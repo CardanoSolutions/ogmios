@@ -1,0 +1,26 @@
+version: "3.5"
+
+services:
+  cardano-node:
+    image: inputoutput/cardano-node:master
+    environment:
+      - NETWORK=mainnet
+    volumes:
+      - cardano-node:/data
+    logging:
+      driver: none
+    restart: on-failure
+
+  ogmios:
+    build: .
+    environment:
+      - OGMIOS_NETWORK=mainnet
+    command: ["--host", "0.0.0.0", "--node-socket", "/data/node.socket"]
+    volumes:
+      - cardano-node:/data
+    ports:
+      - 1337:1337
+    restart: on-failure
+
+volumes:
+  cardano-node:

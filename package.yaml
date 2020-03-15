@@ -1,0 +1,134 @@
+name:                ogmios
+version:             1.0.0
+github:              "KtorZ/cardano-ogmios"
+license:             MPL-2.0
+author:              "KtorZ <matthias.benkort@gmail.com>"
+maintainer:          "matthias.benkort@gmail.com"
+copyright:           "2020 KtorZ"
+description:         Please see the README on GitHub at <https://github.com/KtorZ/ogmios>
+synopsis:            A JSON-WSP WebSocket client for cardano-node
+category:            Web
+
+extra-source-files:
+- README.md
+- ogmios.wsp.json
+- Dockerfile
+- docker-compose.yml
+- docs/COMMAND_LINE.md
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+  ghc-options:
+    - -Wall
+    - -Wcompat
+    - -Werror
+    - -fwarn-redundant-constraints
+  dependencies:
+    - aeson
+    - bytestring
+    - cardano-binary
+    - cardano-crypto-wrapper
+    - cardano-ledger
+    - cardano-slotting
+    - cborg
+    - containers
+    - contra-tracer
+    - file-embed
+    - io-sim-classes
+    - iohk-monitoring
+    - memory
+    - network-mux
+    - optparse-applicative
+    - ouroboros-consensus
+    - ouroboros-consensus-byron
+    - ouroboros-network
+    - ouroboros-network-framework
+    - process
+    - template-haskell
+    - text
+    - typed-protocols-examples
+    - vector
+    - wai
+    - wai-app-static
+    - websockets
+
+executables:
+  ogmios:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -Wall
+    - -Wcompat
+    - -Werror
+    - -fwarn-redundant-constraints
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - contra-tracer
+    - directory
+    - http-types
+    - ogmios
+    - text
+    - wai-websockets
+    - warp
+    - websockets
+
+tests:
+  unit:
+    main: Spec.hs
+    source-dirs:
+    - test/unit
+    - test/ouroboros-network/ouroboros-consensus-byron/test
+    - test/ouroboros-network/ouroboros-consensus-byron/ouroboros-consensus-byrondual/src
+    ghc-options:
+    - -Wcompat
+    - -fwarn-redundant-constraints
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - aeson
+    - aeson-pretty
+    - hjsonschema
+    - hspec
+    - ogmios
+    - QuickCheck
+    - text
+
+    # Needed for 'ouroboros-network/ouroboros-consensus-byron/test'
+    - binary
+    - binary-search
+    - bytestring
+    - cardano-binary
+    - cardano-crypto-class
+    - cardano-crypto-test
+    - cardano-crypto-wrapper
+    - cardano-ledger
+    - cardano-ledger-test
+    - cardano-prelude
+    - cardano-slotting
+    - cborg
+    - containers
+    - cryptonite
+    - cs-blockchain
+    - cs-ledger
+    - hedgehog
+    - hedgehog-quickcheck
+    - mtl
+    - ouroboros-consensus
+    - ouroboros-consensus-byron
+    - ouroboros-consensus-byronspec
+    - ouroboros-consensus-test-infra
+    - ouroboros-network
+    - serialise
+    - small-steps
+    - tasty
+    - tasty-golden
+    - tasty-hunit
+    - tasty-quickcheck
+    - time
+    - transformers

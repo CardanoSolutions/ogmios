@@ -1,0 +1,30 @@
+# Here we list a few set of dependencies we want to be built
+# during the `stack build --only-snapshot` stage. This allows
+# leveraging Docker caching system and get most of the LTS
+# dependencies build only once.
+
+name: ogmios
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+  dependencies:
+    - base
+    - cardano-binary
+    - cardano-crypto
+    - cardano-crypto-wrapper
+    - cardano-ledger
+    - cardano-slotting
+    - cborg
+    - io-sim-classes
+    - iohk-monitoring
+    - network
+    - network-mux
+    - ouroboros-consensus
+    - ouroboros-consensus-byron
+    - ouroboros-network
+    - ouroboros-network-framework
+    - typed-protocols
+    - typed-protocols-examples

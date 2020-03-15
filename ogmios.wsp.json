@@ -1,0 +1,742 @@
+{ "type": "object"
+, "title": "ogmios"
+, "$id": "{{url}}"
+, "$schema": "http://json-schema.org/draft-04/schema#"
+
+
+, "properties":
+
+  { "RequestNext":
+    { "type": "object"
+    , "description": "Request next block from the current cardano-node's cursor."
+    , "properties":
+      { "args":
+        { "type": "object"
+        , "additionalProperties": false
+        }
+      , "result":
+        { "type": "object"
+        , "additionalProperties": false
+        , "oneOf":
+          [ { "required": ["RollForward"]
+            , "properties":
+              { "RollForward":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "tip", "block" ]
+                , "properties":
+                  { "block": { "$ref": "#/definitions/Block" }
+                  , "tip": { "$ref": "#/definitions/Tip" }
+                  }
+                }
+              }
+            }
+          , { "required": ["RollBackward"]
+            , "properties":
+              { "RollBackward":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "tip", "point" ]
+                , "properties":
+                  { "point": { "$ref": "#/definitions/Point" }
+                  , "tip": { "$ref": "#/definitions/Tip" }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+
+  , "FindIntersect":
+    { "type": "object"
+    , "description": "Ask cardano-node to find an intersection between its local chain and the given points."
+    , "properties":
+      { "args":
+        { "type": "object"
+        , "properties":
+          { "points":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Point" }
+            }
+          }
+        }
+      , "result":
+        { "description": "Intersection found if any, alongside the cardano-node's current tip."
+        , "oneOf":
+          [ { "type": "object"
+            , "additionalProperties": false
+            , "required": ["IntersectionFound"]
+            , "properties":
+              { "IntersectionFound":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "point", "tip" ]
+                , "properties":
+                  { "point": { "$ref": "#/definitions/Point" }
+                  , "tip": { "$ref": "#/definitions/Tip" }
+                  }
+                }
+              }
+            }
+          , { "type": "object"
+            , "additionalProperties": false
+            , "required": ["IntersectionNotFound"]
+            , "properties":
+              { "IntersectionNotFound":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "tip" ]
+                , "properties":
+                  { "tip": { "$ref": "#/definitions/Tip" }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+
+  , "SubmitTx":
+    { "type": "object"
+    , "description": "Submit a signed and serialized UTxO transaction to the network."
+    , "properties":
+      { "args":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["bytes"]
+        , "properties":
+          { "bytes":
+            { "type": "string"
+            , "description": "CBOR-serialized signed transaction, in base64"
+            , "format": "base64"
+            , "pattern": "^[A-Za-z0-9+/]=?=?$"
+            }
+          }
+        }
+      , "result":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["SubmitTxResponse"]
+        , "properties":
+          { "SubmitTxResponse":
+            { "type": "object"
+            , "additionalProperties": false
+            , "properties":
+              { "error":
+                { "oneOf":
+                  [ { "type": "null" }
+                  , { "$ref": "#/definitions/SubmitTxError" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+, "definitions":
+  { "Address":
+    { "type": "string"
+    , "format": "base58"
+    , "pattern": "[1-9A-HJ-NP-Za-km-z]*"
+    }
+
+  , "Block":
+    { "type": "object"
+    , "oneOf":
+      [ { "required": [ "header", "body" ]
+        , "additionalProperties": false
+        , "properties":
+          { "header":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "blockHeight", "genesisKey", "prevHash", "proof", "protocolMagicId", "protocolVersion", "signature", "slot", "softwareVersion" ]
+            , "properties":
+              { "blockHeight": { "$ref": "#/definitions/BlockHeight" }
+              , "genesisKey": { "$ref": "#/definitions/Hash64" }
+              , "prevHash": { "$ref": "#/definitions/Hash16" }
+              , "proof": { "$ref": "#/definitions/BlockProof" }
+              , "protocolMagicId": { "$ref": "#/definitions/ProtocolMagicId" }
+              , "protocolVersion": { "$ref": "#/definitions/ProtocolVersion" }
+              , "signature": { "$ref": "#/definitions/Signature" }
+              , "slot": { "$ref": "#/definitions/Slot" }
+              , "softwareVersion": { "$ref": "#/definitions/SoftwareVersion" }
+              }
+            }
+          , "body":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "txPayload", "dlgPayload", "updatePayload" ]
+            , "properties":
+              { "txPayload":
+                { "type": "array"
+                , "items":
+                  { "type": "object"
+                  , "additionalProperties": false
+                  , "required": [ "tx", "witness" ]
+                  , "properties":
+                    { "tx": { "$ref": "#/definitions/Tx" }
+                    , "witness":
+                      { "type": "array"
+                      , "items": { "$ref": "#/definitions/TxWitness" }
+                      }
+                    }
+                  }
+                }
+              , "dlgPayload":
+                { "type": "array"
+                , "items": { "$ref": "#/definitions/DlgCertificate"}
+                }
+              , "updatePayload":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "proposal", "votes" ]
+                , "properties":
+                  { "proposal":
+                    { "oneOf":
+                      [ { "type": "null" }
+                      , { "type": "object"
+                        , "additionalProperties": false
+                        , "required": [ "body", "issuer", "signature" ]
+                        , "properties":
+                          { "body":
+                            { "type": "object"
+                            , "additionalProperties": false
+                            , "required": [ "protocolVersion", "parametersUpdate", "softwareVersion", "metadata" ]
+                            , "properties":
+                              { "protocolVersion": { "$ref": "#/definitions/ProtocolVersion" }
+                              , "softwareVersion": { "$ref": "#/definitions/SoftwareVersion" }
+                              , "metadata":
+                                { "type": "object"
+                                , "additionalProperties": true
+                                }
+                              , "parametersUpdate":
+                                { "type": "object"
+                                , "additionalProperties": true
+                                , "properties":
+                                  { "scriptVersion": { "$ref": "#/definitions/NullableNumber" }
+                                  , "slotDuration": { "$ref": "#/definitions/NullableNumber" }
+                                  , "maxBlockSize": { "$ref": "#/definitions/NullableNumber" }
+                                  , "maxHeaderSize": { "$ref": "#/definitions/NullableNumber" }
+                                  , "maxProposalSize": { "$ref": "#/definitions/NullableNumber" }
+                                  , "mpcThreshold": { "$ref": "#/definitions/NullableRatio" }
+                                  , "heavyDlgThreshold": { "$ref": "#/definitions/NullableRatio" }
+                                  , "updateVoteThreshold": { "$ref": "#/definitions/NullableRatio" }
+                                  , "updateProposalTTL": { "$ref": "#/definitions/NullableNumber" }
+                                  , "unlockStakeEpoch": { "$ref": "#/definitions/NullableNumber" }
+                                  , "txFeePolicy":
+                                    { "oneOf":
+                                      [ { "type": "null" }
+                                      , { "$ref": "#/definitions/TxFeePolicy" }
+                                      ]
+                                    }
+                                  , "softforkRule":
+                                    { "oneOf":
+                                      [ { "type": "null" }
+                                      , { "$ref": "#/definitions/SoftForkRule" }
+                                      ]
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          , "issuer": { "$ref": "#/definitions/Hash64" }
+                          , "signature": { "$ref": "#/definitions/Hash16" }
+                          }
+                        }
+                      ]
+                    }
+                  , "votes":
+                    { "type": "array"
+                    , "items": { "$ref": "#/definitions/Vote" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      , { "required": [ "header" ]
+        , "additionalProperties": false
+        , "properties":
+          { "header":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "blockHeight", "epoch", "prevHash" ]
+            , "properties":
+              { "blockHeight": { "$ref": "#/definitions/BlockHeight" }
+              , "epoch": { "$ref": "#/definitions/Epoch" }
+              , "prevHash": { "$ref": "#/definitions/Hash16" }
+              }
+            }
+          }
+        }
+      ]
+    }
+
+  , "BlockHeight":
+    { "type": "number"
+    , "minimum": 0
+    }
+
+  , "BlockNo":
+    { "type": "number"
+    , "minimum": 0
+    }
+
+  , "BlockProof":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "utxo", "delegation", "update" ]
+    , "properties":
+      { "utxo":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "number", "root", "witnessesHash" ]
+        , "properties":
+          { "number":
+            { "type": "number"
+            , "minimum": 0
+            }
+          , "root": { "$ref": "#/definitions/Hash16" }
+          , "witnessesHash": { "$ref": "#/definitions/Hash16" }
+          }
+        }
+      , "delegation": { "$ref": "#/definitions/Hash16" }
+      , "update": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "DlgCertificate":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "epoch", "issuerVK", "delegateVK", "signature" ]
+    , "properties":
+      { "epoch": { "$ref": "#/definitions/Epoch" }
+      , "issuerVK": { "$ref": "#/definitions/Hash64" }
+      , "delegateVK": { "$ref": "#/definitions/Hash64" }
+      , "signature": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "Epoch":
+    { "type": "number"
+    , "minimum": 0
+    }
+
+  , "Hash16":
+    { "type": "string"
+    , "format": "base16"
+    , "pattern": "^[0-9a-f]*$"
+    }
+
+  , "Hash64":
+    { "type": "string"
+    , "format": "base64"
+    , "pattern": "^[A-Za-z0-9+/]*=?=?$"
+    }
+
+  , "Lovelace":
+    { "type": "number"
+    , "description": "An amount, in Lovelace (1e6 Lovelace = 1 Ada)"
+    , "minimum": 0
+    }
+
+  , "LovelaceError":
+    { "oneOf":
+      [ { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "underflow" ]
+        , "properties":
+          { "underflow":
+            { "type": "array"
+            , "items": { "type": "number" }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "tooSmall" ]
+        , "properties":
+          { "tooSmall": { "type": "number" }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "tooLarge" ]
+        , "properties":
+          { "tooLarge": { "type": "number" }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "overflow" ]
+        , "properties":
+          { "overflow": { "type": "number" }
+          }
+        }
+      ]
+    }
+
+  , "NetworkMagic":
+    { "oneOf":
+      [ { "type": "string"
+        , "enum": [ "mainnet" ]
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "testnet" ]
+        , "properties":
+          { "testnet": { "type": "number" }
+          }
+        }
+      ]
+    }
+
+  , "NullableNumber":
+    { "oneOf":
+      [ { "type": "null" }
+      , { "type": "number" }
+      ]
+    }
+
+  , "NullableRatio":
+    { "oneOf":
+      [ { "type": "null" }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "denominator", "numerator" ]
+        , "properties":
+          { "denominator": { "type": "number" }
+          , "numerator": { "type": "number" }
+          }
+        }
+      ]
+    }
+
+  , "Point":
+    { "oneOf":
+      [ { "type": "string"
+        , "enum": [ "origin" ]
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "slot", "hash" ]
+        , "properties":
+          { "slot": { "$ref": "#/definitions/Slot" }
+          , "hash": { "$ref": "#/definitions/Hash16" }
+          }
+        }
+      ]
+    }
+
+  , "ProtocolMagicId":
+    { "type": "number"
+    }
+
+  , "ProtocolVersion":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "major", "minor", "patch" ]
+    , "properties":
+      { "major": { "type": "number" }
+      , "minor": { "type": "number" }
+      , "patch": { "type": "number" }
+      }
+    }
+
+  , "Signature":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "dlgCertificate", "signature" ]
+    , "properties":
+      { "dlgCertificate": { "$ref": "#/definitions/DlgCertificate" }
+      , "signature": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "Slot":
+    { "type": "number"
+    , "minimum": 0
+    }
+
+  , "SoftwareVersion":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "appName", "number" ]
+    , "properties":
+      { "appName": { "type": "string" }
+      , "number": { "type": "number" }
+      }
+    }
+
+  , "SoftForkRule":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "initThreshold", "minThreshold", "decrementThreshold" ]
+    , "properties":
+      { "initThreshold": { "$ref": "#/definitions/NullableRatio" }
+      , "minThreshold": { "$ref": "#/definitions/NullableRatio" }
+      , "decrementThreshold": { "$ref": "#/definitions/NullableRatio" }
+      }
+    }
+
+  , "SubmitTxError":
+    { "type": "object"
+    , "oneOf":
+      [ { "additionalProperties": false
+        , "required": [ "utxoValidationError" ]
+        , "properties":
+          { "utxoValidationError": { "$ref": "#/definitions/UtxoValidationError" }
+          }
+        }
+      , { "additionalProperties": false
+        , "required": [ "txValidationError" ]
+        , "properties":
+          { "txValidationError": { "$ref": "#/definitions/TxValidationError" }
+          }
+        }
+      ]
+    }
+
+  , "Tip":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "slot", "hash", "blockNo" ]
+    , "properties":
+      { "slot": { "$ref": "#/definitions/Slot" }
+      , "hash": { "$ref": "#/definitions/Hash16" }
+      , "blockNo": { "$ref": "#/definitions/BlockNo" }
+      }
+    }
+
+  , "Tx":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "inputs", "outputs" ]
+    , "properties":
+      { "inputs":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/TxIn" }
+        }
+      , "outputs":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/TxOut" }
+        }
+      }
+    }
+
+  , "TxFeePolicy":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "coefficient", "constant" ]
+    , "properties":
+      { "coefficient": { "type": "number" }
+      , "constant": { "type": "number" }
+      }
+    }
+
+  , "TxIn":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "txId", "index" ]
+    , "properties":
+      { "txId": { "$ref": "#/definitions/Hash16" }
+      , "index":
+        { "type": "number"
+        , "minimum": 0
+        }
+      }
+    }
+
+  , "TxOut":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "address", "value" ]
+    , "properties":
+      { "address": { "$ref": "#/definitions/Address" }
+      , "value": { "$ref": "#/definitions/Lovelace" }
+      }
+    }
+
+  , "TxValidationError":
+    { "oneOf":
+      [ { "type": "string"
+        , "enum": [ "unknownAttributes", "unknownAddressAttributes" ]
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "feeTooSmall" ]
+        , "properties":
+          { "feeTooSmall":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "tx", "requiredFee", "actualFee" ]
+            , "properties":
+              { "tx": { "$ref": "#/definitions/Tx" }
+              , "requiredFee": { "$ref": "#/definitions/Lovelace" }
+              , "actualFee": { "$ref": "#/definitions/Lovelace" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "txTooLarge" ]
+        , "properties":
+          { "txTooLarge":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "maximumSize", "actualSize" ]
+            , "properties":
+              { "maximumSize": { "type": "number" }
+              , "actualSize": { "type": "number" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "missingInput" ]
+        , "properties":
+          { "missingInput":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "index", "txId" ]
+            , "properties":
+              { "index": { "type": "number" }
+              , "txId": { "$ref": "#/definitions/Hash16" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "networkMagicMismatch" ]
+        , "properties":
+          { "networkMagicMismatch":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "expectedMagic", "actualMagic" ]
+            , "properties":
+              { "expectedMagic": { "$ref": "#/definitions/NetworkMagic" }
+              , "actualMagic": { "$ref": "#/definitions/NetworkMagic" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "wrongSignature" ]
+        , "properties":
+          { "wrongSignature":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "witness", "protocolMagic" ]
+            , "properties":
+              { "protocolMagic": { "$ref": "#/definitions/ProtocolMagicId" }
+              , "witness": { "$ref": "#/definitions/TxWitness" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "lovelaceError" ]
+        , "properties":
+          { "lovelaceError":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "error", "label" ]
+            , "properties":
+              { "error": { "$ref": "#/definitions/LovelaceError" }
+              , "label": { "type": "string" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "wrongKey" ]
+        , "properties":
+          { "wrongKey":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "address", "witness" ]
+            , "properties":
+              { "address": { "$ref": "#/definitions/Address" }
+              , "witness": { "$ref": "#/definitions/TxWitness" }
+              }
+            }
+          }
+        }
+      ]
+    }
+
+  , "TxWitness":
+    { "type": "object"
+    , "oneOf":
+      [ { "additionalProperties": false
+        , "required": [ "witnessVK" ]
+        , "properties":
+          { "witnessVK":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "key", "signature" ]
+            , "properties":
+              { "key": { "$ref": "#/definitions/Hash64" }
+              , "signature": { "$ref": "#/definitions/Hash16" }
+              }
+            }
+          }
+        }
+      , { "additionalProperties": false
+        , "required": [ "redeemWitness" ]
+        , "properties":
+          { "redeemWitness":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "key", "signature" ]
+            , "properties":
+              { "key": { "$ref": "#/definitions/Hash64" }
+              , "signature": { "$ref": "#/definitions/Hash64" }
+              }
+            }
+          }
+        }
+      ]
+    }
+
+  , "UtxoValidationError":
+    { "oneOf":
+      [ { "type": "string"
+        , "enum": [ "overlappingUnion" ]
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "missingInput" ]
+        , "properties":
+          { "missingInput": { "$ref": "#/definitions/TxIn" }
+          }
+        }
+      ]
+    }
+
+  , "Vote":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "voterVK", "proposalId", "signature" ]
+    , "properties":
+      { "voterVK": { "$ref": "#/definitions/Hash64" }
+      , "proposalId": { "$ref": "#/definitions/Hash16" }
+      , "signature": { "$ref": "#/definitions/Hash64" }
+      }
+    }
+  }
+}
