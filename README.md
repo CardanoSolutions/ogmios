@@ -79,6 +79,8 @@ chatbots, dashboards...).
 
 # Getting Started
 
+[![DockerHub Badge](http://dockeri.co/image/ktorz/ogmios)](https://hub.docker.com/r/ktorz/ogmios/)
+
 ```
 🐳 docker-compose up
 ```
