@@ -5,6 +5,7 @@
 FROM haskell:8.6.5
 RUN apt-get update && apt-get install -y \
   build-essential \
+  git \
   libgmp-dev \
   libssl-dev \
   libtinfo-dev \
