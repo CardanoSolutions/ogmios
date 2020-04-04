@@ -88,7 +88,7 @@ chatbots, dashboards...).
 :point_up: This will run and connect together:
 
 - An OBFT Byron cardano-node, connected to `MainNet`.
-- An Ogmios server, listening to `localhost` on port `:1337`.
+- An Ogmios server, listening to `localhost` on port `:80`.
 
 And here-under are a few JavaScript snippets of client code interacting with a local Ogmios server.
 
@@ -96,7 +96,7 @@ And here-under are a few JavaScript snippets of client code interacting with a l
   <summary><strong>skeleton.js</strong></summary>
 
   ```js
-  const socket = new WebSocket("ws://127.0.0.1:1337");
+  const socket = new WebSocket("ws://127.0.0.1:80");
 
   const method = {
     FindIntersect: "FindIntersect",

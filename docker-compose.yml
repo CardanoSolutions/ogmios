@@ -12,14 +12,14 @@ services:
     restart: on-failure
 
   ogmios:
-    build: .
+    image: ktorz/ogmios:latest
     environment:
       - OGMIOS_NETWORK=mainnet
     command: ["--host", "0.0.0.0", "--node-socket", "/data/node.socket"]
     volumes:
       - cardano-node:/data
     ports:
-      - 1337:1337
+      - 80:1337
     restart: on-failure
 
 volumes:
