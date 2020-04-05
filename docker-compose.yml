@@ -19,7 +19,7 @@ services:
     volumes:
       - cardano-node:/data
     ports:
-      - 80:1337
+      - 1337:1337
     restart: on-failure
 
 volumes:

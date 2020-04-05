@@ -88,7 +88,7 @@ chatbots, dashboards...).
 :point_up: This will run and connect together:
 
 - An OBFT Byron cardano-node, connected to `MainNet`.
-- An Ogmios server, listening to `localhost` on port `:80`.
+- An Ogmios server, listening to `localhost` on port `:1337`.
 
 And here-under are a few JavaScript snippets of client code interacting with a local Ogmios server.
 
