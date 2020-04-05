@@ -71,12 +71,14 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Client
 import qualified Codec.Json.Wsp as Wsp
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
+import qualified Data.Binary.Builder as Builder
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Network.Wai as Wai
 import qualified Network.Wai.Application.Static as Wai
 import qualified Network.WebSockets as WS
+import qualified WaiAppStatic.Types as Wai
 
 data SimplePipe input output (m :: * -> *) = SimplePipe
     { await :: m input
@@ -234,14 +236,27 @@ serviceDescription
     :: Maybe String
     -> Wai.Application
 serviceDescription publicUrl =
-    Wai.staticApp $ (Wai.embeddedSettings [("/ogmios.wsp.json", description)])
-        { Wai.ssGetMimeType = const (pure "application/json") }
-  where
-    template :: ByteString
-    template = $(embedFile "ogmios.wsp.json")
+    Wai.staticApp $ (Wai.embeddedSettings
+        [ ("/ogmios.wsp.json", replaceUrl (fromMaybe "N/A" publicUrl) spec)
+        ])
+        { Wai.ssGetMimeType = \file -> pure $
+            case Wai.fromPiece (Wai.fileName file) of
+                x | x == "ogmios.wsp.json" ->
+                    "application/json"
+                x | x == "" ->
+                    "text/html"
+                _anythingElse ->
+                    "application/octet-stream"
 
-    description =
-        replaceUrl (fromMaybe "N/A" publicUrl) template
+        , Wai.ssListing = Just $ \_pieces _folder -> do
+            pure (Builder.fromByteString index)
+        }
+  where
+    index :: ByteString
+    index = $(embedFile "ogmios.html")
+
+    spec :: ByteString
+    spec = $(embedFile "ogmios.wsp.json")
 
     replaceUrl url file =
         T.encodeUtf8 $ T.replace "{{url}}" (T.pack url) $ T.decodeUtf8 file

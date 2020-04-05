@@ -96,7 +96,13 @@ And here-under are a few JavaScript snippets of client code interacting with a l
   <summary><strong>skeleton.js</strong></summary>
 
   ```js
-  const socket = new WebSocket("ws://127.0.0.1:80");
+  const socket = new WebSocket("ws://127.0.0.1:1337");
+
+  /* Alternatively, try this NOW via our hosted relay on AWS:
+   *
+   * const socket = new WebSocket("wss://ogmios.dev");
+   *
+   */
 
   const method = {
     FindIntersect: "FindIntersect",

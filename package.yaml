@@ -28,6 +28,7 @@ library:
     - -fwarn-redundant-constraints
   dependencies:
     - aeson
+    - binary
     - bytestring
     - cardano-binary
     - cardano-crypto-wrapper
