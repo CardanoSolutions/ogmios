@@ -30,7 +30,7 @@
     <script language="javascript">
       window.addEventListener('load', function () {
         const span = document.querySelector('span.origin');
-        const protocol = window.location.protocol === "https" ? "wss" : "ws";
+        const protocol = window.location.protocol === "http:" ? "ws" : "wss";
         span.innerHTML = protocol + "://" + window.location.host;
       });
     </script>
