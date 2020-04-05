@@ -46,8 +46,6 @@ Ouroboros' mini-protocols are described as state-machines. **Ogmios** currently 
 ```
 </details>
 
-<br/>
-
 <details>
 
   <summary>Local Transaction Submission Protocol</summary>
@@ -67,8 +65,6 @@ Ouroboros' mini-protocols are described as state-machines. **Ogmios** currently 
                                                              | valid transactions.
 ```
 </details>
-
-<p align="right">See also <a href="https://github.com/KtorZ/cardano-ogmios/blob/master/ogmios.wsp.json">ogmios.wsp.json</a> for a full description of the service.</p>
 
 ### Why Bother?
 
@@ -95,50 +91,88 @@ And here-under are a few JavaScript snippets of client code interacting with a l
 <details>
   <summary><strong>skeleton.js</strong></summary>
 
-  ```js
-  const socket = new WebSocket("ws://127.0.0.1:1337");
+```js
+/*
+ * Typical skeleton code for interacting with Ogmios.
+ */
 
-  /* Alternatively, try this NOW via our hosted relay on AWS:
-   *
-   * const socket = new WebSocket("wss://ogmios.dev");
-   *
-   */
+const socket = new WebSocket("ws://HOST:PORT");
 
-  const method = {
-    FindIntersect: "FindIntersect",
-    RequestNext: "RequestNext",
-    SubmitTx: "SubmitTx"
-  };
+const method = {
+  FindIntersect: "FindIntersect",
+  RequestNext: "RequestNext",
+  SubmitTx: "SubmitTx"
+};
 
-  socket.onopen = function (event) {
-      socket.wsp(method.FindIntersect, { points: ["origin"] })
-  };
+socket.onopen = function (event) {
+    socket.wsp(method.FindIntersect, { points: ["origin"] })
+};
 
-  socket.onmessage = function (event) {
-    let msg = JSON.parse(event.data);
+socket.onmessage = function (event) {
+  let msg = JSON.parse(event.data);
 
-    switch (msg.methodname) {
-      case method.FindIntersect:
-        // do something
-      break;
+  switch (msg.methodname) {
+    case method.FindIntersect:
+      // do something
+    break;
 
-      case method.RequestNext:
-        // do something
-      break;
+    case method.RequestNext:
+      // do something
+    break;
 
-      case method.SubmitTx: 
-        // do something
-      break;
-    }
+    case method.SubmitTx: 
+      // do something
+    break;
+  }
 
-    socket.wsp(method.RequestNext);
-  };
+  socket.wsp(method.RequestNext);
+};
 
-  // ---------------- See also `WebSocket-polyfill.js`
-  ```
+// ---------------- See also `WebSocket-polyfill.js`
+```
 </details>
 
-<br/>
+<details>
+  <summary><strong>simple-client.js</strong></summary>
+
+```js
+/* 
+ * A simple client which fetches the first 100 blocks of the chain and print 
+ * them to the console.
+ */
+
+const socket = new WebSocket("ws://localhost:1337");
+// Or, alternatively: const socket = new WebSocket("wss://ogmios.dev");
+
+const methods = {
+  FindIntersect: "FindIntersect",
+  RequestNext: "RequestNext"
+};
+
+let n = 100;
+
+socket.onopen = function (event) {
+    socket.wsp(methods.FindIntersect, { points: ["origin"] })
+};
+
+socket.onmessage = function (event) {
+  let msg = JSON.parse(event.data);
+  console.log(msg.result);
+  if (n > 0) {
+    socket.wsp(methods.RequestNext);
+    n--;
+  } else {
+    socket.close();
+  }
+};
+
+socket.onclose = function (event) {
+  console.log("Connection closed.");
+};
+
+// ---------------- See also `WebSocket-polyfill.js`
+```
+</details>
 
 <details>
   <summary><strong>WebSocket-polyfill.js</strong></summary>
@@ -158,14 +192,14 @@ And here-under are a few JavaScript snippets of client code interacting with a l
 ```
 </details>
 
-
-
 <hr/>
 
 <p align="center">
   <a href="https://ktorz.github.io/cardano-ogmios/api-reference">:book: API Reference</a> 
   |
   <a href="docs/COMMAND_LINE.md">:computer: Command-Line Interface</a>
+  |
+  <a href="docs/AWS_DEPLOYMENT.md">:package: Deployment Guide</a>
   |
   <a href="CONTRIBUTING.md">:gift: Contributing</a>
   | 
