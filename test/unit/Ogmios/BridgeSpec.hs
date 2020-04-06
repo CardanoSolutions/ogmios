@@ -2,6 +2,7 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
@@ -17,6 +18,8 @@ module Ogmios.BridgeSpec
 
 import Prelude
 
+import Cardano.Chain.Byron.API
+    ( ApplyMempoolPayloadErr (..) )
 import Cardano.Chain.UTxO.Validation
     ( UTxOValidationError )
 import Data.Aeson
@@ -37,6 +40,11 @@ import JSONSchema.Validator.Draft4.Any
     ( OneOfInvalid (..), RefInvalid (..) )
 import JSONSchema.Validator.Draft4.Object
     ( PropertiesRelatedInvalid (..) )
+import Ogmios.Bridge
+    ( FindIntersectResponse (..)
+    , RequestNextResponse (..)
+    , SubmitTxResponse (..)
+    )
 import Ouroboros.Consensus.Byron.Ledger
     ( ByronBlock )
 import Ouroboros.Network.Block
@@ -50,9 +58,13 @@ import Test.QuickCheck
     , Positive (..)
     , Property
     , counterexample
+    , genericShrink
+    , oneof
     , property
     , withMaxSuccess
     )
+import Test.QuickCheck.Arbitrary.Generic
+    ( genericArbitrary )
 import Test.QuickCheck.Hedgehog
     ( hedgehog )
 import Test.QuickCheck.Monadic
@@ -63,6 +75,7 @@ import Cardano.Byron.Types.Json.Orphans
 import Test.Consensus.Byron.Ledger
     ()
 
+import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encode.Pretty as Json
 import qualified Data.ByteString.Lazy.Char8 as BL8
@@ -72,14 +85,12 @@ import qualified Data.Text as T
 spec :: Spec
 spec =
     describe "validate ToJSON instances against JSON-schema" $ do
-        test (validateAllToJSON @UTxOValidationError)
-            "ogmios.wsp.json#/definitions/SubmitTxError"
-        test (validateAllToJSON @(Tip ByronBlock))
-            "ogmios.wsp.json#/definitions/Tip"
-        test (validateAllToJSON @(Point ByronBlock))
-            "ogmios.wsp.json#/definitions/Point"
-        test (validateAllToJSON @ByronBlock)
-            "ogmios.wsp.json#/definitions/Block"
+        test (validateAllToJSON @(FindIntersectResponse ByronBlock))
+            "ogmios.wsp.json#/properties/FindIntersectResponse"
+        test (validateAllToJSON @(RequestNextResponse ByronBlock))
+            "ogmios.wsp.json#/properties/RequestNextResponse"
+        test (validateAllToJSON @(SubmitTxResponse ApplyMempoolPayloadErr))
+            "ogmios.wsp.json#/properties/SubmitTxResponse"
 
 --
 -- Helpers
@@ -90,9 +101,9 @@ newtype SchemaRef = SchemaRef
     deriving (Show, IsString)
 
 validateAllToJSON
-    :: ToJSON a
+    :: ToJSON (Wsp.Response a)
     => SchemaRef
-    -> a
+    -> Wsp.Response a
     -> Property
 validateAllToJSON ref a = monadicIO $ do
     let json = toJSON a
@@ -148,6 +159,23 @@ prettyFailure = \case
 --
 -- Instances
 --
+
+instance Arbitrary a => Arbitrary (Wsp.Response a) where
+    arbitrary = Wsp.Response Nothing <$> arbitrary
+
+instance Arbitrary (FindIntersectResponse ByronBlock) where
+    shrink = genericShrink
+    arbitrary = genericArbitrary
+
+instance Arbitrary (RequestNextResponse ByronBlock) where
+    shrink = genericShrink
+    arbitrary = genericArbitrary
+
+instance Arbitrary (SubmitTxResponse ApplyMempoolPayloadErr) where
+    arbitrary = oneof
+        [ pure (SubmitTxResponse Nothing)
+        , SubmitTxResponse . Just . MempoolTxErr <$> arbitrary
+        ]
 
 instance Arbitrary (Point ByronBlock) where
     arbitrary = blockPoint <$> arbitrary

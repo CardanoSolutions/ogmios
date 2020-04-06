@@ -25,12 +25,12 @@ module Ogmios.Bridge
     , serviceDescription
 
     -- * Internals
-    , FindIntersect
-    , FindIntersectResponse
-    , RequestNext
-    , RequestNextResponse
-    , SubmitTx
-    , SubmitTxResponse
+    , FindIntersect (..)
+    , FindIntersectResponse (..)
+    , RequestNext (..)
+    , RequestNextResponse (..)
+    , SubmitTx (..)
+    , SubmitTxResponse (..)
 
     -- * Re-Exports
     , ByronBlock

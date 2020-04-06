@@ -3,22 +3,65 @@
 , "$id": "{{url}}"
 , "$schema": "http://json-schema.org/draft-04/schema#"
 
-
 , "properties":
 
   { "RequestNext":
     { "type": "object"
     , "description": "Request next block from the current cardano-node's cursor."
+    , "required": [ "type", "version", "servicename", "methodname" ]
     , "properties":
-      { "args":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "RequestNext" ]
+        }
+      , "args":
         { "type": "object"
         , "additionalProperties": false
         }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "RequestNextResponse":
+    { "type": "object"
+    , "description": "Request next block from the current cardano-node's cursor."
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "RequestNext" ]
+        }
       , "result":
         { "type": "object"
-        , "additionalProperties": false
         , "oneOf":
           [ { "required": ["RollForward"]
+            , "additionalProperties": false
             , "properties":
               { "RollForward":
                 { "type": "object"
@@ -32,6 +75,7 @@
               }
             }
           , { "required": ["RollBackward"]
+            , "additionalProperties": false
             , "properties":
               { "RollBackward":
                 { "type": "object"
@@ -46,14 +90,34 @@
             }
           ]
         }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
       }
     }
 
   , "FindIntersect":
     { "type": "object"
     , "description": "Ask cardano-node to find an intersection between its local chain and the given points."
+    , "required": [ "type", "version", "servicename", "methodname" ]
     , "properties":
-      { "args":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "FindIntersect" ]
+        }
+      , "args":
         { "type": "object"
         , "properties":
           { "points":
@@ -61,6 +125,32 @@
             , "items": { "$ref": "#/definitions/Point" }
             }
           }
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "FindIntersectResponse":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "FindIntersect" ]
         }
       , "result":
         { "description": "Intersection found if any, alongside the cardano-node's current tip."
@@ -96,14 +186,34 @@
             }
           ]
         }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
       }
     }
 
   , "SubmitTx":
     { "type": "object"
     , "description": "Submit a signed and serialized UTxO transaction to the network."
+    , "required": [ "type", "version", "servicename", "methodname" ]
     , "properties":
-      { "args":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "SubmitTx" ]
+        }
+      , "args":
         { "type": "object"
         , "additionalProperties": false
         , "required": ["bytes"]
@@ -115,6 +225,32 @@
             , "pattern": "^[A-Za-z0-9+/]=?=?$"
             }
           }
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "SubmitTxResponse":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "SubmitTx" ]
         }
       , "result":
         { "type": "object"
@@ -135,10 +271,12 @@
             }
           }
         }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
       }
     }
   }
-
 
 , "definitions":
   { "Address":

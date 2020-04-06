@@ -94,6 +94,7 @@ tests:
     dependencies:
     - aeson
     - aeson-pretty
+    - generic-arbitrary
     - hjsonschema
     - hspec
     - ogmios
