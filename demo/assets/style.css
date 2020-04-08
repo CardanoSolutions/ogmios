@@ -74,4 +74,11 @@ a.github {
   bottom: 5%;
 }
 
+@media (max-width: 800px) {
+  a.github {
+    display: none;
+  }
+}
+
 a  { outline: 0; }
+

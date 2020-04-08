@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
       <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Ogmios - Latest News</title>
       <link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&display=swap" rel="stylesheet">
       <link href="assets/style.css" rel="stylesheet">
@@ -23,7 +24,9 @@
 
           // Update block header informations
           document.querySelector("#block-slot").innerHTML = epochNo + " | " + slotNo;
-          document.querySelector("#block-hash").innerHTML = hash;
+          document.querySelector("#block-hash").innerHTML = window.innerWidth < 800
+            ? hash.slice(0, 8)
+            : hash;
         });
 
         function pattern() {
