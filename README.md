@@ -73,6 +73,9 @@ a relay node in a very simple and efficient way. Ogmios is very lightweight too 
 relays to create entry points on the Cardano network for various type of applications (e.g. wallets, explorers,
 chatbots, dashboards...).
 
+Here is a little [demo](https://ktorz.github.io/cardano-ogmios/demo) of a simple frontend app using Ogmios
+to display, in-real-time, the current tip of MainNet.
+
 # Getting Started
 
 [![DockerHub Badge](http://dockeri.co/image/ktorz/ogmios)](https://hub.docker.com/r/ktorz/ogmios/)
@@ -86,111 +89,7 @@ chatbots, dashboards...).
 - An OBFT Byron cardano-node, connected to `MainNet`.
 - An Ogmios server, listening to `localhost` on port `:1337`.
 
-And here-under are a few JavaScript snippets of client code interacting with a local Ogmios server.
-
-<details>
-  <summary><strong>skeleton.js</strong></summary>
-
-```js
-/*
- * Typical skeleton code for interacting with Ogmios.
- */
-
-const socket = new WebSocket("ws://HOST:PORT");
-
-const method = {
-  FindIntersect: "FindIntersect",
-  RequestNext: "RequestNext",
-  SubmitTx: "SubmitTx"
-};
-
-socket.onopen = function (event) {
-    socket.wsp(method.FindIntersect, { points: ["origin"] })
-};
-
-socket.onmessage = function (event) {
-  let msg = JSON.parse(event.data);
-
-  switch (msg.methodname) {
-    case method.FindIntersect:
-      // do something
-    break;
-
-    case method.RequestNext:
-      // do something
-    break;
-
-    case method.SubmitTx: 
-      // do something
-    break;
-  }
-
-  socket.wsp(method.RequestNext);
-};
-
-// ---------------- See also `WebSocket-polyfill.js`
-```
-</details>
-
-<details>
-  <summary><strong>simple-client.js</strong></summary>
-
-```js
-/* 
- * A simple client which fetches the first 100 blocks of the chain and print 
- * them to the console.
- */
-
-const socket = new WebSocket("ws://localhost:1337");
-// Or, alternatively: const socket = new WebSocket("wss://ogmios.dev");
-
-const methods = {
-  FindIntersect: "FindIntersect",
-  RequestNext: "RequestNext"
-};
-
-let n = 100;
-
-socket.onopen = function (event) {
-    socket.wsp(methods.FindIntersect, { points: ["origin"] })
-};
-
-socket.onmessage = function (event) {
-  let msg = JSON.parse(event.data);
-  console.log(msg.result);
-  if (n > 0) {
-    socket.wsp(methods.RequestNext);
-    n--;
-  } else {
-    socket.close();
-  }
-};
-
-socket.onclose = function (event) {
-  console.log("Connection closed.");
-};
-
-// ---------------- See also `WebSocket-polyfill.js`
-```
-</details>
-
-<details>
-  <summary><strong>WebSocket-polyfill.js</strong></summary>
-
-```js
-  /* A simple helper to facilitate JSON-WSP requests through a browser WebSocket. 
-  */
-  WebSocket.prototype.wsp = function wsp(methodname, args = {}, mirror = null) {
-    this.send(JSON.stringify({
-      type: "jsonwsp/request",
-      version: "1.0",
-      methodname,
-      args,
-      mirror
-    }));
-  }
-```
-</details>
+Check out the [demo source](https://github.com/KtorZ/cardano-ogmios/blob/master/demo/demo.js) for a detailed albeit simple client example!
 
 <hr/>
 
