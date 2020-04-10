@@ -37,8 +37,14 @@ Available options:
                            - Emergency
                            -------------------- (default: Info)
 
+Additional options (ENV variables):
+  OGMIOS_NETWORK           Configure target network. (default: "mainnet").
+                           Can be either "mainnet", "testnet", "staging"
+                           or a custom magic.
+
+
 Revision:
-  git@fe571250b7659dff0efdd9b275db147074ed8578
+  git@951f73b5bcc0a6a2f81e14e77801b649d7983d9f
 ```
 
 ## Options 

@@ -47,6 +47,8 @@ parserInfo = info (helper <*> parser) $ mempty
     <> footerDoc (Just $ vsep
         [ string "Additional options (ENV variables):"
         , indent 2 $ string "OGMIOS_NETWORK           Configure target network. (default: \"mainnet\")."
+        , indent 2 $ string "                         Can be either \"mainnet\", \"testnet\", \"staging\""
+        , indent 2 $ string "                         or a custom magic."
         , hardline
         , string "Revision:"
         , indent 2 $ string $ "git@" <> $(gitRevParseHEAD)

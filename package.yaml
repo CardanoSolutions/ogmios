@@ -48,6 +48,7 @@ library:
     - ouroboros-network
     - ouroboros-network-framework
     - process
+    - safe
     - template-haskell
     - text
     - typed-protocols-examples

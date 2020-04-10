@@ -3,6 +3,7 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Cardano.Byron.Constants
     (
@@ -12,11 +13,12 @@ module Cardano.Byron.Constants
 
       -- * Mainnet
     , mainnetVersionData
-    , mainnetEpochSlots
 
       -- * Testnet
     , testnetVersionData
-    , testnetEpochSlots
+
+      -- * Staging
+    , stagingVersionData
     ) where
 
 import Prelude
@@ -35,6 +37,8 @@ import Ouroboros.Network.NodeToClient
     ( NodeToClientVersionData (..), nodeToClientCodecCBORTerm )
 import Ouroboros.Network.Protocol.Handshake.Version
     ( CodecCBORTerm )
+import Safe
+    ( readMay )
 import System.Environment
     ( lookupEnv )
 import System.Exit
@@ -56,22 +60,34 @@ lookupVersionData tr name = do
     lookupEnv name >>= \case
         Nothing -> do
             traceWith tr $ LookupDefaultNetwork mainnetNetwork
-            pure (mainnetVersionData, mainnetEpochSlots)
+            pure (mainnetVersionData, defaultEpochSlots)
         Just "mainnet" -> do
             traceWith tr $ LookupUserDefinedNetwork mainnetNetwork
-            pure (mainnetVersionData, mainnetEpochSlots)
+            pure (mainnetVersionData, defaultEpochSlots)
         Just "testnet" -> do
             traceWith tr $ LookupUserDefinedNetwork testnetNetwork
-            pure (testnetVersionData, testnetEpochSlots)
-        Just _invalid  -> do
-            traceWith tr $ LookupInvalidNetwork ["mainnet", "testnet"]
-            exitFailure
+            pure (testnetVersionData, defaultEpochSlots)
+        Just "staging" -> do
+            traceWith tr $ LookupUserDefinedNetwork stagingNetwork
+            pure (stagingVersionData, defaultEpochSlots)
+        Just custom ->
+            case readMay custom of
+                Just n -> do
+                    let magic = NetworkMagic n
+                    traceWith tr $ LookupDefaultNetwork ("custom", magic)
+                    pure (customVersionData magic, defaultEpochSlots)
+                Nothing -> do
+                    traceWith tr $ LookupInvalidNetwork ["mainnet", "testnet", "staging"]
+                    exitFailure
   where
     mainnetNetwork :: (String, NetworkMagic)
     mainnetNetwork = ("mainnet", networkMagic $ fst mainnetVersionData)
 
     testnetNetwork :: (String, NetworkMagic)
     testnetNetwork = ("testnet", networkMagic $ fst testnetVersionData)
+
+    stagingNetwork :: (String, NetworkMagic)
+    stagingNetwork = ("staging", networkMagic $ fst stagingVersionData)
 
 --
 -- Mainnet
@@ -81,17 +97,7 @@ lookupVersionData tr name = do
 mainnetVersionData
     :: NodeVersionData
 mainnetVersionData =
-    ( NodeToClientVersionData
-        { networkMagic = NetworkMagic 764824073
-        }
-    , nodeToClientCodecCBORTerm
-    )
-
--- Hard-coded mainnet genesis slots per epoch
-mainnetEpochSlots
-    :: EpochSlots
-mainnetEpochSlots =
-    EpochSlots 21600
+    customVersionData (NetworkMagic 764824073)
 
 --
 -- Testnet
@@ -101,14 +107,37 @@ mainnetEpochSlots =
 testnetVersionData
     :: NodeVersionData
 testnetVersionData =
-    ( NodeToClientVersionData
-        { networkMagic = NetworkMagic 1097911063
-        }
+    customVersionData (NetworkMagic 1097911063)
+
+--
+-- Staging
+--
+
+-- Hard-coded staging version data
+stagingVersionData
+    :: NodeVersionData
+stagingVersionData =
+    customVersionData (NetworkMagic 633343913)
+
+--
+-- Custom
+--
+
+-- A custom / unknown version data
+customVersionData
+    :: NetworkMagic
+    -> NodeVersionData
+customVersionData networkMagic =
+    ( NodeToClientVersionData { networkMagic }
     , nodeToClientCodecCBORTerm
     )
 
--- Hard-coded testnet genesis slots per epoch
-testnetEpochSlots
+--
+-- Epoch-Slots
+--
+
+-- Hard-coded genesis slots per epoch
+defaultEpochSlots
     :: EpochSlots
-testnetEpochSlots =
+defaultEpochSlots =
     EpochSlots 21600
