@@ -2,11 +2,12 @@ version: "3.5"
 
 services:
   cardano-node:
-    image: inputoutput/cardano-node:master
+    image: inputoutput/cardano-node:1.10.1
     environment:
       - NETWORK=mainnet
     volumes:
-      - cardano-node:/data
+      - node-db:/data/db
+      - node-ipc:/ipc
     logging:
       driver: none
     restart: on-failure
@@ -15,12 +16,13 @@ services:
     image: ktorz/ogmios:latest
     environment:
       - OGMIOS_NETWORK=mainnet
-    command: ["--host", "0.0.0.0", "--node-socket", "/data/node.socket"]
+    command: ["--host", "0.0.0.0", "--node-socket", "/ipc/node.socket", "--public-url", "https://ogmios.dev"]
     volumes:
-      - cardano-node:/data
+      - node-ipc:/ipc
     ports:
       - 1337:1337
     restart: on-failure
 
 volumes:
-  cardano-node:
+  node-db:
+  node-ipc:
