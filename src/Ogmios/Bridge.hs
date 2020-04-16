@@ -238,11 +238,14 @@ serviceDescription
 serviceDescription publicUrl =
     Wai.staticApp $ (Wai.embeddedSettings
         [ ("/ogmios.wsp.json", replaceUrl (fromMaybe "N/A" publicUrl) spec)
+        , ("/benchmark", bench)
         ])
         { Wai.ssGetMimeType = \file -> pure $
             case Wai.fromPiece (Wai.fileName file) of
                 x | x == "ogmios.wsp.json" ->
                     "application/json"
+                x | x == "benchmark" ->
+                    "text/html"
                 x | x == "" ->
                     "text/html"
                 _anythingElse ->
@@ -253,7 +256,10 @@ serviceDescription publicUrl =
         }
   where
     index :: ByteString
-    index = $(embedFile "ogmios.html")
+    index = $(embedFile "static/index.html")
+
+    bench :: ByteString
+    bench = $(embedFile "static/benchmark.html")
 
     spec :: ByteString
     spec = $(embedFile "ogmios.wsp.json")

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+      <title>Ogmios Benchmark</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&display=swap" rel="stylesheet">
+      <style>
+        body {
+          background: #cc3898;
+          color: #fff;
+          font-family: 'Major Mono Display', monospace;
+          height: 100%;
+          margin: 0;
+          padding: 0;
+        }
+
+        svg, label {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+        }
+
+        svg {
+          transform: rotate(-90deg);
+          margin: -200px 0 0 -200px;
+          width: 400px;
+          height: 400px;
+        }
+
+        label {
+          font-size: 2em;
+          height: 400px;
+          margin: -200px 0 0 -200px;
+          position: absolute;
+          text-align: center;
+          width: 400px;
+        }
+
+        label.progress {
+          line-height: 180px;
+        }
+
+        label.syncSpeed {
+          line-height: 400px;
+        }
+
+        label.downSpeed {
+          line-height: 580px;
+        }
+
+        svg circle:first-child {
+          opacity: 0.2;
+        }
+
+        svg circle {
+          stroke: #fff;
+          stroke-width: 1em;
+          transition: stroke-dashoffset 0.5s linear;
+        }
+
+      </style>
+  </head>
+  <body>
+    <svg viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
+      <circle r="90" stroke-dasharray="565.5" stroke-dashoffset="0" cx="100" cy="100" fill="transparent"></circle>
+      <circle r="90" stroke-dasharray="565.5" stroke-dashoffset="565.5" cx="100" cy="100" fill="transparent"></circle>
+    </svg>
+
+    <label class="progress">0%</label>
+
+    <label class="syncSpeed"></label>
+
+    <label class="downSpeed"></label>
+
+    <label class="results"></label>
+
+    <script>
+      const circle = document.querySelector("svg circle:last-child");
+      const progressLbl = document.querySelector("label.progress");
+      const syncSpeedLbl = document.querySelector("label.syncSpeed");
+      const downSpeedLbl = document.querySelector("label.downSpeed");
+
+      const R = 90;
+      const N_MAX = 1000;
+      const I_MAX = 100;
+      let syncSpeed = [];
+      let downSpeed = [];
+
+      function avg(xs) {
+        return xs.reduce((acc, x) => acc + x, 0) / xs.length;
+      }
+
+      window.addEventListener('tick', e => {
+        const { time, size, i } = e.detail;
+        const f = i / I_MAX;
+
+        syncSpeed.push(1000 * N_MAX / time);
+        downSpeed.push((size / 1024) / time);
+
+        circle.style['stroke-dashoffset'] = (1-f)*2*Math.PI*R;
+        document.title = "Ogmios Benchmark | " + (100 * f).toFixed(2) + "%";
+        progressLbl.innerHTML = (100 * f).toFixed(2) + "%";
+        syncSpeedLbl.innerHTML = avg(syncSpeed).toFixed(0) + " block/s";
+        downSpeedLbl.innerHTML = avg(downSpeed).toFixed(2) + " mb/s";
+      });
+
+      const protocol = window.location.protocol === "http:" ? "ws" : "wss";
+      const hostname = window.location.host;
+      const socket = new WebSocket(protocol + "://" + window.location.host);
+
+      let time;
+      let size;
+
+      socket.onopen = function (event) {
+        nextBatch(1);
+      }
+
+      socket.onmessage = function (event) {
+        const msg = JSON.parse(event.data);
+        const { i, n } = msg.reflection;
+
+        size += event.data.length * 2 // 2 bytes per UTF-16 character
+
+        if (n == N_MAX) {
+          const detail = { time: Date.now() - time, size, i };
+          window.dispatchEvent(new CustomEvent('tick', { detail }));
+          if (i < I_MAX) {
+            nextBatch(i + 1);
+          } else {
+            socket.close();
+          }
+        }
+      }
+
+      function nextBatch(i) {
+        time = Date.now();
+        size = 0;
+        for (let n = 1; n <= N_MAX; n += 1) { socket.wsp("RequestNext", {}, { i, n }); }
+      }
+
+      WebSocket.prototype.wsp = function wsp(methodname, args = {}, mirror = null) {
+        this.send(JSON.stringify({
+          type: "jsonwsp/request",
+          version: "1.0",
+          methodname,
+          args,
+          mirror
+        }));
+      };
+    </script>
+  </body>
+</html>
