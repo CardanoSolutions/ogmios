@@ -72,7 +72,7 @@ import Cardano.Chain.UTxO
 import Cardano.Chain.UTxO.Validation
     ( TxValidationError (..), UTxOValidationError (..) )
 import Cardano.Crypto.Hashing
-    ( Hash, decodeHash )
+    ( Hash, decodeHash, hashToBytes )
 import Cardano.Crypto.ProtocolMagic
     ( ProtocolMagicId (..) )
 import Cardano.Crypto.Signing
@@ -119,7 +119,6 @@ import qualified Cardano.Chain.Update.Vote as Upd.Vote
 import qualified Codec.CBOR.Read as Cbor
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
-import qualified Data.ByteArray as BA
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map.Strict as Map
 import qualified Data.Text.Encoding as T
@@ -336,7 +335,7 @@ instance ToAltJSON BlockNo where
     toAltJSON = toJSON . unBlockNo
 
 instance ToAltJSON ByronHash where
-    toAltJSON = toJSON . base16 . unByronHash
+    toAltJSON = toJSON . base16 . hashToBytes .unByronHash
 
 instance ToAltJSON ChainDifficulty where
     toAltJSON = toJSON . unChainDifficulty
@@ -386,7 +385,7 @@ instance ToAltJSON (Dlg.APayload a) where
     toAltJSON = toAltJSON . Dlg.getPayload
 
 instance ToAltJSON (Hash a) where
-    toAltJSON = toAltJSON . BA.convert @_ @ByteString
+    toAltJSON = toAltJSON . hashToBytes
 
 instance ToAltJSON GenesisHash where
     toAltJSON = toAltJSON . unGenesisHash
@@ -531,7 +530,7 @@ instance ToAltJSON ProtocolParametersUpdate where
 instance ToAltJSON TxFeePolicy where
     toAltJSON (TxFeePolicyTxSizeLinear (TxSizeLinear cst coeff)) = Json.object
         [ "constant" .= toAltJSON cst
-        , "coefficient" .= toAltJSON coeff
+        , "coefficient" .= toJSON (fromRational coeff :: Double)
         ]
 
 instance ToAltJSON SoftforkRule where

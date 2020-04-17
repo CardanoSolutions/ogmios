@@ -20,7 +20,7 @@ import Cardano.BM.Data.LogItem
 import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Cardano.BM.Data.Tracer
-    ( DefinePrivacyAnnotation (..), DefineSeverity (..) )
+    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
 import Cardano.BM.Setup
     ( setupTrace_, shutdown )
 import Control.Exception
@@ -38,7 +38,7 @@ import qualified Cardano.BM.Data.BackendKind as CM
 -- | Acquire a tracer that automatically shutdown once the action is done via
 -- bracket-style allocation.
 withStdoutTracer
-    :: forall msg a. (DefinePrivacyAnnotation msg, DefineSeverity msg)
+    :: forall msg a. (HasPrivacyAnnotation msg, HasSeverityAnnotation msg)
     => LoggerName
     -> Severity
     -> (msg -> Text)
@@ -58,12 +58,12 @@ withStdoutTracer name minSeverity transform between = do
 -- | Tracer transformer which converts 'Trace m a' to 'Tracer m a' by wrapping
 -- typed log messages into a 'LogObject'.
 transformLogObject
-    :: (MonadIO m, DefinePrivacyAnnotation msg, DefineSeverity msg)
+    :: (MonadIO m, HasPrivacyAnnotation msg, HasSeverityAnnotation msg)
     => (msg -> Text)
     -> Tracer m (LoggerName, LogObject Text)
     -> Tracer m msg
 transformLogObject transform tr = Tracer $ \a -> do
     traceWith tr . (mempty,) =<< LogObject
         <$> pure mempty
-        <*> (mkLOMeta (defineSeverity a) (definePrivacyAnnotation a))
+        <*> (mkLOMeta (getSeverityAnnotation a) (getPrivacyAnnotation a))
         <*> pure (LogMessage (transform a))

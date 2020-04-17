@@ -13,7 +13,7 @@ import Prelude
 import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Cardano.BM.Data.Tracer
-    ( DefinePrivacyAnnotation (..), DefineSeverity (..) )
+    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
 import Ouroboros.Network.Magic
     ( NetworkMagic (..) )
 
@@ -23,9 +23,9 @@ data TraceLookup
     | LookupInvalidNetwork { expectedOneOf :: [String] }
     deriving (Show)
 
-instance DefinePrivacyAnnotation TraceLookup
-instance DefineSeverity TraceLookup where
-    defineSeverity = \case
+instance HasPrivacyAnnotation TraceLookup
+instance HasSeverityAnnotation TraceLookup where
+    getSeverityAnnotation = \case
         LookupDefaultNetwork{} -> Info
         LookupUserDefinedNetwork{} -> Info
         LookupInvalidNetwork{} -> Critical

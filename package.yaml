@@ -105,6 +105,8 @@ tests:
     # Needed for 'ouroboros-network/ouroboros-consensus-byron/test'
     - binary
     - binary-search
+    - byron-spec-chain
+    - byron-spec-ledger
     - bytestring
     - cardano-binary
     - cardano-crypto-class
@@ -117,8 +119,6 @@ tests:
     - cborg
     - containers
     - cryptonite
-    - cs-blockchain
-    - cs-ledger
     - hedgehog
     - hedgehog-quickcheck
     - mtl
@@ -130,7 +130,6 @@ tests:
     - serialise
     - small-steps
     - tasty
-    - tasty-golden
     - tasty-hunit
     - tasty-quickcheck
     - time

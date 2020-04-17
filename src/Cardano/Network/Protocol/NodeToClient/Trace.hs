@@ -13,7 +13,7 @@ import Prelude
 import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Cardano.BM.Data.Tracer
-    ( DefinePrivacyAnnotation (..), DefineSeverity (..) )
+    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
 import Codec.CBOR.Term
     ( Term )
 import Network.Mux
@@ -35,9 +35,9 @@ data TraceClient block
     | TrHandshake (WithMuxBearer (ConnectionId LocalAddress) HandshakeTrace)
     deriving (Show)
 
-instance DefinePrivacyAnnotation (TraceClient block)
-instance DefineSeverity (TraceClient block) where
-    defineSeverity = \case
-        TrChainSync{}    -> Debug
-        TrMux{}          -> Debug
-        TrHandshake{}    -> Debug
+instance HasPrivacyAnnotation (TraceClient block)
+instance HasSeverityAnnotation (TraceClient block) where
+    getSeverityAnnotation = \case
+        TrChainSync{} -> Debug
+        TrMux{}       -> Debug
+        TrHandshake{} -> Debug

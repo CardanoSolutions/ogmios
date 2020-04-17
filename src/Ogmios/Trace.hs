@@ -16,7 +16,7 @@ import Prelude
 import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Cardano.BM.Data.Tracer
-    ( DefinePrivacyAnnotation (..), DefineSeverity (..) )
+    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
 import Cardano.Byron.Constants.Trace
     ( TraceLookup )
 import Cardano.Network.Protocol.NodeToClient.Trace
@@ -54,11 +54,11 @@ data TraceOgmios where
 
 deriving instance Show TraceOgmios
 
-instance DefinePrivacyAnnotation TraceOgmios
-instance DefineSeverity TraceOgmios where
-    defineSeverity = \case
-        OgmiosClient msg -> defineSeverity msg
-        OgmiosLookupEnv msg -> defineSeverity msg
+instance HasPrivacyAnnotation TraceOgmios
+instance HasSeverityAnnotation TraceOgmios where
+    getSeverityAnnotation = \case
+        OgmiosClient msg -> getSeverityAnnotation msg
+        OgmiosLookupEnv msg -> getSeverityAnnotation msg
         OgmiosStarted{} -> Info
         OgmiosSocketNotFound{} -> Warning
         OgmiosConnectionAccepted{} -> Info
