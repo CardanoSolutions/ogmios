@@ -288,10 +288,11 @@
   , "Block":
     { "type": "object"
     , "oneOf":
-      [ { "required": [ "header", "body" ]
+      [ { "required": [ "hash", "header", "body" ]
         , "additionalProperties": false
         , "properties":
-          { "header":
+          { "hash": { "$ref": "#/definitions/Hash16" }
+          , "header":
             { "type": "object"
             , "additionalProperties": false
             , "required": [ "blockHeight", "genesisKey", "prevHash", "proof", "protocolMagicId", "protocolVersion", "signature", "slot", "softwareVersion" ]
@@ -317,9 +318,10 @@
                 , "items":
                   { "type": "object"
                   , "additionalProperties": false
-                  , "required": [ "tx", "witness" ]
+                  , "required": [ "id", "body", "witness" ]
                   , "properties":
-                    { "tx": { "$ref": "#/definitions/Tx" }
+                    { "id": { "$ref": "#/definitions/Hash16" }
+                    , "body": { "$ref": "#/definitions/Tx" }
                     , "witness":
                       { "type": "array"
                       , "items": { "$ref": "#/definitions/TxWitness" }
@@ -400,10 +402,11 @@
             }
           }
         }
-      , { "required": [ "header" ]
+      , { "required": [ "hash", "header" ]
         , "additionalProperties": false
         , "properties":
-          { "header":
+          { "hash": { "$ref": "#/definitions/Hash16" }
+          , "header":
             { "type": "object"
             , "additionalProperties": false
             , "required": [ "blockHeight", "epoch", "prevHash" ]

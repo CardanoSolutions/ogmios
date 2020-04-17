@@ -5,7 +5,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeApplications #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -24,6 +23,8 @@ import Cardano.Chain.Block
     , ABoundaryHeader (..)
     , AHeader (..)
     , Proof (..)
+    , blockHashAnnotated
+    , boundaryHashAnnotated
     )
 import Cardano.Chain.Byron.API
     ( ApplyMempoolPayloadErr (..) )
@@ -68,11 +69,12 @@ import Cardano.Chain.UTxO
     , TxSigData (..)
     , UTxOError (..)
     , annotateTxAux
+    , taTx
     )
 import Cardano.Chain.UTxO.Validation
     ( TxValidationError (..), UTxOValidationError (..) )
 import Cardano.Crypto.Hashing
-    ( Hash, decodeHash, hashToBytes )
+    ( Hash, decodeHash, hashToBytes, serializeCborHash )
 import Cardano.Crypto.ProtocolMagic
     ( ProtocolMagicId (..) )
 import Cardano.Crypto.Signing
@@ -267,7 +269,7 @@ instance ToJSON UTxOError where
 -- them unsuitable for presenting to an end-user.
 -- In particular:
 --
---   - Many data-types have an 'annotation' field which contains raw bytes data.
+--   - Many data-types have an 'ByteString' field which contains raw bytes data.
 --     Although this might be useful for serializing back to CBOR, we may not
 --     include this in ogmios _yet_ (perhaps under some particular flags).
 --
@@ -378,10 +380,10 @@ instance ToAltJSON Address where
 instance ToAltJSON b => ToAltJSON (Annotated b a) where
     toAltJSON = toAltJSON . unAnnotated
 
-instance ToAltJSON (ATxPayload a) where
+instance ToAltJSON (ATxPayload ByteString) where
     toAltJSON = toAltJSON . aUnTxPayload
 
-instance ToAltJSON (Dlg.APayload a) where
+instance ToAltJSON (Dlg.APayload ByteString) where
     toAltJSON = toAltJSON . Dlg.getPayload
 
 instance ToAltJSON (Hash a) where
@@ -411,31 +413,33 @@ instance ToAltJSON TxSigData where
 
 -- -- * Product & Sum types
 
-instance ToAltJSON (ABlockOrBoundary annotation) where
+instance ToAltJSON (ABlockOrBoundary ByteString) where
     toAltJSON = \case
         ABOBBlock x -> Json.object
             [ "header" .= toAltJSON (blockHeader x)
             , "body" .= toAltJSON (blockBody x)
+            , "hash" .= toAltJSON (blockHashAnnotated x)
             ]
 
         ABOBBoundary x -> Json.object
             [ "header" .= toAltJSON (boundaryHeader x)
+            , "hash" .= toAltJSON (boundaryHashAnnotated x)
             ]
 
-instance ToAltJSON (ABoundaryHeader annotation) where
+instance ToAltJSON (ABoundaryHeader ByteString) where
     toAltJSON x = Json.object
         [ "prevHash" .= either toAltJSON toAltJSON (boundaryPrevHash x)
         , "epoch" .= toAltJSON (boundaryEpoch x)
         , "blockHeight" .= toAltJSON (boundaryDifficulty x)
         ]
 
-instance ToAltJSON (ABlockSignature annotation) where
+instance ToAltJSON (ABlockSignature ByteString) where
     toAltJSON x = Json.object
         [ "dlgCertificate" .= toAltJSON (delegationCertificate x)
         , "signature" .= toAltJSON (signature x)
         ]
 
-instance ToAltJSON (AHeader annotation) where
+instance ToAltJSON (AHeader ByteString) where
     toAltJSON x = Json.object
         [ "protocolMagicId" .= toAltJSON (aHeaderProtocolMagicId x)
         , "prevHash" .= toAltJSON (aHeaderPrevHash x)
@@ -474,27 +478,27 @@ instance ToAltJSON TxProof where
         , "witnessesHash" .= toAltJSON (txpWitnessesHash x)
         ]
 
-instance ToAltJSON (ABody annotation) where
+instance ToAltJSON (ABody ByteString) where
     toAltJSON x = Json.object
         [ "txPayload" .= toAltJSON (bodyTxPayload x)
         , "dlgPayload" .= toAltJSON (bodyDlgPayload x)
         , "updatePayload" .= toAltJSON (bodyUpdatePayload x)
         ]
 
-instance ToAltJSON (Upd.APayload annotation) where
+instance ToAltJSON (Upd.APayload ByteString) where
     toAltJSON x = Json.object
         [ "proposal" .= toAltJSON (Upd.payloadProposal x)
         , "votes" .= toAltJSON (Upd.payloadVotes x)
         ]
 
-instance ToAltJSON (Upd.AVote annotation) where
+instance ToAltJSON (Upd.AVote ByteString) where
     toAltJSON x = Json.object
         [ "voterVK" .= toAltJSON (Upd.voterVK x)
         , "proposalId" .= toAltJSON (Upd.aProposalId x)
         , "signature" .= toAltJSON (Upd.Vote.signature x)
         ]
 
-instance ToAltJSON (Upd.AProposal annotation) where
+instance ToAltJSON (Upd.AProposal ByteString) where
     toAltJSON x = Json.object
         [ "body" .= toAltJSON (Upd.aBody x)
         , "issuer" .= toAltJSON (Upd.issuer x)
@@ -540,7 +544,7 @@ instance ToAltJSON SoftforkRule where
         , "decrementThreshold" .= toAltJSON (srThdDecrement x)
         ]
 
-instance ToAltJSON (Dlg.ACertificate annotation) where
+instance ToAltJSON (Dlg.ACertificate ByteString) where
     toAltJSON x = Json.object
         [ "epoch" .= toAltJSON (Dlg.aEpoch x)
         , "issuerVK" .= toAltJSON (Dlg.issuerVK x)
@@ -548,9 +552,10 @@ instance ToAltJSON (Dlg.ACertificate annotation) where
         , "signature" .= toAltJSON (Dlg.signature x)
         ]
 
-instance ToAltJSON (ATxAux annotation) where
+instance ToAltJSON (ATxAux ByteString) where
     toAltJSON x = Json.object
-        [ "tx" .= toAltJSON (aTaTx x)
+        [ "id" .= toAltJSON (serializeCborHash (taTx x))
+        , "body" .= toAltJSON (aTaTx x)
         , "witness" .= toAltJSON (aTaWitness x)
         ]
 
