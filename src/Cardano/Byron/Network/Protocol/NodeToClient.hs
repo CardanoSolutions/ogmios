@@ -31,6 +31,8 @@ import Cardano.Chain.Slotting
     ( EpochSlots (..) )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient (..) )
+import Control.Monad.Class.MonadAsync
+    ( MonadAsync )
 import Control.Monad.Class.MonadST
     ( MonadST )
 import Control.Monad.Class.MonadThrow
@@ -47,6 +49,8 @@ import Data.Void
     ( Void )
 import Network.Mux
     ( AppType (..) )
+import Network.Mux.Types
+    ( MiniProtocolLimits (..), MiniProtocolNum (..) )
 import Network.TypedProtocol.Codec
     ( Codec )
 import Ouroboros.Consensus.Byron.Ledger
@@ -76,21 +80,23 @@ import Ouroboros.Network.Channel
 import Ouroboros.Network.Codec
     ( DeserialiseFailure )
 import Ouroboros.Network.Driver.Simple
-    ( TraceSendRecv, runPeer )
+    ( TraceSendRecv, runPeer, runPipelinedPeer )
 import Ouroboros.Network.Mux
-    ( MuxPeer (..), OuroborosApplication (..), RunMiniProtocol (..) )
+    ( MiniProtocol (..)
+    , MuxPeer (..)
+    , OuroborosApplication (..)
+    , RunMiniProtocol (..)
+    )
 import Ouroboros.Network.NodeToClient
     ( LocalAddress
     , NetworkConnectTracers (..)
-    , NodeToClientProtocols (..)
     , NodeToClientVersion (..)
     , connectTo
     , localSnocket
-    , nodeToClientProtocols
     , withIOManager
     )
-import Ouroboros.Network.Protocol.ChainSync.Client
-    ( ChainSyncClient (..), chainSyncClientPeer )
+import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
+    ( ChainSyncClientPipelined, chainSyncClientPeerPipelined )
 import Ouroboros.Network.Protocol.ChainSync.Codec
     ( codecChainSync )
 import Ouroboros.Network.Protocol.ChainSync.Type
@@ -144,42 +150,51 @@ mkClient
     :: forall m block err.
         ( block ~ ByronBlock
         , err ~ ApplyMempoolPayloadErr
-        , MonadIO m, MonadThrow m, MonadST m
+        , MonadIO m, MonadThrow m, MonadST m, MonadAsync m
         )
     => Tracer m (TraceClient block)
         -- ^ Base trace for underlying protocols
     -> EpochSlots
         -- ^ Static blockchain parameters
-    -> ChainSyncClient block (Tip block) m ()
+    -> ChainSyncClientPipelined block (Tip block) m ()
         -- ^ Actual ChainSync client logic
     -> LocalTxSubmissionClient (GenTx block) err m ()
         -- ^ Actual LocalTxSubmission client logic
     -> ConnectionId LocalAddress
         -- ^ Connection identifier attributed by the protocol
     -> Client m
-mkClient tr epochSlots chainSyncClient localTxSubmissionClient _ =
-    nodeToClientProtocols NodeToClientProtocols
-        { localChainSyncProtocol = InitiatorProtocolOnly $
-            MuxPeerRaw $ chainSyncWithBlocks trChainSync epochSlots chainSyncClient
-
-        , localTxSubmissionProtocol = InitiatorProtocolOnly $
-            MuxPeerRaw $ localTxSubmission trTxSubmission localTxSubmissionClient
-        }
+mkClient tr epochSlots localChainSyncClient localTxSubmissionClient _ =
+    OuroborosApplication
+        [ MiniProtocol
+            { miniProtocolNum    = MiniProtocolNum 5
+            , miniProtocolLimits = maximumMiniProtocolLimits
+            , miniProtocolRun    = InitiatorProtocolOnly $
+                MuxPeerRaw $ chainSyncWithBlocks trChainSync epochSlots localChainSyncClient
+            }
+        , MiniProtocol
+            { miniProtocolNum    = MiniProtocolNum 6
+            , miniProtocolLimits = maximumMiniProtocolLimits
+            , miniProtocolRun    = InitiatorProtocolOnly $
+                MuxPeerRaw $ localTxSubmission trTxSubmission localTxSubmissionClient
+            }
+        ]
   where
     trChainSync    = contramap TrChainSync tr
     trTxSubmission = nullTracer
+    maximumMiniProtocolLimits =
+        MiniProtocolLimits { maximumIngressQueue = 0xffffffff }
 
 chainSyncWithBlocks
     :: forall m block protocol.
         ( block ~ ByronBlock
         , protocol ~ ChainSync block (Tip block)
-        , MonadThrow m, MonadST m
+        , MonadThrow m, MonadST m, MonadAsync m
         )
     => Tracer m (TraceSendRecv protocol)
         -- ^ Base tracer for the mini-protocols
     -> EpochSlots
         -- ^ Blockchain parameters
-    -> ChainSyncClient block (Tip block) m ()
+    -> ChainSyncClientPipelined block (Tip block) m ()
         -- ^ The actual chain sync client
     -> Channel m ByteString
         -- ^ A 'Channel' is a abstract communication instrument which
@@ -187,7 +202,7 @@ chainSyncWithBlocks
         -- socket).
     -> m ()
 chainSyncWithBlocks tr epochSlots client channel =
-    runPeer tr codec channel (chainSyncClientPeer client)
+    runPipelinedPeer tr codec channel (chainSyncClientPeerPipelined client)
   where
     codec :: Codec protocol DeserialiseFailure m ByteString
     codec =

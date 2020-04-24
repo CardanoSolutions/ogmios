@@ -1,5 +1,5 @@
 name: _
-resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/f3cd5e629fface0a5334ddaccacea1527805fded/snapshots/cardano-1.10.1.yaml
+resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/master/snapshots/cardano-1.11.0.yaml
 packages:
 - hjsonpointer-1.3.0
 - hjsonschema-1.9.0

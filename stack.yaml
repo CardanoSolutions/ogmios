@@ -6,3 +6,10 @@ ghc-options: {"$locals": -ddump-to-file -ddump-hi}
 
 packages:
 - .
+
+extra-deps:
+- git: https://github.com/KtorZ/ouroboros-network
+  commit: a7565915078bc24fff37e4d4bc13b2ce5ae32943
+  subdirs:
+  - ouroboros-network
+  - ouroboros-consensus

@@ -7,6 +7,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -14,7 +15,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 
-{-# LANGUAGE GADTs #-}
+{-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
 
 module Ogmios.Bridge
     (
@@ -41,28 +42,38 @@ module Ogmios.Bridge
 
 import Prelude
 
-import Control.Concurrent.Chan
-    ( newChan, readChan, writeChan )
+import Control.Concurrent.Async
+    ( async, link )
+import Control.Concurrent.STM
+    ( atomically )
+import Control.Concurrent.STM.TQueue
+    ( newTQueueIO, readTQueue, tryReadTQueue, writeTQueue )
+import Control.Monad
+    ( forever, guard )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..) )
 import Data.ByteString
     ( ByteString )
 import Data.FileEmbed
     ( embedFile )
+import Data.Functor
+    ( ($>) )
 import Data.Maybe
     ( fromMaybe )
 import Data.Proxy
     ( Proxy (..) )
 import GHC.Generics
     ( Generic )
+import Network.TypedProtocol.Pipelined
+    ( Nat (..), natToInt )
 import Ouroboros.Consensus.Byron.Ledger
     ( ByronBlock, GenTx )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
-import Ouroboros.Network.Protocol.ChainSync.Client
-    ( ChainSyncClient (..)
-    , ClientStIdle (..)
-    , ClientStIntersect (..)
+import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
+    ( ChainSyncClientPipelined (..)
+    , ClientPipelinedStIdle (..)
+    , ClientPipelinedStIntersect (..)
     , ClientStNext (..)
     )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
@@ -84,11 +95,26 @@ data SimplePipe input output (m :: * -> *) = SimplePipe
     { await :: m input
         -- ^ Await for the next input. Block until an input is available.
 
+    , tryAwait :: m (Maybe input)
+        -- ^ Return 'Just input' if there's an input available, nothing
+        -- otherwise. Non blocking.
+
     , yield :: output -> m ()
         -- ^ Yield a result.
 
     , pass  :: input -> m ()
         -- ^ Pass the input onto another component
+    }
+
+data Queue a (m :: * -> *) = Queue
+    { pop :: m a
+        -- ^ Unstash a value. Block until one is available
+        --
+    , tryPop :: m (Maybe a)
+        -- ^ Unstash a value, if any.
+
+    , push :: a -> m ()
+        -- ^ Stash a value for later.
     }
 
 -- | Create a 'ChainSyncClient' and a 'LocalTxSubmissionClient' from a single
@@ -103,21 +129,37 @@ pipeClients
         , ToJSON err
         )
     => WS.Connection
-    -> IO ( ChainSyncClient block (Tip block) IO ()
+    -> IO ( ChainSyncClientPipelined block (Tip block) IO ()
           , LocalTxSubmissionClient tx err IO ()
           )
 pipeClients conn = do
-    queue <- newChan
-    let chainSyncClient = mkChainSyncClient $ SimplePipe
-            { await = WS.receiveData conn
-            , yield = WS.sendTextData conn
-            , pass  = writeChan queue
+    rcvd <- newTQueueIO
+    pipe <- newTQueueIO
+
+    let receive = WS.receiveData conn >>= atomically . writeTQueue rcvd
+    link =<< async (forever receive)
+
+    resp <- newTQueueIO
+    let queue = Queue
+            { pop = atomically $ readTQueue resp
+            , tryPop = atomically $ tryReadTQueue resp
+            , push  = atomically . writeTQueue resp
             }
+
+    let chainSyncClient = mkChainSyncClient queue $ SimplePipe
+            { await = atomically $ readTQueue rcvd
+            , tryAwait = atomically $ tryReadTQueue rcvd
+            , yield = WS.sendTextData conn
+            , pass  = atomically . writeTQueue pipe
+            }
+
     let localTxSubmissionClient = mkLocalTxSubmissionClient $ SimplePipe
-            { await = readChan queue
+            { await = atomically $ readTQueue pipe
+            , tryAwait = atomically $ tryReadTQueue pipe
             , yield = WS.sendTextData conn
             , pass  = const (defaultHandler conn)
             }
+
     pure (chainSyncClient, localTxSubmissionClient)
 
 --  _____ _           _         _____
@@ -155,38 +197,73 @@ mkChainSyncClient
         , ToJSON (Tip block)
         , Monad m
         )
-    => SimplePipe ByteString ByteString m
-    -> ChainSyncClient block (Tip block) m ()
-mkChainSyncClient SimplePipe{await,yield,pass} =
-    ChainSyncClient clientStIdle
+    => Queue (RequestNextResponse block -> Wsp.Response (RequestNextResponse block)) m
+    -> SimplePipe ByteString ByteString m
+    -> ChainSyncClientPipelined block (Tip block) m ()
+mkChainSyncClient Queue{push,pop,tryPop} SimplePipe{await,tryAwait,yield,pass} =
+    ChainSyncClientPipelined (clientStIdle Zero)
   where
     clientStIdle
-        :: m (ClientStIdle block (Tip block) m ())
-    clientStIdle = await >>= Wsp.handle
-        (\bytes -> pass bytes *> clientStIdle)
-        [ Wsp.Handler $ \FindIntersect{points} toResponse -> do
-            let clientStIntersect = ClientStIntersect
-                    { recvMsgIntersectFound = \point tip -> ChainSyncClient $ do
-                        yield $ json $ toResponse $ IntersectionFound point tip
-                        clientStIdle
-                    , recvMsgIntersectNotFound = \tip -> ChainSyncClient $ do
-                        yield $ json $ toResponse $ IntersectionNotFound tip
-                        clientStIdle
-                    }
-            pure $ SendMsgFindIntersect points clientStIntersect
+        :: forall n. Nat n
+        -> m (ClientPipelinedStIdle n block (Tip block) m ())
+    clientStIdle Zero = await >>= Wsp.handle
+        (\bytes -> pass bytes *> clientStIdle Zero)
+        [ Wsp.Handler $ \FindIntersect{points} ->
+            pure . SendMsgFindIntersect points . clientStIntersect
 
         , Wsp.Handler $ \RequestNext toResponse -> do
-            let clientStNext = ClientStNext
-                    { recvMsgRollForward = \block tip -> ChainSyncClient $ do
-                        yield $ json $ toResponse $ RollForward block tip
-                        clientStIdle
-                    , recvMsgRollBackward = \point tip -> ChainSyncClient $ do
-                        yield $ json $ toResponse $ RollBackward point tip
-                        clientStIdle
-                    }
-            let clientStAwaitReply = pure clientStNext
-            pure $ SendMsgRequestNext clientStNext clientStAwaitReply
+            let collect = CollectResponse
+                    (Just $ clientStIdle (Succ Zero))
+                    (clientStNext Zero pop)
+            push toResponse $> SendMsgRequestNextPipelined collect
         ]
+    clientStIdle n@(Succ prev) = tryAwait >>= \case
+        -- If there's no immediate incoming message, we take this opportunity to
+        -- wait and collect one response.
+        Nothing -> tryPop >>= \case
+            Nothing ->
+                clientStIdle n
+            Just toResponse ->
+                pure $ CollectResponse Nothing (clientStNext prev $ pure toResponse)
+
+        -- Yet, if we have already received a new message from the client, we
+        -- prioritize it and pipeline it right away unless there are already too
+        -- many requests in flights.
+        Just msg -> Wsp.handle
+            (\bytes -> pass bytes *> clientStIdle n)
+            [ Wsp.Handler $ \RequestNext toResponse -> do
+                let collect = CollectResponse
+                        (guard (natToInt n < 1000) $> clientStIdle (Succ n))
+                        (clientStNext n pop)
+                push toResponse $> SendMsgRequestNextPipelined collect
+            ] msg
+
+    clientStIntersect
+        :: (FindIntersectResponse block -> Wsp.Response (FindIntersectResponse block))
+        -> ClientPipelinedStIntersect block (Tip block) m ()
+    clientStIntersect toResponse = ClientPipelinedStIntersect
+        { recvMsgIntersectFound = \point tip -> do
+            yield $ json $ toResponse $ IntersectionFound point tip
+            clientStIdle Zero
+        , recvMsgIntersectNotFound = \tip -> do
+            yield $ json $ toResponse $ IntersectionNotFound tip
+            clientStIdle Zero
+        }
+
+    clientStNext
+        :: Nat n
+        -> m (RequestNextResponse block -> Wsp.Response (RequestNextResponse block))
+        -> ClientStNext n block (Tip block) m ()
+    clientStNext n pop' = ClientStNext
+        { recvMsgRollForward = \block tip -> do
+            toResponse <- pop'
+            yield $ json $ toResponse $ RollForward block tip
+            clientStIdle n
+        , recvMsgRollBackward = \point tip -> do
+            toResponse <- pop'
+            yield $ json $ toResponse $ RollBackward point tip
+            clientStIdle n
+        }
 
 --  _____      _____       _               _         _
 -- |_   _|    /  ___|     | |             (_)       (_)

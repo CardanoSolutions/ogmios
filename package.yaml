@@ -19,6 +19,12 @@ extra-source-files:
 dependencies:
 - base >= 4.7 && < 5
 
+flags:
+  production:
+    description: Compile executables for production.
+    default: False
+    manual: True
+
 library:
   source-dirs: src
   ghc-options:
@@ -28,6 +34,7 @@ library:
     - -fwarn-redundant-constraints
   dependencies:
     - aeson
+    - async
     - binary
     - bytestring
     - cardano-binary
@@ -49,8 +56,10 @@ library:
     - ouroboros-network-framework
     - process
     - safe
+    - stm
     - template-haskell
     - text
+    - typed-protocols
     - typed-protocols-examples
     - vector
     - wai
@@ -64,11 +73,16 @@ executables:
     ghc-options:
     - -Wall
     - -Wcompat
-    - -Werror
     - -fwarn-redundant-constraints
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    when:
+      condition: flag(production)
+      ghc-options:
+      - -Werror
+      - -O2
+      - -with-rtsopts=-A250m
     dependencies:
     - contra-tracer
     - directory

@@ -31,12 +31,12 @@ import Control.Tracer
     ( Tracer, traceWith )
 import Data.Text
     ( Text )
+import Ouroboros.Network.CodecCBORTerm
+    ( CodecCBORTerm )
 import Ouroboros.Network.Magic
     ( NetworkMagic (..) )
 import Ouroboros.Network.NodeToClient
     ( NodeToClientVersionData (..), nodeToClientCodecCBORTerm )
-import Ouroboros.Network.Protocol.Handshake.Version
-    ( CodecCBORTerm )
 import Safe
     ( readMay )
 import System.Environment

@@ -82,8 +82,8 @@
       const downSpeedLbl = document.querySelector("label.downSpeed");
 
       const R = 90;
-      const N_MAX = 1000;
-      const I_MAX = 100;
+      const N_MAX = 100;
+      const I_MAX = 10;
       let syncSpeed = [];
       let downSpeed = [];
 
@@ -107,22 +107,25 @@
 
       const protocol = window.location.protocol === "http:" ? "ws" : "wss";
       const hostname = window.location.host;
-      const socket = new WebSocket(protocol + "://" + window.location.host);
+      const socket = new WebSocket(protocol + "://" + hostname);
 
       let time;
       let size;
+      let rcvd;
 
       socket.onopen = function (event) {
+        rcvd = 0;
         nextBatch(1);
       }
 
       socket.onmessage = function (event) {
         const msg = JSON.parse(event.data);
-        const { i, n } = msg.reflection;
+        const { i } = msg.reflection;
 
-        size += event.data.length * 2 // 2 bytes per UTF-16 character
+        rcvd += 1;
+        size += event.data.length * 2; // 2 bytes per UTF-16 character
 
-        if (n == N_MAX) {
+        if (rcvd % N_MAX == 0) {
           const detail = { time: Date.now() - time, size, i };
           window.dispatchEvent(new CustomEvent('tick', { detail }));
           if (i < I_MAX) {
@@ -136,18 +139,20 @@
       function nextBatch(i) {
         time = Date.now();
         size = 0;
-        for (let n = 1; n <= N_MAX; n += 1) { socket.wsp("RequestNext", {}, { i, n }); }
+        for (let n = 0; n < N_MAX; n += 1) {
+          socket.send(JSON.stringify(wsp("RequestNext", {}, { i })));
+        }
       }
 
-      WebSocket.prototype.wsp = function wsp(methodname, args = {}, mirror = null) {
-        this.send(JSON.stringify({
+      function wsp(methodname, args = {}, mirror = null) {
+        return {
           type: "jsonwsp/request",
           version: "1.0",
           methodname,
           args,
           mirror
-        }));
-      };
+        };
+      }
     </script>
   </body>
 </html>
