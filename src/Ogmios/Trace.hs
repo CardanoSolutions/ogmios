@@ -21,6 +21,8 @@ import Cardano.Byron.Constants.Trace
     ( TraceLookup )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient )
+import Control.Exception
+    ( SomeException )
 import Data.ByteString
     ( ByteString )
 
@@ -50,6 +52,10 @@ data TraceOgmios where
         :: { userAgent :: ByteString }
         -> TraceOgmios
 
+    OgmiosUnknownException
+        :: { exception :: SomeException }
+        -> TraceOgmios
+
 deriving instance Show TraceOgmios
 
 instance HasPrivacyAnnotation TraceOgmios
@@ -61,3 +67,4 @@ instance HasSeverityAnnotation TraceOgmios where
         OgmiosSocketNotFound{} -> Warning
         OgmiosConnectionAccepted{} -> Info
         OgmiosConnectionEnded{} -> Info
+        OgmiosUnknownException{} -> Error

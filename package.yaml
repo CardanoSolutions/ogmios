@@ -88,6 +88,7 @@ executables:
       - -O2
       - -with-rtsopts=-A250m
     dependencies:
+    - async
     - contra-tracer
     - directory
     - http-types

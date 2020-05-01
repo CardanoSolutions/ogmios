@@ -11,8 +11,10 @@ module Main where
 
 import Prelude
 
+import Control.Concurrent.Async
+    ( ExceptionInLinkedThread (..) )
 import Control.Exception
-    ( handle, throwIO )
+    ( fromException, handle, throwIO )
 import Control.Monad
     ( unless )
 import Control.Tracer
@@ -80,7 +82,7 @@ websocketApp
 websocketApp tr (nodeVersionData, epochSlots) Options{nodeSocket} pending = do
     traceWith tr (OgmiosConnectionAccepted userAgent)
     conn <- WS.acceptRequest pending
-    WS.withPingThread conn 30 (pure ()) $ handle onConnectionClosed $ do
+    WS.withPingThread conn 30 (pure ()) $ handlers $ do
         let trClient = contramap OgmiosClient tr
         (chainSync, txSubmit, stateQuery) <- pipeClients conn
         let client = mkClient trClient epochSlots chainSync txSubmit stateQuery
@@ -91,7 +93,19 @@ websocketApp tr (nodeVersionData, epochSlots) Options{nodeSocket} pending = do
         $ WS.requestHeaders
         $ WS.pendingRequest pending
 
+    handlers
+        = handle onUnknownException
+        . handle onConnectionClosed
+        . handle onLinkedException
+
     onConnectionClosed = \case
         CloseRequest{} -> traceWith tr $ OgmiosConnectionEnded userAgent
         ConnectionClosed{} -> traceWith tr $ OgmiosConnectionEnded userAgent
         e -> throwIO e
+
+    onLinkedException = \case
+        ExceptionInLinkedThread _ e -> case fromException e of
+            Just e' -> onConnectionClosed e'
+            Nothing -> throwIO e
+
+    onUnknownException = traceWith tr . OgmiosUnknownException
