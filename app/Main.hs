@@ -82,8 +82,8 @@ websocketApp tr (nodeVersionData, epochSlots) Options{nodeSocket} pending = do
     conn <- WS.acceptRequest pending
     WS.withPingThread conn 30 (pure ()) $ handle onConnectionClosed $ do
         let trClient = contramap OgmiosClient tr
-        (chainSync, txSubmit) <- pipeClients conn
-        let client = mkClient trClient epochSlots chainSync txSubmit
+        (chainSync, txSubmit, stateQuery) <- pipeClients conn
+        let client = mkClient trClient epochSlots chainSync txSubmit stateQuery
         connectClient trClient client nodeVersionData nodeSocket
   where
     userAgent = maybe "User-Agent unknown" snd

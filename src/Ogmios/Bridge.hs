@@ -50,6 +50,8 @@ import Control.Concurrent.STM.TQueue
     ( newTQueueIO, readTQueue, tryReadTQueue, writeTQueue )
 import Control.Monad
     ( forever, guard )
+import Control.Monad.Class.MonadTimer
+    ( threadDelay )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..) )
 import Data.ByteString
@@ -67,7 +69,7 @@ import GHC.Generics
 import Network.TypedProtocol.Pipelined
     ( Nat (..), natToInt )
 import Ouroboros.Consensus.Byron.Ledger
-    ( ByronBlock, GenTx )
+    ( ByronBlock, GenTx, Query )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
@@ -76,6 +78,8 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     , ClientPipelinedStIntersect (..)
     , ClientStNext (..)
     )
+import Ouroboros.Network.Protocol.LocalStateQuery.Client
+    ( LocalStateQueryClient (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxClientStIdle (..), LocalTxSubmissionClient (..) )
 
@@ -91,32 +95,6 @@ import qualified Network.Wai.Application.Static as Wai
 import qualified Network.WebSockets as WS
 import qualified WaiAppStatic.Types as Wai
 
-data SimplePipe input output (m :: * -> *) = SimplePipe
-    { await :: m input
-        -- ^ Await for the next input. Block until an input is available.
-
-    , tryAwait :: m (Maybe input)
-        -- ^ Return 'Just input' if there's an input available, nothing
-        -- otherwise. Non blocking.
-
-    , yield :: output -> m ()
-        -- ^ Yield a result.
-
-    , pass  :: input -> m ()
-        -- ^ Pass the input onto another component
-    }
-
-data Queue a (m :: * -> *) = Queue
-    { pop :: m a
-        -- ^ Unstash a value. Block until one is available
-        --
-    , tryPop :: m (Maybe a)
-        -- ^ Unstash a value, if any.
-
-    , push :: a -> m ()
-        -- ^ Stash a value for later.
-    }
-
 -- | Create a 'ChainSyncClient' and a 'LocalTxSubmissionClient' from a single
 -- WebSocket 'Connection'.
 pipeClients
@@ -131,6 +109,7 @@ pipeClients
     => WS.Connection
     -> IO ( ChainSyncClientPipelined block (Tip block) IO ()
           , LocalTxSubmissionClient tx err IO ()
+          , LocalStateQueryClient block (Query block) IO ()
           )
 pipeClients conn = do
     rcvd <- newTQueueIO
@@ -160,7 +139,11 @@ pipeClients conn = do
             , pass  = const (defaultHandler conn)
             }
 
-    pure (chainSyncClient, localTxSubmissionClient)
+    -- TODO
+    -- Add support for the 'localStateQueryClient'
+    let localStateQueryClient = LocalStateQueryClient $ forever $ threadDelay 1e6
+
+    pure (chainSyncClient, localTxSubmissionClient, localStateQueryClient)
 
 --  _____ _           _         _____
 -- /  __ \ |         (_)       /  ___|
@@ -355,6 +338,32 @@ defaultHandler
 defaultHandler conn = WS.sendTextData conn $ json $ Wsp.clientFault
     "Invalid request: no route found for the given request. Verify the request's \
     \name and/or parameters."
+
+data SimplePipe input output (m :: * -> *) = SimplePipe
+    { await :: m input
+        -- ^ Await for the next input. Block until an input is available.
+
+    , tryAwait :: m (Maybe input)
+        -- ^ Return 'Just input' if there's an input available, nothing
+        -- otherwise. Non blocking.
+
+    , yield :: output -> m ()
+        -- ^ Yield a result.
+
+    , pass  :: input -> m ()
+        -- ^ Pass the input onto another component
+    }
+
+data Queue a (m :: * -> *) = Queue
+    { pop :: m a
+        -- ^ Unstash a value. Block until one is available
+        --
+    , tryPop :: m (Maybe a)
+        -- ^ Unstash a value, if any.
+
+    , push :: a -> m ()
+        -- ^ Stash a value for later.
+    }
 
 --
 -- ToJSON / FromJSON instances. Nothing to see here.

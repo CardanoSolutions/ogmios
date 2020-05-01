@@ -49,13 +49,12 @@ import Data.Void
     ( Void )
 import Network.Mux
     ( AppType (..) )
-import Network.Mux.Types
-    ( MiniProtocolLimits (..), MiniProtocolNum (..) )
 import Network.TypedProtocol.Codec
     ( Codec )
 import Ouroboros.Consensus.Byron.Ledger
     ( ByronBlock (..)
     , GenTx
+    , Query (..)
     , decodeByronBlock
     , decodeByronGenTx
     , decodeByronHeaderHash
@@ -66,7 +65,13 @@ import Ouroboros.Consensus.Byron.Ledger
 import Ouroboros.Consensus.Byron.Node
     ()
 import Ouroboros.Consensus.Node.Run
-    ( nodeDecodeApplyTxError, nodeEncodeApplyTxError )
+    ( nodeDecodeApplyTxError
+    , nodeDecodeQuery
+    , nodeDecodeResult
+    , nodeEncodeApplyTxError
+    , nodeEncodeQuery
+    , nodeEncodeResult
+    )
 import Ouroboros.Network.Block
     ( Tip (..)
     , decodePoint
@@ -82,17 +87,15 @@ import Ouroboros.Network.Codec
 import Ouroboros.Network.Driver.Simple
     ( TraceSendRecv, runPeer, runPipelinedPeer )
 import Ouroboros.Network.Mux
-    ( MiniProtocol (..)
-    , MuxPeer (..)
-    , OuroborosApplication (..)
-    , RunMiniProtocol (..)
-    )
+    ( MuxPeer (..), OuroborosApplication (..), RunMiniProtocol (..) )
 import Ouroboros.Network.NodeToClient
     ( LocalAddress
     , NetworkConnectTracers (..)
+    , NodeToClientProtocols (..)
     , NodeToClientVersion (..)
     , connectTo
     , localSnocket
+    , nodeToClientProtocols
     , withIOManager
     )
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
@@ -103,6 +106,12 @@ import Ouroboros.Network.Protocol.ChainSync.Type
     ( ChainSync )
 import Ouroboros.Network.Protocol.Handshake.Version
     ( DictVersion (..), simpleSingletonVersions )
+import Ouroboros.Network.Protocol.LocalStateQuery.Client
+    ( LocalStateQueryClient, localStateQueryClientPeer )
+import Ouroboros.Network.Protocol.LocalStateQuery.Codec
+    ( codecLocalStateQuery )
+import Ouroboros.Network.Protocol.LocalStateQuery.Type
+    ( LocalStateQuery )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxSubmissionClient, localTxSubmissionClientPeer )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Codec
@@ -160,31 +169,32 @@ mkClient
         -- ^ Actual ChainSync client logic
     -> LocalTxSubmissionClient (GenTx block) err m ()
         -- ^ Actual LocalTxSubmission client logic
+    -> LocalStateQueryClient block (Query block) m ()
+        -- ^ Actual LocalStateQuery client logic
     -> ConnectionId LocalAddress
         -- ^ Connection identifier attributed by the protocol
     -> Client m
-mkClient tr epochSlots localChainSyncClient localTxSubmissionClient _ =
-    OuroborosApplication
-        [ MiniProtocol
-            { miniProtocolNum    = MiniProtocolNum 5
-            , miniProtocolLimits = maximumMiniProtocolLimits
-            , miniProtocolRun    = InitiatorProtocolOnly $
-                MuxPeerRaw $ chainSyncWithBlocks trChainSync epochSlots localChainSyncClient
-            }
-        , MiniProtocol
-            { miniProtocolNum    = MiniProtocolNum 6
-            , miniProtocolLimits = maximumMiniProtocolLimits
-            , miniProtocolRun    = InitiatorProtocolOnly $
-                MuxPeerRaw $ localTxSubmission trTxSubmission localTxSubmissionClient
-            }
-        ]
+mkClient tr epochSlots chainSyncClient txSubmissionClient stateQueryClient _ =
+    nodeToClientProtocols NodeToClientProtocols
+        { localChainSyncProtocol =
+            InitiatorProtocolOnly $ MuxPeerRaw $
+                localChainSync trChainSync epochSlots chainSyncClient
+
+        , localTxSubmissionProtocol =
+            InitiatorProtocolOnly $ MuxPeerRaw $
+                localTxSubmission trTxSubmission txSubmissionClient
+
+        , localStateQueryProtocol =
+            InitiatorProtocolOnly $ MuxPeerRaw $
+                localStateQuery trStateQuery stateQueryClient
+        }
+        NodeToClientV_2
   where
     trChainSync    = contramap TrChainSync tr
     trTxSubmission = nullTracer
-    maximumMiniProtocolLimits =
-        MiniProtocolLimits { maximumIngressQueue = 0xffffffff }
+    trStateQuery   = nullTracer
 
-chainSyncWithBlocks
+localChainSync
     :: forall m block protocol.
         ( block ~ ByronBlock
         , protocol ~ ChainSync block (Tip block)
@@ -201,7 +211,7 @@ chainSyncWithBlocks
         -- transports serialized messages between peers (e.g. a unix
         -- socket).
     -> m ()
-chainSyncWithBlocks tr epochSlots client channel =
+localChainSync tr epochSlots client channel =
     runPipelinedPeer tr codec channel (chainSyncClientPeerPipelined client)
   where
     codec :: Codec protocol DeserialiseFailure m ByteString
@@ -226,7 +236,7 @@ localTxSubmission
     -> LocalTxSubmissionClient (GenTx block) err m ()
         -- ^ Actual local tx submission client
     -> Channel m ByteString
-        -- ^ A 'Channel' is a abstract communication instrument which
+        -- ^ A 'Channel' is an abstract communication instrument which
         -- transports serialized messages between peers (e.g. a unix
         -- socket).
     -> m ()
@@ -239,3 +249,31 @@ localTxSubmission tr client channel =
         decodeByronGenTx -- Cbor.Decoder s Tx
         (nodeEncodeApplyTxError (Proxy @block)) -- err -> Cbor.Encoding
         (nodeDecodeApplyTxError (Proxy @block)) -- Cbor.Decoder s err
+
+-- TODO
+localStateQuery
+    :: forall m block protocol.
+        ( block ~ ByronBlock
+        , protocol ~ LocalStateQuery block (Query block)
+        , MonadThrow m, MonadST m
+        )
+    => Tracer m (TraceSendRecv protocol)
+        -- ^ Base tracer for the mini-protocols
+    -> LocalStateQueryClient block (Query block) m ()
+        -- ^ Actual local state query client.
+    -> Channel m ByteString
+        -- ^ A 'Channel' is an abstract communication instrument which
+        -- transports serialized messages between peers (e.g. a unix
+        -- socket).
+    -> m ()
+localStateQuery tr client channel =
+    runPeer tr codec channel (localStateQueryClientPeer client)
+  where
+    codec :: Codec protocol DeserialiseFailure m ByteString
+    codec = codecLocalStateQuery
+        (encodePoint encodeByronHeaderHash)
+        (decodePoint decodeByronHeaderHash)
+        nodeEncodeQuery
+        nodeDecodeQuery
+        nodeEncodeResult
+        nodeDecodeResult
