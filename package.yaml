@@ -30,8 +30,12 @@ library:
   ghc-options:
     - -Wall
     - -Wcompat
-    - -Werror
     - -fwarn-redundant-constraints
+  when:
+    condition: flag(production)
+    ghc-options:
+    - -Werror
+    - -O2
   dependencies:
     - aeson
     - async
