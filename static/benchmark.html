@@ -3,7 +3,7 @@
   <head>
       <title>Ogmios Benchmark</title>
       <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="viewport" content="width=device-width, initial-scale=0.8">
       <link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&display=swap" rel="stylesheet">
       <style>
         body {
@@ -15,22 +15,21 @@
           padding: 0;
         }
 
-        svg, label {
+        svg {
+          height: 400px;
+          left: 50%;
+          margin: -200px 0 0 -200px;
           position: absolute;
           top: 50%;
-          left: 50%;
-        }
-
-        svg {
-          transform: rotate(-90deg);
-          margin: -200px 0 0 -200px;
           width: 400px;
-          height: 400px;
+
+          transform: rotate(-90deg);
         }
 
         label {
           font-size: 2em;
           height: 400px;
+          left: 50%;
           margin: -200px 0 0 -200px;
           position: absolute;
           text-align: center;
@@ -39,14 +38,18 @@
 
         label.progress {
           line-height: 180px;
+          top: 50%;
         }
 
         label.syncSpeed {
           line-height: 400px;
+          top: 50%;
         }
 
         label.downSpeed {
           line-height: 580px;
+          font-size: 1.5em;
+          top: 50%;
         }
 
         svg circle:first-child {
@@ -68,12 +71,8 @@
     </svg>
 
     <label class="progress">0%</label>
-
     <label class="syncSpeed"></label>
-
     <label class="downSpeed"></label>
-
-    <label class="results"></label>
 
     <script>
       const circle = document.querySelector("svg circle:last-child");
@@ -82,27 +81,29 @@
       const downSpeedLbl = document.querySelector("label.downSpeed");
 
       const R = 90;
-      const N_MAX = 100;
-      const I_MAX = 10;
-      let syncSpeed = [];
-      let downSpeed = [];
+      const N_MAX = 1000;
+      const I_MAX = 100;
 
-      function avg(xs) {
-        return xs.reduce((acc, x) => acc + x, 0) / xs.length;
-      }
+      let totalSync = 0;
+      let totalDown = 0;
+      let totalTime = 0;
 
       window.addEventListener('tick', e => {
         const { time, size, i } = e.detail;
         const f = i / I_MAX;
 
-        syncSpeed.push(1000 * N_MAX / time);
-        downSpeed.push((size / 1024) / time);
+        totalSync += N_MAX;
+        totalDown += size;
+        totalTime += time;
+
+        let syncSpeed = 1000 * totalSync / totalTime;
+        let downSpeed = 1000 * (totalDown / (1024 * 1024)) / totalTime;
 
         circle.style['stroke-dashoffset'] = (1-f)*2*Math.PI*R;
         document.title = "Ogmios Benchmark | " + (100 * f).toFixed(2) + "%";
         progressLbl.innerHTML = (100 * f).toFixed(2) + "%";
-        syncSpeedLbl.innerHTML = avg(syncSpeed).toFixed(0) + " block/s";
-        downSpeedLbl.innerHTML = avg(downSpeed).toFixed(2) + " mb/s";
+        syncSpeedLbl.innerHTML = syncSpeed.toFixed(0) + " block/s";
+        downSpeedLbl.innerHTML = downSpeed.toFixed(0) + " mbits/s";
       });
 
       const protocol = window.location.protocol === "http:" ? "ws" : "wss";
@@ -123,9 +124,9 @@
         const { i } = msg.reflection;
 
         rcvd += 1;
-        size += event.data.length * 2; // 2 bytes per UTF-16 character
+        size += event.data.length * 16; // 2 bytes / 16 bits per UTF-16 character
 
-        if (rcvd % N_MAX == 0) {
+        if ((rcvd + N_MAX / 2) % N_MAX == 0) {
           const detail = { time: Date.now() - time, size, i };
           window.dispatchEvent(new CustomEvent('tick', { detail }));
           if (i < I_MAX) {
