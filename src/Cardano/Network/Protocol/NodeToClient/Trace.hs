@@ -18,26 +18,24 @@ import Codec.CBOR.Term
     ( Term )
 import Network.Mux
     ( MuxTrace, WithMuxBearer )
-import Ouroboros.Network.Block
-    ( Tip )
 import Ouroboros.Network.Driver.Simple
     ( TraceSendRecv )
 import Ouroboros.Network.NodeToClient
     ( ConnectionId (..), Handshake, LocalAddress, NodeToClientVersion )
-import Ouroboros.Network.Protocol.ChainSync.Type
-    ( ChainSync )
+import Ouroboros.Network.Protocol.LocalTxSubmission.Type
+    ( LocalTxSubmission )
 
 type HandshakeTrace = TraceSendRecv (Handshake NodeToClientVersion Term)
 
-data TraceClient block
-    = TrChainSync (TraceSendRecv (ChainSync block (Tip block)))
+data TraceClient tx err
+    = TrTxSubmission (TraceSendRecv (LocalTxSubmission tx err))
     | TrMux (WithMuxBearer (ConnectionId LocalAddress) MuxTrace)
     | TrHandshake (WithMuxBearer (ConnectionId LocalAddress) HandshakeTrace)
     deriving (Show)
 
-instance HasPrivacyAnnotation (TraceClient block)
-instance HasSeverityAnnotation (TraceClient block) where
+instance HasPrivacyAnnotation (TraceClient tx err)
+instance HasSeverityAnnotation (TraceClient tx err) where
     getSeverityAnnotation = \case
-        TrChainSync{} -> Debug
-        TrMux{}       -> Debug
-        TrHandshake{} -> Debug
+        TrTxSubmission{} -> Info
+        TrMux{}          -> Debug
+        TrHandshake{}    -> Debug

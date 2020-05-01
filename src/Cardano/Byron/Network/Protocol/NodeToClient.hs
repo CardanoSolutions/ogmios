@@ -137,7 +137,7 @@ type Client m = OuroborosApplication
 -- Connect a client to a network, see `mkClient` to construct a network
 -- client interface.
 connectClient
-    :: Tracer IO (TraceClient block)
+    :: Tracer IO (TraceClient tx err)
     -> (ConnectionId LocalAddress -> Client IO)
     -> NodeVersionData
     -> FilePath
@@ -161,7 +161,7 @@ mkClient
         , err ~ ApplyMempoolPayloadErr
         , MonadIO m, MonadThrow m, MonadST m, MonadAsync m
         )
-    => Tracer m (TraceClient block)
+    => Tracer m (TraceClient (GenTx block) err)
         -- ^ Base trace for underlying protocols
     -> EpochSlots
         -- ^ Static blockchain parameters
@@ -190,8 +190,8 @@ mkClient tr epochSlots chainSyncClient txSubmissionClient stateQueryClient _ =
         }
         NodeToClientV_2
   where
-    trChainSync    = contramap TrChainSync tr
-    trTxSubmission = nullTracer
+    trChainSync    = nullTracer
+    trTxSubmission = contramap TrTxSubmission tr
     trStateQuery   = nullTracer
 
 localChainSync

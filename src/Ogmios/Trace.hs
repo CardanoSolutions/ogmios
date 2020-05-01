@@ -23,13 +23,11 @@ import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient )
 import Data.ByteString
     ( ByteString )
-import Ouroboros.Network.Block
-    ( StandardHash )
 
 data TraceOgmios where
     OgmiosClient
-        :: forall block. (StandardHash block, Show block)
-        => TraceClient block
+        :: forall tx err. (Show tx, Show err)
+        => TraceClient tx err
         -> TraceOgmios
 
     OgmiosLookupEnv
