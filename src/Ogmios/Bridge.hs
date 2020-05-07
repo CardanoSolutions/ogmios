@@ -21,6 +21,7 @@ module Ogmios.Bridge
     (
     -- * Clients
       pipeClients
+    , handleIOException
 
     -- * JSON-WSP Description
     , serviceDescription
@@ -48,10 +49,14 @@ import Control.Concurrent.STM
     ( atomically )
 import Control.Concurrent.STM.TQueue
     ( newTQueueIO, readTQueue, tryReadTQueue, writeTQueue )
+import Control.Exception
+    ( IOException )
 import Control.Monad
     ( forever, guard )
 import Control.Monad.Class.MonadTimer
     ( threadDelay )
+import Control.Tracer
+    ( Tracer, traceWith )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..) )
 import Data.ByteString
@@ -68,6 +73,8 @@ import GHC.Generics
     ( Generic )
 import Network.TypedProtocol.Pipelined
     ( Nat (..), natToInt )
+import Ogmios.Trace
+    ( TraceOgmios (..) )
 import Ouroboros.Consensus.Byron.Ledger
     ( ByronBlock, GenTx, Query )
 import Ouroboros.Network.Block
@@ -144,6 +151,18 @@ pipeClients conn = do
     let localStateQueryClient = LocalStateQueryClient $ forever $ threadDelay 1e6
 
     pure (chainSyncClient, localTxSubmissionClient, localStateQueryClient)
+
+-- | Provide a handler for exception arising when trying to connect to a node
+-- that is down.
+handleIOException
+    :: Tracer IO TraceOgmios
+    -> WS.Connection
+    -> IOException
+    -> IO ()
+handleIOException tr conn e = do
+    traceWith tr $ OgmiosFailedToConnect e
+    let msg = "Connection with the node lost or failed."
+    WS.sendClose conn $ json $ Wsp.serverFault msg
 
 --  _____ _           _         _____
 -- /  __ \ |         (_)       /  ___|

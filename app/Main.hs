@@ -14,7 +14,7 @@ import Prelude
 import Control.Concurrent.Async
     ( ExceptionInLinkedThread (..) )
 import Control.Exception
-    ( fromException, handle, throwIO )
+    ( catch, fromException, handle, throwIO )
 import Control.Monad
     ( unless )
 import Control.Tracer
@@ -40,7 +40,7 @@ import Cardano.Byron.Types.Json.Orphans
     ()
 
 import Ogmios.Bridge
-    ( pipeClients, serviceDescription )
+    ( handleIOException, pipeClients, serviceDescription )
 import Ogmios.Options.Applicative
     ( Options (..), parseOptions )
 import Ogmios.Trace
@@ -87,6 +87,8 @@ websocketApp tr (nodeVersionData, epochSlots) Options{nodeSocket} pending = do
         (chainSync, txSubmit, stateQuery) <- pipeClients conn
         let client = mkClient trClient epochSlots chainSync txSubmit stateQuery
         connectClient trClient client nodeVersionData nodeSocket
+            `catch` handleIOException tr conn
+        traceWith tr $ OgmiosConnectionEnded userAgent
   where
     userAgent = maybe "User-Agent unknown" snd
         $ L.find ((== hUserAgent) . fst)
