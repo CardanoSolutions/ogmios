@@ -26,7 +26,6 @@ data Options = Options
     { nodeSocket :: FilePath
     , host :: String
     , port :: Int
-    , publicUrl :: Maybe String
     , logLevel :: Severity
     }
 
@@ -58,7 +57,6 @@ parserInfo = info (helper <*> parser) $ mempty
         <$> nodeSocketOption
         <*> hostOption
         <*> portOption
-        <*> urlOption
         <*> logLevelOption
 
 -- | --node-socket=FILEPATH
@@ -85,13 +83,6 @@ portOption = option auto $ mempty
     <> help "Port to listen on."
     <> value 1337
     <> showDefault
-
--- | [--public-url=URI]
-urlOption :: Parser (Maybe String)
-urlOption = optional $ option str $ mempty
-    <> long "public-url"
-    <> metavar "URI"
-    <> help "Public URL, if any, from which Ogmios is accessible when hosted."
 
 -- | [--log-level=SEVERITY], default: Info
 logLevelOption :: Parser Severity

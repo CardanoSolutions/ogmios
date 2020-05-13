@@ -18,6 +18,11 @@ module Cardano.Byron.Network.Protocol.NodeToClient
 
     -- * Connecting
     , connectClient
+
+    -- * Boilerplate
+    , localChainSync
+    , localTxSubmission
+    , localStateQuery
     ) where
 
 import Prelude hiding

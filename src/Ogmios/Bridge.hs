@@ -23,9 +23,6 @@ module Ogmios.Bridge
       pipeClients
     , handleIOException
 
-    -- * JSON-WSP Description
-    , serviceDescription
-
     -- * Internals
     , FindIntersect (..)
     , FindIntersectResponse (..)
@@ -61,12 +58,8 @@ import Data.Aeson
     ( FromJSON (..), ToJSON (..) )
 import Data.ByteString
     ( ByteString )
-import Data.FileEmbed
-    ( embedFile )
 import Data.Functor
     ( ($>) )
-import Data.Maybe
-    ( fromMaybe )
 import Data.Proxy
     ( Proxy (..) )
 import GHC.Generics
@@ -93,14 +86,8 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Client
 import qualified Codec.Json.Wsp as Wsp
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
-import qualified Data.Binary.Builder as Builder
 import qualified Data.ByteString.Lazy as BL
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
-import qualified Network.Wai as Wai
-import qualified Network.Wai.Application.Static as Wai
 import qualified Network.WebSockets as WS
-import qualified WaiAppStatic.Types as Wai
 
 -- | Create a 'ChainSyncClient' and a 'LocalTxSubmissionClient' from a single
 -- WebSocket 'Connection'.
@@ -302,49 +289,6 @@ mkLocalTxSubmissionClient SimplePipe{await,yield,pass} =
                 yield $ json $ toResponse $ SubmitTxResponse e
                 clientStIdle
         ]
-
--- ___  ____              _ _
--- |  \/  (_)            | | |
--- | .  . |_ ___  ___ ___| | | __ _ _ __   ___  ___  _   _ ___
--- | |\/| | / __|/ __/ _ \ | |/ _` | '_ \ / _ \/ _ \| | | / __|
--- | |  | | \__ \ (_|  __/ | | (_| | | | |  __/ (_) | |_| \__ \
--- \_|  |_/_|___/\___\___|_|_|\__,_|_| |_|\___|\___/ \__,_|___/
-
--- | A simple static web-server for serving the WSP description.
-serviceDescription
-    :: Maybe String
-    -> Wai.Application
-serviceDescription publicUrl =
-    Wai.staticApp $ (Wai.embeddedSettings
-        [ ("/ogmios.wsp.json", replaceUrl (fromMaybe "N/A" publicUrl) spec)
-        , ("/benchmark", bench)
-        ])
-        { Wai.ssGetMimeType = \file -> pure $
-            case Wai.fromPiece (Wai.fileName file) of
-                x | x == "ogmios.wsp.json" ->
-                    "application/json"
-                x | x == "benchmark" ->
-                    "text/html"
-                x | x == "" ->
-                    "text/html"
-                _anythingElse ->
-                    "application/octet-stream"
-
-        , Wai.ssListing = Just $ \_pieces _folder -> do
-            pure (Builder.fromByteString index)
-        }
-  where
-    index :: ByteString
-    index = $(embedFile "static/index.html")
-
-    bench :: ByteString
-    bench = $(embedFile "static/benchmark.html")
-
-    spec :: ByteString
-    spec = $(embedFile "ogmios.wsp.json")
-
-    replaceUrl url file =
-        T.encodeUtf8 $ T.replace "{{url}}" (T.pack url) $ T.decodeUtf8 file
 
 -- | Helper function to yield a value that is serialisable to JSON.
 json :: ToJSON a => a -> ByteString

@@ -8,6 +8,7 @@ packages:
 - .
 
 extra-deps:
+- wai-routes-0.10.4
 - git: https://github.com/KtorZ/ouroboros-network
   commit: a7565915078bc24fff37e4d4bc13b2ce5ae32943
   subdirs:

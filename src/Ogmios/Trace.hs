@@ -25,6 +25,8 @@ import Control.Exception
     ( IOException, SomeException )
 import Data.ByteString
     ( ByteString )
+import Ogmios.Health.Trace
+    ( TraceHealth )
 
 data TraceOgmios where
     OgmiosClient
@@ -38,6 +40,11 @@ data TraceOgmios where
 
     OgmiosStarted
         :: { host :: String, port :: Int }
+        -> TraceOgmios
+
+    OgmiosHealth
+        :: forall s. Show s
+        => { health :: TraceHealth s }
         -> TraceOgmios
 
     OgmiosConnectionAccepted
@@ -67,6 +74,7 @@ instance HasSeverityAnnotation TraceOgmios where
     getSeverityAnnotation = \case
         OgmiosClient msg    -> getSeverityAnnotation msg
         OgmiosLookupEnv msg -> getSeverityAnnotation msg
+        OgmiosHealth msg    -> getSeverityAnnotation msg
         OgmiosStarted{}            -> Info
         OgmiosConnectionAccepted{} -> Info
         OgmiosConnectionEnded{}    -> Info

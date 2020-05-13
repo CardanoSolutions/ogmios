@@ -40,7 +40,7 @@ import Cardano.Byron.Types.Json.Orphans
     ()
 
 import Ogmios.Bridge
-    ( handleIOException, pipeClients, serviceDescription )
+    ( handleIOException, pipeClients )
 import Ogmios.Options.Applicative
     ( Options (..), parseOptions )
 import Ogmios.Trace
@@ -51,17 +51,19 @@ import qualified Data.Text as T
 import qualified Network.Wai.Handler.Warp as Warp
 import qualified Network.Wai.Handler.WebSockets as Wai
 import qualified Network.WebSockets as WS
+import qualified Ogmios.Health as Health
 
 main :: IO ()
 main = do
     opts@Options{logLevel} <- parseOptions
     withStdoutTracer "ogmios" logLevel (T.pack . show) $ runServer opts
   where
-    runServer opts@Options{host,port,publicUrl,nodeSocket} tr = do
+    runServer opts@Options{host,port,nodeSocket} tr = do
         env <- lookupVersionData (contramap OgmiosLookupEnv tr) "OGMIOS_NETWORK"
+        healthCheck <- Health.application tr env nodeSocket
         Warp.runSettings settings $ Wai.websocketsOr WS.defaultConnectionOptions
             (websocketApp tr env opts)
-            (serviceDescription publicUrl)
+            healthCheck
       where
         settings = Warp.defaultSettings
             & Warp.setHost (fromString host)

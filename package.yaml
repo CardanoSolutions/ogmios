@@ -63,11 +63,12 @@ library:
     - stm
     - template-haskell
     - text
+    - time
     - typed-protocols
     - typed-protocols-examples
     - vector
     - wai
-    - wai-app-static
+    - wai-routes
     - websockets
 
 executables:
