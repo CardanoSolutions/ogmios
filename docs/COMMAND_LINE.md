@@ -15,7 +15,7 @@ the existing CBOR-based Ouroboros mini-protocols into JSON-WSP-based protocols,
 through WebSocket channels.
 
 Usage: ogmios --node-socket FILEPATH [--host IPv4] [--port TCP/PORT]
-              [--public-url URI] [--log-level SEVERITY]
+              [--log-level SEVERITY]
   Ogmios - A JSON-WSP WebSocket adaptor for cardano-node
 
 Available options:
@@ -23,8 +23,6 @@ Available options:
   --node-socket FILEPATH   Path to the node socket.
   --host IPv4              Address to bind to. (default: "127.0.0.1")
   --port TCP/PORT          Port to listen on. (default: 1337)
-  --public-url URI         Public URL, if any, from which Ogmios is accessible
-                           when hosted.
   --log-level SEVERITY     Minimal severity required for logging.
                            --------------------
                            - Debug
@@ -44,7 +42,7 @@ Additional options (ENV variables):
 
 
 Revision:
-  git@951f73b5bcc0a6a2f81e14e77801b649d7983d9f
+  git@851eb00ad1e9eafefc02c9c8af3ef9360e6c8d26
 ```
 
 ## Options 
@@ -54,7 +52,6 @@ Revision:
 | <pre>--node-socket </pre> | Path to the cardano-node socket file. This is where the Ogmios and cardano-node gets to exchange information. This file can't be accessed remotely which means that Ogmios and cardano-node must be running on the same host machine. |
 | <pre>--host        </pre> | Optional, what host address to bind to. One would typically leave the default value here unless running inside a container. In the latter case, one would typically want to listen on all interfaces and provide `0.0.0.0`.           |
 | <pre>--port        </pre> | Optional, which port to bind to.                                                                                                                                                                                                      |
-| <pre>--public-url  </pre> | Optional, appears in the JSON-WSP description (`ogmios.wsp.json`) as the service URL. This only makes sense when Ogmios is hosted as a public service.                                                                                |
 | <pre>--log-level   </pre> | Increase or decrease logging severity.                                                                                                                                                                                                |
 
 ## Auto-Completion

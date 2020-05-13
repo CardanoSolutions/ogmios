@@ -16,7 +16,7 @@ services:
     image: ktorz/ogmios:latest
     environment:
       - OGMIOS_NETWORK=mainnet
-    command: ["--host", "0.0.0.0", "--node-socket", "/ipc/node.socket", "--public-url", "https://ogmios.dev"]
+    command: ["--host", "0.0.0.0", "--node-socket", "/ipc/node.socket"]
     volumes:
       - node-ipc:/ipc
     ports:
