@@ -10,6 +10,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -39,6 +40,8 @@ import Cardano.Byron.Network.Protocol.NodeToClient
     ( Client, connectClient, localChainSync )
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
+import Control.Concurrent
+    ( threadDelay )
 import Control.Concurrent.Async
     ( async, link )
 import Control.Concurrent.MVar
@@ -201,9 +204,11 @@ application tr (vData, epochSlots) socket = do
     monitor client = forever $ handle onUnknownException $
         connectClient nullTracer (const client) vData socket
 
-    -- TODO Retry with a delay here.
     onUnknownException :: SomeException -> IO ()
-    onUnknownException = traceWith tr . OgmiosUnknownException
+    onUnknownException e = do
+        traceWith tr $ OgmiosUnknownException e
+        let fiveSeconds = 5_000_000
+        threadDelay fiveSeconds
 
 getHomeR :: Handler Server
 getHomeR = runHandlerM $ do
