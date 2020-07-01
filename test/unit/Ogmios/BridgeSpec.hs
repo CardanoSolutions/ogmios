@@ -49,6 +49,8 @@ import Ouroboros.Consensus.Byron.Ledger
     ( ByronBlock )
 import Ouroboros.Network.Block
     ( BlockNo (..), Point (..), Tip (..), blockPoint, legacyTip )
+import Ouroboros.Network.Protocol.LocalTxSubmission.Type
+    ( SubmitResult (..) )
 import Test.Cardano.Chain.UTxO.Gen
     ( genUTxOValidationError )
 import Test.Hspec
@@ -72,7 +74,7 @@ import Test.QuickCheck.Monadic
 
 import Cardano.Byron.Types.Json.Orphans
     ()
-import Test.Consensus.Byron.Ledger
+import Test.Consensus.Byron.Generators
     ()
 
 import qualified Codec.Json.Wsp.Handler as Wsp
@@ -173,8 +175,8 @@ instance Arbitrary (RequestNextResponse ByronBlock) where
 
 instance Arbitrary (SubmitTxResponse ApplyMempoolPayloadErr) where
     arbitrary = oneof
-        [ pure (SubmitTxResponse Nothing)
-        , SubmitTxResponse . Just . MempoolTxErr <$> arbitrary
+        [ pure (SubmitTxResponse SubmitSuccess)
+        , SubmitTxResponse . SubmitFail. MempoolTxErr <$> arbitrary
         ]
 
 instance Arbitrary (Point ByronBlock) where
@@ -182,9 +184,6 @@ instance Arbitrary (Point ByronBlock) where
 
 instance Arbitrary (Tip ByronBlock) where
     arbitrary = legacyTip <$> arbitrary <*> arbitrary
-
-instance Arbitrary BlockNo where
-    arbitrary = BlockNo <$> (getPositive <$> arbitrary)
 
 instance Arbitrary UTxOValidationError where
     arbitrary = hedgehog genUTxOValidationError

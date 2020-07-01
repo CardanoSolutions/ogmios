@@ -9,6 +9,7 @@ module Cardano.Byron.Constants
     (
       NodeVersionData
     , EpochSlots
+    , SecurityParam
     , lookupVersionData
 
       -- * Mainnet
@@ -31,6 +32,8 @@ import Control.Tracer
     ( Tracer, traceWith )
 import Data.Text
     ( Text )
+import Ouroboros.Consensus.Config.SecurityParam
+    ( SecurityParam (..) )
 import Ouroboros.Network.CodecCBORTerm
     ( CodecCBORTerm )
 import Ouroboros.Network.Magic
@@ -55,29 +58,30 @@ lookupVersionData
         -- ^ A tracer for logging messages
     -> String
         -- ^ Variable name
-    -> IO (NodeVersionData, EpochSlots)
+    -> IO (NodeVersionData, EpochSlots, SecurityParam)
 lookupVersionData tr name = do
     lookupEnv name >>= \case
         Nothing -> do
             traceWith tr $ LookupDefaultNetwork mainnetNetwork
-            pure (mainnetVersionData, defaultEpochSlots)
+            pure (mainnetVersionData, defaultEpochSlots, defaultSecurityParam)
         Just "mainnet" -> do
             traceWith tr $ LookupUserDefinedNetwork mainnetNetwork
-            pure (mainnetVersionData, defaultEpochSlots)
+            pure (mainnetVersionData, defaultEpochSlots, defaultSecurityParam)
         Just "testnet" -> do
             traceWith tr $ LookupUserDefinedNetwork testnetNetwork
-            pure (testnetVersionData, defaultEpochSlots)
+            pure (testnetVersionData, defaultEpochSlots, defaultSecurityParam)
         Just "staging" -> do
             traceWith tr $ LookupUserDefinedNetwork stagingNetwork
-            pure (stagingVersionData, defaultEpochSlots)
+            pure (stagingVersionData, defaultEpochSlots, defaultSecurityParam)
         Just custom ->
             case readMay custom of
                 Just n -> do
                     let magic = NetworkMagic n
                     traceWith tr $ LookupDefaultNetwork ("custom", magic)
-                    pure (customVersionData magic, defaultEpochSlots)
+                    pure (customVersionData magic, defaultEpochSlots, defaultSecurityParam)
                 Nothing -> do
-                    traceWith tr $ LookupInvalidNetwork ["mainnet", "testnet", "staging"]
+                    let validNetworks = ["mainnet", "testnet", "staging"]
+                    traceWith tr $ LookupInvalidNetwork validNetworks
                     exitFailure
   where
     mainnetNetwork :: (String, NetworkMagic)
@@ -141,3 +145,13 @@ defaultEpochSlots
     :: EpochSlots
 defaultEpochSlots =
     EpochSlots 21600
+
+--
+-- Security Param
+--
+
+-- Hard-coded security param (a.k.a 'k')
+defaultSecurityParam
+    :: SecurityParam
+defaultSecurityParam =
+    SecurityParam 2160

@@ -11,11 +11,11 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 
 {-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Ogmios.Bridge
     (
@@ -55,7 +55,7 @@ import Control.Monad.Class.MonadTimer
 import Control.Tracer
     ( Tracer, traceWith )
 import Data.Aeson
-    ( FromJSON (..), ToJSON (..) )
+    ( FromJSON (..), ToJSON (..), (.=) )
 import Data.ByteString
     ( ByteString )
 import Data.Functor
@@ -82,6 +82,8 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxClientStIdle (..), LocalTxSubmissionClient (..) )
+import Ouroboros.Network.Protocol.LocalTxSubmission.Type
+    ( SubmitResult (..) )
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Codec.Json.Wsp.Handler as Wsp
@@ -265,9 +267,14 @@ newtype SubmitTx tx
     = SubmitTx { bytes :: tx }
     deriving (Generic, Show)
 
-newtype SubmitTxResponse err
-    = SubmitTxResponse { error :: Maybe err }
+newtype SubmitTxResponse e
+    = SubmitTxResponse { error :: SubmitResult e }
     deriving (Generic, Show)
+
+instance Show e => Show (SubmitResult e) where
+    show = \case
+        SubmitSuccess ->"SubmitSuccess"
+        SubmitFail e -> "SubmitFail " <> show e
 
 mkLocalTxSubmissionClient
     :: forall m tx err.
@@ -367,9 +374,11 @@ instance
   where
     parseJSON = Wsp.genericFromJSON Wsp.defaultOptions
 
-instance
-    ( ToJSON err
-    ) => ToJSON (Wsp.Response (SubmitTxResponse err))
-  where
+instance ToJSON e => ToJSON (Wsp.Response (SubmitTxResponse e)) where
     toJSON = Wsp.genericToJSON Wsp.defaultOptions proxy
       where proxy = Proxy @(Wsp.Request (SubmitTx _))
+
+instance ToJSON e => ToJSON (SubmitResult e) where
+    toJSON = \case
+        SubmitSuccess -> Json.String "SubmitSuccess"
+        SubmitFail e  -> Json.object [ "SubmitFail" .= e ]

@@ -262,8 +262,16 @@
             , "properties":
               { "error":
                 { "oneOf":
-                  [ { "type": "null" }
-                  , { "$ref": "#/definitions/SubmitTxError" }
+                  [ { "type": "string"
+                    , "enum": ["SubmitSuccess"]
+                    }
+                  , { "type": "object"
+                    , "additionalProperties": false
+                    , "required": ["SubmitFail"]
+                    , "properties":
+                      { "SubmitFail": { "$ref": "#/definitions/SubmitTxError" }
+                      }
+                    }
                   ]
                 }
               }

@@ -1,3 +1,0 @@
-[submodule "test/ouroboros-network"]
-	path = test/ouroboros-network
-	url = git@github.com:input-output-hk/ouroboros-network.git

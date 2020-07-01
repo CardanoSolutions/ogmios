@@ -37,7 +37,7 @@ import Prelude
 import Cardano.Byron.Constants
     ( NodeVersionData )
 import Cardano.Byron.Network.Protocol.NodeToClient
-    ( Client, connectClient, localChainSync )
+    ( Client, codecs, connectClient, localChainSync, nullProtocol )
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
 import Control.Concurrent
@@ -62,8 +62,6 @@ import Data.Time.Clock
     ( UTCTime, getCurrentTime )
 import GHC.Generics
     ( Generic )
-import Network.Mux.Types
-    ( MiniProtocolLimits (..), MiniProtocolNum (..) )
 import Network.TypedProtocol.Pipelined
     ( N (..) )
 import Ogmios.Health.Trace
@@ -72,13 +70,18 @@ import Ogmios.Trace
     ( TraceOgmios (..) )
 import Ouroboros.Consensus.Byron.Ledger
     ( ByronBlock )
+import Ouroboros.Consensus.Config.SecurityParam
+    ( SecurityParam (..) )
+import Ouroboros.Consensus.Network.NodeToClient
+    ( Codecs' (..) )
 import Ouroboros.Network.Block
     ( Tip (..), genesisPoint, getTipPoint )
 import Ouroboros.Network.Mux
-    ( MiniProtocol (..)
-    , MuxPeer (..)
-    , OuroborosApplication (..)
-    , RunMiniProtocol (..)
+    ( MuxPeer (..), RunMiniProtocol (..) )
+import Ouroboros.Network.NodeToClient
+    ( NodeToClientProtocols (..)
+    , NodeToClientVersion (..)
+    , nodeToClientProtocols
     )
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     ( ChainSyncClientPipelined (..)
@@ -175,10 +178,10 @@ mkRoute "Server" [parseRoutes|
 
 application
     :: Tracer IO TraceOgmios
-    -> (NodeVersionData, EpochSlots)
+    -> (NodeVersionData, EpochSlots, SecurityParam)
     -> FilePath
     -> IO Wai.Application
-application tr (vData, epochSlots) socket = do
+application tr (vData, epochSlots, securityParam) socket = do
     mvar <- newMVar $ Health TipGenesis Nothing
     link =<< async (monitor $ mkClient mvar)
     pure $ waiApp $ route $ Server mvar
@@ -186,23 +189,25 @@ application tr (vData, epochSlots) socket = do
     mkClient
         :: MVar (Health ByronBlock)
         -> Client IO
-    mkClient mvar = OuroborosApplication
-        [ MiniProtocol
-            { miniProtocolNum    = MiniProtocolNum 5
-            , miniProtocolLimits = MiniProtocolLimits 0xffffffff
-            , miniProtocolRun    = InitiatorProtocolOnly
+    mkClient mvar = do
+        let codec = cChainSyncCodec $ codecs epochSlots securityParam
+        nodeToClientProtocols (const $ pure $ NodeToClientProtocols
+            { localChainSyncProtocol = InitiatorProtocolOnly
                 $ MuxPeerRaw
-                $ localChainSync nullTracer epochSlots
+                $ localChainSync nullTracer codec
                 $ mkHealthCheckClient
                 $ \tip -> modifyMVar_ mvar $ \_ -> do
                     s <- Health tip . Just <$> getCurrentTime
                     s <$ traceWith tr (OgmiosHealth $ HealthTick s)
-            }
-        ]
+
+            , localTxSubmissionProtocol = nullProtocol
+            , localStateQueryProtocol = nullProtocol
+            })
+            NodeToClientV_2
 
     monitor :: Client IO -> IO ()
     monitor client = forever $ handle onUnknownException $
-        connectClient nullTracer (const client) vData socket
+        connectClient nullTracer client vData socket
 
     onUnknownException :: SomeException -> IO ()
     onUnknownException e = do

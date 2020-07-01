@@ -1,6 +1,27 @@
 name: _
-resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/master/snapshots/cardano-1.11.0.yaml
+resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/633f6141c3e7211dbb0c6ae6ad50d4976313e190/snapshots/cardano-1.14.2.yaml
 packages:
 - hjsonpointer-1.3.0
 - hjsonschema-1.9.0
 - hedgehog-quickcheck-0.1.1
+- git: https://github.com/input-output-hk/ouroboros-network
+  commit: ceafa31844e6e9883d5d5634544045eab9c5f2e9
+  subdirs:
+  - io-sim
+  - io-sim-classes
+  - network-mux
+  - ntp-client
+  - Win32-network
+  - ouroboros-consensus
+  - ouroboros-consensus-byron
+  - ouroboros-consensus-byron-test
+  - ouroboros-consensus-byronspec
+  - ouroboros-consensus-cardano
+  - ouroboros-consensus-shelley
+  - ouroboros-consensus/ouroboros-consensus-mock
+  - ouroboros-consensus/ouroboros-consensus-test-infra
+  - ouroboros-network
+  - ouroboros-network-framework
+  - ouroboros-network-testing
+  - typed-protocols
+  - typed-protocols-examples

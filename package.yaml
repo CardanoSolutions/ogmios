@@ -102,10 +102,7 @@ executables:
 tests:
   unit:
     main: Spec.hs
-    source-dirs:
-    - test/unit
-    - test/ouroboros-network/ouroboros-consensus-byron/test
-    - test/ouroboros-network/ouroboros-consensus-byron/ouroboros-consensus-byrondual/src
+    source-dirs: test/unit
     ghc-options:
     - -Wcompat
     - -fwarn-redundant-constraints
@@ -115,42 +112,16 @@ tests:
     dependencies:
     - aeson
     - aeson-pretty
+    - bytestring
+    - cardano-ledger
+    - cardano-ledger-test
     - generic-arbitrary
+    - hedgehog-quickcheck
     - hjsonschema
     - hspec
     - ogmios
+    - ouroboros-consensus-byron
+    - ouroboros-consensus-byron-test
+    - ouroboros-network
     - QuickCheck
     - text
-
-    # Needed for 'ouroboros-network/ouroboros-consensus-byron/test'
-    - binary
-    - binary-search
-    - byron-spec-chain
-    - byron-spec-ledger
-    - bytestring
-    - cardano-binary
-    - cardano-crypto-class
-    - cardano-crypto-test
-    - cardano-crypto-wrapper
-    - cardano-ledger
-    - cardano-ledger-test
-    - cardano-prelude
-    - cardano-slotting
-    - cborg
-    - containers
-    - cryptonite
-    - hedgehog
-    - hedgehog-quickcheck
-    - mtl
-    - ouroboros-consensus
-    - ouroboros-consensus-byron
-    - ouroboros-consensus-byronspec
-    - ouroboros-consensus-test-infra
-    - ouroboros-network
-    - serialise
-    - small-steps
-    - tasty
-    - tasty-hunit
-    - tasty-quickcheck
-    - time
-    - transformers
