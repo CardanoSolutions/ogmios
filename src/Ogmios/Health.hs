@@ -36,10 +36,10 @@ import Prelude
 
 import Cardano.Byron.Constants
     ( NodeVersionData )
-import Cardano.Byron.Network.Protocol.NodeToClient
-    ( Client, codecs, connectClient, localChainSync, nullProtocol )
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
+import Cardano.Network.Protocol.NodeToClient
+    ( Block, Client, codecs, connectClient, localChainSync, nullProtocol )
 import Control.Concurrent
     ( threadDelay )
 import Control.Concurrent.Async
@@ -68,8 +68,6 @@ import Ogmios.Health.Trace
     ( TraceHealth (..) )
 import Ogmios.Trace
     ( TraceOgmios (..) )
-import Ouroboros.Consensus.Byron.Ledger
-    ( ByronBlock )
 import Ouroboros.Consensus.Config.SecurityParam
     ( SecurityParam (..) )
 import Ouroboros.Consensus.Network.NodeToClient
@@ -167,7 +165,7 @@ mkHealthCheckClient notify =
 -- HTTP Server
 --
 
-newtype Server = Server (MVar (Health ByronBlock))
+newtype Server = Server (MVar (Health Block))
 
 mkRoute "Server" [parseRoutes|
 /                HomeR          GET
@@ -187,7 +185,7 @@ application tr (vData, epochSlots, securityParam) socket = do
     pure $ waiApp $ route $ Server mvar
   where
     mkClient
-        :: MVar (Health ByronBlock)
+        :: MVar (Health Block)
         -> Client IO
     mkClient mvar = do
         let codec = cChainSyncCodec $ codecs epochSlots securityParam

@@ -1,0 +1,3 @@
+[submodule "ouroboros-network"]
+	path = modules/ouroboros-network
+	url = git@github.com:KtorZ/ouroboros-network

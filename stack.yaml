@@ -9,8 +9,9 @@ packages:
 
 extra-deps:
 - wai-routes-0.10.4
-- git: https://github.com/KtorZ/ouroboros-network
-  commit: a551cdd035cb4be8e856ef905c268f01e00029a5
-  subdirs:
-  - ouroboros-network
-  - ouroboros-consensus
+
+flags:
+  # Bundle VRF crypto in libsodium and do not rely on an external fork to have it.
+  # This still requires the host system to have the 'standard' libsodium installed.
+  cardano-crypto-praos:
+    external-libsodium-vrf: false

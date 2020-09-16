@@ -7,12 +7,14 @@
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Cardano.Byron.Network.Protocol.NodeToClient
+module Cardano.Network.Protocol.NodeToClient
     (
     -- * Building
-      Client
+      Block
+    , Client
     , mkClient
 
     -- * Connecting
@@ -53,6 +55,10 @@ import Control.Tracer
     ( Tracer (..), contramap, nullTracer )
 import Data.ByteString.Lazy
     ( ByteString )
+import Data.Map.Strict
+    ( Map, (!) )
+import Data.Proxy
+    ( Proxy (..) )
 import Data.Void
     ( Void )
 import Network.Mux
@@ -65,10 +71,28 @@ import Ouroboros.Consensus.Byron.Ledger.Config
     ( CodecConfig (..) )
 import Ouroboros.Consensus.Byron.Node
     ()
+import Ouroboros.Consensus.Cardano
+    ( CardanoBlock )
+import Ouroboros.Consensus.Cardano.Block
+    ( CardanoApplyTxErr
+    , CardanoEras
+    , CardanoGenTx
+    , CodecConfig (..)
+    , GenTx (..)
+    , Query (..)
+    )
 import Ouroboros.Consensus.Config.SecurityParam
     ( SecurityParam (..) )
 import Ouroboros.Consensus.Network.NodeToClient
     ( ClientCodecs, Codecs' (..), clientCodecs )
+import Ouroboros.Consensus.Node.NetworkProtocolVersion
+    ( HasNetworkProtocolVersion (..), SupportedNetworkProtocolVersion (..) )
+import Ouroboros.Consensus.Shelley.Ledger.Config
+    ( CodecConfig (..) )
+import Ouroboros.Consensus.Shelley.Protocol
+    ( TPraosCrypto )
+import Ouroboros.Consensus.Shelley.Protocol.Crypto
+    ( TPraosStandardCrypto )
 import Ouroboros.Network.Block
     ( Tip (..) )
 import Ouroboros.Network.Channel
@@ -103,6 +127,12 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxSubmissionClient, localTxSubmissionClientPeer )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( LocalTxSubmission )
+
+import qualified Ouroboros.Consensus.Shelley.Ledger as O
+import qualified Ouroboros.Network.Block as O
+
+-- | Concrete block type.
+type Block = CardanoBlock TPraosStandardCrypto
 
 -- | Type representing a network client running two mini-protocols to sync
 -- from the chain and, submit transactions.
@@ -141,10 +171,11 @@ connectClient tr client (vData, vCodec) addr = withIOManager $ \iocp -> do
 
 -- | Construct a network client
 mkClient
-    :: forall m block err.
-        ( block ~ ByronBlock
-        , err ~ ApplyMempoolPayloadErr
+    :: forall m block err crypto.
+        ( block ~ CardanoBlock crypto
+        , err ~ CardanoApplyTxErr crypto
         , MonadIO m, MonadThrow m, MonadST m, MonadAsync m
+        , TPraosCrypto crypto
         )
     => Tracer m (TraceClient (GenTx block) err)
         -- ^ Base trace for underlying protocols
@@ -182,16 +213,12 @@ mkClient tr (epochSlots, securityParam) chainSyncClient txSubmissionClient state
     trStateQuery    = nullTracer
     codecStateQuery = cStateQueryCodec $ codecs epochSlots securityParam
 
-nullProtocol
-    :: MonadTimer m => RunMiniProtocol 'InitiatorMode ByteString m a Void
-nullProtocol = do
-    InitiatorProtocolOnly $ MuxPeerRaw $ const $ forever $ threadDelay 43200
-
 localChainSync
-    :: forall m block protocol.
-        ( block ~ ByronBlock
+    :: forall m block protocol crypto.
+        ( block ~ CardanoBlock crypto
         , protocol ~ ChainSync block (Tip block)
         , MonadThrow m, MonadAsync m
+        , TPraosCrypto crypto
         )
     => Tracer m (TraceSendRecv protocol)
         -- ^ Base tracer for the mini-protocols
@@ -208,11 +235,12 @@ localChainSync tr codec client channel =
     runPipelinedPeer tr codec channel (chainSyncClientPeerPipelined client)
 
 localTxSubmission
-    :: forall m block err protocol.
-        ( block ~ ByronBlock
-        , err ~ ApplyMempoolPayloadErr
+    :: forall m block err protocol crypto.
+        ( block ~ CardanoBlock crypto
+        , err ~ CardanoApplyTxErr crypto
         , protocol ~ LocalTxSubmission (GenTx block) err
         , MonadThrow m
+        , TPraosCrypto crypto
         )
     => Tracer m (TraceSendRecv protocol)
         -- ^ Base tracer for the mini-protocols
@@ -228,12 +256,12 @@ localTxSubmission
 localTxSubmission tr codec client channel =
     runPeer tr codec channel (localTxSubmissionClientPeer client)
 
--- TODO
 localStateQuery
-    :: forall m block protocol.
-        ( block ~ ByronBlock
+    :: forall m block protocol crypto.
+        ( block ~ CardanoBlock crypto
         , protocol ~ LocalStateQuery block (Query block)
         , MonadThrow m
+        , TPraosCrypto crypto
         )
     => Tracer m (TraceSendRecv protocol)
         -- ^ Base tracer for the mini-protocols
@@ -249,13 +277,29 @@ localStateQuery
 localStateQuery tr codec client channel =
     runPeer tr codec channel (localStateQueryClientPeer client)
 
--- | Client codecs for Byron.
+-- | A protocol that does nothing. Useful as a placeholder for protocols of an
+-- Ouroboros application.
+nullProtocol
+    :: forall m a. (MonadTimer m)
+    => RunMiniProtocol 'InitiatorMode ByteString m a Void
+nullProtocol = do
+    InitiatorProtocolOnly $ MuxPeerRaw $ const $ forever $ threadDelay 43200
+
+-- | Client codecs for Cardano
 codecs
-    :: MonadST m
+    :: forall crypto m. (TPraosCrypto crypto, MonadST m)
     => EpochSlots
     -> SecurityParam
-    -> ClientCodecs ByronBlock m
+    -> ClientCodecs (CardanoBlock crypto) m
 codecs epochSlots securityParam =
-    clientCodecs config ByronNodeToClientVersion2
+    clientCodecs (CardanoCodecConfig byron shelley) version
   where
-    config = ByronCodecConfig epochSlots securityParam
+    byron = ByronCodecConfig epochSlots securityParam
+    shelley = ShelleyCodecConfig
+    version = allVersions ! NodeToClientV_3
+
+allVersions
+    :: forall crypto. (TPraosCrypto crypto)
+    => Map NodeToClientVersion (BlockNodeToClientVersion (CardanoBlock crypto))
+allVersions =
+    supportedNodeToClientVersions (Proxy @(CardanoBlock crypto))

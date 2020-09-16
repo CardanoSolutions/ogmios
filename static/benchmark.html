@@ -107,7 +107,7 @@
       });
 
       const protocol = window.location.protocol === "http:" ? "ws" : "wss";
-      const hostname = window.location.host;
+      const hostname = "localhost:1337";// window.location.host;
       const socket = new WebSocket(protocol + "://" + hostname);
 
       let time;
@@ -136,6 +136,15 @@
           }
         }
       }
+
+      socket.onerror = function (event) {
+        console.log(event)
+      }
+
+      socket.onclose = function (event) {
+        console.log(JSON.parse(event.reason));
+      }
+
 
       function nextBatch(i) {
         time = Date.now();
