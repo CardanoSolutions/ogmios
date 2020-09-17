@@ -106,7 +106,7 @@ import qualified Data.Aeson as Json
 import qualified Data.Text.Encoding as T
 import qualified Network.Wai as Wai
 
-import Cardano.Byron.Types.Json.Orphans
+import Cardano.Types.Json.Orphans
     ()
 
 data Health block = Health

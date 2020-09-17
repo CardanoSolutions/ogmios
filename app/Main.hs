@@ -6,6 +6,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Main where
 
@@ -34,16 +35,17 @@ import Cardano.BM.Trace.Extra
     ( withStdoutTracer )
 import Cardano.Byron.Constants
     ( EpochSlots, NodeVersionData, SecurityParam, lookupVersionData )
-import Cardano.Byron.Network.Protocol.NodeToClient
-    ( connectClient, mkClient )
-import Cardano.Byron.Types.Json.Orphans
-    ()
+import Cardano.Network.Protocol.NodeToClient
+    ( Block, connectClient, mkClient )
 import Ogmios.Bridge
     ( handleIOException, pipeClients )
 import Ogmios.Options.Applicative
     ( Options (..), parseOptions )
 import Ogmios.Trace
     ( TraceOgmios (..) )
+
+import Cardano.Types.Json.Orphans
+    ()
 
 import qualified Data.List as L
 import qualified Data.Text as T
@@ -86,7 +88,8 @@ websocketApp tr (versionData, epochSlots, securityParam) Options{nodeSocket} pen
     WS.withPingThread conn 30 (pure ()) $ handlers $ do
         let trClient = contramap OgmiosClient tr
         (chainSync, txSubmit, stateQuery) <- pipeClients conn
-        let client = mkClient trClient (epochSlots, securityParam) chainSync txSubmit stateQuery
+        let client = mkClient @_ @Block trClient
+                (epochSlots, securityParam) chainSync txSubmit stateQuery
         connectClient trClient client versionData nodeSocket
             `catch` handleIOException tr conn
         traceWith tr $ OgmiosConnectionEnded userAgent

@@ -39,6 +39,8 @@ library:
   dependencies:
     - aeson
     - async
+    - bech32
+    - bech32-th
     - binary
     - bytestring
     - cardano-binary
