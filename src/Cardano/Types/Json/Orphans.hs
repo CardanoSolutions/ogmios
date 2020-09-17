@@ -84,7 +84,7 @@ import Cardano.Crypto.Signing
 import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
-    ( SlotNo (..), WithOrigin (..) )
+    ( EpochNo (..), SlotNo (..), WithOrigin (..) )
 import Codec.Binary.Bech32
     ( HumanReadablePart )
 import Codec.Binary.Bech32.TH
@@ -139,6 +139,8 @@ import Shelley.Spec.Ledger.API
     ( ApplyTxError (..) )
 import Shelley.Spec.Ledger.Crypto
     ( Crypto )
+import Shelley.Spec.Ledger.STS.Ppup
+    ( VotingPeriod (..) )
 
 import qualified Cardano.Chain.Delegation as Dlg
 import qualified Cardano.Chain.Update as Upd
@@ -170,10 +172,13 @@ import qualified Shelley.Spec.Ledger.MetaData as SL
 import qualified Shelley.Spec.Ledger.OCert as SL
 import qualified Shelley.Spec.Ledger.PParams as SL
 import qualified Shelley.Spec.Ledger.Scripts as SL
+import qualified Shelley.Spec.Ledger.STS.Deleg as Deleg
 import qualified Shelley.Spec.Ledger.STS.Delegs as Delegs
 import qualified Shelley.Spec.Ledger.STS.Delpl as Delpl
 import qualified Shelley.Spec.Ledger.STS.Ledger as Ledger
 import qualified Shelley.Spec.Ledger.STS.Ledgers as Ledgers
+import qualified Shelley.Spec.Ledger.STS.Pool as Pool
+import qualified Shelley.Spec.Ledger.STS.Ppup as Ppup
 import qualified Shelley.Spec.Ledger.STS.Utxo as Utxo
 import qualified Shelley.Spec.Ledger.STS.Utxow as Utxow
 import qualified Shelley.Spec.Ledger.Tx as SL
@@ -422,7 +427,7 @@ instance CC.KESAlgorithm alg => ToAltJSON (CC.VerKeyKES alg) where
     toAltJSON = toAltJSON . CC.rawSerialiseVerKeyKES
 
 instance CC.KESAlgorithm alg => ToAltJSON (CC.SignedKES alg a) where
-    toAltJSON (CC.SignedKES raw) = toAltJSON . CC.rawSerialiseSigKES $ raw
+    toAltJSON (CC.SignedKES raw) = toAltJSON . base64 . CC.rawSerialiseSigKES $ raw
 
 instance ToAltJSON (CC.OutputVRF alg) where
     toAltJSON = toAltJSON . CC.getOutputVRFBytes
@@ -454,6 +459,9 @@ instance Crypto crypto => ToAltJSON (SL.ScriptHash crypto) where
 instance Crypto crypto => ToAltJSON (SL.WitHashes crypto) where
     toAltJSON (SL.WitHashes hash) = toAltJSON hash
 
+instance ToAltJSON EpochNo where
+    toAltJSON (EpochNo ep) = toAltJSON ep
+
 -- -- * Product & Sum types
 --
 instance ToAltJSON NetworkMagic where
@@ -462,6 +470,13 @@ instance ToAltJSON NetworkMagic where
             Json.String "mainnet"
         NetworkTestnet pm ->
             Json.object [ "testnet" .= pm ]
+
+instance ToAltJSON VotingPeriod where
+    toAltJSON = \case
+        VoteForThisEpoch ->
+            Json.String "voteForThisPeriod"
+        VoteForNextEpoch ->
+            Json.String "voteForNextEpoch"
 
 instance ToAltJSON (ABlockOrBoundary ByteString) where
     toAltJSON = \case
@@ -735,6 +750,11 @@ instance ToAltJSON SL.Network where
         SL.Mainnet -> Json.String "mainnet"
         SL.Testnet -> Json.String "testnet"
 
+instance ToAltJSON SL.MIRPot where
+    toAltJSON = \case
+        SL.ReservesMIR -> "reserves"
+        SL.TreasuryMIR -> "treasury"
+
 instance Crypto crypto => ToAltJSON (ApplyTxError crypto) where
     toAltJSON (ApplyTxError xs) = toJSON (ledgerFailureToJSON <$> xs)
       where
@@ -839,8 +859,7 @@ instance Crypto crypto => ToAltJSON (ApplyTxError crypto) where
                 Json.object
                     [ "addressAttributesTooLarge" .= toAltJSON outs
                     ]
-            Utxo.UpdateFailure e ->
-                updateFailureToJSON e
+            Utxo.UpdateFailure e -> updateFailureToJSON e
 
         delegsFailureToJSON = \case
             Delegs.DelegateeNotRegisteredDELEG h ->
@@ -858,10 +877,105 @@ instance Crypto crypto => ToAltJSON (ApplyTxError crypto) where
             Delpl.PoolFailure e -> poolFailureToJSON e
             Delpl.DelegFailure e -> delegFailureToJSON e
 
-        -- FIXME
-        poolFailureToJSON = undefined
-        delegFailureToJSON = undefined
-        updateFailureToJSON = undefined
+        poolFailureToJSON = \case
+            Pool.StakePoolNotRegisteredOnKeyPOOL keyHash ->
+                Json.object
+                    [ "stakePoolNotRegistered" .= toAltJSON keyHash
+                    ]
+            Pool.StakePoolRetirementWrongEpochPOOL current retiring limit ->
+                Json.object
+                    [ "wrongRetirementEpoch" .= Json.object
+                        [ "currentEpoch" .= toAltJSON current
+                        , "requestedEpoch" .= toAltJSON retiring
+                        , "firstUnreachableEpoch" .= toAltJSON limit
+                        ]
+                    ]
+            Pool.WrongCertificateTypePOOL cert ->
+                Json.object
+                    [ "wrongPoolCertificate" .= toAltJSON cert
+                    ]
+            Pool.StakePoolCostTooLowPOOL _cost minimumCost ->
+                Json.object
+                    [ "poolCostTooLow" .= Json.object
+                        [ "minimumCost" .= minimumCost
+                        ]
+                    ]
+
+        delegFailureToJSON = \case
+            Deleg.StakeKeyAlreadyRegisteredDELEG credential ->
+                Json.object
+                    [ "stakeKeyAlreadyRegistered" .= toAltJSON credential
+                    ]
+            Deleg.StakeKeyInRewardsDELEG credential ->
+                Json.object
+                    [ "stakeKeyAlreadyRegistered" .= toAltJSON credential
+                    ]
+            Deleg.StakeKeyNotRegisteredDELEG credential ->
+                Json.object
+                    [ "stakeKeyNotRegistered" .= toAltJSON credential
+                    ]
+            Deleg.StakeDelegationImpossibleDELEG credential ->
+                Json.object
+                    [ "stakeKeyNotRegistered" .= toAltJSON credential
+                    ]
+            Deleg.StakeKeyNonZeroAccountBalanceDELEG Nothing ->
+                Json.String "nonExistingRewardAccount"
+            Deleg.StakeKeyNonZeroAccountBalanceDELEG (Just balance) ->
+                Json.object
+                    [ "nonZeroRewardAccountBalance" .= Json.object
+                        [ "balance" .= toAltJSON  balance
+                        ]
+                    ]
+            Deleg.WrongCertificateTypeDELEG ->
+                Json.String "wrongCertificateType"
+            Deleg.GenesisKeyNotInpMappingDELEG keyHash ->
+                Json.object
+                    [ "unknownGenesisKey" .= keyHash
+                    ]
+            Deleg.DuplicateGenesisDelegateDELEG keyHash ->
+                Json.object
+                    [ "alreadyDelegating" .= keyHash
+                    ]
+            Deleg.InsufficientForInstantaneousRewardsDELEG pot requested size ->
+                Json.object
+                    [ "insufficientFundsForMIR" .= Json.object
+                        [ "rewardSource" .= toAltJSON pot
+                        , "sourceSize" .= toAltJSON size
+                        , "requestedAmount" .= toAltJSON requested
+                        ]
+                    ]
+            Deleg.MIRCertificateTooLateinEpochDELEG currentSlot lastSlot ->
+                Json.object
+                    [ "tooLateForMIR" .= Json.object
+                        [ "currentSlot" .= toAltJSON currentSlot
+                        , "lastAllowedSlot" .= toAltJSON lastSlot
+                        ]
+                    ]
+            Deleg.DuplicateGenesisVRFDELEG vrfHash ->
+                Json.object
+                    [ "duplicateGenesisVRF" .= toAltJSON vrfHash
+                    ]
+
+        updateFailureToJSON = \case
+            Ppup.NonGenesisUpdatePPUP voting shouldBeVoting ->
+                Json.object
+                    [ "nonGenesisVoters" .= Json.object
+                        [ "currentlyVoting" .= toAltJSON voting
+                        , "shouldBeVoting" .= toAltJSON shouldBeVoting
+                        ]
+                    ]
+            Ppup.PPUpdateWrongEpoch currentEpoch updateEpoch votingPeriod ->
+                Json.object
+                    [ "updateWrongEpoch" .= Json.object
+                        [ "currentEpoch" .= toAltJSON currentEpoch
+                        , "requestedEpoch" .= toAltJSON updateEpoch
+                        , "votingPeriod" .= toAltJSON votingPeriod
+                        ]
+                    ]
+            Ppup.PVCannotFollowPPUP version ->
+                Json.object
+                    [ "protocolVersionCannotFollow" .= toAltJSON version
+                    ]
 
 instance ToAltJSON ApplyMempoolPayloadErr where
     toAltJSON = \case
@@ -952,7 +1066,15 @@ instance ToAltJSON UTxOError where
             Json.object [ "missingInput" .= toAltJSON txin ]
 
 instance ToAltJSON EraMismatch where
-    toAltJSON = error "TODO"
+    toAltJSON x = Json.object
+        [ "currentEra" .= toAltJSON (ledgerEraName x)
+        , "requestEra" .= toAltJSON (otherEraName x)
+        ]
+
+instance Crypto crypto => ToAltJSON (SL.Credential any crypto) where
+    toAltJSON = \case
+        SL.ScriptHashObj hash -> toAltJSON hash
+        SL.KeyHashObj hash -> toAltJSON hash
 
 --
 -- Internal / Helpers
@@ -960,6 +1082,9 @@ instance ToAltJSON EraMismatch where
 
 base16 :: ByteArrayAccess bin => bin -> Text
 base16 = T.decodeUtf8 . convertToBase Base16
+
+base64 :: ByteArrayAccess bin => bin -> Text
+base64 = T.decodeUtf8 . convertToBase Base64
 
 fromBase64 :: ByteString -> Json.Parser ByteString
 fromBase64 = either (fail . show) pure . convertFromBase Base64
