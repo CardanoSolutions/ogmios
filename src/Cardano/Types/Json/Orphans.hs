@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
@@ -105,10 +106,14 @@ import Data.ByteString.Short
     ( fromShort, toShort )
 import Data.Foldable
     ( toList )
+import Data.IP
+    ( IPv4, IPv6 )
 import Data.List.NonEmpty
     ( NonEmpty )
 import Data.Map.Strict
     ( Map )
+import Data.Sequence.Strict
+    ( StrictSeq )
 import Data.Set
     ( Set )
 import Data.Text
@@ -305,6 +310,12 @@ instance ToAltJSON Word64 where
 instance ToAltJSON Integer where
     toAltJSON = toJSON
 
+instance ToAltJSON IPv4 where
+    toAltJSON = toJSON
+
+instance ToAltJSON IPv6 where
+    toAltJSON = toJSON
+
 instance ToAltJSON a => ToAltJSON [a] where
     toAltJSON = toJSON . fmap toAltJSON
 
@@ -317,10 +328,16 @@ instance ToAltJSON a => ToAltJSON (Vector a) where
 instance ToAltJSON a => ToAltJSON (Set a) where
     toAltJSON = toAltJSON . Set.toList
 
+instance ToAltJSON a => ToAltJSON (StrictSeq a) where
+    toAltJSON = toAltJSON . toList
+
 instance (ToJSONKey k, ToAltJSON a) => ToAltJSON (Map k a) where
     toAltJSON = toJSON . fmap toAltJSON
 
 instance ToAltJSON a => ToAltJSON (Maybe a) where
+    toAltJSON = toJSON . fmap toAltJSON
+
+instance ToAltJSON a => ToAltJSON (SL.StrictMaybe a) where
     toAltJSON = toJSON . fmap toAltJSON
 
 -- * Instances which piggy-back on 'ToJSON'
@@ -368,6 +385,18 @@ instance ToAltJSON VerificationKey where
     toAltJSON = toJSON
 
 -- * Unary types wrapping some types above
+
+instance ToAltJSON SL.DnsName where
+    toAltJSON = toAltJSON . SL.dnsToText
+
+instance ToAltJSON SL.Port where
+    toAltJSON = toAltJSON . SL.portToWord16
+
+instance ToAltJSON SL.Url where
+    toAltJSON = toAltJSON . SL.urlToText
+
+instance ToAltJSON SL.UnitInterval where
+    toAltJSON = Json.Number . fromRational . SL.unitIntervalToRational
 
 instance ToAltJSON Address where
     toAltJSON = toAltJSON . T.decodeUtf8 . addrToBase58
@@ -450,6 +479,11 @@ instance ToAltJSON SL.Coin where
 instance Crypto crypto => ToAltJSON (SL.KeyHash any crypto) where
     toAltJSON (SL.KeyHash hash) = toAltJSON hash
 
+instance {-# OVERLAPS #-} Crypto crypto => ToAltJSON (SL.KeyHash 'SL.StakePool crypto) where
+    toAltJSON (SL.KeyHash (CC.UnsafeHash h)) = toAltJSON . bech32 hrp . fromShort $ h
+      where
+        hrp = [humanReadablePart|pool|]
+
 instance Crypto crypto => ToAltJSON (SL.MetaDataHash crypto) where
     toAltJSON (SL.MetaDataHash hash) = toAltJSON hash
 
@@ -461,6 +495,9 @@ instance Crypto crypto => ToAltJSON (SL.WitHashes crypto) where
 
 instance ToAltJSON EpochNo where
     toAltJSON (EpochNo ep) = toAltJSON ep
+
+instance Crypto crypto => ToAltJSON (SL.Wdrl crypto) where
+    toAltJSON = toAltJSON . SL.unWdrl
 
 -- -- * Product & Sum types
 --
@@ -710,10 +747,106 @@ instance Crypto crypto => ToAltJSON (ShelleyBlock crypto) where
 instance Crypto crypto => ToAltJSON (SL.Tx crypto) where
     toAltJSON x = Json.object
         [ "id" .= toAltJSON (SL.txid (SL._body x))
-        -- , "body" .= undefined
+        , "body" .= toAltJSON (SL._body x)
         -- , "witness" .= undefined
         -- , "metadata" .= undefined
+        --  _mdHash' in txBody
         ]
+
+instance Crypto crypto => ToAltJSON (SL.TxBody crypto) where
+    toAltJSON x = Json.object
+        [ "inputs" .= toAltJSON (SL._inputs x)
+        , "outputs" .= toAltJSON (SL._outputs x)
+        , "certificates" .= toAltJSON (SL._certs x)
+        , "withdrawals" .= toAltJSON (SL._wdrls x)
+        , "fee" .= toAltJSON (SL._txfee x)
+        , "timeToLive" .= toAltJSON (SL._ttl x)
+        , "update" .= toAltJSON (SL._txUpdate x)
+        ]
+
+instance Crypto crypto => ToAltJSON (SL.DCert crypto) where
+    toAltJSON = \case
+        SL.DCertDeleg (SL.RegKey credential) ->
+            Json.object
+                [ "stakeKeyRegistration" .= toAltJSON credential
+                ]
+        SL.DCertDeleg (SL.DeRegKey credential) ->
+            Json.object
+                [ "stakeKeyDeregistration" .= toAltJSON credential
+                ]
+        SL.DCertDeleg (SL.Delegate delegation) ->
+            Json.object
+                [ "stakeDelegation" .= toAltJSON delegation
+                ]
+        SL.DCertPool (SL.RegPool params)  ->
+            Json.object
+                [ "poolRegistration" .= toAltJSON params
+                ]
+        SL.DCertPool (SL.RetirePool keyHash epochNo) ->
+            Json.object
+                [ "poolRetirement" .= Json.object
+                    [ "poolId" .= toAltJSON keyHash
+                    , "retirementEpoch" .= toAltJSON epochNo
+                    ]
+                ]
+        SL.DCertGenesis (SL.GenesisDelegCert key delegate vrf)  ->
+            Json.object
+                [ "genesisDelegation" .= Json.object
+                    [ "verificationKeyHash" .= toAltJSON key
+                    , "delegateKeyHash" .= toAltJSON delegate
+                    , "vrfVerificationKeyHash" .= toAltJSON vrf
+                    ]
+                ]
+        SL.DCertMir (SL.MIRCert pot rewards) ->
+            Json.object
+                [ "moveInstantaneousRewards" .= Json.object
+                    [ "pot" .= toAltJSON pot
+                    , "rewards" .= toAltJSON rewards
+                    ]
+                ]
+
+instance Crypto crypto => ToAltJSON (SL.Delegation crypto) where
+    toAltJSON x = Json.object
+        [ "delegator" .= toAltJSON (SL._delegator x)
+        , "delegatee" .= toAltJSON (SL._delegatee x)
+        ]
+
+instance Crypto crypto => ToAltJSON (SL.PoolParams crypto) where
+    toAltJSON x = Json.object
+        [ "id" .= toAltJSON (SL._poolPubKey x)
+        , "vrf" .= toAltJSON (SL._poolVrf x)
+        , "pledge" .= toAltJSON (SL._poolPledge x)
+        , "cost" .= toAltJSON (SL._poolCost x)
+        , "margin" .= toAltJSON (SL._poolMargin x)
+        , "rewardAccount" .= toAltJSON (SL._poolRAcnt x)
+        , "owners" .= toAltJSON (SL._poolOwners x)
+        , "relays" .= toAltJSON (SL._poolRelays x)
+        , "metadata" .= toAltJSON (SL._poolMD x)
+        ]
+
+instance ToAltJSON SL.PoolMetaData where
+    toAltJSON x = Json.object
+        [ "url" .= toAltJSON (SL._poolMDUrl x)
+        , "hash" .= toAltJSON (SL._poolMDHash x)
+        ]
+
+instance ToAltJSON SL.StakePoolRelay where
+    toAltJSON = \case
+        SL.SingleHostAddr port ipv4 ipv6 ->
+            Json.object
+                [ "port" .= toAltJSON port
+                , "ipv4" .= toAltJSON ipv4
+                , "ipv6" .= toAltJSON ipv6
+                ]
+        SL.SingleHostName port dns ->
+            Json.object
+                [ "port" .= toAltJSON port
+                , "hostname" .= toAltJSON dns
+                ]
+        SL.MultiHostName dns ->
+            Json.object
+                [ "hostname" .= toAltJSON dns
+                ]
 
 instance Crypto crypto => ToAltJSON (SL.TxOut crypto) where
     toAltJSON (SL.TxOut addr coin) = Json.object

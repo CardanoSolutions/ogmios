@@ -2,12 +2,13 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Ogmios.Options.Applicative
-    ( Options (..)
-    , parseOptions
+    ( run
+    , Options (..)
     ) where
 
 import Prelude
@@ -15,12 +16,24 @@ import Prelude
 import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Data.Git.Revision.TH
-    ( gitRevParseHEAD )
+    ( gitRemoteGetURL, gitRevParseHEAD )
+import Data.Version
+    ( showVersion )
 import Options.Applicative.Help.Pretty
-    ( hardline, indent, string, vsep )
+    ( indent, string, vsep )
+import Paths_ogmios
+    ( version )
 
-import Options.Applicative
+import Options.Applicative hiding
+    ( action )
 
+import qualified Data.ByteString.Char8 as B8
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
+
+data Command
+    = Start Options
+    | Version
 
 data Options = Options
     { nodeSocket :: FilePath
@@ -29,13 +42,24 @@ data Options = Options
     , logLevel :: Severity
     }
 
-parseOptions :: IO Options
-parseOptions =
-    customExecParser preferences parserInfo
+run :: (Options -> IO ()) -> IO ()
+run action = do
+    parseOptions >>= \case
+        Version -> do
+            B8.putStrLn $ T.encodeUtf8 $ T.pack $ unlines
+                [ $(gitRemoteGetURL) <> "@" <> $(gitRevParseHEAD)
+                , showVersion version
+                ]
+        Start opts -> do
+            action opts
   where
-    preferences = prefs showHelpOnEmpty
+    parseOptions :: IO Command
+    parseOptions =
+        customExecParser preferences parserInfo
+      where
+        preferences = prefs showHelpOnEmpty
 
-parserInfo :: ParserInfo Options
+parserInfo :: ParserInfo Command
 parserInfo = info (helper <*> parser) $ mempty
     <> progDesc "Ogmios - A JSON-WSP WebSocket adaptor for cardano-node"
     <> header (unwords
@@ -44,20 +68,27 @@ parserInfo = info (helper <*> parser) $ mempty
         , "into JSON-WSP-based protocols, through WebSocket channels."
         ])
     <> footerDoc (Just $ vsep
-        [ string "Additional options (ENV variables):"
-        , indent 2 $ string "OGMIOS_NETWORK           Configure target network. (default: \"mainnet\")."
-        , indent 2 $ string "                         Can be either \"mainnet\", \"testnet\", \"staging\""
-        , indent 2 $ string "                         or a custom magic."
-        , hardline
-        , string "Revision:"
-        , indent 2 $ string $ "git@" <> $(gitRevParseHEAD)
+        [ string "Available ENV variables:"
+        , indent 2 $ string "OGMIOS_NETWORK           Configure the target network."
+        , indent 27 $ string separator
+        , indent 27 $ string "- mainnet"
+        , indent 27 $ string "- testnet"
+        , indent 27 $ string "- staging"
+        , indent 27 $ string "- <custom:INT>"
+        , indent 27 $ string $ separator <> " (default: mainnet)"
         ])
   where
-    parser = Options
-        <$> nodeSocketOption
-        <*> hostOption
-        <*> portOption
-        <*> logLevelOption
+    parser =
+        versionOption
+        <|>
+        (Start <$>
+            (Options
+                <$> nodeSocketOption
+                <*> hostOption
+                <*> portOption
+                <*> logLevelOption
+            )
+        )
 
 -- | --node-socket=FILEPATH
 nodeSocketOption :: Parser FilePath
@@ -95,7 +126,26 @@ logLevelOption = option auto $ mempty
   where
     severities = mconcat
         [ [ "Minimal severity required for logging." ]
-        , [ replicate 20 '-' ]
+        , [ separator ]
         , ("- " <>) . show @Severity <$> [minBound .. maxBound]
-        , [ replicate 20 '-' ]
+        , [ separator ]
         ]
+
+-- | [--version|-v] | version
+versionOption :: Parser Command
+versionOption =
+    flag' Version (mconcat
+        [ long "version"
+        , short 'v'
+        , help helpText
+        ])
+  <|>
+    subparser (mconcat
+        [ hidden
+        , command "version" $ info (pure Version) (progDesc helpText)
+        ])
+  where
+    helpText = "Show the software current version and build revision."
+
+separator :: String
+separator = replicate 20 '-'

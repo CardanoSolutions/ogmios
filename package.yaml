@@ -48,6 +48,7 @@ library:
     - cardano-crypto-praos
     - cardano-crypto-wrapper
     - cardano-ledger
+    - cardano-prelude
     - cardano-slotting
     - cborg
     - containers
@@ -55,6 +56,7 @@ library:
     - file-embed
     - io-sim-classes
     - iohk-monitoring
+    - iproute
     - memory
     - network-mux
     - optparse-applicative

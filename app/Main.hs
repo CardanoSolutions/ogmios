@@ -40,7 +40,7 @@ import Cardano.Network.Protocol.NodeToClient
 import Ogmios.Bridge
     ( handleIOException, pipeClients )
 import Ogmios.Options.Applicative
-    ( Options (..), parseOptions )
+    ( Options (..), run )
 import Ogmios.Trace
     ( TraceOgmios (..) )
 
@@ -56,8 +56,8 @@ import qualified Ogmios.Health as Health
 
 main :: IO ()
 main = do
-    opts@Options{logLevel} <- parseOptions
-    withStdoutTracer "ogmios" logLevel (T.pack . show) $ runServer opts
+    run $ \opts@Options{logLevel} -> do
+        withStdoutTracer "ogmios" logLevel (T.pack . show) $ runServer opts
   where
     runServer opts@Options{host,port,nodeSocket} tr = do
         env <- lookupVersionData (contramap OgmiosLookupEnv tr) "OGMIOS_NETWORK"
