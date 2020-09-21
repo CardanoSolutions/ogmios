@@ -16,7 +16,7 @@ module Cardano.Types.Json.Orphans () where
 import Prelude
 
 import Cardano.Binary
-    ( Annotated (..), FromCBOR (..) )
+    ( Annotated (..), FromCBOR (..), serialize )
 import Cardano.Chain.Block
     ( ABlock (..)
     , ABlockOrBoundary (..)
@@ -112,6 +112,8 @@ import Data.List.NonEmpty
     ( NonEmpty )
 import Data.Map.Strict
     ( Map )
+import Data.Ratio
+    ( Rational )
 import Data.Sequence.Strict
     ( StrictSeq )
 import Data.Set
@@ -162,9 +164,11 @@ import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
+import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Ouroboros.Network.Point as Point
 import qualified Shelley.Spec.Ledger.Address as SL
+import qualified Shelley.Spec.Ledger.Address.Bootstrap as SL
 import qualified Shelley.Spec.Ledger.BaseTypes as SL
 import qualified Shelley.Spec.Ledger.BlockChain as SL
 import qualified Shelley.Spec.Ledger.Coin as SL
@@ -289,6 +293,9 @@ instance ToAltJSON Text where
 instance ToAltJSON ByteString where
     toAltJSON = toJSON . base16
 
+instance ToAltJSON BL.ByteString where
+    toAltJSON = toAltJSON . BL.toStrict
+
 instance ToAltJSON Natural where
     toAltJSON = toJSON
 
@@ -309,6 +316,9 @@ instance ToAltJSON Word64 where
 
 instance ToAltJSON Integer where
     toAltJSON = toJSON
+
+instance ToAltJSON Rational where
+    toAltJSON = Json.Number . fromRational
 
 instance ToAltJSON IPv4 where
     toAltJSON = toJSON
@@ -385,6 +395,9 @@ instance ToAltJSON VerificationKey where
     toAltJSON = toJSON
 
 -- * Unary types wrapping some types above
+
+instance ToAltJSON SL.ChainCode where
+    toAltJSON = toAltJSON . SL.unChainCode
 
 instance ToAltJSON SL.DnsName where
     toAltJSON = toAltJSON . SL.dnsToText
@@ -487,6 +500,7 @@ instance {-# OVERLAPS #-} Crypto crypto => ToAltJSON (SL.KeyHash 'SL.StakePool c
 instance Crypto crypto => ToAltJSON (SL.MetaDataHash crypto) where
     toAltJSON (SL.MetaDataHash hash) = toAltJSON hash
 
+instance Crypto crypto => ToJSONKey (SL.ScriptHash crypto)
 instance Crypto crypto => ToAltJSON (SL.ScriptHash crypto) where
     toAltJSON (SL.ScriptHash hash) = toAltJSON hash
 
@@ -499,8 +513,19 @@ instance ToAltJSON EpochNo where
 instance Crypto crypto => ToAltJSON (SL.Wdrl crypto) where
     toAltJSON = toAltJSON . SL.unWdrl
 
--- -- * Product & Sum types
---
+instance Crypto crypto => ToAltJSON (SL.ProposedPPUpdates crypto) where
+    toAltJSON (SL.ProposedPPUpdates m) = toAltJSON m
+
+instance Crypto crypto => ToAltJSON (SL.HashBBody crypto) where
+    toAltJSON = toAltJSON . BL.drop cborOverhead . serialize
+      where
+        -- TODO: The constructor of HashBBody isn't exposed.
+        -- So, we abuse the cbor instance to get the raw bytes, but need to drop
+        -- the '58XX' prefix in front of the payload.
+        cborOverhead = 2
+
+-- * Product & Sum types
+
 instance ToAltJSON NetworkMagic where
     toAltJSON = \case
         NetworkMainOrStage ->
@@ -735,8 +760,7 @@ instance Crypto crypto => ToAltJSON (ShelleyBlock crypto) where
                 , "nonce" .= toAltJSON (SL.bheaderEta hBody)
                 , "leaderValue" .=  toAltJSON (SL.bheaderL hBody)
                 , "blockSize" .= toAltJSON (SL.bsize hBody)
-                -- FIXME: The constructor of BHashBody isn't exposed.
-                -- , "blockHash" .= toAltJSON (SL.bhash hBody)
+                , "blockHash" .= toAltJSON (SL.bhash hBody)
                 , "opCert" .= toAltJSON (SL.bheaderOCert hBody)
                 , "protocolVersion" .= toAltJSON (SL.bprotver hBody)
                 , "signature" .= toAltJSON hSig
@@ -748,9 +772,16 @@ instance Crypto crypto => ToAltJSON (SL.Tx crypto) where
     toAltJSON x = Json.object
         [ "id" .= toAltJSON (SL.txid (SL._body x))
         , "body" .= toAltJSON (SL._body x)
-        -- , "witness" .= undefined
+        , "witness" .= toAltJSON (SL._witnessSet x)
         -- , "metadata" .= undefined
         --  _mdHash' in txBody
+        ]
+
+instance Crypto crypto => ToAltJSON (SL.WitnessSet crypto) where
+    toAltJSON x = Json.object
+        [ "address" .= toAltJSON (SL.addrWits x)
+        , "multisig" .= toAltJSON (SL.msigWits x)
+        , "bootstrap" .= toAltJSON (SL.bootWits x)
         ]
 
 instance Crypto crypto => ToAltJSON (SL.TxBody crypto) where
@@ -1208,6 +1239,75 @@ instance Crypto crypto => ToAltJSON (SL.Credential any crypto) where
     toAltJSON = \case
         SL.ScriptHashObj hash -> toAltJSON hash
         SL.KeyHashObj hash -> toAltJSON hash
+
+instance Crypto crypto => ToAltJSON (SL.Update crypto) where
+    toAltJSON (SL.Update update epoch) = Json.object
+        [ "proposal" .= toAltJSON update
+        , "epoch" .= toAltJSON epoch
+        ]
+
+instance ToAltJSON (SL.PParams' SL.StrictMaybe) where
+    toAltJSON x = Json.object
+        [ "minFeeCoefficient" .= toAltJSON (SL._minfeeA x)
+        , "minFeeConstant" .= toAltJSON (SL._minfeeB x)
+        , "maxBlockBodySize" .= toAltJSON (SL._maxBBSize x)
+        , "maxBlockHeaderSize" .= toAltJSON (SL._maxBHSize x)
+        , "maxTxSize" .= toAltJSON (SL._maxTxSize x)
+        , "stakeKeyDeposit" .= toAltJSON (SL._keyDeposit x)
+        , "poolDeposit" .= toAltJSON (SL._poolDeposit x)
+        , "poolRetirementEpochBound" .= toAltJSON (SL._eMax x)
+        , "desiredNumberOfPools" .= toAltJSON (SL._nOpt x)
+        , "poolInfluence" .= toAltJSON (SL._a0 x)
+        , "monetaryExpansion" .= toAltJSON (SL._rho x)
+        , "treasuryExpansion" .= toAltJSON (SL._tau x)
+        , "decentralizationParameter" .= toAltJSON (SL._d x)
+        , "extraEntropy" .= toAltJSON (SL._extraEntropy x)
+        , "protocolVersion" .= toAltJSON (SL._protocolVersion x)
+        , "minUTxOValue" .= toAltJSON (SL._minUTxOValue x)
+        , "minPoolCost" .= toAltJSON (SL._minPoolCost x)
+        ]
+
+instance ToAltJSON SL.Nonce where
+    toAltJSON = \case
+        SL.NeutralNonce -> Json.String "neutral"
+        SL.Nonce h -> toAltJSON h
+
+instance Crypto crypto => ToAltJSON (SL.MultiSig crypto) where
+    toAltJSON = \case
+        SL.RequireSignature sig ->
+            toAltJSON sig
+        SL.RequireAllOf xs ->
+            Json.object
+                [ "require" .= Json.object
+                    [ "all" .= toAltJSON xs
+                    ]
+                ]
+        SL.RequireAnyOf xs ->
+            Json.object
+                [ "require" .= Json.object
+                    [ "any" .= toAltJSON xs
+                    ]
+                ]
+        SL.RequireMOf n xs ->
+            Json.object
+                [ "require" .= Json.object
+                    [ T.pack (show n) .= toAltJSON xs
+                    ]
+                ]
+
+instance Crypto crypto => ToAltJSON (SL.WitVKey crypto 'SL.Witness) where
+    toAltJSON (SL.WitVKey key sig) = Json.object
+        [ "key" .= toAltJSON key
+        , "signature" .= toAltJSON sig
+        ]
+
+instance Crypto crypto => ToAltJSON (SL.BootstrapWitness crypto) where
+    toAltJSON (SL.BootstrapWitness key sig cc attr) = Json.object
+        [ " key" .= toAltJSON key
+        , "chainCode" .= toAltJSON cc
+        , "addressattributes" .= toAltJSON attr
+        , "signature" .= toAltJSON sig
+        ]
 
 --
 -- Internal / Helpers

@@ -6,6 +6,7 @@
 
 module Data.Git.Revision.TH
     ( gitRevParseHEAD
+    , gitTags
     , gitRemoteGetURL
     ) where
 
@@ -15,6 +16,8 @@ import Control.Arrow
     ( second )
 import Control.Exception
     ( SomeException, try )
+import Data.List
+    ( dropWhileEnd )
 import Language.Haskell.TH
     ( Exp (..), Lit (..), Q, runIO )
 import System.Exit
@@ -32,6 +35,24 @@ gitRevParseHEAD =
         case result of
             Right (ExitSuccess, revision) -> pure revision
             _ -> pure "unknown revision"
+
+gitTags :: Q Exp
+gitTags =
+    ListE . fmap (\(a,b) -> TupE [LitE $ StringL a, LitE $ StringL b]) <$> runIO runGitTag
+  where
+    runGitTag :: IO [(String, String)]
+    runGitTag = do
+        result <- git ["tag", "-l", "--sort", "-taggerdate", "--format", "%(refname:short) %(objectname)"]
+        case result of
+            Right (ExitSuccess, tags) -> pure (mkTags <$> lines tags)
+            _ -> pure []
+
+    mkTags :: String -> (String, String)
+    mkTags str =
+        (takeWhile (/= separator) str, tail $ dropWhile (/= separator) str)
+      where
+        separator :: Char
+        separator = ' '
 
 gitRemoteGetURL :: Q Exp
 gitRemoteGetURL =
@@ -53,4 +74,4 @@ git args = do
     dropLast (a,b,_) = (a,b)
 
     trimNewline :: String -> String
-    trimNewline = filter (`notElem` ['\n', '\r'])
+    trimNewline = dropWhileEnd (== '\n') . dropWhileEnd (== '\r')

@@ -16,18 +16,15 @@ import Prelude
 import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Data.Git.Revision.TH
-    ( gitRemoteGetURL, gitRevParseHEAD )
-import Data.Version
-    ( showVersion )
+    ( gitRevParseHEAD, gitTags )
 import Options.Applicative.Help.Pretty
     ( indent, string, vsep )
-import Paths_ogmios
-    ( version )
 
 import Options.Applicative hiding
     ( action )
 
 import qualified Data.ByteString.Char8 as B8
+import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 
@@ -46,10 +43,19 @@ run :: (Options -> IO ()) -> IO ()
 run action = do
     parseOptions >>= \case
         Version -> do
-            B8.putStrLn $ T.encodeUtf8 $ T.pack $ unlines
-                [ $(gitRemoteGetURL) <> "@" <> $(gitRevParseHEAD)
-                , showVersion version
-                ]
+            let tags = $(gitTags)
+            let revHEAD = $(gitRevParseHEAD)
+            let lastKnownTag = fst $ head tags
+            let revision =
+                    case L.find ((== revHEAD) . snd) tags of
+                        Just (tag, _) ->
+                            tag
+                        Nothing -> unwords
+                            [ "unreleased (> " <> lastKnownTag <> ")"
+                            , "-"
+                            , "git revision " <> take 8 revHEAD
+                            ]
+            B8.putStrLn $ T.encodeUtf8 $ T.pack revision
         Start opts -> do
             action opts
   where
