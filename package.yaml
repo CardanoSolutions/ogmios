@@ -54,6 +54,7 @@ library:
     - cborg
     - containers
     - contra-tracer
+    - ekg-core
     - file-embed
     - io-sim-classes
     - iohk-monitoring
@@ -76,6 +77,7 @@ library:
     - time
     - typed-protocols
     - typed-protocols-examples
+    - unordered-containers
     - vector
     - wai
     - wai-routes

@@ -26,6 +26,7 @@ module Ogmios.Health
     (
     -- * Heath Check
       Health (..)
+    , RuntimeStats (..)
     , mkHealthCheckClient
 
     -- * Wai Application
@@ -58,10 +59,18 @@ import Data.Aeson
     ( ToJSON (..), genericToJSON )
 import Data.FileEmbed
     ( embedFile )
+import Data.HashMap.Strict
+    ( HashMap, (!) )
+import Data.Int
+    ( Int64 )
+import Data.Text
+    ( Text )
 import Data.Time.Clock
     ( UTCTime, getCurrentTime )
 import GHC.Generics
     ( Generic )
+import GHC.Stats
+    ( RTSStats (..), RtsTime, getRTSStats, getRTSStatsEnabled )
 import Network.TypedProtocol.Pipelined
     ( N (..) )
 import Ogmios.Health.Trace
@@ -103,8 +112,10 @@ import Wai.Routes
     )
 
 import qualified Data.Aeson as Json
+import qualified Data.HashMap.Strict as Map
 import qualified Data.Text.Encoding as T
 import qualified Network.Wai as Wai
+import qualified System.Metrics as Ekg
 
 import Cardano.Types.Json.Orphans
     ()
@@ -114,9 +125,21 @@ data Health block = Health
         -- ^ Current tip of the core node.
     , lastUpdate :: Maybe UTCTime
         -- ^ Date at which the last update was received.
+    , runtimeStats :: Maybe RuntimeStats
+        -- ^ Runtime statistics of the program.
     } deriving (Generic, Eq, Show)
 
 instance ToJSON (Tip block) => ToJSON (Health block) where
+    toJSON = genericToJSON Json.defaultOptions
+
+data RuntimeStats = RuntimeStats
+    { cpuTime :: RtsTime
+    , gcCpuTime :: RtsTime
+    , allocatedBytes :: Int64
+    , maxLiveBytes :: Int64
+    } deriving (Generic, Eq, Show)
+
+instance ToJSON RuntimeStats where
     toJSON = genericToJSON Json.defaultOptions
 
 --
@@ -165,7 +188,7 @@ mkHealthCheckClient notify =
 -- HTTP Server
 --
 
-newtype Server = Server (MVar (Health Block))
+newtype Server = Server (MVar (Health Block), Ekg.Store)
 
 mkRoute "Server" [parseRoutes|
 /                HomeR          GET
@@ -180,14 +203,19 @@ application
     -> FilePath
     -> IO Wai.Application
 application tr (vData, epochSlots, _securityParam) socket = do
-    mvar <- newMVar $ Health TipGenesis Nothing
-    link =<< async (monitor $ mkClient mvar)
-    pure $ waiApp $ route $ Server mvar
+    store <- Ekg.newStore
+    getRTSStatsEnabled >>= \case
+        True  -> Ekg.registerGroup metrics getRTSStats store
+        False -> traceWith tr (OgmiosRuntimeStatsDisabled "run with '+RTS -T -RTS'")
+    mvar <- newMVar $ Health TipGenesis Nothing Nothing
+    link =<< async (monitor $ mkClient mvar store)
+    pure $ waiApp $ route $ Server (mvar, store)
   where
     mkClient
         :: MVar (Health Block)
+        -> Ekg.Store
         -> Client IO
-    mkClient mvar = do
+    mkClient mvar store = do
         let codec = cChainSyncCodec $ codecs epochSlots
         nodeToClientProtocols (const $ pure $ NodeToClientProtocols
             { localChainSyncProtocol = InitiatorProtocolOnly
@@ -195,7 +223,7 @@ application tr (vData, epochSlots, _securityParam) socket = do
                 $ localChainSync nullTracer codec
                 $ mkHealthCheckClient
                 $ \tip -> modifyMVar_ mvar $ \_ -> do
-                    s <- Health tip . Just <$> getCurrentTime
+                    s <- Health tip <$> (Just <$> getCurrentTime) <*> (sample store)
                     s <$ traceWith tr (OgmiosHealth $ HealthTick s)
 
             , localTxSubmissionProtocol = nullProtocol
@@ -219,8 +247,10 @@ getHomeR = runHandlerM $ do
 
 getHealthR :: Handler Server
 getHealthR = runHandlerM $ do
-    Server mvar <- sub
-    liftIO (readMVar mvar) >>= json
+    Server (mvar, store) <- sub
+    health <- liftIO (readMVar mvar)
+    runtimeStats <- liftIO (sample store)
+    json $ health { runtimeStats }
 
 getBenchmarkR :: Handler Server
 getBenchmarkR = runHandlerM $ do
@@ -229,3 +259,23 @@ getBenchmarkR = runHandlerM $ do
 getSpecificationR :: Handler Server
 getSpecificationR = runHandlerM $ do
     asContent "application/json" $ T.decodeUtf8 $(embedFile "ogmios.wsp.json")
+
+sample :: Ekg.Store -> IO (Maybe RuntimeStats)
+sample store = do
+    values <- Ekg.sampleAll store
+    return $ if Map.null values then Nothing else Just $
+        let
+            Ekg.Counter allocatedBytes = values ! "allocatedBytes"
+            Ekg.Counter maxLiveBytes = values ! "maxLiveBytes"
+            Ekg.Counter cpuTime = values ! "cpuTime"
+            Ekg.Counter gcCpuTime = values ! "gcCpuTime"
+        in
+            RuntimeStats { allocatedBytes, maxLiveBytes, cpuTime, gcCpuTime }
+
+metrics :: HashMap Text (RTSStats -> Ekg.Value)
+metrics = Map.fromList
+    [ ("allocatedBytes", Ekg.Counter . fromIntegral . allocated_bytes)
+    , ("maxLiveBytes", Ekg.Counter . fromIntegral . max_live_bytes)
+    , ("cpuTime", Ekg.Counter . fromIntegral . gc_cpu_ns)
+    , ("gcCpuTime", Ekg.Counter . fromIntegral . gc_cpu_ns)
+    ]
