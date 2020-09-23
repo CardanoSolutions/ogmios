@@ -15,6 +15,10 @@ module Cardano.Types.Json.Orphans () where
 
 import Prelude
 
+import Cardano.Api.MetaData
+    ( TxMetadataJsonSchema (..), TxMetadataValue (..), metadataToJson )
+import Cardano.Api.Typed
+    ( TxMetadata, makeTransactionMetadata )
 import Cardano.Binary
     ( Annotated (..), FromCBOR (..), serialize )
 import Cardano.Chain.Block
@@ -97,6 +101,8 @@ import Control.Monad
     ( (>=>) )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..), ToJSONKey (..), (.:), (.=) )
+import Data.Bifunctor
+    ( bimap )
 import Data.ByteArray
     ( ByteArrayAccess )
 import Data.ByteArray.Encoding
@@ -770,9 +776,26 @@ instance Crypto crypto => ToAltJSON (SL.Tx (Shelley crypto)) where
         [ "id" .= toAltJSON (SL.txid (SL._body x))
         , "body" .= toAltJSON (SL._body x)
         , "witness" .= toAltJSON (SL._witnessSet x)
-        -- , "metadata" .= undefined
-        --  _mdHash' in txBody
+        , "metadata" .= Json.object
+            [ "hash" .= toAltJSON (SL._mdHash (SL._body x))
+            , "body" .= toAltJSON (SL._metadata x)
+            ]
         ]
+
+instance ToAltJSON SL.MetaData where
+    toAltJSON = metadataToJson TxMetadataJsonDetailedSchema . fromShelleyMetadata
+      where
+        fromShelleyMetadata :: SL.MetaData -> TxMetadata
+        fromShelleyMetadata (SL.MetaData meta) =
+            makeTransactionMetadata (convert <$> meta)
+          where
+            convert :: SL.MetaDatum -> TxMetadataValue
+            convert = \case
+                SL.I n -> TxMetaNumber n
+                SL.B bs -> TxMetaBytes bs
+                SL.S s -> TxMetaText s
+                SL.Map as -> TxMetaMap (bimap convert convert <$> as)
+                SL.List xs -> TxMetaList (map convert xs)
 
 instance Crypto crypto => ToAltJSON (SL.WitnessSet (Shelley crypto)) where
     toAltJSON x = Json.object

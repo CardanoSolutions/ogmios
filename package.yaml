@@ -43,6 +43,7 @@ library:
     - bech32-th
     - binary
     - bytestring
+    - cardano-api
     - cardano-binary
     - cardano-crypto-class
     - cardano-crypto-praos
