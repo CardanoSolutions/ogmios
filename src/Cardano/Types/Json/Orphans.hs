@@ -47,8 +47,6 @@ import Cardano.Chain.Common
     )
 import Cardano.Chain.Genesis
     ( GenesisHash (..) )
-import Cardano.Chain.MempoolPayload
-    ( AMempoolPayload (..) )
 import Cardano.Chain.Slotting
     ( EpochNumber (..), SlotNumber (..) )
 import Cardano.Chain.Update
@@ -71,7 +69,6 @@ import Cardano.Chain.UTxO
     , TxProof (..)
     , TxSigData (..)
     , UTxOError (..)
-    , annotateTxAux
     , taTx
     )
 import Cardano.Chain.UTxO.Validation
@@ -82,6 +79,10 @@ import Cardano.Crypto.ProtocolMagic
     ( ProtocolMagicId (..) )
 import Cardano.Crypto.Signing
     ( RedeemSignature, RedeemVerificationKey, Signature, VerificationKey )
+import Cardano.Ledger.Crypto
+    ( Crypto )
+import Cardano.Ledger.Shelley
+    ( Shelley )
 import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
@@ -127,11 +128,10 @@ import Data.Word
 import Numeric.Natural
     ( Natural )
 import Ouroboros.Consensus.Byron.Ledger
-    ( ByronBlock (..), ByronHash (..), GenTx, fromMempoolPayload )
+    ( ByronBlock (..), ByronHash (..), GenTx )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoBlock
     , CardanoEras
-    , CardanoGenTx
     , GenTx (..)
     , HardForkApplyTxErr (..)
     , HardForkBlock (..)
@@ -144,8 +144,6 @@ import Ouroboros.Network.Block
     ( Point (..), Tip (..), genesisPoint )
 import Shelley.Spec.Ledger.API
     ( ApplyTxError (..) )
-import Shelley.Spec.Ledger.Crypto
-    ( Crypto )
 import Shelley.Spec.Ledger.STS.Ppup
     ( VotingPeriod (..) )
 
@@ -174,7 +172,6 @@ import qualified Shelley.Spec.Ledger.BlockChain as SL
 import qualified Shelley.Spec.Ledger.Coin as SL
 import qualified Shelley.Spec.Ledger.Credential as SL
 import qualified Shelley.Spec.Ledger.Delegation.Certificates as SL
-import qualified Shelley.Spec.Ledger.Genesis as SL
 import qualified Shelley.Spec.Ledger.Keys as SL
 import qualified Shelley.Spec.Ledger.LedgerState as SL
 import qualified Shelley.Spec.Ledger.MetaData as SL
@@ -191,7 +188,7 @@ import qualified Shelley.Spec.Ledger.STS.Ppup as Ppup
 import qualified Shelley.Spec.Ledger.STS.Utxo as Utxo
 import qualified Shelley.Spec.Ledger.STS.Utxow as Utxow
 import qualified Shelley.Spec.Ledger.Tx as SL
-import qualified Shelley.Spec.Ledger.TxData as SL
+import qualified Shelley.Spec.Ledger.TxBody as SL
 import qualified Shelley.Spec.Ledger.UTxO as SL
 
 --
@@ -432,7 +429,7 @@ instance ToAltJSON GenesisHash where
 instance ToAltJSON InstallerHash where
     toAltJSON = toAltJSON . unInstallerHash
 
-instance Crypto crypto => ToAltJSON (SL.HashHeader crypto) where
+instance Crypto crypto => ToAltJSON (SL.HashHeader (Shelley crypto)) where
     toAltJSON = toAltJSON . CC.hashToBytes . SL.unHashHeader
 
 instance ToAltJSON (MerkleRoot a) where
@@ -444,13 +441,13 @@ instance ToAltJSON (OneEraHash eras) where
 instance ToAltJSON ProtocolMagicId where
     toAltJSON = toAltJSON . unProtocolMagicId
 
-instance Crypto crypto => ToAltJSON (ShelleyHash crypto) where
+instance Crypto crypto => ToAltJSON (ShelleyHash (Shelley crypto)) where
     toAltJSON (ShelleyHash h) = toAltJSON h
 
 instance ToAltJSON TxSigData where
     toAltJSON = toAltJSON . txSigTxHash
 
-instance Crypto crypto => ToAltJSON (SL.VKey any crypto) where
+instance Crypto crypto => ToAltJSON (SL.VKey any (Shelley crypto)) where
     toAltJSON = toAltJSON . SL.unVKey
 
 instance ToAltJSON (CC.Hash alg a) where
@@ -480,43 +477,43 @@ instance CC.VRFAlgorithm alg => ToAltJSON (CC.CertVRF alg) where
 instance ToAltJSON SL.KESPeriod where
     toAltJSON = toAltJSON . SL.unKESPeriod
 
-instance Crypto crypto => ToAltJSON (SL.TxSeq crypto) where
+instance Crypto crypto => ToAltJSON (SL.TxSeq (Shelley crypto)) where
     toAltJSON = toAltJSON . toList . SL.txSeqTxns'
 
-instance Crypto crypto => ToAltJSON (SL.TxId crypto) where
+instance Crypto crypto => ToAltJSON (SL.TxId (Shelley crypto)) where
     toAltJSON (SL.TxId h) = toAltJSON h
 
 instance ToAltJSON SL.Coin where
     toAltJSON = toAltJSON . SL.unCoin
 
-instance Crypto crypto => ToAltJSON (SL.KeyHash any crypto) where
+instance Crypto crypto => ToAltJSON (SL.KeyHash any (Shelley crypto)) where
     toAltJSON (SL.KeyHash hash) = toAltJSON hash
 
-instance {-# OVERLAPS #-} Crypto crypto => ToAltJSON (SL.KeyHash 'SL.StakePool crypto) where
+instance {-# OVERLAPS #-} Crypto crypto => ToAltJSON (SL.KeyHash 'SL.StakePool (Shelley crypto)) where
     toAltJSON (SL.KeyHash (CC.UnsafeHash h)) = toAltJSON . bech32 hrp . fromShort $ h
       where
         hrp = [humanReadablePart|pool|]
 
-instance Crypto crypto => ToAltJSON (SL.MetaDataHash crypto) where
+instance Crypto crypto => ToAltJSON (SL.MetaDataHash (Shelley crypto)) where
     toAltJSON (SL.MetaDataHash hash) = toAltJSON hash
 
-instance Crypto crypto => ToJSONKey (SL.ScriptHash crypto)
-instance Crypto crypto => ToAltJSON (SL.ScriptHash crypto) where
+instance Crypto crypto => ToJSONKey (SL.ScriptHash (Shelley crypto))
+instance Crypto crypto => ToAltJSON (SL.ScriptHash (Shelley crypto)) where
     toAltJSON (SL.ScriptHash hash) = toAltJSON hash
 
-instance Crypto crypto => ToAltJSON (SL.WitHashes crypto) where
+instance Crypto crypto => ToAltJSON (SL.WitHashes (Shelley crypto)) where
     toAltJSON (SL.WitHashes hash) = toAltJSON hash
 
 instance ToAltJSON EpochNo where
     toAltJSON (EpochNo ep) = toAltJSON ep
 
-instance Crypto crypto => ToAltJSON (SL.Wdrl crypto) where
+instance Crypto crypto => ToAltJSON (SL.Wdrl (Shelley crypto)) where
     toAltJSON = toAltJSON . SL.unWdrl
 
-instance Crypto crypto => ToAltJSON (SL.ProposedPPUpdates crypto) where
+instance Crypto crypto => ToAltJSON (SL.ProposedPPUpdates (Shelley crypto)) where
     toAltJSON (SL.ProposedPPUpdates m) = toAltJSON m
 
-instance Crypto crypto => ToAltJSON (SL.HashBBody crypto) where
+instance Crypto crypto => ToAltJSON (SL.HashBBody (Shelley crypto)) where
     toAltJSON = toAltJSON . BL.drop cborOverhead . serialize
       where
         -- TODO: The constructor of HashBBody isn't exposed.
@@ -728,7 +725,7 @@ instance ToAltJSON TxIn where
         , "index" .= toAltJSON ix
         ]
 
-instance Crypto crypto => ToAltJSON (SL.PrevHash crypto) where
+instance Crypto crypto => ToAltJSON (SL.PrevHash (Shelley crypto)) where
     toAltJSON = \case
         SL.GenesisHash -> toJSON ("genesis" :: String)
         SL.BlockHash h -> toAltJSON h
@@ -739,7 +736,7 @@ instance CC.VRFAlgorithm alg => ToAltJSON (CC.CertifiedVRF alg any) where
         , "proof" .= toAltJSON (CC.certifiedProof x)
         ]
 
-instance Crypto crypto => ToAltJSON (SL.OCert crypto) where
+instance Crypto crypto => ToAltJSON (SL.OCert (Shelley crypto)) where
     toAltJSON x = Json.object
         [ "hotVK" .= toAltJSON (SL.ocertVkHot x)
         , "count" .= toAltJSON (SL.ocertN x)
@@ -747,7 +744,7 @@ instance Crypto crypto => ToAltJSON (SL.OCert crypto) where
         , "sigma" .= toAltJSON (SL.ocertSigma x)
         ]
 
-instance Crypto crypto => ToAltJSON (ShelleyBlock crypto) where
+instance Crypto crypto => ToAltJSON (ShelleyBlock (Shelley crypto)) where
     toAltJSON (ShelleyBlock (SL.Block (SL.BHeader hBody hSig) txs) hHash) =
         Json.object
             [ "body" .= toAltJSON txs
@@ -768,7 +765,7 @@ instance Crypto crypto => ToAltJSON (ShelleyBlock crypto) where
             , "headerHash" .= toAltJSON hHash
             ]
 
-instance Crypto crypto => ToAltJSON (SL.Tx crypto) where
+instance Crypto crypto => ToAltJSON (SL.Tx (Shelley crypto)) where
     toAltJSON x = Json.object
         [ "id" .= toAltJSON (SL.txid (SL._body x))
         , "body" .= toAltJSON (SL._body x)
@@ -777,14 +774,14 @@ instance Crypto crypto => ToAltJSON (SL.Tx crypto) where
         --  _mdHash' in txBody
         ]
 
-instance Crypto crypto => ToAltJSON (SL.WitnessSet crypto) where
+instance Crypto crypto => ToAltJSON (SL.WitnessSet (Shelley crypto)) where
     toAltJSON x = Json.object
         [ "address" .= toAltJSON (SL.addrWits x)
         , "multisig" .= toAltJSON (SL.msigWits x)
         , "bootstrap" .= toAltJSON (SL.bootWits x)
         ]
 
-instance Crypto crypto => ToAltJSON (SL.TxBody crypto) where
+instance Crypto crypto => ToAltJSON (SL.TxBody (Shelley crypto)) where
     toAltJSON x = Json.object
         [ "inputs" .= toAltJSON (SL._inputs x)
         , "outputs" .= toAltJSON (SL._outputs x)
@@ -795,7 +792,7 @@ instance Crypto crypto => ToAltJSON (SL.TxBody crypto) where
         , "update" .= toAltJSON (SL._txUpdate x)
         ]
 
-instance Crypto crypto => ToAltJSON (SL.DCert crypto) where
+instance Crypto crypto => ToAltJSON (SL.DCert (Shelley crypto)) where
     toAltJSON = \case
         SL.DCertDeleg (SL.RegKey credential) ->
             Json.object
@@ -836,13 +833,13 @@ instance Crypto crypto => ToAltJSON (SL.DCert crypto) where
                     ]
                 ]
 
-instance Crypto crypto => ToAltJSON (SL.Delegation crypto) where
+instance Crypto crypto => ToAltJSON (SL.Delegation (Shelley crypto)) where
     toAltJSON x = Json.object
         [ "delegator" .= toAltJSON (SL._delegator x)
         , "delegatee" .= toAltJSON (SL._delegatee x)
         ]
 
-instance Crypto crypto => ToAltJSON (SL.PoolParams crypto) where
+instance Crypto crypto => ToAltJSON (SL.PoolParams (Shelley crypto)) where
     toAltJSON x = Json.object
         [ "id" .= toAltJSON (SL._poolPubKey x)
         , "vrf" .= toAltJSON (SL._poolVrf x)
@@ -879,26 +876,26 @@ instance ToAltJSON SL.StakePoolRelay where
                 [ "hostname" .= toAltJSON dns
                 ]
 
-instance Crypto crypto => ToAltJSON (SL.TxOut crypto) where
+instance Crypto crypto => ToAltJSON (SL.TxOut (Shelley crypto)) where
     toAltJSON (SL.TxOut addr coin) = Json.object
         [ "address" .= toAltJSON addr
         , "value" .= toAltJSON coin
         ]
 
-instance Crypto crypto => ToAltJSON (SL.TxIn crypto) where
+instance Crypto crypto => ToAltJSON (SL.TxIn (Shelley crypto)) where
     toAltJSON (SL.TxIn txid ix) = Json.object
         [ "txId" .= toAltJSON txid
         , "index" .= toAltJSON ix
         ]
 
-instance Crypto crypto => ToAltJSON (SL.RewardAcnt crypto) where
+instance Crypto crypto => ToAltJSON (SL.RewardAcnt (Shelley crypto)) where
     toAltJSON x = toAltJSON . bech32 hrp . SL.serialiseRewardAcnt $ x
       where
         hrp = case SL.getRwdNetwork x of
             SL.Mainnet -> [humanReadablePart|stake|]
             SL.Testnet -> [humanReadablePart|stake_test|]
 
-instance Crypto crypto => ToAltJSON (SL.Addr crypto) where
+instance Crypto crypto => ToAltJSON (SL.Addr (Shelley crypto)) where
     toAltJSON = \case
         SL.AddrBootstrap addr ->
             toAltJSON . SL.unBootstrapAddress $ addr
@@ -919,7 +916,7 @@ instance ToAltJSON SL.MIRPot where
         SL.ReservesMIR -> "reserves"
         SL.TreasuryMIR -> "treasury"
 
-instance Crypto crypto => ToAltJSON (ApplyTxError crypto) where
+instance Crypto crypto => ToAltJSON (ApplyTxError (Shelley crypto)) where
     toAltJSON (ApplyTxError xs) = toJSON (ledgerFailureToJSON <$> xs)
       where
         ledgerFailureToJSON = \case
@@ -1235,18 +1232,18 @@ instance ToAltJSON EraMismatch where
         , "requestEra" .= toAltJSON (otherEraName x)
         ]
 
-instance Crypto crypto => ToAltJSON (SL.Credential any crypto) where
+instance Crypto crypto => ToAltJSON (SL.Credential any (Shelley crypto)) where
     toAltJSON = \case
         SL.ScriptHashObj hash -> toAltJSON hash
         SL.KeyHashObj hash -> toAltJSON hash
 
-instance Crypto crypto => ToAltJSON (SL.Update crypto) where
+instance Crypto crypto => ToAltJSON (SL.Update (Shelley crypto)) where
     toAltJSON (SL.Update update epoch) = Json.object
         [ "proposal" .= toAltJSON update
         , "epoch" .= toAltJSON epoch
         ]
 
-instance ToAltJSON (SL.PParams' SL.StrictMaybe) where
+instance ToAltJSON (SL.PParams' SL.StrictMaybe (Shelley crypto)) where
     toAltJSON x = Json.object
         [ "minFeeCoefficient" .= toAltJSON (SL._minfeeA x)
         , "minFeeConstant" .= toAltJSON (SL._minfeeB x)
@@ -1272,7 +1269,7 @@ instance ToAltJSON SL.Nonce where
         SL.NeutralNonce -> Json.String "neutral"
         SL.Nonce h -> toAltJSON h
 
-instance Crypto crypto => ToAltJSON (SL.MultiSig crypto) where
+instance Crypto crypto => ToAltJSON (SL.MultiSig (Shelley crypto)) where
     toAltJSON = \case
         SL.RequireSignature sig ->
             toAltJSON sig
@@ -1295,13 +1292,13 @@ instance Crypto crypto => ToAltJSON (SL.MultiSig crypto) where
                     ]
                 ]
 
-instance Crypto crypto => ToAltJSON (SL.WitVKey crypto 'SL.Witness) where
+instance Crypto crypto => ToAltJSON (SL.WitVKey (Shelley crypto) 'SL.Witness) where
     toAltJSON (SL.WitVKey key sig) = Json.object
         [ "key" .= toAltJSON key
         , "signature" .= toAltJSON sig
         ]
 
-instance Crypto crypto => ToAltJSON (SL.BootstrapWitness crypto) where
+instance Crypto crypto => ToAltJSON (SL.BootstrapWitness (Shelley crypto)) where
     toAltJSON (SL.BootstrapWitness key sig cc attr) = Json.object
         [ " key" .= toAltJSON key
         , "chainCode" .= toAltJSON cc

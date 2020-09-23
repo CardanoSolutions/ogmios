@@ -179,7 +179,7 @@ application
     -> (NodeVersionData, EpochSlots, SecurityParam)
     -> FilePath
     -> IO Wai.Application
-application tr (vData, epochSlots, securityParam) socket = do
+application tr (vData, epochSlots, _securityParam) socket = do
     mvar <- newMVar $ Health TipGenesis Nothing
     link =<< async (monitor $ mkClient mvar)
     pure $ waiApp $ route $ Server mvar
@@ -188,7 +188,7 @@ application tr (vData, epochSlots, securityParam) socket = do
         :: MVar (Health Block)
         -> Client IO
     mkClient mvar = do
-        let codec = cChainSyncCodec $ codecs epochSlots securityParam
+        let codec = cChainSyncCodec $ codecs epochSlots
         nodeToClientProtocols (const $ pure $ NodeToClientProtocols
             { localChainSyncProtocol = InitiatorProtocolOnly
                 $ MuxPeerRaw

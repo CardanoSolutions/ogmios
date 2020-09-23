@@ -33,8 +33,6 @@ import Prelude hiding
 
 import Cardano.Byron.Constants
     ( NodeVersionData )
-import Cardano.Chain.Byron.API
-    ( ApplyMempoolPayloadErr (..) )
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
 import Cardano.Network.Protocol.NodeToClient.Trace
@@ -56,7 +54,7 @@ import Control.Tracer
 import Data.ByteString.Lazy
     ( ByteString )
 import Data.Map.Strict
-    ( Map, (!) )
+    ( (!) )
 import Data.Proxy
     ( Proxy (..) )
 import Data.Void
@@ -66,7 +64,7 @@ import Network.Mux
 import Network.TypedProtocol.Codec
     ( Codec )
 import Ouroboros.Consensus.Byron.Ledger
-    ( ByronBlock (..), ByronNodeToClientVersion (..), GenTx, Query (..) )
+    ( GenTx, Query (..) )
 import Ouroboros.Consensus.Byron.Ledger.Config
     ( CodecConfig (..) )
 import Ouroboros.Consensus.Byron.Node
@@ -74,25 +72,15 @@ import Ouroboros.Consensus.Byron.Node
 import Ouroboros.Consensus.Cardano
     ( CardanoBlock )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoApplyTxErr
-    , CardanoEras
-    , CardanoGenTx
-    , CodecConfig (..)
-    , GenTx (..)
-    , Query (..)
-    )
-import Ouroboros.Consensus.Config.SecurityParam
-    ( SecurityParam (..) )
+    ( CardanoApplyTxErr, CodecConfig (..) )
 import Ouroboros.Consensus.Network.NodeToClient
     ( ClientCodecs, Codecs' (..), clientCodecs )
 import Ouroboros.Consensus.Node.NetworkProtocolVersion
-    ( HasNetworkProtocolVersion (..), SupportedNetworkProtocolVersion (..) )
+    ( SupportedNetworkProtocolVersion (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CodecConfig (..) )
-import Ouroboros.Consensus.Shelley.Protocol
-    ( TPraosCrypto )
 import Ouroboros.Consensus.Shelley.Protocol.Crypto
-    ( TPraosStandardCrypto )
+    ( StandardCrypto )
 import Ouroboros.Network.Block
     ( Tip (..) )
 import Ouroboros.Network.Channel
@@ -128,11 +116,8 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Client
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( LocalTxSubmission )
 
-import qualified Ouroboros.Consensus.Shelley.Ledger as O
-import qualified Ouroboros.Network.Block as O
-
 -- | Concrete block type.
-type Block = CardanoBlock TPraosStandardCrypto
+type Block = CardanoBlock StandardCrypto
 
 -- | Type representing a network client running two mini-protocols to sync
 -- from the chain and, submit transactions.
@@ -171,24 +156,22 @@ connectClient tr client (vData, vCodec) addr = withIOManager $ \iocp -> do
 
 -- | Construct a network client
 mkClient
-    :: forall m block err crypto.
-        ( block ~ CardanoBlock crypto
-        , err ~ CardanoApplyTxErr crypto
+    :: forall m err.
+        ( err ~ CardanoApplyTxErr StandardCrypto
         , MonadIO m, MonadThrow m, MonadST m, MonadAsync m
-        , TPraosCrypto crypto
         )
-    => Tracer m (TraceClient (GenTx block) err)
+    => Tracer m (TraceClient (GenTx Block) err)
         -- ^ Base trace for underlying protocols
-    -> (EpochSlots, SecurityParam)
+    -> EpochSlots
         -- ^ Static blockchain parameters
-    -> ChainSyncClientPipelined block (Tip block) m ()
+    -> ChainSyncClientPipelined Block (Tip Block) m ()
         -- ^ Actual ChainSync client logic
-    -> LocalTxSubmissionClient (GenTx block) err m ()
+    -> LocalTxSubmissionClient (GenTx Block) err m ()
         -- ^ Actual LocalTxSubmission client logic
-    -> LocalStateQueryClient block (Query block) m ()
+    -> LocalStateQueryClient Block (Query Block) m ()
         -- ^ Actual LocalStateQuery client logic
     -> Client m
-mkClient tr (epochSlots, securityParam) chainSyncClient txSubmissionClient stateQueryClient =
+mkClient tr epochSlots chainSyncClient txSubmissionClient stateQueryClient =
     nodeToClientProtocols (const $ pure $ NodeToClientProtocols
         { localChainSyncProtocol =
             InitiatorProtocolOnly $ MuxPeerRaw $
@@ -205,26 +188,24 @@ mkClient tr (epochSlots, securityParam) chainSyncClient txSubmissionClient state
         NodeToClientV_2
   where
     trChainSync    = nullTracer
-    codecChainSync = cChainSyncCodec $ codecs epochSlots securityParam
+    codecChainSync = cChainSyncCodec $ codecs epochSlots
 
     trTxSubmission    = contramap TrTxSubmission tr
-    codecTxSubmission = cTxSubmissionCodec $ codecs epochSlots securityParam
+    codecTxSubmission = cTxSubmissionCodec $ codecs epochSlots
 
     trStateQuery    = nullTracer
-    codecStateQuery = cStateQueryCodec $ codecs epochSlots securityParam
+    codecStateQuery = cStateQueryCodec $ codecs epochSlots
 
 localChainSync
-    :: forall m block protocol crypto.
-        ( block ~ CardanoBlock crypto
-        , protocol ~ ChainSync block (Tip block)
+    :: forall m protocol.
+        ( protocol ~ ChainSync Block (Tip Block)
         , MonadThrow m, MonadAsync m
-        , TPraosCrypto crypto
         )
     => Tracer m (TraceSendRecv protocol)
         -- ^ Base tracer for the mini-protocols
     -> Codec protocol DeserialiseFailure m ByteString
         -- ^ Codec for deserializing / serializing binary data
-    -> ChainSyncClientPipelined block (Tip block) m ()
+    -> ChainSyncClientPipelined Block (Tip Block) m ()
         -- ^ The actual chain sync client
     -> Channel m ByteString
         -- ^ A 'Channel' is a abstract communication instrument which
@@ -235,18 +216,16 @@ localChainSync tr codec client channel =
     runPipelinedPeer tr codec channel (chainSyncClientPeerPipelined client)
 
 localTxSubmission
-    :: forall m block err protocol crypto.
-        ( block ~ CardanoBlock crypto
-        , err ~ CardanoApplyTxErr crypto
-        , protocol ~ LocalTxSubmission (GenTx block) err
+    :: forall m err protocol.
+        ( err ~ CardanoApplyTxErr StandardCrypto
+        , protocol ~ LocalTxSubmission (GenTx Block) err
         , MonadThrow m
-        , TPraosCrypto crypto
         )
     => Tracer m (TraceSendRecv protocol)
         -- ^ Base tracer for the mini-protocols
     -> Codec protocol DeserialiseFailure m ByteString
         -- ^ Codec for deserializing / serializing binary data
-    -> LocalTxSubmissionClient (GenTx block) err m ()
+    -> LocalTxSubmissionClient (GenTx Block) err m ()
         -- ^ Actual local tx submission client
     -> Channel m ByteString
         -- ^ A 'Channel' is an abstract communication instrument which
@@ -257,17 +236,15 @@ localTxSubmission tr codec client channel =
     runPeer tr codec channel (localTxSubmissionClientPeer client)
 
 localStateQuery
-    :: forall m block protocol crypto.
-        ( block ~ CardanoBlock crypto
-        , protocol ~ LocalStateQuery block (Query block)
+    :: forall m protocol.
+        ( protocol ~ LocalStateQuery Block (Query Block)
         , MonadThrow m
-        , TPraosCrypto crypto
         )
     => Tracer m (TraceSendRecv protocol)
         -- ^ Base tracer for the mini-protocols
     -> Codec protocol DeserialiseFailure m ByteString
         -- ^ Codec for deserializing / serializing binary data
-    -> LocalStateQueryClient block (Query block) m ()
+    -> LocalStateQueryClient Block (Query Block) m ()
         -- ^ Actual local state query client.
     -> Channel m ByteString
         -- ^ A 'Channel' is an abstract communication instrument which
@@ -287,19 +264,12 @@ nullProtocol = do
 
 -- | Client codecs for Cardano
 codecs
-    :: forall crypto m. (TPraosCrypto crypto, MonadST m)
+    :: forall m. (MonadST m)
     => EpochSlots
-    -> SecurityParam
-    -> ClientCodecs (CardanoBlock crypto) m
-codecs epochSlots securityParam =
+    -> ClientCodecs Block m
+codecs epochSlots =
     clientCodecs (CardanoCodecConfig byron shelley) version
   where
-    byron = ByronCodecConfig epochSlots securityParam
+    byron = ByronCodecConfig epochSlots
     shelley = ShelleyCodecConfig
-    version = allVersions ! NodeToClientV_3
-
-allVersions
-    :: forall crypto. (TPraosCrypto crypto)
-    => Map NodeToClientVersion (BlockNodeToClientVersion (CardanoBlock crypto))
-allVersions =
-    supportedNodeToClientVersions (Proxy @(CardanoBlock crypto))
+    version = supportedNodeToClientVersions (Proxy @Block) ! NodeToClientV_3

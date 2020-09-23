@@ -1,13 +1,13 @@
 name: _
 
-resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/567e6f8071d8613b666541ebed369a1cad8a1ec5/snapshots/cardano-1.19.1.yaml
+resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/cfe917f0f419b5c9f63c958f335874e4dc0add85/snapshots/cardano-1.20.0.yaml
 
 packages:
 - hjsonpointer-1.3.0
 - hjsonschema-1.9.0
 - hedgehog-quickcheck-0.1.1
 
-# commit 1ab3fe2fff75141fcfb99e013fe5de33ce5a73d0 (HEAD -> 1.19.1, origin/1.19.1)
+# commit 2ac18c77266348c86db396e731a86d730c316c5b (HEAD -> 1.20.0, origin/1.20.0)
 # Author: KtorZ <matthias.benkort@gmail.com>
 # Date:   Sat Apr 25 00:17:09 2020 +0200
 #
@@ -15,12 +15,12 @@ packages:
 #
 #     A typical client would here want to be able to run extra computation in
 #     order to carry on and do whatever it needs to do to collect or constuct
-#     the next request to send. Being restricted to only pure computation here
-#     makes it fairly hard to pipelined another request unless the request can
-#     be constructed out of thin air or, has already been collected and
-#     buffered upfront.
+#     the next request to send. Being restricted to only pure computation
+#     here makes it fairly hard to pipelined another request unless the
+#     request can be constructed out of thin air or, has already been
+#     collected and buffered upfront.
 - git: git@github.com:KtorZ/ouroboros-network
-  commit: 1ab3fe2fff75141fcfb99e013fe5de33ce5a73d0
+  commit: 2ac18c77266348c86db396e731a86d730c316c5b
   subdirs:
     - io-sim
     - io-sim-classes
