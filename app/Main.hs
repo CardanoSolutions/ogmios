@@ -39,6 +39,8 @@ import Cardano.Network.Protocol.NodeToClient
     ( connectClient, mkClient )
 import Ogmios.Bridge
     ( handleIOException, pipeClients )
+import Ogmios.Health
+    ( ApplicationMetrics, recordSession )
 import Ogmios.Options.Applicative
     ( Options (..), run )
 import Ogmios.Trace
@@ -61,9 +63,9 @@ main = do
   where
     runServer opts@Options{host,port,nodeSocket} tr = do
         env <- lookupVersionData (contramap OgmiosLookupEnv tr) "OGMIOS_NETWORK"
-        healthCheck <- Health.application tr env nodeSocket
+        (healthCheck, metrics) <- Health.application tr env nodeSocket
         Warp.runSettings settings $ Wai.websocketsOr WS.defaultConnectionOptions
-            (websocketApp tr env opts)
+            (websocketApp tr metrics env opts)
             healthCheck
       where
         settings = Warp.defaultSettings
@@ -79,13 +81,14 @@ main = do
 -- for each WebSocket client connected.
 websocketApp
     :: Tracer IO TraceOgmios
+    -> ApplicationMetrics
     -> (NodeVersionData, EpochSlots, SecurityParam)
     -> Options
     -> WS.ServerApp
-websocketApp tr (versionData, epochSlots, _) Options{nodeSocket} pending = do
+websocketApp tr metrics (versionData, epochSlots, _) Options{nodeSocket} pending = do
     traceWith tr (OgmiosConnectionAccepted userAgent)
     conn <- WS.acceptRequest pending
-    WS.withPingThread conn 30 (pure ()) $ handlers $ do
+    recordSession metrics $ WS.withPingThread conn 30 (pure ()) $ handlers $ do
         let trClient = contramap OgmiosClient tr
         (chainSync, txSubmit, stateQuery) <- pipeClients conn
         let client = mkClient trClient epochSlots chainSync txSubmit stateQuery

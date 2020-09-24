@@ -70,6 +70,7 @@ library:
     - ouroboros-network-framework
     - process
     - safe
+    - scientific
     - shelley-spec-ledger
     - stm
     - template-haskell
@@ -100,6 +101,7 @@ executables:
       - -Werror
       - -O2
       - -with-rtsopts=-A250m
+      - -with-rtsopts=-T
     dependencies:
     - async
     - contra-tracer
