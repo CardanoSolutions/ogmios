@@ -1,6 +1,8 @@
 module System.Time.Clock
-    ( timed
+    ( NominalDiffTime
+    , timed
     , nominalDiffTimeToMilliseconds
+    , nominalDiffTimeToMicroseconds
     ) where
 
 import Prelude
@@ -20,3 +22,6 @@ timed action = do
 
 nominalDiffTimeToMilliseconds :: NominalDiffTime -> Integer
 nominalDiffTimeToMilliseconds = round . (* 1000)
+
+nominalDiffTimeToMicroseconds :: NominalDiffTime -> Integer
+nominalDiffTimeToMicroseconds = (* 1000) . nominalDiffTimeToMilliseconds

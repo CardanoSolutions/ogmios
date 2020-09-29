@@ -49,7 +49,7 @@ import Control.Concurrent
 import Control.Concurrent.Async
     ( async, link )
 import Control.Concurrent.MVar
-    ( MVar, modifyMVar_, newMVar, readMVar )
+    ( MVar, modifyMVar_, newMVar, putMVar, readMVar, tryTakeMVar )
 import Control.Exception
     ( SomeException, handle )
 import Control.Monad
@@ -112,7 +112,11 @@ import System.Metrics.Distribution
 import System.Metrics.Gauge
     ( Gauge )
 import System.Time.Clock
-    ( nominalDiffTimeToMilliseconds, timed )
+    ( NominalDiffTime
+    , nominalDiffTimeToMicroseconds
+    , nominalDiffTimeToMilliseconds
+    , timed
+    )
 import Wai.Routes
     ( Handler
     , RenderRoute (..)
@@ -285,21 +289,23 @@ application tr (vData, epochSlots, _securityParam) socket = do
         True  -> Ekg.registerGroup runtimeMetrics getRTSStats store
         False -> traceWith tr (OgmiosRuntimeStatsDisabled "run with '+RTS -T -RTS'")
     mvar <- newMVar initHealth
-    link =<< async (monitor $ mkClient mvar store)
+    debouncer <- newDebouncer 20
+    link =<< async (monitor $ mkClient debouncer mvar store)
     pure (waiApp $ route $ Server (mvar, store), appMetrics)
   where
     mkClient
-        :: MVar (Health Block)
+        :: Debouncer
+        -> MVar (Health Block)
         -> Ekg.Store
         -> Client IO
-    mkClient mvar store = do
+    mkClient Debouncer{debounce} mvar store = do
         let codec = cChainSyncCodec $ codecs epochSlots
         nodeToClientProtocols (const $ pure $ NodeToClientProtocols
             { localChainSyncProtocol = InitiatorProtocolOnly
                 $ MuxPeerRaw
                 $ localChainSync nullTracer codec
                 $ mkHealthCheckClient
-                $ \lastKnownTip -> modifyMVar_ mvar $ \_ -> do
+                $ \lastKnownTip -> debounce $ modifyMVar_ mvar $ \_ -> do
                     lastTipUpdate <- Just <$> getCurrentTime
 
                     (runtimeStats, activeConnections, totalConnections, sessionsDuration)
@@ -415,3 +421,16 @@ newApplicationMetrics store = do
         , totalConnectionsCounter
         , sessionsDurationDistribution
         }
+
+newtype Debouncer = Debouncer { debounce :: IO () -> IO () }
+
+-- | Run an action, but no more than once every chosen interval of time.
+newDebouncer :: NominalDiffTime -> IO Debouncer
+newDebouncer delay = do
+    lock <- newMVar ()
+    link =<< async (forever $ threadDelay (micro delay) *> putMVar lock ())
+    return $ Debouncer $ \action -> tryTakeMVar lock >>= \case
+        Nothing -> return ()
+        Just () -> action
+  where
+    micro = fromIntegral . nominalDiffTimeToMicroseconds
