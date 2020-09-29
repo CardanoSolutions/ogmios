@@ -1,35 +1,16 @@
-# docker
-.dockerignore
-Dockerfile
+*
 
-# git
-.git/
-.gitignore
+!Setup.hs
+!package.yaml
+!package.yaml.tmp
+!snapshot.yaml
+!stack.yaml
+!ogmios.wsp.json
+!LICENSE
 
-# haskell
-dist
-dist-*
-cabal-dev
-*.o
-*.hi
-*.chi
-*.chs.h
-*.dyn_o
-*.dump-hi
-*.dyn_hi
-.hpc
-.hsenv
-.cabal-sandbox/
-cabal.sandbox.config
-*.prof
-*.aux
-*.hp
-*.eventlog
-.stack-work/
-cabal.project.local
-cabal.project.local~
-.HTF/
-.ghc.environment.*
-.ghci
-*.tix
-stack.yaml.lock
+!app/
+!src/
+!static/
+
+# Needed for embeddding the version
+!.git/

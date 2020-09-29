@@ -19,7 +19,7 @@ packages:
 #     here makes it fairly hard to pipelined another request unless the
 #     request can be constructed out of thin air or, has already been
 #     collected and buffered upfront.
-- git: git@github.com:KtorZ/ouroboros-network
+- git: https://github.com/KtorZ/ouroboros-network
   commit: 2ac18c77266348c86db396e731a86d730c316c5b
   subdirs:
     - io-sim
