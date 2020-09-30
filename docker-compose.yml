@@ -10,7 +10,10 @@ services:
       - node-${NETWORK}-db:/data
       - node-ipc:/ipc
     logging:
-      driver: none
+      driver: "json-file"
+      options:
+        max-size: "400k"
+        max-file: "20"
 
   ogmios:
     image: ktorz/ogmios:latest
