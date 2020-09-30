@@ -51,7 +51,7 @@ import Control.Concurrent.Async
 import Control.Concurrent.MVar
     ( MVar, modifyMVar_, newMVar, putMVar, readMVar, tryTakeMVar )
 import Control.Exception
-    ( SomeException, handle )
+    ( IOException, SomeException, handle, throwIO )
 import Control.Monad
     ( forever )
 import Control.Monad.IO.Class
@@ -68,6 +68,8 @@ import Data.HashMap.Strict
     ( HashMap, (!) )
 import Data.Int
     ( Int64 )
+import Data.List
+    ( isInfixOf )
 import Data.Ratio
     ( (%) )
 import Data.Scientific
@@ -84,8 +86,6 @@ import Network.TypedProtocol.Pipelined
     ( N (..) )
 import Ogmios.Health.Trace
     ( TraceHealth (..) )
-import Ogmios.Trace
-    ( TraceOgmios (..) )
 import Ouroboros.Consensus.Config.SecurityParam
     ( SecurityParam (..) )
 import Ouroboros.Consensus.Network.NodeToClient
@@ -105,6 +105,8 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     , ClientPipelinedStIntersect (..)
     , ClientStNext (..)
     )
+import System.IO.Error
+    ( isDoesNotExistError )
 import System.Metrics.Counter
     ( Counter )
 import System.Metrics.Distribution
@@ -278,7 +280,7 @@ mkRoute "Server" [parseRoutes|
 |]
 
 application
-    :: Tracer IO TraceOgmios
+    :: Tracer IO (TraceHealth (Health Block))
     -> (NodeVersionData, EpochSlots, SecurityParam)
     -> FilePath
     -> IO (Wai.Application, ApplicationMetrics)
@@ -287,7 +289,7 @@ application tr (vData, epochSlots, _securityParam) socket = do
     appMetrics <- newApplicationMetrics store
     getRTSStatsEnabled >>= \case
         True  -> Ekg.registerGroup runtimeMetrics getRTSStats store
-        False -> traceWith tr (OgmiosRuntimeStatsDisabled "run with '+RTS -T -RTS'")
+        False -> traceWith tr (HealthRuntimeStatsDisabled "run with '+RTS -T -RTS'")
     mvar <- newMVar initHealth
     debouncer <- newDebouncer 20
     link =<< async (monitor $ mkClient debouncer mvar store)
@@ -320,7 +322,7 @@ application tr (vData, epochSlots, _securityParam) socket = do
                             , sessionsDuration
                             }
 
-                    health <$ traceWith tr (OgmiosHealth $ HealthTick health)
+                    health <$ traceWith tr (HealthTick health)
 
             , localTxSubmissionProtocol = nullProtocol
             , localStateQueryProtocol = nullProtocol
@@ -328,14 +330,31 @@ application tr (vData, epochSlots, _securityParam) socket = do
             NodeToClientV_2
 
     monitor :: Client IO -> IO ()
-    monitor client = forever $ handle onUnknownException $
+    monitor client = forever $ handlers $ do
         connectClient nullTracer client vData socket
+      where
+        handlers
+            = handle onUnknownException
+            . handle onIOException
 
-    onUnknownException :: SomeException -> IO ()
-    onUnknownException e = do
-        traceWith tr $ OgmiosUnknownException e
-        let fiveSeconds = 5_000_000
-        threadDelay fiveSeconds
+        _5s :: NominalDiffTime
+        _5s = 5
+
+        onUnknownException :: SomeException -> IO ()
+        onUnknownException e = do
+            traceWith tr $ HealthUnknownException e
+            threadDelay (fromIntegral $ nominalDiffTimeToMicroseconds _5s)
+
+        onIOException :: IOException -> IO ()
+        onIOException e
+            | isDoesNotExistError e || isTryAgainError e = do
+                traceWith tr $ HealthFailedToConnect socket _5s
+                threadDelay (fromIntegral $ nominalDiffTimeToMicroseconds _5s)
+
+            | otherwise =
+                throwIO e
+          where
+            isTryAgainError = isInfixOf "resource exhausted" . show
 
 getHomeR :: Handler Server
 getHomeR = runHandlerM $ do

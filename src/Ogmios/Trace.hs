@@ -13,8 +13,6 @@ module Ogmios.Trace
 
 import Prelude
 
-import Data.Text
-    ( Text )
 import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Cardano.BM.Data.Tracer
@@ -49,10 +47,6 @@ data TraceOgmios where
         => { health :: TraceHealth s }
         -> TraceOgmios
 
-    OgmiosRuntimeStatsDisabled
-        :: { recommendation :: Text }
-        -> TraceOgmios
-
     OgmiosConnectionAccepted
         :: { userAgent :: ByteString }
         -> TraceOgmios
@@ -84,7 +78,6 @@ instance HasSeverityAnnotation TraceOgmios where
         OgmiosStarted{}              -> Info
         OgmiosConnectionAccepted{}   -> Info
         OgmiosConnectionEnded{}      -> Info
-        OgmiosRuntimeStatsDisabled{} -> Warning
         OgmiosSocketNotFound{}       -> Warning
         OgmiosFailedToConnect{}      -> Error
         OgmiosUnknownException{}     -> Error

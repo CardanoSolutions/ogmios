@@ -2,7 +2,9 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Ogmios.Health.Trace
     ( TraceHealth (..)
@@ -14,12 +16,36 @@ import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Cardano.BM.Data.Tracer
     ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
+import Control.Exception
+    ( SomeException )
+import Data.Text
+    ( Text )
+import Data.Time.Clock
+    ( NominalDiffTime )
 
-newtype TraceHealth s
-    = HealthTick { status :: s }
-    deriving Show
+data TraceHealth s where
+    HealthTick
+        :: { status :: s }
+        -> TraceHealth s
+
+    HealthFailedToConnect
+        :: { socket :: FilePath, retryingIn :: NominalDiffTime }
+        -> TraceHealth s
+
+    HealthRuntimeStatsDisabled
+        :: { recommendation :: Text }
+        -> TraceHealth s
+
+    HealthUnknownException
+        :: { exception :: SomeException }
+        -> TraceHealth s
+
+deriving instance Show s => Show (TraceHealth s)
 
 instance HasPrivacyAnnotation (TraceHealth s)
 instance HasSeverityAnnotation (TraceHealth s) where
     getSeverityAnnotation = \case
         HealthTick{} -> Info
+        HealthFailedToConnect{} -> Warning
+        HealthRuntimeStatsDisabled{} -> Warning
+        HealthUnknownException{} -> Error

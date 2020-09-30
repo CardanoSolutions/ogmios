@@ -63,7 +63,7 @@ main = do
   where
     runServer opts@Options{host,port,nodeSocket} tr = do
         env <- lookupVersionData (contramap OgmiosLookupEnv tr) "OGMIOS_NETWORK"
-        (healthCheck, metrics) <- Health.application tr env nodeSocket
+        (healthCheck, metrics) <- Health.application (contramap OgmiosHealth tr) env nodeSocket
         Warp.runSettings settings $ Wai.websocketsOr WS.defaultConnectionOptions
             (websocketApp tr metrics env opts)
             healthCheck
