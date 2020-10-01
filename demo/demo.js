@@ -1,4 +1,4 @@
-const socket = new WebSocket("wss://ogmios.dev");
+const socket = new WebSocket("ws://127.0.0.1:1337");
 
 socket.onopen = function (event) {
     socket.wsp("FindIntersect", { points: ["origin"] }, { step: "INIT" });

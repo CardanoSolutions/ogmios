@@ -3,7 +3,7 @@
   <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Ogmios - Latest News</title>
+      <title>Ogmios - Demo</title>
       <link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&display=swap" rel="stylesheet">
       <link href="assets/style.css" rel="stylesheet">
       <script src="WebSocket-polyfill.js"></script>
@@ -11,11 +11,7 @@
       <script src="https://cdnjs.cloudflare.com/ajax/libs/trianglify/2.0.0/trianglify.min.js"></script>
       <script>
         window.addEventListener('block', e => {
-          const { slot, hash } = e.detail;
-
-          const epochLength = 21600;
-          const epochNo = Math.floor(slot / epochLength);
-          const slotNo  = slot - epochNo * epochLength;
+          const { blockNo, hash } = e.detail;
 
           // Re-synchronize the progress animation with the node.
           progress.classList.remove("active");
@@ -23,7 +19,7 @@
           progress.classList.add("active");
 
           // Update block header informations
-          document.querySelector("#block-slot").innerHTML = epochNo + " | " + slotNo;
+          document.querySelector("#block-number").innerHTML = blockNo;
           document.querySelector("#block-hash").innerHTML = window.innerWidth < 800
             ? hash.slice(0, 8)
             : hash;
@@ -54,7 +50,7 @@
     <div class="summary">
       <h1>last block</h1>
       <div class="block">
-        <p id="block-slot">... | ...</p>
+        <p id="block-number">...</p>
         <p id="block-hash">...</p>
       </div>
 
