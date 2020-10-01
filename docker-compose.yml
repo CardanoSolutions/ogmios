@@ -5,25 +5,28 @@ services:
     image: inputoutput/cardano-node:1.20.0
     restart: on-failure
     environment:
-      NETWORK:
+      - NETWORK=${NETWORK:-mainnet}
     volumes:
-      - node-${NETWORK}-db:/data
+      - node-db:/data
       - node-ipc:/ipc
     logging:
-      driver: none
+      driver: "json-file"
+      options:
+        max-size: "400k"
+        max-file: "20"
 
   ogmios:
+    build: .
     image: ktorz/ogmios:latest
     restart: on-failure
     environment:
-      - OGMIOS_NETWORK=${NETWORK}
+      - OGMIOS_NETWORK=${NETWORK:-mainnet}
     command: ["--host", "0.0.0.0", "--node-socket", "/ipc/node.socket"]
     volumes:
       - node-ipc:/ipc
     ports:
-      - 1337:1337
+      - ${OGMIOS_PORT:-1337}:1337
 
 volumes:
-  node-mainnet-db:
-  node-testnet-db:
+  node-db:
   node-ipc:
