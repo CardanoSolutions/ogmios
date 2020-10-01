@@ -87,7 +87,8 @@ to display, in-real-time, the current tip of MainNet.
 :point_up: This will run and connect together:
 
 - An OBFT Byron cardano-node, connected to `MainNet`.
-- An Ogmios server, listening to `localhost` on port `:1337`.
+- An Ogmios server using the `latest` Dockerhub build, listening to `localhost` on port `:1337`.
+- To build Ogmios from source, pass the `--build` flag
 
 ## testnet
 

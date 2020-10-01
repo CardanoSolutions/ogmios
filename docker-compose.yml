@@ -16,6 +16,7 @@ services:
         max-file: "20"
 
   ogmios:
+    build: .
     image: ktorz/ogmios:latest
     restart: on-failure
     environment:
