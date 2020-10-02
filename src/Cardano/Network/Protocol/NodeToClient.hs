@@ -15,6 +15,7 @@ module Cardano.Network.Protocol.NodeToClient
     -- * Building
       Block
     , Client
+    , Clients(..)
     , mkClient
 
     -- * Connecting
@@ -134,6 +135,13 @@ type Client m = OuroborosApplication
         -- Clients return type
     Void
 
+-- | A handy type to pass clients around
+data Clients m block tx err = Clients
+    { chainSyncClient :: ChainSyncClientPipelined block (Tip block) m ()
+    , localTxSubmissionClient :: LocalTxSubmissionClient tx err m ()
+    , localStateQueryClient :: LocalStateQueryClient block (Query block) m ()
+    }
+
 -- Connect a client to a network, see `mkClient` to construct a network
 -- client interface.
 connectClient
@@ -144,7 +152,7 @@ connectClient
     -> IO ()
 connectClient tr client (vData, vCodec) addr = withIOManager $ \iocp -> do
     let vDict = DictVersion vCodec
-    let versions = simpleSingletonVersions NodeToClientV_2 vData vDict client
+    let versions = simpleSingletonVersions NodeToClientV_3 vData vDict client
     let socket = localSnocket iocp addr
     connectTo socket tracers versions addr
   where
@@ -164,28 +172,27 @@ mkClient
         -- ^ Base trace for underlying protocols
     -> EpochSlots
         -- ^ Static blockchain parameters
-    -> ChainSyncClientPipelined Block (Tip Block) m ()
-        -- ^ Actual ChainSync client logic
-    -> LocalTxSubmissionClient (GenTx Block) err m ()
-        -- ^ Actual LocalTxSubmission client logic
-    -> LocalStateQueryClient Block (Query Block) m ()
-        -- ^ Actual LocalStateQuery client logic
+    -> Clients m Block (GenTx Block) err
+        -- ^ Clients with the driving logic
     -> Client m
-mkClient tr epochSlots chainSyncClient txSubmissionClient stateQueryClient =
+mkClient tr epochSlots clients =
     nodeToClientProtocols (const $ pure $ NodeToClientProtocols
         { localChainSyncProtocol =
             InitiatorProtocolOnly $ MuxPeerRaw $
-                localChainSync trChainSync codecChainSync chainSyncClient
+                localChainSync trChainSync codecChainSync
+                (chainSyncClient clients)
 
         , localTxSubmissionProtocol =
             InitiatorProtocolOnly $ MuxPeerRaw $
-                localTxSubmission trTxSubmission codecTxSubmission txSubmissionClient
+                localTxSubmission trTxSubmission codecTxSubmission
+                (localTxSubmissionClient clients)
 
         , localStateQueryProtocol =
             InitiatorProtocolOnly $ MuxPeerRaw $
-                localStateQuery trStateQuery codecStateQuery stateQueryClient
+                localStateQuery trStateQuery codecStateQuery
+                (localStateQueryClient clients)
         })
-        NodeToClientV_2
+        NodeToClientV_3
   where
     trChainSync    = nullTracer
     codecChainSync = cChainSyncCodec $ codecs epochSlots

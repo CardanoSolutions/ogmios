@@ -7,12 +7,15 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -28,18 +31,22 @@ module Ogmios.Bridge
     , FindIntersectResponse (..)
     , RequestNext (..)
     , RequestNextResponse (..)
+
     , SubmitTx (..)
     , SubmitTxResponse (..)
 
-    -- * Re-Exports
-    , ByronBlock
-    , GenTx
-    , Point
-    , Tip
+    , Acquire (..)
+    , AcquireResponse (..)
+    , Release (..)
+    , Query (..)
+    , SomeQuery (..)
+    , QueryResponse (..)
     ) where
 
 import Prelude
 
+import Cardano.Network.Protocol.NodeToClient
+    ( Clients (..) )
 import Control.Concurrent.Async
     ( async, link )
 import Control.Concurrent.STM
@@ -50,6 +57,8 @@ import Control.Exception
     ( IOException )
 import Control.Monad
     ( forever, guard )
+import Control.Monad.Class.MonadThrow
+    ( MonadThrow )
 import Control.Monad.Class.MonadTimer
     ( threadDelay )
 import Control.Tracer
@@ -68,8 +77,6 @@ import Network.TypedProtocol.Pipelined
     ( Nat (..), natToInt )
 import Ogmios.Trace
     ( TraceOgmios (..) )
-import Ouroboros.Consensus.Byron.Ledger
-    ( ByronBlock, GenTx, Query )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
@@ -80,6 +87,8 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..) )
+import Ouroboros.Network.Protocol.LocalStateQuery.Type
+    ( AcquireFailure )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxClientStIdle (..), LocalTxSubmissionClient (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
@@ -88,70 +97,11 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Type
 import qualified Codec.Json.Wsp as Wsp
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
+import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString.Lazy as BL
 import qualified Network.WebSockets as WS
-
--- | Create a 'ChainSyncClient' and a 'LocalTxSubmissionClient' from a single
--- WebSocket 'Connection'.
-pipeClients
-    :: forall block tx err.
-        ( FromJSON (Point block)
-        , ToJSON block
-        , ToJSON (Point block)
-        , ToJSON (Tip block)
-        , FromJSON tx
-        , ToJSON err
-        )
-    => WS.Connection
-    -> IO ( ChainSyncClientPipelined block (Tip block) IO ()
-          , LocalTxSubmissionClient tx err IO ()
-          , LocalStateQueryClient block (Query block) IO ()
-          )
-pipeClients conn = do
-    rcvd <- newTQueueIO
-    pipe <- newTQueueIO
-
-    let receive = WS.receiveData conn >>= atomically . writeTQueue rcvd
-    link =<< async (forever receive)
-
-    resp <- newTQueueIO
-    let queue = Queue
-            { pop = atomically $ readTQueue resp
-            , tryPop = atomically $ tryReadTQueue resp
-            , push  = atomically . writeTQueue resp
-            }
-
-    let chainSyncClient = mkChainSyncClient queue $ SimplePipe
-            { await = atomically $ readTQueue rcvd
-            , tryAwait = atomically $ tryReadTQueue rcvd
-            , yield = WS.sendTextData conn
-            , pass  = atomically . writeTQueue pipe
-            }
-
-    let localTxSubmissionClient = mkLocalTxSubmissionClient $ SimplePipe
-            { await = atomically $ readTQueue pipe
-            , tryAwait = atomically $ tryReadTQueue pipe
-            , yield = WS.sendTextData conn
-            , pass  = const (defaultHandler conn)
-            }
-
-    -- TODO
-    -- Add support for the 'localStateQueryClient'
-    let localStateQueryClient = LocalStateQueryClient $ forever $ threadDelay 1e6
-
-    pure (chainSyncClient, localTxSubmissionClient, localStateQueryClient)
-
--- | Provide a handler for exception arising when trying to connect to a node
--- that is down.
-handleIOException
-    :: Tracer IO TraceOgmios
-    -> WS.Connection
-    -> IOException
-    -> IO ()
-handleIOException tr conn e = do
-    traceWith tr $ OgmiosFailedToConnect e
-    let msg = "Connection with the node lost or failed."
-    WS.sendClose conn $ json $ Wsp.serverFault msg
+import qualified Ouroboros.Consensus.Ledger.Abstract as Ledger
+import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 
 --  _____ _           _         _____
 -- /  __ \ |         (_)       /  ___|
@@ -162,7 +112,7 @@ handleIOException tr conn e = do
 --                                     __/ |
 --                                    |___/
 
-newtype FindIntersect block
+data FindIntersect block
     = FindIntersect { points :: [Point block] }
     deriving (Generic, Show)
 
@@ -263,11 +213,11 @@ mkChainSyncClient Queue{push,pop,tryPop} SimplePipe{await,tryAwait,yield,pass} =
 --   | |>  <  /\__/ / |_| | |_) | | | | | | \__ \__ \ | (_) | | | |
 --   \_/_/\_\ \____/ \__,_|_.__/|_| |_| |_|_|___/___/_|\___/|_| |_|
 
-newtype SubmitTx tx
+data SubmitTx tx
     = SubmitTx { bytes :: tx }
     deriving (Generic, Show)
 
-newtype SubmitTxResponse e
+data SubmitTxResponse e
     = SubmitTxResponse { error :: SubmitResult e }
     deriving (Generic, Show)
 
@@ -297,17 +247,198 @@ mkLocalTxSubmissionClient SimplePipe{await,yield,pass} =
                 clientStIdle
         ]
 
--- | Helper function to yield a value that is serialisable to JSON.
-json :: ToJSON a => a -> ByteString
-json = BL.toStrict . Json.encode
+--  _____ _        _         _____
+-- /  ___| |      | |       |  _  |
+-- \ `--.| |_ __ _| |_ ___  | | | |_   _  ___ _ __ _   _
+--  `--. \ __/ _` | __/ _ \ | | | | | | |/ _ \ '__| | | |
+-- /\__/ / || (_| | ||  __/ \ \/' / |_| |  __/ |  | |_| |
+-- \____/ \__\__,_|\__\___|  \_/\_\\__,_|\___|_|   \__, |
+--                                                  __/ |
+--                                                 |___/
 
--- | A default handler for unmatched requests.
-defaultHandler
-    :: WS.Connection
+data Acquire point
+    = Acquire { point :: point }
+    deriving (Generic, Show)
+
+data AcquireResponse point
+    = AcquireSuccess { acquired :: point }
+    | AcquireFailed { failure :: AcquireFailure }
+    deriving (Generic, Show)
+
+data Release
+    = Release
+    deriving (Generic, Show)
+
+data Query block = Query { query :: SomeQuery block }
+    deriving (Generic)
+
+data SomeQuery block = forall result. SomeQuery
+    { query :: Ledger.Query block result
+    , encodeResult :: result -> Json.Value
+    }
+
+newtype QueryResponse =
+    QueryResponse { unQueryResponse :: Json.Value }
+    deriving (Generic, Show)
+
+-- data CodecStateQuery block = CodecStateQuery
+--     { encodeResult :: forall result. Ledger.Query block result -> result -> Json.Value
+--     , parseQuery :: forall result. Json.Value -> Json.Parser (Ledger.Query block result)
+--     }
+
+mkLocalStateQueryClient
+    :: forall m block point.
+        ( MonadThrow m
+        , ToJSON point
+        , ToJSON AcquireFailure
+        , FromJSON point
+        , FromJSON (SomeQuery block)
+        , point ~ Point block
+        )
+    => SimplePipe ByteString ByteString m
+    -> LocalStateQueryClient block (Ledger.Query block) m ()
+mkLocalStateQueryClient SimplePipe{await,yield,pass} =
+    LocalStateQueryClient clientStIdle
+  where
+    clientStIdle
+        :: m (LSQ.ClientStIdle block (Ledger.Query block) m ())
+    clientStIdle = await >>= Wsp.handle
+        (\bytes -> pass bytes *> clientStIdle)
+        [ Wsp.Handler $ \(Acquire pt) toResponse ->
+            pure $ LSQ.SendMsgAcquire pt (clientStAcquiring pt toResponse)
+        , Wsp.Handler $ \Release _toResponse ->
+            clientStIdle
+        ]
+
+    clientStAcquiring
+        :: point
+        -> (AcquireResponse point -> Wsp.Response (AcquireResponse point))
+        -> LSQ.ClientStAcquiring block (Ledger.Query block) m ()
+    clientStAcquiring pt toResponse = LSQ.ClientStAcquiring
+        { recvMsgAcquired = do
+            yield $ json $ toResponse $ AcquireSuccess pt
+            clientStAcquired
+        , recvMsgFailure = \failure -> do
+            yield $ json $ toResponse $ AcquireFailed failure
+            clientStIdle
+        }
+
+    clientStAcquired
+        :: m (LSQ.ClientStAcquired block (Ledger.Query block) m ())
+    clientStAcquired = await >>= Wsp.handle
+        (\bytes -> pass bytes *> clientStAcquired)
+        [ Wsp.Handler $ \(Acquire pt) toResponse ->
+            pure $ LSQ.SendMsgReAcquire pt (clientStAcquiring pt toResponse)
+        , Wsp.Handler $ \Release _toResponse ->
+            pure $ LSQ.SendMsgRelease clientStIdle
+        , Wsp.Handler $ \(Query (SomeQuery query encodeResult)) toResponse ->
+            pure $ LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
+                { recvMsgResult = \result -> do
+                    yield $ json $ toResponse $ QueryResponse $ encodeResult result
+                    clientStAcquired
+                }
+        ]
+
+--  _   _      _
+-- | | | |    | |
+-- | |_| | ___| |_ __   ___ _ __ ___
+-- |  _  |/ _ \ | '_ \ / _ \ '__/ __|
+-- | | | |  __/ | |_) |  __/ |  \__ \
+-- \_| |_/\___|_| .__/ \___|_|  |___/
+--              | |
+--              |_|
+
+-- | WebSocket 'Connection', connects all Ouroboros clients together from a
+-- single WebSocket connections. It works by constructing simple pipes using
+-- queues between clients. Messages first flow through the chain sync clients
+-- (as it is the one with the main performance constraints and which will likely
+-- process the most messages) and, are passed onto the next client if the
+-- message were not recognized as a 'chainSync' message. Here's a little
+-- diagram:
+--
+--     *---------------------------------------------------------------------*
+--     |                                                                     |
+--     v                     pass                  pass                fail  |
+-- WebSocket --> Chain Sync ------> Tx Submission ------> State Query ------>*
+--     ^             |                    |                   |
+--     |             | yield              | yield             | yield
+--     |             v                    v                   v
+--     *------------<*<------------------<*<------------------*
+--
+pipeClients
+    :: forall block tx err.
+        ( ToJSON block
+        , ToJSON (Point block)
+        , ToJSON (Tip block)
+        , ToJSON err
+        , ToJSON AcquireFailure
+        , FromJSON (Point block)
+        , FromJSON (SomeQuery block)
+        , FromJSON tx
+        )
+    => WS.Connection
+    -> IO (Clients IO block tx err)
+pipeClients conn = do
+    chainSyncQ    <- newTQueueIO
+    txSubmissionQ <- newTQueueIO
+    stateQueryQ   <- newTQueueIO
+
+    -- Chain Sync
+    chainSyncInternalQueue <- newQueue
+    let chainSyncClient = mkChainSyncClient chainSyncInternalQueue $ SimplePipe
+            { await = atomically $ readTQueue chainSyncQ
+            , tryAwait = atomically $ tryReadTQueue chainSyncQ
+            , pass  = atomically . writeTQueue txSubmissionQ
+            , yield
+            }
+
+    -- Tx Submission
+    let localTxSubmissionClient = mkLocalTxSubmissionClient $ SimplePipe
+            { await = atomically $ readTQueue txSubmissionQ
+            , tryAwait = atomically $ tryReadTQueue txSubmissionQ
+            , pass = atomically . writeTQueue stateQueryQ
+            , yield
+            }
+
+    -- State Query
+    let localStateQueryClient = mkLocalStateQueryClient $ SimplePipe
+            { await = atomically $ readTQueue stateQueryQ
+            , tryAwait = atomically $ tryReadTQueue stateQueryQ
+            , pass = const defaultHandler
+            , yield
+            }
+
+    -- Receiving loop
+    link =<< async (forever $ receive chainSyncQ)
+    pure Clients
+        { chainSyncClient
+        , localTxSubmissionClient
+        , localStateQueryClient
+        }
+  where
+    -- Responses are always sent through the same connection
+    yield = WS.sendTextData conn
+
+    -- Push every received messages into a first queue
+    receive source = WS.receiveData conn >>= atomically . writeTQueue source
+
+    -- | A default handler for unmatched requests.
+    defaultHandler :: IO ()
+    defaultHandler = WS.sendTextData conn $ json $ Wsp.clientFault
+        "Invalid request: no route found for the given request. Verify the \
+        \request's name and/or parameters."
+
+-- | Provide a handler for exception arising when trying to connect to a node
+-- that is down.
+handleIOException
+    :: Tracer IO TraceOgmios
+    -> WS.Connection
+    -> IOException
     -> IO ()
-defaultHandler conn = WS.sendTextData conn $ json $ Wsp.clientFault
-    "Invalid request: no route found for the given request. Verify the request's \
-    \name and/or parameters."
+handleIOException tr conn e = do
+    traceWith tr $ OgmiosFailedToConnect e
+    let msg = "Connection with the node lost or failed."
+    WS.sendClose conn $ json $ Wsp.serverFault msg
 
 data SimplePipe input output (m :: * -> *) = SimplePipe
     { await :: m input
@@ -335,9 +466,22 @@ data Queue a (m :: * -> *) = Queue
         -- ^ Stash a value for later.
     }
 
+newQueue :: IO (Queue a IO)
+newQueue = do
+    resp <- newTQueueIO
+    return Queue
+        { pop = atomically $ readTQueue resp
+        , tryPop = atomically $ tryReadTQueue resp
+        , push  = atomically . writeTQueue resp
+        }
+
 --
 -- ToJSON / FromJSON instances. Nothing to see here.
 --
+
+-- | Helper function to yield a value that is serialisable to JSON.
+json :: forall a. ToJSON a => a -> ByteString
+json = BL.toStrict . Json.encode
 
 type instance Wsp.ServiceName (Wsp.Response _) = "ogmios"
 
@@ -382,3 +526,32 @@ instance ToJSON e => ToJSON (SubmitResult e) where
     toJSON = \case
         SubmitSuccess -> Json.String "SubmitSuccess"
         SubmitFail e  -> Json.object [ "SubmitFail" .= e ]
+
+instance
+    ( FromJSON (Point block)
+    ) => FromJSON (Wsp.Request (Acquire (Point block)))
+  where
+    parseJSON = Wsp.genericFromJSON Wsp.defaultOptions
+
+instance
+    ( ToJSON AcquireFailure
+    , ToJSON (Point block)
+    ) => ToJSON (Wsp.Response (AcquireResponse (Point block)))
+  where
+    toJSON = Wsp.genericToJSON Wsp.defaultOptions proxy
+      where proxy = Proxy @(Wsp.Request (Acquire _))
+
+instance FromJSON (Wsp.Request Release)
+  where
+    parseJSON = Wsp.genericFromJSON Wsp.defaultOptions
+
+instance
+    ( FromJSON (SomeQuery block)
+    ) => FromJSON (Wsp.Request (Query block))
+  where
+    parseJSON = Wsp.genericFromJSON Wsp.defaultOptions
+
+instance ToJSON (Wsp.Response QueryResponse)
+  where
+    toJSON = Wsp.mkResponse Wsp.defaultOptions unQueryResponse proxy
+      where proxy = Proxy @(Wsp.Request Release) -- FIXME USE QUERY

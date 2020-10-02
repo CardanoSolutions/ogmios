@@ -5,13 +5,17 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Cardano.Types.Json.Orphans () where
+
 
 import Prelude
 
@@ -96,9 +100,13 @@ import Codec.Binary.Bech32
 import Codec.Binary.Bech32.TH
     ( humanReadablePart )
 import Control.Applicative
-    ( empty, (<|>) )
+    ( Alternative, empty, some, (<|>) )
+import Control.Arrow
+    ( right )
+import Control.Exception
+    ( PatternMatchFail (..), throw )
 import Control.Monad
-    ( (>=>) )
+    ( guard, (>=>) )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..), ToJSONKey (..), (.:), (.=) )
 import Data.Bifunctor
@@ -111,8 +119,16 @@ import Data.ByteString
     ( ByteString )
 import Data.ByteString.Short
     ( fromShort, toShort )
+import Data.Coerce
+    ( coerce )
 import Data.Foldable
     ( toList )
+import Data.Functor
+    ( ($>) )
+import Data.Functor.Contravariant
+    ( contramap )
+import Data.Functor.Identity
+    ( Identity )
 import Data.IP
     ( IPv4, IPv6 )
 import Data.List.NonEmpty
@@ -133,21 +149,29 @@ import Data.Word
     ( Word16, Word32, Word64, Word8 )
 import Numeric.Natural
     ( Natural )
+import Ogmios.Bridge
+    ( SomeQuery (..) )
 import Ouroboros.Consensus.Byron.Ledger
     ( ByronBlock (..), ByronHash (..), GenTx )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoBlock
     , CardanoEras
+    , CardanoQueryResult
     , GenTx (..)
     , HardForkApplyTxErr (..)
     , HardForkBlock (..)
+    , Query (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
     ( EraMismatch (..), OneEraHash (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..), ShelleyHash (..) )
+import Ouroboros.Consensus.Shelley.Ledger.Ledger
+    ( NonMyopicMemberRewards (..), Query (..) )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..), genesisPoint )
+import Ouroboros.Network.Protocol.LocalStateQuery.Type
+    ( AcquireFailure (..) )
 import Shelley.Spec.Ledger.API
     ( ApplyTxError (..) )
 import Shelley.Spec.Ledger.STS.Ppup
@@ -164,6 +188,7 @@ import qualified Cardano.Crypto.VRF.Class as CC
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Codec.CBOR.Read as Cbor
 import qualified Data.Aeson as Json
+import qualified Data.Aeson.Encoding.Internal as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map.Strict as Map
@@ -234,6 +259,13 @@ instance Crypto crypto => ToJSON (HardForkApplyTxErr (CardanoEras crypto)) where
         ApplyTxErrWrongEra e ->
             toAltJSON e
 
+instance ToJSON AcquireFailure where
+    toJSON = \case
+        AcquireFailurePointTooOld ->
+            Json.String "pointTooOld"
+        AcquireFailurePointNotOnChain ->
+            Json.String "pointNotOnChain"
+
 instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
     parseJSON json = parseOrigin json <|> parsePoint json
       where
@@ -258,6 +290,23 @@ instance Crypto crypto => FromJSON (GenTx (CardanoBlock crypto))
       where
         deserialiseCBOR = either (fail . show) (pure . GenTxShelley . snd)
             . Cbor.deserialiseFromBytes fromCBOR
+
+instance Crypto crypto => FromJSON (SomeQuery (CardanoBlock crypto)) where
+    parseJSON = choice
+        [ parseGetLedgerTip
+        , parseGetEpochNo
+        , parseGetNonMyopicMemberRewards
+        , parseGetCurrentPParams
+        , parseGetProposedPParamsUpdates
+        , parseGetStakeDistribution
+        , parseGetUTxO
+        , parseGetFilteredUTxO
+        ]
+
+instance (Crypto crypto, ToAltJSON a) => ToAltJSON (CardanoQueryResult crypto a) where
+    toAltJSON = \case
+        Left _err -> error "impossible (currently): MismatchInfo triggered."
+        Right a -> toAltJSON a
 
 -- There are debug JSON instances for many types in cardano-ledger but those are
 -- constructed generically and contains too many little discrepency which makes
@@ -284,6 +333,9 @@ instance Crypto crypto => FromJSON (GenTx (CardanoBlock crypto))
 -- has changed in a future update.
 class ToAltJSON a where
     toAltJSON :: a -> Json.Value
+
+class FromAltJSON a where
+    fromAltJSON :: Json.Value -> Json.Parser a
 
 -- * Instances for primitive types
 
@@ -328,6 +380,9 @@ instance ToAltJSON IPv4 where
 
 instance ToAltJSON IPv6 where
     toAltJSON = toJSON
+
+instance (ToAltJSON a, ToAltJSON b) => ToAltJSON (a, b) where
+    toAltJSON (a,b) = toJSON (toAltJSON a, toAltJSON b)
 
 instance ToAltJSON a => ToAltJSON [a] where
     toAltJSON = toJSON . fmap toAltJSON
@@ -397,6 +452,9 @@ instance ToAltJSON SystemTag where
 instance ToAltJSON VerificationKey where
     toAltJSON = toJSON
 
+instance Crypto crypto => ToAltJSON (Point (CardanoBlock crypto)) where
+    toAltJSON = toJSON
+
 -- * Unary types wrapping some types above
 
 instance ToAltJSON SL.ChainCode where
@@ -459,6 +517,10 @@ instance Crypto crypto => ToAltJSON (SL.VKey any (Shelley crypto)) where
 instance ToAltJSON (CC.Hash alg a) where
     toAltJSON (CC.UnsafeHash h) = toAltJSON (fromShort h)
 
+instance CC.HashAlgorithm alg => FromAltJSON (CC.Hash alg a) where
+    fromAltJSON =
+        parseJSON >=> maybe empty pure . CC.hashFromTextAsHex
+
 instance CC.DSIGNAlgorithm alg => ToAltJSON (CC.VerKeyDSIGN alg) where
     toAltJSON = toAltJSON . CC.rawSerialiseVerKeyDSIGN
 
@@ -492,6 +554,12 @@ instance Crypto crypto => ToAltJSON (SL.TxId (Shelley crypto)) where
 instance ToAltJSON SL.Coin where
     toAltJSON = toAltJSON . SL.unCoin
 
+instance FromAltJSON SL.Coin where
+    fromAltJSON = fmap SL.word64ToCoin . parseJSON
+
+coinToText :: SL.Coin -> Text
+coinToText = T.pack . show . SL.unCoin
+
 instance Crypto crypto => ToAltJSON (SL.KeyHash any (Shelley crypto)) where
     toAltJSON (SL.KeyHash hash) = toAltJSON hash
 
@@ -503,9 +571,18 @@ instance {-# OVERLAPS #-} Crypto crypto => ToAltJSON (SL.KeyHash 'SL.StakePool (
 instance Crypto crypto => ToAltJSON (SL.MetaDataHash (Shelley crypto)) where
     toAltJSON (SL.MetaDataHash hash) = toAltJSON hash
 
-instance Crypto crypto => ToJSONKey (SL.ScriptHash (Shelley crypto))
 instance Crypto crypto => ToAltJSON (SL.ScriptHash (Shelley crypto)) where
     toAltJSON (SL.ScriptHash hash) = toAltJSON hash
+
+instance Crypto crypto => ToJSONKey (SL.ScriptHash (Shelley crypto)) where
+    toJSONKey = contramap scriptHashToText toJSONKey
+
+scriptHashToText
+    :: Crypto crypto
+    => SL.ScriptHash (Shelley crypto)
+    -> Text
+scriptHashToText =
+    unsafeMatchString . toAltJSON
 
 instance Crypto crypto => ToAltJSON (SL.WitHashes (Shelley crypto)) where
     toAltJSON (SL.WitHashes hash) = toAltJSON hash
@@ -1257,8 +1334,40 @@ instance ToAltJSON EraMismatch where
 
 instance Crypto crypto => ToAltJSON (SL.Credential any (Shelley crypto)) where
     toAltJSON = \case
-        SL.ScriptHashObj hash -> toAltJSON hash
         SL.KeyHashObj hash -> toAltJSON hash
+        SL.ScriptHashObj hash -> toAltJSON hash
+
+instance {-# OVERLAPS #-} Crypto crypto => ToJSONKey (SL.Credential any (Shelley crypto)) where
+    toJSONKey = contramap credentialToText toJSONKey
+
+-- FIXME: Makes it possible to distinguish between KeyHash and ScriptHash
+-- credentials. Both are encoded as hex-encoded strings. Encoding them as object
+-- is ill-advised because we also need them as key of the non-myopic member
+-- rewards map.
+--
+-- A possible option: encode them as Bech32 strings with different prefixes.
+instance Crypto crypto => FromAltJSON (SL.Credential any (Shelley crypto)) where
+    fromAltJSON =
+        fmap (SL.KeyHashObj . SL.KeyHash) . fromAltJSON
+
+credentialToText
+    :: Crypto crypto
+    => SL.Credential any (Shelley crypto)
+    -> Text
+credentialToText = \case
+    SL.KeyHashObj (SL.KeyHash hash) -> unsafeMatchString $ toAltJSON hash
+    SL.ScriptHashObj hash -> unsafeMatchString $ toAltJSON hash
+
+instance Crypto crypto => ToJSONKey (Either SL.Coin (SL.Credential any (Shelley crypto))) where
+    toJSONKey = Json.ToJSONKeyText
+        (\case
+            Left coin -> coinToText coin
+            Right cred -> credentialToText cred
+        )
+        (\case
+            Left coin -> Json.text $ coinToText coin
+            Right cred -> Json.text $ credentialToText cred
+        )
 
 instance Crypto crypto => ToAltJSON (SL.Update (Shelley crypto)) where
     toAltJSON (SL.Update update epoch) = Json.object
@@ -1286,6 +1395,28 @@ instance ToAltJSON (SL.PParams' SL.StrictMaybe (Shelley crypto)) where
         , "minUTxOValue" .= toAltJSON (SL._minUTxOValue x)
         , "minPoolCost" .= toAltJSON (SL._minPoolCost x)
         ]
+
+instance ToAltJSON (SL.PParams' Identity (Shelley crypto)) where
+    toAltJSON x = Json.object
+        [ "minFeeCoefficient" .= toAltJSON (SL._minfeeA x)
+        , "minFeeConstant" .= toAltJSON (SL._minfeeB x)
+        , "maxBlockBodySize" .= toAltJSON (SL._maxBBSize x)
+        , "maxBlockHeaderSize" .= toAltJSON (SL._maxBHSize x)
+        , "maxTxSize" .= toAltJSON (SL._maxTxSize x)
+        , "stakeKeyDeposit" .= toAltJSON (SL._keyDeposit x)
+        , "poolDeposit" .= toAltJSON (SL._poolDeposit x)
+        , "poolRetirementEpochBound" .= toAltJSON (SL._eMax x)
+        , "desiredNumberOfPools" .= toAltJSON (SL._nOpt x)
+        , "poolInfluence" .= toAltJSON (SL._a0 x)
+        , "monetaryExpansion" .= toAltJSON (SL._rho x)
+        , "treasuryExpansion" .= toAltJSON (SL._tau x)
+        , "decentralizationParameter" .= toAltJSON (SL._d x)
+        , "extraEntropy" .= toAltJSON (SL._extraEntropy x)
+        , "protocolVersion" .= toAltJSON (SL._protocolVersion x)
+        , "minUTxOValue" .= toAltJSON (SL._minUTxOValue x)
+        , "minPoolCost" .= toAltJSON (SL._minPoolCost x)
+        ]
+
 
 instance ToAltJSON SL.Nonce where
     toAltJSON = \case
@@ -1329,9 +1460,133 @@ instance Crypto crypto => ToAltJSON (SL.BootstrapWitness (Shelley crypto)) where
         , "signature" .= toAltJSON sig
         ]
 
+instance Crypto crypto => ToAltJSON (NonMyopicMemberRewards (Shelley crypto)) where
+    toAltJSON (NonMyopicMemberRewards rewards) = toAltJSON rewards
+
+instance Crypto crypto => ToAltJSON (SL.PoolDistr (Shelley crypto)) where
+    toAltJSON (SL.PoolDistr m) = toAltJSON m
+
+instance Crypto crypto => ToAltJSON (SL.IndividualPoolStake (Shelley crypto)) where
+    toAltJSON x = Json.object
+        [ "stake" .= toAltJSON (SL.individualPoolStake x)
+        , "vrf" .= toAltJSON (SL.individualPoolStakeVrf x)
+        ]
+
+instance Crypto crypto => ToAltJSON (SL.UTxO (Shelley crypto)) where
+    toAltJSON (SL.UTxO m) = toAltJSON (Map.toList m)
+
+--
+-- Local State Queries
+--
+
+parseGetLedgerTip
+    :: forall crypto. (Crypto crypto)
+    => Json.Value
+    -> Json.Parser (SomeQuery (CardanoBlock crypto))
+parseGetLedgerTip = Json.withText "SomeQuery" $ \text -> do
+    guard (text == "ledgerTip") $> SomeQuery
+        { query = QueryIfCurrentShelley GetLedgerTip
+        , encodeResult = toAltJSON. right (coerce @_ @(Point (CardanoBlock crypto)))
+        }
+
+parseGetEpochNo
+    :: forall crypto. (Crypto crypto)
+    => Json.Value
+    -> Json.Parser (SomeQuery (CardanoBlock crypto))
+parseGetEpochNo = Json.withText "SomeQuery" $ \text -> do
+    guard (text == "currentEpoch") $> SomeQuery
+        { query = QueryIfCurrentShelley GetEpochNo
+        , encodeResult = toAltJSON
+        }
+
+parseGetNonMyopicMemberRewards
+    :: forall crypto. (Crypto crypto)
+    => Json.Value
+    -> Json.Parser (SomeQuery (CardanoBlock crypto))
+parseGetNonMyopicMemberRewards = Json.withObject "SomeQuery" $ \obj -> do
+    arg <- obj .: "nonMyopicMemberRewards" >>= some . choice
+        [ parseStake
+        , parseCredential
+        ]
+    pure $ SomeQuery
+        { query = QueryIfCurrentShelley (GetNonMyopicMemberRewards $ Set.fromList arg)
+        , encodeResult = toAltJSON
+        }
+  where
+    parseStake
+        :: Json.Value
+        -> Json.Parser (Either SL.Coin b)
+    parseStake = fmap Left . fromAltJSON
+
+    parseCredential
+        :: Json.Value
+        -> Json.Parser (Either a (SL.Credential 'SL.Staking (Shelley crypto)))
+    parseCredential = fmap Right . fromAltJSON
+
+parseGetCurrentPParams
+    :: forall crypto. (Crypto crypto)
+    => Json.Value
+    -> Json.Parser (SomeQuery (CardanoBlock crypto))
+parseGetCurrentPParams = Json.withText "SomeQuery" $ \text -> do
+    guard (text == "currentProtocolParameters") $> SomeQuery
+        { query = QueryIfCurrentShelley GetCurrentPParams
+        , encodeResult = toAltJSON
+        }
+
+parseGetProposedPParamsUpdates
+    :: forall crypto. (Crypto crypto)
+    => Json.Value
+    -> Json.Parser (SomeQuery (CardanoBlock crypto))
+parseGetProposedPParamsUpdates = Json.withText "SomeQuery" $ \text -> do
+    guard (text == "proposedProtocolParameters") $> SomeQuery
+        { query = QueryIfCurrentShelley GetProposedPParamsUpdates
+        , encodeResult = toAltJSON
+        }
+
+parseGetStakeDistribution
+    :: forall crypto. (Crypto crypto)
+    => Json.Value
+    -> Json.Parser (SomeQuery (CardanoBlock crypto))
+parseGetStakeDistribution = Json.withText "SomeQuery" $ \text -> do
+    guard (text == "stakeDistribution") $> SomeQuery
+        { query = QueryIfCurrentShelley GetStakeDistribution
+        , encodeResult = toAltJSON
+        }
+
+parseGetUTxO
+    :: forall crypto. (Crypto crypto)
+    => Json.Value
+    -> Json.Parser (SomeQuery (CardanoBlock crypto))
+parseGetUTxO = Json.withText "SomeQuery" $ \text -> do
+    guard (text == "utxo") $> SomeQuery
+        { query = QueryIfCurrentShelley GetUTxO
+        , encodeResult = toAltJSON
+        }
+
+parseGetFilteredUTxO
+    :: forall crypto. (Crypto crypto)
+    => Json.Value
+    -> Json.Parser (SomeQuery (CardanoBlock crypto))
+parseGetFilteredUTxO = Json.withObject "SomeQuery" $ \obj -> do
+    -- FIXME: Do not use cardano-ledger-specs FromJSON instances here, but allow
+    -- parsing addresses from base58. bech32 or base16.
+    addrs <- obj .: "utxo"
+    pure SomeQuery
+        { query = QueryIfCurrentShelley (GetFilteredUTxO addrs)
+        , encodeResult = toAltJSON
+        }
+
 --
 -- Internal / Helpers
 --
+
+-- | Handy to avoid duplicating the serialization logic. Use only in places
+-- where it is actually _safe_ and where the values is known to be a 'Text'
+unsafeMatchString :: Json.Value -> Text
+unsafeMatchString = \case
+    Json.String txt -> txt
+    _ -> throw $ PatternMatchFail "expected value to be serialized as a JSON 'String'"
+
 
 base16 :: ByteArrayAccess bin => bin -> Text
 base16 = T.decodeUtf8 . convertToBase Base16
@@ -1344,3 +1599,6 @@ fromBase64 = either (fail . show) pure . convertFromBase Base64
 
 bech32 :: HumanReadablePart -> ByteString -> Text
 bech32 hrp bytes = Bech32.encodeLenient hrp (Bech32.dataPartFromBytes bytes)
+
+choice :: Alternative f => [a -> f b] -> a -> f b
+choice xs a = foldr (<|>) empty (xs <*> pure a)

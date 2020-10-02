@@ -90,8 +90,7 @@ websocketApp tr metrics (versionData, epochSlots, _) Options{nodeSocket} pending
     conn <- WS.acceptRequest pending
     recordSession metrics $ WS.withPingThread conn 30 (pure ()) $ handlers $ do
         let trClient = contramap OgmiosClient tr
-        (chainSync, txSubmit, stateQuery) <- pipeClients conn
-        let client = mkClient trClient epochSlots chainSync txSubmit stateQuery
+        client <- mkClient trClient epochSlots <$> pipeClients conn
         connectClient trClient client versionData nodeSocket
             `catch` handleIOException tr conn
         traceWith tr $ OgmiosConnectionEnded userAgent

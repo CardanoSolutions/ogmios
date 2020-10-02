@@ -103,6 +103,7 @@ executables:
       - -with-rtsopts=-A250m
       - -with-rtsopts=-T
     dependencies:
+    - aeson
     - async
     - contra-tracer
     - directory

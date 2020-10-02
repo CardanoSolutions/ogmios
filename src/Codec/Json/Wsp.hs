@@ -20,6 +20,7 @@ module Codec.Json.Wsp
     -- * Types
       Request
     , Response
+    , mkResponse
     , ServiceName
 
     -- * ToJSON / FromJSON
@@ -81,7 +82,8 @@ genericFromJSON
 genericFromJSON opts =
     fmap (\(refl, x) -> Request refl (to x)) . gWSPFromJSON opts
 
--- | Serialize a given response to JSON
+-- | Serialize a given response to JSON, provided that the result has a generic
+-- JSON instance.
 genericToJSON
     :: forall req res.
         ( Generic res
@@ -93,12 +95,26 @@ genericToJSON
     -> Proxy (Request req)
     -> Response res
     -> Json.Value
-genericToJSON opts _ (Response refl res) = Json.object
+genericToJSON opts =
+    mkResponse opts (gWSPToJSON opts . from)
+
+-- | Serialize a given response to JSON
+mkResponse
+    :: forall req res.
+        ( KnownSymbol (ServiceName (Response res))
+        , GWSPMethodName (Rep req)
+        )
+    => Options
+    -> (res -> Json.Value)
+    -> Proxy (Request req)
+    -> Response res
+    -> Json.Value
+mkResponse opts toResult _ (Response refl res) = Json.object
     [ "type" .= WspResponse
     , "version" .= V1_0
     , "servicename" .= symbolVal (Proxy @(ServiceName (Response res)))
     , "methodname" .= methodName
-    , "result" .= gWSPToJSON opts (from res)
+    , "result" .= toResult res
     , "reflection" .= refl
     ]
   where
