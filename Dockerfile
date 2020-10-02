@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 RUN stack upgrade --binary-version 2.1.3
 
-COPY stack.yaml snapshot.yaml package.yaml /build/
+COPY ogmios-server/stack.yaml ogmios-server/snapshot.yaml ogmios-server/package.yaml /build/
 RUN stack setup
 RUN stack build --only-snapshot
 RUN stack build --only-dependencies

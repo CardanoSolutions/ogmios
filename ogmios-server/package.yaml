@@ -9,13 +9,6 @@ description:         Please see the README on GitHub at <https://github.com/Ktor
 synopsis:            A JSON-WSP WebSocket client for cardano-node
 category:            Web
 
-extra-source-files:
-- README.md
-- ogmios.wsp.json
-- Dockerfile
-- docker-compose.yml
-- docs/COMMAND_LINE.md
-
 dependencies:
 - base >= 4.7 && < 5
 

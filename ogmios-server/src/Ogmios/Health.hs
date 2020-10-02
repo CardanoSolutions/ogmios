@@ -379,7 +379,7 @@ getBenchmarkR = runHandlerM $ do
 
 getSpecificationR :: Handler Server
 getSpecificationR = runHandlerM $ do
-    asContent "application/json" $ T.decodeUtf8 $(embedFile "ogmios.wsp.json")
+    asContent "application/json" $ T.decodeUtf8 $(embedFile "../ogmios.wsp.json")
 
 sample :: Ekg.Store -> IO (Maybe RuntimeStats, Integer, Integer, DistributionStats)
 sample store = do

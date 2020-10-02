@@ -5,7 +5,7 @@ resolver: snapshot.yaml
 ghc-options: {"$locals": -ddump-to-file -ddump-hi}
 
 packages:
-- .
+- ogmios-server
 
 extra-deps:
 - wai-routes-0.10.4
