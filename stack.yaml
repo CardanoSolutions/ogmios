@@ -8,6 +8,7 @@ packages:
 - ogmios-server
 
 - modules/json-wsp
+- modules/git-th
 
 extra-deps:
 - wai-routes-0.10.4

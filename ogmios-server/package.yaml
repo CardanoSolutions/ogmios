@@ -63,6 +63,7 @@ library:
     - ouroboros-network
     - ouroboros-network-framework
     - process
+    - git-th
     - safe
     - scientific
     - shelley-spec-ledger
