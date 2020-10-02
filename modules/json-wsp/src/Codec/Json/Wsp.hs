@@ -46,9 +46,10 @@ import Data.Char
     ( toLower )
 import Data.Proxy
     ( Proxy (..) )
-import GHC.Generics
 import GHC.TypeLits
     ( KnownSymbol, Symbol, symbolVal )
+
+import GHC.Generics
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json

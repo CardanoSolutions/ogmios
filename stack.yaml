@@ -7,6 +7,8 @@ ghc-options: {"$locals": -ddump-to-file -ddump-hi}
 packages:
 - ogmios-server
 
+- modules/json-wsp
+
 extra-deps:
 - wai-routes-0.10.4
 

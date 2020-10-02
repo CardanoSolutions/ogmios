@@ -59,8 +59,6 @@ import Control.Monad
     ( forever, guard )
 import Control.Monad.Class.MonadThrow
     ( MonadThrow )
-import Control.Monad.Class.MonadTimer
-    ( threadDelay )
 import Control.Tracer
     ( Tracer, traceWith )
 import Data.Aeson
@@ -97,7 +95,6 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Type
 import qualified Codec.Json.Wsp as Wsp
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
-import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString.Lazy as BL
 import qualified Network.WebSockets as WS
 import qualified Ouroboros.Consensus.Ledger.Abstract as Ledger

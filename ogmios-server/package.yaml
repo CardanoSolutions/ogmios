@@ -52,6 +52,7 @@ library:
     - io-sim-classes
     - iohk-monitoring
     - iproute
+    - json-wsp
     - memory
     - network-mux
     - optparse-applicative
