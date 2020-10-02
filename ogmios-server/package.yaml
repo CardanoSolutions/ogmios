@@ -34,13 +34,11 @@ library:
     - async
     - bech32
     - bech32-th
-    - binary
     - bytestring
     - cardano-api
     - cardano-binary
     - cardano-client
     - cardano-crypto-class
-    - cardano-crypto-praos
     - cardano-crypto-wrapper
     - cardano-ledger
     - cardano-prelude
@@ -55,7 +53,6 @@ library:
     - iproute
     - json-wsp
     - memory
-    - network-mux
     - optparse-applicative
     - ouroboros-consensus
     - ouroboros-consensus-byron
@@ -63,18 +60,15 @@ library:
     - ouroboros-consensus-shelley
     - ouroboros-network
     - ouroboros-network-framework
-    - process
     - git-th
     - safe
     - scientific
     - shelley-spec-ledger
     - stm
-    - template-haskell
     - text
     - time
     - time-extra
     - typed-protocols
-    - typed-protocols-examples
     - unordered-containers
     - vector
     - wai
@@ -100,7 +94,6 @@ executables:
       - -with-rtsopts=-A250m
       - -with-rtsopts=-T
     dependencies:
-    - aeson
     - async
     - cardano-client
     - contra-tracer

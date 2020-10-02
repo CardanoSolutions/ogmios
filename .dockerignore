@@ -1,16 +1,18 @@
 *
 
-!Setup.hs
-!package.yaml
-!package.yaml.tmp
-!snapshot.yaml
-!stack.yaml
-!ogmios.wsp.json
 !LICENSE
+!stack.yaml
+!snapshot.yaml
+!ogmios.wsp.json
 
-!app/
-!src/
-!static/
+!ogmios-server/app/
+!ogmios-server/src/
+!ogmios-server/static/
+!ogmios-server/Setup.hs
+!ogmios-server/package.yaml
+
+!modules/
+modules/ouroboros-network
 
 # Needed for embeddding the version
 !.git/

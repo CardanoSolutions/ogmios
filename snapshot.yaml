@@ -22,21 +22,13 @@ packages:
 - git: https://github.com/KtorZ/ouroboros-network
   commit: b36ac2404718b0c14296fde557ff2d7dacdde54b
   subdirs:
-    - io-sim
     - io-sim-classes
     - network-mux
-    - ntp-client
     - ouroboros-consensus
     - ouroboros-consensus-byron
-    - ouroboros-consensus-byron-test
-    - ouroboros-consensus-byronspec
     - ouroboros-consensus-cardano
-    - ouroboros-consensus-mock
     - ouroboros-consensus-shelley
-    - ouroboros-consensus-test
     - ouroboros-network
     - ouroboros-network-framework
-    - ouroboros-network-testing
     - typed-protocols
     - typed-protocols-examples
-    - Win32-network

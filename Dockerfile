@@ -19,7 +19,19 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 RUN stack upgrade --binary-version 2.1.3
 
-COPY ogmios-server/stack.yaml ogmios-server/snapshot.yaml ogmios-server/package.yaml /build/
+RUN mkdir -p \
+  modules/cardano-client \
+  modules/git-th \
+  modules/json-wsp \
+  modules/time-extra \
+  ogmios-server
+COPY modules/cardano-client/package.yaml modules/cardano-client
+COPY modules/git-th/package.yaml modules/git-th
+COPY modules/json-wsp/package.yaml modules/json-wsp
+COPY modules/time-extra/package.yaml modules/time-extra
+COPY ogmios-server/package.yaml ogmios-server
+COPY stack.yaml snapshot.yaml .
+
 RUN stack setup
 RUN stack build --only-snapshot
 RUN stack build --only-dependencies
