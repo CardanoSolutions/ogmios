@@ -31,12 +31,8 @@ import Cardano.Network.Protocol.NodeToClient
     ( NodeVersionData )
 import Control.Tracer
     ( Tracer, traceWith )
-import Data.Text
-    ( Text )
 import Ouroboros.Consensus.Config.SecurityParam
     ( SecurityParam (..) )
-import Ouroboros.Network.CodecCBORTerm
-    ( CodecCBORTerm )
 import Ouroboros.Network.Magic
     ( NetworkMagic (..) )
 import Ouroboros.Network.NodeToClient

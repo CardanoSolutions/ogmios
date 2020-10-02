@@ -10,6 +10,7 @@ packages:
 - modules/cardano-client
 - modules/git-th
 - modules/json-wsp
+- modules/time-extra
 
 extra-deps:
 - wai-routes-0.10.4

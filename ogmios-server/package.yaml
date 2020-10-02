@@ -72,6 +72,7 @@ library:
     - template-haskell
     - text
     - time
+    - time-extra
     - typed-protocols
     - typed-protocols-examples
     - unordered-containers

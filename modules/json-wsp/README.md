@@ -1,1 +1,1 @@
-# JSON-WSP
+# json-wsp
