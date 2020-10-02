@@ -7,8 +7,7 @@
 
 module Cardano.Byron.Constants
     (
-      NodeVersionData
-    , EpochSlots
+      EpochSlots
     , SecurityParam
     , lookupVersionData
 
@@ -28,6 +27,8 @@ import Cardano.Byron.Constants.Trace
     ( TraceLookup (..) )
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
+import Cardano.Network.Protocol.NodeToClient
+    ( NodeVersionData )
 import Control.Tracer
     ( Tracer, traceWith )
 import Data.Text
@@ -46,11 +47,6 @@ import System.Environment
     ( lookupEnv )
 import System.Exit
     ( exitFailure )
-
-
--- Type alias to lighten signatures below
-type NodeVersionData =
-    (NodeToClientVersionData, CodecCBORTerm Text NodeToClientVersionData)
 
 -- | Lookup environment for a given version data name, default to mainnet.
 lookupVersionData

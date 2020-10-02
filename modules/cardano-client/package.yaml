@@ -1,4 +1,4 @@
-name:                ogmios
+name:                cardano-client
 version:             1.0.0
 github:              "KtorZ/cardano-ogmios"
 license:             MPL-2.0
@@ -6,8 +6,8 @@ author:              "KtorZ <matthias.benkort@gmail.com>"
 maintainer:          "matthias.benkort@gmail.com"
 copyright:           "2020 KtorZ"
 description:         Please see the README on GitHub at <https://github.com/KtorZ/ogmios>
-synopsis:            A JSON-WSP WebSocket client for cardano-node
-category:            Web
+synopsis:            Utilities to build a cardano client using the Ouroboros mini-protocols
+category:            Cardano
 
 dependencies:
 - base >= 4.7 && < 5
@@ -32,13 +32,9 @@ library:
   dependencies:
     - aeson
     - async
-    - bech32
-    - bech32-th
     - binary
     - bytestring
-    - cardano-api
     - cardano-binary
-    - cardano-client
     - cardano-crypto-class
     - cardano-crypto-praos
     - cardano-crypto-wrapper
@@ -48,12 +44,8 @@ library:
     - cborg
     - containers
     - contra-tracer
-    - ekg-core
-    - file-embed
     - io-sim-classes
     - iohk-monitoring
-    - iproute
-    - json-wsp
     - memory
     - network-mux
     - optparse-applicative
@@ -64,76 +56,13 @@ library:
     - ouroboros-network
     - ouroboros-network-framework
     - process
-    - git-th
     - safe
     - scientific
     - shelley-spec-ledger
     - stm
-    - template-haskell
     - text
     - time
     - typed-protocols
     - typed-protocols-examples
     - unordered-containers
     - vector
-    - wai
-    - wai-routes
-    - websockets
-
-executables:
-  ogmios:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -Wall
-    - -Wcompat
-    - -fwarn-redundant-constraints
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    when:
-      condition: flag(production)
-      ghc-options:
-      - -Werror
-      - -O2
-      - -with-rtsopts=-A250m
-      - -with-rtsopts=-T
-    dependencies:
-    - aeson
-    - async
-    - cardano-client
-    - contra-tracer
-    - directory
-    - http-types
-    - ogmios
-    - text
-    - wai-websockets
-    - warp
-    - websockets
-
-tests:
-  unit:
-    main: Spec.hs
-    source-dirs: test/unit
-    ghc-options:
-    - -Wcompat
-    - -fwarn-redundant-constraints
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - aeson
-    - aeson-pretty
-    - bytestring
-    - cardano-ledger
-    - cardano-ledger-test
-    - generic-arbitrary
-    - hedgehog-quickcheck
-    - hjsonschema
-    - hspec
-    - ogmios
-    - ouroboros-consensus-byron
-    - ouroboros-consensus-byron-test
-    - ouroboros-network
-    - QuickCheck
-    - text

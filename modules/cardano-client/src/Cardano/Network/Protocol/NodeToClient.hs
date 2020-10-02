@@ -14,6 +14,7 @@ module Cardano.Network.Protocol.NodeToClient
     (
     -- * Building
       Block
+    , NodeVersionData
     , Client
     , Clients(..)
     , mkClient
@@ -32,8 +33,6 @@ module Cardano.Network.Protocol.NodeToClient
 import Prelude hiding
     ( read )
 
-import Cardano.Byron.Constants
-    ( NodeVersionData )
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
 import Cardano.Network.Protocol.NodeToClient.Trace
@@ -58,6 +57,8 @@ import Data.Map.Strict
     ( (!) )
 import Data.Proxy
     ( Proxy (..) )
+import Data.Text
+    ( Text )
 import Data.Void
     ( Void )
 import Network.Mux
@@ -88,6 +89,8 @@ import Ouroboros.Network.Channel
     ( Channel )
 import Ouroboros.Network.Codec
     ( DeserialiseFailure )
+import Ouroboros.Network.CodecCBORTerm
+    ( CodecCBORTerm )
 import Ouroboros.Network.Driver.Simple
     ( TraceSendRecv, runPeer, runPipelinedPeer )
 import Ouroboros.Network.Mux
@@ -97,6 +100,7 @@ import Ouroboros.Network.NodeToClient
     , NetworkConnectTracers (..)
     , NodeToClientProtocols (..)
     , NodeToClientVersion (..)
+    , NodeToClientVersionData (..)
     , connectTo
     , localSnocket
     , nodeToClientProtocols
@@ -119,6 +123,10 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Type
 
 -- | Concrete block type.
 type Block = CardanoBlock StandardCrypto
+
+-- Type alias to lighten signatures below
+type NodeVersionData =
+    (NodeToClientVersionData, CodecCBORTerm Text NodeToClientVersionData)
 
 -- | Type representing a network client running two mini-protocols to sync
 -- from the chain and, submit transactions.

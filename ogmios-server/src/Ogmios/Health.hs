@@ -38,12 +38,17 @@ module Ogmios.Health
 import Prelude hiding
     ( max, min )
 
-import Cardano.Byron.Constants
-    ( NodeVersionData )
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
 import Cardano.Network.Protocol.NodeToClient
-    ( Block, Client, codecs, connectClient, localChainSync, nullProtocol )
+    ( Block
+    , Client
+    , NodeVersionData
+    , codecs
+    , connectClient
+    , localChainSync
+    , nullProtocol
+    )
 import Control.Concurrent
     ( threadDelay )
 import Control.Concurrent.Async

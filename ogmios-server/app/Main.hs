@@ -34,9 +34,9 @@ import System.Directory
 import Cardano.BM.Trace.Extra
     ( withStdoutTracer )
 import Cardano.Byron.Constants
-    ( EpochSlots, NodeVersionData, SecurityParam, lookupVersionData )
+    ( EpochSlots, SecurityParam, lookupVersionData )
 import Cardano.Network.Protocol.NodeToClient
-    ( connectClient, mkClient )
+    ( NodeVersionData, connectClient, mkClient )
 import Ogmios.Bridge
     ( handleIOException, pipeClients )
 import Ogmios.Health
