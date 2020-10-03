@@ -1,9 +1,11 @@
 <p align="center">
-  <a href="https://app.circleci.com/pipelines/github/KtorZ/cardano-ogmios"><img src="https://img.shields.io/circleci/build/github/KtorZ/cardano-ogmios/master?color=%23cc3898&style=for-the-badge&token=544a094c627f593d00aa74b5a099e81b5cc6c66f" /></a>
+  <img src=".github/ogmios.png" height=400 alt="ogmios" />
 </p>
 
+---
+
 <p align="center">
-  <img src=".github/ogmios.png" height=400 alt="ogmios" />
+  <a href="https://hub.docker.com/r/ktorz/ogmios/"><img src="http://dockeri.co/image/ktorz/ogmios" alt="DockerHub"/></a>
 </p>
 
 # Overview
@@ -73,12 +75,9 @@ a relay node in a very simple and efficient way. Ogmios is very lightweight too 
 relays to create entry points on the Cardano network for various type of applications (e.g. wallets, explorers,
 chatbots, dashboards...).
 
-Here is a little [demo](https://ktorz.github.io/cardano-ogmios/demo) of a simple frontend app using Ogmios
-to display, in-real-time, the current tip of MainNet.
-
 # Getting Started
 
-[![DockerHub Badge](http://dockeri.co/image/ktorz/ogmios)](https://hub.docker.com/r/ktorz/ogmios/)
+## Mainnet
 
 ```
 🐳 docker-compose up
@@ -90,13 +89,11 @@ to display, in-real-time, the current tip of MainNet.
 - An Ogmios server using the `latest` Dockerhub build, listening to `localhost` on port `:1337`.
 - To build Ogmios from source, pass the `--build` flag
 
-## testnet
+## Testnet
 
 ```
 NETWORK=testnet OGMIOS_PORT=1338 docker-compose -p cardano-ogmios-testnet up
 ```
-
-Check out the [demo source](https://github.com/KtorZ/cardano-ogmios/blob/master/demo/demo.js) for a detailed albeit simple client example!
 
 <hr/>
 

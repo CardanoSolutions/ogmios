@@ -10,6 +10,7 @@ packages:
 - modules/cardano-client
 - modules/git-th
 - modules/json-wsp
+- modules/manufacture
 - modules/time-extra
 
 extra-deps:

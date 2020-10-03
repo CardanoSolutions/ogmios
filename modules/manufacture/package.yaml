@@ -1,0 +1,33 @@
+name:                manufacture
+version:             1.0.0
+github:              "KtorZ/cardano-ogmios"
+license:             MPL-2.0
+author:              "KtorZ <matthias.benkort@gmail.com>"
+maintainer:          "matthias.benkort@gmail.com"
+copyright:           "2020 KtorZ"
+description:         Please see the README on GitHub at <https://github.com/KtorZ/ogmios>
+synopsis:            Like Pipes. But not quite
+category:            Control
+
+dependencies:
+- base >= 4.7 && < 5
+
+flags:
+  production:
+    description: Compile executables for production.
+    default: False
+    manual: True
+
+library:
+  source-dirs: src
+  ghc-options:
+    - -Wall
+    - -Wcompat
+    - -fwarn-redundant-constraints
+  when:
+    condition: flag(production)
+    ghc-options:
+    - -Werror
+    - -O2
+  dependencies:
+    - stm

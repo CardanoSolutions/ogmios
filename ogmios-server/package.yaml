@@ -52,6 +52,7 @@ library:
     - iohk-monitoring
     - iproute
     - json-wsp
+    - manufacture
     - memory
     - optparse-applicative
     - ouroboros-consensus

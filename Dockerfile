@@ -23,14 +23,16 @@ RUN mkdir -p \
   modules/cardano-client \
   modules/git-th \
   modules/json-wsp \
+  modules/manufacture \
   modules/time-extra \
   ogmios-server
 COPY modules/cardano-client/package.yaml modules/cardano-client
 COPY modules/git-th/package.yaml modules/git-th
 COPY modules/json-wsp/package.yaml modules/json-wsp
+COPY modules/manufacture/package.yaml modules/manufacture
 COPY modules/time-extra/package.yaml modules/time-extra
 COPY ogmios-server/package.yaml ogmios-server
-COPY stack.yaml snapshot.yaml .
+COPY stack.yaml snapshot.yaml /build/
 
 RUN stack setup
 RUN stack build --only-snapshot
