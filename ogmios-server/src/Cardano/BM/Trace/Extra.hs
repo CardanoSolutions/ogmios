@@ -63,7 +63,6 @@ transformLogObject
     -> Tracer m (LoggerName, LogObject Text)
     -> Tracer m msg
 transformLogObject transform tr = Tracer $ \a -> do
-    traceWith tr . (mempty,) =<< LogObject
-        <$> pure mempty
-        <*> (mkLOMeta (getSeverityAnnotation a) (getPrivacyAnnotation a))
+    traceWith tr . (mempty,) =<< LogObject mempty
+        <$> (mkLOMeta (getSeverityAnnotation a) (getPrivacyAnnotation a))
         <*> pure (LogMessage (transform a))

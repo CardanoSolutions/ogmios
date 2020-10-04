@@ -122,7 +122,7 @@ import Data.ByteString.Short
 import Data.Coerce
     ( coerce )
 import Data.Foldable
-    ( toList )
+    ( asum, toList )
 import Data.Functor
     ( ($>) )
 import Data.Functor.Contravariant
@@ -1601,4 +1601,4 @@ bech32 :: HumanReadablePart -> ByteString -> Text
 bech32 hrp bytes = Bech32.encodeLenient hrp (Bech32.dataPartFromBytes bytes)
 
 choice :: Alternative f => [a -> f b] -> a -> f b
-choice xs a = foldr (<|>) empty (xs <*> pure a)
+choice xs a = asum (xs <*> pure a)

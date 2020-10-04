@@ -12,23 +12,13 @@ category:            Cardano
 dependencies:
 - base >= 4.7 && < 5
 
-flags:
-  production:
-    description: Compile executables for production.
-    default: False
-    manual: True
-
 library:
   source-dirs: src
   ghc-options:
+    - -O2
     - -Wall
     - -Wcompat
     - -fwarn-redundant-constraints
-  when:
-    condition: flag(production)
-    ghc-options:
-    - -Werror
-    - -O2
   dependencies:
     - bytestring
     - cardano-ledger

@@ -40,4 +40,4 @@ jobs:
 
     - name: 🔨 Build & Test
       run: |
-        stack --no-terminal build --haddock --no-haddock-deps --flag \*:production
+        stack --no-terminal build --haddock --no-haddock-deps --flag ogmios:production

@@ -246,8 +246,7 @@ mkHealthCheckClient notify =
         :: m (ClientPipelinedStIdle Z block (Tip block) m ())
     stInit = pure $
         SendMsgFindIntersect [genesisPoint] $ stIntersect $ \tip -> pure $
-            SendMsgFindIntersect [getTipPoint tip] $ stIntersect $ \_tip ->
-                stIdle
+            SendMsgFindIntersect [getTipPoint tip] $ stIntersect (const stIdle)
 
     stIntersect
         :: (Tip block -> m (ClientPipelinedStIdle Z block (Tip block) m ()))
