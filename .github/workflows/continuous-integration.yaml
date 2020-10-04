@@ -1,0 +1,43 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches: [ "master" ]
+  push:
+    branches: [ "master" ]
+    tags: [ "*.*.*" ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: 💽 Install OS Packages
+      uses: mstksg/get-package@2a4b48d5
+      with:
+        apt-get: libgmp-dev libssl-dev libsystemd-dev libsodium-dev zlib1g-dev
+
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v2.3.3
+
+    - name: 🧰 Setup Stack
+      uses: mstksg/setup-stack@v2
+
+    - name: 💾 Cache Dependencies
+      id: cache
+      uses: actions/cache@v2.1.1
+      with:
+        path: ~/.stack
+        key: ${{ matrix.os }}-${{ hashFiles('stack.yaml') }}
+
+    - name: 📸 Build Snapshot
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: |
+        stack --no-terminal build --haddock --no-haddock-deps --only-snapshot
+
+    - name: 🔨 Build & Test
+      run: |
+        stack --no-terminal build --haddock --no-haddock-deps --flag \*:production
