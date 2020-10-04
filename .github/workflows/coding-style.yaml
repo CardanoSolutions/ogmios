@@ -20,8 +20,8 @@ jobs:
 
     - name: ✍  Check hlint and stylish
       run: |
-        curl -sSL https://raw.github.com/ndmitchell/hlint/master/misc/run.sh | sh -s .
-        curl -sSL https://raw.github.com/jaspervdj/stylish-haskell/master/scripts/latest.sh | sh -s $(find . -type f -name "*.hs" ! -path "*.stack-work*") -i
+        curl -sSL https://raw.github.com/ndmitchell/hlint/master/misc/run.sh | sh -s ogmios-server
+        curl -sSL https://raw.github.com/jaspervdj/stylish-haskell/master/scripts/latest.sh | sh -s $(find ogmios-server -type f -name "*.hs" ! -path "*.stack-work*") -i
         if [ -z "$(git status --porcelain)" ]; then
             echo "No style errors detected."
         else
