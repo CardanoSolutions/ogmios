@@ -6,7 +6,6 @@ ghc-options: {"$locals": -ddump-to-file -ddump-hi}
 
 packages:
 - ogmios-server
-
 - modules/cardano-client
 - modules/git-th
 - modules/json-wsp

@@ -1,3 +1,6 @@
 [submodule "ouroboros-network"]
 	path = modules/ouroboros-network
 	url = git@github.com:KtorZ/ouroboros-network
+[submodule "cardano-node"]
+	path = modules/cardano-node
+	url = git@github.com:KtorZ/cardano-node.git

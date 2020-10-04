@@ -22,13 +22,15 @@ packages:
 - git: https://github.com/KtorZ/ouroboros-network
   commit: b36ac2404718b0c14296fde557ff2d7dacdde54b
   subdirs:
-    - io-sim-classes
-    - network-mux
     - ouroboros-consensus
-    - ouroboros-consensus-byron
-    - ouroboros-consensus-cardano
-    - ouroboros-consensus-shelley
     - ouroboros-network
-    - ouroboros-network-framework
-    - typed-protocols
-    - typed-protocols-examples
+
+# commit a1ed2f2bf23fd8a125bf8b86699783f5d97ab9ab
+# Author: KtorZ <matthias.benkort@gmail.com>
+# Date:   Sun Oct 4 18:04:07 2020 +0200
+#
+#     accommodate ClientStAcquiring now requiring an effect
+- git: https://github.com/KtorZ/cardano-node
+  commit: a1ed2f2bf23fd8a125bf8b86699783f5d97ab9ab
+  subdirs:
+    - cardano-api
