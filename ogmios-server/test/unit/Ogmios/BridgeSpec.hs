@@ -4,11 +4,13 @@
 
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -18,47 +20,23 @@ module Ogmios.BridgeSpec
 
 import Prelude
 
-import Cardano.Chain.Byron.API
-    ( ApplyMempoolPayloadErr (..) )
-import Cardano.Chain.UTxO.Validation
-    ( UTxOValidationError )
-import Data.Aeson
-    ( ToJSON (..) )
-import Data.String
-    ( IsString )
-import Data.Text
-    ( Text )
-import JSONSchema.Draft4
-    ( Schema (..)
-    , SchemaWithURI (..)
-    , ValidatorFailure (..)
-    , checkSchema
-    , emptySchema
-    , referencesViaFilesystem
-    )
-import JSONSchema.Validator.Draft4.Any
-    ( OneOfInvalid (..), RefInvalid (..) )
-import JSONSchema.Validator.Draft4.Object
-    ( PropertiesRelatedInvalid (..) )
+import Cardano.Network.Protocol.NodeToClient
+    ( Block )
 import Ogmios.Bridge
     ( FindIntersectResponse (..)
     , RequestNextResponse (..)
     , SubmitTxResponse (..)
     )
-import Ouroboros.Consensus.Byron.Ledger
-    ( ByronBlock )
-import Ouroboros.Network.Block
-    ( BlockNo (..), Point (..), Tip (..), blockPoint, legacyTip )
-import Ouroboros.Network.Protocol.LocalTxSubmission.Type
-    ( SubmitResult (..) )
-import Test.Cardano.Chain.UTxO.Gen
-    ( genUTxOValidationError )
 import Test.Hspec
     ( Spec, SpecWith, describe, it )
+import Test.Hspec.Json.Schema
+    ( validateToJSON )
 import Test.QuickCheck
     ( Arbitrary (..)
+    , Gen
     , Positive (..)
     , Property
+    , choose
     , counterexample
     , genericShrink
     , oneof
@@ -72,91 +50,36 @@ import Test.QuickCheck.Hedgehog
 import Test.QuickCheck.Monadic
     ( assert, monadicIO, monitor, run )
 
-import Cardano.Byron.Types.Json.Orphans
-    ()
-import Test.Consensus.Byron.Generators
+import Cardano.Types.Json.Orphans
     ()
 
+-- import Test.Consensus.Shelley.Generators
+--     ()
+
 import qualified Codec.Json.Wsp.Handler as Wsp
-import qualified Data.Aeson as Json
-import qualified Data.Aeson.Encode.Pretty as Json
-import qualified Data.ByteString.Lazy.Char8 as BL8
-import qualified Data.List.NonEmpty as NE
-import qualified Data.Text as T
+
+import Ouroboros.Consensus.Shelley.Ledger.Block
+    ( ShelleyBlock )
+import Ouroboros.Consensus.Shelley.Protocol.Crypto
+    ( StandardCrypto )
+import Ouroboros.Network.Block
+    ( BlockNo (..), HeaderHash, Point (..), SlotNo (..), Tip (..) )
+
+import Test.Consensus.Cardano.Generators
+    ()
+
+import qualified Ouroboros.Network.Point as Point
 
 spec :: Spec
 spec =
     describe "validate ToJSON instances against JSON-schema" $ do
-        test (validateAllToJSON @(FindIntersectResponse ByronBlock))
-            "ogmios.wsp.json#/properties/FindIntersectResponse"
-        test (validateAllToJSON @(RequestNextResponse ByronBlock))
-            "ogmios.wsp.json#/properties/RequestNextResponse"
-        test (validateAllToJSON @(SubmitTxResponse ApplyMempoolPayloadErr))
-            "ogmios.wsp.json#/properties/SubmitTxResponse"
+        validateToJSON (arbitrary @(Wsp.Response (FindIntersectResponse Block)))
+            "../ogmios.wsp.json#/properties/FindIntersectResponse"
 
---
--- Helpers
---
-
-newtype SchemaRef = SchemaRef
-    { getSchemaRef :: Text }
-    deriving (Show, IsString)
-
-validateAllToJSON
-    :: ToJSON (Wsp.Response a)
-    => SchemaRef
-    -> Wsp.Response a
-    -> Property
-validateAllToJSON ref a = monadicIO $ do
-    let json = toJSON a
-    errors <- run $ validateSchema ref json
-    monitor $ counterexample $ unlines
-        [ "json:", BL8.unpack $ Json.encodePretty json ]
-    monitor $ counterexample $ unlines
-        (prettyFailure <$> errors)
-    assert (null errors)
-
-validateSchema :: SchemaRef -> Json.Value -> IO [ValidatorFailure]
-validateSchema (SchemaRef ref) value = do
-    let schema = SchemaWithURI (emptySchema { _schemaRef = Just ref }) Nothing
-    refs <- unsafeIO =<< referencesViaFilesystem schema
-    validate <- unsafeIO (checkSchema refs schema)
-    pure $ validate value
-  where
-    unsafeIO :: Show e => Either e a -> IO a
-    unsafeIO = either (fail . show) pure
-
-test
-    :: forall a. (Arbitrary a, Show a)
-    => (SchemaRef -> a -> Property)
-    -> SchemaRef
-    -> SpecWith ()
-test prop ref =
-    it (T.unpack $ getSchemaRef ref) $ withMaxSuccess 100 $ property $ prop ref
-
-prettyFailure
-    :: ValidatorFailure
-    -> String
-prettyFailure = \case
-    FailureRef (RefInvalid _ schema errs) -> unlines
-        [ "schema:", BL8.unpack $ Json.encodePretty schema
-        , "errors:", unlines $ indent $ prettyFailure <$> NE.toList errs
-        ]
-
-    FailureOneOf (NoSuccesses xs _) ->
-        unlines $ concatMap (fmap prettyFailure . NE.toList . snd) $ NE.toList xs
-
-    FailurePropertiesRelated (PropertiesRelatedInvalid prop reg extra) -> unlines
-        [ "properties: " <> show prop
-        , "pattern: " <> show reg
-        , "additional: " <> show extra
-        ]
-
-    anythingElse ->
-        show anythingElse
-
-  where
-    indent xs = ("    " <>) <$> xs
+--        test (validateAllToJSON @(RequestNextResponse ByronBlock))
+--            "ogmios.wsp.json#/properties/RequestNextResponse"
+--        test (validateAllToJSON @(SubmitTxResponse ApplyMempoolPayloadErr))
+--            "ogmios.wsp.json#/properties/SubmitTxResponse"
 
 --
 -- Instances
@@ -165,25 +88,43 @@ prettyFailure = \case
 instance Arbitrary a => Arbitrary (Wsp.Response a) where
     arbitrary = Wsp.Response Nothing <$> arbitrary
 
-instance Arbitrary (FindIntersectResponse ByronBlock) where
+instance Arbitrary (FindIntersectResponse Block) where
     shrink = genericShrink
     arbitrary = genericArbitrary
 
-instance Arbitrary (RequestNextResponse ByronBlock) where
-    shrink = genericShrink
-    arbitrary = genericArbitrary
+-- instance Arbitrary (RequestNextResponse ByronBlock) where
+--     shrink = genericShrink
+--     arbitrary = genericArbitrary
+--
+-- instance Arbitrary (SubmitTxResponse ApplyMempoolPayloadErr) where
+--     arbitrary = oneof
+--         [ pure (SubmitTxResponse SubmitSuccess)
+--         , SubmitTxResponse . SubmitFail. MempoolTxErr <$> arbitrary
+--         ]
 
-instance Arbitrary (SubmitTxResponse ApplyMempoolPayloadErr) where
+-- instance Arbitrary UTxOValidationError where
+--     arbitrary = hedgehog genUTxOValidationError
+
+instance Arbitrary (Point Block) where
     arbitrary = oneof
-        [ pure (SubmitTxResponse SubmitSuccess)
-        , SubmitTxResponse . SubmitFail. MempoolTxErr <$> arbitrary
+        [ pure (Point Point.Origin)
+        , Point . Point.At <$> genPoint
         ]
 
-instance Arbitrary (Point ByronBlock) where
-    arbitrary = blockPoint <$> arbitrary
+instance Arbitrary (Tip Block) where
+    arbitrary = oneof
+        [ pure TipGenesis
+        , Tip <$> genSlotNo <*> genHeaderHash <*> genBlockNo
+        ]
 
-instance Arbitrary (Tip ByronBlock) where
-    arbitrary = legacyTip <$> arbitrary <*> arbitrary
+genSlotNo :: Gen SlotNo
+genSlotNo = SlotNo <$> choose (1, 100000)
 
-instance Arbitrary UTxOValidationError where
-    arbitrary = hedgehog genUTxOValidationError
+genBlockNo :: Gen BlockNo
+genBlockNo = BlockNo <$> arbitrary
+
+genHeaderHash :: Gen (HeaderHash Block)
+genHeaderHash = arbitrary
+
+genPoint :: Gen (Point.Block SlotNo (HeaderHash Block))
+genPoint = Point.Block <$> genSlotNo <*> genHeaderHash

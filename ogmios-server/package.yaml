@@ -117,18 +117,15 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - aeson
-    - aeson-pretty
-    - bytestring
-    - cardano-ledger
-    - cardano-ledger-test
+    - cardano-client
     - generic-arbitrary
     - hedgehog-quickcheck
-    - hjsonschema
     - hspec
+    - hspec-json-schema
+    - json-wsp
     - ogmios
-    - ouroboros-consensus-byron
-    - ouroboros-consensus-byron-test
+    - ouroboros-consensus-cardano-test
+    - ouroboros-consensus-shelley
+    - ouroboros-consensus-shelley-test
     - ouroboros-network
     - QuickCheck
-    - text

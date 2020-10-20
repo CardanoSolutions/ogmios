@@ -654,14 +654,20 @@
     }
 
   , "Tip":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "slot", "hash", "blockNo" ]
-    , "properties":
-      { "slot": { "$ref": "#/definitions/Slot" }
-      , "hash": { "$ref": "#/definitions/Hash16" }
-      , "blockNo": { "$ref": "#/definitions/BlockNo" }
-      }
+    { "oneOf":
+      [ { "type": "string"
+        , "enum": [ "origin" ]
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "slot", "hash", "blockNo" ]
+        , "properties":
+          { "slot": { "$ref": "#/definitions/Slot" }
+          , "hash": { "$ref": "#/definitions/Hash16" }
+          , "blockNo": { "$ref": "#/definitions/BlockNo" }
+          }
+        }
+      ]
     }
 
   , "Tx":

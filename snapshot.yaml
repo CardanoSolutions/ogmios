@@ -3,9 +3,10 @@ name: _
 resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/cfe917f0f419b5c9f63c958f335874e4dc0add85/snapshots/cardano-1.20.0.yaml
 
 packages:
+- hedgehog-quickcheck-0.1.1
 - hjsonpointer-1.3.0
 - hjsonschema-1.9.0
-- hedgehog-quickcheck-0.1.1
+- string-interpolate-0.3.0.2
 
 # commit b36ac2404718b0c14296fde557ff2d7dacdde54b (HEAD -> 1.20.0, origin/1.20.0)
 # Author: KtorZ <matthias.benkort@gmail.com>
@@ -23,6 +24,11 @@ packages:
   commit: b36ac2404718b0c14296fde557ff2d7dacdde54b
   subdirs:
     - ouroboros-consensus
+    - ouroboros-consensus-test
+    - ouroboros-consensus-byronspec
+    - ouroboros-consensus-byron-test
+    - ouroboros-consensus-shelley-test
+    - ouroboros-consensus-cardano-test
     - ouroboros-network
 
 # commit a1ed2f2bf23fd8a125bf8b86699783f5d97ab9ab
