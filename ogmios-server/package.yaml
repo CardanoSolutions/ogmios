@@ -124,7 +124,10 @@ tests:
     - hspec-json-schema
     - json-wsp
     - ogmios
+    - ouroboros-consensus-cardano
     - ouroboros-consensus-cardano-test
+    - ouroboros-consensus-byron
+    - ouroboros-consensus-byron-test
     - ouroboros-consensus-shelley
     - ouroboros-consensus-shelley-test
     - ouroboros-network

@@ -27,6 +27,14 @@ import Ogmios.Bridge
     , RequestNextResponse (..)
     , SubmitTxResponse (..)
     )
+import Ouroboros.Consensus.Cardano.Block
+    ( HardForkBlock (..) )
+import Ouroboros.Consensus.Shelley.Ledger.Block
+    ( ShelleyBlock )
+import Ouroboros.Consensus.Shelley.Protocol.Crypto
+    ( StandardCrypto )
+import Ouroboros.Network.Block
+    ( BlockNo (..), HeaderHash, Point (..), SlotNo (..), Tip (..) )
 import Test.Hspec
     ( Spec, SpecWith, describe, it )
 import Test.Hspec.Json.Schema
@@ -52,22 +60,10 @@ import Test.QuickCheck.Monadic
 
 import Cardano.Types.Json.Orphans
     ()
-
--- import Test.Consensus.Shelley.Generators
---     ()
-
-import qualified Codec.Json.Wsp.Handler as Wsp
-
-import Ouroboros.Consensus.Shelley.Ledger.Block
-    ( ShelleyBlock )
-import Ouroboros.Consensus.Shelley.Protocol.Crypto
-    ( StandardCrypto )
-import Ouroboros.Network.Block
-    ( BlockNo (..), HeaderHash, Point (..), SlotNo (..), Tip (..) )
-
 import Test.Consensus.Cardano.Generators
     ()
 
+import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Ouroboros.Network.Point as Point
 
 spec :: Spec
@@ -76,14 +72,11 @@ spec =
         validateToJSON (arbitrary @(Wsp.Response (FindIntersectResponse Block)))
             "../ogmios.wsp.json#/properties/FindIntersectResponse"
 
---        test (validateAllToJSON @(RequestNextResponse ByronBlock))
---            "ogmios.wsp.json#/properties/RequestNextResponse"
---        test (validateAllToJSON @(SubmitTxResponse ApplyMempoolPayloadErr))
---            "ogmios.wsp.json#/properties/SubmitTxResponse"
+        validateToJSON (arbitrary @(Wsp.Response (RequestNextResponse Block)))
+            "../ogmios.wsp.json#/properties/RequestNextResponse"
 
---
--- Instances
---
+--      validateToJSON (arbitrary @(SubmitTxResponse ApplyMempoolPayloadErr)))
+--            "../ogmios.wsp.json#/properties/SubmitTxResponse"
 
 instance Arbitrary a => Arbitrary (Wsp.Response a) where
     arbitrary = Wsp.Response Nothing <$> arbitrary
@@ -92,10 +85,10 @@ instance Arbitrary (FindIntersectResponse Block) where
     shrink = genericShrink
     arbitrary = genericArbitrary
 
--- instance Arbitrary (RequestNextResponse ByronBlock) where
---     shrink = genericShrink
---     arbitrary = genericArbitrary
---
+instance Arbitrary (RequestNextResponse Block) where
+    shrink = genericShrink
+    arbitrary = genericArbitrary
+
 -- instance Arbitrary (SubmitTxResponse ApplyMempoolPayloadErr) where
 --     arbitrary = oneof
 --         [ pure (SubmitTxResponse SubmitSuccess)
@@ -115,6 +108,12 @@ instance Arbitrary (Tip Block) where
     arbitrary = oneof
         [ pure TipGenesis
         , Tip <$> genSlotNo <*> genHeaderHash <*> genBlockNo
+        ]
+
+instance Arbitrary Block where
+    arbitrary = oneof
+        [ BlockByron <$> arbitrary
+        , BlockShelley <$> arbitrary
         ]
 
 genSlotNo :: Gen SlotNo

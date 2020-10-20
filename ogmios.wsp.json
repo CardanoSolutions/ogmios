@@ -295,6 +295,23 @@
   , "Block":
     { "type": "object"
     , "oneOf":
+      [ { "required": [ "byron" ]
+        , "additionalProperties": false
+        , "properties":
+          { "byron": { "$ref": "#/definitions/Block[Byron]" }
+          }
+        }
+      , { "required": [ "shelley" ]
+        , "additionalProperties": false
+        , "properties":
+          { "shelley": { "$ref": "#/definitions/Block[Shelley]" }
+          }
+        }
+      ]
+    }
+
+  , "Block[Byron]":
+    { "oneOf":
       [ { "required": [ "hash", "header", "body" ]
         , "additionalProperties": false
         , "properties":
@@ -426,6 +443,10 @@
           }
         }
       ]
+    }
+
+  , "Block[Shelley]":
+    { "type": "object"
     }
 
   , "BlockHeight":
