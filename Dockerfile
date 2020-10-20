@@ -6,6 +6,11 @@
 # --------------------------------- BUILD ------------------------------------ #
 #                                                                              #
 
+# To build the snapshot locally, see 'snapshot.Dockerfile'.
+#
+#     docker build . -f snapshot.Dockerfile -t ktorz/ogmios:snapshot
+#
+# Beware, it takes some time.
 FROM ktorz/ogmios:snapshot as build
 RUN stack build --only-dependencies
 COPY . .

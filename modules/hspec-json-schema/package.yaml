@@ -1,0 +1,51 @@
+name:                hspec-json-schema
+version:             1.0.0
+github:              "KtorZ/cardano-ogmios"
+license:             MPL-2.0
+author:              "KtorZ <matthias.benkort@gmail.com>"
+maintainer:          "matthias.benkort@gmail.com"
+copyright:           "2020 KtorZ"
+description:         Please see the README on GitHub at <https://github.com/KtorZ/ogmios>
+synopsis:            For testing arbitrarily generated JSON instances against JSON schemas draft4.
+category:            Web
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+  ghc-options:
+    - -O2
+    - -Wall
+    - -Wcompat
+    - -fwarn-redundant-constraints
+  dependencies:
+    - aeson
+    - aeson-pretty
+    - ansi-wl-pprint
+    - bytestring
+    - hjsonschema
+    - hjsonpointer
+    - hspec
+    - QuickCheck
+    - scientific
+    - text
+
+tests:
+  json-schema-spec:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options:
+    - -Wcompat
+    - -fwarn-redundant-constraints
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - aeson
+    - aeson-qq
+    - hspec
+    - json-schema-spec
+    - QuickCheck
+    - string-interpolate
+    - text

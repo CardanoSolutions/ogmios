@@ -1,0 +1,11 @@
+{ "type": "object"
+, "properties":
+  { "postcode":
+    { "type": "string"
+    , "pattern": "[0-9]{5}"
+    }
+  , "region":
+    { "not": { "type": "null" }
+    }
+  }
+}

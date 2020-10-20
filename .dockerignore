@@ -13,6 +13,7 @@
 
 !modules/
 modules/ouroboros-network
+modules/cardano-node
 
 # Needed for embeddding the version
 !.git/

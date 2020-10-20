@@ -1,0 +1,16 @@
+{ "type": "object"
+, "properties":
+  { "mnemonic_size":
+    { "type": "number"
+    , "multipleOf": 3
+    }
+  , "amount":
+    { "type": "number"
+    , "minimum": 1
+    }
+  , "index":
+    { "type": "number"
+    , "maximum": 10
+    }
+  }
+}

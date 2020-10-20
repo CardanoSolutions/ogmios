@@ -1,0 +1,29 @@
+{ "type": "object"
+, "properties":
+  { "car_brands":
+    { "type": "array"
+    , "uniqueItems": true
+    , "items":
+      { "type": "string"
+      }
+    }
+  , "cities":
+    { "type": "array"
+    , "additionalItems":
+      { "type": "string"
+      , "minLength": 10
+      }
+    , "items":
+      [ { "type": "string" }
+      ]
+    }
+  , "point":
+    { "type": "array"
+    , "additionalItems": false
+    , "items":
+      [ { "type": "number" }
+      , { "type": "number" }
+      ]
+    }
+  }
+}

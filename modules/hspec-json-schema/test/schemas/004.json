@@ -1,0 +1,23 @@
+{ "type": "object"
+, "properties":
+  { "words":
+    { "type": "array"
+    , "minItems": 3
+    , "items":
+      { "type": "string"
+      }
+    }
+  , "indexes":
+    { "type": "array"
+    , "maxItems": 2
+    }
+  , "keys":
+    { "type": "object"
+    , "maxProperties": 1
+    }
+  , "props":
+    { "type": "object"
+    , "minProperties": 2
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{ "type": "object"
+, "properties":
+  { "genre":
+    { "allOf":
+      [ { "type": "string", "enum": ["rock","classic","rap"] }
+      , { "type": "string", "maxLength": 3 }
+      ]
+    }
+  , "band(s)":
+    { "anyOf":
+      [ { "type": "string" }
+      , { "type": "array", "items": { "type": "string" } }
+      ]
+    }
+  , "country":
+    { "oneOf":
+      [ { "type": "string", "enum": [ "Finland", "Norway" ] }
+      , { "type": "string", "minLength": 0 }
+      ]
+    }
+  }
+}
