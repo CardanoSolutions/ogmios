@@ -662,8 +662,8 @@ instance ToAltJSON (AHeader ByteString) where
 instance ToAltJSON (Dlg.ACertificate ByteString) where
     toAltJSON x = Json.object
         [ "epoch" .= toAltJSON (Dlg.aEpoch x)
-        , "issuerVK" .= toAltJSON (Dlg.issuerVK x)
-        , "delegateVK" .= toAltJSON (Dlg.delegateVK x)
+        , "issuerVk" .= toAltJSON (Dlg.issuerVK x)
+        , "delegateVk" .= toAltJSON (Dlg.delegateVK x)
         , "signature" .= toAltJSON (Dlg.signature x)
         ]
 
@@ -709,7 +709,7 @@ instance ToAltJSON (Upd.APayload ByteString) where
 
 instance ToAltJSON (Upd.AVote ByteString) where
     toAltJSON x = Json.object
-        [ "voterVK" .= toAltJSON (Upd.voterVK x)
+        [ "voterVk" .= toAltJSON (Upd.voterVK x)
         , "proposalId" .= toAltJSON (Upd.aProposalId x)
         , "signature" .= toAltJSON (Upd.Vote.signature x)
         ]
@@ -783,7 +783,7 @@ instance ToAltJSON TxInWitness where
     toAltJSON = \case
         VKWitness key sig ->
             Json.object
-                [ "witnessVK" .= Json.object
+                [ "witnessVk" .= Json.object
                     [ "key" .= toAltJSON key
                     , "signature" .= toAltJSON sig
                     ]
@@ -821,9 +821,9 @@ instance CC.VRFAlgorithm alg => ToAltJSON (CC.CertifiedVRF alg any) where
 
 instance Crypto crypto => ToAltJSON (SL.OCert (Shelley crypto)) where
     toAltJSON x = Json.object
-        [ "hotVK" .= toAltJSON (SL.ocertVkHot x)
+        [ "hotVk" .= toAltJSON (SL.ocertVkHot x)
         , "count" .= toAltJSON (SL.ocertN x)
-        , "KESPeriod" .= toAltJSON (SL.ocertKESPeriod x)
+        , "kesPeriod" .= toAltJSON (SL.ocertKESPeriod x)
         , "sigma" .= toAltJSON (SL.ocertSigma x)
         ]
 
@@ -835,8 +835,8 @@ instance Crypto crypto => ToAltJSON (ShelleyBlock (Shelley crypto)) where
                 [ "blockHeight" .= toAltJSON (SL.bheaderBlockNo hBody)
                 , "slot" .= toAltJSON (SL.bheaderSlotNo hBody)
                 , "prevHash" .= toAltJSON (SL.bheaderPrev hBody)
-                , "issuerVK" .=  toAltJSON (SL.bheaderVk hBody)
-                , "issuerVRF" .= toAltJSON (SL.bheaderVrfVk hBody)
+                , "issuerVk" .=  toAltJSON (SL.bheaderVk hBody)
+                , "issuerVrf" .= toAltJSON (SL.bheaderVrfVk hBody)
                 , "nonce" .= toAltJSON (SL.bheaderEta hBody)
                 , "leaderValue" .=  toAltJSON (SL.bheaderL hBody)
                 , "blockSize" .= toAltJSON (SL.bsize hBody)
@@ -1032,7 +1032,7 @@ instance Crypto crypto => ToAltJSON (ApplyTxError (Shelley crypto)) where
                     ]
             Utxow.MissingVKeyWitnessesUTXOW keys ->
                 Json.object
-                    [ "missingVKeyWitnesses" .= toAltJSON keys
+                    [ "missingVkWitnesses" .= toAltJSON keys
                     ]
             Utxow.MissingScriptWitnessesUTXOW scripts ->
                 Json.object
@@ -1214,7 +1214,7 @@ instance Crypto crypto => ToAltJSON (ApplyTxError (Shelley crypto)) where
                     ]
             Deleg.DuplicateGenesisVRFDELEG vrfHash ->
                 Json.object
-                    [ "duplicateGenesisVRF" .= toAltJSON vrfHash
+                    [ "duplicateGenesisVrf" .= toAltJSON vrfHash
                     ]
 
         updateFailureToJSON = \case
@@ -1454,9 +1454,9 @@ instance Crypto crypto => ToAltJSON (SL.WitVKey (Shelley crypto) 'SL.Witness) wh
 
 instance Crypto crypto => ToAltJSON (SL.BootstrapWitness (Shelley crypto)) where
     toAltJSON (SL.BootstrapWitness key sig cc attr) = Json.object
-        [ " key" .= toAltJSON key
+        [ "key" .= toAltJSON key
         , "chainCode" .= toAltJSON cc
-        , "addressattributes" .= toAltJSON attr
+        , "addressAttributes" .= toAltJSON attr
         , "signature" .= toAltJSON sig
         ]
 

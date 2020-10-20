@@ -384,16 +384,16 @@
                                 { "type": "object"
                                 , "additionalProperties": true
                                 , "properties":
-                                  { "scriptVersion": { "$ref": "#/definitions/NullableNumber" }
-                                  , "slotDuration": { "$ref": "#/definitions/NullableNumber" }
-                                  , "maxBlockSize": { "$ref": "#/definitions/NullableNumber" }
-                                  , "maxHeaderSize": { "$ref": "#/definitions/NullableNumber" }
-                                  , "maxProposalSize": { "$ref": "#/definitions/NullableNumber" }
+                                  { "scriptVersion": { "$ref": "#/definitions/NullableInteger" }
+                                  , "slotDuration": { "$ref": "#/definitions/NullableInteger" }
+                                  , "maxBlockSize": { "$ref": "#/definitions/NullableInteger" }
+                                  , "maxHeaderSize": { "$ref": "#/definitions/NullableInteger" }
+                                  , "maxProposalSize": { "$ref": "#/definitions/NullableInteger" }
                                   , "mpcThreshold": { "$ref": "#/definitions/NullableRatio" }
                                   , "heavyDlgThreshold": { "$ref": "#/definitions/NullableRatio" }
                                   , "updateVoteThreshold": { "$ref": "#/definitions/NullableRatio" }
-                                  , "updateProposalTTL": { "$ref": "#/definitions/NullableNumber" }
-                                  , "unlockStakeEpoch": { "$ref": "#/definitions/NullableNumber" }
+                                  , "updateProposalTTL": { "$ref": "#/definitions/NullableInteger" }
+                                  , "unlockStakeEpoch": { "$ref": "#/definitions/NullableInteger" }
                                   , "txFeePolicy":
                                     { "oneOf":
                                       [ { "type": "null" }
@@ -447,15 +447,73 @@
 
   , "Block[Shelley]":
     { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+        { "body":
+          { "type": "array"
+          , "items":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "id", "body", "witness", "metadata" ]
+            , "properties":
+              { "id": { "$ref": "#/definitions/Hash16" }
+              , "body":
+                { "type": "object"
+                }
+              , "witness":
+                { "type": "object"
+                }
+              , "metadata":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "hash", "body" ]
+                , "properties":
+                  { "hash":
+                    { "oneOf":
+                        [ { "type": "null" }
+                        , { "$ref": "#/definitions/Hash16" }
+                        ]
+                    }
+                  , "body":
+                    { "oneOf":
+                      [ { "type": "null" }
+                      , { "type": "object" }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        , "header":
+          { "type": "object"
+          , "additionalProperties": false
+          , "properties":
+            { "blockHeight": { "$ref": "#/definitions/BlockHeight" }
+            , "slot": { "$ref": "#/definitions/Slot" }
+            , "prevHash": { "$ref": "#/definitions/Hash16" }
+            , "issuerVk": { "$ref": "#/definitions/Hash16" }
+            , "issuerVrf": { "$ref": "#/definitions/Hash16" }
+            , "nonce": { "$ref": "#/definitions/Nonce" }
+            , "leaderValue": { "$ref": "#/definitions/LeaderValue" }
+            , "blockSize": { "$ref": "#/definitions/BlockSize" }
+            , "blockHash": { "$ref": "#/definitions/Hash16" }
+            , "opCert": { "$ref": "#/definitions/OpCert" }
+            , "protocolVersion": { "$ref": "#/definitions/ProtocolVersion" }
+            , "signature": { "$ref": "#/definitions/Hash64" }
+            }
+          }
+        , "headerHash": { "$ref": "#/definitions/Hash16" }
+        }
     }
 
   , "BlockHeight":
-    { "type": "number"
+    { "type": "integer"
     , "minimum": 0
     }
 
   , "BlockNo":
-    { "type": "number"
+    { "type": "integer"
     , "minimum": 0
     }
 
@@ -470,7 +528,7 @@
         , "required": [ "number", "root", "witnessesHash" ]
         , "properties":
           { "number":
-            { "type": "number"
+            { "type": "integer"
             , "minimum": 0
             }
           , "root": { "$ref": "#/definitions/Hash16" }
@@ -482,20 +540,25 @@
       }
     }
 
+  , "BlockSize":
+    { "type": "integer"
+    , "minimum": 0
+    }
+
   , "DlgCertificate":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "epoch", "issuerVK", "delegateVK", "signature" ]
+    , "required": [ "epoch", "issuerVk", "delegateVk", "signature" ]
     , "properties":
       { "epoch": { "$ref": "#/definitions/Epoch" }
-      , "issuerVK": { "$ref": "#/definitions/Hash64" }
-      , "delegateVK": { "$ref": "#/definitions/Hash64" }
+      , "issuerVk": { "$ref": "#/definitions/Hash64" }
+      , "delegateVk": { "$ref": "#/definitions/Hash64" }
       , "signature": { "$ref": "#/definitions/Hash16" }
       }
     }
 
   , "Epoch":
-    { "type": "number"
+    { "type": "integer"
     , "minimum": 0
     }
 
@@ -511,8 +574,17 @@
     , "pattern": "^[A-Za-z0-9+/]*=?=?$"
     }
 
+  , "LeaderValue":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "proof": { "$ref": "#/definitions/Hash16" }
+      , "output": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
   , "Lovelace":
-    { "type": "number"
+    { "type": "integer"
     , "description": "An amount, in Lovelace (1e6 Lovelace = 1 Ada)"
     , "minimum": 0
     }
@@ -525,7 +597,7 @@
         , "properties":
           { "underflow":
             { "type": "array"
-            , "items": { "type": "number" }
+            , "items": { "type": "integer" }
             }
           }
         }
@@ -533,21 +605,21 @@
         , "additionalProperties": false
         , "required": [ "tooSmall" ]
         , "properties":
-          { "tooSmall": { "type": "number" }
+          { "tooSmall": { "type": "integer" }
           }
         }
       , { "type": "object"
         , "additionalProperties": false
         , "required": [ "tooLarge" ]
         , "properties":
-          { "tooLarge": { "type": "number" }
+          { "tooLarge": { "type": "integer" }
           }
         }
       , { "type": "object"
         , "additionalProperties": false
         , "required": [ "overflow" ]
         , "properties":
-          { "overflow": { "type": "number" }
+          { "overflow": { "type": "integer" }
           }
         }
       ]
@@ -562,16 +634,25 @@
         , "additionalProperties": false
         , "required": [ "testnet" ]
         , "properties":
-          { "testnet": { "type": "number" }
+          { "testnet": { "type": "integer" }
           }
         }
       ]
     }
 
-  , "NullableNumber":
+  , "Nonce":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "proof": { "$ref": "#/definitions/Hash16" }
+      , "output": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "NullableInteger":
     { "oneOf":
       [ { "type": "null" }
-      , { "type": "number" }
+      , { "type": "integer" }
       ]
     }
 
@@ -582,11 +663,22 @@
         , "additionalProperties": false
         , "required": [ "denominator", "numerator" ]
         , "properties":
-          { "denominator": { "type": "number" }
-          , "numerator": { "type": "number" }
+          { "denominator": { "type": "integer" }
+          , "numerator": { "type": "integer" }
           }
         }
       ]
+    }
+
+  , "OpCert":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "count": { "type": "integer", "minimum": 0 }
+      , "sigma": { "$ref": "#/definitions/Hash16" }
+      , "kesPeriod": { "type": "integer", "minimum": 0 }
+      , "hotVk": { "$ref": "#/definitions/Hash16" }
+      }
     }
 
   , "Point":
@@ -606,17 +698,17 @@
     }
 
   , "ProtocolMagicId":
-    { "type": "number"
+    { "type": "integer"
     }
 
   , "ProtocolVersion":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "major", "minor", "patch" ]
+    , "required": [ "major", "minor" ]
     , "properties":
-      { "major": { "type": "number" }
-      , "minor": { "type": "number" }
-      , "patch": { "type": "number" }
+      { "major": { "type": "integer" }
+      , "minor": { "type": "integer" }
+      , "patch": { "type": "integer" }
       }
     }
 
@@ -631,7 +723,7 @@
     }
 
   , "Slot":
-    { "type": "number"
+    { "type": "integer"
     , "minimum": 0
     }
 
@@ -641,7 +733,7 @@
     , "required": [ "appName", "number" ]
     , "properties":
       { "appName": { "type": "string" }
-      , "number": { "type": "number" }
+      , "number": { "type": "integer" }
       }
     }
 
@@ -724,7 +816,7 @@
     , "properties":
       { "txId": { "$ref": "#/definitions/Hash16" }
       , "index":
-        { "type": "number"
+        { "type": "integer"
         , "minimum": 0
         }
       }
@@ -770,8 +862,8 @@
             , "additionalProperties": false
             , "required": [ "maximumSize", "actualSize" ]
             , "properties":
-              { "maximumSize": { "type": "number" }
-              , "actualSize": { "type": "number" }
+              { "maximumSize": { "type": "integer" }
+              , "actualSize": { "type": "integer" }
               }
             }
           }
@@ -785,7 +877,7 @@
             , "additionalProperties": false
             , "required": [ "index", "txId" ]
             , "properties":
-              { "index": { "type": "number" }
+              { "index": { "type": "integer" }
               , "txId": { "$ref": "#/definitions/Hash16" }
               }
             }
@@ -858,9 +950,9 @@
     { "type": "object"
     , "oneOf":
       [ { "additionalProperties": false
-        , "required": [ "witnessVK" ]
+        , "required": [ "witnessVk" ]
         , "properties":
-          { "witnessVK":
+          { "witnessVk":
             { "type": "object"
             , "additionalProperties": false
             , "required": [ "key", "signature" ]
@@ -906,9 +998,9 @@
   , "Vote":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "voterVK", "proposalId", "signature" ]
+    , "required": [ "voterVk", "proposalId", "signature" ]
     , "properties":
-      { "voterVK": { "$ref": "#/definitions/Hash64" }
+      { "voterVk": { "$ref": "#/definitions/Hash64" }
       , "proposalId": { "$ref": "#/definitions/Hash16" }
       , "signature": { "$ref": "#/definitions/Hash64" }
       }
