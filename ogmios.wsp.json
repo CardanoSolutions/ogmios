@@ -288,7 +288,6 @@
 , "definitions":
   { "Address":
     { "type": "string"
-    , "format": "base58"
     , "pattern": "[1-9A-HJ-NP-Za-km-z]*"
     }
 
@@ -380,34 +379,7 @@
                                 { "type": "object"
                                 , "additionalProperties": true
                                 }
-                              , "parametersUpdate":
-                                { "type": "object"
-                                , "additionalProperties": true
-                                , "properties":
-                                  { "scriptVersion": { "$ref": "#/definitions/NullableInteger" }
-                                  , "slotDuration": { "$ref": "#/definitions/NullableInteger" }
-                                  , "maxBlockSize": { "$ref": "#/definitions/NullableInteger" }
-                                  , "maxHeaderSize": { "$ref": "#/definitions/NullableInteger" }
-                                  , "maxProposalSize": { "$ref": "#/definitions/NullableInteger" }
-                                  , "mpcThreshold": { "$ref": "#/definitions/NullableRatio" }
-                                  , "heavyDlgThreshold": { "$ref": "#/definitions/NullableRatio" }
-                                  , "updateVoteThreshold": { "$ref": "#/definitions/NullableRatio" }
-                                  , "updateProposalTTL": { "$ref": "#/definitions/NullableInteger" }
-                                  , "unlockStakeEpoch": { "$ref": "#/definitions/NullableInteger" }
-                                  , "txFeePolicy":
-                                    { "oneOf":
-                                      [ { "type": "null" }
-                                      , { "$ref": "#/definitions/TxFeePolicy" }
-                                      ]
-                                    }
-                                  , "softforkRule":
-                                    { "oneOf":
-                                      [ { "type": "null" }
-                                      , { "$ref": "#/definitions/SoftForkRule" }
-                                      ]
-                                    }
-                                  }
-                                }
+                              , "parametersUpdate": { "$ref": "#/definitions/ProtocolParameters[Byron]" }
                               }
                             }
                           , "issuer": { "$ref": "#/definitions/Hash64" }
@@ -449,62 +421,129 @@
     { "type": "object"
     , "additionalProperties": false
     , "properties":
-        { "body":
-          { "type": "array"
-          , "items":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "id", "body", "witness", "metadata" ]
-            , "properties":
-              { "id": { "$ref": "#/definitions/Hash16" }
-              , "body":
-                { "type": "object"
+      { "body":
+        { "type": "array"
+        , "items":
+          { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "id", "body", "witness", "metadata" ]
+          , "properties":
+            { "id": { "$ref": "#/definitions/Hash16" }
+            , "body":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": ["inputs","outputs","certificates","withdrawals","fee","timeToLive","update"]
+              , "properties":
+                { "inputs":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/TxIn" }
+                  }
+                , "outputs":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/TxOut" }
+                  }
+                , "certificates":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/Certificate" }
+                  }
+                , "withdrawals": { "$ref": "#/definitions/Withdrawals" }
+                , "fee": { "$ref": "#/definitions/Lovelace" }
+                , "timeToLive": { "$ref": "#/definitions/Slot" }
+                , "update": { "$ref": "#/definitions/Update[Shelley]" }
                 }
-              , "witness":
-                { "type": "object"
+              }
+            , "witness":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": ["address","multisig","bootstrap"]
+              , "properties":
+                { "address":
+                  { "type": "array"
+                  , "items":
+                    { "type": "object"
+                    , "additionalProperties": false
+                    , "properties":
+                      { "signature": { "$ref": "#/definitions/Hash16" }
+                      , "key": { "$ref": "#/definitions/Hash16" }
+                      }
+                    }
+                  }
+                , "multisig":
+                  { "type": "object"
+                  , "propertyNames": { "pattern": "^[0-9a-f]*$" }
+                  , "additionalProperties": { "$ref": "#/definitions/Script" }
+                  }
+                , "bootstrap":
+                  { "type": "array"
+                  , "items":
+                    { "type": "object"
+                    , "additionalProperties": false
+                    , "properties":
+                      { "signature": { "$ref": "#/definitions/Hash16" }
+                      , "chainCode":
+                        { "oneOf":
+                          [ { "$ref": "#/definitions/Hash16" }
+                          , { "type": "null" }
+                          ]
+                        }
+                      , "addressAttributes":
+                        { "oneOf":
+                          [ { "$ref": "#/definitions/Hash16" }
+                          , { "type": "null" }
+                          ]
+                        }
+                      , "key": { "$ref": "#/definitions/Hash16" }
+                      }
+                    }
+                  }
                 }
-              , "metadata":
-                { "type": "object"
-                , "additionalProperties": false
-                , "required": [ "hash", "body" ]
-                , "properties":
-                  { "hash":
-                    { "oneOf":
-                        [ { "type": "null" }
-                        , { "$ref": "#/definitions/Hash16" }
-                        ]
-                    }
-                  , "body":
-                    { "oneOf":
-                      [ { "type": "null" }
-                      , { "type": "object" }
-                      ]
-                    }
+              }
+            , "metadata":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "hash", "body" ]
+              , "properties":
+                { "hash":
+                  { "oneOf":
+                    [ { "type": "null" }
+                    , { "$ref": "#/definitions/Hash16" }
+                    ]
+                  }
+                , "body":
+                  { "oneOf":
+                    [ { "type": "null" }
+                    , { "type": "object" }
+                    ]
                   }
                 }
               }
             }
           }
-        , "header":
-          { "type": "object"
-          , "additionalProperties": false
-          , "properties":
-            { "blockHeight": { "$ref": "#/definitions/BlockHeight" }
-            , "slot": { "$ref": "#/definitions/Slot" }
-            , "prevHash": { "$ref": "#/definitions/Hash16" }
-            , "issuerVk": { "$ref": "#/definitions/Hash16" }
-            , "issuerVrf": { "$ref": "#/definitions/Hash16" }
-            , "nonce": { "$ref": "#/definitions/Nonce" }
-            , "leaderValue": { "$ref": "#/definitions/LeaderValue" }
-            , "blockSize": { "$ref": "#/definitions/BlockSize" }
-            , "blockHash": { "$ref": "#/definitions/Hash16" }
-            , "opCert": { "$ref": "#/definitions/OpCert" }
-            , "protocolVersion": { "$ref": "#/definitions/ProtocolVersion" }
-            , "signature": { "$ref": "#/definitions/Hash64" }
-            }
-          }
-        , "headerHash": { "$ref": "#/definitions/Hash16" }
         }
+      , "headerHash": { "$ref": "#/definitions/Hash16" }
+      , "header":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required":
+          [ "blockHeight","slot","prevHash","issuerVk","issuerVrf","leaderValue"
+          , "blockSize", "blockHash","opCert","protocolVersion","signature"
+          ]
+        , "properties":
+          { "blockHeight": { "$ref": "#/definitions/BlockHeight" }
+          , "slot": { "$ref": "#/definitions/Slot" }
+          , "prevHash": { "$ref": "#/definitions/Hash16" }
+          , "issuerVk": { "$ref": "#/definitions/Hash16" }
+          , "issuerVrf": { "$ref": "#/definitions/Hash16" }
+          , "nonce": { "$ref": "#/definitions/NonceProof" }
+          , "leaderValue": { "$ref": "#/definitions/LeaderValue" }
+          , "blockSize": { "$ref": "#/definitions/BlockSize" }
+          , "blockHash": { "$ref": "#/definitions/Hash16" }
+          , "opCert": { "$ref": "#/definitions/OpCert" }
+          , "protocolVersion": { "$ref": "#/definitions/ProtocolVersion" }
+          , "signature": { "$ref": "#/definitions/Hash64" }
+          }
+        }
+      }
     }
 
   , "BlockHeight":
@@ -543,6 +582,129 @@
   , "BlockSize":
     { "type": "integer"
     , "minimum": 0
+    }
+
+  , "Certificate":
+    { "oneOf":
+      [ { "type": "object"
+        , "additionalProperties": false
+        , "required": ["stakeDelegation"]
+        , "properties":
+          { "stakeDelegation":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": ["delegator", "delegatee"]
+            , "properties":
+              { "delegator": { "$ref": "#/definitions/Hash16" }
+              , "delegatee": { "$ref": "#/definitions/PoolId" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": ["stakeKeyRegistration"]
+        , "properties":
+          { "stakeKeyRegistration": { "$ref": "#/definitions/Hash16" }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": ["stakeKeyDeregistration"]
+        , "properties":
+          { "stakeKeyDeregistration": { "$ref": "#/definitions/Hash16" }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": ["poolRegistration"]
+        , "properties":
+          { "poolRegistration":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": ["owners","cost","margin","pledge","vrf","metadata","id","relays","rewardAccount"]
+            , "properties":
+              { "owners":
+                { "type": "array"
+                , "items": { "$ref": "#/definitions/Hash16" }
+                }
+              , "cost": { "$ref": "#/definitions/Lovelace" }
+              , "margin": { "type": "number" }
+              , "pledge": { "$ref": "#/definitions/Lovelace" }
+              , "vrf": { "$ref": "#/definitions/Hash16" }
+              , "metadata":
+                { "oneOf":
+                  [ { "type": "null" }
+                  , { "type": "object"
+                    , "additionalProperties": false
+                    , "required": ["hash","url"]
+                    , "properties":
+                      { "hash": { "$ref": "#/definitions/Hash16" }
+                      , "url":
+                        { "type": "string"
+                        , "format": "uri"
+                        }
+                      }
+                    }
+                  ]
+                }
+              , "id": { "$ref": "#/definitions/PoolId" }
+              , "relays":
+                { "type": "array"
+                , "items": { "$ref": "#/definitions/Relay" }
+                }
+              , "rewardAccount": { "$ref": "#/definitions/RewardAccount" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": ["poolRetirement"]
+        , "properties":
+          { "poolRetirement":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": ["poolId", "retirementEpoch"]
+            , "properties":
+              { "retirementEpoch": { "$ref": "#/definitions/Epoch" }
+              , "poolId": { "$ref": "#/definitions/PoolId" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": ["genesisDelegation"]
+        , "properties":
+          { "genesisDelegation":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": ["delegateKeyHash","verificationKeyHash","vrfVerificationKeyHash"]
+            , "properties":
+              { "delegateKeyHash": { "$ref": "#/definitions/Hash16" }
+              , "verificationKeyHash": { "$ref": "#/definitions/Hash16" }
+              , "vrfVerificationKeyHash": { "$ref": "#/definitions/Hash16" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": ["moveInstantaneousRewards"]
+        , "properties":
+          { "moveInstantaneousRewards":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": ["rewards","pot"]
+            , "properties":
+              { "rewards": { "$ref": "#/definitions/Rewards" }
+              , "pot": { "$ref": "#/definitions/RewardPot" }
+              }
+            }
+          }
+        }
+      ]
     }
 
   , "DlgCertificate":
@@ -641,6 +803,15 @@
     }
 
   , "Nonce":
+    { "oneOf":
+      [ { "type": "string"
+        , "enum": ["neutral"]
+        }
+      , { "$ref": "#/definitions/Hash16" }
+      ]
+    }
+
+  , "NonceProof":
     { "type": "object"
     , "additionalProperties": false
     , "properties":
@@ -653,6 +824,13 @@
     { "oneOf":
       [ { "type": "null" }
       , { "type": "integer" }
+      ]
+    }
+
+  , "NullableNumber":
+    { "oneOf":
+      [ { "type": "null" }
+      , { "type": "number" }
       ]
     }
 
@@ -697,8 +875,77 @@
       ]
     }
 
+  , "PoolId":
+    { "type": "string"
+    , "format": "bech32"
+    , "pattern": "^pool1[0-9a-z]*$"
+    }
+
   , "ProtocolMagicId":
     { "type": "integer"
+    }
+
+  , "ProtocolParameters[Byron]":
+    { "type": "object"
+    , "additionalProperties": true
+    , "properties":
+      { "scriptVersion": { "$ref": "#/definitions/NullableInteger" }
+      , "slotDuration": { "$ref": "#/definitions/NullableInteger" }
+      , "maxBlockSize": { "$ref": "#/definitions/NullableInteger" }
+      , "maxHeaderSize": { "$ref": "#/definitions/NullableInteger" }
+      , "maxProposalSize": { "$ref": "#/definitions/NullableInteger" }
+      , "mpcThreshold": { "$ref": "#/definitions/NullableRatio" }
+      , "heavyDlgThreshold": { "$ref": "#/definitions/NullableRatio" }
+      , "updateVoteThreshold": { "$ref": "#/definitions/NullableRatio" }
+      , "updateProposalTTL": { "$ref": "#/definitions/NullableInteger" }
+      , "unlockStakeEpoch": { "$ref": "#/definitions/NullableInteger" }
+      , "txFeePolicy":
+        { "oneOf":
+          [ { "type": "null" }
+          , { "$ref": "#/definitions/TxFeePolicy" }
+          ]
+        }
+      , "softforkRule":
+        { "oneOf":
+          [ { "type": "null" }
+          , { "$ref": "#/definitions/SoftForkRule" }
+          ]
+        }
+      }
+    }
+
+  , "ProtocolParameters[Shelley]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "minFeeCoefficient": { "$ref": "#/definitions/NullableInteger" }
+      , "minFeeConstant": { "$ref": "#/definitions/NullableInteger" }
+      , "maxBlockBodySize": { "$ref": "#/definitions/NullableInteger" }
+      , "maxBlockHeaderSize": { "$ref": "#/definitions/NullableInteger" }
+      , "maxTxSize": { "$ref": "#/definitions/NullableInteger" }
+      , "stakeKeyDeposit": { "$ref": "#/definitions/NullableInteger" }
+      , "poolDeposit": { "$ref": "#/definitions/NullableInteger" }
+      , "poolRetirementEpochBound": { "$ref": "#/definitions/NullableInteger" }
+      , "desiredNumberOfPools": { "$ref": "#/definitions/NullableInteger" }
+      , "poolInfluence": { "$ref": "#/definitions/NullableInteger" }
+      , "monetaryExpansion": { "$ref": "#/definitions/NullableNumber" }
+      , "treasuryExpansion": { "$ref": "#/definitions/NullableNumber" }
+      , "decentralizationParameter": { "$ref": "#/definitions/NullableInteger" }
+      , "minUTxOValue": { "$ref": "#/definitions/NullableInteger" }
+      , "minPoolCost": { "$ref": "#/definitions/NullableInteger" }
+      , "extraEntropy":
+        { "oneOf":
+          [ { "type": "null" }
+          , { "$ref": "#/definitions/Nonce" }
+          ]
+        }
+      , "protocolVersion":
+        { "oneOf":
+          [ { "type": "null" }
+          , { "$ref": "#/definitions/ProtocolVersion" }
+          ]
+        }
+      }
     }
 
   , "ProtocolVersion":
@@ -710,6 +957,86 @@
       , "minor": { "type": "integer" }
       , "patch": { "type": "integer" }
       }
+    }
+
+  , "Relay":
+    { "oneOf":
+      [ { "type": "object"
+        , "additionalProperties": false
+        , "required": ["ipv4","ipv6","port"]
+        , "properties":
+          { "ipv4":
+            { "oneOf":
+              [ { "type": "null" }
+              , { "type": "string" }
+              ]
+            }
+          , "ipv6":
+            { "oneOf":
+              [ { "type": "null" }
+              , { "type": "string" }
+              ]
+            }
+          , "port": { "$ref": "#/definitions/NullableInteger" }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": ["hostname","port"]
+        , "properties":
+          { "hostname": { "type": "string" }
+          , "port": { "$ref": "#/definitions/NullableInteger" }
+          }
+        }
+      ]
+    }
+
+  , "Rewards":
+    { "type": "object"
+    , "additionalProperties": { "$ref": "#/definitions/Lovelace" }
+    , "propertyNames": "[0-9a-f]+$"
+    }
+
+  , "RewardAccount":
+    { "type": "string"
+    , "format": "bech32"
+    , "pattern": "^stake(_test)?1[0-9a-z]+$"
+    }
+
+  , "RewardPot":
+    { "type": "string"
+    , "enum": ["reserves", "treasury"]
+    }
+
+  , "Script":
+    { "anyOf":
+      [ { "$ref": "#/definitions/Hash16" }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "properties":
+          { "any":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Script" }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "properties":
+          { "all":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Script" }
+            }
+          }
+        }
+      , { "type": "object"
+        , "propertyNames": { "pattern": "[0-9]+$" }
+        , "additionalProperties":
+          { "type": "array"
+          , "items": { "$ref": "#/definitions/Script" }
+          }
+        }
+      ]
     }
 
   , "Signature":
@@ -980,6 +1307,22 @@
       ]
     }
 
+  , "Update[Shelley]":
+    { "oneOf":
+      [ { "type": "null" }
+      , { "type": "object"
+        , "required": ["proposal", "epoch"]
+        , "properties":
+          { "epoch": { "$ref": "#/definitions/Epoch" }
+          , "proposal":
+            { "type": "object"
+            , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
+            }
+          }
+        }
+      ]
+    }
+
   , "UtxoValidationError":
     { "oneOf":
       [ { "type": "string"
@@ -1005,5 +1348,12 @@
       , "signature": { "$ref": "#/definitions/Hash64" }
       }
     }
+
+  , "Withdrawals":
+    { "type": "object"
+    , "additionalProperties": { "$ref": "#/definitions/Lovelace" }
+    , "propertyNames": "^stake(_test)?1[0-9a-z]+$"
+    }
+
   }
 }

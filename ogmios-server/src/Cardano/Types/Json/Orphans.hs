@@ -190,6 +190,7 @@ import qualified Codec.CBOR.Read as Cbor
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding.Internal as Json
 import qualified Data.Aeson.Types as Json
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
@@ -458,7 +459,10 @@ instance Crypto crypto => ToAltJSON (Point (CardanoBlock crypto)) where
 -- * Unary types wrapping some types above
 
 instance ToAltJSON SL.ChainCode where
-    toAltJSON = toAltJSON . SL.unChainCode
+    toAltJSON cc =
+        if BS.null (SL.unChainCode cc)
+        then Json.Null
+        else toAltJSON (SL.unChainCode cc)
 
 instance ToAltJSON SL.DnsName where
     toAltJSON = toAltJSON . SL.dnsToText
@@ -591,7 +595,7 @@ instance ToAltJSON EpochNo where
     toAltJSON (EpochNo ep) = toAltJSON ep
 
 instance Crypto crypto => ToAltJSON (SL.Wdrl (Shelley crypto)) where
-    toAltJSON = toAltJSON . SL.unWdrl
+    toAltJSON = toAltJSON . Map.mapKeys (unsafeMatchString . toAltJSON) . SL.unWdrl
 
 instance Crypto crypto => ToAltJSON (SL.ProposedPPUpdates (Shelley crypto)) where
     toAltJSON (SL.ProposedPPUpdates m) = toAltJSON m
@@ -968,12 +972,13 @@ instance ToAltJSON SL.StakePoolRelay where
                 ]
         SL.SingleHostName port dns ->
             Json.object
-                [ "port" .= toAltJSON port
-                , "hostname" .= toAltJSON dns
+                [ "hostname" .= toAltJSON dns
+                , "port" .= toAltJSON port
                 ]
         SL.MultiHostName dns ->
             Json.object
                 [ "hostname" .= toAltJSON dns
+                , "port" .= Json.Null
                 ]
 
 instance Crypto crypto => ToAltJSON (SL.TxOut (Shelley crypto)) where
@@ -1429,21 +1434,15 @@ instance Crypto crypto => ToAltJSON (SL.MultiSig (Shelley crypto)) where
             toAltJSON sig
         SL.RequireAllOf xs ->
             Json.object
-                [ "require" .= Json.object
-                    [ "all" .= toAltJSON xs
-                    ]
+                [ "all" .= toAltJSON xs
                 ]
         SL.RequireAnyOf xs ->
             Json.object
-                [ "require" .= Json.object
-                    [ "any" .= toAltJSON xs
-                    ]
+                [ "any" .= toAltJSON xs
                 ]
         SL.RequireMOf n xs ->
             Json.object
-                [ "require" .= Json.object
-                    [ T.pack (show n) .= toAltJSON xs
-                    ]
+                [ T.pack (show n) .= toAltJSON xs
                 ]
 
 instance Crypto crypto => ToAltJSON (SL.WitVKey (Shelley crypto) 'SL.Witness) where
@@ -1456,7 +1455,7 @@ instance Crypto crypto => ToAltJSON (SL.BootstrapWitness (Shelley crypto)) where
     toAltJSON (SL.BootstrapWitness key sig cc attr) = Json.object
         [ "key" .= toAltJSON key
         , "chainCode" .= toAltJSON cc
-        , "addressAttributes" .= toAltJSON attr
+        , "addressAttributes" .= if BS.null attr then Json.Null else toAltJSON attr
         , "signature" .= toAltJSON sig
         ]
 
