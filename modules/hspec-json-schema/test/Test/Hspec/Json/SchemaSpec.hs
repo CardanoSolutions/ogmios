@@ -16,10 +16,10 @@ import Data.String.Interpolate.Extra
 
 import Data.List
     ( dropWhileEnd )
-import Test.Data.Json.Schema
-    ( SchemaRef (..), prop_validateToJSON )
 import Test.Hspec
     ( Spec, SpecWith, describe, expectationFailure, it, shouldBe )
+import Test.Hspec.Json.Schema
+    ( SchemaRef (..), prop_validateToJSON )
 import Test.QuickCheck
     ( Args (..), Result (..), quickCheckWithResult )
 

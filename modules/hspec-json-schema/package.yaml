@@ -45,7 +45,7 @@ tests:
     - aeson
     - aeson-qq
     - hspec
-    - json-schema-spec
+    - hspec-json-schema
     - QuickCheck
     - string-interpolate
     - text
