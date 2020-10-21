@@ -78,5 +78,5 @@ pip3 install json-schema-for-humans
 And then, run:
 
 ```
-cd docs && generate-schema-doc ../ogmios.wsp.json API_REFERENCE
+cd docs && generate-schema-doc --config no_link_to_reused_ref ../ogmios.wsp.json index.html
 ```
