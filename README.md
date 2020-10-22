@@ -5,7 +5,7 @@
 ---
 
 <p align="center">
-  <a href='https://github.com/ktorz/cardano-ogmios/actions?query=workflow%3A"Continuous Integration"'><img src="https://img.shields.io/github/workflow/status/ktorz/cardano-ogmios/Continuous Integration?style=for-the-badge" /></a> <a href="https://hub.docker.com/r/ktorz/ogmios/latest"><img src="https://img.shields.io/docker/image-size/ktorz/ogmios?color=407088&label=%F0%9F%90%B3%20docker&sort=date&style=for-the-badge" alt="DockerHub"/></a>
+  <a href='https://github.com/ktorz/cardano-ogmios/actions?query=workflow%3A"Continuous Integration"'><img src="https://img.shields.io/github/workflow/status/ktorz/cardano-ogmios/Continuous Integration?style=for-the-badge" /></a> <a href="https://hub.docker.com/r/ktorz/ogmios"><img src="https://img.shields.io/docker/image-size/ktorz/ogmios/latest?color=407088&label=%F0%9F%90%B3%20docker&sort=date&style=for-the-badge" alt="DockerHub"/></a>
 </p>
 
 # Overview
