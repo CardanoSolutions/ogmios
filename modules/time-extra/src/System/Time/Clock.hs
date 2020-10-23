@@ -8,7 +8,7 @@
 -- Copyright: © 2020 KtorZ <matthias.benkort@gmail.com>
 -- License: MPL-2.0
 -- Stability: Stable
--- Portability: Unix
+-- Portability: Portable
 module System.Time.Clock
     (
     -- * Re-export

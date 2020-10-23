@@ -2,13 +2,15 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
 
+{-# OPTIONS_HADDOCK prune #-}
+
+-- |
+-- Copyright: © 2020 KtorZ <matthias.benkort@gmail.com>
+-- License: MPL-2.0
+-- Stability: Experimental
+-- Portability: Portable
 module Cardano.Network.Protocol.NodeToClient
     (
     -- * Building
@@ -68,8 +70,6 @@ import Ouroboros.Consensus.Byron.Ledger
     ( GenTx, Query (..) )
 import Ouroboros.Consensus.Byron.Ledger.Config
     ( CodecConfig (..) )
-import Ouroboros.Consensus.Byron.Node
-    ()
 import Ouroboros.Consensus.Cardano
     ( CardanoBlock )
 import Ouroboros.Consensus.Cardano.Block
@@ -149,7 +149,7 @@ data Clients m block tx err = Clients
     , localStateQueryClient :: LocalStateQueryClient block (Query block) m ()
     }
 
--- Connect a client to a network, see `mkClient` to construct a network
+-- | Connect a client to a network, see `mkClient` to construct a network
 -- client interface.
 connectClient
     :: Tracer IO (TraceClient tx err)
@@ -210,6 +210,7 @@ mkClient tr epochSlots clients =
     trStateQuery    = nullTracer
     codecStateQuery = cStateQueryCodec $ codecs epochSlots
 
+-- | Boilerplate for lifting a 'ChainSyncClientPipelined'
 localChainSync
     :: forall m protocol.
         ( protocol ~ ChainSync Block (Tip Block)
@@ -229,6 +230,7 @@ localChainSync
 localChainSync tr codec client channel =
     runPipelinedPeer tr codec channel (chainSyncClientPeerPipelined client)
 
+-- | Boilerplate for lifting a 'LocalTxSubmissionClient'
 localTxSubmission
     :: forall m err protocol.
         ( err ~ CardanoApplyTxErr StandardCrypto
@@ -249,6 +251,7 @@ localTxSubmission
 localTxSubmission tr codec client channel =
     runPeer tr codec channel (localTxSubmissionClientPeer client)
 
+-- | Boilerplate for lifting a 'LocalStateQueryClient'
 localStateQuery
     :: forall m protocol.
         ( protocol ~ LocalStateQuery Block (Query Block)
