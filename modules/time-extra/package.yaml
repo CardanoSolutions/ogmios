@@ -1,3 +1,5 @@
+_config: !include "../../.hpack.config.yaml"
+
 name:                time-extra
 version:             1.0.0
 github:              "KtorZ/cardano-ogmios"
@@ -9,15 +11,30 @@ description:         Please see the README on GitHub at <https://github.com/Ktor
 synopsis:            Some extra functions for the time package.
 category:            Utilities
 
+extra-source-files:
+- LICENSE
+- README.md
+- CHANGELOG.md
+
 dependencies:
 - base >= 4.7 && < 5
 
+default-extensions: *default-extensions
+
 library:
   source-dirs: src
-  ghc-options:
-    - -O2
-    - -Wall
-    - -Wcompat
-    - -fwarn-redundant-constraints
+  ghc-options: *ghc-options-lib
   dependencies:
+    - async
     - time
+
+tests:
+  unit:
+    main: Spec.hs
+    source-dirs: test/unit
+    ghc-options: *ghc-options-test
+    dependencies:
+    - hspec
+    - QuickCheck
+    - time
+    - time-extra
