@@ -2,9 +2,6 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NumericUnderscores #-}
-
 module Data.Git.Revision.THSpec
     ( spec
     ) where
@@ -13,13 +10,10 @@ import Prelude
 
 import Control.Concurrent
     ( threadDelay )
-import Control.Monad
-    ( void )
 import Control.Monad.Fail
     ( MonadFail )
 import Data.Git.Revision.TH
-    ( git
-    , gitRemoteGetURL
+    ( gitRemoteGetURL
     , gitRevParseHEAD
     , gitTags
     , git_
@@ -30,19 +24,18 @@ import Language.Haskell.TH
     ( Exp (..), Lit (..), runQ )
 import System.Environment
     ( setEnv )
-import System.IO.Temp
-    ( withSystemTempDirectory )
 import Test.Hspec
     ( ActionWith
     , Spec
     , around
     , context
-    , parallel
     , shouldBe
     , shouldNotBe
     , shouldSatisfy
     , specify
     )
+import System.IO.Temp
+    ( withSystemTempDirectory )
 
 spec :: Spec
 spec = around withGitSandbox $ do
@@ -93,8 +86,8 @@ spec = around withGitSandbox $ do
             let origin = "git@github.com:repo/owner.git"
             let someFork = "git@github.com:fork/someone.git"
             git_ ["init"]
-            print =<< git ["remote", "add", "origin"  , origin]
-            print =<< git ["remote", "add", "someFork", someFork]
+            git_ ["remote", "add", "origin"  , origin]
+            git_ ["remote", "add", "someFork", someFork]
             remote <- asString =<< runQ gitRemoteGetURL
 
             remote `shouldBe` origin

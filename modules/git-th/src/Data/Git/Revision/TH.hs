@@ -32,7 +32,7 @@ import Control.Exception
 import Control.Monad
     ( void )
 import Data.List
-    ( dropWhileEnd )
+    ( dropWhileEnd, tail )
 import Language.Haskell.TH
     ( Exp (..), Lit (..), Q, runIO )
 import System.Exit

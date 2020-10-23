@@ -9,14 +9,14 @@ module Test.Hspec.Json.SchemaSpec
     ( spec
     ) where
 
+import Prelude
+
 import Data.Aeson.QQ.Simple
     ( aesonQQ )
-import Data.List
-    ( dropWhileEnd )
 import Data.String.Interpolate.Extra
     ( stringQQ )
 import Test.Hspec
-    ( Spec, SpecWith, describe, expectationFailure, it, shouldBe )
+    ( Spec, SpecWith, context, expectationFailure, specify )
 import Test.Hspec.Json.Schema
     ( SchemaRef (..), prop_validateToJSON )
 import Test.QuickCheck
@@ -33,7 +33,7 @@ testFailure
     -> Json.Value
     -> ExpectedError
     -> SpecWith ()
-testFailure filepath json expectedError = it filepath $ do
+testFailure filepath json expectedError = specify filepath $ do
     let ref = SchemaRef (T.pack filepath)
     let args = QC.stdArgs { chatty = False }
     result <- quickCheckWithResult args (prop_validateToJSON ref json)
@@ -50,7 +50,7 @@ testFailure filepath json expectedError = it filepath $ do
     trim = filter (/= ' ') . filter (/= '\n')
 
 spec :: Spec
-spec = describe "prop_validateToJSON" $ do
+spec = context "prop_validateToJSON" $ do
     testFailure "test/schemas/001.json"
         [aesonQQ|
         { "size": "180cm"

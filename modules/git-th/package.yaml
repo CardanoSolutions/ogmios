@@ -1,3 +1,5 @@
+_config: !include "../../.hpack.config.yaml"
+
 name:                git-th
 version:             1.0.0
 github:              "KtorZ/cardano-ogmios"
@@ -17,13 +19,11 @@ extra-source-files:
 dependencies:
 - base >= 4.7 && < 5
 
+default-extensions: *default-extensions
+
 library:
   source-dirs: src
-  ghc-options:
-    - -O2
-    - -Wall
-    - -Wcompat
-    - -fwarn-redundant-constraints
+  ghc-options: *ghc-options-lib
   dependencies:
     - process
     - template-haskell
@@ -32,14 +32,9 @@ tests:
   unit:
     main: Spec.hs
     source-dirs: test/unit
-    ghc-options:
-    - -Wcompat
-    - -fwarn-redundant-constraints
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+    ghc-options: *ghc-options-test
     dependencies:
-    - temporary
     - git-th
     - hspec
     - template-haskell
+    - temporary

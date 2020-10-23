@@ -2,11 +2,15 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE RankNTypes #-}
 
+{-# OPTIONS_HADDOCK prune #-}
+
+-- |
+-- Copyright: © 2020 KtorZ <matthias.benkort@gmail.com>
+-- License: MPL-2.0
+-- Stability: Stable
+-- Portability: Unix
 module Test.Hspec.Json.Schema
     ( validateToJSON
     , prop_validateToJSON
@@ -424,11 +428,14 @@ prettyIndexedList items =
 -- Helpers
 --
 
+-- Format a 'Scientific', converting it a 'Double'
 scientific :: Scientific -> Doc
 scientific = double . toRealFloat
 
+-- An alias to format a 'String'
 s :: String -> Doc
 s = string
 
+-- An alias to format a 'Text'
 t :: Text -> Doc
 t = string . T.unpack
