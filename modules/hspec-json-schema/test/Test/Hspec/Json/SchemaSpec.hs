@@ -11,11 +11,10 @@ module Test.Hspec.Json.SchemaSpec
 
 import Data.Aeson.QQ.Simple
     ( aesonQQ )
-import Data.String.Interpolate.Extra
-    ( stringQQ )
-
 import Data.List
     ( dropWhileEnd )
+import Data.String.Interpolate.Extra
+    ( stringQQ )
 import Test.Hspec
     ( Spec, SpecWith, describe, expectationFailure, it, shouldBe )
 import Test.Hspec.Json.Schema

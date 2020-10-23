@@ -10,6 +10,7 @@ synopsis:            Compile-time helpers to access git informations.
 category:            Development
 
 extra-source-files:
+- LICENSE
 - README.md
 - CHANGELOG.md
 

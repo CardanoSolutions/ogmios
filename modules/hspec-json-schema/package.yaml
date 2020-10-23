@@ -7,7 +7,12 @@ maintainer:          "matthias.benkort@gmail.com"
 copyright:           "2020 KtorZ"
 description:         Please see the README on GitHub at <https://github.com/KtorZ/ogmios>
 synopsis:            For testing arbitrarily generated JSON instances against JSON schemas draft4.
-category:            Web
+category:            Test
+
+extra-source-files:
+- LICENSE
+- README.md
+- CHANGELOG.md
 
 dependencies:
 - base >= 4.7 && < 5
@@ -32,7 +37,7 @@ library:
     - text
 
 tests:
-  json-schema-spec:
+  unit:
     main: Spec.hs
     source-dirs: test
     ghc-options:
