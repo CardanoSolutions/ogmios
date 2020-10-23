@@ -43,7 +43,6 @@ tests:
     ghc-options: *ghc-options-test
     dependencies:
     - aeson
-    - aeson-qq
     - hspec
     - hspec-json-schema
     - QuickCheck

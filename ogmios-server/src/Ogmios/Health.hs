@@ -54,7 +54,7 @@ import Control.Concurrent
 import Control.Concurrent.Async
     ( async, link )
 import Control.Concurrent.MVar
-    ( MVar, modifyMVar_, newMVar, putMVar, readMVar, tryTakeMVar )
+    ( MVar, modifyMVar_, newMVar, readMVar )
 import Control.Exception
     ( IOException, SomeException, handle, throwIO )
 import Control.Monad
@@ -119,7 +119,9 @@ import System.Metrics.Distribution
 import System.Metrics.Gauge
     ( Gauge )
 import System.Time.Clock
-    ( NominalDiffTime
+    ( Debouncer (..)
+    , NominalDiffTime
+    , newDebouncer
     , nominalDiffTimeToMicroseconds
     , nominalDiffTimeToMilliseconds
     , timed
@@ -444,16 +446,3 @@ newApplicationMetrics store = do
         , totalConnectionsCounter
         , sessionsDurationDistribution
         }
-
-newtype Debouncer = Debouncer { debounce :: IO () -> IO () }
-
--- | Run an action, but no more than once every chosen interval of time.
-newDebouncer :: NominalDiffTime -> IO Debouncer
-newDebouncer delay = do
-    lock <- newMVar ()
-    link =<< async (forever $ threadDelay (micro delay) *> putMVar lock ())
-    return $ Debouncer $ \action -> tryTakeMVar lock >>= \case
-        Nothing -> return ()
-        Just () -> action
-  where
-    micro = fromIntegral . nominalDiffTimeToMicroseconds
