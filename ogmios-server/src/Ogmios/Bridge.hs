@@ -2,23 +2,14 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
+{-# OPTIONS_GHC -fno-warn-partial-fields #-}
 
 module Ogmios.Bridge
     (
@@ -45,16 +36,16 @@ module Ogmios.Bridge
 
 import Prelude
 
-import Control.Manufacture
-    ( Worker(..), newWorker, bindWorker, feedWorker )
 import Cardano.Network.Protocol.NodeToClient
     ( Clients (..) )
 import Control.Concurrent.Async
     ( async, link )
 import Control.Concurrent.Queue
-    ( Queue(..), newQueue )
+    ( Queue (..), newQueue )
 import Control.Exception
     ( IOException )
+import Control.Manufacture
+    ( Worker (..), bindWorker, feedWorker, newWorker )
 import Control.Monad
     ( guard )
 import Control.Monad.Class.MonadThrow
@@ -267,12 +258,13 @@ data Release
     = Release
     deriving (Generic, Show)
 
-data Query block = Query { query :: SomeQuery block }
+data Query block = Query { query :: SomeQuery Maybe block }
     deriving (Generic)
 
-data SomeQuery block = forall result. SomeQuery
+data SomeQuery (f :: * -> *) block = forall result. SomeQuery
     { query :: Ledger.Query block result
     , encodeResult :: result -> Json.Value
+    , genResult :: Proxy result -> f result
     }
 
 newtype QueryResponse =
@@ -285,7 +277,7 @@ mkLocalStateQueryClient
         , ToJSON point
         , ToJSON AcquireFailure
         , FromJSON point
-        , FromJSON (SomeQuery block)
+        , FromJSON (SomeQuery Maybe block)
         , point ~ Point block
         )
     => Worker ByteString Json.Encoding m
@@ -324,7 +316,7 @@ mkLocalStateQueryClient Worker{await,yield,pass} =
             pure $ LSQ.SendMsgReAcquire pt (clientStAcquiring pt toResponse)
         , Wsp.Handler $ \Release _toResponse ->
             pure $ LSQ.SendMsgRelease clientStIdle
-        , Wsp.Handler $ \(Query (SomeQuery query encodeResult)) toResponse ->
+        , Wsp.Handler $ \(Query (SomeQuery query encodeResult _)) toResponse ->
             pure $ LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
                 { recvMsgResult = \result -> do
                     yield $ Json.toEncoding $ toResponse $ QueryResponse $ encodeResult result
@@ -366,7 +358,7 @@ newClients
         , ToJSON err
         , ToJSON AcquireFailure
         , FromJSON (Point block)
-        , FromJSON (SomeQuery block)
+        , FromJSON (SomeQuery Maybe block)
         , FromJSON tx
         )
     => WS.Connection
@@ -485,7 +477,7 @@ instance FromJSON (Wsp.Request Release)
     parseJSON = Wsp.genericFromJSON Wsp.defaultOptions
 
 instance
-    ( FromJSON (SomeQuery block)
+    ( FromJSON (SomeQuery Maybe block)
     ) => FromJSON (Wsp.Request (Query block))
   where
     parseJSON = Wsp.genericFromJSON Wsp.defaultOptions

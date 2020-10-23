@@ -4,6 +4,37 @@
 # https://github.com/jaspervdj/stylish-haskell/blob/master/data/stylish-haskell.yaml
 # for usage.
 
+language_extensions: &default-extensions
+- BangPatterns
+- BinaryLiterals
+- ConstraintKinds
+- DataKinds
+- DefaultSignatures
+- ExistentialQuantification
+- FlexibleContexts
+- FlexibleInstances
+- FunctionalDependencies
+- GADTs
+- InstanceSigs
+- KindSignatures
+- LambdaCase
+- MonadFailDesugaring
+- MultiParamTypeClasses
+- MultiWayIf
+- NamedFieldPuns
+- NoImplicitPrelude
+- NumericUnderscores
+- OverloadedStrings
+- PartialTypeSignatures
+- PatternGuards
+- RankNTypes
+- ScopedTypeVariables
+- StandaloneDeriving
+- TupleSections
+- TypeFamilies
+- TypeSynonymInstances
+- ViewPatterns
+
 columns: 80 # Should match .editorconfig
 steps:
   - imports:

@@ -2,20 +2,22 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Cardano.Types.Json.Orphans () where
-
+module Cardano.Types.Json.Orphans
+    ( QueryResult
+    , parseGetLedgerTip
+    , parseGetEpochNo
+    , parseGetNonMyopicMemberRewards
+    , parseGetCurrentPParams
+    , parseGetProposedPParamsUpdates
+    , parseGetStakeDistribution
+    , parseGetUTxO
+    , parseGetFilteredUTxO
+    ) where
 
 import Prelude
 
@@ -135,6 +137,8 @@ import Data.List.NonEmpty
     ( NonEmpty )
 import Data.Map.Strict
     ( Map )
+import Data.Proxy
+    ( Proxy (..) )
 import Data.Ratio
     ( Rational )
 import Data.Sequence.Strict
@@ -161,9 +165,18 @@ import Ouroboros.Consensus.Cardano.Block
     , HardForkApplyTxErr (..)
     , HardForkBlock (..)
     , Query (..)
+    , ShelleyEra
+    )
+import Ouroboros.Consensus.HardFork.Combinator
+    ( LedgerEraInfo (..)
+    , MismatchEraInfo (..)
+    , OneEraHash (..)
+    , SingleEraInfo (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
-    ( EraMismatch (..), OneEraHash (..) )
+    ( EraMismatch (..) )
+import Ouroboros.Consensus.HardFork.Combinator.Util.Match
+    ( mismatchTwo )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..), ShelleyHash (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Ledger
@@ -292,22 +305,40 @@ instance Crypto crypto => FromJSON (GenTx (CardanoBlock crypto))
         deserialiseCBOR = either (fail . show) (pure . GenTxShelley . snd)
             . Cbor.deserialiseFromBytes fromCBOR
 
-instance Crypto crypto => FromJSON (SomeQuery (CardanoBlock crypto)) where
+instance Crypto crypto => FromJSON (SomeQuery Maybe (CardanoBlock crypto)) where
     parseJSON = choice
-        [ parseGetLedgerTip
-        , parseGetEpochNo
-        , parseGetNonMyopicMemberRewards
-        , parseGetCurrentPParams
-        , parseGetProposedPParamsUpdates
-        , parseGetStakeDistribution
-        , parseGetUTxO
-        , parseGetFilteredUTxO
+        [ parseGetLedgerTip (const Nothing)
+        , parseGetEpochNo (const Nothing)
+        , parseGetNonMyopicMemberRewards (const Nothing)
+        , parseGetCurrentPParams (const Nothing)
+        , parseGetProposedPParamsUpdates (const Nothing)
+        , parseGetStakeDistribution (const Nothing)
+        , parseGetUTxO (const Nothing)
+        , parseGetFilteredUTxO (const Nothing)
         ]
 
 instance (Crypto crypto, ToAltJSON a) => ToAltJSON (CardanoQueryResult crypto a) where
     toAltJSON = \case
-        Left _err -> error "impossible (currently): MismatchInfo triggered."
+        Left  e -> toAltJSON e
         Right a -> toAltJSON a
+
+instance (Crypto crypto) => ToAltJSON (MismatchEraInfo (CardanoEras crypto)) where
+    toAltJSON (MismatchEraInfo mismatch) = case mismatchTwo mismatch of
+        Left (SingleEraInfo query, LedgerEraInfo (SingleEraInfo ledger)) ->
+            Json.object
+            [ "eraMismatch" .= Json.object
+                [ "queryEra" .= toAltJSON query
+                , "ledgerEra" .= toAltJSON ledger
+                ]
+            ]
+
+        Right (SingleEraInfo query, LedgerEraInfo (SingleEraInfo ledger)) ->
+            Json.object
+            [ "eraMismatch" .= Json.object
+                [ "queryEra" .= toAltJSON query
+                , "ledgerEra" .= toAltJSON ledger
+                ]
+            ]
 
 -- There are debug JSON instances for many types in cardano-ledger but those are
 -- constructed generically and contains too many little discrepency which makes
@@ -1479,30 +1510,46 @@ instance Crypto crypto => ToAltJSON (SL.UTxO (Shelley crypto)) where
 --
 
 parseGetLedgerTip
-    :: forall crypto. (Crypto crypto)
-    => Json.Value
-    -> Json.Parser (SomeQuery (CardanoBlock crypto))
-parseGetLedgerTip = Json.withText "SomeQuery" $ \text -> do
+    :: forall crypto f result era.
+        ( Crypto crypto
+        , era ~ ShelleyEra crypto
+        , result ~ QueryResult crypto (Point (ShelleyBlock era))
+        )
+    => (Proxy result -> f result)
+    -> Json.Value
+    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
+parseGetLedgerTip genResult = Json.withText "SomeQuery" $ \text -> do
     guard (text == "ledgerTip") $> SomeQuery
         { query = QueryIfCurrentShelley GetLedgerTip
         , encodeResult = toAltJSON. right (coerce @_ @(Point (CardanoBlock crypto)))
+        , genResult
         }
 
 parseGetEpochNo
-    :: forall crypto. (Crypto crypto)
-    => Json.Value
-    -> Json.Parser (SomeQuery (CardanoBlock crypto))
-parseGetEpochNo = Json.withText "SomeQuery" $ \text -> do
+    :: forall crypto f result.
+        ( Crypto crypto
+        , result ~ QueryResult crypto EpochNo
+        )
+    => (Proxy result -> f result)
+    -> Json.Value
+    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
+parseGetEpochNo genResult = Json.withText "SomeQuery" $ \text -> do
     guard (text == "currentEpoch") $> SomeQuery
         { query = QueryIfCurrentShelley GetEpochNo
         , encodeResult = toAltJSON
+        , genResult
         }
 
 parseGetNonMyopicMemberRewards
-    :: forall crypto. (Crypto crypto)
-    => Json.Value
-    -> Json.Parser (SomeQuery (CardanoBlock crypto))
-parseGetNonMyopicMemberRewards = Json.withObject "SomeQuery" $ \obj -> do
+    :: forall crypto f result era.
+        ( Crypto crypto
+        , era ~ ShelleyEra crypto
+        , result ~ QueryResult crypto (NonMyopicMemberRewards era)
+        )
+    => (Proxy result -> f result)
+    -> Json.Value
+    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
+parseGetNonMyopicMemberRewards genResult = Json.withObject "SomeQuery" $ \obj -> do
     arg <- obj .: "nonMyopicMemberRewards" >>= some . choice
         [ parseStake
         , parseCredential
@@ -1510,6 +1557,7 @@ parseGetNonMyopicMemberRewards = Json.withObject "SomeQuery" $ \obj -> do
     pure $ SomeQuery
         { query = QueryIfCurrentShelley (GetNonMyopicMemberRewards $ Set.fromList arg)
         , encodeResult = toAltJSON
+        , genResult
         }
   where
     parseStake
@@ -1523,58 +1571,90 @@ parseGetNonMyopicMemberRewards = Json.withObject "SomeQuery" $ \obj -> do
     parseCredential = fmap Right . fromAltJSON
 
 parseGetCurrentPParams
-    :: forall crypto. (Crypto crypto)
-    => Json.Value
-    -> Json.Parser (SomeQuery (CardanoBlock crypto))
-parseGetCurrentPParams = Json.withText "SomeQuery" $ \text -> do
+    :: forall crypto f result era.
+        ( Crypto crypto
+        , era ~ ShelleyEra crypto
+        , result ~ QueryResult crypto (SL.PParams era)
+        )
+    => (Proxy result -> f result)
+    -> Json.Value
+    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
+parseGetCurrentPParams genResult = Json.withText "SomeQuery" $ \text -> do
     guard (text == "currentProtocolParameters") $> SomeQuery
         { query = QueryIfCurrentShelley GetCurrentPParams
         , encodeResult = toAltJSON
+        , genResult
         }
 
 parseGetProposedPParamsUpdates
-    :: forall crypto. (Crypto crypto)
-    => Json.Value
-    -> Json.Parser (SomeQuery (CardanoBlock crypto))
-parseGetProposedPParamsUpdates = Json.withText "SomeQuery" $ \text -> do
+    :: forall crypto f result era.
+        ( Crypto crypto
+        , era ~ ShelleyEra crypto
+        , result ~ QueryResult crypto (SL.ProposedPPUpdates era)
+        )
+    => (Proxy result -> f result)
+    -> Json.Value
+    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
+parseGetProposedPParamsUpdates genResult = Json.withText "SomeQuery" $ \text -> do
     guard (text == "proposedProtocolParameters") $> SomeQuery
         { query = QueryIfCurrentShelley GetProposedPParamsUpdates
         , encodeResult = toAltJSON
+        , genResult
         }
 
 parseGetStakeDistribution
-    :: forall crypto. (Crypto crypto)
-    => Json.Value
-    -> Json.Parser (SomeQuery (CardanoBlock crypto))
-parseGetStakeDistribution = Json.withText "SomeQuery" $ \text -> do
+    :: forall crypto f result era.
+        ( Crypto crypto
+        , era ~ ShelleyEra crypto
+        , result ~ QueryResult crypto (SL.PoolDistr era)
+        )
+    => (Proxy result -> f result)
+    -> Json.Value
+    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
+parseGetStakeDistribution genResult = Json.withText "SomeQuery" $ \text -> do
     guard (text == "stakeDistribution") $> SomeQuery
         { query = QueryIfCurrentShelley GetStakeDistribution
         , encodeResult = toAltJSON
+        , genResult
         }
 
 parseGetUTxO
-    :: forall crypto. (Crypto crypto)
-    => Json.Value
-    -> Json.Parser (SomeQuery (CardanoBlock crypto))
-parseGetUTxO = Json.withText "SomeQuery" $ \text -> do
+    :: forall crypto f result era.
+        ( Crypto crypto
+        , era ~ ShelleyEra crypto
+        , result ~ QueryResult crypto (SL.UTxO era)
+        )
+    => (Proxy result -> f result)
+    -> Json.Value
+    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
+parseGetUTxO genResult = Json.withText "SomeQuery" $ \text -> do
     guard (text == "utxo") $> SomeQuery
         { query = QueryIfCurrentShelley GetUTxO
         , encodeResult = toAltJSON
+        , genResult
         }
 
 parseGetFilteredUTxO
-    :: forall crypto. (Crypto crypto)
-    => Json.Value
-    -> Json.Parser (SomeQuery (CardanoBlock crypto))
-parseGetFilteredUTxO = Json.withObject "SomeQuery" $ \obj -> do
+    :: forall crypto f result era.
+        ( Crypto crypto
+        , era ~ ShelleyEra crypto
+        , result ~ QueryResult crypto (SL.UTxO era)
+        )
+    => (Proxy result -> f result)
+    -> Json.Value
+    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
+parseGetFilteredUTxO genResult = Json.withObject "SomeQuery" $ \obj -> do
     -- FIXME: Do not use cardano-ledger-specs FromJSON instances here, but allow
     -- parsing addresses from base58. bech32 or base16.
     addrs <- obj .: "utxo"
     pure SomeQuery
         { query = QueryIfCurrentShelley (GetFilteredUTxO addrs)
         , encodeResult = toAltJSON
+        , genResult
         }
 
+type QueryResult crypto result =
+    Either (MismatchEraInfo (CardanoEras crypto)) result
 --
 -- Internal / Helpers
 --

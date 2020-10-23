@@ -118,19 +118,19 @@ validateToJSON
     => Gen a
     -> SchemaRef
     -> SpecWith ()
-validateToJSON arbitrary ref =
-    it (T.unpack $ getSchemaRef ref)
-        $ withMaxSuccess 100
-        $ forAllBlind arbitrary (prop_validateToJSON ref)
+validateToJSON arbitrary ref = it (T.unpack $ getSchemaRef ref)
+    $ withMaxSuccess 100
+    $ forAllBlind arbitrary (prop_validateToJSON toJSON ref)
+
 
 -- | Actual property that a given value a should satisfy.
 prop_validateToJSON
-    :: ToJSON a
-    => SchemaRef
+    :: (a -> Json.Value)
+    -> SchemaRef
     -> a
     -> Property
-prop_validateToJSON ref a = monadicIO $ do
-    let json = toJSON a
+prop_validateToJSON encode ref a = monadicIO $ do
+    let json = encode a
     errors <- run $ validateSchema ref json
     monitor $ counterexample $ unlines
         [ "JSON:", BL8.unpack $ Json.encodePretty json ]

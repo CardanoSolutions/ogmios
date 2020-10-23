@@ -2,21 +2,11 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE NumericUnderscores #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
@@ -70,7 +60,7 @@ import Data.FileEmbed
 import Data.Function
     ( (&) )
 import Data.HashMap.Strict
-    ( HashMap, (!) )
+    ( HashMap )
 import Data.Int
     ( Int64 )
 import Data.List
@@ -83,6 +73,8 @@ import Data.Text
     ( Text )
 import Data.Time.Clock
     ( UTCTime, getCurrentTime )
+import Data.Word
+    ( Word64 )
 import GHC.Generics
     ( Generic )
 import GHC.Stats
@@ -390,16 +382,21 @@ getSpecificationR = runHandlerM $ do
 sample :: Ekg.Store -> IO (Maybe RuntimeStats, Integer, Integer, DistributionStats)
 sample store = do
     values <- Ekg.sampleAll store
-    return $ if Map.null values then (Nothing, 0, 0, mempty) else
-        let
-            Ekg.Gauge maxHeapSize = values ! "maxHeapSize"
-            Ekg.Counter cpuTime = values ! "cpuTime"
-            Ekg.Counter gcCpuTime = values ! "gcCpuTime"
-            Ekg.Gauge _activeConnections = values ! "activeConnections"
-            Ekg.Counter _totalConnections = values ! "totalConnections"
-            Ekg.Distribution _sessionsDuration = values ! "sessionsDuration"
+    maybe (pure (Nothing, 0, 0, mempty)) pure $ do
+        Ekg.Gauge maxHeapSize
+            <- "maxHeapSize" `Map.lookup` values
+        Ekg.Counter cpuTime
+            <- "cpuTime" `Map.lookup` values
+        Ekg.Counter gcCpuTime
+            <- "gcCpuTime" `Map.lookup` values
+        Ekg.Gauge _activeConnections
+            <- "activeConnections" `Map.lookup` values
+        Ekg.Counter _totalConnections
+            <- "totalConnections" `Map.lookup` values
+        Ekg.Distribution _sessionsDuration
+            <- "sessionsDuration" `Map.lookup` values
 
-            productivity
+        let productivity
                 | denominator == 0 = 1
                 | otherwise
                     = either fst fst
@@ -407,7 +404,8 @@ sample store = do
                     $ toInteger cpuTime % denominator
               where
                 denominator = toInteger cpuTime + toInteger gcCpuTime
-        in
+
+        return
             ( Just $ RuntimeStats { productivity, maxHeapSize }
             , toInteger _activeConnections
             , toInteger _totalConnections
@@ -420,12 +418,15 @@ sample store = do
 
 runtimeMetrics :: HashMap Text (RTSStats -> Ekg.Value)
 runtimeMetrics = Map.fromList
-    [ ("maxHeapSize", Ekg.Gauge . fromIntegral . toKB . max_live_bytes)
-    , ("cpuTime", Ekg.Counter . fromIntegral . cpu_ns)
-    , ("gcCpuTime", Ekg.Counter . fromIntegral . gc_cpu_ns)
+    [ ("maxHeapSize", Ekg.Gauge . int64 . toKB . max_live_bytes)
+    , ("cpuTime", Ekg.Counter . cpu_ns)
+    , ("gcCpuTime", Ekg.Counter . gc_cpu_ns)
     ]
   where
     toKB = (`div` 1024)
+
+    int64 :: Word64 -> Int64
+    int64 = fromIntegral
 
 newApplicationMetrics :: Ekg.Store -> IO ApplicationMetrics
 newApplicationMetrics store = do

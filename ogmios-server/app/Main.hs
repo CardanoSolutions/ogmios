@@ -3,14 +3,17 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
 import Prelude
 
+import Cardano.BM.Trace.Extra
+    ( withStdoutTracer )
+import Cardano.Byron.Constants
+    ( EpochSlots, SecurityParam, lookupVersionData )
+import Cardano.Network.Protocol.NodeToClient
+    ( NodeVersionData, connectClient, mkClient )
 import Control.Concurrent.Async
     ( ExceptionInLinkedThread (..) )
 import Control.Exception
@@ -27,15 +30,6 @@ import Network.HTTP.Types.Header
     ( hUserAgent )
 import Network.WebSockets
     ( ConnectionException (..) )
-import System.Directory
-    ( doesPathExist )
-
-import Cardano.BM.Trace.Extra
-    ( withStdoutTracer )
-import Cardano.Byron.Constants
-    ( EpochSlots, SecurityParam, lookupVersionData )
-import Cardano.Network.Protocol.NodeToClient
-    ( NodeVersionData, connectClient, mkClient )
 import Ogmios.Bridge
     ( handleIOException, newClients )
 import Ogmios.Health
@@ -44,6 +38,8 @@ import Ogmios.Options.Applicative
     ( Options (..), run )
 import Ogmios.Trace
     ( TraceOgmios (..) )
+import System.Directory
+    ( doesPathExist )
 
 import Cardano.Types.Json.Orphans
     ()

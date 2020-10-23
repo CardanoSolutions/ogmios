@@ -2,7 +2,6 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE QuasiQuotes #-}
 
 module Test.Hspec.Json.SchemaSpec
@@ -11,6 +10,8 @@ module Test.Hspec.Json.SchemaSpec
 
 import Prelude
 
+import Data.Aeson
+    ( ToJSON (..) )
 import Data.Aeson.QQ.Simple
     ( aesonQQ )
 import Data.String.Interpolate.Extra
@@ -36,7 +37,7 @@ testFailure
 testFailure filepath json expectedError = specify filepath $ do
     let ref = SchemaRef (T.pack filepath)
     let args = QC.stdArgs { chatty = False }
-    result <- quickCheckWithResult args (prop_validateToJSON ref json)
+    result <- quickCheckWithResult args (prop_validateToJSON toJSON ref json)
     case result of
         Failure{output} | trim output == trim expectedError ->
             pure ()

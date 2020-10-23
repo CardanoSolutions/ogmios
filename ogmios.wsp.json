@@ -283,6 +283,115 @@
         }
       }
     }
+
+  , "Query":
+    { "type": "object"
+    , "description": "Query the current ledger tip."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["query"]
+        , "properties":
+          { "query":
+            { "oneOf":
+              [ { "type": "string"
+                , "enum": ["ledgerTip"]
+                }
+              , { "type": "string"
+                , "enum": ["currentEpoch"]
+                }
+              ]
+            }
+          }
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryResponse[ledgerTip]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/Point" }
+          , { "$ref": "#/definitions/EraMismatch" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[currentEpoch]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/Epoch" }
+          , { "$ref": "#/definitions/EraMismatch" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
   }
 
 , "definitions":
@@ -722,6 +831,28 @@
   , "Epoch":
     { "type": "integer"
     , "minimum": 0
+    }
+
+  , "Era":
+    { "type": "string"
+    , "enum": ["Byron", "Shelley"]
+    }
+
+  , "EraMismatch":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "eraMismatch" ]
+    , "properties":
+      { "eraMismatch":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "queryEra", "ledgerEra" ]
+        , "properties":
+          { "queryEra": { "$ref": "#/definitions/Era" }
+          , "ledgerEra": { "$ref": "#/definitions/Era" }
+          }
+        }
+      }
     }
 
   , "Hash16":

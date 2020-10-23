@@ -1,3 +1,5 @@
+_config: !include "../.hpack.config.yaml"
+
 name:                ogmios
 version:             1.0.0
 github:              "KtorZ/cardano-ogmios"
@@ -9,8 +11,15 @@ description:         Please see the README on GitHub at <https://github.com/Ktor
 synopsis:            A JSON-WSP WebSocket client for cardano-node
 category:            Web
 
+extra-source-files:
+- LICENSE
+- README.md
+- CHANGELOG.md
+
 dependencies:
 - base >= 4.7 && < 5
+
+default-extensions: *default-extensions
 
 flags:
   production:
@@ -20,10 +29,7 @@ flags:
 
 library:
   source-dirs: src
-  ghc-options:
-    - -Wall
-    - -Wcompat
-    - -fwarn-redundant-constraints
+  ghc-options: *ghc-options-lib
   when:
     condition: flag(production)
     ghc-options:
@@ -77,15 +83,9 @@ library:
 
 executables:
   ogmios:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -Wall
-    - -Wcompat
-    - -fwarn-redundant-constraints
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+    main: Main.hs
+    source-dirs: app
+    ghc-options: *ghc-options-test
     when:
       condition: flag(production)
       ghc-options:
@@ -116,15 +116,20 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - aeson
     - cardano-client
+    - cardano-slotting
     - generic-arbitrary
     - hedgehog-quickcheck
     - hspec
     - hspec-json-schema
     - json-wsp
     - ogmios
+    - ouroboros-consensus
+    - ouroboros-consensus-byron
     - ouroboros-consensus-cardano
     - ouroboros-consensus-cardano-test
     - ouroboros-consensus-shelley
     - ouroboros-network
     - QuickCheck
+    - text
