@@ -4,10 +4,23 @@
 
 {-# LANGUAGE TypeApplications #-}
 
+{-# OPTIONS_HADDOCK prune #-}
+
+-- |
+-- Copyright: © 2020 KtorZ <matthias.benkort@gmail.com>
+-- License: MPL-2.0
+-- Stability: Stable
+-- Portability: Unix
 module Data.Git.Revision.TH
     ( gitRevParseHEAD
+    , unknownRevision
     , gitTags
     , gitRemoteGetURL
+    , unknownRemote
+
+    -- For Internal Use
+    , git
+    , git_
     ) where
 
 import Prelude
@@ -16,6 +29,8 @@ import Control.Arrow
     ( second )
 import Control.Exception
     ( SomeException, try )
+import Control.Monad
+    ( void )
 import Data.List
     ( dropWhileEnd )
 import Language.Haskell.TH
@@ -25,6 +40,14 @@ import System.Exit
 import System.Process
     ( readProcessWithExitCode )
 
+-- | Get the current HEAD revision (long format).
+--
+-- The resulting splice is a 'String'.
+--
+-- @since 1.0.0
+--
+-- >>> $(gitRevParseHEAD)
+-- "8901897a8883285ceebae66aa806e8ecceb12a48"
 gitRevParseHEAD :: Q Exp
 gitRevParseHEAD =
     LitE . StringL <$> runIO runGitRevParse
@@ -34,8 +57,21 @@ gitRevParseHEAD =
         result <- git ["rev-parse", "--verify", "HEAD"]
         case result of
             Right (ExitSuccess, revision) -> pure revision
-            _ -> pure "unknown revision"
+            _ -> pure unknownRevision
 
+-- | Get a list of tags, ordered by descending date.
+--
+-- The resulting splice is a @[(String, String)]@ where for each tuple:
+--
+-- - The first element is a tag name
+-- - The second element is the revision for that tag
+--
+-- @since 1.0.0
+--
+-- >>> $(gitTags)
+-- [("v1.0.0-beta","6b81b9b961068b4919875a8031677f8b2b091b61")
+-- ,("2.0.0","b906a8e04f6a58a6079a4f0c75f80cf701a17f94")
+-- ]
 gitTags :: Q Exp
 gitTags =
     ListE . fmap (\(a,b) -> TupE [LitE $ StringL a, LitE $ StringL b]) <$> runIO runGitTag
@@ -54,6 +90,14 @@ gitTags =
         separator :: Char
         separator = ' '
 
+-- | Retrieve the repository's upstream remote url 'origin'.
+--
+-- Resulting splice is a 'String' literal.
+--
+-- @since 1.0.0
+--
+-- >>> $(gitRemoteGetURL)
+--"git@github.com:owner/repository.git"
 gitRemoteGetURL :: Q Exp
 gitRemoteGetURL =
     LitE . StringL <$> runIO runGitRemoteGetURL
@@ -63,8 +107,13 @@ gitRemoteGetURL =
         result <- git ["remote", "get-url", "origin"]
         case result of
             Right (ExitSuccess, url) -> pure url
-            _ -> pure "unknown remote"
+            _ -> pure unknownRemote
 
+--
+-- Internals
+--
+
+-- Run an arbitrary git command.
 git :: [String] -> IO (Either SomeException (ExitCode, String))
 git args = do
     result <- try @SomeException $ readProcessWithExitCode "git" args ""
@@ -75,3 +124,15 @@ git args = do
 
     trimNewline :: String -> String
     trimNewline = dropWhileEnd (== '\n') . dropWhileEnd (== '\r')
+
+-- Like 'git', but discard the result.
+git_ :: [String] -> IO ()
+git_ = void . git
+
+-- Magic constant for when the revision isn't found.
+unknownRevision :: String
+unknownRevision = "unknown revision"
+
+-- Magic constant used when the remote can't be found
+unknownRemote :: String
+unknownRemote = "unknown remote"

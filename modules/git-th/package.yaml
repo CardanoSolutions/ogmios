@@ -5,9 +5,13 @@ license:             MPL-2.0
 author:              "KtorZ <matthias.benkort@gmail.com>"
 maintainer:          "matthias.benkort@gmail.com"
 copyright:           "2020 KtorZ"
-description:         Please see the README on GitHub at <https://github.com/KtorZ/ogmios>
+description:         Please see the README on GitHub at <https://github.com/KtorZ/ogmios/tree/master/modules/git-th>
 synopsis:            Compile-time helpers to access git informations.
 category:            Development
+
+extra-source-files:
+- README.md
+- CHANGELOG.md
 
 dependencies:
 - base >= 4.7 && < 5
@@ -21,4 +25,20 @@ library:
     - -fwarn-redundant-constraints
   dependencies:
     - process
+    - template-haskell
+
+tests:
+  unit:
+    main: Spec.hs
+    source-dirs: test/unit
+    ghc-options:
+    - -Wcompat
+    - -fwarn-redundant-constraints
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - temporary
+    - git-th
+    - hspec
     - template-haskell
