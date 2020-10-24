@@ -29,7 +29,7 @@ library:
     - template-haskell
 
 tests:
-  unit:
+  integration:
     main: Spec.hs
     source-dirs: test/unit
     ghc-options: *ghc-options-test

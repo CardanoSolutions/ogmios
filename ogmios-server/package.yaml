@@ -40,6 +40,7 @@ library:
     - async
     - bech32
     - bech32-th
+    - base58-bytestring
     - bytestring
     - cardano-api
     - cardano-binary
@@ -132,4 +133,6 @@ tests:
     - ouroboros-consensus-shelley
     - ouroboros-network
     - QuickCheck
+    - shelley-spec-ledger
+    - shelley-spec-ledger-test
     - text
