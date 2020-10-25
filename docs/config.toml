@@ -57,4 +57,5 @@ theme = "learn"
 
 [Languages]
 [Languages.en]
+  landingPageURL = "/cardano-ogmios"
   landingPageName = "<i class='fas fa-home'></i> Overview"
