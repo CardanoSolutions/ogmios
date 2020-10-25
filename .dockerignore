@@ -4,6 +4,8 @@
 !stack.yaml
 !snapshot.yaml
 !ogmios.wsp.json
+!.hpack.config.yaml
+!.stylish-haskell.yaml
 
 !ogmios-server/app/
 !ogmios-server/src/

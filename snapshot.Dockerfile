@@ -26,6 +26,8 @@ COPY modules/time-extra/package.yaml         modules/time-extra/package.yaml
 COPY ogmios-server/package.yaml              ogmios-server/package.yaml
 COPY stack.yaml                              stack.yaml
 COPY snapshot.yaml                           snapshot.yaml
+COPY .hpack.config.yaml                      .hpack.config.yaml
+COPY .stylish-haskell.yaml                   .stylish-haskell.yaml
 
 RUN stack setup
 RUN stack build --only-snapshot
