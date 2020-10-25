@@ -1,0 +1,34 @@
+name: User Guide
+
+on:
+  push: { "branches": [ "master" ] }
+  pull_request: { "branches": [ "master" ] }
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v1
+
+    - name: 🧰 Download Hugo
+      run: |
+        curl -L https://github.com/gohugoio/hugo/releases/download/v0.76.5/hugo_extended_0.76.5_Linux-64bit.tar.gz | tar xz
+
+    - name: 📸 Build Static Website
+      run: |
+        cd docs
+        git submodule update --init themes/learn
+        ../hugo -t learn --minify
+
+    - name: 📘 Publish Artifacts
+      if: matrix.os == 'ubuntu-latest' && github.event_name == 'push'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: docs/public
+        enable_jekyll: false

@@ -28,4 +28,4 @@ cabal.project.local~
 stack.yaml.lock
 
 ### Generated ###
-docs/API_REFERENCE.*
+docs/public

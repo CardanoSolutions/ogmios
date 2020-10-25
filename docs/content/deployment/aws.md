@@ -1,6 +1,10 @@
-# Deploying to Amazon Web Services
++++
+title = "AWS"
+chapter = false
+weight = 1
++++
 
-![](../.github/aws.png)
+![aws](../images/aws.png?height=300)
 
 ## Pre-Requisites
 
@@ -8,8 +12,7 @@
 
 - Make sure to grant `AmazonEC2FullAccess` to your AWS user.
 
-- You'll need to create a security group which allows inbound TCP connections. See also:
-  https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html#WorkingWithSecurityGroups
+- You'll need to create a security group which allows inbound TCP connections. See also: [Working With Security Groups](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html#WorkingWithSecurityGroups).
 
 - Install [docker-machine](https://docs.docker.com/machine/install-machine/)
 
@@ -40,20 +43,22 @@ docker-machine create -d amazonec2 \
 
 First, configure your shell and activate your docker-machine:
 
-```
+```console
 $ eval $(docker-machine env aws-ogmios)
 ```
 
 Then, simply push the stack using docker-compose:
 
-```
+```console
 $ COMPOSE_TLS_VERSION=TLSv1_2 docker-compose up -d
 ```
 
-> :warning: compose may use a wrong TLS version for pulling layers from dockerhub. Hence the ENV var. 
+{{% notice warning %}} 
+Compose may use a wrong TLS version for pulling layers from dockerhub. Hence the ENV var. 
+{{% /notice %}}
 
 
-## :tada: Enjoy
+## 🎉 Enjoy
 
 ```
 $ docker-machine ls
@@ -63,56 +68,53 @@ aws-ogmios   *        amazonec2   Running   tcp://xx.xxx.xxx.xxx:xxxx           
 
 ## (Optional) Adding TLS with a registered domain
 
-Install [nginx](https://nginx.org/).
+1. Install [nginx](https://nginx.org/).
 
-<details>
-  <summary>Configure a new server as <code>/etc/nginx/sites-enabled/domain.extension</code></summary>
+2. {{% expand "Configure a new server as /etc/nginx/sites-enabled/domain.extension" %}}
 
-```nginx
-server {
-    server_name DOMAIN.EXTENSION;
-    listen 80;
+    ```nginx
+    server {
+        server_name DOMAIN.EXTENSION;
+        listen 80;
 
-    location ^~ /.well-known/acme-challenge/ {
-        try_files $uri /dev/null =404;
+        location ^~ /.well-known/acme-challenge/ {
+            try_files $uri /dev/null =404;
+        }
     }
-}
-```
-</details>
+    ```
+    {{% /expand %}}
 
-> :point_up: Make sure to replace 'DOMAIN.EXTENSION' with your actual registered domain.
+    👆 Make sure to replace 'DOMAIN.EXTENSION' with your actual registered domain.
 
-Make sure to reload your nginx configuration with: `sudo systemctl reload nginx.service`.
+3. Reload your nginx configuration with: `sudo systemctl reload nginx.service`.
 
-Install [certbot](https://certbot.eff.org/lets-encrypt/ubuntubionic-nginx) and let certbot configure your nginx server (`sudo certbot --nginx`).
-Once done, edit your nginx configuration one more time...
+4. Install [certbot](https://certbot.eff.org/lets-encrypt/ubuntubionic-nginx) and let certbot configure your nginx server (`sudo certbot --nginx`).
 
-  1. <details>
-         <summary>Remove (no longer needed after certbot has successfully configured the server):</summary>
+5. Once done, edit your nginx configuration one more time...
 
-     ```nginx
-     location ^~ /.well-known/acme-challenge/ {
-         try_files $uri /dev/null =404;
-     }
-     ```
-     </details>
+    1. {{% expand "Remove (no longer needed after certbot has successfully configured the server)" %}}
 
-  2. <details>
-         <summary>And add the following clause to enable routing all traffic (including WebSockets) to ogmios:</summary>
+       ```nginx
+       location ^~ /.well-known/acme-challenge/ {
+           try_files $uri /dev/null =404;
+       }
+       ```
+       {{% /expand %}}
 
-     ```nginx
-     location ~* / {
-         proxy_pass http://localhost:1337;
-         proxy_http_version 1.1;
-         proxy_set_header Upgrade $http_upgrade;
-         proxy_set_header Connection "Upgrade";
-         proxy_set_header Host $host;
-     }
-     ```
-     </details>
-            
-<details>
-  <summary> The final configuration should look like: <code>/etc/nginx/site-enabled/ogmios.dev</code></summary>
+    2. {{% expand "And add the following clause to enable routing all traffic (including WebSockets) to ogmios" %}}
+
+       ```nginx
+       location ~* / {
+           proxy_pass http://localhost:1337;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection "Upgrade";
+           proxy_set_header Host $host;
+       }
+       ```
+       {{% /expand %}}
+
+The final configuration should look like this:
 
 ```nginx
 server {
@@ -144,4 +146,3 @@ server {
   return 404; # managed by Certbot
 }
 ```
-</details>

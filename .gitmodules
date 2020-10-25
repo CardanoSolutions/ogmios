@@ -4,3 +4,6 @@
 [submodule "cardano-node"]
 	path = modules/cardano-node
 	url = git@github.com:KtorZ/cardano-node.git
+[submodule "hugo-theme-learn"]
+	path = docs/themes/learn
+	url = https://github.com/matcornic/hugo-theme-learn
