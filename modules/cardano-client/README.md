@@ -14,11 +14,5 @@ See [ogmios-server](../../ogmios-server)
 <p align="center">
   <a href="../../CONTRIBUTING.md">:gift: Contributing</a>
   |
-  <a href="../../CHANGELOG.md">:floppy_disk: Changelog</a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/KtorZ/cardano-ogmios/blob/master/modules/cardano-client/LICENSE">
-    <img src="https://img.shields.io/github/license/KtorZ/cardano-ogmios.svg?style=for-the-badge"/>
-  </a>
+  <a href="CHANGELOG.md">:floppy_disk: Changelog</a>
 </p>

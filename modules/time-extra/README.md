@@ -26,15 +26,7 @@ main = do
 <hr/>
 
 <p align="center">
-  <a href="https://ktorz.github.io/cardano-ogmios/modules/time-extra">:book: API Reference</a>
-  |
   <a href="../../CONTRIBUTING.md">:gift: Contributing</a>
   |
-  <a href="../../CHANGELOG.md">:floppy_disk: Changelog</a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/KtorZ/cardano-ogmios/blob/master/modules/time-extra/LICENSE">
-    <img src="https://img.shields.io/github/license/KtorZ/cardano-ogmios.svg?style=for-the-badge"/>
-  </a>
+  <a href="CHANGELOG.md">:floppy_disk: Changelog</a>
 </p>
