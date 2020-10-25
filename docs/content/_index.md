@@ -1,10 +1,10 @@
 +++
-title = "Home"
+title = "Overview"
 +++
 
 ## Overview
 
-**Ogmios** is a translation service written in Haskell running on top of [cardano-node](https://github.com/input-output-hk/cardano-node/). It offers a [JSON-WSP](https://en.wikipedia.org/wiki/JSON-WSP) interface through WebSockets and enables clients to speak [Ouroboros' mini-protocols](https://hydra.iohk.io/build/1070091/download/1/network.pdf#chapter.3) via remote procedure calls over JSON. Ogmios is very lightweight too and can be deployed alongside relays to create entry points on the Cardano network for various type of applications (e.g. wallets, explorers, chatbots, dashboards...).
+[**Ogmios**](https://github.com/KtorZ/cardano-ogmios) is a translation service written in Haskell running on top of [cardano-node](https://github.com/input-output-hk/cardano-node/). It offers a [JSON-WSP](https://en.wikipedia.org/wiki/JSON-WSP) interface through WebSockets and enables clients to speak [Ouroboros' mini-protocols](https://hydra.iohk.io/build/1070091/download/1/network.pdf#chapter.3) via remote procedure calls over JSON. Ogmios is very lightweight too and can be deployed alongside relays to create entry points on the Cardano network for various type of applications (e.g. wallets, explorers, chatbots, dashboards...).
 
 ## Motivation
 
@@ -16,4 +16,4 @@ Ogmios is thereby very lightweight and doesn't do anything on its own. It is run
 
 ## About me
 
-My name is Matthias (a.k.a KtorZ) and I currently work with the engineering teams of IOHK to build Cardano. My main area of focus within the Cardano project is basically anything that deals with a Cardano node, which means a lot of things! From a very young age, I've been enjoying designing and writing programs. Ogmios is yet another instance of this which I started as a proof-of-concept on my free-time, and rapidly became one of my most sophisticated side-project. 
+My name is Matthias (a.k.a [KtorZ](https://github.com/KtorZ)) and I currently work with the engineering teams of IOHK to build Cardano. My main area of focus within the Cardano project is basically anything that deals with a Cardano node, which means a lot of things! From a very young age, I've been enjoying designing and writing programs. Ogmios is yet another instance of this which I started as a proof-of-concept on my free-time, and rapidly became one of my most sophisticated side-project. 
