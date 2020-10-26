@@ -4,6 +4,10 @@ chapter = false
 weight = 3
 +++
 
+{{% notice tip %}}
+You may **skip this section** if you're not interested in contributing to Ogmios.
+{{% /notice %}}
+
 ## 🔧 Unit Tests
 
 First, make sure to pull and update git submodules:

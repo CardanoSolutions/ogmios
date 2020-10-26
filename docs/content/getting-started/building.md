@@ -5,7 +5,7 @@ weight = 2
 +++
 
 {{% notice tip %}}
-You can **skip this section** if you're using **Docker 🐳.**
+You may **skip this section** if you're using **Docker 🐳.**
 {{% /notice %}}
 
 ## Pre-requisites 
