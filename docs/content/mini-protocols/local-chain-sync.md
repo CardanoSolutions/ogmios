@@ -31,23 +31,21 @@ The protocol is stateful, which means that each connection between clients and O
 
 ## How To Use
 
-When you open a connection with Ogmios, you automatically begin a local chain-sync session with the underlying cardano-node; This starts in the `Idle` state. There's an implicit state maintained by the node which you can imagine as a cursor, pointing to a point on the Cardano chain. Initially, this cursor starts at a special point called: _origin_. After each request, the node will move the cursor according to the request and remembers its location for the next request. From there, the protocol is in fact quite small and gives you only two choices: 
+When a connection is opened with Ogmios, it automatically starts a local chain-sync session with the underlying cardano-node. There's an implicit state maintained by the node which one can imagine as a cursor, pointing to a point on the Cardano chain. Initially, this cursor starts at a special point called: _origin_ (as in, the origin of the chain). After each request, the node will move the cursor either forward or backward and remembers its location for the next request. To move the cursor, the protocols gives two mechanisms: RequestNext and FindIntersect.
 
-- Ask the node for the "next" block, where "next" implicitly refers to point after the cursor. 
-- Ask the node to set the cursor somewhere else, i.e. find a new intersection.
 
 ```none
-┌────┬────┬────┬────┬────┬────┬────┬────┬─  
-│ 00 │ 01 │ 02 │ 03 │ 04 │ 05 │ 06 │ 07 │ .. Cardano chain
-└────┴────┴────┴────┴────┴────┴────┴────┴─  
-  ^
-  |
+* -- * -- * -- * -- * -- * .. Cardano chain
+^    
+|    
+|    
+
 origin
 ```
 
 ## RequestNext
 
-To request the next block, send a message with `RequestNext` as a method name. This request does not accept any argument. 
+Clients may ask for the next block where 'next' refers directly to that implicit cursor. This translates to a message with `RequestNext` as a method name. This request does not accept any arguments. 
 
 ```json
 { 
@@ -59,15 +57,15 @@ To request the next block, send a message with `RequestNext` as a method name. T
 }
 ```
 
-As a response, Ogmios will send you back a response which can be either a `RollForward` or a `RollBackward`. Rolling forward is pretty straightforward and is the main type of response you can expect; such response will include the next block, which itself includes a header, transactions, certificates, metadata and all sort of information. 
+As a response, Ogmios will send back a response which can be either `RollForward` or `RollBackward`. Rolling forward is pretty straightforward and is the main type of response one can expect; such response will include the next block, which itself includes a header, transactions, certificates, metadata and all sort of information. 
 
-Rolling backward however may occurs when, since your last request, the underlying node decided to switch to a different fork of the chain to the extent that your cursor is longer pointing to a block that exists on this fork. The node therefore asks you (kindly) to roll backward to previously known point, that is the earliest ancestor that is common between your version of the chain and the one that it just adopted. 
+Rolling backward however may occur when, since the last request, the underlying node decided to switch to a different fork of the chain to the extent that the previous cursor is no longer pointing to a block that exists on the chain. The node therefore asks (kindly) to roll backward to a previously known point that is the earliest ancestor that is common between the client's own chain locally and the one that was just adopted by the node.
 
 ```none                            
                               * -- * -- * -- * (node's chain)
                              /
-                            *
-                           /
+    common chain prefix     *
+<------------------------> /
 * -- * -- * -- * -- * -- * -- * -- * -- * -- * (local chain)
                          ^
                          |
@@ -84,7 +82,7 @@ As a client, it is therefore crucial to be able to rollback to a previous point 
 
 ## FindIntersect
 
-On your first connection with the node, you may probably want to synchronize from the _origin_. Yet, on subsequent connections you may want to resume syncing to a point that is much more recent than the _origin_. The local chain-sync protocol lets you do that via the `FindIntersect` message. This message accepts one argument which is a list of header hashes (or the special keyword `"origin"`). Those header hashes identify blocks that are known by your client that the node will compare with its own chain in order to find a common intersection point. 
+On the first connection with the node, clients will likely synchronize from the _origin_. Yet, on subsequent connections one may want to resume syncing to a point that is much more recent than the _origin_. Ideally, one would like to carry on exactly at the point where the chain was left yet as we just saw, this is not always possible. The local chain-sync protocol gives however clients a way to find a common intersection between a client's current version of the chain and whatever version the node has. This is via the `FindIntersect` message. This message accepts one argument which is a list of header hashes (or the special keyword `"origin"`). 
 
 
 ```json
@@ -103,7 +101,7 @@ On your first connection with the node, you may probably want to synchronize fro
 }
 ```
 
-If an intersection is found, great, the node will set the cursor to that point and let you know. If not, the cursor will remain where it was and you'll be be notified. As we've seen in the previous section, a node may switch to forks based on different strategies. The more points you give, the better. In practice, you may want to give many recent points and a few more that are more sparse and go back at least `k` blocks in the past (your past). 
+If an intersection is found, great, the node will set the cursor to that point and let you know. If not, the cursor will remain where it was and the failure will also be broadcast. As we've seen in the previous section, a node may switch to longer forks based quite arbitrarily. Hence, a good list of intersections candidates is preferably dense near the tip of the chain, and goes far back in the past (`k` is typically not enough).
 
 For example, imagine the following scenario:
 
@@ -115,10 +113,10 @@ Local chain:    * -- * -- * -- * -- *  ... * -- * -- *
 Node's chain:   * -- * -- * -- * -- *  ... * -- * --  *  
 ```
 
-As a client, providing any point before or at `P98` will result in finding an intersection. Yet, if you only provide `[P99A, P100A]`, the node will not be able to figure out where to continue the protocol and will remain at the _origin_.
+As a client, providing any point before or at `P98` will result in finding an intersection. Yet, if one only provides `[P99A, P100A]`, the node will not be able to figure out where to continue the protocol and will remain at the _origin_.
 
 {{% notice tip %}}
-The order of the list matters! The node will intersect with the best match, considering that your preferred points are first in the list. If you provide `origin` as a first point, you are guaranteed to always find a match, and always at origin (and that is quite useless!).
+The order of the list matters! The node will intersect with the best match, considering that the preferred points are first in the list. If one provides `origin` as a first point, an intersection is guaranteed to always find a match, and always at origin (and that is quite useless!).
 {{% /notice %}}
 
 ## Full Example
@@ -184,9 +182,9 @@ client.on('message', function(msg) {
 
 A few important takes from this excerpt: 
 
-- The node continues to stream blocks from intersection point. So if we want the first 14 Shelley blocks, we need to set the intersection at the last Byron block! 
+- The node streams blocks that are **after** the intersection point. Thus to get the first 14 Shelley blocks, one needs to set the intersection at the last Byron block! 
 
-- After successfully finding an intersection, the node will **always** ask us to roll backward to that intersection point. This is because it is possible to provide many points when looking for intersection and the protocol makes sure that both the node and the client are in sync. 
+- After successfully finding an intersection, the node will **always** ask to roll backward to that intersection point. This is because it is possible to provide many points when looking for an intersection and the protocol makes sure that both the node and the client are in sync. This allows clients applications to be somewhat "dumb" and blindly follow instructions from the node. 
 
 - In this schema, we are sending each request one-by-one, using the `mirror` field as counter. An alternative could have been:
 
@@ -199,4 +197,8 @@ A few important takes from this excerpt:
       break;
   ```
 
-  We need not to wait for replies to send requests and can collect all responses at a later stage. 
+  We need not to wait for replies to send requests and can collect all responses at a later stage! 
+
+{{% notice info %}}
+Note that Ogmios will do its best to pipeline requests to the Cardano node. Nevertheless, unlike WebSocket the local chain-sync protocol only allows for finite pipelining. Said differently, Ogmios cannot pipeline an arbitrary and potentially infinite number of requests and will actually starts collecting responses if too many requests are pipelined. So, if you're pipelining many requests in a client application, make sure to also take times to collect some responses because there will be no extra benefits coming from _too much pipelining_.
+{{% /notice %}}
