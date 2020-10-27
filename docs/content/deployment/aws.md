@@ -18,7 +18,7 @@ weight = 1
 
 ## Create an SSH key/pair
 
-```
+```console
 $ ssh-keygen -t rsa -b 4096 -C "your_email@example.com" -f aws_rsa
 $ eval "$(ssh-agent -s)"
 $ ssh-add ~/.ssh/aws_rsa
@@ -60,7 +60,7 @@ Compose may use a wrong TLS version for pulling layers from dockerhub. Hence the
 
 ## 🎉 Enjoy
 
-```
+```console
 $ docker-machine ls
 NAME         ACTIVE   DRIVER      STATE     URL                         SWARM   DOCKER     ERRORS
 aws-ogmios   *        amazonec2   Running   tcp://xx.xxx.xxx.xxx:xxxx           v19.03.8 
@@ -72,17 +72,17 @@ aws-ogmios   *        amazonec2   Running   tcp://xx.xxx.xxx.xxx:xxxx           
 
 2. {{% expand "Configure a new server as /etc/nginx/sites-enabled/domain.extension" %}}
 
-    ```nginx
-    server {
-        server_name DOMAIN.EXTENSION;
-        listen 80;
+```nginx
+server {
+    server_name DOMAIN.EXTENSION;
+    listen 80;
 
-        location ^~ /.well-known/acme-challenge/ {
-            try_files $uri /dev/null =404;
-        }
+    location ^~ /.well-known/acme-challenge/ {
+        try_files $uri /dev/null =404;
     }
-    ```
-    {{% /expand %}}
+}
+```
+   {{% /expand %}}
 
     👆 Make sure to replace 'DOMAIN.EXTENSION' with your actual registered domain.
 
@@ -93,25 +93,24 @@ aws-ogmios   *        amazonec2   Running   tcp://xx.xxx.xxx.xxx:xxxx           
 5. Once done, edit your nginx configuration one more time...
 
     1. {{% expand "Remove (no longer needed after certbot has successfully configured the server)" %}}
-
-       ```nginx
-       location ^~ /.well-known/acme-challenge/ {
-           try_files $uri /dev/null =404;
-       }
-       ```
+```nginx
+location ^~ /.well-known/acme-challenge/ {
+    try_files $uri /dev/null =404;
+}
+```
        {{% /expand %}}
 
     2. {{% expand "And add the following clause to enable routing all traffic (including WebSockets) to ogmios" %}}
 
-       ```nginx
-       location ~* / {
-           proxy_pass http://localhost:1337;
-           proxy_http_version 1.1;
-           proxy_set_header Upgrade $http_upgrade;
-           proxy_set_header Connection "Upgrade";
-           proxy_set_header Host $host;
-       }
-       ```
+```nginx
+location ~* / {
+    proxy_pass http://localhost:1337;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+    proxy_set_header Host $host;
+}
+```
        {{% /expand %}}
 
 The final configuration should look like this:

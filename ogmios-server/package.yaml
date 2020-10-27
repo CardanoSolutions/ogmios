@@ -93,6 +93,7 @@ executables:
       - -Werror
       - -O2
       - -with-rtsopts=-A250m
+      - -with-rtsopts=-N2
       - -with-rtsopts=-T
     dependencies:
     - async
