@@ -8,7 +8,7 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Cardano.Types.Json.OrphansSpec
+module Ogmios.JsonSpec
     ( spec
     ) where
 
@@ -18,17 +18,6 @@ import Cardano.Network.Protocol.NodeToClient
     ( Block )
 import Cardano.Slotting.Slot
     ( EpochNo (..) )
-import Cardano.Types.Json.Orphans
-    ( QueryResult
-    , parseGetCurrentPParams
-    , parseGetEpochNo
-    , parseGetFilteredUTxO
-    , parseGetLedgerTip
-    , parseGetNonMyopicMemberRewards
-    , parseGetProposedPParamsUpdates
-    , parseGetStakeDistribution
-    , parseGetUTxO
-    )
 import Control.Monad
     ( (>=>) )
 import Data.Aeson
@@ -45,6 +34,17 @@ import Ogmios.Bridge
     , RequestNextResponse (..)
     , SomeQuery (..)
     , SubmitTxResponse (..)
+    )
+import Ogmios.Json
+    ( QueryResult
+    , parseGetCurrentPParams
+    , parseGetEpochNo
+    , parseGetFilteredUTxO
+    , parseGetLedgerTip
+    , parseGetNonMyopicMemberRewards
+    , parseGetProposedPParamsUpdates
+    , parseGetStakeDistribution
+    , parseGetUTxO
     )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock )

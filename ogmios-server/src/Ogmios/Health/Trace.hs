@@ -18,8 +18,6 @@ import Control.Exception
     ( SomeException )
 import Data.Time.Clock
     ( NominalDiffTime )
-import Ogmios.Metrics.Trace
-    ( TraceMetrics )
 
 data TraceHealth s where
     HealthTick
@@ -28,10 +26,6 @@ data TraceHealth s where
 
     HealthFailedToConnect
         :: { socket :: FilePath, retryingIn :: NominalDiffTime }
-        -> TraceHealth s
-
-    HealthMetrics
-        :: { metrics :: TraceMetrics }
         -> TraceHealth s
 
     HealthUnknownException
@@ -43,7 +37,6 @@ deriving instance Show s => Show (TraceHealth s)
 instance HasPrivacyAnnotation (TraceHealth s)
 instance HasSeverityAnnotation (TraceHealth s) where
     getSeverityAnnotation = \case
-        HealthMetrics e -> getSeverityAnnotation e
         HealthTick{} -> Info
         HealthFailedToConnect{} -> Warning
         HealthUnknownException{} -> Error

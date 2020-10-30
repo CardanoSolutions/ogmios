@@ -38,9 +38,9 @@ library:
   dependencies:
     - aeson
     - async
+    - base58-bytestring
     - bech32
     - bech32-th
-    - base58-bytestring
     - bytestring
     - cardano-api
     - cardano-binary
@@ -53,8 +53,11 @@ library:
     - cborg
     - containers
     - contra-tracer
+    - directory
     - ekg-core
     - file-embed
+    - git-th
+    - http-types
     - io-sim-classes
     - iohk-monitoring
     - iproute
@@ -62,13 +65,12 @@ library:
     - manufacture
     - memory
     - optparse-applicative
+    - optparse-applicative
     - ouroboros-consensus
     - ouroboros-consensus-byron
     - ouroboros-consensus-cardano
     - ouroboros-consensus-shelley
     - ouroboros-network
-    - ouroboros-network-framework
-    - git-th
     - safe
     - scientific
     - shelley-spec-ledger
@@ -80,6 +82,8 @@ library:
     - vector
     - wai
     - wai-routes
+    - wai-websockets
+    - warp
     - websockets
 
 executables:
@@ -96,16 +100,8 @@ executables:
       - -with-rtsopts=-N2
       - -with-rtsopts=-T
     dependencies:
-    - async
-    - cardano-client
-    - contra-tracer
-    - directory
-    - http-types
     - ogmios
     - text
-    - wai-websockets
-    - warp
-    - websockets
 
 tests:
   unit:

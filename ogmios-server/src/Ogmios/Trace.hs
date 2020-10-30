@@ -10,12 +10,14 @@ module Ogmios.Trace
 
 import Prelude
 
+import Ouroboros.Network.Magic
+    ( NetworkMagic )
+import Cardano.Chain.Slotting
+    ( EpochSlots (..) )
 import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Cardano.BM.Data.Tracer
     ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
-import Cardano.Byron.Constants.Trace
-    ( TraceLookup )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient )
 import Control.Exception
@@ -24,6 +26,8 @@ import Data.ByteString
     ( ByteString )
 import Ogmios.Health.Trace
     ( TraceHealth )
+import Ogmios.Metrics.Trace
+    ( TraceMetrics )
 
 data TraceOgmios where
     OgmiosClient
@@ -31,17 +35,21 @@ data TraceOgmios where
         => TraceClient tx err
         -> TraceOgmios
 
-    OgmiosLookupEnv
-        :: TraceLookup
+    OgmiosHealth
+        :: forall s. Show s
+        => { health :: TraceHealth s }
+        -> TraceOgmios
+
+    OgmiosMetrics
+        :: { metrics :: TraceMetrics }
         -> TraceOgmios
 
     OgmiosStarted
         :: { host :: String, port :: Int }
         -> TraceOgmios
 
-    OgmiosHealth
-        :: forall s. Show s
-        => { health :: TraceHealth s }
+    OgmiosNetwork
+        :: { networkMagic :: NetworkMagic, slotsPerEpoch :: EpochSlots }
         -> TraceOgmios
 
     OgmiosConnectionAccepted
@@ -69,10 +77,12 @@ deriving instance Show TraceOgmios
 instance HasPrivacyAnnotation TraceOgmios
 instance HasSeverityAnnotation TraceOgmios where
     getSeverityAnnotation = \case
-        OgmiosClient msg    -> getSeverityAnnotation msg
-        OgmiosLookupEnv msg -> getSeverityAnnotation msg
-        OgmiosHealth msg    -> getSeverityAnnotation msg
+        OgmiosClient  msg -> getSeverityAnnotation msg
+        OgmiosHealth  msg -> getSeverityAnnotation msg
+        OgmiosMetrics msg -> getSeverityAnnotation msg
+
         OgmiosStarted{}              -> Info
+        OgmiosNetwork{}              -> Info
         OgmiosConnectionAccepted{}   -> Info
         OgmiosConnectionEnded{}      -> Info
         OgmiosSocketNotFound{}       -> Warning

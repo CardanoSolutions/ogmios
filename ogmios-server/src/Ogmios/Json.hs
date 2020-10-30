@@ -7,7 +7,7 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Cardano.Types.Json.Orphans
+module Ogmios.Json
     ( QueryResult
     , parseGetLedgerTip
     , parseGetEpochNo

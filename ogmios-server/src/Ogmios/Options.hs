@@ -2,30 +2,38 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Ogmios.Options.Applicative
-    ( run
-    , Options (..)
+module Ogmios.Options
+    ( Options (..)
+    , Command (..)
+
+    -- * Applicative Options Parser
+    , parseOptions
     ) where
 
 import Prelude
 
+import Options.Applicative
+
 import Cardano.BM.Data.Severity
     ( Severity (..) )
-import Data.Git.Revision.TH
-    ( gitRevParseHEAD, gitTags )
+import Cardano.Chain.Slotting
+    ( EpochSlots (..) )
+import Cardano.Network.Protocol.NodeToClient
+    ( NodeVersionData )
 import Options.Applicative.Help.Pretty
     ( indent, string, vsep )
-
-import Options.Applicative hiding
-    ( action )
-
-import qualified Data.ByteString.Char8 as B8
-import qualified Data.List as L
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
+import Ouroboros.Network.Magic
+    ( NetworkMagic (..) )
+import Ouroboros.Network.NodeToClient
+    ( NodeToClientVersionData (..), nodeToClientCodecCBORTerm )
+import Safe
+    ( readMay )
+import System.Environment
+    ( lookupEnv )
+import System.Exit
+    ( exitFailure )
 
 data Command
     = Start Options
@@ -38,31 +46,10 @@ data Options = Options
     , logLevel :: Severity
     }
 
-run :: (Options -> IO ()) -> IO ()
-run action = do
-    parseOptions >>= \case
-        Version -> do
-            let tags = $(gitTags)
-            let revHEAD = $(gitRevParseHEAD)
-            let lastKnownTag = fst $ head tags
-            let revision =
-                    case L.find ((== revHEAD) . snd) tags of
-                        Just (tag, _) ->
-                            tag
-                        Nothing -> unwords
-                            [ "unreleased (> " <> lastKnownTag <> ")"
-                            , "-"
-                            , "git revision " <> take 8 revHEAD
-                            ]
-            B8.putStrLn $ T.encodeUtf8 $ T.pack revision
-        Start opts -> do
-            action opts
-  where
-    parseOptions :: IO Command
-    parseOptions =
-        customExecParser preferences parserInfo
-      where
-        preferences = prefs showHelpOnEmpty
+parseOptions :: IO ((NodeVersionData, EpochSlots), Command)
+parseOptions = (,)
+    <$> lookupVersionData
+    <*> customExecParser (prefs showHelpOnEmpty) parserInfo
 
 parserInfo :: ParserInfo Command
 parserInfo = info (helper <*> parser) $ mempty
@@ -74,7 +61,7 @@ parserInfo = info (helper <*> parser) $ mempty
         ])
     <> footerDoc (Just $ vsep
         [ string "Available ENV variables:"
-        , indent 2 $ string "OGMIOS_NETWORK           Configure the target network."
+        , indent 2 $ string $ envOgmiosNetwork <> "           Configure the target network."
         , indent 27 $ string separator
         , indent 27 $ string "- mainnet"
         , indent 27 $ string "- testnet"
@@ -94,6 +81,15 @@ parserInfo = info (helper <*> parser) $ mempty
                 <*> logLevelOption
             )
         )
+
+--  _____       _   _
+-- |  _  |     | | (_)
+-- | | | |_ __ | |_ _  ___  _ __  ___
+-- | | | | '_ \| __| |/ _ \| '_ \/ __|
+-- \ \_/ / |_) | |_| | (_) | | | \__ \
+--  \___/| .__/ \__|_|\___/|_| |_|___/
+--       | |
+--       |_|
 
 -- | --node-socket=FILEPATH
 nodeSocketOption :: Parser FilePath
@@ -154,3 +150,68 @@ versionOption =
 
 separator :: String
 separator = replicate 20 '-'
+
+
+--  _____           _                                      _
+-- |  ___|         (_)                                    | |
+-- | |__ _ ____   ___ _ __ ___  _ __  _ __ ___   ___ _ __ | |_
+-- |  __| '_ \ \ / / | '__/ _ \| '_ \| '_ ` _ \ / _ \ '_ \| __|
+-- | |__| | | \ V /| | | | (_) | | | | | | | | |  __/ | | | |_
+-- \____/_| |_|\_/ |_|_|  \___/|_| |_|_| |_| |_|\___|_| |_|\__|
+
+envOgmiosNetwork :: String
+envOgmiosNetwork = "OGMIOS_NETWORK"
+
+-- | Lookup environment for a given version data name, default to mainnet.
+lookupVersionData
+    :: IO (NodeVersionData, EpochSlots)
+lookupVersionData = do
+    lookupEnv envOgmiosNetwork >>= \case
+        Nothing -> do
+            pure (mainnetVersionData, defaultEpochSlots)
+        Just "mainnet" -> do
+            pure (mainnetVersionData, defaultEpochSlots)
+        Just "testnet" -> do
+            pure (testnetVersionData, defaultEpochSlots)
+        Just "staging" -> do
+            pure (stagingVersionData, defaultEpochSlots)
+        Just custom ->
+            case readMay custom of
+                Just n -> do
+                    let magic = NetworkMagic n
+                    pure (customVersionData magic, defaultEpochSlots)
+                Nothing -> do
+                    exitFailure
+
+-- Hard-coded mainnet version data
+mainnetVersionData
+    :: NodeVersionData
+mainnetVersionData =
+    customVersionData (NetworkMagic 764824073)
+
+-- Hard-coded testnet version data
+testnetVersionData
+    :: NodeVersionData
+testnetVersionData =
+    customVersionData (NetworkMagic 1097911063)
+
+-- Hard-coded staging version data
+stagingVersionData
+    :: NodeVersionData
+stagingVersionData =
+    customVersionData (NetworkMagic 633343913)
+
+-- A custom / unknown version data
+customVersionData
+    :: NetworkMagic
+    -> NodeVersionData
+customVersionData networkMagic =
+    ( NodeToClientVersionData { networkMagic }
+    , nodeToClientCodecCBORTerm
+    )
+
+-- Hard-coded genesis slots per epoch
+defaultEpochSlots
+    :: EpochSlots
+defaultEpochSlots =
+    EpochSlots 21600
