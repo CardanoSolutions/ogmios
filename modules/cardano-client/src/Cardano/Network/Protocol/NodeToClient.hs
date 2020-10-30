@@ -15,6 +15,7 @@ module Cardano.Network.Protocol.NodeToClient
     (
     -- * Building
       Block
+    , ApplyErr
     , NodeVersionData
     , Client
     , Clients(..)
@@ -123,6 +124,9 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Type
 -- | Concrete block type.
 type Block = CardanoBlock StandardCrypto
 
+-- | Concrete submission error.
+type ApplyErr = CardanoApplyTxErr StandardCrypto
+
 -- Type alias to lighten signatures below
 type NodeVersionData =
     (NodeToClientVersionData, CodecCBORTerm Text NodeToClientVersionData)
@@ -171,15 +175,14 @@ connectClient tr client (vData, vCodec) addr = withIOManager $ \iocp -> do
 
 -- | Construct a network client
 mkClient
-    :: forall m err.
-        ( err ~ CardanoApplyTxErr StandardCrypto
-        , MonadIO m, MonadThrow m, MonadST m, MonadAsync m
+    :: forall m.
+        ( MonadIO m, MonadThrow m, MonadST m, MonadAsync m
         )
-    => Tracer m (TraceClient (GenTx Block) err)
+    => Tracer m (TraceClient (GenTx Block) ApplyErr)
         -- ^ Base trace for underlying protocols
     -> EpochSlots
         -- ^ Static blockchain parameters
-    -> Clients m Block (GenTx Block) err
+    -> Clients m Block (GenTx Block) ApplyErr
         -- ^ Clients with the driving logic
     -> Client m
 mkClient tr epochSlots clients =
@@ -232,16 +235,15 @@ localChainSync tr codec client channel =
 
 -- | Boilerplate for lifting a 'LocalTxSubmissionClient'
 localTxSubmission
-    :: forall m err protocol.
-        ( err ~ CardanoApplyTxErr StandardCrypto
-        , protocol ~ LocalTxSubmission (GenTx Block) err
+    :: forall m protocol.
+        ( protocol ~ LocalTxSubmission (GenTx Block) ApplyErr
         , MonadThrow m
         )
     => Tracer m (TraceSendRecv protocol)
         -- ^ Base tracer for the mini-protocols
     -> Codec protocol DeserialiseFailure m ByteString
         -- ^ Codec for deserializing / serializing binary data
-    -> LocalTxSubmissionClient (GenTx Block) err m ()
+    -> LocalTxSubmissionClient (GenTx Block) ApplyErr m ()
         -- ^ Actual local tx submission client
     -> Channel m ByteString
         -- ^ A 'Channel' is an abstract communication instrument which

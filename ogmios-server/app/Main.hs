@@ -22,7 +22,7 @@ main = parseOptions >>= \case
     (_, Version) -> do
         printVersion
     (env, Start opts@Options{logLevel}) ->
-        withStdoutTracer "ogmios" logLevel pretty (runServer env opts)
+        withStdoutTracer "ogmios" logLevel toText (runServer env opts)
   where
-    pretty :: Show a => a -> Text
-    pretty = T.pack . show
+    toText :: Show a => a -> Text
+    toText = T.pack . show

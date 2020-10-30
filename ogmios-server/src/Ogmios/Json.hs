@@ -8,7 +8,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Ogmios.Json
-    ( QueryResult
+    ( SomeQuery (..)
+    , QueryResult
     , parseGetLedgerTip
     , parseGetEpochNo
     , parseGetNonMyopicMemberRewards
@@ -154,8 +155,6 @@ import Data.Word
     ( Word16, Word32, Word64, Word8 )
 import Numeric.Natural
     ( Natural )
-import Ogmios.Bridge
-    ( SomeQuery (..) )
 import Ouroboros.Consensus.Byron.Ledger
     ( ByronBlock (..), ByronHash (..), GenTx )
 import Ouroboros.Consensus.Cardano.Block
@@ -1678,6 +1677,12 @@ parseGetFilteredUTxO genResult = Json.withObject "SomeQuery" $ \obj -> do
 
         fromBase16 =
             either (fail . show) pure . convertFromBase Base16 . T.encodeUtf8
+
+data SomeQuery (f :: * -> *) block = forall result. SomeQuery
+    { query :: Query block result
+    , encodeResult :: result -> Json.Value
+    , genResult :: Proxy result -> f result
+    }
 
 type QueryResult crypto result =
     Either (MismatchEraInfo (CardanoEras crypto)) result

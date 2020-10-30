@@ -64,6 +64,8 @@ import GHC.Generics
     ( Generic )
 import Network.TypedProtocol.Pipelined
     ( Nat (..), natToInt )
+import Ogmios.Json
+    ( SomeQuery (..) )
 import Ogmios.Trace
     ( TraceOgmios (..) )
 import Ouroboros.Network.Block
@@ -261,12 +263,6 @@ data Release
 data Query block = Query { query :: SomeQuery Maybe block }
     deriving (Generic)
 
-data SomeQuery (f :: * -> *) block = forall result. SomeQuery
-    { query :: Ledger.Query block result
-    , encodeResult :: result -> Json.Value
-    , genResult :: Proxy result -> f result
-    }
-
 newtype QueryResponse =
     QueryResponse { unQueryResponse :: Json.Value }
     deriving (Generic, Show)
@@ -356,7 +352,6 @@ newClients
         , ToJSON (Point block)
         , ToJSON (Tip block)
         , ToJSON err
-        , ToJSON AcquireFailure
         , FromJSON (Point block)
         , FromJSON (SomeQuery Maybe block)
         , FromJSON tx
