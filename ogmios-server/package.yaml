@@ -97,7 +97,7 @@ executables:
       - -Werror
       - -O2
       - -with-rtsopts=-A250m
-      - -with-rtsopts=-N2
+      - -with-rtsopts=-N3
       - -with-rtsopts=-T
     dependencies:
     - ogmios

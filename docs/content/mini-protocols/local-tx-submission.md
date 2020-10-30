@@ -9,17 +9,17 @@ weight = 2
 ## Overview
 
 {{% ascii-drawing %}}
- *----------*                                                
- |   Busy   |◀══════════════════════════════╗                
- *----------*            SubmitTx           ║                
-      │                                     ║                
-      │                                *---------*           
-      │                                |         |           
-      │                                |         |           
-      │          SubmitTxResponse      |   Idle  |           
-      └───────────────────────────────╼|         |           
-                                       |         |⇦ START    
-                                       *---------*           
+ ┌──────────┐
+ │   Busy   │◀══════════════════════════════╗      
+ └────┬─────┘            SubmitTx           ║      
+      │                                     ║      
+      │                                ┌──────────┐
+      │                                │          │
+      │                                │          │
+      │          SubmitTxResponse      │   Idle   │
+      └───────────────────────────────▶│          │
+                                       │          │⇦ START
+                                       └──────────┘
 {{% /ascii-drawing %}}
 
 Transaction submission is pretty simple & works by submitting an already serialized and signed transaction as one single message.

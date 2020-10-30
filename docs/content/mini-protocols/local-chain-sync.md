@@ -6,21 +6,21 @@ weight = 1
 
 
 {{% ascii-drawing %}}
-*-----------*                                              
-| Intersect |◀══════════════════════════════╗              
-*-----------*         FindIntersect         ║              
+┌───────────┐                                              
+│ Intersect │◀══════════════════════════════╗              
+└─────┬─────┘         FindIntersect         ║              
       │                                     ║              
-      │                                *---------*         
-      │ Intersect.{Found,NotFound}     |         |         
-      └───────────────────────────────╼|         |         
-                                       |   Idle  |         
-   ╔═══════════════════════════════════|         |         
-   ║            RequestNext            |         |⇦ START  
-   ║                                   *---------*         
-   ▼                                        ╿              
-*------*       Roll.{Backward,Forward}      │              
-| Next |────────────────────────────────────┘              
-*------*                                                   
+      │                                ┌──────────┐        
+      │ Intersect.{Found,NotFound}     │          │        
+      └───────────────────────────────▶│          │        
+                                       │   Idle   │        
+   ╔═══════════════════════════════════│          │        
+   ║            RequestNext            │          │⇦ START 
+   ║                                   └──────────┘        
+   ▼                                        ▲              
+┌──────┐       Roll.{Backward,Forward}      │              
+│ Next ├────────────────────────────────────┘              
+└──────┘                                                   
 {{% /ascii-drawing %}}
 
 ## Overview
@@ -127,23 +127,14 @@ Let's see a full example that is synchronizing the first 14 blocks of the **Shel
 const WebSocket = require('ws');
 const client = new WebSocket("ws://localhost:1337");
 
-function findIntersect(points) {
+function wsp(methodname, args, mirror) {
     client.send(JSON.stringify({
         type: "jsonwsp/request",
         version: "1.0",
         servicename: "ogmios",
-        methodname: "FindIntersect",
-        args: { points }
-    }));
-}
-
-function requestNext(mirror) {
-    client.send(JSON.stringify({
-        type: "jsonwsp/request",
-        version: "1.0",
-        servicename: "ogmios",
-        methodname: "RequestNext",
-        mirror,
+        methodname,
+        args,
+        mirror
     }));
 }
 
@@ -152,7 +143,7 @@ client.once('open', () => {
         slot: 4492799,
         hash: "f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457"
     };
-    findIntersect([lastByronBlock]);
+    wsp("FindIntersect", { points: [lastByronBlock] });
 });
 
 client.on('message', function(msg) {
@@ -161,7 +152,7 @@ client.on('message', function(msg) {
     switch (response.methodname) {
         case "FindIntersect":
             if (!response.result.IntersectionFound) { throw "Whoops? Last Byron block disappeared?" }
-            requestNext({ n: 14 });
+            wsp("RequestNext", {}, { n: 14 });
             break;
 
 
@@ -171,7 +162,7 @@ client.on('message', function(msg) {
             }
 
             if (response.reflection.n > 0) {
-                requestNext({ n: response.reflection.n - 1 });
+                wsp("RequestNext", {}, { n: response.reflection.n - 1 });
             } else {
                 client.close();
             }
@@ -192,7 +183,7 @@ A few important takes from this excerpt:
   case "FindIntersect":
       if (!response.result.IntersectionFound) { throw "Whoops? First Shelley block disappeared?" }
       for (let i = 14; i > 0; i += 1) {
-          requestNext()
+          wsp("RequestNext", {});
       }
       break;
   ```

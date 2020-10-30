@@ -5,6 +5,205 @@ weight = 3
 +++
 
 
+{{% ascii-drawing %}}
+                ┌───────────────┐
+        ┌──────▶│     Idle      │⇦ START
+        │       └───┬───────────┘
+        │           │       ▲ 
+        │   Acquire │       │ Failure 
+        │           ▼       │
+        │       ┌───────────┴───┐              
+Release │       │   Acquiring   │◀─────────────────┐
+        │       └───┬───────────┘                  │
+        │           │       ▲                      │ Result 
+        │  Acquired │       │ ReAcquire            │
+        │           ▼       │                      │
+        │       ┌───────────┴───┐         ┌────────┴───────┐
+        └───────┤   Acquired    │────────▶│    Querying    │
+                └───────────────┘         └────────────────┘
+{{% /ascii-drawing %}}
+
 ## Overview
 
-🚧 Coming Soon 🚧
+The state query protocol is likely the most versatile of the three Ouroboros mini-protocols. As a matter of fact, it allows for querying various types of information directly from the ledger. In essence, it is like a very simpler request/response pattern where the types of questions one can ask are specified by the protocols. Those questions include: information about the chain tip, information about stake pools but also the balance of a particular address. 
+
+In order to run a question by the ledger, one must first acquire a particular position on the chain, so that the node can reliably answer a few questions on a chosen, frozen state while continuing maintaining more recent version of the ledger on the side. It is important to note that:
+
+1. The node cannot acquire any arbitrary state. One can only rewind up to a certain point.
+
+2. Should a client keep a state acquired for too long, it is likely to become unreachable at some point, forcing clients to re-acquire.
+
+## How To Use
+
+Ogmios uses a simplified version of the above state-machine. Or more exactly, it exposes a simplified version and handles some of the complexity behind the scene for you. As clients, Ogmios will give you 3 possible requests: Acquire, Query, Release. A typical sequence would be to start by Acquiring a state on a given point and then make a few queries, and then release. The release step is optional although it is a bit more polite to say goodbye at the end of a conversation. 
+
+## Acquire
+
+The `Acquire` request expect one argument named `point`. The point has the same format as points in the local-chain-sync protocol. That is, they can be block header hashes or the special keyword `"origin"` (though there's very little chance that one will be able to acquire the origin!).
+
+```json
+{ 
+    "type": "jsonwsp/request",
+    "version": "1.0",
+    "servicename": "ogmios",
+    "methodname": "Acquire",
+    "args": { "point": "9e871633f7aa356ef11cdcabb6fdd6d8f4b00bc919c57aed71a91af8f86df590" }
+}
+```
+
+One thing that doesn't strike as obvious is that, as clients, you need points to query any information. There are many ways to get those hashes but in the context of Ogmios, the most logical way is via the [local-chain-sync](../local-chain-sync/) protocol. 
+
+{{% notice tip %}}
+You acquire multiple times, the last one will prevail. If you need to re-acquire, simply send
+another `Acquire` request.
+{{% /notice %}}
+
+## Query
+
+There are many queries that can be sent to the ledger, and the list is growing days after days as the Cardano team implements new ones. With Ogmios, all queries follow the same pattern and use the method name `Query`. All of them also take one argument named `query` which specifies the query to run and, optionally some extra argument given to the query. For example:
+
+```
+{ 
+    "type": "jsonwsp/request",
+    "version": "1.0",
+    "servicename": "ogmios",
+    "methodname": "Query",
+    "args": { "query": "ledgerTip" }
+}
+```
+
+At the moment of writing this guide, the following queries are available: 
+
+Query                        | Result
+---                          | ---
+`ledgerTip`                  | The most recent block tip known of the ledger.
+`currentEpoch`               | The current epoch of the ledger.
+`nonMyopicMemberRewards`     | Non-myopic member rewards for each pool. Used in ranking.
+`currentProtocolParameters`  | The current protocol parameters.
+`proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
+`stakeDistribution`          | Distribution of the stake across all known stake pools.
+`utxo`                       | Current UTxO, possibly filtered by address.
+
+
+To know more about arguments and results of each query, have a look at the [API reference](../../api-reference).
+
+## Full Example
+
+Let's see a full example getting the stake distribution of all stake pools of the Cardano mainnet. In the example, we'll also use the `FindIntersect` method from the [local-chain-sync](../local-chain-sync) protocol to get an easy point to acquire.  
+
+```js
+const WebSocket = require('ws');
+const client = new WebSocket("ws://localhost:1337");
+
+function wsp(methodname, args) {
+    client.send(JSON.stringify({
+        type: "jsonwsp/request",
+        version: "1.0",
+        servicename: "ogmios",
+        methodname,
+        args
+    }));
+}
+
+client.once('open', () => {
+    wsp("FindIntersect", { points: ["origin"] });
+});
+
+client.on('message', function(msg) {
+    const response = JSON.parse(msg);
+
+    switch (response.methodname) {
+        case "FindIntersect":
+            const point = response.result.IntersectionFound.tip;
+            wsp("Acquire", { point });
+            break;
+
+        case "Acquire":
+            wsp("Query", { query: "stakeDistribution" });
+            break;
+
+        case "Query":
+            console.log(response.result);
+            client.close();
+            break;
+    }
+});
+```
+
+Here's a walk-though describing what happens when running the above script:
+
+1. An initial request ask to `FindIntersect` that is guaranteed to succeed is sent. This is a little trick in order to access the ledger tip easily. As a response, Ogmios replies with:
+
+    {{% expand "IntersectionFound" %}}
+```json
+{
+    "version": "1.0",
+    "servicename": "ogmios",
+    "type": "jsonwsp/response",
+    "methodname": "FindIntersect",
+    "result": {
+        "IntersectionFound": {
+            "point": "origin",
+            "tip": {
+                "hash": "dbafebb0146b2ec45186dfba6c287ad69c83d3fd9a186b39d99ab955631539e0",
+                "blockNo": 4887546,
+                "slot": 12526684
+            }
+        }
+    },
+    "reflection": null
+}
+```
+    {{% /expand %}}
+
+2. Using the `tip` from the previous response, we can now safely `Acquire` a state on that particular tip which we know exists and is not too old. Ogmios replies successfully with:
+
+    {{% expand "AcquireSuccess" %}}
+```json
+{
+    "version": "1.0",
+    "servicename": "ogmios",
+    "type": "jsonwsp/response",
+    "methodname": "Acquire",
+    "result": {
+        "AcquireSuccess": {
+            "acquired": {
+                "hash": "dbafebb0146b2ec45186dfba6c287ad69c83d3fd9a186b39d99ab955631539e0",
+                "slot": 12526684
+            }
+        }
+    },
+    "reflection": null
+}
+```
+    {{% /expand %}}
+
+3. Now in a position to make an actual `Query`, we do it and ask for the stake distribution across all stake pools. The (truncated) response from the server looks like:
+
+    {{% expand "QueryResponse" %}}
+```json
+{
+    "version": "1.0",
+    "servicename": "ogmios",
+    "type": "jsonwsp/response",
+    "methodname": "Query",
+    "result": {
+        "pool1w3s6gk83y2g3670emy3yfjw9myz3u4whph7peah653rmsfegyj3": {
+            "stake": 0,
+            "vrf": "29c1a293c550beea756bc0c01416bacd7030ae8992e13ca242d4d6c2aebaac0d"
+        },
+        "pool1n5shd9xdt4s2gm27fxcnuejaqhhmpepn6chw2c82kqnuzdtpsem": {
+            "stake": 0.00003058882418046271,
+            "vrf": "7e363eb8bfd8fef018da4c397d6a6ec25998363434e92276e40ee6c706da3ae5"
+        },
+        "..."
+    },
+    "reflection": null
+}
+```
+    {{% /expand %}}
+
+
+{{% notice warning %}}
+Be aware that it is possible for an `Acquire` request to fail even if (and in particular if) made immediately after finding the ledger tip. In Ouroboros Praos frequent small rollbacks of the chain are not rare and the few last blocks of the chain can be a bit volatile. A real application may require more elaborate error handling than the toy example above. 
+{{% /notice %}}
