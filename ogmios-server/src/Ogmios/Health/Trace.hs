@@ -16,10 +16,10 @@ import Cardano.BM.Data.Tracer
     ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
 import Control.Exception
     ( SomeException )
-import Data.Text
-    ( Text )
 import Data.Time.Clock
     ( NominalDiffTime )
+import Ogmios.Metrics.Trace
+    ( TraceMetrics )
 
 data TraceHealth s where
     HealthTick
@@ -30,8 +30,8 @@ data TraceHealth s where
         :: { socket :: FilePath, retryingIn :: NominalDiffTime }
         -> TraceHealth s
 
-    HealthRuntimeStatsDisabled
-        :: { recommendation :: Text }
+    HealthMetrics
+        :: { metrics :: TraceMetrics }
         -> TraceHealth s
 
     HealthUnknownException
@@ -43,7 +43,7 @@ deriving instance Show s => Show (TraceHealth s)
 instance HasPrivacyAnnotation (TraceHealth s)
 instance HasSeverityAnnotation (TraceHealth s) where
     getSeverityAnnotation = \case
+        HealthMetrics e -> getSeverityAnnotation e
         HealthTick{} -> Info
         HealthFailedToConnect{} -> Warning
-        HealthRuntimeStatsDisabled{} -> Warning
         HealthUnknownException{} -> Error

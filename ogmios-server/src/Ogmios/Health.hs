@@ -16,17 +16,13 @@ module Ogmios.Health
     (
     -- * Heath Check
       Health (..)
-    , RuntimeStats (..)
-    , ApplicationMetrics
-    , recordSession
     , mkHealthCheckClient
 
     -- * Wai Application
     , application
     ) where
 
-import Prelude hiding
-    ( max, min )
+import Prelude
 
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
@@ -52,37 +48,23 @@ import Control.Monad
 import Control.Monad.IO.Class
     ( liftIO )
 import Control.Tracer
-    ( Tracer, nullTracer, traceWith )
+    ( Tracer, contramap, nullTracer, traceWith )
 import Data.Aeson
     ( ToJSON (..), genericToJSON )
 import Data.FileEmbed
     ( embedFile )
-import Data.Function
-    ( (&) )
-import Data.HashMap.Strict
-    ( HashMap )
-import Data.Int
-    ( Int64 )
 import Data.List
     ( isInfixOf )
-import Data.Ratio
-    ( (%) )
-import Data.Scientific
-    ( Scientific, fromRationalRepetendLimited )
-import Data.Text
-    ( Text )
 import Data.Time.Clock
     ( UTCTime, getCurrentTime )
-import Data.Word
-    ( Word64 )
 import GHC.Generics
     ( Generic )
-import GHC.Stats
-    ( RTSStats (..), getRTSStats, getRTSStatsEnabled )
 import Network.TypedProtocol.Pipelined
     ( N (..) )
 import Ogmios.Health.Trace
     ( TraceHealth (..) )
+import Ogmios.Metrics
+    ( Metrics )
 import Ouroboros.Consensus.Config.SecurityParam
     ( SecurityParam (..) )
 import Ouroboros.Consensus.Network.NodeToClient
@@ -104,19 +86,11 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     )
 import System.IO.Error
     ( isDoesNotExistError )
-import System.Metrics.Counter
-    ( Counter )
-import System.Metrics.Distribution
-    ( Distribution )
-import System.Metrics.Gauge
-    ( Gauge )
 import System.Time.Clock
     ( Debouncer (..)
     , NominalDiffTime
     , newDebouncer
     , nominalDiffTimeToMicroseconds
-    , nominalDiffTimeToMilliseconds
-    , timed
     )
 import Wai.Routes
     ( Handler
@@ -134,94 +108,36 @@ import Wai.Routes
     )
 
 import qualified Data.Aeson as Json
-import qualified Data.HashMap.Strict as Map
 import qualified Data.Text.Encoding as T
 import qualified Network.Wai as Wai
-import qualified Prelude
-import qualified System.Metrics as Ekg
-import qualified System.Metrics.Counter as Ekg.Counter
-import qualified System.Metrics.Distribution as Ekg.Distribution
-import qualified System.Metrics.Gauge as Ekg.Gauge
+import qualified Ogmios.Metrics as Metrics
 
 import Cardano.Types.Json.Orphans
     ()
 
+-- | Capture some health heartbeat of the application. This is populated by two
+-- things:
+--
+-- - A metric store which measure runtime statistics.
+-- - An Ourobors local chain-sync client which follows the chain's tip.
 data Health block = Health
     { lastKnownTip :: Tip block
-        -- ^ Last known tip of the core node.
+    -- ^ Last known tip of the core node.
     , lastTipUpdate :: Maybe UTCTime
-        -- ^ Date at which the last update was received.
-    , runtimeStats :: Maybe RuntimeStats
-        -- ^ Runtime statistics of the program.
-    , activeConnections :: Integer
-        -- ^ Number of currently active connections
-    , totalConnections :: Integer
-        -- ^ Total connections since the last restart
-    , sessionsDuration :: DistributionStats
-        -- ^ Statistics about the duration of each session, in ms
+    -- ^ Date at which the last update was received.
+    , metrics :: Metrics
+    -- ^ Application metrics measured at regular interval
     } deriving (Generic, Eq, Show)
 
 initHealth :: Health block
 initHealth = Health
     { lastKnownTip = TipGenesis
     , lastTipUpdate = Nothing
-    , runtimeStats = Nothing
-    , activeConnections = 0
-    , totalConnections = 0
-    , sessionsDuration = mempty
+    , metrics = Metrics.empty
     }
 
 instance ToJSON (Tip block) => ToJSON (Health block) where
     toJSON = genericToJSON Json.defaultOptions
-
--- | Some Statistics collected from the runtime execution
-data RuntimeStats = RuntimeStats
-    { productivity :: Scientific
-        -- ^ Proportion of the time spent doing actual work (vs garbage collecting)
-    , maxHeapSize :: Int64
-        -- ^ Maximum live data in the heap, in KB
-    } deriving (Generic, Eq, Show)
-
-instance ToJSON RuntimeStats where
-    toJSON = genericToJSON Json.defaultOptions
-
-data DistributionStats = DistributionStats
-    { mean :: Double
-    , min :: Double
-    , max :: Double
-    } deriving (Generic, Eq, Show)
-
-instance Semigroup DistributionStats where
-    s1 <> s2 = DistributionStats
-        { mean = (mean s1 + mean s2) / 2 -- FIXME: Not quite accurate
-        , min = Prelude.min (min s1) (min s2)
-        , max = Prelude.max (max s1) (max s2)
-        }
-
-instance Monoid DistributionStats where
-    mempty = DistributionStats 0 0 0
-
-instance ToJSON DistributionStats where
-    toJSON = genericToJSON Json.defaultOptions
-
--- | An interface for capturing application metrics
-data ApplicationMetrics = ApplicationMetrics
-    { activeConnectionsGauge :: Gauge
-    , totalConnectionsCounter :: Counter
-    , sessionsDurationDistribution :: Distribution
-    }
-
--- | Record some metrics about a given session.
-recordSession :: ApplicationMetrics -> IO a -> IO a
-recordSession metrics session = do
-    Ekg.Counter.inc (totalConnectionsCounter metrics)
-    Ekg.Gauge.inc (activeConnectionsGauge metrics)
-    (a, duration) <- timed session
-    Ekg.Distribution.add (sessionsDurationDistribution metrics) (ms duration)
-    Ekg.Gauge.dec (activeConnectionsGauge metrics)
-    return a
-  where
-    ms = fromIntegral . nominalDiffTimeToMilliseconds
 
 --
 -- Ouroboros Client
@@ -268,7 +184,7 @@ mkHealthCheckClient notify =
 -- HTTP Server
 --
 
-newtype Server = Server (MVar (Health Block), Ekg.Store)
+newtype Server = Server (MVar (Health Block))
 
 mkRoute "Server" [parseRoutes|
 /                HomeR          GET
@@ -281,24 +197,20 @@ application
     :: Tracer IO (TraceHealth (Health Block))
     -> (NodeVersionData, EpochSlots, SecurityParam)
     -> FilePath
-    -> IO (Wai.Application, ApplicationMetrics)
+    -> IO (Wai.Application, Metrics.Sensors)
 application tr (vData, epochSlots, _securityParam) socket = do
-    store <- Ekg.newStore
-    appMetrics <- newApplicationMetrics store
-    getRTSStatsEnabled >>= \case
-        True  -> Ekg.registerGroup runtimeMetrics getRTSStats store
-        False -> traceWith tr (HealthRuntimeStatsDisabled "run with '+RTS -T -RTS'")
+    (sensors, sampler)  <- Metrics.init (contramap HealthMetrics tr)
     mvar <- newMVar initHealth
     debouncer <- newDebouncer 20
-    link =<< async (monitor $ mkClient debouncer mvar store)
-    pure (waiApp $ route $ Server (mvar, store), appMetrics)
+    link =<< async (monitor $ mkClient debouncer mvar sampler)
+    pure (waiApp $ route $ Server mvar, sensors)
   where
     mkClient
         :: Debouncer
         -> MVar (Health Block)
-        -> Ekg.Store
+        -> Metrics.Sampler IO
         -> Client IO
-    mkClient Debouncer{debounce} mvar store = do
+    mkClient Debouncer{debounce} mvar sample = do
         let codec = cChainSyncCodec $ codecs epochSlots
         nodeToClientProtocols (const $ pure $ NodeToClientProtocols
             { localChainSyncProtocol = InitiatorProtocolOnly
@@ -306,20 +218,9 @@ application tr (vData, epochSlots, _securityParam) socket = do
                 $ localChainSync nullTracer codec
                 $ mkHealthCheckClient
                 $ \lastKnownTip -> debounce $ modifyMVar_ mvar $ \_ -> do
-                    lastTipUpdate <- Just <$> getCurrentTime
-
-                    (runtimeStats, activeConnections, totalConnections, sessionsDuration)
-                        <- sample store
-
-                    let health = Health
-                            { lastKnownTip
-                            , lastTipUpdate
-                            , runtimeStats
-                            , activeConnections
-                            , totalConnections
-                            , sessionsDuration
-                            }
-
+                    health <- Health lastKnownTip
+                        <$> (Just <$> getCurrentTime)
+                        <*> sample
                     health <$ traceWith tr (HealthTick health)
 
             , localTxSubmissionProtocol = nullProtocol
@@ -360,16 +261,9 @@ getHomeR = runHandlerM $ do
 
 getHealthR :: Handler Server
 getHealthR = runHandlerM $ do
-    Server (mvar, store) <- sub
-    health <- liftIO (readMVar mvar)
-    (runtimeStats, activeConnections, totalConnections, sessionsDuration)
-        <- liftIO (sample store)
-    json $ health
-        { runtimeStats
-        , activeConnections
-        , totalConnections
-        , sessionsDuration
-        }
+    Server mvar <- sub
+    health  <- liftIO (readMVar mvar)
+    json health
 
 getBenchmarkR :: Handler Server
 getBenchmarkR = runHandlerM $ do
@@ -378,72 +272,3 @@ getBenchmarkR = runHandlerM $ do
 getSpecificationR :: Handler Server
 getSpecificationR = runHandlerM $ do
     asContent "application/json" $ T.decodeUtf8 $(embedFile "../ogmios.wsp.json")
-
-sample :: Ekg.Store -> IO (Maybe RuntimeStats, Integer, Integer, DistributionStats)
-sample store = do
-    values <- Ekg.sampleAll store
-    maybe (pure (Nothing, 0, 0, mempty)) pure $ do
-        Ekg.Gauge maxHeapSize
-            <- "maxHeapSize" `Map.lookup` values
-        Ekg.Counter cpuTime
-            <- "cpuTime" `Map.lookup` values
-        Ekg.Counter gcCpuTime
-            <- "gcCpuTime" `Map.lookup` values
-        Ekg.Gauge _activeConnections
-            <- "activeConnections" `Map.lookup` values
-        Ekg.Counter _totalConnections
-            <- "totalConnections" `Map.lookup` values
-        Ekg.Distribution _sessionsDuration
-            <- "sessionsDuration" `Map.lookup` values
-
-        let productivity
-                | denominator == 0 = 1
-                | otherwise
-                    = either fst fst
-                    $ fromRationalRepetendLimited 3
-                    $ toInteger cpuTime % denominator
-              where
-                denominator = toInteger cpuTime + toInteger gcCpuTime
-
-        return
-            ( Just $ RuntimeStats { productivity, maxHeapSize }
-            , toInteger _activeConnections
-            , toInteger _totalConnections
-            , DistributionStats
-                { mean = Ekg.Distribution.mean _sessionsDuration
-                , min  = Ekg.Distribution.min _sessionsDuration
-                , max  = Ekg.Distribution.max _sessionsDuration
-                }
-            )
-
-runtimeMetrics :: HashMap Text (RTSStats -> Ekg.Value)
-runtimeMetrics = Map.fromList
-    [ ("maxHeapSize", Ekg.Gauge . int64 . toKB . max_live_bytes)
-    , ("cpuTime", Ekg.Counter . cpu_ns)
-    , ("gcCpuTime", Ekg.Counter . gc_cpu_ns)
-    ]
-  where
-    toKB = (`div` 1024)
-
-    int64 :: Word64 -> Int64
-    int64 = fromIntegral
-
-newApplicationMetrics :: Ekg.Store -> IO ApplicationMetrics
-newApplicationMetrics store = do
-    activeConnectionsGauge <- Ekg.Gauge.new
-    store & Ekg.registerGauge "activeConnections"
-        (Ekg.Gauge.read activeConnectionsGauge)
-
-    totalConnectionsCounter <- Ekg.Counter.new
-    store & Ekg.registerCounter "totalConnections"
-        (Ekg.Counter.read totalConnectionsCounter)
-
-    sessionsDurationDistribution <- Ekg.Distribution.new
-    store & Ekg.registerDistribution "sessionsDuration"
-        (Ekg.Distribution.read sessionsDurationDistribution)
-
-    pure ApplicationMetrics
-        { activeConnectionsGauge
-        , totalConnectionsCounter
-        , sessionsDurationDistribution
-        }
