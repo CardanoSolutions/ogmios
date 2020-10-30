@@ -170,7 +170,7 @@ getBenchmarkR = runHandlerM $ do
 
 getSpecificationR :: Handler Server
 getSpecificationR = runHandlerM $ do
-    asContent "application/json" $ T.decodeUtf8 $(embedFile "../ogmios.wsp.json")
+    asContent "application/json" $ T.decodeUtf8 $(embedFile "ogmios.wsp.json")
 
 getHealthR :: Handler Server
 getHealthR = runHandlerM $ do

@@ -118,36 +118,36 @@ import qualified Ouroboros.Network.Point as Point
 type ApplyTxErr = HardForkApplyTxErr (CardanoEras StandardCrypto)
 
 queryRef :: SchemaRef
-queryRef = "../ogmios.wsp.json#/properties/Query/properties/args/properties/query"
+queryRef = "ogmios.wsp.json#/properties/Query/properties/args/properties/query"
 
 spec :: Spec
 spec = do
     context "validate chain-sync req/res against JSON-schema" $ do
         validateToJSON (arbitrary @(Wsp.Response (FindIntersectResponse Block)))
-            "../ogmios.wsp.json#/properties/FindIntersectResponse"
+            "ogmios.wsp.json#/properties/FindIntersectResponse"
 
         validateToJSON (arbitrary @(Wsp.Response (RequestNextResponse Block)))
-            "../ogmios.wsp.json#/properties/RequestNextResponse"
+            "ogmios.wsp.json#/properties/RequestNextResponse"
 
     context "validate tx submission req/res against JSON-schema" $ do
         validateToJSON (arbitrary @(Wsp.Response (SubmitTxResponse ApplyTxErr)))
-            "../ogmios.wsp.json#/properties/SubmitTxResponse"
+            "ogmios.wsp.json#/properties/SubmitTxResponse"
 
     context "validate local state queries against JSON-schema" $ do
         validateQuery
             [aesonQQ|"ledgerTip"|]
             (parseGetLedgerTip genPointResult)
-            "../ogmios.wsp.json#/properties/QueryResponse[ledgerTip]"
+            "ogmios.wsp.json#/properties/QueryResponse[ledgerTip]"
 
         validateQuery
             [aesonQQ|"currentEpoch"|]
             (parseGetEpochNo genEpochResult)
-            "../ogmios.wsp.json#/properties/QueryResponse[currentEpoch]"
+            "ogmios.wsp.json#/properties/QueryResponse[currentEpoch]"
 
         validateQuery
             [aesonQQ|{ "nonMyopicMemberRewards": [14, 42] }|]
             (parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult)
-            "../ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
+            "ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
 
         validateQuery
             [aesonQQ|
@@ -156,34 +156,34 @@ spec = do
                 ]
             }|]
             (parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult)
-            "../ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
+            "ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
 
         validateQuery
             [aesonQQ|"currentProtocolParameters"|]
             (parseGetCurrentPParams genPParamsResult)
-            "../ogmios.wsp.json#/properties/QueryResponse[currentProtocolParameters]"
+            "ogmios.wsp.json#/properties/QueryResponse[currentProtocolParameters]"
 
         validateQuery
             [aesonQQ|"proposedProtocolParameters"|]
             (parseGetProposedPParamsUpdates genProposedPParamsResult)
-            "../ogmios.wsp.json#/properties/QueryResponse[proposedProtocolParameters]"
+            "ogmios.wsp.json#/properties/QueryResponse[proposedProtocolParameters]"
 
         validateQuery
             [aesonQQ|"stakeDistribution"|]
             (parseGetStakeDistribution genPoolDistrResult)
-            "../ogmios.wsp.json#/properties/QueryResponse[stakeDistribution]"
+            "ogmios.wsp.json#/properties/QueryResponse[stakeDistribution]"
 
         validateQuery
             [aesonQQ|"utxo"|]
             (parseGetUTxO genUTxOResult)
-            "../ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
         validateQuery
             [aesonQQ|
             { "utxo": []
             }|]
             (parseGetFilteredUTxO genUTxOResult)
-            "../ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
         validateQuery
             [aesonQQ|
@@ -193,7 +193,7 @@ spec = do
                 ]
             }|]
             (parseGetFilteredUTxO genUTxOResult)
-            "../ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
 instance Arbitrary a => Arbitrary (Wsp.Response a) where
     arbitrary = Wsp.Response Nothing <$> arbitrary

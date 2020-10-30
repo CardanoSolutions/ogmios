@@ -3,7 +3,6 @@
 !LICENSE
 !stack.yaml
 !snapshot.yaml
-!ogmios.wsp.json
 !.hpack.config.yaml
 !.stylish-haskell.yaml
 
@@ -16,6 +15,8 @@
 !modules/
 modules/ouroboros-network
 modules/cardano-node
+
+!docs/static/ogmios.wsp.json
 
 # Needed for embeddding the version
 !.git/

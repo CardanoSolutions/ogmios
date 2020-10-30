@@ -6,8 +6,6 @@ weight = 2
 +++
 
 
-## Overview
-
 {{% ascii-drawing %}}
  ┌──────────┐
  │   Busy   │◀══════════════════════════════╗      
@@ -21,6 +19,8 @@ weight = 2
                                        │          │⇦ START
                                        └──────────┘
 {{% /ascii-drawing %}}
+
+## Overview
 
 Transaction submission is pretty simple & works by submitting an already serialized and signed transaction as one single message.
 
