@@ -1,0 +1,2135 @@
+{ "type": "object"
+, "title": "ogmios"
+, "$schema": "http://json-schema.org/draft-04/schema#"
+
+, "properties":
+
+  { "RequestNext":
+    { "type": "object"
+    , "description": "Request next block from the current cardano-node's cursor."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "RequestNext" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "RequestNextResponse":
+    { "type": "object"
+    , "description": "Request next block from the current cardano-node's cursor."
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "RequestNext" ]
+        }
+      , "result":
+        { "type": "object"
+        , "oneOf":
+          [ { "required": ["RollForward"]
+            , "additionalProperties": false
+            , "properties":
+              { "RollForward":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "tip", "block" ]
+                , "properties":
+                  { "block": { "$ref": "#/definitions/Block" }
+                  , "tip": { "$ref": "#/definitions/Tip" }
+                  }
+                }
+              }
+            }
+          , { "required": ["RollBackward"]
+            , "additionalProperties": false
+            , "properties":
+              { "RollBackward":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "tip", "point" ]
+                , "properties":
+                  { "point": { "$ref": "#/definitions/Point" }
+                  , "tip": { "$ref": "#/definitions/Tip" }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "FindIntersect":
+    { "type": "object"
+    , "description": "Ask cardano-node to find an intersection between its local chain and the given points."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "FindIntersect" ]
+        }
+      , "args":
+        { "type": "object"
+        , "properties":
+          { "points":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Point" }
+            }
+          }
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "FindIntersectResponse":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "FindIntersect" ]
+        }
+      , "result":
+        { "description": "Intersection found if any, alongside the cardano-node's current tip."
+        , "oneOf":
+          [ { "type": "object"
+            , "additionalProperties": false
+            , "required": ["IntersectionFound"]
+            , "properties":
+              { "IntersectionFound":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "point", "tip" ]
+                , "properties":
+                  { "point": { "$ref": "#/definitions/Point" }
+                  , "tip": { "$ref": "#/definitions/Tip" }
+                  }
+                }
+              }
+            }
+          , { "type": "object"
+            , "additionalProperties": false
+            , "required": ["IntersectionNotFound"]
+            , "properties":
+              { "IntersectionNotFound":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "tip" ]
+                , "properties":
+                  { "tip": { "$ref": "#/definitions/Tip" }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "SubmitTx":
+    { "type": "object"
+    , "description": "Submit a signed and serialized Utxo transaction to the network."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "SubmitTx" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["bytes"]
+        , "properties":
+          { "bytes":
+            { "type": "string"
+            , "description": "CBOR-serialized signed transaction, in base64"
+            , "format": "base64"
+            , "pattern": "^[A-Za-z0-9+/]=?=?$"
+            }
+          }
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "SubmitTxResponse":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "SubmitTx" ]
+        }
+      , "result":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["SubmitTxResponse"]
+        , "properties":
+          { "SubmitTxResponse":
+            { "type": "object"
+            , "additionalProperties": false
+            , "properties":
+              { "error":
+                { "oneOf":
+                  [ { "type": "string"
+                    , "enum": ["SubmitSuccess"]
+                    }
+                  , { "type": "object"
+                    , "additionalProperties": false
+                    , "required": ["SubmitFail"]
+                    , "properties":
+                      { "SubmitFail":
+                        { "oneOf":
+                          [ { "$ref": "#/definitions/EraMismatch" }
+                          , { "$ref": "#/definitions/SubmitTxError[Byron]" }
+                          , { "$ref": "#/definitions/SubmitTxError[Shelley]" }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "Query":
+    { "type": "object"
+    , "description": "Query the current ledger tip."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["query"]
+        , "properties":
+          { "query":
+            { "oneOf":
+              [ { "type": "string"
+                , "enum": ["ledgerTip"]
+                }
+              , { "type": "string"
+                , "enum": ["currentEpoch"]
+                }
+              , { "type": "object"
+                , "additionalProperties": false
+                , "required": ["nonMyopicMemberRewards"]
+                , "properties":
+                  { "nonMyopicMemberRewards":
+                    { "oneOf":
+                      [ { "type": "array"
+                        , "items": { "$ref": "#/definitions/Lovelace" }
+                        }
+                      , { "type": "array"
+                        , "items": { "$ref": "#/definitions/Hash16" }
+                        }
+                      ]
+                    }
+                  }
+                }
+              , { "type": "string"
+                , "enum": ["currentProtocolParameters"]
+                }
+              , { "type": "string"
+                , "enum": ["proposedProtocolParameters"]
+                }
+              , { "type": "string"
+                , "enum": ["stakeDistribution"]
+                }
+              , { "type": "string"
+                , "enum": ["utxo"]
+                }
+              , { "type": "object"
+                , "additionalProperties": false
+                , "required": ["utxo"]
+                , "properties":
+                  { "utxo":
+                    { "type": "array"
+                    , "items": { "$ref": "#/definitions/Address" }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryResponse[ledgerTip]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/Point" }
+          , { "$ref": "#/definitions/EraMismatch" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[currentEpoch]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/Epoch" }
+          , { "$ref": "#/definitions/EraMismatch" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[nonMyopicMemberRewards]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/NonMyopicMemberRewards" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[currentProtocolParameters]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
+          , { "$ref": "#/definitions/EraMismatch" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[proposedProtocolParameters]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "type": "object"
+            , "propertyNames": { "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
+            }
+          , { "$ref": "#/definitions/EraMismatch" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[stakeDistribution]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/PoolDistribution" }
+          , { "$ref": "#/definitions/EraMismatch" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[utxo]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "type": "array"
+            , "items": { "$ref": "#/definitions/Utxo" }
+            }
+          , { "$ref": "#/definitions/EraMismatch" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  }
+
+, "definitions":
+  { "Address":
+    { "type": "string"
+    , "pattern": "[1-9A-HJ-NP-Za-km-z]*"
+    }
+
+  , "Block":
+    { "type": "object"
+    , "oneOf":
+      [ { "required": [ "byron" ]
+        , "additionalProperties": false
+        , "properties":
+          { "byron": { "$ref": "#/definitions/Block[Byron]" }
+          }
+        }
+      , { "required": [ "shelley" ]
+        , "additionalProperties": false
+        , "properties":
+          { "shelley": { "$ref": "#/definitions/Block[Shelley]" }
+          }
+        }
+      ]
+    }
+
+  , "Block[Byron]":
+    { "oneOf":
+      [ { "required": [ "hash", "header", "body" ]
+        , "additionalProperties": false
+        , "properties":
+          { "hash": { "$ref": "#/definitions/Hash16" }
+          , "header":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "blockHeight", "genesisKey", "prevHash", "proof", "protocolMagicId", "protocolVersion", "signature", "slot", "softwareVersion" ]
+            , "properties":
+              { "blockHeight": { "$ref": "#/definitions/BlockHeight" }
+              , "genesisKey": { "$ref": "#/definitions/Hash64" }
+              , "prevHash": { "$ref": "#/definitions/Hash16" }
+              , "proof": { "$ref": "#/definitions/BlockProof" }
+              , "protocolMagicId": { "$ref": "#/definitions/ProtocolMagicId" }
+              , "protocolVersion": { "$ref": "#/definitions/ProtocolVersion" }
+              , "signature": { "$ref": "#/definitions/Signature" }
+              , "slot": { "$ref": "#/definitions/Slot" }
+              , "softwareVersion": { "$ref": "#/definitions/SoftwareVersion" }
+              }
+            }
+          , "body":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "txPayload", "dlgPayload", "updatePayload" ]
+            , "properties":
+              { "txPayload":
+                { "type": "array"
+                , "items":
+                  { "type": "object"
+                  , "additionalProperties": false
+                  , "required": [ "id", "body", "witness" ]
+                  , "properties":
+                    { "id": { "$ref": "#/definitions/Hash16" }
+                    , "body": { "$ref": "#/definitions/Tx" }
+                    , "witness":
+                      { "type": "array"
+                      , "items": { "$ref": "#/definitions/TxWitness" }
+                      }
+                    }
+                  }
+                }
+              , "dlgPayload":
+                { "type": "array"
+                , "items": { "$ref": "#/definitions/DlgCertificate"}
+                }
+              , "updatePayload":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "proposal", "votes" ]
+                , "properties":
+                  { "proposal":
+                    { "oneOf":
+                      [ { "type": "null" }
+                      , { "type": "object"
+                        , "additionalProperties": false
+                        , "required": [ "body", "issuer", "signature" ]
+                        , "properties":
+                          { "body":
+                            { "type": "object"
+                            , "additionalProperties": false
+                            , "required": [ "protocolVersion", "parametersUpdate", "softwareVersion", "metadata" ]
+                            , "properties":
+                              { "protocolVersion": { "$ref": "#/definitions/ProtocolVersion" }
+                              , "softwareVersion": { "$ref": "#/definitions/SoftwareVersion" }
+                              , "metadata":
+                                { "type": "object"
+                                , "additionalProperties": true
+                                }
+                              , "parametersUpdate": { "$ref": "#/definitions/ProtocolParameters[Byron]" }
+                              }
+                            }
+                          , "issuer": { "$ref": "#/definitions/Hash64" }
+                          , "signature": { "$ref": "#/definitions/Hash16" }
+                          }
+                        }
+                      ]
+                    }
+                  , "votes":
+                    { "type": "array"
+                    , "items": { "$ref": "#/definitions/Vote" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      , { "required": [ "hash", "header" ]
+        , "additionalProperties": false
+        , "properties":
+          { "hash": { "$ref": "#/definitions/Hash16" }
+          , "header":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "blockHeight", "epoch", "prevHash" ]
+            , "properties":
+              { "blockHeight": { "$ref": "#/definitions/BlockHeight" }
+              , "epoch": { "$ref": "#/definitions/Epoch" }
+              , "prevHash": { "$ref": "#/definitions/Hash16" }
+              }
+            }
+          }
+        }
+      ]
+    }
+
+  , "Block[Shelley]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "body":
+        { "type": "array"
+        , "items":
+          { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "id", "body", "witness", "metadata" ]
+          , "properties":
+            { "id": { "$ref": "#/definitions/Hash16" }
+            , "body":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": ["inputs","outputs","certificates","withdrawals","fee","timeToLive","update"]
+              , "properties":
+                { "inputs":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/TxIn" }
+                  }
+                , "outputs":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/TxOut" }
+                  }
+                , "certificates":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/Certificate" }
+                  }
+                , "withdrawals": { "$ref": "#/definitions/Withdrawals" }
+                , "fee": { "$ref": "#/definitions/Lovelace" }
+                , "timeToLive": { "$ref": "#/definitions/Slot" }
+                , "update": { "$ref": "#/definitions/Update[Shelley]" }
+                }
+              }
+            , "witness":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": ["address","multisig","bootstrap"]
+              , "properties":
+                { "address":
+                  { "type": "array"
+                  , "items":
+                    { "type": "object"
+                    , "additionalProperties": false
+                    , "properties":
+                      { "signature": { "$ref": "#/definitions/Hash16" }
+                      , "key": { "$ref": "#/definitions/Hash16" }
+                      }
+                    }
+                  }
+                , "multisig":
+                  { "type": "object"
+                  , "propertyNames": { "pattern": "^[0-9a-f]+$" }
+                  , "additionalProperties": { "$ref": "#/definitions/Script" }
+                  }
+                , "bootstrap":
+                  { "type": "array"
+                  , "items":
+                    { "type": "object"
+                    , "additionalProperties": false
+                    , "properties":
+                      { "signature": { "$ref": "#/definitions/Hash16" }
+                      , "chainCode":
+                        { "oneOf":
+                          [ { "$ref": "#/definitions/Hash16" }
+                          , { "type": "null" }
+                          ]
+                        }
+                      , "addressAttributes":
+                        { "oneOf":
+                          [ { "$ref": "#/definitions/Hash16" }
+                          , { "type": "null" }
+                          ]
+                        }
+                      , "key": { "$ref": "#/definitions/Hash16" }
+                      }
+                    }
+                  }
+                }
+              }
+            , "metadata":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "hash", "body" ]
+              , "properties":
+                { "hash":
+                  { "oneOf":
+                    [ { "type": "null" }
+                    , { "$ref": "#/definitions/Hash16" }
+                    ]
+                  }
+                , "body":
+                  { "oneOf":
+                    [ { "type": "null" }
+                    , { "type": "object" }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      , "headerHash": { "$ref": "#/definitions/Hash16" }
+      , "header":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required":
+          [ "blockHeight","slot","prevHash","issuerVk","issuerVrf","leaderValue"
+          , "blockSize", "blockHash","opCert","protocolVersion","signature"
+          ]
+        , "properties":
+          { "blockHeight": { "$ref": "#/definitions/BlockHeight" }
+          , "slot": { "$ref": "#/definitions/Slot" }
+          , "prevHash": { "$ref": "#/definitions/Hash16" }
+          , "issuerVk": { "$ref": "#/definitions/Hash16" }
+          , "issuerVrf": { "$ref": "#/definitions/Hash16" }
+          , "nonce": { "$ref": "#/definitions/NonceProof" }
+          , "leaderValue": { "$ref": "#/definitions/LeaderValue" }
+          , "blockSize": { "$ref": "#/definitions/BlockSize" }
+          , "blockHash": { "$ref": "#/definitions/Hash16" }
+          , "opCert": { "$ref": "#/definitions/OpCert" }
+          , "protocolVersion": { "$ref": "#/definitions/ProtocolVersion" }
+          , "signature": { "$ref": "#/definitions/Hash64" }
+          }
+        }
+      }
+    }
+
+  , "BlockHeight":
+    { "type": "integer"
+    , "minimum": 0
+    }
+
+  , "BlockNo":
+    { "type": "integer"
+    , "minimum": 0
+    }
+
+  , "BlockProof":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "utxo", "delegation", "update" ]
+    , "properties":
+      { "utxo":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "number", "root", "witnessesHash" ]
+        , "properties":
+          { "number":
+            { "type": "integer"
+            , "minimum": 0
+            }
+          , "root": { "$ref": "#/definitions/Hash16" }
+          , "witnessesHash": { "$ref": "#/definitions/Hash16" }
+          }
+        }
+      , "delegation": { "$ref": "#/definitions/Hash16" }
+      , "update": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "BlockSize":
+    { "type": "integer"
+    , "minimum": 0
+    }
+
+  , "Certificate":
+    { "oneOf":
+      [ { "type": "object"
+        , "additionalProperties": false
+        , "required": ["stakeDelegation"]
+        , "properties":
+          { "stakeDelegation":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": ["delegator", "delegatee"]
+            , "properties":
+              { "delegator": { "$ref": "#/definitions/Hash16" }
+              , "delegatee": { "$ref": "#/definitions/PoolId" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": ["stakeKeyRegistration"]
+        , "properties":
+          { "stakeKeyRegistration": { "$ref": "#/definitions/Hash16" }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": ["stakeKeyDeregistration"]
+        , "properties":
+          { "stakeKeyDeregistration": { "$ref": "#/definitions/Hash16" }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": ["poolRegistration"]
+        , "properties":
+          { "poolRegistration":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": ["owners","cost","margin","pledge","vrf","metadata","id","relays","rewardAccount"]
+            , "properties":
+              { "owners":
+                { "type": "array"
+                , "items": { "$ref": "#/definitions/Hash16" }
+                }
+              , "cost": { "$ref": "#/definitions/Lovelace" }
+              , "margin": { "type": "number" }
+              , "pledge": { "$ref": "#/definitions/Lovelace" }
+              , "vrf": { "$ref": "#/definitions/Hash16" }
+              , "metadata":
+                { "oneOf":
+                  [ { "type": "null" }
+                  , { "type": "object"
+                    , "additionalProperties": false
+                    , "required": ["hash","url"]
+                    , "properties":
+                      { "hash": { "$ref": "#/definitions/Hash16" }
+                      , "url":
+                        { "type": "string"
+                        , "format": "uri"
+                        }
+                      }
+                    }
+                  ]
+                }
+              , "id": { "$ref": "#/definitions/PoolId" }
+              , "relays":
+                { "type": "array"
+                , "items": { "$ref": "#/definitions/Relay" }
+                }
+              , "rewardAccount": { "$ref": "#/definitions/RewardAccount" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": ["poolRetirement"]
+        , "properties":
+          { "poolRetirement":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": ["poolId", "retirementEpoch"]
+            , "properties":
+              { "retirementEpoch": { "$ref": "#/definitions/Epoch" }
+              , "poolId": { "$ref": "#/definitions/PoolId" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": ["genesisDelegation"]
+        , "properties":
+          { "genesisDelegation":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": ["delegateKeyHash","verificationKeyHash","vrfVerificationKeyHash"]
+            , "properties":
+              { "delegateKeyHash": { "$ref": "#/definitions/Hash16" }
+              , "verificationKeyHash": { "$ref": "#/definitions/Hash16" }
+              , "vrfVerificationKeyHash": { "$ref": "#/definitions/Hash16" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": ["moveInstantaneousRewards"]
+        , "properties":
+          { "moveInstantaneousRewards":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": ["rewards","pot"]
+            , "properties":
+              { "rewards": { "$ref": "#/definitions/Rewards" }
+              , "pot": { "$ref": "#/definitions/RewardPot" }
+              }
+            }
+          }
+        }
+      ]
+    }
+
+  , "DlgCertificate":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "epoch", "issuerVk", "delegateVk", "signature" ]
+    , "properties":
+      { "epoch": { "$ref": "#/definitions/Epoch" }
+      , "issuerVk": { "$ref": "#/definitions/Hash64" }
+      , "delegateVk": { "$ref": "#/definitions/Hash64" }
+      , "signature": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "Epoch":
+    { "type": "integer"
+    , "minimum": 0
+    }
+
+  , "Era":
+    { "type": "string"
+    , "enum": ["Byron", "Shelley"]
+    }
+
+  , "EraMismatch":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "eraMismatch" ]
+    , "properties":
+      { "eraMismatch":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "queryEra", "ledgerEra" ]
+        , "properties":
+          { "queryEra": { "$ref": "#/definitions/Era" }
+          , "ledgerEra": { "$ref": "#/definitions/Era" }
+          }
+        }
+      }
+    }
+
+  , "Hash16":
+    { "type": "string"
+    , "format": "base16"
+    , "pattern": "^[0-9a-f]*$"
+    }
+
+  , "Hash64":
+    { "type": "string"
+    , "format": "base64"
+    , "pattern": "^[A-Za-z0-9+/]*=?=?$"
+    }
+
+  , "LeaderValue":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "proof": { "$ref": "#/definitions/Hash16" }
+      , "output": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "Lovelace":
+    { "type": "integer"
+    , "description": "An amount, in Lovelace (1e6 Lovelace = 1 Ada)"
+    , "minimum": 0
+    }
+
+  , "LovelaceError":
+    { "oneOf":
+      [ { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "underflow" ]
+        , "properties":
+          { "underflow":
+            { "type": "array"
+            , "items": { "type": "integer" }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "tooSmall" ]
+        , "properties":
+          { "tooSmall": { "type": "integer" }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "tooLarge" ]
+        , "properties":
+          { "tooLarge": { "type": "integer" }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "overflow" ]
+        , "properties":
+          { "overflow": { "type": "integer" }
+          }
+        }
+      ]
+    }
+
+  , "Network":
+    { "type": "string"
+    , "enum": [ "mainnet", "testnet" ]
+    }
+
+  , "NetworkMagic":
+    { "oneOf":
+      [ { "type": "string"
+        , "enum": [ "mainnet" ]
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "testnet" ]
+        , "properties":
+          { "testnet": { "type": "integer" }
+          }
+        }
+      ]
+    }
+
+  , "Nonce":
+    { "oneOf":
+      [ { "type": "string"
+        , "enum": ["neutral"]
+        }
+      , { "$ref": "#/definitions/Hash16" }
+      ]
+    }
+
+  , "NonceProof":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "proof": { "$ref": "#/definitions/Hash16" }
+      , "output": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "NonMyopicMemberRewards":
+    { "type": "object"
+    , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
+    , "additionalProperties":
+      { "type": "object"
+      , "propertyNames": { "pattern": "^[0-9a-f]+$" }
+      , "additionalProperties":
+        { "type": "number"
+        , "minimum": 0
+        }
+      }
+    }
+
+  , "NullableInteger":
+    { "oneOf":
+      [ { "type": "null" }
+      , { "type": "integer" }
+      ]
+    }
+
+  , "NullableNumber":
+    { "oneOf":
+      [ { "type": "null" }
+      , { "type": "number" }
+      ]
+    }
+
+  , "NullableRatio":
+    { "oneOf":
+      [ { "type": "null" }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "denominator", "numerator" ]
+        , "properties":
+          { "denominator": { "type": "integer" }
+          , "numerator": { "type": "integer" }
+          }
+        }
+      ]
+    }
+
+  , "OpCert":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "count": { "type": "integer", "minimum": 0 }
+      , "sigma": { "$ref": "#/definitions/Hash16" }
+      , "kesPeriod": { "type": "integer", "minimum": 0 }
+      , "hotVk": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "Point":
+    { "oneOf":
+      [ { "type": "string"
+        , "enum": [ "origin" ]
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "slot", "hash" ]
+        , "properties":
+          { "slot": { "$ref": "#/definitions/Slot" }
+          , "hash": { "$ref": "#/definitions/Hash16" }
+          }
+        }
+      ]
+    }
+
+  , "PoolDistribution":
+    { "type": "object"
+    , "propertyNames": { "$ref": "#/definitions/PoolId" }
+    , "additionalProperties":
+      { "type": "object"
+      , "additionalProperties": false
+      , "required": ["stake", "vrf"]
+      , "properties":
+        { "stake": { "type": "number" }
+        , "vrf": { "$ref": "#/definitions/Hash16" }
+        }
+      }
+    }
+
+  , "PoolId":
+    { "type": "string"
+    , "format": "bech32"
+    , "pattern": "^pool1[0-9a-z]*$"
+    }
+
+  , "ProtocolMagicId":
+    { "type": "integer"
+    }
+
+  , "ProtocolParameters[Byron]":
+    { "type": "object"
+    , "additionalProperties": true
+    , "properties":
+      { "scriptVersion": { "$ref": "#/definitions/NullableInteger" }
+      , "slotDuration": { "$ref": "#/definitions/NullableInteger" }
+      , "maxBlockSize": { "$ref": "#/definitions/NullableInteger" }
+      , "maxHeaderSize": { "$ref": "#/definitions/NullableInteger" }
+      , "maxProposalSize": { "$ref": "#/definitions/NullableInteger" }
+      , "mpcThreshold": { "$ref": "#/definitions/NullableRatio" }
+      , "heavyDlgThreshold": { "$ref": "#/definitions/NullableRatio" }
+      , "updateVoteThreshold": { "$ref": "#/definitions/NullableRatio" }
+      , "updateProposalTimeToLive": { "$ref": "#/definitions/NullableInteger" }
+      , "unlockStakeEpoch": { "$ref": "#/definitions/NullableInteger" }
+      , "txFeePolicy":
+        { "oneOf":
+          [ { "type": "null" }
+          , { "$ref": "#/definitions/TxFeePolicy" }
+          ]
+        }
+      , "softforkRule":
+        { "oneOf":
+          [ { "type": "null" }
+          , { "$ref": "#/definitions/SoftForkRule" }
+          ]
+        }
+      }
+    }
+
+  , "ProtocolParameters[Shelley]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "minFeeCoefficient": { "$ref": "#/definitions/NullableInteger" }
+      , "minFeeConstant": { "$ref": "#/definitions/NullableInteger" }
+      , "maxBlockBodySize": { "$ref": "#/definitions/NullableInteger" }
+      , "maxBlockHeaderSize": { "$ref": "#/definitions/NullableInteger" }
+      , "maxTxSize": { "$ref": "#/definitions/NullableInteger" }
+      , "stakeKeyDeposit": { "$ref": "#/definitions/NullableInteger" }
+      , "poolDeposit": { "$ref": "#/definitions/NullableInteger" }
+      , "poolRetirementEpochBound": { "$ref": "#/definitions/NullableInteger" }
+      , "desiredNumberOfPools": { "$ref": "#/definitions/NullableInteger" }
+      , "poolInfluence": { "$ref": "#/definitions/NullableNumber" }
+      , "monetaryExpansion": { "$ref": "#/definitions/NullableNumber" }
+      , "treasuryExpansion": { "$ref": "#/definitions/NullableNumber" }
+      , "decentralizationParameter": { "$ref": "#/definitions/NullableNumber" }
+      , "minUtxoValue": { "$ref": "#/definitions/NullableInteger" }
+      , "minPoolCost": { "$ref": "#/definitions/NullableInteger" }
+      , "extraEntropy":
+        { "oneOf":
+          [ { "type": "null" }
+          , { "$ref": "#/definitions/Nonce" }
+          ]
+        }
+      , "protocolVersion":
+        { "oneOf":
+          [ { "type": "null" }
+          , { "$ref": "#/definitions/ProtocolVersion" }
+          ]
+        }
+      }
+    }
+
+  , "ProtocolVersion":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "major", "minor" ]
+    , "properties":
+      { "major": { "type": "integer" }
+      , "minor": { "type": "integer" }
+      , "patch": { "type": "integer" }
+      }
+    }
+
+  , "Relay":
+    { "oneOf":
+      [ { "type": "object"
+        , "additionalProperties": false
+        , "required": ["ipv4","ipv6","port"]
+        , "properties":
+          { "ipv4":
+            { "oneOf":
+              [ { "type": "null" }
+              , { "type": "string" }
+              ]
+            }
+          , "ipv6":
+            { "oneOf":
+              [ { "type": "null" }
+              , { "type": "string" }
+              ]
+            }
+          , "port": { "$ref": "#/definitions/NullableInteger" }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": ["hostname","port"]
+        , "properties":
+          { "hostname": { "type": "string" }
+          , "port": { "$ref": "#/definitions/NullableInteger" }
+          }
+        }
+      ]
+    }
+
+  , "Rewards":
+    { "type": "object"
+    , "additionalProperties": { "$ref": "#/definitions/Lovelace" }
+    , "propertyNames": "[0-9a-f]+$"
+    }
+
+  , "RewardAccount":
+    { "type": "string"
+    , "format": "bech32"
+    , "pattern": "^stake(_test)?1[0-9a-z]+$"
+    }
+
+  , "RewardPot":
+    { "type": "string"
+    , "enum": ["reserves", "treasury"]
+    }
+
+  , "Script":
+    { "anyOf":
+      [ { "$ref": "#/definitions/Hash16" }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "properties":
+          { "any":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Script" }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "properties":
+          { "all":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Script" }
+            }
+          }
+        }
+      , { "type": "object"
+        , "propertyNames": { "pattern": "[0-9]+$" }
+        , "additionalProperties":
+          { "type": "array"
+          , "items": { "$ref": "#/definitions/Script" }
+          }
+        }
+      ]
+    }
+
+  , "Signature":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "dlgCertificate", "signature" ]
+    , "properties":
+      { "dlgCertificate": { "$ref": "#/definitions/DlgCertificate" }
+      , "signature": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "Slot":
+    { "type": "integer"
+    , "minimum": 0
+    }
+
+  , "SoftwareVersion":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "appName", "number" ]
+    , "properties":
+      { "appName": { "type": "string" }
+      , "number": { "type": "integer" }
+      }
+    }
+
+  , "SoftForkRule":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "initThreshold", "minThreshold", "decrementThreshold" ]
+    , "properties":
+      { "initThreshold": { "$ref": "#/definitions/NullableRatio" }
+      , "minThreshold": { "$ref": "#/definitions/NullableRatio" }
+      , "decrementThreshold": { "$ref": "#/definitions/NullableRatio" }
+      }
+    }
+
+  , "SubmitTxError[Byron]":
+    { "type": "object"
+    , "oneOf":
+      [ { "additionalProperties": false
+        , "required": [ "utxoValidationError" ]
+        , "properties":
+          { "utxoValidationError": { "$ref": "#/definitions/UtxoValidationError" }
+          }
+        }
+      , { "additionalProperties": false
+        , "required": [ "txValidationError" ]
+        , "properties":
+          { "txValidationError": { "$ref": "#/definitions/TxValidationError" }
+          }
+        }
+      ]
+    }
+
+  , "SubmitTxError[Shelley]":
+    { "type": "array"
+    , "items":
+      { "oneOf":
+        [ { "type": "object"
+          , "additionalProperties": false
+          , "required": ["invalidWitnesses"]
+          , "properties":
+            { "invalidWitnesses":
+              { "type": "array"
+              , "items": { "$ref": "#/definitions/Hash16" }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "missingVkWitnesses" ]
+          , "properties":
+            { "missingVkWitnesses":
+              { "type": "array"
+              , "items": { "$ref": "#/definitions/Hash16" }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "missingScriptWitnesses" ]
+          , "properties":
+            { "missingScriptWitnesses":
+              { "type": "array"
+              , "items": { "$ref": "#/definitions/Hash16" }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "scriptWitnessNotValidating" ]
+          , "properties":
+            { "scriptWitnessNotValidating":
+              { "type": "array"
+              , "items": { "$ref": "#/definitions/Hash16" }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "insufficientGenesisSignatures" ]
+          , "properties":
+            { "insufficientGenesisSignatures":
+              { "type": "array"
+              , "items": { "$ref": "#/definitions/Hash16" }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "missingTxMetadata" ]
+          , "properties":
+            { "missingTxMetadata": { "$ref": "#/definitions/Hash16" }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "missingTxMetadataHash" ]
+          , "properties":
+            { "missingTxMetadataHash": { "$ref": "#/definitions/Hash16" }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "txMetadataHashMismatch" ]
+          , "properties":
+            { "txMetadataHashMismatch":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "includedHash", "expectedHash" ]
+              , "properties":
+                { "includedHash": { "$ref": "#/definitions/Hash16" }
+                , "expectedHash": { "$ref": "#/definitions/Hash16" }
+                }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "badInputs" ]
+          , "properties":
+            { "badInputs":
+              { "type": "array"
+              , "items": { "$ref": "#/definitions/TxIn" }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "expiredUtxo" ]
+          , "properties":
+            { "expiredUtxo":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "currentSlot", "transactionTimeToLive" ]
+              , "properties":
+                { "currentSlot": { "$ref": "#/definitions/Slot" }
+                , "transactionTimeToLive": { "$ref": "#/definitions/Slot" }
+                }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "txTooLarge" ]
+          , "properties":
+            { "txTooLarge":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "maximumSize", "actualSize" ]
+              , "properties":
+                { "maximumSize": { "type": "integer" }
+                , "actualSize": { "type": "integer" }
+                }
+              }
+            }
+          }
+        , { "type": "string"
+          , "enum": [ "missingAtLeastOneInputUtxo" ]
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "feeTooSmall" ]
+          , "properties":
+            { "feeTooSmall":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "requiredFee", "actualFee" ]
+              , "properties":
+                { "requiredFee": { "$ref": "#/definitions/Lovelace" }
+                , "actualFee": { "$ref": "#/definitions/Lovelace" }
+                }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "valueNotConserved" ]
+          , "properties":
+            { "valueNotConserved":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "consumed", "produced" ]
+              , "properties":
+                { "consumed": { "$ref": "#/definitions/Lovelace" }
+                , "produced": { "$ref": "#/definitions/Lovelace" }
+                }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "networkMismatch" ]
+          , "properties":
+            { "networkMismatch":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "expectedNetwork" ]
+              , "properties":
+                { "expectedNetwork": { "$ref": "#/definitions/Network" }
+                , "invalidAddresses":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/Address" }
+                  }
+                , "invalidRewardAccounts":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/RewardAccount" }
+                  }
+                }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "outputTooSmall" ]
+          , "properties":
+            { "outputTooSmall":
+              { "type": "array"
+              , "items": { "$ref": "#/definitions/TxOut" }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "addressAttributesTooLarge" ]
+          , "properties":
+            { "addressAttributesTooLarge":
+              { "type": "array"
+              , "items": { "$ref": "#/definitions/Address" }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "delegateNotRegistered" ]
+          , "properties":
+            { "delegateNotRegistered": { "$ref": "#/definitions/PoolId" }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "unknownOrIncompleteWithdrawals" ]
+          , "properties":
+            { "unknownOrIncompleteWithdrawals": { "$ref": "#/definitions/Withdrawals" }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "stakePoolNotRegistered" ]
+          , "properties":
+            { "stakePoolNotRegistered": { "$ref": "#/definitions/PoolId" }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "wrongRetirementEpoch" ]
+          , "properties":
+            { "wrongRetirementEpoch":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "currentEpoch", "requestedEpoch", "firstUnreachableEpoch" ]
+              , "properties":
+                { "currentEpoch": { "$ref": "#/definitions/Epoch" }
+                , "requestedEpoch": { "$ref": "#/definitions/Epoch" }
+                , "firstUnreachableEpoch": { "$ref": "#/definitions/Epoch" }
+                }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": ["wrongPoolCertificate"]
+          , "properties":
+            { "wrongPoolCertificate": { "type": "integer" }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "stakeKeyAlreadyRegistered" ]
+          , "properties":
+            { "stakeKeyAlreadyRegistered": { "$ref": "#/definitions/Hash16" }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "poolCostTooSmall" ]
+          , "properties":
+            { "poolCostTooSmall":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "minimumCost" ]
+              , "properties":
+                { "minimumCost": { "$ref": "#/definitions/Lovelace" }
+                }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "stakeKeyNotRegistered" ]
+          , "properties":
+            { "stakeKeyNotRegistered": { "$ref": "#/definitions/Hash16" }
+            }
+          }
+        , { "type": "string"
+          , "enum": [ "rewardAccountNotExisting" ]
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "rewardAccountNotEmpty" ]
+          , "properties":
+            { "rewardAccountNotEmpty":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "balance" ]
+              , "properties":
+                { "balance": { "$ref": "#/definitions/Lovelace" }
+                }
+              }
+            }
+          }
+        , { "type": "string"
+          , "enum": [ "wrongCertificateType" ]
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "unknownGenesisKey" ]
+          , "properties":
+            { "unknownGenesisKey": { "$ref": "#/definitions/Hash16" }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "alreadyDelegating" ]
+          , "properties":
+            { "alreadyDelegating": { "$ref": "#/definitions/Hash16" }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "insufficientFundsForMir" ]
+          , "properties":
+            { "insufficientFundsForMir":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "rewardSource", "sourceSize", "requestedAmount" ]
+              , "properties":
+                { "rewardSource": { "$ref": "#/definitions/RewardPot" }
+                , "sourceSize": { "$ref": "#/definitions/Lovelace" }
+                , "requestedAmount": { "$ref": "#/definitions/Lovelace" }
+                }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "tooLateForMir" ]
+          , "properties":
+            { "tooLateForMir":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "currentSlot", "lastAllowedSlot" ]
+              , "properties":
+                { "currentSlot": { "$ref": "#/definitions/Slot" }
+                , "lastAllowedSlot": { "$ref": "#/definitions/Slot" }
+                }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "duplicateGenesisVrf" ]
+          , "properties":
+            { "duplicateGenesisVrf": { "$ref": "#/definitions/Hash16" }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "nonGenesisVoters" ]
+          , "properties":
+            { "nonGenesisVoters":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "currentlyVoting", "shouldBeVoting" ]
+              , "properties":
+                { "currentlyVoting":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/Hash16" }
+                  }
+                , "shouldBeVoting":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/Hash16" }
+                  }
+                }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "updateWrongEpoch" ]
+          , "properties":
+            { "updateWrongEpoch":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "currentEpoch", "requestedEpoch", "votingPeriod" ]
+              , "properties":
+                { "currentEpoch": { "$ref": "#/definitions/Epoch" }
+                , "requestedEpoch": { "$ref": "#/definitions/Epoch" }
+                , "votingPeriod": { "$ref": "#/definitions/VotingPeriod" }
+                }
+              }
+            }
+          }
+        , { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "protocolVersionCannotFollow" ]
+          , "properties":
+            { "protocolVersionCannotFollow": { "$ref": "#/definitions/ProtocolVersion" }
+            }
+          }
+        ]
+      }
+    }
+
+  , "Tip":
+    { "oneOf":
+      [ { "type": "string"
+        , "enum": [ "origin" ]
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "slot", "hash", "blockNo" ]
+        , "properties":
+          { "slot": { "$ref": "#/definitions/Slot" }
+          , "hash": { "$ref": "#/definitions/Hash16" }
+          , "blockNo": { "$ref": "#/definitions/BlockNo" }
+          }
+        }
+      ]
+    }
+
+  , "Tx":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "inputs", "outputs" ]
+    , "properties":
+      { "inputs":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/TxIn" }
+        }
+      , "outputs":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/TxOut" }
+        }
+      }
+    }
+
+  , "TxFeePolicy":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "coefficient", "constant" ]
+    , "properties":
+      { "coefficient": { "type": "number" }
+      , "constant": { "type": "number" }
+      }
+    }
+
+  , "TxIn":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "txId", "index" ]
+    , "properties":
+      { "txId": { "$ref": "#/definitions/Hash16" }
+      , "index":
+        { "type": "integer"
+        , "minimum": 0
+        }
+      }
+    }
+
+  , "TxOut":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "address", "value" ]
+    , "properties":
+      { "address": { "$ref": "#/definitions/Address" }
+      , "value": { "$ref": "#/definitions/Lovelace" }
+      }
+    }
+
+  , "TxValidationError":
+    { "oneOf":
+      [ { "type": "string"
+        , "enum": [ "unknownAttributes", "unknownAddressAttributes" ]
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "feeTooSmall" ]
+        , "properties":
+          { "feeTooSmall":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "tx", "requiredFee", "actualFee" ]
+            , "properties":
+              { "tx": { "$ref": "#/definitions/Tx" }
+              , "requiredFee": { "$ref": "#/definitions/Lovelace" }
+              , "actualFee": { "$ref": "#/definitions/Lovelace" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "txTooLarge" ]
+        , "properties":
+          { "txTooLarge":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "maximumSize", "actualSize" ]
+            , "properties":
+              { "maximumSize": { "type": "integer" }
+              , "actualSize": { "type": "integer" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "missingInput" ]
+        , "properties":
+          { "missingInput":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "index", "txId" ]
+            , "properties":
+              { "index": { "type": "integer" }
+              , "txId": { "$ref": "#/definitions/Hash16" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "networkMismatch" ]
+        , "properties":
+          { "networkMismatch":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "foundInAddress", "expectedNetwork" ]
+            , "properties":
+              { "foundInAddress": { "$ref": "#/definitions/NetworkMagic" }
+              , "expectedNetwork": { "$ref": "#/definitions/NetworkMagic" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "wrongSignature" ]
+        , "properties":
+          { "wrongSignature":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "witness", "protocolMagic" ]
+            , "properties":
+              { "protocolMagic": { "$ref": "#/definitions/ProtocolMagicId" }
+              , "witness": { "$ref": "#/definitions/TxWitness" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "lovelaceError" ]
+        , "properties":
+          { "lovelaceError":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "error", "label" ]
+            , "properties":
+              { "error": { "$ref": "#/definitions/LovelaceError" }
+              , "label": { "type": "string" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "wrongKey" ]
+        , "properties":
+          { "wrongKey":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "address", "witness" ]
+            , "properties":
+              { "address": { "$ref": "#/definitions/Address" }
+              , "witness": { "$ref": "#/definitions/TxWitness" }
+              }
+            }
+          }
+        }
+      ]
+    }
+
+  , "TxWitness":
+    { "type": "object"
+    , "oneOf":
+      [ { "additionalProperties": false
+        , "required": [ "witnessVk" ]
+        , "properties":
+          { "witnessVk":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "key", "signature" ]
+            , "properties":
+              { "key": { "$ref": "#/definitions/Hash64" }
+              , "signature": { "$ref": "#/definitions/Hash16" }
+              }
+            }
+          }
+        }
+      , { "additionalProperties": false
+        , "required": [ "redeemWitness" ]
+        , "properties":
+          { "redeemWitness":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "key", "signature" ]
+            , "properties":
+              { "key": { "$ref": "#/definitions/Hash64" }
+              , "signature": { "$ref": "#/definitions/Hash64" }
+              }
+            }
+          }
+        }
+      ]
+    }
+
+  , "Update[Shelley]":
+    { "oneOf":
+      [ { "type": "null" }
+      , { "type": "object"
+        , "required": ["proposal", "epoch"]
+        , "properties":
+          { "epoch": { "$ref": "#/definitions/Epoch" }
+          , "proposal":
+            { "type": "object"
+            , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
+            }
+          }
+        }
+      ]
+    }
+
+  , "Utxo":
+    { "type": "array"
+    , "additionalItems": false
+    , "items":
+      [ { "$ref": "#/definitions/TxIn" }
+      , { "$ref": "#/definitions/TxOut" }
+      ]
+    }
+
+  , "UtxoValidationError":
+    { "oneOf":
+      [ { "type": "string"
+        , "enum": [ "overlappingUnion" ]
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "missingInput" ]
+        , "properties":
+          { "missingInput": { "$ref": "#/definitions/TxIn" }
+          }
+        }
+      ]
+    }
+
+  , "Vote":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "voterVk", "proposalId", "signature" ]
+    , "properties":
+      { "voterVk": { "$ref": "#/definitions/Hash64" }
+      , "proposalId": { "$ref": "#/definitions/Hash16" }
+      , "signature": { "$ref": "#/definitions/Hash64" }
+      }
+    }
+
+  , "VotingPeriod":
+    { "type": "string"
+    , "enum": [ "voteForThisEpoch", "voteForNextEpoch" ]
+    }
+
+  , "Withdrawals":
+    { "type": "object"
+    , "additionalProperties": { "$ref": "#/definitions/Lovelace" }
+    , "propertyNames": "^stake(_test)?1[0-9a-z]+$"
+    }
+
+  }
+}
