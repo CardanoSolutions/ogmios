@@ -19,15 +19,19 @@ import Cardano.Network.Protocol.NodeToClient
 import Cardano.Slotting.Slot
     ( EpochNo (..) )
 import Control.Monad
-    ( (>=>) )
+    ( void, (>=>) )
 import Data.Aeson
-    ( toJSON )
+    ( parseJSON, toJSON )
 import Data.Aeson.QQ.Simple
     ( aesonQQ )
+import Data.ByteArray.Encoding
+    ( Base (..), convertFromBase, convertToBase )
 import Data.Proxy
     ( Proxy (..) )
 import Data.SOP.Strict
     ( NS (..) )
+import Data.Text
+    ( Text )
 import Ogmios.Bridge
     ( FindIntersectResponse (..)
     , QueryResponse (..)
@@ -50,6 +54,7 @@ import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras
+    , GenTx
     , HardForkApplyTxErr (ApplyTxErrByron, ApplyTxErrShelley, ApplyTxErrWrongEra)
     , HardForkBlock (..)
     , ShelleyEra
@@ -75,9 +80,11 @@ import Shelley.Spec.Ledger.PParams
 import Shelley.Spec.Ledger.UTxO
     ( UTxO )
 import Test.Hspec
-    ( Spec, SpecWith, context, expectationFailure, specify )
+    ( Spec, SpecWith, context, expectationFailure, shouldBe, specify )
 import Test.Hspec.Json.Schema
     ( SchemaRef (..), prop_validateToJSON, validateToJSON )
+import Test.Hspec.QuickCheck
+    ( prop )
 import Test.QuickCheck
     ( Arbitrary (..)
     , Args (..)
@@ -96,6 +103,7 @@ import Test.QuickCheck
     , quickCheckResult
     , scale
     , withMaxSuccess
+    , (===)
     )
 import Test.QuickCheck.Arbitrary.Generic
     ( genericArbitrary )
@@ -130,6 +138,8 @@ spec = do
             "ogmios.wsp.json#/properties/RequestNextResponse"
 
     context "validate tx submission req/res against JSON-schema" $ do
+        prop "deserialise signed transactions" prop_parseSubmitTx
+
         validateToJSON (arbitrary @(Wsp.Response (SubmitTxResponse ApplyTxErr)))
             "ogmios.wsp.json#/properties/SubmitTxResponse"
 
@@ -247,7 +257,76 @@ genPoint :: Gen (Point.Block SlotNo (HeaderHash Block))
 genPoint = Point.Block <$> genSlotNo <*> genHeaderHash
 
 --
--- Local State Queries
+-- Local Tx Submit
+--
+
+newtype SerializedTx = SerializedTx Text deriving (Eq, Show)
+
+prop_parseSubmitTx
+    :: SerializedTx
+    -> Property
+prop_parseSubmitTx (SerializedTx bytes) =
+    void result === Right ()
+  where
+    result = Json.parseEither (parseJSON @(GenTx Block)) (Json.String bytes)
+
+instance Arbitrary SerializedTx where
+    arbitrary = SerializedTx <$> elements
+        -- base16, with CBOR-in-CBOR prefix.
+        [ "D81859011F\
+          \83a400818258200000000000000000000000000000000000000000000000000000\
+          \000000000000000182825839010101010101010101010101010101010101010101\
+          \010101010101010101010101010101010101010101010101010101010101010101\
+          \0101011a001e848082583901020202020202020202020202020202020202020202\
+          \020202020202020202020202020202020202020202020202020202020202020202\
+          \02021a0078175c021a0001faa403191e46a1008182582001000000000000000000\
+          \000000000000000000000000000000000000000000005840d7af60ae33d2af3514\
+          \11c1445c79590526990bfa73cbb3732b54ef322daa142e6884023410f8be3c16e9\
+          \bd52076f2bb36bf38dfe034a9f04658e9f56197ab80ff6"
+
+        -- base64, not wrapped.
+        , "g6QAgoJYIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIJYIAAAAAAA\
+          \AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQGDglg5AQICAgICAgICAgICAgIC\
+          \AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICGgBbjYCC\
+          \WDkBAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD\
+          \AwMDAwMDAwMDAwMaAFuNgIJYOQEEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\
+          \BAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBBoAeAHgAhoAAhAgAxkeRqEAgoJY\
+          \IBMK6CIB1wcub7/AoYhPtUY2VU0UlFt5kSXPfOONR39RWEBYNf94xvxeRGahecpl\
+          \n6hcmbij+6CD8/P0K6Ng1HnGTvFpkUtSreSbGacgj9Y6bmehnEBrSCZgj9xTBwJV\
+          \BsMHglggAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABYQOjnaezQ88U4\
+          \8KWldKHIgXdfCG1vTIRbgb6beJVXKL/6fvpUKXxqXXMze9YoAgWxdZwT951Mk/KY\
+          \cfxRt4rrqA72"
+
+        -- base16, with bootstrap witnesses
+        , "83a4008182582000000000000000000000000000000000000000000000000000\
+          \0000000000000000018282583901010101010101010101010101010101010101\
+          \0101010101010101010101010101010101010101010101010101010101010101\
+          \0101010101011a001e8480825839010202020202020202020202020202020202\
+          \0202020202020202020202020202020202020202020202020202020202020202\
+          \020202020202021a0078175c021a0001faa403191e46a1028184582001000000\
+          \000000000000000000000000000000000000000000000000000000005840d7af\
+          \60ae33d2af351411c1445c79590526990bfa73cbb3732b54ef322daa142e6884\
+          \023410f8be3c16e9bd52076f2bb36bf38dfe034a9f04658e9f56197ab80f5820\
+          \0000000000000000000000000000000000000000000000000000000000000000\
+          \41a0f6"
+
+        -- base64, with bootstrap witnesses
+        , "g6QAgoJYIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIJYIAAAAAAA\
+          \AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQGDglg5AQICAgICAgICAgICAgIC\
+          \AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICGgBbjYCC\
+          \WDkBAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD\
+          \AwMDAwMDAwMDAwMaAFuNgIJYOQEEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\
+          \BAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBBoAeAHgAhoAAhAgAxkeRqECgoRY\
+          \IAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWEDo52ns0PPFOPClpXSh\
+          \yIF3Xwhtb0yEW4G+m3iVVyi/+n76VCl8al1zM3vWKAIFsXWcE/edTJPymHH8UbeK\
+          \66gOWCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEGghFggEwroIgHX\
+          \By5vv8ChiE+1RjZVTRSUW3mRJc98441Hf1FYQFg1/3jG/F5EZqF5ymWfqFyZuKP7\
+          \oIPz8/Qro2DUecZO8WmRS1Kt5JsZpyCP1jpuZ6GcQGtIJmCP3FMHAlUGwwdYIAEB\
+          \AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBQaD2"
+        ]
+
+--
+-- Local State Query
 --
 
 -- | Parse a given query, generate an arbitrary value, encode it and validate

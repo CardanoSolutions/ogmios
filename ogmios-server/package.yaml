@@ -129,6 +129,7 @@ tests:
     - ouroboros-consensus-cardano-test
     - ouroboros-consensus-shelley
     - ouroboros-network
+    - memory
     - QuickCheck
     - shelley-spec-ledger
     - shelley-spec-ledger-test

@@ -4,6 +4,7 @@
 
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ViewPatterns #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -182,7 +183,7 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
 import Ouroboros.Consensus.Shelley.Ledger.Ledger
     ( NonMyopicMemberRewards (..), Query (..) )
 import Ouroboros.Network.Block
-    ( Point (..), Tip (..), genesisPoint )
+    ( Point (..), Tip (..), genesisPoint, wrapCBORinCBOR )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure (..) )
 import Shelley.Spec.Ledger.API
@@ -200,7 +201,9 @@ import qualified Cardano.Crypto.Hash.Class as CC
 import qualified Cardano.Crypto.KES.Class as CC
 import qualified Cardano.Crypto.VRF.Class as CC
 import qualified Codec.Binary.Bech32 as Bech32
+import qualified Codec.CBOR.Encoding as Cbor
 import qualified Codec.CBOR.Read as Cbor
+import qualified Codec.CBOR.Write as Cbor
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding.Internal as Json
 import qualified Data.Aeson.Types as Json
@@ -298,13 +301,25 @@ instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
 
 instance Crypto crypto => FromJSON (GenTx (CardanoBlock crypto))
   where
-    parseJSON =
-        (fromBase64 . BL.toStrict . Json.encode)
-        >=>
-        (deserialiseCBOR . BL.fromStrict)
+    parseJSON = Json.withText "Tx" $ \(T.encodeUtf8 -> utf8) -> do
+        bytes <- parseBase16 utf8 <|> parseBase64 utf8
+        deserialiseCBOR (BL.fromStrict bytes) <|> deserialiseCBOR (wrap bytes)
       where
-        deserialiseCBOR = either (fail . show) (pure . GenTxShelley . snd)
-            . Cbor.deserialiseFromBytes fromCBOR
+        deserialiseCBOR =
+            either (fail . show) (pure . GenTxShelley . snd)
+            .
+            Cbor.deserialiseFromBytes fromCBOR
+
+        -- Cardano tools have a tendency to wrap cbor in cbor (e.g cardano-cli).
+        -- In particular, a `GenTx` is expected to be prefixed with a cbor tag
+        -- `24` and serialized as CBOR bytes `58xx`.
+        wrap = Cbor.toLazyByteString . wrapCBORinCBOR Cbor.encodePreEncoded
+
+        parseBase16 :: ByteString -> Json.Parser ByteString
+        parseBase16 = either (fail . show) pure . convertFromBase Base16
+
+        parseBase64 :: ByteString -> Json.Parser ByteString
+        parseBase64 = either (fail . show) pure . convertFromBase Base64
 
 instance Crypto crypto => FromJSON (SomeQuery Maybe (CardanoBlock crypto)) where
     parseJSON = choice
@@ -1697,15 +1712,11 @@ unsafeMatchString = \case
     Json.String txt -> txt
     _ -> throw $ PatternMatchFail "expected value to be serialized as a JSON 'String'"
 
-
 base16 :: ByteArrayAccess bin => bin -> Text
 base16 = T.decodeUtf8 . convertToBase Base16
 
 base64 :: ByteArrayAccess bin => bin -> Text
 base64 = T.decodeUtf8 . convertToBase Base64
-
-fromBase64 :: ByteString -> Json.Parser ByteString
-fromBase64 = either (fail . show) pure . convertFromBase Base64
 
 bech32 :: HumanReadablePart -> ByteString -> Text
 bech32 hrp bytes = Bech32.encodeLenient hrp (Bech32.dataPartFromBytes bytes)
