@@ -2,7 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -47,7 +47,7 @@ import Control.Exception
 import Control.Manufacture
     ( Worker (..), bindWorker, feedWorker, newWorker )
 import Control.Monad
-    ( guard )
+    ( guard, void )
 import Control.Monad.Class.MonadThrow
     ( MonadThrow )
 import Control.Tracer
@@ -58,10 +58,16 @@ import Data.ByteString
     ( ByteString )
 import Data.Functor
     ( ($>) )
+import Data.HashMap.Strict
+    ( (!?) )
 import Data.Proxy
     ( Proxy (..) )
+import Data.Text
+    ( Text )
+import Data.Void
+    ( Void, absurd )
 import GHC.Generics
-    ( Generic )
+    ( Generic, Rep )
 import Network.TypedProtocol.Pipelined
     ( Nat (..), natToInt )
 import Ogmios.Json
@@ -89,7 +95,9 @@ import qualified Codec.Json.Wsp as Wsp
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding.Internal as Json
+import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.Text as T
 import qualified Network.WebSockets as WS
 import qualified Ouroboros.Consensus.Ledger.Abstract as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
@@ -360,7 +368,7 @@ newClients
     -> IO (Clients IO block tx err)
 newClients conn = do
     -- State Query
-    stateQueryWorker <- newWorker yield sink
+    stateQueryWorker <- newWorker yield (onUnmatchedMessage @block @tx conn)
     let localStateQueryClient = mkLocalStateQueryClient stateQueryWorker
 
     -- Tx Submission
@@ -380,12 +388,6 @@ newClients conn = do
         , localStateQueryClient
         }
   where
-    -- | A default handler for unmatched requests.
-    sink :: input -> IO ()
-    sink _ = WS.sendTextData conn $ BL.toStrict $ Json.encode $ Wsp.clientFault
-        "Invalid request: no route found for the given request. Verify the \
-        \request's name and/or parameters."
-
     -- | Send a value back into the web-socket
     yield :: Json.Encoding -> IO ()
     yield = WS.sendTextData conn . BL.toStrict . Json.encodingToLazyByteString
@@ -401,6 +403,96 @@ handleIOException tr conn e = do
     traceWith tr $ OgmiosFailedToConnect e
     let msg = "Connection with the node lost or failed."
     WS.sendClose conn $ BL.toStrict $ Json.encode $ Wsp.serverFault msg
+
+-- | A default handler for unmatched requests. This is an attempt to provide
+-- better error messages without adding too much complexity to the above
+-- handlers.
+--
+-- Each handler is rather isolated and independent. They aren't aware of other
+-- handlers and this makes them easy to extend or modify independently. A direct
+-- consequence if that, from a single handler it is hard to tell whether a
+-- request is totally invalid in the context of Ogmios, or simply invalid for
+-- that particular handler.
+--
+-- When a handler fails to parse a request, it simply passes it to the next
+-- handler in the pipeline. Ultimately, once all handlers have passed, we end up
+-- with a request that wasn't proceeded successfully but, the reason why that is
+-- are unclear at this stage:
+--
+-- - Is the request just a gibberish input?
+-- - Is the request an almost valid 'FindIntersect' but with an error on the
+--   argument?
+-- - Is the request an almost valid 'SubmitTx' but with a slightly invalid
+--   transaction body?
+--
+-- This is what this function tries to answer and yield back to users. To some
+-- extent, it redoes some of the parsing work above, but it only occurs on
+-- client errors. This way, base handlers are kept clean and fast for normal
+-- processing.
+onUnmatchedMessage
+    :: forall block tx.
+        ( FromJSON (Point block)
+        , FromJSON (SomeQuery Maybe block)
+        , FromJSON tx
+        )
+    => WS.Connection
+    -> ByteString
+    -> IO ()
+onUnmatchedMessage conn blob = do
+    WS.sendTextData conn $ BL.toStrict $ Json.encode $ Wsp.clientFault $ T.unpack fault
+  where
+    -- Hopefully, this should not show up too often, but only if a request
+    -- really is unknown.
+    defaultGenericFault =
+        "unknown method in 'methodname' (beware names are case-sensitive)."
+
+    fault =
+        "Invalid request: " <> modifyAesonFailure details <> "."
+      where
+        details = case Json.decode' (BL.fromStrict blob) of
+            Just (Json.Object obj) ->
+                either T.pack absurd $ Json.parseEither userFriendlyParser obj
+            _ ->
+                "must be a well-formed JSON object."
+
+    -- A parser that never resolves, yet yield proper error messages based on
+    -- the attempted request.
+    userFriendlyParser :: Json.Object -> Json.Parser Void
+    userFriendlyParser obj = do
+        methodName <-
+            case obj !? "methodname" of
+                Just (Json.String t) -> pure (T.unpack t)
+                _ -> fail "field 'methodname' must be present and be a string."
+
+        if | methodName == Wsp.gWSPMethodName (Proxy @(Rep (FindIntersect block) _)) ->
+              void $ parseJSON @(Wsp.Request (FindIntersect block)) (Json.Object obj)
+
+           | methodName == Wsp.gWSPMethodName (Proxy @(Rep RequestNext _)) ->
+              void $ parseJSON @(Wsp.Request RequestNext) (Json.Object obj)
+
+           | methodName == Wsp.gWSPMethodName (Proxy @(Rep (SubmitTx tx) _)) ->
+              void $ parseJSON @(Wsp.Request (SubmitTx tx)) (Json.Object obj)
+
+           | methodName == Wsp.gWSPMethodName (Proxy @(Rep (Acquire (Point block)) _)) ->
+              void $ parseJSON @(Wsp.Request (Acquire (Point block))) (Json.Object obj)
+
+           | methodName == Wsp.gWSPMethodName (Proxy @(Rep Release _)) ->
+              void $ parseJSON @(Wsp.Request Release) (Json.Object obj)
+
+           | methodName == Wsp.gWSPMethodName (Proxy @(Rep (Query block) _)) ->
+              void $ parseJSON @(Wsp.Request (Query block)) (Json.Object obj)
+
+           | otherwise ->
+              pure ()
+
+        fail defaultGenericFault
+
+    modifyAesonFailure :: Text -> Text
+    modifyAesonFailure
+        = T.dropWhileEnd (== '.')
+        . T.replace "Error in $["    "invalid item ["
+        . T.replace "Error in $: "    ""
+        . T.replace "Error in $: key" "field"
 
 --    ___ _____  _____ _   _   _____          _
 --   |_  /  ___||  _  | \ | | |_   _|        | |

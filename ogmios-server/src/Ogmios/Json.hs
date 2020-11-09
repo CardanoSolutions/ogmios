@@ -110,6 +110,8 @@ import Control.Exception
     ( PatternMatchFail (..), throw )
 import Control.Monad
     ( guard, (>=>) )
+import Control.Monad.Fail
+    ( MonadFail )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..), ToJSONKey (..), (.:), (.=) )
 import Data.Bifunctor
@@ -322,7 +324,7 @@ instance Crypto crypto => FromJSON (GenTx (CardanoBlock crypto))
         parseBase64 = either (fail . show) pure . convertFromBase Base64
 
 instance Crypto crypto => FromJSON (SomeQuery Maybe (CardanoBlock crypto)) where
-    parseJSON = choice
+    parseJSON = choice "query"
         [ parseGetLedgerTip (const Nothing)
         , parseGetEpochNo (const Nothing)
         , parseGetNonMyopicMemberRewards (const Nothing)
@@ -1572,7 +1574,7 @@ parseGetNonMyopicMemberRewards
     -> Json.Parser (SomeQuery f (CardanoBlock crypto))
 parseGetNonMyopicMemberRewards genResult = Json.withObject "SomeQuery" $ \obj -> do
     arg <- obj .: "nonMyopicMemberRewards"
-        >>= traverse (choice [ parseStake, parseCredential ])
+        >>= traverse (choice "credential" [ parseStake, parseCredential ])
     pure $ SomeQuery
         { query = QueryIfCurrentShelley (GetNonMyopicMemberRewards $ Set.fromList arg)
         , encodeResult = toAltJSON
@@ -1671,7 +1673,7 @@ parseGetFilteredUTxO genResult = Json.withObject "SomeQuery" $ \obj -> do
         }
   where
     parseAddress :: Json.Value -> Json.Parser (SL.Addr era)
-    parseAddress = Json.withText "Address" $ choice
+    parseAddress = Json.withText "Address" $ choice "address"
         [ addressFromBytes fromBech32
         , addressFromBytes fromBase58
         , addressFromBytes fromBase16
@@ -1721,5 +1723,6 @@ base64 = T.decodeUtf8 . convertToBase Base64
 bech32 :: HumanReadablePart -> ByteString -> Text
 bech32 hrp bytes = Bech32.encodeLenient hrp (Bech32.dataPartFromBytes bytes)
 
-choice :: Alternative f => [a -> f b] -> a -> f b
-choice xs a = asum (xs <*> pure a)
+choice :: (Alternative f, MonadFail f) => String -> [a -> f b] -> a -> f b
+choice entity xs a =
+    asum (xs <*> pure a) <|> fail ("invalid " <> entity)

@@ -2,18 +2,11 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+
+{-# OPTIONS_HADDOCK hide #-}
 
 module Codec.Json.Wsp
     (
@@ -28,6 +21,11 @@ module Codec.Json.Wsp
     , defaultOptions
     , genericFromJSON
     , genericToJSON
+
+    -- * Generic
+    , gWSPFromJSON
+    , gWSPToJSON
+    , gWSPMethodName
     ) where
 
 import Prelude
@@ -46,6 +44,8 @@ import Data.Char
     ( toLower )
 import Data.Proxy
     ( Proxy (..) )
+import Data.Text
+    ( Text )
 import GHC.TypeLits
     ( KnownSymbol, Symbol, symbolVal )
 
@@ -172,10 +172,9 @@ instance GWSPFromJSON f => GWSPFromJSON (D1 c f) where
 
 instance (Constructor c, GWSPFromJSON f) => GWSPFromJSON (C1 c f) where
     gWSPFromJSON opts value = flip (Json.withObject "U1") value $ \obj -> do
-        -- TODO: Provide better error messages on parse failures.
-        obj .: "type"       >>= guard . (== WspRequest)
-        obj .: "version"    >>= guard . (== V1_0)
-        obj .: "methodname" >>= guard . (== methodName)
+        _ <- parseKey obj "type" WspRequest
+        _ <- parseKey obj "version" V1_0
+        _ <- parseKey obj "methodname" methodName
         refl <- obj .:? "mirror"
         (_, f) <- gWSPFromJSON opts value
         pure (refl, M1 f)
@@ -248,3 +247,49 @@ instance (Selector s, GWSPToJSON f) => GWSPToJSON (S1 s f) where
 -- Arguments are expected to have JSON instances.
 instance ToJSON c => GWSPToJSON (K1 i c) where
     gWSPToJSON _opts = toJSON . unK1
+
+--
+-- Validations (Internal)
+--
+
+parseKey :: (Eq a, FromJSON a, ToJSON a) => Json.Object -> Text -> a -> Json.Parser a
+parseKey obj key expected =
+    case Json.parseMaybe (.:? key) obj of
+        Just Nothing -> fail $ prettyErrValidateKey
+            $ ErrValidateKeyMissing $ ErrMissingKey key
+        Nothing -> fail $ prettyErrValidateKey
+            $ ErrValidateKeyInvalid $ ErrInvalidKey key (toJSON expected)
+        Just (Just v) | v /= expected -> fail $ prettyErrValidateKey
+            $ ErrValidateKeyInvalid $ ErrInvalidKey key (toJSON expected)
+        Just (Just v) ->
+            pure v
+
+data ErrValidateKey
+    = ErrValidateKeyMissing ErrMissingKey
+    | ErrValidateKeyInvalid ErrInvalidKey
+    deriving (Show, Eq)
+
+data ErrMissingKey = ErrMissingKey
+    { missingKey :: Text }
+    deriving (Show, Eq)
+
+data ErrInvalidKey = ErrInvalidKey
+    { invalidKey :: Text, expectedValue :: Json.Value }
+    deriving (Show, Eq)
+
+prettyErrValidateKey :: ErrValidateKey -> String
+prettyErrValidateKey = \case
+    ErrValidateKeyMissing ErrMissingKey{missingKey} ->
+        "missing required field '"<>T.unpack missingKey<>"'."
+
+    ErrValidateKeyInvalid ErrInvalidKey{invalidKey,expectedValue} ->
+        let
+            expected = case expectedValue of
+                Json.Number s ->
+                    ": should be '"<>show s<>"'"
+                Json.String t ->
+                    ": should be '"<>T.unpack t<>"'"
+                _ ->
+                    "."
+        in
+            "invalid value for field '"<>T.unpack invalidKey<>"'"<>expected

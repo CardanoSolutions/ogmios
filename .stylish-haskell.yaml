@@ -10,6 +10,12 @@ language_extensions: &default-extensions
 - ConstraintKinds
 - DataKinds
 - DefaultSignatures
+- DeriveDataTypeable
+- DeriveFoldable
+- DeriveFunctor
+- DeriveGeneric
+- DeriveTraversable
+- EmptyDataDecls
 - ExistentialQuantification
 - FlexibleContexts
 - FlexibleInstances
