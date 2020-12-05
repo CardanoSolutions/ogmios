@@ -38,6 +38,8 @@ library:
   dependencies:
     - aeson
     - async
+    - base16
+    - base64
     - base58-bytestring
     - bech32
     - bech32-th

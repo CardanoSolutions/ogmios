@@ -116,14 +116,16 @@ import Data.Aeson
     ( FromJSON (..), ToJSON (..), ToJSONKey (..), (.:), (.=) )
 import Data.Bifunctor
     ( bimap )
-import Data.ByteArray
-    ( ByteArrayAccess )
 import Data.ByteArray.Encoding
-    ( Base (..), convertFromBase, convertToBase )
+    ( Base (..), convertFromBase )
 import Data.ByteString
     ( ByteString )
+import Data.ByteString.Base16
+    ( encodeBase16 )
 import Data.ByteString.Base58
     ( bitcoinAlphabet, decodeBase58 )
+import Data.ByteString.Base64
+    ( encodeBase64 )
 import Data.ByteString.Short
     ( fromShort, toShort )
 import Data.Coerce
@@ -393,7 +395,7 @@ instance ToAltJSON Text where
     toAltJSON = toJSON
 
 instance ToAltJSON ByteString where
-    toAltJSON = toJSON . base16
+    toAltJSON = toJSON . encodeBase16
 
 instance ToAltJSON BL.ByteString where
     toAltJSON = toAltJSON . BL.toStrict
@@ -464,7 +466,7 @@ instance ToAltJSON BlockNo where
     toAltJSON = toJSON . unBlockNo
 
 instance ToAltJSON ByronHash where
-    toAltJSON = toJSON . base16 . hashToBytes .unByronHash
+    toAltJSON = toJSON . encodeBase16 . hashToBytes .unByronHash
 
 instance ToAltJSON ChainDifficulty where
     toAltJSON = toJSON . unChainDifficulty
@@ -584,7 +586,7 @@ instance CC.KESAlgorithm alg => ToAltJSON (CC.VerKeyKES alg) where
     toAltJSON = toAltJSON . CC.rawSerialiseVerKeyKES
 
 instance CC.KESAlgorithm alg => ToAltJSON (CC.SignedKES alg a) where
-    toAltJSON (CC.SignedKES raw) = toAltJSON . base64 . CC.rawSerialiseSigKES $ raw
+    toAltJSON (CC.SignedKES raw) = toAltJSON . encodeBase64 . CC.rawSerialiseSigKES $ raw
 
 instance ToAltJSON (CC.OutputVRF alg) where
     toAltJSON = toAltJSON . CC.getOutputVRFBytes
@@ -1713,12 +1715,6 @@ unsafeMatchString :: Json.Value -> Text
 unsafeMatchString = \case
     Json.String txt -> txt
     _ -> throw $ PatternMatchFail "expected value to be serialized as a JSON 'String'"
-
-base16 :: ByteArrayAccess bin => bin -> Text
-base16 = T.decodeUtf8 . convertToBase Base16
-
-base64 :: ByteArrayAccess bin => bin -> Text
-base64 = T.decodeUtf8 . convertToBase Base64
 
 bech32 :: HumanReadablePart -> ByteString -> Text
 bech32 hrp bytes = Bech32.encodeLenient hrp (Bech32.dataPartFromBytes bytes)
