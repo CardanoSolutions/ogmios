@@ -1,6 +1,6 @@
 name: _
 
-resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/cfe917f0f419b5c9f63c958f335874e4dc0add85/snapshots/cardano-1.20.0.yaml
+resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/b0a6b22eb5a66e80fcf2d4eaf2cb39094c1d9dd4/snapshots/cardano-1.24.0.yaml
 
 packages:
 - hedgehog-quickcheck-0.1.1
@@ -8,7 +8,20 @@ packages:
 - hjsonschema-1.9.0
 - string-interpolate-0.3.0.2
 
-# commit b36ac2404718b0c14296fde557ff2d7dacdde54b (HEAD -> 1.20.0, origin/1.20.0)
+# commit 345683717da0e5008103a9e25cc2445736ca8e82
+# Merge: 9cd2b6ce 853c2edd
+# Author: redxaxder <abyaly@gmail.com>
+# Date:   Tue Dec 1 14:50:51 2020 -0600
+#
+#     Merge pull request #2033 from input-output-hk/redxaxder/translateera
+#
+#     Test era translation preserves bytes
+- git: https://github.com/input-output-hk/cardano-ledger-specs
+  commit: 345683717da0e5008103a9e25cc2445736ca8e82
+  subdirs:
+  - shelley-ma/shelley-ma-test
+
+# commit 0c6f678351811a375f9344f90ba1ad8844fc4b31 (HEAD -> 1.24.0)
 # Author: KtorZ <matthias.benkort@gmail.com>
 # Date:   Sat Apr 25 00:17:09 2020 +0200
 #
@@ -20,8 +33,9 @@ packages:
 #     here makes it fairly hard to pipelined another request unless the
 #     request can be constructed out of thin air or, has already been
 #     collected and buffered upfront.
+#
 - git: https://github.com/KtorZ/ouroboros-network
-  commit: b36ac2404718b0c14296fde557ff2d7dacdde54b
+  commit: 0c6f678351811a375f9344f90ba1ad8844fc4b31
   subdirs:
     - ouroboros-consensus
     - ouroboros-consensus-test
@@ -31,12 +45,12 @@ packages:
     - ouroboros-consensus-cardano-test
     - ouroboros-network
 
-# commit a1ed2f2bf23fd8a125bf8b86699783f5d97ab9ab
+# commit be857bca0f75dfad254ac07ea21ad1f4cecf6a68 (HEAD -> 1.24.0)
 # Author: KtorZ <matthias.benkort@gmail.com>
 # Date:   Sun Oct 4 18:04:07 2020 +0200
 #
 #     accommodate ClientStAcquiring now requiring an effect
 - git: https://github.com/KtorZ/cardano-node
-  commit: a1ed2f2bf23fd8a125bf8b86699783f5d97ab9ab
+  commit: be857bca0f75dfad254ac07ea21ad1f4cecf6a68
   subdirs:
     - cardano-api

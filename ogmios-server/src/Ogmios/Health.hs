@@ -48,7 +48,7 @@ import Ogmios.Health.Trace
 import Ogmios.Metrics
     ( Metrics )
 import Ouroboros.Network.Block
-    ( Tip (..), genesisPoint, getTipPoint )
+    ( Point, Tip (..), genesisPoint, getTipPoint )
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     ( ChainSyncClientPipelined (..)
     , ClientPipelinedStIdle (..)
@@ -122,31 +122,31 @@ newClients tr mvar sample = do
 mkHealthCheckClient
     :: forall m block. (Monad m)
     => (Tip block -> m ())
-    -> ChainSyncClientPipelined block (Tip block) m ()
+    -> ChainSyncClientPipelined block (Point block) (Tip block) m ()
 mkHealthCheckClient notify =
     ChainSyncClientPipelined stInit
   where
     stInit
-        :: m (ClientPipelinedStIdle Z block (Tip block) m ())
+        :: m (ClientPipelinedStIdle Z block (Point block) (Tip block) m ())
     stInit = pure $
         SendMsgFindIntersect [genesisPoint] $ stIntersect $ \tip -> pure $
             SendMsgFindIntersect [getTipPoint tip] $ stIntersect (const stIdle)
 
     stIntersect
-        :: (Tip block -> m (ClientPipelinedStIdle Z block (Tip block) m ()))
-        -> ClientPipelinedStIntersect block (Tip block) m ()
+        :: (Tip block -> m (ClientPipelinedStIdle Z block (Point block) (Tip block) m ()))
+        -> ClientPipelinedStIntersect block (Point block) (Tip block) m ()
     stIntersect stFound = ClientPipelinedStIntersect
         { recvMsgIntersectNotFound = const stInit
         , recvMsgIntersectFound = const stFound
         }
 
     stIdle
-        :: m (ClientPipelinedStIdle Z block (Tip block) m ())
+        :: m (ClientPipelinedStIdle Z block (Point block) (Tip block) m ())
     stIdle = pure $
         SendMsgRequestNext stNext (pure stNext)
 
     stNext
-        :: ClientStNext Z block (Tip block) m ()
+        :: ClientStNext Z block (Point block) (Tip block) m ()
     stNext = ClientStNext
         { recvMsgRollForward  = const check
         , recvMsgRollBackward = const check

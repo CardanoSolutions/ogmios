@@ -39,5 +39,4 @@ library:
     - ouroboros-consensus-shelley
     - ouroboros-network
     - ouroboros-network-framework
-    - text
     - typed-protocols-examples

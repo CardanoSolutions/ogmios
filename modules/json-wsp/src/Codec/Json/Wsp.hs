@@ -6,8 +6,13 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-{-# OPTIONS_HADDOCK hide #-}
+{-# OPTIONS_HADDOCK prune #-}
 
+-- |
+-- Copyright: © 2020 KtorZ <matthias.benkort@gmail.com>
+-- License: MPL-2.0
+-- Stability: Stable
+-- Portability: Unix
 module Codec.Json.Wsp
     (
     -- * Types
@@ -59,22 +64,33 @@ import qualified Data.Text as T
 -- Types
 --
 
+-- | Service name as a type-family to avoid over-complicating all JSON
+-- instances.
+--
+-- @since 1.0.0
 type family ServiceName a :: Symbol
 
 --
 -- Public ToJSON / FromJSON interfaces
 --
 
+-- | Parsing options, in a similar fasion to aeson.
+--
+-- @since 1.0.0
 data Options = Options
     { fieldLabelModifier :: String -> String
     , constructorTagModifier :: String -> String
     }
 
 -- | Default options for the generic parsing: do nothing.
+--
+-- @since 1.0.0
 defaultOptions :: Options
 defaultOptions = Options id id
 
 -- | Parse a given Json 'Value' as a JSON-WSP 'Request'.
+--
+-- since @1.0.0
 genericFromJSON
     :: (Generic a, GWSPFromJSON (Rep a))
     => Options
@@ -85,6 +101,8 @@ genericFromJSON opts =
 
 -- | Serialize a given response to JSON, provided that the result has a generic
 -- JSON instance.
+--
+-- since @1.0.0
 genericToJSON
     :: forall req res.
         ( Generic res
@@ -100,6 +118,8 @@ genericToJSON opts =
     mkResponse opts (gWSPToJSON opts . from)
 
 -- | Serialize a given response to JSON
+--
+-- since @1.0.0
 mkResponse
     :: forall req res.
         ( KnownSymbol (ServiceName (Response res))
@@ -121,6 +141,9 @@ mkResponse opts toResult _ (Response refl res) = Json.object
   where
     methodName = constructorTagModifier opts $ gWSPMethodName (Proxy :: Proxy (Rep req a))
 
+-- | Supported JSON-WSP versions.
+--
+-- @since 1.0.0
 data WspVersion
     = V1_0
     deriving (Show, Eq)
@@ -135,6 +158,9 @@ instance FromJSON WspVersion where
         guard (json == toJSON V1_0)
         pure V1_0
 
+-- | Supported types of messages as per JSON-WSP specification.
+--
+-- @since 1.0.0
 data WspType
     = WspDescription
     | WspRequest

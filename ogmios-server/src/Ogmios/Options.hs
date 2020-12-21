@@ -20,14 +20,12 @@ import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
-import Cardano.Network.Protocol.NodeToClient
-    ( NodeVersionData )
 import Options.Applicative.Help.Pretty
     ( indent, string, vsep )
 import Ouroboros.Network.Magic
     ( NetworkMagic (..) )
 import Ouroboros.Network.NodeToClient
-    ( NodeToClientVersionData (..), nodeToClientCodecCBORTerm )
+    ( NodeToClientVersionData (..) )
 import Safe
     ( readMay )
 import System.Environment
@@ -46,7 +44,7 @@ data Options = Options
     , logLevel :: Severity
     }
 
-parseOptions :: IO ((NodeVersionData, EpochSlots), Command)
+parseOptions :: IO ((NodeToClientVersionData, EpochSlots), Command)
 parseOptions = (,)
     <$> lookupVersionData
     <*> customExecParser (prefs showHelpOnEmpty) parserInfo
@@ -164,7 +162,7 @@ envOgmiosNetwork = "OGMIOS_NETWORK"
 
 -- | Lookup environment for a given version data name, default to mainnet.
 lookupVersionData
-    :: IO (NodeVersionData, EpochSlots)
+    :: IO (NodeToClientVersionData, EpochSlots)
 lookupVersionData = do
     lookupEnv envOgmiosNetwork >>= \case
         Nothing -> do
@@ -185,30 +183,28 @@ lookupVersionData = do
 
 -- Hard-coded mainnet version data
 mainnetVersionData
-    :: NodeVersionData
+    :: NodeToClientVersionData
 mainnetVersionData =
     customVersionData (NetworkMagic 764824073)
 
 -- Hard-coded testnet version data
 testnetVersionData
-    :: NodeVersionData
+    :: NodeToClientVersionData
 testnetVersionData =
     customVersionData (NetworkMagic 1097911063)
 
 -- Hard-coded staging version data
 stagingVersionData
-    :: NodeVersionData
+    :: NodeToClientVersionData
 stagingVersionData =
     customVersionData (NetworkMagic 633343913)
 
 -- A custom / unknown version data
 customVersionData
     :: NetworkMagic
-    -> NodeVersionData
+    -> NodeToClientVersionData
 customVersionData networkMagic =
-    ( NodeToClientVersionData { networkMagic }
-    , nodeToClientCodecCBORTerm
-    )
+    ( NodeToClientVersionData { networkMagic } )
 
 -- Hard-coded genesis slots per epoch
 defaultEpochSlots

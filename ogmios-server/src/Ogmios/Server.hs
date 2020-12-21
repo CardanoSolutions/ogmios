@@ -23,7 +23,7 @@ import Ogmios.Json
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
 import Cardano.Network.Protocol.NodeToClient
-    ( Block, Client, NodeVersionData, connectClient, mkClient )
+    ( Block, Client, connectClient, mkClient )
 import Control.Concurrent
     ( threadDelay )
 import Control.Concurrent.Async
@@ -62,6 +62,8 @@ import Ogmios.Options
     ( Options (..) )
 import Ogmios.Trace
     ( TraceOgmios (..) )
+import Ouroboros.Network.NodeToClient
+    ( NodeToClientVersionData (..) )
 import System.Directory
     ( doesPathExist )
 import System.IO.Error
@@ -109,7 +111,7 @@ import qualified Ouroboros.Network.NodeToClient.Version as O
 webSocketApp
     :: Tracer IO TraceOgmios
     -> Sensors
-    -> (NodeVersionData, EpochSlots)
+    -> (NodeToClientVersionData, EpochSlots)
     -> Options
     -> WS.ServerApp
 webSocketApp tr sensors (versionData, epochSlots) Options{nodeSocket} pending = do
@@ -182,7 +184,7 @@ getHealthR = runHandlerM $ do
 -- health-check client.
 newHttpApp
     :: Tracer IO TraceOgmios
-    -> (NodeVersionData, EpochSlots)
+    -> (NodeToClientVersionData, EpochSlots)
     -> FilePath
     -> IO (Wai.Application, Metrics.Sensors)
 newHttpApp tr (vData, epochSlots) socket = do
@@ -195,7 +197,7 @@ newHttpApp tr (vData, epochSlots) socket = do
 
 connectHealth
     :: Tracer IO (TraceHealth (Health Block))
-    -> NodeVersionData
+    -> NodeToClientVersionData
     -> FilePath
     -> Client IO
     -> IO ()
@@ -245,12 +247,12 @@ connectHealth tr vData socket client = forever $ handlers $ do
 -- This functions is blocking and starts a Warp server which will route requests
 -- to either of the two Wai applications described above.
 runServer
-    :: (NodeVersionData, EpochSlots)
+    :: (NodeToClientVersionData, EpochSlots)
     -> Options
     -> Tracer IO TraceOgmios
     -> IO ()
 runServer env@(vData, epochSlots) opts@Options{host,port,nodeSocket} tr = do
-    traceWith tr $ OgmiosNetwork (O.networkMagic $ fst vData) epochSlots
+    traceWith tr $ OgmiosNetwork (O.networkMagic vData) epochSlots
     (httpApp, sensors) <- newHttpApp tr env nodeSocket
     Warp.runSettings settings $ Wai.websocketsOr WS.defaultConnectionOptions
         (webSocketApp tr sensors env opts)

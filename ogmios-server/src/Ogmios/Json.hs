@@ -4,6 +4,7 @@
 
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -23,10 +24,13 @@ module Ogmios.Json
 
 import Prelude
 
-import Cardano.Api.MetaData
-    ( TxMetadataJsonSchema (..), TxMetadataValue (..), metadataToJson )
 import Cardano.Api.Typed
-    ( TxMetadata, makeTransactionMetadata )
+    ( TxMetadata
+    , TxMetadataJsonSchema (..)
+    , TxMetadataValue (..)
+    , makeTransactionMetadata
+    , metadataToJson
+    )
 import Cardano.Binary
     ( Annotated (..), FromCBOR (..), serialize )
 import Cardano.Chain.Block
@@ -92,8 +96,8 @@ import Cardano.Crypto.Signing
     ( RedeemSignature, RedeemVerificationKey, Signature, VerificationKey )
 import Cardano.Ledger.Crypto
     ( Crypto )
-import Cardano.Ledger.Shelley
-    ( Shelley )
+import Cardano.Ledger.Era
+    ( Era )
 import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
@@ -112,6 +116,8 @@ import Control.Monad
     ( guard, (>=>) )
 import Control.Monad.Fail
     ( MonadFail )
+import Control.State.Transition
+    ( STS (..) )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..), ToJSONKey (..), (.:), (.=) )
 import Data.Bifunctor
@@ -163,7 +169,8 @@ import Numeric.Natural
 import Ouroboros.Consensus.Byron.Ledger
     ( ByronBlock (..), ByronHash (..), GenTx )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoBlock
+    ( AllegraEra
+    , CardanoBlock
     , CardanoEras
     , CardanoQueryResult
     , GenTx (..)
@@ -173,25 +180,19 @@ import Ouroboros.Consensus.Cardano.Block
     , ShelleyEra
     )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( LedgerEraInfo (..)
-    , MismatchEraInfo (..)
-    , OneEraHash (..)
-    , SingleEraInfo (..)
-    )
+    ( MismatchEraInfo (..), OneEraHash (..) )
 import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
-    ( EraMismatch (..) )
-import Ouroboros.Consensus.HardFork.Combinator.Util.Match
-    ( mismatchTwo )
+    ( EraMismatch (..), mkEraMismatch )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..), ShelleyHash (..) )
-import Ouroboros.Consensus.Shelley.Ledger.Ledger
+import Ouroboros.Consensus.Shelley.Ledger.Query
     ( NonMyopicMemberRewards (..), Query (..) )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..), genesisPoint, wrapCBORinCBOR )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure (..) )
 import Shelley.Spec.Ledger.API
-    ( ApplyTxError (..) )
+    ( ApplyTxError (..), PraosCrypto )
 import Shelley.Spec.Ledger.STS.Ppup
     ( VotingPeriod (..) )
 
@@ -204,6 +205,11 @@ import qualified Cardano.Crypto.DSIGN.Class as CC
 import qualified Cardano.Crypto.Hash.Class as CC
 import qualified Cardano.Crypto.KES.Class as CC
 import qualified Cardano.Crypto.VRF.Class as CC
+import qualified Cardano.Ledger.Era as Era
+import qualified Cardano.Ledger.ShelleyMA.Metadata as MA
+import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MAUtxo
+import qualified Cardano.Ledger.ShelleyMA.Timelocks as MA
+import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Codec.CBOR.Encoding as Cbor
 import qualified Codec.CBOR.Read as Cbor
@@ -254,6 +260,10 @@ instance Crypto crypto => ToJSON (CardanoBlock crypto) where
             Json.object [ "byron"   .= toAltJSON (byronBlockRaw blk) ]
         BlockShelley blk ->
             Json.object [ "shelley" .= toAltJSON blk ]
+        BlockAllegra blk ->
+            Json.object [ "allegra" .= toAltJSON blk ]
+        BlockMary _blk ->
+            Json.object [ "mary" .= Json.String "TODO: Mary era" ]
 
 instance Crypto crypto => ToJSON (Tip (CardanoBlock crypto)) where
     toJSON = \case
@@ -278,6 +288,10 @@ instance Crypto crypto => ToJSON (HardForkApplyTxErr (CardanoEras crypto)) where
             toAltJSON e
         ApplyTxErrShelley e ->
             toAltJSON e
+        ApplyTxErrAllegra e ->
+            toAltJSON e
+        ApplyTxErrMary _e ->
+            Json.String "TODO: Mary era"
         ApplyTxErrWrongEra e ->
             toAltJSON e
 
@@ -303,7 +317,7 @@ instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
         decodeHash' =
             fmap (OneEraHash . toShort . hashToBytes) . decodeHash
 
-instance Crypto crypto => FromJSON (GenTx (CardanoBlock crypto))
+instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto))
   where
     parseJSON = Json.withText "Tx" $ \(T.encodeUtf8 -> utf8) -> do
         bytes <- parseBase16 utf8 <|> parseBase64 utf8
@@ -343,11 +357,7 @@ instance (Crypto crypto, ToAltJSON a) => ToAltJSON (CardanoQueryResult crypto a)
         Right a -> toAltJSON a
 
 instance (Crypto crypto) => ToAltJSON (MismatchEraInfo (CardanoEras crypto)) where
-    toAltJSON (MismatchEraInfo mismatch) = case mismatchTwo mismatch of
-        Left (SingleEraInfo query, LedgerEraInfo (SingleEraInfo ledger)) ->
-            toAltJSON $ EraMismatch ledger query
-        Right (SingleEraInfo query, LedgerEraInfo (SingleEraInfo ledger)) ->
-            toAltJSON $ EraMismatch ledger query
+    toAltJSON = toAltJSON . mkEraMismatch
 
 instance ToAltJSON EraMismatch where
     toAltJSON x = Json.object
@@ -545,7 +555,7 @@ instance ToAltJSON GenesisHash where
 instance ToAltJSON InstallerHash where
     toAltJSON = toAltJSON . unInstallerHash
 
-instance Crypto crypto => ToAltJSON (SL.HashHeader (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.HashHeader crypto) where
     toAltJSON = toAltJSON . CC.hashToBytes . SL.unHashHeader
 
 instance ToAltJSON (MerkleRoot a) where
@@ -557,13 +567,13 @@ instance ToAltJSON (OneEraHash eras) where
 instance ToAltJSON ProtocolMagicId where
     toAltJSON = toAltJSON . unProtocolMagicId
 
-instance Crypto crypto => ToAltJSON (ShelleyHash (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (ShelleyHash crypto) where
     toAltJSON (ShelleyHash h) = toAltJSON h
 
 instance ToAltJSON TxSigData where
     toAltJSON = toAltJSON . txSigTxHash
 
-instance Crypto crypto => ToAltJSON (SL.VKey any (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.VKey any crypto) where
     toAltJSON = toAltJSON . SL.unVKey
 
 instance ToAltJSON (CC.Hash alg a) where
@@ -597,11 +607,17 @@ instance CC.VRFAlgorithm alg => ToAltJSON (CC.CertVRF alg) where
 instance ToAltJSON SL.KESPeriod where
     toAltJSON = toAltJSON . SL.unKESPeriod
 
-instance Crypto crypto => ToAltJSON (SL.TxSeq (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.TxSeq (ShelleyEra crypto)) where
     toAltJSON = toAltJSON . toList . SL.txSeqTxns'
 
-instance Crypto crypto => ToAltJSON (SL.TxId (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.TxSeq (AllegraEra crypto)) where
+    toAltJSON = toAltJSON . toList . SL.txSeqTxns'
+
+instance Era era => ToAltJSON (SL.TxId era) where
     toAltJSON (SL.TxId h) = toAltJSON h
+
+instance ToAltJSON SL.DeltaCoin where
+    toAltJSON (SL.DeltaCoin delta) = toAltJSON delta
 
 instance ToAltJSON SL.Coin where
     toAltJSON = toAltJSON . SL.unCoin
@@ -612,52 +628,55 @@ instance FromAltJSON SL.Coin where
 coinToText :: SL.Coin -> Text
 coinToText = T.pack . show . SL.unCoin
 
-instance Crypto crypto => ToAltJSON (SL.KeyHash any (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.KeyHash any crypto) where
     toAltJSON (SL.KeyHash hash) = toAltJSON hash
 
 instance {-# OVERLAPS #-} Crypto crypto =>
-    ToAltJSON (SL.KeyHash 'SL.StakePool (Shelley crypto))
+    ToAltJSON (SL.KeyHash 'SL.StakePool crypto)
   where
     toAltJSON (SL.KeyHash (CC.UnsafeHash h)) = toAltJSON . bech32 hrp . fromShort $ h
       where
         hrp = [humanReadablePart|pool|]
 
 instance {-# OVERLAPS #-} Crypto crypto =>
-    ToJSONKey (SL.KeyHash 'SL.StakePool (Shelley crypto))
+    ToJSONKey (SL.KeyHash 'SL.StakePool crypto)
   where
     toJSONKey = Json.ToJSONKeyText
         (unsafeMatchString . toAltJSON)
         (Json.text . unsafeMatchString . toAltJSON)
 
-instance Crypto crypto => ToAltJSON (SL.MetaDataHash (Shelley crypto)) where
+instance Era era => ToAltJSON (SL.MetaDataHash era) where
     toAltJSON (SL.MetaDataHash hash) = toAltJSON hash
 
-instance Crypto crypto => ToAltJSON (SL.ScriptHash (Shelley crypto)) where
+instance Era era => ToAltJSON (SL.ScriptHash era) where
     toAltJSON (SL.ScriptHash hash) = toAltJSON hash
 
-instance Crypto crypto => ToJSONKey (SL.ScriptHash (Shelley crypto)) where
+instance Era era => ToJSONKey (SL.ScriptHash era) where
     toJSONKey = contramap scriptHashToText toJSONKey
 
 scriptHashToText
-    :: Crypto crypto
-    => SL.ScriptHash (Shelley crypto)
+    :: Era era
+    => SL.ScriptHash era
     -> Text
 scriptHashToText =
     unsafeMatchString . toAltJSON
 
-instance Crypto crypto => ToAltJSON (SL.WitHashes (Shelley crypto)) where
+instance Crypto (Era.Crypto era) => ToAltJSON (SL.WitHashes era) where
     toAltJSON (SL.WitHashes hash) = toAltJSON hash
 
 instance ToAltJSON EpochNo where
     toAltJSON (EpochNo ep) = toAltJSON ep
 
-instance Crypto crypto => ToAltJSON (SL.Wdrl (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.Wdrl (ShelleyEra crypto)) where
     toAltJSON = toAltJSON . Map.mapKeys (unsafeMatchString . toAltJSON) . SL.unWdrl
 
-instance Crypto crypto => ToAltJSON (SL.ProposedPPUpdates (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.Wdrl (AllegraEra crypto)) where
+    toAltJSON = toAltJSON . Map.mapKeys (unsafeMatchString . toAltJSON) . SL.unWdrl
+
+instance ToAltJSON (SL.ProposedPPUpdates era) where
     toAltJSON (SL.ProposedPPUpdates m) = toAltJSON m
 
-instance Crypto crypto => ToAltJSON (SL.HashBBody (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.HashBBody crypto) where
     toAltJSON = toAltJSON . BL.drop cborOverhead . serialize
       where
         -- TODO: The constructor of HashBBody isn't exposed.
@@ -869,7 +888,7 @@ instance ToAltJSON TxIn where
         , "index" .= toAltJSON ix
         ]
 
-instance Crypto crypto => ToAltJSON (SL.PrevHash (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.PrevHash crypto) where
     toAltJSON = \case
         SL.GenesisHash -> toJSON ("genesis" :: String)
         SL.BlockHash h -> toAltJSON h
@@ -880,7 +899,7 @@ instance CC.VRFAlgorithm alg => ToAltJSON (CC.CertifiedVRF alg any) where
         , "proof" .= toAltJSON (CC.certifiedProof x)
         ]
 
-instance Crypto crypto => ToAltJSON (SL.OCert (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.OCert crypto) where
     toAltJSON x = Json.object
         [ "hotVk" .= toAltJSON (SL.ocertVkHot x)
         , "count" .= toAltJSON (SL.ocertN x)
@@ -888,28 +907,40 @@ instance Crypto crypto => ToAltJSON (SL.OCert (Shelley crypto)) where
         , "sigma" .= toAltJSON (SL.ocertSigma x)
         ]
 
-instance Crypto crypto => ToAltJSON (ShelleyBlock (Shelley crypto)) where
-    toAltJSON (ShelleyBlock (SL.Block (SL.BHeader hBody hSig) txs) hHash) =
+instance Crypto crypto => ToAltJSON (ShelleyBlock (ShelleyEra crypto)) where
+    toAltJSON (ShelleyBlock (SL.Block bh txs) hHash) =
         Json.object
             [ "body" .= toAltJSON txs
-            , "header" .= Json.object
-                [ "blockHeight" .= toAltJSON (SL.bheaderBlockNo hBody)
-                , "slot" .= toAltJSON (SL.bheaderSlotNo hBody)
-                , "prevHash" .= toAltJSON (SL.bheaderPrev hBody)
-                , "issuerVk" .=  toAltJSON (SL.bheaderVk hBody)
-                , "issuerVrf" .= toAltJSON (SL.bheaderVrfVk hBody)
-                , "nonce" .= toAltJSON (SL.bheaderEta hBody)
-                , "leaderValue" .=  toAltJSON (SL.bheaderL hBody)
-                , "blockSize" .= toAltJSON (SL.bsize hBody)
-                , "blockHash" .= toAltJSON (SL.bhash hBody)
-                , "opCert" .= toAltJSON (SL.bheaderOCert hBody)
-                , "protocolVersion" .= toAltJSON (SL.bprotver hBody)
-                , "signature" .= toAltJSON hSig
-                ]
+            , "header" .= toAltJSON bh
             , "headerHash" .= toAltJSON hHash
             ]
 
-instance Crypto crypto => ToAltJSON (SL.Tx (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (ShelleyBlock (AllegraEra crypto)) where
+    toAltJSON (ShelleyBlock (SL.Block bh txs) hHash) =
+        Json.object
+            [ "body" .= toAltJSON txs
+            , "header" .= toAltJSON bh
+            , "headerHash" .= toAltJSON hHash
+            ]
+
+instance Crypto crypto => ToAltJSON (SL.BHeader crypto) where
+    toAltJSON (SL.BHeader hBody hSig) =
+        Json.object
+            [ "blockHeight" .= toAltJSON (SL.bheaderBlockNo hBody)
+            , "slot" .= toAltJSON (SL.bheaderSlotNo hBody)
+            , "prevHash" .= toAltJSON (SL.bheaderPrev hBody)
+            , "issuerVk" .=  toAltJSON (SL.bheaderVk hBody)
+            , "issuerVrf" .= toAltJSON (SL.bheaderVrfVk hBody)
+            , "nonce" .= toAltJSON (SL.bheaderEta hBody)
+            , "leaderValue" .=  toAltJSON (SL.bheaderL hBody)
+            , "blockSize" .= toAltJSON (SL.bsize hBody)
+            , "blockHash" .= toAltJSON (SL.bhash hBody)
+            , "opCert" .= toAltJSON (SL.bheaderOCert hBody)
+            , "protocolVersion" .= toAltJSON (SL.bprotver hBody)
+            , "signature" .= toAltJSON hSig
+            ]
+
+instance Crypto crypto => ToAltJSON (SL.Tx (ShelleyEra crypto)) where
     toAltJSON x = Json.object
         [ "id" .= toAltJSON (SL.txid (SL._body x))
         , "body" .= toAltJSON (SL._body x)
@@ -919,6 +950,19 @@ instance Crypto crypto => ToAltJSON (SL.Tx (Shelley crypto)) where
             , "body" .= toAltJSON (SL._metadata x)
             ]
         ]
+
+instance Crypto crypto => ToAltJSON (SL.Tx (AllegraEra crypto)) where
+    toAltJSON x = Json.object
+        [ "id" .= toAltJSON (SL.txid (SL._body x))
+        , "body" .= toAltJSON (SL._body x)
+        , "witness" .= toAltJSON (SL._witnessSet x)
+        , "metadata" .= Json.object
+            [ "hash" .= toAltJSON (mdHash (SL._body x))
+            , "body" .= toAltJSON (SL._metadata x)
+            ]
+        ]
+      where
+        mdHash (MA.TxBody _ _ _ _ _ _ _ h _) = h
 
 instance ToAltJSON SL.MetaData where
     toAltJSON = metadataToJson TxMetadataJsonDetailedSchema . fromShelleyMetadata
@@ -935,14 +979,24 @@ instance ToAltJSON SL.MetaData where
                 SL.Map as -> TxMetaMap (bimap convert convert <$> as)
                 SL.List xs -> TxMetaList (map convert xs)
 
-instance Crypto crypto => ToAltJSON (SL.WitnessSet (Shelley crypto)) where
+instance ToAltJSON (MA.Metadata (AllegraEra crypto)) where
+    toAltJSON = error "FIXME"
+
+instance Crypto crypto => ToAltJSON (SL.WitnessSet (ShelleyEra crypto)) where
     toAltJSON x = Json.object
         [ "address" .= toAltJSON (SL.addrWits x)
-        , "multisig" .= toAltJSON (SL.msigWits x)
+        , "script" .= toAltJSON (SL.scriptWits x)
         , "bootstrap" .= toAltJSON (SL.bootWits x)
         ]
 
-instance Crypto crypto => ToAltJSON (SL.TxBody (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.WitnessSet (AllegraEra crypto)) where
+    toAltJSON x = Json.object
+        [ "address" .= toAltJSON (SL.addrWits x)
+        , "script" .= toAltJSON (SL.scriptWits x)
+        , "bootstrap" .= toAltJSON (SL.bootWits x)
+        ]
+
+instance Crypto crypto => ToAltJSON (SL.TxBody (ShelleyEra crypto)) where
     toAltJSON x = Json.object
         [ "inputs" .= toAltJSON (SL._inputs x)
         , "outputs" .= toAltJSON (SL._outputs x)
@@ -953,7 +1007,19 @@ instance Crypto crypto => ToAltJSON (SL.TxBody (Shelley crypto)) where
         , "update" .= toAltJSON (SL._txUpdate x)
         ]
 
-instance Crypto crypto => ToAltJSON (SL.DCert (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (MA.TxBody (AllegraEra crypto)) where
+    toAltJSON (MA.TxBody inps outs certs wdrls fee validity updates _ _) =
+        Json.object
+        [ "inputs" .= toAltJSON inps
+        , "outputs" .= toAltJSON outs
+        , "certificates" .= toAltJSON certs
+        , "withdrawals" .= toAltJSON wdrls
+        , "fee" .= toAltJSON fee
+        , "validityInterval" .= toAltJSON validity
+        , "update" .= toAltJSON updates
+        ]
+
+instance Era era => ToAltJSON (SL.DCert era) where
     toAltJSON = \case
         SL.DCertDeleg (SL.RegKey credential) ->
             Json.object
@@ -990,19 +1056,19 @@ instance Crypto crypto => ToAltJSON (SL.DCert (Shelley crypto)) where
             Json.object
                 [ "moveInstantaneousRewards" .= Json.object
                     [ "pot" .= toAltJSON pot
-                    , "rewards" .= toAltJSON rewards
+                    , "rewards" .= toAltJSON (Map.mapKeys credentialToText rewards)
                     ]
                 ]
 
-instance Crypto crypto => ToAltJSON (SL.Delegation (Shelley crypto)) where
+instance Era era => ToAltJSON (SL.Delegation era) where
     toAltJSON x = Json.object
         [ "delegator" .= toAltJSON (SL._delegator x)
         , "delegatee" .= toAltJSON (SL._delegatee x)
         ]
 
-instance Crypto crypto => ToAltJSON (SL.PoolParams (Shelley crypto)) where
+instance Era era => ToAltJSON (SL.PoolParams era) where
     toAltJSON x = Json.object
-        [ "id" .= toAltJSON (SL._poolPubKey x)
+        [ "id" .= toAltJSON (SL._poolId x)
         , "vrf" .= toAltJSON (SL._poolVrf x)
         , "pledge" .= toAltJSON (SL._poolPledge x)
         , "cost" .= toAltJSON (SL._poolCost x)
@@ -1038,26 +1104,32 @@ instance ToAltJSON SL.StakePoolRelay where
                 , "port" .= Json.Null
                 ]
 
-instance Crypto crypto => ToAltJSON (SL.TxOut (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.TxOut (ShelleyEra crypto)) where
     toAltJSON (SL.TxOut addr coin) = Json.object
         [ "address" .= toAltJSON addr
         , "value" .= toAltJSON coin
         ]
 
-instance Crypto crypto => ToAltJSON (SL.TxIn (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.TxOut (AllegraEra crypto)) where
+    toAltJSON (SL.TxOut addr coin) = Json.object
+        [ "address" .= toAltJSON addr
+        , "value" .= toAltJSON coin
+        ]
+
+instance Era era => ToAltJSON (SL.TxIn era) where
     toAltJSON (SL.TxIn txid ix) = Json.object
         [ "txId" .= toAltJSON txid
         , "index" .= toAltJSON ix
         ]
 
-instance Crypto crypto => ToAltJSON (SL.RewardAcnt (Shelley crypto)) where
+instance ToAltJSON (SL.RewardAcnt era) where
     toAltJSON x = toAltJSON . bech32 hrp . SL.serialiseRewardAcnt $ x
       where
         hrp = case SL.getRwdNetwork x of
             SL.Mainnet -> [humanReadablePart|stake|]
             SL.Testnet -> [humanReadablePart|stake_test|]
 
-instance Crypto crypto => ToAltJSON (SL.Addr (Shelley crypto)) where
+instance Era era => ToAltJSON (SL.Addr era) where
     toAltJSON = \case
         SL.AddrBootstrap addr ->
             toAltJSON . SL.unBootstrapAddress $ addr
@@ -1078,228 +1150,354 @@ instance ToAltJSON SL.MIRPot where
         SL.ReservesMIR -> "reserves"
         SL.TreasuryMIR -> "treasury"
 
-instance Crypto crypto => ToAltJSON (ApplyTxError (Shelley crypto)) where
-    toAltJSON (ApplyTxError xs) = toJSON (ledgerFailureToJSON <$> xs)
-      where
-        ledgerFailureToJSON = \case
-            Ledgers.LedgerFailure (Ledger.UtxowFailure e)  ->
-                utxowFailureToJSON e
-            Ledgers.LedgerFailure (Ledger.DelegsFailure e) ->
-                delegsFailureToJSON e
+ledgerFailureToJSON
+    :: forall era.
+        ( PredicateFailure (Utxow.UTXOW era) ~ Utxow.UtxowPredicateFailure era
+        , Era era
+        , ToAltJSON (SL.Wdrl era)
+        )
+    => (PredicateFailure (Utxo.UTXO era) -> Json.Value)
+    -> Ledgers.LedgersPredicateFailure era
+    -> Json.Value
+ledgerFailureToJSON utxoFailureToJSON = \case
+    Ledgers.LedgerFailure (Ledger.UtxowFailure e)  ->
+        utxowFailureToJSON utxoFailureToJSON e
+    Ledgers.LedgerFailure (Ledger.DelegsFailure e) ->
+        delegsFailureToJSON e
 
-        utxowFailureToJSON = \case
-            Utxow.InvalidWitnessesUTXOW wits ->
-                Json.object
-                    [ "invalidWitnesses" .= toAltJSON wits
-                    ]
-            Utxow.MissingVKeyWitnessesUTXOW keys ->
-                Json.object
-                    [ "missingVkWitnesses" .= toAltJSON keys
-                    ]
-            Utxow.MissingScriptWitnessesUTXOW scripts ->
-                Json.object
-                    [ "missingScriptWitnesses" .= toAltJSON scripts
-                    ]
-            Utxow.ScriptWitnessNotValidatingUTXOW scripts ->
-                Json.object
-                    [ "scriptWitnessNotValidating" .= toAltJSON scripts
-                    ]
-            Utxow.MIRInsufficientGenesisSigsUTXOW keys ->
-                Json.object
-                    [ "insufficientGenesisSignatures" .= toAltJSON keys
-                    ]
-            Utxow.MissingTxBodyMetaDataHash hash ->
-                Json.object
-                    [ "missingTxMetadataHash" .= toAltJSON hash
-                    ]
-            Utxow.MissingTxMetaData hash ->
-                Json.object
-                    [ "missingTxMetadata" .= toAltJSON hash
-                    ]
-            Utxow.ConflictingMetaDataHash included expected ->
-                Json.object
-                    [ "txMetadataHashMismatch" .= Json.object
-                        [ "includedHash" .= toAltJSON included
-                        , "expectedHash" .= toAltJSON expected
-                        ]
-                    ]
-            Utxow.UtxoFailure e ->
-                utxoFailureToJSON e
+utxowFailureToJSON
+    :: forall era.
+        ( Era era
+        )
+    => (PredicateFailure (Utxo.UTXO era) -> Json.Value)
+    -> Utxow.UtxowPredicateFailure era
+    -> Json.Value
+utxowFailureToJSON utxoFailureToJSON = \case
+    Utxow.InvalidWitnessesUTXOW wits ->
+        Json.object
+            [ "invalidWitnesses" .= toAltJSON wits
+            ]
+    Utxow.MissingVKeyWitnessesUTXOW keys ->
+        Json.object
+            [ "missingVkWitnesses" .= toAltJSON keys
+            ]
+    Utxow.MissingScriptWitnessesUTXOW scripts ->
+        Json.object
+            [ "missingScriptWitnesses" .= toAltJSON scripts
+            ]
+    Utxow.ScriptWitnessNotValidatingUTXOW scripts ->
+        Json.object
+            [ "scriptWitnessNotValidating" .= toAltJSON scripts
+            ]
+    Utxow.MIRInsufficientGenesisSigsUTXOW keys ->
+        Json.object
+            [ "insufficientGenesisSignatures" .= toAltJSON keys
+            ]
+    Utxow.MissingTxBodyMetaDataHash hash ->
+        Json.object
+            [ "missingTxMetadataHash" .= toAltJSON hash
+            ]
+    Utxow.MissingTxMetaData hash ->
+        Json.object
+            [ "missingTxMetadata" .= toAltJSON hash
+            ]
+    Utxow.ConflictingMetaDataHash included expected ->
+        Json.object
+            [ "txMetadataHashMismatch" .= Json.object
+                [ "includedHash" .= toAltJSON included
+                , "expectedHash" .= toAltJSON expected
+                ]
+            ]
+    Utxow.InvalidMetaData ->
+        Json.String "invalidMetadata"
+    Utxow.UtxoFailure e ->
+        utxoFailureToJSON e
 
-        utxoFailureToJSON = \case
-            Utxo.BadInputsUTxO inputs ->
-                Json.object
-                    [ "badInputs" .= toAltJSON inputs ]
-            Utxo.ExpiredUTxO ttl currentSlot ->
-                Json.object
-                    [ "expiredUtxo" .= Json.object
-                        [ "transactionTimeToLive" .= toAltJSON ttl
-                        , "currentSlot" .= toAltJSON currentSlot
-                        ]
-                    ]
-            Utxo.MaxTxSizeUTxO actualSize maxSize ->
-                Json.object
-                    [ "txTooLarge" .= Json.object
-                        [ "maximumSize" .= maxSize
-                        , "actualSize"  .= actualSize
-                        ]
-                    ]
-            Utxo.InputSetEmptyUTxO ->
-                Json.String "missingAtLeastOneInputUtxo"
-            Utxo.FeeTooSmallUTxO required actual ->
-                Json.object
-                    [ "feeTooSmall" .= Json.object
-                        [ "requiredFee" .= toAltJSON required
-                        , "actualFee" .= toAltJSON actual
-                        ]
-                    ]
-            Utxo.ValueNotConservedUTxO consumed produced ->
-                Json.object
-                    [ "valueNotConserved" .= Json.object
-                        [ "consumed" .= toAltJSON consumed
-                        , "produced" .= toAltJSON produced
-                        ]
-                    ]
-            Utxo.WrongNetwork expected invalidAddrs ->
-                Json.object
-                    [ "networkMismatch" .= Json.object
-                        [ "expectedNetwork" .= toAltJSON expected
-                        , "invalidAddresses" .= toAltJSON invalidAddrs
-                        ]
-                    ]
-            Utxo.WrongNetworkWithdrawal expected invalidAccts ->
-                Json.object
-                    [ "networkMismatch" .= Json.object
-                        [ "expectedNetwork" .= toAltJSON expected
-                        , "invalidRewardAccounts" .= toAltJSON invalidAccts
-                        ]
-                    ]
-            Utxo.OutputTooSmallUTxO outs ->
-                Json.object
-                    [ "outputTooSmall" .= toAltJSON outs
-                    ]
-            Utxo.OutputBootAddrAttrsTooBig outs ->
-                Json.object
-                    [ "addressAttributesTooLarge" .=
-                        toAltJSON ((\(SL.TxOut addr _) -> addr) <$> outs)
-                    ]
-            Utxo.UpdateFailure e -> updateFailureToJSON e
+utxoFailureToJSONShelley
+    :: forall crypto. (Crypto crypto)
+    => Utxo.UtxoPredicateFailure (ShelleyEra crypto)
+    -> Json.Value
+utxoFailureToJSONShelley = \case
+    Utxo.BadInputsUTxO inputs ->
+        Json.object
+            [ "badInputs" .= toAltJSON inputs ]
+    Utxo.ExpiredUTxO ttl currentSlot ->
+        Json.object
+            [ "expiredUtxo" .= Json.object
+                [ "transactionTimeToLive" .= toAltJSON ttl
+                , "currentSlot" .= toAltJSON currentSlot
+                ]
+            ]
+    Utxo.MaxTxSizeUTxO actualSize maxSize ->
+        Json.object
+            [ "txTooLarge" .= Json.object
+                [ "maximumSize" .= maxSize
+                , "actualSize"  .= actualSize
+                ]
+            ]
+    Utxo.InputSetEmptyUTxO ->
+        Json.String "missingAtLeastOneInputUtxo"
+    Utxo.FeeTooSmallUTxO required actual ->
+        Json.object
+            [ "feeTooSmall" .= Json.object
+                [ "requiredFee" .= toAltJSON required
+                , "actualFee" .= toAltJSON actual
+                ]
+            ]
+    Utxo.ValueNotConservedUTxO consumed produced ->
+        Json.object
+            [ "valueNotConserved" .= Json.object
+                [ "consumed" .= toAltJSON consumed
+                , "produced" .= toAltJSON produced
+                ]
+            ]
+    Utxo.WrongNetwork expected invalidAddrs ->
+        Json.object
+            [ "networkMismatch" .= Json.object
+                [ "expectedNetwork" .= toAltJSON expected
+                , "invalidAddresses" .= toAltJSON invalidAddrs
+                ]
+            ]
+    Utxo.WrongNetworkWithdrawal expected invalidAccts ->
+        Json.object
+            [ "networkMismatch" .= Json.object
+                [ "expectedNetwork" .= toAltJSON expected
+                , "invalidRewardAccounts" .= toAltJSON invalidAccts
+                ]
+            ]
+    Utxo.OutputTooSmallUTxO outs ->
+        Json.object
+            [ "outputTooSmall" .= toAltJSON outs
+            ]
+    Utxo.OutputBootAddrAttrsTooBig outs ->
+        Json.object
+            [ "addressAttributesTooLarge" .=
+                toAltJSON ((\(SL.TxOut addr _) -> addr) <$> outs)
+            ]
+    Utxo.UpdateFailure e ->
+        updateFailureToJSON e
 
-        delegsFailureToJSON = \case
-            Delegs.DelegateeNotRegisteredDELEG h ->
-                Json.object
-                    [ "delegateNotRegistered" .= toAltJSON h
-                    ]
-            Delegs.WithdrawalsNotInRewardsDELEGS withdrawals ->
-                Json.object
-                    [ "unknownOrIncompleteWithdrawals" .= toAltJSON (SL.Wdrl withdrawals)
-                    ]
-            Delegs.DelplFailure e ->
-                delplFailureToJSON e
+utxoFailureToJSONAllegra
+    :: forall crypto. (Crypto crypto)
+    => MAUtxo.UtxoPredicateFailure (AllegraEra crypto)
+    -> Json.Value
+utxoFailureToJSONAllegra = \case
+    MAUtxo.BadInputsUTxO inputs ->
+        Json.object
+            [ "badInputs" .= toAltJSON inputs ]
+    MAUtxo.OutsideValidityIntervalUTxO itv currentSlot ->
+        Json.object
+            [ "outsideOfValidityInterval" .= Json.object
+                [ "interval" .= toAltJSON itv
+                , "currentSlot" .= toAltJSON currentSlot
+                ]
+            ]
+    MAUtxo.MaxTxSizeUTxO actualSize maxSize ->
+        Json.object
+            [ "txTooLarge" .= Json.object
+                [ "maximumSize" .= maxSize
+                , "actualSize"  .= actualSize
+                ]
+            ]
+    MAUtxo.InputSetEmptyUTxO ->
+        Json.String "missingAtLeastOneInputUtxo"
+    MAUtxo.FeeTooSmallUTxO required actual ->
+        Json.object
+            [ "feeTooSmall" .= Json.object
+                [ "requiredFee" .= toAltJSON required
+                , "actualFee" .= toAltJSON actual
+                ]
+            ]
+    MAUtxo.ValueNotConservedUTxO consumed produced ->
+        Json.object
+            [ "valueNotConserved" .= Json.object
+                [ "consumed" .= toAltJSON consumed
+                , "produced" .= toAltJSON produced
+                ]
+            ]
+    MAUtxo.WrongNetwork expected invalidAddrs ->
+        Json.object
+            [ "networkMismatch" .= Json.object
+                [ "expectedNetwork" .= toAltJSON expected
+                , "invalidAddresses" .= toAltJSON invalidAddrs
+                ]
+            ]
+    MAUtxo.WrongNetworkWithdrawal expected invalidAccts ->
+        Json.object
+            [ "networkMismatch" .= Json.object
+                [ "expectedNetwork" .= toAltJSON expected
+                , "invalidRewardAccounts" .= toAltJSON invalidAccts
+                ]
+            ]
+    MAUtxo.OutputTooSmallUTxO outs ->
+        Json.object
+            [ "outputTooSmall" .= toAltJSON outs
+            ]
+    MAUtxo.OutputBootAddrAttrsTooBig outs ->
+        Json.object
+            [ "addressAttributesTooLarge" .=
+                toAltJSON ((\(SL.TxOut addr _) -> addr) <$> outs)
+            ]
+    MAUtxo.TriesToForgeADA ->
+        Json.String "triesToForgeADA"
+    MAUtxo.UpdateFailure _ ->
+        -- TODO: Better report update failures
+        Json.String "updateFailure"
 
-        delplFailureToJSON = \case
-            Delpl.PoolFailure e -> poolFailureToJSON e
-            Delpl.DelegFailure e -> delegFailureToJSON e
+delegsFailureToJSON
+    :: forall era.
+        ( Era era
+        , ToAltJSON (SL.Wdrl era)
+        )
+    => Delegs.DelegsPredicateFailure era
+    -> Json.Value
+delegsFailureToJSON = \case
+    Delegs.DelegateeNotRegisteredDELEG h ->
+        Json.object
+            [ "delegateNotRegistered" .= toAltJSON h
+            ]
+    Delegs.WithdrawalsNotInRewardsDELEGS withdrawals ->
+        Json.object
+            [ "unknownOrIncompleteWithdrawals" .= toAltJSON (SL.Wdrl withdrawals)
+            ]
+    Delegs.DelplFailure e ->
+        delplFailureToJSON e
 
-        poolFailureToJSON = \case
-            Pool.StakePoolNotRegisteredOnKeyPOOL keyHash ->
-                Json.object
-                    [ "stakePoolNotRegistered" .= toAltJSON keyHash
-                    ]
-            Pool.StakePoolRetirementWrongEpochPOOL current retiring limit ->
-                Json.object
-                    [ "wrongRetirementEpoch" .= Json.object
-                        [ "currentEpoch" .= toAltJSON current
-                        , "requestedEpoch" .= toAltJSON retiring
-                        , "firstUnreachableEpoch" .= toAltJSON limit
-                        ]
-                    ]
-            Pool.WrongCertificateTypePOOL cert ->
-                Json.object
-                    [ "wrongPoolCertificate" .= toAltJSON cert
-                    ]
-            Pool.StakePoolCostTooLowPOOL _cost minimumCost ->
-                Json.object
-                    [ "poolCostTooSmall" .= Json.object
-                        [ "minimumCost" .= minimumCost
-                        ]
-                    ]
+delplFailureToJSON
+    :: forall era.
+        ( Era era
+        )
+    => Delpl.DelplPredicateFailure era
+    -> Json.Value
+delplFailureToJSON = \case
+    Delpl.PoolFailure e -> poolFailureToJSON e
+    Delpl.DelegFailure e -> delegFailureToJSON e
 
-        delegFailureToJSON = \case
-            Deleg.StakeKeyAlreadyRegisteredDELEG credential ->
-                Json.object
-                    [ "stakeKeyAlreadyRegistered" .= toAltJSON credential
-                    ]
-            Deleg.StakeKeyInRewardsDELEG credential ->
-                Json.object
-                    [ "stakeKeyAlreadyRegistered" .= toAltJSON credential
-                    ]
-            Deleg.StakeKeyNotRegisteredDELEG credential ->
-                Json.object
-                    [ "stakeKeyNotRegistered" .= toAltJSON credential
-                    ]
-            Deleg.StakeDelegationImpossibleDELEG credential ->
-                Json.object
-                    [ "stakeKeyNotRegistered" .= toAltJSON credential
-                    ]
-            Deleg.StakeKeyNonZeroAccountBalanceDELEG Nothing ->
-                Json.String "rewardAccountNotExisting"
-            Deleg.StakeKeyNonZeroAccountBalanceDELEG (Just balance) ->
-                Json.object
-                    [ "rewardAccountNotEmpty" .= Json.object
-                        [ "balance" .= toAltJSON  balance
-                        ]
-                    ]
-            Deleg.WrongCertificateTypeDELEG ->
-                Json.String "wrongCertificateType"
-            Deleg.GenesisKeyNotInpMappingDELEG keyHash ->
-                Json.object
-                    [ "unknownGenesisKey" .= keyHash
-                    ]
-            Deleg.DuplicateGenesisDelegateDELEG keyHash ->
-                Json.object
-                    [ "alreadyDelegating" .= keyHash
-                    ]
-            Deleg.InsufficientForInstantaneousRewardsDELEG pot requested size ->
-                Json.object
-                    [ "insufficientFundsForMir" .= Json.object
-                        [ "rewardSource" .= toAltJSON pot
-                        , "sourceSize" .= toAltJSON size
-                        , "requestedAmount" .= toAltJSON requested
-                        ]
-                    ]
-            Deleg.MIRCertificateTooLateinEpochDELEG currentSlot lastSlot ->
-                Json.object
-                    [ "tooLateForMir" .= Json.object
-                        [ "currentSlot" .= toAltJSON currentSlot
-                        , "lastAllowedSlot" .= toAltJSON lastSlot
-                        ]
-                    ]
-            Deleg.DuplicateGenesisVRFDELEG vrfHash ->
-                Json.object
-                    [ "duplicateGenesisVrf" .= toAltJSON vrfHash
-                    ]
+poolFailureToJSON
+    :: forall era.
+        ( Era era
+        )
+    => Pool.PoolPredicateFailure era
+    -> Json.Value
+poolFailureToJSON = \case
+    Pool.StakePoolNotRegisteredOnKeyPOOL keyHash ->
+        Json.object
+            [ "stakePoolNotRegistered" .= toAltJSON keyHash
+            ]
+    Pool.StakePoolRetirementWrongEpochPOOL current retiring limit ->
+        Json.object
+            [ "wrongRetirementEpoch" .= Json.object
+                [ "currentEpoch" .= toAltJSON current
+                , "requestedEpoch" .= toAltJSON retiring
+                , "firstUnreachableEpoch" .= toAltJSON limit
+                ]
+            ]
+    Pool.WrongCertificateTypePOOL cert ->
+        Json.object
+            [ "wrongPoolCertificate" .= toAltJSON cert
+            ]
+    Pool.StakePoolCostTooLowPOOL _cost minimumCost ->
+        Json.object
+            [ "poolCostTooSmall" .= Json.object
+                [ "minimumCost" .= minimumCost
+                ]
+            ]
 
-        updateFailureToJSON = \case
-            Ppup.NonGenesisUpdatePPUP voting shouldBeVoting ->
-                Json.object
-                    [ "nonGenesisVoters" .= Json.object
-                        [ "currentlyVoting" .= toAltJSON voting
-                        , "shouldBeVoting" .= toAltJSON shouldBeVoting
-                        ]
-                    ]
-            Ppup.PPUpdateWrongEpoch currentEpoch updateEpoch votingPeriod ->
-                Json.object
-                    [ "updateWrongEpoch" .= Json.object
-                        [ "currentEpoch" .= toAltJSON currentEpoch
-                        , "requestedEpoch" .= toAltJSON updateEpoch
-                        , "votingPeriod" .= toAltJSON votingPeriod
-                        ]
-                    ]
-            Ppup.PVCannotFollowPPUP version ->
-                Json.object
-                    [ "protocolVersionCannotFollow" .= toAltJSON version
-                    ]
+delegFailureToJSON
+    :: forall era.
+        ( Era era
+        )
+    => Deleg.DelegPredicateFailure era
+    -> Json.Value
+delegFailureToJSON = \case
+    Deleg.StakeKeyAlreadyRegisteredDELEG credential ->
+        Json.object
+            [ "stakeKeyAlreadyRegistered" .= toAltJSON credential
+            ]
+    Deleg.StakeKeyInRewardsDELEG credential ->
+        Json.object
+            [ "stakeKeyAlreadyRegistered" .= toAltJSON credential
+            ]
+    Deleg.StakeKeyNotRegisteredDELEG credential ->
+        Json.object
+            [ "stakeKeyNotRegistered" .= toAltJSON credential
+            ]
+    Deleg.StakeDelegationImpossibleDELEG credential ->
+        Json.object
+            [ "stakeKeyNotRegistered" .= toAltJSON credential
+            ]
+    Deleg.StakeKeyNonZeroAccountBalanceDELEG Nothing ->
+        Json.String "rewardAccountNotExisting"
+    Deleg.StakeKeyNonZeroAccountBalanceDELEG (Just balance) ->
+        Json.object
+            [ "rewardAccountNotEmpty" .= Json.object
+                [ "balance" .= toAltJSON  balance
+                ]
+            ]
+    Deleg.WrongCertificateTypeDELEG ->
+        Json.String "wrongCertificateType"
+    Deleg.GenesisKeyNotInMappingDELEG keyHash ->
+        Json.object
+            [ "unknownGenesisKey" .= keyHash
+            ]
+    Deleg.DuplicateGenesisDelegateDELEG keyHash ->
+        Json.object
+            [ "alreadyDelegating" .= keyHash
+            ]
+    Deleg.InsufficientForInstantaneousRewardsDELEG pot requested size ->
+        Json.object
+            [ "insufficientFundsForMir" .= Json.object
+                [ "rewardSource" .= toAltJSON pot
+                , "sourceSize" .= toAltJSON size
+                , "requestedAmount" .= toAltJSON requested
+                ]
+            ]
+    Deleg.MIRCertificateTooLateinEpochDELEG currentSlot lastSlot ->
+        Json.object
+            [ "tooLateForMir" .= Json.object
+                [ "currentSlot" .= toAltJSON currentSlot
+                , "lastAllowedSlot" .= toAltJSON lastSlot
+                ]
+            ]
+    Deleg.DuplicateGenesisVRFDELEG vrfHash ->
+        Json.object
+            [ "duplicateGenesisVrf" .= toAltJSON vrfHash
+            ]
+
+updateFailureToJSON
+    :: forall era.
+        ( Era era
+        )
+    => Ppup.PpupPredicateFailure era
+    -> Json.Value
+updateFailureToJSON = \case
+    Ppup.NonGenesisUpdatePPUP voting shouldBeVoting ->
+        Json.object
+            [ "nonGenesisVoters" .= Json.object
+                [ "currentlyVoting" .= toAltJSON voting
+                , "shouldBeVoting" .= toAltJSON shouldBeVoting
+                ]
+            ]
+    Ppup.PPUpdateWrongEpoch currentEpoch updateEpoch votingPeriod ->
+        Json.object
+            [ "updateWrongEpoch" .= Json.object
+                [ "currentEpoch" .= toAltJSON currentEpoch
+                , "requestedEpoch" .= toAltJSON updateEpoch
+                , "votingPeriod" .= toAltJSON votingPeriod
+                ]
+            ]
+    Ppup.PVCannotFollowPPUP version ->
+        Json.object
+            [ "protocolVersionCannotFollow" .= toAltJSON version
+            ]
+
+instance Crypto crypto => ToAltJSON (ApplyTxError (ShelleyEra crypto)) where
+    toAltJSON (ApplyTxError xs) =
+        toJSON (ledgerFailureToJSON utxoFailureToJSONShelley <$> xs)
+
+instance Crypto crypto => ToAltJSON (ApplyTxError (AllegraEra crypto)) where
+    toAltJSON (ApplyTxError xs) =
+        toJSON (ledgerFailureToJSON utxoFailureToJSONAllegra <$> xs)
 
 instance ToAltJSON ApplyMempoolPayloadErr where
     toAltJSON = \case
@@ -1389,15 +1587,10 @@ instance ToAltJSON UTxOError where
         UTxOMissingInput txin ->
             Json.object [ "missingInput" .= toAltJSON txin ]
 
-instance Crypto crypto => ToAltJSON (SL.Credential any (Shelley crypto)) where
+instance Era era => ToAltJSON (SL.Credential any era) where
     toAltJSON = \case
         SL.KeyHashObj hash -> toAltJSON hash
         SL.ScriptHashObj hash -> toAltJSON hash
-
-instance {-# OVERLAPS #-} Crypto crypto =>
-    ToJSONKey (SL.Credential any (Shelley crypto))
-  where
-    toJSONKey = contramap credentialToText toJSONKey
 
 -- FIXME: Makes it possible to distinguish between KeyHash and ScriptHash
 -- credentials. Both are encoded as hex-encoded strings. Encoding them as object
@@ -1405,20 +1598,20 @@ instance {-# OVERLAPS #-} Crypto crypto =>
 -- rewards map.
 --
 -- A possible option: encode them as Bech32 strings with different prefixes.
-instance Crypto crypto => FromAltJSON (SL.Credential any (Shelley crypto)) where
+instance Era era => FromAltJSON (SL.Credential any era) where
     fromAltJSON =
         fmap (SL.KeyHashObj . SL.KeyHash) . fromAltJSON
 
 credentialToText
-    :: Crypto crypto
-    => SL.Credential any (Shelley crypto)
+    :: Era era
+    => SL.Credential any era
     -> Text
 credentialToText = \case
     SL.KeyHashObj (SL.KeyHash hash) -> unsafeMatchString $ toAltJSON hash
     SL.ScriptHashObj hash -> unsafeMatchString $ toAltJSON hash
 
-instance Crypto crypto =>
-    ToJSONKey (Either SL.Coin (SL.Credential any (Shelley crypto)))
+instance Era era =>
+    ToJSONKey (Either SL.Coin (SL.Credential any era))
   where
     toJSONKey = Json.ToJSONKeyText
         (\case
@@ -1430,13 +1623,13 @@ instance Crypto crypto =>
             Right cred -> Json.text $ credentialToText cred
         )
 
-instance Crypto crypto => ToAltJSON (SL.Update (Shelley crypto)) where
+instance ToAltJSON (SL.Update era) where
     toAltJSON (SL.Update update epoch) = Json.object
         [ "proposal" .= toAltJSON update
         , "epoch" .= toAltJSON epoch
         ]
 
-instance ToAltJSON (SL.PParams' SL.StrictMaybe (Shelley crypto)) where
+instance ToAltJSON (SL.PParams' SL.StrictMaybe era) where
     toAltJSON x = Json.object
         [ "minFeeCoefficient" .= toAltJSON (SL._minfeeA x)
         , "minFeeConstant" .= toAltJSON (SL._minfeeB x)
@@ -1457,7 +1650,7 @@ instance ToAltJSON (SL.PParams' SL.StrictMaybe (Shelley crypto)) where
         , "minPoolCost" .= toAltJSON (SL._minPoolCost x)
         ]
 
-instance ToAltJSON (SL.PParams' Identity (Shelley crypto)) where
+instance ToAltJSON (SL.PParams' Identity (ShelleyEra crypto)) where
     toAltJSON x = Json.object
         [ "minFeeCoefficient" .= toAltJSON (SL._minfeeA x)
         , "minFeeConstant" .= toAltJSON (SL._minfeeB x)
@@ -1484,7 +1677,7 @@ instance ToAltJSON SL.Nonce where
         SL.NeutralNonce -> Json.String "neutral"
         SL.Nonce h -> toAltJSON h
 
-instance Crypto crypto => ToAltJSON (SL.MultiSig (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.MultiSig (ShelleyEra crypto)) where
     toAltJSON = \case
         SL.RequireSignature sig ->
             toAltJSON sig
@@ -1501,13 +1694,38 @@ instance Crypto crypto => ToAltJSON (SL.MultiSig (Shelley crypto)) where
                 [ T.pack (show n) .= toAltJSON xs
                 ]
 
-instance Crypto crypto => ToAltJSON (SL.WitVKey (Shelley crypto) 'SL.Witness) where
+instance Era era => ToAltJSON (MA.Timelock era) where
+    toAltJSON = \case
+        MA.RequireSignature sig ->
+            toAltJSON sig
+        MA.RequireAllOf xs ->
+            Json.object
+                [ "all" .= toAltJSON xs
+                ]
+        MA.RequireAnyOf xs ->
+            Json.object
+                [ "any" .= toAltJSON xs
+                ]
+        MA.RequireMOf n xs ->
+            Json.object
+                [ T.pack (show n) .= toAltJSON xs
+                ]
+        MA.RequireTimeExpire s ->
+            Json.object
+                [ "expiresAt" .= s
+                ]
+        MA.RequireTimeStart s ->
+            Json.object
+                [ "startsAt" .= s
+                ]
+
+instance Era era => ToAltJSON (SL.WitVKey 'SL.Witness era) where
     toAltJSON (SL.WitVKey key sig) = Json.object
         [ "key" .= toAltJSON key
         , "signature" .= toAltJSON sig
         ]
 
-instance Crypto crypto => ToAltJSON (SL.BootstrapWitness (Shelley crypto)) where
+instance Era era => ToAltJSON (SL.BootstrapWitness era) where
     toAltJSON (SL.BootstrapWitness key sig cc attr) = Json.object
         [ "key" .= toAltJSON key
         , "chainCode" .= toAltJSON cc
@@ -1515,20 +1733,29 @@ instance Crypto crypto => ToAltJSON (SL.BootstrapWitness (Shelley crypto)) where
         , "signature" .= toAltJSON sig
         ]
 
-instance Crypto crypto => ToAltJSON (NonMyopicMemberRewards (Shelley crypto)) where
+instance Era era => ToAltJSON (NonMyopicMemberRewards era) where
     toAltJSON (NonMyopicMemberRewards rewards) = toAltJSON rewards
 
-instance Crypto crypto => ToAltJSON (SL.PoolDistr (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.PoolDistr crypto) where
     toAltJSON (SL.PoolDistr m) = toJSON $ Map.map toAltJSON m
 
-instance Crypto crypto => ToAltJSON (SL.IndividualPoolStake (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.IndividualPoolStake crypto) where
     toAltJSON x = Json.object
         [ "stake" .= toAltJSON (SL.individualPoolStake x)
         , "vrf" .= toAltJSON (SL.individualPoolStakeVrf x)
         ]
 
-instance Crypto crypto => ToAltJSON (SL.UTxO (Shelley crypto)) where
+instance Crypto crypto => ToAltJSON (SL.UTxO (ShelleyEra crypto)) where
     toAltJSON (SL.UTxO m) = toAltJSON (Map.toList m)
+
+instance Crypto crypto => ToAltJSON (SL.UTxO (AllegraEra crypto)) where
+    toAltJSON (SL.UTxO m) = toAltJSON (Map.toList m)
+
+instance ToAltJSON MA.ValidityInterval where
+    toAltJSON itv = Json.object
+        [ "validFrom" .= toAltJSON (MA.validFrom itv)
+        , "validTo" .= toAltJSON (MA.validTo itv)
+        ]
 
 --
 -- Local State Queries
@@ -1590,7 +1817,7 @@ parseGetNonMyopicMemberRewards genResult = Json.withObject "SomeQuery" $ \obj ->
 
     parseCredential
         :: Json.Value
-        -> Json.Parser (Either a (SL.Credential 'SL.Staking (Shelley crypto)))
+        -> Json.Parser (Either a (SL.Credential 'SL.Staking (ShelleyEra crypto)))
     parseCredential = fmap Right . fromAltJSON
 
 parseGetCurrentPParams
@@ -1626,10 +1853,9 @@ parseGetProposedPParamsUpdates genResult = Json.withText "SomeQuery" $ \text -> 
         }
 
 parseGetStakeDistribution
-    :: forall crypto f result era.
+    :: forall crypto f result.
         ( Crypto crypto
-        , era ~ ShelleyEra crypto
-        , result ~ QueryResult crypto (SL.PoolDistr era)
+        , result ~ QueryResult crypto (SL.PoolDistr crypto)
         )
     => (Proxy result -> f result)
     -> Json.Value

@@ -99,7 +99,7 @@ import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 import qualified Network.WebSockets as WS
-import qualified Ouroboros.Consensus.Ledger.Abstract as Ledger
+import qualified Ouroboros.Consensus.Shelley.Ledger.Query as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 
 --  _____ _           _         _____
@@ -139,13 +139,13 @@ mkChainSyncClient
         )
     => Queue (RequestNextResponse block -> Wsp.Response (RequestNextResponse block)) m
     -> Worker ByteString Json.Encoding m
-    -> ChainSyncClientPipelined block (Tip block) m ()
+    -> ChainSyncClientPipelined block (Point block) (Tip block) m ()
 mkChainSyncClient Queue{push,pop,tryPop} Worker{await,tryAwait,yield,pass} =
     ChainSyncClientPipelined (clientStIdle Zero)
   where
     clientStIdle
         :: forall n. Nat n
-        -> m (ClientPipelinedStIdle n block (Tip block) m ())
+        -> m (ClientPipelinedStIdle n block (Point block) (Tip block) m ())
     clientStIdle Zero = await >>= Wsp.handle
         (\bytes -> pass bytes *> clientStIdle Zero)
         [ Wsp.Handler $ \FindIntersect{points} ->
@@ -180,7 +180,7 @@ mkChainSyncClient Queue{push,pop,tryPop} Worker{await,tryAwait,yield,pass} =
 
     clientStIntersect
         :: (FindIntersectResponse block -> Wsp.Response (FindIntersectResponse block))
-        -> ClientPipelinedStIntersect block (Tip block) m ()
+        -> ClientPipelinedStIntersect block (Point block) (Tip block) m ()
     clientStIntersect toResponse = ClientPipelinedStIntersect
         { recvMsgIntersectFound = \point tip -> do
             yield $ Json.toEncoding $ toResponse $ IntersectionFound point tip
@@ -193,7 +193,7 @@ mkChainSyncClient Queue{push,pop,tryPop} Worker{await,tryAwait,yield,pass} =
     clientStNext
         :: Nat n
         -> m (RequestNextResponse block -> Wsp.Response (RequestNextResponse block))
-        -> ClientStNext n block (Tip block) m ()
+        -> ClientStNext n block (Point block) (Tip block) m ()
     clientStNext n pop' = ClientStNext
         { recvMsgRollForward = \block tip -> do
             toResponse <- pop'
@@ -285,12 +285,12 @@ mkLocalStateQueryClient
         , point ~ Point block
         )
     => Worker ByteString Json.Encoding m
-    -> LocalStateQueryClient block (Ledger.Query block) m ()
+    -> LocalStateQueryClient block (Point block) (Ledger.Query block) m ()
 mkLocalStateQueryClient Worker{await,yield,pass} =
     LocalStateQueryClient clientStIdle
   where
     clientStIdle
-        :: m (LSQ.ClientStIdle block (Ledger.Query block) m ())
+        :: m (LSQ.ClientStIdle block (Point block) (Ledger.Query block) m ())
     clientStIdle = await >>= Wsp.handle
         (\bytes -> pass bytes *> clientStIdle)
         [ Wsp.Handler $ \(Acquire pt) toResponse ->
@@ -302,7 +302,7 @@ mkLocalStateQueryClient Worker{await,yield,pass} =
     clientStAcquiring
         :: point
         -> (AcquireResponse point -> Wsp.Response (AcquireResponse point))
-        -> LSQ.ClientStAcquiring block (Ledger.Query block) m ()
+        -> LSQ.ClientStAcquiring block (Point block) (Ledger.Query block) m ()
     clientStAcquiring pt toResponse = LSQ.ClientStAcquiring
         { recvMsgAcquired = do
             yield $ Json.toEncoding $ toResponse $ AcquireSuccess pt
@@ -313,7 +313,7 @@ mkLocalStateQueryClient Worker{await,yield,pass} =
         }
 
     clientStAcquired
-        :: m (LSQ.ClientStAcquired block (Ledger.Query block) m ())
+        :: m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
     clientStAcquired = await >>= Wsp.handle
         (\bytes -> pass bytes *> clientStAcquired)
         [ Wsp.Handler $ \(Acquire pt) toResponse ->

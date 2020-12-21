@@ -65,7 +65,7 @@ import Ouroboros.Consensus.HardFork.Combinator.Mempool
     ( HardForkApplyTxErr (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock )
-import Ouroboros.Consensus.Shelley.Ledger.Ledger
+import Ouroboros.Consensus.Shelley.Ledger.Query
     ( NonMyopicMemberRewards (..), Query (..) )
 import Ouroboros.Consensus.Shelley.Protocol.Crypto
     ( StandardCrypto )
@@ -111,7 +111,7 @@ import Test.QuickCheck.Hedgehog
     ( hedgehog )
 import Test.QuickCheck.Monadic
     ( assert, monadicIO, monitor, run )
-import Test.Shelley.Spec.Ledger.Serialisation.Generators
+import Test.Shelley.Spec.Ledger.Serialisation.EraIndepGenerators
     ( genPParams )
 
 import Test.Consensus.Cardano.Generators
@@ -413,9 +413,9 @@ genProposedPParamsResult _ = frequency
     ]
 
 genPoolDistrResult
-    :: forall crypto era. (crypto ~ StandardCrypto, era ~ ShelleyEra crypto)
-    => Proxy (QueryResult crypto (PoolDistr era))
-    -> Gen (QueryResult crypto (PoolDistr era))
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Proxy (QueryResult crypto (PoolDistr crypto))
+    -> Gen (QueryResult crypto (PoolDistr crypto))
 genPoolDistrResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> scale (`mod` 10) arbitrary)

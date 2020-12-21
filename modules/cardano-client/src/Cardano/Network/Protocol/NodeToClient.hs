@@ -16,7 +16,6 @@ module Cardano.Network.Protocol.NodeToClient
     -- * Building
       Block
     , ApplyErr
-    , NodeVersionData
     , Client
     , Clients(..)
     , mkClient
@@ -59,8 +58,6 @@ import Data.Map.Strict
     ( (!) )
 import Data.Proxy
     ( Proxy (..) )
-import Data.Text
-    ( Text )
 import Data.Void
     ( Void )
 import Network.Mux
@@ -84,13 +81,11 @@ import Ouroboros.Consensus.Shelley.Ledger.Config
 import Ouroboros.Consensus.Shelley.Protocol.Crypto
     ( StandardCrypto )
 import Ouroboros.Network.Block
-    ( Tip (..) )
+    ( Point (..), Tip (..) )
 import Ouroboros.Network.Channel
     ( Channel )
 import Ouroboros.Network.Codec
     ( DeserialiseFailure )
-import Ouroboros.Network.CodecCBORTerm
-    ( CodecCBORTerm )
 import Ouroboros.Network.Driver.Simple
     ( TraceSendRecv, runPeer, runPipelinedPeer )
 import Ouroboros.Network.Mux
@@ -111,7 +106,7 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
 import Ouroboros.Network.Protocol.ChainSync.Type
     ( ChainSync )
 import Ouroboros.Network.Protocol.Handshake.Version
-    ( DictVersion (..), simpleSingletonVersions )
+    ( simpleSingletonVersions )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient, localStateQueryClientPeer )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
@@ -126,10 +121,6 @@ type Block = CardanoBlock StandardCrypto
 
 -- | Concrete submission error.
 type ApplyErr = CardanoApplyTxErr StandardCrypto
-
--- Type alias to lighten signatures below
-type NodeVersionData =
-    (NodeToClientVersionData, CodecCBORTerm Text NodeToClientVersionData)
 
 -- | Type representing a network client running two mini-protocols to sync
 -- from the chain and, submit transactions.
@@ -148,9 +139,9 @@ type Client m = OuroborosApplication
 
 -- | A handy type to pass clients around
 data Clients m block tx err = Clients
-    { chainSyncClient :: ChainSyncClientPipelined block (Tip block) m ()
+    { chainSyncClient :: ChainSyncClientPipelined block (Point block) (Tip block) m ()
     , localTxSubmissionClient :: LocalTxSubmissionClient tx err m ()
-    , localStateQueryClient :: LocalStateQueryClient block (Query block) m ()
+    , localStateQueryClient :: LocalStateQueryClient block (Point block) (Query block) m ()
     }
 
 -- | Connect a client to a network, see `mkClient` to construct a network
@@ -158,12 +149,11 @@ data Clients m block tx err = Clients
 connectClient
     :: Tracer IO (TraceClient tx err)
     -> Client IO
-    -> NodeVersionData
+    -> NodeToClientVersionData
     -> FilePath
     -> IO ()
-connectClient tr client (vData, vCodec) addr = withIOManager $ \iocp -> do
-    let vDict = DictVersion vCodec
-    let versions = simpleSingletonVersions NodeToClientV_3 vData vDict client
+connectClient tr client vData addr = withIOManager $ \iocp -> do
+    let versions = simpleSingletonVersions NodeToClientV_3 vData client
     let socket = localSnocket iocp addr
     connectTo socket tracers versions addr
   where
@@ -216,14 +206,14 @@ mkClient tr epochSlots clients =
 -- | Boilerplate for lifting a 'ChainSyncClientPipelined'
 localChainSync
     :: forall m protocol.
-        ( protocol ~ ChainSync Block (Tip Block)
+        ( protocol ~ ChainSync Block (Point Block) (Tip Block)
         , MonadThrow m, MonadAsync m
         )
     => Tracer m (TraceSendRecv protocol)
         -- ^ Base tracer for the mini-protocols
     -> Codec protocol DeserialiseFailure m ByteString
         -- ^ Codec for deserializing / serializing binary data
-    -> ChainSyncClientPipelined Block (Tip Block) m ()
+    -> ChainSyncClientPipelined Block (Point Block) (Tip Block) m ()
         -- ^ The actual chain sync client
     -> Channel m ByteString
         -- ^ A 'Channel' is a abstract communication instrument which
@@ -256,14 +246,14 @@ localTxSubmission tr codec client channel =
 -- | Boilerplate for lifting a 'LocalStateQueryClient'
 localStateQuery
     :: forall m protocol.
-        ( protocol ~ LocalStateQuery Block (Query Block)
+        ( protocol ~ LocalStateQuery Block (Point Block) (Query Block)
         , MonadThrow m
         )
     => Tracer m (TraceSendRecv protocol)
         -- ^ Base tracer for the mini-protocols
     -> Codec protocol DeserialiseFailure m ByteString
         -- ^ Codec for deserializing / serializing binary data
-    -> LocalStateQueryClient Block (Query Block) m ()
+    -> LocalStateQueryClient Block (Point Block) (Query Block) m ()
         -- ^ Actual local state query client.
     -> Channel m ByteString
         -- ^ A 'Channel' is an abstract communication instrument which
@@ -287,8 +277,10 @@ codecs
     => EpochSlots
     -> ClientCodecs Block m
 codecs epochSlots =
-    clientCodecs (CardanoCodecConfig byron shelley) version
+    clientCodecs (CardanoCodecConfig byron shelley allegra mary) version
   where
-    byron = ByronCodecConfig epochSlots
+    byron   = ByronCodecConfig epochSlots
     shelley = ShelleyCodecConfig
+    allegra = ShelleyCodecConfig
+    mary    = ShelleyCodecConfig
     version = supportedNodeToClientVersions (Proxy @Block) ! NodeToClientV_3
