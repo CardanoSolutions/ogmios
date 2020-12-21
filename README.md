@@ -15,5 +15,5 @@
   |
   <a href="CONTRIBUTING.md">:gift: Contributing</a>
   |
-  <a href="CHANGELOG.md">:floppy_disk: Changelog</a>
+  <a href="ogmios-server/CHANGELOG.md">:floppy_disk: Changelog</a>
 </p>
