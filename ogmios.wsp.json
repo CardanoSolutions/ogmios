@@ -773,7 +773,7 @@
             , "witness":
               { "type": "object"
               , "additionalProperties": false
-              , "required": ["address","multisig","bootstrap"]
+              , "required": ["address","script","bootstrap"]
               , "properties":
                 { "address":
                   { "type": "array"
@@ -786,7 +786,7 @@
                       }
                     }
                   }
-                , "multisig":
+                , "script":
                   { "type": "object"
                   , "propertyNames": { "pattern": "^[0-9a-f]+$" }
                   , "additionalProperties": { "$ref": "#/definitions/Script" }
@@ -1591,6 +1591,9 @@
         , { "type": "string"
           , "enum": [ "missingAtLeastOneInputUtxo" ]
           }
+        , { "type": "string"
+          , "enum": [ "invalidMetadata" ]
+          }
         , { "type": "object"
           , "additionalProperties": false
           , "required": [ "feeTooSmall" ]
@@ -2107,6 +2110,26 @@
           }
         }
       ]
+    }
+
+  , "ValidityInterval":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "validFrom", "validTo" ]
+    , "properties":
+      { "validFrom":
+          { "oneOf":
+            [ { "type": "null" }
+            , { "$ref": "#/definitions/Slot" }
+            ]
+          }
+      , "validTo":
+          { "oneOf":
+            [ { "type": "null" }
+            , { "$ref": "#/definitions/Slot" }
+            ]
+          }
+      }
     }
 
   , "Vote":
