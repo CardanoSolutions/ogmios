@@ -6,23 +6,25 @@ module Main where
 
 import Prelude
 
-import Cardano.BM.Trace.Extra
-    ( withStdoutTracer )
-import Data.Text
-    ( Text )
-import Ogmios.Options
-    ( Command (..), Options (..), parseOptions )
-import Ogmios.Server
-    ( printVersion, runServer )
+import Ogmios
+    ( Command (..)
+    , Options (..)
+    , application
+    , newEnvironment
+    , parseOptions
+    , runWith
+    , version
+    , withStdoutTracer
+    )
 
 import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 
 main :: IO ()
 main = parseOptions >>= \case
     (_, Version) -> do
-        printVersion
-    (env, Start opts@Options{logLevel}) ->
-        withStdoutTracer "ogmios" logLevel toText (runServer env opts)
-  where
-    toText :: Show a => a -> Text
-    toText = T.pack . show
+        TIO.putStrLn version
+    (network, Start opts@Options{logLevel}) -> do
+        withStdoutTracer "ogmios" logLevel (T.pack . show) $ \tr -> do
+            env <- newEnvironment tr network opts
+            application tr `runWith` env

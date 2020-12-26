@@ -59,14 +59,15 @@ library:
     - directory
     - ekg-core
     - file-embed
+    - generic-lens
     - git-th
     - http-types
     - io-sim-classes
     - iohk-monitoring
     - iproute
     - json-wsp
-    - manufacture
     - memory
+    - mtl
     - optparse-applicative
     - optparse-applicative
     - ouroboros-consensus
@@ -75,12 +76,13 @@ library:
     - ouroboros-consensus-shelley
     - ouroboros-network
     - safe
+    - safe-exceptions
     - scientific
     - shelley-spec-ledger
     - small-steps
+    - stm
     - text
     - time
-    - time-extra
     - typed-protocols
     - unordered-containers
     - vector
@@ -100,9 +102,7 @@ executables:
       ghc-options:
       - -Werror
       - -O2
-      - -with-rtsopts=-A250m
-      - -with-rtsopts=-N3
-      - -with-rtsopts=-T
+      - '"-with-rtsopts=-A100m -T"'
     dependencies:
     - ogmios
     - text

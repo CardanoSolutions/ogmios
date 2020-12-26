@@ -81,18 +81,18 @@
       const downSpeedLbl = document.querySelector("label.downSpeed");
 
       const R = 90;
-      const N_MAX = 1000;
-      const I_MAX = 100;
+      const AT_LEAST = 100000;
+      const N_BATCH = 1000;
 
       let totalSync = 0;
       let totalDown = 0;
       let totalTime = 0;
 
       window.addEventListener('tick', e => {
-        const { time, size, i } = e.detail;
-        const f = i / I_MAX;
+        const { time, size, rcvd } = e.detail;
+        const f = Math.min(1, rcvd / AT_LEAST);
 
-        totalSync += N_MAX;
+        totalSync += N_BATCH;
         totalDown += size;
         totalTime += time;
 
@@ -120,17 +120,14 @@
       }
 
       socket.onmessage = function (event) {
-        const msg = JSON.parse(event.data);
-        const { i } = msg.reflection;
-
         rcvd += 1;
         size += event.data.length * 16; // 2 bytes / 16 bits per UTF-16 character
 
-        if ((rcvd + N_MAX / 2) % N_MAX == 0) {
-          const detail = { time: Date.now() - time, size, i };
+        if ((rcvd + N_BATCH / 2) % N_BATCH == 0) {
+          const detail = { time: Date.now() - time, size, rcvd };
           window.dispatchEvent(new CustomEvent('tick', { detail }));
-          if (i < I_MAX) {
-            nextBatch(i + 1);
+          if (rcvd < AT_LEAST) {
+            nextBatch();
           } else {
             socket.close();
           }
@@ -145,12 +142,13 @@
         console.log(JSON.parse(event.reason));
       }
 
+      const requestNext = JSON.stringify(wsp("RequestNext"));
 
-      function nextBatch(i) {
+      function nextBatch() {
         time = Date.now();
         size = 0;
-        for (let n = 0; n < N_MAX; n += 1) {
-          socket.send(JSON.stringify(wsp("RequestNext", {}, { i })));
+        for (let n = 0; n < N_BATCH; n += 1) {
+          socket.send(requestNext);
         }
       }
 

@@ -52,6 +52,8 @@
 - ignore: {name: "Monoid law, left identity"} # Using 'mempty' can be useful to vertically-align elements
 - ignore: {name: "Use ?~"} # It's actually much clearer to do (.~ Just ...) than having to load yet-another-lens-operator
 - ignore: {name: "Use newtype instead of data"} # The semantic is slightly different, sometimes
+- ignore: {name: "Use newTMVarIO"}
+- ignore: {name: "Use newTVarIO"}
 
 # Add custom hints for this project
 #

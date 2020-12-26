@@ -20,8 +20,6 @@ COPY modules/cardano-client/package.yaml     modules/cardano-client/package.yaml
 COPY modules/git-th/package.yaml             modules/git-th/package.yaml
 COPY modules/hspec-json-schema/package.yaml  modules/hspec-json-schema/package.yaml
 COPY modules/json-wsp/package.yaml           modules/json-wsp/package.yaml
-COPY modules/manufacture/package.yaml        modules/manufacture/package.yaml
-COPY modules/time-extra/package.yaml         modules/time-extra/package.yaml
 
 COPY ogmios-server/package.yaml              ogmios-server/package.yaml
 COPY stack.yaml                              stack.yaml

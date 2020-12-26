@@ -85,6 +85,9 @@ import Wai.Routes
     , waiApp
     )
 
+import Ogmios.App
+    ()
+
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.List as L
 import qualified Data.Text as T
@@ -157,14 +160,20 @@ newtype Server = Server (MVar (Health Block))
 
 mkRoute "Server" [parseRoutes|
 /                HomeR          GET
+/health          HealthR        GET
 /benchmark.html  BenchmarkR     GET
 /ogmios.wsp.json SpecificationR GET
-/health          HealthR        GET
 |]
 
 getHomeR :: Handler Server
 getHomeR = runHandlerM $ do
     html $ T.decodeUtf8 $(embedFile "static/index.html")
+
+getHealthR :: Handler Server
+getHealthR = runHandlerM $ do
+    Server mvar <- sub
+    health  <- liftIO (readMVar mvar)
+    json health
 
 getBenchmarkR :: Handler Server
 getBenchmarkR = runHandlerM $ do
@@ -173,12 +182,6 @@ getBenchmarkR = runHandlerM $ do
 getSpecificationR :: Handler Server
 getSpecificationR = runHandlerM $ do
     asContent "application/json" $ T.decodeUtf8 $(embedFile "ogmios.wsp.json")
-
-getHealthR :: Handler Server
-getHealthR = runHandlerM $ do
-    Server mvar <- sub
-    health  <- liftIO (readMVar mvar)
-    json health
 
 -- | Create a new Wai application which serves some static files and, run a
 -- health-check client.

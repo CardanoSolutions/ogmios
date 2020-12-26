@@ -1091,6 +1091,11 @@
     , "minimum": 0
     }
 
+  , "LovelaceDelta":
+    { "type": "integer"
+    , "description": "An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada)"
+    }
+
   , "LovelaceError":
     { "oneOf":
       [ { "type": "object"
@@ -1618,8 +1623,8 @@
               , "additionalProperties": false
               , "required": [ "consumed", "produced" ]
               , "properties":
-                { "consumed": { "$ref": "#/definitions/Lovelace" }
-                , "produced": { "$ref": "#/definitions/Lovelace" }
+                { "consumed": { "$ref": "#/definitions/LovelaceDelta" }
+                , "produced": { "$ref": "#/definitions/LovelaceDelta" }
                 }
               }
             }

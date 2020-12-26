@@ -8,11 +8,30 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Ogmios.JsonSpec
+module Ogmios.Data.JsonSpec
     ( spec
     ) where
 
 import Prelude
+
+import Ogmios.Data.Json
+    ( QueryResult
+    , SomeQuery (..)
+    , parseGetCurrentPParams
+    , parseGetEpochNo
+    , parseGetFilteredUTxO
+    , parseGetLedgerTip
+    , parseGetNonMyopicMemberRewards
+    , parseGetProposedPParamsUpdates
+    , parseGetStakeDistribution
+    , parseGetUTxO
+    )
+import Ogmios.Data.Protocol.ChainSync
+    ( FindIntersectResponse (..), RequestNextResponse (..) )
+import Ogmios.Data.Protocol.StateQuery
+    ( QueryResponse (..) )
+import Ogmios.Data.Protocol.TxSubmission
+    ( SubmitTxResponse (..) )
 
 import Cardano.Network.Protocol.NodeToClient
     ( Block )
@@ -32,24 +51,6 @@ import Data.SOP.Strict
     ( NS (..) )
 import Data.Text
     ( Text )
-import Ogmios.Bridge
-    ( FindIntersectResponse (..)
-    , QueryResponse (..)
-    , RequestNextResponse (..)
-    , SomeQuery (..)
-    , SubmitTxResponse (..)
-    )
-import Ogmios.Json
-    ( QueryResult
-    , parseGetCurrentPParams
-    , parseGetEpochNo
-    , parseGetFilteredUTxO
-    , parseGetLedgerTip
-    , parseGetNonMyopicMemberRewards
-    , parseGetProposedPParamsUpdates
-    , parseGetStakeDistribution
-    , parseGetUTxO
-    )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock )
 import Ouroboros.Consensus.Cardano.Block

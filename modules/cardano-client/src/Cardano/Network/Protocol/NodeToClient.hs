@@ -24,11 +24,13 @@ module Cardano.Network.Protocol.NodeToClient
     , connectClient
     , codecs
 
+    -- * Helpers / Re-exports
+    , MuxError (..)
+
     -- * Boilerplate
     , localChainSync
     , localTxSubmission
     , localStateQuery
-    , nullProtocol
     ) where
 
 import Prelude hiding
@@ -38,18 +40,14 @@ import Cardano.Chain.Slotting
     ( EpochSlots (..) )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient (..) )
-import Control.Monad
-    ( forever )
 import Control.Monad.Class.MonadAsync
     ( MonadAsync )
 import Control.Monad.Class.MonadST
     ( MonadST )
 import Control.Monad.Class.MonadThrow
     ( MonadThrow )
-import Control.Monad.Class.MonadTimer
-    ( MonadTimer, threadDelay )
 import Control.Monad.IO.Class
-    ( MonadIO )
+    ( MonadIO (..) )
 import Control.Tracer
     ( Tracer (..), contramap, nullTracer )
 import Data.ByteString.Lazy
@@ -61,7 +59,7 @@ import Data.Proxy
 import Data.Void
     ( Void )
 import Network.Mux
-    ( MuxMode (..) )
+    ( MuxError (..), MuxMode (..) )
 import Network.TypedProtocol.Codec
     ( Codec )
 import Ouroboros.Consensus.Byron.Ledger
@@ -83,7 +81,7 @@ import Ouroboros.Consensus.Shelley.Protocol.Crypto
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 import Ouroboros.Network.Channel
-    ( Channel )
+    ( Channel, hoistChannel )
 import Ouroboros.Network.Codec
     ( DeserialiseFailure )
 import Ouroboros.Network.Driver.Simple
@@ -139,20 +137,24 @@ type Client m = OuroborosApplication
 
 -- | A handy type to pass clients around
 data Clients m block tx err = Clients
-    { chainSyncClient :: ChainSyncClientPipelined block (Point block) (Tip block) m ()
-    , localTxSubmissionClient :: LocalTxSubmissionClient tx err m ()
-    , localStateQueryClient :: LocalStateQueryClient block (Point block) (Query block) m ()
+    { chainSyncClient
+        :: ChainSyncClientPipelined block (Point block) (Tip block) m ()
+    , txSubmissionClient
+        :: LocalTxSubmissionClient tx err m ()
+    , stateQueryClient
+        :: LocalStateQueryClient block (Point block) (Query block) m ()
     }
 
 -- | Connect a client to a network, see `mkClient` to construct a network
 -- client interface.
 connectClient
-    :: Tracer IO (TraceClient tx err)
+    :: MonadIO m
+    => Tracer IO (TraceClient tx err)
     -> Client IO
     -> NodeToClientVersionData
     -> FilePath
-    -> IO ()
-connectClient tr client vData addr = withIOManager $ \iocp -> do
+    -> m ()
+connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
     let versions = simpleSingletonVersions NodeToClientV_3 vData client
     let socket = localSnocket iocp addr
     connectTo socket tracers versions addr
@@ -166,31 +168,39 @@ connectClient tr client vData addr = withIOManager $ \iocp -> do
 -- | Construct a network client
 mkClient
     :: forall m.
-        ( MonadIO m, MonadThrow m, MonadST m, MonadAsync m
+        ( MonadAsync m
+        , MonadIO m
+        , MonadST m
+        , MonadThrow m
         )
-    => Tracer m (TraceClient (GenTx Block) ApplyErr)
+    => (forall a. m a -> IO a)
+        -- ^ A natural transformation to unlift a particular 'm' into 'IO'.
+    -> Tracer m (TraceClient (GenTx Block) ApplyErr)
         -- ^ Base trace for underlying protocols
     -> EpochSlots
         -- ^ Static blockchain parameters
     -> Clients m Block (GenTx Block) ApplyErr
         -- ^ Clients with the driving logic
-    -> Client m
-mkClient tr epochSlots clients =
+    -> Client IO
+mkClient unlift tr epochSlots clients =
     nodeToClientProtocols (const $ pure $ NodeToClientProtocols
         { localChainSyncProtocol =
-            InitiatorProtocolOnly $ MuxPeerRaw $
-                localChainSync trChainSync codecChainSync
+            InitiatorProtocolOnly $ MuxPeerRaw $ \channel ->
+                localChainSync unlift trChainSync codecChainSync
                 (chainSyncClient clients)
+                (hoistChannel liftIO channel)
 
         , localTxSubmissionProtocol =
-            InitiatorProtocolOnly $ MuxPeerRaw $
-                localTxSubmission trTxSubmission codecTxSubmission
-                (localTxSubmissionClient clients)
+            InitiatorProtocolOnly $ MuxPeerRaw $ \channel ->
+                localTxSubmission unlift trTxSubmission codecTxSubmission
+                (txSubmissionClient clients)
+                (hoistChannel liftIO channel)
 
         , localStateQueryProtocol =
-            InitiatorProtocolOnly $ MuxPeerRaw $
-                localStateQuery trStateQuery codecStateQuery
-                (localStateQueryClient clients)
+            InitiatorProtocolOnly $ MuxPeerRaw $ \channel ->
+                localStateQuery unlift trStateQuery codecStateQuery
+                (stateQueryClient clients)
+                (hoistChannel liftIO channel)
         })
         NodeToClientV_3
   where
@@ -207,9 +217,12 @@ mkClient tr epochSlots clients =
 localChainSync
     :: forall m protocol.
         ( protocol ~ ChainSync Block (Point Block) (Tip Block)
-        , MonadThrow m, MonadAsync m
+        , MonadThrow m
+        , MonadAsync m
         )
-    => Tracer m (TraceSendRecv protocol)
+    => (forall a. m a -> IO a)
+        -- ^ A natural transformation to unlift a particular 'm' into 'IO'.
+    -> Tracer m (TraceSendRecv protocol)
         -- ^ Base tracer for the mini-protocols
     -> Codec protocol DeserialiseFailure m ByteString
         -- ^ Codec for deserializing / serializing binary data
@@ -219,9 +232,9 @@ localChainSync
         -- ^ A 'Channel' is a abstract communication instrument which
         -- transports serialized messages between peers (e.g. a unix
         -- socket).
-    -> m ((), Maybe ByteString)
-localChainSync tr codec client channel =
-    runPipelinedPeer tr codec channel (chainSyncClientPeerPipelined client)
+    -> IO ((), Maybe ByteString)
+localChainSync unlift tr codec client channel =
+    unlift $ runPipelinedPeer tr codec channel (chainSyncClientPeerPipelined client)
 
 -- | Boilerplate for lifting a 'LocalTxSubmissionClient'
 localTxSubmission
@@ -229,7 +242,9 @@ localTxSubmission
         ( protocol ~ LocalTxSubmission (GenTx Block) ApplyErr
         , MonadThrow m
         )
-    => Tracer m (TraceSendRecv protocol)
+    => (forall a. m a -> IO a)
+        -- ^ A natural transformation to unlift a particular 'm' into 'IO'.
+    -> Tracer m (TraceSendRecv protocol)
         -- ^ Base tracer for the mini-protocols
     -> Codec protocol DeserialiseFailure m ByteString
         -- ^ Codec for deserializing / serializing binary data
@@ -239,9 +254,9 @@ localTxSubmission
         -- ^ A 'Channel' is an abstract communication instrument which
         -- transports serialized messages between peers (e.g. a unix
         -- socket).
-    -> m ((), Maybe ByteString)
-localTxSubmission tr codec client channel =
-    runPeer tr codec channel (localTxSubmissionClientPeer client)
+    -> IO ((), Maybe ByteString)
+localTxSubmission unlift tr codec client channel =
+    unlift $ runPeer tr codec channel (localTxSubmissionClientPeer client)
 
 -- | Boilerplate for lifting a 'LocalStateQueryClient'
 localStateQuery
@@ -249,7 +264,9 @@ localStateQuery
         ( protocol ~ LocalStateQuery Block (Point Block) (Query Block)
         , MonadThrow m
         )
-    => Tracer m (TraceSendRecv protocol)
+    => (forall a. m a -> IO a)
+        -- ^ A natural transformation to unlift a particular 'm' into 'IO'.
+    -> Tracer m (TraceSendRecv protocol)
         -- ^ Base tracer for the mini-protocols
     -> Codec protocol DeserialiseFailure m ByteString
         -- ^ Codec for deserializing / serializing binary data
@@ -259,17 +276,9 @@ localStateQuery
         -- ^ A 'Channel' is an abstract communication instrument which
         -- transports serialized messages between peers (e.g. a unix
         -- socket).
-    -> m ((), Maybe ByteString)
-localStateQuery tr codec client channel =
-    runPeer tr codec channel (localStateQueryClientPeer client)
-
--- | A protocol that does nothing. Useful as a placeholder for protocols of an
--- Ouroboros application.
-nullProtocol
-    :: forall m a. (MonadTimer m)
-    => RunMiniProtocol 'InitiatorMode ByteString m a Void
-nullProtocol = do
-    InitiatorProtocolOnly $ MuxPeerRaw $ const $ forever $ threadDelay 43200
+    -> IO ((), Maybe ByteString)
+localStateQuery unlift tr codec client channel =
+    unlift $ runPeer tr codec channel (localStateQueryClientPeer client)
 
 -- | Client codecs for Cardano
 codecs

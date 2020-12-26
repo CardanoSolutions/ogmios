@@ -10,8 +10,6 @@ packages:
 - modules/git-th
 - modules/hspec-json-schema
 - modules/json-wsp
-- modules/manufacture
-- modules/time-extra
 
 extra-deps:
 - wai-routes-0.10.4

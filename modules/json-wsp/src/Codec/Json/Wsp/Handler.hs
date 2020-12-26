@@ -23,16 +23,14 @@ module Codec.Json.Wsp.Handler
 
 import Prelude
 
-import Control.Applicative
-    ( Alternative (..), (<|>) )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..), genericToJSON )
 import Data.ByteString
     ( ByteString )
 import Data.Char
     ( toLower )
-import Data.List
-    ( foldl' )
+import Data.Maybe
+    ( mapMaybe )
 import GHC.Generics
 
 import qualified Data.Aeson as Json
@@ -111,7 +109,7 @@ data Handler (m :: * -> *) a where
 --
 -- @since 1.0.0
 handle
-    :: forall m a. Monad m
+    :: forall m a. ()
     => (ByteString -> m a)
         -- ^ Default action to perform when no handler is matching
     -> [Handler m a]
@@ -120,14 +118,17 @@ handle
         -- ^ Raw request bytes
     -> m a
 handle whenMissing handlers bytes = do
-    routes <- mapM (\(Handler action) -> tryHandler action) handlers
-    maybe (whenMissing bytes) pure $ foldl' (<|>) Nothing routes
+    case applyHandlers bytes handlers of
+        r:_ -> r
+        _   -> whenMissing bytes
+
+applyHandlers
+    :: ByteString
+    -> [Handler m a]
+    -> [m a]
+applyHandlers bytes =
+    mapMaybe (\(Handler action) -> tryHandler action bytes)
   where
-    tryHandler
-        :: (FromJSON (Request req))
-        => (req -> (res -> Response res) -> m a)
-        -> m (Maybe a)
-    tryHandler action = case Json.decodeStrict bytes of
-        Nothing -> pure Nothing
-        Just (Request refl req) -> Just
-            <$> action req (Response refl)
+    tryHandler action
+        = fmap (\(Request refl req) -> action req (Response refl))
+        . Json.decodeStrict
