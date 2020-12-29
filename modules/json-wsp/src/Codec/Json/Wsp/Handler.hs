@@ -18,20 +18,19 @@ module Codec.Json.Wsp.Handler
 
       -- * Routing
     , Handler (..)
-    , handle
+    , match
     ) where
 
 import Prelude
 
 import Data.Aeson
-    ( FromJSON (..), ToJSON (..), genericToJSON )
+    ( ToJSON (..), genericToJSON )
 import Data.ByteString
     ( ByteString )
 import Data.Char
     ( toLower )
-import Data.Maybe
-    ( mapMaybe )
 import GHC.Generics
+    ( Generic )
 
 import qualified Data.Aeson as Json
 
@@ -97,38 +96,23 @@ serverFault = Fault FaultServer
 -- @since 1.0.0
 data Handler (m :: * -> *) a where
     Handler
-        :: (FromJSON (Request req))
-        => (req -> (res -> Response res) -> m a)
+        :: (ByteString -> Maybe (Request req))
+        -> (req -> (res -> Response res) -> m a)
         -> Handler m a
 
--- | Try each handler in sequence. Returns 'Nothing' the request failed to match
--- any of the handler.
+-- | Try parsing a given 'ByteString' into a request Handler. Handlers are
+-- tried alternatively in order; The most frequent handlers must therefore be
+-- placed first in the list.
 --
--- If matches, runs the corresponding handler and returns either a fault, or a
--- serialized WSP response.
---
--- @since 1.0.0
-handle
-    :: forall m a. ()
-    => (ByteString -> m a)
-        -- ^ Default action to perform when no handler is matching
-    -> [Handler m a]
-        -- ^ Known handlers / routes
-    -> ByteString
-        -- ^ Raw request bytes
-    -> m a
-handle whenMissing handlers bytes = do
-    case applyHandlers bytes handlers of
-        r:_ -> r
-        _   -> whenMissing bytes
-
-applyHandlers
+-- @since 2.0.0
+match
     :: ByteString
+    -> m a
     -> [Handler m a]
-    -> [m a]
-applyHandlers bytes =
-    mapMaybe (\(Handler action) -> tryHandler action bytes)
-  where
-    tryHandler action
-        = fmap (\(Request refl req) -> action req (Response refl))
-        . Json.decodeStrict
+    -> m a
+match bytes defaultHandler = \case
+    [] -> defaultHandler
+    (Handler decode next):q ->
+        case decode bytes of
+            Just (Request refl req) -> next req (Response refl)
+            Nothing -> match bytes defaultHandler q

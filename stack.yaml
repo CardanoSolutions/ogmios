@@ -10,9 +10,11 @@ packages:
 - modules/git-th
 - modules/hspec-json-schema
 - modules/json-wsp
+- modules/jsonifier
 
 extra-deps:
 - wai-routes-0.10.4
+- ptr-poker-0.1.1.2
 
 flags:
   # Bundle VRF crypto in libsodium and do not rely on an external fork to have it.

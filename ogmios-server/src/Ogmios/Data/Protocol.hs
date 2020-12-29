@@ -79,3 +79,80 @@ onUnmatchedMessage match blob = do
                 Just (Json.String t) -> pure (T.unpack t)
                 _ -> fail "field 'methodname' must be present and be a string."
         match methodName (Json.Object obj)
+
+
+-- --
+-- -- Error Handling
+-- --
+--
+-- -- | Default handler attempting to provide user-friendly error message. See also
+-- -- 'Ogmios.Data.Protocol#onUnmatchedMessage'.
+-- --
+-- -- NOTE: This function is ambiguous in 'block' and requires a type application.
+-- parserVoid
+--     :: forall block. (FromJSON (Point block))
+--     => MethodName
+--     -> Json.Value
+--     -> Json.Parser Void
+-- parserVoid methodName json = do
+--     if | methodName == Wsp.gWSPMethodName (Proxy @(Rep (FindIntersect block) _)) ->
+--             void $ parseJSON @(Wsp.Request (FindIntersect block)) json
+--        | methodName == Wsp.gWSPMethodName (Proxy @(Rep RequestNext _)) ->
+--             void $ parseJSON @(Wsp.Request RequestNext) json
+--        | otherwise ->
+--             pure ()
+--
+--     fail "unknown method in 'methodname' (beware names are case-sensitive). \
+--          \Expected either: 'FindIntersect' or 'RequestNext'."
+--
+--
+-- Error Handling
+--
+
+-- -- | Default handler attempting to provide user-friendly error message. See also
+-- -- 'Ogmios.Data.Protocol#onUnmatchedMessage'.
+-- --
+-- -- NOTE: This function is ambiguous in 'block' and requires a type application.
+-- parserVoid
+--     :: forall block.
+--         ( FromJSON (SomeQuery Maybe Json.Value block)
+--         , FromJSON (Point block)
+--         )
+--     => MethodName
+--     -> Json.Value
+--     -> Json.Parser Void
+-- parserVoid methodName json = do
+--     if | methodName == Wsp.gWSPMethodName (Proxy @(Rep (Acquire block) _)) ->
+--             void $ parseJSON @(Wsp.Request (Acquire block)) json
+--        | methodName == Wsp.gWSPMethodName (Proxy @(Rep Release _)) ->
+--             void $ parseJSON @(Wsp.Request Release) json
+--        | methodName == Wsp.gWSPMethodName (Proxy @(Rep (Query Json.Value block) _)) ->
+--             void $ parseJSON @(Wsp.Request (Query Json.Value block)) json
+--        | otherwise ->
+--           pure ()
+--
+--     fail "unknown method in 'methodname' (beware names are case-sensitive). \
+--          \Expected one of: 'Acquire', 'Release' or 'Query'."
+--
+--
+-- --
+-- -- Error Handling
+-- --
+--
+-- -- | Default handler attempting to provide user-friendly error message. See also
+-- -- 'Ogmios.Data.Protocol#onUnmatchedMessage'.
+-- --
+-- -- NOTE: This function is ambiguous in 'tx' and requires a type application.
+-- parserVoid
+--     :: forall tx. (FromJSON tx)
+--     => MethodName
+--     -> Json.Value
+--     -> Json.Parser Void
+-- parserVoid methodName json = do
+--     if methodName == Wsp.gWSPMethodName (Proxy @(Rep (SubmitTx tx) _)) then
+--         void $ parseJSON @(Wsp.Request (SubmitTx tx)) json
+--     else
+--         pure ()
+--
+--     fail "unknown method in 'methodname' (beware names are case-sensitive). \
+--          \Expected: 'SubmitTx'."

@@ -15,7 +15,8 @@ module Cardano.Network.Protocol.NodeToClient
     (
     -- * Building
       Block
-    , ApplyErr
+    , SubmitTxError
+    , SubmitTxPayload
     , Client
     , Clients(..)
     , mkClient
@@ -69,7 +70,7 @@ import Ouroboros.Consensus.Byron.Ledger.Config
 import Ouroboros.Consensus.Cardano
     ( CardanoBlock )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoApplyTxErr, CodecConfig (..) )
+    ( CardanoEras, CodecConfig (..), HardForkApplyTxErr )
 import Ouroboros.Consensus.Network.NodeToClient
     ( ClientCodecs, Codecs' (..), clientCodecs )
 import Ouroboros.Consensus.Node.NetworkProtocolVersion
@@ -117,8 +118,13 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Type
 -- | Concrete block type.
 type Block = CardanoBlock StandardCrypto
 
--- | Concrete submission error.
-type ApplyErr = CardanoApplyTxErr StandardCrypto
+-- | A helper to help getting more uniform type signatures by making the submit
+-- failure a function of a 'block' parameter
+type family SubmitTxError block :: * where
+    SubmitTxError Block = HardForkApplyTxErr (CardanoEras StandardCrypto)
+
+-- | A slightly more transparent type alias for 'GenTx''
+type SubmitTxPayload = GenTx
 
 -- | Type representing a network client running two mini-protocols to sync
 -- from the chain and, submit transactions.
@@ -136,11 +142,11 @@ type Client m = OuroborosApplication
     Void
 
 -- | A handy type to pass clients around
-data Clients m block tx err = Clients
+data Clients m block = Clients
     { chainSyncClient
         :: ChainSyncClientPipelined block (Point block) (Tip block) m ()
     , txSubmissionClient
-        :: LocalTxSubmissionClient tx err m ()
+        :: LocalTxSubmissionClient (SubmitTxPayload block) (SubmitTxError block) m ()
     , stateQueryClient
         :: LocalStateQueryClient block (Point block) (Query block) m ()
     }
@@ -175,11 +181,11 @@ mkClient
         )
     => (forall a. m a -> IO a)
         -- ^ A natural transformation to unlift a particular 'm' into 'IO'.
-    -> Tracer m (TraceClient (GenTx Block) ApplyErr)
+    -> Tracer m (TraceClient (SubmitTxPayload Block) (SubmitTxError Block))
         -- ^ Base trace for underlying protocols
     -> EpochSlots
         -- ^ Static blockchain parameters
-    -> Clients m Block (GenTx Block) ApplyErr
+    -> Clients m Block
         -- ^ Clients with the driving logic
     -> Client IO
 mkClient unlift tr epochSlots clients =
@@ -233,13 +239,13 @@ localChainSync
         -- transports serialized messages between peers (e.g. a unix
         -- socket).
     -> IO ((), Maybe ByteString)
-localChainSync unlift tr codec client channel =
-    unlift $ runPipelinedPeer tr codec channel (chainSyncClientPeerPipelined client)
+localChainSync unliftIO tr codec client channel =
+    unliftIO $ runPipelinedPeer tr codec channel (chainSyncClientPeerPipelined client)
 
 -- | Boilerplate for lifting a 'LocalTxSubmissionClient'
 localTxSubmission
     :: forall m protocol.
-        ( protocol ~ LocalTxSubmission (GenTx Block) ApplyErr
+        ( protocol ~ LocalTxSubmission (SubmitTxPayload Block) (SubmitTxError Block)
         , MonadThrow m
         )
     => (forall a. m a -> IO a)
@@ -248,15 +254,15 @@ localTxSubmission
         -- ^ Base tracer for the mini-protocols
     -> Codec protocol DeserialiseFailure m ByteString
         -- ^ Codec for deserializing / serializing binary data
-    -> LocalTxSubmissionClient (GenTx Block) ApplyErr m ()
+    -> LocalTxSubmissionClient (SubmitTxPayload Block) (SubmitTxError Block) m ()
         -- ^ Actual local tx submission client
     -> Channel m ByteString
         -- ^ A 'Channel' is an abstract communication instrument which
         -- transports serialized messages between peers (e.g. a unix
         -- socket).
     -> IO ((), Maybe ByteString)
-localTxSubmission unlift tr codec client channel =
-    unlift $ runPeer tr codec channel (localTxSubmissionClientPeer client)
+localTxSubmission unliftIO tr codec client channel =
+    unliftIO $ runPeer tr codec channel (localTxSubmissionClientPeer client)
 
 -- | Boilerplate for lifting a 'LocalStateQueryClient'
 localStateQuery
@@ -277,8 +283,8 @@ localStateQuery
         -- transports serialized messages between peers (e.g. a unix
         -- socket).
     -> IO ((), Maybe ByteString)
-localStateQuery unlift tr codec client channel =
-    unlift $ runPeer tr codec channel (localStateQueryClientPeer client)
+localStateQuery unliftIO tr codec client channel =
+    unliftIO $ runPeer tr codec channel (localStateQueryClientPeer client)
 
 -- | Client codecs for Cardano
 codecs

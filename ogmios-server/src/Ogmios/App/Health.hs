@@ -60,13 +60,17 @@ import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TVar, writeTVar )
 import Ogmios.Data.Health
     ( Health (..), emptyHealth )
-import Ogmios.Data.Json
-    ()
 
 import qualified Ogmios.App.Metrics as Metrics
 
 import Cardano.Network.Protocol.NodeToClient
-    ( ApplyErr, Block, Clients (..), connectClient, mkClient )
+    ( Block
+    , Clients (..)
+    , SubmitTxError
+    , SubmitTxPayload
+    , connectClient
+    , mkClient
+    )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient )
 import Data.Generics.Internal.VL.Lens
@@ -75,8 +79,6 @@ import Data.Generics.Product.Typed
     ( HasType, typed )
 import Data.Time.Clock
     ( DiffTime )
-import Ouroboros.Consensus.Byron.Ledger
-    ( GenTx )
 import Ouroboros.Network.Block
     ( Tip (..) )
 import Ouroboros.Network.NodeToClient
@@ -89,7 +91,7 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Client
 -- | A simple wrapper around Ouroboros 'Clients'. A health check client only
 -- carries a chain-sync client.
 newtype HealthCheckClient m
-    = HealthCheckClient (Clients m Block (GenTx Block) ApplyErr)
+    = HealthCheckClient (Clients m Block)
 
 -- | Instantiate a new set of Ouroboros mini-protocols clients. Note that only
 -- the chain-sync client does something here. Others are just idling.
@@ -199,7 +201,7 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
 
 data TraceHealth s where
     HealthClient
-        :: TraceClient (GenTx Block) ApplyErr
+        :: TraceClient (SubmitTxPayload Block) (SubmitTxError Block)
         -> TraceHealth s
 
     HealthTick

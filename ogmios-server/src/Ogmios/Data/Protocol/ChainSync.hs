@@ -2,9 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE TypeApplications #-}
 
 -- NOTE:
 -- This module uses partial record field accessor to automatically derive
@@ -13,28 +11,83 @@
 {-# OPTIONS_GHC -fno-warn-partial-fields #-}
 
 module Ogmios.Data.Protocol.ChainSync
-    ( FindIntersect (..)
+    ( -- * Codecs
+      ChainSyncCodecs (..)
+    , mkChainSyncCodecs
+
+      -- * Messages
+    , ChainSyncMessage (..)
+
+      -- ** FindIntersect
+    , FindIntersect (..)
     , FindIntersectResponse (..)
+    , _encodeFindIntersectResponse
+
+      -- ** RequestNext
     , RequestNext (..)
     , RequestNextResponse (..)
-    , parserVoid
+    , _encodeRequestNextResponse
     ) where
 
-import Relude
+import Ogmios.Data.Json.Prelude
 
 import Ogmios.Data.Protocol
-    ( MethodName )
+    ()
 
-import Data.Aeson
-    ( FromJSON (..), ToJSON (..) )
-import GHC.Generics
-    ( Rep )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 
 import qualified Codec.Json.Wsp as Wsp
-import qualified Data.Aeson as Json
-import qualified Data.Aeson.Types as Json
+import qualified Codec.Json.Wsp.Handler as Wsp
+
+--
+-- Codecs
+--
+
+data ChainSyncCodecs block = ChainSyncCodecs
+    { decodeFindIntersect
+        :: ByteString
+        -> Maybe (Wsp.Request (FindIntersect block))
+    , encodeFindIntersectResponse
+        :: Wsp.Response (FindIntersectResponse block)
+        -> Json
+    , decodeRequestNext
+        :: ByteString
+        -> Maybe (Wsp.Request RequestNext)
+    , encodeRequestNextResponse
+        :: Wsp.Response (RequestNextResponse block)
+        -> Json
+    }
+
+mkChainSyncCodecs
+    :: (FromJSON (Point block))
+    => (block -> Json)
+    -> (Point block -> Json)
+    -> (Tip block -> Json)
+    -> ChainSyncCodecs block
+mkChainSyncCodecs encodeBlock encodePoint encodeTip =
+    ChainSyncCodecs
+        { decodeFindIntersect =
+            _decodeFindIntersect
+        , encodeFindIntersectResponse =
+            _encodeFindIntersectResponse encodePoint encodeTip
+        , decodeRequestNext =
+            _decodeRequestNext
+        , encodeRequestNextResponse =
+            _encodeRequestNextResponse encodeBlock encodePoint encodeTip
+        }
+
+--
+-- ChainSyncMessage
+--
+
+data ChainSyncMessage block
+    = MsgFindIntersect
+        (FindIntersect block)
+        (Wsp.ToResponse (FindIntersectResponse block))
+    | MsgRequestNext
+        RequestNext
+        (Wsp.ToResponse (RequestNextResponse block))
 
 --
 -- FindIntersect
@@ -44,28 +97,38 @@ data FindIntersect block
     = FindIntersect { points :: [Point block] }
     deriving (Generic, Show)
 
-instance
-    ( FromJSON (Point block)
-    ) => FromJSON (Wsp.Request (FindIntersect block))
-  where
-    parseJSON = Wsp.genericFromJSON Wsp.defaultOptions
-
---
--- FindIntersectResponse
---
+_decodeFindIntersect
+    :: FromJSON (Point block)
+    => ByteString
+    -> Maybe (Wsp.Request (FindIntersect block))
+_decodeFindIntersect =
+    decodeWith (Wsp.genericFromJSON Wsp.defaultOptions)
 
 data FindIntersectResponse block
     = IntersectionFound { point :: Point block, tip :: Tip block }
     | IntersectionNotFound { tip :: Tip block }
     deriving (Generic, Show)
 
-instance
-    ( ToJSON (Point block)
-    , ToJSON (Tip block)
-    ) => ToJSON (Wsp.Response (FindIntersectResponse block))
-  where
-    toJSON = Wsp.genericToJSON Wsp.defaultOptions proxy
-      where proxy = Proxy @(Wsp.Request (FindIntersect block))
+_encodeFindIntersectResponse
+    :: forall block. ()
+    => (Point block -> Json)
+    -> (Tip block -> Json)
+    -> Wsp.Response (FindIntersectResponse block)
+    -> Json
+_encodeFindIntersectResponse encodePoint encodeTip = \case
+    Wsp.Response _ IntersectionFound{point,tip} -> encodeObject
+        [ ("IntersectionFound", encodeObject
+            [ ("point", encodePoint point)
+            , ("tip", encodeTip tip)
+            ]
+          )
+        ]
+    Wsp.Response _ IntersectionNotFound{tip} -> encodeObject
+        [ ("IntersectionNotFound", encodeObject
+            [ ("tip", encodeTip tip)
+            ]
+          )
+        ]
 
 --
 -- Requestnext
@@ -75,48 +138,35 @@ data RequestNext
     = RequestNext
     deriving (Generic, Show)
 
-instance FromJSON (Wsp.Request RequestNext)
-  where
-    parseJSON = Wsp.genericFromJSON Wsp.defaultOptions
-
---
--- RequestNextResponse
---
+_decodeRequestNext
+    :: ByteString
+    -> Maybe (Wsp.Request RequestNext)
+_decodeRequestNext =
+    decodeWith (Wsp.genericFromJSON Wsp.defaultOptions)
 
 data RequestNextResponse block
     = RollForward { block :: block, tip :: Tip block }
     | RollBackward { point :: Point block, tip :: Tip block }
     deriving (Generic, Show)
 
-instance
-    ( ToJSON block
-    , ToJSON (Tip block)
-    , ToJSON (Point block)
-    ) => ToJSON (Wsp.Response (RequestNextResponse block))
-  where
-    toJSON = Wsp.genericToJSON Wsp.defaultOptions proxy
-      where proxy = Proxy @(Wsp.Request RequestNext)
-
---
--- Error Handling
---
-
--- | Default handler attempting to provide user-friendly error message. See also
--- 'Ogmios.Data.Protocol#onUnmatchedMessage'.
---
--- NOTE: This function is ambiguous in 'block' and requires a type application.
-parserVoid
-    :: forall block. (FromJSON (Point block))
-    => MethodName
-    -> Json.Value
-    -> Json.Parser Void
-parserVoid methodName json = do
-    if | methodName == Wsp.gWSPMethodName (Proxy @(Rep (FindIntersect block) _)) ->
-            void $ parseJSON @(Wsp.Request (FindIntersect block)) json
-       | methodName == Wsp.gWSPMethodName (Proxy @(Rep RequestNext _)) ->
-            void $ parseJSON @(Wsp.Request RequestNext) json
-       | otherwise ->
-            pure ()
-
-    fail "unknown method in 'methodname' (beware names are case-sensitive). \
-         \Expected either: 'FindIntersect' or 'RequestNext'."
+_encodeRequestNextResponse
+    :: (block -> Json)
+    -> (Point block -> Json)
+    -> (Tip block -> Json)
+    -> Wsp.Response (RequestNextResponse block)
+    -> Json
+_encodeRequestNextResponse encodeBlock encodePoint encodeTip = \case
+    Wsp.Response _ RollForward{block,tip} -> encodeObject
+        [ ("RollForward", encodeObject
+            [ ("block", encodeBlock block)
+            , ("tip", encodeTip tip)
+            ]
+          )
+        ]
+    Wsp.Response _ RollBackward{point,tip} -> encodeObject
+        [ ("RollBackward", encodeObject
+            [ ("point", encodePoint point)
+            , ("tip", encodeTip tip)
+            ]
+          )
+        ]

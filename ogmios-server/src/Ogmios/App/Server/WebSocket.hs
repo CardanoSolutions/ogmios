@@ -21,6 +21,10 @@ import Ogmios.App.Options
     ( NetworkParameters (..), Options (..) )
 import Ogmios.App.Protocol.ChainSync
     ( mkChainSyncClient )
+import Ogmios.App.Protocol.StateQuery
+    ( mkStateQueryClient )
+import Ogmios.App.Protocol.TxSubmission
+    ( mkTxSubmissionClient )
 import Ogmios.Control.Exception
     ( Exception (..)
     , IOException
@@ -31,7 +35,7 @@ import Ogmios.Control.Exception
 import Ogmios.Control.MonadAsync
     ( ExceptionInLinkedThread (..), MonadAsync (..), MonadLink, link )
 import Ogmios.Control.MonadClock
-    ( MonadClock (..), idle )
+    ( MonadClock (..) )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
     , Logger
@@ -55,28 +59,39 @@ import Ogmios.Control.MonadWebSocket
     , headers
     )
 import Ogmios.Data.Json
-    ()
+    ( Json
+    , encodeAcquireFailure
+    , encodeBlock
+    , encodeHardForkApplyTxErr
+    , encodePoint
+    , encodeTip
+    , jsonToByteString
+    )
+import Ogmios.Data.Protocol.ChainSync
+    ( ChainSyncCodecs (..), ChainSyncMessage (..), mkChainSyncCodecs )
+import Ogmios.Data.Protocol.StateQuery
+    ( StateQueryCodecs (..), StateQueryMessage (..), mkStateQueryCodecs )
+import Ogmios.Data.Protocol.TxSubmission
+    ( TxSubmissionCodecs (..), TxSubmissionMessage (..), mkTxSubmissionCodecs )
 
 import Cardano.Network.Protocol.NodeToClient
-    ( ApplyErr, Block, Clients (..), connectClient, mkClient )
+    ( Block
+    , Clients (..)
+    , SubmitTxError
+    , SubmitTxPayload
+    , connectClient
+    , mkClient
+    )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient )
 import Data.Generics.Internal.VL.Lens
     ( view )
 import Data.Generics.Product.Typed
     ( HasType, typed )
-import Jsonifier
-    ( Json )
 import Network.HTTP.Types.Header
     ( hUserAgent )
-import Ouroboros.Consensus.Byron.Ledger
-    ( GenTx )
 import Ouroboros.Network.NodeToClient.Version
     ( NodeToClientVersionData (NodeToClientVersionData) )
-import Ouroboros.Network.Protocol.LocalStateQuery.Client
-    ( LocalStateQueryClient (..) )
-import Ouroboros.Network.Protocol.LocalTxSubmission.Client
-    ( LocalTxSubmissionClient (..) )
 
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
@@ -102,15 +117,15 @@ newWebSocketApp
     => Logger TraceWebSocket
     -> (forall a. m a -> IO a)
     -> m WebSocketApp
-newWebSocketApp tr embed = do
+newWebSocketApp tr unliftIO = do
     NetworkParameters{slotsPerEpoch,networkMagic} <- asks (view typed)
     Options{nodeSocket} <- asks (view typed)
     sensors <- asks (view typed)
-    return $ \pending -> embed $ do
+    return $ \pending -> unliftIO $ do
         logWith tr (WebSocketConnectionAccepted $ userAgent pending)
         acceptRequest pending $ \conn -> do
             let trClient = natTracer liftIO $ contramap WebSocketClient tr
-            client <- mkClient embed trClient slotsPerEpoch <$> newOuroborosClients conn
+            client <- mkClient unliftIO trClient slotsPerEpoch <$> newOuroborosClients conn
             connectClient nullTracer client (NodeToClientVersionData networkMagic) nodeSocket
                 & onExceptions conn
                 & recordSession sensors
@@ -153,29 +168,74 @@ newWebSocketApp tr embed = do
         let msg = "Connection with the node lost or failed."
         close conn $ toStrict $ Json.encode $ Wsp.serverFault msg
 
--- | FIXME: instantiate the right client based on the client's request
 newOuroborosClients
     :: forall m.
         ( MonadAsync m
-        , MonadClock m
         , MonadLink m
         , MonadWebSocket m
         )
     => Connection
-    -> m (Clients m Block (GenTx Block) ApplyErr)
+    -> m (Clients m Block)
 newOuroborosClients conn = do
-    let yield = send conn . BL.toStrict . Json.encodingToLazyByteString
-    queue <- atomically newTQueue
-    link =<< async (queue `feedWith` conn)
-    return Clients
-        { chainSyncClient = mkChainSyncClient queue yield
-        , txSubmissionClient = LocalTxSubmissionClient idle
-        , stateQueryClient = LocalStateQueryClient idle
+    (chainSyncQ, txSubmissionQ, stateQueryQ) <-
+        atomically $ (,,) <$> newTQueue <*> newTQueue <*> newTQueue
+
+    link =<< async (routeMessage chainSyncQ stateQueryQ txSubmissionQ)
+
+    pure Clients
+        { chainSyncClient =
+            mkChainSyncClient chainSyncCodecs chainSyncQ yield
+        , stateQueryClient =
+            mkStateQueryClient stateQueryCodecs stateQueryQ yield
+        , txSubmissionClient =
+            mkTxSubmissionClient txSubmissionCodecs txSubmissionQ yield
         }
   where
-    feedWith :: TQueue m ByteString -> Connection -> m ()
-    feedWith queue source =
-        forever $ receive source >>= atomically . writeTQueue queue
+    yield :: Json -> m ()
+    yield = send conn . jsonToByteString
+
+    routeMessage
+        :: TQueue m (ChainSyncMessage Block)
+        -> TQueue m (StateQueryMessage Block)
+        -> TQueue m (TxSubmissionMessage Block)
+        -> m ()
+    routeMessage chainSyncQ stateQueryQ txSubmissionQ = forever $ do
+        bytes <- receive conn
+        Wsp.match bytes (defaultHandler bytes)
+            [ Wsp.Handler decodeRequestNext
+                (\r -> atomically . writeTQueue chainSyncQ . MsgRequestNext r)
+            , Wsp.Handler decodeFindIntersect
+                (\r -> atomically . writeTQueue chainSyncQ . MsgFindIntersect r)
+
+            , Wsp.Handler decodeAcquire
+                (\r -> atomically . writeTQueue stateQueryQ . MsgAcquire r)
+            , Wsp.Handler decodeRelease
+                (\r -> atomically . writeTQueue stateQueryQ . MsgRelease r)
+            , Wsp.Handler decodeQuery
+                (\r -> atomically . writeTQueue stateQueryQ . MsgQuery r)
+
+            , Wsp.Handler decodeSubmitTx
+                (\r -> atomically . writeTQueue txSubmissionQ .  MsgSubmitTx r)
+            ]
+
+    chainSyncCodecs@ChainSyncCodecs
+        { decodeFindIntersect
+        , decodeRequestNext
+        } = mkChainSyncCodecs encodeBlock encodePoint encodeTip
+
+    stateQueryCodecs@StateQueryCodecs
+        { decodeAcquire
+        , decodeRelease
+        , decodeQuery
+        } = mkStateQueryCodecs encodePoint encodeAcquireFailure
+
+    txSubmissionCodecs@TxSubmissionCodecs
+        { decodeSubmitTx
+        } = mkTxSubmissionCodecs encodeHardForkApplyTxErr
+
+    -- FIXME: Do error handling here.
+    defaultHandler :: ByteString -> m ()
+    defaultHandler _ = return ()
 
 --
 -- Logging
@@ -183,7 +243,7 @@ newOuroborosClients conn = do
 
 data TraceWebSocket where
     WebSocketClient
-        :: TraceClient (GenTx Block) ApplyErr
+        :: TraceClient (SubmitTxPayload Block) (SubmitTxError Block)
         -> TraceWebSocket
 
     WebSocketConnectionAccepted
@@ -206,8 +266,7 @@ deriving instance Show TraceWebSocket
 
 instance HasSeverityAnnotation TraceWebSocket where
     getSeverityAnnotation = \case
-        WebSocketClient msg -> getSeverityAnnotation msg
-
+        WebSocketClient msg           -> getSeverityAnnotation msg
         WebSocketConnectionAccepted{} -> Info
         WebSocketConnectionEnded{}    -> Info
         WebSocketFailedToConnect{}    -> Error

@@ -37,9 +37,7 @@ class Monad m => MonadMetrics (m :: * -> *) where
     record  :: Distribution m -> Double -> m ()
     readDistribution :: (Stats -> stats) -> Distribution m -> m stats
 
--- | Application Metrics are done via 'ekg' using sensors from the application's
--- 'Env'ironment.
-instance MonadMetrics IO where -- TODO Move to 'MonadMetrics'
+instance MonadMetrics IO where
     type Gauge IO = Ekg.Gauge.Gauge
     increment = Ekg.Gauge.inc
     decrement = Ekg.Gauge.dec

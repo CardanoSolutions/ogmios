@@ -140,7 +140,7 @@ newEnvironment
     -> Options
     -> IO (Env App)
 newEnvironment tr network options = do
-    health <- atomically $ newTVar emptyHealth
+    health  <- atomically $ newTVar emptyHealth
     sensors <- newSensors
     sampler <- newSampler (contramap OgmiosMetrics tr)
     pure $ Env{health,sensors,sampler,network,options}

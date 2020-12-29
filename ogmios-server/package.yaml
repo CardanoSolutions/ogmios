@@ -33,7 +33,7 @@ library:
   when:
     condition: flag(production)
     ghc-options:
-    - -Werror
+    # - -Werror
     - -O2
   dependencies:
     - aeson
@@ -67,6 +67,7 @@ library:
     - iohk-monitoring
     - iproute
     - json-wsp
+    - jsonifier
     - memory
     - mtl
     - optparse-applicative

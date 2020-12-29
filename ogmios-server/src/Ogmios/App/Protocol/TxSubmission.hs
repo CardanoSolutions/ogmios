@@ -2,7 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- | Transaction submission is pretty simple & works by submitting an already
 -- serialized and signed transaction as one single message.
@@ -32,47 +32,34 @@ import Relude hiding
 
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TQueue, readTQueue )
-import Ogmios.Data.Protocol
-    ( onUnmatchedMessage )
+import Ogmios.Data.Json
+    ( Json )
 import Ogmios.Data.Protocol.TxSubmission
-    ( SubmitTx (..), SubmitTxResponse (..), parserVoid )
+    ( SubmitTx (..), TxSubmissionCodecs (..), TxSubmissionMessage (..) )
 
-import Data.Aeson
-    ( FromJSON (..), ToJSON (..) )
+import Cardano.Network.Protocol.NodeToClient
+    ( SubmitTxError, SubmitTxPayload )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxClientStIdle (..), LocalTxSubmissionClient (..) )
 
-import qualified Codec.Json.Wsp.Handler as Wsp
-import qualified Data.Aeson as Json
-
---
--- Client
---
-
 mkTxSubmissionClient
-    :: forall m tx err.
-        ( FromJSON tx
-        , ToJSON err
-        , MonadSTM m
+    :: forall m block.
+        ( MonadSTM m
         )
-    => TQueue m ByteString
-    -> (Json.Encoding -> m ())
-    -> LocalTxSubmissionClient tx err m ()
-mkTxSubmissionClient pipe yield =
-     LocalTxSubmissionClient clientStIdle
+    => TxSubmissionCodecs block
+    -> TQueue m (TxSubmissionMessage block)
+    -> (Json -> m ())
+    -> LocalTxSubmissionClient (SubmitTxPayload block) (SubmitTxError block) m ()
+mkTxSubmissionClient TxSubmissionCodecs{..} queue yield =
+    LocalTxSubmissionClient clientStIdle
   where
-    await :: m ByteString
-    await = atomically (readTQueue pipe)
+    await :: m (TxSubmissionMessage block)
+    await = atomically (readTQueue queue)
 
     clientStIdle
-        :: m (LocalTxClientStIdle tx err m ())
-    clientStIdle = await >>= Wsp.handle
-        (\bytes -> do
-            yield $ onUnmatchedMessage (parserVoid @tx) bytes
-            clientStIdle
-        )
-        [ Wsp.Handler $ \SubmitTx{bytes} toResponse ->
-            pure $ SendMsgSubmitTx bytes $ \e -> do
-                yield $ Json.toEncoding $ toResponse $ SubmitTxResponse e
+        :: m (LocalTxClientStIdle (SubmitTxPayload block) (SubmitTxError block) m ())
+    clientStIdle = await >>= \case
+        MsgSubmitTx SubmitTx{bytes} toResponse -> do
+            pure $ SendMsgSubmitTx bytes $ \result -> do
+                yield $ encodeSubmitTxResponse $ toResponse result
                 clientStIdle
-        ]

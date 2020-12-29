@@ -2,10 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE UndecidableInstances #-}
 
 -- NOTE:
 -- This module uses partial record field accessor to automatically derive
@@ -14,64 +11,145 @@
 {-# OPTIONS_GHC -fno-warn-partial-fields #-}
 
 module Ogmios.Data.Protocol.StateQuery
-    ( Acquire (..)
+    ( -- * Codecs
+      StateQueryCodecs (..)
+    , mkStateQueryCodecs
+
+      -- * Messages
+    , StateQueryMessage (..)
+
+      -- ** Acquire
+    , Acquire (..)
+    , _decodeAcquire
     , AcquireResponse (..)
+    , _encodeAcquireResponse
+
+      -- ** Release
     , Release (..)
+    , _decodeRelease
+    , ReleaseResponse (..)
+    , _encodeReleaseResponse
+
+      -- ** Query
     , Query (..)
+    , _decodeQuery
     , QueryResponse (..)
-    , parserVoid
+    , _encodeQueryResponse
     ) where
 
-import Relude
+import Ogmios.Data.Json.Prelude
 
 import Ogmios.Data.Json
     ( SomeQuery (..) )
-import Ogmios.Data.Protocol
-    ( MethodName )
 
-import Data.Aeson
-    ( FromJSON (..), ToJSON (..) )
-import GHC.Generics
-    ( Rep )
 import Ouroboros.Network.Block
     ( Point (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure )
 
 import qualified Codec.Json.Wsp as Wsp
-import qualified Data.Aeson as Json
-import qualified Data.Aeson.Types as Json
+import qualified Codec.Json.Wsp.Handler as Wsp
+import qualified Text.Show as T
+
+--
+-- Codecs
+--
+
+data StateQueryCodecs block = StateQueryCodecs
+    { decodeAcquire
+        :: ByteString
+        -> Maybe (Wsp.Request (Acquire block))
+    , encodeAcquireResponse
+        :: Wsp.Response (AcquireResponse block)
+        -> Json
+    , decodeRelease
+        :: ByteString
+        -> Maybe (Wsp.Request Release)
+    , encodeReleaseResponse
+        :: Wsp.Response ReleaseResponse
+        -> Json
+    , decodeQuery
+        :: ByteString
+        -> Maybe (Wsp.Request (Query block))
+    , encodeQueryResponse
+        :: Wsp.Response QueryResponse
+        -> Json
+    }
+
+mkStateQueryCodecs
+    :: (FromJSON (SomeQuery Maybe block), FromJSON (Point block))
+    => (Point block -> Json)
+    -> (AcquireFailure -> Json)
+    -> StateQueryCodecs block
+mkStateQueryCodecs encodePoint encodeAcquireFailure =
+    StateQueryCodecs
+        { decodeAcquire =
+            _decodeAcquire
+        , encodeAcquireResponse =
+            _encodeAcquireResponse encodePoint encodeAcquireFailure
+        , decodeRelease =
+            _decodeRelease
+        , encodeReleaseResponse =
+            _encodeReleaseResponse
+        , decodeQuery =
+            _decodeQuery
+        , encodeQueryResponse =
+            _encodeQueryResponse
+        }
+
+--
+-- Messages
+--
+
+data StateQueryMessage block
+    = MsgAcquire
+        (Acquire block)
+        (Wsp.ToResponse (AcquireResponse block))
+    | MsgRelease
+        Release
+        (Wsp.ToResponse ReleaseResponse)
+    | MsgQuery
+        (Query block)
+        (Wsp.ToResponse QueryResponse)
 
 --
 -- Acquire
 --
 
-data Acquire point
-    = Acquire { point :: point }
+data Acquire block
+    = Acquire { point :: Point block }
     deriving (Generic, Show)
 
-instance
-    ( FromJSON (Point block)
-    ) => FromJSON (Wsp.Request (Acquire (Point block)))
-  where
-    parseJSON = Wsp.genericFromJSON Wsp.defaultOptions
+_decodeAcquire
+    :: FromJSON (Point block)
+    => ByteString
+    -> Maybe (Wsp.Request (Acquire block))
+_decodeAcquire =
+    decodeWith (Wsp.genericFromJSON Wsp.defaultOptions)
 
---
--- AcquireResponse
---
-
-data AcquireResponse point
-    = AcquireSuccess { acquired :: point }
-    | AcquireFailed { failure :: AcquireFailure }
+data AcquireResponse block
+    = AcquireSuccess { point :: Point block }
+    | AcquireFailure { failure :: AcquireFailure }
     deriving (Generic, Show)
 
-instance
-    ( ToJSON AcquireFailure
-    , ToJSON (Point block)
-    ) => ToJSON (Wsp.Response (AcquireResponse (Point block)))
-  where
-    toJSON = Wsp.genericToJSON Wsp.defaultOptions proxy
-      where proxy = Proxy @(Wsp.Request (Acquire _))
+_encodeAcquireResponse
+    :: (Point block -> Json)
+    -> (AcquireFailure -> Json)
+    -> Wsp.Response (AcquireResponse block)
+    -> Json
+_encodeAcquireResponse encodePoint encodeAcquireFailure = \case
+    Wsp.Response _ AcquireSuccess{point} -> encodeObject
+        [ ("AcquireSuccess", encodeObject
+            [ ("point", encodePoint point)
+            ]
+          )
+        ]
+    Wsp.Response _ AcquireFailure{failure} -> encodeObject
+        [ ( "AcquireFailure", encodeObject
+            [ ("failure", encodeAcquireFailure failure)
+            ]
+          )
+        ]
 
 --
 -- Release
@@ -81,9 +159,21 @@ data Release
     = Release
     deriving (Generic, Show)
 
-instance FromJSON (Wsp.Request Release)
-  where
-    parseJSON = Wsp.genericFromJSON Wsp.defaultOptions
+_decodeRelease
+    :: ByteString
+    -> Maybe (Wsp.Request Release)
+_decodeRelease =
+    decodeWith (Wsp.genericFromJSON Wsp.defaultOptions)
+
+data ReleaseResponse
+    = Released
+    deriving (Generic, Show)
+
+_encodeReleaseResponse
+    :: Wsp.Response ReleaseResponse
+    -> Json
+_encodeReleaseResponse = \case
+    Wsp.Response _ Released -> encodeText "Released"
 
 --
 -- Query
@@ -92,50 +182,26 @@ instance FromJSON (Wsp.Request Release)
 data Query block = Query { query :: SomeQuery Maybe block }
     deriving (Generic)
 
-instance
-    ( FromJSON (SomeQuery Maybe block)
-    ) => FromJSON (Wsp.Request (Query block))
-  where
-    parseJSON = Wsp.genericFromJSON Wsp.defaultOptions
-
---
--- QueryResponse
---
+_decodeQuery
+    :: FromJSON (SomeQuery Maybe block)
+    => ByteString
+    -> Maybe (Wsp.Request (Query block))
+_decodeQuery =
+    decodeWith (Wsp.genericFromJSON Wsp.defaultOptions)
 
 newtype QueryResponse =
-    QueryResponse { unQueryResponse :: Json.Value }
-    deriving (Generic, Show)
+    QueryResponse { unQueryResponse :: Json }
+    deriving (Generic)
 
-instance ToJSON (Wsp.Response QueryResponse)
-  where
-    toJSON = Wsp.mkResponse Wsp.defaultOptions unQueryResponse proxy
-      where proxy = Proxy @(Wsp.Request (Query _))
+instance Show QueryResponse where
+    showsPrec i (QueryResponse json) =
+        T.showParen (i >= 10) (T.showString $ "QueryResponse (" <> str <> ")")
+      where
+        str = decodeUtf8 . jsonToByteString $ json
 
---
--- Error Handling
---
-
--- | Default handler attempting to provide user-friendly error message. See also
--- 'Ogmios.Data.Protocol#onUnmatchedMessage'.
---
--- NOTE: This function is ambiguous in 'block' and requires a type application.
-parserVoid
-    :: forall block.
-        ( FromJSON (SomeQuery Maybe block)
-        , FromJSON (Point block)
-        )
-    => MethodName
-    -> Json.Value
-    -> Json.Parser Void
-parserVoid methodName json = do
-    if | methodName == Wsp.gWSPMethodName (Proxy @(Rep (Acquire (Point block)) _)) ->
-            void $ parseJSON @(Wsp.Request (Acquire (Point block))) json
-       | methodName == Wsp.gWSPMethodName (Proxy @(Rep Release _)) ->
-            void $ parseJSON @(Wsp.Request Release) json
-       | methodName == Wsp.gWSPMethodName (Proxy @(Rep (Query block) _)) ->
-            void $ parseJSON @(Wsp.Request (Query block)) json
-       | otherwise ->
-          pure ()
-
-    fail "unknown method in 'methodname' (beware names are case-sensitive). \
-         \Expected one of: 'Acquire', 'Release' or 'Query'."
+_encodeQueryResponse
+    :: Wsp.Response QueryResponse
+    -> Json
+_encodeQueryResponse = \case
+    Wsp.Response _ (QueryResponse json) ->
+        json

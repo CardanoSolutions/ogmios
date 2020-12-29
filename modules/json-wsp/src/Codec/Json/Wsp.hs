@@ -18,6 +18,7 @@ module Codec.Json.Wsp
     -- * Types
       Request
     , Response
+    , ToResponse
     , mkResponse
     , ServiceName
 
@@ -70,6 +71,11 @@ import qualified Data.Text as T
 -- @since 1.0.0
 type family ServiceName a :: Symbol
 
+-- | A type-alias to help readability in signatures
+--
+-- @since 2.0.0
+type ToResponse a = a -> Response a
+
 --
 -- Public ToJSON / FromJSON interfaces
 --
@@ -114,8 +120,8 @@ genericToJSON
     -> Proxy (Request req)
     -> Response res
     -> Json.Value
-genericToJSON opts =
-    mkResponse opts (gWSPToJSON opts . from)
+genericToJSON opts proxy =
+    mkResponse opts proxy (gWSPToJSON opts . from)
 
 -- | Serialize a given response to JSON
 --
@@ -126,11 +132,11 @@ mkResponse
         , GWSPMethodName (Rep req)
         )
     => Options
-    -> (res -> Json.Value)
     -> Proxy (Request req)
+    -> (res -> Json.Value)
     -> Response res
     -> Json.Value
-mkResponse opts toResult _ (Response refl res) = Json.object
+mkResponse opts _proxy toResult (Response refl res) = Json.object
     [ "type" .= WspResponse
     , "version" .= V1_0
     , "servicename" .= symbolVal (Proxy @(ServiceName (Response res)))

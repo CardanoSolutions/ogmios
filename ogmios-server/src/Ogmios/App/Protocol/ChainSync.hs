@@ -2,7 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE RecordWildCards #-}
 
 {-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
 
@@ -38,28 +38,22 @@ module Ogmios.App.Protocol.ChainSync
     , mkHealthCheckClient
     ) where
 
-import Prelude
+import Relude hiding
+    ( Nat, atomically )
 
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TQueue, readTQueue, tryReadTQueue )
-import Ogmios.Data.Protocol
-    ( onUnmatchedMessage )
+import Ogmios.Data.Json
+    ( Json )
 import Ogmios.Data.Protocol.ChainSync
-    ( FindIntersect (..)
+    ( ChainSyncCodecs (..)
+    , ChainSyncMessage (..)
+    , FindIntersect (..)
     , FindIntersectResponse (..)
     , RequestNext (..)
     , RequestNextResponse (..)
-    , parserVoid
     )
 
-import Control.Monad
-    ( guard )
-import Data.Aeson
-    ( FromJSON (..), ToJSON (..) )
-import Data.ByteString
-    ( ByteString )
-import Data.Functor
-    ( ($>) )
 import Data.Sequence
     ( Seq (..), (|>) )
 import Network.TypedProtocol.Pipelined
@@ -74,61 +68,41 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     )
 
 import qualified Codec.Json.Wsp as Wsp
-import qualified Codec.Json.Wsp.Handler as Wsp
-import qualified Data.Aeson as Json
 import qualified Data.Sequence as Seq
-
--- | Because:
---
--- - Each request may contain data that must be mirrored in the response
--- - Requests are pipelined and may be collected _later_
---
--- We can't simply 'yield' response out of any context. Instead, to yield a response,
--- we must remember how to construct the adequate response from when we got the
--- request.
-type PendingResponse block =
-    RequestNextResponse block -> Wsp.Response (RequestNextResponse block)
 
 mkChainSyncClient
     :: forall m block.
-        ( FromJSON (Point block)
-        , ToJSON block
-        , ToJSON (Point block)
-        , ToJSON (Tip block)
-        , MonadSTM m
+        ( MonadSTM m
         )
-    => TQueue m ByteString
-    -> (Json.Encoding -> m ())
+    => ChainSyncCodecs block
+    -> TQueue m (ChainSyncMessage block)
+    -> (Json -> m ())
     -> ChainSyncClientPipelined block (Point block) (Tip block) m ()
-mkChainSyncClient pipe yield =
+mkChainSyncClient ChainSyncCodecs{..} queue yield =
     ChainSyncClientPipelined $ clientStIdle Zero Seq.Empty
   where
-    await :: m ByteString
-    await = atomically (readTQueue pipe)
+    await :: m (ChainSyncMessage block)
+    await = atomically (readTQueue queue)
 
-    tryAwait :: m (Maybe ByteString)
-    tryAwait = atomically (tryReadTQueue pipe)
+    tryAwait :: m (Maybe (ChainSyncMessage block))
+    tryAwait = atomically (tryReadTQueue queue)
 
     clientStIdle
         :: forall n. ()
         => Nat n
-        -> Seq (PendingResponse block)
+        -> Seq (Wsp.ToResponse (RequestNextResponse block))
         -> m (ClientPipelinedStIdle n block (Point block) (Tip block) m ())
-    clientStIdle Zero buffer = await >>= Wsp.handle
-        (\bytes -> do
-            yield $ onUnmatchedMessage (parserVoid @block) bytes
-            clientStIdle Zero buffer
-        )
-        [ Wsp.Handler $ \FindIntersect{points} ->
-            pure . SendMsgFindIntersect points . clientStIntersect
-
-        , Wsp.Handler $ \RequestNext toResponse -> do
+    clientStIdle Zero buffer = await <&> \case
+        MsgRequestNext RequestNext toResponse ->
             let buffer' = buffer |> toResponse
-            let collect = CollectResponse
+                collect = CollectResponse
                     (Just $ clientStIdle (Succ Zero) buffer')
                     (clientStNext Zero buffer')
-            pure $ SendMsgRequestNextPipelined collect
-        ]
+            in SendMsgRequestNextPipelined collect
+
+        MsgFindIntersect FindIntersect{points} toResponse ->
+            SendMsgFindIntersect points (clientStIntersect toResponse)
+
     clientStIdle n@(Succ prev) buffer = tryAwait >>= \case
         -- If there's no immediate incoming message, we take this opportunity to
         -- wait and collect one response.
@@ -141,44 +115,44 @@ mkChainSyncClient pipe yield =
         -- Yet, if we have already received a new message from the client, we
         -- prioritize it and pipeline it right away unless there are already too
         -- many requests in flights.
-        Just msg -> Wsp.handle
-            (\bytes -> do
-                yield $ onUnmatchedMessage (parserVoid @block) bytes
-                clientStIdle n buffer
-            )
-            [ Wsp.Handler $ \RequestNext toResponse -> do
-                let buffer' = buffer |> toResponse
-                let collect = CollectResponse
-                        (guard (natToInt n < 1000) $> clientStIdle (Succ n) buffer')
-                        (clientStNext n buffer')
-                pure $ SendMsgRequestNextPipelined collect
-            ] msg
+        Just (MsgRequestNext RequestNext toResponse) -> do
+            let buffer' = buffer |> toResponse
+            let collect = CollectResponse
+                    (guard (natToInt n < 1000) $> clientStIdle (Succ n) buffer')
+                    (clientStNext n buffer')
+            pure $ SendMsgRequestNextPipelined collect
+
+        Just (MsgFindIntersect _FindIntersect _toResponse) -> do
+            -- TODO: Return an error telling clients that they can't send
+            -- FindIntersection while there are in-flights 'RequestNext'
+            -- requests.
+            clientStIdle n buffer
 
     clientStNext
         :: Nat n
-        -> Seq (PendingResponse block)
+        -> Seq (Wsp.ToResponse (RequestNextResponse block))
         -> ClientStNext n block (Point block) (Tip block) m ()
     clientStNext _ Empty =
         error "invariant violation: empty buffer on clientStNext"
     clientStNext n (toResponse :<| buffer) =
         ClientStNext
             { recvMsgRollForward = \block tip -> do
-                yield $ Json.toEncoding $ toResponse $ RollForward block tip
+                yield $ encodeRequestNextResponse $ toResponse $ RollForward block tip
                 clientStIdle n buffer
             , recvMsgRollBackward = \point tip -> do
-                yield $ Json.toEncoding $ toResponse $ RollBackward point tip
+                yield $ encodeRequestNextResponse $ toResponse $ RollBackward point tip
                 clientStIdle n buffer
             }
 
     clientStIntersect
-        :: (FindIntersectResponse block -> Wsp.Response (FindIntersectResponse block))
+        :: Wsp.ToResponse (FindIntersectResponse block)
         -> ClientPipelinedStIntersect block (Point block) (Tip block) m ()
     clientStIntersect toResponse = ClientPipelinedStIntersect
         { recvMsgIntersectFound = \point tip -> do
-            yield $ Json.toEncoding $ toResponse $ IntersectionFound point tip
+            yield $ encodeFindIntersectResponse $ toResponse $ IntersectionFound point tip
             clientStIdle Zero Seq.empty
         , recvMsgIntersectNotFound = \tip -> do
-            yield $ Json.toEncoding $ toResponse $ IntersectionNotFound tip
+            yield $ encodeFindIntersectResponse $ toResponse $ IntersectionNotFound tip
             clientStIdle Zero Seq.empty
         }
 

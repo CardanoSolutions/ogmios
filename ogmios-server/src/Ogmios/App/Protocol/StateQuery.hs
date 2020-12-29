@@ -2,7 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- | The state query protocol is likely the most versatile of the three Ouroboros
 -- mini-protocols. As a matter of fact, it allows for querying various types of
@@ -51,93 +51,79 @@ import Ogmios.Control.Exception
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TQueue, readTQueue )
 import Ogmios.Data.Json
-    ( SomeQuery (..) )
-import Ogmios.Data.Protocol
-    ( onUnmatchedMessage )
+    ( Json, SomeQuery (..) )
 import Ogmios.Data.Protocol.StateQuery
     ( Acquire (..)
     , AcquireResponse (..)
     , Query (..)
     , QueryResponse (..)
     , Release (..)
-    , parserVoid
+    , ReleaseResponse (..)
+    , StateQueryCodecs (..)
+    , StateQueryMessage (..)
     )
 
-import Data.Aeson
-    ( FromJSON (..), ToJSON (..) )
 import Ouroboros.Network.Block
     ( Point (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..) )
-import Ouroboros.Network.Protocol.LocalStateQuery.Type
-    ( AcquireFailure )
 
-import qualified Codec.Json.Wsp.Handler as Wsp
-import qualified Data.Aeson as Json
+import qualified Codec.Json.Wsp as Wsp
 import qualified Ouroboros.Consensus.Shelley.Ledger.Query as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 
 mkStateQueryClient
-    :: forall m block point.
+    :: forall m block.
         ( MonadThrow m
         , MonadSTM m
-        , ToJSON point
-        , ToJSON AcquireFailure
-        , FromJSON point
-        , FromJSON (SomeQuery Maybe block)
-        , point ~ Point block
         )
-    => TQueue m ByteString
-    -> (Json.Encoding -> m ())
+    => StateQueryCodecs block
+    -> TQueue m (StateQueryMessage block)
+    -> (Json -> m ())
     -> LocalStateQueryClient block (Point block) (Ledger.Query block) m ()
-mkStateQueryClient pipe yield =
+mkStateQueryClient StateQueryCodecs{..} queue yield =
     LocalStateQueryClient clientStIdle
   where
-    await :: m ByteString
-    await = atomically (readTQueue pipe)
+    await :: m (StateQueryMessage block)
+    await = atomically (readTQueue queue)
 
     clientStIdle
         :: m (LSQ.ClientStIdle block (Point block) (Ledger.Query block) m ())
-    clientStIdle = await >>= Wsp.handle
-        (\bytes -> do
-            yield $ onUnmatchedMessage (parserVoid @block) bytes
-            clientStIdle
-        )
-        [ Wsp.Handler $ \(Acquire pt) toResponse ->
+    clientStIdle = await >>= \case
+        MsgAcquire (Acquire pt) toResponse ->
             pure $ LSQ.SendMsgAcquire pt (clientStAcquiring pt toResponse)
-        , Wsp.Handler $ \Release _toResponse ->
+        MsgRelease Release toResponse -> do
+            yield $ encodeReleaseResponse (toResponse Released)
             clientStIdle
-        ]
+        MsgQuery _ _ -> do
+            -- FIXME: yield an error
+            clientStIdle
 
     clientStAcquiring
-        :: point
-        -> (AcquireResponse point -> Wsp.Response (AcquireResponse point))
+        :: Point block
+        -> (Wsp.ToResponse (AcquireResponse block))
         -> LSQ.ClientStAcquiring block (Point block) (Ledger.Query block) m ()
     clientStAcquiring pt toResponse = LSQ.ClientStAcquiring
         { LSQ.recvMsgAcquired = do
-            yield $ Json.toEncoding $ toResponse $ AcquireSuccess pt
+            yield $ encodeAcquireResponse $ toResponse $ AcquireSuccess pt
             clientStAcquired
         , LSQ.recvMsgFailure = \failure -> do
-            yield $ Json.toEncoding $ toResponse $ AcquireFailed failure
+            yield $ encodeAcquireResponse $ toResponse $ AcquireFailure failure
             clientStIdle
         }
 
     clientStAcquired
         :: m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
-    clientStAcquired = await >>= Wsp.handle
-        (\bytes -> do
-            yield $ onUnmatchedMessage (parserVoid @block) bytes
-            clientStAcquired
-        )
-        [ Wsp.Handler $ \(Acquire pt) toResponse ->
+    clientStAcquired = await >>= \case
+        MsgAcquire (Acquire pt) toResponse ->
             pure $ LSQ.SendMsgReAcquire pt (clientStAcquiring pt toResponse)
-        , Wsp.Handler $ \Release _toResponse ->
+        MsgRelease Release toResponse -> do
+            yield $ encodeReleaseResponse (toResponse Released)
             pure $ LSQ.SendMsgRelease clientStIdle
-        , Wsp.Handler $ \(Query (SomeQuery query encodeResult _)) toResponse ->
+        MsgQuery (Query (SomeQuery query encodeResult _)) toResponse ->
             pure $ LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
                 { LSQ.recvMsgResult = \result -> do
-                    let response = toResponse $ QueryResponse $ encodeResult result
-                    yield $ Json.toEncoding response
+                    let response = QueryResponse $ encodeResult result
+                    yield $ encodeQueryResponse $ toResponse response
                     clientStAcquired
                 }
-        ]

@@ -2,8 +2,8 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- NOTE:
 -- This module uses partial record field accessor to automatically derive
@@ -16,91 +16,87 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Ogmios.Data.Protocol.TxSubmission
-    ( SubmitTx (..)
-    , SubmitTxResponse (..)
-    , parserVoid
+    ( -- * Codecs
+      TxSubmissionCodecs (..)
+    , mkTxSubmissionCodecs
+
+      -- * Messages
+    , TxSubmissionMessage (..)
+
+      -- ** SubmitTx
+    , SubmitTx (..)
+    , SubmitTxResponse
     ) where
 
-import Relude
+import Ogmios.Data.Json.Prelude
 
-import Ogmios.Data.Protocol
-    ( MethodName )
-
-import Data.Aeson
-    ( FromJSON (..), ToJSON (..), (.=) )
-import GHC.Generics
-    ( Rep )
+import Cardano.Network.Protocol.NodeToClient
+    ( SubmitTxError, SubmitTxPayload )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
 
 import qualified Codec.Json.Wsp as Wsp
-import qualified Data.Aeson as Json
-import qualified Data.Aeson.Types as Json
-import qualified Text.Show
+import qualified Codec.Json.Wsp.Handler as Wsp
+
+--
+-- Codecs
+--
+
+data TxSubmissionCodecs block = TxSubmissionCodecs
+    { decodeSubmitTx
+        :: ByteString
+        -> Maybe (Wsp.Request (SubmitTx block))
+    , encodeSubmitTxResponse
+        :: Wsp.Response (SubmitTxResponse block)
+        -> Json
+    }
+
+mkTxSubmissionCodecs
+    :: forall block. (FromJSON (SubmitTxPayload block))
+    => (SubmitTxError block -> Json)
+    -> TxSubmissionCodecs block
+mkTxSubmissionCodecs encodeSubmitTxError =
+    TxSubmissionCodecs
+        { decodeSubmitTx =
+            _decodeSubmitTx
+        , encodeSubmitTxResponse =
+            _encodeSubmitTxResponse (Proxy @block) encodeSubmitTxError
+        }
+
+--
+-- Messages
+--
+
+data TxSubmissionMessage block
+    = MsgSubmitTx
+        (SubmitTx block)
+        (Wsp.ToResponse (SubmitTxResponse block))
 
 --
 -- SubmitTx
 --
 
-data SubmitTx tx
-    = SubmitTx { bytes :: tx }
-    deriving (Generic, Show)
+data SubmitTx block
+    = SubmitTx { bytes :: SubmitTxPayload block }
+    deriving (Generic)
+deriving instance Show (SubmitTxPayload block) => Show (SubmitTx block)
 
-instance
-    ( FromJSON tx
-    ) => FromJSON (Wsp.Request (SubmitTx tx))
-  where
-    parseJSON = Wsp.genericFromJSON Wsp.defaultOptions
+_decodeSubmitTx
+    :: FromJSON (SubmitTxPayload block)
+    => ByteString
+    -> Maybe (Wsp.Request (SubmitTx block))
+_decodeSubmitTx =
+    decodeWith (Wsp.genericFromJSON Wsp.defaultOptions)
 
---
--- SubmitTxResponse
---
+type SubmitTxResponse block = SubmitResult (SubmitTxError block)
 
-data SubmitTxResponse e
-    = SubmitTxResponse { error :: SubmitResult e }
-    deriving (Generic, Show)
-
-instance
-    ( Show e
-    ) => Show (SubmitResult e)
-  where
-    show = \case
-        SubmitSuccess -> "SubmitSuccess"
-        SubmitFail e  -> "SubmitFail " <> show e
-
-instance
-    ( ToJSON e
-    ) => ToJSON (Wsp.Response (SubmitTxResponse e))
-  where
-    toJSON = Wsp.genericToJSON Wsp.defaultOptions proxy
-      where proxy = Proxy @(Wsp.Request (SubmitTx _))
-
-instance
-    ( ToJSON e
-    ) => ToJSON (SubmitResult e)
-  where
-    toJSON = \case
-        SubmitSuccess -> Json.String "SubmitSuccess"
-        SubmitFail e  -> Json.object [ "SubmitFail" .= e ]
-
---
--- Error Handling
---
-
--- | Default handler attempting to provide user-friendly error message. See also
--- 'Ogmios.Data.Protocol#onUnmatchedMessage'.
---
--- NOTE: This function is ambiguous in 'tx' and requires a type application.
-parserVoid
-    :: forall tx. (FromJSON tx)
-    => MethodName
-    -> Json.Value
-    -> Json.Parser Void
-parserVoid methodName json = do
-    if methodName == Wsp.gWSPMethodName (Proxy @(Rep (SubmitTx tx) _)) then
-        void $ parseJSON @(Wsp.Request (SubmitTx tx)) json
-    else
-        pure ()
-
-    fail "unknown method in 'methodname' (beware names are case-sensitive). \
-         \Expected: 'SubmitTx'."
+_encodeSubmitTxResponse
+    :: Proxy block
+    -> (SubmitTxError block -> Json)
+    -> Wsp.Response (SubmitTxResponse block)
+    -> Json
+_encodeSubmitTxResponse _proxy encodeSubmitTxError = \case
+    Wsp.Response _ SubmitSuccess ->
+        encodeText "SubmitSuccess"
+    Wsp.Response _ (SubmitFail e) ->
+        encodeObject [ ( "SubmitFail", encodeSubmitTxError e ) ]
