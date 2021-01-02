@@ -43,7 +43,8 @@ module Ogmios.App.Protocol.StateQuery
     ( mkStateQueryClient
     ) where
 
-import Prelude
+import Relude hiding
+    ( atomically )
 
 import Ogmios.Control.Exception
     ( MonadThrow )
@@ -64,8 +65,6 @@ import Ogmios.Data.Protocol.StateQuery
 
 import Data.Aeson
     ( FromJSON (..), ToJSON (..) )
-import Data.ByteString
-    ( ByteString )
 import Ouroboros.Network.Block
     ( Point (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client

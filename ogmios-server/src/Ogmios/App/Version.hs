@@ -9,15 +9,10 @@ module Ogmios.App.Version
     ( version
     ) where
 
-import Prelude
+import Relude
 
 import Data.Git.Revision.TH
     ( gitRevParseHEAD, gitTags, unknownRevision )
-import Data.Text
-    ( Text )
-
-import qualified Data.List as L
-import qualified Data.Text as T
 
 -- | Show the current application revision from git context embedded at
 -- compile-time. Shows a tag if compiled on a revision pointing to a tag, or
@@ -26,10 +21,10 @@ import qualified Data.Text as T
 -- This is impure in disguise but safe if 'git' is available in the app context.
 version :: Text
 version = do
-    case L.find ((== revHEAD) . snd) tags of
+    case find ((== revHEAD) . snd) tags of
         Just (tag, _) ->
-            T.pack tag
-        Nothing -> T.unwords $ T.pack <$>
+            toText tag
+        Nothing -> unwords $ toText <$>
             [ "unreleased (> " <> lastKnownTag tags <> ")"
             , "-"
             , "git revision " <> revHEADShort

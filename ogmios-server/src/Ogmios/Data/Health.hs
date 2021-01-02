@@ -10,7 +10,7 @@ module Ogmios.Data.Health
     , emptyHealth
     ) where
 
-import Prelude
+import Relude
 
 import Ogmios.Data.Metrics
     ( Metrics, emptyMetrics )
@@ -19,8 +19,6 @@ import Data.Aeson
     ( ToJSON (..), genericToJSON )
 import Data.Time.Clock
     ( UTCTime )
-import GHC.Generics
-    ( Generic )
 import Ouroboros.Network.Block
     ( Tip (..) )
 

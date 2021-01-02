@@ -20,7 +20,7 @@ module Ogmios.Control.Exception
     , isResourceVanishedError
     ) where
 
-import Prelude
+import Relude
 
 import Control.Exception.Safe
     ( Exception (..), IOException, SomeException (..), isAsyncException )

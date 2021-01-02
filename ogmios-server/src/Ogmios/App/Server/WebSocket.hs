@@ -12,7 +12,8 @@ module Ogmios.App.Server.WebSocket
     , TraceWebSocket (..)
     ) where
 
-import Prelude
+import Relude hiding
+    ( atomically )
 
 import Ogmios.App.Metrics
     ( Sensors, recordSession )
@@ -36,7 +37,6 @@ import Ogmios.Control.MonadLog
     , Logger
     , MonadLog (..)
     , Severity (..)
-    , contramap
     , natTracer
     , nullTracer
     )
@@ -61,20 +61,12 @@ import Cardano.Network.Protocol.NodeToClient
     ( ApplyErr, Block, Clients (..), connectClient, mkClient )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient )
-import Control.Monad
-    ( forever )
-import Control.Monad.IO.Class
-    ( MonadIO (..) )
-import Control.Monad.Reader
-    ( MonadReader, asks )
-import Data.ByteString
-    ( ByteString )
-import Data.Function
-    ( (&) )
 import Data.Generics.Internal.VL.Lens
     ( view )
 import Data.Generics.Product.Typed
     ( HasType, typed )
+import Jsonifier
+    ( Json )
 import Network.HTTP.Types.Header
     ( hUserAgent )
 import Ouroboros.Consensus.Byron.Ledger
@@ -88,9 +80,6 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Client
 
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
-import qualified Data.Aeson.Encoding.Internal as Json
-import qualified Data.ByteString.Lazy as BL
-import qualified Data.List as L
 
 --
 -- WebSocketApp
@@ -129,7 +118,7 @@ newWebSocketApp tr embed = do
   where
     userAgent :: PendingConnection -> ByteString
     userAgent pending = maybe "User-Agent unknown" snd
-        $ L.find ((== hUserAgent) . fst)
+        $ find ((== hUserAgent) . fst)
         $ headers pending
 
     onExceptions :: Connection -> m () -> m ()
@@ -162,7 +151,7 @@ newWebSocketApp tr embed = do
     onIOException conn e = do
         logWith tr $ WebSocketFailedToConnect e
         let msg = "Connection with the node lost or failed."
-        close conn $ BL.toStrict $ Json.encode $ Wsp.serverFault msg
+        close conn $ toStrict $ Json.encode $ Wsp.serverFault msg
 
 -- | FIXME: instantiate the right client based on the client's request
 newOuroborosClients

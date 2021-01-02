@@ -7,22 +7,15 @@ module Ogmios.Data.Protocol
     , onUnmatchedMessage
     ) where
 
-import Prelude
+import Relude
 
-import Data.ByteString
-    ( ByteString )
-import Data.HashMap.Strict
-    ( (!?) )
-import Data.Text
-    ( Text )
-import Data.Void
-    ( Void, absurd )
+import Relude.Extra.Map
+    ( lookup )
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
-import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 
 type instance Wsp.ServiceName (Wsp.Response _) = "ogmios"
@@ -64,9 +57,9 @@ onUnmatchedMessage match blob = do
     fault =
         "Invalid request: " <> modifyAesonFailure details <> "."
       where
-        details = case Json.decode' (BL.fromStrict blob) of
+        details = case Json.decode' (fromStrict blob) of
             Just (Json.Object obj) ->
-                either T.pack absurd $ Json.parseEither userFriendlyParser obj
+                either toText absurd $ Json.parseEither userFriendlyParser obj
             _ ->
                 "must be a well-formed JSON object."
 
@@ -82,7 +75,7 @@ onUnmatchedMessage match blob = do
     userFriendlyParser :: Json.Object -> Json.Parser Void
     userFriendlyParser obj = do
         methodName <-
-            case obj !? "methodname" of
+            case lookup "methodname" obj of
                 Just (Json.String t) -> pure (T.unpack t)
                 _ -> fail "field 'methodname' must be present and be a string."
         match methodName (Json.Object obj)

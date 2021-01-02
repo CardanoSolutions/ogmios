@@ -15,14 +15,8 @@ module Ogmios.Control.MonadWebSocket
   , headers
   ) where
 
-import Prelude
+import Relude
 
-import Control.Monad.Reader
-    ( ReaderT (..), ask )
-import Control.Monad.Trans
-    ( lift )
-import Data.ByteString
-    ( ByteString )
 import Network.WebSockets
     ( Connection, ConnectionException (..), Headers, PendingConnection )
 

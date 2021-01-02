@@ -22,23 +22,17 @@ module Ogmios.Data.Protocol.StateQuery
     , parserVoid
     ) where
 
-import Prelude
+import Relude
 
 import Ogmios.Data.Json
     ( SomeQuery (..) )
 import Ogmios.Data.Protocol
     ( MethodName )
 
-import Control.Monad
-    ( void )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..) )
-import Data.Proxy
-    ( Proxy (..) )
-import Data.Void
-    ( Void )
 import GHC.Generics
-    ( Generic, Rep )
+    ( Rep )
 import Ouroboros.Network.Block
     ( Point (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type

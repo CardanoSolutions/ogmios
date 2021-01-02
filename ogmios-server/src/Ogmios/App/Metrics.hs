@@ -27,7 +27,7 @@ module Ogmios.App.Metrics
     , TraceMetrics (..)
     ) where
 
-import Prelude hiding
+import Relude hiding
     ( max, min )
 
 import Ogmios.Control.MonadClock
@@ -49,26 +49,13 @@ import Ogmios.Data.Metrics
 
 import qualified Ogmios.Control.MonadMetrics as Metrics
 
-import Control.Arrow
-    ( second )
-import Control.Monad.IO.Class
-    ( MonadIO (..) )
-import Data.Function
-    ( (&) )
-import Data.Functor
-    ( (<&>) )
-import Data.HashMap.Strict
-    ( HashMap )
-import Data.Text
-    ( Text )
 import Data.Time.Clock
     ( DiffTime )
-import GHC.Generics
-    ( Generic )
 import GHC.Stats
     ( RTSStats (..), getRTSStats, getRTSStatsEnabled )
+import Relude.Extra.Map
+    ( lookup )
 
-import qualified Data.HashMap.Strict as Map
 import qualified System.Metrics as Ekg
 import qualified System.Metrics.Counter as Ekg.Counter
 import qualified System.Metrics.Distribution as Ekg.Distribution
@@ -143,7 +130,7 @@ newSampler tr = do
 
     liftIO getRTSStatsEnabled >>= \case
         False -> logWith tr (MetricsRuntimeStatsDisabled "run with '+RTS -T'")
-        True  -> registerGroup getRTSStats store $ Map.fromList
+        True  -> registerGroup getRTSStats store $ fromList
             [ (maxHeapSizeId, Ekg.Gauge . fromIntegral . max_live_bytes)
             , (cpuTimeId, Ekg.Counter . cpu_ns)
             , (gcCpuTimeId, Ekg.Counter . gc_cpu_ns)
@@ -157,13 +144,13 @@ newSampler tr = do
 
     sampler store = liftIO $
         Ekg.sampleAll store <&> \measures -> RuntimeStats
-            { maxHeapSize = maxHeapSizeId `Map.lookup` measures
+            { maxHeapSize = maxHeapSizeId `lookup` measures
                 & maybe 0 (\(Ekg.Gauge g) -> (`div` 1024) $ toInteger g)
 
-            , cpuTime = cpuTimeId `Map.lookup` measures
+            , cpuTime = cpuTimeId `lookup` measures
                 & maybe 0 (\(Ekg.Counter c) -> toInteger c)
 
-            , gcCpuTime = gcCpuTimeId `Map.lookup` measures
+            , gcCpuTime = gcCpuTimeId `lookup` measures
                 & maybe 0 (\(Ekg.Counter c) -> toInteger c)
             }
 

@@ -22,7 +22,8 @@ module Ogmios.Control.MonadClock
     , _30s
     ) where
 
-import Prelude
+import Relude hiding
+    ( atomically )
 
 import Ogmios.Control.MonadAsync
     ( MonadAsync (..) )
@@ -31,12 +32,8 @@ import Ogmios.Control.MonadSTM
 
 import Control.Exception
     ( evaluate )
-import Control.Monad
-    ( forever )
 import Control.Monad.Reader
-    ( ReaderT, mapReaderT )
-import Control.Monad.Trans
-    ( lift )
+    ( mapReaderT )
 import Data.Time.Clock
     ( DiffTime, NominalDiffTime, UTCTime, diffUTCTime )
 

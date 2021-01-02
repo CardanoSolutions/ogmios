@@ -4,7 +4,7 @@
 
 module Main where
 
-import Prelude
+import Relude
 
 import Ogmios
     ( Command (..)
@@ -17,14 +17,11 @@ import Ogmios
     , withStdoutTracer
     )
 
-import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
-
 main :: IO ()
 main = parseOptions >>= \case
     (_, Version) -> do
-        TIO.putStrLn version
+        putTextLn version
     (network, Start opts@Options{logLevel}) -> do
-        withStdoutTracer "ogmios" logLevel (T.pack . show) $ \tr -> do
+        withStdoutTracer "ogmios" logLevel show $ \tr -> do
             env <- newEnvironment tr network opts
             application tr `runWith` env

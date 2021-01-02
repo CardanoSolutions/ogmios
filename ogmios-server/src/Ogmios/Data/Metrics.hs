@@ -20,12 +20,10 @@ module Ogmios.Data.Metrics
     , emptyDistribution
     ) where
 
-import Prelude
+import Relude
 
 import Data.Aeson
     ( ToJSON (..), genericToJSON )
-import GHC.Generics
-    ( Generic )
 
 import qualified Data.Aeson as Json
 

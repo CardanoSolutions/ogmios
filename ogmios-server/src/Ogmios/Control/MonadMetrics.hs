@@ -13,13 +13,9 @@ module Ogmios.Control.MonadMetrics
     , max
     ) where
 
-import Prelude hiding
+import Relude hiding
     ( max, min )
 
-import Control.Monad.Reader
-    ( ReaderT )
-import Control.Monad.Trans
-    ( lift )
 import System.Metrics.Distribution
     ( Stats, max, mean, min )
 

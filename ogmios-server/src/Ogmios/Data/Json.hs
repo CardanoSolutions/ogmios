@@ -22,7 +22,7 @@ module Ogmios.Data.Json
     , parseGetFilteredUTxO
     ) where
 
-import Prelude
+import Relude
 
 import Cardano.Api.Typed
     ( TxMetadata
@@ -106,26 +106,16 @@ import Codec.Binary.Bech32
     ( HumanReadablePart )
 import Codec.Binary.Bech32.TH
     ( humanReadablePart )
-import Control.Applicative
-    ( Alternative, empty, (<|>) )
 import Control.Arrow
     ( right )
 import Control.Exception
     ( PatternMatchFail (..), throw )
-import Control.Monad
-    ( guard, (>=>) )
-import Control.Monad.Fail
-    ( MonadFail )
 import Control.State.Transition
     ( STS (..) )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..), ToJSONKey (..), (.:), (.=) )
-import Data.Bifunctor
-    ( bimap )
 import Data.ByteArray.Encoding
     ( Base (..), convertFromBase )
-import Data.ByteString
-    ( ByteString )
 import Data.ByteString.Base16
     ( encodeBase16 )
 import Data.ByteString.Base58
@@ -134,38 +124,14 @@ import Data.ByteString.Base64
     ( encodeBase64 )
 import Data.ByteString.Short
     ( fromShort, toShort )
-import Data.Coerce
-    ( coerce )
-import Data.Foldable
-    ( asum, toList )
-import Data.Functor
-    ( ($>) )
-import Data.Functor.Contravariant
-    ( contramap )
-import Data.Functor.Identity
-    ( Identity )
 import Data.IP
     ( IPv4, IPv6 )
-import Data.List.NonEmpty
-    ( NonEmpty )
-import Data.Map.Strict
-    ( Map )
 import Data.Proxy
     ( Proxy (..) )
-import Data.Ratio
-    ( Rational )
 import Data.Sequence.Strict
     ( StrictSeq )
-import Data.Set
-    ( Set )
-import Data.Text
-    ( Text )
 import Data.Vector
     ( Vector )
-import Data.Word
-    ( Word16, Word32, Word64, Word8 )
-import Numeric.Natural
-    ( Natural )
 import Ouroboros.Consensus.Byron.Ledger
     ( ByronBlock (..), ByronHash (..), GenTx )
 import Ouroboros.Consensus.Cardano.Block
@@ -220,9 +186,6 @@ import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map.Strict as Map
-import qualified Data.Set as Set
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
 import qualified Ouroboros.Network.Point as Point
 import qualified Shelley.Spec.Ledger.Address as SL
 import qualified Shelley.Spec.Ledger.Address.Bootstrap as SL
@@ -319,9 +282,9 @@ instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
 
 instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto))
   where
-    parseJSON = Json.withText "Tx" $ \(T.encodeUtf8 -> utf8) -> do
+    parseJSON = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
         bytes <- parseBase16 utf8 <|> parseBase64 utf8
-        deserialiseCBOR (BL.fromStrict bytes) <|> deserialiseCBOR (wrap bytes)
+        deserialiseCBOR (fromStrict bytes) <|> deserialiseCBOR (wrap bytes)
       where
         deserialiseCBOR =
             either (fail . show) (pure . GenTxShelley . snd)
@@ -407,8 +370,8 @@ instance ToAltJSON Text where
 instance ToAltJSON ByteString where
     toAltJSON = toJSON . encodeBase16
 
-instance ToAltJSON BL.ByteString where
-    toAltJSON = toAltJSON . BL.toStrict
+instance ToAltJSON LByteString where
+    toAltJSON = toAltJSON . toStrict
 
 instance ToAltJSON Natural where
     toAltJSON = toJSON
@@ -453,7 +416,7 @@ instance ToAltJSON a => ToAltJSON (Vector a) where
     toAltJSON = toJSON . fmap toAltJSON
 
 instance ToAltJSON a => ToAltJSON (Set a) where
-    toAltJSON = toAltJSON . Set.toList
+    toAltJSON = toAltJSON . toList
 
 instance ToAltJSON a => ToAltJSON (StrictSeq a) where
     toAltJSON = toAltJSON . toList
@@ -535,7 +498,7 @@ instance ToAltJSON SL.UnitInterval where
     toAltJSON = Json.Number . fromRational . SL.unitIntervalToRational
 
 instance ToAltJSON Byron.Address where
-    toAltJSON = toAltJSON . T.decodeUtf8 . addrToBase58
+    toAltJSON = toAltJSON . decodeUtf8 @Text . addrToBase58
 
 instance ToAltJSON b => ToAltJSON (Annotated b a) where
     toAltJSON = toAltJSON . unAnnotated
@@ -626,7 +589,7 @@ instance FromAltJSON SL.Coin where
     fromAltJSON = fmap SL.word64ToCoin . parseJSON
 
 coinToText :: SL.Coin -> Text
-coinToText = T.pack . show . SL.unCoin
+coinToText = show . SL.unCoin
 
 instance Crypto crypto => ToAltJSON (SL.KeyHash any crypto) where
     toAltJSON (SL.KeyHash hash) = toAltJSON hash
@@ -1505,9 +1468,9 @@ instance ToAltJSON ApplyMempoolPayloadErr where
         -- NOTE
         -- branches below aren't actually used because we only submit
         -- payment transaction through the protocol.
-        MempoolDlgErr e -> toAltJSON (show e)
-        MempoolUpdateProposalErr e -> toAltJSON (show e)
-        MempoolUpdateVoteErr e -> toAltJSON (show e)
+        MempoolDlgErr e -> toAltJSON (show @Text e)
+        MempoolUpdateProposalErr e -> toAltJSON (show @Text e)
+        MempoolUpdateVoteErr e -> toAltJSON (show @Text e)
 
 instance ToAltJSON UTxOValidationError where
     toAltJSON = \case
@@ -1691,7 +1654,7 @@ instance Crypto crypto => ToAltJSON (SL.MultiSig (ShelleyEra crypto)) where
                 ]
         SL.RequireMOf n xs ->
             Json.object
-                [ T.pack (show n) .= toAltJSON xs
+                [ show n .= toAltJSON xs
                 ]
 
 instance Era era => ToAltJSON (MA.Timelock era) where
@@ -1708,7 +1671,7 @@ instance Era era => ToAltJSON (MA.Timelock era) where
                 ]
         MA.RequireMOf n xs ->
             Json.object
-                [ T.pack (show n) .= toAltJSON xs
+                [ show n .= toAltJSON xs
                 ]
         MA.RequireTimeExpire s ->
             Json.object
@@ -1737,7 +1700,7 @@ instance Era era => ToAltJSON (NonMyopicMemberRewards era) where
     toAltJSON (NonMyopicMemberRewards rewards) = toAltJSON rewards
 
 instance Crypto crypto => ToAltJSON (SL.PoolDistr crypto) where
-    toAltJSON (SL.PoolDistr m) = toJSON $ Map.map toAltJSON m
+    toAltJSON (SL.PoolDistr m) = toJSON $ fmap toAltJSON m
 
 instance Crypto crypto => ToAltJSON (SL.IndividualPoolStake crypto) where
     toAltJSON x = Json.object
@@ -1746,10 +1709,10 @@ instance Crypto crypto => ToAltJSON (SL.IndividualPoolStake crypto) where
         ]
 
 instance Crypto crypto => ToAltJSON (SL.UTxO (ShelleyEra crypto)) where
-    toAltJSON (SL.UTxO m) = toAltJSON (Map.toList m)
+    toAltJSON (SL.UTxO m) = toAltJSON (toList m)
 
 instance Crypto crypto => ToAltJSON (SL.UTxO (AllegraEra crypto)) where
-    toAltJSON (SL.UTxO m) = toAltJSON (Map.toList m)
+    toAltJSON (SL.UTxO m) = toAltJSON (toList m)
 
 instance ToAltJSON MA.ValidityInterval where
     toAltJSON itv = Json.object
@@ -1805,7 +1768,7 @@ parseGetNonMyopicMemberRewards genResult = Json.withObject "SomeQuery" $ \obj ->
     arg <- obj .: "nonMyopicMemberRewards"
         >>= traverse (choice "credential" [ parseStake, parseCredential ])
     pure $ SomeQuery
-        { query = QueryIfCurrentShelley (GetNonMyopicMemberRewards $ Set.fromList arg)
+        { query = QueryIfCurrentShelley (GetNonMyopicMemberRewards $ fromList arg)
         , encodeResult = toAltJSON
         , genResult
         }
@@ -1895,7 +1858,7 @@ parseGetFilteredUTxO
 parseGetFilteredUTxO genResult = Json.withObject "SomeQuery" $ \obj -> do
     addrs <- obj .: "utxo" >>= traverse parseAddress
     pure SomeQuery
-        { query = QueryIfCurrentShelley (GetFilteredUTxO $ Set.fromList addrs)
+        { query = QueryIfCurrentShelley (GetFilteredUTxO $ fromList addrs)
         , encodeResult = toAltJSON
         , genResult
         }
@@ -1918,10 +1881,10 @@ parseGetFilteredUTxO genResult = Json.withObject "SomeQuery" $ \obj -> do
                     maybe mempty pure $ Bech32.dataPartToBytes dataPart
 
         fromBase58 =
-            maybe mempty pure . decodeBase58 bitcoinAlphabet . T.encodeUtf8
+            maybe mempty pure . decodeBase58 bitcoinAlphabet . encodeUtf8
 
         fromBase16 =
-            either (fail . show) pure . convertFromBase Base16 . T.encodeUtf8
+            either (fail . show) pure . convertFromBase @ByteString Base16 . encodeUtf8
 
 data SomeQuery (f :: * -> *) block = forall result. SomeQuery
     { query :: Query block result

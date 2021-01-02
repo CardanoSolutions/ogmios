@@ -19,7 +19,8 @@ module Ogmios.App.Health
     , TraceHealth (..)
     ) where
 
-import Prelude
+import Relude hiding
+    ( TVar, atomically, writeTVar )
 
 import Ogmios.App.Metrics
     ( RuntimeStats, Sampler, Sensors )
@@ -68,14 +69,6 @@ import Cardano.Network.Protocol.NodeToClient
     ( ApplyErr, Block, Clients (..), connectClient, mkClient )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient )
-import Control.Monad
-    ( forever )
-import Control.Monad.IO.Class
-    ( MonadIO (..) )
-import Control.Monad.Reader
-    ( MonadReader, asks )
-import Data.Function
-    ( (&) )
 import Data.Generics.Internal.VL.Lens
     ( view )
 import Data.Generics.Product.Typed

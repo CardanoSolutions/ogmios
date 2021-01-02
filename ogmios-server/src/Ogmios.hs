@@ -29,8 +29,8 @@ module Ogmios
     , withStdoutTracer
     ) where
 
-import Prelude hiding
-    ( max, min )
+import Relude hiding
+    ( atomically, newTVar )
 
 import Ogmios.App.Health
     ( Health
@@ -62,7 +62,6 @@ import Ogmios.Control.MonadLog
     , Logger
     , MonadLog (..)
     , Severity (..)
-    , contramap
     , withStdoutTracer
     )
 import Ogmios.Control.MonadMetrics
@@ -74,20 +73,12 @@ import Ogmios.Control.MonadWebSocket
 
 import Cardano.Network.Protocol.NodeToClient
     ( Block )
-import Control.Concurrent.STM.TVar
-    ( TVar )
 import Control.Monad.Class.MonadST
     ( MonadST )
-import Control.Monad.IO.Class
-    ( MonadIO (..) )
-import Control.Monad.Reader
-    ( MonadReader, ReaderT (..), ask, asks )
 import Data.Generics.Internal.VL.Lens
     ( view )
 import Data.Generics.Product.Typed
     ( typed )
-import GHC.Generics
-    ( Generic )
 
 --
 -- App

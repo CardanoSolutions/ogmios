@@ -26,7 +26,7 @@ module Ogmios.Control.MonadLog
 
     ) where
 
-import Prelude
+import Relude
 
 import Ogmios.Control.Exception
     ( MonadThrow (..) )
@@ -50,14 +50,8 @@ import Cardano.BM.Setup
     ( setupTrace_, shutdown )
 import Control.Monad.IO.Class
     ( MonadIO (..) )
-import Control.Monad.Reader
-    ( ReaderT )
-import Control.Monad.Trans
-    ( lift )
 import Control.Tracer
-    ( Tracer (..), contramap, natTracer, nullTracer, traceWith )
-import Data.Text
-    ( Text )
+    ( Tracer (..), natTracer, nullTracer, traceWith )
 
 import qualified Cardano.BM.Configuration.Model as CM
 import qualified Cardano.BM.Data.BackendKind as CM

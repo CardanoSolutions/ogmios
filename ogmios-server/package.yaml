@@ -47,6 +47,7 @@ library:
     - cardano-api
     - cardano-binary
     - cardano-client
+    - cardano-crypto
     - cardano-crypto-class
     - cardano-crypto-wrapper
     - cardano-ledger
@@ -69,22 +70,20 @@ library:
     - memory
     - mtl
     - optparse-applicative
-    - optparse-applicative
     - ouroboros-consensus
     - ouroboros-consensus-byron
     - ouroboros-consensus-cardano
     - ouroboros-consensus-shelley
     - ouroboros-network
+    - relude
     - safe
     - safe-exceptions
     - scientific
     - shelley-spec-ledger
     - small-steps
-    - stm
     - text
     - time
     - typed-protocols
-    - unordered-containers
     - vector
     - wai
     - wai-routes
@@ -104,8 +103,8 @@ executables:
       - -O2
       - '"-with-rtsopts=-A100m -T"'
     dependencies:
+    - relude
     - ogmios
-    - text
 
 tests:
   unit:
@@ -135,6 +134,6 @@ tests:
     - ouroboros-network
     - memory
     - QuickCheck
+    - relude
     - shelley-spec-ledger
     - shelley-spec-ledger-test
-    - text

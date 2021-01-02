@@ -25,15 +25,13 @@ module Ogmios.App.Options
     , lookupNetworkMagic
     ) where
 
-import Prelude
+import Relude
 
 import Ogmios.Control.MonadLog
     ( Severity (..) )
 
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
-import GHC.Generics
-    ( Generic )
 import Options.Applicative.Help.Pretty
     ( indent, string, vsep )
 import Ouroboros.Network.Magic
@@ -42,8 +40,6 @@ import Safe
     ( readMay )
 import System.Environment
     ( lookupEnv )
-import System.Exit
-    ( exitFailure )
 
 import Options.Applicative
 
@@ -63,7 +59,7 @@ parseOptions = (,)
 parserInfo :: ParserInfo Command
 parserInfo = info (helper <*> parser) $ mempty
     <> progDesc "Ogmios - A JSON-WSP WebSocket adaptor for cardano-node"
-    <> header (unwords
+    <> header (toString $ unwords
         [ "Provides a bridge between cardano-node and WebSocket clients."
         , "Ogmios translates the existing CBOR-based Ouroboros mini-protocols"
         , "into JSON-WSP-based protocols, through WebSocket channels."
@@ -139,7 +135,7 @@ logLevelOption = option auto $ mempty
     severities = mconcat
         [ [ "Minimal severity required for logging." ]
         , [ separator ]
-        , ("- " <>) . show @Severity <$> [minBound .. maxBound]
+        , ("- " <>) . show @_ @Severity <$> [minBound .. maxBound]
         , [ separator ]
         ]
 

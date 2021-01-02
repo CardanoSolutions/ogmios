@@ -21,27 +21,22 @@ module Ogmios.Data.Protocol.TxSubmission
     , parserVoid
     ) where
 
-import Prelude
+import Relude
 
 import Ogmios.Data.Protocol
     ( MethodName )
 
-import Control.Monad
-    ( void )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..), (.=) )
-import Data.Proxy
-    ( Proxy (..) )
-import Data.Void
-    ( Void )
 import GHC.Generics
-    ( Generic, Rep )
+    ( Rep )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
+import qualified Text.Show
 
 --
 -- SubmitTx
@@ -70,8 +65,8 @@ instance
     ) => Show (SubmitResult e)
   where
     show = \case
-        SubmitSuccess ->"SubmitSuccess"
-        SubmitFail e -> "SubmitFail " <> show e
+        SubmitSuccess -> "SubmitSuccess"
+        SubmitFail e  -> "SubmitFail " <> show e
 
 instance
     ( ToJSON e

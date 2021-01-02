@@ -27,7 +27,8 @@ module Ogmios.App.Protocol.TxSubmission
     ( mkTxSubmissionClient
     ) where
 
-import Prelude
+import Relude hiding
+    ( atomically )
 
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TQueue, readTQueue )
@@ -38,8 +39,6 @@ import Ogmios.Data.Protocol.TxSubmission
 
 import Data.Aeson
     ( FromJSON (..), ToJSON (..) )
-import Data.ByteString
-    ( ByteString )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxClientStIdle (..), LocalTxSubmissionClient (..) )
 

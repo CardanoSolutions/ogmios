@@ -20,21 +20,15 @@ module Ogmios.Data.Protocol.ChainSync
     , parserVoid
     ) where
 
-import Prelude
+import Relude
 
 import Ogmios.Data.Protocol
     ( MethodName )
 
-import Control.Monad
-    ( void )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..) )
-import Data.Proxy
-    ( Proxy (..) )
-import Data.Void
-    ( Void )
 import GHC.Generics
-    ( Generic, Rep )
+    ( Rep )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 

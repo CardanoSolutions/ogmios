@@ -11,7 +11,7 @@ module Ogmios.App.Server
     , TraceServer (..)
     ) where
 
-import Prelude
+import Relude
 
 import Ogmios.App.Options
     ( Options (..) )
@@ -20,14 +20,6 @@ import Ogmios.Control.MonadLog
 import Ogmios.Control.MonadWebSocket
     ( WebSocketApp )
 
-import Control.Monad
-    ( unless )
-import Control.Monad.IO.Class
-    ( MonadIO (..) )
-import Control.Monad.Reader
-    ( MonadReader, asks )
-import Data.Function
-    ( (&) )
 import Data.Generics.Internal.VL.Lens
     ( view )
 import Data.Generics.Product.Typed

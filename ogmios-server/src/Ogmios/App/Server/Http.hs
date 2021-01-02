@@ -15,12 +15,8 @@ module Ogmios.App.Server.Http
     ( mkHttpApp
     ) where
 
-import Prelude
+import Relude
 
-import Control.Concurrent.STM
-    ( TVar, readTVarIO )
-import Control.Monad.IO.Class
-    ( liftIO )
 import Data.Aeson
     ( ToJSON (..) )
 import Data.FileEmbed
@@ -39,7 +35,6 @@ import Wai.Routes
     , waiApp
     )
 
-import qualified Data.Text.Encoding as T
 import qualified Network.Wai as Wai
 
 data Server where
@@ -60,7 +55,7 @@ mkRoute "Server" [parseRoutes|
 getHomeR :: Handler Server
 getHomeR = runHandlerM $ do
     -- TODO: Show live 'health' data instead of a static landing page.
-    html $ T.decodeUtf8 $(embedFile "static/index.html")
+    html $ decodeUtf8 $(embedFile "static/index.html")
 
 getHealthR :: Handler Server
 getHealthR = runHandlerM $ do
@@ -70,7 +65,7 @@ getHealthR = runHandlerM $ do
 
 getBenchmarkR :: Handler Server
 getBenchmarkR = runHandlerM $ do
-    html $ T.decodeUtf8 $(embedFile "static/benchmark.html")
+    html $ decodeUtf8 $(embedFile "static/benchmark.html")
 
 -- | Wai 'Application' representing the HTTP server.
 mkHttpApp
