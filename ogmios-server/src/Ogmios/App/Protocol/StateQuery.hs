@@ -23,6 +23,7 @@
 -- 2. Should a client keep a state acquired for too long, it is likely to become
 --    unreachable at some point, forcing clients to re-acquire.
 --
+-- @
 --                     ┌───────────────┐
 --             ┌──────▶│     Idle      │⇦ START
 --             │       └───┬───────────┘
@@ -38,7 +39,7 @@
 --             │       ┌───────────┴───┐         ┌────────┴───────┐
 --             └───────┤   Acquired    │────────▶│    Querying    │
 --                     └───────────────┘         └────────────────┘
---
+-- @
 module Ogmios.App.Protocol.StateQuery
     ( mkStateQueryClient
     ) where
@@ -78,8 +79,11 @@ mkStateQueryClient
         , MonadSTM m
         )
     => StateQueryCodecs block
+        -- ^ For encoding Haskell types to JSON
     -> TQueue m (StateQueryMessage block)
+        -- ^ Incoming request queue
     -> (Json -> m ())
+        -- ^ An emitter for yielding JSON objects
     -> LocalStateQueryClient block (Point block) (Ledger.Query block) m ()
 mkStateQueryClient StateQueryCodecs{..} queue yield =
     LocalStateQueryClient clientStIdle

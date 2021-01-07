@@ -9,7 +9,8 @@
 {-# OPTIONS_GHC -fno-warn-partial-fields #-}
 
 module Ogmios
-    ( App (..)
+    ( -- * App
+      App (..)
     , application
     , runWith
 
@@ -127,7 +128,7 @@ application tr = do
 -- | Environment of the application, carrying around what's needed for the
 -- application to run.
 data Env (m :: * -> *) = Env
-    { health :: !(TVar (Health Block))
+    { health  :: !(TVar (Health Block))
     , sensors :: !(Sensors m)
     , sampler :: !(Sampler RuntimeStats m)
     , network :: !NetworkParameters

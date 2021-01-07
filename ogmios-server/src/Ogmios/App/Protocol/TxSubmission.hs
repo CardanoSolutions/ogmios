@@ -11,6 +11,7 @@
 -- it returns an error with some details about what went wrong. Clients must
 -- thereby know how to construct valid transactions.
 --
+-- @
 --      ┌──────────┐
 --      │   Busy   │◀══════════════════════════════╗
 --      └────┬─────┘            SubmitTx           ║
@@ -22,7 +23,7 @@
 --           └───────────────────────────────▶│          │
 --                                            │          │⇦ START
 --                                            └──────────┘
---
+-- @
 module Ogmios.App.Protocol.TxSubmission
     ( mkTxSubmissionClient
     ) where
@@ -47,8 +48,11 @@ mkTxSubmissionClient
         ( MonadSTM m
         )
     => TxSubmissionCodecs block
+        -- ^ For encoding Haskell types to JSON
     -> TQueue m (TxSubmissionMessage block)
+        -- ^ Incoming request queue
     -> (Json -> m ())
+        -- ^ An emitter for yielding JSON objects
     -> LocalTxSubmissionClient (SubmitTxPayload block) (SubmitTxError block) m ()
 mkTxSubmissionClient TxSubmissionCodecs{..} queue yield =
     LocalTxSubmissionClient clientStIdle

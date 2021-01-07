@@ -34,15 +34,16 @@ import qualified Network.Wai.Handler.Warp as Warp
 import qualified Network.Wai.Handler.WebSockets as Wai
 import qualified Network.WebSockets as WS
 
--- | Ogmios is made of two part (although the first part really is the core of
--- it):
+-- | Ogmios is made of two parts:
 --
--- (1) A WebSocket server which dedicated communication with an underlying
---     Cardano node and runs all three Ouroboros mini-protocols.
+-- (1) A WebSocket server with a dedicated communication channel to an underlying
+--     Cardano node. It runs all three Ouroboros mini-protocols and translate
+--     them to JSON.
 --
--- (2) An HTTP server which mostly handle monitoring operations.
+-- (2) An HTTP server which mostly handle monitoring operations and serve some
+--     static files.
 --
--- This functions is blocking and starts a Warp server which will route requests
+-- This function is blocking and starts a Warp server which will route requests
 -- to either of the two Wai applications described above.
 connectHybridServer
     :: forall m env.

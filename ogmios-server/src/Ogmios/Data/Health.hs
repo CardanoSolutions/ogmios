@@ -28,7 +28,7 @@ import qualified Data.Aeson as Json
 -- things:
 --
 -- - A metric store which measure runtime statistics.
--- - An Ourobors local chain-sync client which follows the chain's tip.
+-- - An Ouroboros local chain-sync client which follows the chain's tip.
 data Health block = Health
     { lastKnownTip :: !(Tip block)
     -- ^ Last known tip of the core node.

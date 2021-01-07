@@ -17,6 +17,7 @@
 -- Then, it'll simply request the next action to take: either rolling forward
 -- and adding new blocks, or rolling backward.
 --
+-- @
 --     ┌───────────┐
 --     │ Intersect │◀══════════════════════════════╗
 --     └─────┬─────┘         FindIntersect         ║
@@ -32,7 +33,7 @@
 --     ┌──────┐       Roll.{Backward,Forward}      │
 --     │ Next ├────────────────────────────────────┘
 --     └──────┘
---
+-- @
 module Ogmios.App.Protocol.ChainSync
     ( mkChainSyncClient
     , mkHealthCheckClient
@@ -75,8 +76,11 @@ mkChainSyncClient
         ( MonadSTM m
         )
     => ChainSyncCodecs block
+        -- ^ For encoding Haskell types to JSON
     -> TQueue m (ChainSyncMessage block)
+        -- ^ Incoming request queue
     -> (Json -> m ())
+        -- ^ An emitter for yielding JSON objects
     -> ChainSyncClientPipelined block (Point block) (Tip block) m ()
 mkChainSyncClient ChainSyncCodecs{..} queue yield =
     ChainSyncClientPipelined $ clientStIdle Zero Seq.Empty
