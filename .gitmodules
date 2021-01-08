@@ -10,3 +10,6 @@
 [submodule "ogmios-server/src/Ogmios/modules/jsonifier"]
 	path = modules/jsonifier
 	url = https://github.com/KtorZ/jsonifier.git
+[submodule "modules/cardano-ledger-specs"]
+	path = modules/cardano-ledger-specs
+	url = https://github.com/input-output-hk/cardano-ledger-specs.git

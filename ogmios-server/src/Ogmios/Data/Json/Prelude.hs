@@ -2,30 +2,48 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+-- This is used to define the 'keepRedundantContraint' helper here where it is
+-- safe to define, and use it in other Json modules where we do not want to turn
+-- -fno-warn-redundant-constraints for the entire module, but still want some
+-- redundant constraints in order to enforce some restriction at the type-level
+-- to not shoot ourselves in the foot by accident.
+{-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
+
 module Ogmios.Data.Json.Prelude
     ( -- * Prelude
       module Relude
     , Json
-    , jsonToByteString
     , FromJSON
+    , jsonToByteString
     , decodeWith
+    , humanReadablePart
+    , keepRedundantConstraint
+    , choice
 
       -- * Basic Types
+    , encodeBlockNo
     , encodeBool
     , encodeByteArray
     , encodeByteStringBase16
     , encodeByteStringBase64
+    , encodeByteStringBech32
+    , encodeDnsName
     , encodeDouble
+    , encodeEpochNo
     , encodeIPv4
     , encodeIPv6
     , encodeInteger
     , encodeNatural
     , encodeNull
+    , encodePort
     , encodeRational
     , encodeScientific
     , encodeShortByteString
+    , encodeSlotNo
     , encodeString
     , encodeText
+    , encodeUnitInterval
+    , encodeUrl
     , encodeWord
     , encodeWord16
     , encodeWord32
@@ -34,6 +52,7 @@ module Ogmios.Data.Json.Prelude
 
       -- * Data-Structures
     , encodeAnnotated
+    , encodeIdentity
     , encodeFoldable
     , encodeList
     , encodeMap
@@ -52,6 +71,10 @@ import Relude
 
 import Cardano.Binary
     ( Annotated (..) )
+import Cardano.Slotting.Block
+    ( BlockNo (..) )
+import Cardano.Slotting.Slot
+    ( EpochNo (..), SlotNo (..) )
 import Codec.Binary.Bech32
     ( HumanReadablePart )
 import Codec.Binary.Bech32.TH
@@ -62,8 +85,6 @@ import Data.ByteArray
     ( ByteArrayAccess )
 import Data.ByteString.Base16
     ( encodeBase16 )
-import Data.ByteString.Base58
-    ( bitcoinAlphabet, decodeBase58 )
 import Data.ByteString.Base64
     ( encodeBase64 )
 import Data.ByteString.Short
@@ -81,7 +102,16 @@ import Jsonifier
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( Query (..) )
 import Shelley.Spec.Ledger.BaseTypes
-    ( StrictMaybe (..) )
+    ( DnsName
+    , Port
+    , StrictMaybe (..)
+    , UnitInterval
+    , Url
+    , dnsToText
+    , portToWord16
+    , unitIntervalToRational
+    , urlToText
+    )
 
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Data.ByteArray as BA
@@ -106,6 +136,10 @@ decodeWith decoder =
 -- Basic Types
 --
 
+encodeBlockNo :: BlockNo -> Json
+encodeBlockNo =
+    encodeWord64 . unBlockNo
+
 encodeBool :: Bool -> Json
 encodeBool = Json.bool
 
@@ -117,13 +151,26 @@ encodeByteStringBase16 :: ByteString -> Json
 encodeByteStringBase16 =
     encodeText . encodeBase16
 
+encodeByteStringBech32 :: HumanReadablePart -> ByteString -> Json
+encodeByteStringBech32 hrp =
+    encodeText . Bech32.encodeLenient hrp . Bech32.dataPartFromBytes
+
 encodeByteStringBase64 :: ByteString -> Json
 encodeByteStringBase64 =
     encodeText . encodeBase64
 
+encodeDnsName :: DnsName -> Json
+encodeDnsName =
+    encodeText . dnsToText
+
+
 encodeDouble :: Double -> Json
 encodeDouble =
     Json.doubleNumber
+
+encodeEpochNo :: EpochNo -> Json
+encodeEpochNo =
+    encodeWord64 . unEpochNo
 
 encodeIPv4 :: IPv4 -> Json
 encodeIPv4 =
@@ -145,9 +192,13 @@ encodeNull :: Json
 encodeNull =
     Json.null
 
+encodePort :: Port -> Json
+encodePort =
+    encodeWord16 . portToWord16
+
 encodeRational :: Rational -> Json
-encodeRational =
-    encodeDouble . fromRational
+encodeRational r =
+    encodeText (show (numerator r) <> "/" <> show (denominator r))
 
 encodeScientific :: Scientific -> Json
 encodeScientific =
@@ -157,6 +208,10 @@ encodeShortByteString :: (ByteString -> Json) -> ShortByteString -> Json
 encodeShortByteString encodeByteString =
     encodeByteString . fromShort
 
+encodeSlotNo :: SlotNo -> Json
+encodeSlotNo =
+    encodeWord64 . unSlotNo
+
 encodeString :: String -> Json
 encodeString =
     encodeText . toText
@@ -164,6 +219,14 @@ encodeString =
 encodeText :: Text -> Json
 encodeText =
     Json.textString
+
+encodeUnitInterval :: UnitInterval -> Json
+encodeUnitInterval =
+    encodeRational . unitIntervalToRational
+
+encodeUrl :: Url -> Json
+encodeUrl =
+    encodeText . urlToText
 
 encodeWord :: Word -> Json
 encodeWord =
@@ -192,6 +255,10 @@ encodeWord64 =
 encodeAnnotated :: (a -> Json) -> Annotated a any -> Json
 encodeAnnotated encodeElem =
     encodeElem . unAnnotated
+
+encodeIdentity :: (a -> Json) -> Identity a -> Json
+encodeIdentity encodeElem =
+    encodeElem . runIdentity
 
 encodeFoldable :: Foldable f => (a -> Json) -> f a -> Json
 encodeFoldable encodeElem =
@@ -260,3 +327,14 @@ data SomeQuery (f :: * -> *) block = forall result. SomeQuery
     , encodeResult :: result -> Json
     , genResult :: Proxy result -> f result
     }
+
+choice :: (Alternative f, MonadFail f) => String -> [a -> f b] -> a -> f b
+choice entity xs a =
+    asum (xs <*> pure a) <|> fail ("invalid " <> entity)
+
+--
+-- Redundant Constraints
+--
+
+keepRedundantConstraint :: c => Proxy c -> ()
+keepRedundantConstraint _ = ()

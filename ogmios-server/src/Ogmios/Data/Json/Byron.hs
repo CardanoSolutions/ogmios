@@ -27,11 +27,15 @@ import qualified Cardano.Crypto.ProtocolMagic as By
 import qualified Cardano.Crypto.Signing as By
 import qualified Cardano.Crypto.Wallet as CC
 
-encodeAddress :: By.Address -> Json
+encodeAddress
+    :: By.Address
+    -> Json
 encodeAddress =
     encodeText . decodeUtf8 . By.addrToBase58
 
-encodeABlockOrBoundary :: By.ABlockOrBoundary ByteString -> Json
+encodeABlockOrBoundary
+    :: By.ABlockOrBoundary ByteString
+    -> Json
 encodeABlockOrBoundary = \case
     By.ABOBBlock x -> encodeObject
         [ ( "header"
@@ -54,7 +58,9 @@ encodeABlockOrBoundary = \case
           )
         ]
 
-encodeABlockSignature :: By.ABlockSignature any -> Json
+encodeABlockSignature
+    :: By.ABlockSignature any
+    -> Json
 encodeABlockSignature x = encodeObject
     [ ( "dlgCertificate"
       , encodeACertificate (By.delegationCertificate x)
@@ -64,7 +70,9 @@ encodeABlockSignature x = encodeObject
       )
     ]
 
-encodeABody :: By.ABody any -> Json
+encodeABody
+    :: By.ABody any
+    -> Json
 encodeABody x = encodeObject
     [ ( "txPayload"
       , encodeATxPayload (By.bodyTxPayload x)
@@ -77,7 +85,9 @@ encodeABody x = encodeObject
       )
     ]
 
-encodeABoundaryHeader :: By.ABoundaryHeader any -> Json
+encodeABoundaryHeader
+    :: By.ABoundaryHeader any
+    -> Json
 encodeABoundaryHeader x = encodeObject
     [ ( "prevHash"
       , either encodeGenesisHash encodeHash (By.boundaryPrevHash x)
@@ -90,7 +100,9 @@ encodeABoundaryHeader x = encodeObject
       )
     ]
 
-encodeACertificate :: By.ACertificate any -> Json
+encodeACertificate
+    :: By.ACertificate any
+    -> Json
 encodeACertificate x = encodeObject
     [ ( "epoch"
       , encodeAnnotated encodeEpochNumber (By.Dlg.aEpoch x)
@@ -106,7 +118,9 @@ encodeACertificate x = encodeObject
       )
     ]
 
-encodeAHeader :: By.AHeader any -> Json
+encodeAHeader
+    :: By.AHeader any
+    -> Json
 encodeAHeader x = encodeObject
     [ ( "protocolMagicId"
       , encodeAnnotated encodeProtocolMagicId (By.aHeaderProtocolMagicId x)
@@ -137,11 +151,15 @@ encodeAHeader x = encodeObject
       )
     ]
 
-encodeADlgPayload :: By.Dlg.APayload any -> Json
+encodeADlgPayload
+    :: By.Dlg.APayload any
+    -> Json
 encodeADlgPayload =
     encodeList encodeACertificate . By.Dlg.getPayload
 
-encodeTx :: By.Tx -> Json
+encodeTx
+    :: By.Tx
+    -> Json
 encodeTx x = encodeObject
     [ ( "inputs"
       , encodeFoldable encodeTxIn (By.txInputs x)
@@ -151,7 +169,9 @@ encodeTx x = encodeObject
       )
     ]
 
-encodeTxIn :: By.TxIn -> Json
+encodeTxIn
+    :: By.TxIn
+    -> Json
 encodeTxIn (By.TxInUtxo txid ix) = encodeObject
     [ ( "txId"
       , encodeHash txid
@@ -161,7 +181,9 @@ encodeTxIn (By.TxInUtxo txid ix) = encodeObject
       )
     ]
 
-encodeTxOut :: By.TxOut -> Json
+encodeTxOut
+    :: By.TxOut
+    -> Json
 encodeTxOut x = encodeObject
     [ ( "address"
       , encodeAddress (By.txOutAddress x)
@@ -171,7 +193,9 @@ encodeTxOut x = encodeObject
       )
     ]
 
-encodeATxAux :: By.ATxAux any -> Json
+encodeATxAux
+    :: By.ATxAux any
+    -> Json
 encodeATxAux x = encodeObject
     [ ( "id"
       , encodeHash (By.serializeCborHash (By.taTx x))
@@ -184,7 +208,9 @@ encodeATxAux x = encodeObject
       )
     ]
 
-encodeATxPayload :: By.ATxPayload any -> Json
+encodeATxPayload
+    :: By.ATxPayload any
+    -> Json
 encodeATxPayload =
     encodeList encodeATxAux . By.aUnTxPayload
 
@@ -198,7 +224,9 @@ encodeAUpdPayload x = encodeObject
       )
     ]
 
-encodeAUpdProposal :: By.Upd.Proposal.AProposal any -> Json
+encodeAUpdProposal
+    :: By.Upd.Proposal.AProposal any
+    -> Json
 encodeAUpdProposal x = encodeObject
     [ ( "body"
       , encodeAnnotated encodeAUpdProposalBody (By.Upd.Proposal.aBody x)
@@ -211,7 +239,9 @@ encodeAUpdProposal x = encodeObject
       )
     ]
 
-encodeAUpdProposalBody :: By.Upd.Proposal.ProposalBody -> Json
+encodeAUpdProposalBody
+    :: By.Upd.Proposal.ProposalBody
+    -> Json
 encodeAUpdProposalBody x = encodeObject
     [ ( "protocolVersion"
       , encodeProtocolVersion (By.Upd.Proposal.protocolVersion x)
@@ -227,7 +257,9 @@ encodeAUpdProposalBody x = encodeObject
       )
     ]
 
-encodeAVote :: By.Upd.Vote.AVote any -> Json
+encodeAVote
+    :: By.Upd.Vote.AVote any
+    -> Json
 encodeAVote x = encodeObject
     [ ( "voterVk"
       , encodeVerificationKey (By.Upd.Vote.voterVK x)
@@ -240,11 +272,15 @@ encodeAVote x = encodeObject
       )
     ]
 
-encodeApplicationName :: By.ApplicationName -> Json
+encodeApplicationName
+    :: By.ApplicationName
+    -> Json
 encodeApplicationName =
     encodeText . By.unApplicationName
 
-encodeApplyMempoolPayloadErr :: By.ApplyMempoolPayloadErr -> Json
+encodeApplyMempoolPayloadErr
+    :: By.ApplyMempoolPayloadErr
+    -> Json
 encodeApplyMempoolPayloadErr = \case
     By.MempoolTxErr e ->
         encodeUTxOValidationError e
@@ -258,7 +294,9 @@ encodeApplyMempoolPayloadErr = \case
     By.MempoolUpdateVoteErr _e ->
         encodeText "mempoolUpdateVoteError"
 
-encodeBlockProof :: By.Block.Proof -> Json
+encodeBlockProof
+    :: By.Block.Proof
+    -> Json
 encodeBlockProof x = encodeObject
     [ ( "utxo"
       , encodeTxProof (By.proofUTxO x)
@@ -271,31 +309,45 @@ encodeBlockProof x = encodeObject
       )
     ]
 
-encodeChainDifficulty :: By.ChainDifficulty -> Json
+encodeChainDifficulty
+    :: By.ChainDifficulty
+    -> Json
 encodeChainDifficulty =
     encodeWord64 . By.unChainDifficulty
 
-encodeEpochNumber :: By.EpochNumber -> Json
+encodeEpochNumber
+    :: By.EpochNumber
+    -> Json
 encodeEpochNumber =
     encodeWord64 . By.getEpochNumber
 
-encodeGenesisHash :: By.GenesisHash -> Json
+encodeGenesisHash
+    :: By.GenesisHash
+    -> Json
 encodeGenesisHash =
     encodeHash . By.unGenesisHash
 
-encodeHash :: By.Hash a -> Json
+encodeHash
+    :: By.Hash a
+    -> Json
 encodeHash =
     encodeByteStringBase16 . By.hashToBytes
 
-encodeInstallerHash :: By.InstallerHash -> Json
+encodeInstallerHash
+    :: By.InstallerHash
+    -> Json
 encodeInstallerHash =
     encodeHash . By.unInstallerHash
 
-encodeLovelace :: By.Lovelace -> Json
+encodeLovelace
+    :: By.Lovelace
+    -> Json
 encodeLovelace =
     encodeInteger . By.lovelaceToInteger
 
-encodeLovelaceError :: By.LovelaceError -> Json
+encodeLovelaceError
+    :: By.LovelaceError
+    -> Json
 encodeLovelaceError = \case
     By.LovelaceOverflow x ->
         encodeObject [ ( "overflow", encodeWord64 x ) ]
@@ -306,26 +358,36 @@ encodeLovelaceError = \case
     By.LovelaceUnderflow x y ->
         encodeObject [ ( "underflow", encodeList encodeWord64 [x,y] ) ]
 
-encodeLovelacePortion :: By.LovelacePortion -> Json
+encodeLovelacePortion
+    :: By.LovelacePortion
+    -> Json
 encodeLovelacePortion =
     encodeRational . By.lovelacePortionToRational
 
-encodeMerkleRoot :: By.MerkleRoot any -> Json
+encodeMerkleRoot
+    :: By.MerkleRoot any
+    -> Json
 encodeMerkleRoot =
     encodeHash . By.getMerkleRoot
 
-encodeNetworkMagic :: By.NetworkMagic -> Json
+encodeNetworkMagic
+    :: By.NetworkMagic
+    -> Json
 encodeNetworkMagic = \case
     By.NetworkMainOrStage ->
         encodeText "mainnet"
     By.NetworkTestnet pm ->
         encodeObject [ ( "testnet", encodeWord32 pm ) ]
 
-encodeProtocolMagicId :: By.ProtocolMagicId -> Json
+encodeProtocolMagicId
+    :: By.ProtocolMagicId
+    -> Json
 encodeProtocolMagicId =
     encodeWord32 . By.unProtocolMagicId
 
-encodeProtocolParametersUpdate :: By.ProtocolParametersUpdate -> Json
+encodeProtocolParametersUpdate
+    :: By.ProtocolParametersUpdate
+    -> Json
 encodeProtocolParametersUpdate x = encodeObject
     [ ( "scriptVersion"
       , encodeMaybe encodeWord16 (By.ppuScriptVersion x)
@@ -371,7 +433,9 @@ encodeProtocolParametersUpdate x = encodeObject
       )
     ]
 
-encodeProtocolVersion :: By.ProtocolVersion -> Json
+encodeProtocolVersion
+    :: By.ProtocolVersion
+    -> Json
 encodeProtocolVersion x = encodeObject
     [ ( "major"
       , encodeWord16 (By.pvMajor x)
@@ -384,23 +448,33 @@ encodeProtocolVersion x = encodeObject
       )
     ]
 
-encodeRedeemSignature :: By.RedeemSignature any -> Json
+encodeRedeemSignature
+    :: By.RedeemSignature any
+    -> Json
 encodeRedeemSignature (By.RedeemSignature x) =
     encodeByteArray encodeByteStringBase64 x
 
-encodeRedeemVerificationKey :: By.RedeemVerificationKey -> Json
+encodeRedeemVerificationKey
+    :: By.RedeemVerificationKey
+    -> Json
 encodeRedeemVerificationKey (By.RedeemVerificationKey x) =
     encodeByteArray encodeByteStringBase16 x
 
-encodeSignature :: By.Signature any -> Json
+encodeSignature
+    :: By.Signature any
+    -> Json
 encodeSignature (By.Signature x) =
     encodeByteStringBase64 (CC.unXSignature x)
 
-encodeSlotNumber :: By.SlotNumber -> Json
+encodeSlotNumber
+    :: By.SlotNumber
+    -> Json
 encodeSlotNumber =
     encodeWord64 . By.unSlotNumber
 
-encodeSoftforkRule :: By.SoftforkRule -> Json
+encodeSoftforkRule
+    :: By.SoftforkRule
+    -> Json
 encodeSoftforkRule x = encodeObject
     [ ( "initThreshold"
       , encodeLovelacePortion (By.srInitThd x)
@@ -413,7 +487,9 @@ encodeSoftforkRule x = encodeObject
       )
     ]
 
-encodeSoftwareVersion :: By.SoftwareVersion -> Json
+encodeSoftwareVersion
+    :: By.SoftwareVersion
+    -> Json
 encodeSoftwareVersion x = encodeObject
     [ ( "appName"
       , encodeApplicationName (By.svAppName x)
@@ -423,7 +499,9 @@ encodeSoftwareVersion x = encodeObject
       )
     ]
 
-encodeTxFeePolicy :: By.TxFeePolicy -> Json
+encodeTxFeePolicy
+    :: By.TxFeePolicy
+    -> Json
 encodeTxFeePolicy (By.TxFeePolicyTxSizeLinear (By.TxSizeLinear cst coeff)) = encodeObject
     [ ( "constant"
       , encodeLovelace cst
@@ -433,7 +511,9 @@ encodeTxFeePolicy (By.TxFeePolicyTxSizeLinear (By.TxSizeLinear cst coeff)) = enc
       )
     ]
 
-encodeTxProof :: By.TxProof -> Json
+encodeTxProof
+    :: By.TxProof
+    -> Json
 encodeTxProof x = encodeObject
     [ ( "number"
       , encodeWord32 (By.txpNumber x)
@@ -446,11 +526,15 @@ encodeTxProof x = encodeObject
       )
     ]
 
-encodeTxWitness :: By.TxWitness -> Json
+encodeTxWitness
+    :: By.TxWitness
+    -> Json
 encodeTxWitness =
     encodeFoldable encodeTxInWitness
 
-encodeTxInWitness :: By.TxInWitness -> Json
+encodeTxInWitness
+    :: By.TxInWitness
+    -> Json
 encodeTxInWitness = \case
     By.VKWitness key sig -> encodeObject
         [ ( "witnessVk", encodeObject
@@ -520,20 +604,26 @@ encodeTxValidationError = \case
     By.TxValidationUnknownAttributes ->
         encodeText "unknownAttributes"
 
-encodeUTxOError :: By.UTxOError -> Json
+encodeUTxOError
+    :: By.UTxOError
+    -> Json
 encodeUTxOError = \case
     By.UTxOOverlappingUnion ->
         encodeText "overlappingUnion"
     By.UTxOMissingInput txin ->
         encodeObject [ ( "missingInput", encodeTxIn txin ) ]
 
-encodeUTxOValidationError :: By.UTxOValidationError-> Json
+encodeUTxOValidationError
+    :: By.UTxOValidationError
+    -> Json
 encodeUTxOValidationError = \case
     By.UTxOValidationTxValidationError e ->
         encodeObject [ ( "txValidationError", encodeTxValidationError e ) ]
     By.UTxOValidationUTxOError e ->
         encodeObject [ ( "utxoValidationError", encodeUTxOError e ) ]
 
-encodeVerificationKey :: By.VerificationKey -> Json
+encodeVerificationKey
+    :: By.VerificationKey
+    -> Json
 encodeVerificationKey =
     encodeByteStringBase16 . CC.unXPub . By.unVerificationKey

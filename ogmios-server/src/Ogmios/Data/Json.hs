@@ -64,6 +64,8 @@ import Ouroboros.Consensus.HardFork.Combinator
     ( MismatchEraInfo (..), OneEraHash (..) )
 import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
     ( EraMismatch (..), mkEraMismatch )
+import Ouroboros.Consensus.Shelley.Ledger.Query
+    ( NonMyopicMemberRewards (..) )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..), genesisPoint, wrapCBORinCBOR )
 import Ouroboros.Network.Point
@@ -119,15 +121,13 @@ encodeBlock = \case
           , Byron.encodeABlockOrBoundary (byronBlockRaw blk)
           )
         ]
-    BlockShelley _blk -> undefined
+    BlockShelley blk -> encodeObject
+        [ ("shelley"
+          , Shelley.encodeShelleyBlock blk
+          )
+        ]
     BlockAllegra _blk -> undefined
     BlockMary _blk -> undefined
-
-encodeBlockNo
-    :: BlockNo
-    -> Json
-encodeBlockNo =
-    encodeWord64 . unBlockNo
 
 encodeHardForkApplyTxErr
     :: Crypto crypto
@@ -160,6 +160,15 @@ encodeEraMismatch x = encodeObject
       )
     ]
 
+encodeNonMyopicMemberRewards
+    :: NonMyopicMemberRewards era
+    -> Json
+encodeNonMyopicMemberRewards (NonMyopicMemberRewards nonMyopicMemberRewards) =
+    encodeMap
+        (either Shelley.stringifyCoin Shelley.stringifyCredential)
+        (encodeMap Shelley.stringifyPoolId Shelley.encodeCoin)
+        nonMyopicMemberRewards
+
 encodeOneEraHash
     :: OneEraHash eras
     -> Json
@@ -179,12 +188,6 @@ encodePoint = \case
           , encodeOneEraHash (blockPointHash x)
           )
         ]
-
-encodeSlotNo
-    :: SlotNo
-    -> Json
-encodeSlotNo =
-    encodeWord64 . unSlotNo
 
 encodeTip
     :: Tip (CardanoBlock crypto)
@@ -243,9 +246,12 @@ instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
 
 instance Crypto crypto => FromJSON (SomeQuery Maybe (CardanoBlock crypto)) where
     parseJSON = choice "query"
-        [ Shelley.parseGetLedgerTip _void encodeMismatchEraInfo encodePoint
-        -- , parseGetEpochNo _void
-        -- , parseGetNonMyopicMemberRewards _void
+        [ Shelley.parseGetLedgerTip _void
+            encodeMismatchEraInfo encodePoint
+        , Shelley.parseGetEpochNo _void
+            encodeMismatchEraInfo encodeEpochNo
+        , Shelley.parseGetNonMyopicMemberRewards _void
+            encodeMismatchEraInfo encodeNonMyopicMemberRewards
         -- , parseGetCurrentPParams _void
         -- , parseGetProposedPParamsUpdates _void
         -- , parseGetStakeDistribution _void
@@ -274,11 +280,3 @@ decodeOneEraHash
     -> Json.Parser (OneEraHash (CardanoEras crypto))
 decodeOneEraHash =
     either (const mempty) (pure . OneEraHash . toShort . hashToBytes) . decodeHash
-
---
--- Helpers
---
-
-choice :: (Alternative f, MonadFail f) => String -> [a -> f b] -> a -> f b
-choice entity xs a =
-    asum (xs <*> pure a) <|> fail ("invalid " <> entity)
