@@ -31,12 +31,10 @@ import Cardano.Crypto.Hashing
     ( decodeHash, hashToBytes )
 import Cardano.Ledger.Crypto
     ( Crypto )
-import Cardano.Ledger.Era
-    ( Era )
 import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
-    ( EpochNo (..), SlotNo (..), WithOrigin (..) )
+    ( SlotNo (..), WithOrigin (..) )
 import Data.Aeson
     ( (.:) )
 import Data.ByteString.Base16
@@ -49,16 +47,14 @@ import Data.Maybe
     ( fromJust )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock (..) )
+import Ouroboros.Consensus.Byron.Ledger.Mempool
+    ()
 import Ouroboros.Consensus.Cardano.Block
-    ( AllegraEra
-    , CardanoBlock
+    ( CardanoBlock
     , CardanoEras
-    , CardanoQueryResult
     , GenTx (..)
     , HardForkApplyTxErr (..)
     , HardForkBlock (..)
-    , Query (..)
-    , ShelleyEra
     )
 import Ouroboros.Consensus.HardFork.Combinator
     ( MismatchEraInfo (..), OneEraHash (..) )
@@ -69,20 +65,19 @@ import Ouroboros.Consensus.Shelley.Ledger.Query
 import Ouroboros.Network.Block
     ( Point (..), Tip (..), genesisPoint, wrapCBORinCBOR )
 import Ouroboros.Network.Point
-    ( Block (..), WithOrigin (..) )
+    ( Block (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure (..) )
 import Shelley.Spec.Ledger.API
-    ( PraosCrypto )
+    ( ApplyTxError (..), PraosCrypto )
 
-import qualified Cardano.Ledger.Era as Era
 import qualified Codec.CBOR.Encoding as Cbor
 import qualified Codec.CBOR.Read as Cbor
 import qualified Codec.CBOR.Write as Cbor
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
+import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Byron as Byron
-import qualified Ogmios.Data.Json.MaryAllegra as MaryAllegra
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
 --
@@ -117,17 +112,22 @@ encodeBlock
     -> Json
 encodeBlock = \case
     BlockByron blk -> encodeObject
-        [ ("byron"
+        [ ( "byron"
           , Byron.encodeABlockOrBoundary (byronBlockRaw blk)
           )
         ]
     BlockShelley blk -> encodeObject
-        [ ("shelley"
+        [ ( "shelley"
           , Shelley.encodeShelleyBlock blk
           )
         ]
-    BlockAllegra _blk -> undefined
-    BlockMary _blk -> undefined
+    BlockAllegra blk -> encodeObject
+        [ ( "allegra"
+          , Allegra.encodeAllegraBlock blk
+          )
+        ]
+    BlockMary _blk ->
+        encodeText "BlockMary: TODO"
 
 encodeHardForkApplyTxErr
     :: Crypto crypto
@@ -136,12 +136,12 @@ encodeHardForkApplyTxErr
 encodeHardForkApplyTxErr = \case
     ApplyTxErrByron e ->
         Byron.encodeApplyMempoolPayloadErr e
-    ApplyTxErrShelley _e ->
-        undefined
-    ApplyTxErrAllegra _e ->
-        undefined
+    ApplyTxErrShelley (ApplyTxError xs) ->
+        encodeList Shelley.encodeLedgerFailure xs
+    ApplyTxErrAllegra (ApplyTxError xs) ->
+        encodeList Allegra.encodeLedgerFailure xs
     ApplyTxErrMary _e ->
-        undefined
+        encodeText "ApplyTxErrMary: TODO"
     ApplyTxErrWrongEra e ->
         encodeEraMismatch e
 
@@ -210,6 +210,12 @@ encodeTip = \case
 -- Parsers
 --
 
+decodeOneEraHash
+    :: Text
+    -> Json.Parser (OneEraHash (CardanoEras crypto))
+decodeOneEraHash =
+    either (const mempty) (pure . OneEraHash . toShort . hashToBytes) . decodeHash
+
 instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto))
   where
     parseJSON = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
@@ -249,13 +255,17 @@ instance Crypto crypto => FromJSON (SomeQuery Maybe (CardanoBlock crypto)) where
         [ Shelley.parseGetLedgerTip _void
             encodeMismatchEraInfo encodePoint
         , Shelley.parseGetEpochNo _void
-            encodeMismatchEraInfo encodeEpochNo
+            encodeMismatchEraInfo
         , Shelley.parseGetNonMyopicMemberRewards _void
             encodeMismatchEraInfo encodeNonMyopicMemberRewards
-        -- , parseGetCurrentPParams _void
-        -- , parseGetProposedPParamsUpdates _void
-        -- , parseGetStakeDistribution _void
-        -- , parseGetUTxO _void
+        , Shelley.parseGetCurrentPParams _void
+            encodeMismatchEraInfo
+        , Shelley.parseGetProposedPParamsUpdates _void
+            encodeMismatchEraInfo
+        , Shelley.parseGetStakeDistribution _void
+            encodeMismatchEraInfo
+        , Shelley.parseGetUTxO _void
+            encodeMismatchEraInfo
         -- , parseGetFilteredUTxO _void
         ]
       where
@@ -274,9 +284,3 @@ instance Crypto crypto => FromJSON (Tip (CardanoBlock crypto)) where
             hash <- obj .: "hash" >>= decodeOneEraHash
             blockNo <- obj .: "blockNo"
             pure $ Tip (SlotNo slot) hash (BlockNo blockNo)
-
-decodeOneEraHash
-    :: Text
-    -> Json.Parser (OneEraHash (CardanoEras crypto))
-decodeOneEraHash =
-    either (const mempty) (pure . OneEraHash . toShort . hashToBytes) . decodeHash
