@@ -20,10 +20,9 @@ module Ogmios.Control.MonadLog
     , Severity (..)
     , HasSeverityAnnotation (..)
 
-      -- * Instatiation
+      -- * Instantiation
     , LoggerName
     , withStdoutTracer
-
     ) where
 
 import Relude

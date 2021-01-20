@@ -161,7 +161,7 @@ connectClient
     -> FilePath
     -> m ()
 connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
-    let versions = simpleSingletonVersions NodeToClientV_3 vData client
+    let versions = simpleSingletonVersions NodeToClientV_6 vData client
     let socket = localSnocket iocp addr
     connectTo socket tracers versions addr
   where

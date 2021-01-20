@@ -5,17 +5,15 @@
 module Ogmios.Control.MonadClock
     ( -- * Class
       MonadClock (..)
+    , idle
 
       -- * Debouncer
     , Debouncer(..)
     , withDebouncer
 
       -- * Helpers
-    , idle
     , diffTimeToMilliseconds
     , diffTimeToMicroseconds
-
-    -- * Constants
     , _1s
     , _5s
     , _10s
@@ -51,6 +49,10 @@ class Monad m => MonadClock (m :: * -> *) where
     timed :: m a -> m (a, DiffTime)
     -- ^ Measure the actual time taken by an action.
 
+-- | Do nothing. Just wait.
+idle :: MonadClock m => m a
+idle = forever $ threadDelay 43200
+
 instance MonadClock IO where
     getCurrentTime = IO.getCurrentTime
     threadDelay = IO.threadDelay . diffTimeToMicroseconds
@@ -67,10 +69,6 @@ instance MonadClock m => MonadClock (ReaderT env m) where
     getCurrentTime = lift getCurrentTime
     threadDelay = lift . threadDelay
     timed = mapReaderT timed
-
--- | Do nothing. Just wait.
-idle :: MonadClock m => m a
-idle = forever $ threadDelay 43200
 
 --
 -- Debounce
@@ -111,10 +109,6 @@ diffTimeToMilliseconds = round . (* 1000)
 -- | Convert a 'DiffTime' to μs
 diffTimeToMicroseconds :: DiffTime -> Int
 diffTimeToMicroseconds = (* 1000) . diffTimeToMilliseconds
-
---
--- Constants
---
 
 -- | A delay of exactly 1s
 _1s :: DiffTime

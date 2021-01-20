@@ -132,6 +132,13 @@ decodeWith :: (Aeson.Value -> Aeson.Parser a) -> ByteString -> Maybe a
 decodeWith decoder =
     Aeson.decodeStrictWith Aeson.jsonEOF (Aeson.parse decoder)
 
+choice :: (Alternative f, MonadFail f) => String -> [a -> f b] -> a -> f b
+choice entity xs a =
+    asum (xs <*> pure a) <|> fail ("invalid " <> entity)
+
+keepRedundantConstraint :: c => Proxy c -> ()
+keepRedundantConstraint _ = ()
+
 --
 -- Basic Types
 --
@@ -327,14 +334,3 @@ data SomeQuery (f :: * -> *) block = forall result. SomeQuery
     , encodeResult :: result -> Json
     , genResult :: Proxy result -> f result
     }
-
-choice :: (Alternative f, MonadFail f) => String -> [a -> f b] -> a -> f b
-choice entity xs a =
-    asum (xs <*> pure a) <|> fail ("invalid " <> entity)
-
---
--- Redundant Constraints
---
-
-keepRedundantConstraint :: c => Proxy c -> ()
-keepRedundantConstraint _ = ()

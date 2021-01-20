@@ -36,16 +36,9 @@ class Monad m => MonadWebSocket (m :: * -> *) where
         -> (Connection -> m ())
         -> m ()
 
-instance MonadWebSocket m => MonadWebSocket (ReaderT env m) where
-    receive =
-        lift . receive
-    send conn =
-        lift . send conn
-    close conn =
-        lift . close conn
-    acceptRequest pending action = do
-        env <- ask
-        lift $ acceptRequest pending (\conn -> runReaderT (action conn) env)
+headers :: PendingConnection -> Headers
+headers =
+    WS.requestHeaders . WS.pendingRequest
 
 instance MonadWebSocket IO where
     receive =
@@ -61,5 +54,13 @@ instance MonadWebSocket IO where
         afterEachPing :: IO ()
         afterEachPing = return ()
 
-headers :: PendingConnection -> Headers
-headers = WS.requestHeaders . WS.pendingRequest
+instance MonadWebSocket m => MonadWebSocket (ReaderT env m) where
+    receive =
+        lift . receive
+    send conn =
+        lift . send conn
+    close conn =
+        lift . close conn
+    acceptRequest pending action = do
+        env <- ask
+        lift $ acceptRequest pending (\conn -> runReaderT (action conn) env)
