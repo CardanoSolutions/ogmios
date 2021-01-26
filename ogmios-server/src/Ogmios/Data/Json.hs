@@ -13,11 +13,13 @@ module Ogmios.Data.Json
     , decodeWith
 
       -- * Encoders
+    , encodeAcquireFailure
     , encodeBlock
+    , encodeHardForkApplyTxErr
+    , encodeMismatchEraInfo
+    , encodeNonMyopicMemberRewards
     , encodePoint
     , encodeTip
-    , encodeAcquireFailure
-    , encodeHardForkApplyTxErr
 
       -- * Parsers
     , SomeQuery (..)

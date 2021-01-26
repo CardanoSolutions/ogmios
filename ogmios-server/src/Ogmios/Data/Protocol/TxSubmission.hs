@@ -26,6 +26,7 @@ module Ogmios.Data.Protocol.TxSubmission
       -- ** SubmitTx
     , SubmitTx (..)
     , SubmitTxResponse
+    , _encodeSubmitTxResponse
     ) where
 
 import Ogmios.Data.Json.Prelude

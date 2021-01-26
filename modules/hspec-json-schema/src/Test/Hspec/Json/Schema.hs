@@ -12,15 +12,12 @@
 -- Stability: Stable
 -- Portability: Unix
 module Test.Hspec.Json.Schema
-    ( validateToJSON
-    , prop_validateToJSON
+    ( prop_validateToJSON
     , SchemaRef(..)
     ) where
 
 import Prelude
 
-import Data.Aeson
-    ( ToJSON (..) )
 import Data.List.NonEmpty
     ( NonEmpty (..) )
 import Data.Maybe
@@ -91,10 +88,8 @@ import JSONSchema.Validator.Draft4.String
     , PatternInvalid (..)
     , PatternValidator (..)
     )
-import Test.Hspec
-    ( SpecWith, it )
 import Test.QuickCheck
-    ( Gen, Property, counterexample, forAllBlind, withMaxSuccess )
+    ( Property, counterexample )
 import Test.QuickCheck.Monadic
     ( assert, monadicIO, monitor, run )
 import Text.PrettyPrint.ANSI.Leijen hiding
@@ -110,18 +105,6 @@ import qualified Data.Text as T
 newtype SchemaRef = SchemaRef
     { getSchemaRef :: Text
     } deriving (Show, IsString)
-
--- | Generate arbitrary value of a data-type and verify they match a given
--- schema.
-validateToJSON
-    :: forall a. (ToJSON a)
-    => Gen a
-    -> SchemaRef
-    -> SpecWith ()
-validateToJSON arbitrary ref = it (T.unpack $ getSchemaRef ref)
-    $ withMaxSuccess 100
-    $ forAllBlind arbitrary (prop_validateToJSON toJSON ref)
-
 
 -- | Actual property that a given value a should satisfy.
 prop_validateToJSON
