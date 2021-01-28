@@ -97,8 +97,6 @@ import Data.Sequence.Strict
     ( StrictSeq )
 import Data.Vector
     ( Vector )
-import Jsonifier
-    ( Json )
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( Query (..) )
 import Shelley.Spec.Ledger.BaseTypes
@@ -116,21 +114,23 @@ import Shelley.Spec.Ledger.BaseTypes
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Data.ByteArray as BA
 import qualified Data.Map.Strict as Map
-import qualified Jsonifier as Json
 
-import qualified Data.Aeson.Parser.Internal as Aeson
-import qualified Data.Aeson.Types as Aeson
+import qualified Data.Aeson as Json
+import qualified Data.Aeson.Parser.Internal as Json
+import qualified Data.Aeson.Types as Json
 
 --
 -- Prelude
 --
 
-jsonToByteString :: Json -> ByteString
-jsonToByteString = Json.toByteString
+type Json = Json.Value
 
-decodeWith :: (Aeson.Value -> Aeson.Parser a) -> ByteString -> Maybe a
+jsonToByteString :: Json -> ByteString
+jsonToByteString = toStrict . Json.encode
+
+decodeWith :: (Json -> Json.Parser a) -> ByteString -> Maybe a
 decodeWith decoder =
-    Aeson.decodeStrictWith Aeson.jsonEOF (Aeson.parse decoder)
+    Json.decodeStrictWith Json.jsonEOF (Json.parse decoder)
 
 choice :: (Alternative f, MonadFail f) => String -> [a -> f b] -> a -> f b
 choice entity xs a =
@@ -148,7 +148,7 @@ encodeBlockNo =
     encodeWord64 . unBlockNo
 
 encodeBool :: Bool -> Json
-encodeBool = Json.bool
+encodeBool = Json.Bool
 
 encodeByteArray :: ByteArrayAccess ba => (ByteString -> Json) -> ba -> Json
 encodeByteArray encodeByteString =
@@ -170,10 +170,9 @@ encodeDnsName :: DnsName -> Json
 encodeDnsName =
     encodeText . dnsToText
 
-
 encodeDouble :: Double -> Json
 encodeDouble =
-    Json.doubleNumber
+    Json.toJSON
 
 encodeEpochNo :: EpochNo -> Json
 encodeEpochNo =
@@ -189,7 +188,7 @@ encodeIPv6 =
 
 encodeInteger :: Integer -> Json
 encodeInteger =
-    Json.scientificNumber . fromInteger
+    encodeScientific . fromInteger
 
 encodeNatural :: Natural -> Json
 encodeNatural =
@@ -197,7 +196,7 @@ encodeNatural =
 
 encodeNull :: Json
 encodeNull =
-    Json.null
+    Json.Null
 
 encodePort :: Port -> Json
 encodePort =
@@ -209,7 +208,7 @@ encodeRational r =
 
 encodeScientific :: Scientific -> Json
 encodeScientific =
-    Json.scientificNumber
+    Json.Number
 
 encodeShortByteString :: (ByteString -> Json) -> ShortByteString -> Json
 encodeShortByteString encodeByteString =
@@ -225,7 +224,7 @@ encodeString =
 
 encodeText :: Text -> Json
 encodeText =
-    Json.textString
+    Json.String
 
 encodeUnitInterval :: UnitInterval -> Json
 encodeUnitInterval =
@@ -237,23 +236,23 @@ encodeUrl =
 
 encodeWord :: Word -> Json
 encodeWord =
-    Json.wordNumber
+    Json.toJSON
 
 encodeWord8 :: Word8 -> Json
 encodeWord8 =
-    encodeWord . fromIntegral
+    Json.toJSON
 
 encodeWord16 :: Word16 -> Json
 encodeWord16 =
-    encodeWord . fromIntegral
+    Json.toJSON
 
 encodeWord32 :: Word32 -> Json
 encodeWord32 =
-    encodeWord . fromIntegral
+    Json.toJSON
 
 encodeWord64 :: Word64 -> Json
 encodeWord64 =
-    encodeInteger . toInteger
+    Json.toJSON
 
 --
 -- Data-Structures
@@ -269,7 +268,7 @@ encodeIdentity encodeElem =
 
 encodeFoldable :: Foldable f => (a -> Json) -> f a -> Json
 encodeFoldable encodeElem =
-    Json.array . foldr ((:) . encodeElem) []
+    Json.toJSON . foldr ((:) . encodeElem) []
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> [a] -> Json #-}
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> NonEmpty a -> Json #-}
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> Vector a -> Json #-}
@@ -278,20 +277,19 @@ encodeFoldable encodeElem =
 
 encodeList :: (a -> Json) -> [a] -> Json
 encodeList encodeElem =
-    Json.array . fmap encodeElem
+    Json.toJSON . fmap encodeElem
 
 encodeMap :: (k -> Text) -> (v -> Json) -> Map k v -> Json
 encodeMap encodeKey encodeValue =
-    Json.object . Map.foldrWithKey (\k v -> (:) (encodeKey k, encodeValue v)) []
+    encodeObject . Map.foldrWithKey (\k v -> (:) (encodeKey k, encodeValue v)) []
 
 encodeMaybe :: (a -> Json) -> Maybe a -> Json
 encodeMaybe =
-    maybe Json.null
+    maybe encodeNull
 
-encodeObject :: Foldable f => f (Text, Json) -> Json
+encodeObject :: [(Text, Json)] -> Json
 encodeObject =
     Json.object
-{-# SPECIALIZE encodeObject :: [(Text, Json)] -> Json #-}
 
 encode2Tuple
     :: (a -> Json)
@@ -299,7 +297,7 @@ encode2Tuple
     -> (a, b)
     -> Json
 encode2Tuple encodeA encodeB (a,b) =
-    Json.array [encodeA a, encodeB b]
+    Json.toJSON [encodeA a, encodeB b]
 
 encode3Tuple
     :: (a -> Json)
@@ -308,7 +306,7 @@ encode3Tuple
     -> (a, b, c)
     -> Json
 encode3Tuple encodeA encodeB encodeC (a, b, c) =
-    Json.array [encodeA a, encodeB b, encodeC c]
+    Json.toJSON [encodeA a, encodeB b, encodeC c]
 
 encode4Tuple
     :: (a -> Json)
@@ -318,11 +316,11 @@ encode4Tuple
     -> (a, b, c, d)
     -> Json
 encode4Tuple encodeA encodeB encodeC encodeD (a, b, c, d) =
-    Json.array [encodeA a, encodeB b, encodeC c, encodeD d]
+    Json.toJSON [encodeA a, encodeB b, encodeC c, encodeD d]
 
 encodeStrictMaybe :: (a -> Json) -> StrictMaybe a -> Json
 encodeStrictMaybe encodeElem = \case
-    SNothing -> Json.null
+    SNothing -> encodeNull
     SJust a  -> encodeElem a
 
 --

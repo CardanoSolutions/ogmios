@@ -3,6 +3,7 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE TypeApplications #-}
 
 -- NOTE:
 -- This module uses partial record field accessor to automatically derive
@@ -41,6 +42,8 @@ import Ogmios.Data.Json.Prelude
 
 import Ogmios.Data.Json
     ( SomeQuery (..) )
+import Ogmios.Data.Protocol
+    ()
 
 import Ouroboros.Network.Block
     ( Point (..) )
@@ -48,7 +51,6 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure )
 
 import qualified Codec.Json.Wsp as Wsp
-import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Text.Show as T
 
 --
@@ -72,7 +74,7 @@ data StateQueryCodecs block = StateQueryCodecs
         :: ByteString
         -> Maybe (Wsp.Request (Query block))
     , encodeQueryResponse
-        :: Wsp.Response QueryResponse
+        :: Wsp.Response (QueryResponse block)
         -> Json
     }
 
@@ -110,7 +112,7 @@ data StateQueryMessage block
         (Wsp.ToResponse ReleaseResponse)
     | MsgQuery
         (Query block)
-        (Wsp.ToResponse QueryResponse)
+        (Wsp.ToResponse (QueryResponse block))
 
 --
 -- Acquire
@@ -133,23 +135,27 @@ data AcquireResponse block
     deriving (Generic, Show)
 
 _encodeAcquireResponse
-    :: (Point block -> Json)
+    :: forall block. ()
+    => (Point block -> Json)
     -> (AcquireFailure -> Json)
     -> Wsp.Response (AcquireResponse block)
     -> Json
-_encodeAcquireResponse encodePoint encodeAcquireFailure = \case
-    Wsp.Response _ AcquireSuccess{point} -> encodeObject
-        [ ("AcquireSuccess", encodeObject
-            [ ("point", encodePoint point)
+_encodeAcquireResponse encodePoint encodeAcquireFailure =
+    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
+        AcquireSuccess{point} -> encodeObject
+            [ ("AcquireSuccess", encodeObject
+                [ ("point", encodePoint point)
+                ]
+              )
             ]
-          )
-        ]
-    Wsp.Response _ AcquireFailure{failure} -> encodeObject
-        [ ( "AcquireFailure", encodeObject
-            [ ("failure", encodeAcquireFailure failure)
+        AcquireFailure{failure} -> encodeObject
+            [ ( "AcquireFailure", encodeObject
+                [ ("failure", encodeAcquireFailure failure)
+                ]
+              )
             ]
-          )
-        ]
+  where
+    proxy = Proxy @(Wsp.Request (Acquire block))
 
 --
 -- Release
@@ -172,8 +178,11 @@ data ReleaseResponse
 _encodeReleaseResponse
     :: Wsp.Response ReleaseResponse
     -> Json
-_encodeReleaseResponse = \case
-    Wsp.Response _ Released -> encodeText "Released"
+_encodeReleaseResponse =
+    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
+        Released -> encodeText "Released"
+  where
+    proxy = Proxy @(Wsp.Request Release)
 
 --
 -- Query
@@ -189,19 +198,23 @@ _decodeQuery
 _decodeQuery =
     decodeWith (Wsp.genericFromJSON Wsp.defaultOptions)
 
-newtype QueryResponse =
+newtype QueryResponse block =
     QueryResponse { unQueryResponse :: Json }
     deriving (Generic)
 
-instance Show QueryResponse where
+instance Show (QueryResponse block) where
     showsPrec i (QueryResponse json) =
         T.showParen (i >= 10) (T.showString $ "QueryResponse (" <> str <> ")")
       where
         str = decodeUtf8 . jsonToByteString $ json
 
 _encodeQueryResponse
-    :: Wsp.Response QueryResponse
+    :: forall block. ()
+    => Wsp.Response (QueryResponse block)
     -> Json
-_encodeQueryResponse = \case
-    Wsp.Response _ (QueryResponse json) ->
-        json
+_encodeQueryResponse =
+    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
+        QueryResponse json ->
+            json
+  where
+    proxy = Proxy @(Wsp.Request (Query block))

@@ -45,8 +45,6 @@ import Data.ByteString.Base64
     ( decodeBase64 )
 import Data.ByteString.Short
     ( toShort )
-import Data.Maybe
-    ( fromJust )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock (..) )
 import Ouroboros.Consensus.Byron.Ledger.Mempool
@@ -87,7 +85,7 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 --
 
 instance Json.ToJSON (Tip (CardanoBlock crypto)) where
-    toJSON = fromJust . Json.decodeStrict . jsonToByteString . encodeTip
+    toJSON = encodeTip
 
 --
 -- Encoders

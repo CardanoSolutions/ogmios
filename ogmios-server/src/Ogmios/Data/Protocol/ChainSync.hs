@@ -3,6 +3,7 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE TypeApplications #-}
 
 -- NOTE:
 -- This module uses partial record field accessor to automatically derive
@@ -38,7 +39,6 @@ import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 
 import qualified Codec.Json.Wsp as Wsp
-import qualified Codec.Json.Wsp.Handler as Wsp
 
 --
 -- Codecs
@@ -115,20 +115,23 @@ _encodeFindIntersectResponse
     -> (Tip block -> Json)
     -> Wsp.Response (FindIntersectResponse block)
     -> Json
-_encodeFindIntersectResponse encodePoint encodeTip = \case
-    Wsp.Response _ IntersectionFound{point,tip} -> encodeObject
-        [ ("IntersectionFound", encodeObject
-            [ ("point", encodePoint point)
-            , ("tip", encodeTip tip)
+_encodeFindIntersectResponse encodePoint encodeTip =
+    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
+        IntersectionFound{point,tip} -> encodeObject
+            [ ("IntersectionFound", encodeObject
+                [ ("point", encodePoint point)
+                , ("tip", encodeTip tip)
+                ]
+              )
             ]
-          )
-        ]
-    Wsp.Response _ IntersectionNotFound{tip} -> encodeObject
-        [ ("IntersectionNotFound", encodeObject
-            [ ("tip", encodeTip tip)
+        IntersectionNotFound{tip} -> encodeObject
+            [ ("IntersectionNotFound", encodeObject
+                [ ("tip", encodeTip tip)
+                ]
+              )
             ]
-          )
-        ]
+  where
+    proxy = Proxy @(Wsp.Request (FindIntersect block))
 
 --
 -- Requestnext
@@ -155,18 +158,21 @@ _encodeRequestNextResponse
     -> (Tip block -> Json)
     -> Wsp.Response (RequestNextResponse block)
     -> Json
-_encodeRequestNextResponse encodeBlock encodePoint encodeTip = \case
-    Wsp.Response _ RollForward{block,tip} -> encodeObject
-        [ ("RollForward", encodeObject
-            [ ("block", encodeBlock block)
-            , ("tip", encodeTip tip)
+_encodeRequestNextResponse encodeBlock encodePoint encodeTip =
+    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
+        RollForward{block,tip} -> encodeObject
+            [ ("RollForward", encodeObject
+                [ ("block", encodeBlock block)
+                , ("tip", encodeTip tip)
+                ]
+              )
             ]
-          )
-        ]
-    Wsp.Response _ RollBackward{point,tip} -> encodeObject
-        [ ("RollBackward", encodeObject
-            [ ("point", encodePoint point)
-            , ("tip", encodeTip tip)
+        RollBackward{point,tip} -> encodeObject
+            [ ("RollBackward", encodeObject
+                [ ("point", encodePoint point)
+                , ("tip", encodeTip tip)
+                ]
+              )
             ]
-          )
-        ]
+  where
+    proxy = Proxy @(Wsp.Request RequestNext)

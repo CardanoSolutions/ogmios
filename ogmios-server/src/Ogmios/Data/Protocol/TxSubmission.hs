@@ -31,13 +31,15 @@ module Ogmios.Data.Protocol.TxSubmission
 
 import Ogmios.Data.Json.Prelude
 
+import Ogmios.Data.Protocol
+    ()
+
 import Cardano.Network.Protocol.NodeToClient
     ( SubmitTxError, SubmitTxPayload )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
 
 import qualified Codec.Json.Wsp as Wsp
-import qualified Codec.Json.Wsp.Handler as Wsp
 
 --
 -- Codecs
@@ -92,12 +94,16 @@ _decodeSubmitTx =
 type SubmitTxResponse block = SubmitResult (SubmitTxError block)
 
 _encodeSubmitTxResponse
-    :: Proxy block
+    :: forall block. ()
+    => Proxy block
     -> (SubmitTxError block -> Json)
     -> Wsp.Response (SubmitTxResponse block)
     -> Json
-_encodeSubmitTxResponse _proxy encodeSubmitTxError = \case
-    Wsp.Response _ SubmitSuccess ->
-        encodeText "SubmitSuccess"
-    Wsp.Response _ (SubmitFail e) ->
-        encodeObject [ ( "SubmitFail", encodeSubmitTxError e ) ]
+_encodeSubmitTxResponse _proxy encodeSubmitTxError =
+    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
+        SubmitSuccess ->
+            encodeText "SubmitSuccess"
+        (SubmitFail e) ->
+            encodeObject [ ( "SubmitFail", encodeSubmitTxError e ) ]
+  where
+    proxy = Proxy @(Wsp.Request (SubmitTx block))

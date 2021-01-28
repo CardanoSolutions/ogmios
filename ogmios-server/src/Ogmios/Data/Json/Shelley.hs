@@ -1071,7 +1071,7 @@ encodeVerKeyDSign
     => CC.VerKeyDSIGN alg
     -> Json
 encodeVerKeyDSign =
-    encodeByteStringBase64 . CC.rawSerialiseVerKeyDSIGN
+    encodeByteStringBase16 . CC.rawSerialiseVerKeyDSIGN
 
 encodeVerKeyKES
     :: CC.KESAlgorithm alg
