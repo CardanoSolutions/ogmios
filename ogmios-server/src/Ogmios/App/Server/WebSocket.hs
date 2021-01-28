@@ -180,7 +180,7 @@ newOuroborosClients conn = do
     (chainSyncQ, txSubmissionQ, stateQueryQ) <-
         atomically $ (,,) <$> newTQueue <*> newTQueue <*> newTQueue
 
-    link =<< async (routeMessage chainSyncQ stateQueryQ txSubmissionQ)
+    link =<< async (routeMessage Nothing chainSyncQ stateQueryQ txSubmissionQ)
 
     pure Clients
         { chainSyncClient =
@@ -194,29 +194,39 @@ newOuroborosClients conn = do
     yield :: Json -> m ()
     yield = send conn . jsonToByteString
 
+    push :: TQueue m any -> any -> m ()
+    push queue = atomically . writeTQueue queue
+
     routeMessage
-        :: TQueue m (ChainSyncMessage Block)
+        :: Maybe (ByteString, m ())
+        -> TQueue m (ChainSyncMessage Block)
         -> TQueue m (StateQueryMessage Block)
         -> TQueue m (TxSubmissionMessage Block)
         -> m ()
-    routeMessage chainSyncQ stateQueryQ txSubmissionQ = forever $ do
+    routeMessage cache chainSyncQ stateQueryQ txSubmissionQ = do
         bytes <- receive conn
-        Wsp.match bytes (defaultHandler bytes)
-            [ Wsp.Handler decodeRequestNext
-                (\r -> atomically . writeTQueue chainSyncQ . MsgRequestNext r)
-            , Wsp.Handler decodeFindIntersect
-                (\r -> atomically . writeTQueue chainSyncQ . MsgFindIntersect r)
+        case cache of
+            Just (prev, again) | prev == bytes ->
+                again *> routeMessage cache chainSyncQ stateQueryQ txSubmissionQ
 
-            , Wsp.Handler decodeAcquire
-                (\r -> atomically . writeTQueue stateQueryQ . MsgAcquire r)
-            , Wsp.Handler decodeRelease
-                (\r -> atomically . writeTQueue stateQueryQ . MsgRelease r)
-            , Wsp.Handler decodeQuery
-                (\r -> atomically . writeTQueue stateQueryQ . MsgQuery r)
+            _ -> do
+                matched <- Wsp.match bytes (defaultHandler bytes)
+                    [ Wsp.Handler decodeRequestNext
+                        (\r -> push chainSyncQ . MsgRequestNext r)
+                    , Wsp.Handler decodeFindIntersect
+                        (\r -> push chainSyncQ . MsgFindIntersect r)
 
-            , Wsp.Handler decodeSubmitTx
-                (\r -> atomically . writeTQueue txSubmissionQ .  MsgSubmitTx r)
-            ]
+                    , Wsp.Handler decodeAcquire
+                        (\r -> push stateQueryQ . MsgAcquire r)
+                    , Wsp.Handler decodeRelease
+                        (\r -> push stateQueryQ . MsgRelease r)
+                    , Wsp.Handler decodeQuery
+                        (\r -> push stateQueryQ . MsgQuery r)
+
+                    , Wsp.Handler decodeSubmitTx
+                        (\r -> push txSubmissionQ .  MsgSubmitTx r)
+                    ]
+                routeMessage matched chainSyncQ stateQueryQ txSubmissionQ
 
     chainSyncCodecs@ChainSyncCodecs
         { decodeFindIntersect

@@ -100,19 +100,31 @@ data Handler (m :: * -> *) a where
         -> (req -> (res -> Response res) -> m a)
         -> Handler m a
 
+type Matched m = (ByteString, m ())
+
 -- | Try parsing a given 'ByteString' into a request Handler. Handlers are
 -- tried alternatively in order; The most frequent handlers must therefore be
 -- placed first in the list.
 --
+-- It also returns the handler that was matched if any, which allows for
+-- re-running it if the same input is presented (without having to decode and
+-- look again for a route). This is useful when the same handler gets repeatedly
+-- triggered by identical messages.
+--
 -- @since 2.0.0
 match
-    :: ByteString
-    -> m a
-    -> [Handler m a]
-    -> m a
+    :: Monad m
+    => ByteString
+    -> m ()
+    -> [Handler m ()]
+    -> m (Maybe (Matched m))
 match bytes defaultHandler = \case
-    [] -> defaultHandler
+    [] -> Nothing <$ defaultHandler
     (Handler decode next):q ->
         case decode bytes of
-            Just (Request refl req) -> next req (Response refl)
-            Nothing -> match bytes defaultHandler q
+            Just (Request refl req) -> do
+                let matched = next req (Response refl)
+                Just (bytes, matched) <$ matched
+
+            Nothing ->
+                match bytes defaultHandler q
