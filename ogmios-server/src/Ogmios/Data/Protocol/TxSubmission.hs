@@ -25,6 +25,7 @@ module Ogmios.Data.Protocol.TxSubmission
 
       -- ** SubmitTx
     , SubmitTx (..)
+    , _decodeSubmitTx
     , SubmitTxResponse
     , _encodeSubmitTxResponse
     ) where
@@ -40,6 +41,7 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
 
 import qualified Codec.Json.Wsp as Wsp
+import qualified Data.Aeson.Types as Json
 
 --
 -- Codecs
@@ -61,7 +63,7 @@ mkTxSubmissionCodecs
 mkTxSubmissionCodecs encodeSubmitTxError =
     TxSubmissionCodecs
         { decodeSubmitTx =
-            _decodeSubmitTx
+            decodeWith _decodeSubmitTx
         , encodeSubmitTxResponse =
             _encodeSubmitTxResponse (Proxy @block) encodeSubmitTxError
         }
@@ -86,10 +88,10 @@ deriving instance Show (SubmitTxPayload block) => Show (SubmitTx block)
 
 _decodeSubmitTx
     :: FromJSON (SubmitTxPayload block)
-    => ByteString
-    -> Maybe (Wsp.Request (SubmitTx block))
+    => Json
+    -> Json.Parser (Wsp.Request (SubmitTx block))
 _decodeSubmitTx =
-    decodeWith (Wsp.genericFromJSON Wsp.defaultOptions)
+    Wsp.genericFromJSON Wsp.defaultOptions
 
 type SubmitTxResponse block = SubmitResult (SubmitTxError block)
 

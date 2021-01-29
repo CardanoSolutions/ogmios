@@ -2,6 +2,8 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE TypeApplications #-}
+
 {-# OPTIONS_GHC -fno-warn-partial-fields #-}
 
 module Ogmios.App.Server.WebSocket
@@ -19,6 +21,8 @@ import Ogmios.App.Metrics
     ( Sensors, recordSession )
 import Ogmios.App.Options
     ( NetworkParameters (..), Options (..) )
+import Ogmios.App.Protocol
+    ( onUnmatchedMessage )
 import Ogmios.App.Protocol.ChainSync
     ( mkChainSyncClient )
 import Ogmios.App.Protocol.StateQuery
@@ -197,6 +201,9 @@ newOuroborosClients conn = do
     push :: TQueue m any -> any -> m ()
     push queue = atomically . writeTQueue queue
 
+    defaultHandler :: ByteString -> m ()
+    defaultHandler = yield . onUnmatchedMessage @Block
+
     routeMessage
         :: Maybe (ByteString, m ())
         -> TQueue m (ChainSyncMessage Block)
@@ -242,10 +249,6 @@ newOuroborosClients conn = do
     txSubmissionCodecs@TxSubmissionCodecs
         { decodeSubmitTx
         } = mkTxSubmissionCodecs encodeHardForkApplyTxErr
-
-    -- FIXME: Do error handling here.
-    defaultHandler :: ByteString -> m ()
-    defaultHandler _ = return ()
 
 --
 -- Logging

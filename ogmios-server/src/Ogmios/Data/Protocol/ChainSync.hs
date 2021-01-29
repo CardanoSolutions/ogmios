@@ -21,11 +21,13 @@ module Ogmios.Data.Protocol.ChainSync
 
       -- ** FindIntersect
     , FindIntersect (..)
+    , _decodeFindIntersect
     , FindIntersectResponse (..)
     , _encodeFindIntersectResponse
 
       -- ** RequestNext
     , RequestNext (..)
+    , _decodeRequestNext
     , RequestNextResponse (..)
     , _encodeRequestNextResponse
     ) where
@@ -39,6 +41,7 @@ import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 
 import qualified Codec.Json.Wsp as Wsp
+import qualified Data.Aeson.Types as Json
 
 --
 -- Codecs
@@ -68,11 +71,11 @@ mkChainSyncCodecs
 mkChainSyncCodecs encodeBlock encodePoint encodeTip =
     ChainSyncCodecs
         { decodeFindIntersect =
-            _decodeFindIntersect
+            decodeWith _decodeFindIntersect
         , encodeFindIntersectResponse =
             _encodeFindIntersectResponse encodePoint encodeTip
         , decodeRequestNext =
-            _decodeRequestNext
+            decodeWith _decodeRequestNext
         , encodeRequestNextResponse =
             _encodeRequestNextResponse encodeBlock encodePoint encodeTip
         }
@@ -99,10 +102,10 @@ data FindIntersect block
 
 _decodeFindIntersect
     :: FromJSON (Point block)
-    => ByteString
-    -> Maybe (Wsp.Request (FindIntersect block))
+    => Json
+    -> Json.Parser (Wsp.Request (FindIntersect block))
 _decodeFindIntersect =
-    decodeWith (Wsp.genericFromJSON Wsp.defaultOptions)
+    Wsp.genericFromJSON Wsp.defaultOptions
 
 data FindIntersectResponse block
     = IntersectionFound { point :: Point block, tip :: Tip block }
@@ -142,10 +145,10 @@ data RequestNext
     deriving (Generic, Show)
 
 _decodeRequestNext
-    :: ByteString
-    -> Maybe (Wsp.Request RequestNext)
+    :: Json
+    -> Json.Parser (Wsp.Request RequestNext)
 _decodeRequestNext =
-    decodeWith (Wsp.genericFromJSON Wsp.defaultOptions)
+    Wsp.genericFromJSON Wsp.defaultOptions
 
 data RequestNextResponse block
     = RollForward { block :: block, tip :: Tip block }

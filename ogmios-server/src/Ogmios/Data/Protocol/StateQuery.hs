@@ -51,6 +51,7 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure )
 
 import qualified Codec.Json.Wsp as Wsp
+import qualified Data.Aeson.Types as Json
 import qualified Text.Show as T
 
 --
@@ -86,15 +87,15 @@ mkStateQueryCodecs
 mkStateQueryCodecs encodePoint encodeAcquireFailure =
     StateQueryCodecs
         { decodeAcquire =
-            _decodeAcquire
+            decodeWith _decodeAcquire
         , encodeAcquireResponse =
             _encodeAcquireResponse encodePoint encodeAcquireFailure
         , decodeRelease =
-            _decodeRelease
+            decodeWith _decodeRelease
         , encodeReleaseResponse =
             _encodeReleaseResponse
         , decodeQuery =
-            _decodeQuery
+            decodeWith _decodeQuery
         , encodeQueryResponse =
             _encodeQueryResponse
         }
@@ -124,10 +125,10 @@ data Acquire block
 
 _decodeAcquire
     :: FromJSON (Point block)
-    => ByteString
-    -> Maybe (Wsp.Request (Acquire block))
+    => Json
+    -> Json.Parser (Wsp.Request (Acquire block))
 _decodeAcquire =
-    decodeWith (Wsp.genericFromJSON Wsp.defaultOptions)
+    Wsp.genericFromJSON Wsp.defaultOptions
 
 data AcquireResponse block
     = AcquireSuccess { point :: Point block }
@@ -166,10 +167,10 @@ data Release
     deriving (Generic, Show)
 
 _decodeRelease
-    :: ByteString
-    -> Maybe (Wsp.Request Release)
+    :: Json
+    -> Json.Parser (Wsp.Request Release)
 _decodeRelease =
-    decodeWith (Wsp.genericFromJSON Wsp.defaultOptions)
+    Wsp.genericFromJSON Wsp.defaultOptions
 
 data ReleaseResponse
     = Released
@@ -193,10 +194,10 @@ data Query block = Query { query :: SomeQuery Maybe block }
 
 _decodeQuery
     :: FromJSON (SomeQuery Maybe block)
-    => ByteString
-    -> Maybe (Wsp.Request (Query block))
+    => Json
+    -> Json.Parser (Wsp.Request (Query block))
 _decodeQuery =
-    decodeWith (Wsp.genericFromJSON Wsp.defaultOptions)
+    Wsp.genericFromJSON Wsp.defaultOptions
 
 newtype QueryResponse block =
     QueryResponse { unQueryResponse :: Json }
