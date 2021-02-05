@@ -292,10 +292,13 @@ codecs
     => EpochSlots
     -> ClientCodecs Block m
 codecs epochSlots =
-    clientCodecs (CardanoCodecConfig byron shelley allegra mary) version
+    clientCodecs cfg (supportedVersions ! version) version
   where
-    byron   = ByronCodecConfig epochSlots
-    shelley = ShelleyCodecConfig
-    allegra = ShelleyCodecConfig
-    mary    = ShelleyCodecConfig
-    version = supportedNodeToClientVersions (Proxy @Block) ! NodeToClientV_3
+    version = NodeToClientV_8
+    supportedVersions = supportedNodeToClientVersions (Proxy @Block)
+    cfg = CardanoCodecConfig byron shelley allegra mary
+      where
+        byron   = ByronCodecConfig epochSlots
+        shelley = ShelleyCodecConfig
+        allegra = ShelleyCodecConfig
+        mary    = ShelleyCodecConfig

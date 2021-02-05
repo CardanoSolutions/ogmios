@@ -7,6 +7,3 @@
 [submodule "hugo-theme-learn"]
 	path = docs/themes/learn
 	url = https://github.com/matcornic/hugo-theme-learn
-[submodule "modules/cardano-ledger-specs"]
-	path = modules/cardano-ledger-specs
-	url = https://github.com/input-output-hk/cardano-ledger-specs.git

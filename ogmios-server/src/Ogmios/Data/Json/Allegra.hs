@@ -10,8 +10,6 @@ import Ogmios.Data.Json.Prelude
 
 import Cardano.Ledger.Crypto
     ( Crypto )
-import Cardano.Ledger.Era
-    ( Era )
 import GHC.Records
     ( getField )
 import Ouroboros.Consensus.Cardano.Block
@@ -23,12 +21,13 @@ import Shelley.Spec.Ledger.BaseTypes
 
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
-import qualified Cardano.Ledger.ShelleyMA.Metadata as MA
+import qualified Cardano.Ledger.AuxiliaryData as MA
+import qualified Cardano.Ledger.Era as Era
+import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
 import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
 import qualified Cardano.Ledger.ShelleyMA.Timelocks as MA
 import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
-import qualified Shelley.Spec.Ledger.MetaData as Sh
 import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
 import qualified Shelley.Spec.Ledger.STS.Ledgers as Sh
 import qualified Shelley.Spec.Ledger.Tx as Sh
@@ -55,6 +54,19 @@ encodeAllegraBlock (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
       )
     ]
 
+encodeAuxiliaryData
+    :: Crypto crypto
+    => MA.AuxiliaryData (AllegraEra crypto)
+    -> Json
+encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
+    [ ( "blob"
+      , Shelley.encodeMetadataBlob blob
+      )
+    , ( "scriptPreImages"
+      , encodeFoldable encodeTimelock scripts
+      )
+    ]
+
 encodeLedgerFailure
     :: Crypto crypto
     => Sh.LedgersPredicateFailure (AllegraEra crypto)
@@ -65,22 +77,9 @@ encodeLedgerFailure = \case
     Sh.LedgerFailure (Sh.DelegsFailure e) ->
         Shelley.encodeDelegsFailure e
 
-encodeMetadata
-    :: Crypto crypto
-    => MA.Metadata (AllegraEra crypto)
-    -> Json
-encodeMetadata (MA.Metadata blob scripts) = encodeObject
-    [ ( "blob"
-      , Shelley.encodeMetadataBlob blob
-      )
-    , ( "scriptPreImages"
-      , encodeFoldable encodeTimelock scripts
-      )
-    ]
-
 encodeTimelock
-    :: Era era
-    => MA.Timelock era
+    :: Crypto crypto
+    => MA.Timelock crypto
     -> Json
 encodeTimelock = \case
     MA.RequireSignature sig ->
@@ -112,17 +111,17 @@ encodeTx x = encodeObject
       )
     , ( "metadata", encodeObject
         [ ( "hash"
-          , encodeStrictMaybe Shelley.encodeMetadataHash (mdHash (Sh._body x))
+          , encodeStrictMaybe Shelley.encodeAuxiliaryDataHash (adHash (Sh._body x))
           )
         , ( "body"
-          , encodeStrictMaybe encodeMetadata (Sh._metadata x)
+          , encodeStrictMaybe encodeAuxiliaryData (Sh._metadata x)
           )
         ]
       )
     ]
   where
-    mdHash :: MA.TxBody era -> StrictMaybe (Sh.MetaDataHash era)
-    mdHash = getField @"mdHash"
+    adHash :: MA.TxBody era -> StrictMaybe (MA.AuxiliaryDataHash (Era.Crypto era))
+    adHash = getField @"adHash"
 
 encodeTxBody
     :: Crypto crypto
@@ -169,6 +168,12 @@ encodeUtxoFailure = \case
                 [ ( "interval" , encodeValidityInterval itv )
                 , ( "currentSlot" , encodeSlotNo currentSlot )
                 ]
+              )
+            ]
+    MA.OutputTooBigUTxO outs ->
+        encodeObject
+            [ ( "outputsTooLarge"
+              , encodeFoldable Shelley.encodeTxOut outs
               )
             ]
     MA.MaxTxSizeUTxO actualSize maxSize ->
@@ -234,11 +239,11 @@ encodeValidityInterval
     :: MA.ValidityInterval
     -> Json
 encodeValidityInterval x = encodeObject
-    [ ( "validFrom"
-      , encodeStrictMaybe encodeSlotNo (MA.validFrom x)
+    [ ( "invalidBefore"
+      , encodeStrictMaybe encodeSlotNo (MA.invalidBefore x)
       )
-    , ( "validTo"
-      , encodeStrictMaybe encodeSlotNo (MA.validTo x)
+    , ( "invalidHereafter"
+      , encodeStrictMaybe encodeSlotNo (MA.invalidHereafter x)
       )
     ]
 

@@ -1,6 +1,6 @@
 name: _
 
-resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/b0a6b22eb5a66e80fcf2d4eaf2cb39094c1d9dd4/snapshots/cardano-1.24.0.yaml
+resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/1c257e85cadb503ced0fe0a9ba757ae449baaf0b/snapshots/cardano-1.25.1.yaml
 
 packages:
 - hedgehog-quickcheck-0.1.1
@@ -8,18 +8,20 @@ packages:
 - hjsonschema-1.9.0
 - string-interpolate-0.3.0.2
 
-# commit 27c58fb5e24645632a93abee7d7cac31f68e25e4
-# Author: KtorZ <matthias.benkort@gmail.com>
-# Date:   Fri Jan 8 20:01:19 2021 +0100
+# commit 097890495cbb0e8b62106bcd090a5721c3f4b36f
+# Merge: e392f9d9 b23e2006
+# Author: Jared Corduan <jared.corduan@iohk.io>
+# Date:   Wed Jan 20 13:40:27 2021 -0500
 #
-#     expose HKD to allow consumers to operate on PParams' in a more generic manner
-- git: https://github.com/KtorZ/cardano-ledger-specs
-  commit: 27c58fb5e24645632a93abee7d7cac31f68e25e4
+#   Merge pull request #2107 from input-output-hk/better-min-utxo
+#
+- git: https://github.com/input-output-hk/cardano-ledger-specs
+  commit: 097890495cbb0e8b62106bcd090a5721c3f4b36f
   subdirs:
   - shelley-ma/shelley-ma-test
   - shelley/chain-and-ledger/executable-spec
 
-# commit 0c6f678351811a375f9344f90ba1ad8844fc4b31 (HEAD -> 1.24.0)
+# commit 7f8daad43dbb0ae97fe24d36eaff857f63cf5711 (HEAD -> 1.25.1)
 # Author: KtorZ <matthias.benkort@gmail.com>
 # Date:   Sat Apr 25 00:17:09 2020 +0200
 #
@@ -33,7 +35,7 @@ packages:
 #     collected and buffered upfront.
 #
 - git: https://github.com/KtorZ/ouroboros-network
-  commit: 0c6f678351811a375f9344f90ba1ad8844fc4b31
+  commit: 7f8daad43dbb0ae97fe24d36eaff857f63cf5711
   subdirs:
     - ouroboros-consensus
     - ouroboros-consensus-test
@@ -43,12 +45,12 @@ packages:
     - ouroboros-consensus-cardano-test
     - ouroboros-network
 
-# commit be857bca0f75dfad254ac07ea21ad1f4cecf6a68 (HEAD -> 1.24.0)
+# commit c4b23254e28204a5ac1e91bef4a7d4d5fbdf6837 (HEAD -> 1.25.1)
 # Author: KtorZ <matthias.benkort@gmail.com>
 # Date:   Sun Oct 4 18:04:07 2020 +0200
 #
 #     accommodate ClientStAcquiring now requiring an effect
 - git: https://github.com/KtorZ/cardano-node
-  commit: be857bca0f75dfad254ac07ea21ad1f4cecf6a68
+  commit: 1777493c3b353f75ca796b78484d4b2da5ea5864
   subdirs:
     - cardano-api

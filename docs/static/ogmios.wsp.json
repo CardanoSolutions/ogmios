@@ -2267,15 +2267,15 @@
   , "ValidityInterval":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "validFrom", "validTo" ]
+    , "required": [ "invalidBefore", "invalidHereafter" ]
     , "properties":
-      { "validFrom":
+      { "invalidBefore":
           { "oneOf":
             [ { "type": "null" }
             , { "$ref": "#/definitions/Slot" }
             ]
           }
-      , "validTo":
+      , "invalidHereafter":
           { "oneOf":
             [ { "type": "null" }
             , { "$ref": "#/definitions/Slot" }

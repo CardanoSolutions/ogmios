@@ -1,4 +1,4 @@
-resolver: snapshot.yaml
+resolver: resolver.yaml
 
 # Generate files required by weeder
 # See https://github.com/ndmitchell/weeder/issues/53

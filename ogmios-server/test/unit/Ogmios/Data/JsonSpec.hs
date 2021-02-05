@@ -431,9 +431,9 @@ genEpochResult _ = frequency
     ]
 
 genNonMyopicMemberRewardsResult
-    :: forall crypto era. (crypto ~ StandardCrypto, era ~ AllegraEra crypto)
-    => Proxy (QueryResult crypto (NonMyopicMemberRewards era))
-    -> Gen (QueryResult crypto (NonMyopicMemberRewards era))
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Proxy (QueryResult crypto (NonMyopicMemberRewards crypto))
+    -> Gen (QueryResult crypto (NonMyopicMemberRewards crypto))
 genNonMyopicMemberRewardsResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> arbitrary)

@@ -95,7 +95,7 @@ mkStateQueryClient StateQueryCodecs{..} queue yield =
         :: m (LSQ.ClientStIdle block (Point block) (Ledger.Query block) m ())
     clientStIdle = await >>= \case
         MsgAcquire (Acquire pt) toResponse ->
-            pure $ LSQ.SendMsgAcquire pt (clientStAcquiring pt toResponse)
+            pure $ LSQ.SendMsgAcquire (Just pt) (clientStAcquiring pt toResponse)
         MsgRelease Release toResponse -> do
             yield $ encodeReleaseResponse (toResponse Released)
             clientStIdle
@@ -120,7 +120,7 @@ mkStateQueryClient StateQueryCodecs{..} queue yield =
         :: m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
     clientStAcquired = await >>= \case
         MsgAcquire (Acquire pt) toResponse ->
-            pure $ LSQ.SendMsgReAcquire pt (clientStAcquiring pt toResponse)
+            pure $ LSQ.SendMsgReAcquire (Just pt) (clientStAcquiring pt toResponse)
         MsgRelease Release toResponse -> do
             yield $ encodeReleaseResponse (toResponse Released)
             pure $ LSQ.SendMsgRelease clientStIdle

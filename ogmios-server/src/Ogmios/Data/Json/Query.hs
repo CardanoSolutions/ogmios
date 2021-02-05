@@ -27,8 +27,6 @@ import Ogmios.Data.Json.Prelude
 
 import Cardano.Ledger.Crypto
     ( Crypto )
-import Cardano.Ledger.Era
-    ( Era )
 import Cardano.Slotting.Slot
     ( EpochNo (..), WithOrigin (..) )
 import Data.Aeson
@@ -157,10 +155,9 @@ parseGetEpochNo genResult =
             }
 
 parseGetNonMyopicMemberRewards
-    :: forall crypto f result era.
+    :: forall crypto f result.
         ( Crypto crypto
-        , era ~ AllegraEra crypto
-        , result ~ QueryResult crypto (NonMyopicMemberRewards era)
+        , result ~ QueryResult crypto (NonMyopicMemberRewards crypto)
         )
     => (Proxy result -> f result)
     -> Json.Value
@@ -313,9 +310,9 @@ parseCoin =
 --
 -- A possible option: encode them as Bech32 strings with different prefixes.
 parseCredential
-    :: Era era
+    :: Crypto crypto
     => Json.Value
-    -> Json.Parser (Sh.Credential 'Sh.Staking era)
+    -> Json.Parser (Sh.Credential 'Sh.Staking crypto)
 parseCredential =
     fmap (Sh.KeyHashObj . Sh.KeyHash) . parseHash
 

@@ -41,6 +41,7 @@ import qualified Cardano.Crypto.Hash.Class as CC
 import qualified Cardano.Crypto.KES.Class as CC
 import qualified Cardano.Crypto.VRF.Class as CC
 
+import qualified Cardano.Ledger.AuxiliaryData as Sh
 import qualified Cardano.Ledger.Core as Sh.Core
 import qualified Cardano.Ledger.Shelley.Constraints as Sh
 import qualified Shelley.Spec.Ledger.Address as Sh
@@ -52,7 +53,7 @@ import qualified Shelley.Spec.Ledger.Credential as Sh
 import qualified Shelley.Spec.Ledger.Delegation.Certificates as Sh
 import qualified Shelley.Spec.Ledger.Keys as Sh
 import qualified Shelley.Spec.Ledger.LedgerState as Sh
-import qualified Shelley.Spec.Ledger.MetaData as Sh
+import qualified Shelley.Spec.Ledger.Metadata as Sh
 import qualified Shelley.Spec.Ledger.OCert as Sh
 import qualified Shelley.Spec.Ledger.PParams as Sh
 import qualified Shelley.Spec.Ledger.Scripts as Sh
@@ -85,6 +86,12 @@ encodeAddress = \case
     hrp = \case
         Sh.Mainnet -> [humanReadablePart|addr|]
         Sh.Testnet -> [humanReadablePart|addr_test|]
+
+encodeAuxiliaryDataHash
+    :: Sh.AuxiliaryDataHash era
+    -> Json
+encodeAuxiliaryDataHash =
+    encodeHash . Sh.unsafeAuxiliaryDataHash
 
 encodeBHeader
     :: Crypto crypto
@@ -130,8 +137,8 @@ encodeBHeader (Sh.BHeader hBody hSig) = encodeObject
     ]
 
 encodeBootstrapWitness
-    :: Era era
-    => Sh.BootstrapWitness era
+    :: Crypto crypto
+    => Sh.BootstrapWitness crypto
     -> Json
 encodeBootstrapWitness (Sh.BootstrapWitness key sig cc attr) = encodeObject
     [ ( "key"
@@ -263,7 +270,10 @@ encodeDelegation x = encodeObject
     ]
 
 encodeDelegsFailure
-    :: Sh.DelegsPredicateFailure era
+    :: PredicateFailure (Sh.Core.EraRule "DELPL" era) ~ Sh.DelplPredicateFailure era
+    => PredicateFailure (Sh.Core.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
+    => PredicateFailure (Sh.Core.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
+    => Sh.DelegsPredicateFailure era
     -> Json
 encodeDelegsFailure = \case
     Sh.DelegateeNotRegisteredDELEG h ->
@@ -363,7 +373,9 @@ encodeDeltaCoin (Sh.DeltaCoin delta) =
     encodeInteger delta
 
 encodeDeplFailure
-    :: Sh.DelplPredicateFailure era
+    :: PredicateFailure (Sh.Core.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
+    => PredicateFailure (Sh.Core.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
+    => Sh.DelplPredicateFailure era
     -> Json
 encodeDeplFailure = \case
     Sh.PoolFailure e ->
@@ -415,22 +427,22 @@ encodeLedgerFailure = \case
         encodeDelegsFailure e
 
 encodeMetadata
-    :: Sh.MetaData
+    :: Sh.Metadata
     -> Json
-encodeMetadata (Sh.MetaData blob) = encodeObject
+encodeMetadata (Sh.Metadata blob) = encodeObject
     [ ( "blob"
       , encodeMetadataBlob blob
       )
     ]
 
 encodeMetadataBlob
-    :: Map Word64 Sh.MetaDatum
+    :: Map Word64 Sh.Metadatum
     -> Json
 encodeMetadataBlob =
-    encodeMap show encodeMetaDatum
+    encodeMap show encodeMetadatum
   where
-    encodeMetaDatum :: Sh.MetaDatum -> Json
-    encodeMetaDatum = \case
+    encodeMetadatum :: Sh.Metadatum -> Json
+    encodeMetadatum = \case
         Sh.I n ->
             encodeObject [("int", encodeInteger n)]
         Sh.B bytes ->
@@ -438,20 +450,14 @@ encodeMetadataBlob =
         Sh.S txt ->
             encodeObject [("string", encodeText txt)]
         Sh.List xs ->
-            encodeObject [("list", encodeList encodeMetaDatum xs)]
+            encodeObject [("list", encodeList encodeMetadatum xs)]
         Sh.Map xs ->
             encodeObject [("map", encodeList encodeKeyPair xs)]
 
-    encodeKeyPair :: (Sh.MetaDatum, Sh.MetaDatum) -> Json
+    encodeKeyPair :: (Sh.Metadatum, Sh.Metadatum) -> Json
     encodeKeyPair = encode2Tuple
-        (encodeObject . pure @[] . ("k",) . encodeMetaDatum)
-        (encodeObject . pure @[] . ("v",) . encodeMetaDatum)
-
-encodeMetadataHash
-    :: Sh.MetaDataHash era
-    -> Json
-encodeMetadataHash =
-    encodeHash . Sh.unsafeMetaDataHash
+        (encodeObject . pure @[] . ("k",) . encodeMetadatum)
+        (encodeObject . pure @[] . ("v",) . encodeMetadatum)
 
 encodeMIRPot
     :: Sh.MIRPot
@@ -464,7 +470,7 @@ encodeMIRPot = \case
 
 encodeMultiSig
     :: Crypto crypto
-    => Sh.MultiSig (ShelleyEra crypto)
+    => Sh.MultiSig crypto
     -> Json
 encodeMultiSig = \case
     Sh.RequireSignature sig ->
@@ -573,7 +579,7 @@ encodePoolFailure = \case
             ]
 
 encodePoolMetadata
-    :: Sh.PoolMetaData
+    :: Sh.PoolMetadata
     -> Json
 encodePoolMetadata x = encodeObject
     [ ( "url"
@@ -797,7 +803,7 @@ encodeTx x = encodeObject
       )
     , ( "metadata", encodeObject
         [ ( "hash"
-          , encodeStrictMaybe encodeMetadataHash (Sh._mdHash (Sh._body x))
+          , encodeStrictMaybe encodeAuxiliaryDataHash (Sh._mdHash (Sh._body x))
           )
         , ( "body"
           , encodeStrictMaybe encodeMetadata (Sh._metadata x)
@@ -841,8 +847,8 @@ encodeTxId =
     encodeHash . Sh._unTxId
 
 encodeTxIn
-    :: Era era
-    => Sh.TxIn era
+    :: Crypto crypto
+    => Sh.TxIn crypto
     -> Json
 encodeTxIn (Sh.TxIn txid ix) = encodeObject
     [ ( "txId"
@@ -907,7 +913,11 @@ encodeUpdateFailure = \case
             ]
 
 encodeUTxO
-    :: forall era. (Sh.ShelleyBased era, Sh.Core.Value era ~ Sh.Coin)
+    :: forall era.
+        ( Sh.ShelleyBased era
+        , Sh.Core.Value era ~ Sh.Coin
+        , Sh.Core.TxOut era ~ Sh.TxOut era
+        )
     => Sh.UTxO era
     -> Json
 encodeUTxO =
@@ -995,7 +1005,7 @@ encodeUtxowFailure
     :: forall era.
         ( Era era
         )
-    => (PredicateFailure (Sh.UTXO era) -> Json)
+    => (PredicateFailure (Sh.Core.EraRule "UTXO" era) -> Json)
     -> Sh.UtxowPredicateFailure era
     -> Json
 encodeUtxowFailure encodeUtxoFailure_ = \case
@@ -1029,27 +1039,27 @@ encodeUtxowFailure encodeUtxoFailure_ = \case
               , encodeFoldable encodeKeyHash keys
               )
             ]
-    Sh.MissingTxBodyMetaDataHash hash ->
+    Sh.MissingTxBodyMetadataHash hash ->
         encodeObject
             [ ( "missingTxMetadataHash"
-              , encodeMetadataHash hash
+              , encodeAuxiliaryDataHash hash
               )
             ]
-    Sh.MissingTxMetaData hash ->
+    Sh.MissingTxMetadata hash ->
         encodeObject
             [ ( "missingTxMetadata"
-              , encodeMetadataHash hash
+              , encodeAuxiliaryDataHash hash
               )
             ]
-    Sh.ConflictingMetaDataHash included expected ->
+    Sh.ConflictingMetadataHash included expected ->
         encodeObject
             [ ( "txMetadataHashMismatch", encodeObject
-                [ ( "includedHash" , encodeMetadataHash included )
-                , ( "expectedHash" , encodeMetadataHash expected )
+                [ ( "includedHash" , encodeAuxiliaryDataHash included )
+                , ( "expectedHash" , encodeAuxiliaryDataHash expected )
                 ]
               )
             ]
-    Sh.InvalidMetaData ->
+    Sh.InvalidMetadata ->
         encodeText "invalidMetadata"
     Sh.UtxoFailure e ->
         encodeUtxoFailure_ e
@@ -1120,8 +1130,8 @@ encodeWitHashes =
     encodeFoldable encodeKeyHash . Sh.unWitHashes
 
 encodeWitVKey
-    :: Era era
-    => Sh.WitVKey Sh.Witness era
+    :: Crypto crypto
+    => Sh.WitVKey Sh.Witness crypto
     -> Json
 encodeWitVKey (Sh.WitVKey key sig) = encodeObject
     [ ( "key"
