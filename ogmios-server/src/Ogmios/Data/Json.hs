@@ -16,8 +16,6 @@ module Ogmios.Data.Json
     , encodeAcquireFailure
     , encodeBlock
     , encodeHardForkApplyTxErr
-    , encodeMismatchEraInfo
-    , encodeNonMyopicMemberRewards
     , encodePoint
     , encodeTip
 
@@ -45,6 +43,8 @@ import Data.ByteString.Base64
     ( decodeBase64 )
 import Data.ByteString.Short
     ( toShort )
+import Ogmios.Data.Json.Query
+    ( encodeEraMismatch, encodeOneEraHash, encodePoint )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock (..) )
 import Ouroboros.Consensus.Byron.Ledger.Mempool
@@ -57,11 +57,7 @@ import Ouroboros.Consensus.Cardano.Block
     , HardForkBlock (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( MismatchEraInfo (..), OneEraHash (..) )
-import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
-    ( EraMismatch (..), mkEraMismatch )
-import Ouroboros.Consensus.Shelley.Ledger.Query
-    ( NonMyopicMemberRewards (..) )
+    ( OneEraHash (..) )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..), genesisPoint, wrapCBORinCBOR )
 import Ouroboros.Network.Point
@@ -78,6 +74,7 @@ import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Byron as Byron
+import qualified Ogmios.Data.Json.Query as Query
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
 --
@@ -99,12 +96,6 @@ encodeAcquireFailure = \case
         encodeText "pointTooOld"
     AcquireFailurePointNotOnChain ->
         encodeText "pointNotOnChain"
-
-encodeMismatchEraInfo
-    :: MismatchEraInfo (CardanoEras crypto)
-    -> Json
-encodeMismatchEraInfo =
-    encodeEraMismatch . mkEraMismatch
 
 encodeBlock
     :: Crypto crypto
@@ -144,50 +135,6 @@ encodeHardForkApplyTxErr = \case
         encodeText "ApplyTxErrMary: TODO"
     ApplyTxErrWrongEra e ->
         encodeEraMismatch e
-
-encodeEraMismatch
-    :: EraMismatch
-    -> Json
-encodeEraMismatch x = encodeObject
-    [ ( "eraMismatch", encodeObject
-        [ ( "ledgerEra"
-          , encodeText (ledgerEraName x)
-          )
-        , ( "queryEra"
-          , encodeText (otherEraName x)
-          )
-        ]
-      )
-    ]
-
-encodeNonMyopicMemberRewards
-    :: NonMyopicMemberRewards era
-    -> Json
-encodeNonMyopicMemberRewards (NonMyopicMemberRewards nonMyopicMemberRewards) =
-    encodeMap
-        (either Shelley.stringifyCoin Shelley.stringifyCredential)
-        (encodeMap Shelley.stringifyPoolId Shelley.encodeCoin)
-        nonMyopicMemberRewards
-
-encodeOneEraHash
-    :: OneEraHash eras
-    -> Json
-encodeOneEraHash =
-    encodeShortByteString encodeByteStringBase16 . getOneEraHash
-
-encodePoint
-    :: Point (CardanoBlock crypto)
-    -> Json
-encodePoint = \case
-    Point Origin -> encodeText "origin"
-    Point (At x) -> encodeObject
-        [ ( "slot"
-          , encodeSlotNo (blockPointSlot x)
-          )
-        , ( "hash"
-          , encodeOneEraHash (blockPointHash x)
-          )
-        ]
 
 encodeTip
     :: Tip (CardanoBlock crypto)
@@ -252,21 +199,14 @@ instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
 
 instance Crypto crypto => FromJSON (SomeQuery Maybe (CardanoBlock crypto)) where
     parseJSON = choice "query"
-        [ Shelley.parseGetLedgerTip _void
-            encodeMismatchEraInfo encodePoint
-        , Shelley.parseGetEpochNo _void
-            encodeMismatchEraInfo
-        , Shelley.parseGetNonMyopicMemberRewards _void
-            encodeMismatchEraInfo encodeNonMyopicMemberRewards
-        , Shelley.parseGetCurrentPParams _void
-            encodeMismatchEraInfo
-        , Shelley.parseGetProposedPParamsUpdates _void
-            encodeMismatchEraInfo
-        , Shelley.parseGetStakeDistribution _void
-            encodeMismatchEraInfo
-        , Shelley.parseGetUTxO _void
-            encodeMismatchEraInfo
-        -- , parseGetFilteredUTxO _void
+        [ Query.parseGetLedgerTip _void
+        , Query.parseGetEpochNo _void
+        , Query.parseGetNonMyopicMemberRewards _void
+        , Query.parseGetCurrentPParams _void
+        , Query.parseGetProposedPParamsUpdates _void
+        , Query.parseGetStakeDistribution _void
+        , Query.parseGetUTxO _void
+        -- , Query.parseGetFilteredUTxO _void
         ]
       where
         _void :: forall result. Proxy result -> Maybe result

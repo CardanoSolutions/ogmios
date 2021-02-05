@@ -36,13 +36,11 @@ import Ogmios.Data.Json
     , SomeQuery (..)
     , encodeBlock
     , encodeHardForkApplyTxErr
-    , encodeMismatchEraInfo
-    , encodeNonMyopicMemberRewards
     , encodePoint
     , encodeTip
     , jsonToByteString
     )
-import Ogmios.Data.Json.Shelley
+import Ogmios.Data.Json.Query
     ( QueryResult
     , parseGetCurrentPParams
     , parseGetEpochNo
@@ -65,7 +63,8 @@ import Ogmios.Data.Protocol.TxSubmission
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras
+    ( AllegraEra
+    , CardanoEras
     , GenTx
     , HardForkApplyTxErr (ApplyTxErrByron, ApplyTxErrShelley, ApplyTxErrWrongEra)
     , HardForkBlock (..)
@@ -92,7 +91,15 @@ import Shelley.Spec.Ledger.PParams
 import Shelley.Spec.Ledger.UTxO
     ( UTxO )
 import Test.Hspec
-    ( Spec, SpecWith, context, expectationFailure, it, shouldBe, specify )
+    ( Spec
+    , SpecWith
+    , context
+    , expectationFailure
+    , it
+    , parallel
+    , shouldBe
+    , specify
+    )
 import Test.Hspec.Json.Schema
     ( SchemaRef (..), prop_validateToJSON )
 import Test.Hspec.QuickCheck
@@ -152,7 +159,9 @@ validateToJSON
     -> (a -> Json)
     -> SchemaRef
     -> SpecWith ()
-validateToJSON arbitrary encode ref = it (toString $ getSchemaRef ref)
+validateToJSON arbitrary encode ref
+    = parallel
+    $ it (toString $ getSchemaRef ref)
     $ withMaxSuccess 100
     $ forAllBlind arbitrary (prop_validateToJSON (jsonifierToAeson . encode) ref)
 
@@ -181,21 +190,16 @@ spec = do
         validateQuery
             [aesonQQ|"ledgerTip"|]
             ( parseGetLedgerTip genPointResult
-                encodeMismatchEraInfo
-                encodePoint
             ) "ogmios.wsp.json#/properties/QueryResponse[ledgerTip]"
 
         validateQuery
             [aesonQQ|"currentEpoch"|]
             ( parseGetEpochNo genEpochResult
-                encodeMismatchEraInfo
             ) "ogmios.wsp.json#/properties/QueryResponse[currentEpoch]"
 
         validateQuery
             [aesonQQ|{ "nonMyopicMemberRewards": [14, 42] }|]
             ( parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult
-                encodeMismatchEraInfo
-                encodeNonMyopicMemberRewards
             ) "ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
 
         validateQuery
@@ -205,32 +209,26 @@ spec = do
                 ]
             }|]
             ( parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult
-                encodeMismatchEraInfo
-                encodeNonMyopicMemberRewards
             ) "ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
 
         validateQuery
             [aesonQQ|"currentProtocolParameters"|]
             ( parseGetCurrentPParams genPParamsResult
-                encodeMismatchEraInfo
             ) "ogmios.wsp.json#/properties/QueryResponse[currentProtocolParameters]"
 
         validateQuery
             [aesonQQ|"proposedProtocolParameters"|]
             ( parseGetProposedPParamsUpdates genProposedPParamsResult
-                encodeMismatchEraInfo
             ) "ogmios.wsp.json#/properties/QueryResponse[proposedProtocolParameters]"
 
         validateQuery
             [aesonQQ|"stakeDistribution"|]
             ( parseGetStakeDistribution genPoolDistrResult
-                encodeMismatchEraInfo
             ) "ogmios.wsp.json#/properties/QueryResponse[stakeDistribution]"
 
         validateQuery
             [aesonQQ|"utxo"|]
             ( parseGetUTxO genUTxOResult
-                encodeMismatchEraInfo
             ) "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
 -- TODO: re-enabled 'parseGetFilteredUTxO'
@@ -415,7 +413,7 @@ genMismatchEraInfo = MismatchEraInfo <$> elements
         singleEraInfo (Proxy @(ShelleyBlock (ShelleyEra StandardCrypto)))
 
 genPointResult
-    :: forall crypto era. (crypto ~ StandardCrypto, era ~ ShelleyEra crypto)
+    :: forall crypto era. (crypto ~ StandardCrypto, era ~ AllegraEra crypto)
     => Proxy (QueryResult crypto (Point (ShelleyBlock era)))
     -> Gen (QueryResult crypto (Point (ShelleyBlock era)))
 genPointResult _ = frequency
@@ -433,7 +431,7 @@ genEpochResult _ = frequency
     ]
 
 genNonMyopicMemberRewardsResult
-    :: forall crypto era. (crypto ~ StandardCrypto, era ~ ShelleyEra crypto)
+    :: forall crypto era. (crypto ~ StandardCrypto, era ~ AllegraEra crypto)
     => Proxy (QueryResult crypto (NonMyopicMemberRewards era))
     -> Gen (QueryResult crypto (NonMyopicMemberRewards era))
 genNonMyopicMemberRewardsResult _ = frequency
@@ -442,7 +440,7 @@ genNonMyopicMemberRewardsResult _ = frequency
     ]
 
 genPParamsResult
-    :: forall crypto era. (crypto ~ StandardCrypto, era ~ ShelleyEra crypto)
+    :: forall crypto era. (crypto ~ StandardCrypto, era ~ AllegraEra crypto)
     => Proxy (QueryResult crypto (PParams era))
     -> Gen (QueryResult crypto (PParams era))
 genPParamsResult _ = frequency
@@ -451,7 +449,7 @@ genPParamsResult _ = frequency
     ]
 
 genProposedPParamsResult
-    :: forall crypto era. (crypto ~ StandardCrypto, era ~ ShelleyEra crypto)
+    :: forall crypto era. (crypto ~ StandardCrypto, era ~ AllegraEra crypto)
     => Proxy (QueryResult crypto (ProposedPPUpdates era))
     -> Gen (QueryResult crypto (ProposedPPUpdates era))
 genProposedPParamsResult _ = frequency
@@ -469,7 +467,7 @@ genPoolDistrResult _ = frequency
     ]
 
 genUTxOResult
-    :: forall crypto era. (crypto ~ StandardCrypto, era ~ ShelleyEra crypto)
+    :: forall crypto era. (crypto ~ StandardCrypto, era ~ AllegraEra crypto)
     => Proxy (QueryResult crypto (UTxO era))
     -> Gen (QueryResult crypto (UTxO era))
 genUTxOResult _ = frequency

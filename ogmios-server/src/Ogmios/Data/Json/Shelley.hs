@@ -17,12 +17,8 @@ import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Ledger.Era
     ( Era )
-import Cardano.Slotting.Slot
-    ( EpochNo (..) )
 import Control.State.Transition
     ( STS (..) )
-import Data.Aeson
-    ( (.:) )
 import Data.ByteString.Base16
     ( encodeBase16 )
 import Data.ByteString.Short
@@ -30,21 +26,13 @@ import Data.ByteString.Short
 import GHC.TypeLits
     ( ErrorMessage (..), TypeError )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoBlock, CardanoEras, Query (..), ShelleyEra )
-import Ouroboros.Consensus.HardFork.Combinator
-    ( MismatchEraInfo, OneEraHash (..) )
+    ( ShelleyEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..), ShelleyHash (..) )
-import Ouroboros.Consensus.Shelley.Ledger.Query
-    ( NonMyopicMemberRewards, Query (..) )
-import Ouroboros.Network.Block
-    ( Point, castPoint )
 
 import qualified Ogmios.Data.Json.Byron as Byron
 
 import qualified Codec.Binary.Bech32 as Bech32
-import qualified Data.Aeson as Json
-import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString as BS
 import qualified Data.Map.Strict as Map
 
@@ -1198,206 +1186,6 @@ stringifyScriptHash
     -> Text
 stringifyScriptHash (Sh.ScriptHash (CC.UnsafeHash h)) =
     encodeBase16 (fromShort h)
-
---
--- Parsers
---
-
-type QueryResult crypto result =
-    Either (MismatchEraInfo (CardanoEras crypto)) result
-
-parseCoin
-    :: Json.Value
-    -> Json.Parser Sh.Coin
-parseCoin =
-    fmap Sh.word64ToCoin . Json.parseJSON
-
--- TODO: Makes it possible to distinguish between KeyHash and ScriptHash
--- credentials. Both are encoded as hex-encoded strings. Encoding them as
--- object is ill-advised because we also need them as key of the non-myopic
--- member rewards map.
---
--- A possible option: encode them as Bech32 strings with different prefixes.
-parseCredential
-    :: Crypto crypto
-    => Json.Value
-    -> Json.Parser (Sh.Credential Sh.Staking (ShelleyEra crypto))
-parseCredential =
-    fmap (Sh.KeyHashObj . Sh.KeyHash) . parseHash
-
-parseGetLedgerTip
-    :: forall crypto f result era.
-        ( era ~ ShelleyEra crypto
-        , result ~ QueryResult crypto (Point (ShelleyBlock era))
-        )
-    => (Proxy result -> f result)
-    -> (MismatchEraInfo (CardanoEras crypto) -> Json)
-    -> (Point (CardanoBlock crypto) -> Json)
-    -> Json.Value
-    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
-parseGetLedgerTip genResult encodeMismatchEraInfo encodePoint =
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == "ledgerTip") $> SomeQuery
-            { query = QueryIfCurrentShelley GetLedgerTip
-            , encodeResult = either encodeMismatchEraInfo (encodePoint . castPoint)
-            , genResult
-            }
-
-parseGetEpochNo
-    :: forall crypto f result.
-        ( result ~ QueryResult crypto EpochNo
-        )
-    => (Proxy result -> f result)
-    -> (MismatchEraInfo (CardanoEras crypto) -> Json)
-    -> Json.Value
-    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
-parseGetEpochNo genResult encodeMismatchEraInfo =
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == "currentEpoch") $> SomeQuery
-            { query = QueryIfCurrentShelley GetEpochNo
-            , encodeResult = either encodeMismatchEraInfo encodeEpochNo
-            , genResult
-            }
-
-parseGetNonMyopicMemberRewards
-    :: forall crypto f result era.
-        ( Crypto crypto
-        , era ~ ShelleyEra crypto
-        , result ~ QueryResult crypto (NonMyopicMemberRewards era)
-        )
-    => (Proxy result -> f result)
-    -> (MismatchEraInfo (CardanoEras crypto) -> Json)
-    -> (NonMyopicMemberRewards era -> Json)
-    -> Json.Value
-    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
-parseGetNonMyopicMemberRewards genResult encodeMismatchEraInfo encodeNonMyopicMemberRewards =
-    Json.withObject "SomeQuery" $ \obj -> do
-        arg <- obj .: "nonMyopicMemberRewards" >>= traverse
-            (choice "credential"
-                [ fmap Left  . parseCoin
-                , fmap Right . parseCredential
-                ]
-            )
-        pure $ SomeQuery
-            { query = QueryIfCurrentShelley (GetNonMyopicMemberRewards $ fromList arg)
-            , encodeResult = either encodeMismatchEraInfo encodeNonMyopicMemberRewards
-            , genResult
-            }
-
-parseGetCurrentPParams
-    :: forall crypto f result era.
-        ( era ~ ShelleyEra crypto
-        , result ~ QueryResult crypto (Sh.PParams era)
-        )
-    => (Proxy result -> f result)
-    -> (MismatchEraInfo (CardanoEras crypto) -> Json)
-    -> Json.Value
-    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
-parseGetCurrentPParams genResult encodeMismatchEraInfo =
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == "currentProtocolParameters") $> SomeQuery
-            { query = QueryIfCurrentShelley GetCurrentPParams
-            , encodeResult = either encodeMismatchEraInfo (encodePParams' id)
-            , genResult
-            }
-
-parseGetProposedPParamsUpdates
-    :: forall crypto f result era.
-        ( era ~ ShelleyEra crypto
-        , result ~ QueryResult crypto (Sh.ProposedPPUpdates era)
-        )
-    => (Proxy result -> f result)
-    -> (MismatchEraInfo (CardanoEras crypto) -> Json)
-    -> Json.Value
-    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
-parseGetProposedPParamsUpdates genResult encodeMismatchEraInfo =
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == "proposedProtocolParameters") $> SomeQuery
-            { query = QueryIfCurrentShelley GetProposedPParamsUpdates
-            , encodeResult = either encodeMismatchEraInfo encodeProposedPPUpdates
-            , genResult
-            }
-
-parseGetStakeDistribution
-    :: forall crypto f result.
-        ( result ~ QueryResult crypto (Sh.PoolDistr crypto)
-        )
-    => (Proxy result -> f result)
-    -> (MismatchEraInfo (CardanoEras crypto) -> Json)
-    -> Json.Value
-    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
-parseGetStakeDistribution genResult encodeMismatchEraInfo =
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == "stakeDistribution") $> SomeQuery
-            { query = QueryIfCurrentShelley GetStakeDistribution
-            , encodeResult = either encodeMismatchEraInfo encodePoolDistr
-            , genResult
-            }
-
-parseGetUTxO
-    :: forall crypto f result era.
-        ( Crypto crypto
-        , era ~ ShelleyEra crypto
-        , result ~ QueryResult crypto (Sh.UTxO era)
-        )
-    => (Proxy result -> f result)
-    -> (MismatchEraInfo (CardanoEras crypto) -> Json)
-    -> Json.Value
-    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
-parseGetUTxO genResult encodeMismatchEraInfo =
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == "utxo") $> SomeQuery
-            { query = QueryIfCurrentShelley GetUTxO
-            , encodeResult = either encodeMismatchEraInfo encodeUTxO
-            , genResult
-            }
-
--- parseGetFilteredUTxO
---     :: forall crypto f result era.
---         ( Crypto crypto
---         , era ~ ShelleyEra crypto
---         , result ~ QueryResult crypto (Sh.UTxO era)
---         )
---     => (Proxy result -> f result)
---     -> Json.Value
---     -> Json.Parser (SomeQuery f Json.Value (CardanoBlock crypto))
--- parseGetFilteredUTxO genResult = Json.withObject "SomeQuery" $ \obj -> do
---     addrs <- obj .: "utxo" >>= traverse parseAddress
---     pure SomeQuery
---         { query = QueryIfCurrentShelley (GetFilteredUTxO $ fromList addrs)
---         , encodeResult = toAltJSON
---         , genResult
---         }
---   where
---     parseAddress :: Json.Value -> Json.Parser (Sh.Addr era)
---     parseAddress = Json.withText "Address" $ choice "address"
---         [ addressFromBytes fromBech32
---         , addressFromBytes fromBase58
---         , addressFromBytes fromBase16
---         ]
---       where
---         addressFromBytes decode =
---             decode >=> maybe mempty pure . Sh.deserialiseAddr
---
---         fromBech32 txt =
---             case Bech32.decodeLenient txt of
---                 Left e ->
---                     fail (show e)
---                 Right (_, dataPart) ->
---                     maybe mempty pure $ Bech32.dataPartToBytes dataPart
---
---         fromBase58 =
---             maybe mempty pure . decodeBase58 bitcoinAlphabet . encodeUtf8
---
---         fromBase16 =
---             either (fail . show) pure . convertFromBase @ByteString Base16 . encodeUtf8
-
-parseHash
-    :: CC.HashAlgorithm alg
-    => Json.Value
-    -> Json.Parser (CC.Hash alg a)
-parseHash =
-    Json.parseJSON >=> maybe empty pure . CC.hashFromTextAsHex
 
 --
 -- Helpers
