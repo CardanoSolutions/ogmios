@@ -50,8 +50,8 @@ data Server where
 mkRoute "Server" [parseRoutes|
 /                      HomeR                GET
 /health                HealthR              GET
-/benchmark.html        BenchmarkR           GET
 /tests.html            TestsR               GET
+/tests/chain-sync.js   TestsChainSyncR      GET
 /tests/state-query.js  TestsStateQueryR     GET
 |]
 
@@ -66,13 +66,13 @@ getHealthR = runHandlerM $ do
     health <- liftIO $ readTVarIO tvar
     json health
 
-getBenchmarkR :: Handler Server
-getBenchmarkR = runHandlerM $ do
-    html $ decodeUtf8 $(embedFile "static/benchmark.html")
-
 getTestsR :: Handler Server
 getTestsR = runHandlerM $ do
     html $ decodeUtf8 $(embedFile "static/tests.html")
+
+getTestsChainSyncR :: Handler Server
+getTestsChainSyncR = runHandlerM $ do
+    javascript $ decodeUtf8 $(embedFile "static/tests/chain-sync.js")
 
 getTestsStateQueryR :: Handler Server
 getTestsStateQueryR = runHandlerM $ do

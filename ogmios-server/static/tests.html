@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>Mocha Tests</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="https://unpkg.com/mocha/mocha.css" />
+    <link rel="stylesheet" href="https://unpkg.com/mocha@8.2.1/mocha.css" />
     <style>
     pre.result {
       max-height: 150px;
@@ -16,16 +16,19 @@
     </style>
   </head>
   <body>
+    <!-- Mocha Setup -->
     <div id="mocha"></div>
 
     <script src="https://unpkg.com/chai@4.3.0/chai.js"></script>
     <script src="https://unpkg.com/mocha@8.2.1/mocha.js"></script>
 
-    <!-- Mocha Setup -->
     <script class="mocha-init">
       const expect = chai.expect;
       const HTML = mocha._reporter;
 
+      // Outputs additional results from tests, for human sanity check. This
+      // supposes that tests do store in `this.test.result` a JSON(-ified)
+      // result to display.
       const reporter = function Reporter (runner, options) {
         runner.on('pass', function self(test) {
           const matches = document.querySelectorAll(`.pass > h2`);
@@ -60,12 +63,17 @@
         }));
       };
 
+      // Dynamically figure out the websocket URL so that tests works regardless
+      // of the environment and regardless of the server options.
       const protocol = window.location.protocol === "http:" ? "ws" : "wss";
       const OGMIOS_URL = protocol + "://" + window.location.host;
     </script>
     <!-- WebSocket Utils -->
 
+    <!-- Test Scenarios -->
+    <script src="/tests/chain-sync.js"></script>
     <script src="/tests/state-query.js"></script>
+    <!-- Test Scenarios -->
 
     <!-- Mocha Run -->
     <script class="mocha-exec">

@@ -9,10 +9,10 @@
  *
  */
 
-let client;
-let listener;
-
 describe("StateQuery", () => {
+  let client;
+  let listener;
+
   before(done => {
     client = new WebSocket(OGMIOS_URL);
 
