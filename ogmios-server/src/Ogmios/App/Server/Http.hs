@@ -26,6 +26,7 @@ import Wai.Routes
     , RenderRoute (..)
     , Routable (..)
     , html
+    , javascript
     , json
     , mkRoute
     , parseRoutes
@@ -47,9 +48,11 @@ data Server where
 -- - A quick'n'dirty "benchmark" script used for rapid smoke testing.
 --
 mkRoute "Server" [parseRoutes|
-/                HomeR          GET
-/health          HealthR        GET
-/benchmark.html  BenchmarkR     GET
+/                      HomeR                GET
+/health                HealthR              GET
+/benchmark.html        BenchmarkR           GET
+/tests.html            TestsR               GET
+/tests/state-query.js  TestsStateQueryR     GET
 |]
 
 getHomeR :: Handler Server
@@ -66,6 +69,14 @@ getHealthR = runHandlerM $ do
 getBenchmarkR :: Handler Server
 getBenchmarkR = runHandlerM $ do
     html $ decodeUtf8 $(embedFile "static/benchmark.html")
+
+getTestsR :: Handler Server
+getTestsR = runHandlerM $ do
+    html $ decodeUtf8 $(embedFile "static/tests.html")
+
+getTestsStateQueryR :: Handler Server
+getTestsStateQueryR = runHandlerM $ do
+    javascript $ decodeUtf8 $(embedFile "static/tests/state-query.js")
 
 -- | Wai 'Application' representing the HTTP server.
 mkHttpApp
