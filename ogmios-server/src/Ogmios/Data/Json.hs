@@ -18,9 +18,6 @@ module Ogmios.Data.Json
     , encodeHardForkApplyTxErr
     , encodePoint
     , encodeTip
-
-      -- * Parsers
-    , SomeQuery (..)
     ) where
 
 import Ogmios.Data.Json.Prelude
@@ -44,7 +41,7 @@ import Data.ByteString.Base64
 import Data.ByteString.Short
     ( toShort )
 import Ogmios.Data.Json.Query
-    ( encodeEraMismatch, encodeOneEraHash, encodePoint )
+    ( SomeQuery, encodeEraMismatch, encodeOneEraHash, encodePoint )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock (..) )
 import Ouroboros.Consensus.Byron.Ledger.Mempool

@@ -52,7 +52,9 @@ import Ogmios.Control.Exception
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TQueue, readTQueue )
 import Ogmios.Data.Json
-    ( Json, SomeQuery (..) )
+    ( Json )
+import Ogmios.Data.Json.Query
+    ( SomeQuery (..) )
 import Ogmios.Data.Protocol.StateQuery
     ( Acquire (..)
     , AcquireResponse (..)

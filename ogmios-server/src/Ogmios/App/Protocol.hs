@@ -12,7 +12,9 @@ module Ogmios.App.Protocol
 import Relude
 
 import Ogmios.Data.Json
-    ( FromJSON, Json, SomeQuery )
+    ( FromJSON, Json )
+import Ogmios.Data.Json.Query
+    ( SomeQuery )
 import Ogmios.Data.Protocol
     ( MethodName )
 import Ogmios.Data.Protocol.ChainSync

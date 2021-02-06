@@ -5,6 +5,7 @@
 module Ogmios.Data.Json.Query
     ( -- * Types
       QueryResult
+    , SomeQuery (..)
 
       -- * Encoders
     , encodeEraMismatch
@@ -296,6 +297,12 @@ parseGetUTxO genResult =
 
 type QueryResult crypto result =
     Either (MismatchEraInfo (CardanoEras crypto)) result
+
+data SomeQuery (f :: * -> *) block = forall result. SomeQuery
+    { query :: Query block result
+    , encodeResult :: result -> Json
+    , genResult :: Proxy result -> f result
+    }
 
 parseCoin
     :: Json.Value

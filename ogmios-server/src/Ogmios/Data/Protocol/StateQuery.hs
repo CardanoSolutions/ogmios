@@ -40,7 +40,7 @@ module Ogmios.Data.Protocol.StateQuery
 
 import Ogmios.Data.Json.Prelude
 
-import Ogmios.Data.Json
+import Ogmios.Data.Json.Query
     ( SomeQuery (..) )
 import Ogmios.Data.Protocol
     ()

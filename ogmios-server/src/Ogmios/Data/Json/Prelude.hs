@@ -62,9 +62,6 @@ module Ogmios.Data.Json.Prelude
     , encode3Tuple
     , encode4Tuple
     , encodeStrictMaybe
-
-      -- * Queries
-    , SomeQuery (..)
     ) where
 
 import Relude
@@ -97,8 +94,6 @@ import Data.Sequence.Strict
     ( StrictSeq )
 import Data.Vector
     ( Vector )
-import Ouroboros.Consensus.Shelley.Ledger.Query
-    ( Query (..) )
 import Shelley.Spec.Ledger.BaseTypes
     ( DnsName
     , Port
@@ -317,18 +312,10 @@ encode4Tuple
     -> Json
 encode4Tuple encodeA encodeB encodeC encodeD (a, b, c, d) =
     Json.toJSON [encodeA a, encodeB b, encodeC c, encodeD d]
+{-# INLINABLE encode4Tuple #-}
 
 encodeStrictMaybe :: (a -> Json) -> StrictMaybe a -> Json
 encodeStrictMaybe encodeElem = \case
     SNothing -> encodeNull
     SJust a  -> encodeElem a
-
---
--- Queries
---
-
-data SomeQuery (f :: * -> *) block = forall result. SomeQuery
-    { query :: Query block result
-    , encodeResult :: result -> Json
-    , genResult :: Proxy result -> f result
-    }
+{-# INLINABLE encodeStrictMaybe #-}
