@@ -73,7 +73,7 @@ onUnmatchedMessage
     => ByteString
     -> Json
 onUnmatchedMessage blob = do
-    Json.toJSON $ Wsp.clientFault $ T.unpack fault
+    Json.toJSON $ Wsp.mkFault $ Wsp.clientFault $ T.unpack fault
   where
     fault =
         "Invalid request: " <> modifyAesonFailure details <> "."

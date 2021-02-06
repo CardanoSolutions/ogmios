@@ -20,6 +20,7 @@ module Codec.Json.Wsp
     , Response
     , ToResponse
     , mkResponse
+    , mkFault
     , ServiceName
 
     -- * ToJSON / FromJSON
@@ -37,7 +38,7 @@ module Codec.Json.Wsp
 import Prelude
 
 import Codec.Json.Wsp.Handler
-    ( Request (..), Response (..) )
+    ( Fault (..), Request (..), Response (..) )
 import Control.Applicative
     ( Alternative (..), empty )
 import Control.Arrow
@@ -146,6 +147,17 @@ mkResponse opts _proxy toResult (Response refl res) = Json.object
     ]
   where
     methodName = constructorTagModifier opts $ gWSPMethodName (Proxy :: Proxy (Rep req a))
+
+mkFault
+    :: KnownSymbol (ServiceName (Response Fault))
+    => Fault
+    -> Json.Value
+mkFault fault = Json.object
+    [ "type" .= WspFault
+    , "version" .= V1_0
+    , "servicename" .= symbolVal (Proxy @(ServiceName (Response Fault)))
+    , "fault" .= fault
+    ]
 
 -- | Supported JSON-WSP versions.
 --

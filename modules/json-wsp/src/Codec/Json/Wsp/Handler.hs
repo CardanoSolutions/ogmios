@@ -13,6 +13,7 @@ module Codec.Json.Wsp.Handler
     ( -- * Types
       Request (..)
     , Response (..)
+    , Fault (..)
     , serverFault
     , clientFault
 
@@ -78,6 +79,7 @@ data Fault = Fault
 
 instance ToJSON Fault where
     toJSON = genericToJSON Json.defaultOptions
+        { Json.fieldLabelModifier = fmap toLower . drop 5 }
 
 -- | Smart constructor for a client 'Fault'
 --

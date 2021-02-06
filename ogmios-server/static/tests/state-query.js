@@ -40,11 +40,15 @@ describe("StateQuery", () => {
   });
 
   const queries =
-          [ [ "ledgerTip", { timeout: 500 } ]
-          , [ "currentEpoch", { timeout: 500 }]
-          , [ "currentProtocolParameters", { timeout: 500 } ]
-          , [ "proposedProtocolParameters", { timeout: 500 } ]
+          [ [ "ledgerTip", { timeout: 2000 } ]
+          , [ "currentEpoch", { timeout: 2000 }]
+          , [ "currentProtocolParameters", { timeout: 2000 } ]
+          , [ "proposedProtocolParameters", { timeout: 2000 } ]
           , [ "stakeDistribution", { timeout: 5000 } ]
+          ]
+
+  const gibberish =
+          [ "notAQuery"
           ]
 
   queries.forEach(([query, { timeout }]) => {
@@ -61,7 +65,28 @@ describe("StateQuery", () => {
         });
 
         client.ogmios("Query", { query });
-      })
+      });
     });
   });
+
+  gibberish.forEach(([query]) => {
+    it(query, function () {
+      const test = this.test;
+      return new Promise ((resolve, reject) => {
+        client.addEventListener('message', function $listener(msg) {
+          listener = $listener;
+          console.log(msg);
+          const response = JSON.parse(msg.data);
+          expect(response.type).to.equal('jsonwsp/fault');
+          expect(response.fault).to.have.property('code');
+          expect(response.fault).to.have.property('string');
+          test.result = JSON.stringify(response, null, 4);
+          resolve();
+        });
+
+        client.ogmios("Query", { query });
+      });
+    });
+  });
+
 });
