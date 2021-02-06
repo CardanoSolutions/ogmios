@@ -57,7 +57,7 @@ import Ogmios.Control.Exception
 import Ogmios.Control.MonadAsync
     ( MonadAsync (..), MonadFork, MonadThread )
 import Ogmios.Control.MonadClock
-    ( MonadClock )
+    ( MonadClock, withDebouncer, _10s )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
     , Logger
@@ -106,11 +106,11 @@ runWith app = runReaderT (unApp app)
 
 -- | Ogmios, where everything gets stitched together.
 application :: Logger TraceOgmios -> App ()
-application tr = do
+application tr = withDebouncer _10s $ \debouncer -> do
     env@Env{network} <- ask
     logWith tr (OgmiosNetwork network)
 
-    healthCheckClient <- newHealthCheckClient (contramap OgmiosHealth tr)
+    healthCheckClient <- newHealthCheckClient (contramap OgmiosHealth tr) debouncer
 
     webSocketApp <- newWebSocketApp (contramap OgmiosWebSocket tr) (`runWith` env)
     httpApp      <- asks (mkHttpApp @(Health Block) <$> view typed)

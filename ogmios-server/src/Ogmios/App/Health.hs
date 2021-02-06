@@ -42,7 +42,7 @@ import Ogmios.Control.Exception
 import Ogmios.Control.MonadAsync
     ( MonadAsync )
 import Ogmios.Control.MonadClock
-    ( Debouncer (..), MonadClock (..), idle, withDebouncer, _5s )
+    ( Debouncer (..), MonadClock (..), idle, _5s )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
     , Logger
@@ -107,20 +107,20 @@ newHealthCheckClient
         , HasType (Sampler RuntimeStats m) env
         )
     => Logger (TraceHealth (Health Block))
+    -> Debouncer m
     -> m (HealthCheckClient m)
-newHealthCheckClient tr = do
-    withDebouncer 20 $ \Debouncer{debounce} ->
-        pure $ HealthCheckClient $ Clients
-            { chainSyncClient = mkHealthCheckClient $ \lastKnownTip -> debounce $ do
-                health  <- healthCheck lastKnownTip
-                logWith tr (HealthTick health)
+newHealthCheckClient tr Debouncer{debounce} = do
+    pure $ HealthCheckClient $ Clients
+        { chainSyncClient = mkHealthCheckClient $ \lastKnownTip -> debounce $ do
+            health  <- healthCheck lastKnownTip
+            logWith tr (HealthTick health)
 
-            , txSubmissionClient =
-                LocalTxSubmissionClient idle
+        , txSubmissionClient =
+            LocalTxSubmissionClient idle
 
-            , stateQueryClient =
-                LocalStateQueryClient idle
-            }
+        , stateQueryClient =
+            LocalStateQueryClient idle
+        }
 
 -- | Construct a health check by sampling all application sensors.
 --
