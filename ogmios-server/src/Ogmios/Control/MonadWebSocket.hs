@@ -13,6 +13,9 @@ module Ogmios.Control.MonadWebSocket
   , ConnectionException (..)
   , Headers
   , headers
+
+    -- * Constants
+  , pingThreadDelay
   ) where
 
 import Relude
@@ -33,8 +36,8 @@ class Monad m => MonadWebSocket (m :: * -> *) where
         :: Connection -> ByteString -> m ()
     acceptRequest
         :: PendingConnection
-        -> (Connection -> m ())
-        -> m ()
+        -> (Connection -> m a)
+        -> m a
 
 headers :: PendingConnection -> Headers
 headers =
@@ -49,7 +52,7 @@ instance MonadWebSocket IO where
         WS.sendClose
     acceptRequest pending action = do
         conn <- WS.acceptRequest pending
-        WS.withPingThread conn 30 afterEachPing (action conn)
+        WS.withPingThread conn pingThreadDelay afterEachPing (action conn)
       where
         afterEachPing :: IO ()
         afterEachPing = return ()
@@ -64,3 +67,10 @@ instance MonadWebSocket m => MonadWebSocket (ReaderT env m) where
     acceptRequest pending action = do
         env <- ask
         lift $ acceptRequest pending (\conn -> runReaderT (action conn) env)
+
+--
+-- Constants
+--
+
+pingThreadDelay :: Int
+pingThreadDelay = 15

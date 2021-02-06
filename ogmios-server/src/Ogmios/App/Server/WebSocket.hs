@@ -96,6 +96,8 @@ import Network.HTTP.Types.Header
     ( hUserAgent )
 import Ouroboros.Network.NodeToClient.Version
     ( NodeToClientVersionData (NodeToClientVersionData) )
+import System.TimeManager
+    ( TimeoutThread (..) )
 
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
@@ -127,12 +129,14 @@ newWebSocketApp tr unliftIO = do
     sensors <- asks (view typed)
     return $ \pending -> unliftIO $ do
         logWith tr (WebSocketConnectionAccepted $ userAgent pending)
-        acceptRequest pending $ \conn -> do
+        onExceptions $ acceptRequest pending $ \conn -> do
             let trClient = natTracer liftIO $ contramap WebSocketClient tr
-            client <- mkClient unliftIO trClient slotsPerEpoch <$> newOuroborosClients conn
-            connectClient nullTracer client (NodeToClientVersionData networkMagic) nodeSocket
-                & onExceptions conn
-                & recordSession sensors
+            withOuroborosClients conn $ \clients -> do
+                let client = mkClient unliftIO trClient slotsPerEpoch clients
+                let vData  = NodeToClientVersionData networkMagic
+                connectClient nullTracer client vData nodeSocket
+                    & handle (onIOException conn)
+                    & recordSession sensors
         logWith tr (WebSocketConnectionEnded $ userAgent pending)
   where
     userAgent :: PendingConnection -> ByteString
@@ -140,16 +144,32 @@ newWebSocketApp tr unliftIO = do
         $ find ((== hUserAgent) . fst)
         $ headers pending
 
-    onExceptions :: Connection -> m () -> m ()
-    onExceptions conn
+    onIOException :: Connection -> IOException -> m ()
+    onIOException conn e = do
+        logWith tr $ WebSocketFailedToConnect e
+        let msg = "Connection with the node lost or failed."
+        close conn $ toStrict $ Json.encode $ Wsp.serverFault msg
+
+    onExceptions :: m () -> m ()
+    onExceptions
         = handle onUnknownException
+        . handle onTimeoutThread
         . handle onConnectionClosed
-        . handle onLinkedException
-        . handle (onIOException conn)
 
     onUnknownException :: SomeException -> m ()
-    onUnknownException e = do
-        logWith tr $ WebSocketUnknownException e
+    onUnknownException e0 = case fromException e0 of
+        Nothing -> do
+            logWith tr $ WebSocketUnknownException e0
+        Just (ExceptionInLinkedThread _ e1) -> do
+            case fromException e1 of
+                Nothing ->
+                    logWith tr $ WebSocketWorkerExited e1
+                Just e2 ->
+                    onConnectionClosed e2
+
+    onTimeoutThread :: TimeoutThread -> m ()
+    onTimeoutThread = \case
+        TimeoutThread -> pure ()
 
     onConnectionClosed :: ConnectionException -> m ()
     onConnectionClosed = \case
@@ -160,40 +180,30 @@ newWebSocketApp tr unliftIO = do
         e ->
             throwIO e
 
-    onLinkedException :: ExceptionInLinkedThread -> m ()
-    onLinkedException = \case
-        ExceptionInLinkedThread _ e -> case fromException e of
-            Just e' -> onConnectionClosed e'
-            Nothing -> throwIO e
-
-    onIOException :: Connection -> IOException -> m ()
-    onIOException conn e = do
-        logWith tr $ WebSocketFailedToConnect e
-        let msg = "Connection with the node lost or failed."
-        close conn $ toStrict $ Json.encode $ Wsp.serverFault msg
-
-newOuroborosClients
-    :: forall m.
+withOuroborosClients
+    :: forall m a.
         ( MonadAsync m
-        , MonadLink m
         , MonadWebSocket m
+        , MonadLink m
+        , MonadOuroboros m
         )
     => Connection
-    -> m (Clients m Block)
-newOuroborosClients conn = do
+    -> (Clients m Block -> m a)
+    -> m a
+withOuroborosClients conn action = do
     (chainSyncQ, txSubmissionQ, stateQueryQ) <-
         atomically $ (,,) <$> newTQueue <*> newTQueue <*> newTQueue
 
-    link =<< async (routeMessage Nothing chainSyncQ stateQueryQ txSubmissionQ)
-
-    pure Clients
-        { chainSyncClient =
-            mkChainSyncClient chainSyncCodecs chainSyncQ yield
-        , stateQueryClient =
-            mkStateQueryClient stateQueryCodecs stateQueryQ yield
-        , txSubmissionClient =
-            mkTxSubmissionClient txSubmissionCodecs txSubmissionQ yield
-        }
+    withAsync (routeMessage Nothing chainSyncQ stateQueryQ txSubmissionQ) $ \worker -> do
+        link worker
+        action $ Clients
+             { chainSyncClient =
+                 mkChainSyncClient chainSyncCodecs chainSyncQ yield
+             , stateQueryClient =
+                 mkStateQueryClient stateQueryCodecs stateQueryQ yield
+             , txSubmissionClient =
+                 mkTxSubmissionClient txSubmissionCodecs txSubmissionQ yield
+             }
   where
     yield :: Json -> m ()
     yield = send conn . jsonToByteString
@@ -259,6 +269,10 @@ data TraceWebSocket where
         :: TraceClient (SubmitTxPayload Block) (SubmitTxError Block)
         -> TraceWebSocket
 
+    WebSocketWorkerExited
+        :: { exception :: SomeException }
+        -> TraceWebSocket
+
     WebSocketConnectionAccepted
         :: { userAgent :: ByteString }
         -> TraceWebSocket
@@ -267,12 +281,12 @@ data TraceWebSocket where
         :: { userAgent :: ByteString }
         -> TraceWebSocket
 
-    WebSocketFailedToConnect
-        :: { ioException :: IOException }
-        -> TraceWebSocket
-
     WebSocketUnknownException
         :: { exception :: SomeException }
+        -> TraceWebSocket
+
+    WebSocketFailedToConnect
+        :: { ioException :: IOException }
         -> TraceWebSocket
 
 deriving instance Show TraceWebSocket
@@ -280,7 +294,8 @@ deriving instance Show TraceWebSocket
 instance HasSeverityAnnotation TraceWebSocket where
     getSeverityAnnotation = \case
         WebSocketClient msg           -> getSeverityAnnotation msg
+        WebSocketWorkerExited{}       -> Debug
         WebSocketConnectionAccepted{} -> Info
         WebSocketConnectionEnded{}    -> Info
-        WebSocketFailedToConnect{}    -> Error
         WebSocketUnknownException{}   -> Error
+        WebSocketFailedToConnect{}    -> Error

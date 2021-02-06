@@ -83,6 +83,7 @@ library:
     - small-steps
     - text
     - time
+    - time-manager
     - typed-protocols
     - vector
     - wai

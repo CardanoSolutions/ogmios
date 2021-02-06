@@ -18,7 +18,7 @@ import Ogmios.App.Options
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..), Logger, MonadLog (..), Severity (..) )
 import Ogmios.Control.MonadWebSocket
-    ( WebSocketApp )
+    ( WebSocketApp, pingThreadDelay )
 
 import Data.Generics.Internal.VL.Lens
     ( view )
@@ -65,6 +65,12 @@ connectHybridServer tr webSocketApp httpApp = do
         & Warp.setHost (fromString serverHost)
         & Warp.setPort serverPort
         & Warp.setBeforeMainLoop (beforeMainLoop opts)
+        -- NOTE: Set the same timeout as the WebSocket ping thread delay so that
+        -- inactive connections _may_ be closed. It's a bit like russian
+        -- roulette but with timeouts. If Warp timesout before the websocket
+        -- sends a ping, the connection will be closed. If not, it'll stay alive
+        -- a little longer.
+        & Warp.setTimeout pingThreadDelay
 
     beforeMainLoop :: Options -> IO ()
     beforeMainLoop opts@Options{nodeSocket} = do
