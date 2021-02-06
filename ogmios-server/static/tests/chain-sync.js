@@ -9,9 +9,14 @@
  *
  */
 
-const BATCH_SIZE = 1000; // blocks
-const AT_LEAST = 20000; // blocks
-const TIMEOUT = 15; // seconds
+const q = window.location.search
+    .replace('?', '')
+    .split('&')
+    .map(x => x.split('='))
+    .reduce((o, [k,v]) => Object.assign(o, { [k]: v }), {});
+
+const N_MAX = Number(q['n-max'] || 5000); // blocks
+const TIMEOUT = Number(q['timeout'] || 10); // seconds
 
 const lastByronBlock = {
   slot: 4492799,
@@ -36,22 +41,16 @@ describe("ChainSync", () => {
     done();
   });
 
-  testChainSync("Byron Era", [ "origin" ]);
+  testChainSync("Byron Era", []);
   testChainSync("Shelley Era", [ lastByronBlock ]);
   testChainSync("Allegra Era", [ lastShelleyBlock ]);
-
-  function nextBatch(N) {
-    for (let n = 0; n < N; n += 1) {
-      client.ogmios("RequestNext");
-    }
-  }
 
   function testChainSync(title, points) {
     it(title, function (done) {
       const test = this.test;
       this.timeout(TIMEOUT*1000);
 
-      const start = Date.now();
+      let start;
       let size = 0;
       let rcvd = 0;
 
@@ -64,27 +63,31 @@ describe("ChainSync", () => {
 
         switch (response.methodname) {
           case "FindIntersect":
-            nextBatch(BATCH_SIZE);
+            start = Date.now();
+            client.ogmios("RequestNext");
             break;
 
           default:
             rcvd += 1;
-            size += event.data.length * 16; // 2 bytes / 16 bits per UTF-16 character
+            size += event.data.length;
 
-            if ((rcvd + BATCH_SIZE / 2) % BATCH_SIZE == 0) {
-              if (rcvd < AT_LEAST) {
-                nextBatch(BATCH_SIZE);
-              } else {
-                const time = Date.now() - start;
-                const syncSpeed = 1000 * rcvd / time;
-                const downSpeed = 1000 * (size / (1024*1024)) / time;
-                const results = {
-                  "block/s": syncSpeed.toFixed(0),
-                  "mbits/s": downSpeed.toFixed(0),
-                };
-                test.result = JSON.stringify(results, null, 2);
-                done();
-              }
+            if (rcvd < N_MAX) {
+              client.ogmios("RequestNext");
+            } else {
+              const time = Date.now() - start;
+              const mb = size / (1024*1024);
+              const syncSpeed = 1000 * rcvd / time;
+              const downSpeed = 1000 * mb / time;
+              const results = {
+                "totalBlocks": rcvd,
+                "totalTime": (time / 1000).toFixed(3) + "s",
+                "totalSize": mb.toFixed(2) + "MB",
+                "block/s": syncSpeed.toFixed(0),
+                "MB/s": downSpeed.toFixed(0),
+                "lastBlock": response.result,
+              };
+              test.result = JSON.stringify(results, null, 2);
+              done();
             }
         }
       };
