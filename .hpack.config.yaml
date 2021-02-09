@@ -18,14 +18,25 @@ ghc-options:
     - -Wpartial-fields
     - -Wredundant-constraints
 
+  executable: &ghc-options-executable
+    - -Wall                         # ^
+    - -Wcompat                      # |
+    - -Widentities                  # |
+    - -Wincomplete-record-updates   # | Same as &ghc-options-lib
+    - -Wincomplete-uni-patterns     # |
+    - -Wpartial-fields              # |
+    - -Wredundant-constraints       # v
+    - -threaded
+    - -rtsopts
+
   test: &ghc-options-test
-    - -Wall
-    - -Wcompat
-    - -Widentities
-    - -Wincomplete-record-updates
-    - -Wincomplete-uni-patterns
-    - -Wpartial-fields
-    - -Wredundant-constraints
+    - -Wall                         # ^
+    - -Wcompat                      # |
+    - -Widentities                  # |
+    - -Wincomplete-record-updates   # | Same as &ghc-options-lib
+    - -Wincomplete-uni-patterns     # |
+    - -Wpartial-fields              # |
+    - -Wredundant-constraints       # v
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N

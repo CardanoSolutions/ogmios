@@ -33,7 +33,7 @@ library:
   when:
     condition: flag(production)
     ghc-options:
-    # - -Werror
+    - -Werror
     - -O2
   dependencies:
     - aeson
@@ -96,13 +96,13 @@ executables:
   ogmios:
     main: Main.hs
     source-dirs: app
-    ghc-options: *ghc-options-test
+    ghc-options: *ghc-options-executable
     when:
       condition: flag(production)
       ghc-options:
-      - -Werror
       - -O2
-      - '"-with-rtsopts=-A100m -T"'
+      - -Werror
+      - '"-with-rtsopts=-A100m -T -N2"'
     dependencies:
     - relude
     - ogmios
@@ -111,12 +111,7 @@ tests:
   unit:
     main: Spec.hs
     source-dirs: test/unit
-    ghc-options:
-    - -Wcompat
-    - -fwarn-redundant-constraints
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+    ghc-options: *ghc-options-test
     dependencies:
     - aeson
     - cardano-client
