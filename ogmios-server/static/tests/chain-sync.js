@@ -15,8 +15,9 @@ const q = window.location.search
     .map(x => x.split('='))
     .reduce((o, [k,v]) => Object.assign(o, { [k]: v }), {});
 
-const N_MAX = Number(q['n-max'] || 5000); // blocks
-const TIMEOUT = Number(q['timeout'] || 10); // seconds
+const N_MAX = Number(q['max'] || 10000); // blocks
+const N_BOOTSTRAP = Number(q['bootstrap'] || 1000); // blocks
+const TIMEOUT = Number(q['timeout'] || 15); // seconds
 
 const lastByronBlock = {
   slot: 4492799,
@@ -54,6 +55,8 @@ describe("ChainSync", () => {
       let size = 0;
       let rcvd = 0;
 
+      let didBootstrap = false;
+
       client.onopen = function() {
         client.ogmios("FindIntersect", { points });
       };
@@ -68,26 +71,35 @@ describe("ChainSync", () => {
             break;
 
           default:
-            rcvd += 1;
-            size += event.data.length;
-
-            if (rcvd < N_MAX) {
-              client.ogmios("RequestNext");
+            if (!didBootstrap) {
+              didBootstrap = true;
+              for(let n = 0; n <= N_BOOTSTRAP; n += 1) {
+                client.ogmios("RequestNext");
+              }
             } else {
-              const time = Date.now() - start;
-              const mb = size / (1024*1024);
-              const syncSpeed = 1000 * rcvd / time;
-              const downSpeed = 1000 * mb / time;
-              const results = {
-                "totalBlocks": rcvd,
-                "totalTime": (time / 1000).toFixed(3) + "s",
-                "totalSize": mb.toFixed(2) + "MB",
-                "block/s": syncSpeed.toFixed(0),
-                "MB/s": downSpeed.toFixed(0),
-                "lastBlock": response.result,
-              };
-              test.result = JSON.stringify(results, null, 2);
-              done();
+              rcvd += 1;
+              size += event.data.length;
+
+              if (rcvd < N_MAX - N_BOOTSTRAP) {
+                client.ogmios("RequestNext");
+              }
+
+              if (rcvd == N_MAX) {
+                const time = Date.now() - start;
+                const mb = size / (1024*1024);
+                const syncSpeed = 1000 * rcvd / time;
+                const downSpeed = 1000 * mb / time;
+                const results = {
+                  "totalBlocks": rcvd,
+                  "totalTime": (time / 1000).toFixed(3) + "s",
+                  "totalSize": mb.toFixed(2) + "MB",
+                  "block/s": syncSpeed.toFixed(0),
+                  "MB/s": downSpeed.toFixed(0),
+                  "lastBlock": response.result,
+                };
+                test.result = JSON.stringify(results, null, 2);
+                done();
+              }
             }
         }
       };

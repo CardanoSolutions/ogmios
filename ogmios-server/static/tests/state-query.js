@@ -69,13 +69,12 @@ describe("StateQuery", () => {
     });
   });
 
-  gibberish.forEach(([query]) => {
+  gibberish.forEach((query) => {
     it(query, function () {
       const test = this.test;
       return new Promise ((resolve, reject) => {
         client.addEventListener('message', function $listener(msg) {
           listener = $listener;
-          console.log(msg);
           const response = JSON.parse(msg.data);
           expect(response.type).to.equal('jsonwsp/fault');
           expect(response.fault).to.have.property('code');
