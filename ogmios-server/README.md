@@ -40,9 +40,11 @@ Application  |  ─── Ogmios.hs
              |       ├── Json.hs
              |       ├── Json
              |       │   ├── Prelude.hs
+             |       │   ├── Query.hs
              |       │   ├── Byron.hs
-             |       │   ├── MaryAllegra.hs
-       Data  |       │   └── Shelley.hs
+             |       │   ├── Shelley.hs
+             |       │   ├── Allegra.hs
+       Data  |       │   └── Mary.hs
              |       ├── Metrics.hs
              |       ├── Protocol.hs
              |       └── Protocol
