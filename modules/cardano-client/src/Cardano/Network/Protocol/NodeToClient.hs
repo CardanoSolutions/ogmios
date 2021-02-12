@@ -161,7 +161,7 @@ connectClient
     -> FilePath
     -> m ()
 connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
-    let versions = simpleSingletonVersions NodeToClientV_6 vData client
+    let versions = simpleSingletonVersions nodeToClientV vData client
     let socket = localSnocket iocp addr
     connectTo socket tracers versions addr
   where
@@ -208,7 +208,7 @@ mkClient unlift tr epochSlots clients =
                 (stateQueryClient clients)
                 (hoistChannel liftIO channel)
         })
-        NodeToClientV_3
+        nodeToClientV
   where
     trChainSync    = nullTracer
     codecChainSync = cChainSyncCodec $ codecs epochSlots
@@ -292,9 +292,8 @@ codecs
     => EpochSlots
     -> ClientCodecs Block m
 codecs epochSlots =
-    clientCodecs cfg (supportedVersions ! version) version
+    clientCodecs cfg (supportedVersions ! nodeToClientV) nodeToClientV
   where
-    version = NodeToClientV_8
     supportedVersions = supportedNodeToClientVersions (Proxy @Block)
     cfg = CardanoCodecConfig byron shelley allegra mary
       where
@@ -302,3 +301,6 @@ codecs epochSlots =
         shelley = ShelleyCodecConfig
         allegra = ShelleyCodecConfig
         mary    = ShelleyCodecConfig
+
+nodeToClientV :: NodeToClientVersion
+nodeToClientV = NodeToClientV_8
