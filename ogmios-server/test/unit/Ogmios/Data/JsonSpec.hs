@@ -33,7 +33,7 @@ import Data.SOP.Strict
     ( NS (..) )
 import Ogmios.Data.Json
     ( Json
-    , SomeQuery (..)
+    , encodeAcquireFailure
     , encodeBlock
     , encodeHardForkApplyTxErr
     , encodePoint
@@ -42,6 +42,7 @@ import Ogmios.Data.Json
     )
 import Ogmios.Data.Json.Query
     ( QueryResult
+    , SomeQuery (..)
     , parseGetCurrentPParams
     , parseGetEpochNo
     , parseGetLedgerTip
@@ -387,7 +388,7 @@ validateQuery json parser resultRef = specify (toString $ getSchemaRef resultRef
             expectationFailure $ "failed to parse JSON: " <> show e
         Right (SomeQuery{genResult,encodeResult}) -> do
             let toResponse = Wsp.Response Nothing . QueryResponse . encodeResult
-            let encode = jsonifierToAeson . _encodeQueryResponse . toResponse
+            let encode = jsonifierToAeson . _encodeQueryResponse encodeAcquireFailure . toResponse
             runQuickCheck $ withMaxSuccess 100 $ forAllBlind
                 (genResult Proxy)
                 (prop_validateToJSON encode resultRef)

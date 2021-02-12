@@ -101,22 +101,41 @@ mkStateQueryClient StateQueryCodecs{..} queue yield =
         MsgRelease Release toResponse -> do
             yield $ encodeReleaseResponse (toResponse Released)
             clientStIdle
-        MsgQuery _ _ -> do
-            -- FIXME: yield an error
-            clientStIdle
+        MsgQuery query toResponse -> do
+            pure $ LSQ.SendMsgAcquire Nothing (clientStAcquiringTip query toResponse)
 
     clientStAcquiring
         :: Point block
-        -> (Wsp.ToResponse (AcquireResponse block))
+        -> Wsp.ToResponse (AcquireResponse block)
         -> LSQ.ClientStAcquiring block (Point block) (Ledger.Query block) m ()
-    clientStAcquiring pt toResponse = LSQ.ClientStAcquiring
-        { LSQ.recvMsgAcquired = do
-            yield $ encodeAcquireResponse $ toResponse $ AcquireSuccess pt
-            clientStAcquired
-        , LSQ.recvMsgFailure = \failure -> do
-            yield $ encodeAcquireResponse $ toResponse $ AcquireFailure failure
-            clientStIdle
-        }
+    clientStAcquiring pt toResponse =
+        LSQ.ClientStAcquiring
+            { LSQ.recvMsgAcquired = do
+                yield $ encodeAcquireResponse $ toResponse $ AcquireSuccess pt
+                clientStAcquired
+            , LSQ.recvMsgFailure = \failure -> do
+                yield $ encodeAcquireResponse $ toResponse $ AcquireFailure failure
+                clientStIdle
+            }
+
+    clientStAcquiringTip
+        :: Query block
+        -> Wsp.ToResponse (QueryResponse block)
+        -> LSQ.ClientStAcquiring block (Point block) (Ledger.Query block) m ()
+    clientStAcquiringTip (Query (SomeQuery query encodeResult _)) toResponse =
+        LSQ.ClientStAcquiring
+            { LSQ.recvMsgAcquired = do
+                pure $ LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
+                    { LSQ.recvMsgResult = \result -> do
+                        let response = QueryResponse $ encodeResult result
+                        yield $ encodeQueryResponse $ toResponse response
+                        pure $ LSQ.SendMsgRelease clientStIdle
+                    }
+            , LSQ.recvMsgFailure = \failure -> do
+                let response = QueryAcquireFailure failure
+                yield $ encodeQueryResponse $ toResponse response
+                clientStIdle
+            }
 
     clientStAcquired
         :: m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())

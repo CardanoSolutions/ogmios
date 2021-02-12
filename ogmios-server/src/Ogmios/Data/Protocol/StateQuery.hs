@@ -97,7 +97,7 @@ mkStateQueryCodecs encodePoint encodeAcquireFailure =
         , decodeQuery =
             decodeWith _decodeQuery
         , encodeQueryResponse =
-            _encodeQueryResponse
+            _encodeQueryResponse encodeAcquireFailure
         }
 
 --
@@ -199,23 +199,34 @@ _decodeQuery
 _decodeQuery =
     Wsp.genericFromJSON Wsp.defaultOptions
 
-newtype QueryResponse block =
-    QueryResponse { unQueryResponse :: Json }
+data QueryResponse block
+    = QueryResponse { unQueryResponse :: Json }
+    | QueryAcquireFailure { failure :: AcquireFailure }
     deriving (Generic)
 
 instance Show (QueryResponse block) where
-    showsPrec i (QueryResponse json) =
-        T.showParen (i >= 10) (T.showString $ "QueryResponse (" <> str <> ")")
+    showsPrec i = \case
+        QueryResponse json -> T.showParen (i >= 10)
+            (T.showString $ "QueryResponse (" <> str json <> ")")
+        QueryAcquireFailure failure -> T.showParen (i >= 10)
+            (T.showString $ "QueryAcquireFailure (" <> show failure <> ")")
       where
-        str = decodeUtf8 . jsonToByteString $ json
+        str = decodeUtf8 . jsonToByteString
 
 _encodeQueryResponse
     :: forall block. ()
-    => Wsp.Response (QueryResponse block)
+    => (AcquireFailure -> Json)
+    -> Wsp.Response (QueryResponse block)
     -> Json
-_encodeQueryResponse =
+_encodeQueryResponse encodeAcquireFailure =
     Wsp.mkResponse Wsp.defaultOptions proxy $ \case
         QueryResponse json ->
             json
+        QueryAcquireFailure{failure} -> encodeObject
+            [ ( "AcquireFailure", encodeObject
+                [ ("failure", encodeAcquireFailure failure)
+                ]
+              )
+            ]
   where
     proxy = Proxy @(Wsp.Request (Query block))

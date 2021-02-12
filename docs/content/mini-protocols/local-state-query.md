@@ -12,7 +12,7 @@ weight = 3
         │           │       ▲ 
         │   Acquire │       │ Failure 
         │           ▼       │
-        │       ┌───────────┴───┐              
+        │       ┌───────────┴───┐                   
 Release │       │   Acquiring   │◀─────────────────┐
         │       └───┬───────────┘                  │
         │           │       ▲                      │ Result 
@@ -20,7 +20,7 @@ Release │       │   Acquiring   │◀────────────�
         │           ▼       │                      │
         │       ┌───────────┴───┐         ┌────────┴───────┐
         └───────┤   Acquired    │────────▶│    Querying    │
-                └───────────────┘         └────────────────┘
+                └───────────────┘  Query  └────────────────┘
 {{% /ascii-drawing %}}
 
 ## Overview
@@ -36,6 +36,9 @@ In order to run a question by the ledger, one must first acquire a particular po
 ## How To Use
 
 Ogmios uses a simplified version of the above state-machine. Or more exactly, it exposes a simplified version and handles some of the complexity behind the scene for you. As clients, Ogmios will give you 3 possible requests: Acquire, Query, Release. A typical sequence would be to start by Acquiring a state on a given point and then make a few queries, and then release. The release step is optional although it is a bit more polite to say goodbye at the end of a conversation. 
+
+It is also possible to submit queries directly without acquiring. As a consequence, Ogmios will acquire the tip of the chain, run the query and release it for you. This is the easiest way to send 
+queries if you don't care about capturing a particular state. Note however that this may create race conditions if you send multiple queries via this method. Indeed, the tip is changing quite often on the network, and two subsequent queries may actually run on two different points of the chain. While this is generally safe for most queries, it may also put your application in an unexpected state when crossing epoch boundaries or hard-forks. 
 
 ## Acquire
 
@@ -86,6 +89,62 @@ Query                        | Result
 
 
 To know more about arguments and results of each query, have a look at the [API reference](../../api-reference).
+
+## Simplified Example
+
+In this example, we'll consider a simple direct query on the network tip to fetch the latest protocol parameters. The next section gives a more elaborate example which shows how to acquire a specific point on chain.
+
+```js
+const WebSocket = require('ws');
+const client = new WebSocket("ws://localhost:1337");
+
+function wsp(methodname, args) {
+    client.send(JSON.stringify({
+        type: "jsonwsp/request",
+        version: "1.0",
+        servicename: "ogmios",
+        methodname,
+        args
+    }));
+}
+
+client.once('open', () => {
+    wsp("Query", { query: "currentProtocolParameters" } );
+});
+
+client.on('message', function(msg) {
+    const response = JSON.parse(msg);
+    console.log(JSON.stringify(response.result, null, 4));
+    client.close();
+});
+```
+
+This little excerpt outputs the most recent protocol parameters in a nice JSON:
+
+```json
+{
+    "poolDeposit": 500000000,
+    "protocolVersion": {
+        "minor": 0,
+        "major": 3
+    },
+    "minUtxoValue": 1000000,
+    "minFeeConstant": 155381,
+    "maxTxSize": 16384,
+    "minPoolCost": 340000000,
+    "maxBlockBodySize": 65536,
+    "extraEntropy": "neutral",
+    "minFeeCoefficient": 44,
+    "poolInfluence": "3/10",
+    "maxBlockHeaderSize": 1100,
+    "stakeKeyDeposit": 2000000,
+    "decentralizationParameter": "1/5",
+    "desiredNumberOfPools": 500,
+    "poolRetirementEpochBound": 18,
+    "monetaryExpansion": "3/1000",
+    "treasuryExpansion": "1/5"
+}
+```
 
 ## Full Example
 
