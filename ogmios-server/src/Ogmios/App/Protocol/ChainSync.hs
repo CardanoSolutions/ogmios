@@ -69,6 +69,8 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     )
 
 import qualified Codec.Json.Wsp as Wsp
+import qualified Codec.Json.Wsp.Handler as Wsp
+import qualified Data.Aeson as Json
 import qualified Data.Sequence as Seq
 
 mkChainSyncClient
@@ -127,9 +129,8 @@ mkChainSyncClient ChainSyncCodecs{..} queue yield =
             pure $ SendMsgRequestNextPipelined collect
 
         Just (MsgFindIntersect _FindIntersect _toResponse) -> do
-            -- TODO: Return an error telling clients that they can't send
-            -- FindIntersection while there are in-flights 'RequestNext'
-            -- requests.
+            let fault = "'FindIntersect' requests cannot be interleaved with 'RequestNext'."
+            yield $ Json.toJSON $ Wsp.mkFault $ Wsp.clientFault fault
             clientStIdle n buffer
 
     clientStNext
