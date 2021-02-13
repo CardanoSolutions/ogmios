@@ -23,7 +23,7 @@ COPY modules/json-wsp/package.yaml           modules/json-wsp/package.yaml
 
 COPY ogmios-server/package.yaml              ogmios-server/package.yaml
 COPY stack.yaml                              stack.yaml
-COPY snapshot.yaml                           snapshot.yaml
+COPY resolver.yaml                           resolver.yaml
 COPY .hpack.config.yaml                      .hpack.config.yaml
 COPY .stylish-haskell.yaml                   .stylish-haskell.yaml
 

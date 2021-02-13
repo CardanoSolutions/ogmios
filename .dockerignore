@@ -2,7 +2,7 @@
 
 !LICENSE
 !stack.yaml
-!snapshot.yaml
+!resolver.yaml
 !.hpack.config.yaml
 !.stylish-haskell.yaml
 
