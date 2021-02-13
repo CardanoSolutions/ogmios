@@ -37,6 +37,7 @@ module Ogmios.Data.Json.Prelude
     , encodeNull
     , encodePort
     , encodeRational
+    , encodeRelativeTime
     , encodeScientific
     , encodeShortByteString
     , encodeSlotNo
@@ -94,6 +95,8 @@ import Data.Sequence.Strict
     ( StrictSeq )
 import Data.Vector
     ( Vector )
+import Ouroboros.Consensus.BlockchainTime.WallClock.Types
+    ( RelativeTime (..) )
 import Shelley.Spec.Ledger.BaseTypes
     ( DnsName
     , Port
@@ -217,6 +220,11 @@ encodeRational :: Rational -> Json
 encodeRational r =
     encodeText (show (numerator r) <> "/" <> show (denominator r))
 {-# INLINABLE encodeRational #-}
+
+encodeRelativeTime :: RelativeTime -> Json
+encodeRelativeTime =
+    encodeString . show . getRelativeTime
+{-# INLINABLE encodeRelativeTime #-}
 
 encodeScientific :: Scientific -> Json
 encodeScientific =

@@ -15,6 +15,7 @@ module Ogmios.Data.Json.Query
     , encodePoint
 
       -- * Parsers
+    , parseGetEraStart
     , parseGetLedgerTip
     , parseGetEpochNo
     , parseGetNonMyopicMemberRewards
@@ -43,6 +44,10 @@ import Ouroboros.Consensus.HardFork.Combinator
     ( MismatchEraInfo, OneEraHash (..) )
 import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
     ( EraMismatch (..), mkEraMismatch )
+import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
+    ( QueryAnytime (..) )
+import Ouroboros.Consensus.HardFork.History.Summary
+    ( Bound (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..), ShelleyHash (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Query
@@ -72,6 +77,15 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 --
 -- Encoders
 --
+
+encodeBound
+    :: Bound
+    -> Json
+encodeBound bound = encodeObject
+    [ ( "time", encodeRelativeTime (boundTime bound) )
+    , ( "slot", encodeSlotNo (boundSlot bound) )
+    , ( "epoch", encodeEpochNo (boundEpoch bound) )
+    ]
 
 encodeEraMismatch
     :: EraMismatch
@@ -126,6 +140,23 @@ encodePoint = \case
 --
 -- Parsers
 --
+
+parseGetEraStart
+    :: forall crypto f result.
+        ( result ~ Maybe Bound
+        )
+    => (Proxy result -> f result)
+    -> Json.Value
+    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
+parseGetEraStart genResult =
+    Json.withText "SomeQuery" $ \text -> do
+        guard (text == "eraStart") $> SomeQuery
+            { query =
+                QueryAnytimeAllegra GetEraStart
+            , encodeResult =
+                encodeMaybe encodeBound
+            , genResult
+            }
 
 parseGetLedgerTip
     :: forall crypto f result era.

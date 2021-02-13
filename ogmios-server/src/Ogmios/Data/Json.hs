@@ -196,7 +196,8 @@ instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
 
 instance Crypto crypto => FromJSON (SomeQuery Maybe (CardanoBlock crypto)) where
     parseJSON = choice "query"
-        [ Query.parseGetLedgerTip _void
+        [ Query.parseGetEraStart _void
+        , Query.parseGetLedgerTip _void
         , Query.parseGetEpochNo _void
         , Query.parseGetNonMyopicMemberRewards _void
         , Query.parseGetCurrentPParams _void

@@ -79,6 +79,7 @@ At the moment of writing this guide, the following queries are available:
 
 Query                        | Result
 ---                          | ---
+`eraStart`                   | The information regarding the beginning of the current era.
 `ledgerTip`                  | The most recent block tip known of the ledger.
 `currentEpoch`               | The current epoch of the ledger.
 `nonMyopicMemberRewards`     | Non-myopic member rewards for each pool. Used in ranking.

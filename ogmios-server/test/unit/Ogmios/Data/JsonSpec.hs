@@ -14,17 +14,15 @@ module Ogmios.Data.JsonSpec
 import Relude
 
 import Cardano.Network.Protocol.NodeToClient
-    ( Block, SubmitTxError (..) )
+    ( Block )
 import Cardano.Slotting.Slot
     ( EpochNo (..) )
 import Control.Monad
     ( void, (>=>) )
 import Data.Aeson
-    ( parseJSON, toJSON )
+    ( parseJSON )
 import Data.Aeson.QQ.Simple
     ( aesonQQ )
-import Data.ByteArray.Encoding
-    ( Base (..), convertFromBase, convertToBase )
 import Data.Maybe
     ( fromJust )
 import Data.Proxy
@@ -45,6 +43,7 @@ import Ogmios.Data.Json.Query
     , SomeQuery (..)
     , parseGetCurrentPParams
     , parseGetEpochNo
+    , parseGetEraStart
     , parseGetFilteredUTxO
     , parseGetLedgerTip
     , parseGetNonMyopicMemberRewards
@@ -61,14 +60,14 @@ import Ogmios.Data.Protocol.ChainSync
 import Ogmios.Data.Protocol.StateQuery
     ( QueryResponse (..), _encodeQueryResponse )
 import Ogmios.Data.Protocol.TxSubmission
-    ( SubmitTxResponse (..), _encodeSubmitTxResponse )
+    ( SubmitTxResponse, _encodeSubmitTxResponse )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock )
 import Ouroboros.Consensus.Cardano.Block
     ( AllegraEra
     , CardanoEras
     , GenTx
-    , HardForkApplyTxErr (ApplyTxErrByron, ApplyTxErrShelley, ApplyTxErrWrongEra)
+    , HardForkApplyTxErr (..)
     , HardForkBlock (..)
     , ShelleyEra
     )
@@ -76,10 +75,12 @@ import Ouroboros.Consensus.HardFork.Combinator
     ( LedgerEraInfo (..), Mismatch (..), MismatchEraInfo (..), singleEraInfo )
 import Ouroboros.Consensus.HardFork.Combinator.Mempool
     ( HardForkApplyTxErr (..) )
+import Ouroboros.Consensus.HardFork.History.Summary
+    ( Bound (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock )
 import Ouroboros.Consensus.Shelley.Ledger.Query
-    ( NonMyopicMemberRewards (..), Query (..) )
+    ( NonMyopicMemberRewards (..) )
 import Ouroboros.Consensus.Shelley.Protocol.Crypto
     ( StandardCrypto )
 import Ouroboros.Network.Block
@@ -93,34 +94,22 @@ import Shelley.Spec.Ledger.PParams
 import Shelley.Spec.Ledger.UTxO
     ( UTxO )
 import Test.Hspec
-    ( Spec
-    , SpecWith
-    , context
-    , expectationFailure
-    , it
-    , parallel
-    , shouldBe
-    , specify
-    )
+    ( Spec, SpecWith, context, expectationFailure, it, parallel, specify )
 import Test.Hspec.Json.Schema
     ( SchemaRef (..), prop_validateToJSON )
 import Test.Hspec.QuickCheck
     ( prop )
 import Test.QuickCheck
     ( Arbitrary (..)
-    , Args (..)
     , Gen
-    , Positive (..)
     , Property
     , Result (..)
     , choose
-    , counterexample
     , elements
     , forAllBlind
     , frequency
     , genericShrink
     , oneof
-    , property
     , quickCheckResult
     , scale
     , withMaxSuccess
@@ -128,10 +117,6 @@ import Test.QuickCheck
     )
 import Test.QuickCheck.Arbitrary.Generic
     ( genericArbitrary )
-import Test.QuickCheck.Hedgehog
-    ( hedgehog )
-import Test.QuickCheck.Monadic
-    ( assert, monadicIO, monitor, run )
 import Test.Shelley.Spec.Ledger.Serialisation.EraIndepGenerators
     ( genPParams )
 
@@ -142,8 +127,6 @@ import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
 import qualified Ouroboros.Network.Point as Point
-
-type ApplyTxErr = HardForkApplyTxErr (CardanoEras StandardCrypto)
 
 queryRef :: SchemaRef
 queryRef = "ogmios.wsp.json#/properties/Query/properties/args/properties/query"
@@ -161,11 +144,11 @@ validateToJSON
     -> (a -> Json)
     -> SchemaRef
     -> SpecWith ()
-validateToJSON arbitrary encode ref
+validateToJSON gen encode ref
     = parallel
     $ it (toString $ getSchemaRef ref)
     $ withMaxSuccess 100
-    $ forAllBlind arbitrary (prop_validateToJSON (jsonifierToAeson . encode) ref)
+    $ forAllBlind gen (prop_validateToJSON (jsonifierToAeson . encode) ref)
 
 spec :: Spec
 spec = do
@@ -189,6 +172,11 @@ spec = do
             "ogmios.wsp.json#/properties/SubmitTxResponse"
 
     context "validate local state queries against JSON-schema" $ do
+        validateQuery
+            [aesonQQ|"eraStart"|]
+            ( parseGetEraStart genBoundResult
+            ) "ogmios.wsp.json#/properties/QueryResponse[eraStart]"
+
         validateQuery
             [aesonQQ|"ledgerTip"|]
             ( parseGetLedgerTip genPointResult
@@ -413,6 +401,12 @@ genMismatchEraInfo = MismatchEraInfo <$> elements
         singleEraInfo (Proxy @ByronBlock)
     eraInfoShelley =
         singleEraInfo (Proxy @(ShelleyBlock (ShelleyEra StandardCrypto)))
+
+genBoundResult
+    :: Proxy (Maybe Bound)
+    -> Gen (Maybe Bound)
+genBoundResult _ =
+    Just <$> arbitrary -- NOTE: Can't be 'Nothing' with Ogmios.
 
 genPointResult
     :: forall crypto era. (crypto ~ StandardCrypto, era ~ AllegraEra crypto)

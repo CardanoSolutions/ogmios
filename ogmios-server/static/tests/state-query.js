@@ -40,7 +40,8 @@ describe("StateQuery", () => {
   });
 
   const queries =
-          [ [ "ledgerTip", { timeout: 2000 } ]
+          [ [ "eraStart", { timeout: 2000 } ]
+          , [ "ledgerTip", { timeout: 2000 } ]
           , [ "currentEpoch", { timeout: 2000 }]
           , [ "currentProtocolParameters", { timeout: 2000 } ]
           , [ "proposedProtocolParameters", { timeout: 2000 } ]
