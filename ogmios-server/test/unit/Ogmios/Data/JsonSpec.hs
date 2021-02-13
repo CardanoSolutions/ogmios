@@ -45,6 +45,7 @@ import Ogmios.Data.Json.Query
     , SomeQuery (..)
     , parseGetCurrentPParams
     , parseGetEpochNo
+    , parseGetFilteredUTxO
     , parseGetLedgerTip
     , parseGetNonMyopicMemberRewards
     , parseGetProposedPParamsUpdates
@@ -232,23 +233,23 @@ spec = do
             ( parseGetUTxO genUTxOResult
             ) "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
--- TODO: re-enabled 'parseGetFilteredUTxO'
---        validateQuery
---            [aesonQQ|
---            { "utxo": []
---            }|]
---            (parseGetFilteredUTxO genUTxOResult)
---            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
---
---        validateQuery
---            [aesonQQ|
---            { "utxo":
---                [ "addr1vxsvu329sr8z92usevrr6scp4vxxn0j8e20avag662uesgq385tfd"
---                , "Ae2tdPwUPEZEQHoZTVq3KQhtjP32JzoEE5onUS45bFmsBSXYCXSXEQEzb4v"
---                ]
---            }|]
---            (parseGetFilteredUTxO genUTxOResult)
---            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+        validateQuery
+            [aesonQQ|
+            { "utxo": []
+            }|]
+            (parseGetFilteredUTxO genUTxOResult)
+            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+
+        validateQuery
+            [aesonQQ|
+            { "utxo":
+                [ "addr1vxsvu329sr8z92usevrr6scp4vxxn0j8e20avag662uesgq385tfd"
+                , "Ae2tdPwUPEZEQHoZTVq3KQhtjP32JzoEE5onUS45bFmsBSXYCXSXEQEzb4v"
+                , "82d818582183581cb0574c7a1564697578b840fd7ec9d8963fa1398415f9f2f87737a83da0001ae9e3e303"
+                ]
+            }|]
+            (parseGetFilteredUTxO genUTxOResult)
+            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
 instance Arbitrary a => Arbitrary (Wsp.Response a) where
     arbitrary = Wsp.Response Nothing <$> arbitrary

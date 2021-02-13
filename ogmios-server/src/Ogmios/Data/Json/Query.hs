@@ -22,6 +22,7 @@ module Ogmios.Data.Json.Query
     , parseGetProposedPParamsUpdates
     , parseGetStakeDistribution
     , parseGetUTxO
+    , parseGetFilteredUTxO
     ) where
 
 import Ogmios.Data.Json.Prelude
@@ -32,6 +33,10 @@ import Cardano.Slotting.Slot
     ( EpochNo (..), WithOrigin (..) )
 import Data.Aeson
     ( (.:) )
+import Data.ByteString.Base16
+    ( decodeBase16 )
+import Data.ByteString.Base58
+    ( bitcoinAlphabet, decodeBase58 )
 import Ouroboros.Consensus.Cardano.Block
     ( AllegraEra, CardanoBlock, CardanoEras, Query (..) )
 import Ouroboros.Consensus.HardFork.Combinator
@@ -47,11 +52,13 @@ import Ouroboros.Network.Block
 import Ouroboros.Network.Point
     ( Block (..) )
 
+import qualified Codec.Binary.Bech32 as Bech32
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
 
 import qualified Cardano.Crypto.Hash.Class as CC
 
+import qualified Shelley.Spec.Ledger.Address as Sh
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
 import qualified Shelley.Spec.Ledger.Coin as Sh
 import qualified Shelley.Spec.Ledger.Credential as Sh
@@ -251,45 +258,47 @@ parseGetUTxO genResult =
             , genResult
             }
 
--- parseGetFilteredUTxO
---     :: forall crypto f result era.
---         ( Crypto crypto
---         , era ~ ShelleyEra crypto
---         , result ~ QueryResult crypto (Sh.UTxO era)
---         )
---     => (Proxy result -> f result)
---     -> Json.Value
---     -> Json.Parser (SomeQuery f Json.Value (CardanoBlock crypto))
--- parseGetFilteredUTxO genResult = Json.withObject "SomeQuery" $ \obj -> do
---     addrs <- obj .: "utxo" >>= traverse parseAddress
---     pure SomeQuery
---         { query = QueryIfCurrentAllegra (GetFilteredUTxO $ fromList addrs)
---         , encodeResult = toAltJSON
---         , genResult
---         }
---   where
---     parseAddress :: Json.Value -> Json.Parser (Sh.Addr era)
---     parseAddress = Json.withText "Address" $ choice "address"
---         [ addressFromBytes fromBech32
---         , addressFromBytes fromBase58
---         , addressFromBytes fromBase16
---         ]
---       where
---         addressFromBytes decode =
---             decode >=> maybe mempty pure . Sh.deserialiseAddr
---
---         fromBech32 txt =
---             case Bech32.decodeLenient txt of
---                 Left e ->
---                     fail (show e)
---                 Right (_, dataPart) ->
---                     maybe mempty pure $ Bech32.dataPartToBytes dataPart
---
---         fromBase58 =
---             maybe mempty pure . decodeBase58 bitcoinAlphabet . encodeUtf8
---
---         fromBase16 =
---             either (fail . show) pure . convertFromBase @ByteString Base16 . encodeUtf8
+parseGetFilteredUTxO
+    :: forall crypto f result era.
+        ( Crypto crypto
+        , era ~ AllegraEra crypto
+        , result ~ QueryResult crypto (Sh.UTxO era)
+        )
+    => (Proxy result -> f result)
+    -> Json.Value
+    -> Json.Parser (SomeQuery f (CardanoBlock crypto))
+parseGetFilteredUTxO genResult = Json.withObject "SomeQuery" $ \obj -> do
+    addrs <- obj .: "utxo" >>= traverse parseAddress
+    pure SomeQuery
+        { query =
+            QueryIfCurrentAllegra (GetFilteredUTxO $ fromList addrs)
+        , encodeResult =
+            either encodeMismatchEraInfo Shelley.encodeUTxO
+        , genResult
+        }
+  where
+    parseAddress :: Json.Value -> Json.Parser (Sh.Addr crypto)
+    parseAddress = Json.withText "Address" $ choice "address"
+        [ addressFromBytes fromBech32
+        , addressFromBytes fromBase58
+        , addressFromBytes fromBase16
+        ]
+      where
+        addressFromBytes decode =
+            decode >=> maybe mempty pure . Sh.deserialiseAddr
+
+        fromBech32 txt =
+            case Bech32.decodeLenient txt of
+                Left e ->
+                    fail (show e)
+                Right (_, dataPart) ->
+                    maybe mempty pure $ Bech32.dataPartToBytes dataPart
+
+        fromBase58 =
+            maybe mempty pure . decodeBase58 bitcoinAlphabet . encodeUtf8
+
+        fromBase16 =
+            either (fail . show) pure . decodeBase16 . encodeUtf8
 
 --
 -- Internal
@@ -322,7 +331,6 @@ parseCredential
     -> Json.Parser (Sh.Credential 'Sh.Staking crypto)
 parseCredential =
     fmap (Sh.KeyHashObj . Sh.KeyHash) . parseHash
-
 
 parseHash
     :: CC.HashAlgorithm alg

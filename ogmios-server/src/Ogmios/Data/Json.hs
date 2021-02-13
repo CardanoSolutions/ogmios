@@ -203,7 +203,7 @@ instance Crypto crypto => FromJSON (SomeQuery Maybe (CardanoBlock crypto)) where
         , Query.parseGetProposedPParamsUpdates _void
         , Query.parseGetStakeDistribution _void
         , Query.parseGetUTxO _void
-        -- , Query.parseGetFilteredUTxO _void
+        , Query.parseGetFilteredUTxO _void
         ]
       where
         _void :: forall result. Proxy result -> Maybe result

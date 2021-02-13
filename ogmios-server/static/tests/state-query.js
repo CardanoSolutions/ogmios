@@ -45,6 +45,13 @@ describe("StateQuery", () => {
           , [ "currentProtocolParameters", { timeout: 2000 } ]
           , [ "proposedProtocolParameters", { timeout: 2000 } ]
           , [ "stakeDistribution", { timeout: 5000 } ]
+          , [ { "utxo":
+                [ "Ae2tdPwUPEYx54UZRbbU8M8HjXMRqoWXYwgpN3GUuzMQBUFRyrco4jBHZgd"
+                , "addr1qy9y9s40l30283zec5svd6pky39qsae3mwg4an66f28zlns2gtp2llz750z9n3fqcm5rvfz2ppmnrku3tm845j5w9l8qdpmv0m"
+                ]
+              }
+            , { "timeout": 5000 }
+            ]
           ]
 
   const gibberish =
@@ -52,7 +59,8 @@ describe("StateQuery", () => {
           ]
 
   queries.forEach(([query, { timeout }]) => {
-    it(query, function () {
+    const title = typeof query === "string" ? query : Object.keys(query).join("/");
+    it(title, function () {
       const test = this.test;
       this.timeout(timeout);
       return new Promise ((resolve, reject) => {
