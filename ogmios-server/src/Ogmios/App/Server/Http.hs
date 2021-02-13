@@ -25,6 +25,7 @@ import Wai.Routes
     ( Handler
     , RenderRoute (..)
     , Routable (..)
+    , header
     , html
     , javascript
     , json
@@ -62,6 +63,7 @@ getHomeR = runHandlerM $ do
 
 getHealthR :: Handler Server
 getHealthR = runHandlerM $ do
+    header "Access-Control-Allow-Origin" "*"
     Server tvar <- sub
     health <- liftIO $ readTVarIO tvar
     json health
