@@ -462,6 +462,9 @@
           { "query":
             { "oneOf":
               [ { "type": "string"
+                , "enum": ["eraStart"]
+                }
+              , { "type": "string"
                 , "enum": ["ledgerTip"]
                 }
               , { "type": "string"
@@ -511,6 +514,37 @@
         }
       , "mirror":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryResponse[eraStart]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/Bound" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
         }
       }
     }
@@ -1050,6 +1084,17 @@
     , "minimum": 0
     }
 
+  , "Bound":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": ["time", "slot", "epoch"]
+    , "properties":
+      { "time": { "$ref": "#/definitions/RelativeTime" }
+      , "slot": { "$ref": "#/definitions/Slot" }
+      , "epoch": { "$ref": "#/definitions/Epoch" }
+      }
+    }
+
   , "Certificate":
     { "oneOf":
       [ { "type": "object"
@@ -1365,16 +1410,16 @@
 
   , "Point":
     { "oneOf":
-      [ { "type": "string"
-        , "enum": [ "origin" ]
-        }
-      , { "type": "object"
+      [ { "type": "object"
         , "additionalProperties": false
         , "required": [ "slot", "hash" ]
         , "properties":
           { "slot": { "$ref": "#/definitions/Slot" }
           , "hash": { "$ref": "#/definitions/Hash16" }
           }
+        }
+      , { "type": "string"
+        , "enum": [ "origin" ]
         }
       ]
     }
@@ -1479,8 +1524,13 @@
 
   , "Ratio":
     { "type": "string"
-    , "additionalProperties": false
     , "pattern": "^-?[0-9]+/[0-9]+$"
+    }
+
+  , "RelativeTime":
+    { "type": "string"
+    , "description": "A time in seconds relative to the system start."
+    , "pattern": "^[0-9]+.[0-9]+s$"
     }
 
   , "Relay":
