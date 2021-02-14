@@ -2,8 +2,8 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
@@ -15,12 +15,30 @@ module Ogmios.App.Server.Http
     ( mkHttpApp
     ) where
 
-import Relude
+import Relude hiding
+    ( STM, TVar, readTVar )
+
+import Ogmios.App.Health
+    ( Health (..), healthCheck )
+import Ogmios.App.Metrics
+    ( RuntimeStats, Sampler, Sensors )
+import Ogmios.Control.MonadClock
+    ( MonadClock )
+import Ogmios.Control.MonadMetrics
+    ( MonadMetrics )
+import Ogmios.Control.MonadSTM
+    ( MonadSTM (..), TVar, readTVar )
 
 import Data.Aeson
     ( ToJSON (..) )
 import Data.FileEmbed
     ( embedFile )
+import Data.Generics.Internal.VL.Lens
+    ( view )
+import Data.Generics.Product.Typed
+    ( HasType, typed )
+import Ouroboros.Network.Block
+    ( Tip (..) )
 import Wai.Routes
     ( Handler
     , RenderRoute (..)
@@ -39,8 +57,18 @@ import Wai.Routes
 
 import qualified Network.Wai as Wai
 
+data EnvServer block m = EnvServer
+    { health   :: TVar m (Health block)
+    , sensors  :: Sensors m
+    , sampler  :: Sampler RuntimeStats m
+    }
+
 data Server where
-    Server :: ToJSON health => TVar health -> Server
+    Server
+        :: (MonadClock m, MonadMetrics m, MonadSTM m, ToJSON (Tip block))
+        => (forall a. m a -> IO a)
+        -> EnvServer block m
+        -> Server
 
 -- The HTTP 'Server' serves multiple purposes:
 --
@@ -58,15 +86,14 @@ mkRoute "Server" [parseRoutes|
 
 getHomeR :: Handler Server
 getHomeR = runHandlerM $ do
-    -- TODO: Show live 'health' data instead of a static landing page.
     html $ decodeUtf8 $(embedFile "static/index.html")
 
 getHealthR :: Handler Server
 getHealthR = runHandlerM $ do
     header "Access-Control-Allow-Origin" "*"
-    Server tvar <- sub
-    health <- liftIO $ readTVarIO tvar
-    json health
+    Server unliftIO EnvServer{health,sensors,sampler} <- sub
+    let readTip = lastKnownTip <$> readTVar health
+    json =<< liftIO (unliftIO $ healthCheck readTip health sensors sampler)
 
 getTestsR :: Handler Server
 getTestsR = runHandlerM $ do
@@ -82,8 +109,21 @@ getTestsStateQueryR = runHandlerM $ do
 
 -- | Wai 'Application' representing the HTTP server.
 mkHttpApp
-    :: ToJSON health
-    => TVar health
-    -> Wai.Application
-mkHttpApp =
-    waiApp . route . Server
+    :: forall m env block.
+        ( MonadClock m
+        , MonadMetrics m
+        , MonadSTM m
+        , MonadReader env m
+        , HasType (TVar m (Health block)) env
+        , HasType (Sensors m) env
+        , HasType (Sampler RuntimeStats m) env
+        , ToJSON (Tip block)
+        )
+    => (forall a. m a -> IO a)
+    -> m Wai.Application
+mkHttpApp unliftIO = do
+    env <- EnvServer @block @m
+        <$> asks (view typed)
+        <*> asks (view typed)
+        <*> asks (view typed)
+    pure $ waiApp $ route (Server unliftIO env)

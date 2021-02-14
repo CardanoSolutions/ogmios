@@ -76,10 +76,6 @@ import Cardano.Network.Protocol.NodeToClient
     ( Block )
 import Control.Monad.Class.MonadST
     ( MonadST )
-import Data.Generics.Internal.VL.Lens
-    ( view )
-import Data.Generics.Product.Typed
-    ( typed )
 
 --
 -- App
@@ -113,7 +109,7 @@ application tr = withDebouncer _10s $ \debouncer -> do
     healthCheckClient <- newHealthCheckClient (contramap OgmiosHealth tr) debouncer
 
     webSocketApp <- newWebSocketApp (contramap OgmiosWebSocket tr) (`runWith` env)
-    httpApp      <- asks (mkHttpApp @(Health Block) <$> view typed)
+    httpApp      <- mkHttpApp @_ @_ @Block (`runWith` env)
 
     concurrently_
         (connectHealthCheckClient

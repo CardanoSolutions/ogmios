@@ -7,8 +7,9 @@
 
 module Ogmios.App.Health
     ( -- * Health
-      Health
+      Health (..)
     , emptyHealth
+    , healthCheck
 
       -- * HealthCheckClient
     , HealthCheckClient
@@ -20,7 +21,7 @@ module Ogmios.App.Health
     ) where
 
 import Relude hiding
-    ( TVar, atomically, writeTVar )
+    ( STM, TVar, atomically, writeTVar )
 
 import Ogmios.App.Metrics
     ( RuntimeStats, Sampler, Sensors )
@@ -112,7 +113,10 @@ newHealthCheckClient
 newHealthCheckClient tr Debouncer{debounce} = do
     pure $ HealthCheckClient $ Clients
         { chainSyncClient = mkHealthCheckClient $ \lastKnownTip -> debounce $ do
-            health  <- healthCheck lastKnownTip
+            tvar <- asks (view typed)
+            sensors <- asks (view typed)
+            sampler <- asks (view typed)
+            health <- healthCheck (pure lastKnownTip) tvar sensors sampler
             logWith tr (HealthTick health)
 
         , txSubmissionClient =
@@ -126,25 +130,23 @@ newHealthCheckClient tr Debouncer{debounce} = do
 --
 -- See also 'Ogmios.App.Protocol.ChainSync#mkHealthCheckClient'
 healthCheck
-    :: forall m env block.
+    :: forall m block.
         ( MonadClock m
         , MonadMetrics m
         , MonadSTM m
-        , MonadReader env m
-        , HasType (TVar m (Health block)) env
-        , HasType (Sensors m) env
-        , HasType (Sampler RuntimeStats m) env
         )
-    => Tip block
+    => STM m (Tip block)
+    -> TVar m (Health block)
+    -> Sensors m
+    -> Sampler RuntimeStats m
     -> m (Health block)
-healthCheck tip = do
-    tvar    <- asks (view typed)
-    sensors <- asks (view typed)
-    sampler <- asks (view typed)
-    health <- Health tip
-        <$> (Just <$> getCurrentTime)
-        <*> Metrics.sample sampler sensors
-    health <$ atomically (writeTVar tvar health)
+healthCheck readTip tvar sensors sampler = do
+    lastTipUpdate <- Just <$> getCurrentTime
+    metrics <- Metrics.sample sampler sensors
+    atomically $ do
+        lastKnownTip <- readTip
+        let health = Health{ lastKnownTip, lastTipUpdate, metrics }
+        health <$ writeTVar tvar health
 
 connectHealthCheckClient
     :: forall m env.
