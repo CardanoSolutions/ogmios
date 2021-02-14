@@ -129,14 +129,13 @@ newWebSocketApp tr unliftIO = do
     sensors <- asks (view typed)
     return $ \pending -> unliftIO $ do
         logWith tr (WebSocketConnectionAccepted $ userAgent pending)
-        onExceptions $ acceptRequest pending $ \conn -> do
+        recordSession sensors $ onExceptions $ acceptRequest pending $ \conn -> do
             let trClient = natTracer liftIO $ contramap WebSocketClient tr
             withOuroborosClients conn $ \clients -> do
                 let client = mkClient unliftIO trClient slotsPerEpoch clients
                 let vData  = NodeToClientVersionData networkMagic
                 connectClient nullTracer client vData nodeSocket
                     & handle (onIOException conn)
-                    & recordSession sensors
         logWith tr (WebSocketConnectionEnded $ userAgent pending)
   where
     userAgent :: PendingConnection -> ByteString
