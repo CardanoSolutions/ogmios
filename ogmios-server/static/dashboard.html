@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ogmios Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.css"></script>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+      body, html {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+      }
+
+      body {
+        align-items: center;
+        color: #303952;
+        font-family: 'Arial';
+        font-size: 1.2em;
+        justify-content: center;
+        flex-direction: column;
+      }
+
+      /* Tooltip container */
+      .tooltip {
+        position: relative;
+        display: inline-block;
+      }
+
+      .display-none {
+        display: none;
+      }
+
+      /* Tooltip text */
+      .tooltip .tooltip-text {
+        visibility: hidden;
+        background-color: #141414;
+        color: #fff;
+        text-align: center;
+        padding: 0.5em 1em;
+        border-radius: 6px;
+
+        /* Position the tooltip text */
+        position: absolute;
+        z-index: 1;
+        width: 250px;
+        top: 125%;
+        left: 50%;
+        margin-left: -125px; /* width / 2 */
+
+        /* Fade-in */
+        opacity: 0;
+        transition: opacity 1s;
+      }
+
+      /* Tooltip arrow */
+      .tooltip .tooltip-text::after {
+        content: " ";
+        position: absolute;
+        left: 50%;
+        bottom: 100%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent transparent #141414 transparent;
+      }
+
+      /* Show the tooltip text when the tooltip container is mouse-overed */
+      .tooltip:hover .tooltip-text {
+        visibility: visible;
+        opacity: 0.6;
+      }
+
+      div#overview {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: row;
+      }
+
+      div#overview > p {
+        text-align: center;
+        width: 200px;
+      }
+
+      img.logo { width: 400px; }
+
+      div#live-view {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
+        justify-content: space-around;
+        align-items: center;
+      }
+      div#live-view > * {
+        width: 600px;
+      }
+
+      @media only screen and (max-width: 960px) {
+        div#overview { flex-direction: column; }
+        div#live-view { flex-direction: column; }
+        div#live-view > * { width: 540px; }
+        img.logo { width: 300px; }
+      }
+      @media only screen and (max-width: 550px) {
+        div#live-view > * { width: 380px; }
+        img.logo { width: 200px; }
+      }
+    </style>
+  </head>
+  <body>
+    <script src="/dashboard.js"></script>
+
+    <div id="overview">
+      <p>Status: <code class="ogmios-status">?</code></p>
+      <img class="logo" src="/assets/logo.png" />
+      <p>Url: <code class="ogmios-url"></code></p>
+    </div>
+    <script>
+      (function () {
+        const url = () => document.querySelector('div#overview code.ogmios-url');
+        window.addEventListener('websocket_url_change', ({ detail }) => {
+          url().innerHTML = detail.url;
+        });
+
+        const status = () => document.querySelector('div#overview code.ogmios-status');
+        window.addEventListener('tip_change', () => {
+          status().innerHTML = 'OK ✅';
+        });
+
+        window.addEventListener('health_error', () => {
+          status().innterHTML = 'KO 🕱';
+        });
+      } ());
+    </script>
+
+    <div id="epoch" align="center">
+      <span class="epoch"></span>
+      <div class="tooltip">
+        <progress></progress>
+        <span class="tooltip-text display-none"></span>
+      </div>
+    </div>
+    <script>
+      (function () {
+        const epoch = () => document.querySelector('div#epoch span.epoch');
+        const tooltip = () => document.querySelector('div#epoch span.tooltip-text');
+        const progress = () => document.querySelector('div#epoch progress');
+
+        window.addEventListener('tip_change', ({ detail }) => {
+          const percent = (100 * (detail.slotInEpoch / detail.epochLength)).toFixed(2);
+          progress().setAttribute('max', detail.epochLength);
+          progress().setAttribute('value', detail.slotInEpoch);
+          tooltip().innerHTML = percent + '% (' + detail.slotInEpoch + '/' + detail.epochLength + ')';
+          tooltip().classList.remove('display-none');
+        });
+
+        window.addEventListener('epoch_change', ({ detail }) => {
+          epoch().innerHTML = 'Epoch ' + detail.epoch;
+        });
+      } ());
+    </script>
+
+    <br/>
+    <br/>
+
+    <div id="live-view">
+      <div><canvas id="active-connections"></canvas></div>
+      <div><canvas id="max-heap-size"></canvas></div>
+      <div><canvas id="slot-number"></canvas></div>
+    </div>
+    <script>
+      window.addEventListener('load', function () {
+        const options = {
+          responsive: true,
+          tooltips: { mode: 'index', intersect: false },
+          hover: { mode: 'nearest', intersect: true },
+        };
+
+        const activeConnections = new Chart(document.querySelector('canvas#active-connections').getContext('2d'), {
+          type: 'line',
+          options,
+          data: {
+            labels: [],
+            datasets: [{
+              label: 'Active connections',
+              fill: false,
+              data: [],
+              backgroundColor: '#596275',
+              borderColor: '#596275',
+            }]
+          },
+        });
+
+        const currentHeapSize = new Chart(document.querySelector('canvas#max-heap-size').getContext('2d'), {
+          type: 'line',
+          options,
+          data: {
+            labels: [],
+            datasets: [{
+              label: 'Heap size (KB)',
+              fill: true,
+              data: [],
+              backgroundColor: '#778beb',
+              borderColor: '#778beb',
+            }]
+          },
+        });
+
+        const slotNumber = new Chart(document.querySelector('canvas#slot-number').getContext('2d'), {
+          type: 'line',
+          options,
+          data: {
+            labels: [],
+            datasets: [{
+              label: 'Slot number',
+              fill: false,
+              data: [],
+              backgroundColor: '#cf6a87',
+              borderColor: '#cf6a87',
+            }]
+          },
+        });
+
+        const MAXP = 5;
+
+        function addPoint(chart, x, y) {
+          chart.data.labels.push(x);
+          if (chart.data.labels.length > MAXP) {
+            chart.data.labels = chart.data.labels.slice(1);
+          }
+
+          chart.data.datasets.forEach(dataset => {
+            dataset.data.push(y);
+            if (dataset.data.length > MAXP) {
+              dataset.data = dataset.data.slice(1);
+            }
+          });
+
+          chart.update();
+        }
+
+        const getTimestamp = () => (new Date()).toISOString().slice(11,-5);
+
+        window.addEventListener('tip_change', ({ detail }) => {
+          const timestamp = getTimestamp();
+          addPoint(slotNumber, timestamp, detail.lastKnownTip.slot);
+        });
+
+        window.addEventListener('health_tick', ({ detail }) => {
+          const timestamp = getTimestamp();
+          addPoint(activeConnections, timestamp, detail.metrics.activeConnections);
+          addPoint(currentHeapSize, timestamp, detail.metrics.runtimeStats.currentHeapSize);
+        });
+      });
+    </script>
+  </body>
+</html>

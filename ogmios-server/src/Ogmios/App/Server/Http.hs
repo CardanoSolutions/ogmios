@@ -49,6 +49,7 @@ import Wai.Routes
     , json
     , mkRoute
     , parseRoutes
+    , raw
     , route
     , runHandlerM
     , sub
@@ -77,16 +78,23 @@ data Server where
 -- - A quick'n'dirty "benchmark" script used for rapid smoke testing.
 --
 mkRoute "Server" [parseRoutes|
-/                      HomeR                GET
+/                      DashboardR           GET
+/dashboard.js          DashboardJsR         GET
 /health                HealthR              GET
 /tests.html            TestsR               GET
 /tests/chain-sync.js   TestsChainSyncR      GET
 /tests/state-query.js  TestsStateQueryR     GET
+/assets/logo.png       LogoR                GET
+/favicon.ico           FaviconR             GET
 |]
 
-getHomeR :: Handler Server
-getHomeR = runHandlerM $ do
-    html $ decodeUtf8 $(embedFile "static/index.html")
+getDashboardR :: Handler Server
+getDashboardR = runHandlerM $ do
+    html $ decodeUtf8 $(embedFile "static/dashboard.html")
+
+getDashboardJsR :: Handler Server
+getDashboardJsR = runHandlerM $ do
+    javascript $ decodeUtf8 $(embedFile "static/dashboard.js")
 
 getHealthR :: Handler Server
 getHealthR = runHandlerM $ do
@@ -106,6 +114,16 @@ getTestsChainSyncR = runHandlerM $ do
 getTestsStateQueryR :: Handler Server
 getTestsStateQueryR = runHandlerM $ do
     javascript $ decodeUtf8 $(embedFile "static/tests/state-query.js")
+
+getLogoR :: Handler Server
+getLogoR = runHandlerM $ do
+    header "Content-Type" "image/png"
+    raw $(embedFile "static/assets/logo.png")
+
+getFaviconR :: Handler Server
+getFaviconR = runHandlerM $ do
+    header "Content-Type" "image/x-icon"
+    raw $(embedFile "static/assets/favicon.ico")
 
 -- | Wai 'Application' representing the HTTP server.
 mkHttpApp

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/ogmios.png" height=400 alt="ogmios" />
+  <img src="ogmios-server/static/assets/logo.png" height=400 alt="ogmios" />
 </p>
 
 <p align="center">

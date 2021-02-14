@@ -2,6 +2,8 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DuplicateRecordFields #-}
+
 {-# OPTIONS_GHC -fno-warn-partial-fields #-}
 
 module Ogmios.App.Server
@@ -73,10 +75,12 @@ connectHybridServer tr webSocketApp httpApp = do
         & Warp.setTimeout pingThreadDelay
 
     beforeMainLoop :: Options -> IO ()
-    beforeMainLoop opts@Options{nodeSocket} = do
+    beforeMainLoop Options{nodeSocket,serverHost,serverPort} = do
         socketExist <- doesPathExist nodeSocket
         unless socketExist $ logWith tr $ ServerNodeSocketNotFound nodeSocket
-        logWith tr $ ServerStarted opts
+        logWith tr $ ServerStarted{dashboardUrl, nodeSocket}
+      where
+        dashboardUrl = "http://" ++ serverHost ++ ":" ++ show serverPort ++ "/"
 
 --
 -- Logging
@@ -84,7 +88,7 @@ connectHybridServer tr webSocketApp httpApp = do
 
 data TraceServer where
     ServerStarted
-        :: Options
+        :: { dashboardUrl :: String, nodeSocket :: FilePath }
         -> TraceServer
 
     ServerNodeSocketNotFound
