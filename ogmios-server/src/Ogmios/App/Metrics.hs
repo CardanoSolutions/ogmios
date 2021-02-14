@@ -52,7 +52,7 @@ import qualified Ogmios.Control.MonadMetrics as Metrics
 import Data.Time.Clock
     ( DiffTime )
 import GHC.Stats
-    ( RTSStats (..), getRTSStats, getRTSStatsEnabled )
+    ( GCDetails (..), RTSStats (..), getRTSStats, getRTSStatsEnabled )
 import Relude.Extra.Map
     ( lookup )
 
@@ -132,6 +132,7 @@ newSampler tr = do
         False -> logWith tr (MetricsRuntimeStatsDisabled "run with '+RTS -T'")
         True  -> registerGroup getRTSStats store $ fromList
             [ (maxHeapSizeId, Ekg.Gauge . fromIntegral . max_live_bytes)
+            , (currentHeapSizeId, Ekg.Gauge . fromIntegral . gcdetails_live_bytes . gc)
             , (cpuTimeId, Ekg.Counter . cpu_ns)
             , (gcCpuTimeId, Ekg.Counter . gc_cpu_ns)
             ]
@@ -139,12 +140,16 @@ newSampler tr = do
     return (sampler store)
   where
     maxHeapSizeId = "maxHeapSize"
+    currentHeapSizeId = "currentHeapSize"
     cpuTimeId = "cpuTime"
     gcCpuTimeId = "gcCpuTime"
 
     sampler store = liftIO $
         Ekg.sampleAll store <&> \measures -> RuntimeStats
             { maxHeapSize = maxHeapSizeId `lookup` measures
+                & maybe 0 (\(Ekg.Gauge g) -> (`div` 1024) $ toInteger g)
+
+            , currentHeapSize = currentHeapSizeId `lookup` measures
                 & maybe 0 (\(Ekg.Gauge g) -> (`div` 1024) $ toInteger g)
 
             , cpuTime = cpuTimeId `lookup` measures

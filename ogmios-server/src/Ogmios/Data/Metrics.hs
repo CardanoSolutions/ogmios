@@ -63,6 +63,8 @@ type Sampler what m = m what
 data RuntimeStats = RuntimeStats
     { maxHeapSize :: !Integer
         -- ^ Maximum live data in the heap, in KB
+    , currentHeapSize :: !Integer
+        -- ^ Current live data in the heap, in KB
     , cpuTime :: !Integer
         -- ^ Total CPU time (at the previous GC), in ns
     , gcCpuTime :: !Integer
@@ -71,7 +73,7 @@ data RuntimeStats = RuntimeStats
 
 -- | Empty 'RuntimeStats', for initialization.
 emptyRuntimeStats :: RuntimeStats
-emptyRuntimeStats = RuntimeStats 0 0 0
+emptyRuntimeStats = RuntimeStats 0 0 0 0
 
 instance ToJSON RuntimeStats where
     toJSON = genericToJSON Json.defaultOptions
