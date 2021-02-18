@@ -71,6 +71,7 @@ import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Byron as Byron
+import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Query as Query
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
@@ -114,8 +115,11 @@ encodeBlock = \case
           , Allegra.encodeAllegraBlock blk
           )
         ]
-    BlockMary _blk ->
-        encodeText "BlockMary: TODO"
+    BlockMary blk -> encodeObject
+        [ ( "mary"
+          , Mary.encodeMaryBlock blk
+          )
+        ]
 
 encodeHardForkApplyTxErr
     :: Crypto crypto
@@ -167,7 +171,7 @@ instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto))
         deserialiseCBOR (fromStrict bytes) <|> deserialiseCBOR (wrap bytes)
       where
         deserialiseCBOR =
-            either (fail . show) (pure . GenTxShelley . snd)
+            either (fail . show) (pure . GenTxMary . snd)
             .
             Cbor.deserialiseFromBytes fromCBOR
 
