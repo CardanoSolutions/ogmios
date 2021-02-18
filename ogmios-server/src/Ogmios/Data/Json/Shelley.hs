@@ -912,7 +912,7 @@ encodeUpdateFailure = \case
               )
             ]
 
-encodeUTxO
+encodeUtxo
     :: forall era.
         ( Sh.ShelleyBased era
         , Sh.Core.Value era ~ Sh.Coin
@@ -920,7 +920,7 @@ encodeUTxO
         )
     => Sh.UTxO era
     -> Json
-encodeUTxO =
+encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
   where
     encodeIO = curry (encode2Tuple encodeTxIn encodeTxOut)

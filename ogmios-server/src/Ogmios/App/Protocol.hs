@@ -14,7 +14,7 @@ import Relude
 import Ogmios.Data.Json
     ( FromJSON, Json )
 import Ogmios.Data.Json.Query
-    ( SomeQuery )
+    ( QueryInEra )
 import Ogmios.Data.Protocol
     ( MethodName )
 import Ogmios.Data.Protocol.ChainSync
@@ -67,7 +67,7 @@ import qualified Data.Text as T
 onUnmatchedMessage
     :: forall block.
         ( FromJSON (SubmitTxPayload block)
-        , FromJSON (SomeQuery Maybe block)
+        , FromJSON (QueryInEra Maybe block)
         , FromJSON (Point block)
         )
     => ByteString

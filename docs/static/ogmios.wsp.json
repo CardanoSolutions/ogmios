@@ -573,6 +573,7 @@
         { "oneOf":
           [ { "$ref": "#/definitions/Point" }
           , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
         }
       , "reflection":
@@ -605,6 +606,7 @@
         { "oneOf":
           [ { "$ref": "#/definitions/Epoch" }
           , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
         }
       , "reflection":
@@ -635,8 +637,9 @@
         }
       , "result":
         { "oneOf":
-          [ { "$ref": "#/definitions/EraMismatch" }
-          , { "$ref": "#/definitions/NonMyopicMemberRewards" }
+          [ { "$ref": "#/definitions/NonMyopicMemberRewards" }
+          , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
         }
       , "reflection":
@@ -669,6 +672,7 @@
         { "oneOf":
           [ { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
           , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
         }
       , "reflection":
@@ -704,6 +708,7 @@
             , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
             }
           , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
         }
       , "reflection":
@@ -736,6 +741,7 @@
         { "oneOf":
           [ { "$ref": "#/definitions/PoolDistribution" }
           , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
         }
       , "reflection":
@@ -770,6 +776,7 @@
             , "items": { "$ref": "#/definitions/Utxo" }
             }
           , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
         }
       , "reflection":
@@ -1520,6 +1527,12 @@
       , "minor": { "type": "integer" }
       , "patch": { "type": "integer" }
       }
+    }
+
+  , "QueryUnavailableInCurrentEra":
+    { "type": "string"
+    , "description": "The requested query is not available in the current node era. It could be that the node is not fully synced."
+    , "enum": [ "QueryUnavailableInCurrentEra" ]
     }
 
   , "Ratio":

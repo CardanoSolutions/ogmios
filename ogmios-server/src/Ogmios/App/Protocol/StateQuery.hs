@@ -3,6 +3,7 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 
 -- | The state query protocol is likely the most versatile of the three Ouroboros
 -- mini-protocols. As a matter of fact, it allows for querying various types of
@@ -54,7 +55,7 @@ import Ogmios.Control.MonadSTM
 import Ogmios.Data.Json
     ( Json )
 import Ogmios.Data.Json.Query
-    ( SomeQuery (..) )
+    ( QueryInEra, ShelleyBasedEra (..), SomeQuery (..), SomeShelleyEra (..) )
 import Ogmios.Data.Protocol.StateQuery
     ( Acquire (..)
     , AcquireResponse (..)
@@ -65,20 +66,25 @@ import Ogmios.Data.Protocol.StateQuery
     , StateQueryCodecs (..)
     , StateQueryMessage (..)
     )
-
+import Ouroboros.Consensus.Cardano.Block
+    ( CardanoEras )
+import Ouroboros.Consensus.HardFork.Combinator
+    ( HardForkBlock, eraIndexToInt )
 import Ouroboros.Network.Block
     ( Point (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..) )
 
 import qualified Codec.Json.Wsp as Wsp
+import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ
 import qualified Ouroboros.Consensus.Shelley.Ledger.Query as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 
 mkStateQueryClient
-    :: forall m block.
+    :: forall m crypto block.
         ( MonadThrow m
         , MonadSTM m
+        , block ~ HardForkBlock (CardanoEras crypto)
         )
     => StateQueryCodecs block
         -- ^ For encoding Haskell types to JSON
@@ -122,15 +128,23 @@ mkStateQueryClient StateQueryCodecs{..} queue yield =
         :: Query block
         -> Wsp.ToResponse (QueryResponse block)
         -> LSQ.ClientStAcquiring block (Point block) (Ledger.Query block) m ()
-    clientStAcquiringTip (Query (SomeQuery query encodeResult _)) toResponse =
+    clientStAcquiringTip (Query queryInEra) toResponse =
         LSQ.ClientStAcquiring
             { LSQ.recvMsgAcquired = do
-                pure $ LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
-                    { LSQ.recvMsgResult = \result -> do
-                        let response = QueryResponse $ encodeResult result
+                withCurrentEra queryInEra $ \case
+                    Nothing -> do
+                        let response = QueryUnavailableInCurrentEra
                         yield $ encodeQueryResponse $ toResponse response
                         pure $ LSQ.SendMsgRelease clientStIdle
-                    }
+
+                    Just (SomeQuery query encodeResult _) ->
+                        pure $ LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
+                            { LSQ.recvMsgResult = \result -> do
+                                let response = QueryResponse $ encodeResult result
+                                yield $ encodeQueryResponse $ toResponse response
+                                pure $ LSQ.SendMsgRelease clientStIdle
+                            }
+
             , LSQ.recvMsgFailure = \failure -> do
                 let response = QueryAcquireFailure failure
                 yield $ encodeQueryResponse $ toResponse response
@@ -145,10 +159,64 @@ mkStateQueryClient StateQueryCodecs{..} queue yield =
         MsgRelease Release toResponse -> do
             yield $ encodeReleaseResponse (toResponse Released)
             pure $ LSQ.SendMsgRelease clientStIdle
-        MsgQuery (Query (SomeQuery query encodeResult _)) toResponse ->
-            pure $ LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
-                { LSQ.recvMsgResult = \result -> do
-                    let response = QueryResponse $ encodeResult result
+        MsgQuery (Query queryInEra) toResponse ->
+            withCurrentEra queryInEra $ \case
+                Nothing -> do
+                    let response = QueryUnavailableInCurrentEra
                     yield $ encodeQueryResponse $ toResponse response
                     clientStAcquired
-                }
+
+                Just (SomeQuery query encodeResult _) -> pure $
+                    LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
+                        { LSQ.recvMsgResult = \result -> do
+                            let response = QueryResponse $ encodeResult result
+                            yield $ encodeQueryResponse $ toResponse response
+                            clientStAcquired
+                        }
+
+--
+-- Helpers
+--
+
+-- | Run a query in the context of the current era. As a matter of fact, queries
+-- are typed and bound to a particular era. Different era may support small
+-- variations of the same queries.
+--
+-- This is quite cumbersome to handle client-side and usually not desirable. In
+-- most cases:
+--
+-- - Query don't change from an era to another
+-- - New eras may add new queries
+-- - Clients only care about queries available in the current / latest era
+--
+-- Thus, Ogmios is doing the "heavy lifting" by sending queries directly in the
+-- current era, if they exist / are compatible.
+withCurrentEra
+    :: forall crypto block point query m f.
+        ( block ~ HardForkBlock (CardanoEras crypto)
+        , query ~ LSQ.Query block
+        , Applicative m
+        )
+    => QueryInEra f block
+    -> (Maybe (SomeQuery f block) -> m (LSQ.ClientStAcquired block point query m ()))
+    -> m (LSQ.ClientStAcquired block point query m ())
+withCurrentEra queryInEra callback = pure
+    $ LSQ.SendMsgQuery (LSQ.QueryHardFork LSQ.GetCurrentEra)
+    $ LSQ.ClientStQuerying
+        { LSQ.recvMsgResult = \eraIndex ->
+            callback (toSomeShelleyEra eraIndex >>= queryInEra)
+        }
+
+-- | Convert an 'EraIndex' to a Shelley-based era.
+toSomeShelleyEra
+    :: forall crypto. ()
+    => LSQ.EraIndex (CardanoEras crypto)
+    -> Maybe SomeShelleyEra
+toSomeShelleyEra =
+    indexToSomeShelleyEra . eraIndexToInt
+  where
+    indexToSomeShelleyEra = \case
+        1 -> Just (SomeShelleyEra ShelleyBasedEraShelley)
+        2 -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
+        3 -> Just (SomeShelleyEra ShelleyBasedEraMary)
+        _ -> Nothing

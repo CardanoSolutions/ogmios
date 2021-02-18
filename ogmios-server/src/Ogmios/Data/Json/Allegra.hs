@@ -28,6 +28,7 @@ import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
 import qualified Cardano.Ledger.ShelleyMA.Timelocks as MA
 import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
+import qualified Shelley.Spec.Ledger.PParams as Sh
 import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
 import qualified Shelley.Spec.Ledger.STS.Ledgers as Sh
 import qualified Shelley.Spec.Ledger.Tx as Sh
@@ -76,6 +77,19 @@ encodeLedgerFailure = \case
         Shelley.encodeUtxowFailure encodeUtxoFailure e
     Sh.LedgerFailure (Sh.DelegsFailure e) ->
         Shelley.encodeDelegsFailure e
+
+encodePParams'
+    :: (forall a. (a -> Json) -> Sh.HKD f a -> Json)
+    -> Sh.PParams' f era
+    -> Json
+encodePParams' =
+    Shelley.encodePParams'
+
+encodeProposedPPUpdates
+    :: Sh.ProposedPPUpdates era
+    -> Json
+encodeProposedPPUpdates =
+    Shelley.encodeProposedPPUpdates
 
 encodeTimelock
     :: Crypto crypto
@@ -150,6 +164,13 @@ encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ _) = encode
       , encodeStrictMaybe Shelley.encodeUpdate updates
       )
     ]
+
+encodeUtxo
+    :: Crypto crypto
+    => Sh.UTxO (AllegraEra crypto)
+    -> Json
+encodeUtxo =
+    Shelley.encodeUtxo
 
 encodeUtxoFailure
     :: Crypto crypto

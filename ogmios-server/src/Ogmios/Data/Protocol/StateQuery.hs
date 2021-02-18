@@ -41,7 +41,7 @@ module Ogmios.Data.Protocol.StateQuery
 import Ogmios.Data.Json.Prelude
 
 import Ogmios.Data.Json.Query
-    ( SomeQuery (..) )
+    ( QueryInEra )
 import Ogmios.Data.Protocol
     ()
 
@@ -80,7 +80,7 @@ data StateQueryCodecs block = StateQueryCodecs
     }
 
 mkStateQueryCodecs
-    :: (FromJSON (SomeQuery Maybe block), FromJSON (Point block))
+    :: (FromJSON (QueryInEra Maybe block), FromJSON (Point block))
     => (Point block -> Json)
     -> (AcquireFailure -> Json)
     -> StateQueryCodecs block
@@ -189,11 +189,11 @@ _encodeReleaseResponse =
 -- Query
 --
 
-data Query block = Query { query :: SomeQuery Maybe block }
+data Query block = Query { query :: QueryInEra Maybe block }
     deriving (Generic)
 
 _decodeQuery
-    :: FromJSON (SomeQuery Maybe block)
+    :: FromJSON (QueryInEra Maybe block)
     => Json
     -> Json.Parser (Wsp.Request (Query block))
 _decodeQuery =
@@ -201,6 +201,7 @@ _decodeQuery =
 
 data QueryResponse block
     = QueryResponse { unQueryResponse :: Json }
+    | QueryUnavailableInCurrentEra
     | QueryAcquireFailure { failure :: AcquireFailure }
     deriving (Generic)
 
@@ -208,6 +209,8 @@ instance Show (QueryResponse block) where
     showsPrec i = \case
         QueryResponse json -> T.showParen (i >= 10)
             (T.showString $ "QueryResponse (" <> str json <> ")")
+        QueryUnavailableInCurrentEra -> T.showParen (i >= 10)
+            (T.showString "QueryUnavailableInCurrentEra")
         QueryAcquireFailure failure -> T.showParen (i >= 10)
             (T.showString $ "QueryAcquireFailure (" <> show failure <> ")")
       where
@@ -222,6 +225,8 @@ _encodeQueryResponse encodeAcquireFailure =
     Wsp.mkResponse Wsp.defaultOptions proxy $ \case
         QueryResponse json ->
             json
+        QueryUnavailableInCurrentEra ->
+            encodeText "QueryUnavailableInCurrentEra"
         QueryAcquireFailure{failure} -> encodeObject
             [ ( "AcquireFailure", encodeObject
                 [ ("failure", encodeAcquireFailure failure)

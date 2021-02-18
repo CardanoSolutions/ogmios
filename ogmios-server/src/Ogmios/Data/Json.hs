@@ -41,7 +41,7 @@ import Data.ByteString.Base64
 import Data.ByteString.Short
     ( toShort )
 import Ogmios.Data.Json.Query
-    ( SomeQuery, encodeEraMismatch, encodeOneEraHash, encodePoint )
+    ( QueryInEra, encodeEraMismatch, encodeOneEraHash, encodePoint )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock (..) )
 import Ouroboros.Consensus.Byron.Ledger.Mempool
@@ -194,7 +194,7 @@ instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
             hash <- obj .: "hash" >>= decodeOneEraHash
             pure $ Point $ At $ Block (SlotNo slot) hash
 
-instance Crypto crypto => FromJSON (SomeQuery Maybe (CardanoBlock crypto)) where
+instance Crypto crypto => FromJSON (QueryInEra Maybe (CardanoBlock crypto)) where
     parseJSON = choice "query"
         [ Query.parseGetEraStart _void
         , Query.parseGetLedgerTip _void
