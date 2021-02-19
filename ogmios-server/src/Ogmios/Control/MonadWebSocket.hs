@@ -73,4 +73,4 @@ instance MonadWebSocket m => MonadWebSocket (ReaderT env m) where
 --
 
 pingThreadDelay :: Int
-pingThreadDelay = 15
+pingThreadDelay = 30

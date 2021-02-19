@@ -15,6 +15,7 @@ module Ogmios.App.Options
     , nodeSocketOption
     , serverHostOption
     , serverPortOption
+    , connectionTimeoutOption
     , logLevelOption
 
       -- ** Environment
@@ -71,7 +72,7 @@ parserInfo = info (helper <*> parser) $ mempty
         , indent 27 $ string "- mainnet"
         , indent 27 $ string "- testnet"
         , indent 27 $ string "- staging"
-        , indent 27 $ string "- <custom:INT>"
+        , indent 27 $ string "- <INT>"
         , indent 27 $ string $ separator <> " (default: mainnet)"
         ])
   where
@@ -83,6 +84,7 @@ parserInfo = info (helper <*> parser) $ mempty
                 <$> nodeSocketOption
                 <*> serverHostOption
                 <*> serverPortOption
+                <*> connectionTimeoutOption
                 <*> logLevelOption
             )
         )
@@ -95,7 +97,8 @@ data Options = Options
     { nodeSocket :: !FilePath
     , serverHost :: !String
     , serverPort :: !Int
-    , logLevel   :: !Severity
+    , connectionTimeout :: !Int
+    , logLevel :: !Severity
     } deriving (Generic, Eq, Show)
 
 -- | --node-socket=FILEPATH
@@ -121,6 +124,15 @@ serverPortOption = option auto $ mempty
     <> metavar "TCP/PORT"
     <> help "Port to listen on."
     <> value 1337
+    <> showDefault
+
+-- | [--websocket-timeout], default: 90s
+connectionTimeoutOption :: Parser Int
+connectionTimeoutOption = option auto $ mempty
+    <> long "timeout"
+    <> metavar "SECONDS"
+    <> help "Number of seconds of inactivity after which the server should close client connections."
+    <> value 90
     <> showDefault
 
 -- | [--log-level=SEVERITY], default: Info
