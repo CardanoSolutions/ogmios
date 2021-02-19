@@ -21,7 +21,7 @@ module Ogmios.App.Health
     ) where
 
 import Relude hiding
-    ( STM, TVar, atomically, writeTVar )
+    ( STM, TVar, atomically, readTVar, writeTVar )
 
 import Ogmios.App.Metrics
     ( RuntimeStats, Sampler, Sensors )
@@ -58,7 +58,7 @@ import Ogmios.Control.MonadMetrics
 import Ogmios.Control.MonadOuroboros
     ( MonadOuroboros )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), TVar, writeTVar )
+    ( MonadSTM (..), TVar, readTVar, writeTVar )
 import Ogmios.Data.Health
     ( Health (..), emptyHealth )
 
@@ -144,8 +144,9 @@ healthCheck readTip tvar sensors sampler = do
     lastTipUpdate <- Just <$> getCurrentTime
     metrics <- Metrics.sample sampler sensors
     atomically $ do
+        Health{startTime} <- readTVar tvar
         lastKnownTip <- readTip
-        let health = Health{ lastKnownTip, lastTipUpdate, metrics }
+        let health = Health{ startTime, lastKnownTip, lastTipUpdate, metrics }
         health <$ writeTVar tvar health
 
 connectHealthCheckClient

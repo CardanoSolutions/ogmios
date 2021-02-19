@@ -30,7 +30,9 @@ import qualified Data.Aeson as Json
 -- - A metric store which measure runtime statistics.
 -- - An Ouroboros local chain-sync client which follows the chain's tip.
 data Health block = Health
-    { lastKnownTip :: !(Tip block)
+    { startTime :: UTCTime
+    -- ^ Time at which the application was started
+    , lastKnownTip :: !(Tip block)
     -- ^ Last known tip of the core node.
     , lastTipUpdate :: !(Maybe UTCTime)
     -- ^ Date at which the last update was received.
@@ -41,9 +43,10 @@ data Health block = Health
 instance ToJSON (Tip block) => ToJSON (Health block) where
     toJSON = genericToJSON Json.defaultOptions
 
-emptyHealth :: Health block
-emptyHealth = Health
-    { lastKnownTip = TipGenesis
+emptyHealth :: UTCTime -> Health block
+emptyHealth startTime = Health
+    { startTime
+    , lastKnownTip = TipGenesis
     , lastTipUpdate = Nothing
     , metrics = emptyMetrics
     }

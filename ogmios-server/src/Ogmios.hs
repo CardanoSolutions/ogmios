@@ -57,7 +57,7 @@ import Ogmios.Control.Exception
 import Ogmios.Control.MonadAsync
     ( MonadAsync (..), MonadFork, MonadThread )
 import Ogmios.Control.MonadClock
-    ( MonadClock, withDebouncer, _10s )
+    ( MonadClock, getCurrentTime, withDebouncer, _10s )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
     , Logger
@@ -137,7 +137,7 @@ newEnvironment
     -> Options
     -> IO (Env App)
 newEnvironment tr network options = do
-    health  <- atomically $ newTVar emptyHealth
+    health  <- getCurrentTime >>= atomically . newTVar . emptyHealth
     sensors <- newSensors
     sampler <- newSampler (contramap OgmiosMetrics tr)
     pure $ Env{health,sensors,sampler,network,options}
