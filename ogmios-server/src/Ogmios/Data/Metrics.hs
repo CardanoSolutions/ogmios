@@ -34,13 +34,17 @@ import qualified Data.Aeson as Json
 -- measurements of the application runtime.
 data Metrics = Metrics
     { runtimeStats :: !RuntimeStats
-        -- ^ Proportion of the time spent doing actual work (vs garbage collecting)
+    -- ^ Proportion of the time spent doing actual work (vs garbage collecting)
     , activeConnections :: !Integer
-        -- ^ Number of currently active connections
+    -- ^ Number of currently active connections
     , totalConnections :: !Integer
-        -- ^ Total connections since the last restart
+    -- ^ Total connections since the last restart
     , sessionDurations :: !DistributionStats
-        -- ^ Statistics about the duration of each session, in ms
+    -- ^ Statistics about the duration of each session, in ms
+    , totalMessages :: !Integer
+    -- ^ Total number of messages processed through websockets
+    , totalUnrouted :: !Integer
+    -- ^ Total number of messages which couldn't be routed through the protocol
     } deriving (Generic, Eq, Show)
 
 instance ToJSON Metrics where
@@ -48,7 +52,7 @@ instance ToJSON Metrics where
 
 -- | Empty 'Metrics', for initialization.
 emptyMetrics :: Metrics
-emptyMetrics = Metrics emptyRuntimeStats 0 0 emptyDistribution
+emptyMetrics = Metrics emptyRuntimeStats 0 0 emptyDistribution 0 0
 
 --
 -- RuntimeStats

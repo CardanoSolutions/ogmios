@@ -71,6 +71,8 @@ data Sensors (m :: * -> *) = Sensors
     { activeConnectionsGauge :: Gauge m
     , totalConnectionsCounter :: Counter m
     , sessionDurationsDistribution :: Distribution m
+    , totalMessagesCounter :: Counter m
+    , totalUnroutedCounter :: Counter m
     } deriving (Generic)
 
 -- | Initialize new application sensors in 'IO'.
@@ -85,10 +87,14 @@ newSensors = do
     activeConnectionsGauge <- Ekg.Gauge.new
     totalConnectionsCounter <- Ekg.Counter.new
     sessionDurationsDistribution <- Ekg.Distribution.new
+    totalMessagesCounter <- Ekg.Counter.new
+    totalUnroutedCounter <- Ekg.Counter.new
     pure Sensors
         { activeConnectionsGauge
         , totalConnectionsCounter
         , sessionDurationsDistribution
+        , totalMessagesCounter
+        , totalUnroutedCounter
         }
 
 -- | Record some metrics about a given session. In particular, we have:
@@ -170,12 +176,16 @@ sample sampleRuntime sensors = do
     activeConnections <- readGauge (activeConnectionsGauge sensors)
     totalConnections  <- readCounter (totalConnectionsCounter sensors)
     sessionDurations  <- readDistribution mkStats (sessionDurationsDistribution sensors)
+    totalMessages     <- readCounter (totalMessagesCounter sensors)
+    totalUnrouted     <- readCounter (totalUnroutedCounter sensors)
 
     sampleRuntime <&> \runtimeStats -> Metrics
         { runtimeStats
         , activeConnections
         , totalConnections
         , sessionDurations
+        , totalMessages
+        , totalUnrouted
         }
   where
     mkStats distr = DistributionStats

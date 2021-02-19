@@ -18,7 +18,7 @@ import Relude hiding
     ( atomically )
 
 import Ogmios.App.Metrics
-    ( Sensors, recordSession )
+    ( Sensors (..), recordSession )
 import Ogmios.App.Options
     ( NetworkParameters (..), Options (..) )
 import Ogmios.App.Protocol
@@ -131,7 +131,7 @@ newWebSocketApp tr unliftIO = do
         logWith tr (WebSocketConnectionAccepted $ userAgent pending)
         recordSession sensors $ onExceptions $ acceptRequest pending $ \conn -> do
             let trClient = natTracer liftIO $ contramap WebSocketClient tr
-            withOuroborosClients conn $ \clients -> do
+            withOuroborosClients sensors conn $ \clients -> do
                 let client = mkClient unliftIO trClient slotsPerEpoch clients
                 let vData  = NodeToClientVersionData networkMagic
                 connectClient nullTracer client vData nodeSocket
@@ -182,14 +182,16 @@ newWebSocketApp tr unliftIO = do
 withOuroborosClients
     :: forall m a.
         ( MonadAsync m
-        , MonadWebSocket m
         , MonadLink m
+        , MonadMetrics m
         , MonadOuroboros m
+        , MonadWebSocket m
         )
-    => Connection
+    => Sensors m
+    -> Connection
     -> (Clients m Block -> m a)
     -> m a
-withOuroborosClients conn action = do
+withOuroborosClients sensors conn action = do
     (chainSyncQ, txSubmissionQ, stateQueryQ) <-
         atomically $ (,,) <$> newTQueue <*> newTQueue <*> newTQueue
 
@@ -220,13 +222,15 @@ withOuroborosClients conn action = do
         -> TQueue m (TxSubmissionMessage Block)
         -> m ()
     routeMessage cache chainSyncQ stateQueryQ txSubmissionQ = do
+        count (totalMessagesCounter sensors)
         bytes <- receive conn
         case cache of
             Just (prev, again) | prev == bytes ->
                 again *> routeMessage cache chainSyncQ stateQueryQ txSubmissionQ
 
             _ -> do
-                matched <- Wsp.match bytes (defaultHandler bytes)
+                matched <- Wsp.match bytes
+                    (count (totalUnroutedCounter sensors) *> defaultHandler bytes)
                     [ Wsp.Handler decodeRequestNext
                         (\r -> push chainSyncQ . MsgRequestNext r)
                     , Wsp.Handler decodeFindIntersect
