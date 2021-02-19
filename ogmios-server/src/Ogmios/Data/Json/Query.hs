@@ -2,6 +2,8 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE TypeApplications #-}
+
 module Ogmios.Data.Json.Query
     ( -- * Types
       QueryResult
@@ -53,6 +55,8 @@ import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
     ( QueryAnytime (..) )
 import Ouroboros.Consensus.HardFork.History.Summary
     ( Bound (..) )
+import Ouroboros.Consensus.Shelley.Eras
+    ( AllegraEra, MaryEra, ShelleyEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..), ShelleyHash (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Query
@@ -175,10 +179,10 @@ parseGetEraStart genResult =
 
 parseGetLedgerTip
     :: forall crypto f. (Typeable crypto)
-    => (forall era. Typeable era => GenResult crypto f (Point (ShelleyBlock era)))
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Point (ShelleyBlock era)))
     -> Json
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetLedgerTip genResult =
+parseGetLedgerTip genResultInEra =
     Json.withText "SomeQuery" $ \text -> do
         guard (text == "ledgerTip") $> \case
             SomeShelleyEra ShelleyBasedEraShelley ->
@@ -187,7 +191,8 @@ parseGetLedgerTip genResult =
                     QueryIfCurrentShelley GetLedgerTip
                 , encodeResult =
                     either encodeMismatchEraInfo (encodePoint . castPoint)
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(ShelleyEra crypto))
                 }
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
@@ -195,7 +200,8 @@ parseGetLedgerTip genResult =
                     QueryIfCurrentAllegra GetLedgerTip
                 , encodeResult =
                     either encodeMismatchEraInfo (encodePoint . castPoint)
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(AllegraEra crypto))
                 }
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
@@ -203,7 +209,8 @@ parseGetLedgerTip genResult =
                     QueryIfCurrentMary GetLedgerTip
                 , encodeResult =
                     either encodeMismatchEraInfo (encodePoint . castPoint)
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(MaryEra crypto))
                 }
 
 parseGetEpochNo
@@ -269,11 +276,11 @@ parseGetNonMyopicMemberRewards genResult =
             )
 
 parseGetCurrentPParams
-    :: forall crypto f. ()
-    => (forall era. GenResult crypto f (Sh.PParams era))
+    :: forall crypto f. (Typeable crypto)
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.PParams era))
     -> Json
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetCurrentPParams genResult =
+parseGetCurrentPParams genResultInEra =
     Json.withText "SomeQuery" $ \text -> do
         guard (text == "currentProtocolParameters") $> \case
             SomeShelleyEra ShelleyBasedEraShelley ->
@@ -282,7 +289,8 @@ parseGetCurrentPParams genResult =
                     QueryIfCurrentShelley GetCurrentPParams
                 , encodeResult =
                     either encodeMismatchEraInfo (Shelley.encodePParams' id)
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(ShelleyEra crypto))
                 }
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
@@ -290,23 +298,25 @@ parseGetCurrentPParams genResult =
                     QueryIfCurrentAllegra GetCurrentPParams
                 , encodeResult =
                     either encodeMismatchEraInfo (Allegra.encodePParams' id)
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(AllegraEra crypto))
                 }
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
                 { query =
-                    QueryIfCurrentShelley GetCurrentPParams
+                    QueryIfCurrentMary GetCurrentPParams
                 , encodeResult =
                     either encodeMismatchEraInfo (Mary.encodePParams' id)
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(MaryEra crypto))
                 }
 
 parseGetProposedPParamsUpdates
-    :: forall crypto f. ()
-    => (forall era. GenResult crypto f (Sh.ProposedPPUpdates era))
+    :: forall crypto f. (Typeable crypto)
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.ProposedPPUpdates era))
     -> Json
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetProposedPParamsUpdates genResult =
+parseGetProposedPParamsUpdates genResultInEra =
     Json.withText "SomeQuery" $ \text -> do
         guard (text == "proposedProtocolParameters") $> \case
             SomeShelleyEra ShelleyBasedEraShelley ->
@@ -315,7 +325,8 @@ parseGetProposedPParamsUpdates genResult =
                     QueryIfCurrentShelley GetProposedPParamsUpdates
                 , encodeResult =
                     either encodeMismatchEraInfo Shelley.encodeProposedPPUpdates
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(ShelleyEra crypto))
                 }
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
@@ -323,7 +334,8 @@ parseGetProposedPParamsUpdates genResult =
                     QueryIfCurrentAllegra GetProposedPParamsUpdates
                 , encodeResult =
                     either encodeMismatchEraInfo Allegra.encodeProposedPPUpdates
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(AllegraEra crypto))
                 }
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
@@ -331,7 +343,8 @@ parseGetProposedPParamsUpdates genResult =
                     QueryIfCurrentMary GetProposedPParamsUpdates
                 , encodeResult =
                     either encodeMismatchEraInfo Mary.encodeProposedPPUpdates
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(MaryEra crypto))
                 }
 
 parseGetStakeDistribution
@@ -361,10 +374,10 @@ parseGetStakeDistribution genResult =
 
 parseGetUTxO
     :: forall crypto f. (Crypto crypto)
-    => (forall era. GenResult crypto f (Sh.UTxO era))
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.UTxO era))
     -> Json
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetUTxO genResult =
+parseGetUTxO genResultInEra =
     Json.withText "SomeQuery" $ \text -> do
         guard (text == "utxo") $> \case
             SomeShelleyEra ShelleyBasedEraShelley ->
@@ -373,7 +386,8 @@ parseGetUTxO genResult =
                     QueryIfCurrentShelley GetUTxO
                 , encodeResult =
                     either encodeMismatchEraInfo Shelley.encodeUtxo
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(ShelleyEra crypto))
                 }
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
@@ -381,7 +395,8 @@ parseGetUTxO genResult =
                     QueryIfCurrentAllegra GetUTxO
                 , encodeResult =
                     either encodeMismatchEraInfo Allegra.encodeUtxo
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(AllegraEra crypto))
                 }
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
@@ -389,15 +404,16 @@ parseGetUTxO genResult =
                     QueryIfCurrentMary GetUTxO
                 , encodeResult =
                     either encodeMismatchEraInfo Mary.encodeUtxo
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(MaryEra crypto))
                 }
 
 parseGetFilteredUTxO
     :: forall crypto f. (Crypto crypto)
-    => (forall era. GenResult crypto f (Sh.UTxO era))
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.UTxO era))
     -> Json
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetFilteredUTxO genResult = Json.withObject "SomeQuery" $ \obj -> do
+parseGetFilteredUTxO genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
     addrs <- parseAddresses obj
     pure $ \case
         SomeShelleyEra ShelleyBasedEraShelley ->
@@ -406,7 +422,8 @@ parseGetFilteredUTxO genResult = Json.withObject "SomeQuery" $ \obj -> do
                     QueryIfCurrentShelley (GetFilteredUTxO addrs)
                 , encodeResult =
                     either encodeMismatchEraInfo Shelley.encodeUtxo
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(ShelleyEra crypto))
                 }
         SomeShelleyEra ShelleyBasedEraAllegra ->
             Just $ SomeQuery
@@ -414,7 +431,8 @@ parseGetFilteredUTxO genResult = Json.withObject "SomeQuery" $ \obj -> do
                     QueryIfCurrentAllegra(GetFilteredUTxO addrs)
                 , encodeResult =
                     either encodeMismatchEraInfo Allegra.encodeUtxo
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(AllegraEra crypto))
                 }
         SomeShelleyEra ShelleyBasedEraMary ->
             Just $ SomeQuery
@@ -422,7 +440,8 @@ parseGetFilteredUTxO genResult = Json.withObject "SomeQuery" $ \obj -> do
                     QueryIfCurrentMary (GetFilteredUTxO addrs)
                 , encodeResult =
                     either encodeMismatchEraInfo Mary.encodeUtxo
-                , genResult
+                , genResult =
+                    genResultInEra (Proxy @(MaryEra crypto))
                 }
   where
     parseAddresses

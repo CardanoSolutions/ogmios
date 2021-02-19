@@ -198,21 +198,18 @@ instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
             hash <- obj .: "hash" >>= decodeOneEraHash
             pure $ Point $ At $ Block (SlotNo slot) hash
 
-instance Crypto crypto => FromJSON (QueryInEra Maybe (CardanoBlock crypto)) where
+instance Crypto crypto => FromJSON (QueryInEra Proxy (CardanoBlock crypto)) where
     parseJSON = choice "query"
-        [ Query.parseGetEraStart _void
-        , Query.parseGetLedgerTip _void
-        , Query.parseGetEpochNo _void
-        , Query.parseGetNonMyopicMemberRewards _void
-        , Query.parseGetCurrentPParams _void
-        , Query.parseGetProposedPParamsUpdates _void
-        , Query.parseGetStakeDistribution _void
-        , Query.parseGetUTxO _void
-        , Query.parseGetFilteredUTxO _void
+        [ Query.parseGetEraStart id
+        , Query.parseGetLedgerTip (const id)
+        , Query.parseGetEpochNo id
+        , Query.parseGetNonMyopicMemberRewards id
+        , Query.parseGetCurrentPParams (const id)
+        , Query.parseGetProposedPParamsUpdates (const id)
+        , Query.parseGetStakeDistribution id
+        , Query.parseGetUTxO (const id)
+        , Query.parseGetFilteredUTxO (const id)
         ]
-      where
-        _void :: forall result. Proxy result -> Maybe result
-        _void = const Nothing
 
 instance Crypto crypto => FromJSON (Tip (CardanoBlock crypto)) where
     parseJSON json = parseOrigin json <|> parseTip json

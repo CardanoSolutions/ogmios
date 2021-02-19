@@ -67,7 +67,7 @@ import qualified Data.Text as T
 onUnmatchedMessage
     :: forall block.
         ( FromJSON (SubmitTxPayload block)
-        , FromJSON (QueryInEra Maybe block)
+        , FromJSON (QueryInEra Proxy block)
         , FromJSON (Point block)
         )
     => ByteString

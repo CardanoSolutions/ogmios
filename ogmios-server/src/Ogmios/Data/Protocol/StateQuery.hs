@@ -80,7 +80,7 @@ data StateQueryCodecs block = StateQueryCodecs
     }
 
 mkStateQueryCodecs
-    :: (FromJSON (QueryInEra Maybe block), FromJSON (Point block))
+    :: (FromJSON (QueryInEra Proxy block), FromJSON (Point block))
     => (Point block -> Json)
     -> (AcquireFailure -> Json)
     -> StateQueryCodecs block
@@ -189,11 +189,11 @@ _encodeReleaseResponse =
 -- Query
 --
 
-data Query block = Query { query :: QueryInEra Maybe block }
+data Query block = Query { query :: QueryInEra Proxy block }
     deriving (Generic)
 
 _decodeQuery
-    :: FromJSON (QueryInEra Maybe block)
+    :: FromJSON (QueryInEra Proxy block)
     => Json
     -> Json.Parser (Wsp.Request (Query block))
 _decodeQuery =
