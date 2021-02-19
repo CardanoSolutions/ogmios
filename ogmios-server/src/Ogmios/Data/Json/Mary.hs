@@ -158,7 +158,9 @@ encodeUtxo
     => Sh.UTxO (MaryEra crypto)
     -> Json
 encodeUtxo =
-    undefined
+    encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
+  where
+    encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
 
 encodeValue
     :: MA.Value crypto

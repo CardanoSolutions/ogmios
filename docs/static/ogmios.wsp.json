@@ -798,6 +798,10 @@
     , "pattern": "[1-9A-HJ-NP-Za-km-z]*"
     }
 
+  , "AssetQuantity":
+    { "type": "integer"
+    }
+
   , "Block":
     { "type": "object"
     , "oneOf":
@@ -2135,7 +2139,12 @@
     , "required": [ "address", "value" ]
     , "properties":
       { "address": { "$ref": "#/definitions/Address" }
-      , "value": { "$ref": "#/definitions/Lovelace" }
+      , "value":
+        { "oneOf":
+            [ { "$ref": "#/definitions/Lovelace" }
+            , { "$ref": "#/definitions/Value" }
+            ]
+        }
       }
     }
 
@@ -2344,6 +2353,19 @@
             , { "$ref": "#/definitions/Slot" }
             ]
           }
+      }
+    }
+
+  , "Value":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "coins", "assets" ]
+    , "properties":
+      { "coins": { "$ref": "#/definitions/Lovelace" }
+      , "assets":
+        { "type": "object"
+        , "additionalProperties": { "$ref": "#/definitions/AssetQuantity" }
+        }
       }
     }
 
