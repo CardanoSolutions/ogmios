@@ -773,7 +773,12 @@
       , "result":
         { "oneOf":
           [ { "type": "array"
-            , "items": { "$ref": "#/definitions/Utxo" }
+            , "items":
+              { "oneOf":
+                  [ { "$ref": "#/definitions/Utxo" }
+                  , { "$ref": "#/definitions/Utxo[Mary]" }
+                  ]
+              }
             }
           , { "$ref": "#/definitions/EraMismatch" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
@@ -815,6 +820,18 @@
         , "additionalProperties": false
         , "properties":
           { "shelley": { "$ref": "#/definitions/Block[Shelley]" }
+          }
+        }
+      , { "required": [ "allegra" ]
+        , "additionalProperties": false
+        , "properties":
+          { "allegra": { "$ref": "#/definitions/Block[Allegra]" }
+          }
+        }
+      , { "required": [ "mary" ]
+        , "additionalProperties": false
+        , "properties":
+          { "mary": { "$ref": "#/definitions/Block[Mary]" }
           }
         }
       ]
@@ -1054,6 +1071,222 @@
           , "signature": { "$ref": "#/definitions/Hash64" }
           }
         }
+      }
+    }
+
+  , "Block[Allegra]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "body":
+        { "type": "array"
+        , "items":
+          { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "id", "body", "witness", "metadata" ]
+          , "properties":
+            { "id": { "$ref": "#/definitions/Hash16" }
+            , "body":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": ["inputs","outputs","certificates","withdrawals","fee","validityInterval","update"]
+              , "properties":
+                { "inputs":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/TxIn" }
+                  }
+                , "outputs":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/TxOut" }
+                  }
+                , "certificates":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/Certificate" }
+                  }
+                , "withdrawals": { "$ref": "#/definitions/Withdrawals" }
+                , "fee": { "$ref": "#/definitions/Lovelace" }
+                , "validityInterval": { "$ref": "#/definitions/ValidityInterval" }
+                , "update": { "$ref": "#/definitions/Update[Shelley]" }
+                }
+              }
+            , "witness":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": ["address","script","bootstrap"]
+              , "properties":
+                { "address":
+                  { "type": "array"
+                  , "items":
+                    { "type": "object"
+                    , "additionalProperties": false
+                    , "properties":
+                      { "signature": { "$ref": "#/definitions/Hash64" }
+                      , "key": { "$ref": "#/definitions/Hash16" }
+                      }
+                    }
+                  }
+                , "script":
+                  { "type": "object"
+                  , "propertyNames": { "pattern": "^[0-9a-f]+$" }
+                  , "additionalProperties": { "$ref": "#/definitions/Script" }
+                  }
+                , "bootstrap":
+                  { "type": "array"
+                  , "items":
+                    { "type": "object"
+                    , "additionalProperties": false
+                    , "properties":
+                      { "signature": { "$ref": "#/definitions/Hash64" }
+                      , "chainCode":
+                        { "oneOf":
+                          [ { "$ref": "#/definitions/Hash16" }
+                          , { "type": "null" }
+                          ]
+                        }
+                      , "addressAttributes":
+                        { "oneOf":
+                          [ { "$ref": "#/definitions/Hash64" }
+                          , { "type": "null" }
+                          ]
+                        }
+                      , "key": { "$ref": "#/definitions/Hash16" }
+                      }
+                    }
+                  }
+                }
+              }
+            , "metadata":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "hash", "body" ]
+              , "properties":
+                { "hash":
+                  { "oneOf":
+                    [ { "type": "null" }
+                    , { "$ref": "#/definitions/Hash16" }
+                    ]
+                  }
+                , "body":
+                  { "oneOf":
+                    [ { "type": "null" }
+                    , { "type": "object" }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      , "headerHash": { "$ref": "#/definitions/Block[Shelley]/properties/headerHash" }
+      , "header": { "$ref": "#/definitions/Block[Shelley]/properties/header" }
+      }
+    }
+
+  , "Block[Mary]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "body":
+        { "type": "array"
+        , "items":
+          { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "id", "body", "witness", "metadata" ]
+          , "properties":
+            { "id": { "$ref": "#/definitions/Hash16" }
+            , "body":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": ["inputs","outputs","certificates","withdrawals","fee","validityInterval","update"]
+              , "properties":
+                { "inputs":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/TxIn" }
+                  }
+                , "outputs":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/TxOut[Mary]" }
+                  }
+                , "certificates":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/Certificate" }
+                  }
+                , "withdrawals": { "$ref": "#/definitions/Withdrawals" }
+                , "fee": { "$ref": "#/definitions/Lovelace" }
+                , "validityInterval": { "$ref": "#/definitions/ValidityInterval" }
+                , "update": { "$ref": "#/definitions/Update[Shelley]" }
+                }
+              }
+            , "witness":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": ["address","script","bootstrap"]
+              , "properties":
+                { "address":
+                  { "type": "array"
+                  , "items":
+                    { "type": "object"
+                    , "additionalProperties": false
+                    , "properties":
+                      { "signature": { "$ref": "#/definitions/Hash64" }
+                      , "key": { "$ref": "#/definitions/Hash16" }
+                      }
+                    }
+                  }
+                , "script":
+                  { "type": "object"
+                  , "propertyNames": { "pattern": "^[0-9a-f]+$" }
+                  , "additionalProperties": { "$ref": "#/definitions/Script" }
+                  }
+                , "bootstrap":
+                  { "type": "array"
+                  , "items":
+                    { "type": "object"
+                    , "additionalProperties": false
+                    , "properties":
+                      { "signature": { "$ref": "#/definitions/Hash64" }
+                      , "chainCode":
+                        { "oneOf":
+                          [ { "$ref": "#/definitions/Hash16" }
+                          , { "type": "null" }
+                          ]
+                        }
+                      , "addressAttributes":
+                        { "oneOf":
+                          [ { "$ref": "#/definitions/Hash64" }
+                          , { "type": "null" }
+                          ]
+                        }
+                      , "key": { "$ref": "#/definitions/Hash16" }
+                      }
+                    }
+                  }
+                }
+              }
+            , "metadata":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "hash", "body" ]
+              , "properties":
+                { "hash":
+                  { "oneOf":
+                    [ { "type": "null" }
+                    , { "$ref": "#/definitions/Hash16" }
+                    ]
+                  }
+                , "body":
+                  { "oneOf":
+                    [ { "type": "null" }
+                    , { "type": "object" }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      , "headerHash": { "$ref": "#/definitions/Block[Shelley]/properties/headerHash" }
+      , "header": { "$ref": "#/definitions/Block[Shelley]/properties/header" }
       }
     }
 
@@ -1627,6 +1860,18 @@
           , "items": { "$ref": "#/definitions/Script" }
           }
         }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "properties":
+          { "expiresAt": { "$ref": "#/definitions/Slot" }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "properties":
+          { "startsAt": { "$ref": "#/definitions/Slot" }
+          }
+        }
       ]
     }
 
@@ -2139,12 +2384,17 @@
     , "required": [ "address", "value" ]
     , "properties":
       { "address": { "$ref": "#/definitions/Address" }
-      , "value":
-        { "oneOf":
-            [ { "$ref": "#/definitions/Lovelace" }
-            , { "$ref": "#/definitions/Value" }
-            ]
-        }
+      , "value": { "$ref": "#/definitions/Lovelace" }
+      }
+    }
+
+  , "TxOut[Mary]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "address", "value" ]
+    , "properties":
+      { "address": { "$ref": "#/definitions/Address" }
+      , "value": { "$ref": "#/definitions/Value" }
       }
     }
 
@@ -2318,6 +2568,15 @@
     , "items":
       [ { "$ref": "#/definitions/TxIn" }
       , { "$ref": "#/definitions/TxOut" }
+      ]
+    }
+
+  , "Utxo[Mary]":
+    { "type": "array"
+    , "additionalItems": false
+    , "items":
+      [ { "$ref": "#/definitions/TxIn" }
+      , { "$ref": "#/definitions/TxOut[Mary]" }
       ]
     }
 
