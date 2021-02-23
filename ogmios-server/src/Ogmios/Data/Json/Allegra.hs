@@ -157,7 +157,7 @@ encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ _) = encode
     , ( "fee"
       , Shelley.encodeCoin fee
       )
-    , ( "valitityInterval"
+    , ( "validityInterval"
       , encodeValidityInterval validity
       )
     , ( "update"

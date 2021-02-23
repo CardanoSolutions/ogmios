@@ -278,6 +278,8 @@ instance Arbitrary Block where
     arbitrary = reasonablySized $ oneof
         [ BlockByron <$> arbitrary
         , BlockShelley <$> arbitrary
+        , BlockAllegra <$> arbitrary
+        , BlockMary <$> arbitrary
         ]
 
 genEpochNo :: Gen EpochNo
