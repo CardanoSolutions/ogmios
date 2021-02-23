@@ -252,7 +252,7 @@ encodeUtxoFailure = \case
               )
             ]
     MA.TriesToForgeADA ->
-        encodeString "triesToForgeADA"
+        encodeString "triesToForgeAda"
     MA.UpdateFailure e ->
         Shelley.encodeUpdateFailure e
 

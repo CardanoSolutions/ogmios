@@ -31,9 +31,12 @@ import qualified Cardano.Ledger.AuxiliaryData as MA
 import qualified Cardano.Ledger.Era as Era
 import qualified Cardano.Ledger.Mary.Value as MA
 import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
+import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
 import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
 import qualified Shelley.Spec.Ledger.PParams as Sh
+import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
+import qualified Shelley.Spec.Ledger.STS.Ledgers as Sh
 import qualified Shelley.Spec.Ledger.Tx as Sh
 import qualified Shelley.Spec.Ledger.UTxO as Sh
 
@@ -53,6 +56,16 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
       , encodeFoldable Allegra.encodeTimelock scripts
       )
     ]
+
+encodeLedgerFailure
+    :: Crypto crypto
+    => Sh.LedgersPredicateFailure (MaryEra crypto)
+    -> Json
+encodeLedgerFailure = \case
+    Sh.LedgerFailure (Sh.UtxowFailure e)  ->
+        Shelley.encodeUtxowFailure encodeUtxoFailure e
+    Sh.LedgerFailure (Sh.DelegsFailure e) ->
+        Shelley.encodeDelegsFailure e
 
 encodeMaryBlock
     :: Crypto crypto
@@ -161,6 +174,90 @@ encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
   where
     encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
+
+encodeUtxoFailure
+    :: Crypto crypto
+    => MA.UtxoPredicateFailure (MaryEra crypto)
+    -> Json
+encodeUtxoFailure = \case
+    MA.BadInputsUTxO inputs ->
+        encodeObject
+            [ ( "badInputs"
+              , encodeFoldable Shelley.encodeTxIn inputs
+              )
+            ]
+    MA.OutsideValidityIntervalUTxO itv currentSlot ->
+        encodeObject
+            [ ( "outsideOfValidityInterval", encodeObject
+                [ ( "interval" , Allegra.encodeValidityInterval itv )
+                , ( "currentSlot" , encodeSlotNo currentSlot )
+                ]
+              )
+            ]
+    MA.OutputTooBigUTxO outs ->
+        encodeObject
+            [ ( "outputsTooLarge"
+              , encodeFoldable encodeTxOut outs
+              )
+            ]
+    MA.MaxTxSizeUTxO actualSize maxSize ->
+        encodeObject
+            [ ( "txTooLarge", encodeObject
+                [ ( "maximumSize", encodeInteger maxSize )
+                , ( "actualSize", encodeInteger actualSize )
+                ]
+              )
+            ]
+    MA.InputSetEmptyUTxO ->
+        encodeText "missingAtLeastOneInputUtxo"
+    MA.FeeTooSmallUTxO required actual ->
+        encodeObject
+            [ ( "feeTooSmall", encodeObject
+                [ ( "requiredFee", Shelley.encodeCoin required )
+                , ( "actualFee", Shelley.encodeCoin actual )
+                ]
+              )
+            ]
+    MA.ValueNotConservedUTxO consumed produced ->
+        encodeObject
+            [ ( "valueNotConserved", encodeObject
+                [ ( "consumed", encodeValue consumed )
+                , ( "produced", encodeValue produced )
+                ]
+              )
+            ]
+    MA.WrongNetwork expected invalidAddrs ->
+        encodeObject
+            [ ( "networkMismatch", encodeObject
+                [ ( "expectedNetwork", Shelley.encodeNetwork expected )
+                , ( "invalidAddresses", encodeFoldable Shelley.encodeAddress invalidAddrs )
+                ]
+              )
+            ]
+    MA.WrongNetworkWithdrawal expected invalidAccts ->
+        encodeObject
+            [ ( "networkMismatch", encodeObject
+                [ ( "expectedNetwork" , Shelley.encodeNetwork expected )
+                , ( "invalidRewardAccounts" , encodeFoldable Shelley.encodeRewardAcnt invalidAccts )
+                ]
+              )
+            ]
+    MA.OutputTooSmallUTxO outs ->
+        encodeObject
+            [ ( "outputTooSmall"
+              , encodeFoldable encodeTxOut outs
+              )
+            ]
+    MA.OutputBootAddrAttrsTooBig outs ->
+        encodeObject
+            [ ( "addressAttributesTooLarge"
+              , encodeFoldable Shelley.encodeAddress ((\(Sh.TxOut addr _) -> addr) <$> outs)
+              )
+            ]
+    MA.TriesToForgeADA ->
+        encodeString "triesToForgeAda"
+    MA.UpdateFailure e ->
+        Shelley.encodeUpdateFailure e
 
 encodeValue
     :: MA.Value crypto

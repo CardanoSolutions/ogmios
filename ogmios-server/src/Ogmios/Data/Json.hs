@@ -132,8 +132,8 @@ encodeHardForkApplyTxErr = \case
         encodeList Shelley.encodeLedgerFailure xs
     ApplyTxErrAllegra (ApplyTxError xs) ->
         encodeList Allegra.encodeLedgerFailure xs
-    ApplyTxErrMary _e ->
-        encodeText "ApplyTxErrMary: TODO"
+    ApplyTxErrMary (ApplyTxError xs) ->
+        encodeList Mary.encodeLedgerFailure xs
     ApplyTxErrWrongEra e ->
         encodeEraMismatch e
 
