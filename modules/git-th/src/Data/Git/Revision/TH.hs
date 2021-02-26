@@ -78,7 +78,7 @@ gitTags =
   where
     runGitTag :: IO [(String, String)]
     runGitTag = do
-        result <- git ["tag", "-l", "--sort", "-taggerdate", "--format", "%(refname:short) %(objectname)"]
+        result <- git ["tag", "-l", "--sort", "-taggerdate", "--format", "%(refname:short) %(object)"]
         case result of
             Right (ExitSuccess, tags) -> pure (mkTags <$> lines tags)
             _ -> pure []
