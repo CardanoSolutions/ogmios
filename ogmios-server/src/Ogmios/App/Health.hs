@@ -184,7 +184,6 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
 
         | otherwise = do
             logWith tr $ HealthUnknownException e
-            throwIO e
 
     onIOException :: FilePath -> IOException -> m ()
     onIOException nodeSocket e
@@ -193,7 +192,6 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
             liftIO $ threadDelay _5s
         | otherwise = do
             logWith tr $ HealthUnknownException (toException e)
-            throwIO e
       where
         isRetryable :: Bool
         isRetryable = isResourceVanishedError e || isDoesNotExistError e || isTryAgainError e
