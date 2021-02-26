@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="ogmios-server/static/assets/logo.png" height=400 alt="ogmios" />
+  <img src="ogmios-server/static/assets/logo.png" height=266 width=341 alt="ogmios" />
 </p>
 
 <p align="center">
@@ -13,7 +13,9 @@
 <p align="center">
   <a href="https://ktorz.github.io/cardano-ogmios">:book: User Manual</a>
   |
-  <a href="CONTRIBUTING.md">:gift: Contributing</a>
+  <a href="CONTRIBUTING.md">:triangular_ruler: Contributing</a>
+  |
+  <a href="SPONSORS.md">:gift_heart: Sponsors</a>
   |
   <a href="ogmios-server/CHANGELOG.md">:floppy_disk: Changelog</a>
 </p>
