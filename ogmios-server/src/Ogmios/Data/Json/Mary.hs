@@ -129,7 +129,7 @@ encodeTxBody
     :: Crypto crypto
     => MA.TxBody (MaryEra crypto)
     -> Json
-encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ _) = encodeObject
+encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ mint) = encodeObject
     [ ( "inputs"
       , encodeFoldable Shelley.encodeTxIn inps
       )
@@ -150,6 +150,9 @@ encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ _) = encode
       )
     , ( "update"
       , encodeStrictMaybe Shelley.encodeUpdate updates
+      )
+    , ( "mint"
+      , encodeValue mint
       )
     ]
 
