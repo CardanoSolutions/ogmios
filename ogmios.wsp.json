@@ -1215,6 +1215,7 @@
                 , "fee": { "$ref": "#/definitions/Lovelace" }
                 , "validityInterval": { "$ref": "#/definitions/ValidityInterval" }
                 , "update": { "$ref": "#/definitions/Update[Shelley]" }
+                , "mint": { "$ref": "#/definitions/Value" }
                 }
               }
             , "witness":
