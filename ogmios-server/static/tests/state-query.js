@@ -53,6 +53,7 @@ describe("StateQuery", () => {
               }
             , { "timeout": 5000 }
             ]
+          , [ "genesisConfig", { timeout: 2000 } ]
           ]
 
   const gibberish =

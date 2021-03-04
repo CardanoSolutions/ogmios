@@ -29,6 +29,7 @@ module Ogmios.Data.Json.Query
     , parseGetStakeDistribution
     , parseGetUTxO
     , parseGetFilteredUTxO
+    , parseGetGenesisConfig
     ) where
 
 import Ogmios.Data.Json.Prelude
@@ -59,6 +60,8 @@ import Ouroboros.Consensus.Shelley.Eras
     ( AllegraEra, MaryEra, ShelleyEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..), ShelleyHash (..) )
+import Ouroboros.Consensus.Shelley.Ledger.Config
+    ( CompactGenesis, getCompactGenesis )
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( NonMyopicMemberRewards (..), Query (..) )
 import Ouroboros.Network.Block
@@ -449,6 +452,48 @@ parseGetFilteredUTxO genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
         -> Json.Parser (Set (Sh.Addr crypto))
     parseAddresses obj = fmap fromList $
         obj .: "utxo" >>= traverse parseAddress
+
+parseGetGenesisConfig
+    :: forall f crypto. (Crypto crypto)
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (CompactGenesis era))
+    -> Json
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseGetGenesisConfig genResultInEra = do
+    Json.withText "SomeQuery" $ \text -> do
+        guard (text == "genesisConfig") $> \case
+            SomeShelleyEra ShelleyBasedEraShelley ->
+                Just $ SomeQuery
+                    { query =
+                        QueryIfCurrentShelley GetGenesisConfig
+                    , encodeResult =
+                        let encodeGenesis =
+                                Shelley.encodeCompactGenesis . getCompactGenesis
+                        in either encodeMismatchEraInfo encodeGenesis
+                    , genResult =
+                        genResultInEra (Proxy @(ShelleyEra crypto))
+                    }
+            SomeShelleyEra ShelleyBasedEraAllegra ->
+                Just $ SomeQuery
+                    { query =
+                        QueryIfCurrentAllegra GetGenesisConfig
+                    , encodeResult =
+                        let encodeGenesis =
+                                Shelley.encodeCompactGenesis . getCompactGenesis
+                        in either encodeMismatchEraInfo encodeGenesis
+                    , genResult =
+                        genResultInEra (Proxy @(AllegraEra crypto))
+                    }
+            SomeShelleyEra ShelleyBasedEraMary ->
+                Just $ SomeQuery
+                    { query =
+                        QueryIfCurrentMary GetGenesisConfig
+                    , encodeResult =
+                        let encodeGenesis =
+                                Shelley.encodeCompactGenesis . getCompactGenesis
+                        in either encodeMismatchEraInfo encodeGenesis
+                    , genResult =
+                        genResultInEra (Proxy @(MaryEra crypto))
+                    }
 
 --
 -- Internal

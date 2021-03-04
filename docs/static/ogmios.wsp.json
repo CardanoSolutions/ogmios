@@ -508,6 +508,9 @@
                     }
                   }
                 }
+              , { "type": "string"
+                , "enum": ["genesisConfig"]
+                }
               ]
             }
           }
@@ -780,6 +783,39 @@
                   ]
               }
             }
+          , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[genesisConfig]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/CompactGenesis" }
           , { "$ref": "#/definitions/EraMismatch" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
@@ -1461,6 +1497,39 @@
           }
         }
       ]
+    }
+
+  , "CompactGenesis":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required":
+      [ "systemStart"
+      , "networkMagic"
+      , "network"
+      , "activeSlotsCoefficient"
+      , "securityParameter"
+      , "epochLength"
+      , "slotsPerKesPeriod"
+      , "maxKesEvolutions"
+      , "slotLength"
+      , "updateQuorum"
+      , "maxLovelaceSupply"
+      , "protocolParameters"
+      ]
+    , "properties":
+      { "systemStart": { "$ref": "#/definitions/UtcTime" }
+      , "networkMagic": { "type": "integer" }
+      , "network": { "$ref": "#/definitions/Network" }
+      , "activeSlotsCoefficient": { "$ref": "#/definitions/Ratio" }
+      , "securityParameter": { "type": "integer" }
+      , "epochLength": { "$ref": "#/definitions/Epoch" }
+      , "slotsPerKesPeriod": { "type": "integer" }
+      , "maxKesEvolutions": { "type": "integer" }
+      , "slotLength": { "type": "integer" }
+      , "updateQuorum": { "type": "integer" }
+      , "maxLovelaceSupply": { "type": "integer" }
+      , "protocolParameters": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
+      }
     }
 
   , "DlgCertificate":
@@ -2561,6 +2630,11 @@
           }
         }
       ]
+    }
+
+  , "UtcTime":
+    { "type": "string"
+    , "pattern": "[0-9]{1,4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$"
     }
 
   , "Utxo":

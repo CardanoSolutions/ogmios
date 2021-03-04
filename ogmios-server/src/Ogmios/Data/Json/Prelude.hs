@@ -30,10 +30,12 @@ module Ogmios.Data.Json.Prelude
     , encodeDnsName
     , encodeDouble
     , encodeEpochNo
+    , encodeEpochSize
     , encodeIPv4
     , encodeIPv6
     , encodeInteger
     , encodeNatural
+    , encodeNominalDiffTime
     , encodeNull
     , encodePort
     , encodeRational
@@ -45,6 +47,7 @@ module Ogmios.Data.Json.Prelude
     , encodeText
     , encodeUnitInterval
     , encodeUrl
+    , encodeUtcTime
     , encodeWord
     , encodeWord16
     , encodeWord32
@@ -72,7 +75,7 @@ import Cardano.Binary
 import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
-    ( EpochNo (..), SlotNo (..) )
+    ( EpochNo (..), EpochSize (..), SlotNo (..) )
 import Codec.Binary.Bech32
     ( HumanReadablePart )
 import Codec.Binary.Bech32.TH
@@ -93,6 +96,10 @@ import Data.Scientific
     ( Scientific )
 import Data.Sequence.Strict
     ( StrictSeq )
+import Data.Time.Clock
+    ( NominalDiffTime, UTCTime )
+import Data.Time.Format
+    ( defaultTimeLocale, formatTime, iso8601DateFormat )
 import Data.Vector
     ( Vector )
 import Ouroboros.Consensus.BlockchainTime.WallClock.Types
@@ -186,6 +193,11 @@ encodeEpochNo =
     encodeWord64 . unEpochNo
 {-# INLINABLE encodeEpochNo #-}
 
+encodeEpochSize :: EpochSize -> Json
+encodeEpochSize =
+    encodeWord64 . unEpochSize
+{-# INLINABLE encodeEpochSize #-}
+
 encodeIPv4 :: IPv4 -> Json
 encodeIPv4 =
     encodeString . show
@@ -205,6 +217,11 @@ encodeNatural :: Natural -> Json
 encodeNatural =
     encodeInteger . toInteger
 {-# INLINABLE encodeNatural #-}
+
+encodeNominalDiffTime :: NominalDiffTime -> Json
+encodeNominalDiffTime =
+    encodeInteger . round
+{-# INLINABLE encodeNominalDiffTime #-}
 
 encodeNull :: Json
 encodeNull =
@@ -260,6 +277,11 @@ encodeUrl :: Url -> Json
 encodeUrl =
     encodeText . urlToText
 {-# INLINABLE encodeUrl #-}
+
+encodeUtcTime :: UTCTime -> Json
+encodeUtcTime =
+    encodeString . formatTime defaultTimeLocale (iso8601DateFormat (Just "%H:%M:%S"))
+{-# INLINABLE encodeUtcTime #-}
 
 encodeWord :: Word -> Json
 encodeWord =

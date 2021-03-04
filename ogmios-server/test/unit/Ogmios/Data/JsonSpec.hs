@@ -50,6 +50,7 @@ import Ogmios.Data.Json.Query
     , parseGetEpochNo
     , parseGetEraStart
     , parseGetFilteredUTxO
+    , parseGetGenesisConfig
     , parseGetLedgerTip
     , parseGetNonMyopicMemberRewards
     , parseGetProposedPParamsUpdates
@@ -80,6 +81,8 @@ import Ouroboros.Consensus.Shelley.Eras
     ( StandardAllegra, StandardMary, StandardShelley )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock )
+import Ouroboros.Consensus.Shelley.Ledger.Config
+    ( CompactGenesis, compactGenesis )
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( NonMyopicMemberRewards (..) )
 import Ouroboros.Consensus.Shelley.Protocol.Crypto
@@ -230,8 +233,8 @@ spec = do
             [aesonQQ|
             { "utxo": []
             }|]
-            (parseGetFilteredUTxO genUTxOResult)
-            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            ( parseGetFilteredUTxO genUTxOResult
+            ) "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
         validateQuery
             [aesonQQ|
@@ -241,8 +244,13 @@ spec = do
                 , "82d818582183581cb0574c7a1564697578b840fd7ec9d8963fa1398415f9f2f87737a83da0001ae9e3e303"
                 ]
             }|]
-            (parseGetFilteredUTxO genUTxOResult)
-            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            ( parseGetFilteredUTxO genUTxOResult
+            ) "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+
+        validateQuery
+            [aesonQQ|"genesisConfig"|]
+            ( parseGetGenesisConfig genCompactGenesisResult
+            ) "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
 
 instance Arbitrary a => Arbitrary (Wsp.Response a) where
     arbitrary = Wsp.Response Nothing <$> arbitrary
@@ -598,6 +606,43 @@ genUTxOResult _ _ =
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)
                     , (10, Right <$> reasonablySized arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+
+genCompactGenesisResult
+    :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
+    => Proxy era
+    -> Proxy (QueryResult crypto (CompactGenesis era))
+    -> Gen (QueryResult crypto (CompactGenesis era))
+genCompactGenesisResult _ _ =
+    fromMaybe (error "genCompactGenesisResult: unsupported era")
+        (genShelley <|> genAllegra <|> genMary)
+  where
+    genShelley =
+        case testEquality (typeRep @era) (typeRep @StandardShelley) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right . compactGenesis <$> reasonablySized arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+    genAllegra =
+        case testEquality (typeRep @era) (typeRep @StandardAllegra) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right . compactGenesis <$> reasonablySized arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+    genMary =
+        case testEquality (typeRep @era) (typeRep @StandardMary) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right . compactGenesis <$> reasonablySized arbitrary)
                     ]
             Nothing ->
                 Nothing

@@ -51,6 +51,7 @@ import qualified Shelley.Spec.Ledger.BlockChain as Sh
 import qualified Shelley.Spec.Ledger.Coin as Sh
 import qualified Shelley.Spec.Ledger.Credential as Sh
 import qualified Shelley.Spec.Ledger.Delegation.Certificates as Sh
+import qualified Shelley.Spec.Ledger.Genesis as Sh
 import qualified Shelley.Spec.Ledger.Keys as Sh
 import qualified Shelley.Spec.Ledger.LedgerState as Sh
 import qualified Shelley.Spec.Ledger.Metadata as Sh
@@ -152,6 +153,48 @@ encodeBootstrapWitness (Sh.BootstrapWitness key sig cc attr) = encodeObject
       )
     , ( "signature"
       , encodeSignedDSIGN sig
+      )
+    ]
+
+encodeCompactGenesis
+    :: Sh.ShelleyGenesis era
+    -> Json
+encodeCompactGenesis x = encodeObject
+    [ ( "systemStart"
+      , encodeUtcTime (Sh.sgSystemStart x)
+      )
+    , ( "networkMagic"
+      , encodeWord32 (Sh.sgNetworkMagic x)
+      )
+    , ( "network"
+      , encodeNetwork (Sh.sgNetworkId x)
+      )
+    , ( "activeSlotsCoefficient"
+      , encodeRational (Sh.sgActiveSlotsCoeff x)
+      )
+    , ( "securityParameter"
+      , encodeWord64 (Sh.sgSecurityParam x)
+      )
+    , ( "epochLength"
+      , encodeEpochSize (Sh.sgEpochLength x)
+      )
+    , ( "slotsPerKesPeriod"
+      , encodeWord64 (Sh.sgSlotsPerKESPeriod x)
+      )
+    , ( "maxKesEvolutions"
+      , encodeWord64 (Sh.sgMaxKESEvolutions x)
+      )
+    , ( "slotLength"
+      , encodeNominalDiffTime (Sh.sgSlotLength x)
+      )
+    , ( "updateQuorum"
+      , encodeWord64 (Sh.sgUpdateQuorum x)
+      )
+    , ( "maxLovelaceSupply"
+      , encodeWord64 (Sh.sgMaxLovelaceSupply x)
+      )
+    , ( "protocolParameters"
+      , encodePParams' id (Sh.sgProtocolParams x)
       )
     ]
 
