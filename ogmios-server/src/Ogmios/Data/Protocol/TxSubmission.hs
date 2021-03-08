@@ -88,7 +88,7 @@ deriving instance Show (SubmitTxPayload block) => Show (SubmitTx block)
 
 _decodeSubmitTx
     :: FromJSON (SubmitTxPayload block)
-    => Json
+    => Json.Value
     -> Json.Parser (Wsp.Request (SubmitTx block))
 _decodeSubmitTx =
     Wsp.genericFromJSON Wsp.defaultOptions

@@ -125,7 +125,7 @@ data Acquire block
 
 _decodeAcquire
     :: FromJSON (Point block)
-    => Json
+    => Json.Value
     -> Json.Parser (Wsp.Request (Acquire block))
 _decodeAcquire =
     Wsp.genericFromJSON Wsp.defaultOptions
@@ -167,7 +167,7 @@ data Release
     deriving (Generic, Show)
 
 _decodeRelease
-    :: Json
+    :: Json.Value
     -> Json.Parser (Wsp.Request Release)
 _decodeRelease =
     Wsp.genericFromJSON Wsp.defaultOptions
@@ -194,7 +194,7 @@ data Query block = Query { query :: QueryInEra Proxy block }
 
 _decodeQuery
     :: FromJSON (QueryInEra Proxy block)
-    => Json
+    => Json.Value
     -> Json.Parser (Wsp.Request (Query block))
 _decodeQuery =
     Wsp.genericFromJSON Wsp.defaultOptions

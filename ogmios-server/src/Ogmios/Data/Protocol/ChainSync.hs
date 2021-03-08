@@ -102,7 +102,7 @@ data FindIntersect block
 
 _decodeFindIntersect
     :: FromJSON (Point block)
-    => Json
+    => Json.Value
     -> Json.Parser (Wsp.Request (FindIntersect block))
 _decodeFindIntersect =
     Wsp.genericFromJSON Wsp.defaultOptions
@@ -145,7 +145,7 @@ data RequestNext
     deriving (Generic, Show)
 
 _decodeRequestNext
-    :: Json
+    :: Json.Value
     -> Json.Parser (Wsp.Request RequestNext)
 _decodeRequestNext =
     Wsp.genericFromJSON Wsp.defaultOptions

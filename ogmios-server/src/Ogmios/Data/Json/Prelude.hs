@@ -19,6 +19,7 @@ module Ogmios.Data.Json.Prelude
     , humanReadablePart
     , keepRedundantConstraint
     , choice
+    , inefficientEncodingToValue
 
       -- * Basic Types
     , encodeBlockNo
@@ -98,8 +99,6 @@ import Data.Sequence.Strict
     ( StrictSeq )
 import Data.Time.Clock
     ( NominalDiffTime, UTCTime )
-import Data.Time.Format
-    ( defaultTimeLocale, formatTime, iso8601DateFormat )
 import Data.Vector
     ( Vector )
 import Ouroboros.Consensus.BlockchainTime.WallClock.Types
@@ -117,23 +116,25 @@ import Shelley.Spec.Ledger.BaseTypes
     )
 
 import qualified Codec.Binary.Bech32 as Bech32
-import qualified Data.ByteArray as BA
-import qualified Data.Map.Strict as Map
-
 import qualified Data.Aeson as Json
-import qualified Data.Aeson.Parser.Internal as Json
+import qualified Data.Aeson.Encoding as Json
+import qualified Data.Aeson.Parser.Internal as Json hiding
+    ( scientific )
 import qualified Data.Aeson.Types as Json
+import qualified Data.ByteArray as BA
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.Map.Strict as Map
 
 --
 -- Prelude
 --
 
-type Json = Json.Value
+type Json = Json.Encoding
 
 jsonToByteString :: Json -> ByteString
-jsonToByteString = toStrict . Json.encode
+jsonToByteString = toStrict . Json.encodingToLazyByteString
 
-decodeWith :: (Json -> Json.Parser a) -> ByteString -> Maybe a
+decodeWith :: (Json.Value -> Json.Parser a) -> ByteString -> Maybe a
 decodeWith decoder =
     Json.decodeStrictWith Json.jsonEOF (Json.parse decoder)
 
@@ -143,6 +144,27 @@ choice entity xs a =
 
 keepRedundantConstraint :: c => Proxy c -> ()
 keepRedundantConstraint _ = ()
+
+-- | Converts a 'Json.Encoding' to a 'Json.Value'. This is inefficient because
+-- the conversion is done by serializing the encoding to bytestring, and parsing
+-- the bytestring back into a value.
+--
+-- This is to use with care in areas where performances do not matter and where
+-- one cannot simply rely on 'Json.Encoding' solely.
+--
+-- The more 'correct' way to do this would be to define both a `toJSON` and
+-- `toEncoding` wherever this function is needed which usually means duplicating
+-- code.
+inefficientEncodingToValue :: Json.Encoding -> Json.Value
+inefficientEncodingToValue = unsafeDecodeValue . Json.encodingToLazyByteString
+  where
+    unsafeDecodeValue :: BL.ByteString -> Json.Value
+    unsafeDecodeValue =
+        let
+            justification =
+                "impossible: couldn't decode JSON value that was just encoded."
+        in
+            fromMaybe (error justification) . Json.decode
 
 --
 -- Basic Types
@@ -155,7 +177,7 @@ encodeBlockNo =
 
 encodeBool :: Bool -> Json
 encodeBool =
-    Json.Bool
+    Json.bool
 {-# INLINABLE encodeBool #-}
 
 encodeByteArray :: ByteArrayAccess ba => (ByteString -> Json) -> ba -> Json
@@ -185,7 +207,7 @@ encodeDnsName =
 
 encodeDouble :: Double -> Json
 encodeDouble =
-    Json.toJSON
+    Json.toEncoding
 {-# INLINABLE encodeDouble #-}
 
 encodeEpochNo :: EpochNo -> Json
@@ -210,7 +232,7 @@ encodeIPv6 =
 
 encodeInteger :: Integer -> Json
 encodeInteger =
-    encodeScientific . fromInteger
+    Json.integer
 {-# INLINABLE encodeInteger #-}
 
 encodeNatural :: Natural -> Json
@@ -225,7 +247,7 @@ encodeNominalDiffTime =
 
 encodeNull :: Json
 encodeNull =
-    Json.Null
+    Json.null_
 {-# INLINABLE encodeNull #-}
 
 encodePort :: Port -> Json
@@ -245,7 +267,7 @@ encodeRelativeTime =
 
 encodeScientific :: Scientific -> Json
 encodeScientific =
-    Json.Number
+    Json.scientific
 {-# INLINABLE encodeScientific #-}
 
 encodeShortByteString :: (ByteString -> Json) -> ShortByteString -> Json
@@ -260,12 +282,12 @@ encodeSlotNo =
 
 encodeString :: String -> Json
 encodeString =
-    encodeText . toText
+    Json.string
 {-# INLINABLE encodeString #-}
 
 encodeText :: Text -> Json
 encodeText =
-    Json.String
+    Json.text
 {-# INLINABLE encodeText #-}
 
 encodeUnitInterval :: UnitInterval -> Json
@@ -280,32 +302,32 @@ encodeUrl =
 
 encodeUtcTime :: UTCTime -> Json
 encodeUtcTime =
-    encodeString . formatTime defaultTimeLocale (iso8601DateFormat (Just "%H:%M:%S"))
+    Json.utcTime
 {-# INLINABLE encodeUtcTime #-}
 
 encodeWord :: Word -> Json
 encodeWord =
-    Json.toJSON
+    Json.word
 {-# INLINABLE encodeWord #-}
 
 encodeWord8 :: Word8 -> Json
 encodeWord8 =
-    Json.toJSON
+    Json.word8
 {-# INLINABLE encodeWord8 #-}
 
 encodeWord16 :: Word16 -> Json
 encodeWord16 =
-    Json.toJSON
+    Json.word16
 {-# INLINABLE encodeWord16 #-}
 
 encodeWord32 :: Word32 -> Json
 encodeWord32 =
-    Json.toJSON
+    Json.word32
 {-# INLINABLE encodeWord32 #-}
 
 encodeWord64 :: Word64 -> Json
 encodeWord64 =
-    Json.toJSON
+    Json.word64
 {-# INLINABLE encodeWord64 #-}
 
 --
@@ -324,7 +346,7 @@ encodeIdentity encodeElem =
 
 encodeFoldable :: Foldable f => (a -> Json) -> f a -> Json
 encodeFoldable encodeElem =
-    Json.toJSON . foldr ((:) . encodeElem) []
+    Json.list id . foldr ((:) . encodeElem) []
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> [a] -> Json #-}
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> NonEmpty a -> Json #-}
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> Vector a -> Json #-}
@@ -333,8 +355,8 @@ encodeFoldable encodeElem =
 {-# INLINABLE encodeFoldable #-}
 
 encodeList :: (a -> Json) -> [a] -> Json
-encodeList encodeElem =
-    Json.toJSON . fmap encodeElem
+encodeList =
+    Json.list
 {-# INLINABLE encodeList #-}
 
 encodeMap :: (k -> Text) -> (v -> Json) -> Map k v -> Json
@@ -349,7 +371,7 @@ encodeMaybe =
 
 encodeObject :: [(Text, Json)] -> Json
 encodeObject =
-    Json.object
+    Json.pairs . foldr (\(k, v) -> (<>) (Json.pair k v)) mempty
 {-# INLINABLE encodeObject #-}
 
 encode2Tuple
@@ -358,7 +380,7 @@ encode2Tuple
     -> (a, b)
     -> Json
 encode2Tuple encodeA encodeB (a,b) =
-    Json.toJSON [encodeA a, encodeB b]
+    Json.list id [encodeA a, encodeB b]
 {-# INLINABLE encode2Tuple #-}
 
 encode3Tuple
@@ -368,7 +390,7 @@ encode3Tuple
     -> (a, b, c)
     -> Json
 encode3Tuple encodeA encodeB encodeC (a, b, c) =
-    Json.toJSON [encodeA a, encodeB b, encodeC c]
+    Json.list id [encodeA a, encodeB b, encodeC c]
 {-# INLINABLE encode3Tuple #-}
 
 encode4Tuple
@@ -379,7 +401,7 @@ encode4Tuple
     -> (a, b, c, d)
     -> Json
 encode4Tuple encodeA encodeB encodeC encodeD (a, b, c, d) =
-    Json.toJSON [encodeA a, encodeB b, encodeC c, encodeD d]
+    Json.list id [encodeA a, encodeB b, encodeC c, encodeD d]
 {-# INLINABLE encode4Tuple #-}
 
 encodeStrictMaybe :: (a -> Json) -> StrictMaybe a -> Json

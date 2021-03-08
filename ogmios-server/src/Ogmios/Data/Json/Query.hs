@@ -158,7 +158,7 @@ encodePoint = \case
 parseGetEraStart
     :: forall crypto f. ()
     => (Proxy (Maybe Bound) -> f (Maybe Bound))
-    -> Json
+    -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetEraStart genResult =
     Json.withText "SomeQuery" $ \text -> do
@@ -183,7 +183,7 @@ parseGetEraStart genResult =
 parseGetLedgerTip
     :: forall crypto f. (Typeable crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (Point (ShelleyBlock era)))
-    -> Json
+    -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetLedgerTip genResultInEra =
     Json.withText "SomeQuery" $ \text -> do
@@ -219,7 +219,7 @@ parseGetLedgerTip genResultInEra =
 parseGetEpochNo
     :: forall crypto f. ()
     => GenResult crypto f EpochNo
-    -> Json
+    -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetEpochNo genResult =
     Json.withText "SomeQuery" $ \text -> do
@@ -244,7 +244,7 @@ parseGetEpochNo genResult =
 parseGetNonMyopicMemberRewards
     :: forall crypto f. (Crypto crypto)
     => GenResult crypto f (NonMyopicMemberRewards crypto)
-    -> Json
+    -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetNonMyopicMemberRewards genResult =
     Json.withObject "SomeQuery" $ \obj -> do
@@ -281,7 +281,7 @@ parseGetNonMyopicMemberRewards genResult =
 parseGetCurrentPParams
     :: forall crypto f. (Typeable crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.PParams era))
-    -> Json
+    -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetCurrentPParams genResultInEra =
     Json.withText "SomeQuery" $ \text -> do
@@ -317,7 +317,7 @@ parseGetCurrentPParams genResultInEra =
 parseGetProposedPParamsUpdates
     :: forall crypto f. (Typeable crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.ProposedPPUpdates era))
-    -> Json
+    -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetProposedPParamsUpdates genResultInEra =
     Json.withText "SomeQuery" $ \text -> do
@@ -353,7 +353,7 @@ parseGetProposedPParamsUpdates genResultInEra =
 parseGetStakeDistribution
     :: forall crypto f. ()
     => (GenResult crypto f (Sh.PoolDistr crypto))
-    -> Json
+    -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetStakeDistribution genResult =
     Json.withText "SomeQuery" $ \text -> do
@@ -378,7 +378,7 @@ parseGetStakeDistribution genResult =
 parseGetUTxO
     :: forall crypto f. (Crypto crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.UTxO era))
-    -> Json
+    -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetUTxO genResultInEra =
     Json.withText "SomeQuery" $ \text -> do
@@ -414,7 +414,7 @@ parseGetUTxO genResultInEra =
 parseGetFilteredUTxO
     :: forall crypto f. (Crypto crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.UTxO era))
-    -> Json
+    -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetFilteredUTxO genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
     addrs <- parseAddresses obj
@@ -456,7 +456,7 @@ parseGetFilteredUTxO genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
 parseGetGenesisConfig
     :: forall f crypto. (Crypto crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (CompactGenesis era))
-    -> Json
+    -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetGenesisConfig genResultInEra = do
     Json.withText "SomeQuery" $ \text -> do
@@ -519,7 +519,7 @@ data SomeQuery (f :: * -> *) block = forall result. SomeQuery
 
 parseAddress
     :: Crypto crypto
-    => Json
+    => Json.Value
     -> Json.Parser (Sh.Addr crypto)
 parseAddress = Json.withText "Address" $ choice "address"
     [ addressFromBytes fromBech32
@@ -544,7 +544,7 @@ parseAddress = Json.withText "Address" $ choice "address"
         either (fail . show) pure . decodeBase16 . encodeUtf8
 
 parseCoin
-    :: Json
+    :: Json.Value
     -> Json.Parser Sh.Coin
 parseCoin =
     fmap Sh.word64ToCoin . Json.parseJSON
@@ -557,14 +557,14 @@ parseCoin =
 -- A possible option: encode them as Bech32 strings with different prefixes.
 parseCredential
     :: Crypto crypto
-    => Json
+    => Json.Value
     -> Json.Parser (Sh.Credential 'Sh.Staking crypto)
 parseCredential =
     fmap (Sh.KeyHashObj . Sh.KeyHash) . parseHash
 
 parseHash
     :: CC.HashAlgorithm alg
-    => Json
+    => Json.Value
     -> Json.Parser (CC.Hash alg a)
 parseHash =
     Json.parseJSON >=> maybe empty pure . CC.hashFromTextAsHex

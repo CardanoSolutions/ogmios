@@ -80,7 +80,8 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 --
 
 instance Json.ToJSON (Tip (CardanoBlock crypto)) where
-    toJSON = encodeTip
+    toJSON = inefficientEncodingToValue . encodeTip
+    toEncoding = encodeTip
 
 --
 -- Encoders

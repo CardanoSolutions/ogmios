@@ -59,6 +59,7 @@ import GHC.TypeLits
 import GHC.Generics
 
 import qualified Data.Aeson as Json
+import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.Text as T
 
@@ -120,9 +121,13 @@ genericToJSON
     => Options
     -> Proxy (Request req)
     -> Response res
-    -> Json.Value
+    -> Json.Encoding
 genericToJSON opts proxy =
-    mkResponse opts proxy (gWSPToJSON opts . from)
+    -- TODO: `gWSPToJSON` constructs a JSON 'Value', and only after converts it
+    -- into an 'Encoding'. This is not the most efficient as the whole point of
+    -- using an 'Encoding' is to construct it along the way and avoid
+    -- constructing an intermediate 'Value' altogether.
+    mkResponse opts proxy (Json.value . gWSPToJSON opts . from)
 
 -- | Serialize a given response to JSON
 --
@@ -134,30 +139,36 @@ mkResponse
         )
     => Options
     -> Proxy (Request req)
-    -> (res -> Json.Value)
+    -> (res -> Json.Encoding)
     -> Response res
-    -> Json.Value
-mkResponse opts _proxy toResult (Response refl res) = Json.object
-    [ "type" .= WspResponse
-    , "version" .= V1_0
-    , "servicename" .= symbolVal (Proxy @(ServiceName (Response res)))
-    , "methodname" .= methodName
-    , "result" .= toResult res
-    , "reflection" .= refl
-    ]
+    -> Json.Encoding
+mkResponse opts _proxy toResult (Response refl res) = Json.pairs $
+    ("type" .= WspResponse)
+    <>
+    ("version" .= V1_0)
+    <>
+    ("servicename" .= symbolVal (Proxy @(ServiceName (Response res))))
+    <>
+    ("methodname" .= methodName)
+    <>
+    (Json.pair "result" (toResult res))
+    <>
+    ("reflection" .= refl)
   where
     methodName = constructorTagModifier opts $ gWSPMethodName (Proxy :: Proxy (Rep req a))
 
 mkFault
     :: KnownSymbol (ServiceName (Response Fault))
     => Fault
-    -> Json.Value
-mkFault fault = Json.object
-    [ "type" .= WspFault
-    , "version" .= V1_0
-    , "servicename" .= symbolVal (Proxy @(ServiceName (Response Fault)))
-    , "fault" .= fault
-    ]
+    -> Json.Encoding
+mkFault fault = Json.pairs $
+    ("type" .= WspFault)
+    <>
+    ("version" .= V1_0)
+    <>
+    ("servicename" .= symbolVal (Proxy @(ServiceName (Response Fault))))
+    <>
+    ("fault" .= fault)
 
 -- | Supported JSON-WSP versions.
 --
