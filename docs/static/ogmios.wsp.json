@@ -220,7 +220,7 @@
           { "bytes":
             { "type": "string"
             , "description": "CBOR-serialized signed transaction, in base64"
-            , "format": "base64"
+            , "contentEncoding": "base64"
             , "pattern": "^[A-Za-z0-9+/]=?=?$"
             }
           }
@@ -707,7 +707,7 @@
       , "result":
         { "oneOf":
           [ { "type": "object"
-            , "propertyNames": { "pattern": "^[0-9a-f]+$" }
+            , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
             , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
             }
           , { "$ref": "#/definitions/EraMismatch" }
@@ -836,6 +836,7 @@
 
   , "Address":
     { "type": "string"
+    , "contentEncoding": "bech32|base58"
     , "pattern": "[1-9A-HJ-NP-Za-km-z]*"
     }
 
@@ -1034,7 +1035,7 @@
                   }
                 , "script":
                   { "type": "object"
-                  , "propertyNames": { "pattern": "^[0-9a-f]+$" }
+                  , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
                   , "additionalProperties": { "$ref": "#/definitions/Script" }
                   }
                 , "bootstrap":
@@ -1163,7 +1164,7 @@
                   }
                 , "script":
                   { "type": "object"
-                  , "propertyNames": { "pattern": "^[0-9a-f]+$" }
+                  , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
                   , "additionalProperties": { "$ref": "#/definitions/Script" }
                   }
                 , "bootstrap":
@@ -1272,7 +1273,7 @@
                   }
                 , "script":
                   { "type": "object"
-                  , "propertyNames": { "pattern": "^[0-9a-f]+$" }
+                  , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
                   , "additionalProperties": { "$ref": "#/definitions/Script" }
                   }
                 , "bootstrap":
@@ -1573,13 +1574,13 @@
 
   , "Hash16":
     { "type": "string"
-    , "format": "base16"
+    , "contentEncoding": "base16"
     , "pattern": "^[0-9a-f]*$"
     }
 
   , "Hash64":
     { "type": "string"
-    , "format": "base64"
+    , "contentEncoding": "base64"
     , "pattern": "^[A-Za-z0-9+/]*=?=?$"
     }
 
@@ -1682,7 +1683,7 @@
     , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
     , "additionalProperties":
       { "type": "object"
-      , "propertyNames": { "pattern": "^[0-9a-f]+$" }
+      , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
       , "additionalProperties":
         { "type": "number"
         , "minimum": 0
@@ -1754,7 +1755,7 @@
 
   , "PoolId":
     { "type": "string"
-    , "format": "bech32"
+    , "contentEncoding": "bech32"
     , "pattern": "^pool1[0-9a-z]*$"
     }
 
@@ -1893,7 +1894,7 @@
 
   , "RewardAccount":
     { "type": "string"
-    , "format": "bech32"
+    , "contentEncoding": "bech32"
     , "pattern": "^stake(_test)?1[0-9a-z]+$"
     }
 
@@ -2634,7 +2635,7 @@
 
   , "UtcTime":
     { "type": "string"
-    , "pattern": "[0-9]{1,4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$"
+    , "format": "date-time"
     }
 
   , "Utxo":
