@@ -66,8 +66,10 @@ import Ogmios.Data.Protocol.ChainSync
 import Ogmios.Data.Protocol.StateQuery
     ( AcquireResponse (..)
     , QueryResponse (..)
+    , ReleaseResponse (..)
     , _encodeAcquireResponse
     , _encodeQueryResponse
+    , _encodeReleaseResponse
     )
 import Ogmios.Data.Protocol.TxSubmission
     ( SubmitTxResponse, _encodeSubmitTxResponse )
@@ -264,6 +266,12 @@ spec = do
             ( parseGetGenesisConfig genCompactGenesisResult
             ) "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
 
+    context "validate release response against JSON-schema" $ do
+        validateToJSON
+            (arbitrary @(Wsp.Response ReleaseResponse))
+            _encodeReleaseResponse
+            "ogmios.wsp.json#/properties/ReleaseResponse"
+
 instance Arbitrary a => Arbitrary (Wsp.Response a) where
     arbitrary = Wsp.Response Nothing <$> arbitrary
 
@@ -283,6 +291,10 @@ instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto
         ]
 
 instance Arbitrary (AcquireResponse Block) where
+    shrink = genericShrink
+    arbitrary = genericArbitrary
+
+instance Arbitrary ReleaseResponse where
     shrink = genericShrink
     arbitrary = genericArbitrary
 
