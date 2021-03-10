@@ -64,7 +64,11 @@ import Ogmios.Data.Protocol.ChainSync
     , _encodeRequestNextResponse
     )
 import Ogmios.Data.Protocol.StateQuery
-    ( QueryResponse (..), _encodeQueryResponse )
+    ( AcquireResponse (..)
+    , QueryResponse (..)
+    , _encodeAcquireResponse
+    , _encodeQueryResponse
+    )
 import Ogmios.Data.Protocol.TxSubmission
     ( SubmitTxResponse, _encodeSubmitTxResponse )
 import Ouroboros.Consensus.Byron.Ledger.Block
@@ -89,6 +93,8 @@ import Ouroboros.Consensus.Shelley.Protocol.Crypto
     ( StandardCrypto )
 import Ouroboros.Network.Block
     ( BlockNo (..), HeaderHash, Point (..), SlotNo (..), Tip (..) )
+import Ouroboros.Network.Protocol.LocalStateQuery.Type
+    ( AcquireFailure (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
 import Shelley.Spec.Ledger.Delegation.Certificates
@@ -179,6 +185,12 @@ spec = do
             (_encodeSubmitTxResponse (Proxy @Block) encodeHardForkApplyTxErr)
             "ogmios.wsp.json#/properties/SubmitTxResponse"
 
+    context "validate acquire response against JSON-schema" $ do
+        validateToJSON
+            (arbitrary @(Wsp.Response (AcquireResponse Block)))
+            (_encodeAcquireResponse encodePoint encodeAcquireFailure)
+            "ogmios.wsp.json#/properties/AcquireResponse"
+
     context "validate local state queries against JSON-schema" $ do
         validateQuery
             [aesonQQ|"eraStart"|]
@@ -268,6 +280,16 @@ instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto
         [ ( 1, pure SubmitSuccess)
         , ( 1, SubmitFail . HardForkApplyTxErrWrongEra <$> genMismatchEraInfo)
         , (10, SubmitFail . ApplyTxErrShelley <$> reasonablySized arbitrary)
+        ]
+
+instance Arbitrary (AcquireResponse Block) where
+    shrink = genericShrink
+    arbitrary = genericArbitrary
+
+instance Arbitrary AcquireFailure where
+    arbitrary = elements
+        [ AcquireFailurePointTooOld
+        , AcquireFailurePointNotOnChain
         ]
 
 instance Arbitrary (Point Block) where
@@ -397,17 +419,25 @@ validateQuery json parser resultRef = parallel $ specify (toString $ getSchemaRe
                     , SomeShelleyEra ShelleyBasedEraMary
                     ]
             forM_ eras $ \SomeQuery{genResult,encodeResult} -> do
-                let toResponse
-                        = Wsp.Response Nothing
-                        . QueryResponse
-                        . encodeResult
-                let encode
+                let encodeQueryResponse
                         = jsonifierToAeson
                         . _encodeQueryResponse encodeAcquireFailure
-                        . toResponse
+                        . Wsp.Response Nothing
+                        . QueryResponse
+                        . encodeResult
+
                 runQuickCheck $ withMaxSuccess 100 $ forAllBlind
                     (genResult Proxy)
-                    (prop_validateToJSON encode resultRef)
+                    (prop_validateToJSON encodeQueryResponse resultRef)
+
+                let encodeQueryUnavailableInCurrentEra
+                        = jsonifierToAeson
+                        . _encodeQueryResponse encodeAcquireFailure
+                        . Wsp.Response Nothing
+
+                runQuickCheck $ withMaxSuccess 1 $ forAllBlind
+                    (pure QueryUnavailableInCurrentEra)
+                    (prop_validateToJSON encodeQueryUnavailableInCurrentEra resultRef)
 
 -- | Simple run a QuickCheck property
 runQuickCheck :: Property -> IO ()
