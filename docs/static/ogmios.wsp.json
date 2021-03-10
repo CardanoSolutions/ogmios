@@ -344,7 +344,7 @@
                 , "additionalProperties": false
                 , "required": ["point"]
                 , "properties":
-                  { "points": { "$ref": "#/definitions/Point" }
+                  { "point": { "$ref": "#/definitions/Point" }
                   }
                 }
               }
@@ -358,7 +358,7 @@
                 , "additionalProperties": false
                 , "required": ["failure"]
                 , "properties":
-                  { "points": { "$ref": "#/definitions/AcquireFailure" }
+                  { "failure": { "$ref": "#/definitions/AcquireFailure" }
                   }
                 }
               }
@@ -544,6 +544,7 @@
       , "result":
         { "oneOf":
           [ { "$ref": "#/definitions/Bound" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
         }
       , "reflection":
