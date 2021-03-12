@@ -1,5 +1,7 @@
 import {
-  createStateQueryClient, currentEpoch,
+  createStateQueryClient,
+  currentEpoch,
+  currentProtocolParameters,
   ledgerTip
 } from '@src/StateQuery'
 import {
@@ -37,8 +39,10 @@ describe('Local state queries', () => {
     describe('calling queries from the client', () => {
       it('exposes the queries, uses a single context, and should be released when done', async () => {
         const client = await createStateQueryClient()
-        const currentEpoch = await client.currentEpoch()
-        expect(currentEpoch).toBeDefined()
+        const epoch = await client.currentEpoch()
+        expect(epoch).toBeDefined()
+        const protocolParameters = await client.currentProtocolParameters()
+        expect(protocolParameters.protocolVersion.major).toBeDefined()
         const point = await client.ledgerTip() as { slot: Slot, hash: Hash16 }
         expect(point.slot).toBeDefined()
         const bound = await client.eraStart()
@@ -53,6 +57,13 @@ describe('Local state queries', () => {
       it('fetches the current epoch number', async () => {
         const epoch = await currentEpoch()
         expect(epoch).toBeDefined()
+      })
+    })
+    describe('currentProtocolParameters', () => {
+      it('fetches the current shelley protocol parameters', async () => {
+        const protocolParameters = await currentProtocolParameters()
+        expect(protocolParameters.minFeeCoefficient).toBeDefined()
+        expect(protocolParameters.protocolVersion.major).toBeDefined()
       })
     })
     describe('eraStart', () => {
