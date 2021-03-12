@@ -4,7 +4,8 @@ import {
   currentProtocolParameters,
   eraStart,
   ledgerTip,
-  proposedProtocolParameters
+  proposedProtocolParameters,
+  stakeDistribution
 } from '@src/StateQuery'
 import {
   Hash16,
@@ -40,14 +41,25 @@ describe('Local state queries', () => {
     describe('calling queries from the client', () => {
       it('exposes the queries, uses a single context, and should be released when done', async () => {
         const client = await createStateQueryClient()
+
         const epoch = await client.currentEpoch()
         expect(epoch).toBeDefined()
+
         const protocolParameters = await client.currentProtocolParameters()
         expect(protocolParameters.protocolVersion.major).toBeDefined()
-        const point = await client.ledgerTip() as { slot: Slot, hash: Hash16 }
-        expect(point.slot).toBeDefined()
+
         const bound = await client.eraStart()
         expect(bound.slot).toBeDefined()
+
+        const point = await client.ledgerTip() as { slot: Slot, hash: Hash16 }
+        expect(point.slot).toBeDefined()
+
+        const proposedProtocolParameters = await client.proposedProtocolParameters()
+        expect(Object.values(proposedProtocolParameters)[0].minUtxoValue).toBeDefined()
+
+        const stakeDistribution = await client.stakeDistribution()
+        expect(Object.values(stakeDistribution)[0].stake).toBeDefined()
+
         await client.release()
       })
     })
@@ -85,7 +97,18 @@ describe('Local state queries', () => {
     describe('proposedProtocolParameters', () => {
       it('fetches the current shelley protocol parameters', async () => {
         const protocolParameters = await proposedProtocolParameters()
-        expect(protocolParameters).toBeDefined()
+        const params = Object.values(protocolParameters)[0]
+        expect(params.minFeeCoefficient).toBeDefined()
+        expect(params.minUtxoValue).toBeDefined()
+        expect(params.maxTxSize).toBeDefined()
+      })
+    })
+    describe('stakeDistribution', () => {
+      it('fetches the distribution of the stake across all known stake pools', async () => {
+        const poolDistribution = await stakeDistribution()
+        const pool = Object.values(poolDistribution)[0]
+        expect(pool.stake).toBeDefined()
+        expect(pool.vrf).toBeDefined()
       })
     })
   })

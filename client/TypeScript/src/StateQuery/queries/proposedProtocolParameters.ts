@@ -3,10 +3,15 @@ import { EraMismatchError, QueryUnavailableInCurrentEraError } from '../../error
 import { baseRequest } from '../../Request'
 import { ensureSocket, InteractionContext } from '../../Connection'
 
+export interface ObjectOfProtocolParametersShelley { [k: string]: ProtocolParametersShelley }
+
 const isEraMismatch = (result: Ogmios['QueryResponse[proposedProtocolParameters]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
 
-export const proposedProtocolParameters = (context?: InteractionContext): Promise<{[k: string]: ProtocolParametersShelley}> => {
+const isObjectOfProtocolParametersShelley = (result: Ogmios['QueryResponse[proposedProtocolParameters]']['result']): result is ObjectOfProtocolParametersShelley =>
+  Object.values(result as ObjectOfProtocolParametersShelley)[0].minFeeCoefficient !== undefined
+
+export const proposedProtocolParameters = (context?: InteractionContext): Promise<ObjectOfProtocolParametersShelley> => {
   return ensureSocket<{[k: string]: ProtocolParametersShelley}>((socket) => {
     return new Promise((resolve, reject) => {
       socket.once('message', (message: string) => {
@@ -14,6 +19,8 @@ export const proposedProtocolParameters = (context?: InteractionContext): Promis
         if (response === undefined) return
         if (response.result === 'QueryUnavailableInCurrentEra') {
           return reject(new QueryUnavailableInCurrentEraError('proposedProtocolParameters'))
+        } else if (isObjectOfProtocolParametersShelley(response.result)) {
+          return resolve(response.result)
         } else if (isEraMismatch(response.result)) {
           const { eraMismatch } = response.result
           const { ledgerEra, queryEra } = eraMismatch

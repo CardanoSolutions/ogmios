@@ -1,5 +1,13 @@
 import WebSocket from 'isomorphic-ws'
-import { Bound, Epoch, Ogmios, Point, ProtocolParametersShelley, Tip } from '../schema'
+import {
+  Bound,
+  Epoch,
+  Ogmios,
+  Point,
+  PoolDistribution,
+  ProtocolParametersShelley,
+  Tip
+} from '../schema'
 import { createConnectionString, ConnectionConfig } from '../Connection'
 import { baseRequest } from '../Request'
 import {
@@ -12,7 +20,8 @@ import {
   currentProtocolParameters,
   eraStart,
   ledgerTip,
-  proposedProtocolParameters
+  proposedProtocolParameters,
+  stakeDistribution
 } from './queries'
 import { createPointFromCurrentTip } from '../util'
 
@@ -24,6 +33,7 @@ export interface StateQueryClient {
   point: Point
   proposedProtocolParameters: () => Promise<{[k: string]: ProtocolParametersShelley}>
   release: () => Promise<void>
+  stakeDistribution: () => Promise<PoolDistribution>
 }
 
 export const createStateQueryClient = async (options?: {
@@ -66,8 +76,9 @@ export const createStateQueryClient = async (options?: {
                   methodname: 'Release'
                 } as Ogmios['Release']))
               })
-            }
-          })
+            },
+            stakeDistribution: stakeDistribution.bind(this, context)
+          } as StateQueryClient)
         } else {
           socket.once('close', () => {
             if ('AcquireFailure' in response.result) {
