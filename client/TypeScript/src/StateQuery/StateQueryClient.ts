@@ -7,12 +7,14 @@ import {
   AcquirePointTooOldError,
   UnknownResultError
 } from '../errors'
-import { ledgerTip } from './ledgerTip'
+import {
+  currentEpoch,
+  currentProtocolParameters,
+  eraStart,
+  ledgerTip,
+  proposedProtocolParameters
+} from './queries'
 import { createPointFromCurrentTip } from '../util'
-import { eraStart } from './eraStart'
-import { currentEpoch } from './currentEpoch'
-import { currentProtocolParameters } from './currentProtocolParameters'
-import { proposedProtocolParameters } from './proposedProtocolParameters'
 
 export interface StateQueryClient {
   currentEpoch: () => Promise<Epoch>

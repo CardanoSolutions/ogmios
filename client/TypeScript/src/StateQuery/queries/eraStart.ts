@@ -1,7 +1,7 @@
-import { Ogmios, Bound } from '../schema'
-import { QueryUnavailableInCurrentEraError, UnknownResultError } from '../errors'
-import { baseRequest } from '../Request'
-import { ensureSocket, InteractionContext } from '../Connection'
+import { Ogmios, Bound } from '../../schema'
+import { QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
+import { baseRequest } from '../../Request'
+import { ensureSocket, InteractionContext } from '../../Connection'
 
 const isBound = (result: Ogmios['QueryResponse[eraStart]']['result']): result is Bound => {
   const bound = result as Bound

@@ -1,7 +1,7 @@
-import { EraMismatch, Ogmios, ProtocolParametersShelley } from '../schema'
-import { EraMismatchError, QueryUnavailableInCurrentEraError } from '../errors'
-import { baseRequest } from '../Request'
-import { ensureSocket, InteractionContext } from '../Connection'
+import { EraMismatch, Ogmios, ProtocolParametersShelley } from '../../schema'
+import { EraMismatchError, QueryUnavailableInCurrentEraError } from '../../errors'
+import { baseRequest } from '../../Request'
+import { ensureSocket, InteractionContext } from '../../Connection'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[proposedProtocolParameters]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined

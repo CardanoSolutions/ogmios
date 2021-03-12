@@ -1,7 +1,7 @@
-import { Ogmios, Epoch, EraMismatch } from '../schema'
-import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../errors'
-import { baseRequest } from '../Request'
-import { ensureSocket, InteractionContext } from '../Connection'
+import { Ogmios, Epoch, EraMismatch } from '../../schema'
+import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
+import { baseRequest } from '../../Request'
+import { ensureSocket, InteractionContext } from '../../Connection'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[currentEpoch]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined

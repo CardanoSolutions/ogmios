@@ -1,7 +1,7 @@
-import { EraMismatch, Hash16, Ogmios, Point, Slot } from '../schema'
-import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../errors'
-import { baseRequest } from '../Request'
-import { ensureSocket, InteractionContext } from '../Connection'
+import { EraMismatch, Hash16, Ogmios, Point, Slot } from '../../schema'
+import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
+import { baseRequest } from '../../Request'
+import { ensureSocket, InteractionContext } from '../../Connection'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[ledgerTip]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined

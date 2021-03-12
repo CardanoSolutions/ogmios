@@ -2,6 +2,7 @@ import {
   createStateQueryClient,
   currentEpoch,
   currentProtocolParameters,
+  eraStart,
   ledgerTip,
   proposedProtocolParameters
 } from '@src/StateQuery'
@@ -9,7 +10,6 @@ import {
   Hash16,
   Slot
 } from '@src/schema'
-import { eraStart } from '@src/StateQuery/eraStart'
 
 describe('Local state queries', () => {
   describe('StateQueryClient', () => {
