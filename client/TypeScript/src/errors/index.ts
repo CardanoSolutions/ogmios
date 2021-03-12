@@ -1,3 +1,7 @@
+export * from './AcquirePointNotOnChainError'
+export * from './AcquirePointTooOldError'
+export * from './EraMismatchError'
 export * from './IntersectionNotFoundError'
 export * from './TipIsOriginError'
+export * from './QueryUnavailableInCurrentEraError'
 export * from './UnknownResultError'
