@@ -6,6 +6,7 @@ import {
   Hash16,
   Slot
 } from '@src/schema'
+import { eraStart } from '@src/StateQuery/eraStart'
 
 describe('Local state queries', () => {
   describe('StateQueryClient', () => {
@@ -45,11 +46,21 @@ describe('Local state queries', () => {
     })
   })
 
-  describe('Single-shot, self-releasing queries', () => {
-    it('fetches the tip of the ledger', async () => {
-      const point = await ledgerTip() as { slot: Slot, hash: Hash16 }
-      expect(point.hash).toBeDefined()
-      expect(point.slot).toBeDefined()
+  describe('Queries', () => {
+    describe('eraStart', () => {
+      it('fetches the bound of the current era', async () => {
+        const bound = await eraStart()
+        expect(bound.time).toBeDefined()
+        expect(bound.slot).toBeDefined()
+        expect(bound.epoch).toBeDefined()
+      })
+    })
+    describe('ledgerTip', () => {
+      it('fetches the tip of the ledger', async () => {
+        const point = await ledgerTip() as { slot: Slot, hash: Hash16 }
+        expect(point.hash).toBeDefined()
+        expect(point.slot).toBeDefined()
+      })
     })
   })
 })
