@@ -5,7 +5,7 @@ export interface ConnectionConfig {
   port?: number
 }
 
-export interface InteractionOptions {
+export interface InteractionContext {
   socket?: WebSocket
   connection?: ConnectionConfig
   closeOnCompletion?: boolean
@@ -16,18 +16,18 @@ export const createConnectionString = (connection?: ConnectionConfig) =>
 
 export const ensureSocket = async <T>(
   send: (socket: WebSocket) => Promise<T>,
-  options?: InteractionOptions
+  context?: InteractionContext
 ): Promise<T> => {
   return new Promise((resolve, reject) => {
-    if (options?.socket !== undefined) {
-      resolve(send(options.socket))
+    if (context?.socket !== undefined) {
+      resolve(send(context.socket))
     } else {
-      const socket = new WebSocket(createConnectionString(options?.connection))
+      const socket = new WebSocket(createConnectionString(context?.connection))
       socket.on('error', reject)
       socket.on('open', async () => {
         try {
           const result = await send(socket)
-          if (!options?.closeOnCompletion) {
+          if (!context?.closeOnCompletion) {
             socket.once('close', resolve.bind(this, result))
             socket.close()
           } else {

@@ -22,16 +22,17 @@ export const createStateQueryClient = async (options?: {
 }): Promise<StateQueryClient> => {
   return new Promise((resolve, reject) => {
     const socket = new WebSocket(createConnectionString(options?.connection))
+    const context = { socket, closeOnCompletion: false }
     socket.once('error', reject)
     socket.once('open', async () => {
       const point = options?.point !== undefined
         ? options.point
-        : await createPointFromCurrentTip({ socket, closeOnCompletion: false })
+        : await createPointFromCurrentTip(context)
       socket.once('message', (message: string) => {
         const response: Ogmios['AcquireResponse'] = JSON.parse(message)
         if ('AcquireSuccess' in response.result) {
           return resolve({
-            ledgerTip: ledgerTip.bind(this, { socket, closeOnCompletion: false }),
+            ledgerTip: ledgerTip.bind(this, context),
             point,
             release: () => {
               return new Promise((resolve, reject) => {

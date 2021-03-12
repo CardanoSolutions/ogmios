@@ -1,12 +1,12 @@
 import { Ogmios, Point, Tip } from '../schema'
 import { IntersectionNotFoundError, UnknownResultError } from '../errors'
 import { baseRequest } from '../Request'
-import { ensureSocket, InteractionOptions } from '../Connection'
+import { ensureSocket, InteractionContext } from '../Connection'
 
 // type Intersection = Ogmios['FindIntersectResponse']['result']['IntersectionFound']
 export type Intersection = { point: Point, tip: Tip }
 
-export const findIntersect = (points: Point[], options?: InteractionOptions): Promise<Intersection> => {
+export const findIntersect = (points: Point[], context?: InteractionContext): Promise<Intersection> => {
   return ensureSocket<Intersection>((socket) => {
     return new Promise((resolve, reject) => {
       socket.once('message', (message) => {
@@ -31,6 +31,6 @@ export const findIntersect = (points: Point[], options?: InteractionOptions): Pr
       } as Ogmios['FindIntersect']))
     })
   },
-  options
+  context
   )
 }

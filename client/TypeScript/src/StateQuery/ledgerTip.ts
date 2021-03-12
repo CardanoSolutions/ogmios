@@ -1,7 +1,7 @@
 import { EraMismatch, Hash16, Ogmios, Point, Slot } from '../schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../errors'
 import { baseRequest } from '../Request'
-import { ensureSocket, InteractionOptions } from '../Connection'
+import { ensureSocket, InteractionContext } from '../Connection'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[ledgerTip]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
@@ -9,7 +9,7 @@ const isEraMismatch = (result: Ogmios['QueryResponse[ledgerTip]']['result']): re
 const isNonOriginPoint = (result: {slot: Slot, hash: Hash16}): result is {slot: Slot, hash: Hash16} =>
   (result as {slot: Slot, hash: Hash16}).slot !== undefined
 
-export const ledgerTip = (options?: InteractionOptions): Promise<Point> => {
+export const ledgerTip = (context?: InteractionContext): Promise<Point> => {
   return ensureSocket<Point>((socket) => {
     return new Promise((resolve, reject) => {
       socket.once('message', (message: string) => {
@@ -37,6 +37,6 @@ export const ledgerTip = (options?: InteractionOptions): Promise<Point> => {
       } as Ogmios['Query']))
     })
   },
-  options
+  context
   )
 }
