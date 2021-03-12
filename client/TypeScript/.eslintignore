@@ -1,0 +1,4 @@
+.eslintrc.js
+*.d.ts
+*jest.config.js
+src/schema.ts

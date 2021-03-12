@@ -44,3 +44,24 @@ jobs:
         cd server
         stack --no-terminal build                 --haddock --no-haddock-deps --flag ogmios:production
         stack --no-terminal test ogmios:unit      --haddock --no-haddock-deps --flag ogmios:production
+  ts-client:
+    strategy:
+      matrix:
+        os: [ ubuntu-20.04 ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v2.3.3
+
+      - name: 🧰 Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14
+
+      - name: 🔨 Build & Test
+        run: |
+          yarn install --frozen-lockfile --non-interactive --logevel=error
+          yarn generate-schema-types
+          yarn build
+          yarn lint
+          yarn test
