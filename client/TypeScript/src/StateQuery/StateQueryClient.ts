@@ -1,5 +1,5 @@
 import WebSocket from 'isomorphic-ws'
-import { Bound, Ogmios, Point, Tip } from '../schema'
+import { Bound, Epoch, Ogmios, Point, Tip } from '../schema'
 import { createConnectionString, ConnectionConfig } from '../Connection'
 import { baseRequest } from '../Request'
 import {
@@ -10,8 +10,10 @@ import {
 import { ledgerTip } from './ledgerTip'
 import { createPointFromCurrentTip } from '../util'
 import { eraStart } from './eraStart'
+import { currentEpoch } from './currentEpoch'
 
 export interface StateQueryClient {
+  currentEpoch: () => Promise<Epoch>
   eraStart: () => Promise<Bound>
   ledgerTip: () => Promise<Tip>
   point: Point
@@ -34,6 +36,7 @@ export const createStateQueryClient = async (options?: {
         const response: Ogmios['AcquireResponse'] = JSON.parse(message)
         if ('AcquireSuccess' in response.result) {
           return resolve({
+            currentEpoch: currentEpoch.bind(this, context),
             eraStart: eraStart.bind(this, context),
             ledgerTip: ledgerTip.bind(this, context),
             point,

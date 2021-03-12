@@ -1,5 +1,5 @@
 import {
-  createStateQueryClient,
+  createStateQueryClient, currentEpoch,
   ledgerTip
 } from '@src/StateQuery'
 import {
@@ -12,9 +12,8 @@ describe('Local state queries', () => {
   describe('StateQueryClient', () => {
     it('gets the point from the tip if none provided', async () => {
       const client = await createStateQueryClient()
-      const { point } = client as { point: { hash: string, slot: number } }
-      expect(point.slot).toBeDefined()
-      expect(point.hash).toBeDefined()
+      const { point } = client
+      expect(point).toBeDefined()
       await client.release()
     })
 
@@ -35,18 +34,27 @@ describe('Local state queries', () => {
       await expect(createWithOldPoint).rejects
     })
 
-    describe('ledgerTip', () => {
-      it('fetches the tip of the ledger', async () => {
+    describe('calling queries from the client', () => {
+      it('exposes the queries, uses a single context, and should be released when done', async () => {
         const client = await createStateQueryClient()
+        const currentEpoch = await client.currentEpoch()
+        expect(currentEpoch).toBeDefined()
         const point = await client.ledgerTip() as { slot: Slot, hash: Hash16 }
-        expect(point.hash).toBeDefined()
         expect(point.slot).toBeDefined()
+        const bound = await client.eraStart()
+        expect(bound.slot).toBeDefined()
         await client.release()
       })
     })
   })
 
   describe('Queries', () => {
+    describe('currentEpoch', () => {
+      it('fetches the current epoch number', async () => {
+        const epoch = await currentEpoch()
+        expect(epoch).toBeDefined()
+      })
+    })
     describe('eraStart', () => {
       it('fetches the bound of the current era', async () => {
         const bound = await eraStart()
