@@ -2,7 +2,8 @@ import {
   createStateQueryClient,
   currentEpoch,
   currentProtocolParameters,
-  ledgerTip
+  ledgerTip,
+  proposedProtocolParameters
 } from '@src/StateQuery'
 import {
   Hash16,
@@ -79,6 +80,12 @@ describe('Local state queries', () => {
         const point = await ledgerTip() as { slot: Slot, hash: Hash16 }
         expect(point.hash).toBeDefined()
         expect(point.slot).toBeDefined()
+      })
+    })
+    describe('proposedProtocolParameters', () => {
+      it('fetches the current shelley protocol parameters', async () => {
+        const protocolParameters = await proposedProtocolParameters()
+        expect(protocolParameters).toBeDefined()
       })
     })
   })

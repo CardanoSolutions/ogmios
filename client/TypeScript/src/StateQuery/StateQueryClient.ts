@@ -12,6 +12,7 @@ import { createPointFromCurrentTip } from '../util'
 import { eraStart } from './eraStart'
 import { currentEpoch } from './currentEpoch'
 import { currentProtocolParameters } from './currentProtocolParameters'
+import { proposedProtocolParameters } from './proposedProtocolParameters'
 
 export interface StateQueryClient {
   currentEpoch: () => Promise<Epoch>
@@ -19,6 +20,7 @@ export interface StateQueryClient {
   eraStart: () => Promise<Bound>
   ledgerTip: () => Promise<Tip>
   point: Point
+  proposedProtocolParameters: () => Promise<{[k: string]: ProtocolParametersShelley}>
   release: () => Promise<void>
 }
 
@@ -43,6 +45,7 @@ export const createStateQueryClient = async (options?: {
             eraStart: eraStart.bind(this, context),
             ledgerTip: ledgerTip.bind(this, context),
             point,
+            proposedProtocolParameters: proposedProtocolParameters.bind(this, context),
             release: () => {
               return new Promise((resolve, reject) => {
                 socket.once('message', (message: string) => {
