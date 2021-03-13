@@ -4,6 +4,7 @@ import {
   currentProtocolParameters,
   eraStart,
   ledgerTip,
+  nonMyopicMemberRewards,
   proposedProtocolParameters,
   stakeDistribution
 } from '@src/StateQuery'
@@ -54,6 +55,11 @@ describe('Local state queries', () => {
         const point = await client.ledgerTip() as { slot: Slot, hash: Hash16 }
         expect(point.slot).toBeDefined()
 
+        const rewards = await client.nonMyopicMemberRewards([10000])
+        expect(
+          Object.values(Object.values(rewards)[0])[0]
+        ).toBeDefined()
+
         const proposedProtocolParameters = await client.proposedProtocolParameters()
         expect(Object.values(proposedProtocolParameters)[0].minUtxoValue).toBeDefined()
 
@@ -92,6 +98,23 @@ describe('Local state queries', () => {
         const point = await ledgerTip() as { slot: Slot, hash: Hash16 }
         expect(point.hash).toBeDefined()
         expect(point.slot).toBeDefined()
+      })
+    })
+    describe('nonMyopicMemberRewards', () => {
+      describe('fetches the Non-myopic member rewards for each pool. Used in ranking.', () => {
+        it('accepts array of values, either stake key or lovelace', async () => {
+          // Todo: Enable
+          // const stakeKey =
+          const rewards = await nonMyopicMemberRewards([
+            10000
+            // stakeKey
+          ])
+          expect(
+            Object.values(
+              Object.values(rewards)[0]
+            )[0]
+          ).toBeDefined()
+        })
       })
     })
     describe('proposedProtocolParameters', () => {

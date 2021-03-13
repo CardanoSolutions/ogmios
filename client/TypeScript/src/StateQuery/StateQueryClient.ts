@@ -2,6 +2,9 @@ import WebSocket from 'isomorphic-ws'
 import {
   Bound,
   Epoch,
+  Hash16,
+  Lovelace,
+  NonMyopicMemberRewards,
   Ogmios,
   Point,
   PoolDistribution,
@@ -20,6 +23,7 @@ import {
   currentProtocolParameters,
   eraStart,
   ledgerTip,
+  nonMyopicMemberRewards,
   proposedProtocolParameters,
   stakeDistribution
 } from './queries'
@@ -30,6 +34,7 @@ export interface StateQueryClient {
   currentProtocolParameters: () => Promise<ProtocolParametersShelley>
   eraStart: () => Promise<Bound>
   ledgerTip: () => Promise<Tip>
+  nonMyopicMemberRewards: (input: Lovelace[] | Hash16[]) => Promise<NonMyopicMemberRewards>
   point: Point
   proposedProtocolParameters: () => Promise<{[k: string]: ProtocolParametersShelley}>
   release: () => Promise<void>
@@ -56,6 +61,7 @@ export const createStateQueryClient = async (options?: {
             currentProtocolParameters: currentProtocolParameters.bind(this, context),
             eraStart: eraStart.bind(this, context),
             ledgerTip: ledgerTip.bind(this, context),
+            nonMyopicMemberRewards: (input) => nonMyopicMemberRewards(input, context),
             point,
             proposedProtocolParameters: proposedProtocolParameters.bind(this, context),
             release: () => {
