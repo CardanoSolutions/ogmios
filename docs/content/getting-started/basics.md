@@ -1,7 +1,7 @@
 +++
 title = "Basics"
 chapter = false
-weight = 4
+weight = 5
 +++
 
 ## JSON-WSP 

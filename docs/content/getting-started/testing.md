@@ -30,8 +30,10 @@ Run the whole components stack using [docker-compose](https://docs.docker.com/co
 $ docker-compose up
 ```
 
+Assuming the default configuration, Ogmios should be listening on `:1337`. Make sure that cardano-node is up-and-running and has finished its bootstraping phase (Ogmios should no longer print any warnings about `HealthFailedToConnect`). Then, open your favorite browser and visit [http://localhost:1337/tests.html](http://localhost:1337/tests.html).
+
 To tear down, press `CTRL+C` and then run:
 
-```
+```console
 $ docker-compose down
 ```

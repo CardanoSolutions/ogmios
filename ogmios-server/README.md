@@ -1,6 +1,6 @@
 # Ogmios (Server)
 
-<img src="../.github/dashboard.gif" />
+<img src="../docs/static/dashboard.gif" />
 
 ## Synopsis
 
