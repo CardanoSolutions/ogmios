@@ -87,6 +87,7 @@ Query                        | Result
 `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
 `stakeDistribution`          | Distribution of the stake across all known stake pools.
 `utxo`                       | Current UTxO, possibly filtered by address.
+`genesisConfig`              | Get a compact version of the era's genesis configuration.
 
 
 To know more about arguments and results of each query, have a look at the [API reference](../../api-reference).
