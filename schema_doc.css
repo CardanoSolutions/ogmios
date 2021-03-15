@@ -62,6 +62,7 @@ body {
 .badge {
     font-size: 100%;
 	margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
 }
 
 .badge.value-type {
@@ -92,6 +93,10 @@ body {
 
 .examples {
 	padding: 1rem !important;
+}
+
+.examples pre {
+    margin-bottom: 0;
 }
 
 .highlight.jumbotron {
