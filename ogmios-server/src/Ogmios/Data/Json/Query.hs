@@ -11,6 +11,8 @@ module Ogmios.Data.Json.Query
     , SomeQuery (..)
     , SomeShelleyEra (..)
     , ShelleyBasedEra (..)
+    , RewardAccounts
+    , Delegations
 
       -- * Encoders
     , encodeEraMismatch
@@ -24,6 +26,7 @@ module Ogmios.Data.Json.Query
     , parseGetLedgerTip
     , parseGetEpochNo
     , parseGetNonMyopicMemberRewards
+    , parseGetFilteredDelegationsAndRewards
     , parseGetCurrentPParams
     , parseGetProposedPParamsUpdates
     , parseGetStakeDistribution
@@ -101,6 +104,20 @@ encodeBound bound = encodeObject
     , ( "epoch", encodeEpochNo (boundEpoch bound) )
     ]
 
+encodeDelegations
+    :: Delegations crypto
+    -> Json
+encodeDelegations =
+    encodeMap Shelley.stringifyCredential Shelley.encodePoolId
+
+encodeDelegationsAndRewards
+    :: (Delegations crypto, RewardAccounts crypto)
+    -> Json
+encodeDelegationsAndRewards (dlg, rwd) = encodeObject
+    [ ( "delegations", encodeDelegations dlg )
+    , ( "rewards", encodeRewardAccounts rwd )
+    ]
+
 encodeEraMismatch
     :: EraMismatch
     -> Json
@@ -150,6 +167,12 @@ encodePoint = \case
           , encodeOneEraHash (blockPointHash x)
           )
         ]
+
+encodeRewardAccounts
+    :: RewardAccounts crypto
+    -> Json
+encodeRewardAccounts =
+    encodeMap Shelley.stringifyCredential Shelley.encodeCoin
 
 --
 -- Parsers
@@ -277,6 +300,38 @@ parseGetNonMyopicMemberRewards genResult =
                 , fmap Right . parseCredential
                 ]
             )
+
+parseGetFilteredDelegationsAndRewards
+    :: forall crypto f. (Crypto crypto)
+    => GenResult crypto f (Delegations crypto, RewardAccounts crypto)
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseGetFilteredDelegationsAndRewards genResult =
+    Json.withObject "SomeQuery" $ \obj -> do
+        credentials <- parseCredentials obj
+        pure $
+            ( \query -> Just $ SomeQuery
+                { query
+                , genResult
+                , encodeResult =
+                    either encodeMismatchEraInfo encodeDelegationsAndRewards
+                }
+            )
+            .
+            ( \case
+                SomeShelleyEra ShelleyBasedEraShelley ->
+                    QueryIfCurrentShelley (GetFilteredDelegationsAndRewardAccounts credentials)
+                SomeShelleyEra ShelleyBasedEraAllegra ->
+                    QueryIfCurrentAllegra (GetFilteredDelegationsAndRewardAccounts credentials)
+                SomeShelleyEra ShelleyBasedEraMary ->
+                    QueryIfCurrentMary (GetFilteredDelegationsAndRewardAccounts credentials)
+            )
+  where
+    parseCredentials
+        :: Json.Object
+        -> Json.Parser (Set (Sh.Credential 'Sh.Staking crypto))
+    parseCredentials obj = fmap fromList $
+        obj .: "delegationsAndRewards" >>= traverse parseCredential
 
 parseGetCurrentPParams
     :: forall crypto f. (Typeable crypto)
@@ -510,6 +565,12 @@ type QueryInEra f block =
 
 data SomeShelleyEra =
     forall era. SomeShelleyEra (ShelleyBasedEra era)
+
+type Delegations crypto =
+    Map (Sh.Credential 'Sh.Staking crypto) (Sh.KeyHash 'Sh.StakePool crypto)
+
+type RewardAccounts crypto =
+    Map (Sh.Credential 'Sh.Staking crypto) Sh.Coin
 
 data SomeQuery (f :: * -> *) block = forall result. SomeQuery
     { query :: Query block result

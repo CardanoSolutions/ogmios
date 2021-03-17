@@ -83,6 +83,7 @@ Query                        | Result
 `ledgerTip`                  | The most recent block tip known of the ledger.
 `currentEpoch`               | The current epoch of the ledger.
 `nonMyopicMemberRewards`     | Non-myopic member rewards for each pool. Used in ranking.
+`delegationsAndRewards`      | Current delegation settings and rewards of given reward accounts.
 `currentProtocolParameters`  | The current protocol parameters.
 `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
 `stakeDistribution`          | Distribution of the stake across all known stake pools.

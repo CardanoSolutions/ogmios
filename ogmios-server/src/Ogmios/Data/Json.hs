@@ -205,6 +205,7 @@ instance Crypto crypto => FromJSON (QueryInEra Proxy (CardanoBlock crypto)) wher
         , Query.parseGetLedgerTip (const id)
         , Query.parseGetEpochNo id
         , Query.parseGetNonMyopicMemberRewards id
+        , Query.parseGetFilteredDelegationsAndRewards id
         , Query.parseGetCurrentPParams (const id)
         , Query.parseGetProposedPParamsUpdates (const id)
         , Query.parseGetStakeDistribution id

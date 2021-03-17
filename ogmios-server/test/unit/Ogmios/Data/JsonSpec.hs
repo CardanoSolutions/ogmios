@@ -41,14 +41,17 @@ import Ogmios.Data.Json
     , jsonToByteString
     )
 import Ogmios.Data.Json.Query
-    ( QueryInEra
+    ( Delegations
+    , QueryInEra
     , QueryResult
+    , RewardAccounts
     , ShelleyBasedEra (..)
     , SomeQuery (..)
     , SomeShelleyEra (..)
     , parseGetCurrentPParams
     , parseGetEpochNo
     , parseGetEraStart
+    , parseGetFilteredDelegationsAndRewards
     , parseGetFilteredUTxO
     , parseGetGenesisConfig
     , parseGetLedgerTip
@@ -222,6 +225,15 @@ spec = do
             }|]
             ( parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult
             ) "ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
+
+        validateQuery
+            [aesonQQ|
+            { "delegationsAndRewards":
+                [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
+                ]
+            }|]
+            ( parseGetFilteredDelegationsAndRewards genDelegationAndRewardsResult
+            ) "ogmios.wsp.json#/properties/QueryResponse[delegationsAndRewards]"
 
         validateQuery
             [aesonQQ|"currentProtocolParameters"|]
@@ -529,7 +541,16 @@ genNonMyopicMemberRewardsResult
     -> Gen (QueryResult crypto (NonMyopicMemberRewards crypto))
 genNonMyopicMemberRewardsResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right <$> arbitrary)
+    , (10, Right <$> reasonablySized arbitrary)
+    ]
+
+genDelegationAndRewardsResult
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Proxy (QueryResult crypto (Delegations crypto, RewardAccounts crypto))
+    -> Gen (QueryResult crypto (Delegations crypto, RewardAccounts crypto))
+genDelegationAndRewardsResult _ = frequency
+    [ (1, Left <$> genMismatchEraInfo)
+    , (10, Right <$> reasonablySized arbitrary)
     ]
 
 genPParamsResult

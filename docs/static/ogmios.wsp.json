@@ -486,6 +486,16 @@
                     }
                   }
                 }
+              , { "type": "object"
+                , "additionalProperties": false
+                , "required": ["delegationsAndRewards"]
+                , "properties":
+                  { "delegationsAndRewards":
+                    { "type": "array"
+                    , "items": { "$ref": "#/definitions/Hash16" }
+                    }
+                  }
+                }
               , { "type": "string"
                 , "enum": ["currentProtocolParameters"]
                 }
@@ -642,6 +652,39 @@
       , "result":
         { "oneOf":
           [ { "$ref": "#/definitions/NonMyopicMemberRewards" }
+          , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[delegationsAndRewards]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/DelegationsAndRewards" }
           , { "$ref": "#/definitions/EraMismatch" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
@@ -1531,6 +1574,22 @@
       , "updateQuorum": { "type": "integer" }
       , "maxLovelaceSupply": { "type": "integer" }
       , "protocolParameters": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
+      }
+    }
+
+  , "Delegations":
+    { "type": "object"
+    , "additionalProperties": { "$ref": "#/definitions/PoolId" }
+    , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
+    }
+
+  , "DelegationsAndRewards":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": ["delegations", "rewards"]
+    , "properties":
+      { "delegations": { "$ref": "#/definitions/Delegations" }
+      , "rewards": { "$ref": "#/definitions/Rewards" }
       }
     }
 
