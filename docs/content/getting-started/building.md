@@ -65,7 +65,7 @@ $ pip3 install json-schema-for-humans
 And then, run:
 
 ```console
-$ cd docs && generate-schema-doc --config no_link_to_reused_ref static/ogmios.wsp.json static/api-reference.html
+$ cd docs && generate-schema-doc --no-link-to-reused-ref static/ogmios.wsp.json static/api-reference.html
 ```
 
 The documentation will be generated to `static/api-reference.html`.

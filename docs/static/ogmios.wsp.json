@@ -60,6 +60,7 @@
         { "type": "object"
         , "oneOf":
           [ { "required": ["RollForward"]
+            , "title": "RollForward"
             , "additionalProperties": false
             , "properties":
               { "RollForward":
@@ -74,6 +75,7 @@
               }
             }
           , { "required": ["RollBackward"]
+            , "title": "RollBackward"
             , "additionalProperties": false
             , "properties":
               { "RollBackward":
@@ -155,6 +157,7 @@
         { "description": "Intersection found if any, alongside the cardano-node's current tip."
         , "oneOf":
           [ { "type": "object"
+            , "title": "IntersectionFound"
             , "additionalProperties": false
             , "required": ["IntersectionFound"]
             , "properties":
@@ -170,6 +173,7 @@
               }
             }
           , { "type": "object"
+            , "title": "IntersectionNotFound"
             , "additionalProperties": false
             , "required": ["IntersectionNotFound"]
             , "properties":
@@ -254,9 +258,11 @@
       , "result":
         { "oneOf":
           [ { "type": "string"
+            , "title": "SubmitSuccess"
             , "enum": ["SubmitSuccess"]
             }
           , { "type": "object"
+            , "title": "SubmitFail"
             , "additionalProperties": false
             , "required": ["SubmitFail"]
             , "properties":
@@ -336,6 +342,7 @@
       , "result":
         { "oneOf":
           [ { "type": "object"
+            , "title": "AcquireSuccess"
             , "additionalProperties": false
             , "required": [ "AcquireSuccess" ]
             , "properties":
@@ -350,6 +357,7 @@
               }
             }
           , { "type": "object"
+            , "title": "AcquireFailure"
             , "additionalProperties": false
             , "required": [ "AcquireFailure" ]
             , "properties":
@@ -462,24 +470,30 @@
           { "query":
             { "oneOf":
               [ { "type": "string"
+                , "title": "eraStart"
                 , "enum": ["eraStart"]
                 }
               , { "type": "string"
+                , "title": "ledgerTip"
                 , "enum": ["ledgerTip"]
                 }
               , { "type": "string"
+                , "title": "currentEpoch"
                 , "enum": ["currentEpoch"]
                 }
               , { "type": "object"
+                , "title": "nonMyopicMemberRewards"
                 , "additionalProperties": false
                 , "required": ["nonMyopicMemberRewards"]
                 , "properties":
                   { "nonMyopicMemberRewards":
                     { "oneOf":
                       [ { "type": "array"
+                        , "title": "Lovelaces"
                         , "items": { "$ref": "#/definitions/Lovelace" }
                         }
                       , { "type": "array"
+                        , "title": "Credentials"
                         , "items": { "$ref": "#/definitions/Hash16" }
                         }
                       ]
@@ -487,6 +501,7 @@
                   }
                 }
               , { "type": "object"
+                , "title": "delegationAndRewards"
                 , "additionalProperties": false
                 , "required": ["delegationsAndRewards"]
                 , "properties":
@@ -497,18 +512,23 @@
                   }
                 }
               , { "type": "string"
+                , "title": "currentProtocolParameters"
                 , "enum": ["currentProtocolParameters"]
                 }
               , { "type": "string"
+                , "title": "proposedProtocolParameters"
                 , "enum": ["proposedProtocolParameters"]
                 }
               , { "type": "string"
+                , "title": "stakeDistribution"
                 , "enum": ["stakeDistribution"]
                 }
               , { "type": "string"
+                , "title": "utxo"
                 , "enum": ["utxo"]
                 }
               , { "type": "object"
+                , "title": "utxo[filtered]"
                 , "additionalProperties": false
                 , "required": ["utxo"]
                 , "properties":
@@ -519,6 +539,7 @@
                   }
                 }
               , { "type": "string"
+                , "title": "genesisConfig"
                 , "enum": ["genesisConfig"]
                 }
               ]
@@ -751,6 +772,7 @@
       , "result":
         { "oneOf":
           [ { "type": "object"
+            , "title": "ProtocolParameters[Shelley]"
             , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
             , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
             }
@@ -820,6 +842,7 @@
       , "result":
         { "oneOf":
           [ { "type": "array"
+            , "title": "utxo"
             , "items":
               { "oneOf":
                   [ { "$ref": "#/definitions/Utxo" }
@@ -892,24 +915,28 @@
     { "type": "object"
     , "oneOf":
       [ { "required": [ "byron" ]
+        , "title": "byron"
         , "additionalProperties": false
         , "properties":
           { "byron": { "$ref": "#/definitions/Block[Byron]" }
           }
         }
       , { "required": [ "shelley" ]
+        , "title": "shelley"
         , "additionalProperties": false
         , "properties":
           { "shelley": { "$ref": "#/definitions/Block[Shelley]" }
           }
         }
       , { "required": [ "allegra" ]
+        , "title": "allegra"
         , "additionalProperties": false
         , "properties":
           { "allegra": { "$ref": "#/definitions/Block[Allegra]" }
           }
         }
       , { "required": [ "mary" ]
+        , "title": "mary"
         , "additionalProperties": false
         , "properties":
           { "mary": { "$ref": "#/definitions/Block[Mary]" }
@@ -921,6 +948,7 @@
   , "Block[Byron]":
     { "oneOf":
       [ { "required": [ "hash", "header", "body" ]
+        , "title": "standard block"
         , "additionalProperties": false
         , "properties":
           { "hash": { "$ref": "#/definitions/Hash16" }
@@ -972,8 +1000,9 @@
                 , "properties":
                   { "proposal":
                     { "oneOf":
-                      [ { "type": "null" }
+                      [ { "type": "null", "title": "null" }
                       , { "type": "object"
+                        , "title": "proposal"
                         , "additionalProperties": false
                         , "required": [ "body", "issuer", "signature" ]
                         , "properties":
@@ -1008,6 +1037,7 @@
           }
         }
       , { "required": [ "hash", "header" ]
+        , "title": "epoch boundary block"
         , "additionalProperties": false
         , "properties":
           { "hash": { "$ref": "#/definitions/Hash16" }
@@ -1092,13 +1122,13 @@
                       , "chainCode":
                         { "oneOf":
                           [ { "$ref": "#/definitions/Hash16" }
-                          , { "type": "null" }
+                          , { "type": "null", "title": "null" }
                           ]
                         }
                       , "addressAttributes":
                         { "oneOf":
                           [ { "$ref": "#/definitions/Hash64" }
-                          , { "type": "null" }
+                          , { "type": "null", "title": "null" }
                           ]
                         }
                       , "key": { "$ref": "#/definitions/Hash16" }
@@ -1114,14 +1144,14 @@
               , "properties":
                 { "hash":
                   { "oneOf":
-                    [ { "type": "null" }
+                    [ { "type": "null", "title": "null" }
                     , { "$ref": "#/definitions/Hash16" }
                     ]
                   }
                 , "body":
                   { "oneOf":
-                    [ { "type": "null" }
-                    , { "type": "object" }
+                    [ { "type": "null", "title": "null" }
+                    , { "type": "object", "title": "object" }
                     ]
                   }
                 }
@@ -1221,13 +1251,13 @@
                       , "chainCode":
                         { "oneOf":
                           [ { "$ref": "#/definitions/Hash16" }
-                          , { "type": "null" }
+                          , { "type": "null", "title": "null" }
                           ]
                         }
                       , "addressAttributes":
                         { "oneOf":
                           [ { "$ref": "#/definitions/Hash64" }
-                          , { "type": "null" }
+                          , { "type": "null", "title": "null" }
                           ]
                         }
                       , "key": { "$ref": "#/definitions/Hash16" }
@@ -1243,14 +1273,14 @@
               , "properties":
                 { "hash":
                   { "oneOf":
-                    [ { "type": "null" }
+                    [ { "type": "null", "title": "null" }
                     , { "$ref": "#/definitions/Hash16" }
                     ]
                   }
                 , "body":
                   { "oneOf":
-                    [ { "type": "null" }
-                    , { "type": "object" }
+                    [ { "type": "null", "title": "null" }
+                    , { "type": "object", "title": "object" }
                     ]
                   }
                 }
@@ -1330,13 +1360,13 @@
                       , "chainCode":
                         { "oneOf":
                           [ { "$ref": "#/definitions/Hash16" }
-                          , { "type": "null" }
+                          , { "type": "null", "title": "null" }
                           ]
                         }
                       , "addressAttributes":
                         { "oneOf":
                           [ { "$ref": "#/definitions/Hash64" }
-                          , { "type": "null" }
+                          , { "type": "null", "title": "null" }
                           ]
                         }
                       , "key": { "$ref": "#/definitions/Hash16" }
@@ -1352,14 +1382,14 @@
               , "properties":
                 { "hash":
                   { "oneOf":
-                    [ { "type": "null" }
+                    [ { "type": "null", "title": "null" }
                     , { "$ref": "#/definitions/Hash16" }
                     ]
                   }
                 , "body":
                   { "oneOf":
-                    [ { "type": "null" }
-                    , { "type": "object" }
+                    [ { "type": "null", "title": "null" }
+                    , { "type": "object", "title": "null" }
                     ]
                   }
                 }
@@ -1424,6 +1454,7 @@
   , "Certificate":
     { "oneOf":
       [ { "type": "object"
+        , "title": "stakeDelegation"
         , "additionalProperties": false
         , "required": ["stakeDelegation"]
         , "properties":
@@ -1439,6 +1470,7 @@
           }
         }
       , { "type": "object"
+        , "title": "stakeKeyRegistration"
         , "additionalProperties": false
         , "required": ["stakeKeyRegistration"]
         , "properties":
@@ -1446,6 +1478,7 @@
           }
         }
       , { "type": "object"
+        , "title": "stakeKeyDeregistration"
         , "additionalProperties": false
         , "required": ["stakeKeyDeregistration"]
         , "properties":
@@ -1453,6 +1486,7 @@
           }
         }
       , { "type": "object"
+        , "title": "poolRegistration"
         , "additionalProperties": false
         , "required": ["poolRegistration"]
         , "properties":
@@ -1471,8 +1505,9 @@
               , "vrf": { "$ref": "#/definitions/Hash16" }
               , "metadata":
                 { "oneOf":
-                  [ { "type": "null" }
+                  [ { "type": "null", "title": "null" }
                   , { "type": "object"
+                    , "title": "metadata"
                     , "additionalProperties": false
                     , "required": ["hash","url"]
                     , "properties":
@@ -1497,6 +1532,7 @@
         }
       , { "type": "object"
         , "additionalProperties": false
+        , "title": "poolRetirement"
         , "required": ["poolRetirement"]
         , "properties":
           { "poolRetirement":
@@ -1511,6 +1547,7 @@
           }
         }
       , { "type": "object"
+        , "title": "genesisDelegation"
         , "additionalProperties": false
         , "required": ["genesisDelegation"]
         , "properties":
@@ -1527,6 +1564,7 @@
           }
         }
       , { "type": "object"
+        , "title": "moveInstantaneousRewards"
         , "additionalProperties": false
         , "required": ["moveInstantaneousRewards"]
         , "properties":
@@ -1667,6 +1705,7 @@
   , "LovelaceError":
     { "oneOf":
       [ { "type": "object"
+        , "title": "underflow"
         , "additionalProperties": false
         , "required": [ "underflow" ]
         , "properties":
@@ -1677,6 +1716,7 @@
           }
         }
       , { "type": "object"
+        , "title": "tooSmall"
         , "additionalProperties": false
         , "required": [ "tooSmall" ]
         , "properties":
@@ -1684,6 +1724,7 @@
           }
         }
       , { "type": "object"
+        , "title": "tooLarge"
         , "additionalProperties": false
         , "required": [ "tooLarge" ]
         , "properties":
@@ -1691,6 +1732,7 @@
           }
         }
       , { "type": "object"
+        , "title": "overflow"
         , "additionalProperties": false
         , "required": [ "overflow" ]
         , "properties":
@@ -1708,9 +1750,11 @@
   , "NetworkMagic":
     { "oneOf":
       [ { "type": "string"
+        , "title": "mainnet"
         , "enum": [ "mainnet" ]
         }
       , { "type": "object"
+        , "title": "testnet"
         , "additionalProperties": false
         , "required": [ "testnet" ]
         , "properties":
@@ -1724,6 +1768,7 @@
     { "oneOf":
       [ { "type": "string"
         , "enum": ["neutral"]
+        , "title": "neutral"
         }
       , { "$ref": "#/definitions/Hash16" }
       ]
@@ -1753,21 +1798,21 @@
 
   , "NullableInteger":
     { "oneOf":
-      [ { "type": "null" }
-      , { "type": "integer" }
+      [ { "type": "null", "title": "null" }
+      , { "type": "integer", "title": "integer" }
       ]
     }
 
   , "NullableNumber":
     { "oneOf":
-      [ { "type": "null" }
-      , { "type": "number" }
+      [ { "type": "null", "title": "null" }
+      , { "type": "number", "title": "integer" }
       ]
     }
 
   , "NullableRatio":
     { "oneOf":
-      [ { "type": "null" }
+      [ { "type": "null", "title": "null" }
       , { "$ref": "#/definitions/Ratio" }
       ]
     }
@@ -1786,6 +1831,7 @@
   , "Point":
     { "oneOf":
       [ { "type": "object"
+        , "title": "point"
         , "additionalProperties": false
         , "required": [ "slot", "hash" ]
         , "properties":
@@ -1794,6 +1840,7 @@
           }
         }
       , { "type": "string"
+        , "title": "origin"
         , "enum": [ "origin" ]
         }
       ]
@@ -1839,14 +1886,14 @@
       , "unlockStakeEpoch": { "$ref": "#/definitions/NullableInteger" }
       , "txFeePolicy":
         { "oneOf":
-          [ { "type": "null" }
-          , { "$ref": "#/definitions/TxFeePolicy" }
+          [ { "$ref": "#/definitions/TxFeePolicy" }
+          , { "type": "null", "title": "null" }
           ]
         }
       , "softforkRule":
         { "oneOf":
-          [ { "type": "null" }
-          , { "$ref": "#/definitions/SoftForkRule" }
+          [ { "$ref": "#/definitions/SoftForkRule" }
+          , { "type": "null", "title": "null" }
           ]
         }
       }
@@ -1873,14 +1920,14 @@
       , "minPoolCost": { "$ref": "#/definitions/NullableInteger" }
       , "extraEntropy":
         { "oneOf":
-          [ { "type": "null" }
-          , { "$ref": "#/definitions/Nonce" }
+          [ { "$ref": "#/definitions/Nonce" }
+          , { "type": "null", "title": "null" }
           ]
         }
       , "protocolVersion":
         { "oneOf":
-          [ { "type": "null" }
-          , { "$ref": "#/definitions/ProtocolVersion" }
+          [ { "$ref": "#/definitions/ProtocolVersion" }
+          , { "type": "null", "title": "null" }
           ]
         }
       }
@@ -1917,25 +1964,27 @@
   , "Relay":
     { "oneOf":
       [ { "type": "object"
+        , "title": "by address"
         , "additionalProperties": false
         , "required": ["ipv4","ipv6","port"]
         , "properties":
           { "ipv4":
             { "oneOf":
-              [ { "type": "null" }
-              , { "type": "string" }
+              [ { "type": "null", "title": "null" }
+              , { "type": "string", "title": "ip" }
               ]
             }
           , "ipv6":
             { "oneOf":
-              [ { "type": "null" }
-              , { "type": "string" }
+              [ { "type": "null", "title": "null" }
+              , { "type": "string", "title": "ip" }
               ]
             }
           , "port": { "$ref": "#/definitions/NullableInteger" }
           }
         }
       , { "type": "object"
+        , "title": "by name"
         , "additionalProperties": false
         , "required": ["hostname","port"]
         , "properties":
@@ -2046,12 +2095,14 @@
     { "type": "object"
     , "oneOf":
       [ { "additionalProperties": false
+        , "title": "utxoValidationError"
         , "required": [ "utxoValidationError" ]
         , "properties":
           { "utxoValidationError": { "$ref": "#/definitions/UtxoValidationError" }
           }
         }
       , { "additionalProperties": false
+        , "title": "txValidationError"
         , "required": [ "txValidationError" ]
         , "properties":
           { "txValidationError": { "$ref": "#/definitions/TxValidationError" }
@@ -2065,6 +2116,7 @@
     , "items":
       { "oneOf":
         [ { "type": "object"
+          , "title": "invalidWitnesses"
           , "additionalProperties": false
           , "required": ["invalidWitnesses"]
           , "properties":
@@ -2075,6 +2127,7 @@
             }
           }
         , { "type": "object"
+          , "title": "missingVkWitnesses"
           , "additionalProperties": false
           , "required": [ "missingVkWitnesses" ]
           , "properties":
@@ -2085,6 +2138,7 @@
             }
           }
         , { "type": "object"
+          , "title": "missingScriptWitnesses"
           , "additionalProperties": false
           , "required": [ "missingScriptWitnesses" ]
           , "properties":
@@ -2095,6 +2149,7 @@
             }
           }
         , { "type": "object"
+          , "title": "scriptWitnessNotValidating"
           , "additionalProperties": false
           , "required": [ "scriptWitnessNotValidating" ]
           , "properties":
@@ -2105,6 +2160,7 @@
             }
           }
         , { "type": "object"
+          , "title": "insufficientGenesisSignatures"
           , "additionalProperties": false
           , "required": [ "insufficientGenesisSignatures" ]
           , "properties":
@@ -2115,6 +2171,7 @@
             }
           }
         , { "type": "object"
+          , "title": "missingTxMetadata"
           , "additionalProperties": false
           , "required": [ "missingTxMetadata" ]
           , "properties":
@@ -2122,6 +2179,7 @@
             }
           }
         , { "type": "object"
+          , "title": "missingTxMetadataHash"
           , "additionalProperties": false
           , "required": [ "missingTxMetadataHash" ]
           , "properties":
@@ -2129,6 +2187,7 @@
             }
           }
         , { "type": "object"
+          , "title": "txMetadataHashMismatch"
           , "additionalProperties": false
           , "required": [ "txMetadataHashMismatch" ]
           , "properties":
@@ -2144,6 +2203,7 @@
             }
           }
         , { "type": "object"
+          , "title": "badInputs"
           , "additionalProperties": false
           , "required": [ "badInputs" ]
           , "properties":
@@ -2154,6 +2214,7 @@
             }
           }
         , { "type": "object"
+          , "title": "expiredUtxo"
           , "additionalProperties": false
           , "required": [ "expiredUtxo" ]
           , "properties":
@@ -2169,6 +2230,7 @@
             }
           }
         , { "type": "object"
+          , "title": "txTooLarge"
           , "additionalProperties": false
           , "required": [ "txTooLarge" ]
           , "properties":
@@ -2184,12 +2246,15 @@
             }
           }
         , { "type": "string"
+          , "title": "missingAtLeastOneInputUtxo"
           , "enum": [ "missingAtLeastOneInputUtxo" ]
           }
         , { "type": "string"
+          , "title": "invalidMetadata"
           , "enum": [ "invalidMetadata" ]
           }
         , { "type": "object"
+          , "title": "feeTooSmall"
           , "additionalProperties": false
           , "required": [ "feeTooSmall" ]
           , "properties":
@@ -2205,6 +2270,7 @@
             }
           }
         , { "type": "object"
+          , "title": "valueNotConserved"
           , "additionalProperties": false
           , "required": [ "valueNotConserved" ]
           , "properties":
@@ -2220,6 +2286,7 @@
             }
           }
         , { "type": "object"
+          , "title": "networkMismatch"
           , "additionalProperties": false
           , "required": [ "networkMismatch" ]
           , "properties":
@@ -2242,6 +2309,7 @@
             }
           }
         , { "type": "object"
+          , "title": "outputTooSmall"
           , "additionalProperties": false
           , "required": [ "outputTooSmall" ]
           , "properties":
@@ -2252,6 +2320,7 @@
             }
           }
         , { "type": "object"
+          , "title": "addressAttributesTooLarge"
           , "additionalProperties": false
           , "required": [ "addressAttributesTooLarge" ]
           , "properties":
@@ -2262,6 +2331,7 @@
             }
           }
         , { "type": "object"
+          , "title": "delegateNotRegistered"
           , "additionalProperties": false
           , "required": [ "delegateNotRegistered" ]
           , "properties":
@@ -2269,6 +2339,7 @@
             }
           }
         , { "type": "object"
+          , "title": "unknownOrIncompleteWithdrawals"
           , "additionalProperties": false
           , "required": [ "unknownOrIncompleteWithdrawals" ]
           , "properties":
@@ -2276,6 +2347,7 @@
             }
           }
         , { "type": "object"
+          , "title": "stakePoolNotRegistered"
           , "additionalProperties": false
           , "required": [ "stakePoolNotRegistered" ]
           , "properties":
@@ -2283,6 +2355,7 @@
             }
           }
         , { "type": "object"
+          , "title": "wrongRetirementEpoch"
           , "additionalProperties": false
           , "required": [ "wrongRetirementEpoch" ]
           , "properties":
@@ -2299,6 +2372,7 @@
             }
           }
         , { "type": "object"
+          , "title": "wrongPoolCertificate"
           , "additionalProperties": false
           , "required": ["wrongPoolCertificate"]
           , "properties":
@@ -2306,6 +2380,7 @@
             }
           }
         , { "type": "object"
+          , "title": "stakeKeyAlreadyRegistered"
           , "additionalProperties": false
           , "required": [ "stakeKeyAlreadyRegistered" ]
           , "properties":
@@ -2313,6 +2388,7 @@
             }
           }
         , { "type": "object"
+          , "title": "poolCostTooSmall"
           , "additionalProperties": false
           , "required": [ "poolCostTooSmall" ]
           , "properties":
@@ -2327,6 +2403,7 @@
             }
           }
         , { "type": "object"
+          , "title": "stakeKeyNotRegistered"
           , "additionalProperties": false
           , "required": [ "stakeKeyNotRegistered" ]
           , "properties":
@@ -2334,9 +2411,11 @@
             }
           }
         , { "type": "string"
+          , "title": "rewardAccountNotExisting"
           , "enum": [ "rewardAccountNotExisting" ]
           }
         , { "type": "object"
+          , "title": "rewardAccountNotEmpty"
           , "additionalProperties": false
           , "required": [ "rewardAccountNotEmpty" ]
           , "properties":
@@ -2351,9 +2430,11 @@
             }
           }
         , { "type": "string"
+          , "title": "wrongCertificateType"
           , "enum": [ "wrongCertificateType" ]
           }
         , { "type": "object"
+          , "title": "unknownGenesisKey"
           , "additionalProperties": false
           , "required": [ "unknownGenesisKey" ]
           , "properties":
@@ -2361,6 +2442,7 @@
             }
           }
         , { "type": "object"
+          , "title": "alreadyDelegating"
           , "additionalProperties": false
           , "required": [ "alreadyDelegating" ]
           , "properties":
@@ -2368,6 +2450,7 @@
             }
           }
         , { "type": "object"
+          , "title": "insufficientFundsForMir"
           , "additionalProperties": false
           , "required": [ "insufficientFundsForMir" ]
           , "properties":
@@ -2384,6 +2467,7 @@
             }
           }
         , { "type": "object"
+          , "title": "tooLateForMir"
           , "additionalProperties": false
           , "required": [ "tooLateForMir" ]
           , "properties":
@@ -2399,6 +2483,7 @@
             }
           }
         , { "type": "object"
+          , "title": "duplicateGenesisVrf"
           , "additionalProperties": false
           , "required": [ "duplicateGenesisVrf" ]
           , "properties":
@@ -2406,6 +2491,7 @@
             }
           }
         , { "type": "object"
+          , "title": "nonGenesisVoters"
           , "additionalProperties": false
           , "required": [ "nonGenesisVoters" ]
           , "properties":
@@ -2427,6 +2513,7 @@
             }
           }
         , { "type": "object"
+          , "title": "updateWrongEpoch"
           , "additionalProperties": false
           , "required": [ "updateWrongEpoch" ]
           , "properties":
@@ -2443,6 +2530,7 @@
             }
           }
         , { "type": "object"
+          , "title": "protocolVersionCannotFollow"
           , "additionalProperties": false
           , "required": [ "protocolVersionCannotFollow" ]
           , "properties":
@@ -2455,10 +2543,8 @@
 
   , "Tip":
     { "oneOf":
-      [ { "type": "string"
-        , "enum": [ "origin" ]
-        }
-      , { "type": "object"
+      [ { "type": "object"
+        , "title": "tip"
         , "additionalProperties": false
         , "required": [ "slot", "hash", "blockNo" ]
         , "properties":
@@ -2466,6 +2552,10 @@
           , "hash": { "$ref": "#/definitions/Hash16" }
           , "blockNo": { "$ref": "#/definitions/BlockNo" }
           }
+        }
+      , { "type": "string"
+        , "title": "origin"
+        , "enum": [ "origin" ]
         }
       ]
     }
@@ -2532,9 +2622,11 @@
   , "TxValidationError":
     { "oneOf":
       [ { "type": "string"
+        , "title": "unknownAttributes"
         , "enum": [ "unknownAttributes", "unknownAddressAttributes" ]
         }
       , { "type": "object"
+        , "title": "feeTooSmall"
         , "additionalProperties": false
         , "required": [ "feeTooSmall" ]
         , "properties":
@@ -2551,6 +2643,7 @@
           }
         }
       , { "type": "object"
+        , "title": "txTooLarge"
         , "additionalProperties": false
         , "required": [ "txTooLarge" ]
         , "properties":
@@ -2566,6 +2659,7 @@
           }
         }
       , { "type": "object"
+        , "title": "missingInput"
         , "additionalProperties": false
         , "required": [ "missingInput" ]
         , "properties":
@@ -2581,6 +2675,7 @@
           }
         }
       , { "type": "object"
+        , "title": "networkMismatch"
         , "additionalProperties": false
         , "required": [ "networkMismatch" ]
         , "properties":
@@ -2596,6 +2691,7 @@
           }
         }
       , { "type": "object"
+        , "title": "wrongSignature"
         , "additionalProperties": false
         , "required": [ "wrongSignature" ]
         , "properties":
@@ -2611,6 +2707,7 @@
           }
         }
       , { "type": "object"
+        , "title": "lovelaceError"
         , "additionalProperties": false
         , "required": [ "lovelaceError" ]
         , "properties":
@@ -2626,6 +2723,7 @@
           }
         }
       , { "type": "object"
+        , "title": "wrongKey"
         , "additionalProperties": false
         , "required": [ "wrongKey" ]
         , "properties":
@@ -2647,6 +2745,7 @@
     { "type": "object"
     , "oneOf":
       [ { "additionalProperties": false
+        , "title": "witnessVk"
         , "required": [ "witnessVk" ]
         , "properties":
           { "witnessVk":
@@ -2661,6 +2760,7 @@
           }
         }
       , { "additionalProperties": false
+        , "title": "redeemWitness"
         , "required": [ "redeemWitness" ]
         , "properties":
           { "redeemWitness":
@@ -2679,8 +2779,9 @@
 
   , "Update[Shelley]":
     { "oneOf":
-      [ { "type": "null" }
+      [ { "type": "null", "title": "null" }
       , { "type": "object"
+        , "title": "proposal"
         , "required": ["proposal", "epoch"]
         , "properties":
           { "epoch": { "$ref": "#/definitions/Epoch" }
@@ -2719,9 +2820,11 @@
   , "UtxoValidationError":
     { "oneOf":
       [ { "type": "string"
+        , "title": "overlappingUnion"
         , "enum": [ "overlappingUnion" ]
         }
       , { "type": "object"
+        , "title": "missingInput"
         , "additionalProperties": false
         , "required": [ "missingInput" ]
         , "properties":
@@ -2738,14 +2841,14 @@
     , "properties":
       { "invalidBefore":
           { "oneOf":
-            [ { "type": "null" }
-            , { "$ref": "#/definitions/Slot" }
+            [ { "$ref": "#/definitions/Slot" }
+            , { "type": "null", "title": "null" }
             ]
           }
       , "invalidHereafter":
           { "oneOf":
-            [ { "type": "null" }
-            , { "$ref": "#/definitions/Slot" }
+            [ { "$ref": "#/definitions/Slot" }
+            , { "type": "null", "title": "null" }
             ]
           }
       }
