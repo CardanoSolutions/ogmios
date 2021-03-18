@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 RUN stack upgrade --binary-version 2.1.3
 
 COPY modules/cardano-client/package.yaml     modules/cardano-client/package.yaml
+COPY modules/fast-bech32/package.yaml        modules/fast-bech32/package.yaml
 COPY modules/git-th/package.yaml             modules/git-th/package.yaml
 COPY modules/hspec-json-schema/package.yaml  modules/hspec-json-schema/package.yaml
 COPY modules/json-wsp/package.yaml           modules/json-wsp/package.yaml

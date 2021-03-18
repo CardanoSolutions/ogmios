@@ -7,13 +7,15 @@ ghc-options: {"$locals": -ddump-to-file -ddump-hi}
 packages:
 - ogmios-server
 - modules/cardano-client
+- modules/fast-bech32
 - modules/git-th
 - modules/hspec-json-schema
 - modules/json-wsp
 
 extra-deps:
-- wai-routes-0.10.4
+- base32-0.2.0.0
 - ptr-poker-0.1.1.2
+- wai-routes-0.10.4
 
 flags:
   # Bundle VRF crypto in libsodium and do not rely on an external fork to have it.
