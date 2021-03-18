@@ -153,6 +153,7 @@ connectHealthCheckClient
     :: forall m env.
         ( MonadIO m -- Needed by 'connectClient'
         , MonadCatch m
+        , MonadClock m
         , MonadLog m
         , MonadOuroboros m
         , MonadReader env m
@@ -170,26 +171,28 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
     let client = mkClient embed trClient slotsPerEpoch clients
     connectClient nullTracer client (NodeToClientVersionData networkMagic) nodeSocket
         & onExceptions nodeSocket
-        & forever
+        & foreverCalmly
   where
     onExceptions nodeSocket
         = handle onUnknownException
         . handle (onIOException nodeSocket)
+
+    foreverCalmly :: m a -> m a
+    foreverCalmly a = do
+        let a' = a *> threadDelay _5s *> a' in a'
 
     onUnknownException :: SomeException -> m ()
     onUnknownException e
         | isAsyncException e = do
             logWith tr $ HealthShutdown e
             throwIO e
-
-        | otherwise = do
+        | otherwise =
             logWith tr $ HealthUnknownException e
 
     onIOException :: FilePath -> IOException -> m ()
     onIOException nodeSocket e
         | isRetryable = do
             logWith tr $ HealthFailedToConnect nodeSocket _5s
-            liftIO $ threadDelay _5s
         | otherwise = do
             logWith tr $ HealthUnknownException (toException e)
       where

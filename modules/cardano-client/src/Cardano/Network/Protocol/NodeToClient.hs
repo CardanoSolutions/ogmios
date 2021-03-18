@@ -27,6 +27,8 @@ module Cardano.Network.Protocol.NodeToClient
 
     -- * Helpers / Re-exports
     , MuxError (..)
+    , HandshakeClientProtocolError (..)
+    , NodeToClientVersion
 
     -- * Boilerplate
     , localChainSync
@@ -104,6 +106,8 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     ( ChainSyncClientPipelined, chainSyncClientPeerPipelined )
 import Ouroboros.Network.Protocol.ChainSync.Type
     ( ChainSync )
+import Ouroboros.Network.Protocol.Handshake.Type
+    ( HandshakeClientProtocolError (..) )
 import Ouroboros.Network.Protocol.Handshake.Version
     ( simpleSingletonVersions )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
