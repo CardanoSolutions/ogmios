@@ -21,7 +21,7 @@ import Test.Hspec
 import Test.Hspec.QuickCheck
     ( prop )
 import Test.QuickCheck
-    ( Gen, choose, elements, forAll, vector, (===) )
+    ( Gen, Property, choose, elements, forAll, vector, withMaxSuccess, (===) )
 
 import qualified Codec.Binary.Bech32 as Oracle
 import qualified Data.ByteString as BS
@@ -30,12 +30,16 @@ import qualified Data.Text as T
 spec :: Spec
 spec = describe "encodeBech32" $
     prop "oracle with existing bech32's library" $
-        forAll genBytes $ \(Bytes bytes) ->
-            forAll genHrp $ \(HumanReadablePart hrp) -> do
-                let hrp' = unsafeFromRight $ Oracle.humanReadablePartFromText hrp
-                let oracle = Oracle.encodeLenient hrp' $ Oracle.dataPartFromBytes bytes
-                let ours = encodeBech32 (HumanReadablePart hrp) bytes
-                oracle === ours
+        withMaxSuccess 5000 $
+            forAll genBytes $ \bytes ->
+                forAll genHrp $ prop_matchOracle bytes
+
+prop_matchOracle :: Bytes -> HumanReadablePart -> Property
+prop_matchOracle (Bytes bytes) (HumanReadablePart hrp) = do
+    let hrp' = unsafeFromRight $ Oracle.humanReadablePartFromText hrp
+    let oracle = Oracle.encodeLenient hrp' $ Oracle.dataPartFromBytes bytes
+    let ours = encodeBech32 (HumanReadablePart hrp) bytes
+    oracle === ours
 
 --
 -- Generators

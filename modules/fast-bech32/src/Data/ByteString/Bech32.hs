@@ -105,30 +105,33 @@ encodeDataPart !alphabet !chk0 =
     withAllocatedPointers (base32 0 (Residue 0) chk0)
   where
     withAllocatedPointers
-        :: (Ptr Word8 -> Ptr Word8 -> Ptr Word8 -> IO Checksum)
+        :: (Int -> Ptr Word8 -> Ptr Word8 -> IO Checksum)
         -> ByteString
         -> (Checksum, Text)
-    withAllocatedPointers fn (PS !inputForeignPtr !offset !inputLen) =
-        let resultLen = 1 + ((inputLen * 8 - 1) `div` 5) in
+    withAllocatedPointers fn (PS !inputForeignPtr !_ !inputLen) =
+        let (!q, !r) = (inputLen * 8) `quotRem` 5 in
+        let resultLen = q + if r == 0 then 0 else 1 in
         unsafeDupablePerformIO $ do
             resultForeignPtr <- mallocPlainForeignPtrBytes resultLen
             withForeignPtr resultForeignPtr $ \resultPtr ->
                 withForeignPtr inputForeignPtr $ \inputPtr -> do
-                    let endPtr = plusPtr inputPtr (inputLen + offset)
-                    chk' <- fn inputPtr endPtr resultPtr
-                    pure ( chk'
-                         , T.decodeUtf8 $ PS resultForeignPtr 0 resultLen
-                         )
+                    chk' <- fn (resultLen - 1) inputPtr resultPtr
+                    return
+                        ( chk'
+                        , T.decodeUtf8 $ PS resultForeignPtr 0 resultLen
+                        )
 
-    base32 :: Int -> Residue -> Checksum -> Ptr Word8 -> Ptr Word8 -> Ptr Word8 -> IO Checksum
-    base32 !n !r !chk !inputPtr !endPtr !resultPtr
-        | inputPtr > endPtr = do
-            return chk
+    base32 :: Int -> Residue -> Checksum -> Int -> Ptr Word8 -> Ptr Word8 -> IO Checksum
+    base32 !n !r !chk !maxN !inputPtr !resultPtr
+        | n >= maxN = do
+            let w = coerce @Word8 @Word5 (coerce r)
+            poke resultPtr (alphabet `lookupWord5` w)
+            return $ polymodStep chk w
         | otherwise = do
             (w, r', inputPtr') <- peekWord5 n r inputPtr
             poke resultPtr (alphabet `lookupWord5` w)
             let chk' = polymodStep chk w
-            base32 (n+1) r' chk' inputPtr' endPtr (plusPtr resultPtr 1)
+            base32 (n+1) r' chk' maxN inputPtr' (plusPtr resultPtr 1)
 
 --
 -- Checksum
@@ -176,9 +179,11 @@ polymodStep (coerce -> chk) (coerce -> v) =
 
 newtype Word5
     = Word5 Word8
+    deriving Show
 
 newtype Residue
     = Residue Word8
+    deriving Show
 
 word5 :: Word -> Word5
 word5 = coerce . fromIntegral @Word @Word8 . (.&. 31)
