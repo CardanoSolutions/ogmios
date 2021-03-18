@@ -2,7 +2,6 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -21,6 +20,8 @@ import Control.State.Transition
     ( STS (..) )
 import Data.ByteString.Base16
     ( encodeBase16 )
+import Data.ByteString.Bech32
+    ( HumanReadablePart (..), encodeBech32 )
 import Data.ByteString.Short
     ( fromShort )
 import GHC.TypeLits
@@ -32,7 +33,6 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
 
 import qualified Ogmios.Data.Json.Byron as Byron
 
-import qualified Codec.Binary.Bech32 as Bech32
 import qualified Data.ByteString as BS
 import qualified Data.Map.Strict as Map
 
@@ -85,8 +85,8 @@ encodeAddress = \case
         encodeByteStringBech32 (hrp network) (Sh.serialiseAddr addr)
   where
     hrp = \case
-        Sh.Mainnet -> [humanReadablePart|addr|]
-        Sh.Testnet -> [humanReadablePart|addr_test|]
+        Sh.Mainnet -> hrpAddrMainnet
+        Sh.Testnet -> hrpAddrTestnet
 
 encodeAuxiliaryDataHash
     :: Sh.AuxiliaryDataHash era
@@ -1218,21 +1218,17 @@ stringifyPoolId
     :: Sh.KeyHash Sh.StakePool crypto
     -> Text
 stringifyPoolId (Sh.KeyHash (CC.UnsafeHash h)) =
-    Bech32.encodeLenient hrp (dataPart h)
-  where
-    dataPart = Bech32.dataPartFromBytes . fromShort
-    hrp = [humanReadablePart|pool|]
+    encodeBech32 hrpPool (fromShort h)
 
 stringifyRewardAcnt
     :: Sh.RewardAcnt era
     -> Text
 stringifyRewardAcnt x@(Sh.RewardAcnt ntwrk _credential) =
-    Bech32.encodeLenient (hrp ntwrk) (dataPart x)
+    encodeBech32 (hrp ntwrk) (Sh.serialiseRewardAcnt x)
   where
-    dataPart = Bech32.dataPartFromBytes . Sh.serialiseRewardAcnt
     hrp = \case
-        Sh.Mainnet -> [humanReadablePart|stake|]
-        Sh.Testnet -> [humanReadablePart|stake_test|]
+        Sh.Mainnet -> hrpStakeMainnet
+        Sh.Testnet -> hrpStakeTestnet
 
 stringifyScriptHash
     :: Sh.ScriptHash era
@@ -1251,3 +1247,22 @@ type family (:\:) (any :: Sh.KeyRole) (excluded :: Sh.KeyRole) :: Constraint whe
           'Text "Use a dedicated function instead."
         )
     _ :\: _ = ()
+
+--
+-- CIP-0005 Human-Readable Prefixes
+--
+
+hrpAddrMainnet :: HumanReadablePart
+hrpAddrMainnet = HumanReadablePart "addr"
+
+hrpAddrTestnet :: HumanReadablePart
+hrpAddrTestnet = HumanReadablePart "addr_test"
+
+hrpStakeMainnet :: HumanReadablePart
+hrpStakeMainnet = HumanReadablePart "stake"
+
+hrpStakeTestnet :: HumanReadablePart
+hrpStakeTestnet = HumanReadablePart "stake_test"
+
+hrpPool :: HumanReadablePart
+hrpPool = HumanReadablePart "pool"

@@ -59,6 +59,7 @@ library:
     - contra-tracer
     - directory
     - ekg-core
+    - fast-bech32
     - file-embed
     - generic-lens
     - git-th

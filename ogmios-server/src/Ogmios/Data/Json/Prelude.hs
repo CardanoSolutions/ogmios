@@ -16,7 +16,6 @@ module Ogmios.Data.Json.Prelude
     , FromJSON
     , jsonToByteString
     , decodeWith
-    , humanReadablePart
     , keepRedundantConstraint
     , choice
     , inefficientEncodingToValue
@@ -77,10 +76,6 @@ import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
     ( EpochNo (..), EpochSize (..), SlotNo (..) )
-import Codec.Binary.Bech32
-    ( HumanReadablePart )
-import Codec.Binary.Bech32.TH
-    ( humanReadablePart )
 import Data.Aeson
     ( FromJSON )
 import Data.ByteArray
@@ -89,6 +84,8 @@ import Data.ByteString.Base16
     ( encodeBase16 )
 import Data.ByteString.Base64
     ( encodeBase64 )
+import Data.ByteString.Bech32
+    ( HumanReadablePart, encodeBech32 )
 import Data.ByteString.Short
     ( ShortByteString, fromShort )
 import Data.IP
@@ -115,7 +112,6 @@ import Shelley.Spec.Ledger.BaseTypes
     , urlToText
     )
 
-import qualified Codec.Binary.Bech32 as Bech32
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.Parser.Internal as Json hiding
@@ -192,7 +188,7 @@ encodeByteStringBase16 =
 
 encodeByteStringBech32 :: HumanReadablePart -> ByteString -> Json
 encodeByteStringBech32 hrp =
-    encodeText . Bech32.encodeLenient hrp . Bech32.dataPartFromBytes
+    encodeText . encodeBech32 hrp
 {-# INLINABLE encodeByteStringBech32 #-}
 
 encodeByteStringBase64 :: ByteString -> Json
