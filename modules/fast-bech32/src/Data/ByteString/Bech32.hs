@@ -19,7 +19,7 @@ module Data.ByteString.Bech32
 import Relude
 
 import Data.Bits
-    ( complement, shiftL, shiftR, testBit, xor, (.&.) )
+    ( Bits, testBit, unsafeShiftL, unsafeShiftR, xor, (.&.), (.|.) )
 import Data.ByteString.Internal
     ( ByteString (..) )
 import Foreign.ForeignPtr
@@ -73,7 +73,7 @@ pattern HumanReadablePart { unHumanReadablePart } <-
 
             expand :: [Char] -> [Word5]
             expand xs =
-                [ coerce (fromIntegral @_ @Word8 (ord x) `shiftR` 5) | x <- xs ]
+                [ coerce (fromIntegral @_ @Word8 (ord x) .>>. 5) | x <- xs ]
                 ++
                 [Word5 0]
                 ++
@@ -130,7 +130,7 @@ newtype Checksum
 
 encodeChecksum :: Addr# -> Checksum -> Text
 encodeChecksum alphabet chk =
-    [ alphabet `lookupWord5` word5 (polymod `shiftR` i)
+    [ alphabet `lookupWord5` word5 (polymod .>>. i)
     | i <- [25, 20 .. 0 ]
     ] & T.decodeUtf8 . BS.pack
   where
@@ -149,7 +149,7 @@ tailBytes =
 
 polymodStep :: Checksum -> Word5 -> Checksum
 polymodStep (coerce -> (chk :: Word)) (coerce -> v) =
-    let chk' = (chk `shiftL` 5) `xor` fromIntegral (v :: Word8) in
+    let chk' = (chk .<<. 5) `xor` fromIntegral (v :: Word8) in
     chk' & xor (if testBit chk 25 then 0x3b6a57b2 else 0)
          & xor (if testBit chk 26 then 0x26508e6d else 0)
          & xor (if testBit chk 27 then 0x1ea119fa else 0)
@@ -182,60 +182,55 @@ lookupWord5 table (Word5 (W8# i)) =
 -- | Lookup a Word5 using the given pointer and a previous 'Residue'. Returns
 -- the looked up 'Word5', a 'Residue' and the pointer advanced to the next
 -- word;
+--
+-- NOTE: @n = i .&. 7@ is a fast modulo equivalent to @n = i `mod` 8@
 peekWord5 :: Int -> Residue -> Ptr Word8 -> IO (Word5, Residue, Ptr Word8)
-peekWord5 n r ptr
-    | i == 0 = do
+peekWord5 !((.&. 7) -> n) !(coerce -> r) !ptr
+    | n == 0 = do
         w <- peek ptr
-        let mask = 0b11111000 :: Word8
         return
-            ( coerce ((w .&. mask) `shiftR` 3)
-            , coerce ((w .&. complement mask) `shiftL` 2)
+            ( coerce (w .>>. 3)
+            , coerce ((w .&. 0b00000111) .<<. 2)
             , plusPtr ptr 1
             )
-    | i == 1 = do
+    | n == 1 = do
         w <- peek ptr
-        let mask = 0b11000000 :: Word8
         return
-            ( coerce (((w .&. mask) `shiftR` 6) + coerce r)
-            , coerce (w .&. complement mask)
+            ( coerce ((w .>>. 6) .|. r)
+            , coerce (w .&. 0b00111111)
             , plusPtr ptr 1
             )
-    | i == 2 = do
-        let mask = 0b00111110 :: Word8
+    | n == 2 = do
         return
-            ( coerce ((coerce r .&. mask) `shiftR` 1)
-            , coerce ((coerce r .&. complement mask) `shiftL` 4)
+            ( coerce (r .>>. 1)
+            , coerce ((r .&. 0b11000001) .<<. 4)
             , ptr
             )
-    | i == 3 = do
+    | n == 3 = do
         w <- peek ptr
-        let mask = 0b11110000 :: Word8
         return
-            ( coerce (((w .&. mask) `shiftR` 4) + coerce r)
-            , coerce ((w .&. complement mask) `shiftL` 1)
+            ( coerce ((w .>>. 4) .|. r)
+            , coerce ((w .&. 0b00001111) .<<. 1)
             , plusPtr ptr 1
             )
-    | i == 4 = do
+    | n == 4 = do
         w <- peek ptr
-        let mask = 0b10000000 :: Word8
         return
-            ( coerce (((w .&. mask) `shiftR` 7) + coerce r)
-            , coerce (w .&. complement mask)
+            ( coerce ((w .>>. 7) .|. r)
+            , coerce (w .&. 0b01111111)
             , plusPtr ptr 1
             )
-    | i == 5 = do
-        let mask = 0b01111100 :: Word8
+    | n == 5 = do
         return
-            ( coerce ((coerce r .&. mask) `shiftR` 2)
-            , coerce ((coerce r .&. complement mask) `shiftL` 3)
+            ( coerce (r .>>. 2)
+            , coerce ((r .&. 0b10000011) .<<. 3)
             , ptr
             )
-    | i == 6 = do
+    | n == 6 = do
         w <- peek ptr
-        let mask = 0b11100000 :: Word8
         return
-            ( coerce (((w .&. mask) `shiftR` 5) + coerce r)
-            , coerce (w .&. complement mask)
+            ( coerce ((w .>>. 5) .|. r)
+            , coerce (w .&. 0b00011111)
             , plusPtr ptr 1
             )
     | otherwise = do
@@ -244,5 +239,17 @@ peekWord5 n r ptr
             , coerce (0 :: Word8)
             , ptr
             )
-  where
-    i = n `mod` 8
+
+--
+-- Bit Manipulation
+--
+
+(.>>.) :: Bits a => a -> Int -> a
+(.>>.) = unsafeShiftR
+{-# SPECIALIZE INLINE (.>>.) :: Word8 -> Int -> Word8 #-}
+{-# SPECIALIZE INLINE (.>>.) :: Word -> Int -> Word #-}
+
+(.<<.) :: Bits a => a -> Int -> a
+(.<<.) = unsafeShiftL
+{-# SPECIALIZE INLINE (.<<.) :: Word8 -> Int -> Word8 #-}
+{-# SPECIALIZE INLINE (.<<.) :: Word -> Int -> Word #-}
