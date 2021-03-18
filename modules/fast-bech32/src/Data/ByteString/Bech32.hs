@@ -16,24 +16,12 @@ module Data.ByteString.Bech32
     , unHumanReadablePart
     ) where
 
-import Prelude
+import Relude
 
 import Data.Bits
     ( complement, shiftL, shiftR, testBit, xor, (.&.) )
 import Data.ByteString.Internal
     ( ByteString (..) )
-import Data.Char
-    ( ord )
-import Data.Coerce
-    ( coerce )
-import Data.Function
-    ( (&) )
-import Data.List
-    ( foldl' )
-import Data.Text
-    ( Text )
-import Data.Word
-    ( Word8 )
 import Foreign.ForeignPtr
     ( withForeignPtr )
 import Foreign.Ptr
@@ -67,7 +55,6 @@ encodeBech32 hrp bytes =
 --
 -- HumanReadablePart
 --
-
 
 data HumanReadablePart = HumanReadablePartConstr
     { raw :: !Text
@@ -149,29 +136,26 @@ encodeChecksum alphabet chk =
   where
     polymod = (coerce (foldl' polymodStep chk tailBytes) .&. 0x3fffffff) `xor` 1
 
-    tailBytes :: [Word5]
-    tailBytes =
-        [ coerce @Word8 @Word5 0
-        , coerce @Word8 @Word5 0
-        , coerce @Word8 @Word5 0
-        , coerce @Word8 @Word5 0
-        , coerce @Word8 @Word5 0
-        , coerce @Word8 @Word5 0
-        ]
+tailBytes :: [Word5]
+tailBytes =
+    [ coerce @Word8 @Word5 0
+    , coerce @Word8 @Word5 0
+    , coerce @Word8 @Word5 0
+    , coerce @Word8 @Word5 0
+    , coerce @Word8 @Word5 0
+    , coerce @Word8 @Word5 0
+    ]
+{-# INLINE tailBytes #-}
 
 polymodStep :: Checksum -> Word5 -> Checksum
-polymodStep (coerce -> chk) (coerce -> v) =
+polymodStep (coerce -> (chk :: Word)) (coerce -> v) =
     let chk' = (chk `shiftL` 5) `xor` fromIntegral (v :: Word8) in
-    coerce (foldl' xor chk' [g | (i, g) <- polymodGen, testBit chk i])
-  where
-    polymodGen :: [(Int, Word)]
-    polymodGen =
-        [ (25, 0x3b6a57b2)
-        , (26, 0x26508e6d)
-        , (27, 0x1ea119fa)
-        , (28, 0x3d4233dd)
-        , (29, 0x2a1462b3)
-        ]
+    chk' & xor (if testBit chk 25 then 0x3b6a57b2 else 0)
+         & xor (if testBit chk 26 then 0x26508e6d else 0)
+         & xor (if testBit chk 27 then 0x1ea119fa else 0)
+         & xor (if testBit chk 28 then 0x3d4233dd else 0)
+         & xor (if testBit chk 29 then 0x2a1462b3 else 0)
+         & coerce
 
 --
 -- Word5
@@ -193,6 +177,7 @@ word5 = coerce . fromIntegral @Word @Word8 . (.&. 31)
 lookupWord5 :: Addr# -> Word5 -> Word8
 lookupWord5 table (Word5 (W8# i)) =
     W8# (indexWord8OffAddr# table (word2Int# i))
+{-# INLINE lookupWord5 #-}
 
 -- | Lookup a Word5 using the given pointer and a previous 'Residue'. Returns
 -- the looked up 'Word5', a 'Residue' and the pointer advanced to the next

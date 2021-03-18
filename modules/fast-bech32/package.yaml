@@ -26,6 +26,7 @@ library:
   ghc-options: *ghc-options-lib
   dependencies:
     - bytestring
+    - relude
     - text
 
 benchmarks:
