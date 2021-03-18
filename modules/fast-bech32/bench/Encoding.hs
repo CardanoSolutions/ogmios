@@ -2,7 +2,6 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE PatternSynonyms #-}
 {-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
 
 module Main where
@@ -14,7 +13,7 @@ import Criterion
 import Criterion.Main
     ( defaultMain )
 import Data.ByteString.Bech32
-    ( pattern HumanReadablePart, encodeBech32 )
+    ( HumanReadablePart (..), encodeBech32 )
 import Data.ByteString.Random
     ( random )
 
@@ -44,10 +43,12 @@ main = defaultMain
     ]
   where
     base32 = Base32.encodeBase32
-    bech32 = let Right hrp = Bech32.humanReadablePartFromText "bench_" in
-        Bech32.encode hrp . Bech32.dataPartFromBytes
-    fastBech32 = let hrp = HumanReadablePart "bench_" in
-        encodeBech32 hrp
+
+    Right hrp = Bech32.humanReadablePartFromText "bench_"
+    bech32 = Bech32.encode hrp . Bech32.dataPartFromBytes
+
+    fastBech32 = encodeBech32 hrp'
+    hrp' = HumanReadablePart "bench_"
 
     cases = (,,)
         <$> random 10

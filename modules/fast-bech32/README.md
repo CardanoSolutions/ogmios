@@ -8,7 +8,11 @@ An optimized implementation of the [bech32](https://github.com/bitcoin/bips/blob
 
 
 ```hs
-TODO
+import Data.ByteString.Bech32 
+  ( HumanReadablePart(..), encodeBech32 )
+
+encodeAddress :: ByteString -> Text
+encodeAddress = encodeBech32 (HumanReadablePart "addr") 
 ```
 
 <hr/>
