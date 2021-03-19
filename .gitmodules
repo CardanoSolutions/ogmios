@@ -7,3 +7,12 @@
 [submodule "hugo-theme-learn"]
 	path = docs/themes/learn
 	url = https://github.com/matcornic/hugo-theme-learn
+[submodule "modules/wai-routes"]
+	path = modules/wai-routes
+	url = git@github.com:KtorZ/wai-routes
+[submodule "modules/hjsonpointer"]
+	path = modules/hjsonpointer
+	url = git@github.com:KtorZ/hjsonpointer
+[submodule "modules/hjsonschema"]
+	path = modules/hjsonschema
+	url = git@github.com:KtorZ/hjsonschema
