@@ -32,7 +32,7 @@ import Control.Exception
 import Control.Monad
     ( void )
 import Data.List
-    ( dropWhileEnd, tail )
+    ( dropWhileEnd )
 import Language.Haskell.TH
     ( Exp (..), Lit (..), Q, runIO )
 import System.Exit
@@ -74,7 +74,7 @@ gitRevParseHEAD =
 -- ]
 gitTags :: Q Exp
 gitTags =
-    ListE . fmap (\(a,b) -> TupE [LitE $ StringL a, LitE $ StringL b]) <$> runIO runGitTag
+    ListE . fmap (\(a,b) -> TupE [Just $ LitE $ StringL a, Just $ LitE $ StringL b]) <$> runIO runGitTag
   where
     runGitTag :: IO [(String, String)]
     runGitTag = do

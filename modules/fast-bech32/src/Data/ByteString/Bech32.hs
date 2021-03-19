@@ -19,7 +19,7 @@ module Data.ByteString.Bech32
 import Relude
 
 import Data.Bits
-    ( Bits, testBit, unsafeShiftL, unsafeShiftR, xor, (.&.), (.|.) )
+    ( Bits, testBit, unsafeShiftL, unsafeShiftR, (.&.), (.|.) )
 import Data.ByteString.Internal
     ( ByteString (..) )
 import Foreign.ForeignPtr
@@ -45,12 +45,13 @@ import qualified Data.Text.Encoding as T
 encodeBech32 :: HumanReadablePart -> ByteString -> Text
 encodeBech32 hrp bytes =
     let
-        (chk, dp) = encodeDataPart alphabet (chkHead hrp) bytes
+        (!chk, !dp) = encodeDataPart alphabet (chkHead hrp) bytes
     in
         raw hrp <> "1" <> dp <> encodeChecksum alphabet chk
   where
     alphabet :: Addr#
     alphabet = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"#
+    {-# INLINE alphabet #-}
 
 --
 -- HumanReadablePart
@@ -135,6 +136,7 @@ encodeChecksum alphabet chk =
     ] & T.decodeUtf8 . BS.pack
   where
     polymod = (coerce (foldl' polymodStep chk tailBytes) .&. 0x3fffffff) `xor` 1
+    {-# INLINE polymod #-}
 
 tailBytes :: [Word5]
 tailBytes =
@@ -149,13 +151,14 @@ tailBytes =
 
 polymodStep :: Checksum -> Word5 -> Checksum
 polymodStep (coerce -> (chk :: Word)) (coerce -> v) =
-    let chk' = (chk .<<. 5) `xor` fromIntegral (v :: Word8) in
+    let chk' = (chk .<<. 5) `xor` word v in
     chk' & xor (if testBit chk 25 then 0x3b6a57b2 else 0)
          & xor (if testBit chk 26 then 0x26508e6d else 0)
          & xor (if testBit chk 27 then 0x1ea119fa else 0)
          & xor (if testBit chk 28 then 0x3d4233dd else 0)
          & xor (if testBit chk 29 then 0x2a1462b3 else 0)
          & coerce
+{-# INLINE polymodStep #-}
 
 --
 -- Word5
@@ -241,8 +244,12 @@ peekWord5 !((.&. 7) -> n) !(coerce -> r) !ptr
             )
 
 --
--- Bit Manipulation
+-- Bit Manipulation / Conversions
 --
+
+word :: Word8 -> Word
+word = fromIntegral
+{-# INLINE word #-}
 
 (.>>.) :: Bits a => a -> Int -> a
 (.>>.) = unsafeShiftR

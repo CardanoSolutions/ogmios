@@ -23,17 +23,17 @@ import qualified System.Metrics.Counter as Ekg.Counter
 import qualified System.Metrics.Distribution as Ekg.Distribution
 import qualified System.Metrics.Gauge as Ekg.Gauge
 
-class Monad m => MonadMetrics (m :: * -> *) where
-    type Gauge m :: *
+class Monad m => MonadMetrics (m :: Type -> Type) where
+    type Gauge m :: Type
     increment :: Gauge m -> m ()
     decrement :: Gauge m -> m ()
     readGauge :: Gauge m -> m Integer
 
-    type Counter m :: *
+    type Counter m :: Type
     count :: Counter m -> m ()
     readCounter :: Counter m -> m Integer
 
-    type Distribution m :: *
+    type Distribution m :: Type
     record  :: Distribution m -> Double -> m ()
     readDistribution :: (Stats -> stats) -> Distribution m -> m stats
 

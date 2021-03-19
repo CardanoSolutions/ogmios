@@ -30,11 +30,9 @@ import Ogmios.App.Options
 import Ogmios.App.Protocol.ChainSync
     ( mkHealthCheckClient )
 import Ogmios.Control.Exception
-    ( Exception (..)
-    , IOException
+    ( IOException
     , MonadCatch (..)
     , MonadThrow (..)
-    , SomeException
     , isAsyncException
     , isDoesNotExistError
     , isResourceVanishedError
@@ -49,7 +47,6 @@ import Ogmios.Control.MonadLog
     , Logger
     , MonadLog (..)
     , Severity (..)
-    , contramap
     , natTracer
     , nullTracer
     )

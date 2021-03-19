@@ -47,15 +47,13 @@ import Cardano.BM.Data.Tracer
     ( HasSeverityAnnotation (..) )
 import Cardano.BM.Setup
     ( setupTrace_, shutdown )
-import Control.Monad.IO.Class
-    ( MonadIO (..) )
 import Control.Tracer
     ( Tracer (..), natTracer, nullTracer, traceWith )
 
 import qualified Cardano.BM.Configuration.Model as CM
 import qualified Cardano.BM.Data.BackendKind as CM
 
-class Monad m => MonadLog (m :: * -> *) where
+class Monad m => MonadLog (m :: Type -> Type) where
     logWith :: Logger msg -> msg -> m ()
 
 type Logger = Tracer IO

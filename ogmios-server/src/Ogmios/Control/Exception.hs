@@ -23,7 +23,7 @@ module Ogmios.Control.Exception
 import Relude
 
 import Control.Exception.Safe
-    ( Exception (..), IOException, SomeException (..), isAsyncException )
+    ( IOException, isAsyncException )
 import Control.Monad.Class.MonadThrow
     ( MonadCatch (..), MonadMask (..), MonadThrow (..) )
 import Data.List

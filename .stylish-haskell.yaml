@@ -24,7 +24,6 @@ language_extensions: &default-extensions
 - InstanceSigs
 - KindSignatures
 - LambdaCase
-- MonadFailDesugaring
 - MultiParamTypeClasses
 - MultiWayIf
 - NamedFieldPuns

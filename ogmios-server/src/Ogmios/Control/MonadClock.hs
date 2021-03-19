@@ -21,7 +21,7 @@ module Ogmios.Control.MonadClock
     ) where
 
 import Relude hiding
-    ( atomically )
+    ( atomically, newTMVar, putTMVar, tryTakeTMVar )
 
 import Ogmios.Control.MonadAsync
     ( MonadAsync (..) )
@@ -39,7 +39,7 @@ import qualified Control.Concurrent as IO
 import qualified Data.Time.Clock as IO
 
 -- | A 'Monad' to make time effects explicit.
-class Monad m => MonadClock (m :: * -> *) where
+class Monad m => MonadClock (m :: Type -> Type) where
     getCurrentTime :: m UTCTime
     -- ^ Get the time of the current clock.
 

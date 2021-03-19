@@ -24,6 +24,10 @@ default-extensions: *default-extensions
 library:
   source-dirs: src
   ghc-options: *ghc-options-lib
+  when:
+    condition: true
+    ghc-options:
+    - -O2
   dependencies:
     - bytestring
     - relude
@@ -37,7 +41,6 @@ benchmarks:
     dependencies:
     - bytestring
     - criterion
-    - base32
     - bech32
     - fast-bech32
     - random-bytestring

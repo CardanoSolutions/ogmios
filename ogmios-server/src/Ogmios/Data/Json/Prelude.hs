@@ -86,8 +86,6 @@ import Data.ByteString.Base64
     ( encodeBase64 )
 import Data.ByteString.Bech32
     ( HumanReadablePart, encodeBech32 )
-import Data.ByteString.Short
-    ( ShortByteString, fromShort )
 import Data.IP
     ( IPv4, IPv6 )
 import Data.Scientific

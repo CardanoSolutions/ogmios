@@ -26,8 +26,6 @@ import Data.Generics.Internal.VL.Lens
     ( view )
 import Data.Generics.Product.Typed
     ( HasType, typed )
-import Data.String
-    ( IsString (..) )
 import System.Directory
     ( doesPathExist )
 

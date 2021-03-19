@@ -30,12 +30,7 @@ import Ogmios.App.Protocol.StateQuery
 import Ogmios.App.Protocol.TxSubmission
     ( mkTxSubmissionClient )
 import Ogmios.Control.Exception
-    ( Exception (..)
-    , IOException
-    , MonadCatch (..)
-    , MonadThrow (..)
-    , SomeException
-    )
+    ( IOException, MonadCatch (..), MonadThrow (..) )
 import Ogmios.Control.MonadAsync
     ( ExceptionInLinkedThread (..), MonadAsync (..), MonadLink, link )
 import Ogmios.Control.MonadClock

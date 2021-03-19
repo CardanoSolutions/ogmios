@@ -1,5 +1,7 @@
 resolver: resolver.yaml
 
+compiler: ghc-8.10.4 # Simply for reference, already inferred from the resolver.
+
 # Generate files required by weeder
 # See https://github.com/ndmitchell/weeder/issues/53
 ghc-options: {"$locals": -ddump-to-file -ddump-hi}
@@ -11,11 +13,6 @@ packages:
 - modules/git-th
 - modules/hspec-json-schema
 - modules/json-wsp
-
-extra-deps:
-- base32-0.2.0.0
-- ptr-poker-0.1.1.2
-- wai-routes-0.10.4
 
 flags:
   # Bundle VRF crypto in libsodium and do not rely on an external fork to have it.

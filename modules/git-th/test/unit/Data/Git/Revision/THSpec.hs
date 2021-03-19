@@ -10,8 +10,6 @@ import Prelude
 
 import Control.Concurrent
     ( threadDelay )
-import Control.Monad.Fail
-    ( MonadFail )
 import Data.Git.Revision.TH
     ( gitRemoteGetURL
     , gitRevParseHEAD
@@ -24,6 +22,8 @@ import Language.Haskell.TH
     ( Exp (..), Lit (..), runQ )
 import System.Environment
     ( setEnv )
+import System.IO.Temp
+    ( withSystemTempDirectory )
 import Test.Hspec
     ( ActionWith
     , Spec
@@ -34,8 +34,6 @@ import Test.Hspec
     , shouldSatisfy
     , specify
     )
-import System.IO.Temp
-    ( withSystemTempDirectory )
 
 spec :: Spec
 spec = around withGitSandbox $ do
@@ -135,5 +133,5 @@ asList = \case
 -- | Sort of prism to coerce a TH expression to a 2-'Tuple'
 as2Tuple :: MonadFail m => Exp -> m (Exp, Exp)
 as2Tuple = \case
-    TupE [a,b] -> pure (a,b)
+    TupE [Just a, Just b] -> pure (a,b)
     e -> fail $ "cannot convert expression to 2-Tuple: " <> show e

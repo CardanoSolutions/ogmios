@@ -572,7 +572,7 @@ type Delegations crypto =
 type RewardAccounts crypto =
     Map (Sh.Credential 'Sh.Staking crypto) Sh.Coin
 
-data SomeQuery (f :: * -> *) block = forall result. SomeQuery
+data SomeQuery (f :: Type -> Type) block = forall result. SomeQuery
     { query :: Query block result
     , encodeResult :: result -> Json
     , genResult :: Proxy result -> f result

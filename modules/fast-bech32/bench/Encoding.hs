@@ -18,32 +18,26 @@ import Data.ByteString.Random
     ( random )
 
 import qualified Codec.Binary.Bech32 as Bech32
-import qualified Data.ByteString.Base32 as Base32
 
 main :: IO ()
 main = defaultMain
     [ env cases $ \ ~(_10, _100, _1000) -> do
         bgroup "encode"
             [ bgroup "10"
-                [ bench "base32" $ whnf base32 _10
-                , bench "bech32" $ whnf bech32 _10
+                [ bench "bech32" $ whnf bech32 _10
                 , bench "fast-bech32" $ whnf fastBech32 _10
                 ]
             , bgroup "100"
-                [ bench "base32" $ whnf base32 _100
-                , bench "bech32" $ whnf bech32 _100
-                , bench "bech32-fast" $ whnf fastBech32 _100
+                [ bench "bech32" $ whnf bech32 _100
+                , bench "fast-bech32" $ whnf fastBech32 _100
                 ]
             , bgroup "1000"
-                [ bench "base32" $ whnf base32 _1000
-                , bench "bech32" $ whnf bech32 _1000
-                , bench "bech32-fast" $ whnf fastBech32 _1000
+                [ bench "bech32" $ whnf bech32 _1000
+                , bench "fast-bech32" $ whnf fastBech32 _1000
                 ]
             ]
     ]
   where
-    base32 = Base32.encodeBase32
-
     Right hrp = Bech32.humanReadablePartFromText "bench_"
     bech32 = Bech32.encode hrp . Bech32.dataPartFromBytes
 

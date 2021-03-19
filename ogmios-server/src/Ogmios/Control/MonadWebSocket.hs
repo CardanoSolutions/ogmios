@@ -27,7 +27,7 @@ import qualified Network.WebSockets as WS
 
 type WebSocketApp = PendingConnection -> IO ()
 
-class Monad m => MonadWebSocket (m :: * -> *) where
+class Monad m => MonadWebSocket (m :: Type -> Type) where
     receive
         :: Connection -> m ByteString
     send

@@ -67,7 +67,7 @@ import qualified System.Metrics.Gauge as Ekg.Gauge
 
 -- | An interface for capturing application metrics and measuring all sort of
 -- things that are application-specific.
-data Sensors (m :: * -> *) = Sensors
+data Sensors (m :: Type -> Type) = Sensors
     { activeConnectionsGauge :: Gauge m
     , totalConnectionsCounter :: Counter m
     , sessionDurationsDistribution :: Distribution m

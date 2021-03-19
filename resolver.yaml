@@ -1,12 +1,13 @@
 name: _
 
-resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/1c257e85cadb503ced0fe0a9ba757ae449baaf0b/snapshots/cardano-1.25.1.yaml
+resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/160f45b74af4ec2f553c1197028867e93b4f75dd/snapshots/cardano-1.25.1-GHC-8.10.4.yaml
 
 packages:
-- hedgehog-quickcheck-0.1.1
-- hjsonpointer-1.3.0
-- hjsonschema-1.9.0
-- string-interpolate-0.3.0.2
+- async-timer-0.2.0.0
+- Cabal-3.2.1.0
+- markov-chain-usage-model-0.0.0
+- parsec-3.1.14.0
+- quickcheck-state-machine-0.7.0
 
 # commit 097890495cbb0e8b62106bcd090a5721c3f4b36f
 # Merge: e392f9d9 b23e2006
@@ -54,3 +55,30 @@ packages:
   commit: 1777493c3b353f75ca796b78484d4b2da5ea5864
   subdirs:
     - cardano-api
+
+# commit 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e (HEAD -> master, origin/master, origin/HEAD)
+# Merge: 766385f 5818f1c
+# Author: Ian Jeffries <ianspiral@gmail.com>
+# Date:   Mon Oct 1 11:38:56 2018 -0400
+#
+#     Merge pull request #6 from hvr/patch-1
+#
+#     Tighten bounds of base
+- git: https://github.com/KtorZ/hjsonpointer
+  commit: 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e
+
+# commit fde6e676f79f3f3320a558f20492ad816a2543a7 (HEAD -> master, origin/master, origin/HEAD)
+# Author: Ian Grant Jeffries <mail@ianjeffries.net>
+# Date:   Fri May 1 16:03:10 2020 -0400
+#
+#   Archive
+- git: https://github.com/KtorZ/hjsonschema
+  commit: fde6e676f79f3f3320a558f20492ad816a2543a7
+
+# commit d74b39683792649c01113f40bf57724dcf95c96a (HEAD -> master, origin/master, origin/HEAD)
+# Author: Anupam Jain <ajnsit@gmail.com>
+# Date:   Wed Dec 23 11:33:12 2020 +0530
+#
+#     Remove version bounds to ease maintenance. Switch to LTS 16.12 in stack.yaml.
+- git: https://github.com/KtorZ/wai-routes
+  commit: d74b39683792649c01113f40bf57724dcf95c96a

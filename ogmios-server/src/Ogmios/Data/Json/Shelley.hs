@@ -22,8 +22,6 @@ import Data.ByteString.Base16
     ( encodeBase16 )
 import Data.ByteString.Bech32
     ( HumanReadablePart (..), encodeBech32 )
-import Data.ByteString.Short
-    ( fromShort )
 import GHC.TypeLits
     ( ErrorMessage (..), TypeError )
 import Ouroboros.Consensus.Cardano.Block

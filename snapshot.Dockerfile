@@ -2,7 +2,7 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-FROM haskell:8.6.5 as build
+FROM haskell:8.10.4 as build
 WORKDIR /build
 RUN apt-get update && apt-get install --no-install-recommends -y \
   build-essential=12.3 \
@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libsodium-dev=1.0.* \
   zlib1g-dev=1:1.2.*
 
-RUN stack upgrade --binary-version 2.1.3
+RUN stack upgrade --binary-version 2.5.1
 
 COPY modules/cardano-client/package.yaml     modules/cardano-client/package.yaml
 COPY modules/fast-bech32/package.yaml        modules/fast-bech32/package.yaml

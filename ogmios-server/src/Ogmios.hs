@@ -123,7 +123,7 @@ application tr = withDebouncer _10s $ \debouncer -> do
 
 -- | Environment of the application, carrying around what's needed for the
 -- application to run.
-data Env (m :: * -> *) = Env
+data Env (m :: Type -> Type) = Env
     { health  :: !(TVar (Health Block))
     , sensors :: !(Sensors m)
     , sampler :: !(Sampler RuntimeStats m)

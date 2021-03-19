@@ -38,8 +38,6 @@ import Data.ByteString.Base16
     ( decodeBase16 )
 import Data.ByteString.Base64
     ( decodeBase64 )
-import Data.ByteString.Short
-    ( toShort )
 import Ogmios.Data.Json.Query
     ( QueryInEra, encodeEraMismatch, encodeOneEraHash, encodePoint )
 import Ouroboros.Consensus.Byron.Ledger.Block
