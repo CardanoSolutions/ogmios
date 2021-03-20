@@ -7,7 +7,8 @@ import { createPointFromCurrentTip } from '../util'
 import { findIntersect, Intersection } from './findIntersect'
 
 export interface ChainSyncClient {
-  intersection: Intersection
+  findIntersect: (points: Point[]) => Promise<Intersection>
+  initialIntersection: Intersection
   on: (messageHandlers: {
     rollBackward: (point: Point, tip: Tip) => void
     rollForward: (block: Block, tip: Tip) => void
@@ -17,22 +18,25 @@ export interface ChainSyncClient {
 }
 
 export const createChainSyncClient = async (options?: {
-  connection?: ConnectionConfig,
-  points?: Point[]
+  connection?: ConnectionConfig
 }): Promise<ChainSyncClient> => {
   return new Promise((resolve, reject) => {
     const socket = new WebSocket(createConnectionString(options?.connection))
     socket.once('error', reject)
     socket.once('open', async () => {
-      const points = options?.points !== undefined
-        ? options.points
-        : [await createPointFromCurrentTip({ socket, closeOnCompletion: false })]
-      const intersection = await findIntersect(points, {
-        socket,
-        closeOnCompletion: false
-      })
+      const initialIntersection = await findIntersect(
+        [await createPointFromCurrentTip({ socket, closeOnCompletion: false })],
+        {
+          socket,
+          closeOnCompletion: false
+        }
+      )
       return resolve({
-        intersection,
+        findIntersect: (points) => findIntersect(points, {
+          socket,
+          closeOnCompletion: false
+        }),
+        initialIntersection,
         on (messageHandlers) {
           socket.on('message', (message: string) => {
             const response: Ogmios['RequestNextResponse'] = JSON.parse(message)

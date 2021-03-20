@@ -10,27 +10,29 @@ import {
 } from '@src/schema'
 
 describe('ChainSync', () => {
-  it('selects the genesis point as the intersection if origin provided as point', async () => {
-    const client = await createChainSyncClient({ points: ['origin'] })
-    expect(client.intersection.point).toEqual('origin')
-    expect(client.intersection.tip).toBeDefined()
-    await client.shutdown()
-  })
   it('selects the tip as the intersection if no point provided', async () => {
     const client = await createChainSyncClient()
-    if (client.intersection.point === 'origin' || client.intersection.tip === 'origin') {
+    if (client.initialIntersection.point === 'origin' || client.initialIntersection.tip === 'origin') {
       await client.shutdown()
       throw new Error('Test network is not syncing')
-    } else if ('slot' in client.intersection.point && 'slot' in client.intersection.tip) {
-      expect(client.intersection.point.slot).toEqual(client.intersection.tip.slot)
-      expect(client.intersection.point.hash).toEqual(client.intersection.tip.hash)
+    } else if ('slot' in client.initialIntersection.point && 'slot' in client.initialIntersection.tip) {
+      expect(client.initialIntersection.point.slot).toEqual(client.initialIntersection.tip.slot)
+      expect(client.initialIntersection.point.hash).toEqual(client.initialIntersection.tip.hash)
     }
+    await client.shutdown()
+  })
+  it('intersects at the genesis if origin provided as point', async () => {
+    const client = await createChainSyncClient()
+    const intersection = await client.findIntersect(['origin'])
+    expect(intersection.point).toEqual('origin')
+    expect(intersection.tip).toBeDefined()
     await client.shutdown()
   })
   it('accepts message handlers for roll back and roll forward messages', async () => {
     const rollbackPoints: Point[] = []
     const blocks: Block[] = []
-    const client = await createChainSyncClient({ points: ['origin'] })
+    const client = await createChainSyncClient()
+    await client.findIntersect(['origin'])
     client.on({
       rollBackward: (point) => {
         rollbackPoints.push(point)
