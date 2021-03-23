@@ -1,5 +1,31 @@
 # Changelog
 
+## [3.1.0] 
+
+### Added
+
+- Extend the local-state query protocol with support for 'GetCompactGenesis'.
+- Extend the local-state query protocol with support for 'GetFilteredDelegationsAndRewards'.
+- Add missing `mint` field to transaction's body (added since mary).
+
+### Changed
+
+- Use 'contentEncoding' over 'format' in appropriate part of the JSON schema.
+- Fix various errors in the JSON-schema definition & extend test suite coverage in consequence.
+- Implement a 'fast-bech32' encoding library, to speed-up Ogmios serialization of blocks beyond the Shelley era.
+- Use faster (and recommended) JSON encoding techniques to speed up overall JSON serialization. 
+- Improve generated documentation from JSON schema by:
+  - Providing titles to 'oneOf' items
+  - Adding descriptions to top-level definitions
+  - Adding examples to top-level definitions
+- Upgrade dependency and code to work with GHC-8.10.4 (from GHC 8.6.5)
+- Handle more gracefully unknown exceptions (avoid infinite fast loop of retries on errors).
+- Handle more gracefully network mismatches (e.g. connecting Ogmios in testnet mode to a mainnet network)
+
+### Removed
+
+- Support for GHC-8.6.5
+
 ## [3.0.0] -- 2021-02-26
 
 ### Added
