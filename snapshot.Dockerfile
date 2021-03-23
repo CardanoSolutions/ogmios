@@ -2,7 +2,7 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-FROM haskell:8.10.4 as build
+FROM haskell:8.10.2-stretch as build
 WORKDIR /build
 RUN apt-get update && apt-get install --no-install-recommends -y \
   build-essential=12.3 \
