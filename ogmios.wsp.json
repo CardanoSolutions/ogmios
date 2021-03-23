@@ -903,12 +903,18 @@
 
   , "Address":
     { "type": "string"
+    , "description": "A Cardano address (either legacy format or new format)."
     , "contentEncoding": "bech32|base58"
     , "pattern": "[1-9A-HJ-NP-Za-km-z]*"
+    , "examples":
+      [ "addr1q9d34spgg2kdy47n82e7x9pdd6vql6d2engxmpj20jmhuc2047yqd4xnh7u6u5jp4t0q3fkxzckph4tgnzvamlu7k5psuahzcp"
+      , "DdzFFzCqrht8mbSTZHqpM2u4HeND2mdspsaBhdQ1BowPJBMzbDeBMeKgqdoKqo1D4sdPusEdZJVrFJRBBxX1jUEofNDYCJSZLg8MkyCE"
+      ]
     }
 
   , "AssetQuantity":
     { "type": "integer"
+    , "description": "A number of asset, can be negative went burning assets."
     }
 
   , "Block":
@@ -950,6 +956,52 @@
       [ { "required": [ "hash", "header", "body" ]
         , "title": "standard block"
         , "additionalProperties": false
+        , "examples":
+          [ { "hash": "70efc0c5cd2438d79676ed2e6a2dbb03b878e4420eeb03be899a66ea4edb9125"
+            , "header":
+              { "protocolMagicId": 1097911063
+              , "prevHash": "f7b488614495a8edc61aae5d368ef09f4c18156f57634a1465dcf6483cae2b5b"
+              , "slot": 11029
+              , "blockHeight": 9999
+              , "protocolVersion":
+                { "major": 0
+                , "minor": 0
+                , "patch": 0
+                }
+              , "softwareVersion":
+                { "appName": "cardano-sl"
+                , "number": 0
+                }
+              , "proof":
+                { "utxo":
+                  { "number": 0
+                  , "root": "0e5751c026e543b2e8ab2eb06099daa1d1e5df47778f7787faab45cdf12fe3a8"
+                  , "witnessesHash": "afc0da64183bf2664f3d4eec7238d524ba607faeeab24fc100eb861dba69971b"
+                  }
+                , "delegation": "afc0da64183bf2664f3d4eec7238d524ba607faeeab24fc100eb861dba69971b"
+                , "update": "4e66280cd94d591072349bec0a3090a53aa945562efb6d08d56e53654b0e4098"
+                }
+              , "genesisKey": "cb51d29ab94e50d9a144d4f426564cec700dee4d9e857aacf91d3b689374d81f742a452818cf2489c16dfc186f6e9c76b7df40845b7c450785f02d8809767575"
+              , "signature":
+                { "dlgCertificate":
+                  { "epoch": 0
+                  , "issuerVk": "cb51d29ab94e50d9a144d4f426564cec700dee4d9e857aacf91d3b689374d81f742a452818cf2489c16dfc186f6e9c76b7df40845b7c450785f02d8809767575"
+                  , "delegateVk": "7ec249d890d0aaf9a81207960c163ae2d6ac5e715ca6b96d5860e50d9f2b2b2a1d568faa87c9cc8bfd433a3224a96ec5d101b4b6e9db008db8857f49bae294b2"
+                  , "signature": "owS/RbRPvMx49UuQFKay1DVGMev/I1rrsucaFb3Vgr43lDhMG6cTuZ7wV2bpK49Diy/FrzSfK7FuheN4CqhMBw=="
+                  }
+                , "signature": "gi2uNsjBab7lBHnNgsPwofcgKC+i2FYZrlrx/vaQze1actNwHh3vnrvz3PMRDWszeP82/iwIN54nANEhTv9EAg=="
+                }
+              }
+            , "body":
+              { "txPayload": []
+              , "dlgPayload": []
+              , "updatePayload":
+                { "proposal": null
+                , "votes": []
+                }
+              }
+            }
+          ]
         , "properties":
           { "hash": { "$ref": "#/definitions/Hash16" }
           , "header":
@@ -957,7 +1009,7 @@
             , "additionalProperties": false
             , "required": [ "blockHeight", "genesisKey", "prevHash", "proof", "protocolMagicId", "protocolVersion", "signature", "slot", "softwareVersion" ]
             , "properties":
-              { "blockHeight": { "$ref": "#/definitions/BlockHeight" }
+              { "blockHeight": { "$ref": "#/definitions/BlockNo" }
               , "genesisKey": { "$ref": "#/definitions/Hash16" }
               , "prevHash": { "$ref": "#/definitions/Hash16" }
               , "proof": { "$ref": "#/definitions/BlockProof" }
@@ -1046,7 +1098,7 @@
             , "additionalProperties": false
             , "required": [ "blockHeight", "epoch", "prevHash" ]
             , "properties":
-              { "blockHeight": { "$ref": "#/definitions/BlockHeight" }
+              { "blockHeight": { "$ref": "#/definitions/BlockNo" }
               , "epoch": { "$ref": "#/definitions/Epoch" }
               , "prevHash": { "$ref": "#/definitions/Hash16" }
               }
@@ -1059,6 +1111,83 @@
   , "Block[Shelley]":
     { "type": "object"
     , "additionalProperties": false
+    , "examples":
+      [ { "body":
+          [ { "id": "9fdc525c20bc00d9dfa9d14904b65e01910c0dfe3bb39865523c1e20eaeb0903"
+            , "body":
+              { "inputs":
+                [ { "txId": "b984f9c8b36f3fc2d6a5ae5cd7e9741419399d182e5fa1112d94555d40dd3406"
+                  , "index": 0
+                  }
+                ]
+              , "outputs":
+                [ { "address": "addr1qx8gq5rhhrwt0tp3s8qexqglp9tpwruvtfvswplf4juwjqtdqmlq5k5vkmftes6jtqw75cntkke0vmkls4nckte0576st3e6s6"
+                  , "value": 97825743
+                  }
+                ]
+              , "certificates":
+                [ { "stakeKeyRegistration": "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5"
+                  }
+                , { "stakeDelegation":
+                    { "delegator": "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5"
+                    , "delegatee": "pool1pshqcksxywy68lt04lw6uf35f4yssekh5dx2mxqmyrukke2z5y3"
+                    }
+                  }
+                ]
+              , "withdrawals": {}
+              , "fee": 174257
+              , "timeToLive": 4700420
+              , "update": null
+              }
+            , "witness":
+              { "address":
+                [ { "key": "386020d73807f285ba3259efacd9fbea1939ebd97dc2ddc3b178d427e5a047f6"
+                  , "signature": "5bckfySir7f4G+SV83UPw0+42qqFcEU+sdmK+uejnx6gn6OFMckasHBY8xPWabJ9w5xMmD8sRJ5VC7bNsUU0Ag=="
+                  }
+                , { "key": "de735ba8771f521b50bc3130c4a7d6f0784df718d3ed3ca32befd9a4650c2e8a"
+                  , "signature": "KHlV88SX+sODj4EqHW7U1wxLL2nVuq/wg43rdaarckroEZc3k1h7YcH0CyAoBvy5+xv6aZ6clDvceeUliD6RCw=="
+                  }
+                ]
+              , "script": {}
+              , "bootstrap": []
+              }
+            , "metadata":
+              { "hash": null
+              , "body": null
+              }
+            }
+          ]
+        , "header":
+          { "blockHeight": 4500510
+          , "slot": 4693240
+          , "prevHash": "286b7c1c47393c7d12abcc1c5d94fea4300f987cd76fe27ec2147dca18e6a8e6"
+          , "issuerVk": "5fddeedade2714d6db2f9e1104743d2d8d818ecddc306e176108db14caadd441"
+          , "issuerVrf": "axwYeh90N9B55BQwtqn8eymybovJxGco5VE6kwTyIm8="
+          , "nonce":
+            { "output": "GTPlGb3NpwZxuBsnoXhkvHoZvs+D9UsDCwb6WTLBm8lu3gKOOwSdStwGxaGIE7+FAcPXaOJTcUNw2rm48N9RwA=="
+            , "proof": "XHi/02KfvJqpg7x7yVQTZBYXZPxRapD2fhBMZWYlZIGQrMrjGeScmIPIYR4VvyYUJ/cthOLGcxhTpR8z1kfLX0QRzwO7vRSuZl/uMs4E3go="
+            }
+          , "leaderValue":
+            { "output": "wrqii+3nrDTTquWVCIwn8lPt52duurZ++RyfZQtlwUssRJnQybirFrRRNUETpA7sXPzu66j2X9qt7nvHjGB7DQ=="
+            , "proof": "ooR9VQrP8yl2Iu3+v03l5F42rETNzGVljB3OsEYUDMp+iC4LZRmu+6wcfeM4y5qCyr42PPtAaaebnHRV/1oHJNqSyW+2iRuoKywh0X3uKgk="
+            }
+          , "blockSize": 426
+          , "blockHash": "ca26d2d83980492d433751b388423196c5d86219e206be6895b7c169c957e987"
+          , "opCert":
+            { "hotVk": "BUxG5N9t61Y1poqk9d7xRXOnAeqTfDzeCE9unqDE8Ww="
+            , "count": 0
+            , "kesPeriod": 0
+            , "sigma": "SA6eoFShv4vC+6Z9JVlr/rPIuXLHuUOJlT4BFcFgWj0xUYjVCcVTz9ImxIPGNeuCemDXW9mEhWoK+42KNDWcBw=="
+            }
+          , "protocolVersion":
+            { "major": 2
+            , "minor": 0
+            }
+          , "signature": "W6pICB+fcHajaybaN4l3Llep5/Olun1rtKucRlnNZgrpS+i7Y0Y2mgQpNztXe5VvHCUl/M8YcpowUxTLRusLBTLjNz4SlRg4XfBcIOrcDNWcbl+koOXPdX5DUyZqVIWeHlWkxgZWqX+ARwnMV+//wGBs4M86ngLLMr+BrkWyXniZrw+Bt63Yf/cqpyTznauI/I24ZBWnV9cfbmu7zQPaSzEVzDmNgX4JJhznWolFxgqhNNRfYobkNOBu5cycu5Gff8G6EQJnq51Uz0TFN7kQXTM6YVJlwkaXWLwBNayUGzW5KbQ1rChYjAbQ5N+uNpoK6Iff+7hDWW81UgsK+yu0XJM1gXrfgmsNyOL0h2JINXrfAUaBALBUBYnLmi3h0Vmn45SRP40QyuDAmd/hu7S5SUCUY2S7K97p+ZA5bgPqZ8FqjO3W7SfAgpgIKa0gJFRLBiNm03TWRPxNDAq6eIfvBnFlf0QD9WPtuFif84Z9UnyBZuIyZPY4v65Ksy+TZLCCc0w0Z4xWfY3Bo1vvMLsD1OHABYMtt7MbKxW48GgfYTheM3izQfZrbHIiUsYZDCGnVyThud1efl+p9K81nks9IQ=="
+          }
+        , "headerHash": "3a85a47e2fdd8350667fe6a858018318b9c200c4d62f8d85c8aaf0fb273572d5"
+        }
+      ]
     , "properties":
       { "body":
         { "type": "array"
@@ -1168,7 +1297,7 @@
           , "blockSize", "blockHash","opCert","protocolVersion","signature"
           ]
         , "properties":
-          { "blockHeight": { "$ref": "#/definitions/BlockHeight" }
+          { "blockHeight": { "$ref": "#/definitions/BlockNo" }
           , "slot": { "$ref": "#/definitions/Slot" }
           , "prevHash": { "$ref": "#/definitions/Hash16" }
           , "issuerVk": { "$ref": "#/definitions/Hash16" }
@@ -1188,6 +1317,83 @@
   , "Block[Allegra]":
     { "type": "object"
     , "additionalProperties": false
+    , "examples":
+      [ { "body":
+          [ { "id": "9fdc525c20bc00d9dfa9d14904b65e01910c0dfe3bb39865523c1e20eaeb0903"
+            , "body":
+              { "inputs":
+                [ { "txId": "b984f9c8b36f3fc2d6a5ae5cd7e9741419399d182e5fa1112d94555d40dd3406"
+                  , "index": 0
+                  }
+                ]
+              , "outputs":
+                [ { "address": "addr1qx8gq5rhhrwt0tp3s8qexqglp9tpwruvtfvswplf4juwjqtdqmlq5k5vkmftes6jtqw75cntkke0vmkls4nckte0576st3e6s6"
+                  , "value": 97825743
+                  }
+                ]
+              , "certificates":
+                [ { "stakeKeyRegistration": "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5"
+                  }
+                , { "stakeDelegation":
+                    { "delegator": "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5"
+                    , "delegatee": "pool1pshqcksxywy68lt04lw6uf35f4yssekh5dx2mxqmyrukke2z5y3"
+                    }
+                  }
+                ]
+              , "withdrawals": {}
+              , "fee": 174257
+              , "timeToLive": 4700420
+              , "update": null
+              }
+            , "witness":
+              { "address":
+                [ { "key": "386020d73807f285ba3259efacd9fbea1939ebd97dc2ddc3b178d427e5a047f6"
+                  , "signature": "5bckfySir7f4G+SV83UPw0+42qqFcEU+sdmK+uejnx6gn6OFMckasHBY8xPWabJ9w5xMmD8sRJ5VC7bNsUU0Ag=="
+                  }
+                , { "key": "de735ba8771f521b50bc3130c4a7d6f0784df718d3ed3ca32befd9a4650c2e8a"
+                  , "signature": "KHlV88SX+sODj4EqHW7U1wxLL2nVuq/wg43rdaarckroEZc3k1h7YcH0CyAoBvy5+xv6aZ6clDvceeUliD6RCw=="
+                  }
+                ]
+              , "script": {}
+              , "bootstrap": []
+              }
+            , "metadata":
+              { "hash": null
+              , "body": null
+              }
+            }
+          ]
+        , "header":
+          { "blockHeight": 4500510
+          , "slot": 4693240
+          , "prevHash": "286b7c1c47393c7d12abcc1c5d94fea4300f987cd76fe27ec2147dca18e6a8e6"
+          , "issuerVk": "5fddeedade2714d6db2f9e1104743d2d8d818ecddc306e176108db14caadd441"
+          , "issuerVrf": "axwYeh90N9B55BQwtqn8eymybovJxGco5VE6kwTyIm8="
+          , "nonce":
+            { "output": "GTPlGb3NpwZxuBsnoXhkvHoZvs+D9UsDCwb6WTLBm8lu3gKOOwSdStwGxaGIE7+FAcPXaOJTcUNw2rm48N9RwA=="
+            , "proof": "XHi/02KfvJqpg7x7yVQTZBYXZPxRapD2fhBMZWYlZIGQrMrjGeScmIPIYR4VvyYUJ/cthOLGcxhTpR8z1kfLX0QRzwO7vRSuZl/uMs4E3go="
+            }
+          , "leaderValue":
+            { "output": "wrqii+3nrDTTquWVCIwn8lPt52duurZ++RyfZQtlwUssRJnQybirFrRRNUETpA7sXPzu66j2X9qt7nvHjGB7DQ=="
+            , "proof": "ooR9VQrP8yl2Iu3+v03l5F42rETNzGVljB3OsEYUDMp+iC4LZRmu+6wcfeM4y5qCyr42PPtAaaebnHRV/1oHJNqSyW+2iRuoKywh0X3uKgk="
+            }
+          , "blockSize": 426
+          , "blockHash": "ca26d2d83980492d433751b388423196c5d86219e206be6895b7c169c957e987"
+          , "opCert":
+            { "hotVk": "BUxG5N9t61Y1poqk9d7xRXOnAeqTfDzeCE9unqDE8Ww="
+            , "count": 0
+            , "kesPeriod": 0
+            , "sigma": "SA6eoFShv4vC+6Z9JVlr/rPIuXLHuUOJlT4BFcFgWj0xUYjVCcVTz9ImxIPGNeuCemDXW9mEhWoK+42KNDWcBw=="
+            }
+          , "protocolVersion":
+            { "major": 2
+            , "minor": 0
+            }
+          , "signature": "W6pICB+fcHajaybaN4l3Llep5/Olun1rtKucRlnNZgrpS+i7Y0Y2mgQpNztXe5VvHCUl/M8YcpowUxTLRusLBTLjNz4SlRg4XfBcIOrcDNWcbl+koOXPdX5DUyZqVIWeHlWkxgZWqX+ARwnMV+//wGBs4M86ngLLMr+BrkWyXniZrw+Bt63Yf/cqpyTznauI/I24ZBWnV9cfbmu7zQPaSzEVzDmNgX4JJhznWolFxgqhNNRfYobkNOBu5cycu5Gff8G6EQJnq51Uz0TFN7kQXTM6YVJlwkaXWLwBNayUGzW5KbQ1rChYjAbQ5N+uNpoK6Iff+7hDWW81UgsK+yu0XJM1gXrfgmsNyOL0h2JINXrfAUaBALBUBYnLmi3h0Vmn45SRP40QyuDAmd/hu7S5SUCUY2S7K97p+ZA5bgPqZ8FqjO3W7SfAgpgIKa0gJFRLBiNm03TWRPxNDAq6eIfvBnFlf0QD9WPtuFif84Z9UnyBZuIyZPY4v65Ksy+TZLCCc0w0Z4xWfY3Bo1vvMLsD1OHABYMtt7MbKxW48GgfYTheM3izQfZrbHIiUsYZDCGnVyThud1efl+p9K81nks9IQ=="
+          }
+        , "headerHash": "3a85a47e2fdd8350667fe6a858018318b9c200c4d62f8d85c8aaf0fb273572d5"
+        }
+      ]
     , "properties":
       { "body":
         { "type": "array"
@@ -1296,6 +1502,103 @@
   , "Block[Mary]":
     { "type": "object"
     , "additionalProperties": false
+    , "examples":
+      [ { "body":
+          [ { "id": "85070fae1939d851fb50cb64d5c8c043fff628530f02a0a56575738926205de3"
+            , "body":
+              { "inputs":
+                [ { "txId": "89e229cfe25fa75e8e09da42bd7d7f2308dead431ceae59d0f0707cb833fe46a"
+                  , "index": 0
+                  }
+                ]
+              , "outputs":
+                [ { "address": "addr1q9d34spgg2kdy47n82e7x9pdd6vql6d2engxmpj20jmhuc2047yqd4xnh7u6u5jp4t0q3fkxzckph4tgnzvamlu7k5psuahzcp"
+                  , "value":
+                    { "coins": 104699792
+                    , "assets": {}
+                    }
+                  }
+                , { "address": "addr1q8lmu79hgm3sppz8dta3aftf0cwh2v2eja56wqvzqy4jj0zjt7qgvj7saxdxve35c4ehuxuam4czlz9fw6ls7zr4as9s609d7u"
+                  , "value":
+                    { "coins": 3000000
+                    , "assets":
+                      { "5d9d887de76a2c9d057b3e5d34d5411f7f8dc4d54f0c06e8ed2eb4a9.494e4459": 35000000000000
+                      }
+                    }
+                  }
+                ]
+              , "certificates": []
+              , "withdrawals": {}
+              , "fee": 403300
+              , "validityInterval":
+                { "invalidBefore": null
+                , "invalidHereafter": 23279333
+                }
+              , "update": null
+              , "mint":
+                { "coins": 0
+                , "assets": {}
+                }
+              }
+            , "witness":
+              { "address":
+                [ { "key": "a900560b6c0964492849eb5311acac881edeb8d2282122b895fd418243c92f4e"
+                  , "signature": "3TLin5vgz4dQDomhMjW9q4VIQD/X6Q9ECWkA8kVOz/c8R2c4mO1P1+LD/9n2ouHOANNC5ZgzwV2ojAVpZw4IBA=="
+                  }
+                , { "key": "5c19b9b0dd58b782dcac33cdc925f74c1385d8aae5912f7e1040a2d24a47e4eb"
+                  , "signature": "qjqis5n/XGVp5PCIe0h8h/+ZO6rdIClBfzb7SEaaG4kAuY+zMAnfA57oxcLI6MA81rJ/nVct7FDtLKEHjimlDg=="
+                  }
+                 ]
+              , "script": {}
+              , "bootstrap": []
+              }
+            , "metadata":
+              { "hash": "69453cc9796ac4987abcdcbfcf087b287d9f5d698aa32960e542cd97baf00429"
+              , "body":
+                { "blob":
+                  { "411":
+                    { "list":
+                      [ { "string": "Minted by Andrew from BCSH!"
+                        }
+                      ]
+                    }
+                  }
+                , "scriptPreImages": []
+                }
+              }
+            }
+          ]
+          , "header":
+            { "blockHeight": 5416746
+            , "slot": 23272147
+            , "prevHash": "d7e88e5abb70d9a8c2ff37fe2d7d9a08be91e8821751b8d34ffbb9364f497787"
+            , "issuerVk": "a35f527080d2f9184347b43b4f5205557ca9a86a2e4fb3225ae4f477b81d90fb"
+            , "issuerVrf": "4mSfHroaqvbOqZtUoDtJm7t+9rOv4f8/j91ugsw0LiE="
+            , "nonce":
+              { "output": "dRdKKUTP8dXczeALMgi6Ld4JlQPp36PbHJqoEMCGpTfXvpevh1bOuTg5ITV6M551E8QpoI6Jzwy2oNHTVlswNQ=="
+              , "proof": "yB84OdAnPSjaRBAasHk1Njw4Edmq2wIcJB9e5U10kRuGkLjW5zclz2NPlUdRVrtcLpJLc/W7L9pUYsdolQ8b/BXXp8w0oiMdUp+UgJ7s4QY="
+              }
+            , "leaderValue":
+              { "output": "AALyNsHBmH7EvBsY+WLGB6A07OJOfjrBiYpv313+TvE0JfuHjdaPHaH7C17sJTem37ZN4p5hiOQe2OFwXOe3bA=="
+              , "proof": "DehTPTyVgmoGJFcg1YGFjRNkPX5r9FdR2OPW1cLM9UPPq5PMBRcjmzJ+BiJL2Tjj2XkWeUTERVWCBjAV4e2/JCBaZcAgh2kigeU123UbcQg="
+            }
+            , "blockSize": 426
+            , "blockHash": "a36fca2d54d6dc88d7fd417adfde656749ace8f4a86f3c6918eb1edf29deab45"
+            , "opCert":
+              { "hotVk": "igqoraJVCnAvSbGkMIpLK55ojLSxPNjrFo5d2ZIqsRE="
+              , "count": 0
+              , "kesPeriod": 155
+              , "sigma": "/VtuaWMMmmxa904U5W2LpgAF7JhJBpbZAuBKbjYsc+70rqsv04Y1/JwmoWU7yt0UviliC2J9ZiAfVSDDox3HDQ=="
+              }
+            , "protocolVersion":
+              { "major": 4
+              , "minor": 0
+              }
+            , "signature": "W8DDcf7hD05oAHd5NEIBG9kdMUNeybuEl32lzm7Cbb5FgQiksJib4OH3M06khy2QkJZV9IkVoWjfcJuVBpaWA8VxBwf1xEXVEOOgj9AxV8JkVlhVJNZ3h59aAoIome/CK+LScYQWytbOAZV6peVVfFpCu2AjXwx02xFPPXHy6PEBLz/jxJSu3TR+Wb1sEqNyxaSjUwanWjTszF5YjTquuK9upuHw6kLP2fNcDLvOxK/1TcbUWDmuK47L3eyOYWs52+bMuAFyeDDpNAPMc9zdq0uTteRQATY5dqpUh/X3nLKzrIHbVXLwTMk2ep6uiuVSeDePI1Q6xPx2AbILk4MlU2l0am5yQn6hjw9DwGKPZaFI+tSFPxWhjdrUmkvKYM3a9pZ94ehmjNe2ArREStq5LPqkGv7tPoYC1FaXIEypD+WHILrBv02D1rZ8lm25eWDXwcEYXdoDJ82/ULBvf3h3Ix9PtLD8B8dHbchxKlTYpdGptIIGueR9XZoxEFZfl0C2x+w4IwZvoQCBO+nATUq7VilE6DSwg5eoZH3pvoOvRFLkR7Q5q1aUyuJi1ZMoaQacZ10TPpkVeoIx3NFFK81Daw=="
+            }
+          , "headerHash": "6e15e485f3cf61492ca8150039647fe4be80eb43fcac5a536c170fbabc6a12f2"
+        }
+      ]
     , "properties":
       { "body":
         { "type": "array"
@@ -1402,13 +1705,9 @@
       }
     }
 
-  , "BlockHeight":
-    { "type": "integer"
-    , "minimum": 0
-    }
-
   , "BlockNo":
     { "type": "integer"
+    , "description": "A block number, the i-th block to be minted is number i."
     , "minimum": 0
     }
 
@@ -1437,11 +1736,13 @@
 
   , "BlockSize":
     { "type": "integer"
+    , "description": "The size of the block in bytes."
     , "minimum": 0
     }
 
   , "Bound":
     { "type": "object"
+    , "description": "An era bound which captures the time, slot and epoch at which the era start. The time is relative to the start time of the network."
     , "additionalProperties": false
     , "required": ["time", "slot", "epoch"]
     , "properties":
@@ -1454,6 +1755,7 @@
   , "Certificate":
     { "oneOf":
       [ { "type": "object"
+        , "description": "A stake delegation certificate, from a delegator to a stake pool."
         , "title": "stakeDelegation"
         , "additionalProperties": false
         , "required": ["stakeDelegation"]
@@ -1468,24 +1770,42 @@
               }
             }
           }
+        , "examples":
+          [ { "stakeDelegation":
+              { "delegator": "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5"
+              , "delegatee": "pool1pshqcksxywy68lt04lw6uf35f4yssekh5dx2mxqmyrukke2z5y3"
+              }
+            }
+          ]
         }
       , { "type": "object"
+        , "description": "A stake key registration certificate."
         , "title": "stakeKeyRegistration"
         , "additionalProperties": false
         , "required": ["stakeKeyRegistration"]
         , "properties":
           { "stakeKeyRegistration": { "$ref": "#/definitions/Hash16" }
           }
+        , "examples":
+          [ { "stakeKeyRegistration": "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5"
+            }
+          ]
         }
       , { "type": "object"
+        , "description": "A stake key de-registration certificate."
         , "title": "stakeKeyDeregistration"
         , "additionalProperties": false
         , "required": ["stakeKeyDeregistration"]
         , "properties":
           { "stakeKeyDeregistration": { "$ref": "#/definitions/Hash16" }
           }
+        , "examples":
+          [ { "stakeKeyDeregistration": "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5"
+            }
+          ]
         }
       , { "type": "object"
+        , "description": "A pool registration certificate."
         , "title": "poolRegistration"
         , "additionalProperties": false
         , "required": ["poolRegistration"]
@@ -1529,8 +1849,33 @@
               }
             }
           }
+        , "examples":
+          [ { "poolRegistration":
+              { "id": "pool1agk62kg0s9606v78exurl53mqsdu44d6qeuzypur5e7ku6gpgzp"
+              , "vrf": "c91697932cef010ced94eae6854436f8f30a18dbcd16e9176514f9612816023e"
+              , "pledge": 458907757199
+              , "cost": 340000000
+              , "margin": "499/10000"
+              , "rewardAccount": "stake1uy3kcacyk50twxlzluarxwy0wv0nzyt42ecruehek9k5m8g08gvjy"
+              , "owners":
+                [ "236c7704b51eb71be2ff3a33388f731f31117556703e66f9b16d4d9d"
+                ]
+              , "relays":
+                [ { "port": 3001
+                  , "ipv4": "54.163.147.116"
+                  , "ipv6": null
+                  }
+                ]
+              , "metadata":
+                { "url": "https://www.sophias-pool.com/poolInfo"
+                , "hash": "abb6c63334b2c5d107802f932479fc146454a632e886f2b4276d6d00c1d023a2"
+                }
+              }
+            }
+          ]
         }
       , { "type": "object"
+        , "description": "A pool retirement certificate."
         , "additionalProperties": false
         , "title": "poolRetirement"
         , "required": ["poolRetirement"]
@@ -1545,6 +1890,13 @@
               }
             }
           }
+        , "examples":
+          [ { "poolRetirement":
+              { "poolId": "pool14cq225dlh7qy7tcc35fgrkr9yyprlk4cppytjmdv7e0gwm4w9q6"
+              , "retirementEpoch": 237
+              }
+            }
+          ]
         }
       , { "type": "object"
         , "title": "genesisDelegation"
@@ -1584,6 +1936,7 @@
 
   , "CompactGenesis":
     { "type": "object"
+    , "description": "A compact (without genesis UTxO) representation of the genesis configuration."
     , "additionalProperties": false
     , "required":
       [ "systemStart"
@@ -1613,6 +1966,42 @@
       , "maxLovelaceSupply": { "type": "integer" }
       , "protocolParameters": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
       }
+    , "examples":
+      [ { "systemStart": "2017-09-23T21:44:51Z"
+        , "networkMagic": 764824073
+        , "network": "mainnet"
+        , "activeSlotsCoefficient": "1/20"
+        , "securityParameter": 2160
+        , "epochLength": 432000
+        , "slotsPerKesPeriod": 129600
+        , "maxKesEvolutions": 62
+        , "slotLength": 1
+        , "updateQuorum": 5
+        , "maxLovelaceSupply": 45000000000000000
+        , "protocolParameters":
+          { "minFeeCoefficient": 44
+          , "minFeeConstant": 155381
+          , "maxBlockBodySize": 65536
+          , "maxBlockHeaderSize": 1100
+          , "maxTxSize": 16384
+          , "stakeKeyDeposit": 2000000
+          , "poolDeposit": 500000000
+          , "poolRetirementEpochBound": 18
+          , "desiredNumberOfPools": 150
+          , "poolInfluence": "3/10"
+          , "monetaryExpansion": "3/1000"
+          , "treasuryExpansion": "1/5"
+          , "decentralizationParameter": "1/1"
+          , "extraEntropy": "neutral"
+          , "protocolVersion":
+            { "major": 2
+            , "minor": 0
+            }
+          , "minUtxoValue": 1000000
+          , "minPoolCost": 340000000
+          }
+        }
+      ]
     }
 
   , "Delegations":
