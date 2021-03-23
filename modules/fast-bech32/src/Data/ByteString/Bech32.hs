@@ -5,6 +5,7 @@
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- | This package provides an implementation of the bech32 encoding. In essence,
 -- this encoding is comprised of three parts:
@@ -82,7 +83,7 @@ encodeBech32 hrp bytes = mconcat
 
 data HumanReadablePart = HumanReadablePartConstr
     { prefix :: !Text
-    , checksum :: !Word64
+    , checksum :: !Checksum
     } deriving Show
 
 -- | Construct a human readable part from a text string, and pre-calculate the
@@ -93,15 +94,16 @@ pattern HumanReadablePart { unHumanReadablePart } <-
   where
     HumanReadablePart prefix =
         let
-            checksum = foldl' (flip polymodStep) 1 $ expand (T.unpack prefix)
+            checksum =
+                foldl' (flip polymodStep) (Checksum 1) $ expand (T.unpack prefix)
 
-            expand :: [Char] -> [Word8]
+            expand :: [Char] -> [Word5]
             expand xs =
-                [ fromIntegral (ord x) .>>. 5 | x <- xs ]
+                [ coerce @Word8 (fromIntegral (ord x) .>>. 5) | x <- xs ]
                 ++
-                [0]
+                [ coerce @Word8 0 ]
                 ++
-                [ fromIntegral (ord x) .&. 31 | x <- xs ]
+                [ coerce @Word8 (fromIntegral (ord x) .&. 31) | x <- xs ]
         in
             HumanReadablePartConstr {prefix,checksum}
 {-# COMPLETE HumanReadablePart #-}
@@ -110,14 +112,15 @@ pattern HumanReadablePart { unHumanReadablePart } <-
 -- Main encoding loop
 --
 
-encodeDataPart :: Addr# -> Word64 -> ByteString -> Text
+encodeDataPart :: Addr# -> Checksum -> ByteString -> Text
 encodeDataPart !alphabet !chk0 =
-    T.decodeUtf8 . withAllocatedPointers (base32 0 0 chk0)
+    T.decodeUtf8 . withAllocatedPointers (base32 0 (Residue 0) chk0)
   where
     withAllocatedPointers
-        :: (Int -> Ptr Word8 -> Ptr Word8 -> IO Word64)
+        :: (Int -> Ptr Word8 -> Ptr Word8 -> IO Checksum)
         -> ByteString
         -> ByteString
+    withAllocatedPointers _fn "" = ""
     withAllocatedPointers fn (PS !inputForeignPtr !_ !inputLen) =
         let (!q, !r) = (inputLen * 8) `quotRem` 5 in
         let !resultLen = q + if r == 0 then 0 else 1 in
@@ -129,10 +132,10 @@ encodeDataPart !alphabet !chk0 =
                     return $ (PS resultForeignPtr 0 resultLen)
                           <> (encodeChecksum alphabet chk')
 
-    base32 :: Int -> Word8 -> Word64 -> Int -> Ptr Word8 -> Ptr Word8 -> IO Word64
+    base32 :: Int -> Residue -> Checksum -> Int -> Ptr Word8 -> Ptr Word8 -> IO Checksum
     base32 !n !r !chk !maxN !inputPtr !resultPtr
         | n >= maxN = do
-            let !w = r
+            let !w = coerce r
             poke resultPtr (alphabet `lookupWord5` w)
             return $ polymodStep w chk
         | otherwise = do
@@ -145,27 +148,33 @@ encodeDataPart !alphabet !chk0 =
 -- Checksum
 --
 
-encodeChecksum :: Addr# -> Word64 -> ByteString
-encodeChecksum alphabet chk =
+newtype Checksum = Checksum Word64 deriving Show
+
+encodeChecksum :: Addr# -> Checksum -> ByteString
+encodeChecksum !alphabet !chk =
     [ alphabet `lookupWord5` word5 (polymod .>>. i)
     | i <- [25, 20 .. 0 ]
     ] & BS.pack
   where
-    polymod = (foldl' (flip polymodStep) chk [0,0,0,0,0,0] .&. 0x3fffffff) `xor` 1
+    polymod =
+        let z = coerce @Word8 0
+        in (coerce (foldl' (flip polymodStep) chk [z,z,z,z,z,z]) .&. 0x3fffffff) `xor` 1
 
-    word5 :: Word64 -> Word8
-    word5 = fromIntegral @Word64 @Word8 . (.&. 31)
+    word5 :: Word64 -> Word5
+    word5 = coerce . fromIntegral @Word64 @Word8 . (.&. 31)
     {-# INLINE word5 #-}
 
-polymodStep :: Word8 -> Word64 -> Word64
-polymodStep v chk =
+polymodStep :: Word5 -> Checksum -> Checksum
+polymodStep (Word5 !v) (Checksum !chk) =
     let chk' = (chk .<<. 5) `xor` fromIntegral v in
-    xor (if testBit chk 29 then 0x2a1462b3 else 0)
-        ( xor (if testBit chk 28 then 0x3d4233dd else 0)
-            ( xor (if testBit chk 27 then 0x1ea119fa else 0)
-                ( xor (if testBit chk 26 then 0x26508e6d else 0)
-                    ( xor (if testBit chk 25 then 0x3b6a57b2 else 0)
-                        chk'
+    Checksum
+        ( xor (if testBit chk 29 then 0x2a1462b3 else 0)
+            ( xor (if testBit chk 28 then 0x3d4233dd else 0)
+                ( xor (if testBit chk 27 then 0x1ea119fa else 0)
+                    ( xor (if testBit chk 26 then 0x26508e6d else 0)
+                        ( xor (if testBit chk 25 then 0x3b6a57b2 else 0)
+                            chk'
+                        )
                     )
                 )
             )
@@ -175,64 +184,68 @@ polymodStep v chk =
 -- Base32
 --
 
+newtype Word5 = Word5 Word8 deriving Show
+
+newtype Residue = Residue Word8 deriving Show
+
 -- | Lookup a Word5 using the given pointer and a previous 'Residue'. Returns
 -- the looked up 'Word5', a 'Residue' and the pointer advanced to the next
 -- word;
 --
 -- NOTE: @n = i .&. 7@ is a fast modulo equivalent to @n = i `mod` 8@
-peekWord5 :: Int -> Word8 -> Ptr Word8 -> IO (Word8, Word8, Ptr Word8)
-peekWord5 !((.&. 7) -> !n) !r !ptr
+peekWord5 :: Int -> Residue -> Ptr Word8 -> IO (Word5, Residue, Ptr Word8)
+peekWord5 !((.&. 7) -> !n) (Residue !r) !ptr
     | n == 0 = do
         w <- peek ptr
         return
-            ( w .>>. 3
-            , (w .&. 0b00000111) .<<. 2
+            ( coerce (w .>>. 3)
+            , coerce ((w .&. 0b00000111) .<<. 2)
             , plusPtr ptr 1
             )
     | n == 1 = do
         w <- peek ptr
         return
-            ( (w .>>. 6) .|. r
-            , w .&. 0b00111111
+            ( coerce ((w .>>. 6) .|. r)
+            , coerce (w .&. 0b00111111)
             , plusPtr ptr 1
             )
     | n == 2 = do
         return
-            ( r .>>. 1
-            , (r .&. 0b11000001) .<<. 4
+            ( coerce (r .>>. 1)
+            , coerce ((r .&. 0b11000001) .<<. 4)
             , ptr
             )
     | n == 3 = do
         w <- peek ptr
         return
-            ( (w .>>. 4) .|. r
-            , (w .&. 0b00001111) .<<. 1
+            ( coerce ((w .>>. 4) .|. r)
+            , coerce ((w .&. 0b00001111) .<<. 1)
             , plusPtr ptr 1
             )
     | n == 4 = do
         w <- peek ptr
         return
-            ( (w .>>. 7) .|. r
-            , w .&. 0b01111111
+            ( coerce ((w .>>. 7) .|. r)
+            , coerce (w .&. 0b01111111)
             , plusPtr ptr 1
             )
     | n == 5 = do
         return
-            ( r .>>. 2
-            , (r .&. 0b10000011) .<<. 3
+            ( coerce (r .>>. 2)
+            , coerce ((r .&. 0b10000011) .<<. 3)
             , ptr
             )
     | n == 6 = do
         w <- peek ptr
         return
-            ( (w .>>. 5) .|. r
-            , w .&. 0b00011111
+            ( coerce ((w .>>. 5) .|. r)
+            , coerce (w .&. 0b00011111)
             , plusPtr ptr 1
             )
     | otherwise = do
         return
-            ( r
-            , 0
+            ( coerce r
+            , coerce @Word8 0
             , ptr
             )
 
@@ -255,7 +268,7 @@ peekWord5 !((.&. 7) -> !n) !r !ptr
 --
 
 -- | Fast array lookup of a word5 in an unboxed bytestring.
-lookupWord5 :: Addr# -> Word8 -> Word8
-lookupWord5 table (W8# i) =
+lookupWord5 :: Addr# -> Word5 -> Word8
+lookupWord5 table (coerce -> (W8# i)) =
     W8# (indexWord8OffAddr# table (word2Int# i))
 {-# INLINE lookupWord5 #-}
