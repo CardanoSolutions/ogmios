@@ -49,6 +49,8 @@ import Data.Aeson
     ( FromJSON (..), ToJSON (..), (.:), (.:?), (.=) )
 import Data.Char
     ( toLower )
+import Data.Kind
+    ( Type )
 import Data.Proxy
     ( Proxy (..) )
 import Data.Text
@@ -209,13 +211,13 @@ instance FromJSON WspType where
             json | json == toJSON WspFault       -> pure WspFault
             _ -> empty
 
-class GWSPFromJSON (f :: * -> *) where
+class GWSPFromJSON (f :: Type -> Type) where
     gWSPFromJSON :: Options -> Json.Value -> Json.Parser (Maybe Json.Value, f a)
 
-class GWSPToJSON (f :: * -> *) where
+class GWSPToJSON (f :: Type -> Type) where
     gWSPToJSON :: Options -> f a -> Json.Value
 
-class GWSPMethodName (f :: * -> *) where
+class GWSPMethodName (f :: Type -> Type) where
     gWSPMethodName :: Proxy (f a) -> String
 
 --

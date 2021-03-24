@@ -55,6 +55,8 @@ import Control.Tracer
     ( Tracer (..), contramap, nullTracer )
 import Data.ByteString.Lazy
     ( ByteString )
+import Data.Kind
+    ( Type )
 import Data.Map.Strict
     ( (!) )
 import Data.Proxy
@@ -124,7 +126,7 @@ type Block = CardanoBlock StandardCrypto
 
 -- | A helper to help getting more uniform type signatures by making the submit
 -- failure a function of a 'block' parameter
-type family SubmitTxError block :: * where
+type family SubmitTxError block :: Type where
     SubmitTxError Block = HardForkApplyTxErr (CardanoEras StandardCrypto)
 
 -- | A slightly more transparent type alias for 'GenTx''

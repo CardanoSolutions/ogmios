@@ -30,6 +30,8 @@ import Data.ByteString
     ( ByteString )
 import Data.Char
     ( toLower )
+import Data.Kind
+    ( Type )
 import GHC.Generics
     ( Generic )
 
@@ -96,7 +98,7 @@ serverFault = Fault FaultServer
 -- | A data-type to capture the logic to 'handle' any request.
 --
 -- @since 1.0.0
-data Handler (m :: * -> *) a where
+data Handler (m :: Type -> Type) a where
     Handler
         :: (ByteString -> Maybe (Request req))
         -> (req -> (res -> Response res) -> m a)
