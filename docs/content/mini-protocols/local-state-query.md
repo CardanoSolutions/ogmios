@@ -57,8 +57,7 @@ The `Acquire` request expect one argument named `point`. The point has the same 
 One thing that doesn't strike as obvious is that, as clients, you need points to query any information. There are many ways to get those hashes but in the context of Ogmios, the most logical way is via the [local-chain-sync](../local-chain-sync/) protocol. 
 
 {{% notice tip %}}
-You acquire multiple times, the last one will prevail. If you need to re-acquire, simply send
-another `Acquire` request.
+You can acquire multiple times, the last one will prevail. If you need to re-acquire, simply send another `Acquire` request.
 {{% /notice %}}
 
 ## Query
