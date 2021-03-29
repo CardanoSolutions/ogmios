@@ -6,7 +6,8 @@ import {
   ledgerTip,
   nonMyopicMemberRewards,
   proposedProtocolParameters,
-  stakeDistribution
+  stakeDistribution,
+  utxo
 } from '@src/StateQuery'
 import {
   Hash16,
@@ -65,6 +66,9 @@ describe('Local state queries', () => {
 
         const stakeDistribution = await client.stakeDistribution()
         expect(Object.values(stakeDistribution)[0].stake).toBeDefined()
+
+        const utxoSet = await client.utxo(['addr1v9f9pvusgs840v80dgl83humjsda6ynygsgdsjlggxknt8g92v6ap'])
+        expect(utxoSet[0]).toBeDefined()
 
         await client.release()
       })
@@ -132,6 +136,18 @@ describe('Local state queries', () => {
         const pool = Object.values(poolDistribution)[0]
         expect(pool.stake).toBeDefined()
         expect(pool.vrf).toBeDefined()
+      })
+    })
+    describe('utxo', () => {
+      // Todo: Enable
+      // it('fetches the complete UTxO set when no addresses are provided', async () => {
+      //   const utxoSet = await utxo()
+      //   console.log(utxoSet)
+      //   expect(utxoSet[0]).toBeDefined()
+      // })
+      it('fetches the UTxO for the given addresses', async () => {
+        const utxoSet = await utxo(['addr1v9f9pvusgs840v80dgl83humjsda6ynygsgdsjlggxknt8g92v6ap'])
+        expect(utxoSet[0]).toBeDefined()
       })
     })
   })
