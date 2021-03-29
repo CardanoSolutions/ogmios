@@ -7,7 +7,7 @@ import { createPointFromCurrentTip } from '../util'
 import { findIntersect, Intersection } from './findIntersect'
 
 export interface ChainSyncClient {
-  findIntersect: (points: Point[]) => Promise<Intersection>
+  findIntersect: (points: Point[]) => ReturnType<typeof findIntersect>
   initialIntersection: Intersection
   on: (messageHandlers: {
     rollBackward: (point: Point, tip: Tip) => void

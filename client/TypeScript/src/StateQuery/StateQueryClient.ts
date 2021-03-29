@@ -1,18 +1,10 @@
 import WebSocket from 'isomorphic-ws'
 import {
   Address,
-  Bound,
-  Epoch,
   Hash16,
   Lovelace,
-  NonMyopicMemberRewards,
   Ogmios,
-  Point,
-  PoolDistribution,
-  ProtocolParametersShelley,
-  Tip,
-  Utxo,
-  UtxoMary
+  Point
 } from '../schema'
 import { createConnectionString, ConnectionConfig } from '../Connection'
 import { baseRequest } from '../Request'
@@ -34,16 +26,16 @@ import {
 import { createPointFromCurrentTip } from '../util'
 
 export interface StateQueryClient {
-  currentEpoch: () => Promise<Epoch>
-  currentProtocolParameters: () => Promise<ProtocolParametersShelley>
-  eraStart: () => Promise<Bound>
-  ledgerTip: () => Promise<Tip>
-  nonMyopicMemberRewards: (input: Lovelace[] | Hash16[]) => Promise<NonMyopicMemberRewards>
+  currentEpoch: () => ReturnType<typeof currentEpoch>
+  currentProtocolParameters: () => ReturnType<typeof currentProtocolParameters>
+  eraStart: () => ReturnType<typeof eraStart>
+  ledgerTip: () => ReturnType<typeof ledgerTip>
+  nonMyopicMemberRewards: (input: Lovelace[] | Hash16[]) => ReturnType<typeof nonMyopicMemberRewards>
   point: Point
-  proposedProtocolParameters: () => Promise<{[k: string]: ProtocolParametersShelley}>
+  proposedProtocolParameters: () => ReturnType<typeof proposedProtocolParameters>
   release: () => Promise<void>
-  stakeDistribution: () => Promise<PoolDistribution>
-  utxo: (addresses?: Address[]) => Promise<(Utxo | UtxoMary)[]>
+  stakeDistribution: () => ReturnType<typeof stakeDistribution>
+  utxo: (addresses?: Address[]) => ReturnType<typeof utxo>
 }
 
 export const createStateQueryClient = async (options?: {
