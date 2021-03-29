@@ -9,6 +9,8 @@ import {
   Hash16, Point
 } from '@src/schema'
 
+const mirror = { reflectMe: 'someValue' }
+
 describe('ChainSync', () => {
   it('selects the tip as the intersection if no point provided', async () => {
     const client = await createChainSyncClient()
@@ -30,20 +32,23 @@ describe('ChainSync', () => {
   })
   it('accepts message handlers for roll back and roll forward messages', async () => {
     const rollbackPoints: Point[] = []
+    let reflectedValue = ''
     const blocks: Block[] = []
     const client = await createChainSyncClient()
     await client.findIntersect(['origin'])
     client.on({
-      rollBackward: (point) => {
+      rollBackward: ({ point, reflection }) => {
         rollbackPoints.push(point)
-        client.requestNext()
+        reflectedValue = reflection.reflectMe as string
+        client.requestNext({ mirror })
       },
-      rollForward: (block) => {
+      rollForward: ({ block, reflection }) => {
         blocks.push(block)
-        client.requestNext()
+        reflectedValue = reflection.reflectMe as string
+        client.requestNext({ mirror })
       }
     })
-    client.requestNext()
+    client.requestNext({ mirror })
     await delay(100)
     let firstBlockHash: Hash16
     if ('byron' in blocks[0]) {
@@ -61,6 +66,7 @@ describe('ChainSync', () => {
     }
     expect(firstBlockHash).toBeDefined()
     expect(rollbackPoints.length).toBe(1)
+    expect(reflectedValue).toBe(mirror.reflectMe)
     await client.shutdown()
   })
 })

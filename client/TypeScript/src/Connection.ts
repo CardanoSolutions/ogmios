@@ -11,6 +11,8 @@ export interface InteractionContext {
   closeOnCompletion?: boolean
 }
 
+export type Mirror = { [k: string]: unknown }
+
 export const createConnectionString = (connection?: ConnectionConfig) =>
   `ws://${connection?.host || 'localhost'}:${connection?.port || 1337}`
 

@@ -1,6 +1,6 @@
 import WebSocket from 'isomorphic-ws'
 import { Block, Ogmios, Point, Tip } from '../schema'
-import { createConnectionString, ConnectionConfig } from '../Connection'
+import { createConnectionString, ConnectionConfig, Mirror } from '../Connection'
 import { UnknownResultError } from '../errors'
 import { baseRequest } from '../Request'
 import { createPointFromCurrentTip } from '../util'
@@ -10,10 +10,18 @@ export interface ChainSyncClient {
   findIntersect: (points: Point[]) => ReturnType<typeof findIntersect>
   initialIntersection: Intersection
   on: (messageHandlers: {
-    rollBackward: (point: Point, tip: Tip) => void
-    rollForward: (block: Block, tip: Tip) => void
+    rollBackward: (response: {
+      point: Point,
+      tip: Tip,
+      reflection: Mirror
+    }) => void
+    rollForward: (response: {
+      block: Block,
+      tip: Tip,
+      reflection: Mirror
+    }) => void
   }) => void
-  requestNext: () => void
+  requestNext: (options?: { mirror?: Mirror }) => void
   shutdown: () => Promise<void>
 }
 
@@ -42,25 +50,28 @@ export const createChainSyncClient = async (options?: {
             const response: Ogmios['RequestNextResponse'] = JSON.parse(message)
             if (response.methodname === 'RequestNext') {
               if ('RollBackward' in response.result) {
-                messageHandlers.rollBackward(
-                  response.result.RollBackward.point,
-                  response.result.RollBackward.tip
-                )
+                messageHandlers.rollBackward({
+                  point: response.result.RollBackward.point,
+                  tip: response.result.RollBackward.tip,
+                  reflection: response.reflection
+                })
               } else if ('RollForward' in response.result) {
-                messageHandlers.rollForward(
-                  response.result.RollForward.block,
-                  response.result.RollForward.tip
-                )
+                messageHandlers.rollForward({
+                  block: response.result.RollForward.block,
+                  tip: response.result.RollForward.tip,
+                  reflection: response.reflection
+                })
               } else {
                 throw new UnknownResultError(response.result)
               }
             }
           })
         },
-        requestNext () {
+        requestNext (options) {
           socket.send(JSON.stringify({
             ...baseRequest,
-            methodname: 'RequestNext'
+            methodname: 'RequestNext',
+            mirror: options?.mirror
           } as Ogmios['RequestNext']))
         },
         shutdown: () => new Promise(resolve => {
