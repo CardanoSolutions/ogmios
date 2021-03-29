@@ -8,6 +8,7 @@
     { "type": "object"
     , "description": "Request next block from the current cardano-node's cursor."
     , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -39,6 +40,7 @@
     { "type": "object"
     , "description": "Request next block from the current cardano-node's cursor."
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -101,6 +103,7 @@
     { "type": "object"
     , "description": "Ask cardano-node to find an intersection between its local chain and the given points."
     , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -136,6 +139,7 @@
   , "FindIntersectResponse":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -199,6 +203,7 @@
     { "type": "object"
     , "description": "Submit a signed and serialized Utxo transaction to the network."
     , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -238,6 +243,7 @@
   , "SubmitTxResponse":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -287,6 +293,7 @@
     { "type": "object"
     , "description": "Acquire a point on chain from which run queries."
     , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -322,6 +329,7 @@
     { "type": "object"
     , "description": "Respoonse to an 'Acquire' request."
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -373,8 +381,8 @@
             }
           ]
         }
-      , "mirror":
-        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
         }
       }
     }
@@ -383,6 +391,7 @@
     { "type": "object"
     , "description": "Release a point on chain previously acquired."
     , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -414,6 +423,7 @@
     { "type": "object"
     , "description": "Respoonse to a 'Release' request."
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -435,8 +445,8 @@
         { "type": "string"
         , "enum": ["Released"]
         }
-      , "mirror":
-        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
         }
       }
     }
@@ -445,6 +455,7 @@
     { "type": "object"
     , "description": "Query the current ledger tip."
     , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -555,6 +566,7 @@
   , "QueryResponse[eraStart]":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -587,6 +599,7 @@
   , "QueryResponse[ledgerTip]":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -620,6 +633,7 @@
   , "QueryResponse[currentEpoch]":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -653,6 +667,7 @@
   , "QueryResponse[nonMyopicMemberRewards]":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -686,6 +701,7 @@
   , "QueryResponse[delegationsAndRewards]":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -719,6 +735,7 @@
   , "QueryResponse[currentProtocolParameters]":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -752,6 +769,7 @@
   , "QueryResponse[proposedProtocolParameters]":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -789,6 +807,7 @@
   , "QueryResponse[stakeDistribution]":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -822,6 +841,7 @@
   , "QueryResponse[utxo]":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"
@@ -863,6 +883,7 @@
   , "QueryResponse[genesisConfig]":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
     , "properties":
       { "type":
         { "type": "string"

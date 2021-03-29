@@ -17,16 +17,12 @@ import Cardano.Network.Protocol.NodeToClient
     ( Block )
 import Cardano.Slotting.Slot
     ( EpochNo (..) )
-import Control.Monad
-    ( void, (>=>) )
 import Data.Aeson
-    ( parseJSON )
+    ( parseJSON, toJSON )
 import Data.Aeson.QQ.Simple
     ( aesonQQ )
 import Data.Maybe
     ( fromJust )
-import Data.Proxy
-    ( Proxy (..) )
 import Data.SOP.Strict
     ( NS (..) )
 import Data.Type.Equality
@@ -136,7 +132,7 @@ import Test.QuickCheck.Arbitrary.Generic
 import Test.Shelley.Spec.Ledger.Serialisation.EraIndepGenerators
     ( genPParams )
 import Type.Reflection
-    ( Typeable, typeRep )
+    ( typeRep )
 
 import Test.Consensus.Cardano.Generators
     ()
@@ -285,7 +281,10 @@ spec = do
             "ogmios.wsp.json#/properties/ReleaseResponse"
 
 instance Arbitrary a => Arbitrary (Wsp.Response a) where
-    arbitrary = Wsp.Response Nothing <$> arbitrary
+    arbitrary = oneof
+        [ Wsp.Response Nothing <$> arbitrary
+        , Wsp.Response (Just $ toJSON @Int 14) <$> arbitrary
+        ]
 
 instance Arbitrary (FindIntersectResponse Block) where
     shrink = genericShrink
