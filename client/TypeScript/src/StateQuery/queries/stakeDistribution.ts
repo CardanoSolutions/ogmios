@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid'
 import { EraMismatch, Ogmios, PoolDistribution } from '../../schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
 import { baseRequest } from '../../Request'
@@ -12,8 +13,10 @@ const isPoolDistribution = (result: Ogmios['QueryResponse[stakeDistribution]']['
 export const stakeDistribution = (context?: InteractionContext): Promise<PoolDistribution> => {
   return ensureSocket<PoolDistribution>((socket) => {
     return new Promise((resolve, reject) => {
+      const requestId = nanoid(5)
       socket.once('message', (message: string) => {
         const response: Ogmios['QueryResponse[stakeDistribution]'] = JSON.parse(message)
+        if (response.reflection.requestId !== requestId) { return }
         if (response.result === 'QueryUnavailableInCurrentEra') {
           return reject(new QueryUnavailableInCurrentEraError('stakeDistribution'))
         } else if (isPoolDistribution(response.result)) {
@@ -31,7 +34,8 @@ export const stakeDistribution = (context?: InteractionContext): Promise<PoolDis
         methodname: 'Query',
         args: {
           query: 'stakeDistribution'
-        }
+        },
+        mirror: { requestId }
       } as Ogmios['Query']))
     })
   },

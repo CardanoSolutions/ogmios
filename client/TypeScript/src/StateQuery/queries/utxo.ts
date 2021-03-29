@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid'
 import {
   Address,
   EraMismatch,
@@ -28,18 +29,20 @@ const isArrayOfUtxo = (result: Ogmios['QueryResponse[utxo]']['result']): result 
 export const utxo = (addresses?: Address[], context?: InteractionContext): Promise<(Utxo | UtxoMary)[]> => {
   return ensureSocket<(Utxo | UtxoMary)[]>((socket) => {
     return new Promise((resolve, reject) => {
+      const requestId = nanoid(5)
       socket.once('message', (message: string) => {
-        const { result }: Ogmios['QueryResponse[utxo]'] = JSON.parse(message)
-        if (result === 'QueryUnavailableInCurrentEra') {
+        const response: Ogmios['QueryResponse[utxo]'] = JSON.parse(message)
+        if (response.reflection.requestId !== requestId) { return }
+        if (response.result === 'QueryUnavailableInCurrentEra') {
           return reject(new QueryUnavailableInCurrentEraError('utxo'))
-        } else if (isEraMismatch(result)) {
-          const { eraMismatch } = result
+        } else if (isEraMismatch(response.result)) {
+          const { eraMismatch } = response.result
           const { ledgerEra, queryEra } = eraMismatch
           return reject(new EraMismatchError(queryEra, ledgerEra))
-        } else if (isArrayOfUtxo(result)) {
-          return resolve(result)
+        } else if (isArrayOfUtxo(response.result)) {
+          return resolve(response.result)
         } else {
-          return reject(new UnknownResultError(result))
+          return reject(new UnknownResultError(response.result))
         }
       })
       socket.send(JSON.stringify({
@@ -47,7 +50,8 @@ export const utxo = (addresses?: Address[], context?: InteractionContext): Promi
         methodname: 'Query',
         args: {
           query: addresses !== undefined ? { utxo: addresses } : 'utxo'
-        }
+        },
+        mirror: { requestId }
       } as Ogmios['Query']))
     })
   },

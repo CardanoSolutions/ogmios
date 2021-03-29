@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid'
 import { EraMismatch, Ogmios, ProtocolParametersShelley } from '../../schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError } from '../../errors'
 import { baseRequest } from '../../Request'
@@ -14,9 +15,10 @@ const isObjectOfProtocolParametersShelley = (result: Ogmios['QueryResponse[propo
 export const proposedProtocolParameters = (context?: InteractionContext): Promise<ObjectOfProtocolParametersShelley> => {
   return ensureSocket<{[k: string]: ProtocolParametersShelley}>((socket) => {
     return new Promise((resolve, reject) => {
+      const requestId = nanoid(5)
       socket.once('message', (message: string) => {
         const response: Ogmios['QueryResponse[proposedProtocolParameters]'] = JSON.parse(message)
-        if (response === undefined) return
+        if (response.reflection.requestId !== requestId) { return }
         if (response.result === 'QueryUnavailableInCurrentEra') {
           return reject(new QueryUnavailableInCurrentEraError('proposedProtocolParameters'))
         } else if (isObjectOfProtocolParametersShelley(response.result)) {
@@ -34,7 +36,8 @@ export const proposedProtocolParameters = (context?: InteractionContext): Promis
         methodname: 'Query',
         args: {
           query: 'proposedProtocolParameters'
-        }
+        },
+        mirror: { requestId }
       } as Ogmios['Query']))
     })
   },

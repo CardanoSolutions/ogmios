@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid'
 import { EraMismatch, Hash16, Ogmios, Point, Slot } from '../../schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
 import { baseRequest } from '../../Request'
@@ -12,8 +13,10 @@ const isNonOriginPoint = (result: {slot: Slot, hash: Hash16}): result is {slot: 
 export const ledgerTip = (context?: InteractionContext): Promise<Point> => {
   return ensureSocket<Point>((socket) => {
     return new Promise((resolve, reject) => {
+      const requestId = nanoid(5)
       socket.once('message', (message: string) => {
         const response: Ogmios['QueryResponse[ledgerTip]'] = JSON.parse(message)
+        if (response.reflection.requestId !== requestId) { return }
         if (response.result === 'QueryUnavailableInCurrentEra') {
           return reject(new QueryUnavailableInCurrentEraError('ledgerTip'))
         } else if (response.result === 'origin') {
@@ -33,7 +36,8 @@ export const ledgerTip = (context?: InteractionContext): Promise<Point> => {
         methodname: 'Query',
         args: {
           query: 'ledgerTip'
-        }
+        },
+        mirror: { requestId }
       } as Ogmios['Query']))
     })
   },

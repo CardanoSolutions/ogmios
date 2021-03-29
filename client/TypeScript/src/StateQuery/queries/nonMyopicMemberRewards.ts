@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid'
 import { EraMismatch, Hash16, Lovelace, NonMyopicMemberRewards, Ogmios } from '../../schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
 import { baseRequest } from '../../Request'
@@ -14,8 +15,10 @@ const isNonMyopicMemberRewards = (result: Ogmios['QueryResponse[nonMyopicMemberR
 export const nonMyopicMemberRewards = (input: (Lovelace | Hash16)[], context?: InteractionContext): Promise<NonMyopicMemberRewards> => {
   return ensureSocket<NonMyopicMemberRewards>((socket) => {
     return new Promise((resolve, reject) => {
+      const requestId = nanoid(5)
       socket.once('message', (message: string) => {
         const response: Ogmios['QueryResponse[nonMyopicMemberRewards]'] = JSON.parse(message)
+        if (response.reflection.requestId !== requestId) { return }
         if (response.result === 'QueryUnavailableInCurrentEra') {
           return reject(new QueryUnavailableInCurrentEraError('nonMyopicMemberRewards'))
         } else if (isNonMyopicMemberRewards(response.result)) {
@@ -35,7 +38,8 @@ export const nonMyopicMemberRewards = (input: (Lovelace | Hash16)[], context?: I
           query: {
             nonMyopicMemberRewards: input
           }
-        }
+        },
+        mirror: { requestId }
       } as Ogmios['Query']))
     })
   },

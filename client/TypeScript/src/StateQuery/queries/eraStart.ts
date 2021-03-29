@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid'
 import { Ogmios, Bound } from '../../schema'
 import { QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
 import { baseRequest } from '../../Request'
@@ -11,8 +12,10 @@ const isBound = (result: Ogmios['QueryResponse[eraStart]']['result']): result is
 export const eraStart = (context?: InteractionContext): Promise<Bound> => {
   return ensureSocket<Bound>((socket) => {
     return new Promise((resolve, reject) => {
+      const requestId = nanoid(5)
       socket.once('message', (message: string) => {
         const response: Ogmios['QueryResponse[eraStart]'] = JSON.parse(message)
+        if (response.reflection.requestId !== requestId) { return }
         if (response.result === 'QueryUnavailableInCurrentEra') {
           return reject(new QueryUnavailableInCurrentEraError('ledgerTip'))
         } else if (isBound(response.result)) {
@@ -26,7 +29,8 @@ export const eraStart = (context?: InteractionContext): Promise<Bound> => {
         methodname: 'Query',
         args: {
           query: 'eraStart'
-        }
+        },
+        mirror: { requestId }
       } as Ogmios['Query']))
     })
   },

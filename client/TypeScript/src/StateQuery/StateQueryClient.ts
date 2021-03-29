@@ -1,4 +1,5 @@
 import WebSocket from 'isomorphic-ws'
+import { nanoid } from 'nanoid'
 import {
   Address,
   Hash16,
@@ -50,8 +51,10 @@ export const createStateQueryClient = async (options?: {
       const point = options?.point !== undefined
         ? options.point
         : await createPointFromCurrentTip(context)
+      const requestId = nanoid(5)
       socket.once('message', (message: string) => {
         const response: Ogmios['AcquireResponse'] = JSON.parse(message)
+        if (response.reflection.requestId !== requestId) { return }
         if ('AcquireSuccess' in response.result) {
           return resolve({
             currentEpoch: currentEpoch.bind(this, context),
@@ -63,9 +66,11 @@ export const createStateQueryClient = async (options?: {
             proposedProtocolParameters: proposedProtocolParameters.bind(this, context),
             release: () => {
               return new Promise((resolve, reject) => {
+                const releaseRequestId = nanoid(5)
                 socket.once('message', (message: string) => {
                   socket.once('close', () => {
                     const response: Ogmios['ReleaseResponse'] = JSON.parse(message)
+                    if (response.reflection.requestId !== releaseRequestId) { return }
                     if (response.result === 'Released') {
                       resolve()
                     } else {
@@ -76,7 +81,8 @@ export const createStateQueryClient = async (options?: {
                 })
                 socket.send(JSON.stringify({
                   ...baseRequest,
-                  methodname: 'Release'
+                  methodname: 'Release',
+                  mirror: { requestId: releaseRequestId }
                 } as Ogmios['Release']))
               })
             },
@@ -108,9 +114,8 @@ export const createStateQueryClient = async (options?: {
       socket.send(JSON.stringify({
         ...baseRequest,
         methodname: 'Acquire',
-        args: {
-          point
-        }
+        args: { point },
+        mirror: { requestId }
       } as Ogmios['Acquire']))
     })
   })

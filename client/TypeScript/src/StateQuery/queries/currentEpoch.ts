@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid'
 import { Ogmios, Epoch, EraMismatch } from '../../schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
 import { baseRequest } from '../../Request'
@@ -9,8 +10,10 @@ const isEraMismatch = (result: Ogmios['QueryResponse[currentEpoch]']['result']):
 export const currentEpoch = (context?: InteractionContext): Promise<Epoch> => {
   return ensureSocket<Epoch>((socket) => {
     return new Promise((resolve, reject) => {
+      const requestId = nanoid(5)
       socket.once('message', (message: string) => {
         const response: Ogmios['QueryResponse[currentEpoch]'] = JSON.parse(message)
+        if (response.reflection.requestId !== requestId) { return }
         if (response.result === 'QueryUnavailableInCurrentEra') {
           return reject(new QueryUnavailableInCurrentEraError('currentEpoch'))
         } else if (typeof response.result === 'number') {
@@ -28,7 +31,8 @@ export const currentEpoch = (context?: InteractionContext): Promise<Epoch> => {
         methodname: 'Query',
         args: {
           query: 'currentEpoch'
-        }
+        },
+        mirror: { requestId }
       } as Ogmios['Query']))
     })
   },
