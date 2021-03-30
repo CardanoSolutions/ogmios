@@ -721,7 +721,11 @@
         }
       , "result":
         { "oneOf":
-          [ { "$ref": "#/definitions/DelegationsAndRewards" }
+          [ { "type": "object"
+            , "additionalProperties": { "$ref": "#/definitions/DelegationsAndRewards" }
+            , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
+            , "title": "DelegationsAndRewards"
+            }
           , { "$ref": "#/definitions/EraMismatch" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
@@ -2025,19 +2029,12 @@
       ]
     }
 
-  , "Delegations":
-    { "type": "object"
-    , "additionalProperties": { "$ref": "#/definitions/PoolId" }
-    , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
-    }
-
   , "DelegationsAndRewards":
     { "type": "object"
     , "additionalProperties": false
-    , "required": ["delegations", "rewards"]
     , "properties":
-      { "delegations": { "$ref": "#/definitions/Delegations" }
-      , "rewards": { "$ref": "#/definitions/Rewards" }
+      { "delegate": { "$ref": "#/definitions/PoolId" }
+      , "rewards": { "$ref": "#/definitions/Lovelace" }
       }
     }
 
