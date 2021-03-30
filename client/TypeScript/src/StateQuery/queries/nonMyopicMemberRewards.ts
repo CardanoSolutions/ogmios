@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import { EraMismatch, Hash16, Lovelace, NonMyopicMemberRewards, Ogmios } from '../../schema'
+import { EraMismatch, Hash16, Lovelace, NonMyopicMemberRewards1, Ogmios } from '../../schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
 import { baseRequest } from '../../Request'
 import { ensureSocket, InteractionContext } from '../../Connection'
@@ -7,13 +7,13 @@ import { ensureSocket, InteractionContext } from '../../Connection'
 const isEraMismatch = (result: Ogmios['QueryResponse[nonMyopicMemberRewards]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
 
-const isNonMyopicMemberRewards = (result: Ogmios['QueryResponse[nonMyopicMemberRewards]']['result']): result is NonMyopicMemberRewards =>
+const isNonMyopicMemberRewards = (result: Ogmios['QueryResponse[nonMyopicMemberRewards]']['result']): result is NonMyopicMemberRewards1 =>
   typeof Object.values(
-    Object.values(result as NonMyopicMemberRewards)[0]
+    Object.values(result as NonMyopicMemberRewards1)[0]
   )[0] === 'number'
 
-export const nonMyopicMemberRewards = (input: (Lovelace | Hash16)[], context?: InteractionContext): Promise<NonMyopicMemberRewards> => {
-  return ensureSocket<NonMyopicMemberRewards>((socket) => {
+export const nonMyopicMemberRewards = (input: (Lovelace | Hash16)[], context?: InteractionContext): Promise<NonMyopicMemberRewards1> => {
+  return ensureSocket<NonMyopicMemberRewards1>((socket) => {
     return new Promise((resolve, reject) => {
       const requestId = nanoid(5)
       socket.once('message', (message: string) => {

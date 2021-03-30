@@ -3,7 +3,8 @@ import {
   Address,
   EraMismatch,
   Ogmios,
-  Utxo,
+  Utxo1,
+  Utxo2,
   UtxoMary
 } from '../../schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
@@ -13,21 +14,21 @@ import { ensureSocket, InteractionContext } from '../../Connection'
 const isEraMismatch = (result: Ogmios['QueryResponse[utxo]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
 
-const isArrayOfUtxo = (result: Ogmios['QueryResponse[utxo]']['result']): result is (Utxo | UtxoMary)[] => {
+const isArrayOfUtxo = (result: Ogmios['QueryResponse[utxo]']['result']): result is Utxo1 => {
   if (!Array.isArray(result)) {
     return false
   } else if (Array.isArray(result) && result.length === 0) {
     return true
   }
-  const item = result[0] as (Utxo | UtxoMary)
+  const item = result[0] as (Utxo2 | UtxoMary)
   return Array.isArray(item) && item.length === 0 ||
     'index' in item[0] ||
     ('index' in item[0] &&
       (typeof item[1].value === 'number' || typeof item[1].value.coins === 'number'))
 }
 
-export const utxo = (addresses?: Address[], context?: InteractionContext): Promise<(Utxo | UtxoMary)[]> => {
-  return ensureSocket<(Utxo | UtxoMary)[]>((socket) => {
+export const utxo = (addresses?: Address[], context?: InteractionContext): Promise<Utxo1> => {
+  return ensureSocket<Utxo1>((socket) => {
     return new Promise((resolve, reject) => {
       const requestId = nanoid(5)
       socket.once('message', (message: string) => {
