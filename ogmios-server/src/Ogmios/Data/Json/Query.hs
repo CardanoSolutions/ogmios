@@ -75,6 +75,7 @@ import Ouroboros.Network.Point
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
+import qualified Data.Map.Merge.Strict as Map
 
 import qualified Cardano.Crypto.Hash.Class as CC
 
@@ -104,19 +105,29 @@ encodeBound bound = encodeObject
     , ( "epoch", encodeEpochNo (boundEpoch bound) )
     ]
 
-encodeDelegations
-    :: Delegations crypto
-    -> Json
-encodeDelegations =
-    encodeMap Shelley.stringifyCredential Shelley.encodePoolId
-
 encodeDelegationsAndRewards
     :: (Delegations crypto, RewardAccounts crypto)
     -> Json
-encodeDelegationsAndRewards (dlg, rwd) = encodeObject
-    [ ( "delegations", encodeDelegations dlg )
-    , ( "rewards", encodeRewardAccounts rwd )
-    ]
+encodeDelegationsAndRewards (dlg, rwd)
+    = encodeMap Shelley.stringifyCredential id
+    $ Map.merge whenDlgMissing whenRwdMissing whenBothPresent dlg rwd
+  where
+    whenDlgMissing = Map.mapMaybeMissing
+        (\_ v -> Just $ encodeObject
+            [ ( "delegate", Shelley.encodePoolId v )
+            ]
+        )
+    whenRwdMissing = Map.mapMaybeMissing
+        (\_ v -> Just $ encodeObject
+            [ ( "rewards", Shelley.encodeCoin v )
+            ]
+        )
+    whenBothPresent = Map.zipWithAMatched
+        (\_ x y -> pure $ encodeObject
+            [ ( "delegate", Shelley.encodePoolId x )
+            , ( "rewards", Shelley.encodeCoin y )
+            ]
+        )
 
 encodeEraMismatch
     :: EraMismatch
@@ -167,12 +178,6 @@ encodePoint = \case
           , encodeOneEraHash (blockPointHash x)
           )
         ]
-
-encodeRewardAccounts
-    :: RewardAccounts crypto
-    -> Json
-encodeRewardAccounts =
-    encodeMap Shelley.stringifyCredential Shelley.encodeCoin
 
 --
 -- Parsers
