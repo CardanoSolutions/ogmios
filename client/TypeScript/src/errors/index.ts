@@ -1,5 +1,6 @@
 export * from './AcquirePointNotOnChainError'
 export * from './AcquirePointTooOldError'
+export * from './WebSocketClosed'
 export * from './EraMismatchError'
 export * from './IntersectionNotFoundError'
 export * from './TipIsOriginError'

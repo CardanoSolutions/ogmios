@@ -3,7 +3,7 @@ import { Block, Ogmios, Point, Tip } from '../schema'
 import { createConnectionString, ConnectionConfig, Mirror } from '../Connection'
 import { UnknownResultError } from '../errors'
 import { baseRequest } from '../Request'
-import { createPointFromCurrentTip } from '../util'
+import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
 import { findIntersect, Intersection } from './findIntersect'
 
 export interface ChainSyncClient {
@@ -40,10 +40,13 @@ export const createChainSyncClient = async (options?: {
         }
       )
       return resolve({
-        findIntersect: (points) => findIntersect(points, {
-          socket,
-          closeOnCompletion: false
-        }),
+        findIntersect: (points) => {
+          ensureSocketIsOpen(socket)
+          return findIntersect(points, {
+            socket,
+            closeOnCompletion: false
+          })
+        },
         initialIntersection,
         on (messageHandlers) {
           socket.on('message', (message: string) => {
@@ -68,6 +71,7 @@ export const createChainSyncClient = async (options?: {
           })
         },
         requestNext (options) {
+          ensureSocketIsOpen(socket)
           socket.send(JSON.stringify({
             ...baseRequest,
             methodname: 'RequestNext',
@@ -75,6 +79,7 @@ export const createChainSyncClient = async (options?: {
           } as Ogmios['RequestNext']))
         },
         shutdown: () => new Promise(resolve => {
+          ensureSocketIsOpen(socket)
           socket.once('close', resolve)
           socket.close()
         })

@@ -40,6 +40,13 @@ describe('Local state queries', () => {
       await expect(createWithOldPoint).rejects
     })
 
+    it('rejects method calls after release', async () => {
+      const client = await createStateQueryClient()
+      await client.release()
+      const run = () =>  client.currentEpoch()
+      await expect(run).rejects
+    })
+
     describe('calling queries from the client', () => {
       it('exposes the queries, uses a single context, and should be released when done', async () => {
         const client = await createStateQueryClient()

@@ -1,3 +1,4 @@
+import WebSocket from 'isomorphic-ws'
 import { InteractionContext } from './Connection'
 import {
   Block,
@@ -8,7 +9,7 @@ import {
   Point
 } from './schema'
 import { findIntersect } from './ChainSync'
-import { TipIsOriginError } from './errors'
+import { WebSocketClosed, TipIsOriginError } from './errors'
 
 export const createPointFromCurrentTip = async (context?: InteractionContext): Promise<Point> => {
   const { tip } = await findIntersect(['origin'], context)
@@ -19,6 +20,12 @@ export const createPointFromCurrentTip = async (context?: InteractionContext): P
     hash: tip.hash,
     slot: tip.slot
   } as Point
+}
+
+export const ensureSocketIsOpen = (socket: WebSocket) => {
+  if (socket.readyState !== socket.OPEN) {
+    throw new WebSocketClosed()
+  }
 }
 
 export const isAllegraBlock = (block: Block): block is { allegra: BlockAllegra } =>

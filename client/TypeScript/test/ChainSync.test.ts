@@ -30,7 +30,13 @@ describe('ChainSync', () => {
     expect(intersection.tip).toBeDefined()
     await client.shutdown()
   })
-  it('accepts message handlers for roll back and roll forward messages', async () => {
+  it('rejects method calls after shutdown', async () => {
+    const client = await createChainSyncClient()
+    await client.shutdown()
+    const run = () =>  client.findIntersect(['origin'])
+    await expect(run).rejects
+  })
+  it('accepts message handlers for roll back and roll forward messages', async (cb) => {
     const rollbackPoints: Point[] = []
     let reflectedValue = ''
     const blocks: Block[] = []
@@ -39,16 +45,19 @@ describe('ChainSync', () => {
     client.on({
       rollBackward: ({ point, reflection }) => {
         rollbackPoints.push(point)
-        reflectedValue = reflection.reflectMe as string
-        client.requestNext({ mirror })
+        client.requestNext({ mirror: reflection })
       },
-      rollForward: ({ block, reflection }) => {
+      rollForward: async ({ block, reflection }) => {
         blocks.push(block)
-        reflectedValue = reflection.reflectMe as string
-        client.requestNext({ mirror })
+        if (reflection.count < 10) {
+          client.requestNext({ mirror: { count: reflection.count as number + 1 }})
+        } else {
+          await client.shutdown()
+          cb()
+        }
       }
     })
-    client.requestNext({ mirror })
+    client.requestNext({ mirror: { count: 1 } })
     await delay(100)
     let firstBlockHash: Hash16
     if ('byron' in blocks[0]) {
@@ -67,6 +76,5 @@ describe('ChainSync', () => {
     expect(firstBlockHash).toBeDefined()
     expect(rollbackPoints.length).toBe(1)
     expect(reflectedValue).toBe(mirror.reflectMe)
-    await client.shutdown()
   })
 })

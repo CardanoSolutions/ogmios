@@ -24,7 +24,7 @@ import {
   stakeDistribution,
   utxo
 } from './queries'
-import { createPointFromCurrentTip } from '../util'
+import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
 
 export interface StateQueryClient {
   currentEpoch: () => ReturnType<typeof currentEpoch>
@@ -46,6 +46,7 @@ export const createStateQueryClient = async (options?: {
   return new Promise((resolve, reject) => {
     const socket = new WebSocket(createConnectionString(options?.connection))
     const context = { socket, closeOnCompletion: false }
+
     socket.once('error', reject)
     socket.once('open', async () => {
       const point = options?.point !== undefined
@@ -57,14 +58,33 @@ export const createStateQueryClient = async (options?: {
         if (response.reflection.requestId !== requestId) { return }
         if ('AcquireSuccess' in response.result) {
           return resolve({
-            currentEpoch: currentEpoch.bind(this, context),
-            currentProtocolParameters: currentProtocolParameters.bind(this, context),
-            eraStart: eraStart.bind(this, context),
-            ledgerTip: ledgerTip.bind(this, context),
-            nonMyopicMemberRewards: (input) => nonMyopicMemberRewards(input, context),
+            currentEpoch: () => {
+              ensureSocketIsOpen(socket)
+              return currentEpoch(context)
+            },
+            currentProtocolParameters: () => {
+              ensureSocketIsOpen(socket)
+              return currentProtocolParameters(context)
+            },
+            eraStart: () => {
+              ensureSocketIsOpen(socket)
+              return eraStart(context)
+            },
+            ledgerTip: () => {
+              ensureSocketIsOpen(socket)
+              return ledgerTip(context)
+            },
+            nonMyopicMemberRewards: (input) => {
+              ensureSocketIsOpen(socket)
+              return nonMyopicMemberRewards(input, context)
+            },
             point,
-            proposedProtocolParameters: proposedProtocolParameters.bind(this, context),
+            proposedProtocolParameters: () => {
+              ensureSocketIsOpen(socket)
+              return proposedProtocolParameters(context)
+            },
             release: () => {
+              ensureSocketIsOpen(socket)
               return new Promise((resolve, reject) => {
                 const releaseRequestId = nanoid(5)
                 socket.once('message', (message: string) => {
@@ -86,8 +106,14 @@ export const createStateQueryClient = async (options?: {
                 } as Ogmios['Release']))
               })
             },
-            stakeDistribution: stakeDistribution.bind(this, context),
-            utxo: (addresses) => utxo(addresses, context)
+            stakeDistribution: () => {
+              ensureSocketIsOpen(socket)
+              return stakeDistribution(context)
+            },
+            utxo: (addresses) => {
+              ensureSocketIsOpen(socket)
+              return utxo(addresses, context)
+            }
           } as StateQueryClient)
         } else {
           socket.once('close', () => {
