@@ -25,18 +25,21 @@ export const ensureSocket = async <T>(
       resolve(send(context.socket))
     } else {
       const socket = new WebSocket(createConnectionString(context?.connection))
+      const complete = (func: () => void) => {
+        if (!context?.closeOnCompletion) {
+          socket.once('close', func)
+          socket.close()
+        } else {
+          func()
+        }
+      }
       socket.on('error', reject)
       socket.on('open', async () => {
         try {
           const result = await send(socket)
-          if (!context?.closeOnCompletion) {
-            socket.once('close', resolve.bind(this, result))
-            socket.close()
-          } else {
-            resolve(result)
-          }
+          return complete(resolve.bind(this, result))
         } catch (error) {
-          reject(error)
+          return complete(reject.bind(this, error))
         }
       })
     }
