@@ -7,7 +7,7 @@ compiler: ghc-8.10.4 # Simply for reference, already inferred from the resolver.
 ghc-options: {"$locals": -ddump-to-file -ddump-hi}
 
 packages:
-- ogmios-server
+- .
 - modules/cardano-client
 - modules/fast-bech32
 - modules/git-th

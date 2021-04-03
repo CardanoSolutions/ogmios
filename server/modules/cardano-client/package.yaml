@@ -6,8 +6,8 @@ github:              "KtorZ/cardano-ogmios"
 license:             MPL-2.0
 author:              "KtorZ <matthias.benkort@gmail.com>"
 maintainer:          "matthias.benkort@gmail.com"
-copyright:           "2020 KtorZ"
-description:         Please see the README on GitHub at <https://github.com/KtorZ/ogmios>
+copyright:           "2020-2021 KtorZ"
+description:         Please see the README on GitHub at <https://github.com/KtorZ/cardano-ogmios/tree/master/server/modules/cardano-client>
 synopsis:            Utilities to build a cardano client using the Ouroboros mini-protocols
 category:            Cardano
 

@@ -7,12 +7,12 @@ logic.
 
 ## Usage
 
-See [ogmios-server](../../ogmios-server)
+See [server](../../server)
 
 <hr/>
 
 <p align="center">
-  <a href="../../CONTRIBUTING.md">:gift: Contributing</a>
+  <a href="../../../CONTRIBUTING.md">:gift: Contributing</a>
   |
   <a href="CHANGELOG.md">:floppy_disk: Changelog</a>
 </p>

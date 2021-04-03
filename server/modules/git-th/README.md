@@ -31,7 +31,7 @@ revision: 8901897a8883285ceebae66aa806e8ecceb12a48
 <hr/>
 
 <p align="center">
-  <a href="../../CONTRIBUTING.md">:gift: Contributing</a>
+  <a href="../../../CONTRIBUTING.md">:gift: Contributing</a>
   |
   <a href="CHANGELOG.md">:floppy_disk: Changelog</a>
 </p>

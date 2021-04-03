@@ -1,4 +1,4 @@
-_config: !include "../.hpack.config.yaml"
+_config: !include ".hpack.config.yaml"
 
 name:                ogmios
 version:             3.0.0
@@ -6,8 +6,8 @@ github:              "KtorZ/cardano-ogmios"
 license:             MPL-2.0
 author:              "KtorZ <matthias.benkort@gmail.com>"
 maintainer:          "matthias.benkort@gmail.com"
-copyright:           "2020 KtorZ"
-description:         Please see the README on GitHub at <https://github.com/KtorZ/ogmios>
+copyright:           "2020-2021 KtorZ"
+description:         Please see the README on GitHub at <https://github.com/KtorZ/cardano-ogmios/tree/master/server#ogmios-server>
 synopsis:            A JSON-WSP WebSocket client for cardano-node
 category:            Web
 

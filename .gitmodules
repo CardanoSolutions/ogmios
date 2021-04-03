@@ -1,18 +1,18 @@
 [submodule "ouroboros-network"]
-	path = modules/ouroboros-network
+	path = server/modules/ouroboros-network
 	url = git@github.com:KtorZ/ouroboros-network
 [submodule "cardano-node"]
-	path = modules/cardano-node
+	path = server/modules/cardano-node
 	url = git@github.com:KtorZ/cardano-node.git
 [submodule "hugo-theme-learn"]
 	path = docs/themes/learn
 	url = https://github.com/matcornic/hugo-theme-learn
 [submodule "modules/wai-routes"]
-	path = modules/wai-routes
+	path = server/modules/wai-routes
 	url = git@github.com:KtorZ/wai-routes
 [submodule "modules/hjsonpointer"]
-	path = modules/hjsonpointer
+	path = server/modules/hjsonpointer
 	url = git@github.com:KtorZ/hjsonpointer
 [submodule "modules/hjsonschema"]
-	path = modules/hjsonschema
+	path = server/modules/hjsonschema
 	url = git@github.com:KtorZ/hjsonschema

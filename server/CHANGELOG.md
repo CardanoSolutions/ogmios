@@ -18,13 +18,20 @@
   - Providing titles to 'oneOf' items
   - Adding descriptions to top-level definitions
   - Adding examples to top-level definitions
+- Customized API reference's stylesheet to enhance readability.
 - Upgrade dependency and code to work with GHC-8.10.4 (from GHC 8.6.5)
 - Handle more gracefully unknown exceptions (avoid infinite fast loop of retries on errors).
 - Handle more gracefully network mismatches (e.g. connecting Ogmios in testnet mode to a mainnet network)
+- Repository reorganization:
+  - 'ogmios-server' renamed into 'server'
+  - move Haskell-specific dotfiles and configuration files under 'server'
+  - move 'modules' under 'server'
+  - move 'Dockerfile' and 'snapshot.Dockerfile' under 'server'
 
 ### Removed
 
 - Support for GHC-8.6.5
+- The docker image no longer shows git revision / version on '--version'
 
 ## [3.0.0] -- 2021-02-26
 

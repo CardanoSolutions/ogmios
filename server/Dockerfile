@@ -14,7 +14,6 @@
 FROM ktorz/ogmios:snapshot as build
 RUN stack build --only-dependencies
 COPY . .
-COPY docs/static/ogmios.wsp.json ogmios-server/ogmios.wsp.json
 RUN stack install --flag "ogmios:production"
 
 #                                                                              #

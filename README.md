@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="ogmios-server/static/assets/logo.png" height=266 width=341 alt="ogmios" />
+  <img src="server/static/assets/logo.png" height=266 width=341 alt="ogmios" />
 </p>
 
 <p align="center">
@@ -17,5 +17,5 @@
   |
   <a href="SPONSORS.md">:gift_heart: Sponsors</a>
   |
-  <a href="ogmios-server/CHANGELOG.md">:floppy_disk: Changelog</a>
+  <a href="server/CHANGELOG.md">:floppy_disk: Changelog</a>
 </p>
