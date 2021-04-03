@@ -36,9 +36,11 @@ jobs:
     - name: 📸 Build Snapshot
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
-        stack --no-terminal --work-dir server build --haddock --no-haddock-deps --only-snapshot
+        cd server
+        stack --no-terminal build --only-snapshot --haddock --no-haddock-deps
 
     - name: 🔨 Build & Test
       run: |
-        stack --no-terminal --work-dir server build --haddock --no-haddock-deps --flag ogmios:production
-        stack --no-terminal --work-dir server test ogmios:unit --haddock --no-haddock-deps --flag ogmios:production
+        cd server
+        stack --no-terminal build                 --haddock --no-haddock-deps --flag ogmios:production
+        stack --no-terminal test ogmios:unit      --haddock --no-haddock-deps --flag ogmios:production
