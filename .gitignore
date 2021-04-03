@@ -29,3 +29,4 @@ stack.yaml.lock
 
 ### Generated ###
 docs/public
+docs/static/api-reference.html

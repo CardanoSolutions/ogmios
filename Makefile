@@ -2,7 +2,7 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-.PHONY: clean server docker
+.PHONY: clean server api-reference docker
 default: server
 
 # Configuration
@@ -20,6 +20,10 @@ GIT_REV = $(shell git rev-parse --verify --short HEAD)
 #
 
 server: $(INSTALL_DIR)/ogmios-$(GIT_REV)
+
+api-reference:
+	@cd docs && generate-schema-doc --no-link-to-reused-ref static/ogmios.wsp.json static/api-reference.html
+	@sed -i 's@</head>@<link rel="stylesheet" href="api-reference.css"/></head>@' docs/static/api-reference.html
 
 docker:
 	docker build server

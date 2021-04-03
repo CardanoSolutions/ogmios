@@ -21,6 +21,8 @@ jobs:
 
     - name: 📸 Build Static Website
       run: |
+        pip3 install json-schema-for-humans
+        make api-reference
         cd docs
         git submodule update --init themes/learn
         ../hugo -t learn --minify

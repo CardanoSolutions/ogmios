@@ -28,10 +28,10 @@ Ogmios in itself is a rather small project, yet it's using library directly from
 Clone the git repository from Github:
 
 ```console
-$ git clone git@github.com:KtorZ/cardano-ogmios.git && cd cardano-ogmios
+$ git clone git@github.com:KtorZ/cardano-ogmios.git && cd cardano-ogmios/server
 ```
 
-Then, use Stack to compile the project source code from the repository root:
+Then, use Stack to compile the project source code from the 'server' repository:
 
 ```console
 $ stack build ogmios
