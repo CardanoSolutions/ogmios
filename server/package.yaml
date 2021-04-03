@@ -15,6 +15,11 @@ extra-source-files:
 - LICENSE
 - README.md
 - CHANGELOG.md
+- static/dashboard.html
+- static/dashboard.js
+- static/tests.html
+- static/tests/chain-sync.js
+- static/tests/state-query.js
 
 dependencies:
 - base >= 4.7 && < 5
