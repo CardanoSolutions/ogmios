@@ -327,7 +327,7 @@
 
   , "AcquireResponse":
     { "type": "object"
-    , "description": "Respoonse to an 'Acquire' request."
+    , "description": "Response to an 'Acquire' request."
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
     , "additionalProperties": false
     , "properties":
@@ -421,7 +421,7 @@
 
   , "ReleaseResponse":
     { "type": "object"
-    , "description": "Respoonse to a 'Release' request."
+    , "description": "Response to a 'Release' request."
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
     , "additionalProperties": false
     , "properties":
@@ -512,7 +512,7 @@
                   }
                 }
               , { "type": "object"
-                , "title": "delegationAndRewards"
+                , "title": "delegationsAndRewards"
                 , "additionalProperties": false
                 , "required": ["delegationsAndRewards"]
                 , "properties":
@@ -2036,10 +2036,18 @@
       { "delegate": { "$ref": "#/definitions/PoolId" }
       , "rewards": { "$ref": "#/definitions/Lovelace" }
       }
+    , "examples":
+      [ { "bc1597ad71c55d2d009a9274b3831ded155118dd769f5376decc1369":
+          { "delegate": "pool1kchver88u3kygsak8wgll7htr8uxn5v35lfrsyy842nkscrzyvj"
+          , "rewards": 219558722
+          }
+        }
+      ]
     }
 
   , "DlgCertificate":
     { "type": "object"
+    , "description": "A (Byron) delegation certificate."
     , "additionalProperties": false
     , "required": [ "epoch", "issuerVk", "delegateVk", "signature" ]
     , "properties":
@@ -2052,16 +2060,18 @@
 
   , "Epoch":
     { "type": "integer"
+    , "description": "An epoch number."
     , "minimum": 0
     }
 
   , "Era":
     { "type": "string"
-    , "enum": ["Byron", "Shelley"]
+    , "enum": ["Byron", "Shelley", "Allegra", "Mary"]
     }
 
   , "EraMismatch":
     { "type": "object"
+    , "description": "An era mismatch between a client request and the era the ledger is in. This may occur when running queries on a syncing node and/or when the node is crossing an era."
     , "additionalProperties": false
     , "required": [ "eraMismatch" ]
     , "properties":
@@ -2091,6 +2101,7 @@
 
   , "LeaderValue":
     { "type": "object"
+    , "description": "In Ouroboros Praos, designate the leader's contribution to the Multi-Party computation used for calculating the leader schedule."
     , "additionalProperties": false
     , "properties":
       { "proof": { "$ref": "#/definitions/Hash64" }
@@ -2106,7 +2117,7 @@
 
   , "LovelaceDelta":
     { "type": "integer"
-    , "description": "An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada)"
+    , "description": "An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada)."
     }
 
   , "LovelaceError":
@@ -2151,16 +2162,19 @@
 
   , "Network":
     { "type": "string"
+    , "description": "A network target, as defined since the Shelley era."
     , "enum": [ "mainnet", "testnet" ]
     }
 
   , "NetworkMagic":
     { "oneOf":
       [ { "type": "string"
+        , "description": "A network target, as defined in Byron."
         , "title": "mainnet"
         , "enum": [ "mainnet" ]
         }
       , { "type": "object"
+        , "description": "A network target, as defined in Byron."
         , "title": "testnet"
         , "additionalProperties": false
         , "required": [ "testnet" ]
@@ -2192,6 +2206,7 @@
 
   , "NonMyopicMemberRewards":
     { "type": "object"
+    , "description": "Rewards that can be expected assuming a pool is fully saturated. Such rewards are said non-myopic, in opposition to short-sighted rewards looking at immediate benefits. Keys of the map can be either Lovelace amounts or account credentials depending on the query."
     , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
     , "additionalProperties":
       { "type": "object"
@@ -2201,31 +2216,46 @@
         , "minimum": 0
         }
       }
+    , "examples":
+      [ { "1000000":
+          { "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9": 688
+          , "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc": 676
+          , "pool1qqqqzyqf8mlm70883zht60n4q6uqxg4a8x266sewv8ad2grkztl": 0
+          , "pool1qqqqrwzy7njvjq9wph7usj5gghm3py9c97688ek8pgc7uem9cfz": 653
+          }
+        , "bc1597ad71c55d2d009a9274b3831ded155118dd769f5376decc1369":
+          { "pool1qgmwcxs8d8qmr0vtvsqd9u8gugrventh5dcqukmu79e2sgfuu8t": 96946024
+          , "pool1qfzjwrtupyvzx0atp5pa3m82v7s8z2eqyqffa0grpyf4j349h6r": 0
+          , "pool1qfxukshs4fkcrflzdnxa2fdza5lfvew3y6echg8ckaa4q8m5hyf": 103181546
+          }
+        }
+      ]
     }
 
   , "NullableInteger":
     { "oneOf":
-      [ { "type": "null", "title": "null" }
-      , { "type": "integer", "title": "integer" }
+      [ { "type": "integer", "title": "integer" }
+      , { "type": "null", "title": "null" }
       ]
     }
 
   , "NullableNumber":
     { "oneOf":
-      [ { "type": "null", "title": "null" }
-      , { "type": "number", "title": "integer" }
+      [ { "type": "number", "title": "integer" }
+      , { "type": "null", "title": "null" }
       ]
     }
 
   , "NullableRatio":
     { "oneOf":
-      [ { "type": "null", "title": "null" }
-      , { "$ref": "#/definitions/Ratio" }
+      [ { "$ref": "#/definitions/Ratio" }
+      , { "type": "null", "title": "null" }
       ]
     }
 
   , "OpCert":
     { "type": "object"
+    , "description": "Certificate identifying a stake pool operator."
     , "additionalProperties": false
     , "properties":
       { "count": { "type": "integer", "minimum": 0 }
@@ -2238,6 +2268,7 @@
   , "Point":
     { "oneOf":
       [ { "type": "object"
+        , "description": "A point on the chain, identified by a slot and a block header hash."
         , "title": "point"
         , "additionalProperties": false
         , "required": [ "slot", "hash" ]
@@ -2247,6 +2278,7 @@
           }
         }
       , { "type": "string"
+        , "description": "The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point."
         , "title": "origin"
         , "enum": [ "origin" ]
         }
@@ -2255,6 +2287,7 @@
 
   , "PoolDistribution":
     { "type": "object"
+    , "description": "Distribution of stake across registered stake pools. Each key in the map corresponds to a pool id."
     , "propertyNames": { "$ref": "#/definitions/PoolId" }
     , "additionalProperties":
       { "type": "object"
@@ -2265,16 +2298,34 @@
         , "vrf": { "$ref": "#/definitions/Hash16" }
         }
       }
+    , "examples":
+      [ { "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9":
+          { "stake": "64666784451745/32381463809418351"
+          , "vrf": "6de7605b2afd7e205318fc8b4329d26439b5b179b4746fea12f1ce50395f5d9e"
+          }
+        , "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc":
+          { "stake": "7072561631906/10793821269806117"
+          , "vrf": "bb862fcc397de6c06dea9a9ad8442a3d17826e01799a79b861fc083341eaed3d"
+          }
+        }
+      ]
     }
 
   , "PoolId":
     { "type": "string"
     , "contentEncoding": "bech32"
     , "pattern": "^pool1[0-9a-z]*$"
+    , "examples":
+      [ "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc"
+      , "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9"
+      ]
     }
 
   , "ProtocolMagicId":
     { "type": "integer"
+    , "examples":
+      [ 764824073
+      ]
     }
 
   , "ProtocolParameters[Byron]":
@@ -2359,13 +2410,21 @@
 
   , "Ratio":
     { "type": "string"
+    , "description": "A ratio of two integers, to express exact fractions."
     , "pattern": "^-?[0-9]+/[0-9]+$"
+    , "examples":
+      [ "2/3"
+      , "7/8"
+      ]
     }
 
   , "RelativeTime":
     { "type": "string"
     , "description": "A time in seconds relative to the system start."
     , "pattern": "^[0-9]+.[0-9]+s$"
+    , "examples":
+      [ "3441.33s"
+      ]
     }
 
   , "Relay":
@@ -2377,14 +2436,14 @@
         , "properties":
           { "ipv4":
             { "oneOf":
-              [ { "type": "null", "title": "null" }
-              , { "type": "string", "title": "ip" }
+              [ { "type": "string", "title": "ip" }
+              , { "type": "null", "title": "null" }
               ]
             }
           , "ipv6":
             { "oneOf":
-              [ { "type": "null", "title": "null" }
-              , { "type": "string", "title": "ip" }
+              [ { "type": "string", "title": "ip" }
+              , { "type": "null", "title": "null" }
               ]
             }
           , "port": { "$ref": "#/definitions/NullableInteger" }
@@ -2406,23 +2465,62 @@
     { "type": "object"
     , "additionalProperties": { "$ref": "#/definitions/Lovelace" }
     , "propertyNames": "[0-9a-f]+$"
+    , "examples":
+      [ { "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5": 123456789
+        }
+      ]
     }
 
   , "RewardAccount":
     { "type": "string"
+    , "description": "A reward account, also known as 'stake address'."
     , "contentEncoding": "bech32"
     , "pattern": "^stake(_test)?1[0-9a-z]+$"
+    , "examples":
+      [ "stake1ux7pt9adw8z46tgqn2f8fvurrhk325gcm4mf75mkmmxpx6gae9mzv"
+      ]
     }
 
   , "RewardPot":
     { "type": "string"
+    , "description": "Source of rewards as defined by the protocol parameters."
     , "enum": ["reserves", "treasury"]
     }
 
   , "Script":
-    { "anyOf":
+    { "description": "A phase-1 monetary script. Timelocks constraints are only supported since Allegra."
+    , "examples":
+        [ "3c07030e36bfff7cd2f004356ef320f3fe3c07030e7cd2f004356437"
+        , { "all":
+            [ "ec09e5293d384637cd2f004356ef320f3fe3c07030e36bfffe67e2e2"
+            , "3c07030e36bfff7cd2f004356ef320f3fe3c07030e7cd2f004356437"
+            ]
+          }
+        , { "any":
+            [ "3c07030e36bfffe67e2e2ec09e5293d384637cd2f004356ef320f3fe"
+            , { "all":
+                [ "ec09e5293d384637cd2f004356ef320f3fe3c07030e36bfffe67e2e2"
+                , "3c07030e36bfff7cd2f004356ef320f3fe3c07030e7cd2f004356437"
+                , { "expiresAt": 1234 }
+                ]
+              }
+            , { "2":
+                [ "ec09e5293d384637cd2f004356ef320f3fe3c07030e36bfffe67e2e2"
+                , "3c07030e36bfff7cd2f004356ef320f3fe3c07030e7cd2f004356437"
+                , { "all":
+                    [ "3c07030e36bfffe67e2e2ec09e5293d384637cd2f004356ef320f3fe"
+                    , { "startsAt": 5436 }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+    , "anyOf":
       [ { "$ref": "#/definitions/Hash16" }
       , { "type": "object"
+        , "title": "any"
         , "additionalProperties": false
         , "properties":
           { "any":
@@ -2433,6 +2531,7 @@
         }
       , { "type": "object"
         , "additionalProperties": false
+        , "title": "all"
         , "properties":
           { "all":
             { "type": "array"
@@ -2442,18 +2541,21 @@
         }
       , { "type": "object"
         , "propertyNames": { "pattern": "[0-9]+$" }
+        , "title": "NOf"
         , "additionalProperties":
           { "type": "array"
           , "items": { "$ref": "#/definitions/Script" }
           }
         }
       , { "type": "object"
+        , "title": "expiresAt"
         , "additionalProperties": false
         , "properties":
           { "expiresAt": { "$ref": "#/definitions/Slot" }
           }
         }
       , { "type": "object"
+        , "title": "startsAt"
         , "additionalProperties": false
         , "properties":
           { "startsAt": { "$ref": "#/definitions/Slot" }
