@@ -40,31 +40,38 @@ describe("StateQuery", () => {
   });
 
   const queries =
-          [ [ "eraStart", { timeout: 2000 } ]
-          , [ "ledgerTip", { timeout: 2000 } ]
-          , [ "currentEpoch", { timeout: 2000 }]
-          , [ "currentProtocolParameters", { timeout: 2000 } ]
-          , [ "proposedProtocolParameters", { timeout: 2000 } ]
-          , [ "stakeDistribution", { timeout: 5000 } ]
-          , [ { "utxo":
+          [ "eraStart"
+          , "ledgerTip"
+          , "currentEpoch"
+          , "currentProtocolParameters"
+          , "proposedProtocolParameters"
+          , { "utxo":
                 [ "Ae2tdPwUPEYx54UZRbbU8M8HjXMRqoWXYwgpN3GUuzMQBUFRyrco4jBHZgd"
-                , "addr1qy9y9s40l30283zec5svd6pky39qsae3mwg4an66f28zlns2gtp2llz750z9n3fqcm5rvfz2ppmnrku3tm845j5w9l8qdpmv0m"
+                , "addr1q932e2zpu4favd0jemfkwkn2v8wx9w7caj8467jy4a3ps49uzkt66uw9t5kspx5jwjecx80dz4g33htknafhdhkvzd5s9wdqjk"
                 ]
               }
-            , { "timeout": 5000 }
-            ]
-          , [ "genesisConfig", { timeout: 2000 } ]
+          , { "delegationsAndRewards":
+                [ "bc1597ad71c55d2d009a9274b3831ded155118dd769f5376decc1369"
+                ]
+            }
+          , "genesisConfig"
+          , "stakeDistribution"
+          , { "nonMyopicMemberRewards":
+                [ 1000000
+                , "bc1597ad71c55d2d009a9274b3831ded155118dd769f5376decc1369"
+                ]
+            }
           ]
 
   const gibberish =
           [ "notAQuery"
           ]
 
-  queries.forEach(([query, { timeout }]) => {
+  queries.forEach(query => {
     const title = typeof query === "string" ? query : Object.keys(query).join("/");
     it(title, function () {
       const test = this.test;
-      this.timeout(timeout);
+      this.timeout(90000);
       return new Promise ((resolve, reject) => {
         client.addEventListener('message', function $listener(msg) {
           listener = $listener;
