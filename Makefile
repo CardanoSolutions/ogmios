@@ -10,7 +10,7 @@ default: server
 # INSTALL_DIR:
 #	Installation directory for executables. Default to $HOME/.local/bin
 #
-INSTALL_DIR ?= $(shell stack path --local-bin)
+INSTALL_DIR ?= $(HOME)/.local/bin
 
 SHELL = bash
 GIT_REV = $(shell git rev-parse --verify --short HEAD)
