@@ -1,4 +1,4 @@
-baseURL = "https://ktorz.github.io/cardano-ogmios/"
+baseURL = "https://ogmios.dev"
 languageCode = "en-us"
 title = "Ogmios"
 
@@ -57,5 +57,5 @@ theme = "learn"
 
 [Languages]
 [Languages.en]
-  landingPageURL = "/cardano-ogmios"
+  landingPageURL = "/"
   landingPageName = "<i class='fas fa-home'></i> Overview"

@@ -8,7 +8,7 @@ weight = 4
 
 Ogmios offers a simple dashboard through HTTP with a real-time visualization of some of the server runtime metrics. If you've Ogmios up-and-running on the default port, visit [http://localhost:1337](http://localhost:1337) to view Ogmios' dashboard. 
 
-![Dashboard Preview](/cardano-ogmios/dashboard.gif)
+![Dashboard Preview](/dashboard.gif)
 
 ## Health / Metrics
 
