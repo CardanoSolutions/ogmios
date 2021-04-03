@@ -5,13 +5,14 @@ chapter: false
 pre: "<b>5. </b>"
 ---
 
-### [3.1.0] 
+### [3.1.0] - 2021-04-04
 
 #### Added
 
 - Extend the local-state query protocol with support for 'GetCompactGenesis'.
 - Extend the local-state query protocol with support for 'GetFilteredDelegationsAndRewards'.
 - Add missing `mint` field to transaction's body (added since mary).
+- The documentation is now hosted on https://ogmios.dev.
 
 #### Changed
 
