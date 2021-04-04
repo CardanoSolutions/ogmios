@@ -1,4 +1,3 @@
-import WebSocket from 'isomorphic-ws'
 import { nanoid } from 'nanoid'
 import {
   Address,
@@ -7,7 +6,11 @@ import {
   Ogmios,
   Point
 } from '../schema'
-import { createConnectionString, ConnectionConfig } from '../Connection'
+import {
+  ConnectionConfig,
+  createClientContext,
+  InteractionContext
+} from '../Connection'
 import { baseRequest } from '../Request'
 import {
   AcquirePointNotOnChainError,
@@ -27,6 +30,7 @@ import {
 import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
 
 export interface StateQueryClient {
+  context: InteractionContext
   currentEpoch: () => ReturnType<typeof currentEpoch>
   currentProtocolParameters: () => ReturnType<typeof currentProtocolParameters>
   eraStart: () => ReturnType<typeof eraStart>
@@ -43,10 +47,9 @@ export const createStateQueryClient = async (options?: {
   connection?: ConnectionConfig,
   point?: Point
 }): Promise<StateQueryClient> => {
-  return new Promise((resolve, reject) => {
-    const socket = new WebSocket(createConnectionString(options?.connection))
-    const context = { socket, closeOnCompletion: false }
-
+  return new Promise(async (resolve, reject) => {
+    const context = await createClientContext(options)
+    const { socket } = context
     socket.once('error', reject)
     socket.once('open', async () => {
       const point = options?.point !== undefined
@@ -58,6 +61,7 @@ export const createStateQueryClient = async (options?: {
         if (response.reflection.requestId !== requestId) { return }
         if ('AcquireSuccess' in response.result) {
           return resolve({
+            context,
             currentEpoch: () => {
               ensureSocketIsOpen(socket)
               return currentEpoch(context)

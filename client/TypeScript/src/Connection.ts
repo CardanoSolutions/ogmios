@@ -9,12 +9,24 @@ export interface InteractionContext {
   socket?: WebSocket
   connection?: ConnectionConfig
   closeOnCompletion?: boolean
+  connectionString?: string
 }
 
 export type Mirror = { [k: string]: unknown }
 
-export const createConnectionString = (connection?: ConnectionConfig) =>
+const createConnectionString = (connection?: ConnectionConfig): InteractionContext['connectionString'] =>
   `ws://${connection?.host || 'localhost'}:${connection?.port || 1337}`
+
+export const createClientContext = async (options?: { connection?: ConnectionConfig }): Promise<InteractionContext> => {
+  const connectionString = createConnectionString(options?.connection)
+  const socket = new WebSocket(connectionString)
+  return {
+    connection: options.connection,
+    connectionString,
+    closeOnCompletion: false,
+    socket
+  }
+}
 
 export const ensureSocket = async <T>(
   send: (socket: WebSocket) => Promise<T>,

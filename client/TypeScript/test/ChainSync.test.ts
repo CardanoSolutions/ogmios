@@ -9,11 +9,18 @@ import {
   Hash16, Point
 } from '@src/schema'
 
+const connection = { port: 1338 }
 const mirror = { reflectMe: 'someValue' }
 
 describe('ChainSync', () => {
+  it('returns the interaction context', async () => {
+    const client = await createChainSyncClient({ connection })
+    expect(client.context.connectionString).toBe( `ws://localhost:1338`)
+    expect(client.context.socket.readyState).toBe(client.context.socket.OPEN)
+    await client.shutdown()
+  })
   it('selects the tip as the intersection if no point provided', async () => {
-    const client = await createChainSyncClient()
+    const client = await createChainSyncClient({ connection })
     if (client.initialIntersection.point === 'origin' || client.initialIntersection.tip === 'origin') {
       await client.shutdown()
       throw new Error('Test network is not syncing')
@@ -24,23 +31,23 @@ describe('ChainSync', () => {
     await client.shutdown()
   })
   it('intersects at the genesis if origin provided as point', async () => {
-    const client = await createChainSyncClient()
+    const client = await createChainSyncClient({ connection })
     const intersection = await client.findIntersect(['origin'])
     expect(intersection.point).toEqual('origin')
     expect(intersection.tip).toBeDefined()
     await client.shutdown()
   })
   it('rejects method calls after shutdown', async () => {
-    const client = await createChainSyncClient()
+    const client = await createChainSyncClient({ connection })
     await client.shutdown()
-    const run = () =>  client.findIntersect(['origin'])
+    const run = () => client.findIntersect(['origin'])
     await expect(run).rejects
   })
   it('accepts message handlers for roll back and roll forward messages', async (cb) => {
     const rollbackPoints: Point[] = []
-    let reflectedValue = ''
+    const reflectedValue = ''
     const blocks: Block[] = []
-    const client = await createChainSyncClient()
+    const client = await createChainSyncClient({ connection })
     await client.findIntersect(['origin'])
     client.on({
       rollBackward: ({ point, reflection }) => {
@@ -50,7 +57,7 @@ describe('ChainSync', () => {
       rollForward: async ({ block, reflection }) => {
         blocks.push(block)
         if (reflection.count < 10) {
-          client.requestNext({ mirror: { count: reflection.count as number + 1 }})
+          client.requestNext({ mirror: { count: reflection.count as number + 1 } })
         } else {
           await client.shutdown()
           cb()

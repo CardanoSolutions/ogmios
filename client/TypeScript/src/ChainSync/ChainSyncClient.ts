@@ -1,12 +1,17 @@
-import WebSocket from 'isomorphic-ws'
 import { Block, Ogmios, Point, Tip } from '../schema'
-import { createConnectionString, ConnectionConfig, Mirror } from '../Connection'
+import {
+  ConnectionConfig,
+  Mirror,
+  InteractionContext,
+  createClientContext
+} from '../Connection'
 import { UnknownResultError } from '../errors'
 import { baseRequest } from '../Request'
 import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
 import { findIntersect, Intersection } from './findIntersect'
 
 export interface ChainSyncClient {
+  context: InteractionContext
   findIntersect: (points: Point[]) => ReturnType<typeof findIntersect>
   initialIntersection: Intersection
   on: (messageHandlers: {
@@ -28,8 +33,9 @@ export interface ChainSyncClient {
 export const createChainSyncClient = async (options?: {
   connection?: ConnectionConfig
 }): Promise<ChainSyncClient> => {
-  return new Promise((resolve, reject) => {
-    const socket = new WebSocket(createConnectionString(options?.connection))
+  return new Promise(async (resolve, reject) => {
+    const context = await createClientContext(options)
+    const { socket } = context
     socket.once('error', reject)
     socket.once('open', async () => {
       const initialIntersection = await findIntersect(
@@ -40,6 +46,7 @@ export const createChainSyncClient = async (options?: {
         }
       )
       return resolve({
+        context,
         findIntersect: (points) => {
           ensureSocketIsOpen(socket)
           return findIntersect(points, {
