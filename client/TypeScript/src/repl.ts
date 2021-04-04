@@ -17,6 +17,7 @@ import {
 } from './ChainSync'
 import chalk from 'chalk'
 import util from 'util'
+import { Address, Hash16, Lovelace, Point } from './schema'
 
 const log = console.log
 const logObject = (obj: Object) =>
@@ -24,12 +25,11 @@ const logObject = (obj: Object) =>
 
 (async () => {
   const args = parser(process.argv)
-  const chainSync = await createChainSyncClient({
-    connection: {
-      host: args.host,
-      port: args.port
-    }
-  })
+  const connection = {
+    host: args.host,
+    port: args.port
+  }
+  const chainSync = await createChainSyncClient({ connection })
   chainSync.on({
     rollBackward: ({ point, tip, reflection }) => {
       log(chalk.bgRedBright.bold('ROLL BACKWARD'))
@@ -61,17 +61,18 @@ const logObject = (obj: Object) =>
 
   Object.assign(cardanoOgmiosRepl.context, {
     chainSync,
-    createChainSyncClient,
-    createStateQueryClient,
-    currentEpoch,
-    currentProtocolParameters,
-    eraStart,
-    findIntersect,
-    ledgerTip,
-    nonMyopicMemberRewards,
-    proposedProtocolParameters,
-    stakeDistribution,
-    utxo
+    createChainSyncClient: () => createChainSyncClient({ connection }),
+    createStateQueryClient: () => createStateQueryClient({ connection }),
+    currentEpoch: () => currentEpoch({ connection }),
+    currentProtocolParameters: () => currentProtocolParameters({ connection }),
+    eraStart: () => eraStart({ connection }),
+    findIntersect: (points: Point[]) => findIntersect(points, { connection }),
+    ledgerTip: () => ledgerTip({ connection }),
+    nonMyopicMemberRewards:
+      (input: (Lovelace | Hash16)[]) => nonMyopicMemberRewards(input, { connection }),
+    proposedProtocolParameters: () => proposedProtocolParameters({ connection }),
+    stakeDistribution: () => stakeDistribution({ connection }),
+    utxo: (addresses?: Address[]) => utxo(addresses, { connection })
   })
 
   cardanoOgmiosRepl.on('exit', async () => {
