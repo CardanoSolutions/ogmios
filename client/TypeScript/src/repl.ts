@@ -15,6 +15,7 @@ import {
   createChainSyncClient,
   findIntersect
 } from './ChainSync'
+import { submitTx } from './TxSubmission'
 import chalk from 'chalk'
 import util from 'util'
 import { Address, Hash16, Lovelace, Point } from './schema'
@@ -72,6 +73,7 @@ const logObject = (obj: Object) =>
       (input: (Lovelace | Hash16)[]) => nonMyopicMemberRewards(input, { connection }),
     proposedProtocolParameters: () => proposedProtocolParameters({ connection }),
     stakeDistribution: () => stakeDistribution({ connection }),
+    submitTx: (bytes: string) => submitTx(bytes, { connection }),
     utxo: (addresses?: Address[]) => utxo(addresses, { connection })
   })
 
