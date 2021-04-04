@@ -13,9 +13,5 @@ module.exports = {
   },
   "env": {
     "jest": true
-  },
-  "parserOptions": {
-    "project": "./tsconfig.json",
-    "tsconfigRootDir": __dirname
   }
 }

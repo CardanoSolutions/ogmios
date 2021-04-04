@@ -1,0 +1,50 @@
+{
+  "name": "@cardano-ogmios/client",
+  "version": "0.1.0",
+  "description": "TypeScript client library for Cardano Ogmios",
+  "engines": {
+    "node": "^14"
+  },
+  "main": "dist/index.js",
+  "repository": "https://github.com/KtorZ/cardano-ogmios",
+  "author": "Rhys Bartels-Waller",
+  "license": "MPL-2.0",
+  "scripts": {
+    "build": "tsc --build ./src",
+    "cleanup": "shx rm -rf dist node_modules",
+    "lint": "eslint --ignore-path ../../.eslintignore \"**/*.ts\"",
+    "prepack": "yarn build",
+    "test": "yarn build && jest -c ./test/jest.config.js"
+  },
+  "devDependencies": {
+    "@cardano-ogmios/schema": "0.1.0",
+    "@types/jest": "^26.0.20",
+    "@types/node": "^14.14.32",
+    "@types/ws": "^7.4.0",
+    "@typescript-eslint/eslint-plugin": "^4.17.0",
+    "@typescript-eslint/parser": "^4.17.0",
+    "delay": "^5.0.0",
+    "eslint": "^7.21.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jest": "^24.2.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.3.1",
+    "eslint-plugin-standard": "^5.0.0",
+    "eslint-watch": "^7.0.0",
+    "jest": "^26.6.3",
+    "json-schema-to-typescript": "^10.1.4",
+    "shx": "^0.3.3",
+    "ts-jest": "^26.5.3",
+    "typescript": "^4.2.3"
+  },
+  "dependencies": {
+    "isomorphic-ws": "^4.0.1",
+    "nanoid": "^3.1.22",
+    "ts-custom-error": "^3.2.0",
+    "ws": "^7.4.4"
+  },
+  "files": [
+    "dist/*"
+  ]
+}

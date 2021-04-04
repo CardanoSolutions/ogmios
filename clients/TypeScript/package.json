@@ -1,23 +1,29 @@
 {
   "name": "cardano-ogmios",
   "version": "0.1.0",
-  "description": "TypeScript client library for Cardano Ogmios",
+  "private": true,
+  "description": "TypeScript monorepo with client libraries for Cardano Ogmios",
+  "engines": {
+    "node": "^14"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
   "main": "dist/index.js",
   "repository": "https://github.com/KtorZ/cardano-ogmios",
   "author": "Rhys Bartels-Waller",
   "license": "MPL-2.0",
   "scripts": {
-    "build": "tsc --build ./src",
-    "cleanup": "shx rm -rf dist node_modules src/schema.d.ts",
-    "generate-schema-types": "json2ts -i ../../ogmios-server/ogmios.wsp.json -o src/schema.ts",
-    "lint": "eslint --ignore-path .eslintignore \"**/*.ts\"",
-    "prepack": "yarn build && yarn generate-schema-types",
-    "repl": "node --experimental-repl-await dist/repl.js",
+    "build": "yarn workspaces run build",
+    "cleanup": "yarn workspaces run cleanup && shx rm -rf node_modules",
+    "generate-schema-types": "yarn workspace @cardano-ogmios/schema run generate-schema-types",
+    "lint": "yarn workspaces run lint",
     "mainnet:up": "docker-compose --project-directory ../.. -p ogmios-mainnet up",
     "mainnet:down": "docker-compose --project-directory ../.. -p ogmios-mainnet down",
+    "repl": "yarn workspace @cardano-ogmios/repl run dev",
+    "test": "yarn workspaces run test",
     "testnet:up": "OGMIOS_PORT=1338 NETWORK=testnet docker-compose --project-directory ../.. -p ogmios-testnet up",
-    "testnet:down": "docker-compose --project-directory ../.. -p ogmios-testnet down",
-    "test": "yarn build && jest -c ./test/jest.config.js"
+    "testnet:down": "docker-compose --project-directory ../.. -p ogmios-testnet down"
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",
@@ -39,16 +45,5 @@
     "shx": "^0.3.3",
     "ts-jest": "^26.5.3",
     "typescript": "^4.2.3"
-  },
-  "dependencies": {
-    "chalk": "^4.1.0",
-    "isomorphic-ws": "^4.0.1",
-    "nanoid": "^3.1.22",
-    "ts-custom-error": "^3.2.0",
-    "ws": "^7.4.4",
-    "yargs-parser": "^20.2.7"
-  },
-  "files": [
-    "dist/*"
-  ]
+  }
 }
