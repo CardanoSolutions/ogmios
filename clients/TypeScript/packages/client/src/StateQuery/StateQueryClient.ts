@@ -21,6 +21,7 @@ import {
   currentEpoch,
   currentProtocolParameters,
   eraStart,
+  genesisConfig,
   ledgerTip,
   nonMyopicMemberRewards,
   proposedProtocolParameters,
@@ -34,6 +35,7 @@ export interface StateQueryClient {
   currentEpoch: () => ReturnType<typeof currentEpoch>
   currentProtocolParameters: () => ReturnType<typeof currentProtocolParameters>
   eraStart: () => ReturnType<typeof eraStart>
+  genesisConfig: () => ReturnType<typeof genesisConfig>
   ledgerTip: () => ReturnType<typeof ledgerTip>
   nonMyopicMemberRewards: (input: Lovelace[] | Hash16[]) => ReturnType<typeof nonMyopicMemberRewards>
   point: Point
@@ -73,6 +75,10 @@ export const createStateQueryClient = async (options?: {
             eraStart: () => {
               ensureSocketIsOpen(socket)
               return eraStart(context)
+            },
+            genesisConfig: () => {
+              ensureSocketIsOpen(socket)
+              return genesisConfig(context)
             },
             ledgerTip: () => {
               ensureSocketIsOpen(socket)

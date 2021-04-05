@@ -3,6 +3,7 @@ import {
   currentEpoch,
   currentProtocolParameters,
   eraStart,
+  genesisConfig,
   ledgerTip,
   nonMyopicMemberRewards,
   proposedProtocolParameters,
@@ -70,6 +71,9 @@ describe('Local state queries', () => {
         const bound = await client.eraStart()
         expect(bound.slot).toBeDefined()
 
+        const compactGenesis = await client.genesisConfig()
+        expect(compactGenesis.systemStart).toBeDefined()
+
         const point = await client.ledgerTip() as { slot: Slot, hash: Hash16 }
         expect(point.slot).toBeDefined()
 
@@ -112,6 +116,13 @@ describe('Local state queries', () => {
         expect(bound.time).toBeDefined()
         expect(bound.slot).toBeDefined()
         expect(bound.epoch).toBeDefined()
+      })
+    })
+    describe('genesisConfig', () => {
+      it('fetches the config used to bootstrap the blockchain, excluding the genesis UTXO', async () => {
+        const config = await genesisConfig({ connection })
+        expect(config.systemStart).toBeDefined()
+        expect(config.networkMagic).toBeDefined()
       })
     })
     describe('ledgerTip', () => {

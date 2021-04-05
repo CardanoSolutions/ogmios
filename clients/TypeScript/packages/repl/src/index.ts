@@ -7,6 +7,7 @@ import {
   currentProtocolParameters,
   eraStart,
   findIntersect,
+  genesisConfig,
   ledgerTip,
   nonMyopicMemberRewards,
   proposedProtocolParameters,
@@ -65,6 +66,7 @@ const logObject = (obj: Object) =>
     currentEpoch: () => currentEpoch({ connection }),
     currentProtocolParameters: () => currentProtocolParameters({ connection }),
     eraStart: () => eraStart({ connection }),
+    genesisConfig: () => genesisConfig({ connection }),
     findIntersect: (points: Schema.Point[]) => findIntersect(points, { connection }),
     ledgerTip: () => ledgerTip({ connection }),
     nonMyopicMemberRewards:

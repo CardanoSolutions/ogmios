@@ -1,6 +1,7 @@
 export * from './currentEpoch'
 export * from './currentProtocolParameters'
 export * from './eraStart'
+export * from './genesisConfig'
 export * from './ledgerTip'
 export * from './nonMyopicMemberRewards'
 export * from './proposedProtocolParameters'
