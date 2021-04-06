@@ -21,7 +21,7 @@ export const createClientContext = async (options?: { connection?: ConnectionCon
   const connectionString = createConnectionString(options?.connection)
   const socket = new WebSocket(connectionString)
   return {
-    connection: options.connection,
+    connection: options?.connection,
     connectionString,
     closeOnCompletion: false,
     socket
