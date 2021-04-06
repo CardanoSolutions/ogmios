@@ -95,7 +95,7 @@ describe('Local state queries', () => {
         expect(protocolParameters.protocolVersion.major).toBeDefined()
 
         const delegationsAndRewardsResult = await client.delegationsAndRewards(
-          ['e07bb8d7762ebb0f7340c03e69b3b1aa253dab7ba3c62ebbd50781423a']
+          ['7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8']
         )
         expect(Object.keys(delegationsAndRewardsResult).length).toBe(1)
 
@@ -108,18 +108,23 @@ describe('Local state queries', () => {
         const point = await client.ledgerTip() as { slot: Slot, hash: Hash16 }
         expect(point.slot).toBeDefined()
 
-        const rewards = await client.nonMyopicMemberRewards([10000])
+        const nonMyopicMemberRewards = await client.nonMyopicMemberRewards(
+          ['7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8']
+        )
         expect(
-          Object.values(Object.values(rewards)[0])[0]
+          Object.values(Object.values(nonMyopicMemberRewards)[0])[0]
         ).toBeDefined()
 
         const proposedProtocolParameters = await client.proposedProtocolParameters()
-        expect(Object.values(proposedProtocolParameters)[0].minUtxoValue).toBeDefined()
+        expect(proposedProtocolParameters).toBeNull()
+        // expect(Object.values(proposedProtocolParameters)[0].minUtxoValue).toBeDefined()
 
         const stakeDistribution = await client.stakeDistribution()
         expect(Object.values(stakeDistribution)[0].stake).toBeDefined()
 
-        const utxoSet = await client.utxo(['addr1v9f9pvusgs840v80dgl83humjsda6ynygsgdsjlggxknt8g92v6ap'])
+        const utxoSet = await client.utxo([
+          'addr_test1qqymtheun4y437fa6cms4jmtfex39wzz7jfwggudwnqkdnr8udjk6d89dcjadt7tw6hmz0aeue2jzdpl2vnkz8wdk4fqz3y5m9'
+        ])
         expect(utxoSet[0]).toBeDefined()
 
         await client.release()
@@ -143,10 +148,11 @@ describe('Local state queries', () => {
     })
     describe('delegationsAndRewards', () => {
       it('fetches the current delegate and rewards for given stake key hashes', async () => {
-        const stakeKeyHashes = ['0a4fa22c44a2ac1505e34ff15436a06b9de36970af974916d5829be0'] as Hash16[]
+        const stakeKeyHashes = ['7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8'] as Hash16[]
         const result = await delegationsAndRewards(stakeKeyHashes, { connection })
         const item = result[stakeKeyHashes[0]]
-        expect(item.delegate).toHaveProperty(['delegate', 'rewards'])
+        expect(item).toHaveProperty('delegate')
+        expect(item).toHaveProperty('rewards')
       })
     })
     describe('eraStart', () => {
@@ -174,27 +180,24 @@ describe('Local state queries', () => {
     describe('nonMyopicMemberRewards', () => {
       describe('fetches the Non-myopic member rewards for each pool. Used in ranking.', () => {
         it('accepts array of values, either stake key hash or lovelace', async () => {
-          const stakeKeyHash = 'e07bb8d7762ebb0f7340c03e69b3b1aa253dab7ba3c62ebbd50781423a'
+          const stakeKeyHash = '7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8'
           const rewards = await nonMyopicMemberRewards([
             stakeKeyHash
           ],
           { connection }
           )
-          expect(
-            Object.values(
-              Object.values(rewards)[0]
-            )[0]
-          ).toBeDefined()
+          expect(Object.values(rewards[stakeKeyHash])[0]).toBeDefined()
         })
       })
     })
     describe('proposedProtocolParameters', () => {
       it('fetches the current shelley protocol parameters', async () => {
         const protocolParameters = await proposedProtocolParameters({ connection })
-        const params = Object.values(protocolParameters)[0]
-        expect(params.minFeeCoefficient).toBeDefined()
-        expect(params.minUtxoValue).toBeDefined()
-        expect(params.maxTxSize).toBeDefined()
+        expect(protocolParameters).toBeNull()
+        // const params = Object.values(protocolParameters)[0]
+        // expect(params.minFeeCoefficient).toBeDefined()
+        // expect(params.minUtxoValue).toBeDefined()
+        // expect(params.maxTxSize).toBeDefined()
       })
     })
     describe('stakeDistribution', () => {
@@ -206,7 +209,7 @@ describe('Local state queries', () => {
       })
     })
     describe('utxo', () => {
-      // Todo: Enable
+      // Todo: Enable when there's a suitable interface to handle large responses.
       // it('fetches the complete UTxO set when no addresses are provided', async () => {
       //   const utxoSet = await utxo({ connection })
       //   console.log(utxoSet)
