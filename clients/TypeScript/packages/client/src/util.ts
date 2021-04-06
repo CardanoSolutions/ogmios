@@ -39,3 +39,6 @@ export const isMaryBlock = (block: Block): block is { mary: BlockMary } =>
 
 export const isShelleyBlock = (block: Block): block is { shelley: BlockShelley } =>
   (block as { shelley: BlockShelley }).shelley !== undefined
+
+export const isEmptyObject = (obj: Object): boolean =>
+  obj !== undefined && Object.keys(obj).length === 0 && obj.constructor === Object
