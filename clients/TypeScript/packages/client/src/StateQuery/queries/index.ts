@@ -1,5 +1,6 @@
 export * from './currentEpoch'
 export * from './currentProtocolParameters'
+export * from './delegationsAndRewards'
 export * from './eraStart'
 export * from './genesisConfig'
 export * from './ledgerTip'

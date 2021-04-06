@@ -19,7 +19,7 @@ import {
 } from '../errors'
 import {
   currentEpoch,
-  currentProtocolParameters,
+  currentProtocolParameters, delegationsAndRewards,
   eraStart,
   genesisConfig,
   ledgerTip,
@@ -34,6 +34,7 @@ export interface StateQueryClient {
   context: InteractionContext
   currentEpoch: () => ReturnType<typeof currentEpoch>
   currentProtocolParameters: () => ReturnType<typeof currentProtocolParameters>
+  delegationsAndRewards: (stakeKeyHashes: Hash16[]) => ReturnType<typeof delegationsAndRewards>
   eraStart: () => ReturnType<typeof eraStart>
   genesisConfig: () => ReturnType<typeof genesisConfig>
   ledgerTip: () => ReturnType<typeof ledgerTip>
@@ -71,6 +72,10 @@ export const createStateQueryClient = async (options?: {
             currentProtocolParameters: () => {
               ensureSocketIsOpen(socket)
               return currentProtocolParameters(context)
+            },
+            delegationsAndRewards: (stakeKeyHashes) => {
+              ensureSocketIsOpen(socket)
+              return delegationsAndRewards(stakeKeyHashes, context)
             },
             eraStart: () => {
               ensureSocketIsOpen(socket)

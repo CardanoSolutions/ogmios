@@ -1,13 +1,13 @@
 import {
   createStateQueryClient,
   currentEpoch,
-  currentProtocolParameters,
+  currentProtocolParameters, delegationsAndRewards,
   eraStart,
   genesisConfig,
   ledgerTip,
   nonMyopicMemberRewards,
   proposedProtocolParameters,
-  stakeDistribution,
+  stakeDistribution, StateQueryClient,
   utxo
 } from '@src/StateQuery'
 import {
@@ -19,6 +19,32 @@ const connection = { port: 1338 }
 
 describe('Local state queries', () => {
   describe('StateQueryClient', () => {
+    it('rejects with the Websocket errors on failed connection', async () => {
+      let client: StateQueryClient
+      try {
+        client = await createStateQueryClient(
+          { connection: { host: 'non-existent-host', port: 1111 } }
+        )
+        expect(client).toBeUndefined()
+        if (client.context.socket?.readyState === client.context.socket.OPEN) {
+          await client.release()
+        }
+      } catch (error) {
+        expect(error.code).toBe('EAI_AGAIN')
+      }
+      try {
+        client = await createStateQueryClient(
+          { connection: { port: 1111 } }
+        )
+        expect(client).toBeUndefined()
+        if (client.context.socket?.readyState === client.context.socket.OPEN) {
+          await client.release()
+        }
+      } catch (error) {
+        expect(error.code).toBe('ECONNREFUSED')
+      }
+    })
+
     it('returns the interaction context', async () => {
       const client = await createStateQueryClient({ connection })
       expect(client.context.connectionString).toBe('ws://localhost:1338')
@@ -60,13 +86,18 @@ describe('Local state queries', () => {
 
     describe('calling queries from the client', () => {
       it('exposes the queries, uses a single context, and should be released when done', async () => {
-        const client = await createStateQueryClient()
+        const client = await createStateQueryClient({ connection })
 
         const epoch = await client.currentEpoch()
         expect(epoch).toBeDefined()
 
         const protocolParameters = await client.currentProtocolParameters()
         expect(protocolParameters.protocolVersion.major).toBeDefined()
+
+        const delegationsAndRewardsResult = await client.delegationsAndRewards(
+          ['e07bb8d7762ebb0f7340c03e69b3b1aa253dab7ba3c62ebbd50781423a']
+        )
+        expect(Object.keys(delegationsAndRewardsResult).length).toBe(1)
 
         const bound = await client.eraStart()
         expect(bound.slot).toBeDefined()
@@ -110,6 +141,14 @@ describe('Local state queries', () => {
         expect(protocolParameters.protocolVersion.major).toBeDefined()
       })
     })
+    describe('delegationsAndRewards', () => {
+      it('fetches the current delegate and rewards for given stake key hashes', async () => {
+        const stakeKeyHashes = ['0a4fa22c44a2ac1505e34ff15436a06b9de36970af974916d5829be0'] as Hash16[]
+        const result = await delegationsAndRewards(stakeKeyHashes, { connection })
+        const item = result[stakeKeyHashes[0]]
+        expect(item.delegate).toHaveProperty(['delegate', 'rewards'])
+      })
+    })
     describe('eraStart', () => {
       it('fetches the bound of the current era', async () => {
         const bound = await eraStart({ connection })
@@ -134,12 +173,10 @@ describe('Local state queries', () => {
     })
     describe('nonMyopicMemberRewards', () => {
       describe('fetches the Non-myopic member rewards for each pool. Used in ranking.', () => {
-        it('accepts array of values, either stake key or lovelace', async () => {
-          // Todo: Enable
-          // const stakeKey =
+        it('accepts array of values, either stake key hash or lovelace', async () => {
+          const stakeKeyHash = 'e07bb8d7762ebb0f7340c03e69b3b1aa253dab7ba3c62ebbd50781423a'
           const rewards = await nonMyopicMemberRewards([
-            10000
-            // stakeKey
+            stakeKeyHash
           ],
           { connection }
           )
@@ -176,7 +213,7 @@ describe('Local state queries', () => {
       //   expect(utxoSet[0]).toBeDefined()
       // })
       it('fetches the UTxO for the given addresses', async () => {
-        const utxoSet = await utxo(['addr1v9f9pvusgs840v80dgl83humjsda6ynygsgdsjlggxknt8g92v6ap'], { connection })
+        const utxoSet = await utxo(['addr_test1qqymtheun4y437fa6cms4jmtfex39wzz7jfwggudwnqkdnr8udjk6d89dcjadt7tw6hmz0aeue2jzdpl2vnkz8wdk4fqz3y5m9'], { connection })
         expect(utxoSet[0]).toBeDefined()
       })
     })
