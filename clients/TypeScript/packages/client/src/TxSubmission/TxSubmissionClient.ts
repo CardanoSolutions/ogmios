@@ -15,23 +15,24 @@ export interface TxSubmissionClient {
 export const createTxSubmissionClient = async (options?: {
   connection?: ConnectionConfig
 }): Promise<TxSubmissionClient> => {
-  return new Promise(async (resolve, reject) => {
-    const context = await createClientContext(options)
-    const { socket } = context
-    socket.once('error', reject)
-    socket.once('open', async () => {
-      return resolve({
-        context,
-        submitTx: (bytes) => {
-          ensureSocketIsOpen(socket)
-          return submitTx(bytes, context)
-        },
-        shutdown: () => new Promise(resolve => {
-          ensureSocketIsOpen(socket)
-          socket.once('close', resolve)
-          socket.close()
-        })
-      } as TxSubmissionClient)
-    })
+  return new Promise((resolve, reject) => {
+    createClientContext(options).then(context => {
+      const { socket } = context
+      socket.once('error', reject)
+      socket.once('open', async () => {
+        return resolve({
+          context,
+          submitTx: (bytes) => {
+            ensureSocketIsOpen(socket)
+            return submitTx(bytes, context)
+          },
+          shutdown: () => new Promise(resolve => {
+            ensureSocketIsOpen(socket)
+            socket.once('close', resolve)
+            socket.close()
+          })
+        } as TxSubmissionClient)
+      })
+    }).catch(reject)
   })
 }

@@ -85,7 +85,7 @@ export const errors = {
     UtxoValidation: {
       assert: (item: SubmitFail['SubmitFail']): item is UtxoValidationError =>
         (item as UtxoValidationError).utxoValidationError !== undefined,
-      error: class UtxoValidationErrorClass extends CustomError {
+      Error: class UtxoValidationErrorClass extends CustomError {
         public constructor (rawError: UtxoValidationError) {
           super()
           this.message = JSON.stringify(rawError.utxoValidationError, null, 2)
@@ -95,7 +95,7 @@ export const errors = {
     TxValidation: {
       assert: (item: SubmitFail['SubmitFail']): item is TxValidationError =>
         (item as TxValidationError).txValidationError !== undefined,
-      error: class TxValidationErrorClass extends CustomError {
+      Error: class TxValidationErrorClass extends CustomError {
         public constructor (rawError: TxValidationError) {
           super()
           this.message = JSON.stringify(rawError.txValidationError, null, 2)
@@ -107,7 +107,7 @@ export const errors = {
     InvalidWitnesses: {
       assert: (item: SubmitTxErrorShelley): item is InvalidWitnesses =>
         (item as InvalidWitnesses).invalidWitnesses !== undefined,
-      error: class InvalidWitnessesError extends CustomError {
+      Error: class InvalidWitnessesError extends CustomError {
         public constructor (rawError: InvalidWitnesses) {
           super()
           this.message = JSON.stringify(rawError.invalidWitnesses, null, 2)
@@ -117,7 +117,7 @@ export const errors = {
     MissingVkWitnesses: {
       assert: (item: SubmitTxErrorShelley): item is MissingVkWitnesses =>
         (item as MissingVkWitnesses).missingVkWitnesses !== undefined,
-      error: class MissingVkWitnessesError extends CustomError {
+      Error: class MissingVkWitnessesError extends CustomError {
         public constructor (rawError: MissingVkWitnesses) {
           super()
           this.message = JSON.stringify(rawError.missingVkWitnesses, null, 2)
@@ -127,7 +127,7 @@ export const errors = {
     MissingScriptWitnesses: {
       assert: (item: SubmitTxErrorShelley): item is MissingScriptWitnesses =>
         (item as MissingScriptWitnesses).missingScriptWitnesses !== undefined,
-      error: class MissingScriptWitnessesError extends CustomError {
+      Error: class MissingScriptWitnessesError extends CustomError {
         public constructor (rawError: MissingScriptWitnesses) {
           super()
           this.message = JSON.stringify(rawError.missingScriptWitnesses, null, 2)
@@ -137,7 +137,7 @@ export const errors = {
     ScriptWitnessNotValidating: {
       assert: (item: SubmitTxErrorShelley): item is ScriptWitnessNotValidating =>
         (item as ScriptWitnessNotValidating).scriptWitnessNotValidating !== undefined,
-      error: class ScriptWitnessNotValidatingError extends CustomError {
+      Error: class ScriptWitnessNotValidatingError extends CustomError {
         public constructor (rawError: ScriptWitnessNotValidating) {
           super()
           this.message = JSON.stringify(rawError.scriptWitnessNotValidating, null, 2)
@@ -147,7 +147,7 @@ export const errors = {
     InsufficientGenesisSignatures: {
       assert: (item: SubmitTxErrorShelley): item is InsufficientGenesisSignatures =>
         (item as InsufficientGenesisSignatures).insufficientGenesisSignatures !== undefined,
-      error: class InsufficientGenesisSignaturesError extends CustomError {
+      Error: class InsufficientGenesisSignaturesError extends CustomError {
         public constructor (rawError: InsufficientGenesisSignatures) {
           super()
           this.message = JSON.stringify(rawError.insufficientGenesisSignatures, null, 2)
@@ -157,7 +157,7 @@ export const errors = {
     MissingTxMetadata: {
       assert: (item: SubmitTxErrorShelley): item is MissingTxMetadata =>
         (item as MissingTxMetadata).missingTxMetadata !== undefined,
-      error: class MissingTxMetadataError extends CustomError {
+      Error: class MissingTxMetadataError extends CustomError {
         public constructor (rawError: MissingTxMetadata) {
           super()
           this.message = JSON.stringify(rawError.missingTxMetadata, null, 2)
@@ -167,7 +167,7 @@ export const errors = {
     MissingTxMetadataHash: {
       assert: (item: SubmitTxErrorShelley): item is MissingTxMetadataHash =>
         (item as MissingTxMetadataHash).missingTxMetadataHash !== undefined,
-      error: class MissingTxMetadataHashError extends CustomError {
+      Error: class MissingTxMetadataHashError extends CustomError {
         public constructor (rawError: MissingTxMetadataHash) {
           super()
           this.message = JSON.stringify(rawError.missingTxMetadataHash, null, 2)
@@ -177,7 +177,7 @@ export const errors = {
     TxMetadataHashMismatch: {
       assert: (item: SubmitTxErrorShelley): item is TxMetadataHashMismatch =>
         (item as TxMetadataHashMismatch).txMetadataHashMismatch !== undefined,
-      error: class TxMetadataHashMismatchError extends CustomError {
+      Error: class TxMetadataHashMismatchError extends CustomError {
         public constructor (rawError: TxMetadataHashMismatch) {
           super()
           this.message = JSON.stringify(rawError.txMetadataHashMismatch, null, 2)
@@ -187,7 +187,7 @@ export const errors = {
     BadInputs: {
       assert: (item: SubmitTxErrorShelley): item is BadInputs =>
         (item as BadInputs).badInputs !== undefined,
-      error: class BadInputsError extends CustomError {
+      Error: class BadInputsError extends CustomError {
         public constructor (rawError: BadInputs) {
           super()
           this.message = JSON.stringify(rawError.badInputs, null, 2)
@@ -197,7 +197,7 @@ export const errors = {
     ExpiredUtxo: {
       assert: (item: SubmitTxErrorShelley): item is ExpiredUtxo =>
         (item as ExpiredUtxo).expiredUtxo !== undefined,
-      error: class ExpiredUtxoError extends CustomError {
+      Error: class ExpiredUtxoError extends CustomError {
         public constructor (rawError: ExpiredUtxo) {
           super()
           this.message = JSON.stringify(rawError.expiredUtxo, null, 2)
@@ -207,7 +207,7 @@ export const errors = {
     TxTooLarge: {
       assert: (item: SubmitTxErrorShelley): item is TxTooLarge1 =>
         (item as TxTooLarge1).txTooLarge !== undefined,
-      error: class TxTooLargeError extends CustomError {
+      Error: class TxTooLargeError extends CustomError {
         public constructor (rawError: TxTooLarge1) {
           super()
           this.message = JSON.stringify(rawError.txTooLarge, null, 2)
@@ -217,7 +217,7 @@ export const errors = {
     MissingAtLeastOneInputUtxo: {
       assert: (item: SubmitTxErrorShelley): item is MissingAtLeastOneInputUtxo =>
         (item as MissingAtLeastOneInputUtxo) === 'missingAtLeastOneInputUtxo',
-      error: class MissingAtLeastOneInputUtxoError extends CustomError {
+      Error: class MissingAtLeastOneInputUtxoError extends CustomError {
         public constructor (rawError: MissingAtLeastOneInputUtxo) {
           super()
           this.message = JSON.stringify(rawError, null, 2)
@@ -227,7 +227,7 @@ export const errors = {
     InvalidMetadata: {
       assert: (item: SubmitTxErrorShelley): item is InvalidMetadata =>
         (item as InvalidMetadata) === 'invalidMetadata',
-      error: class InvalidMetadataError extends CustomError {
+      Error: class InvalidMetadataError extends CustomError {
         public constructor (rawError: InvalidMetadata) {
           super()
           this.message = JSON.stringify(rawError, null, 2)
@@ -237,7 +237,7 @@ export const errors = {
     FeeTooSmall: {
       assert: (item: SubmitTxErrorShelley): item is FeeTooSmall1 =>
         (item as FeeTooSmall1).feeTooSmall !== undefined,
-      error: class FeeTooSmallError extends CustomError {
+      Error: class FeeTooSmallError extends CustomError {
         public constructor (rawError: FeeTooSmall1) {
           super()
           this.message = JSON.stringify(rawError.feeTooSmall, null, 2)
@@ -247,7 +247,7 @@ export const errors = {
     ValueNotConserved: {
       assert: (item: SubmitTxErrorShelley): item is ValueNotConserved =>
         (item as ValueNotConserved).valueNotConserved !== undefined,
-      error: class ValueNotConservedError extends CustomError {
+      Error: class ValueNotConservedError extends CustomError {
         public constructor (rawError: ValueNotConserved) {
           super()
           this.message = JSON.stringify(rawError.valueNotConserved, null, 2)
@@ -257,7 +257,7 @@ export const errors = {
     NetworkMismatch: {
       assert: (item: SubmitTxErrorShelley): item is NetworkMismatch1 =>
         (item as NetworkMismatch1).networkMismatch !== undefined,
-      error: class NetworkMismatchError extends CustomError {
+      Error: class NetworkMismatchError extends CustomError {
         public constructor (rawError: NetworkMismatch1) {
           super()
           this.message = JSON.stringify(rawError.networkMismatch, null, 2)
@@ -267,7 +267,7 @@ export const errors = {
     OutputTooSmall: {
       assert: (item: SubmitTxErrorShelley): item is OutputTooSmall =>
         (item as OutputTooSmall).outputTooSmall !== undefined,
-      error: class OutputTooSmallError extends CustomError {
+      Error: class OutputTooSmallError extends CustomError {
         public constructor (rawError: OutputTooSmall) {
           super()
           this.message = JSON.stringify(rawError.outputTooSmall, null, 2)
@@ -277,7 +277,7 @@ export const errors = {
     AddressAttributesTooLarge: {
       assert: (item: SubmitTxErrorShelley): item is AddressAttributesTooLarge =>
         (item as AddressAttributesTooLarge).addressAttributesTooLarge !== undefined,
-      error: class AddressAttributesTooLargeError extends CustomError {
+      Error: class AddressAttributesTooLargeError extends CustomError {
         public constructor (rawError: AddressAttributesTooLarge) {
           super()
           this.message = JSON.stringify(rawError.addressAttributesTooLarge, null, 2)
@@ -287,7 +287,7 @@ export const errors = {
     DelegateNotRegistered: {
       assert: (item: SubmitTxErrorShelley): item is DelegateNotRegistered =>
         (item as DelegateNotRegistered).delegateNotRegistered !== undefined,
-      error: class DelegateNotRegisteredError extends CustomError {
+      Error: class DelegateNotRegisteredError extends CustomError {
         public constructor (rawError: DelegateNotRegistered) {
           super()
           this.message = JSON.stringify(rawError.delegateNotRegistered, null, 2)
@@ -297,7 +297,7 @@ export const errors = {
     UnknownOrIncompleteWithdrawals: {
       assert: (item: SubmitTxErrorShelley): item is UnknownOrIncompleteWithdrawals =>
         (item as UnknownOrIncompleteWithdrawals).unknownOrIncompleteWithdrawals !== undefined,
-      error: class UnknownOrIncompleteWithdrawalsError extends CustomError {
+      Error: class UnknownOrIncompleteWithdrawalsError extends CustomError {
         public constructor (rawError: UnknownOrIncompleteWithdrawals) {
           super()
           this.message = JSON.stringify(rawError.unknownOrIncompleteWithdrawals, null, 2)
@@ -307,7 +307,7 @@ export const errors = {
     StakePoolNotRegistered: {
       assert: (item: SubmitTxErrorShelley): item is StakePoolNotRegistered =>
         (item as StakePoolNotRegistered).stakePoolNotRegistered !== undefined,
-      error: class StakePoolNotRegisteredError extends CustomError {
+      Error: class StakePoolNotRegisteredError extends CustomError {
         public constructor (rawError: StakePoolNotRegistered) {
           super()
           this.message = JSON.stringify(rawError.stakePoolNotRegistered, null, 2)
@@ -317,7 +317,7 @@ export const errors = {
     WrongRetirementEpoch: {
       assert: (item: SubmitTxErrorShelley): item is WrongRetirementEpoch =>
         (item as WrongRetirementEpoch).wrongRetirementEpoch !== undefined,
-      error: class WrongRetirementEpochError extends CustomError {
+      Error: class WrongRetirementEpochError extends CustomError {
         public constructor (rawError: WrongRetirementEpoch) {
           super()
           this.message = JSON.stringify(rawError.wrongRetirementEpoch, null, 2)
@@ -327,7 +327,7 @@ export const errors = {
     WrongPoolCertificate: {
       assert: (item: SubmitTxErrorShelley): item is WrongPoolCertificate =>
         (item as WrongPoolCertificate).wrongPoolCertificate !== undefined,
-      error: class WrongPoolCertificateError extends CustomError {
+      Error: class WrongPoolCertificateError extends CustomError {
         public constructor (rawError: WrongPoolCertificate) {
           super()
           this.message = JSON.stringify(rawError.wrongPoolCertificate, null, 2)
@@ -337,7 +337,7 @@ export const errors = {
     StakeKeyAlreadyRegistered: {
       assert: (item: SubmitTxErrorShelley): item is StakeKeyAlreadyRegistered =>
         (item as StakeKeyAlreadyRegistered).stakeKeyAlreadyRegistered !== undefined,
-      error: class StakeKeyAlreadyRegisteredError extends CustomError {
+      Error: class StakeKeyAlreadyRegisteredError extends CustomError {
         public constructor (rawError: StakeKeyAlreadyRegistered) {
           super()
           this.message = JSON.stringify(rawError.stakeKeyAlreadyRegistered, null, 2)
@@ -347,7 +347,7 @@ export const errors = {
     PoolCostTooSmall: {
       assert: (item: SubmitTxErrorShelley): item is PoolCostTooSmall =>
         (item as PoolCostTooSmall).poolCostTooSmall !== undefined,
-      error: class PoolCostTooSmallError extends CustomError {
+      Error: class PoolCostTooSmallError extends CustomError {
         public constructor (rawError: PoolCostTooSmall) {
           super()
           this.message = JSON.stringify(rawError.poolCostTooSmall, null, 2)
@@ -357,7 +357,7 @@ export const errors = {
     StakeKeyNotRegistered: {
       assert: (item: SubmitTxErrorShelley): item is StakeKeyNotRegistered =>
         (item as StakeKeyNotRegistered).stakeKeyNotRegistered !== undefined,
-      error: class StakeKeyNotRegisteredError extends CustomError {
+      Error: class StakeKeyNotRegisteredError extends CustomError {
         public constructor (rawError: StakeKeyNotRegistered) {
           super()
           this.message = JSON.stringify(rawError.stakeKeyNotRegistered, null, 2)
@@ -367,7 +367,7 @@ export const errors = {
     RewardAccountNotExisting: {
       assert: (item: SubmitTxErrorShelley): item is RewardAccountNotExisting =>
         (item as RewardAccountNotExisting) === 'rewardAccountNotExisting',
-      error: class RewardAccountNotExistingError extends CustomError {
+      Error: class RewardAccountNotExistingError extends CustomError {
         public constructor (rawError: RewardAccountNotExisting) {
           super()
           this.message = JSON.stringify(rawError, null, 2)
@@ -377,7 +377,7 @@ export const errors = {
     RewardAccountNotEmpty: {
       assert: (item: SubmitTxErrorShelley): item is RewardAccountNotEmpty =>
         (item as RewardAccountNotEmpty).rewardAccountNotEmpty !== undefined,
-      error: class RewardAccountNotEmptyError extends CustomError {
+      Error: class RewardAccountNotEmptyError extends CustomError {
         public constructor (rawError: RewardAccountNotEmpty) {
           super()
           this.message = JSON.stringify(rawError.rewardAccountNotEmpty, null, 2)
@@ -387,7 +387,7 @@ export const errors = {
     WrongCertificateType: {
       assert: (item: SubmitTxErrorShelley): item is WrongCertificateType =>
         (item as WrongCertificateType) === 'wrongCertificateType',
-      error: class WrongCertificateTypeError extends CustomError {
+      Error: class WrongCertificateTypeError extends CustomError {
         public constructor (rawError: WrongCertificateType) {
           super()
           this.message = JSON.stringify(rawError, null, 2)
@@ -397,7 +397,7 @@ export const errors = {
     UnknownGenesisKey: {
       assert: (item: SubmitTxErrorShelley): item is UnknownGenesisKey =>
         (item as UnknownGenesisKey).unknownGenesisKey !== undefined,
-      error: class UnknownGenesisKeyError extends CustomError {
+      Error: class UnknownGenesisKeyError extends CustomError {
         public constructor (rawError: UnknownGenesisKey) {
           super()
           this.message = JSON.stringify(rawError.unknownGenesisKey, null, 2)
@@ -407,7 +407,7 @@ export const errors = {
     AlreadyDelegating: {
       assert: (item: SubmitTxErrorShelley): item is AlreadyDelegating =>
         (item as AlreadyDelegating).alreadyDelegating !== undefined,
-      error: class AlreadyDelegatingError extends CustomError {
+      Error: class AlreadyDelegatingError extends CustomError {
         public constructor (rawError: AlreadyDelegating) {
           super()
           this.message = JSON.stringify(rawError.alreadyDelegating, null, 2)
@@ -417,7 +417,7 @@ export const errors = {
     InsufficientFundsForMir: {
       assert: (item: SubmitTxErrorShelley): item is InsufficientFundsForMir =>
         (item as InsufficientFundsForMir).insufficientFundsForMir !== undefined,
-      error: class InsufficientFundsForMirError extends CustomError {
+      Error: class InsufficientFundsForMirError extends CustomError {
         public constructor (rawError: InsufficientFundsForMir) {
           super()
           this.message = JSON.stringify(rawError.insufficientFundsForMir, null, 2)
@@ -427,7 +427,7 @@ export const errors = {
     TooLateForMir: {
       assert: (item: SubmitTxErrorShelley): item is TooLateForMir =>
         (item as TooLateForMir).tooLateForMir !== undefined,
-      error: class TooLateForMirError extends CustomError {
+      Error: class TooLateForMirError extends CustomError {
         public constructor (rawError: TooLateForMir) {
           super()
           this.message = JSON.stringify(rawError.tooLateForMir, null, 2)
@@ -437,7 +437,7 @@ export const errors = {
     DuplicateGenesisVrf: {
       assert: (item: SubmitTxErrorShelley): item is DuplicateGenesisVrf =>
         (item as DuplicateGenesisVrf).duplicateGenesisVrf !== undefined,
-      error: class DuplicateGenesisVrfError extends CustomError {
+      Error: class DuplicateGenesisVrfError extends CustomError {
         public constructor (rawError: DuplicateGenesisVrf) {
           super()
           this.message = JSON.stringify(rawError.duplicateGenesisVrf, null, 2)
@@ -447,7 +447,7 @@ export const errors = {
     NonGenesisVoters: {
       assert: (item: SubmitTxErrorShelley): item is NonGenesisVoters =>
         (item as NonGenesisVoters).nonGenesisVoters !== undefined,
-      error: class NonGenesisVotersError extends CustomError {
+      Error: class NonGenesisVotersError extends CustomError {
         public constructor (rawError: NonGenesisVoters) {
           super()
           this.message = JSON.stringify(rawError.nonGenesisVoters, null, 2)
@@ -457,7 +457,7 @@ export const errors = {
     UpdateWrongEpoch: {
       assert: (item: SubmitTxErrorShelley): item is UpdateWrongEpoch =>
         (item as UpdateWrongEpoch).updateWrongEpoch !== undefined,
-      error: class UpdateWrongEpochError extends CustomError {
+      Error: class UpdateWrongEpochError extends CustomError {
         public constructor (rawError: UpdateWrongEpoch) {
           super()
           this.message = JSON.stringify(rawError.updateWrongEpoch, null, 2)
@@ -467,7 +467,7 @@ export const errors = {
     ProtocolVersionCannotFollow: {
       assert: (item: SubmitTxErrorShelley): item is ProtocolVersionCannotFollow =>
         (item as ProtocolVersionCannotFollow).protocolVersionCannotFollow !== undefined,
-      error: class ProtocolVersionCannotFollowError extends CustomError {
+      Error: class ProtocolVersionCannotFollowError extends CustomError {
         public constructor (rawError: ProtocolVersionCannotFollow) {
           super()
           this.message = JSON.stringify(rawError.protocolVersionCannotFollow, null, 2)

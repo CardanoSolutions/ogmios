@@ -56,8 +56,8 @@ describe('TxSubmission', () => {
           { connection }
         )
       } catch (error) {
-        await expect(error[0]).toBeInstanceOf(errors.shelley.BadInputs.error)
-        await expect(error[1]).toBeInstanceOf(errors.shelley.ValueNotConserved.error)
+        await expect(error[0]).toBeInstanceOf(errors.shelley.BadInputs.Error)
+        await expect(error[1]).toBeInstanceOf(errors.shelley.ValueNotConserved.Error)
       }
     })
   })

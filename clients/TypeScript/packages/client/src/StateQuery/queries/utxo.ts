@@ -21,7 +21,7 @@ const isArrayOfUtxo = (result: Ogmios['QueryResponse[utxo]']['result']): result 
     return true
   }
   const item = result[0] as (Utxo2 | UtxoMary)
-  return Array.isArray(item) && item.length === 0 ||
+  return (Array.isArray(item) && item.length === 0) ||
     'index' in item[0] ||
     ('index' in item[0] &&
       (typeof item[1].value === 'number' || typeof item[1].value.coins === 'number'))

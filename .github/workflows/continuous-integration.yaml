@@ -65,7 +65,7 @@ jobs:
         yarn install --frozen-lockfile --non-interactive --logevel=error
         yarn generate-schema-types
         yarn build
-#        yarn lint
+        yarn lint
 #        yarn test
 
     - name: 📦 Package REPL
