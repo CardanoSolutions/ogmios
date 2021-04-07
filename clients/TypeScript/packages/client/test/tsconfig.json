@@ -8,6 +8,6 @@
   },
   "references": [
     { "path": "../src"},
-    { "path": "../../schema"}
+    { "path": "../../schema/src"}
   ]
 }
