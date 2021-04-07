@@ -27,7 +27,7 @@ const isArrayOfUtxo = (result: Ogmios['QueryResponse[utxo]']['result']): result 
       (typeof item[1].value === 'number' || typeof item[1].value.coins === 'number'))
 }
 
-export const utxo = (addresses?: Address[], context?: InteractionContext): Promise<Utxo1> => {
+export const utxo = (addresses: Address[], context?: InteractionContext): Promise<Utxo1> => {
   return ensureSocket<Utxo1>((socket) => {
     return new Promise((resolve, reject) => {
       const requestId = nanoid(5)
@@ -50,7 +50,9 @@ export const utxo = (addresses?: Address[], context?: InteractionContext): Promi
         ...baseRequest,
         methodname: 'Query',
         args: {
-          query: addresses !== undefined ? { utxo: addresses } : 'utxo'
+          query: Array.isArray(addresses) && addresses.length > 0 && addresses[0] !== null
+            ? { utxo: addresses }
+            : 'utxo'
         },
         mirror: { requestId }
       } as Ogmios['Query']))

@@ -194,6 +194,7 @@ describe('Local state queries', () => {
       it('fetches the current shelley protocol parameters', async () => {
         const protocolParameters = await proposedProtocolParameters({ connection })
         expect(protocolParameters).toBeNull()
+        // Todo: Enable with local test network implementation
         // const params = Object.values(protocolParameters)[0]
         // expect(params.minFeeCoefficient).toBeDefined()
         // expect(params.minUtxoValue).toBeDefined()
@@ -209,12 +210,10 @@ describe('Local state queries', () => {
       })
     })
     describe('utxo', () => {
-      // Todo: Enable when there's a suitable interface to handle large responses.
-      // it('fetches the complete UTxO set when no addresses are provided', async () => {
-      //   const utxoSet = await utxo({ connection })
-      //   console.log(utxoSet)
-      //   expect(utxoSet[0]).toBeDefined()
-      // })
+      it('fetches the complete UTxO set when an empty array is provided', async () => {
+        const utxoSet = await utxo([], { connection })
+        expect(utxoSet[0]).toBeDefined()
+      })
       it('fetches the UTxO for the given addresses', async () => {
         const utxoSet = await utxo(['addr_test1qqymtheun4y437fa6cms4jmtfex39wzz7jfwggudwnqkdnr8udjk6d89dcjadt7tw6hmz0aeue2jzdpl2vnkz8wdk4fqz3y5m9'], { connection })
         expect(utxoSet[0]).toBeDefined()
