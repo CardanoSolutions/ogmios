@@ -10,7 +10,6 @@ import {
 } from '@cardano-ogmios/schema'
 
 const connection = { port: 1338 }
-const mirror = { reflectMe: 'someValue' }
 
 describe('ChainSync', () => {
   it('returns the interaction context', async () => {
@@ -43,9 +42,9 @@ describe('ChainSync', () => {
     const run = () => client.findIntersect(['origin'])
     await expect(run).rejects
   })
-  it('accepts message handlers for roll back and roll forward messages', async (cb) => {
+  it('accepts message handlers for roll back and roll forward messages', async () => {
     const rollbackPoints: Point[] = []
-    const reflectedValue = ''
+    let count = 1
     const blocks: Block[] = []
     const client = await createChainSyncClient({ connection })
     await client.findIntersect(['origin'])
@@ -56,15 +55,15 @@ describe('ChainSync', () => {
       },
       rollForward: async ({ block, reflection }) => {
         blocks.push(block)
+        count = reflection.count as number
         if (reflection.count < 10) {
           client.requestNext({ mirror: { count: reflection.count as number + 1 } })
         } else {
           await client.shutdown()
-          cb()
         }
       }
     })
-    client.requestNext({ mirror: { count: 1 } })
+    client.requestNext({ mirror: { count } })
     await delay(100)
     let firstBlockHash: Hash16
     if ('byron' in blocks[0]) {
@@ -82,6 +81,6 @@ describe('ChainSync', () => {
     }
     expect(firstBlockHash).toBeDefined()
     expect(rollbackPoints.length).toBe(1)
-    expect(reflectedValue).toBe(mirror.reflectMe)
+    expect(count).toBe(10)
   })
 })
