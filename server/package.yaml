@@ -12,9 +12,8 @@ synopsis:            A JSON-WSP WebSocket client for cardano-node
 category:            Web
 
 extra-source-files:
-- LICENSE
-- README.md
-- CHANGELOG.md
+- static/assets/logo.png
+- static/assets/favicon.ico
 - static/dashboard.html
 - static/dashboard.js
 - static/tests.html
@@ -139,3 +138,5 @@ tests:
     - relude
     - shelley-spec-ledger
     - shelley-spec-ledger-test
+    build-tools:
+    - hspec-discover

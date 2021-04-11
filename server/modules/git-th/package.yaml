@@ -38,3 +38,5 @@ tests:
     - hspec
     - template-haskell
     - temporary
+    build-tools:
+    - hspec-discover

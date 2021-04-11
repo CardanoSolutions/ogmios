@@ -40,3 +40,5 @@ library:
     - ouroboros-network
     - ouroboros-network-framework
     - typed-protocols-examples
+  build-tools:
+  - hspec-discover

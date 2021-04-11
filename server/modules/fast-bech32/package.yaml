@@ -58,3 +58,5 @@ tests:
     - hspec
     - QuickCheck
     - text
+    build-tools:
+    - hspec-discover

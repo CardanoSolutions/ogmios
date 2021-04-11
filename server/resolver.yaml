@@ -1,13 +1,47 @@
 name: _
 
-resolver: https://raw.githubusercontent.com/input-output-hk/cardano-haskell/160f45b74af4ec2f553c1197028867e93b4f75dd/snapshots/cardano-1.25.1-GHC-8.10.4.yaml
+resolver: lts-17.6
 
 packages:
 - async-timer-0.2.0.0
+- base16-bytestring-1.0.1.0
+- bech32-1.1.0
+- bech32-th-1.0.2
+- binary-0.8.7.0 # 0.8.8.0 on LTS 17.6
 - Cabal-3.2.1.0
+- canonical-json-0.6.0.0
+- containers-0.5.11.0 # 0.6.2.1 on LTS 17.6
+- dns-3.0.4 # 4.0.1 on LTS 17.6
+- gray-code-0.3.1
+- libsystemd-journal-1.4.4
 - markov-chain-usage-model-0.0.0
+- micro-recursion-schemes-5.0.2.2
+- moo-1.2
+- network-3.1.2.1 # 3.1.1.1 on LTS 17.6
+- nothunks-0.1.2
 - parsec-3.1.14.0
+- partial-order-0.2.0.0
 - quickcheck-state-machine-0.7.0
+- regex-posix-clib-2.7
+- statistics-linreg-0.3
+- streaming-binary-0.2.2.0
+- text-1.2.4.0 # 1.2.4.1 on LTS 17.6
+- transformers-except-0.1.1
+- Unique-0.4.7.6
+- Win32-2.6.2.0
+
+- git: https://github.com/input-output-hk/cardano-base
+  commit: b364d925e0a72689ecba40dd1f4899f76170b894
+  subdirs:
+  - binary
+  - binary/test
+  - cardano-crypto-class
+  - cardano-crypto-tests
+  - cardano-crypto-praos
+  - slotting
+
+- git: https://github.com/input-output-hk/cardano-crypto
+  commit: f73079303f663e028288f9f4a9e08bcca39a923e
 
 # commit 097890495cbb0e8b62106bcd090a5721c3f4b36f
 # Merge: e392f9d9 b23e2006
@@ -19,8 +53,19 @@ packages:
 - git: https://github.com/input-output-hk/cardano-ledger-specs
   commit: 097890495cbb0e8b62106bcd090a5721c3f4b36f
   subdirs:
+  - byron/chain/executable-spec
+  - byron/crypto
+  - byron/crypto/test
+  - byron/ledger/executable-spec
+  - byron/ledger/impl
+  - byron/ledger/impl/test
+  - semantics/executable-spec
+  - semantics/small-steps-test
+  - shelley-ma/impl
   - shelley-ma/shelley-ma-test
+  - shelley/chain-and-ledger/dependencies/non-integer
   - shelley/chain-and-ledger/executable-spec
+  - shelley/chain-and-ledger/shelley-spec-ledger-test
 
 # commit 7f8daad43dbb0ae97fe24d36eaff857f63cf5711 (HEAD -> 1.25.1)
 # Author: KtorZ <matthias.benkort@gmail.com>
@@ -38,13 +83,23 @@ packages:
 - git: https://github.com/KtorZ/ouroboros-network
   commit: 7f8daad43dbb0ae97fe24d36eaff857f63cf5711
   subdirs:
+    - io-sim
+    - io-sim-classes
+    - network-mux
     - ouroboros-consensus
     - ouroboros-consensus-test
+    - ouroboros-consensus-byron
     - ouroboros-consensus-byronspec
     - ouroboros-consensus-byron-test
+    - ouroboros-consensus-shelley
     - ouroboros-consensus-shelley-test
+    - ouroboros-consensus-cardano
     - ouroboros-consensus-cardano-test
     - ouroboros-network
+    - ouroboros-network-framework
+    - typed-protocols
+    - typed-protocols-examples
+    - Win32-network
 
 # commit c4b23254e28204a5ac1e91bef4a7d4d5fbdf6837 (HEAD -> 1.25.1)
 # Author: KtorZ <matthias.benkort@gmail.com>
@@ -55,6 +110,25 @@ packages:
   commit: 1777493c3b353f75ca796b78484d4b2da5ea5864
   subdirs:
     - cardano-api
+    - cardano-config
+
+- git: https://github.com/input-output-hk/cardano-prelude
+  commit: ee4e7b547a991876e6b05ba542f4e62909f4a571
+  subdirs:
+  - cardano-prelude
+  - cardano-prelude-test
+
+- git: https://github.com/input-output-hk/iohk-monitoring-framework
+  commit: 563e79f28c6da5c547463391d4c58a81442e48db
+  subdirs:
+  - contra-tracer
+  - iohk-monitoring
+  - plugins/backend-aggregation
+  - plugins/backend-ekg
+  - plugins/backend-monitoring
+  - plugins/backend-trace-forwarder
+  - plugins/scribe-systemd
+  - tracer-transformers
 
 # commit 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e (HEAD -> master, origin/master, origin/HEAD)
 # Merge: 766385f 5818f1c

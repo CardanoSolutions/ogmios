@@ -1,18 +1,20 @@
 *
 
-!LICENSE
 !stack.yaml
 !resolver.yaml
 !.hpack.config.yaml
 !.stylish-haskell.yaml
 
+!package.yaml
 !app/
 !src/
 !static/
-!package.yaml
 
 !modules/
 modules/ouroboros-network
 modules/cardano-node
+modules/hjsonpointer
+modules/hjsonschema
+modules/wai-routes
 
 !ogmios.wsp.json

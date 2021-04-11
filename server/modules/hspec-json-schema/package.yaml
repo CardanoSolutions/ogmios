@@ -48,3 +48,5 @@ tests:
     - QuickCheck
     - string-interpolate
     - text
+    build-tools:
+    - hspec-discover
