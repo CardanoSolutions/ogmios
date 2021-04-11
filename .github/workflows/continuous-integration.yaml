@@ -8,7 +8,7 @@ on:
     tags: [ "*.*.*" ]
 
 jobs:
-  build:
+  server:
     strategy:
       matrix:
         os: [ubuntu-latest]
