@@ -31,7 +31,7 @@ jobs:
       uses: actions/cache@v2.1.1
       with:
         path: ~/.stack
-        key: ${{ matrix.os }}-${{ hashFiles('server/stack.yaml') }}
+        key: ${{ matrix.os }}-${{ hashFiles('server/resolver.yaml') }}
 
     - name: 📸 Build Snapshot
       if: steps.cache.outputs.cache-hit != 'true'
