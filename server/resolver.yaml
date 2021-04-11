@@ -67,6 +67,9 @@ packages:
   - shelley/chain-and-ledger/executable-spec
   - shelley/chain-and-ledger/shelley-spec-ledger-test
 
+- git: https://github.com/input-output-hk/goblins
+  commit: cde90a2b27f79187ca8310b6549331e59595e7ba
+
 # commit 7f8daad43dbb0ae97fe24d36eaff857f63cf5711 (HEAD -> 1.25.1)
 # Author: KtorZ <matthias.benkort@gmail.com>
 # Date:   Sat Apr 25 00:17:09 2020 +0200
