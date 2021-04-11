@@ -8,6 +8,7 @@
 
 module Ogmios.Data.Json
     ( Json
+    , SerializationMode (..)
     , jsonToByteString
     , FromJSON
     , decodeWith

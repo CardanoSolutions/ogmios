@@ -54,11 +54,14 @@ import Ogmios.Control.MonadWebSocket
     , ConnectionException (..)
     , MonadWebSocket (..)
     , PendingConnection
+    , SubProtocol
     , WebSocketApp
     , headers
+    , subProtocols
     )
 import Ogmios.Data.Json
     ( Json
+    , SerializationMode (..)
     , encodeAcquireFailure
     , encodeBlock
     , encodeHardForkApplyTxErr
@@ -123,10 +126,11 @@ newWebSocketApp tr unliftIO = do
     Options{nodeSocket} <- asks (view typed)
     sensors <- asks (view typed)
     return $ \pending -> unliftIO $ do
-        logWith tr (WebSocketConnectionAccepted $ userAgent pending)
-        recordSession sensors $ onExceptions $ acceptRequest pending $ \conn -> do
+        let (mode, sub) = choseSerializationMode pending
+        logWith tr $ WebSocketConnectionAccepted (userAgent pending) mode
+        recordSession sensors $ onExceptions $ acceptRequest pending sub $ \conn -> do
             let trClient = natTracer liftIO $ contramap WebSocketClient tr
-            withOuroborosClients sensors conn $ \clients -> do
+            withOuroborosClients mode sensors conn $ \clients -> do
                 let client = mkClient unliftIO trClient slotsPerEpoch clients
                 let vData  = NodeToClientVersionData networkMagic
                 connectClient nullTracer client vData nodeSocket
@@ -174,6 +178,18 @@ newWebSocketApp tr unliftIO = do
         e ->
             throwIO e
 
+-- | Chose a serialization mode based on the sub-protocols given by the client
+-- websocket. If the client specifies "compact" as a sub-protocol, then Ogmios
+-- will not return proofs, signatures and other voluminous data from the
+-- chain-sync protocol.
+choseSerializationMode
+    :: PendingConnection
+    -> (SerializationMode, Maybe SubProtocol)
+choseSerializationMode conn =
+    case subProtocols conn of
+        ["compact"] -> (CompactSerialization, Just "compact")
+        _ -> (FullSerialization, Nothing)
+
 withOuroborosClients
     :: forall m a.
         ( MonadAsync m
@@ -182,11 +198,12 @@ withOuroborosClients
         , MonadOuroboros m
         , MonadWebSocket m
         )
-    => Sensors m
+    => SerializationMode
+    -> Sensors m
     -> Connection
     -> (Clients m Block -> m a)
     -> m a
-withOuroborosClients sensors conn action = do
+withOuroborosClients mode sensors conn action = do
     (chainSyncQ, txSubmissionQ, stateQueryQ) <-
         atomically $ (,,) <$> newTQueue <*> newTQueue <*> newTQueue
 
@@ -272,7 +289,7 @@ data TraceWebSocket where
         -> TraceWebSocket
 
     WebSocketConnectionAccepted
-        :: { userAgent :: ByteString }
+        :: { userAgent :: ByteString, mode :: SerializationMode }
         -> TraceWebSocket
 
     WebSocketConnectionEnded
