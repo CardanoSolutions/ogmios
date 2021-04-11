@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Adapted from https://raw.githubusercontent.com/ndmitchell/neil/master/misc/travis.sh
 
 set -e
