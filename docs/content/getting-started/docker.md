@@ -9,7 +9,8 @@ weight = 1
 The easiest way to get started is to use [docker](https://www.docker.com/). This guide won't cover installing docker, so make sure you have the docker daemon installed and running. Since Ogmios requires the presence of a Cardano node, we'll be using [docker-compose](https://docs.docker.com/compose/) to orchestrate both services. A compose file is available on the Ogmios repository, get it via:
 
 ```console
-$ wget https://raw.githubusercontent.com/KtorZ/cardano-ogmios/master/docker-compose.yml -O docker-compose.yml
+$ git clone --depth 1 git@github.com:KtorZ/cardano-ogmios.git
+$ cd cardano-ogmios
 ```
 
 Then, starts the components stack using:
@@ -23,7 +24,11 @@ $ docker-compose up
 - A [Cardano node](https://github.com/input-output-hk/cardano-node/), connected to mainnet.
 - An Ogmios server using the [latest Dockerhub build](https://hub.docker.com/r/ktorz/ogmios), listening to localhost on port :1337.
 
-To build the Ogmios image from sources, pass the `--build` flag. This is useful if you need a different version than the latest one available on Dockerhub. 
+To build the Ogmios image from sources, pass the `--build` flag. This is useful if you need a different version than the latest one available on Dockerhub.  
+
+{{% notice tip %}}
+If you're building locally using `docker build`, make sure to leverage existing cache steps from Dockerhub using `--cache-from ktorz/ogmios:latest`. A full build of Ogmios without cache may take up to 45 minutes! 
+{{% /notice %}}
 
 ### Configuration
 
