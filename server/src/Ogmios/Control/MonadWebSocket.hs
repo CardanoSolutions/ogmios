@@ -20,10 +20,10 @@ module Ogmios.Control.MonadWebSocket
     , pingThreadDelay
     ) where
 
-import           Relude
+import Relude
 
-import           Network.WebSockets (Connection, ConnectionException (..),
-                                     Headers, PendingConnection)
+import Network.WebSockets
+    ( Connection, ConnectionException (..), Headers, PendingConnection )
 
 import qualified Network.WebSockets as WS
 

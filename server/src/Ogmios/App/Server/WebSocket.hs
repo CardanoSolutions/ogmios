@@ -263,7 +263,7 @@ withOuroborosClients mode sensors conn action = do
     chainSyncCodecs@ChainSyncCodecs
         { decodeFindIntersect
         , decodeRequestNext
-        } = mkChainSyncCodecs encodeBlock encodePoint encodeTip
+        } = mkChainSyncCodecs (encodeBlock mode) encodePoint encodeTip
 
     stateQueryCodecs@StateQueryCodecs
         { decodeAcquire

@@ -29,6 +29,7 @@ import Data.Type.Equality
     ( (:~:) (..), testEquality )
 import Ogmios.Data.Json
     ( Json
+    , SerializationMode (..)
     , encodeAcquireFailure
     , encodeBlock
     , encodeHardForkApplyTxErr
@@ -175,7 +176,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Wsp.Response (RequestNextResponse Block)))
-            (_encodeRequestNextResponse encodeBlock encodePoint encodeTip)
+            (_encodeRequestNextResponse (encodeBlock FullSerialization) encodePoint encodeTip)
             "ogmios.wsp.json#/properties/RequestNextResponse"
 
     context "validate tx submission req/res against JSON-schema" $ do

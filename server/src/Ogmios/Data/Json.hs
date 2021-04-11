@@ -97,12 +97,13 @@ encodeAcquireFailure = \case
 
 encodeBlock
     :: Crypto crypto
-    => CardanoBlock crypto
+    => SerializationMode
+    -> CardanoBlock crypto
     -> Json
-encodeBlock = \case
+encodeBlock mode = \case
     BlockByron blk -> encodeObject
         [ ( "byron"
-          , Byron.encodeABlockOrBoundary (byronBlockRaw blk)
+          , Byron.encodeABlockOrBoundary mode (byronBlockRaw blk)
           )
         ]
     BlockShelley blk -> encodeObject
