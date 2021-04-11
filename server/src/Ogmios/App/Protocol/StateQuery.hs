@@ -3,7 +3,6 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeApplications #-}
 
 -- | The state query protocol is likely the most versatile of the three Ouroboros
 -- mini-protocols. As a matter of fact, it allows for querying various types of
