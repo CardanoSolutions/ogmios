@@ -918,6 +918,52 @@
       }
     }
 
+  , "Fault":
+    { "type": "object"
+    , "description": "A fault in the JSON-WSP protocol. This is returned by the server when a request from clients is deemed invalid or, when the server was unable to reply to a well-formed request."
+    , "required": [ "type", "version", "servicename", "fault" ]
+    , "additionalProperties": false
+    , "examples":
+      [ { "type": "jsonwsp/fault"
+        ,  "version": "1.0"
+        , "servicename": "ogmios"
+        , "fault":
+          { "string": "Invalid request: invalid query."
+          , "code": "client"
+          }
+        }
+      ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/fault" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "fault":
+        { "type": "object"
+        , "required": [ "code", "string" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code":
+            { "type": "string"
+            , "description": "An error code telling about the nature of the fault."
+            , "enum": [ "incompatible", "server", "client" ]
+            }
+          , "string":
+            { "type": "string"
+            , "description": "A descriptive error message giving hints about the fault."
+            }
+          }
+        }
+      }
+    }
   }
 
 , "definitions":
