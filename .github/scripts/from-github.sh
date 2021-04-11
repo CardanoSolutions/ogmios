@@ -1,29 +1,29 @@
-#!/bin/bash
+#!/bin/sh
 # Adapted from https://raw.githubusercontent.com/ndmitchell/neil/master/misc/travis.sh
 
 set -e
 
-if [[ -z "${PACKAGE}" ]]; then
+if [ -z "$PACKAGE" ]; then
   echo "PACKAGE must be provided as ENV var."
   exit 1
 fi
 
-if [[ -z "${REPOSITORY}" ]]; then
+if [ -z "$REPOSITORY" ]; then
   echo "REPOSITORY must be provided as ENV var."
   exit 1
 fi
 
-if [[ -z "${PLATFORM}" ]]; then
+if [ -z "$PLATFORM" ]; then
   echo "PLATFORM must be provided as ENV var."
   exit 1
 fi
 
-if [[ -z "${VERSION}" ]]; then
+if [ -z "$VERSION" ]; then
   echo "VERSION must be provided as ENV var."
   exit 1
 fi
 
-if [[ -z "${RELEASE}" ]]; then
+if [ -z "$RELEASE" ]; then
   echo "RELEASE must be provided as ENV var."
   exit 1
 fi
