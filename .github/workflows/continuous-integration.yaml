@@ -45,7 +45,7 @@ jobs:
         stack --no-terminal build                 --haddock --no-haddock-deps --flag ogmios:production
         stack --no-terminal test ogmios:unit      --haddock --no-haddock-deps --flag ogmios:production
 
-  node-js:
+  clients_TypeScript:
     strategy:
       matrix:
         os: [ ubuntu-20.04 ]
