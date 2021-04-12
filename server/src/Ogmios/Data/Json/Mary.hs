@@ -69,15 +69,16 @@ encodeLedgerFailure = \case
 
 encodeMaryBlock
     :: Crypto crypto
-    => ShelleyBlock (MaryEra crypto)
+    => SerializationMode
+    -> ShelleyBlock (MaryEra crypto)
     -> Json
-encodeMaryBlock (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
+encodeMaryBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
     encodeObject
     [ ( "body"
-      , encodeFoldable encodeTx (Sh.txSeqTxns' txs)
+      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
       )
     , ( "header"
-      , Shelley.encodeBHeader blkHeader
+      , Shelley.encodeBHeader mode blkHeader
       )
     , ( "headerHash"
       , Shelley.encodeShelleyHash headerHash
@@ -99,17 +100,15 @@ encodeProposedPPUpdates =
 
 encodeTx
     :: Crypto crypto
-    => Sh.Tx (MaryEra crypto)
+    => SerializationMode
+    -> Sh.Tx (MaryEra crypto)
     -> Json
-encodeTx x = encodeObject
+encodeTx mode x = encodeObjectWithMode mode
     [ ( "id"
       , Shelley.encodeTxId (Sh.txid (Sh._body x))
       )
     , ( "body"
       , encodeTxBody (Sh._body x)
-      )
-    , ( "witness"
-      , encodeWitnessSet (Sh._witnessSet x)
       )
     , ( "metadata", encodeObject
         [ ( "hash"
@@ -119,6 +118,10 @@ encodeTx x = encodeObject
           , encodeStrictMaybe encodeAuxiliaryData (Sh._metadata x)
           )
         ]
+      )
+    ]
+    [ ( "witness"
+      , encodeWitnessSet (Sh._witnessSet x)
       )
     ]
   where

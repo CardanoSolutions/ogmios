@@ -108,17 +108,17 @@ encodeBlock mode = \case
         ]
     BlockShelley blk -> encodeObject
         [ ( "shelley"
-          , Shelley.encodeShelleyBlock blk
+          , Shelley.encodeShelleyBlock mode blk
           )
         ]
     BlockAllegra blk -> encodeObject
         [ ( "allegra"
-          , Allegra.encodeAllegraBlock blk
+          , Allegra.encodeAllegraBlock mode blk
           )
         ]
     BlockMary blk -> encodeObject
         [ ( "mary"
-          , Mary.encodeMaryBlock blk
+          , Mary.encodeMaryBlock mode blk
           )
         ]
 
