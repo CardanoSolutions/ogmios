@@ -206,3 +206,13 @@ A few important takes from this excerpt:
 {{% notice info %}}
 Note that Ogmios will do its best to pipeline requests to the Cardano node. Nevertheless, unlike WebSocket the local chain-sync protocol only allows for finite pipelining. Said differently, Ogmios cannot pipeline an arbitrary and potentially infinite number of requests and will actually starts collecting responses if too many requests are pipelined. So, if you're pipelining many requests in a client application, make sure to also take times to collect some responses because there will be no extra benefits coming from _too much pipelining_.
 {{% /notice %}}
+
+## Compact Serialization
+
+Since version `v3.2.0`, Ogmios supports a WebSocket sub-protocol which has an influence on the representation of some data objects. When set, this so-called _compact mode_ will omit proofs, signatures and other voluminous pieces of information from responses that are somewhat superfluous in a trustworthy setup (where for instance, your application fully trusts its node / Ogmios). As a consequence, responses are twice smaller, less bloated and the overall chain-sync synchronization is sped up by about 20%. To enable the compact serialization, use:
+
+```
+ogmios.compact.v1
+```
+
+as a sub-protocol when establishing the WebSocket connection. Omitted fields are documented in the [API reference](../../api-reference) using the `$omitted-if-compact` field of relevant objects.
