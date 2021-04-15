@@ -94,9 +94,10 @@ encodeAuxiliaryDataHash =
 
 encodeBHeader
     :: Crypto crypto
-    => Sh.BHeader crypto
+    => SerializationMode
+    -> Sh.BHeader crypto
     -> Json
-encodeBHeader (Sh.BHeader hBody hSig) = encodeObject
+encodeBHeader mode (Sh.BHeader hBody hSig) = encodeObjectWithMode mode
     [ ( "blockHeight"
       , encodeBlockNo (Sh.bheaderBlockNo hBody)
       )
@@ -112,26 +113,27 @@ encodeBHeader (Sh.BHeader hBody hSig) = encodeObject
     , ( "issuerVrf"
       , encodeVerKeyVRF (Sh.bheaderVrfVk hBody)
       )
-    , ( "nonce"
-      , encodeCertifiedVRF (Sh.bheaderEta hBody)
-      )
-    , ( "leaderValue"
-      , encodeCertifiedVRF (Sh.bheaderL hBody)
-      )
     , ( "blockSize"
       , encodeNatural (Sh.bsize hBody)
       )
     , ( "blockHash"
       , encodeHashBody (Sh.bhash hBody)
       )
+    ]
+    [ ( "signature"
+      , encodeSignedKES hSig
+      )
+    , ( "nonce"
+      , encodeCertifiedVRF (Sh.bheaderEta hBody)
+      )
+    , ( "leaderValue"
+      , encodeCertifiedVRF (Sh.bheaderL hBody)
+      )
     , ( "opCert"
       , encodeOCert (Sh.bheaderOCert hBody)
       )
     , ( "protocolVersion"
       , encodeProtVer (Sh.bprotver hBody)
-      )
-    , ( "signature"
-      , encodeSignedKES hSig
       )
     ]
 
@@ -768,15 +770,16 @@ encodeSignedKES (CC.SignedKES raw) =
 
 encodeShelleyBlock
     :: Crypto crypto
-    => ShelleyBlock (ShelleyEra crypto)
+    => SerializationMode
+    -> ShelleyBlock (ShelleyEra crypto)
     -> Json
-encodeShelleyBlock (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
+encodeShelleyBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
     encodeObject
     [ ( "body"
-      , encodeFoldable encodeTx (Sh.txSeqTxns' txs)
+      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
       )
     , ( "header"
-      , encodeBHeader blkHeader
+      , encodeBHeader mode blkHeader
       )
     , ( "headerHash"
       , encodeShelleyHash headerHash
@@ -830,17 +833,15 @@ encodeStakePoolRelay = \case
 
 encodeTx
     :: Crypto crypto
-    => Sh.Tx (ShelleyEra crypto)
+    => SerializationMode
+    -> Sh.Tx (ShelleyEra crypto)
     -> Json
-encodeTx x = encodeObject
+encodeTx mode x = encodeObjectWithMode mode
     [ ( "id"
       , encodeTxId (Sh.txid (Sh._body x))
       )
     , ( "body"
       , encodeTxBody (Sh._body x)
-      )
-    , ( "witness"
-      , encodeWitnessSet (Sh._witnessSet x)
       )
     , ( "metadata", encodeObject
         [ ( "hash"
@@ -850,6 +851,10 @@ encodeTx x = encodeObject
           , encodeStrictMaybe encodeMetadata (Sh._metadata x)
           )
         ]
+      )
+    ]
+    [ ( "witness"
+      , encodeWitnessSet (Sh._witnessSet x)
       )
     ]
 

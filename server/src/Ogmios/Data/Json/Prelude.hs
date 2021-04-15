@@ -14,6 +14,7 @@ module Ogmios.Data.Json.Prelude
       module Relude
     , Json
     , FromJSON
+    , SerializationMode(..)
     , jsonToByteString
     , decodeWith
     , keepRedundantConstraint
@@ -62,6 +63,7 @@ module Ogmios.Data.Json.Prelude
     , encodeMap
     , encodeMaybe
     , encodeObject
+    , encodeObjectWithMode
     , encode2Tuple
     , encode3Tuple
     , encode4Tuple
@@ -159,6 +161,19 @@ inefficientEncodingToValue = unsafeDecodeValue . Json.encodingToLazyByteString
                 "impossible: couldn't decode JSON value that was just encoded."
         in
             fromMaybe (error justification) . Json.decode
+
+--
+-- Serialization Mode
+--
+
+-- | The 'SerializationMode' allows for selectively run different JSON
+-- serializers. The 'CompactSerialization' mode will omit some fields deemed
+-- non-necessary in a trustless setup (for example, when clients fully trust the
+-- node / ogmios server they're connecting to).
+data SerializationMode
+    = FullSerialization
+    | CompactSerialization
+    deriving (Generic, Show)
 
 --
 -- Basic Types
@@ -367,6 +382,22 @@ encodeObject :: [(Text, Json)] -> Json
 encodeObject =
     Json.pairs . foldr (\(k, v) -> (<>) (Json.pair k v)) mempty
 {-# INLINABLE encodeObject #-}
+
+encodeObjectWithMode
+    :: SerializationMode
+    -> [(Text, Json)]
+        -- ^ Common fields
+    -> [(Text, Json)]
+        -- ^ Field when mode = full
+    -> Json
+encodeObjectWithMode mode common whenFull =
+    let
+        rest = case mode of
+            CompactSerialization -> []
+            FullSerialization -> whenFull
+    in
+        encodeObject (rest ++ common)
+{-# INLINABLE encodeObjectWithMode #-}
 
 encode2Tuple
     :: (a -> Json)

@@ -8,6 +8,7 @@
 
 module Ogmios.Data.Json
     ( Json
+    , SerializationMode (..)
     , jsonToByteString
     , FromJSON
     , decodeWith
@@ -96,27 +97,28 @@ encodeAcquireFailure = \case
 
 encodeBlock
     :: Crypto crypto
-    => CardanoBlock crypto
+    => SerializationMode
+    -> CardanoBlock crypto
     -> Json
-encodeBlock = \case
+encodeBlock mode = \case
     BlockByron blk -> encodeObject
         [ ( "byron"
-          , Byron.encodeABlockOrBoundary (byronBlockRaw blk)
+          , Byron.encodeABlockOrBoundary mode (byronBlockRaw blk)
           )
         ]
     BlockShelley blk -> encodeObject
         [ ( "shelley"
-          , Shelley.encodeShelleyBlock blk
+          , Shelley.encodeShelleyBlock mode blk
           )
         ]
     BlockAllegra blk -> encodeObject
         [ ( "allegra"
-          , Allegra.encodeAllegraBlock blk
+          , Allegra.encodeAllegraBlock mode blk
           )
         ]
     BlockMary blk -> encodeObject
         [ ( "mary"
-          , Mary.encodeMaryBlock blk
+          , Mary.encodeMaryBlock mode blk
           )
         ]
 

@@ -3,20 +3,22 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 module Ogmios.Control.MonadWebSocket
-  ( -- * Class
-    MonadWebSocket (..)
+    ( -- * Class
+      MonadWebSocket (..)
 
-    -- * Helpers
-  , WebSocketApp
-  , Connection
-  , PendingConnection
-  , ConnectionException (..)
-  , Headers
-  , headers
+      -- * Helpers
+    , WebSocketApp
+    , Connection
+    , PendingConnection
+    , ConnectionException (..)
+    , SubProtocol
+    , Headers
+    , headers
+    , subProtocols
 
-    -- * Constants
-  , pingThreadDelay
-  ) where
+      -- * Constants
+    , pingThreadDelay
+    ) where
 
 import Relude
 
@@ -27,6 +29,8 @@ import qualified Network.WebSockets as WS
 
 type WebSocketApp = PendingConnection -> IO ()
 
+type SubProtocol = ByteString
+
 class Monad m => MonadWebSocket (m :: Type -> Type) where
     receive
         :: Connection -> m ByteString
@@ -36,12 +40,17 @@ class Monad m => MonadWebSocket (m :: Type -> Type) where
         :: Connection -> ByteString -> m ()
     acceptRequest
         :: PendingConnection
+        -> Maybe SubProtocol
         -> (Connection -> m a)
         -> m a
 
 headers :: PendingConnection -> Headers
 headers =
     WS.requestHeaders . WS.pendingRequest
+
+subProtocols :: PendingConnection -> [ByteString]
+subProtocols =
+    WS.getRequestSubprotocols . WS.pendingRequest
 
 instance MonadWebSocket IO where
     receive =
@@ -50,8 +59,9 @@ instance MonadWebSocket IO where
         WS.sendTextData
     close =
         WS.sendClose
-    acceptRequest pending action = do
-        conn <- WS.acceptRequest pending
+    acceptRequest pending sub action = do
+        let accept = WS.defaultAcceptRequest { WS.acceptSubprotocol = sub }
+        conn <- WS.acceptRequestWith pending accept
         WS.withPingThread conn pingThreadDelay afterEachPing (action conn)
       where
         afterEachPing :: IO ()
@@ -64,9 +74,9 @@ instance MonadWebSocket m => MonadWebSocket (ReaderT env m) where
         lift . send conn
     close conn =
         lift . close conn
-    acceptRequest pending action = do
+    acceptRequest pending sub action = do
         env <- ask
-        lift $ acceptRequest pending (\conn -> runReaderT (action conn) env)
+        lift $ acceptRequest pending sub (\conn -> runReaderT (action conn) env)
 
 --
 -- Constants
