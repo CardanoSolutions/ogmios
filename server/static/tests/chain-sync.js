@@ -34,81 +34,84 @@ const lastAllegraBlock = {
   hash: "69c44ac1dda2ec74646e4223bc804d9126f719b1c245dadc2ad65e8de1b276d7"
 };
 
-describe("ChainSync", () => {
-  let client;
+[[], ["ogmios.compact.v1"]].forEach(subProtocols => {
+  const suffix = subProtocols.length != 0 ? " "+subProtocols : "";
+  describe("ChainSync"+suffix, () => {
+    let client;
 
-  beforeEach(done => {
-    client = new WebSocket(OGMIOS_URL);
-    done();
-  });
-
-  afterEach(done => {
-    client.close();
-    done();
-  });
-
-  testChainSync("Byron Era", []);
-  testChainSync("Shelley Era", [ lastByronBlock ]);
-  testChainSync("Allegra Era", [ lastShelleyBlock ]);
-  testChainSync("Mary Era", [ lastAllegraBlock ]);
-
-  function testChainSync(title, points) {
-    it(title, function (done) {
-      const test = this.test;
-      this.timeout(TIMEOUT*1000);
-
-      let start;
-      let size = 0;
-      let rcvd = 0;
-
-      let didBootstrap = false;
-
-      client.onopen = function() {
-        client.ogmios("FindIntersect", { points });
-      };
-
-      client.onmessage = function(event) {
-        const response = JSON.parse(event.data);
-
-        switch (response.methodname) {
-          case "FindIntersect":
-            start = Date.now();
-            client.ogmios("RequestNext");
-            break;
-
-          default:
-            if (!didBootstrap) {
-              didBootstrap = true;
-              for(let n = 0; n <= N_BOOTSTRAP; n += 1) {
-                client.ogmios("RequestNext");
-              }
-            } else {
-              rcvd += 1;
-              size += event.data.length;
-
-              if (rcvd < N_MAX - N_BOOTSTRAP) {
-                client.ogmios("RequestNext");
-              }
-
-              if (rcvd == N_MAX) {
-                const time = Date.now() - start;
-                const mb = size / (1024*1024);
-                const syncSpeed = 1000 * rcvd / time;
-                const downSpeed = 1000 * mb / time;
-                const results = {
-                  "totalBlocks": rcvd,
-                  "totalTime": (time / 1000).toFixed(3) + "s",
-                  "totalSize": mb.toFixed(2) + "MB",
-                  "block/s": syncSpeed.toFixed(0),
-                  "MB/s": downSpeed.toFixed(0),
-                  "lastBlock": response.result,
-                };
-                test.result = JSON.stringify(results, null, 2);
-                done();
-              }
-            }
-        }
-      };
+    beforeEach(done => {
+      client = new WebSocket(OGMIOS_URL, subProtocols);
+      done();
     });
-  }
+
+    afterEach(done => {
+      client.close();
+      done();
+    });
+
+    testChainSync(client, "Byron Era"+suffix, []);
+    testChainSync(client, "Shelley Era"+suffix, [ lastByronBlock ]);
+    testChainSync(client, "Allegra Era"+suffix, [ lastShelleyBlock ]);
+    testChainSync(client, "Mary Era"+suffix, [ lastAllegraBlock ]);
+
+    function testChainSync(fixture, title, points) {
+      it(title, function (done) {
+        const test = this.test;
+        this.timeout(TIMEOUT*1000);
+
+        let start;
+        let size = 0;
+        let rcvd = 0;
+
+        let didBootstrap = false;
+
+        client.onopen = function() {
+          client.ogmios("FindIntersect", { points });
+        };
+
+        client.onmessage = function(event) {
+          const response = JSON.parse(event.data);
+
+          switch (response.methodname) {
+            case "FindIntersect":
+              start = Date.now();
+              client.ogmios("RequestNext");
+              break;
+
+            default:
+              if (!didBootstrap) {
+                didBootstrap = true;
+                for(let n = 0; n <= N_BOOTSTRAP; n += 1) {
+                  client.ogmios("RequestNext");
+                }
+              } else {
+                rcvd += 1;
+                size += event.data.length;
+
+                if (rcvd < N_MAX - N_BOOTSTRAP) {
+                  client.ogmios("RequestNext");
+                }
+
+                if (rcvd == N_MAX) {
+                  const time = Date.now() - start;
+                  const mb = size / (1024*1024);
+                  const syncSpeed = 1000 * rcvd / time;
+                  const downSpeed = 1000 * mb / time;
+                  const results = {
+                    "totalBlocks": rcvd,
+                    "totalTime": (time / 1000).toFixed(3) + "s",
+                    "totalSize": mb.toFixed(2) + "MB",
+                    "block/s": syncSpeed.toFixed(0),
+                    "MB/s": downSpeed.toFixed(0),
+                    "lastBlock": response.result,
+                  };
+                  test.result = JSON.stringify(results, null, 2);
+                  done();
+                }
+              }
+          }
+        };
+      });
+    }
+  });
 });
