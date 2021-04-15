@@ -1,6 +1,6 @@
 { "type": "object"
 , "title": "ogmios"
-, "$schema": "http://json-schema.org/draft-04/schema#"
+, "$schema": "https://json-schema.org/draft-07/schema"
 
 , "properties":
 
@@ -989,30 +989,33 @@
     }
 
   , "Block":
-    { "type": "object"
-    , "oneOf":
-      [ { "required": [ "byron" ]
+    { "oneOf":
+      [ { "type": "object"
+        , "required": [ "byron" ]
         , "title": "byron"
         , "additionalProperties": false
         , "properties":
           { "byron": { "$ref": "#/definitions/Block[Byron]" }
           }
         }
-      , { "required": [ "shelley" ]
+      , { "type": "object"
+        , "required": [ "shelley" ]
         , "title": "shelley"
         , "additionalProperties": false
         , "properties":
           { "shelley": { "$ref": "#/definitions/Block[Shelley]" }
           }
         }
-      , { "required": [ "allegra" ]
+      , { "type": "object"
+        , "required": [ "allegra" ]
         , "title": "allegra"
         , "additionalProperties": false
         , "properties":
           { "allegra": { "$ref": "#/definitions/Block[Allegra]" }
           }
         }
-      , { "required": [ "mary" ]
+      , { "type": "object"
+        , "required": [ "mary" ]
         , "title": "mary"
         , "additionalProperties": false
         , "properties":
@@ -1079,6 +1082,7 @@
             { "type": "object"
             , "additionalProperties": false
             , "required": [ "blockHeight", "genesisKey", "prevHash", "proof", "protocolMagicId", "protocolVersion", "signature", "slot", "softwareVersion" ]
+            , "$omitted-if-compact": ["proof", "signature"]
             , "properties":
               { "blockHeight": { "$ref": "#/definitions/BlockNo" }
               , "genesisKey": { "$ref": "#/definitions/Hash16" }
@@ -1095,6 +1099,7 @@
             { "type": "object"
             , "additionalProperties": false
             , "required": [ "txPayload", "dlgPayload", "updatePayload" ]
+            , "$omitted-if-compact": ["dlgPayload"]
             , "properties":
               { "txPayload":
                 { "type": "array"
@@ -1102,6 +1107,7 @@
                   { "type": "object"
                   , "additionalProperties": false
                   , "required": [ "id", "body", "witness" ]
+                  , "$omitted-if-compact": ["witness"]
                   , "properties":
                     { "id": { "$ref": "#/definitions/Hash16" }
                     , "body": { "$ref": "#/definitions/Tx" }
@@ -1120,6 +1126,7 @@
                 { "type": "object"
                 , "additionalProperties": false
                 , "required": [ "proposal", "votes" ]
+                , "$omitted-if-compact": ["votes"]
                 , "properties":
                   { "proposal":
                     { "oneOf":
@@ -1266,6 +1273,7 @@
           { "type": "object"
           , "additionalProperties": false
           , "required": [ "id", "body", "witness", "metadata" ]
+          , "$omitted-if-compact": ["witness"]
           , "properties":
             { "id": { "$ref": "#/definitions/Hash16" }
             , "body":
@@ -1367,6 +1375,7 @@
           [ "blockHeight","slot","prevHash","issuerVk","issuerVrf","leaderValue"
           , "blockSize", "blockHash","opCert","protocolVersion","signature"
           ]
+        , "$omitted-if-compact": ["signature", "nonce", "leaderValue", "opCert", "protocolVersion"]
         , "properties":
           { "blockHeight": { "$ref": "#/definitions/BlockNo" }
           , "slot": { "$ref": "#/definitions/Slot" }
@@ -1472,6 +1481,7 @@
           { "type": "object"
           , "additionalProperties": false
           , "required": [ "id", "body", "witness", "metadata" ]
+          , "$omitted-if-compact": ["witness"]
           , "properties":
             { "id": { "$ref": "#/definitions/Hash16" }
             , "body":
@@ -1677,6 +1687,7 @@
           { "type": "object"
           , "additionalProperties": false
           , "required": [ "id", "body", "witness", "metadata" ]
+          , "$omitted-if-compact": ["witness"]
           , "properties":
             { "id": { "$ref": "#/definitions/Hash16" }
             , "body":
