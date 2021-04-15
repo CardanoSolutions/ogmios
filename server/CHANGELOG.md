@@ -5,6 +5,25 @@ chapter: false
 pre: "<b>5. </b>"
 ---
 
+### [3.2.0] - unreleased
+
+#### Added
+
+- Support for WebSocket sub-protocols, with currently one support sub-protocol: `ogmios.compact.v1`. When enabled,
+  Ogmios will omit fields such as witnesses, proofs and signatures from responses to make responses smaller.
+- JSON-WSP faults are now documented in the JSON schema
+- Continuous integration job checking for code style and lint on the server source code.
+
+#### Changed
+
+- Rework Docker setup to not require an external snapshot image. Everything is now built in a single
+  `Dockerfile`, but cache from DockerHub can be leveraged to reduce overall build time when building
+  from scratch.
+
+#### Removed
+
+ø
+
 ### [3.1.0] - 2021-04-04
 
 #### Added
