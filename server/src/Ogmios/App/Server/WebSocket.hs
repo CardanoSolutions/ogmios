@@ -187,10 +187,12 @@ choseSerializationMode
     -> (SerializationMode, Maybe SubProtocol)
 choseSerializationMode conn =
     case subProtocols conn of
-        [sub] | sub == compact -> (CompactSerialization, Just compact)
+        sub:_ | sub == compact -> (CompactSerialization, Just compact)
+        sub:_ | sub == full -> (FullSerialization, Nothing)
         _ -> (FullSerialization, Nothing)
   where
-    compact = "ogmios.compact.v1"
+    full = "ogmios.v1"
+    compact = full<>":compact"
 
 withOuroborosClients
     :: forall m a.

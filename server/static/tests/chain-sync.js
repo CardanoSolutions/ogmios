@@ -34,7 +34,7 @@ const lastAllegraBlock = {
   hash: "69c44ac1dda2ec74646e4223bc804d9126f719b1c245dadc2ad65e8de1b276d7"
 };
 
-[[], ["ogmios.compact.v1"]].forEach(subProtocols => {
+[[], ["ogmios.v1:compact"]].forEach(subProtocols => {
   const suffix = subProtocols.length != 0 ? " "+subProtocols : "";
   describe("ChainSync"+suffix, () => {
     let client;

@@ -212,7 +212,7 @@ Note that Ogmios will do its best to pipeline requests to the Cardano node. Neve
 Since version `v3.2.0`, Ogmios supports a WebSocket sub-protocol which has an influence on the representation of some data objects. When set, this so-called _compact mode_ will omit proofs, signatures and other voluminous pieces of information from responses that are somewhat superfluous in a trustworthy setup (where for instance, your application fully trusts its node / Ogmios). As a consequence, responses are twice smaller, less bloated and the overall chain-sync synchronization is sped up by about 20%. To enable the compact serialization, use:
 
 ```
-ogmios.compact.v1
+ogmios.v1:compact
 ```
 
 as a sub-protocol when establishing the WebSocket connection. Omitted fields are documented in the [API reference](../../api-reference) using the `$omitted-if-compact` field of relevant objects.
