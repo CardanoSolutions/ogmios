@@ -8,6 +8,13 @@ module Ogmios.Data.Health
     ( -- * Heath
       Health (..)
     , emptyHealth
+      -- ** NetworkSynchronization
+    , NetworkSynchronization
+    , mkNetworkSynchronization
+
+    , SystemStart(..)
+    , RelativeTime(..)
+    , fromRelativeTime
     ) where
 
 import Relude
@@ -18,7 +25,9 @@ import Ogmios.Data.Metrics
 import Data.Aeson
     ( ToJSON (..), genericToJSON )
 import Data.Time.Clock
-    ( UTCTime )
+    ( UTCTime, diffUTCTime )
+import Ouroboros.Consensus.BlockchainTime.WallClock.Types
+    ( RelativeTime (..), SystemStart (..), fromRelativeTime )
 import Ouroboros.Network.Block
     ( Tip (..) )
 
@@ -36,6 +45,8 @@ data Health block = Health
     -- ^ Last known tip of the core node.
     , lastTipUpdate :: !(Maybe UTCTime)
     -- ^ Date at which the last update was received.
+    , networkSynchronization :: !NetworkSynchronization
+    -- ^ Percentage indicator of how far our node is from the network
     , metrics :: !Metrics
     -- ^ Application metrics measured at regular interval
     } deriving (Generic, Eq, Show)
@@ -48,5 +59,33 @@ emptyHealth startTime = Health
     { startTime
     , lastKnownTip = TipGenesis
     , lastTipUpdate = Nothing
+    , networkSynchronization = NetworkSynchronization 0
     , metrics = emptyMetrics
     }
+
+-- | Captures how far is our underlying node from the network, in percentage.
+-- This is calculated using:
+--
+-- - The era start
+-- - The era's slot length
+-- - The current time
+-- - The current node tip
+newtype NetworkSynchronization = NetworkSynchronization Double
+    deriving (Generic, Eq, Show)
+
+instance ToJSON NetworkSynchronization where
+    toJSON (NetworkSynchronization p) = toJSON p
+
+-- | Calculate the network synchronization from various parameters.
+mkNetworkSynchronization
+    :: SystemStart -- System's start
+    -> UTCTime -- Current Time
+    -> RelativeTime -- Tip time, relative to the system start
+    -> NetworkSynchronization
+mkNetworkSynchronization systemStart now relativeSlotTime =
+    let
+        num = round $ getRelativeTime relativeSlotTime :: Integer
+        den = round $ now `diffUTCTime` getSystemStart systemStart :: Integer
+        p = 100
+    in
+        NetworkSynchronization $ fromIntegral (num * p `div` den) / fromIntegral p
