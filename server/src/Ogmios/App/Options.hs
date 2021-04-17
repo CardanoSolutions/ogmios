@@ -23,7 +23,7 @@ module Ogmios.App.Options
     , NetworkMagic (..)
     , EpochSlots (..)
     , envOgmiosNetwork
-    , lookupNetworkMagic
+    , lookupNetworkParameters
     ) where
 
 import Relude
@@ -33,8 +33,12 @@ import Ogmios.Control.MonadLog
 
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
+import Data.Time.Clock.POSIX
+    ( posixSecondsToUTCTime )
 import Options.Applicative.Help.Pretty
     ( indent, string, vsep )
+import Ouroboros.Consensus.BlockchainTime.WallClock.Types
+    ( SystemStart (..) )
 import Ouroboros.Network.Magic
     ( NetworkMagic (..) )
 import Safe
@@ -43,6 +47,8 @@ import System.Environment
     ( lookupEnv )
 
 import Options.Applicative
+
+import qualified Data.Text as T
 
 --
 -- Command-line commands
@@ -54,7 +60,7 @@ data Command
 
 parseOptions :: IO (NetworkParameters, Command)
 parseOptions = (,)
-    <$> lookupNetworkMagic
+    <$> lookupNetworkParameters
     <*> customExecParser (prefs showHelpOnEmpty) parserInfo
 
 parserInfo :: ParserInfo Command
@@ -72,7 +78,7 @@ parserInfo = info (helper <*> parser) $ mempty
         , indent 27 $ string "- mainnet"
         , indent 27 $ string "- testnet"
         , indent 27 $ string "- staging"
-        , indent 27 $ string "- <INT>"
+        , indent 27 $ string "- <MAGIC>:<SYSTEM-START>"
         , indent 27 $ string $ separator <> " (default: mainnet)"
         ])
   where
@@ -173,6 +179,7 @@ versionOption =
 
 data NetworkParameters = NetworkParameters
     { slotsPerEpoch :: !EpochSlots
+    , systemStart :: !SystemStart
     , networkMagic :: !NetworkMagic
     } deriving (Generic, Eq, Show)
 
@@ -180,43 +187,60 @@ envOgmiosNetwork :: String
 envOgmiosNetwork = "OGMIOS_NETWORK"
 
 -- | Lookup environment for a given version data name, default to mainnet.
-lookupNetworkMagic
+lookupNetworkParameters
     :: IO NetworkParameters
-lookupNetworkMagic = do
+lookupNetworkParameters = do
     lookupEnv envOgmiosNetwork >>= \case
         Nothing -> do
-            pure $ NetworkParameters defaultSlotsPerEpoch mainnetNetworkMagic
+            pure mainnetNetworkParameters
         Just "mainnet" -> do
-            pure $ NetworkParameters defaultSlotsPerEpoch mainnetNetworkMagic
+            pure mainnetNetworkParameters
         Just "testnet" -> do
-            pure $ NetworkParameters defaultSlotsPerEpoch testnetNetworkMagic
+            pure testnetNetworkParameters
         Just "staging" -> do
-            pure $ NetworkParameters defaultSlotsPerEpoch stagingNetworkMagic
-        Just custom ->
-            case readMay custom of
-                Just n -> do
-                    let magic = NetworkMagic n
-                    pure $ NetworkParameters defaultSlotsPerEpoch magic
-                Nothing -> do
+            pure stagingNetworkParameters
+        Just custom -> do
+            let (magicStr, systemStartStr) = T.breakOn ":" (toText custom)
+            case (readMay (toString magicStr), readMay (toString systemStartStr)) of
+                (Just n, Just systemStart) -> do
+                    pure $ NetworkParameters
+                        { networkMagic = NetworkMagic n
+                        , slotsPerEpoch = defaultSlotsPerEpoch
+                        , systemStart = SystemStart $ posixSecondsToUTCTime systemStart
+                        }
+                _ -> do
                     exitFailure
 
--- Hard-coded mainnet version data
-mainnetNetworkMagic
-    :: NetworkMagic
-mainnetNetworkMagic =
-    NetworkMagic 764824073
+-- Hard-coded mainnet network parameters
+mainnetNetworkParameters
+    :: NetworkParameters
+mainnetNetworkParameters =
+    NetworkParameters
+        { networkMagic = NetworkMagic 764824073
+        , slotsPerEpoch = defaultSlotsPerEpoch
+        , systemStart = SystemStart $ posixSecondsToUTCTime 1506203091
+        }
 
--- Hard-coded testnet version data
-testnetNetworkMagic
-    :: NetworkMagic
-testnetNetworkMagic =
-    NetworkMagic 1097911063
+-- Hard-coded testnet network parameters
+testnetNetworkParameters
+    :: NetworkParameters
+testnetNetworkParameters =
+    NetworkParameters
+        { networkMagic = NetworkMagic 1097911063
+        , slotsPerEpoch = defaultSlotsPerEpoch
+        , systemStart = SystemStart $ posixSecondsToUTCTime 1563999616
+        }
 
--- Hard-coded staging version data
-stagingNetworkMagic
-    :: NetworkMagic
-stagingNetworkMagic =
-    NetworkMagic 633343913
+-- Hard-coded staging network parameters
+stagingNetworkParameters
+    :: NetworkParameters
+stagingNetworkParameters =
+    NetworkParameters
+        { networkMagic = NetworkMagic 633343913
+        , slotsPerEpoch = defaultSlotsPerEpoch
+        -- FIXME: Find staging's system start time?
+        , systemStart = SystemStart $ posixSecondsToUTCTime 1563999616
+        }
 
 -- Hard-coded genesis slots per epoch
 defaultSlotsPerEpoch
