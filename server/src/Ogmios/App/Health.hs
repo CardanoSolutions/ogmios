@@ -21,14 +21,20 @@ module Ogmios.App.Health
     ) where
 
 import Relude hiding
-    ( STM, TVar, atomically, readTVar, writeTVar )
+    ( STM
+    , TVar
+    , atomically
+    , newEmptyTMVar
+    , putTMVar
+    , readTVar
+    , takeTMVar
+    , writeTVar
+    )
 
 import Ogmios.App.Metrics
     ( RuntimeStats, Sampler, Sensors )
 import Ogmios.App.Options
     ( NetworkParameters (..), Options (..) )
-import Ogmios.App.Protocol.ChainSync
-    ( mkHealthCheckClient )
 import Ogmios.Control.Exception
     ( IOException
     , MonadCatch (..)
@@ -55,9 +61,22 @@ import Ogmios.Control.MonadMetrics
 import Ogmios.Control.MonadOuroboros
     ( MonadOuroboros )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), TVar, readTVar, writeTVar )
+    ( MonadSTM (..)
+    , TVar
+    , newEmptyTMVar
+    , putTMVar
+    , readTVar
+    , takeTMVar
+    , writeTVar
+    )
 import Ogmios.Data.Health
-    ( Health (..), emptyHealth )
+    ( Health (..)
+    , NetworkSynchronization
+    , emptyHealth
+    , mkNetworkSynchronization
+    )
+import Ouroboros.Consensus.Cardano.Block
+    ( CardanoEras )
 
 import qualified Ogmios.App.Metrics as Metrics
 
@@ -77,14 +96,66 @@ import Data.Generics.Product.Typed
     ( HasType, typed )
 import Data.Time.Clock
     ( DiffTime )
+import Network.TypedProtocol.Pipelined
+    ( N (..) )
+import Ouroboros.Consensus.BlockchainTime.WallClock.Types
+    ( RelativeTime )
+import Ouroboros.Consensus.HardFork.Combinator
+    ( HardForkBlock )
+import Ouroboros.Consensus.HardFork.History.Qry
+    ( interpretQuery, slotToWallclock )
 import Ouroboros.Network.Block
-    ( Tip (..) )
+    ( Point (..), Tip (..), genesisPoint, getTipPoint )
 import Ouroboros.Network.NodeToClient
     ( NodeToClientVersionData (NodeToClientVersionData) )
+import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
+    ( ChainSyncClientPipelined (..)
+    , ClientPipelinedStIdle (..)
+    , ClientPipelinedStIntersect (..)
+    , ClientStNext (..)
+    )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxSubmissionClient (..) )
+
+import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ
+import qualified Ouroboros.Consensus.Shelley.Ledger.Query as Ledger
+import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
+
+-- | Construct a health check by sampling all application sensors.
+--
+-- See also 'Ogmios.App.Protocol.ChainSync#mkHealthCheckClient'
+healthCheck
+    :: forall m block.
+        ( MonadClock m
+        , MonadMetrics m
+        , MonadSTM m
+        )
+    => STM m (Tip block, NetworkSynchronization)
+    -> TVar m (Health block)
+    -> Sensors m
+    -> Sampler RuntimeStats m
+    -> m (Health block)
+healthCheck readTip tvar sensors sampler = do
+    lastTipUpdate <- Just <$> getCurrentTime
+    metrics <- Metrics.sample sampler sensors
+    atomically $ do
+        Health{startTime} <- readTVar tvar
+        (lastKnownTip, networkSynchronization) <- readTip
+        let health = Health
+                { startTime
+                , lastKnownTip
+                , lastTipUpdate
+                , networkSynchronization
+                , metrics
+                }
+        health <$ writeTVar tvar health
+
+--
+-- HealthCheck Client
+--
+
 
 -- | A simple wrapper around Ouroboros 'Clients'. A health check client only
 -- carries a chain-sync client.
@@ -100,51 +171,34 @@ newHealthCheckClient
         , MonadLog m
         , MonadMetrics m
         , MonadReader env m
+        , MonadThrow m
         , HasType (TVar m (Health Block)) env
         , HasType (Sensors m) env
         , HasType (Sampler RuntimeStats m) env
+        , HasType NetworkParameters env
         )
     => Logger (TraceHealth (Health Block))
     -> Debouncer m
     -> m (HealthCheckClient m)
 newHealthCheckClient tr Debouncer{debounce} = do
+    NetworkParameters{systemStart} <- asks (view typed)
+    (stateQueryClient, getSlotTime) <- newTimeInterpreterClient
     pure $ HealthCheckClient $ Clients
         { chainSyncClient = mkHealthCheckClient $ \lastKnownTip -> debounce $ do
             tvar <- asks (view typed)
             sensors <- asks (view typed)
             sampler <- asks (view typed)
-            health <- healthCheck (pure lastKnownTip) tvar sensors sampler
+            now <- getCurrentTime
+            networkSync <- mkNetworkSynchronization systemStart now <$> getSlotTime lastKnownTip
+            let tipInfo = (lastKnownTip, networkSync)
+            health <- healthCheck (pure tipInfo) tvar sensors sampler
             logWith tr (HealthTick health)
 
         , txSubmissionClient =
             LocalTxSubmissionClient idle
 
-        , stateQueryClient =
-            LocalStateQueryClient idle
+        , stateQueryClient
         }
-
--- | Construct a health check by sampling all application sensors.
---
--- See also 'Ogmios.App.Protocol.ChainSync#mkHealthCheckClient'
-healthCheck
-    :: forall m block.
-        ( MonadClock m
-        , MonadMetrics m
-        , MonadSTM m
-        )
-    => STM m (Tip block)
-    -> TVar m (Health block)
-    -> Sensors m
-    -> Sampler RuntimeStats m
-    -> m (Health block)
-healthCheck readTip tvar sensors sampler = do
-    lastTipUpdate <- Just <$> getCurrentTime
-    metrics <- Metrics.sample sampler sensors
-    atomically $ do
-        Health{startTime} <- readTVar tvar
-        lastKnownTip <- readTip
-        let health = Health{ startTime, lastKnownTip, lastTipUpdate, metrics }
-        health <$ writeTVar tvar health
 
 connectHealthCheckClient
     :: forall m env.
@@ -195,6 +249,111 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
       where
         isRetryable :: Bool
         isRetryable = isResourceVanishedError e || isDoesNotExistError e || isTryAgainError e
+
+--
+-- Ouroboros clients
+--
+
+-- | Simple client that follows the chain by jumping directly to the tip and
+-- notify a consumer for every tip change.
+mkHealthCheckClient
+    :: forall m block.
+        ( Monad m
+        )
+    => (Tip block -> m ())
+    -> ChainSyncClientPipelined block (Point block) (Tip block) m ()
+mkHealthCheckClient notify =
+    ChainSyncClientPipelined stInit
+  where
+    stInit
+        :: m (ClientPipelinedStIdle Z block (Point block) (Tip block) m ())
+    stInit = pure $
+        SendMsgFindIntersect [genesisPoint] $ stIntersect $ \tip -> pure $
+            SendMsgFindIntersect [getTipPoint tip] $ stIntersect (const stIdle)
+
+    stIntersect
+        :: (Tip block -> m (ClientPipelinedStIdle Z block (Point block) (Tip block) m ()))
+        -> ClientPipelinedStIntersect block (Point block) (Tip block) m ()
+    stIntersect stFound = ClientPipelinedStIntersect
+        { recvMsgIntersectNotFound = const stInit
+        , recvMsgIntersectFound = const stFound
+        }
+
+    stIdle
+        :: m (ClientPipelinedStIdle Z block (Point block) (Tip block) m ())
+    stIdle = pure $
+        SendMsgRequestNext stNext (pure stNext)
+
+    stNext
+        :: ClientStNext Z block (Point block) (Tip block) m ()
+    stNext = ClientStNext
+        { recvMsgRollForward  = const check
+        , recvMsgRollBackward = const check
+        }
+      where
+        check tip = notify tip *> stIdle
+
+-- | A simple client which is used to determine some metrics about the
+-- underlying node. In particular, it allows for knowing the network
+-- synchronization of the underlying node, as well as the current era of that
+-- node.
+newTimeInterpreterClient
+    :: forall m crypto block.
+        ( MonadThrow m
+        , MonadSTM m
+        , block ~ HardForkBlock (CardanoEras crypto)
+        )
+    => m ( LocalStateQueryClient block (Point block) (Ledger.Query block) m ()
+         , Tip block -> m RelativeTime
+         )
+newTimeInterpreterClient = do
+    notifyTip <- atomically newEmptyTMVar
+    getResult <- atomically newEmptyTMVar
+    return
+        ( LocalStateQueryClient $ clientStIdle
+            (atomically $ takeTMVar notifyTip)
+            (atomically . putTMVar getResult)
+        , \tip -> do
+            atomically $ putTMVar notifyTip tip
+            atomically $ takeTMVar getResult
+        )
+  where
+    clientStIdle
+        :: m (Tip block)
+        -> (RelativeTime -> m ())
+        -> m (LSQ.ClientStIdle block (Point block) (Ledger.Query block) m ())
+    clientStIdle getTip notifyResult =
+        pure $ LSQ.SendMsgAcquire Nothing $ LSQ.ClientStAcquiring
+            { LSQ.recvMsgAcquired = do
+                clientStAcquired getTip notifyResult
+            , LSQ.recvMsgFailure = -- Impossible in practice
+                const (clientStIdle getTip notifyResult)
+            }
+
+    clientStAcquired
+        :: m (Tip block)
+        -> (RelativeTime -> m ())
+        -> m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
+    clientStAcquired getTip notifyResult = do
+        tip <- getTip
+        pure $ LSQ.SendMsgReAcquire Nothing $ LSQ.ClientStAcquiring
+            { LSQ.recvMsgAcquired = pure
+                $ LSQ.SendMsgQuery (LSQ.QueryHardFork LSQ.GetInterpreter)
+                $ LSQ.ClientStQuerying
+                    { LSQ.recvMsgResult = \interpreter -> do
+                        let slot = case tip of
+                                TipGenesis -> 0
+                                Tip sl _ _ -> sl
+                        case interpreter `interpretQuery` slotToWallclock slot of
+                            Left{} ->
+                                clientStAcquired (pure tip) notifyResult
+                            Right (slotTime, _) -> do
+                                notifyResult slotTime
+                                clientStAcquired getTip notifyResult
+                    }
+            , LSQ.recvMsgFailure = -- Impossible in practice
+                const (clientStIdle (pure tip) notifyResult)
+            }
 
 --
 -- Logging

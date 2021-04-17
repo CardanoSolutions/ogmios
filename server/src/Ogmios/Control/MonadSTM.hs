@@ -18,6 +18,7 @@ module Ogmios.Control.MonadSTM
 
     , TMVar
     , newTMVar
+    , newEmptyTMVar
     , putTMVar
     , takeTMVar
     , tryTakeTMVar
