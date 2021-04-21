@@ -238,8 +238,7 @@ stagingNetworkParameters =
     NetworkParameters
         { networkMagic = NetworkMagic 633343913
         , slotsPerEpoch = defaultSlotsPerEpoch
-        -- FIXME: Find staging's system start time?
-        , systemStart = SystemStart $ posixSecondsToUTCTime 1563999616
+        , systemStart = SystemStart $ posixSecondsToUTCTime 1506450213
         }
 
 -- Hard-coded genesis slots per epoch
