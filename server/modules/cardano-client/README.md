@@ -7,7 +7,7 @@ logic.
 
 ## Usage
 
-See [server](../../server)
+See [server](../..)
 
 <hr/>
 
