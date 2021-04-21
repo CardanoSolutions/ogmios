@@ -36,7 +36,6 @@
 -- @
 module Ogmios.App.Protocol.ChainSync
     ( mkChainSyncClient
-    , mkHealthCheckClient
     ) where
 
 import Relude hiding
@@ -58,9 +57,9 @@ import Ogmios.Data.Protocol.ChainSync
 import Data.Sequence
     ( Seq (..), (|>) )
 import Network.TypedProtocol.Pipelined
-    ( N (..), Nat (..), natToInt )
+    ( Nat (..), natToInt )
 import Ouroboros.Network.Block
-    ( Point (..), Tip (..), genesisPoint, getTipPoint )
+    ( Point (..), Tip (..) )
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     ( ChainSyncClientPipelined (..)
     , ClientPipelinedStIdle (..)
@@ -159,42 +158,3 @@ mkChainSyncClient ChainSyncCodecs{..} queue yield =
             yield $ encodeFindIntersectResponse $ toResponse $ IntersectionNotFound tip
             clientStIdle Zero Seq.empty
         }
-
--- | Simple client that follows the chain by jumping directly to the tip and
--- notify a consumer for every tip change.
-mkHealthCheckClient
-    :: forall m block.
-        ( Monad m
-        )
-    => (Tip block -> m ())
-    -> ChainSyncClientPipelined block (Point block) (Tip block) m ()
-mkHealthCheckClient notify =
-    ChainSyncClientPipelined stInit
-  where
-    stInit
-        :: m (ClientPipelinedStIdle Z block (Point block) (Tip block) m ())
-    stInit = pure $
-        SendMsgFindIntersect [genesisPoint] $ stIntersect $ \tip -> pure $
-            SendMsgFindIntersect [getTipPoint tip] $ stIntersect (const stIdle)
-
-    stIntersect
-        :: (Tip block -> m (ClientPipelinedStIdle Z block (Point block) (Tip block) m ()))
-        -> ClientPipelinedStIntersect block (Point block) (Tip block) m ()
-    stIntersect stFound = ClientPipelinedStIntersect
-        { recvMsgIntersectNotFound = const stInit
-        , recvMsgIntersectFound = const stFound
-        }
-
-    stIdle
-        :: m (ClientPipelinedStIdle Z block (Point block) (Tip block) m ())
-    stIdle = pure $
-        SendMsgRequestNext stNext (pure stNext)
-
-    stNext
-        :: ClientStNext Z block (Point block) (Tip block) m ()
-    stNext = ClientStNext
-        { recvMsgRollForward  = const check
-        , recvMsgRollBackward = const check
-        }
-      where
-        check tip = notify tip *> stIdle

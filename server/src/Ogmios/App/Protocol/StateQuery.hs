@@ -79,6 +79,12 @@ import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ
 import qualified Ouroboros.Consensus.Shelley.Ledger.Query as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 
+-- | A generic state-query client, which receives commands from a queue, and
+-- yield results as JSON.
+--
+-- This client is meant to be driven by another client (e.g. from a WebSocket
+-- connection) and simply ensures correct execution of the state-query protocol.
+-- In particular, it also makes it easier to run queries _in the current era_.
 mkStateQueryClient
     :: forall m crypto block.
         ( MonadThrow m
