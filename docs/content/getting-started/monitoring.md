@@ -42,7 +42,9 @@ $ curl -H 'Accept: application/json' http://localhost:1337/health
         "hash": "c29428f386c701c1d1ba1fd259d4be78921ee9ee6c174eac898245ceb55e8061",
         "blockNo": 5034297,
         "slot": 15520688
-    }
+    },
+    "networkSynchronization": 0.99,
+    "currentEra": "Mary"
 }
 ```
 
@@ -53,6 +55,8 @@ All information are computed at runtime and **not preserved between restarts** (
 | `startTime`                            | UTC timestamp at which the server was started.                                                                           |
 | `lastTipUpdate`                        | UTC timestamp when `lastKnownTip` was last updated (can be `null`)                                                       |
 | `lastKnownTip`                         | Last known chain tip received from the node (can be `null`)                                                              |
+| `networkSynchronization`               | A percentage indicator of how far the server/node is from the network tip. `1` means it is synchronized.                 |
+| `currentEra`                           | The current Cardano era of the underlying node. Useful for state-queries and debugging.                                  |
 | `metrics.activeConnections`            | Number of WebSocket connections currently established with the server.                                                   |
 | `metrics.totalConnections`             | Total number of WebSocket connections established with the server since it's started.                                    |
 | `metrics.sessionDurations`             | Some time measures (`min`, `max`, `mean`) of the duration of each sessions, in milliseconds.                             |
