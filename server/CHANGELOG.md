@@ -13,6 +13,9 @@ pre: "<b>5. </b>"
   Ogmios will omit fields such as witnesses, proofs and signatures from responses to make responses smaller.
 - JSON-WSP faults are now documented in the JSON schema
 - Continuous integration job checking for code style and lint on the server source code.
+- The `/health` endpoint now returns two additional pieces of information:
+  - A `networkSynchronization` percentage to indicate how far Ogmios / the node is from the network.
+  - A `currentEra` value to indicate the corresponding Cardano era Ogmios / the node is currently running in.
 
 #### Changed
 
