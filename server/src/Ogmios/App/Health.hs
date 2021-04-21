@@ -70,7 +70,8 @@ import Ogmios.Control.MonadSTM
     , writeTVar
     )
 import Ogmios.Data.Health
-    ( Health (..)
+    ( CardanoEra (..)
+    , Health (..)
     , NetworkSynchronization
     , emptyHealth
     , mkNetworkSynchronization
@@ -101,7 +102,7 @@ import Network.TypedProtocol.Pipelined
 import Ouroboros.Consensus.BlockchainTime.WallClock.Types
     ( RelativeTime )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( HardForkBlock )
+    ( HardForkBlock, eraIndexToInt )
 import Ouroboros.Consensus.HardFork.History.Qry
     ( interpretQuery, slotToWallclock )
 import Ouroboros.Network.Block
@@ -132,7 +133,7 @@ healthCheck
         , MonadMetrics m
         , MonadSTM m
         )
-    => STM m (Tip block, NetworkSynchronization)
+    => STM m (Tip block, NetworkSynchronization, CardanoEra)
     -> TVar m (Health block)
     -> Sensors m
     -> Sampler RuntimeStats m
@@ -142,12 +143,13 @@ healthCheck readTip tvar sensors sampler = do
     metrics <- Metrics.sample sampler sensors
     atomically $ do
         Health{startTime} <- readTVar tvar
-        (lastKnownTip, networkSynchronization) <- readTip
+        (lastKnownTip, networkSynchronization, currentEra) <- readTip
         let health = Health
                 { startTime
                 , lastKnownTip
                 , lastTipUpdate
                 , networkSynchronization
+                , currentEra
                 , metrics
                 }
         health <$ writeTVar tvar health
@@ -182,15 +184,16 @@ newHealthCheckClient
     -> m (HealthCheckClient m)
 newHealthCheckClient tr Debouncer{debounce} = do
     NetworkParameters{systemStart} <- asks (view typed)
-    (stateQueryClient, getSlotTime) <- newTimeInterpreterClient
+    (stateQueryClient, getNetworkInformation) <- newTimeInterpreterClient
     pure $ HealthCheckClient $ Clients
         { chainSyncClient = mkHealthCheckClient $ \lastKnownTip -> debounce $ do
             tvar <- asks (view typed)
             sensors <- asks (view typed)
             sampler <- asks (view typed)
             now <- getCurrentTime
-            networkSync <- mkNetworkSynchronization systemStart now <$> getSlotTime lastKnownTip
-            let tipInfo = (lastKnownTip, networkSync)
+            (currentSlotTime, currentEra) <- getNetworkInformation lastKnownTip
+            let networkSync = mkNetworkSynchronization systemStart now currentSlotTime
+            let tipInfo = (lastKnownTip, networkSync, currentEra)
             health <- healthCheck (pure tipInfo) tvar sensors sampler
             logWith tr (HealthTick health)
 
@@ -304,7 +307,7 @@ newTimeInterpreterClient
         , block ~ HardForkBlock (CardanoEras crypto)
         )
     => m ( LocalStateQueryClient block (Point block) (Ledger.Query block) m ()
-         , Tip block -> m RelativeTime
+         , Tip block -> m (RelativeTime, CardanoEra)
          )
 newTimeInterpreterClient = do
     notifyTip <- atomically newEmptyTMVar
@@ -312,7 +315,7 @@ newTimeInterpreterClient = do
     return
         ( LocalStateQueryClient $ clientStIdle
             (atomically $ takeTMVar notifyTip)
-            (atomically . putTMVar getResult)
+            (\a0 a1 -> atomically $ putTMVar getResult (a0, a1))
         , \tip -> do
             atomically $ putTMVar notifyTip tip
             atomically $ takeTMVar getResult
@@ -320,7 +323,7 @@ newTimeInterpreterClient = do
   where
     clientStIdle
         :: m (Tip block)
-        -> (RelativeTime -> m ())
+        -> (RelativeTime -> CardanoEra -> m ())
         -> m (LSQ.ClientStIdle block (Point block) (Ledger.Query block) m ())
     clientStIdle getTip notifyResult =
         pure $ LSQ.SendMsgAcquire Nothing $ LSQ.ClientStAcquiring
@@ -332,27 +335,54 @@ newTimeInterpreterClient = do
 
     clientStAcquired
         :: m (Tip block)
-        -> (RelativeTime -> m ())
+        -> (RelativeTime -> CardanoEra -> m ())
         -> m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
     clientStAcquired getTip notifyResult = do
         tip <- getTip
         pure $ LSQ.SendMsgReAcquire Nothing $ LSQ.ClientStAcquiring
-            { LSQ.recvMsgAcquired = pure
-                $ LSQ.SendMsgQuery (LSQ.QueryHardFork LSQ.GetInterpreter)
-                $ LSQ.ClientStQuerying
-                    { LSQ.recvMsgResult = \interpreter -> do
-                        let slot = case tip of
-                                TipGenesis -> 0
-                                Tip sl _ _ -> sl
-                        case interpreter `interpretQuery` slotToWallclock slot of
-                            Left{} ->
-                                clientStAcquired (pure tip) notifyResult
-                            Right (slotTime, _) -> do
-                                notifyResult slotTime
-                                clientStAcquired getTip notifyResult
-                    }
+            { LSQ.recvMsgAcquired = do
+                let continuation = clientStAcquired getTip notifyResult
+                pure (clientStQuerySlotTime notifyResult tip continuation)
+
             , LSQ.recvMsgFailure = -- Impossible in practice
                 const (clientStIdle (pure tip) notifyResult)
+            }
+
+    clientStQuerySlotTime
+        :: (RelativeTime -> CardanoEra -> m ())
+        -> (Tip block)
+        -> m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
+        -> LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ()
+    clientStQuerySlotTime notifyResult tip continue =
+        LSQ.SendMsgQuery (LSQ.QueryHardFork LSQ.GetInterpreter) $ LSQ.ClientStQuerying
+            { LSQ.recvMsgResult = \interpreter -> do
+                let slot = case tip of
+                        TipGenesis -> 0
+                        Tip sl _ _ -> sl
+                case interpreter `interpretQuery` slotToWallclock slot of
+                    -- NOTE: This request cannot fail in theory because the tip
+                    -- is always known of the interpreter. If that every happens
+                    -- because of some weird condition, retrying should do.
+                    Left{} ->
+                        pure (clientStQuerySlotTime notifyResult tip continue)
+                    Right (slotTime, _) -> do
+                        pure (clientStQueryCurrentEra (notifyResult slotTime) continue)
+            }
+
+    clientStQueryCurrentEra
+        :: (CardanoEra -> m ())
+        -> m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
+        -> LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ()
+    clientStQueryCurrentEra notifyResult continue =
+        LSQ.SendMsgQuery (LSQ.QueryHardFork LSQ.GetCurrentEra) $ LSQ.ClientStQuerying
+            { LSQ.recvMsgResult = \eraIndex -> do
+                notifyResult $ case eraIndexToInt eraIndex of
+                    0 -> Byron
+                    1 -> Shelley
+                    2 -> Allegra
+                    3 -> Mary
+                    _ -> Alonzo
+                continue
             }
 
 --

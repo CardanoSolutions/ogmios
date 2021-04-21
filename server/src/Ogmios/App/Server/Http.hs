@@ -100,7 +100,11 @@ getHealthR :: Handler Server
 getHealthR = runHandlerM $ do
     header "Access-Control-Allow-Origin" "*"
     Server unliftIO EnvServer{health,sensors,sampler} <- sub
-    let readTipInfo = (\h -> (lastKnownTip h, networkSynchronization h)) <$> readTVar health
+    let readTipInfo = (\h ->
+            ( lastKnownTip h
+            , networkSynchronization h
+            , currentEra h
+            )) <$> readTVar health
     json =<< liftIO (unliftIO $ healthCheck readTipInfo health sensors sampler)
 
 getTestsR :: Handler Server

@@ -11,10 +11,8 @@ module Ogmios.Data.Health
       -- ** NetworkSynchronization
     , NetworkSynchronization
     , mkNetworkSynchronization
-
-    , SystemStart(..)
-    , RelativeTime(..)
-    , fromRelativeTime
+      -- ** CardanoEra
+    , CardanoEra (..)
     ) where
 
 import Relude
@@ -27,7 +25,7 @@ import Data.Aeson
 import Data.Time.Clock
     ( UTCTime, diffUTCTime )
 import Ouroboros.Consensus.BlockchainTime.WallClock.Types
-    ( RelativeTime (..), SystemStart (..), fromRelativeTime )
+    ( RelativeTime (..), SystemStart (..) )
 import Ouroboros.Network.Block
     ( Tip (..) )
 
@@ -46,7 +44,9 @@ data Health block = Health
     , lastTipUpdate :: !(Maybe UTCTime)
     -- ^ Date at which the last update was received.
     , networkSynchronization :: !NetworkSynchronization
-    -- ^ Percentage indicator of how far our node is from the network
+    -- ^ Percentage indicator of how far the node is from the network.
+    , currentEra :: !CardanoEra
+    -- ^ Current node's era.
     , metrics :: !Metrics
     -- ^ Application metrics measured at regular interval
     } deriving (Generic, Eq, Show)
@@ -60,6 +60,7 @@ emptyHealth startTime = Health
     , lastKnownTip = TipGenesis
     , lastTipUpdate = Nothing
     , networkSynchronization = NetworkSynchronization 0
+    , currentEra = Byron
     , metrics = emptyMetrics
     }
 
@@ -89,3 +90,16 @@ mkNetworkSynchronization systemStart now relativeSlotTime =
         p = 100
     in
         NetworkSynchronization $ fromIntegral (num * p `div` den) / fromIntegral p
+
+
+-- | A Cardano era, starting from Byron and onwards.
+data CardanoEra
+    = Byron
+    | Shelley
+    | Allegra
+    | Mary
+    | Alonzo
+    deriving (Generic, Show, Eq, Enum, Bounded)
+
+instance ToJSON CardanoEra where
+    toJSON = genericToJSON Json.defaultOptions
