@@ -53,6 +53,6 @@ jobs:
         fi
 
     - name: 🐳 hadolint
-      uses: brpaz/hadolint-action@1.4.0
+      uses: brpaz/hadolint-action@v1.4.0
       with:
         dockerfile: "server/Dockerfile"
