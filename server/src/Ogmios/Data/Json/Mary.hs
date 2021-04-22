@@ -202,7 +202,7 @@ encodeUtxoFailure = \case
             ]
     MA.OutputTooBigUTxO outs ->
         encodeObject
-            [ ( "outputsTooLarge"
+            [ ( "tooManyAssetsInOutput"
               , encodeFoldable encodeTxOut outs
               )
             ]

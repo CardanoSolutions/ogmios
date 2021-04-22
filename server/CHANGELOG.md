@@ -11,7 +11,18 @@ pre: "<b>5. </b>"
 
 - Support for WebSocket sub-protocols, with currently one support sub-protocol: `ogmios.compact.v1`. When enabled,
   Ogmios will omit fields such as witnesses, proofs and signatures from responses to make responses smaller.
-- JSON-WSP faults are now documented in the JSON schema
+- Provide missing documentation / JSON-schema for:
+  - JSON-WSP faults
+  - Allegra & Mary `SubmitTx` failures:
+    - Allegra:
+      - `expiredUtxo` is replaced by `outsideOfValidityInterval`
+      - new error `triesToForgeAda`
+
+      Mary:
+      - `valueNotConserved.consumed` is now a `Value` (instead of a `DeltaCoin`)
+      - `valueNotConserved.produced` is now a `Value` (instead of a `DeltaCoin`)
+      - `outputTooSmall` items are now of type `TxOut[Mary]`
+      - new error `tooManyAssetsInOutput`
 - Continuous integration job checking for code style and lint on the server source code.
 - The `/health` endpoint now returns two additional pieces of information:
   - A `networkSynchronization` percentage to indicate how far Ogmios / the node is from the network.

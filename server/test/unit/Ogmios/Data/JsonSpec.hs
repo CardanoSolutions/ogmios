@@ -300,6 +300,8 @@ instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto
         [ ( 1, pure SubmitSuccess)
         , ( 1, SubmitFail . HardForkApplyTxErrWrongEra <$> genMismatchEraInfo)
         , (10, SubmitFail . ApplyTxErrShelley <$> reasonablySized arbitrary)
+        , (10, SubmitFail . ApplyTxErrAllegra <$> reasonablySized arbitrary)
+        , (10, SubmitFail . ApplyTxErrMary <$> reasonablySized arbitrary)
         ]
 
 instance Arbitrary (AcquireResponse Block) where
