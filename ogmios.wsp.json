@@ -3009,7 +3009,12 @@
     , "properties":
       { "tooManyAssetsInOutput":
         { "type": "array"
-        , "items": { "$ref": "#/definitions/TxOut[Mary]" }
+        , "items":
+          { "oneOf":
+              [ { "$ref": "#/definitions/TxOut" }
+              , { "$ref": "#/definitions/TxOut[Mary]" }
+              ]
+          }
         }
       }
     }
