@@ -113,6 +113,7 @@ nodeSocketOption = option str $ mempty
     <> long "node-socket"
     <> metavar "FILEPATH"
     <> help "Path to the node socket."
+    <> completer (bashCompleter "file")
 
 -- | [--host=IPv4], default: 127.0.0.1
 serverHostOption :: Parser String
@@ -122,6 +123,7 @@ serverHostOption = option str $ mempty
     <> help "Address to bind to."
     <> value "127.0.0.1"
     <> showDefault
+    <> completer (bashCompleter "hostname")
 
 -- | [--port=TCP/PORT], default: 1337
 serverPortOption :: Parser Int
@@ -146,16 +148,20 @@ logLevelOption :: Parser Severity
 logLevelOption = option auto $ mempty
     <> long "log-level"
     <> metavar "SEVERITY"
-    <> helpDoc (Just (vsep (string <$> severities)))
+    <> helpDoc (Just doc)
     <> value Info
     <> showDefault
+    <> completer (listCompleter severities)
   where
-    severities = mconcat
-        [ [ "Minimal severity required for logging." ]
-        , [ separator ]
-        , ("- " <>) . show @_ @Severity <$> [minBound .. maxBound]
-        , [ separator ]
-        ]
+    severities =
+        show @_ @Severity <$> [minBound .. maxBound]
+    doc =
+        vsep $ string <$> mconcat
+            [ [ "Minimal severity required for logging." ]
+            , [ separator ]
+            , ("- " <>) <$> severities
+            , [ separator ]
+            ]
 
 -- | [--version|-v] | version
 versionOption :: Parser Command
