@@ -23,7 +23,7 @@ server: $(INSTALL_DIR)/ogmios-$(GIT_REV)
 
 api-reference:
 	@cd docs && generate-schema-doc --no-link-to-reused-ref static/ogmios.wsp.json static/api-reference.html
-	@sed -i 's@</head>@<link rel="stylesheet" href="api-reference.css"/></head>@' docs/static/api-reference.html
+	@sed -i 's@</head>@<link rel="stylesheet" href="css/api-reference.css"/></head>@' docs/static/api-reference.html
 
 docker:
 	docker build server

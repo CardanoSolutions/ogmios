@@ -5,7 +5,7 @@ weight = 1
 +++
 
 
-{{% ascii-drawing %}}
+{{% ascii-drawing-split %}}
 ┌───────────┐                                              
 │ Intersect │◀══════════════════════════════╗              
 └─────┬─────┘         FindIntersect         ║              
@@ -21,7 +21,7 @@ weight = 1
 ┌──────┐       Roll.{Backward,Forward}      │              
 │ Next ├────────────────────────────────────┘              
 └──────┘                                                   
-{{% /ascii-drawing %}}
+{{% /ascii-drawing-split %}}
 
 ## Overview
 
@@ -34,14 +34,18 @@ The protocol is stateful, which means that each connection between clients and O
 When a connection is opened with Ogmios, it automatically starts a local chain-sync session with the underlying cardano-node. There's an implicit state maintained by the node which one can imagine as a cursor, pointing to a point on the Cardano chain. Initially, this cursor starts at a special point called: _origin_ (as in, the origin of the chain). After each request, the node will move the cursor either forward or backward and remembers its location for the next request. To move the cursor, the protocols gives two mechanisms: RequestNext and FindIntersect.
 
 
-```none
-* -- * -- * -- * -- * -- * .. Cardano chain
+{{% ascii-drawing %}}
+        ____          ____          ____          ____          ____          ____
+       /    /\       /    /\       /    /\       /    /\       /    /\       /    /\
+o === /____/  \ === /____/  \ === /____/  \ === /____/  \ === /____/  \ === /____/  \ == ...
+      \    \  /     \    \  /     \    \  /     \    \  /     \    \  /     \    \  /
+       \____\/       \____\/       \____\/       \____\/       \____\/       \____\/
 ^    
 |    
 |    
 
 origin
-```
+{{% /ascii-drawing %}}
 
 ## RequestNext
 
@@ -61,23 +65,43 @@ As a response, Ogmios will send back a response which can be either `RollForward
 
 Rolling backward however may occur when, since the last request, the underlying node decided to switch to a different fork of the chain to the extent that the previous cursor is no longer pointing to a block that exists on the chain. The node therefore asks (kindly) to roll backward to a previously known point that is the earliest ancestor that is common between the client's own chain locally and the one that was just adopted by the node.
 
-```none                            
-                              * -- * -- * -- * (node's chain)
-                             /
-    common chain prefix     *
-<------------------------> /
-* -- * -- * -- * -- * -- * -- * -- * -- * -- * (local chain)
-                         ^
-                         |
-                         |
-
-                  Point of rollback     
-```
+{{% ascii-drawing %}}
+                                      ____          ____    
+                                     /    /\       /    /\  
+                                    /____/  \ === /____/  \  (node's chain)
+                                    \    \  /     \    \  /   
+                                 /   \____\/       \____\/    
+                                /
+      ____          ____       /   ____          ____
+     /    /\       /    /\    /  /    /\       /    /\
+=== /____/  \ === /____/  \ =*= /____/  \ === /____/  \  (local chain)
+    \    \  /     \    \  /  ^  \    \  /     \    \  /
+     \____\/       \____\/   |   \____\/       \____\/
+                             |
+<------------------------->  |
+    common chain prefix       |
+                             |
+                     point of rollback     
+{{% /ascii-drawing %}}
 
 When rolling backward, the node will not provide a block but instead, a point which is made of a block header hash and a slot. 
 
 {{% notice info %}} 
 As a client, it is therefore crucial to be able to rollback to a previous point of the chain. In practice, Ouroboros guarantees that forks cannot be longer than a certain length. This maximum length is called `k` in the Ouroboros protocol, and also known as _the security parameter_.
+{{% /notice %}}
+
+### Pipelining
+
+Ogmios will do its best to [pipeline](https://en.wikipedia.org/wiki/HTTP_pipelining) requests to the Cardano node. Yet unlike WebSocket, the local chain-sync protocol only allows for finite pipelining. Said differently, Ogmios cannot pipeline an arbitrary and potentially infinite number of requests and will actually starts collecting responses if too many requests are pipelined. Pipelining with WebSocket is however straightforward for most clients permit sending many requests at once and handle responses using callbacks on event handlers. 
+
+A good rule of thumb with Ogmios is to pipeline some requests when starting a long-run chain-sync, and then simply put back a new request in the queue every time you receive a response back. In that way, there are always some requests in flight and Ogmios can make a good use of the available bandwith. How many requests to pipeline depends on various factors including the network latency and machine resources. In a local setup where Ogmios and its client are located on the same machine, pipelining up to 1000 requests can be quite effective and drastically speed up the chain-sync.
+
+|                                      | Without Pipelining | With Pipelining (1000 requests) |
+| ---                                  | ---                | ---                             |
+| Full mainnet synchronization (local) | 340 minutes        | 14 minutes                      |
+
+{{% notice warning %}}
+If you're pipelining many requests in a client application, make sure to also take times to collect some responses because there will be no extra benefits coming from _too much pipelining_.
 {{% /notice %}}
 
 ## FindIntersect
@@ -105,13 +129,8 @@ If an intersection is found, great, the node will set the cursor to that point a
 
 For example, imagine the following scenario:
 
-```none
-               P01  P02  P03  P04  P05    P98  P99A  P100A
-Local chain:    * -- * -- * -- * -- *  ... * -- * -- *  
-
-               P01  P02  P03  P04  P05    P98  P99B  P100B
-Node's chain:   * -- * -- * -- * -- *  ... * -- * --  *  
-```
+- Local chain: `[P01,P02,P03,..,P98,P99A,P100A]`
+- Node's chain: `[P01,P02,P03,..,P98,P99B,P100B]`
 
 As a client, providing any point before or at `P98` will result in finding an intersection. Yet, if one only provides `[P99A, P100A]`, the node will not be able to figure out where to continue the protocol and will remain at the _origin_.
 
@@ -202,10 +221,6 @@ A few important takes from this excerpt:
   ```
 
   We need not to wait for replies to send requests and can collect all responses at a later stage! 
-
-{{% notice info %}}
-Note that Ogmios will do its best to pipeline requests to the Cardano node. Nevertheless, unlike WebSocket the local chain-sync protocol only allows for finite pipelining. Said differently, Ogmios cannot pipeline an arbitrary and potentially infinite number of requests and will actually starts collecting responses if too many requests are pipelined. So, if you're pipelining many requests in a client application, make sure to also take times to collect some responses because there will be no extra benefits coming from _too much pipelining_.
-{{% /notice %}}
 
 ## Compact Serialization
 

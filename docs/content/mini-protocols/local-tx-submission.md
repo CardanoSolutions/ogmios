@@ -6,7 +6,7 @@ weight = 2
 +++
 
 
-{{% ascii-drawing %}}
+{{% ascii-drawing-split %}}
  ┌──────────┐
  │   Busy   │◀══════════════════════════════╗      
  └────┬─────┘            SubmitTx           ║      
@@ -18,7 +18,7 @@ weight = 2
       └───────────────────────────────▶│          │
                                        │          │⇦ START
                                        └──────────┘
-{{% /ascii-drawing %}}
+{{% /ascii-drawing-split %}}
 
 ## Overview
 
