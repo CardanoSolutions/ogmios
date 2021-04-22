@@ -2681,429 +2681,601 @@
     { "type": "array"
     , "items":
       { "oneOf":
-        [ { "type": "object"
-          , "title": "invalidWitnesses"
-          , "additionalProperties": false
-          , "required": ["invalidWitnesses"]
-          , "properties":
-            { "invalidWitnesses":
-              { "type": "array"
-              , "items": { "$ref": "#/definitions/Hash16" }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "missingVkWitnesses"
-          , "additionalProperties": false
-          , "required": [ "missingVkWitnesses" ]
-          , "properties":
-            { "missingVkWitnesses":
-              { "type": "array"
-              , "items": { "$ref": "#/definitions/Hash16" }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "missingScriptWitnesses"
-          , "additionalProperties": false
-          , "required": [ "missingScriptWitnesses" ]
-          , "properties":
-            { "missingScriptWitnesses":
-              { "type": "array"
-              , "items": { "$ref": "#/definitions/Hash16" }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "scriptWitnessNotValidating"
-          , "additionalProperties": false
-          , "required": [ "scriptWitnessNotValidating" ]
-          , "properties":
-            { "scriptWitnessNotValidating":
-              { "type": "array"
-              , "items": { "$ref": "#/definitions/Hash16" }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "insufficientGenesisSignatures"
-          , "additionalProperties": false
-          , "required": [ "insufficientGenesisSignatures" ]
-          , "properties":
-            { "insufficientGenesisSignatures":
-              { "type": "array"
-              , "items": { "$ref": "#/definitions/Hash16" }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "missingTxMetadata"
-          , "additionalProperties": false
-          , "required": [ "missingTxMetadata" ]
-          , "properties":
-            { "missingTxMetadata": { "$ref": "#/definitions/Hash16" }
-            }
-          }
-        , { "type": "object"
-          , "title": "missingTxMetadataHash"
-          , "additionalProperties": false
-          , "required": [ "missingTxMetadataHash" ]
-          , "properties":
-            { "missingTxMetadataHash": { "$ref": "#/definitions/Hash16" }
-            }
-          }
-        , { "type": "object"
-          , "title": "txMetadataHashMismatch"
-          , "additionalProperties": false
-          , "required": [ "txMetadataHashMismatch" ]
-          , "properties":
-            { "txMetadataHashMismatch":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "includedHash", "expectedHash" ]
-              , "properties":
-                { "includedHash": { "$ref": "#/definitions/Hash16" }
-                , "expectedHash": { "$ref": "#/definitions/Hash16" }
-                }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "badInputs"
-          , "additionalProperties": false
-          , "required": [ "badInputs" ]
-          , "properties":
-            { "badInputs":
-              { "type": "array"
-              , "items": { "$ref": "#/definitions/TxIn" }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "expiredUtxo"
-          , "additionalProperties": false
-          , "required": [ "expiredUtxo" ]
-          , "properties":
-            { "expiredUtxo":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "currentSlot", "transactionTimeToLive" ]
-              , "properties":
-                { "currentSlot": { "$ref": "#/definitions/Slot" }
-                , "transactionTimeToLive": { "$ref": "#/definitions/Slot" }
-                }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "txTooLarge"
-          , "additionalProperties": false
-          , "required": [ "txTooLarge" ]
-          , "properties":
-            { "txTooLarge":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "maximumSize", "actualSize" ]
-              , "properties":
-                { "maximumSize": { "type": "integer" }
-                , "actualSize": { "type": "integer" }
-                }
-              }
-            }
-          }
-        , { "type": "string"
-          , "title": "missingAtLeastOneInputUtxo"
-          , "enum": [ "missingAtLeastOneInputUtxo" ]
-          }
-        , { "type": "string"
-          , "title": "invalidMetadata"
-          , "enum": [ "invalidMetadata" ]
-          }
-        , { "type": "object"
-          , "title": "feeTooSmall"
-          , "additionalProperties": false
-          , "required": [ "feeTooSmall" ]
-          , "properties":
-            { "feeTooSmall":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "requiredFee", "actualFee" ]
-              , "properties":
-                { "requiredFee": { "$ref": "#/definitions/Lovelace" }
-                , "actualFee": { "$ref": "#/definitions/Lovelace" }
-                }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "valueNotConserved"
-          , "additionalProperties": false
-          , "required": [ "valueNotConserved" ]
-          , "properties":
-            { "valueNotConserved":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "consumed", "produced" ]
-              , "properties":
-                { "consumed": { "$ref": "#/definitions/LovelaceDelta" }
-                , "produced": { "$ref": "#/definitions/LovelaceDelta" }
-                }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "networkMismatch"
-          , "additionalProperties": false
-          , "required": [ "networkMismatch" ]
-          , "properties":
-            { "networkMismatch":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "expectedNetwork" ]
-              , "properties":
-                { "expectedNetwork": { "$ref": "#/definitions/Network" }
-                , "invalidAddresses":
-                  { "type": "array"
-                  , "items": { "$ref": "#/definitions/Address" }
-                  }
-                , "invalidRewardAccounts":
-                  { "type": "array"
-                  , "items": { "$ref": "#/definitions/RewardAccount" }
-                  }
-                }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "outputTooSmall"
-          , "additionalProperties": false
-          , "required": [ "outputTooSmall" ]
-          , "properties":
-            { "outputTooSmall":
-              { "type": "array"
-              , "items": { "$ref": "#/definitions/TxOut" }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "addressAttributesTooLarge"
-          , "additionalProperties": false
-          , "required": [ "addressAttributesTooLarge" ]
-          , "properties":
-            { "addressAttributesTooLarge":
-              { "type": "array"
-              , "items": { "$ref": "#/definitions/Address" }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "delegateNotRegistered"
-          , "additionalProperties": false
-          , "required": [ "delegateNotRegistered" ]
-          , "properties":
-            { "delegateNotRegistered": { "$ref": "#/definitions/PoolId" }
-            }
-          }
-        , { "type": "object"
-          , "title": "unknownOrIncompleteWithdrawals"
-          , "additionalProperties": false
-          , "required": [ "unknownOrIncompleteWithdrawals" ]
-          , "properties":
-            { "unknownOrIncompleteWithdrawals": { "$ref": "#/definitions/Withdrawals" }
-            }
-          }
-        , { "type": "object"
-          , "title": "stakePoolNotRegistered"
-          , "additionalProperties": false
-          , "required": [ "stakePoolNotRegistered" ]
-          , "properties":
-            { "stakePoolNotRegistered": { "$ref": "#/definitions/PoolId" }
-            }
-          }
-        , { "type": "object"
-          , "title": "wrongRetirementEpoch"
-          , "additionalProperties": false
-          , "required": [ "wrongRetirementEpoch" ]
-          , "properties":
-            { "wrongRetirementEpoch":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "currentEpoch", "requestedEpoch", "firstUnreachableEpoch" ]
-              , "properties":
-                { "currentEpoch": { "$ref": "#/definitions/Epoch" }
-                , "requestedEpoch": { "$ref": "#/definitions/Epoch" }
-                , "firstUnreachableEpoch": { "$ref": "#/definitions/Epoch" }
-                }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "wrongPoolCertificate"
-          , "additionalProperties": false
-          , "required": ["wrongPoolCertificate"]
-          , "properties":
-            { "wrongPoolCertificate": { "type": "integer" }
-            }
-          }
-        , { "type": "object"
-          , "title": "stakeKeyAlreadyRegistered"
-          , "additionalProperties": false
-          , "required": [ "stakeKeyAlreadyRegistered" ]
-          , "properties":
-            { "stakeKeyAlreadyRegistered": { "$ref": "#/definitions/Hash16" }
-            }
-          }
-        , { "type": "object"
-          , "title": "poolCostTooSmall"
-          , "additionalProperties": false
-          , "required": [ "poolCostTooSmall" ]
-          , "properties":
-            { "poolCostTooSmall":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "minimumCost" ]
-              , "properties":
-                { "minimumCost": { "$ref": "#/definitions/Lovelace" }
-                }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "stakeKeyNotRegistered"
-          , "additionalProperties": false
-          , "required": [ "stakeKeyNotRegistered" ]
-          , "properties":
-            { "stakeKeyNotRegistered": { "$ref": "#/definitions/Hash16" }
-            }
-          }
-        , { "type": "string"
-          , "title": "rewardAccountNotExisting"
-          , "enum": [ "rewardAccountNotExisting" ]
-          }
-        , { "type": "object"
-          , "title": "rewardAccountNotEmpty"
-          , "additionalProperties": false
-          , "required": [ "rewardAccountNotEmpty" ]
-          , "properties":
-            { "rewardAccountNotEmpty":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "balance" ]
-              , "properties":
-                { "balance": { "$ref": "#/definitions/Lovelace" }
-                }
-              }
-            }
-          }
-        , { "type": "string"
-          , "title": "wrongCertificateType"
-          , "enum": [ "wrongCertificateType" ]
-          }
-        , { "type": "object"
-          , "title": "unknownGenesisKey"
-          , "additionalProperties": false
-          , "required": [ "unknownGenesisKey" ]
-          , "properties":
-            { "unknownGenesisKey": { "$ref": "#/definitions/Hash16" }
-            }
-          }
-        , { "type": "object"
-          , "title": "alreadyDelegating"
-          , "additionalProperties": false
-          , "required": [ "alreadyDelegating" ]
-          , "properties":
-            { "alreadyDelegating": { "$ref": "#/definitions/Hash16" }
-            }
-          }
-        , { "type": "object"
-          , "title": "insufficientFundsForMir"
-          , "additionalProperties": false
-          , "required": [ "insufficientFundsForMir" ]
-          , "properties":
-            { "insufficientFundsForMir":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "rewardSource", "sourceSize", "requestedAmount" ]
-              , "properties":
-                { "rewardSource": { "$ref": "#/definitions/RewardPot" }
-                , "sourceSize": { "$ref": "#/definitions/Lovelace" }
-                , "requestedAmount": { "$ref": "#/definitions/Lovelace" }
-                }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "tooLateForMir"
-          , "additionalProperties": false
-          , "required": [ "tooLateForMir" ]
-          , "properties":
-            { "tooLateForMir":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "currentSlot", "lastAllowedSlot" ]
-              , "properties":
-                { "currentSlot": { "$ref": "#/definitions/Slot" }
-                , "lastAllowedSlot": { "$ref": "#/definitions/Slot" }
-                }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "duplicateGenesisVrf"
-          , "additionalProperties": false
-          , "required": [ "duplicateGenesisVrf" ]
-          , "properties":
-            { "duplicateGenesisVrf": { "$ref": "#/definitions/Hash16" }
-            }
-          }
-        , { "type": "object"
-          , "title": "nonGenesisVoters"
-          , "additionalProperties": false
-          , "required": [ "nonGenesisVoters" ]
-          , "properties":
-            { "nonGenesisVoters":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "currentlyVoting", "shouldBeVoting" ]
-              , "properties":
-                { "currentlyVoting":
-                  { "type": "array"
-                  , "items": { "$ref": "#/definitions/Hash16" }
-                  }
-                , "shouldBeVoting":
-                  { "type": "array"
-                  , "items": { "$ref": "#/definitions/Hash16" }
-                  }
-                }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "updateWrongEpoch"
-          , "additionalProperties": false
-          , "required": [ "updateWrongEpoch" ]
-          , "properties":
-            { "updateWrongEpoch":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "currentEpoch", "requestedEpoch", "votingPeriod" ]
-              , "properties":
-                { "currentEpoch": { "$ref": "#/definitions/Epoch" }
-                , "requestedEpoch": { "$ref": "#/definitions/Epoch" }
-                , "votingPeriod": { "$ref": "#/definitions/VotingPeriod" }
-                }
-              }
-            }
-          }
-        , { "type": "object"
-          , "title": "protocolVersionCannotFollow"
-          , "additionalProperties": false
-          , "required": [ "protocolVersionCannotFollow" ]
-          , "properties":
-            { "protocolVersionCannotFollow": { "$ref": "#/definitions/ProtocolVersion" }
-            }
-          }
+        [ { "$ref": "#/definitions/SubmitTxError[invalidWitnesses]" }
+        , { "$ref": "#/definitions/SubmitTxError[missingVkWitnesses]" }
+        , { "$ref": "#/definitions/SubmitTxError[missingScriptWitnesses]" }
+        , { "$ref": "#/definitions/SubmitTxError[scriptWitnessNotValidating]" }
+        , { "$ref": "#/definitions/SubmitTxError[insufficientGenesisSignatures]" }
+        , { "$ref": "#/definitions/SubmitTxError[missingTxMetadata]" }
+        , { "$ref": "#/definitions/SubmitTxError[missingTxMetadataHash]" }
+        , { "$ref": "#/definitions/SubmitTxError[txMetadataHashMismatch]" }
+        , { "$ref": "#/definitions/SubmitTxError[badInputs]" }
+        , { "$ref": "#/definitions/SubmitTxError[expiredUtxo]" }
+        , { "$ref": "#/definitions/SubmitTxError[outsideOfValidityInterval]" }
+        , { "$ref": "#/definitions/SubmitTxError[txTooLarge]" }
+        , { "$ref": "#/definitions/SubmitTxError[missingAtLeastOneInputUtxo]" }
+        , { "$ref": "#/definitions/SubmitTxError[invalidMetadata]" }
+        , { "$ref": "#/definitions/SubmitTxError[feeTooSmall]" }
+        , { "$ref": "#/definitions/SubmitTxError[valueNotConserved]" }
+        , { "$ref": "#/definitions/SubmitTxError[networkMismatch]" }
+        , { "$ref": "#/definitions/SubmitTxError[outputTooSmall]" }
+        , { "$ref": "#/definitions/SubmitTxError[tooManyAssetsInOutput]" }
+        , { "$ref": "#/definitions/SubmitTxError[addressAttributesTooLarge]" }
+        , { "$ref": "#/definitions/SubmitTxError[triesToForgeAda]" }
+        , { "$ref": "#/definitions/SubmitTxError[delegateNotRegistered]" }
+        , { "$ref": "#/definitions/SubmitTxError[unknownOrIncompleteWithdrawals]" }
+        , { "$ref": "#/definitions/SubmitTxError[stakePoolNotRegistered]" }
+        , { "$ref": "#/definitions/SubmitTxError[wrongRetirementEpoch]" }
+        , { "$ref": "#/definitions/SubmitTxError[wrongPoolCertificate]" }
+        , { "$ref": "#/definitions/SubmitTxError[stakeKeyAlreadyRegistered]" }
+        , { "$ref": "#/definitions/SubmitTxError[poolCostTooSmall]" }
+        , { "$ref": "#/definitions/SubmitTxError[stakeKeyNotRegistered]" }
+        , { "$ref": "#/definitions/SubmitTxError[rewardAccountNotExisting]" }
+        , { "$ref": "#/definitions/SubmitTxError[rewardAccountNotEmpty]" }
+        , { "$ref": "#/definitions/SubmitTxError[wrongCertificateType]" }
+        , { "$ref": "#/definitions/SubmitTxError[unknownGenesisKey]" }
+        , { "$ref": "#/definitions/SubmitTxError[alreadyDelegating]" }
+        , { "$ref": "#/definitions/SubmitTxError[insufficientFundsForMir]" }
+        , { "$ref": "#/definitions/SubmitTxError[tooLateForMir]" }
+        , { "$ref": "#/definitions/SubmitTxError[duplicateGenesisVrf]" }
+        , { "$ref": "#/definitions/SubmitTxError[nonGenesisVoters]" }
+        , { "$ref": "#/definitions/SubmitTxError[updateWrongEpoch]" }
+        , { "$ref": "#/definitions/SubmitTxError[protocolVersionCannotFollow]" }
         ]
+      }
+    }
+
+  , "SubmitTxError[invalidWitnesses]":
+    { "type": "object"
+    , "title": "invalidWitnesses"
+    , "additionalProperties": false
+    , "required": ["invalidWitnesses"]
+    , "properties":
+      { "invalidWitnesses":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Hash16" }
+        }
+      }
+    }
+
+  , "SubmitTxError[missingVkWitnesses]":
+    { "type": "object"
+    , "title": "missingVkWitnesses"
+    , "additionalProperties": false
+    , "required": [ "missingVkWitnesses" ]
+    , "properties":
+      { "missingVkWitnesses":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Hash16" }
+        }
+      }
+    }
+
+  , "SubmitTxError[missingScriptWitnesses]":
+    { "type": "object"
+    , "title": "missingScriptWitnesses"
+    , "additionalProperties": false
+    , "required": [ "missingScriptWitnesses" ]
+    , "properties":
+      { "missingScriptWitnesses":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Hash16" }
+        }
+      }
+    }
+
+  , "SubmitTxError[scriptWitnessNotValidating]":
+    { "type": "object"
+    , "title": "scriptWitnessNotValidating"
+    , "additionalProperties": false
+    , "required": [ "scriptWitnessNotValidating" ]
+    , "properties":
+      { "scriptWitnessNotValidating":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Hash16" }
+        }
+      }
+    }
+
+  , "SubmitTxError[insufficientGenesisSignatures]":
+    { "type": "object"
+    , "title": "insufficientGenesisSignatures"
+    , "additionalProperties": false
+    , "required": [ "insufficientGenesisSignatures" ]
+    , "properties":
+      { "insufficientGenesisSignatures":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Hash16" }
+        }
+      }
+    }
+
+  , "SubmitTxError[missingTxMetadata]":
+    { "type": "object"
+    , "title": "missingTxMetadata"
+    , "additionalProperties": false
+    , "required": [ "missingTxMetadata" ]
+    , "properties":
+      { "missingTxMetadata": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "SubmitTxError[missingTxMetadataHash]":
+    { "type": "object"
+    , "title": "missingTxMetadataHash"
+    , "additionalProperties": false
+    , "required": [ "missingTxMetadataHash" ]
+    , "properties":
+      { "missingTxMetadataHash": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "SubmitTxError[txMetadataHashMismatch]":
+    { "type": "object"
+    , "title": "txMetadataHashMismatch"
+    , "additionalProperties": false
+    , "required": [ "txMetadataHashMismatch" ]
+    , "properties":
+      { "txMetadataHashMismatch":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "includedHash", "expectedHash" ]
+        , "properties":
+          { "includedHash": { "$ref": "#/definitions/Hash16" }
+          , "expectedHash": { "$ref": "#/definitions/Hash16" }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[badInputs]":
+    { "type": "object"
+    , "title": "badInputs"
+    , "additionalProperties": false
+    , "required": [ "badInputs" ]
+    , "properties":
+      { "badInputs":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/TxIn" }
+        }
+      }
+    }
+
+  , "SubmitTxError[expiredUtxo]":
+    { "type": "object"
+    , "title": "expiredUtxo"
+    , "description": "Only in Shelley. Replaced with 'outsideOfValidityInterval' since Allegra."
+    , "additionalProperties": false
+    , "required": [ "expiredUtxo" ]
+    , "properties":
+      { "expiredUtxo":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "currentSlot", "transactionTimeToLive" ]
+        , "properties":
+          { "currentSlot": { "$ref": "#/definitions/Slot" }
+          , "transactionTimeToLive": { "$ref": "#/definitions/Slot" }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[outsideOfValidityInterval]":
+    { "type": "object"
+    , "title": "outsideOfValidityInterval"
+    , "description": "Since Allegra. Replaces 'expiredUtxo'."
+    , "additionalProperties": false
+    , "required": [ "outsideOfValidityInterval" ]
+    , "properties":
+      { "outsideOfValidityInterval":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "currentSlot", "interval" ]
+        , "properties":
+          { "currentSlot": { "$ref": "#/definitions/Slot" }
+          , "interval": { "$ref": "#/definitions/ValidityInterval" }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[txTooLarge]":
+    { "type": "object"
+    , "title": "txTooLarge"
+    , "additionalProperties": false
+    , "required": [ "txTooLarge" ]
+    , "properties":
+      { "txTooLarge":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "maximumSize", "actualSize" ]
+        , "properties":
+          { "maximumSize": { "type": "integer" }
+          , "actualSize": { "type": "integer" }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[missingAtLeastOneInputUtxo]":
+    { "type": "string"
+    , "title": "missingAtLeastOneInputUtxo"
+    , "enum": [ "missingAtLeastOneInputUtxo" ]
+    }
+
+  , "SubmitTxError[invalidMetadata]":
+    { "type": "string"
+    , "title": "invalidMetadata"
+    , "enum": [ "invalidMetadata" ]
+    }
+
+  , "SubmitTxError[feeTooSmall]":
+    { "type": "object"
+    , "title": "feeTooSmall"
+    , "additionalProperties": false
+    , "required": [ "feeTooSmall" ]
+    , "properties":
+      { "feeTooSmall":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "requiredFee", "actualFee" ]
+        , "properties":
+          { "requiredFee": { "$ref": "#/definitions/Lovelace" }
+          , "actualFee": { "$ref": "#/definitions/Lovelace" }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[valueNotConserved]":
+    { "type": "object"
+    , "title": "valueNotConserved"
+    , "description": "Returns 'Value' since Mary, and 'LovelaceDelta' before."
+    , "additionalProperties": false
+    , "required": [ "valueNotConserved" ]
+    , "properties":
+      { "valueNotConserved":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "consumed", "produced" ]
+        , "properties":
+          { "consumed":
+            { "oneOf":
+                [ { "$ref": "#/definitions/LovelaceDelta" }
+                , { "$ref": "#/definitions/Value" }
+                ]
+            }
+          , "produced":
+            { "oneOf":
+                [ { "$ref": "#/definitions/LovelaceDelta" }
+                , { "$ref": "#/definitions/Value" }
+                ]
+            }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[networkMismatch]":
+    { "type": "object"
+    , "title": "networkMismatch"
+    , "additionalProperties": false
+    , "required": [ "networkMismatch" ]
+    , "properties":
+      { "networkMismatch":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "expectedNetwork" ]
+        , "properties":
+          { "expectedNetwork": { "$ref": "#/definitions/Network" }
+          , "invalidAddresses":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Address" }
+            }
+          , "invalidRewardAccounts":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/RewardAccount" }
+            }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[outputTooSmall]":
+    { "type": "object"
+    , "title": "outputTooSmall"
+    , "description": "Returns 'TxOut[Mary]' since Mary, and 'TxOut' before."
+    , "additionalProperties": false
+    , "required": [ "outputTooSmall" ]
+    , "properties":
+      { "outputTooSmall":
+        { "type": "array"
+        , "items":
+          { "oneOf":
+              [ { "$ref": "#/definitions/TxOut" }
+              , { "$ref": "#/definitions/TxOut[Mary]" }
+              ]
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[tooManyAssetsInOutput]":
+    { "type": "object"
+    , "title": "tooManyAssetsInOutput"
+    , "description": "Only since Mary."
+    , "additionalProperties": false
+    , "required": [ "tooManyAssetsInOutput" ]
+    , "properties":
+      { "tooManyAssetsInOutput":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/TxOut[Mary]" }
+        }
+      }
+    }
+
+  , "SubmitTxError[addressAttributesTooLarge]":
+    { "type": "object"
+    , "title": "addressAttributesTooLarge"
+    , "additionalProperties": false
+    , "required": [ "addressAttributesTooLarge" ]
+    , "properties":
+      { "addressAttributesTooLarge":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Address" }
+        }
+      }
+    }
+
+  , "SubmitTxError[triesToForgeAda]":
+    { "type": "string"
+    , "title": "triesToForgeAda"
+    , "description": "Only since Mary."
+    , "enum": [ "triesToForgeAda" ]
+    }
+
+  , "SubmitTxError[delegateNotRegistered]":
+    { "type": "object"
+    , "title": "delegateNotRegistered"
+    , "additionalProperties": false
+    , "required": [ "delegateNotRegistered" ]
+    , "properties":
+      { "delegateNotRegistered": { "$ref": "#/definitions/PoolId" }
+      }
+    }
+
+  , "SubmitTxError[unknownOrIncompleteWithdrawals]":
+    { "type": "object"
+    , "title": "unknownOrIncompleteWithdrawals"
+    , "additionalProperties": false
+    , "required": [ "unknownOrIncompleteWithdrawals" ]
+    , "properties":
+      { "unknownOrIncompleteWithdrawals": { "$ref": "#/definitions/Withdrawals" }
+      }
+    }
+
+  , "SubmitTxError[stakePoolNotRegistered]":
+    { "type": "object"
+    , "title": "stakePoolNotRegistered"
+    , "additionalProperties": false
+    , "required": [ "stakePoolNotRegistered" ]
+    , "properties":
+      { "stakePoolNotRegistered": { "$ref": "#/definitions/PoolId" }
+      }
+    }
+
+  , "SubmitTxError[wrongRetirementEpoch]":
+    { "type": "object"
+    , "title": "wrongRetirementEpoch"
+    , "additionalProperties": false
+    , "required": [ "wrongRetirementEpoch" ]
+    , "properties":
+      { "wrongRetirementEpoch":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "currentEpoch", "requestedEpoch", "firstUnreachableEpoch" ]
+        , "properties":
+          { "currentEpoch": { "$ref": "#/definitions/Epoch" }
+          , "requestedEpoch": { "$ref": "#/definitions/Epoch" }
+          , "firstUnreachableEpoch": { "$ref": "#/definitions/Epoch" }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[wrongPoolCertificate]":
+    { "type": "object"
+    , "title": "wrongPoolCertificate"
+    , "additionalProperties": false
+    , "required": ["wrongPoolCertificate"]
+    , "properties":
+      { "wrongPoolCertificate": { "type": "integer" }
+      }
+    }
+
+  , "SubmitTxError[stakeKeyAlreadyRegistered]":
+    { "type": "object"
+    , "title": "stakeKeyAlreadyRegistered"
+    , "additionalProperties": false
+    , "required": [ "stakeKeyAlreadyRegistered" ]
+    , "properties":
+      { "stakeKeyAlreadyRegistered": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "SubmitTxError[poolCostTooSmall]":
+    { "type": "object"
+    , "title": "poolCostTooSmall"
+    , "additionalProperties": false
+    , "required": [ "poolCostTooSmall" ]
+    , "properties":
+      { "poolCostTooSmall":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "minimumCost" ]
+        , "properties":
+          { "minimumCost": { "$ref": "#/definitions/Lovelace" }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[stakeKeyNotRegistered]":
+    { "type": "object"
+    , "title": "stakeKeyNotRegistered"
+    , "additionalProperties": false
+    , "required": [ "stakeKeyNotRegistered" ]
+    , "properties":
+      { "stakeKeyNotRegistered": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "SubmitTxError[rewardAccountNotExisting]":
+    { "type": "string"
+    , "title": "rewardAccountNotExisting"
+    , "enum": [ "rewardAccountNotExisting" ]
+    }
+
+  , "SubmitTxError[rewardAccountNotEmpty]":
+    { "type": "object"
+    , "title": "rewardAccountNotEmpty"
+    , "additionalProperties": false
+    , "required": [ "rewardAccountNotEmpty" ]
+    , "properties":
+      { "rewardAccountNotEmpty":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "balance" ]
+        , "properties":
+          { "balance": { "$ref": "#/definitions/Lovelace" }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[wrongCertificateType]":
+    { "type": "string"
+    , "title": "wrongCertificateType"
+    , "enum": [ "wrongCertificateType" ]
+    }
+
+  , "SubmitTxError[unknownGenesisKey]":
+    { "type": "object"
+    , "title": "unknownGenesisKey"
+    , "additionalProperties": false
+    , "required": [ "unknownGenesisKey" ]
+    , "properties":
+      { "unknownGenesisKey": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "SubmitTxError[alreadyDelegating]":
+    { "type": "object"
+    , "title": "alreadyDelegating"
+    , "additionalProperties": false
+    , "required": [ "alreadyDelegating" ]
+    , "properties":
+      { "alreadyDelegating": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "SubmitTxError[insufficientFundsForMir]":
+    { "type": "object"
+    , "title": "insufficientFundsForMir"
+    , "additionalProperties": false
+    , "required": [ "insufficientFundsForMir" ]
+    , "properties":
+      { "insufficientFundsForMir":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "rewardSource", "sourceSize", "requestedAmount" ]
+        , "properties":
+          { "rewardSource": { "$ref": "#/definitions/RewardPot" }
+          , "sourceSize": { "$ref": "#/definitions/Lovelace" }
+          , "requestedAmount": { "$ref": "#/definitions/Lovelace" }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[tooLateForMir]":
+    { "type": "object"
+    , "title": "tooLateForMir"
+    , "additionalProperties": false
+    , "required": [ "tooLateForMir" ]
+    , "properties":
+      { "tooLateForMir":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "currentSlot", "lastAllowedSlot" ]
+        , "properties":
+          { "currentSlot": { "$ref": "#/definitions/Slot" }
+          , "lastAllowedSlot": { "$ref": "#/definitions/Slot" }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[duplicateGenesisVrf]":
+    { "type": "object"
+    , "title": "duplicateGenesisVrf"
+    , "additionalProperties": false
+    , "required": [ "duplicateGenesisVrf" ]
+    , "properties":
+      { "duplicateGenesisVrf": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "SubmitTxError[nonGenesisVoters]":
+    { "type": "object"
+    , "title": "nonGenesisVoters"
+    , "additionalProperties": false
+    , "required": [ "nonGenesisVoters" ]
+    , "properties":
+      { "nonGenesisVoters":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "currentlyVoting", "shouldBeVoting" ]
+        , "properties":
+          { "currentlyVoting":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Hash16" }
+            }
+          , "shouldBeVoting":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Hash16" }
+            }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[updateWrongEpoch]":
+    { "type": "object"
+    , "title": "updateWrongEpoch"
+    , "additionalProperties": false
+    , "required": [ "updateWrongEpoch" ]
+    , "properties":
+      { "updateWrongEpoch":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "currentEpoch", "requestedEpoch", "votingPeriod" ]
+        , "properties":
+          { "currentEpoch": { "$ref": "#/definitions/Epoch" }
+          , "requestedEpoch": { "$ref": "#/definitions/Epoch" }
+          , "votingPeriod": { "$ref": "#/definitions/VotingPeriod" }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[protocolVersionCannotFollow]":
+    { "type": "object"
+    , "title": "protocolVersionCannotFollow"
+    , "additionalProperties": false
+    , "required": [ "protocolVersionCannotFollow" ]
+    , "properties":
+      { "protocolVersionCannotFollow": { "$ref": "#/definitions/ProtocolVersion" }
       }
     }
 
