@@ -1,0 +1,108 @@
+.badge.badge-dark.value-type {
+  background: none;
+  color: #ff6b81;
+  border: none;
+  font-size: 0.9em;
+  margin-right: 0;
+  padding: 0;
+}
+
+.badge.badge-warning.required-property {
+  background: none;
+  color: #ff7f50;
+  font-size: 0.5em;
+}
+
+.badge.value-type + br {
+  display: none;
+}
+
+.badge.badge-info.no-additional {
+  background: none;
+  color: #495057;
+  border: none;
+  font-size: 0.7em;
+}
+.badge.badge-info.no-additional::before {
+  content: "(";
+}
+.badge.badge-info.no-additional::after {
+  content: ")";
+}
+
+.badge.badge-secondary {
+  display: none;
+}
+
+.btn.btn-light.example-show {
+  background-color: #1e90ff;
+  color: #ffffff;
+}
+
+.btn.example-show.collapsed::before {
+  content: "💡 show example(s)";
+  font-variant: small-caps;
+}
+
+.btn.example-show::before {
+  content: "❌ hide example(s)";
+  font-variant: small-caps;
+}
+
+h4 {
+  line-height: 1em;
+  font-size: 1em;
+  font-style: italic;
+}
+h2.handle {
+  display: none;
+}
+
+span.pattern-value::before, span.badge.restriction::before {
+  content: "✓";
+}
+
+span.badge.restriction {
+  border: none;
+  border-radius: 0;
+  background: none;
+  font-weight: normal;
+  padding: 0;
+  margin: 0;
+}
+
+span.description > p {
+  font-size: 1.1em;
+}
+span.description > p::before {
+  content: "Description: ";
+  font-weight: bold;
+}
+
+li.list-group-item.enum-item {
+  border: none;
+  border-radius: 0;
+  padding: 0 1.25rem;
+}
+li.list-group-item.enum-item::before {
+  content: "• ";
+}
+
+body {
+  background: #8451a1;
+  color: #ffffff;
+}
+
+body > h1 ~ span.value-type {
+  display: none;
+}
+
+div.card-body, div.breadcrumbs {
+  color: #2f3542;
+  background: #ffffff;
+}
+
+div.accordion, div.card-header {
+  color: #2f3542;
+  background: #f8f8f8;
+}
