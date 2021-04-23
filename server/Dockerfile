@@ -29,6 +29,7 @@ COPY modules/fast-bech32/package.yaml        modules/fast-bech32/package.yaml
 COPY modules/git-th/package.yaml             modules/git-th/package.yaml
 COPY modules/hspec-json-schema/package.yaml  modules/hspec-json-schema/package.yaml
 COPY modules/json-wsp/package.yaml           modules/json-wsp/package.yaml
+COPY modules/json-via-show/package.yaml      modules/json-via-show/package.yaml
 COPY package.yaml                            package.yaml
 COPY stack.yaml                              stack.yaml
 COPY resolver.yaml                           resolver.yaml
