@@ -8,6 +8,7 @@ module Ogmios.Data.Health
     ( -- * Heath
       Health (..)
     , emptyHealth
+    , modifyHealth
       -- ** NetworkSynchronization
     , NetworkSynchronization
     , mkNetworkSynchronization
@@ -15,8 +16,11 @@ module Ogmios.Data.Health
     , CardanoEra (..)
     ) where
 
-import Relude
+import Relude hiding
+    ( TVar, atomically, readTVar, writeTVar )
 
+import Ogmios.Control.MonadSTM
+    ( MonadSTM, TVar, atomically, readTVar, writeTVar )
 import Ogmios.Data.Metrics
     ( Metrics, emptyMetrics )
 
@@ -63,6 +67,19 @@ emptyHealth startTime = Health
     , currentEra = Byron
     , metrics = emptyMetrics
     }
+
+modifyHealth
+    :: forall m block.
+        ( MonadSTM m
+        )
+    => TVar m (Health block)
+    -> (Health block -> Health block)
+    -> m (Health block)
+modifyHealth tvar fn =
+    atomically $ do
+        health <- fn <$> readTVar tvar
+        health <$ writeTVar tvar health
+
 
 -- | Captures how far is our underlying node from the network, in percentage.
 -- This is calculated using:

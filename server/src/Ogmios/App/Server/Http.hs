@@ -16,10 +16,10 @@ module Ogmios.App.Server.Http
     ) where
 
 import Relude hiding
-    ( STM, TVar, readTVar )
+    ( STM, TVar )
 
 import Ogmios.App.Health
-    ( Health (..), healthCheck )
+    ( Health (..), modifyHealth )
 import Ogmios.App.Metrics
     ( RuntimeStats, Sampler, Sensors )
 import Ogmios.Control.MonadClock
@@ -27,7 +27,9 @@ import Ogmios.Control.MonadClock
 import Ogmios.Control.MonadMetrics
     ( MonadMetrics )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), TVar, readTVar )
+    ( MonadSTM (..), TVar )
+
+import qualified Ogmios.App.Metrics as Metrics
 
 import Data.Aeson
     ( ToJSON (..) )
@@ -100,12 +102,9 @@ getHealthR :: Handler Server
 getHealthR = runHandlerM $ do
     header "Access-Control-Allow-Origin" "*"
     Server unliftIO EnvServer{health,sensors,sampler} <- sub
-    let readTipInfo = (\h ->
-            ( lastKnownTip h
-            , networkSynchronization h
-            , currentEra h
-            )) <$> readTVar health
-    json =<< liftIO (unliftIO $ healthCheck readTipInfo health sensors sampler)
+    json =<< liftIO (unliftIO (do
+        metrics <- Metrics.sample sampler sensors
+        modifyHealth health (\h -> h { metrics })))
 
 getTestsR :: Handler Server
 getTestsR = runHandlerM $ do

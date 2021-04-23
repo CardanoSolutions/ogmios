@@ -167,8 +167,9 @@ newSampler tr = do
 
 -- | Sample 'Metrics' at a given point in time.
 sample
-    :: ( MonadMetrics m
-       )
+    :: forall m.
+        ( MonadMetrics m
+        )
     => Sampler RuntimeStats m
     -> Sensors m
     -> m Metrics

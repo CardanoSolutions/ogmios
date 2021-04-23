@@ -9,7 +9,7 @@ module Ogmios.App.Health
     ( -- * Health
       Health (..)
     , emptyHealth
-    , healthCheck
+    , modifyHealth
 
       -- * HealthCheckClient
     , HealthCheckClient
@@ -21,15 +21,7 @@ module Ogmios.App.Health
     ) where
 
 import Relude hiding
-    ( STM
-    , TVar
-    , atomically
-    , newEmptyTMVar
-    , putTMVar
-    , readTVar
-    , takeTMVar
-    , writeTVar
-    )
+    ( STM, TVar, atomically, newEmptyTMVar, putTMVar, takeTMVar )
 
 import Ogmios.App.Metrics
     ( RuntimeStats, Sampler, Sensors )
@@ -61,20 +53,14 @@ import Ogmios.Control.MonadMetrics
 import Ogmios.Control.MonadOuroboros
     ( MonadOuroboros )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..)
-    , TVar
-    , newEmptyTMVar
-    , putTMVar
-    , readTVar
-    , takeTMVar
-    , writeTVar
-    )
+    ( MonadSTM (..), TVar, newEmptyTMVar, putTMVar, takeTMVar )
 import Ogmios.Data.Health
     ( CardanoEra (..)
     , Health (..)
     , NetworkSynchronization
     , emptyHealth
     , mkNetworkSynchronization
+    , modifyHealth
     )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras )
@@ -96,11 +82,9 @@ import Data.Generics.Internal.VL.Lens
 import Data.Generics.Product.Typed
     ( HasType, typed )
 import Data.Time.Clock
-    ( DiffTime )
+    ( DiffTime, UTCTime )
 import Network.TypedProtocol.Pipelined
     ( N (..) )
-import Ouroboros.Consensus.BlockchainTime.WallClock.Types
-    ( RelativeTime )
 import Ouroboros.Consensus.HardFork.Combinator
     ( HardForkBlock, eraIndexToInt )
 import Ouroboros.Consensus.HardFork.History.Qry
@@ -124,40 +108,9 @@ import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ
 import qualified Ouroboros.Consensus.Shelley.Ledger.Query as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 
--- | Construct a health check by sampling all application sensors.
---
--- See also 'Ogmios.App.Protocol.ChainSync#mkHealthCheckClient'
-healthCheck
-    :: forall m block.
-        ( MonadClock m
-        , MonadMetrics m
-        , MonadSTM m
-        )
-    => STM m (Tip block, NetworkSynchronization, CardanoEra)
-    -> TVar m (Health block)
-    -> Sensors m
-    -> Sampler RuntimeStats m
-    -> m (Health block)
-healthCheck readTip tvar sensors sampler = do
-    lastTipUpdate <- Just <$> getCurrentTime
-    metrics <- Metrics.sample sampler sensors
-    atomically $ do
-        Health{startTime} <- readTVar tvar
-        (lastKnownTip, networkSynchronization, currentEra) <- readTip
-        let health = Health
-                { startTime
-                , lastKnownTip
-                , lastTipUpdate
-                , networkSynchronization
-                , currentEra
-                , metrics
-                }
-        health <$ writeTVar tvar health
-
 --
 -- HealthCheck Client
 --
-
 
 -- | A simple wrapper around Ouroboros 'Clients'. A health check client only
 -- carries a chain-sync client.
@@ -183,18 +136,19 @@ newHealthCheckClient
     -> Debouncer m
     -> m (HealthCheckClient m)
 newHealthCheckClient tr Debouncer{debounce} = do
-    NetworkParameters{systemStart} <- asks (view typed)
     (stateQueryClient, getNetworkInformation) <- newTimeInterpreterClient
     pure $ HealthCheckClient $ Clients
         { chainSyncClient = mkHealthCheckClient $ \lastKnownTip -> debounce $ do
             tvar <- asks (view typed)
-            sensors <- asks (view typed)
-            sampler <- asks (view typed)
-            now <- getCurrentTime
-            (currentSlotTime, currentEra) <- getNetworkInformation lastKnownTip
-            let networkSync = mkNetworkSynchronization systemStart now currentSlotTime
-            let tipInfo = (lastKnownTip, networkSync, currentEra)
-            health <- healthCheck (pure tipInfo) tvar sensors sampler
+            metrics <- join (Metrics.sample <$> asks (view typed) <*> asks (view typed))
+            (now, networkSynchronization, currentEra) <- getNetworkInformation lastKnownTip
+            health <- modifyHealth tvar $ \h -> h
+                { lastKnownTip
+                , lastTipUpdate = Just now
+                , networkSynchronization
+                , currentEra
+                , metrics
+                }
             logWith tr (HealthTick health)
 
         , txSubmissionClient =
@@ -301,13 +255,16 @@ mkHealthCheckClient notify =
 -- synchronization of the underlying node, as well as the current era of that
 -- node.
 newTimeInterpreterClient
-    :: forall m crypto block.
+    :: forall m env crypto block.
         ( MonadThrow m
         , MonadSTM m
+        , MonadClock m
+        , MonadReader env m
         , block ~ HardForkBlock (CardanoEras crypto)
+        , HasType NetworkParameters env
         )
     => m ( LocalStateQueryClient block (Point block) (Ledger.Query block) m ()
-         , Tip block -> m (RelativeTime, CardanoEra)
+         , Tip block -> m (UTCTime, NetworkSynchronization, CardanoEra)
          )
 newTimeInterpreterClient = do
     notifyTip <- atomically newEmptyTMVar
@@ -315,7 +272,7 @@ newTimeInterpreterClient = do
     return
         ( LocalStateQueryClient $ clientStIdle
             (atomically $ takeTMVar notifyTip)
-            (\a0 a1 -> atomically $ putTMVar getResult (a0, a1))
+            (\a0 a1 a2 -> atomically $ putTMVar getResult (a0, a1, a2))
         , \tip -> do
             atomically $ putTMVar notifyTip tip
             atomically $ takeTMVar getResult
@@ -323,7 +280,7 @@ newTimeInterpreterClient = do
   where
     clientStIdle
         :: m (Tip block)
-        -> (RelativeTime -> CardanoEra -> m ())
+        -> (UTCTime -> NetworkSynchronization -> CardanoEra -> m ())
         -> m (LSQ.ClientStIdle block (Point block) (Ledger.Query block) m ())
     clientStIdle getTip notifyResult =
         pure $ LSQ.SendMsgAcquire Nothing $ LSQ.ClientStAcquiring
@@ -335,7 +292,7 @@ newTimeInterpreterClient = do
 
     clientStAcquired
         :: m (Tip block)
-        -> (RelativeTime -> CardanoEra -> m ())
+        -> (UTCTime -> NetworkSynchronization -> CardanoEra -> m ())
         -> m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
     clientStAcquired getTip notifyResult = do
         tip <- getTip
@@ -349,7 +306,7 @@ newTimeInterpreterClient = do
             }
 
     clientStQuerySlotTime
-        :: (RelativeTime -> CardanoEra -> m ())
+        :: (UTCTime -> NetworkSynchronization -> CardanoEra -> m ())
         -> (Tip block)
         -> m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
         -> LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ()
@@ -366,7 +323,10 @@ newTimeInterpreterClient = do
                     Left{} ->
                         pure (clientStQuerySlotTime notifyResult tip continue)
                     Right (slotTime, _) -> do
-                        pure (clientStQueryCurrentEra (notifyResult slotTime) continue)
+                        NetworkParameters{systemStart} <- asks (view typed)
+                        now <- getCurrentTime
+                        let networkSync = mkNetworkSynchronization systemStart now slotTime
+                        pure (clientStQueryCurrentEra (notifyResult now networkSync) continue)
             }
 
     clientStQueryCurrentEra
