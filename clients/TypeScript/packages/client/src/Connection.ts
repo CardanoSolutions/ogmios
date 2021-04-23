@@ -2,7 +2,8 @@ import WebSocket from 'isomorphic-ws'
 
 export interface ConnectionConfig {
   host?: string,
-  port?: number
+  port?: number,
+  protocol?: string
 }
 
 export interface InteractionContext {
@@ -14,10 +15,13 @@ export interface InteractionContext {
 
 export type Mirror = { [k: string]: unknown }
 
-const createConnectionString = (connection?: ConnectionConfig): InteractionContext['connectionString'] =>
-  `ws://${connection?.host || 'localhost'}:${connection?.port || 1337}`
+const createConnectionString = (
+  connection?: ConnectionConfig
+): InteractionContext['connectionString'] =>
+  `${connection?.protocol || 'ws'}://${connection?.host || 'localhost'}:${connection?.port || 1337}`
 
-export const createClientContext = async (options?: { connection?: ConnectionConfig }): Promise<InteractionContext> => {
+export const createClientContext = async (
+  options?: { connection?: ConnectionConfig }): Promise<InteractionContext> => {
   const connectionString = createConnectionString(options?.connection)
   const socket = new WebSocket(connectionString)
   return {
