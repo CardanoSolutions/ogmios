@@ -137,8 +137,8 @@ newWebSocketApp tr unliftIO = do
                     & handle (onIOException conn)
         logWith tr (WebSocketConnectionEnded $ userAgent pending)
   where
-    userAgent :: PendingConnection -> ByteString
-    userAgent pending = maybe "User-Agent unknown" snd
+    userAgent :: PendingConnection -> Text
+    userAgent pending = maybe "User-Agent unknown" (decodeUtf8 . snd)
         $ find ((== hUserAgent) . fst)
         $ headers pending
 
@@ -293,11 +293,11 @@ data TraceWebSocket where
         -> TraceWebSocket
 
     WebSocketConnectionAccepted
-        :: { userAgent :: ByteString, mode :: SerializationMode }
+        :: { userAgent :: Text, mode :: SerializationMode }
         -> TraceWebSocket
 
     WebSocketConnectionEnded
-        :: { userAgent :: ByteString }
+        :: { userAgent :: Text }
         -> TraceWebSocket
 
     WebSocketUnknownException
