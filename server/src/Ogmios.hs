@@ -29,6 +29,7 @@ module Ogmios
     -- * Logging
     , TraceOgmios (..)
     , withStdoutTracer
+    , structuredJson
     ) where
 
 import Ogmios.Prelude
@@ -63,6 +64,7 @@ import Ogmios.Control.MonadLog
     , Logger
     , MonadLog (..)
     , Severity (..)
+    , structuredJson
     , withStdoutTracer
     )
 import Ogmios.Control.MonadMetrics

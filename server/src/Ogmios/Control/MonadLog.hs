@@ -23,6 +23,7 @@ module Ogmios.Control.MonadLog
       -- * Instantiation
     , LoggerName
     , withStdoutTracer
+    , structuredJson
     ) where
 
 import Ogmios.Prelude
@@ -49,9 +50,12 @@ import Cardano.BM.Setup
     ( setupTrace_, shutdown )
 import Control.Tracer
     ( Tracer (..), natTracer, nullTracer, traceWith )
+import Data.Aeson
+    ( ToJSON (..) )
 
 import qualified Cardano.BM.Configuration.Model as CM
 import qualified Cardano.BM.Data.BackendKind as CM
+import qualified Data.Aeson as Json
 
 class Monad m => MonadLog (m :: Type -> Type) where
     logWith :: Logger msg -> msg -> m ()
@@ -63,6 +67,11 @@ instance MonadLog IO where
 
 instance MonadLog m => MonadLog (ReaderT env m) where
     logWith tr = lift . logWith tr
+
+-- | Tiny helper to serialize any message to 'Text'
+structuredJson :: ToJSON msg => msg -> Text
+structuredJson =
+    decodeUtf8 . Json.encode
 
 -- | Acquire a tracer that automatically shutdown once the action is done via
 -- bracket-style allocation.

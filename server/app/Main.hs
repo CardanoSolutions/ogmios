@@ -13,6 +13,7 @@ import Ogmios
     , newEnvironment
     , parseOptions
     , runWith
+    , structuredJson
     , version
     , withStdoutTracer
     )
@@ -22,6 +23,6 @@ main = parseOptions >>= \case
     (_, Version) -> do
         putTextLn version
     (network, Start opts@Options{logLevel}) -> do
-        withStdoutTracer "ogmios" logLevel show $ \tr -> do
+        withStdoutTracer "ogmios" logLevel structuredJson $ \tr -> do
             env <- newEnvironment tr network opts
             application tr `runWith` env
