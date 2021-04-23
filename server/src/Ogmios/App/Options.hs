@@ -2,7 +2,12 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeApplications #-}
+
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Ogmios.App.Options
     ( -- * Command
@@ -33,6 +38,8 @@ import Ogmios.Control.MonadLog
 
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
+import Data.Aeson
+    ( ToJSON )
 import Data.Time.Clock.POSIX
     ( posixSecondsToUTCTime )
 import Options.Applicative.Help.Pretty
@@ -187,7 +194,12 @@ data NetworkParameters = NetworkParameters
     { slotsPerEpoch :: !EpochSlots
     , systemStart :: !SystemStart
     , networkMagic :: !NetworkMagic
-    } deriving (Generic, Eq, Show)
+    } deriving stock (Generic, Eq, Show)
+      deriving anyclass (ToJSON)
+
+deriving newtype instance ToJSON EpochSlots
+deriving newtype instance ToJSON SystemStart
+deriving newtype instance ToJSON NetworkMagic
 
 envOgmiosNetwork :: String
 envOgmiosNetwork = "OGMIOS_NETWORK"

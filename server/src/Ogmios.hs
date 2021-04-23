@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -70,11 +71,15 @@ import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TVar, newTVar )
 import Ogmios.Control.MonadWebSocket
     ( MonadWebSocket )
+import Ogmios.Data.Json
+    ( ToJSON )
 
 import Cardano.Network.Protocol.NodeToClient
     ( Block )
 import Control.Monad.Class.MonadST
     ( MonadST )
+import Data.Aeson.Via.Show
+    ( GenericToJsonViaShow (..), ViaJson (..) )
 
 --
 -- App
@@ -103,18 +108,18 @@ runWith app = runReaderT (unApp app)
 application :: Logger TraceOgmios -> App ()
 application tr = withDebouncer _10s $ \debouncer -> do
     env@Env{network} <- ask
-    logWith tr (OgmiosNetwork network)
+    logWith tr (OgmiosNetwork $ ViaJson network)
 
-    healthCheckClient <- newHealthCheckClient (contramap OgmiosHealth tr) debouncer
+    healthCheckClient <- newHealthCheckClient (contramap (OgmiosHealth . ViaJson) tr) debouncer
 
-    webSocketApp <- newWebSocketApp (contramap OgmiosWebSocket tr) (`runWith` env)
+    webSocketApp <- newWebSocketApp (contramap (OgmiosWebSocket . ViaJson) tr) (`runWith` env)
     httpApp      <- mkHttpApp @_ @_ @Block (`runWith` env)
 
     concurrently_
         (connectHealthCheckClient
-            (contramap OgmiosHealth tr) (`runWith` env) healthCheckClient)
+            (contramap (OgmiosHealth . ViaJson) tr) (`runWith` env) healthCheckClient)
         (connectHybridServer
-            (contramap OgmiosServer tr) webSocketApp httpApp)
+            (contramap (OgmiosServer . ViaJson) tr) webSocketApp httpApp)
 
 --
 -- Environment
@@ -138,7 +143,7 @@ newEnvironment
 newEnvironment tr network options = do
     health  <- getCurrentTime >>= atomically . newTVar . emptyHealth
     sensors <- newSensors
-    sampler <- newSampler (contramap OgmiosMetrics tr)
+    sampler <- newSampler (contramap (OgmiosMetrics . ViaJson) tr)
     pure $ Env{health,sensors,sampler,network,options}
 
 --
@@ -147,31 +152,31 @@ newEnvironment tr network options = do
 
 data TraceOgmios where
     OgmiosHealth
-        :: { healthCheck :: TraceHealth (Health Block) }
+        :: { healthCheck :: ViaJson (TraceHealth (Health Block)) }
         -> TraceOgmios
 
     OgmiosMetrics
-        :: { metrics :: TraceMetrics }
+        :: { metrics :: ViaJson TraceMetrics }
         -> TraceOgmios
 
     OgmiosWebSocket
-        :: { webSocket :: TraceWebSocket }
+        :: { webSocket :: ViaJson TraceWebSocket }
         -> TraceOgmios
 
     OgmiosServer
-        :: { server :: TraceServer }
+        :: { server :: ViaJson TraceServer }
         -> TraceOgmios
 
     OgmiosNetwork
-        :: NetworkParameters
+        :: { networkParameters :: ViaJson NetworkParameters }
         -> TraceOgmios
-
-deriving instance Show TraceOgmios
+    deriving stock (Generic, Show)
+    deriving ToJSON via GenericToJsonViaShow TraceOgmios
 
 instance HasSeverityAnnotation TraceOgmios where
     getSeverityAnnotation = \case
-        OgmiosHealth msg     -> getSeverityAnnotation msg
-        OgmiosMetrics msg    -> getSeverityAnnotation msg
-        OgmiosWebSocket msg  -> getSeverityAnnotation msg
-        OgmiosServer msg     -> getSeverityAnnotation msg
+        OgmiosHealth (ViaJson msg)  -> getSeverityAnnotation msg
+        OgmiosMetrics (ViaJson msg) -> getSeverityAnnotation msg
+        OgmiosWebSocket (ViaJson msg)  -> getSeverityAnnotation msg
+        OgmiosServer (ViaJson msg)     -> getSeverityAnnotation msg
         OgmiosNetwork{}      -> Info

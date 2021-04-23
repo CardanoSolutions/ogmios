@@ -11,6 +11,7 @@ module Ogmios.Data.Json
     , SerializationMode (..)
     , jsonToByteString
     , FromJSON
+    , ToJSON
     , decodeWith
 
       -- * Encoders
@@ -74,7 +75,7 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 -- Orphans
 --
 
-instance Json.ToJSON (Tip (CardanoBlock crypto)) where
+instance ToJSON (Tip (CardanoBlock crypto)) where
     toJSON = inefficientEncodingToValue . encodeTip
     toEncoding = encodeTip
 
