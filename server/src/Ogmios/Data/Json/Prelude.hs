@@ -14,6 +14,7 @@ module Ogmios.Data.Json.Prelude
       module Ogmios.Prelude
     , Json
     , FromJSON
+    , ToJSON
     , SerializationMode(..)
     , jsonToByteString
     , decodeWith
@@ -80,7 +81,7 @@ import Cardano.Slotting.Block
 import Cardano.Slotting.Slot
     ( EpochNo (..), EpochSize (..), SlotNo (..) )
 import Data.Aeson
-    ( FromJSON, (.:) )
+    ( FromJSON, ToJSON, (.:) )
 import Data.ByteArray
     ( ByteArrayAccess )
 import Data.ByteString.Base16

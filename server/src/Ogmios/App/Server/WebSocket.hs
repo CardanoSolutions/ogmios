@@ -2,7 +2,9 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-fields #-}
 
@@ -61,6 +63,7 @@ import Ogmios.Control.MonadWebSocket
 import Ogmios.Data.Json
     ( Json
     , SerializationMode (..)
+    , ToJSON
     , encodeAcquireFailure
     , encodeBlock
     , encodeHardForkApplyTxErr
@@ -85,6 +88,8 @@ import Cardano.Network.Protocol.NodeToClient
     )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient )
+import Data.Aeson.Via.Show
+    ( GenericToJsonViaShow (..) )
 import Network.HTTP.Types.Header
     ( hUserAgent )
 import Ouroboros.Network.NodeToClient.Version
@@ -132,8 +137,8 @@ newWebSocketApp tr unliftIO = do
                     & handle (onIOException conn)
         logWith tr (WebSocketConnectionEnded $ userAgent pending)
   where
-    userAgent :: PendingConnection -> ByteString
-    userAgent pending = maybe "User-Agent unknown" snd
+    userAgent :: PendingConnection -> Text
+    userAgent pending = maybe "User-Agent unknown" (decodeUtf8 . snd)
         $ find ((== hUserAgent) . fst)
         $ headers pending
 
@@ -288,11 +293,11 @@ data TraceWebSocket where
         -> TraceWebSocket
 
     WebSocketConnectionAccepted
-        :: { userAgent :: ByteString, mode :: SerializationMode }
+        :: { userAgent :: Text, mode :: SerializationMode }
         -> TraceWebSocket
 
     WebSocketConnectionEnded
-        :: { userAgent :: ByteString }
+        :: { userAgent :: Text }
         -> TraceWebSocket
 
     WebSocketUnknownException
@@ -302,8 +307,8 @@ data TraceWebSocket where
     WebSocketFailedToConnect
         :: { ioException :: IOException }
         -> TraceWebSocket
-
-deriving instance Show TraceWebSocket
+    deriving stock (Generic, Show)
+    deriving ToJSON via GenericToJsonViaShow TraceWebSocket
 
 instance HasSeverityAnnotation TraceWebSocket where
     getSeverityAnnotation = \case

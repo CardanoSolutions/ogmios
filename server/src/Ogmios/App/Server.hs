@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-fields #-}
@@ -21,7 +22,11 @@ import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..), Logger, MonadLog (..), Severity (..) )
 import Ogmios.Control.MonadWebSocket
     ( WebSocketApp )
+import Ogmios.Data.Json
+    ( ToJSON )
 
+import Data.Aeson.Via.Show
+    ( GenericToJsonViaShow (..) )
 import System.Directory
     ( doesPathExist )
 
@@ -85,7 +90,8 @@ data TraceServer where
         :: { path :: FilePath }
         -> TraceServer
 
-deriving instance Show TraceServer
+    deriving stock (Generic, Show)
+    deriving ToJSON via GenericToJsonViaShow TraceServer
 
 instance HasSeverityAnnotation TraceServer where
     getSeverityAnnotation = \case

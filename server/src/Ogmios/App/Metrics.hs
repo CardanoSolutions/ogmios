@@ -2,6 +2,8 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DerivingVia #-}
+
 -- Mildly safe here and "necessary" because of ekg's internal store. When
 -- register values to sample from 'GHC.Stats', we have to convert each observee
 -- to an opaque 'Ekg.Value'. Then, when reading back from the store, we get that
@@ -44,11 +46,15 @@ import Ogmios.Control.MonadMetrics
     , readGauge
     , record
     )
+import Ogmios.Data.Json
+    ( ToJSON )
 import Ogmios.Data.Metrics
     ( DistributionStats (..), Metrics (..), RuntimeStats (..), Sampler )
 
 import qualified Ogmios.Control.MonadMetrics as Metrics
 
+import Data.Aeson.Via.Show
+    ( GenericToJsonViaShow (..) )
 import Data.Time.Clock
     ( DiffTime )
 import GHC.Stats
@@ -220,8 +226,8 @@ data TraceMetrics where
     MetricsRuntimeStatsDisabled
         :: { recommendation :: Text }
         -> TraceMetrics
-
-deriving instance Show TraceMetrics
+    deriving stock (Generic, Show)
+    deriving ToJSON via GenericToJsonViaShow TraceMetrics
 
 instance HasSeverityAnnotation TraceMetrics where
     getSeverityAnnotation = \case

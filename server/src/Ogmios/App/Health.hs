@@ -2,6 +2,8 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DerivingVia #-}
+
 {-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
 {-# OPTIONS_GHC -fno-warn-partial-fields #-}
 
@@ -44,7 +46,6 @@ import Ogmios.Control.MonadLog
     , Logger
     , MonadLog (..)
     , Severity (..)
-    , natTracer
     , nullTracer
     )
 import Ogmios.Control.MonadMetrics
@@ -61,21 +62,17 @@ import Ogmios.Data.Health
     , mkNetworkSynchronization
     , modifyHealth
     )
+import Ogmios.Data.Json
+    ( ToJSON )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras )
 
 import qualified Ogmios.App.Metrics as Metrics
 
 import Cardano.Network.Protocol.NodeToClient
-    ( Block
-    , Clients (..)
-    , SubmitTxError
-    , SubmitTxPayload
-    , connectClient
-    , mkClient
-    )
-import Cardano.Network.Protocol.NodeToClient.Trace
-    ( TraceClient )
+    ( Block, Clients (..), connectClient, mkClient )
+import Data.Aeson.Via.Show
+    ( GenericToJsonViaShow (..), ViaJson (..) )
 import Data.Time.Clock
     ( DiffTime, UTCTime )
 import Network.TypedProtocol.Pipelined
@@ -144,7 +141,7 @@ newHealthCheckClient tr Debouncer{debounce} = do
                 , currentEra
                 , metrics
                 }
-            logWith tr (HealthTick health)
+            logWith tr (HealthTick $ ViaJson health)
 
         , txSubmissionClient =
             LocalTxSubmissionClient idle
@@ -170,8 +167,7 @@ connectHealthCheckClient
 connectHealthCheckClient tr embed (HealthCheckClient clients) = do
     NetworkParameters{slotsPerEpoch,networkMagic} <- asks (view typed)
     Options{nodeSocket} <- asks (view typed)
-    let trClient = natTracer liftIO $ contramap HealthClient tr
-    let client = mkClient embed trClient slotsPerEpoch clients
+    let client = mkClient embed nullTracer slotsPerEpoch clients
     connectClient nullTracer client (NodeToClientVersionData networkMagic) nodeSocket
         & onExceptions nodeSocket
         & foreverCalmly
@@ -345,12 +341,8 @@ newTimeInterpreterClient = do
 --
 
 data TraceHealth s where
-    HealthClient
-        :: TraceClient (SubmitTxPayload Block) (SubmitTxError Block)
-        -> TraceHealth s
-
     HealthTick
-        :: { status :: s }
+        :: { status :: ViaJson s }
         -> TraceHealth s
 
     HealthFailedToConnect
@@ -364,12 +356,11 @@ data TraceHealth s where
     HealthUnknownException
         :: { exception :: SomeException }
         -> TraceHealth s
-
-deriving instance Show s => Show (TraceHealth s)
+    deriving stock (Show, Generic)
+    deriving ToJSON via GenericToJsonViaShow (TraceHealth s)
 
 instance HasSeverityAnnotation (TraceHealth s) where
     getSeverityAnnotation = \case
-        HealthClient msg -> getSeverityAnnotation msg
         HealthTick{} -> Info
         HealthFailedToConnect{} -> Warning
         HealthShutdown{} -> Notice
