@@ -9,7 +9,7 @@ module Ogmios.App.Protocol
     ( onUnmatchedMessage
     ) where
 
-import Relude
+import Ogmios.Prelude
 
 import Ogmios.Data.Json
     ( FromJSON, Json )

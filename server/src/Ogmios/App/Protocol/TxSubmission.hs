@@ -28,8 +28,7 @@ module Ogmios.App.Protocol.TxSubmission
     ( mkTxSubmissionClient
     ) where
 
-import Relude hiding
-    ( atomically )
+import Ogmios.Prelude
 
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TQueue, readTQueue )

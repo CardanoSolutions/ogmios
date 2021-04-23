@@ -13,7 +13,7 @@ module Ogmios.App.Server
     , TraceServer (..)
     ) where
 
-import Relude
+import Ogmios.Prelude
 
 import Ogmios.App.Options
     ( Options (..) )
@@ -22,10 +22,6 @@ import Ogmios.Control.MonadLog
 import Ogmios.Control.MonadWebSocket
     ( WebSocketApp )
 
-import Data.Generics.Internal.VL.Lens
-    ( view )
-import Data.Generics.Product.Typed
-    ( HasType, typed )
 import System.Directory
     ( doesPathExist )
 

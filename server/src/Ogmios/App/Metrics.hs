@@ -27,7 +27,7 @@ module Ogmios.App.Metrics
     , TraceMetrics (..)
     ) where
 
-import Relude hiding
+import Ogmios.Prelude hiding
     ( max, min )
 
 import Ogmios.Control.MonadClock

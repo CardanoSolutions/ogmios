@@ -20,8 +20,7 @@ module Ogmios.Control.MonadClock
     , _30s
     ) where
 
-import Relude hiding
-    ( atomically, newTMVar, putTMVar, tryTakeTMVar )
+import Ogmios.Prelude
 
 import Ogmios.Control.MonadAsync
     ( MonadAsync (..) )

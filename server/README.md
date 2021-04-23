@@ -21,6 +21,7 @@ entire application is stitched together in a very thin layer.
 
 ```tree
 Application  |  ─── Ogmios.hs
+                    └── Prelude.hs
 
              ^  ─── App
              |      ├── Health.hs

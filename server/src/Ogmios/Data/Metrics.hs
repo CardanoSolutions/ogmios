@@ -18,7 +18,7 @@ module Ogmios.Data.Metrics
     , emptyDistribution
     ) where
 
-import Relude
+import Ogmios.Prelude
 
 import Data.Aeson
     ( ToJSON (..), genericToJSON )

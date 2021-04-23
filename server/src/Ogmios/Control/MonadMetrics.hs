@@ -13,7 +13,7 @@ module Ogmios.Control.MonadMetrics
     , max
     ) where
 
-import Relude hiding
+import Ogmios.Prelude hiding
     ( max, min )
 
 import System.Metrics.Distribution

@@ -44,8 +44,7 @@ module Ogmios.App.Protocol.StateQuery
     ( mkStateQueryClient
     ) where
 
-import Relude hiding
-    ( atomically )
+import Ogmios.Prelude
 
 import Ogmios.Control.Exception
     ( MonadThrow )

@@ -11,7 +11,7 @@
 
 module Ogmios.Data.Json.Prelude
     ( -- * Prelude
-      module Relude
+      module Ogmios.Prelude
     , Json
     , FromJSON
     , SerializationMode(..)
@@ -20,6 +20,7 @@ module Ogmios.Data.Json.Prelude
     , keepRedundantConstraint
     , choice
     , inefficientEncodingToValue
+    , (.:)
 
       -- * Basic Types
     , encodeBlockNo
@@ -70,7 +71,7 @@ module Ogmios.Data.Json.Prelude
     , encodeStrictMaybe
     ) where
 
-import Relude
+import Ogmios.Prelude
 
 import Cardano.Binary
     ( Annotated (..) )
@@ -79,7 +80,7 @@ import Cardano.Slotting.Block
 import Cardano.Slotting.Slot
     ( EpochNo (..), EpochSize (..), SlotNo (..) )
 import Data.Aeson
-    ( FromJSON )
+    ( FromJSON, (.:) )
 import Data.ByteArray
     ( ByteArrayAccess )
 import Data.ByteString.Base16

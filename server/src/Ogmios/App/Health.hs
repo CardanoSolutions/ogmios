@@ -20,8 +20,7 @@ module Ogmios.App.Health
     , TraceHealth (..)
     ) where
 
-import Relude hiding
-    ( STM, TVar, atomically, newEmptyTMVar, putTMVar, takeTMVar )
+import Ogmios.Prelude
 
 import Ogmios.App.Metrics
     ( RuntimeStats, Sampler, Sensors )
@@ -77,10 +76,6 @@ import Cardano.Network.Protocol.NodeToClient
     )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient )
-import Data.Generics.Internal.VL.Lens
-    ( view )
-import Data.Generics.Product.Typed
-    ( HasType, typed )
 import Data.Time.Clock
     ( DiffTime, UTCTime )
 import Network.TypedProtocol.Pipelined

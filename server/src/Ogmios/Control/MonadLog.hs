@@ -25,7 +25,7 @@ module Ogmios.Control.MonadLog
     , withStdoutTracer
     ) where
 
-import Relude
+import Ogmios.Prelude
 
 import Ogmios.Control.Exception
     ( MonadThrow (..) )

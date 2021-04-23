@@ -38,8 +38,7 @@ module Ogmios.App.Protocol.ChainSync
     ( mkChainSyncClient
     ) where
 
-import Relude hiding
-    ( Nat, atomically )
+import Ogmios.Prelude
 
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TQueue, readTQueue, tryReadTQueue )

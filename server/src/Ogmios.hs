@@ -30,8 +30,7 @@ module Ogmios
     , withStdoutTracer
     ) where
 
-import Relude hiding
-    ( atomically, newTVar )
+import Ogmios.Prelude
 
 import Ogmios.App.Health
     ( Health
@@ -68,7 +67,7 @@ import Ogmios.Control.MonadLog
 import Ogmios.Control.MonadMetrics
     ( MonadMetrics )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), newTVar )
+    ( MonadSTM (..), TVar, newTVar )
 import Ogmios.Control.MonadWebSocket
     ( MonadWebSocket )
 
@@ -124,7 +123,7 @@ application tr = withDebouncer _10s $ \debouncer -> do
 -- | Environment of the application, carrying around what's needed for the
 -- application to run.
 data Env (m :: Type -> Type) = Env
-    { health  :: !(TVar (Health Block))
+    { health  :: !(TVar m (Health Block))
     , sensors :: !(Sensors m)
     , sampler :: !(Sampler RuntimeStats m)
     , network :: !NetworkParameters

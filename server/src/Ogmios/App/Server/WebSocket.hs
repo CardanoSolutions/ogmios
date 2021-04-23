@@ -14,8 +14,7 @@ module Ogmios.App.Server.WebSocket
     , TraceWebSocket (..)
     ) where
 
-import Relude hiding
-    ( atomically )
+import Ogmios.Prelude
 
 import Ogmios.App.Metrics
     ( Sensors (..), recordSession )
@@ -86,10 +85,6 @@ import Cardano.Network.Protocol.NodeToClient
     )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient )
-import Data.Generics.Internal.VL.Lens
-    ( view )
-import Data.Generics.Product.Typed
-    ( HasType, typed )
 import Network.HTTP.Types.Header
     ( hUserAgent )
 import Ouroboros.Network.NodeToClient.Version

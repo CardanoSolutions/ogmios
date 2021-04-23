@@ -11,7 +11,7 @@ module Ogmios.Data.JsonSpec
     ( spec
     ) where
 
-import Relude
+import Ogmios.Prelude
 
 import Cardano.Network.Protocol.NodeToClient
     ( Block )

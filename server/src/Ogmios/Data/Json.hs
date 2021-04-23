@@ -33,8 +33,6 @@ import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
     ( SlotNo (..), WithOrigin (..) )
-import Data.Aeson
-    ( (.:) )
 import Data.ByteString.Base16
     ( decodeBase16 )
 import Data.ByteString.Base64
@@ -43,8 +41,6 @@ import Ogmios.Data.Json.Query
     ( QueryInEra, encodeEraMismatch, encodeOneEraHash, encodePoint )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock (..) )
-import Ouroboros.Consensus.Byron.Ledger.Mempool
-    ()
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoBlock
     , CardanoEras

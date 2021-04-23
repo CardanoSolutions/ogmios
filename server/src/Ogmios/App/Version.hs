@@ -9,7 +9,7 @@ module Ogmios.App.Version
     ( version
     ) where
 
-import Relude
+import Ogmios.Prelude
 
 import Data.Git.Revision.TH
     ( gitRevParseHEAD, gitTags, unknownRevision )

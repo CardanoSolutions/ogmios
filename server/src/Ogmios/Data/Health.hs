@@ -16,8 +16,7 @@ module Ogmios.Data.Health
     , CardanoEra (..)
     ) where
 
-import Relude hiding
-    ( TVar, atomically, readTVar, writeTVar )
+import Ogmios.Prelude
 
 import Ogmios.Control.MonadSTM
     ( MonadSTM, TVar, atomically, readTVar, writeTVar )

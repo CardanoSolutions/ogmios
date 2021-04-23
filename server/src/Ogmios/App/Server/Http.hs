@@ -15,8 +15,7 @@ module Ogmios.App.Server.Http
     ( mkHttpApp
     ) where
 
-import Relude hiding
-    ( STM, TVar )
+import Ogmios.Prelude
 
 import Ogmios.App.Health
     ( Health (..), modifyHealth )
@@ -35,10 +34,6 @@ import Data.Aeson
     ( ToJSON (..) )
 import Data.FileEmbed
     ( embedFile )
-import Data.Generics.Internal.VL.Lens
-    ( view )
-import Data.Generics.Product.Typed
-    ( HasType, typed )
 import Ouroboros.Network.Block
     ( Tip (..) )
 import Wai.Routes

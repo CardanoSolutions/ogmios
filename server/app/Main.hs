@@ -4,7 +4,7 @@
 
 module Main where
 
-import Relude
+import Ogmios.Prelude
 
 import Ogmios
     ( Command (..)

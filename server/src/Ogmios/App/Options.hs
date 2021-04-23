@@ -26,7 +26,7 @@ module Ogmios.App.Options
     , lookupNetworkParameters
     ) where
 
-import Relude
+import Ogmios.Prelude
 
 import Ogmios.Control.MonadLog
     ( Severity (..) )

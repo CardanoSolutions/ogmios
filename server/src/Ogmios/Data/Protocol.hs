@@ -6,7 +6,7 @@ module Ogmios.Data.Protocol
     ( MethodName
     ) where
 
-import Relude
+import Ogmios.Prelude
 
 import qualified Codec.Json.Wsp as Wsp
 

@@ -109,7 +109,6 @@ executables:
       - -Werror
       - '"-with-rtsopts=-A100m -T -N2"'
     dependencies:
-    - relude
     - ogmios
 
 tests:

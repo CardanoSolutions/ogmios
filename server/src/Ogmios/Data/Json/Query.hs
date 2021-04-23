@@ -43,8 +43,6 @@ import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Slotting.Slot
     ( EpochNo (..), WithOrigin (..) )
-import Data.Aeson
-    ( (.:) )
 import Data.ByteString.Base16
     ( decodeBase16 )
 import Data.ByteString.Base58
