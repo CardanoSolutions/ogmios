@@ -17,23 +17,38 @@ window.addEventListener('load', function () {
 
   dispatch('websocket_url_change', { url: WEBSOCKET_URL });
 
-  const client = new WebSocket(WEBSOCKET_URL);
-
   /* --------------------------------------------------------------------------
    * Setup
    * ------------------------------------------------------------------------ */
 
   const EPOCH_LENGTH = 432000; // TODO: Get this from the 'GetGenesisConfig' query.
   let eraStart;
+  let tickerId;
 
-  client.addEventListener('open', () => {
-    client.addEventListener('message', function $eraStart({ data }) {
-      eraStart = JSON.parse(data).result;
-      client.removeEventListener('message', $eraStart);
-      monitorHealth(client);
+  function createClient(url) {
+    const client = new WebSocket(url);
+
+    client.addEventListener('open', () => {
+      client.addEventListener('message', function $eraStart({ data }) {
+        eraStart = JSON.parse(data).result;
+        client.removeEventListener('message', $eraStart);
+        monitorHealth(client);
+      });
+      client.ogmios('Query', { query: "eraStart" });
     });
-    client.ogmios('Query', { query: "eraStart" });
-  });
+
+    return client;
+  }
+
+  // Re-connect when disconnecting.
+  let client = createClient(WEBSOCKET_URL);
+  setInterval(() => {
+    if(client.readyState == WebSocket.CLOSING || client.readyState == WebSocket.CLOSED) {
+      dispatch('health_error');
+      if (tickerId !== undefined) { clearInterval(tickerId); }
+      client = createClient(WEBSOCKET_URL);
+    }
+  }, 5000)
 
   /* --------------------------------------------------------------------------
    * Monitoring
@@ -62,7 +77,7 @@ window.addEventListener('load', function () {
     function tick() {
       fetch(HEALTH_URL)
         .then(response => response.json())
-        .then(({ lastKnownTip, lastTipUpdate, metrics }) => {
+        .then(({ lastKnownTip, lastTipUpdate, networkSynchronization, metrics }) => {
           dispatch('health_tick', { metrics });
 
           if (state.tip.hash != lastKnownTip.hash) {
@@ -76,13 +91,15 @@ window.addEventListener('load', function () {
                 hash: lastKnownTip.hash,
                 lastKnownTip,
                 lastTipUpdate,
+                networkSynchronization,
             });
           };
         })
         .catch(() => dispatch('health_error'));
     }
 
-    tick && setInterval(tick, 2500);
+    tick();
+    tickerId = setInterval(tick, 2500);
   };
 
   /* --------------------------------------------------------------------------

@@ -129,12 +129,16 @@
         });
 
         const status = () => document.querySelector('div#overview code.ogmios-status');
-        window.addEventListener('tip_change', () => {
-          status().innerHTML = 'OK ✅';
+        window.addEventListener('tip_change', ({ detail }) => {
+          if (detail.networkSynchronization == 1) {
+            status().innerHTML = 'OK ✅';
+          } else {
+            status().innerHTML = (detail.networkSynchronization * 100).toFixed(3) + "% 🖧" ;
+          }
         });
 
         window.addEventListener('health_error', () => {
-          status().innterHTML = 'KO 🕱';
+          status().innerHTML = 'KO 🕱';
         });
       } ());
     </script>
