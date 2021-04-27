@@ -74,7 +74,7 @@ Rolling backward however may occur when, since the last request, the underlying 
                                 /
       ____          ____       /   ____          ____
      /    /\       /    /\    /  /    /\       /    /\
-=== /____/  \ === /____/  \ =*= /____/  \ === /____/  \  (local chain)
+=== /____/  \ === /____/  \ =.= /____/  \ === /____/  \  (local chain)
     \    \  /     \    \  /  ^  \    \  /     \    \  /
      \____\/       \____\/   |   \____\/       \____\/
                              |
@@ -94,14 +94,21 @@ As a client, it is therefore crucial to be able to rollback to a previous point 
 
 Ogmios will do its best to [pipeline](https://en.wikipedia.org/wiki/HTTP_pipelining) requests to the Cardano node. Yet unlike WebSocket, the local chain-sync protocol only allows for finite pipelining. Said differently, Ogmios cannot pipeline an arbitrary and potentially infinite number of requests and will actually starts collecting responses if too many requests are pipelined. Pipelining with WebSocket is however straightforward for most clients permit sending many requests at once and handle responses using callbacks on event handlers. 
 
-A good rule of thumb with Ogmios is to pipeline some requests when starting a long-run chain-sync, and then simply put back a new request in the queue every time you receive a response back. In that way, there are always some requests in flight and Ogmios can make a good use of the available bandwith. How many requests to pipeline depends on various factors including the network latency and machine resources. In a local setup where Ogmios and its client are located on the same machine, pipelining up to 1000 requests can be quite effective and drastically speed up the chain-sync.
+A good rule of thumb with Ogmios is to pipeline some requests when starting a long-run chain-sync, and then simply put back a new request in the queue every time you receive a response back. In that way, there are always some requests in flight and Ogmios can make a good use of the available bandwith. How many requests to pipeline depends on various factors including the network latency and machine resources. In a local setup where Ogmios and its client are located on the same machine, pipelining a few requests (up to 1000) can be quite effective and drastically speed up the chain-sync.
 
-|                                      | Without Pipelining | With Pipelining (1000 requests) |
-| ---                                  | ---                | ---                             |
-| Full mainnet synchronization (local) | 340 minutes        | 14 minutes                      |
+For example, here below is a comparison of the effect of pipelining on a full synchronization of the Mary era: 
+
+| Num pipelined / in-flight requests | Time     |
+| ---                                | ---      |
+| 1 (i.e. no pipelining)             | 6min 22s |
+| 10                                 | 4min 51s |
+| 25                                 | 3min 44s |
+| 50                                 | 2min 40s |
+| 100                                | 2min 37s |
+| 1000                               | 2min 38s |
 
 {{% notice warning %}}
-If you're pipelining many requests in a client application, make sure to also take times to collect some responses because there will be no extra benefits coming from _too much pipelining_.
+Exact numbers depends on your application and machine resources. But this charts give an order of magnitude. If you're pipelining many requests in a client application, make sure to also take times to collect some responses because there will be no extra benefits coming from _too much pipelining_.
 {{% /notice %}}
 
 ## FindIntersect
