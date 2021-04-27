@@ -103,7 +103,7 @@ mkNetworkSynchronization systemStart now relativeSlotTime =
     let
         num = round $ getRelativeTime relativeSlotTime :: Integer
         den = round $ now `diffUTCTime` getSystemStart systemStart :: Integer
-        p = 100
+        p = 100000
     in
         NetworkSynchronization $ fromIntegral (num * p `div` den) / fromIntegral p
 
