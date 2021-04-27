@@ -104,6 +104,12 @@ export const submitTx = (bytes: string, context?: InteractionContext) => {
                   return new errors.shelley.UpdateWrongEpoch.Error(failure)
                 } else if (errors.shelley.ProtocolVersionCannotFollow.assert(failure)) {
                   return new errors.shelley.ProtocolVersionCannotFollow.Error(failure)
+                } else if (errors.shelley.OutsideOfValidityInterval.assert(failure)) {
+                  return new errors.shelley.OutsideOfValidityInterval.Error(failure)
+                } else if (errors.shelley.TriesToForgeAda.assert(failure)) {
+                  return new errors.shelley.TriesToForgeAda.Error(failure)
+                } else if (errors.shelley.TooManyAssetsInOutput.assert(failure)) {
+                  return new errors.shelley.TooManyAssetsInOutput.Error(failure)
                 } else {
                   return new Error(failure)
                 }

@@ -19,6 +19,7 @@ import {
   NetworkMismatch1,
   NonGenesisVoters,
   OutputTooSmall,
+  OutsideOfValidityInterval,
   PoolCostTooSmall,
   ProtocolVersionCannotFollow,
   RewardAccountNotEmpty,
@@ -28,6 +29,8 @@ import {
   StakeKeyNotRegistered,
   StakePoolNotRegistered, SubmitFail,
   TooLateForMir,
+  TooManyAssetsInOutput,
+  TriesToForgeAda,
   TxMetadataHashMismatch,
   TxTooLarge1,
   TxValidationError,
@@ -79,6 +82,9 @@ type SubmitTxErrorShelley =
   | NonGenesisVoters
   | UpdateWrongEpoch
   | ProtocolVersionCannotFollow
+  | OutsideOfValidityInterval
+  | TriesToForgeAda
+  | TooManyAssetsInOutput
 
 export const errors = {
   byron: {
@@ -471,6 +477,36 @@ export const errors = {
         public constructor (rawError: ProtocolVersionCannotFollow) {
           super()
           this.message = JSON.stringify(rawError.protocolVersionCannotFollow, null, 2)
+        }
+      }
+    },
+    OutsideOfValidityInterval: {
+      assert: (item: SubmitTxErrorShelley): item is OutsideOfValidityInterval =>
+        (item as OutsideOfValidityInterval).outsideOfValidityInterval !== undefined,
+      Error: class OutsideOfValidityIntervalError extends CustomError {
+        public constructor (rawError: OutsideOfValidityInterval) {
+          super()
+          this.message = JSON.stringify(rawError.outsideOfValidityInterval, null, 2)
+        }
+      }
+    },
+    TriesToForgeAda: {
+      assert: (item: SubmitTxErrorShelley): item is TriesToForgeAda =>
+        (item as TriesToForgeAda) === 'triesToForgeAda',
+      Error: class TriesToForgeAdaError extends CustomError {
+        public constructor (rawError: TriesToForgeAda) {
+          super()
+          this.message = JSON.stringify(rawError, null, 2)
+        }
+      }
+    },
+    TooManyAssetsInOutput: {
+      assert: (item: SubmitTxErrorShelley): item is TooManyAssetsInOutput =>
+        (item as TooManyAssetsInOutput).tooManyAssetsInOutput !== undefined,
+      Error: class TooManyAssetsInOutputError extends CustomError {
+        public constructor (rawError: TooManyAssetsInOutput) {
+          super()
+          this.message = JSON.stringify(rawError.tooManyAssetsInOutput, null, 2)
         }
       }
     }
