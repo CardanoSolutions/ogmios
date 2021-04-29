@@ -1,0 +1,31 @@
+{
+  "name": "@cardano-ogmios/schema",
+  "version": "0.1.2",
+  "description": "Generated TypeScript from the Cardano Ogmios schema",
+  "engines": {
+    "node": "^14"
+  },
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KtorZ/cardano-ogmios.git",
+    "directory": "clients/TypeScript/packages/schema"
+  },
+  "author": "Rhys Bartels-Waller",
+  "license": "MPL-2.0",
+  "scripts": {
+    "build": "tsc --build ./src",
+    "cleanup": "shx rm -rf dist node_modules index.ts",
+    "generate-schema-types": "json2ts -i $INIT_CWD/../../server/ogmios.wsp.json -o src/index.ts",
+    "lint": "shx echo No code to lint in this package",
+    "prepack": "yarn build && yarn generate-schema-types",
+    "test": "shx echo No tests in this package"
+  },
+  "devDependencies": {
+    "json-schema-to-typescript": "^10.1.4",
+    "shx": "^0.3.3"
+  },
+  "files": [
+    "dist/*"
+  ]
+}

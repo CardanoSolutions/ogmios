@@ -1,0 +1,56 @@
+{
+  "name": "@cardano-ogmios/repl",
+  "version": "0.1.2",
+  "description": "REPL for Cardano Ogmios",
+  "engines": {
+    "node": "^14"
+  },
+  "bin": "dist/index.js",
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KtorZ/cardano-ogmios.git",
+    "directory": "clients/TypeScript/packages/repl"
+  },
+  "author": "Rhys Bartels-Waller",
+  "license": "MPL-2.0",
+  "scripts": {
+    "build": "tsc --build ./src",
+    "cleanup": "shx rm -rf build dist node_modules",
+    "lint": "eslint --ignore-path ../../.eslintignore \"**/*.ts\"",
+    "pkg": "yarn build && pkg --options experimental-repl-await -o build/cardano-ogmios-repl .",
+    "start": "yarn build && node --experimental-repl-await dist/index.js",
+    "test": "shx echo No tests in this package"
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.32",
+    "@typescript-eslint/eslint-plugin": "^4.17.0",
+    "@typescript-eslint/parser": "^4.17.0",
+    "eslint": "^7.21.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jest": "^24.2.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.3.1",
+    "eslint-plugin-standard": "^5.0.0",
+    "eslint-watch": "^7.0.0",
+    "pkg": "^4.5.1",
+    "shx": "^0.3.3",
+    "typescript": "^4.2.3"
+  },
+  "dependencies": {
+    "@cardano-ogmios/client": "0.1.2",
+    "chalk": "^4.1.0",
+    "yargs-parser": "^20.2.7"
+  },
+  "files": [
+    "dist/*"
+  ],
+  "pkg": {
+    "targets": [
+      "node14.4-linux-x64",
+      "node14.4-macos-x64",
+      "node14.4-win-x64"
+    ]
+  }
+}
