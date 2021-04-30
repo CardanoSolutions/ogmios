@@ -17,7 +17,7 @@ This is where Ogmios comes into play. Ogmios is written in Haskell, so it can sp
 
 #### Where does the name come from?
 
-Ogmios is a [celtic deity of eloquence](https://en.wikipedia.org/wiki/Ogmios) and language, as well as eloquence and learning. This relates to the way this project helps users communicate with Cardano. And while it doesn’t translate languages, it translates protocols to protocols. 
+Ogmios is a [celtic deity of eloquence](https://en.wikipedia.org/wiki/Ogmios), language and learning. This relates to the way this project helps users communicate with Cardano. And while it doesn’t translate languages, it translates protocols to protocols. 
 
 #### Why do I care? 
 
