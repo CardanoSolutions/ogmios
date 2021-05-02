@@ -2,7 +2,8 @@ pkgs: super: with pkgs;
 let
   compiler = config.haskellNix.compiler or "ghc8104";
   src = haskell-nix.haskellLib.cleanGit {
-    src = ../server;
+    src = ../.;
+    subDir = "server";
     name = "ogmios";
   };
 in {
