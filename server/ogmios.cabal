@@ -1,0 +1,296 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 98bd713f02db04b5041f5438ee03274f495a7f0211c69ea7928e0b27a86a026f
+
+name:           ogmios
+version:        3.1.0
+synopsis:       A JSON-WSP WebSocket client for cardano-node
+description:    Please see the README on GitHub at <https://github.com/KtorZ/cardano-ogmios/tree/master/server#ogmios-server>
+category:       Web
+homepage:       https://github.com/KtorZ/cardano-ogmios#readme
+bug-reports:    https://github.com/KtorZ/cardano-ogmios/issues
+author:         KtorZ <matthias.benkort@gmail.com>
+maintainer:     matthias.benkort@gmail.com
+copyright:      2020-2021 KtorZ
+license:        MPL-2.0
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    static/assets/logo.png
+    static/assets/favicon.ico
+    static/dashboard.html
+    static/dashboard.js
+    static/tests.html
+    static/tests/chain-sync.js
+    static/tests/state-query.js
+
+source-repository head
+  type: git
+  location: https://github.com/KtorZ/cardano-ogmios
+
+flag production
+  description: Compile executables for production.
+  manual: True
+  default: False
+
+library
+  exposed-modules:
+      Ogmios
+      Ogmios.App.Health
+      Ogmios.App.Metrics
+      Ogmios.App.Options
+      Ogmios.App.Protocol
+      Ogmios.App.Protocol.ChainSync
+      Ogmios.App.Protocol.StateQuery
+      Ogmios.App.Protocol.TxSubmission
+      Ogmios.App.Server
+      Ogmios.App.Server.Http
+      Ogmios.App.Server.WebSocket
+      Ogmios.App.Version
+      Ogmios.Control.Exception
+      Ogmios.Control.MonadAsync
+      Ogmios.Control.MonadClock
+      Ogmios.Control.MonadLog
+      Ogmios.Control.MonadMetrics
+      Ogmios.Control.MonadOuroboros
+      Ogmios.Control.MonadSTM
+      Ogmios.Control.MonadWebSocket
+      Ogmios.Data.Health
+      Ogmios.Data.Json
+      Ogmios.Data.Json.Allegra
+      Ogmios.Data.Json.Byron
+      Ogmios.Data.Json.Mary
+      Ogmios.Data.Json.Prelude
+      Ogmios.Data.Json.Query
+      Ogmios.Data.Json.Shelley
+      Ogmios.Data.Metrics
+      Ogmios.Data.Protocol
+      Ogmios.Data.Protocol.ChainSync
+      Ogmios.Data.Protocol.StateQuery
+      Ogmios.Data.Protocol.TxSubmission
+      Ogmios.Prelude
+  other-modules:
+      Paths_ogmios
+  hs-source-dirs:
+      src
+  default-extensions:
+      BangPatterns
+      BinaryLiterals
+      ConstraintKinds
+      DataKinds
+      DefaultSignatures
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      EmptyDataDecls
+      ExistentialQuantification
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      NoImplicitPrelude
+      NumericUnderscores
+      OverloadedStrings
+      PartialTypeSignatures
+      PatternGuards
+      RankNTypes
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeFamilies
+      TypeSynonymInstances
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      aeson
+    , async
+    , base >=4.7 && <5
+    , base16
+    , base58-bytestring
+    , base64
+    , bech32
+    , bech32-th
+    , bytestring
+    , cardano-api
+    , cardano-binary
+    , cardano-client
+    , cardano-crypto
+    , cardano-crypto-class
+    , cardano-crypto-wrapper
+    , cardano-ledger
+    , cardano-ledger-shelley-ma
+    , cardano-prelude
+    , cardano-slotting
+    , cborg
+    , containers
+    , contra-tracer
+    , directory
+    , ekg-core
+    , fast-bech32
+    , file-embed
+    , generic-lens
+    , git-th
+    , http-types
+    , io-sim-classes
+    , iohk-monitoring
+    , iproute
+    , json-via-show
+    , json-wsp
+    , memory
+    , mtl
+    , optparse-applicative
+    , ouroboros-consensus
+    , ouroboros-consensus-byron
+    , ouroboros-consensus-cardano
+    , ouroboros-consensus-shelley
+    , ouroboros-network
+    , relude
+    , safe
+    , safe-exceptions
+    , scientific
+    , shelley-spec-ledger
+    , small-steps
+    , text
+    , time
+    , time-manager
+    , typed-protocols
+    , vector
+    , wai
+    , wai-routes
+    , wai-websockets
+    , warp
+    , websockets
+  if flag(production)
+    ghc-options: -Werror -O2
+  default-language: Haskell2010
+
+executable ogmios
+  main-is: Main.hs
+  other-modules:
+      Paths_ogmios
+  hs-source-dirs:
+      app
+  default-extensions:
+      BangPatterns
+      BinaryLiterals
+      ConstraintKinds
+      DataKinds
+      DefaultSignatures
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      EmptyDataDecls
+      ExistentialQuantification
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      NoImplicitPrelude
+      NumericUnderscores
+      OverloadedStrings
+      PartialTypeSignatures
+      PatternGuards
+      RankNTypes
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeFamilies
+      TypeSynonymInstances
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts
+  build-depends:
+      base >=4.7 && <5
+    , ogmios
+  if flag(production)
+    ghc-options: -O2 -Werror "-with-rtsopts=-A100m -T -N2"
+  default-language: Haskell2010
+
+test-suite unit
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Ogmios.Data.JsonSpec
+      Paths_ogmios
+  hs-source-dirs:
+      test/unit
+  default-extensions:
+      BangPatterns
+      BinaryLiterals
+      ConstraintKinds
+      DataKinds
+      DefaultSignatures
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      EmptyDataDecls
+      ExistentialQuantification
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      NoImplicitPrelude
+      NumericUnderscores
+      OverloadedStrings
+      PartialTypeSignatures
+      PatternGuards
+      RankNTypes
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeFamilies
+      TypeSynonymInstances
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-tool-depends:
+      hspec-discover:hspec-discover
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
+    , cardano-client
+    , cardano-slotting
+    , generic-arbitrary
+    , hedgehog-quickcheck
+    , hspec
+    , hspec-json-schema
+    , json-wsp
+    , memory
+    , ogmios
+    , ouroboros-consensus
+    , ouroboros-consensus-byron
+    , ouroboros-consensus-cardano
+    , ouroboros-consensus-cardano-test
+    , ouroboros-consensus-shelley
+    , ouroboros-network
+    , relude
+    , shelley-spec-ledger
+    , shelley-spec-ledger-test
+  default-language: Haskell2010

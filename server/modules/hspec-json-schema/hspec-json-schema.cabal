@@ -1,0 +1,75 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: e56346b254e8dcf918378d31e3200d83bf78f28d9d74dbb2c996794154fe3bbc
+
+name:           hspec-json-schema
+version:        1.0.0
+synopsis:       For testing arbitrarily generated JSON instances against JSON schemas draft4.
+description:    Please see the README on GitHub at <https://github.com/KtorZ/cardano-ogmios/tree/master/server/modules/hspec-json-schema>
+category:       Test
+homepage:       https://github.com/KtorZ/cardano-ogmios#readme
+bug-reports:    https://github.com/KtorZ/cardano-ogmios/issues
+author:         KtorZ <matthias.benkort@gmail.com>
+maintainer:     matthias.benkort@gmail.com
+copyright:      2020-2021 KtorZ
+license:        MPL-2.0
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    LICENSE
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/KtorZ/cardano-ogmios
+
+library
+  exposed-modules:
+      Test.Hspec.Json.Schema
+  other-modules:
+      Paths_hspec_json_schema
+  hs-source-dirs:
+      src
+  default-extensions: BangPatterns BinaryLiterals ConstraintKinds DataKinds DefaultSignatures DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs InstanceSigs KindSignatures LambdaCase MultiParamTypeClasses MultiWayIf NamedFieldPuns NoImplicitPrelude NumericUnderscores OverloadedStrings PartialTypeSignatures PatternGuards RankNTypes ScopedTypeVariables StandaloneDeriving TupleSections TypeFamilies TypeSynonymInstances ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      QuickCheck
+    , aeson
+    , aeson-pretty
+    , ansi-wl-pprint
+    , base >=4.7 && <5
+    , bytestring
+    , hjsonpointer
+    , hjsonschema
+    , hspec
+    , scientific
+    , text
+  default-language: Haskell2010
+
+test-suite unit
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Data.String.Interpolate.Extra
+      Test.Hspec.Json.SchemaSpec
+      Paths_hspec_json_schema
+  hs-source-dirs:
+      test
+  default-extensions: BangPatterns BinaryLiterals ConstraintKinds DataKinds DefaultSignatures DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs InstanceSigs KindSignatures LambdaCase MultiParamTypeClasses MultiWayIf NamedFieldPuns NoImplicitPrelude NumericUnderscores OverloadedStrings PartialTypeSignatures PatternGuards RankNTypes ScopedTypeVariables StandaloneDeriving TupleSections TypeFamilies TypeSynonymInstances ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-tool-depends:
+      hspec-discover:hspec-discover
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
+    , hspec
+    , hspec-json-schema
+    , string-interpolate
+    , text
+  default-language: Haskell2010
