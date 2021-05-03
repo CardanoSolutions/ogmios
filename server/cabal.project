@@ -17,17 +17,7 @@ test-show-details: direct
 
 -- Enable tests in this specific repositories
 package ogmios
-  tests: True
   flags: +production
-
-package fast-bech32
-  tests: True
-
-package git-th
-  tests: True
-
-package hspec-json-schema
-  tests: True
 
 -- Using RDRAND instead of /dev/urandom as an entropy source for key
 -- generation is dubious. Set the flag so we use /dev/urandom by default.
