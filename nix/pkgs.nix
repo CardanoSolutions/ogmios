@@ -5,7 +5,19 @@ let
     name = "ogmios-src";
     src = ../.;
     subDir = "server";
-    filter = path: type: baseNameOf path != "package.yaml";
+    filter = path: type:
+      let
+         notMatchDir = str: !(builtins.elem str (builtins.split "/" path));
+       in
+         builtins.all (x: x) [
+            (baseNameOf path != "package.yaml")
+            (notMatchDir ".stack-work")
+            (notMatchDir "cardano-node")
+            (notMatchDir "ouroboros-network")
+            (notMatchDir "hjsonpointer")
+            (notMatchDir "hjsonschema")
+            (notMatchDir "wai-routes")
+         ];
   };
 in {
   inherit src;
