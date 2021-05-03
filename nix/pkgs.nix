@@ -1,10 +1,11 @@
 pkgs: super: with pkgs;
 let
   compiler = config.haskellNix.compiler or "ghc8104";
-  src = haskell-nix.haskellLib.cleanGit {
+  src = haskell-nix.haskellLib.cleanSourceWith {
     name = "ogmios-src";
     src = ../.;
     subDir = "server";
+    filter = path: type: baseNameOf path != "package.yaml";
   };
 in {
   inherit src;
