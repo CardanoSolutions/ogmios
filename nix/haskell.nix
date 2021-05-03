@@ -10,14 +10,14 @@
 }:
 let
   projectPackages = lib.attrNames (haskell-nix.haskellLib.selectProjectPackages
-    (haskell-nix.stackProject {
+    (haskell-nix.cabalProject {
       inherit src;
       compiler-nix-name = compiler;
     }));
 
   # This creates the Haskell package set.
   # https://input-output-hk.github.io/haskell.nix/user-guide/projects/
-  pkgSet = haskell-nix.stackProject {
+  pkgSet = haskell-nix.cabalProject {
     inherit src;
     compiler-nix-name = compiler;
     modules = [

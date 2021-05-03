@@ -1,0 +1,172 @@
+index-state: 2021-01-10T00:00:00Z
+
+packages:
+  ./
+  modules/cardano-client
+  modules/fast-bech32
+  modules/git-th
+  modules/hspec-json-schema
+  modules/json-wsp
+  modules/json-via-show
+
+-----------------------------------------------------------
+-- Disable all tests by default
+
+tests: False
+test-show-details: direct
+
+-- Enable tests in this specific repositories
+package ogmios
+  tests: True
+  flags: +production
+
+package fast-bech32
+  tests: True
+
+package git-th
+  tests: True
+
+package hspec-json-schema
+  tests: True
+
+-- Using RDRAND instead of /dev/urandom as an entropy source for key
+-- generation is dubious. Set the flag so we use /dev/urandom by default.
+package cryptonite
+  flags: -support_rdrand
+
+-- Bundle VRF crypto in libsodium and do not rely on an external fork to have it. This
+-- is okay because ogmios doesn't really do anything with VRF crypto, it's merely needed
+-- for compiler unused part of the node's api.
+--
+-- This still requires the host system to have the 'standard' libsodium installed.
+package cardano-crypto-praos
+  flags: +external-libsodium-vrf
+
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/cardano-base
+  tag: b364d925e0a72689ecba40dd1f4899f76170b894
+  --sha256: 0igb4gnzlwxy1h40vy5s1aysmaa04wypxn7sn67qy6din7ysmad3
+  subdir:
+    binary
+    binary/test
+    cardano-crypto-class
+    cardano-crypto-praos
+    cardano-crypto-tests
+    slotting
+
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/cardano-crypto
+  tag: f73079303f663e028288f9f4a9e08bcca39a923e
+  --sha256: 1n87i15x54s0cjkh3nsxs4r1x016cdw1fypwmr68936n3xxsjn6q
+
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/cardano-ledger-specs
+  tag: 097890495cbb0e8b62106bcd090a5721c3f4b36f
+  --sha256: 0i3y9n0rsyarvhfqzzzjccqnjgwb9fbmbs6b7vj40afjhimf5hcj
+  subdir:
+    byron/chain/executable-spec
+    byron/crypto
+    byron/crypto/test
+    byron/ledger/executable-spec
+    byron/ledger/impl
+    byron/ledger/impl/test
+    semantics/executable-spec
+    semantics/small-steps-test
+    shelley/chain-and-ledger/dependencies/non-integer
+    shelley/chain-and-ledger/executable-spec
+    shelley/chain-and-ledger/shelley-spec-ledger-test
+    shelley-ma/impl
+    shelley-ma/shelley-ma-test
+
+source-repository-package
+  type: git
+  location: https://github.com/KtorZ/cardano-node
+  tag: 1777493c3b353f75ca796b78484d4b2da5ea5864
+  --sha256: 0qka3nikahavs36cjnv4mnps1s0wa1jb7pnb8rzrmkxm2x4cg27n
+  subdir:
+    cardano-api
+    cardano-config
+
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/cardano-prelude
+  tag: ee4e7b547a991876e6b05ba542f4e62909f4a571
+  --sha256: 0dg6ihgrn5mgqp95c4f11l6kh9k3y75lwfqf47hdp554w7wyvaw6
+  subdir:
+    cardano-prelude
+    cardano-prelude-test
+
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/goblins
+  tag: cde90a2b27f79187ca8310b6549331e59595e7ba
+  --sha256: 17c88rbva3iw82yg9srlxjv2ia5wjb9cyqw44hik565f5v9svnyg
+
+source-repository-package
+  type: git
+  location: https://github.com/KtorZ/hjsonpointer
+  tag: 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e
+  --sha256: 0nf24m8kj5m6x4x5cawb194rzmir0wbz66jjd97sj6ajvsj9jqcp
+
+source-repository-package
+  type: git
+  location: https://github.com/KtorZ/hjsonschema
+  tag: fde6e676f79f3f3320a558f20492ad816a2543a7
+  --sha256: 0683m28348xcqhhp7l84jwknakjn966mv5mx6zbrzipdd8f7kslm
+
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/iohk-monitoring-framework
+  tag: 563e79f28c6da5c547463391d4c58a81442e48db
+  --sha256: 1is18h9kk8j16my89q76nihvapiiff3jl8777vk7c4wl2h4zry2w
+  subdir:
+    contra-tracer
+    iohk-monitoring
+    plugins/backend-aggregation
+    plugins/backend-ekg
+    plugins/backend-monitoring
+    plugins/backend-trace-forwarder
+    plugins/scribe-systemd
+    tracer-transformers
+
+source-repository-package
+  type: git
+  location: https://github.com/KtorZ/ouroboros-network
+  tag: 7f8daad43dbb0ae97fe24d36eaff857f63cf5711
+  --sha256: 179046651gx6jh169fvdgmkd49gnib76rnjmp0ilnvg164bldzv9
+  subdir:
+    io-sim
+    io-sim-classes
+    network-mux
+    ouroboros-consensus
+    ouroboros-consensus-test
+    ouroboros-consensus-byron
+    ouroboros-consensus-byronspec
+    ouroboros-consensus-byron-test
+    ouroboros-consensus-shelley
+    ouroboros-consensus-shelley-test
+    ouroboros-consensus-cardano
+    ouroboros-consensus-cardano-test
+    ouroboros-consensus-mock
+    ouroboros-network
+    ouroboros-network-framework
+    ouroboros-network-testing
+    typed-protocols
+    typed-protocols-examples
+    Win32-network
+
+source-repository-package
+  type: git
+  location: https://github.com/KtorZ/wai-routes
+  tag: d74b39683792649c01113f40bf57724dcf95c96a
+  --sha256: 117gkhcq2spmphp21nx8am6mk80wha1yvsny9y0hlkv381jjavii
+
+constraints:
+    hedgehog >= 1.0
+  , bimap >= 0.4.0
+  , libsystemd-journal >= 1.4.4
+  , systemd >= 2.3.0
+  , network >= 3.1.1.0
