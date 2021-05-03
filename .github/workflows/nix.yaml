@@ -21,6 +21,12 @@ jobs:
           trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
           substituters = https://hydra.iohk.io https://cache.nixos.org/
 
+    - name: 💾 Cache Build
+      uses: cachix/cachix-action@v10
+      with:
+        name: cardano-ogmios
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+
     - name: 🔨 Build
       run: |
         nix-build -A ogmios
