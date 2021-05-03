@@ -73,11 +73,9 @@ let
   # setGitRev is a postInstall script to stamp executables with
   # version info. It uses the "gitrev" argument, if set. Otherwise,
   # the revision is sourced from the local git work tree.
-  setGitRev = ''${haskellBuildUtils}/bin/set-git-rev "${gitrev'}" $out/bin/*'';
-  # package with libsodium:
+  setGitRev = ''${buildPackages.haskellBuildUtils}/bin/set-git-rev "${gitrev'}" $out/bin/*'';
   gitrev' = if (gitrev == null)
     then buildPackages.commonLib.commitIdFromGitRepoOrZero ../.git
     else gitrev;
-  haskellBuildUtils = buildPackages.haskellBuildUtils.package;
 in
   pkgSet
