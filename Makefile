@@ -25,9 +25,6 @@ api-reference:
 	@cd docs && generate-schema-doc --no-link-to-reused-ref static/ogmios.wsp.json static/api-reference.html
 	@sed -i 's@</head>@<link rel="stylesheet" href="css/api-reference.css"/></head>@' docs/static/api-reference.html
 
-nix-regenerate:
-	@nix/regenerate.sh --stack-yaml server/stack.yaml --cache /dev/null
-
 docker:
 	docker build server
 

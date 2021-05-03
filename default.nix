@@ -30,7 +30,7 @@ let
   #    mapAttrsRecursiveCond (as: !(isDerivation as)) rewriteStatic (collectComponents' "exes" haskellPackages);
 
   packages = {
-    inherit haskellPackages scripts environments;
+    inherit haskellPackages;
 
     inherit (ogmiosHaskellPackages) roots;
     inherit (haskellPackages.ogmios.components.exes) ogmios;
