@@ -1693,7 +1693,7 @@
             , "body":
               { "type": "object"
               , "additionalProperties": false
-              , "required": ["inputs","outputs","certificates","withdrawals","fee","validityInterval","update"]
+              , "required": ["inputs","outputs","certificates","withdrawals","fee","validityInterval","mint","update"]
               , "properties":
                 { "inputs":
                   { "type": "array"
