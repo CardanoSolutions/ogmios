@@ -29,6 +29,7 @@ module Ogmios.App.Options
     , EpochSlots (..)
     , envOgmiosNetwork
     , lookupNetworkParameters
+    , parseNetworkParameters
     ) where
 
 import Ogmios.Prelude
@@ -40,6 +41,8 @@ import Cardano.Chain.Slotting
     ( EpochSlots (..) )
 import Data.Aeson
     ( ToJSON )
+import Data.Time.Clock
+    ( UTCTime )
 import Data.Time.Clock.POSIX
     ( posixSecondsToUTCTime )
 import Options.Applicative.Help.Pretty
@@ -85,8 +88,21 @@ parserInfo = info (helper <*> parser) $ mempty
         , indent 27 $ string "- mainnet"
         , indent 27 $ string "- testnet"
         , indent 27 $ string "- staging"
-        , indent 27 $ string "- <MAGIC>:<SYSTEM-START>"
+        , indent 27 $ string "- <MAGIC>:<SYSTEM-START>[:<SLOTS-PER-EPOCH]"
         , indent 27 $ string $ separator <> " (default: mainnet)"
+        , string ""
+        , string "Examples:"
+        , indent 2 $ string "Connecting to the mainnet:"
+        , indent 4 $ string "$ ogmios --node-socket /path/to/node.socket"
+        , string ""
+        , indent 2 $ string "Connecting to the testnet:"
+        , indent 4 $ string "$ OGMIOS_NETWORK=testnet ogmios --node-socket /path/to/node.socket"
+        , string ""
+        , indent 2 $ string "Connecting to the testnet using explicit parameters:"
+        , indent 4 $ string "$ OGMIOS_NETWORK=1097911063:1563999616 ogmios --node-socket /path/to/node.socket"
+        , string ""
+        , indent 2 $ string "Connecting to the Guild network:"
+        , indent 4 $ string "$ OGMIOS_NETWORK=141:1612317107:3600 ogmios --node-socket /path/to/node.socket"
         ])
   where
     parser =
@@ -191,9 +207,9 @@ versionOption =
 --
 
 data NetworkParameters = NetworkParameters
-    { slotsPerEpoch :: !EpochSlots
+    { networkMagic :: !NetworkMagic
     , systemStart :: !SystemStart
-    , networkMagic :: !NetworkMagic
+    , slotsPerEpoch :: !EpochSlots
     } deriving stock (Generic, Eq, Show)
       deriving anyclass (ToJSON)
 
@@ -208,26 +224,36 @@ envOgmiosNetwork = "OGMIOS_NETWORK"
 lookupNetworkParameters
     :: IO NetworkParameters
 lookupNetworkParameters = do
-    lookupEnv envOgmiosNetwork >>= \case
-        Nothing -> do
-            pure mainnetNetworkParameters
-        Just "mainnet" -> do
-            pure mainnetNetworkParameters
-        Just "testnet" -> do
-            pure testnetNetworkParameters
-        Just "staging" -> do
-            pure stagingNetworkParameters
-        Just custom -> do
-            let (magicStr, systemStartStr) = T.breakOn ":" (toText custom)
-            case (readMay (toString magicStr), readMay (toString systemStartStr)) of
-                (Just n, Just systemStart) -> do
-                    pure $ NetworkParameters
-                        { networkMagic = NetworkMagic n
-                        , slotsPerEpoch = defaultSlotsPerEpoch
-                        , systemStart = SystemStart $ posixSecondsToUTCTime systemStart
-                        }
-                _ -> do
-                    exitFailure
+    mStr <- lookupEnv envOgmiosNetwork
+    let params = maybe (Just mainnetNetworkParameters) parseNetworkParameters mStr
+    maybe (die err) pure params
+  where
+    err = "Couldn't parse " <> envOgmiosNetwork <> ". Have a look at the usage using '--help'."
+
+-- | Pure parser for 'NetworkParameters'
+parseNetworkParameters
+    :: String
+    -> Maybe NetworkParameters
+parseNetworkParameters = \case
+    "mainnet" -> do
+        pure mainnetNetworkParameters
+    "testnet" -> do
+        pure testnetNetworkParameters
+    "staging" -> do
+        pure stagingNetworkParameters
+    custom -> do
+        let strs = toString <$> T.splitOn ":" (toText custom)
+        case strs of
+            [magicStr, systemStartStr] -> NetworkParameters
+                <$> fmap NetworkMagic (readMay magicStr)
+                <*> fmap SystemStart (readAsPosixTime systemStartStr)
+                <*> pure defaultSlotsPerEpoch
+            [magicStr, systemStartStr, slotStr] -> NetworkParameters
+                <$> fmap NetworkMagic (readMay magicStr)
+                <*> fmap SystemStart (readAsPosixTime systemStartStr)
+                <*> fmap EpochSlots (readMay slotStr)
+            _ ->
+                Nothing
 
 -- Hard-coded mainnet network parameters
 mainnetNetworkParameters
@@ -235,8 +261,8 @@ mainnetNetworkParameters
 mainnetNetworkParameters =
     NetworkParameters
         { networkMagic = NetworkMagic 764824073
-        , slotsPerEpoch = defaultSlotsPerEpoch
         , systemStart = SystemStart $ posixSecondsToUTCTime 1506203091
+        , slotsPerEpoch = defaultSlotsPerEpoch
         }
 
 -- Hard-coded testnet network parameters
@@ -245,8 +271,8 @@ testnetNetworkParameters
 testnetNetworkParameters =
     NetworkParameters
         { networkMagic = NetworkMagic 1097911063
-        , slotsPerEpoch = defaultSlotsPerEpoch
         , systemStart = SystemStart $ posixSecondsToUTCTime 1563999616
+        , slotsPerEpoch = defaultSlotsPerEpoch
         }
 
 -- Hard-coded staging network parameters
@@ -255,8 +281,8 @@ stagingNetworkParameters
 stagingNetworkParameters =
     NetworkParameters
         { networkMagic = NetworkMagic 633343913
-        , slotsPerEpoch = defaultSlotsPerEpoch
         , systemStart = SystemStart $ posixSecondsToUTCTime 1506450213
+        , slotsPerEpoch = defaultSlotsPerEpoch
         }
 
 -- Hard-coded genesis slots per epoch
@@ -270,4 +296,9 @@ defaultSlotsPerEpoch =
 --
 
 separator :: String
-separator = replicate 20 '-'
+separator =
+    replicate 20 '-'
+
+readAsPosixTime :: String -> Maybe UTCTime
+readAsPosixTime =
+    fmap posixSecondsToUTCTime . readMay . (<> "s")
