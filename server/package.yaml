@@ -138,5 +138,6 @@ tests:
     - relude
     - shelley-spec-ledger
     - shelley-spec-ledger-test
+    - time
     build-tools:
     - hspec-discover

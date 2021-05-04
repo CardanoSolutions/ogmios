@@ -24,10 +24,22 @@ module Ogmios.App.Options
     , logLevelOption
 
       -- ** Environment
+      -- *** ENV Var
+    , envOgmiosNetwork
+
+      -- *** Types
     , NetworkParameters (..)
+    , mainnetNetworkParameters
+    , testnetNetworkParameters
+    , stagingNetworkParameters
+
     , NetworkMagic (..)
     , EpochSlots (..)
-    , envOgmiosNetwork
+    , defaultSlotsPerEpoch
+    , SystemStart (..)
+    , mkSystemStart
+
+      -- *** Parsing 'NetworkParameters'
     , lookupNetworkParameters
     , parseNetworkParameters
     ) where
@@ -302,3 +314,9 @@ separator =
 readAsPosixTime :: String -> Maybe UTCTime
 readAsPosixTime =
     fmap posixSecondsToUTCTime . readMay . (<> "s")
+
+mkSystemStart :: Int -> SystemStart
+mkSystemStart =
+    SystemStart . posixSecondsToUTCTime . toPicoResolution . toEnum
+  where
+    toPicoResolution = (*1000000000000)
