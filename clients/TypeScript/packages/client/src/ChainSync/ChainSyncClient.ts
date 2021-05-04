@@ -6,14 +6,12 @@ import {
   createClientContext
 } from '../Connection'
 import { UnknownResultError } from '../errors'
-import { baseRequest } from '../Request'
 import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
 import { findIntersect, Intersection } from './findIntersect'
+import { requestNext } from './requestNext'
 
 export interface ChainSyncClient {
   context: InteractionContext
-  findIntersect: (points: Point[]) => ReturnType<typeof findIntersect>
-  initialIntersection: Intersection
   on: (messageHandlers: {
     rollBackward: (response: {
       point: Point,
@@ -28,6 +26,7 @@ export interface ChainSyncClient {
   }) => void
   requestNext: (options?: { mirror?: Mirror }) => void
   shutdown: () => Promise<void>
+  startSync: (points?: Point[], requestBuffer?: number) => Promise<Intersection>
 }
 
 export const createChainSyncClient = async (options?: {
@@ -38,23 +37,8 @@ export const createChainSyncClient = async (options?: {
       const { socket } = context
       socket.once('error', reject)
       socket.once('open', async () => {
-        const initialIntersection = await findIntersect(
-          [await createPointFromCurrentTip({ socket, closeOnCompletion: false })],
-          {
-            socket,
-            closeOnCompletion: false
-          }
-        )
         return resolve({
           context,
-          findIntersect: (points) => {
-            ensureSocketIsOpen(socket)
-            return findIntersect(points, {
-              socket,
-              closeOnCompletion: false
-            })
-          },
-          initialIntersection,
           on (messageHandlers) {
             socket.on('message', (message: string) => {
               const response: Ogmios['RequestNextResponse'] = JSON.parse(message)
@@ -79,17 +63,27 @@ export const createChainSyncClient = async (options?: {
           },
           requestNext (options) {
             ensureSocketIsOpen(socket)
-            socket.send(JSON.stringify({
-              ...baseRequest,
-              methodname: 'RequestNext',
-              mirror: options?.mirror
-            } as Ogmios['RequestNext']))
+            return requestNext(socket, options)
           },
           shutdown: () => new Promise(resolve => {
             ensureSocketIsOpen(socket)
             socket.once('close', resolve)
             socket.close()
-          })
+          }),
+          startSync: async (points, requestBuffer) => {
+            const intersection = await findIntersect(
+              points || [await createPointFromCurrentTip({ socket, closeOnCompletion: false })],
+              {
+                socket,
+                closeOnCompletion: false
+              }
+            )
+            ensureSocketIsOpen(socket)
+            for (let n = 0; n <= (requestBuffer || 100); n += 1) {
+              requestNext(socket)
+            }
+            return intersection
+          }
         })
       })
     }).catch(reject)
