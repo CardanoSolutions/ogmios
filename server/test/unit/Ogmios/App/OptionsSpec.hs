@@ -21,8 +21,6 @@ import Ogmios.App.Options
     , testnetNetworkParameters
     )
 
-import Data.Time.Clock.POSIX
-    ( posixSecondsToUTCTime )
 import Test.Hspec
     ( Spec, context, parallel )
 import Test.Hspec.QuickCheck
