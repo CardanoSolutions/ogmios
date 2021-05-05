@@ -12,55 +12,56 @@ import { requestNext } from './requestNext'
 
 export interface ChainSyncClient {
   context: InteractionContext
-  on: (messageHandlers: {
-    rollBackward: (response: {
-      point: Point,
-      tip: Tip,
-      reflection: Mirror
-    }) => void
-    rollForward: (response: {
-      block: Block,
-      tip: Tip,
-      reflection: Mirror
-    }) => void
-  }) => void
   requestNext: (options?: { mirror?: Mirror }) => void
   shutdown: () => Promise<void>
   startSync: (points?: Point[], requestBuffer?: number) => Promise<Intersection>
 }
 
-export const createChainSyncClient = async (options?: {
+export interface ChainSyncMessageHandlers {
+  rollBackward: (response: {
+    point: Point,
+    tip: Tip,
+    reflection: Mirror
+  }) => void
+  rollForward: (response: {
+    block: Block,
+    tip: Tip,
+    reflection: Mirror
+  }) => void
+}
+
+export const createChainSyncClient = async (
+  messageHandlers: ChainSyncMessageHandlers,
+  options?: {
   connection?: ConnectionConfig
 }): Promise<ChainSyncClient> => {
   return new Promise((resolve, reject) => {
     createClientContext(options).then(context => {
       const { socket } = context
       socket.once('error', reject)
+      socket.on('message', (message: string) => {
+        const response: Ogmios['RequestNextResponse'] = JSON.parse(message)
+        if (response.methodname === 'RequestNext') {
+          if ('RollBackward' in response.result) {
+            messageHandlers.rollBackward({
+              point: response.result.RollBackward.point,
+              tip: response.result.RollBackward.tip,
+              reflection: response.reflection
+            })
+          } else if ('RollForward' in response.result) {
+            messageHandlers.rollForward({
+              block: response.result.RollForward.block,
+              tip: response.result.RollForward.tip,
+              reflection: response.reflection
+            })
+          } else {
+            throw new UnknownResultError(response.result)
+          }
+        }
+      })
       socket.once('open', async () => {
         return resolve({
           context,
-          on (messageHandlers) {
-            socket.on('message', (message: string) => {
-              const response: Ogmios['RequestNextResponse'] = JSON.parse(message)
-              if (response.methodname === 'RequestNext') {
-                if ('RollBackward' in response.result) {
-                  messageHandlers.rollBackward({
-                    point: response.result.RollBackward.point,
-                    tip: response.result.RollBackward.tip,
-                    reflection: response.reflection
-                  })
-                } else if ('RollForward' in response.result) {
-                  messageHandlers.rollForward({
-                    block: response.result.RollForward.block,
-                    tip: response.result.RollForward.tip,
-                    reflection: response.reflection
-                  })
-                } else {
-                  throw new UnknownResultError(response.result)
-                }
-              }
-            })
-          },
           requestNext (options) {
             ensureSocketIsOpen(socket)
             return requestNext(socket, options)

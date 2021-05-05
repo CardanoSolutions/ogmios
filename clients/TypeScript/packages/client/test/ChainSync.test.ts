@@ -11,9 +11,14 @@ import {
 
 const connection = { port: 1338 }
 
+const stubHandlers = {
+  rollBackward: () => {},
+  rollForward: () => {}
+}
+
 describe('ChainSync', () => {
   it('returns the interaction context', async () => {
-    const client = await createChainSyncClient({ connection })
+    const client = await createChainSyncClient(stubHandlers, { connection })
     expect(client.context.connectionString).toBe('ws://localhost:1338')
     expect(client.context.socket.readyState).toBe(client.context.socket.OPEN)
     await client.shutdown()
@@ -21,7 +26,7 @@ describe('ChainSync', () => {
 
   describe('startSync', () => {
     it('selects the tip as the intersection if no point provided', async () => {
-      const client = await createChainSyncClient({ connection })
+      const client = await createChainSyncClient(stubHandlers, { connection })
       const intersection = await client.startSync()
       if (intersection.point === 'origin' || intersection.tip === 'origin') {
         await client.shutdown()
@@ -34,7 +39,7 @@ describe('ChainSync', () => {
     })
 
     it('intersects at the genesis if origin provided as point', async () => {
-      const client = await createChainSyncClient({ connection })
+      const client = await createChainSyncClient(stubHandlers, { connection })
       const intersection = await client.startSync(['origin'])
       expect(intersection.point).toEqual('origin')
       expect(intersection.tip).toBeDefined()
@@ -44,8 +49,7 @@ describe('ChainSync', () => {
     it('accepts message handlers for roll back and roll forward messages', async () => {
       const rollbackPoints: Point[] = []
       const blocks: Block[] = []
-      const client = await createChainSyncClient({ connection })
-      client.on({
+      const client = await createChainSyncClient({
         rollBackward: ({ point }) => {
           rollbackPoints.push(point)
           client.requestNext()
@@ -56,6 +60,8 @@ describe('ChainSync', () => {
             client.requestNext()
           }
         }
+      }, {
+        connection
       })
       await client.startSync(['origin'], 10)
       await delay(1000)
@@ -83,10 +89,9 @@ describe('ChainSync', () => {
       type BlocksPerSecond = number
       const run = async (requestBuffer?: number): Promise<BlocksPerSecond> => {
         const blocks: Block[] = []
-        const client = await createChainSyncClient({ connection })
         const start = Date.now()
         let stop: number
-        client.on({
+        const client = await createChainSyncClient({
           rollBackward: () => {
             client.requestNext()
           },
@@ -98,6 +103,8 @@ describe('ChainSync', () => {
               stop = Date.now() - start
             }
           }
+        }, {
+          connection
         })
         await client.startSync(['origin'], requestBuffer)
         await delay(800)
@@ -112,7 +119,7 @@ describe('ChainSync', () => {
   })
 
   it('rejects method calls after shutdown', async () => {
-    const client = await createChainSyncClient({ connection })
+    const client = await createChainSyncClient(stubHandlers, { connection })
     await client.shutdown()
     const run = () => client.startSync(['origin'])
     await expect(run).rejects
