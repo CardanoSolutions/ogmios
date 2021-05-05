@@ -81,7 +81,7 @@ const lastAllegraBlock = {
             default:
               if (!didBootstrap) {
                 didBootstrap = true;
-                for(let n = 0; n <= N_BOOTSTRAP; n += 1) {
+                for(let n = 0; n < N_BOOTSTRAP; n += 1) {
                   client.ogmios("RequestNext");
                 }
               } else {

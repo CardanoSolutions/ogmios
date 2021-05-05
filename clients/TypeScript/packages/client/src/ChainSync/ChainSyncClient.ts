@@ -79,7 +79,7 @@ export const createChainSyncClient = async (options?: {
               }
             )
             ensureSocketIsOpen(socket)
-            for (let n = 0; n <= (requestBuffer || 100); n += 1) {
+            for (let n = 0; n < (requestBuffer || 100); n += 1) {
               requestNext(socket)
             }
             return intersection
