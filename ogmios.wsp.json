@@ -316,7 +316,7 @@
         , "additionalProperties": false
         , "required": ["point"]
         , "properties":
-          { "points": { "$ref": "#/definitions/Point" }
+          { "point": { "$ref": "#/definitions/Point" }
           }
         }
       , "mirror":
