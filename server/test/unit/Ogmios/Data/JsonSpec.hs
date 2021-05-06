@@ -30,6 +30,7 @@ import Data.Type.Equality
 import Ogmios.Data.Json
     ( Json
     , SerializationMode (..)
+    , decodeWith
     , encodeAcquireFailure
     , encodeBlock
     , encodeHardForkApplyTxErr
@@ -58,8 +59,11 @@ import Ogmios.Data.Json.Query
     , parseGetUTxO
     )
 import Ogmios.Data.Protocol.ChainSync
-    ( FindIntersectResponse (..)
+    ( FindIntersect
+    , FindIntersectResponse (..)
     , RequestNextResponse (..)
+    , _decodeFindIntersect
+    , _encodeFindIntersect
     , _encodeFindIntersectResponse
     , _encodeRequestNextResponse
     )
@@ -118,6 +122,7 @@ import Test.QuickCheck
     , Property
     , Result (..)
     , choose
+    , conjoin
     , elements
     , forAllBlind
     , frequency
@@ -166,9 +171,31 @@ validateToJSON gen encode ref
     $ withMaxSuccess 200
     $ forAllBlind gen (prop_validateToJSON (jsonifierToAeson . encode) ref)
 
+-- | Similar to 'validateToJSON', but also check that the produce value can be
+-- decoded back to the expected form.
+validateFromJSON
+    :: (Eq a, Show a)
+    => Gen a
+    -> (a -> Json, Json.Value -> Json.Parser a)
+    -> SchemaRef
+    -> SpecWith ()
+validateFromJSON gen (encode, decode) ref
+    = parallel
+    $ it (toString $ getSchemaRef ref)
+    $ withMaxSuccess 200
+    $ forAllBlind gen $ \a -> conjoin
+        [ prop_validateToJSON (jsonifierToAeson . encode) ref a
+        , decodeWith decode (jsonToByteString (encode a)) === Just a
+        ]
+
 spec :: Spec
 spec = do
     context "validate chain-sync req/res against JSON-schema" $ do
+        validateFromJSON
+            (arbitrary @(Wsp.Request (FindIntersect Block)))
+            (_encodeFindIntersect encodePoint, _decodeFindIntersect)
+            "ogmios.wsp.json#/properties/FindIntersect"
+
         validateToJSON
             (arbitrary @(Wsp.Response (FindIntersectResponse Block)))
             (_encodeFindIntersectResponse encodePoint encodeTip)
@@ -287,13 +314,23 @@ instance Arbitrary a => Arbitrary (Wsp.Response a) where
         , Wsp.Response (Just $ toJSON @Int 14) <$> arbitrary
         ]
 
+instance Arbitrary a => Arbitrary (Wsp.Request a) where
+    arbitrary = oneof
+        [ Wsp.Request Nothing <$> arbitrary
+        , Wsp.Request (Just $ toJSON @String "patate") <$> arbitrary
+        ]
+
+instance Arbitrary (FindIntersect Block) where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
+
 instance Arbitrary (FindIntersectResponse Block) where
     shrink = genericShrink
-    arbitrary = genericArbitrary
+    arbitrary = reasonablySized genericArbitrary
 
 instance Arbitrary (RequestNextResponse Block) where
     shrink = genericShrink
-    arbitrary = genericArbitrary
+    arbitrary = reasonablySized genericArbitrary
 
 instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto))) where
     arbitrary = frequency
