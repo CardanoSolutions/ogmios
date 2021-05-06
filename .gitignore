@@ -1,2 +1,7 @@
+## auto-generated
 docs/public
 docs/static/api-reference.html
+
+## Nix
+/result
+/result-*

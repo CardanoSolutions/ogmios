@@ -1,0 +1,66 @@
+cabal-version: 2.0
+
+-- This file has been generated from package.yaml by hpack version 0.34.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: d7bc26e05c6f51c29027b230fd4987aaebdec2ff88d7d2a51c42e4cee89d10d8
+
+name:           git-th
+version:        1.0.0
+synopsis:       Compile-time helpers to access git informations.
+description:    Please see the README on GitHub at <https://github.com/KtorZ/cardano-ogmios/tree/master/server/modules/git-th>
+category:       Development
+homepage:       https://github.com/KtorZ/cardano-ogmios#readme
+bug-reports:    https://github.com/KtorZ/cardano-ogmios/issues
+author:         KtorZ <matthias.benkort@gmail.com>
+maintainer:     matthias.benkort@gmail.com
+copyright:      2020-2021 KtorZ
+license:        MPL-2.0
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    LICENSE
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/KtorZ/cardano-ogmios
+
+library
+  exposed-modules:
+      Data.Git.Revision.TH
+  other-modules:
+      Paths_git_th
+  hs-source-dirs:
+      src
+  default-extensions: BangPatterns BinaryLiterals ConstraintKinds DataKinds DefaultSignatures DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs InstanceSigs KindSignatures LambdaCase MultiParamTypeClasses MultiWayIf NamedFieldPuns NoImplicitPrelude NumericUnderscores OverloadedStrings PartialTypeSignatures PatternGuards RankNTypes ScopedTypeVariables StandaloneDeriving TupleSections TypeFamilies TypeSynonymInstances ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+  build-tools:
+      git
+  build-depends:
+      base >=4.7 && <5
+    , process
+    , template-haskell
+  default-language: Haskell2010
+
+test-suite integration
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Data.Git.Revision.THSpec
+      Paths_git_th
+  hs-source-dirs:
+      test/unit
+  default-extensions: BangPatterns BinaryLiterals ConstraintKinds DataKinds DefaultSignatures DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs InstanceSigs KindSignatures LambdaCase MultiParamTypeClasses MultiWayIf NamedFieldPuns NoImplicitPrelude NumericUnderscores OverloadedStrings PartialTypeSignatures PatternGuards RankNTypes ScopedTypeVariables StandaloneDeriving TupleSections TypeFamilies TypeSynonymInstances ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-tool-depends:
+      hspec-discover:hspec-discover
+  build-depends:
+      base >=4.7 && <5
+    , git-th
+    , hspec
+    , template-haskell
+    , temporary
+  default-language: Haskell2010

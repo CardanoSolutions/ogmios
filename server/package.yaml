@@ -97,6 +97,8 @@ library:
     - wai-websockets
     - warp
     - websockets
+  system-build-tools:
+  - git
 
 executables:
   ogmios:

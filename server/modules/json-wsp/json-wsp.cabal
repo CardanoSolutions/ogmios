@@ -1,0 +1,46 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 701af22ddfbc925999943f0bb368384a2897cd63ed302baf4558ab6651cad9b3
+
+name:           json-wsp
+version:        1.0.0
+synopsis:       An implementation of JSON-WSP in Haskell
+description:    Please see the README on GitHub at <https://github.com/KtorZ/cardano-ogmios/tree/master/server/modules/json-wsp>
+category:       Web
+homepage:       https://github.com/KtorZ/cardano-ogmios#readme
+bug-reports:    https://github.com/KtorZ/cardano-ogmios/issues
+author:         KtorZ <matthias.benkort@gmail.com>
+maintainer:     matthias.benkort@gmail.com
+copyright:      2020-2021 KtorZ
+license:        MPL-2.0
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    LICENSE
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/KtorZ/cardano-ogmios
+
+library
+  exposed-modules:
+      Codec.Json.Wsp
+      Codec.Json.Wsp.Handler
+  other-modules:
+      Paths_json_wsp
+  hs-source-dirs:
+      src
+  default-extensions: BangPatterns BinaryLiterals ConstraintKinds DataKinds DefaultSignatures DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs InstanceSigs KindSignatures LambdaCase MultiParamTypeClasses MultiWayIf NamedFieldPuns NoImplicitPrelude NumericUnderscores OverloadedStrings PartialTypeSignatures PatternGuards RankNTypes ScopedTypeVariables StandaloneDeriving TupleSections TypeFamilies TypeSynonymInstances ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , text
+  default-language: Haskell2010
