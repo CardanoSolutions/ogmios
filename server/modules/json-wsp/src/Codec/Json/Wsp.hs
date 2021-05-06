@@ -17,9 +17,11 @@ module Codec.Json.Wsp
     (
     -- * Types
       Request
+    , mkRequest
     , Response
-    , ToResponse
     , mkResponse
+    , ToResponse
+    , Fault
     , mkFault
     , ServiceName
 
@@ -55,6 +57,8 @@ import Data.Proxy
     ( Proxy (..) )
 import Data.Text
     ( Text )
+import Data.Void
+    ( Void )
 import GHC.TypeLits
     ( KnownSymbol, Symbol, symbolVal )
 
@@ -116,7 +120,7 @@ genericFromJSON opts =
 genericToJSON
     :: forall req res.
         ( Generic res
-        , KnownSymbol (ServiceName (Response res))
+        , KnownSymbol (ServiceName (Request req))
         , GWSPMethodName (Rep req)
         , GWSPToJSON (Rep res)
         )
@@ -136,7 +140,7 @@ genericToJSON opts proxy =
 -- since @1.0.0
 mkResponse
     :: forall req res.
-        ( KnownSymbol (ServiceName (Response res))
+        ( KnownSymbol (ServiceName (Request req))
         , GWSPMethodName (Rep req)
         )
     => Options
@@ -149,7 +153,7 @@ mkResponse opts _proxy toResult (Response refl res) = Json.pairs $
     <>
     ("version" .= V1_0)
     <>
-    ("servicename" .= symbolVal (Proxy @(ServiceName (Response res))))
+    ("servicename" .= symbolVal (Proxy @(ServiceName (Request req))))
     <>
     ("methodname" .= methodName)
     <>
@@ -159,8 +163,35 @@ mkResponse opts _proxy toResult (Response refl res) = Json.pairs $
   where
     methodName = constructorTagModifier opts $ gWSPMethodName (Proxy :: Proxy (Rep req a))
 
+-- | Serialize a given request to JSON
+--
+-- since @1.1.0
+mkRequest
+    :: forall req.
+        ( KnownSymbol (ServiceName (Request req))
+        , GWSPMethodName (Rep req)
+        )
+    => Options
+    -> (req -> Json.Encoding)
+    -> Request req
+    -> Json.Encoding
+mkRequest opts toArgs (Request mirror req) = Json.pairs $
+    ("type" .= WspRequest)
+    <>
+    ("version" .= V1_0)
+    <>
+    ("servicename" .= symbolVal (Proxy @(ServiceName (Request req))))
+    <>
+    ("methodname" .= methodName)
+    <>
+    (Json.pair "args" (toArgs req))
+    <>
+    ("mirror" .= mirror)
+  where
+    methodName = constructorTagModifier opts $ gWSPMethodName (Proxy :: Proxy (Rep req a))
+
 mkFault
-    :: KnownSymbol (ServiceName (Response Fault))
+    :: KnownSymbol (ServiceName (Request Void))
     => Fault
     -> Json.Encoding
 mkFault fault = Json.pairs $
@@ -168,7 +199,7 @@ mkFault fault = Json.pairs $
     <>
     ("version" .= V1_0)
     <>
-    ("servicename" .= symbolVal (Proxy @(ServiceName (Response Fault))))
+    ("servicename" .= symbolVal (Proxy @(ServiceName (Request Void))))
     <>
     ("fault" .= fault)
 

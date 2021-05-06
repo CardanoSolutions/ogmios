@@ -9,6 +9,11 @@ pre: "<b>5. </b>"
 
 #### Added
 
+- New TypeScript client! The client comes in three packages:
+  - An interactive REPL to play with Ogmios using the command-line.
+  - A generator to derive TypeScript type definitions from the JSON schema.
+  - The actual client library providing nice wrapper around the various protocol, in a typed way.
+  The TypeScript client also includes a new battery of automated integration tests against the testnet. 
 - Support for WebSocket sub-protocols, with currently one support sub-protocol: `ogmios.compact.v1`. When enabled,
   Ogmios will omit fields such as witnesses, proofs and signatures from responses to make responses smaller.
 - Provide missing documentation / JSON-schema for:
@@ -27,12 +32,15 @@ pre: "<b>5. </b>"
 - The `/health` endpoint now returns two additional pieces of information:
   - A `networkSynchronization` percentage to indicate how far Ogmios / the node is from the network.
   - A `currentEra` value to indicate the corresponding Cardano era Ogmios / the node is currently running in.
+- Nix support for building Ogmios (this also include a `cabal.project` to enable cabal support as well).
 
 #### Changed
 
 - Rework Docker setup to not require an external snapshot image. Everything is now built in a single
   `Dockerfile`, but cache from DockerHub can be leveraged to reduce overall build time when building
   from scratch.
+- Fixed typo in the JSON-schema w.r.t to the 'Acquire' request (`points` → `point`), and introduce more automated test
+  to catch this kind of errors more easily. 
 
 #### Removed
 

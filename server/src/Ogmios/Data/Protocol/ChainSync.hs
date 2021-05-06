@@ -21,12 +21,14 @@ module Ogmios.Data.Protocol.ChainSync
 
       -- ** FindIntersect
     , FindIntersect (..)
+    , _encodeFindIntersect
     , _decodeFindIntersect
     , FindIntersectResponse (..)
     , _encodeFindIntersectResponse
 
       -- ** RequestNext
     , RequestNext (..)
+    , _encodeRequestNext
     , _decodeRequestNext
     , RequestNextResponse (..)
     , _encodeRequestNextResponse
@@ -98,7 +100,18 @@ data ChainSyncMessage block
 
 data FindIntersect block
     = FindIntersect { points :: [Point block] }
-    deriving (Generic, Show)
+    deriving (Generic, Show, Eq)
+
+_encodeFindIntersect
+    :: forall block. ()
+    => (Point block -> Json)
+    -> Wsp.Request (FindIntersect block)
+    -> Json
+_encodeFindIntersect encodePoint =
+    Wsp.mkRequest Wsp.defaultOptions $ \case
+        FindIntersect{points} -> encodeObject
+            [ ( "points", encodeList encodePoint points )
+            ]
 
 _decodeFindIntersect
     :: FromJSON (Point block)
@@ -142,7 +155,14 @@ _encodeFindIntersectResponse encodePoint encodeTip =
 
 data RequestNext
     = RequestNext
-    deriving (Generic, Show)
+    deriving (Generic, Show, Eq)
+
+_encodeRequestNext
+    :: Wsp.Request RequestNext
+    -> Json
+_encodeRequestNext =
+    Wsp.mkRequest Wsp.defaultOptions $ \case
+        RequestNext -> encodeObject []
 
 _decodeRequestNext
     :: Json.Value

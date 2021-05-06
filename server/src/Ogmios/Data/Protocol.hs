@@ -10,6 +10,6 @@ import Ogmios.Prelude
 
 import qualified Codec.Json.Wsp as Wsp
 
-type instance Wsp.ServiceName (Wsp.Response _) = "ogmios"
+type instance Wsp.ServiceName (Wsp.Request _) = "ogmios"
 
 type MethodName = String
