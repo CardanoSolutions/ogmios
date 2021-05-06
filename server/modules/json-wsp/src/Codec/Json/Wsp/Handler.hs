@@ -45,13 +45,13 @@ import qualified Data.Aeson as Json
 --
 -- @since 1.0.0
 data Request a = Request Mirror a
-    deriving (Generic, Show)
+    deriving (Generic, Show, Eq)
 
 -- | Represent a JSON-WSP response (from the server to a client)
 --
 -- @since 1.0.0
 data Response a = Response Mirror a
-    deriving (Generic, Show)
+    deriving (Generic, Show, Eq)
 
 -- | Type alias for the optional mirror(ed) value in Request/Response
 --
