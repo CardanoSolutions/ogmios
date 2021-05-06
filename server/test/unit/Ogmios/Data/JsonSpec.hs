@@ -61,18 +61,27 @@ import Ogmios.Data.Json.Query
 import Ogmios.Data.Protocol.ChainSync
     ( FindIntersect
     , FindIntersectResponse (..)
+    , RequestNext
     , RequestNextResponse (..)
     , _decodeFindIntersect
+    , _decodeRequestNext
     , _encodeFindIntersect
     , _encodeFindIntersectResponse
+    , _encodeRequestNext
     , _encodeRequestNextResponse
     )
 import Ogmios.Data.Protocol.StateQuery
-    ( AcquireResponse (..)
+    ( Acquire
+    , AcquireResponse (..)
     , QueryResponse (..)
+    , Release
     , ReleaseResponse (..)
+    , _decodeAcquire
+    , _decodeRelease
+    , _encodeAcquire
     , _encodeAcquireResponse
     , _encodeQueryResponse
+    , _encodeRelease
     , _encodeReleaseResponse
     )
 import Ogmios.Data.Protocol.TxSubmission
@@ -190,7 +199,7 @@ validateFromJSON gen (encode, decode) ref
 
 spec :: Spec
 spec = do
-    context "validate chain-sync req/res against JSON-schema" $ do
+    context "validate chain-sync request/response against JSON-schema" $ do
         validateFromJSON
             (arbitrary @(Wsp.Request (FindIntersect Block)))
             (_encodeFindIntersect encodePoint, _decodeFindIntersect)
@@ -201,12 +210,17 @@ spec = do
             (_encodeFindIntersectResponse encodePoint encodeTip)
             "ogmios.wsp.json#/properties/FindIntersectResponse"
 
+        validateFromJSON
+            (arbitrary @(Wsp.Request RequestNext))
+            (_encodeRequestNext, _decodeRequestNext)
+            "ogmios.wsp.json#/properties/RequestNext"
+
         validateToJSON
             (arbitrary @(Wsp.Response (RequestNextResponse Block)))
             (_encodeRequestNextResponse (encodeBlock FullSerialization) encodePoint encodeTip)
             "ogmios.wsp.json#/properties/RequestNextResponse"
 
-    context "validate tx submission req/res against JSON-schema" $ do
+    context "validate tx submission reqquest/response against JSON-schema" $ do
         prop "deserialise signed transactions" prop_parseSubmitTx
 
         validateToJSON
@@ -214,7 +228,12 @@ spec = do
             (_encodeSubmitTxResponse (Proxy @Block) encodeHardForkApplyTxErr)
             "ogmios.wsp.json#/properties/SubmitTxResponse"
 
-    context "validate acquire response against JSON-schema" $ do
+    context "validate acquire request/response against JSON-schema" $ do
+        validateFromJSON
+            (arbitrary @(Wsp.Request (Acquire Block)))
+            (_encodeAcquire encodePoint, _decodeAcquire)
+            "ogmios.wsp.json#/properties/Acquire"
+
         validateToJSON
             (arbitrary @(Wsp.Response (AcquireResponse Block)))
             (_encodeAcquireResponse encodePoint encodeAcquireFailure)
@@ -302,7 +321,12 @@ spec = do
             ( parseGetGenesisConfig genCompactGenesisResult
             ) "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
 
-    context "validate release response against JSON-schema" $ do
+    context "validate release request/response against JSON-schema" $ do
+        validateFromJSON
+            (arbitrary @(Wsp.Request Release))
+            (_encodeRelease, _decodeRelease)
+            "ogmios.wsp.json#/properties/Release"
+
         validateToJSON
             (arbitrary @(Wsp.Response ReleaseResponse))
             _encodeReleaseResponse
@@ -332,6 +356,10 @@ instance Arbitrary (RequestNextResponse Block) where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
+instance Arbitrary RequestNext where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
+
 instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto))) where
     arbitrary = frequency
         [ ( 1, pure SubmitSuccess)
@@ -341,13 +369,21 @@ instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto
         , (10, SubmitFail . ApplyTxErrMary <$> reasonablySized arbitrary)
         ]
 
+instance Arbitrary (Acquire Block) where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
+
 instance Arbitrary (AcquireResponse Block) where
     shrink = genericShrink
-    arbitrary = genericArbitrary
+    arbitrary = reasonablySized genericArbitrary
+
+instance Arbitrary Release where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
 
 instance Arbitrary ReleaseResponse where
     shrink = genericShrink
-    arbitrary = genericArbitrary
+    arbitrary = reasonablySized genericArbitrary
 
 instance Arbitrary AcquireFailure where
     arbitrary = elements

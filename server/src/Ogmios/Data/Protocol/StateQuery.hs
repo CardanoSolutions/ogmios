@@ -21,12 +21,14 @@ module Ogmios.Data.Protocol.StateQuery
 
       -- ** Acquire
     , Acquire (..)
+    , _encodeAcquire
     , _decodeAcquire
     , AcquireResponse (..)
     , _encodeAcquireResponse
 
       -- ** Release
     , Release (..)
+    , _encodeRelease
     , _decodeRelease
     , ReleaseResponse (..)
     , _encodeReleaseResponse
@@ -121,7 +123,18 @@ data StateQueryMessage block
 
 data Acquire block
     = Acquire { point :: Point block }
-    deriving (Generic, Show)
+    deriving (Generic, Show, Eq)
+
+_encodeAcquire
+    :: forall block. ()
+    => (Point block -> Json)
+    -> Wsp.Request (Acquire block)
+    -> Json
+_encodeAcquire encodePoint =
+    Wsp.mkRequest Wsp.defaultOptions $ \case
+        Acquire{point} -> encodeObject
+            [ ( "point", encodePoint point )
+            ]
 
 _decodeAcquire
     :: FromJSON (Point block)
@@ -164,7 +177,14 @@ _encodeAcquireResponse encodePoint encodeAcquireFailure =
 
 data Release
     = Release
-    deriving (Generic, Show)
+    deriving (Generic, Show, Eq)
+
+_encodeRelease
+    :: Wsp.Request Release
+    -> Json
+_encodeRelease =
+    Wsp.mkRequest Wsp.defaultOptions $ \case
+        Release -> encodeObject []
 
 _decodeRelease
     :: Json.Value

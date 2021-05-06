@@ -28,6 +28,7 @@ module Ogmios.Data.Protocol.ChainSync
 
       -- ** RequestNext
     , RequestNext (..)
+    , _encodeRequestNext
     , _decodeRequestNext
     , RequestNextResponse (..)
     , _encodeRequestNextResponse
@@ -154,7 +155,14 @@ _encodeFindIntersectResponse encodePoint encodeTip =
 
 data RequestNext
     = RequestNext
-    deriving (Generic, Show)
+    deriving (Generic, Show, Eq)
+
+_encodeRequestNext
+    :: Wsp.Request RequestNext
+    -> Json
+_encodeRequestNext =
+    Wsp.mkRequest Wsp.defaultOptions $ \case
+        RequestNext -> encodeObject []
 
 _decodeRequestNext
     :: Json.Value
