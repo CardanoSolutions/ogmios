@@ -14,6 +14,10 @@ yarn build
 ```
 #### Run Tests
 ```console
+yarn testnet:up
+```
+In another terminal
+```console
 yarn test
 ```
 
@@ -39,7 +43,7 @@ yarn testnet:down
 ### Start the REPL
 #### mainnet
 ```console
-yarn repl
+yarn repl:start
 ```
 #### testnet
 ```console

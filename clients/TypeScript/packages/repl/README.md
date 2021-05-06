@@ -36,7 +36,7 @@ ogmios> await currentProtocolParameters()
   treasuryExpansion: '1/5'
 }
 
-ogmios> chainSync.requestNext()
+ogmios> chainSync.startSync()
 ogmios> ROLL BACKWARD
 Point
 {
@@ -50,7 +50,6 @@ Tip
   slot: 25551480
 }
 
-ogmios> chainSync.requestNext()
 ogmios> ROLL FORWARD
 Block
 {

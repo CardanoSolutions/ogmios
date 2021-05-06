@@ -1,6 +1,7 @@
 import repl from 'repl'
 import parser from 'yargs-parser'
 import {
+  ChainSyncMessageHandlers,
   createChainSyncClient,
   createStateQueryClient,
   currentEpoch,
@@ -30,8 +31,7 @@ const logObject = (obj: Object) =>
     host: args.host,
     port: args.port
   }
-  const chainSync = await createChainSyncClient({ connection })
-  chainSync.on({
+  const chainSync = await createChainSyncClient({
     rollBackward: ({ point, tip, reflection }) => {
       log(chalk.bgRedBright.bold('ROLL BACKWARD'))
       log(chalk.redBright.bold('Point'))
@@ -54,6 +54,8 @@ const logObject = (obj: Object) =>
         logObject(reflection)
       }
     }
+  }, {
+    connection
   })
   const cardanoOgmiosRepl = repl.start({
     prompt: 'ogmios> ',
@@ -62,17 +64,21 @@ const logObject = (obj: Object) =>
 
   Object.assign(cardanoOgmiosRepl.context, {
     chainSync,
-    createChainSyncClient: () => createChainSyncClient({ connection }),
+    createChainSyncClient:
+      (messageHandlers: ChainSyncMessageHandlers) =>
+        createChainSyncClient(messageHandlers, { connection }),
     createStateQueryClient: () => createStateQueryClient({ connection }),
     currentEpoch: () => currentEpoch({ connection }),
     currentProtocolParameters: () => currentProtocolParameters({ connection }),
-    delegationsAndRewards: (stakeKeyHashes: Schema.Hash16[]) => delegationsAndRewards(stakeKeyHashes, { connection }),
+    delegationsAndRewards:
+      (stakeKeyHashes: Schema.Hash16[]) => delegationsAndRewards(stakeKeyHashes, { connection }),
     eraStart: () => eraStart({ connection }),
     genesisConfig: () => genesisConfig({ connection }),
     findIntersect: (points: Schema.Point[]) => findIntersect(points, { connection }),
     ledgerTip: () => ledgerTip({ connection }),
     nonMyopicMemberRewards:
-      (input: (Schema.Lovelace | Schema.Hash16)[]) => nonMyopicMemberRewards(input, { connection }),
+      (input: (Schema.Lovelace | Schema.Hash16)[]) =>
+        nonMyopicMemberRewards(input, { connection }),
     proposedProtocolParameters: () => proposedProtocolParameters({ connection }),
     stakeDistribution: () => stakeDistribution({ connection }),
     submitTx: (bytes: string) => submitTx(bytes, { connection }),
