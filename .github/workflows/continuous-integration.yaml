@@ -59,14 +59,30 @@ jobs:
       with:
         node-version: 14.4
 
-    - name: 🔨 Build #& Test
+    - name: ↪ Set package version
+      id: package-version
+      uses: martinbeentjes/npm-get-version-action@master
+      with:
+        path: clients/TypeScript
+
+    - name: 🔨 Build & Pack #& Test
       working-directory: clients/TypeScript
       run: |
         yarn install --frozen-lockfile --non-interactive --logevel=error
         yarn generate-schema-types
         yarn build
         yarn lint
+        ./scripts/pack.sh
 #        yarn test
+
+    - name: 📤 Upload npm packages
+      uses: actions/upload-artifact@v2
+      with:
+        name: cardano-ogmios-clients-ts-packages
+        path: |
+          clients/TypeScript/cardano-ogmios-client-${{ steps.package-version.outputs.current-version}}.tgz
+          clients/TypeScript/cardano-ogmios-schema-${{ steps.package-version.outputs.current-version}}.tgz
+          clients/TypeScript/cardano-ogmios-repl-${{ steps.package-version.outputs.current-version}}.tgz
 
     - name: 📦 Package REPL
       working-directory: clients/TypeScript
