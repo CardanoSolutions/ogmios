@@ -5,7 +5,7 @@ chapter: false
 pre: "<b>5. </b>"
 ---
 
-### [3.2.0] - unreleased
+### [3.2.0] - 2021-05-09
 
 #### Added
 
