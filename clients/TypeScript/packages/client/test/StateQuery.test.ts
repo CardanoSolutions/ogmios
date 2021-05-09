@@ -129,6 +129,19 @@ describe('Local state queries', () => {
 
         await client.release()
       })
+
+      it('can handle concurrent requests ', async () => {
+        const client = await createStateQueryClient({ connection })
+        const [currentEpoch, eraStart, ledgerTip] = await Promise.all([
+          client.currentEpoch(),
+          client.eraStart(),
+          client.ledgerTip()
+        ])
+        expect(currentEpoch).toBeDefined()
+        expect(eraStart).toBeDefined()
+        expect(ledgerTip).toBeDefined()
+        await client.release()
+      })
     })
   })
 

@@ -1,8 +1,11 @@
-import { nanoid } from 'nanoid'
 import { EraMismatch, Ogmios, PoolDistribution } from '@cardano-ogmios/schema'
-import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
-import { baseRequest } from '../../Request'
-import { ensureSocket, InteractionContext } from '../../Connection'
+import {
+  EraMismatchError,
+  QueryUnavailableInCurrentEraError,
+  UnknownResultError
+} from '../../errors'
+import { InteractionContext } from '../../Connection'
+import { Query } from '../Query'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[stakeDistribution]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
@@ -10,13 +13,18 @@ const isEraMismatch = (result: Ogmios['QueryResponse[stakeDistribution]']['resul
 const isPoolDistribution = (result: Ogmios['QueryResponse[stakeDistribution]']['result']): result is PoolDistribution =>
   Object.values(result as PoolDistribution)[0].stake !== undefined
 
-export const stakeDistribution = (context?: InteractionContext): Promise<PoolDistribution> => {
-  return ensureSocket<PoolDistribution>((socket) => {
-    return new Promise((resolve, reject) => {
-      const requestId = nanoid(5)
-      socket.once('message', (message: string) => {
-        const response: Ogmios['QueryResponse[stakeDistribution]'] = JSON.parse(message)
-        if (response.reflection.requestId !== requestId) { return }
+export const stakeDistribution = (context?: InteractionContext): Promise<PoolDistribution> =>
+  Query<
+    Ogmios['Query'],
+    Ogmios['QueryResponse[stakeDistribution]'],
+    PoolDistribution
+    >({
+      methodName: 'Query',
+      args: {
+        query: 'stakeDistribution'
+      }
+    }, {
+      handler: (response, resolve, reject) => {
         if (response.result === 'QueryUnavailableInCurrentEra') {
           return reject(new QueryUnavailableInCurrentEraError('stakeDistribution'))
         } else if (isPoolDistribution(response.result)) {
@@ -28,17 +36,5 @@ export const stakeDistribution = (context?: InteractionContext): Promise<PoolDis
         } else {
           return reject(new UnknownResultError(response.result))
         }
-      })
-      socket.send(JSON.stringify({
-        ...baseRequest,
-        methodname: 'Query',
-        args: {
-          query: 'stakeDistribution'
-        },
-        mirror: { requestId }
-      } as Ogmios['Query']))
-    })
-  },
-  context
-  )
-}
+      }
+    }, context)
