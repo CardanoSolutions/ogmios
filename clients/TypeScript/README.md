@@ -1,9 +1,9 @@
 # Cardano Ogmios TypeScript Client Packages
-A Yarn Workspace containing three packages:
+A Yarn Workspace containing three packages, each published to the npm.org registry:
 
-- [@cardano-ogmios/client](./packages/client/README.md)
-- [@cardano-ogmios/schema](./packages/schema/README.md)
-- [@cardano-ogmios/repl](./packages/repl/README.md)
+- [@cardano-ogmios/client](./packages/client)
+- [@cardano-ogmios/schema](./packages/schema)
+- [@cardano-ogmios/repl](./packages/repl)
 
 ## Development
 #### Install and Build
