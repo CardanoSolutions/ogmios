@@ -11,6 +11,9 @@ import {
   InsufficientGenesisSignatures,
   InvalidMetadata,
   InvalidWitnesses,
+  MirNegativeTransferNotCurrentlyAllowed,
+  MirProducesNegativeUpdate,
+  MirTransferNotCurrentlyAllowed,
   MissingAtLeastOneInputUtxo,
   MissingScriptWitnesses,
   MissingTxMetadata,
@@ -27,7 +30,8 @@ import {
   ScriptWitnessNotValidating,
   StakeKeyAlreadyRegistered,
   StakeKeyNotRegistered,
-  StakePoolNotRegistered, SubmitFail,
+  StakePoolNotRegistered,
+  SubmitFail,
   TooLateForMir,
   TooManyAssetsInOutput,
   TriesToForgeAda,
@@ -78,6 +82,9 @@ type SubmitTxErrorShelley =
   | AlreadyDelegating
   | InsufficientFundsForMir
   | TooLateForMir
+  | MirTransferNotCurrentlyAllowed
+  | MirNegativeTransferNotCurrentlyAllowed
+  | MirProducesNegativeUpdate
   | DuplicateGenesisVrf
   | NonGenesisVoters
   | UpdateWrongEpoch
@@ -437,6 +444,36 @@ export const errors = {
         public constructor (rawError: TooLateForMir) {
           super()
           this.message = JSON.stringify(rawError.tooLateForMir, null, 2)
+        }
+      }
+    },
+    MirTransferNotCurrentlyAllowed: {
+      assert: (item: SubmitTxErrorShelley): item is MirTransferNotCurrentlyAllowed =>
+        (item as MirTransferNotCurrentlyAllowed) === 'mirTransferNotCurrentlyAllowed',
+      Error: class MirTransferNotCurrentlyAllowedError extends CustomError {
+        public constructor (rawError: MirTransferNotCurrentlyAllowed) {
+          super()
+          this.message = JSON.stringify(rawError, null, 2)
+        }
+      }
+    },
+    MirNegativeTransferNotCurrentlyAllowed: {
+      assert: (item: SubmitTxErrorShelley): item is MirNegativeTransferNotCurrentlyAllowed =>
+        (item as MirNegativeTransferNotCurrentlyAllowed) === 'mirNegativeTransferNotCurrentlyAllowed',
+      Error: class MirNegativeTransferNotCurrentlyAllowedError extends CustomError {
+        public constructor (rawError: MirNegativeTransferNotCurrentlyAllowed) {
+          super()
+          this.message = JSON.stringify(rawError, null, 2)
+        }
+      }
+    },
+    MirProducesNegativeUpdate: {
+      assert: (item: SubmitTxErrorShelley): item is MirProducesNegativeUpdate =>
+        (item as MirProducesNegativeUpdate) === 'mirProducesNegativeUpdate',
+      Error: class MirProducesNegativeUpdateError extends CustomError {
+        public constructor (rawError: MirProducesNegativeUpdate) {
+          super()
+          this.message = JSON.stringify(rawError, null, 2)
         }
       }
     },
