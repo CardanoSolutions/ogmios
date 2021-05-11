@@ -27,7 +27,7 @@ $ docker-compose up
 To build the Ogmios image from sources, pass the `--build` flag. This is useful if you need a different version than the latest one available on Dockerhub.  
 
 {{% notice tip %}}
-If you're building locally using `docker build`, make sure to leverage existing cache steps from Dockerhub using `--cache-from ktorz/ogmios:latest`. A full build of Ogmios without cache may take up to 45 minutes! 
+If you're building locally using `docker build`, make sure to leverage existing cache steps from Docker Hub setting the env `DOCKER_BUILDKIT=1` and passing `--cache-from ktorz/ogmios:latest`. For `docker-compose build` or `docker-compose up --build`, **also** set`COMPOSE_DOCKER_CLI_BUILD=1`. A full build of Ogmios without cache may take up to 45 minutes!
 {{% /notice %}}
 
 ### Configuration
