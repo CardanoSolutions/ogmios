@@ -1,1 +1,1 @@
-../../../server/CHANGELOG.md
+../../../CHANGELOG.md
