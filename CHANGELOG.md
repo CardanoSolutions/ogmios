@@ -5,6 +5,30 @@ chapter: false
 pre: "<b>5. </b>"
 ---
 
+### edge / unreleased
+
+#### Added
+
+- Integrated with the Cardano eco-system corresponding to cardano-node@1.26.2. Bumped the docker-compose installation accordingly.
+
+- Three new possible errors from the transaction submission coming with cardano-node@1.26.2:
+
+  - `mirTransferNotCurrentlyAllowed`
+  - `mirNegativeTransferNotCurrentlyAllowed`
+  - `mirProducesNegativeUpdate`
+
+  These errors are related to transactions issuing MIR certificates which can only be done by 
+  genesis delegates. So this change should not impact any 'standard' user. 
+
+#### Changed
+
+- The `moveInstantaneousRewards` certificates have a new optional field `value` and not only a `rewards` map as before. 
+  When `value` is present, it signifies that rewards are moved to the other pot. 
+
+#### Removed
+
+ø
+
 ### [3.2.0] - 2021-05-09
 
 #### Added
