@@ -37,7 +37,7 @@ module Ogmios.Data.Json.Query
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Api.Eras
+import Cardano.Api
     ( ShelleyBasedEra (..) )
 import Cardano.Ledger.Crypto
     ( Crypto )

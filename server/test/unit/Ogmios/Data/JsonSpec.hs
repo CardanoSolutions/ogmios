@@ -144,7 +144,9 @@ import Test.QuickCheck
     )
 import Test.QuickCheck.Arbitrary.Generic
     ( genericArbitrary )
-import Test.Shelley.Spec.Ledger.Serialisation.EraIndepGenerators
+import Test.QuickCheck.Hedgehog
+    ( hedgehog )
+import Test.Shelley.Spec.Ledger.Serialisation.Generators.Genesis
     ( genPParams )
 import Type.Reflection
     ( typeRep )
@@ -642,7 +644,7 @@ genPParamsResult _ _ =
             Just Refl{} ->
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> genPParams (Proxy @era))
+                    , (10, Right <$> hedgehog (genPParams @era))
                     ]
             Nothing ->
                 Nothing
@@ -651,7 +653,7 @@ genPParamsResult _ _ =
             Just Refl{} ->
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> genPParams (Proxy @era))
+                    , (10, Right <$> hedgehog (genPParams @era))
                     ]
             Nothing ->
                 Nothing
@@ -660,7 +662,7 @@ genPParamsResult _ _ =
             Just Refl{} ->
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> genPParams (Proxy @era))
+                    , (10, Right <$> hedgehog (genPParams @era))
                     ]
             Nothing ->
                 Nothing

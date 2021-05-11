@@ -17,6 +17,7 @@ ghc-options:
     - -Wincomplete-uni-patterns
     - -Wpartial-fields
     - -Wredundant-constraints
+    - -Wunused-packages
 
   executable: &ghc-options-executable
     - -Wall                         # ^
@@ -25,7 +26,8 @@ ghc-options:
     - -Wincomplete-record-updates   # | Same as &ghc-options-lib
     - -Wincomplete-uni-patterns     # |
     - -Wpartial-fields              # |
-    - -Wredundant-constraints       # v
+    - -Wredundant-constraints       # |
+    - -Wunused-packages             # v
     - -threaded
     - -rtsopts
 
@@ -36,7 +38,8 @@ ghc-options:
     - -Wincomplete-record-updates   # | Same as &ghc-options-lib
     - -Wincomplete-uni-patterns     # |
     - -Wpartial-fields              # |
-    - -Wredundant-constraints       # v
+    - -Wredundant-constraints       # |
+    - -Wunused-packages             # v
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N

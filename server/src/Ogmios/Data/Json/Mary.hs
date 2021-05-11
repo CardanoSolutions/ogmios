@@ -30,6 +30,7 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 import qualified Cardano.Ledger.AuxiliaryData as MA
 import qualified Cardano.Ledger.Era as Era
 import qualified Cardano.Ledger.Mary.Value as MA
+import qualified Cardano.Ledger.Shelley.Constraints as Sh
 import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
 import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
 import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
@@ -93,19 +94,20 @@ encodePParams' =
     Shelley.encodePParams'
 
 encodeProposedPPUpdates
-    :: Sh.ProposedPPUpdates era
+    :: (Sh.PParamsDelta era ~ Sh.PParamsUpdate era)
+    => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates =
     Shelley.encodeProposedPPUpdates
 
 encodeTx
-    :: Crypto crypto
+    :: forall crypto. (Crypto crypto)
     => SerializationMode
     -> Sh.Tx (MaryEra crypto)
     -> Json
 encodeTx mode x = encodeObjectWithMode mode
     [ ( "id"
-      , Shelley.encodeTxId (Sh.txid (Sh._body x))
+      , Shelley.encodeTxId (Sh.txid @(MaryEra crypto) (Sh._body x))
       )
     , ( "body"
       , encodeTxBody (Sh._body x)

@@ -23,6 +23,7 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 
 import qualified Cardano.Ledger.AuxiliaryData as MA
 import qualified Cardano.Ledger.Era as Era
+import qualified Cardano.Ledger.Shelley.Constraints as Sh
 import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
 import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
 import qualified Cardano.Ledger.ShelleyMA.Timelocks as MA
@@ -87,7 +88,8 @@ encodePParams' =
     Shelley.encodePParams'
 
 encodeProposedPPUpdates
-    :: Sh.ProposedPPUpdates era
+    :: (Sh.PParamsDelta era ~ Sh.PParamsUpdate era)
+    => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates =
     Shelley.encodeProposedPPUpdates
@@ -111,13 +113,13 @@ encodeTimelock = \case
         encodeObject [( "startsAt", encodeSlotNo s )]
 
 encodeTx
-    :: Crypto crypto
+    :: forall crypto. (Crypto crypto)
     => SerializationMode
     -> Sh.Tx (AllegraEra crypto)
     -> Json
 encodeTx mode x = encodeObjectWithMode mode
     [ ( "id"
-      , Shelley.encodeTxId (Sh.txid (Sh._body x))
+      , Shelley.encodeTxId (Sh.txid @(AllegraEra crypto) (Sh._body x))
       )
     , ( "body"
       , encodeTxBody (Sh._body x)
@@ -221,8 +223,8 @@ encodeUtxoFailure = \case
     MA.ValueNotConservedUTxO consumed produced ->
         encodeObject
             [ ( "valueNotConserved", encodeObject
-                [ ( "consumed", Shelley.encodeDeltaCoin consumed )
-                , ( "produced", Shelley.encodeDeltaCoin produced )
+                [ ( "consumed", Shelley.encodeCoin consumed )
+                , ( "produced", Shelley.encodeCoin produced )
                 ]
               )
             ]

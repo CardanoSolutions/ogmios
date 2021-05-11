@@ -1999,15 +1999,17 @@
         }
       , { "type": "object"
         , "title": "moveInstantaneousRewards"
+        , "description": "Either `value` or `rewards` will be present, but never both."
         , "additionalProperties": false
         , "required": ["moveInstantaneousRewards"]
         , "properties":
           { "moveInstantaneousRewards":
             { "type": "object"
             , "additionalProperties": false
-            , "required": ["rewards","pot"]
+            , "required": ["pot"]
             , "properties":
               { "rewards": { "$ref": "#/definitions/Rewards" }
+              , "value":  { "$ref": "#/definitions/Lovelace" }
               , "pot": { "$ref": "#/definitions/RewardPot" }
               }
             }
@@ -2520,8 +2522,8 @@
 
   , "Rewards":
     { "type": "object"
-    , "additionalProperties": { "$ref": "#/definitions/Lovelace" }
-    , "propertyNames": "[0-9a-f]+$"
+    , "additionalProperties": { "$ref": "#/definitions/LovelaceDelta" }
+    , "propertyNames": "[0-9a-f]{56}$"
     , "examples":
       [ { "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5": 123456789
         }
@@ -2717,6 +2719,9 @@
         , { "$ref": "#/definitions/SubmitTxError[alreadyDelegating]" }
         , { "$ref": "#/definitions/SubmitTxError[insufficientFundsForMir]" }
         , { "$ref": "#/definitions/SubmitTxError[tooLateForMir]" }
+        , { "$ref": "#/definitions/SubmitTxError[mirTransferNotCurrentlyAllowed]" }
+        , { "$ref": "#/definitions/SubmitTxError[mirNegativeTransferNotCurrentlyAllowed]" }
+        , { "$ref": "#/definitions/SubmitTxError[mirProducesNegativeUpdate]" }
         , { "$ref": "#/definitions/SubmitTxError[duplicateGenesisVrf]" }
         , { "$ref": "#/definitions/SubmitTxError[nonGenesisVoters]" }
         , { "$ref": "#/definitions/SubmitTxError[updateWrongEpoch]" }
@@ -3219,6 +3224,24 @@
           }
         }
       }
+    }
+
+  , "SubmitTxError[mirTransferNotCurrentlyAllowed]":
+    { "type": "string"
+    , "title": "mirTransferNotCurrentlyAllowed"
+    , "enum": [ "mirTransferNotCurrentlyAllowed" ]
+    }
+
+  , "SubmitTxError[mirNegativeTransferNotCurrentlyAllowed]":
+    { "type": "string"
+    , "title": "mirNegativeTransferNotCurrentlyAllowed"
+    , "enum": [ "mirNegativeTransferNotCurrentlyAllowed" ]
+    }
+
+  , "SubmitTxError[mirProducesNegativeUpdate]":
+    { "type": "string"
+    , "title": "mirProducesNegativeUpdate"
+    , "enum": [ "mirProducesNegativeUpdate" ]
     }
 
   , "SubmitTxError[duplicateGenesisVrf]":

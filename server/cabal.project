@@ -1,4 +1,4 @@
-index-state: 2021-01-10T00:00:00Z
+index-state: 2021-03-15T00:00:00Z
 
 packages:
   ./
@@ -35,8 +35,8 @@ package cardano-crypto-praos
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/cardano-base
-  tag: b364d925e0a72689ecba40dd1f4899f76170b894
-  --sha256: 0igb4gnzlwxy1h40vy5s1aysmaa04wypxn7sn67qy6din7ysmad3
+  tag: 101e7752cf4b23fd0b411736f523b8f6c43f6bc2
+  --sha256: 04qnq9a3mhfqsisln2sygfm0xkkvj8f8hdzxm1qn2ss0mfsfzx8y
   subdir:
     binary
     binary/test
@@ -54,8 +54,8 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/cardano-ledger-specs
-  tag: 097890495cbb0e8b62106bcd090a5721c3f4b36f
-  --sha256: 0i3y9n0rsyarvhfqzzzjccqnjgwb9fbmbs6b7vj40afjhimf5hcj
+  tag: 2e0e7b625492e5e0182464247f4c26d6949ab6f7
+  --sha256: 14affgsf0yl0y5mf9c5r9d9jvah2crrvcslq5cc2h4wii1agl07z
   subdir:
     byron/chain/executable-spec
     byron/crypto
@@ -73,9 +73,9 @@ source-repository-package
 
 source-repository-package
   type: git
-  location: https://github.com/KtorZ/cardano-node
-  tag: 1777493c3b353f75ca796b78484d4b2da5ea5864
-  --sha256: 0qka3nikahavs36cjnv4mnps1s0wa1jb7pnb8rzrmkxm2x4cg27n
+  location: https://github.com/input-output-hk/cardano-node
+  tag: 3531289c9f79eab7ac5d3272ce6e6821504fec4c
+  --sha256: 17zr2lhnrly6gqb1hxf3cjwfw1iz8s85hhhdiivb5ax7fkrrp8pp
   subdir:
     cardano-api
     cardano-config
@@ -97,6 +97,12 @@ source-repository-package
 
 source-repository-package
   type: git
+  location: https://github.com/input-output-hk/hedgehog-extras
+  tag: 8bcd3c9dc22cc44f9fcfe161f4638a384fc7a187
+  --sha256: 12viwpahjdfvlqpnzdgjp40nw31rvyznnab1hml9afpaxd6ixh70
+
+source-repository-package
+  type: git
   location: https://github.com/KtorZ/hjsonpointer
   tag: 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e
   --sha256: 0nf24m8kj5m6x4x5cawb194rzmir0wbz66jjd97sj6ajvsj9jqcp
@@ -110,8 +116,8 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/iohk-monitoring-framework
-  tag: 563e79f28c6da5c547463391d4c58a81442e48db
-  --sha256: 1is18h9kk8j16my89q76nihvapiiff3jl8777vk7c4wl2h4zry2w
+  tag: f6ab0631275d04dff1b990283bbf9671093e7505
+  --sha256: 0hknkpjmfgdlcag9p0z0xspxm7nxl696ajbnafi1b0vzxnkiyhdx
   subdir:
     contra-tracer
     iohk-monitoring
@@ -124,9 +130,9 @@ source-repository-package
 
 source-repository-package
   type: git
-  location: https://github.com/KtorZ/ouroboros-network
-  tag: 7f8daad43dbb0ae97fe24d36eaff857f63cf5711
-  --sha256: 179046651gx6jh169fvdgmkd49gnib76rnjmp0ilnvg164bldzv9
+  location: https://github.com/input-output-hk/ouroboros-network
+  tag: 7f90c8c59ffc7d61a4e161e886d8962a9c26787a
+  --sha256: 0hnw6hvbyny3wniaqw8d37l4ysgp8xrq5d84fapxfm525a4hfs0x
   subdir:
     io-sim
     io-sim-classes
@@ -160,3 +166,4 @@ constraints:
   , libsystemd-journal >= 1.4.4
   , systemd >= 2.3.0
   , network >= 3.1.1.0
+  , relude == 0.7.0.0
