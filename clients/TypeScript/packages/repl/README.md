@@ -1,10 +1,21 @@
 # Cardano Ogmios TypeScript Client Packages - REPL
 
 A Node.js REPL which exposes the client behaviour in a terminal. Loaded into the context are
-the client builder functions, isolated query functions, and an instance of`ChainSyncClient` as
+the client builder functions, isolated query functions, and an instance of [ChainSyncClient] as
 `chainSync` with handlers to log the returned data. On exit the chainSync instance is shutdown.
 Optionally pass `--host` and `--port` arguments to specify the Ogmios server connection.
 
+## Quick Start
+Download and run static package from the [latest release] for your environment.
+
+## Build From Source
+See instructions in [Workspace root]
+
+[ChainSyncClient]: ../client/src/ChainSync/ChainSyncClient.ts
+[latest release]: https://github.com/KtorZ/cardano-ogmios/releases
+[Workspace root]: ../..
+
+## Example
 ``` js
 ogmios> await currentEpoch()
 256
