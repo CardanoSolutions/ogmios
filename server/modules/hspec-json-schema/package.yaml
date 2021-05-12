@@ -31,7 +31,6 @@ library:
     - ansi-wl-pprint
     - hjsonschema
     - hjsonpointer
-    - hspec
     - QuickCheck
     - scientific
     - text

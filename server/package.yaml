@@ -41,12 +41,10 @@ library:
     - -O2
   dependencies:
     - aeson
-    - async
     - base16
     - base64
     - base58-bytestring
     - bech32
-    - bech32-th
     - bytestring
     - cardano-api
     - cardano-binary
@@ -54,7 +52,7 @@ library:
     - cardano-crypto
     - cardano-crypto-class
     - cardano-crypto-wrapper
-    - cardano-ledger
+    - cardano-ledger-byron
     - cardano-ledger-shelley-ma
     - cardano-prelude
     - cardano-slotting
@@ -135,11 +133,9 @@ tests:
     - ouroboros-consensus-cardano-test
     - ouroboros-consensus-shelley
     - ouroboros-network
-    - memory
     - QuickCheck
     - relude
     - shelley-spec-ledger
     - shelley-spec-ledger-test
-    - time
     build-tools:
     - hspec-discover

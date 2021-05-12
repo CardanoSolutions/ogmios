@@ -2,6 +2,12 @@ name: _
 
 resolver: lts-17.6
 
+flags:
+  # Bundle VRF crypto in libsodium and do not rely on an external fork to have it.
+  # This still requires the host system to have the 'standard' libsodium installed.
+  cardano-crypto-praos:
+    external-libsodium-vrf: false
+
 packages:
 - async-timer-0.2.0.0
 - base16-bytestring-1.0.1.0
@@ -31,7 +37,7 @@ packages:
 - Win32-2.6.2.0
 
 - git: https://github.com/input-output-hk/cardano-base
-  commit: b364d925e0a72689ecba40dd1f4899f76170b894
+  commit: 101e7752cf4b23fd0b411736f523b8f6c43f6bc2
   subdirs:
   - binary
   - binary/test
@@ -43,15 +49,8 @@ packages:
 - git: https://github.com/input-output-hk/cardano-crypto
   commit: f73079303f663e028288f9f4a9e08bcca39a923e
 
-# commit 097890495cbb0e8b62106bcd090a5721c3f4b36f
-# Merge: e392f9d9 b23e2006
-# Author: Jared Corduan <jared.corduan@iohk.io>
-# Date:   Wed Jan 20 13:40:27 2021 -0500
-#
-#   Merge pull request #2107 from input-output-hk/better-min-utxo
-#
 - git: https://github.com/input-output-hk/cardano-ledger-specs
-  commit: 097890495cbb0e8b62106bcd090a5721c3f4b36f
+  commit: 2e0e7b625492e5e0182464247f4c26d6949ab6f7
   subdirs:
   - byron/chain/executable-spec
   - byron/crypto
@@ -67,24 +66,44 @@ packages:
   - shelley/chain-and-ledger/executable-spec
   - shelley/chain-and-ledger/shelley-spec-ledger-test
 
+- git: https://github.com/input-output-hk/cardano-node
+  commit: 3531289c9f79eab7ac5d3272ce6e6821504fec4c
+  subdirs:
+    - cardano-api
+    - cardano-config
+
+- git: https://github.com/input-output-hk/cardano-prelude
+  commit: ee4e7b547a991876e6b05ba542f4e62909f4a571
+  subdirs:
+  - cardano-prelude
+  - cardano-prelude-test
+
 - git: https://github.com/input-output-hk/goblins
   commit: cde90a2b27f79187ca8310b6549331e59595e7ba
 
-# commit 7f8daad43dbb0ae97fe24d36eaff857f63cf5711 (HEAD -> 1.25.1)
-# Author: KtorZ <matthias.benkort@gmail.com>
-# Date:   Sat Apr 25 00:17:09 2020 +0200
-#
-#     makes it possible to run an effect in the first callback of 'CollectResponse'
-#
-#     A typical client would here want to be able to run extra computation in
-#     order to carry on and do whatever it needs to do to collect or constuct
-#     the next request to send. Being restricted to only pure computation
-#     here makes it fairly hard to pipelined another request unless the
-#     request can be constructed out of thin air or, has already been
-#     collected and buffered upfront.
-#
-- git: https://github.com/KtorZ/ouroboros-network
-  commit: 7f8daad43dbb0ae97fe24d36eaff857f63cf5711
+- git: https://github.com/input-output-hk/hedgehog-extras
+  commit: 8bcd3c9dc22cc44f9fcfe161f4638a384fc7a187
+
+- git: https://github.com/KtorZ/hjsonpointer
+  commit: 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e
+
+- git: https://github.com/KtorZ/hjsonschema
+  commit: fde6e676f79f3f3320a558f20492ad816a2543a7
+
+- git: https://github.com/input-output-hk/iohk-monitoring-framework
+  commit: f6ab0631275d04dff1b990283bbf9671093e7505
+  subdirs:
+  - contra-tracer
+  - iohk-monitoring
+  - plugins/backend-aggregation
+  - plugins/backend-ekg
+  - plugins/backend-monitoring
+  - plugins/backend-trace-forwarder
+  - plugins/scribe-systemd
+  - tracer-transformers
+
+- git: https://github.com/input-output-hk/ouroboros-network
+  commit: 7f90c8c59ffc7d61a4e161e886d8962a9c26787a
   subdirs:
     - io-sim
     - io-sim-classes
@@ -104,58 +123,5 @@ packages:
     - typed-protocols-examples
     - Win32-network
 
-# commit c4b23254e28204a5ac1e91bef4a7d4d5fbdf6837 (HEAD -> 1.25.1)
-# Author: KtorZ <matthias.benkort@gmail.com>
-# Date:   Sun Oct 4 18:04:07 2020 +0200
-#
-#     accommodate ClientStAcquiring now requiring an effect
-- git: https://github.com/KtorZ/cardano-node
-  commit: 1777493c3b353f75ca796b78484d4b2da5ea5864
-  subdirs:
-    - cardano-api
-    - cardano-config
-
-- git: https://github.com/input-output-hk/cardano-prelude
-  commit: ee4e7b547a991876e6b05ba542f4e62909f4a571
-  subdirs:
-  - cardano-prelude
-  - cardano-prelude-test
-
-- git: https://github.com/input-output-hk/iohk-monitoring-framework
-  commit: 563e79f28c6da5c547463391d4c58a81442e48db
-  subdirs:
-  - contra-tracer
-  - iohk-monitoring
-  - plugins/backend-aggregation
-  - plugins/backend-ekg
-  - plugins/backend-monitoring
-  - plugins/backend-trace-forwarder
-  - plugins/scribe-systemd
-  - tracer-transformers
-
-# commit 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e (HEAD -> master, origin/master, origin/HEAD)
-# Merge: 766385f 5818f1c
-# Author: Ian Jeffries <ianspiral@gmail.com>
-# Date:   Mon Oct 1 11:38:56 2018 -0400
-#
-#     Merge pull request #6 from hvr/patch-1
-#
-#     Tighten bounds of base
-- git: https://github.com/KtorZ/hjsonpointer
-  commit: 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e
-
-# commit fde6e676f79f3f3320a558f20492ad816a2543a7 (HEAD -> master, origin/master, origin/HEAD)
-# Author: Ian Grant Jeffries <mail@ianjeffries.net>
-# Date:   Fri May 1 16:03:10 2020 -0400
-#
-#   Archive
-- git: https://github.com/KtorZ/hjsonschema
-  commit: fde6e676f79f3f3320a558f20492ad816a2543a7
-
-# commit d74b39683792649c01113f40bf57724dcf95c96a (HEAD -> master, origin/master, origin/HEAD)
-# Author: Anupam Jain <ajnsit@gmail.com>
-# Date:   Wed Dec 23 11:33:12 2020 +0530
-#
-#     Remove version bounds to ease maintenance. Switch to LTS 16.12 in stack.yaml.
 - git: https://github.com/KtorZ/wai-routes
   commit: d74b39683792649c01113f40bf57724dcf95c96a

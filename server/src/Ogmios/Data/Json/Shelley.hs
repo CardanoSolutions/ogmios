@@ -28,6 +28,8 @@ import Ouroboros.Consensus.Cardano.Block
     ( ShelleyEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..), ShelleyHash (..) )
+import Shelley.Spec.Ledger.BaseTypes
+    ( StrictMaybe (..) )
 
 import qualified Ogmios.Data.Json.Byron as Byron
 
@@ -41,6 +43,7 @@ import qualified Cardano.Crypto.VRF.Class as CC
 
 import qualified Cardano.Ledger.AuxiliaryData as Sh
 import qualified Cardano.Ledger.Core as Sh.Core
+import qualified Cardano.Ledger.SafeHash as Sh
 import qualified Cardano.Ledger.Shelley.Constraints as Sh
 import qualified Shelley.Spec.Ledger.Address as Sh
 import qualified Shelley.Spec.Ledger.Address.Bootstrap as Sh
@@ -90,7 +93,7 @@ encodeAuxiliaryDataHash
     :: Sh.AuxiliaryDataHash era
     -> Json
 encodeAuxiliaryDataHash =
-    encodeHash . Sh.unsafeAuxiliaryDataHash
+    encodeHash . Sh.extractHash . Sh.unsafeAuxiliaryDataHash
 
 encodeBHeader
     :: Crypto crypto
@@ -288,17 +291,24 @@ encodeDCert = \case
             ]
           )
         ]
-    Sh.DCertMir (Sh.MIRCert pot rewards) -> encodeObject
-        [ ( "moveInstantaneousRewards", encodeObject
-            [ ( "pot"
-              , encodeMIRPot pot
-              )
-            , ( "rewards"
-              , encodeMap stringifyCredential encodeCoin rewards
+    Sh.DCertMir (Sh.MIRCert pot target) ->
+        encodeObject
+            [ ( "moveInstantaneousRewards", encodeObject
+                [ ( "pot"
+                  , encodeMIRPot pot
+                  )
+                , case target of
+                    Sh.StakeAddressesMIR rewards ->
+                        ( "rewards"
+                        , encodeMap stringifyCredential encodeDeltaCoin rewards
+                        )
+                    Sh.SendToOppositePotMIR value ->
+                        ( "value"
+                        , encodeCoin value
+                        )
+                ]
               )
             ]
-          )
-        ]
 
 encodeDelegation
     :: Sh.Delegation era
@@ -394,6 +404,7 @@ encodeDelegFailure = \case
                 ]
               )
             ]
+
     Sh.MIRCertificateTooLateinEpochDELEG currentSlot lastSlot ->
         encodeObject
             [ ( "tooLateForMir", encodeObject
@@ -402,6 +413,25 @@ encodeDelegFailure = \case
                 ]
               )
             ]
+    Sh.MIRTransferNotCurrentlyAllowed ->
+        encodeString "mirTransferNotCurrentlyAllowed"
+
+    Sh.MIRNegativesNotCurrentlyAllowed ->
+        encodeString "mirNegativeTransferNotCurrentlyAllowed"
+
+    Sh.InsufficientForTransferDELEG pot requested size ->
+        encodeObject
+            [ ( "insufficientFundsForMir", encodeObject
+                [ ( "rewardSource", encodeMIRPot pot )
+                , ( "sourceSize", encodeCoin size )
+                , ( "requestedAmount", encodeCoin requested )
+                ]
+              )
+            ]
+
+    Sh.MIRProducesNegativeUpdate ->
+        encodeString "mirProducesNegativeUpdate"
+
     Sh.DuplicateGenesisVRFDELEG vrfHash ->
         encodeObject
             [ ( "duplicateGenesisVrf"
@@ -470,7 +500,7 @@ encodeLedgerFailure = \case
         encodeDelegsFailure e
 
 encodeMetadata
-    :: Sh.Metadata
+    :: Sh.Metadata era
     -> Json
 encodeMetadata (Sh.Metadata blob) = encodeObject
     [ ( "blob"
@@ -732,7 +762,8 @@ encodePrevHash = \case
     Sh.BlockHash h -> encodeHashHeader h
 
 encodeProposedPPUpdates
-    :: Sh.ProposedPPUpdates era
+    :: forall era. (Sh.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
+    => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
     encodeMap stringifyKeyHash (encodePParams' encodeStrictMaybe) m
@@ -832,13 +863,13 @@ encodeStakePoolRelay = \case
         ]
 
 encodeTx
-    :: Crypto crypto
+    :: forall crypto. (Crypto crypto)
     => SerializationMode
     -> Sh.Tx (ShelleyEra crypto)
     -> Json
 encodeTx mode x = encodeObjectWithMode mode
     [ ( "id"
-      , encodeTxId (Sh.txid (Sh._body x))
+      , encodeTxId (Sh.txid @(ShelleyEra crypto) (Sh._body x))
       )
     , ( "body"
       , encodeTxBody (Sh._body x)
@@ -887,10 +918,10 @@ encodeTxBody x = encodeObject
     ]
 
 encodeTxId
-    :: Sh.TxId era
+    :: Sh.TxId crypto
     -> Json
 encodeTxId =
-    encodeHash . Sh._unTxId
+    encodeHash . Sh.extractHash . Sh._unTxId
 
 encodeTxIn
     :: Crypto crypto
@@ -919,7 +950,8 @@ encodeTxOut (Sh.TxOut addr coin) = encodeObject
     ]
 
 encodeUpdate
-    :: Sh.Update era
+    :: forall era. (Sh.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
+    => Sh.Update era
     -> Json
 encodeUpdate (Sh.Update update epoch) = encodeObject
     [ ( "proposal"
@@ -1011,8 +1043,8 @@ encodeUtxoFailure = \case
     Sh.ValueNotConservedUTxO consumed produced ->
         encodeObject
             [ ( "valueNotConserved", encodeObject
-                [ ( "consumed", encodeDeltaCoin consumed )
-                , ( "produced", encodeDeltaCoin produced )
+                [ ( "consumed", encodeCoin consumed )
+                , ( "produced", encodeCoin produced )
                 ]
               )
             ]

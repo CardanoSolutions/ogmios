@@ -98,6 +98,12 @@ export const submitTx = (bytes: string, context?: InteractionContext) =>
                 return new errors.shelley.InsufficientFundsForMir.Error(failure)
               } else if (errors.shelley.TooLateForMir.assert(failure)) {
                 return new errors.shelley.TooLateForMir.Error(failure)
+              } else if (errors.shelley.MirTransferNotCurrentlyAllowed.assert(failure)) {
+                return new errors.shelley.MirTransferNotCurrentlyAllowed.Error(failure)
+              } else if (errors.shelley.MirNegativeTransferNotCurrentlyAllowed.assert(failure)) {
+                return new errors.shelley.MirNegativeTransferNotCurrentlyAllowed.Error(failure)
+              } else if (errors.shelley.MirProducesNegativeUpdate.assert(failure)) {
+                return new errors.shelley.MirProducesNegativeUpdate.Error(failure)
               } else if (errors.shelley.DuplicateGenesisVrf.assert(failure)) {
                 return new errors.shelley.DuplicateGenesisVrf.Error(failure)
               } else if (errors.shelley.NonGenesisVoters.assert(failure)) {

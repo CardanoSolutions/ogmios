@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8810a748db0be13c4d7003b63477b3c6d919877335828e7c04ca5555d64c4a69
+-- hash: c9dd69dfa9313737bf57ada1ea91d1cdde6c2de48bf658f5b3d546d02e05ecbe
 
 name:           cardano-client
 version:        1.0.0
@@ -43,7 +43,7 @@ library
   build-depends:
       base >=4.7 && <5
     , bytestring
-    , cardano-ledger
+    , cardano-ledger-byron
     , cborg
     , containers
     , contra-tracer
