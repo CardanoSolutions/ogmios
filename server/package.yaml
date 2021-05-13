@@ -53,8 +53,8 @@ library:
     - cardano-crypto-class
     - cardano-crypto-wrapper
     - cardano-ledger-byron
+    - cardano-ledger-core
     - cardano-ledger-shelley-ma
-    - cardano-prelude
     - cardano-slotting
     - cborg
     - containers
@@ -85,6 +85,7 @@ library:
     - scientific
     - shelley-spec-ledger
     - small-steps
+    - strict-containers
     - text
     - time
     - time-manager

@@ -4,7 +4,7 @@ cabal-version: 2.0
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ae9bec0e6c1d7d73a31178cd6893593b30a7eebd85f160699a12fee1c619e120
+-- hash: 2bcb05f0341461c98f545690d6a8b2d5f947fb5f559b8588ca4be23e0bf2dc9f
 
 name:           ogmios
 version:        3.2.0
@@ -130,8 +130,8 @@ library
     , cardano-crypto-class
     , cardano-crypto-wrapper
     , cardano-ledger-byron
+    , cardano-ledger-core
     , cardano-ledger-shelley-ma
-    , cardano-prelude
     , cardano-slotting
     , cborg
     , containers
@@ -162,6 +162,7 @@ library
     , scientific
     , shelley-spec-ledger
     , small-steps
+    , strict-containers
     , text
     , time
     , time-manager

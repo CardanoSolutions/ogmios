@@ -77,9 +77,9 @@ import qualified Data.Map.Merge.Strict as Map
 
 import qualified Cardano.Crypto.Hash.Class as CC
 
+import qualified Cardano.Ledger.Coin as Sh
 import qualified Shelley.Spec.Ledger.Address as Sh
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
-import qualified Shelley.Spec.Ledger.Coin as Sh
 import qualified Shelley.Spec.Ledger.Credential as Sh
 import qualified Shelley.Spec.Ledger.Delegation.Certificates as Sh
 import qualified Shelley.Spec.Ledger.Keys as Sh

@@ -42,6 +42,7 @@ import qualified Cardano.Crypto.KES.Class as CC
 import qualified Cardano.Crypto.VRF.Class as CC
 
 import qualified Cardano.Ledger.AuxiliaryData as Sh
+import qualified Cardano.Ledger.Coin as Sh
 import qualified Cardano.Ledger.Core as Sh.Core
 import qualified Cardano.Ledger.SafeHash as Sh
 import qualified Cardano.Ledger.Shelley.Constraints as Sh
@@ -49,7 +50,6 @@ import qualified Shelley.Spec.Ledger.Address as Sh
 import qualified Shelley.Spec.Ledger.Address.Bootstrap as Sh
 import qualified Shelley.Spec.Ledger.BaseTypes as Sh
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
-import qualified Shelley.Spec.Ledger.Coin as Sh
 import qualified Shelley.Spec.Ledger.Credential as Sh
 import qualified Shelley.Spec.Ledger.Delegation.Certificates as Sh
 import qualified Shelley.Spec.Ledger.Genesis as Sh
@@ -63,7 +63,6 @@ import qualified Shelley.Spec.Ledger.STS.Deleg as Sh
 import qualified Shelley.Spec.Ledger.STS.Delegs as Sh
 import qualified Shelley.Spec.Ledger.STS.Delpl as Sh
 import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
-import qualified Shelley.Spec.Ledger.STS.Ledgers as Sh
 import qualified Shelley.Spec.Ledger.STS.Pool as Sh
 import qualified Shelley.Spec.Ledger.STS.Ppup as Sh
 import qualified Shelley.Spec.Ledger.STS.Utxo as Sh
@@ -120,7 +119,7 @@ encodeBHeader mode (Sh.BHeader hBody hSig) = encodeObjectWithMode mode
       , encodeNatural (Sh.bsize hBody)
       )
     , ( "blockHash"
-      , encodeHashBody (Sh.bhash hBody)
+      , encodeHash (Sh.bhash hBody)
       )
     ]
     [ ( "signature"
@@ -462,12 +461,6 @@ encodeHash
 encodeHash (CC.UnsafeHash h) =
     encodeByteStringBase16 (fromShort h)
 
-encodeHashBody
-    :: Sh.HashBBody crypto
-    -> Json
-encodeHashBody =
-    encodeHash . Sh.unHashBody
-
 encodeHashHeader
     :: Sh.HashHeader crypto
     -> Json
@@ -491,12 +484,12 @@ encodeKESPeriod =
 
 encodeLedgerFailure
     :: Crypto crypto
-    => Sh.LedgersPredicateFailure (ShelleyEra crypto)
+    => Sh.LedgerPredicateFailure (ShelleyEra crypto)
     -> Json
 encodeLedgerFailure = \case
-    Sh.LedgerFailure (Sh.UtxowFailure e) ->
+    Sh.UtxowFailure e ->
         encodeUtxowFailure encodeUtxoFailure e
-    Sh.LedgerFailure (Sh.DelegsFailure e) ->
+    Sh.DelegsFailure e ->
         encodeDelegsFailure e
 
 encodeMetadata
@@ -647,6 +640,14 @@ encodePoolFailure = \case
         encodeObject
             [ ( "poolCostTooSmall", encodeObject
                 [ ( "minimumCost", encodeCoin minimumCost )
+                ]
+              )
+            ]
+    Sh.WrongNetworkPOOL _specified expected poolId ->
+        encodeObject
+            [ ( "networkMismatch", encodeObject
+                [ ( "expectedNetwork", encodeNetwork expected )
+                , ( "invalidPoolRegistration", encodePoolId poolId )
                 ]
               )
             ]
@@ -869,23 +870,23 @@ encodeTx
     -> Json
 encodeTx mode x = encodeObjectWithMode mode
     [ ( "id"
-      , encodeTxId (Sh.txid @(ShelleyEra crypto) (Sh._body x))
+      , encodeTxId (Sh.txid @(ShelleyEra crypto) (Sh.body x))
       )
     , ( "body"
-      , encodeTxBody (Sh._body x)
+      , encodeTxBody (Sh.body x)
       )
     , ( "metadata", encodeObject
         [ ( "hash"
-          , encodeStrictMaybe encodeAuxiliaryDataHash (Sh._mdHash (Sh._body x))
+          , encodeStrictMaybe encodeAuxiliaryDataHash (Sh._mdHash (Sh.body x))
           )
         , ( "body"
-          , encodeStrictMaybe encodeMetadata (Sh._metadata x)
+          , encodeStrictMaybe encodeMetadata (Sh.auxiliaryData x)
           )
         ]
       )
     ]
     [ ( "witness"
-      , encodeWitnessSet (Sh._witnessSet x)
+      , encodeWitnessSet (Sh.wits x)
       )
     ]
 

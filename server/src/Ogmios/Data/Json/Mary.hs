@@ -37,7 +37,6 @@ import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
 import qualified Shelley.Spec.Ledger.PParams as Sh
 import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
-import qualified Shelley.Spec.Ledger.STS.Ledgers as Sh
 import qualified Shelley.Spec.Ledger.Tx as Sh
 import qualified Shelley.Spec.Ledger.UTxO as Sh
 
@@ -60,12 +59,12 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
 
 encodeLedgerFailure
     :: Crypto crypto
-    => Sh.LedgersPredicateFailure (MaryEra crypto)
+    => Sh.LedgerPredicateFailure (MaryEra crypto)
     -> Json
 encodeLedgerFailure = \case
-    Sh.LedgerFailure (Sh.UtxowFailure e)  ->
+    Sh.UtxowFailure e  ->
         Shelley.encodeUtxowFailure encodeUtxoFailure e
-    Sh.LedgerFailure (Sh.DelegsFailure e) ->
+    Sh.DelegsFailure e ->
         Shelley.encodeDelegsFailure e
 
 encodeMaryBlock
@@ -107,23 +106,23 @@ encodeTx
     -> Json
 encodeTx mode x = encodeObjectWithMode mode
     [ ( "id"
-      , Shelley.encodeTxId (Sh.txid @(MaryEra crypto) (Sh._body x))
+      , Shelley.encodeTxId (Sh.txid @(MaryEra crypto) (Sh.body x))
       )
     , ( "body"
-      , encodeTxBody (Sh._body x)
+      , encodeTxBody (Sh.body x)
       )
     , ( "metadata", encodeObject
         [ ( "hash"
-          , encodeStrictMaybe Shelley.encodeAuxiliaryDataHash (adHash (Sh._body x))
+          , encodeStrictMaybe Shelley.encodeAuxiliaryDataHash (adHash (Sh.body x))
           )
         , ( "body"
-          , encodeStrictMaybe encodeAuxiliaryData (Sh._metadata x)
+          , encodeStrictMaybe encodeAuxiliaryData (Sh.auxiliaryData x)
           )
         ]
       )
     ]
     [ ( "witness"
-      , encodeWitnessSet (Sh._witnessSet x)
+      , encodeWitnessSet (Sh.wits x)
       )
     ]
   where
