@@ -1,8 +1,8 @@
-name: W.I.P
+name: Network Synchronization
 
 on:
-  push:
-    branches: [ "KtorZ/docker" ]
+  schedule:
+    - cron: '50 22 * * *'
 
 jobs:
   server:
@@ -30,10 +30,10 @@ jobs:
 
     - name: 🖧  Synchronize Node
       env:
-        NETWORK: ${{ matrix.network }}
-        SYNCTIME: 60
+        NETWORK: ${{ matrix.network }} # NOTE: 'NETWORK' is used in the compose file.
+        SYNCTIME: 1800
       run: |
         docker-compose up -d cardano-node
         sleep $SYNCTIME
-        docker-compose logs cardano-node
+        docker-compose logs --no-log-prefix cardano-node
         docker-compose down
