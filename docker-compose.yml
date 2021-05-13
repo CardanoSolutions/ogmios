@@ -2,7 +2,7 @@ version: "3.5"
 
 services:
   cardano-node:
-    image: inputoutput/cardano-node:1.26.2
+    image: inputoutput/cardano-node:1.27.0
     restart: on-failure
     environment:
       - NETWORK=${NETWORK:-mainnet}
