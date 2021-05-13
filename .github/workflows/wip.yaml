@@ -1,0 +1,19 @@
+name: W.I.P
+
+on:
+  push:
+    branches: [ "KtorZ/docker" ]
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v2.3.3
+
+    - name: Setup
+      run: |
+        docker --version
+        docker pull ktorz/ogmios:latest
+        docker run --rm ktorz/ogmios:latest -- --help
