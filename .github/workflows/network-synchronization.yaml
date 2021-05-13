@@ -1,0 +1,39 @@
+name: Network Synchronization
+
+on:
+  schedule:
+    - cron: '50 22 * * *'
+
+jobs:
+  server:
+    strategy:
+      matrix:
+        network: [ testnet ]
+
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v2.3.3
+
+    - name: 💾 Cache Volumes
+      id: cache
+      uses: actions/cache@v2.1.1
+      with:
+        path: ./data
+        key: cardano-node-${{ matrix.network }}-nightly
+
+    - name: 🩹 Overwrite docker-compose.yml
+      shell: bash
+      run: |
+        sed -i "s@node-db:/data@./data:/data@" docker-compose.yml
+
+    - name: 🖧  Synchronize Node
+      env:
+        NETWORK: ${{ matrix.network }} # NOTE: 'NETWORK' is used in the compose file.
+        SYNCTIME: 1800
+      run: |
+        docker-compose up -d cardano-node
+        sleep $SYNCTIME
+        docker-compose logs --no-log-prefix cardano-node
+        docker-compose down
