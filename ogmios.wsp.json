@@ -2968,20 +2968,33 @@
     , "required": [ "networkMismatch" ]
     , "properties":
       { "networkMismatch":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "expectedNetwork" ]
-        , "properties":
-          { "expectedNetwork": { "$ref": "#/definitions/Network" }
-          , "invalidAddresses":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/Address" }
+        { "oneOf":
+          [ { "type": "object"
+            , "title": "In address"
+            , "additionalProperties": false
+            , "required": [ "expectedNetwork" ]
+            , "properties":
+              { "expectedNetwork": { "$ref": "#/definitions/Network" }
+              , "invalidAddresses":
+                { "type": "array"
+                , "items": { "$ref": "#/definitions/Address" }
+                }
+              , "invalidRewardAccounts":
+                { "type": "array"
+                , "items": { "$ref": "#/definitions/RewardAccount" }
+                }
+              }
             }
-          , "invalidRewardAccounts":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/RewardAccount" }
+          , { "type": "object"
+            , "title": "In pool certificate"
+            , "additionalProperties": false
+            , "required": [ "expectedNetwork", "invalidPoolRegistration" ]
+            , "properties":
+              { "expectedNetwork": { "$ref": "#/definitions/Network" }
+              , "invalidPoolRegistration": { "$ref": "#/definitions/PoolId" }
+              }
             }
-          }
+          ]
         }
       }
     }
