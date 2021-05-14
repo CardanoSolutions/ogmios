@@ -22,10 +22,21 @@ let
 in {
   inherit src;
 
-  ogmiosHaskellPackages = callPackage ./haskell.nix {
+  ogmiosProject = callPackage ./haskell.nix {
     inherit compiler gitrev src;
   };
 
+  ogmiosHaskellPackages = ogmiosProject.hsPkgs;
+
   inherit (ogmiosHaskellPackages.ogmios.components.exes)
     ogmios;
+
+  scripts = import ./scripts.nix {
+    inherit pkgs;
+  };
+
+  cabal = haskell-nix.tool compiler "cabal" {
+    version = "latest";
+    inherit (ogmiosProject) index-state;
+  };
 }

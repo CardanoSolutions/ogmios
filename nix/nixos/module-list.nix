@@ -1,0 +1,3 @@
+[
+  ./cardano-ogmios-service.nix
+]
