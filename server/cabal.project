@@ -32,6 +32,12 @@ package cryptonite
 package cardano-crypto-praos
   flags: +external-libsodium-vrf
 
+
+-- The "cabal" wrapper script provided by nix-shell will cut off / restore the remainder of this file
+-- in order to force usage of nix provided dependencies for `source-repository-package`.
+-- --------------------------- 8< --------------------------
+-- Please do not put any `source-repository-package` clause above this line.
+
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/cardano-base
