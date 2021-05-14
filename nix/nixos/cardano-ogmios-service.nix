@@ -71,11 +71,9 @@ in {
       ogmiosPkgs = lib.mkOption {
         type = lib.types.attrs;
         default = import ../. {};
-        defaultText = "cardano-db-sync pkgs";
+        defaultText = "ogmios pkgs";
         description = ''
-          The cardano-db-sync packages and library that should be used.
-          Main usage is sharing optimization:
-          reduce eval time when service is instantiated multiple times.
+          The ogmios packages and library that should be used.
         '';
       };
       package = lib.mkOption {
