@@ -2,7 +2,7 @@ name: Network Synchronization
 
 on:
   schedule:
-    - cron: '14 14 * * *'
+    - cron: '00 08 * * *'
 
 jobs:
   nightly:
@@ -31,7 +31,7 @@ jobs:
     - name: 🖧  Synchronize Node
       env:
         NETWORK: ${{ matrix.network }} # NOTE: 'NETWORK' is used in the compose file.
-        SYNCTIME: 3600
+        SYNCTIME: 7200
       run: |
         docker-compose up -d cardano-node
         sleep $SYNCTIME
