@@ -10,7 +10,7 @@
     nixpkgs.follows = "haskellNix/nixpkgs-unstable";
     utils.url = "github:numtide/flake-utils";
     customConfig = {
-      url = "path:./custom-config";
+      url = "path:./nix/custom-config";
     };
   };
 
@@ -23,7 +23,7 @@
       inherit (utils.lib) eachSystem mkApp flattenTree;
       inherit (iohkNix.lib) prefixNamesWith collectExes;
 
-      supportedSystems = import ./supported-systems.nix;
+      supportedSystems = import ./nix/supported-systems.nix;
       defaultSystem = head supportedSystems;
 
       overlays = [

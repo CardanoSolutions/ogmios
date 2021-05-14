@@ -3,11 +3,11 @@
     "customConfig": {
       "locked": {
         "narHash": "sha256-4wRvnnVtCrHE0puR4+/+qp4DoUboPuCbCe7GmWOGASA=",
-        "path": "./custom-config",
+        "path": "./nix/custom-config",
         "type": "path"
       },
       "original": {
-        "path": "./custom-config",
+        "path": "./nix/custom-config",
         "type": "path"
       }
     },
