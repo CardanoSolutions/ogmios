@@ -30,7 +30,7 @@ describe('Local state queries', () => {
           await client.release()
         }
       } catch (error) {
-        expect(error.code).toBe('EAI_AGAIN')
+        expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
       }
       try {
         client = await createStateQueryClient(

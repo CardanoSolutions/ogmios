@@ -45,19 +45,69 @@ jobs:
         stack --no-terminal build                 --haddock --no-haddock-deps --flag ogmios:production
         stack --no-terminal test ogmios:unit      --haddock --no-haddock-deps --flag ogmios:production
 
-  clients_TypeScript:
+  docker:
     strategy:
       matrix:
         os: [ ubuntu-20.04 ]
+
     runs-on: ${{ matrix.os }}
     steps:
     - name: 📥 Checkout repository
       uses: actions/checkout@v2.3.3
 
+    - name: 🧰 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: 🐳 Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+
+    - name: 🔨 Build and push
+      uses: docker/build-push-action@v2
+      with:
+        context: server
+        push: true
+        tags: ktorz/ogmios:latest
+        cache-from: type=registry,ref=ktorz/ogmios:latest
+        cache-to: type=inline
+
+  clients_TypeScript:
+    needs: [docker]
+    strategy:
+      matrix:
+        os: [ ubuntu-20.04 ]
+        network: [ testnet ]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v2.3.3
+
+    - name: ⌚ Get Date
+      id: date
+      shell: bash
+      run: |
+        echo "::set-output name=value::$(/bin/date -u "+%Y%m%d")"
+
     - name: 🧰 Setup Node.js
       uses: actions/setup-node@v1
       with:
         node-version: 14.4
+
+    - name: 🐳 Cache Docker Volumes
+      id: cache
+      uses: actions/cache@v2.1.1
+      with:
+        path: ./data
+        key: cardano-node-${{ matrix.network }}-${{ steps.date.outputs.value }}
+        restore-keys: |
+          cardano-node-${{ matrix.network }}
+
+    - name: 🩹 Overwrite docker-compose
+      shell: bash
+      run: |
+        sed -i "s@node-db:/data@./data:/data@" docker-compose.yml
 
     - name: ↪ Set package version
       id: package-version
@@ -65,15 +115,28 @@ jobs:
       with:
         path: clients/TypeScript
 
-    - name: 🔨 Build & Pack #& Test
+    - name: 🔨 Build
       working-directory: clients/TypeScript
       run: |
         yarn install --frozen-lockfile --non-interactive --logevel=error
         yarn generate-schema-types
         yarn build
         yarn lint
+
+    - name: 🔬 Test
+      if: matrix.network == 'testnet'
+      working-directory: clients/TypeScript
+      run: |
+        docker pull ktorz/ogmios:latest
+        yarn testnet:up
+        ../../.github/scripts/wait-for-sync.sh 1338 1
+        yarn test
+        yarn testnet:down
+
+    - name: 📦 Pack
+      working-directory: clients/TypeScript
+      run: |
         ./scripts/pack.sh
-#        yarn test
 
     - name: 📤 Upload npm packages
       uses: actions/upload-artifact@v2

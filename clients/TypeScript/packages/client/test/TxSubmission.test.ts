@@ -26,7 +26,7 @@ describe('TxSubmission', () => {
           await client.shutdown()
         }
       } catch (error) {
-        expect(error.code).toBe('EAI_AGAIN')
+        expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
       }
       try {
         client = await createTxSubmissionClient(
@@ -56,8 +56,15 @@ describe('TxSubmission', () => {
           { connection }
         )
       } catch (error) {
-        await expect(error[0]).toBeInstanceOf(errors.shelley.BadInputs.Error)
-        await expect(error[1]).toBeInstanceOf(errors.shelley.ValueNotConserved.Error)
+        await expect(error).toHaveLength(2)
+        // NOTE: We can't predict in which order will the server return the errors.
+        try {
+          await expect(error[0]).toBeInstanceOf(errors.shelley.BadInputs.Error)
+          await expect(error[1]).toBeInstanceOf(errors.shelley.ValueNotConserved.Error)
+        } catch (e) {
+          await expect(error[1]).toBeInstanceOf(errors.shelley.BadInputs.Error)
+          await expect(error[0]).toBeInstanceOf(errors.shelley.ValueNotConserved.Error)
+        }
       }
     })
   })

@@ -64,7 +64,7 @@ describe('ChainSync', () => {
         connection
       })
       await client.startSync(['origin'], 10)
-      await delay(1000)
+      await delay(2000)
       await client.shutdown()
       let firstBlockHash: Hash16
       if ('byron' in blocks[0]) {
@@ -107,7 +107,7 @@ describe('ChainSync', () => {
           connection
         })
         await client.startSync(['origin'], requestBuffer)
-        await delay(800)
+        await delay(2000)
         await client.shutdown()
         expect(blocks.length).toBe(1000)
         return 1000 * blocks.length / stop
