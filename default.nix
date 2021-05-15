@@ -13,7 +13,7 @@ let
   packages = {
     inherit haskellPackages;
 
-    inherit (ogmiosHaskellPackages) roots;
+    inherit (ogmiosProject) roots;
     inherit (haskellPackages.ogmios.components.exes) ogmios;
     inherit (haskellPackages.ogmios.project) plan-nix;
     inherit (haskellPackages.ogmios.identifier) version;

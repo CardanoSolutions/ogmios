@@ -1,40 +1,52 @@
 { system ? builtins.currentSystem
 , crossSystem ? null
 , config ? {}
+, customConfig ? {}
 , sourcesOverride ? {}
 , gitrev ? null
 }:
 let
-  sources = import ./sources.nix { inherit pkgs; }
-    // sourcesOverride;
-  iohkNix = import sources.iohkNix {};
-  haskellNix = import sources.haskellNix {};
-  # use our own nixpkgs if it exists in our sources,
-  # otherwise use iohkNix default nixpkgs.
-  nixpkgs = if (sources ? nixpkgs)
-    then (builtins.trace "Not using IOHK default nixpkgs (use 'niv drop nixpkgs' to use default for better sharing)"
-      sources.nixpkgs)
-    else iohkNix.nixpkgs;
+  flakeSources = let
+    flakeLock = (builtins.fromJSON (builtins.readFile ../flake.lock)).nodes;
+    compat = s: builtins.fetchGit {
+      url = "https://github.com/${s.locked.owner}/${s.locked.repo}.git";
+      inherit (s.locked) rev;
+      ref = s.original.ref or "master";
+    };
+  in {
+    "haskell.nix" = compat flakeLock.haskellNix;
+    "iohk-nix" = compat flakeLock.iohkNix;
+  };
+  sources = flakeSources // sourcesOverride;
+  iohkNix = import sources.iohk-nix { inherit system; };
+  haskellNix = import sources."haskell.nix" { inherit system sourcesOverride; };
+  nixpkgs = haskellNix.sources.nixpkgs-unstable;
 
   # for inclusion in pkgs:
   overlays =
     # Haskell.nix (https://github.com/input-output-hk/haskell.nix)
-    haskellNix.overlays
+    haskellNix.nixpkgsArgs.overlays
     # haskell-nix.haskellLib.extra: some useful extra utility functions for haskell.nix
     ++ iohkNix.overlays.haskell-nix-extra
     ++ iohkNix.overlays.crypto
     # iohkNix: nix utilities and niv:
     ++ iohkNix.overlays.iohkNix
+    ++ iohkNix.overlays.utils
     # our own overlays:
     ++ [
       (pkgs: _: with pkgs; {
-        inherit gitrev;
+        gitrev = if gitrev == null
+          then iohkNix.commitIdFromGitRepoOrZero ../.git
+          else gitrev;
 
+        customConfig = lib.recursiveUpdate
+          (import ../custom-config pkgs.customConfig)
+          customConfig;
+
+        inherit (pkgs.iohkNix) cardanoLib;
         # commonLib: mix pkgs.lib with iohk-nix utils and our own:
-        commonLib = lib // iohkNix // iohkNix.cardanoLib
-          // import ./util.nix { inherit haskell-nix; }
-          # also expose our sources and overlays
-          // { inherit overlays sources; };
+        commonLib = lib // cardanoLib // iohk-nix.lib
+          // import ./util.nix { inherit haskell-nix; };
       })
       # And, of course, our haskell-nix-ified cabal project:
       (import ./pkgs.nix)
@@ -42,7 +54,7 @@ let
 
   pkgs = import nixpkgs {
     inherit system crossSystem overlays;
-    config = haskellNix.config // config;
+    config = haskellNix.nixpkgsArgs.config // config;
   };
-in
-  pkgs
+
+in pkgs
