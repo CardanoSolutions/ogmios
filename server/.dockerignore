@@ -1,16 +1,19 @@
 *
 
-!stack.yaml
 !resolver.yaml
+!stack.yaml
 !.hpack.config.yaml
 !.stylish-haskell.yaml
+!LICENSE
 
 !package.yaml
 !app/
 !src/
 !static/
+!scripts/
 
 !modules/
+modules/**/.stack-work
 modules/ouroboros-network
 modules/cardano-node
 modules/hjsonpointer

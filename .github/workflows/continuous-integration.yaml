@@ -70,6 +70,7 @@ jobs:
         context: server
         push: true
         tags: ktorz/ogmios:cache
+        target: ogmios
         cache-from: type=registry,ref=ktorz/ogmios:cache
         cache-to: type=inline
 
@@ -108,6 +109,7 @@ jobs:
       shell: bash
       run: |
         sed -i "s@node-db:/data@./data:/data@" docker-compose.yml
+        sed -i "s@ktorz/ogmios:latest@ktorz/ogmios:cache@" docker-compose.yml
 
     - name: ↪ Set package version
       id: package-version
