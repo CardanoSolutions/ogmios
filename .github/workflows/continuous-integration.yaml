@@ -69,8 +69,8 @@ jobs:
       with:
         context: server
         push: true
-        tags: ktorz/ogmios:latest
-        cache-from: type=registry,ref=ktorz/ogmios:latest
+        tags: ktorz/ogmios:cache
+        cache-from: type=registry,ref=ktorz/ogmios:cache
         cache-to: type=inline
 
   clients_TypeScript:
@@ -127,8 +127,8 @@ jobs:
       if: matrix.network == 'testnet'
       working-directory: clients/TypeScript
       run: |
-        docker pull ktorz/ogmios:latest
-        yarn testnet:up
+        docker pull ktorz/ogmios:cache
+        yarn testnet:up -d
         ../../.github/scripts/wait-for-sync.sh 1338 1
         yarn test
         yarn testnet:down
