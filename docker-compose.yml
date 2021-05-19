@@ -16,10 +16,11 @@ services:
         max-file: "20"
 
   ogmios:
+    image: ktorz/ogmios:latest
     build:
       context: server
+      target: ogmios
       cache_from: [ktorz/ogmios:latest]
-    image: ktorz/ogmios:latest
     restart: on-failure
     environment:
       - OGMIOS_NETWORK=${NETWORK:-mainnet}
