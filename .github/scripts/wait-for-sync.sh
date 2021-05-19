@@ -43,7 +43,14 @@ showProgress () {
 for (( ;; ))
 do
   HEALTH=$(curl -sS $URL)
-  NETWORK_SYNCHRONIZATION=$(sed 's/.*"networkSynchronization":\(.*\),.*/\1/' <<< $HEALTH)
+  NETWORK_SYNCHRONIZATION=$(sed 's/.*"networkSynchronization":\([0-9]\+\.\?[0-9]*\).*/\1/' <<< $HEALTH)
+
+  RE='^[0-9]+\.?[0-9]*$'
+  if ! [[ $NETWORK_SYNCHRONIZATION =~ $RE ]] ; then
+     echo "error: unexpected response from /health endpoint: $HEALTH"
+     exit 1
+  fi
+
   showProgress $NETWORK_SYNCHRONIZATION
   PREDICATE=$(bc <<< "$NETWORK_SYNCHRONIZATION >= $THRESHOLD")
 
