@@ -24,15 +24,6 @@ package ogmios
 package cryptonite
   flags: -support_rdrand
 
--- Bundle VRF crypto in libsodium and do not rely on an external fork to have it. This
--- is okay because ogmios doesn't really do anything with VRF crypto, it's merely needed
--- for compiler unused part of the node's api.
---
--- This still requires the host system to have the 'standard' libsodium installed.
-package cardano-crypto-praos
-  flags: +external-libsodium-vrf
-
-
 -- The "cabal" wrapper script provided by nix-shell will cut off / restore the remainder of this file
 -- in order to force usage of nix provided dependencies for `source-repository-package`.
 -- --------------------------- 8< --------------------------

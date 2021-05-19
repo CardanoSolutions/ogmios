@@ -1,23 +1,28 @@
 #!/bin/bash
 
+set -m
+
 if [ -z "$NETWORK" ]; then
   echo "'NETWORK' environment variable must be set."
   exit 1
 fi
 
 cardano-node run\
-  --topology config/$NETWORK-topology.json\
+  --topology /config/$NETWORK-topology.json\
   --database-path db/$NETWORK\
   --port 3000\
-  --config config/$NETWORK-config.json\
-  --socket-path ./node.socket &
+  --host-addr 0.0.0.0\
+  --config /config/$NETWORK-config.json\
+  --socket-path ./node.socket&
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start cardano-node: $status"
   exit $status
 fi
 
-OGMIOS_NETWORK=$NETWORK ogmios --node-socket ./node.socket &
+OGMIOS_NETWORK=$NETWORK ogmios \
+  --host 0.0.0.0\
+  --node-socket ./node.socket &
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start ogmios: $status"

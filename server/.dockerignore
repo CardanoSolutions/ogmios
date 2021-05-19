@@ -1,15 +1,13 @@
 *
 
-!resolver.yaml
-!stack.yaml
-!.hpack.config.yaml
-!.stylish-haskell.yaml
-!LICENSE
+!cabal.project
+!*.cabal
 
-!package.yaml
 !app/
 !src/
+!test/
 !static/
+!ogmios.wsp.json
 !scripts/
 
 !modules/
@@ -20,4 +18,4 @@ modules/hjsonpointer
 modules/hjsonschema
 modules/wai-routes
 
-!ogmios.wsp.json
+!LICENSE
