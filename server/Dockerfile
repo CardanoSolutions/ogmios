@@ -4,7 +4,6 @@
 
 ARG CARDANO_NODE_VERSION=1.27.0
 ARG CARDANO_OGMIOS_SNAPSHOT=f5eb524a06bf2439707161f6256af1164e360eb0
-ARG CARDANO_CONFIG_URL=https://hydra.iohk.io/build/5821110/download/1
 ARG IOHK_LIBSODIUM_GIT_REV=66f017f16633f2060db25e17c170c2afa0f2a8a1
 
 #                                                                              #
@@ -105,6 +104,8 @@ ENTRYPOINT ["ogmios"]
 #                                                                              #
 
 FROM debian:buster-slim as cardano-node-ogmios
+
+ARG CARDANO_CONFIG_URL=https://hydra.iohk.io/build/5821110/download/1
 
 LABEL name=cardano-node-ogmios
 LABEL description="A JSON-WSP WebSocket client for cardano-node w/ a cardano-node"
