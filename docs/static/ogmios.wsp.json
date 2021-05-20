@@ -1,7 +1,25 @@
 { "type": "object"
 , "title": "ogmios"
 , "$schema": "https://json-schema.org/draft-07/schema"
-
+, "required":
+  [ "RequestNext", "RequestNextResponse"
+  , "FindIntersect", "FindIntersectResponse"
+  , "SubmitTx", "SubmitTxResponse"
+  , "Acquire", "AcquireResponse"
+  , "Release","ReleaseResponse"
+  , "Query"
+  , "QueryResponse[currentEpoch]"
+  , "QueryResponse[currentProtocolParameters]"
+  , "QueryResponse[delegationsAndRewards]"
+  , "QueryResponse[eraStart]"
+  , "QueryResponse[genesisConfig]"
+  , "QueryResponse[ledgerTip]"
+  , "QueryResponse[nonMyopicMemberRewards]"
+  , "QueryResponse[proposedProtocolParameters]"
+  , "QueryResponse[stakeDistribution]"
+  , "QueryResponse[utxo]"
+  , "Fault"
+  ]
 , "properties":
 
   { "RequestNext":
