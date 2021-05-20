@@ -71,7 +71,7 @@ FROM setup as build
 
 WORKDIR /app/src/cardano-ogmios/server
 
-COPY . .
+COPY server/ .
 
 RUN cabal install exe:ogmios \
   --overwrite-policy=always \

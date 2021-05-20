@@ -18,7 +18,7 @@ services:
   ogmios:
     image: ktorz/ogmios:latest
     build:
-      context: server
+      context: .
       target: ogmios
       cache_from: [ktorz/ogmios:latest]
     restart: on-failure
