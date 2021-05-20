@@ -2,6 +2,7 @@ import repl from 'repl'
 import parser from 'yargs-parser'
 import {
   ChainSyncMessageHandlers,
+  ConnectionConfig,
   createChainSyncClient,
   createStateQueryClient,
   currentEpoch,
@@ -30,29 +31,23 @@ const logObject = (obj: Object) =>
   const connection = {
     host: args.host,
     port: args.port
-  }
+  } as ConnectionConfig
   const chainSync = await createChainSyncClient({
-    rollBackward: ({ point, tip, reflection }) => {
+    rollBackward: ({ point, tip }, requestNext) => {
       log(chalk.bgRedBright.bold('ROLL BACKWARD'))
       log(chalk.redBright.bold('Point'))
       logObject(point)
       log(chalk.redBright.bold('Tip'))
       logObject(tip)
-      if (reflection !== null) {
-        log(chalk.redBright.bold('Reflection'))
-        logObject(reflection)
-      }
+      requestNext()
     },
-    rollForward: ({ block, tip, reflection }) => {
+    rollForward: ({ block, tip }, requestNext) => {
       log(chalk.bgGreen.bold('ROLL FORWARD'))
       log(chalk.green.bold('Block'))
       logObject(block)
       log(chalk.green.bold('Tip'))
       logObject(tip)
-      if (reflection !== null) {
-        log(chalk.green.bold('Reflection'))
-        logObject(reflection)
-      }
+      requestNext()
     }
   }, {
     connection

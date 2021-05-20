@@ -1,7 +1,6 @@
 import { Block, Ogmios, Point, Tip } from '@cardano-ogmios/schema'
 import {
   ConnectionConfig,
-  Mirror,
   InteractionContext,
   createClientContext
 } from '../Connection'
@@ -12,29 +11,35 @@ import { requestNext } from './requestNext'
 
 export interface ChainSyncClient {
   context: InteractionContext
-  requestNext: (options?: { mirror?: Mirror }) => void
   shutdown: () => Promise<void>
-  startSync: (points?: Point[], requestBuffer?: number) => Promise<Intersection>
+  startSync: (
+    points?: Point[],
+    requestBuffer?: number
+  ) => Promise<Intersection>
 }
 
 export interface ChainSyncMessageHandlers {
-  rollBackward: (response: {
-    point: Point,
-    tip: Tip,
-    reflection: Mirror
-  }) => void
-  rollForward: (response: {
-    block: Block,
-    tip: Tip,
-    reflection: Mirror
-  }) => void
+  rollBackward: (
+    response: {
+      point: Point,
+      tip: Tip
+    },
+    requestNext: () => void
+  ) => void
+  rollForward: (
+    response: {
+      block: Block,
+      tip: Tip
+    },
+    requestNext: () => void
+  ) => void
 }
 
 export const createChainSyncClient = async (
   messageHandlers: ChainSyncMessageHandlers,
   options?: {
-  connection?: ConnectionConfig
-}): Promise<ChainSyncClient> => {
+    connection?: ConnectionConfig
+  }): Promise<ChainSyncClient> => {
   return new Promise((resolve, reject) => {
     createClientContext(options).then(context => {
       const { socket } = context
@@ -45,15 +50,13 @@ export const createChainSyncClient = async (
           if ('RollBackward' in response.result) {
             messageHandlers.rollBackward({
               point: response.result.RollBackward.point,
-              tip: response.result.RollBackward.tip,
-              reflection: response.reflection
-            })
+              tip: response.result.RollBackward.tip
+            }, () => requestNext(socket))
           } else if ('RollForward' in response.result) {
             messageHandlers.rollForward({
               block: response.result.RollForward.block,
-              tip: response.result.RollForward.tip,
-              reflection: response.reflection
-            })
+              tip: response.result.RollForward.tip
+            }, () => requestNext(socket))
           } else {
             throw new UnknownResultError(response.result)
           }
@@ -62,10 +65,6 @@ export const createChainSyncClient = async (
       socket.once('open', async () => {
         return resolve({
           context,
-          requestNext (options) {
-            ensureSocketIsOpen(socket)
-            return requestNext(socket, options)
-          },
           shutdown: () => new Promise(resolve => {
             ensureSocketIsOpen(socket)
             socket.once('close', resolve)
