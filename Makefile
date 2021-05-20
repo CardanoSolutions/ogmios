@@ -26,7 +26,7 @@ api-reference:
 	@sed -i 's@</head>@<link rel="stylesheet" href="css/api-reference.css"/></head>@' docs/static/api-reference.html
 
 docker:
-	docker build server
+	docker build .
 
 clean:
 	@cd server && stack clean
