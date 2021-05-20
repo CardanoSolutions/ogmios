@@ -179,7 +179,6 @@ validateToJSON
 validateToJSON gen encode ref
     = parallel
     $ it (toString $ getSchemaRef ref)
-    $ withMaxSuccess 200
     $ forAllBlind gen (prop_validateToJSON (jsonifierToAeson . encode) ref)
 
 -- | Similar to 'validateToJSON', but also check that the produce value can be
@@ -193,7 +192,6 @@ validateFromJSON
 validateFromJSON gen (encode, decode) ref
     = parallel
     $ it (toString $ getSchemaRef ref)
-    $ withMaxSuccess 200
     $ forAllBlind gen $ \a -> conjoin
         [ prop_validateToJSON (jsonifierToAeson . encode) ref a
         , decodeWith decode (jsonToByteString (encode a)) === Just a
@@ -527,7 +525,7 @@ validateQuery json parser resultRef = parallel $ specify (toString $ getSchemaRe
                         . QueryResponse
                         . encodeResult
 
-                runQuickCheck $ withMaxSuccess 100 $ forAllBlind
+                runQuickCheck $ forAllBlind
                     (genResult Proxy)
                     (prop_validateToJSON encodeQueryResponse resultRef)
 
