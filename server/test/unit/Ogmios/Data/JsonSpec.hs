@@ -115,7 +115,7 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Type
 import Shelley.Spec.Ledger.Delegation.Certificates
     ( PoolDistr )
 import Shelley.Spec.Ledger.PParams
-    ( PParams, ProposedPPUpdates )
+    ( ProposedPPUpdates )
 import Shelley.Spec.Ledger.UTxO
     ( UTxO )
 import Test.Hspec
@@ -154,6 +154,7 @@ import Type.Reflection
 import Test.Consensus.Cardano.Generators
     ()
 
+import qualified Cardano.Ledger.Core as Core
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
@@ -631,8 +632,8 @@ genDelegationAndRewardsResult _ = frequency
 genPParamsResult
     :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
     => Proxy era
-    -> Proxy (QueryResult crypto (PParams era))
-    -> Gen (QueryResult crypto (PParams era))
+    -> Proxy (QueryResult crypto (Core.PParams era))
+    -> Gen (QueryResult crypto (Core.PParams era))
 genPParamsResult _ _ =
     fromMaybe (error "genPParamsResult: unsupported era")
         (genShelley <|> genAllegra <|> genMary)

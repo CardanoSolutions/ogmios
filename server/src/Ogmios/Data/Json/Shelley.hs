@@ -763,7 +763,7 @@ encodePrevHash = \case
     Sh.BlockHash h -> encodeHashHeader h
 
 encodeProposedPPUpdates
-    :: forall era. (Sh.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
+    :: forall era. (Sh.Core.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
@@ -951,7 +951,7 @@ encodeTxOut (Sh.TxOut addr coin) = encodeObject
     ]
 
 encodeUpdate
-    :: forall era. (Sh.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
+    :: forall era. (Sh.Core.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
     => Sh.Update era
     -> Json
 encodeUpdate (Sh.Update update epoch) = encodeObject

@@ -22,8 +22,8 @@ import Shelley.Spec.Ledger.BaseTypes
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
 import qualified Cardano.Ledger.AuxiliaryData as MA
+import qualified Cardano.Ledger.Core as Sh.Core
 import qualified Cardano.Ledger.Era as Era
-import qualified Cardano.Ledger.Shelley.Constraints as Sh
 import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
 import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
 import qualified Cardano.Ledger.ShelleyMA.Timelocks as MA
@@ -87,7 +87,7 @@ encodePParams' =
     Shelley.encodePParams'
 
 encodeProposedPPUpdates
-    :: (Sh.PParamsDelta era ~ Sh.PParamsUpdate era)
+    :: (Sh.Core.PParamsDelta era ~ Sh.PParamsUpdate era)
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates =

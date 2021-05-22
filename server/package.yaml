@@ -121,6 +121,7 @@ tests:
     dependencies:
     - aeson
     - cardano-client
+    - cardano-ledger-core
     - cardano-slotting
     - generic-arbitrary
     - hedgehog-quickcheck

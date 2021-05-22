@@ -97,7 +97,7 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxSubmissionClient (..) )
 
 import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ
-import qualified Ouroboros.Consensus.Shelley.Ledger.Query as Ledger
+import qualified Ouroboros.Consensus.Ledger.Query as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 
 --
@@ -302,7 +302,8 @@ newTimeInterpreterClient = do
         -> m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
         -> LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ()
     clientStQuerySlotTime notifyResult tip continue =
-        LSQ.SendMsgQuery (LSQ.QueryHardFork LSQ.GetInterpreter) $ LSQ.ClientStQuerying
+        let query = Ledger.BlockQuery $ LSQ.QueryHardFork LSQ.GetInterpreter in
+        LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
             { LSQ.recvMsgResult = \interpreter -> do
                 let slot = case tip of
                         TipGenesis -> 0
@@ -325,7 +326,8 @@ newTimeInterpreterClient = do
         -> m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
         -> LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ()
     clientStQueryCurrentEra notifyResult continue =
-        LSQ.SendMsgQuery (LSQ.QueryHardFork LSQ.GetCurrentEra) $ LSQ.ClientStQuerying
+        let query = Ledger.BlockQuery $ LSQ.QueryHardFork LSQ.GetCurrentEra in
+        LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
             { LSQ.recvMsgResult = \eraIndex -> do
                 notifyResult $ case eraIndexToInt eraIndex of
                     0 -> Byron

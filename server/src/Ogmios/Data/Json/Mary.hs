@@ -28,9 +28,9 @@ import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
 import qualified Cardano.Ledger.AuxiliaryData as MA
+import qualified Cardano.Ledger.Core as Sh.Core
 import qualified Cardano.Ledger.Era as Era
 import qualified Cardano.Ledger.Mary.Value as MA
-import qualified Cardano.Ledger.Shelley.Constraints as Sh
 import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
 import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
 import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
@@ -93,7 +93,7 @@ encodePParams' =
     Shelley.encodePParams'
 
 encodeProposedPPUpdates
-    :: (Sh.PParamsDelta era ~ Sh.PParamsUpdate era)
+    :: (Sh.Core.PParamsDelta era ~ Sh.PParamsUpdate era)
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates =

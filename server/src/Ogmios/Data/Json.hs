@@ -118,6 +118,11 @@ encodeBlock mode = \case
           , Mary.encodeMaryBlock mode blk
           )
         ]
+    BlockAlonzo _blk -> encodeObject
+        [ ( "alonzo"
+          , error "FIXME: Alonzo.encodeAlonzoBlock mode blk"
+          )
+        ]
 
 encodeHardForkApplyTxErr
     :: Crypto crypto
@@ -132,6 +137,8 @@ encodeHardForkApplyTxErr = \case
         encodeList Allegra.encodeLedgerFailure xs
     ApplyTxErrMary (ApplyTxError xs) ->
         encodeList Mary.encodeLedgerFailure xs
+    ApplyTxErrAlonzo (ApplyTxError xs) ->
+        encodeList (error "FIXME: Alonzo.encodeLedgerFailure") xs
     ApplyTxErrWrongEra e ->
         encodeEraMismatch e
 

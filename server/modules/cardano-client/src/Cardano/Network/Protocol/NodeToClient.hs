@@ -68,13 +68,15 @@ import Network.Mux
 import Network.TypedProtocol.Codec
     ( Codec )
 import Ouroboros.Consensus.Byron.Ledger
-    ( GenTx, Query (..) )
+    ( GenTx )
 import Ouroboros.Consensus.Byron.Ledger.Config
     ( CodecConfig (..) )
 import Ouroboros.Consensus.Cardano
     ( CardanoBlock )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras, CodecConfig (..), HardForkApplyTxErr )
+import Ouroboros.Consensus.Ledger.Query
+    ( Query (..) )
 import Ouroboros.Consensus.Network.NodeToClient
     ( ClientCodecs, Codecs' (..), clientCodecs )
 import Ouroboros.Consensus.Node.NetworkProtocolVersion
@@ -301,12 +303,13 @@ codecs epochSlots =
     clientCodecs cfg (supportedVersions ! nodeToClientV) nodeToClientV
   where
     supportedVersions = supportedNodeToClientVersions (Proxy @Block)
-    cfg = CardanoCodecConfig byron shelley allegra mary
+    cfg = CardanoCodecConfig byron shelley allegra mary alonzo
       where
         byron   = ByronCodecConfig epochSlots
         shelley = ShelleyCodecConfig
         allegra = ShelleyCodecConfig
         mary    = ShelleyCodecConfig
+        alonzo  = ShelleyCodecConfig
 
 nodeToClientV :: NodeToClientVersion
-nodeToClientV = NodeToClientV_8
+nodeToClientV = NodeToClientV_9
