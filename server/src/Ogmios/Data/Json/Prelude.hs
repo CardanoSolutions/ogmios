@@ -23,6 +23,10 @@ module Ogmios.Data.Json.Prelude
     , inefficientEncodingToValue
     , (.:)
 
+      -- * Re-Exports
+    , Coin (..)
+    , StrictMaybe (..)
+
       -- * Basic Types
     , encodeBlockNo
     , encodeBool

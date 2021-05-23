@@ -20,8 +20,6 @@ import Ouroboros.Consensus.Cardano.Block
     ( AlonzoEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
-import Shelley.Spec.Ledger.BaseTypes
-    ( StrictMaybe (..) )
 
 import qualified Data.Map.Strict as Map
 
@@ -33,10 +31,10 @@ import qualified Cardano.Crypto.Hash.Class as CC
 import qualified Cardano.Ledger.Era as Era
 import qualified Cardano.Ledger.SafeHash as SafeHash
 
-import qualified Shelley.Spec.Ledger.API as Spec
-import qualified Shelley.Spec.Ledger.PParams as Spec
-import qualified Shelley.Spec.Ledger.STS.Ledger as Spec
-import qualified Shelley.Spec.Ledger.UTxO as Spec
+import qualified Shelley.Spec.Ledger.API as Sh
+import qualified Shelley.Spec.Ledger.PParams as Sh
+import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
+import qualified Shelley.Spec.Ledger.UTxO as Sh
 
 import qualified Cardano.Ledger.Alonzo.Data as Al
 import qualified Cardano.Ledger.Alonzo.Language as Al
@@ -113,7 +111,7 @@ encodeBlock
     => SerializationMode
     -> ShelleyBlock (AlonzoEra crypto)
     -> Json
-encodeBlock mode (ShelleyBlock (Spec.Block blkHeader txs) headerHash) =
+encodeBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
     encodeObject
     [ ( "body"
       , encodeFoldable (encodeTx mode) (Al.txSeqTxns txs)
@@ -192,16 +190,16 @@ encodeLanguage = \case
 
 encodeLedgerFailure
     :: Crypto crypto
-    => Spec.LedgerPredicateFailure (AlonzoEra crypto)
+    => Sh.LedgerPredicateFailure (AlonzoEra crypto)
     -> Json
 encodeLedgerFailure = \case
-    Spec.UtxowFailure e ->
+    Sh.UtxowFailure e ->
         encodeAlonzoPredFail e
-    Spec.DelegsFailure e ->
+    Sh.DelegsFailure e ->
         Shelley.encodeDelegsFailure e
 
 encodePParams'
-    :: (forall a. (a -> Json) -> Spec.HKD f a -> Json)
+    :: (forall a. (a -> Json) -> Sh.HKD f a -> Json)
     -> Al.PParams' f era
     -> Json
 encodePParams' encodeF x = encodeObject
@@ -288,9 +286,9 @@ encodePrices prices =  encodeObject
     ]
 
 encodeProposedPPUpdates
-    :: Spec.ProposedPPUpdates (AlonzoEra crypto)
+    :: Sh.ProposedPPUpdates (AlonzoEra crypto)
     -> Json
-encodeProposedPPUpdates (Spec.ProposedPPUpdates m) =
+encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
     encodeMap Shelley.stringifyKeyHash (encodePParams' encodeStrictMaybe) m
 
 encodeRedeemers
@@ -345,7 +343,7 @@ encodeTx
     -> Json
 encodeTx mode x = encodeObjectWithMode mode
     [ ( "id"
-      , Shelley.encodeTxId (Spec.txid @(AlonzoEra crypto) (Al.body x))
+      , Shelley.encodeTxId (Sh.txid @(AlonzoEra crypto) (Al.body x))
       )
     , ( "body"
       , encodeTxBody (Al.body x)
@@ -428,9 +426,9 @@ encodeTxOut (Al.TxOut addr value datum) = encodeObject
     ]
 
 encodeUpdate
-    :: Spec.Update (AlonzoEra crypto)
+    :: Sh.Update (AlonzoEra crypto)
     -> Json
-encodeUpdate (Spec.Update update epoch) = encodeObject
+encodeUpdate (Sh.Update update epoch) = encodeObject
     [ ( "proposal"
       , encodeProposedPPUpdates update
       )
@@ -441,10 +439,10 @@ encodeUpdate (Spec.Update update epoch) = encodeObject
 
 encodeUtxo
     :: Crypto crypto
-    => Spec.UTxO (AlonzoEra crypto)
+    => Sh.UTxO (AlonzoEra crypto)
     -> Json
 encodeUtxo =
-    encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Spec.unUTxO
+    encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
   where
     encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
 

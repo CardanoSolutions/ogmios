@@ -16,6 +16,8 @@ import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Ledger.Era
     ( Era )
+import Cardano.Ledger.Shelley.Constraints
+    ( ShelleyBased )
 import Control.State.Transition
     ( STS (..) )
 import Data.ByteString.Base16
@@ -28,8 +30,6 @@ import Ouroboros.Consensus.Cardano.Block
     ( ShelleyEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..), ShelleyHash (..) )
-import Shelley.Spec.Ledger.BaseTypes
-    ( StrictMaybe (..) )
 
 import qualified Ogmios.Data.Json.Byron as Byron
 
@@ -41,11 +41,10 @@ import qualified Cardano.Crypto.Hash.Class as CC
 import qualified Cardano.Crypto.KES.Class as CC
 import qualified Cardano.Crypto.VRF.Class as CC
 
-import qualified Cardano.Ledger.AuxiliaryData as Sh
-import qualified Cardano.Ledger.Coin as Sh
-import qualified Cardano.Ledger.Core as Sh.Core
-import qualified Cardano.Ledger.SafeHash as Sh
-import qualified Cardano.Ledger.Shelley.Constraints as Sh
+import qualified Cardano.Ledger.AuxiliaryData as Aux
+import qualified Cardano.Ledger.Coin as Coin
+import qualified Cardano.Ledger.Core as Core
+import qualified Cardano.Ledger.SafeHash as SafeHash
 
 import qualified Shelley.Spec.Ledger.Address as Sh
 import qualified Shelley.Spec.Ledger.Address.Bootstrap as Sh
@@ -90,10 +89,10 @@ encodeAddress = \case
         Sh.Testnet -> hrpAddrTestnet
 
 encodeAuxiliaryDataHash
-    :: Sh.AuxiliaryDataHash era
+    :: Aux.AuxiliaryDataHash era
     -> Json
 encodeAuxiliaryDataHash =
-    encodeHash . Sh.extractHash . Sh.unsafeAuxiliaryDataHash
+    encodeHash . SafeHash.extractHash . Aux.unsafeAuxiliaryDataHash
 
 encodeBHeader
     :: Crypto crypto
@@ -293,9 +292,9 @@ encodeDelegation x = encodeObject
     ]
 
 encodeDelegsFailure
-    :: PredicateFailure (Sh.Core.EraRule "DELPL" era) ~ Sh.DelplPredicateFailure era
-    => PredicateFailure (Sh.Core.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
-    => PredicateFailure (Sh.Core.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
+    :: PredicateFailure (Core.EraRule "DELPL" era) ~ Sh.DelplPredicateFailure era
+    => PredicateFailure (Core.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
+    => PredicateFailure (Core.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
     => Sh.DelegsPredicateFailure era
     -> Json
 encodeDelegsFailure = \case
@@ -410,14 +409,14 @@ encodeDelegFailure = \case
             ]
 
 encodeDeltaCoin
-    :: Sh.DeltaCoin
+    :: Coin.DeltaCoin
     -> Json
-encodeDeltaCoin (Sh.DeltaCoin delta) =
+encodeDeltaCoin (Coin.DeltaCoin delta) =
     encodeInteger delta
 
 encodeDeplFailure
-    :: PredicateFailure (Sh.Core.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
-    => PredicateFailure (Sh.Core.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
+    :: PredicateFailure (Core.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
+    => PredicateFailure (Core.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
     => Sh.DelplPredicateFailure era
     -> Json
 encodeDeplFailure = \case
@@ -787,7 +786,7 @@ encodePrevHash = \case
     Sh.BlockHash h -> encodeHashHeader h
 
 encodeProposedPPUpdates
-    :: forall era. (Sh.Core.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
+    :: forall era. (Core.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
@@ -928,7 +927,7 @@ encodeTxId
     :: Sh.TxId crypto
     -> Json
 encodeTxId =
-    encodeHash . Sh.extractHash . Sh._unTxId
+    encodeHash . SafeHash.extractHash . Sh._unTxId
 
 encodeTxIn
     :: Crypto crypto
@@ -944,7 +943,7 @@ encodeTxIn (Sh.TxIn txid ix) = encodeObject
     ]
 
 encodeTxOut
-    :: (Sh.ShelleyBased era, Sh.Core.Value era ~ Sh.Coin)
+    :: (ShelleyBased era, Core.Value era ~ Coin)
     => Sh.TxOut era
     -> Json
 encodeTxOut (Sh.TxOut addr coin) = encodeObject
@@ -957,7 +956,7 @@ encodeTxOut (Sh.TxOut addr coin) = encodeObject
     ]
 
 encodeUpdate
-    :: forall era. (Sh.Core.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
+    :: forall era. (Core.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
     => Sh.Update era
     -> Json
 encodeUpdate (Sh.Update update epoch) = encodeObject
@@ -999,9 +998,9 @@ encodeUpdateFailure = \case
 
 encodeUtxo
     :: forall era.
-        ( Sh.ShelleyBased era
-        , Sh.Core.Value era ~ Sh.Coin
-        , Sh.Core.TxOut era ~ Sh.TxOut era
+        ( ShelleyBased era
+        , Core.Value era ~ Coin
+        , Core.TxOut era ~ Sh.TxOut era
         )
     => Sh.UTxO era
     -> Json
@@ -1098,7 +1097,7 @@ encodeUtxowFailure
     :: forall era.
         ( Era era
         )
-    => (PredicateFailure (Sh.Core.EraRule "UTXO" era) -> Json)
+    => (PredicateFailure (Core.EraRule "UTXO" era) -> Json)
     -> Sh.UtxowPredicateFailure era
     -> Json
 encodeUtxowFailure encodeUtxoFailure_ = \case
@@ -1234,10 +1233,10 @@ encodeWitVKey (Sh.WitVKey key sig) =
 --
 
 stringifyCoin
-    :: Sh.Coin
+    :: Coin
     -> Text
 stringifyCoin =
-    show . Sh.unCoin
+    show . unCoin
 
 stringifyCredential
     :: forall any era. (any :\: Sh.StakePool)

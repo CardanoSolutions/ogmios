@@ -18,8 +18,6 @@ import Ouroboros.Consensus.Cardano.Block
     ( MaryEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
-import Shelley.Spec.Ledger.BaseTypes
-    ( StrictMaybe (..) )
 
 import qualified Data.ByteString as BS
 import qualified Data.Map.Strict as Map
@@ -27,18 +25,20 @@ import qualified Data.Map.Strict as Map
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
-import qualified Cardano.Ledger.AuxiliaryData as MA
-import qualified Cardano.Ledger.Core as Sh.Core
+import qualified Cardano.Ledger.Core as Core
 import qualified Cardano.Ledger.Era as Era
-import qualified Cardano.Ledger.Mary.Value as MA
-import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
-import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
-import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
+
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
 import qualified Shelley.Spec.Ledger.PParams as Sh
 import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
 import qualified Shelley.Spec.Ledger.Tx as Sh
 import qualified Shelley.Spec.Ledger.UTxO as Sh
+
+import qualified Cardano.Ledger.AuxiliaryData as MA
+import qualified Cardano.Ledger.Mary.Value as MA
+import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
+import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
+import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
 
 --
 -- Encoders
@@ -99,7 +99,7 @@ encodePParams' =
     Shelley.encodePParams'
 
 encodeProposedPPUpdates
-    :: (Sh.Core.PParamsDelta era ~ Sh.PParamsUpdate era)
+    :: (Core.PParamsDelta era ~ Sh.PParamsUpdate era)
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates =

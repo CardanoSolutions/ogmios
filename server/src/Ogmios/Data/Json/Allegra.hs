@@ -16,23 +16,23 @@ import Ouroboros.Consensus.Cardano.Block
     ( AllegraEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
-import Shelley.Spec.Ledger.BaseTypes
-    ( StrictMaybe (..) )
 
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
-import qualified Cardano.Ledger.AuxiliaryData as MA
-import qualified Cardano.Ledger.Core as Sh.Core
+import qualified Cardano.Ledger.AuxiliaryData as Aux
+import qualified Cardano.Ledger.Core as Core
 import qualified Cardano.Ledger.Era as Era
-import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
-import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
-import qualified Cardano.Ledger.ShelleyMA.Timelocks as MA
-import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
+
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
 import qualified Shelley.Spec.Ledger.PParams as Sh
 import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
 import qualified Shelley.Spec.Ledger.Tx as Sh
 import qualified Shelley.Spec.Ledger.UTxO as Sh
+
+import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
+import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
+import qualified Cardano.Ledger.ShelleyMA.Timelocks as MA
+import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
 
 --
 -- Encoders
@@ -46,8 +46,8 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
     [ ( "blob"
       , Shelley.encodeMetadataBlob blob
       )
-    , ( "scriptPreImages"
-      , encodeFoldable encodeTimelock scripts
+    , ( "scripts"
+      , encodeFoldable encodeScript scripts
       )
     ]
 
@@ -87,7 +87,7 @@ encodePParams' =
     Shelley.encodePParams'
 
 encodeProposedPPUpdates
-    :: (Sh.Core.PParamsDelta era ~ Sh.PParamsUpdate era)
+    :: (Core.PParamsDelta era ~ Sh.PParamsUpdate era)
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates =
@@ -145,7 +145,7 @@ encodeTx mode x = encodeObjectWithMode mode
       )
     ]
   where
-    adHash :: MA.TxBody era -> StrictMaybe (MA.AuxiliaryDataHash (Era.Crypto era))
+    adHash :: MA.TxBody era -> StrictMaybe (Aux.AuxiliaryDataHash (Era.Crypto era))
     adHash = getField @"adHash"
 
 encodeTxBody
