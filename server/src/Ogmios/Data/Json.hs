@@ -66,6 +66,7 @@ import qualified Codec.CBOR.Write as Cbor
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
 import qualified Ogmios.Data.Json.Allegra as Allegra
+import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Byron as Byron
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Query as Query
@@ -118,9 +119,9 @@ encodeBlock mode = \case
           , Mary.encodeMaryBlock mode blk
           )
         ]
-    BlockAlonzo _blk -> encodeObject
+    BlockAlonzo blk -> encodeObject
         [ ( "alonzo"
-          , error "FIXME: Alonzo.encodeAlonzoBlock mode blk"
+          , Alonzo.encodeAlonzoBlock mode blk
           )
         ]
 

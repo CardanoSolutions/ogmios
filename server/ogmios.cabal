@@ -4,7 +4,7 @@ cabal-version: 2.0
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5e7a2a0fc18edb852d7ce577dd7806fc38279415aae96bcd87ea3c9a831022fa
+-- hash: 3bb7c87b75c0d0934e3dc62e7df2aa7ad57356645b936c9b47e3e6031ce544dc
 
 name:           ogmios
 version:        3.2.0
@@ -62,6 +62,7 @@ library
       Ogmios.Data.Health
       Ogmios.Data.Json
       Ogmios.Data.Json.Allegra
+      Ogmios.Data.Json.Alonzo
       Ogmios.Data.Json.Byron
       Ogmios.Data.Json.Mary
       Ogmios.Data.Json.Prelude
@@ -129,6 +130,7 @@ library
     , cardano-crypto
     , cardano-crypto-class
     , cardano-crypto-wrapper
+    , cardano-ledger-alonzo
     , cardano-ledger-byron
     , cardano-ledger-core
     , cardano-ledger-shelley-ma

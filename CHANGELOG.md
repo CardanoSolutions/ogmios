@@ -22,6 +22,12 @@ pre: "<b>5. </b>"
 
 #### Changed
 
+- :warning: **Breaking-Change** :warning: Auxiliary data's `scriptPreImages` in Allegra & Mary has been replaced with a field `scripts` which has one field `native`. The value of `native` corresponds to what used to be the value of `scriptPreImages`. In Alonzo, `scripts` may also have another field `plutus` with a serialized Plutus script. 
+
+- :warning: **Breaking-Change** :warning: Transactions witnesses' `address` has been renamed into `signatures`, and the structure of the object has been changed to be a map from public keys to signatures (instead of an object with two field `key` & `signature`). 
+
+- :warning: **Breaking-Change** :warning: Transactions witnesses' `script` has been renamed into `scripts`.
+
 - The `moveInstantaneousRewards` certificates have a new optional field `value` and not only a `rewards` map as before. 
   When `value` is present, it signifies that rewards are moved to the other pot. 
 

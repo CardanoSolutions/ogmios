@@ -1191,10 +1191,10 @@ encodeWitnessSet
     => Sh.WitnessSet (ShelleyEra crypto)
     -> Json
 encodeWitnessSet x = encodeObject
-    [ ( "address"
+    [ ( "signatures"
       , encodeFoldable encodeWitVKey (Sh.addrWits x)
       )
-    , ( "script"
+    , ( "scripts"
       , encodeMap stringifyScriptHash encodeMultiSig (Sh.scriptWits x)
       )
     , ( "bootstrap"
@@ -1212,14 +1212,8 @@ encodeWitVKey
     :: Crypto crypto
     => Sh.WitVKey Sh.Witness crypto
     -> Json
-encodeWitVKey (Sh.WitVKey key sig) = encodeObject
-    [ ( "key"
-      , encodeVKey key
-      )
-    , ( "signature"
-      , encodeSignedDSIGN sig
-      )
-    ]
+encodeWitVKey (Sh.WitVKey key sig) =
+    encodeObject [(stringifyVKey  key, encodeSignedDSIGN sig)]
 
 --
 -- Conversion To Text
@@ -1271,6 +1265,13 @@ stringifyScriptHash
     -> Text
 stringifyScriptHash (Sh.ScriptHash (CC.UnsafeHash h)) =
     encodeBase16 (fromShort h)
+
+stringifyVKey
+    :: Crypto crypto
+    => Sh.VKey any crypto
+    -> Text
+stringifyVKey =
+    encodeBase16 . CC.rawSerialiseVerKeyDSIGN . Sh.unVKey
 
 --
 -- Helpers

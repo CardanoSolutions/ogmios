@@ -52,8 +52,8 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
     [ ( "blob"
       , Shelley.encodeMetadataBlob blob
       )
-    , ( "scriptPreImages"
-      , encodeFoldable Allegra.encodeTimelock scripts
+    , ( "scripts"
+      , encodeFoldable Allegra.encodeScript scripts
       )
     ]
 
@@ -288,10 +288,10 @@ encodeWitnessSet
     => Sh.WitnessSet (MaryEra crypto)
     -> Json
 encodeWitnessSet x = encodeObject
-    [ ( "address"
+    [ ( "signatures"
       , encodeFoldable Shelley.encodeWitVKey (Sh.addrWits x)
       )
-    , ( "script"
+    , ( "scripts"
       , encodeMap Shelley.stringifyScriptHash Allegra.encodeTimelock (Sh.scriptWits x)
       )
     , ( "bootstrap"

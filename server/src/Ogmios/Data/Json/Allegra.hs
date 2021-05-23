@@ -93,6 +93,13 @@ encodeProposedPPUpdates
 encodeProposedPPUpdates =
     Shelley.encodeProposedPPUpdates
 
+encodeScript
+    :: Crypto crypto
+    => MA.Timelock crypto
+    -> Json
+encodeScript timelock = encodeObject
+    [ ( "native", encodeTimelock timelock ) ]
+
 encodeTimelock
     :: Crypto crypto
     => MA.Timelock crypto
@@ -277,10 +284,10 @@ encodeWitnessSet
     => Sh.WitnessSet (AllegraEra crypto)
     -> Json
 encodeWitnessSet x = encodeObject
-    [ ( "address"
+    [ ( "signatures"
       , encodeFoldable Shelley.encodeWitVKey (Sh.addrWits x)
       )
-    , ( "script"
+    , ( "scripts"
       , encodeMap Shelley.stringifyScriptHash encodeTimelock (Sh.scriptWits x)
       )
     , ( "bootstrap"
