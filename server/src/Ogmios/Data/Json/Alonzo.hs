@@ -23,7 +23,6 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
 import Shelley.Spec.Ledger.BaseTypes
     ( StrictMaybe (..) )
 
-import qualified Data.ByteString as BS
 import qualified Data.Map.Strict as Map
 
 import qualified Ogmios.Data.Json.Allegra as Allegra
@@ -35,17 +34,14 @@ import qualified Cardano.Ledger.Era as Era
 import qualified Cardano.Ledger.SafeHash as SafeHash
 
 import qualified Shelley.Spec.Ledger.API as Spec
-import qualified Shelley.Spec.Ledger.BlockChain as Spec
 import qualified Shelley.Spec.Ledger.PParams as Spec
-import qualified Shelley.Spec.Ledger.Tx as Spec
+import qualified Shelley.Spec.Ledger.STS.Ledger as Spec
 import qualified Shelley.Spec.Ledger.UTxO as Spec
 
 import qualified Cardano.Ledger.Alonzo.Data as Al
 import qualified Cardano.Ledger.Alonzo.Language as Al
 import qualified Cardano.Ledger.Alonzo.PlutusScriptApi as Al
 import qualified Cardano.Ledger.Alonzo.PParams as Al
-import qualified Cardano.Ledger.Alonzo.Rules.Bbody as Al
-import qualified Cardano.Ledger.Alonzo.Rules.Ledger as Al
 import qualified Cardano.Ledger.Alonzo.Rules.Utxo as Al
 import qualified Cardano.Ledger.Alonzo.Rules.Utxos as Al
 import qualified Cardano.Ledger.Alonzo.Rules.Utxow as Al
@@ -53,7 +49,6 @@ import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.Translation as Al
 import qualified Cardano.Ledger.Alonzo.Tx as Al
 import qualified Cardano.Ledger.Alonzo.TxBody as Al
-import qualified Cardano.Ledger.Alonzo.TxInfo as Al
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 import qualified Cardano.Ledger.Alonzo.TxWitness as Al
 
@@ -61,23 +56,41 @@ import qualified Cardano.Ledger.Alonzo.TxWitness as Al
 -- Encoders
 --
 
-encodeAlonzoBlock
+encodeAlonzoPredFail
     :: Crypto crypto
-    => SerializationMode
-    -> ShelleyBlock (AlonzoEra crypto)
+    => Al.AlonzoPredFail (AlonzoEra crypto)
     -> Json
-encodeAlonzoBlock mode (ShelleyBlock (Spec.Block blkHeader txs) headerHash) =
-    encodeObject
-    [ ( "body"
-      , encodeFoldable (encodeTx mode) (Al.txSeqTxns txs)
-      )
-    , ( "header"
-      , Shelley.encodeBHeader mode blkHeader
-      )
-    , ( "headerHash"
-      , Shelley.encodeShelleyHash headerHash
-      )
-    ]
+encodeAlonzoPredFail = \case
+    Al.UnRedeemableScripts scripts ->
+        encodeObject
+            [ ( "unreemableScripts"
+              , encodeFoldable (encode2Tuple encodeScriptPurpose Shelley.encodeScriptHash) scripts
+              )
+            ]
+    Al.DataHashSetsDontAgree provided inferred ->
+        encodeObject
+            [ ( "datumsMismatch", encodeObject
+                [ ( "provided", encodeFoldable encodeDataHash provided )
+                , ( "inferredFromInputs", encodeFoldable encodeDataHash inferred )
+                ]
+              )
+            ]
+    Al.PPViewHashesDontMatch provided inferred ->
+        encodeObject
+            [ ( "extraDataMismatch", encodeObject
+                [ ( "provided", encodeStrictMaybe encodeWitnessPPDataHash provided )
+                , ( "inferredFromParameters", encodeStrictMaybe encodeWitnessPPDataHash inferred )
+                ]
+              )
+            ]
+    Al.MissingRequiredSigners keys ->
+        encodeObject
+            [ ( "missingRequiredSignatures"
+              , encodeFoldable Shelley.encodeKeyHash keys
+              )
+            ]
+    Al.WrappedShelleyEraFailure e ->
+        Shelley.encodeUtxowFailure  encodeUtxoFailure e
 
 encodeAuxiliaryData
     :: Crypto crypto
@@ -95,6 +108,24 @@ encodeAuxiliaryData (Al.AuxiliaryData blob scripts datums) = encodeObject
       )
     ]
 
+encodeBlock
+    :: Crypto crypto
+    => SerializationMode
+    -> ShelleyBlock (AlonzoEra crypto)
+    -> Json
+encodeBlock mode (ShelleyBlock (Spec.Block blkHeader txs) headerHash) =
+    encodeObject
+    [ ( "body"
+      , encodeFoldable (encodeTx mode) (Al.txSeqTxns txs)
+      )
+    , ( "header"
+      , Shelley.encodeBHeader mode blkHeader
+      )
+    , ( "headerHash"
+      , Shelley.encodeShelleyHash headerHash
+      )
+    ]
+
 encodeCostModel
     :: Al.CostModel
     -> Json
@@ -109,6 +140,12 @@ encodeData (Al.DataConstr datum) =
     -- to strip away the extra CBOR wrapping this if any.
     encodeShortByteString encodeByteStringBase64 (memobytes datum)
 
+encodeDataHash
+    :: Al.DataHash crypto
+    -> Json
+encodeDataHash =
+    Shelley.encodeHash . SafeHash.extractHash
+
 encodeExUnits
     :: Al.ExUnits
     -> Json
@@ -117,10 +154,10 @@ encodeExUnits units =  encodeObject
     , ( "steps", encodeWord64 (Al.exUnitsSteps units) )
     ]
 
-encodeAlonzoGenesis
+encodeGenesis
     :: Al.AlonzoGenesis
     -> Json
-encodeAlonzoGenesis x = encodeObject
+encodeGenesis x = encodeObject
     [ ( "lovelacePerUtxoWord"
       , encodeCoin (Al.adaPerUTxOWord x)
       )
@@ -146,6 +183,22 @@ encodeAlonzoGenesis x = encodeObject
       , encodeNatural (Al.maxCollateralInputs x)
       )
     ]
+
+encodeLanguage
+    :: Al.Language
+    -> Json
+encodeLanguage = \case
+    Al.PlutusV1 -> encodeText "plutus:v1"
+
+encodeLedgerFailure
+    :: Crypto crypto
+    => Spec.LedgerPredicateFailure (AlonzoEra crypto)
+    -> Json
+encodeLedgerFailure = \case
+    Spec.UtxowFailure e ->
+        encodeAlonzoPredFail e
+    Spec.DelegsFailure e ->
+        Shelley.encodeDelegsFailure e
 
 encodePParams'
     :: (forall a. (a -> Json) -> Spec.HKD f a -> Json)
@@ -271,6 +324,20 @@ encodeScript = \case
           )
         ]
 
+encodeScriptPurpose
+    :: Crypto crypto
+    => Al.ScriptPurpose crypto
+    -> Json
+encodeScriptPurpose = \case
+    Al.Spending txIn ->
+        encodeObject [ ( "spend", Shelley.encodeTxIn txIn ) ]
+    Al.Minting policyId ->
+        encodeObject [ ( "mint", Mary.encodePolicyId policyId ) ]
+    Al.Certifying cert ->
+        encodeObject [ ( "certificate", Shelley.encodeDCert cert ) ]
+    Al.Rewarding acct ->
+        encodeObject [ ( "withdrawal", Shelley.encodeRewardAcnt acct ) ]
+
 encodeTx
     :: forall crypto. Crypto crypto
     => SerializationMode
@@ -337,7 +404,7 @@ encodeTxBody x = encodeObject
       , encodeStrictMaybe Shelley.encodeNetwork (Al.txnetworkid x)
       )
     , ( "requiredExtraData"
-      , encodeStrictMaybe (Shelley.encodeHash . SafeHash.extractHash) (Al.wppHash x)
+      , encodeStrictMaybe encodeWitnessPPDataHash (Al.wppHash x)
       )
     , ( "requiredExtraSignatures"
       , encodeFoldable Shelley.encodeKeyHash (Al.reqSignerHashes x)
@@ -356,7 +423,7 @@ encodeTxOut (Al.TxOut addr value datum) = encodeObject
       , Mary.encodeValue value
       )
     , ( "datum"
-      , encodeStrictMaybe (Shelley.encodeHash . SafeHash.extractHash) datum
+      , encodeStrictMaybe encodeDataHash datum
       )
     ]
 
@@ -380,6 +447,176 @@ encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Spec.unUTxO
   where
     encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
+
+encodeUtxoFailure
+    :: forall crypto. Crypto crypto
+    => Al.UtxoPredicateFailure (AlonzoEra crypto)
+    -> Json
+encodeUtxoFailure = \case
+    Al.BadInputsUTxO inputs ->
+        encodeObject
+            [ ( "badInputs"
+              , encodeFoldable Shelley.encodeTxIn inputs
+              )
+            ]
+    Al.OutsideValidityIntervalUTxO itv currentSlot ->
+        encodeObject
+            [ ( "outsideOfValidityInterval", encodeObject
+                [ ( "interval" , Allegra.encodeValidityInterval itv )
+                , ( "currentSlot" , encodeSlotNo currentSlot )
+                ]
+              )
+            ]
+    Al.MaxTxSizeUTxO actualSize maxSize ->
+        encodeObject
+            [ ( "txTooLarge", encodeObject
+                [ ( "maximumSize", encodeInteger maxSize )
+                , ( "actualSize", encodeInteger actualSize )
+                ]
+              )
+            ]
+    Al.InputSetEmptyUTxO ->
+        encodeText "missingAtLeastOneInputUtxo"
+    Al.FeeTooSmallUTxO required actual ->
+        encodeObject
+            [ ( "feeTooSmall", encodeObject
+                [ ( "requiredFee", encodeCoin required )
+                , ( "actualFee", encodeCoin actual )
+                ]
+              )
+            ]
+    Al.ValueNotConservedUTxO consumed produced ->
+        encodeObject
+            [ ( "valueNotConserved", encodeObject
+                [ ( "consumed", Mary.encodeValue consumed )
+                , ( "produced", Mary.encodeValue produced )
+                ]
+              )
+            ]
+    Al.WrongNetwork expected invalidAddrs ->
+        encodeObject
+            [ ( "networkMismatch", encodeObject
+                [ ( "expectedNetwork"
+                  , Shelley.encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , Shelley.encodeEntities "address" Shelley.encodeAddress invalidAddrs
+                  )
+                ]
+              )
+            ]
+    Al.WrongNetworkWithdrawal expected invalidAccts ->
+        encodeObject
+            [ ( "networkMismatch", encodeObject
+                [ ( "expectedNetwork"
+                  , Shelley.encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , Shelley.encodeEntities "rewardAccount" Shelley.encodeRewardAcnt invalidAccts
+                  )
+                ]
+              )
+            ]
+    Al.WrongNetworkInTxBody expected actual ->
+        encodeObject
+            [ ( "networkMismatch", encodeObject
+                [ ( "expectedNetwork"
+                  , Shelley.encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , Shelley.encodeEntities "transactionBody" Shelley.encodeNetwork [actual]
+                  )
+                ]
+              )
+            ]
+    Al.OutputTooSmallUTxO outs ->
+        encodeObject
+            [ ( "outputTooSmall"
+              , encodeFoldable encodeTxOut outs
+              )
+            ]
+    Al.OutputBootAddrAttrsTooBig outs ->
+        encodeObject
+            [ ( "addressAttributesTooLarge"
+              , encodeFoldable Shelley.encodeAddress ((\(Al.TxOut addr _ _) -> addr) <$> outs)
+              )
+            ]
+    Al.TriesToForgeADA ->
+        encodeString "triesToForgeAda"
+    Al.OutputTooBigUTxO outs ->
+        encodeObject
+            [ ( "tooManyAssetsInOutput"
+              , encodeFoldable (\(_, _, o) -> encodeTxOut o)  outs
+              )
+            ]
+    Al.InsufficientCollateral required actual ->
+        encodeObject
+            [ ( "collateralTooSmall", encodeObject
+                [ ( "requiredCollateral", encodeCoin required )
+                , ( "actualCollateral", encodeCoin actual )
+                ]
+              )
+            ]
+    Al.ScriptsNotPaidUTxO utxo ->
+        encodeObject
+            [ ( "collateralIsScript", encodeUtxo utxo )
+            ]
+    Al.CollateralContainsNonADA value ->
+        encodeObject
+            [ ( "collateralHasNonAdaAssets", Mary.encodeValue value )
+            ]
+    Al.TooManyCollateralInputs maxInputs actualInputs ->
+        encodeObject
+            [ ( "tooManyCollateralInputs", encodeObject
+                [ ( "maximumCollateralInputs", encodeNatural maxInputs )
+                , ( "actualCollateralInputs", encodeNatural actualInputs )
+                ]
+              )
+            ]
+    Al.ExUnitsTooBigUTxO maxUnit actualUnit ->
+        encodeObject
+            [ ( "executionUnitsTooLarge", encodeObject
+                [ ( "maximumExecutionUnits", encodeExUnits maxUnit )
+                , ( "actualExecutionUnits", encodeExUnits actualUnit )
+                ]
+              )
+            ]
+    Al.OutsideForecast slot ->
+        encodeObject
+            [ ( "outsideForecast", encodeSlotNo slot )
+            ]
+    Al.UtxosFailure e ->
+        encodeUtxosPredicateFailure e
+
+encodeUtxosPredicateFailure
+    :: Crypto crypto
+    => Al.UtxosPredicateFailure (AlonzoEra crypto)
+    -> Json
+encodeUtxosPredicateFailure = \case
+    Al.ValidationTagMismatch{} ->
+        encodeString "validationTagMismatch"
+    Al.CollectErrors errors ->
+        encodeObject [ ( "collectErrors", encodeFoldable encodeCollectError errors ) ]
+    Al.UpdateFailure e ->
+        Shelley.encodeUpdateFailure e
+
+encodeCollectError
+    :: Crypto crypto
+    => Al.CollectError crypto
+    -> Json
+encodeCollectError = \case
+    Al.NoRedeemer purpose ->
+        encodeObject [ ( "noRedeemer", encodeScriptPurpose purpose ) ]
+    Al.NoWitness hash ->
+        encodeObject [ ( "noWitness", Shelley.encodeScriptHash hash ) ]
+    Al.NoCostModel lang ->
+        encodeObject [ ( "noCostModel", encodeLanguage lang ) ]
+
+encodeWitnessPPDataHash
+    :: Al.WitnessPPDataHash crypto
+    -> Json
+encodeWitnessPPDataHash =
+    Shelley.encodeHash . SafeHash.extractHash
 
 encodeWitnessSet
     :: Crypto crypto
@@ -429,7 +666,7 @@ stringifyRdmrPtr (Al.RdmrPtr tag ptr) =
         :: Al.Tag
         -> Text
     stringifyTag = \case
-        Al.Spend -> "utxo"
+        Al.Spend -> "spend"
         Al.Mint -> "mint"
         Al.Cert -> "certificate"
         Al.Rewrd -> "withdrawal"

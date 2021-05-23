@@ -106,22 +106,22 @@ encodeBlock mode = \case
         ]
     BlockShelley blk -> encodeObject
         [ ( "shelley"
-          , Shelley.encodeShelleyBlock mode blk
+          , Shelley.encodeBlock mode blk
           )
         ]
     BlockAllegra blk -> encodeObject
         [ ( "allegra"
-          , Allegra.encodeAllegraBlock mode blk
+          , Allegra.encodeBlock mode blk
           )
         ]
     BlockMary blk -> encodeObject
         [ ( "mary"
-          , Mary.encodeMaryBlock mode blk
+          , Mary.encodeBlock mode blk
           )
         ]
     BlockAlonzo blk -> encodeObject
         [ ( "alonzo"
-          , Alonzo.encodeAlonzoBlock mode blk
+          , Alonzo.encodeBlock mode blk
           )
         ]
 
@@ -139,7 +139,7 @@ encodeHardForkApplyTxErr = \case
     ApplyTxErrMary (ApplyTxError xs) ->
         encodeList Mary.encodeLedgerFailure xs
     ApplyTxErrAlonzo (ApplyTxError xs) ->
-        encodeList (error "FIXME: Alonzo.encodeLedgerFailure") xs
+        encodeList Alonzo.encodeLedgerFailure xs
     ApplyTxErrWrongEra e ->
         encodeEraMismatch e
 

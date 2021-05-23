@@ -46,6 +46,7 @@ import qualified Cardano.Ledger.Coin as Sh
 import qualified Cardano.Ledger.Core as Sh.Core
 import qualified Cardano.Ledger.SafeHash as Sh
 import qualified Cardano.Ledger.Shelley.Constraints as Sh
+
 import qualified Shelley.Spec.Ledger.Address as Sh
 import qualified Shelley.Spec.Ledger.Address.Bootstrap as Sh
 import qualified Shelley.Spec.Ledger.BaseTypes as Sh
@@ -139,6 +140,24 @@ encodeBHeader mode (Sh.BHeader hBody hSig) = encodeObjectWithMode mode
       )
     ]
 
+encodeBlock
+    :: Crypto crypto
+    => SerializationMode
+    -> ShelleyBlock (ShelleyEra crypto)
+    -> Json
+encodeBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
+    encodeObject
+    [ ( "body"
+      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
+      )
+    , ( "header"
+      , encodeBHeader mode blkHeader
+      )
+    , ( "headerHash"
+      , encodeShelleyHash headerHash
+      )
+    ]
+
 encodeBootstrapWitness
     :: Crypto crypto
     => Sh.BootstrapWitness crypto
@@ -155,48 +174,6 @@ encodeBootstrapWitness (Sh.BootstrapWitness key sig cc attr) = encodeObject
       )
     , ( "signature"
       , encodeSignedDSIGN sig
-      )
-    ]
-
-encodeShelleyGenesis
-    :: Sh.ShelleyGenesis era
-    -> Json
-encodeShelleyGenesis x = encodeObject
-    [ ( "systemStart"
-      , encodeUtcTime (Sh.sgSystemStart x)
-      )
-    , ( "networkMagic"
-      , encodeWord32 (Sh.sgNetworkMagic x)
-      )
-    , ( "network"
-      , encodeNetwork (Sh.sgNetworkId x)
-      )
-    , ( "activeSlotsCoefficient"
-      , encodeRational (Sh.sgActiveSlotsCoeff x)
-      )
-    , ( "securityParameter"
-      , encodeWord64 (Sh.sgSecurityParam x)
-      )
-    , ( "epochLength"
-      , encodeEpochSize (Sh.sgEpochLength x)
-      )
-    , ( "slotsPerKesPeriod"
-      , encodeWord64 (Sh.sgSlotsPerKESPeriod x)
-      )
-    , ( "maxKesEvolutions"
-      , encodeWord64 (Sh.sgMaxKESEvolutions x)
-      )
-    , ( "slotLength"
-      , encodeNominalDiffTime (Sh.sgSlotLength x)
-      )
-    , ( "updateQuorum"
-      , encodeWord64 (Sh.sgUpdateQuorum x)
-      )
-    , ( "maxLovelaceSupply"
-      , encodeWord64 (Sh.sgMaxLovelaceSupply x)
-      )
-    , ( "protocolParameters"
-      , encodePParams' id (Sh.sgProtocolParams x)
       )
     ]
 
@@ -448,6 +425,59 @@ encodeDeplFailure = \case
         encodePoolFailure e
     Sh.DelegFailure e ->
         encodeDelegFailure e
+
+encodeEntities
+    :: Foldable f
+    => Text
+    -> (entity -> Json)
+    -> f entity
+    -> Json
+encodeEntities tag encodeEntity = encodeFoldable $ \e -> encodeObject
+    [ ( "type", encodeText tag )
+    , ( "entity", encodeEntity e )
+    ]
+
+encodeGenesis
+    :: Sh.ShelleyGenesis era
+    -> Json
+encodeGenesis x = encodeObject
+    [ ( "systemStart"
+      , encodeUtcTime (Sh.sgSystemStart x)
+      )
+    , ( "networkMagic"
+      , encodeWord32 (Sh.sgNetworkMagic x)
+      )
+    , ( "network"
+      , encodeNetwork (Sh.sgNetworkId x)
+      )
+    , ( "activeSlotsCoefficient"
+      , encodeRational (Sh.sgActiveSlotsCoeff x)
+      )
+    , ( "securityParameter"
+      , encodeWord64 (Sh.sgSecurityParam x)
+      )
+    , ( "epochLength"
+      , encodeEpochSize (Sh.sgEpochLength x)
+      )
+    , ( "slotsPerKesPeriod"
+      , encodeWord64 (Sh.sgSlotsPerKESPeriod x)
+      )
+    , ( "maxKesEvolutions"
+      , encodeWord64 (Sh.sgMaxKESEvolutions x)
+      )
+    , ( "slotLength"
+      , encodeNominalDiffTime (Sh.sgSlotLength x)
+      )
+    , ( "updateQuorum"
+      , encodeWord64 (Sh.sgUpdateQuorum x)
+      )
+    , ( "maxLovelaceSupply"
+      , encodeWord64 (Sh.sgMaxLovelaceSupply x)
+      )
+    , ( "protocolParameters"
+      , encodePParams' id (Sh.sgProtocolParams x)
+      )
+    ]
 
 encodeHash
     :: CC.Hash alg a
@@ -794,24 +824,6 @@ encodeSignedKES
 encodeSignedKES (CC.SignedKES raw) =
     encodeByteStringBase64 . CC.rawSerialiseSigKES $ raw
 
-encodeShelleyBlock
-    :: Crypto crypto
-    => SerializationMode
-    -> ShelleyBlock (ShelleyEra crypto)
-    -> Json
-encodeShelleyBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
-    encodeObject
-    [ ( "body"
-      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
-      )
-    , ( "header"
-      , encodeBHeader mode blkHeader
-      )
-    , ( "headerHash"
-      , encodeShelleyHash headerHash
-      )
-    ]
-
 encodeShelleyHash
     :: ShelleyHash crypto
     -> Json
@@ -1046,16 +1058,24 @@ encodeUtxoFailure = \case
     Sh.WrongNetwork expected invalidAddrs ->
         encodeObject
             [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork", encodeNetwork expected )
-                , ( "invalidAddresses", encodeFoldable encodeAddress invalidAddrs )
+                [ ( "expectedNetwork"
+                  , encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , encodeEntities "addresses" encodeAddress invalidAddrs
+                  )
                 ]
               )
             ]
     Sh.WrongNetworkWithdrawal expected invalidAccts ->
         encodeObject
             [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork", encodeNetwork expected )
-                , ( "invalidRewardAccounts", encodeFoldable encodeRewardAcnt invalidAccts )
+                [ ( "expectedNetwork"
+                  , encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , encodeEntities "rewardAccount" encodeRewardAcnt invalidAccts
+                  )
                 ]
               )
             ]

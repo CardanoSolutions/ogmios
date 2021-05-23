@@ -38,24 +38,6 @@ import qualified Shelley.Spec.Ledger.UTxO as Sh
 -- Encoders
 --
 
-encodeAllegraBlock
-    :: Crypto crypto
-    => SerializationMode
-    -> ShelleyBlock (AllegraEra crypto)
-    -> Json
-encodeAllegraBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
-    encodeObject
-    [ ( "body"
-      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
-      )
-    , ( "header"
-      , Shelley.encodeBHeader mode blkHeader
-      )
-    , ( "headerHash"
-      , Shelley.encodeShelleyHash headerHash
-      )
-    ]
-
 encodeAuxiliaryData
     :: Crypto crypto
     => MA.AuxiliaryData (AllegraEra crypto)
@@ -66,6 +48,24 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
       )
     , ( "scriptPreImages"
       , encodeFoldable encodeTimelock scripts
+      )
+    ]
+
+encodeBlock
+    :: Crypto crypto
+    => SerializationMode
+    -> ShelleyBlock (AllegraEra crypto)
+    -> Json
+encodeBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
+    encodeObject
+    [ ( "body"
+      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
+      )
+    , ( "header"
+      , Shelley.encodeBHeader mode blkHeader
+      )
+    , ( "headerHash"
+      , Shelley.encodeShelleyHash headerHash
       )
     ]
 
@@ -237,19 +237,27 @@ encodeUtxoFailure = \case
     MA.WrongNetwork expected invalidAddrs ->
         encodeObject
             [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork", Shelley.encodeNetwork expected )
-                , ( "invalidAddresses", encodeFoldable Shelley.encodeAddress invalidAddrs )
+                [ ( "expectedNetwork"
+                  , Shelley.encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , Shelley.encodeEntities "address" Shelley.encodeAddress invalidAddrs
+                  )
                 ]
               )
             ]
     MA.WrongNetworkWithdrawal expected invalidAccts ->
         encodeObject
-            [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork" , Shelley.encodeNetwork expected )
-                , ( "invalidRewardAccounts" , encodeFoldable Shelley.encodeRewardAcnt invalidAccts )
-                ]
+        [ ( "networkMismatch", encodeObject
+            [ ( "expectedNetwork"
+              , Shelley.encodeNetwork expected
+              )
+            , ( "invalidEntities"
+              , Shelley.encodeEntities "rewardAccount" Shelley.encodeRewardAcnt invalidAccts
               )
             ]
+          )
+        ]
     MA.OutputTooSmallUTxO outs ->
         encodeObject
             [ ( "outputTooSmall"

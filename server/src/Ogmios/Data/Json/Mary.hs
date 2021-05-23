@@ -57,22 +57,12 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
       )
     ]
 
-encodeLedgerFailure
-    :: Crypto crypto
-    => Sh.LedgerPredicateFailure (MaryEra crypto)
-    -> Json
-encodeLedgerFailure = \case
-    Sh.UtxowFailure e  ->
-        Shelley.encodeUtxowFailure encodeUtxoFailure e
-    Sh.DelegsFailure e ->
-        Shelley.encodeDelegsFailure e
-
-encodeMaryBlock
+encodeBlock
     :: Crypto crypto
     => SerializationMode
     -> ShelleyBlock (MaryEra crypto)
     -> Json
-encodeMaryBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
+encodeBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
     encodeObject
     [ ( "body"
       , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
@@ -84,6 +74,22 @@ encodeMaryBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
       , Shelley.encodeShelleyHash headerHash
       )
     ]
+
+encodeLedgerFailure
+    :: Crypto crypto
+    => Sh.LedgerPredicateFailure (MaryEra crypto)
+    -> Json
+encodeLedgerFailure = \case
+    Sh.UtxowFailure e  ->
+        Shelley.encodeUtxowFailure encodeUtxoFailure e
+    Sh.DelegsFailure e ->
+        Shelley.encodeDelegsFailure e
+
+encodePolicyId
+    :: MA.PolicyID crypto
+    -> Json
+encodePolicyId (MA.PolicyID hash) =
+    Shelley.encodeScriptHash hash
 
 encodePParams'
     :: (forall a. (a -> Json) -> Sh.HKD f a -> Json)
@@ -236,16 +242,24 @@ encodeUtxoFailure = \case
     MA.WrongNetwork expected invalidAddrs ->
         encodeObject
             [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork", Shelley.encodeNetwork expected )
-                , ( "invalidAddresses", encodeFoldable Shelley.encodeAddress invalidAddrs )
+                [ ( "expectedNetwork"
+                  , Shelley.encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , Shelley.encodeEntities "address" Shelley.encodeAddress invalidAddrs
+                  )
                 ]
               )
             ]
     MA.WrongNetworkWithdrawal expected invalidAccts ->
         encodeObject
             [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork" , Shelley.encodeNetwork expected )
-                , ( "invalidRewardAccounts" , encodeFoldable Shelley.encodeRewardAcnt invalidAccts )
+                [ ( "expectedNetwork"
+                  , Shelley.encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , Shelley.encodeEntities "rewardAccount" Shelley.encodeRewardAcnt invalidAccts
+                  )
                 ]
               )
             ]

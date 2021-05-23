@@ -591,7 +591,7 @@ parseGetGenesisConfig genResultInEra = do
                     BlockQuery $ QueryIfCurrentShelley GetGenesisConfig
                 , encodeResult =
                     let encodeGenesis =
-                            Shelley.encodeShelleyGenesis . getCompactGenesis
+                            Shelley.encodeGenesis . getCompactGenesis
                     in either encodeMismatchEraInfo encodeGenesis
                 , genResult =
                     genResultInEra (Proxy @(ShelleyEra crypto))
@@ -602,7 +602,7 @@ parseGetGenesisConfig genResultInEra = do
                     BlockQuery $ QueryIfCurrentAllegra GetGenesisConfig
                 , encodeResult =
                     let encodeGenesis =
-                            Shelley.encodeShelleyGenesis . getCompactGenesis
+                            Shelley.encodeGenesis . getCompactGenesis
                     in either encodeMismatchEraInfo encodeGenesis
                 , genResult =
                     genResultInEra (Proxy @(AllegraEra crypto))
@@ -613,7 +613,7 @@ parseGetGenesisConfig genResultInEra = do
                     BlockQuery $ QueryIfCurrentMary GetGenesisConfig
                 , encodeResult =
                     let encodeGenesis =
-                            Shelley.encodeShelleyGenesis . getCompactGenesis
+                            Shelley.encodeGenesis . getCompactGenesis
                     in either encodeMismatchEraInfo encodeGenesis
                 , genResult =
                     genResultInEra (Proxy @(MaryEra crypto))
@@ -624,7 +624,7 @@ parseGetGenesisConfig genResultInEra = do
                     BlockQuery $ QueryIfCurrentAlonzo GetGenesisConfig
                 , encodeResult =
                     let encodeGenesis =
-                            Shelley.encodeShelleyGenesis . getCompactGenesis
+                            Shelley.encodeGenesis . getCompactGenesis
                      in either encodeMismatchEraInfo encodeGenesis
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
