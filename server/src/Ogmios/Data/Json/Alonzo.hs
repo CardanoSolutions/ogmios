@@ -117,6 +117,36 @@ encodeExUnits units =  encodeObject
     , ( "steps", encodeWord64 (Al.exUnitsSteps units) )
     ]
 
+encodeAlonzoGenesis
+    :: Al.AlonzoGenesis
+    -> Json
+encodeAlonzoGenesis x = encodeObject
+    [ ( "lovelacePerUtxoWord"
+      , encodeCoin (Al.adaPerUTxOWord x)
+      )
+    , ( "costModels"
+      , encodeMap stringifyLanguage encodeCostModel (Al.costmdls x)
+      )
+    , ( "prices"
+      , encodePrices (Al.prices x)
+      )
+    , ( "maxExecutionUnitsPerTransaction"
+      , encodeExUnits (Al.maxTxExUnits x)
+      )
+    , ( "maxExecutionUnitsPerBlock"
+      , encodeExUnits (Al.maxBlockExUnits x)
+      )
+    , ( "maxValueSize"
+      , encodeNatural (Al.maxValSize x)
+      )
+    , ( "collateralPercentage"
+      , encodeNatural (Al.collateralPercentage x)
+      )
+    , ( "maxCollateralInputs"
+      , encodeNatural (Al.maxCollateralInputs x)
+      )
+    ]
+
 encodePParams'
     :: (forall a. (a -> Json) -> Spec.HKD f a -> Json)
     -> Al.PParams' f era
@@ -138,10 +168,10 @@ encodePParams' encodeF x = encodeObject
       , encodeF encodeNatural (Al._maxTxSize x)
       )
     , ( "stakeKeyDeposit"
-      , encodeF Shelley.encodeCoin (Al._keyDeposit x)
+      , encodeF encodeCoin (Al._keyDeposit x)
       )
     , ( "poolDeposit"
-      , encodeF Shelley.encodeCoin (Al._poolDeposit x)
+      , encodeF encodeCoin (Al._poolDeposit x)
       )
     , ( "poolRetirementEpochBound"
       , encodeF encodeEpochNo (Al._eMax x)
@@ -168,10 +198,10 @@ encodePParams' encodeF x = encodeObject
       , encodeF Shelley.encodeProtVer (Al._protocolVersion x)
       )
     , ( "minPoolCost"
-      , encodeF Shelley.encodeCoin (Al._minPoolCost x)
+      , encodeF encodeCoin (Al._minPoolCost x)
       )
-    , ( "adaPerUtxoWord"
-      , encodeF Shelley.encodeCoin (Al._adaPerUTxOWord x)
+    , ( "lovelacePerUtxoWord"
+      , encodeF encodeCoin (Al._adaPerUTxOWord x)
       )
     , ( "costModels"
       , encodeF (encodeMap stringifyLanguage encodeCostModel) (Al._costmdls x)
@@ -200,8 +230,8 @@ encodePrices
     :: Al.Prices
     -> Json
 encodePrices prices =  encodeObject
-    [ ( "memory", Shelley.encodeCoin (Al.prMem prices) )
-    , ( "steps", Shelley.encodeCoin (Al.prSteps prices) )
+    [ ( "memory", encodeCoin (Al.prMem prices) )
+    , ( "steps", encodeCoin (Al.prSteps prices) )
     ]
 
 encodeProposedPPUpdates
@@ -292,7 +322,7 @@ encodeTxBody x = encodeObject
       , Shelley.encodeWdrl (Al.txwdrls x)
       )
     , ( "fee"
-      , Shelley.encodeCoin (Al.txfee x)
+      , encodeCoin (Al.txfee x)
       )
     , ( "validityInterval"
       , Allegra.encodeValidityInterval (Al.txvldt x)
@@ -341,6 +371,15 @@ encodeUpdate (Spec.Update update epoch) = encodeObject
       , encodeEpochNo epoch
       )
     ]
+
+encodeUtxo
+    :: Crypto crypto
+    => Spec.UTxO (AlonzoEra crypto)
+    -> Json
+encodeUtxo =
+    encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Spec.unUTxO
+  where
+    encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
 
 encodeWitnessSet
     :: Crypto crypto

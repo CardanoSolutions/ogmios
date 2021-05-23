@@ -90,6 +90,7 @@ import qualified Shelley.Spec.Ledger.PParams as Sh
 import qualified Shelley.Spec.Ledger.UTxO as Sh
 
 import qualified Ogmios.Data.Json.Allegra as Allegra
+import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
@@ -120,13 +121,13 @@ encodeDelegationsAndRewards (dlg, rwd)
         )
     whenRwdMissing = Map.mapMaybeMissing
         (\_ v -> Just $ encodeObject
-            [ ( "rewards", Shelley.encodeCoin v )
+            [ ( "rewards", encodeCoin v )
             ]
         )
     whenBothPresent = Map.zipWithAMatched
         (\_ x y -> pure $ encodeObject
             [ ( "delegate", Shelley.encodePoolId x )
-            , ( "rewards", Shelley.encodeCoin y )
+            , ( "rewards", encodeCoin y )
             ]
         )
 
@@ -157,7 +158,7 @@ encodeNonMyopicMemberRewards
 encodeNonMyopicMemberRewards (NonMyopicMemberRewards nonMyopicMemberRewards) =
     encodeMap
         (either Shelley.stringifyCoin Shelley.stringifyCredential)
-        (encodeMap Shelley.stringifyPoolId Shelley.encodeCoin)
+        (encodeMap Shelley.stringifyPoolId encodeCoin)
         nonMyopicMemberRewards
 
 encodeOneEraHash
@@ -396,7 +397,7 @@ parseGetCurrentPParams genResultInEra =
                 { query =
                     BlockQuery $ QueryIfCurrentAlonzo GetCurrentPParams
                 , encodeResult =
-                    either encodeMismatchEraInfo (error "FIXME: Alonzo.encodePParams' id")
+                    either encodeMismatchEraInfo (Alonzo.encodePParams' id)
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
@@ -441,7 +442,7 @@ parseGetProposedPParamsUpdates genResultInEra =
                 { query =
                     BlockQuery $ QueryIfCurrentAlonzo GetProposedPParamsUpdates
                 , encodeResult =
-                    either encodeMismatchEraInfo (error "FIXME: Alonzo.encodeProposedPPUpdates")
+                    either encodeMismatchEraInfo Alonzo.encodeProposedPPUpdates
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
@@ -513,7 +514,7 @@ parseGetUTxO genResultInEra =
                 { query =
                     BlockQuery $ QueryIfCurrentAlonzo GetUTxO
                 , encodeResult =
-                    either encodeMismatchEraInfo (error "FIXME: Alonzo.encodeUtxo")
+                    either encodeMismatchEraInfo Alonzo.encodeUtxo
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
@@ -558,7 +559,7 @@ parseGetFilteredUTxO genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
             { query =
                 BlockQuery $ QueryIfCurrentAlonzo (GetFilteredUTxO addrs)
             , encodeResult =
-                either encodeMismatchEraInfo (error "FIXME: Alonzo.encodeUtxo")
+                either encodeMismatchEraInfo Alonzo.encodeUtxo
             , genResult =
                 genResultInEra (Proxy @(AlonzoEra crypto))
             }
@@ -569,6 +570,13 @@ parseGetFilteredUTxO genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
     parseAddresses obj = fmap fromList $
         obj .: "utxo" >>= traverse parseAddress
 
+-- TODO: This query seems to actually always return a compact version of the
+-- `ShelleyGenesis`, even when queried from Alonzo. While this is practical
+-- (because the return type does not change when crossing eras), there's also no
+-- way currently to retrieve an `AlonzoGenesis` ¯\_(ツ)_/¯
+--
+-- If this query is indeed meant to only return ShelleyGenesis, renaming it to
+-- something which suggests it better would make sense. I've asked *the guys*.
 parseGetGenesisConfig
     :: forall f crypto. (Crypto crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (CompactGenesis era))
@@ -583,7 +591,7 @@ parseGetGenesisConfig genResultInEra = do
                     BlockQuery $ QueryIfCurrentShelley GetGenesisConfig
                 , encodeResult =
                     let encodeGenesis =
-                            Shelley.encodeCompactGenesis . getCompactGenesis
+                            Shelley.encodeShelleyGenesis . getCompactGenesis
                     in either encodeMismatchEraInfo encodeGenesis
                 , genResult =
                     genResultInEra (Proxy @(ShelleyEra crypto))
@@ -594,7 +602,7 @@ parseGetGenesisConfig genResultInEra = do
                     BlockQuery $ QueryIfCurrentAllegra GetGenesisConfig
                 , encodeResult =
                     let encodeGenesis =
-                            Shelley.encodeCompactGenesis . getCompactGenesis
+                            Shelley.encodeShelleyGenesis . getCompactGenesis
                     in either encodeMismatchEraInfo encodeGenesis
                 , genResult =
                     genResultInEra (Proxy @(AllegraEra crypto))
@@ -605,7 +613,7 @@ parseGetGenesisConfig genResultInEra = do
                     BlockQuery $ QueryIfCurrentMary GetGenesisConfig
                 , encodeResult =
                     let encodeGenesis =
-                            Shelley.encodeCompactGenesis . getCompactGenesis
+                            Shelley.encodeShelleyGenesis . getCompactGenesis
                     in either encodeMismatchEraInfo encodeGenesis
                 , genResult =
                     genResultInEra (Proxy @(MaryEra crypto))
@@ -615,7 +623,9 @@ parseGetGenesisConfig genResultInEra = do
                 { query =
                     BlockQuery $ QueryIfCurrentAlonzo GetGenesisConfig
                 , encodeResult =
-                    either encodeMismatchEraInfo (error "FIXME: encodeGenesis")
+                    let encodeGenesis =
+                            Shelley.encodeShelleyGenesis . getCompactGenesis
+                     in either encodeMismatchEraInfo encodeGenesis
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }

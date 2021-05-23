@@ -147,7 +147,7 @@ encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ mint) = enc
       , Shelley.encodeWdrl wdrls
       )
     , ( "fee"
-      , Shelley.encodeCoin fee
+      , encodeCoin fee
       )
     , ( "validityInterval"
       , Allegra.encodeValidityInterval validity
@@ -220,8 +220,8 @@ encodeUtxoFailure = \case
     MA.FeeTooSmallUTxO required actual ->
         encodeObject
             [ ( "feeTooSmall", encodeObject
-                [ ( "requiredFee", Shelley.encodeCoin required )
-                , ( "actualFee", Shelley.encodeCoin actual )
+                [ ( "requiredFee", encodeCoin required )
+                , ( "actualFee", encodeCoin actual )
                 ]
               )
             ]

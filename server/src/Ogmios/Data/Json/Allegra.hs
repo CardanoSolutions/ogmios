@@ -166,7 +166,7 @@ encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ _) = encode
       , Shelley.encodeWdrl wdrls
       )
     , ( "fee"
-      , Shelley.encodeCoin fee
+      , encodeCoin fee
       )
     , ( "validityInterval"
       , encodeValidityInterval validity
@@ -221,16 +221,16 @@ encodeUtxoFailure = \case
     MA.FeeTooSmallUTxO required actual ->
         encodeObject
             [ ( "feeTooSmall", encodeObject
-                [ ( "requiredFee", Shelley.encodeCoin required )
-                , ( "actualFee", Shelley.encodeCoin actual )
+                [ ( "requiredFee", encodeCoin required )
+                , ( "actualFee", encodeCoin actual )
                 ]
               )
             ]
     MA.ValueNotConservedUTxO consumed produced ->
         encodeObject
             [ ( "valueNotConserved", encodeObject
-                [ ( "consumed", Shelley.encodeCoin consumed )
-                , ( "produced", Shelley.encodeCoin produced )
+                [ ( "consumed", encodeCoin consumed )
+                , ( "produced", encodeCoin produced )
                 ]
               )
             ]

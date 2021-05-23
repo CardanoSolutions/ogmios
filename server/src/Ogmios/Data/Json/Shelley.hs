@@ -158,10 +158,10 @@ encodeBootstrapWitness (Sh.BootstrapWitness key sig cc attr) = encodeObject
       )
     ]
 
-encodeCompactGenesis
+encodeShelleyGenesis
     :: Sh.ShelleyGenesis era
     -> Json
-encodeCompactGenesis x = encodeObject
+encodeShelleyGenesis x = encodeObject
     [ ( "systemStart"
       , encodeUtcTime (Sh.sgSystemStart x)
       )
@@ -226,12 +226,6 @@ encodeChainCode
 encodeChainCode cc
     | BS.null (Sh.unChainCode cc) = encodeNull
     | otherwise = encodeByteStringBase16 (Sh.unChainCode cc)
-
-encodeCoin
-    :: Sh.Coin
-    -> Json
-encodeCoin =
-    encodeInteger . Sh.unCoin
 
 encodeCredential
     :: forall any era. (any :\: 'Sh.StakePool)
