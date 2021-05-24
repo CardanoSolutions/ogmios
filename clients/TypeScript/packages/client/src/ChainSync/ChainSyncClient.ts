@@ -15,7 +15,7 @@ export interface ChainSyncClient {
   shutdown: () => Promise<void>
   startSync: (
     points?: Point[],
-    requestBuffer?: number
+    inFlight?: number
   ) => Promise<Intersection>
 }
 
@@ -78,7 +78,7 @@ export const createChainSyncClient = async (
             socket.once('close', resolve)
             socket.close()
           }),
-          startSync: async (points, requestBuffer) => {
+          startSync: async (points, inFlight) => {
             const intersection = await findIntersect(
               points || [await createPointFromCurrentTip({ socket, closeOnCompletion: false })],
               {
@@ -87,7 +87,7 @@ export const createChainSyncClient = async (
               }
             )
             ensureSocketIsOpen(socket)
-            for (let n = 0; n < (requestBuffer || 100); n += 1) {
+            for (let n = 0; n < (inFlight || 100); n += 1) {
               requestNext(socket)
             }
             return intersection

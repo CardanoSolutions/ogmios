@@ -97,7 +97,7 @@ describe('ChainSync', () => {
 
     it('implements pipelining to increase sync performance', async () => {
       type BlocksPerSecond = number
-      const run = async (requestBuffer?: number): Promise<BlocksPerSecond> => {
+      const run = async (inFlight?: number): Promise<BlocksPerSecond> => {
         const blocks: Block[] = []
         const start = Date.now()
         let stop: number
@@ -116,7 +116,7 @@ describe('ChainSync', () => {
         }, {
           connection
         })
-        await client.startSync(['origin'], requestBuffer)
+        await client.startSync(['origin'], inFlight)
         await delay(2000)
         await client.shutdown()
         expect(blocks.length).toBe(1000)
