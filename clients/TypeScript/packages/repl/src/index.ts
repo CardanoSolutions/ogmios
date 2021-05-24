@@ -33,7 +33,7 @@ const logObject = (obj: Object) =>
     port: args.port
   } as ConnectionConfig
   const chainSync = await createChainSyncClient({
-    rollBackward: ({ point, tip }, requestNext) => {
+    rollBackward: async ({ point, tip }, requestNext) => {
       log(chalk.bgRedBright.bold('ROLL BACKWARD'))
       log(chalk.redBright.bold('Point'))
       logObject(point)
@@ -41,7 +41,7 @@ const logObject = (obj: Object) =>
       logObject(tip)
       requestNext()
     },
-    rollForward: ({ block, tip }, requestNext) => {
+    rollForward: async ({ block, tip }, requestNext) => {
       log(chalk.bgGreen.bold('ROLL FORWARD'))
       log(chalk.green.bold('Block'))
       logObject(block)

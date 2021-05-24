@@ -1,4 +1,7 @@
-import { ChainSyncMessageHandlers, createChainSyncClient } from '@src/ChainSync'
+import {
+  ChainSyncMessageHandlers,
+  createChainSyncClient
+} from '@src/ChainSync'
 import delay from 'delay'
 import {
   Block,
@@ -6,10 +9,13 @@ import {
   BlockByron,
   BlockMary,
   BlockShelley,
-  Hash16, Point
+  Hash16,
+  Point
 } from '@cardano-ogmios/schema'
 
 const connection = { port: 1338 }
+
+const randomMsUpTo = (max: number) => (Math.random() * (max - 5 + 1)) << 0
 
 const stubHandlers = {
   rollBackward: (_response, requestNext) => {
@@ -54,7 +60,7 @@ describe('ChainSync', () => {
       const rollbackPoints: Point[] = []
       const blocks: Block[] = []
       const client = await createChainSyncClient({
-        rollBackward: ({ point }, requestNext) => {
+        rollBackward: async ({ point }, requestNext) => {
           rollbackPoints.push(point)
           requestNext()
         },
@@ -96,7 +102,7 @@ describe('ChainSync', () => {
         const start = Date.now()
         let stop: number
         const client = await createChainSyncClient({
-          rollBackward: (_response, requestNext) => {
+          rollBackward: async (_response, requestNext) => {
             requestNext()
           },
           rollForward: async ({ block }, requestNext) => {
@@ -120,28 +126,49 @@ describe('ChainSync', () => {
       const nonPipelinedBlocksPerSecond = await run(1)
       expect(pipelinedBlocksPerSecond).toBeGreaterThan(nonPipelinedBlocksPerSecond)
     })
-  })
 
-  it('waits for the first requestNext invocation before priming the pipe, to allow initial setup before first rollForward message is received', async () => {
-    let firstMessageReceived = false
-    let secondMessageReceived = false
-    const client = await createChainSyncClient({
-      rollBackward: (_response, _requestNext) => {
-        firstMessageReceived = true
-        // As we're not invoking requestNext, we expect the second message to remain unreceived
-      },
-      rollForward: async (_response, _requestNext) => {
-        secondMessageReceived = true
-      }
-    }, {
-      connection,
-      requestBuffer: 3
+    it('processes messages sequentially in order', async () => {
+      const resultLog: string[] = []
+      const client = await createChainSyncClient({
+        rollBackward: async (_response, requestNext) => {
+          resultLog.push('rollBackward received')
+          // Simulate some work being done
+          await delay(randomMsUpTo(50))
+          resultLog.push('rollBackward processed')
+          requestNext()
+        },
+        rollForward: async (response, requestNext) => {
+          if ('byron' in response.block) {
+            const block = response.block as { byron: BlockByron }
+            const message = `Block ${block.byron.header.blockHeight}`
+            resultLog.push(`rollForward received: ${message}`)
+            // Simulate some work being done
+            await delay(randomMsUpTo(25))
+            resultLog.push(`rollForward processed: ${message}`)
+            requestNext()
+          }
+        }
+      }, {
+        connection
+      })
+      await client.startSync(['origin'], 3)
+      await delay(500)
+      await client.shutdown()
+      expect(resultLog.slice(0, 12)).toStrictEqual([
+        'rollBackward received',
+        'rollBackward processed',
+        'rollForward received: Block 0',
+        'rollForward processed: Block 0',
+        'rollForward received: Block 1',
+        'rollForward processed: Block 1',
+        'rollForward received: Block 2',
+        'rollForward processed: Block 2',
+        'rollForward received: Block 3',
+        'rollForward processed: Block 3',
+        'rollForward received: Block 4',
+        'rollForward processed: Block 4'
+      ])
     })
-    await client.startSync(['origin'])
-    await delay(500)
-    await client.shutdown()
-    expect(firstMessageReceived).toBe(true)
-    expect(secondMessageReceived).toBe(false)
   })
 
   it('rejects method calls after shutdown', async () => {

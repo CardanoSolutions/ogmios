@@ -5,6 +5,7 @@ import {
   createClientContext
 } from '../Connection'
 import { UnknownResultError } from '../errors'
+import fastq from 'fastq'
 import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
 import { findIntersect, Intersection } from './findIntersect'
 import { requestNext } from './requestNext'
@@ -25,14 +26,14 @@ export interface ChainSyncMessageHandlers {
       tip: Tip
     },
     requestNext: () => void
-  ) => void
+  ) => Promise<void>
   rollForward: (
     response: {
       block: Block,
       tip: Tip
     },
     requestNext: () => void
-  ) => void
+  ) => Promise<void>
 }
 
 export const createChainSyncClient = async (
@@ -43,23 +44,30 @@ export const createChainSyncClient = async (
   return new Promise((resolve, reject) => {
     createClientContext(options).then(context => {
       const { socket } = context
+      const queue = fastq.promise(async (response) => {
+        if ('RollBackward' in response.result) {
+          await messageHandlers.rollBackward({
+            point: response.result.RollBackward.point,
+            tip: response.result.RollBackward.tip
+          }, () =>
+            requestNext(socket)
+          )
+        } else if ('RollForward' in response.result) {
+          await messageHandlers.rollForward({
+            block: response.result.RollForward.block,
+            tip: response.result.RollForward.tip
+          }, () => {
+            requestNext(socket)
+          })
+        } else {
+          throw new UnknownResultError(response.result)
+        }
+      }, 1)
       socket.once('error', reject)
       socket.on('message', (message: string) => {
         const response: Ogmios['RequestNextResponse'] = JSON.parse(message)
         if (response.methodname === 'RequestNext') {
-          if ('RollBackward' in response.result) {
-            messageHandlers.rollBackward({
-              point: response.result.RollBackward.point,
-              tip: response.result.RollBackward.tip
-            }, () => requestNext(socket))
-          } else if ('RollForward' in response.result) {
-            messageHandlers.rollForward({
-              block: response.result.RollForward.block,
-              tip: response.result.RollForward.tip
-            }, () => requestNext(socket))
-          } else {
-            throw new UnknownResultError(response.result)
-          }
+          queue.push(response)
         }
       })
       socket.once('open', async () => {
