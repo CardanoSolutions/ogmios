@@ -3,7 +3,7 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 ARG CARDANO_NODE_VERSION=1.27.0
-ARG CARDANO_OGMIOS_SNAPSHOT=f5eb524a06bf2439707161f6256af1164e360eb0
+ARG CARDANO_OGMIOS_SNAPSHOT=46004deac7fb66a778ee9d684b70a105dbcf63ec
 ARG IOHK_LIBSODIUM_GIT_REV=66f017f16633f2060db25e17c170c2afa0f2a8a1
 
 #                                                                              #

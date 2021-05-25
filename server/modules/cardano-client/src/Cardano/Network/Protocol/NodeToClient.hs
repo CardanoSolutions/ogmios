@@ -311,5 +311,6 @@ codecs epochSlots =
         mary    = ShelleyCodecConfig
         alonzo  = ShelleyCodecConfig
 
+-- TODO: Switch to NodeToClientV_9 as soon as Alonzo node are ready
 nodeToClientV :: NodeToClientVersion
-nodeToClientV = NodeToClientV_9
+nodeToClientV = NodeToClientV_8
