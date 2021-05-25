@@ -892,8 +892,15 @@ encodeTx mode x = encodeObjectWithMode mode
     , ( "body"
       , encodeTxBody (Sh.body x)
       )
-      -- FIXME: We should really return metadata: null when there's no metadata.
+      -- NOTE:
+      -- We should really return metadata: null when there's no metadata.
       -- Right now, this returns { hash: null, body: null } when null.
+      --
+      -- The reason for writing it in such a way is slightly _silly_ and because
+      -- of the way the generators are currently constructed. Indeed, since the
+      -- metadata hash and body are strictly decoupled in the transaction model,
+      -- they end up being generated separately and as a result, the generator
+      -- may generate actually invalid cases like this.
     , ( "metadata", encodeObject
         [ ( "hash"
           , encodeStrictMaybe encodeAuxiliaryDataHash (Sh._mdHash (Sh.body x))
