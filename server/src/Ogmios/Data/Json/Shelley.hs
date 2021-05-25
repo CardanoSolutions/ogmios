@@ -544,9 +544,10 @@ encodeMetadataBlob =
             encodeObject [("map", encodeList encodeKeyPair xs)]
 
     encodeKeyPair :: (Sh.Metadatum, Sh.Metadatum) -> Json
-    encodeKeyPair = encode2Tuple
-        (encodeObject . pure @[] . ("k",) . encodeMetadatum)
-        (encodeObject . pure @[] . ("v",) . encodeMetadatum)
+    encodeKeyPair (k, v) = encodeObject
+        [ ( "k", encodeMetadatum k )
+        , ( "v", encodeMetadatum v )
+        ]
 
 encodeMIRPot
     :: Sh.MIRPot
@@ -669,8 +670,12 @@ encodePoolFailure = \case
     Sh.WrongNetworkPOOL _specified expected poolId ->
         encodeObject
             [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork", encodeNetwork expected )
-                , ( "invalidPoolRegistration", encodePoolId poolId )
+                [ ( "expectedNetwork"
+                  , encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , encodeEntities "poolRegistration" encodePoolId [poolId]
+                  )
                 ]
               )
             ]
@@ -810,6 +815,13 @@ encodeRewardAcnt
 encodeRewardAcnt =
     encodeText . stringifyRewardAcnt
 
+encodeScript
+    :: Crypto crypto
+    => Sh.MultiSig crypto
+    -> Json
+encodeScript script = encodeObject
+    [ ( "native", encodeMultiSig script ) ]
+
 encodeScriptHash
     :: Sh.ScriptHash era
     -> Json
@@ -880,6 +892,8 @@ encodeTx mode x = encodeObjectWithMode mode
     , ( "body"
       , encodeTxBody (Sh.body x)
       )
+      -- FIXME: We should really return metadata: null when there's no metadata.
+      -- Right now, this returns { hash: null, body: null } when null.
     , ( "metadata", encodeObject
         [ ( "hash"
           , encodeStrictMaybe encodeAuxiliaryDataHash (Sh._mdHash (Sh.body x))
@@ -1061,7 +1075,7 @@ encodeUtxoFailure = \case
                   , encodeNetwork expected
                   )
                 , ( "invalidEntities"
-                  , encodeEntities "addresses" encodeAddress invalidAddrs
+                  , encodeEntities "address" encodeAddress invalidAddrs
                   )
                 ]
               )
@@ -1208,7 +1222,7 @@ encodeWitnessSet x = encodeObject
       , encodeFoldable encodeWitVKey (Sh.addrWits x)
       )
     , ( "scripts"
-      , encodeMap stringifyScriptHash encodeMultiSig (Sh.scriptWits x)
+      , encodeMap stringifyScriptHash encodeScript (Sh.scriptWits x)
       )
     , ( "bootstrap"
       , encodeFoldable encodeBootstrapWitness (Sh.bootWits x)

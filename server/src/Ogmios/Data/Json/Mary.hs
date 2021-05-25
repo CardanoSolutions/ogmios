@@ -306,7 +306,7 @@ encodeWitnessSet x = encodeObject
       , encodeFoldable Shelley.encodeWitVKey (Sh.addrWits x)
       )
     , ( "scripts"
-      , encodeMap Shelley.stringifyScriptHash Allegra.encodeTimelock (Sh.scriptWits x)
+      , encodeMap Shelley.stringifyScriptHash Allegra.encodeScript (Sh.scriptWits x)
       )
     , ( "bootstrap"
       , encodeFoldable Shelley.encodeBootstrapWitness (Sh.bootWits x)
