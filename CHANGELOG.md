@@ -32,6 +32,8 @@ pre: "<b>5. </b>"
 
 - :warning: **Breaking-Change** :warning: Empty transaction metadata are no longer materialized by an object with two null fields (`{ "hash": null, "body": null }`). Empty transaction metadata are now equal to `null`. 
 
+- :warning: **Breaking-Change** :warning: `map` metadatum in transactions' metadata are no longer materialized as a list of list of singleton objects: `[[{ "k": ... }, { "v": ... }], ...]` but instead, as a list of object with two fields `k` and `v`: `[{ "k": ..., "v": ...}, ...]`. This was an oversight from the encoder which was never intended to end up that way but happened to slip in because the schema for metadatum was not specified / documented (and therefore, also escaped testing). This is now documented properly.
+
 - The `moveInstantaneousRewards` certificates have a new optional field `value` and not only a `rewards` map as before. 
   When `value` is present, it signifies that rewards are moved to the other pot. 
 

@@ -2235,6 +2235,45 @@
   , "Metadata":
     { "type": "object"
     , "propertyNames": { "pattern": "^-?[0-9]+$" }
+    , "examples":
+      [ { "42":
+          { "int": 14
+          }
+        }
+      , { "42":
+          { "string": "Some Text"
+          }
+        }
+      , { "42":
+          { "list":
+            [ { "int": 1 }
+            , { "int": 2 }
+            , { "int": 3 }
+            ]
+          }
+        , "1337":
+          { "list":
+            [ { "string": "MyString" }
+            , { "map":
+                [ { "k": { "string": "signature" }
+                  , "v": { "bytes": "b359cedd0ccb" }
+                  }
+                , { "k":
+                    { "list":
+                      [ { "string": "keys can also" }
+                      , { "string": "be compound objects" }
+                      ]
+                    }
+                  , "v":
+                    { "int": -42
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
     , "additionalProperties": { "$ref": "#/definitions/Metadatum" }
     }
 
