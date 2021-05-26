@@ -30,6 +30,8 @@ pre: "<b>5. </b>"
 
 - :warning: **Breaking-Change** :warning: Transaction submission errors' `networkMismatch` now returns an `invalidEntities` list of object in the form of `{ "type": ..., "entity": }` where `type` is a text tag designating the type of entity for which there is a network identifier mismatch. Values can be `address`, `rewardAccount` and since Alonzo `transactionBody`. The `entity` field contains some details specific to the type of entity. Before, it used to be two distinct fields `invalidAddresses` and `invalidRewardAccounts`. 
 
+- :warning: **Breaking-Change** :warning: Empty transaction metadata are no longer materialized by an object with two null fields (`{ "hash": null, "body": null }`). Empty transaction metadata are now equal to `null`. 
+
 - The `moveInstantaneousRewards` certificates have a new optional field `value` and not only a `rewards` map as before. 
   When `value` is present, it signifies that rewards are moved to the other pot. 
 

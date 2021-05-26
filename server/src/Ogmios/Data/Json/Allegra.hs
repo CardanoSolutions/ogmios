@@ -130,14 +130,10 @@ encodeTx mode x = encodeObjectWithMode mode
     , ( "body"
       , encodeTxBody (Sh.body x)
       )
-    , ( "metadata", encodeObject
-        [ ( "hash"
-          , encodeStrictMaybe Shelley.encodeAuxiliaryDataHash (adHash (Sh.body x))
-          )
-        , ( "body"
-          , encodeStrictMaybe encodeAuxiliaryData (Sh.auxiliaryData x)
-          )
-        ]
+    , ( "metadata"
+      , (,) <$> fmap (("hash",) . Shelley.encodeAuxiliaryDataHash) (adHash (Sh.body x))
+            <*> fmap (("body",) . encodeAuxiliaryData) (Sh.auxiliaryData x)
+        & encodeStrictMaybe (\(a, b) -> encodeObject [a,b])
       )
     ]
     [ ( "witness"
