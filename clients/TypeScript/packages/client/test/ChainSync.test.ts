@@ -26,6 +26,42 @@ const stubHandlers = {
   }
 } as ChainSyncMessageHandlers
 
+const messageOrderTestHandlers = (resultLog: string[]): ChainSyncMessageHandlers => ({
+  rollBackward: async (_response, requestNext) => {
+    resultLog.push('rollBackward received')
+    // Simulate some work being done
+    await delay(randomMsUpTo(50))
+    resultLog.push('rollBackward processed')
+    requestNext()
+  },
+  rollForward: async (response, requestNext) => {
+    if ('byron' in response.block) {
+      const block = response.block as { byron: BlockByron }
+      const message = `Block ${block.byron.header.blockHeight}`
+      resultLog.push(`rollForward received: ${message}`)
+      // Simulate some work being done
+      await delay(randomMsUpTo(25))
+      resultLog.push(`rollForward processed: ${message}`)
+      requestNext()
+    }
+  }
+})
+
+const sequentialResponses = [
+  'rollBackward received',
+  'rollBackward processed',
+  'rollForward received: Block 0',
+  'rollForward processed: Block 0',
+  'rollForward received: Block 1',
+  'rollForward processed: Block 1',
+  'rollForward received: Block 2',
+  'rollForward processed: Block 2',
+  'rollForward received: Block 3',
+  'rollForward processed: Block 3',
+  'rollForward received: Block 4',
+  'rollForward processed: Block 4'
+]
+
 describe('ChainSync', () => {
   it('returns the interaction context', async () => {
     const client = await createChainSyncClient(stubHandlers, { connection })
@@ -127,48 +163,28 @@ describe('ChainSync', () => {
       expect(pipelinedBlocksPerSecond).toBeGreaterThan(nonPipelinedBlocksPerSecond)
     })
 
-    it('processes messages sequentially in order', async () => {
+    it('processes messages sequentially in order by default', async () => {
       const resultLog: string[] = []
-      const client = await createChainSyncClient({
-        rollBackward: async (_response, requestNext) => {
-          resultLog.push('rollBackward received')
-          // Simulate some work being done
-          await delay(randomMsUpTo(50))
-          resultLog.push('rollBackward processed')
-          requestNext()
-        },
-        rollForward: async (response, requestNext) => {
-          if ('byron' in response.block) {
-            const block = response.block as { byron: BlockByron }
-            const message = `Block ${block.byron.header.blockHeight}`
-            resultLog.push(`rollForward received: ${message}`)
-            // Simulate some work being done
-            await delay(randomMsUpTo(25))
-            resultLog.push(`rollForward processed: ${message}`)
-            requestNext()
-          }
-        }
-      }, {
+      const client = await createChainSyncClient(messageOrderTestHandlers(resultLog), {
         connection
       })
       await client.startSync(['origin'], 3)
       await delay(500)
       await client.shutdown()
-      expect(resultLog.slice(0, 12)).toStrictEqual([
-        'rollBackward received',
-        'rollBackward processed',
-        'rollForward received: Block 0',
-        'rollForward processed: Block 0',
-        'rollForward received: Block 1',
-        'rollForward processed: Block 1',
-        'rollForward received: Block 2',
-        'rollForward processed: Block 2',
-        'rollForward received: Block 3',
-        'rollForward processed: Block 3',
-        'rollForward received: Block 4',
-        'rollForward processed: Block 4'
-      ])
+      expect(resultLog.slice(0, 12)).toStrictEqual(sequentialResponses)
     })
+  })
+
+  it('can be configured to processes messages as fast as possible, when sequential processing is not required', async () => {
+    const resultLog: string[] = []
+    const client = await createChainSyncClient(messageOrderTestHandlers(resultLog), {
+      connection,
+      sequential: false
+    })
+    await client.startSync(['origin'], 3)
+    await delay(500)
+    await client.shutdown()
+    expect(resultLog.slice(0, 12)).not.toStrictEqual(sequentialResponses)
   })
 
   it('rejects method calls after shutdown', async () => {

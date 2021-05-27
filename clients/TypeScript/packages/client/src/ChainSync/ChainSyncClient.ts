@@ -39,12 +39,13 @@ export interface ChainSyncMessageHandlers {
 export const createChainSyncClient = async (
   messageHandlers: ChainSyncMessageHandlers,
   options?: {
-    connection?: ConnectionConfig
+    connection?: ConnectionConfig,
+    sequential?: boolean
   }): Promise<ChainSyncClient> => {
   return new Promise((resolve, reject) => {
     createClientContext(options).then(context => {
       const { socket } = context
-      const queue = fastq.promise(async (response) => {
+      const messageHandler = async (response: Ogmios['RequestNextResponse']) => {
         if ('RollBackward' in response.result) {
           await messageHandlers.rollBackward({
             point: response.result.RollBackward.point,
@@ -62,12 +63,15 @@ export const createChainSyncClient = async (
         } else {
           throw new UnknownResultError(response.result)
         }
-      }, 1)
+      }
+      const responseHandler = options?.sequential !== false
+        ? fastq.promise(messageHandler, 1).push
+        : messageHandler
       socket.once('error', reject)
       socket.on('message', (message: string) => {
         const response: Ogmios['RequestNextResponse'] = JSON.parse(message)
         if (response.methodname === 'RequestNext') {
-          queue.push(response)
+          responseHandler(response)
         }
       })
       socket.once('open', async () => {
