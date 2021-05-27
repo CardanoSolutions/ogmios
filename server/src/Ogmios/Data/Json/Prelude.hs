@@ -23,6 +23,10 @@ module Ogmios.Data.Json.Prelude
     , inefficientEncodingToValue
     , (.:)
 
+      -- * Re-Exports
+    , Coin (..)
+    , StrictMaybe (..)
+
       -- * Basic Types
     , encodeBlockNo
     , encodeBool
@@ -30,6 +34,7 @@ module Ogmios.Data.Json.Prelude
     , encodeByteStringBase16
     , encodeByteStringBase64
     , encodeByteStringBech32
+    , encodeCoin
     , encodeDnsName
     , encodeDouble
     , encodeEpochNo
@@ -76,6 +81,8 @@ import Ogmios.Prelude
 
 import Cardano.Binary
     ( Annotated (..) )
+import Cardano.Ledger.Coin
+    ( Coin (..) )
 import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
@@ -210,6 +217,11 @@ encodeByteStringBase64 :: ByteString -> Json
 encodeByteStringBase64 =
     encodeText . encodeBase64
 {-# INLINABLE encodeByteStringBase64 #-}
+
+encodeCoin :: Coin -> Json
+encodeCoin =
+    encodeInteger . unCoin
+{-# INLINEABLE encodeCoin #-}
 
 encodeDnsName :: DnsName -> Json
 encodeDnsName =

@@ -16,45 +16,27 @@ import Ouroboros.Consensus.Cardano.Block
     ( AllegraEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
-import Shelley.Spec.Ledger.BaseTypes
-    ( StrictMaybe (..) )
 
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
-import qualified Cardano.Ledger.AuxiliaryData as MA
+import qualified Cardano.Ledger.AuxiliaryData as Aux
+import qualified Cardano.Ledger.Core as Core
 import qualified Cardano.Ledger.Era as Era
-import qualified Cardano.Ledger.Shelley.Constraints as Sh
-import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
-import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
-import qualified Cardano.Ledger.ShelleyMA.Timelocks as MA
-import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
+
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
 import qualified Shelley.Spec.Ledger.PParams as Sh
 import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
 import qualified Shelley.Spec.Ledger.Tx as Sh
 import qualified Shelley.Spec.Ledger.UTxO as Sh
 
+import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
+import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
+import qualified Cardano.Ledger.ShelleyMA.Timelocks as MA
+import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
+
 --
 -- Encoders
 --
-
-encodeAllegraBlock
-    :: Crypto crypto
-    => SerializationMode
-    -> ShelleyBlock (AllegraEra crypto)
-    -> Json
-encodeAllegraBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
-    encodeObject
-    [ ( "body"
-      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
-      )
-    , ( "header"
-      , Shelley.encodeBHeader mode blkHeader
-      )
-    , ( "headerHash"
-      , Shelley.encodeShelleyHash headerHash
-      )
-    ]
 
 encodeAuxiliaryData
     :: Crypto crypto
@@ -64,8 +46,26 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
     [ ( "blob"
       , Shelley.encodeMetadataBlob blob
       )
-    , ( "scriptPreImages"
-      , encodeFoldable encodeTimelock scripts
+    , ( "scripts"
+      , encodeFoldable encodeScript scripts
+      )
+    ]
+
+encodeBlock
+    :: Crypto crypto
+    => SerializationMode
+    -> ShelleyBlock (AllegraEra crypto)
+    -> Json
+encodeBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
+    encodeObject
+    [ ( "body"
+      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
+      )
+    , ( "header"
+      , Shelley.encodeBHeader mode blkHeader
+      )
+    , ( "headerHash"
+      , Shelley.encodeShelleyHash headerHash
       )
     ]
 
@@ -87,11 +87,18 @@ encodePParams' =
     Shelley.encodePParams'
 
 encodeProposedPPUpdates
-    :: (Sh.PParamsDelta era ~ Sh.PParamsUpdate era)
+    :: (Core.PParamsDelta era ~ Sh.PParamsUpdate era)
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates =
     Shelley.encodeProposedPPUpdates
+
+encodeScript
+    :: Crypto crypto
+    => MA.Timelock crypto
+    -> Json
+encodeScript timelock = encodeObject
+    [ ( "native", encodeTimelock timelock ) ]
 
 encodeTimelock
     :: Crypto crypto
@@ -138,7 +145,7 @@ encodeTx mode x = encodeObjectWithMode mode
       )
     ]
   where
-    adHash :: MA.TxBody era -> StrictMaybe (MA.AuxiliaryDataHash (Era.Crypto era))
+    adHash :: MA.TxBody era -> StrictMaybe (Aux.AuxiliaryDataHash (Era.Crypto era))
     adHash = getField @"adHash"
 
 encodeTxBody
@@ -159,7 +166,7 @@ encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ _) = encode
       , Shelley.encodeWdrl wdrls
       )
     , ( "fee"
-      , Shelley.encodeCoin fee
+      , encodeCoin fee
       )
     , ( "validityInterval"
       , encodeValidityInterval validity
@@ -214,35 +221,43 @@ encodeUtxoFailure = \case
     MA.FeeTooSmallUTxO required actual ->
         encodeObject
             [ ( "feeTooSmall", encodeObject
-                [ ( "requiredFee", Shelley.encodeCoin required )
-                , ( "actualFee", Shelley.encodeCoin actual )
+                [ ( "requiredFee", encodeCoin required )
+                , ( "actualFee", encodeCoin actual )
                 ]
               )
             ]
     MA.ValueNotConservedUTxO consumed produced ->
         encodeObject
             [ ( "valueNotConserved", encodeObject
-                [ ( "consumed", Shelley.encodeCoin consumed )
-                , ( "produced", Shelley.encodeCoin produced )
+                [ ( "consumed", encodeCoin consumed )
+                , ( "produced", encodeCoin produced )
                 ]
               )
             ]
     MA.WrongNetwork expected invalidAddrs ->
         encodeObject
             [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork", Shelley.encodeNetwork expected )
-                , ( "invalidAddresses", encodeFoldable Shelley.encodeAddress invalidAddrs )
+                [ ( "expectedNetwork"
+                  , Shelley.encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , Shelley.encodeEntities "address" Shelley.encodeAddress invalidAddrs
+                  )
                 ]
               )
             ]
     MA.WrongNetworkWithdrawal expected invalidAccts ->
         encodeObject
-            [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork" , Shelley.encodeNetwork expected )
-                , ( "invalidRewardAccounts" , encodeFoldable Shelley.encodeRewardAcnt invalidAccts )
-                ]
+        [ ( "networkMismatch", encodeObject
+            [ ( "expectedNetwork"
+              , Shelley.encodeNetwork expected
+              )
+            , ( "invalidEntities"
+              , Shelley.encodeEntities "rewardAccount" Shelley.encodeRewardAcnt invalidAccts
               )
             ]
+          )
+        ]
     MA.OutputTooSmallUTxO outs ->
         encodeObject
             [ ( "outputTooSmall"
@@ -277,11 +292,11 @@ encodeWitnessSet
     => Sh.WitnessSet (AllegraEra crypto)
     -> Json
 encodeWitnessSet x = encodeObject
-    [ ( "address"
+    [ ( "signatures"
       , encodeFoldable Shelley.encodeWitVKey (Sh.addrWits x)
       )
-    , ( "script"
-      , encodeMap Shelley.stringifyScriptHash encodeTimelock (Sh.scriptWits x)
+    , ( "scripts"
+      , encodeMap Shelley.stringifyScriptHash encodeScript (Sh.scriptWits x)
       )
     , ( "bootstrap"
       , encodeFoldable Shelley.encodeBootstrapWitness (Sh.bootWits x)

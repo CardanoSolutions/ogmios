@@ -48,7 +48,7 @@ import Data.ByteString.Base16
 import Data.ByteString.Base58
     ( bitcoinAlphabet, decodeBase58 )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoBlock, CardanoEras, Query (..) )
+    ( BlockQuery (..), CardanoBlock, CardanoEras )
 import Ouroboros.Consensus.HardFork.Combinator
     ( MismatchEraInfo, OneEraHash (..) )
 import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
@@ -57,14 +57,16 @@ import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
     ( QueryAnytime (..) )
 import Ouroboros.Consensus.HardFork.History.Summary
     ( Bound (..) )
+import Ouroboros.Consensus.Ledger.Query
+    ( Query (..) )
 import Ouroboros.Consensus.Shelley.Eras
-    ( AllegraEra, MaryEra, ShelleyEra )
+    ( AllegraEra, AlonzoEra, MaryEra, ShelleyEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..), ShelleyHash (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CompactGenesis, getCompactGenesis )
 import Ouroboros.Consensus.Shelley.Ledger.Query
-    ( NonMyopicMemberRewards (..), Query (..) )
+    ( BlockQuery (..), NonMyopicMemberRewards (..) )
 import Ouroboros.Network.Block
     ( Point (..), castPoint )
 import Ouroboros.Network.Point
@@ -78,6 +80,7 @@ import qualified Data.Map.Merge.Strict as Map
 import qualified Cardano.Crypto.Hash.Class as CC
 
 import qualified Cardano.Ledger.Coin as Sh
+import qualified Cardano.Ledger.Core as Core
 import qualified Shelley.Spec.Ledger.Address as Sh
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
 import qualified Shelley.Spec.Ledger.Credential as Sh
@@ -87,6 +90,7 @@ import qualified Shelley.Spec.Ledger.PParams as Sh
 import qualified Shelley.Spec.Ledger.UTxO as Sh
 
 import qualified Ogmios.Data.Json.Allegra as Allegra
+import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
@@ -117,13 +121,13 @@ encodeDelegationsAndRewards (dlg, rwd)
         )
     whenRwdMissing = Map.mapMaybeMissing
         (\_ v -> Just $ encodeObject
-            [ ( "rewards", Shelley.encodeCoin v )
+            [ ( "rewards", encodeCoin v )
             ]
         )
     whenBothPresent = Map.zipWithAMatched
         (\_ x y -> pure $ encodeObject
             [ ( "delegate", Shelley.encodePoolId x )
-            , ( "rewards", Shelley.encodeCoin y )
+            , ( "rewards", encodeCoin y )
             ]
         )
 
@@ -154,7 +158,7 @@ encodeNonMyopicMemberRewards
 encodeNonMyopicMemberRewards (NonMyopicMemberRewards nonMyopicMemberRewards) =
     encodeMap
         (either Shelley.stringifyCoin Shelley.stringifyCredential)
-        (encodeMap Shelley.stringifyPoolId Shelley.encodeCoin)
+        (encodeMap Shelley.stringifyPoolId encodeCoin)
         nonMyopicMemberRewards
 
 encodeOneEraHash
@@ -199,11 +203,13 @@ parseGetEraStart genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    QueryAnytimeShelley GetEraStart
+                    BlockQuery $ QueryAnytimeShelley GetEraStart
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    QueryAnytimeAllegra GetEraStart
+                    BlockQuery $ QueryAnytimeAllegra GetEraStart
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    QueryAnytimeMary GetEraStart
+                    BlockQuery $ QueryAnytimeMary GetEraStart
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    BlockQuery $ QueryAnytimeAlonzo GetEraStart
             )
 
 parseGetLedgerTip
@@ -217,7 +223,7 @@ parseGetLedgerTip genResultInEra =
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeQuery
                 { query =
-                    QueryIfCurrentShelley GetLedgerTip
+                    BlockQuery $ QueryIfCurrentShelley GetLedgerTip
                 , encodeResult =
                     either encodeMismatchEraInfo (encodePoint . castPoint)
                 , genResult =
@@ -226,7 +232,7 @@ parseGetLedgerTip genResultInEra =
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
                 { query =
-                    QueryIfCurrentAllegra GetLedgerTip
+                    BlockQuery $ QueryIfCurrentAllegra GetLedgerTip
                 , encodeResult =
                     either encodeMismatchEraInfo (encodePoint . castPoint)
                 , genResult =
@@ -235,11 +241,20 @@ parseGetLedgerTip genResultInEra =
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
                 { query =
-                    QueryIfCurrentMary GetLedgerTip
+                    BlockQuery $ QueryIfCurrentMary GetLedgerTip
                 , encodeResult =
                     either encodeMismatchEraInfo (encodePoint . castPoint)
                 , genResult =
                     genResultInEra (Proxy @(MaryEra crypto))
+                }
+            SomeShelleyEra ShelleyBasedEraAlonzo ->
+                Just $ SomeQuery
+                { query =
+                    BlockQuery $ QueryIfCurrentAlonzo GetLedgerTip
+                , encodeResult =
+                    either encodeMismatchEraInfo (encodePoint . castPoint)
+                , genResult =
+                    genResultInEra (Proxy @(AlonzoEra crypto))
                 }
 
 parseGetEpochNo
@@ -260,11 +275,13 @@ parseGetEpochNo genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    QueryIfCurrentShelley GetEpochNo
+                    BlockQuery $ QueryIfCurrentShelley GetEpochNo
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    QueryIfCurrentAllegra GetEpochNo
+                    BlockQuery $ QueryIfCurrentAllegra GetEpochNo
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    QueryIfCurrentMary GetEpochNo
+                    BlockQuery $ QueryIfCurrentMary GetEpochNo
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    BlockQuery $ QueryIfCurrentAlonzo GetEpochNo
             )
 
 parseGetNonMyopicMemberRewards
@@ -286,11 +303,13 @@ parseGetNonMyopicMemberRewards genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    QueryIfCurrentShelley (GetNonMyopicMemberRewards credentials)
+                    BlockQuery $ QueryIfCurrentShelley (GetNonMyopicMemberRewards credentials)
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    QueryIfCurrentAllegra (GetNonMyopicMemberRewards credentials)
+                    BlockQuery $ QueryIfCurrentAllegra (GetNonMyopicMemberRewards credentials)
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    QueryIfCurrentMary (GetNonMyopicMemberRewards credentials)
+                    BlockQuery $ QueryIfCurrentMary (GetNonMyopicMemberRewards credentials)
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    BlockQuery $ QueryIfCurrentAlonzo (GetNonMyopicMemberRewards credentials)
             )
   where
     parseCredentials
@@ -323,11 +342,13 @@ parseGetFilteredDelegationsAndRewards genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    QueryIfCurrentShelley (GetFilteredDelegationsAndRewardAccounts credentials)
+                    BlockQuery $ QueryIfCurrentShelley (GetFilteredDelegationsAndRewardAccounts credentials)
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    QueryIfCurrentAllegra (GetFilteredDelegationsAndRewardAccounts credentials)
+                    BlockQuery $ QueryIfCurrentAllegra (GetFilteredDelegationsAndRewardAccounts credentials)
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    QueryIfCurrentMary (GetFilteredDelegationsAndRewardAccounts credentials)
+                    BlockQuery $ QueryIfCurrentMary (GetFilteredDelegationsAndRewardAccounts credentials)
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    BlockQuery $ QueryIfCurrentAlonzo (GetFilteredDelegationsAndRewardAccounts credentials)
             )
   where
     parseCredentials
@@ -338,7 +359,7 @@ parseGetFilteredDelegationsAndRewards genResult =
 
 parseGetCurrentPParams
     :: forall crypto f. (Typeable crypto)
-    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.PParams era))
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Core.PParams era))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetCurrentPParams genResultInEra =
@@ -347,7 +368,7 @@ parseGetCurrentPParams genResultInEra =
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeQuery
                 { query =
-                    QueryIfCurrentShelley GetCurrentPParams
+                    BlockQuery $ QueryIfCurrentShelley GetCurrentPParams
                 , encodeResult =
                     either encodeMismatchEraInfo (Shelley.encodePParams' id)
                 , genResult =
@@ -356,7 +377,7 @@ parseGetCurrentPParams genResultInEra =
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
                 { query =
-                    QueryIfCurrentAllegra GetCurrentPParams
+                    BlockQuery $ QueryIfCurrentAllegra GetCurrentPParams
                 , encodeResult =
                     either encodeMismatchEraInfo (Allegra.encodePParams' id)
                 , genResult =
@@ -365,11 +386,20 @@ parseGetCurrentPParams genResultInEra =
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
                 { query =
-                    QueryIfCurrentMary GetCurrentPParams
+                    BlockQuery $ QueryIfCurrentMary GetCurrentPParams
                 , encodeResult =
                     either encodeMismatchEraInfo (Mary.encodePParams' id)
                 , genResult =
                     genResultInEra (Proxy @(MaryEra crypto))
+                }
+            SomeShelleyEra ShelleyBasedEraAlonzo ->
+                Just $ SomeQuery
+                { query =
+                    BlockQuery $ QueryIfCurrentAlonzo GetCurrentPParams
+                , encodeResult =
+                    either encodeMismatchEraInfo (Alonzo.encodePParams' id)
+                , genResult =
+                    genResultInEra (Proxy @(AlonzoEra crypto))
                 }
 
 parseGetProposedPParamsUpdates
@@ -383,7 +413,7 @@ parseGetProposedPParamsUpdates genResultInEra =
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeQuery
                 { query =
-                    QueryIfCurrentShelley GetProposedPParamsUpdates
+                    BlockQuery $ QueryIfCurrentShelley GetProposedPParamsUpdates
                 , encodeResult =
                     either encodeMismatchEraInfo Shelley.encodeProposedPPUpdates
                 , genResult =
@@ -392,7 +422,7 @@ parseGetProposedPParamsUpdates genResultInEra =
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
                 { query =
-                    QueryIfCurrentAllegra GetProposedPParamsUpdates
+                    BlockQuery $ QueryIfCurrentAllegra GetProposedPParamsUpdates
                 , encodeResult =
                     either encodeMismatchEraInfo Allegra.encodeProposedPPUpdates
                 , genResult =
@@ -401,11 +431,20 @@ parseGetProposedPParamsUpdates genResultInEra =
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
                 { query =
-                    QueryIfCurrentMary GetProposedPParamsUpdates
+                    BlockQuery $ QueryIfCurrentMary GetProposedPParamsUpdates
                 , encodeResult =
                     either encodeMismatchEraInfo Mary.encodeProposedPPUpdates
                 , genResult =
                     genResultInEra (Proxy @(MaryEra crypto))
+                }
+            SomeShelleyEra ShelleyBasedEraAlonzo ->
+                Just $ SomeQuery
+                { query =
+                    BlockQuery $ QueryIfCurrentAlonzo GetProposedPParamsUpdates
+                , encodeResult =
+                    either encodeMismatchEraInfo Alonzo.encodeProposedPPUpdates
+                , genResult =
+                    genResultInEra (Proxy @(AlonzoEra crypto))
                 }
 
 parseGetStakeDistribution
@@ -426,11 +465,13 @@ parseGetStakeDistribution genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    QueryIfCurrentShelley GetStakeDistribution
+                    BlockQuery $ QueryIfCurrentShelley GetStakeDistribution
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    QueryIfCurrentAllegra GetStakeDistribution
+                    BlockQuery $ QueryIfCurrentAllegra GetStakeDistribution
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    QueryIfCurrentMary GetStakeDistribution
+                    BlockQuery $ QueryIfCurrentMary GetStakeDistribution
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    BlockQuery $ QueryIfCurrentAlonzo GetStakeDistribution
             )
 
 parseGetUTxO
@@ -444,7 +485,7 @@ parseGetUTxO genResultInEra =
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeQuery
                 { query =
-                    QueryIfCurrentShelley GetUTxO
+                    BlockQuery $ QueryIfCurrentShelley GetUTxO
                 , encodeResult =
                     either encodeMismatchEraInfo Shelley.encodeUtxo
                 , genResult =
@@ -453,7 +494,7 @@ parseGetUTxO genResultInEra =
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
                 { query =
-                    QueryIfCurrentAllegra GetUTxO
+                    BlockQuery $ QueryIfCurrentAllegra GetUTxO
                 , encodeResult =
                     either encodeMismatchEraInfo Allegra.encodeUtxo
                 , genResult =
@@ -462,11 +503,20 @@ parseGetUTxO genResultInEra =
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
                 { query =
-                    QueryIfCurrentMary GetUTxO
+                    BlockQuery $ QueryIfCurrentMary GetUTxO
                 , encodeResult =
                     either encodeMismatchEraInfo Mary.encodeUtxo
                 , genResult =
                     genResultInEra (Proxy @(MaryEra crypto))
+                }
+            SomeShelleyEra ShelleyBasedEraAlonzo ->
+                Just $ SomeQuery
+                { query =
+                    BlockQuery $ QueryIfCurrentAlonzo GetUTxO
+                , encodeResult =
+                    either encodeMismatchEraInfo Alonzo.encodeUtxo
+                , genResult =
+                    genResultInEra (Proxy @(AlonzoEra crypto))
                 }
 
 parseGetFilteredUTxO
@@ -479,31 +529,40 @@ parseGetFilteredUTxO genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
     pure $ \case
         SomeShelleyEra ShelleyBasedEraShelley ->
             Just $ SomeQuery
-                { query =
-                    QueryIfCurrentShelley (GetFilteredUTxO addrs)
-                , encodeResult =
-                    either encodeMismatchEraInfo Shelley.encodeUtxo
-                , genResult =
-                    genResultInEra (Proxy @(ShelleyEra crypto))
-                }
+            { query =
+                BlockQuery $ QueryIfCurrentShelley (GetFilteredUTxO addrs)
+            , encodeResult =
+                either encodeMismatchEraInfo Shelley.encodeUtxo
+            , genResult =
+                genResultInEra (Proxy @(ShelleyEra crypto))
+            }
         SomeShelleyEra ShelleyBasedEraAllegra ->
             Just $ SomeQuery
-                { query =
-                    QueryIfCurrentAllegra(GetFilteredUTxO addrs)
-                , encodeResult =
-                    either encodeMismatchEraInfo Allegra.encodeUtxo
-                , genResult =
-                    genResultInEra (Proxy @(AllegraEra crypto))
-                }
+            { query =
+                BlockQuery $ QueryIfCurrentAllegra (GetFilteredUTxO addrs)
+            , encodeResult =
+                either encodeMismatchEraInfo Allegra.encodeUtxo
+            , genResult =
+                genResultInEra (Proxy @(AllegraEra crypto))
+            }
         SomeShelleyEra ShelleyBasedEraMary ->
             Just $ SomeQuery
-                { query =
-                    QueryIfCurrentMary (GetFilteredUTxO addrs)
-                , encodeResult =
-                    either encodeMismatchEraInfo Mary.encodeUtxo
-                , genResult =
-                    genResultInEra (Proxy @(MaryEra crypto))
-                }
+            { query =
+                BlockQuery $ QueryIfCurrentMary (GetFilteredUTxO addrs)
+            , encodeResult =
+                either encodeMismatchEraInfo Mary.encodeUtxo
+            , genResult =
+                genResultInEra (Proxy @(MaryEra crypto))
+            }
+        SomeShelleyEra ShelleyBasedEraAlonzo ->
+            Just $ SomeQuery
+            { query =
+                BlockQuery $ QueryIfCurrentAlonzo (GetFilteredUTxO addrs)
+            , encodeResult =
+                either encodeMismatchEraInfo Alonzo.encodeUtxo
+            , genResult =
+                genResultInEra (Proxy @(AlonzoEra crypto))
+            }
   where
     parseAddresses
         :: Json.Object
@@ -511,6 +570,13 @@ parseGetFilteredUTxO genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
     parseAddresses obj = fmap fromList $
         obj .: "utxo" >>= traverse parseAddress
 
+-- TODO: This query seems to actually always return a compact version of the
+-- `ShelleyGenesis`, even when queried from Alonzo. While this is practical
+-- (because the return type does not change when crossing eras), there's also no
+-- way currently to retrieve an `AlonzoGenesis` ¯\_(ツ)_/¯
+--
+-- If this query is indeed meant to only return ShelleyGenesis, renaming it to
+-- something which suggests it better would make sense. I've asked *the guys*.
 parseGetGenesisConfig
     :: forall f crypto. (Crypto crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (CompactGenesis era))
@@ -521,37 +587,48 @@ parseGetGenesisConfig genResultInEra = do
         guard (text == "genesisConfig") $> \case
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeQuery
-                    { query =
-                        QueryIfCurrentShelley GetGenesisConfig
-                    , encodeResult =
-                        let encodeGenesis =
-                                Shelley.encodeCompactGenesis . getCompactGenesis
-                        in either encodeMismatchEraInfo encodeGenesis
-                    , genResult =
-                        genResultInEra (Proxy @(ShelleyEra crypto))
-                    }
+                { query =
+                    BlockQuery $ QueryIfCurrentShelley GetGenesisConfig
+                , encodeResult =
+                    let encodeGenesis =
+                            Shelley.encodeGenesis . getCompactGenesis
+                    in either encodeMismatchEraInfo encodeGenesis
+                , genResult =
+                    genResultInEra (Proxy @(ShelleyEra crypto))
+                }
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
-                    { query =
-                        QueryIfCurrentAllegra GetGenesisConfig
-                    , encodeResult =
-                        let encodeGenesis =
-                                Shelley.encodeCompactGenesis . getCompactGenesis
-                        in either encodeMismatchEraInfo encodeGenesis
-                    , genResult =
-                        genResultInEra (Proxy @(AllegraEra crypto))
-                    }
+                { query =
+                    BlockQuery $ QueryIfCurrentAllegra GetGenesisConfig
+                , encodeResult =
+                    let encodeGenesis =
+                            Shelley.encodeGenesis . getCompactGenesis
+                    in either encodeMismatchEraInfo encodeGenesis
+                , genResult =
+                    genResultInEra (Proxy @(AllegraEra crypto))
+                }
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
-                    { query =
-                        QueryIfCurrentMary GetGenesisConfig
-                    , encodeResult =
-                        let encodeGenesis =
-                                Shelley.encodeCompactGenesis . getCompactGenesis
-                        in either encodeMismatchEraInfo encodeGenesis
-                    , genResult =
-                        genResultInEra (Proxy @(MaryEra crypto))
-                    }
+                { query =
+                    BlockQuery $ QueryIfCurrentMary GetGenesisConfig
+                , encodeResult =
+                    let encodeGenesis =
+                            Shelley.encodeGenesis . getCompactGenesis
+                    in either encodeMismatchEraInfo encodeGenesis
+                , genResult =
+                    genResultInEra (Proxy @(MaryEra crypto))
+                }
+            SomeShelleyEra ShelleyBasedEraAlonzo ->
+                Just $ SomeQuery
+                { query =
+                    BlockQuery $ QueryIfCurrentAlonzo GetGenesisConfig
+                , encodeResult =
+                    let encodeGenesis =
+                            Shelley.encodeGenesis . getCompactGenesis
+                     in either encodeMismatchEraInfo encodeGenesis
+                , genResult =
+                    genResultInEra (Proxy @(AlonzoEra crypto))
+                }
 
 --
 -- Internal

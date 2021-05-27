@@ -75,7 +75,7 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Client
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ
-import qualified Ouroboros.Consensus.Shelley.Ledger.Query as Ledger
+import qualified Ouroboros.Consensus.Ledger.Query as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 
 -- | A generic state-query client, which receives commands from a queue, and
@@ -85,10 +85,12 @@ import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 -- connection) and simply ensures correct execution of the state-query protocol.
 -- In particular, it also makes it easier to run queries _in the current era_.
 mkStateQueryClient
-    :: forall m crypto block.
+    :: forall m crypto block point query.
         ( MonadThrow m
         , MonadSTM m
         , block ~ HardForkBlock (CardanoEras crypto)
+        , point ~ Point block
+        , query ~ Ledger.Query block
         )
     => StateQueryCodecs block
         -- ^ For encoding Haskell types to JSON
@@ -96,7 +98,7 @@ mkStateQueryClient
         -- ^ Incoming request queue
     -> (Json -> m ())
         -- ^ An emitter for yielding JSON objects
-    -> LocalStateQueryClient block (Point block) (Ledger.Query block) m ()
+    -> LocalStateQueryClient block point query m ()
 mkStateQueryClient StateQueryCodecs{..} queue yield =
     LocalStateQueryClient clientStIdle
   where
@@ -104,7 +106,7 @@ mkStateQueryClient StateQueryCodecs{..} queue yield =
     await = atomically (readTQueue queue)
 
     clientStIdle
-        :: m (LSQ.ClientStIdle block (Point block) (Ledger.Query block) m ())
+        :: m (LSQ.ClientStIdle block point query m ())
     clientStIdle = await >>= \case
         MsgAcquire (Acquire pt) toResponse ->
             pure $ LSQ.SendMsgAcquire (Just pt) (clientStAcquiring pt toResponse)
@@ -117,7 +119,7 @@ mkStateQueryClient StateQueryCodecs{..} queue yield =
     clientStAcquiring
         :: Point block
         -> Wsp.ToResponse (AcquireResponse block)
-        -> LSQ.ClientStAcquiring block (Point block) (Ledger.Query block) m ()
+        -> LSQ.ClientStAcquiring block point query m ()
     clientStAcquiring pt toResponse =
         LSQ.ClientStAcquiring
             { LSQ.recvMsgAcquired = do
@@ -131,7 +133,7 @@ mkStateQueryClient StateQueryCodecs{..} queue yield =
     clientStAcquiringTip
         :: Query block
         -> Wsp.ToResponse (QueryResponse block)
-        -> LSQ.ClientStAcquiring block (Point block) (Ledger.Query block) m ()
+        -> LSQ.ClientStAcquiring block point query m ()
     clientStAcquiringTip (Query queryInEra) toResponse =
         LSQ.ClientStAcquiring
             { LSQ.recvMsgAcquired = do
@@ -156,7 +158,7 @@ mkStateQueryClient StateQueryCodecs{..} queue yield =
             }
 
     clientStAcquired
-        :: m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
+        :: m (LSQ.ClientStAcquired block point query m ())
     clientStAcquired = await >>= \case
         MsgAcquire (Acquire pt) toResponse ->
             pure $ LSQ.SendMsgReAcquire (Just pt) (clientStAcquiring pt toResponse)
@@ -198,14 +200,14 @@ mkStateQueryClient StateQueryCodecs{..} queue yield =
 withCurrentEra
     :: forall crypto block point query m f.
         ( block ~ HardForkBlock (CardanoEras crypto)
-        , query ~ LSQ.Query block
+        , query ~ Ledger.Query block
         , Applicative m
         )
     => QueryInEra f block
     -> (Maybe (SomeQuery f block) -> m (LSQ.ClientStAcquired block point query m ()))
     -> m (LSQ.ClientStAcquired block point query m ())
 withCurrentEra queryInEra callback = pure
-    $ LSQ.SendMsgQuery (LSQ.QueryHardFork LSQ.GetCurrentEra)
+    $ LSQ.SendMsgQuery (Ledger.BlockQuery $ LSQ.QueryHardFork LSQ.GetCurrentEra)
     $ LSQ.ClientStQuerying
         { LSQ.recvMsgResult = \eraIndex ->
             callback (toSomeShelleyEra eraIndex >>= queryInEra)

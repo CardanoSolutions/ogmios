@@ -16,6 +16,8 @@ import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Ledger.Era
     ( Era )
+import Cardano.Ledger.Shelley.Constraints
+    ( ShelleyBased )
 import Control.State.Transition
     ( STS (..) )
 import Data.ByteString.Base16
@@ -28,8 +30,6 @@ import Ouroboros.Consensus.Cardano.Block
     ( ShelleyEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..), ShelleyHash (..) )
-import Shelley.Spec.Ledger.BaseTypes
-    ( StrictMaybe (..) )
 
 import qualified Ogmios.Data.Json.Byron as Byron
 
@@ -41,11 +41,11 @@ import qualified Cardano.Crypto.Hash.Class as CC
 import qualified Cardano.Crypto.KES.Class as CC
 import qualified Cardano.Crypto.VRF.Class as CC
 
-import qualified Cardano.Ledger.AuxiliaryData as Sh
-import qualified Cardano.Ledger.Coin as Sh
-import qualified Cardano.Ledger.Core as Sh.Core
-import qualified Cardano.Ledger.SafeHash as Sh
-import qualified Cardano.Ledger.Shelley.Constraints as Sh
+import qualified Cardano.Ledger.AuxiliaryData as Aux
+import qualified Cardano.Ledger.Coin as Coin
+import qualified Cardano.Ledger.Core as Core
+import qualified Cardano.Ledger.SafeHash as SafeHash
+
 import qualified Shelley.Spec.Ledger.Address as Sh
 import qualified Shelley.Spec.Ledger.Address.Bootstrap as Sh
 import qualified Shelley.Spec.Ledger.BaseTypes as Sh
@@ -89,10 +89,10 @@ encodeAddress = \case
         Sh.Testnet -> hrpAddrTestnet
 
 encodeAuxiliaryDataHash
-    :: Sh.AuxiliaryDataHash era
+    :: Aux.AuxiliaryDataHash era
     -> Json
 encodeAuxiliaryDataHash =
-    encodeHash . Sh.extractHash . Sh.unsafeAuxiliaryDataHash
+    encodeHash . SafeHash.extractHash . Aux.unsafeAuxiliaryDataHash
 
 encodeBHeader
     :: Crypto crypto
@@ -139,6 +139,24 @@ encodeBHeader mode (Sh.BHeader hBody hSig) = encodeObjectWithMode mode
       )
     ]
 
+encodeBlock
+    :: Crypto crypto
+    => SerializationMode
+    -> ShelleyBlock (ShelleyEra crypto)
+    -> Json
+encodeBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
+    encodeObject
+    [ ( "body"
+      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
+      )
+    , ( "header"
+      , encodeBHeader mode blkHeader
+      )
+    , ( "headerHash"
+      , encodeShelleyHash headerHash
+      )
+    ]
+
 encodeBootstrapWitness
     :: Crypto crypto
     => Sh.BootstrapWitness crypto
@@ -155,48 +173,6 @@ encodeBootstrapWitness (Sh.BootstrapWitness key sig cc attr) = encodeObject
       )
     , ( "signature"
       , encodeSignedDSIGN sig
-      )
-    ]
-
-encodeCompactGenesis
-    :: Sh.ShelleyGenesis era
-    -> Json
-encodeCompactGenesis x = encodeObject
-    [ ( "systemStart"
-      , encodeUtcTime (Sh.sgSystemStart x)
-      )
-    , ( "networkMagic"
-      , encodeWord32 (Sh.sgNetworkMagic x)
-      )
-    , ( "network"
-      , encodeNetwork (Sh.sgNetworkId x)
-      )
-    , ( "activeSlotsCoefficient"
-      , encodeRational (Sh.sgActiveSlotsCoeff x)
-      )
-    , ( "securityParameter"
-      , encodeWord64 (Sh.sgSecurityParam x)
-      )
-    , ( "epochLength"
-      , encodeEpochSize (Sh.sgEpochLength x)
-      )
-    , ( "slotsPerKesPeriod"
-      , encodeWord64 (Sh.sgSlotsPerKESPeriod x)
-      )
-    , ( "maxKesEvolutions"
-      , encodeWord64 (Sh.sgMaxKESEvolutions x)
-      )
-    , ( "slotLength"
-      , encodeNominalDiffTime (Sh.sgSlotLength x)
-      )
-    , ( "updateQuorum"
-      , encodeWord64 (Sh.sgUpdateQuorum x)
-      )
-    , ( "maxLovelaceSupply"
-      , encodeWord64 (Sh.sgMaxLovelaceSupply x)
-      )
-    , ( "protocolParameters"
-      , encodePParams' id (Sh.sgProtocolParams x)
       )
     ]
 
@@ -226,12 +202,6 @@ encodeChainCode
 encodeChainCode cc
     | BS.null (Sh.unChainCode cc) = encodeNull
     | otherwise = encodeByteStringBase16 (Sh.unChainCode cc)
-
-encodeCoin
-    :: Sh.Coin
-    -> Json
-encodeCoin =
-    encodeInteger . Sh.unCoin
 
 encodeCredential
     :: forall any era. (any :\: 'Sh.StakePool)
@@ -322,9 +292,9 @@ encodeDelegation x = encodeObject
     ]
 
 encodeDelegsFailure
-    :: PredicateFailure (Sh.Core.EraRule "DELPL" era) ~ Sh.DelplPredicateFailure era
-    => PredicateFailure (Sh.Core.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
-    => PredicateFailure (Sh.Core.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
+    :: PredicateFailure (Core.EraRule "DELPL" era) ~ Sh.DelplPredicateFailure era
+    => PredicateFailure (Core.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
+    => PredicateFailure (Core.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
     => Sh.DelegsPredicateFailure era
     -> Json
 encodeDelegsFailure = \case
@@ -439,14 +409,14 @@ encodeDelegFailure = \case
             ]
 
 encodeDeltaCoin
-    :: Sh.DeltaCoin
+    :: Coin.DeltaCoin
     -> Json
-encodeDeltaCoin (Sh.DeltaCoin delta) =
+encodeDeltaCoin (Coin.DeltaCoin delta) =
     encodeInteger delta
 
 encodeDeplFailure
-    :: PredicateFailure (Sh.Core.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
-    => PredicateFailure (Sh.Core.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
+    :: PredicateFailure (Core.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
+    => PredicateFailure (Core.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
     => Sh.DelplPredicateFailure era
     -> Json
 encodeDeplFailure = \case
@@ -454,6 +424,59 @@ encodeDeplFailure = \case
         encodePoolFailure e
     Sh.DelegFailure e ->
         encodeDelegFailure e
+
+encodeEntities
+    :: Foldable f
+    => Text
+    -> (entity -> Json)
+    -> f entity
+    -> Json
+encodeEntities tag encodeEntity = encodeFoldable $ \e -> encodeObject
+    [ ( "type", encodeText tag )
+    , ( "entity", encodeEntity e )
+    ]
+
+encodeGenesis
+    :: Sh.ShelleyGenesis era
+    -> Json
+encodeGenesis x = encodeObject
+    [ ( "systemStart"
+      , encodeUtcTime (Sh.sgSystemStart x)
+      )
+    , ( "networkMagic"
+      , encodeWord32 (Sh.sgNetworkMagic x)
+      )
+    , ( "network"
+      , encodeNetwork (Sh.sgNetworkId x)
+      )
+    , ( "activeSlotsCoefficient"
+      , encodeRational (Sh.sgActiveSlotsCoeff x)
+      )
+    , ( "securityParameter"
+      , encodeWord64 (Sh.sgSecurityParam x)
+      )
+    , ( "epochLength"
+      , encodeEpochSize (Sh.sgEpochLength x)
+      )
+    , ( "slotsPerKesPeriod"
+      , encodeWord64 (Sh.sgSlotsPerKESPeriod x)
+      )
+    , ( "maxKesEvolutions"
+      , encodeWord64 (Sh.sgMaxKESEvolutions x)
+      )
+    , ( "slotLength"
+      , encodeNominalDiffTime (Sh.sgSlotLength x)
+      )
+    , ( "updateQuorum"
+      , encodeWord64 (Sh.sgUpdateQuorum x)
+      )
+    , ( "maxLovelaceSupply"
+      , encodeWord64 (Sh.sgMaxLovelaceSupply x)
+      )
+    , ( "protocolParameters"
+      , encodePParams' id (Sh.sgProtocolParams x)
+      )
+    ]
 
 encodeHash
     :: CC.Hash alg a
@@ -521,9 +544,10 @@ encodeMetadataBlob =
             encodeObject [("map", encodeList encodeKeyPair xs)]
 
     encodeKeyPair :: (Sh.Metadatum, Sh.Metadatum) -> Json
-    encodeKeyPair = encode2Tuple
-        (encodeObject . pure @[] . ("k",) . encodeMetadatum)
-        (encodeObject . pure @[] . ("v",) . encodeMetadatum)
+    encodeKeyPair (k, v) = encodeObject
+        [ ( "k", encodeMetadatum k )
+        , ( "v", encodeMetadatum v )
+        ]
 
 encodeMIRPot
     :: Sh.MIRPot
@@ -646,8 +670,12 @@ encodePoolFailure = \case
     Sh.WrongNetworkPOOL _specified expected poolId ->
         encodeObject
             [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork", encodeNetwork expected )
-                , ( "invalidPoolRegistration", encodePoolId poolId )
+                [ ( "expectedNetwork"
+                  , encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , encodeEntities "poolRegistration" encodePoolId [poolId]
+                  )
                 ]
               )
             ]
@@ -763,7 +791,7 @@ encodePrevHash = \case
     Sh.BlockHash h -> encodeHashHeader h
 
 encodeProposedPPUpdates
-    :: forall era. (Sh.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
+    :: forall era. (Core.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
@@ -787,6 +815,13 @@ encodeRewardAcnt
 encodeRewardAcnt =
     encodeText . stringifyRewardAcnt
 
+encodeScript
+    :: Crypto crypto
+    => Sh.MultiSig crypto
+    -> Json
+encodeScript script = encodeObject
+    [ ( "native", encodeMultiSig script ) ]
+
 encodeScriptHash
     :: Sh.ScriptHash era
     -> Json
@@ -799,24 +834,6 @@ encodeSignedKES
     -> Json
 encodeSignedKES (CC.SignedKES raw) =
     encodeByteStringBase64 . CC.rawSerialiseSigKES $ raw
-
-encodeShelleyBlock
-    :: Crypto crypto
-    => SerializationMode
-    -> ShelleyBlock (ShelleyEra crypto)
-    -> Json
-encodeShelleyBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
-    encodeObject
-    [ ( "body"
-      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
-      )
-    , ( "header"
-      , encodeBHeader mode blkHeader
-      )
-    , ( "headerHash"
-      , encodeShelleyHash headerHash
-      )
-    ]
 
 encodeShelleyHash
     :: ShelleyHash crypto
@@ -875,6 +892,15 @@ encodeTx mode x = encodeObjectWithMode mode
     , ( "body"
       , encodeTxBody (Sh.body x)
       )
+      -- NOTE:
+      -- We should really return metadata: null when there's no metadata.
+      -- Right now, this returns { hash: null, body: null } when null.
+      --
+      -- The reason for writing it in such a way is slightly _silly_ and because
+      -- of the way the generators are currently constructed. Indeed, since the
+      -- metadata hash and body are strictly decoupled in the transaction model,
+      -- they end up being generated separately and as a result, the generator
+      -- may generate actually invalid cases like this.
     , ( "metadata", encodeObject
         [ ( "hash"
           , encodeStrictMaybe encodeAuxiliaryDataHash (Sh._mdHash (Sh.body x))
@@ -922,7 +948,7 @@ encodeTxId
     :: Sh.TxId crypto
     -> Json
 encodeTxId =
-    encodeHash . Sh.extractHash . Sh._unTxId
+    encodeHash . SafeHash.extractHash . Sh._unTxId
 
 encodeTxIn
     :: Crypto crypto
@@ -938,7 +964,7 @@ encodeTxIn (Sh.TxIn txid ix) = encodeObject
     ]
 
 encodeTxOut
-    :: (Sh.ShelleyBased era, Sh.Core.Value era ~ Sh.Coin)
+    :: (ShelleyBased era, Core.Value era ~ Coin)
     => Sh.TxOut era
     -> Json
 encodeTxOut (Sh.TxOut addr coin) = encodeObject
@@ -951,7 +977,7 @@ encodeTxOut (Sh.TxOut addr coin) = encodeObject
     ]
 
 encodeUpdate
-    :: forall era. (Sh.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
+    :: forall era. (Core.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
     => Sh.Update era
     -> Json
 encodeUpdate (Sh.Update update epoch) = encodeObject
@@ -993,9 +1019,9 @@ encodeUpdateFailure = \case
 
 encodeUtxo
     :: forall era.
-        ( Sh.ShelleyBased era
-        , Sh.Core.Value era ~ Sh.Coin
-        , Sh.Core.TxOut era ~ Sh.TxOut era
+        ( ShelleyBased era
+        , Core.Value era ~ Coin
+        , Core.TxOut era ~ Sh.TxOut era
         )
     => Sh.UTxO era
     -> Json
@@ -1052,16 +1078,24 @@ encodeUtxoFailure = \case
     Sh.WrongNetwork expected invalidAddrs ->
         encodeObject
             [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork", encodeNetwork expected )
-                , ( "invalidAddresses", encodeFoldable encodeAddress invalidAddrs )
+                [ ( "expectedNetwork"
+                  , encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , encodeEntities "address" encodeAddress invalidAddrs
+                  )
                 ]
               )
             ]
     Sh.WrongNetworkWithdrawal expected invalidAccts ->
         encodeObject
             [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork", encodeNetwork expected )
-                , ( "invalidRewardAccounts", encodeFoldable encodeRewardAcnt invalidAccts )
+                [ ( "expectedNetwork"
+                  , encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , encodeEntities "rewardAccount" encodeRewardAcnt invalidAccts
+                  )
                 ]
               )
             ]
@@ -1084,7 +1118,7 @@ encodeUtxowFailure
     :: forall era.
         ( Era era
         )
-    => (PredicateFailure (Sh.Core.EraRule "UTXO" era) -> Json)
+    => (PredicateFailure (Core.EraRule "UTXO" era) -> Json)
     -> Sh.UtxowPredicateFailure era
     -> Json
 encodeUtxowFailure encodeUtxoFailure_ = \case
@@ -1191,11 +1225,11 @@ encodeWitnessSet
     => Sh.WitnessSet (ShelleyEra crypto)
     -> Json
 encodeWitnessSet x = encodeObject
-    [ ( "address"
+    [ ( "signatures"
       , encodeFoldable encodeWitVKey (Sh.addrWits x)
       )
-    , ( "script"
-      , encodeMap stringifyScriptHash encodeMultiSig (Sh.scriptWits x)
+    , ( "scripts"
+      , encodeMap stringifyScriptHash encodeScript (Sh.scriptWits x)
       )
     , ( "bootstrap"
       , encodeFoldable encodeBootstrapWitness (Sh.bootWits x)
@@ -1212,24 +1246,18 @@ encodeWitVKey
     :: Crypto crypto
     => Sh.WitVKey Sh.Witness crypto
     -> Json
-encodeWitVKey (Sh.WitVKey key sig) = encodeObject
-    [ ( "key"
-      , encodeVKey key
-      )
-    , ( "signature"
-      , encodeSignedDSIGN sig
-      )
-    ]
+encodeWitVKey (Sh.WitVKey key sig) =
+    encodeObject [(stringifyVKey  key, encodeSignedDSIGN sig)]
 
 --
 -- Conversion To Text
 --
 
 stringifyCoin
-    :: Sh.Coin
+    :: Coin
     -> Text
 stringifyCoin =
-    show . Sh.unCoin
+    show . unCoin
 
 stringifyCredential
     :: forall any era. (any :\: Sh.StakePool)
@@ -1271,6 +1299,13 @@ stringifyScriptHash
     -> Text
 stringifyScriptHash (Sh.ScriptHash (CC.UnsafeHash h)) =
     encodeBase16 (fromShort h)
+
+stringifyVKey
+    :: Crypto crypto
+    => Sh.VKey any crypto
+    -> Text
+stringifyVKey =
+    encodeBase16 . CC.rawSerialiseVerKeyDSIGN . Sh.unVKey
 
 --
 -- Helpers

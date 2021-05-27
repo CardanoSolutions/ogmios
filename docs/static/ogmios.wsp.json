@@ -1108,7 +1108,7 @@
               , "proof": { "$ref": "#/definitions/BlockProof" }
               , "protocolMagicId": { "$ref": "#/definitions/ProtocolMagicId" }
               , "protocolVersion": { "$ref": "#/definitions/ProtocolVersion" }
-              , "signature": { "$ref": "#/definitions/Signature" }
+              , "signature": { "$ref": "#/definitions/BlockSignature" }
               , "slot": { "$ref": "#/definitions/Slot" }
               , "softwareVersion": { "$ref": "#/definitions/SoftwareVersion" }
               }
@@ -1236,15 +1236,12 @@
               , "update": null
               }
             , "witness":
-              { "address":
-                [ { "key": "386020d73807f285ba3259efacd9fbea1939ebd97dc2ddc3b178d427e5a047f6"
-                  , "signature": "5bckfySir7f4G+SV83UPw0+42qqFcEU+sdmK+uejnx6gn6OFMckasHBY8xPWabJ9w5xMmD8sRJ5VC7bNsUU0Ag=="
-                  }
-                , { "key": "de735ba8771f521b50bc3130c4a7d6f0784df718d3ed3ca32befd9a4650c2e8a"
-                  , "signature": "KHlV88SX+sODj4EqHW7U1wxLL2nVuq/wg43rdaarckroEZc3k1h7YcH0CyAoBvy5+xv6aZ6clDvceeUliD6RCw=="
+              { "signatures":
+                [ { "386020d73807f285ba3259efacd9fbea1939ebd97dc2ddc3b178d427e5a047f6": "5bckfySir7f4G+SV83UPw0+42qqFcEU+sdmK+uejnx6gn6OFMckasHBY8xPWabJ9w5xMmD8sRJ5VC7bNsUU0Ag=="
+                  , "de735ba8771f521b50bc3130c4a7d6f0784df718d3ed3ca32befd9a4650c2e8a": "KHlV88SX+sODj4EqHW7U1wxLL2nVuq/wg43rdaarckroEZc3k1h7YcH0CyAoBvy5+xv6aZ6clDvceeUliD6RCw=="
                   }
                 ]
-              , "script": {}
+              , "scripts": {}
               , "bootstrap": []
               }
             , "metadata":
@@ -1320,22 +1317,15 @@
             , "witness":
               { "type": "object"
               , "additionalProperties": false
-              , "required": ["address","script","bootstrap"]
+              , "required": ["signatures","scripts","bootstrap"]
               , "properties":
-                { "address":
+                { "signatures":
                   { "type": "array"
-                  , "items":
-                    { "type": "object"
-                    , "additionalProperties": false
-                    , "properties":
-                      { "signature": { "$ref": "#/definitions/Hash64" }
-                      , "key": { "$ref": "#/definitions/Hash16" }
-                      }
-                    }
+                  , "items": { "$ref": "#/definitions/Signature" }
                   }
-                , "script":
+                , "scripts":
                   { "type": "object"
-                  , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
+                  , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
                   , "additionalProperties": { "$ref": "#/definitions/Script" }
                   }
                 , "bootstrap":
@@ -1370,14 +1360,14 @@
               , "properties":
                 { "hash":
                   { "oneOf":
-                    [ { "type": "null", "title": "null" }
-                    , { "$ref": "#/definitions/Hash16" }
+                    [ { "$ref": "#/definitions/Hash16" }
+                    , { "type": "null", "title": "null" }
                     ]
                   }
                 , "body":
                   { "oneOf":
-                    [ { "type": "null", "title": "null" }
-                    , { "type": "object", "title": "object" }
+                    [ { "$ref": "#/definitions/AuxiliaryData" }
+                    , { "type": "null", "title": "null" }
                     ]
                   }
                 }
@@ -1444,15 +1434,12 @@
               , "update": null
               }
             , "witness":
-              { "address":
-                [ { "key": "386020d73807f285ba3259efacd9fbea1939ebd97dc2ddc3b178d427e5a047f6"
-                  , "signature": "5bckfySir7f4G+SV83UPw0+42qqFcEU+sdmK+uejnx6gn6OFMckasHBY8xPWabJ9w5xMmD8sRJ5VC7bNsUU0Ag=="
-                  }
-                , { "key": "de735ba8771f521b50bc3130c4a7d6f0784df718d3ed3ca32befd9a4650c2e8a"
-                  , "signature": "KHlV88SX+sODj4EqHW7U1wxLL2nVuq/wg43rdaarckroEZc3k1h7YcH0CyAoBvy5+xv6aZ6clDvceeUliD6RCw=="
+              { "signatures":
+                [ { "386020d73807f285ba3259efacd9fbea1939ebd97dc2ddc3b178d427e5a047f6": "5bckfySir7f4G+SV83UPw0+42qqFcEU+sdmK+uejnx6gn6OFMckasHBY8xPWabJ9w5xMmD8sRJ5VC7bNsUU0Ag=="
+                  , "de735ba8771f521b50bc3130c4a7d6f0784df718d3ed3ca32befd9a4650c2e8a": "KHlV88SX+sODj4EqHW7U1wxLL2nVuq/wg43rdaarckroEZc3k1h7YcH0CyAoBvy5+xv6aZ6clDvceeUliD6RCw=="
                   }
                 ]
-              , "script": {}
+              , "scripts": {}
               , "bootstrap": []
               }
             , "metadata":
@@ -1528,22 +1515,15 @@
             , "witness":
               { "type": "object"
               , "additionalProperties": false
-              , "required": ["address","script","bootstrap"]
+              , "required": ["signatures","scripts","bootstrap"]
               , "properties":
-                { "address":
+                { "signatures":
                   { "type": "array"
-                  , "items":
-                    { "type": "object"
-                    , "additionalProperties": false
-                    , "properties":
-                      { "signature": { "$ref": "#/definitions/Hash64" }
-                      , "key": { "$ref": "#/definitions/Hash16" }
-                      }
-                    }
+                  , "items": { "$ref": "#/definitions/Signature" }
                   }
-                , "script":
+                , "scripts":
                   { "type": "object"
-                  , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
+                  , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
                   , "additionalProperties": { "$ref": "#/definitions/Script" }
                   }
                 , "bootstrap":
@@ -1578,14 +1558,14 @@
               , "properties":
                 { "hash":
                   { "oneOf":
-                    [ { "type": "null", "title": "null" }
-                    , { "$ref": "#/definitions/Hash16" }
+                    [ { "$ref": "#/definitions/Hash16" }
+                    , { "type": "null", "title": "null" }
                     ]
                   }
                 , "body":
                   { "oneOf":
-                    [ { "type": "null", "title": "null" }
-                    , { "type": "object", "title": "object" }
+                    [ { "$ref": "#/definitions/AuxiliaryData" }
+                    , { "type": "null", "title": "null" }
                     ]
                   }
                 }
@@ -1640,15 +1620,12 @@
                 }
               }
             , "witness":
-              { "address":
-                [ { "key": "a900560b6c0964492849eb5311acac881edeb8d2282122b895fd418243c92f4e"
-                  , "signature": "3TLin5vgz4dQDomhMjW9q4VIQD/X6Q9ECWkA8kVOz/c8R2c4mO1P1+LD/9n2ouHOANNC5ZgzwV2ojAVpZw4IBA=="
+              { "signatures":
+                [ { "a900560b6c0964492849eb5311acac881edeb8d2282122b895fd418243c92f4e": "3TLin5vgz4dQDomhMjW9q4VIQD/X6Q9ECWkA8kVOz/c8R2c4mO1P1+LD/9n2ouHOANNC5ZgzwV2ojAVpZw4IBA=="
+                  , "5c19b9b0dd58b782dcac33cdc925f74c1385d8aae5912f7e1040a2d24a47e4eb": "qjqis5n/XGVp5PCIe0h8h/+ZO6rdIClBfzb7SEaaG4kAuY+zMAnfA57oxcLI6MA81rJ/nVct7FDtLKEHjimlDg=="
                   }
-                , { "key": "5c19b9b0dd58b782dcac33cdc925f74c1385d8aae5912f7e1040a2d24a47e4eb"
-                  , "signature": "qjqis5n/XGVp5PCIe0h8h/+ZO6rdIClBfzb7SEaaG4kAuY+zMAnfA57oxcLI6MA81rJ/nVct7FDtLKEHjimlDg=="
-                  }
-                 ]
-              , "script": {}
+                ]
+              , "scripts": {}
               , "bootstrap": []
               }
             , "metadata":
@@ -1662,7 +1639,7 @@
                       ]
                     }
                   }
-                , "scriptPreImages": []
+                , "scripts": []
                 }
               }
             }
@@ -1735,22 +1712,15 @@
             , "witness":
               { "type": "object"
               , "additionalProperties": false
-              , "required": ["address","script","bootstrap"]
+              , "required": ["signatures","scripts","bootstrap"]
               , "properties":
-                { "address":
+                { "signatures":
                   { "type": "array"
-                  , "items":
-                    { "type": "object"
-                    , "additionalProperties": false
-                    , "properties":
-                      { "signature": { "$ref": "#/definitions/Hash64" }
-                      , "key": { "$ref": "#/definitions/Hash16" }
-                      }
-                    }
+                  , "items": { "$ref": "#/definitions/Signature" }
                   }
-                , "script":
+                , "scripts":
                   { "type": "object"
-                  , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
+                  , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
                   , "additionalProperties": { "$ref": "#/definitions/Script" }
                   }
                 , "bootstrap":
@@ -1785,14 +1755,14 @@
               , "properties":
                 { "hash":
                   { "oneOf":
-                    [ { "type": "null", "title": "null" }
-                    , { "$ref": "#/definitions/Hash16" }
+                    [ { "$ref": "#/definitions/Hash16" }
+                    , { "type": "null", "title": "null" }
                     ]
                   }
                 , "body":
                   { "oneOf":
-                    [ { "type": "null", "title": "null" }
-                    , { "type": "object", "title": "null" }
+                    [ { "$ref": "#/definitions/AuxiliaryData" }
+                    , { "type": "null", "title": "null" }
                     ]
                   }
                 }
@@ -1831,6 +1801,16 @@
         }
       , "delegation": { "$ref": "#/definitions/Hash16" }
       , "update": { "$ref": "#/definitions/Hash16" }
+      }
+    }
+
+  , "BlockSignature":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "dlgCertificate", "signature" ]
+    , "properties":
+      { "dlgCertificate": { "$ref": "#/definitions/DlgCertificate" }
+      , "signature": { "$ref": "#/definitions/Hash64" }
       }
     }
 
@@ -2176,6 +2156,44 @@
     , "pattern": "^[A-Za-z0-9+/]*=?=?$"
     }
 
+  , "InvalidEntity":
+    { "oneOf":
+      [ { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "type", "entity" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "address" ]
+            }
+          , "entity": { "$ref": "#/definitions/Address" }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "type", "entity" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "poolRegistration" ]
+            }
+          , "entity": { "$ref": "#/definitions/PoolId" }
+          }
+        }
+      , { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "type", "entity" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "rewardAccount" ]
+            }
+          , "entity": { "$ref": "#/definitions/RewardAccount" }
+          }
+        }
+      ]
+    }
+
   , "LeaderValue":
     { "type": "object"
     , "description": "In Ouroboros Praos, designate the leader's contribution to the Multi-Party computation used for calculating the leader schedule."
@@ -2232,6 +2250,91 @@
         , "required": [ "overflow" ]
         , "properties":
           { "overflow": { "type": "integer" }
+          }
+        }
+      ]
+    }
+
+  , "AuxiliaryData":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "blob": { "$ref": "#/definitions/Metadata" }
+      , "scripts":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Script" }
+        }
+      }
+    }
+
+  , "Metadata":
+    { "type": "object"
+    , "propertyNames": { "pattern": "^-?[0-9]+$" }
+    , "additionalProperties": { "$ref": "#/definitions/Metadatum" }
+    }
+
+  , "Metadatum":
+    { "oneOf":
+      [ { "type": "object"
+        , "title": "int"
+        , "additionalProperties": false
+        , "required": ["int"]
+        , "properties":
+          { "int":
+              { "type": "integer"
+              }
+          }
+        }
+      , { "type": "object"
+        , "title": "string"
+        , "additionalProperties": false
+        , "required": ["string"]
+        , "properties":
+          { "string":
+              { "type": "string"
+              }
+          }
+        }
+      , { "type": "object"
+        , "title": "bytes"
+        , "additionalProperties": false
+        , "required": ["bytes"]
+        , "properties":
+          { "bytes":
+            { "type": "string"
+            , "contentEncoding": "base16"
+            , "pattern": "^[0-9a-f]*$"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "list"
+        , "additionalProperties": false
+        , "required": ["list"]
+        , "properties":
+          { "list":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Metadatum" }
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "map"
+        , "additionalProperties": false
+        , "required": ["map"]
+        , "properties":
+          { "map":
+            { "type": "array"
+            , "items":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": ["k", "v"]
+              , "properties":
+                { "k": { "$ref": "#/definitions/Metadatum" }
+                , "v": { "$ref": "#/definitions/Metadatum" }
+                }
+              }
+            }
           }
         }
       ]
@@ -2565,6 +2668,27 @@
     }
 
   , "Script":
+    { "oneOf":
+      [ { "type": "object"
+        , "title": "Native"
+        , "additionalProperties": false
+        , "required": [ "native" ]
+        , "properties":
+          { "native": { "$ref": "#/definitions/Script[Native]" }
+          }
+        }
+      , { "type": "object"
+        , "title": "Plutus"
+        , "additionalProperties": false
+        , "required": [ "plutus" ]
+        , "properties":
+          { "plutus": { "$ref": "#/definitions/Script[Plutus]" }
+          }
+        }
+      ]
+    }
+
+  , "Script[Native]":
     { "description": "A phase-1 monetary script. Timelocks constraints are only supported since Allegra."
     , "examples":
         [ "3c07030e36bfff7cd2f004356ef320f3fe3c07030e7cd2f004356437"
@@ -2599,34 +2723,37 @@
       , { "type": "object"
         , "title": "any"
         , "additionalProperties": false
+        , "required": ["any"]
         , "properties":
           { "any":
             { "type": "array"
-            , "items": { "$ref": "#/definitions/Script" }
+            , "items": { "$ref": "#/definitions/Script[Native]" }
             }
           }
         }
       , { "type": "object"
-        , "additionalProperties": false
         , "title": "all"
+        , "additionalProperties": false
+        , "required": ["all"]
         , "properties":
           { "all":
             { "type": "array"
-            , "items": { "$ref": "#/definitions/Script" }
+            , "items": { "$ref": "#/definitions/Script[Native]" }
             }
           }
         }
       , { "type": "object"
-        , "propertyNames": { "pattern": "[0-9]+$" }
         , "title": "NOf"
+        , "propertyNames": { "pattern": "^[0-9]+$" }
         , "additionalProperties":
           { "type": "array"
-          , "items": { "$ref": "#/definitions/Script" }
+          , "items": { "$ref": "#/definitions/Script[Native]" }
           }
         }
       , { "type": "object"
         , "title": "expiresAt"
         , "additionalProperties": false
+        , "required": [ "expiresAt" ]
         , "properties":
           { "expiresAt": { "$ref": "#/definitions/Slot" }
           }
@@ -2634,6 +2761,7 @@
       , { "type": "object"
         , "title": "startsAt"
         , "additionalProperties": false
+        , "required": [ "startsAt" ]
         , "properties":
           { "startsAt": { "$ref": "#/definitions/Slot" }
           }
@@ -2641,14 +2769,17 @@
       ]
     }
 
+  , "Script[Plutus]":
+    { "type": "string"
+    , "description": "A phase-2 Plutus script; or said differently, a serialized Plutus-core program."
+    , "contentEncoding": "base64"
+    , "pattern": "^[A-Za-z0-9+/]*=?=?$"
+    }
+
   , "Signature":
     { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "dlgCertificate", "signature" ]
-    , "properties":
-      { "dlgCertificate": { "$ref": "#/definitions/DlgCertificate" }
-      , "signature": { "$ref": "#/definitions/Hash64" }
-      }
+    , "additionalProperties": { "$ref": "#/definitions/Hash64" }
+    , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
     }
 
   , "Slot":
@@ -2986,33 +3117,16 @@
     , "required": [ "networkMismatch" ]
     , "properties":
       { "networkMismatch":
-        { "oneOf":
-          [ { "type": "object"
-            , "title": "In address"
-            , "additionalProperties": false
-            , "required": [ "expectedNetwork" ]
-            , "properties":
-              { "expectedNetwork": { "$ref": "#/definitions/Network" }
-              , "invalidAddresses":
-                { "type": "array"
-                , "items": { "$ref": "#/definitions/Address" }
-                }
-              , "invalidRewardAccounts":
-                { "type": "array"
-                , "items": { "$ref": "#/definitions/RewardAccount" }
-                }
-              }
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "expectedNetwork", "invalidEntities" ]
+        , "properties":
+          { "expectedNetwork": { "$ref": "#/definitions/Network" }
+          , "invalidEntities":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/InvalidEntity" }
             }
-          , { "type": "object"
-            , "title": "In pool certificate"
-            , "additionalProperties": false
-            , "required": [ "expectedNetwork", "invalidPoolRegistration" ]
-            , "properties":
-              { "expectedNetwork": { "$ref": "#/definitions/Network" }
-              , "invalidPoolRegistration": { "$ref": "#/definitions/PoolId" }
-              }
-            }
-          ]
+          }
         }
       }
     }

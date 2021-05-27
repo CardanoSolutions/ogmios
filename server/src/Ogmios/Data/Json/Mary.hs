@@ -18,8 +18,6 @@ import Ouroboros.Consensus.Cardano.Block
     ( MaryEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
-import Shelley.Spec.Ledger.BaseTypes
-    ( StrictMaybe (..) )
 
 import qualified Data.ByteString as BS
 import qualified Data.Map.Strict as Map
@@ -27,18 +25,20 @@ import qualified Data.Map.Strict as Map
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
-import qualified Cardano.Ledger.AuxiliaryData as MA
+import qualified Cardano.Ledger.Core as Core
 import qualified Cardano.Ledger.Era as Era
-import qualified Cardano.Ledger.Mary.Value as MA
-import qualified Cardano.Ledger.Shelley.Constraints as Sh
-import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
-import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
-import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
+
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
 import qualified Shelley.Spec.Ledger.PParams as Sh
 import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
 import qualified Shelley.Spec.Ledger.Tx as Sh
 import qualified Shelley.Spec.Ledger.UTxO as Sh
+
+import qualified Cardano.Ledger.AuxiliaryData as MA
+import qualified Cardano.Ledger.Mary.Value as MA
+import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
+import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
+import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
 
 --
 -- Encoders
@@ -52,8 +52,26 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
     [ ( "blob"
       , Shelley.encodeMetadataBlob blob
       )
-    , ( "scriptPreImages"
-      , encodeFoldable Allegra.encodeTimelock scripts
+    , ( "scripts"
+      , encodeFoldable Allegra.encodeScript scripts
+      )
+    ]
+
+encodeBlock
+    :: Crypto crypto
+    => SerializationMode
+    -> ShelleyBlock (MaryEra crypto)
+    -> Json
+encodeBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
+    encodeObject
+    [ ( "body"
+      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
+      )
+    , ( "header"
+      , Shelley.encodeBHeader mode blkHeader
+      )
+    , ( "headerHash"
+      , Shelley.encodeShelleyHash headerHash
       )
     ]
 
@@ -67,23 +85,11 @@ encodeLedgerFailure = \case
     Sh.DelegsFailure e ->
         Shelley.encodeDelegsFailure e
 
-encodeMaryBlock
-    :: Crypto crypto
-    => SerializationMode
-    -> ShelleyBlock (MaryEra crypto)
+encodePolicyId
+    :: MA.PolicyID crypto
     -> Json
-encodeMaryBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
-    encodeObject
-    [ ( "body"
-      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
-      )
-    , ( "header"
-      , Shelley.encodeBHeader mode blkHeader
-      )
-    , ( "headerHash"
-      , Shelley.encodeShelleyHash headerHash
-      )
-    ]
+encodePolicyId (MA.PolicyID hash) =
+    Shelley.encodeScriptHash hash
 
 encodePParams'
     :: (forall a. (a -> Json) -> Sh.HKD f a -> Json)
@@ -93,7 +99,7 @@ encodePParams' =
     Shelley.encodePParams'
 
 encodeProposedPPUpdates
-    :: (Sh.PParamsDelta era ~ Sh.PParamsUpdate era)
+    :: (Core.PParamsDelta era ~ Sh.PParamsUpdate era)
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates =
@@ -147,7 +153,7 @@ encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ mint) = enc
       , Shelley.encodeWdrl wdrls
       )
     , ( "fee"
-      , Shelley.encodeCoin fee
+      , encodeCoin fee
       )
     , ( "validityInterval"
       , Allegra.encodeValidityInterval validity
@@ -220,8 +226,8 @@ encodeUtxoFailure = \case
     MA.FeeTooSmallUTxO required actual ->
         encodeObject
             [ ( "feeTooSmall", encodeObject
-                [ ( "requiredFee", Shelley.encodeCoin required )
-                , ( "actualFee", Shelley.encodeCoin actual )
+                [ ( "requiredFee", encodeCoin required )
+                , ( "actualFee", encodeCoin actual )
                 ]
               )
             ]
@@ -236,16 +242,24 @@ encodeUtxoFailure = \case
     MA.WrongNetwork expected invalidAddrs ->
         encodeObject
             [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork", Shelley.encodeNetwork expected )
-                , ( "invalidAddresses", encodeFoldable Shelley.encodeAddress invalidAddrs )
+                [ ( "expectedNetwork"
+                  , Shelley.encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , Shelley.encodeEntities "address" Shelley.encodeAddress invalidAddrs
+                  )
                 ]
               )
             ]
     MA.WrongNetworkWithdrawal expected invalidAccts ->
         encodeObject
             [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork" , Shelley.encodeNetwork expected )
-                , ( "invalidRewardAccounts" , encodeFoldable Shelley.encodeRewardAcnt invalidAccts )
+                [ ( "expectedNetwork"
+                  , Shelley.encodeNetwork expected
+                  )
+                , ( "invalidEntities"
+                  , Shelley.encodeEntities "rewardAccount" Shelley.encodeRewardAcnt invalidAccts
+                  )
                 ]
               )
             ]
@@ -288,11 +302,11 @@ encodeWitnessSet
     => Sh.WitnessSet (MaryEra crypto)
     -> Json
 encodeWitnessSet x = encodeObject
-    [ ( "address"
+    [ ( "signatures"
       , encodeFoldable Shelley.encodeWitVKey (Sh.addrWits x)
       )
-    , ( "script"
-      , encodeMap Shelley.stringifyScriptHash Allegra.encodeTimelock (Sh.scriptWits x)
+    , ( "scripts"
+      , encodeMap Shelley.stringifyScriptHash Allegra.encodeScript (Sh.scriptWits x)
       )
     , ( "bootstrap"
       , encodeFoldable Shelley.encodeBootstrapWitness (Sh.bootWits x)

@@ -16,12 +16,21 @@ packages:
 - binary-0.8.7.0 # 0.8.8.0 on LTS 17.6
 - Cabal-3.2.1.0
 - canonical-json-0.6.0.0
+- composition-prelude-3.0.0.2
+- constraints-extras-0.3.1.0
 - containers-0.5.11.0 # 0.6.2.1 on LTS 17.6
+- dependent-map-0.4.0.0
+- dependent-sum-0.6.2.0
+- dependent-sum-template-0.1.0.3
 - dns-3.0.4 # 4.0.1 on LTS 17.6
 - gray-code-0.3.1
+- indexed-traversable-instances-0.1
+- lazy-search-0.1.2.1
+- lazysmallcheck-0.6
 - libsystemd-journal-1.4.4
 - markov-chain-usage-model-0.0.0
 - micro-recursion-schemes-5.0.2.2
+- monoidal-containers-0.6.0.1
 - moo-1.2
 - network-3.1.2.1 # 3.1.1.1 on LTS 17.6
 - nothunks-0.1.2
@@ -29,30 +38,36 @@ packages:
 - partial-order-0.2.0.0
 - quickcheck-state-machine-0.7.0
 - regex-posix-clib-2.7
+- size-based-0.1.2.0
 - statistics-linreg-0.3
+- Stream-0.4.7.2
 - streaming-binary-0.2.2.0
 - text-1.2.4.0 # 1.2.4.1 on LTS 17.6
 - transformers-except-0.1.1
 - Unique-0.4.7.6
 - Win32-2.6.2.0
+- witherable-0.4.1
+
 
 - git: https://github.com/input-output-hk/cardano-base
-  commit: 47db5b818ca4fa051f2e44cdf5e7c5c18c1fb0bf
+  commit: a715c7f420770b70bbe95ca51d3dec83866cb1bd
   subdirs:
   - binary
   - binary/test
   - cardano-crypto-class
-  - cardano-crypto-tests
   - cardano-crypto-praos
+  - cardano-crypto-tests
   - slotting
   - strict-containers
 
 - git: https://github.com/input-output-hk/cardano-crypto
-  commit: f73079303f663e028288f9f4a9e08bcca39a923e
+  commit: ce8f1934e4b6252084710975bd9bbc0a4648ece4
 
 - git: https://github.com/input-output-hk/cardano-ledger-specs
-  commit: e8f19bcc9c8f405131cb95ca6ada26b2b4eac638
+  commit: 41b02e51d3e0a4826264fc4ae595a9dd6a7d8849
   subdirs:
+  - alonzo/impl
+  - alonzo/test
   - byron/chain/executable-spec
   - byron/crypto
   - byron/crypto/test
@@ -69,13 +84,13 @@ packages:
   - shelley-ma/shelley-ma-test
 
 - git: https://github.com/input-output-hk/cardano-node
-  commit: 8fe46140a52810b6ca456be01d652ca08fe730bf
+  commit: b83e4025785be16cb5ee5231a6e9939d93564b40
   subdirs:
     - cardano-api
     - cardano-config
 
 - git: https://github.com/input-output-hk/cardano-prelude
-  commit: bb4ed71ba8e587f672d06edf9d2e376f4b055555
+  commit: fd773f7a58412131512b9f694ab95653ac430852
   subdirs:
   - cardano-prelude
   - cardano-prelude-test
@@ -105,7 +120,7 @@ packages:
   - tracer-transformers
 
 - git: https://github.com/input-output-hk/ouroboros-network
-  commit: 9b279c7548ee549e1ed755cd1acb69b6e69d0c7b
+  commit: 8bbded8a3a6e967ce67fbcaf50579d3719e52bef
   subdirs:
     - io-sim
     - io-sim-classes
@@ -125,8 +140,16 @@ packages:
     - typed-protocols
     - typed-protocols-examples
 
+- git: https://github.com/input-output-hk/plutus
+  commit: 530d3f7940319788a49c7ecb017f8366994990b0
+  subdirs:
+    - plutus-core
+    - plutus-ledger-api
+    - plutus-tx
+    - prettyprinter-configurable
+
 - git: https://github.com/KtorZ/wai-routes
   commit: d74b39683792649c01113f40bf57724dcf95c96a
 
 - git: https://github.com/input-output-hk/Win32-network
-  commit: 94153b676617f8f33abe8d8182c37377d2784bd1
+  commit: 82f4afb8c240b8446a1db6c6b50901a42028ce0f

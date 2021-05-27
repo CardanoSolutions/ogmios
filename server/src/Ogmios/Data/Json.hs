@@ -66,6 +66,7 @@ import qualified Codec.CBOR.Write as Cbor
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
 import qualified Ogmios.Data.Json.Allegra as Allegra
+import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Byron as Byron
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Query as Query
@@ -105,17 +106,22 @@ encodeBlock mode = \case
         ]
     BlockShelley blk -> encodeObject
         [ ( "shelley"
-          , Shelley.encodeShelleyBlock mode blk
+          , Shelley.encodeBlock mode blk
           )
         ]
     BlockAllegra blk -> encodeObject
         [ ( "allegra"
-          , Allegra.encodeAllegraBlock mode blk
+          , Allegra.encodeBlock mode blk
           )
         ]
     BlockMary blk -> encodeObject
         [ ( "mary"
-          , Mary.encodeMaryBlock mode blk
+          , Mary.encodeBlock mode blk
+          )
+        ]
+    BlockAlonzo blk -> encodeObject
+        [ ( "alonzo"
+          , Alonzo.encodeBlock mode blk
           )
         ]
 
@@ -132,6 +138,8 @@ encodeHardForkApplyTxErr = \case
         encodeList Allegra.encodeLedgerFailure xs
     ApplyTxErrMary (ApplyTxError xs) ->
         encodeList Mary.encodeLedgerFailure xs
+    ApplyTxErrAlonzo (ApplyTxError xs) ->
+        encodeList Alonzo.encodeLedgerFailure xs
     ApplyTxErrWrongEra e ->
         encodeEraMismatch e
 
