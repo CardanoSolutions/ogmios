@@ -1,4 +1,7 @@
-import { createChainSyncClient } from '@src/ChainSync'
+import {
+  ChainSyncMessageHandlers,
+  createChainSyncClient
+} from '@src/ChainSync'
 import delay from 'delay'
 import {
   Block,
@@ -6,15 +9,58 @@ import {
   BlockByron,
   BlockMary,
   BlockShelley,
-  Hash16, Point
+  Hash16,
+  Point
 } from '@cardano-ogmios/schema'
 
 const connection = { port: 1338 }
 
+const randomMsUpTo = (max: number) => (Math.random() * (max - 5 + 1)) << 0
+
 const stubHandlers = {
-  rollBackward: () => {},
-  rollForward: () => {}
-}
+  rollBackward: (_response, requestNext) => {
+    requestNext()
+  },
+  rollForward: (_response, requestNext) => {
+    requestNext()
+  }
+} as ChainSyncMessageHandlers
+
+const messageOrderTestHandlers = (resultLog: string[]): ChainSyncMessageHandlers => ({
+  rollBackward: async (_response, requestNext) => {
+    resultLog.push('rollBackward received')
+    // Simulate some work being done
+    await delay(randomMsUpTo(50))
+    resultLog.push('rollBackward processed')
+    requestNext()
+  },
+  rollForward: async (response, requestNext) => {
+    if ('byron' in response.block) {
+      const block = response.block as { byron: BlockByron }
+      const message = `Block ${block.byron.header.blockHeight}`
+      resultLog.push(`rollForward received: ${message}`)
+      // Simulate some work being done
+      await delay(randomMsUpTo(25))
+      resultLog.push(`rollForward processed: ${message}`)
+      requestNext()
+    }
+  }
+})
+
+const sequentialResponses = [
+  'rollBackward received',
+  'rollBackward processed',
+  'rollForward received: Block 0',
+  'rollForward processed: Block 0',
+  'rollForward received: Block 1',
+  'rollForward processed: Block 1',
+  'rollForward received: Block 2',
+  'rollForward processed: Block 2',
+  'rollForward received: Block 3',
+  'rollForward processed: Block 3',
+  'rollForward received: Block 4',
+  'rollForward processed: Block 4'
+]
 
 describe('ChainSync', () => {
   it('returns the interaction context', async () => {
@@ -40,25 +86,25 @@ describe('ChainSync', () => {
 
     it('intersects at the genesis if origin provided as point', async () => {
       const client = await createChainSyncClient(stubHandlers, { connection })
-      const intersection = await client.startSync(['origin'])
+      const intersection = await client.startSync(['origin'], 10)
       expect(intersection.point).toEqual('origin')
       expect(intersection.tip).toBeDefined()
       await client.shutdown()
     })
 
-    it('accepts message handlers for roll back and roll forward messages', async () => {
+    it('requires message handlers to process roll back and roll forward messages, invoking the requestNext callback once ready for next message', async () => {
       const rollbackPoints: Point[] = []
       const blocks: Block[] = []
       const client = await createChainSyncClient({
-        rollBackward: ({ point }) => {
+        rollBackward: async ({ point }, requestNext) => {
           rollbackPoints.push(point)
-          client.requestNext()
+          requestNext()
         },
-        rollForward: async ({ block }) => {
+        rollForward: async ({ block }, requestNext) => {
           if (blocks.length < 10) {
             blocks.push(block)
-            client.requestNext()
           }
+          requestNext()
         }
       }, {
         connection
@@ -87,18 +133,18 @@ describe('ChainSync', () => {
 
     it('implements pipelining to increase sync performance', async () => {
       type BlocksPerSecond = number
-      const run = async (requestBuffer?: number): Promise<BlocksPerSecond> => {
+      const run = async (inFlight?: number): Promise<BlocksPerSecond> => {
         const blocks: Block[] = []
         const start = Date.now()
         let stop: number
         const client = await createChainSyncClient({
-          rollBackward: () => {
-            client.requestNext()
+          rollBackward: async (_response, requestNext) => {
+            requestNext()
           },
-          rollForward: async ({ block }) => {
+          rollForward: async ({ block }, requestNext) => {
             if (blocks.length < 1000) {
               blocks.push(block)
-              client.requestNext()
+              requestNext()
             } else if (stop === undefined) {
               stop = Date.now() - start
             }
@@ -106,7 +152,7 @@ describe('ChainSync', () => {
         }, {
           connection
         })
-        await client.startSync(['origin'], requestBuffer)
+        await client.startSync(['origin'], inFlight)
         await delay(2000)
         await client.shutdown()
         expect(blocks.length).toBe(1000)
@@ -116,12 +162,35 @@ describe('ChainSync', () => {
       const nonPipelinedBlocksPerSecond = await run(1)
       expect(pipelinedBlocksPerSecond).toBeGreaterThan(nonPipelinedBlocksPerSecond)
     })
+
+    it('processes messages sequentially in order by default', async () => {
+      const resultLog: string[] = []
+      const client = await createChainSyncClient(messageOrderTestHandlers(resultLog), {
+        connection
+      })
+      await client.startSync(['origin'], 3)
+      await delay(500)
+      await client.shutdown()
+      expect(resultLog.slice(0, 12)).toStrictEqual(sequentialResponses)
+    })
+  })
+
+  it('can be configured to processes messages as fast as possible, when sequential processing is not required', async () => {
+    const resultLog: string[] = []
+    const client = await createChainSyncClient(messageOrderTestHandlers(resultLog), {
+      connection,
+      sequential: false
+    })
+    await client.startSync(['origin'], 3)
+    await delay(500)
+    await client.shutdown()
+    expect(resultLog.slice(0, 12)).not.toStrictEqual(sequentialResponses)
   })
 
   it('rejects method calls after shutdown', async () => {
     const client = await createChainSyncClient(stubHandlers, { connection })
     await client.shutdown()
-    const run = () => client.startSync(['origin'])
+    const run = () => client.startSync(['origin'], 3)
     await expect(run).rejects
   })
 })
