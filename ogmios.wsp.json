@@ -1006,6 +1006,28 @@
     , "description": "A number of asset, can be negative went burning assets."
     }
 
+  , "AuxiliaryData":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "hash", "body" ]
+    , "properties":
+      { "hash": { "$ref": "#/definitions/Hash16" }
+      , "body": { "$ref": "#/definitions/AuxiliaryDataBody" }
+      }
+    }
+
+  , "AuxiliaryDataBody":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "blob": { "$ref": "#/definitions/Metadata" }
+      , "scripts":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Script" }
+        }
+      }
+    }
+
   , "Block":
     { "oneOf":
       [ { "type": "object"
@@ -1244,10 +1266,7 @@
               , "scripts": {}
               , "bootstrap": []
               }
-            , "metadata":
-              { "hash": null
-              , "body": null
-              }
+            , "metadata": null
             }
           ]
         , "header":
@@ -1354,23 +1373,10 @@
                 }
               }
             , "metadata":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "hash", "body" ]
-              , "properties":
-                { "hash":
-                  { "oneOf":
-                    [ { "$ref": "#/definitions/Hash16" }
-                    , { "type": "null", "title": "null" }
-                    ]
-                  }
-                , "body":
-                  { "oneOf":
-                    [ { "$ref": "#/definitions/AuxiliaryData" }
-                    , { "type": "null", "title": "null" }
-                    ]
-                  }
-                }
+              { "oneOf":
+                [ { "$ref": "#/definitions/AuxiliaryData" }
+                , { "type": "null", "title": "null" }
+                ]
               }
             }
           }
@@ -1442,10 +1448,7 @@
               , "scripts": {}
               , "bootstrap": []
               }
-            , "metadata":
-              { "hash": null
-              , "body": null
-              }
+            , "metadata": null
             }
           ]
         , "header":
@@ -1552,23 +1555,10 @@
                 }
               }
             , "metadata":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "hash", "body" ]
-              , "properties":
-                { "hash":
-                  { "oneOf":
-                    [ { "$ref": "#/definitions/Hash16" }
-                    , { "type": "null", "title": "null" }
-                    ]
-                  }
-                , "body":
-                  { "oneOf":
-                    [ { "$ref": "#/definitions/AuxiliaryData" }
-                    , { "type": "null", "title": "null" }
-                    ]
-                  }
-                }
+              { "oneOf":
+                [ { "$ref": "#/definitions/AuxiliaryData" }
+                , { "type": "null", "title": "null" }
+                ]
               }
             }
           }
@@ -1749,23 +1739,10 @@
                 }
               }
             , "metadata":
-              { "type": "object"
-              , "additionalProperties": false
-              , "required": [ "hash", "body" ]
-              , "properties":
-                { "hash":
-                  { "oneOf":
-                    [ { "$ref": "#/definitions/Hash16" }
-                    , { "type": "null", "title": "null" }
-                    ]
-                  }
-                , "body":
-                  { "oneOf":
-                    [ { "$ref": "#/definitions/AuxiliaryData" }
-                    , { "type": "null", "title": "null" }
-                    ]
-                  }
-                }
+              { "oneOf":
+                [ { "$ref": "#/definitions/AuxiliaryData" }
+                , { "type": "null", "title": "null" }
+                ]
               }
             }
           }
@@ -2255,21 +2232,48 @@
       ]
     }
 
-  , "AuxiliaryData":
-    { "type": "object"
-    , "additionalProperties": false
-    , "properties":
-      { "blob": { "$ref": "#/definitions/Metadata" }
-      , "scripts":
-        { "type": "array"
-        , "items": { "$ref": "#/definitions/Script" }
-        }
-      }
-    }
-
   , "Metadata":
     { "type": "object"
     , "propertyNames": { "pattern": "^-?[0-9]+$" }
+    , "examples":
+      [ { "42":
+          { "int": 14
+          }
+        }
+      , { "42":
+          { "string": "Some Text"
+          }
+        }
+      , { "42":
+          { "list":
+            [ { "int": 1 }
+            , { "int": 2 }
+            , { "int": 3 }
+            ]
+          }
+        , "1337":
+          { "list":
+            [ { "string": "MyString" }
+            , { "map":
+                [ { "k": { "string": "signature" }
+                  , "v": { "bytes": "b359cedd0ccb" }
+                  }
+                , { "k":
+                    { "list":
+                      [ { "string": "keys can also" }
+                      , { "string": "be compound objects" }
+                      ]
+                    }
+                  , "v":
+                    { "int": -42
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
     , "additionalProperties": { "$ref": "#/definitions/Metadatum" }
     }
 
