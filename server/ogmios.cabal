@@ -4,7 +4,7 @@ cabal-version: 2.0
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3bb7c87b75c0d0934e3dc62e7df2aa7ad57356645b936c9b47e3e6031ce544dc
+-- hash: c743cd494275c4f71acae05bb27199ed9b16dedb9679a62a25fb0fcf21162343
 
 name:           ogmios
 version:        3.2.0
@@ -280,6 +280,7 @@ test-suite unit
     , aeson
     , base >=4.7 && <5
     , cardano-client
+    , cardano-ledger-alonzo
     , cardano-ledger-core
     , cardano-slotting
     , generic-arbitrary

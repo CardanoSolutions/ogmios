@@ -13,6 +13,8 @@ module Ogmios.Data.JsonSpec
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.Era
+    ( Crypto, Era, SupportsSegWit (..) )
 import Cardano.Network.Protocol.NodeToClient
     ( Block )
 import Cardano.Slotting.Slot
@@ -89,7 +91,15 @@ import Ogmios.Data.Protocol.TxSubmission
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras, GenTx, HardForkApplyTxErr (..), HardForkBlock (..) )
+    ( AllegraEra
+    , AlonzoEra
+    , CardanoEras
+    , GenTx
+    , HardForkApplyTxErr (..)
+    , HardForkBlock (..)
+    , MaryEra
+    , ShelleyEra
+    )
 import Ouroboros.Consensus.HardFork.Combinator
     ( LedgerEraInfo (..), Mismatch (..), MismatchEraInfo (..), singleEraInfo )
 import Ouroboros.Consensus.HardFork.Combinator.Mempool
@@ -99,7 +109,7 @@ import Ouroboros.Consensus.HardFork.History.Summary
 import Ouroboros.Consensus.Shelley.Eras
     ( StandardAllegra, StandardMary, StandardShelley )
 import Ouroboros.Consensus.Shelley.Ledger.Block
-    ( ShelleyBlock )
+    ( ShelleyBlock (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CompactGenesis, compactGenesis )
 import Ouroboros.Consensus.Shelley.Ledger.Query
@@ -116,6 +126,8 @@ import Shelley.Spec.Ledger.Delegation.Certificates
     ( PoolDistr )
 import Shelley.Spec.Ledger.PParams
     ( ProposedPPUpdates )
+import Shelley.Spec.Ledger.Serialization
+    ( ToCBORGroup )
 import Shelley.Spec.Ledger.UTxO
     ( UTxO )
 import Test.Hspec
@@ -146,6 +158,8 @@ import Test.QuickCheck.Arbitrary.Generic
     ( genericArbitrary )
 import Test.QuickCheck.Hedgehog
     ( hedgehog )
+import Test.Shelley.Spec.Ledger.ConcreteCryptoTypes
+    ( Mock )
 import Test.Shelley.Spec.Ledger.Serialisation.Generators.Genesis
     ( genPParams )
 import Type.Reflection
@@ -159,6 +173,7 @@ import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
 import qualified Ouroboros.Network.Point as Point
+import qualified Shelley.Spec.Ledger.BlockChain as Spec
 import qualified Test.QuickCheck as QC
 
 queryRef :: SchemaRef
@@ -368,6 +383,7 @@ instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto
         , (10, SubmitFail . ApplyTxErrShelley <$> reasonablySized arbitrary)
         , (10, SubmitFail . ApplyTxErrAllegra <$> reasonablySized arbitrary)
         , (10, SubmitFail . ApplyTxErrMary <$> reasonablySized arbitrary)
+        -- FIXME: (10, SubmitFail . ApplyTxErrAlonzo <$> reasonablySized arbitrary)
         ]
 
 instance Arbitrary (Acquire Block) where
@@ -407,10 +423,23 @@ instance Arbitrary (Tip Block) where
 instance Arbitrary Block where
     arbitrary = reasonablySized $ oneof
         [ BlockByron <$> arbitrary
-        , BlockShelley <$> arbitrary
-        , BlockAllegra <$> arbitrary
-        , BlockMary <$> arbitrary
+        , BlockShelley <$> genBlock @(ShelleyEra StandardCrypto)
+        , BlockAllegra <$> genBlock @(AllegraEra StandardCrypto)
+        , BlockMary <$> genBlock @(MaryEra StandardCrypto)
+        , BlockAlonzo <$> genBlock @(AlonzoEra StandardCrypto)
         ]
+      where
+        genBlock
+            :: forall era.
+                ( Era era
+                , ToCBORGroup (TxSeq era)
+                , Mock (Crypto era)
+                , Arbitrary (TxInBlock era)
+                )
+            => Gen (ShelleyBlock era)
+        genBlock = ShelleyBlock
+            <$> (Spec.Block <$> arbitrary <*> (toTxSeq @era <$> arbitrary))
+            <*> arbitrary
 
 genEpochNo :: Gen EpochNo
 genEpochNo = EpochNo <$> arbitrary
