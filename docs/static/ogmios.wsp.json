@@ -1062,6 +1062,14 @@
           { "mary": { "$ref": "#/definitions/Block[Mary]" }
           }
         }
+      , { "type": "object"
+        , "required": [ "alonzo" ]
+        , "title": "alonzo"
+        , "additionalProperties": false
+        , "properties":
+          { "alonzo": { "$ref": "#/definitions/Block[Alonzo]" }
+          }
+        }
       ]
     }
 
@@ -1752,6 +1760,124 @@
       }
     }
 
+  , "Block[Alonzo]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "examples": []
+    , "properties":
+      { "body":
+        { "type": "array"
+        , "items":
+          { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "id", "body", "witness", "metadata" ]
+          , "$omitted-if-compact": ["witness"]
+          , "properties":
+            { "id": { "$ref": "#/definitions/Hash16" }
+            , "body":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": ["inputs","outputs","certificates","withdrawals","fee","validityInterval","mint","update"]
+              , "properties":
+                { "inputs":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/TxIn" }
+                  }
+                , "collaterals":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/TxIn" }
+                  }
+                , "outputs":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/TxOut[Alonzo]" }
+                  }
+                , "certificates":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/Certificate" }
+                  }
+                , "withdrawals":
+                  { "$ref": "#/definitions/Withdrawals"
+                  }
+                , "fee":
+                  { "$ref": "#/definitions/Lovelace"
+                  }
+                , "validityInterval":
+                  { "$ref": "#/definitions/ValidityInterval"
+                  }
+                , "update":
+                  { "$ref": "#/definitions/Update[Alonzo]"
+                  }
+                , "mint":
+                  { "$ref": "#/definitions/Value"
+                  }
+                , "network":
+                  { "$ref": "#/definitions/Network"
+                  }
+                , "requiredExtraData":
+                  { "oneOf":
+                    [ { "$ref": "#/definitions/Hash16" }
+                    , { "title": null, "type": "null" }
+                    ]
+                  }
+                , "requiredExtraSignatures":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/Hash16" }
+                  }
+                }
+              }
+            , "witness":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": ["signatures","scripts","bootstrap"]
+              , "properties":
+                { "signatures":
+                  { "type": "array"
+                  , "items": { "$ref": "#/definitions/Signature" }
+                  }
+                , "scripts":
+                  { "type": "object"
+                  , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+                  , "additionalProperties": { "$ref": "#/definitions/Script" }
+                  }
+                , "bootstrap":
+                  { "type": "array"
+                  , "items":
+                    { "type": "object"
+                    , "additionalProperties": false
+                    , "properties":
+                      { "signature": { "$ref": "#/definitions/Hash64" }
+                      , "chainCode":
+                        { "oneOf":
+                          [ { "$ref": "#/definitions/Hash16" }
+                          , { "type": "null", "title": "null" }
+                          ]
+                        }
+                      , "addressAttributes":
+                        { "oneOf":
+                          [ { "$ref": "#/definitions/Hash64" }
+                          , { "type": "null", "title": "null" }
+                          ]
+                        }
+                      , "key": { "$ref": "#/definitions/Hash16" }
+                      }
+                    }
+                  }
+                }
+              }
+            , "metadata":
+              { "oneOf":
+                [ { "$ref": "#/definitions/AuxiliaryData" }
+                , { "type": "null", "title": "null" }
+                ]
+              }
+            }
+          }
+        }
+      , "headerHash": { "$ref": "#/definitions/Block[Shelley]/properties/headerHash" }
+      , "header": { "$ref": "#/definitions/Block[Shelley]/properties/header" }
+      }
+    }
+
   , "BlockNo":
     { "type": "integer"
     , "description": "A block number, the i-th block to be minted is number i."
@@ -2063,6 +2189,30 @@
       ]
     }
 
+  , "CostModels":
+    { "type": "object"
+    , "additionalProperties": { "$ref": "#/definition/CostModel" }
+    , "propertyNames": { "enum": [ "plutus:v1" ] }
+    , "examples":
+      [ { "plutus:v1":
+          { "k": 14
+          , "a": 123
+          }
+        }
+      ]
+    }
+
+  , "CostModel":
+    { "type": "object"
+    , "additionalProperties": { "type": "integer" }
+    }
+
+  , "DatumHash":
+    { "type": "string"
+    , "contentEncoding": "base16"
+    , "pattern": "^[0-9a-f]$"
+    }
+
   , "DelegationsAndRewards":
     { "type": "object"
     , "additionalProperties": false
@@ -2118,6 +2268,16 @@
           , "ledgerEra": { "$ref": "#/definitions/Era" }
           }
         }
+      }
+    }
+
+  , "ExUnits":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "memory", "steps" ]
+    , "properties":
+      { "memory": { "type": "integer" }
+      , "steps": { "type": "integer" }
       }
     }
 
@@ -2505,6 +2665,16 @@
       ]
     }
 
+  , "Prices":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "memory", "steps" ]
+    , "properties":
+      { "memory": { "$ref": "#/definitions/Lovelace" }
+      , "steps": { "$ref": "#/definitions/Lovelace" }
+      }
+    }
+
   , "ProtocolMagicId":
     { "type": "integer"
     , "examples":
@@ -2569,6 +2739,67 @@
       , "protocolVersion":
         { "oneOf":
           [ { "$ref": "#/definitions/ProtocolVersion" }
+          , { "type": "null", "title": "null" }
+          ]
+        }
+      }
+    }
+
+  , "ProtocolParameters[Alonzo]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "minFeeCoefficient": { "$ref": "#/definitions/NullableInteger" }
+      , "minFeeConstant": { "$ref": "#/definitions/NullableInteger" }
+      , "maxBlockBodySize": { "$ref": "#/definitions/NullableInteger" }
+      , "maxBlockHeaderSize": { "$ref": "#/definitions/NullableInteger" }
+      , "maxTxSize": { "$ref": "#/definitions/NullableInteger" }
+      , "stakeKeyDeposit": { "$ref": "#/definitions/NullableInteger" }
+      , "poolDeposit": { "$ref": "#/definitions/NullableInteger" }
+      , "poolRetirementEpochBound": { "$ref": "#/definitions/NullableInteger" }
+      , "desiredNumberOfPools": { "$ref": "#/definitions/NullableInteger" }
+      , "poolInfluence": { "$ref": "#/definitions/NullableRatio" }
+      , "monetaryExpansion": { "$ref": "#/definitions/NullableRatio" }
+      , "treasuryExpansion": { "$ref": "#/definitions/NullableRatio" }
+      , "decentralizationParameter": { "$ref": "#/definitions/NullableRatio" }
+      , "minPoolCost": { "$ref": "#/definitions/NullableInteger" }
+      , "lovelacePerUtxoWord": { "$ref": "#/definitions/NullableInteger" }
+      , "maxValueSize": { "$ref": "#/definitions/NullableInteger" }
+      , "collateralPercentage": { "$ref": "#/definitions/NullableInteger" }
+      , "maxCollateralInputs": { "$ref": "#/definitions/NullableInteger" }
+      , "extraEntropy":
+        { "oneOf":
+          [ { "$ref": "#/definitions/Nonce" }
+          , { "type": "null", "title": "null" }
+          ]
+        }
+      , "protocolVersion":
+        { "oneOf":
+          [ { "$ref": "#/definitions/ProtocolVersion" }
+          , { "type": "null", "title": "null" }
+          ]
+        }
+      , "costModels":
+        { "oneOf":
+          [ { "$ref": "#/definitions/CostModels" }
+          , { "type": "null", "title": "null" }
+          ]
+        }
+      , "prices":
+        { "oneOf":
+          [ { "$ref": "#/definitions/Prices" }
+          , { "type": "null", "title": "null" }
+          ]
+        }
+      , "maxExecutionUnitsPerTransaction":
+        { "oneOf":
+          [ { "$ref": "#/definitions/ExUnits" }
+          , { "type": "null", "title": "null" }
+          ]
+        }
+      , "maxExecutionUnitsPerBlock":
+        { "oneOf":
+          [ { "$ref": "#/definitions/ExUnits" }
           , { "type": "null", "title": "null" }
           ]
         }
@@ -3148,6 +3379,7 @@
           { "oneOf":
               [ { "$ref": "#/definitions/TxOut" }
               , { "$ref": "#/definitions/TxOut[Mary]" }
+              , { "$ref": "#/definitions/TxOut[Alonzo]" }
               ]
           }
         }
@@ -3167,6 +3399,7 @@
           { "oneOf":
               [ { "$ref": "#/definitions/TxOut" }
               , { "$ref": "#/definitions/TxOut[Mary]" }
+              , { "$ref": "#/definitions/TxOut[Alonzo]" }
               ]
           }
         }
@@ -3534,6 +3767,17 @@
       }
     }
 
+  , "TxOut[Alonzo]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "address", "value" ]
+    , "properties":
+      { "address": { "$ref": "#/definitions/Address" }
+      , "value": { "$ref": "#/definitions/Value" }
+      , "datum": { "$ref": "#/definitions/DatumHash" }
+      }
+    }
+
   , "TxValidationError":
     { "oneOf":
       [ { "type": "string"
@@ -3703,6 +3947,23 @@
           , "proposal":
             { "type": "object"
             , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
+            }
+          }
+        }
+      ]
+    }
+
+  , "Update[Alonzo]":
+    { "oneOf":
+      [ { "type": "null", "title": "null" }
+      , { "type": "object"
+        , "title": "proposal"
+        , "required": ["proposal", "epoch"]
+        , "properties":
+          { "epoch": { "$ref": "#/definitions/Epoch" }
+          , "proposal":
+            { "type": "object"
+            , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Alonzo]" }
             }
           }
         }

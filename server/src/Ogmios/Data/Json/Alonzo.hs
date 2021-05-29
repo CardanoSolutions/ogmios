@@ -374,7 +374,7 @@ encodeTxBody x = encodeObject
     [ ( "inputs"
       , encodeFoldable Shelley.encodeTxIn (Al.inputs x)
       )
-    , ( "collateral"
+    , ( "collaterals"
       , encodeFoldable Shelley.encodeTxIn (Al.collateral x)
       )
     , ( "outputs"
