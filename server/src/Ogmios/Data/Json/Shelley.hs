@@ -1213,7 +1213,7 @@ encodeWitnessSet
     -> Json
 encodeWitnessSet x = encodeObject
     [ ( "signatures"
-      , encodeFoldable encodeWitVKey (Sh.addrWits x)
+      , encodeWitVKeys (Sh.addrWits x)
       )
     , ( "scripts"
       , encodeMap stringifyScriptHash encodeScript (Sh.scriptWits x)
@@ -1229,12 +1229,13 @@ encodeWitHashes
 encodeWitHashes =
     encodeFoldable encodeKeyHash . Sh.unWitHashes
 
-encodeWitVKey
+encodeWitVKeys
     :: Crypto crypto
-    => Sh.WitVKey Sh.Witness crypto
+    => Set (Sh.WitVKey 'Sh.Witness crypto)
     -> Json
-encodeWitVKey (Sh.WitVKey key sig) =
-    encodeObject [(stringifyVKey  key, encodeSignedDSIGN sig)]
+encodeWitVKeys = encodeFoldable'
+    (\(Sh.WitVKey key _) -> stringifyVKey key)
+    (\(Sh.WitVKey _ sig) -> encodeSignedDSIGN sig)
 
 --
 -- Conversion To Text

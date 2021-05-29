@@ -618,7 +618,7 @@ encodeWitnessSet
     -> Json
 encodeWitnessSet x = encodeObject
     [ ( "signatures"
-      , encodeFoldable Shelley.encodeWitVKey (Al.txwitsVKey x)
+      , Shelley.encodeWitVKeys (Al.txwitsVKey x)
       )
     , ( "scripts"
       , encodeMap Shelley.stringifyScriptHash encodeScript (Al.txscripts x)

@@ -37,9 +37,6 @@ pre: "<b>5. </b>"
 - The `moveInstantaneousRewards` certificates have a new optional field `value` and not only a `rewards` map as before. 
   When `value` is present, it signifies that rewards are moved to the other pot. 
 
-- The 'networkMismatch` error can now also be related to a mismatch from the network and the reward account coming from a 
-  pool registration certificate. 
-
 #### Removed
 
 ø

@@ -1271,10 +1271,9 @@
               }
             , "witness":
               { "signatures":
-                [ { "386020d73807f285ba3259efacd9fbea1939ebd97dc2ddc3b178d427e5a047f6": "5bckfySir7f4G+SV83UPw0+42qqFcEU+sdmK+uejnx6gn6OFMckasHBY8xPWabJ9w5xMmD8sRJ5VC7bNsUU0Ag=="
-                  , "de735ba8771f521b50bc3130c4a7d6f0784df718d3ed3ca32befd9a4650c2e8a": "KHlV88SX+sODj4EqHW7U1wxLL2nVuq/wg43rdaarckroEZc3k1h7YcH0CyAoBvy5+xv6aZ6clDvceeUliD6RCw=="
-                  }
-                ]
+                { "386020d73807f285ba3259efacd9fbea1939ebd97dc2ddc3b178d427e5a047f6": "5bckfySir7f4G+SV83UPw0+42qqFcEU+sdmK+uejnx6gn6OFMckasHBY8xPWabJ9w5xMmD8sRJ5VC7bNsUU0Ag=="
+                , "de735ba8771f521b50bc3130c4a7d6f0784df718d3ed3ca32befd9a4650c2e8a": "KHlV88SX+sODj4EqHW7U1wxLL2nVuq/wg43rdaarckroEZc3k1h7YcH0CyAoBvy5+xv6aZ6clDvceeUliD6RCw=="
+                }
               , "scripts": {}
               , "bootstrap": []
               }
@@ -1351,8 +1350,9 @@
               , "required": ["signatures","scripts","bootstrap"]
               , "properties":
                 { "signatures":
-                  { "type": "array"
-                  , "items": { "$ref": "#/definitions/Signature" }
+                  { "type": "object"
+                  , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+                  , "additionalProperties": { "$ref": "#/definitions/Signature" }
                   }
                 , "scripts":
                   { "type": "object"
@@ -1434,10 +1434,9 @@
               }
             , "witness":
               { "signatures":
-                [ { "386020d73807f285ba3259efacd9fbea1939ebd97dc2ddc3b178d427e5a047f6": "5bckfySir7f4G+SV83UPw0+42qqFcEU+sdmK+uejnx6gn6OFMckasHBY8xPWabJ9w5xMmD8sRJ5VC7bNsUU0Ag=="
-                  , "de735ba8771f521b50bc3130c4a7d6f0784df718d3ed3ca32befd9a4650c2e8a": "KHlV88SX+sODj4EqHW7U1wxLL2nVuq/wg43rdaarckroEZc3k1h7YcH0CyAoBvy5+xv6aZ6clDvceeUliD6RCw=="
-                  }
-                ]
+                { "386020d73807f285ba3259efacd9fbea1939ebd97dc2ddc3b178d427e5a047f6": "5bckfySir7f4G+SV83UPw0+42qqFcEU+sdmK+uejnx6gn6OFMckasHBY8xPWabJ9w5xMmD8sRJ5VC7bNsUU0Ag=="
+                , "de735ba8771f521b50bc3130c4a7d6f0784df718d3ed3ca32befd9a4650c2e8a": "KHlV88SX+sODj4EqHW7U1wxLL2nVuq/wg43rdaarckroEZc3k1h7YcH0CyAoBvy5+xv6aZ6clDvceeUliD6RCw=="
+                }
               , "scripts": {}
               , "bootstrap": []
               }
@@ -1514,8 +1513,9 @@
               , "required": ["signatures","scripts","bootstrap"]
               , "properties":
                 { "signatures":
-                  { "type": "array"
-                  , "items": { "$ref": "#/definitions/Signature" }
+                  { "type": "object"
+                  , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+                  , "additionalProperties": { "$ref": "#/definitions/Signature" }
                   }
                 , "scripts":
                   { "type": "object"
@@ -1585,10 +1585,9 @@
               }
             , "witness":
               { "signatures":
-                [ { "a900560b6c0964492849eb5311acac881edeb8d2282122b895fd418243c92f4e": "3TLin5vgz4dQDomhMjW9q4VIQD/X6Q9ECWkA8kVOz/c8R2c4mO1P1+LD/9n2ouHOANNC5ZgzwV2ojAVpZw4IBA=="
-                  , "5c19b9b0dd58b782dcac33cdc925f74c1385d8aae5912f7e1040a2d24a47e4eb": "qjqis5n/XGVp5PCIe0h8h/+ZO6rdIClBfzb7SEaaG4kAuY+zMAnfA57oxcLI6MA81rJ/nVct7FDtLKEHjimlDg=="
-                  }
-                ]
+                { "a900560b6c0964492849eb5311acac881edeb8d2282122b895fd418243c92f4e": "3TLin5vgz4dQDomhMjW9q4VIQD/X6Q9ECWkA8kVOz/c8R2c4mO1P1+LD/9n2ouHOANNC5ZgzwV2ojAVpZw4IBA=="
+                , "5c19b9b0dd58b782dcac33cdc925f74c1385d8aae5912f7e1040a2d24a47e4eb": "qjqis5n/XGVp5PCIe0h8h/+ZO6rdIClBfzb7SEaaG4kAuY+zMAnfA57oxcLI6MA81rJ/nVct7FDtLKEHjimlDg=="
+                }
               , "scripts": {}
               , "bootstrap": []
               }
@@ -1679,8 +1678,9 @@
               , "required": ["signatures","scripts","bootstrap"]
               , "properties":
                 { "signatures":
-                  { "type": "array"
-                  , "items": { "$ref": "#/definitions/Signature" }
+                  { "type": "object"
+                  , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+                  , "additionalProperties": { "$ref": "#/definitions/Signature" }
                   }
                 , "scripts":
                   { "type": "object"
@@ -1785,8 +1785,9 @@
               , "required": ["signatures","scripts","bootstrap", "datums", "redeemers"]
               , "properties":
                 { "signatures":
-                  { "type": "array"
-                  , "items": { "$ref": "#/definitions/Signature" }
+                  { "type": "object"
+                  , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+                  , "additionalProperties": { "$ref": "#/definitions/Signature" }
                   }
                 , "scripts":
                   { "type": "object"
@@ -2169,7 +2170,7 @@
 
   , "CostModels":
     { "type": "object"
-    , "additionalProperties": { "$ref": "#/definition/CostModel" }
+    , "additionalProperties": { "$ref": "#/definitions/CostModel" }
     , "propertyNames": { "enum": [ "plutus:v1" ] }
     , "examples":
       [ { "plutus:v1":
@@ -3019,9 +3020,9 @@
     }
 
   , "Signature":
-    { "type": "object"
-    , "additionalProperties": { "$ref": "#/definitions/Hash64" }
-    , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+    { "type": "string"
+    , "contentEncoding": "base64"
+    , "pattern": "^[A-Za-z0-9+/]*=?=?$"
     }
 
   , "Slot":

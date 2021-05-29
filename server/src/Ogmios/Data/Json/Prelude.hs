@@ -66,6 +66,7 @@ module Ogmios.Data.Json.Prelude
     , encodeAnnotated
     , encodeIdentity
     , encodeFoldable
+    , encodeFoldable'
     , encodeList
     , encodeMap
     , encodeMaybe
@@ -376,6 +377,16 @@ encodeFoldable encodeElem =
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> Set a -> Json #-}
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> StrictSeq a -> Json #-}
 {-# INLINABLE encodeFoldable #-}
+
+encodeFoldable' :: Foldable f => (a -> Text) -> (a -> Json) -> f a -> Json
+encodeFoldable' encodeKey encodeValue =
+    Json.pairs . foldr (\a -> (<>) (Json.pair (encodeKey a) (encodeValue a))) mempty
+{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> [a] -> Json #-}
+{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> NonEmpty a -> Json #-}
+{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> Vector a -> Json #-}
+{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> Set a -> Json #-}
+{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> StrictSeq a -> Json #-}
+{-# INLINABLE encodeFoldable' #-}
 
 encodeList :: (a -> Json) -> [a] -> Json
 encodeList =

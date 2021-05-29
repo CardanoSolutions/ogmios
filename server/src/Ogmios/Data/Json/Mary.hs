@@ -299,7 +299,7 @@ encodeWitnessSet
     -> Json
 encodeWitnessSet x = encodeObject
     [ ( "signatures"
-      , encodeFoldable Shelley.encodeWitVKey (Sh.addrWits x)
+      , Shelley.encodeWitVKeys (Sh.addrWits x)
       )
     , ( "scripts"
       , encodeMap Shelley.stringifyScriptHash Allegra.encodeScript (Sh.scriptWits x)
