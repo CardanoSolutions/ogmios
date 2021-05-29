@@ -894,7 +894,7 @@ encodeTx mode x = encodeObjectWithMode mode
       )
     , ( "metadata"
       , (,) <$> fmap (("hash",) . encodeAuxiliaryDataHash) (Sh._mdHash (Sh.body x))
-            <*> fmap (("body",) . encodeMetadata ) (Sh.auxiliaryData x)
+            <*> fmap (("body",) . encodeMetadata) (Sh.auxiliaryData x)
         & encodeStrictMaybe (\(a, b) -> encodeObject [a,b])
       )
     ]

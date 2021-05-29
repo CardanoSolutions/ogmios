@@ -1025,6 +1025,10 @@
         { "type": "array"
         , "items": { "$ref": "#/definitions/Script" }
         }
+      , "datums":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Datum" }
+        }
       }
     }
 
@@ -1357,26 +1361,7 @@
                   }
                 , "bootstrap":
                   { "type": "array"
-                  , "items":
-                    { "type": "object"
-                    , "additionalProperties": false
-                    , "properties":
-                      { "signature": { "$ref": "#/definitions/Hash64" }
-                      , "chainCode":
-                        { "oneOf":
-                          [ { "$ref": "#/definitions/Hash16" }
-                          , { "type": "null", "title": "null" }
-                          ]
-                        }
-                      , "addressAttributes":
-                        { "oneOf":
-                          [ { "$ref": "#/definitions/Hash64" }
-                          , { "type": "null", "title": "null" }
-                          ]
-                        }
-                      , "key": { "$ref": "#/definitions/Hash16" }
-                      }
-                    }
+                  , "items": { "$ref": "#/definitions/BootstrapWitness" }
                   }
                 }
               }
@@ -1539,26 +1524,7 @@
                   }
                 , "bootstrap":
                   { "type": "array"
-                  , "items":
-                    { "type": "object"
-                    , "additionalProperties": false
-                    , "properties":
-                      { "signature": { "$ref": "#/definitions/Hash64" }
-                      , "chainCode":
-                        { "oneOf":
-                          [ { "$ref": "#/definitions/Hash16" }
-                          , { "type": "null", "title": "null" }
-                          ]
-                        }
-                      , "addressAttributes":
-                        { "oneOf":
-                          [ { "$ref": "#/definitions/Hash64" }
-                          , { "type": "null", "title": "null" }
-                          ]
-                        }
-                      , "key": { "$ref": "#/definitions/Hash16" }
-                      }
-                    }
+                  , "items": { "$ref": "#/definitions/BootstrapWitness" }
                   }
                 }
               }
@@ -1723,26 +1689,7 @@
                   }
                 , "bootstrap":
                   { "type": "array"
-                  , "items":
-                    { "type": "object"
-                    , "additionalProperties": false
-                    , "properties":
-                      { "signature": { "$ref": "#/definitions/Hash64" }
-                      , "chainCode":
-                        { "oneOf":
-                          [ { "$ref": "#/definitions/Hash16" }
-                          , { "type": "null", "title": "null" }
-                          ]
-                        }
-                      , "addressAttributes":
-                        { "oneOf":
-                          [ { "$ref": "#/definitions/Hash64" }
-                          , { "type": "null", "title": "null" }
-                          ]
-                        }
-                      , "key": { "$ref": "#/definitions/Hash16" }
-                      }
-                    }
+                  , "items": { "$ref": "#/definitions/BootstrapWitness" }
                   }
                 }
               }
@@ -1777,7 +1724,11 @@
             , "body":
               { "type": "object"
               , "additionalProperties": false
-              , "required": ["inputs","outputs","certificates","withdrawals","fee","validityInterval","mint","update"]
+              , "required":
+                [ "inputs", "collaterals", "outputs", "certificates"
+                , "withdrawals", "fee", "validityInterval", "update", "mint"
+                , "network", "requiredExtraData", "requiredExtraSignatures"
+                ]
               , "properties":
                 { "inputs":
                   { "type": "array"
@@ -1811,12 +1762,15 @@
                   { "$ref": "#/definitions/Value"
                   }
                 , "network":
-                  { "$ref": "#/definitions/Network"
+                  { "oneOf":
+                    [ { "$ref": "#/definitions/Network" }
+                    , { "title": "null", "type": "null" }
+                    ]
                   }
                 , "requiredExtraData":
                   { "oneOf":
                     [ { "$ref": "#/definitions/Hash16" }
-                    , { "title": null, "type": "null" }
+                    , { "title": "null", "type": "null" }
                     ]
                   }
                 , "requiredExtraSignatures":
@@ -1828,7 +1782,7 @@
             , "witness":
               { "type": "object"
               , "additionalProperties": false
-              , "required": ["signatures","scripts","bootstrap"]
+              , "required": ["signatures","scripts","bootstrap", "datums", "redeemers"]
               , "properties":
                 { "signatures":
                   { "type": "array"
@@ -1841,26 +1795,17 @@
                   }
                 , "bootstrap":
                   { "type": "array"
-                  , "items":
-                    { "type": "object"
-                    , "additionalProperties": false
-                    , "properties":
-                      { "signature": { "$ref": "#/definitions/Hash64" }
-                      , "chainCode":
-                        { "oneOf":
-                          [ { "$ref": "#/definitions/Hash16" }
-                          , { "type": "null", "title": "null" }
-                          ]
-                        }
-                      , "addressAttributes":
-                        { "oneOf":
-                          [ { "$ref": "#/definitions/Hash64" }
-                          , { "type": "null", "title": "null" }
-                          ]
-                        }
-                      , "key": { "$ref": "#/definitions/Hash16" }
-                      }
-                    }
+                  , "items": { "$ref": "#/definitions/BootstrapWitness" }
+                  }
+                , "datums":
+                  { "type": "object"
+                  , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+                  , "additionalProperties": { "$ref": "#/definitions/Hash64" }
+                  }
+                , "redeemers":
+                  { "type": "object"
+                  , "propertyNames": { "$ref": "#/definitions/RedeemerPointer" }
+                  , "additionalProperties": { "$ref": "#/definitions/Redeemer" }
                   }
                 }
               }
@@ -1921,6 +1866,39 @@
     { "type": "integer"
     , "description": "The size of the block in bytes."
     , "minimum": 0
+    }
+
+  , "BootstrapWitness":
+    { "type": "object"
+    , "examples":
+      [ { "signature": "ZGdic3hnZ3RvZ2hkanB0ZXR2dGtjb2N2eWZpZHFxZ2d1cmpocmhxYWlpc3BxcnVlbGh2eXBxeGVld3ByeWZ2dw=="
+        , "key": "deeb8f82f2af5836ebbc1b450b6dbf0b03c93afe5696f10d49e8a8304ebfac01"
+        , "addressAttributes": "cA=="
+        , "chainCode": "b6dbf0b03c93afe5696f10d49e8a8304ebfac01deeb8f82f2af5836ebbc1b450"
+        }
+      , { "signature": "KYCDveFX76KYEg6Axad/RG5+b5QbJdtYQSNA6kPjqsHh5cIwYPQyqquLJcwo9uDDfqUNmu7n2NUG+o7t2a1Hjg=="
+        , "key": "0c02af01eaacc939b3d0d817f4eb57d323ea5686cb1fecb8de821df1296b84a7"
+        , "chainCode": null
+        , "addressAttributes": null
+        }
+      ]
+    , "additionalProperties": false
+    , "properties":
+      { "signature": { "$ref": "#/definitions/Hash64" }
+      , "chainCode":
+        { "oneOf":
+          [ { "$ref": "#/definitions/Hash16" }
+          , { "type": "null", "title": "null" }
+          ]
+        }
+      , "addressAttributes":
+        { "oneOf":
+          [ { "$ref": "#/definitions/Hash64" }
+          , { "type": "null", "title": "null" }
+          ]
+        }
+      , "key": { "$ref": "#/definitions/Hash16" }
+      }
     }
 
   , "Bound":
@@ -2207,10 +2185,16 @@
     , "additionalProperties": { "type": "integer" }
     }
 
+  , "Datum":
+    { "type": "string"
+    , "contentEncoding": "base64"
+    , "pattern": "^[A-Za-z0-9+/]*=?=?$"
+    }
+
   , "DatumHash":
     { "type": "string"
     , "contentEncoding": "base16"
-    , "pattern": "^[0-9a-f]$"
+    , "pattern": "^[0-9a-f]+$"
     }
 
   , "DelegationsAndRewards":
@@ -2831,6 +2815,29 @@
       [ "2/3"
       , "7/8"
       ]
+    }
+
+  , "Redeemer":
+    { "type": "object"
+    , "examples":
+      [ { "executionUnits":
+          { "memory": 2
+          , "steps": 2
+          }
+        , "redeemer": "ggRCqSQ="
+        }
+      ]
+    , "additionalProperties": false
+    , "required": [ "redeemer", "executionUnits" ]
+    , "properties":
+      { "redeemer": { "$ref": "#/definitions/Hash64" }
+      , "executionUnits": { "$ref": "#/definitions/ExUnits" }
+      }
+    }
+
+  , "RedeemerPointer":
+    { "type": "string"
+    , "pattern": "^(spend|mint|certificate|withdrawal):[0-9]+$"
     }
 
   , "RelativeTime":
@@ -3770,11 +3777,16 @@
   , "TxOut[Alonzo]":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "address", "value" ]
+    , "required": [ "address", "value", "datum" ]
     , "properties":
       { "address": { "$ref": "#/definitions/Address" }
       , "value": { "$ref": "#/definitions/Value" }
-      , "datum": { "$ref": "#/definitions/DatumHash" }
+      , "datum":
+        { "oneOf":
+          [ { "$ref": "#/definitions/DatumHash" }
+          , { "title": "null", "type": "null" }
+          ]
+        }
       }
     }
 
