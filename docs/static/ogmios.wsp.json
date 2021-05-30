@@ -3118,6 +3118,18 @@
         , { "$ref": "#/definitions/SubmitTxError[nonGenesisVoters]" }
         , { "$ref": "#/definitions/SubmitTxError[updateWrongEpoch]" }
         , { "$ref": "#/definitions/SubmitTxError[protocolVersionCannotFollow]" }
+        , { "$ref": "#/definitions/SubmitTxError[unredeemableScripts]" }
+        , { "$ref": "#/definitions/SubmitTxError[datumsMismatch]" }
+        , { "$ref": "#/definitions/SubmitTxError[extraDataMismatch]" }
+        , { "$ref": "#/definitions/SubmitTxError[missingRequiredSignatures]" }
+        , { "$ref": "#/definitions/SubmitTxError[collateralTooSmall]" }
+        , { "$ref": "#/definitions/SubmitTxError[collateralIsScript]" }
+        , { "$ref": "#/definitions/SubmitTxError[collateralHasNonAdaAssets]" }
+        , { "$ref": "#/definitions/SubmitTxError[tooManyCollateralInputs]" }
+        , { "$ref": "#/definitions/SubmitTxError[executionUnitsTooLarge]" }
+        , { "$ref": "#/definitions/SubmitTxError[outsideForecast]" }
+        , { "$ref": "#/definitions/SubmitTxError[validationTagMismatch]" }
+        , { "$ref": "#/definitions/SubmitTxError[collectErrors]" }
         ]
       }
     }
@@ -3694,6 +3706,141 @@
     , "required": [ "protocolVersionCannotFollow" ]
     , "properties":
       { "protocolVersionCannotFollow": { "$ref": "#/definitions/ProtocolVersion" }
+      }
+    }
+
+  , "SubmitTxError[unredeemableScripts]":
+    { "type": "object"
+    , "title": "unredeemableScripts"
+    , "additionalProperties": false
+    , "required": [ "unredeemableScripts" ]
+    , "properties":
+      { "unredeemableScripts":
+        { "type": "array"
+        }
+      }
+    }
+
+  , "SubmitTxError[datumsMismatch]":
+    { "type": "object"
+    , "title": "datumsMismatch"
+    , "additionalProperties": false
+    , "required": [ "datumsMismatch" ]
+    , "properties":
+      { "datumsMismatch":
+        { "type": "object"
+        }
+      }
+    }
+
+  , "SubmitTxError[extraDataMismatch]":
+    { "type": "object"
+    , "title": "extraDataMismatch"
+    , "additionalProperties": false
+    , "required": [ "extraDataMismatch" ]
+    , "properties":
+      { "extraDataMismatch":
+        { "type": "object"
+        }
+      }
+    }
+
+  , "SubmitTxError[missingRequiredSignatures]":
+    { "type": "object"
+    , "title": "missingRequiredSignatures"
+    , "additionalProperties": false
+    , "required": [ "missingRequiredSignatures" ]
+    , "properties":
+      { "missingRequiredSignatures":
+        { "type": "array"
+        }
+      }
+    }
+
+  , "SubmitTxError[collateralTooSmall]":
+    { "type": "object"
+    , "title": "collateralTooSmall"
+    , "additionalProperties": false
+    , "required": [ "collateralTooSmall" ]
+    , "properties":
+      { "collateralTooSmall":
+        { "type": "object"
+        }
+      }
+    }
+
+  , "SubmitTxError[collateralIsScript]":
+    { "type": "object"
+    , "title": "collateralIsScript"
+    , "additionalProperties": false
+    , "required": [ "collateralIsScript" ]
+    , "properties":
+      { "collateralIsScript":
+        { "type": "object"
+        }
+      }
+    }
+
+  , "SubmitTxError[collateralHasNonAdaAssets]":
+    { "type": "object"
+    , "title": "collateralHasNonAdaAssets"
+    , "additionalProperties": false
+    , "required": [ "collateralHasNonAdaAssets" ]
+    , "properties":
+      { "collateralHasNonAdaAssets":
+          { "type": "object"
+          }
+      }
+    }
+
+  , "SubmitTxError[tooManyCollateralInputs]":
+    { "type": "object"
+    , "title": "tooManyCollateralInputs"
+    , "additionalProperties": false
+    , "required": [ "tooManyCollateralInputs" ]
+    , "properties":
+      { "tooManyCollateralInputs":
+        { "type": "object"
+        }
+      }
+    }
+
+  , "SubmitTxError[executionUnitsTooLarge]":
+    { "type": "object"
+    , "title": "executionUnitsTooLarge"
+    , "additionalProperties": false
+    , "required": [ "executionUnitsTooLarge" ]
+    , "properties":
+      { "executionUnitsTooLarge":
+        { "type": "object"
+        }
+      }
+    }
+
+  , "SubmitTxError[outsideForecast]":
+    { "type": "object"
+    , "title": "outsideForecast"
+    , "additionalProperties": false
+    , "required": [ "outsideForecast" ]
+    , "properties":
+      { "outsideForecast": { "$ref": "#/definitions/SlotNo" }
+      }
+    }
+
+  , "SubmitTxError[validationTagMismatch]":
+    { "type": "string"
+    , "enum": [ "validationTagMismatch" ]
+    }
+
+  , "SubmitTxError[collectErrors]":
+    { "type": "object"
+    , "title": "collectErrors"
+    , "additionalProperties": false
+    , "required": [ "collectErrors" ]
+    , "properties":
+      { "collectErrors":
+        { "type": "array"
+        }
       }
     }
 

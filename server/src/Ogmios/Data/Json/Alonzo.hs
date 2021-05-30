@@ -61,7 +61,7 @@ encodeAlonzoPredFail
 encodeAlonzoPredFail = \case
     Al.UnRedeemableScripts scripts ->
         encodeObject
-            [ ( "unreemableScripts"
+            [ ( "unredeemableScripts"
               , encodeFoldable (encode2Tuple encodeScriptPurpose Shelley.encodeScriptHash) scripts
               )
             ]

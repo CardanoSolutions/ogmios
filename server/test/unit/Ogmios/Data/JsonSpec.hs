@@ -387,7 +387,7 @@ instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto
         , (10, SubmitFail . ApplyTxErrShelley <$> reasonablySized arbitrary)
         , (10, SubmitFail . ApplyTxErrAllegra <$> reasonablySized arbitrary)
         , (10, SubmitFail . ApplyTxErrMary <$> reasonablySized arbitrary)
-        -- FIXME: (10, SubmitFail . ApplyTxErrAlonzo <$> reasonablySized arbitrary)
+        , (10, SubmitFail . ApplyTxErrAlonzo <$> reasonablySized arbitrary)
         ]
 
 instance Arbitrary (Acquire Block) where
