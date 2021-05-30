@@ -131,9 +131,17 @@ import Shelley.Spec.Ledger.Serialization
 import Shelley.Spec.Ledger.UTxO
     ( UTxO )
 import Test.Hspec
-    ( Spec, SpecWith, context, expectationFailure, it, parallel, specify )
+    ( Spec
+    , SpecWith
+    , context
+    , expectationFailure
+    , it
+    , parallel
+    , runIO
+    , specify
+    )
 import Test.Hspec.Json.Schema
-    ( SchemaRef (..), prop_validateToJSON )
+    ( SchemaRef (..), prop_validateToJSON, unsafeReadSchemaRef )
 import Test.Hspec.QuickCheck
     ( prop )
 import Test.QuickCheck
@@ -176,9 +184,6 @@ import qualified Ouroboros.Network.Point as Point
 import qualified Shelley.Spec.Ledger.BlockChain as Spec
 import qualified Test.QuickCheck as QC
 
-queryRef :: SchemaRef
-queryRef = "ogmios.wsp.json#/properties/Query/properties/args/properties/query"
-
 jsonifierToAeson
     :: Json
     -> Json.Value
@@ -192,10 +197,10 @@ validateToJSON
     -> (a -> Json)
     -> SchemaRef
     -> SpecWith ()
-validateToJSON gen encode ref
-    = parallel
-    $ it (toString $ getSchemaRef ref)
-    $ forAllBlind gen (prop_validateToJSON (jsonifierToAeson . encode) ref)
+validateToJSON gen encode ref = parallel $ do
+    refs <- runIO $ unsafeReadSchemaRef ref
+    it (toString $ getSchemaRef ref) $ forAllBlind gen
+        (prop_validateToJSON (jsonifierToAeson . encode) refs)
 
 -- | Similar to 'validateToJSON', but also check that the produce value can be
 -- decoded back to the expected form.
@@ -205,11 +210,10 @@ validateFromJSON
     -> (a -> Json, Json.Value -> Json.Parser a)
     -> SchemaRef
     -> SpecWith ()
-validateFromJSON gen (encode, decode) ref
-    = parallel
-    $ it (toString $ getSchemaRef ref)
-    $ forAllBlind gen $ \a -> conjoin
-        [ prop_validateToJSON (jsonifierToAeson . encode) ref a
+validateFromJSON gen (encode, decode) ref = parallel $ do
+    refs <- runIO $ unsafeReadSchemaRef ref
+    it (toString $ getSchemaRef ref) $ forAllBlind gen $ \a -> conjoin
+        [ prop_validateToJSON (jsonifierToAeson . encode) refs a
         , decodeWith decode (jsonToByteString (encode a)) === Just a
         ]
 
@@ -537,7 +541,8 @@ validateQuery
     -> SchemaRef
     -> SpecWith ()
 validateQuery json parser resultRef = parallel $ specify (toString $ getSchemaRef resultRef) $ do
-    runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON id queryRef json
+    queryRefs <- unsafeReadSchemaRef queryRef
+    runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON id queryRefs json
     case Json.parseEither parser json of
         Left e ->
             expectationFailure $ "failed to parse JSON: " <> show e
@@ -555,9 +560,11 @@ validateQuery json parser resultRef = parallel $ specify (toString $ getSchemaRe
                         . QueryResponse
                         . encodeResult
 
+                resultRefs <- unsafeReadSchemaRef resultRef
+
                 runQuickCheck $ forAllBlind
                     (genResult Proxy)
-                    (prop_validateToJSON encodeQueryResponse resultRef)
+                    (prop_validateToJSON encodeQueryResponse resultRefs)
 
                 let encodeQueryUnavailableInCurrentEra
                         = jsonifierToAeson
@@ -566,7 +573,10 @@ validateQuery json parser resultRef = parallel $ specify (toString $ getSchemaRe
 
                 runQuickCheck $ withMaxSuccess 1 $ forAllBlind
                     (pure QueryUnavailableInCurrentEra)
-                    (prop_validateToJSON encodeQueryUnavailableInCurrentEra resultRef)
+                    (prop_validateToJSON encodeQueryUnavailableInCurrentEra resultRefs)
+  where
+    queryRef :: SchemaRef
+    queryRef = "ogmios.wsp.json#/properties/Query/properties/args/properties/query"
 
 -- | Simple run a QuickCheck property
 runQuickCheck :: Property -> IO ()

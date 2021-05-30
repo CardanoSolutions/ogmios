@@ -1,5 +1,19 @@
 # Changelog
 
+## edge / unreleased
+
+### Added
+
+ø
+
+### Changed
+
+- The `SchemaRef` references are now resolved outside of the property, to avoid unnecessary file-system accesses and speed up the test execution (~40%). Instead, the schema and resolved reference have to be fetched prior to calling `prop_validateToJSON` using `unsafeReadSchemaRef`.
+
+### Removed
+
+ø
+
 ## [1.0.0] -- 2020-10-23
 
 ### Added

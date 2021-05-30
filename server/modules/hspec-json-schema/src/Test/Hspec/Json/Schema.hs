@@ -12,7 +12,8 @@
 -- Stability: Stable
 -- Portability: Unix
 module Test.Hspec.Json.Schema
-    ( prop_validateToJSON
+    ( unsafeReadSchemaRef
+    , prop_validateToJSON
     , SchemaRef(..)
     ) where
 
@@ -40,6 +41,8 @@ import JSONSchema.Draft4
     , emptySchema
     , referencesViaFilesystem
     )
+import JSONSchema.Fetch
+    ( URISchemaMap )
 import JSONSchema.Validator.Draft4.Any
     ( AllOfInvalid (..)
     , AnyOfInvalid (..)
@@ -106,15 +109,23 @@ newtype SchemaRef = SchemaRef
     { getSchemaRef :: Text
     } deriving (Show, IsString)
 
+unsafeReadSchemaRef
+    :: SchemaRef
+    -> IO (URISchemaMap Schema, SchemaWithURI Schema)
+unsafeReadSchemaRef (SchemaRef ref) = do
+    let schema = SchemaWithURI (emptySchema { _schemaRef = Just ref }) Nothing
+    refs <- unsafeEither =<< referencesViaFilesystem schema
+    pure (refs, schema)
+
 -- | Actual property that a given value a should satisfy.
 prop_validateToJSON
     :: (a -> Json.Value)
-    -> SchemaRef
+    -> (URISchemaMap Schema, SchemaWithURI Schema)
     -> a
     -> Property
-prop_validateToJSON encode ref a = monadicIO $ do
+prop_validateToJSON encode refs a = monadicIO $ do
     let json = encode a
-    errors <- run $ validateSchema ref json
+    errors <- run $ validateSchema refs json
     monitor $ counterexample $ unlines
         [ "JSON:", BL8.unpack $ Json.encodePretty json ]
     monitor $ counterexample $ unlines
@@ -122,15 +133,13 @@ prop_validateToJSON encode ref a = monadicIO $ do
     assert (null errors)
 
 -- | Schema validator, reading reference from the file-system.
-validateSchema :: SchemaRef -> Json.Value -> IO [ValidatorFailure]
-validateSchema (SchemaRef ref) value = do
-    let schema = SchemaWithURI (emptySchema { _schemaRef = Just ref }) Nothing
-    refs <- unsafeIO =<< referencesViaFilesystem schema
-    validate <- unsafeIO (checkSchema refs schema)
+validateSchema
+    :: (URISchemaMap Schema, SchemaWithURI Schema)
+    -> Json.Value
+    -> IO [ValidatorFailure]
+validateSchema (refs, schema) value = do
+    validate <- unsafeEither (checkSchema refs schema)
     pure $ validate value
-  where
-    unsafeIO :: Show e => Either e a -> IO a
-    unsafeIO = either (fail . show) pure
 
 --
 -- Pretty Print Failures
@@ -410,6 +419,10 @@ prettyIndexedList items =
 --
 -- Helpers
 --
+
+-- Like 'either', but fail in IO on 'Left'.
+unsafeEither :: Show e => Either e a -> IO a
+unsafeEither = either (fail . show) pure
 
 -- Format a 'Scientific', converting it a 'Double'
 scientific :: Scientific -> Doc
