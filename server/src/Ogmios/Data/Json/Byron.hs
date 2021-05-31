@@ -186,6 +186,13 @@ encodeTxIn (By.TxInUtxo txid ix) = encodeObject
       )
     ]
 
+encodeValue
+    :: By.Lovelace
+    -> Json
+encodeValue coins = encodeObject
+    [ ( "coins", encodeLovelace coins )
+    ]
+
 encodeTxOut
     :: By.TxOut
     -> Json
@@ -194,7 +201,7 @@ encodeTxOut x = encodeObject
       , encodeAddress (By.txOutAddress x)
       )
     , ( "value"
-      , encodeLovelace (By.txOutValue x)
+      , encodeValue (By.txOutValue x)
       )
     ]
 

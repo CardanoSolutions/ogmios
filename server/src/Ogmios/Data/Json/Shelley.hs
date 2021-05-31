@@ -954,12 +954,12 @@ encodeTxOut
     :: (ShelleyBased era, Core.Value era ~ Coin)
     => Sh.TxOut era
     -> Json
-encodeTxOut (Sh.TxOut addr coin) = encodeObject
+encodeTxOut (Sh.TxOut addr value) = encodeObject
     [ ( "address"
       , encodeAddress addr
       )
     , ( "value"
-      , encodeCoin coin
+      , encodeValue value
       )
     ]
 
@@ -1163,6 +1163,13 @@ encodeUtxowFailure encodeUtxoFailure_ = \case
         encodeText "invalidMetadata"
     Sh.UtxoFailure e ->
         encodeUtxoFailure_ e
+
+encodeValue
+    :: Coin
+    -> Json
+encodeValue coin = encodeObject
+    [ ( "coins", encodeCoin coin )
+    ]
 
 encodeVerKeyDSign
     :: CC.DSIGNAlgorithm alg
