@@ -3019,6 +3019,43 @@
     , "pattern": "^[A-Za-z0-9+/]*=?=?$"
     }
 
+  , "ScriptPurpose":
+    { "oneOf":
+      [ { "title": "spend"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "spend" ]
+        , "properties":
+          { "spend": { "$ref": "#/definitions/TxIn" }
+          }
+        }
+      , { "title": "mint"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "mint" ]
+        , "properties":
+          { "mint": { "$ref": "#/definitions/Hash16" }
+          }
+        }
+      , { "title": "certificate"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "certificate" ]
+        , "properties":
+          { "certificate": { "$ref": "#/definitions/Certificate" }
+          }
+        }
+      , { "title": "withdrawal"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "withdrawal" ]
+        , "properties":
+          { "withdrawal": { "$ref": "#/definitions/RewardAccount" }
+          }
+        }
+      ]
+    }
+
   , "Signature":
     { "type": "string"
     , "contentEncoding": "base64"
@@ -3717,6 +3754,11 @@
     , "properties":
       { "unredeemableScripts":
         { "type": "array"
+        , "items":
+          { "type": "object"
+          , "additionalProperties": { "$ref": "#/definitions/ScriptPurpose" }
+          , "propertyNames": { "$ref": "#/definitions/Hash16" }
+          }
         }
       }
     }
@@ -3729,6 +3771,18 @@
     , "properties":
       { "datumsMismatch":
         { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "provided", "inferredFromInputs" ]
+        , "properties":
+          { "provided":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Hash16" }
+            }
+          , "inferredFromInputs":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Hash16" }
+            }
+          }
         }
       }
     }
@@ -3741,6 +3795,22 @@
     , "properties":
       { "extraDataMismatch":
         { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "provided", "inferredFromParameters" ]
+        , "properties":
+          { "provided":
+            { "oneOf":
+              [ { "$ref": "#/definitions/Hash16" }
+              , { "type": "null", "title": "null" }
+              ]
+            }
+          , "inferredFromParameters":
+            { "oneOf":
+              [ { "$ref": "#/definitions/Hash16" }
+              , { "type": "null", "title": "null" }
+              ]
+            }
+          }
         }
       }
     }
@@ -3753,6 +3823,7 @@
     , "properties":
       { "missingRequiredSignatures":
         { "type": "array"
+        , "items": { "$ref": "#/definitions/Hash16" }
         }
       }
     }
@@ -3765,6 +3836,12 @@
     , "properties":
       { "collateralTooSmall":
         { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "requiredCollateral", "actualCollateral" ]
+        , "properties":
+          { "requiredCollateral": { "$ref": "#/definitions/Lovelace" }
+          , "actualCollateral": { "$ref": "#/definitions/Lovelace" }
+          }
         }
       }
     }
@@ -3775,9 +3852,7 @@
     , "additionalProperties": false
     , "required": [ "collateralIsScript" ]
     , "properties":
-      { "collateralIsScript":
-        { "type": "object"
-        }
+      { "collateralIsScript": { "$ref": "#/definitions/Utxo[Alonzo]" }
       }
     }
 
@@ -3787,9 +3862,7 @@
     , "additionalProperties": false
     , "required": [ "collateralHasNonAdaAssets" ]
     , "properties":
-      { "collateralHasNonAdaAssets":
-          { "type": "object"
-          }
+      { "collateralHasNonAdaAssets": { "$ref": "#/definitions/Value" }
       }
     }
 
@@ -3801,6 +3874,12 @@
     , "properties":
       { "tooManyCollateralInputs":
         { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "maximumCollateralInputs", "actualCollateralInputs" ]
+        , "properties":
+          { "maximumCollateralInputs": { "type": "integer" }
+          , "actualCollateralInputs": { "type": "integer" }
+          }
         }
       }
     }
@@ -3813,6 +3892,12 @@
     , "properties":
       { "executionUnitsTooLarge":
         { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "maximumExecutionUnits", "actualExecutionUnits" ]
+        , "properties":
+          { "maximumExecutionUnits": { "$ref": "#/definitions/ExUnits" }
+          , "actualExecutionUnits": { "$ref": "#/definitions/ExUnits" }
+          }
         }
       }
     }
@@ -3823,7 +3908,7 @@
     , "additionalProperties": false
     , "required": [ "outsideForecast" ]
     , "properties":
-      { "outsideForecast": { "$ref": "#/definitions/SlotNo" }
+      { "outsideForecast": { "$ref": "#/definitions/Slot" }
       }
     }
 
@@ -4150,6 +4235,15 @@
     , "items":
       [ { "$ref": "#/definitions/TxIn" }
       , { "$ref": "#/definitions/TxOut[Mary]" }
+      ]
+    }
+
+  , "Utxo[Alonzo]":
+    { "type": "array"
+    , "additionalItems": false
+    , "items":
+      [ { "$ref": "#/definitions/TxIn" }
+      , { "$ref": "#/definitions/TxOut[Alonzo]" }
       ]
     }
 

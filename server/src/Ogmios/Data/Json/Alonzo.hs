@@ -62,7 +62,7 @@ encodeAlonzoPredFail = \case
     Al.UnRedeemableScripts scripts ->
         encodeObject
             [ ( "unredeemableScripts"
-              , encodeFoldable (encode2Tuple encodeScriptPurpose Shelley.encodeScriptHash) scripts
+              , encodeFoldable encodeUnredeemableScript scripts
               )
             ]
     Al.DataHashSetsDontAgree provided inferred ->
@@ -123,6 +123,18 @@ encodeBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
       , Shelley.encodeShelleyHash headerHash
       )
     ]
+
+encodeCollectError
+    :: Crypto crypto
+    => Al.CollectError crypto
+    -> Json
+encodeCollectError = \case
+    Al.NoRedeemer purpose ->
+        encodeObject [ ( "noRedeemer", encodeScriptPurpose purpose ) ]
+    Al.NoWitness hash ->
+        encodeObject [ ( "noWitness", Shelley.encodeScriptHash hash ) ]
+    Al.NoCostModel lang ->
+        encodeObject [ ( "noCostModel", encodeLanguage lang ) ]
 
 encodeCostModel
     :: Al.CostModel
@@ -421,6 +433,17 @@ encodeTxOut (Al.TxOut addr value datum) = encodeObject
       )
     ]
 
+encodeUnredeemableScript
+    :: Crypto crypto
+    => (Al.ScriptPurpose crypto, Sh.ScriptHash crypto)
+    -> Json
+encodeUnredeemableScript (purpose, hash) =
+    encodeObject
+        [ ( Shelley.stringifyScriptHash hash
+          , encodeScriptPurpose purpose
+          )
+        ]
+
 encodeUpdate
     :: Sh.Update (AlonzoEra crypto)
     -> Json
@@ -593,18 +616,6 @@ encodeUtxosPredicateFailure = \case
         encodeObject [ ( "collectErrors", encodeFoldable encodeCollectError errors ) ]
     Al.UpdateFailure e ->
         Shelley.encodeUpdateFailure e
-
-encodeCollectError
-    :: Crypto crypto
-    => Al.CollectError crypto
-    -> Json
-encodeCollectError = \case
-    Al.NoRedeemer purpose ->
-        encodeObject [ ( "noRedeemer", encodeScriptPurpose purpose ) ]
-    Al.NoWitness hash ->
-        encodeObject [ ( "noWitness", Shelley.encodeScriptHash hash ) ]
-    Al.NoCostModel lang ->
-        encodeObject [ ( "noCostModel", encodeLanguage lang ) ]
 
 encodeWitnessPPDataHash
     :: Al.WitnessPPDataHash crypto
