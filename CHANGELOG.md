@@ -36,21 +36,37 @@ pre: "<b>5. </b>"
 
 #### Changed
 
-- :warning: **Breaking-Change** :warning: Auxiliary data's `scriptPreImages` in Allegra & Mary has been replaced with a field `scripts` which has one field `native`. The value of `native` corresponds to what used to be the value of `scriptPreImages`. In Alonzo, `scripts` may also have another field `plutus` with a serialized Plutus script. 
-
-- :warning: **Breaking-Change** :warning: Transactions witnesses' `address` has been renamed into `signatures`, and the structure of the object has been changed to be a map from public keys to signatures (instead of an object with two field `key` & `signature`). 
-
-- :warning: **Breaking-Change** :warning: Transactions witnesses' `script` has been renamed into `scripts`.
-
-- :warning: **Breaking-Change** :warning: Transaction submission errors' `networkMismatch` now returns an `invalidEntities` list of object in the form of `{ "type": ..., "entity": }` where `type` is a text tag designating the type of entity for which there is a network identifier mismatch. Values can be `address`, `rewardAccount` and since Alonzo `transactionBody`. The `entity` field contains some details specific to the type of entity. Before, it used to be two distinct fields `invalidAddresses` and `invalidRewardAccounts`. 
-
-- :warning: **Breaking-Change** :warning: Empty transaction metadata are no longer materialized by an object with two null fields (`{ "hash": null, "body": null }`). Empty transaction metadata are now equal to `null`. 
-
-- :warning: **Breaking-Change** :warning: `map` metadatum in transactions' metadata are no longer materialized as a list of list of singleton objects: `[[{ "k": ... }, { "v": ... }], ...]` but instead, as a list of object with two fields `k` and `v`: `[{ "k": ..., "v": ...}, ...]`. This was an oversight from the encoder which was never intended to end up that way but happened to slip in because the schema for metadatum was not specified / documented (and therefore, also escaped testing). This is now documented properly.
-
-- :warning: **Breaking-Change** :warning: The `TxOut` (and thus Utxo) model definitions have been unified and harmonized across all eras. That is, pre-Mary eras now also wrap Ada values in an object with a field `"coins": ...`. This reduces the discrepancy between eras for there's now a single TxOut representation valid across all eras. Some fields are however optional and only present in some eras (e.g. `datum` starting from Alonzo)
-
 - The `moveInstantaneousRewards` certificates have a new optional field `value` and not only a `rewards` map as before. When `value` is present, it signifies that rewards are moved to the other pot. 
+- :warning: **Server Breaking Changes** :warning: 
+
+  - Auxiliary data's `scriptPreImages` in Allegra & Mary has been replaced with a field `scripts` which has one field `native`. The value of `native` corresponds to what used to be the value of `scriptPreImages`. In Alonzo, `scripts` may also have another field `plutus` with a serialized Plutus script. 
+
+  - Transactions witnesses' `address` has been renamed into `signatures`, and the structure of the object has been changed to be a map from public keys to signatures (instead of an object with two field `key` & `signature`). 
+
+  - Transactions witnesses' `script` has been renamed into `scripts`.
+
+  - Transaction submission errors' `networkMismatch` now returns an `invalidEntities` list of object in the form of `{ "type": ..., "entity": }` where `type` is a text tag designating the type of entity for which there is a network identifier mismatch. Values can be `address`, `rewardAccount` and since Alonzo `transactionBody`. The `entity` field contains some details specific to the type of entity. Before, it used to be two distinct fields `invalidAddresses` and `invalidRewardAccounts`. 
+
+  - Empty transaction metadata are no longer materialized by an object with two null fields (`{ "hash": null, "body": null }`). Empty transaction metadata are now equal to `null`. 
+
+  - `map` metadatum in transactions' metadata are no longer materialized as a list of list of singleton objects: `[[{ "k": ... }, { "v": ... }], ...]` but instead, as a list of object with two fields `k` and `v`: `[{ "k": ..., "v": ...}, ...]`. This was an oversight from the encoder which was never intended to end up that way but happened to slip in because the schema for metadatum was not specified / documented (and therefore, also escaped testing). This is now documented properly.
+
+  - The `TxOut` (and thus Utxo) model definitions have been unified and harmonized across all eras. That is, pre-Mary eras now also wrap Ada values in an object with a field `"coins": ...`. This reduces the discrepancy between eras for there's now a single TxOut representation valid across all eras. Some fields are however optional and only present in some eras (e.g. `datum` starting from Alonzo)
+
+- :warning: **Client/TypeScript Breaking Changes** :warning: 
+
+  - Type `DelegationsAndRewards` renamed into `DelegationsAndRewardsByAccounts`
+  - Type `DelegationsAndRewards1` renamed into `DelegationsAndRewards`
+  - Type `NonMyopicMemberRewards1` renamed into `NonMyopicMemberRewards`
+  - Type `TxTooLarge1` renamed into `TxTooLarge`
+  - Type `FeeTooSmall1` renamed into `FeeTooSmall`
+  - Type `NetworkMismatch1` renamed into `NetworkMismatch`
+  - Type `Proposal` renamed into `UpdateProposalShelley`
+  - Types `Utxo1`, `Utxo2`, `UtxoMary` have been unified into a single `Utxo` type. Refer to server breaking changes for details.
+  - Many types `NullX` merged into a single `Null` type
+  - Query types have been renamed from `ledgerTip1` to `GetLedgerTip` and so forth for all queries.
+
+
 #### Removed
 
 ø

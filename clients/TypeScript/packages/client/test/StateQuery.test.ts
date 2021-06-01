@@ -1,16 +1,19 @@
 import {
   createStateQueryClient,
   currentEpoch,
-  currentProtocolParameters, delegationsAndRewards,
+  currentProtocolParameters,
+  delegationsAndRewards,
   eraStart,
   genesisConfig,
   ledgerTip,
   nonMyopicMemberRewards,
   proposedProtocolParameters,
-  stakeDistribution, StateQueryClient,
+  stakeDistribution,
+  StateQueryClient,
   utxo
 } from '@src/StateQuery'
 import {
+  DelegationsAndRewards,
   Hash16,
   Slot
 } from '@cardano-ogmios/schema'
@@ -163,7 +166,7 @@ describe('Local state queries', () => {
       it('fetches the current delegate and rewards for given stake key hashes', async () => {
         const stakeKeyHashes = ['7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8'] as Hash16[]
         const result = await delegationsAndRewards(stakeKeyHashes, { connection })
-        const item = result[stakeKeyHashes[0]]
+        const item = result[stakeKeyHashes[0]] as DelegationsAndRewards
         expect(item).toHaveProperty('delegate')
         expect(item).toHaveProperty('rewards')
       })

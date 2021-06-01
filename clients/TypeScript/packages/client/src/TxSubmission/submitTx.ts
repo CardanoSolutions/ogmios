@@ -118,6 +118,30 @@ export const submitTx = (bytes: string, context?: InteractionContext) =>
                 return new errors.shelley.TriesToForgeAda.Error(failure)
               } else if (errors.shelley.TooManyAssetsInOutput.assert(failure)) {
                 return new errors.shelley.TooManyAssetsInOutput.Error(failure)
+              } else if (errors.shelley.UnredeemableScripts.assert(failure)) {
+                return new errors.shelley.UnredeemableScripts.Error(failure)
+              } else if (errors.shelley.DatumsMismatch.assert(failure)) {
+                return new errors.shelley.DatumsMismatch.Error(failure)
+              } else if (errors.shelley.ExtraDataMismatch.assert(failure)) {
+                return new errors.shelley.ExtraDataMismatch.Error(failure)
+              } else if (errors.shelley.MissingRequiredSignatures.assert(failure)) {
+                return new errors.shelley.MissingRequiredSignatures.Error(failure)
+              } else if (errors.shelley.CollateralTooSmall.assert(failure)) {
+                return new errors.shelley.CollateralTooSmall.Error(failure)
+              } else if (errors.shelley.CollateralIsScript.assert(failure)) {
+                return new errors.shelley.CollateralIsScript.Error(failure)
+              } else if (errors.shelley.CollateralHasNonAdaAssets.assert(failure)) {
+                return new errors.shelley.CollateralHasNonAdaAssets.Error(failure)
+              } else if (errors.shelley.TooManyCollateralInputs.assert(failure)) {
+                return new errors.shelley.TooManyCollateralInputs.Error(failure)
+              } else if (errors.shelley.ExecutionUnitsTooLarge.assert(failure)) {
+                return new errors.shelley.ExecutionUnitsTooLarge.Error(failure)
+              } else if (errors.shelley.OutsideForecast.assert(failure)) {
+                return new errors.shelley.OutsideForecast.Error(failure)
+              } else if (errors.shelley.ValidationTagMismatch.assert(failure)) {
+                return new errors.shelley.ValidationTagMismatch.Error(failure)
+              } else if (errors.shelley.CollectErrors.assert(failure)) {
+                return new errors.shelley.CollectErrors.Error(failure)
               } else {
                 return new Error(failure)
               }

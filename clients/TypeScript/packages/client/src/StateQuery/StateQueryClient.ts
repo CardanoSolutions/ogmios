@@ -19,7 +19,8 @@ import {
 } from '../errors'
 import {
   currentEpoch,
-  currentProtocolParameters, delegationsAndRewards,
+  currentProtocolParameters,
+  delegationsAndRewards,
   eraStart,
   genesisConfig,
   ledgerTip,
