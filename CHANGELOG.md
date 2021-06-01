@@ -11,7 +11,7 @@ pre: "<b>5. </b>"
 
 - Integrated with the Cardano eco-system corresponding to cardano-node@1.27.0. Bumped the docker-compose installation accordingly.
 
-- Three new possible errors from the transaction submission coming with cardano-node@1.27.0:
+- New possible errors from the transaction submission coming with cardano-node@1.27.0:
 
   - `mirTransferNotCurrentlyAllowed`
   - `mirNegativeTransferNotCurrentlyAllowed`
@@ -19,6 +19,20 @@ pre: "<b>5. </b>"
 
   These errors are related to transactions issuing MIR certificates which can only be done by 
   genesis delegates. So this change should not impact any 'standard' user. 
+
+- New possible errors from the transaction submission coming with the Alonzo era:
+  - `unredeemableScripts`
+  - `datumsMismatch`
+  - `extraDataMismatch`
+  - `missingRequiredSignatures`
+  - `collateralTooSmall`
+  - `collateralIsScript`
+  - `collateralHasNonAdaAssets`
+  - `tooManyCollateralInputs`
+  - `executionUnitsTooLarge`
+  - `outsideForecast`
+  - `validationTagMismatch`
+  - `collectErrors`
 
 #### Changed
 
@@ -34,9 +48,9 @@ pre: "<b>5. </b>"
 
 - :warning: **Breaking-Change** :warning: `map` metadatum in transactions' metadata are no longer materialized as a list of list of singleton objects: `[[{ "k": ... }, { "v": ... }], ...]` but instead, as a list of object with two fields `k` and `v`: `[{ "k": ..., "v": ...}, ...]`. This was an oversight from the encoder which was never intended to end up that way but happened to slip in because the schema for metadatum was not specified / documented (and therefore, also escaped testing). This is now documented properly.
 
-- The `moveInstantaneousRewards` certificates have a new optional field `value` and not only a `rewards` map as before. 
-  When `value` is present, it signifies that rewards are moved to the other pot. 
+- :warning: **Breaking-Change** :warning: The `TxOut` (and thus Utxo) model definitions have been unified and harmonized across all eras. That is, pre-Mary eras now also wrap Ada values in an object with a field `"coins": ...`. This reduces the discrepancy between eras for there's now a single TxOut representation valid across all eras. Some fields are however optional and only present in some eras (e.g. `datum` starting from Alonzo)
 
+- The `moveInstantaneousRewards` certificates have a new optional field `value` and not only a `rewards` map as before. When `value` is present, it signifies that rewards are moved to the other pot. 
 #### Removed
 
 ø
