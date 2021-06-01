@@ -776,8 +776,9 @@
         , "enum": [ "Query" ]
         }
       , "result":
-        { "oneOf":
+        { "anyOf":
           [ { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
+          , { "$ref": "#/definitions/ProtocolParameters[Alonzo]" }
           , { "$ref": "#/definitions/EraMismatch" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
@@ -810,11 +811,16 @@
         , "enum": [ "Query" ]
         }
       , "result":
-        { "oneOf":
+        { "anyOf":
           [ { "type": "object"
             , "title": "ProtocolParameters[Shelley]"
             , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
             , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
+            }
+          , { "type": "object"
+            , "title": "ProtocolParameters[Alonzo]"
+            , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Alonzo]" }
             }
           , { "$ref": "#/definitions/EraMismatch" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
