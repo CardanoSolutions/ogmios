@@ -233,61 +233,59 @@ prettyRefInvalid = \case
         s "could not resolve pointer:" <+> s (show err)
     RefLoop ref _ _ ->
         s "could not resolve reference (looping) at:" <+> t ref
-    RefInvalid _ schema errs ->
-        let
-            n = NE.length errs
-        in
-            vsep
-            ( [ s "Schema: "
-              , s (BL8.unpack $ Json.encodePretty schema) <> linebreak
-              , s "Found" <+> int n <+> s "validation error(s)!" <> linebreak
-              ]
-              ++
-              punctuate hardline (prettyValidatorFailure <$> toList errs)
-            )
+    RefInvalid _ _schema errs ->
+        case prune (prettyValidatorFailure <$> toList errs) of
+            [] -> mempty
+            failures -> vsep failures
 
 prettyRequiredInvalid
     :: RequiredInvalid
     -> Doc
-prettyRequiredInvalid (RequiredInvalid (Required required) found _) =
-    vsep
-    [ s "missing required property"
-    , indent 4 $ group $ vsep
-        [ s "required: " <+> s (show $ toList required)
-        , s "found:    " <+> s (show $ toList found)
+prettyRequiredInvalid (RequiredInvalid (Required required) found _)
+    | required == found = mempty
+    | otherwise = vsep
+        [ s "missing required property"
+        , indent 4 $ group $ vsep
+            [ s "required: " <+> s (show $ toList required)
+            , s "found:    " <+> s (show $ toList found)
+            ]
         ]
-    ]
 
 prettyPropertiesRelatedInvalid
     :: PropertiesRelatedInvalid ValidatorFailure
     -> Doc
 prettyPropertiesRelatedInvalid = \case
     PropertiesRelatedInvalid props patterns additional ->
-        vsep
-        [ s "invalid properties in object"
-        , indent 4 $ group $ vsep $
-              [ prettyInvalidProperties (toList props) | not (null $ toList props) ]
-              ++
-              [ prettyInvalidPatterns (toList patterns) | not (null $ toList patterns) ]
-              ++
-              [ prettyInvalidAdditional additional | isJust additional ]
-        ]
+        let errs =
+                  [ prettyInvalidProperties (toList props) | not (null $ toList props) ]
+                  ++
+                  [ prettyInvalidPatterns (toList patterns) | not (null $ toList patterns) ]
+        in case prune errs of
+            [] -> mempty
+            failures -> vsep
+                [ s "invalid properties in object"
+                , indent 4 $ group $ vsep $ failures ++
+                    [ prettyInvalidAdditional additional | isJust additional ]
+                ]
   where
     prettyInvalidProperties props =
         let invalidProps = [ (prop, errs) | (prop, errs) <- props, not (null errs) ]
         in group $ vsep $ prettyInvalidProperty <$> invalidProps
 
     prettyInvalidProperty (prop, [err]) =
-        label <+> prettyValidatorFailure err
+        case prune [prettyValidatorFailure err] of
+            [failure] -> label <+> failure
+            _ -> mempty
       where
         label = s "invalid property" <+> squotes (t prop) <> s ":"
+
     prettyInvalidProperty (prop, errs) =
-        vsep
-        ( s "invalid property" <+> squotes (t prop)
-        : if null errs
-          then mempty
-          else [indent 4 (group $ vsep $ prettyValidatorFailure <$> errs)]
-        )
+        case prune (prettyValidatorFailure <$> errs) of
+            [] -> mempty
+            failures  -> vsep
+                ( s "invalid property" <+> squotes (t prop)
+                : [indent 4 (group $ vsep failures)]
+                )
 
     prettyInvalidPatterns patterns =
         group $ vsep $ prettyInvalidPattern <$> patterns
@@ -297,12 +295,12 @@ prettyPropertiesRelatedInvalid = \case
       where
         label = s "invalid regular expression /" <> t regex <> s "/ in" <+> t key <> s ":"
     prettyInvalidPattern ((Regex regex, Key key), errs) =
-        vsep
-        ( s "invalid regular expression /" <> t regex <> s "/ in" <+> t key <> s ":"
-        : if null errs
-          then mempty
-          else [indent 4 (group $ vsep $ prettyValidatorFailure <$> errs)]
-        )
+        case prune (prettyValidatorFailure <$> errs) of
+            [] -> mempty
+            failures -> vsep
+                ( s "invalid regular expression /" <> t regex <> s "/ in" <+> t key <> s ":"
+                : [indent 4 (group $ vsep failures)]
+                )
 
     prettyInvalidAdditional = \case
         Nothing -> mempty
@@ -323,15 +321,19 @@ prettyItemsInvalid
     -> Doc
 prettyItemsInvalid = \case
     ItemsObjectInvalid items ->
-        vsep
-        [ s "invalid items in object:"
-        , indent 4 (prettyIndexedList items)
-        ]
+        case prune [prettyIndexedList items] of
+            [failure] -> vsep
+                [ s "invalid items in object:"
+                , indent 4 failure
+                ]
+            _ -> mempty
     ItemsArrayInvalid items ->
-        vsep
-        [ s "invalid items in array:"
-        , indent 4 (prettyIndexedList items)
-        ]
+        case prune [prettyIndexedList items] of
+            [failure] -> vsep
+                [ s "invalid items in array:"
+                , indent 4 failure
+                ]
+            _ -> mempty
 
 prettyAdditionalItemsInvalid
     :: AdditionalItemsInvalid ValidatorFailure
@@ -340,10 +342,12 @@ prettyAdditionalItemsInvalid = \case
     AdditionalItemsBoolInvalid ixs ->
         s "unexpected additional item(s) at position(s):" <+> s (prettyIxs ixs)
     AdditionalItemsObjectInvalid items ->
-        vsep
-        [ s "invalid additional item(s):"
-        , indent 4 (prettyIndexedList items)
-        ]
+        case prune [prettyIndexedList items] of
+            [failure] -> vsep
+                [ s "invalid additional item(s):"
+                , indent 4 failure
+                ]
+            _ -> mempty
   where
     prettyIxs = show . toList . fmap (_unIndex . fst)
 
@@ -352,20 +356,24 @@ prettyAllOfInvalid
     -> Doc
 prettyAllOfInvalid = \case
     AllOfInvalid items ->
-        vsep
-        [ s "failed to validate all given schemas:"
-        , indent 4 (prettyIndexedList items)
-        ]
+        case prune [prettyIndexedList items] of
+            [failure] -> vsep
+                [ s "failed to validate all given schemas:"
+                , indent 4 failure
+                ]
+            _ -> mempty
 
 prettyAnyOfInvalid
     :: AnyOfInvalid ValidatorFailure
     -> Doc
 prettyAnyOfInvalid = \case
     AnyOfInvalid items ->
-        vsep
-        [ s "failed to validate any of given schemas:"
-        , indent 4 (prettyIndexedList items)
-        ]
+        case prune [prettyIndexedList items] of
+            [failure] -> vsep
+                [ s "failed to validate any of given schemas:"
+                , indent 4 failure
+                ]
+            _ -> mempty
 
 prettyOneOfInvalid
     :: OneOfInvalid ValidatorFailure
@@ -378,10 +386,12 @@ prettyOneOfInvalid = \case
         <+>
         s "matching schemas."
     NoSuccesses items _ ->
-        vsep
-        [ s "failed to validate one of given schemas:"
-        , indent 4 (prettyIndexedList items)
-        ]
+        case prune [prettyIndexedList items] of
+            [failure] -> vsep
+                [ s "failed to validate one of given schemas:"
+                , indent 4 failure
+                ]
+            _ -> mempty
 
 prettyTypeValidator
     :: TypeValidator
@@ -406,19 +416,28 @@ prettyIndexedList
     :: NonEmpty (Index, NonEmpty ValidatorFailure)
     -> Doc
 prettyIndexedList items =
-    group $ vsep $ prettyInvalidItem <$> toList items
+    case prune (prettyInvalidItem <$> toList items) of
+        [] -> mempty
+        failures -> group $ vsep failures
   where
     prettyInvalidItem (Index ix, err :| []) =
-        brackets (int ix) <+> prettyValidatorFailure err
+        case prune [prettyValidatorFailure err] of
+            [failure] -> brackets (int ix) <+> failure
+            _ -> mempty
     prettyInvalidItem (Index ix, errs) =
-        vsep
-        [ brackets (int ix)
-        , indent 4 (group $ vsep $ prettyValidatorFailure <$> toList errs)
-        ]
+        case prune (prettyValidatorFailure <$> toList errs) of
+            [] -> mempty
+            failures -> vsep
+                [ brackets (int ix)
+                , indent 4 (group $ vsep failures)
+                ]
 
 --
 -- Helpers
 --
+
+prune :: [Doc] -> [Doc]
+prune = filter (\x -> show x /= show empty)
 
 -- Like 'either', but fail in IO on 'Left'.
 unsafeEither :: Show e => Either e a -> IO a

@@ -19,7 +19,7 @@ import Data.String.Interpolate.Extra
 import Test.Hspec
     ( Spec, SpecWith, context, expectationFailure, specify )
 import Test.Hspec.Json.Schema
-    ( SchemaRef (..), prop_validateToJSON )
+    ( SchemaRef (..), prop_validateToJSON, unsafeReadSchemaRef )
 import Test.QuickCheck
     ( Args (..), Result (..), quickCheckWithResult )
 
@@ -35,9 +35,9 @@ testFailure
     -> ExpectedError
     -> SpecWith ()
 testFailure filepath json expectedError = specify filepath $ do
-    let ref = SchemaRef (T.pack filepath)
+    refs <- unsafeReadSchemaRef $ SchemaRef (T.pack filepath)
     let args = QC.stdArgs { chatty = False }
-    result <- quickCheckWithResult args (prop_validateToJSON toJSON ref json)
+    result <- quickCheckWithResult args (prop_validateToJSON toJSON refs json)
     case result of
         Failure{output} | trim output == trim expectedError ->
             pure ()
@@ -63,25 +63,6 @@ spec = context "prop_validateToJSON" $ do
             "size": "180cm"
         }
 
-        Schema:
-        {
-            "required": [
-                "size",
-                "weight"
-            ],
-            "type": "object",
-            "properties": {
-                "size": {
-                    "type": "string"
-                },
-                "weight": {
-                    "type": "string"
-                }
-            }
-        }
-
-        Found 1 validation error(s)!
-
         missing required property
           required:  ["size","weight"]
           found:     ["weight"]
@@ -102,27 +83,6 @@ spec = context "prop_validateToJSON" $ do
             "index": 42
         }
 
-        Schema:
-        {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "minimum": 1,
-                    "type": "number"
-                },
-                "mnemonic_size": {
-                    "multipleOf": 3,
-                    "type": "number"
-                },
-                "index": {
-                    "maximum": 10,
-                    "type": "number"
-                }
-            }
-        }
-
-        Found 1 validation error(s)!
-
         invalid properties in object
            invalid property 'amount': 0.0 should be greater than 1.0
            invalid property 'mnemonic_size': 13.0 should be a multiple of 3
@@ -141,23 +101,6 @@ spec = context "prop_validateToJSON" $ do
             "lastname": "aaaa",
             "firstname": "aa"
         }
-
-        Schema:
-        {
-            "type": "object",
-            "properties": {
-                "lastname": {
-                    "maxLength": 3,
-                    "type": "string"
-                },
-                "firstname": {
-                    "minLength": 3,
-                    "type": "string"
-                }
-            }
-        }
-
-        Found 1 validation error(s)!
 
         invalid properties in object
            invalid property 'lastname': 'aaaa' should have at most 3 character(s)
@@ -192,34 +135,6 @@ spec = context "prop_validateToJSON" $ do
             ]
         }
 
-        Schema:
-        {
-            "type": "object",
-            "properties": {
-                "props": {
-                    "minProperties": 2,
-                    "type": "object"
-                },
-                "keys": {
-                    "maxProperties": 1,
-                    "type": "object"
-                },
-                "words": {
-                    "minItems": 3,
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "indexes": {
-                    "maxItems": 2,
-                    "type": "array"
-                }
-            }
-        }
-
-        Found 1 validation error(s)!
-
         invalid properties in object
             invalid property 'props': should have at least 2 propertie(s)
             invalid property 'keys': should have at most 1 propertie(s)
@@ -239,24 +154,6 @@ spec = context "prop_validateToJSON" $ do
             "postcode": "31",
             "region": null
         }
-
-        Schema:
-        {
-            "type": "object",
-            "properties": {
-                "postcode": {
-                    "pattern": "[0-9]{5}",
-                    "type": "string"
-                },
-                "region": {
-                    "not": {
-                        "type": "null"
-                    }
-                }
-            }
-        }
-
-        Found 1 validation error(s)!
 
         invalid properties in object
             invalid property 'postcode': "31" should match /[0-9]{5}/
@@ -292,46 +189,6 @@ spec = context "prop_validateToJSON" $ do
             ]
         }
 
-        Schema:
-        {
-            "type": "object",
-            "properties": {
-                "car_brands": {
-                    "uniqueItems": true,
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "cities": {
-                    "additionalItems": {
-                        "minLength": 10,
-                        "type": "string"
-                    },
-                    "items": [
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "type": "array"
-                },
-                "point": {
-                    "additionalItems": false,
-                    "items": [
-                        {
-                            "type": "number"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "type": "array"
-                }
-            }
-        }
-
-        Found 1 validation error(s)!
-
         invalid properties in object
             invalid property 'car_brands': should have only unique items.
             invalid property 'cities': invalid additional item(s):
@@ -353,59 +210,6 @@ spec = context "prop_validateToJSON" $ do
                "band(s)": 14,
                "genre": "death metal"
            }
-
-           Schema:
-           {
-               "type": "object",
-               "properties": {
-                   "country": {
-                       "oneOf": [
-                           {
-                               "type": "string",
-                               "enum": [
-                                   "Finland",
-                                   "Norway"
-                               ]
-                           },
-                           {
-                               "minLength": 0,
-                               "type": "string"
-                           }
-                       ]
-                   },
-                   "band(s)": {
-                       "anyOf": [
-                           {
-                               "type": "string"
-                           },
-                           {
-                               "items": {
-                                   "type": "string"
-                               },
-                               "type": "array"
-                           }
-                       ]
-                   },
-                   "genre": {
-                       "allOf": [
-                           {
-                               "type": "string",
-                               "enum": [
-                                   "rock",
-                                   "classic",
-                                   "rap"
-                               ]
-                           },
-                           {
-                               "maxLength": 3,
-                               "type": "string"
-                           }
-                       ]
-                   }
-               }
-           }
-
-           Found 1 validation error(s)!
 
            invalid properties in object
                invalid property 'country': expected exactly 1 schema to match. But found 2 matching schemas.

@@ -12,7 +12,8 @@
 
 ### Removed
 
-ø
+- The errors no longer spit back the full schema, which turned out to be needlessly verbose (and unhelpful) for large schemas. The 'missing required property' error has also been removed when the
+  found and required keys are identical. This happen when using `oneOf` but failing to match the schema and it only creates more noise in the error output.
 
 ## [1.0.0] -- 2020-10-23
 
