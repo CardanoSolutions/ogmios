@@ -1,0 +1,33 @@
+{
+  "reflection": null,
+  "methodname": "Query",
+  "result": [
+    [
+      {
+        "index": 362,
+        "txId": "0268be9dbd0446eaa217e1dec8f399249305e551d7fc1437dd84521f74aa621c"
+      },
+      {
+        "value": {
+          "coins": 856
+        },
+        "address": "addr1gyxefct5wvh0n2h88uu44dz9q7l6nq7k2q3uzx54ruxr9eyx3yucz7u8y5n4uwjm"
+      }
+    ],
+    [
+      {
+        "index": 365,
+        "txId": "0268be9dbd0446eaa217e1dec8f399249305e551d7fc1437dd84521f74aa621c"
+      },
+      {
+        "value": {
+          "coins": 736
+        },
+        "address": "2RhQhCGqYPDqAydwiQvfu853oqB2r5DQbXRgAF6U8TgHTNFQDmuPdERgB9J3cvQJT2dSpPxJZjRZ1KRVBLcgEJcTg95qtoCceN7Soy5GKbrzzD"
+      }
+    ]
+  ],
+  "version": "1.0",
+  "servicename": "ogmios",
+  "type": "jsonwsp/response"
+}

@@ -889,10 +889,7 @@
         }
       , "result":
         { "oneOf":
-          [ { "type": "array"
-            , "title": "utxo"
-            , "items": { "$ref": "#/definitions/Utxo" }
-            }
+          [ { "$ref": "#/definitions/Utxo" }
           , { "$ref": "#/definitions/EraMismatch" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
@@ -4223,9 +4220,13 @@
     { "type": "array"
     , "additionalItems": false
     , "items":
-      [ { "$ref": "#/definitions/TxIn" }
-      , { "$ref": "#/definitions/TxOut" }
-      ]
+      { "type": "array"
+      , "additionalItems": false
+      , "items":
+        [ { "$ref": "#/definitions/TxIn" }
+        , { "$ref": "#/definitions/TxOut" }
+        ]
+      }
     }
 
   , "UtxoValidationError":

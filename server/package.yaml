@@ -12,13 +12,15 @@ synopsis:            A JSON-WSP WebSocket client for cardano-node
 category:            Web
 
 extra-source-files:
-- static/assets/logo.png
-- static/assets/favicon.ico
-- static/dashboard.html
-- static/dashboard.js
-- static/tests.html
-- static/tests/chain-sync.js
-- static/tests/state-query.js
+- LICENSE
+- README.md
+- CHANGELOG.md
+- static/*
+- static/tests/*
+- static/assets/*
+
+data-files:
+- test/golden/*
 
 dependencies:
 - base >= 4.7 && < 5

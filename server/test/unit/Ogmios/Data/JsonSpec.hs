@@ -181,6 +181,7 @@ import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
 import qualified Ouroboros.Network.Point as Point
+import qualified Paths_ogmios
 import qualified Shelley.Spec.Ledger.BlockChain as Spec
 import qualified Test.QuickCheck as QC
 
@@ -217,6 +218,16 @@ validateFromJSON gen (encode, decode) ref = parallel $ do
         , decodeWith decode (jsonToByteString (encode a)) === Just a
         ]
 
+goldenToJSON
+    :: FilePath
+    -> SchemaRef
+    -> SpecWith ()
+goldenToJSON golden ref = parallel $ do
+    refs <- runIO $ unsafeReadSchemaRef ref
+    a <- runIO $ decodeFileThrow golden
+    it ("Golden: " <> golden <> " ~ " <> toString (getSchemaRef ref)) $ withMaxSuccess 1 $
+        prop_validateToJSON id refs a
+
 spec :: Spec
 spec = do
     context "validate chain-sync request/response against JSON-schema" $ do
@@ -246,6 +257,10 @@ spec = do
         validateToJSON
             (arbitrary @(Wsp.Response (SubmitTxResponse Block)))
             (_encodeSubmitTxResponse (Proxy @Block) encodeHardForkApplyTxErr)
+            "ogmios.wsp.json#/properties/SubmitTxResponse"
+
+        goldenToJSON
+            "test/golden/SubmitTxResponse_1.json"
             "ogmios.wsp.json#/properties/SubmitTxResponse"
 
     context "validate acquire request/response against JSON-schema" $ do
@@ -340,6 +355,10 @@ spec = do
             [aesonQQ|"genesisConfig"|]
             ( parseGetGenesisConfig genCompactGenesisResult
             ) "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
+
+        goldenToJSON
+            "test/golden/QueryResponse-utxo_1.json"
+            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
     context "validate release request/response against JSON-schema" $ do
         validateFromJSON
@@ -878,8 +897,13 @@ genCompactGenesisResult _ _ =
 
 
 --
--- Quickcheck helpers
+-- Helpers
 --
 
 reasonablySized :: Gen a -> Gen a
 reasonablySized = scale (ceiling . sqrt @Double . fromIntegral)
+
+decodeFileThrow :: FilePath -> IO Json.Value
+decodeFileThrow filepath = do
+    json <- Json.decodeFileStrict =<< Paths_ogmios.getDataFileName filepath
+    maybe (fail $ "Unable to decode JSON file: " <> filepath) pure json

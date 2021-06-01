@@ -4,7 +4,7 @@ cabal-version: 2.0
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c743cd494275c4f71acae05bb27199ed9b16dedb9679a62a25fb0fcf21162343
+-- hash: e35d7f4a03f6076120f2e477d63caeb6b7493261b7f8fe91f70477e29d4a3869
 
 name:           ogmios
 version:        3.2.0
@@ -20,13 +20,19 @@ license:        MPL-2.0
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
-    static/assets/logo.png
-    static/assets/favicon.ico
+    LICENSE
+    README.md
+    CHANGELOG.md
     static/dashboard.html
     static/dashboard.js
     static/tests.html
     static/tests/chain-sync.js
     static/tests/state-query.js
+    static/assets/favicon.ico
+    static/assets/logo.png
+data-files:
+    test/golden/QueryResponse-utxo_1.json
+    test/golden/SubmitTxResponse_1.json
 
 source-repository head
   type: git
