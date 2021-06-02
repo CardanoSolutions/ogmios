@@ -1,5 +1,20 @@
 #!/usr/bin/env bash
 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# wait-for-sync.sh
+#
+#   Wait for an ogmios / cardano-node to be synchronized with the network, up to a given threshold.
+#
+# Usage: ./wait-for-sync.sh OGMIOS_PORT THRESHOLD
+#
+# Examples:
+#   ./wait-for-sync.sh 1337 1
+#   ./wait-for-sync.sh 1338 0.95
+
+
 set -eo pipefail
 
 exitWithUsage () {

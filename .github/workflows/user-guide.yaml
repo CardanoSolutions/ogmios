@@ -20,9 +20,10 @@ jobs:
         curl -L https://github.com/gohugoio/hugo/releases/download/v0.76.5/hugo_extended_0.76.5_Linux-64bit.tar.gz | tar xz
 
     - name: 📸 Build Static Website
+      shell: bash
       run: |
         pip3 install json-schema-for-humans
-        make api-reference
+        ./scripts/generate-api-reference.sh
         cd docs
         git submodule update --init themes/learn
         ../hugo -t learn --minify

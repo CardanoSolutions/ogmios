@@ -32,7 +32,7 @@ jobs:
         VERSION: 3.2
       run: |
         cd server
-        curl -sSL https://raw.github.com/KtorZ/cardano-ogmios/master/.github/scripts/from-github.sh | sh -s src test app -h .hlint.yaml
+        curl -sSL https://raw.github.com/KtorZ/cardano-ogmios/master/scripts/exec-from-github.sh | sh -s src test app -h .hlint.yaml
 
     - name: 🧐 stylish-haskell
       env:
@@ -43,7 +43,7 @@ jobs:
         VERSION: v0.11.0.0
       run: |
         cd server
-        curl -sSL https://raw.github.com/KtorZ/cardano-ogmios/master/.github/scripts/from-github.sh | sh -s $(find src test app -type f -name '*.hs' ! -path '*.stack-work*') -i -c .stylish-haskell.yaml
+        curl -sSL https://raw.github.com/KtorZ/cardano-ogmios/master/scripts/exec-from-github.sh | sh -s $(find src test app -type f -name '*.hs' ! -path '*.stack-work*') -i -c .stylish-haskell.yaml
         if [ -z "$(git status --porcelain)" ]; then
             echo "No style errors detected."
         else
