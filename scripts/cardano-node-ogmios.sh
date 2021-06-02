@@ -4,6 +4,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# cardano-node-ogmios.sh
+#
+#   Runs a cardano-node and an ogmios instance side-by-side, and 'monitor' both processes. If one dies, exits.
+#   This script is meant to be used within a container to provide a cardano-node+ogmios as a single service.
+#
+# Usage: ./cardano-node-ogmios.sh
+#
+# Available ENV vars:
+#   NETWORK                 Target network, either 'mainnet' or 'testnet'
+
 set -m
 
 if [ -z "$NETWORK" ]; then
