@@ -3,10 +3,17 @@ import {
   AddressAttributesTooLarge,
   AlreadyDelegating,
   BadInputs,
+  CollateralHasNonAdaAssets,
+  CollateralIsScript,
+  CollateralTooSmall,
+  CollectErrors,
+  DatumsMismatch,
   DelegateNotRegistered,
   DuplicateGenesisVrf,
+  ExecutionUnitsTooLarge,
   ExpiredUtxo,
-  FeeTooSmall1,
+  ExtraDataMismatch,
+  FeeTooSmall,
   InsufficientFundsForMir,
   InsufficientGenesisSignatures,
   InvalidMetadata,
@@ -15,13 +22,15 @@ import {
   MirProducesNegativeUpdate,
   MirTransferNotCurrentlyAllowed,
   MissingAtLeastOneInputUtxo,
+  MissingRequiredSignatures,
   MissingScriptWitnesses,
   MissingTxMetadata,
   MissingTxMetadataHash,
   MissingVkWitnesses,
-  NetworkMismatch1,
+  NetworkMismatch,
   NonGenesisVoters,
   OutputTooSmall,
+  OutsideForecast,
   OutsideOfValidityInterval,
   PoolCostTooSmall,
   ProtocolVersionCannotFollow,
@@ -34,14 +43,17 @@ import {
   SubmitFail,
   TooLateForMir,
   TooManyAssetsInOutput,
+  TooManyCollateralInputs,
   TriesToForgeAda,
   TxMetadataHashMismatch,
-  TxTooLarge1,
+  TxTooLarge,
   TxValidationError,
   UnknownGenesisKey,
   UnknownOrIncompleteWithdrawals,
+  UnredeemableScripts,
   UpdateWrongEpoch,
   UtxoValidationError,
+  ValidationTagMismatch,
   ValueNotConserved,
   WrongCertificateType,
   WrongPoolCertificate,
@@ -59,12 +71,12 @@ type SubmitTxErrorShelley =
   | TxMetadataHashMismatch
   | BadInputs
   | ExpiredUtxo
-  | TxTooLarge1
+  | TxTooLarge
   | MissingAtLeastOneInputUtxo
   | InvalidMetadata
-  | FeeTooSmall1
+  | FeeTooSmall
   | ValueNotConserved
-  | NetworkMismatch1
+  | NetworkMismatch
   | OutputTooSmall
   | AddressAttributesTooLarge
   | DelegateNotRegistered
@@ -92,6 +104,18 @@ type SubmitTxErrorShelley =
   | OutsideOfValidityInterval
   | TriesToForgeAda
   | TooManyAssetsInOutput
+  | UnredeemableScripts
+  | DatumsMismatch
+  | ExtraDataMismatch
+  | MissingRequiredSignatures
+  | CollateralTooSmall
+  | CollateralIsScript
+  | CollateralHasNonAdaAssets
+  | TooManyCollateralInputs
+  | ExecutionUnitsTooLarge
+  | OutsideForecast
+  | ValidationTagMismatch
+  | CollectErrors
 
 export const errors = {
   byron: {
@@ -218,10 +242,10 @@ export const errors = {
       }
     },
     TxTooLarge: {
-      assert: (item: SubmitTxErrorShelley): item is TxTooLarge1 =>
-        (item as TxTooLarge1).txTooLarge !== undefined,
+      assert: (item: SubmitTxErrorShelley): item is TxTooLarge =>
+        (item as TxTooLarge).txTooLarge !== undefined,
       Error: class TxTooLargeError extends CustomError {
-        public constructor (rawError: TxTooLarge1) {
+        public constructor (rawError: TxTooLarge) {
           super()
           this.message = JSON.stringify(rawError.txTooLarge, null, 2)
         }
@@ -248,10 +272,10 @@ export const errors = {
       }
     },
     FeeTooSmall: {
-      assert: (item: SubmitTxErrorShelley): item is FeeTooSmall1 =>
-        (item as FeeTooSmall1).feeTooSmall !== undefined,
+      assert: (item: SubmitTxErrorShelley): item is FeeTooSmall =>
+        (item as FeeTooSmall).feeTooSmall !== undefined,
       Error: class FeeTooSmallError extends CustomError {
-        public constructor (rawError: FeeTooSmall1) {
+        public constructor (rawError: FeeTooSmall) {
           super()
           this.message = JSON.stringify(rawError.feeTooSmall, null, 2)
         }
@@ -268,10 +292,10 @@ export const errors = {
       }
     },
     NetworkMismatch: {
-      assert: (item: SubmitTxErrorShelley): item is NetworkMismatch1 =>
-        (item as NetworkMismatch1).networkMismatch !== undefined,
+      assert: (item: SubmitTxErrorShelley): item is NetworkMismatch =>
+        (item as NetworkMismatch).networkMismatch !== undefined,
       Error: class NetworkMismatchError extends CustomError {
-        public constructor (rawError: NetworkMismatch1) {
+        public constructor (rawError: NetworkMismatch) {
           super()
           this.message = JSON.stringify(rawError.networkMismatch, null, 2)
         }
@@ -544,6 +568,126 @@ export const errors = {
         public constructor (rawError: TooManyAssetsInOutput) {
           super()
           this.message = JSON.stringify(rawError.tooManyAssetsInOutput, null, 2)
+        }
+      }
+    },
+    UnredeemableScripts: {
+      assert: (item: SubmitTxErrorShelley): item is UnredeemableScripts =>
+        (item as UnredeemableScripts).unredeemableScripts !== undefined,
+      Error: class UnredeemableScriptsError extends CustomError {
+        public constructor (rawError: UnredeemableScripts) {
+          super()
+          this.message = JSON.stringify(rawError.unredeemableScripts, null, 2)
+        }
+      }
+    },
+    DatumsMismatch: {
+      assert: (item: SubmitTxErrorShelley): item is DatumsMismatch =>
+        (item as DatumsMismatch).datumsMismatch !== undefined,
+      Error: class DatumsMismatchError extends CustomError {
+        public constructor (rawError: DatumsMismatch) {
+          super()
+          this.message = JSON.stringify(rawError.datumsMismatch, null, 2)
+        }
+      }
+    },
+    ExtraDataMismatch: {
+      assert: (item: SubmitTxErrorShelley): item is ExtraDataMismatch =>
+        (item as ExtraDataMismatch).extraDataMismatch !== undefined,
+      Error: class ExtraDataMismatchError extends CustomError {
+        public constructor (rawError: ExtraDataMismatch) {
+          super()
+          this.message = JSON.stringify(rawError.extraDataMismatch, null, 2)
+        }
+      }
+    },
+    MissingRequiredSignatures: {
+      assert: (item: SubmitTxErrorShelley): item is MissingRequiredSignatures =>
+        (item as MissingRequiredSignatures).missingRequiredSignatures !== undefined,
+      Error: class MissingRequiredSignaturesError extends CustomError {
+        public constructor (rawError: MissingRequiredSignatures) {
+          super()
+          this.message = JSON.stringify(rawError.missingRequiredSignatures, null, 2)
+        }
+      }
+    },
+    CollateralTooSmall: {
+      assert: (item: SubmitTxErrorShelley): item is CollateralTooSmall =>
+        (item as CollateralTooSmall).collateralTooSmall !== undefined,
+      Error: class CollateralTooSmallError extends CustomError {
+        public constructor (rawError: CollateralTooSmall) {
+          super()
+          this.message = JSON.stringify(rawError.collateralTooSmall, null, 2)
+        }
+      }
+    },
+    CollateralIsScript: {
+      assert: (item: SubmitTxErrorShelley): item is CollateralIsScript =>
+        (item as CollateralIsScript).collateralIsScript !== undefined,
+      Error: class CollateralIsScriptError extends CustomError {
+        public constructor (rawError: CollateralIsScript) {
+          super()
+          this.message = JSON.stringify(rawError.collateralIsScript, null, 2)
+        }
+      }
+    },
+    CollateralHasNonAdaAssets: {
+      assert: (item: SubmitTxErrorShelley): item is CollateralHasNonAdaAssets =>
+        (item as CollateralHasNonAdaAssets).collateralHasNonAdaAssets !== undefined,
+      Error: class CollateralHasNonAdaAssetsError extends CustomError {
+        public constructor (rawError: CollateralHasNonAdaAssets) {
+          super()
+          this.message = JSON.stringify(rawError.collateralHasNonAdaAssets, null, 2)
+        }
+      }
+    },
+    TooManyCollateralInputs: {
+      assert: (item: SubmitTxErrorShelley): item is TooManyCollateralInputs =>
+        (item as TooManyCollateralInputs).tooManyCollateralInputs !== undefined,
+      Error: class TooManyCollateralInputsError extends CustomError {
+        public constructor (rawError: TooManyCollateralInputs) {
+          super()
+          this.message = JSON.stringify(rawError.tooManyCollateralInputs, null, 2)
+        }
+      }
+    },
+    ExecutionUnitsTooLarge: {
+      assert: (item: SubmitTxErrorShelley): item is ExecutionUnitsTooLarge =>
+        (item as ExecutionUnitsTooLarge).executionUnitsTooLarge !== undefined,
+      Error: class ExecutionUnitsTooLargeError extends CustomError {
+        public constructor (rawError: ExecutionUnitsTooLarge) {
+          super()
+          this.message = JSON.stringify(rawError.executionUnitsTooLarge, null, 2)
+        }
+      }
+    },
+    OutsideForecast: {
+      assert: (item: SubmitTxErrorShelley): item is OutsideForecast =>
+        (item as OutsideForecast).outsideForecast !== undefined,
+      Error: class OutsideForecastError extends CustomError {
+        public constructor (rawError: OutsideForecast) {
+          super()
+          this.message = JSON.stringify(rawError.outsideForecast, null, 2)
+        }
+      }
+    },
+    ValidationTagMismatch: {
+      assert: (item: SubmitTxErrorShelley): item is ValidationTagMismatch =>
+        (item as ValidationTagMismatch) === 'validationTagMismatch',
+      Error: class ValidationTagMismatchError extends CustomError {
+        public constructor (rawError: ValidationTagMismatch) {
+          super()
+          this.message = JSON.stringify(rawError, null, 2)
+        }
+      }
+    },
+    CollectErrors: {
+      assert: (item: SubmitTxErrorShelley): item is CollectErrors =>
+        (item as CollectErrors).collectErrors !== undefined,
+      Error: class CollectErrorsError extends CustomError {
+        public constructor (rawError: CollectErrors) {
+          super()
+          this.message = JSON.stringify(rawError.collectErrors, null, 2)
         }
       }
     }

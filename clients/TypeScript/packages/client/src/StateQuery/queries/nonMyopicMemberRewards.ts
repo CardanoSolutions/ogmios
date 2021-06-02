@@ -2,7 +2,7 @@ import {
   EraMismatch,
   Hash16,
   Lovelace,
-  NonMyopicMemberRewards1,
+  NonMyopicMemberRewards,
   Ogmios
 } from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
@@ -12,16 +12,16 @@ import { Query } from '../Query'
 const isEraMismatch = (result: Ogmios['QueryResponse[nonMyopicMemberRewards]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
 
-const isNonMyopicMemberRewards = (result: Ogmios['QueryResponse[nonMyopicMemberRewards]']['result']): result is NonMyopicMemberRewards1 =>
+const isNonMyopicMemberRewards = (result: Ogmios['QueryResponse[nonMyopicMemberRewards]']['result']): result is NonMyopicMemberRewards =>
   typeof Object.values(
-    Object.values(result as NonMyopicMemberRewards1)[0]
+    Object.values(result as NonMyopicMemberRewards)[0]
   )[0] === 'number'
 
-export const nonMyopicMemberRewards = (input: (Lovelace | Hash16)[], context?: InteractionContext): Promise<NonMyopicMemberRewards1> =>
+export const nonMyopicMemberRewards = (input: (Lovelace | Hash16)[], context?: InteractionContext): Promise<NonMyopicMemberRewards> =>
   Query<
     Ogmios['Query'],
     Ogmios['QueryResponse[nonMyopicMemberRewards]'],
-    NonMyopicMemberRewards1
+    NonMyopicMemberRewards
   >({
     methodName: 'Query',
     args: {

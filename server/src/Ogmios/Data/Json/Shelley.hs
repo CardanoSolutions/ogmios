@@ -894,7 +894,7 @@ encodeTx mode x = encodeObjectWithMode mode
       )
     , ( "metadata"
       , (,) <$> fmap (("hash",) . encodeAuxiliaryDataHash) (Sh._mdHash (Sh.body x))
-            <*> fmap (("body",) . encodeMetadata ) (Sh.auxiliaryData x)
+            <*> fmap (("body",) . encodeMetadata) (Sh.auxiliaryData x)
         & encodeStrictMaybe (\(a, b) -> encodeObject [a,b])
       )
     ]
@@ -954,12 +954,12 @@ encodeTxOut
     :: (ShelleyBased era, Core.Value era ~ Coin)
     => Sh.TxOut era
     -> Json
-encodeTxOut (Sh.TxOut addr coin) = encodeObject
+encodeTxOut (Sh.TxOut addr value) = encodeObject
     [ ( "address"
       , encodeAddress addr
       )
     , ( "value"
-      , encodeCoin coin
+      , encodeValue value
       )
     ]
 
@@ -1164,6 +1164,13 @@ encodeUtxowFailure encodeUtxoFailure_ = \case
     Sh.UtxoFailure e ->
         encodeUtxoFailure_ e
 
+encodeValue
+    :: Coin
+    -> Json
+encodeValue coin = encodeObject
+    [ ( "coins", encodeCoin coin )
+    ]
+
 encodeVerKeyDSign
     :: CC.DSIGNAlgorithm alg
     => CC.VerKeyDSIGN alg
@@ -1213,7 +1220,7 @@ encodeWitnessSet
     -> Json
 encodeWitnessSet x = encodeObject
     [ ( "signatures"
-      , encodeFoldable encodeWitVKey (Sh.addrWits x)
+      , encodeWitVKeys (Sh.addrWits x)
       )
     , ( "scripts"
       , encodeMap stringifyScriptHash encodeScript (Sh.scriptWits x)
@@ -1229,12 +1236,13 @@ encodeWitHashes
 encodeWitHashes =
     encodeFoldable encodeKeyHash . Sh.unWitHashes
 
-encodeWitVKey
+encodeWitVKeys
     :: Crypto crypto
-    => Sh.WitVKey Sh.Witness crypto
+    => Set (Sh.WitVKey 'Sh.Witness crypto)
     -> Json
-encodeWitVKey (Sh.WitVKey key sig) =
-    encodeObject [(stringifyVKey  key, encodeSignedDSIGN sig)]
+encodeWitVKeys = encodeFoldable'
+    (\(Sh.WitVKey key _) -> stringifyVKey key)
+    (\(Sh.WitVKey _ sig) -> encodeSignedDSIGN sig)
 
 --
 -- Conversion To Text

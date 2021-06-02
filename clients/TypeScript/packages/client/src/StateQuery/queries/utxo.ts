@@ -2,9 +2,9 @@ import {
   Address,
   EraMismatch,
   Ogmios,
-  Utxo1,
-  Utxo2,
-  UtxoMary
+  TxIn,
+  TxOut,
+  Utxo
 } from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
 import { InteractionContext } from '../../Connection'
@@ -13,24 +13,21 @@ import { Query } from '../Query'
 const isEraMismatch = (result: Ogmios['QueryResponse[utxo]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
 
-const isArrayOfUtxo = (result: Ogmios['QueryResponse[utxo]']['result']): result is Utxo1 => {
+const isArrayOfUtxo = (result: Ogmios['QueryResponse[utxo]']['result']): result is Utxo => {
   if (!Array.isArray(result)) {
     return false
   } else if (Array.isArray(result) && result.length === 0) {
     return true
   }
-  const item = result[0] as (Utxo2 | UtxoMary)
-  return (Array.isArray(item) && item.length === 0) ||
-    'index' in item[0] ||
-    ('index' in item[0] &&
-      (typeof item[1].value === 'number' || typeof item[1].value.coins === 'number'))
+  const item = result[0] as [TxIn, TxOut]
+  return 'index' in item[0] || typeof item[1].value.coins === 'number'
 }
 
-export const utxo = (addresses: Address[], context?: InteractionContext): Promise<Utxo1> =>
+export const utxo = (addresses: Address[], context?: InteractionContext): Promise<Utxo> =>
   Query<
     Ogmios['Query'],
     Ogmios['QueryResponse[utxo]'],
-    Utxo1
+    Utxo
   >({
     methodName: 'Query',
     args: {

@@ -61,8 +61,8 @@ encodeAlonzoPredFail
 encodeAlonzoPredFail = \case
     Al.UnRedeemableScripts scripts ->
         encodeObject
-            [ ( "unreemableScripts"
-              , encodeFoldable (encode2Tuple encodeScriptPurpose Shelley.encodeScriptHash) scripts
+            [ ( "unredeemableScripts"
+              , encodeFoldable encodeUnredeemableScript scripts
               )
             ]
     Al.DataHashSetsDontAgree provided inferred ->
@@ -123,6 +123,18 @@ encodeBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
       , Shelley.encodeShelleyHash headerHash
       )
     ]
+
+encodeCollectError
+    :: Crypto crypto
+    => Al.CollectError crypto
+    -> Json
+encodeCollectError = \case
+    Al.NoRedeemer purpose ->
+        encodeObject [ ( "noRedeemer", encodeScriptPurpose purpose ) ]
+    Al.NoWitness hash ->
+        encodeObject [ ( "noWitness", Shelley.encodeScriptHash hash ) ]
+    Al.NoCostModel lang ->
+        encodeObject [ ( "noCostModel", encodeLanguage lang ) ]
 
 encodeCostModel
     :: Al.CostModel
@@ -348,14 +360,10 @@ encodeTx mode x = encodeObjectWithMode mode
     , ( "body"
       , encodeTxBody (Al.body x)
       )
-    , ( "metadata", encodeObject
-        [ ( "hash"
-          , encodeStrictMaybe Shelley.encodeAuxiliaryDataHash (adHash (Al.body x))
-          )
-        , ( "body"
-          , encodeStrictMaybe encodeAuxiliaryData (Al.auxiliaryData x)
-          )
-        ]
+    , ( "metadata"
+      , (,) <$> fmap (("hash",) . Shelley.encodeAuxiliaryDataHash) (adHash (Al.body x))
+            <*> fmap (("body",) . encodeAuxiliaryData) (Al.auxiliaryData x)
+        & encodeStrictMaybe (\(a, b) -> encodeObject [a,b])
       )
     ]
     [ ( "witness"
@@ -374,7 +382,7 @@ encodeTxBody x = encodeObject
     [ ( "inputs"
       , encodeFoldable Shelley.encodeTxIn (Al.inputs x)
       )
-    , ( "collateral"
+    , ( "collaterals"
       , encodeFoldable Shelley.encodeTxIn (Al.collateral x)
       )
     , ( "outputs"
@@ -424,6 +432,17 @@ encodeTxOut (Al.TxOut addr value datum) = encodeObject
       , encodeStrictMaybe encodeDataHash datum
       )
     ]
+
+encodeUnredeemableScript
+    :: Crypto crypto
+    => (Al.ScriptPurpose crypto, Sh.ScriptHash crypto)
+    -> Json
+encodeUnredeemableScript (purpose, hash) =
+    encodeObject
+        [ ( Shelley.stringifyScriptHash hash
+          , encodeScriptPurpose purpose
+          )
+        ]
 
 encodeUpdate
     :: Sh.Update (AlonzoEra crypto)
@@ -598,18 +617,6 @@ encodeUtxosPredicateFailure = \case
     Al.UpdateFailure e ->
         Shelley.encodeUpdateFailure e
 
-encodeCollectError
-    :: Crypto crypto
-    => Al.CollectError crypto
-    -> Json
-encodeCollectError = \case
-    Al.NoRedeemer purpose ->
-        encodeObject [ ( "noRedeemer", encodeScriptPurpose purpose ) ]
-    Al.NoWitness hash ->
-        encodeObject [ ( "noWitness", Shelley.encodeScriptHash hash ) ]
-    Al.NoCostModel lang ->
-        encodeObject [ ( "noCostModel", encodeLanguage lang ) ]
-
 encodeWitnessPPDataHash
     :: Al.WitnessPPDataHash crypto
     -> Json
@@ -622,7 +629,7 @@ encodeWitnessSet
     -> Json
 encodeWitnessSet x = encodeObject
     [ ( "signatures"
-      , encodeFoldable Shelley.encodeWitVKey (Al.txwitsVKey x)
+      , Shelley.encodeWitVKeys (Al.txwitsVKey x)
       )
     , ( "scripts"
       , encodeMap Shelley.stringifyScriptHash encodeScript (Al.txscripts x)
