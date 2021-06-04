@@ -5,7 +5,7 @@ chapter: false
 pre: "<b>5. </b>"
 ---
 
-### edge / unreleased
+### [4.0.0-beta 1] - 2021-06-04
 
 #### Added
 
@@ -17,8 +17,8 @@ pre: "<b>5. </b>"
   - `mirNegativeTransferNotCurrentlyAllowed`
   - `mirProducesNegativeUpdate`
 
-  These errors are related to transactions issuing MIR certificates which can only be done by 
-  genesis delegates. So this change should not impact any 'standard' user. 
+  These errors are related to transactions issuing MIR certificates which can only be done by
+  genesis delegates. So this change should not impact any 'standard' user.
 
 - New possible errors from the transaction submission coming with the Alonzo era:
   - `unredeemableScripts`
@@ -34,26 +34,31 @@ pre: "<b>5. </b>"
   - `validationTagMismatch`
   - `collectErrors`
 
+ - The TypeScript `ChainSyncClient` now implements an in-memory queue to ensure `requestNext`
+   responses are processed sequentially when there are async operations in the message handlers.
+   This behaviour can be bypassed where sequential processsing is not required, by setting the new
+   construction option `sequential` to `false`.
+
 #### Changed
 
-- The `moveInstantaneousRewards` certificates have a new optional field `value` and not only a `rewards` map as before. When `value` is present, it signifies that rewards are moved to the other pot. 
-- :warning: **Server Breaking Changes** :warning: 
+- The `moveInstantaneousRewards` certificates have a new optional field `value` and not only a `rewards` map as before. When `value` is present, it signifies that rewards are moved to the other pot.
+- :warning: **Server Breaking Changes** :warning:
 
-  - Auxiliary data's `scriptPreImages` in Allegra & Mary has been replaced with a field `scripts` which has one field `native`. The value of `native` corresponds to what used to be the value of `scriptPreImages`. In Alonzo, `scripts` may also have another field `plutus` with a serialized Plutus script. 
+  - Auxiliary data's `scriptPreImages` in Allegra & Mary has been replaced with a field `scripts` which has one field `native`. The value of `native` corresponds to what used to be the value of `scriptPreImages`. In Alonzo, `scripts` may also have another field `plutus` with a serialized Plutus script.
 
-  - Transactions witnesses' `address` has been renamed into `signatures`, and the structure of the object has been changed to be a map from public keys to signatures (instead of an object with two field `key` & `signature`). 
+  - Transactions witnesses' `address` has been renamed into `signatures`, and the structure of the object has been changed to be a map from public keys to signatures (instead of an object with two field `key` & `signature`).
 
   - Transactions witnesses' `script` has been renamed into `scripts`.
 
-  - Transaction submission errors' `networkMismatch` now returns an `invalidEntities` list of object in the form of `{ "type": ..., "entity": }` where `type` is a text tag designating the type of entity for which there is a network identifier mismatch. Values can be `address`, `rewardAccount` and since Alonzo `transactionBody`. The `entity` field contains some details specific to the type of entity. Before, it used to be two distinct fields `invalidAddresses` and `invalidRewardAccounts`. 
+  - Transaction submission errors' `networkMismatch` now returns an `invalidEntities` list of object in the form of `{ "type": ..., "entity": }` where `type` is a text tag designating the type of entity for which there is a network identifier mismatch. Values can be `address`, `rewardAccount` and since Alonzo `transactionBody`. The `entity` field contains some details specific to the type of entity. Before, it used to be two distinct fields `invalidAddresses` and `invalidRewardAccounts`.
 
-  - Empty transaction metadata are no longer materialized by an object with two null fields (`{ "hash": null, "body": null }`). Empty transaction metadata are now equal to `null`. 
+  - Empty transaction metadata are no longer materialized by an object with two null fields (`{ "hash": null, "body": null }`). Empty transaction metadata are now equal to `null`.
 
   - `map` metadatum in transactions' metadata are no longer materialized as a list of list of singleton objects: `[[{ "k": ... }, { "v": ... }], ...]` but instead, as a list of object with two fields `k` and `v`: `[{ "k": ..., "v": ...}, ...]`. This was an oversight from the encoder which was never intended to end up that way but happened to slip in because the schema for metadatum was not specified / documented (and therefore, also escaped testing). This is now documented properly.
 
   - The `TxOut` (and thus Utxo) model definitions have been unified and harmonized across all eras. That is, pre-Mary eras now also wrap Ada values in an object with a field `"coins": ...`. This reduces the discrepancy between eras for there's now a single TxOut representation valid across all eras. Some fields are however optional and only present in some eras (e.g. `datum` starting from Alonzo)
 
-- :warning: **Client/TypeScript Breaking Changes** :warning: 
+- :warning: **Client/TypeScript Breaking Changes** :warning:
 
   - Type `DelegationsAndRewards` renamed into `DelegationsAndRewardsByAccounts`
   - Type `DelegationsAndRewards1` renamed into `DelegationsAndRewards`
@@ -66,6 +71,9 @@ pre: "<b>5. </b>"
   - Many types `NullX` merged into a single `Null` type
   - Query types have been renamed from `ledgerTip1` to `GetLedgerTip` and so forth for all queries.
 
+  - `ChainSyncClient` no longer exposes a requestNext function. Instead you must invoke the callback provided as the second argument in each of rollBackward and rollForward handlers.
+  - `ChainSyncClient` no longer exposes JSON-WSP reflection as there would be unexpected results given the first n messages would all share the same reflected value.
+  - The `ChainSyncClientMessageHandlers` methods now must return a promise.
 
 #### Removed
 
@@ -79,7 +87,7 @@ pre: "<b>5. </b>"
   - An interactive REPL to play with Ogmios using the command-line.
   - A generator to derive TypeScript type definitions from the JSON schema.
   - The actual client library providing nice wrapper around the various protocol, in a typed way.
-  The TypeScript client also includes a new battery of automated integration tests against the testnet. 
+  The TypeScript client also includes a new battery of automated integration tests against the testnet.
 - Support for WebSocket sub-protocols, with currently one support sub-protocol: `ogmios.compact.v1`. When enabled,
   Ogmios will omit fields such as witnesses, proofs and signatures from responses to make responses smaller.
 - Provide missing documentation / JSON-schema for:
@@ -106,7 +114,7 @@ pre: "<b>5. </b>"
   `Dockerfile`, but cache from DockerHub can be leveraged to reduce overall build time when building
   from scratch.
 - Fixed typo in the JSON-schema w.r.t to the 'Acquire' request (`points` → `point`), and introduce more automated test
-  to catch this kind of errors more easily. 
+  to catch this kind of errors more easily.
 
 #### Removed
 
@@ -126,7 +134,7 @@ pre: "<b>5. </b>"
 - Use 'contentEncoding' over 'format' in appropriate part of the JSON schema.
 - Fix various errors in the JSON-schema definition & extend test suite coverage in consequence.
 - Implement a 'fast-bech32' encoding library, to speed-up Ogmios serialization of blocks beyond the Shelley era.
-- Use faster (and recommended) JSON encoding techniques to speed up overall JSON serialization. 
+- Use faster (and recommended) JSON encoding techniques to speed up overall JSON serialization.
 - Improve generated documentation from JSON schema by:
   - Providing titles to 'oneOf' items
   - Adding descriptions to top-level definitions
@@ -152,12 +160,12 @@ pre: "<b>5. </b>"
 
 - Support for the Allegra era on the chain-sync, tx submission and state query protocols.
 - Support for the Mary era on the chain-sync, tx submission and state query protocols.
-- Support for multi-era state queries, or said differently, Ogmios can survive a hard-fork without being restarted or re-compiled. 
+- Support for multi-era state queries, or said differently, Ogmios can survive a hard-fork without being restarted or re-compiled.
 - Allow clients to also make state queries based on the node's tip (instead of passing an explicit point to acquire).
 - Interactive dashboard leveraging Ogmios health's endpoint and local state query protocol to show metrics in real-time.
 - Automated smoke sanity tests executed on a running instance, running queries and chain-syncs across all eras.
 - Various internal optimization, in particular with rewards to the chain-sync protocol (~14.000 blocks/s in Byron, ~2500 block/s in Shelley and beyond).
-- Additional metrics for monitoring: current heap size, total messages, total unrouted messages and start time.  
+- Additional metrics for monitoring: current heap size, total messages, total unrouted messages and start time.
 - Configurable HTTP server timeout from the command-line, with sensible defaults.
 
 #### Changed
@@ -183,8 +191,8 @@ pre: "<b>5. </b>"
 - Support for the local-state-query protocol.
 - Health / Heartbeat endpoint for monitoring.
 - Runtime and application metrics measured and served on endpoint (`/health`).
-- Ogmios now includes an HTTP static server hosting both the WSP definition and, a `/benchmark.html` to run some quick benchmark / smoke test. 
-- Added additional configuration options via command-line or environment. 
+- Ogmios now includes an HTTP static server hosting both the WSP definition and, a `/benchmark.html` to run some quick benchmark / smoke test.
+- Added additional configuration options via command-line or environment.
 - Revised user manual with detailed step-by-step examples.
 
 #### Changed
@@ -211,12 +219,12 @@ pre: "<b>5. </b>"
 
 - Full docker stack via docker-compose.
 
-- Basic command-line and logging.  
+- Basic command-line and logging.
 
 #### Changed
 
 ø
 
-#### Removed 
+#### Removed
 
 ø
