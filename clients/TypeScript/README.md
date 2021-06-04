@@ -47,7 +47,7 @@ yarn repl:start
 ```
 #### testnet
 ```console
-yarn repl --port 1338
+yarn repl:start --port 1338
 ```
 ### Lint
 ```console
@@ -67,6 +67,11 @@ yarn cleanup
 ### Publish to npm.org
 ```console
 ./scripts/publish.sh
+```
+
+### Pkg REPL
+```console
+yarn repl:pkg
 ```
 
 
