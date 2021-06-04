@@ -1,6 +1,6 @@
 {
   "name": "@cardano-ogmios/schema",
-  "version": "3.2.0",
+  "version": "4.0.0-beta.1",
   "description": "Generated TypeScript from the Cardano Ogmios schema",
   "engines": {
     "node": "^14"
