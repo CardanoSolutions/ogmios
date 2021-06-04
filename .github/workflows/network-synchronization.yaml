@@ -41,7 +41,7 @@ jobs:
         NETWORK: ${{ matrix.network }} # NOTE: 'NETWORK' is used in the compose file.
       shell: bash
       run: |
-        docker pull ktorz/ogmios:latest
+        docker pull cardanosolutions/ogmios:latest
         docker-compose up -d
         ./scripts/wait-for-sync.sh 1337 1
         docker-compose down

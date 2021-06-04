@@ -69,9 +69,9 @@ jobs:
       with:
         context: .
         push: true
-        tags: ktorz/ogmios:cache
+        tags: cardanosolutions/ogmios:cache
         target: ogmios
-        cache-from: type=registry,ref=ktorz/ogmios:cache
+        cache-from: type=registry,ref=cardanosolutions/ogmios:cache
         cache-to: type=inline
 
   clients_TypeScript:
@@ -109,7 +109,7 @@ jobs:
       shell: bash
       run: |
         sed -i "s@node-db:/data@./data:/data@" docker-compose.yml
-        sed -i "s@ktorz/ogmios:latest@ktorz/ogmios:cache@" docker-compose.yml
+        sed -i "s@cardanosolutions/ogmios:latest@cardanosolutions/ogmios:cache@" docker-compose.yml
 
     - name: ↪ Set package version
       id: package-version
@@ -129,7 +129,7 @@ jobs:
       if: matrix.network == 'testnet'
       working-directory: clients/TypeScript
       run: |
-        docker pull ktorz/ogmios:cache
+        docker pull cardanosolutions/ogmios:cache
         yarn testnet:up -d
         ../../scripts/wait-for-sync.sh 1338 1
         yarn test

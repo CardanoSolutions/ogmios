@@ -39,7 +39,7 @@ I secretly keep a hope that someday, many operators will deploy Ogmios alongside
 
 #### Is there any client for Ogmios?
 
-As a matter of fact, there is. A [TypeScript client library and REPL](https://github.com/KtorZ/cardano-ogmios/tree/master/clients/TypeScript#cardano-ogmios-typescript-client-packages) have been developed by a colleague of mine (thanks again Rhys, you're awesome!). This is huge and comparable to what [web3.js](https://web3js.readthedocs.io/en/v1.3.4/) is for Ethereum. And this is only a beginning. We'll keep working on this to grow the client into a more capable SDK for Cardano. In a future where Ogmios is deployed alongside relays, it could become dead simple to get started with web applications development for Cardano. Simply import the TypeScript client, connect to a relay nearby and start hacking. 
+As a matter of fact, there is. A [TypeScript client library and REPL](https://github.com/cardanosolutions/ogmios/tree/master/clients/TypeScript#cardano-ogmios-typescript-client-packages) have been developed by a colleague of mine (thanks again Rhys, you're awesome!). This is huge and comparable to what [web3.js](https://web3js.readthedocs.io/en/v1.3.4/) is for Ethereum. And this is only a beginning. We'll keep working on this to grow the client into a more capable SDK for Cardano. In a future where Ogmios is deployed alongside relays, it could become dead simple to get started with web applications development for Cardano. Simply import the TypeScript client, connect to a relay nearby and start hacking. 
 
 Besides, it goes without saying that as an open-source project Ogmios welcomes contributions; especially on the client library and/or around tools built on top. 
 

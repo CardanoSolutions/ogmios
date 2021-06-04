@@ -14,8 +14,8 @@ Images are uploaded to [Dockerhub](https://dockerhub.com/) and can be pulled fro
 
 | image               | repository                                                                                      | tags               |
 | ---                 | ---                                                                                             | ---                |
-| cardano-node-ogmios | [ktorz/cardano-node-ogmios](https://hub.docker.com/repository/docker/ktorz/cardano-node-ogmios) | `latest`, `v*.*.*` |
-| ogmios              | [ktorz/ogmios](https://hub.docker.com/repository/docker/ktorz/ogmios)                           | `latest`, `v*.*.*` |
+| cardano-node-ogmios | [cardanosolutions/cardano-node-ogmios](https://hub.docker.com/repository/docker/cardanosolutions/cardano-node-ogmios) | `latest`, `v*.*.*` |
+| ogmios              | [cardanosolutions/ogmios](https://hub.docker.com/repository/docker/cardanosolutions/ogmios)                           | `latest`, `v*.*.*` |
 
 ## cardano-node-ogmios (easiest)
 
@@ -29,7 +29,7 @@ $ docker run -it \
   -e NETWORK=mainnet \
   -p 1337:1337 \
   -v db/mainnet:db/mainnet \
-  ktorz/cardano-node-ogmios:latest
+  cardanosolutions/cardano-node-ogmios:latest
 ```
 
 Let's explore a bit the various options:
@@ -69,9 +69,9 @@ To build the image yourself, we encourage you to leverage the existing build-cac
 
 ```console
 $ DOCKER_BUILDKIT=1 docker build \
-    --cache-from ktorz/cardano-node-ogmios:latest \
-    --tag ktorz/cardano-node-ogmios:latest \
-    https://github.com/KtorZ/cardano-ogmios.git
+    --cache-from cardanosolutions/cardano-node-ogmios:latest \
+    --tag cardanosolutions/cardano-node-ogmios:latest \
+    https://github.com/cardanosolutions/ogmios.git
 ```
 
 {{% notice info %}}
@@ -85,7 +85,7 @@ Note that you can explicitly specify the target build when building the multi-st
 Docker's [compose](https://docs.docker.com/compose/) is a handy tool to orchestrate multiple services packaged as containers. The tool works from a compose file which is available in the Ogmios repository, get it via:
 
 ```console
-$ git clone --depth 1 git@github.com:KtorZ/cardano-ogmios.git
+$ git clone --depth 1 git@github.com:cardanosolutions/ogmios.git
 $ cd cardano-ogmios
 ```
 
@@ -98,7 +98,7 @@ $ docker-compose up
 👆This will run and connect:
 
 - A [Cardano node](https://github.com/input-output-hk/cardano-node/), connected to mainnet.
-- An Ogmios server using the [latest Dockerhub build](https://hub.docker.com/r/ktorz/ogmios), listening to localhost on port: 1337.
+- An Ogmios server using the [latest Dockerhub build](https://hub.docker.com/r/cardanosolutions/ogmios), listening to localhost on port: 1337.
 
 Once finish, tear the stack down using:
 
@@ -137,9 +137,9 @@ To build the Ogmios image from sources, pass the `--build` flag to compose. This
 ```console
 ```console
 $ DOCKER_BUILDKIT=1 docker build \
-    --cache-from ktorz/ogmios:latest \
-    --tag ktorz/ogmios:latest \
+    --cache-from cardanosolutions/ogmios:latest \
+    --tag cardanosolutions/ogmios:latest \
     --target ogmios \ 
-    https://github.com/KtorZ/cardano-ogmios.git
+    https://github.com/cardanosolutions/ogmios.git
 ```
 

@@ -40,9 +40,9 @@ jobs:
       with:
         context: .
         push: ${{ github.event_name == 'push' }}
-        tags: ktorz/${{ matrix.target }}:latest
+        tags: cardanosolutions/${{ matrix.target }}:latest
         target: ${{ matrix.target }}
-        cache-from: type=registry,ref=ktorz/${{ matrix.target }}:latest
+        cache-from: type=registry,ref=cardanosolutions/${{ matrix.target }}:latest
         cache-to: type=inline
 
     - name: 🏷️ Build and push (tag)
@@ -51,7 +51,7 @@ jobs:
       with:
         context: .
         push: true
-        tags: ktorz/${{ matrix.target }}:${{ steps.variables.outputs.tag }}
+        tags: cardanosolutions/${{ matrix.target }}:${{ steps.variables.outputs.tag }}
         target: ${{ matrix.target }}
-        cache-from: type=registry,ref=ktorz/${{ matrix.target }}:latest
+        cache-from: type=registry,ref=cardanosolutions/${{ matrix.target }}:latest
         cache-to: type=inline

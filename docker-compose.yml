@@ -16,11 +16,11 @@ services:
         max-file: "20"
 
   ogmios:
-    image: ktorz/ogmios:latest
+    image: cardanosolutions/ogmios:latest
     build:
       context: .
       target: ogmios
-      cache_from: [ktorz/ogmios:latest]
+      cache_from: [cardanosolutions/ogmios:latest]
     restart: on-failure
     environment:
       - OGMIOS_NETWORK=${NETWORK:-mainnet}

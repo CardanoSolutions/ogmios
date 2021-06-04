@@ -28,7 +28,7 @@ Ogmios in itself is a rather small project, yet it's using library directly from
 Clone the git repository from Github:
 
 ```console
-$ git clone --depth 1 --recursive --shallow-submodules git@github.com:KtorZ/cardano-ogmios.git
+$ git clone --depth 1 --recursive --shallow-submodules git@github.com:cardanosolutions/ogmios.git
 $ cd cardano-ogmios/server
 ```
 

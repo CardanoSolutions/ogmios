@@ -2,12 +2,12 @@ _config: !include "../../.hpack.config.yaml"
 
 name:                fast-bech32
 version:             1.0.0
-github:              "KtorZ/cardano-ogmios"
+github:              "cardanosolutions/ogmios"
 license:             MPL-2.0
 author:              "KtorZ <matthias.benkort@gmail.com>"
 maintainer:          "matthias.benkort@gmail.com"
 copyright:           "2021 KtorZ"
-description:         Please see the README on GitHub at <https://github.com/KtorZ/cardano-ogmios/tree/master/server/modules/fast-bech32>
+description:         Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server/modules/fast-bech32>
 synopsis:            Fast implementation of the Bech32 encoding format.
 category:            Codec
 

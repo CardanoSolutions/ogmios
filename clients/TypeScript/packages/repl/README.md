@@ -12,7 +12,7 @@ Download and run static package from the [latest release] for your environment.
 See instructions in [Workspace root]
 
 [ChainSyncClient]: ../client/src/ChainSync/ChainSyncClient.ts
-[latest release]: https://github.com/KtorZ/cardano-ogmios/releases
+[latest release]: https://github.com/cardanosolutions/ogmios/releases
 [Workspace root]: ../..
 
 ## Example

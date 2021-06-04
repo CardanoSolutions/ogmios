@@ -3,7 +3,7 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 ARG CARDANO_NODE_VERSION=1.27.0
-ARG CARDANO_OGMIOS_SNAPSHOT=46004deac7fb66a778ee9d684b70a105dbcf63ec
+ARG OGMIOS_SNAPSHOT=686af91900619d0239b8feb81a00e3cdbaed0d56
 ARG IOHK_LIBSODIUM_GIT_REV=66f017f16633f2060db25e17c170c2afa0f2a8a1
 
 #                                                                              #
@@ -53,23 +53,23 @@ RUN cabal install cardano-node \
   --installdir=/app/bin
 
 # Pre-build latest release of ogmios, to speed up the actual image build later.
-WORKDIR /app/src/cardano-ogmios
-RUN git clone https://github.com/KtorZ/cardano-ogmios.git /app/src/cardano-ogmios &&\
+WORKDIR /app/src/ogmios
+RUN git clone https://github.com/cardanosolutions/ogmios.git /app/src/ogmios &&\
   git fetch --all --tags &&\
-  git checkout ${CARDANO_OGMIOS_SNAPSHOT}
-WORKDIR /app/src/cardano-ogmios/server
+  git checkout ${OGMIOS_SNAPSHOT}
+WORKDIR /app/src/ogmios/server
 RUN cabal install exe:ogmios \
   --overwrite-policy=always \
   --install-method=copy \
   --installdir=/app/bin
 
 #                                                                              #
-# ----------------------- BUILD (cardano-ogmios) ----------------------------- #
+# --------------------------- BUILD (ogmios) --------------------------------- #
 #                                                                              #
 
 FROM setup as build
 
-WORKDIR /app/src/cardano-ogmios/server
+WORKDIR /app/src/ogmios/server
 
 COPY server/ .
 

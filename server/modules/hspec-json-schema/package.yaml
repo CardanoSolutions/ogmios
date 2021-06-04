@@ -2,12 +2,12 @@ _config: !include "../../.hpack.config.yaml"
 
 name:                hspec-json-schema
 version:             1.0.0
-github:              "KtorZ/cardano-ogmios"
+github:              "cardanosolutions/ogmios"
 license:             MPL-2.0
 author:              "KtorZ <matthias.benkort@gmail.com>"
 maintainer:          "matthias.benkort@gmail.com"
 copyright:           "2020-2021 KtorZ"
-description:         Please see the README on GitHub at <https://github.com/KtorZ/cardano-ogmios/tree/master/server/modules/hspec-json-schema>
+description:         Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server/modules/hspec-json-schema>
 synopsis:            For testing arbitrarily generated JSON instances against JSON schemas draft4.
 category:            Test
 

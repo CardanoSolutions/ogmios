@@ -10,7 +10,7 @@
     "packages/*"
   ],
   "main": "dist/index.js",
-  "repository": "https://github.com/KtorZ/cardano-ogmios",
+  "repository": "https://github.com/cardanosolutions/ogmios",
   "author": "Rhys Bartels-Waller",
   "license": "MPL-2.0",
   "scripts": {

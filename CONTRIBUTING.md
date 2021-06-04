@@ -12,18 +12,18 @@
 
 3. Donation
 
-   Want to drop some Ada to give some financial support? Have a look at the [sponsors page](https://github.com/KtorZ/cardano-ogmios/blob/master/SPONSORS.md) for more details.
+   Want to drop some Ada to give some financial support? Have a look at the [sponsors page](https://github.com/cardanosolutions/ogmios/blob/master/SPONSORS.md) for more details.
 
 ## About Issues
 
 ### :bug: How To Report A Bug
 
-Open a [Bug Ticket](https://github.com/KtorZ/cardano-ogmios/issues/new?template=bug.md). 
+Open a [Bug Ticket](https://github.com/cardanosolutions/ogmios/issues/new?template=bug.md). 
 
 ### :bulb: How To Propose An Idea
 
-Open a [Proposal ticket](https://github.com/KtorZ/cardano-ogmios/issues/new?template=idea.md).
+Open a [Proposal ticket](https://github.com/cardanosolutions/ogmios/issues/new?template=idea.md).
 
 ### :question: How To Ask a Question
 
-Open a [Question ticket](https://github.com/KtorZ/cardano-ogmios/issues/new?template=question.md).
+Open a [Question ticket](https://github.com/cardanosolutions/ogmios/issues/new?template=question.md).
