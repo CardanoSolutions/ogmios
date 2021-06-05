@@ -3161,6 +3161,8 @@
         , { "$ref": "#/definitions/SubmitTxError[datumsMismatch]" }
         , { "$ref": "#/definitions/SubmitTxError[extraDataMismatch]" }
         , { "$ref": "#/definitions/SubmitTxError[missingRequiredSignatures]" }
+        , { "$ref": "#/definitions/SubmitTxError[missingDatumHashesForInputs]" }
+        , { "$ref": "#/definitions/SubmitTxError[missingCollateralInputs]" }
         , { "$ref": "#/definitions/SubmitTxError[collateralTooSmall]" }
         , { "$ref": "#/definitions/SubmitTxError[collateralIsScript]" }
         , { "$ref": "#/definitions/SubmitTxError[collateralHasNonAdaAssets]" }
@@ -3815,6 +3817,25 @@
         , "items": { "$ref": "#/definitions/Hash16" }
         }
       }
+    }
+
+  , "SubmitTxError[missingDatumHashesForInputs]":
+    { "type": "object"
+    , "title": "missingDatumHashesForInputs"
+    , "additionalProperties": false
+    , "required": [ "missingDatumHashesForInputs" ]
+    , "properties":
+      { "missingDatumHashesForInputs":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/TxIn" }
+        }
+      }
+    }
+
+  , "SubmitTxError[missingCollateralInputs]":
+    { "type": "string"
+    , "title": "missingCollateralInputs"
+    , "enum": [ "missingCollateralInputs" ]
     }
 
   , "SubmitTxError[collateralTooSmall]":
