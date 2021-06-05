@@ -15,9 +15,9 @@ const q = window.location.search
     .map(x => x.split('='))
     .reduce((o, [k,v]) => Object.assign(o, { [k]: v }), {});
 
-const N_MAX = Number(q['max'] || 10000); // blocks
-const N_BOOTSTRAP = Number(q['bootstrap'] || 1000); // blocks
-const TIMEOUT = Number(q['timeout'] || 15); // seconds
+const N_MAX = Number(q['max'] || 1000); // blocks
+const N_BOOTSTRAP = Number(q['bootstrap'] || 100); // blocks
+const TIMEOUT = Number(q['timeout'] || 60); // seconds
 
 const lastByronBlock = {
   slot: 4492799,
@@ -88,7 +88,9 @@ const lastAllegraBlock = {
                 rcvd += 1;
                 size += event.data.length;
 
-                if (rcvd < N_MAX - N_BOOTSTRAP) {
+                console.log(rcvd, N_MAX - N_BOOTSTRAP)
+
+                if (rcvd <= N_MAX - N_BOOTSTRAP) {
                   client.ogmios("RequestNext");
                 }
 

@@ -71,7 +71,7 @@ describe("StateQuery", () => {
     const title = typeof query === "string" ? query : Object.keys(query).join("/");
     it(title, function () {
       const test = this.test;
-      this.timeout(90000);
+      this.timeout(180000);
       return new Promise ((resolve, reject) => {
         client.addEventListener('message', function $listener(msg) {
           listener = $listener;
