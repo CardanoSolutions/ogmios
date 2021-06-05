@@ -13,8 +13,6 @@
 
 !server/modules/
 server/modules/**/.stack-work
-server/modules/ouroboros-network
-server/modules/cardano-node
 server/modules/hjsonpointer
 server/modules/hjsonschema
 server/modules/wai-routes

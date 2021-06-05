@@ -8,10 +8,18 @@ on:
     tags: [ "*.*.*" ]
 
 jobs:
+  #  _______  _______  ______    __   __  _______  ______
+  # |       ||       ||    _ |  |  | |  ||       ||    _ |
+  # |  _____||    ___||   | ||  |  |_|  ||    ___||   | ||
+  # | |_____ |   |___ |   |_||_ |       ||   |___ |   |_||_
+  # |_____  ||    ___||    __  ||       ||    ___||    __  |
+  #  _____| ||   |___ |   |  | | |     | |   |___ |   |  | |
+  # |_______||_______||___|  |_|  |___|  |_______||___|  |_|
+  #
   server:
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-20.04]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -45,7 +53,63 @@ jobs:
         stack --no-terminal test --flag ogmios:production --no-run-tests
         stack --no-terminal test --flag ogmios:production                 ogmios:unit
 
-  docker:
+  #  _______  _______  ______    __   __  _______  ______            ___      ___   __    _  _______
+  # |       ||       ||    _ |  |  | |  ||       ||    _ |          |   |    |   | |  |  | ||       |
+  # |  _____||    ___||   | ||  |  |_|  ||    ___||   | ||          |   |    |   | |   |_| ||_     _|
+  # | |_____ |   |___ |   |_||_ |       ||   |___ |   |_||_         |   |    |   | |       |  |   |
+  # |_____  ||    ___||    __  ||       ||    ___||    __  |        |   |___ |   | |  _    |  |   |
+  #  _____| ||   |___ |   |  | | |     | |   |___ |   |  | | _____  |       ||   | | | |   |  |   |
+  # |_______||_______||___|  |_|  |___|  |_______||___|  |_||_____| |_______||___| |_|  |__|  |___|
+  #
+  server_lint:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v2.3.3
+
+    - name: 🔬 hlint
+      shell: bash
+      env:
+        PACKAGE: hlint
+        REPOSITORY: ndmitchell/hlint
+        PLATFORM: x86_64-linux
+        RELEASE: v3.2
+        VERSION: 3.2
+      run: |
+        cd server
+        curl -sSL https://raw.github.com/cardanosolutions/ogmios/master/scripts/exec-from-github.sh | sh -s src test app -h .hlint.yaml
+
+    - name: 🧐 stylish-haskell
+      shell: bash
+      env:
+        PACKAGE: stylish-haskell
+        REPOSITORY: jaspervdj/stylish-haskell
+        PLATFORM: linux-x86_64
+        RELEASE: v0.11.0.0
+        VERSION: v0.11.0.0
+      run: |
+        cd server
+        curl -sSL https://raw.github.com/cardanosolutions/ogmios/master/scripts/exec-from-github.sh | sh -s $(find src test app -type f -name '*.hs' ! -path '*.stack-work*') -i -c .stylish-haskell.yaml
+        if [ -z "$(git status --porcelain)" ]; then
+            echo "No style errors detected."
+        else
+            echo "Style errors detected:"
+            git diff
+            exit 1
+        fi
+
+  #  _______  __    _  ______   _______  _______  _______  __    _  ______           _______  ______    _______
+  # |       ||  |  | ||      | |       ||       ||       ||  |  | ||      |         |       ||    _ |  |       |
+  # |    ___||   |_| ||  _    ||_     _||   _   ||    ___||   |_| ||  _    |        |    _  ||   | ||  |    ___|
+  # |   |___ |       || | |   |  |   |  |  | |  ||   |___ |       || | |   |        |   |_| ||   |_||_ |   |___
+  # |    ___||  _    || |_|   |  |   |  |  |_|  ||    ___||  _    || |_|   |        |    ___||    __  ||    ___|
+  # |   |___ | | |   ||       |  |   |  |       ||   |___ | | |   ||       | _____  |   |    |   |  | ||   |___
+  # |_______||_|  |__||______|   |___|  |_______||_______||_|  |__||______| |_____| |___|    |___|  |_||_______|
+  #
+  pre_endToEnd:
     strategy:
       matrix:
         os: [ ubuntu-20.04 ]
@@ -74,8 +138,16 @@ jobs:
         cache-from: type=registry,ref=cardanosolutions/ogmios:cache
         cache-to: type=inline
 
+  #  _______  ___      ___   _______  __    _  _______  _______          _______  __   __  _______  _______  _______  _______  ______    ___   _______  _______
+  # |       ||   |    |   | |       ||  |  | ||       ||       |        |       ||  | |  ||       ||       ||       ||       ||    _ |  |   | |       ||       |
+  # |       ||   |    |   | |    ___||   |_| ||_     _||  _____|        |_     _||  |_|  ||    _  ||    ___||  _____||       ||   | ||  |   | |    _  ||_     _|
+  # |       ||   |    |   | |   |___ |       |  |   |  | |_____           |   |  |       ||   |_| ||   |___ | |_____ |       ||   |_||_ |   | |   |_| |  |   |
+  # |      _||   |___ |   | |    ___||  _    |  |   |  |_____  |          |   |  |_     _||    ___||    ___||_____  ||      _||    __  ||   | |    ___|  |   |
+  # |     |_ |       ||   | |   |___ | | |   |  |   |   _____| | _____    |   |    |   |  |   |    |   |___  _____| ||     |_ |   |  | ||   | |   |      |   |
+  # |_______||_______||___| |_______||_|  |__|  |___|  |_______||_____|   |___|    |___|  |___|    |_______||_______||_______||___|  |_||___| |___|      |___|
+  #
   clients_TypeScript:
-    needs: [docker]
+    needs: [pre_endToEnd]
     strategy:
       matrix:
         os: [ ubuntu-20.04 ]
