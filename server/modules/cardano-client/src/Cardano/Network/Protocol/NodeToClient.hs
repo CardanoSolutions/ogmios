@@ -113,7 +113,7 @@ import Ouroboros.Network.Protocol.ChainSync.Type
 import Ouroboros.Network.Protocol.Handshake.Type
     ( HandshakeClientProtocolError (..) )
 import Ouroboros.Network.Protocol.Handshake.Version
-    ( simpleSingletonVersions )
+    ( combineVersions, simpleSingletonVersions )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient, localStateQueryClientPeer )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
@@ -164,15 +164,18 @@ data Clients m block = Clients
 connectClient
     :: MonadIO m
     => Tracer IO (TraceClient tx err)
-    -> Client IO
+    -> (NodeToClientVersion -> Client IO)
     -> NodeToClientVersionData
     -> FilePath
     -> m ()
 connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
-    let versions = simpleSingletonVersions nodeToClientV vData client
-    let socket = localSnocket iocp addr
-    connectTo socket tracers versions addr
+    connectTo (localSnocket iocp addr) tracers versions addr
   where
+    versions = combineVersions
+        [ simpleSingletonVersions v vData (client v)
+        | v <- [NodeToClientV_9, NodeToClientV_8]
+        ]
+
     tracers :: NetworkConnectTracers LocalAddress NodeToClientVersion
     tracers = NetworkConnectTracers
         { nctMuxTracer = contramap TrMux tr
@@ -195,37 +198,37 @@ mkClient
         -- ^ Static blockchain parameters
     -> Clients m Block
         -- ^ Clients with the driving logic
-    -> Client IO
-mkClient unlift tr epochSlots clients =
+    -> (NodeToClientVersion -> Client IO)
+mkClient unlift tr epochSlots clients = \nodeToClientV ->
     nodeToClientProtocols (const $ pure $ NodeToClientProtocols
         { localChainSyncProtocol =
             InitiatorProtocolOnly $ MuxPeerRaw $ \channel ->
-                localChainSync unlift trChainSync codecChainSync
+                localChainSync unlift trChainSync (codecChainSync nodeToClientV)
                 (chainSyncClient clients)
                 (hoistChannel liftIO channel)
 
         , localTxSubmissionProtocol =
             InitiatorProtocolOnly $ MuxPeerRaw $ \channel ->
-                localTxSubmission unlift trTxSubmission codecTxSubmission
+                localTxSubmission unlift trTxSubmission (codecTxSubmission nodeToClientV)
                 (txSubmissionClient clients)
                 (hoistChannel liftIO channel)
 
         , localStateQueryProtocol =
             InitiatorProtocolOnly $ MuxPeerRaw $ \channel ->
-                localStateQuery unlift trStateQuery codecStateQuery
+                localStateQuery unlift trStateQuery (codecStateQuery nodeToClientV)
                 (stateQueryClient clients)
                 (hoistChannel liftIO channel)
         })
         nodeToClientV
   where
     trChainSync    = nullTracer
-    codecChainSync = cChainSyncCodec $ codecs epochSlots
+    codecChainSync = cChainSyncCodec . codecs epochSlots
 
     trTxSubmission    = contramap TrTxSubmission tr
-    codecTxSubmission = cTxSubmissionCodec $ codecs epochSlots
+    codecTxSubmission = cTxSubmissionCodec . codecs epochSlots
 
     trStateQuery    = nullTracer
-    codecStateQuery = cStateQueryCodec $ codecs epochSlots
+    codecStateQuery = cStateQueryCodec . codecs epochSlots
 
 -- | Boilerplate for lifting a 'ChainSyncClientPipelined'
 localChainSync
@@ -298,8 +301,9 @@ localStateQuery unliftIO tr codec client channel =
 codecs
     :: forall m. (MonadST m)
     => EpochSlots
+    -> NodeToClientVersion
     -> ClientCodecs Block m
-codecs epochSlots =
+codecs epochSlots nodeToClientV =
     clientCodecs cfg (supportedVersions ! nodeToClientV) nodeToClientV
   where
     supportedVersions = supportedNodeToClientVersions (Proxy @Block)
@@ -310,7 +314,3 @@ codecs epochSlots =
         allegra = ShelleyCodecConfig
         mary    = ShelleyCodecConfig
         alonzo  = ShelleyCodecConfig
-
--- TODO: Switch to NodeToClientV_9 as soon as Alonzo node are ready
-nodeToClientV :: NodeToClientVersion
-nodeToClientV = NodeToClientV_8
