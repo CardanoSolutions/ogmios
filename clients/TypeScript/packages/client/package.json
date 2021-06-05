@@ -1,6 +1,6 @@
 {
   "name": "@cardano-ogmios/client",
-  "version": "4.0.0-beta.2",
+  "version": "4.0.0-beta.3",
   "description": "TypeScript client library for Cardano Ogmios",
   "engines": {
     "node": "^14"
@@ -49,7 +49,7 @@
     "typescript": "^4.2.3"
   },
   "dependencies": {
-    "@cardano-ogmios/schema": "4.0.0-beta.1",
+    "@cardano-ogmios/schema": "4.0.0-beta.3",
     "fastq": "^1.11.0",
     "isomorphic-ws": "^4.0.1",
     "nanoid": "^3.1.22",
