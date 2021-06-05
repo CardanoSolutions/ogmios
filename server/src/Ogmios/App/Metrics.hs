@@ -54,7 +54,7 @@ import Ogmios.Data.Metrics
 import qualified Ogmios.Control.MonadMetrics as Metrics
 
 import Data.Aeson.Via.Show
-    ( GenericToJsonViaShow (..) )
+    ( ToJSONViaShow (..) )
 import Data.Time.Clock
     ( DiffTime )
 import GHC.Stats
@@ -227,7 +227,7 @@ data TraceMetrics where
         :: { recommendation :: Text }
         -> TraceMetrics
     deriving stock (Generic, Show)
-    deriving ToJSON via GenericToJsonViaShow TraceMetrics
+    deriving ToJSON via ToJSONViaShow TraceMetrics
 
 instance HasSeverityAnnotation TraceMetrics where
     getSeverityAnnotation = \case

@@ -1,7 +1,7 @@
 _config: !include "../../.hpack.config.yaml"
 
 name:                json-via-show
-version:             1.0.0
+version:             2.0.0
 github:              "cardanosolutions/ogmios"
 license:             MPL-2.0
 author:              "KtorZ <matthias.benkort@gmail.com>"
@@ -27,3 +27,18 @@ library:
   dependencies:
     - aeson
     - text
+
+tests:
+  unit:
+    main: Spec.hs
+    source-dirs: test/unit
+    ghc-options: *ghc-options-test
+    dependencies:
+    - aeson
+    - containers
+    - json-via-show
+    - hspec
+    - text
+    - time
+    build-tools:
+    - hspec-discover

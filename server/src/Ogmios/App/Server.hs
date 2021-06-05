@@ -26,7 +26,7 @@ import Ogmios.Data.Json
     ( ToJSON )
 
 import Data.Aeson.Via.Show
-    ( GenericToJsonViaShow (..) )
+    ( ToJSONViaShow (..) )
 import System.Directory
     ( doesPathExist )
 
@@ -91,7 +91,7 @@ data TraceServer where
         -> TraceServer
 
     deriving stock (Generic, Show)
-    deriving ToJSON via GenericToJsonViaShow TraceServer
+    deriving ToJSON via ToJSONViaShow TraceServer
 
 instance HasSeverityAnnotation TraceServer where
     getSeverityAnnotation = \case

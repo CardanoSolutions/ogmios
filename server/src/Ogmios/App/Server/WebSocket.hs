@@ -89,7 +89,7 @@ import Cardano.Network.Protocol.NodeToClient
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient )
 import Data.Aeson.Via.Show
-    ( GenericToJsonViaShow (..) )
+    ( ToJSONViaShow (..) )
 import Network.HTTP.Types.Header
     ( hUserAgent )
 import Ouroboros.Network.NodeToClient.Version
@@ -308,7 +308,7 @@ data TraceWebSocket where
         :: { ioException :: IOException }
         -> TraceWebSocket
     deriving stock (Generic, Show)
-    deriving ToJSON via GenericToJsonViaShow TraceWebSocket
+    deriving ToJSON via ToJSONViaShow TraceWebSocket
 
 instance HasSeverityAnnotation TraceWebSocket where
     getSeverityAnnotation = \case

@@ -72,7 +72,7 @@ import qualified Ogmios.App.Metrics as Metrics
 import Cardano.Network.Protocol.NodeToClient
     ( Block, Clients (..), connectClient, mkClient )
 import Data.Aeson.Via.Show
-    ( GenericToJsonViaShow (..), ViaJson (..) )
+    ( ToJSONViaShow (..) )
 import Data.Time.Clock
     ( DiffTime, UTCTime )
 import Network.TypedProtocol.Pipelined
@@ -141,7 +141,7 @@ newHealthCheckClient tr Debouncer{debounce} = do
                 , currentEra
                 , metrics
                 }
-            logWith tr (HealthTick $ ViaJson health)
+            logWith tr (HealthTick health)
 
         , txSubmissionClient =
             LocalTxSubmissionClient idle
@@ -344,7 +344,7 @@ newTimeInterpreterClient = do
 
 data TraceHealth s where
     HealthTick
-        :: { status :: ViaJson s }
+        :: { status :: s }
         -> TraceHealth s
 
     HealthFailedToConnect
@@ -359,7 +359,7 @@ data TraceHealth s where
         :: { exception :: SomeException }
         -> TraceHealth s
     deriving stock (Show, Generic)
-    deriving ToJSON via GenericToJsonViaShow (TraceHealth s)
+    deriving ToJSON via ToJSONViaShow (TraceHealth s)
 
 instance HasSeverityAnnotation (TraceHealth s) where
     getSeverityAnnotation = \case
