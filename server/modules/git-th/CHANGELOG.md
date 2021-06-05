@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0] -- 2021-06-05
+
+### Added
+
+- New top-level template-haskell expression `gitDescribeHEAD`.
+
+### Changed
+
+ø
+
+### Removed
+
+ø
+
+
 ## [1.0.0] -- 2020-10-22
 
 ### Added

@@ -3,11 +3,9 @@ cabal-version: 2.0
 -- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 9fe72c702b3f7a826e779f1407b4cf146972bc25857bc67f198bee7cffcaf574
 
 name:           git-th
-version:        1.0.0
+version:        1.1.0
 synopsis:       Compile-time helpers to access git informations.
 description:    Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server/modules/git-th>
 category:       Development

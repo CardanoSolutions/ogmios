@@ -11,7 +11,8 @@ import Prelude
 import Control.Concurrent
     ( threadDelay )
 import Data.Git.Revision.TH
-    ( gitRemoteGetURL
+    ( gitDescribeHEAD
+    , gitRemoteGetURL
     , gitRevParseHEAD
     , gitTags
     , git_
@@ -37,6 +38,22 @@ import Test.Hspec
 
 spec :: Spec
 spec = around withGitSandbox $ do
+    context "gitDescribeHEAD" $ do
+        specify "returns 'unknown revision' if there are no past tags" $ \_ -> do
+            git_ ["init"]
+            git_ ["commit", "--allow-empty", "-m", "a"]
+            git_ ["commit", "--allow-empty", "-m", "b"]
+            rev <- asString =<< runQ gitDescribeHEAD
+            rev `shouldBe` unknownRevision
+
+        specify "returns latest known tag" $ \_ -> do
+            git_ ["init"]
+            git_ ["commit", "--allow-empty", "-m", "a"]
+            git_ ["tag", "-m", "1st", "2.0.0"] *> threadDelay _1s
+            revA <- asString =<< runQ gitDescribeHEAD
+            git_ ["commit", "--allow-empty", "-m", "b"]
+            revB <- asString =<< runQ gitDescribeHEAD
+            take 5 revA `shouldBe` take 5 revB
 
     context "gitRevParseHEAD" $ do
         specify "interleaving givRevParseHEAD with commits yield different refs" $ \_ -> do
@@ -45,7 +62,6 @@ spec = around withGitSandbox $ do
             revA <- asString =<< runQ gitRevParseHEAD
             git_ ["commit", "--allow-empty", "-m", "b"]
             revB <- asString =<< runQ gitRevParseHEAD
-
             revA `shouldNotBe` revB
             revA `shouldSatisfy` isSHA1
             revB `shouldSatisfy` isSHA1
@@ -53,7 +69,6 @@ spec = around withGitSandbox $ do
         specify "default to 'unknown revision' when rev can't be parsed" $ \_ -> do
             setEnv "GIT_WORK_TREE" "/dev/null"
             rev <- asString =<< runQ gitRevParseHEAD
-
             rev `shouldBe` unknownRevision
 
     context "gitTags" $ do
@@ -69,14 +84,12 @@ spec = around withGitSandbox $ do
                 =<< traverse as2Tuple
                 =<< asList
                 =<< runQ gitTags
-
             (fst <$> tags) `shouldBe` ["3.0.0","1.0.0","2.0.0"]
             (snd <$> tags) `shouldSatisfy` all isSHA1
 
         specify "default to an empty list" $ \_ -> do
             setEnv "GIT_WORK_TREE" "/dev/null"
             tags <- asList =<< runQ gitTags
-
             tags `shouldBe` mempty
 
     context "gitRemoteGetURL" $ do
@@ -87,13 +100,11 @@ spec = around withGitSandbox $ do
             git_ ["remote", "add", "origin"  , origin]
             git_ ["remote", "add", "someFork", someFork]
             remote <- asString =<< runQ gitRemoteGetURL
-
             remote `shouldBe` origin
 
         specify "default to 'unknown remote'" $ \_ -> do
             setEnv "GIT_WORK_TREE" "/dev/null"
             remote <- asString =<< runQ gitRemoteGetURL
-
             remote `shouldBe` unknownRemote
 
 --
