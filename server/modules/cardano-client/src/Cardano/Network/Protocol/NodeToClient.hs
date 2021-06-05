@@ -83,7 +83,7 @@ import Ouroboros.Consensus.Node.NetworkProtocolVersion
     ( SupportedNetworkProtocolVersion (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CodecConfig (..) )
-import Ouroboros.Consensus.Shelley.Protocol.Crypto
+import Ouroboros.Consensus.Shelley.Protocol
     ( StandardCrypto )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )

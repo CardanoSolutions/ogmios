@@ -16,6 +16,8 @@ import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Ledger.Era
     ( Era )
+import Cardano.Ledger.Keys
+    ( KeyRole (..) )
 import Cardano.Ledger.Shelley.Constraints
     ( ShelleyBased )
 import Control.State.Transition
@@ -42,18 +44,18 @@ import qualified Cardano.Crypto.KES.Class as CC
 import qualified Cardano.Crypto.VRF.Class as CC
 
 import qualified Cardano.Ledger.AuxiliaryData as Aux
+import qualified Cardano.Ledger.BaseTypes as BaseTypes
 import qualified Cardano.Ledger.Coin as Coin
 import qualified Cardano.Ledger.Core as Core
+import qualified Cardano.Ledger.Keys as Keys
 import qualified Cardano.Ledger.SafeHash as SafeHash
 
 import qualified Shelley.Spec.Ledger.Address as Sh
 import qualified Shelley.Spec.Ledger.Address.Bootstrap as Sh
-import qualified Shelley.Spec.Ledger.BaseTypes as Sh
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
 import qualified Shelley.Spec.Ledger.Credential as Sh
 import qualified Shelley.Spec.Ledger.Delegation.Certificates as Sh
 import qualified Shelley.Spec.Ledger.Genesis as Sh
-import qualified Shelley.Spec.Ledger.Keys as Sh
 import qualified Shelley.Spec.Ledger.LedgerState as Sh
 import qualified Shelley.Spec.Ledger.Metadata as Sh
 import qualified Shelley.Spec.Ledger.OCert as Sh
@@ -85,8 +87,8 @@ encodeAddress = \case
         encodeByteStringBech32 (hrp network) (Sh.serialiseAddr addr)
   where
     hrp = \case
-        Sh.Mainnet -> hrpAddrMainnet
-        Sh.Testnet -> hrpAddrTestnet
+        BaseTypes.Mainnet -> hrpAddrMainnet
+        BaseTypes.Testnet -> hrpAddrTestnet
 
 encodeAuxiliaryDataHash
     :: Aux.AuxiliaryDataHash era
@@ -204,7 +206,7 @@ encodeChainCode cc
     | otherwise = encodeByteStringBase16 (Sh.unChainCode cc)
 
 encodeCredential
-    :: forall any era. (any :\: 'Sh.StakePool)
+    :: forall any era. (any :\: 'StakePool)
     => Sh.Credential any era
     -> Json
 encodeCredential x = case x of
@@ -491,13 +493,13 @@ encodeHashHeader =
     encodeByteStringBase16 . CC.hashToBytes . Sh.unHashHeader
 
 encodeKeyHash
-    :: forall any crypto. (any :\: Sh.StakePool)
-    => Sh.KeyHash any crypto
+    :: forall any crypto. (any :\: StakePool)
+    => Keys.KeyHash any crypto
     -> Json
-encodeKeyHash (Sh.KeyHash h) =
+encodeKeyHash (Keys.KeyHash h) =
     encodeHash h
   where
-    _ = keepRedundantConstraint (Proxy @(any :\: Sh.StakePool))
+    _ = keepRedundantConstraint (Proxy @(any :\: StakePool))
 
 encodeKESPeriod
     :: Sh.KESPeriod
@@ -573,18 +575,18 @@ encodeMultiSig = \case
         encodeObject [( show n, encodeList encodeMultiSig xs)]
 
 encodeNetwork
-    :: Sh.Network
+    :: BaseTypes.Network
     -> Json
 encodeNetwork = \case
-    Sh.Mainnet -> encodeText "mainnet"
-    Sh.Testnet -> encodeText "testnet"
+    BaseTypes.Mainnet -> encodeText "mainnet"
+    BaseTypes.Testnet -> encodeText "testnet"
 
 encodeNonce
-    :: Sh.Nonce
+    :: BaseTypes.Nonce
     -> Json
 encodeNonce = \case
-    Sh.NeutralNonce -> encodeText "neutral"
-    Sh.Nonce h -> encodeHash h
+    BaseTypes.NeutralNonce -> encodeText "neutral"
+    BaseTypes.Nonce h -> encodeHash h
 
 encodeOCert
     :: Crypto crypto
@@ -630,7 +632,7 @@ encodeIndividualPoolStake x = encodeObject
     ]
 
 encodePoolId
-    :: Sh.KeyHash Sh.StakePool crypto
+    :: Keys.KeyHash StakePool crypto
     -> Json
 encodePoolId =
     encodeText . stringifyPoolId
@@ -1194,10 +1196,10 @@ encodeVerKeyVRF =
 
 encodeVKey
     :: Crypto crypto
-    => Sh.VKey any crypto
+    => Keys.VKey any crypto
     -> Json
 encodeVKey =
-    encodeVerKeyDSign . Sh.unVKey
+    encodeVerKeyDSign . Keys.unVKey
 
 encodeVotingPeriod
     :: Sh.VotingPeriod
@@ -1238,7 +1240,7 @@ encodeWitHashes =
 
 encodeWitVKeys
     :: Crypto crypto
-    => Set (Sh.WitVKey 'Sh.Witness crypto)
+    => Set (Sh.WitVKey Witness crypto)
     -> Json
 encodeWitVKeys = encodeFoldable'
     (\(Sh.WitVKey key _) -> stringifyVKey key)
@@ -1255,28 +1257,28 @@ stringifyCoin =
     show . unCoin
 
 stringifyCredential
-    :: forall any era. (any :\: Sh.StakePool)
+    :: forall any era. (any :\: StakePool)
     => Sh.Credential any era
     -> Text
 stringifyCredential = \case
     Sh.KeyHashObj h -> stringifyKeyHash h
     Sh.ScriptHashObj h -> stringifyScriptHash h
   where
-    _ = keepRedundantConstraint (Proxy @(any :\: Sh.StakePool))
+    _ = keepRedundantConstraint (Proxy @(any :\: StakePool))
 
 stringifyKeyHash
-    :: forall any era. (any :\: Sh.StakePool)
-    => Sh.KeyHash any era
+    :: forall any era. (any :\: StakePool)
+    => Keys.KeyHash any era
     -> Text
-stringifyKeyHash (Sh.KeyHash (CC.UnsafeHash h)) =
+stringifyKeyHash (Keys.KeyHash (CC.UnsafeHash h)) =
     encodeBase16 (fromShort h)
   where
-    _ = keepRedundantConstraint (Proxy @(any :\: Sh.StakePool))
+    _ = keepRedundantConstraint (Proxy @(any :\: StakePool))
 
 stringifyPoolId
-    :: Sh.KeyHash Sh.StakePool crypto
+    :: Keys.KeyHash StakePool crypto
     -> Text
-stringifyPoolId (Sh.KeyHash (CC.UnsafeHash h)) =
+stringifyPoolId (Keys.KeyHash (CC.UnsafeHash h)) =
     encodeBech32 hrpPool (fromShort h)
 
 stringifyRewardAcnt
@@ -1286,8 +1288,8 @@ stringifyRewardAcnt x@(Sh.RewardAcnt ntwrk _credential) =
     encodeBech32 (hrp ntwrk) (Sh.serialiseRewardAcnt x)
   where
     hrp = \case
-        Sh.Mainnet -> hrpStakeMainnet
-        Sh.Testnet -> hrpStakeTestnet
+        BaseTypes.Mainnet -> hrpStakeMainnet
+        BaseTypes.Testnet -> hrpStakeTestnet
 
 stringifyScriptHash
     :: Sh.ScriptHash era
@@ -1297,17 +1299,17 @@ stringifyScriptHash (Sh.ScriptHash (CC.UnsafeHash h)) =
 
 stringifyVKey
     :: Crypto crypto
-    => Sh.VKey any crypto
+    => Keys.VKey any crypto
     -> Text
 stringifyVKey =
-    encodeBase16 . CC.rawSerialiseVerKeyDSIGN . Sh.unVKey
+    encodeBase16 . CC.rawSerialiseVerKeyDSIGN . Keys.unVKey
 
 --
 -- Helpers
 --
 
 infixr 5 :\:
-type family (:\:) (any :: Sh.KeyRole) (excluded :: Sh.KeyRole) :: Constraint where
+type family (:\:) (any :: KeyRole) (excluded :: KeyRole) :: Constraint where
     excluded :\: excluded = TypeError
         ( 'Text "Cannot use this function for the " :<>: 'ShowType excluded :<>: 'Text " role." :$$:
           'Text "Use a dedicated function instead."

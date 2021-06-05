@@ -126,6 +126,10 @@ export const submitTx = (bytes: string, context?: InteractionContext) =>
                 return new errors.shelley.ExtraDataMismatch.Error(failure)
               } else if (errors.shelley.MissingRequiredSignatures.assert(failure)) {
                 return new errors.shelley.MissingRequiredSignatures.Error(failure)
+              } else if (errors.shelley.MissingDatumHashesForInputs.assert(failure)) {
+                return new errors.shelley.MissingDatumHashesForInputs.Error(failure)
+              } else if (errors.shelley.MissingCollateralInputs.assert(failure)) {
+                return new errors.shelley.MissingCollateralInputs.Error(failure)
               } else if (errors.shelley.CollateralTooSmall.assert(failure)) {
                 return new errors.shelley.CollateralTooSmall.Error(failure)
               } else if (errors.shelley.CollateralIsScript.assert(failure)) {

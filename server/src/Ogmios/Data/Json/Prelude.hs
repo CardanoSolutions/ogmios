@@ -82,6 +82,17 @@ import Ogmios.Prelude
 
 import Cardano.Binary
     ( Annotated (..) )
+import Cardano.Ledger.BaseTypes
+    ( DnsName
+    , Port
+    , StrictMaybe (..)
+    , UnitInterval
+    , Url
+    , dnsToText
+    , portToWord16
+    , unitIntervalToRational
+    , urlToText
+    )
 import Cardano.Ledger.Coin
     ( Coin (..) )
 import Cardano.Slotting.Block
@@ -110,17 +121,6 @@ import Data.Vector
     ( Vector )
 import Ouroboros.Consensus.BlockchainTime.WallClock.Types
     ( RelativeTime (..) )
-import Shelley.Spec.Ledger.BaseTypes
-    ( DnsName
-    , Port
-    , StrictMaybe (..)
-    , UnitInterval
-    , Url
-    , dnsToText
-    , portToWord16
-    , unitIntervalToRational
-    , urlToText
-    )
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
