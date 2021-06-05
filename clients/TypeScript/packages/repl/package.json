@@ -1,6 +1,6 @@
 {
   "name": "@cardano-ogmios/repl",
-  "version": "4.0.0-beta.1",
+  "version": "4.0.0-beta.2",
   "description": "REPL for Cardano Ogmios",
   "engines": {
     "node": "^14"

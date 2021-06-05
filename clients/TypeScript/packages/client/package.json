@@ -1,6 +1,6 @@
 {
   "name": "@cardano-ogmios/client",
-  "version": "4.0.0-beta.1",
+  "version": "4.0.0-beta.2",
   "description": "TypeScript client library for Cardano Ogmios",
   "engines": {
     "node": "^14"
