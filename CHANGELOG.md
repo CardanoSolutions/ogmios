@@ -25,6 +25,7 @@ pre: "<b>5. </b>"
   - `datumsMismatch`
   - `extraDataMismatch`
   - `missingRequiredSignatures`
+  - `missingDatumHashesForInputs`
   - `collateralTooSmall`
   - `collateralIsScript`
   - `collateralHasNonAdaAssets`

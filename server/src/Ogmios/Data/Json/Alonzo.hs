@@ -37,6 +37,7 @@ import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
 import qualified Shelley.Spec.Ledger.UTxO as Sh
 
 import qualified Cardano.Ledger.Alonzo.Data as Al
+import qualified Cardano.Ledger.Alonzo.Genesis as Al
 import qualified Cardano.Ledger.Alonzo.Language as Al
 import qualified Cardano.Ledger.Alonzo.PlutusScriptApi as Al
 import qualified Cardano.Ledger.Alonzo.PParams as Al
@@ -44,7 +45,6 @@ import qualified Cardano.Ledger.Alonzo.Rules.Utxo as Al
 import qualified Cardano.Ledger.Alonzo.Rules.Utxos as Al
 import qualified Cardano.Ledger.Alonzo.Rules.Utxow as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
-import qualified Cardano.Ledger.Alonzo.Translation as Al
 import qualified Cardano.Ledger.Alonzo.Tx as Al
 import qualified Cardano.Ledger.Alonzo.TxBody as Al
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
@@ -85,6 +85,13 @@ encodeAlonzoPredFail = \case
         encodeObject
             [ ( "missingRequiredSignatures"
               , encodeFoldable Shelley.encodeKeyHash keys
+              )
+            ]
+
+    Al.UnspendableUTxONoDatumHash inputs ->
+        encodeObject
+            [ ( "missingDatumHashesForInputs"
+              , encodeFoldable Shelley.encodeTxIn inputs
               )
             ]
     Al.WrappedShelleyEraFailure e ->
@@ -566,6 +573,8 @@ encodeUtxoFailure = \case
               , encodeFoldable (\(_, _, o) -> encodeTxOut o)  outs
               )
             ]
+    Al.NoCollateralInputs ->
+        encodeString "missingCollateralInputs"
     Al.InsufficientCollateral required actual ->
         encodeObject
             [ ( "collateralTooSmall", encodeObject

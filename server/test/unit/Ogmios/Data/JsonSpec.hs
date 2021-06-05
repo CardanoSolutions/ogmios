@@ -15,6 +15,8 @@ import Ogmios.Prelude
 
 import Cardano.Ledger.Era
     ( Crypto, Era, SupportsSegWit (..) )
+import Cardano.Ledger.Serialization
+    ( ToCBORGroup )
 import Cardano.Network.Protocol.NodeToClient
     ( Block )
 import Cardano.Slotting.Slot
@@ -114,7 +116,7 @@ import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CompactGenesis, compactGenesis )
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( NonMyopicMemberRewards (..) )
-import Ouroboros.Consensus.Shelley.Protocol.Crypto
+import Ouroboros.Consensus.Shelley.Protocol
     ( StandardCrypto )
 import Ouroboros.Network.Block
     ( BlockNo (..), HeaderHash, Point (..), SlotNo (..), Tip (..) )
@@ -126,8 +128,6 @@ import Shelley.Spec.Ledger.Delegation.Certificates
     ( PoolDistr )
 import Shelley.Spec.Ledger.PParams
     ( ProposedPPUpdates )
-import Shelley.Spec.Ledger.Serialization
-    ( ToCBORGroup )
 import Shelley.Spec.Ledger.UTxO
     ( UTxO )
 import Test.Hspec

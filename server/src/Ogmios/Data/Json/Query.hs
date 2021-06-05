@@ -41,6 +41,8 @@ import Cardano.Api
     ( ShelleyBasedEra (..) )
 import Cardano.Ledger.Crypto
     ( Crypto )
+import Cardano.Ledger.Keys
+    ( KeyRole (..) )
 import Cardano.Slotting.Slot
     ( EpochNo (..), WithOrigin (..) )
 import Data.ByteString.Base16
@@ -78,14 +80,14 @@ import qualified Data.Aeson.Types as Json
 import qualified Data.Map.Merge.Strict as Map
 
 import qualified Cardano.Crypto.Hash.Class as CC
-
-import qualified Cardano.Ledger.Coin as Sh
+import qualified Cardano.Ledger.Coin as Coin
 import qualified Cardano.Ledger.Core as Core
+import qualified Cardano.Ledger.Keys as Keys
+
 import qualified Shelley.Spec.Ledger.Address as Sh
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
 import qualified Shelley.Spec.Ledger.Credential as Sh
 import qualified Shelley.Spec.Ledger.Delegation.Certificates as Sh
-import qualified Shelley.Spec.Ledger.Keys as Sh
 import qualified Shelley.Spec.Ledger.PParams as Sh
 import qualified Shelley.Spec.Ledger.UTxO as Sh
 
@@ -314,7 +316,7 @@ parseGetNonMyopicMemberRewards genResult =
   where
     parseCredentials
         :: Json.Object
-        -> Json.Parser (Set (Either Sh.Coin (Sh.Credential 'Sh.Staking crypto)))
+        -> Json.Parser (Set (Either Coin (Sh.Credential 'Staking crypto)))
     parseCredentials obj = fmap fromList $
         obj .: "nonMyopicMemberRewards" >>= traverse
             (choice "credential"
@@ -353,7 +355,7 @@ parseGetFilteredDelegationsAndRewards genResult =
   where
     parseCredentials
         :: Json.Object
-        -> Json.Parser (Set (Sh.Credential 'Sh.Staking crypto))
+        -> Json.Parser (Set (Sh.Credential 'Staking crypto))
     parseCredentials obj = fmap fromList $
         obj .: "delegationsAndRewards" >>= traverse parseCredential
 
@@ -647,10 +649,10 @@ data SomeShelleyEra =
     forall era. SomeShelleyEra (ShelleyBasedEra era)
 
 type Delegations crypto =
-    Map (Sh.Credential 'Sh.Staking crypto) (Sh.KeyHash 'Sh.StakePool crypto)
+    Map (Sh.Credential 'Staking crypto) (Keys.KeyHash 'StakePool crypto)
 
 type RewardAccounts crypto =
-    Map (Sh.Credential 'Sh.Staking crypto) Sh.Coin
+    Map (Sh.Credential 'Staking crypto) Coin
 
 data SomeQuery (f :: Type -> Type) block = forall result. SomeQuery
     { query :: Query block result
@@ -686,9 +688,9 @@ parseAddress = Json.withText "Address" $ choice "address"
 
 parseCoin
     :: Json.Value
-    -> Json.Parser Sh.Coin
+    -> Json.Parser Coin
 parseCoin =
-    fmap Sh.word64ToCoin . Json.parseJSON
+    fmap Coin.word64ToCoin . Json.parseJSON
 
 -- TODO: Makes it possible to distinguish between KeyHash and ScriptHash
 -- credentials. Both are encoded as hex-encoded strings. Encoding them as
@@ -699,9 +701,9 @@ parseCoin =
 parseCredential
     :: Crypto crypto
     => Json.Value
-    -> Json.Parser (Sh.Credential 'Sh.Staking crypto)
+    -> Json.Parser (Sh.Credential 'Staking crypto)
 parseCredential =
-    fmap (Sh.KeyHashObj . Sh.KeyHash) . parseHash
+    fmap (Sh.KeyHashObj . Keys.KeyHash) . parseHash
 
 parseHash
     :: CC.HashAlgorithm alg

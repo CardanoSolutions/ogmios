@@ -22,6 +22,8 @@ import {
   MirProducesNegativeUpdate,
   MirTransferNotCurrentlyAllowed,
   MissingAtLeastOneInputUtxo,
+  MissingCollateralInputs,
+  MissingDatumHashesForInputs,
   MissingRequiredSignatures,
   MissingScriptWitnesses,
   MissingTxMetadata,
@@ -108,6 +110,8 @@ type SubmitTxErrorShelley =
   | DatumsMismatch
   | ExtraDataMismatch
   | MissingRequiredSignatures
+  | MissingDatumHashesForInputs
+  | MissingCollateralInputs
   | CollateralTooSmall
   | CollateralIsScript
   | CollateralHasNonAdaAssets
@@ -608,6 +612,26 @@ export const errors = {
         public constructor (rawError: MissingRequiredSignatures) {
           super()
           this.message = JSON.stringify(rawError.missingRequiredSignatures, null, 2)
+        }
+      }
+    },
+    MissingDatumHashesForInputs: {
+      assert: (item: SubmitTxErrorShelley): item is MissingDatumHashesForInputs =>
+        (item as MissingDatumHashesForInputs).missingDatumHashesForInputs !== undefined,
+      Error: class MissingDatumHashesForInputsError extends CustomError {
+        public constructor (rawError: MissingDatumHashesForInputs) {
+          super()
+          this.message = JSON.stringify(rawError.missingDatumHashesForInputs, null, 2)
+        }
+      }
+    },
+    MissingCollateralInputs: {
+      assert: (item: SubmitTxErrorShelley): item is MissingCollateralInputs =>
+        (item as MissingCollateralInputs) === 'missingCollateralInputs',
+      Error: class MissingCollateralInputsError extends CustomError {
+        public constructor (rawError: MissingCollateralInputs) {
+          super()
+          this.message = JSON.stringify(rawError, null, 2)
         }
       }
     },

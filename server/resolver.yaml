@@ -64,7 +64,7 @@ packages:
   commit: ce8f1934e4b6252084710975bd9bbc0a4648ece4
 
 - git: https://github.com/input-output-hk/cardano-ledger-specs
-  commit: 41b02e51d3e0a4826264fc4ae595a9dd6a7d8849
+  commit: a3ef848542961079b7cd53d599e5385198a3035c
   subdirs:
   - alonzo/impl
   - alonzo/test
@@ -84,7 +84,7 @@ packages:
   - shelley-ma/shelley-ma-test
 
 - git: https://github.com/input-output-hk/cardano-node
-  commit: b83e4025785be16cb5ee5231a6e9939d93564b40
+  commit: 8c142704e7df8ca857b179e26fdebb6919b5a7a6
   subdirs:
     - cardano-api
     - cardano-config
@@ -120,7 +120,7 @@ packages:
   - tracer-transformers
 
 - git: https://github.com/input-output-hk/ouroboros-network
-  commit: 8bbded8a3a6e967ce67fbcaf50579d3719e52bef
+  commit: e50613562d6d4a0f933741fcf590b0f69a1eda67
   subdirs:
     - io-sim
     - io-sim-classes
@@ -141,7 +141,7 @@ packages:
     - typed-protocols-examples
 
 - git: https://github.com/input-output-hk/plutus
-  commit: 530d3f7940319788a49c7ecb017f8366994990b0
+  commit: 13da6d416b2b47cdb6f287ff078b9e759bb90b7f
   subdirs:
     - plutus-core
     - plutus-ledger-api

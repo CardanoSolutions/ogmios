@@ -12,36 +12,22 @@ module Ogmios.App.Version
 import Ogmios.Prelude
 
 import Data.Git.Revision.TH
-    ( gitRevParseHEAD, gitTags, unknownRevision )
+    ( gitDescribeHEAD, unknownRevision )
+import Data.Version
+    ( showVersion )
+
+import qualified Paths_ogmios as Pkg
 
 -- | Show the current application revision from git context embedded at
 -- compile-time. Shows a tag if compiled on a revision pointing to a tag, or
 -- show the revision and the last known tag otherwise.
 --
 -- This is impure in disguise but safe if 'git' is available in the app context.
+-- If not available, we fallback to the version listed in the cabal file.
 version :: Text
 version = do
-    case find ((== revHEAD) . snd) tags of
-        Just (tag, _) ->
-            toText tag
-        Nothing -> unwords $ toText <$>
-            [ "unreleased (> " <> lastKnownTag tags <> ")"
-            , "-"
-            , "git revision " <> revHEADShort
-            ]
-  where
-    tags :: [(String, String)]
-    tags = $(gitTags)
-
-    revHEAD :: String
-    revHEAD = $(gitRevParseHEAD)
-
-    revHEADShort :: String
-    revHEADShort = case $(gitRevParseHEAD) of
-        s | s == unknownRevision -> s
-        s -> take 8 s
-
-    lastKnownTag :: [(String, String)] -> String
-    lastKnownTag = \case
-        []    -> "unknown"
-        (h:_) -> fst h
+    case $(gitDescribeHEAD) of
+        rev | rev == unknownRevision ->
+            toText ("v" <> showVersion Pkg.version <> "-??-????????")
+        rev ->
+            toText rev

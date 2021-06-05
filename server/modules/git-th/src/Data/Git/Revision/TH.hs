@@ -12,10 +12,13 @@
 -- Stability: Stable
 -- Portability: Unix
 module Data.Git.Revision.TH
-    ( gitRevParseHEAD
-    , unknownRevision
+    ( gitDescribeHEAD
+    , gitRevParseHEAD
     , gitTags
     , gitRemoteGetURL
+
+      -- Magic constants
+    , unknownRevision
     , unknownRemote
 
     -- For Internal Use
@@ -40,6 +43,29 @@ import System.Exit
 import System.Process
     ( readProcessWithExitCode )
 
+-- | Give a human readable name based of the current HEAD revision
+--
+-- The command finds the most recent tag that is reachable from a commit. If the
+-- tag points to the commit, then only the tag is shown. Otherwise, it suffixes
+-- the tag name with the number of additional commits on top of the tagged object
+-- and the abbreviated object name of the most recent commit.
+--
+-- @since 1.1.0
+--
+-- >>> $(gitDescribeHEAD)
+-- "v3.2.0-96-gb5af7eb"
+gitDescribeHEAD :: Q Exp
+gitDescribeHEAD =
+    LitE . StringL <$> runIO runGitDescribe
+  where
+    runGitDescribe :: IO String
+    runGitDescribe = do
+        result <- git ["describe", "HEAD"]
+        case result of
+            Right (ExitSuccess, revision) -> pure revision
+            _                             -> pure unknownRevision
+
+
 -- | Get the current HEAD revision (long format).
 --
 -- The resulting splice is a 'String'.
@@ -57,7 +83,7 @@ gitRevParseHEAD =
         result <- git ["rev-parse", "--verify", "HEAD"]
         case result of
             Right (ExitSuccess, revision) -> pure revision
-            _ -> pure unknownRevision
+            _                             -> pure unknownRevision
 
 -- | Get a list of tags, ordered by descending date.
 --
@@ -81,7 +107,7 @@ gitTags =
         result <- git ["tag", "-l", "--sort", "-taggerdate", "--format", "%(refname:short) %(object)"]
         case result of
             Right (ExitSuccess, tags) -> pure (mkTags <$> lines tags)
-            _ -> pure []
+            _                         -> pure []
 
     mkTags :: String -> (String, String)
     mkTags str =
@@ -107,7 +133,7 @@ gitRemoteGetURL =
         result <- git ["remote", "get-url", "origin"]
         case result of
             Right (ExitSuccess, url) -> pure url
-            _ -> pure unknownRemote
+            _                        -> pure unknownRemote
 
 --
 -- Internals
