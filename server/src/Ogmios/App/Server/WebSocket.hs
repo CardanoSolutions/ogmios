@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -42,7 +43,6 @@ import Ogmios.Control.MonadLog
     , MonadLog (..)
     , Severity (..)
     , natTracer
-    , nullTracer
     )
 import Ogmios.Control.MonadMetrics
     ( MonadMetrics (..) )
@@ -88,8 +88,6 @@ import Cardano.Network.Protocol.NodeToClient
     )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient )
-import Data.Aeson.Via.Show
-    ( ToJSONViaShow (..) )
 import Network.HTTP.Types.Header
     ( hUserAgent )
 import Ouroboros.Network.NodeToClient.Version
@@ -129,11 +127,11 @@ newWebSocketApp tr unliftIO = do
         let (mode, sub) = choseSerializationMode pending
         logWith tr $ WebSocketConnectionAccepted (userAgent pending) mode
         recordSession sensors $ onExceptions $ acceptRequest pending sub $ \conn -> do
-            let trClient = natTracer liftIO $ contramap WebSocketClient tr
+            let trClient = contramap WebSocketClient tr
             withOuroborosClients mode sensors conn $ \clients -> do
-                let client = mkClient unliftIO trClient slotsPerEpoch clients
+                let client = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch clients
                 let vData  = NodeToClientVersionData networkMagic
-                connectClient nullTracer client vData nodeSocket
+                connectClient trClient client vData nodeSocket
                     & handle (onIOException conn)
         logWith tr (WebSocketConnectionEnded $ userAgent pending)
   where
@@ -144,7 +142,7 @@ newWebSocketApp tr unliftIO = do
 
     onIOException :: Connection -> IOException -> m ()
     onIOException conn e = do
-        logWith tr $ WebSocketFailedToConnect e
+        logWith tr $ WebSocketFailedToConnect $ show e
         let msg = "Connection with the node lost or failed."
         close conn $ toStrict $ Json.encode $ Wsp.serverFault msg
 
@@ -157,11 +155,11 @@ newWebSocketApp tr unliftIO = do
     onUnknownException :: SomeException -> m ()
     onUnknownException e0 = case fromException e0 of
         Nothing -> do
-            logWith tr $ WebSocketUnknownException e0
+            logWith tr $ WebSocketUnknownException $ show e0
         Just (ExceptionInLinkedThread _ e1) -> do
             case fromException e1 of
                 Nothing ->
-                    logWith tr $ WebSocketWorkerExited e1
+                    logWith tr $ WebSocketWorkerExited $ show e1
                 Just e2 ->
                     onConnectionClosed e2
 
@@ -289,7 +287,7 @@ data TraceWebSocket where
         -> TraceWebSocket
 
     WebSocketWorkerExited
-        :: { exception :: SomeException }
+        :: { exception :: Text }
         -> TraceWebSocket
 
     WebSocketConnectionAccepted
@@ -301,14 +299,14 @@ data TraceWebSocket where
         -> TraceWebSocket
 
     WebSocketUnknownException
-        :: { exception :: SomeException }
+        :: { exception :: Text }
         -> TraceWebSocket
 
     WebSocketFailedToConnect
-        :: { ioException :: IOException }
+        :: { ioException :: Text }
         -> TraceWebSocket
     deriving stock (Generic, Show)
-    deriving ToJSON via ToJSONViaShow TraceWebSocket
+    deriving anyclass ToJSON
 
 instance HasSeverityAnnotation TraceWebSocket where
     getSeverityAnnotation = \case

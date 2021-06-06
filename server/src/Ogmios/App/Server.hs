@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
@@ -25,8 +26,6 @@ import Ogmios.Control.MonadWebSocket
 import Ogmios.Data.Json
     ( ToJSON )
 
-import Data.Aeson.Via.Show
-    ( ToJSONViaShow (..) )
 import System.Directory
     ( doesPathExist )
 
@@ -89,9 +88,8 @@ data TraceServer where
     ServerNodeSocketNotFound
         :: { path :: FilePath }
         -> TraceServer
-
     deriving stock (Generic, Show)
-    deriving ToJSON via ToJSONViaShow TraceServer
+    deriving anyclass ToJSON
 
 instance HasSeverityAnnotation TraceServer where
     getSeverityAnnotation = \case

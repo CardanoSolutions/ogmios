@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 
 {-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
@@ -71,8 +72,6 @@ import qualified Ogmios.App.Metrics as Metrics
 
 import Cardano.Network.Protocol.NodeToClient
     ( Block, Clients (..), connectClient, mkClient )
-import Data.Aeson.Via.Show
-    ( ToJSONViaShow (..) )
 import Data.Time.Clock
     ( DiffTime, UTCTime )
 import Network.TypedProtocol.Pipelined
@@ -183,17 +182,17 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
     onUnknownException :: SomeException -> m ()
     onUnknownException e
         | isAsyncException e = do
-            logWith tr $ HealthShutdown e
+            logWith tr $ HealthShutdown $ show e
             throwIO e
         | otherwise =
-            logWith tr $ HealthUnknownException e
+            logWith tr $ HealthUnknownException $ show e
 
     onIOException :: FilePath -> IOException -> m ()
     onIOException nodeSocket e
         | isRetryable = do
             logWith tr $ HealthFailedToConnect nodeSocket _5s
         | otherwise = do
-            logWith tr $ HealthUnknownException (toException e)
+            logWith tr $ HealthUnknownException $ show (toException e)
       where
         isRetryable :: Bool
         isRetryable = isResourceVanishedError e || isDoesNotExistError e || isTryAgainError e
@@ -352,14 +351,14 @@ data TraceHealth s where
         -> TraceHealth s
 
     HealthShutdown
-        :: { action :: SomeException }
+        :: { reason :: Text }
         -> TraceHealth s
 
     HealthUnknownException
-        :: { exception :: SomeException }
+        :: { exception :: Text }
         -> TraceHealth s
     deriving stock (Show, Generic)
-    deriving ToJSON via ToJSONViaShow (TraceHealth s)
+    deriving anyclass ToJSON
 
 instance HasSeverityAnnotation (TraceHealth s) where
     getSeverityAnnotation = \case

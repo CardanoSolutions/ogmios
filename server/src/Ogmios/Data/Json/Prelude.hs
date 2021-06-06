@@ -2,6 +2,9 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DerivingVia #-}
+
 -- This is used to define the 'keepRedundantContraint' helper here where it is
 -- safe to define, and use it in other Json modules where we do not want to turn
 -- -fno-warn-redundant-constraints for the entire module, but still want some
@@ -183,7 +186,8 @@ inefficientEncodingToValue = unsafeDecodeValue . Json.encodingToLazyByteString
 data SerializationMode
     = FullSerialization
     | CompactSerialization
-    deriving (Generic, Show)
+    deriving stock (Generic, Show)
+    deriving anyclass (ToJSON)
 
 --
 -- Basic Types

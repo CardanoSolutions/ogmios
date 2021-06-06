@@ -3,11 +3,9 @@ cabal-version: 2.0
 -- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: e35d7f4a03f6076120f2e477d63caeb6b7493261b7f8fe91f70477e29d4a3869
 
 name:           ogmios
-version:        4.0.0
+version:        3.2.0
 synopsis:       A JSON-WSP WebSocket client for cardano-node
 description:    Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server#ogmios-server>
 category:       Web
@@ -154,7 +152,6 @@ library
     , io-sim-classes
     , iohk-monitoring
     , iproute
-    , json-via-show
     , json-wsp
     , memory
     , mtl

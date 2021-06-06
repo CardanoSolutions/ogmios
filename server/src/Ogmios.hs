@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeApplications #-}
@@ -80,8 +81,6 @@ import Cardano.Network.Protocol.NodeToClient
     ( Block )
 import Control.Monad.Class.MonadST
     ( MonadST )
-import Data.Aeson.Via.Show
-    ( ToJSONViaShow (..) )
 
 --
 -- App
@@ -90,7 +89,7 @@ import Data.Aeson.Via.Show
 -- | Main application monad.
 newtype App a = App
     { unApp :: ReaderT (Env App) IO a
-    } deriving
+    } deriving newtype
         ( Functor, Applicative, Monad
         , MonadReader (Env App)
         , MonadIO
@@ -135,7 +134,7 @@ data Env (m :: Type -> Type) = Env
     , sampler :: !(Sampler RuntimeStats m)
     , network :: !NetworkParameters
     , options :: !Options
-    } deriving (Generic)
+    } deriving stock (Generic)
 
 newEnvironment
     :: Logger TraceOgmios
@@ -173,7 +172,7 @@ data TraceOgmios where
         :: { networkParameters :: NetworkParameters }
         -> TraceOgmios
     deriving stock (Generic, Show)
-    deriving ToJSON via ToJSONViaShow TraceOgmios
+    deriving anyclass ToJSON
 
 instance HasSeverityAnnotation TraceOgmios where
     getSeverityAnnotation = \case
