@@ -67,14 +67,12 @@ import Network.Mux
     ( MuxError (..), MuxMode (..) )
 import Network.TypedProtocol.Codec
     ( Codec )
-import Ouroboros.Consensus.Byron.Ledger
-    ( GenTx )
 import Ouroboros.Consensus.Byron.Ledger.Config
     ( CodecConfig (..) )
 import Ouroboros.Consensus.Cardano
     ( CardanoBlock )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras, CodecConfig (..), HardForkApplyTxErr )
+    ( CardanoEras, CodecConfig (..), GenTx, HardForkApplyTxErr )
 import Ouroboros.Consensus.Ledger.Query
     ( Query (..) )
 import Ouroboros.Consensus.Network.NodeToClient
@@ -178,7 +176,7 @@ connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
 
     tracers :: NetworkConnectTracers LocalAddress NodeToClientVersion
     tracers = NetworkConnectTracers
-        { nctMuxTracer = contramap TrMux tr
+        { nctMuxTracer = nullTracer
         , nctHandshakeTracer = contramap TrHandshake tr
         }
 
