@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 
 -- Mildly safe here and "necessary" because of ekg's internal store. When
@@ -53,8 +54,6 @@ import Ogmios.Data.Metrics
 
 import qualified Ogmios.Control.MonadMetrics as Metrics
 
-import Data.Aeson.Via.Show
-    ( GenericToJsonViaShow (..) )
 import Data.Time.Clock
     ( DiffTime )
 import GHC.Stats
@@ -79,7 +78,7 @@ data Sensors (m :: Type -> Type) = Sensors
     , sessionDurationsDistribution :: Distribution m
     , totalMessagesCounter :: Counter m
     , totalUnroutedCounter :: Counter m
-    } deriving (Generic)
+    } deriving stock (Generic)
 
 -- | Initialize new application sensors in 'IO'.
 newSensors
@@ -227,7 +226,7 @@ data TraceMetrics where
         :: { recommendation :: Text }
         -> TraceMetrics
     deriving stock (Generic, Show)
-    deriving ToJSON via GenericToJsonViaShow TraceMetrics
+    deriving anyclass ToJSON
 
 instance HasSeverityAnnotation TraceMetrics where
     getSeverityAnnotation = \case

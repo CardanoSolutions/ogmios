@@ -18,6 +18,7 @@ module Ogmios.Data.Json
     , encodeAcquireFailure
     , encodeBlock
     , encodeHardForkApplyTxErr
+    , encodeSubmitTxPayload
     , encodePoint
     , encodeTip
     ) where
@@ -25,11 +26,13 @@ module Ogmios.Data.Json
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Binary
-    ( FromCBOR (..) )
+    ( FromCBOR (..), ToCBOR (..) )
 import Cardano.Crypto.Hashing
     ( decodeHash, hashToBytes )
 import Cardano.Ledger.Crypto
     ( Crypto )
+import Cardano.Network.Protocol.NodeToClient.Trace
+    ( TraceClient, encodeTraceClient )
 import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
@@ -42,6 +45,8 @@ import Ogmios.Data.Json.Query
     ( QueryInEra, encodeEraMismatch, encodeOneEraHash, encodePoint )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock (..) )
+import Ouroboros.Consensus.Byron.Ledger.Mempool
+    ( encodeByronGenTx )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoBlock
     , CardanoEras
@@ -76,9 +81,20 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 -- Orphans
 --
 
+-- Only used for logging
 instance ToJSON (Tip (CardanoBlock crypto)) where
     toJSON = inefficientEncodingToValue . encodeTip
     toEncoding = encodeTip
+
+-- Only used for logging
+instance (Crypto crypto, PraosCrypto crypto) => ToJSON
+  ( TraceClient
+      (GenTx (CardanoBlock crypto))
+      (HardForkApplyTxErr (CardanoEras crypto))
+  ) where
+    toJSON = encodeTraceClient
+        (inefficientEncodingToValue . encodeSubmitTxPayload)
+        (inefficientEncodingToValue . encodeHardForkApplyTxErr)
 
 --
 -- Encoders
@@ -142,6 +158,22 @@ encodeHardForkApplyTxErr = \case
         encodeList Alonzo.encodeLedgerFailure xs
     ApplyTxErrWrongEra e ->
         encodeEraMismatch e
+
+encodeSubmitTxPayload
+    :: PraosCrypto crypto
+    => GenTx (CardanoBlock crypto)
+    -> Json
+encodeSubmitTxPayload = \case
+    GenTxByron tx ->
+        encodeByteStringBase16 $ Cbor.toStrictByteString $ encodeByronGenTx tx
+    GenTxShelley tx ->
+        encodeByteStringBase16 $ Cbor.toStrictByteString $ toCBOR tx
+    GenTxAllegra tx ->
+        encodeByteStringBase16 $ Cbor.toStrictByteString $ toCBOR tx
+    GenTxMary tx ->
+        encodeByteStringBase16 $ Cbor.toStrictByteString $ toCBOR tx
+    GenTxAlonzo tx ->
+        encodeByteStringBase16 $ Cbor.toStrictByteString $ toCBOR tx
 
 encodeTip
     :: Tip (CardanoBlock crypto)

@@ -40,6 +40,8 @@ pre: "<b>5. </b>"
    This behaviour can be bypassed where sequential processsing is not required, by setting the new
    construction option `sequential` to `false`.
 
+- Nested logs are now also structured, in particular those coming from the Handshake or TxSubmission protocols. Before, any message from these layers where actually plain strings with unprocessable gibberish. Now, the submitted transaction payload is shown encoded as hexadecimals and errors are also serialized to json using the same model / codec as the one used for websockets. The handshake is also more verbose now clearly showing what version is being requested and what the node replies / select. All in all, better logs. 
+
 #### Changed
 
 - The `moveInstantaneousRewards` certificates have a new optional field `value` and not only a `rewards` map as before. When `value` is present, it signifies that rewards are moved to the other pot.

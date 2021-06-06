@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeApplications #-}
@@ -80,8 +81,6 @@ import Cardano.Network.Protocol.NodeToClient
     ( Block )
 import Control.Monad.Class.MonadST
     ( MonadST )
-import Data.Aeson.Via.Show
-    ( GenericToJsonViaShow (..), ViaJson (..) )
 
 --
 -- App
@@ -90,7 +89,7 @@ import Data.Aeson.Via.Show
 -- | Main application monad.
 newtype App a = App
     { unApp :: ReaderT (Env App) IO a
-    } deriving
+    } deriving newtype
         ( Functor, Applicative, Monad
         , MonadReader (Env App)
         , MonadIO
@@ -110,18 +109,18 @@ runWith app = runReaderT (unApp app)
 application :: Logger TraceOgmios -> App ()
 application tr = withDebouncer _10s $ \debouncer -> do
     env@Env{network} <- ask
-    logWith tr (OgmiosNetwork $ ViaJson network)
+    logWith tr (OgmiosNetwork network)
 
-    healthCheckClient <- newHealthCheckClient (contramap (OgmiosHealth . ViaJson) tr) debouncer
+    healthCheckClient <- newHealthCheckClient (contramap OgmiosHealth tr) debouncer
 
-    webSocketApp <- newWebSocketApp (contramap (OgmiosWebSocket . ViaJson) tr) (`runWith` env)
+    webSocketApp <- newWebSocketApp (contramap OgmiosWebSocket tr) (`runWith` env)
     httpApp      <- mkHttpApp @_ @_ @Block (`runWith` env)
 
     concurrently_
         (connectHealthCheckClient
-            (contramap (OgmiosHealth . ViaJson) tr) (`runWith` env) healthCheckClient)
+            (contramap OgmiosHealth tr) (`runWith` env) healthCheckClient)
         (connectHybridServer
-            (contramap (OgmiosServer . ViaJson) tr) webSocketApp httpApp)
+            (contramap OgmiosServer tr) webSocketApp httpApp)
 
 --
 -- Environment
@@ -135,7 +134,7 @@ data Env (m :: Type -> Type) = Env
     , sampler :: !(Sampler RuntimeStats m)
     , network :: !NetworkParameters
     , options :: !Options
-    } deriving (Generic)
+    } deriving stock (Generic)
 
 newEnvironment
     :: Logger TraceOgmios
@@ -145,7 +144,7 @@ newEnvironment
 newEnvironment tr network options = do
     health  <- getCurrentTime >>= atomically . newTVar . emptyHealth
     sensors <- newSensors
-    sampler <- newSampler (contramap (OgmiosMetrics . ViaJson) tr)
+    sampler <- newSampler (contramap OgmiosMetrics tr)
     pure $ Env{health,sensors,sampler,network,options}
 
 --
@@ -154,31 +153,31 @@ newEnvironment tr network options = do
 
 data TraceOgmios where
     OgmiosHealth
-        :: { healthCheck :: ViaJson (TraceHealth (Health Block)) }
+        :: { healthCheck :: TraceHealth (Health Block) }
         -> TraceOgmios
 
     OgmiosMetrics
-        :: { metrics :: ViaJson TraceMetrics }
+        :: { metrics :: TraceMetrics }
         -> TraceOgmios
 
     OgmiosWebSocket
-        :: { webSocket :: ViaJson TraceWebSocket }
+        :: { webSocket :: TraceWebSocket }
         -> TraceOgmios
 
     OgmiosServer
-        :: { server :: ViaJson TraceServer }
+        :: { server :: TraceServer }
         -> TraceOgmios
 
     OgmiosNetwork
-        :: { networkParameters :: ViaJson NetworkParameters }
+        :: { networkParameters :: NetworkParameters }
         -> TraceOgmios
     deriving stock (Generic, Show)
-    deriving ToJSON via GenericToJsonViaShow TraceOgmios
+    deriving anyclass ToJSON
 
 instance HasSeverityAnnotation TraceOgmios where
     getSeverityAnnotation = \case
-        OgmiosHealth (ViaJson msg)  -> getSeverityAnnotation msg
-        OgmiosMetrics (ViaJson msg) -> getSeverityAnnotation msg
-        OgmiosWebSocket (ViaJson msg)  -> getSeverityAnnotation msg
-        OgmiosServer (ViaJson msg)     -> getSeverityAnnotation msg
-        OgmiosNetwork{}      -> Info
+        OgmiosHealth msg    -> getSeverityAnnotation msg
+        OgmiosMetrics msg   -> getSeverityAnnotation msg
+        OgmiosWebSocket msg -> getSeverityAnnotation msg
+        OgmiosServer msg    -> getSeverityAnnotation msg
+        OgmiosNetwork{}     -> Info

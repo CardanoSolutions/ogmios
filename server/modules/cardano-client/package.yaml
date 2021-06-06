@@ -25,6 +25,7 @@ library:
   source-dirs: src
   ghc-options: *ghc-options-lib
   dependencies:
+    - aeson
     - bytestring
     - cardano-ledger-byron
     - cborg
@@ -39,6 +40,7 @@ library:
     - ouroboros-consensus-shelley
     - ouroboros-network
     - ouroboros-network-framework
+    - typed-protocols
     - typed-protocols-examples
   build-tools:
   - hspec-discover

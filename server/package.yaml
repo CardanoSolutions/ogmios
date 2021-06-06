@@ -73,7 +73,6 @@ library:
     - iohk-monitoring
     - iproute
     - json-wsp
-    - json-via-show
     - memory
     - mtl
     - optparse-applicative
