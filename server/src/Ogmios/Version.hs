@@ -5,17 +5,20 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Ogmios.App.Version
+module Ogmios.Version
     ( version
+    , shortVersion
+    , revision
     ) where
 
 import Ogmios.Prelude
 
 import Data.Git.Revision.TH
-    ( gitDescribeHEAD, unknownRevision )
+    ( gitDescribeHEAD, gitRevParseHEAD, unknownRevision )
 import Data.Version
     ( showVersion )
 
+import qualified Data.Text as T
 import qualified Paths_ogmios as Pkg
 
 -- | Show the current application revision from git context embedded at
@@ -25,9 +28,23 @@ import qualified Paths_ogmios as Pkg
 -- This is impure in disguise but safe if 'git' is available in the app context.
 -- If not available, we fallback to the version listed in the cabal file.
 version :: Text
-version = do
+version =
     case $(gitDescribeHEAD) of
         rev | rev == unknownRevision ->
             toText ("v" <> showVersion Pkg.version <> "-??-????????")
+        rev ->
+            toText rev
+
+-- | Version tag only.
+shortVersion :: Text
+shortVersion =
+    T.takeWhile (/= '-') version
+
+-- | Current application git revision.
+revision :: Text
+revision =
+    case $(gitRevParseHEAD) of
+        rev | rev == unknownRevision ->
+            "????????"
         rev ->
             toText rev
