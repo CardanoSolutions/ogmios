@@ -24,13 +24,10 @@ module Ogmios
     , Options (..)
     , NetworkParameters (..)
     , parseOptions
-    -- ** Version
-    , version
 
     -- * Logging
     , TraceOgmios (..)
     , withStdoutTracer
-    , structuredJson
     ) where
 
 import Ogmios.Prelude
@@ -52,8 +49,6 @@ import Ogmios.App.Server.Http
     ( mkHttpApp )
 import Ogmios.App.Server.WebSocket
     ( TraceWebSocket, newWebSocketApp )
-import Ogmios.App.Version
-    ( version )
 import Ogmios.Control.Exception
     ( MonadCatch, MonadMask, MonadThrow )
 import Ogmios.Control.MonadAsync
@@ -65,7 +60,7 @@ import Ogmios.Control.MonadLog
     , Logger
     , MonadLog (..)
     , Severity (..)
-    , structuredJson
+    , ToObject
     , withStdoutTracer
     )
 import Ogmios.Control.MonadMetrics
@@ -74,13 +69,13 @@ import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TVar, newTVar )
 import Ogmios.Control.MonadWebSocket
     ( MonadWebSocket )
-import Ogmios.Data.Json
-    ( ToJSON )
 
 import Cardano.Network.Protocol.NodeToClient
     ( Block )
 import Control.Monad.Class.MonadST
     ( MonadST )
+import Data.Aeson
+    ( FromJSON (..), ToJSON )
 
 --
 -- App
@@ -172,7 +167,10 @@ data TraceOgmios where
         :: { networkParameters :: NetworkParameters }
         -> TraceOgmios
     deriving stock (Generic, Show)
-    deriving anyclass ToJSON
+    deriving anyclass (ToJSON, ToObject)
+
+instance FromJSON TraceOgmios where
+    parseJSON = const empty -- Unused, but required by the logging library.
 
 instance HasSeverityAnnotation TraceOgmios where
     getSeverityAnnotation = \case

@@ -8,6 +8,7 @@ module Ogmios.Control.MonadLog
     ( -- * Class
       MonadLog (..)
     , Logger
+    , ToObject
 
       -- * Tracer
     , Tracer
@@ -23,7 +24,6 @@ module Ogmios.Control.MonadLog
       -- * Instantiation
     , LoggerName
     , withStdoutTracer
-    , structuredJson
     ) where
 
 import Ogmios.Prelude
@@ -45,17 +45,15 @@ import Cardano.BM.Data.LogItem
 import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Cardano.BM.Data.Tracer
-    ( HasSeverityAnnotation (..) )
+    ( HasSeverityAnnotation (..), ToObject (..), TracingVerbosity (..) )
 import Cardano.BM.Setup
     ( setupTrace_, shutdown )
 import Control.Tracer
     ( Tracer (..), natTracer, nullTracer, traceWith )
 import Data.Aeson
-    ( ToJSON (..) )
+    ( FromJSON, ToJSON (..) )
 
 import qualified Cardano.BM.Configuration.Model as CM
-import qualified Cardano.BM.Data.BackendKind as CM
-import qualified Data.Aeson as Json
 
 class Monad m => MonadLog (m :: Type -> Type) where
     logWith :: Logger msg -> msg -> m ()
@@ -68,42 +66,38 @@ instance MonadLog IO where
 instance MonadLog m => MonadLog (ReaderT env m) where
     logWith tr = lift . logWith tr
 
--- | Tiny helper to serialize any message to 'Text'
-structuredJson :: ToJSON msg => msg -> Text
-structuredJson =
-    decodeUtf8 . Json.encode
-
 -- | Acquire a tracer that automatically shutdown once the action is done via
 -- bracket-style allocation.
 withStdoutTracer
-    :: forall m msg a. (MonadIO m, HasSeverityAnnotation msg)
+    :: forall m msg a. (MonadIO m, ToJSON msg, FromJSON msg, ToObject msg, HasSeverityAnnotation msg)
     => LoggerName
+    -> (Text, Text)
     -> Severity
-    -> (msg -> Text)
     -> (Tracer m msg -> IO a)
     -> IO a
-withStdoutTracer name minSeverity transform between = do
+withStdoutTracer name (version, revision) minSeverity between = do
     bracket before after (between . natTracer liftIO . fst)
   where
-    before :: IO (Tracer IO msg, Switchboard Text)
+    before :: IO (Tracer IO msg, Switchboard msg)
     before = do
         config <- defaultConfigStdout
         CM.setMinSeverity config minSeverity
-        CM.setSetupBackends config [CM.KatipBK]
+        CM.setDefaultScribes config ["StdoutSK::json"]
+        CM.setTextOption config "appversion" version
+        CM.setTextOption config "appcommit" revision
         (tr, sb) <- setupTrace_ config name
-        pure (transformLogObject transform tr, sb)
+        pure (transformLogObject tr, sb)
 
-    after :: (Tracer IO msg, Switchboard Text) -> IO ()
+    after :: (tracer, Switchboard msg) -> IO ()
     after = shutdown . snd
 
 -- | Tracer transformer which converts 'Trace m a' to 'Tracer m a' by wrapping
 -- typed log messages into a 'LogObject'.
 transformLogObject
-    :: (MonadIO m, HasSeverityAnnotation msg)
-    => (msg -> Text)
-    -> Tracer m (LoggerName, LogObject Text)
+    :: (MonadIO m, HasSeverityAnnotation msg, ToObject msg)
+    => Tracer m (LoggerName, LogObject msg)
     -> Tracer m msg
-transformLogObject transform tr = Tracer $ \a -> do
+transformLogObject tr = Tracer $ \msg -> do
     traceWith tr . (mempty,) =<< LogObject mempty
-        <$> (mkLOMeta (getSeverityAnnotation a) Public)
-        <*> pure (LogMessage (transform a))
+        <$> (mkLOMeta (getSeverityAnnotation msg) Public)
+        <*> pure (LogStructured (toObject MaximalVerbosity msg))
