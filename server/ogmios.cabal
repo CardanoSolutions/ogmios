@@ -172,6 +172,7 @@ library
     , time
     , time-manager
     , typed-protocols
+    , unordered-containers
     , vector
     , wai
     , wai-routes
@@ -236,7 +237,10 @@ test-suite unit
   main-is: Spec.hs
   other-modules:
       Ogmios.App.OptionsSpec
+      Ogmios.App.Protocol.ChainSyncSpec
       Ogmios.Data.JsonSpec
+      Test.App.Protocol.Util
+      Test.Generators
       Paths_ogmios
   hs-source-dirs:
       test/unit
@@ -290,6 +294,8 @@ test-suite unit
     , hedgehog-quickcheck
     , hspec
     , hspec-json-schema
+    , io-sim
+    , io-sim-classes
     , json-wsp
     , ogmios
     , ouroboros-consensus
@@ -298,7 +304,11 @@ test-suite unit
     , ouroboros-consensus-cardano-test
     , ouroboros-consensus-shelley
     , ouroboros-network
+    , ouroboros-network-framework
+    , random
     , relude
     , shelley-spec-ledger
     , shelley-spec-ledger-test
+    , typed-protocols
+    , typed-protocols-examples
   default-language: Haskell2010

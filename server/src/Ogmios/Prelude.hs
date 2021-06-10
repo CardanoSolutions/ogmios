@@ -15,6 +15,7 @@ module Ogmios.Prelude
 import Relude hiding
     ( Nat
     , STM
+    , TMVar
     , TVar
     , atomically
     , newEmptyTMVar
