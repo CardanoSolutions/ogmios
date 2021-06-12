@@ -137,7 +137,7 @@ RUN wget -q ${CARDANO_CONFIG_URL}/testnet-shelley-genesis.json
 RUN wget -q ${CARDANO_CONFIG_URL}/testnet-topology.json
 
 RUN find . -name "*config*.json" -print0 | xargs -0 sed -i 's/127.0.0.1/0.0.0.0/g' > /dev/null 2>&1
-
+RUN mkdir /ipc
 WORKDIR /root
 COPY scripts/cardano-node-ogmios.sh cardano-node-ogmios.sh
 CMD ["bash", "cardano-node-ogmios.sh" ]

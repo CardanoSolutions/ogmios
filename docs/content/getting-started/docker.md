@@ -6,11 +6,11 @@ weight = 1
 
 ## 🐳 Overview
 
-The easiest way to get started with Ogmios is to use [docker](https://www.docker.com/). This guide won't cover installing docker, so make sure you have the Docker daemon installed and running. 
+The easiest way to get started with Ogmios is to use [docker](https://www.docker.com/). This guide won't cover installing docker, so make sure you have the Docker daemon installed and running.
 
-Ogmios docker images come in two flavours: `cardano-node-ogmios` and `ogmios`. The former is used to run a single container that bundles both a Cardano-node and an Ogmios server running side-by-side. It is likely the easiest way to get started. The latter is a standalone Ogmios server, and you'll need to run that container in orchestration with a cardano-node; this is made relatively easy with [Docker compose](https://docs.docker.com/compose/). 
+Ogmios docker images come in two flavours: `cardano-node-ogmios` and `ogmios`. The former is used to run a single container that bundles both a Cardano-node and an Ogmios server running side-by-side. It is likely the easiest way to get started. The latter is a standalone Ogmios server, and you'll need to run that container in orchestration with a cardano-node; this is made relatively easy with [Docker compose](https://docs.docker.com/compose/).
 
-Images are uploaded to [Dockerhub](https://dockerhub.com/) and can be pulled from the registry at any time. Images are tagged using release versions or with `:latest` if you're living on the edge. 
+Images are uploaded to [Dockerhub](https://dockerhub.com/) and can be pulled from the registry at any time. Images are tagged using release versions or with `:latest` if you're living on the edge.
 
 | image               | repository                                                                                      | tags               |
 | ---                 | ---                                                                                             | ---                |
@@ -36,17 +36,17 @@ Let's explore a bit the various options:
 
 ##### --it
 
-`-it` is a shorthand for two options `-i` & `-t` to enable some interactive support with the container. This is necessary to pass OS signals (e.g. SIGINT from CTRL-C) from the host to the container. 
+`-it` is a shorthand for two options `-i` & `-t` to enable some interactive support with the container. This is necessary to pass OS signals (e.g. SIGINT from CTRL-C) from the host to the container.
 
-##### --name 
+##### --name
 
-`--name` gives a name to the container, to easily identify it later in commands such as `docker container ps`. 
+`--name` gives a name to the container, to easily identify it later in commands such as `docker container ps`.
 
 ##### -e
 
-`-e` sets an environment variable inside the container. So far, only `NETWORK` is the only available variable that can take two values: `testnet` or `mainnet`. 
+`-e` sets an environment variable inside the container. So far, only `NETWORK` is the only available variable that can take two values: `testnet` or `mainnet`.
 
-##### -p 
+##### -p
 
 `-p` instruments docker to bind ports of the container to host. The image exposes 4 ports that can be bound to any (available) port of the host system. Here's the complete list of TCP ports exposed by the image:
 
@@ -57,15 +57,19 @@ Let's explore a bit the various options:
 | 12788       | cardano-node's EKG port                                  |
 | 12798       | cardano-node's Prometheus port                           |
 
-##### -v 
+##### -v
 
-`-v` mounts a shared volume with the container on your host machine. In this case, it is the node's blockchain database to make the container more portable. This way, you can more easily restart a container on a newer image while keeping the data readily available (and without having to resync the entire chain!).
+`-v` mounts a shared volume with the container on your host machine, either via bind mounts or named volumes.
 
-Find more about run options in the docker user documentation. 
+###### Mount points
+- `db/{NETWORK_NAME}` - persist the `cardano-node` DB to avoid re-syncing the chain whenever a new container is run. This is done on every version upgrade and is recommended for most use-cases.
+- `/ipc` if this image is used in a multi-container stack with an external Haskell node client.
+
+Find more about run options in the docker user documentation.
 
 ### Building
 
-To build the image yourself, we encourage you to leverage the existing build-cache layers from the registry. Building the entire image from scratch can take up to an hour! You can 
+To build the image yourself, we encourage you to leverage the existing build-cache layers from the registry. Building the entire image from scratch can take up to an hour! You can
 
 ```console
 $ DOCKER_BUILDKIT=1 docker build \
@@ -114,10 +118,10 @@ Ogmios doesn’t use any form of persistent storage, but cardano-node does. The 
 
 The compose file allows for minimal (albeit useful) configuration parameters via environment variables:
 
-Variable      | Description                                                                                    | Values                 | Default   
----           | ---                                                                                            | ---                    | ---        
-`NETWORK`     | Which Cardano network to connect to. This impacts both Ogmios and the underlying Cardano node. | `mainnet`, `testnet`   | `mainnet`    
-`OGMIOS_PORT` | Which ports to listen to (both for WebSockets and health endpoints)                            | Any valid port number. | `1337`    
+Variable      | Description                                                                                    | Values                 | Default
+---           | ---                                                                                            | ---                    | ---
+`NETWORK`     | Which Cardano network to connect to. This impacts both Ogmios and the underlying Cardano node. | `mainnet`, `testnet`   | `mainnet`
+`OGMIOS_PORT` | Which ports to listen to (both for WebSockets and health endpoints)                            | Any valid port number. | `1337`
 
 {{% notice info %}}
 Ogmios doesn't use any form of persistent storage, but cardano-node does. The mainnet and testnet databases are not compatible, so it is recommended to instrument docker-compose to use different namespaces for different networks (so that you can switch from one another without risking any database conflicts). Compose can do this easily by passing an extra flag: `--project-name`.
@@ -139,7 +143,7 @@ To build the Ogmios image from sources, pass the `--build` flag to compose. This
 $ DOCKER_BUILDKIT=1 docker build \
     --cache-from cardanosolutions/ogmios:latest \
     --tag cardanosolutions/ogmios:latest \
-    --target ogmios \ 
+    --target ogmios \
     https://github.com/cardanosolutions/ogmios.git
 ```
 
