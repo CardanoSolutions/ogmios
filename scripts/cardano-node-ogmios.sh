@@ -27,7 +27,7 @@ cardano-node run\
   --port 3000\
   --host-addr 0.0.0.0\
   --config /config/$NETWORK-config.json\
-  --socket-path ./node.socket&
+  --socket-path /ipc/node.socket&
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start cardano-node: $status"
@@ -36,7 +36,7 @@ fi
 
 OGMIOS_NETWORK=$NETWORK ogmios \
   --host 0.0.0.0\
-  --node-socket ./node.socket &
+  --node-socket ./ipc/node.socket &
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start ogmios: $status"

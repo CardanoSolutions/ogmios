@@ -59,7 +59,11 @@ Let's explore a bit the various options:
 
 ##### -v
 
-`-v` mounts a shared volume with the container on your host machine. In this case, it is the node's blockchain database to make the container more portable. This way, you can more easily restart a container on a newer image while keeping the data readily available (and without having to resync the entire chain!).
+`-v` mounts a shared volume with the container on your host machine, either via bind mounts or named volumes.
+
+###### Mount points
+- `db/{NETWORK_NAME}` - persist the `cardano-node` DB to avoid re-syncing the chain whenever a new container is run. This is done on every version upgrade and is recommended for most use-cases.
+- `/ipc` if this image is used in a multi-container stack with an external Haskell node client.
 
 Find more about run options in the docker user documentation.
 
