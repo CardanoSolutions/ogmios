@@ -12,6 +12,7 @@ module Test.App.Protocol.Util
     , withMockChannel
 
       -- * Exceptions
+    , FailedToDecodeMsg (..)
     , PeerTerminatedUnexpectedly (..)
     , UnexpectedResponse (..)
     ) where
@@ -27,7 +28,7 @@ import Control.Monad.IOSim
 import GHC.TypeLits
     ( KnownSymbol, Symbol, symbolVal )
 import Ogmios.Control.Exception
-    ( MonadThrow (..) )
+    ( MonadCatch (..), MonadThrow (..) )
 import Ogmios.Control.MonadAsync
     ( race )
 import Ogmios.Control.MonadOuroboros
@@ -52,7 +53,7 @@ import qualified Data.Aeson as Json
 -- random numbers deterministically within the simulation. The random generator
 -- is however randomly seeded for each property run.
 prop_inIOSim
-    :: (forall m. (MonadSTM m, MonadOuroboros m, MonadDelay m) => StdGen -> m ())
+    :: (forall m. (MonadSTM m, MonadCatch m, MonadOuroboros m, MonadDelay m) => StdGen -> m ())
     -> Property
 prop_inIOSim action = monadicIO $ do
     seed <- mkStdGen <$> pick arbitrary
@@ -85,10 +86,11 @@ withMockChannel mockPeer action = do
 -- ()
 expectWSPResponse
     :: forall (method :: Symbol) m. (MonadThrow m, KnownSymbol method)
-    => m Json.Encoding
+    => Proxy method
+    -> m Json.Encoding
     -> Json.Value
     -> m ()
-expectWSPResponse recv wantMirror = do
+expectWSPResponse _proxy recv wantMirror = do
     json <- inefficientEncodingToValue <$> recv
 
     let gotMethod = "methodname" `at` json
@@ -121,6 +123,9 @@ expectWSPFault recv wantCode wantMirror = do
 --
 -- Exceptions
 --
+
+data FailedToDecodeMsg = FailedToDecodeMsg String deriving Show
+instance Exception FailedToDecodeMsg
 
 data PeerTerminatedUnexpectedly = PeerTerminatedUnexpectedly deriving Show
 instance Exception PeerTerminatedUnexpectedly

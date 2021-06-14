@@ -56,7 +56,8 @@ import Ouroboros.Network.Protocol.ChainSync.Type
 import System.Random
     ( StdGen, random )
 import Test.App.Protocol.Util
-    ( PeerTerminatedUnexpectedly (..)
+    ( FailedToDecodeMsg (..)
+    , PeerTerminatedUnexpectedly (..)
     , expectWSPFault
     , expectWSPResponse
     , prop_inIOSim
@@ -102,10 +103,10 @@ spec = parallel $ do
       where
         p mirror = prop_inIOSim $ withChainSyncClient $ \send receive -> do
             send $ requestNext mirror
-            expectWSPResponse @"RequestNext" receive (toJSON mirror)
+            expectWSPResponse @"RequestNext" Proxy receive (toJSON mirror)
 
             send $ findIntersect mirror []
-            expectWSPResponse @"FindIntersect" receive (toJSON mirror)
+            expectWSPResponse @"FindIntersect" Proxy receive (toJSON mirror)
 
     -- The chain-sync client will pipeline requests up to a certain point.
     -- Indeed, WebSockets do allow for (theorically) infinite pipelining,
@@ -128,7 +129,7 @@ spec = parallel $ do
                 let mirror = Just $ toJSON i
                 mirror <$ send (requestNext mirror)
             forM_ mirrors $ \mirror -> do
-                expectWSPResponse @"RequestNext" receive (toJSON mirror)
+                expectWSPResponse @"RequestNext" Proxy receive (toJSON mirror)
 
         genMaxInFlight :: Gen MaxInFlight
         genMaxInFlight = oneof
@@ -155,7 +156,7 @@ spec = parallel $ do
             send $ requestNext mirror
             send $ findIntersect mirror' []
             expectWSPFault receive Wsp.FaultClient (toJSON mirror')
-            expectWSPResponse @"RequestNext" receive (toJSON mirror)
+            expectWSPResponse @"RequestNext" Proxy receive (toJSON mirror)
 
 type Protocol = ChainSync Block (Point Block) (Tip Block)
 
@@ -182,7 +183,7 @@ withChainSyncClient action seed = do
             Right a -> pure a
 
 chainSyncMockPeer
-    :: forall m failure. (MonadSTM m, Show failure)
+    :: forall m failure. (MonadSTM m, MonadThrow m, Show failure)
     => StdGen
         -- ^ Random generator
     -> Codec Protocol failure m LByteString
@@ -195,18 +196,18 @@ chainSyncMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
     res <- lift (decodeOrThrow req) >>= \case
         SomeMessage ChainSync.MsgRequestNext -> do
             msg <- generateWith genRequestNextResponse <$> state random
-            pure $ encode codec (ServerAgency $ TokNext TokCanAwait) msg
+            pure $ Just $ encode codec (ServerAgency $ TokNext TokCanAwait) msg
         SomeMessage ChainSync.MsgFindIntersect{} -> do
             msg <- generateWith genFindIntersectResponse <$> state random
-            pure $ encode codec (ServerAgency TokIntersect) msg
+            pure $ Just $ encode codec (ServerAgency TokIntersect) msg
         SomeMessage ChainSync.MsgDone ->
-            error "MsgDone"
-    lift $ send res
+            pure Nothing
+    lift $ maybe (pure ()) send res
   where
     decodeOrThrow bytes = do
         decoder <- decode codec (ClientAgency TokIdle)
         runDecoder [bytes] decoder >>= \case
-            Left failure -> error (show failure)
+            Left failure -> throwIO $ FailedToDecodeMsg (show failure)
             Right msg -> pure msg
 
     genRequestNextResponse

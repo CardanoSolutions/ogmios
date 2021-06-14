@@ -238,6 +238,7 @@ test-suite unit
   other-modules:
       Ogmios.App.OptionsSpec
       Ogmios.App.Protocol.ChainSyncSpec
+      Ogmios.App.Protocol.StateQuerySpec
       Ogmios.Data.JsonSpec
       Test.App.Protocol.Util
       Test.Generators
@@ -291,6 +292,7 @@ test-suite unit
     , cardano-ledger-core
     , cardano-slotting
     , generic-arbitrary
+    , generics-sop
     , hedgehog-quickcheck
     , hspec
     , hspec-json-schema
