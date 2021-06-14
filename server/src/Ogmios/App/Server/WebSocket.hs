@@ -26,7 +26,7 @@ import Ogmios.App.Options
 import Ogmios.App.Protocol
     ( onUnmatchedMessage )
 import Ogmios.App.Protocol.ChainSync
-    ( mkChainSyncClient )
+    ( MaxInFlight, mkChainSyncClient )
 import Ogmios.App.Protocol.StateQuery
     ( mkStateQueryClient )
 import Ogmios.App.Protocol.TxSubmission
@@ -121,14 +121,14 @@ newWebSocketApp
     -> m WebSocketApp
 newWebSocketApp tr unliftIO = do
     NetworkParameters{slotsPerEpoch,networkMagic} <- asks (view typed)
-    Options{nodeSocket} <- asks (view typed)
+    Options{nodeSocket,maxInFlight} <- asks (view typed)
     sensors <- asks (view typed)
     return $ \pending -> unliftIO $ do
         let (mode, sub) = choseSerializationMode pending
         logWith tr $ WebSocketConnectionAccepted (userAgent pending) mode
         recordSession sensors $ onExceptions $ acceptRequest pending sub $ \conn -> do
             let trClient = contramap WebSocketClient tr
-            withOuroborosClients mode sensors conn $ \clients -> do
+            withOuroborosClients mode maxInFlight sensors conn $ \clients -> do
                 let client = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch clients
                 let vData  = NodeToClientVersionData networkMagic
                 connectClient trClient client vData nodeSocket
@@ -201,11 +201,12 @@ withOuroborosClients
         , MonadWebSocket m
         )
     => SerializationMode
+    -> MaxInFlight
     -> Sensors m
     -> Connection
     -> (Clients m Block -> m a)
     -> m a
-withOuroborosClients mode sensors conn action = do
+withOuroborosClients mode maxInFlight sensors conn action = do
     (chainSyncQ, txSubmissionQ, stateQueryQ) <-
         atomically $ (,,) <$> newTQueue <*> newTQueue <*> newTQueue
 
@@ -213,7 +214,7 @@ withOuroborosClients mode sensors conn action = do
         link worker
         action $ Clients
              { chainSyncClient =
-                 mkChainSyncClient chainSyncCodecs chainSyncQ yield
+                 mkChainSyncClient maxInFlight chainSyncCodecs chainSyncQ yield
              , stateQueryClient =
                  mkStateQueryClient stateQueryCodecs stateQueryQ yield
              , txSubmissionClient =

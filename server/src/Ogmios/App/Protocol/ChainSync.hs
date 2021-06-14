@@ -36,6 +36,7 @@
 -- @
 module Ogmios.App.Protocol.ChainSync
     ( mkChainSyncClient
+    , MaxInFlight
     ) where
 
 import Ogmios.Prelude
@@ -70,18 +71,22 @@ import qualified Codec.Json.Wsp as Wsp
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Sequence as Seq
 
+type MaxInFlight = Int
+
 mkChainSyncClient
     :: forall m block.
         ( MonadSTM m
         )
-    => ChainSyncCodecs block
+    => MaxInFlight
+        -- ^ Max number of requests allowed to be in-flight / pipelined
+    -> ChainSyncCodecs block
         -- ^ For encoding Haskell types to JSON
     -> TQueue m (ChainSyncMessage block)
         -- ^ Incoming request queue
     -> (Json -> m ())
         -- ^ An emitter for yielding JSON objects
     -> ChainSyncClientPipelined block (Point block) (Tip block) m ()
-mkChainSyncClient ChainSyncCodecs{..} queue yield =
+mkChainSyncClient maxInFlight ChainSyncCodecs{..} queue yield =
     ChainSyncClientPipelined $ clientStIdle Zero Seq.Empty
   where
     await :: m (ChainSyncMessage block)
@@ -121,7 +126,7 @@ mkChainSyncClient ChainSyncCodecs{..} queue yield =
         Just (MsgRequestNext RequestNext toResponse) -> do
             let buffer' = buffer |> toResponse
             let collect = CollectResponse
-                    (guard (natToInt n < 1000) $> clientStIdle (Succ n) buffer')
+                    (guard (natToInt n < maxInFlight) $> clientStIdle (Succ n) buffer')
                     (clientStNext n buffer')
             pure $ SendMsgRequestNextPipelined collect
 

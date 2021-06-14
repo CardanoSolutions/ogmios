@@ -126,6 +126,7 @@ parserInfo = info (helper <*> parser) $ mempty
                 <*> serverHostOption
                 <*> serverPortOption
                 <*> connectionTimeoutOption
+                <*> maxInFlightOption
                 <*> logLevelOption
             )
         )
@@ -139,6 +140,7 @@ data Options = Options
     , serverHost :: !String
     , serverPort :: !Int
     , connectionTimeout :: !Int
+    , maxInFlight :: !Int
     , logLevel :: !Severity
     } deriving (Generic, Eq, Show)
 
@@ -169,13 +171,22 @@ serverPortOption = option auto $ mempty
     <> value 1337
     <> showDefault
 
--- | [--websocket-timeout], default: 90s
+-- | [--timeout=SECONDS], default: 90s
 connectionTimeoutOption :: Parser Int
 connectionTimeoutOption = option auto $ mempty
     <> long "timeout"
     <> metavar "SECONDS"
     <> help "Number of seconds of inactivity after which the server should close client connections."
     <> value 90
+    <> showDefault
+
+-- | [--max-in-flight=INT], default: 1000
+maxInFlightOption :: Parser Int
+maxInFlightOption = option auto $ mempty
+    <> long "max-in-flight"
+    <> metavar "INT"
+    <> help "Max number of ChainSync requests which can be pipelined at once. Only apply to the chain-sync protocol."
+    <> value 1000
     <> showDefault
 
 -- | [--log-level=SEVERITY], default: Info
