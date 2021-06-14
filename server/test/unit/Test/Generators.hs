@@ -80,6 +80,7 @@ import Test.Consensus.Cardano.Generators
     ()
 
 import qualified Cardano.Ledger.Core as Core
+import qualified Data.Aeson as Json
 import qualified Ouroboros.Network.Point as Point
 import qualified Shelley.Spec.Ledger.BlockChain as Spec
 
@@ -432,6 +433,13 @@ genCompactGenesisResult _ _ =
                     ]
             Nothing ->
                 Nothing
+
+genMirror
+    :: Gen (Maybe Json.Value)
+genMirror = oneof
+    [ pure Nothing
+    , Just . Json.toJSON <$> arbitrary @Int
+    ]
 
 --
 -- Helpers

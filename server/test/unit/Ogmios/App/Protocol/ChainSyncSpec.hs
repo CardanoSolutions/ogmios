@@ -62,32 +62,32 @@ import Test.App.Protocol.Util
     , withMockChannel
     )
 import Test.Generators
-    ( genBlock, genPoint, genTip, generateWith )
+    ( genBlock, genMirror, genPoint, genTip, generateWith )
 import Test.Hspec
-    ( Spec, context, parallel, specify )
+    ( Spec, context, parallel )
+import Test.Hspec.QuickCheck
+    ( prop )
 import Test.QuickCheck
-    ( Gen, frequency )
+    ( Gen, forAll, frequency )
 
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Ouroboros.Network.Protocol.ChainSync.Type as ChainSync
 
+maxInFlight :: MaxInFlight
+maxInFlight = 10
+
 spec :: Spec
 spec = parallel $ do
     context "ChainSync" $ do
-        specify "Basic scenario" $ prop_inIOSim $ withChainSyncClient $ \send receive -> do
-            let mirror = toJSON (14 :: Int)
+        prop "Basic scenario"
+            $ forAll genMirror $ \mirror -> prop_inIOSim
+            $ withChainSyncClient $ \send receive -> do
+                send $ MsgRequestNext RequestNext (Wsp.Response mirror)
+                expectWSPResponse @"RequestNext" receive (toJSON mirror)
 
-            send $ MsgRequestNext RequestNext (Wsp.Response Nothing)
-            expectWSPResponse @"RequestNext" receive Null
+                send $ MsgFindIntersect (FindIntersect []) (Wsp.Response mirror)
+                expectWSPResponse @"FindIntersect" receive (toJSON mirror)
 
-            send $ MsgRequestNext RequestNext (Wsp.Response $ Just mirror)
-            expectWSPResponse @"RequestNext" receive mirror
-
-            send $ MsgFindIntersect (FindIntersect []) (Wsp.Response Nothing)
-            expectWSPResponse @"FindIntersect" receive Null
-
-            send $ MsgFindIntersect (FindIntersect []) (Wsp.Response $ Just mirror)
-            expectWSPResponse @"FindIntersect" receive mirror
 
 type Protocol = ChainSync Block (Point Block) (Tip Block)
 
