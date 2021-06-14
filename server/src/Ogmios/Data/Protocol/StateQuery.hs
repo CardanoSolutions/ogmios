@@ -110,12 +110,15 @@ data StateQueryMessage block
     = MsgAcquire
         (Acquire block)
         (Wsp.ToResponse (AcquireResponse block))
+        Wsp.ToFault
     | MsgRelease
         Release
         (Wsp.ToResponse ReleaseResponse)
+        Wsp.ToFault
     | MsgQuery
         (Query block)
         (Wsp.ToResponse (QueryResponse block))
+        Wsp.ToFault
 
 --
 -- Acquire

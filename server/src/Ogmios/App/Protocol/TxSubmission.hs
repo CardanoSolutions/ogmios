@@ -62,7 +62,7 @@ mkTxSubmissionClient TxSubmissionCodecs{..} queue yield =
     clientStIdle
         :: m (LocalTxClientStIdle (SubmitTxPayload block) (SubmitTxError block) m ())
     clientStIdle = await >>= \case
-        MsgSubmitTx SubmitTx{bytes} toResponse -> do
+        MsgSubmitTx SubmitTx{bytes} toResponse _ -> do
             pure $ SendMsgSubmitTx bytes $ \result -> do
                 yield $ encodeSubmitTxResponse $ toResponse result
                 clientStIdle

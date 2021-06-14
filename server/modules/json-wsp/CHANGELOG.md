@@ -1,5 +1,19 @@
 # Changelog
 
+## [edge] 
+
+### Added
+
+- Expose `FaultCode`.
+
+### Changed
+
+- Handlers now also provide an extra function to create a `Fault`. It allows for answering with a fault while preserving the reflection value. Seemingly, `Fault` also now have a `mirror` field.
+
+### Removed
+
+ø
+
 ## [1.1.0] -- 2021-05-06
 
 ### Added

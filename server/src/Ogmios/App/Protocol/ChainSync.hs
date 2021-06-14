@@ -68,7 +68,6 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     )
 
 import qualified Codec.Json.Wsp as Wsp
-import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Sequence as Seq
 
 type MaxInFlight = Int
@@ -101,14 +100,14 @@ mkChainSyncClient maxInFlight ChainSyncCodecs{..} queue yield =
         -> Seq (Wsp.ToResponse (RequestNextResponse block))
         -> m (ClientPipelinedStIdle n block (Point block) (Tip block) m ())
     clientStIdle Zero buffer = await <&> \case
-        MsgRequestNext RequestNext toResponse ->
+        MsgRequestNext RequestNext toResponse _ ->
             let buffer' = buffer |> toResponse
                 collect = CollectResponse
                     (Just $ clientStIdle (Succ Zero) buffer')
                     (clientStNext Zero buffer')
             in SendMsgRequestNextPipelined collect
 
-        MsgFindIntersect FindIntersect{points} toResponse ->
+        MsgFindIntersect FindIntersect{points} toResponse _ ->
             SendMsgFindIntersect points (clientStIntersect toResponse)
 
     clientStIdle n@(Succ prev) buffer = tryAwait >>= \case
@@ -123,16 +122,16 @@ mkChainSyncClient maxInFlight ChainSyncCodecs{..} queue yield =
         -- Yet, if we have already received a new message from the client, we
         -- prioritize it and pipeline it right away unless there are already too
         -- many requests in flights.
-        Just (MsgRequestNext RequestNext toResponse) -> do
+        Just (MsgRequestNext RequestNext toResponse _) -> do
             let buffer' = buffer |> toResponse
             let collect = CollectResponse
                     (guard (natToInt n < maxInFlight) $> clientStIdle (Succ n) buffer')
                     (clientStNext n buffer')
             pure $ SendMsgRequestNextPipelined collect
 
-        Just (MsgFindIntersect _FindIntersect _toResponse) -> do
+        Just (MsgFindIntersect _FindIntersect _toResponse toFault) -> do
             let fault = "'FindIntersect' requests cannot be interleaved with 'RequestNext'."
-            yield $ Wsp.mkFault $ Wsp.clientFault fault
+            yield $ Wsp.mkFault $ toFault Wsp.FaultClient fault
             clientStIdle n buffer
 
     clientStNext

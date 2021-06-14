@@ -22,8 +22,11 @@ module Codec.Json.Wsp
     , mkResponse
     , ToResponse
     , Fault
+    , FaultCode (..)
     , mkFault
+    , ToFault
     , ServiceName
+    , Mirror
 
     -- * ToJSON / FromJSON
     , Options (..)
@@ -40,7 +43,7 @@ module Codec.Json.Wsp
 import Prelude
 
 import Codec.Json.Wsp.Handler
-    ( Fault (..), Request (..), Response (..) )
+    ( Fault (..), FaultCode (..), Mirror, Request (..), Response (..) )
 import Control.Applicative
     ( Alternative (..), empty )
 import Control.Arrow
@@ -84,6 +87,10 @@ type family ServiceName a :: Symbol
 -- @since 2.0.0
 type ToResponse a = a -> Response a
 
+-- | A type-alias to help readability in signatures
+--
+-- @since 2.0.0
+type ToFault = FaultCode -> String -> Fault
 --
 -- Public ToJSON / FromJSON interfaces
 --
@@ -163,6 +170,28 @@ mkResponse opts _proxy toResult (Response refl res) = Json.pairs $
   where
     methodName = constructorTagModifier opts $ gWSPMethodName (Proxy :: Proxy (Rep req a))
 
+-- | Serialize a given 'Fault' to JSON
+--
+-- since @1.0.0
+mkFault
+    :: KnownSymbol (ServiceName (Request Void))
+    => Fault
+    -> Json.Encoding
+mkFault Fault{faultMirror,faultCode,faultString} = Json.pairs $
+    ("type" .= WspFault)
+    <>
+    ("version" .= V1_0)
+    <>
+    ("servicename" .= symbolVal (Proxy @(ServiceName (Request Void))))
+    <>
+    ("fault" .= Json.object
+        [ "code" .= faultCode
+        , "string" .= faultString
+        ]
+    )
+    <>
+    ("reflection" .= faultMirror)
+
 -- | Serialize a given request to JSON
 --
 -- since @1.1.0
@@ -189,19 +218,6 @@ mkRequest opts toArgs (Request mirror req) = Json.pairs $
     ("mirror" .= mirror)
   where
     methodName = constructorTagModifier opts $ gWSPMethodName (Proxy :: Proxy (Rep req a))
-
-mkFault
-    :: KnownSymbol (ServiceName (Request Void))
-    => Fault
-    -> Json.Encoding
-mkFault fault = Json.pairs $
-    ("type" .= WspFault)
-    <>
-    ("version" .= V1_0)
-    <>
-    ("servicename" .= symbolVal (Proxy @(ServiceName (Request Void))))
-    <>
-    ("fault" .= fault)
 
 -- | Supported JSON-WSP versions.
 --

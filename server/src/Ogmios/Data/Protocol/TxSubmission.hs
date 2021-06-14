@@ -76,6 +76,7 @@ data TxSubmissionMessage block
     = MsgSubmitTx
         (SubmitTx block)
         (Wsp.ToResponse (SubmitTxResponse block))
+        Wsp.ToFault
 
 --
 -- SubmitTx

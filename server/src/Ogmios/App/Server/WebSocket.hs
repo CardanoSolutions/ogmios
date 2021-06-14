@@ -144,7 +144,7 @@ newWebSocketApp tr unliftIO = do
     onIOException conn e = do
         logWith tr $ WebSocketFailedToConnect $ show e
         let msg = "Connection with the node lost or failed."
-        close conn $ toStrict $ Json.encode $ Wsp.serverFault msg
+        close conn $ toStrict $ Json.encode $ Wsp.serverFault Nothing msg
 
     onExceptions :: m () -> m ()
     onExceptions
@@ -247,19 +247,19 @@ withOuroborosClients mode maxInFlight sensors conn action = do
                 matched <- Wsp.match bytes
                     (count (totalUnroutedCounter sensors) *> defaultHandler bytes)
                     [ Wsp.Handler decodeRequestNext
-                        (\r -> push chainSyncQ . MsgRequestNext r)
+                        (\r t -> push chainSyncQ . MsgRequestNext r t)
                     , Wsp.Handler decodeFindIntersect
-                        (\r -> push chainSyncQ . MsgFindIntersect r)
+                        (\r t -> push chainSyncQ . MsgFindIntersect r t)
 
                     , Wsp.Handler decodeAcquire
-                        (\r -> push stateQueryQ . MsgAcquire r)
+                        (\r t -> push stateQueryQ . MsgAcquire r t)
                     , Wsp.Handler decodeRelease
-                        (\r -> push stateQueryQ . MsgRelease r)
+                        (\r t -> push stateQueryQ . MsgRelease r t)
                     , Wsp.Handler decodeQuery
-                        (\r -> push stateQueryQ . MsgQuery r)
+                        (\r t -> push stateQueryQ . MsgQuery r t)
 
                     , Wsp.Handler decodeSubmitTx
-                        (\r -> push txSubmissionQ .  MsgSubmitTx r)
+                        (\r t -> push txSubmissionQ .  MsgSubmitTx r t)
                     ]
                 routeMessage matched chainSyncQ stateQueryQ txSubmissionQ
 
