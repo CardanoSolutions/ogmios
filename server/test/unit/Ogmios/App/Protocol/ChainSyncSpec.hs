@@ -69,16 +69,20 @@ import Test.Hspec
 import Test.Hspec.QuickCheck
     ( prop )
 import Test.QuickCheck
-    ( Gen, Property, checkCoverage, choose, cover, forAll, frequency, oneof )
+    ( Confidence (..)
+    , Gen
+    , Property
+    , checkCoverageWith
+    , choose
+    , cover
+    , forAll
+    , frequency
+    , oneof
+    )
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Ouroboros.Network.Protocol.ChainSync.Type as ChainSync
-
-type Protocol = ChainSync Block (Point Block) (Tip Block)
-
-maxInFlight :: MaxInFlight
-maxInFlight = 3
 
 spec :: Spec
 spec = parallel $ do
@@ -92,9 +96,9 @@ spec = parallel $ do
     -- reflection value (a.k.a mirror).
     prop_basicSendRecv :: Property
     prop_basicSendRecv = forAll genMirror $ \mirror ->
-        cover 30 (isJust mirror) "with mirror" $
-        cover 30 (isNothing mirror) "without mirror" $
-        checkCoverage (p mirror)
+        cover 50 (isJust mirror) "with mirror" $
+        cover 50 (isNothing mirror) "without mirror" $
+        checkCoverageWith (confidence 1e6 0.5) (p mirror)
       where
         p mirror = prop_inIOSim $ withChainSyncClient $ \send receive -> do
             send $ requestNext mirror
@@ -114,10 +118,10 @@ spec = parallel $ do
     -- in flight, which this property captures.
     prop_manyInFlight :: Property
     prop_manyInFlight = forAll genMaxInFlight $ \nMax ->
-        cover 20 (nMax > maxInFlight) "> maxInFlight" $
-        cover 20 (nMax >= maxInFlight - 1 && nMax <= maxInFlight + 1) "=~ maxInFlight" $
-        cover 20 (nMax < maxInFlight) "< maxInFlight" $
-        checkCoverage (p nMax)
+        cover 33 (nMax > maxInFlight) "> maxInFlight" $
+        cover 33 (nMax >= maxInFlight - 1 && nMax <= maxInFlight + 1) "=~ maxInFlight" $
+        cover 33 (nMax < maxInFlight) "< maxInFlight" $
+        checkCoverageWith (confidence 1e6 0.5) (p nMax)
       where
         p nMax = prop_inIOSim $ withChainSyncClient $ \send receive -> do
             mirrors <- forM [0 .. nMax] $ \(i :: Int) -> do
@@ -140,15 +144,23 @@ spec = parallel $ do
     -- asking for an intersection while they are still requests in flight that
     -- haven't been collected. In this case, Ogmios returns a client error.
     prop_interleave :: Property
-    prop_interleave = forAll genMirror $ \mirror ->
-        cover 30 (isJust mirror) "with mirror" $
-        cover 30 (isNothing mirror) "without mirror" $
-        checkCoverage (p mirror)
+    prop_interleave = forAll ((,) <$> genMirror <*> genMirror) $ \(mirror, mirror') ->
+        cover 20 (isJust mirror && isNothing mirror') "+mirror -mirror" $
+        cover 20 (isJust mirror && isJust mirror') "+mirror +mirror" $
+        cover 20 (isNothing mirror && isNothing mirror') "-mirror -mirror" $
+        cover 20 (isNothing mirror && isJust mirror') "-mirror +mirror" $
+        checkCoverageWith (confidence 1e6 0.5) (p mirror mirror')
       where
-        p mirror = prop_inIOSim $ withChainSyncClient $ \send receive -> do
-            send $ requestNext Nothing
-            send $ findIntersect mirror []
-            expectWSPFault receive Wsp.FaultClient (toJSON mirror)
+        p mirror mirror' = prop_inIOSim $ withChainSyncClient $ \send receive -> do
+            send $ requestNext mirror
+            send $ findIntersect mirror' []
+            expectWSPFault receive Wsp.FaultClient (toJSON mirror')
+            expectWSPResponse @"RequestNext" receive (toJSON mirror)
+
+type Protocol = ChainSync Block (Point Block) (Tip Block)
+
+maxInFlight :: MaxInFlight
+maxInFlight = 3
 
 withChainSyncClient
     :: (MonadSTM m, MonadOuroboros m)
@@ -222,3 +234,7 @@ requestNext mirror =
 findIntersect :: Wsp.Mirror -> [Point Block] -> ChainSyncMessage Block
 findIntersect mirror points =
     MsgFindIntersect (FindIntersect points) (Wsp.Response mirror) (Wsp.Fault mirror)
+
+confidence :: Double -> Double -> Confidence
+confidence (round -> certainty) tolerance =
+    Confidence{certainty,tolerance}
