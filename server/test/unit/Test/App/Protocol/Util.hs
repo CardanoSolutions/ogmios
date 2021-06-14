@@ -8,6 +8,7 @@
 module Test.App.Protocol.Util
     ( prop_inIOSim
     , expectWSPResponse
+    , expectWSPFault
     , withMockChannel
 
       -- * Exceptions
@@ -19,6 +20,8 @@ import Ogmios.Prelude
 
 import Control.Exception
     ( evaluate )
+import Control.Monad.Class.MonadTimer
+    ( MonadDelay )
 import Control.Monad.IOSim
     ( runSimOrThrow )
 import GHC.TypeLits
@@ -42,13 +45,14 @@ import Test.QuickCheck
 import Test.QuickCheck.Monadic
     ( monadicIO, pick, run )
 
+import qualified Codec.Json.Wsp as Wsp
 import qualified Data.Aeson as Json
 
 -- | Run a function in IOSim, with a 'StdGen' input which can used to compute
 -- random numbers deterministically within the simulation. The random generator
 -- is however randomly seeded for each property run.
 prop_inIOSim
-    :: (forall m. (MonadSTM m, MonadOuroboros m) => StdGen -> m ())
+    :: (forall m. (MonadSTM m, MonadOuroboros m, MonadDelay m) => StdGen -> m ())
     -> Property
 prop_inIOSim action = monadicIO $ do
     seed <- mkStdGen <$> pick arbitrary
@@ -90,11 +94,29 @@ expectWSPResponse recv wantMirror = do
     let gotMethod = "methodname" `at` json
     let wantMethod = Json.toJSON $ symbolVal (Proxy @method)
     when (gotMethod /= Just wantMethod) $
-        throwIO $ UnexpectedResponse gotMethod wantMethod
+        throwIO $ UnexpectedResponse "methodname" gotMethod wantMethod
 
     let gotMirror = "reflection" `at` json
     when (gotMirror /= Just wantMirror) $
-        throwIO $ UnexpectedResponse gotMirror wantMirror
+        throwIO $ UnexpectedResponse "reflection" gotMirror wantMirror
+
+expectWSPFault
+    :: (MonadThrow m)
+    => m Json.Encoding
+    -> Wsp.FaultCode
+    -> Json.Value
+    -> m ()
+expectWSPFault recv wantCode wantMirror = do
+    json <- inefficientEncodingToValue <$> recv
+
+    let gotCode = ("fault" `at` json) >>= at "code"
+    let wantCode' = Json.toJSON wantCode
+    when (gotCode /= Just wantCode') $
+        throwIO $ UnexpectedResponse "fault" gotCode wantCode'
+
+    let gotMirror = "reflection" `at` json
+    when (gotMirror /= Just wantMirror) $
+        throwIO $ UnexpectedResponse "reflection" gotMirror wantMirror
 
 --
 -- Exceptions
@@ -104,7 +126,8 @@ data PeerTerminatedUnexpectedly = PeerTerminatedUnexpectedly deriving Show
 instance Exception PeerTerminatedUnexpectedly
 
 data UnexpectedResponse = UnexpectedResponse
-    { gotResponse :: Maybe Json.Value
+    { what :: String
+    , gotResponse :: Maybe Json.Value
     , expectedResponse :: Json.Value
     } deriving Show
 instance Exception UnexpectedResponse
