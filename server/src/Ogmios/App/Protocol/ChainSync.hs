@@ -113,9 +113,6 @@ mkChainSyncClient maxInFlight ChainSyncCodecs{..} queue yield =
     clientStIdle n@(Succ prev) buffer = tryAwait >>= \case
         -- If there's no immediate incoming message, we take this opportunity to
         -- wait and collect one response.
-        Nothing | Seq.null buffer ->
-            clientStIdle n buffer
-
         Nothing ->
             pure $ CollectResponse Nothing (clientStNext prev buffer)
 
