@@ -13,24 +13,14 @@ module Ogmios.Data.JsonSpec
 
 import Ogmios.Prelude
 
-import Cardano.Ledger.Era
-    ( Crypto, Era, SupportsSegWit (..) )
-import Cardano.Ledger.Serialization
-    ( ToCBORGroup )
 import Cardano.Network.Protocol.NodeToClient
     ( Block )
-import Cardano.Slotting.Slot
-    ( EpochNo (..) )
 import Data.Aeson
     ( parseJSON, toJSON )
 import Data.Aeson.QQ.Simple
     ( aesonQQ )
 import Data.Maybe
     ( fromJust )
-import Data.SOP.Strict
-    ( NS (..) )
-import Data.Type.Equality
-    ( (:~:) (..), testEquality )
 import Ogmios.Data.Json
     ( Json
     , SerializationMode (..)
@@ -43,10 +33,7 @@ import Ogmios.Data.Json
     , jsonToByteString
     )
 import Ogmios.Data.Json.Query
-    ( Delegations
-    , QueryInEra
-    , QueryResult
-    , RewardAccounts
+    ( QueryInEra
     , ShelleyBasedEra (..)
     , SomeQuery (..)
     , SomeShelleyEra (..)
@@ -90,46 +77,34 @@ import Ogmios.Data.Protocol.StateQuery
     )
 import Ogmios.Data.Protocol.TxSubmission
     ( SubmitTxResponse, _encodeSubmitTxResponse )
-import Ouroboros.Consensus.Byron.Ledger.Block
-    ( ByronBlock )
 import Ouroboros.Consensus.Cardano.Block
-    ( AllegraEra
-    , AlonzoEra
-    , CardanoEras
-    , GenTx
-    , HardForkApplyTxErr (..)
-    , HardForkBlock (..)
-    , MaryEra
-    , ShelleyEra
-    )
-import Ouroboros.Consensus.HardFork.Combinator
-    ( LedgerEraInfo (..), Mismatch (..), MismatchEraInfo (..), singleEraInfo )
-import Ouroboros.Consensus.HardFork.Combinator.Mempool
-    ( HardForkApplyTxErr (..) )
-import Ouroboros.Consensus.HardFork.History.Summary
-    ( Bound (..) )
-import Ouroboros.Consensus.Shelley.Eras
-    ( StandardAllegra, StandardAlonzo, StandardMary, StandardShelley )
-import Ouroboros.Consensus.Shelley.Ledger.Block
-    ( ShelleyBlock (..) )
-import Ouroboros.Consensus.Shelley.Ledger.Config
-    ( CompactGenesis, compactGenesis )
-import Ouroboros.Consensus.Shelley.Ledger.Query
-    ( NonMyopicMemberRewards (..) )
+    ( CardanoEras, GenTx, HardForkApplyTxErr (..) )
 import Ouroboros.Consensus.Shelley.Protocol
     ( StandardCrypto )
 import Ouroboros.Network.Block
-    ( BlockNo (..), HeaderHash, Point (..), SlotNo (..), Tip (..) )
+    ( Point (..), Tip (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
-import Shelley.Spec.Ledger.Delegation.Certificates
-    ( PoolDistr )
-import Shelley.Spec.Ledger.PParams
-    ( ProposedPPUpdates )
-import Shelley.Spec.Ledger.UTxO
-    ( UTxO )
+import Test.Generators
+    ( genAcquireFailure
+    , genBlock
+    , genBoundResult
+    , genCompactGenesisResult
+    , genDelegationAndRewardsResult
+    , genEpochResult
+    , genHardForkApplyTxErr
+    , genNonMyopicMemberRewardsResult
+    , genPParamsResult
+    , genPoint
+    , genPointResult
+    , genPoolDistrResult
+    , genProposedPParamsResult
+    , genTip
+    , genUTxOResult
+    , reasonablySized
+    )
 import Test.Hspec
     ( Spec
     , SpecWith
@@ -150,39 +125,22 @@ import Test.QuickCheck
     , Gen
     , Property
     , Result (..)
-    , choose
     , conjoin
     , elements
     , forAllBlind
-    , frequency
     , genericShrink
     , oneof
     , quickCheckWithResult
-    , scale
     , withMaxSuccess
     , (===)
     )
 import Test.QuickCheck.Arbitrary.Generic
     ( genericArbitrary )
-import Test.QuickCheck.Hedgehog
-    ( hedgehog )
-import Test.Shelley.Spec.Ledger.ConcreteCryptoTypes
-    ( Mock )
-import Test.Shelley.Spec.Ledger.Serialisation.Generators.Genesis
-    ( genPParams )
-import Type.Reflection
-    ( typeRep )
 
-import Test.Consensus.Cardano.Generators
-    ()
-
-import qualified Cardano.Ledger.Core as Core
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
-import qualified Ouroboros.Network.Point as Point
 import qualified Paths_ogmios
-import qualified Shelley.Spec.Ledger.BlockChain as Spec
 import qualified Test.QuickCheck as QC
 
 jsonifierToAeson
@@ -400,14 +358,7 @@ instance Arbitrary RequestNext where
     arbitrary = reasonablySized genericArbitrary
 
 instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto))) where
-    arbitrary = frequency
-        [ ( 1, pure SubmitSuccess)
-        , ( 1, SubmitFail . HardForkApplyTxErrWrongEra <$> genMismatchEraInfo)
-        , (10, SubmitFail . ApplyTxErrShelley <$> reasonablySized arbitrary)
-        , (10, SubmitFail . ApplyTxErrAllegra <$> reasonablySized arbitrary)
-        , (10, SubmitFail . ApplyTxErrMary <$> reasonablySized arbitrary)
-        , (10, SubmitFail . ApplyTxErrAlonzo <$> reasonablySized arbitrary)
-        ]
+    arbitrary = genHardForkApplyTxErr
 
 instance Arbitrary (Acquire Block) where
     shrink = genericShrink
@@ -426,58 +377,16 @@ instance Arbitrary ReleaseResponse where
     arbitrary = reasonablySized genericArbitrary
 
 instance Arbitrary AcquireFailure where
-    arbitrary = elements
-        [ AcquireFailurePointTooOld
-        , AcquireFailurePointNotOnChain
-        ]
+    arbitrary = genAcquireFailure
 
 instance Arbitrary (Point Block) where
-    arbitrary = frequency
-        [ (1, pure (Point Point.Origin))
-        , (10, Point . Point.At <$> genPoint)
-        ]
+    arbitrary = genPoint
 
 instance Arbitrary (Tip Block) where
-    arbitrary = frequency
-        [ (1, pure TipGenesis)
-        , (10, Tip <$> genSlotNo <*> genHeaderHash <*> genBlockNo)
-        ]
+    arbitrary = genTip
 
 instance Arbitrary Block where
-    arbitrary = reasonablySized $ oneof
-        [ BlockByron <$> arbitrary
-        , BlockShelley <$> genBlock @(ShelleyEra StandardCrypto)
-        , BlockAllegra <$> genBlock @(AllegraEra StandardCrypto)
-        , BlockMary <$> genBlock @(MaryEra StandardCrypto)
-        , BlockAlonzo <$> genBlock @(AlonzoEra StandardCrypto)
-        ]
-      where
-        genBlock
-            :: forall era.
-                ( Era era
-                , ToCBORGroup (TxSeq era)
-                , Mock (Crypto era)
-                , Arbitrary (TxInBlock era)
-                )
-            => Gen (ShelleyBlock era)
-        genBlock = ShelleyBlock
-            <$> (Spec.Block <$> arbitrary <*> (toTxSeq @era <$> arbitrary))
-            <*> arbitrary
-
-genEpochNo :: Gen EpochNo
-genEpochNo = EpochNo <$> arbitrary
-
-genSlotNo :: Gen SlotNo
-genSlotNo = SlotNo <$> choose (1, 100000)
-
-genBlockNo :: Gen BlockNo
-genBlockNo = BlockNo <$> arbitrary
-
-genHeaderHash :: Gen (HeaderHash Block)
-genHeaderHash = arbitrary
-
-genPoint :: Gen (Point.Block SlotNo (HeaderHash Block))
-genPoint = Point.Block <$> genSlotNo <*> genHeaderHash
+    arbitrary = genBlock
 
 --
 -- Local Tx Submit
@@ -608,300 +517,6 @@ runQuickCheck = quickCheckWithResult (QC.stdArgs{chatty=False}) >=> \case
     Failure{output} -> expectationFailure output
     GaveUp{output} -> expectationFailure output
     NoExpectedFailure{output} -> expectationFailure output
-
-genMismatchEraInfo
-    :: Gen (MismatchEraInfo (CardanoEras StandardCrypto))
-genMismatchEraInfo = MismatchEraInfo <$> elements
-    [ ML eraInfoByron (Z (LedgerEraInfo eraInfoShelley))
-    , MR (Z eraInfoShelley) (LedgerEraInfo eraInfoByron)
-    ]
-  where
-    eraInfoByron =
-        singleEraInfo (Proxy @ByronBlock)
-    eraInfoShelley =
-        singleEraInfo (Proxy @(ShelleyBlock StandardShelley))
-
-genBoundResult
-    :: Proxy (Maybe Bound)
-    -> Gen (Maybe Bound)
-genBoundResult _ =
-    Just <$> arbitrary -- NOTE: Can't be 'Nothing' with Ogmios.
-
-genPointResult
-    :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
-    => Proxy era
-    -> Proxy (QueryResult crypto (Point (ShelleyBlock era)))
-    -> Gen (QueryResult crypto (Point (ShelleyBlock era)))
-genPointResult _era _result =
-    fromMaybe (error "genPointResult: unsupported era")
-        (genShelley <|> genAllegra <|> genMary <|> genAlonzo)
-  where
-    genShelley =
-        case testEquality (typeRep @era) (typeRep @StandardShelley) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genAllegra =
-        case testEquality (typeRep @era) (typeRep @StandardAllegra) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genMary =
-        case testEquality (typeRep @era) (typeRep @StandardMary) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genAlonzo =
-        case testEquality (typeRep @era) (typeRep @StandardAlonzo) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-
-genEpochResult
-    :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto EpochNo)
-    -> Gen (QueryResult crypto EpochNo)
-genEpochResult _ = frequency
-    [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right <$> genEpochNo)
-    ]
-
-genNonMyopicMemberRewardsResult
-    :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (NonMyopicMemberRewards crypto))
-    -> Gen (QueryResult crypto (NonMyopicMemberRewards crypto))
-genNonMyopicMemberRewardsResult _ = frequency
-    [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right <$> reasonablySized arbitrary)
-    ]
-
-genDelegationAndRewardsResult
-    :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (Delegations crypto, RewardAccounts crypto))
-    -> Gen (QueryResult crypto (Delegations crypto, RewardAccounts crypto))
-genDelegationAndRewardsResult _ = frequency
-    [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right <$> reasonablySized arbitrary)
-    ]
-
-genPParamsResult
-    :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
-    => Proxy era
-    -> Proxy (QueryResult crypto (Core.PParams era))
-    -> Gen (QueryResult crypto (Core.PParams era))
-genPParamsResult _ _ =
-    maybe (error "genPParamsResult: unsupported era") reasonablySized
-        (genShelley <|> genAllegra <|> genMary <|> genAlonzo)
-  where
-    genShelley =
-        case testEquality (typeRep @era) (typeRep @StandardShelley) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> hedgehog (genPParams @era))
-                    ]
-            Nothing ->
-                Nothing
-    genAllegra =
-        case testEquality (typeRep @era) (typeRep @StandardAllegra) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> hedgehog (genPParams @era))
-                    ]
-            Nothing ->
-                Nothing
-    genMary =
-        case testEquality (typeRep @era) (typeRep @StandardMary) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> hedgehog (genPParams @era))
-                    ]
-            Nothing ->
-                Nothing
-    genAlonzo =
-        case testEquality (typeRep @era) (typeRep @StandardAlonzo) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-
-
-genProposedPParamsResult
-    :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
-    => Proxy era
-    -> Proxy (QueryResult crypto (ProposedPPUpdates era))
-    -> Gen (QueryResult crypto (ProposedPPUpdates era))
-genProposedPParamsResult _ _ =
-    maybe (error "genProposedPParamsResult: unsupported era") reasonablySized
-        (genShelley <|> genAllegra <|> genMary <|> genAlonzo)
-  where
-    genShelley =
-        case testEquality (typeRep @era) (typeRep @StandardShelley) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genAllegra =
-        case testEquality (typeRep @era) (typeRep @StandardAllegra) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genMary =
-        case testEquality (typeRep @era) (typeRep @StandardMary) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genAlonzo =
-        case testEquality (typeRep @era) (typeRep @StandardAlonzo) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-
-genPoolDistrResult
-    :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (PoolDistr crypto))
-    -> Gen (QueryResult crypto (PoolDistr crypto))
-genPoolDistrResult _ = frequency
-    [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right <$> reasonablySized arbitrary)
-    ]
-
-genUTxOResult
-    :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
-    => Proxy era
-    -> Proxy (QueryResult crypto (UTxO era))
-    -> Gen (QueryResult crypto (UTxO era))
-genUTxOResult _ _ =
-    maybe (error "genProposedPParamsResult: unsupported era") reasonablySized
-        (genShelley <|> genAllegra <|> genMary <|> genAlonzo)
-  where
-    genShelley =
-        case testEquality (typeRep @era) (typeRep @StandardShelley) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genAllegra =
-        case testEquality (typeRep @era) (typeRep @StandardAllegra) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genMary =
-        case testEquality (typeRep @era) (typeRep @StandardMary) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genAlonzo =
-        case testEquality (typeRep @era) (typeRep @StandardAlonzo) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-
-
-genCompactGenesisResult
-    :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
-    => Proxy era
-    -> Proxy (QueryResult crypto (CompactGenesis era))
-    -> Gen (QueryResult crypto (CompactGenesis era))
-genCompactGenesisResult _ _ =
-    maybe (error "genCompactGenesisResult: unsupported era") reasonablySized
-        (genShelley <|> genAllegra <|> genMary <|> genAlonzo)
-  where
-    genShelley =
-        case testEquality (typeRep @era) (typeRep @StandardShelley) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right . compactGenesis <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genAllegra =
-        case testEquality (typeRep @era) (typeRep @StandardAllegra) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right . compactGenesis <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genMary =
-        case testEquality (typeRep @era) (typeRep @StandardMary) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right . compactGenesis <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genAlonzo =
-        case testEquality (typeRep @era) (typeRep @StandardAlonzo) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right . compactGenesis <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-
-
---
--- Helpers
---
-
-reasonablySized :: Gen a -> Gen a
-reasonablySized = scale (ceiling . sqrt @Double . fromIntegral)
 
 decodeFileThrow :: FilePath -> IO Json.Value
 decodeFileThrow filepath = do

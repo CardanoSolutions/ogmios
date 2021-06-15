@@ -4,6 +4,7 @@
 
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- NOTE:
 -- This module uses partial record field accessor to automatically derive
@@ -48,7 +49,7 @@ import Ogmios.Data.Protocol
     ()
 
 import Ouroboros.Network.Block
-    ( Point (..) )
+    ( Point (..), StandardHash )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure )
 
@@ -110,12 +111,24 @@ data StateQueryMessage block
     = MsgAcquire
         (Acquire block)
         (Wsp.ToResponse (AcquireResponse block))
+        Wsp.ToFault
     | MsgRelease
         Release
         (Wsp.ToResponse ReleaseResponse)
+        Wsp.ToFault
     | MsgQuery
         (Query block)
         (Wsp.ToResponse (QueryResponse block))
+        Wsp.ToFault
+
+instance StandardHash block => Show (StateQueryMessage block) where
+    showsPrec i = \case
+        MsgAcquire acquire _ _ -> T.showParen (i >= 10)
+            (T.showString $ "MsgAcquire " <> show acquire)
+        MsgRelease release _ _ -> T.showParen (i >= 10)
+            (T.showString $ "MsgRelease " <> show release)
+        MsgQuery{} -> T.showParen (i >= 10)
+            (T.showString "MsgQuery")
 
 --
 -- Acquire

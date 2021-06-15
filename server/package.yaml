@@ -92,6 +92,7 @@ library:
     - time
     - time-manager
     - typed-protocols
+    - unordered-containers
     - vector
     - wai
     - wai-routes
@@ -127,9 +128,12 @@ tests:
     - cardano-ledger-core
     - cardano-slotting
     - generic-arbitrary
+    - generics-sop
     - hedgehog-quickcheck
     - hspec
     - hspec-json-schema
+    - io-sim
+    - io-sim-classes
     - json-wsp
     - ogmios
     - ouroboros-consensus
@@ -138,9 +142,13 @@ tests:
     - ouroboros-consensus-cardano-test
     - ouroboros-consensus-shelley
     - ouroboros-network
+    - ouroboros-network-framework
     - QuickCheck
+    - random
     - relude
     - shelley-spec-ledger
     - shelley-spec-ledger-test
+    - typed-protocols
+    - typed-protocols-examples
     build-tools:
     - hspec-discover

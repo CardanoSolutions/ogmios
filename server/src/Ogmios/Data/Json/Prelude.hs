@@ -25,6 +25,7 @@ module Ogmios.Data.Json.Prelude
     , choice
     , inefficientEncodingToValue
     , (.:)
+    , at
 
       -- * Re-Exports
     , Coin (..)
@@ -112,6 +113,8 @@ import Data.ByteString.Base64
     ( encodeBase64 )
 import Data.ByteString.Bech32
     ( HumanReadablePart, encodeBech32 )
+import Data.HashMap.Strict
+    ( (!?) )
 import Data.IP
     ( IPv4, IPv6 )
 import Data.Scientific
@@ -150,6 +153,11 @@ decodeWith decoder =
 choice :: (Alternative f, MonadFail f) => String -> [a -> f b] -> a -> f b
 choice entity xs a =
     asum (xs <*> pure a) <|> fail ("invalid " <> entity)
+
+at :: Text -> Json.Value -> Maybe Json.Value
+at key = \case
+    Json.Object m -> m !? key
+    _ -> Nothing
 
 keepRedundantConstraint :: c => Proxy c -> ()
 keepRedundantConstraint _ = ()

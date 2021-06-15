@@ -90,9 +90,11 @@ data ChainSyncMessage block
     = MsgFindIntersect
         (FindIntersect block)
         (Wsp.ToResponse (FindIntersectResponse block))
+        Wsp.ToFault
     | MsgRequestNext
         RequestNext
         (Wsp.ToResponse (RequestNextResponse block))
+        Wsp.ToFault
 
 --
 -- FindIntersect

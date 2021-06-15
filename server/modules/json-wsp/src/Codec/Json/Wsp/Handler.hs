@@ -13,7 +13,9 @@ module Codec.Json.Wsp.Handler
     ( -- * Types
       Request (..)
     , Response (..)
+    , Mirror
     , Fault (..)
+    , FaultCode (..)
     , serverFault
     , clientFault
 
@@ -75,7 +77,8 @@ instance ToJSON FaultCode where
 --
 -- @since 1.0.0
 data Fault = Fault
-    { faultCode :: FaultCode
+    { faultMirror :: Mirror
+    , faultCode :: FaultCode
     , faultString :: String
     } deriving (Generic, Show)
 
@@ -85,15 +88,15 @@ instance ToJSON Fault where
 
 -- | Smart constructor for a client 'Fault'
 --
--- @since 1.0.0
-clientFault :: String -> Fault
-clientFault = Fault FaultClient
+-- @since 2.0.0
+clientFault :: Mirror -> String -> Fault
+clientFault mirror = Fault mirror FaultClient
 
 -- | Smart constructor for a server 'Fault'
 --
--- @since 1.0.0
-serverFault :: String -> Fault
-serverFault = Fault FaultServer
+-- @since 2.0.0
+serverFault :: Mirror -> String -> Fault
+serverFault mirror = Fault mirror FaultServer
 
 -- | A data-type to capture the logic to 'handle' any request.
 --
@@ -101,7 +104,7 @@ serverFault = Fault FaultServer
 data Handler (m :: Type -> Type) a where
     Handler
         :: (ByteString -> Maybe (Request req))
-        -> (req -> (res -> Response res) -> m a)
+        -> (req -> (res -> Response res) -> (FaultCode -> String -> Fault) -> m a)
         -> Handler m a
 
 type Matched m = (ByteString, m ())
@@ -127,7 +130,7 @@ match bytes defaultHandler = \case
     (Handler decode next):q ->
         case decode bytes of
             Just (Request refl req) -> do
-                let matched = next req (Response refl)
+                let matched = next req (Response refl) (Fault refl)
                 Just (bytes, matched) <$ matched
 
             Nothing ->

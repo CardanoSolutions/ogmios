@@ -36,6 +36,7 @@
 -- @
 module Ogmios.App.Protocol.ChainSync
     ( mkChainSyncClient
+    , MaxInFlight
     ) where
 
 import Ogmios.Prelude
@@ -67,21 +68,24 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     )
 
 import qualified Codec.Json.Wsp as Wsp
-import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Sequence as Seq
+
+type MaxInFlight = Int
 
 mkChainSyncClient
     :: forall m block.
         ( MonadSTM m
         )
-    => ChainSyncCodecs block
+    => MaxInFlight
+        -- ^ Max number of requests allowed to be in-flight / pipelined
+    -> ChainSyncCodecs block
         -- ^ For encoding Haskell types to JSON
     -> TQueue m (ChainSyncMessage block)
         -- ^ Incoming request queue
     -> (Json -> m ())
         -- ^ An emitter for yielding JSON objects
     -> ChainSyncClientPipelined block (Point block) (Tip block) m ()
-mkChainSyncClient ChainSyncCodecs{..} queue yield =
+mkChainSyncClient maxInFlight ChainSyncCodecs{..} queue yield =
     ChainSyncClientPipelined $ clientStIdle Zero Seq.Empty
   where
     await :: m (ChainSyncMessage block)
@@ -96,38 +100,35 @@ mkChainSyncClient ChainSyncCodecs{..} queue yield =
         -> Seq (Wsp.ToResponse (RequestNextResponse block))
         -> m (ClientPipelinedStIdle n block (Point block) (Tip block) m ())
     clientStIdle Zero buffer = await <&> \case
-        MsgRequestNext RequestNext toResponse ->
+        MsgRequestNext RequestNext toResponse _ ->
             let buffer' = buffer |> toResponse
                 collect = CollectResponse
                     (Just $ clientStIdle (Succ Zero) buffer')
                     (clientStNext Zero buffer')
             in SendMsgRequestNextPipelined collect
 
-        MsgFindIntersect FindIntersect{points} toResponse ->
+        MsgFindIntersect FindIntersect{points} toResponse _ ->
             SendMsgFindIntersect points (clientStIntersect toResponse)
 
     clientStIdle n@(Succ prev) buffer = tryAwait >>= \case
         -- If there's no immediate incoming message, we take this opportunity to
         -- wait and collect one response.
-        Nothing | Seq.null buffer ->
-            clientStIdle n buffer
-
         Nothing ->
             pure $ CollectResponse Nothing (clientStNext prev buffer)
 
         -- Yet, if we have already received a new message from the client, we
         -- prioritize it and pipeline it right away unless there are already too
         -- many requests in flights.
-        Just (MsgRequestNext RequestNext toResponse) -> do
+        Just (MsgRequestNext RequestNext toResponse _) -> do
             let buffer' = buffer |> toResponse
             let collect = CollectResponse
-                    (guard (natToInt n < 1000) $> clientStIdle (Succ n) buffer')
+                    (guard (natToInt n < maxInFlight) $> clientStIdle (Succ n) buffer')
                     (clientStNext n buffer')
             pure $ SendMsgRequestNextPipelined collect
 
-        Just (MsgFindIntersect _FindIntersect _toResponse) -> do
+        Just (MsgFindIntersect _FindIntersect _toResponse toFault) -> do
             let fault = "'FindIntersect' requests cannot be interleaved with 'RequestNext'."
-            yield $ Wsp.mkFault $ Wsp.clientFault fault
+            yield $ Wsp.mkFault $ toFault Wsp.FaultClient fault
             clientStIdle n buffer
 
     clientStNext

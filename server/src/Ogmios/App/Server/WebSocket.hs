@@ -26,7 +26,7 @@ import Ogmios.App.Options
 import Ogmios.App.Protocol
     ( onUnmatchedMessage )
 import Ogmios.App.Protocol.ChainSync
-    ( mkChainSyncClient )
+    ( MaxInFlight, mkChainSyncClient )
 import Ogmios.App.Protocol.StateQuery
     ( mkStateQueryClient )
 import Ogmios.App.Protocol.TxSubmission
@@ -121,14 +121,14 @@ newWebSocketApp
     -> m WebSocketApp
 newWebSocketApp tr unliftIO = do
     NetworkParameters{slotsPerEpoch,networkMagic} <- asks (view typed)
-    Options{nodeSocket} <- asks (view typed)
+    Options{nodeSocket,maxInFlight} <- asks (view typed)
     sensors <- asks (view typed)
     return $ \pending -> unliftIO $ do
         let (mode, sub) = choseSerializationMode pending
         logWith tr $ WebSocketConnectionAccepted (userAgent pending) mode
         recordSession sensors $ onExceptions $ acceptRequest pending sub $ \conn -> do
             let trClient = contramap WebSocketClient tr
-            withOuroborosClients mode sensors conn $ \clients -> do
+            withOuroborosClients mode maxInFlight sensors conn $ \clients -> do
                 let client = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch clients
                 let vData  = NodeToClientVersionData networkMagic
                 connectClient trClient client vData nodeSocket
@@ -144,7 +144,7 @@ newWebSocketApp tr unliftIO = do
     onIOException conn e = do
         logWith tr $ WebSocketFailedToConnect $ show e
         let msg = "Connection with the node lost or failed."
-        close conn $ toStrict $ Json.encode $ Wsp.serverFault msg
+        close conn $ toStrict $ Json.encode $ Wsp.serverFault Nothing msg
 
     onExceptions :: m () -> m ()
     onExceptions
@@ -201,11 +201,12 @@ withOuroborosClients
         , MonadWebSocket m
         )
     => SerializationMode
+    -> MaxInFlight
     -> Sensors m
     -> Connection
     -> (Clients m Block -> m a)
     -> m a
-withOuroborosClients mode sensors conn action = do
+withOuroborosClients mode maxInFlight sensors conn action = do
     (chainSyncQ, txSubmissionQ, stateQueryQ) <-
         atomically $ (,,) <$> newTQueue <*> newTQueue <*> newTQueue
 
@@ -213,7 +214,7 @@ withOuroborosClients mode sensors conn action = do
         link worker
         action $ Clients
              { chainSyncClient =
-                 mkChainSyncClient chainSyncCodecs chainSyncQ yield
+                 mkChainSyncClient maxInFlight chainSyncCodecs chainSyncQ yield
              , stateQueryClient =
                  mkStateQueryClient stateQueryCodecs stateQueryQ yield
              , txSubmissionClient =
@@ -246,19 +247,19 @@ withOuroborosClients mode sensors conn action = do
                 matched <- Wsp.match bytes
                     (count (totalUnroutedCounter sensors) *> defaultHandler bytes)
                     [ Wsp.Handler decodeRequestNext
-                        (\r -> push chainSyncQ . MsgRequestNext r)
+                        (\r t -> push chainSyncQ . MsgRequestNext r t)
                     , Wsp.Handler decodeFindIntersect
-                        (\r -> push chainSyncQ . MsgFindIntersect r)
+                        (\r t -> push chainSyncQ . MsgFindIntersect r t)
 
                     , Wsp.Handler decodeAcquire
-                        (\r -> push stateQueryQ . MsgAcquire r)
+                        (\r t -> push stateQueryQ . MsgAcquire r t)
                     , Wsp.Handler decodeRelease
-                        (\r -> push stateQueryQ . MsgRelease r)
+                        (\r t -> push stateQueryQ . MsgRelease r t)
                     , Wsp.Handler decodeQuery
-                        (\r -> push stateQueryQ . MsgQuery r)
+                        (\r t -> push stateQueryQ . MsgQuery r t)
 
                     , Wsp.Handler decodeSubmitTx
-                        (\r -> push txSubmissionQ .  MsgSubmitTx r)
+                        (\r t -> push txSubmissionQ .  MsgSubmitTx r t)
                     ]
                 routeMessage matched chainSyncQ stateQueryQ txSubmissionQ
 

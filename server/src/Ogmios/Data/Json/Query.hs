@@ -20,6 +20,7 @@ module Ogmios.Data.Json.Query
     , encodeNonMyopicMemberRewards
     , encodeOneEraHash
     , encodePoint
+    , encodeEpochNo
 
       -- * Parsers
     , parseGetEraStart

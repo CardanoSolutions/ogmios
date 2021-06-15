@@ -24,6 +24,17 @@ module Cardano.Network.Protocol.NodeToClient
     -- * Connecting
     , connectClient
     , codecs
+    , cChainSyncCodec
+    , cTxSubmissionCodec
+    , cStateQueryCodec
+    , nodeToClientV_Latest
+
+    -- * Running
+    , runPeer
+    , runPipelinedPeer
+    , chainSyncClientPeerPipelined
+    , localStateQueryClientPeer
+    , localTxSubmissionClientPeer
 
     -- * Helpers / Re-exports
     , MuxError (..)
@@ -179,6 +190,9 @@ connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
         { nctMuxTracer = nullTracer
         , nctHandshakeTracer = contramap TrHandshake tr
         }
+
+nodeToClientV_Latest :: NodeToClientVersion
+nodeToClientV_Latest = NodeToClientV_9
 
 -- | Construct a network client
 mkClient
