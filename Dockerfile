@@ -103,7 +103,9 @@ ENTRYPOINT ["ogmios"]
 
 FROM debian:buster-slim as cardano-node-ogmios
 
-ARG CARDANO_CONFIG_URL=https://hydra.iohk.io/build/5821110/download/1
+ARG NETWORK=mainnet
+# Temporary for backwards compatibility.
+ENV NETWORK=$NETWORK
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -123,20 +125,7 @@ RUN apt-get -y purge && apt-get -y clean && apt-get -y autoremove
 COPY --from=setup /usr/local/lib/libsodium.so.23 /usr/lib/x86_64-linux-gnu/libsodium.so.23
 COPY --from=setup /app/bin/cardano-node /bin/cardano-node
 COPY --from=build /app/bin/ogmios /bin/ogmios
-
-WORKDIR /config
-
-RUN wget -q ${CARDANO_CONFIG_URL}/mainnet-config.json
-RUN wget -q ${CARDANO_CONFIG_URL}/mainnet-byron-genesis.json
-RUN wget -q ${CARDANO_CONFIG_URL}/mainnet-shelley-genesis.json
-RUN wget -q ${CARDANO_CONFIG_URL}/mainnet-topology.json
-
-RUN wget -q ${CARDANO_CONFIG_URL}/testnet-config.json
-RUN wget -q ${CARDANO_CONFIG_URL}/testnet-byron-genesis.json
-RUN wget -q ${CARDANO_CONFIG_URL}/testnet-shelley-genesis.json
-RUN wget -q ${CARDANO_CONFIG_URL}/testnet-topology.json
-
-RUN find . -name "*config*.json" -print0 | xargs -0 sed -i 's/127.0.0.1/0.0.0.0/g' > /dev/null 2>&1
+COPY config/network/${NETWORK} /config/
 RUN mkdir /ipc
 WORKDIR /root
 COPY scripts/cardano-node-ogmios.sh cardano-node-ogmios.sh

@@ -22,11 +22,11 @@ if [ -z "$NETWORK" ]; then
 fi
 
 cardano-node run\
-  --topology /config/$NETWORK-topology.json\
-  --database-path db/$NETWORK\
+  --topology /config/cardano-node/topology.json\
+  --database-path db\
   --port 3000\
   --host-addr 0.0.0.0\
-  --config /config/$NETWORK-config.json\
+  --config /config/cardano-node/config.json\
   --socket-path /ipc/node.socket&
 status=$?
 if [ $status -ne 0 ]; then
@@ -34,9 +34,12 @@ if [ $status -ne 0 ]; then
   exit $status
 fi
 
+# Ideally ogmios would read network information
+# from the genesis file, rather than the ENV
 OGMIOS_NETWORK=$NETWORK ogmios \
   --host 0.0.0.0\
-  --node-socket ./ipc/node.socket &
+# --config /config/cardano-node/config.json \
+  --node-socket /ipc/node.socket &
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start ogmios: $status"
