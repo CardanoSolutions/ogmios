@@ -1,8 +1,8 @@
 import { Block, Ogmios, Point, Tip } from '@cardano-ogmios/schema'
 import {
   ConnectionConfig,
-  InteractionContext,
-  createClientContext
+  createClientContext,
+  InteractionContext
 } from '../Connection'
 import { UnknownResultError } from '../errors'
 import fastq from 'fastq'
@@ -84,11 +84,8 @@ export const createChainSyncClient = async (
           }),
           startSync: async (points, inFlight) => {
             const intersection = await findIntersect(
-              points || [await createPointFromCurrentTip({ socket, closeOnCompletion: false })],
-              {
-                socket,
-                closeOnCompletion: false
-              }
+              points || [await createPointFromCurrentTip(context)],
+              context
             )
             ensureSocketIsOpen(socket)
             for (let n = 0; n < (inFlight || 100); n += 1) {

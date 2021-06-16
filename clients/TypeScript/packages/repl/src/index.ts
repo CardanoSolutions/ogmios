@@ -49,9 +49,9 @@ const logObject = (obj: Object) =>
       logObject(tip)
       requestNext()
     }
-  }, {
-    connection
-  })
+  },
+  { connection }
+  )
   const cardanoOgmiosRepl = repl.start({
     prompt: 'ogmios> ',
     ignoreUndefined: true
@@ -63,21 +63,21 @@ const logObject = (obj: Object) =>
       (messageHandlers: ChainSyncMessageHandlers) =>
         createChainSyncClient(messageHandlers, { connection }),
     createStateQueryClient: () => createStateQueryClient({ connection }),
-    currentEpoch: () => currentEpoch({ connection }),
-    currentProtocolParameters: () => currentProtocolParameters({ connection }),
+    currentEpoch: () => currentEpoch(connection),
+    currentProtocolParameters: () => currentProtocolParameters(connection),
     delegationsAndRewards:
-      (stakeKeyHashes: Schema.Hash16[]) => delegationsAndRewards(stakeKeyHashes, { connection }),
-    eraStart: () => eraStart({ connection }),
-    genesisConfig: () => genesisConfig({ connection }),
-    findIntersect: (points: Schema.Point[]) => findIntersect(points, { connection }),
-    ledgerTip: () => ledgerTip({ connection }),
+      (stakeKeyHashes: Schema.Hash16[]) => delegationsAndRewards(stakeKeyHashes, connection),
+    eraStart: () => eraStart(connection),
+    genesisConfig: () => genesisConfig(connection),
+    findIntersect: (points: Schema.Point[]) => findIntersect(points, connection),
+    ledgerTip: () => ledgerTip(connection),
     nonMyopicMemberRewards:
       (input: (Schema.Lovelace | Schema.Hash16)[]) =>
-        nonMyopicMemberRewards(input, { connection }),
-    proposedProtocolParameters: () => proposedProtocolParameters({ connection }),
-    stakeDistribution: () => stakeDistribution({ connection }),
-    submitTx: (bytes: string) => submitTx(bytes, { connection }),
-    utxo: (addresses?: Schema.Address[]) => utxo(addresses, { connection })
+        nonMyopicMemberRewards(input, connection),
+    proposedProtocolParameters: () => proposedProtocolParameters(connection),
+    stakeDistribution: () => stakeDistribution(connection),
+    submitTx: (bytes: string) => submitTx(bytes, connection),
+    utxo: (addresses?: Schema.Address[]) => utxo(addresses, connection)
   })
 
   cardanoOgmiosRepl.on('exit', async () => {

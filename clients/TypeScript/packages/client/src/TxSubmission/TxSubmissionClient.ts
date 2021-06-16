@@ -1,7 +1,7 @@
 import {
   ConnectionConfig,
-  InteractionContext,
-  createClientContext
+  createClientContext,
+  InteractionContext
 } from '../Connection'
 import { ensureSocketIsOpen } from '../util'
 import { submitTx } from './submitTx'
