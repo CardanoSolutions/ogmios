@@ -65,7 +65,7 @@ const sequentialResponses = [
 describe('ChainSync', () => {
   it('returns the interaction context', async () => {
     const client = await createChainSyncClient(stubHandlers, { connection })
-    expect(client.context.connectionString).toBe('ws://localhost:1338')
+    expect(client.context.connection.address.webSocket).toBe('ws://localhost:1338')
     expect(client.context.socket.readyState).toBe(client.context.socket.OPEN)
     await client.shutdown()
   })

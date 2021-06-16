@@ -1,12 +1,15 @@
 import { Ogmios, Point, Tip } from '@cardano-ogmios/schema'
 import { IntersectionNotFoundError, UnknownResultError } from '../errors'
-import { InteractionContext } from '../Connection'
+import { ConnectionConfig, InteractionContext } from '../Connection'
 import { Query } from '../StateQuery/'
 
 // type Intersection = Ogmios['FindIntersectResponse']['result']['IntersectionFound']
 export type Intersection = { point: Point, tip: Tip }
 
-export const findIntersect = (points: Point[], context?: InteractionContext): Promise<Intersection> =>
+export const findIntersect = (
+  points: Point[],
+  config?: ConnectionConfig | InteractionContext
+): Promise<Intersection> =>
   Query<
     Ogmios['FindIntersect'],
     Ogmios['FindIntersectResponse'],
@@ -29,4 +32,4 @@ export const findIntersect = (points: Point[], context?: InteractionContext): Pr
         return reject(new UnknownResultError(response))
       }
     }
-  }, context)
+  }, config)

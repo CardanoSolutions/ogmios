@@ -6,7 +6,7 @@ import {
   Ogmios
 } from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
-import { InteractionContext } from '../../Connection'
+import { ConnectionConfig, InteractionContext } from '../../Connection'
 import { Query } from '../Query'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[nonMyopicMemberRewards]']['result']): result is EraMismatch =>
@@ -17,7 +17,9 @@ const isNonMyopicMemberRewards = (result: Ogmios['QueryResponse[nonMyopicMemberR
     Object.values(result as NonMyopicMemberRewards)[0]
   )[0] === 'number'
 
-export const nonMyopicMemberRewards = (input: (Lovelace | Hash16)[], context?: InteractionContext): Promise<NonMyopicMemberRewards> =>
+export const nonMyopicMemberRewards = (
+  input: (Lovelace | Hash16)[], config?: ConnectionConfig | InteractionContext
+): Promise<NonMyopicMemberRewards> =>
   Query<
     Ogmios['Query'],
     Ogmios['QueryResponse[nonMyopicMemberRewards]'],
@@ -43,4 +45,4 @@ export const nonMyopicMemberRewards = (input: (Lovelace | Hash16)[], context?: I
         return reject(new UnknownResultError(response.result))
       }
     }
-  }, context)
+  }, config)

@@ -4,7 +4,7 @@ import {
   ProtocolParametersShelley
 } from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
-import { InteractionContext } from '../../Connection'
+import { ConnectionConfig, InteractionContext } from '../../Connection'
 import { Query } from '../Query'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[currentProtocolParameters]']['result']): result is EraMismatch =>
@@ -13,7 +13,7 @@ const isEraMismatch = (result: Ogmios['QueryResponse[currentProtocolParameters]'
 const isProtocolParameters = (result: Ogmios['QueryResponse[currentProtocolParameters]']['result']): result is ProtocolParametersShelley =>
   (result as ProtocolParametersShelley).minFeeCoefficient !== undefined
 
-export const currentProtocolParameters = (context?: InteractionContext): Promise<ProtocolParametersShelley> =>
+export const currentProtocolParameters = (config?: ConnectionConfig | InteractionContext): Promise<ProtocolParametersShelley> =>
   Query<
     Ogmios['Query'],
     Ogmios['QueryResponse[currentProtocolParameters]'],
@@ -38,4 +38,4 @@ export const currentProtocolParameters = (context?: InteractionContext): Promise
       }
     }
   },
-  context)
+  config)
