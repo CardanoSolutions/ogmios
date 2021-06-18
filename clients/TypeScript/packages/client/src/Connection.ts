@@ -34,7 +34,7 @@ export const createConnectionObject = (connection?: ConnectionConfig): Connectio
   }
 }
 
-export const createClientContext = async (
+export const createInteractionContext = async (
   errorHandler: (error: Error) => void,
   options?: {
     connection?: ConnectionConfig
@@ -63,7 +63,7 @@ export const ensureSocket = async <T>(
 ): Promise<T> => {
   const { socket } = isContext(config)
     ? config
-    : await createClientContext(
+    : await createInteractionContext(
       () => {},
       { connection: config }
     )

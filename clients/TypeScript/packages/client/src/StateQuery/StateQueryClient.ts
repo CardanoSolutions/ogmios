@@ -8,7 +8,7 @@ import {
 } from '@cardano-ogmios/schema'
 import {
   ConnectionConfig,
-  createClientContext,
+  createInteractionContext,
   InteractionContext
 } from '../Connection'
 import { baseRequest } from '../Request'
@@ -53,7 +53,7 @@ export const createStateQueryClient = async (
     connection?: ConnectionConfig,
     point?: Point
   }): Promise<StateQueryClient> => {
-  const context = await createClientContext(errorHandler, options)
+  const context = await createInteractionContext(errorHandler, options)
   const point = options?.point !== undefined
     ? options.point
     : await createPointFromCurrentTip(context)

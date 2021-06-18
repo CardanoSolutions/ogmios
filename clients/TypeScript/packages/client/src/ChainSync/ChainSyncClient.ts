@@ -1,7 +1,7 @@
 import { Block, Ogmios, Point, Tip } from '@cardano-ogmios/schema'
 import {
   ConnectionConfig,
-  createClientContext,
+  createInteractionContext,
   InteractionContext
 } from '../Connection'
 import { UnknownResultError } from '../errors'
@@ -43,7 +43,7 @@ export const createChainSyncClient = async (
     connection?: ConnectionConfig,
     sequential?: boolean
   }): Promise<ChainSyncClient> => {
-  const context = await createClientContext(errorHandler, options)
+  const context = await createInteractionContext(errorHandler, options)
   const { socket } = context
   return new Promise((resolve) => {
     const messageHandler = async (response: Ogmios['RequestNextResponse']) => {
