@@ -111,6 +111,7 @@ describe('Connection', () => {
       let context: InteractionContext
       try {
         context = await createClientContext(
+          (error) => console.error(error),
           { connection: { host: 'non-existent-host', port: 1111 } }
         )
         expect(context).toBeUndefined()
@@ -122,6 +123,7 @@ describe('Connection', () => {
       }
       try {
         context = await createClientContext(
+          (error) => console.error(error),
           { connection: { port: 1111 } }
         )
         expect(context).toBeUndefined()
