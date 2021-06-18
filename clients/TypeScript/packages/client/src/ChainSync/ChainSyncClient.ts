@@ -38,11 +38,12 @@ export interface ChainSyncMessageHandlers {
 
 export const createChainSyncClient = async (
   messageHandlers: ChainSyncMessageHandlers,
+  errorHandler: (error: Error) => void,
   options?: {
     connection?: ConnectionConfig,
     sequential?: boolean
   }): Promise<ChainSyncClient> => {
-  const context = await createClientContext(options)
+  const context = await createClientContext(errorHandler, options)
   const { socket } = context
   return new Promise((resolve) => {
     const messageHandler = async (response: Ogmios['RequestNextResponse']) => {

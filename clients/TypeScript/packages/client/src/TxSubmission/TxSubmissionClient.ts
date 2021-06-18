@@ -12,10 +12,12 @@ export interface TxSubmissionClient {
   shutdown: () => Promise<void>
 }
 
-export const createTxSubmissionClient = async (options?: {
-  connection?: ConnectionConfig
-}): Promise<TxSubmissionClient> => {
-  const context = await createClientContext(options)
+export const createTxSubmissionClient = async (
+  errorHandler: (error: Error) => void,
+  options?: {
+    connection?: ConnectionConfig
+  }): Promise<TxSubmissionClient> => {
+  const context = await createClientContext(errorHandler, options)
   const { socket } = context
   return Promise.resolve({
     context,

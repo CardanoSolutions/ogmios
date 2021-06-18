@@ -65,7 +65,11 @@ const sequentialResponses = [
 
 describe('ChainSync', () => {
   it('opens a connection on construction, and closes it after shutdown', async () => {
-    const client = await createChainSyncClient(stubHandlers, { connection })
+    const client = await createChainSyncClient(
+      stubHandlers,
+      (error) => console.error(error),
+      { connection }
+    )
     expectContextFromConnectionConfig(connection, client.context)
     await client.shutdown()
     expect(client.context.socket.readyState).not.toBe(client.context.socket.OPEN)
@@ -73,7 +77,11 @@ describe('ChainSync', () => {
 
   describe('startSync', () => {
     it('selects the tip as the intersection if no point provided', async () => {
-      const client = await createChainSyncClient(stubHandlers, { connection })
+      const client = await createChainSyncClient(
+        stubHandlers,
+        (error) => console.error(error),
+        { connection }
+      )
       const intersection = await client.startSync()
       if (intersection.point === 'origin' || intersection.tip === 'origin') {
         await client.shutdown()
@@ -86,7 +94,11 @@ describe('ChainSync', () => {
     })
 
     it('intersects at the genesis if origin provided as point', async () => {
-      const client = await createChainSyncClient(stubHandlers, { connection })
+      const client = await createChainSyncClient(
+        stubHandlers,
+        (error) => console.error(error),
+        { connection }
+      )
       const intersection = await client.startSync(['origin'], 10)
       expect(intersection.point).toEqual('origin')
       expect(intersection.tip).toBeDefined()
@@ -107,7 +119,9 @@ describe('ChainSync', () => {
           }
           requestNext()
         }
-      }, {
+      },
+      (error) => console.error(error),
+      {
         connection
       })
       await client.startSync(['origin'], 10)
@@ -150,9 +164,10 @@ describe('ChainSync', () => {
               stop = Date.now() - start
             }
           }
-        }, {
-          connection
-        })
+        },
+        (error) => console.error(error),
+        { connection }
+        )
         await client.startSync(['origin'], inFlight)
         await delay(2000)
         await client.shutdown()
@@ -166,9 +181,11 @@ describe('ChainSync', () => {
 
     it('processes messages sequentially in order by default', async () => {
       const resultLog: string[] = []
-      const client = await createChainSyncClient(messageOrderTestHandlers(resultLog), {
-        connection
-      })
+      const client = await createChainSyncClient(
+        messageOrderTestHandlers(resultLog),
+        (error) => console.error(error),
+        { connection }
+      )
       await client.startSync(['origin'], 3)
       await delay(500)
       await client.shutdown()
@@ -178,10 +195,14 @@ describe('ChainSync', () => {
 
   it('can be configured to processes messages as fast as possible, when sequential processing is not required', async () => {
     const resultLog: string[] = []
-    const client = await createChainSyncClient(messageOrderTestHandlers(resultLog), {
-      connection,
-      sequential: false
-    })
+    const client = await createChainSyncClient(
+      messageOrderTestHandlers(resultLog),
+      (error) => console.error(error),
+      {
+        connection,
+        sequential: false
+      }
+    )
     await client.startSync(['origin'], 3)
     await delay(500)
     await client.shutdown()
@@ -189,7 +210,12 @@ describe('ChainSync', () => {
   })
 
   it('rejects method calls after shutdown', async () => {
-    const client = await createChainSyncClient(stubHandlers, { connection })
+    const client = await createChainSyncClient(
+      stubHandlers,
+      (error) => console.error(error),
+
+      { connection }
+    )
     await client.shutdown()
     const run = () => client.startSync(['origin'], 3)
     await expect(run).rejects

@@ -47,11 +47,13 @@ export interface StateQueryClient {
   utxo: (addresses?: Address[]) => ReturnType<typeof utxo>
 }
 
-export const createStateQueryClient = async (options?: {
-  connection?: ConnectionConfig,
-  point?: Point
-}): Promise<StateQueryClient> => {
-  const context = await createClientContext(options)
+export const createStateQueryClient = async (
+  errorHandler: (error: Error) => void,
+  options?: {
+    connection?: ConnectionConfig,
+    point?: Point
+  }): Promise<StateQueryClient> => {
+  const context = await createClientContext(errorHandler, options)
   const point = options?.point !== undefined
     ? options.point
     : await createPointFromCurrentTip(context)
