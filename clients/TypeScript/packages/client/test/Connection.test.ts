@@ -1,5 +1,7 @@
 import {
-  createConnectionObject
+  createClientContext,
+  createConnectionObject,
+  InteractionContext
 } from '@src/Connection'
 
 describe('Connection', () => {
@@ -102,6 +104,33 @@ describe('Connection', () => {
           webSocket: 'ws://localhost:1338'
         }
       })
+    })
+  })
+  describe('InteractionContext', () => {
+    it('rejects with the Websocket errors on failed connection', async () => {
+      let context: InteractionContext
+      try {
+        context = await createClientContext(
+          { connection: { host: 'non-existent-host', port: 1111 } }
+        )
+        expect(context).toBeUndefined()
+        if (context.socket.readyState === context.socket.OPEN) {
+          await context.socket.close()
+        }
+      } catch (error) {
+        expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
+      }
+      try {
+        context = await createClientContext(
+          { connection: { port: 1111 } }
+        )
+        expect(context).toBeUndefined()
+        if (context.socket.readyState === context.socket.OPEN) {
+          await context.socket.close()
+        }
+      } catch (error) {
+        expect(error.code).toBe('ECONNREFUSED')
+      }
     })
   })
 })

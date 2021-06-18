@@ -4,6 +4,7 @@ import {
   submitTx,
   TxSubmissionClient
 } from '@src/TxSubmission'
+import { expectContextFromConnectionConfig } from './util'
 
 const connection = { port: 1338 }
 
@@ -11,7 +12,7 @@ describe('TxSubmission', () => {
   describe('TxSubmissionClient', () => {
     it('opens a connection on construction, and closes it after shutdown', async () => {
       const client = await createTxSubmissionClient({ connection })
-      expect(client.context.socket.readyState).toBe(client.context.socket.OPEN)
+      expectContextFromConnectionConfig(connection, client.context)
       await client.shutdown()
       expect(client.context.socket.readyState).not.toBe(client.context.socket.OPEN)
     })

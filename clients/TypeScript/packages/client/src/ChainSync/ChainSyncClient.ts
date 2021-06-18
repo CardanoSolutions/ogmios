@@ -42,59 +42,55 @@ export const createChainSyncClient = async (
     connection?: ConnectionConfig,
     sequential?: boolean
   }): Promise<ChainSyncClient> => {
-  return new Promise((resolve, reject) => {
-    createClientContext(options).then(context => {
-      const { socket } = context
-      const messageHandler = async (response: Ogmios['RequestNextResponse']) => {
-        if ('RollBackward' in response.result) {
-          await messageHandlers.rollBackward({
-            point: response.result.RollBackward.point,
-            tip: response.result.RollBackward.tip
-          }, () =>
-            requestNext(socket)
-          )
-        } else if ('RollForward' in response.result) {
-          await messageHandlers.rollForward({
-            block: response.result.RollForward.block,
-            tip: response.result.RollForward.tip
-          }, () => {
-            requestNext(socket)
-          })
-        } else {
-          throw new UnknownResultError(response.result)
-        }
-      }
-      const responseHandler = options?.sequential !== false
-        ? fastq.promise(messageHandler, 1).push
-        : messageHandler
-      socket.once('error', reject)
-      socket.on('message', (message: string) => {
-        const response: Ogmios['RequestNextResponse'] = JSON.parse(message)
-        if (response.methodname === 'RequestNext') {
-          responseHandler(response)
-        }
-      })
-      socket.once('open', async () => {
-        return resolve({
-          context,
-          shutdown: () => new Promise(resolve => {
-            ensureSocketIsOpen(socket)
-            socket.once('close', resolve)
-            socket.close()
-          }),
-          startSync: async (points, inFlight) => {
-            const intersection = await findIntersect(
-              points || [await createPointFromCurrentTip(context)],
-              context
-            )
-            ensureSocketIsOpen(socket)
-            for (let n = 0; n < (inFlight || 100); n += 1) {
-              requestNext(socket)
-            }
-            return intersection
-          }
+  const context = await createClientContext(options)
+  const { socket } = context
+  return new Promise((resolve) => {
+    const messageHandler = async (response: Ogmios['RequestNextResponse']) => {
+      if ('RollBackward' in response.result) {
+        await messageHandlers.rollBackward({
+          point: response.result.RollBackward.point,
+          tip: response.result.RollBackward.tip
+        }, () =>
+          requestNext(socket)
+        )
+      } else if ('RollForward' in response.result) {
+        await messageHandlers.rollForward({
+          block: response.result.RollForward.block,
+          tip: response.result.RollForward.tip
+        }, () => {
+          requestNext(socket)
         })
-      })
-    }).catch(reject)
+      } else {
+        throw new UnknownResultError(response.result)
+      }
+    }
+    const responseHandler = options?.sequential !== false
+      ? fastq.promise(messageHandler, 1).push
+      : messageHandler
+    socket.on('message', (message: string) => {
+      const response: Ogmios['RequestNextResponse'] = JSON.parse(message)
+      if (response.methodname === 'RequestNext') {
+        responseHandler(response)
+      }
+    })
+    return resolve({
+      context,
+      shutdown: () => new Promise(resolve => {
+        ensureSocketIsOpen(socket)
+        socket.once('close', resolve)
+        socket.close()
+      }),
+      startSync: async (points, inFlight) => {
+        const intersection = await findIntersect(
+          points || [await createPointFromCurrentTip(context)],
+          context
+        )
+        ensureSocketIsOpen(socket)
+        for (let n = 0; n < (inFlight || 100); n += 1) {
+          requestNext(socket)
+        }
+        return intersection
+      }
+    })
   })
 }

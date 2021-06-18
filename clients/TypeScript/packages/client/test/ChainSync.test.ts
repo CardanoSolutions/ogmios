@@ -12,6 +12,7 @@ import {
   Hash16,
   Point
 } from '@cardano-ogmios/schema'
+import { expectContextFromConnectionConfig } from './util'
 
 const connection = { port: 1338 }
 
@@ -63,11 +64,11 @@ const sequentialResponses = [
 ]
 
 describe('ChainSync', () => {
-  it('returns the interaction context', async () => {
+  it('opens a connection on construction, and closes it after shutdown', async () => {
     const client = await createChainSyncClient(stubHandlers, { connection })
-    expect(client.context.connection.address.webSocket).toBe('ws://localhost:1338')
-    expect(client.context.socket.readyState).toBe(client.context.socket.OPEN)
+    expectContextFromConnectionConfig(connection, client.context)
     await client.shutdown()
+    expect(client.context.socket.readyState).not.toBe(client.context.socket.OPEN)
   })
 
   describe('startSync', () => {
