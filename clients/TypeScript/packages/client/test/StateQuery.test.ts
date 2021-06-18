@@ -9,7 +9,6 @@ import {
   nonMyopicMemberRewards,
   proposedProtocolParameters,
   stakeDistribution,
-  StateQueryClient,
   utxo
 } from '@src/StateQuery'
 import {
@@ -17,42 +16,17 @@ import {
   Hash16,
   Slot
 } from '@cardano-ogmios/schema'
+import { expectContextFromConnectionConfig } from './util'
 
 const connection = { port: 1338 }
 
 describe('Local state queries', () => {
   describe('StateQueryClient', () => {
-    it('rejects with the Websocket errors on failed connection', async () => {
-      let client: StateQueryClient
-      try {
-        client = await createStateQueryClient(
-          { connection: { host: 'non-existent-host', port: 1111 } }
-        )
-        expect(client).toBeUndefined()
-        if (client.context.socket.readyState === client.context.socket.OPEN) {
-          await client.release()
-        }
-      } catch (error) {
-        expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
-      }
-      try {
-        client = await createStateQueryClient(
-          { connection: { port: 1111 } }
-        )
-        expect(client).toBeUndefined()
-        if (client.context.socket.readyState === client.context.socket.OPEN) {
-          await client.release()
-        }
-      } catch (error) {
-        expect(error.code).toBe('ECONNREFUSED')
-      }
-    })
-
-    it('returns the interaction context', async () => {
+    it('opens a connection on construction, and closes it after release', async () => {
       const client = await createStateQueryClient({ connection })
-      expect(client.context.connection.address.webSocket).toBe('ws://localhost:1338')
-      expect(client.context.socket.readyState).toBe(client.context.socket.OPEN)
+      expectContextFromConnectionConfig(connection, client.context)
       await client.release()
+      expect(client.context.socket.readyState).not.toBe(client.context.socket.OPEN)
     })
 
     it('gets the point from the tip if none provided', async () => {

@@ -51,115 +51,111 @@ export const createStateQueryClient = async (options?: {
   connection?: ConnectionConfig,
   point?: Point
 }): Promise<StateQueryClient> => {
+  const context = await createClientContext(options)
+  const point = options?.point !== undefined
+    ? options.point
+    : await createPointFromCurrentTip(context)
+  const { socket } = context
   return new Promise((resolve, reject) => {
-    createClientContext(options).then(context => {
-      const { socket } = context
-      socket.once('error', reject)
-      socket.once('open', async () => {
-        const point = options?.point !== undefined
-          ? options.point
-          : await createPointFromCurrentTip(context)
-        const requestId = nanoid(5)
-        socket.once('message', (message: string) => {
-          const response: Ogmios['AcquireResponse'] = JSON.parse(message)
-          if (response.reflection.requestId !== requestId) { return }
-          if ('AcquireSuccess' in response.result) {
-            return resolve({
-              context,
-              currentEpoch: () => {
-                ensureSocketIsOpen(socket)
-                return currentEpoch(context)
-              },
-              currentProtocolParameters: () => {
-                ensureSocketIsOpen(socket)
-                return currentProtocolParameters(context)
-              },
-              delegationsAndRewards: (stakeKeyHashes) => {
-                ensureSocketIsOpen(socket)
-                return delegationsAndRewards(stakeKeyHashes, context)
-              },
-              eraStart: () => {
-                ensureSocketIsOpen(socket)
-                return eraStart(context)
-              },
-              genesisConfig: () => {
-                ensureSocketIsOpen(socket)
-                return genesisConfig(context)
-              },
-              ledgerTip: () => {
-                ensureSocketIsOpen(socket)
-                return ledgerTip(context)
-              },
-              nonMyopicMemberRewards: (input) => {
-                ensureSocketIsOpen(socket)
-                return nonMyopicMemberRewards(input, context)
-              },
-              point,
-              proposedProtocolParameters: () => {
-                ensureSocketIsOpen(socket)
-                return proposedProtocolParameters(context)
-              },
-              release: () => {
-                ensureSocketIsOpen(socket)
-                return new Promise((resolve, reject) => {
-                  const releaseRequestId = nanoid(5)
-                  socket.once('message', (message: string) => {
-                    socket.once('close', () => {
-                      const response: Ogmios['ReleaseResponse'] = JSON.parse(message)
-                      if (response.reflection.requestId !== releaseRequestId) { return }
-                      if (response.result === 'Released') {
-                        resolve()
-                      } else {
-                        reject(new UnknownResultError(response.result))
-                      }
-                    })
-                    socket.close()
-                  })
-                  socket.send(JSON.stringify({
-                    ...baseRequest,
-                    methodname: 'Release',
-                    mirror: { requestId: releaseRequestId }
-                  } as Ogmios['Release']))
+    const requestId = nanoid(5)
+    socket.once('message', (message: string) => {
+      const response: Ogmios['AcquireResponse'] = JSON.parse(message)
+      if (response.reflection.requestId !== requestId) { return }
+      if ('AcquireSuccess' in response.result) {
+        return resolve({
+          context,
+          currentEpoch: () => {
+            ensureSocketIsOpen(socket)
+            return currentEpoch(context)
+          },
+          currentProtocolParameters: () => {
+            ensureSocketIsOpen(socket)
+            return currentProtocolParameters(context)
+          },
+          delegationsAndRewards: (stakeKeyHashes) => {
+            ensureSocketIsOpen(socket)
+            return delegationsAndRewards(stakeKeyHashes, context)
+          },
+          eraStart: () => {
+            ensureSocketIsOpen(socket)
+            return eraStart(context)
+          },
+          genesisConfig: () => {
+            ensureSocketIsOpen(socket)
+            return genesisConfig(context)
+          },
+          ledgerTip: () => {
+            ensureSocketIsOpen(socket)
+            return ledgerTip(context)
+          },
+          nonMyopicMemberRewards: (input) => {
+            ensureSocketIsOpen(socket)
+            return nonMyopicMemberRewards(input, context)
+          },
+          point,
+          proposedProtocolParameters: () => {
+            ensureSocketIsOpen(socket)
+            return proposedProtocolParameters(context)
+          },
+          release: () => {
+            ensureSocketIsOpen(socket)
+            return new Promise((resolve, reject) => {
+              const releaseRequestId = nanoid(5)
+              socket.once('message', (message: string) => {
+                socket.once('close', () => {
+                  const response: Ogmios['ReleaseResponse'] = JSON.parse(message)
+                  if (response.reflection.requestId !== releaseRequestId) { return }
+                  if (response.result === 'Released') {
+                    resolve()
+                  } else {
+                    reject(new UnknownResultError(response.result))
+                  }
                 })
-              },
-              stakeDistribution: () => {
-                ensureSocketIsOpen(socket)
-                return stakeDistribution(context)
-              },
-              utxo: (addresses) => {
-                ensureSocketIsOpen(socket)
-                return utxo(addresses, context)
-              }
-            } as StateQueryClient)
-          } else {
-            socket.once('close', () => {
-              if ('AcquireFailure' in response.result) {
-                const { failure } = response.result.AcquireFailure
-                switch (failure) {
-                  case 'pointTooOld': {
-                    return reject(new AcquirePointTooOldError())
-                  }
-                  case 'pointNotOnChain': {
-                    return reject(new AcquirePointNotOnChainError())
-                  }
-                  default: {
-                    return reject(new Error(`Unknown AcquirePointFailure ${failure}`))
-                  }
-                }
-              } else {
-                reject(new UnknownResultError(response.result))
-              }
+                socket.close()
+              })
+              socket.send(JSON.stringify({
+                ...baseRequest,
+                methodname: 'Release',
+                mirror: { requestId: releaseRequestId }
+              } as Ogmios['Release']))
             })
-            socket.close()
+          },
+          stakeDistribution: () => {
+            ensureSocketIsOpen(socket)
+            return stakeDistribution(context)
+          },
+          utxo: (addresses) => {
+            ensureSocketIsOpen(socket)
+            return utxo(addresses, context)
+          }
+        } as StateQueryClient)
+      } else {
+        socket.once('close', () => {
+          if ('AcquireFailure' in response.result) {
+            const { failure } = response.result.AcquireFailure
+            switch (failure) {
+              case 'pointTooOld': {
+                return reject(new AcquirePointTooOldError())
+              }
+              case 'pointNotOnChain': {
+                return reject(new AcquirePointNotOnChainError())
+              }
+              default: {
+                return reject(new Error(`Unknown AcquirePointFailure ${failure}`))
+              }
+            }
+          } else {
+            reject(new UnknownResultError(response.result))
           }
         })
-        socket.send(JSON.stringify({
-          ...baseRequest,
-          methodname: 'Acquire',
-          args: { point },
-          mirror: { requestId }
-        } as Ogmios['Acquire']))
-      })
-    }).catch(reject)
+        socket.close()
+      }
+    })
+    socket.send(JSON.stringify({
+      ...baseRequest,
+      methodname: 'Acquire',
+      args: { point },
+      mirror: { requestId }
+    } as Ogmios['Acquire']))
   })
 }

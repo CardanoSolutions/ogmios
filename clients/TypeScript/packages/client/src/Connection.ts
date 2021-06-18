@@ -38,10 +38,17 @@ export const createClientContext = async (
   options?: { connection?: ConnectionConfig }): Promise<InteractionContext> => {
   const connection = createConnectionObject(options?.connection)
   const socket = new WebSocket(connection.address.webSocket)
-  return {
-    connection,
-    socket
-  }
+  return new Promise((resolve, reject) => {
+    const onError = reject
+    socket.on('error', onError)
+    socket.on('open', () => {
+      socket.removeListener('error', onError)
+      resolve({
+        connection,
+        socket
+      })
+    })
+  })
 }
 
 const isContext = (config: ConnectionConfig | InteractionContext): config is InteractionContext =>
@@ -65,14 +72,8 @@ export const ensureSocket = async <T>(
     if (!closeOnCompletion) {
       return resolve(send(socket))
     }
-    socket.on('error', reject)
-    socket.on('open', async () => {
-      try {
-        const result = await send(socket)
-        return complete(resolve.bind(this, result))
-      } catch (error) {
-        return complete(reject.bind(this, error))
-      }
-    })
+    send(socket)
+      .then(result => complete(resolve.bind(this, result)))
+      .catch(error => complete(reject.bind(this, error)))
   })
 }
