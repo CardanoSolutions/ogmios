@@ -138,6 +138,7 @@ library
     , cardano-ledger-byron
     , cardano-ledger-core
     , cardano-ledger-shelley-ma
+    , cardano-node
     , cardano-slotting
     , cborg
     , containers
@@ -162,7 +163,6 @@ library
     , ouroboros-consensus-shelley
     , ouroboros-network
     , relude
-    , safe
     , safe-exceptions
     , scientific
     , shelley-spec-ledger
@@ -171,6 +171,7 @@ library
     , text
     , time
     , time-manager
+    , transformers
     , typed-protocols
     , unordered-containers
     , vector

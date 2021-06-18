@@ -20,9 +20,9 @@ import Ogmios.Version
 
 main :: IO ()
 main = parseOptions >>= \case
-    (_, Version) -> do
+    Version -> do
         putTextLn version
-    (network, Start opts@Options{logLevel}) -> do
+    Start (Identity network) opts@Options{logLevel} -> do
         withStdoutTracer "ogmios" (shortVersion, revision) logLevel $ \tr -> do
             env <- newEnvironment tr network opts
             application tr `runWith` env

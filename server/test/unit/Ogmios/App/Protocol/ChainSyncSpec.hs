@@ -24,7 +24,7 @@ import Data.Aeson
 import Network.TypedProtocol.Codec
     ( Codec (..), PeerHasAgency (..), SomeMessage (..), runDecoder )
 import Ogmios.App.Options
-    ( defaultSlotsPerEpoch )
+    ( EpochSlots (..) )
 import Ogmios.App.Protocol.ChainSync
     ( MaxInFlight, mkChainSyncClient )
 import Ogmios.Control.Exception
@@ -181,6 +181,8 @@ withChainSyncClient action seed = do
         case result of
             Left{}  -> throwIO PeerTerminatedUnexpectedly
             Right a -> pure a
+  where
+    defaultSlotsPerEpoch = EpochSlots 432000
 
 chainSyncMockPeer
     :: forall m failure. (MonadSTM m, MonadThrow m, Show failure)

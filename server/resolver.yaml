@@ -88,6 +88,7 @@ packages:
   subdirs:
     - cardano-api
     - cardano-config
+    - cardano-node
 
 - git: https://github.com/input-output-hk/cardano-prelude
   commit: fd773f7a58412131512b9f694ab95653ac430852

@@ -31,7 +31,7 @@ import GHC.TypeLits
 import Network.TypedProtocol.Codec
     ( Codec (..), PeerHasAgency (..), SomeMessage (..), runDecoder )
 import Ogmios.App.Options
-    ( defaultSlotsPerEpoch )
+    ( EpochSlots (..) )
 import Ogmios.App.Protocol.StateQuery
     ( mkStateQueryClient )
 import Ogmios.Control.Exception
@@ -180,6 +180,8 @@ withStateQueryClient action seed = do
         case result of
             Left{}  -> throwIO PeerTerminatedUnexpectedly
             Right a -> pure a
+  where
+    defaultSlotsPerEpoch = EpochSlots 432000
 
 data SomeResponse from =
     forall to. SomeResponse (LSQ.Message Protocol from to)
