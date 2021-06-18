@@ -3,7 +3,7 @@ import WebSocket from 'isomorphic-ws'
 export interface ConnectionConfig {
   host?: string,
   port?: number,
-  protocol?: string
+  tls?: boolean
 }
 
 export interface Connection extends Required<ConnectionConfig> {
@@ -23,19 +23,21 @@ export const createConnectionObject = (connection?: ConnectionConfig): Connectio
   const base = {
     host: connection?.host ?? 'localhost',
     port: connection?.port ?? 1337,
-    protocol: connection?.protocol ?? 'ws'
+    tls: connection?.tls ?? false
   }
   const hostAndPort = `${base.host}:${base.port}`
   return {
     ...base,
     address: {
-      webSocket: `${base.protocol}://${hostAndPort}`
+      webSocket: `${base.tls ? 'wss' : 'ws'}://${hostAndPort}`
     }
   }
 }
 
 export const createClientContext = async (
-  options?: { connection?: ConnectionConfig }): Promise<InteractionContext> => {
+  options?: {
+    connection?: ConnectionConfig
+  }): Promise<InteractionContext> => {
   const connection = createConnectionObject(options?.connection)
   const socket = new WebSocket(connection.address.webSocket)
   return new Promise((resolve, reject) => {

@@ -10,7 +10,7 @@ describe('Connection', () => {
       expect(createConnectionObject(undefined)).toStrictEqual({
         host: 'localhost',
         port: 1337,
-        protocol: 'ws',
+        tls: false,
         address: {
           webSocket: 'ws://localhost:1337'
         }
@@ -20,11 +20,11 @@ describe('Connection', () => {
       expect(createConnectionObject({
         host: 'some-host',
         port: 1338,
-        protocol: 'wss'
+        tls: true
       })).toStrictEqual({
         host: 'some-host',
         port: 1338,
-        protocol: 'wss',
+        tls: true,
         address: {
           webSocket: 'wss://some-host:1338'
         }
@@ -36,7 +36,7 @@ describe('Connection', () => {
       })).toStrictEqual({
         host: 'some-host',
         port: 1337,
-        protocol: 'ws',
+        tls: false,
         address: {
           webSocket: 'ws://some-host:1337'
         }
@@ -48,19 +48,19 @@ describe('Connection', () => {
       })).toStrictEqual({
         host: 'localhost',
         port: 1338,
-        protocol: 'ws',
+        tls: false,
         address: {
           webSocket: 'ws://localhost:1338'
         }
       })
     })
-    it('can be passed an object with just a protocol', () => {
+    it('can be passed an object with just tls', () => {
       expect(createConnectionObject({
-        protocol: 'wss'
+        tls: true
       })).toStrictEqual({
         host: 'localhost',
         port: 1337,
-        protocol: 'wss',
+        tls: true,
         address: {
           webSocket: 'wss://localhost:1337'
         }
@@ -69,11 +69,11 @@ describe('Connection', () => {
     it('can be passed an object excluding a host', () => {
       expect(createConnectionObject({
         port: 1338,
-        protocol: 'wss'
+        tls: true
       })).toStrictEqual({
         host: 'localhost',
         port: 1338,
-        protocol: 'wss',
+        tls: true,
         address: {
           webSocket: 'wss://localhost:1338'
         }
@@ -82,24 +82,24 @@ describe('Connection', () => {
     it('can be passed an object excluding a port', () => {
       expect(createConnectionObject({
         host: 'localhost',
-        protocol: 'wss'
+        tls: true
       })).toStrictEqual({
         host: 'localhost',
         port: 1337,
-        protocol: 'wss',
+        tls: true,
         address: {
           webSocket: 'wss://localhost:1337'
         }
       })
     })
-    it('can be passed an object excluding a protocol', () => {
+    it('can be passed an object excluding tls', () => {
       expect(createConnectionObject({
         host: 'localhost',
         port: 1338
       })).toStrictEqual({
         host: 'localhost',
         port: 1338,
-        protocol: 'ws',
+        tls: false,
         address: {
           webSocket: 'ws://localhost:1338'
         }
