@@ -1,5 +1,5 @@
 import {
-  createClientContext,
+  createInteractionContext,
   createConnectionObject,
   InteractionContext
 } from '@src/Connection'
@@ -110,7 +110,7 @@ describe('Connection', () => {
     it('rejects with the Websocket errors on failed connection', async () => {
       let context: InteractionContext
       try {
-        context = await createClientContext(
+        context = await createInteractionContext(
           (error) => console.error(error),
           { connection: { host: 'non-existent-host', port: 1111 } }
         )
@@ -122,7 +122,7 @@ describe('Connection', () => {
         expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
       }
       try {
-        context = await createClientContext(
+        context = await createInteractionContext(
           (error) => console.error(error),
           { connection: { port: 1111 } }
         )

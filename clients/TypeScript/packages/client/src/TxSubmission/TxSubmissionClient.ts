@@ -1,6 +1,6 @@
 import {
   ConnectionConfig,
-  createClientContext,
+  createInteractionContext,
   InteractionContext
 } from '../Connection'
 import { ensureSocketIsOpen } from '../util'
@@ -17,7 +17,7 @@ export const createTxSubmissionClient = async (
   options?: {
     connection?: ConnectionConfig
   }): Promise<TxSubmissionClient> => {
-  const context = await createClientContext(errorHandler, options)
+  const context = await createInteractionContext(errorHandler, options)
   const { socket } = context
   return Promise.resolve({
     context,
