@@ -54,34 +54,5 @@ export const createInteractionContext = async (
   })
 }
 
-const isContext = (config: ConnectionConfig | InteractionContext): config is InteractionContext =>
+export const isContext = (config: ConnectionConfig | InteractionContext): config is InteractionContext =>
   (config as InteractionContext).socket !== undefined
-
-export const ensureSocket = async <T>(
-  send: (socket: WebSocket) => Promise<T>,
-  config?: ConnectionConfig | InteractionContext
-): Promise<T> => {
-  const { socket } = isContext(config)
-    ? config
-    : await createInteractionContext(
-      () => {},
-      { connection: config }
-    )
-  const closeOnCompletion = !isContext(config)
-  const complete = (func: () => void) => {
-    if (closeOnCompletion) {
-      socket.once('close', func)
-      socket.close()
-    } else {
-      func()
-    }
-  }
-  return new Promise((resolve, reject) => {
-    if (!closeOnCompletion) {
-      return resolve(send(socket))
-    }
-    send(socket)
-      .then(result => complete(resolve.bind(this, result)))
-      .catch(error => complete(reject.bind(this, error)))
-  })
-}

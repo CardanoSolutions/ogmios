@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid'
 import { Data } from 'isomorphic-ws'
-import { baseRequest } from '../Request'
-import { ConnectionConfig, ensureSocket, InteractionContext } from '../Connection'
+import { ConnectionConfig, InteractionContext } from '../Connection'
+import { baseRequest, send } from '../Request'
 
 export const Query = <
   Request,
@@ -21,7 +21,7 @@ export const Query = <
   },
     config?: ConnectionConfig | InteractionContext
   ): Promise<Response> =>
-    ensureSocket<Response>((socket) =>
+    send<Response>((socket) =>
       new Promise((resolve, reject) => {
         const requestId = nanoid(5)
 
