@@ -8,6 +8,7 @@ export interface ConnectionConfig {
 
 export interface Connection extends Required<ConnectionConfig> {
   address: {
+    http: string
     webSocket: string
   }
 }
@@ -29,6 +30,7 @@ export const createConnectionObject = (connection?: ConnectionConfig): Connectio
   return {
     ...base,
     address: {
+      http: `${base.tls ? 'https' : 'http'}://${hostAndPort}`,
       webSocket: `${base.tls ? 'wss' : 'ws'}://${hostAndPort}`
     }
   }
@@ -56,3 +58,6 @@ export const createInteractionContext = async (
 
 export const isContext = (config: ConnectionConfig | InteractionContext): config is InteractionContext =>
   (config as InteractionContext).socket !== undefined
+
+export const isConnectionObject = (config: ConnectionConfig | Connection): config is Connection =>
+  (config as Connection).address !== undefined

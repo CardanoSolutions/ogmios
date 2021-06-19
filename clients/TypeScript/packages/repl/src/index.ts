@@ -11,6 +11,7 @@ import {
   eraStart,
   findIntersect,
   genesisConfig,
+  getOgmiosHealth,
   ledgerTip,
   nonMyopicMemberRewards,
   proposedProtocolParameters,
@@ -70,6 +71,7 @@ const logObject = (obj: Object) =>
       (stakeKeyHashes: Schema.Hash16[]) => delegationsAndRewards(stakeKeyHashes, connection),
     eraStart: () => eraStart(connection),
     genesisConfig: () => genesisConfig(connection),
+    getOgmiosHealth: () => getOgmiosHealth(connection),
     findIntersect: (points: Schema.Point[]) => findIntersect(points, connection),
     ledgerTip: () => ledgerTip(connection),
     nonMyopicMemberRewards:

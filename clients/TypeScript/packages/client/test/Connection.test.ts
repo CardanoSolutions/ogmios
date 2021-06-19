@@ -12,6 +12,7 @@ describe('Connection', () => {
         port: 1337,
         tls: false,
         address: {
+          http: 'http://localhost:1337',
           webSocket: 'ws://localhost:1337'
         }
       })
@@ -26,6 +27,7 @@ describe('Connection', () => {
         port: 1338,
         tls: true,
         address: {
+          http: 'https://some-host:1338',
           webSocket: 'wss://some-host:1338'
         }
       })
@@ -38,6 +40,7 @@ describe('Connection', () => {
         port: 1337,
         tls: false,
         address: {
+          http: 'http://some-host:1337',
           webSocket: 'ws://some-host:1337'
         }
       })
@@ -50,6 +53,7 @@ describe('Connection', () => {
         port: 1338,
         tls: false,
         address: {
+          http: 'http://localhost:1338',
           webSocket: 'ws://localhost:1338'
         }
       })
@@ -62,6 +66,7 @@ describe('Connection', () => {
         port: 1337,
         tls: true,
         address: {
+          http: 'https://localhost:1337',
           webSocket: 'wss://localhost:1337'
         }
       })
@@ -75,6 +80,7 @@ describe('Connection', () => {
         port: 1338,
         tls: true,
         address: {
+          http: 'https://localhost:1338',
           webSocket: 'wss://localhost:1338'
         }
       })
@@ -88,6 +94,7 @@ describe('Connection', () => {
         port: 1337,
         tls: true,
         address: {
+          http: 'https://localhost:1337',
           webSocket: 'wss://localhost:1337'
         }
       })
@@ -101,6 +108,7 @@ describe('Connection', () => {
         port: 1338,
         tls: false,
         address: {
+          http: 'http://localhost:1338',
           webSocket: 'ws://localhost:1338'
         }
       })
