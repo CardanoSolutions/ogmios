@@ -13,6 +13,7 @@ jobs:
       matrix:
         os: [ ubuntu-20.04 ]
         target: [ ogmios, cardano-node-ogmios ]
+        network: [ "", "-testnet" ]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -42,9 +43,9 @@ jobs:
       with:
         context: .
         push: true
-        tags: cardanosolutions/${{ matrix.target }}:latest
+        tags: cardanosolutions/${{ matrix.target }}:latest${{ matrix.network }}
         target: ${{ matrix.target }}
-        cache-from: type=registry,ref=cardanosolutions/${{ matrix.target }}:latest
+        cache-from: type=registry,ref=cardanosolutions/${{ matrix.target }}:latest${{ matrix.network }}
         cache-to: type=inline
 
     - name: 📝 Variables
@@ -59,7 +60,7 @@ jobs:
       with:
         context: .
         push: true
-        tags: cardanosolutions/${{ matrix.target }}:${{ steps.variables.outputs.tag }}
+        tags: cardanosolutions/${{ matrix.target }}:${{ steps.variables.outputs.tag }}${{ matrix.network }}
         target: ${{ matrix.target }}
-        cache-from: type=registry,ref=cardanosolutions/${{ matrix.target }}:latest
+        cache-from: type=registry,ref=cardanosolutions/${{ matrix.target }}:latest${{ matrix.network }}
         cache-to: type=inline
