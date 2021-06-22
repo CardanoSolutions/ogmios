@@ -31,6 +31,16 @@ extra-source-files:
 data-files:
     test/golden/QueryResponse-utxo_1.json
     test/golden/SubmitTxResponse_1.json
+    config/network/mainnet/cardano-node/config.json
+    config/network/mainnet/cardano-node/topology.json
+    config/network/testnet/cardano-node/config.json
+    config/network/testnet/cardano-node/topology.json
+    config/network/mainnet/genesis/alonzo.json
+    config/network/mainnet/genesis/byron.json
+    config/network/mainnet/genesis/shelley.json
+    config/network/testnet/genesis/alonzo.json
+    config/network/testnet/genesis/byron.json
+    config/network/testnet/genesis/shelley.json
 
 source-repository head
   type: git

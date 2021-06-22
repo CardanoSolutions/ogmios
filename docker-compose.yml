@@ -11,8 +11,8 @@ services:
       "--topology", "/config/topology.json"
     ]
     volumes:
-      - ./config/network/${NETWORK:-mainnet}/cardano-node:/config
-      - ./config/network/${NETWORK:-mainnet}/genesis:/genesis
+      - ./server/config/network/${NETWORK:-mainnet}/cardano-node:/config
+      - ./server/config/network/${NETWORK:-mainnet}/genesis:/genesis
       - node-db:/data/db
       - node-ipc:/ipc
     restart: on-failure
@@ -35,7 +35,7 @@ services:
       "--node-config", "/config/cardano-node/config.json"
     ]
     volumes:
-      - ./config/network/${NETWORK:-mainnet}:/config
+      - ./server/config/network/${NETWORK:-mainnet}:/config
       - node-ipc:/ipc
     ports:
       - ${OGMIOS_PORT:-1337}:1337

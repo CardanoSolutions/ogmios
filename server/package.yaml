@@ -21,6 +21,8 @@ extra-source-files:
 
 data-files:
 - test/golden/*
+- config/network/**/cardano-node/*
+- config/network/**/genesis/*
 
 dependencies:
 - base >= 4.7 && < 5

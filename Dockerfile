@@ -125,7 +125,7 @@ RUN apt-get -y purge && apt-get -y clean && apt-get -y autoremove
 COPY --from=setup /usr/local/lib/libsodium.so.23 /usr/lib/x86_64-linux-gnu/libsodium.so.23
 COPY --from=setup /app/bin/cardano-node /bin/cardano-node
 COPY --from=build /app/bin/ogmios /bin/ogmios
-COPY config/network/${NETWORK} /config/
+COPY server/config/network/${NETWORK} /config/
 RUN mkdir /ipc
 WORKDIR /root
 COPY scripts/cardano-node-ogmios.sh cardano-node-ogmios.sh
