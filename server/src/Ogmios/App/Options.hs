@@ -6,6 +6,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -13,7 +14,7 @@ module Ogmios.App.Options
     ( -- * Command
       Command (..)
     , parseOptions
-    , parserInfo
+    , parseOptionsPure
 
       -- ** Options
     , Options (..)
@@ -25,6 +26,7 @@ module Ogmios.App.Options
     , logLevelOption
 
       -- *** Types
+    , Severity (..)
     , NetworkParameters (..)
     , parseNetworkParameters
 
@@ -60,6 +62,8 @@ import Control.Monad.Trans.Except
     ( except, throwE, withExceptT )
 import Data.Aeson
     ( ToJSON )
+import Data.Char
+    ( toUpper )
 import Data.Time.Clock.POSIX
     ( posixSecondsToUTCTime )
 import Options.Applicative.Help.Pretty
@@ -68,6 +72,8 @@ import Ouroboros.Consensus.BlockchainTime.WallClock.Types
     ( SystemStart (..) )
 import Ouroboros.Network.Magic
     ( NetworkMagic (..) )
+import Safe
+    ( readMay )
 import Shelley.Spec.Ledger.Genesis
     ( ShelleyGenesis (..) )
 
@@ -81,6 +87,9 @@ data Command (f :: Type -> Type)
     = Start (f NetworkParameters)  Options
     | Version
 
+deriving instance Eq (f NetworkParameters) => Eq (Command f)
+deriving instance Show (f NetworkParameters) => Show (Command f)
+
 parseOptions :: IO (Command Identity)
 parseOptions =
     customExecParser (prefs showHelpOnEmpty) parserInfo >>= \case
@@ -88,6 +97,13 @@ parseOptions =
         Start _ opts@Options{nodeConfig} -> do
             networkParameters <- parseNetworkParameters nodeConfig
             pure $ Start (Identity networkParameters) opts
+
+parseOptionsPure :: [String] -> Either String (Command Proxy)
+parseOptionsPure args =
+    case execParserPure defaultPrefs parserInfo args of
+        Success a -> Right a
+        Failure e -> Left (show e)
+        CompletionInvoked{} -> Left "Completion Invoked."
 
 parserInfo :: ParserInfo (Command Proxy)
 parserInfo = info (helper <*> parser) $ mempty
@@ -187,7 +203,7 @@ maxInFlightOption = option auto $ mempty
 
 -- | [--log-level=SEVERITY], default: Info
 logLevelOption :: Parser Severity
-logLevelOption = option auto $ mempty
+logLevelOption = option caseInsensitive $ mempty
     <> long "log-level"
     <> metavar "SEVERITY"
     <> helpDoc (Just doc)
@@ -282,6 +298,11 @@ parseNetworkParameters (ConfigYamlFilePath -> configFile) = runOrDie $ do
 --
 -- Helpers
 --
+
+caseInsensitive :: Read a => ReadM a
+caseInsensitive = maybeReader $ \case
+    [] -> Nothing
+    h:q -> readMay (toUpper h:q)
 
 mkSystemStart :: Int -> SystemStart
 mkSystemStart =
