@@ -3,7 +3,6 @@
 let
   inherit (lib) mkEnableOption mkOption types elem optionalString optionalAttrs;
   cfg = config.services.cardano-ogmios;
-  genesis = builtins.fromJSON (builtins.readFile cfg.environment.networkConfig.ShelleyGenesisFile);
 in {
   options = {
     services.cardano-ogmios = {
@@ -12,30 +11,10 @@ in {
         internal = true;
         type = types.package;
       };
-      environment = mkOption {
-        type = types.nullOr types.attrs;
-        default = cfg.ogmiosPkgs.cardanoLib.environments.${cfg.network} or null;
-      };
-      network = mkOption {
-        type = types.nullOr types.str;
-        description = "network name";
-      };
-      networkMagic = mkOption {
-        type = types.int;
-        default = genesis.networkMagic;
-        description = "network magic";
-      };
-      networkSystemStart = mkOption {
-        type = types.str;
-        default = genesis.systemStart;
-        description = "network system start (shelley genesis systemStart timestamp)";
-      };
-      networkSlotsPerEpoch = mkOption {
-        type = types.nullOr types.int;
-        default = if cfg.environment != null
-          then genesis.epochLength / genesis.slotLength
-          else null;
-        description = "network slots per epoch";
+      nodeConfig = mkOption {
+        type = types.nullOr (types.either types.str types.path);
+        description = "Path to cardano-node JSON/Yaml config file";
+        default = null;
       };
       nodeSocketPath = mkOption {
         type = types.nullOr (types.either types.str types.path);
@@ -84,28 +63,25 @@ in {
   };
   config = lib.mkIf cfg.enable {
     services.cardano-ogmios.script = let
-      network = "OGMIOS_NETWORK=${if (elem cfg.network ["mainnet" "testnet" "staging"])
-        then cfg.network
-        else ''${toString cfg.networkMagic}:$(date +\%s -d "${cfg.networkSystemStart}")${optionalString (cfg.networkSlotsPerEpoch != null) ":${toString cfg.networkSlotsPerEpoch}"}''
-      }";
       cmd = ''
         ${cfg.package}/bin/ogmios \
         --node-socket "$CARDANO_NODE_SOCKET_PATH" \
+        --node-config ${toString cfg.nodeConfig} \
         --host ${cfg.hostAddr} \
         --port ${toString cfg.port} \
         --timeout ${toString cfg.timeout} \
         --log-level ${toString cfg.logLevel}
       '';
-    in pkgs.writeShellScript "cardano-db-sync" ''
+    in pkgs.writeShellScript "cardano-ogmios" ''
       ${if (cfg.nodeSocketPath == null) then ''if [ -z "$CARDANO_NODE_SOCKET_PATH" ]
       then
         echo "You must set \$CARDANO_NODE_SOCKET_PATH"
         exit 1
       fi'' else "export CARDANO_NODE_SOCKET_PATH=\"${cfg.nodeSocketPath}\""}
       echo
-      echo "Launching ${network} ${cmd}"
+      echo "Launching ${cmd}"
       echo
-      ${network} exec ${cmd}
+      exec ${cmd}
     '';
     systemd.services.cardano-ogmios = {
       wantedBy = [ "multi-user.target" ];
