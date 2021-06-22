@@ -2,7 +2,7 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-ARG CARDANO_NODE_VERSION=1.27.0
+ARG CARDANO_NODE_REV=8c142704e7df8ca857b179e26fdebb6919b5a7a6
 ARG OGMIOS_SNAPSHOT=686af91900619d0239b8feb81a00e3cdbaed0d56
 ARG IOHK_LIBSODIUM_GIT_REV=66f017f16633f2060db25e17c170c2afa0f2a8a1
 
@@ -45,7 +45,7 @@ ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
 WORKDIR /app/src/cardano-node
 RUN git clone https://github.com/input-output-hk/cardano-node.git /app/src/cardano-node &&\
   git fetch --all --tags &&\
-  git checkout ${CARDANO_NODE_VERSION}
+  git checkout ${CARDANO_NODE_REV}
 WORKDIR /app/src/cardano-node
 RUN cabal install cardano-node \
   --overwrite-policy=always \
