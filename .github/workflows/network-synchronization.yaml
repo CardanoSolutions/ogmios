@@ -34,7 +34,7 @@ jobs:
     - name: 🩹 Overwrite docker-compose.yml
       shell: bash
       run: |
-        sed -i "s@node-db:/data@./data:/data@" docker-compose.yml
+        sed -i "s@node-db:/data/db@./data:/data/db@" docker-compose.yml
 
     - name: 🖧  Synchronize Node
       env:

@@ -3,12 +3,19 @@ version: "3.5"
 services:
   cardano-node:
     image: inputoutput/cardano-node:1.27.0
-    restart: on-failure
-    environment:
-      - NETWORK=${NETWORK:-mainnet}
+    command: [
+      "run",
+      "--config", "/config/config.json",
+      "--database-path", "/data/db",
+      "--socket-path", "/ipc/node.socket",
+      "--topology", "/config/topology.json"
+    ]
     volumes:
-      - node-db:/data
+      - ./config/network/${NETWORK:-mainnet}/cardano-node:/config
+      - ./config/network/${NETWORK:-mainnet}/genesis:/genesis
+      - node-db:/data/db
       - node-ipc:/ipc
+    restart: on-failure
     logging:
       driver: "json-file"
       options:
@@ -22,9 +29,13 @@ services:
       target: ogmios
       cache_from: [cardanosolutions/ogmios:latest]
     restart: on-failure
-    command: ["--host", "0.0.0.0", "--node-socket", "/ipc/node.socket", "--node-config", "/config/cardano-node/config.json"]
+    command: [
+      "--host", "0.0.0.0",
+      "--node-socket", "/ipc/node.socket",
+      "--node-config", "/config/cardano-node/config.json"
+    ]
     volumes:
-      - config/network/${NETWORK:-mainnet}:/config
+      - ./config/network/${NETWORK:-mainnet}:/config
       - node-ipc:/ipc
     ports:
       - ${OGMIOS_PORT:-1337}:1337

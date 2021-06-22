@@ -180,7 +180,7 @@ jobs:
     - name: 🩹 Overwrite docker-compose
       shell: bash
       run: |
-        sed -i "s@node-db:/data@./data:/data@" docker-compose.yml
+        sed -i "s@node-db:/data/db@./data:/data/db@" docker-compose.yml
         sed -i "s@cardanosolutions/ogmios:latest@cardanosolutions/ogmios:cache@" docker-compose.yml
 
     - name: ↪ Set package version
