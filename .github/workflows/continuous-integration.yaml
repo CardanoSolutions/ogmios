@@ -45,13 +45,13 @@ jobs:
 
     - name: 📸 Build Snapshot
       if: steps.cache.outputs.cache-hit != 'true'
+      working-directory: server
       run: |
-        cd server
         stack --no-terminal build --only-snapshot --haddock --no-haddock-deps
 
     - name: 🔨 Build & Test
+      working-directory: server
       run: |
-        cd server
         stack --no-terminal test --flag ogmios:production --no-run-tests
         stack --no-terminal test --flag ogmios:production                 ogmios:unit
 
@@ -75,6 +75,7 @@ jobs:
         submodules: true
 
     - name: 🔬 hlint
+      working-directory: server
       shell: bash
       env:
         PACKAGE: hlint
@@ -83,10 +84,10 @@ jobs:
         RELEASE: v3.2
         VERSION: 3.2
       run: |
-        cd server
         curl -sSL https://raw.github.com/cardanosolutions/ogmios/master/scripts/exec-from-github.sh | sh -s src test app -h .hlint.yaml
 
     - name: 🧐 stylish-haskell
+      working-directory: server
       shell: bash
       env:
         PACKAGE: stylish-haskell
@@ -95,7 +96,6 @@ jobs:
         RELEASE: v0.11.0.0
         VERSION: v0.11.0.0
       run: |
-        cd server
         curl -sSL https://raw.github.com/cardanosolutions/ogmios/master/scripts/exec-from-github.sh | sh -s $(find src test app -type f -name '*.hs' ! -path '*.stack-work*') -i -c .stylish-haskell.yaml
         if [ -z "$(git status --porcelain)" ]; then
             echo "No style errors detected."
@@ -188,7 +188,7 @@ jobs:
     - name: 🩹 Overwrite docker-compose
       shell: bash
       run: |
-        sed -i "s@node-db:/data/db@./data:/data/db@" docker-compose.yml
+        sed -i "s@node-db:/data@./data:/data@" docker-compose.yml
         sed -i "s@cardanosolutions/ogmios:latest@cardanosolutions/ogmios:cache@" docker-compose.yml
 
     - name: ↪ Set package version

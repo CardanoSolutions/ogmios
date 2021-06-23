@@ -19,11 +19,6 @@ extra-source-files:
 - static/tests/*
 - static/assets/*
 
-data-files:
-- test/golden/*
-- config/network/**/cardano-node/*
-- config/network/**/genesis/*
-
 dependencies:
 - base >= 4.7 && < 5
 
@@ -131,6 +126,7 @@ tests:
     - cardano-ledger-alonzo
     - cardano-ledger-core
     - cardano-slotting
+    - file-embed
     - generic-arbitrary
     - generics-sop
     - hedgehog-quickcheck
@@ -152,6 +148,7 @@ tests:
     - relude
     - shelley-spec-ledger
     - shelley-spec-ledger-test
+    - template-haskell
     - typed-protocols
     - typed-protocols-examples
     build-tools:

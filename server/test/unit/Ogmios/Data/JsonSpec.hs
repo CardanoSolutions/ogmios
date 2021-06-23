@@ -3,6 +3,7 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -119,6 +120,8 @@ import Test.Hspec.Json.Schema
     ( SchemaRef (..), prop_validateToJSON, unsafeReadSchemaRef )
 import Test.Hspec.QuickCheck
     ( prop )
+import Test.Path.Util
+    ( getProjectRoot )
 import Test.QuickCheck
     ( Arbitrary (..)
     , Args (..)
@@ -140,7 +143,6 @@ import Test.QuickCheck.Arbitrary.Generic
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
-import qualified Paths_ogmios
 import qualified Test.QuickCheck as QC
 
 jsonifierToAeson
@@ -218,7 +220,7 @@ spec = do
             "ogmios.wsp.json#/properties/SubmitTxResponse"
 
         goldenToJSON
-            "test/golden/SubmitTxResponse_1.json"
+            "SubmitTxResponse_1.json"
             "ogmios.wsp.json#/properties/SubmitTxResponse"
 
     context "validate acquire request/response against JSON-schema" $ do
@@ -315,7 +317,7 @@ spec = do
             ) "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
 
         goldenToJSON
-            "test/golden/QueryResponse-utxo_1.json"
+            "QueryResponse-utxo_1.json"
             "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
     context "validate release request/response against JSON-schema" $ do
@@ -520,5 +522,5 @@ runQuickCheck = quickCheckWithResult (QC.stdArgs{chatty=False}) >=> \case
 
 decodeFileThrow :: FilePath -> IO Json.Value
 decodeFileThrow filepath = do
-    json <- Json.decodeFileStrict =<< Paths_ogmios.getDataFileName filepath
+    json <- Json.decodeFileStrict ($(getProjectRoot) <> "/test/golden/" <> filepath)
     maybe (fail $ "Unable to decode JSON file: " <> filepath) pure json

@@ -2,6 +2,8 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE TemplateHaskell #-}
+
 -- Used to partially pattern match result of parsing default arguments. Okay-ish
 -- because it's test code and, having it fail would be instantly caught.
 {-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
@@ -25,8 +27,8 @@ import Ogmios.App.Options
     )
 import Test.Hspec
     ( Expectation, Spec, context, parallel, shouldBe, shouldSatisfy, specify )
-
-import qualified Paths_ogmios
+import Test.Path.Util
+    ( getProjectRoot )
 
 spec :: Spec
 spec = parallel $ do
@@ -37,13 +39,13 @@ spec = parallel $ do
 
     context "parseNetworkParameters" $ do
         specify "mainnet" $ do
-            params <- parseNetworkParameters =<< getConfigFile "mainnet"
+            params <- parseNetworkParameters (getConfigFile "mainnet")
             networkMagic  params `shouldBe` NetworkMagic 764824073
             systemStart   params `shouldBe` mkSystemStart 1506203091
             slotsPerEpoch params `shouldBe` EpochSlots 432000
 
         specify "testnet" $ do
-            params <- parseNetworkParameters =<< getConfigFile "testnet"
+            params <- parseNetworkParameters (getConfigFile "testnet")
             networkMagic  params `shouldBe` NetworkMagic 1097911063
             systemStart   params `shouldBe` mkSystemStart 1563999616
             slotsPerEpoch params `shouldBe` EpochSlots 432000
@@ -150,7 +152,6 @@ shouldSucceed =
 shouldFail :: (Either String (Command Proxy)) -> Expectation
 shouldFail = flip shouldSatisfy isLeft
 
-getConfigFile :: String -> IO FilePath
+getConfigFile :: String -> FilePath
 getConfigFile network =
-    "config/network/" <> network <> "/cardano-node/config.json"
-    & Paths_ogmios.getDataFileName
+    $(getProjectRoot) <> "/config/network/" <> network <> "/cardano-node/config.json"

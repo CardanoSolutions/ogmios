@@ -13,7 +13,7 @@ services:
     volumes:
       - ./server/config/network/${NETWORK:-mainnet}/cardano-node:/config
       - ./server/config/network/${NETWORK:-mainnet}/genesis:/genesis
-      - node-db:/data/db
+      - node-db:/data
       - node-ipc:/ipc
     restart: on-failure
     logging:
