@@ -2,7 +2,7 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-ARG CARDANO_NODE_VERSION=1.27.0
+ARG CARDANO_NODE_REV=8c142704e7df8ca857b179e26fdebb6919b5a7a6
 ARG OGMIOS_SNAPSHOT=686af91900619d0239b8feb81a00e3cdbaed0d56
 ARG IOHK_LIBSODIUM_GIT_REV=66f017f16633f2060db25e17c170c2afa0f2a8a1
 
@@ -45,7 +45,7 @@ ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
 WORKDIR /app/src/cardano-node
 RUN git clone https://github.com/input-output-hk/cardano-node.git /app/src/cardano-node &&\
   git fetch --all --tags &&\
-  git checkout ${CARDANO_NODE_VERSION}
+  git checkout ${CARDANO_NODE_REV}
 WORKDIR /app/src/cardano-node
 RUN cabal install cardano-node \
   --overwrite-policy=always \
@@ -103,7 +103,9 @@ ENTRYPOINT ["ogmios"]
 
 FROM debian:buster-slim as cardano-node-ogmios
 
-ARG CARDANO_CONFIG_URL=https://hydra.iohk.io/build/5821110/download/1
+ARG NETWORK=mainnet
+# Temporary for backwards compatibility.
+ENV NETWORK=$NETWORK
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -123,20 +125,7 @@ RUN apt-get -y purge && apt-get -y clean && apt-get -y autoremove
 COPY --from=setup /usr/local/lib/libsodium.so.23 /usr/lib/x86_64-linux-gnu/libsodium.so.23
 COPY --from=setup /app/bin/cardano-node /bin/cardano-node
 COPY --from=build /app/bin/ogmios /bin/ogmios
-
-WORKDIR /config
-
-RUN wget -q ${CARDANO_CONFIG_URL}/mainnet-config.json
-RUN wget -q ${CARDANO_CONFIG_URL}/mainnet-byron-genesis.json
-RUN wget -q ${CARDANO_CONFIG_URL}/mainnet-shelley-genesis.json
-RUN wget -q ${CARDANO_CONFIG_URL}/mainnet-topology.json
-
-RUN wget -q ${CARDANO_CONFIG_URL}/testnet-config.json
-RUN wget -q ${CARDANO_CONFIG_URL}/testnet-byron-genesis.json
-RUN wget -q ${CARDANO_CONFIG_URL}/testnet-shelley-genesis.json
-RUN wget -q ${CARDANO_CONFIG_URL}/testnet-topology.json
-
-RUN find . -name "*config*.json" -print0 | xargs -0 sed -i 's/127.0.0.1/0.0.0.0/g' > /dev/null 2>&1
+COPY server/config/network/${NETWORK} /config/
 RUN mkdir /ipc
 WORKDIR /root
 COPY scripts/cardano-node-ogmios.sh cardano-node-ogmios.sh

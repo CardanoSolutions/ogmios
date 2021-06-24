@@ -9,6 +9,7 @@
 !server/src/
 !server/test/
 !server/static/
+!server/config/
 !server/ogmios.wsp.json
 
 !server/modules/

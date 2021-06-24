@@ -14,8 +14,8 @@ Images are uploaded to [Dockerhub](https://dockerhub.com/) and can be pulled fro
 
 | image               | repository                                                                                      | tags               |
 | ---                 | ---                                                                                             | ---                |
-| cardano-node-ogmios | [cardanosolutions/cardano-node-ogmios](https://hub.docker.com/repository/docker/cardanosolutions/cardano-node-ogmios) | `latest`, `v*.*.*` |
-| ogmios              | [cardanosolutions/ogmios](https://hub.docker.com/repository/docker/cardanosolutions/ogmios)                           | `latest`, `v*.*.*` |
+| cardano-node-ogmios | [cardanosolutions/cardano-node-ogmios](https://hub.docker.com/repository/docker/cardanosolutions/cardano-node-ogmios) | `latest`, `latest-testnet`, `v*.*.*`, `v*.*.*-testnet` |
+| ogmios              | [cardanosolutions/ogmios](https://hub.docker.com/repository/docker/cardanosolutions/ogmios)                           | `latest`, `latest-testnet`, `v*.*.*`, `v*.*.*-testnet` |
 
 ## cardano-node-ogmios (easiest)
 
@@ -26,9 +26,8 @@ Assuming you've pulled or build the image (otherwise, see below), you can start 
 ```console
 $ docker run -it \
   --name cardano-node-ogmios \
-  -e NETWORK=mainnet \
   -p 1337:1337 \
-  -v db/mainnet:db/mainnet \
+  -v db/mainnet:db \
   cardanosolutions/cardano-node-ogmios:latest
 ```
 
@@ -41,10 +40,6 @@ Let's explore a bit the various options:
 ##### --name
 
 `--name` gives a name to the container, to easily identify it later in commands such as `docker container ps`.
-
-##### -e
-
-`-e` sets an environment variable inside the container. So far, only `NETWORK` is the only available variable that can take two values: `testnet` or `mainnet`.
 
 ##### -p
 
@@ -76,6 +71,13 @@ $ DOCKER_BUILDKIT=1 docker build \
     --cache-from cardanosolutions/cardano-node-ogmios:latest \
     --tag cardanosolutions/cardano-node-ogmios:latest \
     https://github.com/cardanosolutions/ogmios.git
+```
+
+**_Optionally_**  specify a [network](../../../config/network) name, other than `mainnet`, using a build
+argument:
+
+```console
+  --build-arg NETWORK=testnet
 ```
 
 {{% notice info %}}

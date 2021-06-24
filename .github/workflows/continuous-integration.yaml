@@ -30,6 +30,8 @@ jobs:
 
     - name: 📥 Checkout repository
       uses: actions/checkout@v2.3.3
+      with:
+        submodules: true
 
     - name: 🧰 Setup Stack
       uses: timbod7/setup-stack@1f68f27c99094a718fe60a2790550aafd042f729
@@ -43,13 +45,13 @@ jobs:
 
     - name: 📸 Build Snapshot
       if: steps.cache.outputs.cache-hit != 'true'
+      working-directory: server
       run: |
-        cd server
         stack --no-terminal build --only-snapshot --haddock --no-haddock-deps
 
     - name: 🔨 Build & Test
+      working-directory: server
       run: |
-        cd server
         stack --no-terminal test --flag ogmios:production --no-run-tests
         stack --no-terminal test --flag ogmios:production                 ogmios:unit
 
@@ -69,8 +71,11 @@ jobs:
     steps:
     - name: 📥 Checkout repository
       uses: actions/checkout@v2.3.3
+      with:
+        submodules: true
 
     - name: 🔬 hlint
+      working-directory: server
       shell: bash
       env:
         PACKAGE: hlint
@@ -79,10 +84,10 @@ jobs:
         RELEASE: v3.2
         VERSION: 3.2
       run: |
-        cd server
         curl -sSL https://raw.github.com/cardanosolutions/ogmios/master/scripts/exec-from-github.sh | sh -s src test app -h .hlint.yaml
 
     - name: 🧐 stylish-haskell
+      working-directory: server
       shell: bash
       env:
         PACKAGE: stylish-haskell
@@ -91,7 +96,6 @@ jobs:
         RELEASE: v0.11.0.0
         VERSION: v0.11.0.0
       run: |
-        cd server
         curl -sSL https://raw.github.com/cardanosolutions/ogmios/master/scripts/exec-from-github.sh | sh -s $(find src test app -type f -name '*.hs' ! -path '*.stack-work*') -i -c .stylish-haskell.yaml
         if [ -z "$(git status --porcelain)" ]; then
             echo "No style errors detected."
@@ -118,6 +122,8 @@ jobs:
     steps:
     - name: 📥 Checkout repository
       uses: actions/checkout@v2.3.3
+      with:
+        submodules: true
 
     - name: 🧰 Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
@@ -156,6 +162,8 @@ jobs:
     steps:
     - name: 📥 Checkout repository
       uses: actions/checkout@v2.3.3
+      with:
+        submodules: true
 
     - name: ⌚ Get Date
       id: date

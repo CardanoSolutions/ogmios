@@ -82,11 +82,6 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 --
 
 -- Only used for logging
-instance ToJSON (Tip (CardanoBlock crypto)) where
-    toJSON = inefficientEncodingToValue . encodeTip
-    toEncoding = encodeTip
-
--- Only used for logging
 instance (Crypto crypto, PraosCrypto crypto) => ToJSON
   ( TraceClient
       (GenTx (CardanoBlock crypto))

@@ -10,3 +10,6 @@
 [submodule "modules/hjsonschema"]
 	path = server/modules/hjsonschema
 	url = https://github.com/KtorZ/hjsonschema.git
+[submodule "server/config"]
+	path = server/config
+	url = https://github.com/input-output-hk/cardano-configurations.git

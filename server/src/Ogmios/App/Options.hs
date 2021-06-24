@@ -6,6 +6,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -13,35 +14,26 @@ module Ogmios.App.Options
     ( -- * Command
       Command (..)
     , parseOptions
-    , parserInfo
+    , parseOptionsPure
 
       -- ** Options
     , Options (..)
     , nodeSocketOption
+    , nodeConfigOption
     , serverHostOption
     , serverPortOption
     , connectionTimeoutOption
     , logLevelOption
 
-      -- ** Environment
-      -- *** ENV Var
-    , envOgmiosNetwork
-
       -- *** Types
+    , Severity (..)
     , NetworkParameters (..)
-    , mainnetNetworkParameters
-    , testnetNetworkParameters
-    , stagingNetworkParameters
+    , parseNetworkParameters
 
     , NetworkMagic (..)
     , EpochSlots (..)
-    , defaultSlotsPerEpoch
     , SystemStart (..)
     , mkSystemStart
-
-      -- *** Parsing 'NetworkParameters'
-    , lookupNetworkParameters
-    , parseNetworkParameters
     ) where
 
 import Ogmios.Prelude
@@ -51,10 +43,27 @@ import Ogmios.Control.MonadLog
 
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
+import Cardano.Ledger.Crypto
+    ( StandardCrypto )
+import Cardano.Ledger.Shelley
+    ( ShelleyEra )
+import Cardano.Node.Configuration.POM
+    ( PartialNodeConfiguration (..), parseNodeConfigurationFP )
+import Cardano.Node.Protocol.Shelley
+    ( readGenesisAny )
+import Cardano.Node.Types
+    ( ConfigYamlFilePath (..)
+    , NodeProtocolConfiguration (..)
+    , NodeShelleyProtocolConfiguration (..)
+    )
+import Cardano.Slotting.Slot
+    ( EpochSize (..) )
+import Control.Monad.Trans.Except
+    ( except, throwE, withExceptT )
 import Data.Aeson
     ( ToJSON )
-import Data.Time.Clock
-    ( UTCTime )
+import Data.Char
+    ( toUpper )
 import Data.Time.Clock.POSIX
     ( posixSecondsToUTCTime )
 import Options.Applicative.Help.Pretty
@@ -65,27 +74,38 @@ import Ouroboros.Network.Magic
     ( NetworkMagic (..) )
 import Safe
     ( readMay )
-import System.Environment
-    ( lookupEnv )
+import Shelley.Spec.Ledger.Genesis
+    ( ShelleyGenesis (..) )
 
 import Options.Applicative
-
-import qualified Data.Text as T
 
 --
 -- Command-line commands
 --
 
-data Command
-    = Start Options
+data Command (f :: Type -> Type)
+    = Start (f NetworkParameters)  Options
     | Version
 
-parseOptions :: IO (NetworkParameters, Command)
-parseOptions = (,)
-    <$> lookupNetworkParameters
-    <*> customExecParser (prefs showHelpOnEmpty) parserInfo
+deriving instance Eq (f NetworkParameters) => Eq (Command f)
+deriving instance Show (f NetworkParameters) => Show (Command f)
 
-parserInfo :: ParserInfo Command
+parseOptions :: IO (Command Identity)
+parseOptions =
+    customExecParser (prefs showHelpOnEmpty) parserInfo >>= \case
+        Version -> pure Version
+        Start _ opts@Options{nodeConfig} -> do
+            networkParameters <- parseNetworkParameters nodeConfig
+            pure $ Start (Identity networkParameters) opts
+
+parseOptionsPure :: [String] -> Either String (Command Proxy)
+parseOptionsPure args =
+    case execParserPure defaultPrefs parserInfo args of
+        Success a -> Right a
+        Failure e -> Left (show e)
+        CompletionInvoked{} -> Left "Completion Invoked."
+
+parserInfo :: ParserInfo (Command Proxy)
 parserInfo = info (helper <*> parser) $ mempty
     <> progDesc "Ogmios - A JSON-WSP WebSocket adaptor for cardano-node"
     <> header (toString $ unwords
@@ -94,35 +114,18 @@ parserInfo = info (helper <*> parser) $ mempty
         , "into JSON-WSP-based protocols, through WebSocket channels."
         ])
     <> footerDoc (Just $ vsep
-        [ string "Available ENV variables:"
-        , indent 2 $ string $ envOgmiosNetwork <> "           Configure the target network."
-        , indent 27 $ string separator
-        , indent 27 $ string "- mainnet"
-        , indent 27 $ string "- testnet"
-        , indent 27 $ string "- staging"
-        , indent 27 $ string "- <MAGIC>:<SYSTEM-START>[:<SLOTS-PER-EPOCH]"
-        , indent 27 $ string $ separator <> " (default: mainnet)"
-        , string ""
-        , string "Examples:"
+        [ string "Examples:"
         , indent 2 $ string "Connecting to the mainnet:"
-        , indent 4 $ string "$ ogmios --node-socket /path/to/node.socket"
-        , string ""
-        , indent 2 $ string "Connecting to the testnet:"
-        , indent 4 $ string "$ OGMIOS_NETWORK=testnet ogmios --node-socket /path/to/node.socket"
-        , string ""
-        , indent 2 $ string "Connecting to the testnet using explicit parameters:"
-        , indent 4 $ string "$ OGMIOS_NETWORK=1097911063:1563999616 ogmios --node-socket /path/to/node.socket"
-        , string ""
-        , indent 2 $ string "Connecting to the Guild network:"
-        , indent 4 $ string "$ OGMIOS_NETWORK=141:1612317107:3600 ogmios --node-socket /path/to/node.socket"
+        , indent 4 $ string "$ ogmios --node-socket /path/to/node.socket --node-config /path/to/node/config"
         ])
   where
     parser =
         versionOption
         <|>
-        (Start <$>
+        (Start Proxy <$>
             (Options
                 <$> nodeSocketOption
+                <*> nodeConfigOption
                 <*> serverHostOption
                 <*> serverPortOption
                 <*> connectionTimeoutOption
@@ -137,6 +140,7 @@ parserInfo = info (helper <*> parser) $ mempty
 
 data Options = Options
     { nodeSocket :: !FilePath
+    , nodeConfig :: !FilePath
     , serverHost :: !String
     , serverPort :: !Int
     , connectionTimeout :: !Int
@@ -150,6 +154,14 @@ nodeSocketOption = option str $ mempty
     <> long "node-socket"
     <> metavar "FILEPATH"
     <> help "Path to the node socket."
+    <> completer (bashCompleter "file")
+
+-- | --node-config=FILEPATH
+nodeConfigOption :: Parser FilePath
+nodeConfigOption = option str $ mempty
+    <> long "node-config"
+    <> metavar "FILEPATH"
+    <> help "Path to the node configuration file."
     <> completer (bashCompleter "file")
 
 -- | [--host=IPv4], default: 127.0.0.1
@@ -191,7 +203,7 @@ maxInFlightOption = option auto $ mempty
 
 -- | [--log-level=SEVERITY], default: Info
 logLevelOption :: Parser Severity
-logLevelOption = option auto $ mempty
+logLevelOption = option caseInsensitive $ mempty
     <> long "log-level"
     <> metavar "SEVERITY"
     <> helpDoc (Just doc)
@@ -209,8 +221,13 @@ logLevelOption = option auto $ mempty
             , [ separator ]
             ]
 
+    separator :: String
+    separator =
+        replicate 20 '-'
+
+
 -- | [--version|-v] | version
-versionOption :: Parser Command
+versionOption :: Parser (Command f)
 versionOption =
     flag' Version (mconcat
         [ long "version"
@@ -240,91 +257,52 @@ deriving newtype instance ToJSON EpochSlots
 deriving newtype instance ToJSON SystemStart
 deriving newtype instance ToJSON NetworkMagic
 
-envOgmiosNetwork :: String
-envOgmiosNetwork = "OGMIOS_NETWORK"
-
--- | Lookup environment for a given version data name, default to mainnet.
-lookupNetworkParameters
-    :: IO NetworkParameters
-lookupNetworkParameters = do
-    mStr <- lookupEnv envOgmiosNetwork
-    let params = maybe (Just mainnetNetworkParameters) parseNetworkParameters mStr
-    maybe (die err) pure params
-  where
-    err = "Couldn't parse " <> envOgmiosNetwork <> ". Have a look at the usage using '--help'."
-
--- | Pure parser for 'NetworkParameters'
 parseNetworkParameters
-    :: String
-    -> Maybe NetworkParameters
-parseNetworkParameters = \case
-    "mainnet" -> do
-        pure mainnetNetworkParameters
-    "testnet" -> do
-        pure testnetNetworkParameters
-    "staging" -> do
-        pure stagingNetworkParameters
-    custom -> do
-        let strs = toString <$> T.splitOn ":" (toText custom)
-        case strs of
-            [magicStr, systemStartStr] -> NetworkParameters
-                <$> fmap NetworkMagic (readMay magicStr)
-                <*> fmap SystemStart (readAsPosixTime systemStartStr)
-                <*> pure defaultSlotsPerEpoch
-            [magicStr, systemStartStr, slotStr] -> NetworkParameters
-                <$> fmap NetworkMagic (readMay magicStr)
-                <*> fmap SystemStart (readAsPosixTime systemStartStr)
-                <*> fmap EpochSlots (readMay slotStr)
-            _ ->
-                Nothing
+    :: FilePath
+    -> IO NetworkParameters
+parseNetworkParameters (ConfigYamlFilePath -> configFile) = runOrDie $ do
+    parseConfiguration >>= \case
+        NodeProtocolConfigurationCardano _ shelley _ _ -> do
+            genesis <- readGenesisFile shelley
+            pure NetworkParameters
+                { networkMagic = NetworkMagic $ sgNetworkMagic genesis
+                , systemStart = SystemStart $ sgSystemStart genesis
+                , slotsPerEpoch = coerce $ sgEpochLength genesis
+                }
+        _ ->
+            throwE "Can't use single-era configurations, only Cardano."
 
--- Hard-coded mainnet network parameters
-mainnetNetworkParameters
-    :: NetworkParameters
-mainnetNetworkParameters =
-    NetworkParameters
-        { networkMagic = NetworkMagic 764824073
-        , systemStart = SystemStart $ posixSecondsToUTCTime 1506203091
-        , slotsPerEpoch = defaultSlotsPerEpoch
-        }
+  where
+    runOrDie :: ExceptT String IO a -> IO a
+    runOrDie = runExceptT >=> either die pure
 
--- Hard-coded testnet network parameters
-testnetNetworkParameters
-    :: NetworkParameters
-testnetNetworkParameters =
-    NetworkParameters
-        { networkMagic = NetworkMagic 1097911063
-        , systemStart = SystemStart $ posixSecondsToUTCTime 1563999616
-        , slotsPerEpoch = defaultSlotsPerEpoch
-        }
+    lastToEither :: Last a -> Either () a
+    lastToEither (Last x) = maybe (Left ()) Right x
 
--- Hard-coded staging network parameters
-stagingNetworkParameters
-    :: NetworkParameters
-stagingNetworkParameters =
-    NetworkParameters
-        { networkMagic = NetworkMagic 633343913
-        , systemStart = SystemStart $ posixSecondsToUTCTime 1506450213
-        , slotsPerEpoch = defaultSlotsPerEpoch
-        }
+    parseConfiguration
+        :: ExceptT String IO NodeProtocolConfiguration
+    parseConfiguration =
+        withExceptT (const "Couldn't parse cardano-node's configuration") $ do
+            config <- lift $ parseNodeConfigurationFP (Just configFile)
+            except $ lastToEither (pncProtocolConfig config)
 
--- Hard-coded genesis slots per epoch
-defaultSlotsPerEpoch
-    :: EpochSlots
-defaultSlotsPerEpoch =
-    EpochSlots 21600
+    readGenesisFile
+        :: NodeShelleyProtocolConfiguration
+        -> ExceptT String IO (ShelleyGenesis (ShelleyEra StandardCrypto))
+    readGenesisFile shelley = do
+        let genesisFile = npcShelleyGenesisFile shelley
+        let genesisHash = npcShelleyGenesisFileHash shelley
+        withExceptT (("Couldn't parse Shelley's genesis file: " <>) . show) $
+            fst <$> readGenesisAny genesisFile genesisHash
 
 --
 -- Helpers
 --
 
-separator :: String
-separator =
-    replicate 20 '-'
-
-readAsPosixTime :: String -> Maybe UTCTime
-readAsPosixTime =
-    fmap posixSecondsToUTCTime . readMay . (<> "s")
+caseInsensitive :: Read a => ReadM a
+caseInsensitive = maybeReader $ \case
+    [] -> Nothing
+    h:q -> readMay (toUpper h:q)
 
 mkSystemStart :: Int -> SystemStart
 mkSystemStart =

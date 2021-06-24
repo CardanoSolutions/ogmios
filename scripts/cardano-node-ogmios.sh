@@ -10,23 +10,15 @@
 #   This script is meant to be used within a container to provide a cardano-node+ogmios as a single service.
 #
 # Usage: ./cardano-node-ogmios.sh
-#
-# Available ENV vars:
-#   NETWORK                 Target network, either 'mainnet' or 'testnet'
 
 set -m
 
-if [ -z "$NETWORK" ]; then
-  echo "'NETWORK' environment variable must be set."
-  exit 1
-fi
-
 cardano-node run\
-  --topology /config/$NETWORK-topology.json\
-  --database-path db/$NETWORK\
+  --topology /config/cardano-node/topology.json\
+  --database-path db\
   --port 3000\
   --host-addr 0.0.0.0\
-  --config /config/$NETWORK-config.json\
+  --config /config/cardano-node/config.json\
   --socket-path /ipc/node.socket&
 status=$?
 if [ $status -ne 0 ]; then
@@ -34,9 +26,10 @@ if [ $status -ne 0 ]; then
   exit $status
 fi
 
-OGMIOS_NETWORK=$NETWORK ogmios \
+ogmios \
   --host 0.0.0.0\
-  --node-socket ./ipc/node.socket &
+  --node-config /config/cardano-node/config.json \
+  --node-socket /ipc/node.socket &
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start ogmios: $status"

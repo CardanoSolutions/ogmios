@@ -28,9 +28,6 @@ extra-source-files:
     static/tests/state-query.js
     static/assets/favicon.ico
     static/assets/logo.png
-data-files:
-    test/golden/QueryResponse-utxo_1.json
-    test/golden/SubmitTxResponse_1.json
 
 source-repository head
   type: git
@@ -138,6 +135,7 @@ library
     , cardano-ledger-byron
     , cardano-ledger-core
     , cardano-ledger-shelley-ma
+    , cardano-node
     , cardano-slotting
     , cborg
     , containers
@@ -171,6 +169,7 @@ library
     , text
     , time
     , time-manager
+    , transformers
     , typed-protocols
     , unordered-containers
     , vector
@@ -242,6 +241,7 @@ test-suite unit
       Ogmios.Data.JsonSpec
       Test.App.Protocol.Util
       Test.Generators
+      Test.Path.Util
       Paths_ogmios
   hs-source-dirs:
       test/unit
@@ -291,6 +291,7 @@ test-suite unit
     , cardano-ledger-alonzo
     , cardano-ledger-core
     , cardano-slotting
+    , file-embed
     , generic-arbitrary
     , generics-sop
     , hedgehog-quickcheck
@@ -311,6 +312,7 @@ test-suite unit
     , relude
     , shelley-spec-ledger
     , shelley-spec-ledger-test
+    , template-haskell
     , typed-protocols
     , typed-protocols-examples
   default-language: Haskell2010
