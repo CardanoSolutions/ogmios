@@ -9,7 +9,8 @@ import {
 import {
   ConnectionConfig,
   createInteractionContext,
-  InteractionContext
+  InteractionContext,
+  WebSocketCloseHandler
 } from '../Connection'
 import { baseRequest } from '../Request'
 import {
@@ -30,7 +31,6 @@ import {
   utxo
 } from './queries'
 import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
-import WebSocket from 'isomorphic-ws'
 
 export interface StateQueryClient {
   context: InteractionContext
@@ -50,7 +50,7 @@ export interface StateQueryClient {
 
 export const createStateQueryClient = async (
   errorHandler: (error: Error) => void,
-  closeHandler: (code: WebSocket.CloseEvent['code'], reason: WebSocket.CloseEvent['reason']) => void,
+  closeHandler: WebSocketCloseHandler,
   options?: {
     connection?: ConnectionConfig,
     point?: Point

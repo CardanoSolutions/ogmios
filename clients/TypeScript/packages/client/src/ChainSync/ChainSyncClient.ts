@@ -2,14 +2,14 @@ import { Block, Ogmios, Point, Tip } from '@cardano-ogmios/schema'
 import {
   ConnectionConfig,
   createInteractionContext,
-  InteractionContext
+  InteractionContext,
+  WebSocketCloseHandler
 } from '../Connection'
 import { UnknownResultError } from '../errors'
 import fastq from 'fastq'
 import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
 import { findIntersect, Intersection } from './findIntersect'
 import { requestNext } from './requestNext'
-import WebSocket from 'isomorphic-ws'
 
 export interface ChainSyncClient {
   context: InteractionContext
@@ -40,7 +40,7 @@ export interface ChainSyncMessageHandlers {
 export const createChainSyncClient = async (
   messageHandlers: ChainSyncMessageHandlers,
   errorHandler: (error: Error) => void,
-  closeHandler: (code: WebSocket.CloseEvent['code'], reason: WebSocket.CloseEvent['reason']) => void,
+  closeHandler: WebSocketCloseHandler,
   options?: {
     connection?: ConnectionConfig,
     sequential?: boolean

@@ -1,4 +1,6 @@
 import WebSocket from 'isomorphic-ws'
+import { getOgmiosHealth } from './OgmiosHealth'
+import { OgmiosNotReady } from './errors'
 
 export interface ConnectionConfig {
   host?: string,
@@ -20,6 +22,11 @@ export interface InteractionContext {
 
 export type Mirror = { [k: string]: unknown }
 
+export type WebSocketCloseHandler = (
+  code: WebSocket.CloseEvent['code'],
+  reason: WebSocket.CloseEvent['reason']
+) => void
+
 export const createConnectionObject = (connection?: ConnectionConfig): Connection => {
   const base = {
     host: connection?.host ?? 'localhost',
@@ -38,21 +45,28 @@ export const createConnectionObject = (connection?: ConnectionConfig): Connectio
 
 export const createInteractionContext = async (
   errorHandler: (error: Error) => void,
-  closeHandler: (
-    code: WebSocket.CloseEvent['code'],
-    reason: WebSocket.CloseEvent['reason']
-  ) => void,
+  closeHandler: WebSocketCloseHandler,
   options?: {
     connection?: ConnectionConfig
   }): Promise<InteractionContext> => {
-  const connection = createConnectionObject(options?.connection)
-  const socket = new WebSocket(connection.address.webSocket)
+  const health = await getOgmiosHealth(options?.connection)
   return new Promise((resolve, reject) => {
-    socket.on('error', reject)
-    socket.on('close', reject)
-    socket.on('open', () => {
-      socket.removeListener('error', reject)
-      socket.removeListener('close', reject)
+    if (health.lastTipUpdate === null) {
+      return reject(new OgmiosNotReady(health))
+    }
+    const connection = createConnectionObject(options?.connection)
+    const socket = new WebSocket(connection.address.webSocket)
+    const onInitialError = (error: Error) => {
+      socket.removeAllListeners()
+      return reject(error)
+    }
+    socket.on('error', onInitialError)
+    socket.once('close', (_code: number, reason: string) => {
+      socket.removeAllListeners()
+      reject(new Error(reason))
+    })
+    socket.on('open', async () => {
+      socket.removeListener('error', onInitialError)
       socket.on('error', errorHandler)
       socket.on('close', closeHandler)
       resolve({
