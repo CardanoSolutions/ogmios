@@ -68,6 +68,7 @@ describe('ChainSync', () => {
     const client = await createChainSyncClient(
       stubHandlers,
       (error) => console.error(error),
+      () => {},
       { connection }
     )
     expectContextFromConnectionConfig(connection, client.context)
@@ -80,6 +81,7 @@ describe('ChainSync', () => {
       const client = await createChainSyncClient(
         stubHandlers,
         (error) => console.error(error),
+        () => {},
         { connection }
       )
       const intersection = await client.startSync()
@@ -97,6 +99,7 @@ describe('ChainSync', () => {
       const client = await createChainSyncClient(
         stubHandlers,
         (error) => console.error(error),
+        () => {},
         { connection }
       )
       const intersection = await client.startSync(['origin'], 10)
@@ -121,6 +124,7 @@ describe('ChainSync', () => {
         }
       },
       (error) => console.error(error),
+      () => {},
       {
         connection
       })
@@ -166,6 +170,7 @@ describe('ChainSync', () => {
           }
         },
         (error) => console.error(error),
+        () => {},
         { connection }
         )
         await client.startSync(['origin'], inFlight)
@@ -184,6 +189,7 @@ describe('ChainSync', () => {
       const client = await createChainSyncClient(
         messageOrderTestHandlers(resultLog),
         (error) => console.error(error),
+        () => {},
         { connection }
       )
       await client.startSync(['origin'], 3)
@@ -198,6 +204,7 @@ describe('ChainSync', () => {
     const client = await createChainSyncClient(
       messageOrderTestHandlers(resultLog),
       (error) => console.error(error),
+      () => {},
       {
         connection,
         sequential: false
@@ -213,6 +220,7 @@ describe('ChainSync', () => {
     const client = await createChainSyncClient(
       stubHandlers,
       (error) => console.error(error),
+      () => {},
 
       { connection }
     )

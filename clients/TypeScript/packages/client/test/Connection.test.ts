@@ -120,6 +120,7 @@ describe('Connection', () => {
       try {
         context = await createInteractionContext(
           (error) => console.error(error),
+          () => {},
           { connection: { host: 'non-existent-host', port: 1111 } }
         )
         expect(context).toBeUndefined()
@@ -132,6 +133,7 @@ describe('Connection', () => {
       try {
         context = await createInteractionContext(
           (error) => console.error(error),
+          () => {},
           { connection: { port: 1111 } }
         )
         expect(context).toBeUndefined()
@@ -142,5 +144,19 @@ describe('Connection', () => {
         expect(error.code).toBe('ECONNREFUSED')
       }
     })
+    // describe('connecting before the node socket is ready', () => {
+    //   // Todo: Implement https://github.com/mswjs/msw to return required health to trigger this
+    //   it('rejects if the node socket is not ready', async () => {
+    //     try {
+    //       await createInteractionContext(
+    //         (error) => console.error(error),
+    //         () => {},
+    //         { connection: { port: 1338 } }
+    //       )
+    //     } catch (error) {
+    //       expect(error.message).toBe('Ogmios is not ready')
+    //     }
+    //   })
+    // })
   })
 })

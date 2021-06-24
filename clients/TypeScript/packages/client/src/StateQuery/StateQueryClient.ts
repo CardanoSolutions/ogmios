@@ -30,6 +30,7 @@ import {
   utxo
 } from './queries'
 import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
+import WebSocket from 'isomorphic-ws'
 
 export interface StateQueryClient {
   context: InteractionContext
@@ -49,11 +50,12 @@ export interface StateQueryClient {
 
 export const createStateQueryClient = async (
   errorHandler: (error: Error) => void,
+  closeHandler: (code: WebSocket.CloseEvent['code'], reason: WebSocket.CloseEvent['reason']) => void,
   options?: {
     connection?: ConnectionConfig,
     point?: Point
   }): Promise<StateQueryClient> => {
-  const context = await createInteractionContext(errorHandler, options)
+  const context = await createInteractionContext(errorHandler, closeHandler, options)
   const point = options?.point !== undefined
     ? options.point
     : await createPointFromCurrentTip(context)

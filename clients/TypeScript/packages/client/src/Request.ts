@@ -20,6 +20,7 @@ export const send = async <T>(
     ? config
     : await createInteractionContext(
       () => {},
+      () => {},
       { connection: config }
     )
   const closeOnCompletion = !isContext(config)

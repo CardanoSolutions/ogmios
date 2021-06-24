@@ -9,6 +9,7 @@ import fastq from 'fastq'
 import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
 import { findIntersect, Intersection } from './findIntersect'
 import { requestNext } from './requestNext'
+import WebSocket from 'isomorphic-ws'
 
 export interface ChainSyncClient {
   context: InteractionContext
@@ -39,11 +40,12 @@ export interface ChainSyncMessageHandlers {
 export const createChainSyncClient = async (
   messageHandlers: ChainSyncMessageHandlers,
   errorHandler: (error: Error) => void,
+  closeHandler: (code: WebSocket.CloseEvent['code'], reason: WebSocket.CloseEvent['reason']) => void,
   options?: {
     connection?: ConnectionConfig,
     sequential?: boolean
   }): Promise<ChainSyncClient> => {
-  const context = await createInteractionContext(errorHandler, options)
+  const context = await createInteractionContext(errorHandler, closeHandler, options)
   const { socket } = context
   return new Promise((resolve) => {
     const messageHandler = async (response: Ogmios['RequestNextResponse']) => {

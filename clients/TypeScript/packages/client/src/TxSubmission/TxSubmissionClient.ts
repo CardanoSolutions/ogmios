@@ -5,6 +5,7 @@ import {
 } from '../Connection'
 import { ensureSocketIsOpen } from '../util'
 import { submitTx } from './submitTx'
+import WebSocket from 'isomorphic-ws'
 
 export interface TxSubmissionClient {
   context: InteractionContext
@@ -14,10 +15,11 @@ export interface TxSubmissionClient {
 
 export const createTxSubmissionClient = async (
   errorHandler: (error: Error) => void,
+  closeHandler: (code: WebSocket.CloseEvent['code'], reason: WebSocket.CloseEvent['reason']) => void,
   options?: {
     connection?: ConnectionConfig
   }): Promise<TxSubmissionClient> => {
-  const context = await createInteractionContext(errorHandler, options)
+  const context = await createInteractionContext(errorHandler, closeHandler, options)
   const { socket } = context
   return Promise.resolve({
     context,

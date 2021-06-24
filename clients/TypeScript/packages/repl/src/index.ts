@@ -52,6 +52,7 @@ const logObject = (obj: Object) =>
     }
   },
   console.error,
+  console.log,
   { connection }
   )
   const cardanoOgmiosRepl = repl.start({
@@ -63,8 +64,8 @@ const logObject = (obj: Object) =>
     chainSync,
     createChainSyncClient:
       (messageHandlers: ChainSyncMessageHandlers) =>
-        createChainSyncClient(messageHandlers, console.error, { connection }),
-    createStateQueryClient: () => createStateQueryClient(console.error, { connection }),
+        createChainSyncClient(messageHandlers, console.error, console.log, { connection }),
+    createStateQueryClient: () => createStateQueryClient(console.error, console.log, { connection }),
     currentEpoch: () => currentEpoch(connection),
     currentProtocolParameters: () => currentProtocolParameters(connection),
     delegationsAndRewards:

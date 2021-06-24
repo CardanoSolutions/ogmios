@@ -25,6 +25,7 @@ describe('Local state queries', () => {
     it('opens a connection on construction, and closes it after release', async () => {
       const client = await createStateQueryClient(
         (error) => console.error(error),
+        () => {},
         { connection }
       )
       expectContextFromConnectionConfig(connection, client.context)
@@ -35,6 +36,7 @@ describe('Local state queries', () => {
     it('gets the point from the tip if none provided', async () => {
       const client = await createStateQueryClient(
         (error) => console.error(error),
+        () => {},
         { connection }
       )
       const { point } = client
@@ -45,10 +47,12 @@ describe('Local state queries', () => {
     it('uses the provided point for reproducible queries across clients', async () => {
       const client = await createStateQueryClient(
         (error) => console.error(error),
+        () => {},
         { connection }
       )
       const anotherClient = await createStateQueryClient(
         (error) => console.error(error),
+        () => {},
         { connection, point: client.point }
       )
       expect(anotherClient.point).toEqual(client.point)
@@ -60,6 +64,7 @@ describe('Local state queries', () => {
       const createWithOldPoint = async () => {
         await createStateQueryClient(
           (error) => console.error(error),
+          () => {},
           {
             connection,
             point: 'origin'
@@ -71,6 +76,7 @@ describe('Local state queries', () => {
     it('rejects method calls after release', async () => {
       const client = await createStateQueryClient(
         (error) => console.error(error),
+        () => {},
         { connection }
       )
       await client.release()
@@ -82,6 +88,7 @@ describe('Local state queries', () => {
       it('exposes the queries, uses a single context, and should be released when done', async () => {
         const client = await createStateQueryClient(
           (error) => console.error(error),
+          () => {},
           { connection }
         )
 
@@ -130,6 +137,7 @@ describe('Local state queries', () => {
       it('can handle concurrent requests ', async () => {
         const client = await createStateQueryClient(
           (error) => console.error(error),
+          () => {},
           { connection }
         )
         const [currentEpoch, eraStart, ledgerTip] = await Promise.all([

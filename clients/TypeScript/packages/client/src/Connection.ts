@@ -38,6 +38,10 @@ export const createConnectionObject = (connection?: ConnectionConfig): Connectio
 
 export const createInteractionContext = async (
   errorHandler: (error: Error) => void,
+  closeHandler: (
+    code: WebSocket.CloseEvent['code'],
+    reason: WebSocket.CloseEvent['reason']
+  ) => void,
   options?: {
     connection?: ConnectionConfig
   }): Promise<InteractionContext> => {
@@ -45,9 +49,12 @@ export const createInteractionContext = async (
   const socket = new WebSocket(connection.address.webSocket)
   return new Promise((resolve, reject) => {
     socket.on('error', reject)
+    socket.on('close', reject)
     socket.on('open', () => {
       socket.removeListener('error', reject)
+      socket.removeListener('close', reject)
       socket.on('error', errorHandler)
+      socket.on('close', closeHandler)
       resolve({
         connection,
         socket

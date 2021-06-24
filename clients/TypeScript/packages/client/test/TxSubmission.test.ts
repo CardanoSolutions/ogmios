@@ -13,6 +13,7 @@ describe('TxSubmission', () => {
     it('opens a connection on construction, and closes it after shutdown', async () => {
       const client = await createTxSubmissionClient(
         (error) => console.error(error),
+        () => {},
         { connection }
       )
       expectContextFromConnectionConfig(connection, client.context)
@@ -24,6 +25,7 @@ describe('TxSubmission', () => {
       try {
         client = await createTxSubmissionClient(
           (error) => console.error(error),
+          () => {},
           { connection: { host: 'non-existent-host', port: 1111 } }
         )
         expect(client).toBeUndefined()
@@ -36,6 +38,7 @@ describe('TxSubmission', () => {
       try {
         client = await createTxSubmissionClient(
           (error) => console.error(error),
+          () => {},
           { connection: { port: 1111 } }
         )
         expect(client).toBeUndefined()
