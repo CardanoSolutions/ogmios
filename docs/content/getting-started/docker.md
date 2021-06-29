@@ -29,7 +29,7 @@ Assuming you've pulled or build the image (otherwise, see below), you can start 
 $ docker run -it \
   --name cardano-node-ogmios \
   -p 1337:1337 \
-  -v db/mainnet:db \
+  -v cardano-node-ogmios-db:db \
   cardanosolutions/cardano-node-ogmios:latest
 ```
 
