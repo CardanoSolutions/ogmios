@@ -10,12 +10,14 @@ The easiest way to get started with Ogmios is to use [docker](https://www.docker
 
 Ogmios docker images come in two flavours: `cardano-node-ogmios` and `ogmios`. The former is used to run a single container that bundles both a Cardano-node and an Ogmios server running side-by-side. It is likely the easiest way to get started. The latter is a standalone Ogmios server, and you'll need to run that container in orchestration with a cardano-node; this is made relatively easy with [Docker compose](https://docs.docker.com/compose/).
 
-Images are uploaded to [Dockerhub](https://dockerhub.com/) and can be pulled from the registry at any time. Images are tagged using release versions or with `:latest` if you're living on the edge.
+Images are uploaded to [Dockerhub](https://dockerhub.com/) and are tagged using release versions
+combined with the [supported network name](../../../config/network), or with `:latest` if you're
+living on the edge. If using the `mainnet` image you can omit the network name.
 
 | image               | repository                                                                                      | tags               |
 | ---                 | ---                                                                                             | ---                |
-| cardano-node-ogmios | [cardanosolutions/cardano-node-ogmios](https://hub.docker.com/repository/docker/cardanosolutions/cardano-node-ogmios) | `latest`, `latest-testnet`, `v*.*.*`, `v*.*.*-testnet` |
-| ogmios              | [cardanosolutions/ogmios](https://hub.docker.com/repository/docker/cardanosolutions/ogmios)                           | `latest`, `latest-testnet`, `v*.*.*`, `v*.*.*-testnet` |
+| cardano-node-ogmios | [cardanosolutions/cardano-node-ogmios](https://hub.docker.com/repository/docker/cardanosolutions/cardano-node-ogmios) | `latest`, `latest-{NETWORK}`, `v*.*.*`, `v*.*.*-{NETWORK}` |
+| ogmios              | [cardanosolutions/ogmios](https://hub.docker.com/repository/docker/cardanosolutions/ogmios)                           | `latest`, `latest-{NETWORK}`, `v*.*.*`, `v*.*.*-{NETWORK}` |
 
 ## cardano-node-ogmios (easiest)
 
