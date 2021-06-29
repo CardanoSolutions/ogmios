@@ -104,8 +104,6 @@ ENTRYPOINT ["ogmios"]
 FROM debian:buster-slim as cardano-node-ogmios
 
 ARG NETWORK=mainnet
-# Temporary for backwards compatibility.
-ENV NETWORK=$NETWORK
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 

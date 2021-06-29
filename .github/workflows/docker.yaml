@@ -13,7 +13,7 @@ jobs:
       matrix:
         os: [ ubuntu-20.04 ]
         target: [ ogmios, cardano-node-ogmios ]
-        network: [ "", "-testnet" ]
+        network: [ "mainnet", "testnet" ]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -39,30 +39,57 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
 
-    - name: 🔨 Build and push
+    - name: 📝 Base Variables
+      id: base-variables
+      run: |
+        echo ::set-output name=image::cardanosolutions/${{ matrix.target }}
+
+    - name: 📝 Tag Variables
+      if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
+      id: tag-variables
+      run: |
+        echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
+
+    - name: 🔨 Build and push (default latest)
+      if: ${{ github.event_name == 'push' && matrix.target == 'mainnet' }}
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.base-variables.outputs.image }}:latest
+        target: ${{ matrix.target }}
+        cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest
+        cache-to: type=inline
+
+    - name: 🔨 Build and push (network latest)
       if: ${{ github.event_name == 'push' }}
       uses: docker/build-push-action@v2
       with:
         context: .
         push: true
-        tags: cardanosolutions/${{ matrix.target }}:latest${{ matrix.network }}
+        tags: ${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
         target: ${{ matrix.target }}
-        cache-from: type=registry,ref=cardanosolutions/${{ matrix.target }}:latest${{ matrix.network }}
+        cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
         cache-to: type=inline
 
-    - name: 📝 Variables
-      if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
-      id: variables
-      run: |
-        echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
+    - name: 🏷️ Build and push (default tag)
+      if: ${{ github.event_name == 'push' && matrix.target == 'mainnet' && startsWith(github.ref, 'refs/tags') }}
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.base-variables.outputs.image }}:${{ steps.tag-variables.outputs.tag }}
+        target: ${{ matrix.target }}
+        cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest
+        cache-to: type=inline
 
-    - name: 🏷️ Build and push (tag)
+    - name: 🏷️ Build and push (network tags)
       if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
       uses: docker/build-push-action@v2
       with:
         context: .
         push: true
-        tags: cardanosolutions/${{ matrix.target }}:${{ steps.variables.outputs.tag }}${{ matrix.network }}
+        tags: ${{ steps.base-variables.outputs.image }}:${{ steps.tag-variables.outputs.tag }}-${{ matrix.network }}
         target: ${{ matrix.target }}
-        cache-from: type=registry,ref=cardanosolutions/${{ matrix.target }}:latest${{ matrix.network }}
+        cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
         cache-to: type=inline
