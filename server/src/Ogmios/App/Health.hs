@@ -2,7 +2,6 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 
 {-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
@@ -63,8 +62,6 @@ import Ogmios.Data.Health
     , mkNetworkSynchronization
     , modifyHealth
     )
-import Ogmios.Data.Json
-    ( ToJSON )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras )
 
@@ -72,6 +69,8 @@ import qualified Ogmios.App.Metrics as Metrics
 
 import Cardano.Network.Protocol.NodeToClient
     ( Block, Clients (..), connectClient, mkClient )
+import Data.Aeson
+    ( ToJSON (..), genericToEncoding )
 import Data.Time.Clock
     ( DiffTime, UTCTime )
 import Network.TypedProtocol.Pipelined
@@ -95,6 +94,7 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Client
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxSubmissionClient (..) )
 
+import qualified Data.Aeson as Json
 import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ
 import qualified Ouroboros.Consensus.Ledger.Query as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
@@ -358,7 +358,9 @@ data TraceHealth s where
         :: { exception :: Text }
         -> TraceHealth s
     deriving stock (Show, Generic)
-    deriving anyclass ToJSON
+
+instance ToJSON s => ToJSON (TraceHealth s) where
+    toEncoding = genericToEncoding Json.defaultOptions
 
 instance HasSeverityAnnotation (TraceHealth s) where
     getSeverityAnnotation = \case

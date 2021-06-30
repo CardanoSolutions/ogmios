@@ -2,6 +2,8 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Ogmios.Data.Health
@@ -24,7 +26,7 @@ import Ogmios.Data.Metrics
     ( Metrics, emptyMetrics )
 
 import Data.Aeson
-    ( ToJSON (..), genericToJSON )
+    ( ToJSON (..), genericToEncoding )
 import Data.ByteString.Builder.Scientific
     ( FPFormat (Fixed), formatScientificBuilder )
 import Data.Ratio
@@ -59,10 +61,10 @@ data Health block = Health
     -- ^ Current node's era.
     , metrics :: !Metrics
     -- ^ Application metrics measured at regular interval
-    } deriving (Generic, Eq, Show)
+    } deriving stock (Generic, Eq, Show)
 
 instance ToJSON (Tip block) => ToJSON (Health block) where
-    toJSON = genericToJSON Json.defaultOptions
+    toEncoding = genericToEncoding Json.defaultOptions
 
 emptyHealth :: UTCTime -> Health block
 emptyHealth startTime = Health
@@ -95,7 +97,7 @@ modifyHealth tvar fn =
 -- - The current time
 -- - The current node tip
 newtype NetworkSynchronization = NetworkSynchronization Scientific
-    deriving (Generic, Eq, Show)
+    deriving stock (Generic, Eq, Show)
 
 instance ToJSON NetworkSynchronization where
     toEncoding (NetworkSynchronization s) =
@@ -115,7 +117,7 @@ instance ToJSON NetworkSynchronization where
         -- 0.00140
         --
         -- etc...
-        Json.unsafeToEncoding $ formatScientificBuilder Fixed (Just 5) s
+        Json.unsafeToEncoding (formatScientificBuilder Fixed (Just 5) s)
 
 -- | Calculate the network synchronization from various parameters.
 mkNetworkSynchronization
@@ -131,7 +133,6 @@ mkNetworkSynchronization systemStart now relativeSlotTime =
     in
         NetworkSynchronization $ unsafeFromRational $ (num * p `div` den) % p
 
-
 -- | A Cardano era, starting from Byron and onwards.
 data CardanoEra
     = Byron
@@ -139,7 +140,5 @@ data CardanoEra
     | Allegra
     | Mary
     | Alonzo
-    deriving (Generic, Show, Eq, Enum, Bounded)
-
-instance ToJSON CardanoEra where
-    toJSON = genericToJSON Json.defaultOptions
+    deriving stock (Generic, Show, Eq, Enum, Bounded)
+    deriving anyclass (ToJSON)

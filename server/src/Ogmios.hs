@@ -2,7 +2,6 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeApplications #-}
@@ -74,8 +73,9 @@ import Cardano.Network.Protocol.NodeToClient
 import Control.Monad.Class.MonadST
     ( MonadST )
 import Data.Aeson
-    ( ToJSON )
+    ( ToJSON, genericToEncoding )
 
+import qualified Data.Aeson as Json
 --
 -- App
 --
@@ -166,7 +166,9 @@ data TraceOgmios where
         :: { networkParameters :: NetworkParameters }
         -> TraceOgmios
     deriving stock (Generic, Show)
-    deriving anyclass (ToJSON)
+
+instance ToJSON TraceOgmios where
+    toEncoding = genericToEncoding Json.defaultOptions
 
 instance HasSeverityAnnotation TraceOgmios where
     getSeverityAnnotation = \case
