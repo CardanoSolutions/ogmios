@@ -100,6 +100,7 @@ newtype NetworkSynchronization = NetworkSynchronization Scientific
     deriving stock (Generic, Eq, Show)
 
 instance ToJSON NetworkSynchronization where
+    toJSON _ = error "'toJSON' called on 'NetworkSynchronization'. This should never happen. Use 'toEncoding' instead."
     toEncoding (NetworkSynchronization s) =
         -- NOTE: Using a specific encoder here to avoid turning the value into
         -- scientific notation. Indeed, for small decimals values, aeson
