@@ -43,16 +43,17 @@ import Wai.Routes
     , header
     , html
     , javascript
-    , json
     , mkRoute
     , parseRoutes
     , raw
+    , rawBuilder
     , route
     , runHandlerM
     , sub
     , waiApp
     )
 
+import qualified Data.Aeson.Encoding as Json
 import qualified Network.Wai as Wai
 
 data EnvServer block m = EnvServer
@@ -100,6 +101,13 @@ getHealthR = runHandlerM $ do
     json =<< liftIO (unliftIO (do
         metrics <- Metrics.sample sampler sensors
         modifyHealth health (\h -> h { metrics })))
+  where
+    -- NOTE: Not using Wai.Routes.json because it forces 'toJSON' instead of
+    -- defaulting to 'toEncoding'. So, quickly redefining it here, relying on
+    -- 'toEncoding'.
+    json a = do
+      header "Content-Type" "application/json; charset=utf-8"
+      rawBuilder $ Json.fromEncoding $ toEncoding a
 
 getTestsR :: Handler Server
 getTestsR = runHandlerM $ do
