@@ -1,0 +1,22 @@
+version: "3.5"
+
+services:
+  cardano-node-ogmios:
+    build:
+      args:
+        - NETWORK=${NETWORK:-mainnet}
+      cache_from: [cardanosolutions/ogmios:latest]
+      context: ../..
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "400k"
+        max-file: "20"
+    ports:
+      - ${OGMIOS_PORT:-1337}:1337
+    restart: on-failure
+    volumes:
+      - node-db:/db
+
+volumes:
+  node-db:
