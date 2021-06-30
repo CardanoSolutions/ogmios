@@ -8,7 +8,6 @@ module Ogmios.Control.MonadLog
     ( -- * Class
       MonadLog (..)
     , Logger
-    , ToObject
 
       -- * Tracer
     , Tracer
@@ -22,43 +21,39 @@ module Ogmios.Control.MonadLog
     , HasSeverityAnnotation (..)
 
       -- * Instantiation
-    , LoggerName
     , withStdoutTracer
     ) where
 
 import Ogmios.Prelude
 
-import Ogmios.Control.Exception
-    ( MonadThrow (..) )
-
-import Cardano.BM.Backend.Switchboard
-    ( Switchboard )
-import Cardano.BM.Configuration.Static
-    ( defaultConfigStdout )
-import Cardano.BM.Data.LogItem
-    ( LOContent (..)
-    , LogObject (..)
-    , LoggerName
-    , PrivacyAnnotation (..)
-    , mkLOMeta
-    )
 import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Cardano.BM.Data.Tracer
-    ( HasSeverityAnnotation (..), ToObject (..), TracingVerbosity (..) )
-import Cardano.BM.Setup
-    ( setupTrace_, shutdown )
+    ( HasSeverityAnnotation (..) )
 import Control.Tracer
     ( Tracer (..), natTracer, nullTracer, traceWith )
 import Data.Aeson
-    ( FromJSON, ToJSON (..) )
+    ( ToJSON (..) )
+import Data.Aeson.Encoding
+    ( pair, pairs )
+import GHC.Conc
+    ( myThreadId )
+import Ogmios.Control.MonadClock
+    ( getCurrentTime )
+import Ogmios.Control.MonadSTM
+    ( newTMVarIO, withTMVar )
+import System.IO
+    ( BufferMode (..), hSetBuffering, hSetEncoding, utf8 )
 
-import qualified Cardano.BM.Configuration.Model as CM
+import qualified Data.Aeson.Encoding as Json
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 
 class Monad m => MonadLog (m :: Type -> Type) where
     logWith :: Logger msg -> msg -> m ()
 
 type Logger = Tracer IO
+type AppVersion = Text
 
 instance MonadLog IO where
     logWith = traceWith
@@ -66,38 +61,30 @@ instance MonadLog IO where
 instance MonadLog m => MonadLog (ReaderT env m) where
     logWith tr = lift . logWith tr
 
--- | Acquire a tracer that automatically shutdown once the action is done via
--- bracket-style allocation.
+-- | Acquire a tracer to use across the app lifecycle.
 withStdoutTracer
-    :: forall m msg a. (MonadIO m, ToJSON msg, FromJSON msg, ToObject msg, HasSeverityAnnotation msg)
-    => LoggerName
-    -> (Text, Text)
+    :: forall m msg a. (MonadIO m, ToJSON msg, HasSeverityAnnotation msg)
+    => AppVersion
     -> Severity
     -> (Tracer m msg -> IO a)
     -> IO a
-withStdoutTracer name (version, revision) minSeverity between = do
-    bracket before after (between . natTracer liftIO . fst)
+withStdoutTracer version minSeverity action = do
+    hSetBuffering stdout LineBuffering
+    hSetEncoding stdout utf8
+    lock <- newTMVarIO ()
+    action (tracer lock)
   where
-    before :: IO (Tracer IO msg, Switchboard msg)
-    before = do
-        config <- defaultConfigStdout
-        CM.setMinSeverity config minSeverity
-        CM.setDefaultScribes config ["StdoutSK::json"]
-        CM.setTextOption config "appversion" version
-        CM.setTextOption config "appcommit" revision
-        (tr, sb) <- setupTrace_ config name
-        pure (transformLogObject tr, sb)
+    tracer lock = Tracer $ \msg -> do
+        let severity = getSeverityAnnotation msg
+        when (severity >= minSeverity) $ liftIO $ withTMVar lock $ \() -> do
+            mkEnvelop msg severity >>= liftIO . TIO.putStrLn . decodeUtf8 . Json.encodingToLazyByteString
 
-    after :: (tracer, Switchboard msg) -> IO ()
-    after = shutdown . snd
-
--- | Tracer transformer which converts 'Trace m a' to 'Tracer m a' by wrapping
--- typed log messages into a 'LogObject'.
-transformLogObject
-    :: (MonadIO m, HasSeverityAnnotation msg, ToObject msg)
-    => Tracer m (LoggerName, LogObject msg)
-    -> Tracer m msg
-transformLogObject tr = Tracer $ \msg -> do
-    traceWith tr . (mempty,) =<< LogObject mempty
-        <$> (mkLOMeta (getSeverityAnnotation msg) Public)
-        <*> pure (LogStructured (toObject MaximalVerbosity msg))
+    mkEnvelop msg severity = do
+        timestamp <- liftIO getCurrentTime
+        threadId <- T.drop 9 . show <$> liftIO myThreadId
+        pure $ pairs $ mempty
+            <> pair "severity"  (toEncoding severity)
+            <> pair "timestamp" (toEncoding timestamp)
+            <> pair "thread"    (toEncoding threadId)
+            <> pair "message"   (toEncoding msg)
+            <> pair "version"   (toEncoding version)

@@ -115,7 +115,7 @@ instance ToJSON NetworkSynchronization where
         -- 0.00140
         --
         -- etc...
-        Json.unsafeToEncoding (formatScientificBuilder Fixed (Just 5) s)
+        Json.unsafeToEncoding $ formatScientificBuilder Fixed (Just 5) s
 
 -- | Calculate the network synchronization from various parameters.
 mkNetworkSynchronization

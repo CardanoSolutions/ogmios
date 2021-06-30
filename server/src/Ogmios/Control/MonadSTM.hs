@@ -22,7 +22,19 @@ module Ogmios.Control.MonadSTM
     , putTMVar
     , takeTMVar
     , tryTakeTMVar
+    , withTMVar
     ) where
+
+import Ogmios.Prelude
 
 import Control.Monad.Class.MonadSTM
     ( MonadSTM (..), MonadSTMTx (..), TMVar, TQueue, TVar )
+import Control.Monad.Class.MonadThrow
+    ( MonadCatch (..), MonadMask (..) )
+
+-- | An exception-safe bracket-style acquisition of a TMVar.
+withTMVar :: (MonadSTM m, MonadMask m) => TMVar m a -> (a -> m b) -> m b
+withTMVar var action = mask $ \restore -> do
+    a <- atomically (takeTMVar var)
+    b <- restore (action a) `onException` atomically (putTMVar var a)
+    b <$ atomically (putTMVar var a)

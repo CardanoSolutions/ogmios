@@ -7,18 +7,15 @@
 
 module Ogmios.Version
     ( version
-    , shortVersion
-    , revision
     ) where
 
 import Ogmios.Prelude
 
 import Data.Git.Revision.TH
-    ( gitDescribeHEAD, gitRevParseHEAD, unknownRevision )
+    ( gitDescribeHEAD, unknownRevision )
 import Data.Version
     ( showVersion )
 
-import qualified Data.Text as T
 import qualified Paths_ogmios as Pkg
 
 -- | Show the current application revision from git context embedded at
@@ -32,19 +29,5 @@ version =
     case $(gitDescribeHEAD) of
         rev | rev == unknownRevision ->
             toText ("v" <> showVersion Pkg.version <> "-??-????????")
-        rev ->
-            toText rev
-
--- | Version tag only.
-shortVersion :: Text
-shortVersion =
-    T.takeWhile (/= '-') version
-
--- | Current application git revision.
-revision :: Text
-revision =
-    case $(gitRevParseHEAD) of
-        rev | rev == unknownRevision ->
-            "????????"
         rev ->
             toText rev

@@ -60,7 +60,6 @@ import Ogmios.Control.MonadLog
     , Logger
     , MonadLog (..)
     , Severity (..)
-    , ToObject
     , withStdoutTracer
     )
 import Ogmios.Control.MonadMetrics
@@ -75,7 +74,7 @@ import Cardano.Network.Protocol.NodeToClient
 import Control.Monad.Class.MonadST
     ( MonadST )
 import Data.Aeson
-    ( FromJSON (..), ToJSON )
+    ( ToJSON )
 
 --
 -- App
@@ -167,10 +166,7 @@ data TraceOgmios where
         :: { networkParameters :: NetworkParameters }
         -> TraceOgmios
     deriving stock (Generic, Show)
-    deriving anyclass (ToJSON, ToObject)
-
-instance FromJSON TraceOgmios where
-    parseJSON = const empty -- Unused, but required by the logging library.
+    deriving anyclass (ToJSON)
 
 instance HasSeverityAnnotation TraceOgmios where
     getSeverityAnnotation = \case
