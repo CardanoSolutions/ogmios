@@ -10,7 +10,7 @@ module Ogmios.Data.Health
     , emptyHealth
     , modifyHealth
       -- ** NetworkSynchronization
-    , NetworkSynchronization
+    , NetworkSynchronization (..)
     , mkNetworkSynchronization
       -- ** CardanoEra
     , CardanoEra (..)
@@ -25,6 +25,12 @@ import Ogmios.Data.Metrics
 
 import Data.Aeson
     ( ToJSON (..), genericToJSON )
+import Data.ByteString.Builder.Scientific
+    ( FPFormat (Fixed), formatScientificBuilder )
+import Data.Ratio
+    ( (%) )
+import Data.Scientific
+    ( Scientific, unsafeFromRational )
 import Data.Time.Clock
     ( UTCTime, diffUTCTime )
 import Ouroboros.Consensus.BlockchainTime.WallClock.Types
@@ -33,6 +39,7 @@ import Ouroboros.Network.Block
     ( Tip (..) )
 
 import qualified Data.Aeson as Json
+import qualified Data.Aeson.Encoding as Json
 
 -- | Capture some health heartbeat of the application. This is populated by two
 -- things:
@@ -87,11 +94,28 @@ modifyHealth tvar fn =
 -- - The era's slot length
 -- - The current time
 -- - The current node tip
-newtype NetworkSynchronization = NetworkSynchronization Double
+newtype NetworkSynchronization = NetworkSynchronization Scientific
     deriving (Generic, Eq, Show)
 
 instance ToJSON NetworkSynchronization where
-    toJSON (NetworkSynchronization p) = toJSON p
+    toEncoding (NetworkSynchronization s) =
+        -- NOTE: Using a specific encoder here to avoid turning the value into
+        -- scientific notation. Indeed, for small decimals values, aeson
+        -- automatically turn the representation into scientific notation with
+        -- exponent. While this is useful and harmless in many cases, it makes
+        -- consuming this value a bit harder from scripts. Since we know (by
+        -- construction) that the network value will necessarily have a maximum
+        -- of 5 decimals, we encode it as a number with a fixed number (=5) of
+        -- decimals.
+        --
+        -- >>> encode (NetworkSynchronization 1.0)
+        -- 1.00000
+        --
+        -- >>> encode (NetworkSynchronization 1.4e-3)
+        -- 0.00140
+        --
+        -- etc...
+        Json.unsafeToEncoding (formatScientificBuilder Fixed (Just 5) s)
 
 -- | Calculate the network synchronization from various parameters.
 mkNetworkSynchronization
@@ -105,7 +129,7 @@ mkNetworkSynchronization systemStart now relativeSlotTime =
         den = round $ now `diffUTCTime` getSystemStart systemStart :: Integer
         p = 100000
     in
-        NetworkSynchronization $ fromIntegral (num * p `div` den) / fromIntegral p
+        NetworkSynchronization $ unsafeFromRational $ (num * p `div` den) % p
 
 
 -- | A Cardano era, starting from Byron and onwards.

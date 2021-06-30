@@ -107,15 +107,7 @@ import Test.Generators
     , reasonablySized
     )
 import Test.Hspec
-    ( Spec
-    , SpecWith
-    , context
-    , expectationFailure
-    , it
-    , parallel
-    , runIO
-    , specify
-    )
+    ( Spec, SpecWith, context, expectationFailure, parallel, runIO, specify )
 import Test.Hspec.Json.Schema
     ( SchemaRef (..), prop_validateToJSON, unsafeReadSchemaRef )
 import Test.Hspec.QuickCheck
@@ -160,7 +152,7 @@ validateToJSON
     -> SpecWith ()
 validateToJSON gen encode ref = parallel $ do
     refs <- runIO $ unsafeReadSchemaRef ref
-    it (toString $ getSchemaRef ref) $ forAllBlind gen
+    specify (toString $ getSchemaRef ref) $ forAllBlind gen
         (prop_validateToJSON (jsonifierToAeson . encode) refs)
 
 -- | Similar to 'validateToJSON', but also check that the produce value can be
@@ -173,7 +165,7 @@ validateFromJSON
     -> SpecWith ()
 validateFromJSON gen (encode, decode) ref = parallel $ do
     refs <- runIO $ unsafeReadSchemaRef ref
-    it (toString $ getSchemaRef ref) $ forAllBlind gen $ \a -> conjoin
+    specify (toString $ getSchemaRef ref) $ forAllBlind gen $ \a -> conjoin
         [ prop_validateToJSON (jsonifierToAeson . encode) refs a
         , decodeWith decode (jsonToByteString (encode a)) === Just a
         ]
@@ -185,7 +177,7 @@ goldenToJSON
 goldenToJSON golden ref = parallel $ do
     refs <- runIO $ unsafeReadSchemaRef ref
     a <- runIO $ decodeFileThrow golden
-    it ("Golden: " <> golden <> " ~ " <> toString (getSchemaRef ref)) $ withMaxSuccess 1 $
+    specify ("Golden: " <> golden <> " ~ " <> toString (getSchemaRef ref)) $ withMaxSuccess 1 $
         prop_validateToJSON id refs a
 
 spec :: Spec

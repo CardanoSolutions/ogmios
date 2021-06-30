@@ -238,6 +238,7 @@ test-suite unit
       Ogmios.App.OptionsSpec
       Ogmios.App.Protocol.ChainSyncSpec
       Ogmios.App.Protocol.StateQuerySpec
+      Ogmios.Data.HealthSpec
       Ogmios.Data.JsonSpec
       Test.App.Protocol.Util
       Test.Generators
