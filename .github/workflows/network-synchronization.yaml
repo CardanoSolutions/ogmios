@@ -3,9 +3,10 @@ name: Network Synchronization
 on:
   schedule:
     - cron: '00 06,18 * * *'
+  workflow_dispatch:
 
 jobs:
-  nightly:
+  sync_and_cache:
     strategy:
       matrix:
         network: [ testnet ]
@@ -16,32 +17,23 @@ jobs:
     - name: 📥 Checkout repository
       uses: actions/checkout@v2.3.3
 
-    - name: ⌚ Get Date
-      id: date
+    - name: ⌚ Get Date/Time
+      id: date-time
       shell: bash
       run: |
-        echo "::set-output name=value::$(/bin/date -u "+%Y%m%d")"
+        echo "::set-output name=value::$(/bin/date -u "+%Y%m%d-%H%M%S")"
 
-    - name: 💾 Cache Volumes
+    - name: 💾 Cache cardano-node DB
       id: cache
       uses: actions/cache@v2.1.1
       with:
-        path: ./data
-        key: cardano-node-${{ matrix.network }}-${{ steps.date.outputs.value }}
+        path: ${{ runner.temp }}/db-${{ matrix.network }}
+        key: cardano-node-ogmios-${{ matrix.network }}-${{ steps.date-time.outputs.value }}
         restore-keys: |
-          cardano-node-${{ matrix.network }}
+          cardano-node-ogmios-${{ matrix.network }}-
 
-    - name: 🩹 Overwrite docker-compose.yml
-      shell: bash
-      run: |
-        sed -i "s@node-db:/data@./data:/data@" docker-compose.yml
-
-    - name: 🖧  Synchronize Node
-      env:
-        NETWORK: ${{ matrix.network }} # NOTE: 'NETWORK' is used in the compose file.
-      shell: bash
-      run: |
-        docker pull cardanosolutions/ogmios:latest
-        docker-compose up -d
-        ./scripts/wait-for-sync.sh 1337 1
-        docker-compose down
+    - name: ⟲ Sync Node
+      uses: CardanoSolutions/gh-action-cardano-node-ogmios-docker-sync@v1.0.0
+      with:
+        db-dir: ${{ runner.temp }}/db-${{ matrix.network }}
+        network: ${{ matrix.network }}

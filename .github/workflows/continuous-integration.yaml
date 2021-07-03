@@ -134,15 +134,22 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
 
-    - name: 🔨 Build and push
+    - name: 🔨 Build cardano-node-ogmios testnet
       uses: docker/build-push-action@v2
       with:
+        build-args: NETWORK=testnet
         context: .
-        push: true
-        tags: cardanosolutions/ogmios:cache
-        target: ogmios
-        cache-from: type=registry,ref=cardanosolutions/ogmios:cache
+        push: false
+        tags: cardanosolutions/cardano-node-ogmios:${{ github.sha }}-testnet
+        cache-from: type=registry,ref=cardanosolutions/cardano-node-ogmios:latest-testnet
         cache-to: type=inline
+        outputs: type=docker,dest=/tmp/cardano-node-ogmios-${{ github.sha }}-testnet.tar
+
+    - name: Upload Docker image artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: cardano-node-ogmios-${{ github.sha }}-testnet
+        path: /tmp/cardano-node-ogmios-${{ github.sha }}-testnet.tar
 
   #  _______  ___      ___   _______  __    _  _______  _______          _______  __   __  _______  _______  _______  _______  ______    ___   _______  _______
   # |       ||   |    |   | |       ||  |  | ||       ||       |        |       ||  | |  ||       ||       ||       ||       ||    _ |  |   | |       ||       |
@@ -165,31 +172,36 @@ jobs:
       with:
         submodules: true
 
-    - name: ⌚ Get Date
-      id: date
+    - name: ⌚ Get Date/Time
+      id: date-time
       shell: bash
       run: |
-        echo "::set-output name=value::$(/bin/date -u "+%Y%m%d")"
+        echo "::set-output name=value::$(/bin/date -u "+%Y%m%d-%H%M%S")"
 
     - name: 🧰 Setup Node.js
       uses: actions/setup-node@v1
       with:
         node-version: 14.4
 
-    - name: 🐳 Cache Docker Volumes
+    - name: Download Docker image artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: cardano-node-ogmios-${{ github.sha }}-${{ matrix.network }}
+        path: /tmp
+
+    - name: Load Docker image
+      run: |
+        docker load --input /tmp/cardano-node-ogmios-${{ github.sha }}-${{ matrix.network }}.tar
+        docker image ls -a
+
+    - name: 💾 Cache cardano-node DB
       id: cache
       uses: actions/cache@v2.1.1
       with:
-        path: ./data
-        key: cardano-node-${{ matrix.network }}-${{ steps.date.outputs.value }}
+        path: ${{ runner.temp }}/db-${{ matrix.network }}
+        key: cardano-node-ogmios-${{ matrix.network }}-${{ steps.date-time.outputs.value }}
         restore-keys: |
-          cardano-node-${{ matrix.network }}
-
-    - name: 🩹 Overwrite docker-compose
-      shell: bash
-      run: |
-        sed -i "s@node-db:/data@./data:/data@" docker-compose.yml
-        sed -i "s@cardanosolutions/ogmios:latest@cardanosolutions/ogmios:cache@" docker-compose.yml
+          cardano-node-ogmios-${{ matrix.network }}-
 
     - name: ↪ Set package version
       id: package-version
@@ -209,11 +221,11 @@ jobs:
       if: matrix.network == 'testnet'
       working-directory: clients/TypeScript
       run: |
-        docker pull cardanosolutions/ogmios:cache
-        yarn testnet:up -d
+        docker run -d --name cardano-node-ogmios -p 1338:1337 -v ${{ runner.temp }}/db-${{ matrix.network }}:/db cardanosolutions/cardano-node-ogmios:${{ github.sha }}-${{ matrix.network }}
         ../../scripts/wait-for-sync.sh 1338 1
         yarn test
-        yarn testnet:down
+        docker stop cardano-node-ogmios
+        docker rm cardano-node-ogmios
 
     - name: 📦 Pack
       working-directory: clients/TypeScript
