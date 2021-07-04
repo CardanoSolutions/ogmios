@@ -12,7 +12,7 @@ export interface OgmiosHealth {
   lastKnownTip: Tip,
   lastTipUpdate: string | null,
   metrics: {
-    runtimeStats: {
+    runtimeStats?: {
       gcCpuTime: number,
       cpuTime: number,
       maxHeapSize: number,
