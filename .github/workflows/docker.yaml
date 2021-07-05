@@ -51,9 +51,12 @@ jobs:
         echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
 
     - name: 🔨 Build and push (default latest)
-      if: ${{ github.event_name == 'push' && matrix.target == 'mainnet' }}
+      if: ${{ github.event_name == 'push' && matrix.network == 'mainnet' }}
       uses: docker/build-push-action@v2
       with:
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
+          NETWORK=${{ matrix.network }}
         context: .
         push: true
         tags: ${{ steps.base-variables.outputs.image }}:latest
@@ -65,6 +68,9 @@ jobs:
       if: ${{ github.event_name == 'push' }}
       uses: docker/build-push-action@v2
       with:
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
+          NETWORK=${{ matrix.network }}
         context: .
         push: true
         tags: ${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
@@ -73,9 +79,12 @@ jobs:
         cache-to: type=inline
 
     - name: 🏷️ Build and push (default tag)
-      if: ${{ github.event_name == 'push' && matrix.target == 'mainnet' && startsWith(github.ref, 'refs/tags') }}
+      if: ${{ github.event_name == 'push' && matrix.network == 'mainnet' && startsWith(github.ref, 'refs/tags') }}
       uses: docker/build-push-action@v2
       with:
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
+          NETWORK=${{ matrix.network }}
         context: .
         push: true
         tags: ${{ steps.base-variables.outputs.image }}:${{ steps.tag-variables.outputs.tag }}
@@ -87,7 +96,9 @@ jobs:
       if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
       uses: docker/build-push-action@v2
       with:
-        build-args: NETWORK=${{ matrix.network }}
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
+          NETWORK=${{ matrix.network }}
         context: .
         push: true
         tags: ${{ steps.base-variables.outputs.image }}:${{ steps.tag-variables.outputs.tag }}-${{ matrix.network }}
