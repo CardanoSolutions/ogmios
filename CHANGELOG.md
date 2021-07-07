@@ -5,7 +5,7 @@ chapter: false
 pre: "<b>5. </b>"
 ---
 
-### [4.0.0-beta.3] - 2021-06-05
+### [4.0.0-beta.4] - 2021-07-07
 
 #### Added
 
@@ -40,7 +40,14 @@ pre: "<b>5. </b>"
    This behaviour can be bypassed where sequential processsing is not required, by setting the new
    construction option `sequential` to `false`.
 
-- Nested logs are now also structured, in particular those coming from the Handshake or TxSubmission protocols. Before, any message from these layers where actually plain strings with unprocessable gibberish. Now, the submitted transaction payload is shown encoded as hexadecimals and errors are also serialized to json using the same model / codec as the one used for websockets. The handshake is also more verbose now clearly showing what version is being requested and what the node replies / select. All in all, better logs. 
+- Nested logs are now also structured, in particular those coming from the Handshake or TxSubmission protocols. Before, any message from these layers where actually plain strings with unprocessable gibberish. Now, the submitted transaction payload is shown encoded as hexadecimals and errors are also serialized to json using the same model / codec as the one used for websockets. The handshake is also more verbose now clearly showing what version is being requested and what the node replies / select. All in all, better logs.
+
+- The Dockerfile now includes a build definition for including `cardano-node` and `ogmios` in
+  the same image, which is the default and suggested mode of operation. To build an image
+  with only Ogmios, use the build target `ogmios`. Docker Hub now hosts two image
+  repositories: `cardanosolutions/cardano-node-ogmios` and `cardanosolutions/ogmios`.
+- Docker Hub images are now tagged with `-mainnet` to make all network images consistent. This
+  more specific tag is optional, and points to the same build as the defaults.
 
 #### Changed
 
