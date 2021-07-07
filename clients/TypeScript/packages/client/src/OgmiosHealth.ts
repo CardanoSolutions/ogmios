@@ -35,9 +35,9 @@ export interface OgmiosHealth {
 export const getOgmiosHealth = async (
   config?: ConnectionConfig | Connection
 ): Promise<OgmiosHealth> => {
-  const connection = isConnectionObject(config)
+  const connection = config !== undefined && isConnectionObject(config)
     ? config
-    : await createConnectionObject(config)
+    : createConnectionObject(config)
   const response = await fetch(`${connection.address.http}/health`)
   const responseJson = await response.json()
   if (response.ok) {
