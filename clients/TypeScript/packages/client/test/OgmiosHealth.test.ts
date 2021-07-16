@@ -16,6 +16,10 @@ const expectHealth = (obj: any): void => {
 
 describe('OgmiosHealth', () => {
   describe('getOgmiosHealth', () => {
+    // This test requires a mainnet instance, so is currently disabled.
+    // it('fetches the service metadata using default connection config by default', async () => {
+    //   expectHealth(await getOgmiosHealth())
+    // })
     it('fetches the service metadata when passed a ConnectionConfig', async () => {
       expectHealth(await getOgmiosHealth({ port: 1338 }))
     })

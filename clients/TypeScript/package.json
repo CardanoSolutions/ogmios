@@ -1,6 +1,6 @@
 {
   "name": "cardano-ogmios",
-  "version": "4.0.0-beta.3",
+  "version": "4.0.0-beta.4",
   "private": true,
   "description": "TypeScript monorepo with client libraries for Cardano Ogmios",
   "engines": {
@@ -18,13 +18,13 @@
     "cleanup": "yarn workspaces run cleanup && shx rm -rf node_modules",
     "generate-schema-types": "yarn workspace @cardano-ogmios/schema run generate-schema-types",
     "lint": "yarn workspaces run lint",
-    "mainnet:up": "docker-compose --project-directory ../.. -p ogmios-mainnet up",
-    "mainnet:down": "docker-compose --project-directory ../.. -p ogmios-mainnet down",
+    "mainnet:up": "DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose -p ogmios-mainnet up",
+    "mainnet:down": "docker-compose -p ogmios-mainnet down",
     "repl:pkg": "yarn workspace @cardano-ogmios/repl run pkg",
     "repl:start": "yarn workspace @cardano-ogmios/repl run start",
     "test": "yarn workspaces run test",
-    "testnet:up": "OGMIOS_PORT=1338 NETWORK=testnet docker-compose --project-directory ../.. -p ogmios-testnet up",
-    "testnet:down": "docker-compose --project-directory ../.. -p ogmios-testnet down"
+    "testnet:up": "DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 OGMIOS_PORT=1338 NETWORK=testnet docker-compose -p ogmios-testnet up",
+    "testnet:down": "docker-compose -p ogmios-testnet down"
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",
