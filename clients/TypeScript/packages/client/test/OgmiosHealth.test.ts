@@ -28,7 +28,7 @@ describe('OgmiosHealth', () => {
       try {
         await getOgmiosHealth({ host: 'non-existent' })
       } catch (error) {
-        expect(error.code).toEqual('EAI_AGAIN')
+        expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
       }
     })
   })
