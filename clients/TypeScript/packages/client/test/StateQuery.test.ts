@@ -9,7 +9,6 @@ import {
   nonMyopicMemberRewards,
   proposedProtocolParameters,
   stakeDistribution,
-  StateQueryClient,
   utxo
 } from '@src/StateQuery'
 import {
@@ -17,54 +16,45 @@ import {
   Hash16,
   Slot
 } from '@cardano-ogmios/schema'
+import { expectContextFromConnectionConfig } from './util'
 
 const connection = { port: 1338 }
 
 describe('Local state queries', () => {
   describe('StateQueryClient', () => {
-    it('rejects with the Websocket errors on failed connection', async () => {
-      let client: StateQueryClient
-      try {
-        client = await createStateQueryClient(
-          { connection: { host: 'non-existent-host', port: 1111 } }
-        )
-        expect(client).toBeUndefined()
-        if (client.context.socket?.readyState === client.context.socket.OPEN) {
-          await client.release()
-        }
-      } catch (error) {
-        expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
-      }
-      try {
-        client = await createStateQueryClient(
-          { connection: { port: 1111 } }
-        )
-        expect(client).toBeUndefined()
-        if (client.context.socket?.readyState === client.context.socket.OPEN) {
-          await client.release()
-        }
-      } catch (error) {
-        expect(error.code).toBe('ECONNREFUSED')
-      }
-    })
-
-    it('returns the interaction context', async () => {
-      const client = await createStateQueryClient({ connection })
-      expect(client.context.connectionString).toBe('ws://localhost:1338')
-      expect(client.context.socket.readyState).toBe(client.context.socket.OPEN)
+    it('opens a connection on construction, and closes it after release', async () => {
+      const client = await createStateQueryClient(
+        (error) => console.error(error),
+        () => {},
+        { connection }
+      )
+      expectContextFromConnectionConfig(connection, client.context)
       await client.release()
+      expect(client.context.socket.readyState).not.toBe(client.context.socket.OPEN)
     })
 
     it('gets the point from the tip if none provided', async () => {
-      const client = await createStateQueryClient({ connection })
+      const client = await createStateQueryClient(
+        (error) => console.error(error),
+        () => {},
+        { connection }
+      )
       const { point } = client
       expect(point).toBeDefined()
       await client.release()
     })
 
     it('uses the provided point for reproducible queries across clients', async () => {
-      const client = await createStateQueryClient({ connection })
-      const anotherClient = await createStateQueryClient({ connection, point: client.point })
+      const client = await createStateQueryClient(
+        (error) => console.error(error),
+        () => {},
+        { connection }
+      )
+      const anotherClient = await createStateQueryClient(
+        (error) => console.error(error),
+        () => {},
+        { connection, point: client.point }
+      )
       expect(anotherClient.point).toEqual(client.point)
       await client.release()
       await anotherClient.release()
@@ -72,16 +62,23 @@ describe('Local state queries', () => {
 
     it('rejects if the provided point is too old', async () => {
       const createWithOldPoint = async () => {
-        await createStateQueryClient({
-          connection,
-          point: 'origin'
-        })
+        await createStateQueryClient(
+          (error) => console.error(error),
+          () => {},
+          {
+            connection,
+            point: 'origin'
+          })
       }
       await expect(createWithOldPoint).rejects
     })
 
     it('rejects method calls after release', async () => {
-      const client = await createStateQueryClient({ connection })
+      const client = await createStateQueryClient(
+        (error) => console.error(error),
+        () => {},
+        { connection }
+      )
       await client.release()
       const run = () => client.currentEpoch()
       await expect(run).rejects
@@ -89,7 +86,11 @@ describe('Local state queries', () => {
 
     describe('calling queries from the client', () => {
       it('exposes the queries, uses a single context, and should be released when done', async () => {
-        const client = await createStateQueryClient({ connection })
+        const client = await createStateQueryClient(
+          (error) => console.error(error),
+          () => {},
+          { connection }
+        )
 
         const epoch = await client.currentEpoch()
         expect(epoch).toBeDefined()
@@ -134,7 +135,11 @@ describe('Local state queries', () => {
       })
 
       it('can handle concurrent requests ', async () => {
-        const client = await createStateQueryClient({ connection })
+        const client = await createStateQueryClient(
+          (error) => console.error(error),
+          () => {},
+          { connection }
+        )
         const [currentEpoch, eraStart, ledgerTip] = await Promise.all([
           client.currentEpoch(),
           client.eraStart(),
@@ -151,13 +156,13 @@ describe('Local state queries', () => {
   describe('Queries', () => {
     describe('currentEpoch', () => {
       it('fetches the current epoch number', async () => {
-        const epoch = await currentEpoch({ connection })
+        const epoch = await currentEpoch(connection)
         expect(epoch).toBeDefined()
       })
     })
     describe('currentProtocolParameters', () => {
       it('fetches the current shelley protocol parameters', async () => {
-        const protocolParameters = await currentProtocolParameters({ connection })
+        const protocolParameters = await currentProtocolParameters(connection)
         expect(protocolParameters.minFeeCoefficient).toBeDefined()
         expect(protocolParameters.protocolVersion.major).toBeDefined()
       })
@@ -165,7 +170,7 @@ describe('Local state queries', () => {
     describe('delegationsAndRewards', () => {
       it('fetches the current delegate and rewards for given stake key hashes', async () => {
         const stakeKeyHashes = ['7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8'] as Hash16[]
-        const result = await delegationsAndRewards(stakeKeyHashes, { connection })
+        const result = await delegationsAndRewards(stakeKeyHashes, connection)
         const item = result[stakeKeyHashes[0]] as DelegationsAndRewards
         expect(item).toHaveProperty('delegate')
         expect(item).toHaveProperty('rewards')
@@ -173,7 +178,7 @@ describe('Local state queries', () => {
     })
     describe('eraStart', () => {
       it('fetches the bound of the current era', async () => {
-        const bound = await eraStart({ connection })
+        const bound = await eraStart(connection)
         expect(bound.time).toBeDefined()
         expect(bound.slot).toBeDefined()
         expect(bound.epoch).toBeDefined()
@@ -181,14 +186,14 @@ describe('Local state queries', () => {
     })
     describe('genesisConfig', () => {
       it('fetches the config used to bootstrap the blockchain, excluding the genesis UTXO', async () => {
-        const config = await genesisConfig({ connection })
+        const config = await genesisConfig(connection)
         expect(config.systemStart).toBeDefined()
         expect(config.networkMagic).toBeDefined()
       })
     })
     describe('ledgerTip', () => {
       it('fetches the tip of the ledger', async () => {
-        const point = await ledgerTip({ connection }) as { slot: Slot, hash: Hash16 }
+        const point = await ledgerTip(connection) as { slot: Slot, hash: Hash16 }
         expect(point.hash).toBeDefined()
         expect(point.slot).toBeDefined()
       })
@@ -200,7 +205,7 @@ describe('Local state queries', () => {
           const rewards = await nonMyopicMemberRewards([
             stakeKeyHash
           ],
-          { connection }
+          connection
           )
           expect(Object.values(rewards[stakeKeyHash])[0]).toBeDefined()
         })
@@ -208,7 +213,7 @@ describe('Local state queries', () => {
     })
     describe('proposedProtocolParameters', () => {
       it('fetches the current shelley protocol parameters', async () => {
-        const protocolParameters = await proposedProtocolParameters({ connection })
+        const protocolParameters = await proposedProtocolParameters(connection)
         expect(protocolParameters).toBeNull()
         // Todo: Enable with local test network implementation
         // const params = Object.values(protocolParameters)[0]
@@ -219,7 +224,7 @@ describe('Local state queries', () => {
     })
     describe('stakeDistribution', () => {
       it('fetches the distribution of the stake across all known stake pools', async () => {
-        const poolDistribution = await stakeDistribution({ connection })
+        const poolDistribution = await stakeDistribution(connection)
         const pool = Object.values(poolDistribution)[0]
         expect(pool.stake).toBeDefined()
         expect(pool.vrf).toBeDefined()
@@ -227,11 +232,11 @@ describe('Local state queries', () => {
     })
     describe('utxo', () => {
       it('fetches the complete UTxO set when an empty array is provided', async () => {
-        const utxoSet = await utxo([], { connection })
+        const utxoSet = await utxo([], connection)
         expect(utxoSet[0]).toBeDefined()
       })
       it('fetches the UTxO for the given addresses', async () => {
-        const utxoSet = await utxo(['addr_test1qqymtheun4y437fa6cms4jmtfex39wzz7jfwggudwnqkdnr8udjk6d89dcjadt7tw6hmz0aeue2jzdpl2vnkz8wdk4fqz3y5m9'], { connection })
+        const utxoSet = await utxo(['addr_test1qqymtheun4y437fa6cms4jmtfex39wzz7jfwggudwnqkdnr8udjk6d89dcjadt7tw6hmz0aeue2jzdpl2vnkz8wdk4fqz3y5m9'], connection)
         expect(utxoSet[0]).toBeDefined()
       })
     })

@@ -7,7 +7,7 @@ import {
   Utxo
 } from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
-import { InteractionContext } from '../../Connection'
+import { ConnectionConfig, InteractionContext } from '../../Connection'
 import { Query } from '../Query'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[utxo]']['result']): result is EraMismatch =>
@@ -23,7 +23,10 @@ const isArrayOfUtxo = (result: Ogmios['QueryResponse[utxo]']['result']): result 
   return 'index' in item[0] || typeof item[1].value.coins === 'number'
 }
 
-export const utxo = (addresses: Address[], context?: InteractionContext): Promise<Utxo> =>
+export const utxo = (
+  addresses: Address[],
+  config?: ConnectionConfig | InteractionContext
+): Promise<Utxo> =>
   Query<
     Ogmios['Query'],
     Ogmios['QueryResponse[utxo]'],
@@ -49,4 +52,4 @@ export const utxo = (addresses: Address[], context?: InteractionContext): Promis
         return reject(new UnknownResultError(response.result))
       }
     }
-  }, context)
+  }, config)

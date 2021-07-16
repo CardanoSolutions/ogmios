@@ -6,7 +6,7 @@ import {
   Ogmios
 } from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
-import { InteractionContext } from '../../Connection'
+import { ConnectionConfig, InteractionContext } from '../../Connection'
 import { Query } from '../Query'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[delegationsAndRewards]']['result']): result is EraMismatch =>
@@ -17,7 +17,9 @@ const isDelegationsAndRewardsByAccounts = (result: Ogmios['QueryResponse[delegat
   return typeof sample[0] === 'string' && (sample[1].delegate !== undefined || sample[1].rewards !== undefined)
 }
 
-export const delegationsAndRewards = (stakeKeyHashes: Hash16[], context?: InteractionContext): Promise<DelegationsAndRewardsByAccounts> =>
+export const delegationsAndRewards = (
+  stakeKeyHashes: Hash16[], config?: ConnectionConfig | InteractionContext
+): Promise<DelegationsAndRewardsByAccounts> =>
   Query<
     Ogmios['Query'],
     Ogmios['QueryResponse[delegationsAndRewards]'],
@@ -41,4 +43,4 @@ export const delegationsAndRewards = (stakeKeyHashes: Hash16[], context?: Intera
         return reject(new UnknownResultError(response.result))
       }
     }
-  }, context)
+  }, config)

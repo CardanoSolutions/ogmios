@@ -27,6 +27,7 @@
     "@types/jest": "^26.0.20",
     "@types/jest-environment-puppeteer": "^4.4.1",
     "@types/node": "^14.14.32",
+    "@types/node-fetch": "^2.5.10",
     "@types/puppeteer": "^5.4.3",
     "@types/ws": "^7.4.0",
     "@typescript-eslint/eslint-plugin": "^4.17.0",
@@ -40,6 +41,7 @@
     "eslint-plugin-promise": "^4.3.1",
     "eslint-plugin-standard": "^5.0.0",
     "eslint-watch": "^7.0.0",
+    "http-status-codes": "^2.1.4",
     "jest": "^26.6.3",
     "jest-puppeteer": "^4.4.0",
     "json-schema-to-typescript": "^10.1.4",
@@ -50,6 +52,7 @@
   },
   "dependencies": {
     "@cardano-ogmios/schema": "4.0.0-beta.3",
+    "cross-fetch": "^3.1.4",
     "fastq": "^1.11.0",
     "isomorphic-ws": "^4.0.1",
     "nanoid": "^3.1.22",

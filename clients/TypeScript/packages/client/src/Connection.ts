@@ -1,63 +1,84 @@
 import WebSocket from 'isomorphic-ws'
+import { getOgmiosHealth } from './OgmiosHealth'
+import { OgmiosNotReady } from './errors'
 
 export interface ConnectionConfig {
   host?: string,
   port?: number,
-  protocol?: string
+  tls?: boolean
+}
+
+export interface Connection extends Required<ConnectionConfig> {
+  address: {
+    http: string
+    webSocket: string
+  }
 }
 
 export interface InteractionContext {
-  socket?: WebSocket
-  connection?: ConnectionConfig
-  closeOnCompletion?: boolean
-  connectionString?: string
+  connection: Connection
+  socket: WebSocket
 }
 
 export type Mirror = { [k: string]: unknown }
 
-const createConnectionString = (
-  connection?: ConnectionConfig
-): InteractionContext['connectionString'] =>
-  `${connection?.protocol || 'ws'}://${connection?.host || 'localhost'}:${connection?.port || 1337}`
+export type WebSocketCloseHandler = (
+  code: WebSocket.CloseEvent['code'],
+  reason: WebSocket.CloseEvent['reason']
+) => void
 
-export const createClientContext = async (
-  options?: { connection?: ConnectionConfig }): Promise<InteractionContext> => {
-  const connectionString = createConnectionString(options?.connection)
-  const socket = new WebSocket(connectionString)
+export const createConnectionObject = (connection?: ConnectionConfig): Connection => {
+  const base = {
+    host: connection?.host ?? 'localhost',
+    port: connection?.port ?? 1337,
+    tls: connection?.tls ?? false
+  }
+  const hostAndPort = `${base.host}:${base.port}`
   return {
-    connection: options?.connection,
-    connectionString,
-    closeOnCompletion: false,
-    socket
+    ...base,
+    address: {
+      http: `${base.tls ? 'https' : 'http'}://${hostAndPort}`,
+      webSocket: `${base.tls ? 'wss' : 'ws'}://${hostAndPort}`
+    }
   }
 }
 
-export const ensureSocket = async <T>(
-  send: (socket: WebSocket) => Promise<T>,
-  context?: InteractionContext
-): Promise<T> => {
+export const createInteractionContext = async (
+  errorHandler: (error: Error) => void,
+  closeHandler: WebSocketCloseHandler,
+  options?: {
+    connection?: ConnectionConfig
+  }): Promise<InteractionContext> => {
+  const health = await getOgmiosHealth(options?.connection)
   return new Promise((resolve, reject) => {
-    if (context?.socket !== undefined) {
-      resolve(send(context.socket))
-    } else {
-      const socket = new WebSocket(createConnectionString(context?.connection))
-      const complete = (func: () => void) => {
-        if (!context?.closeOnCompletion) {
-          socket.once('close', func)
-          socket.close()
-        } else {
-          func()
-        }
-      }
-      socket.on('error', reject)
-      socket.on('open', async () => {
-        try {
-          const result = await send(socket)
-          return complete(resolve.bind(this, result))
-        } catch (error) {
-          return complete(reject.bind(this, error))
-        }
-      })
+    if (health.lastTipUpdate === null) {
+      return reject(new OgmiosNotReady(health))
     }
+    const connection = createConnectionObject(options?.connection)
+    const socket = new WebSocket(connection.address.webSocket)
+    const onInitialError = (error: Error) => {
+      socket.removeAllListeners()
+      return reject(error)
+    }
+    socket.on('error', onInitialError)
+    socket.once('close', (_code: number, reason: string) => {
+      socket.removeAllListeners()
+      reject(new Error(reason))
+    })
+    socket.on('open', async () => {
+      socket.removeListener('error', onInitialError)
+      socket.on('error', errorHandler)
+      socket.on('close', closeHandler)
+      resolve({
+        connection,
+        socket
+      })
+    })
   })
 }
+
+export const isContext = (config: ConnectionConfig | InteractionContext): config is InteractionContext =>
+  (config as InteractionContext).socket !== undefined
+
+export const isConnectionObject = (config: ConnectionConfig | Connection): config is Connection =>
+  (config as Connection).address !== undefined
