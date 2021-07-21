@@ -65,11 +65,19 @@ encodeAlonzoPredFail = \case
               , encodeFoldable encodeUnredeemableScript scripts
               )
             ]
-    Al.DataHashSetsDontAgree provided inferred ->
+    Al.MissingRequiredDatums missing provided ->
         encodeObject
-            [ ( "datumsMismatch", encodeObject
+            [ ( "missingRequiredDatums", encodeObject
                 [ ( "provided", encodeFoldable encodeDataHash provided )
-                , ( "inferredFromInputs", encodeFoldable encodeDataHash inferred )
+                , ( "missing", encodeFoldable encodeDataHash missing )
+                ]
+              )
+            ]
+    Al.NonOutputSupplimentaryDatums unallowed acceptable ->
+        encodeObject
+            [ ( "unspendableDatums", encodeObject
+                [ ( "nonSpendable", encodeFoldable encodeDataHash unallowed )
+                , ( "acceptable", encodeFoldable encodeDataHash acceptable )
                 ]
               )
             ]
@@ -87,11 +95,10 @@ encodeAlonzoPredFail = \case
               , encodeFoldable Shelley.encodeKeyHash keys
               )
             ]
-
-    Al.UnspendableUTxONoDatumHash inputs ->
+    Al.UnspendableUTxONoDatumHash utxos ->
         encodeObject
-            [ ( "missingDatumHashesForInputs"
-              , encodeFoldable Shelley.encodeTxIn inputs
+            [ ( "unspendableScriptInputsWithoutDatum"
+              , encodeFoldable Shelley.encodeTxIn utxos
               )
             ]
     Al.WrappedShelleyEraFailure e ->
@@ -101,15 +108,12 @@ encodeAuxiliaryData
     :: Crypto crypto
     => Al.AuxiliaryData (AlonzoEra crypto)
     -> Json
-encodeAuxiliaryData (Al.AuxiliaryData blob scripts datums) = encodeObject
+encodeAuxiliaryData (Al.AuxiliaryData blob scripts) = encodeObject
     [ ( "blob"
       , Shelley.encodeMetadataBlob blob
       )
     , ( "scripts"
       , encodeFoldable encodeScript scripts
-      )
-    , ( "datums"
-      , encodeFoldable encodeData datums
       )
     ]
 
@@ -175,8 +179,8 @@ encodeGenesis
     :: Al.AlonzoGenesis
     -> Json
 encodeGenesis x = encodeObject
-    [ ( "lovelacePerUtxoWord"
-      , encodeCoin (Al.adaPerUTxOWord x)
+    [ ( "coinsPerUtxoWord"
+      , encodeCoin (Al.coinsPerUTxOWord x)
       )
     , ( "costModels"
       , encodeMap stringifyLanguage encodeCostModel (Al.costmdls x)
@@ -250,7 +254,7 @@ encodePParams' encodeF x = encodeObject
       , encodeF encodeNatural (Al._nOpt x)
       )
     , ( "poolInfluence"
-      , encodeF encodeRational (Al._a0 x)
+      , encodeF encodeNonNegativeInterval (Al._a0 x)
       )
     , ( "monetaryExpansion"
       , encodeF encodeUnitInterval (Al._rho x)
@@ -270,8 +274,8 @@ encodePParams' encodeF x = encodeObject
     , ( "minPoolCost"
       , encodeF encodeCoin (Al._minPoolCost x)
       )
-    , ( "lovelacePerUtxoWord"
-      , encodeF encodeCoin (Al._adaPerUTxOWord x)
+    , ( "coinsPerUtxoWord"
+      , encodeF encodeCoin (Al._coinsPerUTxOWord x)
       )
     , ( "costModels"
       , encodeF (encodeMap stringifyLanguage encodeCostModel) (Al._costmdls x)
@@ -300,8 +304,8 @@ encodePrices
     :: Al.Prices
     -> Json
 encodePrices prices =  encodeObject
-    [ ( "memory", encodeCoin (Al.prMem prices) )
-    , ( "steps", encodeCoin (Al.prSteps prices) )
+    [ ( "memory", encodeNonNegativeInterval (Al.prMem prices) )
+    , ( "steps", encodeNonNegativeInterval (Al.prSteps prices) )
     ]
 
 encodeProposedPPUpdates
@@ -644,7 +648,7 @@ encodeWitnessSet x = encodeObject
       , encodeMap Shelley.stringifyScriptHash encodeScript (Al.txscripts x)
       )
     , ( "datums"
-      , encodeMap stringifyDataHash encodeData (Al.txdats x)
+      , encodeMap stringifyDataHash encodeData (Al.unTxDats $ Al.txdats x)
       )
     , ( "redeemers"
       , encodeRedeemers (Al.txrdmrs x)

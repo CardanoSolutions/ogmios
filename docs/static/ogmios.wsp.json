@@ -1023,10 +1023,6 @@
         { "type": "array"
         , "items": { "$ref": "#/definitions/Script" }
         }
-      , "datums":
-        { "type": "array"
-        , "items": { "$ref": "#/definitions/Datum" }
-        }
       }
     }
 
@@ -2657,8 +2653,8 @@
     , "additionalProperties": false
     , "required": [ "memory", "steps" ]
     , "properties":
-      { "memory": { "$ref": "#/definitions/Lovelace" }
-      , "steps": { "$ref": "#/definitions/Lovelace" }
+      { "memory": { "$ref": "#/definitions/Ratio" }
+      , "steps": { "$ref": "#/definitions/Ratio" }
       }
     }
 
@@ -2750,7 +2746,7 @@
       , "treasuryExpansion": { "$ref": "#/definitions/NullableRatio" }
       , "decentralizationParameter": { "$ref": "#/definitions/NullableRatio" }
       , "minPoolCost": { "$ref": "#/definitions/NullableInteger" }
-      , "lovelacePerUtxoWord": { "$ref": "#/definitions/NullableInteger" }
+      , "coinsPerUtxoWord": { "$ref": "#/definitions/NullableInteger" }
       , "maxValueSize": { "$ref": "#/definitions/NullableInteger" }
       , "collateralPercentage": { "$ref": "#/definitions/NullableInteger" }
       , "maxCollateralInputs": { "$ref": "#/definitions/NullableInteger" }
@@ -3142,6 +3138,7 @@
         , { "$ref": "#/definitions/SubmitTxError[wrongPoolCertificate]" }
         , { "$ref": "#/definitions/SubmitTxError[stakeKeyAlreadyRegistered]" }
         , { "$ref": "#/definitions/SubmitTxError[poolCostTooSmall]" }
+        , { "$ref": "#/definitions/SubmitTxError[poolMetadataHashTooBig]" }
         , { "$ref": "#/definitions/SubmitTxError[stakeKeyNotRegistered]" }
         , { "$ref": "#/definitions/SubmitTxError[rewardAccountNotExisting]" }
         , { "$ref": "#/definitions/SubmitTxError[rewardAccountNotEmpty]" }
@@ -3158,9 +3155,11 @@
         , { "$ref": "#/definitions/SubmitTxError[updateWrongEpoch]" }
         , { "$ref": "#/definitions/SubmitTxError[protocolVersionCannotFollow]" }
         , { "$ref": "#/definitions/SubmitTxError[unredeemableScripts]" }
-        , { "$ref": "#/definitions/SubmitTxError[datumsMismatch]" }
+        , { "$ref": "#/definitions/SubmitTxError[missingRequiredDatums]" }
+        , { "$ref": "#/definitions/SubmitTxError[unspendableDatums]" }
         , { "$ref": "#/definitions/SubmitTxError[extraDataMismatch]" }
         , { "$ref": "#/definitions/SubmitTxError[missingRequiredSignatures]" }
+        , { "$ref": "#/definitions/SubmitTxError[unspendableScriptInputsWithoutDatum]" }
         , { "$ref": "#/definitions/SubmitTxError[missingDatumHashesForInputs]" }
         , { "$ref": "#/definitions/SubmitTxError[missingCollateralInputs]" }
         , { "$ref": "#/definitions/SubmitTxError[collateralTooSmall]" }
@@ -3560,6 +3559,24 @@
       }
     }
 
+  , "SubmitTxError[poolMetadataHashTooBig]":
+    { "type": "object"
+    , "title": "poolMetadataHashTooBig"
+    , "additionalProperties": false
+    , "required": [ "poolMetadataHashTooBig" ]
+    , "properties":
+      { "poolMetadataHashTooBig":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "poolId", "measuredSize" ]
+        , "properties":
+          { "poolId": { "$ref": "#/definitions/PoolId" }
+          , "measuredSize": { "type": "integer" }
+          }
+        }
+      }
+    }
+
   , "SubmitTxError[stakeKeyNotRegistered]":
     { "type": "object"
     , "title": "stakeKeyNotRegistered"
@@ -3754,22 +3771,46 @@
       }
     }
 
-  , "SubmitTxError[datumsMismatch]":
+  , "SubmitTxError[missingRequiredDatums]":
     { "type": "object"
-    , "title": "datumsMismatch"
+    , "title": "missingRequiredDatums"
     , "additionalProperties": false
-    , "required": [ "datumsMismatch" ]
+    , "required": [ "missingRequiredDatums" ]
     , "properties":
-      { "datumsMismatch":
+      { "missingRequiredDatums":
         { "type": "object"
         , "additionalProperties": false
-        , "required": [ "provided", "inferredFromInputs" ]
+        , "required": [ "provided", "missing" ]
         , "properties":
           { "provided":
             { "type": "array"
             , "items": { "$ref": "#/definitions/Hash16" }
             }
-          , "inferredFromInputs":
+          , "missing":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Hash16" }
+            }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[unspendableDatums]":
+    { "type": "object"
+    , "title": "unspendableDatums"
+    , "additionalProperties": false
+    , "required": [ "unspendableDatums" ]
+    , "properties":
+      { "unspendableDatums":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "nonSpendable", "acceptable" ]
+        , "properties":
+          { "nonSpendable":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Hash16" }
+            }
+          , "acceptable":
             { "type": "array"
             , "items": { "$ref": "#/definitions/Hash16" }
             }
@@ -3815,6 +3856,19 @@
       { "missingRequiredSignatures":
         { "type": "array"
         , "items": { "$ref": "#/definitions/Hash16" }
+        }
+      }
+    }
+
+  , "SubmitTxError[unspendableScriptInputsWithoutDatum]":
+    { "type": "object"
+    , "title": "unspendableScriptInputsWithoutDatum"
+    , "additionalProperties": false
+    , "required": [ "unspendableScriptInputsWithoutDatum" ]
+    , "properties":
+      { "unspendableScriptInputsWithoutDatum":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/TxIn" }
         }
       }
     }

@@ -2,8 +2,8 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-ARG CARDANO_NODE_REV=8fe46140a52810b6ca456be01d652ca08fe730bf
-ARG OGMIOS_SNAPSHOT=2e014ab79c5abce5f3cea2db09200fe3c00bc117
+ARG CARDANO_NODE_REV=48429531f0d3d71fadce9a5971bf56a6df396f2d
+ARG OGMIOS_SNAPSHOT=a7bab073220caad8b98351515e3d68f5eb605383
 ARG IOHK_LIBSODIUM_GIT_REV=66f017f16633f2060db25e17c170c2afa0f2a8a1
 
 #                                                                              #

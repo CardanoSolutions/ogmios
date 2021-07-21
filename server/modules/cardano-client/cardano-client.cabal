@@ -80,7 +80,7 @@ library
     , cborg
     , containers
     , contra-tracer
-    , io-sim-classes
+    , io-classes
     , iohk-monitoring
     , network-mux
     , ouroboros-consensus

@@ -147,7 +147,7 @@ library
     , generic-lens
     , git-th
     , http-types
-    , io-sim-classes
+    , io-classes
     , iohk-monitoring
     , iproute
     , json-wsp
@@ -298,8 +298,8 @@ test-suite unit
     , hedgehog-quickcheck
     , hspec
     , hspec-json-schema
+    , io-classes
     , io-sim
-    , io-sim-classes
     , json-wsp
     , ogmios
     , ouroboros-consensus

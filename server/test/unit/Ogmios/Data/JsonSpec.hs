@@ -42,13 +42,13 @@ import Ogmios.Data.Json.Query
     , parseGetEpochNo
     , parseGetEraStart
     , parseGetFilteredDelegationsAndRewards
-    , parseGetFilteredUTxO
     , parseGetGenesisConfig
     , parseGetLedgerTip
     , parseGetNonMyopicMemberRewards
     , parseGetProposedPParamsUpdates
     , parseGetStakeDistribution
     , parseGetUTxO
+    , parseGetUTxOByAddress
     )
 import Ogmios.Data.Protocol.ChainSync
     ( FindIntersect
@@ -289,7 +289,7 @@ spec = do
             [aesonQQ|
             { "utxo": []
             }|]
-            ( parseGetFilteredUTxO genUTxOResult
+            ( parseGetUTxOByAddress genUTxOResult
             ) "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
         validateQuery
@@ -300,7 +300,7 @@ spec = do
                 , "82d818582183581cb0574c7a1564697578b840fd7ec9d8963fa1398415f9f2f87737a83da0001ae9e3e303"
                 ]
             }|]
-            ( parseGetFilteredUTxO genUTxOResult
+            ( parseGetUTxOByAddress genUTxOResult
             ) "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
         validateQuery

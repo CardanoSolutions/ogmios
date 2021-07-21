@@ -1,4 +1,4 @@
-index-state: 2021-03-15T00:00:00Z
+index-state: 2021-04-30T00:00:00Z
 
 packages:
   ./
@@ -35,8 +35,8 @@ allow-newer:
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/cardano-base
-  tag: a715c7f420770b70bbe95ca51d3dec83866cb1bd
-  --sha256: 06l06mmb8cd4q37bnvfpgx1c5zgsl4xaf106dqva98738i8asj7j
+  tag: b6a215c42a28dc8b71b42946fe30256a333d34af
+  --sha256: 1l9nqsg6kfkfadlbvyl4afdf8v408zf0fn6dkihqf56g2mnk4i04
   subdir:
     binary
     binary/test
@@ -55,8 +55,8 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/cardano-ledger-specs
-  tag: a3ef848542961079b7cd53d599e5385198a3035c
-  --sha256: 02iwn2lcfcfvrnvcqnx586ncdnma23vdqvicxgr4f39vcacalzpd
+  tag: ec9c77edbf5700a4b2ece8f97a1e313df06abc97
+  --sha256: 1ia8x9dnw36y0xazg7xg263ax9mamw9w4sg460cmibj3wv49im4w
   subdir:
     alonzo/impl
     alonzo/test
@@ -78,8 +78,8 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/cardano-node
-  tag: 8c142704e7df8ca857b179e26fdebb6919b5a7a6
-  --sha256: 1xydm6xhyyj9nhg42d2gdha9bv5xd9i7hf1s8akg9xj2mcxfh2mk
+  tag: 48429531f0d3d71fadce9a5971bf56a6df396f2d
+  --sha256: 0arhmmxb86ggfc73rbyz1fj43glj9z2f8w5416cix2wxkvlm8bys
   subdir:
     cardano-api
     cardano-config
@@ -103,8 +103,8 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/hedgehog-extras
-  tag: 8bcd3c9dc22cc44f9fcfe161f4638a384fc7a187
-  --sha256: 12viwpahjdfvlqpnzdgjp40nw31rvyznnab1hml9afpaxd6ixh70
+  tag: edf6945007177a638fbeb8802397f3a6f4e47c14
+  --sha256: 0wc7qzkc7j4ns2rz562h6qrx2f8xyq7yjcb7zidnj7f6j0pcd0i9
 
 source-repository-package
   type: git
@@ -136,11 +136,12 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/ouroboros-network
-  tag: e50613562d6d4a0f933741fcf590b0f69a1eda67
-  --sha256: 0i192ksa69lpzjhzmhd2h1mramkvvikw04pqws18h5dly55f4z3k
+  tag: e338f2cf8e1078fbda9555dd2b169c6737ef6774
+  --sha256: 12x81hpjyw2cpkazfalz6bw2wgr6ax7bnmlxl2rlfakkvsjfgaqd
   subdir:
+    io-classes
     io-sim
-    io-sim-classes
+    monoidal-synchronisation
     network-mux
     ouroboros-consensus
     ouroboros-consensus-test
@@ -161,14 +162,14 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/plutus
-  tag: 13da6d416b2b47cdb6f287ff078b9e759bb90b7f
-  --sha256: 11jpcjdr05l2yyhy9zp3hpkq8bhipx5w3y9bjzg2hzh0fay8571w
+  tag: 523f349f3d68db07c98150734793ed7003d1f562
+  --sha256: 0vp6wiv1fz5bzvw90pdwv96nck78m5s91xiwjhkksq06l1yqr3ps
   subdir:
     plutus-core
     plutus-ledger-api
     plutus-tx
-    plutus-tx-plugin
     prettyprinter-configurable
+    word-array
 
 source-repository-package
   type: git
@@ -179,8 +180,14 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/Win32-network
-  tag: 94153b676617f8f33abe8d8182c37377d2784bd1
-  --sha256: 0pb7bg0936fldaa5r08nqbxvi2g8pcy4w3c7kdcg7pdgmimr30ss
+  tag: 5b3d08c454f425da5cf045fe7865950d7c806691
+  --sha256: 0npyihbaqlih9abdbaj451lm1h0kl5braczy8vn41s3ivbbnvpcw
+
+source-repository-package
+  type: git
+  location: https://github.com/Quid2/flat.git
+  tag: 95e5d7488451e43062ca84d5376b3adcc465f1cd
+  --sha256: 06l31x3y93rjpryvlxnpsyq2zyxvb0z6lik6yq2fvh36i5zwvwa3
 
 constraints:
     hedgehog >= 1.0
