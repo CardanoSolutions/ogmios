@@ -5,6 +5,27 @@ chapter: false
 pre: "<b>5. </b>"
 ---
 
+### [4.0.0] - 2021-07-XX
+
+#### Added
+
+- Integrated with the Cardano eco-system corresponding to cardano-node@1.28.0. Bumped the docker-compose installation accordingly.
+- New possible errors from the transaction submission:
+  - `poolMetadataHashTooBig`
+  - `missingRequiredDatums`
+  - `unspendableDatums`
+  - `unspendableScriptInputsWithoutDatum`
+
+#### Changed
+
+- The `memory` and `steps` JSON representations for `prices` are no longer coins, but ratio (represented as strings in the API).
+- `lovelacePerUtxoWord` has been renamed into `coinsPerUtxoWord` in the AlonzoGenesis.
+
+#### Removed
+
+- A previous introduced error from the transaction submission has been removed / replaced:
+  - `datumsMismatch`
+
 ### [4.0.0-beta.4] - 2021-07-07
 
 #### Added
