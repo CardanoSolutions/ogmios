@@ -17,8 +17,6 @@ module Ogmios.App.Server.Http
 
 import Ogmios.Prelude
 
-import Ogmios.App.Health
-    ( Health (..), modifyHealth )
 import Ogmios.App.Metrics
     ( RuntimeStats, Sampler, Sensors )
 import Ogmios.Control.MonadClock
@@ -27,6 +25,8 @@ import Ogmios.Control.MonadMetrics
     ( MonadMetrics )
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TVar )
+import Ogmios.Data.Health
+    ( Health (..), NodeTip (..), modifyHealth )
 
 import qualified Ogmios.App.Metrics as Metrics
 
@@ -34,8 +34,6 @@ import Data.Aeson
     ( ToJSON (..) )
 import Data.FileEmbed
     ( embedFile )
-import Ouroboros.Network.Block
-    ( Tip (..) )
 import Wai.Routes
     ( Handler
     , RenderRoute (..)
@@ -64,7 +62,7 @@ data EnvServer block m = EnvServer
 
 data Server where
     Server
-        :: (MonadClock m, MonadMetrics m, MonadSTM m, ToJSON (Tip block))
+        :: (MonadClock m, MonadMetrics m, MonadSTM m, ToJSON (NodeTip block))
         => (forall a. m a -> IO a)
         -> EnvServer block m
         -> Server
@@ -141,7 +139,7 @@ mkHttpApp
         , HasType (TVar m (Health block)) env
         , HasType (Sensors m) env
         , HasType (Sampler RuntimeStats m) env
-        , ToJSON (Tip block)
+        , ToJSON (NodeTip block)
         )
     => (forall a. m a -> IO a)
     -> m Wai.Application

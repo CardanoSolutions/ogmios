@@ -20,7 +20,7 @@ packages:
 - constraints-extras-0.3.1.0
 - containers-0.5.11.0 # 0.6.2.1 on LTS 17.6
 - dependent-map-0.4.0.0
-- dependent-sum-0.6.2.0
+- dependent-sum-0.7.1.0
 - dependent-sum-template-0.1.0.3
 - dns-3.0.4 # 4.0.1 on LTS 17.6
 - gray-code-0.3.1
@@ -50,7 +50,7 @@ packages:
 
 
 - git: https://github.com/input-output-hk/cardano-base
-  commit: a715c7f420770b70bbe95ca51d3dec83866cb1bd
+  commit: b6a215c42a28dc8b71b42946fe30256a333d34af
   subdirs:
   - binary
   - binary/test
@@ -64,7 +64,7 @@ packages:
   commit: ce8f1934e4b6252084710975bd9bbc0a4648ece4
 
 - git: https://github.com/input-output-hk/cardano-ledger-specs
-  commit: a3ef848542961079b7cd53d599e5385198a3035c
+  commit: ec9c77edbf5700a4b2ece8f97a1e313df06abc97
   subdirs:
   - alonzo/impl
   - alonzo/test
@@ -84,7 +84,7 @@ packages:
   - shelley-ma/shelley-ma-test
 
 - git: https://github.com/input-output-hk/cardano-node
-  commit: 8c142704e7df8ca857b179e26fdebb6919b5a7a6
+  commit: 48429531f0d3d71fadce9a5971bf56a6df396f2d
   subdirs:
     - cardano-api
     - cardano-config
@@ -96,11 +96,14 @@ packages:
   - cardano-prelude
   - cardano-prelude-test
 
+- git: https://github.com/Quid2/flat.git
+  commit: 95e5d7488451e43062ca84d5376b3adcc465f1cd
+
 - git: https://github.com/input-output-hk/goblins
   commit: cde90a2b27f79187ca8310b6549331e59595e7ba
 
 - git: https://github.com/input-output-hk/hedgehog-extras
-  commit: 8bcd3c9dc22cc44f9fcfe161f4638a384fc7a187
+  commit: edf6945007177a638fbeb8802397f3a6f4e47c14
 
 - git: https://github.com/KtorZ/hjsonpointer
   commit: 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e
@@ -121,10 +124,11 @@ packages:
   - tracer-transformers
 
 - git: https://github.com/input-output-hk/ouroboros-network
-  commit: e50613562d6d4a0f933741fcf590b0f69a1eda67
+  commit: e338f2cf8e1078fbda9555dd2b169c6737ef6774
   subdirs:
+    - io-classes
     - io-sim
-    - io-sim-classes
+    - monoidal-synchronisation
     - network-mux
     - ouroboros-consensus
     - ouroboros-consensus-test
@@ -142,15 +146,16 @@ packages:
     - typed-protocols-examples
 
 - git: https://github.com/input-output-hk/plutus
-  commit: 13da6d416b2b47cdb6f287ff078b9e759bb90b7f
+  commit: 523f349f3d68db07c98150734793ed7003d1f562
   subdirs:
     - plutus-core
     - plutus-ledger-api
     - plutus-tx
     - prettyprinter-configurable
+    - word-array
 
 - git: https://github.com/KtorZ/wai-routes
   commit: d74b39683792649c01113f40bf57724dcf95c96a
 
 - git: https://github.com/input-output-hk/Win32-network
-  commit: 82f4afb8c240b8446a1db6c6b50901a42028ce0f
+  commit: 5b3d08c454f425da5cf045fe7865950d7c806691

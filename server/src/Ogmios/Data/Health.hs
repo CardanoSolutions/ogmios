@@ -4,27 +4,35 @@
 
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Ogmios.Data.Health
     ( -- * Heath
       Health (..)
+    , CardanoEra (..)
+    , Tip (..)
+    , NodeTip (..)
     , emptyHealth
     , modifyHealth
       -- ** NetworkSynchronization
     , NetworkSynchronization (..)
+    , SystemStart (..)
+    , RelativeTime (..)
     , mkNetworkSynchronization
-      -- ** CardanoEra
-    , CardanoEra (..)
     ) where
 
 import Ogmios.Prelude
 
 import Ogmios.Control.MonadSTM
     ( MonadSTM, TVar, atomically, readTVar, writeTVar )
+import Ogmios.Data.Json
+    ( encodeTip, inefficientEncodingToValue )
 import Ogmios.Data.Metrics
     ( Metrics, emptyMetrics )
 
+import Cardano.Network.Protocol.NodeToClient
+    ( Block )
 import Data.Aeson
     ( ToJSON (..), genericToEncoding )
 import Data.ByteString.Builder.Scientific
@@ -51,7 +59,7 @@ import qualified Data.Aeson.Encoding as Json
 data Health block = Health
     { startTime :: UTCTime
     -- ^ Time at which the application was started
-    , lastKnownTip :: !(Tip block)
+    , lastKnownTip :: !(NodeTip block)
     -- ^ Last known tip of the core node.
     , lastTipUpdate :: !(Maybe UTCTime)
     -- ^ Date at which the last update was received.
@@ -63,13 +71,22 @@ data Health block = Health
     -- ^ Application metrics measured at regular interval
     } deriving stock (Generic, Eq, Show)
 
-instance ToJSON (Tip block) => ToJSON (Health block) where
+instance ToJSON (NodeTip block) => ToJSON (Health block) where
     toEncoding = genericToEncoding Json.defaultOptions
+
+-- Re-wrap 'Tip' to avoid conflicting orphan instances from cardano-node.
+newtype NodeTip block = NodeTip { getTip :: Tip block }
+    deriving stock (Generic)
+    deriving newtype (Eq, Show)
+
+instance ToJSON (NodeTip Block) where
+    toJSON = inefficientEncodingToValue . encodeTip . getTip
+    toEncoding = encodeTip . getTip
 
 emptyHealth :: UTCTime -> Health block
 emptyHealth startTime = Health
     { startTime
-    , lastKnownTip = TipGenesis
+    , lastKnownTip = NodeTip TipGenesis
     , lastTipUpdate = Nothing
     , networkSynchronization = NetworkSynchronization 0
     , currentEra = Byron
@@ -97,7 +114,7 @@ modifyHealth tvar fn =
 -- - The current time
 -- - The current node tip
 newtype NetworkSynchronization = NetworkSynchronization Scientific
-    deriving stock (Generic, Eq, Show)
+    deriving stock (Generic, Eq, Ord, Show)
 
 instance ToJSON NetworkSynchronization where
     toJSON _ = error "'toJSON' called on 'NetworkSynchronization'. This should never happen. Use 'toEncoding' instead."
@@ -132,7 +149,7 @@ mkNetworkSynchronization systemStart now relativeSlotTime =
         den = round $ now `diffUTCTime` getSystemStart systemStart :: Integer
         p = 100000
     in
-        NetworkSynchronization $ unsafeFromRational $ (num * p `div` den) % p
+        NetworkSynchronization $ unsafeFromRational $ min 1 ((num * p `div` den) % p)
 
 -- | A Cardano era, starting from Byron and onwards.
 data CardanoEra

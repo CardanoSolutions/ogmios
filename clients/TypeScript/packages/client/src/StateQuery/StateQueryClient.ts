@@ -4,7 +4,7 @@ import {
   Hash16,
   Lovelace,
   Ogmios,
-  Point
+  PointOrOrigin
 } from '@cardano-ogmios/schema'
 import {
   ConnectionConfig,
@@ -41,7 +41,7 @@ export interface StateQueryClient {
   genesisConfig: () => ReturnType<typeof genesisConfig>
   ledgerTip: () => ReturnType<typeof ledgerTip>
   nonMyopicMemberRewards: (input: Lovelace[] | Hash16[]) => ReturnType<typeof nonMyopicMemberRewards>
-  point: Point
+  point: PointOrOrigin
   proposedProtocolParameters: () => ReturnType<typeof proposedProtocolParameters>
   release: () => Promise<void>
   stakeDistribution: () => ReturnType<typeof stakeDistribution>
@@ -53,7 +53,7 @@ export const createStateQueryClient = async (
   closeHandler: WebSocketCloseHandler,
   options?: {
     connection?: ConnectionConfig,
-    point?: Point
+    point?: PointOrOrigin
   }): Promise<StateQueryClient> => {
   const context = await createInteractionContext(errorHandler, closeHandler, options)
   const point = options?.point !== undefined

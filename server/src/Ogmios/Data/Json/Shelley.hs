@@ -12,6 +12,10 @@ module Ogmios.Data.Json.Shelley where
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Ledger.Address
+    ( Addr )
+import Cardano.Ledger.Credential
+    ( Credential )
 import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Ledger.Era
@@ -43,17 +47,17 @@ import qualified Cardano.Crypto.Hash.Class as CC
 import qualified Cardano.Crypto.KES.Class as CC
 import qualified Cardano.Crypto.VRF.Class as CC
 
+import qualified Cardano.Ledger.Address as Address
 import qualified Cardano.Ledger.AuxiliaryData as Aux
 import qualified Cardano.Ledger.BaseTypes as BaseTypes
 import qualified Cardano.Ledger.Coin as Coin
 import qualified Cardano.Ledger.Core as Core
+import qualified Cardano.Ledger.Credential as Credential
 import qualified Cardano.Ledger.Keys as Keys
 import qualified Cardano.Ledger.SafeHash as SafeHash
 
-import qualified Shelley.Spec.Ledger.Address as Sh
 import qualified Shelley.Spec.Ledger.Address.Bootstrap as Sh
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
-import qualified Shelley.Spec.Ledger.Credential as Sh
 import qualified Shelley.Spec.Ledger.Delegation.Certificates as Sh
 import qualified Shelley.Spec.Ledger.Genesis as Sh
 import qualified Shelley.Spec.Ledger.LedgerState as Sh
@@ -78,13 +82,13 @@ import qualified Shelley.Spec.Ledger.UTxO as Sh
 --
 
 encodeAddress
-    :: Sh.Addr era
+    :: Addr era
     -> Json
 encodeAddress = \case
-    Sh.AddrBootstrap addr ->
-        Byron.encodeAddress (Sh.unBootstrapAddress addr)
-    addr@(Sh.Addr network _ _) ->
-        encodeByteStringBech32 (hrp network) (Sh.serialiseAddr addr)
+    Address.AddrBootstrap addr ->
+        Byron.encodeAddress (Address.unBootstrapAddress addr)
+    addr@(Address.Addr network _ _) ->
+        encodeByteStringBech32 (hrp network) (Address.serialiseAddr addr)
   where
     hrp = \case
         BaseTypes.Mainnet -> hrpAddrMainnet
@@ -207,11 +211,11 @@ encodeChainCode cc
 
 encodeCredential
     :: forall any era. (any :\: 'StakePool)
-    => Sh.Credential any era
+    => Credential any era
     -> Json
 encodeCredential x = case x of
-    Sh.KeyHashObj h -> encodeKeyHash h
-    Sh.ScriptHashObj h -> encodeScriptHash h
+    Credential.KeyHashObj h -> encodeKeyHash h
+    Credential.ScriptHashObj h -> encodeScriptHash h
 
 encodeDCert
     :: Sh.DCert era
@@ -452,7 +456,7 @@ encodeGenesis x = encodeObject
       , encodeNetwork (Sh.sgNetworkId x)
       )
     , ( "activeSlotsCoefficient"
-      , encodeRational (Sh.sgActiveSlotsCoeff x)
+      , encodePositiveUnitInterval (Sh.sgActiveSlotsCoeff x)
       )
     , ( "securityParameter"
       , encodeWord64 (Sh.sgSecurityParam x)
@@ -681,6 +685,18 @@ encodePoolFailure = \case
                 ]
               )
             ]
+    Sh.PoolMedataHashTooBig poolId measuredSize ->
+        encodeObject
+            [ ( "poolMetadataHashTooBig", encodeObject
+                [ ( "poolId"
+                  , encodePoolId poolId
+                  )
+                , ( "measuredSize"
+                  , encodeInteger (fromIntegral measuredSize)
+                  )
+                ]
+              )
+            ]
 
 encodePoolMetadata
     :: Sh.PoolMetadata
@@ -760,7 +776,7 @@ encodePParams' encodeF x = encodeObject
       , encodeF encodeNatural (Sh._nOpt x)
       )
     , ( "poolInfluence"
-      , encodeF encodeRational (Sh._a0 x)
+      , encodeF encodeNonNegativeInterval (Sh._a0 x)
       )
     , ( "monetaryExpansion"
       , encodeF encodeUnitInterval (Sh._rho x)
@@ -1258,11 +1274,11 @@ stringifyCoin =
 
 stringifyCredential
     :: forall any era. (any :\: StakePool)
-    => Sh.Credential any era
+    => Credential any era
     -> Text
 stringifyCredential = \case
-    Sh.KeyHashObj h -> stringifyKeyHash h
-    Sh.ScriptHashObj h -> stringifyScriptHash h
+    Credential.KeyHashObj h -> stringifyKeyHash h
+    Credential.ScriptHashObj h -> stringifyScriptHash h
   where
     _ = keepRedundantConstraint (Proxy @(any :\: StakePool))
 
@@ -1285,7 +1301,7 @@ stringifyRewardAcnt
     :: Sh.RewardAcnt era
     -> Text
 stringifyRewardAcnt x@(Sh.RewardAcnt ntwrk _credential) =
-    encodeBech32 (hrp ntwrk) (Sh.serialiseRewardAcnt x)
+    encodeBech32 (hrp ntwrk) (Address.serialiseRewardAcnt x)
   where
     hrp = \case
         BaseTypes.Mainnet -> hrpStakeMainnet

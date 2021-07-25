@@ -16,7 +16,7 @@ jobs:
   #  _____| ||   |___ |   |  | | |     | |   |___ |   |  | |
   # |_______||_______||___|  |_|  |___|  |_______||___|  |_|
   #
-  server:
+  server_build:
     strategy:
       matrix:
         os: [ubuntu-20.04]
@@ -49,7 +49,49 @@ jobs:
       run: |
         stack --no-terminal build --only-snapshot --haddock --no-haddock-deps
 
-    - name: 🔨 Build & Test
+    - name: 🔨 Build
+      working-directory: server
+      shell: bash
+      run: |
+        stack --no-terminal install --flag ogmios:production ogmios
+        mv $(stack path --local-bin)/ogmios ogmios
+
+    - name: 📤 Upload binary
+      uses: actions/upload-artifact@v2
+      with:
+        name: ogmios
+        path: |
+          server/ogmios
+
+  server_test:
+    needs: [server_build]
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: 💽 Install OS Packages
+      uses: mstksg/get-package@2a4b48d55d72d43ca89ae58ec9ca1397d34a1c35
+      with:
+        apt-get: libgmp-dev libssl-dev libsystemd-dev libsodium-dev zlib1g-dev
+
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v2.3.3
+      with:
+        submodules: true
+
+    - name: 🧰 Setup Stack
+      uses: timbod7/setup-stack@1f68f27c99094a718fe60a2790550aafd042f729
+
+    - name: 💾 Cache Dependencies
+      id: cache
+      uses: actions/cache@v2.1.1
+      with:
+        path: ~/.stack
+        key: ${{ matrix.os }}-${{ hashFiles('server/resolver.yaml') }}
+
+    - name: 🔨 Test
       working-directory: server
       run: |
         stack --no-terminal test --flag ogmios:production --no-run-tests
@@ -105,52 +147,6 @@ jobs:
             exit 1
         fi
 
-  #  _______  __    _  ______   _______  _______  _______  __    _  ______           _______  ______    _______
-  # |       ||  |  | ||      | |       ||       ||       ||  |  | ||      |         |       ||    _ |  |       |
-  # |    ___||   |_| ||  _    ||_     _||   _   ||    ___||   |_| ||  _    |        |    _  ||   | ||  |    ___|
-  # |   |___ |       || | |   |  |   |  |  | |  ||   |___ |       || | |   |        |   |_| ||   |_||_ |   |___
-  # |    ___||  _    || |_|   |  |   |  |  |_|  ||    ___||  _    || |_|   |        |    ___||    __  ||    ___|
-  # |   |___ | | |   ||       |  |   |  |       ||   |___ | | |   ||       | _____  |   |    |   |  | ||   |___
-  # |_______||_|  |__||______|   |___|  |_______||_______||_|  |__||______| |_____| |___|    |___|  |_||_______|
-  #
-  pre_endToEnd:
-    strategy:
-      matrix:
-        os: [ ubuntu-20.04 ]
-
-    runs-on: ${{ matrix.os }}
-    steps:
-    - name: 📥 Checkout repository
-      uses: actions/checkout@v2.3.3
-      with:
-        submodules: true
-
-    - name: 🧰 Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-
-    - name: 🐳 Login to DockerHub
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
-
-    - name: 🔨 Build cardano-node-ogmios testnet
-      uses: docker/build-push-action@v2
-      with:
-        build-args: NETWORK=testnet
-        context: .
-        push: false
-        tags: cardanosolutions/cardano-node-ogmios:${{ github.sha }}-testnet
-        cache-from: type=registry,ref=cardanosolutions/cardano-node-ogmios:latest-testnet
-        cache-to: type=inline
-        outputs: type=docker,dest=/tmp/cardano-node-ogmios-${{ github.sha }}-testnet.tar
-
-    - name: Upload Docker image artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: cardano-node-ogmios-${{ github.sha }}-testnet
-        path: /tmp/cardano-node-ogmios-${{ github.sha }}-testnet.tar
-
   #  _______  ___      ___   _______  __    _  _______  _______          _______  __   __  _______  _______  _______  _______  ______    ___   _______  _______
   # |       ||   |    |   | |       ||  |  | ||       ||       |        |       ||  | |  ||       ||       ||       ||       ||    _ |  |   | |       ||       |
   # |       ||   |    |   | |    ___||   |_| ||_     _||  _____|        |_     _||  |_|  ||    _  ||    ___||  _____||       ||   | ||  |   | |    _  ||_     _|
@@ -160,13 +156,19 @@ jobs:
   # |_______||_______||___| |_______||_|  |__|  |___|  |_______||_____|   |___|    |___|  |___|    |_______||_______||_______||___|  |_||___| |___|      |___|
   #
   clients_TypeScript:
-    needs: [pre_endToEnd]
+    needs: [server_build]
     strategy:
       matrix:
         os: [ ubuntu-20.04 ]
         network: [ testnet ]
+        cardanoNodeVersion: [1.28.0]
     runs-on: ${{ matrix.os }}
     steps:
+    - name: 💽 Install OS Packages
+      uses: mstksg/get-package@2a4b48d55d72d43ca89ae58ec9ca1397d34a1c35
+      with:
+        apt-get: libgmp-dev libssl-dev libsystemd-dev libsodium-dev zlib1g-dev
+
     - name: 📥 Checkout repository
       uses: actions/checkout@v2.3.3
       with:
@@ -183,26 +185,6 @@ jobs:
       with:
         node-version: 14.4
 
-    - name: Download Docker image artifact
-      uses: actions/download-artifact@v2
-      with:
-        name: cardano-node-ogmios-${{ github.sha }}-${{ matrix.network }}
-        path: /tmp
-
-    - name: Load Docker image
-      run: |
-        docker load --input /tmp/cardano-node-ogmios-${{ github.sha }}-${{ matrix.network }}.tar
-        docker image ls -a
-
-    - name: 💾 Cache cardano-node DB
-      id: cache
-      uses: actions/cache@v2.1.1
-      with:
-        path: ${{ runner.temp }}/db-${{ matrix.network }}
-        key: cardano-node-ogmios-${{ matrix.network }}-${{ steps.date-time.outputs.value }}
-        restore-keys: |
-          cardano-node-ogmios-${{ matrix.network }}-
-
     - name: ↪ Set package version
       id: package-version
       uses: martinbeentjes/npm-get-version-action@master
@@ -217,15 +199,44 @@ jobs:
         yarn build
         yarn lint
 
+    - name: 📥 Download
+      uses: actions/download-artifact@v2
+      with:
+        name: ogmios
+        path: server
+
+    - name: 💾 Cache cardano-node DB
+      id: cache
+      uses: actions/cache@v2.1.1
+      with:
+        path: ${{ runner.temp }}/db-${{ matrix.network }}
+        key: cardano-node-ogmios-${{ matrix.network }}-${{ steps.date-time.outputs.value }}
+        restore-keys: |
+          cardano-node-ogmios-${{ matrix.network }}-
+
     - name: 🔬 Test
       if: matrix.network == 'testnet'
       working-directory: clients/TypeScript
+      shell: bash
+      env:
+        CONFDIR: /home/runner/work/ogmios/ogmios/server/config/network/${{ matrix.network }}
       run: |
-        docker run -d --name cardano-node-ogmios -p 1338:1337 -v ${{ runner.temp }}/db-${{ matrix.network }}:/db cardanosolutions/cardano-node-ogmios:${{ github.sha }}-${{ matrix.network }}
+        chmod +x ../../server/ogmios
+        sudo ../../server/ogmios --port 1338 --log-level error --node-socket ${{ runner.temp }}/ipc/node.socket --node-config $CONFDIR/cardano-node/config.json &
+
+        docker pull inputoutput/cardano-node:${{ matrix.cardanoNodeVersion }}
+        docker run -d --name cardano-node \
+          -v ${{ runner.temp }}/db-${{ matrix.network }}:/db \
+          -v ${{ runner.temp }}/ipc:/ipc \
+          -v $CONFDIR/cardano-node:/config \
+          -v $CONFDIR/genesis:/genesis \
+          inputoutput/cardano-node:${{ matrix.cardanoNodeVersion }} run --config /config/config.json --database-path /db --socket-path /ipc/node.socket --topology /config/topology.json
+
         ../../scripts/wait-for-sync.sh 1338 1
+
         yarn test
-        docker stop cardano-node-ogmios
-        docker rm cardano-node-ogmios
+        docker stop cardano-node
+        docker rm cardano-node
 
     - name: 📦 Pack
       working-directory: clients/TypeScript

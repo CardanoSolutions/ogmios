@@ -42,7 +42,7 @@ import Ouroboros.Network.Channel
 import System.Random
     ( StdGen, mkStdGen )
 import Test.QuickCheck
-    ( Property, arbitrary )
+    ( Arbitrary (..), Property )
 import Test.QuickCheck.Monadic
     ( monadicIO, pick, run )
 

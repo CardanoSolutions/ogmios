@@ -435,7 +435,7 @@ encodeProtocolParametersUpdate x = encodeObject
     , ( "updateVoteThreshold"
       , encodeMaybe encodeLovelacePortion (By.ppuUpdateVoteThd x)
       )
-    , ( "updateProposalTheshold"
+    , ( "updateProposalThreshold"
       , encodeMaybe encodeLovelacePortion (By.ppuUpdateProposalThd x)
       )
     , ( "updateProposalTimeToLive"

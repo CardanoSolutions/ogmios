@@ -26,126 +26,128 @@ export const submitTx = (bytes: string, config?: ConnectionConfig | InteractionC
           if (isEraMismatch(SubmitFail)) {
             const { eraMismatch } = SubmitFail
             return reject(new EraMismatchError(eraMismatch.queryEra, eraMismatch.ledgerEra))
-          } else if (errors.byron.UtxoValidation.assert(SubmitFail)) {
-            return reject(new errors.byron.UtxoValidation.Error(SubmitFail))
-          } else if (errors.byron.TxValidation.assert(SubmitFail)) {
-            return reject(new errors.byron.TxValidation.Error(SubmitFail))
           } else if (Array.isArray(SubmitFail)) {
             reject(SubmitFail.map(failure => {
-              if (errors.shelley.InvalidWitnesses.assert(failure)) {
-                return new errors.shelley.InvalidWitnesses.Error(failure)
-              } else if (errors.shelley.MissingVkWitnesses.assert(failure)) {
-                return new errors.shelley.MissingVkWitnesses.Error(failure)
-              } else if (errors.shelley.MissingScriptWitnesses.assert(failure)) {
-                return new errors.shelley.MissingScriptWitnesses.Error(failure)
-              } else if (errors.shelley.ScriptWitnessNotValidating.assert(failure)) {
-                return new errors.shelley.ScriptWitnessNotValidating.Error(failure)
-              } else if (errors.shelley.InsufficientGenesisSignatures.assert(failure)) {
-                return new errors.shelley.InsufficientGenesisSignatures.Error(failure)
-              } else if (errors.shelley.MissingTxMetadata.assert(failure)) {
-                return new errors.shelley.MissingTxMetadata.Error(failure)
-              } else if (errors.shelley.MissingTxMetadataHash.assert(failure)) {
-                return new errors.shelley.MissingTxMetadataHash.Error(failure)
-              } else if (errors.shelley.TxMetadataHashMismatch.assert(failure)) {
-                return new errors.shelley.TxMetadataHashMismatch.Error(failure)
-              } else if (errors.shelley.BadInputs.assert(failure)) {
-                return new errors.shelley.BadInputs.Error(failure)
-              } else if (errors.shelley.ExpiredUtxo.assert(failure)) {
-                return new errors.shelley.ExpiredUtxo.Error(failure)
-              } else if (errors.shelley.TxTooLarge.assert(failure)) {
-                return new errors.shelley.TxTooLarge.Error(failure)
-              } else if (errors.shelley.MissingAtLeastOneInputUtxo.assert(failure)) {
-                return new errors.shelley.MissingAtLeastOneInputUtxo.Error(failure)
-              } else if (errors.shelley.InvalidMetadata.assert(failure)) {
-                return new errors.shelley.InvalidMetadata.Error(failure)
-              } else if (errors.shelley.FeeTooSmall.assert(failure)) {
-                return new errors.shelley.FeeTooSmall.Error(failure)
-              } else if (errors.shelley.ValueNotConserved.assert(failure)) {
-                return new errors.shelley.ValueNotConserved.Error(failure)
-              } else if (errors.shelley.NetworkMismatch.assert(failure)) {
-                return new errors.shelley.NetworkMismatch.Error(failure)
-              } else if (errors.shelley.OutputTooSmall.assert(failure)) {
-                return new errors.shelley.OutputTooSmall.Error(failure)
-              } else if (errors.shelley.AddressAttributesTooLarge.assert(failure)) {
-                return new errors.shelley.AddressAttributesTooLarge.Error(failure)
-              } else if (errors.shelley.DelegateNotRegistered.assert(failure)) {
-                return new errors.shelley.DelegateNotRegistered.Error(failure)
-              } else if (errors.shelley.UnknownOrIncompleteWithdrawals.assert(failure)) {
-                return new errors.shelley.UnknownOrIncompleteWithdrawals.Error(failure)
-              } else if (errors.shelley.StakePoolNotRegistered.assert(failure)) {
-                return new errors.shelley.StakePoolNotRegistered.Error(failure)
-              } else if (errors.shelley.WrongRetirementEpoch.assert(failure)) {
-                return new errors.shelley.WrongRetirementEpoch.Error(failure)
-              } else if (errors.shelley.WrongPoolCertificate.assert(failure)) {
-                return new errors.shelley.WrongPoolCertificate.Error(failure)
-              } else if (errors.shelley.StakeKeyAlreadyRegistered.assert(failure)) {
-                return new errors.shelley.StakeKeyAlreadyRegistered.Error(failure)
-              } else if (errors.shelley.PoolCostTooSmall.assert(failure)) {
-                return new errors.shelley.PoolCostTooSmall.Error(failure)
-              } else if (errors.shelley.StakeKeyNotRegistered.assert(failure)) {
-                return new errors.shelley.StakeKeyNotRegistered.Error(failure)
-              } else if (errors.shelley.RewardAccountNotExisting.assert(failure)) {
-                return new errors.shelley.RewardAccountNotExisting.Error(failure)
-              } else if (errors.shelley.RewardAccountNotEmpty.assert(failure)) {
-                return new errors.shelley.RewardAccountNotEmpty.Error(failure)
-              } else if (errors.shelley.WrongCertificateType.assert(failure)) {
-                return new errors.shelley.WrongCertificateType.Error(failure)
-              } else if (errors.shelley.UnknownGenesisKey.assert(failure)) {
-                return new errors.shelley.UnknownGenesisKey.Error(failure)
-              } else if (errors.shelley.AlreadyDelegating.assert(failure)) {
-                return new errors.shelley.AlreadyDelegating.Error(failure)
-              } else if (errors.shelley.InsufficientFundsForMir.assert(failure)) {
-                return new errors.shelley.InsufficientFundsForMir.Error(failure)
-              } else if (errors.shelley.TooLateForMir.assert(failure)) {
-                return new errors.shelley.TooLateForMir.Error(failure)
-              } else if (errors.shelley.MirTransferNotCurrentlyAllowed.assert(failure)) {
-                return new errors.shelley.MirTransferNotCurrentlyAllowed.Error(failure)
-              } else if (errors.shelley.MirNegativeTransferNotCurrentlyAllowed.assert(failure)) {
-                return new errors.shelley.MirNegativeTransferNotCurrentlyAllowed.Error(failure)
-              } else if (errors.shelley.MirProducesNegativeUpdate.assert(failure)) {
-                return new errors.shelley.MirProducesNegativeUpdate.Error(failure)
-              } else if (errors.shelley.DuplicateGenesisVrf.assert(failure)) {
-                return new errors.shelley.DuplicateGenesisVrf.Error(failure)
-              } else if (errors.shelley.NonGenesisVoters.assert(failure)) {
-                return new errors.shelley.NonGenesisVoters.Error(failure)
-              } else if (errors.shelley.UpdateWrongEpoch.assert(failure)) {
-                return new errors.shelley.UpdateWrongEpoch.Error(failure)
-              } else if (errors.shelley.ProtocolVersionCannotFollow.assert(failure)) {
-                return new errors.shelley.ProtocolVersionCannotFollow.Error(failure)
-              } else if (errors.shelley.OutsideOfValidityInterval.assert(failure)) {
-                return new errors.shelley.OutsideOfValidityInterval.Error(failure)
-              } else if (errors.shelley.TriesToForgeAda.assert(failure)) {
-                return new errors.shelley.TriesToForgeAda.Error(failure)
-              } else if (errors.shelley.TooManyAssetsInOutput.assert(failure)) {
-                return new errors.shelley.TooManyAssetsInOutput.Error(failure)
-              } else if (errors.shelley.UnredeemableScripts.assert(failure)) {
-                return new errors.shelley.UnredeemableScripts.Error(failure)
-              } else if (errors.shelley.DatumsMismatch.assert(failure)) {
-                return new errors.shelley.DatumsMismatch.Error(failure)
-              } else if (errors.shelley.ExtraDataMismatch.assert(failure)) {
-                return new errors.shelley.ExtraDataMismatch.Error(failure)
-              } else if (errors.shelley.MissingRequiredSignatures.assert(failure)) {
-                return new errors.shelley.MissingRequiredSignatures.Error(failure)
-              } else if (errors.shelley.MissingDatumHashesForInputs.assert(failure)) {
-                return new errors.shelley.MissingDatumHashesForInputs.Error(failure)
-              } else if (errors.shelley.MissingCollateralInputs.assert(failure)) {
-                return new errors.shelley.MissingCollateralInputs.Error(failure)
-              } else if (errors.shelley.CollateralTooSmall.assert(failure)) {
-                return new errors.shelley.CollateralTooSmall.Error(failure)
-              } else if (errors.shelley.CollateralIsScript.assert(failure)) {
-                return new errors.shelley.CollateralIsScript.Error(failure)
-              } else if (errors.shelley.CollateralHasNonAdaAssets.assert(failure)) {
-                return new errors.shelley.CollateralHasNonAdaAssets.Error(failure)
-              } else if (errors.shelley.TooManyCollateralInputs.assert(failure)) {
-                return new errors.shelley.TooManyCollateralInputs.Error(failure)
-              } else if (errors.shelley.ExecutionUnitsTooLarge.assert(failure)) {
-                return new errors.shelley.ExecutionUnitsTooLarge.Error(failure)
-              } else if (errors.shelley.OutsideForecast.assert(failure)) {
-                return new errors.shelley.OutsideForecast.Error(failure)
-              } else if (errors.shelley.ValidationTagMismatch.assert(failure)) {
-                return new errors.shelley.ValidationTagMismatch.Error(failure)
-              } else if (errors.shelley.CollectErrors.assert(failure)) {
-                return new errors.shelley.CollectErrors.Error(failure)
+              if (errors.InvalidWitnesses.assert(failure)) {
+                return new errors.InvalidWitnesses.Error(failure)
+              } else if (errors.MissingVkWitnesses.assert(failure)) {
+                return new errors.MissingVkWitnesses.Error(failure)
+              } else if (errors.MissingScriptWitnesses.assert(failure)) {
+                return new errors.MissingScriptWitnesses.Error(failure)
+              } else if (errors.ScriptWitnessNotValidating.assert(failure)) {
+                return new errors.ScriptWitnessNotValidating.Error(failure)
+              } else if (errors.InsufficientGenesisSignatures.assert(failure)) {
+                return new errors.InsufficientGenesisSignatures.Error(failure)
+              } else if (errors.MissingTxMetadata.assert(failure)) {
+                return new errors.MissingTxMetadata.Error(failure)
+              } else if (errors.MissingTxMetadataHash.assert(failure)) {
+                return new errors.MissingTxMetadataHash.Error(failure)
+              } else if (errors.TxMetadataHashMismatch.assert(failure)) {
+                return new errors.TxMetadataHashMismatch.Error(failure)
+              } else if (errors.BadInputs.assert(failure)) {
+                return new errors.BadInputs.Error(failure)
+              } else if (errors.ExpiredUtxo.assert(failure)) {
+                return new errors.ExpiredUtxo.Error(failure)
+              } else if (errors.TxTooLarge.assert(failure)) {
+                return new errors.TxTooLarge.Error(failure)
+              } else if (errors.MissingAtLeastOneInputUtxo.assert(failure)) {
+                return new errors.MissingAtLeastOneInputUtxo.Error(failure)
+              } else if (errors.InvalidMetadata.assert(failure)) {
+                return new errors.InvalidMetadata.Error(failure)
+              } else if (errors.FeeTooSmall.assert(failure)) {
+                return new errors.FeeTooSmall.Error(failure)
+              } else if (errors.ValueNotConserved.assert(failure)) {
+                return new errors.ValueNotConserved.Error(failure)
+              } else if (errors.NetworkMismatch.assert(failure)) {
+                return new errors.NetworkMismatch.Error(failure)
+              } else if (errors.OutputTooSmall.assert(failure)) {
+                return new errors.OutputTooSmall.Error(failure)
+              } else if (errors.AddressAttributesTooLarge.assert(failure)) {
+                return new errors.AddressAttributesTooLarge.Error(failure)
+              } else if (errors.DelegateNotRegistered.assert(failure)) {
+                return new errors.DelegateNotRegistered.Error(failure)
+              } else if (errors.UnknownOrIncompleteWithdrawals.assert(failure)) {
+                return new errors.UnknownOrIncompleteWithdrawals.Error(failure)
+              } else if (errors.StakePoolNotRegistered.assert(failure)) {
+                return new errors.StakePoolNotRegistered.Error(failure)
+              } else if (errors.WrongRetirementEpoch.assert(failure)) {
+                return new errors.WrongRetirementEpoch.Error(failure)
+              } else if (errors.WrongPoolCertificate.assert(failure)) {
+                return new errors.WrongPoolCertificate.Error(failure)
+              } else if (errors.StakeKeyAlreadyRegistered.assert(failure)) {
+                return new errors.StakeKeyAlreadyRegistered.Error(failure)
+              } else if (errors.PoolCostTooSmall.assert(failure)) {
+                return new errors.PoolCostTooSmall.Error(failure)
+              } else if (errors.StakeKeyNotRegistered.assert(failure)) {
+                return new errors.StakeKeyNotRegistered.Error(failure)
+              } else if (errors.RewardAccountNotExisting.assert(failure)) {
+                return new errors.RewardAccountNotExisting.Error(failure)
+              } else if (errors.RewardAccountNotEmpty.assert(failure)) {
+                return new errors.RewardAccountNotEmpty.Error(failure)
+              } else if (errors.WrongCertificateType.assert(failure)) {
+                return new errors.WrongCertificateType.Error(failure)
+              } else if (errors.UnknownGenesisKey.assert(failure)) {
+                return new errors.UnknownGenesisKey.Error(failure)
+              } else if (errors.AlreadyDelegating.assert(failure)) {
+                return new errors.AlreadyDelegating.Error(failure)
+              } else if (errors.InsufficientFundsForMir.assert(failure)) {
+                return new errors.InsufficientFundsForMir.Error(failure)
+              } else if (errors.TooLateForMir.assert(failure)) {
+                return new errors.TooLateForMir.Error(failure)
+              } else if (errors.MirTransferNotCurrentlyAllowed.assert(failure)) {
+                return new errors.MirTransferNotCurrentlyAllowed.Error(failure)
+              } else if (errors.MirNegativeTransferNotCurrentlyAllowed.assert(failure)) {
+                return new errors.MirNegativeTransferNotCurrentlyAllowed.Error(failure)
+              } else if (errors.MirProducesNegativeUpdate.assert(failure)) {
+                return new errors.MirProducesNegativeUpdate.Error(failure)
+              } else if (errors.DuplicateGenesisVrf.assert(failure)) {
+                return new errors.DuplicateGenesisVrf.Error(failure)
+              } else if (errors.NonGenesisVoters.assert(failure)) {
+                return new errors.NonGenesisVoters.Error(failure)
+              } else if (errors.UpdateWrongEpoch.assert(failure)) {
+                return new errors.UpdateWrongEpoch.Error(failure)
+              } else if (errors.ProtocolVersionCannotFollow.assert(failure)) {
+                return new errors.ProtocolVersionCannotFollow.Error(failure)
+              } else if (errors.OutsideOfValidityInterval.assert(failure)) {
+                return new errors.OutsideOfValidityInterval.Error(failure)
+              } else if (errors.TriesToForgeAda.assert(failure)) {
+                return new errors.TriesToForgeAda.Error(failure)
+              } else if (errors.TooManyAssetsInOutput.assert(failure)) {
+                return new errors.TooManyAssetsInOutput.Error(failure)
+              } else if (errors.UnredeemableScripts.assert(failure)) {
+                return new errors.UnredeemableScripts.Error(failure)
+              } else if (errors.ExtraDataMismatch.assert(failure)) {
+                return new errors.ExtraDataMismatch.Error(failure)
+              } else if (errors.MissingRequiredSignatures.assert(failure)) {
+                return new errors.MissingRequiredSignatures.Error(failure)
+              } else if (errors.MissingDatumHashesForInputs.assert(failure)) {
+                return new errors.MissingDatumHashesForInputs.Error(failure)
+              } else if (errors.MissingCollateralInputs.assert(failure)) {
+                return new errors.MissingCollateralInputs.Error(failure)
+              } else if (errors.CollateralTooSmall.assert(failure)) {
+                return new errors.CollateralTooSmall.Error(failure)
+              } else if (errors.CollateralIsScript.assert(failure)) {
+                return new errors.CollateralIsScript.Error(failure)
+              } else if (errors.CollateralHasNonAdaAssets.assert(failure)) {
+                return new errors.CollateralHasNonAdaAssets.Error(failure)
+              } else if (errors.TooManyCollateralInputs.assert(failure)) {
+                return new errors.TooManyCollateralInputs.Error(failure)
+              } else if (errors.ExecutionUnitsTooLarge.assert(failure)) {
+                return new errors.ExecutionUnitsTooLarge.Error(failure)
+              } else if (errors.OutsideForecast.assert(failure)) {
+                return new errors.OutsideForecast.Error(failure)
+              } else if (errors.ValidationTagMismatch.assert(failure)) {
+                return new errors.ValidationTagMismatch.Error(failure)
+              } else if (errors.CollectErrors.assert(failure)) {
+                return new errors.CollectErrors.Error(failure)
+              } else if (errors.PoolMetadataHashTooBig.assert(failure)) {
+                return new errors.PoolMetadataHashTooBig.Error(failure)
+              } else if (errors.MissingRequiredDatums.assert(failure)) {
+                return new errors.MissingRequiredDatums.Error(failure)
+              } else if (errors.UnspendableDatums.assert(failure)) {
+                return new errors.UnspendableDatums.Error(failure)
+              } else if (errors.UnspendableScriptInputs.assert(failure)) {
+                return new errors.UnspendableScriptInputs.Error(failure)
               } else {
                 return new Error(failure)
               }

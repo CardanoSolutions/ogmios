@@ -3,6 +3,7 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 
 -- Used to partially pattern match result of parsing default arguments. Okay-ish
 -- because it's test code and, having it fail would be instantly caught.
@@ -14,6 +15,8 @@ module Ogmios.App.OptionsSpec
 
 import Ogmios.Prelude
 
+import Data.List
+    ( isInfixOf )
 import Ogmios.App.Options
     ( Command (..)
     , EpochSlots (..)
@@ -23,10 +26,21 @@ import Ogmios.App.Options
     , Severity (..)
     , mkSystemStart
     , parseNetworkParameters
+    , parseOptions
     , parseOptionsPure
     )
+import System.Environment
+    ( withArgs )
 import Test.Hspec
-    ( Expectation, Spec, context, parallel, shouldBe, shouldSatisfy, specify )
+    ( Expectation
+    , Spec
+    , context
+    , expectationFailure
+    , parallel
+    , shouldBe
+    , shouldSatisfy
+    , specify
+    )
 import Test.Path.Util
     ( getProjectRoot )
 
@@ -36,6 +50,36 @@ spec = parallel $ do
         forM_ matrix $ \(args, expect) -> do
             let title = toString $ unwords $ toText <$> args
             specify title $ expect (parseOptionsPure args)
+
+        specify "invalid" $ do
+            case parseOptionsPure ["--nope"] of
+                Right{} -> expectationFailure "Expected error but got success."
+                Left e -> e `shouldSatisfy` isInfixOf "Invalid option"
+
+        specify "test completion" $ do
+            case parseOptionsPure ["--node-so\t"] of
+                Right{} -> expectationFailure "Expected error but got success."
+                Left e -> e `shouldSatisfy` isInfixOf "Invalid option"
+
+    context "parseOptions(IO)" $ do
+        specify "--version" $ withArgs ["--version"] parseOptions >>= \case
+            Version -> pure ()
+            Start{} -> expectationFailure "Expected Version but got Start."
+
+        let args =
+                [ "--node-socket", "./node.socket"
+                , "--node-config", getConfigFile "testnet"
+                ]
+        specify (show args) $ withArgs args parseOptions >>= \case
+            Start (Identity _) opts -> do
+                nodeSocket opts `shouldBe` "./node.socket"
+                nodeConfig opts `shouldBe` (getConfigFile "testnet")
+                serverHost opts `shouldBe` "127.0.0.1"
+                serverPort opts `shouldBe` 1337
+                connectionTimeout opts `shouldBe` 90
+                maxInFlight opts `shouldBe` 1000
+                logLevel opts `shouldBe` Info
+            Version -> expectationFailure "Expected Start but got Version."
 
     context "parseNetworkParameters" $ do
         specify "mainnet" $ do
@@ -127,8 +171,14 @@ spec = parallel $ do
         , ( [ "-v" ], flip shouldBe $ Right Version )
         , ( [ "--version" ], flip shouldBe $ Right Version )
 
-        , ( [ "--help" ], flip shouldSatisfy isLeft  )
-        , ( [ "-h" ], flip shouldSatisfy isLeft )
+        , ( [ "--help" ]
+          , flip shouldSatisfy $ isLeftWith $ \help ->
+            help `deepseq` ("Usage:" `isInfixOf` help)
+          )
+        , ( [ "-h" ]
+          , flip shouldSatisfy $ isLeftWith $ \help ->
+            help `deepseq` ("Usage:" `isInfixOf` help)
+          )
         ]
 
 --
@@ -151,6 +201,11 @@ shouldSucceed =
 
 shouldFail :: (Either String (Command Proxy)) -> Expectation
 shouldFail = flip shouldSatisfy isLeft
+
+isLeftWith :: (err -> Bool) -> Either err result -> Bool
+isLeftWith predicate = \case
+    Left e -> predicate e
+    Right{} -> False
 
 getConfigFile :: String -> FilePath
 getConfigFile network =

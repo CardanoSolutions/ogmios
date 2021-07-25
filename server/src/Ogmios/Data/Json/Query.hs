@@ -32,7 +32,7 @@ module Ogmios.Data.Json.Query
     , parseGetProposedPParamsUpdates
     , parseGetStakeDistribution
     , parseGetUTxO
-    , parseGetFilteredUTxO
+    , parseGetUTxOByAddress
     , parseGetGenesisConfig
     ) where
 
@@ -40,6 +40,10 @@ import Ogmios.Data.Json.Prelude
 
 import Cardano.Api
     ( ShelleyBasedEra (..) )
+import Cardano.Ledger.Address
+    ( Addr )
+import Cardano.Ledger.Credential
+    ( Credential )
 import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Ledger.Keys
@@ -81,13 +85,13 @@ import qualified Data.Aeson.Types as Json
 import qualified Data.Map.Merge.Strict as Map
 
 import qualified Cardano.Crypto.Hash.Class as CC
+import qualified Cardano.Ledger.Address as Address
 import qualified Cardano.Ledger.Coin as Coin
 import qualified Cardano.Ledger.Core as Core
+import qualified Cardano.Ledger.Credential as Credential
 import qualified Cardano.Ledger.Keys as Keys
 
-import qualified Shelley.Spec.Ledger.Address as Sh
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
-import qualified Shelley.Spec.Ledger.Credential as Sh
 import qualified Shelley.Spec.Ledger.Delegation.Certificates as Sh
 import qualified Shelley.Spec.Ledger.PParams as Sh
 import qualified Shelley.Spec.Ledger.UTxO as Sh
@@ -317,7 +321,7 @@ parseGetNonMyopicMemberRewards genResult =
   where
     parseCredentials
         :: Json.Object
-        -> Json.Parser (Set (Either Coin (Sh.Credential 'Staking crypto)))
+        -> Json.Parser (Set (Either Coin (Credential 'Staking crypto)))
     parseCredentials obj = fmap fromList $
         obj .: "nonMyopicMemberRewards" >>= traverse
             (choice "credential"
@@ -356,7 +360,7 @@ parseGetFilteredDelegationsAndRewards genResult =
   where
     parseCredentials
         :: Json.Object
-        -> Json.Parser (Set (Sh.Credential 'Staking crypto))
+        -> Json.Parser (Set (Credential 'Staking crypto))
     parseCredentials obj = fmap fromList $
         obj .: "delegationsAndRewards" >>= traverse parseCredential
 
@@ -488,7 +492,7 @@ parseGetUTxO genResultInEra =
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentShelley GetUTxO
+                    BlockQuery $ QueryIfCurrentShelley GetUTxOWhole
                 , encodeResult =
                     either encodeMismatchEraInfo Shelley.encodeUtxo
                 , genResult =
@@ -497,7 +501,7 @@ parseGetUTxO genResultInEra =
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentAllegra GetUTxO
+                    BlockQuery $ QueryIfCurrentAllegra GetUTxOWhole
                 , encodeResult =
                     either encodeMismatchEraInfo Allegra.encodeUtxo
                 , genResult =
@@ -506,7 +510,7 @@ parseGetUTxO genResultInEra =
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentMary GetUTxO
+                    BlockQuery $ QueryIfCurrentMary GetUTxOWhole
                 , encodeResult =
                     either encodeMismatchEraInfo Mary.encodeUtxo
                 , genResult =
@@ -515,25 +519,25 @@ parseGetUTxO genResultInEra =
             SomeShelleyEra ShelleyBasedEraAlonzo ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentAlonzo GetUTxO
+                    BlockQuery $ QueryIfCurrentAlonzo GetUTxOWhole
                 , encodeResult =
                     either encodeMismatchEraInfo Alonzo.encodeUtxo
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
 
-parseGetFilteredUTxO
+parseGetUTxOByAddress
     :: forall crypto f. (Crypto crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.UTxO era))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetFilteredUTxO genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
+parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
     addrs <- parseAddresses obj
     pure $ \case
         SomeShelleyEra ShelleyBasedEraShelley ->
             Just $ SomeQuery
             { query =
-                BlockQuery $ QueryIfCurrentShelley (GetFilteredUTxO addrs)
+                BlockQuery $ QueryIfCurrentShelley (GetUTxOByAddress addrs)
             , encodeResult =
                 either encodeMismatchEraInfo Shelley.encodeUtxo
             , genResult =
@@ -542,7 +546,7 @@ parseGetFilteredUTxO genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
         SomeShelleyEra ShelleyBasedEraAllegra ->
             Just $ SomeQuery
             { query =
-                BlockQuery $ QueryIfCurrentAllegra (GetFilteredUTxO addrs)
+                BlockQuery $ QueryIfCurrentAllegra (GetUTxOByAddress addrs)
             , encodeResult =
                 either encodeMismatchEraInfo Allegra.encodeUtxo
             , genResult =
@@ -551,7 +555,7 @@ parseGetFilteredUTxO genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
         SomeShelleyEra ShelleyBasedEraMary ->
             Just $ SomeQuery
             { query =
-                BlockQuery $ QueryIfCurrentMary (GetFilteredUTxO addrs)
+                BlockQuery $ QueryIfCurrentMary (GetUTxOByAddress addrs)
             , encodeResult =
                 either encodeMismatchEraInfo Mary.encodeUtxo
             , genResult =
@@ -560,7 +564,7 @@ parseGetFilteredUTxO genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
         SomeShelleyEra ShelleyBasedEraAlonzo ->
             Just $ SomeQuery
             { query =
-                BlockQuery $ QueryIfCurrentAlonzo (GetFilteredUTxO addrs)
+                BlockQuery $ QueryIfCurrentAlonzo (GetUTxOByAddress addrs)
             , encodeResult =
                 either encodeMismatchEraInfo Alonzo.encodeUtxo
             , genResult =
@@ -569,7 +573,7 @@ parseGetFilteredUTxO genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
   where
     parseAddresses
         :: Json.Object
-        -> Json.Parser (Set (Sh.Addr crypto))
+        -> Json.Parser (Set (Addr crypto))
     parseAddresses obj = fmap fromList $
         obj .: "utxo" >>= traverse parseAddress
 
@@ -650,10 +654,10 @@ data SomeShelleyEra =
     forall era. SomeShelleyEra (ShelleyBasedEra era)
 
 type Delegations crypto =
-    Map (Sh.Credential 'Staking crypto) (Keys.KeyHash 'StakePool crypto)
+    Map (Credential 'Staking crypto) (Keys.KeyHash 'StakePool crypto)
 
 type RewardAccounts crypto =
-    Map (Sh.Credential 'Staking crypto) Coin
+    Map (Credential 'Staking crypto) Coin
 
 data SomeQuery (f :: Type -> Type) block = forall result. SomeQuery
     { query :: Query block result
@@ -664,7 +668,7 @@ data SomeQuery (f :: Type -> Type) block = forall result. SomeQuery
 parseAddress
     :: Crypto crypto
     => Json.Value
-    -> Json.Parser (Sh.Addr crypto)
+    -> Json.Parser (Addr crypto)
 parseAddress = Json.withText "Address" $ choice "address"
     [ addressFromBytes fromBech32
     , addressFromBytes fromBase58
@@ -672,7 +676,7 @@ parseAddress = Json.withText "Address" $ choice "address"
     ]
   where
     addressFromBytes decode =
-        decode >=> maybe mempty pure . Sh.deserialiseAddr
+        decode >=> maybe mempty pure . Address.deserialiseAddr
 
     fromBech32 txt =
         case Bech32.decodeLenient txt of
@@ -702,9 +706,9 @@ parseCoin =
 parseCredential
     :: Crypto crypto
     => Json.Value
-    -> Json.Parser (Sh.Credential 'Staking crypto)
+    -> Json.Parser (Credential 'Staking crypto)
 parseCredential =
-    fmap (Sh.KeyHashObj . Keys.KeyHash) . parseHash
+    fmap (Credential.KeyHashObj . Keys.KeyHash) . parseHash
 
 parseHash
     :: CC.HashAlgorithm alg

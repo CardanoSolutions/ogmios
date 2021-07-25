@@ -147,7 +147,7 @@ library
     , generic-lens
     , git-th
     , http-types
-    , io-sim-classes
+    , io-classes
     , iohk-monitoring
     , iproute
     , json-wsp
@@ -240,8 +240,10 @@ test-suite unit
       Ogmios.App.Protocol.StateQuerySpec
       Ogmios.Data.HealthSpec
       Ogmios.Data.JsonSpec
+      Ogmios.Data.MetricsSpec
       Test.App.Protocol.Util
       Test.Generators
+      Test.Instances.Util
       Test.Path.Util
       Paths_ogmios
   hs-source-dirs:
@@ -298,8 +300,8 @@ test-suite unit
     , hedgehog-quickcheck
     , hspec
     , hspec-json-schema
+    , io-classes
     , io-sim
-    , io-sim-classes
     , json-wsp
     , ogmios
     , ouroboros-consensus
@@ -314,6 +316,7 @@ test-suite unit
     , shelley-spec-ledger
     , shelley-spec-ledger-test
     , template-haskell
+    , time
     , typed-protocols
     , typed-protocols-examples
   default-language: Haskell2010

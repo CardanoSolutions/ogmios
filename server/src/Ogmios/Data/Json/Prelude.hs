@@ -48,8 +48,10 @@ module Ogmios.Data.Json.Prelude
     , encodeInteger
     , encodeNatural
     , encodeNominalDiffTime
+    , encodeNonNegativeInterval
     , encodeNull
     , encodePort
+    , encodePositiveUnitInterval
     , encodeRational
     , encodeRelativeTime
     , encodeScientific
@@ -88,13 +90,15 @@ import Cardano.Binary
     ( Annotated (..) )
 import Cardano.Ledger.BaseTypes
     ( DnsName
+    , NonNegativeInterval
     , Port
+    , PositiveUnitInterval
     , StrictMaybe (..)
     , UnitInterval
     , Url
     , dnsToText
     , portToWord16
-    , unitIntervalToRational
+    , unboundRational
     , urlToText
     )
 import Cardano.Ledger.Coin
@@ -281,6 +285,11 @@ encodeNominalDiffTime =
     encodeInteger . round
 {-# INLINABLE encodeNominalDiffTime #-}
 
+encodeNonNegativeInterval :: NonNegativeInterval -> Json
+encodeNonNegativeInterval =
+    encodeRational . unboundRational
+{-# INLINABLE encodeNonNegativeInterval #-}
+
 encodeNull :: Json
 encodeNull =
     Json.null_
@@ -290,6 +299,11 @@ encodePort :: Port -> Json
 encodePort =
     encodeWord16 . portToWord16
 {-# INLINABLE encodePort #-}
+
+encodePositiveUnitInterval :: PositiveUnitInterval -> Json
+encodePositiveUnitInterval =
+    encodeRational . unboundRational
+{-# INLINABLE encodePositiveUnitInterval #-}
 
 encodeRational :: Rational -> Json
 encodeRational r =
@@ -328,7 +342,7 @@ encodeText =
 
 encodeUnitInterval :: UnitInterval -> Json
 encodeUnitInterval =
-    encodeRational . unitIntervalToRational
+    encodeRational . unboundRational
 {-# INLINABLE encodeUnitInterval #-}
 
 encodeUrl :: Url -> Json

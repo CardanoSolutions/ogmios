@@ -67,7 +67,7 @@ library:
     - generic-lens
     - git-th
     - http-types
-    - io-sim-classes
+    - io-classes
     - iohk-monitoring
     - iproute
     - json-wsp
@@ -133,7 +133,7 @@ tests:
     - hspec
     - hspec-json-schema
     - io-sim
-    - io-sim-classes
+    - io-classes
     - json-wsp
     - ogmios
     - ouroboros-consensus
@@ -149,6 +149,7 @@ tests:
     - shelley-spec-ledger
     - shelley-spec-ledger-test
     - template-haskell
+    - time
     - typed-protocols
     - typed-protocols-examples
     build-tools:

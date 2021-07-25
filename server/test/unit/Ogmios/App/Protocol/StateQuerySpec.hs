@@ -242,7 +242,6 @@ stateQueryMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
             SomeResponse . LSQ.MsgResult query <$> genEpochResult Proxy
         Ledger.BlockQuery (QueryIfCurrentAlonzo GetEpochNo) ->
             SomeResponse . LSQ.MsgResult query <$> genEpochResult Proxy
-
         Ledger.BlockQuery (QueryHardFork GetCurrentEra) -> elements
             [ SomeResponse $ LSQ.MsgResult query (EraIndex (IxByron   (K ())))
             , SomeResponse $ LSQ.MsgResult query (EraIndex (IxShelley (K ())))
@@ -250,7 +249,7 @@ stateQueryMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
             , SomeResponse $ LSQ.MsgResult query (EraIndex (IxMary    (K ())))
             , SomeResponse $ LSQ.MsgResult query (EraIndex (IxAlonzo  (K ())))
             ]
-        Ledger.BlockQuery _ ->
+        _ ->
             error $ "No generator for query: " <> show query
 
 --
