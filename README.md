@@ -9,7 +9,7 @@
 
 **Ogmios** is a lightweight translation service written in Haskell running on top of [cardano-node](https://github.com/input-output-hk/cardano-node/). It offers a JSON interface through WebSockets and enables clients to speak [Ouroboros' mini-protocols](https://hydra.iohk.io/build/1070091/download/1/network.pdf#chapter.3) via remote procedure calls over JSON. 
 
-It comes battery-included with monitoring, logging and a high-performance [server](./server). In addition, a [TypeScript client library](./clients/TypeScript) is available and provide a fully static and type-safe interface for Cardano in TypeScript.
+It comes battery-included with monitoring, logging and a high-performance [server](./server#readme). In addition, a [TypeScript client library](./clients/TypeScript#readme) is available and provide a fully static and type-safe interface for Cardano in TypeScript.
 
 <p align="center">
   <img src=".github/preview.png" alt="Ogmios TypeScript Client Preview">
