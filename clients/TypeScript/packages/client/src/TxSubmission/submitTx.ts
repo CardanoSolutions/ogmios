@@ -120,8 +120,6 @@ export const submitTx = (bytes: string, config?: ConnectionConfig | InteractionC
                 return new errors.shelley.TooManyAssetsInOutput.Error(failure)
               } else if (errors.shelley.UnredeemableScripts.assert(failure)) {
                 return new errors.shelley.UnredeemableScripts.Error(failure)
-              } else if (errors.shelley.DatumsMismatch.assert(failure)) {
-                return new errors.shelley.DatumsMismatch.Error(failure)
               } else if (errors.shelley.ExtraDataMismatch.assert(failure)) {
                 return new errors.shelley.ExtraDataMismatch.Error(failure)
               } else if (errors.shelley.MissingRequiredSignatures.assert(failure)) {
@@ -146,6 +144,14 @@ export const submitTx = (bytes: string, config?: ConnectionConfig | InteractionC
                 return new errors.shelley.ValidationTagMismatch.Error(failure)
               } else if (errors.shelley.CollectErrors.assert(failure)) {
                 return new errors.shelley.CollectErrors.Error(failure)
+              } else if (errors.shelley.PoolMetadataHashTooBig.assert(failure)) {
+                return new errors.shelley.PoolMetadataHashTooBig.Error(failure)
+              } else if (errors.shelley.MissingRequiredDatums.assert(failure)) {
+                return new errors.shelley.MissingRequiredDatums.Error(failure)
+              } else if (errors.shelley.UnspendableDatums.assert(failure)) {
+                return new errors.shelley.UnspendableDatums.Error(failure)
+              } else if (errors.shelley.UnspendableScriptInputs.assert(failure)) {
+                return new errors.shelley.UnspendableScriptInputs.Error(failure)
               } else {
                 return new Error(failure)
               }

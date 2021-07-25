@@ -14,7 +14,7 @@ pre: "<b>5. </b>"
   - `poolMetadataHashTooBig`
   - `missingRequiredDatums`
   - `unspendableDatums`
-  - `unspendableScriptInputsWithoutDatum`
+  - `unspendableScriptInputs`
 
 #### Changed
 

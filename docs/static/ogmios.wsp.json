@@ -3159,7 +3159,7 @@
         , { "$ref": "#/definitions/SubmitTxError[unspendableDatums]" }
         , { "$ref": "#/definitions/SubmitTxError[extraDataMismatch]" }
         , { "$ref": "#/definitions/SubmitTxError[missingRequiredSignatures]" }
-        , { "$ref": "#/definitions/SubmitTxError[unspendableScriptInputsWithoutDatum]" }
+        , { "$ref": "#/definitions/SubmitTxError[unspendableScriptInputs]" }
         , { "$ref": "#/definitions/SubmitTxError[missingDatumHashesForInputs]" }
         , { "$ref": "#/definitions/SubmitTxError[missingCollateralInputs]" }
         , { "$ref": "#/definitions/SubmitTxError[collateralTooSmall]" }
@@ -3860,13 +3860,13 @@
       }
     }
 
-  , "SubmitTxError[unspendableScriptInputsWithoutDatum]":
+  , "SubmitTxError[unspendableScriptInputs]":
     { "type": "object"
-    , "title": "unspendableScriptInputsWithoutDatum"
+    , "title": "unspendableScriptInputs"
     , "additionalProperties": false
-    , "required": [ "unspendableScriptInputsWithoutDatum" ]
+    , "required": [ "unspendableScriptInputs" ]
     , "properties":
-      { "unspendableScriptInputsWithoutDatum":
+      { "unspendableScriptInputs":
         { "type": "array"
         , "items": { "$ref": "#/definitions/TxIn" }
         }

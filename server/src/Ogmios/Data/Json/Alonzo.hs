@@ -97,7 +97,7 @@ encodeAlonzoPredFail = \case
             ]
     Al.UnspendableUTxONoDatumHash utxos ->
         encodeObject
-            [ ( "unspendableScriptInputsWithoutDatum"
+            [ ( "unspendableScriptInputs"
               , encodeFoldable Shelley.encodeTxIn utxos
               )
             ]

@@ -10,7 +10,7 @@ import {
   BlockMary,
   BlockShelley,
   Hash16,
-  Point
+  PointOrOrigin
 } from '@cardano-ogmios/schema'
 import { expectContextFromConnectionConfig } from './util'
 
@@ -109,7 +109,7 @@ describe('ChainSync', () => {
     })
 
     it('requires message handlers to process roll back and roll forward messages, invoking the requestNext callback once ready for next message', async () => {
-      const rollbackPoints: Point[] = []
+      const rollbackPoints: PointOrOrigin[] = []
       const blocks: Block[] = []
       const client = await createChainSyncClient({
         rollBackward: async ({ point }, requestNext) => {

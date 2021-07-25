@@ -7,7 +7,6 @@ import {
   CollateralIsScript,
   CollateralTooSmall,
   CollectErrors,
-  DatumsMismatch,
   DelegateNotRegistered,
   DuplicateGenesisVrf,
   ExecutionUnitsTooLarge,
@@ -24,6 +23,7 @@ import {
   MissingAtLeastOneInputUtxo,
   MissingCollateralInputs,
   MissingDatumHashesForInputs,
+  MissingRequiredDatums,
   MissingRequiredSignatures,
   MissingScriptWitnesses,
   MissingTxMetadata,
@@ -35,6 +35,7 @@ import {
   OutsideForecast,
   OutsideOfValidityInterval,
   PoolCostTooSmall,
+  PoolMetadataHashTooBig,
   ProtocolVersionCannotFollow,
   RewardAccountNotEmpty,
   RewardAccountNotExisting,
@@ -53,6 +54,8 @@ import {
   UnknownGenesisKey,
   UnknownOrIncompleteWithdrawals,
   UnredeemableScripts,
+  UnspendableDatums,
+  UnspendableScriptInputs,
   UpdateWrongEpoch,
   UtxoValidationError,
   ValidationTagMismatch,
@@ -63,63 +66,66 @@ import {
 } from '@cardano-ogmios/schema'
 
 type SubmitTxErrorShelley =
-  InvalidWitnesses
-  | MissingVkWitnesses
-  | MissingScriptWitnesses
-  | ScriptWitnessNotValidating
-  | InsufficientGenesisSignatures
-  | MissingTxMetadata
-  | MissingTxMetadataHash
-  | TxMetadataHashMismatch
-  | BadInputs
-  | ExpiredUtxo
-  | TxTooLarge
-  | MissingAtLeastOneInputUtxo
-  | InvalidMetadata
-  | FeeTooSmall
-  | ValueNotConserved
-  | NetworkMismatch
-  | OutputTooSmall
   | AddressAttributesTooLarge
-  | DelegateNotRegistered
-  | UnknownOrIncompleteWithdrawals
-  | StakePoolNotRegistered
-  | WrongRetirementEpoch
-  | WrongPoolCertificate
-  | StakeKeyAlreadyRegistered
-  | PoolCostTooSmall
-  | StakeKeyNotRegistered
-  | RewardAccountNotExisting
-  | RewardAccountNotEmpty
-  | WrongCertificateType
-  | UnknownGenesisKey
   | AlreadyDelegating
+  | BadInputs
+  | CollateralHasNonAdaAssets
+  | CollateralIsScript
+  | CollateralTooSmall
+  | CollectErrors
+  | DelegateNotRegistered
+  | DuplicateGenesisVrf
+  | ExecutionUnitsTooLarge
+  | ExpiredUtxo
+  | ExtraDataMismatch
+  | FeeTooSmall
   | InsufficientFundsForMir
-  | TooLateForMir
-  | MirTransferNotCurrentlyAllowed
+  | InsufficientGenesisSignatures
+  | InvalidMetadata
+  | InvalidWitnesses
   | MirNegativeTransferNotCurrentlyAllowed
   | MirProducesNegativeUpdate
-  | DuplicateGenesisVrf
-  | NonGenesisVoters
-  | UpdateWrongEpoch
-  | ProtocolVersionCannotFollow
-  | OutsideOfValidityInterval
-  | TriesToForgeAda
-  | TooManyAssetsInOutput
-  | UnredeemableScripts
-  | DatumsMismatch
-  | ExtraDataMismatch
-  | MissingRequiredSignatures
-  | MissingDatumHashesForInputs
+  | MirTransferNotCurrentlyAllowed
+  | MissingAtLeastOneInputUtxo
   | MissingCollateralInputs
-  | CollateralTooSmall
-  | CollateralIsScript
-  | CollateralHasNonAdaAssets
-  | TooManyCollateralInputs
-  | ExecutionUnitsTooLarge
+  | MissingDatumHashesForInputs
+  | MissingRequiredDatums
+  | MissingRequiredSignatures
+  | MissingScriptWitnesses
+  | MissingTxMetadata
+  | MissingTxMetadataHash
+  | MissingVkWitnesses
+  | NetworkMismatch
+  | NonGenesisVoters
+  | OutputTooSmall
   | OutsideForecast
+  | OutsideOfValidityInterval
+  | PoolCostTooSmall
+  | PoolMetadataHashTooBig
+  | ProtocolVersionCannotFollow
+  | RewardAccountNotEmpty
+  | RewardAccountNotExisting
+  | ScriptWitnessNotValidating
+  | StakeKeyAlreadyRegistered
+  | StakeKeyNotRegistered
+  | StakePoolNotRegistered
+  | TooLateForMir
+  | TooManyAssetsInOutput
+  | TooManyCollateralInputs
+  | TriesToForgeAda
+  | TxMetadataHashMismatch
+  | TxTooLarge
+  | UnknownGenesisKey
+  | UnknownOrIncompleteWithdrawals
+  | UnredeemableScripts
+  | UnspendableDatums
+  | UnspendableScriptInputs
+  | UpdateWrongEpoch
   | ValidationTagMismatch
-  | CollectErrors
+  | ValueNotConserved
+  | WrongCertificateType
+  | WrongPoolCertificate
+  | WrongRetirementEpoch;
 
 export const errors = {
   byron: {
@@ -585,16 +591,6 @@ export const errors = {
         }
       }
     },
-    DatumsMismatch: {
-      assert: (item: SubmitTxErrorShelley): item is DatumsMismatch =>
-        (item as DatumsMismatch).datumsMismatch !== undefined,
-      Error: class DatumsMismatchError extends CustomError {
-        public constructor (rawError: DatumsMismatch) {
-          super()
-          this.message = JSON.stringify(rawError.datumsMismatch)
-        }
-      }
-    },
     ExtraDataMismatch: {
       assert: (item: SubmitTxErrorShelley): item is ExtraDataMismatch =>
         (item as ExtraDataMismatch).extraDataMismatch !== undefined,
@@ -712,6 +708,46 @@ export const errors = {
         public constructor (rawError: CollectErrors) {
           super()
           this.message = JSON.stringify(rawError.collectErrors)
+        }
+      }
+    },
+    PoolMetadataHashTooBig: {
+      assert: (item: SubmitTxErrorShelley): item is PoolMetadataHashTooBig =>
+        (item as PoolMetadataHashTooBig).poolMetadataHashTooBig !== undefined,
+      Error: class PoolMetadataHashTooBigError extends CustomError {
+        public constructor (rawError: PoolMetadataHashTooBig) {
+          super()
+          this.message = JSON.stringify(rawError.poolMetadataHashTooBig)
+        }
+      }
+    },
+    MissingRequiredDatums: {
+      assert: (item: SubmitTxErrorShelley): item is MissingRequiredDatums =>
+        (item as MissingRequiredDatums).missingRequiredDatums !== undefined,
+      Error: class MissingRequiredDatumsError extends CustomError {
+        public constructor (rawError: MissingRequiredDatums) {
+          super()
+          this.message = JSON.stringify(rawError.missingRequiredDatums)
+        }
+      }
+    },
+    UnspendableDatums: {
+      assert: (item: SubmitTxErrorShelley): item is UnspendableDatums =>
+        (item as UnspendableDatums).unspendableDatums !== undefined,
+      Error: class UnspendableDatumsError extends CustomError {
+        public constructor (rawError: UnspendableDatums) {
+          super()
+          this.message = JSON.stringify(rawError.unspendableDatums)
+        }
+      }
+    },
+    UnspendableScriptInputs: {
+      assert: (item: SubmitTxErrorShelley): item is UnspendableScriptInputs =>
+        (item as UnspendableScriptInputs).unspendableScriptInputs !== undefined,
+      Error: class UnspendableScriptInputsError extends CustomError {
+        public constructor (rawError: UnspendableScriptInputs) {
+          super()
+          this.message = JSON.stringify(rawError.unspendableScriptInputs)
         }
       }
     }
