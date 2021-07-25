@@ -79,6 +79,7 @@ library:
     - ouroboros-consensus-cardano
     - ouroboros-consensus-shelley
     - ouroboros-network
+    - profunctors
     - relude
     - safe
     - safe-exceptions
@@ -135,6 +136,7 @@ tests:
     - io-sim
     - io-classes
     - json-wsp
+    - lens-aeson
     - ogmios
     - ouroboros-consensus
     - ouroboros-consensus-byron
@@ -149,6 +151,7 @@ tests:
     - shelley-spec-ledger
     - shelley-spec-ledger-test
     - template-haskell
+    - text
     - time
     - typed-protocols
     - typed-protocols-examples

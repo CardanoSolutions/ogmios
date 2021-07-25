@@ -73,16 +73,22 @@ onUnmatchedMessage
     => ByteString
     -> Json
 onUnmatchedMessage blob = do
-    Wsp.mkFault $ Wsp.clientFault Nothing $ T.unpack fault
+    Wsp.mkFault $ Wsp.clientFault reflection $ T.unpack fault
   where
-    fault =
-        "Invalid request: " <> modifyAesonFailure details <> "."
+    (fault, reflection) =
+        ( "Invalid request: " <> modifyAesonFailure details <> "."
+        , reflection'
+        )
       where
-        details = case Json.decode' (fromStrict blob) of
+        (details, reflection') = case Json.decode' (fromStrict blob) of
             Just (Json.Object obj) ->
-                either toText absurd $ Json.parseEither userFriendlyParser obj
+                ( either toText absurd $ Json.parseEither userFriendlyParser obj
+                , lookup "mirror" obj
+                )
             _ ->
-                "must be a well-formed JSON object."
+                ( "must be a well-formed JSON object."
+                , Nothing
+                )
 
     modifyAesonFailure :: Text -> Text
     modifyAesonFailure

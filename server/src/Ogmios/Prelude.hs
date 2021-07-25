@@ -10,12 +10,16 @@ module Ogmios.Prelude
     , HasType
     , view
     , typed
+    , (^?)
+    , (^.)
     ) where
 
 import Data.Generics.Internal.VL.Lens
-    ( view )
+    ( view, (^.) )
 import Data.Generics.Product.Typed
     ( HasType, typed )
+import Data.Profunctor.Unsafe
+    ( ( #. ) )
 import Relude hiding
     ( MVar
     , Nat
@@ -56,3 +60,9 @@ import Relude hiding
     , tryTakeTMVar
     , writeTVar
     )
+
+-- | Copied from: https://hackage.haskell.org/package/generic-lens-1.1.0.0/docs/src/Data.Generics.Internal.VL.Prism.html
+infixl 8 ^?
+(^?) :: s -> ((a -> Const (First a) a) -> s -> Const (First a) s) -> Maybe a
+s ^? l = getFirst (fmof l (First #. Just) s)
+  where fmof l' f = getConst #. l' (Const #. f)

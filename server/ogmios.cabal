@@ -159,6 +159,7 @@ library
     , ouroboros-consensus-cardano
     , ouroboros-consensus-shelley
     , ouroboros-network
+    , profunctors
     , relude
     , safe
     , safe-exceptions
@@ -238,6 +239,7 @@ test-suite unit
       Ogmios.App.OptionsSpec
       Ogmios.App.Protocol.ChainSyncSpec
       Ogmios.App.Protocol.StateQuerySpec
+      Ogmios.App.ProtocolSpec
       Ogmios.Data.HealthSpec
       Ogmios.Data.JsonSpec
       Ogmios.Data.MetricsSpec
@@ -303,6 +305,7 @@ test-suite unit
     , io-classes
     , io-sim
     , json-wsp
+    , lens-aeson
     , ogmios
     , ouroboros-consensus
     , ouroboros-consensus-byron
@@ -316,6 +319,7 @@ test-suite unit
     , shelley-spec-ledger
     , shelley-spec-ledger-test
     , template-haskell
+    , text
     , time
     , typed-protocols
     , typed-protocols-examples
