@@ -20,22 +20,24 @@ entire application is stitched together in a very thin layer.
 ### Overview
 
 ```tree
-Application  |  ─── Ogmios.hs
-                    └── Prelude.hs
+             ^  ─── Ogmios.hs
+Application  |      ├── Prelude.hs
+             v      └── Version.hs
 
              ^  ─── App
              |      ├── Health.hs
              |      ├── Metrics.hs
              |      ├── Options.hs
+             |      ├── Protocol.hs
              |      ├── Protocol
-             |      │   ├── ChainSync.hs
+      Logic  |      │   ├── ChainSync.hs
              |      │   ├── StateQuery.hs
-      Logic  |      │   └── TxSubmission.hs
+             |      │   └── TxSubmission.hs
              |      ├── Server.hs
-             |      ├── Server
-             |      │   ├── Http.hs
-             |      │   └── WebSocket.hs
-             v      └── Version.hs
+             |      └── Server
+             |          ├── Http.hs
+             |          └── WebSocket.hs
+             v       
  
              ^  ─── Control
              |      ├── Exception.hs
@@ -56,7 +58,8 @@ Application  |  ─── Ogmios.hs
              |       │   ├── Byron.hs
              |       │   ├── Shelley.hs
              |       │   ├── Allegra.hs
-       Data  |       │   └── Mary.hs
+             |       │   ├── Mary.hs
+       Data  |       │   └── Alonzo.hs
              |       ├── Metrics.hs
              |       ├── Protocol.hs
              |       └── Protocol
