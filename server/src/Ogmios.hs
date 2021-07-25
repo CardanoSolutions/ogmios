@@ -31,6 +31,12 @@ module Ogmios
 
 import Ogmios.Prelude
 
+import Cardano.Network.Protocol.NodeToClient
+    ( Block )
+import Control.Monad.Class.MonadST
+    ( MonadST )
+import Data.Aeson
+    ( ToJSON, genericToEncoding )
 import Ogmios.App.Health
     ( Health
     , TraceHealth
@@ -68,14 +74,8 @@ import Ogmios.Control.MonadSTM
 import Ogmios.Control.MonadWebSocket
     ( MonadWebSocket )
 
-import Cardano.Network.Protocol.NodeToClient
-    ( Block )
-import Control.Monad.Class.MonadST
-    ( MonadST )
-import Data.Aeson
-    ( ToJSON, genericToEncoding )
-
 import qualified Data.Aeson as Json
+
 --
 -- App
 --

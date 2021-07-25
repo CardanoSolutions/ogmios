@@ -243,6 +243,7 @@ test-suite unit
       Ogmios.Data.MetricsSpec
       Test.App.Protocol.Util
       Test.Generators
+      Test.Instances.Util
       Test.Path.Util
       Paths_ogmios
   hs-source-dirs:
@@ -315,6 +316,7 @@ test-suite unit
     , shelley-spec-ledger
     , shelley-spec-ledger-test
     , template-haskell
+    , time
     , typed-protocols
     , typed-protocols-examples
   default-language: Haskell2010

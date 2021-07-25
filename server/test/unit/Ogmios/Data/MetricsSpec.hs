@@ -9,8 +9,6 @@ module Ogmios.Data.MetricsSpec
 import Ogmios.Prelude hiding
     ( max, min )
 
-import Data.Aeson
-    ( ToJSON (..) )
 import Ogmios.Data.Metrics
     ( DistributionStats (..)
     , Metrics (..)
@@ -20,12 +18,14 @@ import Ogmios.Data.Metrics
     , emptyRuntimeStats
     )
 import Test.Hspec
-    ( Expectation, Spec, SpecWith, context, parallel, shouldBe, specify )
+    ( Spec, context, parallel, shouldBe )
+import Test.Instances.Util
+    ( eqShowJson )
 
 spec :: Spec
 spec = parallel $ do
-    context "empty smart-constructors" $ do
-        cover "Metrics" emptyMetrics $ \metrics -> do
+    context "Eq/Show/Json" $ do
+        eqShowJson "Metrics" emptyMetrics $ \metrics -> do
             runtimeStats metrics `shouldBe` emptyRuntimeStats
             activeConnections metrics `shouldBe` 0
             totalConnections metrics `shouldBe` 0
@@ -33,22 +33,13 @@ spec = parallel $ do
             totalMessages metrics `shouldBe` 0
             totalUnrouted metrics `shouldBe` 0
 
-        cover "RuntimeStats" emptyRuntimeStats $ \stats -> do
+        eqShowJson "RuntimeStats" emptyRuntimeStats $ \stats -> do
             maxHeapSize stats `shouldBe` 0
             currentHeapSize stats `shouldBe` 0
             cpuTime stats `shouldBe` 0
             gcCpuTime stats `shouldBe` 0
 
-        cover "DistributionStats" emptyDistributionStats $ \stats -> do
+        eqShowJson "DistributionStats" emptyDistributionStats $ \stats -> do
             mean stats `shouldBe` 0
             max stats `shouldBe` 0
             min stats `shouldBe` 0
-
---
--- Helpers
---
-
-cover :: (Eq a, Show a, ToJSON a) => String -> a -> (a -> Expectation) -> SpecWith ()
-cover lbl zero predicate =
-    specify (lbl <> " / " <> show zero <> " / " <> show (toJSON zero)) $
-        predicate zero >> shouldBe zero zero

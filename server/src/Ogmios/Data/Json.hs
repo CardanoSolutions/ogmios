@@ -13,6 +13,7 @@ module Ogmios.Data.Json
     , FromJSON
     , ToJSON
     , decodeWith
+    , inefficientEncodingToValue
 
       -- * Encoders
     , encodeAcquireFailure
