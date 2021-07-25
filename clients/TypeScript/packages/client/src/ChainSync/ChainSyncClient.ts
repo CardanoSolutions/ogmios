@@ -1,4 +1,4 @@
-import { Block, Ogmios, Point, Tip } from '@cardano-ogmios/schema'
+import { Block, Ogmios, PointOrOrigin, TipOrOrigin } from '@cardano-ogmios/schema'
 import {
   ConnectionConfig,
   createInteractionContext,
@@ -15,7 +15,7 @@ export interface ChainSyncClient {
   context: InteractionContext
   shutdown: () => Promise<void>
   startSync: (
-    points?: Point[],
+    points?: PointOrOrigin[],
     inFlight?: number
   ) => Promise<Intersection>
 }
@@ -23,15 +23,15 @@ export interface ChainSyncClient {
 export interface ChainSyncMessageHandlers {
   rollBackward: (
     response: {
-      point: Point,
-      tip: Tip
+      point: PointOrOrigin,
+      tip: TipOrOrigin
     },
     requestNext: () => void
   ) => Promise<void>
   rollForward: (
     response: {
       block: Block,
-      tip: Tip
+      tip: TipOrOrigin
     },
     requestNext: () => void
   ) => Promise<void>

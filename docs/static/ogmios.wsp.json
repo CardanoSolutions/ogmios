@@ -89,7 +89,7 @@
                 , "required": [ "tip", "block" ]
                 , "properties":
                   { "block": { "$ref": "#/definitions/Block" }
-                  , "tip": { "$ref": "#/definitions/Tip" }
+                  , "tip": { "$ref": "#/definitions/TipOrOrigin" }
                   }
                 }
               }
@@ -103,8 +103,8 @@
                 , "additionalProperties": false
                 , "required": [ "tip", "point" ]
                 , "properties":
-                  { "point": { "$ref": "#/definitions/Point" }
-                  , "tip": { "$ref": "#/definitions/Tip" }
+                  { "point": { "$ref": "#/definitions/PointOrOrigin" }
+                  , "tip": { "$ref": "#/definitions/TipOrOrigin" }
                   }
                 }
               }
@@ -141,10 +141,11 @@
         }
       , "args":
         { "type": "object"
+        , "additionalProperties": false
         , "properties":
           { "points":
             { "type": "array"
-            , "items": { "$ref": "#/definitions/Point" }
+            , "items": { "$ref": "#/definitions/PointOrOrigin" }
             }
           }
         }
@@ -188,8 +189,8 @@
                 , "additionalProperties": false
                 , "required": [ "point", "tip" ]
                 , "properties":
-                  { "point": { "$ref": "#/definitions/Point" }
-                  , "tip": { "$ref": "#/definitions/Tip" }
+                  { "point": { "$ref": "#/definitions/PointOrOrigin" }
+                  , "tip": { "$ref": "#/definitions/TipOrOrigin" }
                   }
                 }
               }
@@ -204,7 +205,7 @@
                 , "additionalProperties": false
                 , "required": [ "tip" ]
                 , "properties":
-                  { "tip": { "$ref": "#/definitions/Tip" }
+                  { "tip": { "$ref": "#/definitions/TipOrOrigin" }
                   }
                 }
               }
@@ -293,8 +294,7 @@
               { "SubmitFail":
                 { "oneOf":
                   [ { "$ref": "#/definitions/EraMismatch" }
-                  , { "$ref": "#/definitions/SubmitTxError[Byron]" }
-                  , { "$ref": "#/definitions/SubmitTxError[Shelley]" }
+                  , { "$ref": "#/definitions/SubmitTxError" }
                   ]
                 }
               }
@@ -334,7 +334,7 @@
         , "additionalProperties": false
         , "required": ["point"]
         , "properties":
-          { "point": { "$ref": "#/definitions/Point" }
+          { "point": { "$ref": "#/definitions/PointOrOrigin" }
           }
         }
       , "mirror":
@@ -377,7 +377,7 @@
                 , "additionalProperties": false
                 , "required": ["point"]
                 , "properties":
-                  { "point": { "$ref": "#/definitions/Point" }
+                  { "point": { "$ref": "#/definitions/PointOrOrigin" }
                   }
                 }
               }
@@ -637,7 +637,7 @@
         }
       , "result":
         { "oneOf":
-          [ { "$ref": "#/definitions/Point" }
+          [ { "$ref": "#/definitions/PointOrOrigin" }
           , { "$ref": "#/definitions/EraMismatch" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
@@ -813,12 +813,12 @@
       , "result":
         { "anyOf":
           [ { "type": "object"
-            , "title": "ProtocolParameters[Shelley]"
+            , "title": "ProposedProtocolParameters[Shelley]"
             , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
             , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
             }
           , { "type": "object"
-            , "title": "ProtocolParameters[Alonzo]"
+            , "title": "ProposedProtocolParameters[Alonzo]"
             , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
             , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Alonzo]" }
             }
@@ -1191,7 +1191,7 @@
                               , "softwareVersion": { "$ref": "#/definitions/SoftwareVersion" }
                               , "metadata":
                                 { "type": "object"
-                                , "additionalProperties": true
+                                , "additionalProperties": { "type": "string" }
                                 }
                               , "parametersUpdate": { "$ref": "#/definitions/ProtocolParameters[Byron]" }
                               }
@@ -1983,7 +1983,7 @@
                 { "oneOf":
                   [ { "$ref": "#/definitions/Null"}
                   , { "type": "object"
-                    , "title": "metadata"
+                    , "title": "poolMetadata"
                     , "additionalProperties": false
                     , "required": ["hash","url"]
                     , "properties":
@@ -2331,46 +2331,6 @@
     , "description": "An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada)."
     }
 
-  , "LovelaceError":
-    { "oneOf":
-      [ { "type": "object"
-        , "title": "underflow"
-        , "additionalProperties": false
-        , "required": [ "underflow" ]
-        , "properties":
-          { "underflow":
-            { "type": "array"
-            , "items": { "type": "integer" }
-            }
-          }
-        }
-      , { "type": "object"
-        , "title": "tooSmall"
-        , "additionalProperties": false
-        , "required": [ "tooSmall" ]
-        , "properties":
-          { "tooSmall": { "type": "integer" }
-          }
-        }
-      , { "type": "object"
-        , "title": "tooLarge"
-        , "additionalProperties": false
-        , "required": [ "tooLarge" ]
-        , "properties":
-          { "tooLarge": { "type": "integer" }
-          }
-        }
-      , { "type": "object"
-        , "title": "overflow"
-        , "additionalProperties": false
-        , "required": [ "overflow" ]
-        , "properties":
-          { "overflow": { "type": "integer" }
-          }
-        }
-      ]
-    }
-
   , "Metadata":
     { "type": "object"
     , "propertyNames": { "pattern": "^-?[0-9]+$" }
@@ -2592,7 +2552,14 @@
       }
     }
 
-  , "Point":
+  , "Origin":
+    { "type": "string"
+    , "description": "The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point."
+    , "title": "origin"
+    , "enum": [ "origin" ]
+    }
+
+  , "PointOrOrigin":
     { "oneOf":
       [ { "type": "object"
         , "description": "A point on the chain, identified by a slot and a block header hash."
@@ -2604,11 +2571,7 @@
           , "hash": { "$ref": "#/definitions/Hash16" }
           }
         }
-      , { "type": "string"
-        , "description": "The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point."
-        , "title": "origin"
-        , "enum": [ "origin" ]
-        }
+      , { "$ref": "#/definitions/Origin" }
       ]
     }
 
@@ -2667,18 +2630,36 @@
 
   , "ProtocolParameters[Byron]":
     { "type": "object"
-    , "additionalProperties": true
+    , "additionalProperties": false
+    , "required":
+      [ "heavyDlgThreshold"
+      , "maxBlockSize"
+      , "maxHeaderSize"
+      , "maxProposalSize"
+      , "maxTxSize"
+      , "mpcThreshold"
+      , "scriptVersion"
+      , "slotDuration"
+      , "unlockStakeEpoch"
+      , "updateProposalThreshold"
+      , "updateProposalTimeToLive"
+      , "updateVoteThreshold"
+      , "txFeePolicy"
+      , "softforkRule"
+      ]
     , "properties":
-      { "scriptVersion": { "$ref": "#/definitions/NullableInteger" }
-      , "slotDuration": { "$ref": "#/definitions/NullableInteger" }
+      { "heavyDlgThreshold": { "$ref": "#/definitions/NullableRatio" }
       , "maxBlockSize": { "$ref": "#/definitions/NullableInteger" }
       , "maxHeaderSize": { "$ref": "#/definitions/NullableInteger" }
       , "maxProposalSize": { "$ref": "#/definitions/NullableInteger" }
+      , "maxTxSize": { "$ref": "#/definitions/NullableInteger" }
       , "mpcThreshold": { "$ref": "#/definitions/NullableRatio" }
-      , "heavyDlgThreshold": { "$ref": "#/definitions/NullableRatio" }
-      , "updateVoteThreshold": { "$ref": "#/definitions/NullableRatio" }
-      , "updateProposalTimeToLive": { "$ref": "#/definitions/NullableInteger" }
+      , "scriptVersion": { "$ref": "#/definitions/NullableInteger" }
+      , "slotDuration": { "$ref": "#/definitions/NullableInteger" }
       , "unlockStakeEpoch": { "$ref": "#/definitions/NullableInteger" }
+      , "updateProposalThreshold": { "$ref": "#/definitions/NullableRatio" }
+      , "updateProposalTimeToLive": { "$ref": "#/definitions/NullableInteger" }
+      , "updateVoteThreshold": { "$ref": "#/definitions/NullableRatio" }
       , "txFeePolicy":
         { "oneOf":
           [ { "$ref": "#/definitions/TxFeePolicy" }
@@ -2697,6 +2678,25 @@
   , "ProtocolParameters[Shelley]":
     { "type": "object"
     , "additionalProperties": false
+    , "required":
+      [ "minFeeCoefficient"
+      , "minFeeConstant"
+      , "maxBlockBodySize"
+      , "maxBlockHeaderSize"
+      , "maxTxSize"
+      , "stakeKeyDeposit"
+      , "poolDeposit"
+      , "poolRetirementEpochBound"
+      , "desiredNumberOfPools"
+      , "poolInfluence"
+      , "monetaryExpansion"
+      , "treasuryExpansion"
+      , "decentralizationParameter"
+      , "minUtxoValue"
+      , "minPoolCost"
+      , "extraEntropy"
+      , "protocolVersion"
+      ]
     , "properties":
       { "minFeeCoefficient": { "$ref": "#/definitions/NullableInteger" }
       , "minFeeConstant": { "$ref": "#/definitions/NullableInteger" }
@@ -2731,6 +2731,32 @@
   , "ProtocolParameters[Alonzo]":
     { "type": "object"
     , "additionalProperties": false
+    , "required":
+      [ "minFeeCoefficient"
+      , "minFeeConstant"
+      , "maxBlockBodySize"
+      , "maxBlockHeaderSize"
+      , "maxTxSize"
+      , "stakeKeyDeposit"
+      , "poolDeposit"
+      , "poolRetirementEpochBound"
+      , "desiredNumberOfPools"
+      , "poolInfluence"
+      , "monetaryExpansion"
+      , "treasuryExpansion"
+      , "decentralizationParameter"
+      , "minPoolCost"
+      , "coinsPerUtxoWord"
+      , "maxValueSize"
+      , "collateralPercentage"
+      , "maxCollateralInputs"
+      , "extraEntropy"
+      , "protocolVersion"
+      , "costModels"
+      , "prices"
+      , "maxExecutionUnitsPerTransaction"
+      , "maxExecutionUnitsPerBlock"
+      ]
     , "properties":
       { "minFeeCoefficient": { "$ref": "#/definitions/NullableInteger" }
       , "minFeeConstant": { "$ref": "#/definitions/NullableInteger" }
@@ -3086,27 +3112,7 @@
       }
     }
 
-  , "SubmitTxError[Byron]":
-    { "type": "object"
-    , "oneOf":
-      [ { "additionalProperties": false
-        , "title": "utxoValidationError"
-        , "required": [ "utxoValidationError" ]
-        , "properties":
-          { "utxoValidationError": { "$ref": "#/definitions/UtxoValidationError" }
-          }
-        }
-      , { "additionalProperties": false
-        , "title": "txValidationError"
-        , "required": [ "txValidationError" ]
-        , "properties":
-          { "txValidationError": { "$ref": "#/definitions/TxValidationError" }
-          }
-        }
-      ]
-    }
-
-  , "SubmitTxError[Shelley]":
+  , "SubmitTxError":
     { "type": "array"
     , "items":
       { "oneOf":
@@ -3994,7 +4000,7 @@
       }
     }
 
-  , "Tip":
+  , "TipOrOrigin":
     { "oneOf":
       [ { "type": "object"
         , "title": "tip"
@@ -4006,10 +4012,7 @@
           , "blockNo": { "$ref": "#/definitions/BlockNo" }
           }
         }
-      , { "type": "string"
-        , "title": "origin"
-        , "enum": [ "origin" ]
-        }
+      , { "$ref": "#/definitions/Origin" }
       ]
     }
 
@@ -4099,128 +4102,6 @@
       }
     }
 
-  , "TxValidationError":
-    { "oneOf":
-      [ { "type": "string"
-        , "title": "unknownAttributes"
-        , "enum": [ "unknownAttributes", "unknownAddressAttributes" ]
-        }
-      , { "type": "object"
-        , "title": "feeTooSmall_"
-        , "additionalProperties": false
-        , "required": [ "feeTooSmall" ]
-        , "properties":
-          { "feeTooSmall":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "tx", "requiredFee", "actualFee" ]
-            , "properties":
-              { "tx": { "$ref": "#/definitions/Tx" }
-              , "requiredFee": { "$ref": "#/definitions/Lovelace" }
-              , "actualFee": { "$ref": "#/definitions/Lovelace" }
-              }
-            }
-          }
-        }
-      , { "type": "object"
-        , "title": "txTooLarge_"
-        , "additionalProperties": false
-        , "required": [ "txTooLarge" ]
-        , "properties":
-          { "txTooLarge":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "maximumSize", "actualSize" ]
-            , "properties":
-              { "maximumSize": { "type": "integer" }
-              , "actualSize": { "type": "integer" }
-              }
-            }
-          }
-        }
-      , { "type": "object"
-        , "title": "missingInput_"
-        , "additionalProperties": false
-        , "required": [ "missingInput" ]
-        , "properties":
-          { "missingInput":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "index", "txId" ]
-            , "properties":
-              { "index": { "type": "integer" }
-              , "txId": { "$ref": "#/definitions/Hash16" }
-              }
-            }
-          }
-        }
-      , { "type": "object"
-        , "title": "networkMismatch_"
-        , "additionalProperties": false
-        , "required": [ "networkMismatch" ]
-        , "properties":
-          { "networkMismatch":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "foundInAddress", "expectedNetwork" ]
-            , "properties":
-              { "foundInAddress": { "$ref": "#/definitions/NetworkMagic" }
-              , "expectedNetwork": { "$ref": "#/definitions/NetworkMagic" }
-              }
-            }
-          }
-        }
-      , { "type": "object"
-        , "title": "wrongSignature_"
-        , "additionalProperties": false
-        , "required": [ "wrongSignature" ]
-        , "properties":
-          { "wrongSignature":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "witness", "protocolMagic" ]
-            , "properties":
-              { "protocolMagic": { "$ref": "#/definitions/ProtocolMagicId" }
-              , "witness": { "$ref": "#/definitions/TxWitness" }
-              }
-            }
-          }
-        }
-      , { "type": "object"
-        , "title": "lovelaceError_"
-        , "additionalProperties": false
-        , "required": [ "lovelaceError" ]
-        , "properties":
-          { "lovelaceError":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "error", "label" ]
-            , "properties":
-              { "error": { "$ref": "#/definitions/LovelaceError" }
-              , "label": { "type": "string" }
-              }
-            }
-          }
-        }
-      , { "type": "object"
-        , "title": "wrongKey_"
-        , "additionalProperties": false
-        , "required": [ "wrongKey" ]
-        , "properties":
-          { "wrongKey":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "address", "witness" ]
-            , "properties":
-              { "address": { "$ref": "#/definitions/Address" }
-              , "witness": { "$ref": "#/definitions/TxWitness" }
-              }
-            }
-          }
-        }
-      ]
-    }
-
   , "TxWitness":
     { "type": "object"
     , "oneOf":
@@ -4262,6 +4143,7 @@
       [ { "$ref": "#/definitions/Null"}
       , { "type": "object"
         , "title": "UpdateProposal[Shelley]"
+        , "additionalProperties": false
         , "required": ["proposal", "epoch"]
         , "properties":
           { "epoch": { "$ref": "#/definitions/Epoch" }
@@ -4279,6 +4161,7 @@
       [ { "$ref": "#/definitions/Null"}
       , { "type": "object"
         , "title": "UpdateProposal[Alonzo]"
+        , "additionalProperties": false
         , "required": ["proposal", "epoch"]
         , "properties":
           { "epoch": { "$ref": "#/definitions/Epoch" }
@@ -4309,23 +4192,6 @@
         , { "$ref": "#/definitions/TxOut" }
         ]
       }
-    }
-
-  , "UtxoValidationError":
-    { "oneOf":
-      [ { "type": "string"
-        , "title": "overlappingUnion"
-        , "enum": [ "overlappingUnion" ]
-        }
-      , { "type": "object"
-        , "title": "missingInput"
-        , "additionalProperties": false
-        , "required": [ "missingInput" ]
-        , "properties":
-          { "missingInput": { "$ref": "#/definitions/TxIn" }
-          }
-        }
-      ]
     }
 
   , "ValidityInterval":

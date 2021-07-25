@@ -68,11 +68,11 @@ describe('TxSubmission', () => {
         await expect(error).toHaveLength(2)
         // NOTE: We can't predict in which order will the server return the errors.
         try {
-          await expect(error[0]).toBeInstanceOf(errors.shelley.BadInputs.Error)
-          await expect(error[1]).toBeInstanceOf(errors.shelley.ValueNotConserved.Error)
+          await expect(error[0]).toBeInstanceOf(errors.BadInputs.Error)
+          await expect(error[1]).toBeInstanceOf(errors.ValueNotConserved.Error)
         } catch (e) {
-          await expect(error[1]).toBeInstanceOf(errors.shelley.BadInputs.Error)
-          await expect(error[0]).toBeInstanceOf(errors.shelley.ValueNotConserved.Error)
+          await expect(error[1]).toBeInstanceOf(errors.BadInputs.Error)
+          await expect(error[0]).toBeInstanceOf(errors.ValueNotConserved.Error)
         }
       }
     })

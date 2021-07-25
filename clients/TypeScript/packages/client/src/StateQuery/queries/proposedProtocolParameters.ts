@@ -1,24 +1,19 @@
-import { EraMismatch, Ogmios, ProtocolParametersShelley } from '@cardano-ogmios/schema'
+import { EraMismatch, Ogmios, ProposedProtocolParametersAlonzo, ProposedProtocolParametersShelley } from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError } from '../../errors'
 import { ConnectionConfig, InteractionContext } from '../../Connection'
 import { isEmptyObject } from '../../util'
 import { Query } from '../Query'
 
-export interface ObjectOfProtocolParametersShelley { [k: string]: ProtocolParametersShelley }
-
 const isEraMismatch = (result: Ogmios['QueryResponse[proposedProtocolParameters]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
 
-const isObjectOfProtocolParametersShelley = (result: Ogmios['QueryResponse[proposedProtocolParameters]']['result']): result is ObjectOfProtocolParametersShelley =>
-  Object.values(result as ObjectOfProtocolParametersShelley)[0]?.minFeeCoefficient !== undefined
-
 export const proposedProtocolParameters = (
   config?: ConnectionConfig | InteractionContext
-): Promise<ObjectOfProtocolParametersShelley | null> =>
+): Promise<ProposedProtocolParametersShelley | ProposedProtocolParametersAlonzo | null> =>
   Query<
     Ogmios['Query'],
     Ogmios['QueryResponse[proposedProtocolParameters]'],
-    ObjectOfProtocolParametersShelley | null
+    ProposedProtocolParametersShelley | ProposedProtocolParametersAlonzo | null
   >({
     methodName: 'Query',
     args: {
@@ -26,16 +21,14 @@ export const proposedProtocolParameters = (
     }
   }, {
     handler: (response, resolve, reject) => {
-      if (isEmptyObject(response.result)) {
-        resolve(null)
-      } else if (response.result === 'QueryUnavailableInCurrentEra') {
+      if (response.result === 'QueryUnavailableInCurrentEra') {
         return reject(new QueryUnavailableInCurrentEraError('proposedProtocolParameters'))
-      } else if (isObjectOfProtocolParametersShelley(response.result)) {
-        return resolve(response.result)
       } else if (isEraMismatch(response.result)) {
         const { eraMismatch } = response.result
         const { ledgerEra, queryEra } = eraMismatch
         return reject(new EraMismatchError(queryEra, ledgerEra))
+      } else if (isEmptyObject(response.result)) {
+        return resolve(null)
       } else {
         return resolve(response.result)
       }
