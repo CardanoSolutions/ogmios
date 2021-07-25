@@ -15,7 +15,7 @@ module Ogmios.Data.Metrics
 
     -- ** DistributionStats
     , DistributionStats (..)
-    , emptyDistribution
+    , emptyDistributionStats
     ) where
 
 import Ogmios.Prelude
@@ -52,7 +52,7 @@ instance ToJSON Metrics where
 
 -- | Empty 'Metrics', for initialization.
 emptyMetrics :: Metrics
-emptyMetrics = Metrics emptyRuntimeStats 0 0 emptyDistribution 0 0
+emptyMetrics = Metrics emptyRuntimeStats 0 0 emptyDistributionStats 0 0
 
 --
 -- RuntimeStats
@@ -94,8 +94,8 @@ data DistributionStats = DistributionStats
     } deriving (Generic, Eq, Show)
 
 -- | Create an empty distribution with all values to 0
-emptyDistribution :: DistributionStats
-emptyDistribution = DistributionStats 0 0 0
+emptyDistributionStats :: DistributionStats
+emptyDistributionStats = DistributionStats 0 0 0
 
 instance ToJSON DistributionStats where
     toJSON = genericToJSON Json.defaultOptions

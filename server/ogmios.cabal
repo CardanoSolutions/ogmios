@@ -240,6 +240,7 @@ test-suite unit
       Ogmios.App.Protocol.StateQuerySpec
       Ogmios.Data.HealthSpec
       Ogmios.Data.JsonSpec
+      Ogmios.Data.MetricsSpec
       Test.App.Protocol.Util
       Test.Generators
       Test.Path.Util
