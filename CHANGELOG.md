@@ -15,16 +15,27 @@ pre: "<b>5. </b>"
   - `missingRequiredDatums`
   - `unspendableDatums`
   - `unspendableScriptInputs`
+- Added missing properties in Byron's protocol parameters update. Somehow, an `additionalProperties: true` had slipped through and caused the tests to pass with an incomplete schema.
 
 #### Changed
 
 - The `memory` and `steps` JSON representations for `prices` are no longer coins, but ratio (represented as strings in the API).
 - `lovelacePerUtxoWord` has been renamed into `coinsPerUtxoWord` in the AlonzoGenesis.
+- Changes in the TypeScript's client:
+  - `Tip` & `Point` have been renamed to `TipOrOrigin` and `PointOrOrigin`. As a consequence, `Tip1` and `Point1` are now simply `Tip` and `Point`.
+  - `Origin` is now a standalone type, merged with `Origin1`.
+  - `SubmitTx` no-longer returns Byron errors. Consequently, submit errors are no longer scoped under `errors.byron` or `errors.shelley` but simply `errors`.
+  - Fixed `proposedProtocolParameters` query. All fields are actually required AND, more importantly, it can now return either Shelley protocol parameters or, Alonzo protocol parameters.
 
 #### Removed
 
 - A previous introduced error from the transaction submission has been removed / replaced:
   - `datumsMismatch`
+
+- `SubmitTx` can no longer return `SubmitTxError[Byron]`. All the child error types have been removed accordingly, namely:
+  - `UtxoValidationError`
+  - `TxValidationError`
+  - `LovelaceError`
 
 ### [4.0.0-beta.4] - 2021-07-07
 
