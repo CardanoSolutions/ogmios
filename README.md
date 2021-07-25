@@ -24,7 +24,7 @@ It comes battery-included with monitoring, logging and a high-performance [serve
   |
   <a href="SPONSORS.md">:gift_heart: Sponsors</a>
   |
-  <a href="server/CHANGELOG.md">:floppy_disk: Changelog</a>
+  <a href="CHANGELOG.md">:floppy_disk: Changelog</a>
 </p>
 
 <p align="center"><a href="https://github.com/cardanosolutions/ogmios/blob/master/LICENSE"><img src=".github/license.svg" alt="license=MPL-2.0" /></a></p>
