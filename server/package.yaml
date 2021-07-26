@@ -55,7 +55,6 @@ library:
     - cardano-ledger-byron
     - cardano-ledger-core
     - cardano-ledger-shelley-ma
-    - cardano-node
     - cardano-slotting
     - cborg
     - containers
@@ -64,6 +63,7 @@ library:
     - ekg-core
     - fast-bech32
     - file-embed
+    - filepath
     - generic-lens
     - git-th
     - http-types
@@ -71,6 +71,7 @@ library:
     - iohk-monitoring
     - iproute
     - json-wsp
+    - lens-aeson
     - memory
     - mtl
     - optparse-applicative
@@ -94,6 +95,7 @@ library:
     - typed-protocols
     - unordered-containers
     - vector
+    - yaml
     - wai
     - wai-routes
     - wai-websockets

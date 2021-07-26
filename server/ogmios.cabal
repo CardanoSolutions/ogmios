@@ -135,7 +135,6 @@ library
     , cardano-ledger-byron
     , cardano-ledger-core
     , cardano-ledger-shelley-ma
-    , cardano-node
     , cardano-slotting
     , cborg
     , containers
@@ -144,6 +143,7 @@ library
     , ekg-core
     , fast-bech32
     , file-embed
+    , filepath
     , generic-lens
     , git-th
     , http-types
@@ -151,6 +151,7 @@ library
     , iohk-monitoring
     , iproute
     , json-wsp
+    , lens-aeson
     , memory
     , mtl
     , optparse-applicative
@@ -179,6 +180,7 @@ library
     , wai-websockets
     , warp
     , websockets
+    , yaml
   if flag(production)
     ghc-options: -Werror -O2
   default-language: Haskell2010

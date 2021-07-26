@@ -43,29 +43,18 @@ import Ogmios.Control.MonadLog
 
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
-import Cardano.Ledger.Crypto
-    ( StandardCrypto )
-import Cardano.Ledger.Shelley
-    ( ShelleyEra )
-import Cardano.Node.Configuration.POM
-    ( PartialNodeConfiguration (..), parseNodeConfigurationFP )
-import Cardano.Node.Protocol.Shelley
-    ( readGenesisAny )
-import Cardano.Node.Types
-    ( ConfigYamlFilePath (..)
-    , NodeProtocolConfiguration (..)
-    , NodeShelleyProtocolConfiguration (..)
-    )
-import Cardano.Slotting.Slot
-    ( EpochSize (..) )
 import Control.Monad.Trans.Except
-    ( except, throwE, withExceptT )
+    ( throwE, withExceptT )
 import Data.Aeson
     ( ToJSON )
+import Data.Aeson.Lens
+    ( key, _Integer, _String )
 import Data.Char
     ( toUpper )
 import Data.Time.Clock.POSIX
     ( posixSecondsToUTCTime )
+import Data.Time.Format.ISO8601
+    ( iso8601ParseM )
 import Options.Applicative.Help.Pretty
     ( indent, string, vsep )
 import Ouroboros.Consensus.BlockchainTime.WallClock.Types
@@ -74,10 +63,13 @@ import Ouroboros.Network.Magic
     ( NetworkMagic (..) )
 import Safe
     ( readMay )
-import Shelley.Spec.Ledger.Genesis
-    ( ShelleyGenesis (..) )
+import System.FilePath.Posix
+    ( replaceFileName )
 
 import Options.Applicative
+
+import qualified Data.Yaml as Yaml
+import qualified Data.Yaml.Pretty as Yaml
 
 --
 -- Command-line commands
@@ -257,43 +249,44 @@ deriving newtype instance ToJSON EpochSlots
 deriving newtype instance ToJSON SystemStart
 deriving newtype instance ToJSON NetworkMagic
 
-parseNetworkParameters
-    :: FilePath
-    -> IO NetworkParameters
-parseNetworkParameters (ConfigYamlFilePath -> configFile) = runOrDie $ do
-    parseConfiguration >>= \case
-        NodeProtocolConfigurationCardano _ shelley _ _ -> do
-            genesis <- readGenesisFile shelley
-            pure NetworkParameters
-                { networkMagic = NetworkMagic $ sgNetworkMagic genesis
-                , systemStart = SystemStart $ sgSystemStart genesis
-                , slotsPerEpoch = coerce $ sgEpochLength genesis
-                }
-        _ ->
-            throwE "Can't use single-era configurations, only Cardano."
-
+parseNetworkParameters :: FilePath -> IO NetworkParameters
+parseNetworkParameters configFile = runOrDie $ do
+    config <- decodeYaml configFile
+    case config ^? key "ShelleyGenesisFile" . _String of
+        Nothing ->
+            throwE "Missing 'ShelleyGenesisFile' from Cardano's configuration?"
+        Just (toString -> shelleyGenesisFile) -> do
+            shelleyGenesis <- decodeYaml (replaceFileName configFile shelleyGenesisFile)
+            let params = (,,)
+                    <$> (shelleyGenesis ^? key "networkMagic" . _Integer)
+                    <*> (iso8601ParseM . toString =<< shelleyGenesis ^? key "systemStart" . _String)
+                    <*> (shelleyGenesis ^? key "epochLength"  . _Integer)
+            case params of
+                Nothing -> do
+                    let prettyYaml = decodeUtf8 (Yaml.encodePretty Yaml.defConfig shelleyGenesis)
+                    throwE $ toString $ unwords
+                        [ "Couldn't find (or failed to parse) required network"
+                        , "parameters (networkMagic, systemStart and/or epochLength)"
+                        , "in genesis file: \n" <> prettyYaml
+                        ]
+                Just (nm, ss, ep) ->
+                    return NetworkParameters
+                        { networkMagic =
+                            NetworkMagic (fromIntegral nm)
+                        , systemStart =
+                            SystemStart ss
+                        , slotsPerEpoch  =
+                            EpochSlots (fromIntegral ep)
+                        }
   where
     runOrDie :: ExceptT String IO a -> IO a
     runOrDie = runExceptT >=> either die pure
 
-    lastToEither :: Last a -> Either () a
-    lastToEither (Last x) = maybe (Left ()) Right x
+    prettyParseException :: Yaml.ParseException -> String
+    prettyParseException e = "Failed to decode JSON (or YAML) file: " <> show e
 
-    parseConfiguration
-        :: ExceptT String IO NodeProtocolConfiguration
-    parseConfiguration =
-        withExceptT (const "Couldn't parse cardano-node's configuration") $ do
-            config <- lift $ parseNodeConfigurationFP (Just configFile)
-            except $ lastToEither (pncProtocolConfig config)
-
-    readGenesisFile
-        :: NodeShelleyProtocolConfiguration
-        -> ExceptT String IO (ShelleyGenesis (ShelleyEra StandardCrypto))
-    readGenesisFile shelley = do
-        let genesisFile = npcShelleyGenesisFile shelley
-        let genesisHash = npcShelleyGenesisFileHash shelley
-        withExceptT (("Couldn't parse Shelley's genesis file: " <>) . show) $
-            fst <$> readGenesisAny genesisFile genesisHash
+    decodeYaml :: FilePath -> ExceptT String IO Yaml.Value
+    decodeYaml = withExceptT prettyParseException . ExceptT . Yaml.decodeFileEither
 
 --
 -- Helpers
