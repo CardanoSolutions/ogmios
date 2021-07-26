@@ -92,6 +92,11 @@ instance (Crypto crypto, PraosCrypto crypto) => ToJSON
         (inefficientEncodingToValue . encodeSubmitTxPayload)
         (inefficientEncodingToValue . encodeHardForkApplyTxErr)
 
+-- Only used for logging & health
+instance ToJSON (Tip (CardanoBlock crypto)) where
+    toJSON = inefficientEncodingToValue . encodeTip
+    toEncoding = encodeTip
+
 --
 -- Encoders
 --

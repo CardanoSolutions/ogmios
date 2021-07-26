@@ -26,7 +26,7 @@ import Ogmios.Control.MonadMetrics
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TVar )
 import Ogmios.Data.Health
-    ( Health (..), NodeTip (..), modifyHealth )
+    ( Health (..), Tip (..), modifyHealth )
 
 import qualified Ogmios.App.Metrics as Metrics
 
@@ -62,7 +62,7 @@ data EnvServer block m = EnvServer
 
 data Server where
     Server
-        :: (MonadClock m, MonadMetrics m, MonadSTM m, ToJSON (NodeTip block))
+        :: (MonadClock m, MonadMetrics m, MonadSTM m, ToJSON (Tip block))
         => (forall a. m a -> IO a)
         -> EnvServer block m
         -> Server
@@ -139,7 +139,7 @@ mkHttpApp
         , HasType (TVar m (Health block)) env
         , HasType (Sensors m) env
         , HasType (Sampler RuntimeStats m) env
-        , ToJSON (NodeTip block)
+        , ToJSON (Tip block)
         )
     => (forall a. m a -> IO a)
     -> m Wai.Application

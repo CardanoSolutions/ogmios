@@ -58,7 +58,6 @@ import Ogmios.Data.Health
     ( CardanoEra (..)
     , Health (..)
     , NetworkSynchronization
-    , NodeTip (..)
     , emptyHealth
     , mkNetworkSynchronization
     , modifyHealth
@@ -130,10 +129,10 @@ newHealthCheckClient
 newHealthCheckClient tr Debouncer{debounce} = do
     (stateQueryClient, getNetworkInformation) <- newTimeInterpreterClient
     pure $ HealthCheckClient $ Clients
-        { chainSyncClient = mkHealthCheckClient $ \(NodeTip -> lastKnownTip) -> debounce $ do
+        { chainSyncClient = mkHealthCheckClient $ \lastKnownTip -> debounce $ do
             tvar <- asks (view typed)
             metrics <- join (Metrics.sample <$> asks (view typed) <*> asks (view typed))
-            (now, networkSynchronization, currentEra) <- getNetworkInformation (getTip lastKnownTip)
+            (now, networkSynchronization, currentEra) <- getNetworkInformation lastKnownTip
             health <- modifyHealth tvar $ \h -> h
                 { lastKnownTip
                 , lastTipUpdate = Just now

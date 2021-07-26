@@ -20,7 +20,6 @@ import Ogmios.Data.Health
     ( CardanoEra (..)
     , Health (..)
     , NetworkSynchronization (..)
-    , NodeTip (..)
     , RelativeTime (..)
     , SystemStart (..)
     , Tip (..)
@@ -46,7 +45,7 @@ spec = parallel $ do
         time <- runIO getCurrentTime
         eqShowJson "Health" (emptyHealth time) $ \(health :: Health Block) -> do
             startTime health `shouldBe` time
-            lastKnownTip health `shouldBe` NodeTip TipGenesis
+            lastKnownTip health `shouldBe` TipGenesis
             lastTipUpdate health `shouldBe` Nothing
             networkSynchronization health `shouldBe` NetworkSynchronization 0
             currentEra health `shouldBe` Byron

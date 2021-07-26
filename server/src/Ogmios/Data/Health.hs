@@ -4,7 +4,6 @@
 
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Ogmios.Data.Health
@@ -12,7 +11,6 @@ module Ogmios.Data.Health
       Health (..)
     , CardanoEra (..)
     , Tip (..)
-    , NodeTip (..)
     , emptyHealth
     , modifyHealth
       -- ** NetworkSynchronization
@@ -26,13 +24,9 @@ import Ogmios.Prelude
 
 import Ogmios.Control.MonadSTM
     ( MonadSTM, TVar, atomically, readTVar, writeTVar )
-import Ogmios.Data.Json
-    ( encodeTip, inefficientEncodingToValue )
 import Ogmios.Data.Metrics
     ( Metrics, emptyMetrics )
 
-import Cardano.Network.Protocol.NodeToClient
-    ( Block )
 import Data.Aeson
     ( ToJSON (..), genericToEncoding )
 import Data.ByteString.Builder.Scientific
@@ -59,7 +53,7 @@ import qualified Data.Aeson.Encoding as Json
 data Health block = Health
     { startTime :: UTCTime
     -- ^ Time at which the application was started
-    , lastKnownTip :: !(NodeTip block)
+    , lastKnownTip :: !(Tip block)
     -- ^ Last known tip of the core node.
     , lastTipUpdate :: !(Maybe UTCTime)
     -- ^ Date at which the last update was received.
@@ -71,22 +65,13 @@ data Health block = Health
     -- ^ Application metrics measured at regular interval
     } deriving stock (Generic, Eq, Show)
 
-instance ToJSON (NodeTip block) => ToJSON (Health block) where
+instance ToJSON (Tip block) => ToJSON (Health block) where
     toEncoding = genericToEncoding Json.defaultOptions
-
--- Re-wrap 'Tip' to avoid conflicting orphan instances from cardano-node.
-newtype NodeTip block = NodeTip { getTip :: Tip block }
-    deriving stock (Generic)
-    deriving newtype (Eq, Show)
-
-instance ToJSON (NodeTip Block) where
-    toJSON = inefficientEncodingToValue . encodeTip . getTip
-    toEncoding = encodeTip . getTip
 
 emptyHealth :: UTCTime -> Health block
 emptyHealth startTime = Health
     { startTime
-    , lastKnownTip = NodeTip TipGenesis
+    , lastKnownTip = TipGenesis
     , lastTipUpdate = Nothing
     , networkSynchronization = NetworkSynchronization 0
     , currentEra = Byron
