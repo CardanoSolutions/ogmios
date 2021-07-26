@@ -93,6 +93,12 @@ spec = parallel $ do
             networkMagic  params `shouldBe` NetworkMagic 1097911063
             systemStart   params `shouldBe` mkSystemStart 1563999616
             slotsPerEpoch params `shouldBe` EpochSlots 432000
+
+        specify "alonzo-white" $ do
+            params <- parseNetworkParameters (getConfigFile "alonzo-white")
+            networkMagic  params `shouldBe` NetworkMagic 7
+            systemStart   params `shouldBe` mkSystemStart 1625593493
+            slotsPerEpoch params `shouldBe` EpochSlots 7200
   where
     matrix =
         [ ( [], shouldFail )
