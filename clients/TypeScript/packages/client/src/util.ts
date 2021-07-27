@@ -12,7 +12,7 @@ import { findIntersect } from './ChainSync'
 import { WebSocketClosed, TipIsOriginError } from './errors'
 
 export const createPointFromCurrentTip = async (context?: InteractionContext): Promise<Point> => {
-  const { tip } = await findIntersect(['origin'], context)
+  const { tip } = await findIntersect(context, ['origin'])
   if (tip === 'origin') {
     throw new TipIsOriginError()
   }

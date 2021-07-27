@@ -20,17 +20,15 @@ describe('OgmiosHealth', () => {
     // it('fetches the service metadata using default connection config by default', async () => {
     //   expectHealth(await getOgmiosHealth())
     // })
-    it('fetches the service metadata when passed a ConnectionConfig', async () => {
-      expectHealth(await getOgmiosHealth({ port: 1338 }))
-    })
-    it('fetches the service metadata when passed a ConnectionObject', async () => {
-      const connection = await createConnectionObject({ port: 1338 })
+    it('fetches the service metadata', async () => {
+      const connection = createConnectionObject({ port: 1338 })
       expectHealth(await getOgmiosHealth(connection))
     })
     it('throws fetch errors if encountered', async () => {
       expect.assertions(1)
       try {
-        await getOgmiosHealth({ host: 'non-existent' })
+        const connection = createConnectionObject({ host: 'non-existent' })
+        await getOgmiosHealth(connection)
       } catch (error) {
         expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
       }

@@ -27,10 +27,9 @@ export interface InteractionContext {
  * however will close the connection afterwards.
  */
 export type InteractionType = (
-  | "LongRunning"
-  | "OneTime"
+  | 'LongRunning'
+  | 'OneTime'
 )
-
 
 export type Mirror = { [k: string]: unknown }
 
@@ -41,11 +40,11 @@ export type WebSocketCloseHandler = (
   reason: WebSocket.CloseEvent['reason']
 ) => void
 
-export const createConnectionObject = (connection?: ConnectionConfig): Connection => {
+export const createConnectionObject = (config?: ConnectionConfig): Connection => {
   const base = {
-    host: connection?.host ?? 'localhost',
-    port: connection?.port ?? 1337,
-    tls: connection?.tls ?? false
+    host: config?.host ?? 'localhost',
+    port: config?.port ?? 1337,
+    tls: config?.tls ?? false
   }
   const hostAndPort = `${base.host}:${base.port}`
   return {
@@ -64,15 +63,15 @@ export const createInteractionContext = async (
     connection?: ConnectionConfig
     interactionType?: InteractionType,
   }): Promise<InteractionContext> => {
-  const health = await getOgmiosHealth(options.connection)
+  const connection = createConnectionObject(options?.connection)
+  const health = await getOgmiosHealth(connection)
   return new Promise((resolve, reject) => {
     if (health.lastTipUpdate === null) {
       return reject(new OgmiosNotReady(health))
     }
-    const connection = createConnectionObject(options?.connection)
     const socket = new WebSocket(connection.address.webSocket)
 
-    const closeOnCompletion = (options?.interactionType || "LongRunning") == "OneTime"
+    const closeOnCompletion = (options?.interactionType || 'LongRunning') === 'OneTime'
     const afterEach = (cb: () => void) => {
       if (closeOnCompletion) {
         socket.once('close', cb)
@@ -103,9 +102,3 @@ export const createInteractionContext = async (
     })
   })
 }
-
-export const isContext = (config: ConnectionConfig | InteractionContext): config is InteractionContext =>
-  (config as InteractionContext).socket !== undefined
-
-export const isConnectionObject = (config: ConnectionConfig | Connection): config is Connection =>
-  (config as Connection).address !== undefined

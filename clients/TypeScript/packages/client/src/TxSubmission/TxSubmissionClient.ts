@@ -1,9 +1,4 @@
-import {
-  ConnectionConfig,
-  createInteractionContext,
-  InteractionContext,
-  WebSocketCloseHandler
-} from '../Connection'
+import { InteractionContext } from '../Connection'
 import { ensureSocketIsOpen } from '../util'
 import { submitTx } from './submitTx'
 
@@ -14,18 +9,14 @@ export interface TxSubmissionClient {
 }
 
 export const createTxSubmissionClient = async (
-  errorHandler: (error: Error) => void,
-  closeHandler: WebSocketCloseHandler,
-  options?: {
-    connection?: ConnectionConfig
-  }): Promise<TxSubmissionClient> => {
-  const context = await createInteractionContext(errorHandler, closeHandler, options)
+  context: InteractionContext
+): Promise<TxSubmissionClient> => {
   const { socket } = context
   return Promise.resolve({
     context,
     submitTx: (bytes) => {
       ensureSocketIsOpen(socket)
-      return submitTx(bytes, context)
+      return submitTx(context, bytes)
     },
     shutdown: () => new Promise(resolve => {
       ensureSocketIsOpen(socket)

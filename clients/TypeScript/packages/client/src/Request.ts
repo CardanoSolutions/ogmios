@@ -1,10 +1,5 @@
 import WebSocket from 'isomorphic-ws'
-import {
-  ConnectionConfig,
-  createInteractionContext,
-  InteractionContext,
-  isContext
-} from './Connection'
+import { InteractionContext } from './Connection'
 
 export const baseRequest = {
   type: 'jsonwsp/request',
@@ -14,16 +9,9 @@ export const baseRequest = {
 
 export const send = async <T>(
   send: (socket: WebSocket) => Promise<T>,
-  config?: ConnectionConfig | InteractionContext
+  context: InteractionContext
 ): Promise<T> => {
-  const { socket, afterEach } = isContext(config)
-    ? config
-    : await createInteractionContext(
-      () => {},
-      () => {},
-      { connection: config, interactionType: "OneTime" }
-    )
-
+  const { socket, afterEach } = context
   return new Promise((resolve, reject) => {
     send(socket)
       .then(result => afterEach(resolve.bind(this, result)))

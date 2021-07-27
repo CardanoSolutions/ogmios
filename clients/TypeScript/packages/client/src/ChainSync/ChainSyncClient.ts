@@ -1,10 +1,5 @@
 import { Block, Ogmios, PointOrOrigin, TipOrOrigin } from '@cardano-ogmios/schema'
-import {
-  ConnectionConfig,
-  createInteractionContext,
-  InteractionContext,
-  WebSocketCloseHandler
-} from '../Connection'
+import { InteractionContext } from '../Connection'
 import { UnknownResultError } from '../errors'
 import fastq from 'fastq'
 import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
@@ -38,14 +33,10 @@ export interface ChainSyncMessageHandlers {
 }
 
 export const createChainSyncClient = async (
+  context: InteractionContext,
   messageHandlers: ChainSyncMessageHandlers,
-  errorHandler: (error: Error) => void,
-  closeHandler: WebSocketCloseHandler,
-  options?: {
-    connection?: ConnectionConfig,
-    sequential?: boolean
-  }): Promise<ChainSyncClient> => {
-  const context = await createInteractionContext(errorHandler, closeHandler, options)
+  options?: { sequential?: boolean }
+): Promise<ChainSyncClient> => {
   const { socket } = context
   return new Promise((resolve) => {
     const messageHandler = async (response: Ogmios['RequestNextResponse']) => {
@@ -85,8 +76,8 @@ export const createChainSyncClient = async (
       }),
       startSync: async (points, inFlight) => {
         const intersection = await findIntersect(
-          points || [await createPointFromCurrentTip(context)],
-          context
+          context,
+          points || [await createPointFromCurrentTip(context)]
         )
         ensureSocketIsOpen(socket)
         for (let n = 0; n < (inFlight || 100); n += 1) {

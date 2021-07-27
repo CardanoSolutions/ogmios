@@ -4,7 +4,7 @@ import {
   QueryUnavailableInCurrentEraError,
   UnknownResultError
 } from '../../errors'
-import { ConnectionConfig, InteractionContext } from '../../Connection'
+import { InteractionContext } from '../../Connection'
 import { Query } from '../Query'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[stakeDistribution]']['result']): result is EraMismatch =>
@@ -14,7 +14,7 @@ const isPoolDistribution = (result: Ogmios['QueryResponse[stakeDistribution]']['
   Object.values(result as PoolDistribution)[0].stake !== undefined
 
 export const stakeDistribution = (
-  config?: ConnectionConfig | InteractionContext
+  context: InteractionContext
 ): Promise<PoolDistribution> =>
   Query<
     Ogmios['Query'],
@@ -39,4 +39,4 @@ export const stakeDistribution = (
           return reject(new UnknownResultError(response.result))
         }
       }
-    }, config)
+    }, context)

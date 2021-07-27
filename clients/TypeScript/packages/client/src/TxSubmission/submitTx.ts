@@ -1,4 +1,4 @@
-import { ConnectionConfig, InteractionContext } from '../Connection'
+import { InteractionContext } from '../Connection'
 import { EraMismatchError, UnknownResultError } from '../errors'
 import { errors } from './errors'
 import { EraMismatch, Ogmios, SubmitFail } from '@cardano-ogmios/schema'
@@ -7,7 +7,7 @@ import { Query } from '../StateQuery'
 const isEraMismatch = (item: SubmitFail['SubmitFail']): item is EraMismatch =>
   (item as EraMismatch).eraMismatch !== undefined
 
-export const submitTx = (bytes: string, config?: ConnectionConfig | InteractionContext) =>
+export const submitTx = (context: InteractionContext, bytes: string) =>
   Query<
     Ogmios['SubmitTx'],
     Ogmios['SubmitTxResponse'],
@@ -158,4 +158,4 @@ export const submitTx = (bytes: string, config?: ConnectionConfig | InteractionC
         return reject(new UnknownResultError(response))
       }
     }
-  }, config)
+  }, context)

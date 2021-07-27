@@ -1,10 +1,5 @@
 import fetch from 'cross-fetch'
-import {
-  Connection,
-  ConnectionConfig,
-  createConnectionObject,
-  isConnectionObject
-} from './Connection'
+import { Connection } from './Connection'
 import { Tip } from '@cardano-ogmios/schema'
 
 export interface OgmiosHealth {
@@ -33,11 +28,8 @@ export interface OgmiosHealth {
 }
 
 export const getOgmiosHealth = async (
-  config?: ConnectionConfig | Connection
+  connection?: Connection
 ): Promise<OgmiosHealth> => {
-  const connection = config !== undefined && isConnectionObject(config)
-    ? config
-    : createConnectionObject(config)
   const response = await fetch(`${connection.address.http}/health`)
   const responseJson = await response.json()
   if (response.ok) {
