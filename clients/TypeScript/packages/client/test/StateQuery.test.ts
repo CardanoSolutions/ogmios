@@ -194,11 +194,6 @@ describe('Local state queries', () => {
       it('fetches the current shelley protocol parameters', async () => {
         const protocolParameters = await proposedProtocolParameters(context)
         expect(protocolParameters).toBeNull()
-        // Todo: Enable with local test network implementation
-        // const params = Object.values(protocolParameters)[0]
-        // expect(params.minFeeCoefficient).toBeDefined()
-        // expect(params.minUtxoValue).toBeDefined()
-        // expect(params.maxTxSize).toBeDefined()
       })
     })
     describe('stakeDistribution', () => {
