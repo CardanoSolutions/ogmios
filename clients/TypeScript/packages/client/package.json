@@ -5,7 +5,14 @@
   "engines": {
     "node": "^14"
   },
-  "main": "dist/index.js",
+  "exports": {
+    ".": "src/index.js",
+    "./Connection": "src/Connection",
+    "./ChainSync": "src/ChainSync",
+    "./StateQuery": "src/StateQuery",
+    "./TxSubmission": "src/TxSubmission",
+    "./util": "src/util"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/cardanosolutions/ogmios.git",
