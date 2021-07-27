@@ -1,8 +1,8 @@
 +++
 title = "F.A.Q"
-weight = 6
+weight = 7
 chapter = false
-pre = "<b>6. </b>"
+pre = "<b>7. </b>"
 +++
 
 #### Can you explain Ogmios in ~~one~~ three sentences?
