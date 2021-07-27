@@ -16,28 +16,17 @@ export const send = async <T>(
   send: (socket: WebSocket) => Promise<T>,
   config?: ConnectionConfig | InteractionContext
 ): Promise<T> => {
-  const { socket } = isContext(config)
+  const { socket, afterEach } = isContext(config)
     ? config
     : await createInteractionContext(
       () => {},
       () => {},
-      { connection: config }
+      { connection: config, interactionType: "OneTime" }
     )
-  const closeOnCompletion = !isContext(config)
-  const complete = (func: () => void) => {
-    if (closeOnCompletion) {
-      socket.once('close', func)
-      socket.close()
-    } else {
-      func()
-    }
-  }
+
   return new Promise((resolve, reject) => {
-    if (!closeOnCompletion) {
-      return resolve(send(socket))
-    }
     send(socket)
-      .then(result => complete(resolve.bind(this, result)))
-      .catch(error => complete(reject.bind(this, error)))
+      .then(result => afterEach(resolve.bind(this, result)))
+      .catch(error => afterEach(reject.bind(this, error)))
   })
 }

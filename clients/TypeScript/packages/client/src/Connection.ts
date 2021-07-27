@@ -18,7 +18,19 @@ export interface Connection extends Required<ConnectionConfig> {
 export interface InteractionContext {
   connection: Connection
   socket: WebSocket
+  afterEach: (cb: () => void) => void
 }
+
+/**
+ * Describe how the interaction context behaves. A `LongRunning` context does not close
+ * the underlying connection after a request, it has to be done manually. A `OneTime` context
+ * however will close the connection afterwards.
+ */
+export type InteractionType = (
+  | "LongRunning"
+  | "OneTime"
+)
+
 
 export type Mirror = { [k: string]: unknown }
 
@@ -50,14 +62,26 @@ export const createInteractionContext = async (
   closeHandler: WebSocketCloseHandler,
   options?: {
     connection?: ConnectionConfig
+    interactionType?: InteractionType,
   }): Promise<InteractionContext> => {
-  const health = await getOgmiosHealth(options?.connection)
+  const health = await getOgmiosHealth(options.connection)
   return new Promise((resolve, reject) => {
     if (health.lastTipUpdate === null) {
       return reject(new OgmiosNotReady(health))
     }
     const connection = createConnectionObject(options?.connection)
     const socket = new WebSocket(connection.address.webSocket)
+
+    const closeOnCompletion = (options?.interactionType || "LongRunning") == "OneTime"
+    const afterEach = (cb: () => void) => {
+      if (closeOnCompletion) {
+        socket.once('close', cb)
+        socket.close()
+      } else {
+        cb()
+      }
+    }
+
     const onInitialError = (error: Error) => {
       socket.removeAllListeners()
       return reject(error)
@@ -73,7 +97,8 @@ export const createInteractionContext = async (
       socket.on('close', closeHandler)
       resolve({
         connection,
-        socket
+        socket,
+        afterEach
       })
     })
   })
