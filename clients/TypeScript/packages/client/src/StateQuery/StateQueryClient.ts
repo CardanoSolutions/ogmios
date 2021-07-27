@@ -38,7 +38,7 @@ export interface StateQueryClient {
   nonMyopicMemberRewards: (input: Lovelace[] | Hash16[]) => ReturnType<typeof nonMyopicMemberRewards>
   point: PointOrOrigin
   proposedProtocolParameters: () => ReturnType<typeof proposedProtocolParameters>
-  release: () => Promise<void>
+  shutdown: () => Promise<void>
   stakeDistribution: () => ReturnType<typeof stakeDistribution>
   utxo: (addresses?: Address[]) => ReturnType<typeof utxo>
 }
@@ -90,7 +90,7 @@ export const createStateQueryClient = async (
             ensureSocketIsOpen(socket)
             return proposedProtocolParameters(context)
           },
-          release: () => {
+          shutdown: () => {
             ensureSocketIsOpen(socket)
             return new Promise((resolve, reject) => {
               const releaseRequestId = nanoid(5)

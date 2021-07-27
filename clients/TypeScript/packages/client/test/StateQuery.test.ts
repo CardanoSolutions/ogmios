@@ -21,10 +21,10 @@ import { InteractionContext } from '@src/Connection'
 
 describe('Local state queries', () => {
   describe('StateQueryClient', () => {
-    it('opens a connection on construction, and closes it after release', async () => {
+    it('opens a connection on construction, and closes it after shutdown', async () => {
       const context = await dummyInteractionContext()
       const client = await createStateQueryClient(context)
-      await client.release()
+      await client.shutdown()
       expect(client.context.socket.readyState).not.toBe(client.context.socket.OPEN)
     })
 
@@ -33,7 +33,7 @@ describe('Local state queries', () => {
       const client = await createStateQueryClient(context)
       const { point } = client
       expect(point).toBeDefined()
-      await client.release()
+      await client.shutdown()
     })
 
     it('uses the provided point for reproducible queries across clients', async () => {
@@ -42,8 +42,8 @@ describe('Local state queries', () => {
       const anotherContext = await dummyInteractionContext()
       const anotherClient = await createStateQueryClient(anotherContext)
       expect(anotherClient.point).toEqual(client.point)
-      await client.release()
-      await anotherClient.release()
+      await client.shutdown()
+      await anotherClient.shutdown()
     })
 
     it('rejects if the provided point is too old', async () => {
@@ -56,16 +56,16 @@ describe('Local state queries', () => {
       context.socket.close()
     })
 
-    it('rejects method calls after release', async () => {
+    it('rejects method calls after shutdown', async () => {
       const context = await dummyInteractionContext()
       const client = await createStateQueryClient(context)
-      await client.release()
+      await client.shutdown()
       const run = () => client.currentEpoch()
       await expect(run).rejects
     })
 
     describe('calling queries from the client', () => {
-      it('exposes the queries, uses a single context, and should be released when done', async () => {
+      it('exposes the queries, uses a single context, and should be shutdownd when done', async () => {
         const context = await dummyInteractionContext()
         const client = await createStateQueryClient(context)
 
@@ -107,7 +107,7 @@ describe('Local state queries', () => {
         ])
         expect(utxoSet[0]).toBeDefined()
 
-        await client.release()
+        await client.shutdown()
       })
 
       it('can handle concurrent requests ', async () => {
@@ -121,7 +121,7 @@ describe('Local state queries', () => {
         expect(currentEpoch).toBeDefined()
         expect(eraStart).toBeDefined()
         expect(ledgerTip).toBeDefined()
-        await client.release()
+        await client.shutdown()
       })
     })
   })
