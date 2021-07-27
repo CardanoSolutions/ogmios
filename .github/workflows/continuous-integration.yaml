@@ -159,9 +159,10 @@ jobs:
     needs: [server_build]
     strategy:
       matrix:
-        os: [ ubuntu-20.04 ]
-        network: [ testnet ]
+        os: [ubuntu-20.04]
+        network: [testnet]
         cardanoNodeVersion: [1.28.0]
+
     runs-on: ${{ matrix.os }}
     steps:
     - name: 💽 Install OS Packages
@@ -238,9 +239,57 @@ jobs:
         docker stop cardano-node
         docker rm cardano-node
 
+  clients_TypeScript_repl:
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ${{ matrix.os }}
+    needs: [clients_TypeScript]
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        target: [linux,macos,win.exe]
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v2.3.3
+
+    - name: 🧰 Setup Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 14.4
+
+    - name: 📦 Package REPL
+      working-directory: clients/TypeScript
+      run: |
+        yarn install --frozen-lockfile --non-interactive --logevel=error
+        yarn generate-schema-types
+        yarn repl:pkg
+
+    - name: 📤 Upload REPL exe
+      uses: actions/upload-artifact@v2
+      with:
+        name: cardano-ogmios-repl-${{ matrix.target }}
+        path: clients/TypeScript/packages/repl/build/cardano-ogmios-repl-${{ matrix.target }}
+
+  clients_TypeScript_npm:
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ${{ matrix.os }}
+    needs: [clients_TypeScript]
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        package: [schema,client,repl]
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v2.3.3
+
+    - name: 🧰 Setup Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 14.4
+
     - name: 📦 Pack
       working-directory: clients/TypeScript
       run: |
+        yarn install --frozen-lockfile --non-interactive --logevel=error
         ./scripts/pack.sh
 
     - name: 📤 Upload npm packages
@@ -252,24 +301,10 @@ jobs:
           clients/TypeScript/cardano-ogmios-schema-${{ steps.package-version.outputs.current-version}}.tgz
           clients/TypeScript/cardano-ogmios-repl-${{ steps.package-version.outputs.current-version}}.tgz
 
-    - name: 📦 Package REPL
-      working-directory: clients/TypeScript
-      run: yarn repl:pkg
-
-    - name: 📤 Upload REPL exe - Linux
-      uses: actions/upload-artifact@v2
+    - name: 📤 Publish client package to npm registry
+      if: ${{ startsWith(github.ref, 'refs/tags') }}
+      uses: JS-DevTools/npm-publish@v1
       with:
-        name: cardano-ogmios-repl-linux
-        path: clients/TypeScript/packages/repl/build/cardano-ogmios-repl-linux
-
-    - name: 📤 Upload REPL exe - macOS
-      uses: actions/upload-artifact@v2
-      with:
-        name: cardano-ogmios-repl-macos
-        path: clients/TypeScript/packages/repl/build/cardano-ogmios-repl-macos
-
-    - name: 📤 Upload REPL exe - Windows
-      uses: actions/upload-artifact@v2
-      with:
-        name: cardano-ogmios-repl-win
-        path: clients/TypeScript/packages/repl/build/cardano-ogmios-repl-win.exe
+        check-version: true
+        package: clients/TypeScript/packages/${{ matrix.package }}/package.json
+        token: ${{ secrets.NPM_TOKEN }}

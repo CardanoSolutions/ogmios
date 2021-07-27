@@ -18,7 +18,7 @@
     "cleanup": "shx rm -rf dist node_modules index.ts",
     "generate-schema-types": "json2ts -i $INIT_CWD/../../server/ogmios.wsp.json -o src/index.ts",
     "lint": "shx echo No code to lint in this package",
-    "prepack": "yarn build && yarn generate-schema-types",
+    "prepack": "yarn generate-schema-types && yarn build",
     "test": "shx echo No tests in this package"
   },
   "devDependencies": {

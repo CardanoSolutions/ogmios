@@ -22,6 +22,8 @@ export interface InteractionContext {
 
 export type Mirror = { [k: string]: unknown }
 
+export type WebSocketErrorHandler = (error: Error) => void
+
 export type WebSocketCloseHandler = (
   code: WebSocket.CloseEvent['code'],
   reason: WebSocket.CloseEvent['reason']
@@ -44,7 +46,7 @@ export const createConnectionObject = (connection?: ConnectionConfig): Connectio
 }
 
 export const createInteractionContext = async (
-  errorHandler: (error: Error) => void,
+  errorHandler: WebSocketErrorHandler,
   closeHandler: WebSocketCloseHandler,
   options?: {
     connection?: ConnectionConfig
