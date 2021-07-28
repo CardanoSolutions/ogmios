@@ -17,6 +17,13 @@ const isNonMyopicMemberRewards = (result: Ogmios['QueryResponse[nonMyopicMemberR
     Object.values(result as NonMyopicMemberRewards)[0]
   )[0] === 'number'
 
+/**
+ * Get non-myopic member rewards from a projected delegation amount;
+ * this is used to rank pools such that the system converges towards
+ * a fixed number of pools at equilibrium.
+ *
+ * @category StateQueryClient::query
+ */
 export const nonMyopicMemberRewards = (
   context: InteractionContext,
   input: (Lovelace | Hash16)[]

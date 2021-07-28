@@ -8,6 +8,11 @@ const isBound = (result: Ogmios['QueryResponse[eraStart]']['result']): result is
   return bound.time !== undefined && bound.slot !== undefined && bound.epoch !== undefined
 }
 
+/**
+ * Get the beginning of this era.
+ *
+ * @category StateQueryClient::query
+ */
 export const eraStart = (context: InteractionContext): Promise<Bound> =>
   Query<
     Ogmios['Query'],

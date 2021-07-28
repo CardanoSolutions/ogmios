@@ -27,6 +27,11 @@ import {
 } from './queries'
 import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
 
+/**
+ * A State Query client.
+ *
+ * @category StateQueryClient
+ */
 export interface StateQueryClient {
   context: InteractionContext
   currentEpoch: () => ReturnType<typeof currentEpoch>
@@ -43,6 +48,11 @@ export interface StateQueryClient {
   utxo: (addresses?: Address[]) => ReturnType<typeof utxo>
 }
 
+/**
+ * Initialize a {@link StateQueryClient} from an {@link InteractionContext}
+ *
+ * @category StateQueryClient
+ */
 export const createStateQueryClient = async (
   context: InteractionContext,
   options?: { point?: PointOrOrigin }

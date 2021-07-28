@@ -9,6 +9,11 @@ const isEraMismatch = (result: Ogmios['QueryResponse[currentProtocolParameters]'
 const isGenesisConfig = (result: Ogmios['QueryResponse[genesisConfig]']['result']): result is CompactGenesis =>
   (result as CompactGenesis).systemStart !== undefined
 
+/**
+ * Get the Shelley's genesis configuration.
+ *
+ * @category StateQueryClient::query
+ */
 export const genesisConfig = (context: InteractionContext): Promise<CompactGenesis> =>
   Query<
     Ogmios['Query'],

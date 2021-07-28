@@ -13,6 +13,11 @@ const isEraMismatch = (result: Ogmios['QueryResponse[stakeDistribution]']['resul
 const isPoolDistribution = (result: Ogmios['QueryResponse[stakeDistribution]']['result']): result is PoolDistribution =>
   Object.values(result as PoolDistribution)[0].stake !== undefined
 
+/**
+ * Get the current stake {@PoolDistribution}. This request may be quite long, use with care.
+ *
+ * @category StateQueryClient::query
+ */
 export const stakeDistribution = (
   context: InteractionContext
 ): Promise<PoolDistribution> =>

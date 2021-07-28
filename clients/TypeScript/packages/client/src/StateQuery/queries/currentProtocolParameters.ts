@@ -13,6 +13,11 @@ const isEraMismatch = (result: Ogmios['QueryResponse[currentProtocolParameters]'
 const isProtocolParameters = (result: Ogmios['QueryResponse[currentProtocolParameters]']['result']): result is ProtocolParametersShelley =>
   (result as ProtocolParametersShelley).minFeeCoefficient !== undefined
 
+/**
+ * Get the protocol parameters of the current epoch / era.
+ *
+ * @category StateQueryClient::query
+ */
 export const currentProtocolParameters = (context: InteractionContext): Promise<ProtocolParametersShelley> =>
   Query<
     Ogmios['Query'],

@@ -2,6 +2,10 @@ import WebSocket from 'isomorphic-ws'
 import { getOgmiosHealth } from './OgmiosHealth'
 import { OgmiosNotReady } from './errors'
 
+/**
+ * Connection configuration parameters. Use `tls: true` to create a `wss://` using TLS
+ * encryption (if supported by the server).
+ */
 export interface ConnectionConfig {
   host?: string,
   port?: number,
@@ -15,13 +19,16 @@ export interface Connection extends Required<ConnectionConfig> {
   }
 }
 
+/**
+ * An interaction context used by Ouroboros clients to interact with the server.
+ */
 export interface InteractionContext {
   connection: Connection
   socket: WebSocket
   afterEach: (cb: () => void) => void
 }
 
-/**
+/*
  * Describe how the interaction context behaves. A `LongRunning` context does not close
  * the underlying connection after a request, it has to be done manually. A `OneTime` context
  * however will close the connection afterwards.
@@ -30,8 +37,6 @@ export type InteractionType = (
   | 'LongRunning'
   | 'OneTime'
 )
-
-export type Mirror = { [k: string]: unknown }
 
 export type WebSocketErrorHandler = (error: Error) => void
 

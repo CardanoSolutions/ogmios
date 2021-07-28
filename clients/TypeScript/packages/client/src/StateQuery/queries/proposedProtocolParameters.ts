@@ -7,6 +7,11 @@ import { Query } from '../Query'
 const isEraMismatch = (result: Ogmios['QueryResponse[proposedProtocolParameters]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
 
+/**
+ * Get proposed protocol parameters for update, if any.
+ *
+ * @category StateQueryClient::query
+ */
 export const proposedProtocolParameters = (
   context: InteractionContext
 ): Promise<ProposedProtocolParametersShelley | ProposedProtocolParametersAlonzo | null> =>

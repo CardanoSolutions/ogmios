@@ -5,6 +5,7 @@
   "engines": {
     "node": "^14"
   },
+  "main": "src/index.ts",
   "exports": {
     ".": "src/index.js",
     "./Connection": "src/Connection",

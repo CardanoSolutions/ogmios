@@ -9,6 +9,11 @@ const isEraMismatch = (result: Ogmios['QueryResponse[ledgerTip]']['result']): re
 const isNonOriginPoint = (result: {slot: Slot, hash: Hash16}): result is {slot: Slot, hash: Hash16} =>
   (result as {slot: Slot, hash: Hash16}).slot !== undefined
 
+/**
+ * Get the current ledger tip. Will resolve the the acquired point if any.
+ *
+ * @category StateQueryClient::query
+ */
 export const ledgerTip = (context: InteractionContext): Promise<PointOrOrigin> =>
   Query<
     Ogmios['Query'],

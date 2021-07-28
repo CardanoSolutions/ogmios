@@ -6,6 +6,11 @@ import { Query } from '../Query'
 const isEraMismatch = (result: Ogmios['QueryResponse[currentEpoch]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
 
+/**
+ * Get the current Cardano {@link Epoch}
+ *
+ * @category StateQueryClient::query
+ */
 export const currentEpoch = (context: InteractionContext): Promise<Epoch> =>
   Query<
     Ogmios['Query'],

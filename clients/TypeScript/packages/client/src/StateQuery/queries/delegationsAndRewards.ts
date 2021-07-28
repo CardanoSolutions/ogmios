@@ -17,6 +17,11 @@ const isDelegationsAndRewardsByAccounts = (result: Ogmios['QueryResponse[delegat
   return typeof sample[0] === 'string' && (sample[1].delegate !== undefined || sample[1].rewards !== undefined)
 }
 
+/**
+ * Get delegation choices and reward balances of some given accounts / stake addresses.
+ *
+ * @category StateQueryClient::query
+ */
 export const delegationsAndRewards = (
   context: InteractionContext,
   stakeKeyHashes: Hash16[]

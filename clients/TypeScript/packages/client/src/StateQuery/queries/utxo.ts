@@ -23,6 +23,11 @@ const isArrayOfUtxo = (result: Ogmios['QueryResponse[utxo]']['result']): result 
   return 'index' in item[0] || typeof item[1].value.coins === 'number'
 }
 
+/**
+ * Queries the {@link Utxo} associated with some {@link Address}.
+ *
+ * @category StateQueryClient::query
+ */
 export const utxo = (
   context: InteractionContext,
   addresses: Address[]
