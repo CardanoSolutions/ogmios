@@ -1,24 +1,15 @@
 import repl from 'repl'
 import parser from 'yargs-parser'
 import {
-  ChainSyncMessageHandlers,
+  ChainSync,
   ConnectionConfig,
+  createConnectionObject,
   createChainSyncClient,
-  createStateQueryClient,
-  currentEpoch,
-  currentProtocolParameters,
-  delegationsAndRewards,
-  eraStart,
-  findIntersect,
-  genesisConfig,
+  createInteractionContext,
   getServerHealth,
-  ledgerTip,
-  nonMyopicMemberRewards,
-  proposedProtocolParameters,
   Schema,
-  stakeDistribution,
-  submitTx,
-  utxo
+  StateQuery,
+  TxSubmission
 } from '@cardano-ogmios/client'
 import chalk from 'chalk'
 import util from 'util'
@@ -33,7 +24,8 @@ const logObject = (obj: Object) =>
     host: args.host,
     port: args.port
   } as ConnectionConfig
-  const chainSync = await createChainSyncClient({
+  const context = await createInteractionContext(console.error, () => {}, { connection })
+  const chainSync = await createChainSyncClient(context, {
     rollBackward: async ({ point, tip }, requestNext) => {
       log(chalk.bgRedBright.bold('ROLL BACKWARD'))
       log(chalk.redBright.bold('Point'))
@@ -50,10 +42,7 @@ const logObject = (obj: Object) =>
       logObject(tip)
       requestNext()
     }
-  },
-  console.error,
-  console.log,
-  { connection }
+  }
   )
   const cardanoOgmiosRepl = repl.start({
     prompt: 'ogmios> ',
@@ -62,26 +51,22 @@ const logObject = (obj: Object) =>
 
   Object.assign(cardanoOgmiosRepl.context, {
     chainSync,
-    createChainSyncClient:
-      (messageHandlers: ChainSyncMessageHandlers) =>
-        createChainSyncClient(messageHandlers, console.error, console.log, { connection }),
-    createStateQueryClient: () => createStateQueryClient(console.error, console.log, { connection }),
-    currentEpoch: () => currentEpoch(connection),
-    currentProtocolParameters: () => currentProtocolParameters(connection),
+    currentEpoch: () => StateQuery.currentEpoch(context),
+    currentProtocolParameters: () => StateQuery.currentProtocolParameters(context),
     delegationsAndRewards:
-      (stakeKeyHashes: Schema.Hash16[]) => delegationsAndRewards(stakeKeyHashes, connection),
-    eraStart: () => eraStart(connection),
-    genesisConfig: () => genesisConfig(connection),
-    getServerHealth: () => getServerHealth(connection),
-    findIntersect: (points: Schema.Point[]) => findIntersect(points, connection),
-    ledgerTip: () => ledgerTip(connection),
+      (stakeKeyHashes: Schema.Hash16[]) => StateQuery.delegationsAndRewards(context, stakeKeyHashes),
+    eraStart: () => StateQuery.eraStart(context),
+    genesisConfig: () => StateQuery.genesisConfig(context),
+    getServerHealth: () => getServerHealth(createConnectionObject(connection)),
+    findIntersect: (points: Schema.Point[]) => ChainSync.findIntersect(context, points),
+    ledgerTip: () => StateQuery.ledgerTip(context),
     nonMyopicMemberRewards:
       (input: (Schema.Lovelace | Schema.Hash16)[]) =>
-        nonMyopicMemberRewards(input, connection),
-    proposedProtocolParameters: () => proposedProtocolParameters(connection),
-    stakeDistribution: () => stakeDistribution(connection),
-    submitTx: (bytes: string) => submitTx(bytes, connection),
-    utxo: (addresses?: Schema.Address[]) => utxo(addresses, connection)
+        StateQuery.nonMyopicMemberRewards(context, input),
+    proposedProtocolParameters: () => StateQuery.proposedProtocolParameters(context),
+    stakeDistribution: () => StateQuery.stakeDistribution(context),
+    submitTx: (bytes: string) => TxSubmission.submitTx(context, bytes),
+    utxo: (addresses?: Schema.Address[]) => StateQuery.utxo(context, addresses)
   })
 
   cardanoOgmiosRepl.on('exit', async () => {
