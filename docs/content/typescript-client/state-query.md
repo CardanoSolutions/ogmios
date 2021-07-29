@@ -9,7 +9,7 @@ weight = 2
 The StateQuery client allows you to play with the [Local State Query](/mini-protocols/local-state-query) mini protocol; that is, a protocol for querying parts of the ledger state. The complete set of queries is described in [the documentation](#TODO). To use it, create a client from a context and start querying!
 
 ```ts
-import { createStateQueryClient } from '@cardano-ogmios/client/StateQuery'
+import { createStateQueryClient } from '@cardano-ogmios/client'
 
 const client = await createStateQueryClient(context)
 
@@ -30,7 +30,7 @@ For example (notice how the `ledgerTip` remains unchanged, and equal to the acqu
 
 ```
 import delay from 'delay'
-import { createStateQueryClient } from '@cardano-ogmios/client/StateQuery'
+import { createStateQueryClient } from '@cardano-ogmios/client'
 
 const point = {
   slot: 33055551,

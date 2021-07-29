@@ -29,7 +29,7 @@ To create an `InteractionContext`, you need to provide three elements:
 For example:
 
 ```ts
-import { createInteractionContext, InteractionContext } from '@cardano-ogmios/client/Connection'
+import { createInteractionContext, InteractionContext } from '@cardano-ogmios/client'
 
 const context : InteractionContext = await createInteractionContext(
   err => console.error(err),
