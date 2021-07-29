@@ -2,6 +2,24 @@ import fetch from 'cross-fetch'
 import { Connection } from './Connection'
 import { Tip } from '@cardano-ogmios/schema'
 
+/**
+ * Captures the health of the server, including metrics and synchronization progress.
+ *
+ * This is useful to monitor whether the server is running (or simply, if the underlying
+ * node is ready to receive requests). `lastTipUpdate` will be null if the server hasn't
+ * received any tip update from the Cardano node which means that either:
+ *
+ * - There's an error with the connection to the node
+ * - The node is still starting and checking the integrity of its database.
+ *
+ * The node checks the database integrity on each restart; in some cases it can take several
+ * minutes. While doing so, it does not allow any external client to connect.
+ *
+ * See also {@link InteractionContext} for an easy way to manage connection establishment with
+ * a bootstrapping node.
+ *
+ * @category Connection
+ */
 export interface OgmiosHealth {
   currentEra: 'Alonzo' | 'Byron' | 'Mary' | 'Shelley'
   lastKnownTip: Tip,
@@ -27,6 +45,11 @@ export interface OgmiosHealth {
   networkSynchronization: number,
 }
 
+/**
+ * Get the server health. This can be safely polled at regular intervals for monitoring.
+ *
+ * @category Connection
+ */
 export const getOgmiosHealth = async (
   connection?: Connection
 ): Promise<OgmiosHealth> => {

@@ -10,7 +10,7 @@ const isEraMismatch = (result: Ogmios['QueryResponse[proposedProtocolParameters]
 /**
  * Get proposed protocol parameters for update, if any.
  *
- * @category StateQueryClient::query
+ * @category StateQuery
  */
 export const proposedProtocolParameters = (
   context: InteractionContext

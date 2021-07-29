@@ -3,9 +3,10 @@ import { IntersectionNotFoundError, UnknownResultError } from '../errors'
 import { InteractionContext } from '../Connection'
 import { Query } from '../StateQuery/'
 
-// type Intersection = Ogmios['FindIntersectResponse']['result']['IntersectionFound']
+/** @category ChainSync */
 export type Intersection = { point: PointOrOrigin, tip: TipOrOrigin }
 
+/** @category ChainSync */
 export const findIntersect = (
   context: InteractionContext,
   points: PointOrOrigin[]

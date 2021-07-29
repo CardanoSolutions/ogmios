@@ -22,7 +22,7 @@ const isNonMyopicMemberRewards = (result: Ogmios['QueryResponse[nonMyopicMemberR
  * this is used to rank pools such that the system converges towards
  * a fixed number of pools at equilibrium.
  *
- * @category StateQueryClient::query
+ * @category StateQuery
  */
 export const nonMyopicMemberRewards = (
   context: InteractionContext,

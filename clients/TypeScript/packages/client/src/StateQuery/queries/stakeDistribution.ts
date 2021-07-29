@@ -16,7 +16,7 @@ const isPoolDistribution = (result: Ogmios['QueryResponse[stakeDistribution]']['
 /**
  * Get the current stake {@PoolDistribution}. This request may be quite long, use with care.
  *
- * @category StateQueryClient::query
+ * @category StateQuery
  */
 export const stakeDistribution = (
   context: InteractionContext

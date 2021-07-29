@@ -11,7 +11,7 @@ const isBound = (result: Ogmios['QueryResponse[eraStart]']['result']): result is
 /**
  * Get the beginning of this era.
  *
- * @category StateQueryClient::query
+ * @category StateQuery
  */
 export const eraStart = (context: InteractionContext): Promise<Bound> =>
   Query<

@@ -12,7 +12,7 @@ const isNonOriginPoint = (result: {slot: Slot, hash: Hash16}): result is {slot: 
 /**
  * Get the current ledger tip. Will resolve the the acquired point if any.
  *
- * @category StateQueryClient::query
+ * @category StateQuery
  */
 export const ledgerTip = (context: InteractionContext): Promise<PointOrOrigin> =>
   Query<

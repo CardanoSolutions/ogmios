@@ -6,6 +6,11 @@ import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
 import { findIntersect, Intersection } from './findIntersect'
 import { requestNext } from './requestNext'
 
+/**
+ * See also {@link createChainSyncClient} for creating a client.
+ *
+ * @category ChainSync
+ */
 export interface ChainSyncClient {
   context: InteractionContext
   shutdown: () => Promise<void>
@@ -15,6 +20,7 @@ export interface ChainSyncClient {
   ) => Promise<Intersection>
 }
 
+/** @category ChainSync */
 export interface ChainSyncMessageHandlers {
   rollBackward: (
     response: {
@@ -32,6 +38,7 @@ export interface ChainSyncMessageHandlers {
   ) => Promise<void>
 }
 
+/** @category Constructor */
 export const createChainSyncClient = async (
   context: InteractionContext,
   messageHandlers: ChainSyncMessageHandlers,

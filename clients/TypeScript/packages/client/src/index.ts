@@ -1,9 +1,15 @@
 export * as Schema from '@cardano-ogmios/schema'
+
 export * from './Connection'
-export * from './ChainSync'
-export * from './errors'
 export * from './OgmiosHealth'
-export * from './Request'
-export * from './StateQuery'
-export * from './TxSubmission'
+export * from './errors'
 export * from './util'
+
+export { createChainSyncClient } from './ChainSync'
+export * as ChainSync from './ChainSync'
+
+export { createStateQueryClient } from './StateQuery'
+export * as StateQuery from './StateQuery'
+
+export { createTxSubmissionClient } from './TxSubmission'
+export * as TxSubmission from './TxSubmission'

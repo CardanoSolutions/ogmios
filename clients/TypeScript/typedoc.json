@@ -1,0 +1,16 @@
+{
+  "theme": "./node_modules/igniteui-typedoc-theme/dist",
+  "excludeInternal": true,
+  "toc": [""],
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Constructor",
+    "Connection",
+    "ChainSync",
+    "StateQuery",
+    "TxSubmission",
+    "Health",
+    "Helper",
+    "*"
+  ]
+}

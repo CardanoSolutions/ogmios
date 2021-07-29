@@ -5,6 +5,8 @@ import { OgmiosNotReady } from './errors'
 /**
  * Connection configuration parameters. Use `tls: true` to create a `wss://` using TLS
  * encryption (if supported by the server).
+ *
+ * @category Connection
  */
 export interface ConnectionConfig {
   host?: string,
@@ -12,6 +14,7 @@ export interface ConnectionConfig {
   tls?: boolean
 }
 
+/** @category Connection */
 export interface Connection extends Required<ConnectionConfig> {
   address: {
     http: string
@@ -21,6 +24,8 @@ export interface Connection extends Required<ConnectionConfig> {
 
 /**
  * An interaction context used by Ouroboros clients to interact with the server.
+ *
+ * @category Connection
  */
 export interface InteractionContext {
   connection: Connection
@@ -28,23 +33,28 @@ export interface InteractionContext {
   afterEach: (cb: () => void) => void
 }
 
-/*
+/**
  * Describe how the interaction context behaves. A `LongRunning` context does not close
  * the underlying connection after a request, it has to be done manually. A `OneTime` context
  * however will close the connection afterwards.
+ *
+ * @category Connection
  */
 export type InteractionType = (
   | 'LongRunning'
   | 'OneTime'
 )
 
+/** @category Connection */
 export type WebSocketErrorHandler = (error: Error) => void
 
+/** @category Connection */
 export type WebSocketCloseHandler = (
   code: WebSocket.CloseEvent['code'],
   reason: WebSocket.CloseEvent['reason']
 ) => void
 
+/** @category Constructor */
 export const createConnectionObject = (config?: ConnectionConfig): Connection => {
   const base = {
     host: config?.host ?? 'localhost',
@@ -61,6 +71,7 @@ export const createConnectionObject = (config?: ConnectionConfig): Connection =>
   }
 }
 
+/** @category Constructor */
 export const createInteractionContext = async (
   errorHandler: WebSocketErrorHandler,
   closeHandler: WebSocketCloseHandler,

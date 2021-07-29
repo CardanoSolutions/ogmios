@@ -20,7 +20,7 @@ const isDelegationsAndRewardsByAccounts = (result: Ogmios['QueryResponse[delegat
 /**
  * Get delegation choices and reward balances of some given accounts / stake addresses.
  *
- * @category StateQueryClient::query
+ * @category StateQuery
  */
 export const delegationsAndRewards = (
   context: InteractionContext,

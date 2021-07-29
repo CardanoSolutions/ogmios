@@ -62,7 +62,8 @@ import {
   WrongRetirementEpoch
 } from '@cardano-ogmios/schema'
 
-type SubmitTxErrorShelley =
+/** @category TxSubmission */
+export type SubmitTxErrorShelley =
   | AddressAttributesTooLarge
   | AlreadyDelegating
   | BadInputs
@@ -124,6 +125,7 @@ type SubmitTxErrorShelley =
   | WrongPoolCertificate
   | WrongRetirementEpoch;
 
+/** @category TxSubmission */
 export const errors = {
   InvalidWitnesses: {
     assert: (item: SubmitTxErrorShelley): item is InvalidWitnesses =>

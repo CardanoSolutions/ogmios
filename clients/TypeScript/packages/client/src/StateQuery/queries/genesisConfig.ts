@@ -12,7 +12,7 @@ const isGenesisConfig = (result: Ogmios['QueryResponse[genesisConfig]']['result'
 /**
  * Get the Shelley's genesis configuration.
  *
- * @category StateQueryClient::query
+ * @category StateQuery
  */
 export const genesisConfig = (context: InteractionContext): Promise<CompactGenesis> =>
   Query<

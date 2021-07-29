@@ -9,7 +9,7 @@ const isEraMismatch = (result: Ogmios['QueryResponse[currentEpoch]']['result']):
 /**
  * Get the current Cardano {@link Epoch}
  *
- * @category StateQueryClient::query
+ * @category StateQuery
  */
 export const currentEpoch = (context: InteractionContext): Promise<Epoch> =>
   Query<

@@ -26,7 +26,7 @@ const isArrayOfUtxo = (result: Ogmios['QueryResponse[utxo]']['result']): result 
 /**
  * Queries the {@link Utxo} associated with some {@link Address}.
  *
- * @category StateQueryClient::query
+ * @category StateQuery
  */
 export const utxo = (
   context: InteractionContext,

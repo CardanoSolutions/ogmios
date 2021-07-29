@@ -1,12 +1,14 @@
 import WebSocket from 'isomorphic-ws'
 import { InteractionContext } from './Connection'
 
+/** @internal */
 export const baseRequest = {
   type: 'jsonwsp/request',
   version: '1.0',
   servicename: 'ogmios'
 }
 
+/** @internal */
 export const send = async <T>(
   send: (socket: WebSocket) => Promise<T>,
   context: InteractionContext

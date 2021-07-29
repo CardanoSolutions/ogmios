@@ -1,6 +1,7 @@
 import { CustomError } from 'ts-custom-error'
 import { PointOrOrigin } from '@cardano-ogmios/schema'
 
+/** @category ChainSync */
 export class IntersectionNotFoundError extends CustomError {
   public constructor (points: PointOrOrigin | PointOrOrigin[]) {
     super()

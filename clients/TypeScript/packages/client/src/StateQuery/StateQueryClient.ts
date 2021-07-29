@@ -30,7 +30,7 @@ import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
 /**
  * A State Query client.
  *
- * @category StateQueryClient
+ * @category StateQuery
  */
 export interface StateQueryClient {
   context: InteractionContext
@@ -51,7 +51,7 @@ export interface StateQueryClient {
 /**
  * Initialize a {@link StateQueryClient} from an {@link InteractionContext}
  *
- * @category StateQueryClient
+ * @category Constructor
  */
 export const createStateQueryClient = async (
   context: InteractionContext,

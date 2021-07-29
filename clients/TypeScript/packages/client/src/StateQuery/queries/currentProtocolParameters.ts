@@ -16,7 +16,7 @@ const isProtocolParameters = (result: Ogmios['QueryResponse[currentProtocolParam
 /**
  * Get the protocol parameters of the current epoch / era.
  *
- * @category StateQueryClient::query
+ * @category StateQuery
  */
 export const currentProtocolParameters = (context: InteractionContext): Promise<ProtocolParametersShelley> =>
   Query<

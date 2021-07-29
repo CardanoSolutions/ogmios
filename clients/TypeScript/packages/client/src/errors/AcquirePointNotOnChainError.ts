@@ -3,7 +3,7 @@ import { CustomError } from 'ts-custom-error'
 /**
  * Returned by the node when trying to acquire a point which does not exists.
  *
- * @category StateQueryClient
+ * @category StateQuery
  */
 export class AcquirePointNotOnChainError extends CustomError {
   public constructor () {

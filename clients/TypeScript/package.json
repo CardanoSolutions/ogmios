@@ -26,7 +26,7 @@
     "testnet:up": "DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 OGMIOS_PORT=1338 NETWORK=testnet docker-compose -p ogmios-testnet up",
     "testnet:down": "docker-compose -p ogmios-testnet down",
     "tags": "ctags $(find packages -type f -name '*.ts' ! -path 'dist/*' ! -name '*.test.ts' ! -name '*.d.ts' ! -path 'node_modules/*')",
-    "doc": "typedoc --excludeInternal --categorizeByGroup --theme igniteui-typedoc-theme/dist --packages ."
+    "doc": "typedoc --packages ."
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",

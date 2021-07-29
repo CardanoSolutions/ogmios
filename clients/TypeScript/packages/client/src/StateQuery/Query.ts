@@ -3,6 +3,7 @@ import { Data } from 'isomorphic-ws'
 import { InteractionContext } from '../Connection'
 import { baseRequest, send } from '../Request'
 
+/** @internal */
 export const Query = <
   Request,
   QueryResponse extends { reflection?: { requestId?: string } },
