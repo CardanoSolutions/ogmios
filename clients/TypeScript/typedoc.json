@@ -1,5 +1,6 @@
 {
   "theme": "./node_modules/igniteui-typedoc-theme/dist",
+  "out": "../../docs/static/api",
   "excludeInternal": true,
   "toc": [""],
   "categorizeByGroup": true,

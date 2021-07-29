@@ -13,19 +13,30 @@ jobs:
     steps:
 
     - name: 📥 Checkout repository
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2.3.3
+      with:
+        submodules: true
+
+    - name: 🧰 Setup Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 14.4
 
     - name: 🧰 Download Hugo
       run: |
         curl -L https://github.com/gohugoio/hugo/releases/download/v0.76.5/hugo_extended_0.76.5_Linux-64bit.tar.gz | tar xz
 
+    - name: 🔨 Build TypeScript Doc
+      working-directory: clients/TypeScript
+      run: |
+        yarn install --frozen-lockfile --non-interactive --logevel=error
+        yarn generate-schema-types
+        yarn doc
+
     - name: 📸 Build Static Website
       shell: bash
+      working-directory: docs
       run: |
-        pip3 install json-schema-for-humans
-        ./scripts/generate-api-reference.sh
-        cd docs
-        git submodule update --init themes/learn
         ../hugo -t learn --minify
         echo "ogmios.dev" > public/CNAME
 
