@@ -20,7 +20,7 @@ import { Tip } from '@cardano-ogmios/schema'
  *
  * @category Connection
  */
-export interface OgmiosHealth {
+export interface ServerHealth {
   currentEra: 'Alonzo' | 'Byron' | 'Mary' | 'Shelley'
   lastKnownTip: Tip,
   lastTipUpdate: string | null,
@@ -50,9 +50,9 @@ export interface OgmiosHealth {
  *
  * @category Connection
  */
-export const getOgmiosHealth = async (
+export const getServerHealth = async (
   connection?: Connection
-): Promise<OgmiosHealth> => {
+): Promise<ServerHealth> => {
   const response = await fetch(`${connection.address.http}/health`)
   const responseJson = await response.json()
   if (response.ok) {

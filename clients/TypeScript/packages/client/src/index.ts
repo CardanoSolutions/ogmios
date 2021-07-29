@@ -1,7 +1,7 @@
 export * as Schema from '@cardano-ogmios/schema'
 
 export * from './Connection'
-export * from './OgmiosHealth'
+export * from './ServerHealth'
 export * from './errors'
 export * from './util'
 

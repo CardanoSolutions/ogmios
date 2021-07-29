@@ -1,6 +1,6 @@
 import WebSocket from 'isomorphic-ws'
-import { getOgmiosHealth } from './OgmiosHealth'
-import { OgmiosNotReady } from './errors'
+import { getServerHealth } from './ServerHealth'
+import { ServerNotReady } from './errors'
 
 /**
  * Connection configuration parameters. Use `tls: true` to create a `wss://` using TLS
@@ -80,10 +80,10 @@ export const createInteractionContext = async (
     interactionType?: InteractionType,
   }): Promise<InteractionContext> => {
   const connection = createConnectionObject(options?.connection)
-  const health = await getOgmiosHealth(connection)
+  const health = await getServerHealth(connection)
   return new Promise((resolve, reject) => {
     if (health.lastTipUpdate === null) {
-      return reject(new OgmiosNotReady(health))
+      return reject(new ServerNotReady(health))
     }
     const socket = new WebSocket(connection.address.webSocket)
 
