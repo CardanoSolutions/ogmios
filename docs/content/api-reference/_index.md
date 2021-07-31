@@ -12,7 +12,7 @@ Ogmios as a JSON-WSP service is entirely described using [JSON Schema - Draft 7]
 The schema is large (200+ type definitions!) for it covers everything there's to cover in Cardano. If you get lost, look for the `Ogmios` object in the search bar to get back to the root of the schema!
 {{% /notice %}}
 
-If you're using the TypeScript, you may also give a look at the [API reference for the TypeScript client](http://localhost:1313/api/modules/_cardano_ogmios_client.html) or more specifically, documentation for one of the Ouroboros mini-protocols clients:
+If you're using TypeScript, take a look at the [API reference for the TypeScript client](http://localhost:1313/api/modules/_cardano_ogmios_client.html) or more specifically, documentation for one of the Ouroboros mini-protocols clients:
 
 - [ChainSync](http://localhost:1313/api/modules/_cardano_ogmios_client.html)
 - [StateQuery](http://localhost:1313/api/modules/_cardano_ogmios_client.StateQuery.html)

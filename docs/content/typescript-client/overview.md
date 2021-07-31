@@ -33,7 +33,7 @@ import { createInteractionContext, InteractionContext } from '@cardano-ogmios/cl
 
 const context : InteractionContext = await createInteractionContext(
   err => console.error(err),
-  () => console.error("Connection closed."),
+  () => console.log("Connection closed."),
   { connection: { port: 1337 } }
 )
 ```

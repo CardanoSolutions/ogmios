@@ -55,18 +55,12 @@ $ ogmios --help
 
 ## 📚 Documentation
 
-### API Reference
-
-Install [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) using `pip3`:
+The documentation can be generated from the TypeScript client workbench. Follow the instruction in the README to setup the TypeScript workspace, and then run:
 
 ```console
-$ pip3 install json-schema-for-humans
+$ yarn docs
 ```
 
-And then, run:
+This will generate documentation for the API and the TypeScript clients in `/docs/static` to be served by the static website generator [Hugo](https://gohugo.io/documentation/). 
 
-```console
-$ cd docs && generate-schema-doc --no-link-to-reused-ref static/ogmios.wsp.json static/api-reference.html
-```
-
-The documentation will be generated to `static/api-reference.html`.
+Alternatively, you can also look at our [User-Guide Github Workflow](https://github.com/CardanoSolutions/ogmios/blob/master/.github/workflows/user-guide.yaml#L18-L30) to see how its done.

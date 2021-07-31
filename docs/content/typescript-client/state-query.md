@@ -13,7 +13,7 @@ import { createStateQueryClient } from '@cardano-ogmios/client'
 
 const client = await createStateQueryClient(context)
 
-console.log(`ledgerTip: ${await client.ledgerTip().tip}`) 
+console.log(`ledgerTip: ${(await client.ledgerTip()).tip}`) 
 // ledgerTip: {"slot":33055551,"hash":"050b05030645fdc4ee10e81f131030049c08f7763355873564540fe5a0533f43"}
 
 console.log(`currentEpoch: ${await client.currentEpoch()}`)
