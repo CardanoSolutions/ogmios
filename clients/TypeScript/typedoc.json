@@ -1,5 +1,5 @@
 {
-  "theme": "./node_modules/igniteui-typedoc-theme/dist",
+  "theme": "./docs/theme",
   "out": "../../docs/static/api",
   "excludeInternal": true,
   "toc": [""],

@@ -31,7 +31,7 @@ jobs:
       run: |
         yarn install --frozen-lockfile --non-interactive --logevel=error
         yarn generate-schema-types
-        yarn doc
+        yarn docs
 
     - name: 📸 Build Static Website
       shell: bash

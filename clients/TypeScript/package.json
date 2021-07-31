@@ -15,7 +15,7 @@
   "license": "MPL-2.0",
   "scripts": {
     "build": "yarn workspaces run build",
-    "cleanup": "yarn workspaces run cleanup && shx rm -rf node_modules",
+    "cleanup": "yarn workspaces run cleanup &&  shx rm -rf docs/theme && shx rm -rf node_modules",
     "generate-schema-types": "yarn workspace @cardano-ogmios/schema run generate-schema-types",
     "lint": "yarn workspaces run lint",
     "mainnet:up": "DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose -p ogmios-mainnet up",
@@ -26,7 +26,7 @@
     "testnet:up": "DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 OGMIOS_PORT=1338 NETWORK=testnet docker-compose -p ogmios-testnet up",
     "testnet:down": "docker-compose -p ogmios-testnet down",
     "tags": "ctags $(find packages -type f -name '*.ts' ! -path 'dist/*' ! -name '*.test.ts' ! -name '*.d.ts' ! -path 'node_modules/*')",
-    "doc": "typedoc --packages ."
+    "docs": "tar -C docs -xf docs/ogmios-typedoc-theme.tar.gz && typedoc --packages ."
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",
@@ -43,7 +43,6 @@
     "eslint-plugin-promise": "^4.3.1",
     "eslint-plugin-standard": "^5.0.0",
     "eslint-watch": "^7.0.0",
-    "igniteui-typedoc-theme": "https://github.com/CardanoSolutions/igniteui-typedoc-theme",
     "jest": "^26.6.3",
     "json-schema-to-typescript": "^10.1.4",
     "shx": "^0.3.3",
