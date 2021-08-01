@@ -46,6 +46,6 @@ An `InteractionContext` is a tiny abstraction on top of a WebSocket connection. 
 
 Once you've got your hands on an `InteractionContext`, you can use it to create any of the 3 clients (each of one corresponding to one of the Ouroboros mini-protocols):
 
-- `StateQueryClient`
-- `TxSubmissionClient`
-- `ChainSyncClient`
+- [`ChainSyncClient`](/typescript-client/chain-sync)
+- [`StateQueryClient`](/typescript-client/state-query)
+- [`TxSubmissionClient`](/typescript-client/tx-submission)

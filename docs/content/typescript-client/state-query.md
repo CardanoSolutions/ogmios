@@ -1,7 +1,7 @@
 +++
-title = "StateQueryClient"
+title = "StateQuery Client"
 chapter = false
-weight = 2
+weight = 3
 +++
 
 ## StateQueryClient
