@@ -1,7 +1,7 @@
 import { Ogmios } from '@cardano-ogmios/schema'
 import { baseRequest } from '../Request'
 import { safeJSON } from '../util'
-import WebSocket from 'isomorphic-ws'
+import WebSocket from '../IsomorphicWebSocket'
 
 /** A value set when sending the request, to be mirrored by the server in the corresponding response.
  *
