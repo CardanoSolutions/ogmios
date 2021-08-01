@@ -1,6 +1,6 @@
 import { Ogmios, Bound } from '@cardano-ogmios/schema'
 import { QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
-import { ConnectionConfig, InteractionContext } from '../../Connection'
+import { InteractionContext } from '../../Connection'
 import { Query } from '../Query'
 
 const isBound = (result: Ogmios['QueryResponse[eraStart]']['result']): result is Bound => {
@@ -8,7 +8,12 @@ const isBound = (result: Ogmios['QueryResponse[eraStart]']['result']): result is
   return bound.time !== undefined && bound.slot !== undefined && bound.epoch !== undefined
 }
 
-export const eraStart = (config?: ConnectionConfig | InteractionContext): Promise<Bound> =>
+/**
+ * Get the beginning of this era.
+ *
+ * @category StateQuery
+ */
+export const eraStart = (context: InteractionContext): Promise<Bound> =>
   Query<
     Ogmios['Query'],
     Ogmios['QueryResponse[eraStart]'],
@@ -28,4 +33,4 @@ export const eraStart = (config?: ConnectionConfig | InteractionContext): Promis
         return reject(new UnknownResultError(response.result))
       }
     }
-  }, config)
+  }, context)

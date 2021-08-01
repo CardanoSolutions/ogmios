@@ -1,13 +1,20 @@
-import { ConnectionConfig, InteractionContext } from '../Connection'
+import { InteractionContext } from '../Connection'
 import { EraMismatchError, UnknownResultError } from '../errors'
 import { errors } from './errors'
 import { EraMismatch, Ogmios, SubmitFail } from '@cardano-ogmios/schema'
 import { Query } from '../StateQuery'
 
+/** @internal */
 const isEraMismatch = (item: SubmitFail['SubmitFail']): item is EraMismatch =>
   (item as EraMismatch).eraMismatch !== undefined
 
-export const submitTx = (bytes: string, config?: ConnectionConfig | InteractionContext) =>
+/**
+ * Submit a serialized transaction. This expects a base16 or base64 CBOR-encoded
+ * transaction as obtained from the cardano-cli or cardano-serialization-lib.
+ *
+ * @category TxSubmission
+ */
+export const submitTx = (context: InteractionContext, bytes: string) =>
   Query<
     Ogmios['SubmitTx'],
     Ogmios['SubmitTxResponse'],
@@ -158,4 +165,4 @@ export const submitTx = (bytes: string, config?: ConnectionConfig | InteractionC
         return reject(new UnknownResultError(response))
       }
     }
-  }, config)
+  }, context)

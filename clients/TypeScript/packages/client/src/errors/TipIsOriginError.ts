@@ -1,5 +1,6 @@
 import { CustomError } from 'ts-custom-error'
 
+/** @internal */
 export class TipIsOriginError extends CustomError {
   public constructor () {
     super()

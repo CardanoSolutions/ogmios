@@ -1,12 +1,17 @@
 import { Ogmios, Epoch, EraMismatch } from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
-import { ConnectionConfig, InteractionContext } from '../../Connection'
+import { InteractionContext } from '../../Connection'
 import { Query } from '../Query'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[currentEpoch]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
 
-export const currentEpoch = (config?: ConnectionConfig | InteractionContext): Promise<Epoch> =>
+/**
+ * Get the current Cardano {@link Epoch}
+ *
+ * @category StateQuery
+ */
+export const currentEpoch = (context: InteractionContext): Promise<Epoch> =>
   Query<
     Ogmios['Query'],
     Ogmios['QueryResponse[currentEpoch]'],
@@ -30,4 +35,4 @@ export const currentEpoch = (config?: ConnectionConfig | InteractionContext): Pr
         return reject(new UnknownResultError(response.result))
       }
     }
-  }, config)
+  }, context)

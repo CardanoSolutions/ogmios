@@ -6,7 +6,7 @@ import {
   Ogmios
 } from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
-import { ConnectionConfig, InteractionContext } from '../../Connection'
+import { InteractionContext } from '../../Connection'
 import { Query } from '../Query'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[nonMyopicMemberRewards]']['result']): result is EraMismatch =>
@@ -17,8 +17,16 @@ const isNonMyopicMemberRewards = (result: Ogmios['QueryResponse[nonMyopicMemberR
     Object.values(result as NonMyopicMemberRewards)[0]
   )[0] === 'number'
 
+/**
+ * Get non-myopic member rewards from a projected delegation amount;
+ * this is used to rank pools such that the system converges towards
+ * a fixed number of pools at equilibrium.
+ *
+ * @category StateQuery
+ */
 export const nonMyopicMemberRewards = (
-  input: (Lovelace | Hash16)[], config?: ConnectionConfig | InteractionContext
+  context: InteractionContext,
+  input: (Lovelace | Hash16)[]
 ): Promise<NonMyopicMemberRewards> =>
   Query<
     Ogmios['Query'],
@@ -45,4 +53,4 @@ export const nonMyopicMemberRewards = (
         return reject(new UnknownResultError(response.result))
       }
     }
-  }, config)
+  }, context)

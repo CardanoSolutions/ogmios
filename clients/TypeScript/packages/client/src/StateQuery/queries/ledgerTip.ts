@@ -1,6 +1,6 @@
 import { EraMismatch, Hash16, Ogmios, PointOrOrigin, Slot } from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
-import { ConnectionConfig, InteractionContext } from '../../Connection'
+import { InteractionContext } from '../../Connection'
 import { Query } from '../Query'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[ledgerTip]']['result']): result is EraMismatch =>
@@ -9,7 +9,12 @@ const isEraMismatch = (result: Ogmios['QueryResponse[ledgerTip]']['result']): re
 const isNonOriginPoint = (result: {slot: Slot, hash: Hash16}): result is {slot: Slot, hash: Hash16} =>
   (result as {slot: Slot, hash: Hash16}).slot !== undefined
 
-export const ledgerTip = (config?: ConnectionConfig | InteractionContext): Promise<PointOrOrigin> =>
+/**
+ * Get the current ledger tip. Will resolve the the acquired point if any.
+ *
+ * @category StateQuery
+ */
+export const ledgerTip = (context: InteractionContext): Promise<PointOrOrigin> =>
   Query<
     Ogmios['Query'],
     Ogmios['QueryResponse[ledgerTip]'],
@@ -35,4 +40,4 @@ export const ledgerTip = (config?: ConnectionConfig | InteractionContext): Promi
         reject(new UnknownResultError(response.result))
       }
     }
-  }, config)
+  }, context)

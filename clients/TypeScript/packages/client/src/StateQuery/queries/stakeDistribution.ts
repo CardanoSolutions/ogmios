@@ -4,7 +4,7 @@ import {
   QueryUnavailableInCurrentEraError,
   UnknownResultError
 } from '../../errors'
-import { ConnectionConfig, InteractionContext } from '../../Connection'
+import { InteractionContext } from '../../Connection'
 import { Query } from '../Query'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[stakeDistribution]']['result']): result is EraMismatch =>
@@ -13,8 +13,13 @@ const isEraMismatch = (result: Ogmios['QueryResponse[stakeDistribution]']['resul
 const isPoolDistribution = (result: Ogmios['QueryResponse[stakeDistribution]']['result']): result is PoolDistribution =>
   Object.values(result as PoolDistribution)[0].stake !== undefined
 
+/**
+ * Get the current stake {@PoolDistribution}. This request may be quite long, use with care.
+ *
+ * @category StateQuery
+ */
 export const stakeDistribution = (
-  config?: ConnectionConfig | InteractionContext
+  context: InteractionContext
 ): Promise<PoolDistribution> =>
   Query<
     Ogmios['Query'],
@@ -39,4 +44,4 @@ export const stakeDistribution = (
           return reject(new UnknownResultError(response.result))
         }
       }
-    }, config)
+    }, context)

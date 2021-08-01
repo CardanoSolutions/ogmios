@@ -1,7 +1,7 @@
 +++
 title = "Local State Query"
 chapter = false
-weight = 3
+weight = 2
 +++
 
 

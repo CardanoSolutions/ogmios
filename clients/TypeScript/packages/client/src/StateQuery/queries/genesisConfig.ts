@@ -1,6 +1,6 @@
 import { CompactGenesis, EraMismatch, Ogmios } from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
-import { ConnectionConfig, InteractionContext } from '../../Connection'
+import { InteractionContext } from '../../Connection'
 import { Query } from '../Query'
 
 const isEraMismatch = (result: Ogmios['QueryResponse[currentProtocolParameters]']['result']): result is EraMismatch =>
@@ -9,7 +9,12 @@ const isEraMismatch = (result: Ogmios['QueryResponse[currentProtocolParameters]'
 const isGenesisConfig = (result: Ogmios['QueryResponse[genesisConfig]']['result']): result is CompactGenesis =>
   (result as CompactGenesis).systemStart !== undefined
 
-export const genesisConfig = (config?: ConnectionConfig | InteractionContext): Promise<CompactGenesis> =>
+/**
+ * Get the Shelley's genesis configuration.
+ *
+ * @category StateQuery
+ */
+export const genesisConfig = (context: InteractionContext): Promise<CompactGenesis> =>
   Query<
     Ogmios['Query'],
     Ogmios['QueryResponse[genesisConfig]'],
@@ -33,4 +38,4 @@ export const genesisConfig = (config?: ConnectionConfig | InteractionContext): P
         return reject(new UnknownResultError(response.result))
       }
     }
-  }, config)
+  }, context)

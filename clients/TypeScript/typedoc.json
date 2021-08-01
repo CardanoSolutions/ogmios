@@ -1,0 +1,17 @@
+{
+  "theme": "./docs/theme",
+  "out": "../../docs/static/api",
+  "excludeInternal": true,
+  "toc": [""],
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Constructor",
+    "Connection",
+    "ChainSync",
+    "StateQuery",
+    "TxSubmission",
+    "Health",
+    "Helper",
+    "*"
+  ]
+}

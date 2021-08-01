@@ -1,8 +1,9 @@
 import { nanoid } from 'nanoid'
 import { Data } from 'isomorphic-ws'
-import { ConnectionConfig, InteractionContext } from '../Connection'
+import { InteractionContext } from '../Connection'
 import { baseRequest, send } from '../Request'
 
+/** @internal */
 export const Query = <
   Request,
   QueryResponse extends { reflection?: { requestId?: string } },
@@ -19,7 +20,7 @@ export const Query = <
       reject: (reason?: any) => void
     ) => void
   },
-    config?: ConnectionConfig | InteractionContext
+    context: InteractionContext
   ): Promise<Response> =>
     send<Response>((socket) =>
       new Promise((resolve, reject) => {
@@ -43,4 +44,4 @@ export const Query = <
           args: request.args,
           mirror: { requestId }
         } as unknown as Request))
-      }), config)
+      }), context)

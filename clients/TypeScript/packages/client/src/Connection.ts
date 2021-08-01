@@ -1,13 +1,20 @@
 import WebSocket from 'isomorphic-ws'
-import { getOgmiosHealth } from './OgmiosHealth'
-import { OgmiosNotReady } from './errors'
+import { getServerHealth } from './ServerHealth'
+import { ServerNotReady } from './errors'
 
+/**
+ * Connection configuration parameters. Use `tls: true` to create a `wss://` using TLS
+ * encryption (if supported by the server).
+ *
+ * @category Connection
+ */
 export interface ConnectionConfig {
   host?: string,
   port?: number,
   tls?: boolean
 }
 
+/** @category Connection */
 export interface Connection extends Required<ConnectionConfig> {
   address: {
     http: string
@@ -15,25 +22,44 @@ export interface Connection extends Required<ConnectionConfig> {
   }
 }
 
+/**
+ * An interaction context used by Ouroboros clients to interact with the server.
+ *
+ * @category Connection
+ */
 export interface InteractionContext {
   connection: Connection
   socket: WebSocket
+  afterEach: (cb: () => void) => void
 }
 
-export type Mirror = { [k: string]: unknown }
+/**
+ * Describe how the interaction context behaves. A `LongRunning` context does not close
+ * the underlying connection after a request, it has to be done manually. A `OneTime` context
+ * however will close the connection afterwards.
+ *
+ * @category Connection
+ */
+export type InteractionType = (
+  | 'LongRunning'
+  | 'OneTime'
+)
 
+/** @category Connection */
 export type WebSocketErrorHandler = (error: Error) => void
 
+/** @category Connection */
 export type WebSocketCloseHandler = (
   code: WebSocket.CloseEvent['code'],
   reason: WebSocket.CloseEvent['reason']
 ) => void
 
-export const createConnectionObject = (connection?: ConnectionConfig): Connection => {
+/** @category Constructor */
+export const createConnectionObject = (config?: ConnectionConfig): Connection => {
   const base = {
-    host: connection?.host ?? 'localhost',
-    port: connection?.port ?? 1337,
-    tls: connection?.tls ?? false
+    host: config?.host ?? 'localhost',
+    port: config?.port ?? 1337,
+    tls: config?.tls ?? false
   }
   const hostAndPort = `${base.host}:${base.port}`
   return {
@@ -45,19 +71,32 @@ export const createConnectionObject = (connection?: ConnectionConfig): Connectio
   }
 }
 
+/** @category Constructor */
 export const createInteractionContext = async (
   errorHandler: WebSocketErrorHandler,
   closeHandler: WebSocketCloseHandler,
   options?: {
     connection?: ConnectionConfig
+    interactionType?: InteractionType,
   }): Promise<InteractionContext> => {
-  const health = await getOgmiosHealth(options?.connection)
+  const connection = createConnectionObject(options?.connection)
+  const health = await getServerHealth(connection)
   return new Promise((resolve, reject) => {
     if (health.lastTipUpdate === null) {
-      return reject(new OgmiosNotReady(health))
+      return reject(new ServerNotReady(health))
     }
-    const connection = createConnectionObject(options?.connection)
     const socket = new WebSocket(connection.address.webSocket)
+
+    const closeOnCompletion = (options?.interactionType || 'LongRunning') === 'OneTime'
+    const afterEach = (cb: () => void) => {
+      if (closeOnCompletion) {
+        socket.once('close', cb)
+        socket.close()
+      } else {
+        cb()
+      }
+    }
+
     const onInitialError = (error: Error) => {
       socket.removeAllListeners()
       return reject(error)
@@ -73,14 +112,9 @@ export const createInteractionContext = async (
       socket.on('close', closeHandler)
       resolve({
         connection,
-        socket
+        socket,
+        afterEach
       })
     })
   })
 }
-
-export const isContext = (config: ConnectionConfig | InteractionContext): config is InteractionContext =>
-  (config as InteractionContext).socket !== undefined
-
-export const isConnectionObject = (config: ConnectionConfig | Connection): config is Connection =>
-  (config as Connection).address !== undefined

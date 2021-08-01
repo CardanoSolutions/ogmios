@@ -6,12 +6,7 @@ import {
   Ogmios,
   PointOrOrigin
 } from '@cardano-ogmios/schema'
-import {
-  ConnectionConfig,
-  createInteractionContext,
-  InteractionContext,
-  WebSocketCloseHandler
-} from '../Connection'
+import { InteractionContext } from '../Connection'
 import { baseRequest } from '../Request'
 import {
   AcquirePointNotOnChainError,
@@ -32,6 +27,11 @@ import {
 } from './queries'
 import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
 
+/**
+ * A State Query client.
+ *
+ * @category StateQuery
+ */
 export interface StateQueryClient {
   context: InteractionContext
   currentEpoch: () => ReturnType<typeof currentEpoch>
@@ -43,23 +43,22 @@ export interface StateQueryClient {
   nonMyopicMemberRewards: (input: Lovelace[] | Hash16[]) => ReturnType<typeof nonMyopicMemberRewards>
   point: PointOrOrigin
   proposedProtocolParameters: () => ReturnType<typeof proposedProtocolParameters>
-  release: () => Promise<void>
+  shutdown: () => Promise<void>
   stakeDistribution: () => ReturnType<typeof stakeDistribution>
   utxo: (addresses?: Address[]) => ReturnType<typeof utxo>
 }
 
+/**
+ * Initialize a {@link StateQueryClient} from an {@link InteractionContext}
+ *
+ * @category Constructor
+ */
 export const createStateQueryClient = async (
-  errorHandler: (error: Error) => void,
-  closeHandler: WebSocketCloseHandler,
-  options?: {
-    connection?: ConnectionConfig,
-    point?: PointOrOrigin
-  }): Promise<StateQueryClient> => {
-  const context = await createInteractionContext(errorHandler, closeHandler, options)
-  const point = options?.point !== undefined
-    ? options.point
-    : await createPointFromCurrentTip(context)
+  context: InteractionContext,
+  options?: { point?: PointOrOrigin }
+): Promise<StateQueryClient> => {
   const { socket } = context
+  const point = options?.point !== undefined ? options.point : await createPointFromCurrentTip(context)
   return new Promise((resolve, reject) => {
     const requestId = nanoid(5)
     socket.once('message', (message: string) => {
@@ -78,7 +77,7 @@ export const createStateQueryClient = async (
           },
           delegationsAndRewards: (stakeKeyHashes) => {
             ensureSocketIsOpen(socket)
-            return delegationsAndRewards(stakeKeyHashes, context)
+            return delegationsAndRewards(context, stakeKeyHashes)
           },
           eraStart: () => {
             ensureSocketIsOpen(socket)
@@ -94,14 +93,14 @@ export const createStateQueryClient = async (
           },
           nonMyopicMemberRewards: (input) => {
             ensureSocketIsOpen(socket)
-            return nonMyopicMemberRewards(input, context)
+            return nonMyopicMemberRewards(context, input)
           },
           point,
           proposedProtocolParameters: () => {
             ensureSocketIsOpen(socket)
             return proposedProtocolParameters(context)
           },
-          release: () => {
+          shutdown: () => {
             ensureSocketIsOpen(socket)
             return new Promise((resolve, reject) => {
               const releaseRequestId = nanoid(5)
@@ -130,7 +129,7 @@ export const createStateQueryClient = async (
           },
           utxo: (addresses) => {
             ensureSocketIsOpen(socket)
-            return utxo(addresses, context)
+            return utxo(context, addresses)
           }
         } as StateQueryClient)
       } else {
