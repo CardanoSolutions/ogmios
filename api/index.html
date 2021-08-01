@@ -1,0 +1,156 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>cardano-ogmios</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<link rel="stylesheet" href="assets/css/layout.css">
+	<link rel="stylesheet" href="assets/css/navigation.css">
+	<link rel="stylesheet" href="assets/css/main.css">
+	<script async defer src="assets/js/search.js" id="search-script"></script>
+	<script async defer src="assets/js/main.js"></script>
+</head>
+<body>
+<div class="container">
+	<div class="row">
+		<div class="col-2 col-menu menu-sticky-wrap menu-highlight">
+			<div class="table-cell" id="tsd-logo">
+				<a href="/"><img src="/ogmios-logo-white.png" alt="Ogmios"/></a>
+			</div>
+			<div class="table-cell" id="tsd-search" data-index="assets/js/search.json" data-base=".">
+				<div class="field">
+					<label for="tsd-search-field" class="material-icons">search</label>
+					<input id="tsd-search-field" type="text" placeholder="Search API" />
+				</div>
+				<ul class="results">
+					<li class="state loading">Preparing search index...</li>
+					<li class="state failure">The search index is not available</li>
+				</ul>
+			</div>
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class=" ">
+						<a href="modules.html">Exports</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+				</ul>
+			</nav>
+		</div>
+		<div class="col-10 col-content">
+			<div class="tsd-page-title">
+				<div class="container">
+					<ul class="tsd-breadcrumb">
+						<li>
+							<a href="modules.html">#</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="tsd-panel tsd-typography">
+				<a href="#cardano-ogmios-typescript-client-packages" id="cardano-ogmios-typescript-client-packages" style="color: inherit; text-decoration: none;">
+					<h1>Cardano Ogmios TypeScript Client Packages</h1>
+				</a>
+				<p>A Yarn Workspace containing three packages, each published to the npm.org registry:</p>
+				<ul>
+					<li><a href="./packages/client">@cardano-ogmios/client</a></li>
+					<li><a href="./packages/schema">@cardano-ogmios/schema</a></li>
+					<li><a href="./packages/repl">@cardano-ogmios/repl</a></li>
+				</ul>
+				<a href="#development" id="development" style="color: inherit; text-decoration: none;">
+					<h2>Development</h2>
+				</a>
+				<a href="#install-and-build" id="install-and-build" style="color: inherit; text-decoration: none;">
+					<h4>Install and Build</h4>
+				</a>
+				<pre><code class="language-console">yarn install &amp;&amp; \
+yarn generate-schema-types &amp;&amp; \
+yarn build
+</code></pre>
+				<a href="#run-tests" id="run-tests" style="color: inherit; text-decoration: none;">
+					<h4>Run Tests</h4>
+				</a>
+				<pre><code class="language-console">yarn testnet:up
+</code></pre>
+				<p>In another terminal</p>
+				<pre><code class="language-console">yarn test
+</code></pre>
+				<a href="#start-cardano-node-and-ogmios-server" id="start-cardano-node-and-ogmios-server" style="color: inherit; text-decoration: none;">
+					<h3>Start Cardano Node and Ogmios Server</h3>
+				</a>
+				<a href="#mainnet" id="mainnet" style="color: inherit; text-decoration: none;">
+					<h4>mainnet</h4>
+				</a>
+				<pre><code class="language-console">yarn mainnet:up
+</code></pre>
+				<a href="#testnet" id="testnet" style="color: inherit; text-decoration: none;">
+					<h4>testnet</h4>
+				</a>
+				<pre><code class="language-console">yarn testnet:up
+</code></pre>
+				<a href="#stop-cardano-node-and-ogmios-server" id="stop-cardano-node-and-ogmios-server" style="color: inherit; text-decoration: none;">
+					<h3>Stop Cardano Node and Ogmios Server</h3>
+				</a>
+				<a href="#mainnet-1" id="mainnet-1" style="color: inherit; text-decoration: none;">
+					<h4>mainnet</h4>
+				</a>
+				<pre><code class="language-console">yarn mainnet:down
+</code></pre>
+				<a href="#testnet-1" id="testnet-1" style="color: inherit; text-decoration: none;">
+					<h4>testnet</h4>
+				</a>
+				<pre><code class="language-console">yarn testnet:down
+</code></pre>
+				<a href="#start-the-repl" id="start-the-repl" style="color: inherit; text-decoration: none;">
+					<h3>Start the REPL</h3>
+				</a>
+				<a href="#mainnet-2" id="mainnet-2" style="color: inherit; text-decoration: none;">
+					<h4>mainnet</h4>
+				</a>
+				<pre><code class="language-console">yarn repl:start
+</code></pre>
+				<a href="#testnet-2" id="testnet-2" style="color: inherit; text-decoration: none;">
+					<h4>testnet</h4>
+				</a>
+				<pre><code class="language-console">yarn repl:start --port 1338
+</code></pre>
+				<a href="#lint" id="lint" style="color: inherit; text-decoration: none;">
+					<h3>Lint</h3>
+				</a>
+				<pre><code class="language-console">yarn lint
+</code></pre>
+				<a href="#cleanup" id="cleanup" style="color: inherit; text-decoration: none;">
+					<h3>Cleanup</h3>
+				</a>
+				<pre><code><span style="color: #001080">yarn</span><span style="color: #000000"> </span><span style="color: #001080">cleanup</span>
+</code></pre>
+				<a href="#distribute" id="distribute" style="color: inherit; text-decoration: none;">
+					<h2>Distribute</h2>
+				</a>
+				<a href="#pack" id="pack" style="color: inherit; text-decoration: none;">
+					<h3>Pack</h3>
+				</a>
+				<pre><code class="language-console">./scripts/pack.sh
+</code></pre>
+				<a href="#publish-to-npmorg" id="publish-to-npmorg" style="color: inherit; text-decoration: none;">
+					<h3>Publish to npm.org</h3>
+				</a>
+				<pre><code class="language-console">./scripts/publish.sh
+</code></pre>
+				<a href="#pkg-repl" id="pkg-repl" style="color: inherit; text-decoration: none;">
+					<h3>Pkg REPL</h3>
+				</a>
+				<pre><code class="language-console">yarn repl:pkg
+</code></pre>
+			</div>
+			<div></div>
+		</div>
+	</div>
+</div>
+</body>
+</html>
