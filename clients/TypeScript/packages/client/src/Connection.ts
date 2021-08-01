@@ -1,4 +1,4 @@
-import WebSocket from 'isomorphic-ws'
+import WebSocket from './IsomorphicWebSocket'
 import { getServerHealth } from './ServerHealth'
 import { ServerNotReady } from './errors'
 
