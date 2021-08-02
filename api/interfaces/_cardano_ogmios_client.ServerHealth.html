@@ -1,0 +1,232 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>ServerHealth | cardano-ogmios</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<link rel="stylesheet" href="../assets/css/layout.css">
+	<link rel="stylesheet" href="../assets/css/navigation.css">
+	<link rel="stylesheet" href="../assets/css/main.css">
+	<script async defer src="../assets/js/search.js" id="search-script"></script>
+	<script async defer src="../assets/js/main.js"></script>
+</head>
+<body>
+<div class="container">
+	<div class="row">
+		<div class="col-2 col-menu menu-sticky-wrap menu-highlight">
+			<div class="table-cell" id="tsd-logo">
+				<a href="/"><img src="/ogmios-logo-white.png" alt="Ogmios"/></a>
+			</div>
+			<div class="table-cell" id="tsd-search" data-index="../assets/js/search.json" data-base="..">
+				<div class="field">
+					<label for="tsd-search-field" class="material-icons">search</label>
+					<input id="tsd-search-field" type="text" placeholder="Search API" />
+				</div>
+				<ul class="results">
+					<li class="state loading">Preparing search index...</li>
+					<li class="state failure">The search index is not available</li>
+				</ul>
+			</div>
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class=" ">
+						<a href="../modules.html">Modules</a>
+					</li>
+					<li class="current tsd-kind-module">
+						<a href="../modules/_cardano_ogmios_client.html">@cardano-<wbr>ogmios/client</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/_cardano_ogmios_schema.html">@cardano-<wbr>ogmios/schema</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+				</ul>
+			</nav>
+		</div>
+		<div class="col-10 col-content">
+			<div class="tsd-page-title">
+				<div class="container">
+					<ul class="tsd-breadcrumb">
+						<li>
+							<a href="../modules.html">#</a>
+						</li>
+						<li>
+							<a href="../modules/_cardano_ogmios_client.html">@cardano-ogmios/client</a>
+						</li>
+						<li>
+							<a href="_cardano_ogmios_client.ServerHealth.html">ServerHealth</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>Captures the health of the server, including metrics and synchronization progress.</p>
+					</div>
+					<p>This is useful to monitor whether the server is running (or simply, if the underlying
+						node is ready to receive requests). <code>lastTipUpdate</code> will be null if the server hasn&#39;t
+					received any tip update from the Cardano node which means that either:</p>
+					<ul>
+						<li>There&#39;s an error with the connection to the node</li>
+						<li>The node is still starting and checking the integrity of its database.</li>
+					</ul>
+					<p>The node checks the database integrity on each restart; in some cases it can take several
+					minutes. While doing so, it does not allow any external client to connect.</p>
+					<p>See also <a href="_cardano_ogmios_client.InteractionContext.html">InteractionContext</a> for an easy way to manage connection establishment with
+					a bootstrapping node.</p>
+				</div>
+			</section>
+			<section class="tsd-panel tsd-hierarchy">
+				<h3>Hierarchy</h3>
+				<ul class="tsd-hierarchy">
+					<li>
+						<span class="target">ServerHealth</span>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel-group tsd-index-group">
+				<h2>Index</h2>
+				<section class="tsd-panel tsd-index-panel">
+					<div class="tsd-index-content">
+						<section class="tsd-index-section ">
+							<h3>Properties</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.ServerHealth.html#currentEra" class="tsd-kind-icon">current<wbr>Era</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.ServerHealth.html#lastKnownTip" class="tsd-kind-icon">last<wbr>Known<wbr>Tip</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.ServerHealth.html#lastTipUpdate" class="tsd-kind-icon">last<wbr>Tip<wbr>Update</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.ServerHealth.html#metrics" class="tsd-kind-icon">metrics</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.ServerHealth.html#networkSynchronization" class="tsd-kind-icon">network<wbr>Synchronization</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.ServerHealth.html#startTime" class="tsd-kind-icon">start<wbr>Time</a></li>
+							</ul>
+						</section>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Properties</h2>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="currentEra" class="tsd-anchor"></a>
+					<h3>current<wbr>Era</h3>
+					<div class="tsd-signature tsd-kind-icon">current<wbr>Era<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"Byron"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"Shelley"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"Mary"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"Alonzo"</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/1bb8dd8/clients/TypeScript/packages/client/src/ServerHealth.ts#L24">packages/client/src/ServerHealth.ts:24</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="lastKnownTip" class="tsd-anchor"></a>
+					<h3>last<wbr>Known<wbr>Tip</h3>
+					<div class="tsd-signature tsd-kind-icon">last<wbr>Known<wbr>Tip<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.Tip.html" class="tsd-signature-type">Tip</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/1bb8dd8/clients/TypeScript/packages/client/src/ServerHealth.ts#L25">packages/client/src/ServerHealth.ts:25</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="lastTipUpdate" class="tsd-anchor"></a>
+					<h3>last<wbr>Tip<wbr>Update</h3>
+					<div class="tsd-signature tsd-kind-icon">last<wbr>Tip<wbr>Update<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/1bb8dd8/clients/TypeScript/packages/client/src/ServerHealth.ts#L26">packages/client/src/ServerHealth.ts:26</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="metrics" class="tsd-anchor"></a>
+					<h3>metrics</h3>
+					<div class="tsd-signature tsd-kind-icon">metrics<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/1bb8dd8/clients/TypeScript/packages/client/src/ServerHealth.ts#L27">packages/client/src/ServerHealth.ts:27</a>
+							</li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>active<wbr>Connections<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5><span class="tsd-flag ts-flagOptional">Optional</span> runtime<wbr>Stats<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">object</span></h5>
+								<ul class="tsd-parameters">
+									<li class="tsd-parameter">
+										<h5>cpu<wbr>Time<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+									</li>
+									<li class="tsd-parameter">
+										<h5>current<wbr>Heap<wbr>Size<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+									</li>
+									<li class="tsd-parameter">
+										<h5>gc<wbr>Cpu<wbr>Time<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+									</li>
+									<li class="tsd-parameter">
+										<h5>max<wbr>Heap<wbr>Size<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+									</li>
+								</ul>
+							</li>
+							<li class="tsd-parameter">
+								<h5>session<wbr>Durations<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span></h5>
+								<ul class="tsd-parameters">
+									<li class="tsd-parameter">
+										<h5>max<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+									</li>
+									<li class="tsd-parameter">
+										<h5>mean<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+									</li>
+									<li class="tsd-parameter">
+										<h5>min<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+									</li>
+								</ul>
+							</li>
+							<li class="tsd-parameter">
+								<h5>total<wbr>Connections<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>total<wbr>Messages<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>total<wbr>Unrouted<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="networkSynchronization" class="tsd-anchor"></a>
+					<h3>network<wbr>Synchronization</h3>
+					<div class="tsd-signature tsd-kind-icon">network<wbr>Synchronization<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/1bb8dd8/clients/TypeScript/packages/client/src/ServerHealth.ts#L45">packages/client/src/ServerHealth.ts:45</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="startTime" class="tsd-anchor"></a>
+					<h3>start<wbr>Time</h3>
+					<div class="tsd-signature tsd-kind-icon">start<wbr>Time<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/1bb8dd8/clients/TypeScript/packages/client/src/ServerHealth.ts#L44">packages/client/src/ServerHealth.ts:44</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+			</section>
+		</div>
+	</div>
+</div>
+</body>
+</html>
