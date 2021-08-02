@@ -8,7 +8,7 @@ weight = 2
 You may **skip this section** if you're using **Docker 🐳.**
 {{% /notice %}}
 
-## Pre-requisites
+## Pre-requisites (Server)
 
 Ogmios is built using the great Haskell build tool [stack](https://docs.haskellstack.org/en/stable/README/). You'll also need [git](https://git-scm.com/) to clone the source code, that is:
 - `git 2.11.*`
@@ -66,9 +66,9 @@ Then, use Yarn to install dependencies and compile the project source code from 
 `client/TypeScript` directory:
 
 ```console
-$ yarn install && \
-yarn generate-schema-types && \
-yarn build
+$ yarn install \ 
+  && yarn generate-schema-types \
+  && yarn build
 ```
 
 ## 📚 Documentation

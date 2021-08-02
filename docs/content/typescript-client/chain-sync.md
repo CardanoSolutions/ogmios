@@ -10,7 +10,7 @@ The ChainSync client streams block from the network, one-by-one in the form of e
 - on `rollBackward`, to process rollback requests to a previous point of your local chain.
 
 {{% notice tip %}}
-These callbacks are captured via the [ChainSyncMessageHandlers](http://localhost:1313/api/interfaces/_cardano_ogmios_client.ChainSync.ChainSyncMessageHandlers.html) interface.
+These callbacks are captured via the [ChainSyncMessageHandlers](/api/interfaces/_cardano_ogmios_client.ChainSync.ChainSyncMessageHandlers.html) interface.
 {{% /notice %}}
 
 For example, you can store blocks into a _database_ (assuming some high-level `db` interface) as follows:
