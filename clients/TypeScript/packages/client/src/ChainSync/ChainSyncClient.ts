@@ -2,7 +2,7 @@ import { Block, Ogmios, PointOrOrigin, TipOrOrigin } from '@cardano-ogmios/schem
 import { InteractionContext } from '../Connection'
 import { UnknownResultError } from '../errors'
 import fastq from 'fastq'
-import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
+import { createPointFromCurrentTip, ensureSocketIsOpen, safeJSON } from '../util'
 import { findIntersect, Intersection } from './findIntersect'
 import { requestNext } from './requestNext'
 
@@ -69,7 +69,7 @@ export const createChainSyncClient = async (
       ? fastq.promise(messageHandler, 1).push
       : messageHandler
     socket.on('message', (message: string) => {
-      const response: Ogmios['RequestNextResponse'] = JSON.parse(message)
+      const response: Ogmios['RequestNextResponse'] = safeJSON.parse(message)
       if (response.methodname === 'RequestNext') {
         responseHandler(response)
       }

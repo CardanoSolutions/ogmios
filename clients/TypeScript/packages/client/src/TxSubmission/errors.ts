@@ -1,4 +1,5 @@
 import { CustomError } from 'ts-custom-error'
+import { safeJSON } from '../util'
 import {
   AddressAttributesTooLarge,
   AlreadyDelegating,
@@ -133,7 +134,7 @@ export const errors = {
     Error: class InvalidWitnessesError extends CustomError {
       public constructor (rawError: InvalidWitnesses) {
         super()
-        this.message = JSON.stringify(rawError.invalidWitnesses)
+        this.message = safeJSON.stringify(rawError.invalidWitnesses)
       }
     }
   },
@@ -143,7 +144,7 @@ export const errors = {
     Error: class MissingVkWitnessesError extends CustomError {
       public constructor (rawError: MissingVkWitnesses) {
         super()
-        this.message = JSON.stringify(rawError.missingVkWitnesses)
+        this.message = safeJSON.stringify(rawError.missingVkWitnesses)
       }
     }
   },
@@ -153,7 +154,7 @@ export const errors = {
     Error: class MissingScriptWitnessesError extends CustomError {
       public constructor (rawError: MissingScriptWitnesses) {
         super()
-        this.message = JSON.stringify(rawError.missingScriptWitnesses)
+        this.message = safeJSON.stringify(rawError.missingScriptWitnesses)
       }
     }
   },
@@ -163,7 +164,7 @@ export const errors = {
     Error: class ScriptWitnessNotValidatingError extends CustomError {
       public constructor (rawError: ScriptWitnessNotValidating) {
         super()
-        this.message = JSON.stringify(rawError.scriptWitnessNotValidating)
+        this.message = safeJSON.stringify(rawError.scriptWitnessNotValidating)
       }
     }
   },
@@ -173,7 +174,7 @@ export const errors = {
     Error: class InsufficientGenesisSignaturesError extends CustomError {
       public constructor (rawError: InsufficientGenesisSignatures) {
         super()
-        this.message = JSON.stringify(rawError.insufficientGenesisSignatures)
+        this.message = safeJSON.stringify(rawError.insufficientGenesisSignatures)
       }
     }
   },
@@ -183,7 +184,7 @@ export const errors = {
     Error: class MissingTxMetadataError extends CustomError {
       public constructor (rawError: MissingTxMetadata) {
         super()
-        this.message = JSON.stringify(rawError.missingTxMetadata)
+        this.message = safeJSON.stringify(rawError.missingTxMetadata)
       }
     }
   },
@@ -193,7 +194,7 @@ export const errors = {
     Error: class MissingTxMetadataHashError extends CustomError {
       public constructor (rawError: MissingTxMetadataHash) {
         super()
-        this.message = JSON.stringify(rawError.missingTxMetadataHash)
+        this.message = safeJSON.stringify(rawError.missingTxMetadataHash)
       }
     }
   },
@@ -203,7 +204,7 @@ export const errors = {
     Error: class TxMetadataHashMismatchError extends CustomError {
       public constructor (rawError: TxMetadataHashMismatch) {
         super()
-        this.message = JSON.stringify(rawError.txMetadataHashMismatch)
+        this.message = safeJSON.stringify(rawError.txMetadataHashMismatch)
       }
     }
   },
@@ -213,7 +214,7 @@ export const errors = {
     Error: class BadInputsError extends CustomError {
       public constructor (rawError: BadInputs) {
         super()
-        this.message = JSON.stringify(rawError.badInputs)
+        this.message = safeJSON.stringify(rawError.badInputs)
       }
     }
   },
@@ -223,7 +224,7 @@ export const errors = {
     Error: class ExpiredUtxoError extends CustomError {
       public constructor (rawError: ExpiredUtxo) {
         super()
-        this.message = JSON.stringify(rawError.expiredUtxo)
+        this.message = safeJSON.stringify(rawError.expiredUtxo)
       }
     }
   },
@@ -233,7 +234,7 @@ export const errors = {
     Error: class TxTooLargeError extends CustomError {
       public constructor (rawError: TxTooLarge) {
         super()
-        this.message = JSON.stringify(rawError.txTooLarge)
+        this.message = safeJSON.stringify(rawError.txTooLarge)
       }
     }
   },
@@ -243,7 +244,7 @@ export const errors = {
     Error: class MissingAtLeastOneInputUtxoError extends CustomError {
       public constructor (rawError: MissingAtLeastOneInputUtxo) {
         super()
-        this.message = JSON.stringify(rawError)
+        this.message = safeJSON.stringify(rawError)
       }
     }
   },
@@ -253,7 +254,7 @@ export const errors = {
     Error: class InvalidMetadataError extends CustomError {
       public constructor (rawError: InvalidMetadata) {
         super()
-        this.message = JSON.stringify(rawError)
+        this.message = safeJSON.stringify(rawError)
       }
     }
   },
@@ -263,7 +264,7 @@ export const errors = {
     Error: class FeeTooSmallError extends CustomError {
       public constructor (rawError: FeeTooSmall) {
         super()
-        this.message = JSON.stringify(rawError.feeTooSmall)
+        this.message = safeJSON.stringify(rawError.feeTooSmall)
       }
     }
   },
@@ -273,7 +274,7 @@ export const errors = {
     Error: class ValueNotConservedError extends CustomError {
       public constructor (rawError: ValueNotConserved) {
         super()
-        this.message = JSON.stringify(rawError.valueNotConserved)
+        this.message = safeJSON.stringify(rawError.valueNotConserved)
       }
     }
   },
@@ -283,7 +284,7 @@ export const errors = {
     Error: class NetworkMismatchError extends CustomError {
       public constructor (rawError: NetworkMismatch) {
         super()
-        this.message = JSON.stringify(rawError.networkMismatch)
+        this.message = safeJSON.stringify(rawError.networkMismatch)
       }
     }
   },
@@ -293,7 +294,7 @@ export const errors = {
     Error: class OutputTooSmallError extends CustomError {
       public constructor (rawError: OutputTooSmall) {
         super()
-        this.message = JSON.stringify(rawError.outputTooSmall)
+        this.message = safeJSON.stringify(rawError.outputTooSmall)
       }
     }
   },
@@ -303,7 +304,7 @@ export const errors = {
     Error: class AddressAttributesTooLargeError extends CustomError {
       public constructor (rawError: AddressAttributesTooLarge) {
         super()
-        this.message = JSON.stringify(rawError.addressAttributesTooLarge)
+        this.message = safeJSON.stringify(rawError.addressAttributesTooLarge)
       }
     }
   },
@@ -313,7 +314,7 @@ export const errors = {
     Error: class DelegateNotRegisteredError extends CustomError {
       public constructor (rawError: DelegateNotRegistered) {
         super()
-        this.message = JSON.stringify(rawError.delegateNotRegistered)
+        this.message = safeJSON.stringify(rawError.delegateNotRegistered)
       }
     }
   },
@@ -323,7 +324,7 @@ export const errors = {
     Error: class UnknownOrIncompleteWithdrawalsError extends CustomError {
       public constructor (rawError: UnknownOrIncompleteWithdrawals) {
         super()
-        this.message = JSON.stringify(rawError.unknownOrIncompleteWithdrawals)
+        this.message = safeJSON.stringify(rawError.unknownOrIncompleteWithdrawals)
       }
     }
   },
@@ -333,7 +334,7 @@ export const errors = {
     Error: class StakePoolNotRegisteredError extends CustomError {
       public constructor (rawError: StakePoolNotRegistered) {
         super()
-        this.message = JSON.stringify(rawError.stakePoolNotRegistered)
+        this.message = safeJSON.stringify(rawError.stakePoolNotRegistered)
       }
     }
   },
@@ -343,7 +344,7 @@ export const errors = {
     Error: class WrongRetirementEpochError extends CustomError {
       public constructor (rawError: WrongRetirementEpoch) {
         super()
-        this.message = JSON.stringify(rawError.wrongRetirementEpoch)
+        this.message = safeJSON.stringify(rawError.wrongRetirementEpoch)
       }
     }
   },
@@ -353,7 +354,7 @@ export const errors = {
     Error: class WrongPoolCertificateError extends CustomError {
       public constructor (rawError: WrongPoolCertificate) {
         super()
-        this.message = JSON.stringify(rawError.wrongPoolCertificate)
+        this.message = safeJSON.stringify(rawError.wrongPoolCertificate)
       }
     }
   },
@@ -363,7 +364,7 @@ export const errors = {
     Error: class StakeKeyAlreadyRegisteredError extends CustomError {
       public constructor (rawError: StakeKeyAlreadyRegistered) {
         super()
-        this.message = JSON.stringify(rawError.stakeKeyAlreadyRegistered)
+        this.message = safeJSON.stringify(rawError.stakeKeyAlreadyRegistered)
       }
     }
   },
@@ -373,7 +374,7 @@ export const errors = {
     Error: class PoolCostTooSmallError extends CustomError {
       public constructor (rawError: PoolCostTooSmall) {
         super()
-        this.message = JSON.stringify(rawError.poolCostTooSmall)
+        this.message = safeJSON.stringify(rawError.poolCostTooSmall)
       }
     }
   },
@@ -383,7 +384,7 @@ export const errors = {
     Error: class StakeKeyNotRegisteredError extends CustomError {
       public constructor (rawError: StakeKeyNotRegistered) {
         super()
-        this.message = JSON.stringify(rawError.stakeKeyNotRegistered)
+        this.message = safeJSON.stringify(rawError.stakeKeyNotRegistered)
       }
     }
   },
@@ -393,7 +394,7 @@ export const errors = {
     Error: class RewardAccountNotExistingError extends CustomError {
       public constructor (rawError: RewardAccountNotExisting) {
         super()
-        this.message = JSON.stringify(rawError)
+        this.message = safeJSON.stringify(rawError)
       }
     }
   },
@@ -403,7 +404,7 @@ export const errors = {
     Error: class RewardAccountNotEmptyError extends CustomError {
       public constructor (rawError: RewardAccountNotEmpty) {
         super()
-        this.message = JSON.stringify(rawError.rewardAccountNotEmpty)
+        this.message = safeJSON.stringify(rawError.rewardAccountNotEmpty)
       }
     }
   },
@@ -413,7 +414,7 @@ export const errors = {
     Error: class WrongCertificateTypeError extends CustomError {
       public constructor (rawError: WrongCertificateType) {
         super()
-        this.message = JSON.stringify(rawError)
+        this.message = safeJSON.stringify(rawError)
       }
     }
   },
@@ -423,7 +424,7 @@ export const errors = {
     Error: class UnknownGenesisKeyError extends CustomError {
       public constructor (rawError: UnknownGenesisKey) {
         super()
-        this.message = JSON.stringify(rawError.unknownGenesisKey)
+        this.message = safeJSON.stringify(rawError.unknownGenesisKey)
       }
     }
   },
@@ -433,7 +434,7 @@ export const errors = {
     Error: class AlreadyDelegatingError extends CustomError {
       public constructor (rawError: AlreadyDelegating) {
         super()
-        this.message = JSON.stringify(rawError.alreadyDelegating)
+        this.message = safeJSON.stringify(rawError.alreadyDelegating)
       }
     }
   },
@@ -443,7 +444,7 @@ export const errors = {
     Error: class InsufficientFundsForMirError extends CustomError {
       public constructor (rawError: InsufficientFundsForMir) {
         super()
-        this.message = JSON.stringify(rawError.insufficientFundsForMir)
+        this.message = safeJSON.stringify(rawError.insufficientFundsForMir)
       }
     }
   },
@@ -453,7 +454,7 @@ export const errors = {
     Error: class TooLateForMirError extends CustomError {
       public constructor (rawError: TooLateForMir) {
         super()
-        this.message = JSON.stringify(rawError.tooLateForMir)
+        this.message = safeJSON.stringify(rawError.tooLateForMir)
       }
     }
   },
@@ -463,7 +464,7 @@ export const errors = {
     Error: class MirTransferNotCurrentlyAllowedError extends CustomError {
       public constructor (rawError: MirTransferNotCurrentlyAllowed) {
         super()
-        this.message = JSON.stringify(rawError)
+        this.message = safeJSON.stringify(rawError)
       }
     }
   },
@@ -473,7 +474,7 @@ export const errors = {
     Error: class MirNegativeTransferNotCurrentlyAllowedError extends CustomError {
       public constructor (rawError: MirNegativeTransferNotCurrentlyAllowed) {
         super()
-        this.message = JSON.stringify(rawError)
+        this.message = safeJSON.stringify(rawError)
       }
     }
   },
@@ -483,7 +484,7 @@ export const errors = {
     Error: class MirProducesNegativeUpdateError extends CustomError {
       public constructor (rawError: MirProducesNegativeUpdate) {
         super()
-        this.message = JSON.stringify(rawError)
+        this.message = safeJSON.stringify(rawError)
       }
     }
   },
@@ -493,7 +494,7 @@ export const errors = {
     Error: class DuplicateGenesisVrfError extends CustomError {
       public constructor (rawError: DuplicateGenesisVrf) {
         super()
-        this.message = JSON.stringify(rawError.duplicateGenesisVrf)
+        this.message = safeJSON.stringify(rawError.duplicateGenesisVrf)
       }
     }
   },
@@ -503,7 +504,7 @@ export const errors = {
     Error: class NonGenesisVotersError extends CustomError {
       public constructor (rawError: NonGenesisVoters) {
         super()
-        this.message = JSON.stringify(rawError.nonGenesisVoters)
+        this.message = safeJSON.stringify(rawError.nonGenesisVoters)
       }
     }
   },
@@ -513,7 +514,7 @@ export const errors = {
     Error: class UpdateWrongEpochError extends CustomError {
       public constructor (rawError: UpdateWrongEpoch) {
         super()
-        this.message = JSON.stringify(rawError.updateWrongEpoch)
+        this.message = safeJSON.stringify(rawError.updateWrongEpoch)
       }
     }
   },
@@ -523,7 +524,7 @@ export const errors = {
     Error: class ProtocolVersionCannotFollowError extends CustomError {
       public constructor (rawError: ProtocolVersionCannotFollow) {
         super()
-        this.message = JSON.stringify(rawError.protocolVersionCannotFollow)
+        this.message = safeJSON.stringify(rawError.protocolVersionCannotFollow)
       }
     }
   },
@@ -533,7 +534,7 @@ export const errors = {
     Error: class OutsideOfValidityIntervalError extends CustomError {
       public constructor (rawError: OutsideOfValidityInterval) {
         super()
-        this.message = JSON.stringify(rawError.outsideOfValidityInterval)
+        this.message = safeJSON.stringify(rawError.outsideOfValidityInterval)
       }
     }
   },
@@ -543,7 +544,7 @@ export const errors = {
     Error: class TriesToForgeAdaError extends CustomError {
       public constructor (rawError: TriesToForgeAda) {
         super()
-        this.message = JSON.stringify(rawError)
+        this.message = safeJSON.stringify(rawError)
       }
     }
   },
@@ -553,7 +554,7 @@ export const errors = {
     Error: class TooManyAssetsInOutputError extends CustomError {
       public constructor (rawError: TooManyAssetsInOutput) {
         super()
-        this.message = JSON.stringify(rawError.tooManyAssetsInOutput)
+        this.message = safeJSON.stringify(rawError.tooManyAssetsInOutput)
       }
     }
   },
@@ -563,7 +564,7 @@ export const errors = {
     Error: class UnredeemableScriptsError extends CustomError {
       public constructor (rawError: UnredeemableScripts) {
         super()
-        this.message = JSON.stringify(rawError.unredeemableScripts)
+        this.message = safeJSON.stringify(rawError.unredeemableScripts)
       }
     }
   },
@@ -573,7 +574,7 @@ export const errors = {
     Error: class ExtraDataMismatchError extends CustomError {
       public constructor (rawError: ExtraDataMismatch) {
         super()
-        this.message = JSON.stringify(rawError.extraDataMismatch)
+        this.message = safeJSON.stringify(rawError.extraDataMismatch)
       }
     }
   },
@@ -583,7 +584,7 @@ export const errors = {
     Error: class MissingRequiredSignaturesError extends CustomError {
       public constructor (rawError: MissingRequiredSignatures) {
         super()
-        this.message = JSON.stringify(rawError.missingRequiredSignatures)
+        this.message = safeJSON.stringify(rawError.missingRequiredSignatures)
       }
     }
   },
@@ -593,7 +594,7 @@ export const errors = {
     Error: class MissingDatumHashesForInputsError extends CustomError {
       public constructor (rawError: MissingDatumHashesForInputs) {
         super()
-        this.message = JSON.stringify(rawError.missingDatumHashesForInputs)
+        this.message = safeJSON.stringify(rawError.missingDatumHashesForInputs)
       }
     }
   },
@@ -603,7 +604,7 @@ export const errors = {
     Error: class MissingCollateralInputsError extends CustomError {
       public constructor (rawError: MissingCollateralInputs) {
         super()
-        this.message = JSON.stringify(rawError)
+        this.message = safeJSON.stringify(rawError)
       }
     }
   },
@@ -613,7 +614,7 @@ export const errors = {
     Error: class CollateralTooSmallError extends CustomError {
       public constructor (rawError: CollateralTooSmall) {
         super()
-        this.message = JSON.stringify(rawError.collateralTooSmall)
+        this.message = safeJSON.stringify(rawError.collateralTooSmall)
       }
     }
   },
@@ -623,7 +624,7 @@ export const errors = {
     Error: class CollateralIsScriptError extends CustomError {
       public constructor (rawError: CollateralIsScript) {
         super()
-        this.message = JSON.stringify(rawError.collateralIsScript)
+        this.message = safeJSON.stringify(rawError.collateralIsScript)
       }
     }
   },
@@ -633,7 +634,7 @@ export const errors = {
     Error: class CollateralHasNonAdaAssetsError extends CustomError {
       public constructor (rawError: CollateralHasNonAdaAssets) {
         super()
-        this.message = JSON.stringify(rawError.collateralHasNonAdaAssets)
+        this.message = safeJSON.stringify(rawError.collateralHasNonAdaAssets)
       }
     }
   },
@@ -643,7 +644,7 @@ export const errors = {
     Error: class TooManyCollateralInputsError extends CustomError {
       public constructor (rawError: TooManyCollateralInputs) {
         super()
-        this.message = JSON.stringify(rawError.tooManyCollateralInputs)
+        this.message = safeJSON.stringify(rawError.tooManyCollateralInputs)
       }
     }
   },
@@ -653,7 +654,7 @@ export const errors = {
     Error: class ExecutionUnitsTooLargeError extends CustomError {
       public constructor (rawError: ExecutionUnitsTooLarge) {
         super()
-        this.message = JSON.stringify(rawError.executionUnitsTooLarge)
+        this.message = safeJSON.stringify(rawError.executionUnitsTooLarge)
       }
     }
   },
@@ -663,7 +664,7 @@ export const errors = {
     Error: class OutsideForecastError extends CustomError {
       public constructor (rawError: OutsideForecast) {
         super()
-        this.message = JSON.stringify(rawError.outsideForecast)
+        this.message = safeJSON.stringify(rawError.outsideForecast)
       }
     }
   },
@@ -673,7 +674,7 @@ export const errors = {
     Error: class ValidationTagMismatchError extends CustomError {
       public constructor (rawError: ValidationTagMismatch) {
         super()
-        this.message = JSON.stringify(rawError)
+        this.message = safeJSON.stringify(rawError)
       }
     }
   },
@@ -683,7 +684,7 @@ export const errors = {
     Error: class CollectErrorsError extends CustomError {
       public constructor (rawError: CollectErrors) {
         super()
-        this.message = JSON.stringify(rawError.collectErrors)
+        this.message = safeJSON.stringify(rawError.collectErrors)
       }
     }
   },
@@ -693,7 +694,7 @@ export const errors = {
     Error: class PoolMetadataHashTooBigError extends CustomError {
       public constructor (rawError: PoolMetadataHashTooBig) {
         super()
-        this.message = JSON.stringify(rawError.poolMetadataHashTooBig)
+        this.message = safeJSON.stringify(rawError.poolMetadataHashTooBig)
       }
     }
   },
@@ -703,7 +704,7 @@ export const errors = {
     Error: class MissingRequiredDatumsError extends CustomError {
       public constructor (rawError: MissingRequiredDatums) {
         super()
-        this.message = JSON.stringify(rawError.missingRequiredDatums)
+        this.message = safeJSON.stringify(rawError.missingRequiredDatums)
       }
     }
   },
@@ -713,7 +714,7 @@ export const errors = {
     Error: class UnspendableDatumsError extends CustomError {
       public constructor (rawError: UnspendableDatums) {
         super()
-        this.message = JSON.stringify(rawError.unspendableDatums)
+        this.message = safeJSON.stringify(rawError.unspendableDatums)
       }
     }
   },
@@ -723,7 +724,7 @@ export const errors = {
     Error: class UnspendableScriptInputsError extends CustomError {
       public constructor (rawError: UnspendableScriptInputs) {
         super()
-        this.message = JSON.stringify(rawError.unspendableScriptInputs)
+        this.message = safeJSON.stringify(rawError.unspendableScriptInputs)
       }
     }
   }

@@ -10,6 +10,10 @@ import {
 } from '@cardano-ogmios/schema'
 import { findIntersect } from './ChainSync'
 import { WebSocketClosed, TipIsOriginError } from './errors'
+import JSONBig from 'json-bigint'
+
+/** @internal */
+export const safeJSON = JSONBig({ useNativeBigInt: true })
 
 /** @internal */
 export const createPointFromCurrentTip = async (context?: InteractionContext): Promise<Point> => {
@@ -48,4 +52,4 @@ export const isShelleyBlock = (block: Block): block is { shelley: BlockShelley }
 
 /** @internal */
 export const isEmptyObject = (obj: Object): boolean =>
-  obj !== undefined && Object.keys(obj).length === 0 && obj.constructor === Object
+  obj !== undefined && Object.keys(obj).length === 0 && (obj.constructor === Object || obj.constructor === undefined)
