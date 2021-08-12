@@ -35,32 +35,25 @@ $ docker run -it \
 
 Let's explore a bit the various options:
 
-##### --it
+- `-it` is a shorthand for two options `-i` & `-t` to enable some interactive support with the container. This is necessary to pass OS signals (e.g. SIGINT from CTRL-C) from the host to the container.
 
-`-it` is a shorthand for two options `-i` & `-t` to enable some interactive support with the container. This is necessary to pass OS signals (e.g. SIGINT from CTRL-C) from the host to the container.
+- `--name` gives a name to the container, to easily identify it later in commands such as `docker container ps`.
 
-##### --name
+- `-p` instruments docker to bind ports of the container to host. The image exposes 4 ports that can be bound to any (available) port of the host system. Here's the complete list of TCP ports exposed by the image:
 
-`--name` gives a name to the container, to easily identify it later in commands such as `docker container ps`.
+  | Port Number | Description                                              |
+  | ---         | ---                                                      |
+  | 1337        | Ogmios port, for both the WebSocket and the HTTP server. |
+  | 3000        | cardano-node's relay port                                |
+  | 12788       | cardano-node's EKG port                                  |
+  | 12798       | cardano-node's Prometheus port                           |
 
-##### -p
+- `-v` mounts a shared volume with the container on your host machine, either via bind mounts or named volumes. 
 
-`-p` instruments docker to bind ports of the container to host. The image exposes 4 ports that can be bound to any (available) port of the host system. Here's the complete list of TCP ports exposed by the image:
-
-| Port Number | Description                                              |
-| ---         | ---                                                      |
-| 1337        | Ogmios port, for both the WebSocket and the HTTP server. |
-| 3000        | cardano-node's relay port                                |
-| 12788       | cardano-node's EKG port                                  |
-| 12798       | cardano-node's Prometheus port                           |
-
-##### -v
-
-`-v` mounts a shared volume with the container on your host machine, either via bind mounts or named volumes.
-
-###### Mount points
-- `db/{NETWORK_NAME}` - persist the `cardano-node` DB to avoid re-syncing the chain whenever a new container is run. This is done on every version upgrade and is recommended for most use-cases.
-- `/ipc` if this image is used in a multi-container stack with an external Haskell node client.
+  | Mount Point        | Description |
+  | ---                | ---         |
+  | `db/{NETWORK_NAME}` | Persist the cardano-node's database to avoid re-syncing the chain whenever a new container is run. This is done on every version upgrade and is recommended for most use-cases. | 
+  | `ipc`               | Bind `/ipc` to get access to the cardano-node's local socket if you use the image in a multi-container stack with an external Haskell client. | 
 
 Find more about run options in the docker user documentation.
 
@@ -142,7 +135,6 @@ $ NETWORK=testnet OGMIOS_PORT=1338 docker-compose --project-name cardano-ogmios-
 
 To build the Ogmios image from sources, pass the `--build` flag to compose. This is useful if you need a different version than the latest one available on Dockerhub. Alternatively, you can resort to building the image directly from the Dockerfile. Note that the same Dockerfile is used to produced both the `ogmios` image and the `cardano-node-ogmios` image using multi-stage docker builds. To build only the `ogmios` image, you'll have to explicitly specify the build target using the `--target ogmios` option. So in brief:
 
-```console
 ```console
 $ DOCKER_BUILDKIT=1 docker build \
     --cache-from cardanosolutions/ogmios:latest \
