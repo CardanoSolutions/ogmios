@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 import { Data } from 'isomorphic-ws'
 import { InteractionContext } from '../Connection'
 import { baseRequest, send } from '../Request'
+import { safeJSON } from '../util'
 
 /** @internal */
 export const Query = <
@@ -27,7 +28,7 @@ export const Query = <
         const requestId = nanoid(5)
 
         async function listener (data: Data) {
-          const queryResponse = JSON.parse(data as string) as QueryResponse
+          const queryResponse = safeJSON.parse(data as string) as QueryResponse
           if (queryResponse.reflection?.requestId !== requestId) { return }
           await response.handler(
             queryResponse,
@@ -38,7 +39,7 @@ export const Query = <
         }
 
         socket.on('message', listener)
-        socket.send(JSON.stringify({
+        socket.send(safeJSON.stringify({
           ...baseRequest,
           methodname: request.methodName,
           args: request.args,

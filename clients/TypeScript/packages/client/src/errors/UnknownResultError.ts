@@ -1,4 +1,5 @@
 import { CustomError } from 'ts-custom-error'
+import { safeJSON } from '../util'
 
 /**
  * @category ChainSync
@@ -8,6 +9,6 @@ import { CustomError } from 'ts-custom-error'
 export class UnknownResultError extends CustomError {
   public constructor (result: object | string) {
     super()
-    this.message = `${JSON.stringify(result)} is an unknown result`
+    this.message = `${safeJSON.stringify(result)} is an unknown result`
   }
 }

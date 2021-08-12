@@ -203,7 +203,7 @@ spec = do
             (_encodeRequestNextResponse (encodeBlock FullSerialization) encodePoint encodeTip)
             "ogmios.wsp.json#/properties/RequestNextResponse"
 
-    context "validate tx submission reqquest/response against JSON-schema" $ do
+    context "validate tx submission request/response against JSON-schema" $ do
         prop "deserialise signed transactions" prop_parseSubmitTx
 
         validateToJSON

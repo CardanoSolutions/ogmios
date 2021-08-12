@@ -25,7 +25,7 @@ import {
   stakeDistribution,
   utxo
 } from './queries'
-import { createPointFromCurrentTip, ensureSocketIsOpen } from '../util'
+import { createPointFromCurrentTip, ensureSocketIsOpen, safeJSON } from '../util'
 
 /**
  * A State Query client.
@@ -62,7 +62,7 @@ export const createStateQueryClient = async (
   return new Promise((resolve, reject) => {
     const requestId = nanoid(5)
     socket.once('message', (message: string) => {
-      const response: Ogmios['AcquireResponse'] = JSON.parse(message)
+      const response: Ogmios['AcquireResponse'] = safeJSON.parse(message)
       if (response.reflection.requestId !== requestId) { return }
       if ('AcquireSuccess' in response.result) {
         return resolve({
@@ -106,7 +106,7 @@ export const createStateQueryClient = async (
               const releaseRequestId = nanoid(5)
               socket.once('message', (message: string) => {
                 socket.once('close', () => {
-                  const response: Ogmios['ReleaseResponse'] = JSON.parse(message)
+                  const response: Ogmios['ReleaseResponse'] = safeJSON.parse(message)
                   if (response.reflection.requestId !== releaseRequestId) { return }
                   if (response.result === 'Released') {
                     resolve()
@@ -116,7 +116,7 @@ export const createStateQueryClient = async (
                 })
                 socket.close()
               })
-              socket.send(JSON.stringify({
+              socket.send(safeJSON.stringify({
                 ...baseRequest,
                 methodname: 'Release',
                 mirror: { requestId: releaseRequestId }
@@ -154,7 +154,7 @@ export const createStateQueryClient = async (
         socket.close()
       }
     })
-    socket.send(JSON.stringify({
+    socket.send(safeJSON.stringify({
       ...baseRequest,
       methodname: 'Acquire',
       args: { point },
