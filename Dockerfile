@@ -3,7 +3,6 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 ARG CARDANO_NODE_REV=48429531f0d3d71fadce9a5971bf56a6df396f2d
-ARG OGMIOS_SNAPSHOT=a7bab073220caad8b98351515e3d68f5eb605383
 ARG IOHK_LIBSODIUM_GIT_REV=66f017f16633f2060db25e17c170c2afa0f2a8a1
 
 #                                                                              #
@@ -52,17 +51,6 @@ RUN cabal install cardano-node \
   --install-method=copy \
   --installdir=/app/bin
 
-# Pre-build latest release of ogmios, to speed up the actual image build later.
-WORKDIR /app/src/ogmios
-RUN git clone https://github.com/cardanosolutions/ogmios.git /app/src/ogmios &&\
-  git fetch --all --tags &&\
-  git checkout ${OGMIOS_SNAPSHOT}
-WORKDIR /app/src/ogmios/server
-RUN cabal install exe:ogmios \
-  --overwrite-policy=always \
-  --install-method=copy \
-  --installdir=/app/bin
-
 #                                                                              #
 # --------------------------- BUILD (ogmios) --------------------------------- #
 #                                                                              #
@@ -85,7 +73,7 @@ RUN cabal install exe:ogmios \
 FROM debian:buster-slim as ogmios
 
 LABEL name=ogmios
-LABEL description="A JSON-WSP WebSocket client for cardano-node"
+LABEL description="A JSON WebSocket bridge for cardano-node."
 
 COPY --from=build /usr/local/lib/libsodium.so.23 /usr/lib/x86_64-linux-gnu/libsodium.so.23
 COPY --from=build /app/bin/ogmios /bin/ogmios
@@ -108,7 +96,7 @@ ARG NETWORK=mainnet
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 LABEL name=cardano-node-ogmios
-LABEL description="A JSON-WSP WebSocket client for cardano-node w/ a cardano-node"
+LABEL description="A JSON WebSocket bridge for cardano-node w/ a cardano-node."
 
 # Ogmios, cardano-node, ekg, prometheus
 EXPOSE 1337/tcp 3000/tcp 12788/tcp 12798/tcp
