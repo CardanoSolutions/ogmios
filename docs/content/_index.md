@@ -5,7 +5,7 @@ chapter = true
 
 # Ogmios
 
-**Ogmios** is a lightweight translation service written in Haskell running on top of [cardano-node](https://github.com/input-output-hk/cardano-node/). It offers a JSON interface through WebSockets and enables clients to speak [Ouroboros' mini-protocols](https://hydra.iohk.io/build/1070091/download/1/network.pdf#chapter.3) via remote procedure calls over JSON. 
+**Ogmios** is a lightweight bridge interface of [cardano-node](https://github.com/input-output-hk/cardano-node/). It offers a WebSockets API that enables local clients to speak [Ouroboros' mini-protocols](https://hydra.iohk.io/build/1070091/download/1/network.pdf#chapter.3) via JSON/RPC.
 
 ---
 

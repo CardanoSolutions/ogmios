@@ -7,7 +7,8 @@ pre = "<b>7. </b>"
 
 #### Can you explain Ogmios in ~~one~~ three sentences?
 
-Ogmios is a protocol translation service written in Haskell running on top of cardano-node. It offers a JSON interface through WebSockets and enables applications to speak Ouroboros' client mini-protocols via remote procedure calls. Ogmios is a fast and lightweight solution that can be deployed alongside relays to create entry points on the Cardano network for various types of applications (e.g. wallets, explorers, chatbots, dashboards…).
+
+Ogmios is a lightweight bridge interface of [cardano-node](https://github.com/input-output-hk/cardano-node/). It offers a WebSockets API that enables local clients to speak [Ouroboros' mini-protocols](https://hydra.iohk.io/build/1070091/download/1/network.pdf#chapter.3) via JSON/RPC. Ogmios is a fast and lightweight solution that can be deployed alongside relays to create entry points on the Cardano network for various types of applications (e.g. wallets, explorers, chatbots, dashboards…)
 
 #### Can you explain Ogmios to me like I'm five? 
 
@@ -58,4 +59,4 @@ I've got some positive feedback from a handful of stake pool operators using it 
 - https://gimbalabs.com/dandelionapis/ogmios-api
 - https://www.f2lb.org/
 
-There are also projects in preparation which looked into Ogmios as an alternative to cardano-db-sync for it better suited their need. Ogmios only reached a good enough feature-set and stability recently, thus most projects currently using it are still in the hoven. With the Ogmios TypeScript client now available, I have also good hope that more and more projects will see the light. This goes hand-and-hand with adoption from stake pools relays of course: the more relays are avaiable and provide entry points to the network, the more applications can rely on it.  
+There are also projects in preparation which looked into Ogmios as an alternative to cardano-db-sync for it better suited their need. Ogmios only reached a good enough feature-set and stability recently, thus most projects currently using it are still in the oven. With the Ogmios TypeScript client now available, I have also good hope that more and more projects will see the light. This goes hand-and-hand with adoption from stake pools relays of course: the more relays are available and provide entry points to the network, the more applications can rely on it.
