@@ -1027,7 +1027,8 @@
     }
 
   , "Block":
-    { "oneOf":
+    { "description": "A Cardano Block, which can take different forms depending on the era."
+    , "oneOf":
       [ { "type": "object"
         , "required": [ "byron" ]
         , "title": "byron"
@@ -1072,7 +1073,8 @@
     }
 
   , "Block[Byron]":
-    { "oneOf":
+    { "description": "A block in the Byron era. Most blocks are stanard blocks, but once at the beginning of each era is an additional epoch boundary block (a.k.a. EBB)"
+    , "oneOf":
       [ { "required": [ "hash", "header", "body" ]
         , "title": "standard block"
         , "additionalProperties": false
@@ -1822,6 +1824,7 @@
     { "type": "integer"
     , "description": "A block number, the i-th block to be minted is number i."
     , "minimum": 0
+    , "maximum": 18446744073709552999
     }
 
   , "BlockProof":
@@ -1834,10 +1837,7 @@
         , "additionalProperties": false
         , "required": [ "number", "root", "witnessesHash" ]
         , "properties":
-          { "number":
-            { "type": "integer"
-            , "minimum": 0
-            }
+          { "number": { "$ref": "#/definitions/UInt32" }
           , "root": { "$ref": "#/definitions/Hash16" }
           , "witnessesHash": { "$ref": "#/definitions/Hash16" }
           }
@@ -1861,6 +1861,7 @@
     { "type": "integer"
     , "description": "The size of the block in bytes."
     , "minimum": 0
+    , "maximum": 18446744073709552999
     }
 
   , "BootstrapWitness":
@@ -2112,16 +2113,16 @@
       ]
     , "properties":
       { "systemStart": { "$ref": "#/definitions/UtcTime" }
-      , "networkMagic": { "type": "integer" }
+      , "networkMagic": { "$ref": "#/definitions/NetworkMagic" }
       , "network": { "$ref": "#/definitions/Network" }
       , "activeSlotsCoefficient": { "$ref": "#/definitions/Ratio" }
-      , "securityParameter": { "type": "integer" }
+      , "securityParameter": { "$ref": "#/definitions/UInt64" }
       , "epochLength": { "$ref": "#/definitions/Epoch" }
-      , "slotsPerKesPeriod": { "type": "integer" }
-      , "maxKesEvolutions": { "type": "integer" }
-      , "slotLength": { "type": "integer" }
-      , "updateQuorum": { "type": "integer" }
-      , "maxLovelaceSupply": { "type": "integer" }
+      , "slotsPerKesPeriod": { "$ref": "#/definitions/UInt64" }
+      , "maxKesEvolutions": { "$ref": "#/definitions/UInt64" }
+      , "slotLength": { "$ref": "#/definitions/Int64" }
+      , "updateQuorum": { "$ref": "#/definitions/UInt64" }
+      , "maxLovelaceSupply": { "$ref": "#/definitions/UInt64" }
       , "protocolParameters": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
       }
     , "examples":
@@ -2177,19 +2178,13 @@
 
   , "CostModel":
     { "type": "object"
-    , "additionalProperties": { "type": "integer" }
+    , "additionalProperties": { "$ref": "#/definitions/Int64" }
     }
 
   , "Datum":
     { "type": "string"
     , "contentEncoding": "base64"
     , "pattern": "^[A-Za-z0-9+/]*=?=?$"
-    }
-
-  , "DatumHash":
-    { "type": "string"
-    , "contentEncoding": "base16"
-    , "pattern": "^[0-9a-f]+$"
     }
 
   , "DelegationsAndRewards":
@@ -2225,6 +2220,7 @@
     { "type": "integer"
     , "description": "An epoch number."
     , "minimum": 0
+    , "maximum": 18446744073709552000
     }
 
   , "Era":
@@ -2255,21 +2251,29 @@
     , "additionalProperties": false
     , "required": [ "memory", "steps" ]
     , "properties":
-      { "memory": { "type": "integer" }
-      , "steps": { "type": "integer" }
+      { "memory": { "$ref": "#/definitions/UInt64" }
+      , "steps": { "$ref": "#/definitions/UInt64" }
       }
     }
 
   , "Hash16":
     { "type": "string"
+    , "description": "A base16-encoded digest."
     , "contentEncoding": "base16"
     , "pattern": "^[0-9a-f]*$"
     }
 
   , "Hash64":
     { "type": "string"
+    , "description": "A base64-encoded digest."
     , "contentEncoding": "base64"
     , "pattern": "^[A-Za-z0-9+/]*=?=?$"
+    }
+
+  , "Int64":
+    { "type": "integer"
+    , "minimum": -9223372036854775808
+    , "maximum": 9223372036854775807
     }
 
   , "InvalidEntity":
@@ -2324,11 +2328,14 @@
     { "type": "integer"
     , "description": "An amount, in Lovelace (1e6 Lovelace = 1 Ada)"
     , "minimum": 0
+    , "maximum": 18446744073709552000
     }
 
   , "LovelaceDelta":
     { "type": "integer"
     , "description": "An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada)."
+    , "minimum": -9223372036854775808
+    , "maximum": 9223372036854775807
     }
 
   , "Metadata":
@@ -2450,21 +2457,12 @@
     }
 
   , "NetworkMagic":
-    { "oneOf":
-      [ { "type": "string"
-        , "description": "A network target, as defined in Byron."
-        , "title": "mainnet"
-        , "enum": [ "mainnet" ]
-        }
-      , { "type": "object"
-        , "description": "A network target, as defined in Byron."
-        , "title": "testnet"
-        , "additionalProperties": false
-        , "required": [ "testnet" ]
-        , "properties":
-          { "testnet": { "type": "integer" }
-          }
-        }
+    { "type": "integer"
+    , "description": "A magic number for telling networks apart. (e.g. 764824073)"
+    , "minimum": 0
+    , "maximum": 4294967296
+    , "examples":
+      [ 764824073
       ]
     }
 
@@ -2519,16 +2517,9 @@
     { "type": "null"
     }
 
-  , "NullableInteger":
+  , "NullableUInt64":
     { "oneOf":
-      [ { "type": "integer", "title": "integer" }
-      , { "$ref": "#/definitions/Null"}
-      ]
-    }
-
-  , "NullableNumber":
-    { "oneOf":
-      [ { "type": "number", "title": "integer" }
+      [ { "$ref": "#/definitions/UInt64" }
       , { "$ref": "#/definitions/Null"}
       ]
     }
@@ -2545,9 +2536,9 @@
     , "description": "Certificate identifying a stake pool operator."
     , "additionalProperties": false
     , "properties":
-      { "count": { "type": "integer", "minimum": 0 }
+      { "count": { "$ref": "#/definitions/UInt64" }
       , "sigma": { "$ref": "#/definitions/Hash64" }
-      , "kesPeriod": { "type": "integer", "minimum": 0 }
+      , "kesPeriod": { "$ref": "#/definitions/UInt64" }
       , "hotVk": { "$ref": "#/definitions/Hash64" }
       }
     }
@@ -2623,6 +2614,8 @@
 
   , "ProtocolMagicId":
     { "type": "integer"
+    , "minimum": 0
+    , "maximum": 4294967295
     , "examples":
       [ 764824073
       ]
@@ -2649,16 +2642,16 @@
       ]
     , "properties":
       { "heavyDlgThreshold": { "$ref": "#/definitions/NullableRatio" }
-      , "maxBlockSize": { "$ref": "#/definitions/NullableInteger" }
-      , "maxHeaderSize": { "$ref": "#/definitions/NullableInteger" }
-      , "maxProposalSize": { "$ref": "#/definitions/NullableInteger" }
-      , "maxTxSize": { "$ref": "#/definitions/NullableInteger" }
+      , "maxBlockSize": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxHeaderSize": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxProposalSize": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxTxSize": { "$ref": "#/definitions/NullableUInt64" }
       , "mpcThreshold": { "$ref": "#/definitions/NullableRatio" }
-      , "scriptVersion": { "$ref": "#/definitions/NullableInteger" }
-      , "slotDuration": { "$ref": "#/definitions/NullableInteger" }
-      , "unlockStakeEpoch": { "$ref": "#/definitions/NullableInteger" }
+      , "scriptVersion": { "$ref": "#/definitions/NullableUInt64" }
+      , "slotDuration": { "$ref": "#/definitions/NullableUInt64" }
+      , "unlockStakeEpoch": { "$ref": "#/definitions/NullableUInt64" }
       , "updateProposalThreshold": { "$ref": "#/definitions/NullableRatio" }
-      , "updateProposalTimeToLive": { "$ref": "#/definitions/NullableInteger" }
+      , "updateProposalTimeToLive": { "$ref": "#/definitions/NullableUInt64" }
       , "updateVoteThreshold": { "$ref": "#/definitions/NullableRatio" }
       , "txFeePolicy":
         { "oneOf":
@@ -2698,21 +2691,21 @@
       , "protocolVersion"
       ]
     , "properties":
-      { "minFeeCoefficient": { "$ref": "#/definitions/NullableInteger" }
-      , "minFeeConstant": { "$ref": "#/definitions/NullableInteger" }
-      , "maxBlockBodySize": { "$ref": "#/definitions/NullableInteger" }
-      , "maxBlockHeaderSize": { "$ref": "#/definitions/NullableInteger" }
-      , "maxTxSize": { "$ref": "#/definitions/NullableInteger" }
-      , "stakeKeyDeposit": { "$ref": "#/definitions/NullableInteger" }
-      , "poolDeposit": { "$ref": "#/definitions/NullableInteger" }
-      , "poolRetirementEpochBound": { "$ref": "#/definitions/NullableInteger" }
-      , "desiredNumberOfPools": { "$ref": "#/definitions/NullableInteger" }
+      { "minFeeCoefficient": { "$ref": "#/definitions/NullableUInt64" }
+      , "minFeeConstant": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxBlockBodySize": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxBlockHeaderSize": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxTxSize": { "$ref": "#/definitions/NullableUInt64" }
+      , "stakeKeyDeposit": { "$ref": "#/definitions/NullableUInt64" }
+      , "poolDeposit": { "$ref": "#/definitions/NullableUInt64" }
+      , "poolRetirementEpochBound": { "$ref": "#/definitions/NullableUInt64" }
+      , "desiredNumberOfPools": { "$ref": "#/definitions/NullableUInt64" }
       , "poolInfluence": { "$ref": "#/definitions/NullableRatio" }
       , "monetaryExpansion": { "$ref": "#/definitions/NullableRatio" }
       , "treasuryExpansion": { "$ref": "#/definitions/NullableRatio" }
       , "decentralizationParameter": { "$ref": "#/definitions/NullableRatio" }
-      , "minUtxoValue": { "$ref": "#/definitions/NullableInteger" }
-      , "minPoolCost": { "$ref": "#/definitions/NullableInteger" }
+      , "minUtxoValue": { "$ref": "#/definitions/NullableUInt64" }
+      , "minPoolCost": { "$ref": "#/definitions/NullableUInt64" }
       , "extraEntropy":
         { "oneOf":
           [ { "$ref": "#/definitions/Nonce" }
@@ -2758,24 +2751,24 @@
       , "maxExecutionUnitsPerBlock"
       ]
     , "properties":
-      { "minFeeCoefficient": { "$ref": "#/definitions/NullableInteger" }
-      , "minFeeConstant": { "$ref": "#/definitions/NullableInteger" }
-      , "maxBlockBodySize": { "$ref": "#/definitions/NullableInteger" }
-      , "maxBlockHeaderSize": { "$ref": "#/definitions/NullableInteger" }
-      , "maxTxSize": { "$ref": "#/definitions/NullableInteger" }
-      , "stakeKeyDeposit": { "$ref": "#/definitions/NullableInteger" }
-      , "poolDeposit": { "$ref": "#/definitions/NullableInteger" }
-      , "poolRetirementEpochBound": { "$ref": "#/definitions/NullableInteger" }
-      , "desiredNumberOfPools": { "$ref": "#/definitions/NullableInteger" }
+      { "minFeeCoefficient": { "$ref": "#/definitions/NullableUInt64" }
+      , "minFeeConstant": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxBlockBodySize": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxBlockHeaderSize": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxTxSize": { "$ref": "#/definitions/NullableUInt64" }
+      , "stakeKeyDeposit": { "$ref": "#/definitions/NullableUInt64" }
+      , "poolDeposit": { "$ref": "#/definitions/NullableUInt64" }
+      , "poolRetirementEpochBound": { "$ref": "#/definitions/NullableUInt64" }
+      , "desiredNumberOfPools": { "$ref": "#/definitions/NullableUInt64" }
       , "poolInfluence": { "$ref": "#/definitions/NullableRatio" }
       , "monetaryExpansion": { "$ref": "#/definitions/NullableRatio" }
       , "treasuryExpansion": { "$ref": "#/definitions/NullableRatio" }
       , "decentralizationParameter": { "$ref": "#/definitions/NullableRatio" }
-      , "minPoolCost": { "$ref": "#/definitions/NullableInteger" }
-      , "coinsPerUtxoWord": { "$ref": "#/definitions/NullableInteger" }
-      , "maxValueSize": { "$ref": "#/definitions/NullableInteger" }
-      , "collateralPercentage": { "$ref": "#/definitions/NullableInteger" }
-      , "maxCollateralInputs": { "$ref": "#/definitions/NullableInteger" }
+      , "minPoolCost": { "$ref": "#/definitions/NullableUInt64" }
+      , "coinsPerUtxoWord": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxValueSize": { "$ref": "#/definitions/NullableUInt64" }
+      , "collateralPercentage": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxCollateralInputs": { "$ref": "#/definitions/NullableUInt64" }
       , "extraEntropy":
         { "oneOf":
           [ { "$ref": "#/definitions/Nonce" }
@@ -2820,9 +2813,9 @@
     , "additionalProperties": false
     , "required": [ "major", "minor" ]
     , "properties":
-      { "major": { "type": "integer" }
-      , "minor": { "type": "integer" }
-      , "patch": { "type": "integer" }
+      { "major": { "$ref": "#/definitions/UInt32" }
+      , "minor": { "$ref": "#/definitions/UInt32" }
+      , "patch": { "$ref": "#/definitions/UInt32" }
       }
     }
 
@@ -2883,17 +2876,25 @@
         , "properties":
           { "ipv4":
             { "oneOf":
-              [ { "type": "string", "title": "ip" }
+              [ { "type": "string" }
               , { "$ref": "#/definitions/Null"}
               ]
             }
           , "ipv6":
             { "oneOf":
-              [ { "type": "string", "title": "ip" }
+              [ { "type": "string" }
               , { "$ref": "#/definitions/Null"}
               ]
             }
-          , "port": { "$ref": "#/definitions/NullableInteger" }
+          , "port":
+            { "oneOf":
+              [ { "type": "integer"
+                , "minimum": 0
+                , "maximum": 65535
+                }
+              , { "$ref": "#/definitions/Null" }
+              ]
+            }
           }
         }
       , { "type": "object"
@@ -2902,7 +2903,15 @@
         , "required": ["hostname","port"]
         , "properties":
           { "hostname": { "type": "string" }
-          , "port": { "$ref": "#/definitions/NullableInteger" }
+          , "port":
+            { "oneOf":
+              [ { "type": "integer"
+                , "minimum": 0
+                , "maximum": 65535
+                }
+              , { "$ref": "#/definitions/Null" }
+              ]
+            }
           }
         }
       ]
@@ -2932,6 +2941,24 @@
     { "type": "string"
     , "description": "Source of rewards as defined by the protocol parameters."
     , "enum": ["reserves", "treasury"]
+    }
+
+  , "UInt8":
+    { "type": "integer"
+    , "minimum": 0
+    , "maximum": 255
+    }
+
+  , "UInt32":
+    { "type": "integer"
+    , "minimum": 0
+    , "maximum": 4294967295
+    }
+
+  , "UInt64":
+    { "type": "integer"
+    , "minimum": 0
+    , "maximum": 18446744073709552999
     }
 
   , "Script":
@@ -3087,8 +3114,10 @@
     }
 
   , "Slot":
-    { "type": "integer"
+    { "description": "An absolute slot number."
+    , "type": "integer"
     , "minimum": 0
+    , "maximum": 18446744073709552000
     }
 
   , "SoftwareVersion":
@@ -3097,7 +3126,7 @@
     , "required": [ "appName", "number" ]
     , "properties":
       { "appName": { "type": "string" }
-      , "number": { "type": "integer" }
+      , "number": { "$ref": "#/definitions/UInt32" }
       }
     }
 
@@ -3345,8 +3374,8 @@
         , "additionalProperties": false
         , "required": [ "maximumSize", "actualSize" ]
         , "properties":
-          { "maximumSize": { "type": "integer" }
-          , "actualSize": { "type": "integer" }
+          { "maximumSize": { "$ref": "#/definitions/Int64" }
+          , "actualSize": { "$ref": "#/definitions/Int64" }
           }
         }
       }
@@ -3534,7 +3563,7 @@
     , "additionalProperties": false
     , "required": ["wrongPoolCertificate"]
     , "properties":
-      { "wrongPoolCertificate": { "type": "integer" }
+      { "wrongPoolCertificate": { "$ref": "#/definitions/UInt8" }
       }
     }
 
@@ -3577,7 +3606,7 @@
         , "required": [ "poolId", "measuredSize" ]
         , "properties":
           { "poolId": { "$ref": "#/definitions/PoolId" }
-          , "measuredSize": { "type": "integer" }
+          , "measuredSize": { "$ref": "#/definitions/Int64" }
           }
         }
       }
@@ -3947,8 +3976,8 @@
         , "additionalProperties": false
         , "required": [ "maximumCollateralInputs", "actualCollateralInputs" ]
         , "properties":
-          { "maximumCollateralInputs": { "type": "integer" }
-          , "actualCollateralInputs": { "type": "integer" }
+          { "maximumCollateralInputs": { "$ref": "#/definitions/UInt64" }
+          , "actualCollateralInputs": { "$ref": "#/definitions/UInt64" }
           }
         }
       }
@@ -4049,7 +4078,7 @@
     , "properties":
       { "txId": { "$ref": "#/definitions/Hash16" }
       , "index":
-        { "type": "integer"
+        { "$ref": "#/definitions/UInt32"
         , "minimum": 0
         }
       }
@@ -4095,7 +4124,7 @@
       , "value": { "$ref": "#/definitions/Value" }
       , "datum":
         { "oneOf":
-          [ { "$ref": "#/definitions/DatumHash" }
+          [ { "$ref": "#/definitions/Hash16" }
           , { "$ref": "#/definitions/Null"}
           ]
         }
