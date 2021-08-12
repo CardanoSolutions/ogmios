@@ -28,6 +28,6 @@ version :: Text
 version =
     case $(gitDescribeHEAD) of
         rev | rev == unknownRevision ->
-            toText ("v" <> showVersion Pkg.version <> "-??-????????")
+            toText ("v" <> showVersion Pkg.version)
         rev ->
             toText rev

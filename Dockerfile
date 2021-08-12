@@ -1,15 +1,13 @@
 #  This Source Code Form is subject to the terms of the Mozilla Public
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-ARG CARDANO_NODE_REV=48429531f0d3d71fadce9a5971bf56a6df396f2d
-ARG IOHK_LIBSODIUM_GIT_REV=66f017f16633f2060db25e17c170c2afa0f2a8a1
-
 #                                                                              #
 # ------------------------------- SETUP  ------------------------------------- #
 #                                                                              #
 
 FROM haskell:8.10.4 as setup
+ARG CARDANO_NODE_REV=alonzo-purple-1.0
+ARG IOHK_LIBSODIUM_GIT_REV=66f017f16633f2060db25e17c170c2afa0f2a8a1
 WORKDIR /build
 RUN apt-get update && apt-get install --no-install-recommends -y \
   automake=1:1.16.* \

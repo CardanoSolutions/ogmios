@@ -46,6 +46,8 @@ module Ogmios.App.Protocol.StateQuery
 
 import Ogmios.Prelude
 
+import Data.SOP.Strict
+    ( NS (..) )
 import Ogmios.Control.Exception
     ( MonadThrow )
 import Ogmios.Control.MonadSTM
@@ -67,7 +69,7 @@ import Ogmios.Data.Protocol.StateQuery
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( HardForkBlock, eraIndexToInt )
+    ( HardForkBlock )
 import Ouroboros.Network.Block
     ( Point (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
@@ -218,11 +220,9 @@ toSomeShelleyEra
     :: forall crypto. ()
     => LSQ.EraIndex (CardanoEras crypto)
     -> Maybe SomeShelleyEra
-toSomeShelleyEra =
-    indexToSomeShelleyEra . eraIndexToInt
-  where
-    indexToSomeShelleyEra = \case
-        1 -> Just (SomeShelleyEra ShelleyBasedEraShelley)
-        2 -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
-        3 -> Just (SomeShelleyEra ShelleyBasedEraMary)
-        _ -> Nothing
+toSomeShelleyEra = \case
+    LSQ.EraIndex             Z{}     -> Nothing
+    LSQ.EraIndex          (S Z{})    -> Just (SomeShelleyEra ShelleyBasedEraShelley)
+    LSQ.EraIndex       (S (S Z{}))   -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
+    LSQ.EraIndex    (S (S (S Z{})))  -> Just (SomeShelleyEra ShelleyBasedEraMary)
+    LSQ.EraIndex (S (S (S (S Z{})))) -> Just (SomeShelleyEra ShelleyBasedEraAlonzo)
