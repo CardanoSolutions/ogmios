@@ -54,6 +54,7 @@ jobs:
       shell: bash
       run: |
         stack --no-terminal install --flag ogmios:production ogmios
+        stack --no-terminal test    --flag ogmios:production --no-run-tests
         mv $(stack path --local-bin)/ogmios ogmios
 
     - name: 📤 Upload binary
@@ -94,8 +95,7 @@ jobs:
     - name: 🔨 Test
       working-directory: server
       run: |
-        stack --no-terminal test --flag ogmios:production --no-run-tests
-        stack --no-terminal test --flag ogmios:production                 ogmios:unit
+        stack --no-terminal test --flag ogmios:production ogmios:unit
 
   #  _______  _______  ______    __   __  _______  ______            ___      ___   __    _  _______
   # |       ||       ||    _ |  |  | |  ||       ||    _ |          |   |    |   | |  |  | ||       |
