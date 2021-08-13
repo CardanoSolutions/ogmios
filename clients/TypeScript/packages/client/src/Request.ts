@@ -1,4 +1,4 @@
-import WebSocket from './IsomorphicWebSocket'
+import { WebSocket } from './IsomorphicWebSocket'
 import { InteractionContext } from './Connection'
 
 /** @internal */

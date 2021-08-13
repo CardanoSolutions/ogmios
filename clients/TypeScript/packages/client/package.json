@@ -14,7 +14,7 @@
   "author": "Rhys Bartels-Waller",
   "license": "MPL-2.0",
   "scripts": {
-    "build": "cp src/*.js dist && tsc --build ./src",
+    "build": "tsc --build ./src",
     "cleanup": "shx rm -rf dist node_modules",
     "lint": "eslint --ignore-path ../../.eslintignore \"**/*.ts\"",
     "prepack": "yarn build",
