@@ -1,4 +1,4 @@
-import WebSocket from 'isomorphic-ws'
+import { WebSocket } from './IsomorphicWebSocket'
 import { InteractionContext } from './Connection'
 import {
   Block,

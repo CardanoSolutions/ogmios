@@ -1,4 +1,4 @@
-import WebSocket from 'isomorphic-ws'
+import { WebSocket, CloseEvent } from './IsomorphicWebSocket'
 import { getServerHealth } from './ServerHealth'
 import { ServerNotReady } from './errors'
 
@@ -50,8 +50,8 @@ export type WebSocketErrorHandler = (error: Error) => void
 
 /** @category Connection */
 export type WebSocketCloseHandler = (
-  code: WebSocket.CloseEvent['code'],
-  reason: WebSocket.CloseEvent['reason']
+  code: CloseEvent['code'],
+  reason: CloseEvent['reason']
 ) => void
 
 /** @category Constructor */

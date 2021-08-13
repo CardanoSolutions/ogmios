@@ -1,5 +1,4 @@
 import { nanoid } from 'nanoid'
-import { Data } from 'isomorphic-ws'
 import { InteractionContext } from '../Connection'
 import { baseRequest, send } from '../Request'
 import { safeJSON } from '../util'
@@ -27,8 +26,8 @@ export const Query = <
       new Promise((resolve, reject) => {
         const requestId = nanoid(5)
 
-        async function listener (data: Data) {
-          const queryResponse = safeJSON.parse(data as string) as QueryResponse
+        async function listener (data: string) {
+          const queryResponse = safeJSON.parse(data) as QueryResponse
           if (queryResponse.reflection?.requestId !== requestId) { return }
           await response.handler(
             queryResponse,
