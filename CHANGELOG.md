@@ -5,33 +5,34 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
-### [4.0.0] - 2021-08-13
+### [4.0.0] - 2021-08-14
 
 #### Added
 
 - Integrated with the Cardano eco-system corresponding to cardano-node@1.28.0 & latest testnet (alonzo-purple). Bumped the docker-compose installation accordingly.
 
 - New possible errors from the transaction submission:
-  - `poolMetadataHashTooBig`
-  - `missingRequiredDatums`
-  - `unspendableDatums`
-  - `unspendableScriptInputs`
-  - `mirTransferNotCurrentlyAllowed`
+  - `collateralHasNonAdaAssets`
+  - `collateralIsScript`
+  - `collateralTooSmall`
+  - `collectErrors`
+  - `datumsMismatch`
+  - `executionUnitsTooLarge`
+  - `extraDataMismatch`
+  - `extraRedeemers`
   - `mirNegativeTransferNotCurrentlyAllowed`
   - `mirProducesNegativeUpdate`
-  - `unredeemableScripts`
-  - `datumsMismatch`
-  - `extraDataMismatch`
-  - `missingRequiredSignatures`
+  - `mirTransferNotCurrentlyAllowed`
   - `missingDatumHashesForInputs`
-  - `collateralTooSmall`
-  - `collateralIsScript`
-  - `collateralHasNonAdaAssets`
-  - `tooManyCollateralInputs`
-  - `executionUnitsTooLarge`
+  - `missingRequiredDatums`
+  - `missingRequiredSignatures`
   - `outsideForecast`
+  - `poolMetadataHashTooBig`
+  - `tooManyCollateralInputs`
+  - `unredeemableScripts`
+  - `unspendableDatums`
+  - `unspendableScriptInputs`
   - `validationTagMismatch`
-  - `collectErrors`
 
 - Added missing properties in Byron's protocol parameters update. Somehow, an `additionalProperties: true` had slipped through and caused the tests to pass with an incomplete schema.
 

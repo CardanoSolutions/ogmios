@@ -84,19 +84,13 @@ import qualified Data.Aeson as Json
 import qualified Ouroboros.Network.Point as Point
 import qualified Shelley.Spec.Ledger.BlockChain as Spec
 
-genBlock :: Bool -> Gen Block
-genBlock withAlonzo = reasonablySized $ oneof $
+genBlock :: Gen Block
+genBlock = reasonablySized $ oneof
     [ BlockByron <$> arbitrary
     , BlockShelley <$> genBlockFrom @(ShelleyEra StandardCrypto)
     , BlockAllegra <$> genBlockFrom @(AllegraEra StandardCrypto)
     , BlockMary <$> genBlockFrom @(MaryEra StandardCrypto)
-    ]
-    -- FIXME: Temporary. There's an issue with one of the CBOR decoder in an
-    -- Alonzo component. It doesn't roundtrip and make some of our test fail.
-    -- The issue has been reported to the core team, but in the meantime, we
-    -- selectively disable this one when needed.
-    ++
-    [ BlockAlonzo <$> genBlockFrom @(AlonzoEra StandardCrypto) | withAlonzo
+    , BlockAlonzo <$> genBlockFrom @(AlonzoEra StandardCrypto)
     ]
   where
     genBlockFrom
@@ -104,7 +98,7 @@ genBlock withAlonzo = reasonablySized $ oneof $
             ( Era era
             , ToCBORGroup (TxSeq era)
             , Mock (Crypto era)
-            , Arbitrary (TxInBlock era)
+            , Arbitrary (Core.Tx era)
             )
         => Gen (ShelleyBlock era)
     genBlockFrom = ShelleyBlock

@@ -155,6 +155,8 @@ export const submitTx = (context: InteractionContext, bytes: string) =>
                 return new errors.UnspendableDatums.Error(failure)
               } else if (errors.UnspendableScriptInputs.assert(failure)) {
                 return new errors.UnspendableScriptInputs.Error(failure)
+              } else if (errors.ExtraRedeemers.assert(failure)) {
+                return new errors.ExtraRedeemers.Error(failure)
               } else {
                 return new Error(failure)
               }

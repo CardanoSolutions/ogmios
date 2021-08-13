@@ -3195,6 +3195,7 @@
         , { "$ref": "#/definitions/SubmitTxError[extraDataMismatch]" }
         , { "$ref": "#/definitions/SubmitTxError[missingRequiredSignatures]" }
         , { "$ref": "#/definitions/SubmitTxError[unspendableScriptInputs]" }
+        , { "$ref": "#/definitions/SubmitTxError[extraRedeemers]" }
         , { "$ref": "#/definitions/SubmitTxError[missingDatumHashesForInputs]" }
         , { "$ref": "#/definitions/SubmitTxError[missingCollateralInputs]" }
         , { "$ref": "#/definitions/SubmitTxError[collateralTooSmall]" }
@@ -3904,6 +3905,19 @@
       { "unspendableScriptInputs":
         { "type": "array"
         , "items": { "$ref": "#/definitions/TxIn" }
+        }
+      }
+    }
+
+  , "SubmitTxError[extraRedeemers]":
+    { "type": "object"
+    , "title": "extraRedeemers"
+    , "additionalProperties": false
+    , "required": [ "extraRedeemers" ]
+    , "properties":
+      { "extraRedeemers":
+        { "type": "array"
+        , "items": { "type": "string" }
         }
       }
     }

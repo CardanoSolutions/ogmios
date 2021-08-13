@@ -50,21 +50,24 @@ packages:
 
 
 - git: https://github.com/input-output-hk/cardano-base
-  commit: b6a215c42a28dc8b71b42946fe30256a333d34af
+  commit: 8c732560b201b5da8e3bdf175c6eda73a32d64bc
   subdirs:
+  - base-deriving-via
   - binary
   - binary/test
   - cardano-crypto-class
   - cardano-crypto-praos
   - cardano-crypto-tests
+  - measures
+  - orphans-deriving-via
   - slotting
   - strict-containers
 
 - git: https://github.com/input-output-hk/cardano-crypto
-  commit: ce8f1934e4b6252084710975bd9bbc0a4648ece4
+  commit: f73079303f663e028288f9f4a9e08bcca39a923e
 
 - git: https://github.com/input-output-hk/cardano-ledger-specs
-  commit: ec9c77edbf5700a4b2ece8f97a1e313df06abc97
+  commit: 30eca73a2f5c13f1fbed9a98a59540ac3d0c8afe
   subdirs:
   - alonzo/impl
   - alonzo/test
@@ -84,14 +87,14 @@ packages:
   - shelley-ma/shelley-ma-test
 
 - git: https://github.com/input-output-hk/cardano-node
-  commit: 48429531f0d3d71fadce9a5971bf56a6df396f2d
+  commit: 708de685d49ec6af4b2d8b3cbfa0eca0e9e43edf
   subdirs:
     - cardano-api
     - cardano-config
     - cardano-node
 
 - git: https://github.com/input-output-hk/cardano-prelude
-  commit: fd773f7a58412131512b9f694ab95653ac430852
+  commit: bb4ed71ba8e587f672d06edf9d2e376f4b055555
   subdirs:
   - cardano-prelude
   - cardano-prelude-test
@@ -124,7 +127,7 @@ packages:
   - tracer-transformers
 
 - git: https://github.com/input-output-hk/ouroboros-network
-  commit: e338f2cf8e1078fbda9555dd2b169c6737ef6774
+  commit: e9cda57df7ea6969edbc3bfc4e117668277d09c8
   subdirs:
     - io-classes
     - io-sim
@@ -146,7 +149,7 @@ packages:
     - typed-protocols-examples
 
 - git: https://github.com/input-output-hk/plutus
-  commit: 523f349f3d68db07c98150734793ed7003d1f562
+  commit: 826c2514a40e962c2e4d56ce912803a434cc28fe
   subdirs:
     - plutus-core
     - plutus-ledger-api

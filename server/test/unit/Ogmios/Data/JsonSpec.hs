@@ -380,7 +380,7 @@ instance Arbitrary (Tip Block) where
     arbitrary = genTip
 
 instance Arbitrary Block where
-    arbitrary = genBlock True
+    arbitrary = genBlock
 
 --
 -- Local Tx Submit

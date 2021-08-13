@@ -101,6 +101,12 @@ encodeAlonzoPredFail = \case
               , encodeFoldable Shelley.encodeTxIn utxos
               )
             ]
+    Al.ExtraRedeemers redeemers ->
+        encodeObject
+            [ ( "extraRedeemers"
+              , encodeFoldable (encodeText . stringifyRdmrPtr) redeemers
+              )
+            ]
     Al.WrappedShelleyEraFailure e ->
         Shelley.encodeUtxowFailure  encodeUtxoFailure e
 

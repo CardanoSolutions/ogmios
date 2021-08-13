@@ -215,7 +215,7 @@ chainSyncMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
     genRequestNextResponse
         :: Gen (ChainSync.Message Protocol ('StNext any) 'StIdle)
     genRequestNextResponse = frequency
-        [ (10, ChainSync.MsgRollForward <$> genBlock False <*> genTip)
+        [ (10, ChainSync.MsgRollForward <$> genBlock <*> genTip)
         , ( 1, ChainSync.MsgRollBackward <$> genPoint <*> genTip)
         ]
 
