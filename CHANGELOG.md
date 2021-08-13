@@ -5,54 +5,20 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
-### [4.0.0] - 2021-07-XX
+### [4.0.0] - 2021-08-13
 
 #### Added
 
-- Integrated with the Cardano eco-system corresponding to cardano-node@1.28.0. Bumped the docker-compose installation accordingly.
+- Integrated with the Cardano eco-system corresponding to cardano-node@1.28.0 & latest testnet (alonzo-purple). Bumped the docker-compose installation accordingly.
+
 - New possible errors from the transaction submission:
   - `poolMetadataHashTooBig`
   - `missingRequiredDatums`
   - `unspendableDatums`
   - `unspendableScriptInputs`
-- Added missing properties in Byron's protocol parameters update. Somehow, an `additionalProperties: true` had slipped through and caused the tests to pass with an incomplete schema.
-
-#### Changed
-
-- The `memory` and `steps` JSON representations for `prices` are no longer coins, but ratio (represented as strings in the API).
-- `lovelacePerUtxoWord` has been renamed into `coinsPerUtxoWord` in the AlonzoGenesis.
-- Changes in the TypeScript's client:
-  - `Tip` & `Point` have been renamed to `TipOrOrigin` and `PointOrOrigin`. As a consequence, `Tip1` and `Point1` are now simply `Tip` and `Point`.
-  - `Origin` is now a standalone type, merged with `Origin1`.
-  - `SubmitTx` no-longer returns Byron errors. Consequently, submit errors are no longer scoped under `errors.byron` or `errors.shelley` but simply `errors`.
-  - Fixed `proposedProtocolParameters` query. All fields are actually required AND, more importantly, it can now return either Shelley protocol parameters or, Alonzo protocol parameters.
-
-#### Removed
-
-- A previous introduced error from the transaction submission has been removed / replaced:
-  - `datumsMismatch`
-
-- `SubmitTx` can no longer return `SubmitTxError[Byron]`. All the child error types have been removed accordingly, namely:
-  - `UtxoValidationError`
-  - `TxValidationError`
-  - `LovelaceError`
-
-### [4.0.0-beta.4] - 2021-07-07
-
-#### Added
-
-- Integrated with the Cardano eco-system corresponding to cardano-node@1.27.0. Bumped the docker-compose installation accordingly.
-
-- New possible errors from the transaction submission coming with cardano-node@1.27.0:
-
   - `mirTransferNotCurrentlyAllowed`
   - `mirNegativeTransferNotCurrentlyAllowed`
   - `mirProducesNegativeUpdate`
-
-  These errors are related to transactions issuing MIR certificates which can only be done by
-  genesis delegates. So this change should not impact any 'standard' user.
-
-- New possible errors from the transaction submission coming with the Alonzo era:
   - `unredeemableScripts`
   - `datumsMismatch`
   - `extraDataMismatch`
@@ -67,41 +33,44 @@ pre: "<b>6. </b>"
   - `validationTagMismatch`
   - `collectErrors`
 
- - The TypeScript `ChainSyncClient` now implements an in-memory queue to ensure `requestNext`
-   responses are processed sequentially when there are async operations in the message handlers.
-   This behaviour can be bypassed where sequential processsing is not required, by setting the new
-   construction option `sequential` to `false`.
+- Added missing properties in Byron's protocol parameters update. Somehow, an `additionalProperties: true` had slipped through and caused the tests to pass with an incomplete schema.
+
+- The TypeScript `ChainSyncClient` now implements an in-memory queue to ensure `requestNext` responses are processed sequentially when there are async operations in the message handlers.  This behaviour can be bypassed where sequential processsing is not required, by setting the new construction option `sequential` to `false`.
 
 - Nested logs are now also structured, in particular those coming from the Handshake or TxSubmission protocols. Before, any message from these layers where actually plain strings with unprocessable gibberish. Now, the submitted transaction payload is shown encoded as hexadecimals and errors are also serialized to json using the same model / codec as the one used for websockets. The handshake is also more verbose now clearly showing what version is being requested and what the node replies / select. All in all, better logs.
 
-- The Dockerfile now includes a build definition for including `cardano-node` and `ogmios` in
-  the same image, which is the default and suggested mode of operation. To build an image
-  with only Ogmios, use the build target `ogmios`. Docker Hub now hosts two image
-  repositories: `cardanosolutions/cardano-node-ogmios` and `cardanosolutions/ogmios`.
-- Docker Hub images are now tagged with `-mainnet` to make all network images consistent. This
-  more specific tag is optional, and points to the same build as the defaults.
+- The Dockerfile now includes a build definition for including `cardano-node` and `ogmios` in the same image, which is the default and suggested mode of operation. To build an image with only Ogmios, use the build target `ogmios`. Docker Hub now hosts two image repositories: `cardanosolutions/cardano-node-ogmios` and `cardanosolutions/ogmios`.  - Docker Hub images are now tagged with `-mainnet` to make all network images consistent. This more specific tag is optional, and points to the same build as the defaults.
 
 #### Changed
 
+- The `memory` and `steps` JSON representations for `prices` are no longer coins, but ratio (represented as strings in the API).
+- `lovelacePerUtxoWord` has been renamed into `coinsPerUtxoWord` in the AlonzoGenesis.
+- Changes in the TypeScript's client:
+  - `Tip` & `Point` have been renamed to `TipOrOrigin` and `PointOrOrigin`. As a consequence, `Tip1` and `Point1` are now simply `Tip` and `Point`.
+  - `Origin` is now a standalone type, merged with `Origin1`.
+  - `SubmitTx` no-longer returns Byron errors. Consequently, submit errors are no longer scoped under `errors.byron` or `errors.shelley` but simply `errors`.
+  - Fixed `proposedProtocolParameters` query. All fields are actually required AND, more importantly, it can now return either Shelley protocol parameters or, Alonzo protocol parameters.
+
 - The `moveInstantaneousRewards` certificates have a new optional field `value` and not only a `rewards` map as before. When `value` is present, it signifies that rewards are moved to the other pot.
-- :warning: **Server Breaking Changes** :warning:
 
-  - Auxiliary data's `scriptPreImages` in Allegra & Mary has been replaced with a field `scripts` which has one field `native`. The value of `native` corresponds to what used to be the value of `scriptPreImages`. In Alonzo, `scripts` may also have another field `plutus` with a serialized Plutus script.
+- Auxiliary data's `scriptPreImages` in Allegra & Mary has been replaced with a field `scripts` which has one field `native`. The value of `native` corresponds to what used to be the value of `scriptPreImages`. In Alonzo, `scripts` may also have another field `plutus` with a serialized Plutus script.
 
-  - Transactions witnesses' `address` has been renamed into `signatures`, and the structure of the object has been changed to be a map from public keys to signatures (instead of an object with two field `key` & `signature`).
+- Transactions witnesses' `address` has been renamed into `signatures`, and the structure of the object has been changed to be a map from public keys to signatures (instead of an object with two field `key` & `signature`).
 
-  - Transactions witnesses' `script` has been renamed into `scripts`.
+- Transactions witnesses' `script` has been renamed into `scripts`.
 
-  - Transaction submission errors' `networkMismatch` now returns an `invalidEntities` list of object in the form of `{ "type": ..., "entity": }` where `type` is a text tag designating the type of entity for which there is a network identifier mismatch. Values can be `address`, `rewardAccount` and since Alonzo `transactionBody`. The `entity` field contains some details specific to the type of entity. Before, it used to be two distinct fields `invalidAddresses` and `invalidRewardAccounts`.
+- Transaction submission errors' `networkMismatch` now returns an `invalidEntities` list of object in the form of `{ "type": ..., "entity": }` where `type` is a text tag designating the type of entity for which there is a network identifier mismatch. Values can be `address`, `rewardAccount` and since Alonzo `transactionBody`. The `entity` field contains some details specific to the type of entity. Before, it used to be two distinct fields `invalidAddresses` and `invalidRewardAccounts`.
 
-  - Empty transaction metadata are no longer materialized by an object with two null fields (`{ "hash": null, "body": null }`). Empty transaction metadata are now equal to `null`.
+- Empty transaction metadata are no longer materialized by an object with two null fields (`{ "hash": null, "body": null }`). Empty transaction metadata are now equal to `null`.
 
-  - `map` metadatum in transactions' metadata are no longer materialized as a list of list of singleton objects: `[[{ "k": ... }, { "v": ... }], ...]` but instead, as a list of object with two fields `k` and `v`: `[{ "k": ..., "v": ...}, ...]`. This was an oversight from the encoder which was never intended to end up that way but happened to slip in because the schema for metadatum was not specified / documented (and therefore, also escaped testing). This is now documented properly.
+- `map` metadatum in transactions' metadata are no longer materialized as a list of list of singleton objects: `[[{ "k": ... }, { "v": ... }], ...]` but instead, as a list of object with two fields `k` and `v`: `[{ "k": ..., "v": ...}, ...]`. This was an oversight from the encoder which was never intended to end up that way but happened to slip in because the schema for metadatum was not specified / documented (and therefore, also escaped testing). This is now documented properly.
 
-  - The `TxOut` (and thus Utxo) model definitions have been unified and harmonized across all eras. That is, pre-Mary eras now also wrap Ada values in an object with a field `"coins": ...`. This reduces the discrepancy between eras for there's now a single TxOut representation valid across all eras. Some fields are however optional and only present in some eras (e.g. `datum` starting from Alonzo)
+- The `TxOut` (and thus Utxo) model definitions have been unified and harmonized across all eras. That is, pre-Mary eras now also wrap Ada values in an object with a field `"coins": ...`. This reduces the discrepancy between eras for there's now a single TxOut representation valid across all eras. Some fields are however optional and only present in some eras (e.g. `datum` starting from Alonzo)
 
-- :warning: **Client/TypeScript Breaking Changes** :warning:
+- Various reworks and renaming of the TypeScript types
 
+  - AssetQuantity is now a native bigint
+  - Metadatum's Int are now native bigint
   - Type `DelegationsAndRewards` renamed into `DelegationsAndRewardsByAccounts`
   - Type `DelegationsAndRewards1` renamed into `DelegationsAndRewards`
   - Type `NonMyopicMemberRewards1` renamed into `NonMyopicMemberRewards`
@@ -113,13 +82,21 @@ pre: "<b>6. </b>"
   - Many types `NullX` merged into a single `Null` type
   - Query types have been renamed from `ledgerTip1` to `GetLedgerTip` and so forth for all queries.
 
-  - `ChainSyncClient` no longer exposes a requestNext function. Instead you must invoke the callback provided as the second argument in each of rollBackward and rollForward handlers.
-  - `ChainSyncClient` no longer exposes JSON-WSP reflection as there would be unexpected results given the first n messages would all share the same reflected value.
-  - The `ChainSyncClientMessageHandlers` methods now must return a promise.
+- `ChainSyncClient` no longer exposes a requestNext function. Instead you must invoke the callback provided as the second argument in each of rollBackward and rollForward handlers.
+
+- `ChainSyncClient` no longer exposes JSON-WSP reflection as there would be unexpected results given the first n messages would all share the same reflected value.
+
+- The `ChainSyncClientMessageHandlers` methods now must return a promise.
 
 #### Removed
 
-ø
+- A previous introduced error from the transaction submission has been removed / replaced:
+  - `datumsMismatch`
+
+- `SubmitTx` can no longer return `SubmitTxError[Byron]`. All the child error types have been removed accordingly, namely:
+  - `UtxoValidationError`
+  - `TxValidationError`
+  - `LovelaceError`
 
 ### [3.2.0] - 2021-05-09
 
