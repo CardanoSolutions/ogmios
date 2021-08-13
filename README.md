@@ -7,9 +7,33 @@
   <img src="server/static/assets/logo.png" height=266 width=341 alt="ogmios" />
 </p>
 
+### Overview
+
 **Ogmios** is a lightweight bridge interface of [cardano-node](https://github.com/input-output-hk/cardano-node/). It offers a WebSockets API that enables local clients to speak [Ouroboros' mini-protocols](https://hydra.iohk.io/build/1070091/download/1/network.pdf#chapter.3) via JSON/RPC.
 
-It comes battery-included with monitoring, logging and a high-performance [server](./server#readme). In addition, a [TypeScript client library](./clients/TypeScript#readme) is available and provide a fully static and type-safe interface for Cardano in TypeScript.
+### Features
+
+- Fast synchronization of blocks from the Cardano network
+- Full ledger state query support:
+  - `currentEpoch`
+  - `eraStart`
+  - `ledgerTip`
+  - `nonMyopicMemberRewards`
+  - `delegationsAndRewards`
+  - `currentProtocolParameters`
+  - `proposedProtocolParameters`
+  - `stakeDistribution`
+  - `utxo`
+  - `genesisConfig`
+- Transaction submission with enhanced error messages
+- TypeScript client & REPL
+- Structured JSON logging 
+- Health monitoring (with runtime and application statistics)
+- Supports for all Cardano networks (mainnet, testnet, staging...)
+- Fully documented API with JSON-schema
+
+
+### Preview
 
 <p align="center">
   <img src=".github/preview.png" alt="Ogmios TypeScript Client Preview">
