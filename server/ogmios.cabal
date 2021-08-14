@@ -9,6 +9,7 @@ version:        4.0.0
 synopsis:       A JSON-WSP WebSocket client for cardano-node
 description:    Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server#ogmios-server>
 category:       Web
+stability:      beta.5
 homepage:       https://github.com/cardanosolutions/ogmios#readme
 bug-reports:    https://github.com/cardanosolutions/ogmios/issues
 author:         KtorZ <matthias.benkort@gmail.com>
