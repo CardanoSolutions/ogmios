@@ -9,7 +9,8 @@ pre: "<b>6. </b>"
 
 #### Added
 
-- Integrated with the Cardano eco-system corresponding to cardano-node@1.28.0 & latest testnet (alonzo-purple). Bumped the docker-compose installation accordingly.
+- Integrated with the Cardano eco-system corresponding to cardano-node@1.29.0 & latest testnet
+  (alonzo-purple). Bumped the docker-compose installation accordingly.
 
 - New possible errors from the transaction submission:
   - `collateralHasNonAdaAssets`
