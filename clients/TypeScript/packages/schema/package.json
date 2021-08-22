@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc --build ./src",
     "cleanup": "shx rm -rf dist node_modules index.ts",
-    "generate-schema-types": "json2ts -i $INIT_CWD/../../server/ogmios.wsp.json -o src/index.ts --enableBigInt",
+    "generate-schema-types": "json2ts -i ../../../../server/ogmios.wsp.json -o src/index.ts --enableBigInt",
     "lint": "shx echo No code to lint in this package",
     "prepack": "yarn generate-schema-types && yarn build",
     "test": "shx echo No tests in this package"
