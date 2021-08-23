@@ -1,6 +1,6 @@
 {
   "name": "@cardano-ogmios/repl",
-  "version": "4.0.0-beta.6",
+  "version": "4.0.0-beta.7",
   "description": "REPL for Cardano Ogmios",
   "engines": {
     "node": "^14"
@@ -39,7 +39,7 @@
     "typescript": "^4.2.3"
   },
   "dependencies": {
-    "@cardano-ogmios/client": "4.0.0-beta.6",
+    "@cardano-ogmios/client": "4.0.0-beta.7",
     "chalk": "^4.1.0",
     "yargs-parser": "^20.2.7"
   },
