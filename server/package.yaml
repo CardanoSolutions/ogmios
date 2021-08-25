@@ -2,7 +2,7 @@ _config: !include ".hpack.config.yaml"
 
 name:                ogmios
 version:             4.0.0
-stability:           beta.7
+stability:           beta.8
 github:              "cardanosolutions/ogmios"
 license:             MPL-2.0
 author:              "KtorZ <matthias.benkort@gmail.com>"
