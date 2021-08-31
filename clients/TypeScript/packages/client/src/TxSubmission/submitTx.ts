@@ -121,8 +121,8 @@ export const submitTx = (context: InteractionContext, bytes: string) =>
                 return new errors.TriesToForgeAda.Error(failure)
               } else if (errors.TooManyAssetsInOutput.assert(failure)) {
                 return new errors.TooManyAssetsInOutput.Error(failure)
-              } else if (errors.UnredeemableScripts.assert(failure)) {
-                return new errors.UnredeemableScripts.Error(failure)
+              } else if (errors.MissingRequiredRedeemers.assert(failure)) {
+                return new errors.MissingRequiredRedeemers.Error(failure)
               } else if (errors.ExtraDataMismatch.assert(failure)) {
                 return new errors.ExtraDataMismatch.Error(failure)
               } else if (errors.MissingRequiredSignatures.assert(failure)) {

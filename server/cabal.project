@@ -34,9 +34,29 @@ allow-newer:
 
 source-repository-package
   type: git
+  location: https://github.com/input-output-hk/cardano-node
+  tag: 4c59442958072657812c6c0bb8e0b4ab85ce1ba2
+  --sha256: 0pc26hrgdsf93h3qvp8m76axm4jspzclg6psn14mbaf1mkc1fxmx
+  subdir:
+    cardano-api
+
+-- source-repository-package
+--   type: git
+--   location: https://github.com/input-output-hk/optparse-applicative
+--   tag: 7497a29cb998721a9068d5725d49461f2bba0e7a
+--   --sha256: 1gvsrg925vynwgqwplgjmp53vj953qyh3wbdf34pw21c8r47w35r
+
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/hedgehog-extras
+  tag: edf6945007177a638fbeb8802397f3a6f4e47c14
+  --sha256: 0wc7qzkc7j4ns2rz562h6qrx2f8xyq7yjcb7zidnj7f6j0pcd0i9
+
+source-repository-package
+  type: git
   location: https://github.com/input-output-hk/cardano-base
-  tag: 8c732560b201b5da8e3bdf175c6eda73a32d64bc
-  --sha256: 0nwy03wyd2ks4qxg47py7lm18karjz6vs7p8knmn3zy72i3n9rfi
+  tag: cb0f19c85e5bb5299839ad4ed66af6fa61322cc4
+  --sha256: 0dnkfqcvbifbk3m5pg8kyjqjy0zj1l4vd23p39n6ym4q0bnib1cq
   subdir:
     base-deriving-via
     binary
@@ -52,14 +72,14 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/cardano-crypto
-  tag: f73079303f663e028288f9f4a9e08bcca39a923e
-  --sha256: 1n87i15x54s0cjkh3nsxs4r1x016cdw1fypwmr68936n3xxsjn6q
+  tag: 07397f0e50da97eaa0575d93bee7ac4b2b2576ec
+  --sha256: 06sdx5ndn2g722jhpicmg96vsrys89fl81k8290b3lr6b1b0w4m3
 
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/cardano-ledger-specs
-  tag: 30eca73a2f5c13f1fbed9a98a59540ac3d0c8afe
-  --sha256: 02klj4zpcl98p22n2v9nkjxxdf8mmw069mw4ddhlgr931bfigz6w
+  tag: 6aa1cd0a64a464371b94d4ac182e7e2cddc83a36
+  --sha256: 1yv2biqc2q01xn7i7h7d1yn8dzygnqn8mywpjfs1i0pa7gnf5q14
   subdir:
     alonzo/impl
     alonzo/test
@@ -80,19 +100,9 @@ source-repository-package
 
 source-repository-package
   type: git
-  location: https://github.com/input-output-hk/cardano-node
-  tag: 708de685d49ec6af4b2d8b3cbfa0eca0e9e43edf
-  --sha256: 0147jsz1rywma71vq5yqswr3gwv9vrndf73b989dwxcn4zn92iwv
-  subdir:
-    cardano-api
-    cardano-config
-    cardano-node
-
-source-repository-package
-  type: git
   location: https://github.com/input-output-hk/cardano-prelude
-  tag: bb4ed71ba8e587f672d06edf9d2e376f4b055555
-  --sha256: 00h10l5mmiza9819p9v5q5749nb9pzgi20vpzpy1d34zmh6gf1cj
+  tag: fd773f7a58412131512b9f694ab95653ac430852
+  --sha256: 02jddik1yw0222wd6q0vv10f7y8rdgrlqaiy83ph002f9kjx7mh6
   subdir:
     cardano-prelude
     cardano-prelude-test
@@ -102,24 +112,6 @@ source-repository-package
   location: https://github.com/input-output-hk/goblins
   tag: cde90a2b27f79187ca8310b6549331e59595e7ba
   --sha256: 17c88rbva3iw82yg9srlxjv2ia5wjb9cyqw44hik565f5v9svnyg
-
-source-repository-package
-  type: git
-  location: https://github.com/input-output-hk/hedgehog-extras
-  tag: edf6945007177a638fbeb8802397f3a6f4e47c14
-  --sha256: 0wc7qzkc7j4ns2rz562h6qrx2f8xyq7yjcb7zidnj7f6j0pcd0i9
-
-source-repository-package
-  type: git
-  location: https://github.com/KtorZ/hjsonpointer
-  tag: 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e
-  --sha256: 0nf24m8kj5m6x4x5cawb194rzmir0wbz66jjd97sj6ajvsj9jqcp
-
-source-repository-package
-  type: git
-  location: https://github.com/KtorZ/hjsonschema
-  tag: fde6e676f79f3f3320a558f20492ad816a2543a7
-  --sha256: 0683m28348xcqhhp7l84jwknakjn966mv5mx6zbrzipdd8f7kslm
 
 source-repository-package
   type: git
@@ -138,9 +130,15 @@ source-repository-package
 
 source-repository-package
   type: git
+  location: https://github.com/input-output-hk/Win32-network
+  tag: 3825d3abf75f83f406c1f7161883c438dac7277d
+  --sha256: 19wahfv726fa3mqajpqdqhnl9ica3xmf68i254q45iyjcpj1psqx
+
+source-repository-package
+  type: git
   location: https://github.com/input-output-hk/ouroboros-network
-  tag: e9cda57df7ea6969edbc3bfc4e117668277d09c8
-  --sha256: 1a91z6yvlhzlqrf7fy51fmmpm3ssk684h6pjgg022cdlsq56yif2
+  tag: 877ce057ff6fb086474c8eaad53f2b7f0e0fce6b
+  --sha256: 1kp0qysfy3hl96a3a61rijascq36f1imh3z4jy0vyiygb6qrv47z
   subdir:
     io-classes
     io-sim
@@ -165,8 +163,8 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/plutus
-  tag: 826c2514a40e962c2e4d56ce912803a434cc28fe
-  --sha256: 04jryrgi2wggkf4a994smbcp8j39clshbzfnvfvvk7lq0sm8kssz
+  tag: edc6d4672c41de4485444122ff843bc86ff421a0
+  --sha256: 12dmxp11xlal8rr3371sir5q4f7gscmyl84nw6wm47mb5b28bk92
   subdir:
     plutus-core
     plutus-ledger-api
@@ -176,21 +174,27 @@ source-repository-package
 
 source-repository-package
   type: git
+  location: https://github.com/input-output-hk/flat
+  tag: ee59880f47ab835dbd73bea0847dab7869fc20d8
+  --sha256: 1lrzknw765pz2j97nvv9ip3l1mcpf2zr4n56hwlz0rk7wq7ls4cm
+
+source-repository-package
+  type: git
+  location: https://github.com/KtorZ/hjsonpointer
+  tag: 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e
+  --sha256: 0nf24m8kj5m6x4x5cawb194rzmir0wbz66jjd97sj6ajvsj9jqcp
+
+source-repository-package
+  type: git
+  location: https://github.com/KtorZ/hjsonschema
+  tag: fde6e676f79f3f3320a558f20492ad816a2543a7
+  --sha256: 0683m28348xcqhhp7l84jwknakjn966mv5mx6zbrzipdd8f7kslm
+
+source-repository-package
+  type: git
   location: https://github.com/KtorZ/wai-routes
   tag: d74b39683792649c01113f40bf57724dcf95c96a
   --sha256: 117gkhcq2spmphp21nx8am6mk80wha1yvsny9y0hlkv381jjavii
-
-source-repository-package
-  type: git
-  location: https://github.com/input-output-hk/Win32-network
-  tag: 5b3d08c454f425da5cf045fe7865950d7c806691
-  --sha256: 0npyihbaqlih9abdbaj451lm1h0kl5braczy8vn41s3ivbbnvpcw
-
-source-repository-package
-  type: git
-  location: https://github.com/Quid2/flat.git
-  tag: 95e5d7488451e43062ca84d5376b3adcc465f1cd
-  --sha256: 06l31x3y93rjpryvlxnpsyq2zyxvb0z6lik6yq2fvh36i5zwvwa3
 
 constraints:
     hedgehog >= 1.0

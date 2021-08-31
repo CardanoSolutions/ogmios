@@ -50,7 +50,7 @@ packages:
 
 
 - git: https://github.com/input-output-hk/cardano-base
-  commit: 8c732560b201b5da8e3bdf175c6eda73a32d64bc
+  commit: cb0f19c85e5bb5299839ad4ed66af6fa61322cc4
   subdirs:
   - base-deriving-via
   - binary
@@ -64,10 +64,10 @@ packages:
   - strict-containers
 
 - git: https://github.com/input-output-hk/cardano-crypto
-  commit: f73079303f663e028288f9f4a9e08bcca39a923e
+  commit: 07397f0e50da97eaa0575d93bee7ac4b2b2576ec
 
 - git: https://github.com/input-output-hk/cardano-ledger-specs
-  commit: 30eca73a2f5c13f1fbed9a98a59540ac3d0c8afe
+  commit: 6aa1cd0a64a464371b94d4ac182e7e2cddc83a36
   subdirs:
   - alonzo/impl
   - alonzo/test
@@ -87,32 +87,24 @@ packages:
   - shelley-ma/shelley-ma-test
 
 - git: https://github.com/input-output-hk/cardano-node
-  commit: 708de685d49ec6af4b2d8b3cbfa0eca0e9e43edf
+  commit: 4c59442958072657812c6c0bb8e0b4ab85ce1ba2
   subdirs:
-    - cardano-api
-    - cardano-config
-    - cardano-node
+  - cardano-api
 
 - git: https://github.com/input-output-hk/cardano-prelude
-  commit: bb4ed71ba8e587f672d06edf9d2e376f4b055555
+  commit: fd773f7a58412131512b9f694ab95653ac430852
   subdirs:
   - cardano-prelude
   - cardano-prelude-test
 
-- git: https://github.com/Quid2/flat.git
-  commit: 95e5d7488451e43062ca84d5376b3adcc465f1cd
+- git: https://github.com/input-output-hk/flat
+  commit: ee59880f47ab835dbd73bea0847dab7869fc20d8
 
 - git: https://github.com/input-output-hk/goblins
   commit: cde90a2b27f79187ca8310b6549331e59595e7ba
 
 - git: https://github.com/input-output-hk/hedgehog-extras
   commit: edf6945007177a638fbeb8802397f3a6f4e47c14
-
-- git: https://github.com/KtorZ/hjsonpointer
-  commit: 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e
-
-- git: https://github.com/KtorZ/hjsonschema
-  commit: fde6e676f79f3f3320a558f20492ad816a2543a7
 
 - git: https://github.com/input-output-hk/iohk-monitoring-framework
   commit: 808724ff8a19a33d0ed06f9ef59fbd900b08553c
@@ -127,38 +119,44 @@ packages:
   - tracer-transformers
 
 - git: https://github.com/input-output-hk/ouroboros-network
-  commit: e9cda57df7ea6969edbc3bfc4e117668277d09c8
+  commit: 877ce057ff6fb086474c8eaad53f2b7f0e0fce6b
   subdirs:
-    - io-classes
-    - io-sim
-    - monoidal-synchronisation
-    - network-mux
-    - ouroboros-consensus
-    - ouroboros-consensus-test
-    - ouroboros-consensus-byron
-    - ouroboros-consensus-byronspec
-    - ouroboros-consensus-byron-test
-    - ouroboros-consensus-shelley
-    - ouroboros-consensus-shelley-test
-    - ouroboros-consensus-cardano
-    - ouroboros-consensus-cardano-test
-    - ouroboros-network
-    - ouroboros-network-framework
-    - ouroboros-network-testing
-    - typed-protocols
-    - typed-protocols-examples
+  - io-classes
+  - io-sim
+  - monoidal-synchronisation
+  - network-mux
+  - ouroboros-consensus
+  - ouroboros-consensus-test
+  - ouroboros-consensus-byron
+  - ouroboros-consensus-byronspec
+  - ouroboros-consensus-byron-test
+  - ouroboros-consensus-cardano
+  - ouroboros-consensus-shelley
+  - ouroboros-consensus-shelley-test
+  - ouroboros-consensus-cardano-test
+  - ouroboros-network
+  - ouroboros-network-framework
+  - ouroboros-network-testing
+  - typed-protocols
+  - typed-protocols-examples
 
 - git: https://github.com/input-output-hk/plutus
-  commit: 826c2514a40e962c2e4d56ce912803a434cc28fe
+  commit: edc6d4672c41de4485444122ff843bc86ff421a0
   subdirs:
-    - plutus-core
-    - plutus-ledger-api
-    - plutus-tx
-    - prettyprinter-configurable
-    - word-array
+  - plutus-core
+  - plutus-ledger-api
+  - plutus-tx
+  - prettyprinter-configurable
+  - word-array
+
+- git: https://github.com/input-output-hk/Win32-network
+  commit: 3825d3abf75f83f406c1f7161883c438dac7277d
+
+- git: https://github.com/KtorZ/hjsonpointer
+  commit: 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e
+
+- git: https://github.com/KtorZ/hjsonschema
+  commit: fde6e676f79f3f3320a558f20492ad816a2543a7
 
 - git: https://github.com/KtorZ/wai-routes
   commit: d74b39683792649c01113f40bf57724dcf95c96a
-
-- git: https://github.com/input-output-hk/Win32-network
-  commit: 5b3d08c454f425da5cf045fe7865950d7c806691

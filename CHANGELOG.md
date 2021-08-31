@@ -5,12 +5,13 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
-### [4.0.0] - 2021-08-14
+### [4.0.0] - 2021-08-31
 
 #### Added
 
-- Integrated with the Cardano eco-system corresponding to cardano-node@1.29.0 & latest testnet
-  (alonzo-purple). Bumped the docker-compose installation accordingly.
+- Integrated with the Cardano eco-system corresponding to cardano-node@1.29.0 & latest testnet.
+
+- Bumped the docker-compose installation accordingly.
 
 - New possible errors from the transaction submission:
   - `collateralHasNonAdaAssets`
@@ -26,11 +27,11 @@ pre: "<b>6. </b>"
   - `mirTransferNotCurrentlyAllowed`
   - `missingDatumHashesForInputs`
   - `missingRequiredDatums`
+  - `missingRequiredRedeemers`
   - `missingRequiredSignatures`
   - `outsideForecast`
   - `poolMetadataHashTooBig`
   - `tooManyCollateralInputs`
-  - `unredeemableScripts`
   - `unspendableDatums`
   - `unspendableScriptInputs`
   - `validationTagMismatch`
