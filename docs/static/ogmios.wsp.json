@@ -2326,65 +2326,43 @@
       ]
     , "properties":
       { "totalMintedBlocks":
-        { "allOf":
-          [ { "$ref": "#/definitions/UInt64" }
-          , { "description": "The number of blocks the pool produced." }
-          ]
-        }
+          { "$ref": "#/definitions/UInt64"
+          , "description": "The number of blocks the pool produced."
+          }
       , "totalStakeShare":
-        { "allOf":
-          [ { "$ref": "#/definitions/Ratio" }
-          , { "description": "The stake pool's stake share (portion of the total stake)." }
-          ]
-        }
+          { "$ref": "#/definitions/Ratio"
+          , "description": "The stake pool's stake share (portion of the total stake)."
+          }
       , "activeStakeShare":
-        { "allOf":
-          [ { "$ref": "#/definitions/Ratio" }
-          , { "description": "The stake pool's active stake share (portion of the active stake)." }
-          ]
-        }
+          { "$ref": "#/definitions/Ratio"
+          , "description": "The stake pool's active stake share (portion of the active stake)."
+          }
       , "ownerStake":
-        { "allOf":
-          [ { "$ref": "#/definitions/Lovelace" }
-          , { "description": "The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch." }
-          ]
-        }
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch."
+          }
       , "parameters":
-        { "allOf":
-          [ { "$ref": "#/definitions/PoolParameters" }
-          , { "description": "The stake pool's registered parameters." }
-          ]
-        }
+          { "$ref": "#/definitions/PoolParameters" }
       , "pledgeRatio":
-        { "allOf":
-          [ { "$ref": "#/definitions/Ratio" }
-          , { "description": "The stake pool's pledge ratio (over its total stake)." }
-          ]
-        }
+          { "$ref": "#/definitions/Ratio"
+          , "description": "The stake pool's pledge ratio (over its total stake)."
+          }
       , "maxRewards":
-        { "allOf":
-          [ { "$ref": "#/definitions/Lovelace" }
-          , { "description": "The maximum number of Lovelace this stake pool can earn." }
-          ]
-        }
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The maximum number of Lovelace this stake pool can earn."
+          }
       , "apparentPerformance":
-        { "allOf":
-          [ { "$ref": "#/definitions/Ratio" }
-          , { "description": "The stake pool's apparent performance according to Section 5.5.2 of the Shelley Design Spec." }
-          ]
-        }
+          { "$ref": "#/definitions/Ratio"
+          , "description": "The stake pool's apparent performance according to Section 5.5.2 of the Shelley Design Spec."
+          }
       , "totalRewards":
-        { "allOf":
-          [ { "$ref": "#/definitions/Lovelace" }
-          , { "description": "The total Lovelace earned by the stake pool." }
-          ]
-        }
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The total Lovelace earned by the stake pool."
+          }
       , "leaderRewards":
-        { "allOf":
-          [ { "$ref": "#/definitions/Lovelace" }
-          , { "description": "The total Lovelace earned by the stake pool leader." }
-          ]
-        }
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The total Lovelace earned by the stake pool leader."
+          }
       }
     }
 
@@ -2444,7 +2422,6 @@
 
   , "Lovelace":
     { "type": "integer"
-    , "description": "An amount, in Lovelace (1e6 Lovelace = 1 Ada)"
     , "minimum": 0
     , "maximum": 18446744073709552000
     }
@@ -3200,53 +3177,37 @@
         , "propertyNames": { "$ref": "#/definitions/PoolId" }
         }
       , "totalMintedBlocks":
-        { "allOf":
-          [ { "$ref": "#/definitions/Int64" }
-          , { "description": "The total number of blocks minted during the given epoch." }
-          ]
-        }
+          { "$ref": "#/definitions/Int64"
+          , "description": "The total number of blocks minted during the given epoch."
+          }
       , "totalExpectedBlocks":
-        { "allOf":
-          [ { "$ref": "#/definitions/Int64" }
-          , { "description": "The number of blocks expected to be produced during the given epoch." }
-          ]
-        }
+          { "$ref": "#/definitions/Int64"
+          , "description": "The number of blocks expected to be produced during the given epoch."
+          }
       , "incentive":
-        { "allOf":
-          [ { "$ref": "#/definitions/Lovelace" }
-          , { "description": "The maximum amount of Lovelace which can be removed from the reserves to be given out as rewards for the given epoch." }
-          ]
-        }
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The maximum amount of Lovelace which can be removed from the reserves to be given out as rewards for the given epoch."
+          }
       , "rewardsGap":
-        { "allOf":
-          [ { "$ref": "#/definitions/Lovelace" }
-          , { "description": "The difference between the 'availableRewards' and what was actually distributed." }
-          ]
-        }
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The difference between the 'availableRewards' and what was actually distributed."
+          }
       , "availableRewards":
-        { "allOf":
-          [ { "$ref": "#/definitions/Lovelace" }
-          , { "description": "The total Lovelace available for rewards for the given epoch, equal to 'totalRewards' less 'treasuryTax'." }
-          ]
-        }
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The total Lovelace available for rewards for the given epoch, equal to 'totalRewards' less 'treasuryTax'."
+          }
       , "totalRewards":
-        { "allOf":
-          [ { "$ref": "#/definitions/Lovelace" }
-          , { "description": "The reward pot for the given epoch, equal to the 'incentive' plus the fee pot." }
-          ]
-        }
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The reward pot for the given epoch, equal to the 'incentive' plus the fee pot."
+          }
       , "treasuryTax":
-        { "allOf":
-          [ { "$ref": "#/definitions/Lovelace" }
-          , { "description": "The amount of Lovelace taken for the treasury for the given epoch." }
-          ]
-        }
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The amount of Lovelace taken for the treasury for the given epoch."
+          }
       , "activeStake":
-        { "allOf":
-          [ { "$ref": "#/definitions/Lovelace" }
-          , { "description": "The amount of Lovelace that is delegated during the given epoch." }
-          ]
-        }
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The amount of Lovelace that is delegated during the given epoch."
+          }
       , "pools":
         { "type": "object"
         , "additionalProperties": { "$ref": "#/definitions/IndividualPoolRewardsProvenance" }

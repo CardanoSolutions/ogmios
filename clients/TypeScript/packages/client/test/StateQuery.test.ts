@@ -7,7 +7,9 @@ import {
   genesisConfig,
   ledgerTip,
   nonMyopicMemberRewards,
+  poolsRanking,
   proposedProtocolParameters,
+  rewardsProvenance,
   stakeDistribution,
   utxo
 } from '@src/StateQuery'
@@ -212,6 +214,18 @@ describe('Local state queries', () => {
       it('fetches the UTxO for the given addresses', async () => {
         const utxoSet = await utxo(context, ['addr_test1qqymtheun4y437fa6cms4jmtfex39wzz7jfwggudwnqkdnr8udjk6d89dcjadt7tw6hmz0aeue2jzdpl2vnkz8wdk4fqz3y5m9'])
         expect(utxoSet[0]).toBeDefined()
+      })
+    })
+    describe('rewardsProvenance', () => {
+      it('fetches rewards provenance for the ongoing epoch', async () => {
+        const provenance = await rewardsProvenance(context)
+        expect(provenance).toBeDefined()
+      })
+    })
+    describe('poolsRanking', () => {
+      it('fetches rewards provenance for the ongoing epoch', async () => {
+        const ranking = await poolsRanking(context)
+        expect(ranking).toBeDefined()
       })
     })
   })
