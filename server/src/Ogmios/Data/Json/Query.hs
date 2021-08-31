@@ -13,6 +13,9 @@ module Ogmios.Data.Json.Query
     , ShelleyBasedEra (..)
     , RewardAccounts
     , Delegations
+    , RewardProvenance
+    , RewardProvenancePool
+    , Desirability
 
       -- * Encoders
     , encodeEraMismatch
@@ -34,6 +37,8 @@ module Ogmios.Data.Json.Query
     , parseGetUTxO
     , parseGetUTxOByAddress
     , parseGetGenesisConfig
+    , parseGetRewardProvenance
+    , parseGetPoolsRanking
     ) where
 
 import Ogmios.Data.Json.Prelude
@@ -78,6 +83,8 @@ import Ouroboros.Network.Block
     ( Point (..), castPoint )
 import Ouroboros.Network.Point
     ( Block (..) )
+import Shelley.Spec.Ledger.RewardProvenance
+    ( Desirability (..), RewardProvenance (..), RewardProvenancePool (..) )
 
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Data.Aeson as Json
@@ -93,6 +100,7 @@ import qualified Cardano.Ledger.Keys as Keys
 
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
 import qualified Shelley.Spec.Ledger.Delegation.Certificates as Sh
+import qualified Shelley.Spec.Ledger.EpochBoundary as Sh
 import qualified Shelley.Spec.Ledger.PParams as Sh
 import qualified Shelley.Spec.Ledger.UTxO as Sh
 
@@ -186,6 +194,104 @@ encodePoint = \case
         , ( "hash"
           , encodeOneEraHash (blockPointHash x)
           )
+        ]
+
+encodeRewardProvenance
+    :: RewardProvenance crypto
+    -> Json
+encodeRewardProvenance rp =
+    encodeObject
+        [ ( "epochLength"
+          , encodeWord64 (spe rp)
+          )
+        , ( "decentralizationParameter"
+          , encodeRational (d rp)
+          )
+        , ( "maxLovelaceSupply"
+          , encodeCoin (maxLL rp)
+          )
+        , ( "mintedBlocks"
+          , encodeMap Shelley.stringifyPoolId encodeNatural (Sh.unBlocksMade $ blocks rp)
+          )
+        , ( "totalMintedBlocks"
+          , encodeInteger (blocksCount rp)
+          )
+        , ( "totalExpectedBlocks"
+          , encodeInteger (expBlocks rp)
+          )
+        , ( "incentive"
+          , encodeCoin (deltaR1 rp)
+          )
+        , ( "rewardsGap"
+          , encodeCoin (deltaR2 rp)
+          )
+        , ( "availableRewards"
+          , encodeCoin (r rp)
+          )
+        , ( "totalRewards"
+          , encodeCoin (rPot rp)
+          )
+        , ( "treasuryTax"
+          , encodeCoin (deltaT1 rp)
+          )
+        , ( "activeStake"
+          , encodeCoin (activeStake rp)
+          )
+        , ( "pools"
+          , encodeMap Shelley.stringifyPoolId encodeRewardProvenancePool (pools rp)
+          )
+        ]
+
+encodeRewardProvenancePool
+    :: RewardProvenancePool crypto
+    -> Json
+encodeRewardProvenancePool rpp =
+    encodeObject
+        [ ( "totalMintedBlocks"
+          , encodeNatural (poolBlocksP rpp)
+          )
+        , ( "totalStakeShare"
+          , encodeRational (sigmaP rpp)
+          )
+        , ( "activeStakeShare"
+          , encodeRational (sigmaAP rpp)
+          )
+        , ( "ownerStake"
+          , encodeCoin (ownerStakeP rpp)
+          )
+        , ( "parameters"
+          , Shelley.encodePoolParams (poolParamsP rpp)
+          )
+        , ( "pledgeRatio"
+          , encodeRational (pledgeRatioP rpp)
+          )
+        , ( "maxRewards"
+          , encodeCoin (maxPP rpp)
+          )
+        , ( "apparentPerformance"
+          , encodeRational (appPerfP rpp)
+          )
+        , ( "totalRewards"
+          , encodeCoin (poolRP rpp)
+          )
+        , ( "leaderRewards"
+          , encodeCoin (lRewardP rpp)
+          )
+        ]
+
+encodeDesirabilities
+    :: RewardProvenance crypto
+    -> Json
+encodeDesirabilities rp =
+    encodeMap Shelley.stringifyPoolId encodeDesirability (desirabilities rp)
+
+encodeDesirability
+    :: Desirability
+    -> Json
+encodeDesirability d =
+    encodeObject
+        [ ( "score", encodeDouble (desirabilityScore d) )
+        , ( "estimatedHitRate", encodeDouble (desirabilityScore d) )
         ]
 
 --
@@ -636,6 +742,61 @@ parseGetGenesisConfig genResultInEra = do
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
+
+parseGetRewardProvenance
+    :: forall crypto f. ()
+    => GenResult crypto f (RewardProvenance crypto)
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseGetRewardProvenance genResult =
+    Json.withText "SomeQuery" $ \text -> do
+        guard (text == "rewardsProvenance") $>
+            ( \query -> Just $ SomeQuery
+                { query
+                , genResult
+                , encodeResult =
+                    either encodeMismatchEraInfo encodeRewardProvenance
+                }
+            )
+            .
+            ( \case
+                SomeShelleyEra ShelleyBasedEraShelley ->
+                    BlockQuery $ QueryIfCurrentShelley GetRewardProvenance
+                SomeShelleyEra ShelleyBasedEraAllegra ->
+                    BlockQuery $ QueryIfCurrentAllegra GetRewardProvenance
+                SomeShelleyEra ShelleyBasedEraMary ->
+                    BlockQuery $ QueryIfCurrentMary GetRewardProvenance
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    BlockQuery $ QueryIfCurrentAlonzo GetRewardProvenance
+            )
+
+parseGetPoolsRanking
+    :: forall crypto f. ()
+    => GenResult crypto f (RewardProvenance crypto)
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseGetPoolsRanking genResult =
+    Json.withText "SomeQuery" $ \text -> do
+        guard (text == "poolsRanking") $>
+            ( \query -> Just $ SomeQuery
+                { query
+                , genResult
+                , encodeResult =
+                    either encodeMismatchEraInfo encodeDesirabilities
+                }
+            )
+            .
+            ( \case
+                SomeShelleyEra ShelleyBasedEraShelley ->
+                    BlockQuery $ QueryIfCurrentShelley GetRewardProvenance
+                SomeShelleyEra ShelleyBasedEraAllegra ->
+                    BlockQuery $ QueryIfCurrentAllegra GetRewardProvenance
+                SomeShelleyEra ShelleyBasedEraMary ->
+                    BlockQuery $ QueryIfCurrentMary GetRewardProvenance
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    BlockQuery $ QueryIfCurrentAlonzo GetRewardProvenance
+            )
+
 
 --
 -- Internal

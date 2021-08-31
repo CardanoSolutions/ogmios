@@ -21,7 +21,7 @@ import Data.SOP.Strict
 import Data.Type.Equality
     ( (:~:) (..), testEquality )
 import Ogmios.Data.Json.Query
-    ( Delegations, QueryResult, RewardAccounts )
+    ( Delegations, QueryResult, RewardAccounts, RewardProvenance )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock )
 import Ouroboros.Consensus.Cardano.Block
@@ -433,6 +433,22 @@ genCompactGenesisResult _ _ =
                     ]
             Nothing ->
                 Nothing
+
+genRewardProvenanceResult
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Proxy (QueryResult crypto (RewardProvenance crypto))
+    -> Gen (QueryResult crypto (RewardProvenance crypto))
+genRewardProvenanceResult _ = frequency
+    [ (1, Left <$> genMismatchEraInfo)
+    , (10, Right <$> reasonablySized arbitrary)
+    ]
+
+genPoolsRankingResult
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Proxy (QueryResult crypto (RewardProvenance crypto))
+    -> Gen (QueryResult crypto (RewardProvenance crypto))
+genPoolsRankingResult =
+    genRewardProvenanceResult
 
 genMirror
     :: Gen (Maybe Json.Value)
