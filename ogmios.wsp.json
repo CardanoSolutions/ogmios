@@ -1723,7 +1723,7 @@
               , "required":
                 [ "inputs", "collaterals", "outputs", "certificates"
                 , "withdrawals", "fee", "validityInterval", "update", "mint"
-                , "network", "requiredExtraData", "requiredExtraSignatures"
+                , "network", "scriptIntegrityHash", "requiredExtraSignatures"
                 ]
               , "properties":
                 { "inputs":
@@ -1763,7 +1763,7 @@
                     , { "$ref": "#/definitions/Null"}
                     ]
                   }
-                , "requiredExtraData":
+                , "scriptIntegrityHash":
                   { "oneOf":
                     [ { "$ref": "#/definitions/Hash16" }
                     , { "$ref": "#/definitions/Null"}
@@ -3189,7 +3189,7 @@
         , { "$ref": "#/definitions/SubmitTxError[nonGenesisVoters]" }
         , { "$ref": "#/definitions/SubmitTxError[updateWrongEpoch]" }
         , { "$ref": "#/definitions/SubmitTxError[protocolVersionCannotFollow]" }
-        , { "$ref": "#/definitions/SubmitTxError[unredeemableScripts]" }
+        , { "$ref": "#/definitions/SubmitTxError[missingRequiredRedeemers]" }
         , { "$ref": "#/definitions/SubmitTxError[missingRequiredDatums]" }
         , { "$ref": "#/definitions/SubmitTxError[unspendableDatums]" }
         , { "$ref": "#/definitions/SubmitTxError[extraDataMismatch]" }
@@ -3790,18 +3790,25 @@
       }
     }
 
-  , "SubmitTxError[unredeemableScripts]":
+  , "SubmitTxError[missingRequiredRedeemers]":
     { "type": "object"
-    , "title": "unredeemableScripts"
+    , "title": "missingRequiredRedeemers"
     , "additionalProperties": false
-    , "required": [ "unredeemableScripts" ]
+    , "required": [ "missingRequiredRedeemers" ]
     , "properties":
-      { "unredeemableScripts":
-        { "type": "array"
-        , "items":
-          { "type": "object"
-          , "additionalProperties": { "$ref": "#/definitions/ScriptPurpose" }
-          , "propertyNames": { "$ref": "#/definitions/Hash16" }
+      { "missingRequiredRedeemers":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["missing"]
+        , "properties":
+          { "missing":
+            { "type": "array"
+            , "items":
+              { "type": "object"
+              , "additionalProperties": { "$ref": "#/definitions/ScriptPurpose" }
+              , "propertyNames": { "$ref": "#/definitions/Hash16" }
+              }
+            }
           }
         }
       }
