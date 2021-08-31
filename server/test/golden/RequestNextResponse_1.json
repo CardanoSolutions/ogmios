@@ -1,0 +1,143 @@
+{
+  "version": "1.0",
+  "servicename": "ogmios",
+  "type": "jsonwsp/response",
+  "reflection": null,
+  "methodname": "RequestNext",
+  "result": {
+    "RollForward": {
+      "block": {
+        "alonzo": {
+          "body": [
+            {
+              "body": {
+                "requiredExtraSignatures": [
+                  "a646474b8f5431261506b6c273d307c7569a4eb6c96b42dd4a29520a",
+                  "e0a714319812c3f773ba04ec5d6b3ffcd5aad85006805b047b082541"
+                ],
+                "withdrawals": {},
+                "scriptIntegrityHash": null,
+                "validityInterval": {
+                  "invalidHereafter": 86273,
+                  "invalidBefore": null
+                },
+                "inputs": [
+                  {
+                    "index": 885,
+                    "txId": "ae85d245a3d00bfde01f59f3c4fe0b4bfae1cb37e9cf91929eadcea4985711de"
+                  }
+                ],
+                "fee": 79,
+                "network": null,
+                "certificates": [
+                  {
+                    "moveInstantaneousRewards": {
+                      "value": 608,
+                      "pot": "treasury"
+                    }
+                  }
+                ],
+                "outputs": [
+                  {
+                    "value": {
+                      "coins": 0,
+                      "assets": {}
+                    },
+                    "address": "EqGAuA8vHnNvC1HnDpMRpXg6jfiDyY3zPCVBs11maiYnYSP6np8pepGSgC3MreFYWnqvMjfSD4zEW7d3L21PNkkq3M5bZaJswRnXfTZesBjnbkzUeaazj1p",
+                    "datum": null
+                  }
+                ],
+                "collaterals": [
+                  {
+                    "index": 215,
+                    "txId": "ee155ace9c40292074cb6aff8c9ccdd273c81648ff1149ef36bcea6ebb8a3e25"
+                  }
+                ],
+                "mint": {
+                  "coins": 0,
+                  "assets": {}
+                },
+                "update": {
+                  "proposal": {},
+                  "epoch": 54880
+                }
+              },
+              "witness": {
+                "scripts": {
+                  "43c8c9f1a97b2b9f67471cb36e3e04b963421bfe2ccb122195a14bb9": {
+                    "native": {
+                      "startsAt": 59536
+                    }
+                  },
+                  "d9e0c75fb59dba0a82897cf42bb81ad4dba7ca78159b7b1b9f5ee56e": {
+                    "native": "0d94e174732ef9aae73f395ab44507bfa983d65023c11a951f0c32e4"
+                  }
+                },
+                "signatures": {
+                  "15be0ae6da335c249282ea0910135dea4a7a0e4bab7caecf338d08e74e9e5a41": "m4LRu7gbuMdwfM/Mnfik/ZZDpyVnLtts8Qfniqd8Y1llrAeMqcey4OOf0+7cl7OQ83pWIXPPLZPRr9txyPmULA=="
+                },
+                "datums": {
+                  "71330f2d14b2869680a9162115d850479d3a138ae25db71b0230e1599ca5f9bc": "owMA2GaCGQOWn59Bw/9Bi0HXIkHa/5/YZoIZAvSA/wGlnyJAI//YZoIZAnefACH/pEEzJCNCfV4AQ44hMCFB8ERAjjNMgENb3n2jIEFxIQQEAp9DtpZ8RAZ0Zuf/n0AAQ5XrZv+kICRCnhYiIQAiAA==",
+                  "01c6d26856cd7e817fcacb097e870654bd36e5ef7ce7c9fef4e1fb1393840181": "n4AFRCqmhf//"
+                },
+                "bootstrap": [],
+                "redeemers": {
+                  "certificate:2": {
+                    "executionUnits": {
+                      "memory": 2,
+                      "steps": 2
+                    },
+                    "redeemer": "AA=="
+                  },
+                  "spend:0": {
+                    "executionUnits": {
+                      "memory": 1,
+                      "steps": 1
+                    },
+                    "redeemer": "2GaCGQJFn6DYZoIZAVOf2GaCGQOBnwEBQ2xl1P9CyZefIv//2GaCGQNpn6IgQmGfQdQF/6KfQRpC3cJDb9gXIkPBGkP/Qw43xqRCXhMiQa9AI0TI/D85QgasROv6MdnYZoIZA7OfQiaQQm9kI0Nh8tf//w=="
+                  }
+                }
+              },
+              "metadata": null,
+              "id": "c25a3f496b6b9f4c013686537ea4b7ff8123861ed02bd7665c3c2aacb5d0e3f5"
+            }
+          ],
+          "header": {
+            "signature": "hu9XUa7iwIg3FAMLg+I/sNBV+MubfFMfumhLtrH4COZofk/Out4gJhqKwUgzfwOdcbVvu64kLJ3W1kHz4PHXBL/ALVHiU8XiAgR2M3NEBKRcM1fp0lcFJiiQFrVUPfW75JVksJYuw/YgmI8obFfNO4Y1TnD7+bBTqMsPYZvHA8qewm5GR2g8kNmz9Rakapjos83KhyFjVXN+hnQJXHgHTou4Ag/6Xp1dRYb98ZwfphssKh03TC+lydrMOcfbaBy3ADgV4JIxAMM0O7ZEDqaUbcoFdbNa3ZYqwND0Nn7+aj2VjCkbSFCP9v58pXnxhI9cdWnAx+umiqmGv4lN966qaGFnlxyUIOQb6LX+2tMAzc9qMqod1wYMUV4KzsfubmeMnpyAGW7d8u2TzRsmdjJIDmfaKNdAwnpjSYmGfQQnKo5UcZ+Qw1640NZR1WtVVHYEMTQrYDM2BT1O4loFRhVNWMjLJZ0+CE5cy5nrH4JYQFjAToREzGPaSW90ucU2KtxSiCfFrz12EEdnaJIA+nUEm5ebpL2q8n0HKidfWApGiPvAZAeMvaUzgnMTHdle4eV8Rbzyxuwjd29wl9jzCTX9iQ==",
+            "blockSize": 586,
+            "protocolVersion": {
+              "minor": 0,
+              "major": 0
+            },
+            "blockHash": "0268be9dbd0446eaa217e1dec8f399249305e551d7fc1437dd84521f74aa621c",
+            "issuerVk": "d9de82af557d4e17af444160186b5e56d13864fc42b3ce3718ddec446df989b1",
+            "slot": 5,
+            "opCert": {
+              "count": 1,
+              "sigma": "kxKsqF0F09cM57GJNuIi2mX1o6cUNQvwwHhaJ+8MzkCxvBsKP7BwZT/GFqCdsvi/K7PjsIbBJRWN7zhgtaUvAQ==",
+              "kesPeriod": 1,
+              "hotVk": "/0dIGF/y6WQIY8o2LmDM5Hk+Wg29c2dk2QicWvjhOBo="
+            },
+            "leaderValue": {
+              "proof": "JOuHJpZf5u6LpwR/wnM/nkGF2KP2yllGeUTJGauYBm3rh3FasZp0n24aGZ0gcL44pP0yZUsaBaZtKaFF43cNRklRybNiHbQZC2pFjkVSXQ8=",
+              "output": "en/OE8hMBo4Ry9sjuFlo/lxl01ZxKjhM2fwc5v67EP7tgOnPvtCJQZ6D37HEWQ7NWnAOdZJO93X7NJ2yoA2UFQ=="
+            },
+            "prevHash": "ae85d245a3d00bfde01f59f3c4fe0b4bfae1cb37e9cf91929eadcea4985711de",
+            "blockHeight": 11,
+            "issuerVrf": "nRYteh7Nm0iYMIGZSbkxfD+hvLckkWKNBLiTEHgC5sU=",
+            "nonce": {
+              "proof": "li4Pm7qsGaGS5PBCGz+G4IckWKGUjLU1/jmvCAUni4ChYAMVSZ6fWZmGs71OprF40AoewXeO9Qybn+InglKlxwsHge/Q/4Z+iOyecMxVLAw=",
+              "output": "5YIAO7SqRgayewA90NfpfA8AfdtpETjAzdhPQBaud5s1svZhQ/1qNYRhHn5YU9Yqik9bhZkZszlfkOc8RFY9gg=="
+            }
+          },
+          "headerHash": "03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314"
+        }
+      },
+      "tip": {
+        "hash": "ee155ace9c40292074cb6aff8c9ccdd273c81648ff1149ef36bcea6ebb8a3e25",
+        "blockNo": 1,
+        "slot": 40292
+      }
+    }
+  }
+}

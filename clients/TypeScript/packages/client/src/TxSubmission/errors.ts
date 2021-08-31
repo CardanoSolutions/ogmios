@@ -26,6 +26,7 @@ import {
   MissingCollateralInputs,
   MissingDatumHashesForInputs,
   MissingRequiredDatums,
+  MissingRequiredRedeemers,
   MissingRequiredSignatures,
   MissingScriptWitnesses,
   MissingTxMetadata,
@@ -53,7 +54,6 @@ import {
   TxTooLarge,
   UnknownGenesisKey,
   UnknownOrIncompleteWithdrawals,
-  UnredeemableScripts,
   UnspendableDatums,
   UnspendableScriptInputs,
   UpdateWrongEpoch,
@@ -91,6 +91,7 @@ export type SubmitTxErrorShelley =
   | MissingCollateralInputs
   | MissingDatumHashesForInputs
   | MissingRequiredDatums
+  | MissingRequiredRedeemers
   | MissingRequiredSignatures
   | MissingScriptWitnesses
   | MissingTxMetadata
@@ -118,7 +119,6 @@ export type SubmitTxErrorShelley =
   | TxTooLarge
   | UnknownGenesisKey
   | UnknownOrIncompleteWithdrawals
-  | UnredeemableScripts
   | UnspendableDatums
   | UnspendableScriptInputs
   | UpdateWrongEpoch
@@ -560,13 +560,13 @@ export const errors = {
       }
     }
   },
-  UnredeemableScripts: {
-    assert: (item: SubmitTxErrorShelley): item is UnredeemableScripts =>
-      (item as UnredeemableScripts).unredeemableScripts !== undefined,
-    Error: class UnredeemableScriptsError extends CustomError {
-      public constructor (rawError: UnredeemableScripts) {
+  MissingRequiredRedeemers: {
+    assert: (item: SubmitTxErrorShelley): item is MissingRequiredRedeemers =>
+      (item as MissingRequiredRedeemers).missingRequiredRedeemers !== undefined,
+    Error: class MissingRequiredRedeemersError extends CustomError {
+      public constructor (rawError: MissingRequiredRedeemers) {
         super()
-        this.message = safeJSON.stringify(rawError.unredeemableScripts)
+        this.message = safeJSON.stringify(rawError.missingRequiredRedeemers)
       }
     }
   },

@@ -97,7 +97,7 @@ describe('Local state queries', () => {
         ).toBeDefined()
 
         const proposedProtocolParameters = await client.proposedProtocolParameters()
-        expect(proposedProtocolParameters).toBeNull()
+        expect(proposedProtocolParameters).toBeDefined()
 
         const stakeDistribution = await client.stakeDistribution()
         expect(Object.values(stakeDistribution)[0].stake).toBeDefined()
@@ -144,7 +144,7 @@ describe('Local state queries', () => {
       })
     })
     describe('currentProtocolParameters', () => {
-      it('fetches the current shelley protocol parameters', async () => {
+      it('fetches the current protocol parameters', async () => {
         const protocolParameters = await currentProtocolParameters(context)
         expect(protocolParameters.minFeeCoefficient).toBeDefined()
         expect(protocolParameters.protocolVersion.major).toBeDefined()
@@ -191,9 +191,9 @@ describe('Local state queries', () => {
       })
     })
     describe('proposedProtocolParameters', () => {
-      it('fetches the current shelley protocol parameters', async () => {
+      it('fetches the proposed protocol parameters', async () => {
         const protocolParameters = await proposedProtocolParameters(context)
-        expect(protocolParameters).toBeNull()
+        expect(protocolParameters).toBeDefined()
       })
     })
     describe('stakeDistribution', () => {

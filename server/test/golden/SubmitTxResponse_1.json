@@ -28,7 +28,9 @@
         "delegateNotRegistered": "pool1x4p2evaxfkqv9yczycxk9sac0f6z4522h7z4a0r8xvypuxru6s8"
       },
       {
-        "unredeemableScripts": []
+        "missingRequiredRedeemers": {
+          "missing": []
+        }
       },
       {
         "collateralIsScript": [

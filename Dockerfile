@@ -7,6 +7,7 @@
 
 FROM haskell:8.10.4 as setup
 ARG CARDANO_NODE_REV=1.29.0
+# https://github.com/input-output-hk/iohk-nix/blob/master/overlays/crypto/libsodium.nix
 ARG IOHK_LIBSODIUM_GIT_REV=66f017f16633f2060db25e17c170c2afa0f2a8a1
 WORKDIR /build
 RUN apt-get update && apt-get install --no-install-recommends -y \

@@ -59,10 +59,11 @@ encodeAlonzoPredFail
     => Al.AlonzoPredFail (AlonzoEra crypto)
     -> Json
 encodeAlonzoPredFail = \case
-    Al.UnRedeemableScripts scripts ->
+    Al.MissingRedeemers missing ->
         encodeObject
-            [ ( "unredeemableScripts"
-              , encodeFoldable encodeUnredeemableScript scripts
+            [ ( "missingRequiredRedeemers", encodeObject
+                [ ( "missing", encodeFoldable encodeMissingRedeemer missing)
+                ]
               )
             ]
     Al.MissingRequiredDatums missing provided ->
@@ -84,8 +85,8 @@ encodeAlonzoPredFail = \case
     Al.PPViewHashesDontMatch provided inferred ->
         encodeObject
             [ ( "extraDataMismatch", encodeObject
-                [ ( "provided", encodeStrictMaybe encodeWitnessPPDataHash provided )
-                , ( "inferredFromParameters", encodeStrictMaybe encodeWitnessPPDataHash inferred )
+                [ ( "provided", encodeStrictMaybe encodeScriptIntegrityHash provided )
+                , ( "inferredFromParameters", encodeStrictMaybe encodeScriptIntegrityHash inferred )
                 ]
               )
             ]
@@ -226,6 +227,17 @@ encodeLedgerFailure = \case
         encodeAlonzoPredFail e
     Sh.DelegsFailure e ->
         Shelley.encodeDelegsFailure e
+
+encodeMissingRedeemer
+    :: Crypto crypto
+    => (Al.ScriptPurpose crypto, Sh.ScriptHash crypto)
+    -> Json
+encodeMissingRedeemer (purpose, hash) =
+    encodeObject
+        [ ( Shelley.stringifyScriptHash hash
+          , encodeScriptPurpose purpose
+          )
+        ]
 
 encodePParams'
     :: (forall a. (a -> Json) -> Sh.HKD f a -> Json)
@@ -426,8 +438,8 @@ encodeTxBody x = encodeObject
     , ( "network"
       , encodeStrictMaybe Shelley.encodeNetwork (Al.txnetworkid x)
       )
-    , ( "requiredExtraData"
-      , encodeStrictMaybe encodeWitnessPPDataHash (Al.wppHash x)
+    , ( "scriptIntegrityHash"
+      , encodeStrictMaybe encodeScriptIntegrityHash (Al.scriptIntegrityHash x)
       )
     , ( "requiredExtraSignatures"
       , encodeFoldable Shelley.encodeKeyHash (Al.reqSignerHashes x)
@@ -449,17 +461,6 @@ encodeTxOut (Al.TxOut addr value datum) = encodeObject
       , encodeStrictMaybe encodeDataHash datum
       )
     ]
-
-encodeUnredeemableScript
-    :: Crypto crypto
-    => (Al.ScriptPurpose crypto, Sh.ScriptHash crypto)
-    -> Json
-encodeUnredeemableScript (purpose, hash) =
-    encodeObject
-        [ ( Shelley.stringifyScriptHash hash
-          , encodeScriptPurpose purpose
-          )
-        ]
 
 encodeUpdate
     :: Sh.Update (AlonzoEra crypto)
@@ -636,10 +637,10 @@ encodeUtxosPredicateFailure = \case
     Al.UpdateFailure e ->
         Shelley.encodeUpdateFailure e
 
-encodeWitnessPPDataHash
-    :: Al.WitnessPPDataHash crypto
+encodeScriptIntegrityHash
+    :: Al.ScriptIntegrityHash crypto
     -> Json
-encodeWitnessPPDataHash =
+encodeScriptIntegrityHash =
     Shelley.encodeHash . SafeHash.extractHash
 
 encodeWitnessSet
