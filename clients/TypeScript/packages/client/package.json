@@ -56,7 +56,7 @@
     "cross-fetch": "^3.1.4",
     "fastq": "^1.11.0",
     "isomorphic-ws": "^4.0.1",
-    "json-bigint": "^1.0.0",
+    "json-bigint": "CardanoSolutions/json-bigint#d277387d",
     "nanoid": "^3.1.22",
     "ts-custom-error": "^3.2.0",
     "ws": "^7.4.6"
