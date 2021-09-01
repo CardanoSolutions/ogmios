@@ -16,10 +16,12 @@ import {
 import {
   DelegationsAndRewards,
   Hash16,
+  Point,
   Slot
 } from '@cardano-ogmios/schema'
 import { dummyInteractionContext } from './util'
 import { InteractionContext } from '@src/Connection'
+import delay from 'delay'
 
 describe('Local state queries', () => {
   describe('StateQueryClient', () => {
@@ -30,22 +32,25 @@ describe('Local state queries', () => {
       expect(client.context.socket.readyState).not.toBe(client.context.socket.OPEN)
     })
 
-    it('gets the point from the tip if none provided', async () => {
+    it('query from the tip if no point is provided', async () => {
       const context = await dummyInteractionContext()
       const client = await createStateQueryClient(context)
-      const { point } = client
-      expect(point).toBeDefined()
+      const tip = await client.ledgerTip()
+      expect(tip).not.toBe('origin')
       await client.shutdown()
     })
 
     it('uses the provided point for reproducible queries across clients', async () => {
       const context = await dummyInteractionContext()
-      const client = await createStateQueryClient(context)
-      const anotherContext = await dummyInteractionContext()
-      const anotherClient = await createStateQueryClient(anotherContext)
-      expect(anotherClient.point).toEqual(client.point)
-      await client.shutdown()
-      await anotherClient.shutdown()
+      const tip = await ledgerTip(context)
+      delay(2000)
+      const clientA = await createStateQueryClient(context, { point: tip as Point })
+      const clientB = await createStateQueryClient(context, { point: tip as Point })
+      const tipA = await clientA.ledgerTip()
+      const tipB = await clientB.ledgerTip()
+      expect(tip).toEqual(tipA)
+      expect(tip).toEqual(tipB)
+      await context.socket.close()
     })
 
     it('rejects if the provided point is too old', async () => {
