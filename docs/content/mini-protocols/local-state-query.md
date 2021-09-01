@@ -78,17 +78,18 @@ At the moment of writing this guide, the following queries are available:
 
 Query                        | Result
 ---                          | ---
-`eraStart`                   | The information regarding the beginning of the current era.
-`ledgerTip`                  | The most recent block tip known of the ledger.
 `currentEpoch`               | The current epoch of the ledger.
-`nonMyopicMemberRewards`     | Non-myopic member rewards for each pool. Used in ranking.
-`delegationsAndRewards`      | Current delegation settings and rewards of given reward accounts.
 `currentProtocolParameters`  | The current protocol parameters.
-`proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
-`stakeDistribution`          | Distribution of the stake across all known stake pools.
-`utxo`                       | Current UTxO, possibly filtered by address.
+`delegationsAndRewards`      | Current delegation settings and rewards of given reward accounts.
+`eraStart`                   | The information regarding the beginning of the current era.
 `genesisConfig`              | Get a compact version of the era's genesis configuration.
-
+`ledgerTip`                  | The most recent block tip known of the ledger.
+`nonMyopicMemberRewards`     | Non-myopic member rewards for each pool. Used in ranking.
+`poolsRanking`               | Retrieve stake pools ranking (a.k.a desirabilities).
+`proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
+`rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
+`stakeDistribution`          | Distribution of the stake across all known stake pools.
+`utxo`                       | Current UTXO, possibly filtered by address.
 
 To know more about arguments and results of each query, have a look at the [API reference](../../api-reference).
 

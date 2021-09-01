@@ -45,7 +45,9 @@ import Ogmios.Data.Json.Query
     , parseGetGenesisConfig
     , parseGetLedgerTip
     , parseGetNonMyopicMemberRewards
+    , parseGetPoolsRanking
     , parseGetProposedPParamsUpdates
+    , parseGetRewardProvenance
     , parseGetStakeDistribution
     , parseGetUTxO
     , parseGetUTxOByAddress
@@ -101,7 +103,9 @@ import Test.Generators
     , genPoint
     , genPointResult
     , genPoolDistrResult
+    , genPoolsRankingResult
     , genProposedPParamsResult
+    , genRewardProvenanceResult
     , genTip
     , genUTxOResult
     , reasonablySized
@@ -311,6 +315,16 @@ spec = do
             [aesonQQ|"genesisConfig"|]
             ( parseGetGenesisConfig genCompactGenesisResult
             ) "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
+
+        validateQuery
+            [aesonQQ|"rewardsProvenance"|]
+            ( parseGetRewardProvenance genRewardProvenanceResult
+            ) "ogmios.wsp.json#/properties/QueryResponse[rewardsProvenance]"
+
+        validateQuery
+            [aesonQQ|"poolsRanking"|]
+            ( parseGetPoolsRanking genPoolsRankingResult
+            ) "ogmios.wsp.json#/properties/QueryResponse[poolsRanking]"
 
         goldenToJSON
             "QueryResponse-utxo_1.json"

@@ -13,23 +13,24 @@
 
 ### Features
 
-- Fast synchronization of blocks from the Cardano network
+- Fast synchronization of blocks from the Cardano network(s)
+- Transaction submission with enhanced error messages
 - Full ledger state query support:
   - `currentEpoch`
+  - `currentProtocolParameters`
+  - `delegationsAndRewards`
   - `eraStart`
+  - `genesisConfig`
   - `ledgerTip`
   - `nonMyopicMemberRewards`
-  - `delegationsAndRewards`
-  - `currentProtocolParameters`
+  - `poolsRanking`
   - `proposedProtocolParameters`
+  - `rewardsProvenance`
   - `stakeDistribution`
   - `utxo`
-  - `genesisConfig`
-- Transaction submission with enhanced error messages
 - TypeScript client & REPL
 - Structured JSON logging 
-- Health monitoring (with runtime and application statistics)
-- Supports for all Cardano networks (mainnet, testnet, staging...)
+- Health monitoring, with runtime and application statistics
 - Fully documented API with JSON-schema
 
 
