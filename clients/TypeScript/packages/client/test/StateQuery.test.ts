@@ -16,7 +16,6 @@ import {
 import {
   DelegationsAndRewards,
   Hash16,
-  Point,
   Slot
 } from '@cardano-ogmios/schema'
 import { dummyInteractionContext } from './util'
@@ -44,13 +43,24 @@ describe('Local state queries', () => {
       const context = await dummyInteractionContext()
       const tip = await ledgerTip(context)
       delay(2000)
-      const clientA = await createStateQueryClient(context, { point: tip as Point })
-      const clientB = await createStateQueryClient(context, { point: tip as Point })
+      const clientA = await createStateQueryClient(context, { point: tip })
+      const clientB = await createStateQueryClient(context, { point: tip })
       const tipA = await clientA.ledgerTip()
       const tipB = await clientB.ledgerTip()
       expect(tip).toEqual(tipA)
       expect(tip).toEqual(tipB)
       await context.socket.close()
+    })
+
+    it('can acquire / re-acquire after a client is created', async () => {
+      const context = await dummyInteractionContext()
+      const client = await createStateQueryClient(context)
+      const tip = await client.ledgerTip()
+      delay(2000)
+      await client.acquire(tip)
+      const tipAgain = await client.ledgerTip()
+      expect(tip).toEqual(tipAgain)
+      await client.shutdown()
     })
 
     it('rejects if the provided point is too old', async () => {

@@ -34,6 +34,8 @@ import { ensureSocketIsOpen, safeJSON } from '../util'
  */
 export interface StateQueryClient {
   context: InteractionContext
+  acquire: (point: PointOrOrigin) => Promise<StateQueryClient>
+  shutdown: () => Promise<void>
   currentEpoch: () => ReturnType<typeof currentEpoch>
   currentProtocolParameters: () => ReturnType<typeof currentProtocolParameters>
   delegationsAndRewards: (stakeKeyHashes: Hash16[]) => ReturnType<typeof delegationsAndRewards>
@@ -41,9 +43,7 @@ export interface StateQueryClient {
   genesisConfig: () => ReturnType<typeof genesisConfig>
   ledgerTip: () => ReturnType<typeof ledgerTip>
   nonMyopicMemberRewards: (input: Lovelace[] | Hash16[]) => ReturnType<typeof nonMyopicMemberRewards>
-  point: PointOrOrigin
   proposedProtocolParameters: () => ReturnType<typeof proposedProtocolParameters>
-  shutdown: () => Promise<void>
   stakeDistribution: () => ReturnType<typeof stakeDistribution>
   utxo: (addresses?: Address[]) => ReturnType<typeof utxo>
 }
@@ -62,6 +62,10 @@ export const createStateQueryClient = async (
     const requestId = nanoid(5)
     const createClient = () => resolve({
       context,
+      async acquire (point : PointOrOrigin) : Promise<StateQueryClient> {
+        const client = await createStateQueryClient(context, { point })
+        return Object.assign(this, client)
+      },
       shutdown: () => {
         ensureSocketIsOpen(socket)
         return new Promise((resolve, reject) => {
