@@ -571,6 +571,14 @@
                 , "title": "GetGenesisConfig"
                 , "enum": ["genesisConfig"]
                 }
+              , { "type": "string"
+                , "title": "GetRewardsProvenance"
+                , "enum": ["rewardsProvenance"]
+                }
+              , { "type": "string"
+                , "title": "GetPoolsRanking"
+                , "enum": ["poolsRanking"]
+                }
               ]
             }
           }
@@ -924,6 +932,74 @@
       , "result":
         { "oneOf":
           [ { "$ref": "#/definitions/CompactGenesis" }
+          , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[rewardsProvenance]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/RewardsProvenance" }
+          , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[poolsRanking]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/PoolsRanking" }
           , { "$ref": "#/definitions/EraMismatch" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
@@ -1967,44 +2043,7 @@
         , "additionalProperties": false
         , "required": ["poolRegistration"]
         , "properties":
-          { "poolRegistration":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": ["owners","cost","margin","pledge","vrf","metadata","id","relays","rewardAccount"]
-            , "properties":
-              { "owners":
-                { "type": "array"
-                , "items": { "$ref": "#/definitions/Hash16" }
-                }
-              , "cost": { "$ref": "#/definitions/Lovelace" }
-              , "margin": { "$ref": "#/definitions/Ratio" }
-              , "pledge": { "$ref": "#/definitions/Lovelace" }
-              , "vrf": { "$ref": "#/definitions/Hash16" }
-              , "metadata":
-                { "oneOf":
-                  [ { "$ref": "#/definitions/Null"}
-                  , { "type": "object"
-                    , "title": "poolMetadata"
-                    , "additionalProperties": false
-                    , "required": ["hash","url"]
-                    , "properties":
-                      { "hash": { "$ref": "#/definitions/Hash16" }
-                      , "url":
-                        { "type": "string"
-                        , "format": "uri"
-                        }
-                      }
-                    }
-                  ]
-                }
-              , "id": { "$ref": "#/definitions/PoolId" }
-              , "relays":
-                { "type": "array"
-                , "items": { "$ref": "#/definitions/Relay" }
-                }
-              , "rewardAccount": { "$ref": "#/definitions/RewardAccount" }
-              }
-            }
+          { "poolRegistration": { "$ref": "#/definitions/PoolParameters" }
           }
         , "examples":
           [ { "poolRegistration":
@@ -2270,6 +2309,63 @@
     , "pattern": "^[A-Za-z0-9+/]*=?=?$"
     }
 
+  , "IndividualPoolRewardsProvenance":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required":
+      [ "totalMintedBlocks"
+      , "totalStakeShare"
+      , "activeStakeShare"
+      , "ownerStake"
+      , "parameters"
+      , "pledgeRatio"
+      , "maxRewards"
+      , "apparentPerformance"
+      , "totalRewards"
+      , "leaderRewards"
+      ]
+    , "properties":
+      { "totalMintedBlocks":
+          { "$ref": "#/definitions/UInt64"
+          , "description": "The number of blocks the pool produced."
+          }
+      , "totalStakeShare":
+          { "$ref": "#/definitions/Ratio"
+          , "description": "The stake pool's stake share (portion of the total stake)."
+          }
+      , "activeStakeShare":
+          { "$ref": "#/definitions/Ratio"
+          , "description": "The stake pool's active stake share (portion of the active stake)."
+          }
+      , "ownerStake":
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch."
+          }
+      , "parameters":
+          { "$ref": "#/definitions/PoolParameters" }
+      , "pledgeRatio":
+          { "$ref": "#/definitions/Ratio"
+          , "description": "The stake pool's pledge ratio (over its total stake)."
+          }
+      , "maxRewards":
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The maximum number of Lovelace this stake pool can earn."
+          }
+      , "apparentPerformance":
+          { "$ref": "#/definitions/Ratio"
+          , "description": "The stake pool's apparent performance according to Section 5.5.2 of the Shelley Design Spec."
+          }
+      , "totalRewards":
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The total Lovelace earned by the stake pool."
+          }
+      , "leaderRewards":
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The total Lovelace earned by the stake pool leader."
+          }
+      }
+    }
+
   , "Int64":
     { "type": "integer"
     , "minimum": -9223372036854775808
@@ -2326,7 +2422,6 @@
 
   , "Lovelace":
     { "type": "integer"
-    , "description": "An amount, in Lovelace (1e6 Lovelace = 1 Ada)"
     , "minimum": 0
     , "maximum": 18446744073709552000
     }
@@ -2599,6 +2694,73 @@
     , "examples":
       [ "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc"
       , "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9"
+      ]
+    }
+
+  , "PoolParameters":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": ["owners","cost","margin","pledge","vrf","metadata","id","relays","rewardAccount"]
+    , "properties":
+      { "owners":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Hash16" }
+        }
+      , "cost": { "$ref": "#/definitions/Lovelace" }
+      , "margin": { "$ref": "#/definitions/Ratio" }
+      , "pledge": { "$ref": "#/definitions/Lovelace" }
+      , "vrf": { "$ref": "#/definitions/Hash16" }
+      , "metadata":
+        { "oneOf":
+          [ { "$ref": "#/definitions/Null"}
+          , { "type": "object"
+            , "title": "poolMetadata"
+            , "additionalProperties": false
+            , "required": ["hash","url"]
+            , "properties":
+              { "hash": { "$ref": "#/definitions/Hash16" }
+              , "url":
+                { "type": "string"
+                , "format": "uri"
+                }
+              }
+            }
+          ]
+        }
+      , "id": { "$ref": "#/definitions/PoolId" }
+      , "relays":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Relay" }
+        }
+      , "rewardAccount": { "$ref": "#/definitions/RewardAccount" }
+      }
+    }
+
+  , "PoolsRanking":
+    { "type": "object"
+    , "propertyNames": { "$ref": "#/definitions/PoolId" }
+    , "additionalProperties":
+      { "type": "object"
+      , "additionalProperties": false
+      , "required":
+        [ "score"
+        , "estimatedHitRate"
+        ]
+      , "properties":
+        { "score": { "type": "number" }
+        , "estimatedHitRate": { "type": "number" }
+        }
+      }
+    , "examples":
+      [ { "pool15erywju02scjv9gxkmp885c8catf5n4ke9459h2299fq57u9c3e":
+          { "estimatedHitRate": 0.46007879047717787
+          , "score": 0.46007879047717787
+          }
+        , "pool1uzn3gvvcztplwua6qnk966elln264kzsq6q9kprmpqj5zytzn03":
+          { "estimatedHitRate": 0.4434403878475427
+          , "score": 0.4434403878475427
+          }
+        }
       ]
     }
 
@@ -2941,6 +3103,117 @@
     { "type": "string"
     , "description": "Source of rewards as defined by the protocol parameters."
     , "enum": ["reserves", "treasury"]
+    }
+
+  , "RewardsProvenance":
+    { "type": "object"
+    , "description": "Details about how rewards are calculated for the ongoing epoch."
+    , "examples":
+      [ { "pools":
+          { "pool1uzn3gvvcztplwua6qnk966elln264kzsq6q9kprmpqj5zytzn03":
+            { "leaderRewards": 952
+            , "totalMintedBlocks": 710
+            , "apparentPerformance": "18812959026/99805300093"
+            , "totalStakeShare": "522895940905/1291880908953"
+            , "parameters":
+              { "owners": []
+              , "cost": 697
+              , "margin": "1/1"
+              , "pledge": 137
+              , "vrf": "03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314"
+              , "metadata":
+                { "hash": "62797465737472696e67"
+                , "url": "https://..."
+                }
+              , "id": "pool1uzn3gvvcztplwua6qnk966elln264kzsq6q9kprmpqj5zytzn03"
+              , "relays": []
+              , "rewardAccount": "stake1u8s2w9p3nqfv8amnhgzwchtt8l7dt2kc2qrgqkcy0vyz2sgltd8xl"
+              }
+            , "maxRewards": 772
+            , "totalRewards": 177
+            , "pledgeRatio": "1890420803177/2397524606197"
+            , "ownerStake": 766
+            , "activeStakeShare": "3637271273329/4596544940606"
+            }
+          }
+        , "totalMintedBlocks": 1
+        , "rewardsGap": 752
+        , "totalExpectedBlocks": 1
+        , "activeStake": 844
+        , "maxLovelaceSupply": 981
+        , "treasuryTax": 819
+        , "epochLength": 12432
+        , "decentralizationParameter": "144984708469/1172194782596"
+        , "availableRewards": 622
+        , "mintedBlocks": {}
+        , "totalRewards": 281
+        , "incentive": 204
+        }
+      ]
+    , "additionalProperties": false
+    , "required":
+      [ "epochLength"
+      , "decentralizationParameter"
+      , "maxLovelaceSupply"
+      , "mintedBlocks"
+      , "totalMintedBlocks"
+      , "totalExpectedBlocks"
+      , "incentive"
+      , "rewardsGap"
+      , "availableRewards"
+      , "totalRewards"
+      , "treasuryTax"
+      , "activeStake"
+      , "pools"
+      ]
+    , "properties":
+      { "epochLength": { "$ref": "#/definitions/Epoch" }
+      , "decentralizationParameter": { "$ref": "#/definitions/Ratio" }
+      , "maxLovelaceSupply": { "$ref": "#/definitions/Lovelace" }
+      , "mintedBlocks":
+        { "type": "object"
+        , "description": "Number of blocks minted by each pool."
+        , "additionalProperties": { "$ref": "#/definitions/UInt64" }
+        , "propertyNames": { "$ref": "#/definitions/PoolId" }
+        }
+      , "totalMintedBlocks":
+          { "$ref": "#/definitions/Int64"
+          , "description": "The total number of blocks minted during the given epoch."
+          }
+      , "totalExpectedBlocks":
+          { "$ref": "#/definitions/Int64"
+          , "description": "The number of blocks expected to be produced during the given epoch."
+          }
+      , "incentive":
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The maximum amount of Lovelace which can be removed from the reserves to be given out as rewards for the given epoch."
+          }
+      , "rewardsGap":
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The difference between the 'availableRewards' and what was actually distributed."
+          }
+      , "availableRewards":
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The total Lovelace available for rewards for the given epoch, equal to 'totalRewards' less 'treasuryTax'."
+          }
+      , "totalRewards":
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The reward pot for the given epoch, equal to the 'incentive' plus the fee pot."
+          }
+      , "treasuryTax":
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The amount of Lovelace taken for the treasury for the given epoch."
+          }
+      , "activeStake":
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The amount of Lovelace that is delegated during the given epoch."
+          }
+      , "pools":
+        { "type": "object"
+        , "additionalProperties": { "$ref": "#/definitions/IndividualPoolRewardsProvenance" }
+        , "propertyNames": { "$ref": "#/definitions/PoolId" }
+        }
+      }
     }
 
   , "UInt8":
