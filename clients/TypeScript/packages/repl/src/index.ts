@@ -63,7 +63,9 @@ const logObject = (obj: Object) =>
     nonMyopicMemberRewards:
       (input: (Schema.Lovelace | Schema.Hash16)[]) =>
         StateQuery.nonMyopicMemberRewards(context, input),
+    poolsRanking: () => StateQuery.poolsRanking(context),
     proposedProtocolParameters: () => StateQuery.proposedProtocolParameters(context),
+    rewardsProvenance: () => StateQuery.rewardsProvenance(context),
     stakeDistribution: () => StateQuery.stakeDistribution(context),
     submitTx: (bytes: string) => TxSubmission.submitTx(context, bytes),
     utxo: (filters?: Schema.Address[]|Schema.TxIn[]) => StateQuery.utxo(context, filters)

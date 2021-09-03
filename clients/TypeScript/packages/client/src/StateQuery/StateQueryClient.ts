@@ -22,7 +22,9 @@ import {
   genesisConfig,
   ledgerTip,
   nonMyopicMemberRewards,
+  poolsRanking,
   proposedProtocolParameters,
+  rewardsProvenance,
   stakeDistribution,
   utxo
 } from './queries'
@@ -44,7 +46,9 @@ export interface StateQueryClient {
   genesisConfig: () => ReturnType<typeof genesisConfig>
   ledgerTip: () => ReturnType<typeof ledgerTip>
   nonMyopicMemberRewards: (input: Lovelace[] | Hash16[]) => ReturnType<typeof nonMyopicMemberRewards>
+  poolsRanking: () => ReturnType<typeof poolsRanking>
   proposedProtocolParameters: () => ReturnType<typeof proposedProtocolParameters>
+  rewardsProvenance: () => ReturnType<typeof rewardsProvenance>
   stakeDistribution: () => ReturnType<typeof stakeDistribution>
   utxo: (filter?: Address[]|TxIn[]) => ReturnType<typeof utxo>
 }
@@ -103,9 +107,17 @@ export const createStateQueryClient = async (
         ensureSocketIsOpen(socket)
         return nonMyopicMemberRewards(context, input)
       },
+      poolsRanking: () => {
+        ensureSocketIsOpen(socket)
+        return poolsRanking(context)
+      },
       proposedProtocolParameters: () => {
         ensureSocketIsOpen(socket)
         return proposedProtocolParameters(context)
+      },
+      rewardsProvenance: () => {
+        ensureSocketIsOpen(socket)
+        return rewardsProvenance(context)
       },
       stakeDistribution: () => {
         ensureSocketIsOpen(socket)
