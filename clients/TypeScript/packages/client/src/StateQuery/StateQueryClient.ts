@@ -2,10 +2,11 @@ import { nanoid } from 'nanoid'
 import {
   Address,
   Hash16,
-  TxIn,
   Lovelace,
   Ogmios,
-  PointOrOrigin
+  PointOrOrigin,
+  PoolId,
+  TxIn
 } from '@cardano-ogmios/schema'
 import { InteractionContext } from '../Connection'
 import { baseRequest } from '../Request'
@@ -23,6 +24,7 @@ import {
   ledgerTip,
   nonMyopicMemberRewards,
   poolIds,
+  poolParameters,
   poolsRanking,
   proposedProtocolParameters,
   rewardsProvenance,
@@ -48,6 +50,7 @@ export interface StateQueryClient {
   ledgerTip: () => ReturnType<typeof ledgerTip>
   nonMyopicMemberRewards: (input: Lovelace[] | Hash16[]) => ReturnType<typeof nonMyopicMemberRewards>
   poolIds: () => ReturnType<typeof poolIds>
+  poolParameters: (pools: PoolId[]) => ReturnType<typeof poolParameters>
   poolsRanking: () => ReturnType<typeof poolsRanking>
   proposedProtocolParameters: () => ReturnType<typeof proposedProtocolParameters>
   rewardsProvenance: () => ReturnType<typeof rewardsProvenance>
@@ -112,6 +115,10 @@ export const createStateQueryClient = async (
       poolIds: () => {
         ensureSocketIsOpen(socket)
         return poolIds(context)
+      },
+      poolParameters: (pools) => {
+        ensureSocketIsOpen(socket)
+        return poolParameters(context, pools)
       },
       poolsRanking: () => {
         ensureSocketIsOpen(socket)

@@ -23,7 +23,7 @@ import Data.SOP.Strict
 import Data.Type.Equality
     ( (:~:) (..), testEquality )
 import Ogmios.Data.Json.Query
-    ( Delegations, QueryResult, RewardAccounts, RewardProvenance )
+    ( Delegations, PoolParams, QueryResult, RewardAccounts, RewardProvenance )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock )
 import Ouroboros.Consensus.Cardano.Block
@@ -451,6 +451,15 @@ genPoolIdsResult
     => Proxy (QueryResult crypto (Set (Keys.KeyHash 'StakePool crypto)))
     -> Gen (QueryResult crypto (Set (Keys.KeyHash 'StakePool crypto)))
 genPoolIdsResult _ = frequency
+    [ (1, Left <$> genMismatchEraInfo)
+    , (10, Right <$> reasonablySized arbitrary)
+    ]
+
+genPoolParametersResult
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Proxy (QueryResult crypto (Map (Keys.KeyHash 'StakePool crypto) (PoolParams crypto)))
+    -> Gen (QueryResult crypto (Map (Keys.KeyHash 'StakePool crypto) (PoolParams crypto)))
+genPoolParametersResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> reasonablySized arbitrary)
     ]

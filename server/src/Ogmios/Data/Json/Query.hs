@@ -16,6 +16,7 @@ module Ogmios.Data.Json.Query
     , RewardProvenance
     , RewardProvenancePool
     , Desirability
+    , PoolParams
 
       -- * Encoders
     , encodeEraMismatch
@@ -40,6 +41,7 @@ module Ogmios.Data.Json.Query
     , parseGetGenesisConfig
     , parseGetRewardProvenance
     , parseGetPoolIds
+    , parseGetPoolParameters
     , parseGetPoolsRanking
     ) where
 
@@ -48,7 +50,7 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Api
     ( ShelleyBasedEra (..) )
 import Cardano.Crypto.Hash
-    ( hashFromTextAsHex )
+    ( hashFromBytes, hashFromTextAsHex )
 import Cardano.Ledger.Address
     ( Addr )
 import Cardano.Ledger.Credential
@@ -91,6 +93,8 @@ import Ouroboros.Network.Point
     ( Block (..) )
 import Shelley.Spec.Ledger.RewardProvenance
     ( Desirability (..), RewardProvenance (..), RewardProvenancePool (..) )
+import Shelley.Spec.Ledger.TxBody
+    ( PoolParams )
 
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Data.Aeson as Json
@@ -856,6 +860,42 @@ parseGetPoolIds genResult =
                     BlockQuery $ QueryIfCurrentAlonzo GetStakePools
             )
 
+parseGetPoolParameters
+    :: forall crypto f. (Crypto crypto)
+    => GenResult crypto f (Map (Keys.KeyHash 'StakePool crypto) (PoolParams crypto))
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseGetPoolParameters genResult =
+    Json.withObject "SomeQuery" $ \obj -> do
+        ids <- parsePoolIds obj
+        pure $
+            (\query -> Just $ SomeQuery
+                { query
+                , genResult
+                , encodeResult =
+                    either
+                        encodeMismatchEraInfo
+                        (encodeMap Shelley.stringifyPoolId Shelley.encodePoolParams)
+                }
+            )
+            .
+            ( \case
+                SomeShelleyEra ShelleyBasedEraShelley ->
+                    BlockQuery $ QueryIfCurrentShelley (GetStakePoolParams ids)
+                SomeShelleyEra ShelleyBasedEraAllegra ->
+                    BlockQuery $ QueryIfCurrentAllegra (GetStakePoolParams ids)
+                SomeShelleyEra ShelleyBasedEraMary ->
+                    BlockQuery $ QueryIfCurrentMary (GetStakePoolParams ids)
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    BlockQuery $ QueryIfCurrentAlonzo (GetStakePoolParams ids)
+            )
+  where
+    parsePoolIds
+        :: Json.Object
+        -> Json.Parser (Set (Keys.KeyHash 'StakePool crypto))
+    parsePoolIds obj = fmap fromList $
+        obj .: "poolParameters" >>= traverse parsePoolId
+
 parseGetPoolsRanking
     :: forall crypto f. ()
     => GenResult crypto f (RewardProvenance crypto)
@@ -882,7 +922,6 @@ parseGetPoolsRanking genResult =
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     BlockQuery $ QueryIfCurrentAlonzo GetRewardProvenance
             )
-
 
 --
 -- Internal
@@ -938,18 +977,6 @@ parseAddress = Json.withText "Address" $ choice "address"
     fromBase16 =
         either (fail . show) pure . decodeBase16 . encodeUtf8
 
-parseTxIn
-    :: forall crypto. (Crypto crypto)
-    => Json.Value
-    -> Json.Parser (Sh.TxIn crypto)
-parseTxIn = Json.withObject "TxIn" $ \o -> do
-    txid <- o .: "txId" >>= fromBase16
-    ix <- o .: "index"
-    pure $ Sh.TxIn (Sh.TxId txid) ix
-  where
-    fromBase16 =
-        maybe empty (pure . unsafeMakeSafeHash) . hashFromTextAsHex @(CC.HASH crypto)
-
 parseCoin
     :: Json.Value
     -> Json.Parser Coin
@@ -975,3 +1002,37 @@ parseHash
     -> Json.Parser (CC.Hash alg a)
 parseHash =
     Json.parseJSON >=> maybe empty pure . CC.hashFromTextAsHex
+
+parsePoolId
+    :: Crypto crypto
+    => Json.Value
+    -> Json.Parser (Keys.KeyHash 'StakePool crypto)
+parsePoolId = Json.withText "PoolId" $ choice "poolId"
+    [ poolIdFromBytes fromBech32
+    , poolIdFromBytes fromBase16
+    ]
+  where
+    poolIdFromBytes decode =
+        decode >=> maybe empty (pure . Keys.KeyHash) . hashFromBytes
+
+    fromBech32 txt =
+        case Bech32.decodeLenient txt of
+            Left e ->
+                fail (show e)
+            Right (_, dataPart) ->
+                maybe empty pure $ Bech32.dataPartToBytes dataPart
+
+    fromBase16 =
+        either (fail . show) pure . decodeBase16 . encodeUtf8
+
+parseTxIn
+    :: forall crypto. (Crypto crypto)
+    => Json.Value
+    -> Json.Parser (Sh.TxIn crypto)
+parseTxIn = Json.withObject "TxIn" $ \o -> do
+    txid <- o .: "txId" >>= fromBase16
+    ix <- o .: "index"
+    pure $ Sh.TxIn (Sh.TxId txid) ix
+  where
+    fromBase16 =
+        maybe empty (pure . unsafeMakeSafeHash) . hashFromTextAsHex @(CC.HASH crypto)

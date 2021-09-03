@@ -86,6 +86,7 @@ Query                        | Result
 `ledgerTip`                  | The most recent block tip known of the ledger.
 `nonMyopicMemberRewards`     | Non-myopic member rewards for each pool. Used in ranking.
 `poolIds`                    | The list of all pool identifiers currently registered and active.
+`poolParameters`             | Stake pool parameters submitted with registration certificates.
 `poolsRanking`               | Retrieve stake pools ranking (a.k.a desirabilities).
 `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
 `rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.

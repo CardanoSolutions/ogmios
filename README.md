@@ -24,6 +24,7 @@
   - `ledgerTip`
   - `nonMyopicMemberRewards`
   - `poolIds`
+  - `poolParameters`
   - `poolsRanking`
   - `proposedProtocolParameters`
   - `rewardsProvenance`
