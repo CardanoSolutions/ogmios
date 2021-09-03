@@ -39,6 +39,7 @@ module Ogmios.Data.Json.Query
     , parseGetUTxOByTxIn
     , parseGetGenesisConfig
     , parseGetRewardProvenance
+    , parseGetPoolIds
     , parseGetPoolsRanking
     ) where
 
@@ -826,6 +827,33 @@ parseGetRewardProvenance genResult =
                     BlockQuery $ QueryIfCurrentMary GetRewardProvenance
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     BlockQuery $ QueryIfCurrentAlonzo GetRewardProvenance
+            )
+
+parseGetPoolIds
+    :: forall crypto f. ()
+    => GenResult crypto f (Set (Keys.KeyHash 'StakePool crypto))
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseGetPoolIds genResult =
+    Json.withText "SomeQuery" $ \text -> do
+        guard (text == "poolIds") $>
+            ( \query -> Just $ SomeQuery
+                { query
+                , genResult
+                , encodeResult =
+                    either encodeMismatchEraInfo (encodeFoldable Shelley.encodePoolId)
+                }
+            )
+            .
+            ( \case
+                SomeShelleyEra ShelleyBasedEraShelley ->
+                    BlockQuery $ QueryIfCurrentShelley GetStakePools
+                SomeShelleyEra ShelleyBasedEraAllegra ->
+                    BlockQuery $ QueryIfCurrentAllegra GetStakePools
+                SomeShelleyEra ShelleyBasedEraMary ->
+                    BlockQuery $ QueryIfCurrentMary GetStakePools
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    BlockQuery $ QueryIfCurrentAlonzo GetStakePools
             )
 
 parseGetPoolsRanking

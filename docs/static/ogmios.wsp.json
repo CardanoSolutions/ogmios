@@ -15,7 +15,10 @@
   , "QueryResponse[genesisConfig]"
   , "QueryResponse[ledgerTip]"
   , "QueryResponse[nonMyopicMemberRewards]"
+  , "QueryResponse[poolsIds]"
+  , "QueryResponse[poolsRanking]"
   , "QueryResponse[proposedProtocolParameters]"
+  , "QueryResponse[rewardsProvenance]"
   , "QueryResponse[stakeDistribution]"
   , "QueryResponse[utxo]"
   , "Fault"
@@ -590,6 +593,10 @@
                 , "title": "GetPoolsRanking"
                 , "enum": ["poolsRanking"]
                 }
+              , { "type": "string"
+                , "title": "GetPoolIds"
+                , "enum": ["poolIds"]
+                }
               ]
             }
           }
@@ -977,6 +984,42 @@
       , "result":
         { "oneOf":
           [ { "$ref": "#/definitions/RewardsProvenance" }
+          , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[poolIds]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "type": "array"
+            , "items": { "$ref": "#/definitions/PoolId" }
+            }
           , { "$ref": "#/definitions/EraMismatch" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
