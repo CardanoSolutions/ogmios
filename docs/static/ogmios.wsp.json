@@ -497,7 +497,7 @@
         , "required": ["query"]
         , "properties":
           { "query":
-            { "oneOf":
+            { "anyOf":
               [ { "type": "string"
                 , "title": "GetEraStart"
                 , "enum": ["eraStart"]
@@ -557,13 +557,24 @@
                 , "enum": ["utxo"]
                 }
               , { "type": "object"
-                , "title": "GetUtxo[filtered]"
+                , "title": "GetUtxo[byAddress]"
                 , "additionalProperties": false
                 , "required": ["utxo"]
                 , "properties":
                   { "utxo":
                     { "type": "array"
                     , "items": { "$ref": "#/definitions/Address" }
+                    }
+                  }
+                }
+              , { "type": "object"
+                , "title": "GetUtxo[byTxIn]"
+                , "additionalProperties": false
+                , "required": ["utxo"]
+                , "properties":
+                  { "utxo":
+                    { "type": "array"
+                    , "items": { "$ref": "#/definitions/TxIn" }
                     }
                   }
                 }

@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 import {
   Address,
   Hash16,
+  TxIn,
   Lovelace,
   Ogmios,
   PointOrOrigin
@@ -45,7 +46,7 @@ export interface StateQueryClient {
   nonMyopicMemberRewards: (input: Lovelace[] | Hash16[]) => ReturnType<typeof nonMyopicMemberRewards>
   proposedProtocolParameters: () => ReturnType<typeof proposedProtocolParameters>
   stakeDistribution: () => ReturnType<typeof stakeDistribution>
-  utxo: (addresses?: Address[]) => ReturnType<typeof utxo>
+  utxo: (filter?: Address[]|TxIn[]) => ReturnType<typeof utxo>
 }
 
 /**
@@ -110,9 +111,9 @@ export const createStateQueryClient = async (
         ensureSocketIsOpen(socket)
         return stakeDistribution(context)
       },
-      utxo: (addresses) => {
+      utxo: (filters) => {
         ensureSocketIsOpen(socket)
-        return utxo(context, addresses)
+        return utxo(context, filters)
       }
     } as StateQueryClient)
 

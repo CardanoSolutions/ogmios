@@ -36,6 +36,7 @@ module Ogmios.Data.Json.Query
     , parseGetStakeDistribution
     , parseGetUTxO
     , parseGetUTxOByAddress
+    , parseGetUTxOByTxIn
     , parseGetGenesisConfig
     , parseGetRewardProvenance
     , parseGetPoolsRanking
@@ -45,6 +46,8 @@ import Ogmios.Data.Json.Prelude
 
 import Cardano.Api
     ( ShelleyBasedEra (..) )
+import Cardano.Crypto.Hash
+    ( hashFromTextAsHex )
 import Cardano.Ledger.Address
     ( Addr )
 import Cardano.Ledger.Credential
@@ -53,6 +56,8 @@ import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Ledger.Keys
     ( KeyRole (..) )
+import Cardano.Ledger.SafeHash
+    ( unsafeMakeSafeHash )
 import Cardano.Slotting.Slot
     ( EpochNo (..), WithOrigin (..) )
 import Data.ByteString.Base16
@@ -96,12 +101,14 @@ import qualified Cardano.Ledger.Address as Address
 import qualified Cardano.Ledger.Coin as Coin
 import qualified Cardano.Ledger.Core as Core
 import qualified Cardano.Ledger.Credential as Credential
+import qualified Cardano.Ledger.Crypto as CC
 import qualified Cardano.Ledger.Keys as Keys
 
 import qualified Shelley.Spec.Ledger.BlockChain as Sh
 import qualified Shelley.Spec.Ledger.Delegation.Certificates as Sh
 import qualified Shelley.Spec.Ledger.EpochBoundary as Sh
 import qualified Shelley.Spec.Ledger.PParams as Sh
+import qualified Shelley.Spec.Ledger.TxBody as Sh
 import qualified Shelley.Spec.Ledger.UTxO as Sh
 
 import qualified Ogmios.Data.Json.Allegra as Allegra
@@ -683,6 +690,57 @@ parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
     parseAddresses obj = fmap fromList $
         obj .: "utxo" >>= traverse parseAddress
 
+parseGetUTxOByTxIn
+    :: forall crypto f. (Crypto crypto)
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.UTxO era))
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
+    ins <- parseTxIns obj
+    pure $ \case
+        SomeShelleyEra ShelleyBasedEraShelley ->
+            Just $ SomeQuery
+            { query =
+                BlockQuery $ QueryIfCurrentShelley (GetUTxOByTxIn ins)
+            , encodeResult =
+                either encodeMismatchEraInfo Shelley.encodeUtxo
+            , genResult =
+                genResultInEra (Proxy @(ShelleyEra crypto))
+            }
+        SomeShelleyEra ShelleyBasedEraAllegra ->
+            Just $ SomeQuery
+            { query =
+                BlockQuery $ QueryIfCurrentAllegra (GetUTxOByTxIn ins)
+            , encodeResult =
+                either encodeMismatchEraInfo Allegra.encodeUtxo
+            , genResult =
+                genResultInEra (Proxy @(AllegraEra crypto))
+            }
+        SomeShelleyEra ShelleyBasedEraMary ->
+            Just $ SomeQuery
+            { query =
+                BlockQuery $ QueryIfCurrentMary (GetUTxOByTxIn ins)
+            , encodeResult =
+                either encodeMismatchEraInfo Mary.encodeUtxo
+            , genResult =
+                genResultInEra (Proxy @(MaryEra crypto))
+            }
+        SomeShelleyEra ShelleyBasedEraAlonzo ->
+            Just $ SomeQuery
+            { query =
+                BlockQuery $ QueryIfCurrentAlonzo (GetUTxOByTxIn ins)
+            , encodeResult =
+                either encodeMismatchEraInfo Alonzo.encodeUtxo
+            , genResult =
+                genResultInEra (Proxy @(AlonzoEra crypto))
+            }
+  where
+    parseTxIns
+        :: Json.Object
+        -> Json.Parser (Set (Sh.TxIn crypto))
+    parseTxIns obj = fmap fromList $
+        obj .: "utxo" >>= traverse parseTxIn
+
 -- TODO: This query seems to actually always return a compact version of the
 -- `ShelleyGenesis`, even when queried from Alonzo. While this is practical
 -- (because the return type does not change when crossing eras), there's also no
@@ -851,6 +909,18 @@ parseAddress = Json.withText "Address" $ choice "address"
 
     fromBase16 =
         either (fail . show) pure . decodeBase16 . encodeUtf8
+
+parseTxIn
+    :: forall crypto. (Crypto crypto)
+    => Json.Value
+    -> Json.Parser (Sh.TxIn crypto)
+parseTxIn = Json.withObject "TxIn" $ \o -> do
+    txid <- o .: "txId" >>= fromBase16
+    ix <- o .: "index"
+    pure $ Sh.TxIn (Sh.TxId txid) ix
+  where
+    fromBase16 =
+        maybe empty (pure . unsafeMakeSafeHash) . hashFromTextAsHex @(CC.HASH crypto)
 
 parseCoin
     :: Json.Value

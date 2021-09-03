@@ -51,6 +51,7 @@ import Ogmios.Data.Json.Query
     , parseGetStakeDistribution
     , parseGetUTxO
     , parseGetUTxOByAddress
+    , parseGetUTxOByTxIn
     )
 import Ogmios.Data.Protocol.ChainSync
     ( FindIntersect
@@ -309,6 +310,17 @@ spec = do
                 ]
             }|]
             ( parseGetUTxOByAddress genUTxOResult
+            ) "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+
+        validateQuery
+            [aesonQQ|
+            { "utxo":
+                [ { "txId": "141933320b6e5d4522d7d3bf052dd2a26cc7eb58b66ae357f95f83715c8add5b"
+                  , "index": 14
+                  }
+                ]
+            }|]
+            ( parseGetUTxOByTxIn genUTxOResult
             ) "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
         validateQuery

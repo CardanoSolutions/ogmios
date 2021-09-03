@@ -66,7 +66,7 @@ const logObject = (obj: Object) =>
     proposedProtocolParameters: () => StateQuery.proposedProtocolParameters(context),
     stakeDistribution: () => StateQuery.stakeDistribution(context),
     submitTx: (bytes: string) => TxSubmission.submitTx(context, bytes),
-    utxo: (addresses?: Schema.Address[]) => StateQuery.utxo(context, addresses)
+    utxo: (filters?: Schema.Address[]|Schema.TxIn[]) => StateQuery.utxo(context, filters)
   })
 
   cardanoOgmiosRepl.on('exit', async () => {
