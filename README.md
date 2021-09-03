@@ -23,6 +23,7 @@
   - `genesisConfig`
   - `ledgerTip`
   - `nonMyopicMemberRewards`
+  - `poolIds`
   - `poolsRanking`
   - `proposedProtocolParameters`
   - `rewardsProvenance`

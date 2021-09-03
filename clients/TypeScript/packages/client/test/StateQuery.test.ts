@@ -7,6 +7,7 @@ import {
   genesisConfig,
   ledgerTip,
   nonMyopicMemberRewards,
+  poolIds,
   poolsRanking,
   proposedProtocolParameters,
   rewardsProvenance,
@@ -238,9 +239,15 @@ describe('Local state queries', () => {
       })
     })
     describe('poolsRanking', () => {
-      it('fetches rewards provenance for the ongoing epoch', async () => {
+      it('fetches ranking of all stake pools', async () => {
         const ranking = await poolsRanking(context)
         expect(ranking).toBeDefined()
+      })
+    })
+    describe('poolIds', () => {
+      it('fetches stake pools ids', async () => {
+        const ids = await poolIds(context)
+        expect(ids).toBeDefined()
       })
     })
   })
