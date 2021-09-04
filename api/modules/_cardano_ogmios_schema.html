@@ -125,7 +125,9 @@
 								<li class="tsd-kind-interface tsd-parent-kind-module"><a href="../interfaces/_cardano_ogmios_schema.GenesisDelegation.html" class="tsd-kind-icon">Genesis<wbr>Delegation</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-module"><a href="../interfaces/_cardano_ogmios_schema.GetDelegationsAndRewards.html" class="tsd-kind-icon">Get<wbr>Delegations<wbr>And<wbr>Rewards</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-module"><a href="../interfaces/_cardano_ogmios_schema.GetNonMyopicMemberRewards.html" class="tsd-kind-icon">Get<wbr>Non<wbr>Myopic<wbr>Member<wbr>Rewards</a></li>
-								<li class="tsd-kind-interface tsd-parent-kind-module"><a href="../interfaces/_cardano_ogmios_schema.GetUtxoFiltered.html" class="tsd-kind-icon">Get<wbr>Utxo<wbr>Filtered</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-module"><a href="../interfaces/_cardano_ogmios_schema.GetPoolParameters.html" class="tsd-kind-icon">Get<wbr>Pool<wbr>Parameters</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-module"><a href="../interfaces/_cardano_ogmios_schema.GetUtxoByAddress.html" class="tsd-kind-icon">Get<wbr>Utxo<wbr>ByAddress</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-module"><a href="../interfaces/_cardano_ogmios_schema.GetUtxoByTxIn.html" class="tsd-kind-icon">Get<wbr>Utxo<wbr>ByTx<wbr>In</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-module"><a href="../interfaces/_cardano_ogmios_schema.IndividualPoolRewardsProvenance.html" class="tsd-kind-icon">Individual<wbr>Pool<wbr>Rewards<wbr>Provenance</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-module"><a href="../interfaces/_cardano_ogmios_schema.InsufficientFundsForMir.html" class="tsd-kind-icon">Insufficient<wbr>Funds<wbr>For<wbr>Mir</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-module"><a href="../interfaces/_cardano_ogmios_schema.InsufficientGenesisSignatures.html" class="tsd-kind-icon">Insufficient<wbr>Genesis<wbr>Signatures</a></li>
@@ -247,6 +249,7 @@
 								<li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="_cardano_ogmios_schema.html#GetEraStart" class="tsd-kind-icon">Get<wbr>Era<wbr>Start</a></li>
 								<li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="_cardano_ogmios_schema.html#GetGenesisConfig" class="tsd-kind-icon">Get<wbr>Genesis<wbr>Config</a></li>
 								<li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="_cardano_ogmios_schema.html#GetLedgerTip" class="tsd-kind-icon">Get<wbr>Ledger<wbr>Tip</a></li>
+								<li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="_cardano_ogmios_schema.html#GetPoolIds" class="tsd-kind-icon">Get<wbr>Pool<wbr>Ids</a></li>
 								<li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="_cardano_ogmios_schema.html#GetPoolsRanking" class="tsd-kind-icon">Get<wbr>Pools<wbr>Ranking</a></li>
 								<li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="_cardano_ogmios_schema.html#GetProposedProtocolParameters" class="tsd-kind-icon">Get<wbr>Proposed<wbr>Protocol<wbr>Parameters</a></li>
 								<li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="_cardano_ogmios_schema.html#GetRewardsProvenance" class="tsd-kind-icon">Get<wbr>Rewards<wbr>Provenance</a></li>
@@ -508,6 +511,16 @@
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-module">
+					<a name="GetPoolIds" class="tsd-anchor"></a>
+					<h3>Get<wbr>Pool<wbr>Ids</h3>
+					<div class="tsd-signature tsd-kind-icon">Get<wbr>Pool<wbr>Ids<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"poolIds"</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/src/index.ts:216</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-module">
 					<a name="GetPoolsRanking" class="tsd-anchor"></a>
 					<h3>Get<wbr>Pools<wbr>Ranking</h3>
 					<div class="tsd-signature tsd-kind-icon">Get<wbr>Pools<wbr>Ranking<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"poolsRanking"</span></div>
@@ -733,7 +746,7 @@
 					<div class="tsd-signature tsd-kind-icon">Network<wbr>Magic<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/src/index.ts:228</li>
+							<li><span>Defined in</span> packages/schema/src/index.ts:229</li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -843,7 +856,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Unavailable<wbr>InCurrent<wbr>Era<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"QueryUnavailableInCurrentEra"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/src/index.ts:223</li>
+							<li><span>Defined in</span> packages/schema/src/index.ts:224</li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -873,7 +886,7 @@
 					<div class="tsd-signature tsd-kind-icon">Relative<wbr>Time<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/src/index.ts:219</li>
+							<li><span>Defined in</span> packages/schema/src/index.ts:220</li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -1118,7 +1131,7 @@
 					<div class="tsd-signature tsd-kind-icon">Utc<wbr>Time<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/src/index.ts:224</li>
+							<li><span>Defined in</span> packages/schema/src/index.ts:225</li>
 						</ul>
 					</aside>
 				</section>

@@ -113,7 +113,9 @@
 								<li class="tsd-kind-interface tsd-parent-kind-namespace"><a href="../interfaces/_cardano_ogmios_client.Schema.GenesisDelegation.html" class="tsd-kind-icon">Genesis<wbr>Delegation</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-namespace"><a href="../interfaces/_cardano_ogmios_client.Schema.GetDelegationsAndRewards.html" class="tsd-kind-icon">Get<wbr>Delegations<wbr>And<wbr>Rewards</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-namespace"><a href="../interfaces/_cardano_ogmios_client.Schema.GetNonMyopicMemberRewards.html" class="tsd-kind-icon">Get<wbr>Non<wbr>Myopic<wbr>Member<wbr>Rewards</a></li>
-								<li class="tsd-kind-interface tsd-parent-kind-namespace"><a href="../interfaces/_cardano_ogmios_client.Schema.GetUtxoFiltered.html" class="tsd-kind-icon">Get<wbr>Utxo<wbr>Filtered</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-namespace"><a href="../interfaces/_cardano_ogmios_client.Schema.GetPoolParameters.html" class="tsd-kind-icon">Get<wbr>Pool<wbr>Parameters</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-namespace"><a href="../interfaces/_cardano_ogmios_client.Schema.GetUtxoByAddress.html" class="tsd-kind-icon">Get<wbr>Utxo<wbr>ByAddress</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-namespace"><a href="../interfaces/_cardano_ogmios_client.Schema.GetUtxoByTxIn.html" class="tsd-kind-icon">Get<wbr>Utxo<wbr>ByTx<wbr>In</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-namespace"><a href="../interfaces/_cardano_ogmios_client.Schema.IndividualPoolRewardsProvenance.html" class="tsd-kind-icon">Individual<wbr>Pool<wbr>Rewards<wbr>Provenance</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-namespace"><a href="../interfaces/_cardano_ogmios_client.Schema.InsufficientFundsForMir.html" class="tsd-kind-icon">Insufficient<wbr>Funds<wbr>For<wbr>Mir</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-namespace"><a href="../interfaces/_cardano_ogmios_client.Schema.InsufficientGenesisSignatures.html" class="tsd-kind-icon">Insufficient<wbr>Genesis<wbr>Signatures</a></li>
@@ -235,6 +237,7 @@
 								<li class="tsd-kind-type-alias tsd-parent-kind-namespace"><a href="_cardano_ogmios_client.Schema.html#GetEraStart" class="tsd-kind-icon">Get<wbr>Era<wbr>Start</a></li>
 								<li class="tsd-kind-type-alias tsd-parent-kind-namespace"><a href="_cardano_ogmios_client.Schema.html#GetGenesisConfig" class="tsd-kind-icon">Get<wbr>Genesis<wbr>Config</a></li>
 								<li class="tsd-kind-type-alias tsd-parent-kind-namespace"><a href="_cardano_ogmios_client.Schema.html#GetLedgerTip" class="tsd-kind-icon">Get<wbr>Ledger<wbr>Tip</a></li>
+								<li class="tsd-kind-type-alias tsd-parent-kind-namespace"><a href="_cardano_ogmios_client.Schema.html#GetPoolIds" class="tsd-kind-icon">Get<wbr>Pool<wbr>Ids</a></li>
 								<li class="tsd-kind-type-alias tsd-parent-kind-namespace"><a href="_cardano_ogmios_client.Schema.html#GetPoolsRanking" class="tsd-kind-icon">Get<wbr>Pools<wbr>Ranking</a></li>
 								<li class="tsd-kind-type-alias tsd-parent-kind-namespace"><a href="_cardano_ogmios_client.Schema.html#GetProposedProtocolParameters" class="tsd-kind-icon">Get<wbr>Proposed<wbr>Protocol<wbr>Parameters</a></li>
 								<li class="tsd-kind-type-alias tsd-parent-kind-namespace"><a href="_cardano_ogmios_client.Schema.html#GetRewardsProvenance" class="tsd-kind-icon">Get<wbr>Rewards<wbr>Provenance</a></li>
@@ -461,6 +464,16 @@
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-namespace">
+					<a name="GetPoolIds" class="tsd-anchor"></a>
+					<h3>Get<wbr>Pool<wbr>Ids</h3>
+					<div class="tsd-signature tsd-kind-icon">Get<wbr>Pool<wbr>Ids<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"poolIds"</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:80</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-namespace">
 					<a name="GetPoolsRanking" class="tsd-anchor"></a>
 					<h3>Get<wbr>Pools<wbr>Ranking</h3>
 					<div class="tsd-signature tsd-kind-icon">Get<wbr>Pools<wbr>Ranking<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"poolsRanking"</span></div>
@@ -666,7 +679,7 @@
 					<div class="tsd-signature tsd-kind-icon">Network<wbr>Magic<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:83</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:84</li>
 						</ul>
 					</aside>
 				</section>
@@ -766,7 +779,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Unavailable<wbr>InCurrent<wbr>Era<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"QueryUnavailableInCurrentEra"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:81</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:82</li>
 						</ul>
 					</aside>
 				</section>
@@ -786,7 +799,7 @@
 					<div class="tsd-signature tsd-kind-icon">Relative<wbr>Time<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:80</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:81</li>
 						</ul>
 					</aside>
 				</section>
@@ -996,7 +1009,7 @@
 					<div class="tsd-signature tsd-kind-icon">Utc<wbr>Time<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:82</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:83</li>
 						</ul>
 					</aside>
 				</section>

@@ -15,7 +15,10 @@
   , "QueryResponse[genesisConfig]"
   , "QueryResponse[ledgerTip]"
   , "QueryResponse[nonMyopicMemberRewards]"
+  , "QueryResponse[poolsIds]"
+  , "QueryResponse[poolsRanking]"
   , "QueryResponse[proposedProtocolParameters]"
+  , "QueryResponse[rewardsProvenance]"
   , "QueryResponse[stakeDistribution]"
   , "QueryResponse[utxo]"
   , "Fault"
@@ -497,7 +500,7 @@
         , "required": ["query"]
         , "properties":
           { "query":
-            { "oneOf":
+            { "anyOf":
               [ { "type": "string"
                 , "title": "GetEraStart"
                 , "enum": ["eraStart"]
@@ -557,13 +560,24 @@
                 , "enum": ["utxo"]
                 }
               , { "type": "object"
-                , "title": "GetUtxo[filtered]"
+                , "title": "GetUtxo[byAddress]"
                 , "additionalProperties": false
                 , "required": ["utxo"]
                 , "properties":
                   { "utxo":
                     { "type": "array"
                     , "items": { "$ref": "#/definitions/Address" }
+                    }
+                  }
+                }
+              , { "type": "object"
+                , "title": "GetUtxo[byTxIn]"
+                , "additionalProperties": false
+                , "required": ["utxo"]
+                , "properties":
+                  { "utxo":
+                    { "type": "array"
+                    , "items": { "$ref": "#/definitions/TxIn" }
                     }
                   }
                 }
@@ -578,6 +592,26 @@
               , { "type": "string"
                 , "title": "GetPoolsRanking"
                 , "enum": ["poolsRanking"]
+                }
+              , { "type": "string"
+                , "title": "GetPoolIds"
+                , "enum": ["poolIds"]
+                }
+              , { "type": "object"
+                , "title": "GetPoolParameters"
+                , "additionalProperties": false
+                , "required": ["poolParameters"]
+                , "properties":
+                  { "poolParameters":
+                    { "type": "array"
+                    , "items":
+                      { "oneOf":
+                        [ { "$ref": "#/definitions/PoolId" }
+                        , { "type": "string", "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+                        ]
+                      }
+                    }
+                  }
                 }
               ]
             }
@@ -975,6 +1009,80 @@
         }
       }
     }
+
+  , "QueryResponse[poolIds]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "type": "array"
+            , "items": { "$ref": "#/definitions/PoolId" }
+            }
+          , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[poolParameters]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "type": "object"
+            , "propertyNames": { "$ref": "#/definitions/PoolId" }
+            , "additionalProperties": { "$ref": "#/definitions/PoolParameters" }
+            }
+          , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
 
   , "QueryResponse[poolsRanking]":
     { "type": "object"
