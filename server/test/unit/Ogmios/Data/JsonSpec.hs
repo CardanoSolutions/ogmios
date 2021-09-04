@@ -45,12 +45,15 @@ import Ogmios.Data.Json.Query
     , parseGetGenesisConfig
     , parseGetLedgerTip
     , parseGetNonMyopicMemberRewards
+    , parseGetPoolIds
+    , parseGetPoolParameters
     , parseGetPoolsRanking
     , parseGetProposedPParamsUpdates
     , parseGetRewardProvenance
     , parseGetStakeDistribution
     , parseGetUTxO
     , parseGetUTxOByAddress
+    , parseGetUTxOByTxIn
     )
 import Ogmios.Data.Protocol.ChainSync
     ( FindIntersect
@@ -103,6 +106,8 @@ import Test.Generators
     , genPoint
     , genPointResult
     , genPoolDistrResult
+    , genPoolIdsResult
+    , genPoolParametersResult
     , genPoolsRankingResult
     , genProposedPParamsResult
     , genRewardProvenanceResult
@@ -312,6 +317,17 @@ spec = do
             ) "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
         validateQuery
+            [aesonQQ|
+            { "utxo":
+                [ { "txId": "141933320b6e5d4522d7d3bf052dd2a26cc7eb58b66ae357f95f83715c8add5b"
+                  , "index": 14
+                  }
+                ]
+            }|]
+            ( parseGetUTxOByTxIn genUTxOResult
+            ) "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+
+        validateQuery
             [aesonQQ|"genesisConfig"|]
             ( parseGetGenesisConfig genCompactGenesisResult
             ) "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
@@ -320,6 +336,21 @@ spec = do
             [aesonQQ|"rewardsProvenance"|]
             ( parseGetRewardProvenance genRewardProvenanceResult
             ) "ogmios.wsp.json#/properties/QueryResponse[rewardsProvenance]"
+
+        validateQuery
+            [aesonQQ|"poolIds"|]
+            ( parseGetPoolIds genPoolIdsResult
+            ) "ogmios.wsp.json#/properties/QueryResponse[poolIds]"
+
+        validateQuery
+            [aesonQQ|
+            { "poolParameters":
+                [ "pool1m80g9t64048p0t6yg9sps6672mgnse8ug2euudccmhkygfnf6tg"
+                , "d9de82af557d4e17af444160186b5e56d13864fc42b3ce3718ddec44"
+                ]
+            }|]
+            ( parseGetPoolParameters genPoolParametersResult
+            ) "ogmios.wsp.json#/properties/QueryResponse[poolParameters]"
 
         validateQuery
             [aesonQQ|"poolsRanking"|]

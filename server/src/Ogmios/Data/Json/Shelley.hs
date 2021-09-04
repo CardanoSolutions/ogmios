@@ -711,7 +711,7 @@ encodePoolMetadata x = encodeObject
     ]
 
 encodePoolParams
-    :: Sh.PoolParams era
+    :: Sh.PoolParams crypto
     -> Json
 encodePoolParams x = encodeObject
     [ ( "id"

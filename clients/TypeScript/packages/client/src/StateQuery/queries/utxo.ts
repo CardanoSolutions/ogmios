@@ -30,7 +30,7 @@ const isArrayOfUtxo = (result: Ogmios['QueryResponse[utxo]']['result']): result 
  */
 export const utxo = (
   context: InteractionContext,
-  addresses: Address[]
+  filters: Address[]|TxIn[]
 ): Promise<Utxo> =>
   Query<
     Ogmios['Query'],
@@ -39,8 +39,8 @@ export const utxo = (
   >({
     methodName: 'Query',
     args: {
-      query: Array.isArray(addresses) && addresses.length > 0 && addresses[0] !== null
-        ? { utxo: addresses }
+      query: Array.isArray(filters) && filters.length > 0 && filters[0] !== null
+        ? { utxo: filters }
         : 'utxo'
     }
   }, {

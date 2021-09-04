@@ -4,7 +4,9 @@ import {
   Hash16,
   Lovelace,
   Ogmios,
-  PointOrOrigin
+  PointOrOrigin,
+  PoolId,
+  TxIn
 } from '@cardano-ogmios/schema'
 import { InteractionContext } from '../Connection'
 import { baseRequest } from '../Request'
@@ -21,7 +23,11 @@ import {
   genesisConfig,
   ledgerTip,
   nonMyopicMemberRewards,
+  poolIds,
+  poolParameters,
+  poolsRanking,
   proposedProtocolParameters,
+  rewardsProvenance,
   stakeDistribution,
   utxo
 } from './queries'
@@ -43,9 +49,13 @@ export interface StateQueryClient {
   genesisConfig: () => ReturnType<typeof genesisConfig>
   ledgerTip: () => ReturnType<typeof ledgerTip>
   nonMyopicMemberRewards: (input: Lovelace[] | Hash16[]) => ReturnType<typeof nonMyopicMemberRewards>
+  poolIds: () => ReturnType<typeof poolIds>
+  poolParameters: (pools: PoolId[]) => ReturnType<typeof poolParameters>
+  poolsRanking: () => ReturnType<typeof poolsRanking>
   proposedProtocolParameters: () => ReturnType<typeof proposedProtocolParameters>
+  rewardsProvenance: () => ReturnType<typeof rewardsProvenance>
   stakeDistribution: () => ReturnType<typeof stakeDistribution>
-  utxo: (addresses?: Address[]) => ReturnType<typeof utxo>
+  utxo: (filter?: Address[]|TxIn[]) => ReturnType<typeof utxo>
 }
 
 /**
@@ -102,17 +112,33 @@ export const createStateQueryClient = async (
         ensureSocketIsOpen(socket)
         return nonMyopicMemberRewards(context, input)
       },
+      poolIds: () => {
+        ensureSocketIsOpen(socket)
+        return poolIds(context)
+      },
+      poolParameters: (pools) => {
+        ensureSocketIsOpen(socket)
+        return poolParameters(context, pools)
+      },
+      poolsRanking: () => {
+        ensureSocketIsOpen(socket)
+        return poolsRanking(context)
+      },
       proposedProtocolParameters: () => {
         ensureSocketIsOpen(socket)
         return proposedProtocolParameters(context)
+      },
+      rewardsProvenance: () => {
+        ensureSocketIsOpen(socket)
+        return rewardsProvenance(context)
       },
       stakeDistribution: () => {
         ensureSocketIsOpen(socket)
         return stakeDistribution(context)
       },
-      utxo: (addresses) => {
+      utxo: (filters) => {
         ensureSocketIsOpen(socket)
-        return utxo(context, addresses)
+        return utxo(context, filters)
       }
     } as StateQueryClient)
 

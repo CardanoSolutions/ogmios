@@ -63,10 +63,14 @@ const logObject = (obj: Object) =>
     nonMyopicMemberRewards:
       (input: (Schema.Lovelace | Schema.Hash16)[]) =>
         StateQuery.nonMyopicMemberRewards(context, input),
+    poolIds: () => StateQuery.poolIds(context),
+    poolParameters: (pools: Schema.PoolId[]) => StateQuery.poolParameters(context, pools),
+    poolsRanking: () => StateQuery.poolsRanking(context),
     proposedProtocolParameters: () => StateQuery.proposedProtocolParameters(context),
+    rewardsProvenance: () => StateQuery.rewardsProvenance(context),
     stakeDistribution: () => StateQuery.stakeDistribution(context),
     submitTx: (bytes: string) => TxSubmission.submitTx(context, bytes),
-    utxo: (addresses?: Schema.Address[]) => StateQuery.utxo(context, addresses)
+    utxo: (filters?: Schema.Address[]|Schema.TxIn[]) => StateQuery.utxo(context, filters)
   })
 
   cardanoOgmiosRepl.on('exit', async () => {

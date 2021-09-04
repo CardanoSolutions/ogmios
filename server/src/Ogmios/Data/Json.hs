@@ -246,12 +246,15 @@ instance Crypto crypto => FromJSON (QueryInEra Proxy (CardanoBlock crypto)) wher
         , Query.parseGetGenesisConfig (const id)
         , Query.parseGetLedgerTip (const id)
         , Query.parseGetNonMyopicMemberRewards id
+        , Query.parseGetPoolIds id
+        , Query.parseGetPoolParameters id
         , Query.parseGetPoolsRanking id
         , Query.parseGetProposedPParamsUpdates (const id)
         , Query.parseGetRewardProvenance id
         , Query.parseGetStakeDistribution id
         , Query.parseGetUTxO (const id)
         , Query.parseGetUTxOByAddress (const id)
+        , Query.parseGetUTxOByTxIn (const id)
         ]
 
 instance Crypto crypto => FromJSON (Tip (CardanoBlock crypto)) where

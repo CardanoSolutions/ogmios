@@ -10,6 +10,8 @@ import Ogmios.Prelude
 
 import Cardano.Ledger.Era
     ( Crypto, Era, SupportsSegWit (..) )
+import Cardano.Ledger.Keys
+    ( KeyRole (..) )
 import Cardano.Ledger.Serialization
     ( ToCBORGroup )
 import Cardano.Network.Protocol.NodeToClient
@@ -21,7 +23,7 @@ import Data.SOP.Strict
 import Data.Type.Equality
     ( (:~:) (..), testEquality )
 import Ogmios.Data.Json.Query
-    ( Delegations, QueryResult, RewardAccounts, RewardProvenance )
+    ( Delegations, PoolParams, QueryResult, RewardAccounts, RewardProvenance )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock )
 import Ouroboros.Consensus.Cardano.Block
@@ -80,6 +82,7 @@ import Test.Consensus.Cardano.Generators
     ()
 
 import qualified Cardano.Ledger.Core as Core
+import qualified Cardano.Ledger.Keys as Keys
 import qualified Data.Aeson as Json
 import qualified Ouroboros.Network.Point as Point
 import qualified Shelley.Spec.Ledger.BlockChain as Spec
@@ -439,6 +442,24 @@ genRewardProvenanceResult
     => Proxy (QueryResult crypto (RewardProvenance crypto))
     -> Gen (QueryResult crypto (RewardProvenance crypto))
 genRewardProvenanceResult _ = frequency
+    [ (1, Left <$> genMismatchEraInfo)
+    , (10, Right <$> reasonablySized arbitrary)
+    ]
+
+genPoolIdsResult
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Proxy (QueryResult crypto (Set (Keys.KeyHash 'StakePool crypto)))
+    -> Gen (QueryResult crypto (Set (Keys.KeyHash 'StakePool crypto)))
+genPoolIdsResult _ = frequency
+    [ (1, Left <$> genMismatchEraInfo)
+    , (10, Right <$> reasonablySized arbitrary)
+    ]
+
+genPoolParametersResult
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Proxy (QueryResult crypto (Map (Keys.KeyHash 'StakePool crypto) (PoolParams crypto)))
+    -> Gen (QueryResult crypto (Map (Keys.KeyHash 'StakePool crypto) (PoolParams crypto)))
+genPoolParametersResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> reasonablySized arbitrary)
     ]
