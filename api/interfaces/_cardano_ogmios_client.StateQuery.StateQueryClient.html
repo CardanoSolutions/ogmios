@@ -84,12 +84,12 @@
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.StateQuery.StateQueryClient.html#context" class="tsd-kind-icon">context</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.StateQuery.StateQueryClient.html#point" class="tsd-kind-icon">point</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_cardano_ogmios_client.StateQuery.StateQueryClient.html#acquire" class="tsd-kind-icon">acquire</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_cardano_ogmios_client.StateQuery.StateQueryClient.html#currentEpoch" class="tsd-kind-icon">current<wbr>Epoch</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_cardano_ogmios_client.StateQuery.StateQueryClient.html#currentProtocolParameters" class="tsd-kind-icon">current<wbr>Protocol<wbr>Parameters</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_cardano_ogmios_client.StateQuery.StateQueryClient.html#delegationsAndRewards" class="tsd-kind-icon">delegations<wbr>And<wbr>Rewards</a></li>
@@ -114,18 +114,7 @@
 					<div class="tsd-signature tsd-kind-icon">context<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.InteractionContext.html" class="tsd-signature-type">InteractionContext</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc1d14d/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L36">packages/client/src/StateQuery/StateQueryClient.ts:36</a>
-							</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="point" class="tsd-anchor"></a>
-					<h3>point</h3>
-					<div class="tsd-signature tsd-kind-icon">point<span class="tsd-signature-symbol">:</span> <a href="../modules/_cardano_ogmios_client.Schema.html#PointOrOrigin" class="tsd-signature-type">PointOrOrigin</a></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc1d14d/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L44">packages/client/src/StateQuery/StateQueryClient.ts:44</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e76e924/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L36">packages/client/src/StateQuery/StateQueryClient.ts:36</a>
 							</li>
 						</ul>
 					</aside>
@@ -133,6 +122,30 @@
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Methods</h2>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
+					<a name="acquire" class="tsd-anchor"></a>
+					<h3>acquire</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
+						<li class="tsd-signature tsd-kind-icon">acquire<span class="tsd-signature-symbol">(</span>point<span class="tsd-signature-symbol">: </span><a href="../modules/_cardano_ogmios_client.Schema.html#PointOrOrigin" class="tsd-signature-type">PointOrOrigin</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="_cardano_ogmios_client.StateQuery.StateQueryClient.html" class="tsd-signature-type">StateQueryClient</a><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e76e924/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L37">packages/client/src/StateQuery/StateQueryClient.ts:37</a>
+									</li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>point: <a href="../modules/_cardano_ogmios_client.Schema.html#PointOrOrigin" class="tsd-signature-type">PointOrOrigin</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title"><span>Returns</span> <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="_cardano_ogmios_client.StateQuery.StateQueryClient.html" class="tsd-signature-type">StateQueryClient</a><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
 					<a name="currentEpoch" class="tsd-anchor"></a>
 					<h3>current<wbr>Epoch</h3>
@@ -143,7 +156,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc1d14d/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L37">packages/client/src/StateQuery/StateQueryClient.ts:37</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e76e924/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L39">packages/client/src/StateQuery/StateQueryClient.ts:39</a>
 									</li>
 								</ul>
 							</aside>
@@ -161,7 +174,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc1d14d/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L38">packages/client/src/StateQuery/StateQueryClient.ts:38</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e76e924/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L40">packages/client/src/StateQuery/StateQueryClient.ts:40</a>
 									</li>
 								</ul>
 							</aside>
@@ -179,7 +192,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc1d14d/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L39">packages/client/src/StateQuery/StateQueryClient.ts:39</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e76e924/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L41">packages/client/src/StateQuery/StateQueryClient.ts:41</a>
 									</li>
 								</ul>
 							</aside>
@@ -203,7 +216,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc1d14d/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L40">packages/client/src/StateQuery/StateQueryClient.ts:40</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e76e924/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L42">packages/client/src/StateQuery/StateQueryClient.ts:42</a>
 									</li>
 								</ul>
 							</aside>
@@ -221,7 +234,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc1d14d/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L41">packages/client/src/StateQuery/StateQueryClient.ts:41</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e76e924/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L43">packages/client/src/StateQuery/StateQueryClient.ts:43</a>
 									</li>
 								</ul>
 							</aside>
@@ -239,7 +252,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc1d14d/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L42">packages/client/src/StateQuery/StateQueryClient.ts:42</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e76e924/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L44">packages/client/src/StateQuery/StateQueryClient.ts:44</a>
 									</li>
 								</ul>
 							</aside>
@@ -257,7 +270,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc1d14d/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L43">packages/client/src/StateQuery/StateQueryClient.ts:43</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e76e924/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L45">packages/client/src/StateQuery/StateQueryClient.ts:45</a>
 									</li>
 								</ul>
 							</aside>
@@ -281,7 +294,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc1d14d/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L45">packages/client/src/StateQuery/StateQueryClient.ts:45</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e76e924/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L46">packages/client/src/StateQuery/StateQueryClient.ts:46</a>
 									</li>
 								</ul>
 							</aside>
@@ -299,7 +312,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc1d14d/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L46">packages/client/src/StateQuery/StateQueryClient.ts:46</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e76e924/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L38">packages/client/src/StateQuery/StateQueryClient.ts:38</a>
 									</li>
 								</ul>
 							</aside>
@@ -317,7 +330,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc1d14d/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L47">packages/client/src/StateQuery/StateQueryClient.ts:47</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e76e924/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L47">packages/client/src/StateQuery/StateQueryClient.ts:47</a>
 									</li>
 								</ul>
 							</aside>
@@ -335,7 +348,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc1d14d/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L48">packages/client/src/StateQuery/StateQueryClient.ts:48</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e76e924/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L48">packages/client/src/StateQuery/StateQueryClient.ts:48</a>
 									</li>
 								</ul>
 							</aside>
