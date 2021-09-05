@@ -46,11 +46,17 @@ Besides, it goes without saying that as an open-source project Ogmios welcomes c
 
 #### Is Ogmios production ready? 
 
-Probably, yes. But I'd like to point that I am obviously biased on this topic. I am myself a professional and seasoned software engineer and I've helped to put various systems in production throughout my career. Ogmios is nevertheless an open-source project I've been working on during my free time, I've got a mad passion for software quality and I have put quite a lot of effort into making Ogmios of the highest quality. 
+Ogmios is an open-source project which is being worked on in small steps when time allows. Its development started in 2020 and it has undergone several updates and iterations. We've got a mad passion for software quality and we put extensive efforts into making Ogmios of the highest quality. The server follows a well-known architecture and abides by battle-tested Haskell coding practices. As it should, Ogmios is of course deeply tested at several levels via **continuous integration**<sup>[1](https://github.com/CardanoSolutions/ogmios/actions)</sup>.
 
-I've been testing various parts of Ogmios using in particular property testing and generators from the Cardano consensus and ledger codebases. The interfaces are well-documented, and the code itself follows a strict organization while abiding by Haskell battle-tested coding practices and code architecture. The application also comes with logging and metrics for monitoring and has already undergone a few rounds of optimizations. 
+Tests for the server include **property-based testing** of the core protocols<sup>[2](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/App/Protocol/StateQuerySpec.hs)</sup> <sup>[3](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/App/Protocol/StateQuerySpec.hs)</sup>, property-based testing of the entire JSON interface validated against the JSON-schema<sup>[4](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/Data/JsonSpec.hs)</sup>. Note that property tests all use generators which comes directly from the [ouroboros-network](https://github.com/input-output-hk/ouroboros-network/) and [cardano-ledger-specs](https://github.com/input-output-hk/cardano-ledger-specs) to ensure that Ogmios is **always up-to-date** with the Cardano eco-system. There are also various<sup>[5](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/App/OptionsSpec.hs)</sup> unit<sup>[6](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/Data/MetricsSpec.hs)</sup> tests<sup>[7](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/Data/HealthSpec.hs)</sup> to cover basic functionalities. 
 
-Now, this is as good as it gets for an open-source project. I've been incorporating feedback from various users over the past year which has been great so far. For the rest, everything is open-source licensed under [MPL-2.0](https://choosealicense.com/licenses/mpl-2.0/) and you're the best judge.
+On the other hand, the TypeScript client is used to perform **end-to-end tests** with tests running against the Cardano testnet<sup>[8](https://github.com/CardanoSolutions/ogmios/tree/master/clients/TypeScript/packages/client/test)</sup>. The tests are executed both in a Node.js and browser context and the synchronization with the network is done via a [Github action which leverages Ogmios' server](https://github.com/CardanoSolutions/gh-action-cardano-node-ogmios-docker-sync).
+
+Beside, Ogmios also comes with **structured logging and monitoring** out of the box. Putting any monitoring solution on top like Prometheus is trivial. 
+
+Finally, if you ventured through this page and user-guide, you have also noticed that the project is **well-documented**. And this includes the [API reference](/api-reference), the [ChangeLog](/changelog) as well as the [architectural decisions](https://github.com/CardanoSolutions/ogmios/tree/master/architectural-decisions) going over rationales for decisions we made along the way. 
+
+Thus, is Ogmios production-ready? **Probably, yes**. At least, this is as good as it gets for an open-source project. We've been incorporating feedback from various users over the past year which has been great so far. For the rest, everything is open-source licensed under [MPL-2.0](https://choosealicense.com/licenses/mpl-2.0/) and **you're the best judge.**
 
 #### Are there any projects using it?
 
@@ -58,5 +64,10 @@ I've got some positive feedback from a handful of stake pool operators using it 
 
 - https://gimbalabs.com/dandelionapis/ogmios-api
 - https://www.f2lb.org/
+- https://github.com/input-output-hk/cardano-graphql 
 
-There are also projects in preparation which looked into Ogmios as an alternative to cardano-db-sync for it better suited their need. Ogmios only reached a good enough feature-set and stability recently, thus most projects currently using it are still in the oven. With the Ogmios TypeScript client now available, I have also good hope that more and more projects will see the light. This goes hand-and-hand with adoption from stake pools relays of course: the more relays are available and provide entry points to the network, the more applications can rely on it.
+There are also projects in preparation which looked into Ogmios as a lightweight alternative to cardano-db-sync for it better suited their need. 
+
+{{% notice tip %}}
+Are you using Ogmios for a project? [Let us know on Github!](https://github.com/CardanoSolutions/ogmios/issues/new?assignees=&labels=&template=project.md)
+{{% /notice %}}
