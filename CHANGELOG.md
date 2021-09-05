@@ -5,15 +5,40 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
-### [4.0.0] - 2021-08-31
+### [4.0.0] - 2021-09-06
 
 #### Added
 
-- Integrated with the Cardano eco-system corresponding to cardano-node@1.29.0 & latest testnet.
+- Integrated with the Cardano eco-system corresponding to [cardano-node@1.29.0](https://github.com/input-output-hk/cardano-node/releases/tag/1.29.0) (Alonzo!) & latest testnet(s).
 
-- Bumped the docker-compose installation accordingly.
+- New `alonzo` block type, with various additions related to Alonzo.
 
-- New possible errors from the transaction submission:
+- New state-queries:
+
+  Query                        | Description
+  ---                          | ---
+  `poolIds`                    | The list of all pool identifiers currently registered and active.
+  `poolParameters`             | Stake pool parameters submitted with registration certificates.
+  `poolsRanking`               | Retrieve stake pools ranking (a.k.a desirabilities).
+  `rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
+
+- Added missing properties in Byron's protocol parameters update. Somehow, an `additionalProperties: true` had slipped through and caused the tests to pass with an incomplete schema.
+
+- The TypeScript `ChainSyncClient` now implements an in-memory queue to ensure `requestNext` responses are processed sequentially when there are async operations in the message handlers.  This behaviour can be bypassed where sequential processsing is not required, by setting the new construction option `sequential` to `false`.
+
+- The TypeScript `StateQueryClient` can now re-acquire new points at will, useful for long-running clients for which previously acquired points may expire. 
+
+- The TypeScript client is now [fully documented](https://ogmios.dev/api/modules/_cardano_ogmios_client.html)!
+
+- Nested logs are now also structured, in particular those coming from the `Handshake` or `TxSubmission` protocols. Before, any message from these layers where actually plain strings with unintelligible gibberish. Now, the submitted transaction payload is shown encoded as hexadecimals and errors are also serialized to json using the same model / codec as the one used for websockets. The handshake is also more verbose now clearly showing what version is being requested and what the node replies / select. All in all, better logs.
+
+- The Dockerfile now includes a build definition for building `cardano-node` and `ogmios` into the **same image**, which is the default and suggested mode of operation. To build an image with only Ogmios, use the build `--target ogmios`. Docker Hub now hosts two image repositories: `cardanosolutions/cardano-node-ogmios` and `cardanosolutions/ogmios`.  
+
+- Docker Hub images are now tagged with a network suffix (e.g. `-mainnet`). In the case of mainnet, the `-mainnet` suffix is optional, and points to the same build as the defaults.
+
+- A new repository for hosting Cardano configurations of various services was created and is now used in Ogmios. Configuration for cardano-node (and therefore Ogmios) or, network genesis can be found in [input-output-hk/cardano-configurations](https://github.com/input-output-hk/cardano-configurations). Configurations are updated automatically by a nightly job to be always up-to-date. They can be pulled into projects as git submodules.
+
+- New possible errors from the transaction submission (stemming from the Alonzo integration):
   - `collateralHasNonAdaAssets`
   - `collateralIsScript`
   - `collateralTooSmall`
@@ -36,23 +61,26 @@ pre: "<b>6. </b>"
   - `unspendableScriptInputs`
   - `validationTagMismatch`
 
-- Added missing properties in Byron's protocol parameters update. Somehow, an `additionalProperties: true` had slipped through and caused the tests to pass with an incomplete schema.
-
-- The TypeScript `ChainSyncClient` now implements an in-memory queue to ensure `requestNext` responses are processed sequentially when there are async operations in the message handlers.  This behaviour can be bypassed where sequential processsing is not required, by setting the new construction option `sequential` to `false`.
-
-- Nested logs are now also structured, in particular those coming from the Handshake or TxSubmission protocols. Before, any message from these layers where actually plain strings with unprocessable gibberish. Now, the submitted transaction payload is shown encoded as hexadecimals and errors are also serialized to json using the same model / codec as the one used for websockets. The handshake is also more verbose now clearly showing what version is being requested and what the node replies / select. All in all, better logs.
-
-- The Dockerfile now includes a build definition for including `cardano-node` and `ogmios` in the same image, which is the default and suggested mode of operation. To build an image with only Ogmios, use the build target `ogmios`. Docker Hub now hosts two image repositories: `cardanosolutions/cardano-node-ogmios` and `cardanosolutions/ogmios`.  - Docker Hub images are now tagged with `-mainnet` to make all network images consistent. This more specific tag is optional, and points to the same build as the defaults.
-
 #### Changed
 
-- The `memory` and `steps` JSON representations for `prices` are no longer coins, but ratio (represented as strings in the API).
-- `lovelacePerUtxoWord` has been renamed into `coinsPerUtxoWord` in the AlonzoGenesis.
+##### MAJOR
+
+- The `utxo` query can now accept a list `TxIn` as argument, and still supports list of `Address`. Note that lists can't be heterogeneous and it's not possible to mix `TxIn` and `Address`.
+
+- Asset quantities and transaction metadata's integers are now parsed as native `BigInt`.
+
 - Changes in the TypeScript's client:
-  - `Tip` & `Point` have been renamed to `TipOrOrigin` and `PointOrOrigin`. As a consequence, `Tip1` and `Point1` are now simply `Tip` and `Point`.
-  - `Origin` is now a standalone type, merged with `Origin1`.
+  - State queries (resp. the `StateQueryClient`) now automatically runs queries against the last known tip if no explicit point is provided. It used to acquire a point on the first query which would eventually become too old. The behavior is now equivalent to acquiring a new point on **every** query! 
+
+
   - `SubmitTx` no-longer returns Byron errors. Consequently, submit errors are no longer scoped under `errors.byron` or `errors.shelley` but simply `errors`.
   - Fixed `proposedProtocolParameters` query. All fields are actually required AND, more importantly, it can now return either Shelley protocol parameters or, Alonzo protocol parameters.
+
+##### MINOR
+
+- The `ChainSyncClientMessageHandlers` methods now must return a promise.
+
+- The `memory` and `steps` JSON representations for `prices` are no longer coins, but ratio (represented as strings in the API).
 
 - The `moveInstantaneousRewards` certificates have a new optional field `value` and not only a `rewards` map as before. When `value` is present, it signifies that rewards are moved to the other pot.
 
@@ -82,24 +110,22 @@ pre: "<b>6. </b>"
   - Type `NetworkMismatch1` renamed into `NetworkMismatch`
   - Type `Proposal` renamed into `UpdateProposalShelley`
   - Types `Utxo1`, `Utxo2`, `UtxoMary` have been unified into a single `Utxo` type. Refer to server breaking changes for details.
+  - Type `Tip` & `Point` renamed into `TipOrOrigin` and `PointOrOrigin`. As a consequence, `Tip1` and `Point1` are now simply `Tip` and `Point`.
   - Many types `NullX` merged into a single `Null` type
   - Query types have been renamed from `ledgerTip1` to `GetLedgerTip` and so forth for all queries.
 
-- `ChainSyncClient` no longer exposes a requestNext function. Instead you must invoke the callback provided as the second argument in each of rollBackward and rollForward handlers.
-
-- `ChainSyncClient` no longer exposes JSON-WSP reflection as there would be unexpected results given the first n messages would all share the same reflected value.
-
-- The `ChainSyncClientMessageHandlers` methods now must return a promise.
-
 #### Removed
 
-- A previous introduced error from the transaction submission has been removed / replaced:
-  - `datumsMismatch`
+- `datumsMismatch`, a previously introduced error from the transaction submission has been removed / replaced.
 
 - `SubmitTx` can no longer return `SubmitTxError[Byron]`. All the child error types have been removed accordingly, namely:
   - `UtxoValidationError`
   - `TxValidationError`
   - `LovelaceError`
+
+- `ChainSyncClient` no longer exposes a requestNext function. Instead you must invoke the callback provided as the second argument in each of rollBackward and rollForward handlers.
+
+- `ChainSyncClient` no longer exposes JSON-WSP reflection as there would be unexpected results given the first n messages would all share the same reflected value.
 
 ### [3.2.0] - 2021-05-09
 
