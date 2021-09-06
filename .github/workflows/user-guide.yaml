@@ -30,7 +30,6 @@ jobs:
       working-directory: clients/TypeScript
       run: |
         yarn install --frozen-lockfile --non-interactive --logevel=error
-        yarn generate-schema-types
         yarn build
         yarn docs
 

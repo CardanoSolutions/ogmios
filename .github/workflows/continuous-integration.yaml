@@ -186,17 +186,10 @@ jobs:
       with:
         node-version: 14.4
 
-    - name: ↪ Set package version
-      id: package-version
-      uses: martinbeentjes/npm-get-version-action@master
-      with:
-        path: clients/TypeScript
-
     - name: 🔨 Build
       working-directory: clients/TypeScript
       run: |
         yarn install --frozen-lockfile --non-interactive --logevel=error
-        yarn generate-schema-types
         yarn build
         yarn lint
 
@@ -260,13 +253,12 @@ jobs:
       working-directory: clients/TypeScript
       run: |
         yarn install --frozen-lockfile --non-interactive --logevel=error
-        yarn generate-schema-types
         yarn repl:pkg
 
     - name: 📤 Upload REPL exe
       uses: actions/upload-artifact@v2
       with:
-        name: cardano-ogmios-repl-${{ matrix.target }}
+        name: cardano-ogmios-repl-${{ matrix.target }}-${{ github.sha }}
         path: clients/TypeScript/packages/repl/build/cardano-ogmios-repl-${{ matrix.target }}
 
   clients_TypeScript_npm:
@@ -297,9 +289,9 @@ jobs:
       with:
         name: cardano-ogmios-clients-ts-packages
         path: |
-          clients/TypeScript/cardano-ogmios-client-${{ steps.package-version.outputs.current-version}}.tgz
-          clients/TypeScript/cardano-ogmios-schema-${{ steps.package-version.outputs.current-version}}.tgz
-          clients/TypeScript/cardano-ogmios-repl-${{ steps.package-version.outputs.current-version}}.tgz
+          clients/TypeScript/cardano-ogmios-client-${{ github.sha }}.tgz
+          clients/TypeScript/cardano-ogmios-schema-${{ github.sha }}.tgz
+          clients/TypeScript/cardano-ogmios-repl-${{ github.sha }}.tgz
 
     - name: 📤 Publish client package to npm registry
       if: ${{ startsWith(github.ref, 'refs/tags') }}

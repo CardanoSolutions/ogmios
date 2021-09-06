@@ -3,6 +3,7 @@ import { InteractionContext } from './Connection'
 import {
   Block,
   BlockAllegra,
+  BlockAlonzo,
   BlockByron,
   BlockMary,
   BlockShelley,
@@ -89,6 +90,10 @@ export const ensureSocketIsOpen = (socket: WebSocket) => {
 /** @category Helper */
 export const isAllegraBlock = (block: Block): block is { allegra: BlockAllegra } =>
   (block as { allegra: BlockAllegra }).allegra !== undefined
+
+/** @category Helper */
+export const isAlonzoBlock = (block: Block): block is { alonzo: BlockAlonzo } =>
+  (block as { alonzo: BlockAlonzo }).alonzo !== undefined
 
 /** @category Helper */
 export const isByronBlock = (block: Block): block is { byron: BlockByron } =>

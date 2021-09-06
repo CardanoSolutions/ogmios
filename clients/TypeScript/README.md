@@ -9,7 +9,6 @@ A Yarn Workspace containing three packages, each published to the npm.org regist
 #### Install and Build
 ```console
 yarn install && \
-yarn generate-schema-types && \
 yarn build
 ```
 #### Run Tests
