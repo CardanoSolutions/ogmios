@@ -67,7 +67,6 @@ Then, use Yarn to install dependencies and compile the project source code from 
 
 ```console
 $ yarn install \ 
-  && yarn generate-schema-types \
   && yarn build
 ```
 
