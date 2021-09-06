@@ -51,7 +51,7 @@
     "typescript": "^4.2.3"
   },
   "dependencies": {
-    "@cardano-ogmios/schema": "4.0.0-beta.9",
+    "@cardano-ogmios/schema": "4.0.0",
     "@types/json-bigint": "^1.0.1",
     "cross-fetch": "^3.1.4",
     "fastq": "^1.11.0",

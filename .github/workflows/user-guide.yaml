@@ -20,7 +20,7 @@ jobs:
     - name: 🧰 Setup Node.js
       uses: actions/setup-node@v1
       with:
-        node-version: 14.4
+        node-version: 14.15.0
 
     - name: 🧰 Download Hugo
       run: |

@@ -184,7 +184,7 @@ jobs:
     - name: 🧰 Setup Node.js
       uses: actions/setup-node@v1
       with:
-        node-version: 14.4
+        node-version: 14.15.0
 
     - name: 🔨 Build
       working-directory: clients/TypeScript
@@ -247,7 +247,7 @@ jobs:
     - name: 🧰 Setup Node.js
       uses: actions/setup-node@v1
       with:
-        node-version: 14.4
+        node-version: 14.15.0
 
     - name: 📦 Package REPL
       working-directory: clients/TypeScript
@@ -276,7 +276,7 @@ jobs:
     - name: 🧰 Setup Node.js
       uses: actions/setup-node@v1
       with:
-        node-version: 14.4
+        node-version: 14.15.0
 
     - name: 📦 Pack
       working-directory: clients/TypeScript
