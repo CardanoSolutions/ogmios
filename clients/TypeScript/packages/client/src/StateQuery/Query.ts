@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 import { InteractionContext } from '../Connection'
 import { baseRequest, send } from '../Request'
 import { safeJSON } from '../util'
+import { UnknownResultError } from '../errors'
 
 /** @internal */
 export const Query = <
@@ -29,11 +30,15 @@ export const Query = <
         async function listener (data: string) {
           const queryResponse = safeJSON.parse(data) as QueryResponse
           if (queryResponse.reflection?.requestId !== requestId) { return }
-          await response.handler(
-            queryResponse,
-            resolve,
-            reject
-          )
+          try {
+            await response.handler(
+              queryResponse,
+              resolve,
+              reject
+            )
+          } catch (e) {
+            return reject(new UnknownResultError(queryResponse))
+          }
           socket.removeListener('message', listener)
         }
 
