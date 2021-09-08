@@ -1,4 +1,5 @@
 import {
+  UnknownResultError,
   createStateQueryClient,
   currentEpoch,
   currentProtocolParameters,
@@ -176,6 +177,10 @@ describe('Local state queries', () => {
         const item = result[stakeKeyHashes[0]] as DelegationsAndRewards
         expect(item).toHaveProperty('delegate')
         expect(item).toHaveProperty('rewards')
+      })
+      it('returns an error when given a malformed key hash', () => {
+        const notKeyHashes = ['patate'] as Hash16[]
+        expect(delegationsAndRewards(context, notKeyHashes)).rejects.toBeInstanceOf(UnknownResultError)
       })
     })
     describe('eraStart', () => {
