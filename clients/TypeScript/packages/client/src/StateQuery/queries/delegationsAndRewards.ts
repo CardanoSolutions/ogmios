@@ -37,20 +37,16 @@ export const delegationsAndRewards = (
     }
   }, {
     handler: (response, resolve, reject) => {
-      try {
-        if (response.result === 'QueryUnavailableInCurrentEra') {
-          return reject(new QueryUnavailableInCurrentEraError('delegationsAndRewards'))
-        } else if (isEraMismatch(response.result)) {
-          const { eraMismatch } = response.result
-          const { ledgerEra, queryEra } = eraMismatch
-          return reject(new EraMismatchError(queryEra, ledgerEra))
-        } else if (isDelegationsAndRewardsByAccounts(response.result)) {
-          return resolve(response.result)
-        } else {
-          return reject(new UnknownResultError(response.result))
-        }
-      } catch (e) {
-        return reject(new UnknownResultError(e))
+      if (response.result === 'QueryUnavailableInCurrentEra') {
+        return reject(new QueryUnavailableInCurrentEraError('delegationsAndRewards'))
+      } else if (isEraMismatch(response.result)) {
+        const { eraMismatch } = response.result
+        const { ledgerEra, queryEra } = eraMismatch
+        return reject(new EraMismatchError(queryEra, ledgerEra))
+      } else if (isDelegationsAndRewardsByAccounts(response.result)) {
+        return resolve(response.result)
+      } else {
+        return reject(new UnknownResultError(response.result))
       }
     }
   }, context)
