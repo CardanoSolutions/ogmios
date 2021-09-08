@@ -5,6 +5,21 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [4.0.1] - 2021-09-08
+
+#### Added
+
+N/A
+
+#### Changed
+
+- The TypeScript `StateQueryClient` now wraps every query in a try/catch to cope with malformed queries leading to client `fault` results from the server.
+
+#### Removed
+
+N/A
+
+
 ### [4.0.0] - 2021-09-06
 
 #### Added
