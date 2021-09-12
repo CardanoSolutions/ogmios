@@ -4665,6 +4665,7 @@
       { "coins": { "$ref": "#/definitions/Lovelace" }
       , "assets":
         { "type": "object"
+        , "propertyNames": "^[0-9a-z]{56}(.[0-9a-z]{1,64})?$"
         , "additionalProperties": { "$ref": "#/definitions/AssetQuantity" }
         }
       }
