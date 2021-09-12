@@ -576,7 +576,7 @@ export interface Ogmios {
       [k: string]: unknown;
     };
   };
-  "QueryResponse[poolIds]"?: {
+  "QueryResponse[poolIds]": {
     type: "jsonwsp/response";
     version: "1.0";
     servicename: "ogmios";
@@ -589,7 +589,7 @@ export interface Ogmios {
       [k: string]: unknown;
     };
   };
-  "QueryResponse[poolParameters]"?: {
+  "QueryResponse[poolParameters]": {
     type: "jsonwsp/response";
     version: "1.0";
     servicename: "ogmios";
@@ -794,28 +794,7 @@ export interface Shelley {
   shelley: BlockShelley;
 }
 export interface BlockShelley {
-  body?: {
-    id: Hash16;
-    body: {
-      inputs: TxIn[];
-      outputs: TxOut[];
-      certificates: Certificate[];
-      withdrawals: Withdrawals;
-      fee: Lovelace;
-      timeToLive: Slot;
-      update: UpdateShelley;
-    };
-    witness: {
-      signatures: {
-        [k: string]: Signature;
-      };
-      scripts: {
-        [k: string]: Script;
-      };
-      bootstrap: BootstrapWitness[];
-    };
-    metadata: AuxiliaryData | Null;
-  }[];
+  body?: BlockBodyShelley[];
   headerHash?: Hash16;
   header?: {
     blockHeight: BlockNo;
@@ -831,6 +810,28 @@ export interface BlockShelley {
     protocolVersion: ProtocolVersion;
     signature: Hash64;
   };
+}
+export interface BlockBodyShelley {
+  id: Hash16;
+  body: {
+    inputs: TxIn[];
+    outputs: TxOut[];
+    certificates: Certificate[];
+    withdrawals: Withdrawals;
+    fee: Lovelace;
+    timeToLive: Slot;
+    update: UpdateShelley;
+  };
+  witness: {
+    signatures: {
+      [k: string]: Signature;
+    };
+    scripts: {
+      [k: string]: Script;
+    };
+    bootstrap: BootstrapWitness[];
+  };
+  metadata: AuxiliaryData | Null;
 }
 /**
  * A stake delegation certificate, from a delegator to a stake pool.
@@ -991,10 +992,11 @@ export interface List {
   list: Metadatum[];
 }
 export interface Map {
-  map: {
-    k: Metadatum;
-    v: Metadatum;
-  }[];
+  map: MetadatumMap[];
+}
+export interface MetadatumMap {
+  k: Metadatum;
+  v: Metadatum;
 }
 export interface NonceProof {
   proof?: Hash64;
@@ -1020,28 +1022,7 @@ export interface Allegra {
   allegra: BlockAllegra;
 }
 export interface BlockAllegra {
-  body?: {
-    id: Hash16;
-    body: {
-      inputs: TxIn[];
-      outputs: TxOut[];
-      certificates: Certificate[];
-      withdrawals: Withdrawals;
-      fee: Lovelace;
-      validityInterval: ValidityInterval;
-      update: UpdateShelley;
-    };
-    witness: {
-      signatures: {
-        [k: string]: Signature;
-      };
-      scripts: {
-        [k: string]: Script;
-      };
-      bootstrap: BootstrapWitness[];
-    };
-    metadata: AuxiliaryData | Null;
-  }[];
+  body?: BlockBodyAllegra[];
   headerHash?: Hash16;
   header?: {
     blockHeight: BlockNo;
@@ -1057,6 +1038,28 @@ export interface BlockAllegra {
     protocolVersion: ProtocolVersion;
     signature: Hash64;
   };
+}
+export interface BlockBodyAllegra {
+  id: Hash16;
+  body: {
+    inputs: TxIn[];
+    outputs: TxOut[];
+    certificates: Certificate[];
+    withdrawals: Withdrawals;
+    fee: Lovelace;
+    validityInterval: ValidityInterval;
+    update: UpdateShelley;
+  };
+  witness: {
+    signatures: {
+      [k: string]: Signature;
+    };
+    scripts: {
+      [k: string]: Script;
+    };
+    bootstrap: BootstrapWitness[];
+  };
+  metadata: AuxiliaryData | Null;
 }
 export interface ValidityInterval {
   invalidBefore: Slot | Null;
@@ -1066,29 +1069,7 @@ export interface Mary {
   mary: BlockMary;
 }
 export interface BlockMary {
-  body?: {
-    id: Hash16;
-    body: {
-      inputs: TxIn[];
-      outputs: TxOut[];
-      certificates: Certificate[];
-      withdrawals: Withdrawals;
-      fee: Lovelace;
-      validityInterval: ValidityInterval;
-      update: UpdateShelley;
-      mint: Value;
-    };
-    witness: {
-      signatures: {
-        [k: string]: Signature;
-      };
-      scripts: {
-        [k: string]: Script;
-      };
-      bootstrap: BootstrapWitness[];
-    };
-    metadata: AuxiliaryData | Null;
-  }[];
+  body?: BlockBodyMary[];
   headerHash?: Hash16;
   header?: {
     blockHeight: BlockNo;
@@ -1104,44 +1085,35 @@ export interface BlockMary {
     protocolVersion: ProtocolVersion;
     signature: Hash64;
   };
+}
+export interface BlockBodyMary {
+  id: Hash16;
+  body: {
+    inputs: TxIn[];
+    outputs: TxOut[];
+    certificates: Certificate[];
+    withdrawals: Withdrawals;
+    fee: Lovelace;
+    validityInterval: ValidityInterval;
+    update: UpdateShelley;
+    mint: Value;
+  };
+  witness: {
+    signatures: {
+      [k: string]: Signature;
+    };
+    scripts: {
+      [k: string]: Script;
+    };
+    bootstrap: BootstrapWitness[];
+  };
+  metadata: AuxiliaryData | Null;
 }
 export interface Alonzo {
   alonzo: BlockAlonzo;
 }
 export interface BlockAlonzo {
-  body?: {
-    id: Hash16;
-    body: {
-      inputs: TxIn[];
-      collaterals: TxIn[];
-      outputs: TxOut[];
-      certificates: Certificate[];
-      withdrawals: Withdrawals;
-      fee: Lovelace;
-      validityInterval: ValidityInterval;
-      update: UpdateAlonzo;
-      mint: Value;
-      network: Network | Null;
-      scriptIntegrityHash: Hash16 | Null;
-      requiredExtraSignatures: Hash16[];
-    };
-    witness: {
-      signatures: {
-        [k: string]: Signature;
-      };
-      scripts: {
-        [k: string]: Script;
-      };
-      bootstrap: BootstrapWitness[];
-      datums: {
-        [k: string]: Hash64;
-      };
-      redeemers: {
-        [k: string]: Redeemer;
-      };
-    };
-    metadata: AuxiliaryData | Null;
-  }[];
+  body?: BlockBodyAlonzo[];
   headerHash?: Hash16;
   header?: {
     blockHeight: BlockNo;
@@ -1157,6 +1129,39 @@ export interface BlockAlonzo {
     protocolVersion: ProtocolVersion;
     signature: Hash64;
   };
+}
+export interface BlockBodyAlonzo {
+  id: Hash16;
+  body: {
+    inputs: TxIn[];
+    collaterals: TxIn[];
+    outputs: TxOut[];
+    certificates: Certificate[];
+    withdrawals: Withdrawals;
+    fee: Lovelace;
+    validityInterval: ValidityInterval;
+    update: UpdateAlonzo;
+    mint: Value;
+    network: Network | Null;
+    scriptIntegrityHash: Hash16 | Null;
+    requiredExtraSignatures: Hash16[];
+  };
+  witness: {
+    signatures: {
+      [k: string]: Signature;
+    };
+    scripts: {
+      [k: string]: Script;
+    };
+    bootstrap: BootstrapWitness[];
+    datums: {
+      [k: string]: Hash64;
+    };
+    redeemers: {
+      [k: string]: Redeemer;
+    };
+  };
+  metadata: AuxiliaryData | Null;
 }
 export interface UpdateProposalAlonzo {
   epoch: Epoch;
