@@ -14,6 +14,7 @@ N/A
 #### Changed
 
 - The TypeScript `StateQueryClient` now wraps every query in a try/catch to cope with malformed queries leading to client `fault` results from the server.
+- Type definitions for `QueryResponse[poolIds]` and `QueryResponse[poolParameters]` are no longer marked as "optional".
 
 #### Removed
 
