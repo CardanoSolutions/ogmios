@@ -292,10 +292,12 @@ test-suite unit
       QuickCheck
     , aeson
     , base >=4.7 && <5
+    , bytestring
     , cardano-client
     , cardano-ledger-alonzo
     , cardano-ledger-core
     , cardano-slotting
+    , directory
     , file-embed
     , generic-arbitrary
     , generics-sop

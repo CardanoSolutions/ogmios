@@ -16,6 +16,8 @@ import Ogmios.Prelude
 
 import Cardano.Network.Protocol.NodeToClient
     ( Block )
+import Control.Monad.Class.MonadAsync
+    ( forConcurrently_ )
 import Data.Aeson
     ( parseJSON, toJSON )
 import Data.Aeson.QQ.Simple
@@ -93,6 +95,8 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
+import System.Directory
+    ( createDirectoryIfMissing )
 import Test.Generators
     ( genAcquireFailure
     , genBlock
@@ -113,6 +117,7 @@ import Test.Generators
     , genRewardProvenanceResult
     , genTip
     , genUTxOResult
+    , generateWith
     , reasonablySized
     )
 import Test.Hspec
@@ -135,6 +140,7 @@ import Test.QuickCheck
     , genericShrink
     , oneof
     , quickCheckWithResult
+    , vectorOf
     , withMaxSuccess
     , (===)
     )
@@ -144,6 +150,7 @@ import Test.QuickCheck.Arbitrary.Generic
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
+import qualified Data.ByteString as BS
 import qualified Test.QuickCheck as QC
 
 jsonifierToAeson
@@ -157,9 +164,11 @@ jsonifierToAeson =
 validateToJSON
     :: Gen a
     -> (a -> Json)
+    -> (Int, String)
     -> SchemaRef
     -> SpecWith ()
-validateToJSON gen encode ref = parallel $ do
+validateToJSON gen encode (n, vectorFilePath) ref = parallel $ do
+    runIO $ generateTestVectors (n, vectorFilePath) gen encode
     refs <- runIO $ unsafeReadSchemaRef ref
     specify (toString $ getSchemaRef ref) $ forAllBlind gen
         (prop_validateToJSON (jsonifierToAeson . encode) refs)
@@ -170,9 +179,11 @@ validateFromJSON
     :: (Eq a, Show a)
     => Gen a
     -> (a -> Json, Json.Value -> Json.Parser a)
+    -> (Int, String)
     -> SchemaRef
     -> SpecWith ()
-validateFromJSON gen (encode, decode) ref = parallel $ do
+validateFromJSON gen (encode, decode) (n, vectorFilePath) ref = parallel $ do
+    runIO $ generateTestVectors (n, vectorFilePath) gen encode
     refs <- runIO $ unsafeReadSchemaRef ref
     specify (toString $ getSchemaRef ref) $ forAllBlind gen $ \a -> conjoin
         [ prop_validateToJSON (jsonifierToAeson . encode) refs a
@@ -195,21 +206,25 @@ spec = do
         validateFromJSON
             (arbitrary @(Wsp.Request (FindIntersect Block)))
             (_encodeFindIntersect encodePoint, _decodeFindIntersect)
+            (10, "ChainSync/Request/FindIntersect")
             "ogmios.wsp.json#/properties/FindIntersect"
 
         validateToJSON
             (arbitrary @(Wsp.Response (FindIntersectResponse Block)))
             (_encodeFindIntersectResponse encodePoint encodeTip)
+            (10, "ChainSync/Response/FindIntersect")
             "ogmios.wsp.json#/properties/FindIntersectResponse"
 
         validateFromJSON
             (arbitrary @(Wsp.Request RequestNext))
             (_encodeRequestNext, _decodeRequestNext)
+            (3, "ChainSync/Request/RequestNext")
             "ogmios.wsp.json#/properties/RequestNext"
 
         validateToJSON
             (arbitrary @(Wsp.Response (RequestNextResponse Block)))
             (_encodeRequestNextResponse (encodeBlock FullSerialization) encodePoint encodeTip)
+            (200, "ChainSync/Response/RequestNext")
             "ogmios.wsp.json#/properties/RequestNextResponse"
 
         goldenToJSON
@@ -222,6 +237,7 @@ spec = do
         validateToJSON
             (arbitrary @(Wsp.Response (SubmitTxResponse Block)))
             (_encodeSubmitTxResponse (Proxy @Block) encodeHardForkApplyTxErr)
+            (200, "TxSubmission/Response/SubmitTx")
             "ogmios.wsp.json#/properties/SubmitTxResponse"
 
         goldenToJSON
@@ -232,33 +248,39 @@ spec = do
         validateFromJSON
             (arbitrary @(Wsp.Request (Acquire Block)))
             (_encodeAcquire encodePoint, _decodeAcquire)
+            (10, "StateQuery/Request/Acquire")
             "ogmios.wsp.json#/properties/Acquire"
 
         validateToJSON
             (arbitrary @(Wsp.Response (AcquireResponse Block)))
             (_encodeAcquireResponse encodePoint encodeAcquireFailure)
+            (10, "StateQuery/Response/Acquire")
             "ogmios.wsp.json#/properties/AcquireResponse"
 
     context "validate local state queries against JSON-schema" $ do
         validateQuery
             [aesonQQ|"eraStart"|]
             ( parseGetEraStart genBoundResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[eraStart]"
+            ) (10, "StateQuery/Response/Query[eraStart]")
+            "ogmios.wsp.json#/properties/QueryResponse[eraStart]"
 
         validateQuery
             [aesonQQ|"ledgerTip"|]
             ( parseGetLedgerTip genPointResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[ledgerTip]"
+            ) (10, "StateQuery/Response/Query[ledgerTip]")
+            "ogmios.wsp.json#/properties/QueryResponse[ledgerTip]"
 
         validateQuery
             [aesonQQ|"currentEpoch"|]
             ( parseGetEpochNo genEpochResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[currentEpoch]"
+            ) (3, "StateQuery/Response/Query[currentEpoch]")
+            "ogmios.wsp.json#/properties/QueryResponse[currentEpoch]"
 
         validateQuery
             [aesonQQ|{ "nonMyopicMemberRewards": [14, 42] }|]
             ( parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
+            ) (10, "StateQuery/Response/Query[nonMyopicMemberRewards]")
+            "ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
 
         validateQuery
             [aesonQQ|
@@ -267,7 +289,8 @@ spec = do
                 ]
             }|]
             ( parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
+            ) (0, "StateQuery/Response/Query[nonMyopicMemberRewards]")
+            "ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
 
         validateQuery
             [aesonQQ|
@@ -276,34 +299,40 @@ spec = do
                 ]
             }|]
             ( parseGetFilteredDelegationsAndRewards genDelegationAndRewardsResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[delegationsAndRewards]"
+            ) (10, "StateQuery/Response/Query[nonMyopicMemberRewards]")
+            "ogmios.wsp.json#/properties/QueryResponse[delegationsAndRewards]"
 
         validateQuery
             [aesonQQ|"currentProtocolParameters"|]
             ( parseGetCurrentPParams genPParamsResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[currentProtocolParameters]"
+            ) (100, "StateQuery/Response/Query[currentProtocolParameters]")
+            "ogmios.wsp.json#/properties/QueryResponse[currentProtocolParameters]"
 
         validateQuery
             [aesonQQ|"proposedProtocolParameters"|]
             ( parseGetProposedPParamsUpdates genProposedPParamsResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[proposedProtocolParameters]"
+            ) (100, "StateQuery/Response/Query[proposedProtocolParameters]")
+            "ogmios.wsp.json#/properties/QueryResponse[proposedProtocolParameters]"
 
         validateQuery
             [aesonQQ|"stakeDistribution"|]
             ( parseGetStakeDistribution genPoolDistrResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[stakeDistribution]"
+            ) (10, "StateQuery/Response/Query[stakeDistribution]")
+            "ogmios.wsp.json#/properties/QueryResponse[stakeDistribution]"
 
         validateQuery
             [aesonQQ|"utxo"|]
             ( parseGetUTxO genUTxOResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            ) (100, "StateQuery/Response/Query[utxo]")
+            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
         validateQuery
             [aesonQQ|
             { "utxo": []
             }|]
             ( parseGetUTxOByAddress genUTxOResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            ) (0, "StateQuery/Response/Query[utxo]")
+            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
         validateQuery
             [aesonQQ|
@@ -314,7 +343,8 @@ spec = do
                 ]
             }|]
             ( parseGetUTxOByAddress genUTxOResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            ) (0, "StateQuery/Response/Query[utxo]")
+            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
         validateQuery
             [aesonQQ|
@@ -325,22 +355,26 @@ spec = do
                 ]
             }|]
             ( parseGetUTxOByTxIn genUTxOResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            ) (0, "StateQuery/Response/Query[utxo]")
+            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
         validateQuery
             [aesonQQ|"genesisConfig"|]
             ( parseGetGenesisConfig genCompactGenesisResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
+            ) (100, "StateQuery/Response/Query[genesisConfig]")
+            "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
 
         validateQuery
             [aesonQQ|"rewardsProvenance"|]
             ( parseGetRewardProvenance genRewardProvenanceResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[rewardsProvenance]"
+            ) (100, "StateQuery/Response/Query[rewardsProvenance]")
+            "ogmios.wsp.json#/properties/QueryResponse[rewardsProvenance]"
 
         validateQuery
             [aesonQQ|"poolIds"|]
             ( parseGetPoolIds genPoolIdsResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[poolIds]"
+            ) (10, "StateQuery/Response/Query[poolIds]")
+            "ogmios.wsp.json#/properties/QueryResponse[poolIds]"
 
         validateQuery
             [aesonQQ|
@@ -350,12 +384,14 @@ spec = do
                 ]
             }|]
             ( parseGetPoolParameters genPoolParametersResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[poolParameters]"
+            ) (50, "StateQuery/Response/Query[poolParameters]")
+            "ogmios.wsp.json#/properties/QueryResponse[poolParameters]"
 
         validateQuery
             [aesonQQ|"poolsRanking"|]
             ( parseGetPoolsRanking genPoolsRankingResult
-            ) "ogmios.wsp.json#/properties/QueryResponse[poolsRanking]"
+            ) (10, "StateQuery/Response/Query[poolsRanking]")
+            "ogmios.wsp.json#/properties/QueryResponse[poolsRanking]"
 
         goldenToJSON
             "QueryResponse-utxo_1.json"
@@ -365,11 +401,13 @@ spec = do
         validateFromJSON
             (arbitrary @(Wsp.Request Release))
             (_encodeRelease, _decodeRelease)
+            (3, "StateQuery/Request/Release")
             "ogmios.wsp.json#/properties/Release"
 
         validateToJSON
             (arbitrary @(Wsp.Response ReleaseResponse))
             _encodeReleaseResponse
+            (3, "StateQuery/Response/Release")
             "ogmios.wsp.json#/properties/ReleaseResponse"
 
 instance Arbitrary a => Arbitrary (Wsp.Response a) where
@@ -509,28 +547,37 @@ instance Arbitrary SerializedTx where
 validateQuery
     :: Json.Value
     -> (Json.Value -> Json.Parser (QueryInEra Gen Block))
+    -> (Int, String)
     -> SchemaRef
     -> SpecWith ()
-validateQuery json parser resultRef = parallel $ specify (toString $ getSchemaRef resultRef) $ do
+validateQuery json parser (n, vectorFilepath) resultRef =
+  parallel $ specify (toString $ getSchemaRef resultRef) $ do
     queryRefs <- unsafeReadSchemaRef queryRef
     runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON id queryRefs json
     case Json.parseEither parser json of
         Left e ->
             expectationFailure $ "failed to parse JSON: " <> show e
         Right queryInEra -> do
-            let eras = catMaybes $ queryInEra <$>
+            let eras = catMaybes $ (\e -> (e,) <$> queryInEra e) <$>
                     [ SomeShelleyEra ShelleyBasedEraShelley
                     , SomeShelleyEra ShelleyBasedEraAllegra
                     , SomeShelleyEra ShelleyBasedEraMary
                     , SomeShelleyEra ShelleyBasedEraAlonzo
                     ]
-            forM_ eras $ \SomeQuery{genResult,encodeResult} -> do
+            forM_ eras $ \(era, SomeQuery{genResult,encodeResult}) -> do
                 let encodeQueryResponse
-                        = jsonifierToAeson
-                        . _encodeQueryResponse encodeAcquireFailure
+                        = _encodeQueryResponse encodeAcquireFailure
                         . Wsp.Response Nothing
                         . QueryResponse
                         . encodeResult
+
+                case era of
+                    SomeShelleyEra ShelleyBasedEraAlonzo -> do
+                        generateTestVectors (n, vectorFilepath)
+                            (genResult Proxy)
+                            encodeQueryResponse
+                    _ ->
+                        pure ()
 
                 resultRefs <- unsafeReadSchemaRef resultRef
 
@@ -539,7 +586,7 @@ validateQuery json parser resultRef = parallel $ specify (toString $ getSchemaRe
                 -- max success. In the end, the property run 4 times!
                 runQuickCheck $ withMaxSuccess 25 $ forAllBlind
                     (genResult Proxy)
-                    (prop_validateToJSON encodeQueryResponse resultRefs)
+                    (prop_validateToJSON (jsonifierToAeson . encodeQueryResponse) resultRefs)
 
                 let encodeQueryUnavailableInCurrentEra
                         = jsonifierToAeson
@@ -552,6 +599,21 @@ validateQuery json parser resultRef = parallel $ specify (toString $ getSchemaRe
   where
     queryRef :: SchemaRef
     queryRef = "ogmios.wsp.json#/properties/Query/properties/args/properties/query"
+
+generateTestVectors
+    :: (Int, String)
+    -> Gen a
+    -> (a -> Json)
+    -> IO ()
+generateTestVectors (0, _) _ _ = pure ()
+generateTestVectors (n, filepath) gen encode = do
+    let workDir = $(getProjectRoot) <> "/test/vectors/" <> filepath <> "/"
+    let padded = reverse . take 3 . reverse . ("00" <>) . show
+    let filename f = workDir <> padded f <> ".json"
+    let xs = let seed = 14 in generateWith (vectorOf n gen) seed
+    createDirectoryIfMissing True workDir
+    forConcurrently_ (zip [0..] xs) $ \(i :: Word, x) -> do
+        BS.writeFile (filename i) (jsonToByteString $ encode x)
 
 -- | Simple run a QuickCheck property
 runQuickCheck :: Property -> IO ()

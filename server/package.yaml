@@ -123,10 +123,12 @@ tests:
     ghc-options: *ghc-options-test
     dependencies:
     - aeson
+    - bytestring
     - cardano-client
     - cardano-ledger-alonzo
     - cardano-ledger-core
     - cardano-slotting
+    - directory
     - file-embed
     - generic-arbitrary
     - generics-sop
