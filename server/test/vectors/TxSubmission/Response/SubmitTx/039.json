@@ -1,0 +1,1 @@
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SubmitTx","result":{"SubmitFail":[{"delegateNotRegistered":"pool1k944da0vqe97dtpu4dsrtmaws6ekdnpacjsd2utq84cw2jk52f0"}]},"reflection":null}

@@ -1,0 +1,1 @@
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"RequestNext","result":{"RollForward":{"block":{"byron":{"hash":"d0d87576422100a3d64073ef624d6492e403d38aa5377e12b43ce3b2d2d9af8c","header":{"prevHash":"aad78a13b50a014a24633c7d44fd8f8d18f67bbb3fa9cbcedf834ac899759dcd","epoch":0,"blockHeight":16897703540569403639}}},"tip":"origin"}},"reflection":14}

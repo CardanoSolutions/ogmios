@@ -1,0 +1,1 @@
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"RequestNext","result":{"RollBackward":{"point":{"slot":9573,"hash":"e88bd757ad5b9bedf372d8d3f0cf6c962a469db61a265f6418e1ffed86da29ec"},"tip":{"slot":32125,"hash":"642206314f534b29ad297d82440a5f9f210e30ca5ced805a587ca402de927342","blockNo":1}}},"reflection":null}

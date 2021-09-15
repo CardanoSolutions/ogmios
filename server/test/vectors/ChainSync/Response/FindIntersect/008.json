@@ -1,0 +1,1 @@
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"FindIntersect","result":{"IntersectionNotFound":{"tip":"origin"}},"reflection":null}
