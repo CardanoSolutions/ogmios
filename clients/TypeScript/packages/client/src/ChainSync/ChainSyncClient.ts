@@ -68,10 +68,14 @@ export const createChainSyncClient = async (
     const responseHandler = options?.sequential !== false
       ? fastq.promise(messageHandler, 1).push
       : messageHandler
-    socket.on('message', (message: string) => {
+    socket.on('message', async (message: string) => {
       const response: Ogmios['RequestNextResponse'] = safeJSON.parse(message)
       if (response.methodname === 'RequestNext') {
-        responseHandler(response)
+        try {
+          await responseHandler(response)
+        } catch (error) {
+          console.error(error)
+        }
       }
     })
     return resolve({
