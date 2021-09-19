@@ -45,7 +45,7 @@ describe('Local state queries', () => {
     it('uses the provided point for reproducible queries across clients', async () => {
       const context = await dummyInteractionContext()
       const tip = await ledgerTip(context)
-      delay(2000)
+      await delay(2000)
       const clientA = await createStateQueryClient(context, { point: tip })
       const clientB = await createStateQueryClient(context, { point: tip })
       const tipA = await clientA.ledgerTip()
@@ -59,7 +59,7 @@ describe('Local state queries', () => {
       const context = await dummyInteractionContext()
       const client = await createStateQueryClient(context)
       const tip = await client.ledgerTip()
-      delay(2000)
+      await delay(2000)
       await client.acquire(tip)
       const tipAgain = await client.ledgerTip()
       expect(tip).toEqual(tipAgain)
@@ -178,9 +178,9 @@ describe('Local state queries', () => {
         expect(item).toHaveProperty('delegate')
         expect(item).toHaveProperty('rewards')
       })
-      it('returns an error when given a malformed key hash', () => {
+      it('returns an error when given a malformed key hash', async () => {
         const notKeyHashes = ['patate'] as Hash16[]
-        expect(delegationsAndRewards(context, notKeyHashes)).rejects.toBeInstanceOf(UnknownResultError)
+        await expect(delegationsAndRewards(context, notKeyHashes)).rejects.toBeInstanceOf(UnknownResultError)
       })
     })
     describe('eraStart', () => {

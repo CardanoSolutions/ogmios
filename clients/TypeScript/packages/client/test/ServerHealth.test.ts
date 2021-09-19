@@ -30,7 +30,7 @@ describe('ServerHealth', () => {
         const connection = createConnectionObject({ host: 'non-existent' })
         await getServerHealth(connection)
       } catch (error) {
-        expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
+        await expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
       }
     })
   })

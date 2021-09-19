@@ -17,7 +17,7 @@ describe('TxSubmission', () => {
         await createTxSubmissionClient(context)
         // expect(client).toBeUndefined()
       } catch (error) {
-        expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
+        await expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
       }
       try {
         const context = await dummyInteractionContext('LongRunning', { port: 1111 })

@@ -13,6 +13,7 @@ module.exports = {
       "unix"
     ],
     "no-unused-expressions": 0,
-    "no-useless-constructor": 0
+    "no-useless-constructor": 0,
+    "@typescript-eslint/no-floating-promises": 1
   }
 }

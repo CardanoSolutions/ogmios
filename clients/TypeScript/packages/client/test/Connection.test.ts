@@ -128,7 +128,7 @@ describe('Connection', () => {
           await context.socket.close()
         }
       } catch (error) {
-        expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
+        await expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
       }
       try {
         context = await createInteractionContext(
