@@ -11,11 +11,13 @@ import { ServerNotReady } from './errors'
 export interface ConnectionConfig {
   host?: string,
   port?: number,
-  tls?: boolean
+  tls?: boolean,
+  maxPayload?: number
 }
 
 /** @category Connection */
 export interface Connection extends Required<ConnectionConfig> {
+  maxPayload: number,
   address: {
     http: string
     webSocket: string
@@ -56,10 +58,12 @@ export type WebSocketCloseHandler = (
 
 /** @category Constructor */
 export const createConnectionObject = (config?: ConnectionConfig): Connection => {
+  const _128MB = 128 * 1024 * 1024
   const base = {
     host: config?.host ?? 'localhost',
     port: config?.port ?? 1337,
-    tls: config?.tls ?? false
+    tls: config?.tls ?? false,
+    maxPayload: config?.maxPayload ?? _128MB
   }
   const hostAndPort = `${base.host}:${base.port}`
   return {
@@ -85,7 +89,7 @@ export const createInteractionContext = async (
     if (health.lastTipUpdate === null) {
       return reject(new ServerNotReady(health))
     }
-    const socket = new WebSocket(connection.address.webSocket)
+    const socket = new WebSocket(connection.address.webSocket, { maxPayload: connection.maxPayload })
 
     const closeOnCompletion = (options?.interactionType || 'LongRunning') === 'OneTime'
     const afterEach = (cb: () => void) => {

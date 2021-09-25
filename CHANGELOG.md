@@ -5,22 +5,37 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
-### [4.0.1] - 2021-09-08
+### [4.1.0] - 2021-09-08
 
 #### Added
 
-N/A
+##### Server
 
-#### Changed
-
+- Generate and store [test vectors](https://github.com/CardanoSolutions/ogmios/tree/master/server/test/vectors) for various JSON requests and responses. This should ease integration for many clients who seek for good coverage of the server inputs/outputs.
 
 ##### TypeScript Client
 
-- The TypeScript `StateQueryClient` now wraps every query in a try/catch to cope with malformed queries leading to client `fault` results from the server.
+- The `ConnectionConfig` has an additional, optional, configuration parameter `maxPayload` to configure the maximum allowed message size in bytes. The default is chosen quite large as the `utxo` query can result in large payloads. 
+
+#### Changed
+
+##### Server
+
+N/A
+
+##### TypeScript Client
+
+- The `StateQueryClient` now wraps every query in a try/catch to cope with malformed queries leading to client `fault` results from the server.
 - Type definitions for `QueryResponse[poolIds]` and `QueryResponse[poolParameters]` are no longer marked as "optional".
 - Fixed bug #125 where empty results of `delegationAndRewards` would cause the client to throw an exception.
 
 #### Removed
+
+##### Server
+
+N/A
+
+##### TypeScript Client
 
 N/A
 
