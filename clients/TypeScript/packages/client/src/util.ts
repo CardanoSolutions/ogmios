@@ -7,7 +7,9 @@ import {
   BlockByron,
   BlockMary,
   BlockShelley,
-  Point
+  EpochBoundaryBlock,
+  Point,
+  StandardBlock
 } from '@cardano-ogmios/schema'
 import { findIntersect } from './ChainSync'
 import { WebSocketClosed, TipIsOriginError } from './errors'
@@ -98,6 +100,14 @@ export const isAlonzoBlock = (block: Block): block is { alonzo: BlockAlonzo } =>
 /** @category Helper */
 export const isByronBlock = (block: Block): block is { byron: BlockByron } =>
   (block as { byron: BlockByron }).byron !== undefined
+
+/** @category Helper */
+export const isByronStandardBlock = (block: Block): block is { byron: StandardBlock } =>
+  isByronBlock(block) && (block.byron as StandardBlock).body !== undefined
+
+/** @category Helper */
+export const isByronEpochBoundaryBlock = (block: Block): block is { byron: EpochBoundaryBlock } =>
+  isByronBlock(block) && (block.byron as StandardBlock).body === undefined
 
 /** @category Helper */
 export const isMaryBlock = (block: Block): block is { mary: BlockMary } =>

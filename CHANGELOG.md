@@ -19,6 +19,8 @@ pre: "<b>6. </b>"
 
 - The `ConnectionConfig` has an additional, optional, configuration parameter `maxPayload` to configure the maximum allowed message size in bytes. The default is chosen quite large as the `utxo` query can result in large payloads. 
 
+- New helpers `isByronEpochBoundaryBlock` and `isByronStandardBlock`.
+
 #### Changed
 
 ##### Server
