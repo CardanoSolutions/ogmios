@@ -13,8 +13,12 @@ N/A
 
 #### Changed
 
+
+##### TypeScript Client
+
 - The TypeScript `StateQueryClient` now wraps every query in a try/catch to cope with malformed queries leading to client `fault` results from the server.
 - Type definitions for `QueryResponse[poolIds]` and `QueryResponse[poolParameters]` are no longer marked as "optional".
+- Fixed bug #125 where empty results of `delegationAndRewards` would cause the client to throw an exception.
 
 #### Removed
 

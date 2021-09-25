@@ -178,6 +178,11 @@ describe('Local state queries', () => {
         expect(item).toHaveProperty('delegate')
         expect(item).toHaveProperty('rewards')
       })
+      it('returns an empty object when there are no rewards', async () => {
+        const stakeKeyHashes = ['00000000000000000000000000000000000000000000000000000000'] as Hash16[]
+        const result = await delegationsAndRewards(context, stakeKeyHashes)
+        expect(result).toBeDefined()
+      })
       it('returns an error when given a malformed key hash', async () => {
         const notKeyHashes = ['patate'] as Hash16[]
         await expect(delegationsAndRewards(context, notKeyHashes)).rejects.toBeInstanceOf(UnknownResultError)

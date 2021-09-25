@@ -13,8 +13,14 @@ const isEraMismatch = (result: Ogmios['QueryResponse[delegationsAndRewards]']['r
   (result as EraMismatch).eraMismatch !== undefined
 
 const isDelegationsAndRewardsByAccounts = (result: Ogmios['QueryResponse[delegationsAndRewards]']['result']): result is DelegationsAndRewardsByAccounts => {
-  const sample = Object.entries(result as DelegationsAndRewards)[0]
-  return typeof sample[0] === 'string' && (sample[1].delegate !== undefined || sample[1].rewards !== undefined)
+  if (typeof result === 'object' && result != null) {
+    if (Object.entries(result).length > 0) {
+      const sample = Object.entries(result as DelegationsAndRewards)[0]
+      return typeof sample[0] === 'string' && (sample[1].delegate !== undefined || sample[1].rewards !== undefined)
+    } else {
+      return true // Empty Object
+    }
+  }
 }
 
 /**
