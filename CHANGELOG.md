@@ -13,6 +13,8 @@ pre: "<b>6. </b>"
 
 - Generate and store [test vectors](https://github.com/CardanoSolutions/ogmios/tree/master/server/test/vectors) for various JSON requests and responses. This should ease integration for many clients who seek for good coverage of the server inputs/outputs.
 
+- Documented [example state queries](https://ogmios.dev/mini-protocols/local-state-query/#example-queries) in the user-guide.
+
 ##### TypeScript Client
 
 - The `ConnectionConfig` has an additional, optional, configuration parameter `maxPayload` to configure the maximum allowed message size in bytes. The default is chosen quite large as the `utxo` query can result in large payloads. 

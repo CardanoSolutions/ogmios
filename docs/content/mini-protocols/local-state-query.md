@@ -271,3 +271,166 @@ Here's a walk-though describing what happens when running the above script:
 {{% notice warning %}}
 Be aware that it is possible for an `Acquire` request to fail even if (and in particular if) made immediately after finding the ledger tip. In Ouroboros Praos frequent small rollbacks of the chain are not rare and the few last blocks of the chain can be a bit volatile. A real application may require more elaborate error handling than the toy example above. 
 {{% /notice %}}
+
+## Example Queries
+
+#### currentEpoch
+
+```json
+{
+  "query": "currentEpoch"
+}
+```
+
+#### currentProtocolParameters
+
+```json
+{
+  "query": "currentProtocolParameters"
+}
+```
+
+#### delegationsAndRewards   
+
+```json
+{
+  "query": {
+    "delegationAndRewards": [
+      "7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8"
+    ]
+  }
+}
+```
+
+#### eraStart       
+
+```json
+{
+  "query": "eraStart"
+}
+```
+
+#### genesisConfig
+
+```json
+{
+  "query": "genesisConfig"
+}
+```
+
+#### ledgerTip
+
+```json
+{
+  "query": "ledgerTip"
+}
+```
+
+
+#### nonMyopicMemberRewards (by credentials)
+
+```json
+{
+  "query": {
+    "nonMyopicMemberRewards": [
+      "7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8"
+    ]
+  }
+}
+```
+
+#### nonMyopicMemberRewards (by amounts)
+
+```json
+{
+  "query": {
+    "nonMyopicMemberRewards": [
+      42000000
+    ]
+  }
+}
+```
+
+#### poolIds
+
+```json
+{
+  "query": "poolIds"
+}
+```
+
+#### poolParameters
+
+```json
+{
+  "query": {
+    "poolParameters": [
+      "pool1pk2wzarn9mu64eel89dtg3g8h75c84jsy0q349glpsewgd7sdls",
+      "4acf2773917c7b547c576a7ff110d2ba5733c1f1ca9cdc659aea3a56"
+    ]
+  }
+}
+```
+
+#### poolsRanking
+
+
+```json
+{
+  "query": "poolsRanking"
+}
+```
+
+#### proposedProtocolParameters
+
+
+```json
+{
+  "query": "proposedProtocolParameters"
+}
+```
+
+#### rewardsProvenance
+
+
+```json
+{
+  "query": "rewardsProvenance"
+}
+```
+
+#### stakeDistribution
+
+```json
+{
+  "query": "stakeDistribution"
+}
+```
+
+#### utxo (by Address)
+
+```json
+{
+  "query": {
+    "utxo": [
+      "addr1wx66ue36465w2qq40005h2hadad6pnjht8mu6sgplsfj74qhpnf3s",
+      "addr1xyxefct5wvh0n2h88uu44dz9q7l6nq7k2q3uzx54ruxr9e93ddt0tmqxf0n2c09tvq67lt5xkdnvc0wy5r2hzcpawrjsjk6m63"
+    ]
+  }
+}
+```
+
+#### utxo (by TxIn)
+
+```json
+{
+  "query": {
+    "utxo": [
+      {
+        "txId": "ee155ace9c40292074cb6aff8c9ccdd273c81648ff1149ef36bcea6ebb8a3e25",
+        "index": 2
+      }
+    ]
+  }
+}
+```
