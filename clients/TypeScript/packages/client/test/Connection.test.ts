@@ -2,7 +2,7 @@ import {
   createInteractionContext,
   createConnectionObject,
   InteractionContext
-} from '@src/Connection'
+} from '../src'
 
 describe('Connection', () => {
   describe('createConnectionObject', () => {

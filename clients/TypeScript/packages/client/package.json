@@ -19,8 +19,8 @@
     "lint": "eslint --ignore-path ../../.eslintignore \"**/*.ts\"",
     "prepack": "yarn build",
     "test": "yarn test:nodejs && yarn test:chrome",
-    "test:nodejs": "jest -c ./test/jest.config.js",
-    "test:chrome": "jest -c test/jest.config.puppeteer.js"
+    "test:nodejs": "jest -c ./jest.config.js",
+    "test:chrome": "jest -c ./jest.config.puppeteer.js"
   },
   "devDependencies": {
     "@types/expect-puppeteer": "^4.4.5",

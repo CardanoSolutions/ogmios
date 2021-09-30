@@ -1,5 +1,4 @@
-import { getServerHealth } from '@src/ServerHealth'
-import { createConnectionObject } from '@src/Connection'
+import { createConnectionObject, getServerHealth } from '../src'
 
 const expectHealth = (obj: any): void => {
   const keys = Object.keys(obj)
