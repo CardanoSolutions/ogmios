@@ -4,9 +4,7 @@ import {
   Metadata,
   TxOut
 } from '@cardano-ogmios/schema'
-import {
-  safeJSON
-} from '@src/util'
+import { safeJSON } from '../src'
 
 describe('util', () => {
   describe('safeJSON', () => {

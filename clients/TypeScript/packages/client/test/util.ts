@@ -2,7 +2,7 @@ import {
   ConnectionConfig,
   createInteractionContext,
   InteractionType
-} from '@src/Connection'
+} from '../src'
 
 export const dummyInteractionContext = async (
   interactionType: InteractionType = 'LongRunning',

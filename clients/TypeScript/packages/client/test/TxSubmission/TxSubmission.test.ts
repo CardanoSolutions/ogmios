@@ -1,12 +1,11 @@
-import { errors, createTxSubmissionClient, submitTx } from '@src/TxSubmission'
-import { InteractionContext } from '@src/Connection'
-import { dummyInteractionContext } from './util'
+import { InteractionContext, TxSubmission } from '../../src'
+import { dummyInteractionContext } from '../util'
 
 describe('TxSubmission', () => {
   describe('TxSubmissionClient', () => {
     it('opens a connection on construction, and closes it after shutdown', async () => {
       const context = await dummyInteractionContext()
-      const client = await createTxSubmissionClient(context)
+      const client = await TxSubmission.createTxSubmissionClient(context)
       await client.shutdown()
       expect(context.socket.readyState).not.toBe(context.socket.OPEN)
     })
@@ -14,14 +13,14 @@ describe('TxSubmission', () => {
       // let client: TxSubmissionClient
       try {
         const context = await dummyInteractionContext('LongRunning', { host: 'non-existent' })
-        await createTxSubmissionClient(context)
+        await TxSubmission.createTxSubmissionClient(context)
         // expect(client).toBeUndefined()
       } catch (error) {
         await expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
       }
       try {
         const context = await dummyInteractionContext('LongRunning', { port: 1111 })
-        await createTxSubmissionClient(context)
+        await TxSubmission.createTxSubmissionClient(context)
         // expect(client).toBeUndefined()
         // if (client.context.socket.readyState === client.context.socket.OPEN) {
         //   await client.shutdown()
@@ -38,7 +37,7 @@ describe('TxSubmission', () => {
 
     it('rejects with an array of named errors', async () => {
       try {
-        await submitTx(
+        await TxSubmission.submitTx(
           context,
           ('83a40081825820e1e86da6446c7f81da8d5e440bb0d4eed0f1530ba15bf77e49c33d' +
             '6f050d8fb500018182581d60ff7b4521589238cfb9c26870edfa782541e615444744' +
@@ -52,11 +51,11 @@ describe('TxSubmission', () => {
         await expect(error).toHaveLength(2)
         // NOTE: We can't predict in which order will the server return the errors.
         try {
-          await expect(error[0]).toBeInstanceOf(errors.BadInputs.Error)
-          await expect(error[1]).toBeInstanceOf(errors.ValueNotConserved.Error)
+          await expect(error[0]).toBeInstanceOf(TxSubmission.errors.BadInputs.Error)
+          await expect(error[1]).toBeInstanceOf(TxSubmission.errors.ValueNotConserved.Error)
         } catch (e) {
-          await expect(error[1]).toBeInstanceOf(errors.BadInputs.Error)
-          await expect(error[0]).toBeInstanceOf(errors.ValueNotConserved.Error)
+          await expect(error[1]).toBeInstanceOf(TxSubmission.errors.BadInputs.Error)
+          await expect(error[0]).toBeInstanceOf(TxSubmission.errors.ValueNotConserved.Error)
         }
       }
     })

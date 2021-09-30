@@ -1,7 +1,7 @@
 import {
   ChainSyncMessageHandlers,
   createChainSyncClient
-} from '@src/ChainSync'
+} from '../../src/ChainSync'
 import delay from 'delay'
 import {
   Block,
@@ -12,7 +12,7 @@ import {
   Hash16,
   PointOrOrigin
 } from '@cardano-ogmios/schema'
-import { dummyInteractionContext } from './util'
+import { dummyInteractionContext } from '../util'
 
 const randomMsUpTo = (max: number) => (Math.random() * (max - 5 + 1)) << 0
 
