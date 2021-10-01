@@ -17,7 +17,7 @@ pre: "<b>6. </b>"
 
 ##### TypeScript Client
 
-- The `ConnectionConfig` has an additional, optional, configuration parameter `maxPayload` to configure the maximum allowed message size in bytes. The default is chosen quite large as the `utxo` query can result in large payloads. 
+- The `ConnectionConfig` has an additional, optional, configuration parameter `maxPayload` to configure the maximum allowed message size in bytes. The default is chosen quite large as the `utxo` query can result in large payloads.
 
 - New helpers `isByronEpochBoundaryBlock` and `isByronStandardBlock`.
 
@@ -32,6 +32,7 @@ N/A
 - The `StateQueryClient` now wraps every query in a try/catch to cope with malformed queries leading to client `fault` results from the server.
 - Type definitions for `QueryResponse[poolIds]` and `QueryResponse[poolParameters]` are no longer marked as "optional".
 - Fixed bug #125 where empty results of `delegationAndRewards` would cause the client to throw an exception.
+- Handled some floating promises.
 
 #### Removed
 
@@ -65,13 +66,13 @@ N/A
 
 - The TypeScript `ChainSyncClient` now implements an in-memory queue to ensure `requestNext` responses are processed sequentially when there are async operations in the message handlers.  This behaviour can be bypassed where sequential processsing is not required, by setting the new construction option `sequential` to `false`.
 
-- The TypeScript `StateQueryClient` can now re-acquire new points at will, useful for long-running clients for which previously acquired points may expire. 
+- The TypeScript `StateQueryClient` can now re-acquire new points at will, useful for long-running clients for which previously acquired points may expire.
 
 - The TypeScript client is now [fully documented](https://ogmios.dev/api/modules/_cardano_ogmios_client.html)!
 
 - Nested logs are now also structured, in particular those coming from the `Handshake` or `TxSubmission` protocols. Before, any message from these layers where actually plain strings with unintelligible gibberish. Now, the submitted transaction payload is shown encoded as hexadecimals and errors are also serialized to json using the same model / codec as the one used for websockets. The handshake is also more verbose now clearly showing what version is being requested and what the node replies / select. All in all, better logs.
 
-- The Dockerfile now includes a build definition for building `cardano-node` and `ogmios` into the **same image**, which is the default and suggested mode of operation. To build an image with only Ogmios, use the build `--target ogmios`. Docker Hub now hosts two image repositories: `cardanosolutions/cardano-node-ogmios` and `cardanosolutions/ogmios`.  
+- The Dockerfile now includes a build definition for building `cardano-node` and `ogmios` into the **same image**, which is the default and suggested mode of operation. To build an image with only Ogmios, use the build `--target ogmios`. Docker Hub now hosts two image repositories: `cardanosolutions/cardano-node-ogmios` and `cardanosolutions/ogmios`.
 
 - Docker Hub images are now tagged with a network suffix (e.g. `-mainnet`). In the case of mainnet, the `-mainnet` suffix is optional, and points to the same build as the defaults.
 
@@ -109,7 +110,7 @@ N/A
 - Asset quantities and transaction metadata's integers are now parsed as native `BigInt`.
 
 - Changes in the TypeScript's client:
-  - State queries (resp. the `StateQueryClient`) now automatically runs queries against the last known tip if no explicit point is provided. It used to acquire a point on the first query which would eventually become too old. The behavior is now equivalent to acquiring a new point on **every** query! 
+  - State queries (resp. the `StateQueryClient`) now automatically runs queries against the last known tip if no explicit point is provided. It used to acquire a point on the first query which would eventually become too old. The behavior is now equivalent to acquiring a new point on **every** query!
 
 
   - `SubmitTx` no-longer returns Byron errors. Consequently, submit errors are no longer scoped under `errors.byron` or `errors.shelley` but simply `errors`.
