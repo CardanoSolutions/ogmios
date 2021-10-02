@@ -50,7 +50,7 @@ packages:
 
 
 - git: https://github.com/input-output-hk/cardano-base
-  commit: cb0f19c85e5bb5299839ad4ed66af6fa61322cc4
+  commit: e8a48cf0500b03c744c7fc6f2fedb86e8bdbe055
   subdirs:
   - base-deriving-via
   - binary
@@ -67,7 +67,7 @@ packages:
   commit: 07397f0e50da97eaa0575d93bee7ac4b2b2576ec
 
 - git: https://github.com/input-output-hk/cardano-ledger-specs
-  commit: 6aa1cd0a64a464371b94d4ac182e7e2cddc83a36
+  commit: f827a4321e42f528e25f6079f7af3eb18f10d391
   subdirs:
   - alonzo/impl
   - alonzo/test
@@ -87,7 +87,7 @@ packages:
   - shelley-ma/shelley-ma-test
 
 - git: https://github.com/input-output-hk/cardano-node
-  commit: 4c59442958072657812c6c0bb8e0b4ab85ce1ba2
+  commit: 0fb43f4e3da8b225f4f86557aed90a183981a64f
   subdirs:
   - cardano-api
 
@@ -119,7 +119,7 @@ packages:
   - tracer-transformers
 
 - git: https://github.com/input-output-hk/ouroboros-network
-  commit: 877ce057ff6fb086474c8eaad53f2b7f0e0fce6b
+  commit: aa7bc087737edca29133844b14bb7cba2cd213f2
   subdirs:
   - io-classes
   - io-sim
