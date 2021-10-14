@@ -1,6 +1,7 @@
 import {
   EraMismatch,
   Ogmios,
+  ProtocolParametersAlonzo,
   ProtocolParametersShelley
 } from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
@@ -10,19 +11,19 @@ import { Query } from '../Query'
 const isEraMismatch = (result: Ogmios['QueryResponse[currentProtocolParameters]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
 
-const isProtocolParameters = (result: Ogmios['QueryResponse[currentProtocolParameters]']['result']): result is ProtocolParametersShelley =>
-  (result as ProtocolParametersShelley).minFeeCoefficient !== undefined
+const isProtocolParameters = (result: Ogmios['QueryResponse[currentProtocolParameters]']['result']): result is ProtocolParametersAlonzo | ProtocolParametersShelley =>
+  (result as ProtocolParametersAlonzo).coinsPerUtxoWord !== undefined || (result as ProtocolParametersShelley).minUtxoValue !== undefined
 
 /**
  * Get the protocol parameters of the current epoch / era.
  *
  * @category StateQuery
  */
-export const currentProtocolParameters = (context: InteractionContext): Promise<ProtocolParametersShelley> =>
+export const currentProtocolParameters = (context: InteractionContext): Promise<ProtocolParametersAlonzo | ProtocolParametersShelley> =>
   Query<
     Ogmios['Query'],
     Ogmios['QueryResponse[currentProtocolParameters]'],
-    ProtocolParametersShelley
+    ProtocolParametersAlonzo | ProtocolParametersShelley
   >({
     methodName: 'Query',
     args: {

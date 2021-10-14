@@ -9,6 +9,8 @@ import {
   BlockShelley,
   EpochBoundaryBlock,
   Point,
+  ProtocolParametersAlonzo,
+  ProtocolParametersShelley,
   StandardBlock
 } from '@cardano-ogmios/schema'
 import { findIntersect } from './ChainSync'
@@ -120,3 +122,11 @@ export const isShelleyBlock = (block: Block): block is { shelley: BlockShelley }
 /** @internal */
 export const isEmptyObject = (obj: Object): boolean =>
   obj !== undefined && Object.keys(obj).length === 0 && (obj.constructor === Object || obj.constructor === undefined)
+
+/** @category Helper */
+export const isAlonzoProtocolParameters = (params: ProtocolParametersShelley | ProtocolParametersAlonzo): params is ProtocolParametersAlonzo =>
+  (params as ProtocolParametersAlonzo).coinsPerUtxoWord !== undefined
+
+/** @category Helper */
+export const isShelleyProtocolParameters = (params: ProtocolParametersShelley | ProtocolParametersAlonzo): params is ProtocolParametersShelley =>
+  (params as ProtocolParametersShelley).minUtxoValue !== undefined
