@@ -149,12 +149,15 @@ The order of the list matters! The node will intersect with the best match, cons
 
 For several applications, it may be quite useful to know the last point of each era; This allows to start syncing blocks from the beginning of a particular era. For instance, after seeking an intersection with the last point of the Shelley, `RequestNext` would yield the first block of the Allegra era. Handy!
 
-| Era Bound                      | SlotNo     | Hash                                                               |
-| ---                            | ---        | ---                                                                |
-| Last _Byron_ Block (mainnet)   | `4492799`  | `f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457` |
-| Last _Shelley_ Block (mainnet) | `16588737` | `4e9bbbb67e3ae262133d94c3da5bffce7b1127fc436e7433b87668dba34c354a` |
-| Last _Allegra_ Block (mainnet) | `23068793` | `69c44ac1dda2ec74646e4223bc804d9126f719b1c245dadc2ad65e8de1b276d7` |
-| Last _Mary_ Block (mainnet)    | N/A        | N/A                                                                |
+#### Mainnet
+
+| Era Bound            | SlotNo     | Hash                                                               |
+| ---                  | ---        | ---                                                                |
+| Last _Byron_ Block   | `4492799`  | `f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457` |
+| Last _Shelley_ Block | `16588737` | `4e9bbbb67e3ae262133d94c3da5bffce7b1127fc436e7433b87668dba34c354a` |
+| Last _Allegra_ Block | `23068793` | `69c44ac1dda2ec74646e4223bc804d9126f719b1c245dadc2ad65e8de1b276d7` |
+| Last _Mary_ Block    | `39916796` | `e72579ff89dc9ed325b723a33624b596c08141c7bd573ecfff56a1f7229e4d09` |
+| Last _Alonzo_ Block  | N/A        | N/A                                                                |
 
 Remember also that `"origin"` is a special point that can be queried and will always yield a success.
 
