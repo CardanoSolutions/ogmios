@@ -209,10 +209,13 @@ instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto))
         bytes <- parseBase16 utf8 <|> parseBase64 utf8
         deserialiseCBOR (fromStrict bytes) <|> deserialiseCBOR (wrap bytes)
       where
-        deserialiseCBOR =
-            either (fail . show) (pure . GenTxMary . snd)
-            .
-            Cbor.deserialiseFromBytes fromCBOR
+        tryCBOR gen = second (gen . snd) . Cbor.deserialiseFromBytes fromCBOR
+        deserialiseCBOR cbor =
+            either (fail . show) pure $
+                tryCBOR GenTxAlonzo cbor
+                <> tryCBOR GenTxMary cbor
+                <> tryCBOR GenTxAllegra cbor
+                <> tryCBOR GenTxShelley cbor
 
         -- Cardano tools have a tendency to wrap cbor in cbor (e.g cardano-cli).
         -- In particular, a `GenTx` is expected to be prefixed with a cbor tag
