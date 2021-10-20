@@ -38,11 +38,6 @@ import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
     ( SlotNo (..), WithOrigin (..) )
-import Data.ByteString.Base16
-    ( decodeBase16 )
-import Data.ByteString.Base64
-    ( decodeBase64 )
-import Data.SOP.Strict
 import Ogmios.Data.Json.Query
     ( QueryInEra, encodeEraMismatch, encodeOneEraHash, encodePoint )
 import Ouroboros.Consensus.Byron.Ledger.Block
@@ -217,7 +212,7 @@ data GenTxCtor crypto era = GenTxCtor (GenTx (ShelleyBlock era) -> CardanoGenTx 
 instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto))
   where
     parseJSON = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
-        bytes <- parseBase16 utf8 <|> parseBase64 utf8
+        bytes <- decodeBase16 utf8 <|> decodeBase64 utf8
         deserialiseCBOR (fromStrict bytes) <|> deserialiseCBOR (wrap bytes)
       where
         genTxs :: NP (GenTxCtor crypto) (ShelleyBasedEras crypto)
@@ -243,12 +238,6 @@ instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto))
         -- In particular, a `GenTx` is expected to be prefixed with a cbor tag
         -- `24` and serialized as CBOR bytes `58xx`.
         wrap = Cbor.toLazyByteString . wrapCBORinCBOR Cbor.encodePreEncoded
-
-        parseBase16 :: ByteString -> Json.Parser ByteString
-        parseBase16 = either (fail . toString) pure . decodeBase16
-
-        parseBase64 :: ByteString -> Json.Parser ByteString
-        parseBase64 = either (fail . toString) pure . decodeBase64
 
 instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
     parseJSON json = parseOrigin json <|> parsePoint json

@@ -31,6 +31,11 @@ module Ogmios.Data.Json.Prelude
     , Coin (..)
     , StrictMaybe (..)
 
+      -- * Decoder
+    , decodeBase16
+    , decodeBase58
+    , decodeBase64
+
       -- * Basic Types
     , encodeBlockNo
     , encodeBool
@@ -138,6 +143,9 @@ import qualified Data.Aeson.Parser.Internal as Json hiding
     ( scientific )
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteArray as BA
+import qualified Data.ByteString.Base16 as B16
+import qualified Data.ByteString.Base58 as B58
+import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map.Strict as Map
 
@@ -485,3 +493,16 @@ encodeStrictMaybe encodeElem = \case
     SNothing -> encodeNull
     SJust a  -> encodeElem a
 {-# INLINABLE encodeStrictMaybe #-}
+
+--
+-- Decoder
+--
+
+decodeBase16 :: ByteString -> Json.Parser ByteString
+decodeBase16 = either (fail . toString) pure . B16.decodeBase16
+
+decodeBase58 :: ByteString -> Json.Parser ByteString
+decodeBase58 = maybe mempty pure . B58.decodeBase58 B58.bitcoinAlphabet
+
+decodeBase64 :: ByteString -> Json.Parser ByteString
+decodeBase64 = either (fail . toString) pure . B64.decodeBase64
