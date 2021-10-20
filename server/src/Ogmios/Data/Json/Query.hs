@@ -63,10 +63,6 @@ import Cardano.Ledger.SafeHash
     ( unsafeMakeSafeHash )
 import Cardano.Slotting.Slot
     ( EpochNo (..), WithOrigin (..) )
-import Data.ByteString.Base16
-    ( decodeBase16 )
-import Data.ByteString.Base58
-    ( bitcoinAlphabet, decodeBase58 )
 import Ouroboros.Consensus.Cardano.Block
     ( BlockQuery (..), CardanoBlock, CardanoEras )
 import Ouroboros.Consensus.HardFork.Combinator
@@ -972,10 +968,10 @@ parseAddress = Json.withText "Address" $ choice "address"
                 maybe mempty pure $ Bech32.dataPartToBytes dataPart
 
     fromBase58 =
-        maybe mempty pure . decodeBase58 bitcoinAlphabet . encodeUtf8
+        decodeBase58 . encodeUtf8
 
     fromBase16 =
-        either (fail . show) pure . decodeBase16 . encodeUtf8
+        decodeBase16 . encodeUtf8
 
 parseCoin
     :: Json.Value
@@ -1023,7 +1019,7 @@ parsePoolId = Json.withText "PoolId" $ choice "poolId"
                 maybe empty pure $ Bech32.dataPartToBytes dataPart
 
     fromBase16 =
-        either (fail . show) pure . decodeBase16 . encodeUtf8
+        decodeBase16 . encodeUtf8
 
 parseTxIn
     :: forall crypto. (Crypto crypto)

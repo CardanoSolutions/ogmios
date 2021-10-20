@@ -38,10 +38,6 @@ import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
     ( SlotNo (..), WithOrigin (..) )
-import Data.ByteString.Base16
-    ( decodeBase16 )
-import Data.ByteString.Base64
-    ( decodeBase64 )
 import Ogmios.Data.Json.Query
     ( QueryInEra, encodeEraMismatch, encodeOneEraHash, encodePoint )
 import Ouroboros.Consensus.Byron.Ledger.Block
@@ -206,24 +202,23 @@ decodeOneEraHash =
 instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto))
   where
     parseJSON = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
-        bytes <- parseBase16 utf8 <|> parseBase64 utf8
-        deserialiseCBOR (fromStrict bytes) <|> deserialiseCBOR (wrap bytes)
+        bytes <- decodeBase16 utf8 <|> decodeBase64 utf8
+        asum $ deserialiseCBOR GenTxAlonzo <$> [fromStrict bytes, wrap bytes]
       where
-        deserialiseCBOR =
-            either (fail . show) (pure . GenTxMary . snd)
-            .
-            Cbor.deserialiseFromBytes fromCBOR
-
         -- Cardano tools have a tendency to wrap cbor in cbor (e.g cardano-cli).
         -- In particular, a `GenTx` is expected to be prefixed with a cbor tag
         -- `24` and serialized as CBOR bytes `58xx`.
+        wrap :: ByteString -> LByteString
         wrap = Cbor.toLazyByteString . wrapCBORinCBOR Cbor.encodePreEncoded
 
-        parseBase16 :: ByteString -> Json.Parser ByteString
-        parseBase16 = either (fail . toString) pure . decodeBase16
-
-        parseBase64 :: ByteString -> Json.Parser ByteString
-        parseBase64 = either (fail . toString) pure . decodeBase64
+        deserialiseCBOR
+            :: (GenTx (LastElem (CardanoEras crypto)) -> GenTx (CardanoBlock crypto))
+            -> LByteString
+            -> Json.Parser (GenTx (CardanoBlock crypto))
+        deserialiseCBOR mk =
+            either (fail . show) (pure . mk . snd)
+            .
+            Cbor.deserialiseFromBytes fromCBOR
 
 instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
     parseJSON json = parseOrigin json <|> parsePoint json
