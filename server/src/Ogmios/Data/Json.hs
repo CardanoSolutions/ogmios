@@ -47,18 +47,12 @@ import Ouroboros.Consensus.Byron.Ledger.Mempool
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoBlock
     , CardanoEras
-    , CardanoGenTx
     , GenTx (..)
     , HardForkApplyTxErr (..)
     , HardForkBlock (..)
-    , ShelleyBasedEras
     )
 import Ouroboros.Consensus.HardFork.Combinator
     ( OneEraHash (..) )
-import Ouroboros.Consensus.Shelley.Eras
-    ( ShelleyBasedEra )
-import Ouroboros.Consensus.Shelley.Ledger
-    ( ShelleyBlock )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..), genesisPoint, wrapCBORinCBOR )
 import Ouroboros.Network.Point
@@ -73,7 +67,6 @@ import qualified Codec.CBOR.Read as Cbor
 import qualified Codec.CBOR.Write as Cbor
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
-import qualified Data.ByteString.Lazy as LBS (ByteString)
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Byron as Byron
@@ -206,38 +199,26 @@ decodeOneEraHash
 decodeOneEraHash =
     either (const mempty) (pure . OneEraHash . toShort . hashToBytes) . decodeHash
 
-
-data GenTxCtor crypto era = GenTxCtor (GenTx (ShelleyBlock era) -> CardanoGenTx crypto)
-
 instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto))
   where
     parseJSON = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
         bytes <- decodeBase16 utf8 <|> decodeBase64 utf8
-        deserialiseCBOR (fromStrict bytes) <|> deserialiseCBOR (wrap bytes)
+        asum $ deserialiseCBOR GenTxAlonzo <$> [fromStrict bytes, wrap bytes]
       where
-        genTxs :: NP (GenTxCtor crypto) (ShelleyBasedEras crypto)
-        genTxs = GenTxCtor GenTxShelley
-            :* GenTxCtor GenTxAllegra
-            :* GenTxCtor GenTxMary
-            :* GenTxCtor GenTxAlonzo
-            :* Nil
-
-        tryCBOR gen = second (gen . snd) . Cbor.deserialiseFromBytes fromCBOR
-        deserialiseCBOR = either fail pure . tryGenTxs genTxs
-
-        tryGenTxs ::
-            forall eras.
-            Data.SOP.Strict.All ShelleyBasedEra eras
-            => NP (GenTxCtor crypto) eras
-            -> LBS.ByteString
-            -> Either String (GenTx (CardanoBlock crypto))
-        tryGenTxs ((GenTxCtor gen) :* gens) cbor = (first show $ tryCBOR gen cbor) <> tryGenTxs gens cbor
-        tryGenTxs Nil _ = fail ""
-
         -- Cardano tools have a tendency to wrap cbor in cbor (e.g cardano-cli).
         -- In particular, a `GenTx` is expected to be prefixed with a cbor tag
         -- `24` and serialized as CBOR bytes `58xx`.
+        wrap :: ByteString -> LByteString
         wrap = Cbor.toLazyByteString . wrapCBORinCBOR Cbor.encodePreEncoded
+
+        deserialiseCBOR
+            :: (GenTx (LastElem (CardanoEras crypto)) -> GenTx (CardanoBlock crypto))
+            -> LByteString
+            -> Json.Parser (GenTx (CardanoBlock crypto))
+        deserialiseCBOR mk =
+            either (fail . show) (pure . mk . snd)
+            .
+            Cbor.deserialiseFromBytes fromCBOR
 
 instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
     parseJSON json = parseOrigin json <|> parsePoint json
