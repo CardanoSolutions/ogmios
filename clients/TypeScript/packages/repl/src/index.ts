@@ -20,7 +20,9 @@ const logObject = (obj: Object) =>
 
 (async () => {
   const args = parser(process.argv)
+  const _512MB = 512 * 1024 * 1024
   const connection = {
+    maxPayload: _512MB,
     host: args.host,
     port: args.port
   } as ConnectionConfig
