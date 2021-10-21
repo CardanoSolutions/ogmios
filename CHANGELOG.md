@@ -5,6 +5,20 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [4.2.0] - 2021-10-XX
+
+##### Server
+
+#### Added
+
+- Enable Alonzo transaction in the submission protocol (oversight from previous releases). Doing so, explicit compiler warnings have been added to the relevant code to avoid overseeing this in the next upgrade.
+
+- Documented Mary last point to the _points of interests_ for the chain-sync protocol.
+
+##### TypeScript
+
+- N/A
+
 ### [4.1.0] - 2021-09-08
 
 #### Added
