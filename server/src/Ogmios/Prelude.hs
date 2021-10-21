@@ -5,6 +5,13 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
+-- This is used to define the 'keepRedundantContraint' helper here where it is
+-- safe to define, and use it in other Json modules where we do not want to turn
+-- -fno-warn-redundant-constraints for the entire module, but still want some
+-- redundant constraints in order to enforce some restriction at the type-level
+-- to not shoot ourselves in the foot by accident.
+{-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
+
 module Ogmios.Prelude
     ( -- * relude, minus STM
       module Relude
@@ -17,7 +24,9 @@ module Ogmios.Prelude
     , (^.)
 
       -- * type-level helpers
+    , keepRedundantConstraint
     , LastElem
+    , Or
     ) where
 
 import Data.Generics.Internal.VL.Lens
@@ -75,8 +84,17 @@ infixl 8 ^?
 s ^? l = getFirst (fmof l (First #. Just) s)
   where fmof l' f = getConst #. l' (Const #. f)
 
+keepRedundantConstraint :: c => Proxy c -> ()
+keepRedundantConstraint _ = ()
+
 -- | Access the last element of a type-level list.
 type family LastElem xs where
     LastElem ('[])     = TypeError ('Text "LastElem: empty list.")
     LastElem (x : '[]) = x
     LastElem (x : xs)  = LastElem xs
+
+type family Or (a :: Constraint) (b :: Constraint) :: Constraint where
+    Or () b = ()
+    Or (x ~ x) b = Or () b
+    Or a () = ()
+    Or a (x ~ x) = Or a ()

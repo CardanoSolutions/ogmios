@@ -5,13 +5,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 
--- This is used to define the 'keepRedundantContraint' helper here where it is
--- safe to define, and use it in other Json modules where we do not want to turn
--- -fno-warn-redundant-constraints for the entire module, but still want some
--- redundant constraints in order to enforce some restriction at the type-level
--- to not shoot ourselves in the foot by accident.
-{-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
-
 module Ogmios.Data.Json.Prelude
     ( -- * Prelude
       module Ogmios.Prelude
@@ -21,7 +14,6 @@ module Ogmios.Data.Json.Prelude
     , SerializationMode(..)
     , jsonToByteString
     , decodeWith
-    , keepRedundantConstraint
     , choice
     , inefficientEncodingToValue
     , (.:)
@@ -170,9 +162,6 @@ at :: Text -> Json.Value -> Maybe Json.Value
 at key = \case
     Json.Object m -> m !? key
     _ -> Nothing
-
-keepRedundantConstraint :: c => Proxy c -> ()
-keepRedundantConstraint _ = ()
 
 -- | Converts a 'Json.Encoding' to a 'Json.Value'. This is inefficient because
 -- the conversion is done by serializing the encoding to bytestring, and parsing

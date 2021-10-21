@@ -3,6 +3,7 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE TypeApplications #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -53,6 +54,10 @@ import Ouroboros.Consensus.Cardano.Block
     )
 import Ouroboros.Consensus.HardFork.Combinator
     ( OneEraHash (..) )
+import Ouroboros.Consensus.Shelley.Eras
+    ( MaryEra )
+import Ouroboros.Consensus.Shelley.Ledger
+    ( ShelleyBlock )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..), genesisPoint, wrapCBORinCBOR )
 import Ouroboros.Network.Point
@@ -203,7 +208,10 @@ instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto))
   where
     parseJSON = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
         bytes <- decodeBase16 utf8 <|> decodeBase64 utf8
-        asum $ deserialiseCBOR GenTxAlonzo <$> [fromStrict bytes, wrap bytes]
+        asum $
+            (deserialiseCBOR GenTxMary <$> [fromStrict bytes, wrap bytes])
+            ++
+            (deserialiseCBOR GenTxAlonzo <$> [fromStrict bytes, wrap bytes])
       where
         -- Cardano tools have a tendency to wrap cbor in cbor (e.g cardano-cli).
         -- In particular, a `GenTx` is expected to be prefixed with a cbor tag
@@ -212,13 +220,25 @@ instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto))
         wrap = Cbor.toLazyByteString . wrapCBORinCBOR Cbor.encodePreEncoded
 
         deserialiseCBOR
-            :: (GenTx (LastElem (CardanoEras crypto)) -> GenTx (CardanoBlock crypto))
+            :: forall era.
+                ( Or
+                    (era ~ LastElem (CardanoEras crypto))
+                    (era ~ ShelleyBlock (MaryEra crypto))
+                , FromCBOR (GenTx era)
+                )
+            => (GenTx era -> GenTx (CardanoBlock crypto))
             -> LByteString
             -> Json.Parser (GenTx (CardanoBlock crypto))
         deserialiseCBOR mk =
             either (fail . show) (pure . mk . snd)
             .
             Cbor.deserialiseFromBytes fromCBOR
+          where
+            _compilerWarning = keepRedundantConstraint
+                (Proxy @(Or
+                    (era ~ LastElem (CardanoEras crypto))
+                    (era ~ ShelleyBlock (MaryEra crypto))
+                ))
 
 instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
     parseJSON json = parseOrigin json <|> parsePoint json
