@@ -21,9 +21,6 @@ build-type:     Simple
 extra-source-files:
     static/dashboard.html
     static/dashboard.js
-    static/tests.html
-    static/tests/chain-sync.js
-    static/tests/state-query.js
     static/assets/favicon.ico
     static/assets/logo.png
 

@@ -77,9 +77,6 @@ mkRoute "Server" [parseRoutes|
 /                      DashboardR           GET
 /dashboard.js          DashboardJsR         GET
 /health                HealthR              GET
-/tests.html            TestsR               GET
-/tests/chain-sync.js   TestsChainSyncR      GET
-/tests/state-query.js  TestsStateQueryR     GET
 /assets/logo.png       LogoR                GET
 /favicon.ico           FaviconR             GET
 |]
@@ -106,18 +103,6 @@ getHealthR = runHandlerM $ do
     json a = do
       header "Content-Type" "application/json; charset=utf-8"
       rawBuilder $ Json.fromEncoding $ toEncoding a
-
-getTestsR :: Handler Server
-getTestsR = runHandlerM $ do
-    html $ decodeUtf8 $(embedFile "static/tests.html")
-
-getTestsChainSyncR :: Handler Server
-getTestsChainSyncR = runHandlerM $ do
-    javascript $ decodeUtf8 $(embedFile "static/tests/chain-sync.js")
-
-getTestsStateQueryR :: Handler Server
-getTestsStateQueryR = runHandlerM $ do
-    javascript $ decodeUtf8 $(embedFile "static/tests/state-query.js")
 
 getLogoR :: Handler Server
 getLogoR = runHandlerM $ do

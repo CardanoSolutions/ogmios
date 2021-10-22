@@ -14,7 +14,6 @@ category:            Web
 
 extra-source-files:
 - static/*
-- static/tests/*
 - static/assets/*
 
 dependencies:
