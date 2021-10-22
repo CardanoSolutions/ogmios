@@ -41,6 +41,7 @@ import { ensureSocketIsOpen, safeJSON } from '../util'
 export interface StateQueryClient {
   context: InteractionContext
   acquire: (point: PointOrOrigin) => Promise<StateQueryClient>
+  release: () => Promise<void>
   shutdown: () => Promise<void>
   currentEpoch: () => ReturnType<typeof currentEpoch>
   currentProtocolParameters: () => ReturnType<typeof currentProtocolParameters>
@@ -74,6 +75,27 @@ export const createStateQueryClient = async (
       async acquire (point : PointOrOrigin) : Promise<StateQueryClient> {
         const client = await createStateQueryClient(context, { point })
         return Object.assign(this, client)
+      },
+      async release () : Promise<void> {
+        ensureSocketIsOpen(socket)
+        const requestId = nanoid(5)
+        return new Promise((resolveRelease, rejectRelease) => {
+          socket.once('message', (message: string) => {
+            const response: Ogmios['ReleaseResponse'] = safeJSON.parse(message)
+            if (response.reflection.requestId !== requestId) { return }
+            if (response.result === 'Released') {
+              resolveRelease()
+            } else {
+              rejectRelease(new UnknownResultError(message))
+            }
+          })
+          socket.send(safeJSON.stringify({
+            ...baseRequest,
+            methodname: 'Release',
+            args: {},
+            mirror: { requestId }
+          } as Ogmios['Release']))
+        })
       },
       shutdown: () => {
         ensureSocketIsOpen(socket)
