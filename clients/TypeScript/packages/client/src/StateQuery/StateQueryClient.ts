@@ -79,14 +79,14 @@ export const createStateQueryClient = async (
       async release () : Promise<void> {
         ensureSocketIsOpen(socket)
         const requestId = nanoid(5)
-        return new Promise((resolveRelease, rejectRelease) => {
+        return new Promise((resolve, reject) => {
           socket.once('message', (message: string) => {
             const response: Ogmios['ReleaseResponse'] = safeJSON.parse(message)
             if (response.reflection.requestId !== requestId) { return }
             if (response.result === 'Released') {
-              resolveRelease()
+              resolve()
             } else {
-              rejectRelease(new UnknownResultError(message))
+              reject(new UnknownResultError(message))
             }
           })
           socket.send(safeJSON.stringify({

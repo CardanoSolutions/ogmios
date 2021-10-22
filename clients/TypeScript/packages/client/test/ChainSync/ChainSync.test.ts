@@ -89,12 +89,12 @@ describe('ChainSync', () => {
       const context = await dummyInteractionContext()
       const client = await createChainSyncClient(context, stubHandlers)
 
-      expect(async () => {
-        await client.startSync([{
-          "slot": 0,
-          "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+      return expect(() =>
+        client.startSync([{
+          slot: 0,
+          hash: '0000000000000000000000000000000000000000000000000000000000000000'
         }])
-      }).rejects.toThrow(IntersectionNotFoundError)
+      ).rejects.toThrow(IntersectionNotFoundError)
     })
 
     it('intersects at the genesis if origin provided as point', async () => {
