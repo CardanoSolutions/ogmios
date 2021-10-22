@@ -65,6 +65,9 @@ RUN cabal install exe:ogmios \
   --install-method=copy \
   --installdir=/app/bin
 
+WORKDIR /app
+RUN git clone --depth 1 https://github.com/input-output-hk/cardano-configurations.git
+
 #                                                                              #
 # --------------------------- RUN (ogmios-only) ------------------------------ #
 #                                                                              #
@@ -110,8 +113,10 @@ RUN apt-get -y purge && apt-get -y clean && apt-get -y autoremove
 COPY --from=setup /usr/local/lib/libsodium.so.23 /usr/lib/x86_64-linux-gnu/libsodium.so.23
 COPY --from=setup /app/bin/cardano-node /bin/cardano-node
 COPY --from=build /app/bin/ogmios /bin/ogmios
-COPY server/config/network/${NETWORK} /config/
+COPY --from=build /app/cardano-configurations/network/${NETWORK} /config
+
 RUN mkdir /ipc
+
 WORKDIR /root
 COPY scripts/cardano-node-ogmios.sh cardano-node-ogmios.sh
 CMD ["bash", "cardano-node-ogmios.sh" ]
