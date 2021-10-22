@@ -44,11 +44,23 @@ As a matter of fact, there is. A [TypeScript client library and REPL](https://gi
 
 Besides, it goes without saying that as an open-source project Ogmios welcomes contributions; especially on the client library and/or around tools built on top. 
 
+#### Does Ogmios require the PAB (Plutus Application Backend) to work?
+
+No it does not. The PAB is an application framework which provides DApp developers with an extra interface for running smart-contracts on Cardano; Ogmios is not a DApp, nor does it require any DApp functionality. Ogmios does however require a full cardano-node to work for it is merely an interface on top of it. 
+
+#### Can I use Ogmios in a remote setup? 
+
+Yes. The easiest way is probably by using a reverse-proxy like [NGINX](https://www.nginx.com/) to also promote the WebSocket connection to a secure connection. A more interesting question however is: should you? Ogmios is an interface for the so-called **local client protocols** which are, by design, intended to be used in a local setup: where Ogmios and cardano-node are on the same host. It would be ill-advised to expose the server to many clients without any restriction as each client can drain a quite large amount of resources from the local node. Rather, Ogmios ought to be used in a backend stack for a service which requires an access to the blockchain. 
+
+#### Why do Ogmios returns JSON with integers larger than `MAX_SAFE_INTEGER`?
+
+JSON does support large integers by design. The default JavaScript JSON parser does not however. Thus, it is not a problem which lies on the server-side, but rather on "naive" JavaScript clients. For more details, have a look at this [architectural decision record](https://github.com/CardanoSolutions/ogmios/blob/master/architectural-decisions/accepted/typescript-client-bigint-parsing.md) which explains how we handle large integers in the TypeScript client. 
+
 #### Is Ogmios production ready? 
 
 Ogmios is an open-source project which is being worked on in small steps when time allows. Its development started in 2020 and it has undergone several updates and iterations. We've got a mad passion for software quality and we put extensive efforts into making Ogmios of the highest quality. The server follows a well-known architecture and abides by battle-tested Haskell coding practices. As it should, Ogmios is of course deeply tested at several levels via **continuous integration**<sup>[1](https://github.com/CardanoSolutions/ogmios/actions)</sup>.
 
-Tests for the server include **property-based testing** of the core protocols<sup>[2](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/App/Protocol/StateQuerySpec.hs)</sup> <sup>[3](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/App/Protocol/StateQuerySpec.hs)</sup>, property-based testing of the entire JSON interface validated against the JSON-schema<sup>[4](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/Data/JsonSpec.hs)</sup>. Note that property tests all use generators which comes directly from the [ouroboros-network](https://github.com/input-output-hk/ouroboros-network/) and [cardano-ledger-specs](https://github.com/input-output-hk/cardano-ledger-specs) to ensure that Ogmios is **always up-to-date** with the Cardano eco-system. There are also various<sup>[5](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/App/OptionsSpec.hs)</sup> unit<sup>[6](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/Data/MetricsSpec.hs)</sup> tests<sup>[7](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/Data/HealthSpec.hs)</sup> to cover basic functionalities. 
+Tests for the server include **property-based testing** of the core protocols<sup>[2](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/App/Protocol/StateQuerySpec.hs)</sup> <sup>[3](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/App/Protocol/StateQuerySpec.hs)</sup>, property-based testing of the entire JSON interface validated against a JSON-schema specification<sup>[4](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/Data/JsonSpec.hs)</sup>. Note that property tests all use generators which comes directly from the [ouroboros-network](https://github.com/input-output-hk/ouroboros-network/) and [cardano-ledger-specs](https://github.com/input-output-hk/cardano-ledger-specs) to ensure that Ogmios is **always up-to-date** with the Cardano eco-system. There are also various<sup>[5](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/App/OptionsSpec.hs)</sup> unit<sup>[6](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/Data/MetricsSpec.hs)</sup> tests<sup>[7](https://github.com/CardanoSolutions/ogmios/blob/master/server/test/unit/Ogmios/Data/HealthSpec.hs)</sup> to cover basic functionalities. 
 
 On the other hand, the TypeScript client is used to perform **end-to-end tests** with tests running against the Cardano testnet<sup>[8](https://github.com/CardanoSolutions/ogmios/tree/master/clients/TypeScript/packages/client/test)</sup>. The tests are executed both in a Node.js and browser context and the synchronization with the network is done via a [Github action which leverages Ogmios' server](https://github.com/CardanoSolutions/gh-action-cardano-node-ogmios-docker-sync).
 
@@ -60,13 +72,14 @@ Thus, is Ogmios production-ready? **Probably, yes**. At least, this is as good a
 
 #### Are there any projects using it?
 
-I've got some positive feedback from a handful of stake pool operators using it for various projects, for example:
+We've heard of a handful happy users! And it keeps growing...
 
-- https://gimbalabs.com/dandelionapis/ogmios-api
-- https://www.f2lb.org/
+- https://ccwallet.io/
 - https://github.com/input-output-hk/cardano-graphql 
+- https://www.f2lb.org/
+- https://gimbalabs.com/dandelionapis/ogmios-api
 
-There are also projects in preparation which looked into Ogmios as a lightweight alternative to cardano-db-sync for it better suited their need. 
+There are also projects still in preparation which looked into Ogmios as a lightweight alternative to cardano-db-sync for it better suited their need. 
 
 {{% notice tip %}}
 Are you using Ogmios for a project? [Let us know on Github!](https://github.com/CardanoSolutions/ogmios/issues/new?assignees=&labels=&template=project.md)
