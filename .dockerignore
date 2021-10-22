@@ -5,13 +5,15 @@
 !server/cabal.project
 !server/*.cabal
 
-!server/app/
-!server/src/
-!server/test/
-!server/static/
-!server/config/
 !server/ogmios.wsp.json
 !server/LICENSE
+
+!server/app/
+!server/src/
+!server/static/
+!server/config/
+!server/test/
+server/test/vectors
 
 !server/modules/
 server/modules/**/.stack-work
