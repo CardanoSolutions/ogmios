@@ -69,7 +69,6 @@ export const createStateQueryClient = async (
 ): Promise<StateQueryClient> => {
   const { socket } = context
   return new Promise((resolve, reject) => {
-    const requestId = nanoid(5)
     const createClient = () => resolve({
       context,
       async acquire (point : PointOrOrigin) : Promise<StateQueryClient> {
@@ -142,35 +141,36 @@ export const createStateQueryClient = async (
       }
     } as StateQueryClient)
 
-    socket.once('message', (message: string) => {
-      const response: Ogmios['AcquireResponse'] = safeJSON.parse(message)
-      if (response.reflection.requestId !== requestId) { return }
-      if ('AcquireSuccess' in response.result) {
-        createClient()
-      } else {
-        socket.once('close', () => {
-          if ('AcquireFailure' in response.result) {
-            const { failure } = response.result.AcquireFailure
-            switch (failure) {
-              case 'pointTooOld': {
-                return reject(new AcquirePointTooOldError())
-              }
-              case 'pointNotOnChain': {
-                return reject(new AcquirePointNotOnChainError())
-              }
-              default: {
-                return reject(new Error(`Unknown AcquirePointFailure ${failure}`))
-              }
-            }
-          } else {
-            reject(new UnknownResultError(response.result))
-          }
-        })
-        socket.close()
-      }
-    })
     if (options?.point !== undefined) {
       const point = options?.point
+      const requestId = nanoid(5)
+      socket.once('message', (message: string) => {
+        const response: Ogmios['AcquireResponse'] = safeJSON.parse(message)
+        if (response.reflection.requestId !== requestId) { return }
+        if ('AcquireSuccess' in response.result) {
+          createClient()
+        } else {
+          socket.once('close', () => {
+            if ('AcquireFailure' in response.result) {
+              const { failure } = response.result.AcquireFailure
+              switch (failure) {
+                case 'pointTooOld': {
+                  return reject(new AcquirePointTooOldError())
+                }
+                case 'pointNotOnChain': {
+                  return reject(new AcquirePointNotOnChainError())
+                }
+                default: {
+                  return reject(new Error(`Unknown AcquirePointFailure ${failure}`))
+                }
+              }
+            } else {
+              reject(new UnknownResultError(response.result))
+            }
+          })
+          socket.close()
+        }
+      })
       socket.send(safeJSON.stringify({
         ...baseRequest,
         methodname: 'Acquire',
