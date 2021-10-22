@@ -15,7 +15,7 @@ import {
 } from '@cardano-ogmios/schema'
 import { findIntersect } from './ChainSync'
 import { WebSocketClosed, TipIsOriginError } from './errors'
-import JSONBig from 'json-bigint'
+const JSONBig = require('@cardanosolutions/json-bigint')
 
 /** @internal */
 export const safeJSON = {
