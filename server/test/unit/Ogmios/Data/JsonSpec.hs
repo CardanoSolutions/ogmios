@@ -485,7 +485,7 @@ prop_parseSubmitTx (SerializedTx bytes) =
 
 instance Arbitrary SerializedTx where
     arbitrary = SerializedTx <$> elements
-        -- base16, with CBOR-in-CBOR prefix.
+        -- base16, with CBOR-in-CBOR prefix, Mary era
         [ "D81859011F\
           \83a400818258200000000000000000000000000000000000000000000000000000\
           \000000000000000182825839010101010101010101010101010101010101010101\
@@ -497,7 +497,7 @@ instance Arbitrary SerializedTx where
           \11c1445c79590526990bfa73cbb3732b54ef322daa142e6884023410f8be3c16e9\
           \bd52076f2bb36bf38dfe034a9f04658e9f56197ab80ff6"
 
-        -- base64, not wrapped.
+        -- base64, not wrapped, Mary era
         , "g6QAgoJYIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIJYIAAAAAAA\
           \AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQGDglg5AQICAgICAgICAgICAgIC\
           \AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICGgBbjYCC\
@@ -510,7 +510,7 @@ instance Arbitrary SerializedTx where
           \8KWldKHIgXdfCG1vTIRbgb6beJVXKL/6fvpUKXxqXXMze9YoAgWxdZwT951Mk/KY\
           \cfxRt4rrqA72"
 
-        -- base16, with bootstrap witnesses
+        -- base16, with bootstrap witnesses, Mary era
         , "83a4008182582000000000000000000000000000000000000000000000000000\
           \0000000000000000018282583901010101010101010101010101010101010101\
           \0101010101010101010101010101010101010101010101010101010101010101\
@@ -523,7 +523,7 @@ instance Arbitrary SerializedTx where
           \0000000000000000000000000000000000000000000000000000000000000000\
           \41a0f6"
 
-        -- base64, with bootstrap witnesses
+        -- base64, with bootstrap witnesses, Mary era
         , "g6QAgoJYIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIJYIAAAAAAA\
           \AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQGDglg5AQICAgICAgICAgICAgIC\
           \AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICGgBbjYCC\
@@ -536,6 +536,16 @@ instance Arbitrary SerializedTx where
           \By5vv8ChiE+1RjZVTRSUW3mRJc98441Hf1FYQFg1/3jG/F5EZqF5ymWfqFyZuKP7\
           \oIPz8/Qro2DUecZO8WmRS1Kt5JsZpyCP1jpuZ6GcQGtIJmCP3FMHAlUGwwdYIAEB\
           \AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBQaD2"
+
+        -- base16, not wrapped, Alonzo era
+        , "83a4008182582039786f186d94d8dd0b4fcf05d1458b18cd5fd8c6823364612f\
+          \4a3c11b77e7cc700018282581d60f8a68cd18e59a6ace848155a0e967af64f4d\
+          \00cf8acee8adc95a6b0d1a05f5e10082581d60f8a68cd18e59a6ace848155a0e\
+          \967af64f4d00cf8acee8adc95a6b0d1b000000d18635a3cf021a0002a3310318\
+          \78a10081825820eb94e8236e2099357fa499bfbc415968691573f25ec77435b7\
+          \949f5fdfaa5da05840c8c0c016b714adb318a9495849c8ec647bc9742ef2b4cd\
+          \03b9bc8694b65a42dbe3a2275ebcfe482c246fc8fbc34aa8dcebf18a4c3836b3\
+          \ce8473e990d61c1506f6"
         ]
 
 --
