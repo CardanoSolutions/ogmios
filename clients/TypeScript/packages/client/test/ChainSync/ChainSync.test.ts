@@ -1,5 +1,6 @@
 import {
   ChainSyncMessageHandlers,
+  IntersectionNotFoundError,
   createChainSyncClient
 } from '../../src/ChainSync'
 import delay from 'delay'
@@ -82,6 +83,18 @@ describe('ChainSync', () => {
         expect(intersection.point.hash).toEqual(intersection.tip.hash)
       }
       await client.shutdown()
+    })
+
+    it('throws an exception when no intersection is found', async () => {
+      const context = await dummyInteractionContext()
+      const client = await createChainSyncClient(context, stubHandlers)
+
+      expect(async () => {
+        await client.startSync([{
+          "slot": 0,
+          "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        }])
+      }).rejects.toThrow(IntersectionNotFoundError)
     })
 
     it('intersects at the genesis if origin provided as point', async () => {
