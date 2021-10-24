@@ -65,6 +65,7 @@ library:
     - git-th
     - http-types
     - io-classes
+    - io-sim
     - iohk-monitoring
     - iproute
     - json-wsp

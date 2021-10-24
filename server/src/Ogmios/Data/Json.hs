@@ -10,6 +10,7 @@
 module Ogmios.Data.Json
     ( Json
     , SerializationMode (..)
+    , ViaEncoding (..)
     , jsonToByteString
     , FromJSON
     , ToJSON
@@ -96,6 +97,12 @@ instance (Crypto crypto, PraosCrypto crypto) => ToJSON
 instance ToJSON (Tip (CardanoBlock crypto)) where
     toJSON = inefficientEncodingToValue . encodeTip
     toEncoding = encodeTip
+
+-- Only used for logging & health
+instance ToJSON (Point (CardanoBlock crypto)) where
+    toJSON = inefficientEncodingToValue . encodePoint
+    toEncoding = encodePoint
+
 
 --
 -- Encoders

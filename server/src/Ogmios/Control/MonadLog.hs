@@ -30,6 +30,8 @@ import Cardano.BM.Data.Severity
     ( Severity (..) )
 import Cardano.BM.Data.Tracer
     ( HasSeverityAnnotation (..) )
+import Control.Monad.IOSim
+    ( IOSim )
 import Control.Tracer
     ( Tracer (..), natTracer, nullTracer, traceWith )
 import Data.Aeson
@@ -57,6 +59,11 @@ type AppVersion = Text
 
 instance MonadLog IO where
     logWith = traceWith
+
+-- TODO: This instance is bonkers, but this is because of the over-specialized
+-- Logger = Tracer IO. Ideally, MonadLog should work with _any_
+instance MonadLog (IOSim s) where
+    logWith _ _ = pure ()
 
 instance MonadLog m => MonadLog (ReaderT env m) where
     logWith tr = lift . logWith tr

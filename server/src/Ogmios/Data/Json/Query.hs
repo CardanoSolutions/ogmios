@@ -12,8 +12,9 @@ module Ogmios.Data.Json.Query
     , QueryResult
 
       -- ** Eras
-    , SomeShelleyEra (..)
     , ShelleyBasedEra (..)
+    , SomeShelleyEra (..)
+    , fromEraIndex
 
       -- ** Types in queries
     , RewardAccounts
@@ -68,10 +69,14 @@ import Cardano.Ledger.SafeHash
     ( unsafeMakeSafeHash )
 import Cardano.Slotting.Slot
     ( EpochNo (..), WithOrigin (..) )
+import Data.Aeson
+    ( toJSON )
+import Data.SOP.Strict
+    ( NS (..) )
 import Ouroboros.Consensus.Cardano.Block
     ( BlockQuery (..), CardanoBlock, CardanoEras )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( MismatchEraInfo, OneEraHash (..) )
+    ( EraIndex (..), MismatchEraInfo, OneEraHash (..) )
 import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
     ( EraMismatch (..), mkEraMismatch )
 import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
@@ -166,14 +171,39 @@ type QueryResult crypto result =
 type GenResult crypto f t =
     Proxy (QueryResult crypto t) -> f (QueryResult crypto t)
 
-data SomeShelleyEra =
-    forall era. SomeShelleyEra (ShelleyBasedEra era)
-
 type Delegations crypto =
     Map (Credential 'Staking crypto) (Keys.KeyHash 'StakePool crypto)
 
 type RewardAccounts crypto =
     Map (Credential 'Staking crypto) Coin
+
+--
+-- SomeShelleyEra
+--
+
+data SomeShelleyEra =
+    forall era. SomeShelleyEra (ShelleyBasedEra era)
+
+deriving instance Show SomeShelleyEra
+
+instance ToJSON SomeShelleyEra where
+    toJSON = \case
+        SomeShelleyEra ShelleyBasedEraShelley -> toJSON @Text "Shelley"
+        SomeShelleyEra ShelleyBasedEraAllegra -> toJSON @Text "Allegra"
+        SomeShelleyEra ShelleyBasedEraMary -> toJSON @Text "Mary"
+        SomeShelleyEra ShelleyBasedEraAlonzo -> toJSON @Text "Alonzo"
+
+-- | Convert an 'EraIndex' to a Shelley-based era.
+fromEraIndex
+    :: forall crypto. ()
+    => EraIndex (CardanoEras crypto)
+    -> Maybe SomeShelleyEra
+fromEraIndex = \case
+    EraIndex             Z{}     -> Nothing
+    EraIndex          (S Z{})    -> Just (SomeShelleyEra ShelleyBasedEraShelley)
+    EraIndex       (S (S Z{}))   -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
+    EraIndex    (S (S (S Z{})))  -> Just (SomeShelleyEra ShelleyBasedEraMary)
+    EraIndex (S (S (S (S Z{})))) -> Just (SomeShelleyEra ShelleyBasedEraAlonzo)
 
 --
 -- Encoders

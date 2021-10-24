@@ -12,6 +12,7 @@ module Ogmios.Data.Json.Prelude
     , FromJSON
     , ToJSON
     , SerializationMode(..)
+    , ViaEncoding (..)
     , jsonToByteString
     , decodeWith
     , choice
@@ -183,6 +184,13 @@ inefficientEncodingToValue = unsafeDecodeValue . Json.encodingToLazyByteString
                 "impossible: couldn't decode JSON value that was just encoded."
         in
             fromMaybe (error justification) . Json.decode
+
+newtype ViaEncoding = ViaEncoding { unViaEncoding :: Json }
+    deriving (Show, Generic)
+
+instance ToJSON ViaEncoding where
+    toJSON = inefficientEncodingToValue . unViaEncoding
+    toEncoding = unViaEncoding
 
 --
 -- Serialization Mode

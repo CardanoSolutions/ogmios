@@ -28,7 +28,7 @@ import Ogmios.App.Protocol
 import Ogmios.App.Protocol.ChainSync
     ( MaxInFlight, mkChainSyncClient )
 import Ogmios.App.Protocol.StateQuery
-    ( mkStateQueryClient )
+    ( TraceStateQuery, mkStateQueryClient )
 import Ogmios.App.Protocol.TxSubmission
     ( mkTxSubmissionClient )
 import Ogmios.Control.Exception
@@ -128,7 +128,7 @@ newWebSocketApp tr unliftIO = do
         logWith tr $ WebSocketConnectionAccepted (userAgent pending) mode
         recordSession sensors $ onExceptions $ acceptRequest pending sub $ \conn -> do
             let trClient = contramap WebSocketClient tr
-            withOuroborosClients mode maxInFlight sensors conn $ \clients -> do
+            withOuroborosClients tr mode maxInFlight sensors conn $ \clients -> do
                 let client = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch clients
                 let vData  = NodeToClientVersionData networkMagic
                 connectClient trClient client vData nodeSocket
@@ -196,17 +196,19 @@ withOuroborosClients
     :: forall m a.
         ( MonadAsync m
         , MonadLink m
+        , MonadLog m
         , MonadMetrics m
         , MonadOuroboros m
         , MonadWebSocket m
         )
-    => SerializationMode
+    => Logger TraceWebSocket
+    -> SerializationMode
     -> MaxInFlight
     -> Sensors m
     -> Connection
     -> (Clients m Block -> m a)
     -> m a
-withOuroborosClients mode maxInFlight sensors conn action = do
+withOuroborosClients tr mode maxInFlight sensors conn action = do
     (chainSyncQ, txSubmissionQ, stateQueryQ) <-
         atomically $ (,,) <$> newTQueue <*> newTQueue <*> newTQueue
 
@@ -216,7 +218,7 @@ withOuroborosClients mode maxInFlight sensors conn action = do
              { chainSyncClient =
                  mkChainSyncClient maxInFlight chainSyncCodecs chainSyncQ yield
              , stateQueryClient =
-                 mkStateQueryClient stateQueryCodecs stateQueryQ yield
+                 mkStateQueryClient (contramap WebSocketStateQuery tr) stateQueryCodecs stateQueryQ yield
              , txSubmissionClient =
                  mkTxSubmissionClient txSubmissionCodecs txSubmissionQ yield
              }
@@ -287,6 +289,10 @@ data TraceWebSocket where
         :: TraceClient (SubmitTxPayload Block) (SubmitTxError Block)
         -> TraceWebSocket
 
+    WebSocketStateQuery
+        :: TraceStateQuery Block
+        -> TraceWebSocket
+
     WebSocketWorkerExited
         :: { exception :: Text }
         -> TraceWebSocket
@@ -312,6 +318,7 @@ data TraceWebSocket where
 instance HasSeverityAnnotation TraceWebSocket where
     getSeverityAnnotation = \case
         WebSocketClient msg           -> getSeverityAnnotation msg
+        WebSocketStateQuery msg       -> getSeverityAnnotation msg
         WebSocketWorkerExited{}       -> Debug
         WebSocketConnectionAccepted{} -> Info
         WebSocketConnectionEnded{}    -> Info

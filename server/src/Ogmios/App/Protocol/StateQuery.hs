@@ -3,6 +3,9 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE UndecidableInstances #-}
+
+{-# OPTIONS_GHC -fno-warn-partial-fields #-}
 
 -- | The state query protocol is likely the most versatile of the three Ouroboros
 -- mini-protocols. As a matter of fact, it allows for querying various types of
@@ -42,20 +45,23 @@
 -- @
 module Ogmios.App.Protocol.StateQuery
     ( mkStateQueryClient
+    , TraceStateQuery (..)
     ) where
 
 import Ogmios.Prelude
 
-import Data.SOP.Strict
-    ( NS (..) )
+import Data.Aeson
+    ( ToJSON (..), genericToEncoding )
 import Ogmios.Control.Exception
     ( MonadThrow )
+import Ogmios.Control.MonadLog
+    ( HasSeverityAnnotation (..), Logger, MonadLog (..), Severity (..) )
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TQueue, readTQueue )
 import Ogmios.Data.Json
-    ( Json )
+    ( Json, ViaEncoding (..) )
 import Ogmios.Data.Json.Query
-    ( QueryInEra, ShelleyBasedEra (..), SomeQuery (..), SomeShelleyEra (..) )
+    ( QueryInEra, SomeQuery (..), SomeShelleyEra (..), fromEraIndex )
 import Ogmios.Data.Protocol.StateQuery
     ( Acquire (..)
     , AcquireResponse (..)
@@ -76,6 +82,7 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..) )
 
 import qualified Codec.Json.Wsp as Wsp
+import qualified Data.Aeson as Json
 import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ
 import qualified Ouroboros.Consensus.Ledger.Query as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
@@ -90,18 +97,21 @@ mkStateQueryClient
     :: forall m crypto block point query.
         ( MonadThrow m
         , MonadSTM m
+        , MonadLog m
         , block ~ HardForkBlock (CardanoEras crypto)
         , point ~ Point block
         , query ~ Ledger.Query block
         )
-    => StateQueryCodecs block
+    => Logger (TraceStateQuery block)
+        -- ^ A tracer for logging
+    -> StateQueryCodecs block
         -- ^ For encoding Haskell types to JSON
     -> TQueue m (StateQueryMessage block)
         -- ^ Incoming request queue
     -> (Json -> m ())
         -- ^ An emitter for yielding JSON objects
     -> LocalStateQueryClient block point query m ()
-mkStateQueryClient StateQueryCodecs{..} queue yield =
+mkStateQueryClient tr StateQueryCodecs{..} queue yield =
     LocalStateQueryClient clientStIdle
   where
     await :: m (StateQueryMessage block)
@@ -126,7 +136,7 @@ mkStateQueryClient StateQueryCodecs{..} queue yield =
         LSQ.ClientStAcquiring
             { LSQ.recvMsgAcquired = do
                 yield $ encodeAcquireResponse $ toResponse $ AcquireSuccess pt
-                clientStAcquired
+                clientStAcquired pt
             , LSQ.recvMsgFailure = \failure -> do
                 yield $ encodeAcquireResponse $ toResponse $ AcquireFailure failure
                 clientStIdle
@@ -136,7 +146,7 @@ mkStateQueryClient StateQueryCodecs{..} queue yield =
         :: QueryT Proxy block
         -> Wsp.ToResponse (QueryResponse block)
         -> LSQ.ClientStAcquiring block point query m ()
-    clientStAcquiringTip QueryT{queryInEra} toResponse =
+    clientStAcquiringTip QueryT{rawQuery = query, queryInEra} toResponse =
         LSQ.ClientStAcquiring
             { LSQ.recvMsgAcquired = do
                 withCurrentEra queryInEra $ \case
@@ -145,11 +155,12 @@ mkStateQueryClient StateQueryCodecs{..} queue yield =
                         yield $ encodeQueryResponse $ toResponse response
                         pure $ LSQ.SendMsgRelease clientStIdle
 
-                    Just (SomeQuery query encodeResult _) ->
-                        pure $ LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
-                            { LSQ.recvMsgResult = \result -> do
-                                let response = QueryResponse $ encodeResult result
-                                yield $ encodeQueryResponse $ toResponse response
+                    Just (era, SomeQuery qry encodeResult _) -> do
+                        logWith tr $ StateQueryRequest { query, point = Nothing, era }
+                        pure $ LSQ.SendMsgQuery qry $ LSQ.ClientStQuerying
+                            { LSQ.recvMsgResult = \(encodeResult -> result) -> do
+                                logWith tr $ StateQueryResponse{result = ViaEncoding result}
+                                yield $ encodeQueryResponse $ toResponse $ QueryResponse result
                                 pure $ LSQ.SendMsgRelease clientStIdle
                             }
 
@@ -160,26 +171,28 @@ mkStateQueryClient StateQueryCodecs{..} queue yield =
             }
 
     clientStAcquired
-        :: m (LSQ.ClientStAcquired block point query m ())
-    clientStAcquired = await >>= \case
-        MsgAcquire (Acquire pt) toResponse _ ->
-            pure $ LSQ.SendMsgReAcquire (Just pt) (clientStAcquiring pt toResponse)
+        :: Point block
+        -> m (LSQ.ClientStAcquired block point query m ())
+    clientStAcquired pt = await >>= \case
+        MsgAcquire (Acquire pt') toResponse _ ->
+            pure $ LSQ.SendMsgReAcquire (Just pt') (clientStAcquiring pt' toResponse)
         MsgRelease Release toResponse _ -> do
             yield $ encodeReleaseResponse (toResponse Released)
             pure $ LSQ.SendMsgRelease clientStIdle
-        MsgQuery QueryT{queryInEra} toResponse _ ->
+        MsgQuery QueryT{rawQuery = query,queryInEra} toResponse _ ->
             withCurrentEra queryInEra $ \case
                 Nothing -> do
                     let response = QueryUnavailableInCurrentEra
                     yield $ encodeQueryResponse $ toResponse response
-                    clientStAcquired
+                    clientStAcquired pt
 
-                Just (SomeQuery query encodeResult _) -> pure $
-                    LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
-                        { LSQ.recvMsgResult = \result -> do
-                            let response = QueryResponse $ encodeResult result
-                            yield $ encodeQueryResponse $ toResponse response
-                            clientStAcquired
+                Just (era, SomeQuery qry encodeResult _) -> do
+                    logWith tr $ StateQueryRequest { query, point = Just pt, era }
+                    pure $ LSQ.SendMsgQuery qry $ LSQ.ClientStQuerying
+                        { LSQ.recvMsgResult = \(encodeResult -> result) -> do
+                            logWith tr $ StateQueryResponse{result = ViaEncoding result}
+                            yield $ encodeQueryResponse $ toResponse $ QueryResponse result
+                            clientStAcquired pt
                         }
 
 --
@@ -206,23 +219,37 @@ withCurrentEra
         , Applicative m
         )
     => QueryInEra f block
-    -> (Maybe (SomeQuery f block) -> m (LSQ.ClientStAcquired block point query m ()))
+    -> (Maybe (SomeShelleyEra, SomeQuery f block) -> m (LSQ.ClientStAcquired block point query m ()))
     -> m (LSQ.ClientStAcquired block point query m ())
 withCurrentEra queryInEra callback = pure
     $ LSQ.SendMsgQuery (Ledger.BlockQuery $ LSQ.QueryHardFork LSQ.GetCurrentEra)
     $ LSQ.ClientStQuerying
         { LSQ.recvMsgResult = \eraIndex ->
-            callback (toSomeShelleyEra eraIndex >>= queryInEra)
+            callback (fromEraIndex eraIndex >>= (\e -> (e,) <$> queryInEra e))
         }
 
--- | Convert an 'EraIndex' to a Shelley-based era.
-toSomeShelleyEra
-    :: forall crypto. ()
-    => LSQ.EraIndex (CardanoEras crypto)
-    -> Maybe SomeShelleyEra
-toSomeShelleyEra = \case
-    LSQ.EraIndex             Z{}     -> Nothing
-    LSQ.EraIndex          (S Z{})    -> Just (SomeShelleyEra ShelleyBasedEraShelley)
-    LSQ.EraIndex       (S (S Z{}))   -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
-    LSQ.EraIndex    (S (S (S Z{})))  -> Just (SomeShelleyEra ShelleyBasedEraMary)
-    LSQ.EraIndex (S (S (S (S Z{})))) -> Just (SomeShelleyEra ShelleyBasedEraAlonzo)
+--
+-- Logs
+--
+
+data TraceStateQuery block where
+    StateQueryRequest
+        :: { point :: Maybe (Point block)
+           , query :: Json.Value
+           , era :: SomeShelleyEra
+           }
+        -> TraceStateQuery block
+
+    StateQueryResponse
+        :: { result :: ViaEncoding }
+        -> TraceStateQuery block
+
+    deriving (Show, Generic)
+
+instance ToJSON (Point block) => ToJSON (TraceStateQuery block) where
+    toEncoding = genericToEncoding Json.defaultOptions
+
+instance HasSeverityAnnotation (TraceStateQuery block) where
+    getSeverityAnnotation = \case
+        StateQueryRequest{} -> Info
+        StateQueryResponse{} -> Info

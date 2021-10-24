@@ -39,7 +39,7 @@ import Ogmios.Control.Exception
 import Ogmios.Control.MonadAsync
     ( race )
 import Ogmios.Control.MonadLog
-    ( nullTracer )
+    ( MonadLog, nullTracer )
 import Ogmios.Control.MonadOuroboros
     ( MonadOuroboros )
 import Ogmios.Control.MonadSTM
@@ -164,14 +164,14 @@ spec = parallel $ do
 type Protocol = LocalStateQuery Block (Point Block) (Ledger.Query Block)
 
 withStateQueryClient
-    :: (MonadSTM m, MonadCatch m, MonadOuroboros m)
+    :: (MonadSTM m, MonadCatch m, MonadOuroboros m, MonadLog m)
     => ((StateQueryMessage Block -> m ()) ->  m Json -> m a)
     -> StdGen
     -> m a
 withStateQueryClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
     let innerCodecs = mkStateQueryCodecs encodePoint encodeAcquireFailure
-    let client = mkStateQueryClient innerCodecs recvQ (atomically . writeTQueue sendQ)
+    let client = mkStateQueryClient nullTracer innerCodecs recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cStateQueryCodec
     withMockChannel (stateQueryMockPeer seed codec) $ \channel -> do
         result <- race
