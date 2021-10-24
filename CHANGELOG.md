@@ -5,19 +5,35 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
-### [4.2.0] - 2021-10-XX
-
-##### Server
+### [4.2.0] - 2021-10-25
 
 #### Added
 
+##### Server
+
 - Enable Alonzo transaction in the submission protocol (oversight from previous releases). Doing so, explicit compiler warnings have been added to the relevant code to avoid overseeing this in the next upgrade.
+
+- Added query response and requests to logs trace. This currently logs the **entire** request and responses, which means that large queries such as `utxo` (without arguments) or `stakeDistribution` will also be fully logged. May be revisited in the future. 
 
 - Documented Mary last point to the _points of interests_ for the chain-sync protocol.
 
-##### TypeScript
+##### TypeScript Client
 
-- N/A
+- The State-Query client can now `release` acquired points to perform queries against the most recent tip (which was also the default when creating a client with no point).
+
+#### Changed
+
+##### Server
+
+N/A
+
+##### TypeScript Client
+
+- Some internal rework and cleanup; mostly chasing dangling promises by avoiding attaching even handlers when not needed. 
+
+#### Removed
+
+N/A
 
 ### [4.1.0] - 2021-09-08
 
