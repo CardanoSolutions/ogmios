@@ -166,6 +166,9 @@ export const createStateQueryClient = async (
     if (options?.point !== undefined) {
       const point = options?.point
       const requestId = nanoid(5)
+
+      ensureSocketIsOpen(socket)
+      socket.once('error', e => reject(new UnknownResultError(e)))
       socket.once('message', (message: string) => {
         const response: Ogmios['AcquireResponse'] = safeJSON.parse(message)
         if (response.reflection.requestId !== requestId) { return }

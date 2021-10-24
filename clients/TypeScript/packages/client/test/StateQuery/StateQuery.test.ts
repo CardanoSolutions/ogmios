@@ -10,48 +10,57 @@ import delay from 'delay'
 
 describe('Local state queries', () => {
   describe('StateQueryClient', () => {
+    let context : InteractionContext
+    let client : StateQuery.StateQueryClient
+
+    beforeEach(async () => {
+      context = await dummyInteractionContext()
+      client = await StateQuery.createStateQueryClient(context)
+    })
+
+    afterEach(async () => {
+      try { await client.shutdown() } catch (_) {}
+    })
+
     it('opens a connection on construction, and closes it after shutdown', async () => {
-      const context = await dummyInteractionContext()
-      const client = await StateQuery.createStateQueryClient(context)
       await client.shutdown()
       expect(client.context.socket.readyState).not.toBe(client.context.socket.OPEN)
     })
 
+    it('rejects method calls after shutdown', async () => {
+      await client.shutdown()
+      const run = () => client.currentEpoch()
+      await expect(run).rejects
+    })
+
     it('query from the tip if no point is provided', async () => {
-      const context = await dummyInteractionContext()
-      const client = await StateQuery.createStateQueryClient(context)
       const tip = await client.ledgerTip()
       expect(tip).not.toBe('origin')
-      await client.shutdown()
     })
 
     it('uses the provided point for reproducible queries across clients', async () => {
-      const context = await dummyInteractionContext()
-      const tip = await StateQuery.ledgerTip(context)
+      const tip = await client.ledgerTip()
       await delay(2000)
+      // NOTE:
+      // `clientA` and `clientB` uses the same `context` as the fixture client, so there's
+      // no need to tear them down at the end of the test, it's already covered.
       const clientA = await StateQuery.createStateQueryClient(context, { point: tip })
-      const clientB = await StateQuery.createStateQueryClient(context, { point: tip })
       const tipA = await clientA.ledgerTip()
+      const clientB = await StateQuery.createStateQueryClient(context, { point: tip })
       const tipB = await clientB.ledgerTip()
       expect(tip).toEqual(tipA)
       expect(tip).toEqual(tipB)
-      await context.socket.close()
     })
 
     it('can acquire / re-acquire after a client is created', async () => {
-      const context = await dummyInteractionContext()
-      const client = await StateQuery.createStateQueryClient(context)
       const tip = await client.ledgerTip()
       await delay(2000)
       await client.acquire(tip)
       const tipAgain = await client.ledgerTip()
       expect(tip).toEqual(tipAgain)
-      await client.shutdown()
     })
 
     it('can acquire / release to perform queries against tip', async () => {
-      const context = await dummyInteractionContext()
-      const client = await StateQuery.createStateQueryClient(context)
       const tip = await client.ledgerTip() as Point
       await client.acquire(tip)
       await client.release()
@@ -60,86 +69,65 @@ describe('Local state queries', () => {
         await delay(1000)
         tipAgain = await client.ledgerTip() as Point
       }
-      await client.shutdown()
     }, 90000)
 
     it('rejects if the provided point is too old', async () => {
-      const context = await dummyInteractionContext()
       const createWithOldPoint = async () => {
         await StateQuery.createStateQueryClient(context, { point: 'origin' })
       }
       await expect(createWithOldPoint).rejects
       expect(context.socket.readyState).toBe(context.socket.OPEN)
-      context.socket.close()
     })
 
-    it('rejects method calls after shutdown', async () => {
-      const context = await dummyInteractionContext()
-      const client = await StateQuery.createStateQueryClient(context)
-      await client.shutdown()
-      const run = () => client.currentEpoch()
-      await expect(run).rejects
+    it('exposes the queries, uses a single context, and should be shutdowned when done', async () => {
+      const epoch = await client.currentEpoch()
+      expect(epoch).toBeDefined()
+
+      const protocolParameters = await client.currentProtocolParameters()
+      expect(protocolParameters.protocolVersion.major).toBeDefined()
+
+      const delegationsAndRewardsResult = await client.delegationsAndRewards(
+        ['7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8']
+      )
+      expect(Object.keys(delegationsAndRewardsResult).length).toBe(1)
+
+      const bound = await client.eraStart()
+      expect(bound.slot).toBeDefined()
+
+      const compactGenesis = await client.genesisConfig()
+      expect(compactGenesis.systemStart).toBeDefined()
+
+      const point = await client.ledgerTip() as { slot: Slot, hash: Hash16 }
+      expect(point.slot).toBeDefined()
+
+      const nonMyopicMemberRewards = await client.nonMyopicMemberRewards(
+        ['7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8']
+      )
+      expect(
+        Object.values(Object.values(nonMyopicMemberRewards)[0])[0]
+      ).toBeDefined()
+
+      const proposedProtocolParameters = await client.proposedProtocolParameters()
+      expect(proposedProtocolParameters).toBeDefined()
+
+      const stakeDistribution = await client.stakeDistribution()
+      expect(Object.values(stakeDistribution)[0].stake).toBeDefined()
+
+      const utxoSet = await client.utxo([
+        'addr_test1qqymtheun4y437fa6cms4jmtfex39wzz7jfwggudwnqkdnr8udjk6d89dcjadt7tw6hmz0aeue2jzdpl2vnkz8wdk4fqz3y5m9'
+      ])
+      expect(utxoSet[0]).toBeDefined()
     })
 
-    describe('calling queries from the client', () => {
-      it('exposes the queries, uses a single context, and should be shutdownd when done', async () => {
-        const context = await dummyInteractionContext()
-        const client = await StateQuery.createStateQueryClient(context)
-
-        const epoch = await client.currentEpoch()
-        expect(epoch).toBeDefined()
-
-        const protocolParameters = await client.currentProtocolParameters()
-        expect(protocolParameters.protocolVersion.major).toBeDefined()
-
-        const delegationsAndRewardsResult = await client.delegationsAndRewards(
-          ['7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8']
-        )
-        expect(Object.keys(delegationsAndRewardsResult).length).toBe(1)
-
-        const bound = await client.eraStart()
-        expect(bound.slot).toBeDefined()
-
-        const compactGenesis = await client.genesisConfig()
-        expect(compactGenesis.systemStart).toBeDefined()
-
-        const point = await client.ledgerTip() as { slot: Slot, hash: Hash16 }
-        expect(point.slot).toBeDefined()
-
-        const nonMyopicMemberRewards = await client.nonMyopicMemberRewards(
-          ['7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8']
-        )
-        expect(
-          Object.values(Object.values(nonMyopicMemberRewards)[0])[0]
-        ).toBeDefined()
-
-        const proposedProtocolParameters = await client.proposedProtocolParameters()
-        expect(proposedProtocolParameters).toBeDefined()
-
-        const stakeDistribution = await client.stakeDistribution()
-        expect(Object.values(stakeDistribution)[0].stake).toBeDefined()
-
-        const utxoSet = await client.utxo([
-          'addr_test1qqymtheun4y437fa6cms4jmtfex39wzz7jfwggudwnqkdnr8udjk6d89dcjadt7tw6hmz0aeue2jzdpl2vnkz8wdk4fqz3y5m9'
-        ])
-        expect(utxoSet[0]).toBeDefined()
-
-        await client.shutdown()
-      })
-
-      it('can handle concurrent requests ', async () => {
-        const context = await dummyInteractionContext()
-        const client = await StateQuery.createStateQueryClient(context)
-        const [currentEpoch, eraStart, ledgerTip] = await Promise.all([
-          client.currentEpoch(),
-          client.eraStart(),
-          client.ledgerTip()
-        ])
-        expect(currentEpoch).toBeDefined()
-        expect(eraStart).toBeDefined()
-        expect(ledgerTip).toBeDefined()
-        await client.shutdown()
-      })
+    it('can handle concurrent requests ', async () => {
+      const [currentEpoch, eraStart, ledgerTip] = await Promise.all([
+        client.currentEpoch(),
+        client.eraStart(),
+        client.ledgerTip()
+      ])
+      expect(currentEpoch).toBeDefined()
+      expect(eraStart).toBeDefined()
+      expect(ledgerTip).toBeDefined()
     })
   })
 
