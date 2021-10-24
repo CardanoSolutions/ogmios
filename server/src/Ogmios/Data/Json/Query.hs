@@ -6,11 +6,16 @@
 
 module Ogmios.Data.Json.Query
     ( -- * Types
-      QueryResult
+      QueryT (..)
     , QueryInEra
     , SomeQuery (..)
+    , QueryResult
+
+      -- ** Eras
     , SomeShelleyEra (..)
     , ShelleyBasedEra (..)
+
+      -- ** Types in queries
     , RewardAccounts
     , Delegations
     , RewardProvenance
@@ -73,8 +78,6 @@ import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
     ( QueryAnytime (..) )
 import Ouroboros.Consensus.HardFork.History.Summary
     ( Bound (..) )
-import Ouroboros.Consensus.Ledger.Query
-    ( Query (..) )
 import Ouroboros.Consensus.Shelley.Eras
     ( AllegraEra, AlonzoEra, MaryEra, ShelleyEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
@@ -97,6 +100,8 @@ import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.Map.Merge.Strict as Map
 
+import qualified Ouroboros.Consensus.Ledger.Query as LSQ
+
 import qualified Cardano.Crypto.Hash.Class as CC
 import qualified Cardano.Ledger.Address as Address
 import qualified Cardano.Ledger.Coin as Coin
@@ -116,6 +121,59 @@ import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
+
+--
+-- Types
+--
+
+data QueryT (f :: Type -> Type) block = QueryT
+    { rawQuery :: Json.Value
+    , queryInEra :: QueryInEra f block
+    } deriving (Generic)
+
+type QueryInEra f block =
+    SomeShelleyEra -> Maybe (SomeQuery f block)
+
+data SomeQuery (f :: Type -> Type) block = forall result. SomeQuery
+    { query :: LSQ.Query block result
+    , encodeResult :: result -> Json
+    , genResult :: Proxy result -> f result
+    }
+
+instance Crypto crypto => FromJSON (QueryT Proxy (CardanoBlock crypto)) where
+    parseJSON = choice "query"
+        [ \raw -> QueryT raw <$> parseGetCurrentPParams (const id) raw
+        , \raw -> QueryT raw <$> parseGetEpochNo id raw
+        , \raw -> QueryT raw <$> parseGetEraStart id raw
+        , \raw -> QueryT raw <$> parseGetFilteredDelegationsAndRewards id raw
+        , \raw -> QueryT raw <$> parseGetGenesisConfig (const id) raw
+        , \raw -> QueryT raw <$> parseGetLedgerTip (const id) raw
+        , \raw -> QueryT raw <$> parseGetNonMyopicMemberRewards id raw
+        , \raw -> QueryT raw <$> parseGetPoolIds id raw
+        , \raw -> QueryT raw <$> parseGetPoolParameters id raw
+        , \raw -> QueryT raw <$> parseGetPoolsRanking id raw
+        , \raw -> QueryT raw <$> parseGetProposedPParamsUpdates (const id) raw
+        , \raw -> QueryT raw <$> parseGetRewardProvenance id raw
+        , \raw -> QueryT raw <$> parseGetStakeDistribution id raw
+        , \raw -> QueryT raw <$> parseGetUTxO (const id) raw
+        , \raw -> QueryT raw <$> parseGetUTxOByAddress (const id) raw
+        , \raw -> QueryT raw <$> parseGetUTxOByTxIn (const id) raw
+        ]
+
+type QueryResult crypto result =
+    Either (MismatchEraInfo (CardanoEras crypto)) result
+
+type GenResult crypto f t =
+    Proxy (QueryResult crypto t) -> f (QueryResult crypto t)
+
+data SomeShelleyEra =
+    forall era. SomeShelleyEra (ShelleyBasedEra era)
+
+type Delegations crypto =
+    Map (Credential 'Staking crypto) (Keys.KeyHash 'StakePool crypto)
+
+type RewardAccounts crypto =
+    Map (Credential 'Staking crypto) Coin
 
 --
 -- Encoders
@@ -303,7 +361,7 @@ encodeDesirability d =
         ]
 
 --
--- Parsers
+-- Parsers (Queries)
 --
 
 parseGetEraStart
@@ -324,13 +382,13 @@ parseGetEraStart genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    BlockQuery $ QueryAnytimeShelley GetEraStart
+                    LSQ.BlockQuery $ QueryAnytimeShelley GetEraStart
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    BlockQuery $ QueryAnytimeAllegra GetEraStart
+                    LSQ.BlockQuery $ QueryAnytimeAllegra GetEraStart
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    BlockQuery $ QueryAnytimeMary GetEraStart
+                    LSQ.BlockQuery $ QueryAnytimeMary GetEraStart
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    BlockQuery $ QueryAnytimeAlonzo GetEraStart
+                    LSQ.BlockQuery $ QueryAnytimeAlonzo GetEraStart
             )
 
 parseGetLedgerTip
@@ -344,7 +402,7 @@ parseGetLedgerTip genResultInEra =
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentShelley GetLedgerTip
+                    LSQ.BlockQuery $ QueryIfCurrentShelley GetLedgerTip
                 , encodeResult =
                     either encodeMismatchEraInfo (encodePoint . castPoint)
                 , genResult =
@@ -353,7 +411,7 @@ parseGetLedgerTip genResultInEra =
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentAllegra GetLedgerTip
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetLedgerTip
                 , encodeResult =
                     either encodeMismatchEraInfo (encodePoint . castPoint)
                 , genResult =
@@ -362,7 +420,7 @@ parseGetLedgerTip genResultInEra =
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentMary GetLedgerTip
+                    LSQ.BlockQuery $ QueryIfCurrentMary GetLedgerTip
                 , encodeResult =
                     either encodeMismatchEraInfo (encodePoint . castPoint)
                 , genResult =
@@ -371,7 +429,7 @@ parseGetLedgerTip genResultInEra =
             SomeShelleyEra ShelleyBasedEraAlonzo ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentAlonzo GetLedgerTip
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetLedgerTip
                 , encodeResult =
                     either encodeMismatchEraInfo (encodePoint . castPoint)
                 , genResult =
@@ -396,13 +454,13 @@ parseGetEpochNo genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    BlockQuery $ QueryIfCurrentShelley GetEpochNo
+                    LSQ.BlockQuery $ QueryIfCurrentShelley GetEpochNo
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    BlockQuery $ QueryIfCurrentAllegra GetEpochNo
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetEpochNo
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    BlockQuery $ QueryIfCurrentMary GetEpochNo
+                    LSQ.BlockQuery $ QueryIfCurrentMary GetEpochNo
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    BlockQuery $ QueryIfCurrentAlonzo GetEpochNo
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetEpochNo
             )
 
 parseGetNonMyopicMemberRewards
@@ -424,13 +482,13 @@ parseGetNonMyopicMemberRewards genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    BlockQuery $ QueryIfCurrentShelley (GetNonMyopicMemberRewards credentials)
+                    LSQ.BlockQuery $ QueryIfCurrentShelley (GetNonMyopicMemberRewards credentials)
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    BlockQuery $ QueryIfCurrentAllegra (GetNonMyopicMemberRewards credentials)
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra (GetNonMyopicMemberRewards credentials)
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    BlockQuery $ QueryIfCurrentMary (GetNonMyopicMemberRewards credentials)
+                    LSQ.BlockQuery $ QueryIfCurrentMary (GetNonMyopicMemberRewards credentials)
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    BlockQuery $ QueryIfCurrentAlonzo (GetNonMyopicMemberRewards credentials)
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetNonMyopicMemberRewards credentials)
             )
   where
     parseCredentials
@@ -463,13 +521,13 @@ parseGetFilteredDelegationsAndRewards genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    BlockQuery $ QueryIfCurrentShelley (GetFilteredDelegationsAndRewardAccounts credentials)
+                    LSQ.BlockQuery $ QueryIfCurrentShelley (GetFilteredDelegationsAndRewardAccounts credentials)
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    BlockQuery $ QueryIfCurrentAllegra (GetFilteredDelegationsAndRewardAccounts credentials)
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra (GetFilteredDelegationsAndRewardAccounts credentials)
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    BlockQuery $ QueryIfCurrentMary (GetFilteredDelegationsAndRewardAccounts credentials)
+                    LSQ.BlockQuery $ QueryIfCurrentMary (GetFilteredDelegationsAndRewardAccounts credentials)
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    BlockQuery $ QueryIfCurrentAlonzo (GetFilteredDelegationsAndRewardAccounts credentials)
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetFilteredDelegationsAndRewardAccounts credentials)
             )
   where
     parseCredentials
@@ -489,7 +547,7 @@ parseGetCurrentPParams genResultInEra =
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentShelley GetCurrentPParams
+                    LSQ.BlockQuery $ QueryIfCurrentShelley GetCurrentPParams
                 , encodeResult =
                     either encodeMismatchEraInfo (Shelley.encodePParams' id)
                 , genResult =
@@ -498,7 +556,7 @@ parseGetCurrentPParams genResultInEra =
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentAllegra GetCurrentPParams
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetCurrentPParams
                 , encodeResult =
                     either encodeMismatchEraInfo (Allegra.encodePParams' id)
                 , genResult =
@@ -507,7 +565,7 @@ parseGetCurrentPParams genResultInEra =
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentMary GetCurrentPParams
+                    LSQ.BlockQuery $ QueryIfCurrentMary GetCurrentPParams
                 , encodeResult =
                     either encodeMismatchEraInfo (Mary.encodePParams' id)
                 , genResult =
@@ -516,7 +574,7 @@ parseGetCurrentPParams genResultInEra =
             SomeShelleyEra ShelleyBasedEraAlonzo ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentAlonzo GetCurrentPParams
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetCurrentPParams
                 , encodeResult =
                     either encodeMismatchEraInfo (Alonzo.encodePParams' id)
                 , genResult =
@@ -534,7 +592,7 @@ parseGetProposedPParamsUpdates genResultInEra =
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentShelley GetProposedPParamsUpdates
+                    LSQ.BlockQuery $ QueryIfCurrentShelley GetProposedPParamsUpdates
                 , encodeResult =
                     either encodeMismatchEraInfo Shelley.encodeProposedPPUpdates
                 , genResult =
@@ -543,7 +601,7 @@ parseGetProposedPParamsUpdates genResultInEra =
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentAllegra GetProposedPParamsUpdates
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetProposedPParamsUpdates
                 , encodeResult =
                     either encodeMismatchEraInfo Allegra.encodeProposedPPUpdates
                 , genResult =
@@ -552,7 +610,7 @@ parseGetProposedPParamsUpdates genResultInEra =
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentMary GetProposedPParamsUpdates
+                    LSQ.BlockQuery $ QueryIfCurrentMary GetProposedPParamsUpdates
                 , encodeResult =
                     either encodeMismatchEraInfo Mary.encodeProposedPPUpdates
                 , genResult =
@@ -561,7 +619,7 @@ parseGetProposedPParamsUpdates genResultInEra =
             SomeShelleyEra ShelleyBasedEraAlonzo ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentAlonzo GetProposedPParamsUpdates
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetProposedPParamsUpdates
                 , encodeResult =
                     either encodeMismatchEraInfo Alonzo.encodeProposedPPUpdates
                 , genResult =
@@ -570,7 +628,7 @@ parseGetProposedPParamsUpdates genResultInEra =
 
 parseGetStakeDistribution
     :: forall crypto f. ()
-    => (GenResult crypto f (Sh.PoolDistr crypto))
+    => GenResult crypto f (Sh.PoolDistr crypto)
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetStakeDistribution genResult =
@@ -586,13 +644,13 @@ parseGetStakeDistribution genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    BlockQuery $ QueryIfCurrentShelley GetStakeDistribution
+                    LSQ.BlockQuery $ QueryIfCurrentShelley GetStakeDistribution
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    BlockQuery $ QueryIfCurrentAllegra GetStakeDistribution
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetStakeDistribution
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    BlockQuery $ QueryIfCurrentMary GetStakeDistribution
+                    LSQ.BlockQuery $ QueryIfCurrentMary GetStakeDistribution
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    BlockQuery $ QueryIfCurrentAlonzo GetStakeDistribution
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetStakeDistribution
             )
 
 parseGetUTxO
@@ -606,7 +664,7 @@ parseGetUTxO genResultInEra =
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentShelley GetUTxOWhole
+                    LSQ.BlockQuery $ QueryIfCurrentShelley GetUTxOWhole
                 , encodeResult =
                     either encodeMismatchEraInfo Shelley.encodeUtxo
                 , genResult =
@@ -615,7 +673,7 @@ parseGetUTxO genResultInEra =
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentAllegra GetUTxOWhole
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetUTxOWhole
                 , encodeResult =
                     either encodeMismatchEraInfo Allegra.encodeUtxo
                 , genResult =
@@ -624,7 +682,7 @@ parseGetUTxO genResultInEra =
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentMary GetUTxOWhole
+                    LSQ.BlockQuery $ QueryIfCurrentMary GetUTxOWhole
                 , encodeResult =
                     either encodeMismatchEraInfo Mary.encodeUtxo
                 , genResult =
@@ -633,7 +691,7 @@ parseGetUTxO genResultInEra =
             SomeShelleyEra ShelleyBasedEraAlonzo ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentAlonzo GetUTxOWhole
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetUTxOWhole
                 , encodeResult =
                     either encodeMismatchEraInfo Alonzo.encodeUtxo
                 , genResult =
@@ -651,7 +709,7 @@ parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
         SomeShelleyEra ShelleyBasedEraShelley ->
             Just $ SomeQuery
             { query =
-                BlockQuery $ QueryIfCurrentShelley (GetUTxOByAddress addrs)
+                LSQ.BlockQuery $ QueryIfCurrentShelley (GetUTxOByAddress addrs)
             , encodeResult =
                 either encodeMismatchEraInfo Shelley.encodeUtxo
             , genResult =
@@ -660,7 +718,7 @@ parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
         SomeShelleyEra ShelleyBasedEraAllegra ->
             Just $ SomeQuery
             { query =
-                BlockQuery $ QueryIfCurrentAllegra (GetUTxOByAddress addrs)
+                LSQ.BlockQuery $ QueryIfCurrentAllegra (GetUTxOByAddress addrs)
             , encodeResult =
                 either encodeMismatchEraInfo Allegra.encodeUtxo
             , genResult =
@@ -669,7 +727,7 @@ parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
         SomeShelleyEra ShelleyBasedEraMary ->
             Just $ SomeQuery
             { query =
-                BlockQuery $ QueryIfCurrentMary (GetUTxOByAddress addrs)
+                LSQ.BlockQuery $ QueryIfCurrentMary (GetUTxOByAddress addrs)
             , encodeResult =
                 either encodeMismatchEraInfo Mary.encodeUtxo
             , genResult =
@@ -678,7 +736,7 @@ parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
         SomeShelleyEra ShelleyBasedEraAlonzo ->
             Just $ SomeQuery
             { query =
-                BlockQuery $ QueryIfCurrentAlonzo (GetUTxOByAddress addrs)
+                LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetUTxOByAddress addrs)
             , encodeResult =
                 either encodeMismatchEraInfo Alonzo.encodeUtxo
             , genResult =
@@ -702,7 +760,7 @@ parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
         SomeShelleyEra ShelleyBasedEraShelley ->
             Just $ SomeQuery
             { query =
-                BlockQuery $ QueryIfCurrentShelley (GetUTxOByTxIn ins)
+                LSQ.BlockQuery $ QueryIfCurrentShelley (GetUTxOByTxIn ins)
             , encodeResult =
                 either encodeMismatchEraInfo Shelley.encodeUtxo
             , genResult =
@@ -711,7 +769,7 @@ parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
         SomeShelleyEra ShelleyBasedEraAllegra ->
             Just $ SomeQuery
             { query =
-                BlockQuery $ QueryIfCurrentAllegra (GetUTxOByTxIn ins)
+                LSQ.BlockQuery $ QueryIfCurrentAllegra (GetUTxOByTxIn ins)
             , encodeResult =
                 either encodeMismatchEraInfo Allegra.encodeUtxo
             , genResult =
@@ -720,7 +778,7 @@ parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
         SomeShelleyEra ShelleyBasedEraMary ->
             Just $ SomeQuery
             { query =
-                BlockQuery $ QueryIfCurrentMary (GetUTxOByTxIn ins)
+                LSQ.BlockQuery $ QueryIfCurrentMary (GetUTxOByTxIn ins)
             , encodeResult =
                 either encodeMismatchEraInfo Mary.encodeUtxo
             , genResult =
@@ -729,7 +787,7 @@ parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
         SomeShelleyEra ShelleyBasedEraAlonzo ->
             Just $ SomeQuery
             { query =
-                BlockQuery $ QueryIfCurrentAlonzo (GetUTxOByTxIn ins)
+                LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetUTxOByTxIn ins)
             , encodeResult =
                 either encodeMismatchEraInfo Alonzo.encodeUtxo
             , genResult =
@@ -760,7 +818,7 @@ parseGetGenesisConfig genResultInEra = do
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentShelley GetGenesisConfig
+                    LSQ.BlockQuery $ QueryIfCurrentShelley GetGenesisConfig
                 , encodeResult =
                     let encodeGenesis =
                             Shelley.encodeGenesis . getCompactGenesis
@@ -771,7 +829,7 @@ parseGetGenesisConfig genResultInEra = do
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentAllegra GetGenesisConfig
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetGenesisConfig
                 , encodeResult =
                     let encodeGenesis =
                             Shelley.encodeGenesis . getCompactGenesis
@@ -782,7 +840,7 @@ parseGetGenesisConfig genResultInEra = do
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentMary GetGenesisConfig
+                    LSQ.BlockQuery $ QueryIfCurrentMary GetGenesisConfig
                 , encodeResult =
                     let encodeGenesis =
                             Shelley.encodeGenesis . getCompactGenesis
@@ -793,7 +851,7 @@ parseGetGenesisConfig genResultInEra = do
             SomeShelleyEra ShelleyBasedEraAlonzo ->
                 Just $ SomeQuery
                 { query =
-                    BlockQuery $ QueryIfCurrentAlonzo GetGenesisConfig
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetGenesisConfig
                 , encodeResult =
                     let encodeGenesis =
                             Shelley.encodeGenesis . getCompactGenesis
@@ -820,13 +878,13 @@ parseGetRewardProvenance genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    BlockQuery $ QueryIfCurrentShelley GetRewardProvenance
+                    LSQ.BlockQuery $ QueryIfCurrentShelley GetRewardProvenance
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    BlockQuery $ QueryIfCurrentAllegra GetRewardProvenance
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetRewardProvenance
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    BlockQuery $ QueryIfCurrentMary GetRewardProvenance
+                    LSQ.BlockQuery $ QueryIfCurrentMary GetRewardProvenance
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    BlockQuery $ QueryIfCurrentAlonzo GetRewardProvenance
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetRewardProvenance
             )
 
 parseGetPoolIds
@@ -847,13 +905,13 @@ parseGetPoolIds genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    BlockQuery $ QueryIfCurrentShelley GetStakePools
+                    LSQ.BlockQuery $ QueryIfCurrentShelley GetStakePools
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    BlockQuery $ QueryIfCurrentAllegra GetStakePools
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetStakePools
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    BlockQuery $ QueryIfCurrentMary GetStakePools
+                    LSQ.BlockQuery $ QueryIfCurrentMary GetStakePools
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    BlockQuery $ QueryIfCurrentAlonzo GetStakePools
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetStakePools
             )
 
 parseGetPoolParameters
@@ -877,13 +935,13 @@ parseGetPoolParameters genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    BlockQuery $ QueryIfCurrentShelley (GetStakePoolParams ids)
+                    LSQ.BlockQuery $ QueryIfCurrentShelley (GetStakePoolParams ids)
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    BlockQuery $ QueryIfCurrentAllegra (GetStakePoolParams ids)
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra (GetStakePoolParams ids)
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    BlockQuery $ QueryIfCurrentMary (GetStakePoolParams ids)
+                    LSQ.BlockQuery $ QueryIfCurrentMary (GetStakePoolParams ids)
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    BlockQuery $ QueryIfCurrentAlonzo (GetStakePoolParams ids)
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetStakePoolParams ids)
             )
   where
     parsePoolIds
@@ -910,42 +968,18 @@ parseGetPoolsRanking genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    BlockQuery $ QueryIfCurrentShelley GetRewardProvenance
+                    LSQ.BlockQuery $ QueryIfCurrentShelley GetRewardProvenance
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    BlockQuery $ QueryIfCurrentAllegra GetRewardProvenance
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetRewardProvenance
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    BlockQuery $ QueryIfCurrentMary GetRewardProvenance
+                    LSQ.BlockQuery $ QueryIfCurrentMary GetRewardProvenance
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    BlockQuery $ QueryIfCurrentAlonzo GetRewardProvenance
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetRewardProvenance
             )
 
 --
--- Internal
+-- Parsers (Others)
 --
-
-type QueryResult crypto result =
-    Either (MismatchEraInfo (CardanoEras crypto)) result
-
-type GenResult crypto f t =
-    Proxy (QueryResult crypto t) -> f (QueryResult crypto t)
-
-type QueryInEra f block =
-    SomeShelleyEra -> Maybe (SomeQuery f block)
-
-data SomeShelleyEra =
-    forall era. SomeShelleyEra (ShelleyBasedEra era)
-
-type Delegations crypto =
-    Map (Credential 'Staking crypto) (Keys.KeyHash 'StakePool crypto)
-
-type RewardAccounts crypto =
-    Map (Credential 'Staking crypto) Coin
-
-data SomeQuery (f :: Type -> Type) block = forall result. SomeQuery
-    { query :: Query block result
-    , encodeResult :: result -> Json
-    , genResult :: Proxy result -> f result
-    }
 
 parseAddress
     :: Crypto crypto

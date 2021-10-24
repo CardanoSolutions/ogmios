@@ -35,7 +35,7 @@ module Ogmios.Data.Protocol.StateQuery
     , _encodeReleaseResponse
 
       -- ** Query
-    , Query (..)
+    , QueryT (..)
     , _decodeQuery
     , QueryResponse (..)
     , _encodeQueryResponse
@@ -44,7 +44,7 @@ module Ogmios.Data.Protocol.StateQuery
 import Ogmios.Data.Json.Prelude
 
 import Ogmios.Data.Json.Query
-    ( QueryInEra )
+    ( QueryT (..) )
 import Ogmios.Data.Protocol
     ()
 
@@ -76,14 +76,14 @@ data StateQueryCodecs block = StateQueryCodecs
         -> Json
     , decodeQuery
         :: ByteString
-        -> Maybe (Wsp.Request (Query block))
+        -> Maybe (Wsp.Request (QueryT Proxy block))
     , encodeQueryResponse
         :: Wsp.Response (QueryResponse block)
         -> Json
     }
 
 mkStateQueryCodecs
-    :: (FromJSON (QueryInEra Proxy block), FromJSON (Point block))
+    :: (FromJSON (QueryT Proxy block), FromJSON (Point block))
     => (Point block -> Json)
     -> (AcquireFailure -> Json)
     -> StateQueryCodecs block
@@ -117,7 +117,7 @@ data StateQueryMessage block
         (Wsp.ToResponse ReleaseResponse)
         Wsp.ToFault
     | MsgQuery
-        (Query block)
+        (QueryT Proxy block)
         (Wsp.ToResponse (QueryResponse block))
         Wsp.ToFault
 
@@ -222,15 +222,15 @@ _encodeReleaseResponse =
 -- Query
 --
 
-data Query block = Query { query :: QueryInEra Proxy block }
+newtype Query block = Query { query :: QueryT Proxy block }
     deriving (Generic)
 
 _decodeQuery
-    :: FromJSON (QueryInEra Proxy block)
+    :: FromJSON (QueryT Proxy block)
     => Json.Value
-    -> Json.Parser (Wsp.Request (Query block))
+    -> Json.Parser (Wsp.Request (QueryT Proxy block))
 _decodeQuery =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    fmap (fmap query) . Wsp.genericFromJSON Wsp.defaultOptions
 
 data QueryResponse block
     = QueryResponse { unQueryResponse :: Json }
@@ -267,4 +267,4 @@ _encodeQueryResponse encodeAcquireFailure =
               )
             ]
   where
-    proxy = Proxy @(Wsp.Request (Query block))
+    proxy = Proxy @(Wsp.Request (QueryT Proxy block))

@@ -40,7 +40,7 @@ import Cardano.Slotting.Block
 import Cardano.Slotting.Slot
     ( SlotNo (..), WithOrigin (..) )
 import Ogmios.Data.Json.Query
-    ( QueryInEra, encodeEraMismatch, encodeOneEraHash, encodePoint )
+    ( encodeEraMismatch, encodeOneEraHash, encodePoint )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock (..) )
 import Ouroboros.Consensus.Byron.Ledger.Mempool
@@ -76,7 +76,6 @@ import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Byron as Byron
 import qualified Ogmios.Data.Json.Mary as Mary
-import qualified Ogmios.Data.Json.Query as Query
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
 --
@@ -198,12 +197,6 @@ encodeTip = \case
 -- Parsers
 --
 
-decodeOneEraHash
-    :: Text
-    -> Json.Parser (OneEraHash (CardanoEras crypto))
-decodeOneEraHash =
-    either (const mempty) (pure . OneEraHash . toShort . hashToBytes) . decodeHash
-
 instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto))
   where
     parseJSON = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
@@ -252,26 +245,6 @@ instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
             hash <- obj .: "hash" >>= decodeOneEraHash
             pure $ Point $ At $ Block (SlotNo slot) hash
 
-instance Crypto crypto => FromJSON (QueryInEra Proxy (CardanoBlock crypto)) where
-    parseJSON = choice "query"
-        [ Query.parseGetCurrentPParams (const id)
-        , Query.parseGetEpochNo id
-        , Query.parseGetEraStart id
-        , Query.parseGetFilteredDelegationsAndRewards id
-        , Query.parseGetGenesisConfig (const id)
-        , Query.parseGetLedgerTip (const id)
-        , Query.parseGetNonMyopicMemberRewards id
-        , Query.parseGetPoolIds id
-        , Query.parseGetPoolParameters id
-        , Query.parseGetPoolsRanking id
-        , Query.parseGetProposedPParamsUpdates (const id)
-        , Query.parseGetRewardProvenance id
-        , Query.parseGetStakeDistribution id
-        , Query.parseGetUTxO (const id)
-        , Query.parseGetUTxOByAddress (const id)
-        , Query.parseGetUTxOByTxIn (const id)
-        ]
-
 instance Crypto crypto => FromJSON (Tip (CardanoBlock crypto)) where
     parseJSON json = parseOrigin json <|> parseTip json
       where
@@ -284,3 +257,9 @@ instance Crypto crypto => FromJSON (Tip (CardanoBlock crypto)) where
             hash <- obj .: "hash" >>= decodeOneEraHash
             blockNo <- obj .: "blockNo"
             pure $ Tip (SlotNo slot) hash (BlockNo blockNo)
+
+decodeOneEraHash
+    :: Text
+    -> Json.Parser (OneEraHash (CardanoEras crypto))
+decodeOneEraHash =
+    either (const mempty) (pure . OneEraHash . toShort . hashToBytes) . decodeHash

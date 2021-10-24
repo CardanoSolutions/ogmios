@@ -21,7 +21,7 @@ import Cardano.Network.Protocol.NodeToClient
     , runPeer
     )
 import Data.Aeson
-    ( ToJSON (..) )
+    ( ToJSON (..), object, (.=) )
 import Data.SOP.Strict
     ( NS (..) )
 import Generics.SOP
@@ -50,7 +50,7 @@ import Ogmios.Data.Json.Query
     ( SomeQuery (..), encodeEpochNo, encodeMismatchEraInfo )
 import Ogmios.Data.Protocol.StateQuery
     ( Acquire (..)
-    , Query (Query)
+    , QueryT (..)
     , Release (..)
     , StateQueryMessage (..)
     , mkStateQueryCodecs
@@ -299,9 +299,10 @@ release mirror =
 
 queryAny :: Wsp.Mirror -> StateQueryMessage Block
 queryAny mirror =
-    MsgQuery (Query q) (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgQuery QueryT{rawQuery,queryInEra} (Wsp.Response mirror) (Wsp.Fault mirror)
   where
-    q _ = Just $ SomeQuery
+    rawQuery = object [ "query" .= ("currentEpoch" :: String) ]
+    queryInEra _ = Just $ SomeQuery
         { query = Ledger.BlockQuery $ QueryIfCurrentAlonzo GetEpochNo
         , genResult = const Proxy
         , encodeResult = either encodeMismatchEraInfo encodeEpochNo
