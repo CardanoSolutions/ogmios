@@ -49,11 +49,17 @@ import qualified Data.Aeson as Json
 data Request a = Request Mirror a
     deriving (Generic, Show, Eq)
 
+instance Functor Request where
+    fmap fn (Request mirror a) = Request mirror (fn a)
+
 -- | Represent a JSON-WSP response (from the server to a client)
 --
 -- @since 1.0.0
 data Response a = Response Mirror a
     deriving (Generic, Show, Eq)
+
+instance Functor Response where
+    fmap fn (Response mirror a) = Response mirror (fn a)
 
 -- | Type alias for the optional mirror(ed) value in Request/Response
 --

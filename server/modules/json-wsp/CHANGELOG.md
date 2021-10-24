@@ -1,10 +1,11 @@
 # Changelog
 
-## [edge] 
+## [1.2.0] -- 2021-10-24
 
 ### Added
 
 - Expose `FaultCode`.
+- `Functor` instances for `Request` and `Response` types.
 
 ### Changed
 
@@ -12,7 +13,7 @@
 
 ### Removed
 
-ø
+N/A
 
 ## [1.1.0] -- 2021-05-06
 

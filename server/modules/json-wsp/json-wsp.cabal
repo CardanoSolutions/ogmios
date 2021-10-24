@@ -7,7 +7,7 @@ cabal-version: 1.12
 -- hash: cb9b5f1a7463d974b765c06f1c5492edc38cab64382201e1f6f0246e1080e310
 
 name:           json-wsp
-version:        1.1.0
+version:        1.2.0
 synopsis:       An implementation of JSON-WSP in Haskell
 description:    Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server/modules/json-wsp>
 category:       Web
