@@ -6,7 +6,7 @@
 
 module Ogmios.Data.Json.Query
     ( -- * Types
-      QueryT (..)
+      Query (..)
     , QueryInEra
     , SomeQuery (..)
     , QueryResult
@@ -131,7 +131,7 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 -- Types
 --
 
-data QueryT (f :: Type -> Type) block = QueryT
+data Query (f :: Type -> Type) block = Query
     { rawQuery :: Json.Value
     , queryInEra :: QueryInEra f block
     } deriving (Generic)
@@ -145,24 +145,24 @@ data SomeQuery (f :: Type -> Type) block = forall result. SomeQuery
     , genResult :: Proxy result -> f result
     }
 
-instance Crypto crypto => FromJSON (QueryT Proxy (CardanoBlock crypto)) where
+instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
     parseJSON = choice "query"
-        [ \raw -> QueryT raw <$> parseGetCurrentPParams (const id) raw
-        , \raw -> QueryT raw <$> parseGetEpochNo id raw
-        , \raw -> QueryT raw <$> parseGetEraStart id raw
-        , \raw -> QueryT raw <$> parseGetFilteredDelegationsAndRewards id raw
-        , \raw -> QueryT raw <$> parseGetGenesisConfig (const id) raw
-        , \raw -> QueryT raw <$> parseGetLedgerTip (const id) raw
-        , \raw -> QueryT raw <$> parseGetNonMyopicMemberRewards id raw
-        , \raw -> QueryT raw <$> parseGetPoolIds id raw
-        , \raw -> QueryT raw <$> parseGetPoolParameters id raw
-        , \raw -> QueryT raw <$> parseGetPoolsRanking id raw
-        , \raw -> QueryT raw <$> parseGetProposedPParamsUpdates (const id) raw
-        , \raw -> QueryT raw <$> parseGetRewardProvenance id raw
-        , \raw -> QueryT raw <$> parseGetStakeDistribution id raw
-        , \raw -> QueryT raw <$> parseGetUTxO (const id) raw
-        , \raw -> QueryT raw <$> parseGetUTxOByAddress (const id) raw
-        , \raw -> QueryT raw <$> parseGetUTxOByTxIn (const id) raw
+        [ \raw -> Query raw <$> parseGetCurrentPParams (const id) raw
+        , \raw -> Query raw <$> parseGetEpochNo id raw
+        , \raw -> Query raw <$> parseGetEraStart id raw
+        , \raw -> Query raw <$> parseGetFilteredDelegationsAndRewards id raw
+        , \raw -> Query raw <$> parseGetGenesisConfig (const id) raw
+        , \raw -> Query raw <$> parseGetLedgerTip (const id) raw
+        , \raw -> Query raw <$> parseGetNonMyopicMemberRewards id raw
+        , \raw -> Query raw <$> parseGetPoolIds id raw
+        , \raw -> Query raw <$> parseGetPoolParameters id raw
+        , \raw -> Query raw <$> parseGetPoolsRanking id raw
+        , \raw -> Query raw <$> parseGetProposedPParamsUpdates (const id) raw
+        , \raw -> Query raw <$> parseGetRewardProvenance id raw
+        , \raw -> Query raw <$> parseGetStakeDistribution id raw
+        , \raw -> Query raw <$> parseGetUTxO (const id) raw
+        , \raw -> Query raw <$> parseGetUTxOByAddress (const id) raw
+        , \raw -> Query raw <$> parseGetUTxOByTxIn (const id) raw
         ]
 
 type QueryResult crypto result =

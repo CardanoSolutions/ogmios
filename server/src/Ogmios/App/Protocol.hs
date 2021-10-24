@@ -18,7 +18,7 @@ import Ogmios.Data.Protocol
 import Ogmios.Data.Protocol.ChainSync
     ( FindIntersect, RequestNext, _decodeFindIntersect, _decodeRequestNext )
 import Ogmios.Data.Protocol.StateQuery
-    ( Acquire, QueryT, Release, _decodeAcquire, _decodeQuery, _decodeRelease )
+    ( Acquire, Query, Release, _decodeAcquire, _decodeQuery, _decodeRelease )
 import Ogmios.Data.Protocol.TxSubmission
     ( SubmitTx, _decodeSubmitTx )
 import Ouroboros.Network.Block
@@ -65,7 +65,7 @@ import qualified Data.Text as T
 onUnmatchedMessage
     :: forall block.
         ( FromJSON (SubmitTxPayload block)
-        , FromJSON (QueryT Proxy block)
+        , FromJSON (Query Proxy block)
         , FromJSON (Point block)
         )
     => ByteString
@@ -115,7 +115,7 @@ onUnmatchedMessage blob = do
                 void $ _decodeAcquire @block json
            | methodName == Wsp.gWSPMethodName (Proxy @(Rep Release _)) ->
                 void $ _decodeRelease json
-           | methodName == Wsp.gWSPMethodName (Proxy @(Rep (QueryT Proxy block) _)) ->
+           | methodName == Wsp.gWSPMethodName (Proxy @(Rep (Query Proxy block) _)) ->
                 void $ _decodeQuery @block json
            | methodName == Wsp.gWSPMethodName (Proxy @(Rep (SubmitTx block) _)) ->
                 void $ _decodeSubmitTx @block json

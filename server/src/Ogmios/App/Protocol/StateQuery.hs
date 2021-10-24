@@ -65,8 +65,8 @@ import Ogmios.Data.Json.Query
 import Ogmios.Data.Protocol.StateQuery
     ( Acquire (..)
     , AcquireResponse (..)
+    , Query (..)
     , QueryResponse (..)
-    , QueryT (..)
     , Release (..)
     , ReleaseResponse (..)
     , StateQueryCodecs (..)
@@ -143,10 +143,10 @@ mkStateQueryClient tr StateQueryCodecs{..} queue yield =
             }
 
     clientStAcquiringTip
-        :: QueryT Proxy block
+        :: Query Proxy block
         -> Wsp.ToResponse (QueryResponse block)
         -> LSQ.ClientStAcquiring block point query m ()
-    clientStAcquiringTip QueryT{rawQuery = query, queryInEra} toResponse =
+    clientStAcquiringTip Query{rawQuery = query, queryInEra} toResponse =
         LSQ.ClientStAcquiring
             { LSQ.recvMsgAcquired = do
                 withCurrentEra queryInEra $ \case
@@ -179,7 +179,7 @@ mkStateQueryClient tr StateQueryCodecs{..} queue yield =
         MsgRelease Release toResponse _ -> do
             yield $ encodeReleaseResponse (toResponse Released)
             pure $ LSQ.SendMsgRelease clientStIdle
-        MsgQuery QueryT{rawQuery = query,queryInEra} toResponse _ ->
+        MsgQuery Query{rawQuery = query,queryInEra} toResponse _ ->
             withCurrentEra queryInEra $ \case
                 Nothing -> do
                     let response = QueryUnavailableInCurrentEra

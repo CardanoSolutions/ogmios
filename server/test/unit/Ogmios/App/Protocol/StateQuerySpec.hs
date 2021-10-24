@@ -50,7 +50,7 @@ import Ogmios.Data.Json.Query
     ( SomeQuery (..), encodeEpochNo, encodeMismatchEraInfo )
 import Ogmios.Data.Protocol.StateQuery
     ( Acquire (..)
-    , QueryT (..)
+    , Query (..)
     , Release (..)
     , StateQueryMessage (..)
     , mkStateQueryCodecs
@@ -299,7 +299,7 @@ release mirror =
 
 queryAny :: Wsp.Mirror -> StateQueryMessage Block
 queryAny mirror =
-    MsgQuery QueryT{rawQuery,queryInEra} (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgQuery Query{rawQuery,queryInEra} (Wsp.Response mirror) (Wsp.Fault mirror)
   where
     rawQuery = object [ "query" .= ("currentEpoch" :: String) ]
     queryInEra _ = Just $ SomeQuery

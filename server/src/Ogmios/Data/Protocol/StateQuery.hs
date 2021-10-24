@@ -35,7 +35,7 @@ module Ogmios.Data.Protocol.StateQuery
     , _encodeReleaseResponse
 
       -- ** Query
-    , QueryT (..)
+    , Query (..)
     , _decodeQuery
     , QueryResponse (..)
     , _encodeQueryResponse
@@ -44,7 +44,7 @@ module Ogmios.Data.Protocol.StateQuery
 import Ogmios.Data.Json.Prelude
 
 import Ogmios.Data.Json.Query
-    ( QueryT (..) )
+    ( Query (..) )
 import Ogmios.Data.Protocol
     ()
 
@@ -76,14 +76,14 @@ data StateQueryCodecs block = StateQueryCodecs
         -> Json
     , decodeQuery
         :: ByteString
-        -> Maybe (Wsp.Request (QueryT Proxy block))
+        -> Maybe (Wsp.Request (Query Proxy block))
     , encodeQueryResponse
         :: Wsp.Response (QueryResponse block)
         -> Json
     }
 
 mkStateQueryCodecs
-    :: (FromJSON (QueryT Proxy block), FromJSON (Point block))
+    :: (FromJSON (Query Proxy block), FromJSON (Point block))
     => (Point block -> Json)
     -> (AcquireFailure -> Json)
     -> StateQueryCodecs block
@@ -117,7 +117,7 @@ data StateQueryMessage block
         (Wsp.ToResponse ReleaseResponse)
         Wsp.ToFault
     | MsgQuery
-        (QueryT Proxy block)
+        (Query Proxy block)
         (Wsp.ToResponse (QueryResponse block))
         Wsp.ToFault
 
@@ -222,13 +222,13 @@ _encodeReleaseResponse =
 -- Query
 --
 
-newtype Query block = Query { query :: QueryT Proxy block }
+newtype QueryT block = Query { query :: Query Proxy block }
     deriving (Generic)
 
 _decodeQuery
-    :: FromJSON (QueryT Proxy block)
+    :: FromJSON (Query Proxy block)
     => Json.Value
-    -> Json.Parser (Wsp.Request (QueryT Proxy block))
+    -> Json.Parser (Wsp.Request (Query Proxy block))
 _decodeQuery =
     fmap (fmap query) . Wsp.genericFromJSON Wsp.defaultOptions
 
@@ -267,4 +267,4 @@ _encodeQueryResponse encodeAcquireFailure =
               )
             ]
   where
-    proxy = Proxy @(Wsp.Request (QueryT Proxy block))
+    proxy = Proxy @(Wsp.Request (Query Proxy block))
