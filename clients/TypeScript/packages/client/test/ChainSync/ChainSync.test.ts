@@ -1,8 +1,12 @@
 import {
+  ChainSyncClient,
   ChainSyncMessageHandlers,
   IntersectionNotFoundError,
   createChainSyncClient
 } from '../../src/ChainSync'
+import {
+  InteractionContext
+} from '../../src'
 import delay from 'delay'
 import {
   Block,
@@ -70,10 +74,28 @@ describe('ChainSync', () => {
     expect(context.socket.readyState).not.toBe(context.socket.OPEN)
   })
 
+  it('rejects method calls after shutdown', async () => {
+    const context = await dummyInteractionContext()
+    const client = await createChainSyncClient(context, stubHandlers)
+    await client.shutdown()
+    const run = () => client.startSync(['origin'], 3)
+    await expect(run).rejects
+  })
+
   describe('startSync', () => {
+    let context : InteractionContext
+    let client : ChainSyncClient
+
+    beforeEach(async () => {
+      context = await dummyInteractionContext()
+      client = await createChainSyncClient(context, stubHandlers)
+    })
+
+    afterEach(async () => {
+      try { await client.shutdown() } catch (_) {}
+    })
+
     it('selects the tip as the intersection if no point provided', async () => {
-      const context = await dummyInteractionContext()
-      const client = await createChainSyncClient(context, stubHandlers)
       const intersection = await client.startSync()
       if (intersection.point === 'origin' || intersection.tip === 'origin') {
         await client.shutdown()
@@ -82,13 +104,9 @@ describe('ChainSync', () => {
         expect(intersection.point.slot).toEqual(intersection.tip.slot)
         expect(intersection.point.hash).toEqual(intersection.tip.hash)
       }
-      await client.shutdown()
     })
 
     it('throws an exception when no intersection is found', async () => {
-      const context = await dummyInteractionContext()
-      const client = await createChainSyncClient(context, stubHandlers)
-
       return expect(() =>
         client.startSync([{
           slot: 0,
@@ -98,19 +116,15 @@ describe('ChainSync', () => {
     })
 
     it('intersects at the genesis if origin provided as point', async () => {
-      const context = await dummyInteractionContext()
-      const client = await createChainSyncClient(context, stubHandlers)
       const intersection = await client.startSync(['origin'], 10)
       expect(intersection.point).toEqual('origin')
       expect(intersection.tip).toBeDefined()
-      await client.shutdown()
     })
 
     it('requires message handlers to process roll back and roll forward messages, invoking the requestNext callback once ready for next message', async () => {
       const rollbackPoints: PointOrOrigin[] = []
       const blocks: Block[] = []
-      const context = await dummyInteractionContext()
-      const client = await createChainSyncClient(context, {
+      client = await createChainSyncClient(context, {
         rollBackward: async ({ point }, requestNext) => {
           rollbackPoints.push(point)
           requestNext()
@@ -124,7 +138,6 @@ describe('ChainSync', () => {
       })
       await client.startSync(['origin'], 10)
       await delay(2000)
-      await client.shutdown()
       let firstBlockHash: Hash16
       if ('byron' in blocks[0]) {
         const block = blocks[0] as { byron: BlockByron }
@@ -144,6 +157,31 @@ describe('ChainSync', () => {
       expect(blocks.length).toBe(10)
     })
 
+    it('processes messages sequentially in order by default', async () => {
+      const resultLog: string[] = []
+      client = await createChainSyncClient(
+        context,
+        messageOrderTestHandlers(resultLog)
+      )
+      await client.startSync(['origin'], 3)
+      await delay(500)
+      expect(resultLog.slice(0, 12)).toStrictEqual(sequentialResponses)
+    })
+
+    it('can be configured to processes messages as fast as possible, when sequential processing is not required', async () => {
+      const resultLog: string[] = []
+      client = await createChainSyncClient(
+        context,
+        messageOrderTestHandlers(resultLog),
+        { sequential: false }
+      )
+      await client.startSync(['origin'], 3)
+      await delay(500)
+      expect(resultLog.slice(0, 12)).not.toStrictEqual(sequentialResponses)
+    })
+  })
+
+  describe('Pipelining', () => {
     it('implements pipelining to increase sync performance', async () => {
       type BlocksPerSecond = number
       const run = async (inFlight?: number): Promise<BlocksPerSecond> => {
@@ -174,40 +212,5 @@ describe('ChainSync', () => {
       const nonPipelinedBlocksPerSecond = await run(1)
       expect(pipelinedBlocksPerSecond).toBeGreaterThan(nonPipelinedBlocksPerSecond)
     })
-
-    it('processes messages sequentially in order by default', async () => {
-      const resultLog: string[] = []
-      const context = await dummyInteractionContext()
-      const client = await createChainSyncClient(
-        context,
-        messageOrderTestHandlers(resultLog)
-      )
-      await client.startSync(['origin'], 3)
-      await delay(500)
-      await client.shutdown()
-      expect(resultLog.slice(0, 12)).toStrictEqual(sequentialResponses)
-    })
-  })
-
-  it('can be configured to processes messages as fast as possible, when sequential processing is not required', async () => {
-    const resultLog: string[] = []
-    const context = await dummyInteractionContext()
-    const client = await createChainSyncClient(
-      context,
-      messageOrderTestHandlers(resultLog),
-      { sequential: false }
-    )
-    await client.startSync(['origin'], 3)
-    await delay(500)
-    await client.shutdown()
-    expect(resultLog.slice(0, 12)).not.toStrictEqual(sequentialResponses)
-  })
-
-  it('rejects method calls after shutdown', async () => {
-    const context = await dummyInteractionContext()
-    const client = await createChainSyncClient(context, stubHandlers)
-    await client.shutdown()
-    const run = () => client.startSync(['origin'], 3)
-    await expect(run).rejects
   })
 })
