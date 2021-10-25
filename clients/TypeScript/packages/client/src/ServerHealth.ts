@@ -51,7 +51,7 @@ export interface ServerHealth {
  * @category Connection
  */
 export const getServerHealth = async (
-  connection?: Connection
+  connection: Connection
 ): Promise<ServerHealth> => {
   const response = await fetch(`${connection.address.http}/health`)
   const responseJson = await response.json()
