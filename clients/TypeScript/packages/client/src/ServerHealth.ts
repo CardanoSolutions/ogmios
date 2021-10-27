@@ -1,6 +1,7 @@
 import fetch from 'cross-fetch'
 import { Connection } from './Connection'
 import { Tip } from '@cardano-ogmios/schema'
+import { loadLogger, Logger } from './logger'
 
 /**
  * Captures the health of the server, including metrics and synchronization progress.
@@ -51,10 +52,15 @@ export interface ServerHealth {
  * @category Connection
  */
 export const getServerHealth = async (
-  connection: Connection
+  connection: Connection,
+  options?: {
+    logger?: Logger
+  }
 ): Promise<ServerHealth> => {
+  const logger = loadLogger('ServerHealth', options?.logger)
   const response = await fetch(`${connection.address.http}/health`)
   const responseJson = await response.json()
+  logger.debug({ response: responseJson })
   if (response.ok) {
     return responseJson
   } else {

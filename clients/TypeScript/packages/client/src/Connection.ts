@@ -1,6 +1,7 @@
 import { WebSocket, CloseEvent } from './IsomorphicWebSocket'
 import { getServerHealth } from './ServerHealth'
 import { ServerNotReady } from './errors'
+import { loadLogger, Logger } from './logger'
 
 /**
  * Connection configuration parameters. Use `tls: true` to create a `wss://` using TLS
@@ -82,9 +83,14 @@ export const createInteractionContext = async (
   options?: {
     connection?: ConnectionConfig
     interactionType?: InteractionType,
+    logger?: Logger
   }): Promise<InteractionContext> => {
+  const logger = loadLogger('InteractionContext', options?.logger)
   const connection = createConnectionObject(options?.connection)
-  const health = await getServerHealth(connection)
+  logger.info({ connection })
+
+  const health = await getServerHealth(connection, { logger: options?.logger })
+
   return new Promise((resolve, reject) => {
     if (health.lastTipUpdate === null) {
       return reject(new ServerNotReady(health))
@@ -94,7 +100,12 @@ export const createInteractionContext = async (
     const closeOnCompletion = (options?.interactionType || 'LongRunning') === 'OneTime'
     const afterEach = (cb: () => void) => {
       if (closeOnCompletion) {
-        socket.once('close', cb)
+        logger.debug('Interaction complete, closing socket...')
+
+        socket.once('close', () => {
+          logger.debug('Socket closed')
+          cb()
+        })
         socket.close()
       } else {
         cb()
@@ -107,10 +118,14 @@ export const createInteractionContext = async (
     }
     socket.on('error', onInitialError)
     socket.once('close', (_code: number, reason: string) => {
+      logger.debug('Socket closed, removing listeners...')
+
       socket.removeAllListeners()
       reject(new Error(reason))
     })
     socket.on('open', async () => {
+      logger.debug('Socket open, adding listeners...')
+
       socket.removeListener('error', onInitialError)
       socket.on('error', errorHandler)
       socket.on('close', closeHandler)

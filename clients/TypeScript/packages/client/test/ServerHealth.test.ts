@@ -1,3 +1,4 @@
+import { dummyLogger } from 'ts-log'
 import { createConnectionObject, getServerHealth } from '../src'
 
 const expectHealth = (obj: any): void => {
@@ -19,6 +20,13 @@ describe('ServerHealth', () => {
     // it('fetches the service metadata using default connection config by default', async () => {
     //   expectHealth(await getServerHealth())
     // })
+    it('implements an abstract logger compatible with console', async () => {
+      const spy = jest.spyOn(dummyLogger, 'debug')
+      const connection = createConnectionObject({ port: 1338 })
+      await getServerHealth(connection, { logger: dummyLogger })
+      expect(spy).toHaveBeenCalled()
+      spy.mockClear()
+    })
     it('fetches the service metadata', async () => {
       const connection = createConnectionObject({ port: 1338 })
       expectHealth(await getServerHealth(connection))

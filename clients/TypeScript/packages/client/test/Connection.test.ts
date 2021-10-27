@@ -3,6 +3,7 @@ import {
   createConnectionObject,
   InteractionContext
 } from '../src'
+import { dummyLogger } from 'ts-log'
 
 describe('Connection', () => {
   describe('createConnectionObject', () => {
@@ -151,6 +152,18 @@ describe('Connection', () => {
       } catch (error) {
         expect(error.code).toBe('ECONNREFUSED')
       }
+    })
+
+    it('implements an abstract logger compatible with console', async () => {
+      const spy = jest.spyOn(dummyLogger, 'debug')
+      await createInteractionContext(
+        (error) => console.error(error),
+        () => {
+        },
+        { connection: { port: 1338 }, logger: dummyLogger }
+      )
+      expect(spy).toHaveBeenCalled()
+      spy.mockClear()
     })
     // describe('connecting before the node socket is ready', () => {
     //   // Todo: Implement https://github.com/mswjs/msw to return required health to trigger this

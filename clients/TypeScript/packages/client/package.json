@@ -59,6 +59,7 @@
     "isomorphic-ws": "^4.0.1",
     "nanoid": "^3.1.22",
     "ts-custom-error": "^3.2.0",
+    "ts-log": "^2.2.3",
     "ws": "^7.4.6"
   },
   "files": [
