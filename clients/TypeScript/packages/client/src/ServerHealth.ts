@@ -59,10 +59,10 @@ export const getServerHealth = async (
 ): Promise<ServerHealth> => {
   const logger = loadLogger('ServerHealth', options?.logger)
   const response = await fetch(`${connection.address.http}/health`)
-  const responseJson = await response.json()
-  logger.debug({ response: responseJson })
+  const health = await response.json()
+  logger.debug({ health })
   if (response.ok) {
-    return responseJson
+    return health
   } else {
     throw new Error(response.statusText)
   }
