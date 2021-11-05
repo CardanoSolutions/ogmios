@@ -305,5 +305,5 @@ queryAny mirror =
     queryInEra _ = Just $ SomeQuery
         { query = Ledger.BlockQuery $ QueryIfCurrentAlonzo GetEpochNo
         , genResult = const Proxy
-        , encodeResult = either encodeMismatchEraInfo encodeEpochNo
+        , encodeResult = const (either encodeMismatchEraInfo encodeEpochNo)
         }

@@ -72,7 +72,9 @@ module Ogmios.Data.Json.Prelude
     , encodeFoldable
     , encodeFoldable'
     , encodeList
+    , encodeListWithMode
     , encodeMap
+    , encodeMapWithMode
     , encodeMaybe
     , encodeObject
     , encodeObjectWithMode
@@ -424,10 +426,40 @@ encodeList =
     Json.list
 {-# INLINABLE encodeList #-}
 
+encodeListWithMode :: SerializationMode -> (a -> Json) -> [a] -> Json
+encodeListWithMode mode =
+    case mode of
+        FullSerialization ->
+            Json.list
+        CompactSerialization -> \encodeVal xs ->
+            let n = 5
+                r = length xs - n
+             in
+            Json.list id
+                ( (encodeVal <$> take n xs)
+                  ++
+                  [ encodeText ("..." <> show r <> " more element(s)") | r > 0 ]
+                )
+
+{-# INLINABLE encodeListWithMode #-}
+
 encodeMap :: (k -> Text) -> (v -> Json) -> Map k v -> Json
 encodeMap encodeKey encodeValue =
     encodeObject . Map.foldrWithKey (\k v -> (:) (encodeKey k, encodeValue v)) []
 {-# INLINABLE encodeMap #-}
+
+encodeMapWithMode :: SerializationMode -> (k -> Text) -> (v -> Json) -> Map k v -> Json
+encodeMapWithMode mode encodeKey encodeValue m =
+    case mode of
+        FullSerialization ->
+            encodeMap encodeKey encodeValue m
+        CompactSerialization ->
+            let reducer k v = (:) (Json.pairs $ Json.pair (encodeKey k) (encodeValue v))
+                zero = [ encodeText ("..." <> show r <> " more element(s)") | r > 0 ]
+                r = Map.size m - n
+                n = 5
+             in (Json.list id . Map.foldrWithKey reducer zero . Map.take n) m
+{-# INLINABLE encodeMapWithMode #-}
 
 encodeMaybe :: (a -> Json) -> Maybe a -> Json
 encodeMaybe =

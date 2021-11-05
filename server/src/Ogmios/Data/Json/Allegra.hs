@@ -179,6 +179,14 @@ encodeUtxo
 encodeUtxo =
     Shelley.encodeUtxo
 
+encodeUtxoWithMode
+    :: Crypto crypto
+    => SerializationMode
+    -> Sh.UTxO (AllegraEra crypto)
+    -> Json
+encodeUtxoWithMode =
+    Shelley.encodeUtxoWithMode
+
 encodeUtxoFailure
     :: Crypto crypto
     => MA.UtxoPredicateFailure (AllegraEra crypto)

@@ -103,7 +103,6 @@ instance ToJSON (Point (CardanoBlock crypto)) where
     toJSON = inefficientEncodingToValue . encodePoint
     toEncoding = encodePoint
 
-
 --
 -- Encoders
 --

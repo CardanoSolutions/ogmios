@@ -579,7 +579,7 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                         = _encodeQueryResponse encodeAcquireFailure
                         . Wsp.Response Nothing
                         . QueryResponse
-                        . encodeResult
+                        . encodeResult FullSerialization
 
                 case era of
                     SomeShelleyEra ShelleyBasedEraAlonzo -> do

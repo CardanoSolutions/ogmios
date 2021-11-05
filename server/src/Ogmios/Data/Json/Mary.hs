@@ -184,6 +184,16 @@ encodeUtxo =
   where
     encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
 
+encodeUtxoWithMode
+    :: Crypto crypto
+    => SerializationMode
+    -> Sh.UTxO (MaryEra crypto)
+    -> Json
+encodeUtxoWithMode mode =
+    encodeListWithMode mode id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
+  where
+    encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
+
 encodeUtxoFailure
     :: Crypto crypto
     => MA.UtxoPredicateFailure (MaryEra crypto)

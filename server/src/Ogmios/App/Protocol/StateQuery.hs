@@ -59,7 +59,7 @@ import Ogmios.Control.MonadLog
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TQueue, readTQueue )
 import Ogmios.Data.Json
-    ( Json, ViaEncoding (..) )
+    ( Json, SerializationMode (..), ViaEncoding (..) )
 import Ogmios.Data.Json.Query
     ( QueryInEra, SomeQuery (..), SomeShelleyEra (..), fromEraIndex )
 import Ogmios.Data.Protocol.StateQuery
@@ -158,9 +158,11 @@ mkStateQueryClient tr StateQueryCodecs{..} queue yield =
                     Just (era, SomeQuery qry encodeResult _) -> do
                         logWith tr $ StateQueryRequest { query, point = Nothing, era }
                         pure $ LSQ.SendMsgQuery qry $ LSQ.ClientStQuerying
-                            { LSQ.recvMsgResult = \(encodeResult -> result) -> do
-                                logWith tr $ StateQueryResponse{result = ViaEncoding result}
-                                yield $ encodeQueryResponse $ toResponse $ QueryResponse result
+                            { LSQ.recvMsgResult = \result -> do
+                                logWith tr $ StateQueryResponse
+                                    { result = ViaEncoding $ encodeResult CompactSerialization result }
+                                yield $ encodeQueryResponse $ toResponse $ QueryResponse $
+                                    encodeResult FullSerialization result
                                 pure $ LSQ.SendMsgRelease clientStIdle
                             }
 
@@ -189,9 +191,11 @@ mkStateQueryClient tr StateQueryCodecs{..} queue yield =
                 Just (era, SomeQuery qry encodeResult _) -> do
                     logWith tr $ StateQueryRequest { query, point = Just pt, era }
                     pure $ LSQ.SendMsgQuery qry $ LSQ.ClientStQuerying
-                        { LSQ.recvMsgResult = \(encodeResult -> result) -> do
-                            logWith tr $ StateQueryResponse{result = ViaEncoding result}
-                            yield $ encodeQueryResponse $ toResponse $ QueryResponse result
+                        { LSQ.recvMsgResult = \result -> do
+                            logWith tr $ StateQueryResponse
+                                {result = ViaEncoding $ encodeResult CompactSerialization result}
+                            yield $ encodeQueryResponse $ toResponse $ QueryResponse $
+                                encodeResult FullSerialization result
                             clientStAcquired pt
                         }
 

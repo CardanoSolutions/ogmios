@@ -617,24 +617,6 @@ encodeOutputVRF
 encodeOutputVRF =
     encodeByteStringBase64 . CC.getOutputVRFBytes
 
-encodePoolDistr
-    :: Sh.PoolDistr crypto
-    -> Json
-encodePoolDistr =
-    encodeMap stringifyPoolId encodeIndividualPoolStake . Sh.unPoolDistr
-
-encodeIndividualPoolStake
-    :: Sh.IndividualPoolStake crypto
-    -> Json
-encodeIndividualPoolStake x = encodeObject
-    [ ( "stake"
-      , encodeRational (Sh.individualPoolStake x)
-      )
-    , ( "vrf"
-      , encodeHash (Sh.individualPoolStakeVrf x)
-      )
-    ]
-
 encodePoolId
     :: Keys.KeyHash StakePool crypto
     -> Json
@@ -1032,6 +1014,20 @@ encodeUtxo
     -> Json
 encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
+  where
+    encodeIO = curry (encode2Tuple encodeTxIn encodeTxOut)
+
+encodeUtxoWithMode
+    :: forall era.
+        ( ShelleyBased era
+        , Core.Value era ~ Coin
+        , Core.TxOut era ~ Sh.TxOut era
+        )
+    => SerializationMode
+    -> Sh.UTxO era
+    -> Json
+encodeUtxoWithMode mode =
+    encodeListWithMode mode id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
   where
     encodeIO = curry (encode2Tuple encodeTxIn encodeTxOut)
 

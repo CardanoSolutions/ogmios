@@ -25,12 +25,18 @@ module Ogmios.Data.Json.Query
     , PoolParams
 
       -- * Encoders
+    , encodeBound
+    , encodeDelegationsAndRewards
+    , encodeDesirabilities
+    , encodeEpochNo
     , encodeEraMismatch
     , encodeMismatchEraInfo
     , encodeNonMyopicMemberRewards
     , encodeOneEraHash
     , encodePoint
-    , encodeEpochNo
+    , encodePoolDistr
+    , encodePoolParameters
+    , encodeRewardProvenance
 
       -- * Parsers
     , parseGetEraStart
@@ -141,7 +147,7 @@ type QueryInEra f block =
 
 data SomeQuery (f :: Type -> Type) block = forall result. SomeQuery
     { query :: LSQ.Query block result
-    , encodeResult :: result -> Json
+    , encodeResult :: SerializationMode -> result -> Json
     , genResult :: Proxy result -> f result
     }
 
@@ -219,12 +225,14 @@ encodeBound bound = encodeObject
     ]
 
 encodeDelegationsAndRewards
-    :: (Delegations crypto, RewardAccounts crypto)
+    :: SerializationMode
+    -> (Delegations crypto, RewardAccounts crypto)
     -> Json
-encodeDelegationsAndRewards (dlg, rwd)
-    = encodeMap Shelley.stringifyCredential id
-    $ Map.merge whenDlgMissing whenRwdMissing whenBothPresent dlg rwd
+encodeDelegationsAndRewards mode (dlg, rwd) =
+    encodeMapWithMode mode Shelley.stringifyCredential id merge
   where
+    merge = Map.merge whenDlgMissing whenRwdMissing whenBothPresent dlg rwd
+
     whenDlgMissing = Map.mapMaybeMissing
         (\_ v -> Just $ encodeObject
             [ ( "delegate", Shelley.encodePoolId v )
@@ -241,6 +249,22 @@ encodeDelegationsAndRewards (dlg, rwd)
             , ( "rewards", encodeCoin y )
             ]
         )
+
+encodeDesirabilities
+    :: SerializationMode
+    -> RewardProvenance crypto
+    -> Json
+encodeDesirabilities mode rp =
+    encodeMapWithMode mode Shelley.stringifyPoolId encodeDesirability (desirabilities rp)
+  where
+    encodeDesirability
+        :: Desirability
+        -> Json
+    encodeDesirability d =
+        encodeObject
+            [ ( "score", encodeDouble (desirabilityScore d) )
+            , ( "estimatedHitRate", encodeDouble (desirabilityScore d) )
+            ]
 
 encodeEraMismatch
     :: EraMismatch
@@ -264,13 +288,14 @@ encodeMismatchEraInfo =
     encodeEraMismatch . mkEraMismatch
 
 encodeNonMyopicMemberRewards
-    :: NonMyopicMemberRewards era
+    :: SerializationMode
+    -> NonMyopicMemberRewards era
     -> Json
-encodeNonMyopicMemberRewards (NonMyopicMemberRewards nonMyopicMemberRewards) =
-    encodeMap
-        (either Shelley.stringifyCoin Shelley.stringifyCredential)
-        (encodeMap Shelley.stringifyPoolId encodeCoin)
-        nonMyopicMemberRewards
+encodeNonMyopicMemberRewards mode (NonMyopicMemberRewards nonMyopicMemberRewards) =
+    encodeMapWithMode mode encodeKey encodeVal nonMyopicMemberRewards
+  where
+    encodeKey = either Shelley.stringifyCoin Shelley.stringifyCredential
+    encodeVal = encodeMapWithMode mode Shelley.stringifyPoolId encodeCoin
 
 encodeOneEraHash
     :: OneEraHash eras
@@ -292,11 +317,38 @@ encodePoint = \case
           )
         ]
 
-encodeRewardProvenance
-    :: RewardProvenance crypto
+encodePoolDistr
+    :: SerializationMode
+    -> Sh.PoolDistr crypto
     -> Json
-encodeRewardProvenance rp =
-    encodeObject
+encodePoolDistr mode =
+    encodeMapWithMode mode Shelley.stringifyPoolId encodeIndividualPoolStake . Sh.unPoolDistr
+  where
+    encodeIndividualPoolStake
+        :: Sh.IndividualPoolStake crypto
+        -> Json
+    encodeIndividualPoolStake x = encodeObject
+        [ ( "stake"
+          , encodeRational (Sh.individualPoolStake x)
+          )
+        , ( "vrf"
+          , Shelley.encodeHash (Sh.individualPoolStakeVrf x)
+          )
+        ]
+
+encodePoolParameters
+    :: SerializationMode
+    -> Map (Keys.KeyHash 'StakePool crypto) (PoolParams crypto)
+    -> Json
+encodePoolParameters mode =
+    encodeMapWithMode mode Shelley.stringifyPoolId Shelley.encodePoolParams
+
+encodeRewardProvenance
+    :: SerializationMode
+    -> RewardProvenance crypto
+    -> Json
+encodeRewardProvenance mode rp =
+    encodeObjectWithMode mode
         [ ( "epochLength"
           , encodeWord64 (spe rp)
           )
@@ -305,9 +357,6 @@ encodeRewardProvenance rp =
           )
         , ( "maxLovelaceSupply"
           , encodeCoin (maxLL rp)
-          )
-        , ( "mintedBlocks"
-          , encodeMap Shelley.stringifyPoolId encodeNatural (Sh.unBlocksMade $ blocks rp)
           )
         , ( "totalMintedBlocks"
           , encodeInteger (blocksCount rp)
@@ -333,62 +382,51 @@ encodeRewardProvenance rp =
         , ( "activeStake"
           , encodeCoin (activeStake rp)
           )
-        , ( "pools"
+        ]
+        [ ( "pools"
           , encodeMap Shelley.stringifyPoolId encodeRewardProvenancePool (pools rp)
           )
-        ]
-
-encodeRewardProvenancePool
-    :: RewardProvenancePool crypto
-    -> Json
-encodeRewardProvenancePool rpp =
-    encodeObject
-        [ ( "totalMintedBlocks"
-          , encodeNatural (poolBlocksP rpp)
-          )
-        , ( "totalStakeShare"
-          , encodeRational (sigmaP rpp)
-          )
-        , ( "activeStakeShare"
-          , encodeRational (sigmaAP rpp)
-          )
-        , ( "ownerStake"
-          , encodeCoin (ownerStakeP rpp)
-          )
-        , ( "parameters"
-          , Shelley.encodePoolParams (poolParamsP rpp)
-          )
-        , ( "pledgeRatio"
-          , encodeRational (pledgeRatioP rpp)
-          )
-        , ( "maxRewards"
-          , encodeCoin (maxPP rpp)
-          )
-        , ( "apparentPerformance"
-          , encodeRational (appPerfP rpp)
-          )
-        , ( "totalRewards"
-          , encodeCoin (poolRP rpp)
-          )
-        , ( "leaderRewards"
-          , encodeCoin (lRewardP rpp)
+        , ( "mintedBlocks"
+          , encodeMap Shelley.stringifyPoolId encodeNatural (Sh.unBlocksMade $ blocks rp)
           )
         ]
-
-encodeDesirabilities
-    :: RewardProvenance crypto
-    -> Json
-encodeDesirabilities rp =
-    encodeMap Shelley.stringifyPoolId encodeDesirability (desirabilities rp)
-
-encodeDesirability
-    :: Desirability
-    -> Json
-encodeDesirability d =
-    encodeObject
-        [ ( "score", encodeDouble (desirabilityScore d) )
-        , ( "estimatedHitRate", encodeDouble (desirabilityScore d) )
-        ]
+  where
+    encodeRewardProvenancePool
+        :: RewardProvenancePool crypto
+        -> Json
+    encodeRewardProvenancePool rpp =
+        encodeObject
+            [ ( "totalMintedBlocks"
+              , encodeNatural (poolBlocksP rpp)
+              )
+            , ( "totalStakeShare"
+              , encodeRational (sigmaP rpp)
+              )
+            , ( "activeStakeShare"
+              , encodeRational (sigmaAP rpp)
+              )
+            , ( "ownerStake"
+              , encodeCoin (ownerStakeP rpp)
+              )
+            , ( "parameters"
+              , Shelley.encodePoolParams (poolParamsP rpp)
+              )
+            , ( "pledgeRatio"
+              , encodeRational (pledgeRatioP rpp)
+              )
+            , ( "maxRewards"
+              , encodeCoin (maxPP rpp)
+              )
+            , ( "apparentPerformance"
+              , encodeRational (appPerfP rpp)
+              )
+            , ( "totalRewards"
+              , encodeCoin (poolRP rpp)
+              )
+            , ( "leaderRewards"
+              , encodeCoin (lRewardP rpp)
+              )
+            ]
 
 --
 -- Parsers (Queries)
@@ -405,8 +443,7 @@ parseGetEraStart genResult =
             ( \query -> Just $ SomeQuery
                 { query
                 , genResult
-                , encodeResult =
-                    encodeMaybe encodeBound
+                , encodeResult = const (encodeMaybe encodeBound)
                 }
             )
             .
@@ -434,7 +471,7 @@ parseGetLedgerTip genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentShelley GetLedgerTip
                 , encodeResult =
-                    either encodeMismatchEraInfo (encodePoint . castPoint)
+                    const (either encodeMismatchEraInfo (encodePoint . castPoint))
                 , genResult =
                     genResultInEra (Proxy @(ShelleyEra crypto))
                 }
@@ -443,7 +480,7 @@ parseGetLedgerTip genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentAllegra GetLedgerTip
                 , encodeResult =
-                    either encodeMismatchEraInfo (encodePoint . castPoint)
+                    const (either encodeMismatchEraInfo (encodePoint . castPoint))
                 , genResult =
                     genResultInEra (Proxy @(AllegraEra crypto))
                 }
@@ -452,7 +489,7 @@ parseGetLedgerTip genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentMary GetLedgerTip
                 , encodeResult =
-                    either encodeMismatchEraInfo (encodePoint . castPoint)
+                    const (either encodeMismatchEraInfo (encodePoint . castPoint))
                 , genResult =
                     genResultInEra (Proxy @(MaryEra crypto))
                 }
@@ -461,7 +498,7 @@ parseGetLedgerTip genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetLedgerTip
                 , encodeResult =
-                    either encodeMismatchEraInfo (encodePoint . castPoint)
+                    const (either encodeMismatchEraInfo (encodePoint . castPoint))
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
@@ -478,7 +515,7 @@ parseGetEpochNo genResult =
                 { query
                 , genResult
                 , encodeResult =
-                    either encodeMismatchEraInfo encodeEpochNo
+                    const (either encodeMismatchEraInfo encodeEpochNo)
                 }
             )
             .
@@ -506,7 +543,7 @@ parseGetNonMyopicMemberRewards genResult =
                 { query
                 , genResult
                 , encodeResult =
-                    either encodeMismatchEraInfo encodeNonMyopicMemberRewards
+                    either encodeMismatchEraInfo . encodeNonMyopicMemberRewards
                 }
             )
             .
@@ -545,7 +582,7 @@ parseGetFilteredDelegationsAndRewards genResult =
                 { query
                 , genResult
                 , encodeResult =
-                    either encodeMismatchEraInfo encodeDelegationsAndRewards
+                    either encodeMismatchEraInfo . encodeDelegationsAndRewards
                 }
             )
             .
@@ -579,7 +616,7 @@ parseGetCurrentPParams genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentShelley GetCurrentPParams
                 , encodeResult =
-                    either encodeMismatchEraInfo (Shelley.encodePParams' id)
+                    const (either encodeMismatchEraInfo (Shelley.encodePParams' id))
                 , genResult =
                     genResultInEra (Proxy @(ShelleyEra crypto))
                 }
@@ -588,7 +625,7 @@ parseGetCurrentPParams genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentAllegra GetCurrentPParams
                 , encodeResult =
-                    either encodeMismatchEraInfo (Allegra.encodePParams' id)
+                    const (either encodeMismatchEraInfo (Allegra.encodePParams' id))
                 , genResult =
                     genResultInEra (Proxy @(AllegraEra crypto))
                 }
@@ -597,7 +634,7 @@ parseGetCurrentPParams genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentMary GetCurrentPParams
                 , encodeResult =
-                    either encodeMismatchEraInfo (Mary.encodePParams' id)
+                    const (either encodeMismatchEraInfo (Mary.encodePParams' id))
                 , genResult =
                     genResultInEra (Proxy @(MaryEra crypto))
                 }
@@ -606,7 +643,7 @@ parseGetCurrentPParams genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetCurrentPParams
                 , encodeResult =
-                    either encodeMismatchEraInfo (Alonzo.encodePParams' id)
+                    const (either encodeMismatchEraInfo (Alonzo.encodePParams' id))
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
@@ -624,7 +661,7 @@ parseGetProposedPParamsUpdates genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentShelley GetProposedPParamsUpdates
                 , encodeResult =
-                    either encodeMismatchEraInfo Shelley.encodeProposedPPUpdates
+                    const (either encodeMismatchEraInfo Shelley.encodeProposedPPUpdates)
                 , genResult =
                     genResultInEra (Proxy @(ShelleyEra crypto))
                 }
@@ -633,7 +670,7 @@ parseGetProposedPParamsUpdates genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentAllegra GetProposedPParamsUpdates
                 , encodeResult =
-                    either encodeMismatchEraInfo Allegra.encodeProposedPPUpdates
+                    const (either encodeMismatchEraInfo Allegra.encodeProposedPPUpdates)
                 , genResult =
                     genResultInEra (Proxy @(AllegraEra crypto))
                 }
@@ -642,7 +679,7 @@ parseGetProposedPParamsUpdates genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentMary GetProposedPParamsUpdates
                 , encodeResult =
-                    either encodeMismatchEraInfo Mary.encodeProposedPPUpdates
+                    const (either encodeMismatchEraInfo Mary.encodeProposedPPUpdates)
                 , genResult =
                     genResultInEra (Proxy @(MaryEra crypto))
                 }
@@ -651,7 +688,7 @@ parseGetProposedPParamsUpdates genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetProposedPParamsUpdates
                 , encodeResult =
-                    either encodeMismatchEraInfo Alonzo.encodeProposedPPUpdates
+                    const (either encodeMismatchEraInfo Alonzo.encodeProposedPPUpdates)
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
@@ -668,7 +705,7 @@ parseGetStakeDistribution genResult =
                 { query
                 , genResult
                 , encodeResult =
-                    either encodeMismatchEraInfo Shelley.encodePoolDistr
+                    either encodeMismatchEraInfo . encodePoolDistr
                 }
             )
             .
@@ -696,7 +733,7 @@ parseGetUTxO genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentShelley GetUTxOWhole
                 , encodeResult =
-                    either encodeMismatchEraInfo Shelley.encodeUtxo
+                    either encodeMismatchEraInfo . Shelley.encodeUtxoWithMode
                 , genResult =
                     genResultInEra (Proxy @(ShelleyEra crypto))
                 }
@@ -705,7 +742,7 @@ parseGetUTxO genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentAllegra GetUTxOWhole
                 , encodeResult =
-                    either encodeMismatchEraInfo Allegra.encodeUtxo
+                    either encodeMismatchEraInfo . Allegra.encodeUtxoWithMode
                 , genResult =
                     genResultInEra (Proxy @(AllegraEra crypto))
                 }
@@ -714,7 +751,7 @@ parseGetUTxO genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentMary GetUTxOWhole
                 , encodeResult =
-                    either encodeMismatchEraInfo Mary.encodeUtxo
+                    either encodeMismatchEraInfo . Mary.encodeUtxoWithMode
                 , genResult =
                     genResultInEra (Proxy @(MaryEra crypto))
                 }
@@ -723,7 +760,7 @@ parseGetUTxO genResultInEra =
                 { query =
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetUTxOWhole
                 , encodeResult =
-                    either encodeMismatchEraInfo Alonzo.encodeUtxo
+                    either encodeMismatchEraInfo . Alonzo.encodeUtxoWithMode
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
@@ -741,7 +778,7 @@ parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
             { query =
                 LSQ.BlockQuery $ QueryIfCurrentShelley (GetUTxOByAddress addrs)
             , encodeResult =
-                either encodeMismatchEraInfo Shelley.encodeUtxo
+                either encodeMismatchEraInfo . Shelley.encodeUtxoWithMode
             , genResult =
                 genResultInEra (Proxy @(ShelleyEra crypto))
             }
@@ -750,7 +787,7 @@ parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
             { query =
                 LSQ.BlockQuery $ QueryIfCurrentAllegra (GetUTxOByAddress addrs)
             , encodeResult =
-                either encodeMismatchEraInfo Allegra.encodeUtxo
+                either encodeMismatchEraInfo . Allegra.encodeUtxoWithMode
             , genResult =
                 genResultInEra (Proxy @(AllegraEra crypto))
             }
@@ -759,7 +796,7 @@ parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
             { query =
                 LSQ.BlockQuery $ QueryIfCurrentMary (GetUTxOByAddress addrs)
             , encodeResult =
-                either encodeMismatchEraInfo Mary.encodeUtxo
+                either encodeMismatchEraInfo . Mary.encodeUtxoWithMode
             , genResult =
                 genResultInEra (Proxy @(MaryEra crypto))
             }
@@ -768,7 +805,7 @@ parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
             { query =
                 LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetUTxOByAddress addrs)
             , encodeResult =
-                either encodeMismatchEraInfo Alonzo.encodeUtxo
+                either encodeMismatchEraInfo . Alonzo.encodeUtxoWithMode
             , genResult =
                 genResultInEra (Proxy @(AlonzoEra crypto))
             }
@@ -792,7 +829,7 @@ parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
             { query =
                 LSQ.BlockQuery $ QueryIfCurrentShelley (GetUTxOByTxIn ins)
             , encodeResult =
-                either encodeMismatchEraInfo Shelley.encodeUtxo
+                either encodeMismatchEraInfo . Shelley.encodeUtxoWithMode
             , genResult =
                 genResultInEra (Proxy @(ShelleyEra crypto))
             }
@@ -801,7 +838,7 @@ parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
             { query =
                 LSQ.BlockQuery $ QueryIfCurrentAllegra (GetUTxOByTxIn ins)
             , encodeResult =
-                either encodeMismatchEraInfo Allegra.encodeUtxo
+                either encodeMismatchEraInfo . Allegra.encodeUtxoWithMode
             , genResult =
                 genResultInEra (Proxy @(AllegraEra crypto))
             }
@@ -810,7 +847,7 @@ parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
             { query =
                 LSQ.BlockQuery $ QueryIfCurrentMary (GetUTxOByTxIn ins)
             , encodeResult =
-                either encodeMismatchEraInfo Mary.encodeUtxo
+                either encodeMismatchEraInfo . Mary.encodeUtxoWithMode
             , genResult =
                 genResultInEra (Proxy @(MaryEra crypto))
             }
@@ -819,7 +856,7 @@ parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
             { query =
                 LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetUTxOByTxIn ins)
             , encodeResult =
-                either encodeMismatchEraInfo Alonzo.encodeUtxo
+                either encodeMismatchEraInfo . Alonzo.encodeUtxoWithMode
             , genResult =
                 genResultInEra (Proxy @(AlonzoEra crypto))
             }
@@ -852,7 +889,7 @@ parseGetGenesisConfig genResultInEra = do
                 , encodeResult =
                     let encodeGenesis =
                             Shelley.encodeGenesis . getCompactGenesis
-                    in either encodeMismatchEraInfo encodeGenesis
+                    in const (either encodeMismatchEraInfo encodeGenesis)
                 , genResult =
                     genResultInEra (Proxy @(ShelleyEra crypto))
                 }
@@ -863,7 +900,7 @@ parseGetGenesisConfig genResultInEra = do
                 , encodeResult =
                     let encodeGenesis =
                             Shelley.encodeGenesis . getCompactGenesis
-                    in either encodeMismatchEraInfo encodeGenesis
+                    in const (either encodeMismatchEraInfo encodeGenesis)
                 , genResult =
                     genResultInEra (Proxy @(AllegraEra crypto))
                 }
@@ -874,7 +911,7 @@ parseGetGenesisConfig genResultInEra = do
                 , encodeResult =
                     let encodeGenesis =
                             Shelley.encodeGenesis . getCompactGenesis
-                    in either encodeMismatchEraInfo encodeGenesis
+                    in const (either encodeMismatchEraInfo encodeGenesis)
                 , genResult =
                     genResultInEra (Proxy @(MaryEra crypto))
                 }
@@ -885,7 +922,7 @@ parseGetGenesisConfig genResultInEra = do
                 , encodeResult =
                     let encodeGenesis =
                             Shelley.encodeGenesis . getCompactGenesis
-                     in either encodeMismatchEraInfo encodeGenesis
+                     in const (either encodeMismatchEraInfo encodeGenesis)
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
@@ -902,7 +939,7 @@ parseGetRewardProvenance genResult =
                 { query
                 , genResult
                 , encodeResult =
-                    either encodeMismatchEraInfo encodeRewardProvenance
+                    either encodeMismatchEraInfo . encodeRewardProvenance
                 }
             )
             .
@@ -928,8 +965,8 @@ parseGetPoolIds genResult =
             ( \query -> Just $ SomeQuery
                 { query
                 , genResult
-                , encodeResult =
-                    either encodeMismatchEraInfo (encodeFoldable Shelley.encodePoolId)
+                , encodeResult = \mode ->
+                    either encodeMismatchEraInfo (encodeListWithMode mode Shelley.encodePoolId . toList)
                 }
             )
             .
@@ -957,9 +994,7 @@ parseGetPoolParameters genResult =
                 { query
                 , genResult
                 , encodeResult =
-                    either
-                        encodeMismatchEraInfo
-                        (encodeMap Shelley.stringifyPoolId Shelley.encodePoolParams)
+                    either encodeMismatchEraInfo . encodePoolParameters
                 }
             )
             .
@@ -992,7 +1027,7 @@ parseGetPoolsRanking genResult =
                 { query
                 , genResult
                 , encodeResult =
-                    either encodeMismatchEraInfo encodeDesirabilities
+                    either encodeMismatchEraInfo . encodeDesirabilities
                 }
             )
             .
