@@ -1,5 +1,5 @@
 ---
-Number: `009`
+Number: 9
 Title: Compact Serialization Mode
 Category: Server
 Status: accepted 

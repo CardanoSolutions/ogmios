@@ -1,5 +1,5 @@
 ---
-Number: `007`
+Number: 7
 Title: cardano-node-ogmios Docker
 Category: General
 Status: accepted 

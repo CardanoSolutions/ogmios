@@ -1,5 +1,5 @@
 ---
-Number: `005`
+Number: 5
 Title: Use jsonifier
 Category: Server
 Status: superseded by 006

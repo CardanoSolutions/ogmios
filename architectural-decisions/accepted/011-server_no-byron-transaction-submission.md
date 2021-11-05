@@ -1,5 +1,5 @@
 ---
-Number: `011`
+Number: 11
 Title: No Byron Transaction Submission 
 Category: Server
 Status: accepted 

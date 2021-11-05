@@ -1,5 +1,5 @@
 ---
-Number: `003`
+Number: 3
 Title: Dual WebSocket / HTTP Server
 Category: Server
 Status: accepted 

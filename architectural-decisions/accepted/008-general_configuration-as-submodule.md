@@ -1,5 +1,5 @@
 ---
-Number: `008`
+Number: 8
 Title: Configuration as sub-module
 Category: General
 Status: accepted 

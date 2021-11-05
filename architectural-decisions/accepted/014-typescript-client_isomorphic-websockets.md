@@ -1,5 +1,5 @@
 ---
-Number: `014`
+Number: 14
 Title: TypeScript Isomorphic WebSockets
 Category: TypeScript Client
 Status: accepted 

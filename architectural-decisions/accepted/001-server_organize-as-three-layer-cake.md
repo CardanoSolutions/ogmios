@@ -1,5 +1,5 @@
 ---
-Number: `001`
+Number: 1
 Title: Organize as a three-layer Haskell cake
 Category: Server
 Status: accepted 
