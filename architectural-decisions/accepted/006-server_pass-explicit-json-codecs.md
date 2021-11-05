@@ -1,6 +1,7 @@
 ---
 Number: `006`
 Title: Pass Explicit JSON Codecs
+Category: Server
 Status: accepted
 ---
 

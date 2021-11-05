@@ -1,6 +1,7 @@
 ---
 Number: `005`
 Title: Use jsonifier
+Category: Server
 Status: superseded by 006
 ---
 

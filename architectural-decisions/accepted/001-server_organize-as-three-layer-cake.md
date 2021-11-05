@@ -1,6 +1,7 @@
 ---
 Number: `001`
 Title: Organize as a three-layer Haskell cake
+Category: Server
 Status: accepted 
 ---
 

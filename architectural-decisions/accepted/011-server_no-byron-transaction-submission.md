@@ -1,6 +1,7 @@
 ---
 Number: `011`
 Title: No Byron Transaction Submission 
+Category: Server
 Status: accepted 
 ---
 

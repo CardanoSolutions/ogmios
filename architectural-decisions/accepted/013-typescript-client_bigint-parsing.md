@@ -1,6 +1,7 @@
 ---
 Number: `013`
-Title: typescript-client-bigint-parsing
+Title: BigInt Parsing
+Category: TypeScript Client
 Status: accepted 
 ---
 

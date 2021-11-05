@@ -1,6 +1,7 @@
 ---
 Number: `003`
 Title: Dual WebSocket / HTTP Server
+Category: Server
 Status: accepted 
 ---
 

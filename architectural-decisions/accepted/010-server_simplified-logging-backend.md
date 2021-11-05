@@ -1,6 +1,7 @@
 ---
 Number: `010`
 Title: Simplified Logging Backend
+Category: Server
 Status: accepted
 ---
 

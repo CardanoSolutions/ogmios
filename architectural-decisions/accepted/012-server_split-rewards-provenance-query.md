@@ -1,6 +1,7 @@
 ---
 Number: `012`
 Title: Split Rewards Provenance Query
+Category: Server
 Status: proposed 
 ---
 

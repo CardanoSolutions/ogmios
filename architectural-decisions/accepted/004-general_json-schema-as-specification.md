@@ -1,6 +1,7 @@
 ---
 Number: `004`
 Title: JSON-Schema As Specification
+Category: General
 Status: accepted
 ---
 

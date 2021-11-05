@@ -1,6 +1,7 @@
 ---
 Number: `007`
 Title: cardano-node-ogmios Docker
+Category: General
 Status: accepted 
 ---
 
