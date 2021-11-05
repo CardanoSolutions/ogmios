@@ -14,11 +14,13 @@ module Ogmios
       App (..)
     , application
     , runWith
+    , version
 
     -- * Environment
     , Env (..)
     , newEnvironment
-    -- ** Command & Options
+
+    -- * Command & Options
     , Command (..)
     , Options (..)
     , NetworkParameters (..)
@@ -73,6 +75,15 @@ import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TVar, newTVar )
 import Ogmios.Control.MonadWebSocket
     ( MonadWebSocket )
+import Ogmios.Version
+    ( version )
+import System.Posix.Signals
+    ( Handler (..)
+    , installHandler
+    , keyboardSignal
+    , raiseSignal
+    , softwareTermination
+    )
 
 import qualified Data.Aeson as Json
 
@@ -101,7 +112,7 @@ runWith app = runReaderT (unApp app)
 
 -- | Ogmios, where everything gets stitched together.
 application :: Logger TraceOgmios -> App ()
-application tr = withDebouncer _10s $ \debouncer -> do
+application tr = hijackSigTerm >> withDebouncer _10s (\debouncer -> do
     env@Env{network} <- ask
     logWith tr (OgmiosNetwork network)
 
@@ -115,6 +126,18 @@ application tr = withDebouncer _10s $ \debouncer -> do
             (contramap OgmiosHealth tr) (`runWith` env) healthCheckClient)
         (connectHybridServer
             (contramap OgmiosServer tr) webSocketApp httpApp)
+    )
+
+-- | The runtime does not let the application terminate gracefully when a
+-- SIGTERM is received. It does however for SIGINT which allows the application
+-- to cleanup sub-processes.
+--
+-- This function install handlers for SIGTERM and turn them into SIGINT.
+hijackSigTerm :: App ()
+hijackSigTerm =
+    liftIO $ void (installHandler softwareTermination handler empty)
+  where
+    handler = CatchOnce (raiseSignal keyboardSignal)
 
 --
 -- Environment

@@ -13,10 +13,9 @@ import Ogmios
     , newEnvironment
     , parseOptions
     , runWith
+    , version
     , withStdoutTracer
     )
-import Ogmios.Version
-    ( version )
 
 main :: IO ()
 main = parseOptions >>= \case

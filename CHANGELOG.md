@@ -14,6 +14,8 @@ pre: "<b>6. </b>"
 > - Enable Alonzo transaction in the submission protocol (oversight from previous releases). Doing so, explicit compiler warnings have been added to the relevant code to avoid overseeing this in the next upgrade.
 > 
 > - Added query response and requests to logs trace, large responses are truncated (e.g. querying the entire UTXO or, informations about all stake pools).
+>
+> - Graceful shutdown and process cleanup on `SIGTERM`.
 > 
 > - Documented Mary last point to the _points of interests_ for the chain-sync protocol.
 > 
