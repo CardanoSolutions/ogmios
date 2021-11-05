@@ -1,6 +1,7 @@
 ---
+Number: `005`
 Title: Use jsonifier
-Status: superseded
+Status: superseded by 006
 ---
 
 <!-- ADR template adapted from Michael Nygard's -->

@@ -1,4 +1,5 @@
 ---
+Number: `010`
 Title: Simplified Logging Backend
 Status: accepted
 ---

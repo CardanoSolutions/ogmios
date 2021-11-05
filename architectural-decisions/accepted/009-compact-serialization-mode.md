@@ -1,4 +1,5 @@
 ---
+Number: `009`
 Title: Compact Serialization Mode
 Status: accepted 
 ---

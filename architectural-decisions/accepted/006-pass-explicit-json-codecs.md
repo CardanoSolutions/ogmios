@@ -1,4 +1,5 @@
 ---
+Number: `006`
 Title: Pass Explicit JSON Codecs
 Status: accepted
 ---
