@@ -30,11 +30,13 @@ import Ogmios.Data.Json
     , decodeWith
     , encodeAcquireFailure
     , encodeBlock
-    , encodeHardForkApplyTxErr
     , encodePoint
+    , encodeSubmitTxError
     , encodeTip
     , jsonToByteString
     )
+import Ogmios.Data.Json.Orphans
+    ()
 import Ogmios.Data.Json.Query
     ( QueryInEra
     , ShelleyBasedEra (..)
@@ -236,7 +238,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Wsp.Response (SubmitTxResponse Block)))
-            (_encodeSubmitTxResponse (Proxy @Block) encodeHardForkApplyTxErr)
+            (_encodeSubmitTxResponse (Proxy @Block) encodeSubmitTxError)
             (200, "TxSubmission/Response/SubmitTx")
             "ogmios.wsp.json#/properties/SubmitTxResponse"
 

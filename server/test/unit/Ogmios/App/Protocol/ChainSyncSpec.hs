@@ -39,6 +39,8 @@ import Ogmios.Control.MonadSTM
     ( MonadSTM (..), newTQueue, readTQueue, writeTQueue )
 import Ogmios.Data.Json
     ( Json, SerializationMode (..), encodeBlock, encodePoint, encodeTip )
+import Ogmios.Data.Json.Orphans
+    ()
 import Ogmios.Data.Protocol.ChainSync
     ( ChainSyncMessage (..)
     , FindIntersect (..)

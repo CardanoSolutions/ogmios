@@ -20,10 +20,16 @@ module Ogmios.Data.Json
       -- * Encoders
     , encodeAcquireFailure
     , encodeBlock
-    , encodeHardForkApplyTxErr
-    , encodeSubmitTxPayload
     , encodePoint
+    , encodeSubmitTxError
+    , encodeSubmitTxPayload
     , encodeTip
+
+      -- * Decoders
+    , decodeOneEraHash
+    , decodePoint
+    , decodeSubmitTxPayload
+    , decodeTip
     ) where
 
 import Ogmios.Data.Json.Prelude
@@ -34,8 +40,8 @@ import Cardano.Crypto.Hashing
     ( decodeHash, hashToBytes )
 import Cardano.Ledger.Crypto
     ( Crypto )
-import Cardano.Network.Protocol.NodeToClient.Trace
-    ( TraceClient, encodeTraceClient )
+import Cardano.Network.Protocol.NodeToClient
+    ( SubmitTxError, SubmitTxPayload )
 import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
@@ -78,30 +84,6 @@ import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Byron as Byron
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
-
---
--- Orphans
---
-
--- Only used for logging
-instance (Crypto crypto, PraosCrypto crypto) => ToJSON
-  ( TraceClient
-      (GenTx (CardanoBlock crypto))
-      (HardForkApplyTxErr (CardanoEras crypto))
-  ) where
-    toJSON = encodeTraceClient
-        (inefficientEncodingToValue . encodeSubmitTxPayload)
-        (inefficientEncodingToValue . encodeHardForkApplyTxErr)
-
--- Only used for logging & health
-instance ToJSON (Tip (CardanoBlock crypto)) where
-    toJSON = inefficientEncodingToValue . encodeTip
-    toEncoding = encodeTip
-
--- Only used for logging & health
-instance ToJSON (Point (CardanoBlock crypto)) where
-    toJSON = inefficientEncodingToValue . encodePoint
-    toEncoding = encodePoint
 
 --
 -- Encoders
@@ -148,11 +130,11 @@ encodeBlock mode = \case
           )
         ]
 
-encodeHardForkApplyTxErr
+encodeSubmitTxError
     :: Crypto crypto
-    => HardForkApplyTxErr (CardanoEras crypto)
+    => SubmitTxError (CardanoBlock crypto)
     -> Json
-encodeHardForkApplyTxErr = \case
+encodeSubmitTxError = \case
     ApplyTxErrByron e ->
         Byron.encodeApplyMempoolPayloadErr e
     ApplyTxErrShelley (ApplyTxError xs) ->
@@ -168,7 +150,7 @@ encodeHardForkApplyTxErr = \case
 
 encodeSubmitTxPayload
     :: PraosCrypto crypto
-    => GenTx (CardanoBlock crypto)
+    => SubmitTxPayload (CardanoBlock crypto)
     -> Json
 encodeSubmitTxPayload = \case
     GenTxByron tx ->
@@ -200,72 +182,80 @@ encodeTip = \case
         ]
 
 --
--- Parsers
+-- Decoders
 --
-
-instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto))
-  where
-    parseJSON = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
-        bytes <- decodeBase16 utf8 <|> decodeBase64 utf8
-        asum $
-            (deserialiseCBOR GenTxMary <$> [fromStrict bytes, wrap bytes])
-            ++
-            (deserialiseCBOR GenTxAlonzo <$> [fromStrict bytes, wrap bytes])
-      where
-        -- Cardano tools have a tendency to wrap cbor in cbor (e.g cardano-cli).
-        -- In particular, a `GenTx` is expected to be prefixed with a cbor tag
-        -- `24` and serialized as CBOR bytes `58xx`.
-        wrap :: ByteString -> LByteString
-        wrap = Cbor.toLazyByteString . wrapCBORinCBOR Cbor.encodePreEncoded
-
-        deserialiseCBOR
-            :: forall era.
-                ( Or
-                    (era ~ LastElem (CardanoEras crypto))
-                    (era ~ ShelleyBlock (MaryEra crypto))
-                , FromCBOR (GenTx era)
-                )
-            => (GenTx era -> GenTx (CardanoBlock crypto))
-            -> LByteString
-            -> Json.Parser (GenTx (CardanoBlock crypto))
-        deserialiseCBOR mk =
-            either (fail . show) (pure . mk . snd)
-            .
-            Cbor.deserialiseFromBytes fromCBOR
-          where
-            _compilerWarning = keepRedundantConstraint
-                (Proxy @(Or
-                    (era ~ LastElem (CardanoEras crypto))
-                    (era ~ ShelleyBlock (MaryEra crypto))
-                ))
-
-instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
-    parseJSON json = parseOrigin json <|> parsePoint json
-      where
-        parseOrigin = Json.withText "Point" $ \case
-            txt | txt == "origin" -> pure genesisPoint
-            _ -> empty
-
-        parsePoint = Json.withObject "Point" $ \obj -> do
-            slot <- obj .: "slot"
-            hash <- obj .: "hash" >>= decodeOneEraHash
-            pure $ Point $ At $ Block (SlotNo slot) hash
-
-instance Crypto crypto => FromJSON (Tip (CardanoBlock crypto)) where
-    parseJSON json = parseOrigin json <|> parseTip json
-      where
-        parseOrigin = Json.withText "Tip" $ \case
-            txt | txt == "origin" -> pure TipGenesis
-            _ -> empty
-
-        parseTip = Json.withObject "Tip" $ \obj -> do
-            slot <- obj .: "slot"
-            hash <- obj .: "hash" >>= decodeOneEraHash
-            blockNo <- obj .: "blockNo"
-            pure $ Tip (SlotNo slot) hash (BlockNo blockNo)
 
 decodeOneEraHash
     :: Text
     -> Json.Parser (OneEraHash (CardanoEras crypto))
 decodeOneEraHash =
     either (const mempty) (pure . OneEraHash . toShort . hashToBytes) . decodeHash
+
+decodePoint
+    :: Json.Value
+    -> Json.Parser (Point (CardanoBlock crypto))
+decodePoint json =
+    parseOrigin json <|> parsePoint json
+  where
+    parseOrigin = Json.withText "Point" $ \case
+        txt | txt == "origin" -> pure genesisPoint
+        _ -> empty
+
+    parsePoint = Json.withObject "Point" $ \obj -> do
+        slot <- obj .: "slot"
+        hash <- obj .: "hash" >>= decodeOneEraHash
+        pure $ Point $ At $ Block (SlotNo slot) hash
+
+decodeSubmitTxPayload
+    :: forall crypto. PraosCrypto crypto
+    => Json.Value
+    -> Json.Parser (SubmitTxPayload (CardanoBlock crypto))
+decodeSubmitTxPayload = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
+    bytes <- decodeBase16 utf8 <|> decodeBase64 utf8
+    asum $
+        (deserialiseCBOR GenTxMary <$> [fromStrict bytes, wrap bytes])
+        ++
+        (deserialiseCBOR GenTxAlonzo <$> [fromStrict bytes, wrap bytes])
+  where
+    -- Cardano tools have a tendency to wrap cbor in cbor (e.g cardano-cli).
+    -- In particular, a `GenTx` is expected to be prefixed with a cbor tag
+    -- `24` and serialized as CBOR bytes `58xx`.
+    wrap :: ByteString -> LByteString
+    wrap = Cbor.toLazyByteString . wrapCBORinCBOR Cbor.encodePreEncoded
+
+    deserialiseCBOR
+        :: forall era.
+            ( Or
+                (era ~ LastElem (CardanoEras crypto))
+                (era ~ ShelleyBlock (MaryEra crypto))
+            , FromCBOR (GenTx era)
+            )
+        => (GenTx era -> GenTx (CardanoBlock crypto))
+        -> LByteString
+        -> Json.Parser (GenTx (CardanoBlock crypto))
+    deserialiseCBOR mk =
+        either (fail . show) (pure . mk . snd)
+        .
+        Cbor.deserialiseFromBytes fromCBOR
+      where
+        _compilerWarning = keepRedundantConstraint
+            (Proxy @(Or
+                (era ~ LastElem (CardanoEras crypto))
+                (era ~ ShelleyBlock (MaryEra crypto))
+            ))
+
+decodeTip
+    :: Json.Value
+    -> Json.Parser (Tip (CardanoBlock crypto))
+decodeTip json =
+    parseOrigin json <|> parseTip json
+  where
+    parseOrigin = Json.withText "Tip" $ \case
+        txt | txt == "origin" -> pure TipGenesis
+        _ -> empty
+
+    parseTip = Json.withObject "Tip" $ \obj -> do
+        slot <- obj .: "slot"
+        hash <- obj .: "hash" >>= decodeOneEraHash
+        blockNo <- obj .: "blockNo"
+        pure $ Tip (SlotNo slot) hash (BlockNo blockNo)

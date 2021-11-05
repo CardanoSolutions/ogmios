@@ -60,6 +60,7 @@ library
       Ogmios.Data.Json.Alonzo
       Ogmios.Data.Json.Byron
       Ogmios.Data.Json.Mary
+      Ogmios.Data.Json.Orphans
       Ogmios.Data.Json.Prelude
       Ogmios.Data.Json.Query
       Ogmios.Data.Json.Shelley

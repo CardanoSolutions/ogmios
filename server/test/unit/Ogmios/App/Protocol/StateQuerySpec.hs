@@ -46,6 +46,8 @@ import Ogmios.Control.MonadSTM
     ( MonadSTM (..), newTQueue, readTQueue, writeTQueue )
 import Ogmios.Data.Json
     ( Json, encodeAcquireFailure, encodePoint )
+import Ogmios.Data.Json.Orphans
+    ()
 import Ogmios.Data.Json.Query
     ( SomeQuery (..), encodeEpochNo, encodeMismatchEraInfo )
 import Ogmios.Data.Protocol.StateQuery

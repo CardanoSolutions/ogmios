@@ -15,6 +15,7 @@ module Cardano.Network.Protocol.NodeToClient
     (
     -- * Building
       Block
+    , Eras
     , SubmitTxError
     , SubmitTxPayload
     , Client
@@ -135,10 +136,13 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Type
 -- | Concrete block type.
 type Block = CardanoBlock StandardCrypto
 
+-- | Concrete eras type.
+type Eras = CardanoEras StandardCrypto
+
 -- | A helper to help getting more uniform type signatures by making the submit
 -- failure a function of a 'block' parameter
 type family SubmitTxError block :: Type where
-    SubmitTxError Block = HardForkApplyTxErr (CardanoEras StandardCrypto)
+    SubmitTxError (CardanoBlock crypto) = HardForkApplyTxErr (CardanoEras crypto)
 
 -- | A slightly more transparent type alias for 'GenTx''
 type SubmitTxPayload = GenTx

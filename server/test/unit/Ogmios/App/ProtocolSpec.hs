@@ -23,6 +23,8 @@ import Ogmios.App.Protocol
     ( onUnmatchedMessage )
 import Ogmios.Data.Json
     ( inefficientEncodingToValue )
+import Ogmios.Data.Json.Orphans
+    ()
 import Test.Hspec
     ( Spec
     , context

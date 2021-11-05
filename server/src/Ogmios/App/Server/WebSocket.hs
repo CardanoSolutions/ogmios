@@ -66,11 +66,13 @@ import Ogmios.Data.Json
     , ToJSON
     , encodeAcquireFailure
     , encodeBlock
-    , encodeHardForkApplyTxErr
     , encodePoint
+    , encodeSubmitTxError
     , encodeTip
     , jsonToByteString
     )
+import Ogmios.Data.Json.Orphans
+    ()
 import Ogmios.Data.Protocol.ChainSync
     ( ChainSyncCodecs (..), ChainSyncMessage (..), mkChainSyncCodecs )
 import Ogmios.Data.Protocol.StateQuery
@@ -278,7 +280,7 @@ withOuroborosClients tr mode maxInFlight sensors conn action = do
 
     txSubmissionCodecs@TxSubmissionCodecs
         { decodeSubmitTx
-        } = mkTxSubmissionCodecs encodeHardForkApplyTxErr
+        } = mkTxSubmissionCodecs encodeSubmitTxError
 
 --
 -- Logging
@@ -313,7 +315,7 @@ data TraceWebSocket where
         :: { ioException :: Text }
         -> TraceWebSocket
     deriving stock (Generic, Show)
-    deriving anyclass ToJSON
+    deriving anyclass (ToJSON)
 
 instance HasSeverityAnnotation TraceWebSocket where
     getSeverityAnnotation = \case

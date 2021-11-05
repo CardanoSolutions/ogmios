@@ -54,6 +54,7 @@ Application  |      ├── Prelude.hs
              |       ├── Json.hs
              |       ├── Json
              |       │   ├── Prelude.hs
+             |       │   ├── Orphans.hs
              |       │   ├── Query.hs
              |       │   ├── Byron.hs
              |       │   ├── Shelley.hs
