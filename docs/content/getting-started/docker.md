@@ -10,8 +10,8 @@ The easiest way to get started with Ogmios is to use [docker](https://www.docker
 
 Ogmios docker images come in two flavours: `cardano-node-ogmios` and `ogmios`. The former is used to run a single container that bundles both a Cardano-node and an Ogmios server running side-by-side. It is likely the easiest way to get started. The latter is a standalone Ogmios server, and you'll need to run that container in orchestration with a cardano-node; this is made relatively easy with [Docker compose](https://docs.docker.com/compose/).
 
-Images are uploaded to [Dockerhub](https://dockerhub.com/) and are tagged using release versions
-combined with the [supported network name](../../../config/network), or with `:latest` if you're
+Images are uploaded to [Dockerhub](https://hub.docker.com/u/cardanosolutions) and are tagged using release versions
+combined with the [supported network name][networks], or with `:latest` if you're
 living on the edge. If using the `mainnet` image you can omit the network name.
 
 | image               | repository                                                                                      | tags               |
@@ -48,12 +48,12 @@ Let's explore a bit the various options:
   | 12788       | cardano-node's EKG port                                  |
   | 12798       | cardano-node's Prometheus port                           |
 
-- `-v` mounts a shared volume with the container on your host machine, either via bind mounts or named volumes. 
+- `-v` mounts a shared volume with the container on your host machine, either via bind mounts or named volumes.
 
   | Mount Point        | Description |
   | ---                | ---         |
-  | `db/{NETWORK_NAME}` | Persist the cardano-node's database to avoid re-syncing the chain whenever a new container is run. This is done on every version upgrade and is recommended for most use-cases. | 
-  | `ipc`               | Bind `/ipc` to get access to the cardano-node's local socket if you use the image in a multi-container stack with an external Haskell client. | 
+  | `db/{NETWORK_NAME}` | Persist the cardano-node's database to avoid re-syncing the chain whenever a new container is run. This is done on every version upgrade and is recommended for most use-cases. |
+  | `ipc`               | Bind `/ipc` to get access to the cardano-node's local socket if you use the image in a multi-container stack with an external Haskell client. |
 
 Find more about run options in the docker user documentation.
 
@@ -68,7 +68,7 @@ $ DOCKER_BUILDKIT=1 docker build \
     https://github.com/cardanosolutions/ogmios.git
 ```
 
-**_Optionally_**  specify a [network](../../../config/network) name, other than `mainnet`, using a build
+**_Optionally_**  specify a [network][networks] name, other than `mainnet`, using a build
 argument:
 
 ```console
@@ -143,3 +143,4 @@ $ DOCKER_BUILDKIT=1 docker build \
     https://github.com/cardanosolutions/ogmios.git
 ```
 
+[networks]: https://github.com/CardanoSolutions/ogmios/blob/master/.github/workflows/docker.yaml#L16
