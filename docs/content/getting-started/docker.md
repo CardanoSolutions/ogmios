@@ -107,10 +107,6 @@ Once finish, tear the stack down using:
 $ docker-compose down
 ```
 
-{{% notice tip %}}
-Ogmios doesn’t use any form of persistent storage, but cardano-node does. The mainnet and testnet databases are not compatible, so it is recommended to instrument docker-compose to use different namespaces for different networks (so that you can switch from one another without risking any database conflicts). Compose can do this easily by passing an extra flag: --project-name.
-{{% /notice %}}
-
 #### Configuration
 
 The compose file allows for minimal (albeit useful) configuration parameters via environment variables:
@@ -120,7 +116,7 @@ Variable      | Description                                                     
 `NETWORK`     | Which Cardano network to connect to. This impacts both Ogmios and the underlying Cardano node. | `mainnet`, `testnet`   | `mainnet`
 `OGMIOS_PORT` | Which ports to listen to (both for WebSockets and health endpoints)                            | Any valid port number. | `1337`
 
-{{% notice info %}}
+{{% notice tip %}}
 Ogmios doesn't use any form of persistent storage, but cardano-node does. The mainnet and testnet databases are not compatible, so it is recommended to instrument docker-compose to use different namespaces for different networks (so that you can switch from one another without risking any database conflicts). Compose can do this easily by passing an extra flag: `--project-name`.
 {{% /notice %}}
 
