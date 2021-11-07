@@ -51,7 +51,9 @@ library:
     - cardano-ledger-alonzo
     - cardano-ledger-byron
     - cardano-ledger-core
+    - cardano-ledger-shelley
     - cardano-ledger-shelley-ma
+    - cardano-protocol-tpraos
     - cardano-slotting
     - cborg
     - containers
@@ -83,7 +85,6 @@ library:
     - safe
     - safe-exceptions
     - scientific
-    - shelley-spec-ledger
     - small-steps
     - strict-containers
     - text
@@ -128,6 +129,8 @@ tests:
     - cardano-client
     - cardano-ledger-alonzo
     - cardano-ledger-core
+    - cardano-ledger-shelley
+    - cardano-ledger-shelley-test
     - cardano-slotting
     - directory
     - file-embed
@@ -151,12 +154,9 @@ tests:
     - QuickCheck
     - random
     - relude
-    - shelley-spec-ledger
-    - shelley-spec-ledger-test
     - template-haskell
     - text
     - time
     - typed-protocols
-    - typed-protocols-examples
     build-tools:
     - hspec-discover

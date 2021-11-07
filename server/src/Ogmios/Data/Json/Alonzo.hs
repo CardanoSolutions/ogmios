@@ -28,13 +28,15 @@ import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
 import qualified Cardano.Crypto.Hash.Class as CC
-import qualified Cardano.Ledger.Era as Era
-import qualified Cardano.Ledger.SafeHash as SafeHash
 
-import qualified Shelley.Spec.Ledger.API as Sh
-import qualified Shelley.Spec.Ledger.PParams as Sh
-import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
-import qualified Shelley.Spec.Ledger.UTxO as Sh
+import qualified Cardano.Ledger.Block as Ledger
+import qualified Cardano.Ledger.Era as Ledger
+import qualified Cardano.Ledger.SafeHash as Ledger
+import qualified Cardano.Ledger.TxIn as Ledger
+
+import qualified Cardano.Ledger.Shelley.API as Sh
+import qualified Cardano.Ledger.Shelley.PParams as Sh
+import qualified Cardano.Ledger.Shelley.Rules.Ledger as Sh
 
 import qualified Cardano.Ledger.Alonzo.Data as Al
 import qualified Cardano.Ledger.Alonzo.Genesis as Al
@@ -129,7 +131,7 @@ encodeBlock
     => SerializationMode
     -> ShelleyBlock (AlonzoEra crypto)
     -> Json
-encodeBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
+encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
     [ ( "body"
       , encodeFoldable (encodeTx mode) (Al.txSeqTxns txs)
@@ -164,22 +166,21 @@ encodeData
     :: Al.Data era
     -> Json
 encodeData (Al.DataConstr datum) =
-    -- TODO: Check whether 'memobytes' really is what we want here. Might be good
-    -- to strip away the extra CBOR wrapping this if any.
     encodeShortByteString encodeByteStringBase64 (memobytes datum)
 
 encodeDataHash
-    :: Al.DataHash crypto
+    :: Crypto crypto
+    => Al.DataHash crypto
     -> Json
 encodeDataHash =
-    Shelley.encodeHash . SafeHash.extractHash
+    Shelley.encodeHash . Ledger.extractHash
 
 encodeExUnits
     :: Al.ExUnits
     -> Json
 encodeExUnits units =  encodeObject
-    [ ( "memory", encodeWord64 (Al.exUnitsMem units) )
-    , ( "steps", encodeWord64 (Al.exUnitsSteps units) )
+    [ ( "memory", encodeNatural (Al.exUnitsMem units) )
+    , ( "steps", encodeNatural (Al.exUnitsSteps units) )
     ]
 
 encodeGenesis
@@ -215,8 +216,8 @@ encodeGenesis x = encodeObject
 encodeLanguage
     :: Al.Language
     -> Json
-encodeLanguage = \case
-    Al.PlutusV1 -> encodeText "plutus:v1"
+encodeLanguage =
+    encodeText . stringifyLanguage
 
 encodeLedgerFailure
     :: Crypto crypto
@@ -327,7 +328,8 @@ encodePrices prices =  encodeObject
     ]
 
 encodeProposedPPUpdates
-    :: Sh.ProposedPPUpdates (AlonzoEra crypto)
+    :: Crypto crypto
+    => Sh.ProposedPPUpdates (AlonzoEra crypto)
     -> Json
 encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
     encodeMap Shelley.stringifyKeyHash (encodePParams' encodeStrictMaybe) m
@@ -357,8 +359,8 @@ encodeScript = \case
           , Allegra.encodeTimelock nativeScript
           )
         ]
-    Al.PlutusScript serializedScript -> encodeObject
-        [ ( "plutus"
+    Al.PlutusScript lang serializedScript -> encodeObject
+        [ ( stringifyLanguage lang
           , encodeShortByteString encodeByteStringBase64 serializedScript
           )
         ]
@@ -384,7 +386,7 @@ encodeTx
     -> Json
 encodeTx mode x = encodeObjectWithMode mode
     [ ( "id"
-      , Shelley.encodeTxId (Sh.txid @(AlonzoEra crypto) (Al.body x))
+      , Shelley.encodeTxId (Ledger.txid @(AlonzoEra crypto) (Al.body x))
       )
     , ( "body"
       , encodeTxBody (Al.body x)
@@ -400,7 +402,7 @@ encodeTx mode x = encodeObjectWithMode mode
       )
     ]
   where
-    adHash :: Al.TxBody era -> StrictMaybe (Al.AuxiliaryDataHash (Era.Crypto era))
+    adHash :: Al.TxBody era -> StrictMaybe (Al.AuxiliaryDataHash (Ledger.Crypto era))
     adHash = getField @"adHash"
 
 encodeTxBody
@@ -463,7 +465,8 @@ encodeTxOut (Al.TxOut addr value datum) = encodeObject
     ]
 
 encodeUpdate
-    :: Sh.Update (AlonzoEra crypto)
+    :: Crypto crypto
+    => Sh.Update (AlonzoEra crypto)
     -> Json
 encodeUpdate (Sh.Update update epoch) = encodeObject
     [ ( "proposal"
@@ -648,10 +651,11 @@ encodeUtxosPredicateFailure = \case
         Shelley.encodeUpdateFailure e
 
 encodeScriptIntegrityHash
-    :: Al.ScriptIntegrityHash crypto
+    :: Crypto crypto
+    => Al.ScriptIntegrityHash crypto
     -> Json
 encodeScriptIntegrityHash =
-    Shelley.encodeHash . SafeHash.extractHash
+    Shelley.encodeHash . Ledger.extractHash
 
 encodeWitnessSet
     :: Crypto crypto
@@ -680,9 +684,10 @@ encodeWitnessSet x = encodeObject
 --
 
 stringifyDataHash
-    :: Al.DataHash crypto
+    :: Crypto crypto
+    => Al.DataHash crypto
     -> Text
-stringifyDataHash (SafeHash.extractHash -> (CC.UnsafeHash h)) =
+stringifyDataHash (Ledger.extractHash -> (CC.UnsafeHash h)) =
     encodeBase16 (fromShort h)
 
 stringifyLanguage
@@ -690,6 +695,7 @@ stringifyLanguage
     -> Text
 stringifyLanguage = \case
     Al.PlutusV1 -> "plutus:v1"
+    Al.PlutusV2 -> "plutus:v2"
 
 stringifyRdmrPtr
     :: Al.RdmrPtr

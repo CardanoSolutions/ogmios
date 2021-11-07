@@ -57,12 +57,10 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
-import Shelley.Spec.Ledger.Delegation.Certificates
-    ( PoolDistr )
-import Shelley.Spec.Ledger.PParams
-    ( ProposedPPUpdates )
-import Shelley.Spec.Ledger.UTxO
-    ( UTxO )
+import Test.Cardano.Ledger.Shelley.ConcreteCryptoTypes
+    ( Mock )
+import Test.Cardano.Ledger.Shelley.Serialisation.Generators.Genesis
+    ( genPParams )
 import Test.QuickCheck
     ( Arbitrary (..), Gen, choose, elements, frequency, oneof, scale )
 import Test.QuickCheck.Gen
@@ -71,21 +69,22 @@ import Test.QuickCheck.Hedgehog
     ( hedgehog )
 import Test.QuickCheck.Random
     ( mkQCGen )
-import Test.Shelley.Spec.Ledger.ConcreteCryptoTypes
-    ( Mock )
-import Test.Shelley.Spec.Ledger.Serialisation.Generators.Genesis
-    ( genPParams )
 import Type.Reflection
     ( typeRep )
 
 import Test.Consensus.Cardano.Generators
     ()
 
-import qualified Cardano.Ledger.Core as Core
-import qualified Cardano.Ledger.Keys as Keys
 import qualified Data.Aeson as Json
 import qualified Ouroboros.Network.Point as Point
-import qualified Shelley.Spec.Ledger.BlockChain as Spec
+
+import qualified Cardano.Ledger.Block as Ledger
+import qualified Cardano.Ledger.Core as Ledger
+import qualified Cardano.Ledger.Keys as Ledger
+import qualified Cardano.Ledger.PoolDistr as Ledger
+
+import qualified Cardano.Ledger.Shelley.PParams as Sh
+import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
 genBlock :: Gen Block
 genBlock = reasonablySized $ oneof
@@ -101,11 +100,11 @@ genBlock = reasonablySized $ oneof
             ( Era era
             , ToCBORGroup (TxSeq era)
             , Mock (Crypto era)
-            , Arbitrary (Core.Tx era)
+            , Arbitrary (Ledger.Tx era)
             )
         => Gen (ShelleyBlock era)
     genBlockFrom = ShelleyBlock
-        <$> (Spec.Block <$> arbitrary <*> (toTxSeq @era <$> arbitrary))
+        <$> (Ledger.Block <$> arbitrary <*> (toTxSeq @era <$> arbitrary))
         <*> arbitrary
 
 genPoint :: Gen (Point Block)
@@ -245,8 +244,8 @@ genDelegationAndRewardsResult _ = frequency
 genPParamsResult
     :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
     => Proxy era
-    -> Proxy (QueryResult crypto (Core.PParams era))
-    -> Gen (QueryResult crypto (Core.PParams era))
+    -> Proxy (QueryResult crypto (Ledger.PParams era))
+    -> Gen (QueryResult crypto (Ledger.PParams era))
 genPParamsResult _ _ =
     maybe (error "genPParamsResult: unsupported era") reasonablySized
         (genShelley <|> genAllegra <|> genMary <|> genAlonzo)
@@ -292,8 +291,8 @@ genPParamsResult _ _ =
 genProposedPParamsResult
     :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
     => Proxy era
-    -> Proxy (QueryResult crypto (ProposedPPUpdates era))
-    -> Gen (QueryResult crypto (ProposedPPUpdates era))
+    -> Proxy (QueryResult crypto (Sh.ProposedPPUpdates era))
+    -> Gen (QueryResult crypto (Sh.ProposedPPUpdates era))
 genProposedPParamsResult _ _ =
     maybe (error "genProposedPParamsResult: unsupported era") reasonablySized
         (genShelley <|> genAllegra <|> genMary <|> genAlonzo)
@@ -337,8 +336,8 @@ genProposedPParamsResult _ _ =
 
 genPoolDistrResult
     :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (PoolDistr crypto))
-    -> Gen (QueryResult crypto (PoolDistr crypto))
+    => Proxy (QueryResult crypto (Ledger.PoolDistr crypto))
+    -> Gen (QueryResult crypto (Ledger.PoolDistr crypto))
 genPoolDistrResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> reasonablySized arbitrary)
@@ -347,8 +346,8 @@ genPoolDistrResult _ = frequency
 genUTxOResult
     :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
     => Proxy era
-    -> Proxy (QueryResult crypto (UTxO era))
-    -> Gen (QueryResult crypto (UTxO era))
+    -> Proxy (QueryResult crypto (Sh.UTxO era))
+    -> Gen (QueryResult crypto (Sh.UTxO era))
 genUTxOResult _ _ =
     maybe (error "genProposedPParamsResult: unsupported era") reasonablySized
         (genShelley <|> genAllegra <|> genMary <|> genAlonzo)
@@ -448,8 +447,8 @@ genRewardProvenanceResult _ = frequency
 
 genPoolIdsResult
     :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (Set (Keys.KeyHash 'StakePool crypto)))
-    -> Gen (QueryResult crypto (Set (Keys.KeyHash 'StakePool crypto)))
+    => Proxy (QueryResult crypto (Set (Ledger.KeyHash 'StakePool crypto)))
+    -> Gen (QueryResult crypto (Set (Ledger.KeyHash 'StakePool crypto)))
 genPoolIdsResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> reasonablySized arbitrary)
@@ -457,8 +456,8 @@ genPoolIdsResult _ = frequency
 
 genPoolParametersResult
     :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (Map (Keys.KeyHash 'StakePool crypto) (PoolParams crypto)))
-    -> Gen (QueryResult crypto (Map (Keys.KeyHash 'StakePool crypto) (PoolParams crypto)))
+    => Proxy (QueryResult crypto (Map (Ledger.KeyHash 'StakePool crypto) (PoolParams crypto)))
+    -> Gen (QueryResult crypto (Map (Ledger.KeyHash 'StakePool crypto) (PoolParams crypto)))
 genPoolParametersResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> reasonablySized arbitrary)

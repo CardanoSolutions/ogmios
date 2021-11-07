@@ -112,6 +112,10 @@ encodeTraceClient encodeTx encodeErr = \case
                 [ "tag" .= ("ProposeVersions" :: String)
                 , "versions" .= (show <$> Map.keys versions)
                 ]
+            MsgReplyVersions versions ->
+                [ "tag" .= ("ReplyVersions" :: String)
+                , "versions" .= (show <$> Map.keys versions)
+                ]
             MsgAcceptVersion v _ ->
                 [ "tag" .= ("AcceptVersion" :: String)
                 , "version" .= show (show v)

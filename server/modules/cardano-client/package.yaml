@@ -41,6 +41,6 @@ library:
     - ouroboros-network
     - ouroboros-network-framework
     - typed-protocols
-    - typed-protocols-examples
+    - typed-protocols-cborg
   build-tools:
   - hspec-discover

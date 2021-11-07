@@ -10,6 +10,8 @@ import Ogmios.Data.Json.Prelude
 
 import Cardano.Ledger.Crypto
     ( Crypto )
+import Cardano.Ledger.Shelley.API
+    ( PraosCrypto )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient, encodeTraceClient )
 import Ogmios.Data.Json
@@ -26,8 +28,6 @@ import Ouroboros.Consensus.Cardano.Block
     ( CardanoBlock, CardanoEras, GenTx (..), HardForkApplyTxErr (..) )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
-import Shelley.Spec.Ledger.API
-    ( PraosCrypto )
 
 import qualified Data.Aeson as Json
 

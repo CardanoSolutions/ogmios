@@ -12,10 +12,6 @@ module Ogmios.Data.Json.Shelley where
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Ledger.Address
-    ( Addr )
-import Cardano.Ledger.Credential
-    ( Credential )
 import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Ledger.Era
@@ -47,101 +43,107 @@ import qualified Cardano.Crypto.Hash.Class as CC
 import qualified Cardano.Crypto.KES.Class as CC
 import qualified Cardano.Crypto.VRF.Class as CC
 
-import qualified Cardano.Ledger.Address as Address
-import qualified Cardano.Ledger.AuxiliaryData as Aux
-import qualified Cardano.Ledger.BaseTypes as BaseTypes
-import qualified Cardano.Ledger.Coin as Coin
-import qualified Cardano.Ledger.Core as Core
-import qualified Cardano.Ledger.Credential as Credential
-import qualified Cardano.Ledger.Keys as Keys
-import qualified Cardano.Ledger.SafeHash as SafeHash
+import qualified Cardano.Protocol.TPraos.BHeader as TPraos
+import qualified Cardano.Protocol.TPraos.OCert as TPraos
 
-import qualified Shelley.Spec.Ledger.Address.Bootstrap as Sh
-import qualified Shelley.Spec.Ledger.BlockChain as Sh
-import qualified Shelley.Spec.Ledger.Delegation.Certificates as Sh
-import qualified Shelley.Spec.Ledger.Genesis as Sh
-import qualified Shelley.Spec.Ledger.LedgerState as Sh
-import qualified Shelley.Spec.Ledger.Metadata as Sh
-import qualified Shelley.Spec.Ledger.OCert as Sh
-import qualified Shelley.Spec.Ledger.PParams as Sh
-import qualified Shelley.Spec.Ledger.Scripts as Sh
-import qualified Shelley.Spec.Ledger.STS.Deleg as Sh
-import qualified Shelley.Spec.Ledger.STS.Delegs as Sh
-import qualified Shelley.Spec.Ledger.STS.Delpl as Sh
-import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
-import qualified Shelley.Spec.Ledger.STS.Pool as Sh
-import qualified Shelley.Spec.Ledger.STS.Ppup as Sh
-import qualified Shelley.Spec.Ledger.STS.Utxo as Sh
-import qualified Shelley.Spec.Ledger.STS.Utxow as Sh
-import qualified Shelley.Spec.Ledger.Tx as Sh
-import qualified Shelley.Spec.Ledger.TxBody as Sh
-import qualified Shelley.Spec.Ledger.UTxO as Sh
+import qualified Cardano.Ledger.Address as Ledger
+import qualified Cardano.Ledger.AuxiliaryData as Ledger
+import qualified Cardano.Ledger.BaseTypes as Ledger
+import qualified Cardano.Ledger.Block as Ledger
+import qualified Cardano.Ledger.Coin as Ledger
+import qualified Cardano.Ledger.Core as Ledger
+import qualified Cardano.Ledger.Credential as Ledger
+import qualified Cardano.Ledger.Era as Ledger
+import qualified Cardano.Ledger.Keys as Ledger
+import qualified Cardano.Ledger.SafeHash as Ledger
+import qualified Cardano.Ledger.TxIn as Ledger
+
+import qualified Cardano.Ledger.Shelley.Address.Bootstrap as Sh
+import qualified Cardano.Ledger.Shelley.BlockChain as Sh
+import qualified Cardano.Ledger.Shelley.Delegation.Certificates as Sh
+import qualified Cardano.Ledger.Shelley.Genesis as Sh
+import qualified Cardano.Ledger.Shelley.LedgerState as Sh
+import qualified Cardano.Ledger.Shelley.Metadata as Sh
+import qualified Cardano.Ledger.Shelley.PParams as Sh
+import qualified Cardano.Ledger.Shelley.Rules.Deleg as Sh
+import qualified Cardano.Ledger.Shelley.Rules.Delegs as Sh
+import qualified Cardano.Ledger.Shelley.Rules.Delpl as Sh
+import qualified Cardano.Ledger.Shelley.Rules.Ledger as Sh
+import qualified Cardano.Ledger.Shelley.Rules.Pool as Sh
+import qualified Cardano.Ledger.Shelley.Rules.Ppup as Sh
+import qualified Cardano.Ledger.Shelley.Rules.Utxo as Sh
+import qualified Cardano.Ledger.Shelley.Rules.Utxow as Sh
+import qualified Cardano.Ledger.Shelley.Scripts as Sh
+import qualified Cardano.Ledger.Shelley.Tx as Sh
+import qualified Cardano.Ledger.Shelley.TxBody as Sh
+import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
 --
 -- Encoders
 --
 
 encodeAddress
-    :: Addr era
+    :: Ledger.Addr crypto
     -> Json
 encodeAddress = \case
-    Address.AddrBootstrap addr ->
-        Byron.encodeAddress (Address.unBootstrapAddress addr)
-    addr@(Address.Addr network _ _) ->
-        encodeByteStringBech32 (hrp network) (Address.serialiseAddr addr)
+    Ledger.AddrBootstrap addr ->
+        Byron.encodeAddress (Ledger.unBootstrapAddress addr)
+    addr@(Ledger.Addr network _ _) ->
+        encodeByteStringBech32 (hrp network) (Ledger.serialiseAddr addr)
   where
     hrp = \case
-        BaseTypes.Mainnet -> hrpAddrMainnet
-        BaseTypes.Testnet -> hrpAddrTestnet
+        Ledger.Mainnet -> hrpAddrMainnet
+        Ledger.Testnet -> hrpAddrTestnet
 
 encodeAuxiliaryDataHash
-    :: Aux.AuxiliaryDataHash era
+    :: Crypto crypto
+    => Ledger.AuxiliaryDataHash crypto
     -> Json
 encodeAuxiliaryDataHash =
-    encodeHash . SafeHash.extractHash . Aux.unsafeAuxiliaryDataHash
+    encodeHash . Ledger.extractHash . Ledger.unsafeAuxiliaryDataHash
 
 encodeBHeader
     :: Crypto crypto
     => SerializationMode
-    -> Sh.BHeader crypto
+    -> TPraos.BHeader crypto
     -> Json
-encodeBHeader mode (Sh.BHeader hBody hSig) = encodeObjectWithMode mode
+encodeBHeader mode (TPraos.BHeader hBody hSig) = encodeObjectWithMode mode
     [ ( "blockHeight"
-      , encodeBlockNo (Sh.bheaderBlockNo hBody)
+      , encodeBlockNo (TPraos.bheaderBlockNo hBody)
       )
     , ( "slot"
-      , encodeSlotNo (Sh.bheaderSlotNo hBody)
+      , encodeSlotNo (TPraos.bheaderSlotNo hBody)
       )
     , ( "prevHash"
-      , encodePrevHash (Sh.bheaderPrev hBody)
+      , encodePrevHash (TPraos.bheaderPrev hBody)
       )
     , ( "issuerVk"
-      , encodeVKey (Sh.bheaderVk hBody)
+      , encodeVKey (TPraos.bheaderVk hBody)
       )
     , ( "issuerVrf"
-      , encodeVerKeyVRF (Sh.bheaderVrfVk hBody)
+      , encodeVerKeyVRF (TPraos.bheaderVrfVk hBody)
       )
     , ( "blockSize"
-      , encodeNatural (Sh.bsize hBody)
+      , encodeNatural (TPraos.bsize hBody)
       )
     , ( "blockHash"
-      , encodeHash (Sh.bhash hBody)
+      , encodeHash (TPraos.bhash hBody)
       )
     ]
     [ ( "signature"
       , encodeSignedKES hSig
       )
     , ( "nonce"
-      , encodeCertifiedVRF (Sh.bheaderEta hBody)
+      , encodeCertifiedVRF (TPraos.bheaderEta hBody)
       )
     , ( "leaderValue"
-      , encodeCertifiedVRF (Sh.bheaderL hBody)
+      , encodeCertifiedVRF (TPraos.bheaderL hBody)
       )
     , ( "opCert"
-      , encodeOCert (Sh.bheaderOCert hBody)
+      , encodeOCert (TPraos.bheaderOCert hBody)
       )
     , ( "protocolVersion"
-      , encodeProtVer (Sh.bprotver hBody)
+      , encodeProtVer (TPraos.bprotver hBody)
       )
     ]
 
@@ -150,7 +152,7 @@ encodeBlock
     => SerializationMode
     -> ShelleyBlock (ShelleyEra crypto)
     -> Json
-encodeBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
+encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
     [ ( "body"
       , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
@@ -210,15 +212,16 @@ encodeChainCode cc
     | otherwise = encodeByteStringBase16 (Sh.unChainCode cc)
 
 encodeCredential
-    :: forall any era. (any :\: 'StakePool)
-    => Credential any era
+    :: forall any crypto. (any :\: 'StakePool, Crypto crypto)
+    => Ledger.Credential any crypto
     -> Json
 encodeCredential x = case x of
-    Credential.KeyHashObj h -> encodeKeyHash h
-    Credential.ScriptHashObj h -> encodeScriptHash h
+    Ledger.KeyHashObj h -> encodeKeyHash h
+    Ledger.ScriptHashObj h -> encodeScriptHash h
 
 encodeDCert
-    :: Sh.DCert era
+    :: Crypto crypto
+    => Sh.DCert crypto
     -> Json
 encodeDCert = \case
     Sh.DCertDeleg (Sh.RegKey credential) -> encodeObject
@@ -286,7 +289,8 @@ encodeDCert = \case
             ]
 
 encodeDelegation
-    :: Sh.Delegation era
+    :: Crypto crypto
+    => Sh.Delegation crypto
     -> Json
 encodeDelegation x = encodeObject
     [ ( "delegator"
@@ -298,9 +302,10 @@ encodeDelegation x = encodeObject
     ]
 
 encodeDelegsFailure
-    :: PredicateFailure (Core.EraRule "DELPL" era) ~ Sh.DelplPredicateFailure era
-    => PredicateFailure (Core.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
-    => PredicateFailure (Core.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
+    :: PredicateFailure (Ledger.EraRule "DELPL" era) ~ Sh.DelplPredicateFailure era
+    => PredicateFailure (Ledger.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
+    => PredicateFailure (Ledger.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
+    => Crypto (Ledger.Crypto era)
     => Sh.DelegsPredicateFailure era
     -> Json
 encodeDelegsFailure = \case
@@ -320,7 +325,8 @@ encodeDelegsFailure = \case
         encodeDeplFailure e
 
 encodeDelegFailure
-    :: Sh.DelegPredicateFailure era
+    :: Crypto (Ledger.Crypto era)
+    => Sh.DelegPredicateFailure era
     -> Json
 encodeDelegFailure = \case
     Sh.StakeKeyAlreadyRegisteredDELEG credential ->
@@ -379,7 +385,6 @@ encodeDelegFailure = \case
                 ]
               )
             ]
-
     Sh.MIRCertificateTooLateinEpochDELEG currentSlot lastSlot ->
         encodeObject
             [ ( "tooLateForMir", encodeObject
@@ -390,10 +395,8 @@ encodeDelegFailure = \case
             ]
     Sh.MIRTransferNotCurrentlyAllowed ->
         encodeString "mirTransferNotCurrentlyAllowed"
-
     Sh.MIRNegativesNotCurrentlyAllowed ->
         encodeString "mirNegativeTransferNotCurrentlyAllowed"
-
     Sh.InsufficientForTransferDELEG pot requested size ->
         encodeObject
             [ ( "insufficientFundsForMir", encodeObject
@@ -403,10 +406,8 @@ encodeDelegFailure = \case
                 ]
               )
             ]
-
     Sh.MIRProducesNegativeUpdate ->
         encodeString "mirProducesNegativeUpdate"
-
     Sh.DuplicateGenesisVRFDELEG vrfHash ->
         encodeObject
             [ ( "duplicateGenesisVrf"
@@ -415,14 +416,15 @@ encodeDelegFailure = \case
             ]
 
 encodeDeltaCoin
-    :: Coin.DeltaCoin
+    :: Ledger.DeltaCoin
     -> Json
-encodeDeltaCoin (Coin.DeltaCoin delta) =
+encodeDeltaCoin (Ledger.DeltaCoin delta) =
     encodeInteger delta
 
 encodeDeplFailure
-    :: PredicateFailure (Core.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
-    => PredicateFailure (Core.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
+    :: PredicateFailure (Ledger.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
+    => PredicateFailure (Ledger.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
+    => Crypto (Ledger.Crypto era)
     => Sh.DelplPredicateFailure era
     -> Json
 encodeDeplFailure = \case
@@ -485,31 +487,32 @@ encodeGenesis x = encodeObject
     ]
 
 encodeHash
-    :: CC.Hash alg a
+    :: CC.HashAlgorithm alg
+    => CC.Hash alg a
     -> Json
 encodeHash (CC.UnsafeHash h) =
     encodeByteStringBase16 (fromShort h)
 
 encodeHashHeader
-    :: Sh.HashHeader crypto
+    :: TPraos.HashHeader crypto
     -> Json
 encodeHashHeader =
-    encodeByteStringBase16 . CC.hashToBytes . Sh.unHashHeader
+    encodeByteStringBase16 . CC.hashToBytes . TPraos.unHashHeader
 
 encodeKeyHash
-    :: forall any crypto. (any :\: StakePool)
-    => Keys.KeyHash any crypto
+    :: forall any crypto. (any :\: StakePool, Crypto crypto)
+    => Ledger.KeyHash any crypto
     -> Json
-encodeKeyHash (Keys.KeyHash h) =
+encodeKeyHash (Ledger.KeyHash h) =
     encodeHash h
   where
     _ = keepRedundantConstraint (Proxy @(any :\: StakePool))
 
 encodeKESPeriod
-    :: Sh.KESPeriod
+    :: TPraos.KESPeriod
     -> Json
 encodeKESPeriod =
-    encodeWord . Sh.unKESPeriod
+    encodeWord . TPraos.unKESPeriod
 
 encodeLedgerFailure
     :: Crypto crypto
@@ -579,35 +582,35 @@ encodeMultiSig = \case
         encodeObject [( show n, encodeList encodeMultiSig xs)]
 
 encodeNetwork
-    :: BaseTypes.Network
+    :: Ledger.Network
     -> Json
 encodeNetwork = \case
-    BaseTypes.Mainnet -> encodeText "mainnet"
-    BaseTypes.Testnet -> encodeText "testnet"
+    Ledger.Mainnet -> encodeText "mainnet"
+    Ledger.Testnet -> encodeText "testnet"
 
 encodeNonce
-    :: BaseTypes.Nonce
+    :: Ledger.Nonce
     -> Json
 encodeNonce = \case
-    BaseTypes.NeutralNonce -> encodeText "neutral"
-    BaseTypes.Nonce h -> encodeHash h
+    Ledger.NeutralNonce -> encodeText "neutral"
+    Ledger.Nonce h -> encodeHash h
 
 encodeOCert
     :: Crypto crypto
-    => Sh.OCert crypto
+    => TPraos.OCert crypto
     -> Json
 encodeOCert x = encodeObject
     [ ( "hotVk"
-      , encodeVerKeyKES (Sh.ocertVkHot x)
+      , encodeVerKeyKES (TPraos.ocertVkHot x)
       )
     , ( "count"
-      , encodeWord64 (Sh.ocertN x)
+      , encodeWord64 (TPraos.ocertN x)
       )
     , ( "kesPeriod"
-      , encodeKESPeriod (Sh.ocertKESPeriod x)
+      , encodeKESPeriod (TPraos.ocertKESPeriod x)
       )
     , ( "sigma"
-      , encodeSignedDSIGN (Sh.ocertSigma x)
+      , encodeSignedDSIGN (TPraos.ocertSigma x)
       )
     ]
 
@@ -618,13 +621,15 @@ encodeOutputVRF =
     encodeByteStringBase64 . CC.getOutputVRFBytes
 
 encodePoolId
-    :: Keys.KeyHash StakePool crypto
+    :: Crypto crypto
+    => Ledger.KeyHash StakePool crypto
     -> Json
 encodePoolId =
     encodeText . stringifyPoolId
 
 encodePoolFailure
-    :: Sh.PoolPredicateFailure era
+    :: Crypto (Ledger.Crypto era)
+    => Sh.PoolPredicateFailure era
     -> Json
 encodePoolFailure = \case
     Sh.StakePoolNotRegisteredOnKeyPOOL keyHash ->
@@ -693,7 +698,8 @@ encodePoolMetadata x = encodeObject
     ]
 
 encodePoolParams
-    :: Sh.PoolParams crypto
+    :: Crypto crypto
+    => Sh.PoolParams crypto
     -> Json
 encodePoolParams x = encodeObject
     [ ( "id"
@@ -784,28 +790,29 @@ encodePParams' encodeF x = encodeObject
     ]
 
 encodePrevHash
-    :: Sh.PrevHash crypto
+    :: TPraos.PrevHash crypto
     -> Json
 encodePrevHash = \case
-    Sh.GenesisHash -> encodeText "genesis"
-    Sh.BlockHash h -> encodeHashHeader h
+    TPraos.GenesisHash -> encodeText "genesis"
+    TPraos.BlockHash h -> encodeHashHeader h
 
 encodeProposedPPUpdates
-    :: forall era. (Core.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
+    :: Ledger.PParamsDelta era ~ Sh.PParams' StrictMaybe era
+    => Crypto (Ledger.Crypto era)
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
     encodeMap stringifyKeyHash (encodePParams' encodeStrictMaybe) m
 
 encodeProtVer
-    :: Sh.ProtVer
+    :: Ledger.ProtVer
     -> Json
 encodeProtVer x = encodeObject
     [ ( "major"
-      , encodeNatural (Sh.pvMajor x)
+      , encodeNatural (Ledger.pvMajor x)
       )
     , ( "minor"
-      , encodeNatural (Sh.pvMinor x)
+      , encodeNatural (Ledger.pvMinor x)
       )
     ]
 
@@ -823,7 +830,8 @@ encodeScript script = encodeObject
     [ ( "native", encodeMultiSig script ) ]
 
 encodeScriptHash
-    :: Sh.ScriptHash era
+    :: Crypto crypto
+    => Sh.ScriptHash crypto
     -> Json
 encodeScriptHash (Sh.ScriptHash h) =
     encodeHash h
@@ -887,7 +895,7 @@ encodeTx
     -> Json
 encodeTx mode x = encodeObjectWithMode mode
     [ ( "id"
-      , encodeTxId (Sh.txid @(ShelleyEra crypto) (Sh.body x))
+      , encodeTxId (Ledger.txid @(ShelleyEra crypto) (Sh.body x))
       )
     , ( "body"
       , encodeTxBody (Sh.body x)
@@ -932,16 +940,17 @@ encodeTxBody x = encodeObject
     ]
 
 encodeTxId
-    :: Sh.TxId crypto
+    :: Crypto crypto
+    => Ledger.TxId crypto
     -> Json
 encodeTxId =
-    encodeHash . SafeHash.extractHash . Sh._unTxId
+    encodeHash . Ledger.extractHash . Ledger._unTxId
 
 encodeTxIn
     :: Crypto crypto
-    => Sh.TxIn crypto
+    => Ledger.TxIn crypto
     -> Json
-encodeTxIn (Sh.TxIn txid ix) = encodeObject
+encodeTxIn (Ledger.TxIn txid ix) = encodeObject
     [ ( "txId"
       , encodeTxId txid
       )
@@ -951,7 +960,7 @@ encodeTxIn (Sh.TxIn txid ix) = encodeObject
     ]
 
 encodeTxOut
-    :: (ShelleyBased era, Core.Value era ~ Coin)
+    :: (ShelleyBased era, Ledger.Value era ~ Coin)
     => Sh.TxOut era
     -> Json
 encodeTxOut (Sh.TxOut addr value) = encodeObject
@@ -964,7 +973,8 @@ encodeTxOut (Sh.TxOut addr value) = encodeObject
     ]
 
 encodeUpdate
-    :: forall era. (Core.PParamsDelta era ~ Sh.PParams' StrictMaybe era)
+    :: Ledger.PParamsDelta era ~ Sh.PParams' StrictMaybe era
+    => Crypto (Ledger.Crypto era)
     => Sh.Update era
     -> Json
 encodeUpdate (Sh.Update update epoch) = encodeObject
@@ -977,7 +987,8 @@ encodeUpdate (Sh.Update update epoch) = encodeObject
     ]
 
 encodeUpdateFailure
-    :: Sh.PpupPredicateFailure era
+    :: Crypto (Ledger.Crypto era)
+    => Sh.PpupPredicateFailure era
     -> Json
 encodeUpdateFailure = \case
     Sh.NonGenesisUpdatePPUP voting shouldBeVoting ->
@@ -1007,8 +1018,8 @@ encodeUpdateFailure = \case
 encodeUtxo
     :: forall era.
         ( ShelleyBased era
-        , Core.Value era ~ Coin
-        , Core.TxOut era ~ Sh.TxOut era
+        , Ledger.Value era ~ Coin
+        , Ledger.TxOut era ~ Sh.TxOut era
         )
     => Sh.UTxO era
     -> Json
@@ -1020,8 +1031,8 @@ encodeUtxo =
 encodeUtxoWithMode
     :: forall era.
         ( ShelleyBased era
-        , Core.Value era ~ Coin
-        , Core.TxOut era ~ Sh.TxOut era
+        , Ledger.Value era ~ Coin
+        , Ledger.TxOut era ~ Sh.TxOut era
         )
     => SerializationMode
     -> Sh.UTxO era
@@ -1119,7 +1130,7 @@ encodeUtxowFailure
     :: forall era.
         ( Era era
         )
-    => (PredicateFailure (Core.EraRule "UTXO" era) -> Json)
+    => (PredicateFailure (Ledger.EraRule "UTXO" era) -> Json)
     -> Sh.UtxowPredicateFailure era
     -> Json
 encodeUtxowFailure encodeUtxoFailure_ = \case
@@ -1208,10 +1219,10 @@ encodeVerKeyVRF =
 
 encodeVKey
     :: Crypto crypto
-    => Keys.VKey any crypto
+    => Ledger.VKey any crypto
     -> Json
 encodeVKey =
-    encodeVerKeyDSign . Keys.unVKey
+    encodeVerKeyDSign . Ledger.unVKey
 
 encodeVotingPeriod
     :: Sh.VotingPeriod
@@ -1245,7 +1256,8 @@ encodeWitnessSet x = encodeObject
     ]
 
 encodeWitHashes
-    :: Sh.WitHashes era
+    :: Crypto crypto
+    => Sh.WitHashes crypto
     -> Json
 encodeWitHashes =
     encodeFoldable encodeKeyHash . Sh.unWitHashes
@@ -1269,52 +1281,54 @@ stringifyCoin =
     show . unCoin
 
 stringifyCredential
-    :: forall any era. (any :\: StakePool)
-    => Credential any era
+    :: forall any crypto. (any :\: StakePool, Crypto crypto)
+    => Ledger.Credential any crypto
     -> Text
 stringifyCredential = \case
-    Credential.KeyHashObj h -> stringifyKeyHash h
-    Credential.ScriptHashObj h -> stringifyScriptHash h
+    Ledger.KeyHashObj h -> stringifyKeyHash h
+    Ledger.ScriptHashObj h -> stringifyScriptHash h
   where
     _ = keepRedundantConstraint (Proxy @(any :\: StakePool))
 
 stringifyKeyHash
-    :: forall any era. (any :\: StakePool)
-    => Keys.KeyHash any era
+    :: forall any crypto. (any :\: StakePool, Crypto crypto)
+    => Ledger.KeyHash any crypto
     -> Text
-stringifyKeyHash (Keys.KeyHash (CC.UnsafeHash h)) =
+stringifyKeyHash (Ledger.KeyHash (CC.UnsafeHash h)) =
     encodeBase16 (fromShort h)
   where
     _ = keepRedundantConstraint (Proxy @(any :\: StakePool))
 
 stringifyPoolId
-    :: Keys.KeyHash StakePool crypto
+    :: Crypto crypto
+    => Ledger.KeyHash StakePool crypto
     -> Text
-stringifyPoolId (Keys.KeyHash (CC.UnsafeHash h)) =
+stringifyPoolId (Ledger.KeyHash (CC.UnsafeHash h)) =
     encodeBech32 hrpPool (fromShort h)
 
 stringifyRewardAcnt
     :: Sh.RewardAcnt era
     -> Text
 stringifyRewardAcnt x@(Sh.RewardAcnt ntwrk _credential) =
-    encodeBech32 (hrp ntwrk) (Address.serialiseRewardAcnt x)
+    encodeBech32 (hrp ntwrk) (Ledger.serialiseRewardAcnt x)
   where
     hrp = \case
-        BaseTypes.Mainnet -> hrpStakeMainnet
-        BaseTypes.Testnet -> hrpStakeTestnet
+        Ledger.Mainnet -> hrpStakeMainnet
+        Ledger.Testnet -> hrpStakeTestnet
 
 stringifyScriptHash
-    :: Sh.ScriptHash era
+    :: Crypto crypto
+    => Sh.ScriptHash crypto
     -> Text
 stringifyScriptHash (Sh.ScriptHash (CC.UnsafeHash h)) =
     encodeBase16 (fromShort h)
 
 stringifyVKey
     :: Crypto crypto
-    => Keys.VKey any crypto
+    => Ledger.VKey any crypto
     -> Text
 stringifyVKey =
-    encodeBase16 . CC.rawSerialiseVerKeyDSIGN . Keys.unVKey
+    encodeBase16 . CC.rawSerialiseVerKeyDSIGN . Ledger.unVKey
 
 --
 -- Helpers

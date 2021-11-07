@@ -19,15 +19,17 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
 
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
-import qualified Cardano.Ledger.AuxiliaryData as Aux
-import qualified Cardano.Ledger.Core as Core
-import qualified Cardano.Ledger.Era as Era
+import qualified Cardano.Ledger.AuxiliaryData as Ledger
+import qualified Cardano.Ledger.Block as Ledger
+import qualified Cardano.Ledger.Core as Ledger
+import qualified Cardano.Ledger.Era as Ledger
+import qualified Cardano.Ledger.TxIn as Ledger
 
-import qualified Shelley.Spec.Ledger.BlockChain as Sh
-import qualified Shelley.Spec.Ledger.PParams as Sh
-import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
-import qualified Shelley.Spec.Ledger.Tx as Sh
-import qualified Shelley.Spec.Ledger.UTxO as Sh
+import qualified Cardano.Ledger.Shelley.BlockChain as Sh
+import qualified Cardano.Ledger.Shelley.PParams as Sh
+import qualified Cardano.Ledger.Shelley.Rules.Ledger as Sh
+import qualified Cardano.Ledger.Shelley.Tx as Sh
+import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
 import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
 import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
@@ -56,7 +58,7 @@ encodeBlock
     => SerializationMode
     -> ShelleyBlock (AllegraEra crypto)
     -> Json
-encodeBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
+encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
     [ ( "body"
       , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
@@ -87,7 +89,8 @@ encodePParams' =
     Shelley.encodePParams'
 
 encodeProposedPPUpdates
-    :: (Core.PParamsDelta era ~ Sh.PParamsUpdate era)
+    :: Ledger.PParamsDelta era ~ Sh.PParamsUpdate era
+    => Crypto (Ledger.Crypto era)
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates =
@@ -125,7 +128,7 @@ encodeTx
     -> Json
 encodeTx mode x = encodeObjectWithMode mode
     [ ( "id"
-      , Shelley.encodeTxId (Sh.txid @(AllegraEra crypto) (Sh.body x))
+      , Shelley.encodeTxId (Ledger.txid @(AllegraEra crypto) (Sh.body x))
       )
     , ( "body"
       , encodeTxBody (Sh.body x)
@@ -141,7 +144,7 @@ encodeTx mode x = encodeObjectWithMode mode
       )
     ]
   where
-    adHash :: MA.TxBody era -> StrictMaybe (Aux.AuxiliaryDataHash (Era.Crypto era))
+    adHash :: MA.TxBody era -> StrictMaybe (Ledger.AuxiliaryDataHash (Ledger.Crypto era))
     adHash = getField @"adHash"
 
 encodeTxBody

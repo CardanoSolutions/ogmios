@@ -2323,7 +2323,7 @@
   , "CostModels":
     { "type": "object"
     , "additionalProperties": { "$ref": "#/definitions/CostModel" }
-    , "propertyNames": { "enum": [ "plutus:v1" ] }
+    , "propertyNames": { "enum": [ "plutus:v1", "plutus:v2" ] }
     , "examples":
       [ { "plutus:v1":
           { "k": 14
@@ -3367,9 +3367,17 @@
       , { "type": "object"
         , "title": "Plutus"
         , "additionalProperties": false
-        , "required": [ "plutus" ]
+        , "required": [ "plutus:v1" ]
         , "properties":
-          { "plutus": { "$ref": "#/definitions/Script[Plutus]" }
+          { "plutus:v1": { "$ref": "#/definitions/Script[Plutus]" }
+          }
+        }
+      , { "type": "object"
+        , "title": "Plutus"
+        , "additionalProperties": false
+        , "required": [ "plutus:v2" ]
+        , "properties":
+          { "plutus:v2": { "$ref": "#/definitions/Script[Plutus]" }
           }
         }
       ]

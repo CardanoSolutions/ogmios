@@ -40,6 +40,8 @@ import Cardano.Crypto.Hashing
     ( decodeHash, hashToBytes )
 import Cardano.Ledger.Crypto
     ( Crypto )
+import Cardano.Ledger.Shelley.API
+    ( ApplyTxError (..), PraosCrypto )
 import Cardano.Network.Protocol.NodeToClient
     ( SubmitTxError, SubmitTxPayload )
 import Cardano.Slotting.Block
@@ -71,14 +73,14 @@ import Ouroboros.Network.Point
     ( Block (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure (..) )
-import Shelley.Spec.Ledger.API
-    ( ApplyTxError (..), PraosCrypto )
 
 import qualified Codec.CBOR.Encoding as Cbor
 import qualified Codec.CBOR.Read as Cbor
 import qualified Codec.CBOR.Write as Cbor
+
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
+
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Byron as Byron

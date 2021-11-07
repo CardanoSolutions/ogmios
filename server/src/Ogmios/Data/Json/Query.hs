@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Ogmios.Data.Json.Query
@@ -19,10 +20,10 @@ module Ogmios.Data.Json.Query
       -- ** Types in queries
     , RewardAccounts
     , Delegations
-    , RewardProvenance
-    , RewardProvenancePool
-    , Desirability
-    , PoolParams
+    , Sh.RewardProvenance
+    , Sh.RewardProvenancePool
+    , Sh.Desirability
+    , Sh.PoolParams
 
       -- * Encoders
     , encodeBound
@@ -62,13 +63,9 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Api
     ( ShelleyBasedEra (..) )
 import Cardano.Crypto.Hash
-    ( hashFromBytes, hashFromTextAsHex )
-import Cardano.Ledger.Address
-    ( Addr )
-import Cardano.Ledger.Credential
-    ( Credential )
+    ( pattern UnsafeHash, hashFromBytes, hashFromTextAsHex )
 import Cardano.Ledger.Crypto
-    ( Crypto )
+    ( Crypto, HASH )
 import Cardano.Ledger.Keys
     ( KeyRole (..) )
 import Cardano.Ledger.SafeHash
@@ -98,13 +95,9 @@ import Ouroboros.Consensus.Shelley.Ledger.Config
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( BlockQuery (..), NonMyopicMemberRewards (..) )
 import Ouroboros.Network.Block
-    ( Point (..), castPoint )
+    ( pattern BlockPoint, pattern GenesisPoint, Point (..) )
 import Ouroboros.Network.Point
     ( Block (..) )
-import Shelley.Spec.Ledger.RewardProvenance
-    ( Desirability (..), RewardProvenance (..), RewardProvenancePool (..) )
-import Shelley.Spec.Ledger.TxBody
-    ( PoolParams )
 
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Data.Aeson as Json
@@ -114,19 +107,23 @@ import qualified Data.Map.Merge.Strict as Map
 import qualified Ouroboros.Consensus.Ledger.Query as LSQ
 
 import qualified Cardano.Crypto.Hash.Class as CC
-import qualified Cardano.Ledger.Address as Address
-import qualified Cardano.Ledger.Coin as Coin
-import qualified Cardano.Ledger.Core as Core
-import qualified Cardano.Ledger.Credential as Credential
-import qualified Cardano.Ledger.Crypto as CC
-import qualified Cardano.Ledger.Keys as Keys
 
-import qualified Shelley.Spec.Ledger.BlockChain as Sh
-import qualified Shelley.Spec.Ledger.Delegation.Certificates as Sh
-import qualified Shelley.Spec.Ledger.EpochBoundary as Sh
-import qualified Shelley.Spec.Ledger.PParams as Sh
-import qualified Shelley.Spec.Ledger.TxBody as Sh
-import qualified Shelley.Spec.Ledger.UTxO as Sh
+import qualified Cardano.Ledger.Address as Ledger
+import qualified Cardano.Ledger.BaseTypes as Ledger
+import qualified Cardano.Ledger.Coin as Ledger
+import qualified Cardano.Ledger.Core as Ledger
+import qualified Cardano.Ledger.Credential as Ledger
+import qualified Cardano.Ledger.Era as Ledger
+import qualified Cardano.Ledger.Keys as Ledger
+import qualified Cardano.Ledger.PoolDistr as Ledger
+import qualified Cardano.Ledger.TxIn as Ledger
+
+import qualified Cardano.Protocol.TPraos.BHeader as TPraos
+
+import qualified Cardano.Ledger.Shelley.PParams as Sh
+import qualified Cardano.Ledger.Shelley.RewardProvenance as Sh
+import qualified Cardano.Ledger.Shelley.TxBody as Sh
+import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
@@ -178,10 +175,10 @@ type GenResult crypto f t =
     Proxy (QueryResult crypto t) -> f (QueryResult crypto t)
 
 type Delegations crypto =
-    Map (Credential 'Staking crypto) (Keys.KeyHash 'StakePool crypto)
+    Map (Ledger.Credential 'Staking crypto) (Ledger.KeyHash 'StakePool crypto)
 
 type RewardAccounts crypto =
-    Map (Credential 'Staking crypto) Coin
+    Map (Ledger.Credential 'Staking crypto) Coin
 
 --
 -- SomeShelleyEra
@@ -225,7 +222,8 @@ encodeBound bound = encodeObject
     ]
 
 encodeDelegationsAndRewards
-    :: SerializationMode
+    :: Crypto crypto
+    => SerializationMode
     -> (Delegations crypto, RewardAccounts crypto)
     -> Json
 encodeDelegationsAndRewards mode (dlg, rwd) =
@@ -251,19 +249,20 @@ encodeDelegationsAndRewards mode (dlg, rwd) =
         )
 
 encodeDesirabilities
-    :: SerializationMode
-    -> RewardProvenance crypto
+    :: Crypto crypto
+    => SerializationMode
+    -> Sh.RewardProvenance crypto
     -> Json
 encodeDesirabilities mode rp =
-    encodeMapWithMode mode Shelley.stringifyPoolId encodeDesirability (desirabilities rp)
+    encodeMapWithMode mode Shelley.stringifyPoolId encodeDesirability (Sh.desirabilities rp)
   where
     encodeDesirability
-        :: Desirability
+        :: Sh.Desirability
         -> Json
     encodeDesirability d =
         encodeObject
-            [ ( "score", encodeDouble (desirabilityScore d) )
-            , ( "estimatedHitRate", encodeDouble (desirabilityScore d) )
+            [ ( "score", encodeDouble (Sh.desirabilityScore d) )
+            , ( "estimatedHitRate", encodeDouble (Sh.desirabilityScore d) )
             ]
 
 encodeEraMismatch
@@ -288,8 +287,9 @@ encodeMismatchEraInfo =
     encodeEraMismatch . mkEraMismatch
 
 encodeNonMyopicMemberRewards
-    :: SerializationMode
-    -> NonMyopicMemberRewards era
+    :: Crypto crypto
+    => SerializationMode
+    -> NonMyopicMemberRewards crypto
     -> Json
 encodeNonMyopicMemberRewards mode (NonMyopicMemberRewards nonMyopicMemberRewards) =
     encodeMapWithMode mode encodeKey encodeVal nonMyopicMemberRewards
@@ -318,113 +318,117 @@ encodePoint = \case
         ]
 
 encodePoolDistr
-    :: SerializationMode
-    -> Sh.PoolDistr crypto
+    :: forall crypto. Crypto crypto
+    => SerializationMode
+    -> Ledger.PoolDistr crypto
     -> Json
-encodePoolDistr mode =
-    encodeMapWithMode mode Shelley.stringifyPoolId encodeIndividualPoolStake . Sh.unPoolDistr
+encodePoolDistr mode
+    = encodeMapWithMode mode Shelley.stringifyPoolId encodeIndividualPoolStake
+    . Ledger.unPoolDistr
   where
     encodeIndividualPoolStake
-        :: Sh.IndividualPoolStake crypto
+        :: Ledger.IndividualPoolStake crypto
         -> Json
     encodeIndividualPoolStake x = encodeObject
         [ ( "stake"
-          , encodeRational (Sh.individualPoolStake x)
+          , encodeRational (Ledger.individualPoolStake x)
           )
         , ( "vrf"
-          , Shelley.encodeHash (Sh.individualPoolStakeVrf x)
+          , Shelley.encodeHash (Ledger.individualPoolStakeVrf x)
           )
         ]
 
 encodePoolParameters
-    :: SerializationMode
-    -> Map (Keys.KeyHash 'StakePool crypto) (PoolParams crypto)
+    :: Crypto crypto
+    => SerializationMode
+    -> Map (Ledger.KeyHash 'StakePool crypto) (Sh.PoolParams crypto)
     -> Json
 encodePoolParameters mode =
     encodeMapWithMode mode Shelley.stringifyPoolId Shelley.encodePoolParams
 
 encodeRewardProvenance
-    :: SerializationMode
-    -> RewardProvenance crypto
+    :: forall crypto. Crypto crypto
+    => SerializationMode
+    -> Sh.RewardProvenance crypto
     -> Json
 encodeRewardProvenance mode rp =
     encodeObjectWithMode mode
         [ ( "epochLength"
-          , encodeWord64 (spe rp)
+          , encodeWord64 (Sh.spe rp)
           )
         , ( "decentralizationParameter"
-          , encodeRational (d rp)
+          , encodeRational (Sh.d rp)
           )
         , ( "maxLovelaceSupply"
-          , encodeCoin (maxLL rp)
+          , encodeCoin (Sh.maxLL rp)
           )
         , ( "totalMintedBlocks"
-          , encodeInteger (blocksCount rp)
+          , encodeInteger (Sh.blocksCount rp)
           )
         , ( "totalExpectedBlocks"
-          , encodeInteger (expBlocks rp)
+          , encodeInteger (Sh.expBlocks rp)
           )
         , ( "incentive"
-          , encodeCoin (deltaR1 rp)
+          , encodeCoin (Sh.deltaR1 rp)
           )
         , ( "rewardsGap"
-          , encodeCoin (deltaR2 rp)
+          , encodeCoin (Sh.deltaR2 rp)
           )
         , ( "availableRewards"
-          , encodeCoin (r rp)
+          , encodeCoin (Sh.r rp)
           )
         , ( "totalRewards"
-          , encodeCoin (rPot rp)
+          , encodeCoin (Sh.rPot rp)
           )
         , ( "treasuryTax"
-          , encodeCoin (deltaT1 rp)
+          , encodeCoin (Sh.deltaT1 rp)
           )
         , ( "activeStake"
-          , encodeCoin (activeStake rp)
+          , encodeCoin (Sh.activeStake rp)
           )
         ]
         [ ( "pools"
-          , encodeMap Shelley.stringifyPoolId encodeRewardProvenancePool (pools rp)
+          , encodeMap Shelley.stringifyPoolId encodeRewardProvenancePool (Sh.pools rp)
           )
         , ( "mintedBlocks"
-          , encodeMap Shelley.stringifyPoolId encodeNatural (Sh.unBlocksMade $ blocks rp)
+          , encodeMap Shelley.stringifyPoolId encodeNatural (Ledger.unBlocksMade $ Sh.blocks rp)
           )
         ]
   where
     encodeRewardProvenancePool
-        :: RewardProvenancePool crypto
+        :: Sh.RewardProvenancePool crypto
         -> Json
     encodeRewardProvenancePool rpp =
         encodeObject
             [ ( "totalMintedBlocks"
-              , encodeNatural (poolBlocksP rpp)
+              , encodeNatural (Sh.poolBlocksP rpp)
               )
             , ( "totalStakeShare"
-              , encodeRational (sigmaP rpp)
+              , encodeRational (Sh.sigmaP rpp)
               )
             , ( "activeStakeShare"
-              , encodeRational (sigmaAP rpp)
+              , encodeRational (Sh.sigmaAP rpp)
               )
             , ( "ownerStake"
-              , encodeCoin (ownerStakeP rpp)
+              , encodeCoin (Sh.ownerStakeP rpp)
               )
             , ( "parameters"
-              , Shelley.encodePoolParams (poolParamsP rpp)
+              , Shelley.encodePoolParams (Sh.poolParamsP rpp)
               )
             , ( "pledgeRatio"
-              , encodeRational (pledgeRatioP rpp)
+              , encodeRational (Sh.pledgeRatioP rpp)
               )
             , ( "maxRewards"
-              , encodeCoin (maxPP rpp)
+              , encodeCoin (Sh.maxPP rpp)
               )
             , ( "apparentPerformance"
-              , encodeRational (appPerfP rpp)
+              , encodeRational (Sh.appPerfP rpp)
               )
             , ( "totalRewards"
-              , encodeCoin (poolRP rpp)
+              , encodeCoin (Sh.poolRP rpp)
               )
             , ( "leaderRewards"
-              , encodeCoin (lRewardP rpp)
+              , encodeCoin (Sh.lRewardP rpp)
               )
             ]
 
@@ -459,7 +463,7 @@ parseGetEraStart genResult =
             )
 
 parseGetLedgerTip
-    :: forall crypto f. (Typeable crypto)
+    :: forall crypto f. (Crypto crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (Point (ShelleyBlock era)))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
@@ -560,7 +564,7 @@ parseGetNonMyopicMemberRewards genResult =
   where
     parseCredentials
         :: Json.Object
-        -> Json.Parser (Set (Either Coin (Credential 'Staking crypto)))
+        -> Json.Parser (Set (Either Ledger.Coin (Ledger.Credential 'Staking crypto)))
     parseCredentials obj = fmap fromList $
         obj .: "nonMyopicMemberRewards" >>= traverse
             (choice "credential"
@@ -599,13 +603,13 @@ parseGetFilteredDelegationsAndRewards genResult =
   where
     parseCredentials
         :: Json.Object
-        -> Json.Parser (Set (Credential 'Staking crypto))
+        -> Json.Parser (Set (Ledger.Credential 'Staking crypto))
     parseCredentials obj = fmap fromList $
         obj .: "delegationsAndRewards" >>= traverse parseCredential
 
 parseGetCurrentPParams
     :: forall crypto f. (Typeable crypto)
-    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Core.PParams era))
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Ledger.PParams era))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetCurrentPParams genResultInEra =
@@ -649,7 +653,7 @@ parseGetCurrentPParams genResultInEra =
                 }
 
 parseGetProposedPParamsUpdates
-    :: forall crypto f. (Typeable crypto)
+    :: forall crypto f. (Crypto crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.ProposedPPUpdates era))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
@@ -694,8 +698,8 @@ parseGetProposedPParamsUpdates genResultInEra =
                 }
 
 parseGetStakeDistribution
-    :: forall crypto f. ()
-    => GenResult crypto f (Sh.PoolDistr crypto)
+    :: forall crypto f. (Crypto crypto)
+    => GenResult crypto f (Ledger.PoolDistr crypto)
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetStakeDistribution genResult =
@@ -812,7 +816,7 @@ parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
   where
     parseAddresses
         :: Json.Object
-        -> Json.Parser (Set (Addr crypto))
+        -> Json.Parser (Set (Ledger.Addr crypto))
     parseAddresses obj = fmap fromList $
         obj .: "utxo" >>= traverse parseAddress
 
@@ -863,7 +867,7 @@ parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
   where
     parseTxIns
         :: Json.Object
-        -> Json.Parser (Set (Sh.TxIn crypto))
+        -> Json.Parser (Set (Ledger.TxIn crypto))
     parseTxIns obj = fmap fromList $
         obj .: "utxo" >>= traverse parseTxIn
 
@@ -928,8 +932,8 @@ parseGetGenesisConfig genResultInEra = do
                 }
 
 parseGetRewardProvenance
-    :: forall crypto f. ()
-    => GenResult crypto f (RewardProvenance crypto)
+    :: forall crypto f. (Crypto crypto)
+    => GenResult crypto f (Sh.RewardProvenance crypto)
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetRewardProvenance genResult =
@@ -955,8 +959,8 @@ parseGetRewardProvenance genResult =
             )
 
 parseGetPoolIds
-    :: forall crypto f. ()
-    => GenResult crypto f (Set (Keys.KeyHash 'StakePool crypto))
+    :: forall crypto f. (Crypto crypto)
+    => GenResult crypto f (Set (Ledger.KeyHash 'StakePool crypto))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetPoolIds genResult =
@@ -983,7 +987,7 @@ parseGetPoolIds genResult =
 
 parseGetPoolParameters
     :: forall crypto f. (Crypto crypto)
-    => GenResult crypto f (Map (Keys.KeyHash 'StakePool crypto) (PoolParams crypto))
+    => GenResult crypto f (Map (Ledger.KeyHash 'StakePool crypto) (Sh.PoolParams crypto))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetPoolParameters genResult =
@@ -1011,13 +1015,13 @@ parseGetPoolParameters genResult =
   where
     parsePoolIds
         :: Json.Object
-        -> Json.Parser (Set (Keys.KeyHash 'StakePool crypto))
+        -> Json.Parser (Set (Ledger.KeyHash 'StakePool crypto))
     parsePoolIds obj = fmap fromList $
         obj .: "poolParameters" >>= traverse parsePoolId
 
 parseGetPoolsRanking
-    :: forall crypto f. ()
-    => GenResult crypto f (RewardProvenance crypto)
+    :: forall crypto f. (Crypto crypto)
+    => GenResult crypto f (Sh.RewardProvenance crypto)
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetPoolsRanking genResult =
@@ -1049,7 +1053,7 @@ parseGetPoolsRanking genResult =
 parseAddress
     :: Crypto crypto
     => Json.Value
-    -> Json.Parser (Addr crypto)
+    -> Json.Parser (Ledger.Addr crypto)
 parseAddress = Json.withText "Address" $ choice "address"
     [ addressFromBytes fromBech32
     , addressFromBytes fromBase58
@@ -1057,7 +1061,7 @@ parseAddress = Json.withText "Address" $ choice "address"
     ]
   where
     addressFromBytes decode =
-        decode >=> maybe mempty pure . Address.deserialiseAddr
+        decode >=> maybe mempty pure . Ledger.deserialiseAddr
 
     fromBech32 txt =
         case Bech32.decodeLenient txt of
@@ -1076,7 +1080,7 @@ parseCoin
     :: Json.Value
     -> Json.Parser Coin
 parseCoin =
-    fmap Coin.word64ToCoin . Json.parseJSON
+    fmap Ledger.word64ToCoin . Json.parseJSON
 
 -- TODO: Makes it possible to distinguish between KeyHash and ScriptHash
 -- credentials. Both are encoded as hex-encoded strings. Encoding them as
@@ -1087,9 +1091,9 @@ parseCoin =
 parseCredential
     :: Crypto crypto
     => Json.Value
-    -> Json.Parser (Credential 'Staking crypto)
+    -> Json.Parser (Ledger.Credential 'Staking crypto)
 parseCredential =
-    fmap (Credential.KeyHashObj . Keys.KeyHash) . parseHash
+    fmap (Ledger.KeyHashObj . Ledger.KeyHash) . parseHash
 
 parseHash
     :: CC.HashAlgorithm alg
@@ -1101,14 +1105,14 @@ parseHash =
 parsePoolId
     :: Crypto crypto
     => Json.Value
-    -> Json.Parser (Keys.KeyHash 'StakePool crypto)
+    -> Json.Parser (Ledger.KeyHash 'StakePool crypto)
 parsePoolId = Json.withText "PoolId" $ choice "poolId"
     [ poolIdFromBytes fromBech32
     , poolIdFromBytes fromBase16
     ]
   where
     poolIdFromBytes decode =
-        decode >=> maybe empty (pure . Keys.KeyHash) . hashFromBytes
+        decode >=> maybe empty (pure . Ledger.KeyHash) . hashFromBytes
 
     fromBech32 txt =
         case Bech32.decodeLenient txt of
@@ -1123,11 +1127,29 @@ parsePoolId = Json.withText "PoolId" $ choice "poolId"
 parseTxIn
     :: forall crypto. (Crypto crypto)
     => Json.Value
-    -> Json.Parser (Sh.TxIn crypto)
+    -> Json.Parser (Ledger.TxIn crypto)
 parseTxIn = Json.withObject "TxIn" $ \o -> do
     txid <- o .: "txId" >>= fromBase16
     ix <- o .: "index"
-    pure $ Sh.TxIn (Sh.TxId txid) ix
+    pure $ Ledger.TxIn (Ledger.TxId txid) ix
   where
     fromBase16 =
-        maybe empty (pure . unsafeMakeSafeHash) . hashFromTextAsHex @(CC.HASH crypto)
+        maybe empty (pure . unsafeMakeSafeHash) . hashFromTextAsHex @(HASH crypto)
+
+--
+-- Helpers
+--
+
+-- NOTE: This is necessary because the constructor of 'Hash' is no longer
+-- exposed, and thus, it is not possible to use the 'castPoint' function from
+-- Ouroboros.Network.Block anymore! May revisit in future upgrade of the
+-- dependencies.
+castPoint
+    :: forall era crypto. (Ledger.Crypto era ~ crypto, Crypto crypto)
+    => Point (ShelleyBlock era)
+    -> Point (CardanoBlock crypto)
+castPoint = \case
+    GenesisPoint -> GenesisPoint
+    BlockPoint slot h -> BlockPoint slot (cast h)
+  where
+    cast (TPraos.unHashHeader . unShelleyHash -> UnsafeHash h) = coerce h

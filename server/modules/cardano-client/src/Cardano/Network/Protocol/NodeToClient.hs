@@ -39,7 +39,7 @@ module Cardano.Network.Protocol.NodeToClient
 
     -- * Helpers / Re-exports
     , MuxError (..)
-    , HandshakeClientProtocolError (..)
+    , HandshakeProtocolError (..)
     , NodeToClientVersion
 
     -- * Boilerplate
@@ -79,6 +79,8 @@ import Network.Mux
     ( MuxError (..), MuxMode (..) )
 import Network.TypedProtocol.Codec
     ( Codec )
+import Network.TypedProtocol.Codec.CBOR
+    ( DeserialiseFailure )
 import Ouroboros.Consensus.Byron.Ledger.Config
     ( CodecConfig (..) )
 import Ouroboros.Consensus.Cardano
@@ -99,8 +101,6 @@ import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 import Ouroboros.Network.Channel
     ( Channel, hoistChannel )
-import Ouroboros.Network.Codec
-    ( DeserialiseFailure )
 import Ouroboros.Network.Driver.Simple
     ( TraceSendRecv, runPeer, runPipelinedPeer )
 import Ouroboros.Network.Mux
@@ -121,7 +121,7 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
 import Ouroboros.Network.Protocol.ChainSync.Type
     ( ChainSync )
 import Ouroboros.Network.Protocol.Handshake.Type
-    ( HandshakeClientProtocolError (..) )
+    ( HandshakeProtocolError (..) )
 import Ouroboros.Network.Protocol.Handshake.Version
     ( combineVersions, simpleSingletonVersions )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
@@ -182,7 +182,7 @@ connectClient
     -> FilePath
     -> m ()
 connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
-    connectTo (localSnocket iocp addr) tracers versions addr
+    connectTo (localSnocket iocp) tracers versions addr
   where
     versions = combineVersions
         [ simpleSingletonVersions v vData (client v)

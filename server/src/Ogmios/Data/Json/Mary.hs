@@ -25,14 +25,16 @@ import qualified Data.Map.Strict as Map
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
-import qualified Cardano.Ledger.Core as Core
-import qualified Cardano.Ledger.Era as Era
+import qualified Cardano.Ledger.Block as Ledger
+import qualified Cardano.Ledger.Core as Ledger
+import qualified Cardano.Ledger.Era as Ledger
+import qualified Cardano.Ledger.TxIn as Ledger
 
-import qualified Shelley.Spec.Ledger.BlockChain as Sh
-import qualified Shelley.Spec.Ledger.PParams as Sh
-import qualified Shelley.Spec.Ledger.STS.Ledger as Sh
-import qualified Shelley.Spec.Ledger.Tx as Sh
-import qualified Shelley.Spec.Ledger.UTxO as Sh
+import qualified Cardano.Ledger.Shelley.BlockChain as Sh
+import qualified Cardano.Ledger.Shelley.PParams as Sh
+import qualified Cardano.Ledger.Shelley.Rules.Ledger as Sh
+import qualified Cardano.Ledger.Shelley.Tx as Sh
+import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
 import qualified Cardano.Ledger.AuxiliaryData as MA
 import qualified Cardano.Ledger.Mary.Value as MA
@@ -62,7 +64,7 @@ encodeBlock
     => SerializationMode
     -> ShelleyBlock (MaryEra crypto)
     -> Json
-encodeBlock mode (ShelleyBlock (Sh.Block blkHeader txs) headerHash) =
+encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
     [ ( "body"
       , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
@@ -86,7 +88,8 @@ encodeLedgerFailure = \case
         Shelley.encodeDelegsFailure e
 
 encodePolicyId
-    :: MA.PolicyID crypto
+    :: Crypto crypto
+    => MA.PolicyID crypto
     -> Json
 encodePolicyId (MA.PolicyID hash) =
     Shelley.encodeScriptHash hash
@@ -99,7 +102,8 @@ encodePParams' =
     Shelley.encodePParams'
 
 encodeProposedPPUpdates
-    :: (Core.PParamsDelta era ~ Sh.PParamsUpdate era)
+    :: Ledger.PParamsDelta era ~ Sh.PParamsUpdate era
+    => Crypto (Ledger.Crypto era)
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates =
@@ -112,7 +116,7 @@ encodeTx
     -> Json
 encodeTx mode x = encodeObjectWithMode mode
     [ ( "id"
-      , Shelley.encodeTxId (Sh.txid @(MaryEra crypto) (Sh.body x))
+      , Shelley.encodeTxId (Ledger.txid @(MaryEra crypto) (Sh.body x))
       )
     , ( "body"
       , encodeTxBody (Sh.body x)
@@ -128,7 +132,7 @@ encodeTx mode x = encodeObjectWithMode mode
       )
     ]
   where
-    adHash :: MA.TxBody era -> StrictMaybe (MA.AuxiliaryDataHash (Era.Crypto era))
+    adHash :: MA.TxBody era -> StrictMaybe (MA.AuxiliaryDataHash (Ledger.Crypto era))
     adHash = getField @"adHash"
 
 encodeTxBody
@@ -287,7 +291,8 @@ encodeUtxoFailure = \case
         Shelley.encodeUpdateFailure e
 
 encodeValue
-    :: MA.Value crypto
+    :: Crypto crypto
+    => MA.Value crypto
     -> Json
 encodeValue (MA.Value coins assets) = encodeObject
     [ ( "coins"
@@ -323,7 +328,7 @@ encodeWitnessSet x = encodeObject
 -- Conversion To Text
 --
 
-stringifyAssetId :: (MA.PolicyID crypto, MA.AssetName) -> Text
+stringifyAssetId :: Crypto crypto => (MA.PolicyID crypto, MA.AssetName) -> Text
 stringifyAssetId (MA.PolicyID pid, MA.AssetName bytes)
     | BS.null bytes = Shelley.stringifyScriptHash pid
     | otherwise     = Shelley.stringifyScriptHash pid <> "." <> encodeBase16 bytes

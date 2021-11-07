@@ -5,6 +5,24 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.0.0] - unreleased
+
+#### Added
+
+> N/A
+
+#### Changed
+
+> ##### 🏢 Server
+> 
+> - ⚠️ Serialised Plutus scripts are now labelled either `plutus:v1` or `plutus:v2` (instead of `plutus`).
+>
+> - Upgraded internal dependencies to Cardano eco-system 1.31.0
+
+#### Removed
+
+> N/A
+
 ### [4.2.0] - 2021-11-05
 
 #### Added
