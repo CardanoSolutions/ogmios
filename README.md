@@ -45,6 +45,16 @@
   <img src=".github/preview.png" alt="Ogmios TypeScript Client Preview">
 </p>
 
+### Sponsors
+
+| [Ray Network][Ray Network] | [ccvault.io][ccvault] | [tapiocapool][tapiocapool] | 
+| --- | --- | --- |
+| [<img src="https://avatars.githubusercontent.com/u/65092852" height=100 width=100 />][Ray Network] | [<img src="https://avatars.githubusercontent.com/u/86010408" height=100 width=100 />][Ray Network] | [<img src="https://avatars.githubusercontent.com/u/80033713" height=100 width=100 />][tapiocapool] |
+
+[Ray Network]: https://rraayy.com/
+[tapiocapool]: https://github.com/tapiocapool
+[ccvault]: https://ccvault.io/
+
 <hr/>
 
 <p align="center">
