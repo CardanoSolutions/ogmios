@@ -56,10 +56,12 @@ module Ogmios.Data.Json.Prelude
     , encodeShortByteString
     , encodeSlotNo
     , encodeString
+    , encodeSystemStart
     , encodeText
     , encodeUnitInterval
     , encodeUrl
     , encodeUtcTime
+    , encodeWithOrigin
     , encodeWord
     , encodeWord16
     , encodeWord32
@@ -106,7 +108,9 @@ import Cardano.Ledger.Coin
 import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
-    ( EpochNo (..), EpochSize (..), SlotNo (..) )
+    ( EpochNo (..), EpochSize (..), SlotNo (..), WithOrigin (..) )
+import Cardano.Slotting.Time
+    ( SystemStart (..) )
 import Data.Aeson
     ( FromJSON, ToJSON, (.:) )
 import Data.ByteArray
@@ -342,6 +346,13 @@ encodeString =
     Json.string
 {-# INLINABLE encodeString #-}
 
+encodeSystemStart
+    :: SystemStart
+    -> Json
+encodeSystemStart =
+    encodeUtcTime . getSystemStart
+{-# INLINABLE encodeSystemStart #-}
+
 encodeText :: Text -> Json
 encodeText =
     Json.text
@@ -361,6 +372,12 @@ encodeUtcTime :: UTCTime -> Json
 encodeUtcTime =
     Json.utcTime
 {-# INLINABLE encodeUtcTime #-}
+
+encodeWithOrigin :: (a -> Json) -> WithOrigin a -> Json
+encodeWithOrigin encodeA = \case
+    Origin -> encodeText "origin"
+    At a -> encodeA a
+{-# INLINABLE encodeWithOrigin #-}
 
 encodeWord :: Word -> Json
 encodeWord =

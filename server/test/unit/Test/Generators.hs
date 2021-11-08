@@ -18,6 +18,8 @@ import Cardano.Network.Protocol.NodeToClient
     ( Block )
 import Cardano.Slotting.Slot
     ( EpochNo (..) )
+import Cardano.Slotting.Time
+    ( SystemStart )
 import Data.SOP.Strict
     ( NS (..) )
 import Data.Type.Equality
@@ -107,11 +109,15 @@ genBlock = reasonablySized $ oneof
         <$> (Ledger.Block <$> arbitrary <*> (toTxSeq @era <$> arbitrary))
         <*> arbitrary
 
-genPoint :: Gen (Point Block)
-genPoint = frequency
-    [ (1, pure (Point Point.Origin))
-    , (10, Point . Point.At <$> genPointBlock)
+genWithOrigin :: Gen a -> Gen (Point.WithOrigin a)
+genWithOrigin genA = frequency
+    [ (1, pure Point.Origin)
+    , (10, Point.At <$> genA)
     ]
+
+genPoint :: Gen (Point Block)
+genPoint =
+    Point <$> genWithOrigin genPointBlock
 
 genTip :: Gen (Tip Block)
 genTip = frequency
@@ -146,6 +152,9 @@ genBlockNo = BlockNo <$> arbitrary
 
 genHeaderHash :: Gen (HeaderHash Block)
 genHeaderHash = arbitrary
+
+genSystemStart :: Gen SystemStart
+genSystemStart = arbitrary
 
 genPointBlock :: Gen (Point.Block SlotNo (HeaderHash Block))
 genPointBlock = Point.Block <$> genSlotNo <*> genHeaderHash

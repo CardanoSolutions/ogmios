@@ -42,6 +42,8 @@ import Ogmios.Data.Json.Query
     , ShelleyBasedEra (..)
     , SomeQuery (..)
     , SomeShelleyEra (..)
+    , parseGetBlockHeight
+    , parseGetChainTip
     , parseGetCurrentPParams
     , parseGetEpochNo
     , parseGetEraStart
@@ -55,6 +57,7 @@ import Ogmios.Data.Json.Query
     , parseGetProposedPParamsUpdates
     , parseGetRewardProvenance
     , parseGetStakeDistribution
+    , parseGetSystemStart
     , parseGetUTxO
     , parseGetUTxOByAddress
     , parseGetUTxOByTxIn
@@ -102,6 +105,7 @@ import System.Directory
 import Test.Generators
     ( genAcquireFailure
     , genBlock
+    , genBlockNo
     , genBoundResult
     , genCompactGenesisResult
     , genDelegationAndRewardsResult
@@ -117,8 +121,10 @@ import Test.Generators
     , genPoolsRankingResult
     , genProposedPParamsResult
     , genRewardProvenanceResult
+    , genSystemStart
     , genTip
     , genUTxOResult
+    , genWithOrigin
     , generateWith
     , reasonablySized
     )
@@ -394,6 +400,24 @@ spec = do
             ( parseGetPoolsRanking genPoolsRankingResult
             ) (10, "StateQuery/Response/Query[poolsRanking]")
             "ogmios.wsp.json#/properties/QueryResponse[poolsRanking]"
+
+        validateQuery
+            [aesonQQ|"chainTip"|]
+            ( parseGetChainTip (const genPoint)
+            ) (10, "StateQuery/Response/Query[chainTip]")
+            "ogmios.wsp.json#/properties/QueryResponse[chainTip]"
+
+        validateQuery
+            [aesonQQ|"systemStart"|]
+            ( parseGetSystemStart (const genSystemStart)
+            ) (10, "StateQuery/Response/Query[systemStart]")
+            "ogmios.wsp.json#/properties/QueryResponse[systemStart]"
+
+        validateQuery
+            [aesonQQ|"blockHeight"|]
+            ( parseGetBlockHeight (const $ genWithOrigin genBlockNo)
+            ) (10, "StateQuery/Response/Query[blockHeight]")
+            "ogmios.wsp.json#/properties/QueryResponse[blockHeight]"
 
         goldenToJSON
             "QueryResponse-utxo_1.json"

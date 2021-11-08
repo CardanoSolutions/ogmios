@@ -40,22 +40,25 @@ module Ogmios.Data.Json.Query
     , encodeRewardProvenance
 
       -- * Parsers
-    , parseGetEraStart
-    , parseGetLedgerTip
-    , parseGetEpochNo
-    , parseGetNonMyopicMemberRewards
-    , parseGetFilteredDelegationsAndRewards
+    , parseGetBlockHeight
+    , parseGetChainTip
     , parseGetCurrentPParams
-    , parseGetProposedPParamsUpdates
-    , parseGetStakeDistribution
-    , parseGetUTxO
-    , parseGetUTxOByAddress
-    , parseGetUTxOByTxIn
+    , parseGetEpochNo
+    , parseGetEraStart
+    , parseGetFilteredDelegationsAndRewards
     , parseGetGenesisConfig
-    , parseGetRewardProvenance
+    , parseGetLedgerTip
+    , parseGetNonMyopicMemberRewards
     , parseGetPoolIds
     , parseGetPoolParameters
     , parseGetPoolsRanking
+    , parseGetProposedPParamsUpdates
+    , parseGetRewardProvenance
+    , parseGetStakeDistribution
+    , parseGetSystemStart
+    , parseGetUTxO
+    , parseGetUTxOByAddress
+    , parseGetUTxOByTxIn
     ) where
 
 import Ogmios.Data.Json.Prelude
@@ -76,6 +79,8 @@ import Data.Aeson
     ( toJSON )
 import Data.SOP.Strict
     ( NS (..) )
+import Ouroboros.Consensus.BlockchainTime
+    ( SystemStart (..) )
 import Ouroboros.Consensus.Cardano.Block
     ( BlockQuery (..), CardanoBlock, CardanoEras )
 import Ouroboros.Consensus.HardFork.Combinator
@@ -95,7 +100,7 @@ import Ouroboros.Consensus.Shelley.Ledger.Config
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( BlockQuery (..), NonMyopicMemberRewards (..) )
 import Ouroboros.Network.Block
-    ( pattern BlockPoint, pattern GenesisPoint, Point (..) )
+    ( BlockNo, pattern BlockPoint, pattern GenesisPoint, Point (..) )
 import Ouroboros.Network.Point
     ( Block (..) )
 
@@ -150,7 +155,9 @@ data SomeQuery (f :: Type -> Type) block = forall result. SomeQuery
 
 instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
     parseJSON = choice "query"
-        [ \raw -> Query raw <$> parseGetCurrentPParams (const id) raw
+        [ \raw -> Query raw <$> parseGetBlockHeight id raw
+        , \raw -> Query raw <$> parseGetChainTip id raw
+        , \raw -> Query raw <$> parseGetCurrentPParams (const id) raw
         , \raw -> Query raw <$> parseGetEpochNo id raw
         , \raw -> Query raw <$> parseGetEraStart id raw
         , \raw -> Query raw <$> parseGetFilteredDelegationsAndRewards id raw
@@ -163,6 +170,7 @@ instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
         , \raw -> Query raw <$> parseGetProposedPParamsUpdates (const id) raw
         , \raw -> Query raw <$> parseGetRewardProvenance id raw
         , \raw -> Query raw <$> parseGetStakeDistribution id raw
+        , \raw -> Query raw <$> parseGetSystemStart id raw
         , \raw -> Query raw <$> parseGetUTxO (const id) raw
         , \raw -> Query raw <$> parseGetUTxOByAddress (const id) raw
         , \raw -> Query raw <$> parseGetUTxOByTxIn (const id) raw
@@ -435,6 +443,34 @@ encodeRewardProvenance mode rp =
 --
 -- Parsers (Queries)
 --
+
+parseGetBlockHeight
+    :: forall crypto f. ()
+    => (Proxy (WithOrigin BlockNo) -> f (WithOrigin BlockNo))
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseGetBlockHeight genResult =
+    Json.withText "SomeQuery" $ \text -> do
+        guard (text == "blockHeight")
+        pure $ const $ Just $ SomeQuery
+            { query = LSQ.GetChainBlockNo
+            , genResult
+            , encodeResult = const (encodeWithOrigin encodeBlockNo)
+            }
+
+parseGetChainTip
+    :: forall crypto f. ()
+    => (Proxy (Point (CardanoBlock crypto)) -> f (Point (CardanoBlock crypto)))
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseGetChainTip genResult =
+    Json.withText "SomeQuery" $ \text -> do
+        guard (text == "chainTip")
+        pure $ const $ Just $ SomeQuery
+            { query = LSQ.GetChainPoint
+            , genResult
+            , encodeResult = const encodePoint
+            }
 
 parseGetEraStart
     :: forall crypto f. ()
@@ -723,6 +759,20 @@ parseGetStakeDistribution genResult =
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetStakeDistribution
             )
+
+parseGetSystemStart
+    :: forall crypto f. ()
+    => (Proxy SystemStart -> f SystemStart)
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseGetSystemStart genResult =
+    Json.withText "SomeQuery" $ \text -> do
+        guard (text == "systemStart")
+        pure $ const $ Just $ SomeQuery
+            { query = LSQ.GetSystemStart
+            , genResult
+            , encodeResult = const encodeSystemStart
+            }
 
 parseGetUTxO
     :: forall crypto f. (Crypto crypto)

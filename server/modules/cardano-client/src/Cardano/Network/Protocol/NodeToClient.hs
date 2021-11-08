@@ -186,7 +186,7 @@ connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
   where
     versions = combineVersions
         [ simpleSingletonVersions v vData (client v)
-        | v <- [NodeToClientV_9, NodeToClientV_8]
+        | v <- [NodeToClientV_10, NodeToClientV_9, NodeToClientV_8]
         ]
 
     tracers :: NetworkConnectTracers LocalAddress NodeToClientVersion
@@ -196,7 +196,7 @@ connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
         }
 
 nodeToClientV_Latest :: NodeToClientVersion
-nodeToClientV_Latest = NodeToClientV_9
+nodeToClientV_Latest = maxBound
 
 -- | Construct a network client
 mkClient
