@@ -8,6 +8,8 @@
   , "Acquire", "AcquireResponse"
   , "Release","ReleaseResponse"
   , "Query"
+  , "QueryResponse[blockHeight]"
+  , "QueryResponse[chainTip]"
   , "QueryResponse[currentEpoch]"
   , "QueryResponse[currentProtocolParameters]"
   , "QueryResponse[delegationsAndRewards]"
@@ -21,6 +23,7 @@
   , "QueryResponse[proposedProtocolParameters]"
   , "QueryResponse[rewardsProvenance]"
   , "QueryResponse[stakeDistribution]"
+  , "QueryResponse[systemStart]"
   , "QueryResponse[utxo]"
   , "Fault"
   ]
@@ -614,6 +617,18 @@
                     }
                   }
                 }
+              , { "type": "string"
+                , "title": "GetChainTip"
+                , "enum": ["chainTip"]
+                }
+              , { "type": "string"
+                , "title": "GetBlockHeight"
+                , "enum": ["blockHeight"]
+                }
+              , { "type": "string"
+                , "title": "GetSystemStart"
+                , "enum": ["systemStart"]
+                }
               ]
             }
           }
@@ -1084,7 +1099,6 @@
       }
     }
 
-
   , "QueryResponse[poolsRanking]":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
@@ -1110,6 +1124,105 @@
         { "oneOf":
           [ { "$ref": "#/definitions/PoolsRanking" }
           , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[blockHeight]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/BlockNoOrOrigin" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[chainTip]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/PointOrOrigin" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[systemStart]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/UtcTime" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
         }
@@ -2013,12 +2126,18 @@
       }
     }
 
-
   , "BlockNo":
     { "type": "integer"
     , "description": "A block number, the i-th block to be minted is number i."
     , "minimum": 0
     , "maximum": 18446744073709552999
+    }
+
+  , "BlockNoOrOrigin":
+    { "oneOf":
+      [ { "$ref": "#/definitions/BlockNo" }
+      , { "$ref": "#/definitions/Origin" }
+      ]
     }
 
   , "BlockProof":
@@ -4628,6 +4747,7 @@
   , "UtcTime":
     { "type": "string"
     , "format": "date-time"
+    , "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.?[0-9]*Z?"
     }
 
   , "Utxo":
