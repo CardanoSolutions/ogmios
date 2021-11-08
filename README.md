@@ -16,6 +16,8 @@
 - Fast synchronization of blocks from the Cardano network(s)
 - Transaction submission with enhanced error messages
 - Full ledger state query support:
+  - `blockHeight`
+  - `chainTip`
   - `currentEpoch`
   - `currentProtocolParameters`
   - `delegationsAndRewards`
@@ -29,6 +31,7 @@
   - `proposedProtocolParameters`
   - `rewardsProvenance`
   - `stakeDistribution`
+  - `systemStart`
   - `utxo`
 - TypeScript client & REPL
 - Structured JSON logging 

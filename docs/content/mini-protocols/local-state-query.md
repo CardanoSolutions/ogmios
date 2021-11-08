@@ -78,6 +78,8 @@ At the moment of writing this guide, the following queries are available:
 
 Query                        | Result
 ---                          | ---
+`blockHeight`                | The chain's highest block number.
+`chainTip`                   | The chain's current tip.
 `currentEpoch`               | The current epoch of the ledger.
 `currentProtocolParameters`  | The current protocol parameters.
 `delegationsAndRewards`      | Current delegation settings and rewards of given reward accounts.
@@ -91,6 +93,7 @@ Query                        | Result
 `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
 `rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
 `stakeDistribution`          | Distribution of the stake across all known stake pools.
+`systemStart`                | The chain's start time (UTC).
 `utxo`                       | Current UTXO, possibly filtered by address.
 
 To know more about arguments and results of each query, have a look at the [API reference](../../api-reference).
