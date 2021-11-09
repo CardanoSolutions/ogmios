@@ -69,7 +69,7 @@ describe('Local state queries', () => {
         await delay(1000)
         tipAgain = await client.ledgerTip() as Point
       }
-    }, 90000)
+    }, 300000)
 
     it('rejects if the provided point is too old', async () => {
       const createWithOldPoint = async () => {
