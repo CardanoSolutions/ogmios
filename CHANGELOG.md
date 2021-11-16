@@ -9,6 +9,7 @@ pre: "<b>6. </b>"
 
 #### Added
 
+> ##### 🏢 Server 
 > - New state-query `systemStart` to access the blockchain start time (UTC).
 > 
 > - New state-query `chainTip` to access the blockchain current tip (may slightly differ from the `ledgerTip` which may be behind catching up).
@@ -23,6 +24,22 @@ pre: "<b>6. </b>"
 >
 > - Upgraded internal dependencies to Cardano eco-system 1.31.0
 
+#### Removed
+
+> N/A
+
+### [4.2.1] - 2021-11-16
+
+#### Added
+>
+> N / A
+
+#### Changed
+
+> ##### 🏢 Server
+> 
+> - Fixed configuration parsing which would wrongly use Shelley's slots per epoch instead of Byron's. This had an impact on the reported slot number in the chain-sync protocol, where slot numbers would be wrongly offset by `432000` per epoch after the first epoch. 
+ 
 #### Removed
 
 > N/A
