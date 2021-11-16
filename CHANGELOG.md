@@ -5,6 +5,22 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [4.2.1] - 2021-11-16
+
+#### Added
+>
+> N / A
+
+#### Changed
+
+> ##### 🏢 Server
+> 
+> - Fixed configuration parsing which would wrongly use Shelley's slots per epoch instead of Byron's. This had an impact on the reported slot number in the chain-sync protocol, where slot numbers would be wrongly offset by `432000` per epoch after the first epoch. 
+ 
+#### Removed
+
+> N/A
+
 ### [4.2.0] - 2021-11-05
 
 #### Added
