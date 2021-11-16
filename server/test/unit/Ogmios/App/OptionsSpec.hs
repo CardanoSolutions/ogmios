@@ -73,7 +73,7 @@ spec = parallel $ do
         specify (show args) $ withArgs args parseOptions >>= \case
             Start (Identity _) opts -> do
                 nodeSocket opts `shouldBe` "./node.socket"
-                nodeConfig opts `shouldBe` (getConfigFile "testnet")
+                nodeConfig opts `shouldBe` getConfigFile "testnet"
                 serverHost opts `shouldBe` "127.0.0.1"
                 serverPort opts `shouldBe` 1337
                 connectionTimeout opts `shouldBe` 90
@@ -86,19 +86,19 @@ spec = parallel $ do
             params <- parseNetworkParameters (getConfigFile "mainnet")
             networkMagic  params `shouldBe` NetworkMagic 764824073
             systemStart   params `shouldBe` mkSystemStart 1506203091
-            slotsPerEpoch params `shouldBe` EpochSlots 432000
+            slotsPerEpoch params `shouldBe` EpochSlots 21600
 
         specify "testnet" $ do
             params <- parseNetworkParameters (getConfigFile "testnet")
             networkMagic  params `shouldBe` NetworkMagic 1097911063
             systemStart   params `shouldBe` mkSystemStart 1563999616
-            slotsPerEpoch params `shouldBe` EpochSlots 432000
+            slotsPerEpoch params `shouldBe` EpochSlots 21600
 
         specify "alonzo-white" $ do
             params <- parseNetworkParameters (getConfigFile "alonzo-white")
             networkMagic  params `shouldBe` NetworkMagic 7
             systemStart   params `shouldBe` mkSystemStart 1625593493
-            slotsPerEpoch params `shouldBe` EpochSlots 7200
+            slotsPerEpoch params `shouldBe` EpochSlots 360
   where
     matrix =
         [ ( [], shouldFail )
