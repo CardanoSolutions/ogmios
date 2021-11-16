@@ -252,15 +252,19 @@ deriving newtype instance ToJSON NetworkMagic
 parseNetworkParameters :: FilePath -> IO NetworkParameters
 parseNetworkParameters configFile = runOrDie $ do
     config <- decodeYaml configFile
-    case config ^? key "ShelleyGenesisFile" . _String of
+    let genesisFiles = (,)
+            <$> config ^? key "ByronGenesisFile" . _String
+            <*> config ^? key "ShelleyGenesisFile" . _String
+    case genesisFiles of
         Nothing ->
-            throwE "Missing 'ShelleyGenesisFile' from Cardano's configuration?"
-        Just (toString -> shelleyGenesisFile) -> do
+            throwE "Missing 'ByronGenesisFile' and/or 'ShelleyGenesisFile' from Cardano's configuration?"
+        Just (toString -> byronGenesisFile, toString -> shelleyGenesisFile) -> do
+            byronGenesis   <- decodeYaml (replaceFileName configFile byronGenesisFile)
             shelleyGenesis <- decodeYaml (replaceFileName configFile shelleyGenesisFile)
             let params = (,,)
                     <$> (shelleyGenesis ^? key "networkMagic" . _Integer)
                     <*> (iso8601ParseM . toString =<< shelleyGenesis ^? key "systemStart" . _String)
-                    <*> (shelleyGenesis ^? key "epochLength"  . _Integer)
+                    <*> (byronGenesis ^? key "protocolConsts" . key "k" . _Integer)
             case params of
                 Nothing -> do
                     let prettyYaml = decodeUtf8 (Yaml.encodePretty Yaml.defConfig shelleyGenesis)
@@ -269,14 +273,14 @@ parseNetworkParameters configFile = runOrDie $ do
                         , "parameters (networkMagic, systemStart and/or epochLength)"
                         , "in genesis file: \n" <> prettyYaml
                         ]
-                Just (nm, ss, ep) ->
+                Just (nm, ss, k) ->
                     return NetworkParameters
                         { networkMagic =
                             NetworkMagic (fromIntegral nm)
                         , systemStart =
                             SystemStart ss
                         , slotsPerEpoch  =
-                            EpochSlots (fromIntegral ep)
+                            EpochSlots (fromIntegral $ 10 * k)
                         }
   where
     runOrDie :: ExceptT String IO a -> IO a
