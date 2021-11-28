@@ -79,7 +79,7 @@ export type UpdateShelley = Null | UpdateProposalShelley;
 export type Nonce = Neutral | Hash16;
 export type Neutral = "neutral";
 export type Signature = string;
-export type Script = Native | Plutus;
+export type Script = Native | Plutus | Plutus1;
 /**
  * A phase-1 monetary script. Timelocks constraints are only supported since Allegra.
  */
@@ -214,6 +214,9 @@ export type GetGenesisConfig = "genesisConfig";
 export type GetRewardsProvenance = "rewardsProvenance";
 export type GetPoolsRanking = "poolsRanking";
 export type GetPoolIds = "poolIds";
+export type GetChainTip = "chainTip";
+export type GetBlockHeight = "blockHeight";
+export type GetSystemStart = "systemStart";
 /**
  * A time in seconds relative to the system start.
  */
@@ -227,6 +230,7 @@ export type UtcTime = string;
  * A magic number for telling networks apart. (e.g. 764824073)
  */
 export type NetworkMagic = number;
+export type BlockNoOrOrigin = BlockNo | Origin;
 
 export interface Ogmios {
   /**
@@ -420,7 +424,10 @@ export interface Ogmios {
         | GetRewardsProvenance
         | GetPoolsRanking
         | GetPoolIds
-        | GetPoolParameters;
+        | GetPoolParameters
+        | GetChainTip
+        | GetBlockHeight
+        | GetSystemStart;
     };
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
@@ -613,6 +620,45 @@ export interface Ogmios {
     servicename: "ogmios";
     methodname: "Query";
     result: PoolsRanking | EraMismatch | QueryUnavailableInCurrentEra;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  "QueryResponse[blockHeight]": {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "Query";
+    result: BlockNoOrOrigin | QueryUnavailableInCurrentEra;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  "QueryResponse[chainTip]": {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "Query";
+    result: PointOrOrigin | QueryUnavailableInCurrentEra;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  "QueryResponse[systemStart]": {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "Query";
+    result: UtcTime | QueryUnavailableInCurrentEra;
     /**
      * Any value that was set by a client request in the 'mirror' field.
      */
@@ -960,7 +1006,10 @@ export interface StartsAt {
   startsAt: Slot;
 }
 export interface Plutus {
-  plutus: ScriptPlutus;
+  "plutus:v1": ScriptPlutus;
+}
+export interface Plutus1 {
+  "plutus:v2": ScriptPlutus;
 }
 export interface BootstrapWitness {
   signature?: Hash64;
