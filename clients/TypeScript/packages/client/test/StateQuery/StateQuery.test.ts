@@ -271,5 +271,11 @@ describe('Local state queries', () => {
         expect(blockHeight).not.toEqual('origin')
       })
     })
+    describe('chainTip', () => {
+      it('can query the blockchain\'s tip', async () => {
+        const tip = await StateQuery.chainTip(context)
+        expect(tip).not.toEqual('origin')
+      })
+    })
   })
 })

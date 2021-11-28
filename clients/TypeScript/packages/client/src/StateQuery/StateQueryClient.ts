@@ -17,6 +17,7 @@ import {
 } from '../errors'
 import {
   blockHeight,
+  chainTip,
   currentEpoch,
   currentProtocolParameters,
   delegationsAndRewards,
@@ -46,6 +47,7 @@ export interface StateQueryClient {
   release: () => Promise<void>
   shutdown: () => Promise<void>
   blockHeight: () => ReturnType<typeof blockHeight>
+  chainTip: () => ReturnType<typeof chainTip>
   currentEpoch: () => ReturnType<typeof currentEpoch>
   currentProtocolParameters: () => ReturnType<typeof currentProtocolParameters>
   delegationsAndRewards: (stakeKeyHashes: Hash16[]) => ReturnType<typeof delegationsAndRewards>
@@ -112,6 +114,10 @@ export const createStateQueryClient = async (
       blockHeight: () => {
         ensureSocketIsOpen(socket)
         return blockHeight(context)
+      },
+      chainTip: () => {
+        ensureSocketIsOpen(socket)
+        return chainTip(context)
       },
       currentEpoch: () => {
         ensureSocketIsOpen(socket)

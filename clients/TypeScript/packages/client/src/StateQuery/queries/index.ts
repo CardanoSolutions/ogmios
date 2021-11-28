@@ -1,4 +1,5 @@
 export * from './blockHeight'
+export * from './chainTip'
 export * from './currentEpoch'
 export * from './currentProtocolParameters'
 export * from './delegationsAndRewards'
