@@ -53,6 +53,8 @@ const logObject = (obj: Object) =>
 
   Object.assign(cardanoOgmiosRepl.context, {
     chainSync,
+    blockHeight: () => StateQuery.blockHeight(context),
+    chainTip: () => StateQuery.chainTip(context),
     currentEpoch: () => StateQuery.currentEpoch(context),
     currentProtocolParameters: () => StateQuery.currentProtocolParameters(context),
     delegationsAndRewards:
@@ -71,6 +73,7 @@ const logObject = (obj: Object) =>
     proposedProtocolParameters: () => StateQuery.proposedProtocolParameters(context),
     rewardsProvenance: () => StateQuery.rewardsProvenance(context),
     stakeDistribution: () => StateQuery.stakeDistribution(context),
+    systemStart: () => StateQuery.systemStart(context),
     submitTx: (bytes: string) => TxSubmission.submitTx(context, bytes),
     utxo: (filters?: Schema.Address[]|Schema.TxIn[]) => StateQuery.utxo(context, filters)
   })
