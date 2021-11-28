@@ -259,5 +259,11 @@ describe('Local state queries', () => {
         expect(pools[b]).toBeDefined()
       })
     })
+    describe('systemStart', () => {
+      it('can query the blockchain start-time', async () => {
+        const systemStart = await StateQuery.systemStart(context)
+        expect(systemStart).toEqual(new Date('2019-07-24T20:20:16.000Z'))
+      })
+    })
   })
 })

@@ -29,6 +29,7 @@ import {
   proposedProtocolParameters,
   rewardsProvenance,
   stakeDistribution,
+  systemStart,
   utxo
 } from './queries'
 import { ensureSocketIsOpen, safeJSON } from '../util'
@@ -156,6 +157,10 @@ export const createStateQueryClient = async (
       stakeDistribution: () => {
         ensureSocketIsOpen(socket)
         return stakeDistribution(context)
+      },
+      systemStart: () => {
+        ensureSocketIsOpen(socket)
+        return systemStart(context)
       },
       utxo: (filters) => {
         ensureSocketIsOpen(socket)
