@@ -265,5 +265,11 @@ describe('Local state queries', () => {
         expect(systemStart).toEqual(new Date('2019-07-24T20:20:16.000Z'))
       })
     })
+    describe('blockHeight', () => {
+      it('can query the blockchain\'s height', async () => {
+        const blockHeight = await StateQuery.blockHeight(context)
+        expect(blockHeight).not.toEqual('origin')
+      })
+    })
   })
 })

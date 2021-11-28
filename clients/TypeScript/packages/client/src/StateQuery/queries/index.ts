@@ -1,3 +1,4 @@
+export * from './blockHeight'
 export * from './currentEpoch'
 export * from './currentProtocolParameters'
 export * from './delegationsAndRewards'

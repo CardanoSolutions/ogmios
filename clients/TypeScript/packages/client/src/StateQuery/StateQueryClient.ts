@@ -16,6 +16,7 @@ import {
   UnknownResultError
 } from '../errors'
 import {
+  blockHeight,
   currentEpoch,
   currentProtocolParameters,
   delegationsAndRewards,
@@ -44,6 +45,7 @@ export interface StateQueryClient {
   acquire: (point: PointOrOrigin) => Promise<StateQueryClient>
   release: () => Promise<void>
   shutdown: () => Promise<void>
+  blockHeight: () => ReturnType<typeof blockHeight>
   currentEpoch: () => ReturnType<typeof currentEpoch>
   currentProtocolParameters: () => ReturnType<typeof currentProtocolParameters>
   delegationsAndRewards: (stakeKeyHashes: Hash16[]) => ReturnType<typeof delegationsAndRewards>
@@ -57,6 +59,7 @@ export interface StateQueryClient {
   proposedProtocolParameters: () => ReturnType<typeof proposedProtocolParameters>
   rewardsProvenance: () => ReturnType<typeof rewardsProvenance>
   stakeDistribution: () => ReturnType<typeof stakeDistribution>
+  systemStart: () => ReturnType<typeof systemStart>
   utxo: (filter?: Address[]|TxIn[]) => ReturnType<typeof utxo>
 }
 
@@ -105,6 +108,10 @@ export const createStateQueryClient = async (
           socket.once('error', e => reject(new UnknownResultError(e)))
           socket.close()
         })
+      },
+      blockHeight: () => {
+        ensureSocketIsOpen(socket)
+        return blockHeight(context)
       },
       currentEpoch: () => {
         ensureSocketIsOpen(socket)
