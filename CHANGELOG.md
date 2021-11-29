@@ -10,11 +10,16 @@ pre: "<b>6. </b>"
 #### Added
 
 > ##### 🏢 Server 
+>
 > - New state-query `systemStart` to access the blockchain start time (UTC).
 > 
 > - New state-query `chainTip` to access the blockchain current tip (may slightly differ from the `ledgerTip` which may be behind catching up).
 >
 > - New state-query `blockHeight` to access the blockchain current highest block number (or `"origin"` if the chain is just starting).
+>
+> ##### 🚗 TypeScript Client
+>
+> - Add support for `systemStart`, `chainTip`, `blockHeight` in the `client` and `repl`.
 
 #### Changed
 
