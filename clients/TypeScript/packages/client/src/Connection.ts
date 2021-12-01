@@ -84,7 +84,7 @@ export const createInteractionContext = async (
     interactionType?: InteractionType,
   }): Promise<InteractionContext> => {
   const connection = createConnectionObject(options?.connection)
-  const health = await getServerHealth(connection)
+  const health = await getServerHealth({ connection })
   return new Promise((resolve, reject) => {
     if (health.lastTipUpdate === null) {
       return reject(new ServerNotReady(health))

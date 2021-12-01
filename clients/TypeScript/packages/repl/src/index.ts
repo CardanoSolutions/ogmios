@@ -61,7 +61,7 @@ const logObject = (obj: Object) =>
       (stakeKeyHashes: Schema.Hash16[]) => StateQuery.delegationsAndRewards(context, stakeKeyHashes),
     eraStart: () => StateQuery.eraStart(context),
     genesisConfig: () => StateQuery.genesisConfig(context),
-    getServerHealth: () => getServerHealth(createConnectionObject(connection)),
+    getServerHealth: () => getServerHealth({ connection: createConnectionObject(connection) }),
     findIntersect: (points: Schema.Point[]) => ChainSync.findIntersect(context, points),
     ledgerTip: () => StateQuery.ledgerTip(context),
     nonMyopicMemberRewards:

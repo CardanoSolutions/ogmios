@@ -28,6 +28,10 @@ pre: "<b>6. </b>"
 > - ⚠️ Serialised Plutus scripts are now labelled either `plutus:v1` or `plutus:v2` (instead of `plutus`).
 >
 > - Upgraded internal dependencies to Cardano eco-system 1.31.0
+>
+> ##### 🚗 TypeScript Client
+>
+> - ⚠️ `getServerHealth`'s `connection` argument is now wrapped into an object, mapped to the field `connection`. (see [#135](https://github.com/CardanoSolutions/ogmios/issues/135))
 
 #### Removed
 
