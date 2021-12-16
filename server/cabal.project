@@ -8,20 +8,36 @@ packages:
   modules/hspec-json-schema
   modules/json-wsp
 
------------------------------------------------------------
--- Disable all tests by default
-
 tests: False
+
 test-show-details: direct
 
--- Enable tests in this specific repositories
 package ogmios
   flags: +production
+  tests: false
+
+package cardano-client
+  tests: false
+
+package git-th
+  tests: false
+
+package fast-bech32
+  tests: false
+
+package hspec-json-schema
+  tests: false
+
+package json-wsp
+  tests: false
 
 -- Using RDRAND instead of /dev/urandom as an entropy source for key
 -- generation is dubious. Set the flag so we use /dev/urandom by default.
 package cryptonite
   flags: -support_rdrand
+
+package cardano-crypto-praos
+  flags: -external-libsodium-vrf
 
 allow-newer:
   monoidal-containers:aeson,
@@ -205,6 +221,7 @@ constraints:
   , systemd >= 2.3.0
   , network >= 3.1.1.0
   , relude == 0.7.0.0
+  , graphviz >= 2999.20.1.0
 
 allow-newer:
   monoidal-containers:aeson,
