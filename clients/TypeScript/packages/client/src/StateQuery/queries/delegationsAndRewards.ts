@@ -2,7 +2,7 @@ import {
   DelegationsAndRewardsByAccounts,
   DelegationsAndRewards,
   EraMismatch,
-  Hash16,
+  DigestBlake2BCredential,
   Ogmios
 } from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
@@ -30,7 +30,7 @@ const isDelegationsAndRewardsByAccounts = (result: Ogmios['QueryResponse[delegat
  */
 export const delegationsAndRewards = (
   context: InteractionContext,
-  stakeKeyHashes: Hash16[]
+  stakeKeyHashes: DigestBlake2BCredential[]
 ): Promise<DelegationsAndRewardsByAccounts> =>
   Query<
     Ogmios['Query'],

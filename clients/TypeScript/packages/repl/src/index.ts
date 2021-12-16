@@ -58,14 +58,14 @@ const logObject = (obj: Object) =>
     currentEpoch: () => StateQuery.currentEpoch(context),
     currentProtocolParameters: () => StateQuery.currentProtocolParameters(context),
     delegationsAndRewards:
-      (stakeKeyHashes: Schema.Hash16[]) => StateQuery.delegationsAndRewards(context, stakeKeyHashes),
+      (stakeKeyHashes: Schema.DigestBlake2BCredential[]) => StateQuery.delegationsAndRewards(context, stakeKeyHashes),
     eraStart: () => StateQuery.eraStart(context),
     genesisConfig: () => StateQuery.genesisConfig(context),
     getServerHealth: () => getServerHealth({ connection: createConnectionObject(connection) }),
     findIntersect: (points: Schema.Point[]) => ChainSync.findIntersect(context, points),
     ledgerTip: () => StateQuery.ledgerTip(context),
     nonMyopicMemberRewards:
-      (input: (Schema.Lovelace | Schema.Hash16)[]) =>
+      (input: (Schema.Lovelace | Schema.DigestBlake2BCredential)[]) =>
         StateQuery.nonMyopicMemberRewards(context, input),
     poolIds: () => StateQuery.poolIds(context),
     poolParameters: (pools: Schema.PoolId[]) => StateQuery.poolParameters(context, pools),

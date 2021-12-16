@@ -7,7 +7,9 @@
     "node": "^14"
   },
   "workspaces": [
-    "packages/*"
+    "packages/schema",
+    "packages/client",
+    "packages/repl"
   ],
   "main": "dist/index.js",
   "repository": "https://github.com/cardanosolutions/ogmios",
