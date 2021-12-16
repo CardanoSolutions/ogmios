@@ -28,10 +28,12 @@ pre: "<b>6. </b>"
 > - ⚠️ Serialised Plutus scripts are now labelled either `plutus:v1` or `plutus:v2` (instead of `plutus`).
 >
 > - Upgraded internal dependencies to Cardano eco-system 1.31.0
->
+> 
 > ##### 🚗 TypeScript Client
 >
 > - ⚠️ `getServerHealth`'s `connection` argument is now wrapped into an object, mapped to the field `connection`. (see [#135](https://github.com/CardanoSolutions/ogmios/issues/135))
+>
+> - ⚠️ Replaced schema definitions for `Hash16` and `Hash64` with more precise type definitions. For hashes, definitions now follows a convention `Digest[ALGORITHM]::PRE-IMAGE` where `ALGORITHM` and `PRE-IMAGE` points to the corresponding has algorithm used to hash the `PRE-IMAGE`. The length of the digest is given by `minLength` and `maxLength` JSON-schema constraints. Consequently, TypeScript types / interfaces generated from the JSON-schema definitions have been altered. 
 
 #### Removed
 
