@@ -1,1 +1,1 @@
-{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SubmitTx","result":{"SubmitFail":{"eraMismatch":{"ledgerEra":"Byron","queryEra":"Shelley"}}},"reflection":null}
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SubmitTx","result":{"SubmitFail":[{"eraMismatch":{"ledgerEra":"Byron","queryEra":"Shelley"}}]},"reflection":null}

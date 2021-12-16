@@ -298,12 +298,7 @@
             , "additionalProperties": false
             , "required": ["SubmitFail"]
             , "properties":
-              { "SubmitFail":
-                { "oneOf":
-                  [ { "$ref": "#/definitions/EraMismatch" }
-                  , { "$ref": "#/definitions/SubmitTxError" }
-                  ]
-                }
+              { "SubmitFail": { "$ref": "#/definitions/SubmitTxError" }
               }
             }
           ]
@@ -3807,7 +3802,8 @@
     { "type": "array"
     , "items":
       { "oneOf":
-        [ { "$ref": "#/definitions/SubmitTxError[invalidWitnesses]" }
+        [ { "$ref": "#/definitions/EraMismatch" }
+        , { "$ref": "#/definitions/SubmitTxError[invalidWitnesses]" }
         , { "$ref": "#/definitions/SubmitTxError[missingVkWitnesses]" }
         , { "$ref": "#/definitions/SubmitTxError[missingScriptWitnesses]" }
         , { "$ref": "#/definitions/SubmitTxError[scriptWitnessNotValidating]" }
@@ -4045,15 +4041,27 @@
     }
 
   , "SubmitTxError[missingAtLeastOneInputUtxo]":
-    { "type": "string"
+    { "type": "object"
     , "title": "missingAtLeastOneInputUtxo"
-    , "enum": [ "missingAtLeastOneInputUtxo" ]
+    , "additionalProperties": false
+    , "required": [ "missingAtLeastOneInputUtxo" ]
+    , "properties":
+      { "missingAtLeastOneInputUtxo":
+        { "type": "null"
+        }
+      }
     }
 
   , "SubmitTxError[invalidMetadata]":
-    { "type": "string"
+    { "type": "object"
     , "title": "invalidMetadata"
-    , "enum": [ "invalidMetadata" ]
+    , "additionalProperties": false
+    , "required": [ "invalidMetadata" ]
+    , "properties":
+      { "invalidMetadata":
+        { "type": "null"
+        }
+      }
     }
 
   , "SubmitTxError[feeTooSmall]":
@@ -4165,10 +4173,16 @@
     }
 
   , "SubmitTxError[triesToForgeAda]":
-    { "type": "string"
+    { "type": "object"
     , "title": "triesToForgeAda"
+    , "additionalProperties": false
+    , "required": [ "triesToForgeAda" ]
+    , "properties":
+      { "triesToForgeAda":
+        { "type": "null"
+        }
+      }
     , "description": "Only since Mary."
-    , "enum": [ "triesToForgeAda" ]
     }
 
   , "SubmitTxError[delegateNotRegistered]":
@@ -4286,9 +4300,15 @@
     }
 
   , "SubmitTxError[rewardAccountNotExisting]":
-    { "type": "string"
+    { "type": "object"
     , "title": "rewardAccountNotExisting"
-    , "enum": [ "rewardAccountNotExisting" ]
+    , "additionalProperties": false
+    , "required": [ "rewardAccountNotExisting" ]
+    , "properties":
+      { "rewardAccountNotExisting":
+        { "type": "null"
+        }
+      }
     }
 
   , "SubmitTxError[rewardAccountNotEmpty]":
@@ -4309,9 +4329,15 @@
     }
 
   , "SubmitTxError[wrongCertificateType]":
-    { "type": "string"
+    { "type": "object"
     , "title": "wrongCertificateType"
-    , "enum": [ "wrongCertificateType" ]
+    , "additionalProperties": false
+    , "required": [ "wrongCertificateType" ]
+    , "properties":
+      { "wrongCertificateType":
+        { "type": "null"
+        }
+      }
     }
 
   , "SubmitTxError[unknownGenesisKey]":
@@ -4372,21 +4398,39 @@
     }
 
   , "SubmitTxError[mirTransferNotCurrentlyAllowed]":
-    { "type": "string"
+    { "type": "object"
     , "title": "mirTransferNotCurrentlyAllowed"
-    , "enum": [ "mirTransferNotCurrentlyAllowed" ]
+    , "additionalProperties": false
+    , "required": [ "mirTransferNotCurrentlyAllowed" ]
+    , "properties":
+      { "mirTransferNotCurrentlyAllowed":
+        { "type": "null"
+        }
+      }
     }
 
   , "SubmitTxError[mirNegativeTransferNotCurrentlyAllowed]":
-    { "type": "string"
+    { "type": "object"
     , "title": "mirNegativeTransferNotCurrentlyAllowed"
-    , "enum": [ "mirNegativeTransferNotCurrentlyAllowed" ]
+    , "additionalProperties": false
+    , "required": [ "mirNegativeTransferNotCurrentlyAllowed" ]
+    , "properties":
+      { "mirNegativeTransferNotCurrentlyAllowed":
+        { "type": "null"
+        }
+      }
     }
 
   , "SubmitTxError[mirProducesNegativeUpdate]":
-    { "type": "string"
+    { "type": "object"
     , "title": "mirProducesNegativeUpdate"
-    , "enum": [ "mirProducesNegativeUpdate" ]
+    , "additionalProperties": false
+    , "required": [ "mirProducesNegativeUpdate" ]
+    , "properties":
+      { "mirProducesNegativeUpdate":
+        { "type": "null"
+        }
+      }
     }
 
   , "SubmitTxError[duplicateGenesisVrf]":
@@ -4605,9 +4649,16 @@
     }
 
   , "SubmitTxError[missingCollateralInputs]":
-    { "type": "string"
+    { "type": "object"
     , "title": "missingCollateralInputs"
-    , "enum": [ "missingCollateralInputs" ]
+    , "additionalProperties": false
+    , "required": [ "missingCollateralInputs" ]
+    , "properties":
+      { "missingCollateralInputs":
+        { "type": "null"
+        }
+      }
+    , "description": "Only since Alonzo."
     }
 
   , "SubmitTxError[collateralTooSmall]":
@@ -4695,9 +4746,16 @@
     }
 
   , "SubmitTxError[validationTagMismatch]":
-    { "type": "string"
+    { "type": "object"
     , "title": "validationTagMismatch"
-    , "enum": [ "validationTagMismatch" ]
+    , "additionalProperties": false
+    , "required": [ "validationTagMismatch" ]
+    , "properties":
+      { "validationTagMismatch":
+        { "type": "null"
+        }
+      }
+    , "description": "Only since Alonzo."
     }
 
   , "SubmitTxError[collectErrors]":
