@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid'
 import {
   Address,
-  Hash16,
+  DigestBlake2BCredential,
   Lovelace,
   Ogmios,
   PointOrOrigin,
@@ -50,11 +50,11 @@ export interface StateQueryClient {
   chainTip: () => ReturnType<typeof chainTip>
   currentEpoch: () => ReturnType<typeof currentEpoch>
   currentProtocolParameters: () => ReturnType<typeof currentProtocolParameters>
-  delegationsAndRewards: (stakeKeyHashes: Hash16[]) => ReturnType<typeof delegationsAndRewards>
+  delegationsAndRewards: (stakeKeyHashes: DigestBlake2BCredential[]) => ReturnType<typeof delegationsAndRewards>
   eraStart: () => ReturnType<typeof eraStart>
   genesisConfig: () => ReturnType<typeof genesisConfig>
   ledgerTip: () => ReturnType<typeof ledgerTip>
-  nonMyopicMemberRewards: (input: Lovelace[] | Hash16[]) => ReturnType<typeof nonMyopicMemberRewards>
+  nonMyopicMemberRewards: (input: Lovelace[] | DigestBlake2BCredential[]) => ReturnType<typeof nonMyopicMemberRewards>
   poolIds: () => ReturnType<typeof poolIds>
   poolParameters: (pools: PoolId[]) => ReturnType<typeof poolParameters>
   poolsRanking: () => ReturnType<typeof poolsRanking>
