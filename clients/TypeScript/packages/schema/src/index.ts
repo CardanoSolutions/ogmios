@@ -48,9 +48,9 @@ export type ProtocolMagicId = number;
  */
 export type Epoch = number;
 /**
- * A base64-encoded digest.
+ * Signature proving a block was issued by a given issuer VRF key.
  */
-export type Hash64 = string;
+export type IssuerSignature = string;
 /**
  * An absolute slot number.
  */
@@ -78,6 +78,14 @@ export type TxWitness = WitnessVk | RedeemWitness;
  * A Blake2b 28-byte digest of an Ed25519 verification key.
  */
 export type DigestBlake2BVerificationKey = string;
+/**
+ * A signature coming from an Ed25519 or Ed25519-BIP32 signing key.
+ */
+export type Signature = string;
+/**
+ * An Ed25519 verification key.
+ */
+export type VerificationKey = string;
 export type NullableRatio = Ratio | Null;
 /**
  * A ratio of two integers, to express exact fractions.
@@ -85,6 +93,10 @@ export type NullableRatio = Ratio | Null;
 export type Ratio = string;
 export type NullableUInt64 = UInt64 | Null;
 export type UInt64 = number;
+/**
+ * A key identifying a block issuer.
+ */
+export type IssuerVrfVerificationKey = string;
 /**
  * A Blake2b 32-byte digest of an era-independent block body.
  */
@@ -133,7 +145,6 @@ export type Neutral = "neutral";
  * A Blake2b 32-byte digest of some arbitrary to make a nonce.
  */
 export type DigestBlake2BNonce = string;
-export type Signature = string;
 export type Script = Native | Plutus | Plutus1;
 /**
  * A phase-1 monetary script. Timelocks constraints are only supported since Allegra.
@@ -152,18 +163,17 @@ export type ChainCode = string;
  */
 export type AddressAttributes = string;
 /**
- * An Ed25519 verification key.
- */
-export type VerificationKey = string;
-/**
  * A Blake2b 32-byte digest of an 'AuxiliaryDataBody', serialised as CBOR.
  */
 export type DigestBlake2BAuxiliaryDataBody = string;
 export type Metadatum = Int | String | Bytes | List | Map;
+export type VrfProof = string;
+export type VrfOutput = string;
 /**
  * The size of the block in bytes.
  */
 export type BlockSize = number;
+export type KesVerificationKey = string;
 export type UpdateAlonzo = Null | UpdateProposalAlonzo;
 export type Int64 = number;
 /**
@@ -174,6 +184,11 @@ export type Network = "mainnet" | "testnet";
  * A Blake2b 32-byte digest of a script-integrity hash (i.e redeemers, datums and cost model, CBOR-encoded).
  */
 export type DigestBlake2BScriptIntegrity = string;
+export type Datum = string;
+/**
+ * Plutus data, CBOR-serialised.
+ */
+export type RedeemerData = string;
 export type TipOrOrigin = Tip | Origin;
 /**
  * The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point.
@@ -816,7 +831,7 @@ export interface ProtocolVersion {
 }
 export interface BlockSignature {
   dlgCertificate: DlgCertificate;
-  signature: Hash64;
+  signature: IssuerSignature;
 }
 /**
  * A (Byron) delegation certificate.
@@ -825,7 +840,7 @@ export interface DlgCertificate {
   epoch: Epoch;
   issuerVk: GenesisVerificationKey;
   delegateVk: GenesisVerificationKey;
-  signature: Hash64;
+  signature: IssuerSignature;
 }
 export interface SoftwareVersion {
   appName: string;
@@ -856,13 +871,13 @@ export interface Value {
 export interface WitnessVk {
   witnessVk: {
     key: DigestBlake2BVerificationKey;
-    signature: Hash64;
+    signature: Signature;
   };
 }
 export interface RedeemWitness {
   redeemWitness: {
-    key: Hash64;
-    signature: Hash64;
+    key: VerificationKey;
+    signature: Signature;
   };
 }
 export interface UpdateProposalByron {
@@ -874,8 +889,8 @@ export interface UpdateProposalByron {
     };
     parametersUpdate: ProtocolParametersByron;
   };
-  issuer: Hash64;
-  signature: Hash64;
+  issuer: IssuerVrfVerificationKey;
+  signature: IssuerSignature;
 }
 export interface ProtocolParametersByron {
   heavyDlgThreshold: NullableRatio;
@@ -903,9 +918,9 @@ export interface SoftForkRule {
   decrementThreshold: NullableRatio;
 }
 export interface Vote {
-  voterVk: Hash64;
+  voterVk: VerificationKey;
   proposalId: DigestBlake2BVerificationKey;
-  signature: Hash64;
+  signature: Signature;
 }
 export interface EpochBoundaryBlock {
   hash: DigestBlake2BBlockHeader;
@@ -926,14 +941,14 @@ export interface BlockShelley {
     slot: Slot;
     prevHash: DigestBlake2BBlockHeader;
     issuerVk: VerificationKey;
-    issuerVrf: Hash64;
-    nonce?: NonceProof;
-    leaderValue: LeaderValue;
+    issuerVrf: IssuerVrfVerificationKey;
+    nonce?: CertifiedVrf;
+    leaderValue: CertifiedVrf;
     blockSize: BlockSize;
     blockHash: DigestBlake2BBlockBody;
     opCert: OpCert;
     protocolVersion: ProtocolVersion;
-    signature: Hash64;
+    signature: IssuerSignature;
   };
 }
 export interface BlockBodyShelley {
@@ -1091,7 +1106,7 @@ export interface Plutus1 {
   "plutus:v2": ScriptPlutus;
 }
 export interface BootstrapWitness {
-  signature?: Hash64;
+  signature?: Signature;
   chainCode?: ChainCode | Null;
   addressAttributes?: AddressAttributes | Null;
   key?: VerificationKey;
@@ -1126,25 +1141,18 @@ export interface MetadatumMap {
   k: Metadatum;
   v: Metadatum;
 }
-export interface NonceProof {
-  proof?: Hash64;
-  output?: Hash64;
-}
-/**
- * In Ouroboros Praos, designate the leader's contribution to the Multi-Party computation used for calculating the leader schedule.
- */
-export interface LeaderValue {
-  proof?: Hash64;
-  output?: Hash64;
+export interface CertifiedVrf {
+  proof?: VrfProof;
+  output?: VrfOutput;
 }
 /**
  * Certificate identifying a stake pool operator.
  */
 export interface OpCert {
   count?: UInt64;
-  sigma?: Hash64;
+  sigma?: Signature;
   kesPeriod?: UInt64;
-  hotVk?: Hash64;
+  hotVk?: KesVerificationKey;
 }
 export interface Allegra {
   allegra: BlockAllegra;
@@ -1157,14 +1165,14 @@ export interface BlockAllegra {
     slot: Slot;
     prevHash: DigestBlake2BBlockHeader;
     issuerVk: VerificationKey;
-    issuerVrf: Hash64;
-    nonce?: NonceProof;
-    leaderValue: LeaderValue;
+    issuerVrf: IssuerVrfVerificationKey;
+    nonce?: CertifiedVrf;
+    leaderValue: CertifiedVrf;
     blockSize: BlockSize;
     blockHash: DigestBlake2BBlockBody;
     opCert: OpCert;
     protocolVersion: ProtocolVersion;
-    signature: Hash64;
+    signature: IssuerSignature;
   };
 }
 export interface BlockBodyAllegra {
@@ -1204,14 +1212,14 @@ export interface BlockMary {
     slot: Slot;
     prevHash: DigestBlake2BBlockHeader;
     issuerVk: VerificationKey;
-    issuerVrf: Hash64;
-    nonce?: NonceProof;
-    leaderValue: LeaderValue;
+    issuerVrf: IssuerVrfVerificationKey;
+    nonce?: CertifiedVrf;
+    leaderValue: CertifiedVrf;
     blockSize: BlockSize;
     blockHash: DigestBlake2BBlockBody;
     opCert: OpCert;
     protocolVersion: ProtocolVersion;
-    signature: Hash64;
+    signature: IssuerSignature;
   };
 }
 export interface BlockBodyMary {
@@ -1248,14 +1256,14 @@ export interface BlockAlonzo {
     slot: Slot;
     prevHash: DigestBlake2BBlockHeader;
     issuerVk: VerificationKey;
-    issuerVrf: Hash64;
-    nonce?: NonceProof;
-    leaderValue: LeaderValue;
+    issuerVrf: IssuerVrfVerificationKey;
+    nonce?: CertifiedVrf;
+    leaderValue: CertifiedVrf;
     blockSize: BlockSize;
     blockHash: DigestBlake2BBlockBody;
     opCert: OpCert;
     protocolVersion: ProtocolVersion;
-    signature: Hash64;
+    signature: IssuerSignature;
   };
 }
 export interface BlockBodyAlonzo {
@@ -1283,7 +1291,7 @@ export interface BlockBodyAlonzo {
     };
     bootstrap: BootstrapWitness[];
     datums: {
-      [k: string]: Hash64;
+      [k: string]: Datum;
     };
     redeemers: {
       [k: string]: Redeemer;
@@ -1338,7 +1346,7 @@ export interface ExUnits {
   steps: UInt64;
 }
 export interface Redeemer {
-  redeemer: Hash64;
+  redeemer: RedeemerData;
   executionUnits: ExUnits;
 }
 export interface Tip {

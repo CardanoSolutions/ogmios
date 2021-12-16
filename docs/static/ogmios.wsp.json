@@ -1502,8 +1502,8 @@
                               , "parametersUpdate": { "$ref": "#/definitions/ProtocolParameters[Byron]" }
                               }
                             }
-                          , "issuer": { "$ref": "#/definitions/Hash64" }
-                          , "signature": { "$ref": "#/definitions/Hash64" }
+                          , "issuer": { "$ref": "#/definitions/IssuerVrfVerificationKey" }
+                          , "signature": { "$ref": "#/definitions/IssuerSignature" }
                           }
                         }
                       ]
@@ -1630,14 +1630,14 @@
           , "slot": { "$ref": "#/definitions/Slot" }
           , "prevHash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].header" }
           , "issuerVk": { "$ref": "#/definitions/VerificationKey" }
-          , "issuerVrf": { "$ref": "#/definitions/Hash64" }
-          , "nonce": { "$ref": "#/definitions/NonceProof" }
-          , "leaderValue": { "$ref": "#/definitions/LeaderValue" }
+          , "issuerVrf": { "$ref": "#/definitions/IssuerVrfVerificationKey" }
+          , "nonce": { "$ref": "#/definitions/CertifiedVrf" }
+          , "leaderValue": { "$ref": "#/definitions/CertifiedVrf" }
           , "blockSize": { "$ref": "#/definitions/BlockSize" }
           , "blockHash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
           , "opCert": { "$ref": "#/definitions/OpCert" }
           , "protocolVersion": { "$ref": "#/definitions/ProtocolVersion" }
-          , "signature": { "$ref": "#/definitions/Hash64" }
+          , "signature": { "$ref": "#/definitions/IssuerSignature" }
           }
         }
       }
@@ -2114,7 +2114,7 @@
           , "datums":
             { "type": "object"
             , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "#/definitions/Hash64" }
+            , "additionalProperties": { "$ref": "#/definitions/Datum" }
             }
           , "redeemers":
             { "type": "object"
@@ -2172,7 +2172,7 @@
     , "required": [ "dlgCertificate", "signature" ]
     , "properties":
       { "dlgCertificate": { "$ref": "#/definitions/DlgCertificate" }
-      , "signature": { "$ref": "#/definitions/Hash64" }
+      , "signature": { "$ref": "#/definitions/IssuerSignature" }
       }
     }
 
@@ -2199,7 +2199,7 @@
       ]
     , "additionalProperties": false
     , "properties":
-      { "signature": { "$ref": "#/definitions/Hash64" }
+      { "signature": { "$ref": "#/definitions/Signature" }
       , "chainCode":
         { "oneOf":
           [ { "$ref": "#/definitions/ChainCode" }
@@ -2373,6 +2373,15 @@
           }
         }
       ]
+    }
+
+  , "CertifiedVrf":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "proof": { "$ref": "#/definitions/VrfProof" }
+      , "output": { "$ref": "#/definitions/VrfOutput" }
+      }
     }
 
   , "ChainCode":
@@ -2618,7 +2627,7 @@
       { "epoch": { "$ref": "#/definitions/Epoch" }
       , "issuerVk": { "$ref": "#/definitions/GenesisVerificationKey" }
       , "delegateVk": { "$ref": "#/definitions/GenesisVerificationKey" }
-      , "signature": { "$ref": "#/definitions/Hash64" }
+      , "signature": { "$ref": "#/definitions/IssuerSignature" }
       }
     }
 
@@ -2668,13 +2677,6 @@
     , "contentEncoding": "base16"
     , "minLength": 128
     , "maxLength": 128
-    }
-
-  , "Hash64":
-    { "type": "string"
-    , "description": "A base64-encoded digest."
-    , "contentEncoding": "base64"
-    , "pattern": "^[A-Za-z0-9+/]*=?=?$"
     }
 
   , "IndividualPoolRewardsProvenance":
@@ -2778,14 +2780,16 @@
       ]
     }
 
-  , "LeaderValue":
-    { "type": "object"
-    , "description": "In Ouroboros Praos, designate the leader's contribution to the Multi-Party computation used for calculating the leader schedule."
-    , "additionalProperties": false
-    , "properties":
-      { "proof": { "$ref": "#/definitions/Hash64" }
-      , "output": { "$ref": "#/definitions/Hash64" }
-      }
+  , "IssuerVrfVerificationKey":
+    { "type": "string"
+    , "description": "A key identifying a block issuer."
+    , "contentEncoding": "base64"
+    }
+
+  , "IssuerSignature":
+    { "type": "string"
+    , "description": "Signature proving a block was issued by a given issuer VRF key."
+    , "contentEncoding": "base64"
     }
 
   , "Lovelace":
@@ -2799,6 +2803,11 @@
     , "description": "An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada)."
     , "minimum": -9223372036854775808
     , "maximum": 9223372036854775807
+    }
+
+  , "KesVerificationKey":
+    { "type": "string"
+    , "contentEncoding": "base64"
     }
 
   , "Metadata":
@@ -2941,15 +2950,6 @@
       ]
     }
 
-  , "NonceProof":
-    { "type": "object"
-    , "additionalProperties": false
-    , "properties":
-      { "proof": { "$ref": "#/definitions/Hash64" }
-      , "output": { "$ref": "#/definitions/Hash64" }
-      }
-    }
-
   , "NonMyopicMemberRewards":
     { "type": "object"
     , "description": "Rewards that can be expected assuming a pool is fully saturated. Such rewards are said non-myopic, in opposition to short-sighted rewards looking at immediate benefits. Keys of the map can be either Lovelace amounts or account credentials depending on the query."
@@ -3002,9 +3002,9 @@
     , "additionalProperties": false
     , "properties":
       { "count": { "$ref": "#/definitions/UInt64" }
-      , "sigma": { "$ref": "#/definitions/Hash64" }
+      , "sigma": { "$ref": "#/definitions/Signature" }
       , "kesPeriod": { "$ref": "#/definitions/UInt64" }
-      , "hotVk": { "$ref": "#/definitions/Hash64" }
+      , "hotVk": { "$ref": "#/definitions/KesVerificationKey" }
       }
     }
 
@@ -3385,9 +3385,15 @@
     , "additionalProperties": false
     , "required": [ "redeemer", "executionUnits" ]
     , "properties":
-      { "redeemer": { "$ref": "#/definitions/Hash64" }
+      { "redeemer": { "$ref": "#/definitions/RedeemerData" }
       , "executionUnits": { "$ref": "#/definitions/ExUnits" }
       }
+    }
+
+  , "RedeemerData":
+    { "type": "string"
+    , "contentEncoding": "base64"
+    , "description": "Plutus data, CBOR-serialised."
     }
 
   , "RedeemerPointer":
@@ -3765,8 +3771,8 @@
 
   , "Signature":
     { "type": "string"
+    , "description": "A signature coming from an Ed25519 or Ed25519-BIP32 signing key."
     , "contentEncoding": "base64"
-    , "pattern": "^[A-Za-z0-9+/]*=?=?$"
     }
 
   , "Slot":
@@ -4829,7 +4835,7 @@
             , "required": [ "key", "signature" ]
             , "properties":
               { "key": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
-              , "signature": { "$ref": "#/definitions/Hash64" }
+              , "signature": { "$ref": "#/definitions/Signature" }
               }
             }
           }
@@ -4843,8 +4849,8 @@
             , "additionalProperties": false
             , "required": [ "key", "signature" ]
             , "properties":
-              { "key": { "$ref": "#/definitions/Hash64" }
-              , "signature": { "$ref": "#/definitions/Hash64" }
+              { "key": { "$ref": "#/definitions/VerificationKey" }
+              , "signature": { "$ref": "#/definitions/Signature" }
               }
             }
           }
@@ -4948,15 +4954,25 @@
     , "additionalProperties": false
     , "required": [ "voterVk", "proposalId", "signature" ]
     , "properties":
-      { "voterVk": { "$ref": "#/definitions/Hash64" }
+      { "voterVk": { "$ref": "#/definitions/VerificationKey" }
       , "proposalId": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
-      , "signature": { "$ref": "#/definitions/Hash64" }
+      , "signature": { "$ref": "#/definitions/Signature" }
       }
     }
 
   , "VotingPeriod":
     { "type": "string"
     , "enum": [ "voteForThisEpoch", "voteForNextEpoch" ]
+    }
+
+  , "VrfProof":
+    { "type": "string"
+    , "contentEncoding": "base64"
+    }
+
+  , "VrfOutput":
+    { "type": "string"
+    , "contentEncoding": "base64"
     }
 
   , "Withdrawals":
