@@ -599,7 +599,7 @@ encodeUtxoFailure = \case
             ]
     Al.NoCollateralInputs ->
         encodeString "missingCollateralInputs"
-    Al.InsufficientCollateral required actual ->
+    Al.InsufficientCollateral actual required ->
         encodeObject
             [ ( "collateralTooSmall", encodeObject
                 [ ( "requiredCollateral", encodeCoin required )
