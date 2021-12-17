@@ -1,0 +1,9 @@
+index-state: 2021-08-14T00:00:00Z
+
+packages:
+  ./server
+  ./server/modules/cardano-client
+  ./server/modules/fast-bech32
+  ./server/modules/git-th
+  ./server/modules/hspec-json-schema
+  ./server/modules/json-wsp
