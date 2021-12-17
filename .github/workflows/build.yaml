@@ -29,5 +29,5 @@ jobs:
           authToken: "${{ secrets.CACHIXKEY }}"
       - name: Build all project components
         run: |
-          nix build .#check.x86_64-linux
+          nix build -L .#check.x86_64-linux
           nix develop -L -c cabal test --test-show-details=direct ogmios:test:unit fast-bech32:test:unit git-th:test:integration
