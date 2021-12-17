@@ -331,30 +331,24 @@ encodeDelegFailure
 encodeDelegFailure = \case
     Sh.StakeKeyAlreadyRegisteredDELEG credential ->
         encodeObject
-            [ ( "stakeKeyAlreadyRegistered"
-              , encodeCredential credential
-              )
+            [ ( "stakeKeyAlreadyRegistered", encodeCredential credential )
             ]
     Sh.StakeKeyInRewardsDELEG credential ->
         encodeObject
-            [ ( "stakeKeyAlreadyRegistered"
-              , encodeCredential credential
-              )
+            [ ( "stakeKeyAlreadyRegistered", encodeCredential credential )
             ]
     Sh.StakeKeyNotRegisteredDELEG credential ->
         encodeObject
-            [ ( "stakeKeyNotRegistered"
-              , encodeCredential credential
-              )
+            [ ( "stakeKeyNotRegistered", encodeCredential credential )
             ]
     Sh.StakeDelegationImpossibleDELEG credential ->
         encodeObject
-            [ ( "stakeKeyNotRegistered"
-              , encodeCredential  credential
-              )
+            [ ( "stakeKeyNotRegistered", encodeCredential  credential )
             ]
     Sh.StakeKeyNonZeroAccountBalanceDELEG Nothing ->
-        encodeText "rewardAccountNotExisting"
+        encodeObject
+            [ ( "rewardAccountNotExisting", encodeNull )
+            ]
     Sh.StakeKeyNonZeroAccountBalanceDELEG (Just balance) ->
         encodeObject
             [ ( "rewardAccountNotEmpty", encodeObject
@@ -363,18 +357,16 @@ encodeDelegFailure = \case
               )
             ]
     Sh.WrongCertificateTypeDELEG ->
-        encodeString "wrongCertificateType"
+        encodeObject
+            [  ( "wrongCertificateType", encodeNull )
+            ]
     Sh.GenesisKeyNotInMappingDELEG keyHash ->
         encodeObject
-            [ ( "unknownGenesisKey"
-              , encodeKeyHash keyHash
-              )
+            [ ( "unknownGenesisKey", encodeKeyHash keyHash )
             ]
     Sh.DuplicateGenesisDelegateDELEG keyHash ->
         encodeObject
-            [ ( "alreadyDelegating"
-              , encodeKeyHash keyHash
-              )
+            [ ( "alreadyDelegating", encodeKeyHash keyHash )
             ]
     Sh.InsufficientForInstantaneousRewardsDELEG pot requested size ->
         encodeObject
@@ -394,9 +386,13 @@ encodeDelegFailure = \case
               )
             ]
     Sh.MIRTransferNotCurrentlyAllowed ->
-        encodeString "mirTransferNotCurrentlyAllowed"
+        encodeObject
+            [ ( "mirTransferNotCurrentlyAllowed", encodeNull )
+            ]
     Sh.MIRNegativesNotCurrentlyAllowed ->
-        encodeString "mirNegativeTransferNotCurrentlyAllowed"
+        encodeObject
+            [ ( "mirNegativeTransferNotCurrentlyAllowed", encodeNull )
+            ]
     Sh.InsufficientForTransferDELEG pot requested size ->
         encodeObject
             [ ( "insufficientFundsForMir", encodeObject
@@ -407,12 +403,12 @@ encodeDelegFailure = \case
               )
             ]
     Sh.MIRProducesNegativeUpdate ->
-        encodeString "mirProducesNegativeUpdate"
+        encodeObject
+            [ ( "mirProducesNegativeUpdate", encodeNull )
+            ]
     Sh.DuplicateGenesisVRFDELEG vrfHash ->
         encodeObject
-            [ ( "duplicateGenesisVrf"
-              , encodeHash vrfHash
-              )
+            [ ( "duplicateGenesisVrf", encodeHash vrfHash )
             ]
 
 encodeDeltaCoin
@@ -1070,7 +1066,9 @@ encodeUtxoFailure = \case
               )
             ]
     Sh.InputSetEmptyUTxO ->
-        encodeText "missingAtLeastOneInputUtxo"
+        encodeObject
+            [ ( "missingAtLeastOneInputUtxo", encodeNull )
+            ]
     Sh.FeeTooSmallUTxO required actual ->
         encodeObject
             [ ( "feeTooSmall", encodeObject
@@ -1185,7 +1183,9 @@ encodeUtxowFailure encodeUtxoFailure_ = \case
               )
             ]
     Sh.InvalidMetadata ->
-        encodeText "invalidMetadata"
+        encodeObject
+            [ ( "invalidMetadata", encodeNull )
+            ]
     Sh.UtxoFailure e ->
         encodeUtxoFailure_ e
 

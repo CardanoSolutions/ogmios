@@ -201,8 +201,6 @@ export type Era = "Byron" | "Shelley" | "Allegra" | "Mary" | "Alonzo";
  * A Blake2b 32-byte digest of a phase-1 or phase-2 script, CBOR-encoded.
  */
 export type DigestBlake2BScript = string;
-export type MissingAtLeastOneInputUtxo = "missingAtLeastOneInputUtxo";
-export type InvalidMetadata = "invalidMetadata";
 export type InvalidEntity =
   | {
       type: "address";
@@ -216,22 +214,12 @@ export type InvalidEntity =
       type: "rewardAccount";
       entity: RewardAccount;
     };
-/**
- * Only since Mary.
- */
-export type TriesToForgeAda = "triesToForgeAda";
 export type UInt8 = number;
-export type RewardAccountNotExisting = "rewardAccountNotExisting";
-export type WrongCertificateType = "wrongCertificateType";
-export type MirTransferNotCurrentlyAllowed = "mirTransferNotCurrentlyAllowed";
-export type MirNegativeTransferNotCurrentlyAllowed = "mirNegativeTransferNotCurrentlyAllowed";
-export type MirProducesNegativeUpdate = "mirProducesNegativeUpdate";
 export type VotingPeriod = "voteForThisEpoch" | "voteForNextEpoch";
 export type ScriptPurpose = Spend | Mint | Certificate1 | Withdrawal;
-export type MissingCollateralInputs = "missingCollateralInputs";
 export type Utxo = [TxIn, TxOut][];
-export type ValidationTagMismatch = "validationTagMismatch";
 export type SubmitTxError = (
+  | EraMismatch
   | InvalidWitnesses
   | MissingVkWitnesses
   | MissingScriptWitnesses
@@ -1379,7 +1367,7 @@ export interface IntersectionNotFound {
   };
 }
 export interface SubmitFail {
-  SubmitFail: EraMismatch | SubmitTxError;
+  SubmitFail: SubmitTxError;
 }
 /**
  * An era mismatch between a client request and the era the ledger is in. This may occur when running queries on a syncing node and/or when the node is crossing an era.
@@ -1444,6 +1432,12 @@ export interface TxTooLarge {
     actualSize: Int64;
   };
 }
+export interface MissingAtLeastOneInputUtxo {
+  missingAtLeastOneInputUtxo: null;
+}
+export interface InvalidMetadata {
+  invalidMetadata: null;
+}
 export interface FeeTooSmall {
   feeTooSmall: {
     requiredFee: Lovelace;
@@ -1476,6 +1470,12 @@ export interface TooManyAssetsInOutput {
 }
 export interface AddressAttributesTooLarge {
   addressAttributesTooLarge: Address[];
+}
+/**
+ * Only since Mary.
+ */
+export interface TriesToForgeAda {
+  triesToForgeAda: null;
 }
 export interface DelegateNotRegistered {
   delegateNotRegistered: PoolId;
@@ -1513,10 +1513,16 @@ export interface PoolMetadataHashTooBig {
 export interface StakeKeyNotRegistered {
   stakeKeyNotRegistered: DigestBlake2BVerificationKey;
 }
+export interface RewardAccountNotExisting {
+  rewardAccountNotExisting: null;
+}
 export interface RewardAccountNotEmpty {
   rewardAccountNotEmpty: {
     balance: Lovelace;
   };
+}
+export interface WrongCertificateType {
+  wrongCertificateType: null;
 }
 export interface UnknownGenesisKey {
   unknownGenesisKey: DigestBlake2BVerificationKey;
@@ -1536,6 +1542,15 @@ export interface TooLateForMir {
     currentSlot: Slot;
     lastAllowedSlot: Slot;
   };
+}
+export interface MirTransferNotCurrentlyAllowed {
+  mirTransferNotCurrentlyAllowed: null;
+}
+export interface MirNegativeTransferNotCurrentlyAllowed {
+  mirNegativeTransferNotCurrentlyAllowed: null;
+}
+export interface MirProducesNegativeUpdate {
+  mirProducesNegativeUpdate: null;
 }
 export interface DuplicateGenesisVrf {
   duplicateGenesisVrf: DigestBlake2BVrfVerificationKey;
@@ -1605,6 +1620,12 @@ export interface ExtraRedeemers {
 export interface MissingDatumHashesForInputs {
   missingDatumHashesForInputs: TxIn[];
 }
+/**
+ * Only since Alonzo.
+ */
+export interface MissingCollateralInputs {
+  missingCollateralInputs: null;
+}
 export interface CollateralTooSmall {
   collateralTooSmall: {
     requiredCollateral: Lovelace;
@@ -1631,6 +1652,12 @@ export interface ExecutionUnitsTooLarge {
 }
 export interface OutsideForecast {
   outsideForecast: Slot;
+}
+/**
+ * Only since Alonzo.
+ */
+export interface ValidationTagMismatch {
+  validationTagMismatch: null;
 }
 export interface CollectErrors {
   collectErrors: unknown[];

@@ -26,6 +26,17 @@ pre: "<b>6. </b>"
 > ##### 🏢 Server
 > 
 > - ⚠️ Serialised Plutus scripts are now labelled either `plutus:v1` or `plutus:v2` (instead of `plutus`).
+> 
+> - ⚠️ Some breaking changes in the SubmitTx errors returned by the server for the sake of consistency. All submission errors are now returned as singleton objects within an array. The key of each object indicates the type of error and the value gives additional details about the errors. This is also true for era-mismatch errors. Some errors used to be returned as plain strings, they are now wrapped as singleton object with `null` as a value; this is the case for:
+>   - `invalidMetadata`
+>   - `mirNegativeTransferNotCurrentlyAllowed`
+>   - `mirProducesNegativeUpdate`
+>   - `mirTransferNotCurrentlyAllowed`
+>   - `missingAtLeastOneInputUtxo`
+>   - `missingCollateralInputs`
+>   - `triesToForgeAda`
+>   - `validationTagMismatch`
+>   - `wrongCertificateType`
 >
 > - Upgraded internal dependencies to Cardano eco-system 1.31.0
 > 
