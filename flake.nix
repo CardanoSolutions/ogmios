@@ -2,105 +2,97 @@
   description = "cardano-ogmios";
 
   inputs = {
-    haskellNix.url = "github:input-output-hk/haskell.nix";
-    iohkNix = {
-      url = "github:input-output-hk/iohk-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
+    flake-utils = {
+      type = "github";
+      owner = "numtide";
+      repo = "flake-utils";
     };
-    nixpkgs.follows = "haskellNix/nixpkgs-unstable";
-    utils.url = "github:numtide/flake-utils";
-    customConfig = {
-      url = "path:./nix/custom-config";
+
+    # The Plutus "flake" isn't really a flake - it doesn't define any
+    # outputs and is only used for input pinning according to to
+    # the comments
+    plutusSrc = {
+      type = "github";
+      owner = "input-output-hk";
+      repo = "plutus";
+      rev = "1efbb276ef1a10ca6961d0fd32e6141e9798bd11";
+      flake = false;
+    };
+
+    haskell-nix = {
+      type = "github";
+      owner = "input-output-hk";
+      repo = "haskell.nix";
+      # FIXME rev taken from Plutus doesn't work?
+      rev = "64cd5f70ce0d619390039a1a3d57c442552b0924";
+    };
+
+    nixpkgs.follows = "haskell-nix/nixpkgs-unstable";
+
+    flake-compat = {
+      type = "github";
+      owner = "edolstra";
+      repo = "flake-compat";
+      rev = "12c64ca55c1014cdc1b16ed5a804aa8576601ff2";
+      flake = false;
     };
   };
 
-  outputs = { self, iohkNix, haskellNix, nixpkgs, utils, customConfig, ... }:
+  outputs = { self, flake-utils, plutusSrc, nixpkgs, haskell-nix, ... }:
     let
-      inherit (haskellNix.internal) config;
-      inherit (nixpkgs) lib;
-      inherit (lib) systems mapAttrs recursiveUpdate mkDefault optionalAttrs nameValuePair
-        attrNames getAttrs head;
-      inherit (utils.lib) eachSystem mkApp flattenTree;
-      inherit (iohkNix.lib) prefixNamesWith collectExes;
+      inherit (flake-utils.lib) defaultSystems;
 
-      supportedSystems = import ./nix/supported-systems.nix;
-      defaultSystem = head supportedSystems;
+      perSystem = nixpkgs.lib.genAttrs defaultSystems;
 
-      overlays = [
-        haskellNix.overlay
-        iohkNix.overlays.haskell-nix-extra
-        iohkNix.overlays.crypto
-        iohkNix.overlays.cardano-lib
-        iohkNix.overlays.utils
-        (final: prev: {
-          customConfig = recursiveUpdate
-            (import ./custom-config final.customConfig)
-            customConfig.outputs;
-          gitrev = self.rev or "dirty";
-          commonLib = lib // iohkNix.lib;
-        })
-        (import ./nix/pkgs.nix)
-      ];
+      nixpkgsFor = system: import nixpkgs {
+        overlays = [ haskell-nix.overlay ];
+        inherit (haskell-nix) config;
+        inherit system;
+      };
 
-    in eachSystem supportedSystems (system:
-      let
-        pkgs = import nixpkgs { inherit system overlays config; };
-
-        devShell = import ./shell.nix { inherit pkgs; };
-
-        flake = pkgs.ogmiosProject.flake {};
-
-        scripts = flattenTree pkgs.scripts;
-
-        checkNames = attrNames flake.checks;
-
-        exes = collectExes flake.packages;
-
-        packages = {
-          inherit (pkgs) ;
-        }
-        // (collectExes flake.packages)
-        // scripts
-        # Add checks to be able to build them individually
-        // (prefixNamesWith "checks/" flake.checks);
-
-      in recursiveUpdate flake {
-
-        inherit packages;
-
-        legacyPackages = pkgs;
-
-        # Built by `nix build .`
-        defaultPackage = flake.packages."ogmios:exe:ogmios";
-
-        # Run by `nix run .`
-        defaultApp = flake.apps."ogmios:exe:ogmios";
-
-        # This is used by `nix develop .` to open a devShell
-        inherit devShell;
-
-        apps = {
-          repl = mkApp {
-            drv = pkgs.writeShellScriptBin "repl" ''
-              confnix=$(mktemp)
-              echo "builtins.getFlake (toString $(git rev-parse --show-toplevel))" >$confnix
-              trap "rm $confnix" EXIT
-              nix repl $confnix
+      projectFor = system:
+        let
+          pkgs = nixpkgsFor system;
+          plutus = import plutusSrc { inherit system; };
+          fakeSrc = pkgs.runCommand "real-src" {} ''
+            cp -rT ${self} $out
+            chmod u+w $out/cabal.project
+            cat $out/nix/haskell-nix-cabal.project >> $out/cabal.project
           '';
+          src = fakeSrc.outPath;
+        in
+          import ./nix/haskell.nix {
+            inherit src pkgs plutus system;
           };
-        } # nix run .#<exe>
-        // (collectExes flake.apps);
 
-      }
-    ) // {
-      overlay = final: prev: with self.legacyPackages.${final.system}; {
-        inherit ogmios;
+    in
+      {
+        flake = perSystem (system: (projectFor system).flake {});
+
+        defaultPackage = perSystem (
+          system:
+            self.flake.${system}.packages."ogmios:exe:ogmios"
+        );
+
+        packages = perSystem (system: self.flake.${system}.packages);
+
+        apps = perSystem (system: self.flake.${system}.apps);
+
+        devShell = perSystem (system: self.flake.${system}.devShell);
+
+        # This will build all of the project's packages and the tests
+        check = perSystem (
+          system:
+            (nixpkgsFor system).runCommand "combined-packages" {
+              nativeBuildInputs = builtins.attrValues self.checks.${system};
+            } "touch $out"
+        );
+
+        # NOTE `nix flake check` will not work at the moment due to use of
+        # IFD in haskell.nix
+        #
+        # Includes all of the packages in the `checks`, otherwise only the
+        # test suite would be included
+        checks = perSystem (system: self.flake.${system}.packages);
       };
-      nixosModules = {
-        cardano-ogmios = { pkgs, lib, ... }: {
-          imports = [ ./nix/nixos/cardano-ogmios-service.nix ];
-          services.cardano-ogmios.ogmiosPkgs = lib.mkDefault self.legacyPackages.${pkgs.system};
-        };
-      };
-    };
 }

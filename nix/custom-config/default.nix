@@ -1,3 +1,0 @@
-self: {
-  withHoogle = true;
-}

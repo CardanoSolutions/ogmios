@@ -1,27 +1,13 @@
-{ system ? builtins.currentSystem
-, crossSystem ? null
-, config ? {}
-, sourcesOverride ? {}
-, gitrev ? null # Git sha1 hash, to be passed when not building from a git work tree.
-, pkgs ? import ./nix { inherit system crossSystem config sourcesOverride gitrev; }
-}:
-with pkgs; with commonLib;
-let
-  haskellPackages =
-    recRecurseIntoAttrs (selectProjectPackages ogmiosHaskellPackages);
-
-  packages = {
-    inherit haskellPackages;
-
-    inherit (ogmiosProject) roots;
-    inherit (haskellPackages.ogmios.components.exes) ogmios;
-    inherit (haskellPackages.ogmios.project) plan-nix;
-    inherit (haskellPackages.ogmios.identifier) version;
-
-    shell = import ./shell.nix {
-      inherit pkgs;
-      withHoogle = true;
-    };
-  };
-in
-  packages
+(
+  import (
+    let
+      lock = builtins.fromJSON (builtins.readFile ./flake.lock);
+    in
+      fetchTarball {
+        url = "https://github.com/edolstra/flake-compat/archive/${lock.nodes.flake-compat.locked.rev}.tar.gz";
+        sha256 = lock.nodes.flake-compat.locked.narHash;
+      }
+  ) {
+    src = ./.;
+  }
+).defaultNix
