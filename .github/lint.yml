@@ -1,0 +1,23 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v13
+        name: Set up nix
+        with:
+          extra_nix_config: experimental-features = nix-command flakes
+
+      - run: |
+          nix shell nixpkgs#haskellPackages.hlint -c hlint \
+            $(git ls-tree -r HEAD --full-tree --name-only | grep -E '.*\.hs')
+        name: Lint
