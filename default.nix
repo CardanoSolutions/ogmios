@@ -14,10 +14,8 @@
 let
   pkgs = import nixpkgsSrc (nixpkgsArgs // {
     overlays =
-      # Haskell.nix (https://github.com/input-output-hk/haskell.nix)
-      haskellNix.overlays
-        # needed for cardano-api wich uses a patched libsodium
-        ++ iohkNix.overlays.crypto;
+      # iohkNix overlay needed for cardano-api wich uses a patched libsodium
+      haskellNix.overlays ++ iohkNix.overlays.crypto;
   });
 in
 pkgs.haskell-nix.project {
@@ -26,32 +24,10 @@ pkgs.haskell-nix.project {
     src = ./.;
     subDir = "server";
     filter = path: type:
-      let
-         notMatchDir = str: !(builtins.elem str (builtins.split "/" path));
-       in
-         builtins.all (x: x) [
-            (baseNameOf path != "package.yaml")
-            (notMatchDir ".stack-work")
-            (notMatchDir "cardano-node")
-            (notMatchDir "ouroboros-network")
-            (notMatchDir "hjsonpointer")
-            (notMatchDir "hjsonschema")
-            (notMatchDir "wai-routes")
-         ];
+      builtins.all (x: x) [
+        (baseNameOf path != "package.yaml")
+      ];
   };
   projectFileName = "cabal.project";
   compiler-nix-name = compiler;
-  modules = [{
-    packages = {
-      eventful-sql-common = {
-        # This is needed so evenful-sql-common will build with a newer version of persistent.
-        ghcOptions = [ "-XDerivingStrategies -XStandaloneDeriving -XUndecidableInstances -XDataKinds -XFlexibleInstances -XMultiParamTypeClasses" ];
-        doHaddock = false;
-      };
-
-      # Broken due to haddock errors. Refer to https://github.com/input-output-hk/plutus/blob/master/nix/pkgs/haskell/haskell.nix
-      plutus-ledger.doHaddock = false;
-      plutus-use-cases.doHaddock = false;
-    };
-  }];
 }
