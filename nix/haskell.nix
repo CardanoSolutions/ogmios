@@ -39,6 +39,7 @@ pkgs.haskell-nix.cabalProject {
       ouroboros-consensus-byronspec
       ouroboros-consensus-shelley
       ouroboros-consensus-cardano
+      ouroboros-consensus-cardano-test
       ouroboros-network
       ouroboros-network-framework
       typed-protocols

@@ -70,8 +70,6 @@ library
       TypeSynonymInstances
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-packages
-  build-tool-depends:
-      hspec-discover:hspec-discover
   build-depends:
       aeson
     , base >=4.7 && <5
