@@ -2,6 +2,10 @@
 docs/public
 docs/static/api
 
+dist-newstyle/
+
 ## Nix
-/result
-/result-*
+result
+result-*
+.direnv/
+.envrc

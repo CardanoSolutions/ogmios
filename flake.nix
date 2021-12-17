@@ -74,21 +74,16 @@
             self.flake.${system}.packages."ogmios:exe:ogmios"
         );
 
-        defaultApp = perSystem (
-          system:
-            self.flake.${system}.packages."ogmios:exe:ogmios"
-        );
-
         packages = perSystem (system: self.flake.${system}.packages);
 
         apps = perSystem (system: self.flake.${system}.apps);
 
         devShell = perSystem (system: self.flake.${system}.devShell);
 
-        # This will build all of the project's executables and the tests
+        # This will build all of the project's packages and the tests
         check = perSystem (
           system:
-            (nixpkgsFor system).runCommand "combined-executables" {
+            (nixpkgsFor system).runCommand "combined-packages" {
               nativeBuildInputs = builtins.attrValues self.checks.${system};
             } "touch $out"
         );

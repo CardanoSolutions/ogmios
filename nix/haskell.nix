@@ -21,8 +21,33 @@ pkgs.haskell-nix.cabalProject {
 
   shell = {
     # Make sure to keep this list updated after upgrading git dependencies!
-    # TODO
-    additional = ps: with ps; [];
+    additional = ps: with ps; [
+      cardano-api
+      cardano-binary
+      cardano-crypto-class
+      cardano-crypto-praos
+      cardano-crypto-tests
+      cardano-slotting
+      strict-containers
+      cardano-prelude
+      contra-tracer
+      iohk-monitoring
+      io-classes
+      io-sim
+      ouroboros-consensus
+      ouroboros-consensus-byron
+      ouroboros-consensus-byronspec
+      ouroboros-consensus-shelley
+      ouroboros-consensus-cardano
+      ouroboros-network
+      ouroboros-network-framework
+      typed-protocols
+      typed-protocols-cborg
+      flat
+      hjsonpointer
+      hjsonschema
+      wai-routes
+    ];
 
     withHoogle = true;
 
