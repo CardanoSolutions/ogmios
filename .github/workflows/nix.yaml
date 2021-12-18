@@ -31,4 +31,13 @@ jobs:
 
     - name: 🔨 Build
       run: |
-        nix-build -A ogmios.components.exes.ogmios
+        nix-build -A ogmios.components.exes.ogmios -o dist
+        cp -r dist/* .
+
+    - name: 📎 Upload Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ogmios-x86_64-linux
+        path: |
+          bin
+          share
