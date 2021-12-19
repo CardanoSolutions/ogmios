@@ -36,9 +36,9 @@ flag production
 library
   exposed-modules:
       Ogmios
+      Ogmios.App.Configuration
       Ogmios.App.Health
       Ogmios.App.Metrics
-      Ogmios.App.Options
       Ogmios.App.Protocol
       Ogmios.App.Protocol.ChainSync
       Ogmios.App.Protocol.StateQuery
@@ -69,6 +69,7 @@ library
       Ogmios.Data.Protocol.ChainSync
       Ogmios.Data.Protocol.StateQuery
       Ogmios.Data.Protocol.TxSubmission
+      Ogmios.Options
       Ogmios.Prelude
       Ogmios.Version
   other-modules:
@@ -137,6 +138,7 @@ library
     , cborg
     , containers
     , contra-tracer
+    , contra-tracers
     , directory
     , ekg-core
     , fast-bech32
@@ -237,13 +239,13 @@ test-suite unit
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Ogmios.App.OptionsSpec
       Ogmios.App.Protocol.ChainSyncSpec
       Ogmios.App.Protocol.StateQuerySpec
       Ogmios.App.ProtocolSpec
       Ogmios.Data.HealthSpec
       Ogmios.Data.JsonSpec
       Ogmios.Data.MetricsSpec
+      Ogmios.OptionsSpec
       Test.App.Protocol.Util
       Test.Generators
       Test.Instances.Util

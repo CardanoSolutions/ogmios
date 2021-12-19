@@ -8,20 +8,19 @@ import Ogmios.Prelude
 
 import Ogmios
     ( Command (..)
-    , Options (..)
     , application
     , newEnvironment
     , parseOptions
     , runWith
     , version
-    , withStdoutTracer
+    , withStdoutTracers
     )
 
 main :: IO ()
 main = parseOptions >>= \case
     Version -> do
         putTextLn version
-    Start (Identity network) opts@Options{logLevel} -> do
-        withStdoutTracer version logLevel $ \tr -> do
+    Start (Identity network) opts logLevels -> do
+        withStdoutTracers version logLevels $ \tr -> do
             env <- newEnvironment tr network opts
             application tr `runWith` env

@@ -19,10 +19,10 @@ module Ogmios.App.Server.WebSocket
 
 import Ogmios.Prelude
 
+import Ogmios.App.Configuration
+    ( Configuration (..), NetworkParameters (..) )
 import Ogmios.App.Metrics
     ( Sensors (..), recordSession )
-import Ogmios.App.Options
-    ( NetworkParameters (..), Options (..) )
 import Ogmios.App.Protocol
     ( onUnmatchedMessage )
 import Ogmios.App.Protocol.ChainSync
@@ -42,6 +42,7 @@ import Ogmios.Control.MonadLog
     , Logger
     , MonadLog (..)
     , Severity (..)
+    , getSeverityAnnotation'
     , natTracer
     )
 import Ogmios.Control.MonadMetrics
@@ -115,7 +116,7 @@ newWebSocketApp
         , MonadReader env m
         , MonadLog m
         , HasType NetworkParameters env
-        , HasType Options env
+        , HasType Configuration env
         , HasType (Sensors m) env
         )
     => Logger TraceWebSocket
@@ -123,7 +124,7 @@ newWebSocketApp
     -> m WebSocketApp
 newWebSocketApp tr unliftIO = do
     NetworkParameters{slotsPerEpoch,networkMagic} <- asks (view typed)
-    Options{nodeSocket,maxInFlight} <- asks (view typed)
+    Configuration{nodeSocket,maxInFlight} <- asks (view typed)
     sensors <- asks (view typed)
     return $ \pending -> unliftIO $ do
         let (mode, sub) = choseSerializationMode pending
@@ -319,7 +320,7 @@ data TraceWebSocket where
 
 instance HasSeverityAnnotation TraceWebSocket where
     getSeverityAnnotation = \case
-        WebSocketClient msg           -> getSeverityAnnotation msg
+        WebSocketClient msg           -> getSeverityAnnotation' msg
         WebSocketStateQuery msg       -> getSeverityAnnotation msg
         WebSocketWorkerExited{}       -> Debug
         WebSocketConnectionAccepted{} -> Info
