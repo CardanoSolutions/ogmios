@@ -40,7 +40,7 @@ import Ogmios.App.Server
 import Ogmios.App.Server.WebSocket
     ( TraceWebSocket )
 import Ogmios.Control.MonadLog
-    ( Severity (..), Tracer )
+    ( Severity (..), Tracer, defaultTracers )
 
 import Cardano.Network.Protocol.NodeToClient
     ( Block )
@@ -192,7 +192,7 @@ maxInFlightOption = option auto $ mempty
 
 -- | [--log-level=SEVERITY]
 tracersOption :: Parser (Tracers m (Const Severity))
-tracersOption = fmap mkDefaultTracers $ option caseInsensitive $ mempty
+tracersOption = fmap defaultTracers $ option caseInsensitive $ mempty
     <> long "log-level"
     <> metavar "SEVERITY"
     <> helpDoc (Just doc)
@@ -296,19 +296,10 @@ data Tracers m (f :: Type -> Type) = Tracers
         :: HKD f (Tracer m TraceServer)
     , tracerConfiguration
         :: HKD f (Tracer m TraceConfiguration)
-    }
+    } deriving (Generic)
 
 deriving instance Show (Tracers m (Const Severity))
 deriving instance Eq (Tracers m (Const Severity))
-
-mkDefaultTracers :: Severity -> Tracers m (Const Severity)
-mkDefaultTracers minSeverity = Tracers
-    { tracerHealth = Const minSeverity
-    , tracerMetrics = Const minSeverity
-    , tracerWebSocket = Const minSeverity
-    , tracerServer = Const minSeverity
-    , tracerConfiguration = Const minSeverity
-    }
 
 --
 -- Helpers

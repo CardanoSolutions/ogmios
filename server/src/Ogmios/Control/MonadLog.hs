@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Ogmios.Control.MonadLog
@@ -21,7 +22,8 @@ module Ogmios.Control.MonadLog
     , HasSeverityAnnotation (..)
 
       -- * Instantiation
-    , SomeMsg (..)
+    , mkTracers
+    , defaultTracers
     , withStdoutTracer
     ) where
 
@@ -44,9 +46,11 @@ import GHC.Conc
 import Ogmios.Control.MonadClock
     ( getCurrentTime )
 import Ogmios.Control.MonadSTM
-    ( STM, TMVar, newTMVarIO, withTMVar )
+    ( newTMVarIO, withTMVar )
 import System.IO
     ( BufferMode (..), hSetBuffering, hSetEncoding, utf8 )
+
+import GHC.Generics
 
 import qualified Data.Aeson.Encoding as Json
 import qualified Data.Text as T
@@ -69,13 +73,9 @@ instance MonadLog (IOSim s) where
 instance MonadLog m => MonadLog (ReaderT env m) where
     logWith tr = lift . logWith tr
 
-data SomeMsg where
-    SomeMsg :: forall msg. (ToJSON msg, HasSeverityAnnotation msg) => Severity -> msg -> SomeMsg
-
 -- | Acquire a tracer to use across the app lifecycle.
 withStdoutTracer
-    :: forall a. ()
-    => AppVersion
+    :: AppVersion
     -> (Tracer IO SomeMsg -> IO ())
     -> IO ()
 withStdoutTracer version action = do
@@ -99,3 +99,107 @@ withStdoutTracer version action = do
             <> pair "thread"    (toEncoding threadId)
             <> pair "message"   (toEncoding msg)
             <> pair "version"   (toEncoding version)
+
+--
+-- Declaring Tracers
+--
+
+data SomeMsg where
+    SomeMsg :: forall msg. (ToJSON msg, HasSeverityAnnotation msg) => Severity -> msg -> SomeMsg
+
+-- | Generically instantiate tracers from a record type. The record is
+-- parameterized by a functor which is intended to be one of:
+--
+-- - Const
+-- - Identity
+--
+-- 'Const' is used to define a record of minimum severities, for configuring the
+-- tracers independently. This function then instantiates each field of the
+-- record to an actual tracer with a configured minimum severity.
+--
+--     data Tracers m (f :: Type -> Type) = Tracers
+--         { tracerFoo
+--             :: HKD f (Tracer m Foo)
+--         , tracerBar
+--             :: HKD f (Tracer m Bar)
+--         } deriving (Generic)
+--
+--     mkTracersSpecialized
+--       :: Tracers m (Const Severity)
+--       -> Tracer m SomeMsg
+--       -> Tracers m Identity
+--
+mkTracers
+    :: ( Generic (f m Identity)
+       , Generic (f m (Const Severity))
+       , GMkTracers m (Rep (f m (Const Severity))) (Rep (f m Identity))
+       )
+    => f m (Const Severity)
+    -> Tracer m SomeMsg
+    -> f m Identity
+mkTracers f tr =
+    to . gMkTracers tr . from $ f
+
+defaultTracers
+    :: ( Generic (f (Const Severity))
+       , GDefaultTracers (Rep (f (Const Severity)))
+       )
+    => Severity
+    -> f (Const Severity)
+defaultTracers =
+    to . gDefaultTracers
+
+
+class GMkTracers m (f :: Type -> Type) (g :: Type -> Type) where
+    gMkTracers
+        :: Tracer m SomeMsg
+        -> f (Const Severity tr)
+        -> g tr
+
+instance GMkTracers m f g => GMkTracers m (D1 c f) (D1 c g) where
+    gMkTracers tr =
+        M1 . gMkTracers tr . unM1
+
+instance GMkTracers m f g => GMkTracers m (C1 c f) (C1 c g) where
+    gMkTracers tr =
+        M1 . gMkTracers tr . unM1
+
+instance GMkTracers m f g => GMkTracers m (S1 c f) (S1 c g) where
+    gMkTracers tr =
+        M1 . gMkTracers tr . unM1
+
+instance (GMkTracers m f0 g0, GMkTracers m f1 g1) => GMkTracers m (f0 :*: f1) (g0 :*: g1) where
+    gMkTracers tr (f0 :*: f1) =
+        gMkTracers tr f0 :*: gMkTracers tr f1
+
+instance (ToJSON msg, HasSeverityAnnotation msg)
+    => GMkTracers m (K1 i (Const Severity (Tracer m msg))) (K1 i (Tracer m msg))
+  where
+    gMkTracers tr (K1 msg) =
+        K1 (contramap (SomeMsg (getConst msg)) tr :: Tracer m msg)
+
+
+class GDefaultTracers (f :: Type -> Type) where
+    gDefaultTracers
+        :: Severity
+        -> f (Const Severity b)
+
+instance GDefaultTracers f => GDefaultTracers (D1 c f) where
+    gDefaultTracers minSeverity =
+        M1 (gDefaultTracers minSeverity)
+
+instance GDefaultTracers f => GDefaultTracers (C1 c f) where
+    gDefaultTracers minSeverity =
+        M1 (gDefaultTracers minSeverity)
+
+instance GDefaultTracers f => GDefaultTracers (S1 c f) where
+    gDefaultTracers minSeverity =
+        M1 (gDefaultTracers minSeverity)
+
+instance (GDefaultTracers f, GDefaultTracers g) => GDefaultTracers (f :*: g) where
+    gDefaultTracers minSeverity =
+        gDefaultTracers minSeverity :*: gDefaultTracers minSeverity
+
+instance GDefaultTracers (K1 i (Const Severity b))  where
+    gDefaultTracers minSeverity =
+        K1 (Const minSeverity)

@@ -36,8 +36,6 @@ import Cardano.Network.Protocol.NodeToClient
     ( Block )
 import Control.Monad.Class.MonadST
     ( MonadST )
-import Data.Aeson
-    ( ToJSON )
 import Ogmios.App.Configuration
     ( Configuration (..), NetworkParameters (..), TraceConfiguration (..) )
 import Ogmios.App.Health
@@ -57,13 +55,7 @@ import Ogmios.Control.MonadAsync
 import Ogmios.Control.MonadClock
     ( MonadClock, getCurrentTime, withDebouncer, _10s )
 import Ogmios.Control.MonadLog
-    ( HasSeverityAnnotation
-    , MonadLog (..)
-    , Severity (..)
-    , SomeMsg (..)
-    , Tracer
-    , withStdoutTracer
-    )
+    ( MonadLog (..), mkTracers, withStdoutTracer )
 import Ogmios.Control.MonadMetrics
     ( MonadMetrics )
 import Ogmios.Control.MonadSTM
@@ -158,32 +150,3 @@ newEnvironment Tracers{tracerMetrics} network configuration = do
     sensors <- newSensors
     sampler <- newSampler tracerMetrics
     pure $ Env{health,sensors,sampler,network,configuration}
-
---
--- Logging
---
-
-mkTracers
-    :: forall m. ()
-    => Tracers m (Const Severity)
-    -> Tracer m SomeMsg
-    -> Tracers m Identity
-mkTracers tracers tr =
-    Tracers
-        { tracerHealth =
-            useTracer tracerHealth
-        , tracerMetrics =
-            useTracer tracerMetrics
-        , tracerWebSocket =
-            useTracer tracerWebSocket
-        , tracerServer =
-            useTracer tracerServer
-        , tracerConfiguration =
-            useTracer tracerConfiguration
-        }
-  where
-    useTracer
-        :: forall msg. (ToJSON msg, HasSeverityAnnotation msg)
-        => (Tracers m (Const Severity) -> Const Severity (Tracer m msg))
-        -> Tracer m msg
-    useTracer getter = contramap (SomeMsg . getConst . getter $ tracers) tr
