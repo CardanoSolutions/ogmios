@@ -2,65 +2,66 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-
-module Ogmios.App.Options
+module Ogmios.Options
     ( -- * Command
       Command (..)
     , parseOptions
     , parseOptionsPure
 
-      -- ** Options
-    , Options (..)
+      -- * Options
     , nodeSocketOption
     , nodeConfigOption
     , serverHostOption
     , serverPortOption
     , connectionTimeoutOption
+    , tracersOption
     , logLevelOption
 
-      -- *** Types
-    , Severity (..)
+      -- * Types
     , NetworkParameters (..)
     , parseNetworkParameters
 
-    , NetworkMagic (..)
-    , EpochSlots (..)
-    , SystemStart (..)
-    , mkSystemStart
+      -- * Tracers
+    , Tracers (..)
     ) where
 
 import Ogmios.Prelude
 
+import Ogmios.App.Health
+    ( Health, TraceHealth )
+import Ogmios.App.Metrics
+    ( TraceMetrics )
+import Ogmios.App.Server
+    ( TraceServer )
+import Ogmios.App.Server.WebSocket
+    ( TraceWebSocket )
 import Ogmios.Control.MonadLog
-    ( Severity (..) )
+    ( Severity (..), Tracer )
 
-import Cardano.Chain.Slotting
-    ( EpochSlots (..) )
+import Cardano.Network.Protocol.NodeToClient
+    ( Block )
 import Control.Monad.Trans.Except
     ( throwE, withExceptT )
-import Data.Aeson
-    ( ToJSON )
 import Data.Aeson.Lens
     ( key, _Integer, _String )
 import Data.Char
     ( toUpper )
-import Data.Time.Clock.POSIX
-    ( posixSecondsToUTCTime )
 import Data.Time.Format.ISO8601
     ( iso8601ParseM )
+import Ogmios.App.Configuration
+    ( Configuration (..)
+    , EpochSlots (..)
+    , NetworkMagic (..)
+    , NetworkParameters (..)
+    , SystemStart (..)
+    , TraceConfiguration (..)
+    )
 import Options.Applicative.Help.Pretty
     ( indent, string, vsep )
-import Ouroboros.Consensus.BlockchainTime.WallClock.Types
-    ( SystemStart (..) )
-import Ouroboros.Network.Magic
-    ( NetworkMagic (..) )
 import Safe
     ( readMay )
 import System.FilePath.Posix
@@ -76,7 +77,7 @@ import qualified Data.Yaml.Pretty as Yaml
 --
 
 data Command (f :: Type -> Type)
-    = Start (f NetworkParameters)  Options
+    = Start (f NetworkParameters) Configuration (Tracers IO (Const Severity))
     | Version
 
 deriving instance Eq (f NetworkParameters) => Eq (Command f)
@@ -86,9 +87,9 @@ parseOptions :: IO (Command Identity)
 parseOptions =
     customExecParser (prefs showHelpOnEmpty) parserInfo >>= \case
         Version -> pure Version
-        Start _ opts@Options{nodeConfig} -> do
+        Start _ cfg@Configuration{nodeConfig} lvl -> do
             networkParameters <- parseNetworkParameters nodeConfig
-            pure $ Start (Identity networkParameters) opts
+            pure $ Start (Identity networkParameters) cfg lvl
 
 parseOptionsPure :: [String] -> Either String (Command Proxy)
 parseOptionsPure args =
@@ -114,31 +115,27 @@ parserInfo = info (helper <*> parser) $ mempty
     parser =
         versionOption
         <|>
-        (Start Proxy <$>
-            (Options
-                <$> nodeSocketOption
-                <*> nodeConfigOption
-                <*> serverHostOption
-                <*> serverPortOption
-                <*> connectionTimeoutOption
-                <*> maxInFlightOption
-                <*> logLevelOption
-            )
+        (Start Proxy
+            <$> (Configuration
+                    <$> nodeSocketOption
+                    <*> nodeConfigOption
+                    <*> serverHostOption
+                    <*> serverPortOption
+                    <*> connectionTimeoutOption
+                    <*> maxInFlightOption
+                )
+            <*> (tracersOption <|> Tracers
+                    <$> fmap Const (logLevelOption "health")
+                    <*> fmap Const (logLevelOption "metrics")
+                    <*> fmap Const (logLevelOption "websocket")
+                    <*> fmap Const (logLevelOption "server")
+                    <*> fmap Const (logLevelOption "options")
+                )
         )
 
 --
 -- Command-line options
 --
-
-data Options = Options
-    { nodeSocket :: !FilePath
-    , nodeConfig :: !FilePath
-    , serverHost :: !String
-    , serverPort :: !Int
-    , connectionTimeout :: !Int
-    , maxInFlight :: !Int
-    , logLevel :: !Severity
-    } deriving (Generic, Eq, Show)
 
 -- | --node-socket=FILEPATH
 nodeSocketOption :: Parser FilePath
@@ -189,34 +186,37 @@ maxInFlightOption :: Parser Int
 maxInFlightOption = option auto $ mempty
     <> long "max-in-flight"
     <> metavar "INT"
-    <> help "Max number of ChainSync requests which can be pipelined at once. Only apply to the chain-sync protocol."
+    <> help "Max number of ChainSync requests which can be pipelined at once. Only applies to the chain-sync protocol."
     <> value 1000
     <> showDefault
 
--- | [--log-level=SEVERITY], default: Info
-logLevelOption :: Parser Severity
-logLevelOption = option caseInsensitive $ mempty
+-- | [--log-level=SEVERITY]
+tracersOption :: Parser (Tracers m (Const Severity))
+tracersOption = fmap mkDefaultTracers $ option caseInsensitive $ mempty
     <> long "log-level"
     <> metavar "SEVERITY"
     <> helpDoc (Just doc)
-    <> value Info
-    <> showDefault
     <> completer (listCompleter severities)
   where
-    severities =
-        show @_ @Severity <$> [minBound .. maxBound]
     doc =
         vsep $ string <$> mconcat
-            [ [ "Minimal severity required for logging." ]
-            , [ separator ]
+            [ [ "Minimal severity of all log messages." ]
             , ("- " <>) <$> severities
-            , [ separator ]
             ]
 
-    separator :: String
-    separator =
-        replicate 20 '-'
-
+-- | [--log-level-{COMPONENT}=SEVERITY], default: Info
+logLevelOption :: Text -> Parser Severity
+logLevelOption component =
+    option caseInsensitive $ mempty
+        <> long ("log-level-" <> toString component)
+        <> metavar "SEVERITY"
+        <> helpDoc (Just doc)
+        <> value Info
+        <> showDefault
+        <> completer (listCompleter severities)
+  where
+    doc =
+        string $ "Minimal severity of " <> toString component <> " log messages."
 
 -- | [--version|-v] | version
 versionOption :: Parser (Command f)
@@ -237,17 +237,6 @@ versionOption =
 --
 -- Environment
 --
-
-data NetworkParameters = NetworkParameters
-    { networkMagic :: !NetworkMagic
-    , systemStart :: !SystemStart
-    , slotsPerEpoch :: !EpochSlots
-    } deriving stock (Generic, Eq, Show)
-      deriving anyclass (ToJSON)
-
-deriving newtype instance ToJSON EpochSlots
-deriving newtype instance ToJSON SystemStart
-deriving newtype instance ToJSON NetworkMagic
 
 parseNetworkParameters :: FilePath -> IO NetworkParameters
 parseNetworkParameters configFile = runOrDie $ do
@@ -293,6 +282,35 @@ parseNetworkParameters configFile = runOrDie $ do
     decodeYaml = withExceptT prettyParseException . ExceptT . Yaml.decodeFileEither
 
 --
+-- Tracers
+--
+
+data Tracers m (f :: Type -> Type) = Tracers
+    { tracerHealth
+        :: HKD f (Tracer m (TraceHealth (Health Block)))
+    , tracerMetrics
+        :: HKD f (Tracer m TraceMetrics)
+    , tracerWebSocket
+        :: HKD f (Tracer m TraceWebSocket)
+    , tracerServer
+        :: HKD f (Tracer m TraceServer)
+    , tracerConfiguration
+        :: HKD f (Tracer m TraceConfiguration)
+    }
+
+deriving instance Show (Tracers m (Const Severity))
+deriving instance Eq (Tracers m (Const Severity))
+
+mkDefaultTracers :: Severity -> Tracers m (Const Severity)
+mkDefaultTracers minSeverity = Tracers
+    { tracerHealth = Const minSeverity
+    , tracerMetrics = Const minSeverity
+    , tracerWebSocket = Const minSeverity
+    , tracerServer = Const minSeverity
+    , tracerConfiguration = Const minSeverity
+    }
+
+--
 -- Helpers
 --
 
@@ -301,8 +319,5 @@ caseInsensitive = maybeReader $ \case
     [] -> Nothing
     h:q -> readMay (toUpper h:q)
 
-mkSystemStart :: Int -> SystemStart
-mkSystemStart =
-    SystemStart . posixSecondsToUTCTime . toPicoResolution . toEnum
-  where
-    toPicoResolution = (*1000000000000)
+severities :: [String]
+severities = show @_ @Severity <$> [minBound .. maxBound]

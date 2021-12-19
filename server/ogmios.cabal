@@ -36,9 +36,9 @@ flag production
 library
   exposed-modules:
       Ogmios
+      Ogmios.App.Configuration
       Ogmios.App.Health
       Ogmios.App.Metrics
-      Ogmios.App.Options
       Ogmios.App.Protocol
       Ogmios.App.Protocol.ChainSync
       Ogmios.App.Protocol.StateQuery
@@ -69,6 +69,7 @@ library
       Ogmios.Data.Protocol.ChainSync
       Ogmios.Data.Protocol.StateQuery
       Ogmios.Data.Protocol.TxSubmission
+      Ogmios.Options
       Ogmios.Prelude
       Ogmios.Version
   other-modules:

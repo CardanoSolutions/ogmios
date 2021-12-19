@@ -19,10 +19,10 @@ module Ogmios.App.Server.WebSocket
 
 import Ogmios.Prelude
 
+import Ogmios.App.Configuration
+    ( Configuration (..), NetworkParameters (..) )
 import Ogmios.App.Metrics
     ( Sensors (..), recordSession )
-import Ogmios.App.Options
-    ( NetworkParameters (..), Options (..) )
 import Ogmios.App.Protocol
     ( onUnmatchedMessage )
 import Ogmios.App.Protocol.ChainSync
@@ -115,7 +115,7 @@ newWebSocketApp
         , MonadReader env m
         , MonadLog m
         , HasType NetworkParameters env
-        , HasType Options env
+        , HasType Configuration env
         , HasType (Sensors m) env
         )
     => Logger TraceWebSocket
@@ -123,7 +123,7 @@ newWebSocketApp
     -> m WebSocketApp
 newWebSocketApp tr unliftIO = do
     NetworkParameters{slotsPerEpoch,networkMagic} <- asks (view typed)
-    Options{nodeSocket,maxInFlight} <- asks (view typed)
+    Configuration{nodeSocket,maxInFlight} <- asks (view typed)
     sensors <- asks (view typed)
     return $ \pending -> unliftIO $ do
         let (mode, sub) = choseSerializationMode pending

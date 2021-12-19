@@ -21,6 +21,7 @@ module Ogmios.Control.MonadLog
     , HasSeverityAnnotation (..)
 
       -- * Instantiation
+    , SomeMsg (..)
     , withStdoutTracer
     ) where
 
@@ -43,7 +44,7 @@ import GHC.Conc
 import Ogmios.Control.MonadClock
     ( getCurrentTime )
 import Ogmios.Control.MonadSTM
-    ( newTMVarIO, withTMVar )
+    ( STM, TMVar, newTMVarIO, withTMVar )
 import System.IO
     ( BufferMode (..), hSetBuffering, hSetEncoding, utf8 )
 
@@ -68,24 +69,27 @@ instance MonadLog (IOSim s) where
 instance MonadLog m => MonadLog (ReaderT env m) where
     logWith tr = lift . logWith tr
 
+data SomeMsg where
+    SomeMsg :: forall msg. (ToJSON msg, HasSeverityAnnotation msg) => Severity -> msg -> SomeMsg
+
 -- | Acquire a tracer to use across the app lifecycle.
 withStdoutTracer
-    :: forall m msg a. (MonadIO m, ToJSON msg, HasSeverityAnnotation msg)
+    :: forall a. ()
     => AppVersion
-    -> Severity
-    -> (Tracer m msg -> IO a)
-    -> IO a
-withStdoutTracer version minSeverity action = do
+    -> (Tracer IO SomeMsg -> IO ())
+    -> IO ()
+withStdoutTracer version action = do
     hSetBuffering stdout LineBuffering
     hSetEncoding stdout utf8
     lock <- newTMVarIO ()
     action (tracer lock)
   where
-    tracer lock = Tracer $ \msg -> do
+    tracer lock = Tracer $ \(SomeMsg minSeverity msg) -> do
         let severity = getSeverityAnnotation msg
         when (severity >= minSeverity) $ liftIO $ withTMVar lock $ \() -> do
             mkEnvelop msg severity >>= liftIO . TIO.putStrLn . decodeUtf8 . Json.encodingToLazyByteString
 
+    mkEnvelop :: forall m msg. (ToJSON msg, MonadIO m) => msg -> Severity -> m Json.Encoding
     mkEnvelop msg severity = do
         timestamp <- liftIO getCurrentTime
         threadId <- T.drop 9 . show <$> liftIO myThreadId
