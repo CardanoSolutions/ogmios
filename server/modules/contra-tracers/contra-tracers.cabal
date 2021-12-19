@@ -1,0 +1,79 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           contra-tracers
+version:        1.0.0
+synopsis:       A logging library built on top of contra-tracer to make configuring and declaring multiple tracers easy (via generics).
+description:    Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server/modules/contra-tracers>
+category:       Logging, Contravariant, Generics
+homepage:       https://github.com/cardanosolutions/ogmios#readme
+bug-reports:    https://github.com/cardanosolutions/ogmios/issues
+author:         KtorZ <matthias.benkort@gmail.com>
+maintainer:     matthias.benkort@gmail.com
+copyright:      2021 KtorZ
+license:        MPL-2.0
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    LICENSE
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/cardanosolutions/ogmios
+
+library
+  exposed-modules:
+      Data.Generics.Tracers
+      Data.Severity
+  other-modules:
+      Paths_contra_tracers
+  hs-source-dirs:
+      src
+  default-extensions:
+      BangPatterns
+      BinaryLiterals
+      ConstraintKinds
+      DataKinds
+      DefaultSignatures
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      EmptyDataDecls
+      ExistentialQuantification
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      NoImplicitPrelude
+      NumericUnderscores
+      OverloadedStrings
+      PartialTypeSignatures
+      PatternGuards
+      RankNTypes
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeFamilies
+      TypeSynonymInstances
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-packages
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , contra-tracer
+  if true
+    ghc-options: -O2
+  default-language: Haskell2010
