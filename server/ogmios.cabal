@@ -239,13 +239,13 @@ test-suite unit
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Ogmios.App.OptionsSpec
       Ogmios.App.Protocol.ChainSyncSpec
       Ogmios.App.Protocol.StateQuerySpec
       Ogmios.App.ProtocolSpec
       Ogmios.Data.HealthSpec
       Ogmios.Data.JsonSpec
       Ogmios.Data.MetricsSpec
+      Ogmios.OptionsSpec
       Test.App.Protocol.Util
       Test.Generators
       Test.Instances.Util
