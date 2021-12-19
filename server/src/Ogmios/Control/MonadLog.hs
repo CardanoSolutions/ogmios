@@ -38,6 +38,8 @@ import Data.Aeson
     ( ToJSON (..), toEncoding )
 import Data.Aeson.Encoding
     ( Encoding, encodingToLazyByteString, pair, pairs )
+import Data.Char
+    ( isLower )
 import Data.Generics.Tracers
     ( IsRecordOfTracers
     , SomeMsg (..)
@@ -98,20 +100,21 @@ withStdoutTracers version tracers action = do
     lock <- newTMVarIO ()
     action (configureTracers tracers (tracer lock))
   where
-    tracer lock = Tracer $ \(SomeMsg minSeverity msg) -> do
+    tracer lock = Tracer $ \(SomeMsg minSeverity tracerName msg) -> do
         let severity = getSeverityAnnotation msg
         when (severity >= minSeverity) $ liftIO $ withTMVar lock $ \() -> do
-            mkEnvelop msg severity >>= liftIO . BL8.putStrLn . encodingToLazyByteString
+            mkEnvelop msg severity tracerName >>= liftIO . BL8.putStrLn . encodingToLazyByteString
 
-    mkEnvelop :: forall m msg. (ToJSON msg, MonadIO m) => msg -> Severity -> m Encoding
-    mkEnvelop msg severity = do
+    mkEnvelop :: forall m msg. (ToJSON msg, MonadIO m) => msg -> Severity -> String -> m Encoding
+    mkEnvelop msg severity tracerName = do
+        let context = toText (dropWhile isLower tracerName)
         timestamp <- liftIO getCurrentTime
         threadId <- drop 9 . show <$> liftIO myThreadId
         pure $ pairs $ mempty
             <> pair "severity"  (toEncoding severity)
             <> pair "timestamp" (toEncoding timestamp)
             <> pair "thread"    (toEncoding threadId)
-            <> pair "message"   (toEncoding msg)
+            <> pair "message"   (pairs $ pair context (toEncoding msg))
             <> pair "version"   (toEncoding version)
 
 -- | Working around iohk-monitoring. Ogmios doesn't use 'Severity' from

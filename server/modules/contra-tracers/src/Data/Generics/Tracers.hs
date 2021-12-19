@@ -89,37 +89,40 @@ configureTracers
     -> Tracer m SomeMsg
     -> tracers m Concrete
 configureTracers f tr =
-    to . gConfigureTracers tr . from $ f
+    to . gConfigureTracers mempty tr . from $ f
 
 class GConfigureTracers m (f :: Type -> Type) (g :: Type -> Type) where
     gConfigureTracers
-        :: Tracer m SomeMsg
+        :: String
+        -> Tracer m SomeMsg
         -> f (Const (Maybe Severity) tr)
         -> g tr
 
 instance GConfigureTracers m f g => GConfigureTracers m (D1 c f) (D1 c g) where
-    gConfigureTracers tr = M1 . gConfigureTracers tr . unM1
+    gConfigureTracers field tr = M1 . gConfigureTracers field tr . unM1
 
 instance GConfigureTracers m f g => GConfigureTracers m (C1 c f) (C1 c g) where
-    gConfigureTracers tr = M1 . gConfigureTracers tr . unM1
+    gConfigureTracers field tr = M1 . gConfigureTracers field tr . unM1
 
-instance GConfigureTracers m f g => GConfigureTracers m (S1 c f) (S1 c g) where
-    gConfigureTracers tr = M1 . gConfigureTracers tr . unM1
+instance (Selector s, GConfigureTracers m f g) => GConfigureTracers m (S1 s f) (S1 s g) where
+    gConfigureTracers _ tr = M1 . gConfigureTracers field tr . unM1
+      where
+        field = selName (undefined :: S1 s f a)
 
 instance (GConfigureTracers m f0 g0, GConfigureTracers m f1 g1)
     => GConfigureTracers m (f0 :*: f1) (g0 :*: g1)
   where
-    gConfigureTracers tr (f0 :*: f1) =
-        gConfigureTracers tr f0
+    gConfigureTracers field tr (f0 :*: f1) =
+        gConfigureTracers field tr f0
         :*:
-        gConfigureTracers tr f1
+        gConfigureTracers field tr f1
 
 instance (ToJSON msg, HasSeverityAnnotation msg, Applicative m)
     => GConfigureTracers m (K1 i (Const (Maybe Severity) (Tracer m msg))) (K1 i (Tracer m msg))
   where
-    gConfigureTracers tr = \case
+    gConfigureTracers field tr = \case
         K1 (Const (Just minSeverity)) ->
-            K1 (contramap (SomeMsg minSeverity) tr)
+            K1 (contramap (SomeMsg minSeverity field) tr)
         K1 (Const Nothing) ->
             K1 nullTracer
 
@@ -177,5 +180,6 @@ data SomeMsg where
     SomeMsg
         :: forall msg. (ToJSON msg, HasSeverityAnnotation msg)
         => Severity
+        -> String
         -> msg
         -> SomeMsg
