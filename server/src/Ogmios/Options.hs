@@ -40,7 +40,7 @@ import Ogmios.App.Server
 import Ogmios.App.Server.WebSocket
     ( TraceWebSocket )
 import Ogmios.Control.MonadLog
-    ( Severity (..), Tracer, defaultTracers )
+    ( Severity (..), Tracer, TracerDefinition (..), TracerHKD, defaultTracers )
 
 import Cardano.Network.Protocol.NodeToClient
     ( Block )
@@ -77,7 +77,7 @@ import qualified Data.Yaml.Pretty as Yaml
 --
 
 data Command (f :: Type -> Type)
-    = Start (f NetworkParameters) Configuration (Tracers IO (Const Severity))
+    = Start (f NetworkParameters) Configuration (Tracers IO 'MinSeverities)
     | Version
 
 deriving instance Eq (f NetworkParameters) => Eq (Command f)
@@ -191,8 +191,8 @@ maxInFlightOption = option auto $ mempty
     <> showDefault
 
 -- | [--log-level=SEVERITY]
-tracersOption :: Parser (Tracers m (Const Severity))
-tracersOption = fmap defaultTracers $ option caseInsensitive $ mempty
+tracersOption :: Parser (Tracers m 'MinSeverities)
+tracersOption = fmap defaultTracers $ option readSeverityM $ mempty
     <> long "log-level"
     <> metavar "SEVERITY"
     <> helpDoc (Just doc)
@@ -202,16 +202,18 @@ tracersOption = fmap defaultTracers $ option caseInsensitive $ mempty
         vsep $ string <$> mconcat
             [ [ "Minimal severity of all log messages." ]
             , ("- " <>) <$> severities
+            , [ "Or alternatively, to turn a logger off:" ]
+            , [ "- Off" ]
             ]
 
 -- | [--log-level-{COMPONENT}=SEVERITY], default: Info
-logLevelOption :: Text -> Parser Severity
+logLevelOption :: Text -> Parser (Maybe Severity)
 logLevelOption component =
-    option caseInsensitive $ mempty
+    option readSeverityM $ mempty
         <> long ("log-level-" <> toString component)
         <> metavar "SEVERITY"
         <> helpDoc (Just doc)
-        <> value Info
+        <> value (Just Info)
         <> showDefault
         <> completer (listCompleter severities)
   where
@@ -285,30 +287,35 @@ parseNetworkParameters configFile = runOrDie $ do
 -- Tracers
 --
 
-data Tracers m (f :: Type -> Type) = Tracers
+data Tracers m (kind :: TracerDefinition) = Tracers
     { tracerHealth
-        :: HKD f (Tracer m (TraceHealth (Health Block)))
+        :: TracerHKD kind (Tracer m (TraceHealth (Health Block)))
     , tracerMetrics
-        :: HKD f (Tracer m TraceMetrics)
+        :: TracerHKD kind (Tracer m TraceMetrics)
     , tracerWebSocket
-        :: HKD f (Tracer m TraceWebSocket)
+        :: TracerHKD kind (Tracer m TraceWebSocket)
     , tracerServer
-        :: HKD f (Tracer m TraceServer)
+        :: TracerHKD kind (Tracer m TraceServer)
     , tracerConfiguration
-        :: HKD f (Tracer m TraceConfiguration)
+        :: TracerHKD kind (Tracer m TraceConfiguration)
     } deriving (Generic)
 
-deriving instance Show (Tracers m (Const Severity))
-deriving instance Eq (Tracers m (Const Severity))
+deriving instance Show (Tracers m 'MinSeverities)
+deriving instance Eq (Tracers m 'MinSeverities)
 
 --
 -- Helpers
 --
 
-caseInsensitive :: Read a => ReadM a
-caseInsensitive = maybeReader $ \case
+readSeverityM :: ReadM (Maybe Severity)
+readSeverityM = maybeReader $ \case
     [] -> Nothing
-    h:q -> readMay (toUpper h:q)
+    (toUpper -> h):q ->
+        if h:q == "Off" then
+            Just Nothing
+        else
+            Just <$> readMay (h:q)
 
 severities :: [String]
-severities = show @_ @Severity <$> [minBound .. maxBound]
+severities =
+    show @_ @Severity <$> [minBound .. maxBound]

@@ -42,6 +42,7 @@ import Ogmios.Control.MonadLog
     , Logger
     , MonadLog (..)
     , Severity (..)
+    , getSeverityAnnotation'
     , natTracer
     )
 import Ogmios.Control.MonadMetrics
@@ -319,7 +320,7 @@ data TraceWebSocket where
 
 instance HasSeverityAnnotation TraceWebSocket where
     getSeverityAnnotation = \case
-        WebSocketClient msg           -> getSeverityAnnotation msg
+        WebSocketClient msg           -> getSeverityAnnotation' msg
         WebSocketStateQuery msg       -> getSeverityAnnotation msg
         WebSocketWorkerExited{}       -> Debug
         WebSocketConnectionAccepted{} -> Info

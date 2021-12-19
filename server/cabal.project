@@ -3,6 +3,7 @@ index-state: 2021-09-15T00:00:00Z
 packages:
   ./
   modules/cardano-client
+  modules/contra-tracers
   modules/fast-bech32
   modules/git-th
   modules/hspec-json-schema

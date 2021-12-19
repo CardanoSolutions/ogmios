@@ -26,8 +26,7 @@ module Ogmios
 
     -- * Logging
     , Tracers (..)
-    , mkTracers
-    , withStdoutTracer
+    , withStdoutTracers
     ) where
 
 import Ogmios.Prelude
@@ -55,7 +54,7 @@ import Ogmios.Control.MonadAsync
 import Ogmios.Control.MonadClock
     ( MonadClock, getCurrentTime, withDebouncer, _10s )
 import Ogmios.Control.MonadLog
-    ( MonadLog (..), mkTracers, withStdoutTracer )
+    ( MonadLog (..), TracerDefinition (..), withStdoutTracers )
 import Ogmios.Control.MonadMetrics
     ( MonadMetrics )
 import Ogmios.Control.MonadSTM
@@ -98,7 +97,7 @@ runWith :: forall a. App a -> Env App -> IO a
 runWith app = runReaderT (unApp app)
 
 -- | Ogmios, where everything gets stitched together.
-application :: Tracers IO Identity -> App ()
+application :: Tracers IO 'Concrete -> App ()
 application tracers = hijackSigTerm >> withDebouncer _10s (\debouncer -> do
     env@Env{network} <- ask
     logWith tracerConfiguration (ConfigurationNetwork network)
@@ -141,7 +140,7 @@ data Env (m :: Type -> Type) = Env
     } deriving stock (Generic)
 
 newEnvironment
-    :: Tracers IO Identity
+    :: Tracers IO 'Concrete
     -> NetworkParameters
     -> Configuration
     -> IO (Env App)
