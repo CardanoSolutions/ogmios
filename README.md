@@ -17,6 +17,7 @@
   - `currentProtocolParameters`
   - `delegationsAndRewards`
   - `eraStart`
+  - `eraSummaries`
   - `genesisConfig`
   - `ledgerTip`
   - `nonMyopicMemberRewards`
