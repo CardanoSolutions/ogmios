@@ -14,6 +14,7 @@
   , "QueryResponse[currentProtocolParameters]"
   , "QueryResponse[delegationsAndRewards]"
   , "QueryResponse[eraStart]"
+  , "QueryResponse[eraSummaries]"
   , "QueryResponse[genesisConfig]"
   , "QueryResponse[ledgerTip]"
   , "QueryResponse[nonMyopicMemberRewards]"
@@ -505,6 +506,10 @@
                 , "enum": ["eraStart"]
                 }
               , { "type": "string"
+                , "title": "GetEraSummaries"
+                , "enum": ["eraSummaries"]
+                }
+              , { "type": "string"
                 , "title": "GetLedgerTip"
                 , "enum": ["ledgerTip"]
                 }
@@ -659,6 +664,41 @@
         { "oneOf":
           [ { "$ref": "#/definitions/Bound" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[eraSummaries]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          , { "type": "array"
+            , "items": { "$ref": "#/definitions/EraSummary" }
+            }
           ]
         }
       , "reflection":
@@ -2412,7 +2452,7 @@
       , "epochLength": { "$ref": "#/definitions/Epoch" }
       , "slotsPerKesPeriod": { "$ref": "#/definitions/UInt64" }
       , "maxKesEvolutions": { "$ref": "#/definitions/UInt64" }
-      , "slotLength": { "$ref": "#/definitions/Int64" }
+      , "slotLength": { "$ref": "#/definitions/SlotLength" }
       , "updateQuorum": { "$ref": "#/definitions/UInt64" }
       , "maxLovelaceSupply": { "$ref": "#/definitions/UInt64" }
       , "protocolParameters": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
@@ -2628,7 +2668,7 @@
 
   , "Epoch":
     { "type": "integer"
-    , "description": "An epoch number."
+    , "description": "An epoch number or length."
     , "minimum": 0
     , "maximum": 18446744073709552000
     }
@@ -2653,6 +2693,40 @@
           , "ledgerEra": { "$ref": "#/definitions/Era" }
           }
         }
+      }
+    }
+
+  , "EraParameters":
+    { "type": "object"
+    , "description": "Parameters that can vary across hard forks."
+    , "additionalProperties": false
+    , "required": [ "epochLength", "slotLength", "safeZone" ]
+    , "properties":
+      { "epochLength": { "$ref": "#/definitions/Epoch" }
+      , "slotLength": { "$ref": "#/definitions/SlotLength" }
+      , "safeZone":
+        { "oneOf":
+          [ { "$ref": "#/definitions/SafeZone" }
+          , { "type": "null" }
+          ]
+        }
+      }
+    }
+
+  , "EraSummary":
+    { "type": "object"
+    , "description": "Summary of the confirmed parts of the ledger."
+    , "additionalProperties": false
+    , "required": [ "start", "end", "parameters" ]
+    , "properties":
+      { "start": { "$ref": "#/definitions/Bound" }
+      , "end":
+        { "oneOf":
+          [ { "$ref": "#/definitions/Bound" }
+          , { "type": "null" }
+          ]
+        }
+      , "parameters": { "$ref": "#/definitions/EraParameters" }
       }
     }
 
@@ -2789,8 +2863,7 @@
 
   , "Lovelace":
     { "type": "integer"
-    , "minimum": 0
-    , "maximum": 18446744073709552000
+    , "description": "A number of lovelace, possibly large when summed up."
     }
 
   , "LovelaceDelta":
@@ -3397,12 +3470,10 @@
     }
 
   , "RelativeTime":
-    { "type": "string"
-    , "description": "A time in seconds relative to the system start."
-    , "pattern": "^[0-9]+.[0-9]+s$"
-    , "examples":
-      [ "3441.33s"
-      ]
+    { "type": "integer"
+    , "description": "A time in seconds relative to another one (typically, system start or era start)."
+    , "minimum": 0
+    , "maximum": 18446744073709552999
     }
 
   , "Relay":
@@ -3592,20 +3663,9 @@
       }
     }
 
-  , "UInt8":
+  , "SafeZone":
     { "type": "integer"
-    , "minimum": 0
-    , "maximum": 255
-    }
-
-  , "UInt32":
-    { "type": "integer"
-    , "minimum": 0
-    , "maximum": 4294967295
-    }
-
-  , "UInt64":
-    { "type": "integer"
+    , "description": "Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks."
     , "minimum": 0
     , "maximum": 18446744073709552999
     }
@@ -3771,9 +3831,15 @@
     }
 
   , "Slot":
-    { "description": "An absolute slot number."
-    , "type": "integer"
+    { "type": "integer"
+    , "description": "An absolute slot number."
     , "minimum": 0
+    , "maximum": 18446744073709552000
+    }
+
+  , "SlotLength":
+    { "type": "integer"
+    , "description": "A slot length, in seconds."
     , "maximum": 18446744073709552000
     }
 
@@ -4914,6 +4980,24 @@
           }
         }
       ]
+    }
+
+  , "UInt8":
+    { "type": "integer"
+    , "minimum": 0
+    , "maximum": 255
+    }
+
+  , "UInt32":
+    { "type": "integer"
+    , "minimum": 0
+    , "maximum": 4294967295
+    }
+
+  , "UInt64":
+    { "type": "integer"
+    , "minimum": 0
+    , "maximum": 18446744073709552999
     }
 
   , "Update[Shelley]":
