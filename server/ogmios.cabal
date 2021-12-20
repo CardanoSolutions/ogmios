@@ -23,6 +23,8 @@ extra-source-files:
     static/dashboard.js
     static/assets/favicon.ico
     static/assets/logo.png
+data-files:
+    ogmios.wsp.json
 
 source-repository head
   type: git

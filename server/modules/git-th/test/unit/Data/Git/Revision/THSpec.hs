@@ -24,7 +24,7 @@ import Language.Haskell.TH
 import System.Environment
     ( setEnv )
 import System.IO.Temp
-    ( withSystemTempDirectory )
+    ( withTempDirectory )
 import Test.Hspec
     ( ActionWith
     , Spec
@@ -115,7 +115,7 @@ spec = around withGitSandbox $ do
 -- test scenarios that are explicit in the test themselves.
 withGitSandbox :: ActionWith FilePath -> IO ()
 withGitSandbox actionWith =
-    withSystemTempDirectory "git-th" $ \tmp -> do
+    withTempDirectory "." "git-th" $ \tmp -> do
         setEnv "GIT_WORK_TREE" tmp
         setEnv "GIT_DIR" (tmp <> "/.git")
         actionWith tmp
