@@ -1,5 +1,5 @@
 import { Ogmios, Bound } from '@cardano-ogmios/schema'
-import { QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
+import { UnknownResultError } from '../../errors'
 import { InteractionContext } from '../../Connection'
 import { Query } from '../Query'
 
@@ -25,9 +25,7 @@ export const eraStart = (context: InteractionContext): Promise<Bound> =>
     }
   }, {
     handler: (response, resolve, reject) => {
-      if (response.result === 'QueryUnavailableInCurrentEra') {
-        return reject(new QueryUnavailableInCurrentEraError('ledgerTip'))
-      } else if (isBound(response.result)) {
+      if (isBound(response.result)) {
         return resolve(response.result)
       } else {
         return reject(new UnknownResultError(response.result))
