@@ -2412,7 +2412,7 @@
       , "epochLength": { "$ref": "#/definitions/Epoch" }
       , "slotsPerKesPeriod": { "$ref": "#/definitions/UInt64" }
       , "maxKesEvolutions": { "$ref": "#/definitions/UInt64" }
-      , "slotLength": { "$ref": "#/definitions/Int64" }
+      , "slotLength": { "$ref": "#/definitions/SlotLength" }
       , "updateQuorum": { "$ref": "#/definitions/UInt64" }
       , "maxLovelaceSupply": { "$ref": "#/definitions/UInt64" }
       , "protocolParameters": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
@@ -2628,7 +2628,7 @@
 
   , "Epoch":
     { "type": "integer"
-    , "description": "An epoch number."
+    , "description": "An epoch number or length."
     , "minimum": 0
     , "maximum": 18446744073709552000
     }
@@ -3771,9 +3771,15 @@
     }
 
   , "Slot":
-    { "description": "An absolute slot number."
-    , "type": "integer"
+    { "type": "integer"
+    , "description": "An absolute slot number."
     , "minimum": 0
+    , "maximum": 18446744073709552000
+    }
+
+  , "SlotLength":
+    { "type": "integer"
+    , "description": "A slot length, in seconds."
     , "maximum": 18446744073709552000
     }
 
@@ -4914,6 +4920,24 @@
           }
         }
       ]
+    }
+
+  , "UInt8":
+    { "type": "integer"
+    , "minimum": 0
+    , "maximum": 255
+    }
+
+  , "UInt32":
+    { "type": "integer"
+    , "minimum": 0
+    , "maximum": 4294967295
+    }
+
+  , "UInt64":
+    { "type": "integer"
+    , "minimum": 0
+    , "maximum": 18446744073709552999
     }
 
   , "Update[Shelley]":
