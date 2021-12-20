@@ -2859,8 +2859,7 @@
 
   , "Lovelace":
     { "type": "integer"
-    , "minimum": 0
-    , "maximum": 18446744073709552000
+    , "description": "A number of lovelace, possibly large when summed up."
     }
 
   , "LovelaceDelta":

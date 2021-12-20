@@ -63,7 +63,10 @@ export type TxId = string;
  * A Cardano address (either legacy format or new format).
  */
 export type Address = string;
-export type Lovelace = number;
+/**
+ * A number of lovelace, possibly large when summed up.
+ */
+export type Lovelace = bigint;
 /**
  * A number of asset, can be negative went burning assets.
  */
@@ -301,9 +304,9 @@ export type GetChainTip = "chainTip";
 export type GetBlockHeight = "blockHeight";
 export type GetSystemStart = "systemStart";
 /**
- * A time in seconds relative to the system start.
+ * A time in seconds relative to another one (typically, system start or era start).
  */
-export type RelativeTime = string;
+export type RelativeTime = number;
 /**
  * The requested query is not available in the current node era. It could be that the node is not fully synced.
  */
@@ -1803,29 +1806,29 @@ export interface RewardsProvenance {
    */
   totalExpectedBlocks: number;
   /**
-   * The maximum amount of Lovelace which can be removed from the reserves to be given out as rewards for the given epoch.
+   * A number of lovelace, possibly large when summed up.
    */
-  incentive: number;
+  incentive: bigint;
   /**
-   * The difference between the 'availableRewards' and what was actually distributed.
+   * A number of lovelace, possibly large when summed up.
    */
-  rewardsGap: number;
+  rewardsGap: bigint;
   /**
-   * The total Lovelace available for rewards for the given epoch, equal to 'totalRewards' less 'treasuryTax'.
+   * A number of lovelace, possibly large when summed up.
    */
-  availableRewards: number;
+  availableRewards: bigint;
   /**
-   * The reward pot for the given epoch, equal to the 'incentive' plus the fee pot.
+   * A number of lovelace, possibly large when summed up.
    */
-  totalRewards: number;
+  totalRewards: bigint;
   /**
-   * The amount of Lovelace taken for the treasury for the given epoch.
+   * A number of lovelace, possibly large when summed up.
    */
-  treasuryTax: number;
+  treasuryTax: bigint;
   /**
-   * The amount of Lovelace that is delegated during the given epoch.
+   * A number of lovelace, possibly large when summed up.
    */
-  activeStake: number;
+  activeStake: bigint;
   pools: {
     [k: string]: IndividualPoolRewardsProvenance;
   };
@@ -1844,30 +1847,30 @@ export interface IndividualPoolRewardsProvenance {
    */
   activeStakeShare: string;
   /**
-   * The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch.
+   * A number of lovelace, possibly large when summed up.
    */
-  ownerStake: number;
+  ownerStake: bigint;
   parameters: PoolParameters;
   /**
    * A ratio of two integers, to express exact fractions.
    */
   pledgeRatio: string;
   /**
-   * The maximum number of Lovelace this stake pool can earn.
+   * A number of lovelace, possibly large when summed up.
    */
-  maxRewards: number;
+  maxRewards: bigint;
   /**
    * A ratio of two integers, to express exact fractions.
    */
   apparentPerformance: string;
   /**
-   * The total Lovelace earned by the stake pool.
+   * A number of lovelace, possibly large when summed up.
    */
-  totalRewards: number;
+  totalRewards: bigint;
   /**
-   * The total Lovelace earned by the stake pool leader.
+   * A number of lovelace, possibly large when summed up.
    */
-  leaderRewards: number;
+  leaderRewards: bigint;
 }
 export interface PoolsRanking {
   [k: string]: {
