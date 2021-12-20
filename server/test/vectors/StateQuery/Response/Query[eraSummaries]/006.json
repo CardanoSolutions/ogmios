@@ -1,0 +1,1 @@
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"Query","result":[{"start":{"time":840009067,"slot":7508077,"epoch":14491817},"end":null,"parameters":{"epochLength":95809,"slotLength":9,"safeZone":5063650}}],"reflection":null}
