@@ -325,7 +325,7 @@ encodeRational r =
 
 encodeRelativeTime :: RelativeTime -> Json
 encodeRelativeTime =
-    encodeString . show . getRelativeTime
+    encodeNominalDiffTime . getRelativeTime
 {-# INLINABLE encodeRelativeTime #-}
 
 encodeScientific :: Scientific -> Json

@@ -3467,12 +3467,10 @@
     }
 
   , "RelativeTime":
-    { "type": "string"
-    , "description": "A time in seconds relative to the system start."
-    , "pattern": "^[0-9]+.[0-9]+s$"
-    , "examples":
-      [ "3441.33s"
-      ]
+    { "type": "integer"
+    , "description": "A time in seconds relative to another one (typically, system start or era start)."
+    , "minimum": 0
+    , "maximum": 18446744073709552999
     }
 
   , "Relay":
