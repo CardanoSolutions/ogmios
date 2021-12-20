@@ -27,4 +27,6 @@ jobs:
           name: mlabs
           authToken: "${{ secrets.CACHIXKEY }}"
       - name: Build and run tests
-        run: nix develop -L -c cabal test --test-show-details=direct ogmios:test:unit
+        run: |
+          nix build -L .#check.x86_64-linux
+          nix develop -L -c cabal test --test-show-details=direct ogmios:test:unit
