@@ -1,9 +1,4 @@
-cabal-version: 2.0
-
--- This file has been generated from package.yaml by hpack version 0.34.4.
---
--- see: https://github.com/sol/hpack
-
+cabal-version:  2.4
 name:           git-th
 version:        1.1.0
 synopsis:       Compile-time helpers to access git informations.
@@ -22,17 +17,12 @@ extra-source-files:
     README.md
     CHANGELOG.md
 
-source-repository head
-  type: git
-  location: https://github.com/cardanosolutions/ogmios
+common common-ghc-options
+  ghc-options:
+    -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wpartial-fields -Wredundant-constraints -Wunused-packages
 
-library
-  exposed-modules:
-      Data.Git.Revision.TH
-  other-modules:
-      Paths_git_th
-  hs-source-dirs:
-      src
+common common-extensions
   default-extensions:
       BangPatterns
       BinaryLiterals
@@ -68,9 +58,20 @@ library
       TypeFamilies
       TypeSynonymInstances
       ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-packages
-  build-tools:
-      git
+
+source-repository head
+  type: git
+  location: https://github.com/cardanosolutions/ogmios
+
+library
+  import: common-ghc-options
+  import: common-extensions
+  exposed-modules:
+      Data.Git.Revision.TH
+  other-modules:
+      Paths_git_th
+  hs-source-dirs:
+      src
   build-depends:
       base >=4.7 && <5
     , process
@@ -78,6 +79,8 @@ library
   default-language: Haskell2010
 
 test-suite integration
+  import: common-ghc-options
+  import: common-extensions
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
@@ -85,42 +88,7 @@ test-suite integration
       Paths_git_th
   hs-source-dirs:
       test/unit
-  default-extensions:
-      BangPatterns
-      BinaryLiterals
-      ConstraintKinds
-      DataKinds
-      DefaultSignatures
-      DeriveDataTypeable
-      DeriveFoldable
-      DeriveFunctor
-      DeriveGeneric
-      DeriveTraversable
-      EmptyDataDecls
-      ExistentialQuantification
-      FlexibleContexts
-      FlexibleInstances
-      FunctionalDependencies
-      GADTs
-      InstanceSigs
-      KindSignatures
-      LambdaCase
-      MultiParamTypeClasses
-      MultiWayIf
-      NamedFieldPuns
-      NoImplicitPrelude
-      NumericUnderscores
-      OverloadedStrings
-      PartialTypeSignatures
-      PatternGuards
-      RankNTypes
-      ScopedTypeVariables
-      StandaloneDeriving
-      TupleSections
-      TypeFamilies
-      TypeSynonymInstances
-      ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-packages -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , git-th
