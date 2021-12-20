@@ -60,6 +60,7 @@ const logObject = (obj: Object) =>
     delegationsAndRewards:
       (stakeKeyHashes: Schema.DigestBlake2BCredential[]) => StateQuery.delegationsAndRewards(context, stakeKeyHashes),
     eraStart: () => StateQuery.eraStart(context),
+    eraSummaries: () => StateQuery.eraSummaries(context),
     genesisConfig: () => StateQuery.genesisConfig(context),
     getServerHealth: () => getServerHealth({ connection: createConnectionObject(connection) }),
     findIntersect: (points: Schema.Point[]) => ChainSync.findIntersect(context, points),

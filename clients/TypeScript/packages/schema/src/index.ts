@@ -44,7 +44,7 @@ export type DigestBlake2BBlockByronBodyDlgPayload = string;
 export type DigestBlake2BBlockByronBodyUpdatePayload = string;
 export type ProtocolMagicId = number;
 /**
- * An epoch number.
+ * An epoch number or length.
  */
 export type Epoch = number;
 /**
@@ -284,6 +284,7 @@ export type SubmitTxError = (
 )[];
 export type AcquireFailureDetails = "pointTooOld" | "pointNotOnChain";
 export type GetEraStart = "eraStart";
+export type GetEraSummaries = "eraSummaries";
 export type GetLedgerTip = "ledgerTip";
 export type GetCurrentEpoch = "currentEpoch";
 export type Lovelaces = Lovelace[];
@@ -307,6 +308,14 @@ export type RelativeTime = string;
  * The requested query is not available in the current node era. It could be that the node is not fully synced.
  */
 export type QueryUnavailableInCurrentEra = "QueryUnavailableInCurrentEra";
+/**
+ * A slot length, in seconds.
+ */
+export type SlotLength = number;
+/**
+ * Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks.
+ */
+export type SafeZone = number;
 export type UtcTime = string;
 /**
  * A magic number for telling networks apart. (e.g. 764824073)
@@ -492,6 +501,7 @@ export interface Ogmios {
     args?: {
       query:
         | GetEraStart
+        | GetEraSummaries
         | GetLedgerTip
         | GetCurrentEpoch
         | GetNonMyopicMemberRewards
@@ -524,6 +534,19 @@ export interface Ogmios {
     servicename: "ogmios";
     methodname: "Query";
     result: Bound | QueryUnavailableInCurrentEra;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  "QueryResponse[eraSummaries]": {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "Query";
+    result: QueryUnavailableInCurrentEra | EraSummary[];
     /**
      * Any value that was set by a client request in the 'mirror' field.
      */
@@ -1696,6 +1719,22 @@ export interface Bound {
   epoch: Epoch;
 }
 /**
+ * Summary of the confirmed parts of the ledger.
+ */
+export interface EraSummary {
+  start: Bound;
+  end: Bound | null;
+  parameters: EraParameters;
+}
+/**
+ * Parameters that can vary across hard forks.
+ */
+export interface EraParameters {
+  epochLength: Epoch;
+  slotLength: SlotLength;
+  safeZone: SafeZone | null;
+}
+/**
  * Rewards that can be expected assuming a pool is fully saturated. Such rewards are said non-myopic, in opposition to short-sighted rewards looking at immediate benefits. Keys of the map can be either Lovelace amounts or account credentials depending on the query.
  */
 export interface NonMyopicMemberRewards {
@@ -1737,7 +1776,7 @@ export interface CompactGenesis {
   epochLength: Epoch;
   slotsPerKesPeriod: UInt64;
   maxKesEvolutions: UInt64;
-  slotLength: Int64;
+  slotLength: SlotLength;
   updateQuorum: UInt64;
   maxLovelaceSupply: UInt64;
   protocolParameters: ProtocolParametersShelley;

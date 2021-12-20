@@ -22,6 +22,7 @@ import {
   currentProtocolParameters,
   delegationsAndRewards,
   eraStart,
+  eraSummaries,
   genesisConfig,
   ledgerTip,
   nonMyopicMemberRewards,
@@ -52,6 +53,7 @@ export interface StateQueryClient {
   currentProtocolParameters: () => ReturnType<typeof currentProtocolParameters>
   delegationsAndRewards: (stakeKeyHashes: DigestBlake2BCredential[]) => ReturnType<typeof delegationsAndRewards>
   eraStart: () => ReturnType<typeof eraStart>
+  eraSummaries: () => ReturnType<typeof eraSummaries>
   genesisConfig: () => ReturnType<typeof genesisConfig>
   ledgerTip: () => ReturnType<typeof ledgerTip>
   nonMyopicMemberRewards: (input: Lovelace[] | DigestBlake2BCredential[]) => ReturnType<typeof nonMyopicMemberRewards>
@@ -134,6 +136,10 @@ export const createStateQueryClient = async (
       eraStart: () => {
         ensureSocketIsOpen(socket)
         return eraStart(context)
+      },
+      eraSummaries: () => {
+        ensureSocketIsOpen(socket)
+        return eraSummaries(context)
       },
       genesisConfig: () => {
         ensureSocketIsOpen(socket)
