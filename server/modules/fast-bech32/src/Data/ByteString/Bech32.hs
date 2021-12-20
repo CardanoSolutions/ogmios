@@ -28,11 +28,11 @@
 --   encoded, the checksum is already calculated and only need to be base32
 --   encoded in turn.
 --
--- - The first part of the checksum is pre-computed during the of the HRP. It is
---   indeed quite common for a single HRP to encode many payload. To calculate
---   the checksum, one must first expand the HRP which is in itself an already
---   'costly' operation. Pre-calculating the expansion and the beginning of the
---   checksum shaves off some time .
+-- - The first part of the checksum is pre-computed during the construction of the
+--   HRP. It is indeed quite common for a single HRP to encode many payload. To
+--   calculate the checksum, one must first expand the HRP which is in itself an
+--   already 'costly' operation. Pre-calculating the expansion and the beginning
+--   of the checksum shaves off some time .
 --
 module Data.ByteString.Bech32
     ( -- * Encoding
@@ -40,7 +40,6 @@ module Data.ByteString.Bech32
 
       -- * HumanReadablePart
     , HumanReadablePart(HumanReadablePart)
-    , pattern HumanReadablePartConstr
     , unHumanReadablePart
     ) where
 
