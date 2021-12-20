@@ -20,6 +20,7 @@ module Ogmios.Data.Json.Query
       -- ** Types in queries
     , RewardAccounts
     , Delegations
+    , Interpreter
     , Sh.RewardProvenance
     , Sh.RewardProvenancePool
     , Sh.Desirability
@@ -31,6 +32,7 @@ module Ogmios.Data.Json.Query
     , encodeDesirabilities
     , encodeEpochNo
     , encodeEraMismatch
+    , encodeInterpreter
     , encodeMismatchEraInfo
     , encodeNonMyopicMemberRewards
     , encodeOneEraHash
@@ -47,6 +49,7 @@ module Ogmios.Data.Json.Query
     , parseGetEraStart
     , parseGetFilteredDelegationsAndRewards
     , parseGetGenesisConfig
+    , parseGetInterpreter
     , parseGetLedgerTip
     , parseGetNonMyopicMemberRewards
     , parseGetPoolIds
@@ -75,6 +78,8 @@ import Cardano.Ledger.SafeHash
     ( unsafeMakeSafeHash )
 import Cardano.Slotting.Slot
     ( EpochNo (..), WithOrigin (..) )
+import Codec.Serialise
+    ( deserialise, serialise )
 import Data.Aeson
     ( toJSON )
 import Data.SOP.Strict
@@ -89,8 +94,12 @@ import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
     ( EraMismatch (..), mkEraMismatch )
 import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
     ( QueryAnytime (..) )
+import Ouroboros.Consensus.HardFork.History.EraParams
+    ( EraParams (..), SafeZone (..) )
+import Ouroboros.Consensus.HardFork.History.Qry
+    ( Interpreter )
 import Ouroboros.Consensus.HardFork.History.Summary
-    ( Bound (..) )
+    ( Bound (..), EraEnd (..), EraSummary (..), Summary (..) )
 import Ouroboros.Consensus.Shelley.Eras
     ( AllegraEra, AlonzoEra, MaryEra, ShelleyEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
@@ -109,6 +118,7 @@ import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.Map.Merge.Strict as Map
 
+import qualified Ouroboros.Consensus.HardFork.Combinator.Ledger.Query as LSQ
 import qualified Ouroboros.Consensus.Ledger.Query as LSQ
 
 import qualified Cardano.Crypto.Hash.Class as CC
@@ -162,6 +172,7 @@ instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
         , \raw -> Query raw <$> parseGetEraStart id raw
         , \raw -> Query raw <$> parseGetFilteredDelegationsAndRewards id raw
         , \raw -> Query raw <$> parseGetGenesisConfig (const id) raw
+        , \raw -> Query raw <$> parseGetInterpreter id raw
         , \raw -> Query raw <$> parseGetLedgerTip (const id) raw
         , \raw -> Query raw <$> parseGetNonMyopicMemberRewards id raw
         , \raw -> Query raw <$> parseGetPoolIds id raw
@@ -273,6 +284,15 @@ encodeDesirabilities mode rp =
             , ( "estimatedHitRate", encodeDouble (Sh.desirabilityScore d) )
             ]
 
+encodeEraEnd
+    :: EraEnd
+    -> Json
+encodeEraEnd = \case
+    EraEnd bound ->
+        encodeBound bound
+    EraUnbounded ->
+        encodeNull
+
 encodeEraMismatch
     :: EraMismatch
     -> Json
@@ -287,6 +307,31 @@ encodeEraMismatch x = encodeObject
         ]
       )
     ]
+
+encodeEraParams
+    :: EraParams
+    -> Json
+encodeEraParams x = encodeObject
+    [ ( "epochLength", encodeEpochSize (eraEpochSize x) )
+    , ( "slotLength", encodeSlotLength (eraSlotLength x) )
+    , ( "safeZone", encodeSafeZone (eraSafeZone x) )
+    ]
+
+encodeEraSummary
+    :: EraSummary
+    -> Json
+encodeEraSummary x = encodeObject
+    [ ( "start", encodeBound (eraStart x) )
+    , ( "end", encodeEraEnd (eraEnd x) )
+    , ( "parameters", encodeEraParams (eraParams x) )
+    ]
+
+encodeInterpreter
+    :: forall crypto eras. (eras ~ CardanoEras crypto)
+    => Interpreter eras
+    -> Json
+encodeInterpreter (deserialise @(Summary eras). serialise -> Summary eraSummaries) =
+    encodeFoldable encodeEraSummary (eraSummaries)
 
 encodeMismatchEraInfo
     :: MismatchEraInfo (CardanoEras crypto)
@@ -439,6 +484,15 @@ encodeRewardProvenance mode rp =
               , encodeCoin (Sh.lRewardP rpp)
               )
             ]
+
+encodeSafeZone
+    :: SafeZone
+    -> Json
+encodeSafeZone = \case
+    StandardSafeZone k ->
+        encodeWord64 k
+    UnsafeIndefiniteSafeZone ->
+        encodeNull
 
 --
 -- Parsers (Queries)
@@ -1095,6 +1149,20 @@ parseGetPoolsRanking genResult =
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetRewardProvenance
             )
+
+parseGetInterpreter
+    :: forall crypto f. ()
+    => (Proxy (Interpreter (CardanoEras crypto)) -> f (Interpreter (CardanoEras crypto)))
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseGetInterpreter genResult =
+    Json.withText "SomeQuery" $ \text -> do
+        guard (text == "eraSummaries")
+        pure $ const $ Just $ SomeQuery
+            { query = LSQ.BlockQuery $ LSQ.QueryHardFork LSQ.GetInterpreter
+            , genResult
+            , encodeResult = const encodeInterpreter
+            }
 
 --
 -- Parsers (Others)

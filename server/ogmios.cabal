@@ -166,6 +166,7 @@ library
     , safe
     , safe-exceptions
     , scientific
+    , serialise
     , small-steps
     , strict-containers
     , text

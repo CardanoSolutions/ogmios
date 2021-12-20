@@ -55,6 +55,7 @@ module Ogmios.Data.Json.Prelude
     , encodeScientific
     , encodeShortByteString
     , encodeSlotNo
+    , encodeSlotLength
     , encodeString
     , encodeSystemStart
     , encodeText
@@ -110,7 +111,7 @@ import Cardano.Slotting.Block
 import Cardano.Slotting.Slot
     ( EpochNo (..), EpochSize (..), SlotNo (..), WithOrigin (..) )
 import Cardano.Slotting.Time
-    ( SystemStart (..) )
+    ( SlotLength (..), SystemStart (..), slotLengthToSec )
 import Data.Aeson
     ( FromJSON, ToJSON, (.:) )
 import Data.ByteArray
@@ -147,6 +148,7 @@ import qualified Data.ByteString.Base58 as B58
 import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map.Strict as Map
+import qualified Ouroboros.Consensus.Util.Counting as Consensus
 
 --
 -- Prelude
@@ -336,6 +338,11 @@ encodeShortByteString encodeByteString =
     encodeByteString . fromShort
 {-# INLINABLE encodeShortByteString #-}
 
+encodeSlotLength :: SlotLength -> Json
+encodeSlotLength =
+    encodeInteger . slotLengthToSec
+{-# INLINABLE encodeSlotLength #-}
+
 encodeSlotNo :: SlotNo -> Json
 encodeSlotNo =
     encodeWord64 . unSlotNo
@@ -423,6 +430,7 @@ encodeFoldable encodeElem =
     Json.list id . foldr ((:) . encodeElem) []
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> [a] -> Json #-}
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> NonEmpty a -> Json #-}
+{-# SPECIALIZE encodeFoldable :: (a -> Json) -> Consensus.NonEmpty xs a -> Json #-}
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> Vector a -> Json #-}
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> Set a -> Json #-}
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> StrictSeq a -> Json #-}
