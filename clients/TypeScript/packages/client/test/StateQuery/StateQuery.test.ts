@@ -95,6 +95,9 @@ describe('Local state queries', () => {
       const bound = await client.eraStart()
       expect(bound.slot).toBeDefined()
 
+      const eraSummaries = await client.eraSummaries()
+      expect(eraSummaries).toHaveLength(5)
+
       const compactGenesis = await client.genesisConfig()
       expect(compactGenesis.systemStart).toBeDefined()
 
@@ -276,6 +279,17 @@ describe('Local state queries', () => {
       it('can query the blockchain\'s tip', async () => {
         const tip = await StateQuery.chainTip(context)
         expect(tip).not.toEqual('origin')
+      })
+    })
+    describe('eraSummaries', () => {
+      it('can fetch era summaries for slotting arithmetic', async () => {
+        const eraSummaries = await StateQuery.eraSummaries(context)
+        expect(eraSummaries).toHaveLength(5)
+        eraSummaries.forEach(s => {
+          expect(s.start).toBeDefined()
+          expect(s.end).toBeDefined()
+          expect(s.parameters).toBeDefined()
+        })
       })
     })
   })
