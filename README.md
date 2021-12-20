@@ -43,13 +43,14 @@
 
 ## Sponsors
 
-| [Ray Network][Ray Network] | [ccvault.io][ccvault] | [tapiocapool][tapiocapool] | 
-| --- | --- | --- |
-| [<img src="https://avatars.githubusercontent.com/u/65092852" height=100 width=100 />][Ray Network] | [<img src="https://avatars.githubusercontent.com/u/86010408" height=100 width=100 />][Ray Network] | [<img src="https://avatars.githubusercontent.com/u/80033713" height=100 width=100 />][tapiocapool] |
+| [Ray Network][Ray Network] | [ccvault.io][ccvault] | [kayandra][kayandra] | [tapiocapool][tapiocapool] | 
+| --- | --- | --- | --- |
+| [<img src="https://avatars.githubusercontent.com/u/65092852" height=100 width=100 />][Ray Network] | [<img src="https://avatars.githubusercontent.com/u/86010408" height=100 width=100 />][Ray Network] | [<img src="https://avatars.githubusercontent.com/u/5002506" height=100 width=100>][kayandra] | [<img src="https://avatars.githubusercontent.com/u/80033713" height=100 width=100 />][tapiocapool] |
 
 [Ray Network]: https://rraayy.com/
 [tapiocapool]: https://github.com/tapiocapool
 [ccvault]: https://ccvault.io/
+[kayandra]: https://github.com/kayandra
 
 <hr/>
 
