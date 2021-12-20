@@ -84,6 +84,7 @@ Query                        | Result
 `currentProtocolParameters`  | The current protocol parameters.
 `delegationsAndRewards`      | Current delegation settings and rewards of given reward accounts.
 `eraStart`                   | The information regarding the beginning of the current era.
+`eraSummaries`               | Era bounds and slotting parameters details, required for proper slot arithmetic.
 `genesisConfig`              | Get a compact version of the era's genesis configuration.
 `ledgerTip`                  | The most recent block tip known of the ledger.
 `nonMyopicMemberRewards`     | Non-myopic member rewards for each pool. Used in ranking.
@@ -94,7 +95,7 @@ Query                        | Result
 `rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
 `stakeDistribution`          | Distribution of the stake across all known stake pools.
 `systemStart`                | The chain's start time (UTC).
-`utxo`                       | Current UTXO, possibly filtered by address.
+`utxo`                       | Current UTXO, possibly filtered by address or output reference.
 
 To know more about arguments and results of each query, have a look at the [API reference](../../api-reference).
 

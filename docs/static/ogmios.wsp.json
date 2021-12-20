@@ -694,8 +694,12 @@
         , "enum": [ "Query" ]
         }
       , "result":
-        { "type": "array"
-        , "items": { "$ref": "#/definitions/EraSummary" }
+        { "oneOf":
+          [ { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          , { "type": "array"
+            , "items": { "$ref": "#/definitions/EraSummary" }
+            }
+          ]
         }
       , "reflection":
         { "description": "Any value that was set by a client request in the 'mirror' field."
@@ -3662,7 +3666,7 @@
   , "SafeZone":
     { "type": "integer"
     , "description": "Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks."
-    , "minimum": 1
+    , "minimum": 0
     , "maximum": 18446744073709552999
     }
 
