@@ -25,7 +25,7 @@ import Ogmios.Prelude
 import Ogmios.Control.MonadAsync
     ( MonadAsync (..) )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), newTMVar, putTMVar, tryTakeTMVar )
+    ( MonadSTM (..), newTMVarIO, putTMVar, tryTakeTMVar )
 
 import Control.Exception
     ( evaluate )
@@ -87,7 +87,7 @@ withDebouncer
     -> (Debouncer m -> m a)
     -> m a
 withDebouncer delay action = do
-    lock <- atomically $ newTMVar ()
+    lock <- newTMVarIO ()
 
     let debouncer = Debouncer $ \io -> atomically (tryTakeTMVar lock) >>= \case
             Nothing -> return ()

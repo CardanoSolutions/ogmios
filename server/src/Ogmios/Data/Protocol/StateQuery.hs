@@ -134,7 +134,7 @@ instance StandardHash block => Show (StateQueryMessage block) where
 -- Acquire
 --
 
-data Acquire block
+newtype Acquire block
     = Acquire { point :: Point block }
     deriving (Generic, Show, Eq)
 

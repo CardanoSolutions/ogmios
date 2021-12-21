@@ -72,7 +72,7 @@ import Ogmios.Control.MonadLog
 import Ogmios.Control.MonadMetrics
     ( MonadMetrics )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), TVar, newTVar )
+    ( MonadSTM (..), TVar, newTVarIO )
 import Ogmios.Control.MonadWebSocket
     ( MonadWebSocket )
 import Ogmios.Version
@@ -159,7 +159,7 @@ newEnvironment
     -> Options
     -> IO (Env App)
 newEnvironment tr network options = do
-    health  <- getCurrentTime >>= atomically . newTVar . emptyHealth
+    health  <- getCurrentTime >>= newTVarIO . emptyHealth
     sensors <- newSensors
     sampler <- newSampler (contramap OgmiosMetrics tr)
     pure $ Env{health,sensors,sampler,network,options}

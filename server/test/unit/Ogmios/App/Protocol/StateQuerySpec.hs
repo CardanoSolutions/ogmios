@@ -17,7 +17,7 @@ import Cardano.Network.Protocol.NodeToClient
     , cStateQueryCodec
     , codecs
     , localStateQueryClientPeer
-    , nodeToClientV_Latest
+    , nodeToClientVLatest
     , runPeer
     )
 import Data.Aeson
@@ -174,7 +174,7 @@ withStateQueryClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
     let innerCodecs = mkStateQueryCodecs encodePoint encodeAcquireFailure
     let client = mkStateQueryClient nullTracer innerCodecs recvQ (atomically . writeTQueue sendQ)
-    let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cStateQueryCodec
+    let codec = codecs defaultSlotsPerEpoch nodeToClientVLatest & cStateQueryCodec
     withMockChannel (stateQueryMockPeer seed codec) $ \channel -> do
         result <- race
             (runPeer nullTracer codec channel (localStateQueryClientPeer client))
@@ -201,12 +201,12 @@ stateQueryMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
     req <- lift recv
 
     msg <- lift (try @_ @SomeException (decodeOrThrow TokIdle req)) >>= \case
-        (Right (SomeMessage LSQ.MsgDone)) ->
+        Right (SomeMessage LSQ.MsgDone) ->
             pure Nothing
-        (Right (SomeMessage LSQ.MsgAcquire{})) -> do
+        Right (SomeMessage LSQ.MsgAcquire{}) -> do
             SomeResponse msg <- generateWith genAcquireResponse <$> state random
             pure $ Just $ encode codec (ServerAgency TokAcquiring) msg
-        (Left{}) -> lift (decodeOrThrow TokAcquired req) >>= \case
+        Left{} -> lift (decodeOrThrow TokAcquired req) >>= \case
             SomeMessage (LSQ.MsgQuery query) -> do
                 SomeResponse msg <- generateWith (genQueryResponse query) <$> state random
                 pure $ Just $ encode codec (ServerAgency $ TokQuerying query) msg

@@ -129,8 +129,8 @@ encodeDataPart !alphabet !chk0 =
             withForeignPtr resultForeignPtr $ \resultPtr ->
                 withForeignPtr inputForeignPtr $ \inputPtr -> do
                     chk' <- fn (resultLen - 1) inputPtr resultPtr
-                    return $ (PS resultForeignPtr 0 resultLen)
-                          <> (encodeChecksum alphabet chk')
+                    return $ PS resultForeignPtr 0 resultLen
+                          <> encodeChecksum alphabet chk'
 
     base32 :: Int -> Residue -> Checksum -> Int -> Ptr Word8 -> Ptr Word8 -> IO Checksum
     base32 !n !r !chk !maxN !inputPtr !resultPtr

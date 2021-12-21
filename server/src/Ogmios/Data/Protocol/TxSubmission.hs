@@ -82,7 +82,7 @@ data TxSubmissionMessage block
 -- SubmitTx
 --
 
-data SubmitTx block
+newtype SubmitTx block
     = SubmitTx { bytes :: SubmitTxPayload block }
     deriving (Generic)
 deriving instance Show (SubmitTxPayload block) => Show (SubmitTx block)

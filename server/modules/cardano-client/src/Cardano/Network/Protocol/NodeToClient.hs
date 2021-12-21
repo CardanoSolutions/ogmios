@@ -28,7 +28,7 @@ module Cardano.Network.Protocol.NodeToClient
     , cChainSyncCodec
     , cTxSubmissionCodec
     , cStateQueryCodec
-    , nodeToClientV_Latest
+    , nodeToClientVLatest
 
     -- * Running
     , runPeer
@@ -195,8 +195,8 @@ connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
         , nctHandshakeTracer = contramap TrHandshake tr
         }
 
-nodeToClientV_Latest :: NodeToClientVersion
-nodeToClientV_Latest = maxBound
+nodeToClientVLatest :: NodeToClientVersion
+nodeToClientVLatest = maxBound
 
 -- | Construct a network client
 mkClient
