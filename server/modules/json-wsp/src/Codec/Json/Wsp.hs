@@ -164,7 +164,7 @@ mkResponse opts _proxy toResult (Response refl res) = Json.pairs $
     <>
     ("methodname" .= methodName)
     <>
-    (Json.pair "result" (toResult res))
+    Json.pair "result" (toResult res)
     <>
     ("reflection" .= refl)
   where
@@ -213,7 +213,7 @@ mkRequest opts toArgs (Request mirror req) = Json.pairs $
     <>
     ("methodname" .= methodName)
     <>
-    (Json.pair "args" (toArgs req))
+    Json.pair "args" (toArgs req)
     <>
     ("mirror" .= mirror)
   where
@@ -373,7 +373,7 @@ data ErrValidateKey
     | ErrValidateKeyInvalid ErrInvalidKey
     deriving (Show, Eq)
 
-data ErrMissingKey = ErrMissingKey
+newtype ErrMissingKey = ErrMissingKey
     { missingKey :: Text }
     deriving (Show, Eq)
 

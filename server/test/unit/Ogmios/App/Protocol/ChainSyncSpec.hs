@@ -16,7 +16,7 @@ import Cardano.Network.Protocol.NodeToClient
     , cChainSyncCodec
     , chainSyncClientPeerPipelined
     , codecs
-    , nodeToClientV_Latest
+    , nodeToClientVLatest
     , runPipelinedPeer
     )
 import Data.Aeson
@@ -175,7 +175,7 @@ withChainSyncClient action seed = do
     let mode = CompactSerialization
     let innerCodecs = mkChainSyncCodecs (encodeBlock mode) encodePoint encodeTip
     let client = mkChainSyncClient maxInFlight innerCodecs recvQ (atomically . writeTQueue sendQ)
-    let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cChainSyncCodec
+    let codec = codecs defaultSlotsPerEpoch nodeToClientVLatest & cChainSyncCodec
     withMockChannel (chainSyncMockPeer seed codec) $ \channel -> do
         result <- race
             (runPipelinedPeer nullTracer codec channel (chainSyncClientPeerPipelined client))

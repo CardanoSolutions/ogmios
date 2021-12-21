@@ -30,7 +30,7 @@ import Test.Hspec
 
 import qualified Data.Map.Strict as Map
 
-data Foo = Foo
+newtype Foo = Foo
     { foo :: Int
     }
     deriving stock Show
@@ -48,7 +48,7 @@ newtype MyMap = MyMap (Map Char Bool)
     deriving stock Show
     deriving ToJSON via ToJSONViaShow MyMap
 
-data LastUpdate = LastUpdate (Maybe UTCTime)
+newtype LastUpdate = LastUpdate (Maybe UTCTime)
     deriving stock Show
     deriving ToJSON via ToJSONViaShow LastUpdate
 

@@ -205,7 +205,7 @@ shouldSucceed :: Options -> (Either String (Command Proxy) -> Expectation)
 shouldSucceed =
     flip shouldBe . Right . Start Proxy
 
-shouldFail :: (Either String (Command Proxy)) -> Expectation
+shouldFail :: Either String (Command Proxy) -> Expectation
 shouldFail = flip shouldSatisfy isLeft
 
 isLeftWith :: (err -> Bool) -> Either err result -> Bool

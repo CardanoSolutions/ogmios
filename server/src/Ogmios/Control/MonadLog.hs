@@ -89,8 +89,8 @@ withStdoutTracer version minSeverity action = do
     mkEnvelop msg severity = do
         timestamp <- liftIO getCurrentTime
         threadId <- T.drop 9 . show <$> liftIO myThreadId
-        pure $ pairs $ mempty
-            <> pair "severity"  (toEncoding severity)
+        pure $ pairs $
+            pair "severity"  (toEncoding severity)
             <> pair "timestamp" (toEncoding timestamp)
             <> pair "thread"    (toEncoding threadId)
             <> pair "message"   (toEncoding msg)

@@ -53,7 +53,7 @@ import Ogmios.Control.MonadMetrics
 import Ogmios.Control.MonadOuroboros
     ( MonadOuroboros )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), TVar, newEmptyTMVar, putTMVar, takeTMVar )
+    ( MonadSTM (..), TVar, newEmptyTMVarIO, putTMVar, takeTMVar )
 import Ogmios.Data.Health
     ( CardanoEra (..)
     , Health (..)
@@ -257,8 +257,8 @@ newTimeInterpreterClient
          , Tip block -> m (UTCTime, NetworkSynchronization, CardanoEra)
          )
 newTimeInterpreterClient = do
-    notifyTip <- atomically newEmptyTMVar
-    getResult <- atomically newEmptyTMVar
+    notifyTip <- newEmptyTMVarIO
+    getResult <- newEmptyTMVarIO
     return
         ( LocalStateQueryClient $ clientStIdle
             (atomically $ takeTMVar notifyTip)
@@ -297,7 +297,7 @@ newTimeInterpreterClient = do
 
     clientStQuerySlotTime
         :: (UTCTime -> NetworkSynchronization -> CardanoEra -> m ())
-        -> (Tip block)
+        -> Tip block
         -> m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
         -> LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ()
     clientStQuerySlotTime notifyResult tip continue =
