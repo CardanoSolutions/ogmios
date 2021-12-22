@@ -20,6 +20,7 @@ extra-source-files:
     static/assets/logo.png
 data-files:
     ogmios.wsp.json
+    test/golden/*.json
 
 source-repository head
   type: git

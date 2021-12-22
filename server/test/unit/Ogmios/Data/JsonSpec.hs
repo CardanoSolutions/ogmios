@@ -101,6 +101,8 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
+import Paths_ogmios
+    ( getDataFileName )
 import System.Directory
     ( createDirectoryIfMissing )
 import Test.Generators
@@ -669,5 +671,6 @@ runQuickCheck = quickCheckWithResult (QC.stdArgs{chatty=False}) >=> \case
 
 decodeFileThrow :: FilePath -> IO Json.Value
 decodeFileThrow filepath = do
-    json <- Json.decodeFileStrict ($(getProjectRoot) <> "/test/golden/" <> filepath)
+    json <- Json.decodeFileStrict =<<
+      getDataFileName ("/test/golden/" <> filepath)
     maybe (fail $ "Unable to decode JSON file: " <> filepath) pure json
