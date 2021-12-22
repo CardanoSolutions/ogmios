@@ -89,7 +89,7 @@ keepRedundantConstraint _ = ()
 
 -- | Access the last element of a type-level list.
 type family LastElem xs where
-    LastElem ('[])     = TypeError ('Text "LastElem: empty list.")
+    LastElem '[]       = TypeError ('Text "LastElem: empty list.")
     LastElem (x : '[]) = x
     LastElem (x : xs)  = LastElem xs
 

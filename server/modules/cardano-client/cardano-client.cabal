@@ -1,9 +1,4 @@
-cabal-version: 1.12
-
--- This file has been generated from package.yaml by hpack version 0.34.4.
---
--- see: https://github.com/sol/hpack
-
+cabal-version:  2.4
 name:           cardano-client
 version:        1.0.0
 synopsis:       Utilities to build a cardano client using the Ouroboros mini-protocols
@@ -26,7 +21,13 @@ source-repository head
   type: git
   location: https://github.com/cardanosolutions/ogmios
 
+common common-ghc-options
+  ghc-options:
+    -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wpartial-fields -Wredundant-constraints -Wunused-packages
+
 library
+  import: common-ghc-options
   exposed-modules:
       Cardano.Network.Protocol.NodeToClient
       Cardano.Network.Protocol.NodeToClient.Trace
@@ -69,7 +70,6 @@ library
       TypeFamilies
       TypeSynonymInstances
       ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-packages
   build-depends:
       aeson
     , base >=4.7 && <5

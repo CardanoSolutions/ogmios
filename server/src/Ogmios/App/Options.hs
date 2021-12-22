@@ -98,8 +98,8 @@ parseOptionsPure args =
         CompletionInvoked{} -> Left "Completion Invoked."
 
 parserInfo :: ParserInfo (Command Proxy)
-parserInfo = info (helper <*> parser) $ mempty
-    <> progDesc "Ogmios - A JSON-WSP WebSocket adaptor for cardano-node"
+parserInfo = info (helper <*> parser) $
+    progDesc "Ogmios - A JSON-WSP WebSocket adaptor for cardano-node"
     <> header (toString $ unwords
         [ "Provides a bridge between cardano-node and WebSocket clients."
         , "Ogmios translates the existing CBOR-based Ouroboros mini-protocols"
@@ -142,24 +142,24 @@ data Options = Options
 
 -- | --node-socket=FILEPATH
 nodeSocketOption :: Parser FilePath
-nodeSocketOption = option str $ mempty
-    <> long "node-socket"
+nodeSocketOption = option str $
+    long "node-socket"
     <> metavar "FILEPATH"
     <> help "Path to the node socket."
     <> completer (bashCompleter "file")
 
 -- | --node-config=FILEPATH
 nodeConfigOption :: Parser FilePath
-nodeConfigOption = option str $ mempty
-    <> long "node-config"
+nodeConfigOption = option str $
+    long "node-config"
     <> metavar "FILEPATH"
     <> help "Path to the node configuration file."
     <> completer (bashCompleter "file")
 
 -- | [--host=IPv4], default: 127.0.0.1
 serverHostOption :: Parser String
-serverHostOption = option str $ mempty
-    <> long "host"
+serverHostOption = option str $
+    long "host"
     <> metavar "IPv4"
     <> help "Address to bind to."
     <> value "127.0.0.1"
@@ -168,8 +168,8 @@ serverHostOption = option str $ mempty
 
 -- | [--port=TCP/PORT], default: 1337
 serverPortOption :: Parser Int
-serverPortOption = option auto $ mempty
-    <> long "port"
+serverPortOption = option auto $
+    long "port"
     <> metavar "TCP/PORT"
     <> help "Port to listen on."
     <> value 1337
@@ -177,8 +177,8 @@ serverPortOption = option auto $ mempty
 
 -- | [--timeout=SECONDS], default: 90s
 connectionTimeoutOption :: Parser Int
-connectionTimeoutOption = option auto $ mempty
-    <> long "timeout"
+connectionTimeoutOption = option auto $
+    long "timeout"
     <> metavar "SECONDS"
     <> help "Number of seconds of inactivity after which the server should close client connections."
     <> value 90
@@ -186,8 +186,8 @@ connectionTimeoutOption = option auto $ mempty
 
 -- | [--max-in-flight=INT], default: 1000
 maxInFlightOption :: Parser Int
-maxInFlightOption = option auto $ mempty
-    <> long "max-in-flight"
+maxInFlightOption = option auto $
+    long "max-in-flight"
     <> metavar "INT"
     <> help "Max number of ChainSync requests which can be pipelined at once. Only apply to the chain-sync protocol."
     <> value 1000
@@ -195,8 +195,8 @@ maxInFlightOption = option auto $ mempty
 
 -- | [--log-level=SEVERITY], default: Info
 logLevelOption :: Parser Severity
-logLevelOption = option caseInsensitive $ mempty
-    <> long "log-level"
+logLevelOption = option caseInsensitive $
+    long "log-level"
     <> metavar "SEVERITY"
     <> helpDoc (Just doc)
     <> value Info

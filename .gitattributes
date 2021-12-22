@@ -1,4 +1,2 @@
-nix/sources.nix linguist-generated=true
 server/test/vectors/**/* linguist-generated=true
 flake.lock linguist-generated=true
-*.cabal linguist-generated=true

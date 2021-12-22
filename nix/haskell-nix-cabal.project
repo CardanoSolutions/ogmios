@@ -1,7 +1,4 @@
 -----------------------------------------------------------
--- Disable all tests by default
-
-tests: False
 test-show-details: direct
 
 -- Enable tests in this specific repositories
@@ -16,11 +13,6 @@ package cryptonite
 allow-newer:
   monoidal-containers:aeson,
   size-based:template-haskell
-
--- The "cabal" wrapper script provided by nix-shell will cut off / restore the remainder of this file
--- in order to force usage of nix provided dependencies for `source-repository-package`.
--- --------------------------- 8< --------------------------
--- Please do not put any `source-repository-package` clause above this line.
 
 source-repository-package
   type: git

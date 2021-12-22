@@ -100,7 +100,7 @@ data ChainSyncMessage block
 -- FindIntersect
 --
 
-data FindIntersect block
+newtype FindIntersect block
     = FindIntersect { points :: [Point block] }
     deriving (Generic, Show, Eq)
 

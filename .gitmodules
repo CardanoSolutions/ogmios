@@ -1,15 +1,20 @@
 [submodule "hugo-theme-learn"]
 	path = docs/themes/learn
 	url = https://github.com/matcornic/hugo-theme-learn.git
+	ignore = dirty
 [submodule "modules/wai-routes"]
 	path = server/modules/wai-routes
 	url = https://github.com/KtorZ/wai-routes.git
+	ignore = dirty
 [submodule "modules/hjsonpointer"]
 	path = server/modules/hjsonpointer
 	url = https://github.com/KtorZ/hjsonpointer.git
+	ignore = dirty
 [submodule "modules/hjsonschema"]
 	path = server/modules/hjsonschema
 	url = https://github.com/KtorZ/hjsonschema.git
+	ignore = dirty
 [submodule "server/config"]
 	path = server/config
 	url = https://github.com/input-output-hk/cardano-configurations.git
+	ignore = dirty

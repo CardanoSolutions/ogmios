@@ -1,11 +1,4 @@
-cabal-version: 1.12
-
--- This file has been generated from package.yaml by hpack version 0.34.4.
---
--- see: https://github.com/sol/hpack
---
--- hash: cb9b5f1a7463d974b765c06f1c5492edc38cab64382201e1f6f0246e1080e310
-
+cabal-version:  2.4
 name:           json-wsp
 version:        1.2.0
 synopsis:       An implementation of JSON-WSP in Haskell
@@ -28,7 +21,13 @@ source-repository head
   type: git
   location: https://github.com/cardanosolutions/ogmios
 
+common common-ghc-options
+  ghc-options:
+    -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wpartial-fields -Wredundant-constraints -Wunused-packages
+
 library
+  import: common-ghc-options
   exposed-modules:
       Codec.Json.Wsp
       Codec.Json.Wsp.Handler
@@ -71,7 +70,6 @@ library
       TypeFamilies
       TypeSynonymInstances
       ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-packages
   build-depends:
       aeson
     , base >=4.7 && <5

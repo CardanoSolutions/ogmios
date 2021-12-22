@@ -126,7 +126,7 @@ expectWSPFault recv wantCode wantMirror = do
 -- Exceptions
 --
 
-data FailedToDecodeMsg = FailedToDecodeMsg String deriving Show
+newtype FailedToDecodeMsg = FailedToDecodeMsg String deriving Show
 instance Exception FailedToDecodeMsg
 
 data PeerTerminatedUnexpectedly = PeerTerminatedUnexpectedly deriving Show
