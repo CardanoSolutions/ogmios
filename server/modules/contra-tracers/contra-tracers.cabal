@@ -1,4 +1,4 @@
-cabal-version: 1.12
+cabal-version:  2.4
 
 -- This file has been generated from package.yaml by hpack version 0.34.4.
 --
@@ -69,7 +69,9 @@ library
       TypeFamilies
       TypeSynonymInstances
       ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-packages
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates
+               -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+               -Wunused-packages
   build-depends:
       aeson
     , base >=4.7 && <5
