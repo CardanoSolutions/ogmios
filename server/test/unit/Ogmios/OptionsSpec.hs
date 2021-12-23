@@ -279,6 +279,6 @@ isLeftWith predicate = \case
 getConfigFile :: String -> IO FilePath
 getConfigFile network =
     getDataFileName $
-      "/test-config/network/"
+      "/test/config/network/"
       <> network
       <> "/cardano-node/config.json"

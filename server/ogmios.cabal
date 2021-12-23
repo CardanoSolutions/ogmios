@@ -21,12 +21,12 @@ extra-source-files:
 data-files:
     ogmios.wsp.json
     test/golden/*.json
-    test-config/network/mainnet/cardano-node/*.json
-    test-config/network/testnet/cardano-node/*.json
-    test-config/network/alonzo-white/cardano-node/*.json
-    test-config/network/mainnet/genesis/*.json
-    test-config/network/testnet/genesis/*.json
-    test-config/network/alonzo-white/genesis/*.json
+    test/config/network/mainnet/cardano-node/*.json
+    test/config/network/testnet/cardano-node/*.json
+    test/config/network/alonzo-white/cardano-node/*.json
+    test/config/network/mainnet/genesis/*.json
+    test/config/network/testnet/genesis/*.json
+    test/config/network/alonzo-white/genesis/*.json
 
 source-repository head
   type: git
