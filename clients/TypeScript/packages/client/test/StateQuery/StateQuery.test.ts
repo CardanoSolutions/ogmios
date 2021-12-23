@@ -1,6 +1,7 @@
 import {
   DelegationsAndRewards,
-  Hash16,
+  DigestBlake2BBlockHeader,
+  DigestBlake2BCredential,
   Point,
   Slot
 } from '@cardano-ogmios/schema'
@@ -94,10 +95,13 @@ describe('Local state queries', () => {
       const bound = await client.eraStart()
       expect(bound.slot).toBeDefined()
 
+      const eraSummaries = await client.eraSummaries()
+      expect(eraSummaries).toHaveLength(5)
+
       const compactGenesis = await client.genesisConfig()
       expect(compactGenesis.systemStart).toBeDefined()
 
-      const point = await client.ledgerTip() as { slot: Slot, hash: Hash16 }
+      const point = await client.ledgerTip() as { slot: Slot, hash: DigestBlake2BBlockHeader }
       expect(point.slot).toBeDefined()
 
       const nonMyopicMemberRewards = await client.nonMyopicMemberRewards(
@@ -157,19 +161,19 @@ describe('Local state queries', () => {
     })
     describe('delegationsAndRewards', () => {
       it('fetches the current delegate and rewards for given stake key hashes', async () => {
-        const stakeKeyHashes = ['7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8'] as Hash16[]
+        const stakeKeyHashes = ['7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8'] as DigestBlake2BCredential[]
         const result = await StateQuery.delegationsAndRewards(context, stakeKeyHashes)
         const item = result[stakeKeyHashes[0]] as DelegationsAndRewards
         expect(item).toHaveProperty('delegate')
         expect(item).toHaveProperty('rewards')
       })
       it('returns an empty object when there are no rewards', async () => {
-        const stakeKeyHashes = ['00000000000000000000000000000000000000000000000000000000'] as Hash16[]
+        const stakeKeyHashes = ['00000000000000000000000000000000000000000000000000000000'] as DigestBlake2BCredential[]
         const result = await StateQuery.delegationsAndRewards(context, stakeKeyHashes)
         expect(result).toBeDefined()
       })
       it('returns an error when given a malformed key hash', async () => {
-        const notKeyHashes = ['patate'] as Hash16[]
+        const notKeyHashes = ['patate'] as DigestBlake2BCredential[]
         await expect(StateQuery.delegationsAndRewards(context, notKeyHashes)).rejects.toBeInstanceOf(StateQuery.UnknownResultError)
       })
     })
@@ -190,7 +194,7 @@ describe('Local state queries', () => {
     })
     describe('ledgerTip', () => {
       it('fetches the tip of the ledger', async () => {
-        const point = await StateQuery.ledgerTip(context) as { slot: Slot, hash: Hash16 }
+        const point = await StateQuery.ledgerTip(context) as { slot: Slot, hash: DigestBlake2BCredential }
         expect(point.hash).toBeDefined()
         expect(point.slot).toBeDefined()
       })
@@ -275,6 +279,17 @@ describe('Local state queries', () => {
       it('can query the blockchain\'s tip', async () => {
         const tip = await StateQuery.chainTip(context)
         expect(tip).not.toEqual('origin')
+      })
+    })
+    describe('eraSummaries', () => {
+      it('can fetch era summaries for slotting arithmetic', async () => {
+        const eraSummaries = await StateQuery.eraSummaries(context)
+        expect(eraSummaries).toHaveLength(5)
+        eraSummaries.forEach(s => {
+          expect(s.start).toBeDefined()
+          expect(s.end).toBeDefined()
+          expect(s.parameters).toBeDefined()
+        })
       })
     })
   })

@@ -10,6 +10,7 @@ import {
   CollectErrors,
   DelegateNotRegistered,
   DuplicateGenesisVrf,
+  EraMismatch,
   ExecutionUnitsTooLarge,
   ExpiredUtxo,
   ExtraDataMismatch,
@@ -75,6 +76,7 @@ export type SubmitTxErrorShelley =
   | CollectErrors
   | DelegateNotRegistered
   | DuplicateGenesisVrf
+  | EraMismatch
   | ExecutionUnitsTooLarge
   | ExpiredUtxo
   | ExtraDataMismatch
@@ -130,6 +132,16 @@ export type SubmitTxErrorShelley =
 
 /** @category TxSubmission */
 export const errors = {
+  EraMismatch: {
+    assert: (item: SubmitTxErrorShelley): item is EraMismatch =>
+      (item as EraMismatch).eraMismatch !== undefined,
+    Error: class EraMismatchError extends CustomError {
+      public constructor (rawError: EraMismatch) {
+        super()
+        this.message = safeJSON.stringify(rawError.eraMismatch)
+      }
+    }
+  },
   InvalidWitnesses: {
     assert: (item: SubmitTxErrorShelley): item is InvalidWitnesses =>
       (item as InvalidWitnesses).invalidWitnesses !== undefined,
@@ -242,7 +254,7 @@ export const errors = {
   },
   MissingAtLeastOneInputUtxo: {
     assert: (item: SubmitTxErrorShelley): item is MissingAtLeastOneInputUtxo =>
-      (item as MissingAtLeastOneInputUtxo) === 'missingAtLeastOneInputUtxo',
+      (item as MissingAtLeastOneInputUtxo).missingAtLeastOneInputUtxo !== undefined,
     Error: class MissingAtLeastOneInputUtxoError extends CustomError {
       public constructor (rawError: MissingAtLeastOneInputUtxo) {
         super()
@@ -252,7 +264,7 @@ export const errors = {
   },
   InvalidMetadata: {
     assert: (item: SubmitTxErrorShelley): item is InvalidMetadata =>
-      (item as InvalidMetadata) === 'invalidMetadata',
+      (item as InvalidMetadata).invalidMetadata !== undefined,
     Error: class InvalidMetadataError extends CustomError {
       public constructor (rawError: InvalidMetadata) {
         super()
@@ -392,7 +404,7 @@ export const errors = {
   },
   RewardAccountNotExisting: {
     assert: (item: SubmitTxErrorShelley): item is RewardAccountNotExisting =>
-      (item as RewardAccountNotExisting) === 'rewardAccountNotExisting',
+      (item as RewardAccountNotExisting).rewardAccountNotExisting !== undefined,
     Error: class RewardAccountNotExistingError extends CustomError {
       public constructor (rawError: RewardAccountNotExisting) {
         super()
@@ -412,7 +424,7 @@ export const errors = {
   },
   WrongCertificateType: {
     assert: (item: SubmitTxErrorShelley): item is WrongCertificateType =>
-      (item as WrongCertificateType) === 'wrongCertificateType',
+      (item as WrongCertificateType).wrongCertificateType !== undefined,
     Error: class WrongCertificateTypeError extends CustomError {
       public constructor (rawError: WrongCertificateType) {
         super()
@@ -462,7 +474,7 @@ export const errors = {
   },
   MirTransferNotCurrentlyAllowed: {
     assert: (item: SubmitTxErrorShelley): item is MirTransferNotCurrentlyAllowed =>
-      (item as MirTransferNotCurrentlyAllowed) === 'mirTransferNotCurrentlyAllowed',
+      (item as MirTransferNotCurrentlyAllowed).mirTransferNotCurrentlyAllowed !== undefined,
     Error: class MirTransferNotCurrentlyAllowedError extends CustomError {
       public constructor (rawError: MirTransferNotCurrentlyAllowed) {
         super()
@@ -472,7 +484,7 @@ export const errors = {
   },
   MirNegativeTransferNotCurrentlyAllowed: {
     assert: (item: SubmitTxErrorShelley): item is MirNegativeTransferNotCurrentlyAllowed =>
-      (item as MirNegativeTransferNotCurrentlyAllowed) === 'mirNegativeTransferNotCurrentlyAllowed',
+      (item as MirNegativeTransferNotCurrentlyAllowed).mirNegativeTransferNotCurrentlyAllowed !== undefined,
     Error: class MirNegativeTransferNotCurrentlyAllowedError extends CustomError {
       public constructor (rawError: MirNegativeTransferNotCurrentlyAllowed) {
         super()
@@ -482,7 +494,7 @@ export const errors = {
   },
   MirProducesNegativeUpdate: {
     assert: (item: SubmitTxErrorShelley): item is MirProducesNegativeUpdate =>
-      (item as MirProducesNegativeUpdate) === 'mirProducesNegativeUpdate',
+      (item as MirProducesNegativeUpdate).mirProducesNegativeUpdate !== undefined,
     Error: class MirProducesNegativeUpdateError extends CustomError {
       public constructor (rawError: MirProducesNegativeUpdate) {
         super()
@@ -542,7 +554,7 @@ export const errors = {
   },
   TriesToForgeAda: {
     assert: (item: SubmitTxErrorShelley): item is TriesToForgeAda =>
-      (item as TriesToForgeAda) === 'triesToForgeAda',
+      (item as TriesToForgeAda).triesToForgeAda !== undefined,
     Error: class TriesToForgeAdaError extends CustomError {
       public constructor (rawError: TriesToForgeAda) {
         super()
@@ -602,7 +614,7 @@ export const errors = {
   },
   MissingCollateralInputs: {
     assert: (item: SubmitTxErrorShelley): item is MissingCollateralInputs =>
-      (item as MissingCollateralInputs) === 'missingCollateralInputs',
+      (item as MissingCollateralInputs).missingCollateralInputs !== undefined,
     Error: class MissingCollateralInputsError extends CustomError {
       public constructor (rawError: MissingCollateralInputs) {
         super()
@@ -672,7 +684,7 @@ export const errors = {
   },
   ValidationTagMismatch: {
     assert: (item: SubmitTxErrorShelley): item is ValidationTagMismatch =>
-      (item as ValidationTagMismatch) === 'validationTagMismatch',
+      (item as ValidationTagMismatch).validationTagMismatch !== undefined,
     Error: class ValidationTagMismatchError extends CustomError {
       public constructor (rawError: ValidationTagMismatch) {
         super()

@@ -17,8 +17,8 @@ module Ogmios.App.Server
 
 import Ogmios.Prelude
 
-import Ogmios.App.Options
-    ( Options (..) )
+import Ogmios.App.Configuration
+    ( Configuration (..) )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..), Logger, MonadLog (..), Severity (..) )
 import Ogmios.Control.MonadWebSocket
@@ -49,7 +49,7 @@ connectHybridServer
     :: forall m env.
         ( MonadIO m
         , MonadReader env m
-        , HasType Options env
+        , HasType Configuration env
         )
     => Logger TraceServer
     -> WebSocketApp
@@ -61,15 +61,15 @@ connectHybridServer tr webSocketApp httpApp = do
         $ Warp.runSettings (serverSettings opts)
         $ Wai.websocketsOr WS.defaultConnectionOptions webSocketApp httpApp
   where
-    serverSettings opts@Options{serverHost, serverPort, connectionTimeout} =
+    serverSettings opts@Configuration{serverHost, serverPort, connectionTimeout} =
         Warp.defaultSettings
         & Warp.setHost (fromString serverHost)
         & Warp.setPort serverPort
         & Warp.setBeforeMainLoop (beforeMainLoop opts)
         & Warp.setTimeout connectionTimeout
 
-    beforeMainLoop :: Options -> IO ()
-    beforeMainLoop Options{nodeSocket,serverHost,serverPort} = do
+    beforeMainLoop :: Configuration -> IO ()
+    beforeMainLoop Configuration{nodeSocket,serverHost,serverPort} = do
         socketExist <- doesPathExist nodeSocket
         unless socketExist $ logWith tr $ ServerNodeSocketNotFound nodeSocket
         logWith tr $ ServerStarted{dashboardUrl, nodeSocket}

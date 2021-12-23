@@ -21,13 +21,14 @@ entire application is stitched together in a very thin layer.
 
 ```tree
              ^  ─── Ogmios.hs
+             |      ├── Options.hs
 Application  |      ├── Prelude.hs
              v      └── Version.hs
 
              ^  ─── App
              |      ├── Health.hs
              |      ├── Metrics.hs
-             |      ├── Options.hs
+             |      ├── Configuration.hs
              |      ├── Protocol.hs
              |      ├── Protocol
       Logic  |      │   ├── ChainSync.hs

@@ -148,7 +148,7 @@ encodeSubmitTxError = \case
     ApplyTxErrAlonzo (ApplyTxError xs) ->
         encodeList Alonzo.encodeLedgerFailure xs
     ApplyTxErrWrongEra e ->
-        encodeEraMismatch e
+        encodeList encodeEraMismatch [ e ]
 
 encodeSubmitTxPayload
     :: PraosCrypto crypto

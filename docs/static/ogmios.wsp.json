@@ -14,6 +14,7 @@
   , "QueryResponse[currentProtocolParameters]"
   , "QueryResponse[delegationsAndRewards]"
   , "QueryResponse[eraStart]"
+  , "QueryResponse[eraSummaries]"
   , "QueryResponse[genesisConfig]"
   , "QueryResponse[ledgerTip]"
   , "QueryResponse[nonMyopicMemberRewards]"
@@ -298,12 +299,7 @@
             , "additionalProperties": false
             , "required": ["SubmitFail"]
             , "properties":
-              { "SubmitFail":
-                { "oneOf":
-                  [ { "$ref": "#/definitions/EraMismatch" }
-                  , { "$ref": "#/definitions/SubmitTxError" }
-                  ]
-                }
+              { "SubmitFail": { "$ref": "#/definitions/SubmitTxError" }
               }
             }
           ]
@@ -510,6 +506,10 @@
                 , "enum": ["eraStart"]
                 }
               , { "type": "string"
+                , "title": "GetEraSummaries"
+                , "enum": ["eraSummaries"]
+                }
+              , { "type": "string"
                 , "title": "GetLedgerTip"
                 , "enum": ["ledgerTip"]
                 }
@@ -530,7 +530,7 @@
                         }
                       , { "type": "array"
                         , "title": "Credentials"
-                        , "items": { "$ref": "#/definitions/Hash16" }
+                        , "items": { "$ref": "#/definitions/Digest[Blake2b]::Credential" }
                         }
                       ]
                     }
@@ -543,7 +543,7 @@
                 , "properties":
                   { "delegationsAndRewards":
                     { "type": "array"
-                    , "items": { "$ref": "#/definitions/Hash16" }
+                    , "items": { "$ref": "#/definitions/Digest[Blake2b]::Credential" }
                     }
                   }
                 }
@@ -664,6 +664,41 @@
         { "oneOf":
           [ { "$ref": "#/definitions/Bound" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[eraSummaries]":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          , { "type": "array"
+            , "items": { "$ref": "#/definitions/EraSummary" }
+            }
           ]
         }
       , "reflection":
@@ -1297,6 +1332,12 @@
       ]
     }
 
+  , "AddressAttributes":
+    { "type": "string"
+    , "description": "Extra attributes carried by Byron addresses (network magic and/or HD payload)."
+    , "contentEncoding": "base64"
+    }
+
   , "AssetQuantity":
     { "type": "integer"
     , "description": "A number of asset, can be negative went burning assets."
@@ -1307,7 +1348,7 @@
     , "additionalProperties": false
     , "required": [ "hash", "body" ]
     , "properties":
-      { "hash": { "$ref": "#/definitions/Hash16" }
+      { "hash": { "$ref": "#/definitions/Digest[Blake2b]::AuxiliaryDataBody" }
       , "body": { "$ref": "#/definitions/AuxiliaryDataBody" }
       }
     }
@@ -1423,7 +1464,7 @@
             }
           ]
         , "properties":
-          { "hash": { "$ref": "#/definitions/Hash16" }
+          { "hash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].header" }
           , "header":
             { "type": "object"
             , "additionalProperties": false
@@ -1431,8 +1472,8 @@
             , "$omitted-if-compact": ["proof", "signature"]
             , "properties":
               { "blockHeight": { "$ref": "#/definitions/BlockNo" }
-              , "genesisKey": { "$ref": "#/definitions/Hash16" }
-              , "prevHash": { "$ref": "#/definitions/Hash16" }
+              , "genesisKey": { "$ref": "#/definitions/GenesisVerificationKey" }
+              , "prevHash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].header" }
               , "proof": { "$ref": "#/definitions/BlockProof" }
               , "protocolMagicId": { "$ref": "#/definitions/ProtocolMagicId" }
               , "protocolVersion": { "$ref": "#/definitions/ProtocolVersion" }
@@ -1455,7 +1496,7 @@
                   , "required": [ "id", "body", "witness" ]
                   , "$omitted-if-compact": ["witness"]
                   , "properties":
-                    { "id": { "$ref": "#/definitions/Hash16" }
+                    { "id": { "$ref": "#/definitions/TxId" }
                     , "body": { "$ref": "#/definitions/Tx" }
                     , "witness":
                       { "type": "array"
@@ -1496,8 +1537,8 @@
                               , "parametersUpdate": { "$ref": "#/definitions/ProtocolParameters[Byron]" }
                               }
                             }
-                          , "issuer": { "$ref": "#/definitions/Hash64" }
-                          , "signature": { "$ref": "#/definitions/Hash64" }
+                          , "issuer": { "$ref": "#/definitions/IssuerVrfVerificationKey" }
+                          , "signature": { "$ref": "#/definitions/IssuerSignature" }
                           }
                         }
                       ]
@@ -1516,7 +1557,7 @@
         , "title": "epoch boundary block"
         , "additionalProperties": false
         , "properties":
-          { "hash": { "$ref": "#/definitions/Hash16" }
+          { "hash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].header" }
           , "header":
             { "type": "object"
             , "additionalProperties": false
@@ -1524,7 +1565,7 @@
             , "properties":
               { "blockHeight": { "$ref": "#/definitions/BlockNo" }
               , "epoch": { "$ref": "#/definitions/Epoch" }
-              , "prevHash": { "$ref": "#/definitions/Hash16" }
+              , "prevHash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].header" }
               }
             }
           }
@@ -1610,7 +1651,7 @@
         { "type": "array"
         , "items": { "$ref": "#/definitions/BlockBody[Shelley]" }
         }
-      , "headerHash": { "$ref": "#/definitions/Hash16" }
+      , "headerHash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].header" }
       , "header":
         { "type": "object"
         , "additionalProperties": false
@@ -1622,16 +1663,16 @@
         , "properties":
           { "blockHeight": { "$ref": "#/definitions/BlockNo" }
           , "slot": { "$ref": "#/definitions/Slot" }
-          , "prevHash": { "$ref": "#/definitions/Hash16" }
-          , "issuerVk": { "$ref": "#/definitions/Hash16" }
-          , "issuerVrf": { "$ref": "#/definitions/Hash64" }
-          , "nonce": { "$ref": "#/definitions/NonceProof" }
-          , "leaderValue": { "$ref": "#/definitions/LeaderValue" }
+          , "prevHash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].header" }
+          , "issuerVk": { "$ref": "#/definitions/VerificationKey" }
+          , "issuerVrf": { "$ref": "#/definitions/IssuerVrfVerificationKey" }
+          , "nonce": { "$ref": "#/definitions/CertifiedVrf" }
+          , "leaderValue": { "$ref": "#/definitions/CertifiedVrf" }
           , "blockSize": { "$ref": "#/definitions/BlockSize" }
-          , "blockHash": { "$ref": "#/definitions/Hash16" }
+          , "blockHash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
           , "opCert": { "$ref": "#/definitions/OpCert" }
           , "protocolVersion": { "$ref": "#/definitions/ProtocolVersion" }
-          , "signature": { "$ref": "#/definitions/Hash64" }
+          , "signature": { "$ref": "#/definitions/IssuerSignature" }
           }
         }
       }
@@ -1643,7 +1684,7 @@
     , "required": [ "id", "body", "witness", "metadata" ]
     , "$omitted-if-compact": ["witness"]
     , "properties":
-      { "id": { "$ref": "#/definitions/Hash16" }
+      { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
       , "body":
         { "type": "object"
         , "additionalProperties": false
@@ -1786,7 +1827,7 @@
     , "required": [ "id", "body", "witness", "metadata" ]
     , "$omitted-if-compact": ["witness"]
     , "properties":
-      { "id": { "$ref": "#/definitions/Hash16" }
+      { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
       , "body":
         { "type": "object"
         , "additionalProperties": false
@@ -1952,7 +1993,7 @@
     , "required": [ "id", "body", "witness", "metadata" ]
     , "$omitted-if-compact": ["witness"]
     , "properties":
-      { "id": { "$ref": "#/definitions/Hash16" }
+      { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
       , "body":
         { "type": "object"
         , "additionalProperties": false
@@ -2027,7 +2068,7 @@
     , "required": [ "id", "body", "witness", "metadata" ]
     , "$omitted-if-compact": ["witness"]
     , "properties":
-      { "id": { "$ref": "#/definitions/Hash16" }
+      { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
       , "body":
         { "type": "object"
         , "additionalProperties": false
@@ -2076,13 +2117,13 @@
             }
           , "scriptIntegrityHash":
             { "oneOf":
-              [ { "$ref": "#/definitions/Hash16" }
+              [ { "$ref": "#/definitions/Digest[Blake2b]::ScriptIntegrity" }
               , { "$ref": "#/definitions/Null"}
               ]
             }
           , "requiredExtraSignatures":
             { "type": "array"
-            , "items": { "$ref": "#/definitions/Hash16" }
+            , "items": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
             }
           }
         }
@@ -2108,7 +2149,7 @@
           , "datums":
             { "type": "object"
             , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "#/definitions/Hash64" }
+            , "additionalProperties": { "$ref": "#/definitions/Datum" }
             }
           , "redeemers":
             { "type": "object"
@@ -2151,12 +2192,12 @@
         , "required": [ "number", "root", "witnessesHash" ]
         , "properties":
           { "number": { "$ref": "#/definitions/UInt32" }
-          , "root": { "$ref": "#/definitions/Hash16" }
-          , "witnessesHash": { "$ref": "#/definitions/Hash16" }
+          , "root": { "$ref": "#/definitions/Digest[Blake2b]::MerkleRoot" }
+          , "witnessesHash": { "$ref": "#/definitions/Digest[Blake2b]::Block[Byron].body.txPayload[].witness" }
           }
         }
-      , "delegation": { "$ref": "#/definitions/Hash16" }
-      , "update": { "$ref": "#/definitions/Hash16" }
+      , "delegation": { "$ref": "#/definitions/Digest[Blake2b]::Block[Byron].body.dlgPayload" }
+      , "update": { "$ref": "#/definitions/Digest[Blake2b]::Block[Byron].body.updatePayload" }
       }
     }
 
@@ -2166,7 +2207,7 @@
     , "required": [ "dlgCertificate", "signature" ]
     , "properties":
       { "dlgCertificate": { "$ref": "#/definitions/DlgCertificate" }
-      , "signature": { "$ref": "#/definitions/Hash64" }
+      , "signature": { "$ref": "#/definitions/IssuerSignature" }
       }
     }
 
@@ -2193,20 +2234,20 @@
       ]
     , "additionalProperties": false
     , "properties":
-      { "signature": { "$ref": "#/definitions/Hash64" }
+      { "signature": { "$ref": "#/definitions/Signature" }
       , "chainCode":
         { "oneOf":
-          [ { "$ref": "#/definitions/Hash16" }
+          [ { "$ref": "#/definitions/ChainCode" }
           , { "$ref": "#/definitions/Null"}
           ]
         }
       , "addressAttributes":
         { "oneOf":
-          [ { "$ref": "#/definitions/Hash64" }
+          [ { "$ref": "#/definitions/AddressAttributes" }
           , { "$ref": "#/definitions/Null"}
           ]
         }
-      , "key": { "$ref": "#/definitions/Hash16" }
+      , "key": { "$ref": "#/definitions/VerificationKey" }
       }
     }
 
@@ -2235,7 +2276,7 @@
             , "additionalProperties": false
             , "required": ["delegator", "delegatee"]
             , "properties":
-              { "delegator": { "$ref": "#/definitions/Hash16" }
+              { "delegator": { "$ref": "#/definitions/Digest[Blake2b]::Credential" }
               , "delegatee": { "$ref": "#/definitions/PoolId" }
               }
             }
@@ -2254,7 +2295,7 @@
         , "additionalProperties": false
         , "required": ["stakeKeyRegistration"]
         , "properties":
-          { "stakeKeyRegistration": { "$ref": "#/definitions/Hash16" }
+          { "stakeKeyRegistration": { "$ref": "#/definitions/Digest[Blake2b]::Credential" }
           }
         , "examples":
           [ { "stakeKeyRegistration": "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5"
@@ -2267,7 +2308,7 @@
         , "additionalProperties": false
         , "required": ["stakeKeyDeregistration"]
         , "properties":
-          { "stakeKeyDeregistration": { "$ref": "#/definitions/Hash16" }
+          { "stakeKeyDeregistration": { "$ref": "#/definitions/Digest[Blake2b]::Credential" }
           }
         , "examples":
           [ { "stakeKeyDeregistration": "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5"
@@ -2341,9 +2382,9 @@
             , "additionalProperties": false
             , "required": ["delegateKeyHash","verificationKeyHash","vrfVerificationKeyHash"]
             , "properties":
-              { "delegateKeyHash": { "$ref": "#/definitions/Hash16" }
-              , "verificationKeyHash": { "$ref": "#/definitions/Hash16" }
-              , "vrfVerificationKeyHash": { "$ref": "#/definitions/Hash16" }
+              { "delegateKeyHash": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
+              , "verificationKeyHash": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
+              , "vrfVerificationKeyHash": { "$ref": "#/definitions/Digest[Blake2b]::VrfVerificationKey" }
               }
             }
           }
@@ -2367,6 +2408,21 @@
           }
         }
       ]
+    }
+
+  , "CertifiedVrf":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "proof": { "$ref": "#/definitions/VrfProof" }
+      , "output": { "$ref": "#/definitions/VrfOutput" }
+      }
+    }
+
+  , "ChainCode":
+    { "type": "string"
+    , "description": "An Ed25519-BIP32 chain-code for key deriviation."
+    , "contentEncoding": "base16"
     }
 
   , "CompactGenesis":
@@ -2396,7 +2452,7 @@
       , "epochLength": { "$ref": "#/definitions/Epoch" }
       , "slotsPerKesPeriod": { "$ref": "#/definitions/UInt64" }
       , "maxKesEvolutions": { "$ref": "#/definitions/UInt64" }
-      , "slotLength": { "$ref": "#/definitions/Int64" }
+      , "slotLength": { "$ref": "#/definitions/SlotLength" }
       , "updateQuorum": { "$ref": "#/definitions/UInt64" }
       , "maxLovelaceSupply": { "$ref": "#/definitions/UInt64" }
       , "protocolParameters": { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
@@ -2479,6 +2535,124 @@
       ]
     }
 
+  , "Digest[Blake2b]::AuxiliaryDataBody":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte digest of an 'AuxiliaryDataBody', serialised as CBOR."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
+  , "Digest[Blake2b]::Block[*].body":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte digest of an era-independent block body."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
+  , "Digest[Blake2b]::Block[*].header":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte digest of an era-independent block header, serialised as CBOR."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
+  , "Digest[Blake2b]::Block[Byron].body.dlgPayload":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte digest of a Byron delegation payload, CBOR-encoded."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
+  , "Digest[Blake2b]::Block[Byron].body.txPayload[].witness":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte digest of a Byron transaction witness set, CBOR-encoded."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
+  , "Digest[Blake2b]::Block[Byron].body.updatePayload":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte digest of a Byron update payload, CBOR-encoded."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
+  , "Digest[Blake2b]::Credential":
+    { "type": "string"
+    , "description": "A Blake2b 28-byte digest of a verification key or a script."
+    , "contentEncoding": "base16"
+    , "minLength": 56
+    , "maxLength": 56
+    }
+
+  , "Digest[Blake2b]::Datum":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte digest of a serialized datum, CBOR-encoded."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
+  , "Digest[Blake2b]::MerkleRoot":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte digest of a Merkle tree (or all block's transactions) root hash."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
+  , "Digest[Blake2b]::Nonce":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte digest of some arbitrary to make a nonce."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
+  , "Digest[Blake2b]::PoolMetadata":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte digest of stake pool (canonical) JSON metadata."
+    , "contentEncoding": "base16"
+    }
+
+  , "Digest[Blake2b]::Script":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte digest of a phase-1 or phase-2 script, CBOR-encoded."
+    , "contentEncoding": "base16"
+    , "minLength": 56
+    , "maxLength": 56
+    }
+
+  , "Digest[Blake2b]::ScriptIntegrity":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte digest of a script-integrity hash (i.e redeemers, datums and cost model, CBOR-encoded)."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
+  , "Digest[Blake2b]::VerificationKey":
+    { "type": "string"
+    , "description": "A Blake2b 28-byte digest of an Ed25519 verification key."
+    , "contentEncoding": "base16"
+    , "minLength": 56
+    , "maxLength": 56
+    }
+
+  , "Digest[Blake2b]::VrfVerificationKey":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte digest of a VRF verification key."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
   , "DlgCertificate":
     { "type": "object"
     , "description": "A (Byron) delegation certificate."
@@ -2486,15 +2660,15 @@
     , "required": [ "epoch", "issuerVk", "delegateVk", "signature" ]
     , "properties":
       { "epoch": { "$ref": "#/definitions/Epoch" }
-      , "issuerVk": { "$ref": "#/definitions/Hash16" }
-      , "delegateVk": { "$ref": "#/definitions/Hash16" }
-      , "signature": { "$ref": "#/definitions/Hash64" }
+      , "issuerVk": { "$ref": "#/definitions/GenesisVerificationKey" }
+      , "delegateVk": { "$ref": "#/definitions/GenesisVerificationKey" }
+      , "signature": { "$ref": "#/definitions/IssuerSignature" }
       }
     }
 
   , "Epoch":
     { "type": "integer"
-    , "description": "An epoch number."
+    , "description": "An epoch number or length."
     , "minimum": 0
     , "maximum": 18446744073709552000
     }
@@ -2522,6 +2696,40 @@
       }
     }
 
+  , "EraParameters":
+    { "type": "object"
+    , "description": "Parameters that can vary across hard forks."
+    , "additionalProperties": false
+    , "required": [ "epochLength", "slotLength", "safeZone" ]
+    , "properties":
+      { "epochLength": { "$ref": "#/definitions/Epoch" }
+      , "slotLength": { "$ref": "#/definitions/SlotLength" }
+      , "safeZone":
+        { "oneOf":
+          [ { "$ref": "#/definitions/SafeZone" }
+          , { "type": "null" }
+          ]
+        }
+      }
+    }
+
+  , "EraSummary":
+    { "type": "object"
+    , "description": "Summary of the confirmed parts of the ledger."
+    , "additionalProperties": false
+    , "required": [ "start", "end", "parameters" ]
+    , "properties":
+      { "start": { "$ref": "#/definitions/Bound" }
+      , "end":
+        { "oneOf":
+          [ { "$ref": "#/definitions/Bound" }
+          , { "type": "null" }
+          ]
+        }
+      , "parameters": { "$ref": "#/definitions/EraParameters" }
+      }
+    }
+
   , "ExUnits":
     { "type": "object"
     , "additionalProperties": false
@@ -2532,18 +2740,12 @@
       }
     }
 
-  , "Hash16":
+  , "GenesisVerificationKey":
     { "type": "string"
-    , "description": "A base16-encoded digest."
+    , "description": "An Ed25519-BIP32 Byron genesis delegate verification key with chain-code."
     , "contentEncoding": "base16"
-    , "pattern": "^[0-9a-f]*$"
-    }
-
-  , "Hash64":
-    { "type": "string"
-    , "description": "A base64-encoded digest."
-    , "contentEncoding": "base64"
-    , "pattern": "^[A-Za-z0-9+/]*=?=?$"
+    , "minLength": 128
+    , "maxLength": 128
     }
 
   , "IndividualPoolRewardsProvenance":
@@ -2647,20 +2849,21 @@
       ]
     }
 
-  , "LeaderValue":
-    { "type": "object"
-    , "description": "In Ouroboros Praos, designate the leader's contribution to the Multi-Party computation used for calculating the leader schedule."
-    , "additionalProperties": false
-    , "properties":
-      { "proof": { "$ref": "#/definitions/Hash64" }
-      , "output": { "$ref": "#/definitions/Hash64" }
-      }
+  , "IssuerVrfVerificationKey":
+    { "type": "string"
+    , "description": "A key identifying a block issuer."
+    , "contentEncoding": "base64"
+    }
+
+  , "IssuerSignature":
+    { "type": "string"
+    , "description": "Signature proving a block was issued by a given issuer VRF key."
+    , "contentEncoding": "base64"
     }
 
   , "Lovelace":
     { "type": "integer"
-    , "minimum": 0
-    , "maximum": 18446744073709552000
+    , "description": "A number of lovelace, possibly large when summed up."
     }
 
   , "LovelaceDelta":
@@ -2668,6 +2871,11 @@
     , "description": "An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada)."
     , "minimum": -9223372036854775808
     , "maximum": 9223372036854775807
+    }
+
+  , "KesVerificationKey":
+    { "type": "string"
+    , "contentEncoding": "base64"
     }
 
   , "Metadata":
@@ -2806,17 +3014,8 @@
         , "enum": ["neutral"]
         , "title": "neutral"
         }
-      , { "$ref": "#/definitions/Hash16" }
+      , { "$ref": "#/definitions/Digest[Blake2b]::Nonce" }
       ]
-    }
-
-  , "NonceProof":
-    { "type": "object"
-    , "additionalProperties": false
-    , "properties":
-      { "proof": { "$ref": "#/definitions/Hash64" }
-      , "output": { "$ref": "#/definitions/Hash64" }
-      }
     }
 
   , "NonMyopicMemberRewards":
@@ -2871,9 +3070,9 @@
     , "additionalProperties": false
     , "properties":
       { "count": { "$ref": "#/definitions/UInt64" }
-      , "sigma": { "$ref": "#/definitions/Hash64" }
+      , "sigma": { "$ref": "#/definitions/Signature" }
       , "kesPeriod": { "$ref": "#/definitions/UInt64" }
-      , "hotVk": { "$ref": "#/definitions/Hash64" }
+      , "hotVk": { "$ref": "#/definitions/KesVerificationKey" }
       }
     }
 
@@ -2893,11 +3092,15 @@
         , "required": [ "slot", "hash" ]
         , "properties":
           { "slot": { "$ref": "#/definitions/Slot" }
-          , "hash": { "$ref": "#/definitions/Hash16" }
+          , "hash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].header" }
           }
         }
       , { "$ref": "#/definitions/Origin" }
       ]
+    }
+
+  , "PolicyId":
+    { "$ref": "#/definitions/Digest[Blake2b]::Script"
     }
 
   , "PoolDistribution":
@@ -2910,7 +3113,7 @@
       , "required": ["stake", "vrf"]
       , "properties":
         { "stake": { "$ref": "#/definitions/Ratio" }
-        , "vrf": { "$ref": "#/definitions/Hash16" }
+        , "vrf": { "$ref": "#/definitions/Digest[Blake2b]::VrfVerificationKey" }
         }
       }
     , "examples":
@@ -2928,6 +3131,7 @@
 
   , "PoolId":
     { "type": "string"
+    , "description": "A Blake2b 32-byte digest of a pool's verification key."
     , "contentEncoding": "bech32"
     , "pattern": "^pool1[0-9a-z]*$"
     , "examples":
@@ -2943,12 +3147,12 @@
     , "properties":
       { "owners":
         { "type": "array"
-        , "items": { "$ref": "#/definitions/Hash16" }
+        , "items": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
         }
       , "cost": { "$ref": "#/definitions/Lovelace" }
       , "margin": { "$ref": "#/definitions/Ratio" }
       , "pledge": { "$ref": "#/definitions/Lovelace" }
-      , "vrf": { "$ref": "#/definitions/Hash16" }
+      , "vrf": { "$ref": "#/definitions/Digest[Blake2b]::VrfVerificationKey" }
       , "metadata":
         { "oneOf":
           [ { "$ref": "#/definitions/Null"}
@@ -2957,7 +3161,7 @@
             , "additionalProperties": false
             , "required": ["hash","url"]
             , "properties":
-              { "hash": { "$ref": "#/definitions/Hash16" }
+              { "hash": { "$ref": "#/definitions/Digest[Blake2b]::PoolMetadata" }
               , "url":
                 { "type": "string"
                 , "format": "uri"
@@ -3249,9 +3453,15 @@
     , "additionalProperties": false
     , "required": [ "redeemer", "executionUnits" ]
     , "properties":
-      { "redeemer": { "$ref": "#/definitions/Hash64" }
+      { "redeemer": { "$ref": "#/definitions/RedeemerData" }
       , "executionUnits": { "$ref": "#/definitions/ExUnits" }
       }
+    }
+
+  , "RedeemerData":
+    { "type": "string"
+    , "contentEncoding": "base64"
+    , "description": "Plutus data, CBOR-serialised."
     }
 
   , "RedeemerPointer":
@@ -3260,12 +3470,10 @@
     }
 
   , "RelativeTime":
-    { "type": "string"
-    , "description": "A time in seconds relative to the system start."
-    , "pattern": "^[0-9]+.[0-9]+s$"
-    , "examples":
-      [ "3441.33s"
-      ]
+    { "type": "integer"
+    , "description": "A time in seconds relative to another one (typically, system start or era start)."
+    , "minimum": 0
+    , "maximum": 18446744073709552999
     }
 
   , "Relay":
@@ -3455,20 +3663,9 @@
       }
     }
 
-  , "UInt8":
+  , "SafeZone":
     { "type": "integer"
-    , "minimum": 0
-    , "maximum": 255
-    }
-
-  , "UInt32":
-    { "type": "integer"
-    , "minimum": 0
-    , "maximum": 4294967295
-    }
-
-  , "UInt64":
-    { "type": "integer"
+    , "description": "Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks."
     , "minimum": 0
     , "maximum": 18446744073709552999
     }
@@ -3533,7 +3730,7 @@
           }
         ]
     , "anyOf":
-      [ { "$ref": "#/definitions/Hash16" }
+      [ { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
       , { "type": "object"
         , "title": "any"
         , "additionalProperties": false
@@ -3605,7 +3802,7 @@
         , "additionalProperties": false
         , "required": [ "mint" ]
         , "properties":
-          { "mint": { "$ref": "#/definitions/Hash16" }
+          { "mint": { "$ref": "#/definitions/PolicyId" }
           }
         }
       , { "title": "certificate"
@@ -3629,14 +3826,20 @@
 
   , "Signature":
     { "type": "string"
+    , "description": "A signature coming from an Ed25519 or Ed25519-BIP32 signing key."
     , "contentEncoding": "base64"
-    , "pattern": "^[A-Za-z0-9+/]*=?=?$"
     }
 
   , "Slot":
-    { "description": "An absolute slot number."
-    , "type": "integer"
+    { "type": "integer"
+    , "description": "An absolute slot number."
     , "minimum": 0
+    , "maximum": 18446744073709552000
+    }
+
+  , "SlotLength":
+    { "type": "integer"
+    , "description": "A slot length, in seconds."
     , "maximum": 18446744073709552000
     }
 
@@ -3665,7 +3868,8 @@
     { "type": "array"
     , "items":
       { "oneOf":
-        [ { "$ref": "#/definitions/SubmitTxError[invalidWitnesses]" }
+        [ { "$ref": "#/definitions/EraMismatch" }
+        , { "$ref": "#/definitions/SubmitTxError[invalidWitnesses]" }
         , { "$ref": "#/definitions/SubmitTxError[missingVkWitnesses]" }
         , { "$ref": "#/definitions/SubmitTxError[missingScriptWitnesses]" }
         , { "$ref": "#/definitions/SubmitTxError[scriptWitnessNotValidating]" }
@@ -3738,7 +3942,7 @@
     , "properties":
       { "invalidWitnesses":
         { "type": "array"
-        , "items": { "$ref": "#/definitions/Hash16" }
+        , "items": { "$ref": "#/definitions/VerificationKey" }
         }
       }
     }
@@ -3751,7 +3955,7 @@
     , "properties":
       { "missingVkWitnesses":
         { "type": "array"
-        , "items": { "$ref": "#/definitions/Hash16" }
+        , "items": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
         }
       }
     }
@@ -3764,7 +3968,7 @@
     , "properties":
       { "missingScriptWitnesses":
         { "type": "array"
-        , "items": { "$ref": "#/definitions/Hash16" }
+        , "items": { "$ref": "#/definitions/Digest[Blake2b]::Script" }
         }
       }
     }
@@ -3777,7 +3981,7 @@
     , "properties":
       { "scriptWitnessNotValidating":
         { "type": "array"
-        , "items": { "$ref": "#/definitions/Hash16" }
+        , "items": { "$ref": "#/definitions/Digest[Blake2b]::Script" }
         }
       }
     }
@@ -3790,7 +3994,7 @@
     , "properties":
       { "insufficientGenesisSignatures":
         { "type": "array"
-        , "items": { "$ref": "#/definitions/Hash16" }
+        , "items": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
         }
       }
     }
@@ -3801,7 +4005,7 @@
     , "additionalProperties": false
     , "required": [ "missingTxMetadata" ]
     , "properties":
-      { "missingTxMetadata": { "$ref": "#/definitions/Hash16" }
+      { "missingTxMetadata": { "$ref": "#/definitions/Digest[Blake2b]::AuxiliaryDataBody" }
       }
     }
 
@@ -3811,7 +4015,7 @@
     , "additionalProperties": false
     , "required": [ "missingTxMetadataHash" ]
     , "properties":
-      { "missingTxMetadataHash": { "$ref": "#/definitions/Hash16" }
+      { "missingTxMetadataHash": { "$ref": "#/definitions/Digest[Blake2b]::AuxiliaryDataBody" }
       }
     }
 
@@ -3826,8 +4030,8 @@
         , "additionalProperties": false
         , "required": [ "includedHash", "expectedHash" ]
         , "properties":
-          { "includedHash": { "$ref": "#/definitions/Hash16" }
-          , "expectedHash": { "$ref": "#/definitions/Hash16" }
+          { "includedHash": { "$ref": "#/definitions/Digest[Blake2b]::AuxiliaryDataBody" }
+          , "expectedHash": { "$ref": "#/definitions/Digest[Blake2b]::AuxiliaryDataBody" }
           }
         }
       }
@@ -3903,15 +4107,27 @@
     }
 
   , "SubmitTxError[missingAtLeastOneInputUtxo]":
-    { "type": "string"
+    { "type": "object"
     , "title": "missingAtLeastOneInputUtxo"
-    , "enum": [ "missingAtLeastOneInputUtxo" ]
+    , "additionalProperties": false
+    , "required": [ "missingAtLeastOneInputUtxo" ]
+    , "properties":
+      { "missingAtLeastOneInputUtxo":
+        { "type": "null"
+        }
+      }
     }
 
   , "SubmitTxError[invalidMetadata]":
-    { "type": "string"
+    { "type": "object"
     , "title": "invalidMetadata"
-    , "enum": [ "invalidMetadata" ]
+    , "additionalProperties": false
+    , "required": [ "invalidMetadata" ]
+    , "properties":
+      { "invalidMetadata":
+        { "type": "null"
+        }
+      }
     }
 
   , "SubmitTxError[feeTooSmall]":
@@ -4023,10 +4239,16 @@
     }
 
   , "SubmitTxError[triesToForgeAda]":
-    { "type": "string"
+    { "type": "object"
     , "title": "triesToForgeAda"
+    , "additionalProperties": false
+    , "required": [ "triesToForgeAda" ]
+    , "properties":
+      { "triesToForgeAda":
+        { "type": "null"
+        }
+      }
     , "description": "Only since Mary."
-    , "enum": [ "triesToForgeAda" ]
     }
 
   , "SubmitTxError[delegateNotRegistered]":
@@ -4094,7 +4316,7 @@
     , "additionalProperties": false
     , "required": [ "stakeKeyAlreadyRegistered" ]
     , "properties":
-      { "stakeKeyAlreadyRegistered": { "$ref": "#/definitions/Hash16" }
+      { "stakeKeyAlreadyRegistered": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
       }
     }
 
@@ -4139,14 +4361,20 @@
     , "additionalProperties": false
     , "required": [ "stakeKeyNotRegistered" ]
     , "properties":
-      { "stakeKeyNotRegistered": { "$ref": "#/definitions/Hash16" }
+      { "stakeKeyNotRegistered": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
       }
     }
 
   , "SubmitTxError[rewardAccountNotExisting]":
-    { "type": "string"
+    { "type": "object"
     , "title": "rewardAccountNotExisting"
-    , "enum": [ "rewardAccountNotExisting" ]
+    , "additionalProperties": false
+    , "required": [ "rewardAccountNotExisting" ]
+    , "properties":
+      { "rewardAccountNotExisting":
+        { "type": "null"
+        }
+      }
     }
 
   , "SubmitTxError[rewardAccountNotEmpty]":
@@ -4167,9 +4395,15 @@
     }
 
   , "SubmitTxError[wrongCertificateType]":
-    { "type": "string"
+    { "type": "object"
     , "title": "wrongCertificateType"
-    , "enum": [ "wrongCertificateType" ]
+    , "additionalProperties": false
+    , "required": [ "wrongCertificateType" ]
+    , "properties":
+      { "wrongCertificateType":
+        { "type": "null"
+        }
+      }
     }
 
   , "SubmitTxError[unknownGenesisKey]":
@@ -4178,7 +4412,7 @@
     , "additionalProperties": false
     , "required": [ "unknownGenesisKey" ]
     , "properties":
-      { "unknownGenesisKey": { "$ref": "#/definitions/Hash16" }
+      { "unknownGenesisKey": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
       }
     }
 
@@ -4188,7 +4422,7 @@
     , "additionalProperties": false
     , "required": [ "alreadyDelegating" ]
     , "properties":
-      { "alreadyDelegating": { "$ref": "#/definitions/Hash16" }
+      { "alreadyDelegating": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
       }
     }
 
@@ -4230,21 +4464,39 @@
     }
 
   , "SubmitTxError[mirTransferNotCurrentlyAllowed]":
-    { "type": "string"
+    { "type": "object"
     , "title": "mirTransferNotCurrentlyAllowed"
-    , "enum": [ "mirTransferNotCurrentlyAllowed" ]
+    , "additionalProperties": false
+    , "required": [ "mirTransferNotCurrentlyAllowed" ]
+    , "properties":
+      { "mirTransferNotCurrentlyAllowed":
+        { "type": "null"
+        }
+      }
     }
 
   , "SubmitTxError[mirNegativeTransferNotCurrentlyAllowed]":
-    { "type": "string"
+    { "type": "object"
     , "title": "mirNegativeTransferNotCurrentlyAllowed"
-    , "enum": [ "mirNegativeTransferNotCurrentlyAllowed" ]
+    , "additionalProperties": false
+    , "required": [ "mirNegativeTransferNotCurrentlyAllowed" ]
+    , "properties":
+      { "mirNegativeTransferNotCurrentlyAllowed":
+        { "type": "null"
+        }
+      }
     }
 
   , "SubmitTxError[mirProducesNegativeUpdate]":
-    { "type": "string"
+    { "type": "object"
     , "title": "mirProducesNegativeUpdate"
-    , "enum": [ "mirProducesNegativeUpdate" ]
+    , "additionalProperties": false
+    , "required": [ "mirProducesNegativeUpdate" ]
+    , "properties":
+      { "mirProducesNegativeUpdate":
+        { "type": "null"
+        }
+      }
     }
 
   , "SubmitTxError[duplicateGenesisVrf]":
@@ -4253,7 +4505,7 @@
     , "additionalProperties": false
     , "required": [ "duplicateGenesisVrf" ]
     , "properties":
-      { "duplicateGenesisVrf": { "$ref": "#/definitions/Hash16" }
+      { "duplicateGenesisVrf": { "$ref": "#/definitions/Digest[Blake2b]::VrfVerificationKey" }
       }
     }
 
@@ -4270,11 +4522,11 @@
         , "properties":
           { "currentlyVoting":
             { "type": "array"
-            , "items": { "$ref": "#/definitions/Hash16" }
+            , "items": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
             }
           , "shouldBeVoting":
             { "type": "array"
-            , "items": { "$ref": "#/definitions/Hash16" }
+            , "items": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
             }
           }
         }
@@ -4326,7 +4578,7 @@
             , "items":
               { "type": "object"
               , "additionalProperties": { "$ref": "#/definitions/ScriptPurpose" }
-              , "propertyNames": { "$ref": "#/definitions/Hash16" }
+              , "propertyNames": { "$ref": "#/definitions/Digest[Blake2b]::Script" }
               }
             }
           }
@@ -4347,11 +4599,11 @@
         , "properties":
           { "provided":
             { "type": "array"
-            , "items": { "$ref": "#/definitions/Hash16" }
+            , "items": { "$ref": "#/definitions/Digest[Blake2b]::Datum" }
             }
           , "missing":
             { "type": "array"
-            , "items": { "$ref": "#/definitions/Hash16" }
+            , "items": { "$ref": "#/definitions/Digest[Blake2b]::Datum" }
             }
           }
         }
@@ -4371,11 +4623,11 @@
         , "properties":
           { "nonSpendable":
             { "type": "array"
-            , "items": { "$ref": "#/definitions/Hash16" }
+            , "items": { "$ref": "#/definitions/Digest[Blake2b]::Datum" }
             }
           , "acceptable":
             { "type": "array"
-            , "items": { "$ref": "#/definitions/Hash16" }
+            , "items": { "$ref": "#/definitions/Digest[Blake2b]::Datum" }
             }
           }
         }
@@ -4395,13 +4647,13 @@
         , "properties":
           { "provided":
             { "oneOf":
-              [ { "$ref": "#/definitions/Hash16" }
+              [ { "$ref": "#/definitions/Digest[Blake2b]::ScriptIntegrity" }
               , { "$ref": "#/definitions/Null"}
               ]
             }
           , "inferredFromParameters":
             { "oneOf":
-              [ { "$ref": "#/definitions/Hash16" }
+              [ { "$ref": "#/definitions/Digest[Blake2b]::ScriptIntegrity" }
               , { "$ref": "#/definitions/Null"}
               ]
             }
@@ -4418,7 +4670,7 @@
     , "properties":
       { "missingRequiredSignatures":
         { "type": "array"
-        , "items": { "$ref": "#/definitions/Hash16" }
+        , "items": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
         }
       }
     }
@@ -4463,9 +4715,16 @@
     }
 
   , "SubmitTxError[missingCollateralInputs]":
-    { "type": "string"
+    { "type": "object"
     , "title": "missingCollateralInputs"
-    , "enum": [ "missingCollateralInputs" ]
+    , "additionalProperties": false
+    , "required": [ "missingCollateralInputs" ]
+    , "properties":
+      { "missingCollateralInputs":
+        { "type": "null"
+        }
+      }
+    , "description": "Only since Alonzo."
     }
 
   , "SubmitTxError[collateralTooSmall]":
@@ -4553,9 +4812,16 @@
     }
 
   , "SubmitTxError[validationTagMismatch]":
-    { "type": "string"
+    { "type": "object"
     , "title": "validationTagMismatch"
-    , "enum": [ "validationTagMismatch" ]
+    , "additionalProperties": false
+    , "required": [ "validationTagMismatch" ]
+    , "properties":
+      { "validationTagMismatch":
+        { "type": "null"
+        }
+      }
+    , "description": "Only since Alonzo."
     }
 
   , "SubmitTxError[collectErrors]":
@@ -4578,7 +4844,7 @@
         , "required": [ "slot", "hash", "blockNo" ]
         , "properties":
           { "slot": { "$ref": "#/definitions/Slot" }
-          , "hash": { "$ref": "#/definitions/Hash16" }
+          , "hash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].header" }
           , "blockNo": { "$ref": "#/definitions/BlockNo" }
           }
         }
@@ -4612,12 +4878,20 @@
       }
     }
 
+  , "TxId":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte digest of a transaction body, CBOR-encoded."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
   , "TxIn":
     { "type": "object"
     , "additionalProperties": false
     , "required": [ "txId", "index" ]
     , "properties":
-      { "txId": { "$ref": "#/definitions/Hash16" }
+      { "txId": { "$ref": "#/definitions/TxId" }
       , "index":
         { "$ref": "#/definitions/UInt32"
         , "minimum": 0
@@ -4665,7 +4939,7 @@
       , "value": { "$ref": "#/definitions/Value" }
       , "datum":
         { "oneOf":
-          [ { "$ref": "#/definitions/Hash16" }
+          [ { "$ref": "#/definitions/Digest[Blake2b]::Datum" }
           , { "$ref": "#/definitions/Null"}
           ]
         }
@@ -4684,8 +4958,8 @@
             , "additionalProperties": false
             , "required": [ "key", "signature" ]
             , "properties":
-              { "key": { "$ref": "#/definitions/Hash16" }
-              , "signature": { "$ref": "#/definitions/Hash64" }
+              { "key": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
+              , "signature": { "$ref": "#/definitions/Signature" }
               }
             }
           }
@@ -4699,13 +4973,31 @@
             , "additionalProperties": false
             , "required": [ "key", "signature" ]
             , "properties":
-              { "key": { "$ref": "#/definitions/Hash64" }
-              , "signature": { "$ref": "#/definitions/Hash64" }
+              { "key": { "$ref": "#/definitions/VerificationKey" }
+              , "signature": { "$ref": "#/definitions/Signature" }
               }
             }
           }
         }
       ]
+    }
+
+  , "UInt8":
+    { "type": "integer"
+    , "minimum": 0
+    , "maximum": 255
+    }
+
+  , "UInt32":
+    { "type": "integer"
+    , "minimum": 0
+    , "maximum": 4294967295
+    }
+
+  , "UInt64":
+    { "type": "integer"
+    , "minimum": 0
+    , "maximum": 18446744073709552999
     }
 
   , "Update[Shelley]":
@@ -4804,9 +5096,9 @@
     , "additionalProperties": false
     , "required": [ "voterVk", "proposalId", "signature" ]
     , "properties":
-      { "voterVk": { "$ref": "#/definitions/Hash64" }
-      , "proposalId": { "$ref": "#/definitions/Hash16" }
-      , "signature": { "$ref": "#/definitions/Hash64" }
+      { "voterVk": { "$ref": "#/definitions/VerificationKey" }
+      , "proposalId": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
+      , "signature": { "$ref": "#/definitions/Signature" }
       }
     }
 
@@ -4815,11 +5107,28 @@
     , "enum": [ "voteForThisEpoch", "voteForNextEpoch" ]
     }
 
+  , "VrfProof":
+    { "type": "string"
+    , "contentEncoding": "base64"
+    }
+
+  , "VrfOutput":
+    { "type": "string"
+    , "contentEncoding": "base64"
+    }
+
   , "Withdrawals":
     { "type": "object"
     , "additionalProperties": { "$ref": "#/definitions/Lovelace" }
     , "propertyNames": "^stake(_test)?1[0-9a-z]+$"
     }
 
+  , "VerificationKey":
+    { "type": "string"
+    , "description": "An Ed25519 verification key."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
   }
 }

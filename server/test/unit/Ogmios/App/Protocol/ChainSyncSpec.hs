@@ -23,7 +23,7 @@ import Data.Aeson
     ( ToJSON (..) )
 import Network.TypedProtocol.Codec
     ( Codec (..), PeerHasAgency (..), SomeMessage (..), runDecoder )
-import Ogmios.App.Options
+import Ogmios.App.Configuration
     ( EpochSlots (..) )
 import Ogmios.App.Protocol.ChainSync
     ( MaxInFlight, mkChainSyncClient )

@@ -49,6 +49,7 @@ import Ogmios.Data.Json.Query
     , parseGetEraStart
     , parseGetFilteredDelegationsAndRewards
     , parseGetGenesisConfig
+    , parseGetInterpreter
     , parseGetLedgerTip
     , parseGetNonMyopicMemberRewards
     , parseGetPoolIds
@@ -111,6 +112,7 @@ import Test.Generators
     , genDelegationAndRewardsResult
     , genEpochResult
     , genHardForkApplyTxErr
+    , genInterpreterResult
     , genNonMyopicMemberRewardsResult
     , genPParamsResult
     , genPoint
@@ -271,6 +273,12 @@ spec = do
             ( parseGetEraStart genBoundResult
             ) (10, "StateQuery/Response/Query[eraStart]")
             "ogmios.wsp.json#/properties/QueryResponse[eraStart]"
+
+        validateQuery
+            [aesonQQ|"eraSummaries"|]
+            ( parseGetInterpreter genInterpreterResult
+            ) (10, "StateQuery/Response/Query[eraSummaries]")
+            "ogmios.wsp.json#/properties/QueryResponse[eraSummaries]"
 
         validateQuery
             [aesonQQ|"ledgerTip"|]

@@ -27,6 +27,7 @@ module Ogmios.Prelude
     , keepRedundantConstraint
     , LastElem
     , Or
+    , HKD
     ) where
 
 import Data.Generics.Internal.VL.Lens
@@ -98,3 +99,7 @@ type family Or (a :: Constraint) (b :: Constraint) :: Constraint where
     Or (x ~ x) b = Or () b
     Or a () = ()
     Or a (x ~ x) = Or a ()
+
+type family HKD f a where
+  HKD Identity a = a
+  HKD f a = f a

@@ -7,3 +7,4 @@ packages:
   ./server/modules/git-th
   ./server/modules/hspec-json-schema
   ./server/modules/json-wsp
+  ./server/modules/contra-tracers

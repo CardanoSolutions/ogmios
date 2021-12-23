@@ -1,12 +1,8 @@
 import { InteractionContext } from '../Connection'
-import { EraMismatchError, UnknownResultError } from '../errors'
+import { UnknownResultError } from '../errors'
 import { errors } from './errors'
-import { EraMismatch, Ogmios, SubmitFail } from '@cardano-ogmios/schema'
+import { Ogmios } from '@cardano-ogmios/schema'
 import { Query } from '../StateQuery'
-
-/** @internal */
-const isEraMismatch = (item: SubmitFail['SubmitFail']): item is EraMismatch =>
-  (item as EraMismatch).eraMismatch !== undefined
 
 /**
  * Submit a serialized transaction. This expects a base16 or base64 CBOR-encoded
@@ -30,12 +26,11 @@ export const submitTx = (context: InteractionContext, bytes: string) =>
           return resolve()
         } else if ('SubmitFail' in result) {
           const { SubmitFail } = result
-          if (isEraMismatch(SubmitFail)) {
-            const { eraMismatch } = SubmitFail
-            return reject(new EraMismatchError(eraMismatch.queryEra, eraMismatch.ledgerEra))
-          } else if (Array.isArray(SubmitFail)) {
+          if (Array.isArray(SubmitFail)) {
             reject(SubmitFail.map(failure => {
-              if (errors.InvalidWitnesses.assert(failure)) {
+              if (errors.EraMismatch.assert(failure)) {
+                return new errors.EraMismatch.Error(failure)
+              } else if (errors.InvalidWitnesses.assert(failure)) {
                 return new errors.InvalidWitnesses.Error(failure)
               } else if (errors.MissingVkWitnesses.assert(failure)) {
                 return new errors.MissingVkWitnesses.Error(failure)

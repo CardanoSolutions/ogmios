@@ -1,4 +1,4 @@
-import { EraMismatch, Hash16, Ogmios, PointOrOrigin, Slot } from '@cardano-ogmios/schema'
+import { EraMismatch, DigestBlake2BBlockHeader, Ogmios, PointOrOrigin, Slot } from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
 import { InteractionContext } from '../../Connection'
 import { Query } from '../Query'
@@ -6,8 +6,8 @@ import { Query } from '../Query'
 const isEraMismatch = (result: Ogmios['QueryResponse[ledgerTip]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
 
-const isNonOriginPoint = (result: {slot: Slot, hash: Hash16}): result is {slot: Slot, hash: Hash16} =>
-  (result as {slot: Slot, hash: Hash16}).slot !== undefined
+const isNonOriginPoint = (result: {slot: Slot, hash: DigestBlake2BBlockHeader}): result is {slot: Slot, hash: DigestBlake2BBlockHeader} =>
+  (result as {slot: Slot, hash: DigestBlake2BBlockHeader}).slot !== undefined
 
 /**
  * Get the current ledger tip. Will resolve the the acquired point if any.

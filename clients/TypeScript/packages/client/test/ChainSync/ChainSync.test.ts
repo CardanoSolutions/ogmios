@@ -14,7 +14,7 @@ import {
   BlockByron,
   BlockMary,
   BlockShelley,
-  Hash16,
+  DigestBlake2BBlockHeader,
   PointOrOrigin
 } from '@cardano-ogmios/schema'
 import { dummyInteractionContext } from '../util'
@@ -138,7 +138,7 @@ describe('ChainSync', () => {
       })
       await client.startSync(['origin'], 10)
       await delay(2000)
-      let firstBlockHash: Hash16
+      let firstBlockHash: DigestBlake2BBlockHeader
       if ('byron' in blocks[0]) {
         const block = blocks[0] as { byron: BlockByron }
         firstBlockHash = block.byron.hash
