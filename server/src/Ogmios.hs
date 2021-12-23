@@ -22,13 +22,11 @@ module Ogmios
 
     -- * Command & Options
     , Command (..)
-    , Options (..)
-    , NetworkParameters (..)
     , parseOptions
 
     -- * Logging
-    , TraceOgmios (..)
-    , withStdoutTracer
+    , Tracers (..)
+    , withStdoutTracers
     ) where
 
 import Ogmios.Prelude
@@ -37,25 +35,18 @@ import Cardano.Network.Protocol.NodeToClient
     ( Block )
 import Control.Monad.Class.MonadST
     ( MonadST )
-import Data.Aeson
-    ( ToJSON, genericToEncoding )
+import Ogmios.App.Configuration
+    ( Configuration (..), NetworkParameters (..), TraceConfiguration (..) )
 import Ogmios.App.Health
-    ( Health
-    , TraceHealth
-    , connectHealthCheckClient
-    , emptyHealth
-    , newHealthCheckClient
-    )
+    ( Health, connectHealthCheckClient, emptyHealth, newHealthCheckClient )
 import Ogmios.App.Metrics
-    ( RuntimeStats, Sampler, Sensors, TraceMetrics, newSampler, newSensors )
-import Ogmios.App.Options
-    ( Command (..), NetworkParameters (..), Options (..), parseOptions )
+    ( RuntimeStats, Sampler, Sensors, newSampler, newSensors )
 import Ogmios.App.Server
-    ( TraceServer, connectHybridServer )
+    ( connectHybridServer )
 import Ogmios.App.Server.Http
     ( mkHttpApp )
 import Ogmios.App.Server.WebSocket
-    ( TraceWebSocket, newWebSocketApp )
+    ( newWebSocketApp )
 import Ogmios.Control.Exception
     ( MonadCatch, MonadMask, MonadThrow )
 import Ogmios.Control.MonadAsync
@@ -63,18 +54,15 @@ import Ogmios.Control.MonadAsync
 import Ogmios.Control.MonadClock
     ( MonadClock, getCurrentTime, withDebouncer, _10s )
 import Ogmios.Control.MonadLog
-    ( HasSeverityAnnotation (..)
-    , Logger
-    , MonadLog (..)
-    , Severity (..)
-    , withStdoutTracer
-    )
+    ( MonadLog (..), TracerDefinition (..), withStdoutTracers )
 import Ogmios.Control.MonadMetrics
     ( MonadMetrics )
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TVar, newTVarIO )
 import Ogmios.Control.MonadWebSocket
     ( MonadWebSocket )
+import Ogmios.Options
+    ( Command (..), Tracers (..), parseOptions )
 import Ogmios.Version
     ( version )
 import System.Posix.Signals
@@ -84,8 +72,6 @@ import System.Posix.Signals
     , raiseSignal
     , softwareTermination
     )
-
-import qualified Data.Aeson as Json
 
 --
 -- App
@@ -111,22 +97,22 @@ runWith :: forall a. App a -> Env App -> IO a
 runWith app = runReaderT (unApp app)
 
 -- | Ogmios, where everything gets stitched together.
-application :: Logger TraceOgmios -> App ()
-application tr = hijackSigTerm >> withDebouncer _10s (\debouncer -> do
+application :: Tracers IO 'Concrete -> App ()
+application tracers = hijackSigTerm >> withDebouncer _10s (\debouncer -> do
     env@Env{network} <- ask
-    logWith tr (OgmiosNetwork network)
+    logWith tracerConfiguration (ConfigurationNetwork network)
 
-    healthCheckClient <- newHealthCheckClient (contramap OgmiosHealth tr) debouncer
+    healthCheckClient <- newHealthCheckClient tracerHealth debouncer
 
-    webSocketApp <- newWebSocketApp (contramap OgmiosWebSocket tr) (`runWith` env)
+    webSocketApp <- newWebSocketApp tracerWebSocket (`runWith` env)
     httpApp      <- mkHttpApp @_ @_ @Block (`runWith` env)
 
     concurrently_
-        (connectHealthCheckClient
-            (contramap OgmiosHealth tr) (`runWith` env) healthCheckClient)
-        (connectHybridServer
-            (contramap OgmiosServer tr) webSocketApp httpApp)
+        (connectHealthCheckClient tracerHealth (`runWith` env) healthCheckClient)
+        (connectHybridServer tracerServer webSocketApp httpApp)
     )
+  where
+    Tracers { tracerHealth, tracerWebSocket, tracerServer, tracerConfiguration } = tracers
 
 -- | The runtime does not let the application terminate gracefully when a
 -- SIGTERM is received. It does however for SIGINT which allows the application
@@ -146,57 +132,20 @@ hijackSigTerm =
 -- | Environment of the application, carrying around what's needed for the
 -- application to run.
 data Env (m :: Type -> Type) = Env
-    { health  :: !(TVar m (Health Block))
+    { health :: !(TVar m (Health Block))
     , sensors :: !(Sensors m)
     , sampler :: !(Sampler RuntimeStats m)
     , network :: !NetworkParameters
-    , options :: !Options
+    , configuration :: !Configuration
     } deriving stock (Generic)
 
 newEnvironment
-    :: Logger TraceOgmios
+    :: Tracers IO 'Concrete
     -> NetworkParameters
-    -> Options
+    -> Configuration
     -> IO (Env App)
-newEnvironment tr network options = do
+newEnvironment Tracers{tracerMetrics} network configuration = do
     health  <- getCurrentTime >>= newTVarIO . emptyHealth
     sensors <- newSensors
-    sampler <- newSampler (contramap OgmiosMetrics tr)
-    pure $ Env{health,sensors,sampler,network,options}
-
---
--- Logging
---
-
-data TraceOgmios where
-    OgmiosHealth
-        :: { healthCheck :: TraceHealth (Health Block) }
-        -> TraceOgmios
-
-    OgmiosMetrics
-        :: { metrics :: TraceMetrics }
-        -> TraceOgmios
-
-    OgmiosWebSocket
-        :: { webSocket :: TraceWebSocket }
-        -> TraceOgmios
-
-    OgmiosServer
-        :: { server :: TraceServer }
-        -> TraceOgmios
-
-    OgmiosNetwork
-        :: { networkParameters :: NetworkParameters }
-        -> TraceOgmios
-    deriving stock (Generic, Show)
-
-instance ToJSON TraceOgmios where
-    toEncoding = genericToEncoding Json.defaultOptions
-
-instance HasSeverityAnnotation TraceOgmios where
-    getSeverityAnnotation = \case
-        OgmiosHealth msg    -> getSeverityAnnotation msg
-        OgmiosMetrics msg   -> getSeverityAnnotation msg
-        OgmiosWebSocket msg -> getSeverityAnnotation msg
-        OgmiosServer msg    -> getSeverityAnnotation msg
-        OgmiosNetwork{}     -> Info
+    sampler <- newSampler tracerMetrics
+    pure $ Env{health,sensors,sampler,network,configuration}

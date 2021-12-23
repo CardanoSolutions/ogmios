@@ -14,38 +14,81 @@ export type Block = Byron | Shelley | Allegra | Mary | Alonzo;
  */
 export type BlockByron = StandardBlock | EpochBoundaryBlock;
 /**
- * A base16-encoded digest.
+ * A Blake2b 32-byte digest of an era-independent block header, serialised as CBOR.
  */
-export type Hash16 = string;
+export type DigestBlake2BBlockHeader = string;
 /**
  * A block number, the i-th block to be minted is number i.
  */
 export type BlockNo = number;
+/**
+ * An Ed25519-BIP32 Byron genesis delegate verification key with chain-code.
+ */
+export type GenesisVerificationKey = string;
 export type UInt32 = number;
+/**
+ * A Blake2b 32-byte digest of a Merkle tree (or all block's transactions) root hash.
+ */
+export type DigestBlake2BMerkleRoot = string;
+/**
+ * A Blake2b 32-byte digest of a Byron transaction witness set, CBOR-encoded.
+ */
+export type DigestBlake2BBlockByronBodyTxPayloadWitness = string;
+/**
+ * A Blake2b 32-byte digest of a Byron delegation payload, CBOR-encoded.
+ */
+export type DigestBlake2BBlockByronBodyDlgPayload = string;
+/**
+ * A Blake2b 32-byte digest of a Byron update payload, CBOR-encoded.
+ */
+export type DigestBlake2BBlockByronBodyUpdatePayload = string;
 export type ProtocolMagicId = number;
 /**
- * An epoch number.
+ * An epoch number or length.
  */
 export type Epoch = number;
 /**
- * A base64-encoded digest.
+ * Signature proving a block was issued by a given issuer VRF key.
  */
-export type Hash64 = string;
+export type IssuerSignature = string;
 /**
  * An absolute slot number.
  */
 export type Slot = number;
 /**
+ * A Blake2b 32-byte digest of a transaction body, CBOR-encoded.
+ */
+export type TxId = string;
+/**
  * A Cardano address (either legacy format or new format).
  */
 export type Address = string;
-export type Lovelace = number;
+/**
+ * A number of lovelace, possibly large when summed up.
+ */
+export type Lovelace = bigint;
 /**
  * A number of asset, can be negative went burning assets.
  */
 export type AssetQuantity = bigint;
+/**
+ * A Blake2b 32-byte digest of a serialized datum, CBOR-encoded.
+ */
+export type DigestBlake2BDatum = string;
 export type Null = null;
 export type TxWitness = WitnessVk | RedeemWitness;
+/**
+ * A Blake2b 28-byte digest of an Ed25519 verification key.
+ */
+export type DigestBlake2BVerificationKey = string;
+/**
+ * A signature coming from an Ed25519 or Ed25519-BIP32 signing key.
+ */
+export type Signature = string;
+/**
+ * An Ed25519 verification key.
+ */
+export type VerificationKey = string;
 export type NullableRatio = Ratio | Null;
 /**
  * A ratio of two integers, to express exact fractions.
@@ -53,6 +96,14 @@ export type NullableRatio = Ratio | Null;
 export type Ratio = string;
 export type NullableUInt64 = UInt64 | Null;
 export type UInt64 = number;
+/**
+ * A key identifying a block issuer.
+ */
+export type IssuerVrfVerificationKey = string;
+/**
+ * A Blake2b 32-byte digest of an era-independent block body.
+ */
+export type DigestBlake2BBlockBody = string;
 export type Certificate =
   | StakeDelegation
   | StakeKeyRegistration
@@ -61,7 +112,22 @@ export type Certificate =
   | PoolRetirement
   | GenesisDelegation
   | MoveInstantaneousRewards;
+/**
+ * A Blake2b 28-byte digest of a verification key or a script.
+ */
+export type DigestBlake2BCredential = string;
+/**
+ * A Blake2b 32-byte digest of a pool's verification key.
+ */
 export type PoolId = string;
+/**
+ * A Blake2b 32-byte digest of a VRF verification key.
+ */
+export type DigestBlake2BVrfVerificationKey = string;
+/**
+ * A Blake2b 32-byte digest of stake pool (canonical) JSON metadata.
+ */
+export type DigestBlake2BPoolMetadata = string;
 export type Relay = ByAddress | ByName;
 /**
  * A reward account, also known as 'stake address'.
@@ -76,29 +142,56 @@ export type LovelaceDelta = number;
  */
 export type RewardPot = "reserves" | "treasury";
 export type UpdateShelley = Null | UpdateProposalShelley;
-export type Nonce = Neutral | Hash16;
+export type Nonce = Neutral | DigestBlake2BNonce;
 export type Neutral = "neutral";
-export type Signature = string;
+/**
+ * A Blake2b 32-byte digest of some arbitrary to make a nonce.
+ */
+export type DigestBlake2BNonce = string;
 export type Script = Native | Plutus | Plutus1;
 /**
  * A phase-1 monetary script. Timelocks constraints are only supported since Allegra.
  */
-export type ScriptNative = Hash16 | Any | All | NOf | ExpiresAt | StartsAt;
+export type ScriptNative = DigestBlake2BVerificationKey | Any | All | NOf | ExpiresAt | StartsAt;
 /**
  * A phase-2 Plutus script; or said differently, a serialized Plutus-core program.
  */
 export type ScriptPlutus = string;
+/**
+ * An Ed25519-BIP32 chain-code for key deriviation.
+ */
+export type ChainCode = string;
+/**
+ * Extra attributes carried by Byron addresses (network magic and/or HD payload).
+ */
+export type AddressAttributes = string;
+/**
+ * A Blake2b 32-byte digest of an 'AuxiliaryDataBody', serialised as CBOR.
+ */
+export type DigestBlake2BAuxiliaryDataBody = string;
 export type Metadatum = Int | String | Bytes | List | Map;
+export type VrfProof = string;
+export type VrfOutput = string;
 /**
  * The size of the block in bytes.
  */
 export type BlockSize = number;
+export type KesVerificationKey = string;
 export type UpdateAlonzo = Null | UpdateProposalAlonzo;
 export type Int64 = number;
 /**
  * A network target, as defined since the Shelley era.
  */
 export type Network = "mainnet" | "testnet";
+/**
+ * A Blake2b 32-byte digest of a script-integrity hash (i.e redeemers, datums and cost model, CBOR-encoded).
+ */
+export type DigestBlake2BScriptIntegrity = string;
+export type Datum = string;
+/**
+ * Plutus data, CBOR-serialised.
+ */
+export type RedeemerData = string;
 export type TipOrOrigin = Tip | Origin;
 /**
  * The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point.
@@ -107,8 +200,10 @@ export type Origin = "origin";
 export type PointOrOrigin = Point | Origin;
 export type SubmitSuccess = "SubmitSuccess";
 export type Era = "Byron" | "Shelley" | "Allegra" | "Mary" | "Alonzo";
-export type MissingAtLeastOneInputUtxo = "missingAtLeastOneInputUtxo";
-export type InvalidMetadata = "invalidMetadata";
+/**
+ * A Blake2b 32-byte digest of a phase-1 or phase-2 script, CBOR-encoded.
+ */
+export type DigestBlake2BScript = string;
 export type InvalidEntity =
   | {
       type: "address";
@@ -122,22 +217,12 @@ export type InvalidEntity =
       type: "rewardAccount";
       entity: RewardAccount;
     };
-/**
- * Only since Mary.
- */
-export type TriesToForgeAda = "triesToForgeAda";
 export type UInt8 = number;
-export type RewardAccountNotExisting = "rewardAccountNotExisting";
-export type WrongCertificateType = "wrongCertificateType";
-export type MirTransferNotCurrentlyAllowed = "mirTransferNotCurrentlyAllowed";
-export type MirNegativeTransferNotCurrentlyAllowed = "mirNegativeTransferNotCurrentlyAllowed";
-export type MirProducesNegativeUpdate = "mirProducesNegativeUpdate";
 export type VotingPeriod = "voteForThisEpoch" | "voteForNextEpoch";
 export type ScriptPurpose = Spend | Mint | Certificate1 | Withdrawal;
-export type MissingCollateralInputs = "missingCollateralInputs";
 export type Utxo = [TxIn, TxOut][];
-export type ValidationTagMismatch = "validationTagMismatch";
 export type SubmitTxError = (
+  | EraMismatch
   | InvalidWitnesses
   | MissingVkWitnesses
   | MissingScriptWitnesses
@@ -202,10 +287,11 @@ export type SubmitTxError = (
 )[];
 export type AcquireFailureDetails = "pointTooOld" | "pointNotOnChain";
 export type GetEraStart = "eraStart";
+export type GetEraSummaries = "eraSummaries";
 export type GetLedgerTip = "ledgerTip";
 export type GetCurrentEpoch = "currentEpoch";
 export type Lovelaces = Lovelace[];
-export type Credentials = Hash16[];
+export type Credentials = DigestBlake2BCredential[];
 export type GetCurrentProtocolParameters = "currentProtocolParameters";
 export type GetProposedProtocolParameters = "proposedProtocolParameters";
 export type GetStakeDistribution = "stakeDistribution";
@@ -218,13 +304,21 @@ export type GetChainTip = "chainTip";
 export type GetBlockHeight = "blockHeight";
 export type GetSystemStart = "systemStart";
 /**
- * A time in seconds relative to the system start.
+ * A time in seconds relative to another one (typically, system start or era start).
  */
-export type RelativeTime = string;
+export type RelativeTime = number;
 /**
  * The requested query is not available in the current node era. It could be that the node is not fully synced.
  */
 export type QueryUnavailableInCurrentEra = "QueryUnavailableInCurrentEra";
+/**
+ * A slot length, in seconds.
+ */
+export type SlotLength = number;
+/**
+ * Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks.
+ */
+export type SafeZone = number;
 export type UtcTime = string;
 /**
  * A magic number for telling networks apart. (e.g. 764824073)
@@ -410,6 +504,7 @@ export interface Ogmios {
     args?: {
       query:
         | GetEraStart
+        | GetEraSummaries
         | GetLedgerTip
         | GetCurrentEpoch
         | GetNonMyopicMemberRewards
@@ -442,6 +537,19 @@ export interface Ogmios {
     servicename: "ogmios";
     methodname: "Query";
     result: Bound | QueryUnavailableInCurrentEra;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  "QueryResponse[eraSummaries]": {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "Query";
+    result: QueryUnavailableInCurrentEra | EraSummary[];
     /**
      * Any value that was set by a client request in the 'mirror' field.
      */
@@ -696,11 +804,11 @@ export interface Byron {
   byron: BlockByron;
 }
 export interface StandardBlock {
-  hash: Hash16;
+  hash: DigestBlake2BBlockHeader;
   header: {
     blockHeight: BlockNo;
-    genesisKey: Hash16;
-    prevHash: Hash16;
+    genesisKey: GenesisVerificationKey;
+    prevHash: DigestBlake2BBlockHeader;
     proof: BlockProof;
     protocolMagicId: ProtocolMagicId;
     protocolVersion: ProtocolVersion;
@@ -710,7 +818,7 @@ export interface StandardBlock {
   };
   body: {
     txPayload: {
-      id: Hash16;
+      id: TxId;
       body: Tx;
       witness: TxWitness[];
     }[];
@@ -724,11 +832,11 @@ export interface StandardBlock {
 export interface BlockProof {
   utxo: {
     number: UInt32;
-    root: Hash16;
-    witnessesHash: Hash16;
+    root: DigestBlake2BMerkleRoot;
+    witnessesHash: DigestBlake2BBlockByronBodyTxPayloadWitness;
   };
-  delegation: Hash16;
-  update: Hash16;
+  delegation: DigestBlake2BBlockByronBodyDlgPayload;
+  update: DigestBlake2BBlockByronBodyUpdatePayload;
 }
 export interface ProtocolVersion {
   major: UInt32;
@@ -737,16 +845,16 @@ export interface ProtocolVersion {
 }
 export interface BlockSignature {
   dlgCertificate: DlgCertificate;
-  signature: Hash64;
+  signature: IssuerSignature;
 }
 /**
  * A (Byron) delegation certificate.
  */
 export interface DlgCertificate {
   epoch: Epoch;
-  issuerVk: Hash16;
-  delegateVk: Hash16;
-  signature: Hash64;
+  issuerVk: GenesisVerificationKey;
+  delegateVk: GenesisVerificationKey;
+  signature: IssuerSignature;
 }
 export interface SoftwareVersion {
   appName: string;
@@ -757,7 +865,7 @@ export interface Tx {
   outputs: TxOut[];
 }
 export interface TxIn {
-  txId: Hash16;
+  txId: TxId;
   index: number;
 }
 /**
@@ -766,7 +874,7 @@ export interface TxIn {
 export interface TxOut {
   address: Address;
   value: Value;
-  datum?: Hash16 | Null;
+  datum?: DigestBlake2BDatum | Null;
 }
 export interface Value {
   coins: Lovelace;
@@ -776,14 +884,14 @@ export interface Value {
 }
 export interface WitnessVk {
   witnessVk: {
-    key: Hash16;
-    signature: Hash64;
+    key: DigestBlake2BVerificationKey;
+    signature: Signature;
   };
 }
 export interface RedeemWitness {
   redeemWitness: {
-    key: Hash64;
-    signature: Hash64;
+    key: VerificationKey;
+    signature: Signature;
   };
 }
 export interface UpdateProposalByron {
@@ -795,8 +903,8 @@ export interface UpdateProposalByron {
     };
     parametersUpdate: ProtocolParametersByron;
   };
-  issuer: Hash64;
-  signature: Hash64;
+  issuer: IssuerVrfVerificationKey;
+  signature: IssuerSignature;
 }
 export interface ProtocolParametersByron {
   heavyDlgThreshold: NullableRatio;
@@ -824,16 +932,16 @@ export interface SoftForkRule {
   decrementThreshold: NullableRatio;
 }
 export interface Vote {
-  voterVk: Hash64;
-  proposalId: Hash16;
-  signature: Hash64;
+  voterVk: VerificationKey;
+  proposalId: DigestBlake2BVerificationKey;
+  signature: Signature;
 }
 export interface EpochBoundaryBlock {
-  hash: Hash16;
+  hash: DigestBlake2BBlockHeader;
   header: {
     blockHeight: BlockNo;
     epoch: Epoch;
-    prevHash: Hash16;
+    prevHash: DigestBlake2BBlockHeader;
   };
 }
 export interface Shelley {
@@ -841,24 +949,24 @@ export interface Shelley {
 }
 export interface BlockShelley {
   body?: BlockBodyShelley[];
-  headerHash?: Hash16;
+  headerHash?: DigestBlake2BBlockHeader;
   header?: {
     blockHeight: BlockNo;
     slot: Slot;
-    prevHash: Hash16;
-    issuerVk: Hash16;
-    issuerVrf: Hash64;
-    nonce?: NonceProof;
-    leaderValue: LeaderValue;
+    prevHash: DigestBlake2BBlockHeader;
+    issuerVk: VerificationKey;
+    issuerVrf: IssuerVrfVerificationKey;
+    nonce?: CertifiedVrf;
+    leaderValue: CertifiedVrf;
     blockSize: BlockSize;
-    blockHash: Hash16;
+    blockHash: DigestBlake2BBlockBody;
     opCert: OpCert;
     protocolVersion: ProtocolVersion;
-    signature: Hash64;
+    signature: IssuerSignature;
   };
 }
 export interface BlockBodyShelley {
-  id: Hash16;
+  id: DigestBlake2BBlockBody;
   body: {
     inputs: TxIn[];
     outputs: TxOut[];
@@ -884,7 +992,7 @@ export interface BlockBodyShelley {
  */
 export interface StakeDelegation {
   stakeDelegation: {
-    delegator: Hash16;
+    delegator: DigestBlake2BCredential;
     delegatee: PoolId;
   };
 }
@@ -892,13 +1000,13 @@ export interface StakeDelegation {
  * A stake key registration certificate.
  */
 export interface StakeKeyRegistration {
-  stakeKeyRegistration: Hash16;
+  stakeKeyRegistration: DigestBlake2BCredential;
 }
 /**
  * A stake key de-registration certificate.
  */
 export interface StakeKeyDeregistration {
-  stakeKeyDeregistration: Hash16;
+  stakeKeyDeregistration: DigestBlake2BCredential;
 }
 /**
  * A pool registration certificate.
@@ -907,18 +1015,18 @@ export interface PoolRegistration {
   poolRegistration: PoolParameters;
 }
 export interface PoolParameters {
-  owners: Hash16[];
+  owners: DigestBlake2BVerificationKey[];
   cost: Lovelace;
   margin: Ratio;
   pledge: Lovelace;
-  vrf: Hash16;
+  vrf: DigestBlake2BVrfVerificationKey;
   metadata: Null | PoolMetadata;
   id: PoolId;
   relays: Relay[];
   rewardAccount: RewardAccount;
 }
 export interface PoolMetadata {
-  hash: Hash16;
+  hash: DigestBlake2BPoolMetadata;
   url: string;
 }
 export interface ByAddress {
@@ -941,9 +1049,9 @@ export interface PoolRetirement {
 }
 export interface GenesisDelegation {
   genesisDelegation: {
-    delegateKeyHash: Hash16;
-    verificationKeyHash: Hash16;
-    vrfVerificationKeyHash: Hash16;
+    delegateKeyHash: DigestBlake2BVerificationKey;
+    verificationKeyHash: DigestBlake2BVerificationKey;
+    vrfVerificationKeyHash: DigestBlake2BVrfVerificationKey;
   };
 }
 /**
@@ -1012,13 +1120,13 @@ export interface Plutus1 {
   "plutus:v2": ScriptPlutus;
 }
 export interface BootstrapWitness {
-  signature?: Hash64;
-  chainCode?: Hash16 | Null;
-  addressAttributes?: Hash64 | Null;
-  key?: Hash16;
+  signature?: Signature;
+  chainCode?: ChainCode | Null;
+  addressAttributes?: AddressAttributes | Null;
+  key?: VerificationKey;
 }
 export interface AuxiliaryData {
-  hash: Hash16;
+  hash: DigestBlake2BAuxiliaryDataBody;
   body: AuxiliaryDataBody;
 }
 export interface AuxiliaryDataBody {
@@ -1047,49 +1155,42 @@ export interface MetadatumMap {
   k: Metadatum;
   v: Metadatum;
 }
-export interface NonceProof {
-  proof?: Hash64;
-  output?: Hash64;
-}
-/**
- * In Ouroboros Praos, designate the leader's contribution to the Multi-Party computation used for calculating the leader schedule.
- */
-export interface LeaderValue {
-  proof?: Hash64;
-  output?: Hash64;
+export interface CertifiedVrf {
+  proof?: VrfProof;
+  output?: VrfOutput;
 }
 /**
  * Certificate identifying a stake pool operator.
  */
 export interface OpCert {
   count?: UInt64;
-  sigma?: Hash64;
+  sigma?: Signature;
   kesPeriod?: UInt64;
-  hotVk?: Hash64;
+  hotVk?: KesVerificationKey;
 }
 export interface Allegra {
   allegra: BlockAllegra;
 }
 export interface BlockAllegra {
   body?: BlockBodyAllegra[];
-  headerHash?: Hash16;
+  headerHash?: DigestBlake2BBlockHeader;
   header?: {
     blockHeight: BlockNo;
     slot: Slot;
-    prevHash: Hash16;
-    issuerVk: Hash16;
-    issuerVrf: Hash64;
-    nonce?: NonceProof;
-    leaderValue: LeaderValue;
+    prevHash: DigestBlake2BBlockHeader;
+    issuerVk: VerificationKey;
+    issuerVrf: IssuerVrfVerificationKey;
+    nonce?: CertifiedVrf;
+    leaderValue: CertifiedVrf;
     blockSize: BlockSize;
-    blockHash: Hash16;
+    blockHash: DigestBlake2BBlockBody;
     opCert: OpCert;
     protocolVersion: ProtocolVersion;
-    signature: Hash64;
+    signature: IssuerSignature;
   };
 }
 export interface BlockBodyAllegra {
-  id: Hash16;
+  id: DigestBlake2BBlockBody;
   body: {
     inputs: TxIn[];
     outputs: TxOut[];
@@ -1119,24 +1220,24 @@ export interface Mary {
 }
 export interface BlockMary {
   body?: BlockBodyMary[];
-  headerHash?: Hash16;
+  headerHash?: DigestBlake2BBlockHeader;
   header?: {
     blockHeight: BlockNo;
     slot: Slot;
-    prevHash: Hash16;
-    issuerVk: Hash16;
-    issuerVrf: Hash64;
-    nonce?: NonceProof;
-    leaderValue: LeaderValue;
+    prevHash: DigestBlake2BBlockHeader;
+    issuerVk: VerificationKey;
+    issuerVrf: IssuerVrfVerificationKey;
+    nonce?: CertifiedVrf;
+    leaderValue: CertifiedVrf;
     blockSize: BlockSize;
-    blockHash: Hash16;
+    blockHash: DigestBlake2BBlockBody;
     opCert: OpCert;
     protocolVersion: ProtocolVersion;
-    signature: Hash64;
+    signature: IssuerSignature;
   };
 }
 export interface BlockBodyMary {
-  id: Hash16;
+  id: DigestBlake2BBlockBody;
   body: {
     inputs: TxIn[];
     outputs: TxOut[];
@@ -1163,24 +1264,24 @@ export interface Alonzo {
 }
 export interface BlockAlonzo {
   body?: BlockBodyAlonzo[];
-  headerHash?: Hash16;
+  headerHash?: DigestBlake2BBlockHeader;
   header?: {
     blockHeight: BlockNo;
     slot: Slot;
-    prevHash: Hash16;
-    issuerVk: Hash16;
-    issuerVrf: Hash64;
-    nonce?: NonceProof;
-    leaderValue: LeaderValue;
+    prevHash: DigestBlake2BBlockHeader;
+    issuerVk: VerificationKey;
+    issuerVrf: IssuerVrfVerificationKey;
+    nonce?: CertifiedVrf;
+    leaderValue: CertifiedVrf;
     blockSize: BlockSize;
-    blockHash: Hash16;
+    blockHash: DigestBlake2BBlockBody;
     opCert: OpCert;
     protocolVersion: ProtocolVersion;
-    signature: Hash64;
+    signature: IssuerSignature;
   };
 }
 export interface BlockBodyAlonzo {
-  id: Hash16;
+  id: DigestBlake2BBlockBody;
   body: {
     inputs: TxIn[];
     collaterals: TxIn[];
@@ -1192,8 +1293,8 @@ export interface BlockBodyAlonzo {
     update: UpdateAlonzo;
     mint: Value;
     network: Network | Null;
-    scriptIntegrityHash: Hash16 | Null;
-    requiredExtraSignatures: Hash16[];
+    scriptIntegrityHash: DigestBlake2BScriptIntegrity | Null;
+    requiredExtraSignatures: DigestBlake2BVerificationKey[];
   };
   witness: {
     signatures: {
@@ -1204,7 +1305,7 @@ export interface BlockBodyAlonzo {
     };
     bootstrap: BootstrapWitness[];
     datums: {
-      [k: string]: Hash64;
+      [k: string]: Datum;
     };
     redeemers: {
       [k: string]: Redeemer;
@@ -1259,12 +1360,12 @@ export interface ExUnits {
   steps: UInt64;
 }
 export interface Redeemer {
-  redeemer: Hash64;
+  redeemer: RedeemerData;
   executionUnits: ExUnits;
 }
 export interface Tip {
   slot: Slot;
-  hash: Hash16;
+  hash: DigestBlake2BBlockHeader;
   blockNo: BlockNo;
 }
 export interface RollBackward {
@@ -1278,7 +1379,7 @@ export interface RollBackward {
  */
 export interface Point {
   slot: Slot;
-  hash: Hash16;
+  hash: DigestBlake2BBlockHeader;
 }
 export interface IntersectionFound {
   IntersectionFound: {
@@ -1292,7 +1393,7 @@ export interface IntersectionNotFound {
   };
 }
 export interface SubmitFail {
-  SubmitFail: EraMismatch | SubmitTxError;
+  SubmitFail: SubmitTxError;
 }
 /**
  * An era mismatch between a client request and the era the ledger is in. This may occur when running queries on a syncing node and/or when the node is crossing an era.
@@ -1304,30 +1405,30 @@ export interface EraMismatch {
   };
 }
 export interface InvalidWitnesses {
-  invalidWitnesses: Hash16[];
+  invalidWitnesses: VerificationKey[];
 }
 export interface MissingVkWitnesses {
-  missingVkWitnesses: Hash16[];
+  missingVkWitnesses: DigestBlake2BVerificationKey[];
 }
 export interface MissingScriptWitnesses {
-  missingScriptWitnesses: Hash16[];
+  missingScriptWitnesses: DigestBlake2BScript[];
 }
 export interface ScriptWitnessNotValidating {
-  scriptWitnessNotValidating: Hash16[];
+  scriptWitnessNotValidating: DigestBlake2BScript[];
 }
 export interface InsufficientGenesisSignatures {
-  insufficientGenesisSignatures: Hash16[];
+  insufficientGenesisSignatures: DigestBlake2BVerificationKey[];
 }
 export interface MissingTxMetadata {
-  missingTxMetadata: Hash16;
+  missingTxMetadata: DigestBlake2BAuxiliaryDataBody;
 }
 export interface MissingTxMetadataHash {
-  missingTxMetadataHash: Hash16;
+  missingTxMetadataHash: DigestBlake2BAuxiliaryDataBody;
 }
 export interface TxMetadataHashMismatch {
   txMetadataHashMismatch: {
-    includedHash: Hash16;
-    expectedHash: Hash16;
+    includedHash: DigestBlake2BAuxiliaryDataBody;
+    expectedHash: DigestBlake2BAuxiliaryDataBody;
   };
 }
 export interface BadInputs {
@@ -1356,6 +1457,12 @@ export interface TxTooLarge {
     maximumSize: Int64;
     actualSize: Int64;
   };
+}
+export interface MissingAtLeastOneInputUtxo {
+  missingAtLeastOneInputUtxo: null;
+}
+export interface InvalidMetadata {
+  invalidMetadata: null;
 }
 export interface FeeTooSmall {
   feeTooSmall: {
@@ -1390,6 +1497,12 @@ export interface TooManyAssetsInOutput {
 export interface AddressAttributesTooLarge {
   addressAttributesTooLarge: Address[];
 }
+/**
+ * Only since Mary.
+ */
+export interface TriesToForgeAda {
+  triesToForgeAda: null;
+}
 export interface DelegateNotRegistered {
   delegateNotRegistered: PoolId;
 }
@@ -1410,7 +1523,7 @@ export interface WrongPoolCertificate {
   wrongPoolCertificate: UInt8;
 }
 export interface StakeKeyAlreadyRegistered {
-  stakeKeyAlreadyRegistered: Hash16;
+  stakeKeyAlreadyRegistered: DigestBlake2BVerificationKey;
 }
 export interface PoolCostTooSmall {
   poolCostTooSmall: {
@@ -1424,18 +1537,24 @@ export interface PoolMetadataHashTooBig {
   };
 }
 export interface StakeKeyNotRegistered {
-  stakeKeyNotRegistered: Hash16;
+  stakeKeyNotRegistered: DigestBlake2BVerificationKey;
+}
+export interface RewardAccountNotExisting {
+  rewardAccountNotExisting: null;
 }
 export interface RewardAccountNotEmpty {
   rewardAccountNotEmpty: {
     balance: Lovelace;
   };
 }
+export interface WrongCertificateType {
+  wrongCertificateType: null;
+}
 export interface UnknownGenesisKey {
-  unknownGenesisKey: Hash16;
+  unknownGenesisKey: DigestBlake2BVerificationKey;
 }
 export interface AlreadyDelegating {
-  alreadyDelegating: Hash16;
+  alreadyDelegating: DigestBlake2BVerificationKey;
 }
 export interface InsufficientFundsForMir {
   insufficientFundsForMir: {
@@ -1450,13 +1569,22 @@ export interface TooLateForMir {
     lastAllowedSlot: Slot;
   };
 }
+export interface MirTransferNotCurrentlyAllowed {
+  mirTransferNotCurrentlyAllowed: null;
+}
+export interface MirNegativeTransferNotCurrentlyAllowed {
+  mirNegativeTransferNotCurrentlyAllowed: null;
+}
+export interface MirProducesNegativeUpdate {
+  mirProducesNegativeUpdate: null;
+}
 export interface DuplicateGenesisVrf {
-  duplicateGenesisVrf: Hash16;
+  duplicateGenesisVrf: DigestBlake2BVrfVerificationKey;
 }
 export interface NonGenesisVoters {
   nonGenesisVoters: {
-    currentlyVoting: Hash16[];
-    shouldBeVoting: Hash16[];
+    currentlyVoting: DigestBlake2BVerificationKey[];
+    shouldBeVoting: DigestBlake2BVerificationKey[];
   };
 }
 export interface UpdateWrongEpoch {
@@ -1480,7 +1608,7 @@ export interface Spend {
   spend: TxIn;
 }
 export interface Mint {
-  mint: Hash16;
+  mint: DigestBlake2BScript;
 }
 export interface Certificate1 {
   certificate: Certificate;
@@ -1490,24 +1618,24 @@ export interface Withdrawal {
 }
 export interface MissingRequiredDatums {
   missingRequiredDatums: {
-    provided: Hash16[];
-    missing: Hash16[];
+    provided: DigestBlake2BDatum[];
+    missing: DigestBlake2BDatum[];
   };
 }
 export interface UnspendableDatums {
   unspendableDatums: {
-    nonSpendable: Hash16[];
-    acceptable: Hash16[];
+    nonSpendable: DigestBlake2BDatum[];
+    acceptable: DigestBlake2BDatum[];
   };
 }
 export interface ExtraDataMismatch {
   extraDataMismatch: {
-    provided: Hash16 | Null;
-    inferredFromParameters: Hash16 | Null;
+    provided: DigestBlake2BScriptIntegrity | Null;
+    inferredFromParameters: DigestBlake2BScriptIntegrity | Null;
   };
 }
 export interface MissingRequiredSignatures {
-  missingRequiredSignatures: Hash16[];
+  missingRequiredSignatures: DigestBlake2BVerificationKey[];
 }
 export interface UnspendableScriptInputs {
   unspendableScriptInputs: TxIn[];
@@ -1517,6 +1645,12 @@ export interface ExtraRedeemers {
 }
 export interface MissingDatumHashesForInputs {
   missingDatumHashesForInputs: TxIn[];
+}
+/**
+ * Only since Alonzo.
+ */
+export interface MissingCollateralInputs {
+  missingCollateralInputs: null;
 }
 export interface CollateralTooSmall {
   collateralTooSmall: {
@@ -1545,6 +1679,12 @@ export interface ExecutionUnitsTooLarge {
 export interface OutsideForecast {
   outsideForecast: Slot;
 }
+/**
+ * Only since Alonzo.
+ */
+export interface ValidationTagMismatch {
+  validationTagMismatch: null;
+}
 export interface CollectErrors {
   collectErrors: unknown[];
 }
@@ -1562,7 +1702,7 @@ export interface GetNonMyopicMemberRewards {
   nonMyopicMemberRewards: Lovelaces | Credentials;
 }
 export interface GetDelegationsAndRewards {
-  delegationsAndRewards: Hash16[];
+  delegationsAndRewards: DigestBlake2BCredential[];
 }
 export interface GetUtxoByAddress {
   utxo: Address[];
@@ -1580,6 +1720,22 @@ export interface Bound {
   time: RelativeTime;
   slot: Slot;
   epoch: Epoch;
+}
+/**
+ * Summary of the confirmed parts of the ledger.
+ */
+export interface EraSummary {
+  start: Bound;
+  end: Bound | null;
+  parameters: EraParameters;
+}
+/**
+ * Parameters that can vary across hard forks.
+ */
+export interface EraParameters {
+  epochLength: Epoch;
+  slotLength: SlotLength;
+  safeZone: SafeZone | null;
 }
 /**
  * Rewards that can be expected assuming a pool is fully saturated. Such rewards are said non-myopic, in opposition to short-sighted rewards looking at immediate benefits. Keys of the map can be either Lovelace amounts or account credentials depending on the query.
@@ -1608,7 +1764,7 @@ export interface ProposedProtocolParametersAlonzo {
 export interface PoolDistribution {
   [k: string]: {
     stake: Ratio;
-    vrf: Hash16;
+    vrf: DigestBlake2BVrfVerificationKey;
   };
 }
 /**
@@ -1623,7 +1779,7 @@ export interface CompactGenesis {
   epochLength: Epoch;
   slotsPerKesPeriod: UInt64;
   maxKesEvolutions: UInt64;
-  slotLength: Int64;
+  slotLength: SlotLength;
   updateQuorum: UInt64;
   maxLovelaceSupply: UInt64;
   protocolParameters: ProtocolParametersShelley;
@@ -1650,29 +1806,29 @@ export interface RewardsProvenance {
    */
   totalExpectedBlocks: number;
   /**
-   * The maximum amount of Lovelace which can be removed from the reserves to be given out as rewards for the given epoch.
+   * A number of lovelace, possibly large when summed up.
    */
-  incentive: number;
+  incentive: bigint;
   /**
-   * The difference between the 'availableRewards' and what was actually distributed.
+   * A number of lovelace, possibly large when summed up.
    */
-  rewardsGap: number;
+  rewardsGap: bigint;
   /**
-   * The total Lovelace available for rewards for the given epoch, equal to 'totalRewards' less 'treasuryTax'.
+   * A number of lovelace, possibly large when summed up.
    */
-  availableRewards: number;
+  availableRewards: bigint;
   /**
-   * The reward pot for the given epoch, equal to the 'incentive' plus the fee pot.
+   * A number of lovelace, possibly large when summed up.
    */
-  totalRewards: number;
+  totalRewards: bigint;
   /**
-   * The amount of Lovelace taken for the treasury for the given epoch.
+   * A number of lovelace, possibly large when summed up.
    */
-  treasuryTax: number;
+  treasuryTax: bigint;
   /**
-   * The amount of Lovelace that is delegated during the given epoch.
+   * A number of lovelace, possibly large when summed up.
    */
-  activeStake: number;
+  activeStake: bigint;
   pools: {
     [k: string]: IndividualPoolRewardsProvenance;
   };
@@ -1691,30 +1847,30 @@ export interface IndividualPoolRewardsProvenance {
    */
   activeStakeShare: string;
   /**
-   * The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch.
+   * A number of lovelace, possibly large when summed up.
    */
-  ownerStake: number;
+  ownerStake: bigint;
   parameters: PoolParameters;
   /**
    * A ratio of two integers, to express exact fractions.
    */
   pledgeRatio: string;
   /**
-   * The maximum number of Lovelace this stake pool can earn.
+   * A number of lovelace, possibly large when summed up.
    */
-  maxRewards: number;
+  maxRewards: bigint;
   /**
    * A ratio of two integers, to express exact fractions.
    */
   apparentPerformance: string;
   /**
-   * The total Lovelace earned by the stake pool.
+   * A number of lovelace, possibly large when summed up.
    */
-  totalRewards: number;
+  totalRewards: bigint;
   /**
-   * The total Lovelace earned by the stake pool leader.
+   * A number of lovelace, possibly large when summed up.
    */
-  leaderRewards: number;
+  leaderRewards: bigint;
 }
 export interface PoolsRanking {
   [k: string]: {

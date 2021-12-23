@@ -5,7 +5,7 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
-### [5.0.0] - unreleased
+### [5.0.0] - 2021-12-20
 
 #### Added
 
@@ -17,25 +17,54 @@ pre: "<b>6. </b>"
 >
 > - New state-query `blockHeight` to access the blockchain current highest block number (or `"origin"` if the chain is just starting).
 >
+> - New state-query `eraSummaries` to access all era bounds and slotting parameters details, required for proper slot arithmetic.
+>
+> - Log-levels can now be configured per-component. For example, one can decrease the min severity for the health component while keeping the state-query logs at another.
+>
+> - Logs can now be shutdown completely via the special keyword `off`.
+>
+> - Static binaries for Linux are now produced by the Nix build and uploaded as build artifacts for the corresponding Github workflow (i.e. Nix).
+>
 > ##### 🚗 TypeScript Client
 >
-> - Add support for `systemStart`, `chainTip`, `blockHeight` in the `client` and `repl`.
+> - Add support for `systemStart`, `chainTip`, `blockHeight` & `eraSummaries` in the `client` and `repl`.
 
 #### Changed
 
 > ##### 🏢 Server
 > 
+> - ⚠️ `RelativeTime` is no-longer serialised as a string (with `s` as suffix) but, as an integer representing the number of seconds.
+>
 > - ⚠️ Serialised Plutus scripts are now labelled either `plutus:v1` or `plutus:v2` (instead of `plutus`).
+> 
+> - ⚠️ Some breaking changes in the SubmitTx errors returned by the server for the sake of consistency. All submission errors are now returned as singleton objects within an array. The key of each object indicates the type of error and the value gives additional details about the errors. This is also true for era-mismatch errors. Some errors used to be returned as plain strings, they are now wrapped as singleton object with `null` as a value; this is the case for:
+>   - `invalidMetadata`
+>   - `mirNegativeTransferNotCurrentlyAllowed`
+>   - `mirProducesNegativeUpdate`
+>   - `mirTransferNotCurrentlyAllowed`
+>   - `missingAtLeastOneInputUtxo`
+>   - `missingCollateralInputs`
+>   - `triesToForgeAda`
+>   - `validationTagMismatch`
+>   - `wrongCertificateType`
 >
 > - Upgraded internal dependencies to Cardano eco-system 1.31.0
->
+> 
 > ##### 🚗 TypeScript Client
 >
+> - ⚠️ `Lovelace` is now a native BigInt.
+>
 > - ⚠️ `getServerHealth`'s `connection` argument is now wrapped into an object, mapped to the field `connection`. (see [#135](https://github.com/CardanoSolutions/ogmios/issues/135))
+> 
+> - ⚠️ Replaced schema definitions for `Hash16` and `Hash64` with more precise type definitions. For hashes, definitions now follows a convention `Digest[ALGORITHM]::PRE-IMAGE` where `ALGORITHM` and `PRE-IMAGE` points to the corresponding has algorithm used to hash the `PRE-IMAGE`. The length of the digest is given by `minLength` and `maxLength` JSON-schema constraints. Consequently, TypeScript types / interfaces generated from the JSON-schema definitions have been altered. 
 
 #### Removed
 
-> N/A
+> ##### 🏢 Server
+> 
+> - ⚠️ Log level severities `critical`, `alert` and `emergency` have been removed. `error` is now the highest severity.
+
+> - ⚠️ The Nix setup has been highly simplified, resulting in removal of the NixOS services configuration and probably some other stuff.
 
 ### [4.2.1] - 2021-11-16
 

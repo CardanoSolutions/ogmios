@@ -9,7 +9,7 @@
 -- because it's test code and, having it fail would be instantly caught.
 {-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
 
-module Ogmios.App.OptionsSpec
+module Ogmios.OptionsSpec
     ( spec
     ) where
 
@@ -17,14 +17,18 @@ import Ogmios.Prelude
 
 import Data.List
     ( isInfixOf )
-import Ogmios.App.Options
-    ( Command (..)
+import Ogmios.App.Configuration
+    ( Configuration (..)
     , EpochSlots (..)
     , NetworkMagic (..)
     , NetworkParameters (..)
-    , Options (..)
-    , Severity (..)
     , mkSystemStart
+    )
+import Ogmios.Control.MonadLog
+    ( Severity (..), TracerDefinition (..), defaultTracers )
+import Ogmios.Options
+    ( Command (..)
+    , Tracers (..)
     , parseNetworkParameters
     , parseOptions
     , parseOptionsPure
@@ -71,14 +75,14 @@ spec = parallel $ do
                 , "--node-config", getConfigFile "testnet"
                 ]
         specify (show args) $ withArgs args parseOptions >>= \case
-            Start (Identity _) opts -> do
+            Start (Identity _) opts logLevels -> do
                 nodeSocket opts `shouldBe` "./node.socket"
                 nodeConfig opts `shouldBe` getConfigFile "testnet"
                 serverHost opts `shouldBe` "127.0.0.1"
                 serverPort opts `shouldBe` 1337
                 connectionTimeout opts `shouldBe` 90
                 maxInFlight opts `shouldBe` 1000
-                logLevel opts `shouldBe` Info
+                logLevels `shouldBe` defaultTracersInfo
             Version -> expectationFailure "Expected Start but got Version."
 
     context "parseNetworkParameters" $ do
@@ -108,69 +112,107 @@ spec = parallel $ do
         , ( [ "--node-socket", "/path/to/socket"
             , "--node-config", "./node.config"
             ]
-          , shouldSucceed defaultOptions { nodeSocket = "/path/to/socket" }
+          , shouldSucceed
+                (defaultConfiguration { nodeSocket = "/path/to/socket" })
+                defaultTracersInfo
           )
 
         , ( [ "--node-socket", "./node.socket"
             , "--node-config", "/path/to/config"
             ]
-          , shouldSucceed defaultOptions { nodeConfig = "/path/to/config" }
+          , shouldSucceed
+                (defaultConfiguration { nodeConfig = "/path/to/config" })
+                defaultTracersInfo
           )
 
         , ( defaultArgs ++ [ "--host", "0.0.0.0" ]
-          , shouldSucceed defaultOptions { serverHost = "0.0.0.0" }
+          , shouldSucceed
+                (defaultConfiguration { serverHost = "0.0.0.0" })
+                defaultTracersInfo
           )
 
         , ( defaultArgs ++ [ "--port", "42" ]
-          , shouldSucceed defaultOptions { serverPort = 42 }
+          , shouldSucceed
+                (defaultConfiguration { serverPort = 42 })
+                defaultTracersInfo
           )
         , ( defaultArgs ++ [ "--port", "#" ]
           , shouldFail
           )
 
         , ( defaultArgs ++ [ "--timeout", "42" ]
-          , shouldSucceed defaultOptions { connectionTimeout = 42 }
+          , shouldSucceed
+                (defaultConfiguration { connectionTimeout = 42 })
+                defaultTracersInfo
           )
         , ( defaultArgs ++ [ "--timeout", "#" ]
           , shouldFail
           )
 
         , ( defaultArgs ++ [ "--max-in-flight", "42" ]
-          , shouldSucceed defaultOptions { maxInFlight = 42 }
+          , shouldSucceed
+                (defaultConfiguration { maxInFlight = 42 })
+                defaultTracersInfo
           )
         , ( defaultArgs ++ [ "--max-in-flight", "#" ]
           , shouldFail
           )
 
         , ( defaultArgs ++ [ "--log-level", "Debug" ]
-          , shouldSucceed defaultOptions { logLevel = Debug }
+          , shouldSucceed defaultConfiguration (defaultTracersDebug)
           )
         , ( defaultArgs ++ [ "--log-level", "debug" ]
-          , shouldSucceed defaultOptions { logLevel = Debug }
+          , shouldSucceed defaultConfiguration (defaultTracersDebug)
           )
         , ( defaultArgs ++ [ "--log-level", "Info" ]
-          , shouldSucceed defaultOptions { logLevel = Info }
+          , shouldSucceed defaultConfiguration defaultTracersInfo
           )
         , ( defaultArgs ++ [ "--log-level", "info" ]
-          , shouldSucceed defaultOptions { logLevel = Info }
+          , shouldSucceed defaultConfiguration defaultTracersInfo
           )
         , ( defaultArgs ++ [ "--log-level", "Notice" ]
-          , shouldSucceed defaultOptions { logLevel = Notice }
+          , shouldSucceed defaultConfiguration (defaultTracersNotice)
           )
         , ( defaultArgs ++ [ "--log-level", "notice" ]
-          , shouldSucceed defaultOptions { logLevel = Notice }
+          , shouldSucceed defaultConfiguration (defaultTracersNotice)
           )
         , ( defaultArgs ++ [ "--log-level", "Warning" ]
-          , shouldSucceed defaultOptions { logLevel = Warning }
+          , shouldSucceed defaultConfiguration (defaultTracersWarning)
           )
         , ( defaultArgs ++ [ "--log-level", "warning" ]
-          , shouldSucceed defaultOptions { logLevel = Warning }
+          , shouldSucceed defaultConfiguration (defaultTracersWarning)
           )
         , ( defaultArgs ++ [ "--log-level", "Error" ]
-          , shouldSucceed defaultOptions { logLevel = Error }
+          , shouldSucceed defaultConfiguration (defaultTracersError)
           )
         , ( defaultArgs ++ [ "--log-level", "error" ]
-          , shouldSucceed defaultOptions { logLevel = Error }
+          , shouldSucceed defaultConfiguration (defaultTracersError)
+          )
+
+        , ( defaultArgs ++ [ "--log-level-health", "Notice" ]
+          , shouldSucceed
+                defaultConfiguration
+                (defaultTracersInfo { tracerHealth = Const (Just Notice) })
+          )
+
+        , ( defaultArgs ++
+                [ "--log-level-metrics", "Debug"
+                , "--log-level-websocket", "Warning"
+                ]
+          , shouldSucceed
+                defaultConfiguration
+                (defaultTracersInfo
+                    { tracerMetrics = Const (Just Debug)
+                    , tracerWebSocket = Const (Just Warning)
+                    }
+                )
+          )
+
+        , ( defaultArgs ++
+                [ "--log-level", "Error"
+                , "--log-level-health", "Debug"
+                ]
+          , shouldFail
           )
 
         , ( [ "version" ], flip shouldBe $ Right Version )
@@ -191,9 +233,24 @@ spec = parallel $ do
 -- Helper
 --
 
-defaultOptions :: Options
-defaultOptions = parseOptionsPure defaultArgs
-    & either (error . toText) (\(Start _ opts) -> opts)
+defaultConfiguration :: Configuration
+defaultConfiguration = parseOptionsPure defaultArgs
+    & either (error . toText) (\(Start _ cfg _) -> cfg)
+
+defaultTracersDebug :: Tracers IO 'MinSeverities
+defaultTracersDebug = defaultTracers (Just Debug)
+
+defaultTracersInfo :: Tracers IO 'MinSeverities
+defaultTracersInfo = defaultTracers (Just Info)
+
+defaultTracersNotice :: Tracers IO 'MinSeverities
+defaultTracersNotice = defaultTracers (Just Notice)
+
+defaultTracersWarning :: Tracers IO 'MinSeverities
+defaultTracersWarning = defaultTracers (Just Warning)
+
+defaultTracersError :: Tracers IO 'MinSeverities
+defaultTracersError = defaultTracers (Just Error)
 
 defaultArgs :: [String]
 defaultArgs =
@@ -201,9 +258,12 @@ defaultArgs =
     , "--node-config", "./node.config"
     ]
 
-shouldSucceed :: Options -> (Either String (Command Proxy) -> Expectation)
-shouldSucceed =
-    flip shouldBe . Right . Start Proxy
+shouldSucceed
+    :: Configuration
+    -> Tracers IO 'MinSeverities
+    -> (Either String (Command Proxy) -> Expectation)
+shouldSucceed cfg =
+    flip shouldBe . Right . Start Proxy cfg
 
 shouldFail :: Either String (Command Proxy) -> Expectation
 shouldFail = flip shouldSatisfy isLeft

@@ -1,0 +1,33 @@
+_config: !include "../../.hpack.config.yaml"
+
+name:                contra-tracers
+version:             1.0.0
+github:              "cardanosolutions/ogmios"
+license:             MPL-2.0
+author:              "KtorZ <matthias.benkort@gmail.com>"
+maintainer:          "matthias.benkort@gmail.com"
+copyright:           "2021 KtorZ"
+description:         Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server/modules/contra-tracers>
+synopsis:            A logging library built on top of contra-tracer to make configuring and declaring multiple tracers easy (via generics).
+category:            Logging, Contravariant, Generics
+
+extra-source-files:
+- LICENSE
+- README.md
+- CHANGELOG.md
+
+dependencies:
+- base >= 4.7 && < 5
+
+default-extensions: *default-extensions
+
+library:
+  source-dirs: src
+  ghc-options: *ghc-options-lib
+  when:
+    condition: true
+    ghc-options:
+    - -O2
+  dependencies:
+    - aeson
+    - contra-tracer

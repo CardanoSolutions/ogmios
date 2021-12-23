@@ -24,10 +24,10 @@ module Ogmios.App.Health
 
 import Ogmios.Prelude
 
+import Ogmios.App.Configuration
+    ( Configuration (..), NetworkParameters (..) )
 import Ogmios.App.Metrics
     ( RuntimeStats, Sampler, Sensors )
-import Ogmios.App.Options
-    ( NetworkParameters (..), Options (..) )
 import Ogmios.Control.Exception
     ( IOException
     , MonadCatch (..)
@@ -157,7 +157,7 @@ connectHealthCheckClient
         , MonadOuroboros m
         , MonadReader env m
         , HasType NetworkParameters env
-        , HasType Options env
+        , HasType Configuration env
         )
     => Logger (TraceHealth (Health Block))
     -> (forall a. m a -> IO a)
@@ -165,7 +165,7 @@ connectHealthCheckClient
     -> m ()
 connectHealthCheckClient tr embed (HealthCheckClient clients) = do
     NetworkParameters{slotsPerEpoch,networkMagic} <- asks (view typed)
-    Options{nodeSocket} <- asks (view typed)
+    Configuration{nodeSocket} <- asks (view typed)
     let client = mkClient embed nullTracer slotsPerEpoch clients
     connectClient nullTracer client (NodeToClientVersionData networkMagic) nodeSocket
         & onExceptions nodeSocket

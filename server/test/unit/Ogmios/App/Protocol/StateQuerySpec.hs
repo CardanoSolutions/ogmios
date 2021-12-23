@@ -30,7 +30,7 @@ import GHC.TypeLits
     ( KnownSymbol )
 import Network.TypedProtocol.Codec
     ( Codec (..), PeerHasAgency (..), SomeMessage (..), runDecoder )
-import Ogmios.App.Options
+import Ogmios.App.Configuration
     ( EpochSlots (..) )
 import Ogmios.App.Protocol.StateQuery
     ( mkStateQueryClient )

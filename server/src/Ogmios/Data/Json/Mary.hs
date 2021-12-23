@@ -232,7 +232,9 @@ encodeUtxoFailure = \case
               )
             ]
     MA.InputSetEmptyUTxO ->
-        encodeText "missingAtLeastOneInputUtxo"
+        encodeObject
+            [ ( "missingAtLeastOneInputUtxo", encodeNull )
+            ]
     MA.FeeTooSmallUTxO required actual ->
         encodeObject
             [ ( "feeTooSmall", encodeObject
@@ -286,7 +288,9 @@ encodeUtxoFailure = \case
               )
             ]
     MA.TriesToForgeADA ->
-        encodeString "triesToForgeAda"
+        encodeObject
+            [ ( "triesToForgeAda", encodeNull )
+            ]
     MA.UpdateFailure e ->
         Shelley.encodeUpdateFailure e
 

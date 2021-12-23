@@ -25,7 +25,13 @@ import Data.SOP.Strict
 import Data.Type.Equality
     ( (:~:) (..), testEquality )
 import Ogmios.Data.Json.Query
-    ( Delegations, PoolParams, QueryResult, RewardAccounts, RewardProvenance )
+    ( Delegations
+    , Interpreter
+    , PoolParams
+    , QueryResult
+    , RewardAccounts
+    , RewardProvenance
+    )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock )
 import Ouroboros.Consensus.Cardano.Block
@@ -176,6 +182,12 @@ genBoundResult
     -> Gen (Maybe Bound)
 genBoundResult _ =
     Just <$> arbitrary -- NOTE: Can't be 'Nothing' with Ogmios.
+
+genInterpreterResult
+    :: Proxy (Interpreter (CardanoEras StandardCrypto))
+    -> Gen (Interpreter (CardanoEras StandardCrypto))
+genInterpreterResult _ =
+    arbitrary
 
 genPointResult
     :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)

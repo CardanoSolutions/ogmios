@@ -1,6 +1,6 @@
 import {
   EraMismatch,
-  Hash16,
+  DigestBlake2BCredential,
   Lovelace,
   NonMyopicMemberRewards,
   Ogmios
@@ -26,7 +26,7 @@ const isNonMyopicMemberRewards = (result: Ogmios['QueryResponse[nonMyopicMemberR
  */
 export const nonMyopicMemberRewards = (
   context: InteractionContext,
-  input: (Lovelace | Hash16)[]
+  input: (Lovelace | DigestBlake2BCredential)[]
 ): Promise<NonMyopicMemberRewards> =>
   Query<
     Ogmios['Query'],

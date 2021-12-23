@@ -1,13 +1,15 @@
 {
   "name": "cardano-ogmios",
-  "version": "4.2.1",
+  "version": "5.0.0",
   "private": true,
   "description": "TypeScript monorepo with client libraries for Cardano Ogmios",
   "engines": {
     "node": "^14"
   },
   "workspaces": [
-    "packages/*"
+    "packages/schema",
+    "packages/client",
+    "packages/repl"
   ],
   "main": "dist/index.js",
   "repository": "https://github.com/cardanosolutions/ogmios",

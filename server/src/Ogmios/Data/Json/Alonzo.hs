@@ -524,7 +524,9 @@ encodeUtxoFailure = \case
               )
             ]
     Al.InputSetEmptyUTxO ->
-        encodeText "missingAtLeastOneInputUtxo"
+        encodeObject
+            [ ( "missingAtLeastOneInputUtxo", encodeNull )
+            ]
     Al.FeeTooSmallUTxO required actual ->
         encodeObject
             [ ( "feeTooSmall", encodeObject
@@ -590,7 +592,9 @@ encodeUtxoFailure = \case
               )
             ]
     Al.TriesToForgeADA ->
-        encodeString "triesToForgeAda"
+        encodeObject
+            [ ( "triesToForgeAda", encodeNull )
+            ]
     Al.OutputTooBigUTxO outs ->
         encodeObject
             [ ( "tooManyAssetsInOutput"
@@ -598,8 +602,10 @@ encodeUtxoFailure = \case
               )
             ]
     Al.NoCollateralInputs ->
-        encodeString "missingCollateralInputs"
-    Al.InsufficientCollateral required actual ->
+        encodeObject
+            [ ( "missingCollateralInputs", encodeNull )
+            ]
+    Al.InsufficientCollateral actual required ->
         encodeObject
             [ ( "collateralTooSmall", encodeObject
                 [ ( "requiredCollateral", encodeCoin required )
@@ -644,9 +650,13 @@ encodeUtxosPredicateFailure
     -> Json
 encodeUtxosPredicateFailure = \case
     Al.ValidationTagMismatch{} ->
-        encodeString "validationTagMismatch"
+        encodeObject
+            [ ( "validationTagMismatch", encodeNull )
+            ]
     Al.CollectErrors errors ->
-        encodeObject [ ( "collectErrors", encodeFoldable encodeCollectError errors ) ]
+        encodeObject
+            [ ( "collectErrors", encodeFoldable encodeCollectError errors )
+            ]
     Al.UpdateFailure e ->
         Shelley.encodeUpdateFailure e
 
