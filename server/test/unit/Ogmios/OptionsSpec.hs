@@ -159,10 +159,10 @@ spec = parallel $ do
           )
 
         , ( defaultArgs ++ [ "--log-level", "Debug" ]
-          , shouldSucceed defaultConfiguration (defaultTracersDebug)
+          , shouldSucceed defaultConfiguration defaultTracersDebug
           )
         , ( defaultArgs ++ [ "--log-level", "debug" ]
-          , shouldSucceed defaultConfiguration (defaultTracersDebug)
+          , shouldSucceed defaultConfiguration defaultTracersDebug
           )
         , ( defaultArgs ++ [ "--log-level", "Info" ]
           , shouldSucceed defaultConfiguration defaultTracersInfo
@@ -171,22 +171,22 @@ spec = parallel $ do
           , shouldSucceed defaultConfiguration defaultTracersInfo
           )
         , ( defaultArgs ++ [ "--log-level", "Notice" ]
-          , shouldSucceed defaultConfiguration (defaultTracersNotice)
+          , shouldSucceed defaultConfiguration defaultTracersNotice
           )
         , ( defaultArgs ++ [ "--log-level", "notice" ]
-          , shouldSucceed defaultConfiguration (defaultTracersNotice)
+          , shouldSucceed defaultConfiguration defaultTracersNotice
           )
         , ( defaultArgs ++ [ "--log-level", "Warning" ]
-          , shouldSucceed defaultConfiguration (defaultTracersWarning)
+          , shouldSucceed defaultConfiguration defaultTracersWarning
           )
         , ( defaultArgs ++ [ "--log-level", "warning" ]
-          , shouldSucceed defaultConfiguration (defaultTracersWarning)
+          , shouldSucceed defaultConfiguration defaultTracersWarning
           )
         , ( defaultArgs ++ [ "--log-level", "Error" ]
-          , shouldSucceed defaultConfiguration (defaultTracersError)
+          , shouldSucceed defaultConfiguration defaultTracersError
           )
         , ( defaultArgs ++ [ "--log-level", "error" ]
-          , shouldSucceed defaultConfiguration (defaultTracersError)
+          , shouldSucceed defaultConfiguration defaultTracersError
           )
 
         , ( defaultArgs ++ [ "--log-level-health", "Notice" ]

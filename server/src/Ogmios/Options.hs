@@ -209,8 +209,8 @@ tracersOption = fmap defaultTracers $ option readSeverityM $
 -- | [--log-level-{COMPONENT}=SEVERITY], default: Info
 logLevelOption :: Text -> Parser (Maybe Severity)
 logLevelOption component =
-    option readSeverityM $ mempty
-        <> long ("log-level-" <> toString component)
+    option readSeverityM $
+        long ("log-level-" <> toString component)
         <> metavar "SEVERITY"
         <> helpDoc (Just doc)
         <> value (Just Info)
