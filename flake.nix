@@ -80,19 +80,25 @@
 
         devShell = perSystem (system: self.flake.${system}.devShell);
 
-        # This will build all of the project's packages and the tests
+        # This will build all of the project's packages and run the `checks`
         check = perSystem (
           system:
-            (nixpkgsFor system).runCommand "combined-packages" {
-              nativeBuildInputs = builtins.attrValues self.checks.${system};
+            (nixpkgsFor system).runCommand "combined-check" {
+              nativeBuildInputs =
+                builtins.attrValues self.checks.${system}
+                ++ builtins.attrValues self.packages.${system};
             } "touch $out"
         );
 
-        # NOTE `nix flake check` will not work at the moment due to use of
-        # IFD in haskell.nix
-        #
-        # Includes all of the packages in the `checks`, otherwise only the
-        # test suite would be included
-        checks = perSystem (system: self.flake.${system}.packages);
+        # HACK
+        # Only include `ogmios:test:unit` and just build/run that
+        # We could configure this via haskell.nix, but this is
+        # more convenient
+        checks = perSystem (
+          system:
+            {
+              inherit (self.flake.${system}.checks) "ogmios:test:unit";
+            }
+        );
       };
 }

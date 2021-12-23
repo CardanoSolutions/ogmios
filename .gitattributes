@@ -1,2 +1,3 @@
 server/test/vectors/**/* linguist-generated=true
 flake.lock linguist-generated=true
+server/test/config/**/* linguist-generated=true
