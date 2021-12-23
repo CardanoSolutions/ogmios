@@ -5,21 +5,6 @@ package ogmios
   flags: +production
   tests: false
 
-package cardano-client
-  tests: false
-
-package git-th
-  tests: false
-
-package fast-bech32
-  tests: false
-
-package hspec-json-schema
-  tests: false
-
-package json-wsp
-  tests: false
-
 -- Using RDRAND instead of /dev/urandom as an entropy source for key
 -- generation is dubious. Set the flag so we use /dev/urandom by default.
 package cryptonite
