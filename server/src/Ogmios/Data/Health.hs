@@ -10,6 +10,7 @@ module Ogmios.Data.Health
     ( -- * Heath
       Health (..)
     , CardanoEra (..)
+    , ConnectionStatus (..)
     , Tip (..)
     , emptyHealth
     , modifyHealth
@@ -45,6 +46,17 @@ import Ouroboros.Network.Block
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
 
+-- | Reflect the current state of the connection with the underlying node.
+data ConnectionStatus
+    = Connected
+    | Disconnected
+    deriving stock (Generic, Eq, Show)
+
+instance ToJSON ConnectionStatus where
+    toJSON = \case
+        Connected -> Json.String "connected"
+        Disconnected -> Json.String "disconnected"
+
 -- | Capture some health heartbeat of the application. This is populated by two
 -- things:
 --
@@ -62,7 +74,9 @@ data Health block = Health
     , currentEra :: !(Maybe CardanoEra)
     -- ^ Current node's era.
     , metrics :: !Metrics
-    -- ^ Application metrics measured at regular interval
+    -- ^ Application metrics measured at regular interval.
+    , connectionStatus :: !ConnectionStatus
+    -- ^ State of the connectino with the underlying node.
     } deriving stock (Generic, Eq, Show)
 
 instance ToJSON (Tip block) => ToJSON (Health block) where
@@ -76,6 +90,7 @@ emptyHealth startTime = Health
     , networkSynchronization = empty
     , currentEra = empty
     , metrics = emptyMetrics
+    , connectionStatus = Disconnected
     }
 
 modifyHealth

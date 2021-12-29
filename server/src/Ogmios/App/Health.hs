@@ -56,6 +56,7 @@ import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TVar, newEmptyTMVar, putTMVar, takeTMVar )
 import Ogmios.Data.Health
     ( CardanoEra (..)
+    , ConnectionStatus (..)
     , Health (..)
     , NetworkSynchronization
     , emptyHealth
@@ -139,6 +140,7 @@ newHealthCheckClient tr Debouncer{debounce} = do
                 , networkSynchronization
                 , currentEra
                 , metrics
+                , connectionStatus = Connected
                 }
             logWith tr (HealthTick health)
 
@@ -183,6 +185,7 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
         void $ modifyHealth tvar $ \(h :: (Health Block)) -> h
             { networkSynchronization = empty
             , currentEra = empty
+            , connectionStatus = Disconnected
             }
 
     onIOException :: FilePath -> IOException -> m ()
