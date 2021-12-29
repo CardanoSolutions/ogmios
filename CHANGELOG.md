@@ -5,6 +5,26 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.1.0] - UNRELEASED
+
+#### Added
+
+> ##### 🏢 Server 
+> 
+> - `connectionStatus` in the health object, taking `"connected"` or `"disconnected"` as values to reflect the current connection status with the node. [#154](https://github.com/CardanoSolutions/ogmios/issues/154)
+
+#### Changed
+
+> ##### 🏢 Server 
+> 
+> - `networkSynchronization` and `currentEra` can be `null` when the server isn't connected to a node. [#154](https://github.com/CardanoSolutions/ogmios/issues/154)
+> - The `Metrics` trace is now correctly tagged with `MetricsRuntimeStatsDisabled`.
+> 
+
+#### Removed
+
+> N/A
+
 ### [5.0.0] - 2021-12-20
 
 #### Added
