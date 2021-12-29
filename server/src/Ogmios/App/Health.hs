@@ -158,6 +158,7 @@ connectHealthCheckClient
         , MonadReader env m
         , HasType NetworkParameters env
         , HasType Configuration env
+        , HasType (TVar m (Health Block)) env
         )
     => Logger (TraceHealth (Health Block))
     -> (forall a. m a -> IO a)
@@ -174,18 +175,15 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
     onExceptions nodeSocket
         = handle onUnknownException
         . handle (onIOException nodeSocket)
+        . (`onException` recordException)
 
-    foreverCalmly :: m a -> m a
-    foreverCalmly a = do
-        let a' = a *> threadDelay _5s *> a' in a'
-
-    onUnknownException :: SomeException -> m ()
-    onUnknownException e
-        | isAsyncException e = do
-            logWith tr $ HealthShutdown $ show e
-            throwIO e
-        | otherwise =
-            logWith tr $ HealthUnknownException $ show e
+    recordException ::  m ()
+    recordException = do
+        tvar <- asks (view typed)
+        void $ modifyHealth tvar $ \(h :: (Health Block)) -> h
+            { networkSynchronization = empty
+            , currentEra = empty
+            }
 
     onIOException :: FilePath -> IOException -> m ()
     onIOException nodeSocket e
@@ -196,6 +194,14 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
       where
         isRetryable :: Bool
         isRetryable = isResourceVanishedError e || isDoesNotExistError e || isTryAgainError e
+
+    onUnknownException :: SomeException -> m ()
+    onUnknownException e
+        | isAsyncException e = do
+            logWith tr $ HealthShutdown $ show e
+            throwIO e
+        | otherwise =
+            logWith tr $ HealthUnknownException $ show e
 
 --
 -- Ouroboros clients
