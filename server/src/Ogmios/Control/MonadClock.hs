@@ -12,6 +12,7 @@ module Ogmios.Control.MonadClock
     , withDebouncer
 
       -- * Helpers
+    , foreverCalmly
     , diffTimeToMilliseconds
     , diffTimeToMicroseconds
     , _1s
@@ -100,6 +101,11 @@ withDebouncer delay action = do
 --
 -- Helpers
 --
+
+-- | Like 'forever', but with pauses.
+foreverCalmly :: MonadClock m => m a -> m a
+foreverCalmly a = do
+    let a' = a *> threadDelay _5s *> a' in a'
 
 -- | Convert a 'DiffTime' to ms
 diffTimeToMilliseconds :: DiffTime -> Int

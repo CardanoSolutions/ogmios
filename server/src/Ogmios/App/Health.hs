@@ -40,7 +40,7 @@ import Ogmios.Control.Exception
 import Ogmios.Control.MonadAsync
     ( MonadAsync )
 import Ogmios.Control.MonadClock
-    ( Debouncer (..), MonadClock (..), idle, _5s )
+    ( Debouncer (..), MonadClock (..), foreverCalmly, idle, _5s )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
     , Logger
