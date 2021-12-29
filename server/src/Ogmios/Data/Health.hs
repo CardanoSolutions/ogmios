@@ -57,9 +57,9 @@ data Health block = Health
     -- ^ Last known tip of the core node.
     , lastTipUpdate :: !(Maybe UTCTime)
     -- ^ Date at which the last update was received.
-    , networkSynchronization :: !NetworkSynchronization
+    , networkSynchronization :: !(Maybe NetworkSynchronization)
     -- ^ Percentage indicator of how far the node is from the network.
-    , currentEra :: !CardanoEra
+    , currentEra :: !(Maybe CardanoEra)
     -- ^ Current node's era.
     , metrics :: !Metrics
     -- ^ Application metrics measured at regular interval
@@ -72,9 +72,9 @@ emptyHealth :: UTCTime -> Health block
 emptyHealth startTime = Health
     { startTime
     , lastKnownTip = TipGenesis
-    , lastTipUpdate = Nothing
-    , networkSynchronization = NetworkSynchronization 0
-    , currentEra = Byron
+    , lastTipUpdate = empty
+    , networkSynchronization = empty
+    , currentEra = empty
     , metrics = emptyMetrics
     }
 

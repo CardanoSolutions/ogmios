@@ -132,7 +132,7 @@ newHealthCheckClient tr Debouncer{debounce} = do
         { chainSyncClient = mkHealthCheckClient $ \lastKnownTip -> debounce $ do
             tvar <- asks (view typed)
             metrics <- join (Metrics.sample <$> asks (view typed) <*> asks (view typed))
-            (now, networkSynchronization, currentEra) <- getNetworkInformation lastKnownTip
+            (now, Just -> networkSynchronization, Just -> currentEra) <- getNetworkInformation lastKnownTip
             health <- modifyHealth tvar $ \h -> h
                 { lastKnownTip
                 , lastTipUpdate = Just now
