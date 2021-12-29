@@ -3,7 +3,7 @@
   "version": "5.0.0",
   "description": "REPL for Cardano Ogmios",
   "engines": {
-    "node": "^14"
+    "node": ">=14"
   },
   "bin": "dist/index.js",
   "main": "dist/index.js",
