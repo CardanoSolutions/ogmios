@@ -45,7 +45,7 @@ $ curl -H 'Accept: application/json' http://localhost:1337/health
     },
     "networkSynchronization": 0.99,
     "currentEra": "Mary",
-    "connectionStataus": "disconnected"
+    "connectionStatus": "disconnected"
 }
 ```
 
