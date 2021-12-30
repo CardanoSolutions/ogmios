@@ -36,6 +36,8 @@ COPY --from=build /app/cardano-configurations/network/${NETWORK} /config
 
 EXPOSE 1337/tcp
 STOPSIGNAL SIGINT
+HEALTHCHECK --interval=10s --timeout=5s --retries=1 CMD \
+  [ connected == $(wget http://localhost:1337 | sed 's/.*"connectionStatus":"\([a-z]\+\)".*/\1/') ]
 ENTRYPOINT ["/bin/ogmios"]
 
 #                                                                              #
@@ -61,4 +63,6 @@ COPY scripts/cardano-node-ogmios.sh cardano-node-ogmios.sh
  # Ogmios, cardano-node, ekg, prometheus
 EXPOSE 1337/tcp 3000/tcp 12788/tcp 12798/tcp
 STOPSIGNAL SIGINT
+HEALTHCHECK --interval=10s --timeout=5s --retries=1 CMD \
+  [ connected == $(wget http://localhost:1337 | sed 's/.*"connectionStatus":"\([a-z]\+\)".*/\1/') ]
 CMD ["bash", "cardano-node-ogmios.sh" ]
