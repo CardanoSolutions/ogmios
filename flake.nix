@@ -54,51 +54,52 @@
         let
           pkgs = nixpkgsFor system;
           plutus = import plutusSrc { inherit system; };
-          fakeSrc = pkgs.runCommand "real-src" {} ''
+          fakeSrc = pkgs.runCommand "real-src" { } ''
             cp -rT ${self} $out
             chmod u+w $out/cabal.project
             cat $out/nix/haskell-nix-cabal.project >> $out/cabal.project
           '';
           src = fakeSrc.outPath;
         in
-          import ./nix/haskell.nix {
-            inherit src pkgs plutus system;
-          };
+        import ./nix/haskell.nix {
+          inherit src pkgs plutus system;
+        };
 
     in
-      {
-        flake = perSystem (system: (projectFor system).flake {});
+    {
+      flake = perSystem (system: (projectFor system).flake { });
 
-        defaultPackage = perSystem (
-          system:
-            self.flake.${system}.packages."ogmios:exe:ogmios"
-        );
+      defaultPackage = perSystem (
+        system:
+        self.flake.${system}.packages."ogmios:exe:ogmios"
+      );
 
-        packages = perSystem (system: self.flake.${system}.packages);
+      packages = perSystem (system: self.flake.${system}.packages);
 
-        apps = perSystem (system: self.flake.${system}.apps);
+      apps = perSystem (system: self.flake.${system}.apps);
 
-        devShell = perSystem (system: self.flake.${system}.devShell);
+      devShell = perSystem (system: self.flake.${system}.devShell);
 
-        # This will build all of the project's packages and run the `checks`
-        check = perSystem (
-          system:
-            (nixpkgsFor system).runCommand "combined-check" {
-              nativeBuildInputs =
-                builtins.attrValues self.checks.${system}
-                ++ builtins.attrValues self.packages.${system};
-            } "touch $out"
-        );
+      # This will build all of the project's packages and run the `checks`
+      check = perSystem (
+        system:
+        (nixpkgsFor system).runCommand "combined-check"
+          {
+            nativeBuildInputs =
+              builtins.attrValues self.checks.${system}
+              ++ builtins.attrValues self.packages.${system};
+          } "touch $out"
+      );
 
-        # HACK
-        # Only include `ogmios:test:unit` and just build/run that
-        # We could configure this via haskell.nix, but this is
-        # more convenient
-        checks = perSystem (
-          system:
-            {
-              inherit (self.flake.${system}.checks) "ogmios:test:unit";
-            }
-        );
-      };
+      # HACK
+      # Only include `ogmios:test:unit` and just build/run that
+      # We could configure this via haskell.nix, but this is
+      # more convenient
+      checks = perSystem (
+        system:
+        {
+          inherit (self.flake.${system}.checks) "ogmios:test:unit";
+        }
+      );
+    };
 }
