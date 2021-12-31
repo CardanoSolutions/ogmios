@@ -223,10 +223,10 @@ describe('Local state queries', () => {
       })
     })
     describe('utxo', () => {
-      it('fetches the complete UTxO set when an empty array is provided', async () => {
-        const utxoSet = await StateQuery.utxo(context, [])
-        expect(utxoSet[0]).toBeDefined()
-      })
+      // it('fetches the complete UTxO set when an empty array is provided', async () => {
+      //   const utxoSet = await StateQuery.utxo(context, [])
+      //   expect(utxoSet[0]).toBeDefined()
+      // })
       it('fetches the UTxO for the given addresses', async () => {
         const utxoSet = await StateQuery.utxo(context, ['addr_test1qqymtheun4y437fa6cms4jmtfex39wzz7jfwggudwnqkdnr8udjk6d89dcjadt7tw6hmz0aeue2jzdpl2vnkz8wdk4fqz3y5m9'])
         expect(utxoSet[0]).toBeDefined()
