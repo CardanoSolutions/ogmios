@@ -64,3 +64,4 @@ EXPOSE 1337/tcp 3000/tcp 12788/tcp 12798/tcp
 STOPSIGNAL SIGINT
 HEALTHCHECK --interval=10s --timeout=5s --retries=1 CMD /bin/ogmios health-check
 CMD ["bash", "cardano-node-ogmios.sh" ]
+ENTRYPOINT [ "/root/cardano-node-ogmios.sh" ]
