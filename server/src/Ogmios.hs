@@ -15,6 +15,7 @@ module Ogmios
     , application
     , runWith
     , version
+    , healthCheck
 
     -- * Environment
     , Env (..)
@@ -44,7 +45,7 @@ import Ogmios.App.Metrics
 import Ogmios.App.Server
     ( connectHybridServer )
 import Ogmios.App.Server.Http
-    ( mkHttpApp )
+    ( healthCheck, mkHttpApp )
 import Ogmios.App.Server.WebSocket
     ( newWebSocketApp )
 import Ogmios.Control.Exception

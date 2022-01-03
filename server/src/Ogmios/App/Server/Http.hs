@@ -13,6 +13,7 @@
 
 module Ogmios.App.Server.Http
     ( mkHttpApp
+    , healthCheck
     ) where
 
 import Ogmios.Prelude
@@ -26,7 +27,7 @@ import Ogmios.Control.MonadMetrics
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TVar )
 import Ogmios.Data.Health
-    ( Health (..), Tip (..), modifyHealth )
+    ( ConnectionStatus (..), Health (..), Tip (..), modifyHealth )
 
 import qualified Ogmios.App.Metrics as Metrics
 
@@ -34,6 +35,12 @@ import Data.Aeson
     ( ToJSON (..) )
 import Data.FileEmbed
     ( embedFile )
+import Network.HTTP.Client
+    ( defaultManagerSettings, httpLbs, newManager, parseRequest, responseBody )
+import Relude.Extra
+    ( lookup )
+import System.Exit
+    ( ExitCode (..) )
 import Wai.Routes
     ( Handler
     , RenderRoute (..)
@@ -47,11 +54,12 @@ import Wai.Routes
     , rawBuilder
     , route
     , runHandlerM
+    , showRoute
     , sub
     , waiApp
     )
 
-import qualified Data.Aeson.Encoding as Json
+import qualified Data.Aeson as Json
 import qualified Network.Wai as Wai
 
 data EnvServer block m = EnvServer
@@ -113,6 +121,25 @@ getFaviconR :: Handler Server
 getFaviconR = runHandlerM $ do
     header "Content-Type" "image/x-icon"
     raw $(embedFile "static/assets/favicon.ico")
+
+--
+-- HealthCheck
+--
+
+-- | Performs a health check against a running server, this is a standalone
+-- program which exits immediately, either with a success or an error code.
+healthCheck :: Int -> IO ()
+healthCheck port = do
+    response <- join $ httpLbs
+        <$> parseRequest (toString $ "http://localhost:" <> show port <> showRoute HealthR)
+        <*> newManager defaultManagerSettings
+    case Json.decode (responseBody response) >>= getConnectionStatus of
+        Just st | st == toJSON Connected ->
+            return ()
+        _ ->
+            exitWith (ExitFailure 1)
+  where
+    getConnectionStatus = lookup @(Map String Json.Value) "connectionStatus"
 
 -- | Wai 'Application' representing the HTTP server.
 mkHttpApp

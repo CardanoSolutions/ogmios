@@ -9,6 +9,7 @@ import Ogmios.Prelude
 import Ogmios
     ( Command (..)
     , application
+    , healthCheck
     , newEnvironment
     , parseOptions
     , runWith
@@ -18,9 +19,11 @@ import Ogmios
 
 main :: IO ()
 main = parseOptions >>= \case
-    Version -> do
-        putTextLn version
     Start (Identity network) opts logLevels -> do
         withStdoutTracers version logLevels $ \tr -> do
             env <- newEnvironment tr network opts
             application tr `runWith` env
+    HealthCheck{healthCheckPort} ->
+        healthCheck healthCheckPort
+    Version -> do
+        putTextLn version

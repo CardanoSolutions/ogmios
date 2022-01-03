@@ -66,6 +66,7 @@ library:
     - filepath
     - generic-lens
     - git-th
+    - http-client
     - http-types
     - io-classes
     - io-sim

@@ -2,6 +2,8 @@
 
 !scripts/
 
+!default.nix
+
 !server/cabal.project
 !server/*.cabal
 
