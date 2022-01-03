@@ -12,6 +12,11 @@ pre: "<b>6. </b>"
 > ##### 🏢 Server 
 > 
 > - `connectionStatus` in the health object, taking `"connected"` or `"disconnected"` as values to reflect the current connection status with the node. [#154](https://github.com/CardanoSolutions/ogmios/issues/154)
+>
+> - New `ogmios health-check` command, useful to perform simple health check on a running server. For example, to monitor a container via Docker health check mechanism:
+>   ```Dockerfile
+>   HEALTHCHECK --interval=10s --timeout=5s --retries=1 CMD /bin/ogmios health-check
+>   ```
 
 #### Changed
 
@@ -20,6 +25,10 @@ pre: "<b>6. </b>"
 > - `networkSynchronization` and `currentEra` can be `null` when the server isn't connected to a node. [#154](https://github.com/CardanoSolutions/ogmios/issues/154)
 > - The `Metrics` trace is now correctly tagged with `MetricsRuntimeStatsDisabled`.
 > 
+>
+> ##### 🚗 TypeScript Client
+>
+> - Relax upper-bound constraint on required node.js engine. This should make it possible to install the TypeScript packages on more recent versions on node.js than the one specified on the repository.
 
 #### Removed
 
