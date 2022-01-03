@@ -1,4 +1,4 @@
-name: Docker
+name: Package
 
 on:
   pull_request:
@@ -8,12 +8,51 @@ on:
     tags: [ "*.*.*" ]
 
 jobs:
+  nix:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v2.3.3
+      with:
+        submodules: true
+
+    - name: ❄️  Install Nix
+      uses: cachix/install-nix-action@v13
+      with:
+        extra_nix_config: |
+          trusted-public-keys = iohk.cachix.org-1:DpRUyj7h7V830dp/i6Nti+NEO2/nhblbov/8MW7Rqoo= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+          substituters = https://hydra.iohk.io https://cache.nixos.org/
+
+    - name: 💾 Cache Build
+      uses: cachix/cachix-action@v10
+      with:
+        name: cardano-ogmios
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+
+    - name: 🔨 Build
+      run: |
+        nix-build -A ogmios.components.exes.ogmios -o dist
+        cp -r dist/* . && chmod +w share
+        mkdir -p share/zsh/site-functions          && ./bin/ogmios --zsh-completion-script  ogmios > share/zsh/site-functions/_ogmios
+        mkdir -p share/bash-completion/completions && ./bin/ogmios --bash-completion-script ogmios > share/bash-completion/completions/ogmios
+        chmod -w share
+
+    - name: 📎 Upload Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ogmios-x86_64-linux
+        path: |
+          bin
+          share
+
   docker:
+    needs: [nix]
     strategy:
       matrix:
         os: [ ubuntu-20.04 ]
         target: [ ogmios, cardano-node-ogmios ]
-        network: [ "mainnet", "testnet", "alonzo-purple" ]
+        network: [ "mainnet", "testnet" ]
 
     runs-on: ${{ matrix.os }}
     steps:
