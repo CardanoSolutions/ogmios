@@ -19,7 +19,6 @@ let
 
     name = "ogmios";
 
-    # Plutus uses a patched GHC. And so shall we.
     compiler-nix-name = "ghc8107";
 
     shell = {
