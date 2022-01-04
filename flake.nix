@@ -97,7 +97,7 @@
           {
             nativeBuildInputs =
               builtins.attrValues self.checks.${system}
-              ++ builtins.attrValues self.packages.${system};
+              ++ builtins.attrValues self.flake.${system}.packages;
           } "touch $out"
       );
 
