@@ -1,20 +1,22 @@
 *
 
 !scripts/
+!*.nix
+!flake.lock
+!nix/
+!cabal.project
 
-!server/cabal.project
+!docs/static/ogmios.wsp.json
+
 !server/*.cabal
-
 !server/ogmios.wsp.json
 !server/LICENSE
-
 !server/app/
 !server/src/
 !server/static/
 !server/config/
 !server/test/
 server/test/vectors
-
 !server/modules/
 server/modules/**/.stack-work
 server/modules/hjsonpointer

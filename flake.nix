@@ -50,7 +50,9 @@
         inherit system;
       };
 
-      projectFor = system:
+      # `static` enables cross-compilation with musl64 to produce a statically
+      # linked `ogmios` executable
+      projectFor = { system, static ? false }:
         let
           pkgs = nixpkgsFor system;
           plutus = import plutusSrc { inherit system; };
@@ -62,19 +64,27 @@
           src = fakeSrc.outPath;
         in
         import ./nix/haskell.nix {
-          inherit src pkgs plutus system;
+          inherit src pkgs plutus system static;
         };
 
     in
     {
-      flake = perSystem (system: (projectFor system).flake { });
+      flake = perSystem (system: (projectFor { inherit system; }).flake { });
 
-      defaultPackage = perSystem (
-        system:
+      flake-static = perSystem (system:
+        (projectFor { inherit system; static = true; }).flake { }
+      );
+
+      defaultPackage = perSystem (system:
         self.flake.${system}.packages."ogmios:exe:ogmios"
       );
 
-      packages = perSystem (system: self.flake.${system}.packages);
+      packages = perSystem (system:
+        self.flake.${system}.packages // {
+          ogmios-static =
+            self.flake-static.${system}.packages."ogmios:exe:ogmios";
+        }
+      );
 
       apps = perSystem (system: self.flake.${system}.apps);
 
@@ -87,7 +97,7 @@
           {
             nativeBuildInputs =
               builtins.attrValues self.checks.${system}
-              ++ builtins.attrValues self.packages.${system};
+              ++ builtins.attrValues self.flake.${system}.packages;
           } "touch $out"
       );
 
