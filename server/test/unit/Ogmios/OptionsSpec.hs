@@ -2,9 +2,6 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeApplications #-}
-
 -- Used to partially pattern match result of parsing default arguments. Okay-ish
 -- because it's test code and, having it fail would be instantly caught.
 {-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
@@ -33,6 +30,8 @@ import Ogmios.Options
     , parseOptions
     , parseOptionsPure
     )
+import Paths_ogmios
+    ( getDataFileName )
 import System.Environment
     ( withArgs )
 import Test.Hspec
@@ -41,15 +40,18 @@ import Test.Hspec
     , context
     , expectationFailure
     , parallel
+    , runIO
     , shouldBe
     , shouldSatisfy
     , specify
     )
-import Test.Path.Util
-    ( getProjectRoot )
 
 spec :: Spec
 spec = parallel $ do
+    testnetConfig <- liftGetConfigFile "testnet"
+    mainnetConfig <- liftGetConfigFile "mainnet"
+    alonzoConfig <- liftGetConfigFile "alonzo-white"
+
     context "parseOptions(Pure)" $ do
         forM_ matrix $ \(args, expect) -> do
             let title = toString $ unwords $ toText <$> args
@@ -72,12 +74,12 @@ spec = parallel $ do
 
         let args =
                 [ "--node-socket", "./node.socket"
-                , "--node-config", getConfigFile "testnet"
+                , "--node-config", testnetConfig
                 ]
         specify (show args) $ withArgs args parseOptions >>= \case
             Start (Identity _) opts logLevels -> do
                 nodeSocket opts `shouldBe` "./node.socket"
-                nodeConfig opts `shouldBe` getConfigFile "testnet"
+                nodeConfig opts `shouldBe` testnetConfig
                 serverHost opts `shouldBe` "127.0.0.1"
                 serverPort opts `shouldBe` 1337
                 connectionTimeout opts `shouldBe` 90
@@ -87,23 +89,24 @@ spec = parallel $ do
 
     context "parseNetworkParameters" $ do
         specify "mainnet" $ do
-            params <- parseNetworkParameters (getConfigFile "mainnet")
+            params <- parseNetworkParameters mainnetConfig
             networkMagic  params `shouldBe` NetworkMagic 764824073
             systemStart   params `shouldBe` mkSystemStart 1506203091
             slotsPerEpoch params `shouldBe` EpochSlots 21600
 
         specify "testnet" $ do
-            params <- parseNetworkParameters (getConfigFile "testnet")
+            params <- parseNetworkParameters testnetConfig
             networkMagic  params `shouldBe` NetworkMagic 1097911063
             systemStart   params `shouldBe` mkSystemStart 1563999616
             slotsPerEpoch params `shouldBe` EpochSlots 21600
 
         specify "alonzo-white" $ do
-            params <- parseNetworkParameters (getConfigFile "alonzo-white")
+            params <- parseNetworkParameters alonzoConfig
             networkMagic  params `shouldBe` NetworkMagic 7
             systemStart   params `shouldBe` mkSystemStart 1625593493
             slotsPerEpoch params `shouldBe` EpochSlots 360
   where
+    liftGetConfigFile = runIO . getConfigFile
     matrix =
         [ ( [], shouldFail )
         , ( [ "--node-socket", "./node.socket" ], shouldFail )
@@ -273,6 +276,9 @@ isLeftWith predicate = \case
     Left e -> predicate e
     Right{} -> False
 
-getConfigFile :: String -> FilePath
+getConfigFile :: String -> IO FilePath
 getConfigFile network =
-    $(getProjectRoot) <> "/config/network/" <> network <> "/cardano-node/config.json"
+    getDataFileName $
+      "/test/config/network/"
+      <> network
+      <> "/cardano-node/config.json"
