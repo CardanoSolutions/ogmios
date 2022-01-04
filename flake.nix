@@ -81,7 +81,7 @@
 
       packages = perSystem (system:
         self.flake.${system}.packages // {
-          static-ogmios =
+          ogmios-static =
             self.flake-static.${system}.packages."ogmios:exe:ogmios";
         }
       );
