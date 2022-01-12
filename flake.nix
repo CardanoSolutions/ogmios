@@ -2,45 +2,96 @@
   description = "cardano-ogmios";
 
   inputs = {
-    flake-utils = {
-      type = "github";
-      owner = "numtide";
-      repo = "flake-utils";
-    };
+    haskell-nix.url = "github:L-as/haskell.nix?ref=master";
 
-    # The Plutus "flake" isn't really a flake - it doesn't define any
-    # outputs and is only used for input pinning according to to
-    # the comments
-    plutusSrc = {
-      type = "github";
-      owner = "input-output-hk";
-      repo = "plutus";
-      rev = "1efbb276ef1a10ca6961d0fd32e6141e9798bd11";
+    nixpkgs.follows = "haskell-nix/nixpkgs-2105";
+
+    flake-compat = {
+      url = "github:edolstra/flake-compat";
       flake = false;
     };
 
-    haskell-nix = {
-      type = "github";
-      owner = "input-output-hk";
-      repo = "haskell.nix";
-      # FIXME rev taken from Plutus doesn't work?
-      rev = "64cd5f70ce0d619390039a1a3d57c442552b0924";
+    # all inputs below here are for pinning with haskell.nix
+    cardano-base = {
+      url =
+        "github:input-output-hk/cardano-base/654f5b7c76f7cc57900b4ddc664a82fc3b925fb0";
+      flake = false;
     };
-
-    nixpkgs.follows = "haskell-nix/nixpkgs-unstable";
-
-    flake-compat = {
-      type = "github";
-      owner = "edolstra";
-      repo = "flake-compat";
-      rev = "12c64ca55c1014cdc1b16ed5a804aa8576601ff2";
+    cardano-crypto = {
+      url =
+        "github:input-output-hk/cardano-crypto/f73079303f663e028288f9f4a9e08bcca39a923e";
+      flake = false;
+    };
+    cardano-ledger-specs = {
+      url =
+        "github:input-output-hk/cardano-ledger-specs/bf008ce028751cae9fb0b53c3bef20f07c06e333";
+      flake = false;
+    };
+    cardano-node = {
+      url =
+        "github:input-output-hk/cardano-node/2cbe363874d0261bc62f52185cf23ed492cf4859";
+      flake = false;
+    };
+    cardano-prelude = {
+      url =
+        "github:input-output-hk/cardano-prelude/bb4ed71ba8e587f672d06edf9d2e376f4b055555";
+      flake = false;
+    };
+    flat = {
+      url =
+        "github:input-output-hk/flat/ee59880f47ab835dbd73bea0847dab7869fc20d8";
+      flake = false;
+    };
+    goblins = {
+      url =
+        "github:input-output-hk/goblins/cde90a2b27f79187ca8310b6549331e59595e7ba";
+      flake = false;
+    };
+    hedgehog-extras = {
+      url =
+        "github:input-output-hk/hedgehog-extras/edf6945007177a638fbeb8802397f3a6f4e47c14";
+      flake = false;
+    };
+    hjsonpointer = {
+      url =
+        "github:KtorZ/hjsonpointer/75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e";
+      flake = false;
+    };
+    hjsonschema = {
+      url =
+        "github:KtorZ/hjsonschema/fde6e676f79f3f3320a558f20492ad816a2543a7";
+      flake = false;
+    };
+    iohk-monitoring-framework = {
+      url =
+        "github:input-output-hk/iohk-monitoring-framework/46f994e216a1f8b36fe4669b47b2a7011b0e153c";
+      flake = false;
+    };
+    ouroboros-network = {
+      url =
+        "github:input-output-hk/ouroboros-network/94782e5ca52f234ff8eeddc6322a46cca0b69c0e";
+      flake = false;
+    };
+    plutus = {
+      url =
+        "github:input-output-hk/plutus/1efbb276ef1a10ca6961d0fd32e6141e9798bd11";
+      flake = false;
+    };
+    wai-routes = {
+      url =
+        "github:KtorZ/wai-routes/d74b39683792649c01113f40bf57724dcf95c96a";
+      flake = false;
+    };
+    Win32-network = {
+      url =
+        "github:input-output-hk/Win32-network/3825d3abf75f83f406c1f7161883c438dac7277d";
       flake = false;
     };
   };
 
-  outputs = { self, flake-utils, plutusSrc, nixpkgs, haskell-nix, ... }:
+  outputs = { self, nixpkgs, haskell-nix, ... }@inputs:
     let
-      inherit (flake-utils.lib) defaultSystems;
+      defaultSystems = [ "x86_64-linux" "x86_64-darwin" ];
 
       perSystem = nixpkgs.lib.genAttrs defaultSystems;
 
@@ -55,16 +106,11 @@
       projectFor = { system, static ? false }:
         let
           pkgs = nixpkgsFor system;
-          plutus = import plutusSrc { inherit system; };
-          fakeSrc = pkgs.runCommand "real-src" { } ''
-            cp -rT ${self} $out
-            chmod u+w $out/cabal.project
-            cat $out/nix/haskell-nix-cabal.project >> $out/cabal.project
-          '';
-          src = fakeSrc.outPath;
+          plutus = import inputs.plutus { inherit system; };
+          src = ./.;
         in
         import ./nix/haskell.nix {
-          inherit src pkgs plutus system static;
+          inherit src inputs pkgs plutus system static;
         };
 
     in

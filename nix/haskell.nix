@@ -1,4 +1,5 @@
 { src
+, inputs
 , pkgs
 , plutus
 , static
@@ -90,7 +91,6 @@ let
         );
     };
 
-
     modules = [{
       packages = {
         eventful-sql-common.doHaddock = false;
@@ -117,6 +117,160 @@ let
       };
     }];
 
+    extraSources = [
+      {
+        src = inputs.cardano-base;
+        subdirs = [
+          "base-deriving-via"
+          "binary"
+          "binary/test"
+          "cardano-crypto-class"
+          "cardano-crypto-praos"
+          "cardano-crypto-tests"
+          "measures"
+          "orphans-deriving-via"
+          "slotting"
+          "strict-containers"
+        ];
+      }
+      {
+        src = inputs.cardano-crypto;
+        subdirs = [
+          "."
+        ];
+      }
+      {
+        src = inputs.cardano-ledger-specs;
+        subdirs = [
+          "eras/alonzo/impl"
+          "eras/alonzo/test-suite"
+          "eras/byron/chain/executable-spec"
+          "eras/byron/crypto"
+          "eras/byron/crypto/test"
+          "eras/byron/ledger/executable-spec"
+          "eras/byron/ledger/impl"
+          "eras/byron/ledger/impl/test"
+          "eras/shelley-ma/impl"
+          "eras/shelley-ma/test-suite"
+          "eras/shelley/chain-and-ledger/dependencies/non-integer"
+          "eras/shelley/chain-and-ledger/executable-spec"
+          "eras/shelley/chain-and-ledger/shelley-spec-ledger-test"
+          "eras/shelley/impl"
+          "eras/shelley/test-suite"
+          "libs/cardano-ledger-core"
+          "libs/cardano-ledger-pretty"
+          "libs/cardano-protocol-tpraos"
+          "libs/non-integral"
+          "libs/small-steps"
+          "libs/small-steps-test"
+        ];
+      }
+      {
+        src = inputs.cardano-node;
+        subdirs = [
+          "cardano-api"
+        ];
+      }
+      {
+        src = inputs.cardano-prelude;
+        subdirs = [
+          "cardano-prelude"
+          "cardano-prelude-test"
+        ];
+      }
+      {
+        src = inputs.flat;
+        subdirs = [
+          "."
+        ];
+      }
+      {
+        src = inputs.goblins;
+        subdirs = [
+          "."
+        ];
+      }
+      {
+        src = inputs.hedgehog-extras;
+        subdirs = [
+          "."
+        ];
+      }
+      {
+        src = inputs.hjsonpointer;
+        subdirs = [
+          "."
+        ];
+      }
+      {
+        src = inputs.hjsonschema;
+        subdirs = [
+          "."
+        ];
+      }
+      {
+        src = inputs.iohk-monitoring-framework;
+        subdirs = [
+          "contra-tracer"
+          "iohk-monitoring"
+          "plugins/backend-aggregation"
+          "plugins/backend-ekg"
+          "plugins/backend-monitoring"
+          "plugins/backend-trace-forwarder"
+          "plugins/scribe-systemd"
+          "tracer-transformers"
+        ];
+      }
+      {
+        src = inputs.ouroboros-network;
+        subdirs = [
+          "io-classes"
+          "io-sim"
+          "monoidal-synchronisation"
+          "network-mux"
+          "ouroboros-consensus"
+          "ouroboros-consensus-test"
+          "ouroboros-consensus-byron"
+          "ouroboros-consensus-byronspec"
+          "ouroboros-consensus-byron-test"
+          "ouroboros-consensus-shelley"
+          "ouroboros-consensus-shelley-test"
+          "ouroboros-consensus-cardano"
+          "ouroboros-consensus-cardano-test"
+          "ouroboros-consensus-mock"
+          "ouroboros-network"
+          "ouroboros-network-framework"
+          "ouroboros-network-testing"
+          "typed-protocols"
+          "typed-protocols-cborg"
+          "typed-protocols-examples"
+        ];
+      }
+      {
+        src = inputs.plutus;
+        subdirs = [
+          "freer-extras"
+          "plutus-core"
+          "plutus-ledger-api"
+          "plutus-tx"
+          "prettyprinter-configurable"
+          "stubs/plutus-ghc-stub"
+          "word-array"
+        ];
+      }
+      {
+        src = inputs.wai-routes;
+        subdirs = [
+          "."
+        ];
+      }
+      {
+        src = inputs.Win32-network;
+        subdirs = [
+          "."
+        ];
+      }
+    ];
   };
 in
 pkgSet.haskell-nix.cabalProject project
