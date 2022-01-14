@@ -19,7 +19,7 @@ cardano-node run\
   --port 3000\
   --host-addr 0.0.0.0\
   --config /config/cardano-node/config.json\
-  --socket-path /ipc/node.socket&
+  --socket-path /ipc/node.socket &
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start cardano-node: $status"
