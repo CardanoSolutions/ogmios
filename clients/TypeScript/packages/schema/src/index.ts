@@ -284,6 +284,7 @@ export type SubmitTxError = (
   | OutsideForecast
   | ValidationTagMismatch
   | CollectErrors
+  | ExtraScriptWitnesses
 )[];
 export type AcquireFailureDetails = "pointTooOld" | "pointNotOnChain";
 export type GetEraStart = "eraStart";
@@ -1687,6 +1688,9 @@ export interface ValidationTagMismatch {
 }
 export interface CollectErrors {
   collectErrors: unknown[];
+}
+export interface ExtraScriptWitnesses {
+  extraScriptWitnesses: DigestBlake2BScript[];
 }
 export interface AcquireSuccess {
   AcquireSuccess: {

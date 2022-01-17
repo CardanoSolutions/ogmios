@@ -1193,6 +1193,12 @@ encodeUtxowFailure encodeUtxoFailure_ = \case
         encodeObject
             [ ( "invalidMetadata", encodeNull )
             ]
+    Sh.ExtraneousScriptWitnessesUTXOW scripts ->
+        encodeObject
+            [ ( "extraScriptWitnesses"
+              , encodeFoldable encodeScriptHash scripts
+              )
+            ]
     Sh.UtxoFailure e ->
         encodeUtxoFailure_ e
 

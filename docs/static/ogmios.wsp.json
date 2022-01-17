@@ -3930,6 +3930,7 @@
         , { "$ref": "#/definitions/SubmitTxError[outsideForecast]" }
         , { "$ref": "#/definitions/SubmitTxError[validationTagMismatch]" }
         , { "$ref": "#/definitions/SubmitTxError[collectErrors]" }
+        , { "$ref": "#/definitions/SubmitTxError[extraScriptWitnesses]" }
         ]
       }
     }
@@ -4832,6 +4833,19 @@
     , "properties":
       { "collectErrors":
         { "type": "array"
+        }
+      }
+    }
+
+  , "SubmitTxError[extraScriptWitnesses]":
+    { "type": "object"
+    , "title": "extraScriptWitnesses"
+    , "additionalProperties": false
+    , "required": ["extraScriptWitnesses"]
+    , "properties":
+      { "extraScriptWitnesses":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Digest[Blake2b]::Script" }
         }
       }
     }
