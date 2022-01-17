@@ -243,11 +243,11 @@ mkHealthCheckClient notify =
     stNext
         :: ClientStNext Z block (Point block) (Tip block) m ()
     stNext = ClientStNext
-        { recvMsgRollForward  = const check
-        , recvMsgRollBackward = const check
+        { recvMsgRollForward  = const doCheck
+        , recvMsgRollBackward = const doCheck
         }
       where
-        check tip = notify tip *> stIdle
+        doCheck tip = notify tip *> stIdle
 
 -- | A simple client which is used to determine some metrics about the
 -- underlying node. In particular, it allows for knowing the network

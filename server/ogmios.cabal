@@ -116,6 +116,7 @@ library
       git
   build-depends:
       aeson
+    , async
     , base >=4.7 && <5
     , base16
     , base58-bytestring
@@ -128,6 +129,7 @@ library
     , cardano-crypto
     , cardano-crypto-class
     , cardano-crypto-wrapper
+    , cardano-data
     , cardano-ledger-alonzo
     , cardano-ledger-byron
     , cardano-ledger-core
@@ -169,6 +171,7 @@ library
     , scientific
     , serialise
     , small-steps
+    , stm
     , strict-containers
     , text
     , time

@@ -8,6 +8,8 @@ module Test.Generators where
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.Crypto
+    ( StandardCrypto )
 import Cardano.Ledger.Era
     ( Crypto, Era, SupportsSegWit (..) )
 import Cardano.Ledger.Keys
@@ -57,8 +59,6 @@ import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CompactGenesis, compactGenesis )
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( NonMyopicMemberRewards (..) )
-import Ouroboros.Consensus.Shelley.Protocol
-    ( StandardCrypto )
 import Ouroboros.Network.Block
     ( BlockNo (..), HeaderHash, Point (..), SlotNo (..), Tip (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type

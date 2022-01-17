@@ -14,6 +14,8 @@ module Ogmios.Data.JsonSpec
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.Crypto
+    ( StandardCrypto )
 import Cardano.Network.Protocol.NodeToClient
     ( Block )
 import Control.Monad.Class.MonadAsync
@@ -93,8 +95,6 @@ import Ogmios.Data.Protocol.TxSubmission
     ( SubmitTxResponse, _encodeSubmitTxResponse )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras, GenTx, HardForkApplyTxErr (..) )
-import Ouroboros.Consensus.Shelley.Protocol
-    ( StandardCrypto )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type

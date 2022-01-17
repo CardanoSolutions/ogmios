@@ -19,7 +19,7 @@ import Cardano.Ledger.Era
 import Cardano.Ledger.Keys
     ( KeyRole (..) )
 import Cardano.Ledger.Shelley.Constraints
-    ( ShelleyBased )
+    ( UsesAuxiliary, UsesScript, UsesTxBody, UsesValue )
 import Control.State.Transition
     ( STS (..) )
 import Data.ByteString.Base16
@@ -77,6 +77,13 @@ import qualified Cardano.Ledger.Shelley.Scripts as Sh
 import qualified Cardano.Ledger.Shelley.Tx as Sh
 import qualified Cardano.Ledger.Shelley.TxBody as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
+
+type ShelleyBased era =
+  ( UsesValue era
+  , UsesTxBody era
+  , UsesScript era
+  , UsesAuxiliary era
+  )
 
 --
 -- Encoders

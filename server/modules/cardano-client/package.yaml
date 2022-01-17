@@ -28,6 +28,8 @@ library:
     - aeson
     - bytestring
     - cardano-ledger-byron
+    - cardano-ledger-core
+    - cardano-slotting
     - cborg
     - containers
     - contra-tracer

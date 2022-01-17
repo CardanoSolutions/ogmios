@@ -53,8 +53,12 @@ import Prelude hiding
 
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
+import Cardano.Ledger.Crypto
+    ( StandardCrypto )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient (..) )
+import Cardano.Slotting.Slot
+    ( SlotNo )
 import Control.Monad.Class.MonadAsync
     ( MonadAsync )
 import Control.Monad.Class.MonadST
@@ -86,17 +90,17 @@ import Ouroboros.Consensus.Byron.Ledger.Config
 import Ouroboros.Consensus.Cardano
     ( CardanoBlock )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras, CodecConfig (..), GenTx, HardForkApplyTxErr )
+    ( CardanoEras, CodecConfig (..), HardForkApplyTxErr )
 import Ouroboros.Consensus.Ledger.Query
     ( Query (..) )
+import Ouroboros.Consensus.Ledger.SupportsMempool
+    ( GenTx, GenTxId )
 import Ouroboros.Consensus.Network.NodeToClient
     ( ClientCodecs, Codecs' (..), clientCodecs )
 import Ouroboros.Consensus.Node.NetworkProtocolVersion
     ( SupportedNetworkProtocolVersion (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CodecConfig (..) )
-import Ouroboros.Consensus.Shelley.Protocol
-    ( StandardCrypto )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 import Ouroboros.Network.Channel
