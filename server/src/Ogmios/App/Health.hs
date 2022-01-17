@@ -92,6 +92,8 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..) )
+import Ouroboros.Network.Protocol.LocalTxMonitor.Client
+    ( LocalTxMonitorClient (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxSubmissionClient (..) )
 
@@ -146,6 +148,9 @@ newHealthCheckClient tr Debouncer{debounce} = do
 
         , txSubmissionClient =
             LocalTxSubmissionClient idle
+
+        , txMonitorClient =
+            LocalTxMonitorClient idle
 
         , stateQueryClient
         }
