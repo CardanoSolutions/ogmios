@@ -42,6 +42,7 @@ library
       Ogmios.App.Protocol
       Ogmios.App.Protocol.ChainSync
       Ogmios.App.Protocol.StateQuery
+      Ogmios.App.Protocol.TxMonitor
       Ogmios.App.Protocol.TxSubmission
       Ogmios.App.Server
       Ogmios.App.Server.Http
