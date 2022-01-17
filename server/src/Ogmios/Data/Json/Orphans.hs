@@ -20,6 +20,7 @@ import Ogmios.Data.Json
     ( decodePoint
     , decodeSubmitTxPayload
     , decodeTip
+    , decodeTxId
     , encodeSubmitTxError
     , encodeSubmitTxPayload
     , encodeTip
@@ -64,8 +65,8 @@ instance ToJSON (Point (CardanoBlock crypto)) where
 instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto)) where
     parseJSON = decodeSubmitTxPayload
 
-instance FromJSON (GenTxId (CardanoBlock crypto)) where
-    parseJSON = error "FromJSON: GenTxId"
+instance PraosCrypto crypto => FromJSON (GenTxId (CardanoBlock crypto)) where
+    parseJSON = decodeTxId
 
 instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
     parseJSON = decodePoint

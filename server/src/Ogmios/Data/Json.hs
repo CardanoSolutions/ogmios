@@ -30,12 +30,15 @@ module Ogmios.Data.Json
     , decodePoint
     , decodeSubmitTxPayload
     , decodeTip
+    , decodeTxId
     ) where
 
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Binary
     ( FromCBOR (..), ToCBOR (..) )
+import Cardano.Crypto.Hash
+    ( hashFromBytes )
 import Cardano.Crypto.Hashing
     ( decodeHash, hashToBytes )
 import Cardano.Ledger.Crypto
@@ -43,7 +46,7 @@ import Cardano.Ledger.Crypto
 import Cardano.Ledger.Shelley.API
     ( ApplyTxError (..), PraosCrypto )
 import Cardano.Network.Protocol.NodeToClient
-    ( SubmitTxError, SubmitTxPayload )
+    ( GenTx, GenTxId, SubmitTxError, SubmitTxPayload )
 import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
@@ -60,6 +63,7 @@ import Ouroboros.Consensus.Cardano.Block
     , GenTx (..)
     , HardForkApplyTxErr (..)
     , HardForkBlock (..)
+    , TxId (GenTxIdAlonzo)
     )
 import Ouroboros.Consensus.HardFork.Combinator
     ( OneEraHash (..) )
@@ -67,6 +71,8 @@ import Ouroboros.Consensus.Shelley.Eras
     ( MaryEra )
 import Ouroboros.Consensus.Shelley.Ledger
     ( ShelleyBlock )
+import Ouroboros.Consensus.Shelley.Ledger.Mempool
+    ( TxId (..) )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..), genesisPoint, wrapCBORinCBOR )
 import Ouroboros.Network.Point
@@ -74,6 +80,8 @@ import Ouroboros.Network.Point
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure (..) )
 
+import qualified Cardano.Ledger.SafeHash as Ledger
+import qualified Cardano.Ledger.TxIn as Ledger
 import qualified Codec.CBOR.Encoding as Cbor
 import qualified Codec.CBOR.Read as Cbor
 import qualified Codec.CBOR.Write as Cbor
@@ -261,3 +269,15 @@ decodeTip json =
         hash <- obj .: "hash" >>= decodeOneEraHash
         blockNo <- obj .: "blockNo"
         pure $ Tip (SlotNo slot) hash (BlockNo blockNo)
+
+decodeTxId
+    :: forall crypto. PraosCrypto crypto
+    => Json.Value
+    -> Json.Parser (GenTxId (CardanoBlock crypto))
+decodeTxId = Json.withText "TxId" $ \(encodeUtf8 -> utf8) -> do
+    bytes <- decodeBase16 utf8
+    case hashFromBytes bytes of
+        Nothing ->
+            fail "couldn't interpret bytes as blake2b-256 digest."
+        Just h ->
+            pure $ GenTxIdAlonzo $ ShelleyTxId $ Ledger.TxId (Ledger.unsafeMakeSafeHash h)
