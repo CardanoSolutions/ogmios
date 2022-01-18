@@ -1,1 +1,1 @@
-{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SubmitTx","result":{"SubmitFail":[{"insufficientGenesisSignatures":["3542acb3a64d80c29302260d62c3b87a742ad14abf855ebc6733081e","4acf2773917c7b547c576a7ff110d2ba5733c1f1ca9cdc659aea3a56"]}]},"reflection":null}
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SubmitTx","result":{"SubmitFail":[{"triesToForgeAda":null}]},"reflection":null}
