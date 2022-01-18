@@ -39,7 +39,7 @@
 -- @
 --
 -- Note that Ogmios enables a slightly modified version of that protocol where
--- `HasTx`, `NextTx` and `GetSizes` can be sent right away. This effectively
+-- `HasTx`, `NextTx` and `SizeAndCapacity` can be sent right away. This effectively
 -- performs an implicit `Acquire` conviniently. From there, the protocol behaves
 -- identically.
 module Ogmios.App.Protocol.TxMonitor
@@ -58,19 +58,20 @@ import Ogmios.Data.Protocol.TxMonitor
     , AwaitAcquireResponse (..)
     , GenTx
     , GenTxId
-    , GetSizes (..)
-    , GetSizesResponse (..)
     , HasTx (..)
     , HasTxResponse (..)
     , NextTx (..)
     , NextTxResponse (..)
-    , Release (..)
-    , ReleaseResponse (..)
+    , ReleaseMempool (..)
+    , ReleaseMempoolResponse (..)
+    , SizeAndCapacity (..)
+    , SizeAndCapacityResponse (..)
     , SlotNo (..)
     , TxMonitorCodecs (..)
     , TxMonitorMessage (..)
     )
-
+import Ouroboros.Consensus.Ledger.SupportsMempool
+    ( HasTxId (..) )
 import Ouroboros.Network.Protocol.LocalTxMonitor.Client
     ( ClientStAcquired (..), ClientStIdle (..), LocalTxMonitorClient (..) )
 
@@ -79,6 +80,7 @@ import qualified Codec.Json.Wsp as Wsp
 mkTxMonitorClient
     :: forall m block.
         ( MonadSTM m
+        , HasTxId (GenTx block)
         )
     => TxMonitorCodecs block
         -- ^ For encoding Haskell types to JSON
@@ -106,11 +108,11 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
         MsgHasTx HasTx{id} toResponse _ ->
             pure $ SendMsgAcquire $ \_slot -> do
                 pure $ sendMsgHasTx HasTx{id} toResponse
-        MsgGetSizes GetSizes toResponse _ -> do
+        MsgSizeAndCapacity SizeAndCapacity toResponse _ -> do
             pure $ SendMsgAcquire $ \_slot -> do
-                pure $ sendMsgGetSizes GetSizes toResponse
-        MsgRelease Release _ toFault -> do
-            let fault = "'Release' must be call after acquiring some state."
+                pure $ sendMsgSizeAndCapacity SizeAndCapacity toResponse
+        MsgReleaseMempool ReleaseMempool _ toFault -> do
+            let fault = "'ReleaseMempool' must be call after acquiring some state."
             yield $ Wsp.mkFault $ toFault Wsp.FaultClient fault
             clientStIdle
 
@@ -125,11 +127,11 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
             sendMsgNextTx NextTx toResponse
         MsgHasTx HasTx{id} toResponse _ ->
             sendMsgHasTx HasTx{id} toResponse
-        MsgGetSizes GetSizes toResponse _ ->
-            sendMsgGetSizes GetSizes toResponse
-        MsgRelease Release toResponse _ ->
+        MsgSizeAndCapacity SizeAndCapacity toResponse _ ->
+            sendMsgSizeAndCapacity SizeAndCapacity toResponse
+        MsgReleaseMempool ReleaseMempool toResponse _ ->
             SendMsgRelease $ do
-                yield $ encodeReleaseResponse $ toResponse Released
+                yield $ encodeReleaseMempoolResponse $ toResponse Released
                 clientStIdle
 
     sendMsgNextTx
@@ -137,7 +139,7 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
         -> (Wsp.ToResponse (NextTxResponse block))
         -> ClientStAcquired (GenTxId block) (GenTx block) SlotNo  m ()
     sendMsgNextTx NextTx toResponse =
-        SendMsgNextTx $ \next -> do
+        SendMsgNextTx $ \(fmap txId -> next) -> do
             yield $ encodeNextTxResponse $ toResponse $ NextTxResponse{next}
             clientStAcquired
 
@@ -150,11 +152,11 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
             yield $ encodeHasTxResponse $ toResponse $ HasTxResponse{has}
             clientStAcquired
 
-    sendMsgGetSizes
-        :: GetSizes
-        -> (Wsp.ToResponse GetSizesResponse)
+    sendMsgSizeAndCapacity
+        :: SizeAndCapacity
+        -> (Wsp.ToResponse SizeAndCapacityResponse)
         -> ClientStAcquired (GenTxId block) (GenTx block) SlotNo  m ()
-    sendMsgGetSizes GetSizes toResponse =
+    sendMsgSizeAndCapacity SizeAndCapacity toResponse =
         SendMsgGetSizes $ \sizes -> do
-            yield $ encodeGetSizesResponse $ toResponse $ GetSizesResponse{sizes}
+            yield $ encodeSizeAndCapacityResponse $ toResponse $ SizeAndCapacityResponse{sizes}
             clientStAcquired

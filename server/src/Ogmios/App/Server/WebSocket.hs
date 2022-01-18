@@ -4,6 +4,7 @@
 
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -19,6 +20,18 @@ module Ogmios.App.Server.WebSocket
 
 import Ogmios.Prelude
 
+import Cardano.Network.Protocol.NodeToClient
+    ( Block
+    , Clients (..)
+    , SubmitTxError
+    , SubmitTxPayload
+    , connectClient
+    , mkClient
+    )
+import Cardano.Network.Protocol.NodeToClient.Trace
+    ( TraceClient )
+import Network.HTTP.Types.Header
+    ( hUserAgent )
 import Ogmios.App.Configuration
     ( Configuration (..), NetworkParameters (..) )
 import Ogmios.App.Metrics
@@ -71,38 +84,20 @@ import Ogmios.Data.Json
     , encodeBlock
     , encodePoint
     , encodeSubmitTxError
-    , encodeSubmitTxPayload
     , encodeTip
+    , encodeTxId
     , jsonToByteString
     )
 import Ogmios.Data.Json.Orphans
     ()
 import Ogmios.Data.Protocol.ChainSync
-    ( ChainSyncMessage (..), mkChainSyncCodecs )
+    ( ChainSyncCodecs (..), ChainSyncMessage (..), mkChainSyncCodecs )
 import Ogmios.Data.Protocol.StateQuery
-    ( StateQueryMessage (..), mkStateQueryCodecs )
+    ( StateQueryCodecs (..), StateQueryMessage (..), mkStateQueryCodecs )
 import Ogmios.Data.Protocol.TxMonitor
-    ( TxMonitorMessage (..), mkTxMonitorCodecs )
+    ( TxMonitorCodecs (..), TxMonitorMessage (..), mkTxMonitorCodecs )
 import Ogmios.Data.Protocol.TxSubmission
-    ( TxSubmissionMessage (..), mkTxSubmissionCodecs )
-
-import qualified Ogmios.Data.Protocol.ChainSync as ChainSync
-import qualified Ogmios.Data.Protocol.StateQuery as StateQuery
-import qualified Ogmios.Data.Protocol.TxMonitor as TxMonitor
-import qualified Ogmios.Data.Protocol.TxSubmission as TxSubmission
-
-import Cardano.Network.Protocol.NodeToClient
-    ( Block
-    , Clients (..)
-    , SubmitTxError
-    , SubmitTxPayload
-    , connectClient
-    , mkClient
-    )
-import Cardano.Network.Protocol.NodeToClient.Trace
-    ( TraceClient )
-import Network.HTTP.Types.Header
-    ( hUserAgent )
+    ( TxSubmissionCodecs (..), TxSubmissionMessage (..), mkTxSubmissionCodecs )
 import Ouroboros.Network.NodeToClient.Version
     ( NodeToClientVersionData (NodeToClientVersionData) )
 import System.TimeManager
@@ -269,45 +264,45 @@ withOuroborosClients tr mode maxInFlight sensors conn action = do
                 matched <- Wsp.match bytes
                     (count (totalUnroutedCounter sensors) *> defaultHandler bytes)
                     -- ChainSync
-                    [ Wsp.Handler (ChainSync.decodeRequestNext chainSyncCodecs)
-                        (\r t -> push chainSyncQ . ChainSync.MsgRequestNext r t)
-                    , Wsp.Handler (ChainSync.decodeFindIntersect chainSyncCodecs)
-                        (\r t -> push chainSyncQ . ChainSync.MsgFindIntersect r t)
+                    [ Wsp.Handler decodeRequestNext
+                        (\r t -> push chainSyncQ . MsgRequestNext r t)
+                    , Wsp.Handler decodeFindIntersect
+                        (\r t -> push chainSyncQ . MsgFindIntersect r t)
 
                     -- TxSubmission
-                    , Wsp.Handler (TxSubmission.decodeSubmitTx txSubmissionCodecs)
-                        (\r t -> push txSubmissionQ .  TxSubmission.MsgSubmitTx r t)
+                    , Wsp.Handler decodeSubmitTx
+                        (\r t -> push txSubmissionQ .  MsgSubmitTx r t)
 
                     -- StateQuery
-                    , Wsp.Handler (StateQuery.decodeAcquire stateQueryCodecs)
-                        (\r t -> push stateQueryQ . StateQuery.MsgAcquire r t)
-                    , Wsp.Handler (StateQuery.decodeRelease stateQueryCodecs)
-                        (\r t -> push stateQueryQ . StateQuery.MsgRelease r t)
-                    , Wsp.Handler (StateQuery.decodeQuery stateQueryCodecs)
-                        (\r t -> push stateQueryQ . StateQuery.MsgQuery r t)
+                    , Wsp.Handler decodeAcquire
+                        (\r t -> push stateQueryQ . MsgAcquire r t)
+                    , Wsp.Handler decodeRelease
+                        (\r t -> push stateQueryQ . MsgRelease r t)
+                    , Wsp.Handler decodeQuery
+                        (\r t -> push stateQueryQ . MsgQuery r t)
 
                     -- TxMonitor
-                    , Wsp.Handler (TxMonitor.decodeAwaitAcquire txMonitorCodecs)
-                        (\r t -> push txMonitorQ . TxMonitor.MsgAwaitAcquire r t)
-                    , Wsp.Handler (TxMonitor.decodeNextTx txMonitorCodecs)
-                        (\r t -> push txMonitorQ . TxMonitor.MsgNextTx r t)
-                    , Wsp.Handler (TxMonitor.decodeHasTx txMonitorCodecs)
-                        (\r t -> push txMonitorQ . TxMonitor.MsgHasTx r t)
-                    , Wsp.Handler (TxMonitor.decodeGetSizes txMonitorCodecs)
-                        (\r t -> push txMonitorQ . TxMonitor.MsgGetSizes r t)
-                    , Wsp.Handler (TxMonitor.decodeRelease txMonitorCodecs)
-                        (\r t -> push txMonitorQ . TxMonitor.MsgRelease r t)
+                    , Wsp.Handler decodeAwaitAcquire
+                        (\r t -> push txMonitorQ . MsgAwaitAcquire r t)
+                    , Wsp.Handler decodeNextTx
+                        (\r t -> push txMonitorQ . MsgNextTx r t)
+                    , Wsp.Handler decodeHasTx
+                        (\r t -> push txMonitorQ . MsgHasTx r t)
+                    , Wsp.Handler decodeSizeAndCapacity
+                        (\r t -> push txMonitorQ . MsgSizeAndCapacity r t)
+                    , Wsp.Handler decodeReleaseMempool
+                        (\r t -> push txMonitorQ . MsgReleaseMempool r t)
                     ]
                 routeMessage matched chainSyncQ stateQueryQ txSubmissionQ txMonitorQ
 
-    chainSyncCodecs =
+    chainSyncCodecs@ChainSyncCodecs{..} =
         mkChainSyncCodecs (encodeBlock mode) encodePoint encodeTip
-    stateQueryCodecs =
+    stateQueryCodecs@StateQueryCodecs{..} =
         mkStateQueryCodecs encodePoint encodeAcquireFailure
-    txSubmissionCodecs =
+    txSubmissionCodecs@TxSubmissionCodecs{..} =
         mkTxSubmissionCodecs encodeSubmitTxError
-    txMonitorCodecs =
-        mkTxMonitorCodecs encodeSubmitTxPayload
+    txMonitorCodecs@TxMonitorCodecs{..} =
+        mkTxMonitorCodecs encodeTxId
 
 --
 -- Logging

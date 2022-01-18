@@ -24,6 +24,7 @@ module Ogmios.Data.Json
     , encodeSubmitTxError
     , encodeSubmitTxPayload
     , encodeTip
+    , encodeTxId
 
       -- * Decoders
     , decodeOneEraHash
@@ -63,7 +64,7 @@ import Ouroboros.Consensus.Cardano.Block
     , GenTx (..)
     , HardForkApplyTxErr (..)
     , HardForkBlock (..)
-    , TxId (GenTxIdAlonzo)
+    , TxId (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator
     ( OneEraHash (..) )
@@ -190,6 +191,22 @@ encodeTip = \case
           , encodeBlockNo blockNo
           )
         ]
+
+encodeTxId
+    :: Crypto crypto
+    => GenTxId (CardanoBlock crypto)
+    -> Json
+encodeTxId = \case
+    GenTxIdAlonzo (ShelleyTxId x) ->
+        Shelley.encodeTxId x
+    GenTxIdMary (ShelleyTxId x) ->
+        Shelley.encodeTxId x
+    GenTxIdAllegra (ShelleyTxId x) ->
+        Shelley.encodeTxId x
+    GenTxIdShelley (ShelleyTxId x) ->
+        Shelley.encodeTxId x
+    GenTxIdByron _ ->
+        error "encodeTxId: unsupported Byron transaction."
 
 --
 -- Decoders

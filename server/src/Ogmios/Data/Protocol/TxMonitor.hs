@@ -43,19 +43,19 @@ module Ogmios.Data.Protocol.TxMonitor
     , _encodeHasTxResponse
 
 
-      -- ** GetSizes
-    , GetSizes (..)
-    , _encodeGetSizes
-    , _decodeGetSizes
-    , GetSizesResponse (..)
-    , _encodeGetSizesResponse
+      -- ** SizeAndCapacity
+    , SizeAndCapacity (..)
+    , _encodeSizeAndCapacity
+    , _decodeSizeAndCapacity
+    , SizeAndCapacityResponse (..)
+    , _encodeSizeAndCapacityResponse
 
-      -- ** Releases
-    , Release (..)
-    , _encodeRelease
-    , _decodeRelease
-    , ReleaseResponse (..)
-    , _encodeReleaseResponse
+      -- ** ReleaseMempools
+    , ReleaseMempool (..)
+    , _encodeReleaseMempool
+    , _decodeReleaseMempool
+    , ReleaseMempoolResponse (..)
+    , _encodeReleaseMempoolResponse
 
      -- * Re-exports
     , GenTx
@@ -103,36 +103,36 @@ data TxMonitorCodecs block = TxMonitorCodecs
     , encodeHasTxResponse
         :: Wsp.Response HasTxResponse
         -> Json
-    , decodeGetSizes
+    , decodeSizeAndCapacity
         :: ByteString
-        -> Maybe (Wsp.Request GetSizes)
-    , encodeGetSizesResponse
-        :: Wsp.Response GetSizesResponse
+        -> Maybe (Wsp.Request SizeAndCapacity)
+    , encodeSizeAndCapacityResponse
+        :: Wsp.Response SizeAndCapacityResponse
         -> Json
-    , decodeRelease
+    , decodeReleaseMempool
         :: ByteString
-        -> Maybe (Wsp.Request Release)
-    , encodeReleaseResponse
-        :: Wsp.Response ReleaseResponse
+        -> Maybe (Wsp.Request ReleaseMempool)
+    , encodeReleaseMempoolResponse
+        :: Wsp.Response ReleaseMempoolResponse
         -> Json
     }
 
 mkTxMonitorCodecs
     :: (FromJSON (GenTxId block))
-    => (GenTx block -> Json)
+    => (GenTxId block -> Json)
     -> TxMonitorCodecs block
-mkTxMonitorCodecs encodeTx =
+mkTxMonitorCodecs encodeTxId =
     TxMonitorCodecs
         { decodeAwaitAcquire = decodeWith _decodeAwaitAcquire
         , encodeAwaitAcquireResponse = _encodeAwaitAcquireResponse
         , decodeNextTx = decodeWith _decodeNextTx
-        , encodeNextTxResponse = _encodeNextTxResponse encodeTx
+        , encodeNextTxResponse = _encodeNextTxResponse encodeTxId
         , decodeHasTx = decodeWith _decodeHasTx
         , encodeHasTxResponse = _encodeHasTxResponse
-        , decodeGetSizes = decodeWith _decodeGetSizes
-        , encodeGetSizesResponse = _encodeGetSizesResponse
-        , decodeRelease = decodeWith _decodeRelease
-        , encodeReleaseResponse = _encodeReleaseResponse
+        , decodeSizeAndCapacity = decodeWith _decodeSizeAndCapacity
+        , encodeSizeAndCapacityResponse = _encodeSizeAndCapacityResponse
+        , decodeReleaseMempool = decodeWith _decodeReleaseMempool
+        , encodeReleaseMempoolResponse = _encodeReleaseMempoolResponse
         }
 
 --
@@ -152,13 +152,13 @@ data TxMonitorMessage block
         (HasTx block)
         (Wsp.ToResponse HasTxResponse)
         Wsp.ToFault
-    | MsgGetSizes
-        GetSizes
-        (Wsp.ToResponse GetSizesResponse)
+    | MsgSizeAndCapacity
+        SizeAndCapacity
+        (Wsp.ToResponse SizeAndCapacityResponse)
         Wsp.ToFault
-    | MsgRelease
-        Release
-        (Wsp.ToResponse ReleaseResponse)
+    | MsgReleaseMempool
+        ReleaseMempool
+        (Wsp.ToResponse ReleaseMempoolResponse)
         Wsp.ToFault
 
 --
@@ -223,19 +223,19 @@ _decodeNextTx =
     Wsp.genericFromJSON Wsp.defaultOptions
 
 data NextTxResponse block
-    = NextTxResponse { next :: Maybe (GenTx block) }
+    = NextTxResponse { next :: Maybe (GenTxId block) }
     deriving (Generic)
-deriving instance Show (GenTx block) => Show (NextTxResponse block)
-deriving instance   Eq (GenTx block) =>   Eq (NextTxResponse block)
+deriving instance Show (GenTxId block) => Show (NextTxResponse block)
+deriving instance   Eq (GenTxId block) =>   Eq (NextTxResponse block)
 
 _encodeNextTxResponse
     :: forall block. ()
-    => (GenTx block -> Json)
+    => (GenTxId block -> Json)
     -> Wsp.Response (NextTxResponse block)
     -> Json
-_encodeNextTxResponse encodeTx =
+_encodeNextTxResponse encodeTxId =
     Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        NextTxResponse{next} -> encodeMaybe encodeTx next
+        NextTxResponse{next} -> encodeMaybe encodeTxId next
   where
     proxy = Proxy @(Wsp.Request NextTx)
 
@@ -283,73 +283,73 @@ _encodeHasTxResponse =
     proxy = Proxy @(Wsp.Request (HasTx block))
 
 --
--- GetSizes
+-- SizeAndCapacity
 --
 
-data GetSizes
-    = GetSizes
+data SizeAndCapacity
+    = SizeAndCapacity
     deriving (Generic, Show, Eq)
 
-_encodeGetSizes
-    :: Wsp.Request GetSizes
+_encodeSizeAndCapacity
+    :: Wsp.Request SizeAndCapacity
     -> Json
-_encodeGetSizes =
+_encodeSizeAndCapacity =
     Wsp.mkRequest Wsp.defaultOptions $ \case
-        GetSizes -> encodeObject []
+        SizeAndCapacity -> encodeObject []
 
-_decodeGetSizes
+_decodeSizeAndCapacity
     :: Json.Value
-    -> Json.Parser (Wsp.Request GetSizes)
-_decodeGetSizes =
+    -> Json.Parser (Wsp.Request SizeAndCapacity)
+_decodeSizeAndCapacity =
     Wsp.genericFromJSON Wsp.defaultOptions
 
-data GetSizesResponse
-    = GetSizesResponse { sizes :: MempoolSizeAndCapacity }
+data SizeAndCapacityResponse
+    = SizeAndCapacityResponse { sizes :: MempoolSizeAndCapacity }
     deriving (Generic, Show)
 
-_encodeGetSizesResponse
-    :: Wsp.Response GetSizesResponse
+_encodeSizeAndCapacityResponse
+    :: Wsp.Response SizeAndCapacityResponse
     -> Json
-_encodeGetSizesResponse =
+_encodeSizeAndCapacityResponse =
     Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        GetSizesResponse{sizes} -> encodeObject
+        SizeAndCapacityResponse{sizes} -> encodeObject
             [ ( "capacity", encodeWord32 (capacityInBytes sizes) )
             , ( "currentSize", encodeWord32 (sizeInBytes sizes) )
             , ( "numberOfTxs", encodeWord32 (numberOfTxs sizes) )
             ]
   where
-    proxy = Proxy @(Wsp.Request GetSizes)
+    proxy = Proxy @(Wsp.Request SizeAndCapacity)
 
 --
--- Release
+-- ReleaseMempool
 --
 
-data Release
-    = Release
+data ReleaseMempool
+    = ReleaseMempool
     deriving (Generic, Show, Eq)
 
-_encodeRelease
-    :: Wsp.Request Release
+_encodeReleaseMempool
+    :: Wsp.Request ReleaseMempool
     -> Json
-_encodeRelease =
+_encodeReleaseMempool =
     Wsp.mkRequest Wsp.defaultOptions $ \case
-        Release -> encodeObject []
+        ReleaseMempool -> encodeObject []
 
-_decodeRelease
+_decodeReleaseMempool
     :: Json.Value
-    -> Json.Parser (Wsp.Request Release)
-_decodeRelease =
+    -> Json.Parser (Wsp.Request ReleaseMempool)
+_decodeReleaseMempool =
     Wsp.genericFromJSON Wsp.defaultOptions
 
-data ReleaseResponse
+data ReleaseMempoolResponse
     = Released
     deriving (Generic, Show)
 
-_encodeReleaseResponse
-    :: Wsp.Response ReleaseResponse
+_encodeReleaseMempoolResponse
+    :: Wsp.Response ReleaseMempoolResponse
     -> Json
-_encodeReleaseResponse =
+_encodeReleaseMempoolResponse =
     Wsp.mkResponse Wsp.defaultOptions proxy $ \case
         Released -> encodeText "Released"
   where
-    proxy = Proxy @(Wsp.Request Release)
+    proxy = Proxy @(Wsp.Request ReleaseMempool)
