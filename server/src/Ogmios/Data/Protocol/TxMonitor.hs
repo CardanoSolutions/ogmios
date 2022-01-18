@@ -212,9 +212,7 @@ _encodeNextTx
     -> Json
 _encodeNextTx =
     Wsp.mkRequest Wsp.defaultOptions $ \case
-        NextTx -> encodeObject
-            [ ( "NextTx", encodeObject [] )
-            ]
+        NextTx -> encodeObject []
 
 _decodeNextTx
     :: Json.Value
@@ -255,11 +253,7 @@ _encodeHasTx
     -> Json
 _encodeHasTx encodeTxId =
     Wsp.mkRequest Wsp.defaultOptions $ \case
-        HasTx{id} -> encodeObject
-            [ ( "HasTx"
-              , encodeObject [ ( "id", encodeTxId id ) ]
-              )
-            ]
+        HasTx{id} -> encodeObject [ ( "id", encodeTxId id ) ]
 
 _decodeHasTx
     :: forall block. (FromJSON (GenTxId block))
