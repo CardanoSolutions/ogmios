@@ -40,6 +40,7 @@ import Ouroboros.Consensus.Cardano.Block
     ( AllegraEra
     , AlonzoEra
     , CardanoEras
+    , GenTx (..)
     , HardForkApplyTxErr (..)
     , HardForkBlock (..)
     , MaryEra
@@ -59,7 +60,7 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
 import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CompactGenesis, compactGenesis )
 import Ouroboros.Consensus.Shelley.Ledger.Mempool
-    ( TxId (..) )
+    ( GenTx (..), TxId (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( NonMyopicMemberRewards (..) )
 import Ouroboros.Network.Block
@@ -123,6 +124,11 @@ genBlock = reasonablySized $ oneof
 genTxId :: Gen (GenTxId Block)
 genTxId =
     GenTxIdAlonzo . ShelleyTxId <$> arbitrary
+
+genTx :: Gen (GenTx Block)
+genTx = do
+    tx <- ShelleyTx <$> arbitrary <*> arbitrary
+    pure (GenTxAlonzo tx)
 
 genMempoolSizeAndCapacity :: Gen MempoolSizeAndCapacity
 genMempoolSizeAndCapacity = MempoolSizeAndCapacity
