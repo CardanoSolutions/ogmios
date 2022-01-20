@@ -28,6 +28,7 @@ module Cardano.Network.Protocol.NodeToClient
     , cChainSyncCodec
     , cTxSubmissionCodec
     , cStateQueryCodec
+    , cTxMonitorCodec
     , nodeToClientV_Latest
 
     -- * Running
@@ -36,6 +37,7 @@ module Cardano.Network.Protocol.NodeToClient
     , chainSyncClientPeerPipelined
     , localStateQueryClientPeer
     , localTxSubmissionClientPeer
+    , localTxMonitorClientPeer
 
     -- * Helpers / Re-exports
     , MuxError (..)
@@ -48,6 +50,7 @@ module Cardano.Network.Protocol.NodeToClient
     , localChainSync
     , localTxSubmission
     , localStateQuery
+    , localTxMonitor
     ) where
 
 import Prelude hiding

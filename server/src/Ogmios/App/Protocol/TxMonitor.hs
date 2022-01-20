@@ -112,7 +112,7 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
             pure $ SendMsgAcquire $ \_slot -> do
                 pure $ sendMsgSizeAndCapacity SizeAndCapacity toResponse
         MsgReleaseMempool ReleaseMempool _ toFault -> do
-            let fault = "'ReleaseMempool' must be call after acquiring some state."
+            let fault = "'ReleaseMempool' must be called after acquiring some state."
             yield $ Wsp.mkFault $ toFault Wsp.FaultClient fault
             clientStIdle
 
