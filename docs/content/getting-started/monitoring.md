@@ -45,7 +45,9 @@ $ curl -H 'Accept: application/json' http://localhost:1337/health
     },
     "networkSynchronization": 0.99,
     "currentEra": "Mary",
-    "connectionStatus": "disconnected"
+    "connectionStatus": "disconnected",
+    "currentEpoch": 164,
+    "slotInEpoch": 324543
 }
 ```
 
@@ -59,6 +61,8 @@ All information are computed at runtime and **not preserved between restarts** (
 | `lastKnownTip`                         | Last known chain tip received from the node (can be `null`)                                                                       |
 | `networkSynchronization`               | A **(nullable)** percentage indicator of how far the server/node is from the network tip. `1` means it is synchronized.           |
 | `currentEra`                           | The **(nullable)** current Cardano era of the underlying node. Useful for state-queries and debugging.                            |
+| `currentEpoch`                         | The **(nullable)** current epoch number known of the underlying node.                                                             |
+| `slotInEpoch`                          | The **(nullable)** relative slot number within the current epoch.                                                                 |
 | `metrics.activeConnections`            | Number of WebSocket connections currently established with the server.                                                            |
 | `metrics.totalConnections`             | Total number of WebSocket connections established with the server since it's started.                                             |
 | `metrics.sessionDurations`             | Some time measures (`min`, `max`, `mean`) of the duration of each sessions, in milliseconds.                                      |
