@@ -10,6 +10,7 @@
 
 - Fast synchronization of blocks from the Cardano network(s)
 - Transaction submission with enhanced error messages
+- Local mempool monitoring 
 - Full ledger state query support:
   - `blockHeight`
   - `chainTip`
