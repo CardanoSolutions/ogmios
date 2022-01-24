@@ -52,6 +52,8 @@ spec = parallel $ do
             currentEra health `shouldBe` Nothing
             metrics health `shouldBe` emptyMetrics
             connectionStatus health `shouldBe` Disconnected
+            currentEpoch health `shouldBe` Nothing
+            slotInEpoch health `shouldBe` Nothing
 
     context "NetworkSynchronization" $ do
         let matrix =
