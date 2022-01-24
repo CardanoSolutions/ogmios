@@ -17,13 +17,16 @@ pre: "<b>6. </b>"
 >
 >   A version of `cardano-node@1.33.0` patched with the necessary commits can be found at [CardanoSolutions/cardano-node@1.33.0+local-tx-monitor](https://github.com/CardanoSolutions/cardano-node/releases/tag/1.33.0+local-tx-monitor).
 >
-> - `connectionStatus` in the health object, taking `"connected"` or `"disconnected"` as values to reflect the current connection status with the node. [#154](https://github.com/CardanoSolutions/ogmios/issues/154)
+> - New fields in the health object:
+>   - `connectionStatus` → `"connected"` or `"disconnected"`, to reflect status with the node. [#154](https://github.com/CardanoSolutions/ogmios/issues/154)
+>   - `currentEpoch` → which returns the current known epoch of the linked node [#164](https://github.com/CardanoSolutions/ogmios/issues/164)
+>   - `slotInEpoch` → which returns the relative number of slots elapsed in the current epoch [#164](https://github.com/CardanoSolutions/ogmios/issues/154)
 >
 > - New `ogmios health-check` command, useful to perform simple health check on a running server. For example, to monitor a container via Docker health check mechanism:
 >   ```Dockerfile
 >   HEALTHCHECK --interval=10s --timeout=5s --retries=1 CMD /bin/ogmios health-check
 >   ```
-> - Bumped internal dependencies to Cardano's 1.33.0 eco-system.
+> - Bumped internal dependencies to Cardano's 1.33.* eco-system.
 
 #### Changed
 
