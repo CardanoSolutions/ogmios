@@ -532,7 +532,7 @@
         }
       , "result":
         { "type": "object"
-        , "title": "AcquireSuccess"
+        , "title": "AwaitAcquired"
         , "additionalProperties": false
         , "required": [ "AwaitAcquired" ]
         , "properties":
@@ -609,7 +609,7 @@
       , "result":
         { "oneOf":
           [ { "$ref": "#/definitions/TxId" }
-          , { "type": "null", "title": "null" }
+          , { "$ref": "#/definitions/Null" }
           ]
         }
       , "reflection":
