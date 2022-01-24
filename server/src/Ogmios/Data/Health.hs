@@ -4,6 +4,7 @@
 
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Ogmios.Data.Health
@@ -12,6 +13,8 @@ module Ogmios.Data.Health
     , CardanoEra (..)
     , ConnectionStatus (..)
     , Tip (..)
+    , SlotInEpoch (..)
+    , EpochNo (..)
     , emptyHealth
     , modifyHealth
       -- ** NetworkSynchronization
@@ -28,6 +31,8 @@ import Ogmios.Control.MonadSTM
 import Ogmios.Data.Metrics
     ( Metrics, emptyMetrics )
 
+import Cardano.Slotting.Slot
+    ( EpochNo (..) )
 import Data.Aeson
     ( ToJSON (..), genericToEncoding )
 import Data.ByteString.Builder.Scientific
@@ -77,6 +82,10 @@ data Health block = Health
     -- ^ Application metrics measured at regular interval.
     , connectionStatus :: !ConnectionStatus
     -- ^ State of the connectino with the underlying node.
+    , currentEpoch :: !(Maybe EpochNo)
+    -- ^ Current known epoch number
+    , slotInEpoch :: !(Maybe SlotInEpoch)
+    -- ^ Relative slot number within the epoch
     } deriving stock (Generic, Eq, Show)
 
 instance ToJSON (Tip block) => ToJSON (Health block) where
@@ -91,6 +100,8 @@ emptyHealth startTime = Health
     , currentEra = empty
     , metrics = emptyMetrics
     , connectionStatus = Disconnected
+    , currentEpoch = empty
+    , slotInEpoch = empty
     }
 
 modifyHealth
@@ -105,6 +116,10 @@ modifyHealth tvar fn =
         health <- fn <$> readTVar tvar
         health <$ writeTVar tvar health
 
+newtype SlotInEpoch = SlotInEpoch
+    { getSlotInEpoch :: Word64
+    } deriving stock (Generic, Eq, Show)
+      deriving newtype (ToJSON)
 
 -- | Captures how far is our underlying node from the network, in percentage.
 -- This is calculated using:
