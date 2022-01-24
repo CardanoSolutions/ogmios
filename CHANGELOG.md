@@ -5,17 +5,17 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
-### [5.1.0] - UNRELEASED
+### [5.1.0] - 2022-01-24
 
 #### Added
 
 > ##### 🏢 Server 
 >
-> - New `LocalTxMonitor` support in Ogmios. See [The user guide](https://ogmios.dev/https://ogmios.dev/mini-protocols/local-tx-monitor/) for more details.
+> - New `LocalTxMonitor` support in Ogmios. See [The user guide](https://ogmios.dev/mini-protocols/local-tx-monitor/) for more details.
 >
 >   ⚠️  This new protocol is **NOT** enabled in `cardano-node@1.33.*`. Until its inclusion in a next release, a custom build of cardano-node is required to include a more recent version of `ouroboros-network` which adds support for that protocol to the Ouroboros' mini-protocols; namely: [`32af9168`](https://github.com/input-output-hk/ouroboros-network/commit/32af9168). 
 >
->   A version of `cardano-node@1.33.1` patched with the necessary commits can be found at [CardanoSolutions/cardano-node@1.33.1+local-tx-monitor](https://github.com/CardanoSolutions/cardano-node/releases/tag/1.33.1+local-tx-monitor).
+>   A version of `cardano-node@1.33.0` patched with the necessary commits can be found at [CardanoSolutions/cardano-node@1.33.0+local-tx-monitor](https://github.com/CardanoSolutions/cardano-node/releases/tag/1.33.0+local-tx-monitor).
 >
 > - `connectionStatus` in the health object, taking `"connected"` or `"disconnected"` as values to reflect the current connection status with the node. [#154](https://github.com/CardanoSolutions/ogmios/issues/154)
 >
