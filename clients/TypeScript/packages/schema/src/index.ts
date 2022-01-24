@@ -495,6 +495,168 @@ export interface Ogmios {
     };
   };
   /**
+   * Acquire a mempool snapshot. This is blocking until a new (i.e different) snapshot is available.
+   */
+  AwaitAcquire: {
+    type: "jsonwsp/request";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "AwaitAcquire";
+    args?: {};
+    /**
+     * An arbitrary JSON value that will be mirrored back in the response.
+     */
+    mirror?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Response to a 'AwaitAcquire' request.
+   */
+  AwaitAcquireResponse: {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "AwaitAcquire";
+    result: AwaitAcquired;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Request the next transaction from an acquired snapshot.
+   */
+  NextTx: {
+    type: "jsonwsp/request";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "NextTx";
+    args?: {};
+    /**
+     * An arbitrary JSON value that will be mirrored back in the response.
+     */
+    mirror?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Response to a 'NextTx' request.
+   */
+  NextTxResponse: {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "NextTx";
+    result: TxId | Null;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Ask whether a given transaction is present in the acquired mempool snapshot.
+   */
+  HasTx: {
+    type: "jsonwsp/request";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "HasTx";
+    args?: {
+      id: TxId;
+    };
+    /**
+     * An arbitrary JSON value that will be mirrored back in the response.
+     */
+    mirror?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Response to a 'HasTx' request.
+   */
+  HasTxResponse: {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "HasTx";
+    result: boolean;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Get size and capacities of the mempool (acquired snapshot).
+   */
+  SizeAndCapacity: {
+    type: "jsonwsp/request";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "SizeAndCapacity";
+    args?: {};
+    /**
+     * An arbitrary JSON value that will be mirrored back in the response.
+     */
+    mirror?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Response to a 'SizeAndCapacity' request.
+   */
+  SizeAndCapacityResponse: {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "SizeAndCapacity";
+    result: MempoolSizeAndCapacity;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Release a previously acquired mempool snapshot.
+   */
+  ReleaseMempool?: {
+    type: "jsonwsp/request";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "ReleaseMempool";
+    args?: {};
+    /**
+     * An arbitrary JSON value that will be mirrored back in the response.
+     */
+    mirror?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Response to a 'ReleaseMempool' request.
+   */
+  ReleaseMempoolResponse?: {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "ReleaseMempool";
+    result: "Released";
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
    * Query the current ledger tip.
    */
   Query: {
@@ -1701,6 +1863,16 @@ export interface AcquireFailure {
   AcquireFailure: {
     failure: AcquireFailureDetails;
   };
+}
+export interface AwaitAcquired {
+  AwaitAcquired: {
+    slot: Slot;
+  };
+}
+export interface MempoolSizeAndCapacity {
+  capacity: UInt32;
+  currentSize: UInt32;
+  numberOfTxs: UInt32;
 }
 export interface GetNonMyopicMemberRewards {
   nonMyopicMemberRewards: Lovelaces | Credentials;
