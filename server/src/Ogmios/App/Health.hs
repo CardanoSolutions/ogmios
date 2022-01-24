@@ -92,6 +92,8 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..) )
+import Ouroboros.Network.Protocol.LocalTxMonitor.Client
+    ( LocalTxMonitorClient (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxSubmissionClient (..) )
 
@@ -146,6 +148,9 @@ newHealthCheckClient tr Debouncer{debounce} = do
 
         , txSubmissionClient =
             LocalTxSubmissionClient idle
+
+        , txMonitorClient =
+            LocalTxMonitorClient idle
 
         , stateQueryClient
         }
@@ -243,11 +248,11 @@ mkHealthCheckClient notify =
     stNext
         :: ClientStNext Z block (Point block) (Tip block) m ()
     stNext = ClientStNext
-        { recvMsgRollForward  = const check
-        , recvMsgRollBackward = const check
+        { recvMsgRollForward  = const doCheck
+        , recvMsgRollBackward = const doCheck
         }
       where
-        check tip = notify tip *> stIdle
+        doCheck tip = notify tip *> stIdle
 
 -- | A simple client which is used to determine some metrics about the
 -- underlying node. In particular, it allows for knowing the network

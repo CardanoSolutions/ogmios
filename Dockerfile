@@ -43,7 +43,7 @@ ENTRYPOINT ["/bin/ogmios"]
 # --------------------- RUN (cardano-node & ogmios) -------------------------- #
 #                                                                              #
 
-FROM inputoutput/cardano-node:1.31.0 as cardano-node-ogmios
+FROM inputoutput/cardano-node:1.33.0 as cardano-node-ogmios
 
 ARG NETWORK=mainnet
 

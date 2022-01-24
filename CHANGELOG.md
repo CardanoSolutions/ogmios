@@ -10,13 +10,20 @@ pre: "<b>6. </b>"
 #### Added
 
 > ##### 🏢 Server 
-> 
+>
+> - New `LocalTxMonitor` support in Ogmios. See [The user guide](https://ogmios.dev/https://ogmios.dev/mini-protocols/local-tx-monitor/) for more details.
+>
+>   ⚠️  This new protocol is **NOT** enabled in `cardano-node@1.33.*`. Until its inclusion in a next release, a custom build of cardano-node is required to include a more recent version of `ouroboros-network` which adds support for that protocol to the Ouroboros' mini-protocols; namely: [`32af9168`](https://github.com/input-output-hk/ouroboros-network/commit/32af9168). 
+>
+>   A version of `cardano-node@1.33.1` patched with the necessary commits can be found at [CardanoSolutions/cardano-node@1.33.1+local-tx-monitor](https://github.com/CardanoSolutions/cardano-node/releases/tag/1.33.1+local-tx-monitor).
+>
 > - `connectionStatus` in the health object, taking `"connected"` or `"disconnected"` as values to reflect the current connection status with the node. [#154](https://github.com/CardanoSolutions/ogmios/issues/154)
 >
 > - New `ogmios health-check` command, useful to perform simple health check on a running server. For example, to monitor a container via Docker health check mechanism:
 >   ```Dockerfile
 >   HEALTHCHECK --interval=10s --timeout=5s --retries=1 CMD /bin/ogmios health-check
 >   ```
+> - Bumped internal dependencies to Cardano's 1.33.0 eco-system.
 
 #### Changed
 
@@ -24,6 +31,7 @@ pre: "<b>6. </b>"
 > 
 > - `networkSynchronization` and `currentEra` can be `null` when the server isn't connected to a node. [#154](https://github.com/CardanoSolutions/ogmios/issues/154)
 > - The `Metrics` trace is now correctly tagged with `MetricsRuntimeStatsDisabled`.
+> - Fixed an issue with the Docker monitoring scripts of cardano-node-ogmios, causing issues on restart. [#159](https://github.com/CardanoSolutions/ogmios/pulls/159)
 > 
 >
 > ##### 🚗 TypeScript Client

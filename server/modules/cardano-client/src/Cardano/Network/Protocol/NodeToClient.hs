@@ -28,6 +28,7 @@ module Cardano.Network.Protocol.NodeToClient
     , cChainSyncCodec
     , cTxSubmissionCodec
     , cStateQueryCodec
+    , cTxMonitorCodec
     , nodeToClientV_Latest
 
     -- * Running
@@ -36,16 +37,20 @@ module Cardano.Network.Protocol.NodeToClient
     , chainSyncClientPeerPipelined
     , localStateQueryClientPeer
     , localTxSubmissionClientPeer
+    , localTxMonitorClientPeer
 
     -- * Helpers / Re-exports
     , MuxError (..)
     , HandshakeProtocolError (..)
     , NodeToClientVersion
+    , GenTx
+    , GenTxId
 
     -- * Boilerplate
     , localChainSync
     , localTxSubmission
     , localStateQuery
+    , localTxMonitor
     ) where
 
 import Prelude hiding
@@ -53,8 +58,12 @@ import Prelude hiding
 
 import Cardano.Chain.Slotting
     ( EpochSlots (..) )
+import Cardano.Ledger.Crypto
+    ( StandardCrypto )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient (..) )
+import Cardano.Slotting.Slot
+    ( SlotNo )
 import Control.Monad.Class.MonadAsync
     ( MonadAsync )
 import Control.Monad.Class.MonadST
@@ -86,17 +95,17 @@ import Ouroboros.Consensus.Byron.Ledger.Config
 import Ouroboros.Consensus.Cardano
     ( CardanoBlock )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras, CodecConfig (..), GenTx, HardForkApplyTxErr )
+    ( CardanoEras, CodecConfig (..), HardForkApplyTxErr )
 import Ouroboros.Consensus.Ledger.Query
     ( Query (..) )
+import Ouroboros.Consensus.Ledger.SupportsMempool
+    ( GenTx, GenTxId )
 import Ouroboros.Consensus.Network.NodeToClient
     ( ClientCodecs, Codecs' (..), clientCodecs )
 import Ouroboros.Consensus.Node.NetworkProtocolVersion
     ( SupportedNetworkProtocolVersion (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CodecConfig (..) )
-import Ouroboros.Consensus.Shelley.Protocol
-    ( StandardCrypto )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 import Ouroboros.Network.Channel
@@ -128,6 +137,10 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient, localStateQueryClientPeer )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( LocalStateQuery )
+import Ouroboros.Network.Protocol.LocalTxMonitor.Client
+    ( LocalTxMonitorClient, localTxMonitorClientPeer )
+import Ouroboros.Network.Protocol.LocalTxMonitor.Type
+    ( LocalTxMonitor )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxSubmissionClient, localTxSubmissionClientPeer )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
@@ -168,6 +181,8 @@ data Clients m block = Clients
         :: ChainSyncClientPipelined block (Point block) (Tip block) m ()
     , txSubmissionClient
         :: LocalTxSubmissionClient (SubmitTxPayload block) (SubmitTxError block) m ()
+    , txMonitorClient
+        :: LocalTxMonitorClient (GenTxId block) (GenTx block) SlotNo m ()
     , stateQueryClient
         :: LocalStateQueryClient block (Point block) (Query block) m ()
     }
@@ -186,7 +201,7 @@ connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
   where
     versions = combineVersions
         [ simpleSingletonVersions v vData (client v)
-        | v <- [NodeToClientV_10, NodeToClientV_9, NodeToClientV_8]
+        | v <- [NodeToClientV_12, NodeToClientV_11, NodeToClientV_10]
         ]
 
     tracers :: NetworkConnectTracers LocalAddress NodeToClientVersion
@@ -229,6 +244,12 @@ mkClient unlift tr epochSlots clients = \nodeToClientV ->
                 (txSubmissionClient clients)
                 (hoistChannel liftIO channel)
 
+        , localTxMonitorProtocol =
+            InitiatorProtocolOnly $ MuxPeerRaw $ \channel ->
+                localTxMonitor unlift trTxMonitor (codecTxMonitor nodeToClientV)
+                (txMonitorClient clients)
+                (hoistChannel liftIO channel)
+
         , localStateQueryProtocol =
             InitiatorProtocolOnly $ MuxPeerRaw $ \channel ->
                 localStateQuery unlift trStateQuery (codecStateQuery nodeToClientV)
@@ -242,6 +263,9 @@ mkClient unlift tr epochSlots clients = \nodeToClientV ->
 
     trTxSubmission    = contramap TrTxSubmission tr
     codecTxSubmission = cTxSubmissionCodec . codecs epochSlots
+
+    trTxMonitor    = nullTracer
+    codecTxMonitor = cTxMonitorCodec . codecs epochSlots
 
     trStateQuery    = nullTracer
     codecStateQuery = cStateQueryCodec . codecs epochSlots
@@ -290,6 +314,28 @@ localTxSubmission
     -> IO ((), Maybe ByteString)
 localTxSubmission unliftIO tr codec client channel =
     unliftIO $ runPeer tr codec channel (localTxSubmissionClientPeer client)
+
+-- | Boilerplate for lifting a 'LocalTxMonitorClient'
+localTxMonitor
+    :: forall m protocol.
+        ( protocol ~ LocalTxMonitor (GenTxId Block) (GenTx Block) SlotNo
+        , MonadThrow m
+        )
+    => (forall a. m a -> IO a)
+        -- ^ A natural transformation to unlift a particular 'm' into 'IO'.
+    -> Tracer m (TraceSendRecv protocol)
+        -- ^ Base tracer for the mini-protocols
+    -> Codec protocol DeserialiseFailure m ByteString
+        -- ^ Codec for deserializing / serializing binary data
+    -> LocalTxMonitorClient (GenTxId Block) (GenTx Block) SlotNo m ()
+        -- ^ Actual local tx submission client
+    -> Channel m ByteString
+        -- ^ A 'Channel' is an abstract communication instrument which
+        -- transports serialized messages between peers (e.g. a unix
+        -- socket).
+    -> IO ((), Maybe ByteString)
+localTxMonitor unliftIO tr codec client channel =
+    unliftIO $ runPeer tr codec channel (localTxMonitorClientPeer client)
 
 -- | Boilerplate for lifting a 'LocalStateQueryClient'
 localStateQuery

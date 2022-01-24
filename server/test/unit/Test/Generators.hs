@@ -8,6 +8,8 @@ module Test.Generators where
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.Crypto
+    ( StandardCrypto )
 import Cardano.Ledger.Era
     ( Crypto, Era, SupportsSegWit (..) )
 import Cardano.Ledger.Keys
@@ -15,7 +17,7 @@ import Cardano.Ledger.Keys
 import Cardano.Ledger.Serialization
     ( ToCBORGroup )
 import Cardano.Network.Protocol.NodeToClient
-    ( Block )
+    ( Block, GenTxId )
 import Cardano.Slotting.Slot
     ( EpochNo (..) )
 import Cardano.Slotting.Time
@@ -38,10 +40,12 @@ import Ouroboros.Consensus.Cardano.Block
     ( AllegraEra
     , AlonzoEra
     , CardanoEras
+    , GenTx (..)
     , HardForkApplyTxErr (..)
     , HardForkBlock (..)
     , MaryEra
     , ShelleyEra
+    , TxId (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator
     ( LedgerEraInfo (..), Mismatch (..), MismatchEraInfo (..), singleEraInfo )
@@ -55,14 +59,16 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CompactGenesis, compactGenesis )
+import Ouroboros.Consensus.Shelley.Ledger.Mempool
+    ( GenTx (..), TxId (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( NonMyopicMemberRewards (..) )
-import Ouroboros.Consensus.Shelley.Protocol
-    ( StandardCrypto )
 import Ouroboros.Network.Block
     ( BlockNo (..), HeaderHash, Point (..), SlotNo (..), Tip (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure (..) )
+import Ouroboros.Network.Protocol.LocalTxMonitor.Type
+    ( MempoolSizeAndCapacity (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
 import Test.Cardano.Ledger.Shelley.ConcreteCryptoTypes
@@ -114,6 +120,21 @@ genBlock = reasonablySized $ oneof
     genBlockFrom = ShelleyBlock
         <$> (Ledger.Block <$> arbitrary <*> (toTxSeq @era <$> arbitrary))
         <*> arbitrary
+
+genTxId :: Gen (GenTxId Block)
+genTxId =
+    GenTxIdAlonzo . ShelleyTxId <$> arbitrary
+
+genTx :: Gen (GenTx Block)
+genTx = do
+    tx <- ShelleyTx <$> arbitrary <*> arbitrary
+    pure (GenTxAlonzo tx)
+
+genMempoolSizeAndCapacity :: Gen MempoolSizeAndCapacity
+genMempoolSizeAndCapacity = MempoolSizeAndCapacity
+    <$> arbitrary
+    <*> arbitrary
+    <*> arbitrary
 
 genWithOrigin :: Gen a -> Gen (Point.WithOrigin a)
 genWithOrigin genA = frequency

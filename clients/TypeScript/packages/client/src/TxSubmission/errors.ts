@@ -15,6 +15,7 @@ import {
   ExpiredUtxo,
   ExtraDataMismatch,
   ExtraRedeemers,
+  ExtraScriptWitnesses,
   FeeTooSmall,
   InsufficientFundsForMir,
   InsufficientGenesisSignatures,
@@ -81,6 +82,7 @@ export type SubmitTxErrorShelley =
   | ExpiredUtxo
   | ExtraDataMismatch
   | ExtraRedeemers
+  | ExtraScriptWitnesses
   | FeeTooSmall
   | InsufficientFundsForMir
   | InsufficientGenesisSignatures
@@ -749,6 +751,16 @@ export const errors = {
       public constructor (rawError: ExtraRedeemers) {
         super()
         this.message = safeJSON.stringify(rawError.extraRedeemers)
+      }
+    }
+  },
+  ExtraScriptWitnesses: {
+    assert: (item: SubmitTxErrorShelley): item is ExtraScriptWitnesses =>
+      (item as ExtraScriptWitnesses).extraScriptWitnesses !== undefined,
+    Error: class ExtraScriptWitnessesError extends CustomError {
+      public constructor (rawError: ExtraScriptWitnesses) {
+        super()
+        this.message = safeJSON.stringify(rawError.extraScriptWitnesses)
       }
     }
   }

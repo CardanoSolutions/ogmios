@@ -7,6 +7,10 @@
   , "SubmitTx", "SubmitTxResponse"
   , "Acquire", "AcquireResponse"
   , "Release","ReleaseResponse"
+  , "AwaitAcquire", "AwaitAcquireResponse"
+  , "NextTx", "NextTxResponse"
+  , "HasTx", "HasTxResponse"
+  , "SizeAndCapacity", "SizeAndCapacityResponse"
   , "Query"
   , "QueryResponse[blockHeight]"
   , "QueryResponse[chainTip]"
@@ -461,6 +465,342 @@
       , "methodname":
         { "type": "string"
         , "enum": [ "Release" ]
+        }
+      , "result":
+        { "type": "string"
+        , "enum": ["Released"]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "AwaitAcquire":
+    { "type": "object"
+    , "description": "Acquire a mempool snapshot. This is blocking until a new (i.e different) snapshot is available."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "AwaitAcquire" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "AwaitAcquireResponse":
+    { "type": "object"
+    , "description": "Response to a 'AwaitAcquire' request."
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "AwaitAcquire" ]
+        }
+      , "result":
+        { "type": "object"
+        , "title": "AcquireSuccess"
+        , "additionalProperties": false
+        , "required": [ "AwaitAcquired" ]
+        , "properties":
+          { "AwaitAcquired":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "slot" ]
+            , "properties":
+              { "slot": { "$ref": "#/definitions/Slot" }
+              }
+            }
+          }
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "NextTx":
+    { "type": "object"
+    , "description": "Request the next transaction from an acquired snapshot."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "NextTx" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "NextTxResponse":
+    { "type": "object"
+    , "description": "Response to a 'NextTx' request."
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "NextTx" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/TxId" }
+          , { "type": "null", "title": "null" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "HasTx":
+    { "type": "object"
+    , "description": "Ask whether a given transaction is present in the acquired mempool snapshot."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "HasTx" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "id" ]
+        , "properties":
+          { "id": { "$ref": "#/definitions/TxId" }
+          }
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "HasTxResponse":
+    { "type": "object"
+    , "description": "Response to a 'HasTx' request."
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "HasTx" ]
+        }
+      , "result":
+        { "type": "boolean"
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "SizeAndCapacity":
+    { "type": "object"
+    , "description": "Get size and capacities of the mempool (acquired snapshot)."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "SizeAndCapacity" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "SizeAndCapacityResponse":
+    { "type": "object"
+    , "description": "Response to a 'SizeAndCapacity' request."
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "SizeAndCapacity" ]
+        }
+      , "result":
+        { "$ref": "#/definitions/MempoolSizeAndCapacity"
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "ReleaseMempool":
+    { "type": "object"
+    , "description": "Release a previously acquired mempool snapshot."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "ReleaseMempool" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "ReleaseMempoolResponse":
+    { "type": "object"
+    , "description": "Response to a 'ReleaseMempool' request."
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "ReleaseMempool" ]
         }
       , "result":
         { "type": "string"
@@ -2878,6 +3218,17 @@
     , "contentEncoding": "base64"
     }
 
+  , "MempoolSizeAndCapacity":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "capacity", "currentSize", "numberOfTxs" ]
+    , "properties":
+      { "capacity": { "$ref": "#/definitions/UInt32" }
+      , "currentSize": { "$ref": "#/definitions/UInt32" }
+      , "numberOfTxs": { "$ref": "#/definitions/UInt32" }
+      }
+    }
+
   , "Metadata":
     { "type": "object"
     , "propertyNames": { "pattern": "^-?[0-9]+$" }
@@ -3930,6 +4281,7 @@
         , { "$ref": "#/definitions/SubmitTxError[outsideForecast]" }
         , { "$ref": "#/definitions/SubmitTxError[validationTagMismatch]" }
         , { "$ref": "#/definitions/SubmitTxError[collectErrors]" }
+        , { "$ref": "#/definitions/SubmitTxError[extraScriptWitnesses]" }
         ]
       }
     }
@@ -4832,6 +5184,19 @@
     , "properties":
       { "collectErrors":
         { "type": "array"
+        }
+      }
+    }
+
+  , "SubmitTxError[extraScriptWitnesses]":
+    { "type": "object"
+    , "title": "extraScriptWitnesses"
+    , "additionalProperties": false
+    , "required": ["extraScriptWitnesses"]
+    , "properties":
+      { "extraScriptWitnesses":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Digest[Blake2b]::Script" }
         }
       }
     }

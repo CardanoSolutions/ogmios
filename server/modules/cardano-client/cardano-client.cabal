@@ -77,6 +77,8 @@ library
     , base >=4.7 && <5
     , bytestring
     , cardano-ledger-byron
+    , cardano-ledger-core
+    , cardano-slotting
     , cborg
     , containers
     , contra-tracer

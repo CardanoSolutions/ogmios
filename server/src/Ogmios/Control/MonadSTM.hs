@@ -4,31 +4,13 @@
 
 module Ogmios.Control.MonadSTM
     ( MonadSTM (..)
-
-    , TQueue
-    , newTQueue
-    , writeTQueue
-    , readTQueue
-    , tryReadTQueue
-
-    , TVar
-    , newTVar
-    , writeTVar
-    , readTVar
-
-    , TMVar
-    , newTMVar
-    , newEmptyTMVar
-    , putTMVar
-    , takeTMVar
-    , tryTakeTMVar
     , withTMVar
     ) where
 
 import Ogmios.Prelude
 
 import Control.Monad.Class.MonadSTM
-    ( MonadSTM (..), MonadSTMTx (..), TMVar, TQueue, TVar )
+    ( MonadSTM (..) )
 import Control.Monad.Class.MonadThrow
     ( MonadCatch (..), MonadMask (..) )
 

@@ -12,12 +12,15 @@ import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Ledger.Shelley.API
     ( PraosCrypto )
+import Cardano.Network.Protocol.NodeToClient
+    ( GenTx, GenTxId )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient, encodeTraceClient )
 import Ogmios.Data.Json
     ( decodePoint
     , decodeSubmitTxPayload
     , decodeTip
+    , decodeTxId
     , encodeSubmitTxError
     , encodeSubmitTxPayload
     , encodeTip
@@ -25,7 +28,7 @@ import Ogmios.Data.Json
 import Ogmios.Data.Json.Query
     ( encodePoint )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoBlock, CardanoEras, GenTx (..), HardForkApplyTxErr (..) )
+    ( CardanoBlock, CardanoEras, HardForkApplyTxErr (..) )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 
@@ -61,6 +64,9 @@ instance ToJSON (Point (CardanoBlock crypto)) where
 
 instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto)) where
     parseJSON = decodeSubmitTxPayload
+
+instance PraosCrypto crypto => FromJSON (GenTxId (CardanoBlock crypto)) where
+    parseJSON = decodeTxId
 
 instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
     parseJSON = decodePoint

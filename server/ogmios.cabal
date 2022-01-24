@@ -42,6 +42,7 @@ library
       Ogmios.App.Protocol
       Ogmios.App.Protocol.ChainSync
       Ogmios.App.Protocol.StateQuery
+      Ogmios.App.Protocol.TxMonitor
       Ogmios.App.Protocol.TxSubmission
       Ogmios.App.Server
       Ogmios.App.Server.Http
@@ -68,6 +69,7 @@ library
       Ogmios.Data.Protocol
       Ogmios.Data.Protocol.ChainSync
       Ogmios.Data.Protocol.StateQuery
+      Ogmios.Data.Protocol.TxMonitor
       Ogmios.Data.Protocol.TxSubmission
       Ogmios.Options
       Ogmios.Prelude
@@ -116,6 +118,7 @@ library
       git
   build-depends:
       aeson
+    , async
     , base >=4.7 && <5
     , base16
     , base58-bytestring
@@ -128,6 +131,7 @@ library
     , cardano-crypto
     , cardano-crypto-class
     , cardano-crypto-wrapper
+    , cardano-data
     , cardano-ledger-alonzo
     , cardano-ledger-byron
     , cardano-ledger-core
@@ -169,6 +173,7 @@ library
     , scientific
     , serialise
     , small-steps
+    , stm
     , strict-containers
     , text
     , time
@@ -243,6 +248,7 @@ test-suite unit
   other-modules:
       Ogmios.App.Protocol.ChainSyncSpec
       Ogmios.App.Protocol.StateQuerySpec
+      Ogmios.App.Protocol.TxMonitorSpec
       Ogmios.App.ProtocolSpec
       Ogmios.Data.HealthSpec
       Ogmios.Data.JsonSpec
