@@ -95,8 +95,7 @@ import Test.QuickCheck
     , choose
     , cover
     , elements
-    , forAll
-    , forAllBlind
+    , forAllShow
     , forAllShrinkShow
     , frequency
     , listOf1
@@ -114,21 +113,23 @@ spec :: Spec
 spec = parallel $ do
     context "TxMonitor" $ do
         parallel $ prop "Any sequence acquire/has/next/size is valid" prop_anySequenceValid
-        parallel $ prop "Can and must release after acquiring" prop_releaseAfterAcquiring
+        parallel $ prop "Can and must query after acquiring" prop_queryAfterAcquiring
   where
     prop_anySequenceValid :: Property
     prop_anySequenceValid =
         checkCoverageWith (confidence 1e6 0.5) $ forAllShrinkShow
-            (reasonablySized (listOf1 genTxMonitorMessage))
+            (reasonablySized (listOf1 (withoutReleaseMempool genTxMonitorAcquiredMessage)))
             (shrinkList (const []))
             (show . fmap showTxMonitorMessage)
             (\msgs -> p msgs
                 & cover 1 (acquireTwice False msgs) "AwaitAcquire twice"
                 & cover 1 (multipleNextTx (0 :: Int) 0 msgs) "Multiple NextTx"
-                & cover 5 (nextThenHas False msgs) "NextTx then HasTx"
+                & cover 1 (nextThenHas False msgs) "NextTx then HasTx"
             )
       where
         p msgs = prop_inIOSim $ withTxMonitorClient $ \send receive -> do
+            send $ awaitAcquire Nothing
+            expectWSPResponse @"AwaitAcquire" Proxy receive Json.Null
             forM_ msgs  $ \(msg, mirror, SomeProxy proxy) -> do
                 send msg
                 expectWSPResponse proxy receive (toJSON mirror)
@@ -152,20 +153,21 @@ spec = parallel $ do
             ((MsgAwaitAcquire{},_,_):q) -> hasAcquired || acquireTwice True q
             _:q -> acquireTwice False q
 
-    prop_releaseAfterAcquiring :: Property
-    prop_releaseAfterAcquiring =
-        forAll (choose (0, 3)) $ \n -> do
-            forAllBlind
-                (vectorOf n (awaitAcquire <$> genMirror))
-                p
+    prop_queryAfterAcquiring :: Property
+    prop_queryAfterAcquiring =
+        checkCoverageWith (confidence 1e6 0.5) $ forAllShow
+            (withoutAwaitAcquire genTxMonitorAcquiredMessage)
+            showTxMonitorMessage
+            (\arg -> p arg
+                & cover 1 ("ReleaseMempool" == showTxMonitorMessage arg) "ReleaseMempool"
+                & cover 1 ("HasTx" == showTxMonitorMessage arg) "HasTx"
+                & cover 1 ("NextTx" == showTxMonitorMessage arg) "NextTx"
+                & cover 1 ("SizeAndCapacity" == showTxMonitorMessage arg) "SizeAndCapacity"
+            )
       where
-        p msgs = prop_inIOSim $ withTxMonitorClient $ \send receive -> do
-            forM_ msgs  $ \msg -> do
-                send msg >> void receive
-                send $ releaseMempool Nothing
-                expectWSPResponse @"ReleaseMempool" Proxy receive Json.Null
-            send $ releaseMempool Nothing
-            expectWSPFault receive Wsp.FaultClient Json.Null
+        p (msg, mirror, _) = prop_inIOSim $ withTxMonitorClient $ \send receive -> do
+            send msg
+            expectWSPFault receive Wsp.FaultClient (toJSON mirror)
 
 type Protocol = LocalTxMonitor (GenTxId Block) (GenTx Block) SlotNo
 
@@ -333,7 +335,7 @@ plausibleTxsIds = txId <$> plausibleTxs
 
 genServerAction :: [tx] -> Gen ServerAction
 genServerAction xs = frequency $ mconcat
-    [ [ ( 75, pure ServerDoesNothing ) ]
+    [ [ (75, pure ServerDoesNothing ) ]
     , [ (15, pure ServerAddTx ) | length xs < maxCapacity ]
     , [ (10, pure ServerRemoveTx ) | not (null xs) ]
     ]
@@ -341,18 +343,33 @@ genServerAction xs = frequency $ mconcat
 data SomeProxy = forall method. KnownSymbol method => SomeProxy (Proxy method)
 deriving instance Show SomeProxy
 
-genTxMonitorMessage :: Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
-genTxMonitorMessage = do
+genTxMonitorAcquiredMessage :: Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
+genTxMonitorAcquiredMessage = do
     mirror <- genMirror
     plausible <- elements plausibleTxsIds
     unknown <- genTxId `suchThat` (`notElem` plausibleTxsIds)
     frequency
-        [ (10, pure (awaitAcquire mirror     , mirror, SomeProxy (Proxy :: Proxy "AwaitAcquire")))
-        , (50, pure (nextTx mirror           , mirror, SomeProxy (Proxy :: Proxy "NextTx")))
+        [ (20, pure (awaitAcquire mirror     , mirror, SomeProxy (Proxy :: Proxy "AwaitAcquire")))
+        , (75, pure (nextTx mirror           , mirror, SomeProxy (Proxy :: Proxy "NextTx")))
         , (10, pure (hasTx mirror plausible  , mirror, SomeProxy (Proxy :: Proxy "HasTx")))
         , (10, pure (hasTx mirror unknown    , mirror, SomeProxy (Proxy :: Proxy "HasTx")))
-        , (20, pure (sizeAndCapacity mirror  , mirror, SomeProxy (Proxy :: Proxy "SizeAndCapacity")))
+        , ( 5, pure (sizeAndCapacity mirror  , mirror, SomeProxy (Proxy :: Proxy "SizeAndCapacity")))
+        , ( 5, pure (releaseMempool mirror   , mirror, SomeProxy (Proxy :: Proxy "ReleaseMempool")))
         ]
+
+withoutReleaseMempool
+    :: Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
+    -> Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
+withoutReleaseMempool = flip suchThat $ \case
+    (MsgReleaseMempool{}, _, _) -> False
+    _ -> True
+
+withoutAwaitAcquire
+    :: Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
+    -> Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
+withoutAwaitAcquire = flip suchThat $ \case
+    (MsgAwaitAcquire{}, _, _) -> False
+    _ -> True
 
 --
 -- Messages

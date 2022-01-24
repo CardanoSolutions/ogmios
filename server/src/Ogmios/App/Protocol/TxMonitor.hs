@@ -37,11 +37,6 @@
 --                    │      Busy     │
 --                    └───────────────┘
 -- @
---
--- Note that Ogmios enables a slightly modified version of that protocol where
--- `HasTx`, `NextTx` and `SizeAndCapacity` can be sent right away. This effectively
--- performs an implicit `Acquire` conviniently. From there, the protocol behaves
--- identically.
 module Ogmios.App.Protocol.TxMonitor
     ( mkTxMonitorClient
     ) where
@@ -95,6 +90,11 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
     await :: m (TxMonitorMessage block)
     await = atomically (readTQueue queue)
 
+    mustAcquireFirst :: forall a. (Show a) => a -> Wsp.ToFault -> m ()
+    mustAcquireFirst query toFault = do
+        let fault = "'" <> show query <> "' must be called after at least one 'AwaitAcquire'."
+        yield $ Wsp.mkFault $ toFault Wsp.FaultClient fault
+
     clientStIdle
         :: m (ClientStIdle (GenTxId block) (GenTx block) SlotNo m ())
     clientStIdle = await >>= \case
@@ -102,18 +102,17 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
             pure $ SendMsgAcquire $ \slot -> do
                 yield $ encodeAwaitAcquireResponse $ toResponse $ AwaitAcquired slot
                 clientStAcquired
-        MsgNextTx NextTx toResponse _ ->
-            pure $ SendMsgAcquire $ \_slot -> do
-                pure $ sendMsgNextTx NextTx toResponse
-        MsgHasTx HasTx{id} toResponse _ ->
-            pure $ SendMsgAcquire $ \_slot -> do
-                pure $ sendMsgHasTx HasTx{id} toResponse
-        MsgSizeAndCapacity SizeAndCapacity toResponse _ -> do
-            pure $ SendMsgAcquire $ \_slot -> do
-                pure $ sendMsgSizeAndCapacity SizeAndCapacity toResponse
-        MsgReleaseMempool ReleaseMempool _ toFault -> do
-            let fault = "'ReleaseMempool' must be called after acquiring some state."
-            yield $ Wsp.mkFault $ toFault Wsp.FaultClient fault
+        MsgNextTx q@NextTx _ toFault -> do
+            mustAcquireFirst q toFault
+            clientStIdle
+        MsgHasTx q@HasTx{} _ toFault -> do
+            mustAcquireFirst q toFault
+            clientStIdle
+        MsgSizeAndCapacity q@SizeAndCapacity _ toFault -> do
+            mustAcquireFirst q toFault
+            clientStIdle
+        MsgReleaseMempool q@ReleaseMempool _ toFault -> do
+            mustAcquireFirst q toFault
             clientStIdle
 
     clientStAcquired
@@ -124,39 +123,18 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
                 yield $ encodeAwaitAcquireResponse $ toResponse $ AwaitAcquired slot
                 clientStAcquired
         MsgNextTx NextTx toResponse _ ->
-            sendMsgNextTx NextTx toResponse
+            SendMsgNextTx $ \(fmap txId -> next) -> do
+                yield $ encodeNextTxResponse $ toResponse $ NextTxResponse{next}
+                clientStAcquired
         MsgHasTx HasTx{id} toResponse _ ->
-            sendMsgHasTx HasTx{id} toResponse
+            SendMsgHasTx id $ \has -> do
+                yield $ encodeHasTxResponse $ toResponse $ HasTxResponse{has}
+                clientStAcquired
         MsgSizeAndCapacity SizeAndCapacity toResponse _ ->
-            sendMsgSizeAndCapacity SizeAndCapacity toResponse
+            SendMsgGetSizes $ \sizes -> do
+                yield $ encodeSizeAndCapacityResponse $ toResponse $ SizeAndCapacityResponse{sizes}
+                clientStAcquired
         MsgReleaseMempool ReleaseMempool toResponse _ ->
             SendMsgRelease $ do
                 yield $ encodeReleaseMempoolResponse $ toResponse Released
                 clientStIdle
-
-    sendMsgNextTx
-        :: NextTx
-        -> (Wsp.ToResponse (NextTxResponse block))
-        -> ClientStAcquired (GenTxId block) (GenTx block) SlotNo  m ()
-    sendMsgNextTx NextTx toResponse =
-        SendMsgNextTx $ \(fmap txId -> next) -> do
-            yield $ encodeNextTxResponse $ toResponse $ NextTxResponse{next}
-            clientStAcquired
-
-    sendMsgHasTx
-        :: HasTx block
-        -> (Wsp.ToResponse HasTxResponse)
-        -> ClientStAcquired (GenTxId block) (GenTx block) SlotNo  m ()
-    sendMsgHasTx HasTx{id} toResponse =
-        SendMsgHasTx id $ \has -> do
-            yield $ encodeHasTxResponse $ toResponse $ HasTxResponse{has}
-            clientStAcquired
-
-    sendMsgSizeAndCapacity
-        :: SizeAndCapacity
-        -> (Wsp.ToResponse SizeAndCapacityResponse)
-        -> ClientStAcquired (GenTxId block) (GenTx block) SlotNo  m ()
-    sendMsgSizeAndCapacity SizeAndCapacity toResponse =
-        SendMsgGetSizes $ \sizes -> do
-            yield $ encodeSizeAndCapacityResponse $ toResponse $ SizeAndCapacityResponse{sizes}
-            clientStAcquired
