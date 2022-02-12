@@ -847,6 +847,9 @@ export interface Ogmios {
       [k: string]: unknown;
     };
   };
+  /**
+   * This query is now deprecated. Use /rewardsProvenance'/ instead.
+   */
   "QueryResponse[rewardsProvenance]": {
     type: "jsonwsp/response";
     version: "1.0";

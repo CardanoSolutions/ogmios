@@ -1375,6 +1375,7 @@
   , "QueryResponse[rewardsProvenance]":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "description": "This query is now deprecated. Use /rewardsProvenance'/ instead."
     , "additionalProperties": false
     , "properties":
       { "type":

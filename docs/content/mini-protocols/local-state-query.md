@@ -92,10 +92,19 @@ Query                        | Result
 `poolParameters`             | Stake pool parameters submitted with registration certificates.
 `poolsRanking`               | Retrieve stake pools ranking (a.k.a desirabilities).
 `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
-`rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
+`rewardsProvenance'`         | Get details about rewards calculation for the ongoing epoch.
 `stakeDistribution`          | Distribution of the stake across all known stake pools.
 `systemStart`                | The chain's start time (UTC).
-`utxo`                       | Current UTXO, possibly filtered by address or output reference.
+`utxo`                       | Current UTXO, possibly filtered by output reference.
+
+{{% notice warning %}}
+Deprecated queries. Queries or functionalities listed below will be removed in the next **major** release of Ogmios.
+
+Query               | Notice | Deprecated Since
+---                 | --- | ---
+`rewardsProvenance` | Supports for this query is not longer guaranteed. The `pools` field in the result is no longer populated. Use `rewardsProvenance'` instead | [cardano-node@1.33.0](https://github.com/input-output-hk/cardano-node/releases/tag/1.33.0)
+`utxo`              | Filtering UTXO **by address** is no longer recommended with the introduction of on-disk ledger state storage. Filtering by output reference is preferred. | [cardano-node@1.33.0](https://github.com/input-output-hk/cardano-node/releases/tag/1.33.0)
+{{% /notice %}}
 
 To know more about arguments and results of each query, have a look at the [API reference](../../api-reference).
 
@@ -306,11 +315,19 @@ Be aware that it is possible for an `Acquire` request to fail even if (and in pa
 }
 ```
 
-#### eraStart       
+#### eraStart
 
 ```json
 {
   "query": "eraStart"
+}
+```
+
+#### eraSummaries
+
+```json
+{
+  "query": "eraSummaries"
 }
 ```
 
@@ -400,6 +417,16 @@ Be aware that it is possible for an `Acquire` request to fail even if (and in pa
 ```json
 {
   "query": "rewardsProvenance"
+}
+```
+
+
+#### rewardsProvenance'
+
+
+```json
+{
+  "query": "rewardsProvenance'"
 }
 ```
 
