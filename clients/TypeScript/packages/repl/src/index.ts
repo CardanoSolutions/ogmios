@@ -73,6 +73,7 @@ const logObject = (obj: Object) =>
     poolsRanking: () => StateQuery.poolsRanking(context),
     proposedProtocolParameters: () => StateQuery.proposedProtocolParameters(context),
     rewardsProvenance: () => StateQuery.rewardsProvenance(context),
+    rewardsProvenanceNew: () => StateQuery.rewardsProvenanceNew(context),
     stakeDistribution: () => StateQuery.stakeDistribution(context),
     systemStart: () => StateQuery.systemStart(context),
     submitTx: (bytes: string) => TxSubmission.submitTx(context, bytes),

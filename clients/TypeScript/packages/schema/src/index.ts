@@ -298,7 +298,8 @@ export type GetProposedProtocolParameters = "proposedProtocolParameters";
 export type GetStakeDistribution = "stakeDistribution";
 export type GetUtxo = "utxo";
 export type GetGenesisConfig = "genesisConfig";
-export type GetRewardsProvenance = "rewardsProvenance";
+export type GetRewardsProvenanceDeprecated = "rewardsProvenance";
+export type GetRewardsProvenance = "rewardsProvenance'";
 export type GetPoolsRanking = "poolsRanking";
 export type GetPoolIds = "poolIds";
 export type GetChainTip = "chainTip";
@@ -325,6 +326,10 @@ export type UtcTime = string;
  * A magic number for telling networks apart. (e.g. 764824073)
  */
 export type NetworkMagic = number;
+/**
+ * The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch.
+ */
+export type OwnerStake = bigint;
 export type BlockNoOrOrigin = BlockNo | Origin;
 
 export interface Ogmios {
@@ -679,6 +684,7 @@ export interface Ogmios {
         | GetUtxoByAddress
         | GetUtxoByTxIn
         | GetGenesisConfig
+        | GetRewardsProvenanceDeprecated
         | GetRewardsProvenance
         | GetPoolsRanking
         | GetPoolIds
@@ -841,12 +847,28 @@ export interface Ogmios {
       [k: string]: unknown;
     };
   };
+  /**
+   * This query is now deprecated. Use /rewardsProvenance'/ instead.
+   */
   "QueryResponse[rewardsProvenance]": {
     type: "jsonwsp/response";
     version: "1.0";
     servicename: "ogmios";
     methodname: "Query";
     result: RewardsProvenance | EraMismatch | QueryUnavailableInCurrentEra;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  "QueryResponse[rewardsProvenance']": {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "Query";
+    result: RewardsProvenance1 | EraMismatch | QueryUnavailableInCurrentEra;
     /**
      * Any value that was set by a client request in the 'mirror' field.
      */
@@ -2022,10 +2044,7 @@ export interface IndividualPoolRewardsProvenance {
    * A ratio of two integers, to express exact fractions.
    */
   activeStakeShare: string;
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  ownerStake: bigint;
+  ownerStake: OwnerStake;
   parameters: PoolParameters;
   /**
    * A ratio of two integers, to express exact fractions.
@@ -2047,6 +2066,46 @@ export interface IndividualPoolRewardsProvenance {
    * A number of lovelace, possibly large when summed up.
    */
   leaderRewards: bigint;
+}
+/**
+ * Details about how rewards are calculated for the ongoing epoch.
+ */
+export interface RewardsProvenance1 {
+  /**
+   * Desired number of stake pools.
+   */
+  desiredNumberOfPools: number;
+  /**
+   * Influence of the pool owner's pledge on rewards, as a ratio of two integers.
+   */
+  poolInfluence: string;
+  /**
+   * Total rewards available for the given epoch.
+   */
+  totalRewards: number;
+  /**
+   * The total amount of staked Lovelace during this epoch.
+   */
+  activeStake: number;
+  pools: {
+    [k: string]: RewardInfoPool;
+  };
+}
+export interface RewardInfoPool {
+  stake: Lovelace;
+  ownerStake: OwnerStake;
+  /**
+   * Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky.
+   */
+  approximatePerformance: number;
+  /**
+   * Some of the pool parameters relevant for the reward calculation.
+   */
+  poolParameters: {
+    cost: Lovelace;
+    margin: Ratio;
+    pledge: Lovelace;
+  };
 }
 export interface PoolsRanking {
   [k: string]: {

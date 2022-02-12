@@ -1,0 +1,1 @@
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"Query","result":{"eraMismatch":{"ledgerEra":"Shelley","queryEra":"Byron"}},"reflection":null}

@@ -5,6 +5,19 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.2.0] - UNRELEASED
+
+#### Added
+
+> ##### 🏢 Server 
+>
+> - New `rewardsProvenance'` query coming as a replacement for the now-deprecated `rewardsProvenance` query. See discussion on [#171](https://github.com/CardanoSolutions/ogmios/issues/171).
+>
+> ##### 🚗 TypeScript Client
+>
+> - Support for the new `rewardsProvenance'` query as `rewardsProvenanceNew` in the TypeScript client & repl.
+
+
 ### [5.1.0] - 2022-01-24
 
 #### Added
