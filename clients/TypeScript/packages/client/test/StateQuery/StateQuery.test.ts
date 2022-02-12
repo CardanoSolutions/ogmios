@@ -233,8 +233,14 @@ describe('Local state queries', () => {
       })
     })
     describe('rewardsProvenance', () => {
-      it('fetches rewards provenance for the ongoing epoch', async () => {
+      it('fetches rewards provenance for the ongoing epoch (legacy)', async () => {
         const provenance = await StateQuery.rewardsProvenance(context)
+        expect(provenance).toBeDefined()
+      })
+    })
+    describe('rewardsProvenance\'', () => {
+      it('fetches rewards provenance for the ongoing epoch (new)', async () => {
+        const provenance = await StateQuery.rewardsProvenanceNew(context)
         expect(provenance).toBeDefined()
       })
     })
