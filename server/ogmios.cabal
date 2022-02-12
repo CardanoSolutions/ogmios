@@ -118,6 +118,7 @@ library
       git
   build-depends:
       aeson
+    , array
     , async
     , base >=4.7 && <5
     , base16

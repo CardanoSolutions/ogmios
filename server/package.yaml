@@ -37,6 +37,7 @@ library:
     - -O2
   dependencies:
     - aeson
+    - array
     - async
     - base16
     - base64
