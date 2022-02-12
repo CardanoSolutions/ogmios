@@ -23,6 +23,9 @@ module Ogmios.Data.Json.Query
     , Interpreter
     , Sh.RewardProvenance
     , Sh.RewardProvenancePool
+    , RewardProvenance'
+    , Sh.Api.RewardInfoPool
+    , Sh.Api.RewardParams
     , Sh.Desirability
     , Sh.PoolParams
 
@@ -39,6 +42,8 @@ module Ogmios.Data.Json.Query
     , encodePoint
     , encodePoolDistr
     , encodePoolParameters
+    , encodeRewardInfoPool
+    , encodeRewardInfoPools
     , encodeRewardProvenance
 
       -- * Parsers
@@ -56,6 +61,7 @@ module Ogmios.Data.Json.Query
     , parseGetPoolParameters
     , parseGetPoolsRanking
     , parseGetProposedPParamsUpdates
+    , parseGetRewardInfoPools
     , parseGetRewardProvenance
     , parseGetStakeDistribution
     , parseGetSystemStart
@@ -135,6 +141,7 @@ import qualified Cardano.Ledger.TxIn as Ledger
 
 import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 
+import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.RewardProvenance as Sh
 import qualified Cardano.Ledger.Shelley.TxBody as Sh
@@ -179,6 +186,7 @@ instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
         , \raw -> Query raw <$> parseGetPoolParameters id raw
         , \raw -> Query raw <$> parseGetPoolsRanking id raw
         , \raw -> Query raw <$> parseGetProposedPParamsUpdates (const id) raw
+        , \raw -> Query raw <$> parseGetRewardInfoPools id raw
         , \raw -> Query raw <$> parseGetRewardProvenance id raw
         , \raw -> Query raw <$> parseGetStakeDistribution id raw
         , \raw -> Query raw <$> parseGetSystemStart id raw
@@ -198,6 +206,12 @@ type Delegations crypto =
 
 type RewardAccounts crypto =
     Map (Ledger.Credential 'Staking crypto) Coin
+
+type RewardProvenance' crypto =
+    ( Sh.Api.RewardParams
+    , Map (Ledger.KeyHash 'StakePool crypto) (Sh.Api.RewardInfoPool)
+    )
+
 
 --
 -- SomeShelleyEra
@@ -398,6 +412,58 @@ encodePoolParameters
     -> Json
 encodePoolParameters mode =
     encodeMapWithMode mode Shelley.stringifyPoolId Shelley.encodePoolParams
+
+encodeRewardInfoPool
+    :: Sh.Api.RewardInfoPool
+    -> Json
+encodeRewardInfoPool info =
+    encodeObject
+        [ ( "stake"
+          , encodeCoin (Sh.Api.stake info)
+          )
+        , ( "ownerStake"
+          , encodeCoin (Sh.Api.ownerStake info)
+          )
+        , ( "approximatePerformance"
+          , encodeDouble (Sh.Api.performanceEstimate info)
+          )
+        , ( "poolParameters"
+          , encodeObject
+            [ ( "cost"
+              , encodeCoin (Sh.Api.cost info)
+              )
+            , ( "margin"
+              , encodeUnitInterval (Sh.Api.margin info)
+              )
+            , ( "pledge"
+              , encodeCoin (Sh.Api.ownerPledge info)
+              )
+            ]
+          )
+        ]
+
+encodeRewardInfoPools
+    :: Crypto crypto
+    => RewardProvenance' crypto
+    -> Json
+encodeRewardInfoPools (rp, pools) =
+    encodeObject
+        [ ( "desiredNumberOfPools"
+          , encodeNatural (Sh.Api.nOpt rp)
+          )
+        , ( "poolInfluence"
+          , encodeNonNegativeInterval (Sh.Api.a0 rp)
+          )
+        , ( "totalRewards"
+          , encodeCoin (Sh.Api.rPot rp)
+          )
+        , ( "activeStake"
+          , encodeCoin (Sh.Api.totalStake rp)
+          )
+        , ( "pools"
+          , encodeMap Shelley.stringifyPoolId encodeRewardInfoPool pools
+          )
+        ]
 
 encodeRewardProvenance
     :: forall crypto. Crypto crypto
@@ -1060,6 +1126,33 @@ parseGetRewardProvenance genResult =
                     LSQ.BlockQuery $ QueryIfCurrentMary GetRewardProvenance
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetRewardProvenance
+            )
+
+parseGetRewardInfoPools
+    :: forall crypto f. (Crypto crypto)
+    => GenResult crypto f (RewardProvenance' crypto)
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseGetRewardInfoPools genResult =
+    Json.withText "SomeQuery" $ \text -> do
+        guard (text == "rewardsProvenance'") $>
+            ( \query -> Just $ SomeQuery
+                { query
+                , genResult
+                , encodeResult = \_ ->
+                    either encodeMismatchEraInfo encodeRewardInfoPools
+                }
+            )
+            .
+            ( \case
+                SomeShelleyEra ShelleyBasedEraShelley ->
+                    LSQ.BlockQuery $ QueryIfCurrentShelley GetRewardInfoPools
+                SomeShelleyEra ShelleyBasedEraAllegra ->
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetRewardInfoPools
+                SomeShelleyEra ShelleyBasedEraMary ->
+                    LSQ.BlockQuery $ QueryIfCurrentMary GetRewardInfoPools
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetRewardInfoPools
             )
 
 parseGetPoolIds

@@ -33,6 +33,7 @@ import Ogmios.Data.Json.Query
     , QueryResult
     , RewardAccounts
     , RewardProvenance
+    , RewardProvenance'
     )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock )
@@ -76,7 +77,7 @@ import Test.Cardano.Ledger.Shelley.ConcreteCryptoTypes
 import Test.Cardano.Ledger.Shelley.Serialisation.Generators.Genesis
     ( genPParams )
 import Test.QuickCheck
-    ( Arbitrary (..), Gen, choose, elements, frequency, oneof, scale )
+    ( Arbitrary (..), Gen, choose, elements, frequency, listOf1, oneof, scale )
 import Test.QuickCheck.Gen
     ( Gen (..) )
 import Test.QuickCheck.Hedgehog
@@ -97,6 +98,7 @@ import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
 import qualified Cardano.Ledger.PoolDistr as Ledger
 
+import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
@@ -179,6 +181,37 @@ genBlockNo = BlockNo <$> arbitrary
 
 genHeaderHash :: Gen (HeaderHash Block)
 genHeaderHash = arbitrary
+
+genRewardInfoPool
+    :: Gen Sh.Api.RewardInfoPool
+genRewardInfoPool =
+    Sh.Api.RewardInfoPool
+        <$> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> choose (0, 2)
+
+genRewardParams
+    :: Gen Sh.Api.RewardParams
+genRewardParams =
+    Sh.Api.RewardParams
+        <$> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+
+genRewardProvenance'
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Gen (RewardProvenance' crypto)
+genRewardProvenance' =
+    (,) <$> genRewardParams
+        <*> fmap fromList
+            ( reasonablySized $ listOf1 $
+                (,) <$> arbitrary
+                    <*> genRewardInfoPool
+            )
 
 genSystemStart :: Gen SystemStart
 genSystemStart = arbitrary
@@ -477,6 +510,15 @@ genCompactGenesisResult _ _ =
                     ]
             Nothing ->
                 Nothing
+
+genRewardInfoPoolsResult
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Proxy (QueryResult crypto (RewardProvenance' crypto))
+    -> Gen (QueryResult crypto (RewardProvenance' crypto))
+genRewardInfoPoolsResult _ = frequency
+    [ (1, Left <$> genMismatchEraInfo)
+    , (10, Right <$> genRewardProvenance')
+    ]
 
 genRewardProvenanceResult
     :: forall crypto. (crypto ~ StandardCrypto)

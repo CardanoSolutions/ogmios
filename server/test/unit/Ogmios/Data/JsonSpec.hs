@@ -59,6 +59,7 @@ import Ogmios.Data.Json.Query
     , parseGetPoolParameters
     , parseGetPoolsRanking
     , parseGetProposedPParamsUpdates
+    , parseGetRewardInfoPools
     , parseGetRewardProvenance
     , parseGetStakeDistribution
     , parseGetSystemStart
@@ -152,6 +153,7 @@ import Test.Generators
     , genPoolParametersResult
     , genPoolsRankingResult
     , genProposedPParamsResult
+    , genRewardInfoPoolsResult
     , genRewardProvenanceResult
     , genSystemStart
     , genTip
@@ -477,6 +479,12 @@ spec = do
             ( parseGetRewardProvenance genRewardProvenanceResult
             ) (100, "StateQuery/Response/Query[rewardsProvenance]")
             "ogmios.wsp.json#/properties/QueryResponse[rewardsProvenance]"
+
+        validateQuery
+            [aesonQQ|"rewardsProvenance'"|]
+            ( parseGetRewardInfoPools genRewardInfoPoolsResult
+            ) (100, "StateQuery/Response/Query[rewardsProvenance']")
+            "ogmios.wsp.json#/properties/QueryResponse[rewardsProvenance']"
 
         validateQuery
             [aesonQQ|"poolIds"|]
