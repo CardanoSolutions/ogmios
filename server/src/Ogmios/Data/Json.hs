@@ -22,14 +22,14 @@ module Ogmios.Data.Json
     , encodeBlock
     , encodePoint
     , encodeSubmitTxError
-    , encodeSubmitTxPayload
+    , encodeSerializedTx
     , encodeTip
     , encodeTxId
 
       -- * Decoders
     , decodeOneEraHash
     , decodePoint
-    , decodeSubmitTxPayload
+    , decodeSerializedTx
     , decodeTip
     , decodeTxId
     ) where
@@ -47,7 +47,7 @@ import Cardano.Ledger.Crypto
 import Cardano.Ledger.Shelley.API
     ( ApplyTxError (..), PraosCrypto )
 import Cardano.Network.Protocol.NodeToClient
-    ( GenTx, GenTxId, SubmitTxError, SubmitTxPayload )
+    ( GenTx, GenTxId, SerializedTx, SubmitTxError )
 import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
@@ -159,11 +159,11 @@ encodeSubmitTxError = \case
     ApplyTxErrWrongEra e ->
         encodeList encodeEraMismatch [ e ]
 
-encodeSubmitTxPayload
+encodeSerializedTx
     :: PraosCrypto crypto
-    => SubmitTxPayload (CardanoBlock crypto)
+    => SerializedTx (CardanoBlock crypto)
     -> Json
-encodeSubmitTxPayload = \case
+encodeSerializedTx = \case
     GenTxByron tx ->
         encodeByteStringBase16 $ Cbor.toStrictByteString $ encodeByronGenTx tx
     GenTxShelley tx ->
@@ -233,11 +233,11 @@ decodePoint json =
         hash <- obj .: "hash" >>= decodeOneEraHash
         pure $ Point $ At $ Block (SlotNo slot) hash
 
-decodeSubmitTxPayload
+decodeSerializedTx
     :: forall crypto. PraosCrypto crypto
     => Json.Value
-    -> Json.Parser (SubmitTxPayload (CardanoBlock crypto))
-decodeSubmitTxPayload = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
+    -> Json.Parser (SerializedTx (CardanoBlock crypto))
+decodeSerializedTx = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
     bytes <- decodeBase16 utf8 <|> decodeBase64 utf8
     asum $
         (deserialiseCBOR GenTxMary <$> [fromStrict bytes, wrap bytes])

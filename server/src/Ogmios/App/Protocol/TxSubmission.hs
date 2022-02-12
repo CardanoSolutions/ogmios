@@ -38,7 +38,7 @@ import Ogmios.Data.Protocol.TxSubmission
     ( SubmitTx (..), TxSubmissionCodecs (..), TxSubmissionMessage (..) )
 
 import Cardano.Network.Protocol.NodeToClient
-    ( SubmitTxError, SubmitTxPayload )
+    ( SerializedTx, SubmitTxError )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxClientStIdle (..), LocalTxSubmissionClient (..) )
 
@@ -52,7 +52,7 @@ mkTxSubmissionClient
         -- ^ Incoming request queue
     -> (Json -> m ())
         -- ^ An emitter for yielding JSON objects
-    -> LocalTxSubmissionClient (SubmitTxPayload block) (SubmitTxError block) m ()
+    -> LocalTxSubmissionClient (SerializedTx block) (SubmitTxError block) m ()
 mkTxSubmissionClient TxSubmissionCodecs{..} queue yield =
     LocalTxSubmissionClient clientStIdle
   where
@@ -60,7 +60,7 @@ mkTxSubmissionClient TxSubmissionCodecs{..} queue yield =
     await = atomically (readTQueue queue)
 
     clientStIdle
-        :: m (LocalTxClientStIdle (SubmitTxPayload block) (SubmitTxError block) m ())
+        :: m (LocalTxClientStIdle (SerializedTx block) (SubmitTxError block) m ())
     clientStIdle = await >>= \case
         MsgSubmitTx SubmitTx{bytes} toResponse _ -> do
             pure $ SendMsgSubmitTx bytes $ \result -> do

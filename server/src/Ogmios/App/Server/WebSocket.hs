@@ -23,8 +23,8 @@ import Ogmios.Prelude
 import Cardano.Network.Protocol.NodeToClient
     ( Block
     , Clients (..)
+    , SerializedTx
     , SubmitTxError
-    , SubmitTxPayload
     , connectClient
     , mkClient
     )
@@ -310,7 +310,7 @@ withOuroborosClients tr mode maxInFlight sensors conn action = do
 
 data TraceWebSocket where
     WebSocketClient
-        :: TraceClient (SubmitTxPayload Block) (SubmitTxError Block)
+        :: TraceClient (SerializedTx Block) (SubmitTxError Block)
         -> TraceWebSocket
 
     WebSocketStateQuery

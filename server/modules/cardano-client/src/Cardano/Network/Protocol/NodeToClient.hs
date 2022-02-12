@@ -17,7 +17,7 @@ module Cardano.Network.Protocol.NodeToClient
       Block
     , Eras
     , SubmitTxError
-    , SubmitTxPayload
+    , SerializedTx
     , Client
     , Clients(..)
     , mkClient
@@ -158,7 +158,7 @@ type family SubmitTxError block :: Type where
     SubmitTxError (CardanoBlock crypto) = HardForkApplyTxErr (CardanoEras crypto)
 
 -- | A slightly more transparent type alias for 'GenTx''
-type SubmitTxPayload = GenTx
+type SerializedTx = GenTx
 
 -- | Type representing a network client running two mini-protocols to sync
 -- from the chain and, submit transactions.
@@ -180,7 +180,7 @@ data Clients m block = Clients
     { chainSyncClient
         :: ChainSyncClientPipelined block (Point block) (Tip block) m ()
     , txSubmissionClient
-        :: LocalTxSubmissionClient (SubmitTxPayload block) (SubmitTxError block) m ()
+        :: LocalTxSubmissionClient (SerializedTx block) (SubmitTxError block) m ()
     , txMonitorClient
         :: LocalTxMonitorClient (GenTxId block) (GenTx block) SlotNo m ()
     , stateQueryClient
@@ -223,7 +223,7 @@ mkClient
         )
     => (forall a. m a -> IO a)
         -- ^ A natural transformation to unlift a particular 'm' into 'IO'.
-    -> Tracer m (TraceClient (SubmitTxPayload Block) (SubmitTxError Block))
+    -> Tracer m (TraceClient (SerializedTx Block) (SubmitTxError Block))
         -- ^ Base trace for underlying protocols
     -> EpochSlots
         -- ^ Static blockchain parameters
@@ -296,7 +296,7 @@ localChainSync unliftIO tr codec client channel =
 -- | Boilerplate for lifting a 'LocalTxSubmissionClient'
 localTxSubmission
     :: forall m protocol.
-        ( protocol ~ LocalTxSubmission (SubmitTxPayload Block) (SubmitTxError Block)
+        ( protocol ~ LocalTxSubmission (SerializedTx Block) (SubmitTxError Block)
         , MonadThrow m
         )
     => (forall a. m a -> IO a)
@@ -305,7 +305,7 @@ localTxSubmission
         -- ^ Base tracer for the mini-protocols
     -> Codec protocol DeserialiseFailure m ByteString
         -- ^ Codec for deserializing / serializing binary data
-    -> LocalTxSubmissionClient (SubmitTxPayload Block) (SubmitTxError Block) m ()
+    -> LocalTxSubmissionClient (SerializedTx Block) (SubmitTxError Block) m ()
         -- ^ Actual local tx submission client
     -> Channel m ByteString
         -- ^ A 'Channel' is an abstract communication instrument which

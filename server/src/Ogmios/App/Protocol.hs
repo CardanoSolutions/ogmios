@@ -25,7 +25,7 @@ import Ouroboros.Network.Block
     ( Point (..) )
 
 import Cardano.Network.Protocol.NodeToClient
-    ( SubmitTxPayload )
+    ( SerializedTx )
 import GHC.Generics
     ( Rep )
 import Relude.Extra.Map
@@ -64,7 +64,7 @@ import qualified Data.Text as T
 -- processing.
 onUnmatchedMessage
     :: forall block.
-        ( FromJSON (SubmitTxPayload block)
+        ( FromJSON (SerializedTx block)
         , FromJSON (Query Proxy block)
         , FromJSON (Point block)
         )

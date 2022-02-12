@@ -18,11 +18,11 @@ import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient, encodeTraceClient )
 import Ogmios.Data.Json
     ( decodePoint
-    , decodeSubmitTxPayload
+    , decodeSerializedTx
     , decodeTip
     , decodeTxId
+    , encodeSerializedTx
     , encodeSubmitTxError
-    , encodeSubmitTxPayload
     , encodeTip
     )
 import Ogmios.Data.Json.Query
@@ -45,7 +45,7 @@ instance (Crypto crypto, PraosCrypto crypto) => ToJSON
       (HardForkApplyTxErr (CardanoEras crypto))
   ) where
     toJSON = encodeTraceClient
-        (inefficientEncodingToValue . encodeSubmitTxPayload)
+        (inefficientEncodingToValue . encodeSerializedTx)
         (inefficientEncodingToValue . encodeSubmitTxError)
 
 -- Only used for logging & health
@@ -63,7 +63,7 @@ instance ToJSON (Point (CardanoBlock crypto)) where
 --
 
 instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto)) where
-    parseJSON = decodeSubmitTxPayload
+    parseJSON = decodeSerializedTx
 
 instance PraosCrypto crypto => FromJSON (GenTxId (CardanoBlock crypto)) where
     parseJSON = decodeTxId
