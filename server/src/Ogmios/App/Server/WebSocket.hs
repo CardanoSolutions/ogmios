@@ -300,7 +300,7 @@ withOuroborosClients tr mode maxInFlight sensors conn action = do
     stateQueryCodecs@StateQueryCodecs{..} =
         mkStateQueryCodecs encodePoint encodeAcquireFailure
     txSubmissionCodecs@TxSubmissionCodecs{..} =
-        mkTxSubmissionCodecs encodeSubmitTxError
+        mkTxSubmissionCodecs encodeSubmitTxError undefined undefined undefined undefined
     txMonitorCodecs@TxMonitorCodecs{..} =
         mkTxMonitorCodecs encodeTxId
 

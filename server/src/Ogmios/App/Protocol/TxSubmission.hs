@@ -11,18 +11,20 @@
 -- it returns an error with some details about what went wrong. Clients must
 -- thereby know how to construct valid transactions.
 --
+-- Ogmios offers a slightly modified version of that protocol and allows to
+-- only evaluate a transaction redeemers' execution units.
 -- @
---      ┌──────────┐
---      │   Busy   │◀══════════════════════════════╗
---      └────┬─────┘            SubmitTx           ║
---           │                                     ║
---           │                                ┌──────────┐
---           │                                │          │
---           │                                │          │
---           │          SubmitTxResponse      │   Idle   │
---           └───────────────────────────────▶│          │
---                                            │          │⇦ START
---                                            └──────────┘
+--   ┌──────────┐
+--   │   Busy   │◀═══════════════════════════════════════╗
+--   └────┬─────┘        SubmitTx / EvaluateTx           ║
+--        │                                              ║
+--        │                                         ┌──────────┐
+--        │                                         │          │
+--        │                                         │          │
+--        │   SubmitTxResponse / EvaluateTxResponse │   Idle   │
+--        └────────────────────────────────────────▶│          │
+--                                                  │          │⇦ START
+--                                                  └──────────┘
 -- @
 module Ogmios.App.Protocol.TxSubmission
     ( mkTxSubmissionClient
@@ -62,7 +64,7 @@ mkTxSubmissionClient TxSubmissionCodecs{..} queue yield =
     clientStIdle
         :: m (LocalTxClientStIdle (SerializedTx block) (SubmitTxError block) m ())
     clientStIdle = await >>= \case
-        MsgSubmitTx SubmitTx{bytes} toResponse _ -> do
-            pure $ SendMsgSubmitTx bytes $ \result -> do
+        MsgSubmitTx SubmitTx{submit} toResponse _ -> do
+            pure $ SendMsgSubmitTx submit $ \result -> do
                 yield $ encodeSubmitTxResponse $ toResponse result
                 clientStIdle
