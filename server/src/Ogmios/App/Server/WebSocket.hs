@@ -45,13 +45,16 @@ import Ogmios.App.Protocol.StateQuery
 import Ogmios.App.Protocol.TxMonitor
     ( mkTxMonitorClient )
 import Ogmios.App.Protocol.TxSubmission
-    ( mkTxSubmissionClient )
+    ( ExecutionUnitsEvaluator
+    , mkTxSubmissionClient
+    , newExecutionUnitsEvaluator
+    )
 import Ogmios.Control.Exception
     ( IOException, MonadCatch (..), MonadThrow (..) )
 import Ogmios.Control.MonadAsync
     ( ExceptionInLinkedThread (..), MonadAsync (..), MonadLink, link )
 import Ogmios.Control.MonadClock
-    ( MonadClock (..) )
+    ( MonadClock (..), idle )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
     , Logger
@@ -104,6 +107,12 @@ import Ogmios.Data.Protocol.TxSubmission
     ( TxSubmissionCodecs (..), TxSubmissionMessage (..), mkTxSubmissionCodecs )
 import Ouroboros.Network.NodeToClient.Version
     ( NodeToClientVersionData (NodeToClientVersionData) )
+import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
+    ( ChainSyncClientPipelined (..) )
+import Ouroboros.Network.Protocol.LocalTxMonitor.Client
+    ( LocalTxMonitorClient (..) )
+import Ouroboros.Network.Protocol.LocalTxSubmission.Client
+    ( LocalTxSubmissionClient (..) )
 import System.TimeManager
     ( TimeoutThread (..) )
 
@@ -140,11 +149,15 @@ newWebSocketApp tr unliftIO = do
         logWith tr $ WebSocketConnectionAccepted (userAgent pending) mode
         recordSession sensors $ onExceptions $ acceptRequest pending sub $ \conn -> do
             let trClient = contramap WebSocketClient tr
-            withOuroborosClients tr mode maxInFlight sensors conn $ \clients -> do
-                let client = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch clients
-                let vData  = NodeToClientVersionData networkMagic
-                connectClient trClient client vData nodeSocket
-                    & handle (onIOException conn)
+            withExecutionUnitsEvaluator $ \exUnitsEvaluator exUnitsClients -> do
+                withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator conn $ \protocolsClients -> do
+                    let clientA = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch protocolsClients
+                    let clientB = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch exUnitsClients
+                    let vData  = NodeToClientVersionData networkMagic
+                    concurrently_
+                        (connectClient trClient clientA vData nodeSocket)
+                        (connectClient trClient clientB vData nodeSocket)
+                        & handle (onIOException conn)
         logWith tr (WebSocketConnectionEnded $ userAgent pending)
   where
     userAgent :: PendingConnection -> Text
@@ -204,6 +217,26 @@ choseSerializationMode conn =
     full = "ogmios.v1"
     compact = full<>":compact"
 
+withExecutionUnitsEvaluator
+    :: forall m a.
+        ( MonadClock m
+        , MonadSTM m
+        )
+    => (ExecutionUnitsEvaluator m Block -> Clients m Block -> m a)
+    -> m a
+withExecutionUnitsEvaluator action = do
+    ( exUnitsEvaluator, stateQueryClient ) <- newExecutionUnitsEvaluator
+    action exUnitsEvaluator $ Clients
+         { chainSyncClient =
+            ChainSyncClientPipelined idle
+         , stateQueryClient =
+            stateQueryClient
+         , txSubmissionClient =
+            LocalTxSubmissionClient idle
+         , txMonitorClient =
+            LocalTxMonitorClient idle
+         }
+
 withOuroborosClients
     :: forall m a.
         ( MonadAsync m
@@ -217,10 +250,11 @@ withOuroborosClients
     -> SerializationMode
     -> MaxInFlight
     -> Sensors m
+    -> ExecutionUnitsEvaluator m Block
     -> Connection
     -> (Clients m Block -> m a)
     -> m a
-withOuroborosClients tr mode maxInFlight sensors conn action = do
+withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator conn action = do
     (chainSyncQ, stateQueryQ, txSubmissionQ, txMonitorQ) <-
         atomically $ (,,,)
             <$> newTQueue
@@ -236,7 +270,7 @@ withOuroborosClients tr mode maxInFlight sensors conn action = do
              , stateQueryClient =
                  mkStateQueryClient (contramap WebSocketStateQuery tr) stateQueryCodecs stateQueryQ yield
              , txSubmissionClient =
-                 mkTxSubmissionClient txSubmissionCodecs txSubmissionQ yield
+                 mkTxSubmissionClient txSubmissionCodecs exUnitsEvaluator txSubmissionQ yield
              , txMonitorClient =
                  mkTxMonitorClient txMonitorCodecs txMonitorQ yield
              }
@@ -276,6 +310,8 @@ withOuroborosClients tr mode maxInFlight sensors conn action = do
                     -- TxSubmission
                     , Wsp.Handler decodeSubmitTx
                         (\r t -> push txSubmissionQ .  MsgSubmitTx r t)
+                    , Wsp.Handler decodeEvaluateTx
+                        (\r t -> push txSubmissionQ .  MsgEvaluateTx r t)
 
                     -- StateQuery
                     , Wsp.Handler decodeAcquire

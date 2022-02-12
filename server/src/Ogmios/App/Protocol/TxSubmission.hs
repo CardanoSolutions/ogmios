@@ -30,7 +30,7 @@
 module Ogmios.App.Protocol.TxSubmission
     ( ExecutionUnitsEvaluator(..)
     , mkTxSubmissionClient
-    , mkExecutionUnitsEvaluator
+    , newExecutionUnitsEvaluator
     ) where
 
 import Ogmios.Prelude
@@ -129,7 +129,7 @@ data ExecutionUnitsEvaluator m block = ExecutionUnitsEvaluator
 
 -- | Construct an effectful 'ExecutionUnitsEvaluator'; this requires to wire a
 -- local-state-query client to the node.
-mkExecutionUnitsEvaluator
+newExecutionUnitsEvaluator
     :: forall m block crypto.
         ( MonadSTM m
         , crypto ~ StandardCrypto
@@ -138,7 +138,7 @@ mkExecutionUnitsEvaluator
     => m ( ExecutionUnitsEvaluator m block
          , LocalStateQueryClient block (Point block) (Query block) m ()
          )
-mkExecutionUnitsEvaluator = do
+newExecutionUnitsEvaluator = do
     evaluateExecutionUnitsRequest  <- atomically newEmptyTMVar
     evaluateExecutionUnitsResponse <- atomically newEmptyTMVar
     return
