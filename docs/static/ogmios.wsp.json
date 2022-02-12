@@ -5,6 +5,7 @@
   [ "RequestNext", "RequestNextResponse"
   , "FindIntersect", "FindIntersectResponse"
   , "SubmitTx", "SubmitTxResponse"
+  , "EvaluateTx", "EvaluateTxResponse"
   , "Acquire", "AcquireResponse"
   , "Release","ReleaseResponse"
   , "AwaitAcquire", "AwaitAcquireResponse"
@@ -256,11 +257,11 @@
       , "args":
         { "type": "object"
         , "additionalProperties": false
-        , "required": ["bytes"]
+        , "required": ["submit"]
         , "properties":
-          { "bytes":
+          { "submit":
             { "type": "string"
-            , "description": "CBOR-serialized signed transaction, in base64"
+            , "description": "CBOR-serialized signed transaction, in base64 (or base16)"
             , "contentEncoding": "base64"
             , "pattern": "^[A-Za-z0-9+/]=?=?$"
             }
@@ -307,6 +308,80 @@
               { "SubmitFail": { "$ref": "#/definitions/SubmitTxError" }
               }
             }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "EvaluateTx":
+    { "type": "object"
+    , "description": "Evaluate execution units for which redeemers's budget hasn't yet been set."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "EvaluateTx" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["evaluate"]
+        , "properties":
+          { "evaluate":
+            { "type": "string"
+            , "description": "CBOR-serialized signed transaction, in base64 (or base16)"
+            , "contentEncoding": "base64"
+            , "pattern": "^[A-Za-z0-9+/]=?=?$"
+            }
+          }
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "EvaluateTxResponse":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "EvaluateTx" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/EvaluationResult" }
+          , { "$ref": "#/definitions/EvaluationFailure" }
           ]
         }
       , "reflection":
@@ -3107,6 +3182,87 @@
           ]
         }
       , "parameters": { "$ref": "#/definitions/EraParameters" }
+      }
+    }
+
+  , "EvaluationFailure":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "EvaluationFailure" ]
+    , "properties":
+      { "EvaluationFailure":
+        { "oneOf":
+            [ { "$ref": "#/definitions/EvaluationFailure[ScriptFailures]" }
+            , { "$ref": "#/definitions/EvaluationFailure[UnknownInputs]" }
+            , { "$ref": "#/definitions/EvaluationFailure[IncompatibleEra]" }
+            , { "$ref": "#/definitions/EvaluationFailure[UncomputableSlotArithmetic]" }
+            ]
+        }
+      }
+    }
+
+  , "EvaluationFailure[ScriptFailures]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "ScriptFailures" ]
+    , "properties":
+      { "ScriptFailures":
+        { "type": "object"
+        , "propertyNames": { "$ref": "#/definitions/RedeemerPointer" }
+        , "additionalProperties": { "$ref": "#/definitions/ScriptFailure" }
+        }
+      }
+    }
+
+  , "EvaluationFailure[UnknownInputs]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "UnknownInputs" ]
+    , "properties":
+      { "UnknownInputs":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/TxIn" }
+        }
+      }
+    }
+
+  , "EvaluationFailure[IncompatibleEra]":
+    { "type": "object"
+    , "description": "Returned when trying to evaluate execution units of a pre-Alonzo transaction. Note that this isn't possible with Ogmios because transactions are always de-serialized as Alonzo transactions."
+    , "additionalProperties": false
+    , "required": [ "IncompatibleEra" ]
+    , "properties":
+      { "IncompatibleEra":
+        { "type": "string"
+        , "description": "The era in which the transaction has been identified."
+        , "enum": [ "Byron", "Shelley", "Allegra", "Mary" ]
+        }
+      }
+    }
+
+  , "EvaluationFailure[UncomputableSlotArithmetic]":
+    { "type": "object"
+    , "description": "May happen when evaluating a transaction with validity bounds that goes past the foreseeable end of the current era (i.e. near a hardfork)."
+    , "additionalProperties": false
+    , "required": [ "UncomputableSlotArithmetic" ]
+    , "properties":
+      { "UncomputableSlotArithmetic":
+        { "type": "string"
+        , "description": "An error message, possibly meaningful but likely unreadable."
+        }
+      }
+    }
+
+  , "EvaluationResult":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "EvaluationResult" ]
+    , "properties":
+      { "EvaluationResult":
+        { "type": "object"
+        , "propertyNames": { "$ref": "#/definitions/RedeemerPointer" }
+        , "additionalProperties": { "$ref": "#/definitions/ExUnits" }
+        }
       }
     }
 

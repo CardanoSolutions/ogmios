@@ -286,6 +286,21 @@ export type SubmitTxError = (
   | CollectErrors
   | ExtraScriptWitnesses
 )[];
+export type RedeemerPointer = string;
+export type Language = "plutus:v1" | "plutus:v2";
+/**
+ * Errors whcih may occur when evaluating an on-chain script.
+ */
+export type ScriptFailure = (
+  | ExtraRedeemers
+  | MissingRequiredDatums
+  | MissingRequiredScripts
+  | ValidatorFailed
+  | UnknownInputReferencedByRedeemer
+  | NonScriptInputReferencedByRedeemer
+  | IllFormedExecutionBudget
+  | NoCostModelForLanguage
+)[];
 export type AcquireFailureDetails = "pointTooOld" | "pointNotOnChain";
 export type GetEraStart = "eraStart";
 export type GetEraSummaries = "eraSummaries";
@@ -409,9 +424,9 @@ export interface Ogmios {
     methodname: "SubmitTx";
     args?: {
       /**
-       * CBOR-serialized signed transaction, in base64
+       * CBOR-serialized signed transaction, in base64 (or base16)
        */
-      bytes: string;
+      submit: string;
     };
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
@@ -426,6 +441,40 @@ export interface Ogmios {
     servicename: "ogmios";
     methodname: "SubmitTx";
     result: SubmitSuccess | SubmitFail;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Evaluate execution units for which redeemers's budget hasn't yet been set.
+   */
+  EvaluateTx: {
+    type: "jsonwsp/request";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "EvaluateTx";
+    args?: {
+      /**
+       * CBOR-serialized signed transaction, in base64 (or base16)
+       */
+      evaluate: string;
+    };
+    /**
+     * An arbitrary JSON value that will be mirrored back in the response.
+     */
+    mirror?: {
+      [k: string]: unknown;
+    };
+  };
+  EvaluateTxResponse: {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "EvaluateTx";
+    result: EvaluationResult | EvaluationFailure;
     /**
      * Any value that was set by a client request in the 'mirror' field.
      */
@@ -1803,7 +1852,7 @@ export interface Withdrawal {
 }
 export interface MissingRequiredDatums {
   missingRequiredDatums: {
-    provided: DigestBlake2BDatum[];
+    provided?: DigestBlake2BDatum[];
     missing: DigestBlake2BDatum[];
   };
 }
@@ -1875,6 +1924,85 @@ export interface CollectErrors {
 }
 export interface ExtraScriptWitnesses {
   extraScriptWitnesses: DigestBlake2BScript[];
+}
+export interface EvaluationResult {
+  EvaluationResult: {
+    [k: string]: ExUnits;
+  };
+}
+export interface EvaluationFailure {
+  EvaluationFailure:
+    | EvaluationFailureScriptFailures
+    | EvaluationFailureUnknownInputs
+    | EvaluationFailureIncompatibleEra
+    | EvaluationFailureUncomputableSlotArithmetic;
+}
+export interface EvaluationFailureScriptFailures {
+  ScriptFailures: {
+    [k: string]: ScriptFailure;
+  };
+}
+/**
+ * Missing scripts required for validating script inputs.
+ */
+export interface MissingRequiredScripts {
+  missingRequiredScripts: {
+    missing: RedeemerPointer[];
+  };
+}
+/**
+ * Plutus interpreter error. Returns additional traces produced by the validator.
+ */
+export interface ValidatorFailed {
+  validatorFailed: {
+    error: string;
+    traces: string[];
+  };
+}
+/**
+ * Non-existing input referenced by a redeemer pointer.
+ */
+export interface UnknownInputReferencedByRedeemer {
+  unknownInputReferencedByRedeemer: TxIn;
+}
+/**
+ * Input not locked by a Plutus referenced by a redeemer pointer.
+ */
+export interface NonScriptInputReferencedByRedeemer {
+  nonScriptInputReferencedByRedeemer: TxIn;
+}
+/**
+ * Invalid execution budget set for a redeemer. In principle, cannot happen in the context of Ogmios.
+ */
+export interface IllFormedExecutionBudget {
+  illFormedExecutionBudget: ExUnits | Null;
+}
+/**
+ * Input locked by a script which language has no cost model in current protocol parameters. In principle, cannot happen in the context of Ogmios.
+ */
+export interface NoCostModelForLanguage {
+  noCostModelForLanguage: Language;
+}
+export interface EvaluationFailureUnknownInputs {
+  UnknownInputs: TxIn[];
+}
+/**
+ * Returned when trying to evaluate execution units of a pre-Alonzo transaction. Note that this isn't possible with Ogmios because transactions are always de-serialized as Alonzo transactions.
+ */
+export interface EvaluationFailureIncompatibleEra {
+  /**
+   * The era in which the transaction has been identified.
+   */
+  IncompatibleEra: "Byron" | "Shelley" | "Allegra" | "Mary";
+}
+/**
+ * May happen when evaluating a transaction with validity bounds that goes past the foreseeable end of the current era (i.e. near a hardfork).
+ */
+export interface EvaluationFailureUncomputableSlotArithmetic {
+  /**
+   * An error message, possibly meaningful but likely unreadable.
+   */
+  UncomputableSlotArithmetic: string;
 }
 export interface AcquireSuccess {
   AcquireSuccess: {
