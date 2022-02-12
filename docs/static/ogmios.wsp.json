@@ -2878,7 +2878,7 @@
   , "CostModels":
     { "type": "object"
     , "additionalProperties": { "$ref": "#/definitions/CostModel" }
-    , "propertyNames": { "enum": [ "plutus:v1", "plutus:v2" ] }
+    , "propertyNames": { "$ref": "#/definitions/Language" }
     , "examples":
       [ { "plutus:v1":
           { "k": 14
@@ -3238,6 +3238,11 @@
     { "type": "string"
     , "description": "Signature proving a block was issued by a given issuer VRF key."
     , "contentEncoding": "base64"
+    }
+
+  , "Language":
+    { "type": "string"
+    , "enum": [ "plutus:v1", "plutus:v2" ]
     }
 
   , "Lovelace":
@@ -4249,6 +4254,115 @@
     , "pattern": "^[A-Za-z0-9+/]*=?=?$"
     }
 
+  , "ScriptFailure":
+    { "type": "array"
+    , "description": "Errors whcih may occur when evaluating an on-chain script."
+    , "items":
+      { "oneOf":
+        [ { "$ref": "#/definitions/SubmitTxError[extraRedeemers]" }
+        , { "$ref": "#/definitions/SubmitTxError[missingRequiredDatums]" }
+        , { "$ref": "#/definitions/ScriptFailure[missingRequiredScripts]" }
+        , { "$ref": "#/definitions/ScriptFailure[validatorFailed]" }
+        , { "$ref": "#/definitions/ScriptFailure[unknownInputReferencedByRedeemer]" }
+        , { "$ref": "#/definitions/ScriptFailure[nonScriptInputReferencedByRedeemer]" }
+        , { "$ref": "#/definitions/ScriptFailure[illFormedExecutionBudget]" }
+        , { "$ref": "#/definitions/ScriptFailure[noCostModelForLanguage]" }
+        ]
+      }
+    }
+
+  , "ScriptFailure[missingRequiredScripts]":
+    { "title": "missingRequiredScripts"
+    , "description": "Missing scripts required for validating script inputs."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "missingRequiredScripts" ]
+    , "properties":
+      { "missingRequiredScripts":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "missing" ]
+        , "properties":
+          { "missing":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/RedeemerPointer" }
+            }
+          }
+        }
+      }
+    }
+
+  , "ScriptFailure[validatorFailed]":
+    { "title": "validatorFailed"
+    , "description": "Plutus interpreter error. Returns additional traces produced by the validator."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "validatorFailed" ]
+    , "properties":
+      { "validatorFailed":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "error", "traces" ]
+        , "properties":
+          { "error": { "type": "string" }
+          , "traces":
+            { "type": "array"
+            , "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+
+  , "ScriptFailure[unknownInputReferencedByRedeemer]":
+    { "title": "unknownInputReferencedByRedeemer"
+    , "description": "Non-existing input referenced by a redeemer pointer."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "unknownInputReferencedByRedeemer" ]
+    , "properties":
+      { "unknownInputReferencedByRedeemer": { "$ref": "#/definitions/TxIn" }
+      }
+    }
+
+  , "ScriptFailure[nonScriptInputReferencedByRedeemer]":
+    { "title": "nonScriptInputReferencedByRedeemer"
+    , "description": "Input not locked by a Plutus referenced by a redeemer pointer."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "nonScriptInputReferencedByRedeemer" ]
+    , "properties":
+      { "nonScriptInputReferencedByRedeemer": { "$ref": "#/definitions/TxIn" }
+      }
+    }
+
+  , "ScriptFailure[illFormedExecutionBudget]":
+    { "title": "illFormedExecutionBudget"
+    , "description": "Invalid execution budget set for a redeemer. In principle, cannot happen in the context of Ogmios."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "illFormedExecutionBudget" ]
+    , "properties":
+      { "illFormedExecutionBudget":
+        { "oneOf":
+          [ { "$ref": "#/definitions/ExUnits" }
+          , { "$ref": "#/definitions/Null" }
+          ]
+        }
+      }
+    }
+
+  , "ScriptFailure[noCostModelForLanguage]":
+    { "title": "noCostModelForLanguage"
+    , "description": "Input locked by a script which language has no cost model in current protocol parameters. In principle, cannot happen in the context of Ogmios."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "noCostModelForLanguage" ]
+    , "properties":
+      { "noCostModelForLanguage": { "$ref": "#/definitions/Language" }
+      }
+    }
+
   , "ScriptPurpose":
     { "oneOf":
       [ { "title": "spend"
@@ -5058,7 +5172,7 @@
       { "missingRequiredDatums":
         { "type": "object"
         , "additionalProperties": false
-        , "required": [ "provided", "missing" ]
+        , "required": [ "missing" ]
         , "properties":
           { "provided":
             { "type": "array"

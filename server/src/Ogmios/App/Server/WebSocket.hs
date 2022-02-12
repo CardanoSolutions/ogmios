@@ -82,11 +82,15 @@ import Ogmios.Data.Json
     , ToJSON
     , encodeAcquireFailure
     , encodeBlock
+    , encodeExUnits
     , encodePoint
+    , encodeScriptFailure
     , encodeSubmitTxError
     , encodeTip
     , encodeTxId
+    , encodeTxIn
     , jsonToByteString
+    , stringifyRdmrPtr
     )
 import Ogmios.Data.Json.Orphans
     ()
@@ -300,7 +304,12 @@ withOuroborosClients tr mode maxInFlight sensors conn action = do
     stateQueryCodecs@StateQueryCodecs{..} =
         mkStateQueryCodecs encodePoint encodeAcquireFailure
     txSubmissionCodecs@TxSubmissionCodecs{..} =
-        mkTxSubmissionCodecs encodeSubmitTxError undefined undefined undefined undefined
+        mkTxSubmissionCodecs
+            encodeSubmitTxError
+            stringifyRdmrPtr
+            encodeExUnits
+            encodeScriptFailure
+            encodeTxIn
     txMonitorCodecs@TxMonitorCodecs{..} =
         mkTxMonitorCodecs encodeTxId
 

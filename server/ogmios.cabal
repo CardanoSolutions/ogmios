@@ -166,6 +166,7 @@ library
     , ouroboros-consensus-cardano
     , ouroboros-consensus-shelley
     , ouroboros-network
+    , prettyprinter
     , profunctors
     , relude
     , safe

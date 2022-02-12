@@ -20,11 +20,15 @@ module Ogmios.Data.Json
       -- * Encoders
     , encodeAcquireFailure
     , encodeBlock
+    , Alonzo.encodeExUnits
     , encodePoint
-    , encodeSubmitTxError
+    , Alonzo.encodeScriptFailure
     , encodeSerializedTx
+    , encodeSubmitTxError
     , encodeTip
     , encodeTxId
+    , Shelley.encodeTxIn
+    , Alonzo.stringifyRdmrPtr
 
       -- * Decoders
     , decodeOneEraHash
