@@ -32,12 +32,23 @@ module Ogmios.Data.Protocol.TxSubmission
       -- ** EvaluateTx
     , EvaluateTx (..)
     , _decodeEvaluateTx
-    , EvaluateTxResponse
+    , EvaluateTxResponse (..)
+    , EvaluateTxError (..)
+    , evaluateExecutionUnits
+    , incompatibleEra
     , _encodeEvaluateTxResponse
+
+      -- ** Re-exports
+    , AlonzoEra
+    , EpochInfo
     , ExUnits
+    , PParams
     , RdmrPtr
     , ScriptFailure
+    , SystemStart
+    , Tx
     , TxIn
+    , UTxO
     ) where
 
 import Ogmios.Data.Json.Prelude
@@ -45,21 +56,40 @@ import Ogmios.Data.Json.Prelude
 import Ogmios.Data.Protocol
     ()
 
+import Cardano.Ledger.Alonzo
+    ( AlonzoEra )
+import Cardano.Ledger.Alonzo.PParams
+    ( PParams' (_costmdls) )
 import Cardano.Ledger.Alonzo.Scripts
-    ( ExUnits )
+    ( ExUnits (..) )
 import Cardano.Ledger.Alonzo.Tools
-    ( ScriptFailure )
+    ( BasicFailure (..), ScriptFailure, evaluateTransactionExecutionUnits )
 import Cardano.Ledger.Alonzo.TxWitness
     ( RdmrPtr )
+import Cardano.Ledger.Core
+    ( PParams, Tx )
+import Cardano.Ledger.Crypto
+    ( StandardCrypto )
+import Cardano.Ledger.Shelley.UTxO
+    ( UTxO (..) )
 import Cardano.Ledger.TxIn
     ( TxIn )
 import Cardano.Network.Protocol.NodeToClient
     ( Crypto, SerializedTx, SubmitTxError )
+import Cardano.Slotting.EpochInfo
+    ( EpochInfo )
+import Cardano.Slotting.Time
+    ( SystemStart )
+import Control.Monad.Trans.Except
+    ( Except )
+import Ouroboros.Consensus.HardFork.History
+    ( PastHorizonException )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Data.Aeson.Types as Json
+import qualified Data.Map as Map
 
 --
 -- Codecs
@@ -185,7 +215,13 @@ data EvaluateTxResponse block
 data EvaluateTxError block
     = EvaluateTxScriptFailures (Map RdmrPtr (ScriptFailure (Crypto block)))
     | EvaluateTxUnknownInputs (Set (TxIn (Crypto block)))
+    | EvaluateTxIncompatibleEra Text
+    | EvaluateTxUncomputableSlotArithmetic PastHorizonException
     deriving (Show)
+
+-- | Shorthand constructor for 'EvaluateTxResponse'
+incompatibleEra :: Text -> EvaluateTxResponse block
+incompatibleEra = EvaluationFailure . EvaluateTxIncompatibleEra
 
 _encodeEvaluateTxResponse
     :: forall block. ()
@@ -221,5 +257,77 @@ _encodeEvaluateTxResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFail
                 ]
               )
             ]
+        EvaluationFailure (EvaluateTxIncompatibleEra era) -> encodeObject
+            [ ( "EvaluationFailure"
+              , encodeObject
+                [ ( "IncompatibleEra"
+                  , encodeText era
+                  )
+                ]
+              )
+            ]
+        EvaluationFailure (EvaluateTxUncomputableSlotArithmetic pastHorizon) -> encodeObject
+            [ ( "EvaluationFailure"
+              , encodeObject
+                [ ( "UncomputableSlotArithmetic"
+                  , encodeText (show pastHorizon)
+                  )
+                ]
+              )
+            ]
   where
     proxy = Proxy @(Wsp.Request (EvaluateTx block))
+
+-- | Evaluate script executions units for the given transaction.
+evaluateExecutionUnits
+    :: forall block. (Crypto block ~ StandardCrypto)
+    => PParams (AlonzoEra (Crypto block))
+        -- ^ Protocol parameters
+    -> SystemStart
+        -- ^ Start of the blockchain, for converting slots to UTC times
+    -> EpochInfo (Except PastHorizonException)
+        -- ^ Information about epoch sizes, for converting slots to UTC times
+    -> UTxO (AlonzoEra (Crypto block))
+        -- ^ A UTXO needed to resolve inputs
+    -> Tx (AlonzoEra (Crypto block))
+        -- ^ The actual transaction
+    -> EvaluateTxResponse block
+evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation of
+    Left pastHorizonException ->
+        EvaluationFailure (EvaluateTxUncomputableSlotArithmetic pastHorizonException)
+    Right (Left (UnknownTxIns inputs)) ->
+        EvaluationFailure (EvaluateTxUnknownInputs inputs)
+    Right (Right reports) ->
+        let (failures, successes) =
+                Map.foldMapWithKey aggregateReports reports
+         in if null failures
+            then EvaluationResult successes
+            else EvaluationFailure $ EvaluateTxScriptFailures failures
+  where
+    aggregateReports
+        :: RdmrPtr
+        -> Either (ScriptFailure (Crypto block)) ExUnits
+        -> (Map RdmrPtr (ScriptFailure (Crypto block)), Map RdmrPtr ExUnits)
+    aggregateReports ptr = \case
+        Left scriptFailure ->
+            ( Map.singleton ptr scriptFailure, mempty )
+        Right exUnits ->
+            ( mempty, Map.singleton ptr exUnits )
+
+    evaluation
+        :: Either
+              PastHorizonException
+              (Either
+                  (BasicFailure (Crypto block))
+                  (Map RdmrPtr (Either (ScriptFailure (Crypto block)) ExUnits))
+              )
+    evaluation =
+        runIdentity $
+          runExceptT $
+            evaluateTransactionExecutionUnits
+              pparams
+              tx
+              utxo
+              epochInfo
+              systemStart
+              (mapToArray (_costmdls pparams))

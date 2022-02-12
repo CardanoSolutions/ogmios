@@ -65,8 +65,6 @@ import Ogmios.Data.Health
     , mkNetworkSynchronization
     , modifyHealth
     )
-import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras )
 
 import qualified Ogmios.App.Metrics as Metrics
 
@@ -78,6 +76,8 @@ import Data.Time.Clock
     ( DiffTime, UTCTime )
 import Network.TypedProtocol.Pipelined
     ( N (..) )
+import Ouroboros.Consensus.Cardano.Block
+    ( CardanoEras )
 import Ouroboros.Consensus.HardFork.Combinator
     ( HardForkBlock, eraIndexToInt )
 import Ouroboros.Consensus.HardFork.History.Qry
