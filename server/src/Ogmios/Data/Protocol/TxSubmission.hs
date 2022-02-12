@@ -41,6 +41,7 @@ module Ogmios.Data.Protocol.TxSubmission
       -- ** Re-exports
     , AlonzoEra
     , EpochInfo
+    , PastHorizonException
     , ExUnits
     , PParams
     , RdmrPtr
