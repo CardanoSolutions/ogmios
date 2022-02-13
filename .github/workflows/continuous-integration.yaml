@@ -161,7 +161,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04]
         network: [testnet]
-        cardanoNodeVersion: [1.31.0]
+        cardanoNodeVersion: [1.33.0]
 
     runs-on: ${{ matrix.os }}
     steps:

@@ -5,6 +5,7 @@
   [ "RequestNext", "RequestNextResponse"
   , "FindIntersect", "FindIntersectResponse"
   , "SubmitTx", "SubmitTxResponse"
+  , "EvaluateTx", "EvaluateTxResponse"
   , "Acquire", "AcquireResponse"
   , "Release","ReleaseResponse"
   , "AwaitAcquire", "AwaitAcquireResponse"
@@ -256,11 +257,11 @@
       , "args":
         { "type": "object"
         , "additionalProperties": false
-        , "required": ["bytes"]
+        , "required": ["submit"]
         , "properties":
-          { "bytes":
+          { "submit":
             { "type": "string"
-            , "description": "CBOR-serialized signed transaction, in base64"
+            , "description": "CBOR-serialized signed transaction, in base64 (or base16)"
             , "contentEncoding": "base64"
             , "pattern": "^[A-Za-z0-9+/]=?=?$"
             }
@@ -295,9 +296,20 @@
         }
       , "result":
         { "oneOf":
-          [ { "type": "string"
+          [ { "type": "object"
             , "title": "SubmitSuccess"
-            , "enum": ["SubmitSuccess"]
+            , "additionalProperties": false
+            , "required": ["SubmitSuccess"]
+            , "properties":
+              { "SubmitSuccess":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "txId" ]
+                , "properties":
+                  { "txId": { "$ref": "#/definitions/TxId" }
+                  }
+                }
+              }
             }
           , { "type": "object"
             , "title": "SubmitFail"
@@ -307,6 +319,80 @@
               { "SubmitFail": { "$ref": "#/definitions/SubmitTxError" }
               }
             }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "EvaluateTx":
+    { "type": "object"
+    , "description": "Evaluate execution units for which redeemers's budget hasn't yet been set."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "EvaluateTx" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["evaluate"]
+        , "properties":
+          { "evaluate":
+            { "type": "string"
+            , "description": "CBOR-serialized signed transaction, in base64 (or base16)"
+            , "contentEncoding": "base64"
+            , "pattern": "^[A-Za-z0-9+/]=?=?$"
+            }
+          }
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "EvaluateTxResponse":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "EvaluateTx" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/EvaluationResult" }
+          , { "$ref": "#/definitions/EvaluationFailure" }
           ]
         }
       , "reflection":
@@ -2878,7 +2964,7 @@
   , "CostModels":
     { "type": "object"
     , "additionalProperties": { "$ref": "#/definitions/CostModel" }
-    , "propertyNames": { "enum": [ "plutus:v1", "plutus:v2" ] }
+    , "propertyNames": { "$ref": "#/definitions/Language" }
     , "examples":
       [ { "plutus:v1":
           { "k": 14
@@ -3110,6 +3196,87 @@
       }
     }
 
+  , "EvaluationFailure":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "EvaluationFailure" ]
+    , "properties":
+      { "EvaluationFailure":
+        { "oneOf":
+            [ { "$ref": "#/definitions/EvaluationFailure[ScriptFailures]" }
+            , { "$ref": "#/definitions/EvaluationFailure[UnknownInputs]" }
+            , { "$ref": "#/definitions/EvaluationFailure[IncompatibleEra]" }
+            , { "$ref": "#/definitions/EvaluationFailure[UncomputableSlotArithmetic]" }
+            ]
+        }
+      }
+    }
+
+  , "EvaluationFailure[ScriptFailures]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "ScriptFailures" ]
+    , "properties":
+      { "ScriptFailures":
+        { "type": "object"
+        , "propertyNames": { "$ref": "#/definitions/RedeemerPointer" }
+        , "additionalProperties": { "$ref": "#/definitions/ScriptFailure" }
+        }
+      }
+    }
+
+  , "EvaluationFailure[UnknownInputs]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "UnknownInputs" ]
+    , "properties":
+      { "UnknownInputs":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/TxIn" }
+        }
+      }
+    }
+
+  , "EvaluationFailure[IncompatibleEra]":
+    { "type": "object"
+    , "description": "Returned when trying to evaluate execution units of a pre-Alonzo transaction. Note that this isn't possible with Ogmios because transactions are always de-serialized as Alonzo transactions."
+    , "additionalProperties": false
+    , "required": [ "IncompatibleEra" ]
+    , "properties":
+      { "IncompatibleEra":
+        { "type": "string"
+        , "description": "The era in which the transaction has been identified."
+        , "enum": [ "Byron", "Shelley", "Allegra", "Mary" ]
+        }
+      }
+    }
+
+  , "EvaluationFailure[UncomputableSlotArithmetic]":
+    { "type": "object"
+    , "description": "May happen when evaluating a transaction with validity bounds that goes past the foreseeable end of the current era (i.e. near a hardfork)."
+    , "additionalProperties": false
+    , "required": [ "UncomputableSlotArithmetic" ]
+    , "properties":
+      { "UncomputableSlotArithmetic":
+        { "type": "string"
+        , "description": "An error message, possibly meaningful but likely unreadable."
+        }
+      }
+    }
+
+  , "EvaluationResult":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "EvaluationResult" ]
+    , "properties":
+      { "EvaluationResult":
+        { "type": "object"
+        , "propertyNames": { "$ref": "#/definitions/RedeemerPointer" }
+        , "additionalProperties": { "$ref": "#/definitions/ExUnits" }
+        }
+      }
+    }
+
   , "ExUnits":
     { "type": "object"
     , "additionalProperties": false
@@ -3238,6 +3405,11 @@
     { "type": "string"
     , "description": "Signature proving a block was issued by a given issuer VRF key."
     , "contentEncoding": "base64"
+    }
+
+  , "Language":
+    { "type": "string"
+    , "enum": [ "plutus:v1", "plutus:v2" ]
     }
 
   , "Lovelace":
@@ -4249,6 +4421,115 @@
     , "pattern": "^[A-Za-z0-9+/]*=?=?$"
     }
 
+  , "ScriptFailure":
+    { "type": "array"
+    , "description": "Errors whcih may occur when evaluating an on-chain script."
+    , "items":
+      { "oneOf":
+        [ { "$ref": "#/definitions/SubmitTxError[extraRedeemers]" }
+        , { "$ref": "#/definitions/SubmitTxError[missingRequiredDatums]" }
+        , { "$ref": "#/definitions/ScriptFailure[missingRequiredScripts]" }
+        , { "$ref": "#/definitions/ScriptFailure[validatorFailed]" }
+        , { "$ref": "#/definitions/ScriptFailure[unknownInputReferencedByRedeemer]" }
+        , { "$ref": "#/definitions/ScriptFailure[nonScriptInputReferencedByRedeemer]" }
+        , { "$ref": "#/definitions/ScriptFailure[illFormedExecutionBudget]" }
+        , { "$ref": "#/definitions/ScriptFailure[noCostModelForLanguage]" }
+        ]
+      }
+    }
+
+  , "ScriptFailure[missingRequiredScripts]":
+    { "title": "missingRequiredScripts"
+    , "description": "Missing scripts required for validating script inputs."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "missingRequiredScripts" ]
+    , "properties":
+      { "missingRequiredScripts":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "missing" ]
+        , "properties":
+          { "missing":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/RedeemerPointer" }
+            }
+          }
+        }
+      }
+    }
+
+  , "ScriptFailure[validatorFailed]":
+    { "title": "validatorFailed"
+    , "description": "Plutus interpreter error. Returns additional traces produced by the validator."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "validatorFailed" ]
+    , "properties":
+      { "validatorFailed":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "error", "traces" ]
+        , "properties":
+          { "error": { "type": "string" }
+          , "traces":
+            { "type": "array"
+            , "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+
+  , "ScriptFailure[unknownInputReferencedByRedeemer]":
+    { "title": "unknownInputReferencedByRedeemer"
+    , "description": "Non-existing input referenced by a redeemer pointer."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "unknownInputReferencedByRedeemer" ]
+    , "properties":
+      { "unknownInputReferencedByRedeemer": { "$ref": "#/definitions/TxIn" }
+      }
+    }
+
+  , "ScriptFailure[nonScriptInputReferencedByRedeemer]":
+    { "title": "nonScriptInputReferencedByRedeemer"
+    , "description": "Input not locked by a Plutus referenced by a redeemer pointer."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "nonScriptInputReferencedByRedeemer" ]
+    , "properties":
+      { "nonScriptInputReferencedByRedeemer": { "$ref": "#/definitions/TxIn" }
+      }
+    }
+
+  , "ScriptFailure[illFormedExecutionBudget]":
+    { "title": "illFormedExecutionBudget"
+    , "description": "Invalid execution budget set for a redeemer. In principle, cannot happen in the context of Ogmios."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "illFormedExecutionBudget" ]
+    , "properties":
+      { "illFormedExecutionBudget":
+        { "oneOf":
+          [ { "$ref": "#/definitions/ExUnits" }
+          , { "$ref": "#/definitions/Null" }
+          ]
+        }
+      }
+    }
+
+  , "ScriptFailure[noCostModelForLanguage]":
+    { "title": "noCostModelForLanguage"
+    , "description": "Input locked by a script which language has no cost model in current protocol parameters. In principle, cannot happen in the context of Ogmios."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "noCostModelForLanguage" ]
+    , "properties":
+      { "noCostModelForLanguage": { "$ref": "#/definitions/Language" }
+      }
+    }
+
   , "ScriptPurpose":
     { "oneOf":
       [ { "title": "spend"
@@ -5058,7 +5339,7 @@
       { "missingRequiredDatums":
         { "type": "object"
         , "additionalProperties": false
-        , "required": [ "provided", "missing" ]
+        , "required": [ "missing" ]
         , "properties":
           { "provided":
             { "type": "array"

@@ -118,6 +118,7 @@ library
       git
   build-depends:
       aeson
+    , array
     , async
     , base >=4.7 && <5
     , base16
@@ -148,6 +149,7 @@ library
     , fast-bech32
     , file-embed
     , filepath
+    , formatting
     , generic-lens
     , git-th
     , http-client
@@ -166,6 +168,7 @@ library
     , ouroboros-consensus-cardano
     , ouroboros-consensus-shelley
     , ouroboros-network
+    , prettyprinter
     , profunctors
     , relude
     , safe

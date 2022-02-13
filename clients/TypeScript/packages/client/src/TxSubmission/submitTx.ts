@@ -1,7 +1,7 @@
 import { InteractionContext } from '../Connection'
 import { UnknownResultError } from '../errors'
-import { errors } from './errors'
-import { Ogmios } from '@cardano-ogmios/schema'
+import { errors } from './submissionErrors'
+import { Ogmios, TxId } from '@cardano-ogmios/schema'
 import { Query } from '../StateQuery'
 
 /**
@@ -14,16 +14,17 @@ export const submitTx = (context: InteractionContext, bytes: string) =>
   Query<
     Ogmios['SubmitTx'],
     Ogmios['SubmitTxResponse'],
-    void
+    TxId
   >({
     methodName: 'SubmitTx',
-    args: { bytes }
+    args: { submit: bytes }
   }, {
     handler: (response, resolve, reject) => {
       if (response.methodname === 'SubmitTx') {
         const { result } = response
-        if (result === 'SubmitSuccess') {
-          return resolve()
+        if ('SubmitSuccess' in result) {
+          const { SubmitSuccess } = result
+          return resolve(SubmitSuccess.txId)
         } else if ('SubmitFail' in result) {
           const { SubmitFail } = result
           if (Array.isArray(SubmitFail)) {

@@ -5,6 +5,38 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.2.0] - UNRELEASED
+
+#### Added
+
+> ##### 🏢 Server 
+>
+> - Extended the local-tx-submission protocol with a [new `EvaluateTx` query](https://ogmios.dev/mini-protocols/local-tx-submission/#evaluatetx) which evaluates execution units of scripts present in a transaction. This effectively piggybacks on the Alonzo's tools from the cardano-ledger while providing a more user-friendly interface regarding network parameters. The API offers well-detailed errors and an interface similar to the `SubmitTx`. See discussion on [#172](https://github.com/CardanoSolutions/ogmios/issues/172). 
+>
+> - New `rewardsProvenance'` query coming as a replacement for the now-deprecated `rewardsProvenance` query. See discussion on [#171](https://github.com/CardanoSolutions/ogmios/issues/171).
+>
+> ##### 🚗 TypeScript Client
+>
+> - Support for the new `evaluateTx` query in the `TxSubmissionClient` & repl.
+> - Support for the new `rewardsProvenance'` query as `rewardsProvenanceNew` in the `StateQueryClient` & repl.
+
+#### Changed
+
+> ##### 🏢 Server 
+>
+> - Added transaction id as part of the successful response to a `SubmitTx`. While this is technically a breaking-change, it was introduced in a backward-compatible way. Existing applications using the existing `SubmitTx` query will see no change and will keep receiving successes as `"SubmitSuccessful"` text responses. However, queries which pass transactions using the `submit` field (instead of the currently expected `bytes` field) will receive, on success, an augmented response which contains a transaction id `"SubmitSuccessful": { "txId": "..." }`. See discussion on [#174](https://github.com/CardanoSolutions/ogmios/issues/174).
+>
+> - Improved error reporting for the `SubmitTx` protocol which should gives a little clearer errors for ill-formed transactions.
+>
+>
+> ##### 🚗 TypeScript Client
+>
+> - :warning: Renamed client's `TxSubmission/errors.ts` into `TxSubmission/submissionErrors.ts`. Similarly, the submission are also now nested under a `submissionErrors` field in the `TxSubmission` top-level object. 
+
+#### Removed
+
+> N/A
+
 ### [5.1.0] - 2022-01-24
 
 #### Added

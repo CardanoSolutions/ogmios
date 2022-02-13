@@ -20,16 +20,20 @@ module Ogmios.Data.Json
       -- * Encoders
     , encodeAcquireFailure
     , encodeBlock
+    , Alonzo.encodeExUnits
     , encodePoint
+    , Alonzo.encodeScriptFailure
+    , encodeSerializedTx
     , encodeSubmitTxError
-    , encodeSubmitTxPayload
     , encodeTip
     , encodeTxId
+    , Shelley.encodeTxIn
+    , Alonzo.stringifyRdmrPtr
 
       -- * Decoders
     , decodeOneEraHash
     , decodePoint
-    , decodeSubmitTxPayload
+    , decodeSerializedTx
     , decodeTip
     , decodeTxId
     ) where
@@ -37,7 +41,7 @@ module Ogmios.Data.Json
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Binary
-    ( FromCBOR (..), ToCBOR (..) )
+    ( DecoderError, FromCBOR (..), ToCBOR (..), decodeFull )
 import Cardano.Crypto.Hash
     ( hashFromBytes )
 import Cardano.Crypto.Hashing
@@ -47,11 +51,13 @@ import Cardano.Ledger.Crypto
 import Cardano.Ledger.Shelley.API
     ( ApplyTxError (..), PraosCrypto )
 import Cardano.Network.Protocol.NodeToClient
-    ( GenTx, GenTxId, SubmitTxError, SubmitTxPayload )
+    ( GenTx, GenTxId, SerializedTx, SubmitTxError )
 import Cardano.Slotting.Block
     ( BlockNo (..) )
 import Cardano.Slotting.Slot
     ( SlotNo (..), WithOrigin (..) )
+import Formatting.Buildable
+    ( build )
 import Ogmios.Data.Json.Query
     ( encodeEraMismatch, encodeOneEraHash, encodePoint )
 import Ouroboros.Consensus.Byron.Ledger.Block
@@ -84,8 +90,9 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Type
 import qualified Cardano.Ledger.SafeHash as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
 import qualified Codec.CBOR.Encoding as Cbor
-import qualified Codec.CBOR.Read as Cbor
 import qualified Codec.CBOR.Write as Cbor
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.Builder as TL
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
@@ -159,11 +166,11 @@ encodeSubmitTxError = \case
     ApplyTxErrWrongEra e ->
         encodeList encodeEraMismatch [ e ]
 
-encodeSubmitTxPayload
+encodeSerializedTx
     :: PraosCrypto crypto
-    => SubmitTxPayload (CardanoBlock crypto)
+    => SerializedTx (CardanoBlock crypto)
     -> Json
-encodeSubmitTxPayload = \case
+encodeSerializedTx = \case
     GenTxByron tx ->
         encodeByteStringBase16 $ Cbor.toStrictByteString $ encodeByronGenTx tx
     GenTxShelley tx ->
@@ -233,17 +240,22 @@ decodePoint json =
         hash <- obj .: "hash" >>= decodeOneEraHash
         pure $ Point $ At $ Block (SlotNo slot) hash
 
-decodeSubmitTxPayload
+decodeSerializedTx
     :: forall crypto. PraosCrypto crypto
     => Json.Value
-    -> Json.Parser (SubmitTxPayload (CardanoBlock crypto))
-decodeSubmitTxPayload = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
-    bytes <- decodeBase16 utf8 <|> decodeBase64 utf8
-    asum $
-        (deserialiseCBOR GenTxMary <$> [fromStrict bytes, wrap bytes])
-        ++
-        (deserialiseCBOR GenTxAlonzo <$> [fromStrict bytes, wrap bytes])
+    -> Json.Parser (SerializedTx (CardanoBlock crypto))
+decodeSerializedTx = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
+    bytes <- decodeBase16 utf8 <|> decodeBase64 utf8 <|> invalidEncodingError
+    -- NOTE: Avoiding 'asum' here because it generates poor errors on failures
+    deserialiseCBOR GenTxMary (wrap bytes)
+        <|> deserialiseCBOR GenTxMary (fromStrict bytes)
+        <|> deserialiseCBOR GenTxAlonzo (wrap bytes)
+        <|> deserialiseCBOR GenTxAlonzo (fromStrict bytes)
   where
+    invalidEncodingError :: Json.Parser a
+    invalidEncodingError =
+        fail "failed to decode payload from base64 or base16."
+
     -- Cardano tools have a tendency to wrap cbor in cbor (e.g cardano-cli).
     -- In particular, a `GenTx` is expected to be prefixed with a cbor tag
     -- `24` and serialized as CBOR bytes `58xx`.
@@ -261,15 +273,27 @@ decodeSubmitTxPayload = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
         -> LByteString
         -> Json.Parser (GenTx (CardanoBlock crypto))
     deserialiseCBOR mk =
-        either (fail . show) (pure . mk . snd)
+        either (fail . prettyDecoderError) (pure . mk)
         .
-        Cbor.deserialiseFromBytes fromCBOR
+        decodeFull
       where
         _compilerWarning = keepRedundantConstraint
             (Proxy @(Or
                 (era ~ LastElem (CardanoEras crypto))
                 (era ~ ShelleyBlock (MaryEra crypto))
             ))
+
+        prettyDecoderError :: DecoderError -> String
+        prettyDecoderError =
+            toString
+                . TL.replace
+                    (toLazy $ label (Proxy @(GenTx era)))
+                    "serialised transaction"
+                . TL.replace
+                    "\n"
+                    " "
+                . TL.toLazyText
+                . build
 
 decodeTip
     :: Json.Value

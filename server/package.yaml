@@ -37,6 +37,7 @@ library:
     - -O2
   dependencies:
     - aeson
+    - array
     - async
     - base16
     - base64
@@ -66,6 +67,7 @@ library:
     - fast-bech32
     - file-embed
     - filepath
+    - formatting
     - generic-lens
     - git-th
     - http-client
@@ -84,6 +86,7 @@ library:
     - ouroboros-consensus-cardano
     - ouroboros-consensus-shelley
     - ouroboros-network
+    - prettyprinter
     - profunctors
     - relude
     - safe
