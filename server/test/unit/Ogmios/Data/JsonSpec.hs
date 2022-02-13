@@ -32,11 +32,15 @@ import Ogmios.Data.Json
     , decodeWith
     , encodeAcquireFailure
     , encodeBlock
+    , encodeExUnits
     , encodePoint
+    , encodeScriptFailure
     , encodeSubmitTxError
     , encodeTip
     , encodeTxId
+    , encodeTxIn
     , jsonToByteString
+    , stringifyRdmrPtr
     )
 import Ogmios.Data.Json.Orphans
     ()
@@ -122,7 +126,11 @@ import Ogmios.Data.Protocol.TxMonitor
     , _encodeSizeAndCapacityResponse
     )
 import Ogmios.Data.Protocol.TxSubmission
-    ( SubmitTxResponse (..), _encodeSubmitTxResponse )
+    ( EvaluateTxResponse
+    , SubmitTxResponse (..)
+    , _encodeEvaluateTxResponse
+    , _encodeSubmitTxResponse
+    )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras, GenTx, HardForkApplyTxErr (..) )
 import Ouroboros.Network.Block
@@ -141,6 +149,7 @@ import Test.Generators
     , genCompactGenesisResult
     , genDelegationAndRewardsResult
     , genEpochResult
+    , genEvaluateTxResponse
     , genHardForkApplyTxErr
     , genInterpreterResult
     , genMempoolSizeAndCapacity
@@ -275,7 +284,7 @@ spec = do
             "RequestNextResponse_1.json"
             "ogmios.wsp.json#/properties/RequestNextResponse"
 
-    context "validate tx submission request/response against JSON-schema" $ do
+    context "validate tx-submission request/response against JSON-schema" $ do
         prop "deserialise signed transactions" prop_parseSubmitTx
 
         validateToJSON
@@ -283,6 +292,12 @@ spec = do
             (_encodeSubmitTxResponse (Proxy @Block) encodeTxId encodeSubmitTxError)
             (200, "TxSubmission/Response/SubmitTx")
             "ogmios.wsp.json#/properties/SubmitTxResponse"
+
+        validateToJSON
+            (arbitrary @(Wsp.Response (EvaluateTxResponse Block)))
+            (_encodeEvaluateTxResponse (Proxy @Block) stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn)
+            (100, "TxSubmission/Response/EvaluateTx")
+            "ogmios.wsp.json#/properties/EvaluateTxResponse"
 
         goldenToJSON
             "SubmitTxResponse_1.json"
@@ -582,6 +597,9 @@ instance Arbitrary (HardForkApplyTxErr (CardanoEras StandardCrypto)) where
 
 instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto))) where
     arbitrary = genSubmitResult
+
+instance Arbitrary (EvaluateTxResponse Block) where
+    arbitrary = genEvaluateTxResponse
 
 instance Arbitrary (Acquire Block) where
     shrink = genericShrink

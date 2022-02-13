@@ -305,7 +305,7 @@ data EvaluateTxResponse block
     deriving (Show)
 
 data EvaluateTxError block
-    = EvaluateTxScriptFailures (Map RdmrPtr (ScriptFailure (Crypto block)))
+    = EvaluateTxScriptFailures (Map RdmrPtr [ScriptFailure (Crypto block)])
     | EvaluateTxUnknownInputs (Set (TxIn (Crypto block)))
     | EvaluateTxIncompatibleEra Text
     | EvaluateTxUncomputableSlotArithmetic PastHorizonException
@@ -335,7 +335,7 @@ _encodeEvaluateTxResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFail
             [ ( "EvaluationFailure"
               , encodeObject
                 [ ( "ScriptFailures"
-                  , encodeMap stringifyRdmrPtr encodeScriptFailure failures
+                  , encodeMap stringifyRdmrPtr (encodeList encodeScriptFailure) failures
                   )
                 ]
               )
@@ -391,7 +391,7 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
         EvaluationFailure (EvaluateTxUnknownInputs inputs)
     Right (Right reports) ->
         let (failures, successes) =
-                Map.foldMapWithKey aggregateReports reports
+                Map.foldrWithKey aggregateReports (mempty, mempty)  reports
          in if null failures
             then EvaluationResult successes
             else EvaluationFailure $ EvaluateTxScriptFailures failures
@@ -399,12 +399,17 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
     aggregateReports
         :: RdmrPtr
         -> Either (ScriptFailure (Crypto block)) ExUnits
-        -> (Map RdmrPtr (ScriptFailure (Crypto block)), Map RdmrPtr ExUnits)
-    aggregateReports ptr = \case
+        -> (Map RdmrPtr [ScriptFailure (Crypto block)], Map RdmrPtr ExUnits)
+        -> (Map RdmrPtr [ScriptFailure (Crypto block)], Map RdmrPtr ExUnits)
+    aggregateReports ptr result (failures, successes) = case result of
         Left scriptFailure ->
-            ( Map.singleton ptr scriptFailure, mempty )
+            ( Map.unionWith (++) (Map.singleton ptr [scriptFailure]) failures
+            , successes
+            )
         Right exUnits ->
-            ( mempty, Map.singleton ptr exUnits )
+            ( failures
+            , Map.singleton ptr exUnits <> successes
+            )
 
     evaluation
         :: Either

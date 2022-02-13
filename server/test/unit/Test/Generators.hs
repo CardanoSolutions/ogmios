@@ -8,6 +8,10 @@ module Test.Generators where
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.Alonzo.Tools
+    ( ScriptFailure (..) )
+import Cardano.Ledger.Alonzo.TxInfo
+    ( transExUnits )
 import Cardano.Ledger.Crypto
     ( StandardCrypto )
 import Cardano.Ledger.Era
@@ -35,6 +39,8 @@ import Ogmios.Data.Json.Query
     , RewardProvenance
     , RewardProvenance'
     )
+import Ogmios.Data.Protocol.TxSubmission
+    ( EvaluateTxError (..), EvaluateTxResponse (..) )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock )
 import Ouroboros.Consensus.Cardano.Block
@@ -77,7 +83,16 @@ import Test.Cardano.Ledger.Shelley.ConcreteCryptoTypes
 import Test.Cardano.Ledger.Shelley.Serialisation.Generators.Genesis
     ( genPParams )
 import Test.QuickCheck
-    ( Arbitrary (..), Gen, choose, elements, frequency, listOf1, oneof, scale )
+    ( Arbitrary (..)
+    , Gen
+    , choose
+    , elements
+    , frequency
+    , listOf1
+    , oneof
+    , scale
+    , vector
+    )
 import Test.QuickCheck.Gen
     ( Gen (..) )
 import Test.QuickCheck.Hedgehog
@@ -166,6 +181,37 @@ genHardForkApplyTxErr = frequency
     , (10, ApplyTxErrAllegra <$> reasonablySized arbitrary)
     , (10, ApplyTxErrMary <$> reasonablySized arbitrary)
     , (10, ApplyTxErrAlonzo <$> reasonablySized arbitrary)
+    ]
+
+genEvaluateTxResponse :: Gen (EvaluateTxResponse Block)
+genEvaluateTxResponse = frequency
+    [ (10, EvaluationFailure <$> genEvaluateTxError)
+    , (1, EvaluationResult <$> reasonablySized arbitrary)
+    ]
+
+genEvaluateTxError :: Gen (EvaluateTxError Block)
+genEvaluateTxError = frequency
+    [ (10, EvaluateTxScriptFailures . fromList <$> reasonablySized (do
+        failures <- listOf1 (listOf1 genScriptFailure)
+        ptrs <- vector (length failures)
+        pure (zip ptrs failures)
+      ))
+    , (1, EvaluateTxUnknownInputs <$> reasonablySized arbitrary)
+    , (1, EvaluateTxIncompatibleEra <$> elements [ "Byron", "Shelley", "Allegra", "Mary" ])
+    ]
+
+genScriptFailure :: Gen (ScriptFailure StandardCrypto)
+genScriptFailure = oneof
+    [ RedeemerNotNeeded <$> arbitrary
+    , MissingScript <$> arbitrary
+    , MissingDatum <$> arbitrary
+    , UnknownTxIn <$> arbitrary
+    , InvalidTxIn <$> arbitrary
+    , IncompatibleBudget . transExUnits <$> arbitrary
+    , NoCostModel <$> arbitrary
+    -- TODO: Also cover ValidationFailedV1 & ValidationFailedV2.
+    -- This requires to also generate arbitrary instances for plutus' 'EvaluationError'
+    -- which do not exists :'( ...
     ]
 
 genAcquireFailure :: Gen AcquireFailure
