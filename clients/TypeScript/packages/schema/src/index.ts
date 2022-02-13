@@ -198,7 +198,6 @@ export type TipOrOrigin = Tip | Origin;
  */
 export type Origin = "origin";
 export type PointOrOrigin = Point | Origin;
-export type SubmitSuccess = "SubmitSuccess";
 export type Era = "Byron" | "Shelley" | "Allegra" | "Mary" | "Alonzo";
 /**
  * A Blake2b 32-byte digest of a phase-1 or phase-2 script, CBOR-encoded.
@@ -1624,6 +1623,11 @@ export interface IntersectionFound {
 export interface IntersectionNotFound {
   IntersectionNotFound: {
     tip: TipOrOrigin;
+  };
+}
+export interface SubmitSuccess {
+  SubmitSuccess: {
+    txId: TxId;
   };
 }
 export interface SubmitFail {

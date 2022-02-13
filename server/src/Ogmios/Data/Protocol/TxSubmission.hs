@@ -23,11 +23,18 @@ module Ogmios.Data.Protocol.TxSubmission
       -- * Messages
     , TxSubmissionMessage (..)
 
+      -- ** BackwardCompatibleSubmitTx
+    , BackwardCompatibleSubmitTx (..)
+    , _decodeBackwardCompatibleSubmitTx
+    , BackwardCompatibleSubmitTxResponse
+    , _encodeBackwardCompatibleSubmitTxResponse
+
       -- ** SubmitTx
     , SubmitTx (..)
     , _decodeSubmitTx
-    , SubmitTxResponse
+    , SubmitTxResponse (..)
     , _encodeSubmitTxResponse
+    , mkSubmitTxResponse
 
       -- ** EvaluateTx
     , EvaluateTx (..)
@@ -41,11 +48,15 @@ module Ogmios.Data.Protocol.TxSubmission
       -- ** Re-exports
     , AlonzoEra
     , EpochInfo
-    , PastHorizonException
     , ExUnits
+    , GenTxId
+    , HasTxId
     , PParams
+    , PastHorizonException
     , RdmrPtr
     , ScriptFailure
+    , SerializedTx
+    , SubmitTxError
     , SystemStart
     , Tx
     , TxIn
@@ -76,7 +87,7 @@ import Cardano.Ledger.Shelley.UTxO
 import Cardano.Ledger.TxIn
     ( TxIn )
 import Cardano.Network.Protocol.NodeToClient
-    ( Crypto, SerializedTx, SubmitTxError )
+    ( Crypto, GenTxId, SerializedTx, SubmitTxError )
 import Cardano.Slotting.EpochInfo
     ( EpochInfo )
 import Cardano.Slotting.Time
@@ -85,6 +96,8 @@ import Control.Monad.Trans.Except
     ( Except )
 import Ouroboros.Consensus.HardFork.History
     ( PastHorizonException )
+import Ouroboros.Consensus.Ledger.SupportsMempool
+    ( HasTxId (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
 
@@ -97,7 +110,13 @@ import qualified Data.Map as Map
 --
 
 data TxSubmissionCodecs block = TxSubmissionCodecs
-    { decodeSubmitTx
+    { decodeBackwardCompatibleSubmitTx
+        :: ByteString
+        -> Maybe (Wsp.Request (BackwardCompatibleSubmitTx block))
+    , encodeBackwardCompatibleSubmitTxResponse
+        :: Wsp.Response (BackwardCompatibleSubmitTxResponse block)
+        -> Json
+    , decodeSubmitTx
         :: ByteString
         -> Maybe (Wsp.Request (SubmitTx block))
     , encodeSubmitTxResponse
@@ -113,18 +132,25 @@ data TxSubmissionCodecs block = TxSubmissionCodecs
 
 mkTxSubmissionCodecs
     :: forall block. (FromJSON (SerializedTx block))
-    => (SubmitTxError block -> Json)
+    => (GenTxId block -> Json)
+    -> (SubmitTxError block -> Json)
     -> (RdmrPtr -> Text)
     -> (ExUnits -> Json)
     -> (ScriptFailure (Crypto block) -> Json)
     -> (TxIn (Crypto block) -> Json)
     -> TxSubmissionCodecs block
-mkTxSubmissionCodecs encodeSubmitTxError stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn =
+mkTxSubmissionCodecs encodeTxId encodeSubmitTxError stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn =
     TxSubmissionCodecs
-        { decodeSubmitTx =
+        { decodeBackwardCompatibleSubmitTx =
+            decodeWith _decodeBackwardCompatibleSubmitTx
+        , encodeBackwardCompatibleSubmitTxResponse =
+            _encodeBackwardCompatibleSubmitTxResponse (Proxy @block)
+                encodeSubmitTxError
+        , decodeSubmitTx =
             decodeWith _decodeSubmitTx
         , encodeSubmitTxResponse =
             _encodeSubmitTxResponse (Proxy @block)
+                encodeTxId
                 encodeSubmitTxError
         , decodeEvaluateTx =
             decodeWith _decodeEvaluateTx
@@ -141,7 +167,11 @@ mkTxSubmissionCodecs encodeSubmitTxError stringifyRdmrPtr encodeExUnits encodeSc
 --
 
 data TxSubmissionMessage block
-    = MsgSubmitTx
+    = MsgBackwardCompatibleSubmitTx
+        (BackwardCompatibleSubmitTx block)
+        (Wsp.ToResponse (BackwardCompatibleSubmitTxResponse block))
+        Wsp.ToFault
+    | MsgSubmitTx
         (SubmitTx block)
         (Wsp.ToResponse (SubmitTxResponse block))
         Wsp.ToFault
@@ -149,6 +179,47 @@ data TxSubmissionMessage block
         (EvaluateTx block)
         (Wsp.ToResponse (EvaluateTxResponse block))
         Wsp.ToFault
+
+--
+-- BackwardCompatibleSubmitTx
+--
+
+data BackwardCompatibleSubmitTx block
+    = BackwardCompatibleSubmitTx { bytes :: SerializedTx block }
+    deriving (Generic)
+deriving instance Show (SerializedTx block) => Show (BackwardCompatibleSubmitTx block)
+
+_decodeBackwardCompatibleSubmitTx
+    :: FromJSON (SerializedTx block)
+    => Json.Value
+    -> Json.Parser (Wsp.Request (BackwardCompatibleSubmitTx block))
+_decodeBackwardCompatibleSubmitTx =
+    Wsp.genericFromJSON backwardCompatibleOptions
+
+type BackwardCompatibleSubmitTxResponse block =
+    SubmitResult (SubmitTxError block)
+
+_encodeBackwardCompatibleSubmitTxResponse
+    :: forall block. ()
+    => Proxy block
+    -> (SubmitTxError block -> Json)
+    -> Wsp.Response (BackwardCompatibleSubmitTxResponse block)
+    -> Json
+_encodeBackwardCompatibleSubmitTxResponse _proxy encodeSubmitTxError =
+    Wsp.mkResponse backwardCompatibleOptions proxy $ \case
+        SubmitSuccess ->
+            encodeText "SubmitSuccess"
+        (SubmitFail e) ->
+            encodeObject [ ( "SubmitFail", encodeSubmitTxError e ) ]
+  where
+    proxy = Proxy @(Wsp.Request (BackwardCompatibleSubmitTx block))
+
+backwardCompatibleOptions :: Wsp.Options
+backwardCompatibleOptions =
+    Wsp.defaultOptions
+        { Wsp.constructorTagModifier =
+            drop (length ("BackwardCompatible" :: String))
+        }
 
 --
 -- SubmitTx
@@ -159,38 +230,58 @@ data SubmitTx block
     deriving (Generic)
 deriving instance Show (SerializedTx block) => Show (SubmitTx block)
 
-data BackwardCompatibleSubmitTx block
-    = BackwardCompatibleSubmitTx { bytes :: SerializedTx block }
-    deriving (Generic)
-
 _decodeSubmitTx
     :: FromJSON (SerializedTx block)
     => Json.Value
     -> Json.Parser (Wsp.Request (SubmitTx block))
-_decodeSubmitTx value =
-    fmap (fmap backwardCompatible) (Wsp.genericFromJSON Wsp.defaultOptions value)
-  <|>
-    Wsp.genericFromJSON Wsp.defaultOptions value
-  where
-    backwardCompatible :: forall block. BackwardCompatibleSubmitTx block -> SubmitTx block
-    backwardCompatible (BackwardCompatibleSubmitTx tx) = SubmitTx tx
+_decodeSubmitTx =
+    Wsp.genericFromJSON Wsp.defaultOptions
 
-type SubmitTxResponse block = SubmitResult (SubmitTxError block)
+data SubmitTxResponse block
+    = SubmitTxSuccess (GenTxId block)
+    | SubmitTxFail (SubmitTxError block)
+    deriving (Generic)
+deriving instance
+    ( Show (SubmitTxError block)
+    , Show (GenTxId block)
+    ) => Show (SubmitTxResponse block)
 
 _encodeSubmitTxResponse
     :: forall block. ()
     => Proxy block
+    -> (GenTxId block -> Json)
     -> (SubmitTxError block -> Json)
     -> Wsp.Response (SubmitTxResponse block)
     -> Json
-_encodeSubmitTxResponse _proxy encodeSubmitTxError =
+_encodeSubmitTxResponse _proxy encodeTxId encodeSubmitTxError =
     Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        SubmitSuccess ->
-            encodeText "SubmitSuccess"
-        (SubmitFail e) ->
-            encodeObject [ ( "SubmitFail", encodeSubmitTxError e ) ]
+        SubmitTxSuccess i ->
+            encodeObject
+                [ ( "SubmitSuccess"
+                  , encodeObject [ ( "txId", encodeTxId i) ]
+                  )
+                ]
+        (SubmitTxFail e) ->
+            encodeObject
+                [ ( "SubmitFail"
+                  , encodeSubmitTxError e
+                  )
+                ]
   where
     proxy = Proxy @(Wsp.Request (SubmitTx block))
+
+-- | Translate an ouroboros-network's 'SubmitResult' into our own
+-- 'SubmitTxResponse' which also carries a transaction id.
+mkSubmitTxResponse
+    :: HasTxId (SerializedTx block)
+    => SerializedTx block
+    -> SubmitResult (SubmitTxError block)
+    -> SubmitTxResponse block
+mkSubmitTxResponse tx = \case
+    SubmitSuccess ->
+        SubmitTxSuccess (txId tx)
+    SubmitFail e ->
+        SubmitTxFail e
 
 --
 -- EvaluateTx

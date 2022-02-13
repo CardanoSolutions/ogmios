@@ -154,14 +154,18 @@ genTip = frequency
     , (10, Tip <$> genSlotNo <*> genHeaderHash <*> genBlockNo)
     ]
 
-genHardForkApplyTxErr :: Gen (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto)))
-genHardForkApplyTxErr = frequency
+genSubmitResult :: Gen (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto)))
+genSubmitResult = frequency
     [ ( 1, pure SubmitSuccess)
-    , ( 1, SubmitFail . HardForkApplyTxErrWrongEra <$> genMismatchEraInfo)
-    , (10, SubmitFail . ApplyTxErrShelley <$> reasonablySized arbitrary)
-    , (10, SubmitFail . ApplyTxErrAllegra <$> reasonablySized arbitrary)
-    , (10, SubmitFail . ApplyTxErrMary <$> reasonablySized arbitrary)
-    , (10, SubmitFail . ApplyTxErrAlonzo <$> reasonablySized arbitrary)
+    , (40, SubmitFail <$> genHardForkApplyTxErr)
+    ]
+genHardForkApplyTxErr :: Gen (HardForkApplyTxErr (CardanoEras StandardCrypto))
+genHardForkApplyTxErr = frequency
+    [ ( 1, HardForkApplyTxErrWrongEra <$> genMismatchEraInfo)
+    , (10, ApplyTxErrShelley <$> reasonablySized arbitrary)
+    , (10, ApplyTxErrAllegra <$> reasonablySized arbitrary)
+    , (10, ApplyTxErrMary <$> reasonablySized arbitrary)
+    , (10, ApplyTxErrAlonzo <$> reasonablySized arbitrary)
     ]
 
 genAcquireFailure :: Gen AcquireFailure

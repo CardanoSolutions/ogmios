@@ -296,9 +296,20 @@
         }
       , "result":
         { "oneOf":
-          [ { "type": "string"
+          [ { "type": "object"
             , "title": "SubmitSuccess"
-            , "enum": ["SubmitSuccess"]
+            , "additionalProperties": false
+            , "required": ["SubmitSuccess"]
+            , "properties":
+              { "SubmitSuccess":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "txId" ]
+                , "properties":
+                  { "txId": { "$ref": "#/definitions/TxId" }
+                  }
+                }
+              }
             }
           , { "type": "object"
             , "title": "SubmitFail"

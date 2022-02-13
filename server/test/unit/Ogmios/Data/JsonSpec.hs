@@ -122,7 +122,7 @@ import Ogmios.Data.Protocol.TxMonitor
     , _encodeSizeAndCapacityResponse
     )
 import Ogmios.Data.Protocol.TxSubmission
-    ( SubmitTxResponse, _encodeSubmitTxResponse )
+    ( SubmitTxResponse (..), _encodeSubmitTxResponse )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras, GenTx, HardForkApplyTxErr (..) )
 import Ouroboros.Network.Block
@@ -155,6 +155,7 @@ import Test.Generators
     , genProposedPParamsResult
     , genRewardInfoPoolsResult
     , genRewardProvenanceResult
+    , genSubmitResult
     , genSystemStart
     , genTip
     , genTxId
@@ -279,7 +280,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Wsp.Response (SubmitTxResponse Block)))
-            (_encodeSubmitTxResponse (Proxy @Block) encodeSubmitTxError)
+            (_encodeSubmitTxResponse (Proxy @Block) encodeTxId encodeSubmitTxError)
             (200, "TxSubmission/Response/SubmitTx")
             "ogmios.wsp.json#/properties/SubmitTxResponse"
 
@@ -572,8 +573,15 @@ instance Arbitrary RequestNext where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto))) where
+instance Arbitrary (SubmitTxResponse Block) where
+    shrink = genericShrink
+    arbitrary = genericArbitrary
+
+instance Arbitrary (HardForkApplyTxErr (CardanoEras StandardCrypto)) where
     arbitrary = genHardForkApplyTxErr
+
+instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto))) where
+    arbitrary = genSubmitResult
 
 instance Arbitrary (Acquire Block) where
     shrink = genericShrink

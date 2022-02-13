@@ -41,12 +41,16 @@ import Ogmios.Data.Json
     ( Json )
 import Ogmios.Data.Protocol.TxSubmission
     ( AlonzoEra
+    , BackwardCompatibleSubmitTx (..)
     , EpochInfo
     , EvaluateTx (..)
     , EvaluateTxResponse (..)
+    , HasTxId
     , PParams
     , PastHorizonException
+    , SerializedTx
     , SubmitTx (..)
+    , SubmitTxError
     , SystemStart
     , Tx
     , TxSubmissionCodecs (..)
@@ -54,14 +58,13 @@ import Ogmios.Data.Protocol.TxSubmission
     , UTxO
     , evaluateExecutionUnits
     , incompatibleEra
+    , mkSubmitTxResponse
     )
 
 import Cardano.Ledger.Alonzo.Tx
     ( body )
 import Cardano.Ledger.Crypto
     ( StandardCrypto )
-import Cardano.Network.Protocol.NodeToClient
-    ( SerializedTx, SubmitTxError )
 import Control.Monad.Trans.Except
     ( Except )
 import GHC.Records
@@ -92,6 +95,7 @@ import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 mkTxSubmissionClient
     :: forall m block.
         ( MonadSTM m
+        , HasTxId (SerializedTx block)
         )
     => TxSubmissionCodecs block
         -- ^ For encoding Haskell types to JSON
@@ -111,9 +115,13 @@ mkTxSubmissionClient TxSubmissionCodecs{..} ExecutionUnitsEvaluator{..} queue yi
     clientStIdle
         :: m (LocalTxClientStIdle (SerializedTx block) (SubmitTxError block) m ())
     clientStIdle = await >>= \case
+        MsgBackwardCompatibleSubmitTx BackwardCompatibleSubmitTx{bytes = tx} toResponse _ -> do
+            pure $ SendMsgSubmitTx tx $ \result -> do
+                yield $ encodeBackwardCompatibleSubmitTxResponse $ toResponse result
+                clientStIdle
         MsgSubmitTx SubmitTx{submit = tx} toResponse _ -> do
             pure $ SendMsgSubmitTx tx $ \result -> do
-                yield $ encodeSubmitTxResponse $ toResponse result
+                yield $ encodeSubmitTxResponse $ toResponse $ mkSubmitTxResponse tx result
                 clientStIdle
         MsgEvaluateTx EvaluateTx{evaluate = tx} toResponse _ -> do
             result <- evaluateExecutionUnitsM tx

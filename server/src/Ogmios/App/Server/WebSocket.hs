@@ -310,6 +310,8 @@ withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator conn action = 
                     -- TxSubmission
                     , Wsp.Handler decodeSubmitTx
                         (\r t -> push txSubmissionQ .  MsgSubmitTx r t)
+                    , Wsp.Handler decodeBackwardCompatibleSubmitTx
+                        (\r t -> push txSubmissionQ .  MsgBackwardCompatibleSubmitTx r t)
                     , Wsp.Handler decodeEvaluateTx
                         (\r t -> push txSubmissionQ .  MsgEvaluateTx r t)
 
@@ -339,15 +341,16 @@ withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator conn action = 
         mkChainSyncCodecs (encodeBlock mode) encodePoint encodeTip
     stateQueryCodecs@StateQueryCodecs{..} =
         mkStateQueryCodecs encodePoint encodeAcquireFailure
+    txMonitorCodecs@TxMonitorCodecs{..} =
+        mkTxMonitorCodecs encodeTxId
     txSubmissionCodecs@TxSubmissionCodecs{..} =
         mkTxSubmissionCodecs
+            encodeTxId
             encodeSubmitTxError
             stringifyRdmrPtr
             encodeExUnits
             encodeScriptFailure
             encodeTxIn
-    txMonitorCodecs@TxMonitorCodecs{..} =
-        mkTxMonitorCodecs encodeTxId
 
 --
 -- Logging
