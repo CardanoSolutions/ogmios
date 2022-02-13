@@ -8,16 +8,16 @@ weight = 3
 
 {{% ascii-drawing-split %}}
  ┌──────────┐
- │   Busy   │◀══════════════════════════════╗      
- └────┬─────┘            SubmitTx           ║      
-      │                                     ║      
-      │                                ┌──────────┐
-      │                                │          │
-      │                                │          │
-      │          SubmitTxResponse      │   Idle   │
-      └───────────────────────────────▶│          │
-                                       │          │⇦ START
-                                       └──────────┘
+ │   Busy   │◀═══════════════════════════════════════╗
+ └────┬─────┘        SubmitTx / EvaluateTx           ║
+      │                                              ║
+      │                                         ┌──────────┐
+      │                                         │          │
+      │                                         │          │
+      │  SubmitTxResponse / EvaluateTxResponse  │   Idle   │
+      └────────────────────────────────────────▶│          │
+                                                │          │⇦ START
+                                                └──────────┘
 {{% /ascii-drawing-split %}}
 
 ## Overview
@@ -44,7 +44,7 @@ In any case, one can always refer to the source [CDDL specifications](https://gi
 Providing a more user-friendly interface with regards to transactions in Ogmios is still under consideration. Yet, since in order to handle and sign transactions, one needs some knowledge about the on-chain binary format anyway, I've made the (effortless) choice to only treat with already serialized blobs in Ogmios. I am open to suggestions about how this could be made better, drop me a message on Github if you have ideas!
 {{% /notice %}}
 
-## How to Use
+## SubmitTx 
 
 Sending a transaction through the Cardano network requires one message using the method `SubmitTx`, and with a single mandatory arguments with `bytes`, representing a serialized signed transactions with its full witness. 
 
@@ -56,13 +56,63 @@ Note that JSON does not support embedding raw bytes in objects. Bytes needs ther
     "version": "1.0",
     "servicename": "ogmios",
     "methodname": "SubmitTx",
-    "args": { "bytes": "<base16 or base64>" }
+    "args": { "submit": "<base16 or base64>" }
 }
 ```
 
 The response will indicate either a `SubmitSuccess` or `SubmitFail`. In case of failure, Ogmios will return a list of failures reported by the underlying node. Note that, if the transaction fails to parse, Ogmios will reply with a generic error. 
 
 Transactions in Shelley are rather _complicated_ and there is **a lot of** possible validation errors that can be returned. Be sure to have a look at the [API reference](../../api-reference) for an exhaustive list. 
+
+## EvaluateTx
+
+Starting from [`5.2.0`](https://github.com/CardanoSolutions/ogmios/releases/tag/v5.2.0), Ogmios supports a modified version of the local-tx-submission protocol which also allows to evaluate the transaction execution units of scripts present in a transaction, **without actually submitting the transaction**. This is useful for DApp developers who wants a quick-and-easy to measure script execution costs. 
+
+The API is purposely similar to the `SubmitTx` command, with a few semantic changes:
+
+- The transaction needs not to be fully authenticated. Key witnesses may be omitted unless they are relevant to the evaluation of scripts themselves!
+- The transaction needs not to be balanced; indeed, the evaluation does not perform a full run of all the ledger rules. So while the transaction must be well-formed, it may be _invalid_ from a protocol standpoint.
+- Execution budgets assigned to redeemers is expected to be set to zero since the goal of this endpoint is to figure out this very execution budget. 
+
+From there, the endpoint works similarly to `SubmitTx`, but with different method and argument names:
+
+```json
+{ 
+    "type": "jsonwsp/request",
+    "version": "1.0",
+    "servicename": "ogmios",
+    "methodname": "EvaluateTx",
+    "args": { "evaluate": "<base16 or base64>" }
+}
+```
+
+Successful responses include a map of _redeemer pointers_ with the corresponding execution units. A redeemer pointer is a key composed of two parts: a _redeemer entity tag_ and a 0-based index related to that entity. There exists 4 kinds of redeemer entities: `spend` (for transaction inputs), `certificate` (for transaction certificates), `mint` (for transaction monetary policies) and `withdrawal` (for transaction's rewards withdrawals). The index therefore refers to the position of the script-locked entity within the set of entities in the transaction. 
+
+For example `spend:0` points to the first transaction input; `mint:2` would point to the 3rd policy referenced in the minting map... and so forth.  Here below is a JSON example of an evaluation result:
+
+```json
+{
+  "type": "jsonwsp/response",
+  "version": "1.0",
+  "servicename": "ogmios",
+  "methodname": "EvaluateTx",
+  "result": {
+    "EvaluationResult": {
+      "spend:0": {
+        "memory": 1700,
+        "steps": 476468
+      }
+    }
+  },
+  "reflection": null
+}
+```
+
+See the [full API reference](/api/modules/_cardano_ogmios_client.TxSubmission.evaluationErrors.html) for details about possible errors returned from this endpoint.
+
+{{% notice warning %}}
+If you're using typed Plutus validators (if you don't know what that is, then it is most likely what you're using), keep in mind that **adding or removing elements** to and off your transaction **will change its execution cost**. Indeed, the creation of the script context passed down to on-chain validators is done as part of the on-chain validator execution. Thus, **larger contexts require more execution units!** <br/><br/> This is the case for instance when you add a change output to a transaction or, a script integrity hash. A generally good way to approach this problem is to either: <br/><br/>**1.** make sure that the transaction you evaluate is as close as possible to the final transaction; that is, create dummy change outputs and script integrity hash before evaluating and fill-in their actual value once evaluated;<br/>**2.** keep some safe margin from the evaluated execution units; Execution units are relatively cheap on Cardano so, an extra 5 or 10% isn't much and saves you in most cases a lot of hassle to cope with small differences. 
+{{% /notice %}}
 
 ## Full Example
 
@@ -83,7 +133,7 @@ function wsp(methodname, args) {
 }
 
 client.once('open', () => {
-    const bytes =
+    const submit =
       "g6QAgYJYIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGCglg5AQEBAQEBAQEB"+
       "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBGgAehICC"+
       "WDkBAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC"+
@@ -91,7 +141,7 @@ client.once('open', () => {
       "AAAAAFhA169grjPSrzUUEcFEXHlZBSaZC/pzy7NzK1TvMi2qFC5ohAI0EPi+PBbpvVIHbyuz"+
       "a/ON/gNKnwRljp9WGXq4D/Y=";
 
-    wsp("SubmitTx", { bytes });
+    wsp("SubmitTx", { submit });
 });
 
 client.on('message', function(msg) {
