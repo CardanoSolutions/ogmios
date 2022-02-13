@@ -63,6 +63,12 @@
 								<a href="_cardano_ogmios_schema.Ogmios.html#AwaitAcquireResponse" class="tsd-kind-icon">Await<wbr>Acquire<wbr>Response</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.Ogmios.html#EvaluateTx" class="tsd-kind-icon">Evaluate<wbr>Tx</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.Ogmios.html#EvaluateTxResponse" class="tsd-kind-icon">Evaluate<wbr>TxResponse</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_schema.Ogmios.html#Fault" class="tsd-kind-icon">Fault</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
@@ -219,6 +225,8 @@
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Ogmios.html#AcquireResponse" class="tsd-kind-icon">Acquire<wbr>Response</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Ogmios.html#AwaitAcquire" class="tsd-kind-icon">Await<wbr>Acquire</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Ogmios.html#AwaitAcquireResponse" class="tsd-kind-icon">Await<wbr>Acquire<wbr>Response</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Ogmios.html#EvaluateTx" class="tsd-kind-icon">Evaluate<wbr>Tx</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Ogmios.html#EvaluateTxResponse" class="tsd-kind-icon">Evaluate<wbr>TxResponse</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Ogmios.html#Fault" class="tsd-kind-icon">Fault</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Ogmios.html#FindIntersect" class="tsd-kind-icon">Find<wbr>Intersect</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Ogmios.html#FindIntersectResponse" class="tsd-kind-icon">Find<wbr>Intersect<wbr>Response</a></li>
@@ -269,7 +277,7 @@
 					<div class="tsd-signature tsd-kind-icon">Acquire<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L439">packages/schema/src/index.ts:439</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L487">packages/schema/src/index.ts:487</a>
 							</li>
 						</ul>
 					</aside>
@@ -323,7 +331,7 @@
 					<div class="tsd-signature tsd-kind-icon">Acquire<wbr>Response<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L457">packages/schema/src/index.ts:457</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L505">packages/schema/src/index.ts:505</a>
 							</li>
 						</ul>
 					</aside>
@@ -372,7 +380,7 @@
 					<div class="tsd-signature tsd-kind-icon">Await<wbr>Acquire<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L505">packages/schema/src/index.ts:505</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L553">packages/schema/src/index.ts:553</a>
 							</li>
 						</ul>
 					</aside>
@@ -423,7 +431,7 @@
 					<div class="tsd-signature tsd-kind-icon">Await<wbr>Acquire<wbr>Response<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L521">packages/schema/src/index.ts:521</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L569">packages/schema/src/index.ts:569</a>
 							</li>
 						</ul>
 					</aside>
@@ -467,12 +475,115 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="EvaluateTx" class="tsd-anchor"></a>
+					<h3>Evaluate<wbr>Tx</h3>
+					<div class="tsd-signature tsd-kind-icon">Evaluate<wbr>Tx<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L453">packages/schema/src/index.ts:453</a>
+							</li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Evaluate execution units for which redeemers&#39;s budget hasn&#39;t yet been set.</p>
+						</div>
+					</div>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5><span class="tsd-flag ts-flagOptional">Optional</span> args<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">object</span></h5>
+								<ul class="tsd-parameters">
+									<li class="tsd-parameter">
+										<h5>evaluate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>CBOR-serialized signed transaction, in base64 (or base16)</p>
+											</div>
+										</div>
+									</li>
+								</ul>
+							</li>
+							<li class="tsd-parameter">
+								<h5>methodname<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"EvaluateTx"</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5><span class="tsd-flag ts-flagOptional">Optional</span> mirror<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">object</span></h5>
+								<div class="tsd-comment tsd-typography">
+									<div class="lead">
+										<p>An arbitrary JSON value that will be mirrored back in the response.</p>
+									</div>
+								</div>
+								<ul class="tsd-parameters">
+									<li class="tsd-parameter-index-signature">
+										<h5><span class="tsd-signature-symbol">[</span>k: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><span class="tsd-signature-type">unknown</span></h5>
+									</li>
+								</ul>
+							</li>
+							<li class="tsd-parameter">
+								<h5>servicename<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"ogmios"</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"jsonwsp/request"</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>version<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"1.0"</span></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="EvaluateTxResponse" class="tsd-anchor"></a>
+					<h3>Evaluate<wbr>TxResponse</h3>
+					<div class="tsd-signature tsd-kind-icon">Evaluate<wbr>TxResponse<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L471">packages/schema/src/index.ts:471</a>
+							</li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>methodname<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"EvaluateTx"</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5><span class="tsd-flag ts-flagOptional">Optional</span> reflection<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">object</span></h5>
+								<div class="tsd-comment tsd-typography">
+									<div class="lead">
+										<p>Any value that was set by a client request in the &#39;mirror&#39; field.</p>
+									</div>
+								</div>
+								<ul class="tsd-parameters">
+									<li class="tsd-parameter-index-signature">
+										<h5><span class="tsd-signature-symbol">[</span>k: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><span class="tsd-signature-type">unknown</span></h5>
+									</li>
+								</ul>
+							</li>
+							<li class="tsd-parameter">
+								<h5>result<span class="tsd-signature-symbol">: </span><a href="_cardano_ogmios_schema.EvaluationResult.html" class="tsd-signature-type">EvaluationResult</a><span class="tsd-signature-symbol"> | </span><a href="_cardano_ogmios_schema.EvaluationFailure.html" class="tsd-signature-type">EvaluationFailure</a></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>servicename<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"ogmios"</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"jsonwsp/response"</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>version<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"1.0"</span></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="Fault" class="tsd-anchor"></a>
 					<h3>Fault</h3>
 					<div class="tsd-signature tsd-kind-icon">Fault<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L965">packages/schema/src/index.ts:965</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L1013">packages/schema/src/index.ts:1013</a>
 							</li>
 						</ul>
 					</aside>
@@ -523,7 +634,7 @@
 					<div class="tsd-signature tsd-kind-icon">Find<wbr>Intersect<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L371">packages/schema/src/index.ts:371</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L385">packages/schema/src/index.ts:385</a>
 							</li>
 						</ul>
 					</aside>
@@ -577,7 +688,7 @@
 					<div class="tsd-signature tsd-kind-icon">Find<wbr>Intersect<wbr>Response<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L386">packages/schema/src/index.ts:386</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L400">packages/schema/src/index.ts:400</a>
 							</li>
 						</ul>
 					</aside>
@@ -626,7 +737,7 @@
 					<div class="tsd-signature tsd-kind-icon">Has<wbr>Tx<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L569">packages/schema/src/index.ts:569</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L617">packages/schema/src/index.ts:617</a>
 							</li>
 						</ul>
 					</aside>
@@ -680,7 +791,7 @@
 					<div class="tsd-signature tsd-kind-icon">Has<wbr>TxResponse<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L587">packages/schema/src/index.ts:587</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L635">packages/schema/src/index.ts:635</a>
 							</li>
 						</ul>
 					</aside>
@@ -729,7 +840,7 @@
 					<div class="tsd-signature tsd-kind-icon">Next<wbr>Tx<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L537">packages/schema/src/index.ts:537</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L585">packages/schema/src/index.ts:585</a>
 							</li>
 						</ul>
 					</aside>
@@ -780,7 +891,7 @@
 					<div class="tsd-signature tsd-kind-icon">Next<wbr>TxResponse<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L553">packages/schema/src/index.ts:553</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L601">packages/schema/src/index.ts:601</a>
 							</li>
 						</ul>
 					</aside>
@@ -829,7 +940,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L667">packages/schema/src/index.ts:667</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L715">packages/schema/src/index.ts:715</a>
 							</li>
 						</ul>
 					</aside>
@@ -883,7 +994,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[block<wbr>Height]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L923">packages/schema/src/index.ts:923</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L971">packages/schema/src/index.ts:971</a>
 							</li>
 						</ul>
 					</aside>
@@ -927,7 +1038,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[chain<wbr>Tip]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L936">packages/schema/src/index.ts:936</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L984">packages/schema/src/index.ts:984</a>
 							</li>
 						</ul>
 					</aside>
@@ -971,7 +1082,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[current<wbr>Epoch]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L742">packages/schema/src/index.ts:742</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L790">packages/schema/src/index.ts:790</a>
 							</li>
 						</ul>
 					</aside>
@@ -1015,7 +1126,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[current<wbr>Protocol<wbr>Parameters]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L781">packages/schema/src/index.ts:781</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L829">packages/schema/src/index.ts:829</a>
 							</li>
 						</ul>
 					</aside>
@@ -1059,7 +1170,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[delegations<wbr>And<wbr>Rewards]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L768">packages/schema/src/index.ts:768</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L816">packages/schema/src/index.ts:816</a>
 							</li>
 						</ul>
 					</aside>
@@ -1103,7 +1214,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[era<wbr>Start]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L703">packages/schema/src/index.ts:703</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L751">packages/schema/src/index.ts:751</a>
 							</li>
 						</ul>
 					</aside>
@@ -1147,7 +1258,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[era<wbr>Summaries]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L716">packages/schema/src/index.ts:716</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L764">packages/schema/src/index.ts:764</a>
 							</li>
 						</ul>
 					</aside>
@@ -1191,7 +1302,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[genesis<wbr>Config]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L837">packages/schema/src/index.ts:837</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L885">packages/schema/src/index.ts:885</a>
 							</li>
 						</ul>
 					</aside>
@@ -1235,7 +1346,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[ledger<wbr>Tip]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L729">packages/schema/src/index.ts:729</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L777">packages/schema/src/index.ts:777</a>
 							</li>
 						</ul>
 					</aside>
@@ -1279,7 +1390,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[non<wbr>Myopic<wbr>Member<wbr>Rewards]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L755">packages/schema/src/index.ts:755</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L803">packages/schema/src/index.ts:803</a>
 							</li>
 						</ul>
 					</aside>
@@ -1323,7 +1434,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[pool<wbr>Ids]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L879">packages/schema/src/index.ts:879</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L927">packages/schema/src/index.ts:927</a>
 							</li>
 						</ul>
 					</aside>
@@ -1367,7 +1478,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[pool<wbr>Parameters]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L892">packages/schema/src/index.ts:892</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L940">packages/schema/src/index.ts:940</a>
 							</li>
 						</ul>
 					</aside>
@@ -1411,7 +1522,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[pools<wbr>Ranking]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L910">packages/schema/src/index.ts:910</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L958">packages/schema/src/index.ts:958</a>
 							</li>
 						</ul>
 					</aside>
@@ -1455,7 +1566,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[proposed<wbr>Protocol<wbr>Parameters]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L794">packages/schema/src/index.ts:794</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L842">packages/schema/src/index.ts:842</a>
 							</li>
 						</ul>
 					</aside>
@@ -1499,7 +1610,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[rewards<wbr>Provenance&#x27;]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L866">packages/schema/src/index.ts:866</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L914">packages/schema/src/index.ts:914</a>
 							</li>
 						</ul>
 					</aside>
@@ -1543,7 +1654,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[rewards<wbr>Provenance]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L853">packages/schema/src/index.ts:853</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L901">packages/schema/src/index.ts:901</a>
 							</li>
 						</ul>
 					</aside>
@@ -1592,7 +1703,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[stake<wbr>Distribution]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L811">packages/schema/src/index.ts:811</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L859">packages/schema/src/index.ts:859</a>
 							</li>
 						</ul>
 					</aside>
@@ -1636,7 +1747,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[system<wbr>Start]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L949">packages/schema/src/index.ts:949</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L997">packages/schema/src/index.ts:997</a>
 							</li>
 						</ul>
 					</aside>
@@ -1680,7 +1791,7 @@
 					<div class="tsd-signature tsd-kind-icon">Query<wbr>Response[utxo]<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L824">packages/schema/src/index.ts:824</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L872">packages/schema/src/index.ts:872</a>
 							</li>
 						</ul>
 					</aside>
@@ -1724,7 +1835,7 @@
 					<div class="tsd-signature tsd-kind-icon">Release<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L473">packages/schema/src/index.ts:473</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L521">packages/schema/src/index.ts:521</a>
 							</li>
 						</ul>
 					</aside>
@@ -1775,7 +1886,7 @@
 					<div class="tsd-signature tsd-kind-icon">Release<wbr>Mempool<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L635">packages/schema/src/index.ts:635</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L683">packages/schema/src/index.ts:683</a>
 							</li>
 						</ul>
 					</aside>
@@ -1826,7 +1937,7 @@
 					<div class="tsd-signature tsd-kind-icon">Release<wbr>Mempool<wbr>Response<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L651">packages/schema/src/index.ts:651</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L699">packages/schema/src/index.ts:699</a>
 							</li>
 						</ul>
 					</aside>
@@ -1875,7 +1986,7 @@
 					<div class="tsd-signature tsd-kind-icon">Release<wbr>Response<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L489">packages/schema/src/index.ts:489</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L537">packages/schema/src/index.ts:537</a>
 							</li>
 						</ul>
 					</aside>
@@ -1924,7 +2035,7 @@
 					<div class="tsd-signature tsd-kind-icon">Request<wbr>Next<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L339">packages/schema/src/index.ts:339</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L353">packages/schema/src/index.ts:353</a>
 							</li>
 						</ul>
 					</aside>
@@ -1975,7 +2086,7 @@
 					<div class="tsd-signature tsd-kind-icon">Request<wbr>Next<wbr>Response<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L355">packages/schema/src/index.ts:355</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L369">packages/schema/src/index.ts:369</a>
 							</li>
 						</ul>
 					</aside>
@@ -2024,7 +2135,7 @@
 					<div class="tsd-signature tsd-kind-icon">Size<wbr>And<wbr>Capacity<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L603">packages/schema/src/index.ts:603</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L651">packages/schema/src/index.ts:651</a>
 							</li>
 						</ul>
 					</aside>
@@ -2075,7 +2186,7 @@
 					<div class="tsd-signature tsd-kind-icon">Size<wbr>And<wbr>Capacity<wbr>Response<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L619">packages/schema/src/index.ts:619</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L667">packages/schema/src/index.ts:667</a>
 							</li>
 						</ul>
 					</aside>
@@ -2124,7 +2235,7 @@
 					<div class="tsd-signature tsd-kind-icon">Submit<wbr>Tx<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L405">packages/schema/src/index.ts:405</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L419">packages/schema/src/index.ts:419</a>
 							</li>
 						</ul>
 					</aside>
@@ -2140,10 +2251,10 @@
 								<h5><span class="tsd-flag ts-flagOptional">Optional</span> args<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">object</span></h5>
 								<ul class="tsd-parameters">
 									<li class="tsd-parameter">
-										<h5>bytes<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+										<h5>submit<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
 										<div class="tsd-comment tsd-typography">
 											<div class="lead">
-												<p>CBOR-serialized signed transaction, in base64</p>
+												<p>CBOR-serialized signed transaction, in base64 (or base16)</p>
 											</div>
 										</div>
 									</li>
@@ -2183,7 +2294,7 @@
 					<div class="tsd-signature tsd-kind-icon">Submit<wbr>TxResponse<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b7ca8d3/clients/TypeScript/packages/schema/src/index.ts#L423">packages/schema/src/index.ts:423</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/39eb479/clients/TypeScript/packages/schema/src/index.ts#L437">packages/schema/src/index.ts:437</a>
 							</li>
 						</ul>
 					</aside>
@@ -2207,7 +2318,7 @@
 								</ul>
 							</li>
 							<li class="tsd-parameter">
-								<h5>result<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"SubmitSuccess"</span><span class="tsd-signature-symbol"> | </span><a href="_cardano_ogmios_schema.SubmitFail.html" class="tsd-signature-type">SubmitFail</a></h5>
+								<h5>result<span class="tsd-signature-symbol">: </span><a href="_cardano_ogmios_schema.SubmitSuccess.html" class="tsd-signature-type">SubmitSuccess</a><span class="tsd-signature-symbol"> | </span><a href="_cardano_ogmios_schema.SubmitFail.html" class="tsd-signature-type">SubmitFail</a></h5>
 							</li>
 							<li class="tsd-parameter">
 								<h5>servicename<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"ogmios"</span></h5>
