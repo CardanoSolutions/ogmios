@@ -149,6 +149,7 @@ library
     , fast-bech32
     , file-embed
     , filepath
+    , formatting
     , generic-lens
     , git-th
     , http-client

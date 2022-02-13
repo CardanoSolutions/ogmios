@@ -168,9 +168,9 @@ _decodeSubmitTx
     => Json.Value
     -> Json.Parser (Wsp.Request (SubmitTx block))
 _decodeSubmitTx value =
-    Wsp.genericFromJSON Wsp.defaultOptions value
-  <|>
     fmap (fmap backwardCompatible) (Wsp.genericFromJSON Wsp.defaultOptions value)
+  <|>
+    Wsp.genericFromJSON Wsp.defaultOptions value
   where
     backwardCompatible :: forall block. BackwardCompatibleSubmitTx block -> SubmitTx block
     backwardCompatible (BackwardCompatibleSubmitTx tx) = SubmitTx tx

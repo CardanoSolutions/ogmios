@@ -20,7 +20,7 @@ import Ogmios.Data.Protocol.ChainSync
 import Ogmios.Data.Protocol.StateQuery
     ( Acquire, Query, Release, _decodeAcquire, _decodeQuery, _decodeRelease )
 import Ogmios.Data.Protocol.TxSubmission
-    ( SubmitTx, _decodeSubmitTx )
+    ( EvaluateTx, SubmitTx, _decodeEvaluateTx, _decodeSubmitTx )
 import Ouroboros.Network.Block
     ( Point (..) )
 
@@ -91,6 +91,11 @@ onUnmatchedMessage blob = do
     modifyAesonFailure :: Text -> Text
     modifyAesonFailure
         = T.dropWhileEnd (== '.')
+        . T.replace
+            "field \"submit\" not found"
+            "field \"submit\" not found. If you're using the legacy \"bytes\" \
+            \field, change it to \"submit\" to get a (hopefully) more \
+            \informative error."
         . T.replace "Error in $["    "invalid item ["
         . T.replace "Error in $: "    ""
         . T.replace "Error in $: key" "field"
@@ -119,6 +124,8 @@ onUnmatchedMessage blob = do
                 void $ _decodeQuery @block json
            | methodName == Wsp.gWSPMethodName (Proxy @(Rep (SubmitTx block) _)) ->
                 void $ _decodeSubmitTx @block json
+           | methodName == Wsp.gWSPMethodName (Proxy @(Rep (EvaluateTx block) _)) ->
+                void $ _decodeEvaluateTx @block json
            | otherwise ->
                 pure ()
         fail "unknown method in 'methodname' (beware names are case-sensitive)."
