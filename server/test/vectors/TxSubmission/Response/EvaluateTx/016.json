@@ -1,0 +1,1 @@
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"EvaluateTx","result":{"EvaluationResult":{"mint:11":{"memory":8089758296104760601,"steps":3037461385788725762}}},"reflection":null}

@@ -1,1 +1,1 @@
-{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SubmitTx","result":{"SubmitFail":[{"scriptWitnessNotValidating":["1920e782f048e9ef52acd89c4341a89c3908c6e046ad87c474fffb48","3542acb3a64d80c29302260d62c3b87a742ad14abf855ebc6733081e","76e607db2a31c9a2c32761d2431a186a550cc321f79cd8d6a82b29b8"]}]},"reflection":14}
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SubmitTx","result":{"SubmitSuccess":{"txId":"7bee3bbfb37286d6a41378082e08c12af0084f0b1b92f77983f4c3394e91b5e9"}},"reflection":14}
