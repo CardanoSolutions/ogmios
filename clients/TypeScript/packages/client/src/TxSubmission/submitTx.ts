@@ -1,6 +1,6 @@
 import { InteractionContext } from '../Connection'
 import { UnknownResultError } from '../errors'
-import { errors } from './errors'
+import { errors } from './submissionErrors'
 import { Ogmios } from '@cardano-ogmios/schema'
 import { Query } from '../StateQuery'
 
@@ -17,7 +17,7 @@ export const submitTx = (context: InteractionContext, bytes: string) =>
     void
   >({
     methodName: 'SubmitTx',
-    args: { bytes }
+    args: { submit: bytes }
   }, {
     handler: (response, resolve, reject) => {
       if (response.methodname === 'SubmitTx') {
