@@ -61,7 +61,7 @@ module Ogmios.Data.Protocol.TxSubmission
     , SystemStart
     , Tx
     , TxIn
-    , UTxO
+    , UTxO (..)
     ) where
 
 import Ogmios.Data.Json.Prelude
@@ -338,6 +338,7 @@ data EvaluateTxError block
     | EvaluateTxUnknownInputs (Set (TxIn (Crypto block)))
     | EvaluateTxIncompatibleEra Text
     | EvaluateTxUncomputableSlotArithmetic PastHorizonException
+    | EvaluateTxAdditionalUtxoOverlap (Set (TxIn (Crypto block)))
     deriving (Show)
 
 -- | Shorthand constructor for 'EvaluateTxResponse'
@@ -392,6 +393,15 @@ _encodeEvaluateTxResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFail
               , encodeObject
                 [ ( "UncomputableSlotArithmetic"
                   , encodeText (show pastHorizon)
+                  )
+                ]
+              )
+            ]
+        EvaluationFailure (EvaluateTxAdditionalUtxoOverlap inputs) -> encodeObject
+            [ ( "EvaluationFailure"
+              , encodeObject
+                [ ( "AdditionalUtxoOverlap"
+                  , encodeFoldable encodeTxIn inputs
                   )
                 ]
               )

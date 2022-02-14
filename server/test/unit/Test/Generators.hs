@@ -198,6 +198,7 @@ genEvaluateTxError = frequency
       ))
     , (1, EvaluateTxUnknownInputs <$> reasonablySized arbitrary)
     , (1, EvaluateTxIncompatibleEra <$> elements [ "Byron", "Shelley", "Allegra", "Mary" ])
+    , (1, EvaluateTxAdditionalUtxoOverlap <$> reasonablySized arbitrary)
     ]
 
 genScriptFailure :: Gen (ScriptFailure StandardCrypto)

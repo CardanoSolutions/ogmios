@@ -39,11 +39,14 @@ import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TQueue, newEmptyTMVar, putTMVar, readTQueue, takeTMVar )
 import Ogmios.Data.Json
     ( Json )
+import Ogmios.Data.Protocol
+    ( MostRecentEra )
 import Ogmios.Data.Protocol.TxSubmission
     ( AlonzoEra
     , BackwardCompatibleSubmitTx (..)
     , EpochInfo
     , EvaluateTx (..)
+    , EvaluateTxError (..)
     , EvaluateTxResponse (..)
     , HasTxId
     , PParams
@@ -55,7 +58,7 @@ import Ogmios.Data.Protocol.TxSubmission
     , Tx
     , TxSubmissionCodecs (..)
     , TxSubmissionMessage (..)
-    , UTxO
+    , UTxO (..)
     , evaluateExecutionUnits
     , incompatibleEra
     , mkSubmitTxResponse
@@ -90,6 +93,7 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Client
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxClientStIdle (..), LocalTxSubmissionClient (..) )
 
+import qualified Data.Map.Strict as Map
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 
 mkTxSubmissionClient
@@ -123,15 +127,16 @@ mkTxSubmissionClient TxSubmissionCodecs{..} ExecutionUnitsEvaluator{..} queue yi
             pure $ SendMsgSubmitTx tx $ \result -> do
                 yield $ encodeSubmitTxResponse $ toResponse $ mkSubmitTxResponse tx result
                 clientStIdle
-        MsgEvaluateTx EvaluateTx{evaluate = tx} toResponse _ -> do
-            result <- evaluateExecutionUnitsM tx
+        MsgEvaluateTx EvaluateTx{additionalUtxoSet, evaluate = tx} toResponse _ -> do
+            result <- evaluateExecutionUnitsM additionalUtxoSet tx
             yield $ encodeEvaluateTxResponse $ toResponse result
             clientStIdle
 
 -- | A thin abstraction for evaluating transaction units.
 data ExecutionUnitsEvaluator m block = ExecutionUnitsEvaluator
     { evaluateExecutionUnitsM
-        :: SerializedTx block
+        :: UTxO (MostRecentEra block)
+        -> SerializedTx block
         -> m (EvaluateTxResponse block)
     }
 
@@ -151,7 +156,7 @@ newExecutionUnitsEvaluator = do
     evaluateExecutionUnitsResponse <- atomically newEmptyTMVar
     return
         ( ExecutionUnitsEvaluator
-            { evaluateExecutionUnitsM = \case
+            { evaluateExecutionUnitsM = \utxo -> \case
                 GenTxByron{} ->
                     return (incompatibleEra "Byron")
                 GenTxShelley{} ->
@@ -161,7 +166,7 @@ newExecutionUnitsEvaluator = do
                 GenTxMary{} ->
                     return (incompatibleEra "Mary")
                 GenTxAlonzo (ShelleyTx _id tx) -> do
-                    atomically $ putTMVar evaluateExecutionUnitsRequest tx
+                    atomically $ putTMVar evaluateExecutionUnitsRequest (utxo, tx)
                     atomically $ takeTMVar evaluateExecutionUnitsResponse
             }
         , localStateQueryClient
@@ -170,7 +175,7 @@ newExecutionUnitsEvaluator = do
         )
   where
     localStateQueryClient
-        :: m (Tx (AlonzoEra crypto))
+        :: m (UTxO (AlonzoEra crypto), Tx (AlonzoEra crypto))
         -> (EvaluateTxResponse block -> m ())
         -> LocalStateQueryClient block (Point block) (Query block) m ()
     localStateQueryClient await reply =
@@ -179,27 +184,30 @@ newExecutionUnitsEvaluator = do
         clientStIdle
             :: m (LSQ.ClientStIdle block (Point block) (Query block) m ())
         clientStIdle = do
-            await <&> LSQ.SendMsgAcquire Nothing . clientStAcquiring
+            await <&> LSQ.SendMsgAcquire Nothing . uncurry clientStAcquiring
 
         clientStAcquiring
-            :: Tx (AlonzoEra crypto)
+            :: UTxO (AlonzoEra crypto)
+            -> Tx (AlonzoEra crypto)
             -> LSQ.ClientStAcquiring block (Point block) (Query block) m ()
-        clientStAcquiring tx =
+        clientStAcquiring utxo tx =
             LSQ.ClientStAcquiring
                 { LSQ.recvMsgAcquired =
-                    pure (clientStAcquired0 tx evaluateExecutionUnits)
+                    pure (clientStAcquired0 utxo tx evaluateExecutionUnits)
                 , LSQ.recvMsgFailure =
-                    const $ pure $ LSQ.SendMsgAcquire Nothing (clientStAcquiring tx)
+                    const $ pure $ LSQ.SendMsgAcquire Nothing (clientStAcquiring utxo tx)
                 }
 
         reAcquire
-            :: Tx (AlonzoEra crypto)
+            :: UTxO (AlonzoEra crypto)
+            -> Tx (AlonzoEra crypto)
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
-        reAcquire
-            = LSQ.SendMsgReAcquire Nothing . clientStAcquiring
+        reAcquire utxo
+            = LSQ.SendMsgReAcquire Nothing . clientStAcquiring utxo
 
         clientStAcquired0
-            :: Tx (AlonzoEra crypto)
+            :: UTxO (AlonzoEra crypto)
+            -> Tx (AlonzoEra crypto)
             -> (  PParams (AlonzoEra crypto)
                -> SystemStart
                -> EpochInfo (Except PastHorizonException)
@@ -208,18 +216,19 @@ newExecutionUnitsEvaluator = do
                -> EvaluateTxResponse block
                )
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
-        clientStAcquired0 tx callback = do
+        clientStAcquired0 utxo tx callback = do
             let query = BlockQuery (QueryIfCurrentAlonzo GetCurrentPParams)
              in LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
                 { LSQ.recvMsgResult = \case
                     Right pparams ->
-                        pure $ clientStAcquired1 tx (callback pparams)
+                        pure $ clientStAcquired1 utxo tx (callback pparams)
                     Left{} ->
-                        pure $ reAcquire tx
+                        pure $ reAcquire utxo tx
                 }
 
         clientStAcquired1
-            :: Tx (AlonzoEra crypto)
+            :: UTxO (AlonzoEra crypto)
+            -> Tx (AlonzoEra crypto)
             -> (  SystemStart
                -> EpochInfo (Except PastHorizonException)
                -> UTxO (AlonzoEra crypto)
@@ -227,43 +236,50 @@ newExecutionUnitsEvaluator = do
                -> EvaluateTxResponse block
                )
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
-        clientStAcquired1 tx callback = do
+        clientStAcquired1 utxo tx callback = do
             let query = GetSystemStart
              in LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
                 { LSQ.recvMsgResult =
-                    pure . clientStAcquired2 tx . callback
+                    pure . clientStAcquired2 utxo tx . callback
                 }
 
         clientStAcquired2
-            :: Tx (AlonzoEra crypto)
+            :: UTxO (AlonzoEra crypto)
+            -> Tx (AlonzoEra crypto)
             -> (  EpochInfo (Except PastHorizonException)
                -> UTxO (AlonzoEra crypto)
                -> Tx (AlonzoEra crypto)
                -> EvaluateTxResponse block
                )
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
-        clientStAcquired2 tx callback = do
+        clientStAcquired2 utxo tx callback = do
             let query = BlockQuery $ QueryHardFork GetInterpreter
              in LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
                 { LSQ.recvMsgResult = \(interpreterToEpochInfo -> epochInfo) ->
-                    pure $ clientStAcquired3 tx (callback epochInfo)
+                    pure $ clientStAcquired3 utxo tx (callback epochInfo)
                 }
 
         clientStAcquired3
-            :: Tx (AlonzoEra crypto)
+            :: UTxO (AlonzoEra crypto)
+            -> Tx (AlonzoEra crypto)
             -> (  UTxO (AlonzoEra crypto)
                -> Tx (AlonzoEra crypto)
                -> EvaluateTxResponse block
                )
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
-        clientStAcquired3 tx callback = do
+        clientStAcquired3 (UTxO userProvidedUtxo) tx callback = do
             let inputs = getField @"inputs" (body tx)
                 query  = BlockQuery $ QueryIfCurrentAlonzo $ GetUTxOByTxIn inputs
              in LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
                 { LSQ.recvMsgResult = \case
-                    Right utxo -> do
-                        reply (callback utxo tx)
+                    Right (UTxO networkUtxo) -> do
+                        let intersection = Map.intersection userProvidedUtxo networkUtxo
+                        if null intersection then do
+                            reply (callback (UTxO $ userProvidedUtxo <> networkUtxo) tx)
+                        else do
+                            let failure = EvaluateTxAdditionalUtxoOverlap $ Map.keysSet intersection
+                            reply (EvaluationFailure failure)
                         pure $ LSQ.SendMsgRelease clientStIdle
                     Left{} ->
-                        pure $ reAcquire tx
+                        pure $ reAcquire (UTxO userProvidedUtxo) tx
                 }
