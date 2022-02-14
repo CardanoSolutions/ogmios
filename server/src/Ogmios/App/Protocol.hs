@@ -82,8 +82,6 @@ onUnmatchedMessage
         , FromJSON (Point block)
         , FromJSON (GenTxId block)
         , FromJSON (UTxO (MostRecentEra block))
-        , Monoid (UTxO (MostRecentEra block))
-        , Typeable (MostRecentEra block)
         )
     => ByteString
     -> Json
