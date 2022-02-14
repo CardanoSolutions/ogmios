@@ -2,6 +2,10 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Ogmios.Data.Json.Orphans () where
@@ -12,6 +16,8 @@ import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Ledger.Shelley.API
     ( PraosCrypto )
+import Cardano.Ledger.Shelley.UTxO
+    ( UTxO (..) )
 import Cardano.Network.Protocol.NodeToClient
     ( GenTx, GenTxId )
 import Cardano.Network.Protocol.NodeToClient.Trace
@@ -21,6 +27,7 @@ import Ogmios.Data.Json
     , decodeSerializedTx
     , decodeTip
     , decodeTxId
+    , decodeUtxo
     , encodeSerializedTx
     , encodeSubmitTxError
     , encodeTip
@@ -29,6 +36,8 @@ import Ogmios.Data.Json.Query
     ( encodePoint )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoBlock, CardanoEras, HardForkApplyTxErr (..) )
+import Ouroboros.Consensus.Shelley.Eras
+    ( AlonzoEra )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 
@@ -68,8 +77,18 @@ instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto)) where
 instance PraosCrypto crypto => FromJSON (GenTxId (CardanoBlock crypto)) where
     parseJSON = decodeTxId
 
+instance FromJSON (UTxO (AlonzoEra crypto)) where
+    parseJSON = decodeUtxo
+
 instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
     parseJSON = decodePoint
 
 instance Crypto crypto => FromJSON (Tip (CardanoBlock crypto)) where
     parseJSON = decodeTip
+
+--
+-- Monoid / Semigroup
+--
+
+deriving newtype instance Semigroup (UTxO (AlonzoEra crypto))
+deriving newtype instance Monoid (UTxO (AlonzoEra crypto))

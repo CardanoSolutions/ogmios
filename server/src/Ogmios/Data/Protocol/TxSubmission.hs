@@ -3,6 +3,7 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- NOTE:
@@ -66,7 +67,7 @@ module Ogmios.Data.Protocol.TxSubmission
 import Ogmios.Data.Json.Prelude
 
 import Ogmios.Data.Protocol
-    ()
+    ( MostRecentEra )
 
 import Cardano.Ledger.Alonzo
     ( AlonzoEra )
@@ -94,12 +95,16 @@ import Cardano.Slotting.Time
     ( SystemStart )
 import Control.Monad.Trans.Except
     ( Except )
+import Data.Type.Equality
+    ( (:~:) (..), testEquality )
 import Ouroboros.Consensus.HardFork.History
     ( PastHorizonException )
 import Ouroboros.Consensus.Ledger.SupportsMempool
     ( HasTxId (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
+import Type.Reflection
+    ( typeRep )
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Data.Aeson.Types as Json
@@ -131,7 +136,12 @@ data TxSubmissionCodecs block = TxSubmissionCodecs
     }
 
 mkTxSubmissionCodecs
-    :: forall block. (FromJSON (SerializedTx block))
+    :: forall block.
+        ( FromJSON (SerializedTx block)
+        , FromJSON (UTxO (MostRecentEra block))
+        , Monoid (UTxO (MostRecentEra block))
+        , Typeable (MostRecentEra block)
+        )
     => (GenTxId block -> Json)
     -> (SubmitTxError block -> Json)
     -> (RdmrPtr -> Text)
@@ -288,16 +298,35 @@ mkSubmitTxResponse tx = \case
 --
 
 data EvaluateTx block
-    = EvaluateTx { evaluate :: SerializedTx block }
+    = EvaluateTx
+        { evaluate :: SerializedTx block
+        , additionalUtxoSet :: UTxO (MostRecentEra block)
+        }
     deriving (Generic)
-deriving instance Show (SerializedTx block) => Show (EvaluateTx block)
+deriving instance
+    ( Show (SerializedTx block)
+    , Show (UTxO (MostRecentEra block))
+    ) => Show (EvaluateTx block)
 
 _decodeEvaluateTx
-    :: FromJSON (SerializedTx block)
+    :: forall block era.
+        ( era ~ MostRecentEra block
+        , FromJSON (SerializedTx block)
+        , FromJSON (UTxO era)
+        , Monoid (UTxO era)
+        , Typeable era
+        )
     => Json.Value
     -> Json.Parser (Wsp.Request (EvaluateTx block))
 _decodeEvaluateTx =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    Wsp.genericFromJSON $ Wsp.defaultOptions
+        { Wsp.onMissingField = \rep k ->
+            case testEquality rep typeRep of
+                Just (Refl :: a :~: UTxO era) ->
+                    pure mempty
+                Nothing ->
+                    Wsp.onMissingField Wsp.defaultOptions rep k
+        }
 
 data EvaluateTxResponse block
     = EvaluationFailure (EvaluateTxError block)

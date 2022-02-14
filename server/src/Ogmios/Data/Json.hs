@@ -36,6 +36,7 @@ module Ogmios.Data.Json
     , decodeSerializedTx
     , decodeTip
     , decodeTxId
+    , decodeUtxo
     ) where
 
 import Ogmios.Data.Json.Prelude
@@ -50,6 +51,8 @@ import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Ledger.Shelley.API
     ( ApplyTxError (..), PraosCrypto )
+import Cardano.Ledger.Shelley.UTxO
+    ( UTxO (..) )
 import Cardano.Network.Protocol.NodeToClient
     ( GenTx, GenTxId, SerializedTx, SubmitTxError )
 import Cardano.Slotting.Block
@@ -75,7 +78,7 @@ import Ouroboros.Consensus.Cardano.Block
 import Ouroboros.Consensus.HardFork.Combinator
     ( OneEraHash (..) )
 import Ouroboros.Consensus.Shelley.Eras
-    ( MaryEra )
+    ( AlonzoEra, MaryEra )
 import Ouroboros.Consensus.Shelley.Ledger
     ( ShelleyBlock )
 import Ouroboros.Consensus.Shelley.Ledger.Mempool
@@ -294,6 +297,12 @@ decodeSerializedTx = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
                     " "
                 . TL.toLazyText
                 . build
+
+decodeUtxo
+    :: Json.Value
+    -> Json.Parser (UTxO (AlonzoEra crypto))
+decodeUtxo =
+    undefined
 
 decodeTip
     :: Json.Value

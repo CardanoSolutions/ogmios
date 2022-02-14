@@ -14,7 +14,7 @@ import Ogmios.Prelude
 import Ogmios.Data.Json
     ( FromJSON, Json )
 import Ogmios.Data.Protocol
-    ( MethodName )
+    ( MethodName, MostRecentEra )
 import Ogmios.Data.Protocol.ChainSync
     ( FindIntersect, RequestNext, _decodeFindIntersect, _decodeRequestNext )
 import Ogmios.Data.Protocol.StateQuery
@@ -33,7 +33,7 @@ import Ogmios.Data.Protocol.TxMonitor
     , _decodeSizeAndCapacity
     )
 import Ogmios.Data.Protocol.TxSubmission
-    ( EvaluateTx, SubmitTx, _decodeEvaluateTx, _decodeSubmitTx )
+    ( EvaluateTx, SubmitTx, UTxO, _decodeEvaluateTx, _decodeSubmitTx )
 import Ouroboros.Network.Block
     ( Point (..) )
 
@@ -81,6 +81,9 @@ onUnmatchedMessage
         , FromJSON (Query Proxy block)
         , FromJSON (Point block)
         , FromJSON (GenTxId block)
+        , FromJSON (UTxO (MostRecentEra block))
+        , Monoid (UTxO (MostRecentEra block))
+        , Typeable (MostRecentEra block)
         )
     => ByteString
     -> Json
