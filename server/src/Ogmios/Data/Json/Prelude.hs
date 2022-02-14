@@ -18,6 +18,7 @@ module Ogmios.Data.Json.Prelude
     , choice
     , inefficientEncodingToValue
     , (.:)
+    , (.:?)
     , at
 
       -- * Re-Exports
@@ -113,7 +114,7 @@ import Cardano.Slotting.Slot
 import Cardano.Slotting.Time
     ( SlotLength (..), SystemStart (..), slotLengthToSec )
 import Data.Aeson
-    ( FromJSON, ToJSON, (.:) )
+    ( FromJSON, ToJSON, (.:), (.:?) )
 import Data.ByteArray
     ( ByteArrayAccess )
 import Data.ByteString.Base16

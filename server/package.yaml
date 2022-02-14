@@ -134,6 +134,7 @@ tests:
     ghc-options: *ghc-options-test
     dependencies:
     - aeson
+    - aeson-pretty
     - bytestring
     - cardano-client
     - cardano-ledger-alonzo
@@ -141,6 +142,7 @@ tests:
     - cardano-ledger-shelley
     - cardano-ledger-shelley-test
     - cardano-slotting
+    - containers
     - directory
     - file-embed
     - generic-arbitrary

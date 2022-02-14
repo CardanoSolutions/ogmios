@@ -29,6 +29,7 @@ module Ogmios.Data.Json
     , encodeTxId
     , Shelley.encodeTxIn
     , Alonzo.stringifyRdmrPtr
+    , Alonzo.encodeUtxo
 
       -- * Decoders
     , decodeOneEraHash
@@ -47,12 +48,16 @@ import Cardano.Crypto.Hash
     ( hashFromBytes )
 import Cardano.Crypto.Hashing
     ( decodeHash, hashToBytes )
+import Cardano.Ledger.Alonzo.TxBody
+    ( TxOut )
 import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Ledger.Shelley.API
     ( ApplyTxError (..), PraosCrypto )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..) )
+import Cardano.Ledger.TxIn
+    ( TxIn )
 import Cardano.Network.Protocol.NodeToClient
     ( GenTx, GenTxId, SerializedTx, SubmitTxError )
 import Cardano.Slotting.Block
@@ -62,7 +67,12 @@ import Cardano.Slotting.Slot
 import Formatting.Buildable
     ( build )
 import Ogmios.Data.Json.Query
-    ( encodeEraMismatch, encodeOneEraHash, encodePoint )
+    ( decodeTxIn
+    , decodeTxOut
+    , encodeEraMismatch
+    , encodeOneEraHash
+    , encodePoint
+    )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock (..) )
 import Ouroboros.Consensus.Byron.Ledger.Mempool
@@ -94,6 +104,7 @@ import qualified Cardano.Ledger.SafeHash as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
 import qualified Codec.CBOR.Encoding as Cbor
 import qualified Codec.CBOR.Write as Cbor
+import qualified Data.Map.Strict as Map
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TL
 
@@ -299,10 +310,22 @@ decodeSerializedTx = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
                 . build
 
 decodeUtxo
-    :: Json.Value
+    :: forall crypto. (Crypto crypto)
+    => Json.Value
     -> Json.Parser (UTxO (AlonzoEra crypto))
-decodeUtxo =
-    undefined
+decodeUtxo v = do
+    xs <- Json.parseJSONList v >>= traverse decodeUtxoEntry
+    pure $ UTxO (Map.fromList xs)
+  where
+    decodeUtxoEntry :: Json.Value -> Json.Parser (TxIn crypto, TxOut (AlonzoEra crypto))
+    decodeUtxoEntry =
+        Json.parseJSONList >=> \case
+            [i, o] ->
+                (,) <$> decodeTxIn i <*> decodeTxOut o
+            _ ->
+                fail
+                    "Failed to decode utxo entry. Expected an array of length \
+                    \2 as [output-reference, output]"
 
 decodeTip
     :: Json.Value

@@ -29,6 +29,7 @@ import Data.Maybe
 import Ogmios.Data.Json
     ( Json
     , SerializationMode (..)
+    , decodeUtxo
     , decodeWith
     , encodeAcquireFailure
     , encodeBlock
@@ -39,6 +40,8 @@ import Ogmios.Data.Json
     , encodeTip
     , encodeTxId
     , encodeTxIn
+    , encodeUtxo
+    , inefficientEncodingToValue
     , jsonToByteString
     , stringifyRdmrPtr
     )
@@ -169,9 +172,11 @@ import Test.Generators
     , genTip
     , genTxId
     , genUTxOResult
+    , genUtxo
     , genWithOrigin
     , generateWith
     , reasonablySized
+    , shrinkUtxo
     )
 import Test.Hspec
     ( Spec, SpecWith, context, expectationFailure, parallel, runIO, specify )
@@ -188,10 +193,13 @@ import Test.QuickCheck
     , Property
     , Result (..)
     , conjoin
+    , counterexample
     , elements
     , forAllBlind
+    , forAllShrinkBlind
     , genericShrink
     , oneof
+    , property
     , quickCheckWithResult
     , vectorOf
     , withMaxSuccess
@@ -202,6 +210,7 @@ import Test.QuickCheck.Arbitrary.Generic
 
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
+import qualified Data.Aeson.Encode.Pretty as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString as BS
 import qualified Test.QuickCheck as QC
@@ -255,6 +264,18 @@ goldenToJSON golden ref = parallel $ do
 
 spec :: Spec
 spec = do
+    context "JSON roundtrips" $ do
+        prop "encodeUtxo / decodeUtxo" $ forAllShrinkBlind genUtxo shrinkUtxo $ \utxo ->
+            let encoded = inefficientEncodingToValue (encodeUtxo utxo) in
+            case Json.parse decodeUtxo encoded of
+                Json.Error e ->
+                    property False
+                        & counterexample e
+                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+                Json.Success u ->
+                    utxo === u
+                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+
     context "validate chain-sync request/response against JSON-schema" $ do
         validateFromJSON
             (arbitrary @(Wsp.Request (FindIntersect Block)))

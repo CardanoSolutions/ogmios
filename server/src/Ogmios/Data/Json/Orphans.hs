@@ -77,7 +77,7 @@ instance PraosCrypto crypto => FromJSON (GenTx (CardanoBlock crypto)) where
 instance PraosCrypto crypto => FromJSON (GenTxId (CardanoBlock crypto)) where
     parseJSON = decodeTxId
 
-instance FromJSON (UTxO (AlonzoEra crypto)) where
+instance Crypto crypto => FromJSON (UTxO (AlonzoEra crypto)) where
     parseJSON = decodeUtxo
 
 instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
