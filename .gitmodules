@@ -13,3 +13,6 @@
 [submodule "server/config"]
 	path = server/config
 	url = https://github.com/input-output-hk/cardano-configurations.git
+[submodule "clients/Go"]
+	path = clients/Go
+	url = https://github.com/savaki/ogmigo.git
