@@ -1,7 +1,7 @@
 _config: !include "../../.hpack.config.yaml"
 
 name:                json-wsp
-version:             1.2.0
+version:             1.3.0
 github:              "cardanosolutions/ogmios"
 license:             MPL-2.0
 author:              "KtorZ <matthias.benkort@gmail.com>"

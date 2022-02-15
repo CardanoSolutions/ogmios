@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0] -- 2022-02-15
+
+### Added
+
+- `onMissingField` options to allow providing a possible default values for missing fields in records.
+
 ## [1.2.0] -- 2021-10-24
 
 ### Added
