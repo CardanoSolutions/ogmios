@@ -8,10 +8,11 @@
 
 ## Features
 
-- Fast synchronization of blocks from the Cardano network(s)
-- Transaction submission with enhanced error messages
-- Local mempool monitoring 
-- Full ledger state query support:
+- [Fast synchronization of blocks from the Cardano network(s)](https://ogmios.dev/mini-protocols/local-chain-sync/)
+- [Transaction submission with enhanced error messages](https://ogmios.dev/mini-protocols/local-tx-submission/#submittx)
+- [Evaluation of Plutus script execution units](https://ogmios.dev/mini-protocols/local-tx-submission/#evaluatetx)
+- [Local mempool monitoring](https://ogmios.dev/mini-protocols/local-tx-monitor/)
+- [Full ledger state query support:](https://ogmios.dev/mini-protocols/local-state-query/)
   - `blockHeight`
   - `chainTip`
   - `currentEpoch`
@@ -30,11 +31,10 @@
   - `stakeDistribution`
   - `systemStart`
   - `utxo`
-- TypeScript client & REPL
-- Structured JSON logging 
-- Health monitoring, with runtime and application statistics
-- Fully documented API with JSON-schema
-
+- [TypeScript client & REPL](https://github.com/CardanoSolutions/ogmios/tree/master/clients/TypeScript#cardano-ogmios-typescript-client-packages)
+- [Structured JSON logging](https://ogmios.dev/getting-started/monitoring/)
+- [Health monitoring, with runtime and application statistics](https://ogmios.dev/getting-started/monitoring/)
+- [Fully documented API with JSON-schema](https://ogmios.dev/api-reference/)
 
 ## Preview
 
