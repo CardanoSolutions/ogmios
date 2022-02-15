@@ -360,6 +360,9 @@
             , "contentEncoding": "base64"
             , "pattern": "^[A-Za-z0-9+/]=?=?$"
             }
+          , "additionalUtxoSet":
+            { "$ref": "#/definitions/Utxo"
+            }
           }
         }
       , "mirror":
