@@ -360,6 +360,9 @@
             , "contentEncoding": "base64"
             , "pattern": "^[A-Za-z0-9+/]=?=?$"
             }
+          , "additionalUtxoSet":
+            { "$ref": "#/definitions/Utxo"
+            }
           }
         }
       , "mirror":
@@ -3207,6 +3210,7 @@
             , { "$ref": "#/definitions/EvaluationFailure[UnknownInputs]" }
             , { "$ref": "#/definitions/EvaluationFailure[IncompatibleEra]" }
             , { "$ref": "#/definitions/EvaluationFailure[UncomputableSlotArithmetic]" }
+            , { "$ref": "#/definitions/EvaluationFailure[AdditionalUtxoOverlap]" }
             ]
         }
       }
@@ -3260,6 +3264,19 @@
       { "UncomputableSlotArithmetic":
         { "type": "string"
         , "description": "An error message, possibly meaningful but likely unreadable."
+        }
+      }
+    }
+
+  , "EvaluationFailure[AdditionalUtxoOverlap]":
+    { "type": "object"
+    , "description": "Happens when providing an additional UTXO set which overlaps with the UTXO on-chain."
+    , "additionalProperties": false
+    , "required": [ "AdditionalUtxoOverlap" ]
+    , "properties":
+      { "AdditionalUtxoOverlap":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/TxIn" }
         }
       }
     }
