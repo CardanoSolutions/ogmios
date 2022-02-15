@@ -1,3 +1,4 @@
+import { TxIn, TxOut, Utxo } from '@cardano-ogmios/schema'
 import { InteractionContext, TxSubmission, UnknownResultError } from '../../src'
 import { dummyInteractionContext } from '../util'
 
@@ -103,6 +104,41 @@ describe('TxSubmission', () => {
         expect(error).toHaveLength(1)
         expect(error[0]).toBeInstanceOf(TxSubmission.evaluationErrors.errors.UnknownInputs.Error)
       }
+    })
+
+    it('successfully evaluate execution units when unknown inputs are provided as additional utxo', async () => {
+      const additionalUtxoSet = [
+        [{
+          txId: '97b2af6dfc6a4825e934146f424cdd6ede43ff98c355d2ae3aa95b0f70b63949',
+          index: 3
+        } as TxIn,
+         {
+           address: 'addr_test1qp9zjnc775anpndl0jh3w7vyy25syfezf70m7qmleaky0fdu9mqe2tg33xyxlcqcy98w630c82cyzuwyrumn65cv57nqwxm2yd',
+           value: { coins: BigInt(10000000) }
+         } as TxOut
+        ]
+      ] as Utxo
+
+      const result = await TxSubmission.evaluateTx(
+        context,
+        ('84a6008282582078e963207a3fa50f5db363439a246d9c5631d398c7b7' +
+         '397435b6ec133432a64701825820db7dbf9eaa6094982ed4b9b735ce27' +
+         '5345f348194a7e8e9200fec7d1cad008eb010d81825820db7dbf9eaa60' +
+         '94982ed4b9b735ce275345f348194a7e8e9200fec7d1cad008eb010181' +
+         '825839004a294f1ef53b30cdbf7caf17798422a90227224f9fbf037fcf' +
+         '6c47a5bc2ec1952d1189886fe018214eed45f83ab04171c41f373d530c' +
+         'a7a61a3bb94e8002000e800b58206df8859ec92c3ff6bc0e2964793789' +
+         'e44e4c5abbcc9ff6f2387b94f4c2020e6ea303814e4d01000033222220' +
+         '0512001200110481800581840000182a820000f5f6'
+        ),
+        additionalUtxoSet
+      )
+      expect(result).toEqual({
+        'spend:0': {
+          memory: 1700,
+          steps: 476468
+        }
+      })
     })
 
     it('fails to evaluate execution units of non-Alonzo tx', async () => {
