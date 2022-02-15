@@ -62,17 +62,17 @@ Note that JSON does not support embedding raw bytes in objects. Bytes needs ther
 
 The response will indicate either a `SubmitSuccess` or `SubmitFail`. In case of failure, Ogmios will return a list of failures reported by the underlying node. Note that, if the transaction fails to parse, Ogmios will reply with a generic error. 
 
-Transactions in Shelley are rather _complicated_ and there is **a lot of** possible validation errors that can be returned. Be sure to have a look at the [API reference](../../api-reference) for an exhaustive list. 
+Transactions in Shelley are rather _complicated_ and there is **a lot of** possible validation errors that can be returned. Be sure to have a look at the [API reference](../../api-reference) for an exhaustive list.
 
 ## EvaluateTx
 
-Starting from [`5.2.0`](https://github.com/CardanoSolutions/ogmios/releases/tag/v5.2.0), Ogmios supports a modified version of the local-tx-submission protocol which also allows to evaluate the transaction execution units of scripts present in a transaction, **without actually submitting the transaction**. This is useful for DApp developers who wants a quick-and-easy to measure script execution costs. 
+Starting from [`5.2.0`](https://github.com/CardanoSolutions/ogmios/releases/tag/v5.2.0), Ogmios supports a modified version of the local-tx-submission protocol that allows to evaluate the execution units of scripts present in a given transaction, **without actually submitting the transaction**. This is useful for DApp developers who wants a quick-and-easy way to measure script execution costs.
 
 The API is purposely similar to the `SubmitTx` command, with a few semantic changes:
 
 - The transaction needs not to be fully authenticated. Key witnesses may be omitted unless they are relevant to the evaluation of scripts themselves!
-- The transaction needs not to be balanced; indeed, the evaluation does not perform a full run of all the ledger rules. So while the transaction must be well-formed, it may be _invalid_ from a protocol standpoint.
-- Execution budgets assigned to redeemers is expected to be set to zero since the goal of this endpoint is to figure out this very execution budget. 
+- The transaction needs not to be balanced; indeed, the evaluation does not perform a full execution of all the ledger rules. So while the transaction must be well-formed, it may be _invalid_ with regards to phase-1 validations.
+- Execution budgets assigned to redeemers are expected to be set to zero since the goal of this endpoint is to figure out these very execution budgets.
 
 From there, the endpoint works similarly to `SubmitTx`, but with different method and argument names:
 
@@ -86,7 +86,7 @@ From there, the endpoint works similarly to `SubmitTx`, but with different metho
 }
 ```
 
-Successful responses include a map of _redeemer pointers_ with the corresponding execution units. A redeemer pointer is a key composed of two parts: a _redeemer entity tag_ and a 0-based index related to that entity. There exists 4 kinds of redeemer entities: `spend` (for transaction inputs), `certificate` (for transaction certificates), `mint` (for transaction monetary policies) and `withdrawal` (for transaction's rewards withdrawals). The index therefore refers to the position of the script-locked entity within the set of entities in the transaction. 
+Successful responses include a map of [_redeemer pointers_]() with the corresponding execution units. A redeemer pointer is a key composed of two parts: a _redeemer entity tag_ and a 0-based index related to that entity. There exists 4 kinds of redeemer entities: `spend` (for transaction inputs), `certificate` (for transaction certificates), `mint` (for transaction monetary policies) and `withdrawal` (for transaction's rewards withdrawals). The index therefore refers to the position of the script-locked entity within the set of entities in the transaction.
 
 For example `spend:0` points to the first transaction input; `mint:2` would point to the 3rd policy referenced in the minting map... and so forth.  Here below is a JSON example of an evaluation result:
 
@@ -111,8 +111,43 @@ For example `spend:0` points to the first transaction input; `mint:2` would poin
 See the [full API reference](/api/modules/_cardano_ogmios_client.TxSubmission.evaluationErrors.html) for details about possible errors returned from this endpoint.
 
 {{% notice warning %}}
-If you're using typed Plutus validators (if you don't know what that is, then it is most likely what you're using), keep in mind that **adding or removing elements** to and off your transaction **will change its execution cost**. Indeed, the creation of the script context passed down to on-chain validators is done as part of the on-chain validator execution. Thus, **larger contexts require more execution units!** <br/><br/> This is the case for instance when you add a change output to a transaction or, a script integrity hash. A generally good way to approach this problem is to either: <br/><br/>**1.** make sure that the transaction you evaluate is as close as possible to the final transaction; that is, create dummy change outputs and script integrity hash before evaluating and fill-in their actual value once evaluated;<br/>**2.** keep some safe margin from the evaluated execution units; Execution units are relatively cheap on Cardano so, an extra 5 or 10% isn't much and saves you in most cases a lot of hassle to cope with small differences. 
+If you're using typed Plutus validators (if you don't know what that is, then it is most likely what you're using), keep in mind that **adding or removing elements** to and off your transaction **will change its execution cost**. Indeed, the creation of the script context passed down to on-chain validators is done as part of the on-chain validator execution. Thus, **larger contexts require more execution units!** <br/><br/> This is the case for instance when you add a change output to a transaction or, a script integrity hash. A generally good way to approach this problem is to either: <br/><br/>**1.** make sure that the transaction you evaluate is as close as possible to the final transaction; that is, create dummy change outputs and script integrity hash before evaluating and fill-in their actual value once evaluated;<br/>**2.** keep some safe margin from the evaluated execution units; Execution units are relatively cheap on Cardano so, an extra 5 or 10% isn't much and saves you in most cases a lot of hassle to cope with small differences.
 {{% /notice %}}
+
+### Additional UTXO Set
+
+In order to construct the validator script context, Ogmios needs to resolve transaction inputs from the Cardano blockchain. In case where a submitted transaction refers to non-existing inputs, the evaluation will fail with an [UnknownInputs](/api/modules/_cardano_ogmios_client.TxSubmission.evaluationErrors.html#UnknownInputs) error. This can be an impediment during development or, in scenarios where transactions are being prepared ahead of UTXO.
+
+In such scenarios, Ogmios gives way to provide an _additional UTXO set_ to be used during evaluation. Note that it will still try to resolve inputs that are known, but will use the provided UTXO set as a complement for those that are unknown or yet-to-know.
+
+{{% notice tip %}}
+The [structure of the additional UTXO set](/api/modules/_cardano_ogmios_schema.html#Utxo) is the same as UTXO sets returned in other part of the Ogmios' API; that is, an array of `[TxIn, TxOut]` tuples.
+{{% /notice %}}
+
+For example:
+
+```json
+{ 
+    "type": "jsonwsp/request",
+    "version": "1.0",
+    "servicename": "ogmios",
+    "methodname": "EvaluateTx",
+    "args": { 
+      "evaluate": "<base16 or base64>",
+      "additionalUtxoSet": [
+        [ 
+          { "txId":"97b2af6dfc6a4825e934146f424cdd6ede43ff98c355d2ae3aa95b0f70b63949"
+          , "index": 3
+          },
+          { "address": "addr_test1qp9zjnc775anpndl0jh3w7vyy25syfezf70m7qmleaky0fdu9mqe2tg33xyxlcqcy98w630c82cyzuwyrumn65cv57nqwxm2yd"
+          , "value": { "coins": 10000000 }
+          } 
+        ]
+      ]
+    }
+}
+```
+
 
 ## Full Example
 

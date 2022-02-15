@@ -20,6 +20,8 @@ import Cardano.Ledger.Keys
     ( KeyRole (..) )
 import Cardano.Ledger.Serialization
     ( ToCBORGroup )
+import Cardano.Ledger.Shelley.UTxO
+    ( UTxO (..) )
 import Cardano.Network.Protocol.NodeToClient
     ( Block, GenTxId )
 import Cardano.Slotting.Slot
@@ -91,6 +93,7 @@ import Test.QuickCheck
     , listOf1
     , oneof
     , scale
+    , shrinkList
     , vector
     )
 import Test.QuickCheck.Gen
@@ -106,6 +109,7 @@ import Test.Consensus.Cardano.Generators
     ()
 
 import qualified Data.Aeson as Json
+import qualified Data.Map as Map
 import qualified Ouroboros.Network.Point as Point
 
 import qualified Cardano.Ledger.Block as Ledger
@@ -198,6 +202,7 @@ genEvaluateTxError = frequency
       ))
     , (1, EvaluateTxUnknownInputs <$> reasonablySized arbitrary)
     , (1, EvaluateTxIncompatibleEra <$> elements [ "Byron", "Shelley", "Allegra", "Mary" ])
+    , (1, EvaluateTxAdditionalUtxoOverlap <$> reasonablySized arbitrary)
     ]
 
 genScriptFailure :: Gen (ScriptFailure StandardCrypto)
@@ -610,6 +615,17 @@ genMirror = oneof
     [ pure Nothing
     , Just . Json.toJSON <$> arbitrary @Int
     ]
+
+genUtxo
+    :: Gen (UTxO (AlonzoEra StandardCrypto))
+genUtxo =
+    reasonablySized arbitrary
+
+shrinkUtxo
+    :: UTxO (AlonzoEra StandardCrypto)
+    -> [UTxO (AlonzoEra StandardCrypto)]
+shrinkUtxo (UTxO u) =
+    UTxO . Map.fromList <$> shrinkList shrink (Map.toList u)
 
 --
 -- Helpers

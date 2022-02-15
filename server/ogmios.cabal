@@ -305,6 +305,7 @@ test-suite unit
   build-depends:
       QuickCheck
     , aeson
+    , aeson-pretty
     , base >=4.7 && <5
     , bytestring
     , cardano-client
@@ -313,6 +314,7 @@ test-suite unit
     , cardano-ledger-shelley
     , cardano-ledger-shelley-test
     , cardano-slotting
+    , containers
     , directory
     , file-embed
     , generic-arbitrary

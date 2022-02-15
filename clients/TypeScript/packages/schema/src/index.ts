@@ -1939,7 +1939,8 @@ export interface EvaluationFailure {
     | EvaluationFailureScriptFailures
     | EvaluationFailureUnknownInputs
     | EvaluationFailureIncompatibleEra
-    | EvaluationFailureUncomputableSlotArithmetic;
+    | EvaluationFailureUncomputableSlotArithmetic
+    | EvaluationFailureAdditionalUtxoOverlap;
 }
 export interface EvaluationFailureScriptFailures {
   ScriptFailures: {
@@ -2007,6 +2008,12 @@ export interface EvaluationFailureUncomputableSlotArithmetic {
    * An error message, possibly meaningful but likely unreadable.
    */
   UncomputableSlotArithmetic: string;
+}
+/**
+ * Happens when providing an additional UTXO set which overlaps with the UTXO on-chain.
+ */
+export interface EvaluationFailureAdditionalUtxoOverlap {
+  AdditionalUtxoOverlap: TxIn[];
 }
 export interface AcquireSuccess {
   AcquireSuccess: {

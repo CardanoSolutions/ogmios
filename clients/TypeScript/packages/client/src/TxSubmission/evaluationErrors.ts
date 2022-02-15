@@ -1,6 +1,7 @@
 import { CustomError } from 'ts-custom-error'
 import { safeJSON } from '../util'
 import {
+  EvaluationFailureAdditionalUtxoOverlap,
   EvaluationFailureUnknownInputs,
   EvaluationFailureIncompatibleEra,
   EvaluationFailureUncomputableSlotArithmetic,
@@ -14,11 +15,13 @@ import {
   ValidatorFailed
 } from '@cardano-ogmios/schema'
 
-export type UnknownInputs = EvaluationFailureUnknownInputs;
+export type AdditionalUtxoOverlap = EvaluationFailureAdditionalUtxoOverlap;
 export type IncompatibleEra = EvaluationFailureIncompatibleEra;
 export type UncomputableSlotArithmetic = EvaluationFailureUncomputableSlotArithmetic;
+export type UnknownInputs = EvaluationFailureUnknownInputs;
 
 export type EvaluateTxError =
+  | AdditionalUtxoOverlap
   | ExtraRedeemers
   | IllFormedExecutionBudget
   | IncompatibleEra
@@ -33,6 +36,16 @@ export type EvaluateTxError =
 
 /** @category TxSubmission */
 export const errors = {
+  AdditionalUtxoOverlap: {
+    assert: (item: EvaluateTxError): item is AdditionalUtxoOverlap =>
+      (item as AdditionalUtxoOverlap).AdditionalUtxoOverlap !== undefined,
+    Error: class AdditionalUtxoOverlapError extends CustomError {
+      public constructor (rawError: AdditionalUtxoOverlap) {
+        super()
+        this.message = safeJSON.stringify(rawError.AdditionalUtxoOverlap)
+      }
+    }
+  },
   ExtraRedeemers: {
     assert: (item: EvaluateTxError): item is ExtraRedeemers =>
       (item as ExtraRedeemers).extraRedeemers !== undefined,

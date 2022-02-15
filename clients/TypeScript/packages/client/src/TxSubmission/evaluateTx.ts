@@ -1,7 +1,7 @@
 import { InteractionContext } from '../Connection'
 import { UnknownResultError } from '../errors'
 import { errors } from './evaluationErrors'
-import { Ogmios, ExUnits } from '@cardano-ogmios/schema'
+import { Ogmios, ExUnits, Utxo } from '@cardano-ogmios/schema'
 import { Query } from '../StateQuery'
 
 export interface EvaluationResult {
@@ -15,14 +15,17 @@ export interface EvaluationResult {
  *
  * @category TxSubmission
  */
-export const evaluateTx = (context: InteractionContext, bytes: string) =>
+export const evaluateTx = (context: InteractionContext, bytes: string, additionalUtxoSet?: Utxo) =>
   Query<
     Ogmios['EvaluateTx'],
     Ogmios['EvaluateTxResponse'],
     EvaluationResult
   >({
     methodName: 'EvaluateTx',
-    args: { evaluate: bytes }
+    args: {
+      ...(additionalUtxoSet !== undefined ? {} : { additionalUtxoSet }),
+      evaluate: bytes
+    }
   }, {
     handler: (response, resolve, reject) => {
       if (response.methodname === 'EvaluateTx') {
@@ -62,6 +65,8 @@ export const evaluateTx = (context: InteractionContext, bytes: string) =>
             return reject([new errors.IncompatibleEra.Error(EvaluationFailure)])
           } else if (errors.UncomputableSlotArithmetic.assert(EvaluationFailure)) {
             return reject([new errors.UncomputableSlotArithmetic.Error(EvaluationFailure)])
+          } else if (errors.AdditionalUtxoOverlap.assert(EvaluationFailure)) {
+            return reject([new errors.AdditionalUtxoOverlap.Error(EvaluationFailure)])
           }
         }
       }

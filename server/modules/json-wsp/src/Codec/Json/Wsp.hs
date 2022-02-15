@@ -101,13 +101,14 @@ type ToFault = FaultCode -> String -> Fault
 data Options = Options
     { fieldLabelModifier :: String -> String
     , constructorTagModifier :: String -> String
+    , onMissingField :: Text -> Json.Parser Json.Value
     }
 
 -- | Default options for the generic parsing: do nothing.
 --
 -- @since 1.0.0
 defaultOptions :: Options
-defaultOptions = Options id id
+defaultOptions = Options id id (\k -> fail $ "key " ++ show k ++ " not found")
 
 -- | Parse a given Json 'Value' as a JSON-WSP 'Request'.
 --
@@ -296,7 +297,11 @@ instance (GWSPFromJSON f, GWSPFromJSON g) => GWSPFromJSON (f :*: g) where
 instance (Selector s, GWSPFromJSON f) => GWSPFromJSON (S1 s f) where
     gWSPFromJSON opts = Json.withObject "S1" $ \obj -> do
         let fieldName = T.pack $ fieldLabelModifier opts $ selName (undefined :: S1 s f a)
-        (_, k1) <- obj .: "args" >>= (.: fieldName) >>= gWSPFromJSON opts
+        (_, k1) <- obj .: "args"
+            >>= (.:? fieldName)
+            >>= maybe
+                (gWSPFromJSON opts =<< onMissingField opts fieldName)
+                (gWSPFromJSON opts)
         pure (Nothing, M1 k1)
 
 -- Unary constructor, nothing to do, the constructor name has been verified

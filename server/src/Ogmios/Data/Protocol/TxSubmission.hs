@@ -3,6 +3,7 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- NOTE:
@@ -60,13 +61,13 @@ module Ogmios.Data.Protocol.TxSubmission
     , SystemStart
     , Tx
     , TxIn
-    , UTxO
+    , UTxO (..)
     ) where
 
 import Ogmios.Data.Json.Prelude
 
 import Ogmios.Data.Protocol
-    ()
+    ( MostRecentEra )
 
 import Cardano.Ledger.Alonzo
     ( AlonzoEra )
@@ -131,7 +132,10 @@ data TxSubmissionCodecs block = TxSubmissionCodecs
     }
 
 mkTxSubmissionCodecs
-    :: forall block. (FromJSON (SerializedTx block))
+    :: forall block.
+        ( FromJSON (SerializedTx block)
+        , FromJSON (UTxO (MostRecentEra block))
+        )
     => (GenTxId block -> Json)
     -> (SubmitTxError block -> Json)
     -> (RdmrPtr -> Text)
@@ -288,16 +292,32 @@ mkSubmitTxResponse tx = \case
 --
 
 data EvaluateTx block
-    = EvaluateTx { evaluate :: SerializedTx block }
+    = EvaluateTx
+        { evaluate :: SerializedTx block
+        , additionalUtxoSet :: UTxO (MostRecentEra block)
+        }
     deriving (Generic)
-deriving instance Show (SerializedTx block) => Show (EvaluateTx block)
+deriving instance
+    ( Show (SerializedTx block)
+    , Show (UTxO (MostRecentEra block))
+    ) => Show (EvaluateTx block)
 
 _decodeEvaluateTx
-    :: FromJSON (SerializedTx block)
+    :: forall block era.
+        ( era ~ MostRecentEra block
+        , FromJSON (SerializedTx block)
+        , FromJSON (UTxO era)
+        )
     => Json.Value
     -> Json.Parser (Wsp.Request (EvaluateTx block))
 _decodeEvaluateTx =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    Wsp.genericFromJSON $ Wsp.defaultOptions
+        { Wsp.onMissingField = \fieldName ->
+            if fieldName == "additionalUtxoSet" then
+                pure (Json.Array mempty)
+            else
+                Wsp.onMissingField Wsp.defaultOptions fieldName
+        }
 
 data EvaluateTxResponse block
     = EvaluationFailure (EvaluateTxError block)
@@ -309,6 +329,7 @@ data EvaluateTxError block
     | EvaluateTxUnknownInputs (Set (TxIn (Crypto block)))
     | EvaluateTxIncompatibleEra Text
     | EvaluateTxUncomputableSlotArithmetic PastHorizonException
+    | EvaluateTxAdditionalUtxoOverlap (Set (TxIn (Crypto block)))
     deriving (Show)
 
 -- | Shorthand constructor for 'EvaluateTxResponse'
@@ -363,6 +384,15 @@ _encodeEvaluateTxResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFail
               , encodeObject
                 [ ( "UncomputableSlotArithmetic"
                   , encodeText (show pastHorizon)
+                  )
+                ]
+              )
+            ]
+        EvaluationFailure (EvaluateTxAdditionalUtxoOverlap inputs) -> encodeObject
+            [ ( "EvaluationFailure"
+              , encodeObject
+                [ ( "AdditionalUtxoOverlap"
+                  , encodeFoldable encodeTxIn inputs
                   )
                 ]
               )
