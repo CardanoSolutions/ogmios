@@ -44,13 +44,28 @@
 
 ## Sponsors
 
-| [Ray Network][Ray Network] | [ccvault.io][ccvault] | [kayandra][kayandra] | [tapiocapool][tapiocapool] | 
-| --- | --- | --- | --- |
-| [<img src="https://avatars.githubusercontent.com/u/65092852" height=100 width=100 />][Ray Network] | [<img src="https://avatars.githubusercontent.com/u/86010408" height=100 width=100 />][Ray Network] | [<img src="https://avatars.githubusercontent.com/u/5002506" height=100 width=100>][kayandra] | [<img src="https://avatars.githubusercontent.com/u/80033713" height=100 width=100 />][tapiocapool] |
+[![](https://avatars.githubusercontent.com/u/65092852?s=75&v=4)][Ray Network] 
+[![](https://avatars.githubusercontent.com/u/70073210?s=75&v=4)][Blockfrost]
+[![](https://avatars.githubusercontent.com/u/83610786?s=75&v=4)][SundaeSwap]
+[![](https://avatars.githubusercontent.com/u/9424043?s=75&v=4)][JacobLambda]
+[![](https://avatars.githubusercontent.com/u/86010408?s=75&v=4)][CCVault]
+[![](https://avatars.githubusercontent.com/u/3670430?s=75&v=4)][CodyButz]
+[![](https://avatars.githubusercontent.com/u/653886?s=75&v=4)][Scarmuega]
+[<img src="https://avatars.githubusercontent.com/u/83517471?s=75&v=4" width=75 height=75 />][Artem Wright]
+[![](https://avatars.githubusercontent.com/u/5002506?s=75&v=4)][kayandra] 
+[![](https://avatars.githubusercontent.com/u/80033713?s=75&v=4)][tapiocapool]
+
+<p align="right">:heart:</p>
 
 [Ray Network]: https://rraayy.com/
+[Blockfrost]: https://blockfrost.io/
+[SundaeSwap]: https://sundaeswap.finance/
+[JacobLambda]: https://github.com/jacoblambda
+[CCVault]: https://ccvault.io/
+[Scarmuega]: https://github.com/scarmuega
+[CodyButz]: https://github.com/codybutz
+[Artem Wright]: https://github.com/artemwright
 [tapiocapool]: https://github.com/tapiocapool
-[ccvault]: https://ccvault.io/
 [kayandra]: https://github.com/kayandra
 
 <hr/>
