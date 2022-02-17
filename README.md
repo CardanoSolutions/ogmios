@@ -55,7 +55,7 @@
 [![](https://avatars.githubusercontent.com/u/5002506?s=75&v=4)][kayandra] 
 [![](https://avatars.githubusercontent.com/u/80033713?s=75&v=4)][tapiocapool]
 
-<p align="right">:heart:</p>
+<p align="center">:heart:</p>
 
 [Ray Network]: https://rraayy.com/
 [Blockfrost]: https://blockfrost.io/
@@ -74,8 +74,6 @@
   <a href="https://cardanosolutions.github.io/ogmios">:book: User Manual</a>
   |
   <a href="CONTRIBUTING.md">:triangular_ruler: Contributing</a>
-  |
-  <a href="SPONSORS.md">:gift_heart: Sponsors</a>
   |
   <a href="CHANGELOG.md">:floppy_disk: Changelog</a>
 </p>
