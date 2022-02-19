@@ -44,26 +44,30 @@
 
 ## Sponsors
 
-[![](https://avatars.githubusercontent.com/u/65092852?s=75&v=4)][Ray Network] 
-[![](https://avatars.githubusercontent.com/u/70073210?s=75&v=4)][Blockfrost]
-[![](https://avatars.githubusercontent.com/u/83610786?s=75&v=4)][SundaeSwap]
-[![](https://avatars.githubusercontent.com/u/9424043?s=75&v=4)][JacobLambda]
-[![](https://avatars.githubusercontent.com/u/86010408?s=75&v=4)][CCVault]
-[![](https://avatars.githubusercontent.com/u/3670430?s=75&v=4)][CodyButz]
-[![](https://avatars.githubusercontent.com/u/653886?s=75&v=4)][Scarmuega]
-[<img src="https://avatars.githubusercontent.com/u/83517471?s=75&v=4" width=75 height=75 />][Artem Wright]
-[![](https://avatars.githubusercontent.com/u/5002506?s=75&v=4)][kayandra] 
-[![](https://avatars.githubusercontent.com/u/80033713?s=75&v=4)][tapiocapool]
+[![](https://avatars.githubusercontent.com/u/65092852?s=128&v=4)][Ray Network] 
+[![](https://avatars.githubusercontent.com/u/83610786?s=128&v=4)][SundaeSwap]
+[![](https://avatars.githubusercontent.com/u/108710?s=128&v=4)][Savaki]
+[![](https://avatars.githubusercontent.com/u/70073210?s=128&v=4)][Blockfrost]
+[![](https://avatars.githubusercontent.com/u/9424043?s=128&v=4)][JacobLambda]
+[![](https://avatars.githubusercontent.com/u/86010408?s=128&v=4)][CCVault]
+[![](https://avatars.githubusercontent.com/u/3670430?s=128&v=4)][CodyButz]
+[![](https://avatars.githubusercontent.com/u/653886?s=128&v=4)][Scarmuega]
+[<img src="https://avatars.githubusercontent.com/u/41247403?s=128&v=4" width=128 height=128 />][mrbrinker]
+[<img src="https://avatars.githubusercontent.com/u/83517471?s=128&v=4" width=128 height=128 />][Artem Wright]
+[![](https://avatars.githubusercontent.com/u/5002506?s=128&v=4)][kayandra] 
+[![](https://avatars.githubusercontent.com/u/80033713?s=128&v=4)][tapiocapool]
 
 <p align="center">:heart:</p>
 
 [Ray Network]: https://rraayy.com/
-[Blockfrost]: https://blockfrost.io/
 [SundaeSwap]: https://sundaeswap.finance/
+[Savaki]: https://github.com/savaki
+[Blockfrost]: https://blockfrost.io/
 [JacobLambda]: https://github.com/jacoblambda
 [CCVault]: https://ccvault.io/
 [Scarmuega]: https://github.com/scarmuega
 [CodyButz]: https://github.com/codybutz
+[mrbrinker]: https://github.com/mrbrinker
 [Artem Wright]: https://github.com/artemwright
 [tapiocapool]: https://github.com/tapiocapool
 [kayandra]: https://github.com/kayandra
