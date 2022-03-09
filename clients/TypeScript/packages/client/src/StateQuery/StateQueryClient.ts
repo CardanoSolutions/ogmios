@@ -31,6 +31,7 @@ import {
   poolsRanking,
   proposedProtocolParameters,
   rewardsProvenance,
+  rewardsProvenanceNew,
   stakeDistribution,
   systemStart,
   utxo
@@ -62,6 +63,7 @@ export interface StateQueryClient {
   poolsRanking: () => ReturnType<typeof poolsRanking>
   proposedProtocolParameters: () => ReturnType<typeof proposedProtocolParameters>
   rewardsProvenance: () => ReturnType<typeof rewardsProvenance>
+  rewardsProvenanceNew: () => ReturnType<typeof rewardsProvenanceNew>
   stakeDistribution: () => ReturnType<typeof stakeDistribution>
   systemStart: () => ReturnType<typeof systemStart>
   utxo: (filter?: Address[]|TxIn[]) => ReturnType<typeof utxo>
@@ -172,6 +174,10 @@ export const createStateQueryClient = async (
       rewardsProvenance: () => {
         ensureSocketIsOpen(socket)
         return rewardsProvenance(context)
+      },
+      rewardsProvenanceNew: () => {
+        ensureSocketIsOpen(socket)
+        return rewardsProvenanceNew(context)
       },
       stakeDistribution: () => {
         ensureSocketIsOpen(socket)

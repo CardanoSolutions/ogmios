@@ -98,11 +98,11 @@ expectWSPResponse _proxy recv wantMirror = do
     let gotMethod = "methodname" `at` json
     let wantMethod = Json.toJSON $ symbolVal (Proxy @method)
     when (gotMethod /= Just wantMethod) $
-        throwIO $ UnexpectedResponse "methodname" gotMethod wantMethod
+        throwIO $ UnexpectedResponse "methodname" json gotMethod wantMethod
 
     let gotMirror = "reflection" `at` json
     when (gotMirror /= Just wantMirror) $
-        throwIO $ UnexpectedResponse "reflection" gotMirror wantMirror
+        throwIO $ UnexpectedResponse "reflection" json gotMirror wantMirror
 
 expectWSPFault
     :: (MonadThrow m)
@@ -116,11 +116,11 @@ expectWSPFault recv wantCode wantMirror = do
     let gotCode = ("fault" `at` json) >>= at "code"
     let wantCode' = Json.toJSON wantCode
     when (gotCode /= Just wantCode') $
-        throwIO $ UnexpectedResponse "fault" gotCode wantCode'
+        throwIO $ UnexpectedResponse "fault" json gotCode wantCode'
 
     let gotMirror = "reflection" `at` json
     when (gotMirror /= Just wantMirror) $
-        throwIO $ UnexpectedResponse "reflection" gotMirror wantMirror
+        throwIO $ UnexpectedResponse "reflection" json gotMirror wantMirror
 
 --
 -- Exceptions
@@ -134,6 +134,7 @@ instance Exception PeerTerminatedUnexpectedly
 
 data UnexpectedResponse = UnexpectedResponse
     { what :: String
+    , rawJson :: Json.Value
     , gotResponse :: Maybe Json.Value
     , expectedResponse :: Json.Value
     } deriving Show

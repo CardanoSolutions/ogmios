@@ -14,8 +14,10 @@ module Ogmios.Data.JsonSpec
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.Crypto
+    ( StandardCrypto )
 import Cardano.Network.Protocol.NodeToClient
-    ( Block )
+    ( Block, GenTxId )
 import Control.Monad.Class.MonadAsync
     ( forConcurrently_ )
 import Data.Aeson
@@ -27,13 +29,21 @@ import Data.Maybe
 import Ogmios.Data.Json
     ( Json
     , SerializationMode (..)
+    , decodeUtxo
     , decodeWith
     , encodeAcquireFailure
     , encodeBlock
+    , encodeExUnits
     , encodePoint
+    , encodeScriptFailure
     , encodeSubmitTxError
     , encodeTip
+    , encodeTxId
+    , encodeTxIn
+    , encodeUtxo
+    , inefficientEncodingToValue
     , jsonToByteString
+    , stringifyRdmrPtr
     )
 import Ogmios.Data.Json.Orphans
     ()
@@ -56,6 +66,7 @@ import Ogmios.Data.Json.Query
     , parseGetPoolParameters
     , parseGetPoolsRanking
     , parseGetProposedPParamsUpdates
+    , parseGetRewardInfoPools
     , parseGetRewardProvenance
     , parseGetStakeDistribution
     , parseGetSystemStart
@@ -89,12 +100,42 @@ import Ogmios.Data.Protocol.StateQuery
     , _encodeRelease
     , _encodeReleaseResponse
     )
+import Ogmios.Data.Protocol.TxMonitor
+    ( AwaitAcquire
+    , AwaitAcquireResponse (..)
+    , HasTx
+    , HasTxResponse (..)
+    , MempoolSizeAndCapacity
+    , NextTx
+    , NextTxResponse (..)
+    , ReleaseMempool
+    , ReleaseMempoolResponse (..)
+    , SizeAndCapacity
+    , SizeAndCapacityResponse (..)
+    , _decodeAwaitAcquire
+    , _decodeHasTx
+    , _decodeNextTx
+    , _decodeReleaseMempool
+    , _decodeSizeAndCapacity
+    , _encodeAwaitAcquire
+    , _encodeAwaitAcquireResponse
+    , _encodeHasTx
+    , _encodeHasTxResponse
+    , _encodeNextTx
+    , _encodeNextTxResponse
+    , _encodeReleaseMempool
+    , _encodeReleaseMempoolResponse
+    , _encodeSizeAndCapacity
+    , _encodeSizeAndCapacityResponse
+    )
 import Ogmios.Data.Protocol.TxSubmission
-    ( SubmitTxResponse, _encodeSubmitTxResponse )
+    ( EvaluateTxResponse
+    , SubmitTxResponse (..)
+    , _encodeEvaluateTxResponse
+    , _encodeSubmitTxResponse
+    )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras, GenTx, HardForkApplyTxErr (..) )
-import Ouroboros.Consensus.Shelley.Protocol
-    ( StandardCrypto )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
@@ -113,8 +154,10 @@ import Test.Generators
     , genCompactGenesisResult
     , genDelegationAndRewardsResult
     , genEpochResult
+    , genEvaluateTxResponse
     , genHardForkApplyTxErr
     , genInterpreterResult
+    , genMempoolSizeAndCapacity
     , genNonMyopicMemberRewardsResult
     , genPParamsResult
     , genPoint
@@ -124,13 +167,18 @@ import Test.Generators
     , genPoolParametersResult
     , genPoolsRankingResult
     , genProposedPParamsResult
+    , genRewardInfoPoolsResult
     , genRewardProvenanceResult
+    , genSubmitResult
     , genSystemStart
     , genTip
+    , genTxId
     , genUTxOResult
+    , genUtxo
     , genWithOrigin
     , generateWith
     , reasonablySized
+    , shrinkUtxo
     )
 import Test.Hspec
     ( Spec, SpecWith, context, expectationFailure, parallel, runIO, specify )
@@ -147,10 +195,13 @@ import Test.QuickCheck
     , Property
     , Result (..)
     , conjoin
+    , counterexample
     , elements
     , forAllBlind
+    , forAllShrinkBlind
     , genericShrink
     , oneof
+    , property
     , quickCheckWithResult
     , vectorOf
     , withMaxSuccess
@@ -161,6 +212,7 @@ import Test.QuickCheck.Arbitrary.Generic
 
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
+import qualified Data.Aeson.Encode.Pretty as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString as BS
 import qualified Test.QuickCheck as QC
@@ -214,6 +266,18 @@ goldenToJSON golden ref = parallel $ do
 
 spec :: Spec
 spec = do
+    context "JSON roundtrips" $ do
+        prop "encodeUtxo / decodeUtxo" $ forAllShrinkBlind genUtxo shrinkUtxo $ \utxo ->
+            let encoded = inefficientEncodingToValue (encodeUtxo utxo) in
+            case Json.parse decodeUtxo encoded of
+                Json.Error e ->
+                    property False
+                        & counterexample e
+                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+                Json.Success u ->
+                    utxo === u
+                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+
     context "validate chain-sync request/response against JSON-schema" $ do
         validateFromJSON
             (arbitrary @(Wsp.Request (FindIntersect Block)))
@@ -243,18 +307,85 @@ spec = do
             "RequestNextResponse_1.json"
             "ogmios.wsp.json#/properties/RequestNextResponse"
 
-    context "validate tx submission request/response against JSON-schema" $ do
+    context "validate tx-submission request/response against JSON-schema" $ do
         prop "deserialise signed transactions" prop_parseSubmitTx
 
         validateToJSON
             (arbitrary @(Wsp.Response (SubmitTxResponse Block)))
-            (_encodeSubmitTxResponse (Proxy @Block) encodeSubmitTxError)
+            (_encodeSubmitTxResponse (Proxy @Block) encodeTxId encodeSubmitTxError)
             (200, "TxSubmission/Response/SubmitTx")
             "ogmios.wsp.json#/properties/SubmitTxResponse"
+
+        validateToJSON
+            (arbitrary @(Wsp.Response (EvaluateTxResponse Block)))
+            (_encodeEvaluateTxResponse (Proxy @Block) stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn)
+            (100, "TxSubmission/Response/EvaluateTx")
+            "ogmios.wsp.json#/properties/EvaluateTxResponse"
 
         goldenToJSON
             "SubmitTxResponse_1.json"
             "ogmios.wsp.json#/properties/SubmitTxResponse"
+
+    context "validate tx monitor request/response against JSON-schema" $ do
+        validateFromJSON
+            (arbitrary @(Wsp.Request AwaitAcquire))
+            (_encodeAwaitAcquire, _decodeAwaitAcquire)
+            (10, "TxMonitor/Request/AwaitAcquire")
+            "ogmios.wsp.json#/properties/AwaitAcquire"
+
+        validateToJSON
+            (arbitrary @(Wsp.Response AwaitAcquireResponse))
+            _encodeAwaitAcquireResponse
+            (10, "TxMonitor/Response/AwaitAcquire")
+            "ogmios.wsp.json#/properties/AwaitAcquireResponse"
+
+        validateFromJSON
+            (arbitrary @(Wsp.Request NextTx))
+            (_encodeNextTx, _decodeNextTx)
+            (10, "TxMonitor/Request/NextTx")
+            "ogmios.wsp.json#/properties/NextTx"
+
+        validateToJSON
+            (arbitrary @(Wsp.Response (NextTxResponse Block)))
+            (_encodeNextTxResponse encodeTxId)
+            (10, "TxMonitor/Response/NextTx")
+            "ogmios.wsp.json#/properties/NextTxResponse"
+
+        validateFromJSON
+            (arbitrary @(Wsp.Request (HasTx Block)))
+            (_encodeHasTx encodeTxId, _decodeHasTx)
+            (10, "TxMonitor/Request/HasTx")
+            "ogmios.wsp.json#/properties/HasTx"
+
+        validateToJSON
+            (arbitrary @(Wsp.Response HasTxResponse))
+            _encodeHasTxResponse
+            (10, "TxMonitor/Response/HasTx")
+            "ogmios.wsp.json#/properties/HasTxResponse"
+
+        validateFromJSON
+            (arbitrary @(Wsp.Request SizeAndCapacity))
+            (_encodeSizeAndCapacity, _decodeSizeAndCapacity)
+            (10, "TxMonitor/Request/SizeAndCapacity")
+            "ogmios.wsp.json#/properties/SizeAndCapacity"
+
+        validateToJSON
+            (arbitrary @(Wsp.Response SizeAndCapacityResponse))
+            _encodeSizeAndCapacityResponse
+            (10, "TxMonitor/Response/SizeAndCapacity")
+            "ogmios.wsp.json#/properties/SizeAndCapacityResponse"
+
+        validateFromJSON
+            (arbitrary @(Wsp.Request ReleaseMempool))
+            (_encodeReleaseMempool, _decodeReleaseMempool)
+            (10, "TxMonitor/Request/ReleaseMempool")
+            "ogmios.wsp.json#/properties/ReleaseMempool"
+
+        validateToJSON
+            (arbitrary @(Wsp.Response ReleaseMempoolResponse))
+            _encodeReleaseMempoolResponse
+            (10, "TxMonitor/Response/ReleaseMempool")
+            "ogmios.wsp.json#/properties/ReleaseMempoolResponse"
 
     context "validate acquire request/response against JSON-schema" $ do
         validateFromJSON
@@ -389,6 +520,12 @@ spec = do
             "ogmios.wsp.json#/properties/QueryResponse[rewardsProvenance]"
 
         validateQuery
+            [aesonQQ|"rewardsProvenance'"|]
+            ( parseGetRewardInfoPools genRewardInfoPoolsResult
+            ) (100, "StateQuery/Response/Query[rewardsProvenance']")
+            "ogmios.wsp.json#/properties/QueryResponse[rewardsProvenance']"
+
+        validateQuery
             [aesonQQ|"poolIds"|]
             ( parseGetPoolIds genPoolIdsResult
             ) (10, "StateQuery/Response/Query[poolIds]")
@@ -474,8 +611,18 @@ instance Arbitrary RequestNext where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto))) where
+instance Arbitrary (SubmitTxResponse Block) where
+    shrink = genericShrink
+    arbitrary = genericArbitrary
+
+instance Arbitrary (HardForkApplyTxErr (CardanoEras StandardCrypto)) where
     arbitrary = genHardForkApplyTxErr
+
+instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto))) where
+    arbitrary = genSubmitResult
+
+instance Arbitrary (EvaluateTxResponse Block) where
+    arbitrary = genEvaluateTxResponse
 
 instance Arbitrary (Acquire Block) where
     shrink = genericShrink
@@ -496,6 +643,46 @@ instance Arbitrary ReleaseResponse where
 instance Arbitrary AcquireFailure where
     arbitrary = genAcquireFailure
 
+instance Arbitrary AwaitAcquire where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
+
+instance Arbitrary AwaitAcquireResponse where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
+
+instance Arbitrary NextTx where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
+
+instance Arbitrary (NextTxResponse Block) where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
+
+instance Arbitrary (HasTx Block) where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
+
+instance Arbitrary HasTxResponse where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
+
+instance Arbitrary SizeAndCapacity where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
+
+instance Arbitrary SizeAndCapacityResponse where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
+
+instance Arbitrary ReleaseMempool where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
+
+instance Arbitrary ReleaseMempoolResponse where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
+
 instance Arbitrary (Point Block) where
     arbitrary = genPoint
 
@@ -504,6 +691,12 @@ instance Arbitrary (Tip Block) where
 
 instance Arbitrary Block where
     arbitrary = genBlock
+
+instance Arbitrary (GenTxId Block) where
+    arbitrary = genTxId
+
+instance Arbitrary MempoolSizeAndCapacity where
+    arbitrary = genMempoolSizeAndCapacity
 
 --
 -- Local Tx Submit

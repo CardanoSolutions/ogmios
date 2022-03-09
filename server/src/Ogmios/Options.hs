@@ -5,6 +5,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -fno-warn-partial-fields #-}
 
 module Ogmios.Options
     ( -- * Command
@@ -79,6 +80,7 @@ import qualified Data.Yaml.Pretty as Yaml
 data Command (f :: Type -> Type)
     = Start (f NetworkParameters) Configuration (Tracers IO 'MinSeverities)
     | Version
+    | HealthCheck { healthCheckPort :: !Int }
 
 deriving instance Eq (f NetworkParameters) => Eq (Command f)
 deriving instance Show (f NetworkParameters) => Show (Command f)
@@ -87,6 +89,7 @@ parseOptions :: IO (Command Identity)
 parseOptions =
     customExecParser (prefs showHelpOnEmpty) parserInfo >>= \case
         Version -> pure Version
+        HealthCheck{healthCheckPort} -> pure HealthCheck{healthCheckPort}
         Start _ cfg@Configuration{nodeConfig} lvl -> do
             networkParameters <- parseNetworkParameters nodeConfig
             pure $ Start (Identity networkParameters) cfg lvl
@@ -113,7 +116,9 @@ parserInfo = info (helper <*> parser) $
         ])
   where
     parser =
-        versionOption
+        versionOptionOrCommand
+        <|>
+        healthCheckCommand
         <|>
         (Start Proxy
             <$> (Configuration
@@ -221,8 +226,8 @@ logLevelOption component =
         string $ "Minimal severity of " <> toString component <> " log messages."
 
 -- | [--version|-v] | version
-versionOption :: Parser (Command f)
-versionOption =
+versionOptionOrCommand :: Parser (Command f)
+versionOptionOrCommand =
     flag' Version (mconcat
         [ long "version"
         , short 'v'
@@ -235,6 +240,26 @@ versionOption =
         ])
   where
     helpText = "Show the software current version and build revision."
+
+-- | health-check
+healthCheckCommand :: Parser (Command f)
+healthCheckCommand =
+    subparser $ command "health-check" $ info (helper <*> parser) $ mempty
+        <> progDesc helpText
+        <> headerDoc (Just $ vsep
+            [ string $ toString $ unwords
+                [ "Handy command to check whether an Ogmios server is up-and-running,"
+                , "and correctly connected to a network / cardano-node."
+                ]
+            , mempty
+            , string $ toString $ unwords
+                [ "This can, for example, be wired to Docker's HEALTHCHECK"
+                , "feature easily."
+                ]
+            ])
+  where
+    parser = HealthCheck <$> serverPortOption
+    helpText = "Performs a health check against a running server."
 
 --
 -- Environment

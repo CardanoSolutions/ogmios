@@ -140,7 +140,7 @@ let
         ];
       }
       {
-        src = inputs.cardano-ledger-specs;
+        src = inputs.cardano-ledger;
         subdirs = [
           "eras/alonzo/impl"
           "eras/alonzo/test-suite"
@@ -150,17 +150,17 @@ let
           "eras/byron/ledger/executable-spec"
           "eras/byron/ledger/impl"
           "eras/byron/ledger/impl/test"
-          "eras/shelley-ma/impl"
-          "eras/shelley-ma/test-suite"
-          "eras/shelley/chain-and-ledger/dependencies/non-integer"
-          "eras/shelley/chain-and-ledger/executable-spec"
-          "eras/shelley/chain-and-ledger/shelley-spec-ledger-test"
           "eras/shelley/impl"
           "eras/shelley/test-suite"
+          "eras/shelley-ma/impl"
+          "eras/shelley-ma/test-suite"
+          "libs/cardano-data"
           "libs/cardano-ledger-core"
           "libs/cardano-ledger-pretty"
           "libs/cardano-protocol-tpraos"
+          "libs/compact-map"
           "libs/non-integral"
+          "libs/set-algebra"
           "libs/small-steps"
           "libs/small-steps-test"
         ];
@@ -233,6 +233,8 @@ let
           "ouroboros-consensus-byron"
           "ouroboros-consensus-byronspec"
           "ouroboros-consensus-byron-test"
+          "ouroboros-consensus-cardano"
+          "ouroboros-consensus-protocol"
           "ouroboros-consensus-shelley"
           "ouroboros-consensus-shelley-test"
           "ouroboros-consensus-cardano"
@@ -241,6 +243,7 @@ let
           "ouroboros-network"
           "ouroboros-network-framework"
           "ouroboros-network-testing"
+          "strict-stm"
           "typed-protocols"
           "typed-protocols-cborg"
           "typed-protocols-examples"

@@ -1,1 +1,1 @@
-{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SubmitTx","result":{"SubmitFail":[]},"reflection":14}
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SubmitTx","result":{"SubmitSuccess":{"txId":"df5078aee07dd171a343fb99d5fc1b5462fb3c94d82bf72dc1b77d9c0aceec29"}},"reflection":14}

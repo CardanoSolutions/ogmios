@@ -23,6 +23,9 @@ module Ogmios.Data.Json.Query
     , Interpreter
     , Sh.RewardProvenance
     , Sh.RewardProvenancePool
+    , RewardProvenance'
+    , Sh.Api.RewardInfoPool
+    , Sh.Api.RewardParams
     , Sh.Desirability
     , Sh.PoolParams
 
@@ -39,7 +42,13 @@ module Ogmios.Data.Json.Query
     , encodePoint
     , encodePoolDistr
     , encodePoolParameters
+    , encodeRewardInfoPool
+    , encodeRewardInfoPools
     , encodeRewardProvenance
+
+      -- * Decoders
+    , decodeTxIn
+    , decodeTxOut
 
       -- * Parsers
     , parseGetBlockHeight
@@ -56,6 +65,7 @@ module Ogmios.Data.Json.Query
     , parseGetPoolParameters
     , parseGetPoolsRanking
     , parseGetProposedPParamsUpdates
+    , parseGetRewardInfoPools
     , parseGetRewardProvenance
     , parseGetStakeDistribution
     , parseGetSystemStart
@@ -116,7 +126,9 @@ import Ouroboros.Network.Point
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
+import qualified Data.HashMap.Strict as HMap
 import qualified Data.Map.Merge.Strict as Map
+import qualified Data.Text as T
 
 import qualified Ouroboros.Consensus.HardFork.Combinator.Ledger.Query as LSQ
 import qualified Ouroboros.Consensus.Ledger.Query as LSQ
@@ -124,17 +136,22 @@ import qualified Ouroboros.Consensus.Ledger.Query as LSQ
 import qualified Cardano.Crypto.Hash.Class as CC
 
 import qualified Cardano.Ledger.Address as Ledger
+import qualified Cardano.Ledger.Alonzo.Data as Ledger.Alonzo
+import qualified Cardano.Ledger.Alonzo.TxBody as Ledger.Alonzo
 import qualified Cardano.Ledger.BaseTypes as Ledger
 import qualified Cardano.Ledger.Coin as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Credential as Ledger
 import qualified Cardano.Ledger.Era as Ledger
+import qualified Cardano.Ledger.Hashes as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
+import qualified Cardano.Ledger.Mary.Value as Ledger.Mary
 import qualified Cardano.Ledger.PoolDistr as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
 
 import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 
+import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.RewardProvenance as Sh
 import qualified Cardano.Ledger.Shelley.TxBody as Sh
@@ -179,6 +196,7 @@ instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
         , \raw -> Query raw <$> parseGetPoolParameters id raw
         , \raw -> Query raw <$> parseGetPoolsRanking id raw
         , \raw -> Query raw <$> parseGetProposedPParamsUpdates (const id) raw
+        , \raw -> Query raw <$> parseGetRewardInfoPools id raw
         , \raw -> Query raw <$> parseGetRewardProvenance id raw
         , \raw -> Query raw <$> parseGetStakeDistribution id raw
         , \raw -> Query raw <$> parseGetSystemStart id raw
@@ -198,6 +216,12 @@ type Delegations crypto =
 
 type RewardAccounts crypto =
     Map (Ledger.Credential 'Staking crypto) Coin
+
+type RewardProvenance' crypto =
+    ( Sh.Api.RewardParams
+    , Map (Ledger.KeyHash 'StakePool crypto) (Sh.Api.RewardInfoPool)
+    )
+
 
 --
 -- SomeShelleyEra
@@ -398,6 +422,58 @@ encodePoolParameters
     -> Json
 encodePoolParameters mode =
     encodeMapWithMode mode Shelley.stringifyPoolId Shelley.encodePoolParams
+
+encodeRewardInfoPool
+    :: Sh.Api.RewardInfoPool
+    -> Json
+encodeRewardInfoPool info =
+    encodeObject
+        [ ( "stake"
+          , encodeCoin (Sh.Api.stake info)
+          )
+        , ( "ownerStake"
+          , encodeCoin (Sh.Api.ownerStake info)
+          )
+        , ( "approximatePerformance"
+          , encodeDouble (Sh.Api.performanceEstimate info)
+          )
+        , ( "poolParameters"
+          , encodeObject
+            [ ( "cost"
+              , encodeCoin (Sh.Api.cost info)
+              )
+            , ( "margin"
+              , encodeUnitInterval (Sh.Api.margin info)
+              )
+            , ( "pledge"
+              , encodeCoin (Sh.Api.ownerPledge info)
+              )
+            ]
+          )
+        ]
+
+encodeRewardInfoPools
+    :: Crypto crypto
+    => RewardProvenance' crypto
+    -> Json
+encodeRewardInfoPools (rp, pools) =
+    encodeObject
+        [ ( "desiredNumberOfPools"
+          , encodeNatural (Sh.Api.nOpt rp)
+          )
+        , ( "poolInfluence"
+          , encodeNonNegativeInterval (Sh.Api.a0 rp)
+          )
+        , ( "totalRewards"
+          , encodeCoin (Sh.Api.rPot rp)
+          )
+        , ( "activeStake"
+          , encodeCoin (Sh.Api.totalStake rp)
+          )
+        , ( "pools"
+          , encodeMap Shelley.stringifyPoolId encodeRewardInfoPool pools
+          )
+        ]
 
 encodeRewardProvenance
     :: forall crypto. Crypto crypto
@@ -631,7 +707,7 @@ parseGetNonMyopicMemberRewards
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetNonMyopicMemberRewards genResult =
     Json.withObject "SomeQuery" $ \obj -> do
-        credentials <- parseCredentials obj
+        credentials <- decodeCredentials obj
         pure $
             ( \query -> Just $ SomeQuery
                 { query
@@ -652,14 +728,14 @@ parseGetNonMyopicMemberRewards genResult =
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetNonMyopicMemberRewards credentials)
             )
   where
-    parseCredentials
+    decodeCredentials
         :: Json.Object
         -> Json.Parser (Set (Either Ledger.Coin (Ledger.Credential 'Staking crypto)))
-    parseCredentials obj = fmap fromList $
+    decodeCredentials obj = fmap fromList $
         obj .: "nonMyopicMemberRewards" >>= traverse
             (choice "credential"
-                [ fmap Left  . parseCoin
-                , fmap Right . parseCredential
+                [ fmap Left  . decodeCoin
+                , fmap Right . decodeCredential
                 ]
             )
 
@@ -670,7 +746,7 @@ parseGetFilteredDelegationsAndRewards
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetFilteredDelegationsAndRewards genResult =
     Json.withObject "SomeQuery" $ \obj -> do
-        credentials <- parseCredentials obj
+        credentials <- decodeCredentials obj
         pure $
             ( \query -> Just $ SomeQuery
                 { query
@@ -691,11 +767,11 @@ parseGetFilteredDelegationsAndRewards genResult =
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetFilteredDelegationsAndRewardAccounts credentials)
             )
   where
-    parseCredentials
+    decodeCredentials
         :: Json.Object
         -> Json.Parser (Set (Ledger.Credential 'Staking crypto))
-    parseCredentials obj = fmap fromList $
-        obj .: "delegationsAndRewards" >>= traverse parseCredential
+    decodeCredentials obj = fmap fromList $
+        obj .: "delegationsAndRewards" >>= traverse decodeCredential
 
 parseGetCurrentPParams
     :: forall crypto f. (Typeable crypto)
@@ -879,7 +955,7 @@ parseGetUTxOByAddress
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
-    addrs <- parseAddresses obj
+    addrs <- decodeAddresses obj
     pure $ \case
         SomeShelleyEra ShelleyBasedEraShelley ->
             Just $ SomeQuery
@@ -918,11 +994,11 @@ parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
                 genResultInEra (Proxy @(AlonzoEra crypto))
             }
   where
-    parseAddresses
+    decodeAddresses
         :: Json.Object
         -> Json.Parser (Set (Ledger.Addr crypto))
-    parseAddresses obj = fmap fromList $
-        obj .: "utxo" >>= traverse parseAddress
+    decodeAddresses obj = fmap fromList $
+        obj .: "utxo" >>= traverse decodeAddress
 
 parseGetUTxOByTxIn
     :: forall crypto f. (Crypto crypto)
@@ -930,7 +1006,7 @@ parseGetUTxOByTxIn
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
-    ins <- parseTxIns obj
+    ins <- decodeTxIns obj
     pure $ \case
         SomeShelleyEra ShelleyBasedEraShelley ->
             Just $ SomeQuery
@@ -969,11 +1045,11 @@ parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
                 genResultInEra (Proxy @(AlonzoEra crypto))
             }
   where
-    parseTxIns
+    decodeTxIns
         :: Json.Object
         -> Json.Parser (Set (Ledger.TxIn crypto))
-    parseTxIns obj = fmap fromList $
-        obj .: "utxo" >>= traverse parseTxIn
+    decodeTxIns obj = fmap fromList $
+        obj .: "utxo" >>= traverse decodeTxIn
 
 -- TODO: This query seems to actually always return a compact version of the
 -- `ShelleyGenesis`, even when queried from Alonzo. While this is practical
@@ -1062,6 +1138,33 @@ parseGetRewardProvenance genResult =
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetRewardProvenance
             )
 
+parseGetRewardInfoPools
+    :: forall crypto f. (Crypto crypto)
+    => GenResult crypto f (RewardProvenance' crypto)
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseGetRewardInfoPools genResult =
+    Json.withText "SomeQuery" $ \text -> do
+        guard (text == "rewardsProvenance'") $>
+            ( \query -> Just $ SomeQuery
+                { query
+                , genResult
+                , encodeResult = \_ ->
+                    either encodeMismatchEraInfo encodeRewardInfoPools
+                }
+            )
+            .
+            ( \case
+                SomeShelleyEra ShelleyBasedEraShelley ->
+                    LSQ.BlockQuery $ QueryIfCurrentShelley GetRewardInfoPools
+                SomeShelleyEra ShelleyBasedEraAllegra ->
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetRewardInfoPools
+                SomeShelleyEra ShelleyBasedEraMary ->
+                    LSQ.BlockQuery $ QueryIfCurrentMary GetRewardInfoPools
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetRewardInfoPools
+            )
+
 parseGetPoolIds
     :: forall crypto f. (Crypto crypto)
     => GenResult crypto f (Set (Ledger.KeyHash 'StakePool crypto))
@@ -1096,7 +1199,7 @@ parseGetPoolParameters
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetPoolParameters genResult =
     Json.withObject "SomeQuery" $ \obj -> do
-        ids <- parsePoolIds obj
+        ids <- decodePoolIds obj
         pure $
             (\query -> Just $ SomeQuery
                 { query
@@ -1117,11 +1220,11 @@ parseGetPoolParameters genResult =
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetStakePoolParams ids)
             )
   where
-    parsePoolIds
+    decodePoolIds
         :: Json.Object
         -> Json.Parser (Set (Ledger.KeyHash 'StakePool crypto))
-    parsePoolIds obj = fmap fromList $
-        obj .: "poolParameters" >>= traverse parsePoolId
+    decodePoolIds obj = fmap fromList $
+        obj .: "poolParameters" >>= traverse decodePoolId
 
 parseGetPoolsRanking
     :: forall crypto f. (Crypto crypto)
@@ -1168,11 +1271,11 @@ parseGetInterpreter genResult =
 -- Parsers (Others)
 --
 
-parseAddress
+decodeAddress
     :: Crypto crypto
     => Json.Value
     -> Json.Parser (Ledger.Addr crypto)
-parseAddress = Json.withText "Address" $ choice "address"
+decodeAddress = Json.withText "Address" $ choice "address"
     [ addressFromBytes fromBech32
     , addressFromBytes fromBase58
     , addressFromBytes fromBase16
@@ -1194,10 +1297,43 @@ parseAddress = Json.withText "Address" $ choice "address"
     fromBase16 =
         decodeBase16 . encodeUtf8
 
-parseCoin
+decodeAssets
+    :: Crypto crypto
+    => Json.Value
+    -> Json.Parser [(Ledger.Mary.PolicyID crypto, Ledger.Mary.AssetName, Integer)]
+decodeAssets =
+    Json.withObject "Assets" $ HMap.foldrWithKey' fn (pure mempty)
+  where
+    fn k v p = do
+        xs <- p
+        (policyId, assetName) <- decodeAssetId k
+        quantity <- Json.parseJSON v
+        pure $ (policyId, assetName, quantity) : xs
+
+decodeAssetId
+    :: Crypto crypto
+    => Text
+    -> Json.Parser (Ledger.Mary.PolicyID crypto, Ledger.Mary.AssetName)
+decodeAssetId txt =
+    case T.splitOn "." txt of
+        [rawPolicyId] ->
+            let emptyAssetName = Ledger.Mary.AssetName mempty in
+            (,) <$> decodePolicyId rawPolicyId <*> pure emptyAssetName
+        [rawPolicyId, rawAssetName] ->
+            (,) <$> decodePolicyId rawPolicyId <*> decodeAssetName rawAssetName
+        _ ->
+            fail "invalid asset id, should be a dot-separated policy id and asset name, both base16-encoded."
+
+decodeAssetName
+    :: Text
+    -> Json.Parser Ledger.Mary.AssetName
+decodeAssetName =
+    fmap Ledger.Mary.AssetName . decodeBase16 . encodeUtf8
+
+decodeCoin
     :: Json.Value
     -> Json.Parser Coin
-parseCoin =
+decodeCoin =
     fmap Ledger.word64ToCoin . Json.parseJSON
 
 -- TODO: Makes it possible to distinguish between KeyHash and ScriptHash
@@ -1206,25 +1342,44 @@ parseCoin =
 -- member rewards map.
 --
 -- A possible option: encode them as Bech32 strings with different prefixes.
-parseCredential
+decodeCredential
     :: Crypto crypto
     => Json.Value
     -> Json.Parser (Ledger.Credential 'Staking crypto)
-parseCredential =
-    fmap (Ledger.KeyHashObj . Ledger.KeyHash) . parseHash
+decodeCredential =
+    fmap (Ledger.KeyHashObj . Ledger.KeyHash) . decodeHash
 
-parseHash
+decodeDatumHash
+    :: Crypto crypto
+    => Json.Value
+    -> Json.Parser (Ledger.Alonzo.DataHash crypto)
+decodeDatumHash =
+    fmap unsafeMakeSafeHash . decodeHash
+
+decodeHash
     :: CC.HashAlgorithm alg
     => Json.Value
     -> Json.Parser (CC.Hash alg a)
-parseHash =
+decodeHash =
     Json.parseJSON >=> maybe empty pure . CC.hashFromTextAsHex
 
-parsePoolId
+decodePolicyId
+    :: Crypto crypto
+    => Text
+    -> Json.Parser (Ledger.Mary.PolicyID crypto)
+decodePolicyId =
+    maybe
+        invalidPolicyId
+        (pure . Ledger.Mary.PolicyID . Ledger.ScriptHash)
+    . CC.hashFromTextAsHex
+  where
+    invalidPolicyId = fail "failed to decode policy id for a given asset."
+
+decodePoolId
     :: Crypto crypto
     => Json.Value
     -> Json.Parser (Ledger.KeyHash 'StakePool crypto)
-parsePoolId = Json.withText "PoolId" $ choice "poolId"
+decodePoolId = Json.withText "PoolId" $ choice "poolId"
     [ poolIdFromBytes fromBech32
     , poolIdFromBytes fromBase16
     ]
@@ -1242,17 +1397,36 @@ parsePoolId = Json.withText "PoolId" $ choice "poolId"
     fromBase16 =
         decodeBase16 . encodeUtf8
 
-parseTxIn
+decodeTxIn
     :: forall crypto. (Crypto crypto)
     => Json.Value
     -> Json.Parser (Ledger.TxIn crypto)
-parseTxIn = Json.withObject "TxIn" $ \o -> do
+decodeTxIn = Json.withObject "TxIn" $ \o -> do
     txid <- o .: "txId" >>= fromBase16
     ix <- o .: "index"
     pure $ Ledger.TxIn (Ledger.TxId txid) ix
   where
     fromBase16 =
         maybe empty (pure . unsafeMakeSafeHash) . hashFromTextAsHex @(HASH crypto)
+
+decodeTxOut
+    :: forall crypto. (Crypto crypto)
+    => Json.Value
+    -> Json.Parser (Ledger.TxOut (AlonzoEra crypto))
+decodeTxOut = Json.withObject "TxOut" $ \o -> do
+    address <- o .: "address" >>= decodeAddress
+    value <- o .: "value" >>= decodeValue
+    datum <- o .:? "datum" >>= maybe (pure SNothing) (fmap SJust . decodeDatumHash)
+    pure (Ledger.Alonzo.TxOut address value datum)
+
+decodeValue
+    :: forall crypto. (Crypto crypto)
+    => Json.Value
+    -> Json.Parser (Ledger.Value (AlonzoEra crypto))
+decodeValue = Json.withObject "Value" $ \o -> do
+    coins <- o .: "coins" >>= decodeCoin
+    assets <- o .:? "assets" >>= maybe mempty decodeAssets
+    pure (Ledger.Mary.valueFromList (Ledger.unCoin coins) assets)
 
 --
 -- Helpers

@@ -14,7 +14,7 @@
     # all inputs below here are for pinning with haskell.nix
     cardano-base = {
       url =
-        "github:input-output-hk/cardano-base/654f5b7c76f7cc57900b4ddc664a82fc3b925fb0";
+        "github:input-output-hk/cardano-base/41545ba3ac6b3095966316a99883d678b5ab8da8";
       flake = false;
     };
     cardano-crypto = {
@@ -22,14 +22,14 @@
         "github:input-output-hk/cardano-crypto/f73079303f663e028288f9f4a9e08bcca39a923e";
       flake = false;
     };
-    cardano-ledger-specs = {
+    cardano-ledger = {
       url =
-        "github:input-output-hk/cardano-ledger-specs/bf008ce028751cae9fb0b53c3bef20f07c06e333";
+        "github:input-output-hk/cardano-ledger/1a9ec4ae9e0b09d54e49b2a40c4ead37edadcce5";
       flake = false;
     };
     cardano-node = {
       url =
-        "github:input-output-hk/cardano-node/2cbe363874d0261bc62f52185cf23ed492cf4859";
+        "github:input-output-hk/cardano-node/814df2c146f5d56f8c35a681fe75e85b905aed5d";
       flake = false;
     };
     cardano-prelude = {
@@ -69,7 +69,7 @@
     };
     ouroboros-network = {
       url =
-        "github:input-output-hk/ouroboros-network/94782e5ca52f234ff8eeddc6322a46cca0b69c0e";
+        "github:input-output-hk/ouroboros-network/32af91686b86dac7454eee8b8a8d6e97a80638da";
       flake = false;
     };
     plutus = {

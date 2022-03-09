@@ -1,6 +1,6 @@
 cabal-version:  2.4
 name:           ogmios
-version:        5.0.0
+version:        5.2.0
 synopsis:       A JSON-WSP WebSocket client for cardano-node
 description:    Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server#ogmios-server>
 category:       Web
@@ -90,6 +90,7 @@ library
       Ogmios.App.Protocol
       Ogmios.App.Protocol.ChainSync
       Ogmios.App.Protocol.StateQuery
+      Ogmios.App.Protocol.TxMonitor
       Ogmios.App.Protocol.TxSubmission
       Ogmios.App.Server
       Ogmios.App.Server.Http
@@ -116,6 +117,7 @@ library
       Ogmios.Data.Protocol
       Ogmios.Data.Protocol.ChainSync
       Ogmios.Data.Protocol.StateQuery
+      Ogmios.Data.Protocol.TxMonitor
       Ogmios.Data.Protocol.TxSubmission
       Ogmios.Options
       Ogmios.Prelude
@@ -126,6 +128,8 @@ library
       src
   build-depends:
       aeson
+    , array
+    , async
     , base >=4.7 && <5
     , base16
     , base58-bytestring
@@ -138,6 +142,7 @@ library
     , cardano-crypto
     , cardano-crypto-class
     , cardano-crypto-wrapper
+    , cardano-data
     , cardano-ledger-alonzo
     , cardano-ledger-byron
     , cardano-ledger-core
@@ -154,8 +159,10 @@ library
     , fast-bech32
     , file-embed
     , filepath
+    , formatting
     , generic-lens
     , git-th
+    , http-client
     , http-types
     , io-classes
     , io-sim
@@ -171,6 +178,7 @@ library
     , ouroboros-consensus-cardano
     , ouroboros-consensus-shelley
     , ouroboros-network
+    , prettyprinter
     , profunctors
     , relude
     , safe
@@ -178,6 +186,7 @@ library
     , scientific
     , serialise
     , small-steps
+    , stm
     , strict-containers
     , text
     , time
@@ -222,6 +231,7 @@ test-suite unit
   other-modules:
       Ogmios.App.Protocol.ChainSyncSpec
       Ogmios.App.Protocol.StateQuerySpec
+      Ogmios.App.Protocol.TxMonitorSpec
       Ogmios.App.ProtocolSpec
       Ogmios.Data.HealthSpec
       Ogmios.Data.JsonSpec
@@ -237,6 +247,7 @@ test-suite unit
   build-depends:
       QuickCheck
     , aeson
+    , aeson-pretty
     , base >=4.7 && <5
     , bytestring
     , cardano-client
@@ -245,6 +256,7 @@ test-suite unit
     , cardano-ledger-shelley
     , cardano-ledger-shelley-test
     , cardano-slotting
+    , containers
     , directory
     , file-embed
     , generic-arbitrary

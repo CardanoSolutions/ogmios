@@ -1,9 +1,9 @@
 {
   "name": "@cardano-ogmios/schema",
-  "version": "5.0.0",
+  "version": "5.2.0",
   "description": "Generated TypeScript from the Cardano Ogmios schema",
   "engines": {
-    "node": "^14"
+    "node": ">=14"
   },
   "main": "dist/index.js",
   "repository": {

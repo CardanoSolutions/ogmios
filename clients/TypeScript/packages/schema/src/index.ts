@@ -198,7 +198,6 @@ export type TipOrOrigin = Tip | Origin;
  */
 export type Origin = "origin";
 export type PointOrOrigin = Point | Origin;
-export type SubmitSuccess = "SubmitSuccess";
 export type Era = "Byron" | "Shelley" | "Allegra" | "Mary" | "Alonzo";
 /**
  * A Blake2b 32-byte digest of a phase-1 or phase-2 script, CBOR-encoded.
@@ -284,6 +283,22 @@ export type SubmitTxError = (
   | OutsideForecast
   | ValidationTagMismatch
   | CollectErrors
+  | ExtraScriptWitnesses
+)[];
+export type RedeemerPointer = string;
+export type Language = "plutus:v1" | "plutus:v2";
+/**
+ * Errors whcih may occur when evaluating an on-chain script.
+ */
+export type ScriptFailure = (
+  | ExtraRedeemers
+  | MissingRequiredDatums
+  | MissingRequiredScripts
+  | ValidatorFailed
+  | UnknownInputReferencedByRedeemer
+  | NonScriptInputReferencedByRedeemer
+  | IllFormedExecutionBudget
+  | NoCostModelForLanguage
 )[];
 export type AcquireFailureDetails = "pointTooOld" | "pointNotOnChain";
 export type GetEraStart = "eraStart";
@@ -297,7 +312,8 @@ export type GetProposedProtocolParameters = "proposedProtocolParameters";
 export type GetStakeDistribution = "stakeDistribution";
 export type GetUtxo = "utxo";
 export type GetGenesisConfig = "genesisConfig";
-export type GetRewardsProvenance = "rewardsProvenance";
+export type GetRewardsProvenanceDeprecated = "rewardsProvenance";
+export type GetRewardsProvenance = "rewardsProvenance'";
 export type GetPoolsRanking = "poolsRanking";
 export type GetPoolIds = "poolIds";
 export type GetChainTip = "chainTip";
@@ -324,6 +340,10 @@ export type UtcTime = string;
  * A magic number for telling networks apart. (e.g. 764824073)
  */
 export type NetworkMagic = number;
+/**
+ * The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch.
+ */
+export type OwnerStake = bigint;
 export type BlockNoOrOrigin = BlockNo | Origin;
 
 export interface Ogmios {
@@ -403,9 +423,9 @@ export interface Ogmios {
     methodname: "SubmitTx";
     args?: {
       /**
-       * CBOR-serialized signed transaction, in base64
+       * CBOR-serialized signed transaction, in base64 (or base16)
        */
-      bytes: string;
+      submit: string;
     };
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
@@ -420,6 +440,40 @@ export interface Ogmios {
     servicename: "ogmios";
     methodname: "SubmitTx";
     result: SubmitSuccess | SubmitFail;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Evaluate execution units for which redeemers's budget hasn't yet been set.
+   */
+  EvaluateTx: {
+    type: "jsonwsp/request";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "EvaluateTx";
+    args?: {
+      /**
+       * CBOR-serialized signed transaction, in base64 (or base16)
+       */
+      evaluate: string;
+    };
+    /**
+     * An arbitrary JSON value that will be mirrored back in the response.
+     */
+    mirror?: {
+      [k: string]: unknown;
+    };
+  };
+  EvaluateTxResponse: {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "EvaluateTx";
+    result: EvaluationResult | EvaluationFailure;
     /**
      * Any value that was set by a client request in the 'mirror' field.
      */
@@ -494,6 +548,168 @@ export interface Ogmios {
     };
   };
   /**
+   * Acquire a mempool snapshot. This is blocking until a new (i.e different) snapshot is available.
+   */
+  AwaitAcquire: {
+    type: "jsonwsp/request";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "AwaitAcquire";
+    args?: {};
+    /**
+     * An arbitrary JSON value that will be mirrored back in the response.
+     */
+    mirror?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Response to a 'AwaitAcquire' request.
+   */
+  AwaitAcquireResponse: {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "AwaitAcquire";
+    result: AwaitAcquired;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Request the next transaction from an acquired snapshot.
+   */
+  NextTx: {
+    type: "jsonwsp/request";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "NextTx";
+    args?: {};
+    /**
+     * An arbitrary JSON value that will be mirrored back in the response.
+     */
+    mirror?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Response to a 'NextTx' request.
+   */
+  NextTxResponse: {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "NextTx";
+    result: TxId | Null;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Ask whether a given transaction is present in the acquired mempool snapshot.
+   */
+  HasTx: {
+    type: "jsonwsp/request";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "HasTx";
+    args?: {
+      id: TxId;
+    };
+    /**
+     * An arbitrary JSON value that will be mirrored back in the response.
+     */
+    mirror?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Response to a 'HasTx' request.
+   */
+  HasTxResponse: {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "HasTx";
+    result: boolean;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Get size and capacities of the mempool (acquired snapshot).
+   */
+  SizeAndCapacity: {
+    type: "jsonwsp/request";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "SizeAndCapacity";
+    args?: {};
+    /**
+     * An arbitrary JSON value that will be mirrored back in the response.
+     */
+    mirror?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Response to a 'SizeAndCapacity' request.
+   */
+  SizeAndCapacityResponse: {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "SizeAndCapacity";
+    result: MempoolSizeAndCapacity;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Release a previously acquired mempool snapshot.
+   */
+  ReleaseMempool?: {
+    type: "jsonwsp/request";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "ReleaseMempool";
+    args?: {};
+    /**
+     * An arbitrary JSON value that will be mirrored back in the response.
+     */
+    mirror?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Response to a 'ReleaseMempool' request.
+   */
+  ReleaseMempoolResponse?: {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "ReleaseMempool";
+    result: "Released";
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
    * Query the current ledger tip.
    */
   Query: {
@@ -516,6 +732,7 @@ export interface Ogmios {
         | GetUtxoByAddress
         | GetUtxoByTxIn
         | GetGenesisConfig
+        | GetRewardsProvenanceDeprecated
         | GetRewardsProvenance
         | GetPoolsRanking
         | GetPoolIds
@@ -678,12 +895,28 @@ export interface Ogmios {
       [k: string]: unknown;
     };
   };
+  /**
+   * This query is now deprecated. Use /rewardsProvenance'/ instead.
+   */
   "QueryResponse[rewardsProvenance]": {
     type: "jsonwsp/response";
     version: "1.0";
     servicename: "ogmios";
     methodname: "Query";
     result: RewardsProvenance | EraMismatch | QueryUnavailableInCurrentEra;
+    /**
+     * Any value that was set by a client request in the 'mirror' field.
+     */
+    reflection?: {
+      [k: string]: unknown;
+    };
+  };
+  "QueryResponse[rewardsProvenance']": {
+    type: "jsonwsp/response";
+    version: "1.0";
+    servicename: "ogmios";
+    methodname: "Query";
+    result: RewardsProvenance1 | EraMismatch | QueryUnavailableInCurrentEra;
     /**
      * Any value that was set by a client request in the 'mirror' field.
      */
@@ -1392,6 +1625,11 @@ export interface IntersectionNotFound {
     tip: TipOrOrigin;
   };
 }
+export interface SubmitSuccess {
+  SubmitSuccess: {
+    txId: TxId;
+  };
+}
 export interface SubmitFail {
   SubmitFail: SubmitTxError;
 }
@@ -1618,7 +1856,7 @@ export interface Withdrawal {
 }
 export interface MissingRequiredDatums {
   missingRequiredDatums: {
-    provided: DigestBlake2BDatum[];
+    provided?: DigestBlake2BDatum[];
     missing: DigestBlake2BDatum[];
   };
 }
@@ -1688,6 +1926,95 @@ export interface ValidationTagMismatch {
 export interface CollectErrors {
   collectErrors: unknown[];
 }
+export interface ExtraScriptWitnesses {
+  extraScriptWitnesses: DigestBlake2BScript[];
+}
+export interface EvaluationResult {
+  EvaluationResult: {
+    [k: string]: ExUnits;
+  };
+}
+export interface EvaluationFailure {
+  EvaluationFailure:
+    | EvaluationFailureScriptFailures
+    | EvaluationFailureUnknownInputs
+    | EvaluationFailureIncompatibleEra
+    | EvaluationFailureUncomputableSlotArithmetic
+    | EvaluationFailureAdditionalUtxoOverlap;
+}
+export interface EvaluationFailureScriptFailures {
+  ScriptFailures: {
+    [k: string]: ScriptFailure;
+  };
+}
+/**
+ * Missing scripts required for validating script inputs.
+ */
+export interface MissingRequiredScripts {
+  missingRequiredScripts: {
+    missing: RedeemerPointer[];
+  };
+}
+/**
+ * Plutus interpreter error. Returns additional traces produced by the validator.
+ */
+export interface ValidatorFailed {
+  validatorFailed: {
+    error: string;
+    traces: string[];
+  };
+}
+/**
+ * Non-existing input referenced by a redeemer pointer.
+ */
+export interface UnknownInputReferencedByRedeemer {
+  unknownInputReferencedByRedeemer: TxIn;
+}
+/**
+ * Input not locked by a Plutus referenced by a redeemer pointer.
+ */
+export interface NonScriptInputReferencedByRedeemer {
+  nonScriptInputReferencedByRedeemer: TxIn;
+}
+/**
+ * Invalid execution budget set for a redeemer. In principle, cannot happen in the context of Ogmios.
+ */
+export interface IllFormedExecutionBudget {
+  illFormedExecutionBudget: ExUnits | Null;
+}
+/**
+ * Input locked by a script which language has no cost model in current protocol parameters. In principle, cannot happen in the context of Ogmios.
+ */
+export interface NoCostModelForLanguage {
+  noCostModelForLanguage: Language;
+}
+export interface EvaluationFailureUnknownInputs {
+  UnknownInputs: TxIn[];
+}
+/**
+ * Returned when trying to evaluate execution units of a pre-Alonzo transaction. Note that this isn't possible with Ogmios because transactions are always de-serialized as Alonzo transactions.
+ */
+export interface EvaluationFailureIncompatibleEra {
+  /**
+   * The era in which the transaction has been identified.
+   */
+  IncompatibleEra: "Byron" | "Shelley" | "Allegra" | "Mary";
+}
+/**
+ * May happen when evaluating a transaction with validity bounds that goes past the foreseeable end of the current era (i.e. near a hardfork).
+ */
+export interface EvaluationFailureUncomputableSlotArithmetic {
+  /**
+   * An error message, possibly meaningful but likely unreadable.
+   */
+  UncomputableSlotArithmetic: string;
+}
+/**
+ * Happens when providing an additional UTXO set which overlaps with the UTXO on-chain.
+ */
+export interface EvaluationFailureAdditionalUtxoOverlap {
+  AdditionalUtxoOverlap: TxIn[];
+}
 export interface AcquireSuccess {
   AcquireSuccess: {
     point: PointOrOrigin;
@@ -1697,6 +2024,16 @@ export interface AcquireFailure {
   AcquireFailure: {
     failure: AcquireFailureDetails;
   };
+}
+export interface AwaitAcquired {
+  AwaitAcquired: {
+    slot: Slot;
+  };
+}
+export interface MempoolSizeAndCapacity {
+  capacity: UInt32;
+  currentSize: UInt32;
+  numberOfTxs: UInt32;
 }
 export interface GetNonMyopicMemberRewards {
   nonMyopicMemberRewards: Lovelaces | Credentials;
@@ -1846,10 +2183,7 @@ export interface IndividualPoolRewardsProvenance {
    * A ratio of two integers, to express exact fractions.
    */
   activeStakeShare: string;
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  ownerStake: bigint;
+  ownerStake: OwnerStake;
   parameters: PoolParameters;
   /**
    * A ratio of two integers, to express exact fractions.
@@ -1871,6 +2205,46 @@ export interface IndividualPoolRewardsProvenance {
    * A number of lovelace, possibly large when summed up.
    */
   leaderRewards: bigint;
+}
+/**
+ * Details about how rewards are calculated for the ongoing epoch.
+ */
+export interface RewardsProvenance1 {
+  /**
+   * Desired number of stake pools.
+   */
+  desiredNumberOfPools: number;
+  /**
+   * Influence of the pool owner's pledge on rewards, as a ratio of two integers.
+   */
+  poolInfluence: string;
+  /**
+   * Total rewards available for the given epoch.
+   */
+  totalRewards: number;
+  /**
+   * The total amount of staked Lovelace during this epoch.
+   */
+  activeStake: number;
+  pools: {
+    [k: string]: RewardInfoPool;
+  };
+}
+export interface RewardInfoPool {
+  stake: Lovelace;
+  ownerStake: OwnerStake;
+  /**
+   * Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky.
+   */
+  approximatePerformance: number;
+  /**
+   * Some of the pool parameters relevant for the reward calculation.
+   */
+  poolParameters: {
+    cost: Lovelace;
+    margin: Ratio;
+    pledge: Lovelace;
+  };
 }
 export interface PoolsRanking {
   [k: string]: {

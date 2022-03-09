@@ -71,6 +71,7 @@ spec = parallel $ do
         specify "--version" $ withArgs ["--version"] parseOptions >>= \case
             Version -> pure ()
             Start{} -> expectationFailure "Expected Version but got Start."
+            HealthCheck{} -> expectationFailure "Expected Version but got HealthCheck."
 
         let args =
                 [ "--node-socket", "./node.socket"
@@ -86,6 +87,7 @@ spec = parallel $ do
                 maxInFlight opts `shouldBe` 1000
                 logLevels `shouldBe` defaultTracersInfo
             Version -> expectationFailure "Expected Start but got Version."
+            HealthCheck{} -> expectationFailure "Expected Start but got HealthCheck."
 
     context "parseNetworkParameters" $ do
         specify "mainnet" $ do

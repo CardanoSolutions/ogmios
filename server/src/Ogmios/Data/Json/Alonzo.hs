@@ -20,6 +20,8 @@ import Ouroboros.Consensus.Cardano.Block
     ( AlonzoEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
+import Prettyprinter
+    ( pretty )
 
 import qualified Data.Map.Strict as Map
 
@@ -49,8 +51,11 @@ import qualified Cardano.Ledger.Alonzo.Rules.Utxow as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.Tx as Al
 import qualified Cardano.Ledger.Alonzo.TxBody as Al
+import qualified Cardano.Ledger.Alonzo.TxInfo as Al
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 import qualified Cardano.Ledger.Alonzo.TxWitness as Al
+
+import qualified Cardano.Ledger.Alonzo.Tools as Al.Tools
 
 --
 -- Encoders
@@ -666,6 +671,88 @@ encodeScriptIntegrityHash
     -> Json
 encodeScriptIntegrityHash =
     Shelley.encodeHash . Ledger.extractHash
+
+encodeScriptFailure
+    :: Crypto crypto
+    => Al.Tools.ScriptFailure crypto
+    -> Json
+encodeScriptFailure = \case
+    Al.Tools.RedeemerNotNeeded ptr ->
+        encodeObject
+            [ ( "extraRedeemers"
+              , encodeFoldable (encodeText . stringifyRdmrPtr) [ptr]
+              )
+            ]
+    Al.Tools.MissingScript ptr ->
+        encodeObject
+            [ ( "missingRequiredScripts"
+              , encodeObject
+                  [ ( "missing"
+                    , encodeFoldable (encodeText . stringifyRdmrPtr) [ptr]
+                    )
+                  ]
+              )
+            ]
+    Al.Tools.MissingDatum h ->
+        encodeObject
+            [ ( "missingRequiredDatums"
+              , encodeObject
+                  [ ( "missing"
+                    , encodeFoldable encodeDataHash [h]
+                    )
+                  ]
+              )
+            ]
+    Al.Tools.ValidationFailedV1 err traces ->
+        encodeObject
+            [ ( "validatorFailed"
+              , encodeObject
+                  [ ( "error"
+                    , encodeText (show (pretty err))
+                    )
+                  , ( "traces"
+                    , encodeFoldable encodeText traces
+                    )
+                  ]
+              )
+            ]
+    Al.Tools.ValidationFailedV2 err traces ->
+        encodeObject
+            [ ( "validatorFailed"
+              , encodeObject
+                  [ ( "error"
+                    , encodeText (show (pretty err))
+                    )
+                  , ( "traces"
+                    , encodeFoldable encodeText traces
+                    )
+                  ]
+              )
+            ]
+    Al.Tools.UnknownTxIn i ->
+        encodeObject
+            [ ( "unknownInputReferencedByRedeemer"
+              , Shelley.encodeTxIn i
+              )
+            ]
+    Al.Tools.InvalidTxIn i ->
+        encodeObject
+            [ ( "nonScriptInputReferencedByRedeemer"
+              , Shelley.encodeTxIn i
+              )
+            ]
+    Al.Tools.IncompatibleBudget budget ->
+        encodeObject
+            [ ( "illFormedExecutionBudget"
+              , encodeMaybe encodeExUnits (Al.exBudgetToExUnits budget)
+              )
+            ]
+    Al.Tools.NoCostModel lang ->
+        encodeObject
+            [ ( "noCostModelForLanguage"
+              , encodeLanguage lang
+              )
+            ]
 
 encodeWitnessSet
     :: Crypto crypto

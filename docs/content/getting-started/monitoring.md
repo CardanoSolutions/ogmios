@@ -44,28 +44,34 @@ $ curl -H 'Accept: application/json' http://localhost:1337/health
         "slot": 15520688
     },
     "networkSynchronization": 0.99,
-    "currentEra": "Mary"
+    "currentEra": "Mary",
+    "connectionStatus": "disconnected",
+    "currentEpoch": 164,
+    "slotInEpoch": 324543
 }
 ```
 
 All information are computed at runtime and **not preserved between restarts** (at least not yet). The health response includes:
 
-| field                                  | description                                                                                                              |
-| ---                                    | ---                                                                                                                      |
-| `startTime`                            | UTC timestamp at which the server was started.                                                                           |
-| `lastTipUpdate`                        | UTC timestamp when `lastKnownTip` was last updated (can be `null`)                                                       |
-| `lastKnownTip`                         | Last known chain tip received from the node (can be `null`)                                                              |
-| `networkSynchronization`               | A percentage indicator of how far the server/node is from the network tip. `1` means it is synchronized.                 |
-| `currentEra`                           | The current Cardano era of the underlying node. Useful for state-queries and debugging.                                  |
-| `metrics.activeConnections`            | Number of WebSocket connections currently established with the server.                                                   |
-| `metrics.totalConnections`             | Total number of WebSocket connections established with the server since it's started.                                    |
-| `metrics.sessionDurations`             | Some time measures (`min`, `max`, `mean`) of the duration of each sessions, in milliseconds.                             |
-| `metrics.totalMessages`                | Total number of messages received from all / any WebSocket connections.                                                  |
-| `metrics.totalUnrouted`                | Total number of invalid messages not routed to one of the mini-protocols, received from all / any WebSocket connections. |
-| `metrics.runtimeStats.gcCpuTime`       | Time spent by the garbage collector cleaning up previously allocated data objects, in nano-seconds.                      |
-| `metrics.runtimeStats.cpuTime`         | Time spent by the CPU doing work (at the last GC), in nano-seconds.                                                      |
-| `metrics.runtimeStats.maxHeapSize`     | Maximum live data allocated in the heap, in kilo-bytes.                                                                  |
-| `metrics.runtimeStats.currentHeapSize` | Current live data allocated in the heap, in kilo-bytes.                                                                  |
+| field                                  | description                                                                                                                       |
+| ---                                    | ---                                                                                                                               |
+| `connectionStatus`                     | A string `"connected"` or `"disconnected"` indicating whether Ogmios' server is correctly communicating with its underlying node. |
+| `startTime`                            | UTC timestamp at which the server was started.                                                                                    |
+| `lastTipUpdate`                        | UTC timestamp when `lastKnownTip` was last updated (can be `null`)                                                                |
+| `lastKnownTip`                         | Last known chain tip received from the node (can be `null`)                                                                       |
+| `networkSynchronization`               | A **(nullable)** percentage indicator of how far the server/node is from the network tip. `1` means it is synchronized.           |
+| `currentEra`                           | The **(nullable)** current Cardano era of the underlying node. Useful for state-queries and debugging.                            |
+| `currentEpoch`                         | The **(nullable)** current epoch number known of the underlying node.                                                             |
+| `slotInEpoch`                          | The **(nullable)** relative slot number within the current epoch.                                                                 |
+| `metrics.activeConnections`            | Number of WebSocket connections currently established with the server.                                                            |
+| `metrics.totalConnections`             | Total number of WebSocket connections established with the server since it's started.                                             |
+| `metrics.sessionDurations`             | Some time measures (`min`, `max`, `mean`) of the duration of each sessions, in milliseconds.                                      |
+| `metrics.totalMessages`                | Total number of messages received from all / any WebSocket connections.                                                           |
+| `metrics.totalUnrouted`                | Total number of invalid messages not routed to one of the mini-protocols, received from all / any WebSocket connections.          |
+| `metrics.runtimeStats.gcCpuTime`       | Time spent by the garbage collector cleaning up previously allocated data objects, in nano-seconds.                               |
+| `metrics.runtimeStats.cpuTime`         | Time spent by the CPU doing work (at the last GC), in nano-seconds.                                                               |
+| `metrics.runtimeStats.maxHeapSize`     | Maximum live data allocated in the heap, in kilo-bytes.                                                                           |
+| `metrics.runtimeStats.currentHeapSize` | Current live data allocated in the heap, in kilo-bytes.                                                                           |
 
 
 {{% notice note %}}

@@ -8,14 +8,22 @@ module Test.Generators where
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.Alonzo.Tools
+    ( ScriptFailure (..) )
+import Cardano.Ledger.Alonzo.TxInfo
+    ( transExUnits )
+import Cardano.Ledger.Crypto
+    ( StandardCrypto )
 import Cardano.Ledger.Era
     ( Crypto, Era, SupportsSegWit (..) )
 import Cardano.Ledger.Keys
     ( KeyRole (..) )
 import Cardano.Ledger.Serialization
     ( ToCBORGroup )
+import Cardano.Ledger.Shelley.UTxO
+    ( UTxO (..) )
 import Cardano.Network.Protocol.NodeToClient
-    ( Block )
+    ( Block, GenTxId )
 import Cardano.Slotting.Slot
     ( EpochNo (..) )
 import Cardano.Slotting.Time
@@ -31,17 +39,22 @@ import Ogmios.Data.Json.Query
     , QueryResult
     , RewardAccounts
     , RewardProvenance
+    , RewardProvenance'
     )
+import Ogmios.Data.Protocol.TxSubmission
+    ( EvaluateTxError (..), EvaluateTxResponse (..) )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock )
 import Ouroboros.Consensus.Cardano.Block
     ( AllegraEra
     , AlonzoEra
     , CardanoEras
+    , GenTx (..)
     , HardForkApplyTxErr (..)
     , HardForkBlock (..)
     , MaryEra
     , ShelleyEra
+    , TxId (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator
     ( LedgerEraInfo (..), Mismatch (..), MismatchEraInfo (..), singleEraInfo )
@@ -55,14 +68,16 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CompactGenesis, compactGenesis )
+import Ouroboros.Consensus.Shelley.Ledger.Mempool
+    ( GenTx (..), TxId (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( NonMyopicMemberRewards (..) )
-import Ouroboros.Consensus.Shelley.Protocol
-    ( StandardCrypto )
 import Ouroboros.Network.Block
     ( BlockNo (..), HeaderHash, Point (..), SlotNo (..), Tip (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure (..) )
+import Ouroboros.Network.Protocol.LocalTxMonitor.Type
+    ( MempoolSizeAndCapacity (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
 import Test.Cardano.Ledger.Shelley.ConcreteCryptoTypes
@@ -70,7 +85,17 @@ import Test.Cardano.Ledger.Shelley.ConcreteCryptoTypes
 import Test.Cardano.Ledger.Shelley.Serialisation.Generators.Genesis
     ( genPParams )
 import Test.QuickCheck
-    ( Arbitrary (..), Gen, choose, elements, frequency, oneof, scale )
+    ( Arbitrary (..)
+    , Gen
+    , choose
+    , elements
+    , frequency
+    , listOf1
+    , oneof
+    , scale
+    , shrinkList
+    , vector
+    )
 import Test.QuickCheck.Gen
     ( Gen (..) )
 import Test.QuickCheck.Hedgehog
@@ -84,6 +109,7 @@ import Test.Consensus.Cardano.Generators
     ()
 
 import qualified Data.Aeson as Json
+import qualified Data.Map as Map
 import qualified Ouroboros.Network.Point as Point
 
 import qualified Cardano.Ledger.Block as Ledger
@@ -91,6 +117,7 @@ import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
 import qualified Cardano.Ledger.PoolDistr as Ledger
 
+import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
@@ -115,6 +142,21 @@ genBlock = reasonablySized $ oneof
         <$> (Ledger.Block <$> arbitrary <*> (toTxSeq @era <$> arbitrary))
         <*> arbitrary
 
+genTxId :: Gen (GenTxId Block)
+genTxId =
+    GenTxIdAlonzo . ShelleyTxId <$> arbitrary
+
+genTx :: Gen (GenTx Block)
+genTx = do
+    tx <- ShelleyTx <$> arbitrary <*> arbitrary
+    pure (GenTxAlonzo tx)
+
+genMempoolSizeAndCapacity :: Gen MempoolSizeAndCapacity
+genMempoolSizeAndCapacity = MempoolSizeAndCapacity
+    <$> arbitrary
+    <*> arbitrary
+    <*> arbitrary
+
 genWithOrigin :: Gen a -> Gen (Point.WithOrigin a)
 genWithOrigin genA = frequency
     [ (1, pure Point.Origin)
@@ -131,14 +173,50 @@ genTip = frequency
     , (10, Tip <$> genSlotNo <*> genHeaderHash <*> genBlockNo)
     ]
 
-genHardForkApplyTxErr :: Gen (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto)))
-genHardForkApplyTxErr = frequency
+genSubmitResult :: Gen (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto)))
+genSubmitResult = frequency
     [ ( 1, pure SubmitSuccess)
-    , ( 1, SubmitFail . HardForkApplyTxErrWrongEra <$> genMismatchEraInfo)
-    , (10, SubmitFail . ApplyTxErrShelley <$> reasonablySized arbitrary)
-    , (10, SubmitFail . ApplyTxErrAllegra <$> reasonablySized arbitrary)
-    , (10, SubmitFail . ApplyTxErrMary <$> reasonablySized arbitrary)
-    , (10, SubmitFail . ApplyTxErrAlonzo <$> reasonablySized arbitrary)
+    , (40, SubmitFail <$> genHardForkApplyTxErr)
+    ]
+genHardForkApplyTxErr :: Gen (HardForkApplyTxErr (CardanoEras StandardCrypto))
+genHardForkApplyTxErr = frequency
+    [ ( 1, HardForkApplyTxErrWrongEra <$> genMismatchEraInfo)
+    , (10, ApplyTxErrShelley <$> reasonablySized arbitrary)
+    , (10, ApplyTxErrAllegra <$> reasonablySized arbitrary)
+    , (10, ApplyTxErrMary <$> reasonablySized arbitrary)
+    , (10, ApplyTxErrAlonzo <$> reasonablySized arbitrary)
+    ]
+
+genEvaluateTxResponse :: Gen (EvaluateTxResponse Block)
+genEvaluateTxResponse = frequency
+    [ (10, EvaluationFailure <$> genEvaluateTxError)
+    , (1, EvaluationResult <$> reasonablySized arbitrary)
+    ]
+
+genEvaluateTxError :: Gen (EvaluateTxError Block)
+genEvaluateTxError = frequency
+    [ (10, EvaluateTxScriptFailures . fromList <$> reasonablySized (do
+        failures <- listOf1 (listOf1 genScriptFailure)
+        ptrs <- vector (length failures)
+        pure (zip ptrs failures)
+      ))
+    , (1, EvaluateTxUnknownInputs <$> reasonablySized arbitrary)
+    , (1, EvaluateTxIncompatibleEra <$> elements [ "Byron", "Shelley", "Allegra", "Mary" ])
+    , (1, EvaluateTxAdditionalUtxoOverlap <$> reasonablySized arbitrary)
+    ]
+
+genScriptFailure :: Gen (ScriptFailure StandardCrypto)
+genScriptFailure = oneof
+    [ RedeemerNotNeeded <$> arbitrary
+    , MissingScript <$> arbitrary
+    , MissingDatum <$> arbitrary
+    , UnknownTxIn <$> arbitrary
+    , InvalidTxIn <$> arbitrary
+    , IncompatibleBudget . transExUnits <$> arbitrary
+    , NoCostModel <$> arbitrary
+    -- TODO: Also cover ValidationFailedV1 & ValidationFailedV2.
+    -- This requires to also generate arbitrary instances for plutus' 'EvaluationError'
+    -- which do not exists :'( ...
     ]
 
 genAcquireFailure :: Gen AcquireFailure
@@ -158,6 +236,37 @@ genBlockNo = BlockNo <$> arbitrary
 
 genHeaderHash :: Gen (HeaderHash Block)
 genHeaderHash = arbitrary
+
+genRewardInfoPool
+    :: Gen Sh.Api.RewardInfoPool
+genRewardInfoPool =
+    Sh.Api.RewardInfoPool
+        <$> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> choose (0, 2)
+
+genRewardParams
+    :: Gen Sh.Api.RewardParams
+genRewardParams =
+    Sh.Api.RewardParams
+        <$> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+
+genRewardProvenance'
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Gen (RewardProvenance' crypto)
+genRewardProvenance' =
+    (,) <$> genRewardParams
+        <*> fmap fromList
+            ( reasonablySized $ listOf1 $
+                (,) <$> arbitrary
+                    <*> genRewardInfoPool
+            )
 
 genSystemStart :: Gen SystemStart
 genSystemStart = arbitrary
@@ -457,6 +566,15 @@ genCompactGenesisResult _ _ =
             Nothing ->
                 Nothing
 
+genRewardInfoPoolsResult
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Proxy (QueryResult crypto (RewardProvenance' crypto))
+    -> Gen (QueryResult crypto (RewardProvenance' crypto))
+genRewardInfoPoolsResult _ = frequency
+    [ (1, Left <$> genMismatchEraInfo)
+    , (10, Right <$> genRewardProvenance')
+    ]
+
 genRewardProvenanceResult
     :: forall crypto. (crypto ~ StandardCrypto)
     => Proxy (QueryResult crypto (RewardProvenance crypto))
@@ -497,6 +615,17 @@ genMirror = oneof
     [ pure Nothing
     , Just . Json.toJSON <$> arbitrary @Int
     ]
+
+genUtxo
+    :: Gen (UTxO (AlonzoEra StandardCrypto))
+genUtxo =
+    reasonablySized arbitrary
+
+shrinkUtxo
+    :: UTxO (AlonzoEra StandardCrypto)
+    -> [UTxO (AlonzoEra StandardCrypto)]
+shrinkUtxo (UTxO u) =
+    UTxO . Map.fromList <$> shrinkList shrink (Map.toList u)
 
 --
 -- Helpers

@@ -40,7 +40,7 @@ import Ogmios.Control.Exception
 import Ogmios.Control.MonadAsync
     ( MonadAsync )
 import Ogmios.Control.MonadClock
-    ( Debouncer (..), MonadClock (..), idle, _5s )
+    ( Debouncer (..), MonadClock (..), foreverCalmly, idle, _5s )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
     , Logger
@@ -56,14 +56,15 @@ import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TVar, newEmptyTMVarIO, putTMVar, takeTMVar )
 import Ogmios.Data.Health
     ( CardanoEra (..)
+    , ConnectionStatus (..)
+    , EpochNo (..)
     , Health (..)
     , NetworkSynchronization
+    , SlotInEpoch (..)
     , emptyHealth
     , mkNetworkSynchronization
     , modifyHealth
     )
-import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras )
 
 import qualified Ogmios.App.Metrics as Metrics
 
@@ -75,10 +76,12 @@ import Data.Time.Clock
     ( DiffTime, UTCTime )
 import Network.TypedProtocol.Pipelined
     ( N (..) )
+import Ouroboros.Consensus.Cardano.Block
+    ( CardanoEras )
 import Ouroboros.Consensus.HardFork.Combinator
     ( HardForkBlock, eraIndexToInt )
 import Ouroboros.Consensus.HardFork.History.Qry
-    ( interpretQuery, slotToWallclock )
+    ( interpretQuery, slotToEpoch', slotToWallclock )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..), genesisPoint, getTipPoint )
 import Ouroboros.Network.NodeToClient
@@ -91,6 +94,8 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..) )
+import Ouroboros.Network.Protocol.LocalTxMonitor.Client
+    ( LocalTxMonitorClient (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxSubmissionClient (..) )
 
@@ -132,18 +137,28 @@ newHealthCheckClient tr Debouncer{debounce} = do
         { chainSyncClient = mkHealthCheckClient $ \lastKnownTip -> debounce $ do
             tvar <- asks (view typed)
             metrics <- join (Metrics.sample <$> asks (view typed) <*> asks (view typed))
-            (now, networkSynchronization, currentEra) <- getNetworkInformation lastKnownTip
+            ( now
+              , Just -> networkSynchronization
+              , (Just -> currentEpoch, Just -> slotInEpoch)
+              , Just -> currentEra
+              ) <- getNetworkInformation lastKnownTip
             health <- modifyHealth tvar $ \h -> h
                 { lastKnownTip
                 , lastTipUpdate = Just now
                 , networkSynchronization
                 , currentEra
                 , metrics
+                , currentEpoch
+                , slotInEpoch
+                , connectionStatus = Connected
                 }
             logWith tr (HealthTick health)
 
         , txSubmissionClient =
             LocalTxSubmissionClient idle
+
+        , txMonitorClient =
+            LocalTxMonitorClient idle
 
         , stateQueryClient
         }
@@ -158,6 +173,7 @@ connectHealthCheckClient
         , MonadReader env m
         , HasType NetworkParameters env
         , HasType Configuration env
+        , HasType (TVar m (Health Block)) env
         )
     => Logger (TraceHealth (Health Block))
     -> (forall a. m a -> IO a)
@@ -174,18 +190,16 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
     onExceptions nodeSocket
         = handle onUnknownException
         . handle (onIOException nodeSocket)
+        . (`onException` recordException)
 
-    foreverCalmly :: m a -> m a
-    foreverCalmly a = do
-        let a' = a *> threadDelay _5s *> a' in a'
-
-    onUnknownException :: SomeException -> m ()
-    onUnknownException e
-        | isAsyncException e = do
-            logWith tr $ HealthShutdown $ show e
-            throwIO e
-        | otherwise =
-            logWith tr $ HealthUnknownException $ show e
+    recordException ::  m ()
+    recordException = do
+        tvar <- asks (view typed)
+        void $ modifyHealth tvar $ \(h :: (Health Block)) -> h
+            { networkSynchronization = empty
+            , currentEra = empty
+            , connectionStatus = Disconnected
+            }
 
     onIOException :: FilePath -> IOException -> m ()
     onIOException nodeSocket e
@@ -196,6 +210,14 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
       where
         isRetryable :: Bool
         isRetryable = isResourceVanishedError e || isDoesNotExistError e || isTryAgainError e
+
+    onUnknownException :: SomeException -> m ()
+    onUnknownException e
+        | isAsyncException e = do
+            logWith tr $ HealthShutdown $ show e
+            throwIO e
+        | otherwise =
+            logWith tr $ HealthUnknownException $ show e
 
 --
 -- Ouroboros clients
@@ -234,11 +256,11 @@ mkHealthCheckClient notify =
     stNext
         :: ClientStNext Z block (Point block) (Tip block) m ()
     stNext = ClientStNext
-        { recvMsgRollForward  = const check
-        , recvMsgRollBackward = const check
+        { recvMsgRollForward  = const doCheck
+        , recvMsgRollBackward = const doCheck
         }
       where
-        check tip = notify tip *> stIdle
+        doCheck tip = notify tip *> stIdle
 
 -- | A simple client which is used to determine some metrics about the
 -- underlying node. In particular, it allows for knowing the network
@@ -254,7 +276,7 @@ newTimeInterpreterClient
         , HasType NetworkParameters env
         )
     => m ( LocalStateQueryClient block (Point block) (Ledger.Query block) m ()
-         , Tip block -> m (UTCTime, NetworkSynchronization, CardanoEra)
+         , Tip block -> m (UTCTime, NetworkSynchronization, (EpochNo, SlotInEpoch), CardanoEra)
          )
 newTimeInterpreterClient = do
     notifyTip <- newEmptyTMVarIO
@@ -262,7 +284,7 @@ newTimeInterpreterClient = do
     return
         ( LocalStateQueryClient $ clientStIdle
             (atomically $ takeTMVar notifyTip)
-            (\a0 a1 a2 -> atomically $ putTMVar getResult (a0, a1, a2))
+            (\a0 a1 a2 a3 -> atomically $ putTMVar getResult (a0, a1, a2, a3))
         , \tip -> do
             atomically $ putTMVar notifyTip tip
             atomically $ takeTMVar getResult
@@ -270,7 +292,7 @@ newTimeInterpreterClient = do
   where
     clientStIdle
         :: m (Tip block)
-        -> (UTCTime -> NetworkSynchronization -> CardanoEra -> m ())
+        -> (UTCTime -> NetworkSynchronization -> (EpochNo, SlotInEpoch) -> CardanoEra -> m ())
         -> m (LSQ.ClientStIdle block (Point block) (Ledger.Query block) m ())
     clientStIdle getTip notifyResult =
         pure $ LSQ.SendMsgAcquire Nothing $ LSQ.ClientStAcquiring
@@ -282,7 +304,7 @@ newTimeInterpreterClient = do
 
     clientStAcquired
         :: m (Tip block)
-        -> (UTCTime -> NetworkSynchronization -> CardanoEra -> m ())
+        -> (UTCTime -> NetworkSynchronization -> (EpochNo, SlotInEpoch) -> CardanoEra -> m ())
         -> m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
     clientStAcquired getTip notifyResult = do
         tip <- getTip
@@ -296,8 +318,8 @@ newTimeInterpreterClient = do
             }
 
     clientStQuerySlotTime
-        :: (UTCTime -> NetworkSynchronization -> CardanoEra -> m ())
-        -> Tip block
+        :: (UTCTime -> NetworkSynchronization -> (EpochNo, SlotInEpoch) -> CardanoEra -> m ())
+        -> (Tip block)
         -> m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
         -> LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ()
     clientStQuerySlotTime notifyResult tip continue =
@@ -307,17 +329,22 @@ newTimeInterpreterClient = do
                 let slot = case tip of
                         TipGenesis -> 0
                         Tip sl _ _ -> sl
-                case interpreter `interpretQuery` slotToWallclock slot of
+                let result = (,)
+                        <$> (interpreter `interpretQuery` slotToWallclock slot)
+                        <*> (interpreter `interpretQuery` slotToEpoch' slot)
+                case result of
                     -- NOTE: This request cannot fail in theory because the tip
                     -- is always known of the interpreter. If that every happens
                     -- because of some weird condition, retrying should do.
                     Left{} ->
                         pure (clientStQuerySlotTime notifyResult tip continue)
-                    Right (slotTime, _) -> do
+                    Right ((slotTime, _), (epochNo, SlotInEpoch -> slotInEpoch)) -> do
                         NetworkParameters{systemStart} <- asks (view typed)
                         now <- getCurrentTime
                         let networkSync = mkNetworkSynchronization systemStart now slotTime
-                        pure (clientStQueryCurrentEra (notifyResult now networkSync) continue)
+                        pure $ clientStQueryCurrentEra
+                            (notifyResult now networkSync (epochNo, slotInEpoch))
+                            continue
             }
 
     clientStQueryCurrentEra

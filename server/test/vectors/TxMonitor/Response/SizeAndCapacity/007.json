@@ -1,0 +1,1 @@
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SizeAndCapacity","result":{"capacity":7,"currentSize":2,"numberOfTxs":3},"reflection":14}
