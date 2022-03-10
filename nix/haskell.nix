@@ -61,34 +61,12 @@ let
 
       nativeBuildInputs = with pkgs;
         [
-          # Haskell Tools
-          entr
-          ghcid
-          git
-
           # Use plutus for these packages for now, the versions from haskell.nix
           # nixpkgs are too new and require builds
           plutusPkgs.haskellPackages.fourmolu
-
           plutus.plutus.haskell-language-server
           plutus.plutus.hlint
-          jq
-          nixfmt
-
-          # hls doesn't support preprocessors yet so this has to exist in PATH
-          haskellPackages.record-dot-preprocessor
-
-          # Graphviz Diagrams for documentation
-          graphviz
-          pkg-config
-          plutusPkgs.libsodium-vrf
-        ] ++ (
-          lib.optionals (!stdenv.isDarwin) [
-            rPackages.plotly
-            R
-            systemdMinimal
-          ]
-        );
+        ];
     };
 
     modules = [{
