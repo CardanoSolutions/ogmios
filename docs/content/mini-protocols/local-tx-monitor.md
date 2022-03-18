@@ -69,13 +69,31 @@ At any moment, it is also possible to interleave a `SizeAndCapacity` query to ge
 The _capacity_ refers to the maximum size of the mempool. It is currently defined as twice the network block size and can be adjusted via protocol updates. 
 {{% /notice %}}
 
+## Retrieve Full Transactions
+
+Since `5.3.0`, Ogmios can also return full transactions as a result of `NextTx`. This must be however explicitly requested from clients by providing an extra (optional) argument to each `NextTx` request:
+
+
+```json
+{                                 
+    "type": "jsonwsp/request",
+    "version": "1.0",
+    "servicename": "ogmios",
+    "methodname": "NextTx",
+    "args": {
+        "fields": "all"
+    }
+}
+```
+`"fields"` accept only one value (`"all"`) and can be omitted. When present, `NextTxResponse` will contain a full transaction as `"result"`. When omitted, the latter only contains a transaction id.
+
 # Important Notes 
 
 Some important notes to keep in mind regarding the management of the mempool:
 
 ### About Transaction Locality
 
-This protocol gives access to transactions that are submitted locally, by the connected client via the local-tx-submission protocol. It **does not** provide access to transactions broadcast from peers. It is entire local.
+This protocol gives access to transactions that are submitted locally, by the connected client via the local-tx-submission protocol. In case of block producing nodes (i.e. stake pools), transactions pulled from peers may also be available.
 
 ### About Transaction Observability
 
