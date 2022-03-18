@@ -56,6 +56,7 @@ import Ogmios.Data.Protocol.TxMonitor
     , HasTx (..)
     , HasTxResponse (..)
     , NextTx (..)
+    , NextTxFields (..)
     , NextTxResponse (..)
     , ReleaseMempool (..)
     , ReleaseMempoolResponse (..)
@@ -102,7 +103,7 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
             pure $ SendMsgAcquire $ \slot -> do
                 yield $ encodeAwaitAcquireResponse $ toResponse $ AwaitAcquired slot
                 clientStAcquired
-        MsgNextTx q@NextTx _ toFault -> do
+        MsgNextTx q@NextTx{} _ toFault -> do
             mustAcquireFirst q toFault
             clientStIdle
         MsgHasTx q@HasTx{} _ toFault -> do
@@ -122,9 +123,14 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
             SendMsgAwaitAcquire $ \slot -> do
                 yield $ encodeAwaitAcquireResponse $ toResponse $ AwaitAcquired slot
                 clientStAcquired
-        MsgNextTx NextTx toResponse _ ->
-            SendMsgNextTx $ \(fmap txId -> next) -> do
-                yield $ encodeNextTxResponse $ toResponse $ NextTxResponse{next}
+        MsgNextTx NextTx{fields} toResponse _ ->
+            SendMsgNextTx $ \mTx -> do
+                let response = case fields of
+                        Nothing ->
+                            NextTxResponseId (txId <$> mTx)
+                        Just NextTxAllFields ->
+                            NextTxResponseTx mTx
+                yield $ encodeNextTxResponse $ toResponse response
                 clientStAcquired
         MsgHasTx HasTx{id} toResponse _ ->
             SendMsgHasTx id $ \has -> do

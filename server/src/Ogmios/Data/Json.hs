@@ -26,6 +26,7 @@ module Ogmios.Data.Json
     , encodeSerializedTx
     , encodeSubmitTxError
     , encodeTip
+    , encodeTx
     , encodeTxId
     , Shelley.encodeTxIn
     , Alonzo.stringifyRdmrPtr
@@ -92,7 +93,7 @@ import Ouroboros.Consensus.Shelley.Eras
 import Ouroboros.Consensus.Shelley.Ledger
     ( ShelleyBlock )
 import Ouroboros.Consensus.Shelley.Ledger.Mempool
-    ( TxId (..) )
+    ( GenTx (..), TxId (..) )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..), genesisPoint, wrapCBORinCBOR )
 import Ouroboros.Network.Point
@@ -212,6 +213,25 @@ encodeTip = \case
           , encodeBlockNo blockNo
           )
         ]
+
+encodeTx
+    :: forall crypto.
+        ( Crypto crypto
+        )
+    => SerializationMode
+    -> GenTx (CardanoBlock crypto)
+    -> Json
+encodeTx mode = \case
+    GenTxAlonzo (ShelleyTx _ x) ->
+        Alonzo.encodeTx mode x
+    GenTxMary (ShelleyTx _ x) ->
+        Mary.encodeTx mode x
+    GenTxAllegra (ShelleyTx _ x) ->
+        Allegra.encodeTx mode x
+    GenTxShelley (ShelleyTx _ x) ->
+        Shelley.encodeTx mode x
+    GenTxByron _ ->
+        error "encodeTx: unsupported Byron transaction."
 
 encodeTxId
     :: Crypto crypto

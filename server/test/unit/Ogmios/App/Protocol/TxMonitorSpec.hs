@@ -42,7 +42,7 @@ import Ogmios.Control.MonadOuroboros
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), newTQueue, readTQueue, writeTQueue )
 import Ogmios.Data.Json
-    ( Json, encodeTxId )
+    ( Json, SerializationMode (..), encodeTx, encodeTxId )
 import Ogmios.Data.Json.Orphans
     ()
 import Ogmios.Data.Protocol.TxMonitor
@@ -178,7 +178,7 @@ withTxMonitorClient
     -> m a
 withTxMonitorClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
-    let innerCodecs = mkTxMonitorCodecs encodeTxId
+    let innerCodecs = mkTxMonitorCodecs encodeTxId (encodeTx FullSerialization)
     let client = mkTxMonitorClient innerCodecs recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cTxMonitorCodec
     withMockChannel (txMonitorMockPeer seed codec) $ \channel -> do
@@ -381,7 +381,7 @@ awaitAcquire mirror =
 
 nextTx :: Wsp.Mirror -> TxMonitorMessage Block
 nextTx mirror =
-    MsgNextTx NextTx (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgNextTx (NextTx Nothing) (Wsp.Response mirror) (Wsp.Fault mirror)
 
 hasTx :: Wsp.Mirror -> GenTxId Block -> TxMonitorMessage Block
 hasTx mirror tx =
