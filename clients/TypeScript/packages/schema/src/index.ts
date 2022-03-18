@@ -460,6 +460,7 @@ export interface Ogmios {
        * CBOR-serialized signed transaction, in base64 (or base16)
        */
       evaluate: string;
+      additionalUtxoSet?: Utxo;
     };
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
@@ -587,7 +588,9 @@ export interface Ogmios {
     version: "1.0";
     servicename: "ogmios";
     methodname: "NextTx";
-    args?: {};
+    args?: {
+      fields?: "all";
+    };
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
      */
@@ -603,7 +606,7 @@ export interface Ogmios {
     version: "1.0";
     servicename: "ogmios";
     methodname: "NextTx";
-    result: TxId | Null;
+    result: TxId | TxAlonzo | Null;
     /**
      * Any value that was set by a client request in the 'mirror' field.
      */
@@ -1050,11 +1053,7 @@ export interface StandardBlock {
     softwareVersion: SoftwareVersion;
   };
   body: {
-    txPayload: {
-      id: TxId;
-      body: Tx;
-      witness: TxWitness[];
-    }[];
+    txPayload: TxByron[];
     dlgPayload: DlgCertificate[];
     updatePayload: {
       proposal: Null | UpdateProposalByron;
@@ -1093,9 +1092,13 @@ export interface SoftwareVersion {
   appName: string;
   number: UInt32;
 }
-export interface Tx {
-  inputs: TxIn[];
-  outputs: TxOut[];
+export interface TxByron {
+  id: TxId;
+  body: {
+    inputs: TxIn[];
+    outputs: TxOut[];
+  };
+  witness: TxWitness[];
 }
 export interface TxIn {
   txId: TxId;
@@ -1181,7 +1184,7 @@ export interface Shelley {
   shelley: BlockShelley;
 }
 export interface BlockShelley {
-  body?: BlockBodyShelley[];
+  body?: TxShelley[];
   headerHash?: DigestBlake2BBlockHeader;
   header?: {
     blockHeight: BlockNo;
@@ -1198,7 +1201,7 @@ export interface BlockShelley {
     signature: IssuerSignature;
   };
 }
-export interface BlockBodyShelley {
+export interface TxShelley {
   id: DigestBlake2BBlockBody;
   body: {
     inputs: TxIn[];
@@ -1405,7 +1408,7 @@ export interface Allegra {
   allegra: BlockAllegra;
 }
 export interface BlockAllegra {
-  body?: BlockBodyAllegra[];
+  body?: TxAllegra[];
   headerHash?: DigestBlake2BBlockHeader;
   header?: {
     blockHeight: BlockNo;
@@ -1422,7 +1425,7 @@ export interface BlockAllegra {
     signature: IssuerSignature;
   };
 }
-export interface BlockBodyAllegra {
+export interface TxAllegra {
   id: DigestBlake2BBlockBody;
   body: {
     inputs: TxIn[];
@@ -1452,7 +1455,7 @@ export interface Mary {
   mary: BlockMary;
 }
 export interface BlockMary {
-  body?: BlockBodyMary[];
+  body?: TxMary[];
   headerHash?: DigestBlake2BBlockHeader;
   header?: {
     blockHeight: BlockNo;
@@ -1469,7 +1472,7 @@ export interface BlockMary {
     signature: IssuerSignature;
   };
 }
-export interface BlockBodyMary {
+export interface TxMary {
   id: DigestBlake2BBlockBody;
   body: {
     inputs: TxIn[];
@@ -1496,7 +1499,7 @@ export interface Alonzo {
   alonzo: BlockAlonzo;
 }
 export interface BlockAlonzo {
-  body?: BlockBodyAlonzo[];
+  body?: TxAlonzo[];
   headerHash?: DigestBlake2BBlockHeader;
   header?: {
     blockHeight: BlockNo;
@@ -1513,7 +1516,7 @@ export interface BlockAlonzo {
     signature: IssuerSignature;
   };
 }
-export interface BlockBodyAlonzo {
+export interface TxAlonzo {
   id: DigestBlake2BBlockBody;
   body: {
     inputs: TxIn[];
