@@ -667,6 +667,12 @@
       , "args":
         { "type": "object"
         , "additionalProperties": false
+        , "properties":
+          { "fields":
+            { "type": "string"
+            , "enum": [ "all" ]
+            }
+          }
         }
       , "mirror":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
@@ -699,6 +705,7 @@
       , "result":
         { "oneOf":
           [ { "$ref": "#/definitions/TxId" }
+          , { "$ref": "#/definitions/Tx[Alonzo]" }
           , { "$ref": "#/definitions/Null" }
           ]
         }
@@ -1959,20 +1966,7 @@
             , "properties":
               { "txPayload":
                 { "type": "array"
-                , "items":
-                  { "type": "object"
-                  , "additionalProperties": false
-                  , "required": [ "id", "body", "witness" ]
-                  , "$omitted-if-compact": ["witness"]
-                  , "properties":
-                    { "id": { "$ref": "#/definitions/TxId" }
-                    , "body": { "$ref": "#/definitions/Tx" }
-                    , "witness":
-                      { "type": "array"
-                      , "items": { "$ref": "#/definitions/TxWitness" }
-                      }
-                    }
-                  }
+                , "items": { "$ref": "#/definitions/Tx[Byron]" }
                 }
               , "dlgPayload":
                 { "type": "array"
@@ -2118,7 +2112,7 @@
     , "properties":
       { "body":
         { "type": "array"
-        , "items": { "$ref": "#/definitions/BlockBody[Shelley]" }
+        , "items": { "$ref": "#/definitions/Tx[Shelley]" }
         }
       , "headerHash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].header" }
       , "header":
@@ -2143,66 +2137,6 @@
           , "protocolVersion": { "$ref": "#/definitions/ProtocolVersion" }
           , "signature": { "$ref": "#/definitions/IssuerSignature" }
           }
-        }
-      }
-    }
-
-  , "BlockBody[Shelley]":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "metadata" ]
-    , "$omitted-if-compact": ["witness"]
-    , "properties":
-      { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
-      , "body":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": ["inputs","outputs","certificates","withdrawals","fee","timeToLive","update"]
-        , "properties":
-          { "inputs":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/TxIn" }
-            }
-          , "outputs":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/TxOut" }
-            }
-          , "certificates":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/Certificate" }
-            }
-          , "withdrawals": { "$ref": "#/definitions/Withdrawals" }
-          , "fee": { "$ref": "#/definitions/Lovelace" }
-          , "timeToLive": { "$ref": "#/definitions/Slot" }
-          , "update": { "$ref": "#/definitions/Update[Shelley]" }
-          }
-        }
-      , "witness":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": ["signatures","scripts","bootstrap"]
-        , "properties":
-          { "signatures":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "#/definitions/Signature" }
-            }
-          , "scripts":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "#/definitions/Script" }
-            }
-          , "bootstrap":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/BootstrapWitness" }
-            }
-          }
-        }
-      , "metadata":
-        { "oneOf":
-          [ { "$ref": "#/definitions/AuxiliaryData" }
-          , { "$ref": "#/definitions/Null"}
-          ]
         }
       }
     }
@@ -2283,14 +2217,14 @@
     , "properties":
       { "body":
         { "type": "array"
-        , "items": { "$ref": "#/definitions/BlockBody[Allegra]" }
+        , "items": { "$ref": "#/definitions/Tx[Allegra]" }
         }
       , "headerHash": { "$ref": "#/definitions/Block[Shelley]/properties/headerHash" }
       , "header": { "$ref": "#/definitions/Block[Shelley]/properties/header" }
       }
     }
 
-  , "BlockBody[Allegra]":
+  , "Tx[Allegra]":
     { "type": "object"
     , "additionalProperties": false
     , "required": [ "id", "body", "witness", "metadata" ]
@@ -2449,71 +2383,10 @@
     , "properties":
       { "body":
         { "type": "array"
-        , "items": { "$ref": "#/definitions/BlockBody[Mary]" }
+        , "items": { "$ref": "#/definitions/Tx[Mary]" }
         }
       , "headerHash": { "$ref": "#/definitions/Block[Shelley]/properties/headerHash" }
       , "header": { "$ref": "#/definitions/Block[Shelley]/properties/header" }
-      }
-    }
-
-  , "BlockBody[Mary]":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "metadata" ]
-    , "$omitted-if-compact": ["witness"]
-    , "properties":
-      { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
-      , "body":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": ["inputs","outputs","certificates","withdrawals","fee","validityInterval","mint","update"]
-        , "properties":
-          { "inputs":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/TxIn" }
-            }
-          , "outputs":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/TxOut" }
-            }
-          , "certificates":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/Certificate" }
-            }
-          , "withdrawals": { "$ref": "#/definitions/Withdrawals" }
-          , "fee": { "$ref": "#/definitions/Lovelace" }
-          , "validityInterval": { "$ref": "#/definitions/ValidityInterval" }
-          , "update": { "$ref": "#/definitions/Update[Shelley]" }
-          , "mint": { "$ref": "#/definitions/Value" }
-          }
-        }
-      , "witness":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": ["signatures","scripts","bootstrap"]
-        , "properties":
-          { "signatures":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "#/definitions/Signature" }
-            }
-          , "scripts":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "#/definitions/Script" }
-            }
-          , "bootstrap":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/BootstrapWitness" }
-            }
-          }
-        }
-      , "metadata":
-        { "oneOf":
-          [ { "$ref": "#/definitions/AuxiliaryData" }
-          , { "$ref": "#/definitions/Null"}
-          ]
-        }
       }
     }
 
@@ -2524,115 +2397,10 @@
     , "properties":
       { "body":
         { "type": "array"
-        , "items": { "$ref": "#/definitions/BlockBody[Alonzo]" }
+        , "items": { "$ref": "#/definitions/Tx[Alonzo]" }
         }
       , "headerHash": { "$ref": "#/definitions/Block[Shelley]/properties/headerHash" }
       , "header": { "$ref": "#/definitions/Block[Shelley]/properties/header" }
-      }
-    }
-
-  , "BlockBody[Alonzo]":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "metadata" ]
-    , "$omitted-if-compact": ["witness"]
-    , "properties":
-      { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
-      , "body":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required":
-          [ "inputs", "collaterals", "outputs", "certificates"
-          , "withdrawals", "fee", "validityInterval", "update", "mint"
-          , "network", "scriptIntegrityHash", "requiredExtraSignatures"
-          ]
-        , "properties":
-          { "inputs":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/TxIn" }
-            }
-          , "collaterals":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/TxIn" }
-            }
-          , "outputs":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/TxOut" }
-            }
-          , "certificates":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/Certificate" }
-            }
-          , "withdrawals":
-            { "$ref": "#/definitions/Withdrawals"
-            }
-          , "fee":
-            { "$ref": "#/definitions/Lovelace"
-            }
-          , "validityInterval":
-            { "$ref": "#/definitions/ValidityInterval"
-            }
-          , "update":
-            { "$ref": "#/definitions/Update[Alonzo]"
-            }
-          , "mint":
-            { "$ref": "#/definitions/Value"
-            }
-          , "network":
-            { "oneOf":
-              [ { "$ref": "#/definitions/Network" }
-              , { "$ref": "#/definitions/Null"}
-              ]
-            }
-          , "scriptIntegrityHash":
-            { "oneOf":
-              [ { "$ref": "#/definitions/Digest[Blake2b]::ScriptIntegrity" }
-              , { "$ref": "#/definitions/Null"}
-              ]
-            }
-          , "requiredExtraSignatures":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
-            }
-          }
-        }
-      , "witness":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": ["signatures","scripts","bootstrap", "datums", "redeemers"]
-        , "properties":
-          { "signatures":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "#/definitions/Signature" }
-            }
-          , "scripts":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "#/definitions/Script" }
-            }
-          , "bootstrap":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/BootstrapWitness" }
-            }
-          , "datums":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "#/definitions/Datum" }
-            }
-          , "redeemers":
-            { "type": "object"
-            , "propertyNames": { "$ref": "#/definitions/RedeemerPointer" }
-            , "additionalProperties": { "$ref": "#/definitions/Redeemer" }
-            }
-          }
-        }
-      , "metadata":
-        { "oneOf":
-          [ { "$ref": "#/definitions/AuxiliaryData" }
-          , { "$ref": "#/definitions/Null"}
-          ]
-        }
       }
     }
 
@@ -5626,18 +5394,257 @@
       ]
     }
 
-  , "Tx":
+  , "Tx[Byron]":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "inputs", "outputs" ]
+    , "required": [ "id", "body", "witness" ]
+    , "$omitted-if-compact": ["witness"]
     , "properties":
-      { "inputs":
-        { "type": "array"
-        , "items": { "$ref": "#/definitions/TxIn" }
+      { "id": { "$ref": "#/definitions/TxId" }
+      , "body":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "inputs", "outputs" ]
+        , "properties":
+          { "inputs":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxIn" }
+            }
+          , "outputs":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxOut" }
+            }
+          }
         }
-      , "outputs":
+      , "witness":
         { "type": "array"
-        , "items": { "$ref": "#/definitions/TxOut" }
+        , "items": { "$ref": "#/definitions/TxWitness" }
+        }
+      }
+    }
+
+  , "Tx[Shelley]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id", "body", "witness", "metadata" ]
+    , "$omitted-if-compact": ["witness"]
+    , "properties":
+      { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
+      , "body":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["inputs","outputs","certificates","withdrawals","fee","timeToLive","update"]
+        , "properties":
+          { "inputs":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxIn" }
+            }
+          , "outputs":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxOut" }
+            }
+          , "certificates":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Certificate" }
+            }
+          , "withdrawals": { "$ref": "#/definitions/Withdrawals" }
+          , "fee": { "$ref": "#/definitions/Lovelace" }
+          , "timeToLive": { "$ref": "#/definitions/Slot" }
+          , "update": { "$ref": "#/definitions/Update[Shelley]" }
+          }
+        }
+      , "witness":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["signatures","scripts","bootstrap"]
+        , "properties":
+          { "signatures":
+            { "type": "object"
+            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/Signature" }
+            }
+          , "scripts":
+            { "type": "object"
+            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/Script" }
+            }
+          , "bootstrap":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/BootstrapWitness" }
+            }
+          }
+        }
+      , "metadata":
+        { "oneOf":
+          [ { "$ref": "#/definitions/AuxiliaryData" }
+          , { "$ref": "#/definitions/Null"}
+          ]
+        }
+      }
+    }
+
+  , "Tx[Mary]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id", "body", "witness", "metadata" ]
+    , "$omitted-if-compact": ["witness"]
+    , "properties":
+      { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
+      , "body":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["inputs","outputs","certificates","withdrawals","fee","validityInterval","mint","update"]
+        , "properties":
+          { "inputs":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxIn" }
+            }
+          , "outputs":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxOut" }
+            }
+          , "certificates":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Certificate" }
+            }
+          , "withdrawals": { "$ref": "#/definitions/Withdrawals" }
+          , "fee": { "$ref": "#/definitions/Lovelace" }
+          , "validityInterval": { "$ref": "#/definitions/ValidityInterval" }
+          , "update": { "$ref": "#/definitions/Update[Shelley]" }
+          , "mint": { "$ref": "#/definitions/Value" }
+          }
+        }
+      , "witness":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["signatures","scripts","bootstrap"]
+        , "properties":
+          { "signatures":
+            { "type": "object"
+            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/Signature" }
+            }
+          , "scripts":
+            { "type": "object"
+            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/Script" }
+            }
+          , "bootstrap":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/BootstrapWitness" }
+            }
+          }
+        }
+      , "metadata":
+        { "oneOf":
+          [ { "$ref": "#/definitions/AuxiliaryData" }
+          , { "$ref": "#/definitions/Null"}
+          ]
+        }
+      }
+    }
+
+  , "Tx[Alonzo]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id", "body", "witness", "metadata" ]
+    , "$omitted-if-compact": ["witness"]
+    , "properties":
+      { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
+      , "body":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required":
+          [ "inputs", "collaterals", "outputs", "certificates"
+          , "withdrawals", "fee", "validityInterval", "update", "mint"
+          , "network", "scriptIntegrityHash", "requiredExtraSignatures"
+          ]
+        , "properties":
+          { "inputs":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxIn" }
+            }
+          , "collaterals":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxIn" }
+            }
+          , "outputs":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxOut" }
+            }
+          , "certificates":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Certificate" }
+            }
+          , "withdrawals":
+            { "$ref": "#/definitions/Withdrawals"
+            }
+          , "fee":
+            { "$ref": "#/definitions/Lovelace"
+            }
+          , "validityInterval":
+            { "$ref": "#/definitions/ValidityInterval"
+            }
+          , "update":
+            { "$ref": "#/definitions/Update[Alonzo]"
+            }
+          , "mint":
+            { "$ref": "#/definitions/Value"
+            }
+          , "network":
+            { "oneOf":
+              [ { "$ref": "#/definitions/Network" }
+              , { "$ref": "#/definitions/Null"}
+              ]
+            }
+          , "scriptIntegrityHash":
+            { "oneOf":
+              [ { "$ref": "#/definitions/Digest[Blake2b]::ScriptIntegrity" }
+              , { "$ref": "#/definitions/Null"}
+              ]
+            }
+          , "requiredExtraSignatures":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
+            }
+          }
+        }
+      , "witness":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["signatures","scripts","bootstrap", "datums", "redeemers"]
+        , "properties":
+          { "signatures":
+            { "type": "object"
+            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/Signature" }
+            }
+          , "scripts":
+            { "type": "object"
+            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/Script" }
+            }
+          , "bootstrap":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/BootstrapWitness" }
+            }
+          , "datums":
+            { "type": "object"
+            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/Datum" }
+            }
+          , "redeemers":
+            { "type": "object"
+            , "propertyNames": { "$ref": "#/definitions/RedeemerPointer" }
+            , "additionalProperties": { "$ref": "#/definitions/Redeemer" }
+            }
+          }
+        }
+      , "metadata":
+        { "oneOf":
+          [ { "$ref": "#/definitions/AuxiliaryData" }
+          , { "$ref": "#/definitions/Null"}
+          ]
         }
       }
     }
