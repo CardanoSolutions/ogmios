@@ -81,7 +81,7 @@ data Health block = Health
     , metrics :: !Metrics
     -- ^ Application metrics measured at regular interval.
     , connectionStatus :: !ConnectionStatus
-    -- ^ State of the connectino with the underlying node.
+    -- ^ State of the connection with the underlying node.
     , currentEpoch :: !(Maybe EpochNo)
     -- ^ Current known epoch number
     , slotInEpoch :: !(Maybe SlotInEpoch)
