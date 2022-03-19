@@ -52,8 +52,8 @@ allow-newer:
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/cardano-node
-  tag: 814df2c146f5d56f8c35a681fe75e85b905aed5d
-  --sha256: 1hr00wqzmcyc3x0kp2hyw78rfmimf6z4zd4vv85b9zv3nqbjgrik
+  tag: 73f9a746362695dc2cb63ba757fbcabb81733d23
+  --sha256: 1hh53whcj5y9kw4qpkiza7rmkniz18r493vv4dzl1a8r5fy3b2bv
   subdir:
     cardano-api
 
@@ -153,8 +153,8 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/ouroboros-network
-  tag: 32af91686b86dac7454eee8b8a8d6e97a80638da
-  --sha256: 0wkk40nw9vylc7imndhj3ca60mv59034mi2irnnilfvpzavj5zlz
+  tag: 4fac197b6f0d2ff60dc3486c593b68dc00969fbf
+  --sha256: 1b43vbdsr9m3ry1kgag2p2ixpv54gw7a4vvmndxl6knqg8qbsb8b
   subdir:
     io-classes
     io-sim
@@ -169,9 +169,7 @@ source-repository-package
     ouroboros-consensus-protocol
     ouroboros-consensus-shelley
     ouroboros-consensus-shelley-test
-    ouroboros-consensus-cardano
     ouroboros-consensus-cardano-test
-    ouroboros-consensus-mock
     ouroboros-network
     ouroboros-network-framework
     ouroboros-network-testing
@@ -183,10 +181,9 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/input-output-hk/plutus
-  tag: 1efbb276ef1a10ca6961d0fd32e6141e9798bd11
-  --sha256: 1jicyk4hr8p0xksj4048gdxndrb42jz4wsnkhc3ymxbm5v6snalf
+  tag: fc5fe94d3d9525d032bcbc79ff0e1ebcfd8ef143
+  --sha256: 1gnzhns44rzvf9cw84jaqajqqbi9xdcpyy2sapa890vwf796nigv
   subdir:
-    freer-extras
     plutus-core
     plutus-ledger-api
     plutus-tx

@@ -5,6 +5,33 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.3.0] - UNRELEASED
+
+#### Added
+
+> ##### 🏢 Server 
+>
+> - `NextTx` can now take an (optional) extra argument `{ "fields": "all" }` to instrument the server in returning not only a transaction id in `NextTxResponse`, but a full transaction. See [#190](https://github.com/CardanoSolutions/ogmios/issues/190).
+
+#### Changed
+
+> ##### 🏢 Server 
+>
+> - Upgrade internal dependencies to `cardano-node@1.34.1`
+
+> ##### 🚗 TypeScript Client
+>
+> - ⚠️  Some schema type interface renaming:
+>     - `Tx` → `TxByron`
+>     - `BlockBodyShelley` → `TxShelley`
+>     - `BlockBodyAllegra` → `TxAllegra`
+>     - `BlockBodyMary` → `TxMary`
+>     - `BlockBodyAlonzo` → `TxAlonzo`
+
+#### Removed
+
+> N/A
+
 ### [5.2.0] - 2022-02-15
 
 #### Added

@@ -38,6 +38,7 @@ import Ogmios.Data.Json
     , encodeScriptFailure
     , encodeSubmitTxError
     , encodeTip
+    , encodeTx
     , encodeTxId
     , encodeTxIn
     , encodeUtxo
@@ -107,6 +108,7 @@ import Ogmios.Data.Protocol.TxMonitor
     , HasTxResponse (..)
     , MempoolSizeAndCapacity
     , NextTx
+    , NextTxFields (..)
     , NextTxResponse (..)
     , ReleaseMempool
     , ReleaseMempoolResponse (..)
@@ -170,6 +172,7 @@ import Test.Generators
     , genSubmitResult
     , genSystemStart
     , genTip
+    , genTx
     , genTxId
     , genUTxOResult
     , genUtxo
@@ -247,9 +250,14 @@ validateFromJSON
 validateFromJSON gen (encode, decode) (n, vectorFilePath) ref = parallel $ do
     runIO $ generateTestVectors (n, vectorFilePath) gen encode
     refs <- runIO $ unsafeReadSchemaRef ref
-    specify (toString $ getSchemaRef ref) $ forAllBlind gen $ \a -> conjoin
+    specify (toString $ getSchemaRef ref) $ forAllBlind gen $ \a ->
+        let leftSide = decodeWith decode (jsonToByteString (encode a)) in
+        conjoin
         [ prop_validateToJSON (jsonifierToAeson . encode) refs a
-        , decodeWith decode (jsonToByteString (encode a)) === Just a
+        , leftSide == Just a
+            & counterexample (decodeUtf8 $ Json.encodePretty $ inefficientEncodingToValue $ encode a)
+            & counterexample ("Got:  " <> show leftSide)
+            & counterexample ("Want: " <> show (Just a))
         ]
 
 goldenToJSON
@@ -345,7 +353,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Wsp.Response (NextTxResponse Block)))
-            (_encodeNextTxResponse encodeTxId)
+            (_encodeNextTxResponse encodeTxId (encodeTx FullSerialization))
             (10, "TxMonitor/Response/NextTx")
             "ogmios.wsp.json#/properties/NextTxResponse"
 
@@ -653,6 +661,10 @@ instance Arbitrary NextTx where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
+instance Arbitrary NextTxFields where
+    shrink = genericShrink
+    arbitrary = genericArbitrary
+
 instance Arbitrary (NextTxResponse Block) where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
@@ -689,6 +701,9 @@ instance Arbitrary (Tip Block) where
 
 instance Arbitrary Block where
     arbitrary = genBlock
+
+instance Arbitrary (GenTx Block) where
+    arbitrary = genTx
 
 instance Arbitrary (GenTxId Block) where
     arbitrary = genTxId

@@ -90,6 +90,7 @@ import Ogmios.Data.Json
     , encodeScriptFailure
     , encodeSubmitTxError
     , encodeTip
+    , encodeTx
     , encodeTxId
     , encodeTxIn
     , jsonToByteString
@@ -342,7 +343,9 @@ withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator conn action = 
     stateQueryCodecs@StateQueryCodecs{..} =
         mkStateQueryCodecs encodePoint encodeAcquireFailure
     txMonitorCodecs@TxMonitorCodecs{..} =
-        mkTxMonitorCodecs encodeTxId
+        mkTxMonitorCodecs
+            encodeTxId
+            (encodeTx mode)
     txSubmissionCodecs@TxSubmissionCodecs{..} =
         mkTxSubmissionCodecs
             encodeTxId

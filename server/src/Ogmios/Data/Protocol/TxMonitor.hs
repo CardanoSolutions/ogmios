@@ -30,6 +30,7 @@ module Ogmios.Data.Protocol.TxMonitor
 
       -- ** NextTx
     , NextTx (..)
+    , NextTxFields (..)
     , _encodeNextTx
     , _decodeNextTx
     , NextTxResponse (..)
@@ -78,6 +79,8 @@ import Ouroboros.Network.Protocol.LocalTxMonitor.Type
     ( MempoolSizeAndCapacity (..) )
 
 import qualified Codec.Json.Wsp as Wsp
+import qualified Data.Aeson as Json
+import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.Types as Json
 
 --
@@ -120,13 +123,14 @@ data TxMonitorCodecs block = TxMonitorCodecs
 mkTxMonitorCodecs
     :: (FromJSON (GenTxId block))
     => (GenTxId block -> Json)
+    -> (GenTx block -> Json)
     -> TxMonitorCodecs block
-mkTxMonitorCodecs encodeTxId =
+mkTxMonitorCodecs encodeTxId encodeTx =
     TxMonitorCodecs
         { decodeAwaitAcquire = decodeWith _decodeAwaitAcquire
         , encodeAwaitAcquireResponse = _encodeAwaitAcquireResponse
         , decodeNextTx = decodeWith _decodeNextTx
-        , encodeNextTxResponse = _encodeNextTxResponse encodeTxId
+        , encodeNextTxResponse = _encodeNextTxResponse encodeTxId encodeTx
         , decodeHasTx = decodeWith _decodeHasTx
         , encodeHasTxResponse = _encodeHasTxResponse
         , decodeSizeAndCapacity = decodeWith _decodeSizeAndCapacity
@@ -204,7 +208,7 @@ _encodeAwaitAcquireResponse =
 --
 
 data NextTx
-    = NextTx
+    = NextTx { fields :: Maybe NextTxFields }
     deriving (Generic, Show, Eq)
 
 _encodeNextTx
@@ -212,28 +216,66 @@ _encodeNextTx
     -> Json
 _encodeNextTx =
     Wsp.mkRequest Wsp.defaultOptions $ \case
-        NextTx -> encodeObject []
+        NextTx{fields} ->
+            case fields of
+                Nothing ->
+                    encodeObject []
+                Just NextTxAllFields ->
+                    encodeObject [ ( "fields", encodeText "all" ) ]
 
 _decodeNextTx
     :: Json.Value
     -> Json.Parser (Wsp.Request NextTx)
 _decodeNextTx =
     Wsp.genericFromJSON Wsp.defaultOptions
+        { Wsp.onMissingField = \case
+            "fields" -> pure Json.Null
+            k -> Wsp.onMissingField  Wsp.defaultOptions k
+        }
+
+data NextTxFields
+    = NextTxAllFields
+    deriving (Generic, Show, Eq)
+
+instance FromJSON NextTxFields where
+    parseJSON = Json.withText "NextTxFields" $ \x -> do
+        when (x /= "all") $ do
+            fail "Invalid argument to 'fields'. Expected 'all'."
+        pure NextTxAllFields
+
+instance ToJSON NextTxFields where
+    toJSON = \case
+        NextTxAllFields -> Json.String "all"
+    toEncoding = \case
+        NextTxAllFields -> Json.text "all"
 
 data NextTxResponse block
-    = NextTxResponse { next :: Maybe (GenTxId block) }
+    = NextTxResponseId
+        { nextId :: Maybe (GenTxId block)
+        }
+    | NextTxResponseTx
+        { nextTx :: Maybe (GenTx block)
+        }
     deriving (Generic)
-deriving instance Show (GenTxId block) => Show (NextTxResponse block)
-deriving instance   Eq (GenTxId block) =>   Eq (NextTxResponse block)
+deriving instance
+    ( Show (GenTxId block)
+    , Show (GenTx block)
+    ) => Show (NextTxResponse block)
+deriving instance
+    ( Eq (GenTxId block)
+    , Eq (GenTx block)
+    ) => Eq (NextTxResponse block)
 
 _encodeNextTxResponse
     :: forall block. ()
     => (GenTxId block -> Json)
+    -> (GenTx block -> Json)
     -> Wsp.Response (NextTxResponse block)
     -> Json
-_encodeNextTxResponse encodeTxId =
+_encodeNextTxResponse encodeTxId encodeTx =
     Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        NextTxResponse{next} -> encodeMaybe encodeTxId next
+        NextTxResponseId{nextId} -> encodeMaybe encodeTxId nextId
+        NextTxResponseTx{nextTx} -> encodeMaybe encodeTx nextTx
   where
     proxy = Proxy @(Wsp.Request NextTx)
 
