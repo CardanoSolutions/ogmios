@@ -5,7 +5,11 @@ import IsoWebSocket from 'isomorphic-ws'
  */
 export class WebSocket extends IsoWebSocket {
   constructor (addr : string | URL, opts? : IsoWebSocket.ClientOptions) {
-    super(addr, opts)
+    if (isBrowser) {
+      super(addr)
+    } else {
+      super(addr, opts)
+    }
     return isBrowser ? Object.assign(this, browserPolyfill(this as unknown as EventTarget)) : this
   }
 }
