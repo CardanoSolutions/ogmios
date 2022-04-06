@@ -30,6 +30,7 @@ export const Query = <
         async function listener (data: string) {
           const queryResponse = safeJSON.parse(data) as QueryResponse
           if (queryResponse.reflection?.requestId !== requestId) { return }
+          socket.removeListener('message', listener)
           try {
             await response.handler(
               queryResponse,
@@ -39,7 +40,6 @@ export const Query = <
           } catch (e) {
             return reject(new UnknownResultError(queryResponse))
           }
-          socket.removeListener('message', listener)
         }
 
         socket.on('message', listener)
