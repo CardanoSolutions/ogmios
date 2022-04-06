@@ -2224,66 +2224,6 @@
       }
     }
 
-  , "Tx[Allegra]":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "metadata" ]
-    , "$omitted-if-compact": ["witness"]
-    , "properties":
-      { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
-      , "body":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": ["inputs","outputs","certificates","withdrawals","fee","validityInterval","update"]
-        , "properties":
-          { "inputs":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/TxIn" }
-            }
-          , "outputs":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/TxOut" }
-            }
-          , "certificates":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/Certificate" }
-            }
-          , "withdrawals": { "$ref": "#/definitions/Withdrawals" }
-          , "fee": { "$ref": "#/definitions/Lovelace" }
-          , "validityInterval": { "$ref": "#/definitions/ValidityInterval" }
-          , "update": { "$ref": "#/definitions/Update[Shelley]" }
-          }
-        }
-      , "witness":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": ["signatures","scripts","bootstrap"]
-        , "properties":
-          { "signatures":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "#/definitions/Signature" }
-            }
-          , "scripts":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "#/definitions/Script" }
-            }
-          , "bootstrap":
-            { "type": "array"
-            , "items": { "$ref": "#/definitions/BootstrapWitness" }
-            }
-          }
-        }
-      , "metadata":
-        { "oneOf":
-          [ { "$ref": "#/definitions/AuxiliaryData" }
-          , { "$ref": "#/definitions/Null"}
-          ]
-        }
-      }
-    }
-
   , "Block[Mary]":
     { "type": "object"
     , "additionalProperties": false
@@ -5397,8 +5337,8 @@
   , "Tx[Byron]":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "body", "witness" ]
-    , "$omitted-if-compact": ["witness"]
+    , "required": [ "id", "body", "witness", "raw" ]
+    , "$omitted-if-compact": ["witness", "raw"]
     , "properties":
       { "id": { "$ref": "#/definitions/TxId" }
       , "body":
@@ -5420,14 +5360,19 @@
         { "type": "array"
         , "items": { "$ref": "#/definitions/TxWitness" }
         }
+      , "raw":
+        { "type": "string"
+        , "contentEncoding": "base64"
+        , "description": "The raw serialized transaction, as found on-chain."
+        }
       }
     }
 
   , "Tx[Shelley]":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "metadata" ]
-    , "$omitted-if-compact": ["witness"]
+    , "required": [ "id", "body", "witness", "metadata", "raw" ]
+    , "$omitted-if-compact": ["witness", "raw"]
     , "properties":
       { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
       , "body":
@@ -5480,14 +5425,84 @@
           , { "$ref": "#/definitions/Null"}
           ]
         }
+      , "raw":
+        { "type": "string"
+        , "contentEncoding": "base64"
+        , "description": "The raw serialized transaction, as found on-chain."
+        }
+      }
+    }
+
+  , "Tx[Allegra]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id", "body", "witness", "metadata", "raw" ]
+    , "$omitted-if-compact": ["witness", "raw"]
+    , "properties":
+      { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
+      , "body":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["inputs","outputs","certificates","withdrawals","fee","validityInterval","update"]
+        , "properties":
+          { "inputs":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxIn" }
+            }
+          , "outputs":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxOut" }
+            }
+          , "certificates":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Certificate" }
+            }
+          , "withdrawals": { "$ref": "#/definitions/Withdrawals" }
+          , "fee": { "$ref": "#/definitions/Lovelace" }
+          , "validityInterval": { "$ref": "#/definitions/ValidityInterval" }
+          , "update": { "$ref": "#/definitions/Update[Shelley]" }
+          }
+        }
+      , "witness":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["signatures","scripts","bootstrap"]
+        , "properties":
+          { "signatures":
+            { "type": "object"
+            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/Signature" }
+            }
+          , "scripts":
+            { "type": "object"
+            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/Script" }
+            }
+          , "bootstrap":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/BootstrapWitness" }
+            }
+          }
+        }
+      , "metadata":
+        { "oneOf":
+          [ { "$ref": "#/definitions/AuxiliaryData" }
+          , { "$ref": "#/definitions/Null"}
+          ]
+        }
+      , "raw":
+        { "type": "string"
+        , "contentEncoding": "base64"
+        , "description": "The raw serialized transaction, as found on-chain."
+        }
       }
     }
 
   , "Tx[Mary]":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "metadata" ]
-    , "$omitted-if-compact": ["witness"]
+    , "required": [ "id", "body", "witness", "metadata", "raw" ]
+    , "$omitted-if-compact": ["witness", "raw"]
     , "properties":
       { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
       , "body":
@@ -5541,14 +5556,19 @@
           , { "$ref": "#/definitions/Null"}
           ]
         }
+      , "raw":
+        { "type": "string"
+        , "contentEncoding": "base64"
+        , "description": "The raw serialized transaction, as found on-chain."
+        }
       }
     }
 
   , "Tx[Alonzo]":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "metadata" ]
-    , "$omitted-if-compact": ["witness"]
+    , "required": [ "id", "body", "witness", "metadata", "raw" ]
+    , "$omitted-if-compact": ["witness", "raw"]
     , "properties":
       { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
       , "body":
@@ -5645,6 +5665,11 @@
           [ { "$ref": "#/definitions/AuxiliaryData" }
           , { "$ref": "#/definitions/Null"}
           ]
+        }
+      , "raw":
+        { "type": "string"
+        , "contentEncoding": "base64"
+        , "description": "The raw serialized transaction, as found on-chain."
         }
       }
     }

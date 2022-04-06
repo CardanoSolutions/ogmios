@@ -309,10 +309,6 @@ spec = do
             (200, "ChainSync/Response/RequestNext")
             "ogmios.wsp.json#/properties/RequestNextResponse"
 
-        goldenToJSON
-            "RequestNextResponse_1.json"
-            "ogmios.wsp.json#/properties/RequestNextResponse"
-
     context "validate tx-submission request/response against JSON-schema" $ do
         prop "deserialise signed transactions" prop_parseSubmitTx
 

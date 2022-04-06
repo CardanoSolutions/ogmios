@@ -8,6 +8,8 @@ module Ogmios.Data.Json.Allegra where
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Binary
+    ( serialize' )
 import Cardano.Ledger.Crypto
     ( Crypto )
 import GHC.Records
@@ -141,6 +143,9 @@ encodeTx mode x = encodeObjectWithMode mode
     ]
     [ ( "witness"
       , encodeWitnessSet (Sh.wits x)
+      )
+    , ( "raw"
+      , encodeByteStringBase64 (serialize' x)
       )
     ]
   where

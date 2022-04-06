@@ -6,6 +6,13 @@ module Ogmios.Data.Json.Byron where
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Binary
+    ( toCBOR )
+import Codec.CBOR.Encoding
+    ( encodeListLen )
+import Codec.CBOR.Write
+    ( toStrictByteString )
+
 import qualified Cardano.Chain.Block as By.Block
 import qualified Cardano.Chain.Block as By hiding
     ( Proof, signature )
@@ -219,6 +226,13 @@ encodeATxAux mode x = encodeObjectWithMode mode
     ]
     [ ( "witness"
       , encodeAnnotated encodeTxWitness (By.aTaWitness x)
+      )
+    , ( "raw"
+      , encodeByteStringBase64 $ toStrictByteString $ mconcat
+        [ encodeListLen 2
+        , toCBOR (By.taTx x)
+        , toCBOR (By.taWitness x)
+        ]
       )
     ]
 

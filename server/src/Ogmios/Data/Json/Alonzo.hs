@@ -8,6 +8,8 @@ module Ogmios.Data.Json.Alonzo where
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Binary
+    ( serialize' )
 import Cardano.Ledger.Crypto
     ( Crypto )
 import Data.ByteString.Base16
@@ -404,6 +406,9 @@ encodeTx mode x = encodeObjectWithMode mode
     ]
     [ ( "witness"
       , encodeWitnessSet (Al.wits x)
+      )
+    , ( "raw"
+      , encodeByteStringBase64 (serialize' x)
       )
     ]
   where
