@@ -16,9 +16,11 @@ RUN nix-shell -p git --command "git clone --depth 1 https://github.com/input-out
 
 WORKDIR /app/ogmios
 RUN nix-env -iA cachix -f https://cachix.org/api/v1/install && cachix use cardano-ogmios
-COPY . .
+COPY default.nix default.nix
+COPY server server
 RUN nix-build -A ogmios.components.exes.ogmios -o dist
 RUN cp -r dist/* . && chmod +w dist/bin && chmod +x dist/bin/ogmios
+COPY scripts scripts
 
 #                                                                              #
 # --------------------------- BUILD (ogmios) --------------------------------- #
@@ -35,8 +37,9 @@ COPY --from=build /app/ogmios/bin/ogmios /bin/ogmios
 COPY --from=build /app/cardano-configurations/network/${NETWORK} /config
 
 EXPOSE 1337/tcp
-STOPSIGNAL SIGINT
 HEALTHCHECK --interval=10s --timeout=5s --retries=1 CMD /bin/ogmios health-check
+
+STOPSIGNAL SIGINT
 ENTRYPOINT ["/bin/ogmios"]
 
 #                                                                              #
@@ -46,22 +49,22 @@ ENTRYPOINT ["/bin/ogmios"]
 FROM inputoutput/cardano-node:1.33.0 as cardano-node-ogmios
 
 ARG NETWORK=mainnet
-
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ENV TINI_VERSION v0.19.0
 
 LABEL name=cardano-node-ogmios
 LABEL description="A Cardano node, side-by-side with its JSON WebSocket bridge."
 
 COPY --from=build /app/ogmios/bin/ogmios /bin/ogmios
 COPY --from=build /app/cardano-configurations/network/${NETWORK} /config
-
-RUN mkdir -p /ipc
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static /tini
+RUN chmod +x /tini && mkdir -p /ipc
 
 WORKDIR /root
-COPY scripts/cardano-node-ogmios.sh cardano-node-ogmios.sh
+
  # Ogmios, cardano-node, ekg, prometheus
 EXPOSE 1337/tcp 3000/tcp 12788/tcp 12798/tcp
-STOPSIGNAL SIGINT
 HEALTHCHECK --interval=10s --timeout=5s --retries=1 CMD /bin/ogmios health-check
-CMD ["bash", "cardano-node-ogmios.sh" ]
-ENTRYPOINT [ "/root/cardano-node-ogmios.sh" ]
+
+STOPSIGNAL SIGINT
+COPY scripts/cardano-node-ogmios.sh cardano-node-ogmios.sh
+ENTRYPOINT ["/tini", "-g", "--", "/root/cardano-node-ogmios.sh" ]
