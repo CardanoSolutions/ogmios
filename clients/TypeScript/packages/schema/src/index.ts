@@ -1099,6 +1099,10 @@ export interface TxByron {
     outputs: TxOut[];
   };
   witness: TxWitness[];
+  /**
+   * The raw serialized transaction, as found on-chain.
+   */
+  raw: string;
 }
 export interface TxIn {
   txId: TxId;
@@ -1222,6 +1226,10 @@ export interface TxShelley {
     bootstrap: BootstrapWitness[];
   };
   metadata: AuxiliaryData | Null;
+  /**
+   * The raw serialized transaction, as found on-chain.
+   */
+  raw: string;
 }
 /**
  * A stake delegation certificate, from a delegator to a stake pool.
@@ -1446,6 +1454,10 @@ export interface TxAllegra {
     bootstrap: BootstrapWitness[];
   };
   metadata: AuxiliaryData | Null;
+  /**
+   * The raw serialized transaction, as found on-chain.
+   */
+  raw: string;
 }
 export interface ValidityInterval {
   invalidBefore: Slot | Null;
@@ -1494,6 +1506,10 @@ export interface TxMary {
     bootstrap: BootstrapWitness[];
   };
   metadata: AuxiliaryData | Null;
+  /**
+   * The raw serialized transaction, as found on-chain.
+   */
+  raw: string;
 }
 export interface Alonzo {
   alonzo: BlockAlonzo;
@@ -1548,6 +1564,10 @@ export interface TxAlonzo {
     };
   };
   metadata: AuxiliaryData | Null;
+  /**
+   * The raw serialized transaction, as found on-chain.
+   */
+  raw: string;
 }
 export interface UpdateProposalAlonzo {
   epoch: Epoch;
