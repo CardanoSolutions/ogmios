@@ -12,15 +12,24 @@ pre: "<b>6. </b>"
 > ##### 🏢 Server 
 >
 > - `NextTx` can now take an (optional) extra argument `{ "fields": "all" }` to instrument the server in returning not only a transaction id in `NextTxResponse`, but a full transaction. See [#190](https://github.com/CardanoSolutions/ogmios/issues/190).
+> 
+> - Transaction JSON objects from all eras now contains an extra field `raw`, which represents the raw serialized transaction (CBOR) as a base64-encoded text string. This is the case of the chain-sync protocol, but also for the tx-monitor protocol. The field is however absent in the `ogmios.v1:compact` mode. See [#190](https://github.com/CardanoSolutions/ogmios/issues/190).
+
 
 #### Changed
 
 > ##### 🏢 Server 
 >
 > - Upgrade internal dependencies to `cardano-node@1.34.1`
-
+>
+> - Fixed the supervisor script for the `cardano-node-ogmios` Docker image, which would wrongly ignore signals sent from the Docker daemon (e.g. `docker container stop ...`). See [#168](https://github.com/CardanoSolutions/ogmios/issues/168)
+>
+>
+>
 > ##### 🚗 TypeScript Client
 >
+> - The options passed to the WebSocket constructors are now ignored on the browser, since they aren't supported and were causing the constructor to "crash". See [#194](https://github.com/CardanoSolutions/ogmios/issues/194).
+> 
 > - ⚠️  Some schema type interface renaming:
 >     - `Tx` → `TxByron`
 >     - `BlockBodyShelley` → `TxShelley`
