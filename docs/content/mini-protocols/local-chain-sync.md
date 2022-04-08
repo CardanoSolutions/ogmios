@@ -123,9 +123,9 @@ On the first connection with the node, clients will likely synchronize from the 
     "servicename": "ogmios",
     "methodname": "FindIntersect",
     "args": { 
-        "points": [ 
-            "9e871633f7aa356ef11cdcabb6fdd6d8f4b00bc919c57aed71a91af8f86df590",
-            "d184f428159290bf3558b4d1d139e6a07ec6589738c28a0925a7ab776bde4d62",
+        "points": [
+            { "slot": 39916796, "hash": "e72579ff89dc9ed325b723a33624b596c08141c7bd573ecfff56a1f7229e4d09" },
+            { "slot": 23068793, "hash": "69c44ac1dda2ec74646e4223bc804d9126f719b1c245dadc2ad65e8de1b276d7" },
             "origin" 
         ]
     },
