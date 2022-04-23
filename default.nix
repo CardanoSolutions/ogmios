@@ -20,6 +20,8 @@ let
   musl64 = pkgs.pkgsCross.musl64;
 in
 musl64.haskell-nix.project {
+  compiler-nix-name = compiler;
+  projectFileName = "cabal.project";
   src = musl64.haskell-nix.haskellLib.cleanSourceWith {
     name = "ogmios-src";
     src = ./.;
@@ -29,20 +31,4 @@ musl64.haskell-nix.project {
         (baseNameOf path != "package.yaml")
       ];
   };
-  projectFileName = "cabal.project";
-  compiler-nix-name = compiler;
-  modules = [{
-    packages = {
-      myPackage.components.exes.myPackage.configureFlags =
-        musl64.lib.optionals musl64.stdenv.hostPlatform.isMusl [
-          "--disable-executable-dynamic"
-          "--disable-shared"
-          "--ghc-option=-optl=-pthread"
-          "--ghc-option=-optl=-static"
-          "--ghc-option=-optl=-L${musl64.gmp6.override { withStatic = true; }}/lib"
-          "--ghc-option=-optl=-L${musl64.zlib.static}/lib"
-        ];
-
-    };
-  }];
 }
