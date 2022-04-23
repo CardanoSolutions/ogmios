@@ -1,0 +1,15 @@
+{{ $host := "cardanoscan.io" }}
+{{ if eq (.Get "network") "testnet" }}
+  {{ $host = "testnet.cardanoscan.io" }}
+{{ end }}
+
+<tr>
+  <td>Last <i>{{ .Get "era" }}</i> block</td>
+  {{ if eq (.Get "blockNumber") "N/A" }}
+  <td>{{ .Get "blockNumber" }}</td>
+  {{ else }}
+  <td><a target="_blank" href="https://{{$host}}/block/{{ .Get "blockNumber" }}">{{ .Get "blockNumber" }} <i style="font-size: 0.8rem;" class="fas fa-external-link-alt"></i></a></td>
+  {{ end }}
+  <td><code>{{ .Get "slotNumber" }}</code></td>
+  <td><code>{{ .Get "headerHash" }}</code></td>
+</tr>
