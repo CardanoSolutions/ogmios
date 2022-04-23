@@ -1,8 +1,8 @@
 import { InteractionContext } from '../Connection'
 import { ensureSocketIsOpen, eventEmitterToGenerator, safeJSON } from '../util'
 import { handleSubmitTxResponse, isTxId } from './submitTx'
-import { evaluateTx } from './evaluateTx'
-import { Ogmios, TxId } from '@cardano-ogmios/schema'
+import { handleEvaluateTxResponse, isEvaluationResult, EvaluationResult } from './evaluateTx'
+import { Ogmios, TxId, Utxo } from '@cardano-ogmios/schema'
 import { baseRequest, send } from '../Request'
 
 /**
@@ -12,7 +12,7 @@ import { baseRequest, send } from '../Request'
  **/
 export interface TxSubmissionClient {
   context: InteractionContext
-  evaluateTx: (bytes: string) => ReturnType<typeof evaluateTx>
+  evaluateTx: (bytes: string, additionalUtxoSet?: Utxo) => Promise<EvaluationResult>
   submitTx: (bytes: string) => Promise<TxId>
   shutdown: () => Promise<void>
 }
@@ -39,9 +39,26 @@ export const createTxSubmissionClient = async (
 
   return Promise.resolve({
     context,
-    evaluateTx: (bytes) => {
+    evaluateTx: (bytes, additionalUtxoSet) => {
       ensureSocketIsOpen(socket)
-      return evaluateTx(context, bytes)
+      return send<EvaluationResult>(async (socket) => {
+        socket.send(safeJSON.stringify({
+          ...baseRequest,
+          methodname: 'EvaluateTx',
+          args: {
+            ...(additionalUtxoSet !== undefined ? {} : { additionalUtxoSet }),
+            evaluate: bytes
+          }
+        } as unknown as Ogmios['EvaluateTx']))
+
+        const response = handleEvaluateTxResponse((await submitTxResponse.next()).value)
+
+        if (isEvaluationResult(response)) {
+          return response
+        } else {
+          throw response
+        }
+      }, context)
     },
     submitTx: async (bytes) => {
       ensureSocketIsOpen(socket)

@@ -24,15 +24,11 @@ export const submitTx = (context: InteractionContext, bytes: string) =>
     args: { submit: bytes }
   }, {
     handler: (response, resolve, reject) => {
-      if (response.methodname === 'SubmitTx') {
-        const result = handleSubmitTxResponse(response)
-        if (isTxId(result)) {
-          return resolve(result as TxId)
-        } else {
-          return reject(result as Error[])
-        }
+      const result = handleSubmitTxResponse(response)
+      if (isTxId(result)) {
+        return resolve(result as TxId)
       } else {
-        return reject([new UnknownResultError(response)])
+        return reject(result as Error[])
       }
     }
   }, context)
