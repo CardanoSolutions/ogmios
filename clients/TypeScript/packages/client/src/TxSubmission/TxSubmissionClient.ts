@@ -17,6 +17,24 @@ export interface TxSubmissionClient {
   shutdown: () => Promise<void>
 }
 
+/** @Internal */
+const matchSubmitTx = (data: string) => {
+  const response = safeJSON.parse(data) as Ogmios['SubmitTxResponse']
+  if ((response.type as string) !== 'jsonwsp/fault' && response.methodname !== 'SubmitTx') {
+    return null
+  }
+  return response
+}
+
+/** @Internal */
+const matchEvaluateTx = (data: string) => {
+  const response = safeJSON.parse(data) as Ogmios['EvaluateTxResponse']
+  if ((response.type as string) !== 'jsonwsp/fault' && response.methodname !== 'EvaluateTx') {
+    return null
+  }
+  return response
+}
+
 /**
  * Create a client for submitting signed transactions to underlying Cardano chain.
  *
@@ -27,15 +45,11 @@ export const createTxSubmissionClient = async (
 ): Promise<TxSubmissionClient> => {
   const { socket } = context
 
-  const matchSubmitTx = (data: string) => {
-    const response = safeJSON.parse(data) as Ogmios['SubmitTxResponse']
-    if (response.methodname !== 'SubmitTx') {
-      return null
-    }
-    return response
-  }
   const submitTxResponse = eventEmitterToGenerator(socket, 'message', matchSubmitTx)() as
     AsyncGenerator<Ogmios['SubmitTxResponse']>
+
+  const evaluateTxResponse = eventEmitterToGenerator(socket, 'message', matchEvaluateTx)() as
+    AsyncGenerator<Ogmios['EvaluateTxResponse']>
 
   return Promise.resolve({
     context,
@@ -51,7 +65,7 @@ export const createTxSubmissionClient = async (
           }
         } as unknown as Ogmios['EvaluateTx']))
 
-        const response = handleEvaluateTxResponse((await submitTxResponse.next()).value)
+        const response = handleEvaluateTxResponse((await evaluateTxResponse.next()).value)
 
         if (isEvaluationResult(response)) {
           return response

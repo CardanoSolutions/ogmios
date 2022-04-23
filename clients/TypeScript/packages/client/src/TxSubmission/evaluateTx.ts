@@ -52,46 +52,50 @@ export const evaluateTx = (context: InteractionContext, bytes: string, additiona
 
 /** @Internal */
 export const handleEvaluateTxResponse = (response: Ogmios['EvaluateTxResponse']) : (EvaluationResult | Error[]) => {
-  const { result } = response
-  if ('EvaluationResult' in result) {
-    return result.EvaluationResult
-  } else if ('EvaluationFailure' in result) {
-    const { EvaluationFailure } = result
-    if ('ScriptFailures' in EvaluationFailure) {
-      const { ScriptFailures } = EvaluationFailure
-      if (Array.isArray(ScriptFailures)) {
-        return ScriptFailures.map(failure => {
-          if (errors.ExtraRedeemers.assert(failure)) {
-            return new errors.ExtraRedeemers.Error(failure)
-          } else if (errors.IllFormedExecutionBudget.assert(failure)) {
-            return new errors.IllFormedExecutionBudget.Error(failure)
-          } else if (errors.MissingRequiredDatums.assert(failure)) {
-            return new errors.MissingRequiredDatums.Error(failure)
-          } else if (errors.MissingRequiredScripts.assert(failure)) {
-            return new errors.MissingRequiredScripts.Error(failure)
-          } else if (errors.NoCostModelForLanguage.assert(failure)) {
-            return new errors.NoCostModelForLanguage.Error(failure)
-          } else if (errors.NonScriptInputReferencedByRedeemer.assert(failure)) {
-            return new errors.NonScriptInputReferencedByRedeemer.Error(failure)
-          } else if (errors.UnknownInputReferencedByRedeemer.assert(failure)) {
-            return new errors.UnknownInputReferencedByRedeemer.Error(failure)
-          } else if (errors.ValidatorFailed.assert(failure)) {
-            return new errors.ValidatorFailed.Error(failure)
-          } else {
-            return new Error(failure)
-          }
-        })
+  try {
+    const { result } = response
+    if ('EvaluationResult' in result) {
+      return result.EvaluationResult
+    } else if ('EvaluationFailure' in result) {
+      const { EvaluationFailure } = result
+      if ('ScriptFailures' in EvaluationFailure) {
+        const { ScriptFailures } = EvaluationFailure
+        if (Array.isArray(ScriptFailures)) {
+          return ScriptFailures.map(failure => {
+            if (errors.ExtraRedeemers.assert(failure)) {
+              return new errors.ExtraRedeemers.Error(failure)
+            } else if (errors.IllFormedExecutionBudget.assert(failure)) {
+              return new errors.IllFormedExecutionBudget.Error(failure)
+            } else if (errors.MissingRequiredDatums.assert(failure)) {
+              return new errors.MissingRequiredDatums.Error(failure)
+            } else if (errors.MissingRequiredScripts.assert(failure)) {
+              return new errors.MissingRequiredScripts.Error(failure)
+            } else if (errors.NoCostModelForLanguage.assert(failure)) {
+              return new errors.NoCostModelForLanguage.Error(failure)
+            } else if (errors.NonScriptInputReferencedByRedeemer.assert(failure)) {
+              return new errors.NonScriptInputReferencedByRedeemer.Error(failure)
+            } else if (errors.UnknownInputReferencedByRedeemer.assert(failure)) {
+              return new errors.UnknownInputReferencedByRedeemer.Error(failure)
+            } else if (errors.ValidatorFailed.assert(failure)) {
+              return new errors.ValidatorFailed.Error(failure)
+            } else {
+              return new Error(failure)
+            }
+          })
+        }
+      } else if (errors.UnknownInputs.assert(EvaluationFailure)) {
+        return [new errors.UnknownInputs.Error(EvaluationFailure)]
+      } else if (errors.IncompatibleEra.assert(EvaluationFailure)) {
+        return [new errors.IncompatibleEra.Error(EvaluationFailure)]
+      } else if (errors.UncomputableSlotArithmetic.assert(EvaluationFailure)) {
+        return [new errors.UncomputableSlotArithmetic.Error(EvaluationFailure)]
+      } else if (errors.AdditionalUtxoOverlap.assert(EvaluationFailure)) {
+        return [new errors.AdditionalUtxoOverlap.Error(EvaluationFailure)]
       }
-    } else if (errors.UnknownInputs.assert(EvaluationFailure)) {
-      return [new errors.UnknownInputs.Error(EvaluationFailure)]
-    } else if (errors.IncompatibleEra.assert(EvaluationFailure)) {
-      return [new errors.IncompatibleEra.Error(EvaluationFailure)]
-    } else if (errors.UncomputableSlotArithmetic.assert(EvaluationFailure)) {
-      return [new errors.UncomputableSlotArithmetic.Error(EvaluationFailure)]
-    } else if (errors.AdditionalUtxoOverlap.assert(EvaluationFailure)) {
-      return [new errors.AdditionalUtxoOverlap.Error(EvaluationFailure)]
+    } else {
+      return [new UnknownResultError(response)]
     }
-  } else {
+  } catch (e) {
     return [new UnknownResultError(response)]
   }
 }
