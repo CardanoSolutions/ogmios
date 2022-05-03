@@ -220,6 +220,15 @@ encodeGenesis x = encodeObject
       )
     ]
 
+encodeIsValid
+    :: Al.IsValid
+    -> Json
+encodeIsValid = \case
+    Al.IsValid True ->
+        encodeText "inputs"
+    Al.IsValid False ->
+        encodeText "collaterals"
+
 encodeLanguage
     :: Al.Language
     -> Json
@@ -402,6 +411,9 @@ encodeTx mode x = encodeObjectWithMode mode
       , (,) <$> fmap (("hash",) . Shelley.encodeAuxiliaryDataHash) (adHash (Al.body x))
             <*> fmap (("body",) . encodeAuxiliaryData) (Al.auxiliaryData x)
         & encodeStrictMaybe (\(a, b) -> encodeObject [a,b])
+      )
+    , ( "inputSource"
+      , encodeIsValid (Al.isValid x)
       )
     ]
     [ ( "witness"
