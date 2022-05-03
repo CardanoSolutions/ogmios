@@ -15,6 +15,7 @@ pre: "<b>6. </b>"
 > 
 > - Transaction JSON objects from all eras now contains an extra field `raw`, which represents the raw serialized transaction (CBOR) as a base64-encoded text string. This is the case of the chain-sync protocol, but also for the tx-monitor protocol. The field is however absent in the `ogmios.v1:compact` mode. See [#190](https://github.com/CardanoSolutions/ogmios/issues/190).
 
+> - Transaction JSON objects from the **Alonzo** era now contains an extra field `inputSource` which a string set to either `inputs` or `collaterals`. This captures the fact that since the introduction of Plutus scripts in Alonzo, some transactions may be recorded as _failed_ transactions in the ledger. Those transactions do not successfully spend their inputs but instead, consume their collaterals as an input source to compensate block validators for their work. 
 
 #### Changed
 
