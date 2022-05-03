@@ -5567,10 +5567,17 @@
   , "Tx[Alonzo]":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "metadata", "raw" ]
+    , "required": [ "id", "body", "witness", "metadata", "inputSource", "raw" ]
     , "$omitted-if-compact": ["witness", "raw"]
     , "properties":
       { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
+      , "inputSource":
+        { "type": "string"
+        , "enum":
+          [ "inputs"
+          , "collaterals"
+          ]
+        }
       , "body":
         { "type": "object"
         , "additionalProperties": false
