@@ -1,0 +1,36 @@
+{{ partial "header.html" . }}
+
+<div id="asyncapi"></div>
+<link rel="stylesheet" href="https://unpkg.com/@asyncapi/react-component@1.0.0-next.34/styles/default.min.css" />
+<div className="loader"></div>
+<script src="https://unpkg.com/@asyncapi/react-component@1.0.0-next.34/browser/standalone/index.js"></script>
+<script>
+  AsyncApiStandalone.render({
+    schema: {
+      url: '/api/specification.yaml',
+    },
+    config: {
+      show: {
+        messages: false,
+      },
+    },
+  }, document.getElementById('asyncapi'));
+</script>
+<style>
+  #body .padding {
+    padding: 0 !important;
+  }
+
+  #body #body-inner {
+    margin-bottom: 0;
+  }
+
+  #navigation {
+    display: none;
+  }
+
+  #operations > ul > li div.panel-item--center > div:nth-child(3) {
+    display: none;
+  }
+</style>
+{{ partial "footer.html" . }}
