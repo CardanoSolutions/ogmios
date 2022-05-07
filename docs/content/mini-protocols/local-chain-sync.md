@@ -246,4 +246,4 @@ Since version `v3.2.0`, Ogmios supports a WebSocket sub-protocol which has an in
 ogmios.v1:compact
 ```
 
-as a sub-protocol when establishing the WebSocket connection. Omitted fields are documented in the [API reference](../../api-reference) using the `$omitted-if-compact` field of relevant objects.
+as a sub-protocol when establishing the WebSocket connection. Omitted fields are documented in the [API reference](../../api) using the `$omitted-if-compact` field of relevant objects.

@@ -66,7 +66,7 @@ On the other hand, the TypeScript client is used to perform **end-to-end tests**
 
 Beside, Ogmios also comes with **structured logging and monitoring** out of the box. Putting any monitoring solution on top like Prometheus is trivial. 
 
-Finally, if you ventured through this page and user-guide, you have also noticed that the project is **well-documented**. And this includes the [API reference](/api-reference), the [ChangeLog](/changelog) as well as the [architectural decisions](https://github.com/CardanoSolutions/ogmios/tree/master/architectural-decisions) going over rationales for decisions we made along the way. 
+Finally, if you ventured through this page and user-guide, you have also noticed that the project is **well-documented**. And this includes the [API reference](/api), the [ChangeLog](/changelog) as well as the [architectural decisions](https://github.com/CardanoSolutions/ogmios/tree/master/architectural-decisions) going over rationales for decisions we made along the way. 
 
 Thus, is Ogmios production-ready? **Probably, yes**. At least, this is as good as it gets for an open-source project. We've been incorporating feedback from various users over the past year which has been great so far. For the rest, everything is open-source licensed under [MPL-2.0](https://choosealicense.com/licenses/mpl-2.0/) and **you're the best judge.**
 
@@ -74,11 +74,14 @@ Thus, is Ogmios production-ready? **Probably, yes**. At least, this is as good a
 
 We've heard of a handful happy users! And it keeps growing...
 
-- https://ccwallet.io/
+- https://blockfrost.io/
+- https://eternl.io/
 - https://www.sundaeswap.finance/
+- https://spacebudz.io/
+- https://www.tangocrypto.com/
 - https://github.com/input-output-hk/cardano-graphql 
 - https://www.f2lb.org/
-- https://gimbalabs.com/dandelionapis/ogmios-api
+- https://gimbalabs.com/
 
 There are also projects still in preparation which looked into Ogmios as a lightweight alternative to cardano-db-sync for it better suited their need. 
 

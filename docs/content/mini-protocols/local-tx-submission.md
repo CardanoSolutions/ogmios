@@ -62,7 +62,7 @@ Note that JSON does not support embedding raw bytes in objects. Bytes needs ther
 
 The response will indicate either a `SubmitSuccess` or `SubmitFail`. In case of failure, Ogmios will return a list of failures reported by the underlying node. Note that, if the transaction fails to parse, Ogmios will reply with a generic error. 
 
-Transactions in Shelley are rather _complicated_ and there is **a lot of** possible validation errors that can be returned. Be sure to have a look at the [API reference](../../api-reference) for an exhaustive list.
+Transactions in Shelley are rather _complicated_ and there is **a lot of** possible validation errors that can be returned. Be sure to have a look at the [API reference](../../api) for an exhaustive list.
 
 ## EvaluateTx
 

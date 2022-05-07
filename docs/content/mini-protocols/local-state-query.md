@@ -106,7 +106,7 @@ Query               | Notice | Deprecated Since
 `utxo`              | Filtering UTXO **by address** is no longer recommended with the introduction of on-disk ledger state storage. Filtering by output reference is preferred. | [cardano-node@1.33.0](https://github.com/input-output-hk/cardano-node/releases/tag/1.33.0)
 {{% /notice %}}
 
-To know more about arguments and results of each query, have a look at the [API reference](../../api-reference).
+To know more about arguments and results of each query, have a look at the [API reference](../../api).
 
 ## Simplified Example
 

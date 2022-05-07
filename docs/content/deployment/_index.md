@@ -1,6 +1,6 @@
 +++
 title = "Deployment"
-weight = 4
+weight = 3
 chapter = true
 pre = "<b>4. </b>"
 +++

@@ -1534,6 +1534,7 @@ export interface BlockAlonzo {
 }
 export interface TxAlonzo {
   id: DigestBlake2BBlockBody;
+  inputSource: "inputs" | "collaterals";
   body: {
     inputs: TxIn[];
     collaterals: TxIn[];
