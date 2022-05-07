@@ -29,6 +29,8 @@ pre: "<b>6. </b>"
 
 ##### 🚗 TypeScript Client
 
+- The tx-submission client now only creates a single event listener to interact with the server. This solves the Node.js warning "possible memory leak detected" when firing many submission requests at once (and going beyond the internal default `maxNumberOfListeners` set by node.js on event emitters). See [#197](https://github.com/CardanoSolutions/ogmios/issues/197).
+
 - The options passed to the WebSocket constructors are now ignored on the browser, since they aren't supported and were causing the constructor to "crash". See [#194](https://github.com/CardanoSolutions/ogmios/issues/194).
 
 - ⚠️  Some schema type interface renaming:
