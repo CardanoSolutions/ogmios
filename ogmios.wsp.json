@@ -2510,8 +2510,6 @@
     { "type": "string"
     , "description": "A Blake2b 32-byte digest of stake pool (canonical) JSON metadata."
     , "contentEncoding": "base16"
-    , "minLength": 64
-    , "maxLength": 64
     , "examples":
       [ "c248757d390181c517a5beadc9c3fe64bf821d3e889a963fc717003ec248757d"
       ]
@@ -5613,7 +5611,7 @@
   , "Withdrawals":
     { "type": "object"
     , "additionalProperties": { "$ref": "#/definitions/Lovelace" }
-    , "propertyNames": { "apttern": "^stake(_test)?1[0-9a-z]+$" }
+    , "propertyNames": { "pattern": "^stake(_test)?1[0-9a-z]+$" }
     }
 
   , "VerificationKey":
