@@ -6,6 +6,9 @@ module.exports = {
   "plugins": [
     "@typescript-eslint"
   ],
+  "globals": {
+    "AsyncGenerator": true
+  },
   "rules": {
     "no-unused-vars": 0,
     "linebreak-style": [

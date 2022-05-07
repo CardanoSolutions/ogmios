@@ -15,6 +15,7 @@ import {
 } from '@cardano-ogmios/schema'
 import { findIntersect } from './ChainSync'
 import { WebSocketClosed, TipIsOriginError } from './errors'
+import { EventEmitter } from 'events'
 const JSONBig = require('@cardanosolutions/json-bigint')
 
 /** @internal */
@@ -88,6 +89,35 @@ export const createPointFromCurrentTip = async (context?: InteractionContext): P
 export const ensureSocketIsOpen = (socket: WebSocket) => {
   if (socket.readyState !== socket.OPEN) {
     throw new WebSocketClosed()
+  }
+}
+
+/** @internal */
+export function eventEmitterToGenerator <T> (eventEmitter: EventEmitter, eventName: string, match: (e: string) => T|null) {
+  const events = [] as T[]
+  const listeners = [] as ((t: T) => void)[]
+
+  eventEmitter.on(eventName, async (e: string) => {
+    const matched = match(e)
+    if (matched !== null) {
+      if (listeners.length > 0) {
+        listeners.shift()(matched)
+      } else {
+        events.push(matched)
+      }
+    }
+  })
+
+  return async function * generator () {
+    while (true) {
+      yield new Promise((resolve) => {
+        if (events.length > 0) {
+          resolve(events.shift())
+        } else {
+          listeners.push(resolve)
+        }
+      })
+    }
   }
 }
 
