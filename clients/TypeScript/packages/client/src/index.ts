@@ -13,3 +13,6 @@ export * as StateQuery from './StateQuery'
 
 export { createTxSubmissionClient } from './TxSubmission'
 export * as TxSubmission from './TxSubmission'
+
+export { createLocalTxMonitorClient } from './LocalTxMonitor'
+export * as LocalTxMonitor from './LocalTxMonitor'

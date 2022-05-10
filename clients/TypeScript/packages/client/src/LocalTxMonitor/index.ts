@@ -1,0 +1,7 @@
+export * from './awaitAcquire'
+export * from './hasTx'
+export * from './nextTx'
+export * from './sizeAndCapacity'
+export * from './releaseMempool'
+export * from './LocalTxMonitorClient'
+export { UnknownResultError } from '../errors'
