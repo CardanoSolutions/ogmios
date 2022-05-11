@@ -4,12 +4,12 @@ import { UnknownResultError } from "../errors";
 
 
 export const isMempoolSizeAndCapacity = (result: MempoolSizeAndCapacity | Error[]): result is MempoolSizeAndCapacity => 
-    (Object.keys(result).every(x => typeof x === 'number'))
+    (typeof (result as MempoolSizeAndCapacity) === 'object' && !Array.isArray(result))
 
 export const handleSizeAndCapacityResponse = (response: Ogmios['SizeAndCapacityResponse']): (MempoolSizeAndCapacity | Error[]) => {
     try {
         const { result } = response
-        if ( 'capacity' in result && 'currentSize' in result && 'numberOfTxs' in result) {
+        if ('capacity' in result && 'currentSize' in result && 'numberOfTxs' in result) {
             return result;
         } else {
             return [new UnknownResultError(response)]
