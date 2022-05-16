@@ -4,7 +4,7 @@ import { TxMonitorClient } from '../../src/TxMonitor'
 import { dummyInteractionContext } from '../util'
 
 describe('TxMonitor', () => {
-  describe('TxSubmissionClient', () => {
+  describe('TxMonitorClient', () => {
     it('opens a connection on construction, and closes it after shutdown', async () => {
       const context = await dummyInteractionContext()
       const client = await TxMonitor.createTxMonitorClient(context)
@@ -168,7 +168,7 @@ describe('TxMonitor', () => {
     })
   })
 
-  describe('releaseMempool', () => {
+  describe('release', () => {
     let context: InteractionContext
     let client: TxMonitorClient
     beforeAll(async () => { context = await dummyInteractionContext() })
@@ -182,21 +182,20 @@ describe('TxMonitor', () => {
       }
     ]
 
-    methods.forEach(releaseMempool => {
+    methods.forEach(release => {
       it('successfully release mempool', async () => {
         await client.awaitAcquire();
 
         const args: any = {};
 
-        const released = await releaseMempool(args)
-        expect(released).toEqual("Released")
+        await expect(release(args)).resolves.not.toThrow();
       })
       
       it('fail to get mempool size and capacity as no snapshot was previously acquired', async () => {
         try {
           const args: any = {}
   
-          await releaseMempool(args)
+          await release(args)
         } catch(errors) {
           expect(errors).toHaveLength(1)
           expect(errors[0]).toBeInstanceOf(UnknownResultError)

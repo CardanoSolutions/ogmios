@@ -15,7 +15,7 @@ export const release = (context: InteractionContext, args?: {}) =>
     Query<
         Ogmios['ReleaseMempool'],
         Ogmios['ReleaseMempoolResponse'],
-        string
+        void
     >({
         methodName: 'ReleaseMempool',
         args: args
@@ -23,7 +23,7 @@ export const release = (context: InteractionContext, args?: {}) =>
         handler: (response, resolve, reject) => {
             const result = handleReleaseResponse(response)
             if (isReleasedResult(result)) {
-                return resolve(result)
+                return resolve()
             } else {
                 return reject(result as Error[])
             }

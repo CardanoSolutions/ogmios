@@ -19,7 +19,7 @@ export interface TxMonitorClient {
     hasTx: (id: TxId) => Promise<boolean>
     nextTx: (args?: { fields?: "all" }) => Promise<TxId | TxAlonzo | Null>
     sizeAndCapacity: (args?: {}) => Promise<MempoolSizeAndCapacity>
-    release: (args?: {}) => Promise<string>
+    release: (args?: {}) => Promise<void>
     shutdown: () => Promise<void>
 }
 
@@ -170,7 +170,7 @@ export const createTxMonitorClient = async (
         },
         release: (args?: {}) => {
             ensureSocketIsOpen(socket)
-            return send<string>(async (socket) => {
+            return send<void>(async (socket) => {
                 socket.send(safeJSON.stringify({
                     ...baseRequest,
                     methodname: 'ReleaseMempool',
@@ -180,7 +180,7 @@ export const createTxMonitorClient = async (
                 const response = handleReleaseResponse((await releaseMempoolResponse.next()).value)
 
                 if (isReleasedResult(response)) {
-                    return response
+                    return
                 } else {
                     throw response
                 }
