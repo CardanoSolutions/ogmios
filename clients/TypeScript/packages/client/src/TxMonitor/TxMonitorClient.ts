@@ -2,7 +2,7 @@ import { InteractionContext } from '../Connection'
 import { ensureSocketIsOpen, eventEmitterToGenerator, safeJSON } from '../util'
 import { MempoolSizeAndCapacity, Null, Ogmios, TxAlonzo, TxId } from "@cardano-ogmios/schema"
 import { baseRequest, send } from "../Request"
-import { AwaitAcquired, handleAwaitAcquireResponse, isAwaitAcquiredResult } from "./awaitAcquire"
+import { AwaitAcquired, handleAwaitAcquireResponse } from "./awaitAcquire"
 import { handleHasTxResponse, isHasTxResult } from "./hasTx"
 import { handleNextTxResponse, isNextTxResult } from "./nextTx"
 import { handleReleaseResponse, isReleasedResult } from "./release"
@@ -105,13 +105,7 @@ export const createTxMonitorClient = async (
                     args: args
                 } as unknown as Ogmios['AwaitAcquire']))
 
-                const response = handleAwaitAcquireResponse((await awaitAcquireResponse.next()).value)
-
-                if (isAwaitAcquiredResult(response)) {
-                    return response
-                } else {
-                    throw response
-                }
+                return handleAwaitAcquireResponse((await awaitAcquireResponse.next()).value)
             }, context)
         },
         hasTx: (id: TxId) => {

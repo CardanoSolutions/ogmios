@@ -24,24 +24,18 @@ export const awaitAcquire = (context: InteractionContext, args?: {}) =>
         args: args
     }, {
         handler: (response, resolve, reject) => {
-            const result = handleAwaitAcquireResponse(response)
-            if (isAwaitAcquiredResult(result)) {
-                return resolve(result as AwaitAcquired)
-            } else {
-                return reject(result as Error[])
+            try {
+                resolve(handleAwaitAcquireResponse(response))
+            } catch (e) {
+                reject(e)
             }
         }
     }, context)
 
-export const handleAwaitAcquireResponse = (response: Ogmios['AwaitAcquireResponse']): (AwaitAcquired | Error[]) => {
-    try {
-        const { result } = response
-        if ('AwaitAcquired' in result) {
-            return result.AwaitAcquired
-        } else {
-            return [new UnknownResultError(response)]
-        }
-    } catch (e) {
-        return [new UnknownResultError(response)]
-    }
+export const handleAwaitAcquireResponse = (response: Ogmios['AwaitAcquireResponse']): AwaitAcquired => {
+    const { result } = response
+    if ('AwaitAcquired' in result) {
+        return result.AwaitAcquired
+    } 
+    throw new UnknownResultError(response)
 }
