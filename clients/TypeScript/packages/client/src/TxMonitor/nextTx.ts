@@ -9,7 +9,7 @@ export const isNextTxResult = (result: TxId | TxAlonzo | Null | Error[]): result
 /**
  * Request the next mempool transaction from an acquired snapshot.
  *
- * @category LocalTxMonitor
+ * @category TxMonitor
  */
  export const nextTx = (context: InteractionContext, args?: { fields?: "all"}) =>
  Query<

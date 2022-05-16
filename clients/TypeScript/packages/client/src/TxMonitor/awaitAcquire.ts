@@ -12,7 +12,7 @@ export const isAwaitAcquiredResult = (result: AwaitAcquired | Error[]): result i
 /**
  * Acquire a mempool snapshot. This is blocking until a new (i.e different) snapshot is available.
  *
- * @category LocalTxMonitor
+ * @category TxMonitor
  */
 export const awaitAcquire = (context: InteractionContext, args?: {}) =>
     Query<

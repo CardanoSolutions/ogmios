@@ -9,7 +9,7 @@ export const isMempoolSizeAndCapacity = (result: MempoolSizeAndCapacity | Error[
 /**
  * Get size and capacities of the mempool (acquired snapshot).
  *
- * @category LocalTxMonitor
+ * @category TxMonitor
  */
 export const sizeAndCapacity = (context: InteractionContext, args?: {}) =>
     Query<

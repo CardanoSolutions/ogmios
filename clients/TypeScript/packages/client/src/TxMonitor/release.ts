@@ -3,15 +3,15 @@ import { UnknownResultError } from "../errors";
 import { InteractionContext } from '../Connection'
 import { Query } from '../StateQuery'
 
-export const isReleasedMempoolResult = (result: string | Error[]): result is string =>
+export const isReleasedResult = (result: string | Error[]): result is string =>
     (result === "Released")
 
 /**
  * Release a previously acquired mempool snapshot.
  *
- * @category LocalTxMonitor
+ * @category TxMonitor
  */
-export const releaseMempool = (context: InteractionContext, args?: {}) =>
+export const release = (context: InteractionContext, args?: {}) =>
     Query<
         Ogmios['ReleaseMempool'],
         Ogmios['ReleaseMempoolResponse'],
@@ -21,8 +21,8 @@ export const releaseMempool = (context: InteractionContext, args?: {}) =>
         args: args
     }, {
         handler: (response, resolve, reject) => {
-            const result = handleReleaseMempoolResponse(response)
-            if (isReleasedMempoolResult(result)) {
+            const result = handleReleaseResponse(response)
+            if (isReleasedResult(result)) {
                 return resolve(result)
             } else {
                 return reject(result as Error[])
@@ -30,7 +30,7 @@ export const releaseMempool = (context: InteractionContext, args?: {}) =>
         }
     }, context)
 
-export const handleReleaseMempoolResponse = (response: Ogmios['ReleaseMempoolResponse']): (string | Error[]) => {
+export const handleReleaseResponse = (response: Ogmios['ReleaseMempoolResponse']): (string | Error[]) => {
     try {
         const { result } = response
         if (result !== undefined) {

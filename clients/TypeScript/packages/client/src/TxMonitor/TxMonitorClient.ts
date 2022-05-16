@@ -5,21 +5,21 @@ import { baseRequest, send } from "../Request"
 import { AwaitAcquired, handleAwaitAcquireResponse, isAwaitAcquiredResult } from "./awaitAcquire"
 import { handleHasTxResponse, isHasTxResult } from "./hasTx"
 import { handleNextTxResponse, isNextTxResult } from "./nextTx"
-import { handleReleaseMempoolResponse, isReleasedMempoolResult } from "./releaseMempool"
+import { handleReleaseResponse, isReleasedResult } from "./release"
 import { handleSizeAndCapacityResponse, isMempoolSizeAndCapacity } from "./sizeAndCapacity"
 
 /**
- * See also {@link createLocalTxMonitorClient} for creating a client.
+ * See also {@link createTxMonitorClient} for creating a client.
  *
- * @category LocalTxMonitor
+ * @category TxMonitor
  **/
-export interface LocalTxMonitorClient {
+export interface TxMonitorClient {
     context: InteractionContext
     awaitAcquire: (args?: {}) => Promise<AwaitAcquired>
     hasTx: (id: TxId) => Promise<boolean>
     nextTx: (args?: { fields?: "all" }) => Promise<TxId | TxAlonzo | Null>
     sizeAndCapacity: (args?: {}) => Promise<MempoolSizeAndCapacity>
-    releaseMempool: (args?: {}) => Promise<string>
+    release: (args?: {}) => Promise<string>
     shutdown: () => Promise<void>
 }
 
@@ -73,9 +73,9 @@ const matchReleaseMempool = (data: string) => {
  *
  * @category Constructor
  **/
-export const createLocalTxMonitorClient = async (
+export const createTxMonitorClient = async (
     context: InteractionContext
-): Promise<LocalTxMonitorClient> => {
+): Promise<TxMonitorClient> => {
     const { socket } = context
 
     const awaitAcquireResponse = eventEmitterToGenerator(socket, 'message', matchAwaitAcquire)() as
@@ -168,7 +168,7 @@ export const createLocalTxMonitorClient = async (
                 }
             }, context)
         },
-        releaseMempool: (args?: {}) => {
+        release: (args?: {}) => {
             ensureSocketIsOpen(socket)
             return send<string>(async (socket) => {
                 socket.send(safeJSON.stringify({
@@ -177,9 +177,9 @@ export const createLocalTxMonitorClient = async (
                     args: args
                 } as unknown as Ogmios['ReleaseMempool']))
 
-                const response = handleReleaseMempoolResponse((await releaseMempoolResponse.next()).value)
+                const response = handleReleaseResponse((await releaseMempoolResponse.next()).value)
 
-                if (isReleasedMempoolResult(response)) {
+                if (isReleasedResult(response)) {
                     return response
                 } else {
                     throw response
@@ -191,5 +191,5 @@ export const createLocalTxMonitorClient = async (
             socket.once('close', resolve)
             socket.close()
         })
-    } as LocalTxMonitorClient)
+    } as TxMonitorClient)
 }

@@ -10,7 +10,7 @@ export const isHasTxResult = (result: boolean | Error[]): result is boolean =>
 /**
  * Ask whether a given transaction is present in the acquired mempool snapshot.
  *
- * @category LocalTxMonitor
+ * @category TxMonitor
  */
 export const hasTx = (context: InteractionContext, id: TxId) =>
 Query<
