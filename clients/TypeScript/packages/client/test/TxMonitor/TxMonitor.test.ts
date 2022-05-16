@@ -31,13 +31,12 @@ describe('TxMonitor', () => {
     let client: TxMonitorClient
     beforeAll(async () => { context = await dummyInteractionContext() })
     beforeEach(async () => { client = await createTxMonitorClient(context) })
-    afterAll(async () => { client.release(); context.socket.close() })
+    afterEach(async () => client.release())
+    afterAll(async () => context.socket.close())
 
     const methods = [
       async (args?: {}) => await TxMonitor.awaitAcquire(context, args),
-      async (args?: {}) => {
-        return await client.awaitAcquire(args)
-      }
+      async (args?: {}) => await client.awaitAcquire(args)
     ]
 
     methods.forEach(acquire => {
@@ -53,19 +52,17 @@ describe('TxMonitor', () => {
 
   describe('hasTx', () => {
     let context: InteractionContext
+    let client: TxMonitorClient
     beforeAll(async () => { context = await dummyInteractionContext() })
-    afterAll(() => context.socket.close())
+    beforeEach(async () => { client = await createTxMonitorClient(context) })
+    afterAll(async () => context.socket.close())
 
     const methods = [
       async (id: TxId) => await TxMonitor.hasTx(context, id),
-      async (id: TxId) => {
-        const client = await createTxMonitorClient(context)
-        return await client.hasTx(id)
-      }
+      async (id: TxId) => await client.hasTx(id)
     ]
 
     methods.forEach(hashTx => {
-
       it('successfully return tx is not in mempool', async () => {
         const client = await createTxMonitorClient(context)
         await client.awaitAcquire();
@@ -73,12 +70,13 @@ describe('TxMonitor', () => {
         const id = '4f539156bfbefc070a3b61cad3d1cedab3050e2b2a62f0ffe16a43eb0edc1ce8'
 
         const exist = await hashTx(id)
+        await client.release()
         expect(exist).toEqual(false)
       })
       
       it('fail to check whether tx is in mempool or not as no snapshot was previously acquired', async () => {
         try {
-          const id = '0123456789'
+          const id = '4f539156bfbefc070a3b61cad3d1cedab3050e2b2a62f0ffe16a43eb0edc1ce8'
   
           await hashTx(id)
         } catch(errors) {
@@ -95,13 +93,11 @@ describe('TxMonitor', () => {
     let client: TxMonitorClient
     beforeAll(async () => { context = await dummyInteractionContext() })
     beforeEach(async () => { client = await createTxMonitorClient(context) })
-    afterAll(async () => { client.release(); context.socket.close() })
+    afterAll(async () => context.socket.close())
 
     const methods = [
       async (args?: { fields?: "all" }) => await TxMonitor.nextTx(context, args),
-      async (args?: { fields?: "all" }) => {
-        return await client.nextTx(args)
-      }
+      async (args?: { fields?: "all" }) => await client.nextTx(args)
     ]
 
     methods.forEach(nextTx => {
@@ -111,6 +107,7 @@ describe('TxMonitor', () => {
         const args: any = { fields: "all" };
 
         const tx = await nextTx(args)
+        await client.release()
         expect(tx).toEqual(null)
       })
       
@@ -133,13 +130,11 @@ describe('TxMonitor', () => {
     let client: TxMonitorClient
     beforeAll(async () => { context = await dummyInteractionContext() })
     beforeEach(async () => { client = await createTxMonitorClient(context) })
-    afterAll(async () => { client.release(); context.socket.close() })
+    afterAll(async () => context.socket.close())
 
     const methods = [
       async (args?: {}) => await TxMonitor.sizeAndCapacity(context, args),
-      async (args?: {}) => {
-        return await client.sizeAndCapacity(args)
-      }
+      async (args?: {}) => await client.sizeAndCapacity(args)
     ]
 
     methods.forEach(sizeAndCapacity => {
@@ -149,6 +144,7 @@ describe('TxMonitor', () => {
         const args: any = {};
 
         const mempoolStats = await sizeAndCapacity(args)
+        await client.release()
         expect(mempoolStats.capacity).toEqual(expect.any(Number))
         expect(mempoolStats.currentSize).toEqual(0)
         expect(mempoolStats.numberOfTxs).toEqual(0)
@@ -159,6 +155,7 @@ describe('TxMonitor', () => {
           const args: any = {}
   
           await sizeAndCapacity(args)
+          await client.release()
         } catch(errors) {
           expect(errors).toHaveLength(1)
           expect(errors[0]).toBeInstanceOf(UnknownResultError)
@@ -173,13 +170,11 @@ describe('TxMonitor', () => {
     let client: TxMonitorClient
     beforeAll(async () => { context = await dummyInteractionContext() })
     beforeEach(async () => { client = await createTxMonitorClient(context) })
-    afterAll(() => context.socket.close())
+    afterAll(async () => { context.socket.close() })
 
     const methods = [
       async (args?: {}) => await TxMonitor.release(context, args),
-      async (args?: {}) => {
-        return await client.release(args)
-      }
+      async (args?: {}) => await client.release(args)
     ]
 
     methods.forEach(release => {
