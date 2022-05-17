@@ -1,1 +1,1 @@
-{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SubmitTx","result":{"SubmitFail":[{"stakeKeyAlreadyRegistered":"65fc709a5e019b8aba76f6977c1c8770e4b36fa76f434efc588747b7"},{"missingTxMetadataHash":"ae85d245a3d00bfde01f59f3c4fe0b4bfae1cb37e9cf91929eadcea4985711de"}]},"reflection":14}
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SubmitTx","result":{"SubmitSuccess":{"txId":"5e9d8bac576e8604e7c3526025bc146f5fa178173e3a5592d122687bd785b520"}},"reflection":14}

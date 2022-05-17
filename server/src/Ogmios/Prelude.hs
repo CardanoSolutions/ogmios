@@ -23,6 +23,10 @@ module Ogmios.Prelude
     , (^?)
     , (^.)
 
+      -- * Array
+    , Array
+    , mapToArray
+
       -- * type-level helpers
     , keepRedundantConstraint
     , LastElem
@@ -30,12 +34,17 @@ module Ogmios.Prelude
     , HKD
     ) where
 
+import Data.Array
+    ( Array, array )
 import Data.Generics.Internal.VL.Lens
     ( view, (^.) )
 import Data.Generics.Product.Typed
     ( HasType, typed )
+import qualified Data.Map as Map
 import Data.Profunctor.Unsafe
     ( ( #. ) )
+import GHC.Ix
+    ( Ix )
 import GHC.TypeLits
     ( ErrorMessage (..), TypeError )
 import Relude hiding
@@ -103,3 +112,9 @@ type family Or (a :: Constraint) (b :: Constraint) :: Constraint where
 type family HKD f a where
   HKD Identity a = a
   HKD f a = f a
+
+mapToArray :: Ix k => Map k v -> Array k v
+mapToArray m =
+  array
+    (fst (Map.findMin m), fst (Map.findMax m))
+    (Map.toList m)

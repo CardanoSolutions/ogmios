@@ -4,13 +4,17 @@
 
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Ogmios.Data.Health
     ( -- * Heath
       Health (..)
     , CardanoEra (..)
+    , ConnectionStatus (..)
     , Tip (..)
+    , SlotInEpoch (..)
+    , EpochNo (..)
     , emptyHealth
     , modifyHealth
       -- ** NetworkSynchronization
@@ -27,6 +31,8 @@ import Ogmios.Control.MonadSTM
 import Ogmios.Data.Metrics
     ( Metrics, emptyMetrics )
 
+import Cardano.Slotting.Slot
+    ( EpochNo (..) )
 import Data.Aeson
     ( ToJSON (..), genericToEncoding )
 import Data.ByteString.Builder.Scientific
@@ -45,6 +51,17 @@ import Ouroboros.Network.Block
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
 
+-- | Reflect the current state of the connection with the underlying node.
+data ConnectionStatus
+    = Connected
+    | Disconnected
+    deriving stock (Generic, Eq, Show)
+
+instance ToJSON ConnectionStatus where
+    toJSON = \case
+        Connected -> Json.String "connected"
+        Disconnected -> Json.String "disconnected"
+
 -- | Capture some health heartbeat of the application. This is populated by two
 -- things:
 --
@@ -57,12 +74,18 @@ data Health block = Health
     -- ^ Last known tip of the core node.
     , lastTipUpdate :: !(Maybe UTCTime)
     -- ^ Date at which the last update was received.
-    , networkSynchronization :: !NetworkSynchronization
+    , networkSynchronization :: !(Maybe NetworkSynchronization)
     -- ^ Percentage indicator of how far the node is from the network.
-    , currentEra :: !CardanoEra
+    , currentEra :: !(Maybe CardanoEra)
     -- ^ Current node's era.
     , metrics :: !Metrics
-    -- ^ Application metrics measured at regular interval
+    -- ^ Application metrics measured at regular interval.
+    , connectionStatus :: !ConnectionStatus
+    -- ^ State of the connectino with the underlying node.
+    , currentEpoch :: !(Maybe EpochNo)
+    -- ^ Current known epoch number
+    , slotInEpoch :: !(Maybe SlotInEpoch)
+    -- ^ Relative slot number within the epoch
     } deriving stock (Generic, Eq, Show)
 
 instance ToJSON (Tip block) => ToJSON (Health block) where
@@ -72,10 +95,13 @@ emptyHealth :: UTCTime -> Health block
 emptyHealth startTime = Health
     { startTime
     , lastKnownTip = TipGenesis
-    , lastTipUpdate = Nothing
-    , networkSynchronization = NetworkSynchronization 0
-    , currentEra = Byron
+    , lastTipUpdate = empty
+    , networkSynchronization = empty
+    , currentEra = empty
     , metrics = emptyMetrics
+    , connectionStatus = Disconnected
+    , currentEpoch = empty
+    , slotInEpoch = empty
     }
 
 modifyHealth
@@ -90,6 +116,10 @@ modifyHealth tvar fn =
         health <- fn <$> readTVar tvar
         health <$ writeTVar tvar health
 
+newtype SlotInEpoch = SlotInEpoch
+    { getSlotInEpoch :: Word64
+    } deriving stock (Generic, Eq, Show)
+      deriving newtype (ToJSON)
 
 -- | Captures how far is our underlying node from the network, in percentage.
 -- This is calculated using:

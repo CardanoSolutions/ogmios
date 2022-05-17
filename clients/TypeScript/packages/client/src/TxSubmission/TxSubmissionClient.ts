@@ -1,6 +1,7 @@
 import { InteractionContext } from '../Connection'
 import { ensureSocketIsOpen } from '../util'
 import { submitTx } from './submitTx'
+import { evaluateTx } from './evaluateTx'
 
 /**
  * See also {@link createTxSubmissionClient} for creating a client.
@@ -9,6 +10,7 @@ import { submitTx } from './submitTx'
  **/
 export interface TxSubmissionClient {
   context: InteractionContext
+  evaluateTx: (bytes: string) => ReturnType<typeof evaluateTx>
   submitTx: (bytes: string) => ReturnType<typeof submitTx>
   shutdown: () => Promise<void>
 }
@@ -24,6 +26,10 @@ export const createTxSubmissionClient = async (
   const { socket } = context
   return Promise.resolve({
     context,
+    evaluateTx: (bytes) => {
+      ensureSocketIsOpen(socket)
+      return evaluateTx(context, bytes)
+    },
     submitTx: (bytes) => {
       ensureSocketIsOpen(socket)
       return submitTx(context, bytes)

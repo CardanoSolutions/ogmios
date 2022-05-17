@@ -10,14 +10,15 @@ module Ogmios.Data.HealthSpec
 
 import Ogmios.Prelude
 
+import Ogmios
+    ()
+
 import Cardano.Network.Protocol.NodeToClient
     ( Block )
 import Data.Time.Clock
     ( UTCTime (..), addUTCTime, getCurrentTime )
-import Ogmios
-    ()
 import Ogmios.Data.Health
-    ( CardanoEra (..)
+    ( ConnectionStatus (..)
     , Health (..)
     , NetworkSynchronization (..)
     , RelativeTime (..)
@@ -47,9 +48,12 @@ spec = parallel $ do
             startTime health `shouldBe` time
             lastKnownTip health `shouldBe` TipGenesis
             lastTipUpdate health `shouldBe` Nothing
-            networkSynchronization health `shouldBe` NetworkSynchronization 0
-            currentEra health `shouldBe` Byron
+            networkSynchronization health `shouldBe` Nothing
+            currentEra health `shouldBe` Nothing
             metrics health `shouldBe` emptyMetrics
+            connectionStatus health `shouldBe` Disconnected
+            currentEpoch health `shouldBe` Nothing
+            slotInEpoch health `shouldBe` Nothing
 
     context "NetworkSynchronization" $ do
         let matrix =

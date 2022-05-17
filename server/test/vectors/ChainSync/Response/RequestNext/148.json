@@ -1,1 +1,1 @@
-{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"RequestNext","result":{"RollBackward":{"point":"origin","tip":{"slot":56673,"hash":"642206314f534b29ad297d82440a5f9f210e30ca5ced805a587ca402de927342","blockNo":4}}},"reflection":14}
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"RequestNext","result":{"RollBackward":{"point":"origin","tip":{"slot":57761,"hash":"642206314f534b29ad297d82440a5f9f210e30ca5ced805a587ca402de927342","blockNo":4}}},"reflection":14}

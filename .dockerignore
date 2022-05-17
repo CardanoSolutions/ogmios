@@ -7,6 +7,10 @@
 !cabal.project
 
 !docs/static/ogmios.wsp.json
+!default.nix
+
+!server/cabal.project
+!server/*.cabal
 
 !server/*.cabal
 !server/ogmios.wsp.json

@@ -9,8 +9,12 @@ const expectHealth = (obj: any): void => {
       'lastTipUpdate',
       'metrics',
       'startTime',
-      'networkSynchronization'
+      'networkSynchronization',
+      'currentEpoch',
+      'slotInEpoch'
     ]))
+  expect(obj.currentEpoch).not.toBe(null)
+  expect(obj.slotInEra).not.toBe(null)
 }
 
 describe('ServerHealth', () => {

@@ -5,6 +5,78 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.2.0] - 2022-02-15
+
+#### Added
+
+> ##### 🏢 Server 
+>
+> - Extended the local-tx-submission protocol with a [new `EvaluateTx` query](https://ogmios.dev/mini-protocols/local-tx-submission/#evaluatetx) which evaluates execution units of scripts present in a transaction. This effectively piggybacks on the Alonzo's tools from the cardano-ledger while providing a more user-friendly interface regarding network parameters. The API offers well-detailed errors and an interface similar to the `SubmitTx`. See discussion on [#172](https://github.com/CardanoSolutions/ogmios/issues/172). 
+>
+> - New `rewardsProvenance'` query coming as a replacement for the now-deprecated `rewardsProvenance` query. See discussion on [#171](https://github.com/CardanoSolutions/ogmios/issues/171).
+>
+> ##### 🚗 TypeScript Client
+>
+> - Support for the new `evaluateTx` query in the `TxSubmissionClient` & repl.
+> - Support for the new `rewardsProvenance'` query as `rewardsProvenanceNew` in the `StateQueryClient` & repl.
+
+#### Changed
+
+> ##### 🏢 Server 
+>
+> - Added transaction id as part of the successful response to a `SubmitTx`. While this is technically a breaking-change, it was introduced in a backward-compatible way. Existing applications using the existing `SubmitTx` query will see no change and will keep receiving successes as `"SubmitSuccessful"` text responses. However, queries which pass transactions using the `submit` field (instead of the currently expected `bytes` field) will receive, on success, an augmented response which contains a transaction id `"SubmitSuccessful": { "txId": "..." }`. See discussion on [#174](https://github.com/CardanoSolutions/ogmios/issues/174).
+>
+> - Improved error reporting for the `SubmitTx` protocol which should gives a little clearer errors for ill-formed transactions.
+>
+>
+> ##### 🚗 TypeScript Client
+>
+> - :warning: Renamed client's `TxSubmission/errors.ts` into `TxSubmission/submissionErrors.ts`. Similarly, the submission are also now nested under a `submissionErrors` field in the `TxSubmission` top-level object. 
+
+#### Removed
+
+> N/A
+
+### [5.1.0] - 2022-01-24
+
+#### Added
+
+> ##### 🏢 Server 
+>
+> - New `LocalTxMonitor` support in Ogmios. See [The user guide](https://ogmios.dev/mini-protocols/local-tx-monitor/) for more details.
+>
+>   ⚠️  This new protocol is **NOT** enabled in `cardano-node@1.33.*`. Until its inclusion in a next release, a custom build of cardano-node is required to include a more recent version of `ouroboros-network` which adds support for that protocol to the Ouroboros' mini-protocols; namely: [`32af9168`](https://github.com/input-output-hk/ouroboros-network/commit/32af9168). 
+>
+>   A version of `cardano-node@1.33.0` patched with the necessary commits can be found at [CardanoSolutions/cardano-node@1.33.0+local-tx-monitor](https://github.com/CardanoSolutions/cardano-node/releases/tag/1.33.0+local-tx-monitor).
+>
+> - New fields in the health object:
+>   - `connectionStatus` → `"connected"` or `"disconnected"`, to reflect status with the node. [#154](https://github.com/CardanoSolutions/ogmios/issues/154)
+>   - `currentEpoch` → which returns the current known epoch of the linked node [#164](https://github.com/CardanoSolutions/ogmios/issues/164)
+>   - `slotInEpoch` → which returns the relative number of slots elapsed in the current epoch [#164](https://github.com/CardanoSolutions/ogmios/issues/154)
+>
+> - New `ogmios health-check` command, useful to perform simple health check on a running server. For example, to monitor a container via Docker health check mechanism:
+>   ```Dockerfile
+>   HEALTHCHECK --interval=10s --timeout=5s --retries=1 CMD /bin/ogmios health-check
+>   ```
+> - Bumped internal dependencies to Cardano's 1.33.* eco-system.
+
+#### Changed
+
+> ##### 🏢 Server 
+> 
+> - `networkSynchronization` and `currentEra` can be `null` when the server isn't connected to a node. [#154](https://github.com/CardanoSolutions/ogmios/issues/154)
+> - The `Metrics` trace is now correctly tagged with `MetricsRuntimeStatsDisabled`.
+> - Fixed an issue with the Docker monitoring scripts of cardano-node-ogmios, causing issues on restart. [#159](https://github.com/CardanoSolutions/ogmios/pulls/159)
+> 
+>
+> ##### 🚗 TypeScript Client
+>
+> - Relax upper-bound constraint on required node.js engine. This should make it possible to install the TypeScript packages on more recent versions on node.js than the one specified on the repository.
+
+#### Removed
+
+> N/A
+
 ### [5.0.0] - 2021-12-20
 
 #### Added

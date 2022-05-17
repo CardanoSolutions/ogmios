@@ -1,1 +1,1 @@
-{"type":"jsonwsp/request","version":"1.0","servicename":"ogmios","methodname":"Acquire","args":{"point":{"slot":98050,"hash":"bb30a42c1e62f0afda5f0a4e8a562f7a13a24cea00ee81917b86b89e801314aa"}},"mirror":"patate"}
+{"type":"jsonwsp/request","version":"1.0","servicename":"ogmios","methodname":"Acquire","args":{"point":{"slot":32546,"hash":"bb30a42c1e62f0afda5f0a4e8a562f7a13a24cea00ee81917b86b89e801314aa"}},"mirror":"patate"}

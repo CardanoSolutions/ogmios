@@ -17,39 +17,26 @@ Ogmios is constructed as a [three-layer Haskell cake](https://www.parsonsmatt.or
 aims at being a simple and maintainable architecture for Haskell applications. Effects are separated from the business logic, and the
 entire application is stitched together in a very thin layer. 
 
-### Overview
+<!-- RP11Rp8X48Rl_8g9X--6th-3qQg9RLHQsMOFnWEoKoNkWWMsgMdwtxk0crtJtc2UPuRXdJWlhA-haYZjqRu9YJ1uucmpol7WZ3oZ7u1my9ZpNyOoovuJ3AS-dZsmxMXkAg4qyDwGEIVa8kHP71l972jbt02-2C0kJ02EzWFjFgZX7khD5cb07-Oyjg0e_Gd-mHgzLTAbliLqbIq3PhKr1sEDW-dbKYefl38wEknrove56OV6YmyFX-DRvt-e7JRbd8TYfxRrPFtDOWn0wRZTldk8nhz3YB4HQFf1EEzEgYXGxorjDo3VX6pOV77h8IJbTAy6eHUb5BOGsb1j2Wn9Hvw2BOqK9PKdeJHrLorZ0giPxvZ_fAu-LCgvDg1LTeyhevKtziRM7NDUUAJlDTfhWlmbh3z1NTHL-GC0 -->
+![Server Architecture Diagram](../docs/static/server-architecture-diagram.png)
+
+### Modules Overview
+
+<details>
+  <summary>Application</summary>
 
 ```tree
              ^  ─── Ogmios.hs
              |      ├── Options.hs
 Application  |      ├── Prelude.hs
              v      └── Version.hs
+```
+</details>
 
-             ^  ─── App
-             |      ├── Health.hs
-             |      ├── Metrics.hs
-             |      ├── Configuration.hs
-             |      ├── Protocol.hs
-             |      ├── Protocol
-      Logic  |      │   ├── ChainSync.hs
-             |      │   ├── StateQuery.hs
-             |      │   └── TxSubmission.hs
-             |      ├── Server.hs
-             |      └── Server
-             |          ├── Http.hs
-             |          └── WebSocket.hs
-             v       
- 
-             ^  ─── Control
-             |      ├── Exception.hs
-             |      ├── MonadAsync.hs
-             |      ├── MonadClock.hs
-    Effects  |      ├── MonadLog.hs
-             |      ├── MonadMetrics.hs
-             |      ├── MonadOuroboros.hs
-             |      ├── MonadSTM.hs
-             v      └── MonadWebSocket.hs
- 
+<details>
+  <summary>Data</summary>
+
+```tree
              ^  ─── Data
              |       ├── Health.hs
              |       ├── Json.hs
@@ -67,5 +54,45 @@ Application  |      ├── Prelude.hs
              |       └── Protocol
              |           ├── ChainSync.hs
              |           ├── StateQuery.hs
+             |           ├── TxMonitor.hs
              v           └── TxSubmission.hs
 ```
+</details>
+
+<details>
+  <summary>Logic</summary>
+
+```tree
+             ^  ─── App
+             |      ├── Health.hs
+             |      ├── Metrics.hs
+             |      ├── Configuration.hs
+             |      ├── Protocol.hs
+             |      ├── Protocol
+             |      │   ├── ChainSync.hs
+      Logic  |      │   ├── StateQuery.hs
+             |      │   ├── TxMonitor.hs
+             |      │   └── TxSubmission.hs
+             |      ├── Server.hs
+             |      └── Server
+             |          ├── Http.hs
+             |          └── WebSocket.hs
+             v
+```
+</details>
+
+<details>
+  <summary>Effects</summary>
+
+```tree
+             ^  ─── Control
+             |      ├── Exception.hs
+             |      ├── MonadAsync.hs
+             |      ├── MonadClock.hs
+    Effects  |      ├── MonadLog.hs
+             |      ├── MonadMetrics.hs
+             |      ├── MonadOuroboros.hs
+             |      ├── MonadSTM.hs
+             v      └── MonadWebSocket.hs
+```
+</details>

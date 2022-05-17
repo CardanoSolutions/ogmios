@@ -2,7 +2,6 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 
 -- Mildly safe here and "necessary" because of ekg's internal store. When
@@ -47,13 +46,13 @@ import Ogmios.Control.MonadMetrics
     , readGauge
     , record
     )
-import Ogmios.Data.Json
-    ( ToJSON )
 import Ogmios.Data.Metrics
     ( DistributionStats (..), Metrics (..), RuntimeStats (..), Sampler )
 
 import qualified Ogmios.Control.MonadMetrics as Metrics
 
+import Data.Aeson
+    ( ToJSON (..), genericToEncoding )
 import Data.Time.Clock
     ( DiffTime )
 import GHC.Stats
@@ -61,6 +60,7 @@ import GHC.Stats
 import Relude.Extra.Map
     ( lookup )
 
+import qualified Data.Aeson as Json
 import qualified System.Metrics as Ekg
 import qualified System.Metrics.Counter as Ekg.Counter
 import qualified System.Metrics.Distribution as Ekg.Distribution
@@ -226,7 +226,19 @@ data TraceMetrics where
         :: { recommendation :: Text }
         -> TraceMetrics
     deriving stock (Generic, Show)
-    deriving anyclass ToJSON
+
+-- NOTE: This instance is hand-written because 'TraceMetrics' has only one
+-- field and we want to force tagging of single constructors. If it included
+-- more than one constructors, we could simply go with:
+--
+--     deriving anyclass (ToJSON)
+--
+instance ToJSON TraceMetrics where
+    toEncoding = genericToEncoding
+        (Json.defaultOptions
+            { Json.tagSingleConstructors = True
+            }
+        )
 
 instance HasSeverityAnnotation TraceMetrics where
     getSeverityAnnotation = \case

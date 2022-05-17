@@ -223,18 +223,24 @@ describe('Local state queries', () => {
       })
     })
     describe('utxo', () => {
-      it('fetches the complete UTxO set when an empty array is provided', async () => {
-        const utxoSet = await StateQuery.utxo(context, [])
-        expect(utxoSet[0]).toBeDefined()
-      })
+      // it('fetches the complete UTxO set when an empty array is provided', async () => {
+      //   const utxoSet = await StateQuery.utxo(context, [])
+      //   expect(utxoSet[0]).toBeDefined()
+      // })
       it('fetches the UTxO for the given addresses', async () => {
         const utxoSet = await StateQuery.utxo(context, ['addr_test1qqymtheun4y437fa6cms4jmtfex39wzz7jfwggudwnqkdnr8udjk6d89dcjadt7tw6hmz0aeue2jzdpl2vnkz8wdk4fqz3y5m9'])
         expect(utxoSet[0]).toBeDefined()
       })
     })
     describe('rewardsProvenance', () => {
-      it('fetches rewards provenance for the ongoing epoch', async () => {
+      it('fetches rewards provenance for the ongoing epoch (legacy)', async () => {
         const provenance = await StateQuery.rewardsProvenance(context)
+        expect(provenance).toBeDefined()
+      })
+    })
+    describe('rewardsProvenance\'', () => {
+      it('fetches rewards provenance for the ongoing epoch (new)', async () => {
+        const provenance = await StateQuery.rewardsProvenanceNew(context)
         expect(provenance).toBeDefined()
       })
     })

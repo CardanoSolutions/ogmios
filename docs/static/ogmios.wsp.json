@@ -5,8 +5,13 @@
   [ "RequestNext", "RequestNextResponse"
   , "FindIntersect", "FindIntersectResponse"
   , "SubmitTx", "SubmitTxResponse"
+  , "EvaluateTx", "EvaluateTxResponse"
   , "Acquire", "AcquireResponse"
   , "Release","ReleaseResponse"
+  , "AwaitAcquire", "AwaitAcquireResponse"
+  , "NextTx", "NextTxResponse"
+  , "HasTx", "HasTxResponse"
+  , "SizeAndCapacity", "SizeAndCapacityResponse"
   , "Query"
   , "QueryResponse[blockHeight]"
   , "QueryResponse[chainTip]"
@@ -23,6 +28,7 @@
   , "QueryResponse[poolsRanking]"
   , "QueryResponse[proposedProtocolParameters]"
   , "QueryResponse[rewardsProvenance]"
+  , "QueryResponse[rewardsProvenance']"
   , "QueryResponse[stakeDistribution]"
   , "QueryResponse[systemStart]"
   , "QueryResponse[utxo]"
@@ -251,11 +257,11 @@
       , "args":
         { "type": "object"
         , "additionalProperties": false
-        , "required": ["bytes"]
+        , "required": ["submit"]
         , "properties":
-          { "bytes":
+          { "submit":
             { "type": "string"
-            , "description": "CBOR-serialized signed transaction, in base64"
+            , "description": "CBOR-serialized signed transaction, in base64 (or base16)"
             , "contentEncoding": "base64"
             , "pattern": "^[A-Za-z0-9+/]=?=?$"
             }
@@ -290,9 +296,20 @@
         }
       , "result":
         { "oneOf":
-          [ { "type": "string"
+          [ { "type": "object"
             , "title": "SubmitSuccess"
-            , "enum": ["SubmitSuccess"]
+            , "additionalProperties": false
+            , "required": ["SubmitSuccess"]
+            , "properties":
+              { "SubmitSuccess":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "txId" ]
+                , "properties":
+                  { "txId": { "$ref": "#/definitions/TxId" }
+                  }
+                }
+              }
             }
           , { "type": "object"
             , "title": "SubmitFail"
@@ -302,6 +319,83 @@
               { "SubmitFail": { "$ref": "#/definitions/SubmitTxError" }
               }
             }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "EvaluateTx":
+    { "type": "object"
+    , "description": "Evaluate execution units for which redeemers's budget hasn't yet been set."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "EvaluateTx" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["evaluate"]
+        , "properties":
+          { "evaluate":
+            { "type": "string"
+            , "description": "CBOR-serialized signed transaction, in base64 (or base16)"
+            , "contentEncoding": "base64"
+            , "pattern": "^[A-Za-z0-9+/]=?=?$"
+            }
+          , "additionalUtxoSet":
+            { "$ref": "#/definitions/Utxo"
+            }
+          }
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "EvaluateTxResponse":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "EvaluateTx" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/EvaluationResult" }
+          , { "$ref": "#/definitions/EvaluationFailure" }
           ]
         }
       , "reflection":
@@ -472,6 +566,342 @@
       }
     }
 
+  , "AwaitAcquire":
+    { "type": "object"
+    , "description": "Acquire a mempool snapshot. This is blocking until a new (i.e different) snapshot is available."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "AwaitAcquire" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "AwaitAcquireResponse":
+    { "type": "object"
+    , "description": "Response to a 'AwaitAcquire' request."
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "AwaitAcquire" ]
+        }
+      , "result":
+        { "type": "object"
+        , "title": "AwaitAcquired"
+        , "additionalProperties": false
+        , "required": [ "AwaitAcquired" ]
+        , "properties":
+          { "AwaitAcquired":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "slot" ]
+            , "properties":
+              { "slot": { "$ref": "#/definitions/Slot" }
+              }
+            }
+          }
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "NextTx":
+    { "type": "object"
+    , "description": "Request the next transaction from an acquired snapshot."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "NextTx" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "NextTxResponse":
+    { "type": "object"
+    , "description": "Response to a 'NextTx' request."
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "NextTx" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/TxId" }
+          , { "$ref": "#/definitions/Null" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "HasTx":
+    { "type": "object"
+    , "description": "Ask whether a given transaction is present in the acquired mempool snapshot."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "HasTx" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "id" ]
+        , "properties":
+          { "id": { "$ref": "#/definitions/TxId" }
+          }
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "HasTxResponse":
+    { "type": "object"
+    , "description": "Response to a 'HasTx' request."
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "HasTx" ]
+        }
+      , "result":
+        { "type": "boolean"
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "SizeAndCapacity":
+    { "type": "object"
+    , "description": "Get size and capacities of the mempool (acquired snapshot)."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "SizeAndCapacity" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "SizeAndCapacityResponse":
+    { "type": "object"
+    , "description": "Response to a 'SizeAndCapacity' request."
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "SizeAndCapacity" ]
+        }
+      , "result":
+        { "$ref": "#/definitions/MempoolSizeAndCapacity"
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "ReleaseMempool":
+    { "type": "object"
+    , "description": "Release a previously acquired mempool snapshot."
+    , "required": [ "type", "version", "servicename", "methodname" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/request" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "ReleaseMempool" ]
+        }
+      , "args":
+        { "type": "object"
+        , "additionalProperties": false
+        }
+      , "mirror":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "ReleaseMempoolResponse":
+    { "type": "object"
+    , "description": "Response to a 'ReleaseMempool' request."
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "ReleaseMempool" ]
+        }
+      , "result":
+        { "type": "string"
+        , "enum": ["Released"]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
   , "Query":
     { "type": "object"
     , "description": "Query the current ledger tip."
@@ -590,8 +1020,12 @@
                 , "enum": ["genesisConfig"]
                 }
               , { "type": "string"
-                , "title": "GetRewardsProvenance"
+                , "title": "GetRewardsProvenance (deprecated)"
                 , "enum": ["rewardsProvenance"]
+                }
+              , { "type": "string"
+                , "title": "GetRewardsProvenance'"
+                , "enum": ["rewardsProvenance'"]
                 }
               , { "type": "string"
                 , "title": "GetPoolsRanking"
@@ -1030,6 +1464,7 @@
   , "QueryResponse[rewardsProvenance]":
     { "type": "object"
     , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "description": "This query is now deprecated. Use /rewardsProvenance'/ instead."
     , "additionalProperties": false
     , "properties":
       { "type":
@@ -1051,6 +1486,40 @@
       , "result":
         { "oneOf":
           [ { "$ref": "#/definitions/RewardsProvenance" }
+          , { "$ref": "#/definitions/EraMismatch" }
+          , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
+          ]
+        }
+      , "reflection":
+        { "description": "Any value that was set by a client request in the 'mirror' field."
+        }
+      }
+    }
+
+  , "QueryResponse[rewardsProvenance']":
+    { "type": "object"
+    , "required": [ "type", "version", "servicename", "methodname", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "jsonwsp/response" ]
+        }
+      , "version":
+        { "type": "string"
+        , "enum": [ "1.0" ]
+        }
+      , "servicename":
+        { "type": "string"
+        , "enum": [ "ogmios" ]
+        }
+      , "methodname":
+        { "type": "string"
+        , "enum": [ "Query" ]
+        }
+      , "result":
+        { "oneOf":
+          [ { "$ref": "#/definitions/RewardsProvenance'" }
           , { "$ref": "#/definitions/EraMismatch" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
@@ -2498,7 +2967,7 @@
   , "CostModels":
     { "type": "object"
     , "additionalProperties": { "$ref": "#/definitions/CostModel" }
-    , "propertyNames": { "enum": [ "plutus:v1", "plutus:v2" ] }
+    , "propertyNames": { "$ref": "#/definitions/Language" }
     , "examples":
       [ { "plutus:v1":
           { "k": 14
@@ -2730,6 +3199,101 @@
       }
     }
 
+  , "EvaluationFailure":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "EvaluationFailure" ]
+    , "properties":
+      { "EvaluationFailure":
+        { "oneOf":
+            [ { "$ref": "#/definitions/EvaluationFailure[ScriptFailures]" }
+            , { "$ref": "#/definitions/EvaluationFailure[UnknownInputs]" }
+            , { "$ref": "#/definitions/EvaluationFailure[IncompatibleEra]" }
+            , { "$ref": "#/definitions/EvaluationFailure[UncomputableSlotArithmetic]" }
+            , { "$ref": "#/definitions/EvaluationFailure[AdditionalUtxoOverlap]" }
+            ]
+        }
+      }
+    }
+
+  , "EvaluationFailure[ScriptFailures]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "ScriptFailures" ]
+    , "properties":
+      { "ScriptFailures":
+        { "type": "object"
+        , "propertyNames": { "$ref": "#/definitions/RedeemerPointer" }
+        , "additionalProperties": { "$ref": "#/definitions/ScriptFailure" }
+        }
+      }
+    }
+
+  , "EvaluationFailure[UnknownInputs]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "UnknownInputs" ]
+    , "properties":
+      { "UnknownInputs":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/TxIn" }
+        }
+      }
+    }
+
+  , "EvaluationFailure[IncompatibleEra]":
+    { "type": "object"
+    , "description": "Returned when trying to evaluate execution units of a pre-Alonzo transaction. Note that this isn't possible with Ogmios because transactions are always de-serialized as Alonzo transactions."
+    , "additionalProperties": false
+    , "required": [ "IncompatibleEra" ]
+    , "properties":
+      { "IncompatibleEra":
+        { "type": "string"
+        , "description": "The era in which the transaction has been identified."
+        , "enum": [ "Byron", "Shelley", "Allegra", "Mary" ]
+        }
+      }
+    }
+
+  , "EvaluationFailure[UncomputableSlotArithmetic]":
+    { "type": "object"
+    , "description": "May happen when evaluating a transaction with validity bounds that goes past the foreseeable end of the current era (i.e. near a hardfork)."
+    , "additionalProperties": false
+    , "required": [ "UncomputableSlotArithmetic" ]
+    , "properties":
+      { "UncomputableSlotArithmetic":
+        { "type": "string"
+        , "description": "An error message, possibly meaningful but likely unreadable."
+        }
+      }
+    }
+
+  , "EvaluationFailure[AdditionalUtxoOverlap]":
+    { "type": "object"
+    , "description": "Happens when providing an additional UTXO set which overlaps with the UTXO on-chain."
+    , "additionalProperties": false
+    , "required": [ "AdditionalUtxoOverlap" ]
+    , "properties":
+      { "AdditionalUtxoOverlap":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/TxIn" }
+        }
+      }
+    }
+
+  , "EvaluationResult":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "EvaluationResult" ]
+    , "properties":
+      { "EvaluationResult":
+        { "type": "object"
+        , "propertyNames": { "$ref": "#/definitions/RedeemerPointer" }
+        , "additionalProperties": { "$ref": "#/definitions/ExUnits" }
+        }
+      }
+    }
+
   , "ExUnits":
     { "type": "object"
     , "additionalProperties": false
@@ -2777,8 +3341,7 @@
           , "description": "The stake pool's active stake share (portion of the active stake)."
           }
       , "ownerStake":
-          { "$ref": "#/definitions/Lovelace"
-          , "description": "The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch."
+          { "$ref": "#/definitions/OwnerStake"
           }
       , "parameters":
           { "$ref": "#/definitions/PoolParameters" }
@@ -2861,6 +3424,11 @@
     , "contentEncoding": "base64"
     }
 
+  , "Language":
+    { "type": "string"
+    , "enum": [ "plutus:v1", "plutus:v2" ]
+    }
+
   , "Lovelace":
     { "type": "integer"
     , "description": "A number of lovelace, possibly large when summed up."
@@ -2876,6 +3444,17 @@
   , "KesVerificationKey":
     { "type": "string"
     , "contentEncoding": "base64"
+    }
+
+  , "MempoolSizeAndCapacity":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "capacity", "currentSize", "numberOfTxs" ]
+    , "properties":
+      { "capacity": { "$ref": "#/definitions/UInt32" }
+      , "currentSize": { "$ref": "#/definitions/UInt32" }
+      , "numberOfTxs": { "$ref": "#/definitions/UInt32" }
+      }
     }
 
   , "Metadata":
@@ -3081,6 +3660,11 @@
     , "description": "The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point."
     , "title": "origin"
     , "enum": [ "origin" ]
+    }
+
+  , "OwnerStake":
+    { "type": "integer"
+    , "description": "The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch."
     }
 
   , "PointOrOrigin":
@@ -3546,10 +4130,77 @@
       ]
     }
 
+  , "RewardInfoPool":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "stake", "ownerStake", "approximatePerformance", "poolParameters" ]
+    , "properties":
+      { "stake": { "$ref": "#/definitions/Lovelace" }
+      , "ownerStake": { "$ref": "#/definitions/OwnerStake" }
+      , "approximatePerformance":
+        { "type": "number"
+        , "description": "Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky."
+        , "minimum": 0
+        }
+      , "poolParameters":
+        { "type": "object"
+        , "description": "Some of the pool parameters relevant for the reward calculation."
+        , "additionalProperties": false
+        , "required": [ "cost", "margin", "pledge" ]
+        , "properties":
+          { "cost": { "$ref": "#/definitions/Lovelace" }
+          , "margin": { "$ref": "#/definitions/Ratio" }
+          , "pledge": { "$ref": "#/definitions/Lovelace" }
+          }
+        }
+      }
+    }
+
   , "RewardPot":
     { "type": "string"
     , "description": "Source of rewards as defined by the protocol parameters."
     , "enum": ["reserves", "treasury"]
+    }
+
+  , "RewardsProvenance'":
+    { "type": "object"
+    , "description": "Details about how rewards are calculated for the ongoing epoch."
+    , "additionalProperties": false
+    , "required": [ "desiredNumberOfPools", "poolInfluence", "totalRewards", "activeStake", "pools" ]
+    , "properties":
+      { "desiredNumberOfPools":
+        { "type": "integer"
+        , "description": "Desired number of stake pools."
+        , "minimum": 0
+        , "maximum": 18446744073709552999
+        }
+      , "poolInfluence":
+        { "type": "string"
+        , "description": "Influence of the pool owner's pledge on rewards, as a ratio of two integers."
+        , "pattern": "^-?[0-9]+/[0-9]+$"
+        , "examples":
+          [ "2/3"
+          , "7/8"
+          ]
+        }
+      , "totalRewards":
+        { "type": "integer"
+        , "description": "Total rewards available for the given epoch."
+        , "minimum": 0
+        , "maximum": 18446744073709552999
+        }
+      , "activeStake":
+        { "type": "integer"
+        , "description": "The total amount of staked Lovelace during this epoch."
+        , "minimum": 0
+        , "maximum": 18446744073709552999
+        }
+      , "pools":
+        { "type": "object"
+        , "additionalProperties": { "$ref": "#/definitions/RewardInfoPool" }
+        , "propertyNames": { "$ref": "#/definitions/PoolId" }
+        }
+      }
     }
 
   , "RewardsProvenance":
@@ -3787,6 +4438,115 @@
     , "pattern": "^[A-Za-z0-9+/]*=?=?$"
     }
 
+  , "ScriptFailure":
+    { "type": "array"
+    , "description": "Errors whcih may occur when evaluating an on-chain script."
+    , "items":
+      { "oneOf":
+        [ { "$ref": "#/definitions/SubmitTxError[extraRedeemers]" }
+        , { "$ref": "#/definitions/SubmitTxError[missingRequiredDatums]" }
+        , { "$ref": "#/definitions/ScriptFailure[missingRequiredScripts]" }
+        , { "$ref": "#/definitions/ScriptFailure[validatorFailed]" }
+        , { "$ref": "#/definitions/ScriptFailure[unknownInputReferencedByRedeemer]" }
+        , { "$ref": "#/definitions/ScriptFailure[nonScriptInputReferencedByRedeemer]" }
+        , { "$ref": "#/definitions/ScriptFailure[illFormedExecutionBudget]" }
+        , { "$ref": "#/definitions/ScriptFailure[noCostModelForLanguage]" }
+        ]
+      }
+    }
+
+  , "ScriptFailure[missingRequiredScripts]":
+    { "title": "missingRequiredScripts"
+    , "description": "Missing scripts required for validating script inputs."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "missingRequiredScripts" ]
+    , "properties":
+      { "missingRequiredScripts":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "missing" ]
+        , "properties":
+          { "missing":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/RedeemerPointer" }
+            }
+          }
+        }
+      }
+    }
+
+  , "ScriptFailure[validatorFailed]":
+    { "title": "validatorFailed"
+    , "description": "Plutus interpreter error. Returns additional traces produced by the validator."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "validatorFailed" ]
+    , "properties":
+      { "validatorFailed":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "error", "traces" ]
+        , "properties":
+          { "error": { "type": "string" }
+          , "traces":
+            { "type": "array"
+            , "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+
+  , "ScriptFailure[unknownInputReferencedByRedeemer]":
+    { "title": "unknownInputReferencedByRedeemer"
+    , "description": "Non-existing input referenced by a redeemer pointer."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "unknownInputReferencedByRedeemer" ]
+    , "properties":
+      { "unknownInputReferencedByRedeemer": { "$ref": "#/definitions/TxIn" }
+      }
+    }
+
+  , "ScriptFailure[nonScriptInputReferencedByRedeemer]":
+    { "title": "nonScriptInputReferencedByRedeemer"
+    , "description": "Input not locked by a Plutus referenced by a redeemer pointer."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "nonScriptInputReferencedByRedeemer" ]
+    , "properties":
+      { "nonScriptInputReferencedByRedeemer": { "$ref": "#/definitions/TxIn" }
+      }
+    }
+
+  , "ScriptFailure[illFormedExecutionBudget]":
+    { "title": "illFormedExecutionBudget"
+    , "description": "Invalid execution budget set for a redeemer. In principle, cannot happen in the context of Ogmios."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "illFormedExecutionBudget" ]
+    , "properties":
+      { "illFormedExecutionBudget":
+        { "oneOf":
+          [ { "$ref": "#/definitions/ExUnits" }
+          , { "$ref": "#/definitions/Null" }
+          ]
+        }
+      }
+    }
+
+  , "ScriptFailure[noCostModelForLanguage]":
+    { "title": "noCostModelForLanguage"
+    , "description": "Input locked by a script which language has no cost model in current protocol parameters. In principle, cannot happen in the context of Ogmios."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "noCostModelForLanguage" ]
+    , "properties":
+      { "noCostModelForLanguage": { "$ref": "#/definitions/Language" }
+      }
+    }
+
   , "ScriptPurpose":
     { "oneOf":
       [ { "title": "spend"
@@ -3930,6 +4690,7 @@
         , { "$ref": "#/definitions/SubmitTxError[outsideForecast]" }
         , { "$ref": "#/definitions/SubmitTxError[validationTagMismatch]" }
         , { "$ref": "#/definitions/SubmitTxError[collectErrors]" }
+        , { "$ref": "#/definitions/SubmitTxError[extraScriptWitnesses]" }
         ]
       }
     }
@@ -4595,7 +5356,7 @@
       { "missingRequiredDatums":
         { "type": "object"
         , "additionalProperties": false
-        , "required": [ "provided", "missing" ]
+        , "required": [ "missing" ]
         , "properties":
           { "provided":
             { "type": "array"
@@ -4832,6 +5593,19 @@
     , "properties":
       { "collectErrors":
         { "type": "array"
+        }
+      }
+    }
+
+  , "SubmitTxError[extraScriptWitnesses]":
+    { "type": "object"
+    , "title": "extraScriptWitnesses"
+    , "additionalProperties": false
+    , "required": ["extraScriptWitnesses"]
+    , "properties":
+      { "extraScriptWitnesses":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Digest[Blake2b]::Script" }
         }
       }
     }

@@ -40,7 +40,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 COPY --from=builder /ogmios/server/ogmios /bin/ogmios
 COPY --from=builder /ogmios/cardano-configurations/network/${NETWORK} /config
 
-RUN mkdir /ipc
+RUN mkdir -p /ipc
 
 WORKDIR /root
 COPY scripts/cardano-node-ogmios.sh cardano-node-ogmios.sh
