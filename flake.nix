@@ -91,7 +91,12 @@
 
   outputs = { self, nixpkgs, haskell-nix, ... }@inputs:
     let
-      defaultSystems = [ "x86_64-linux" "x86_64-darwin" ];
+      defaultSystems = [
+        "x86_64-linux"
+        "x86_64-darwin"
+        "aarch64-linux"
+        "aarch64-darwin"
+      ];
 
       perSystem = nixpkgs.lib.genAttrs defaultSystems;
 
