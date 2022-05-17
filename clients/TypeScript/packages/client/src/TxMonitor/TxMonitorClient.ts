@@ -93,7 +93,6 @@ export const createTxMonitorClient = async (
     const releaseMempoolResponse = eventEmitterToGenerator(socket, 'message', matchReleaseMempool)() as
         AsyncGenerator<Ogmios['ReleaseMempoolResponse']>
 
-
     return Promise.resolve({
         context,
         awaitAcquire: (args?: {}) => {
