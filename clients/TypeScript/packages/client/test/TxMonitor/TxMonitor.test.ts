@@ -31,10 +31,14 @@ describe('TxMonitor', () => {
   describe('awaitAcquire', () => {
     let context: InteractionContext
     let client: TxMonitorClient
-    beforeAll(async () => { context = await dummyInteractionContext() })
-    beforeEach(async () => { client = await createTxMonitorClient(context) })
-    afterEach(async () => client.release())
-    afterAll(async () => client.shutdown())
+    beforeEach(async () => {
+      context = await dummyInteractionContext()
+      client = await createTxMonitorClient(context)
+      await client.awaitAcquire();
+    })
+    afterEach(async () => {
+      await client.shutdown()
+    })
 
     const methods = [
       async (args?: {}) => await TxMonitor.awaitAcquire(context, args),
@@ -52,12 +56,14 @@ describe('TxMonitor', () => {
   describe('hasTx', () => {
     let context: InteractionContext
     let client: TxMonitorClient
-    beforeAll(async () => { context = await dummyInteractionContext() })
     beforeEach(async () => {
+      context = await dummyInteractionContext()
       client = await createTxMonitorClient(context)
       await client.awaitAcquire();
     })
-    afterAll(async () => client.shutdown())
+    afterEach(async () => {
+      await client.shutdown()
+    })
 
     const methods = [
       async (id: TxId) => await TxMonitor.hasTx(context, id),
@@ -88,12 +94,14 @@ describe('TxMonitor', () => {
   describe('nextTx', () => {
     let context: InteractionContext
     let client: TxMonitorClient
-    beforeAll(async () => { context = await dummyInteractionContext() })
     beforeEach(async () => {
+      context = await dummyInteractionContext()
       client = await createTxMonitorClient(context)
-      await client.awaitAcquire()
+      await client.awaitAcquire();
     })
-    afterAll(async () => client.shutdown())
+    afterEach(async () => {
+      await client.shutdown()
+    })
 
     const methods = [
       async (args?: { fields?: "all" }) => await TxMonitor.nextTx(context, args),
@@ -121,12 +129,14 @@ describe('TxMonitor', () => {
   describe('sizeAndCapacity', () => {
     let context: InteractionContext
     let client: TxMonitorClient
-    beforeAll(async () => { context = await dummyInteractionContext() })
     beforeEach(async () => {
+      context = await dummyInteractionContext()
       client = await createTxMonitorClient(context)
       await client.awaitAcquire();
     })
-    afterAll(async () => client.shutdown())
+    afterEach(async () => {
+      await client.shutdown()
+    })
 
     const methods = [
       async (args?: {}) => await TxMonitor.sizeAndCapacity(context, args),
@@ -157,12 +167,14 @@ describe('TxMonitor', () => {
   describe('release', () => {
     let context: InteractionContext
     let client: TxMonitorClient
-    beforeAll(async () => { context = await dummyInteractionContext() })
     beforeEach(async () => {
-        client = await createTxMonitorClient(context)
-        await client.awaitAcquire();
+      context = await dummyInteractionContext()
+      client = await createTxMonitorClient(context)
+      await client.awaitAcquire();
     })
-    afterAll(async () => client.shutdown())
+    afterEach(async () => {
+      await client.shutdown()
+    })
 
     const methods = [
       async (args?: {}) => await TxMonitor.release(context, args),
