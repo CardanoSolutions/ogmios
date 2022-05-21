@@ -71,6 +71,7 @@
 								<li class="tsd-kind-namespace tsd-parent-kind-module"><a href="_cardano_ogmios_client.ChainSync.html" class="tsd-kind-icon">Chain<wbr>Sync</a></li>
 								<li class="tsd-kind-namespace tsd-parent-kind-module"><a href="_cardano_ogmios_client.Schema.html" class="tsd-kind-icon">Schema</a></li>
 								<li class="tsd-kind-namespace tsd-parent-kind-module"><a href="_cardano_ogmios_client.StateQuery.html" class="tsd-kind-icon">State<wbr>Query</a></li>
+								<li class="tsd-kind-namespace tsd-parent-kind-module"><a href="_cardano_ogmios_client.TxMonitor.html" class="tsd-kind-icon">Tx<wbr>Monitor</a></li>
 								<li class="tsd-kind-namespace tsd-parent-kind-module"><a href="_cardano_ogmios_client.TxSubmission.html" class="tsd-kind-icon">Tx<wbr>Submission</a></li>
 							</ul>
 						</section>
@@ -98,6 +99,10 @@
 								<li class="tsd-kind-class tsd-parent-kind-module"><a href="../classes/_cardano_ogmios_client.EraMismatchError.html" class="tsd-kind-icon">Era<wbr>Mismatch<wbr>Error</a></li>
 								<li class="tsd-kind-class tsd-parent-kind-module"><a href="../classes/_cardano_ogmios_client.UnknownResultError.html" class="tsd-kind-icon">Unknown<wbr>Result<wbr>Error</a></li>
 							</ul>
+							<h3>TxMonitor Classes</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-class tsd-parent-kind-module"><a href="../classes/_cardano_ogmios_client.UnknownResultError.html" class="tsd-kind-icon">Unknown<wbr>Result<wbr>Error</a></li>
+							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Connection Interfaces</h3>
@@ -123,6 +128,7 @@
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="_cardano_ogmios_client.html#createConnectionObject" class="tsd-kind-icon">create<wbr>Connection<wbr>Object</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="_cardano_ogmios_client.html#createInteractionContext" class="tsd-kind-icon">create<wbr>Interaction<wbr>Context</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="_cardano_ogmios_client.html#createStateQueryClient" class="tsd-kind-icon">create<wbr>State<wbr>Query<wbr>Client</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="_cardano_ogmios_client.html#createTxMonitorClient" class="tsd-kind-icon">create<wbr>TxMonitor<wbr>Client</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="_cardano_ogmios_client.html#createTxSubmissionClient" class="tsd-kind-icon">create<wbr>TxSubmission<wbr>Client</a></li>
 							</ul>
 							<h3>Connection Functions</h3>
@@ -153,7 +159,7 @@
 					<div class="tsd-signature tsd-kind-icon">Interaction<wbr>Type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"LongRunning"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"OneTime"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/Connection.ts#L45">packages/client/src/Connection.ts:45</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/Connection.ts#L45">packages/client/src/Connection.ts:45</a>
 							</li>
 						</ul>
 					</aside>
@@ -171,7 +177,7 @@
 					<div class="tsd-signature tsd-kind-icon">Web<wbr>Socket<wbr>Close<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/Connection.ts#L54">packages/client/src/Connection.ts:54</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/Connection.ts#L54">packages/client/src/Connection.ts:54</a>
 							</li>
 						</ul>
 					</aside>
@@ -206,7 +212,7 @@
 					<div class="tsd-signature tsd-kind-icon">Web<wbr>Socket<wbr>Error<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/Connection.ts#L51">packages/client/src/Connection.ts:51</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/Connection.ts#L51">packages/client/src/Connection.ts:51</a>
 							</li>
 						</ul>
 					</aside>
@@ -245,7 +251,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/ChainSync/ChainSyncClient.ts#L42">packages/client/src/ChainSync/ChainSyncClient.ts:42</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/ChainSync/ChainSyncClient.ts#L42">packages/client/src/ChainSync/ChainSyncClient.ts:42</a>
 									</li>
 								</ul>
 							</aside>
@@ -280,7 +286,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/Connection.ts#L60">packages/client/src/Connection.ts:60</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/Connection.ts#L60">packages/client/src/Connection.ts:60</a>
 									</li>
 								</ul>
 							</aside>
@@ -304,7 +310,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/Connection.ts#L79">packages/client/src/Connection.ts:79</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/Connection.ts#L79">packages/client/src/Connection.ts:79</a>
 									</li>
 								</ul>
 							</aside>
@@ -342,7 +348,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L77">packages/client/src/StateQuery/StateQueryClient.ts:77</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/StateQuery/StateQueryClient.ts#L77">packages/client/src/StateQuery/StateQueryClient.ts:77</a>
 									</li>
 								</ul>
 							</aside>
@@ -370,6 +376,35 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="createTxMonitorClient" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> create<wbr>TxMonitor<wbr>Client</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>TxMonitor<wbr>Client<span class="tsd-signature-symbol">(</span>context<span class="tsd-signature-symbol">: </span><a href="../interfaces/_cardano_ogmios_client.InteractionContext.html" class="tsd-signature-type">InteractionContext</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/_cardano_ogmios_client.TxMonitor.TxMonitorClient.html" class="tsd-signature-type">TxMonitorClient</a><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/TxMonitor/TxMonitorClient.ts#L31">packages/client/src/TxMonitor/TxMonitorClient.ts:31</a>
+									</li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Create a client for inspect the node’s local mempool.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>context: <a href="../interfaces/_cardano_ogmios_client.InteractionContext.html" class="tsd-signature-type">InteractionContext</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title"><span>Returns</span> <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/_cardano_ogmios_client.TxMonitor.TxMonitorClient.html" class="tsd-signature-type">TxMonitorClient</a><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
 					<a name="createTxSubmissionClient" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagConst">Const</span> create<wbr>TxSubmission<wbr>Client</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
@@ -379,7 +414,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/TxSubmission/TxSubmissionClient.ts#L43">packages/client/src/TxSubmission/TxSubmissionClient.ts:43</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/TxSubmission/TxSubmissionClient.ts#L43">packages/client/src/TxSubmission/TxSubmissionClient.ts:43</a>
 									</li>
 								</ul>
 							</aside>
@@ -411,7 +446,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/ServerHealth.ts#L53">packages/client/src/ServerHealth.ts:53</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/ServerHealth.ts#L53">packages/client/src/ServerHealth.ts:53</a>
 									</li>
 								</ul>
 							</aside>
@@ -448,7 +483,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/util.ts#L125">packages/client/src/util.ts:125</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/util.ts#L125">packages/client/src/util.ts:125</a>
 									</li>
 								</ul>
 							</aside>
@@ -472,7 +507,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/util.ts#L129">packages/client/src/util.ts:129</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/util.ts#L129">packages/client/src/util.ts:129</a>
 									</li>
 								</ul>
 							</aside>
@@ -496,7 +531,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/util.ts#L157">packages/client/src/util.ts:157</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/util.ts#L157">packages/client/src/util.ts:157</a>
 									</li>
 								</ul>
 							</aside>
@@ -520,7 +555,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/util.ts#L133">packages/client/src/util.ts:133</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/util.ts#L133">packages/client/src/util.ts:133</a>
 									</li>
 								</ul>
 							</aside>
@@ -544,7 +579,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/util.ts#L141">packages/client/src/util.ts:141</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/util.ts#L141">packages/client/src/util.ts:141</a>
 									</li>
 								</ul>
 							</aside>
@@ -568,7 +603,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/util.ts#L137">packages/client/src/util.ts:137</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/util.ts#L137">packages/client/src/util.ts:137</a>
 									</li>
 								</ul>
 							</aside>
@@ -592,7 +627,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/util.ts#L145">packages/client/src/util.ts:145</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/util.ts#L145">packages/client/src/util.ts:145</a>
 									</li>
 								</ul>
 							</aside>
@@ -616,7 +651,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/util.ts#L149">packages/client/src/util.ts:149</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/util.ts#L149">packages/client/src/util.ts:149</a>
 									</li>
 								</ul>
 							</aside>
@@ -640,7 +675,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/56ffd75/clients/TypeScript/packages/client/src/util.ts#L161">packages/client/src/util.ts:161</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/644ab42/clients/TypeScript/packages/client/src/util.ts#L161">packages/client/src/util.ts:161</a>
 									</li>
 								</ul>
 							</aside>
