@@ -34,7 +34,7 @@ describe('TxMonitor', () => {
     beforeEach(async () => {
       context = await dummyInteractionContext()
       client = await createTxMonitorClient(context)
-      await client.awaitAcquire();
+      await client.awaitAcquire()
     })
     afterEach(async () => {
       await client.shutdown()
@@ -59,7 +59,7 @@ describe('TxMonitor', () => {
     beforeEach(async () => {
       context = await dummyInteractionContext()
       client = await createTxMonitorClient(context)
-      await client.awaitAcquire();
+      await client.awaitAcquire()
     })
     afterEach(async () => {
       await client.shutdown()
@@ -82,7 +82,7 @@ describe('TxMonitor', () => {
         await client.release()
         try {
           await hasTx(id)
-        } catch(e) {
+        } catch (e) {
           expect(e).toBeInstanceOf(UnknownResultError)
         }
       })
@@ -95,28 +95,28 @@ describe('TxMonitor', () => {
     beforeEach(async () => {
       context = await dummyInteractionContext()
       client = await createTxMonitorClient(context)
-      await client.awaitAcquire();
+      await client.awaitAcquire()
     })
     afterEach(async () => {
       await client.shutdown()
     })
 
     const methods = [
-      async (args?: { fields?: "all" }) => await TxMonitor.nextTx(context, args),
-      async (args?: { fields?: "all" }) => await client.nextTx(args)
+      async (args?: { fields?: 'all' }) => await TxMonitor.nextTx(context, args),
+      async (args?: { fields?: 'all' }) => await client.nextTx(args)
     ]
 
     methods.forEach(nextTx => {
       it('successfully return next tx in mempool', async () => {
-        const tx = await nextTx({ fields: "all" })
+        const tx = await nextTx({ fields: 'all' })
         expect(tx).toEqual(null)
       })
 
       it('fail to get next tx from mempool when no snapshot was previously acquired', async () => {
         await client.release()
         try {
-          await nextTx({ fields: "all" })
-        } catch(e) {
+          await nextTx({ fields: 'all' })
+        } catch (e) {
           expect(e).toBeInstanceOf(UnknownResultError)
         }
       })
@@ -129,7 +129,7 @@ describe('TxMonitor', () => {
     beforeEach(async () => {
       context = await dummyInteractionContext()
       client = await createTxMonitorClient(context)
-      await client.awaitAcquire();
+      await client.awaitAcquire()
     })
     afterEach(async () => {
       await client.shutdown()
@@ -152,11 +152,10 @@ describe('TxMonitor', () => {
         await client.release()
         try {
           await sizeAndCapacity()
-        } catch(e) {
+        } catch (e) {
           expect(e).toBeInstanceOf(UnknownResultError)
         }
       })
-
     })
   })
 
@@ -166,7 +165,7 @@ describe('TxMonitor', () => {
     beforeEach(async () => {
       context = await dummyInteractionContext()
       client = await createTxMonitorClient(context)
-      await client.awaitAcquire();
+      await client.awaitAcquire()
     })
     afterEach(async () => {
       await client.shutdown()
@@ -179,14 +178,14 @@ describe('TxMonitor', () => {
 
     methods.forEach(release => {
       it('successfully release mempool', async () => {
-        await expect(release()).resolves.not.toThrow();
+        await expect(release()).resolves.not.toThrow()
       })
 
       it('fail to get mempool size and capacity when no snapshot was previously acquired', async () => {
         await release()
         try {
           await release()
-        } catch(e) {
+        } catch (e) {
           expect(e).toBeInstanceOf(UnknownResultError)
         }
       })

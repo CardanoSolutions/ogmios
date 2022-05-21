@@ -1,5 +1,5 @@
-import { MempoolSizeAndCapacity, Ogmios } from "@cardano-ogmios/schema"
-import { UnknownResultError } from "../errors";
+import { MempoolSizeAndCapacity, Ogmios } from '@cardano-ogmios/schema'
+import { UnknownResultError } from '../errors'
 import { InteractionContext } from '../Connection'
 import { Query } from '../StateQuery'
 
@@ -9,43 +9,43 @@ import { Query } from '../StateQuery'
  * @category TxMonitor
  */
 export const sizeAndCapacity = (context: InteractionContext, args?: {}) =>
-    Query<
+  Query<
         Ogmios['SizeAndCapacity'],
         Ogmios['SizeAndCapacityResponse'],
         MempoolSizeAndCapacity
     >({
-        methodName: 'SizeAndCapacity',
-        args: args
+      methodName: 'SizeAndCapacity',
+      args: args
     }, {
-        handler: (response, resolve, reject) => {
-            try {
-                resolve(handleSizeAndCapacityResponse(response))
-            } catch (e) {
-                reject(e)
-            }
+      handler: (response, resolve, reject) => {
+        try {
+          resolve(handleSizeAndCapacityResponse(response))
+        } catch (e) {
+          reject(e)
         }
+      }
     }, context)
 
 /**
  * @internal
  */
 export const isSizeAndCapacityResult = (result: any): result is MempoolSizeAndCapacity => {
-    if (typeof (result as MempoolSizeAndCapacity) !== 'object' || result === null) {
-        return false
-    }
+  if (typeof (result as MempoolSizeAndCapacity) !== 'object' || result === null) {
+    return false
+  }
 
-    return ('capacity' in result && 'currentSize' in result && 'numberOfTxs' in result)
+  return ('capacity' in result && 'currentSize' in result && 'numberOfTxs' in result)
 }
 
 /**
  * @internal
  */
 export const handleSizeAndCapacityResponse = (response: Ogmios['SizeAndCapacityResponse']): MempoolSizeAndCapacity => {
-    const { result } = response
+  const { result } = response
 
-    if (isSizeAndCapacityResult(result)) {
-        return result
-    }
+  if (isSizeAndCapacityResult(result)) {
+    return result
+  }
 
-    throw new UnknownResultError(response)
+  throw new UnknownResultError(response)
 }

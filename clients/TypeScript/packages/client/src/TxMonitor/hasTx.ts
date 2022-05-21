@@ -1,5 +1,5 @@
-import { Ogmios, TxId } from "@cardano-ogmios/schema"
-import { UnknownResultError } from "../errors";
+import { Ogmios, TxId } from '@cardano-ogmios/schema'
+import { UnknownResultError } from '../errors'
 import { InteractionContext } from '../Connection'
 import { Query } from '../StateQuery'
 
@@ -9,28 +9,28 @@ import { Query } from '../StateQuery'
  * @category TxMonitor
  */
 export const hasTx = (context: InteractionContext, id: TxId) =>
-    Query<
+  Query<
         Ogmios['HasTx'],
         Ogmios['HasTxResponse'],
         boolean
     >({
-        methodName: 'HasTx',
-        args: { id }
+      methodName: 'HasTx',
+      args: { id }
     }, {
-        handler: (response, resolve, reject) => {
-            try {
-                resolve(handleHasTxResponse(response))
-            } catch (e) {
-                reject(e)
-            }
+      handler: (response, resolve, reject) => {
+        try {
+          resolve(handleHasTxResponse(response))
+        } catch (e) {
+          reject(e)
         }
+      }
     }, context)
 
 /**
  * @internal
  */
 export const isHasTxResult = (result: any): result is boolean =>
-    (typeof result === 'boolean')
+  (typeof result === 'boolean')
 
 /**
  * @internal
