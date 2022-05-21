@@ -3,9 +3,6 @@ import { UnknownResultError } from "../errors";
 import { InteractionContext } from '../Connection'
 import { Query } from '../StateQuery'
 
-export const isMempoolSizeAndCapacity = (result: MempoolSizeAndCapacity | Error[]): result is MempoolSizeAndCapacity =>
-    (typeof (result as MempoolSizeAndCapacity) === 'object' && !Array.isArray(result))
-
 /**
  * Get size and capacities of the mempool (acquired snapshot).
  *
@@ -21,24 +18,34 @@ export const sizeAndCapacity = (context: InteractionContext, args?: {}) =>
         args: args
     }, {
         handler: (response, resolve, reject) => {
-            const result = handleSizeAndCapacityResponse(response)
-            if (isMempoolSizeAndCapacity(result)) {
-                return resolve(result as MempoolSizeAndCapacity)
-            } else {
-                return reject(result as Error[])
+            try {
+                resolve(handleSizeAndCapacityResponse(response))
+            } catch (e) {
+                reject(e)
             }
         }
     }, context)
 
-export const handleSizeAndCapacityResponse = (response: Ogmios['SizeAndCapacityResponse']): (MempoolSizeAndCapacity | Error[]) => {
-    try {
-        const { result } = response
-        if ('capacity' in result && 'currentSize' in result && 'numberOfTxs' in result) {
-            return result;
-        } else {
-            return [new UnknownResultError(response)]
-        }
-    } catch (e) {
-        return [new UnknownResultError(response)]
+/**
+ * @internal
+ */
+export const isSizeAndCapacityResult = (result: any): result is MempoolSizeAndCapacity => {
+    if (typeof (result as MempoolSizeAndCapacity) !== 'object' || result === null) {
+        return false
     }
+
+    return ('capacity' in result && 'currentSize' in result && 'numberOfTxs' in result)
+}
+
+/**
+ * @internal
+ */
+export const handleSizeAndCapacityResponse = (response: Ogmios['SizeAndCapacityResponse']): MempoolSizeAndCapacity => {
+    const { result } = response
+
+    if (isSizeAndCapacityResult(result)) {
+        return result
+    }
+
+    throw new UnknownResultError(response)
 }

@@ -1,12 +1,12 @@
 import { InteractionContext } from '../Connection'
 import { ensureSocketIsOpen, eventEmitterToGenerator, safeJSON } from '../util'
-import { MempoolSizeAndCapacity, Null, Ogmios, TxAlonzo, TxId } from "@cardano-ogmios/schema"
+import { Ogmios, MempoolSizeAndCapacity, Slot, TxAlonzo, TxId } from "@cardano-ogmios/schema"
 import { baseRequest, send } from "../Request"
-import { AwaitAcquired, handleAwaitAcquireResponse } from "./awaitAcquire"
-import { handleHasTxResponse, isHasTxResult } from "./hasTx"
-import { handleNextTxResponse, isNextTxResult } from "./nextTx"
-import { handleReleaseResponse, isReleasedResult } from "./release"
-import { handleSizeAndCapacityResponse, isMempoolSizeAndCapacity } from "./sizeAndCapacity"
+import { handleAwaitAcquireResponse } from "./awaitAcquire"
+import { handleHasTxResponse } from "./hasTx"
+import { handleNextTxResponse } from "./nextTx"
+import { handleReleaseResponse } from "./release"
+import { handleSizeAndCapacityResponse } from "./sizeAndCapacity"
 
 /**
  * See also {@link createTxMonitorClient} for creating a client.
@@ -15,9 +15,9 @@ import { handleSizeAndCapacityResponse, isMempoolSizeAndCapacity } from "./sizeA
  **/
 export interface TxMonitorClient {
     context: InteractionContext
-    awaitAcquire: (args?: {}) => Promise<AwaitAcquired>
+    awaitAcquire: (args?: {}) => Promise<Slot>
     hasTx: (id: TxId) => Promise<boolean>
-    nextTx: (args?: { fields?: "all" }) => Promise<TxId | TxAlonzo | Null>
+    nextTx: (args?: { fields?: "all" }) => Promise<TxId | TxAlonzo | null>
     sizeAndCapacity: (args?: {}) => Promise<MempoolSizeAndCapacity>
     release: (args?: {}) => Promise<void>
     shutdown: () => Promise<void>
@@ -97,7 +97,7 @@ export const createTxMonitorClient = async (
         context,
         awaitAcquire: (args?: {}) => {
             ensureSocketIsOpen(socket)
-            return send<AwaitAcquired>(async (socket) => {
+            return send<Slot>(async (socket) => {
                 socket.send(safeJSON.stringify({
                     ...baseRequest,
                     methodname: 'AwaitAcquire',
@@ -116,31 +116,19 @@ export const createTxMonitorClient = async (
                     args: { id }
                 } as unknown as Ogmios['HasTx']))
 
-                const response = handleHasTxResponse((await hasTxResponse.next()).value)
-
-                if (isHasTxResult(response)) {
-                    return response
-                } else {
-                    throw response
-                }
+                return handleHasTxResponse((await hasTxResponse.next()).value)
             }, context)
         },
         nextTx: (args?: {fields?: "all"}) => {
             ensureSocketIsOpen(socket)
-            return send<TxId | TxAlonzo | Null>(async (socket) => {
+            return send<TxId | TxAlonzo | null>(async (socket) => {
                 socket.send(safeJSON.stringify({
                     ...baseRequest,
                     methodname: 'NextTx',
                     args: args
                 } as unknown as Ogmios['NextTx']))
 
-                const response = handleNextTxResponse((await nextTxResponse.next()).value)
-
-                if (isNextTxResult(response)) {
-                    return response
-                } else {
-                    throw response
-                }
+                return handleNextTxResponse((await nextTxResponse.next()).value, args)
             }, context)
         },
         sizeAndCapacity: (args?: {}) => {
@@ -152,13 +140,7 @@ export const createTxMonitorClient = async (
                     args: args
                 } as unknown as Ogmios['SizeAndCapacity']))
 
-                const response = handleSizeAndCapacityResponse((await sizeAndCapacityResponse.next()).value)
-
-                if (isMempoolSizeAndCapacity(response)) {
-                    return response
-                } else {
-                    throw response
-                }
+                return handleSizeAndCapacityResponse((await sizeAndCapacityResponse.next()).value)
             }, context)
         },
         release: (args?: {}) => {
@@ -170,13 +152,7 @@ export const createTxMonitorClient = async (
                     args: args
                 } as unknown as Ogmios['ReleaseMempool']))
 
-                const response = handleReleaseResponse((await releaseMempoolResponse.next()).value)
-
-                if (isReleasedResult(response)) {
-                    return
-                } else {
-                    throw response
-                }
+                return handleReleaseResponse((await releaseMempoolResponse.next()).value)
             }, context)
         },
         shutdown: () => new Promise(resolve => {

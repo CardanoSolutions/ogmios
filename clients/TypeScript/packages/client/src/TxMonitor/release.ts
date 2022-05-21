@@ -3,9 +3,6 @@ import { UnknownResultError } from "../errors";
 import { InteractionContext } from '../Connection'
 import { Query } from '../StateQuery'
 
-export const isReleasedResult = (result: string | Error[]): result is string =>
-    (result === "Released")
-
 /**
  * Release a previously acquired mempool snapshot.
  *
@@ -21,24 +18,27 @@ export const release = (context: InteractionContext, args?: {}) =>
         args: args
     }, {
         handler: (response, resolve, reject) => {
-            const result = handleReleaseResponse(response)
-            if (isReleasedResult(result)) {
-                return resolve()
-            } else {
-                return reject(result as Error[])
+            try {
+                resolve(handleReleaseResponse(response))
+            } catch (e) {
+                reject(e)
             }
         }
     }, context)
 
-export const handleReleaseResponse = (response: Ogmios['ReleaseMempoolResponse']): (string | Error[]) => {
-    try {
-        const { result } = response
-        if (result !== undefined) {
-            return result;
-        } else {
-            return [new UnknownResultError(response)]
-        }
-    } catch (e) {
-        return [new UnknownResultError(response)]
+/**
+ * @internal
+ */
+export const isReleaseResult = (result: any): result is string =>
+    (result === "Released")
+
+/**
+ * @internal
+ */
+export const handleReleaseResponse = (response: Ogmios['ReleaseMempoolResponse']): void => {
+    const { result } = response
+    if (isReleaseResult(result)) {
+      return
     }
+    throw new UnknownResultError(response)
 }

@@ -48,7 +48,7 @@ describe('TxMonitor', () => {
     methods.forEach(awaitAcquire => {
       it('successfully acquire the first snapshot', async () => {
         const snapshot = await awaitAcquire()
-        expect(snapshot.slot).toEqual(expect.any(Number))
+        expect(snapshot).toEqual(expect.any(Number))
       })
     })
   })
@@ -79,13 +79,12 @@ describe('TxMonitor', () => {
         expect(exist).toEqual(false)
       })
 
-      it('fail to check whether tx is in mempool or not as no snapshot was previously acquired', async () => {
+      it('fail to check whether tx is in mempool when no snapshot was previously acquired', async () => {
         await client.release()
         try {
           await hasTx(id)
-        } catch(errors) {
-          expect(errors).toHaveLength(1)
-          expect(errors[0]).toBeInstanceOf(UnknownResultError)
+        } catch(e) {
+          expect(e).toBeInstanceOf(UnknownResultError)
         }
       })
     })
@@ -118,9 +117,8 @@ describe('TxMonitor', () => {
         await client.release()
         try {
           await nextTx({ fields: "all" })
-        } catch(errors) {
-          expect(errors).toHaveLength(1)
-          expect(errors[0]).toBeInstanceOf(UnknownResultError)
+        } catch(e) {
+          expect(e).toBeInstanceOf(UnknownResultError)
         }
       })
     })
@@ -155,9 +153,8 @@ describe('TxMonitor', () => {
         await client.release()
         try {
           await sizeAndCapacity()
-        } catch(errors) {
-          expect(errors).toHaveLength(1)
-          expect(errors[0]).toBeInstanceOf(UnknownResultError)
+        } catch(e) {
+          expect(e).toBeInstanceOf(UnknownResultError)
         }
       })
 
@@ -186,13 +183,12 @@ describe('TxMonitor', () => {
         await expect(release()).resolves.not.toThrow();
       })
 
-      it('fail to get mempool size and capacity as no snapshot was previously acquired', async () => {
+      it('fail to get mempool size and capacity when no snapshot was previously acquired', async () => {
         await release()
         try {
           await release()
-        } catch(errors) {
-          expect(errors).toHaveLength(1)
-          expect(errors[0]).toBeInstanceOf(UnknownResultError)
+        } catch(e) {
+          expect(e).toBeInstanceOf(UnknownResultError)
         }
       })
     })
