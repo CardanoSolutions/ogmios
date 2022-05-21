@@ -23,51 +23,6 @@ export interface TxMonitorClient {
     shutdown: () => Promise<void>
 }
 
-/** @Internal */
-const matchAwaitAcquire = (data: string) => {
-    const response = safeJSON.parse(data) as Ogmios['AwaitAcquireResponse']
-    if ((response.type as string) !== 'jsonwsp/fault' && response.methodname !== 'AwaitAcquire') {
-        return null
-    }
-    return response
-}
-
-/** @Internal */
-const matchHasTx = (data: string) => {
-    const response = safeJSON.parse(data) as Ogmios['HasTxResponse']
-    if ((response.type as string) !== 'jsonwsp/fault' && response.methodname !== 'HasTx') {
-        return null
-    }
-    return response
-}
-
-/** @Internal */
-const matchNextTx = (data: string) => {
-    const response = safeJSON.parse(data) as Ogmios['NextTxResponse']
-    if ((response.type as string) !== 'jsonwsp/fault' && response.methodname !== 'NextTx') {
-        return null
-    }
-    return response
-}
-
-/** @Internal */
-const matchSizeAndCapacity = (data: string) => {
-    const response = safeJSON.parse(data) as Ogmios['SizeAndCapacityResponse']
-    if ((response.type as string) !== 'jsonwsp/fault' && response.methodname !== 'SizeAndCapacity') {
-        return null
-    }
-    return response
-}
-
-/** @Internal */
-const matchReleaseMempool = (data: string) => {
-    const response = safeJSON.parse(data) as Ogmios['ReleaseMempoolResponse']
-    if ((response.type as string) !== 'jsonwsp/fault' && response.methodname !== 'ReleaseMempool') {
-        return null
-    }
-    return response
-}
-
 /**
  * Create a client for inspect the node’s local mempool.
  *
@@ -78,20 +33,23 @@ export const createTxMonitorClient = async (
 ): Promise<TxMonitorClient> => {
     const { socket } = context
 
-    const awaitAcquireResponse = eventEmitterToGenerator(socket, 'message', matchAwaitAcquire)() as
-        AsyncGenerator<Ogmios['AwaitAcquireResponse']>
+    const matchAny = (data: string) => {
+        const json = safeJSON.parse(data)
+        const methods = ['AwaitAcquire', 'HasTx', 'NextTx', 'SizeAndCapacity', 'ReleaseMempool']
+        if (json.type !== 'jsonwsp/fault' && !methods.includes(json.methodname)) {
+            return null
+        }
+        return json
+    }
 
-    const hasTxResponse = eventEmitterToGenerator(socket, 'message', matchHasTx)() as
-        AsyncGenerator<Ogmios['HasTxResponse']>
-
-    const nextTxResponse = eventEmitterToGenerator(socket, 'message', matchNextTx)() as
-        AsyncGenerator<Ogmios['NextTxResponse']>
-
-    const sizeAndCapacityResponse = eventEmitterToGenerator(socket, 'message', matchSizeAndCapacity)() as
-        AsyncGenerator<Ogmios['SizeAndCapacityResponse']>
-
-    const releaseMempoolResponse = eventEmitterToGenerator(socket, 'message', matchReleaseMempool)() as
-        AsyncGenerator<Ogmios['ReleaseMempoolResponse']>
+    const response = eventEmitterToGenerator(socket, 'message', matchAny)() as
+        AsyncGenerator<
+          | Ogmios['AwaitAcquireResponse']
+          | Ogmios['HasTxResponse']
+          | Ogmios['NextTxResponse']
+          | Ogmios['SizeAndCapacityTxResponse']
+          | Ogmios['ReleaseMempoolTxResponse']
+        >
 
     return Promise.resolve({
         context,
@@ -104,7 +62,7 @@ export const createTxMonitorClient = async (
                     args: args
                 } as unknown as Ogmios['AwaitAcquire']))
 
-                return handleAwaitAcquireResponse((await awaitAcquireResponse.next()).value)
+                return handleAwaitAcquireResponse((await response.next()).value)
             }, context)
         },
         hasTx: (id: TxId) => {
@@ -116,7 +74,7 @@ export const createTxMonitorClient = async (
                     args: { id }
                 } as unknown as Ogmios['HasTx']))
 
-                return handleHasTxResponse((await hasTxResponse.next()).value)
+                return handleHasTxResponse((await response.next()).value)
             }, context)
         },
         nextTx: (args?: {fields?: "all"}) => {
@@ -128,7 +86,7 @@ export const createTxMonitorClient = async (
                     args: args
                 } as unknown as Ogmios['NextTx']))
 
-                return handleNextTxResponse((await nextTxResponse.next()).value, args)
+                return handleNextTxResponse((await response.next()).value, args)
             }, context)
         },
         sizeAndCapacity: (args?: {}) => {
@@ -140,7 +98,7 @@ export const createTxMonitorClient = async (
                     args: args
                 } as unknown as Ogmios['SizeAndCapacity']))
 
-                return handleSizeAndCapacityResponse((await sizeAndCapacityResponse.next()).value)
+                return handleSizeAndCapacityResponse((await response.next()).value)
             }, context)
         },
         release: (args?: {}) => {
@@ -152,7 +110,7 @@ export const createTxMonitorClient = async (
                     args: args
                 } as unknown as Ogmios['ReleaseMempool']))
 
-                return handleReleaseResponse((await releaseMempoolResponse.next()).value)
+                return handleReleaseResponse((await response.next()).value)
             }, context)
         },
         shutdown: () => new Promise(resolve => {

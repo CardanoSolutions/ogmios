@@ -70,7 +70,6 @@ describe('TxMonitor', () => {
       async (id: TxId) => await client.hasTx(id)
     ]
 
-
     methods.forEach(hasTx => {
       const id = '4f539156bfbefc070a3b61cad3d1cedab3050e2b2a62f0ffe16a43eb0edc1ce8'
 

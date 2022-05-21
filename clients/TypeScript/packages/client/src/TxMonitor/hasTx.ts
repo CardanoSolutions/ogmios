@@ -37,8 +37,10 @@ export const isHasTxResult = (result: any): result is boolean =>
  */
 export const handleHasTxResponse = (response: Ogmios['HasTxResponse']): boolean => {
   const { result } = response
+
   if (isHasTxResult(result)) {
     return result
   }
+
   throw new UnknownResultError(response)
 }

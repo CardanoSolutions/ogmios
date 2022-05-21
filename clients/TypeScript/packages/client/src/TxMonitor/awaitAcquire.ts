@@ -43,7 +43,7 @@ export const isAwaitAcquiredResult = (result: any): result is AwaitAcquired => {
 export const handleAwaitAcquireResponse = (response: Ogmios['AwaitAcquireResponse']): Slot => {
     const { result } = response
 
-    if ('AwaitAcquired' in result) {
+    if (isAwaitAcquiredResult(result)) {
         return result.AwaitAcquired.slot
     }
 
