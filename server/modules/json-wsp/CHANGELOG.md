@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.1] -- 2022-05-21
+
+- `gWSPFromJSON` will now fail with a user-friendly error when encountering a key `reflection` in the body of a **request**. See [#217](https://github.com/CardanoSolutions/ogmios/issues/217)
+
 ## [1.3.0] -- 2022-02-15
 
 ### Added
