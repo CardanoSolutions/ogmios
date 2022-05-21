@@ -72,6 +72,7 @@ import Ouroboros.Network.Protocol.LocalTxMonitor.Client
     ( ClientStAcquired (..), ClientStIdle (..), LocalTxMonitorClient (..) )
 
 import qualified Codec.Json.Wsp as Wsp
+import qualified Prelude
 
 mkTxMonitorClient
     :: forall m block.
@@ -93,7 +94,8 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
 
     mustAcquireFirst :: forall a. (Show a) => a -> Wsp.ToFault -> m ()
     mustAcquireFirst query toFault = do
-        let fault = "'" <> show query <> "' must be called after at least one 'AwaitAcquire'."
+        let constructor = toString $ Prelude.head $ words $ show query
+        let fault = "'" <> constructor <> "' must be called after at least one 'AwaitAcquire'."
         yield $ Wsp.mkFault $ toFault Wsp.FaultClient fault
 
     clientStIdle
