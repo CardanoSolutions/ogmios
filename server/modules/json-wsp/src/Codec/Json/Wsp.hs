@@ -49,13 +49,15 @@ import Control.Applicative
 import Control.Arrow
     ( second )
 import Control.Monad
-    ( guard )
+    ( guard, when )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..), (.:), (.:?), (.=) )
 import Data.Char
     ( toLower )
 import Data.Kind
     ( Type )
+import Data.Maybe
+    ( isJust )
 import Data.Proxy
     ( Proxy (..) )
 import Data.Text
@@ -281,6 +283,9 @@ instance (Constructor c, GWSPFromJSON f) => GWSPFromJSON (C1 c f) where
         _ <- parseKey obj "version" V1_0
         _ <- parseKey obj "methodname" methodName
         refl <- obj .:? "mirror"
+        wrong <- obj .:? "reflection"
+        when (isJust @(Maybe Json.Value) wrong)
+            (fail "invalid key 'reflection'; should be 'mirror' on requests.")
         (_, f) <- gWSPFromJSON opts value
         pure (refl, M1 f)
       where

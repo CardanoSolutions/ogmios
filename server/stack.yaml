@@ -1,6 +1,6 @@
 resolver: resolver.yaml
 
-compiler: ghc-8.10.4 # Simply for reference, already inferred from the resolver.
+compiler: ghc-8.10.7 # Simply for reference, already inferred from the resolver.
 
 packages:
 - .
