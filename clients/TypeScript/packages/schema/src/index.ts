@@ -8,53 +8,11 @@
 /**
  * A Cardano Block, which can take different forms depending on the era.
  */
-export type Block = Byron | Shelley | Allegra | Mary | Alonzo;
+export type Block = Alonzo | Mary | Allegra | Shelley | Byron;
 /**
- * A block in the Byron era. Most blocks are stanard blocks, but once at the beginning of each era is an additional epoch boundary block (a.k.a. EBB)
+ * A Blake2b 32-byte digest of an era-independent block body.
  */
-export type BlockByron = StandardBlock | EpochBoundaryBlock;
-/**
- * A Blake2b 32-byte digest of an era-independent block header, serialised as CBOR.
- */
-export type DigestBlake2BBlockHeader = string;
-/**
- * A block number, the i-th block to be minted is number i.
- */
-export type BlockNo = number;
-/**
- * An Ed25519-BIP32 Byron genesis delegate verification key with chain-code.
- */
-export type GenesisVerificationKey = string;
-export type UInt32 = number;
-/**
- * A Blake2b 32-byte digest of a Merkle tree (or all block's transactions) root hash.
- */
-export type DigestBlake2BMerkleRoot = string;
-/**
- * A Blake2b 32-byte digest of a Byron transaction witness set, CBOR-encoded.
- */
-export type DigestBlake2BBlockByronBodyTxPayloadWitness = string;
-/**
- * A Blake2b 32-byte digest of a Byron delegation payload, CBOR-encoded.
- */
-export type DigestBlake2BBlockByronBodyDlgPayload = string;
-/**
- * A Blake2b 32-byte digest of a Byron update payload, CBOR-encoded.
- */
-export type DigestBlake2BBlockByronBodyUpdatePayload = string;
-export type ProtocolMagicId = number;
-/**
- * An epoch number or length.
- */
-export type Epoch = number;
-/**
- * Signature proving a block was issued by a given issuer VRF key.
- */
-export type IssuerSignature = string;
-/**
- * An absolute slot number.
- */
-export type Slot = number;
+export type DigestBlake2BBlockBody = string;
 /**
  * A Blake2b 32-byte digest of a transaction body, CBOR-encoded.
  */
@@ -76,34 +34,6 @@ export type AssetQuantity = bigint;
  */
 export type DigestBlake2BDatum = string;
 export type Null = null;
-export type TxWitness = WitnessVk | RedeemWitness;
-/**
- * A Blake2b 28-byte digest of an Ed25519 verification key.
- */
-export type DigestBlake2BVerificationKey = string;
-/**
- * A signature coming from an Ed25519 or Ed25519-BIP32 signing key.
- */
-export type Signature = string;
-/**
- * An Ed25519 verification key.
- */
-export type VerificationKey = string;
-export type NullableRatio = Ratio | Null;
-/**
- * A ratio of two integers, to express exact fractions.
- */
-export type Ratio = string;
-export type NullableUInt64 = UInt64 | Null;
-export type UInt64 = number;
-/**
- * A key identifying a block issuer.
- */
-export type IssuerVrfVerificationKey = string;
-/**
- * A Blake2b 32-byte digest of an era-independent block body.
- */
-export type DigestBlake2BBlockBody = string;
 export type Certificate =
   | StakeDelegation
   | StakeKeyRegistration
@@ -121,6 +51,14 @@ export type DigestBlake2BCredential = string;
  */
 export type PoolId = string;
 /**
+ * A Blake2b 28-byte digest of an Ed25519 verification key.
+ */
+export type DigestBlake2BVerificationKey = string;
+/**
+ * A ratio of two integers, to express exact fractions.
+ */
+export type Ratio = string;
+/**
  * A Blake2b 32-byte digest of a VRF verification key.
  */
 export type DigestBlake2BVrfVerificationKey = string;
@@ -134,6 +72,10 @@ export type Relay = ByAddress | ByName;
  */
 export type RewardAccount = string;
 /**
+ * An epoch number or length.
+ */
+export type Epoch = number;
+/**
  * An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada).
  */
 export type LovelaceDelta = number;
@@ -141,13 +83,34 @@ export type LovelaceDelta = number;
  * Source of rewards as defined by the protocol parameters.
  */
 export type RewardPot = "reserves" | "treasury";
-export type UpdateShelley = Null | UpdateProposalShelley;
+/**
+ * An absolute slot number.
+ */
+export type Slot = number;
+export type UpdateAlonzo = Null | UpdateProposalAlonzo;
+export type NullableUInt64 = UInt64 | Null;
+export type UInt64 = number;
+export type NullableRatio = Ratio | Null;
 export type Nonce = Neutral | DigestBlake2BNonce;
 export type Neutral = "neutral";
 /**
  * A Blake2b 32-byte digest of some arbitrary to make a nonce.
  */
 export type DigestBlake2BNonce = string;
+export type UInt32 = number;
+export type Int64 = number;
+/**
+ * A network target, as defined since the Shelley era.
+ */
+export type Network = "mainnet" | "testnet";
+/**
+ * A Blake2b 32-byte digest of a script-integrity hash (i.e redeemers, datums and cost model, CBOR-encoded).
+ */
+export type DigestBlake2BScriptIntegrity = string;
+/**
+ * A signature coming from an Ed25519 or Ed25519-BIP32 signing key.
+ */
+export type Signature = string;
 export type Script = Native | Plutus | Plutus1;
 /**
  * A phase-1 monetary script. Timelocks constraints are only supported since Allegra.
@@ -166,10 +129,31 @@ export type ChainCode = string;
  */
 export type AddressAttributes = string;
 /**
+ * An Ed25519 verification key.
+ */
+export type VerificationKey = string;
+export type Datum = string;
+/**
+ * Plutus data, CBOR-serialised.
+ */
+export type RedeemerData = string;
+/**
  * A Blake2b 32-byte digest of an 'AuxiliaryDataBody', serialised as CBOR.
  */
 export type DigestBlake2BAuxiliaryDataBody = string;
 export type Metadatum = Int | String | Bytes | List | Map;
+/**
+ * A Blake2b 32-byte digest of an era-independent block header, serialised as CBOR.
+ */
+export type DigestBlake2BBlockHeader = string;
+/**
+ * A block number, the i-th block to be minted is number i.
+ */
+export type BlockNo = number;
+/**
+ * A key identifying a block issuer.
+ */
+export type IssuerVrfVerificationKey = string;
 export type VrfProof = string;
 export type VrfOutput = string;
 /**
@@ -177,21 +161,37 @@ export type VrfOutput = string;
  */
 export type BlockSize = number;
 export type KesVerificationKey = string;
-export type UpdateAlonzo = Null | UpdateProposalAlonzo;
-export type Int64 = number;
 /**
- * A network target, as defined since the Shelley era.
+ * Signature proving a block was issued by a given issuer VRF key.
  */
-export type Network = "mainnet" | "testnet";
+export type IssuerSignature = string;
+export type UpdateShelley = Null | UpdateProposalShelley;
 /**
- * A Blake2b 32-byte digest of a script-integrity hash (i.e redeemers, datums and cost model, CBOR-encoded).
+ * A block in the Byron era. Most blocks are stanard blocks, but once at the beginning of each era is an additional epoch boundary block (a.k.a. EBB)
  */
-export type DigestBlake2BScriptIntegrity = string;
-export type Datum = string;
+export type BlockByron = StandardBlock | EpochBoundaryBlock;
 /**
- * Plutus data, CBOR-serialised.
+ * An Ed25519-BIP32 Byron genesis delegate verification key with chain-code.
  */
-export type RedeemerData = string;
+export type GenesisVerificationKey = string;
+/**
+ * A Blake2b 32-byte digest of a Merkle tree (or all block's transactions) root hash.
+ */
+export type DigestBlake2BMerkleRoot = string;
+/**
+ * A Blake2b 32-byte digest of a Byron transaction witness set, CBOR-encoded.
+ */
+export type DigestBlake2BBlockByronBodyTxPayloadWitness = string;
+/**
+ * A Blake2b 32-byte digest of a Byron delegation payload, CBOR-encoded.
+ */
+export type DigestBlake2BBlockByronBodyDlgPayload = string;
+/**
+ * A Blake2b 32-byte digest of a Byron update payload, CBOR-encoded.
+ */
+export type DigestBlake2BBlockByronBodyUpdatePayload = string;
+export type ProtocolMagicId = number;
+export type TxWitness = WitnessVk | RedeemWitness;
 export type TipOrOrigin = Tip | Origin;
 /**
  * The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point.
@@ -414,7 +414,7 @@ export interface Ogmios {
     };
   };
   /**
-   * Submit a signed and serialized Utxo transaction to the network.
+   * Submit a signed and serialized transaction to the network.
    */
   SubmitTx: {
     type: "jsonwsp/request";
@@ -713,7 +713,7 @@ export interface Ogmios {
     };
   };
   /**
-   * Query the current ledger tip.
+   * Query the ledger / node.
    */
   Query: {
     type: "jsonwsp/request";
@@ -1036,69 +1036,60 @@ export interface RollForward {
     tip: TipOrOrigin;
   };
 }
-export interface Byron {
-  byron: BlockByron;
+export interface Alonzo {
+  alonzo: BlockAlonzo;
 }
-export interface StandardBlock {
-  hash: DigestBlake2BBlockHeader;
-  header: {
+export interface BlockAlonzo {
+  body?: TxAlonzo[];
+  headerHash?: DigestBlake2BBlockHeader;
+  header?: {
     blockHeight: BlockNo;
-    genesisKey: GenesisVerificationKey;
-    prevHash: DigestBlake2BBlockHeader;
-    proof: BlockProof;
-    protocolMagicId: ProtocolMagicId;
-    protocolVersion: ProtocolVersion;
-    signature: BlockSignature;
     slot: Slot;
-    softwareVersion: SoftwareVersion;
+    prevHash: DigestBlake2BBlockHeader;
+    issuerVk: VerificationKey;
+    issuerVrf: IssuerVrfVerificationKey;
+    nonce?: CertifiedVrf;
+    leaderValue: CertifiedVrf;
+    blockSize: BlockSize;
+    blockHash: DigestBlake2BBlockBody;
+    opCert: OpCert;
+    protocolVersion: ProtocolVersion;
+    signature: IssuerSignature;
   };
-  body: {
-    txPayload: TxByron[];
-    dlgPayload: DlgCertificate[];
-    updatePayload: {
-      proposal: Null | UpdateProposalByron;
-      votes: Vote[];
-    };
-  };
 }
-export interface BlockProof {
-  utxo: {
-    number: UInt32;
-    root: DigestBlake2BMerkleRoot;
-    witnessesHash: DigestBlake2BBlockByronBodyTxPayloadWitness;
-  };
-  delegation: DigestBlake2BBlockByronBodyDlgPayload;
-  update: DigestBlake2BBlockByronBodyUpdatePayload;
-}
-export interface ProtocolVersion {
-  major: UInt32;
-  minor: UInt32;
-  patch?: UInt32;
-}
-export interface BlockSignature {
-  dlgCertificate: DlgCertificate;
-  signature: IssuerSignature;
-}
-/**
- * A (Byron) delegation certificate.
- */
-export interface DlgCertificate {
-  epoch: Epoch;
-  issuerVk: GenesisVerificationKey;
-  delegateVk: GenesisVerificationKey;
-  signature: IssuerSignature;
-}
-export interface SoftwareVersion {
-  appName: string;
-  number: UInt32;
-}
-export interface TxByron {
-  id: TxId;
+export interface TxAlonzo {
+  id: DigestBlake2BBlockBody;
+  inputSource: "inputs" | "collaterals";
   body: {
     inputs: TxIn[];
+    collaterals: TxIn[];
     outputs: TxOut[];
+    certificates: Certificate[];
+    withdrawals: Withdrawals;
+    fee: Lovelace;
+    validityInterval: ValidityInterval;
+    update: UpdateAlonzo;
+    mint: Value;
+    network: Network | Null;
+    scriptIntegrityHash: DigestBlake2BScriptIntegrity | Null;
+    requiredExtraSignatures: DigestBlake2BVerificationKey[];
   };
-  witness: TxWitness[];
+  witness: {
+    signatures: {
+      [k: string]: Signature;
+    };
+    scripts: {
+      [k: string]: Script;
+    };
+    bootstrap: BootstrapWitness[];
+    datums: {
+      [k: string]: Datum;
+    };
+    redeemers: {
+      [k: string]: Redeemer;
+    };
+  };
+  metadata: AuxiliaryData | Null;
   /**
    * The raw serialized transaction, as found on-chain.
    */
@@ -1121,115 +1112,6 @@ export interface Value {
   assets?: {
     [k: string]: AssetQuantity;
   };
-}
-export interface WitnessVk {
-  witnessVk: {
-    key: DigestBlake2BVerificationKey;
-    signature: Signature;
-  };
-}
-export interface RedeemWitness {
-  redeemWitness: {
-    key: VerificationKey;
-    signature: Signature;
-  };
-}
-export interface UpdateProposalByron {
-  body: {
-    protocolVersion: ProtocolVersion;
-    softwareVersion: SoftwareVersion;
-    metadata: {
-      [k: string]: string;
-    };
-    parametersUpdate: ProtocolParametersByron;
-  };
-  issuer: IssuerVrfVerificationKey;
-  signature: IssuerSignature;
-}
-export interface ProtocolParametersByron {
-  heavyDlgThreshold: NullableRatio;
-  maxBlockSize: NullableUInt64;
-  maxHeaderSize: NullableUInt64;
-  maxProposalSize: NullableUInt64;
-  maxTxSize: NullableUInt64;
-  mpcThreshold: NullableRatio;
-  scriptVersion: NullableUInt64;
-  slotDuration: NullableUInt64;
-  unlockStakeEpoch: NullableUInt64;
-  updateProposalThreshold: NullableRatio;
-  updateProposalTimeToLive: NullableUInt64;
-  updateVoteThreshold: NullableRatio;
-  txFeePolicy: TxFeePolicy | Null;
-  softforkRule: SoftForkRule | Null;
-}
-export interface TxFeePolicy {
-  coefficient: Ratio;
-  constant: number;
-}
-export interface SoftForkRule {
-  initThreshold: NullableRatio;
-  minThreshold: NullableRatio;
-  decrementThreshold: NullableRatio;
-}
-export interface Vote {
-  voterVk: VerificationKey;
-  proposalId: DigestBlake2BVerificationKey;
-  signature: Signature;
-}
-export interface EpochBoundaryBlock {
-  hash: DigestBlake2BBlockHeader;
-  header: {
-    blockHeight: BlockNo;
-    epoch: Epoch;
-    prevHash: DigestBlake2BBlockHeader;
-  };
-}
-export interface Shelley {
-  shelley: BlockShelley;
-}
-export interface BlockShelley {
-  body?: TxShelley[];
-  headerHash?: DigestBlake2BBlockHeader;
-  header?: {
-    blockHeight: BlockNo;
-    slot: Slot;
-    prevHash: DigestBlake2BBlockHeader;
-    issuerVk: VerificationKey;
-    issuerVrf: IssuerVrfVerificationKey;
-    nonce?: CertifiedVrf;
-    leaderValue: CertifiedVrf;
-    blockSize: BlockSize;
-    blockHash: DigestBlake2BBlockBody;
-    opCert: OpCert;
-    protocolVersion: ProtocolVersion;
-    signature: IssuerSignature;
-  };
-}
-export interface TxShelley {
-  id: DigestBlake2BBlockBody;
-  body: {
-    inputs: TxIn[];
-    outputs: TxOut[];
-    certificates: Certificate[];
-    withdrawals: Withdrawals;
-    fee: Lovelace;
-    timeToLive: Slot;
-    update: UpdateShelley;
-  };
-  witness: {
-    signatures: {
-      [k: string]: Signature;
-    };
-    scripts: {
-      [k: string]: Script;
-    };
-    bootstrap: BootstrapWitness[];
-  };
-  metadata: AuxiliaryData | Null;
-  /**
-   * The raw serialized transaction, as found on-chain.
-   */
-  raw: string;
 }
 /**
  * A stake delegation certificate, from a delegator to a stake pool.
@@ -1314,13 +1196,17 @@ export interface Rewards {
 export interface Withdrawals {
   [k: string]: Lovelace;
 }
-export interface UpdateProposalShelley {
+export interface ValidityInterval {
+  invalidBefore: Slot | Null;
+  invalidHereafter: Slot | Null;
+}
+export interface UpdateProposalAlonzo {
   epoch: Epoch;
   proposal: {
-    [k: string]: ProtocolParametersShelley;
+    [k: string]: ProtocolParametersAlonzo;
   };
 }
-export interface ProtocolParametersShelley {
+export interface ProtocolParametersAlonzo {
   minFeeCoefficient: NullableUInt64;
   minFeeConstant: NullableUInt64;
   maxBlockBodySize: NullableUInt64;
@@ -1334,10 +1220,36 @@ export interface ProtocolParametersShelley {
   monetaryExpansion: NullableRatio;
   treasuryExpansion: NullableRatio;
   decentralizationParameter: NullableRatio;
-  minUtxoValue: NullableUInt64;
   minPoolCost: NullableUInt64;
+  coinsPerUtxoWord: NullableUInt64;
+  maxValueSize: NullableUInt64;
+  collateralPercentage: NullableUInt64;
+  maxCollateralInputs: NullableUInt64;
   extraEntropy: Nonce | Null;
   protocolVersion: ProtocolVersion | Null;
+  costModels: CostModels | Null;
+  prices: Prices | Null;
+  maxExecutionUnitsPerTransaction: ExUnits | Null;
+  maxExecutionUnitsPerBlock: ExUnits | Null;
+}
+export interface ProtocolVersion {
+  major: UInt32;
+  minor: UInt32;
+  patch?: UInt32;
+}
+export interface CostModels {
+  [k: string]: CostModel;
+}
+export interface CostModel {
+  [k: string]: Int64;
+}
+export interface Prices {
+  memory: Ratio;
+  steps: Ratio;
+}
+export interface ExUnits {
+  memory: UInt64;
+  steps: UInt64;
 }
 export interface Native {
   native: ScriptNative;
@@ -1368,6 +1280,10 @@ export interface BootstrapWitness {
   chainCode?: ChainCode | Null;
   addressAttributes?: AddressAttributes | Null;
   key?: VerificationKey;
+}
+export interface Redeemer {
+  redeemer: RedeemerData;
+  executionUnits: ExUnits;
 }
 export interface AuxiliaryData {
   hash: DigestBlake2BAuxiliaryDataBody;
@@ -1411,57 +1327,6 @@ export interface OpCert {
   sigma?: Signature;
   kesPeriod?: UInt64;
   hotVk?: KesVerificationKey;
-}
-export interface Allegra {
-  allegra: BlockAllegra;
-}
-export interface BlockAllegra {
-  body?: TxAllegra[];
-  headerHash?: DigestBlake2BBlockHeader;
-  header?: {
-    blockHeight: BlockNo;
-    slot: Slot;
-    prevHash: DigestBlake2BBlockHeader;
-    issuerVk: VerificationKey;
-    issuerVrf: IssuerVrfVerificationKey;
-    nonce?: CertifiedVrf;
-    leaderValue: CertifiedVrf;
-    blockSize: BlockSize;
-    blockHash: DigestBlake2BBlockBody;
-    opCert: OpCert;
-    protocolVersion: ProtocolVersion;
-    signature: IssuerSignature;
-  };
-}
-export interface TxAllegra {
-  id: DigestBlake2BBlockBody;
-  body: {
-    inputs: TxIn[];
-    outputs: TxOut[];
-    certificates: Certificate[];
-    withdrawals: Withdrawals;
-    fee: Lovelace;
-    validityInterval: ValidityInterval;
-    update: UpdateShelley;
-  };
-  witness: {
-    signatures: {
-      [k: string]: Signature;
-    };
-    scripts: {
-      [k: string]: Script;
-    };
-    bootstrap: BootstrapWitness[];
-  };
-  metadata: AuxiliaryData | Null;
-  /**
-   * The raw serialized transaction, as found on-chain.
-   */
-  raw: string;
-}
-export interface ValidityInterval {
-  invalidBefore: Slot | Null;
-  invalidHereafter: Slot | Null;
 }
 export interface Mary {
   mary: BlockMary;
@@ -1511,11 +1376,36 @@ export interface TxMary {
    */
   raw: string;
 }
-export interface Alonzo {
-  alonzo: BlockAlonzo;
+export interface UpdateProposalShelley {
+  epoch: Epoch;
+  proposal: {
+    [k: string]: ProtocolParametersShelley;
+  };
 }
-export interface BlockAlonzo {
-  body?: TxAlonzo[];
+export interface ProtocolParametersShelley {
+  minFeeCoefficient: NullableUInt64;
+  minFeeConstant: NullableUInt64;
+  maxBlockBodySize: NullableUInt64;
+  maxBlockHeaderSize: NullableUInt64;
+  maxTxSize: NullableUInt64;
+  stakeKeyDeposit: NullableUInt64;
+  poolDeposit: NullableUInt64;
+  poolRetirementEpochBound: NullableUInt64;
+  desiredNumberOfPools: NullableUInt64;
+  poolInfluence: NullableRatio;
+  monetaryExpansion: NullableRatio;
+  treasuryExpansion: NullableRatio;
+  decentralizationParameter: NullableRatio;
+  minUtxoValue: NullableUInt64;
+  minPoolCost: NullableUInt64;
+  extraEntropy: Nonce | Null;
+  protocolVersion: ProtocolVersion | Null;
+}
+export interface Allegra {
+  allegra: BlockAllegra;
+}
+export interface BlockAllegra {
+  body?: TxAllegra[];
   headerHash?: DigestBlake2BBlockHeader;
   header?: {
     blockHeight: BlockNo;
@@ -1532,22 +1422,16 @@ export interface BlockAlonzo {
     signature: IssuerSignature;
   };
 }
-export interface TxAlonzo {
+export interface TxAllegra {
   id: DigestBlake2BBlockBody;
-  inputSource: "inputs" | "collaterals";
   body: {
     inputs: TxIn[];
-    collaterals: TxIn[];
     outputs: TxOut[];
     certificates: Certificate[];
     withdrawals: Withdrawals;
     fee: Lovelace;
     validityInterval: ValidityInterval;
-    update: UpdateAlonzo;
-    mint: Value;
-    network: Network | Null;
-    scriptIntegrityHash: DigestBlake2BScriptIntegrity | Null;
-    requiredExtraSignatures: DigestBlake2BVerificationKey[];
+    update: UpdateShelley;
   };
   witness: {
     signatures: {
@@ -1557,12 +1441,6 @@ export interface TxAlonzo {
       [k: string]: Script;
     };
     bootstrap: BootstrapWitness[];
-    datums: {
-      [k: string]: Datum;
-    };
-    redeemers: {
-      [k: string]: Redeemer;
-    };
   };
   metadata: AuxiliaryData | Null;
   /**
@@ -1570,55 +1448,177 @@ export interface TxAlonzo {
    */
   raw: string;
 }
-export interface UpdateProposalAlonzo {
-  epoch: Epoch;
-  proposal: {
-    [k: string]: ProtocolParametersAlonzo;
+export interface Shelley {
+  shelley: BlockShelley;
+}
+export interface BlockShelley {
+  body?: TxShelley[];
+  headerHash?: DigestBlake2BBlockHeader;
+  header?: {
+    blockHeight: BlockNo;
+    slot: Slot;
+    prevHash: DigestBlake2BBlockHeader;
+    issuerVk: VerificationKey;
+    issuerVrf: IssuerVrfVerificationKey;
+    nonce?: CertifiedVrf;
+    leaderValue: CertifiedVrf;
+    blockSize: BlockSize;
+    blockHash: DigestBlake2BBlockBody;
+    opCert: OpCert;
+    protocolVersion: ProtocolVersion;
+    signature: IssuerSignature;
   };
 }
-export interface ProtocolParametersAlonzo {
-  minFeeCoefficient: NullableUInt64;
-  minFeeConstant: NullableUInt64;
-  maxBlockBodySize: NullableUInt64;
-  maxBlockHeaderSize: NullableUInt64;
+export interface TxShelley {
+  id: DigestBlake2BBlockBody;
+  body: {
+    inputs: TxIn[];
+    outputs: TxOut[];
+    certificates: Certificate[];
+    withdrawals: Withdrawals;
+    fee: Lovelace;
+    timeToLive: Slot;
+    update: UpdateShelley;
+  };
+  witness: {
+    signatures: {
+      [k: string]: Signature;
+    };
+    scripts: {
+      [k: string]: Script;
+    };
+    bootstrap: BootstrapWitness[];
+  };
+  metadata: AuxiliaryData | Null;
+  /**
+   * The raw serialized transaction, as found on-chain.
+   */
+  raw: string;
+}
+export interface Byron {
+  byron: BlockByron;
+}
+export interface StandardBlock {
+  hash: DigestBlake2BBlockHeader;
+  header: {
+    blockHeight: BlockNo;
+    genesisKey: GenesisVerificationKey;
+    prevHash: DigestBlake2BBlockHeader;
+    proof: BlockProof;
+    protocolMagicId: ProtocolMagicId;
+    protocolVersion: ProtocolVersion;
+    signature: BlockSignature;
+    slot: Slot;
+    softwareVersion: SoftwareVersion;
+  };
+  body: {
+    txPayload: TxByron[];
+    dlgPayload: DlgCertificate[];
+    updatePayload: {
+      proposal: Null | UpdateProposalByron;
+      votes: Vote[];
+    };
+  };
+}
+export interface BlockProof {
+  utxo: {
+    number: UInt32;
+    root: DigestBlake2BMerkleRoot;
+    witnessesHash: DigestBlake2BBlockByronBodyTxPayloadWitness;
+  };
+  delegation: DigestBlake2BBlockByronBodyDlgPayload;
+  update: DigestBlake2BBlockByronBodyUpdatePayload;
+}
+export interface BlockSignature {
+  dlgCertificate: DlgCertificate;
+  signature: IssuerSignature;
+}
+/**
+ * A (Byron) delegation certificate.
+ */
+export interface DlgCertificate {
+  epoch: Epoch;
+  issuerVk: GenesisVerificationKey;
+  delegateVk: GenesisVerificationKey;
+  signature: IssuerSignature;
+}
+export interface SoftwareVersion {
+  appName: string;
+  number: UInt32;
+}
+export interface TxByron {
+  id: TxId;
+  body: {
+    inputs: TxIn[];
+    outputs: TxOut[];
+  };
+  witness: TxWitness[];
+  /**
+   * The raw serialized transaction, as found on-chain.
+   */
+  raw: string;
+}
+export interface WitnessVk {
+  witnessVk: {
+    key: DigestBlake2BVerificationKey;
+    signature: Signature;
+  };
+}
+export interface RedeemWitness {
+  redeemWitness: {
+    key: VerificationKey;
+    signature: Signature;
+  };
+}
+export interface UpdateProposalByron {
+  body: {
+    protocolVersion: ProtocolVersion;
+    softwareVersion: SoftwareVersion;
+    metadata: {
+      [k: string]: string;
+    };
+    parametersUpdate: ProtocolParametersByron;
+  };
+  issuer: IssuerVrfVerificationKey;
+  signature: IssuerSignature;
+}
+export interface ProtocolParametersByron {
+  heavyDlgThreshold: NullableRatio;
+  maxBlockSize: NullableUInt64;
+  maxHeaderSize: NullableUInt64;
+  maxProposalSize: NullableUInt64;
   maxTxSize: NullableUInt64;
-  stakeKeyDeposit: NullableUInt64;
-  poolDeposit: NullableUInt64;
-  poolRetirementEpochBound: NullableUInt64;
-  desiredNumberOfPools: NullableUInt64;
-  poolInfluence: NullableRatio;
-  monetaryExpansion: NullableRatio;
-  treasuryExpansion: NullableRatio;
-  decentralizationParameter: NullableRatio;
-  minPoolCost: NullableUInt64;
-  coinsPerUtxoWord: NullableUInt64;
-  maxValueSize: NullableUInt64;
-  collateralPercentage: NullableUInt64;
-  maxCollateralInputs: NullableUInt64;
-  extraEntropy: Nonce | Null;
-  protocolVersion: ProtocolVersion | Null;
-  costModels: CostModels | Null;
-  prices: Prices | Null;
-  maxExecutionUnitsPerTransaction: ExUnits | Null;
-  maxExecutionUnitsPerBlock: ExUnits | Null;
+  mpcThreshold: NullableRatio;
+  scriptVersion: NullableUInt64;
+  slotDuration: NullableUInt64;
+  unlockStakeEpoch: NullableUInt64;
+  updateProposalThreshold: NullableRatio;
+  updateProposalTimeToLive: NullableUInt64;
+  updateVoteThreshold: NullableRatio;
+  txFeePolicy: TxFeePolicy | Null;
+  softforkRule: SoftForkRule | Null;
 }
-export interface CostModels {
-  [k: string]: CostModel;
+export interface TxFeePolicy {
+  coefficient: Ratio;
+  constant: number;
 }
-export interface CostModel {
-  [k: string]: Int64;
+export interface SoftForkRule {
+  initThreshold: NullableRatio;
+  minThreshold: NullableRatio;
+  decrementThreshold: NullableRatio;
 }
-export interface Prices {
-  memory: Ratio;
-  steps: Ratio;
+export interface Vote {
+  voterVk: VerificationKey;
+  proposalId: DigestBlake2BVerificationKey;
+  signature: Signature;
 }
-export interface ExUnits {
-  memory: UInt64;
-  steps: UInt64;
-}
-export interface Redeemer {
-  redeemer: RedeemerData;
-  executionUnits: ExUnits;
+export interface EpochBoundaryBlock {
+  hash: DigestBlake2BBlockHeader;
+  header: {
+    blockHeight: BlockNo;
+    epoch: Epoch;
+    prevHash: DigestBlake2BBlockHeader;
+  };
 }
 export interface Tip {
   slot: Slot;

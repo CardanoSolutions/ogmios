@@ -5,6 +5,14 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.4.0] - UNRELEASED
+
+#### Added
+
+##### 🚗 TypeScript Client
+
+- TypeScript client for the 'TxMonitor' mini-protocol. Documentation available at https://ogmios.dev/typescript-client/tx-monitor/.
+
 ### [5.3.0] - 2022-05-07
 
 #### Added

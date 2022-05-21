@@ -4,7 +4,7 @@ chapter = false
 weight = 3
 +++
 
-The StateQuery client allows you to play with the [Local State Query](/mini-protocols/local-state-query) mini protocol; that is, a protocol for querying parts of the ledger state. The complete set of queries is described in [the documentation](#TODO). To use it, create a client from a context and start querying!
+The StateQuery client allows you to play with the [Local State Query](/mini-protocols/local-state-query) mini protocol; that is, a protocol for querying parts of the ledger state. The complete set of queries is described in [API reference](https://ogmios.dev/typescript/api/modules/_cardano_ogmios_client.StateQuery.html). To use it, create a client from a context and start querying!
 
 ```ts
 import { createStateQueryClient } from '@cardano-ogmios/client'
