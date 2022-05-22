@@ -8,39 +8,58 @@
 
 ## Features
 
-- [Fast synchronization of blocks from the Cardano network(s)](https://ogmios.dev/mini-protocols/local-chain-sync/)
-- [Transaction submission with enhanced error messages](https://ogmios.dev/mini-protocols/local-tx-submission/#submittx)
-- [Evaluation of Plutus script execution units](https://ogmios.dev/mini-protocols/local-tx-submission/#evaluatetx)
-- [Local mempool monitoring](https://ogmios.dev/mini-protocols/local-tx-monitor/)
-- [Full ledger state query support:](https://ogmios.dev/mini-protocols/local-state-query/)
-  - `blockHeight`
-  - `chainTip`
-  - `currentEpoch`
-  - `currentProtocolParameters`
-  - `delegationsAndRewards`
-  - `eraStart`
-  - `eraSummaries`
-  - `genesisConfig`
-  - `ledgerTip`
-  - `nonMyopicMemberRewards`
-  - `poolIds`
-  - `poolParameters`
-  - `poolsRanking`
-  - `proposedProtocolParameters`
-  - `rewardsProvenance`
-  - `stakeDistribution`
-  - `systemStart`
-  - `utxo`
-- [TypeScript client & REPL](https://github.com/CardanoSolutions/ogmios/tree/master/clients/TypeScript#cardano-ogmios-typescript-client-packages)
-- [Structured JSON logging](https://ogmios.dev/getting-started/monitoring/)
-- [Health monitoring, with runtime and application statistics](https://ogmios.dev/getting-started/monitoring/)
-- [Fully documented API with JSON-schema](https://ogmios.dev/api-reference/)
+<table>
+  <tr><td>Fast synchronization of blocks from the Cardano network(s)</td><td><a href="https://ogmios.dev/mini-protocols/local-chain-sync/" target="_blank">↗️</a></td></tr>
+  <tr><td>Transaction submission with enhanced error messages</td><td><a href="https://ogmios.dev/mini-protocols/local-tx-submission/#submittx" target="_blank">↗️</a></td></tr>
+  <tr><td>Evaluation of Plutus script execution units</td><td><a href="https://ogmios.dev/mini-protocols/local-tx-submission/#evaluatetx" target="_blank">↗️</a></td></tr>
+  <tr><td>Local mempool monitoring</td><td><a href="https://ogmios.dev/mini-protocols/local-tx-monitor/" target="_blank">↗️</a></td></tr>
+  <tr>
+  <td>
+  <details>
+  <summary>Full ledger state query support</summary>
+
+  Query                        | Result
+  ---                          | ---
+  `blockHeight`                | The chain's highest block number.
+  `chainTip`                   | The chain's current tip.
+  `currentEpoch`               | The current epoch of the ledger.
+  `currentProtocolParameters`  | The current protocol parameters.
+  `delegationsAndRewards`      | Current delegation settings and rewards of given reward accounts.
+  `eraStart`                   | The information regarding the beginning of the current era.
+  `eraSummaries`               | Era bounds and slotting parameters details, required for proper slot arithmetic.
+  `genesisConfig`              | Get a compact version of the era's genesis configuration.
+  `ledgerTip`                  | The most recent block tip known of the ledger.
+  `nonMyopicMemberRewards`     | Non-myopic member rewards for each pool. Used in ranking.
+  `poolIds`                    | The list of all pool identifiers currently registered and active.
+  `poolParameters`             | Stake pool parameters submitted with registration certificates.
+  `poolsRanking`               | Retrieve stake pools ranking (a.k.a desirabilities).
+  `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
+  `rewardsProvenance'`         | Get details about rewards calculation for the ongoing epoch.
+  `stakeDistribution`          | Distribution of the stake across all known stake pools.
+  `systemStart`                | The chain's start time (UTC).
+  `utxo`                       | Current UTXO, possibly filtered by output reference.
+
+  </details>
+  </td>
+  <td>
+    <a href="https://ogmios.dev/mini-protocols/local-state-query/" target="_blank">↗️</a>
+  </td>
+  </tr> 
+  <tr><td>Structured JSON logging</td><td><a href="https://ogmios.dev/getting-started/monitoring/" target="_blank">↗️</a></td></tr>
+  <tr><td>Health monitoring, with runtime and application statistics</td><td><a href="https://ogmios.dev/getting-started/monitoring/" target="_blank">↗️</a></td></tr>
+</table>
 
 ## Preview
 
 <p align="center">
   <img src=".github/preview.png" alt="Ogmios TypeScript Client Preview">
 </p>
+
+## Clients / SDKs
+
+- <a href="https://ogmios.dev/typescript-client/overview/">TypeScript</a>
+- <a href="https://github.com/savaki/ogmigo/#readme">Go</a>
+- <a href="https://github.com/projectNEWM/kogmios#readme">Kotlin</a>
 
 ## Sponsors 💖 
 
