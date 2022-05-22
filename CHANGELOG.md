@@ -5,13 +5,21 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
-### [5.4.0] - UNRELEASED
+### [5.4.0] - 2022-05-22
 
 #### Added
 
 ##### 🚗 TypeScript Client
 
 - TypeScript client for the 'TxMonitor' mini-protocol. Documentation available at https://ogmios.dev/typescript-client/tx-monitor/.
+
+#### Changed
+
+##### 🏢 Server 
+
+- The server now returns slightly better faults when detecting a misuse of the `TxMonitor` protocol (e.g. when sending a `HasTx` before an `AwaitAcquire`).
+
+- The server now fails with an explicit error when given a `Request` containing a `reflection` field; `reflection` are only used in responses, while requests use `mirror`. See [#217](https://github.com/CardanoSolutions/ogmios/issues/217).
 
 ### [5.3.0] - 2022-05-07
 
