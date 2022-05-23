@@ -16,3 +16,6 @@
 [submodule "clients/Go"]
 	path = clients/Go
 	url = https://github.com/savaki/ogmigo.git
+[submodule "clients/Kotlin"]
+	path = clients/Kotlin
+	url = git@github.com:projectNEWM/kogmios.git
