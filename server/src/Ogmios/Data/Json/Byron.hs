@@ -189,7 +189,7 @@ encodeTxIn (By.TxInUtxo txid ix) = encodeObject
       , encodeHash txid
       )
     , ( "index"
-      , encodeWord32 ix
+      , encodeWord16 ix
       )
     ]
 

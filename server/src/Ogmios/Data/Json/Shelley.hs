@@ -32,8 +32,12 @@ import GHC.TypeLits
     ( ErrorMessage (..), TypeError )
 import Ouroboros.Consensus.Cardano.Block
     ( ShelleyEra )
+import Ouroboros.Consensus.Protocol.TPraos
+    ( TPraos )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..), ShelleyHash (..) )
+import Ouroboros.Consensus.Shelley.Protocol.TPraos
+    ()
 
 import qualified Ogmios.Data.Json.Byron as Byron
 
@@ -159,7 +163,7 @@ encodeBHeader mode (TPraos.BHeader hBody hSig) = encodeObjectWithMode mode
 encodeBlock
     :: Crypto crypto
     => SerializationMode
-    -> ShelleyBlock (ShelleyEra crypto)
+    -> ShelleyBlock (TPraos crypto) (ShelleyEra crypto)
     -> Json
 encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
@@ -849,10 +853,11 @@ encodeSignedKES (CC.SignedKES raw) =
     encodeByteStringBase64 . CC.rawSerialiseSigKES $ raw
 
 encodeShelleyHash
-    :: ShelleyHash crypto
+    :: Crypto crypto
+    => ShelleyHash crypto
     -> Json
 encodeShelleyHash =
-    encodeHashHeader . unShelleyHash
+    encodeHash . unShelleyHash
 
 encodeSignedDSIGN
     :: CC.DSIGNAlgorithm alg
@@ -958,12 +963,12 @@ encodeTxIn
     :: Crypto crypto
     => Ledger.TxIn crypto
     -> Json
-encodeTxIn (Ledger.TxIn txid ix) = encodeObject
+encodeTxIn (Ledger.TxIn txid (Ledger.TxIx ix)) = encodeObject
     [ ( "txId"
       , encodeTxId txid
       )
     , ( "index"
-      , encodeNatural ix
+      , encodeWord16 ix
       )
     ]
 

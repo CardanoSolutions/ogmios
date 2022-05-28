@@ -10,18 +10,24 @@ import Ogmios.Data.Json.Prelude
 
 import Cardano.Binary
     ( serialize' )
+import Cardano.Ledger.Alonzo.TxInfo
+    ( exBudgetToExUnits )
 import Cardano.Ledger.Crypto
     ( Crypto )
+import Codec.Serialise
+    ( serialise )
 import Data.ByteString.Base16
     ( encodeBase16 )
-import Data.MemoBytes
-    ( memobytes )
 import GHC.Records
     ( getField )
 import Ouroboros.Consensus.Cardano.Block
     ( AlonzoEra )
+import Ouroboros.Consensus.Protocol.TPraos
+    ( TPraos )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
+import Ouroboros.Consensus.Shelley.Protocol.TPraos
+    ()
 import Prettyprinter
     ( pretty )
 
@@ -53,7 +59,6 @@ import qualified Cardano.Ledger.Alonzo.Rules.Utxow as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.Tx as Al
 import qualified Cardano.Ledger.Alonzo.TxBody as Al
-import qualified Cardano.Ledger.Alonzo.TxInfo as Al
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 import qualified Cardano.Ledger.Alonzo.TxWitness as Al
 
@@ -63,11 +68,11 @@ import qualified Cardano.Ledger.Alonzo.Tools as Al.Tools
 -- Encoders
 --
 
-encodeAlonzoPredFail
+encodeUtxowPredicateFail
     :: Crypto crypto
-    => Al.AlonzoPredFail (AlonzoEra crypto)
+    => Al.UtxowPredicateFail (AlonzoEra crypto)
     -> Json
-encodeAlonzoPredFail = \case
+encodeUtxowPredicateFail = \case
     Al.MissingRedeemers missing ->
         encodeObject
             [ ( "missingRequiredRedeemers", encodeObject
@@ -136,7 +141,7 @@ encodeAuxiliaryData (Al.AuxiliaryData blob scripts) = encodeObject
 encodeBlock
     :: Crypto crypto
     => SerializationMode
-    -> ShelleyBlock (AlonzoEra crypto)
+    -> ShelleyBlock (TPraos crypto) (AlonzoEra crypto)
     -> Json
 encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
@@ -166,14 +171,20 @@ encodeCollectError = \case
 encodeCostModel
     :: Al.CostModel
     -> Json
-encodeCostModel (Al.CostModel model) =
-    encodeMap id encodeInteger model
+encodeCostModel model =
+    encodeMap id encodeInteger (Al.getCostModelParams model)
+
+encodeCostModels
+    :: Al.CostModels
+    -> Json
+encodeCostModels =
+    encodeMap stringifyLanguage encodeCostModel . Al.unCostModels
 
 encodeData
     :: Al.Data era
     -> Json
-encodeData (Al.DataConstr datum) =
-    encodeShortByteString encodeByteStringBase64 (memobytes datum)
+encodeData (Al.Data datum) =
+    encodeByteStringBase16 (toStrict (serialise datum))
 
 encodeDataHash
     :: Crypto crypto
@@ -198,7 +209,7 @@ encodeGenesis x = encodeObject
       , encodeCoin (Al.coinsPerUTxOWord x)
       )
     , ( "costModels"
-      , encodeMap stringifyLanguage encodeCostModel (Al.costmdls x)
+      , encodeCostModels (Al.costmdls x)
       )
     , ( "prices"
       , encodePrices (Al.prices x)
@@ -241,7 +252,7 @@ encodeLedgerFailure
     -> Json
 encodeLedgerFailure = \case
     Sh.UtxowFailure e ->
-        encodeAlonzoPredFail e
+        encodeUtxowPredicateFail e
     Sh.DelegsFailure e ->
         Shelley.encodeDelegsFailure e
 
@@ -313,7 +324,7 @@ encodePParams' encodeF x = encodeObject
       , encodeF encodeCoin (Al._coinsPerUTxOWord x)
       )
     , ( "costModels"
-      , encodeF (encodeMap stringifyLanguage encodeCostModel) (Al._costmdls x)
+      , encodeF encodeCostModels (Al._costmdls x)
       )
     , ( "prices"
       , encodeF encodePrices (Al._prices x)
@@ -761,7 +772,7 @@ encodeScriptFailure = \case
     Al.Tools.IncompatibleBudget budget ->
         encodeObject
             [ ( "illFormedExecutionBudget"
-              , encodeMaybe encodeExUnits (Al.exBudgetToExUnits budget)
+              , encodeMaybe encodeExUnits (exBudgetToExUnits budget)
               )
             ]
     Al.Tools.NoCostModel lang ->

@@ -30,6 +30,7 @@ module Ogmios.Prelude
       -- * type-level helpers
     , keepRedundantConstraint
     , LastElem
+    , Elem
     , Or
     , HKD
     ) where
@@ -102,6 +103,10 @@ type family LastElem xs where
     LastElem ('[])     = TypeError ('Text "LastElem: empty list.")
     LastElem (x : '[]) = x
     LastElem (x : xs)  = LastElem xs
+
+type family Elem e es where
+    Elem e ('[]) = TypeError ('Text "Elem: not found.")
+    Elem e (x : es) = Or (e ~ x) (Elem e es)
 
 type family Or (a :: Constraint) (b :: Constraint) :: Constraint where
     Or () b = ()

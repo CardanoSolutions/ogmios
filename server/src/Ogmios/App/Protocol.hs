@@ -11,10 +11,14 @@ module Ogmios.App.Protocol
 
 import Ogmios.Prelude
 
+import Cardano.Network.Protocol.NodeToClient
+    ( SerializedTx )
+import GHC.Generics
+    ( Rep )
 import Ogmios.Data.Json
     ( FromJSON, Json )
 import Ogmios.Data.Protocol
-    ( MethodName, MostRecentEra )
+    ( MethodName )
 import Ogmios.Data.Protocol.ChainSync
     ( FindIntersect, RequestNext, _decodeFindIntersect, _decodeRequestNext )
 import Ogmios.Data.Protocol.StateQuery
@@ -33,20 +37,19 @@ import Ogmios.Data.Protocol.TxMonitor
     , _decodeSizeAndCapacity
     )
 import Ogmios.Data.Protocol.TxSubmission
-    ( EvaluateTx, SubmitTx, UTxO, _decodeEvaluateTx, _decodeSubmitTx )
+    ( EvaluateTx
+    , SomeUTxOInAnyEra
+    , SubmitTx
+    , _decodeEvaluateTx
+    , _decodeSubmitTx
+    )
 import Ouroboros.Network.Block
     ( Point (..) )
-
-import Cardano.Network.Protocol.NodeToClient
-    ( SerializedTx )
-import GHC.Generics
-    ( Rep )
-import Relude.Extra.Map
-    ( lookup )
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
+import qualified Data.Aeson.KeyMap as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.Text as T
 
@@ -81,7 +84,7 @@ onUnmatchedMessage
         , FromJSON (Query Proxy block)
         , FromJSON (Point block)
         , FromJSON (GenTxId block)
-        , FromJSON (UTxO (MostRecentEra block))
+        , FromJSON (SomeUTxOInAnyEra block)
         )
     => ByteString
     -> Json
@@ -96,7 +99,7 @@ onUnmatchedMessage blob = do
         (details, reflection') = case Json.decode' (fromStrict blob) of
             Just (Json.Object obj) ->
                 ( either toText absurd $ Json.parseEither userFriendlyParser obj
-                , lookup "mirror" obj
+                , Json.lookup "mirror" obj
                 )
             _ ->
                 ( "must be a well-formed JSON object."
@@ -120,8 +123,8 @@ onUnmatchedMessage blob = do
     userFriendlyParser :: Json.Object -> Json.Parser Void
     userFriendlyParser obj = do
         methodName <-
-            case lookup "methodname" obj of
-                Just (Json.String t) -> pure (T.unpack t)
+            case Json.lookup "methodname" obj of
+                Just (Json.String t) -> pure (toString t)
                 _ -> fail "field 'methodname' must be present and be a string."
         match methodName (Json.Object obj)
 

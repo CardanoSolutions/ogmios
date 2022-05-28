@@ -16,8 +16,12 @@ import GHC.Records
     ( getField )
 import Ouroboros.Consensus.Cardano.Block
     ( AllegraEra )
+import Ouroboros.Consensus.Protocol.TPraos
+    ( TPraos )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
+import Ouroboros.Consensus.Shelley.Protocol.TPraos
+    ()
 
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
@@ -58,7 +62,7 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
 encodeBlock
     :: Crypto crypto
     => SerializationMode
-    -> ShelleyBlock (AllegraEra crypto)
+    -> ShelleyBlock (TPraos crypto) (AllegraEra crypto)
     -> Json
 encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject

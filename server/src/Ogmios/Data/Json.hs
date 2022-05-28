@@ -54,7 +54,7 @@ import Cardano.Ledger.Alonzo.TxBody
 import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Ledger.Shelley.API
-    ( ApplyTxError (..), PraosCrypto )
+    ( ApplyTxError (..) )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..) )
 import Cardano.Ledger.TxIn
@@ -67,6 +67,8 @@ import Cardano.Slotting.Slot
     ( SlotNo (..), WithOrigin (..) )
 import Formatting.Buildable
     ( build )
+import Ogmios.Data.EraTranslation
+    ( MostRecentEra )
 import Ogmios.Data.Json.Query
     ( decodeTxIn
     , decodeTxOut
@@ -88,10 +90,10 @@ import Ouroboros.Consensus.Cardano.Block
     )
 import Ouroboros.Consensus.HardFork.Combinator
     ( OneEraHash (..) )
+import Ouroboros.Consensus.Protocol.Praos
+    ( PraosCrypto )
 import Ouroboros.Consensus.Shelley.Eras
-    ( AlonzoEra, MaryEra )
-import Ouroboros.Consensus.Shelley.Ledger
-    ( ShelleyBlock )
+    ( AlonzoEra, BabbageEra )
 import Ouroboros.Consensus.Shelley.Ledger.Mempool
     ( GenTx (..), TxId (..) )
 import Ouroboros.Network.Block
@@ -103,6 +105,7 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Type
 
 import qualified Cardano.Ledger.SafeHash as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
+import qualified Cardano.Protocol.TPraos.API as TPraos
 import qualified Codec.CBOR.Encoding as Cbor
 import qualified Codec.CBOR.Write as Cbor
 import qualified Data.Map.Strict as Map
@@ -182,7 +185,7 @@ encodeSubmitTxError = \case
         encodeList encodeEraMismatch [ e ]
 
 encodeSerializedTx
-    :: PraosCrypto crypto
+    :: (PraosCrypto crypto, TPraos.PraosCrypto crypto)
     => SerializedTx (CardanoBlock crypto)
     -> Json
 encodeSerializedTx = \case
@@ -274,17 +277,23 @@ decodePoint json =
         hash <- obj .: "hash" >>= decodeOneEraHash
         pure $ Point $ At $ Block (SlotNo slot) hash
 
+
 decodeSerializedTx
-    :: forall crypto. PraosCrypto crypto
+    :: forall crypto.
+        ( PraosCrypto crypto
+        , TPraos.PraosCrypto crypto
+        )
     => Json.Value
     -> Json.Parser (SerializedTx (CardanoBlock crypto))
 decodeSerializedTx = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
     bytes <- decodeBase16 utf8 <|> decodeBase64 utf8 <|> invalidEncodingError
     -- NOTE: Avoiding 'asum' here because it generates poor errors on failures
-    deserialiseCBOR GenTxMary (wrap bytes)
-        <|> deserialiseCBOR GenTxMary (fromStrict bytes)
-        <|> deserialiseCBOR GenTxAlonzo (wrap bytes)
-        <|> deserialiseCBOR GenTxAlonzo (fromStrict bytes)
+    deserialiseCBOR @(MostRecentEra (CardanoBlock crypto) ~ BabbageEra crypto) GenTxBabbage (fromStrict bytes)
+        <|> deserialiseCBOR @(MostRecentEra (CardanoBlock crypto) ~ BabbageEra crypto) GenTxBabbage (wrap bytes)
+        <|> deserialiseCBOR @() GenTxAlonzo (fromStrict bytes)
+        <|> deserialiseCBOR @() GenTxAlonzo (wrap bytes)
+        <|> deserialiseCBOR @() GenTxMary (fromStrict bytes)
+        <|> deserialiseCBOR @() GenTxMary (wrap bytes)
   where
     invalidEncodingError :: Json.Parser a
     invalidEncodingError =
@@ -297,37 +306,46 @@ decodeSerializedTx = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
     wrap = Cbor.toLazyByteString . wrapCBORinCBOR Cbor.encodePreEncoded
 
     deserialiseCBOR
-        :: forall era.
-            ( Or
-                (era ~ LastElem (CardanoEras crypto))
-                (era ~ ShelleyBlock (MaryEra crypto))
-            , FromCBOR (GenTx era)
+        :: forall constraint era.
+            ( FromCBOR (GenTx era)
+            , constraint
             )
         => (GenTx era -> GenTx (CardanoBlock crypto))
         -> LByteString
         -> Json.Parser (GenTx (CardanoBlock crypto))
     deserialiseCBOR mk =
-        either (fail . prettyDecoderError) (pure . mk)
+        either (fail . prettyDecoderError @era) (pure . mk)
         .
         decodeFull
       where
-        _compilerWarning = keepRedundantConstraint
-            (Proxy @(Or
-                (era ~ LastElem (CardanoEras crypto))
-                (era ~ ShelleyBlock (MaryEra crypto))
-            ))
+        -- We use this extra constraint when decoding transactions to generate a
+        -- compiler warning in case a new era becomes available, to not forget to update
+        -- this bit of code. The constraint is purely artificial but will generate a
+        -- compilation error which will catch our attention.
+        --
+        -- Generally speaking, we still want to deserialise previous eras, but we want
+        -- to make sure to have support for the latest as well. In case a more recent is
+        -- available, this will generate a compiler error looking like:
+        --
+        --    • Couldn't match type ‘BabbageEra crypto’ with ‘AlonzoEra crypto’ arising from a use of ‘deserialiseCBOR’
+        _compilerWarning = keepRedundantConstraint (Proxy @constraint)
 
-        prettyDecoderError :: DecoderError -> String
-        prettyDecoderError =
-            toString
-                . TL.replace
-                    (toLazy $ label (Proxy @(GenTx era)))
-                    "serialised transaction"
-                . TL.replace
-                    "\n"
-                    " "
-                . TL.toLazyText
-                . build
+    prettyDecoderError
+        :: forall era.
+            ( FromCBOR (GenTx era)
+            )
+        => DecoderError
+        -> String
+    prettyDecoderError =
+        toString
+            . TL.replace
+                (toLazy $ label (Proxy @(GenTx era)))
+                "serialised transaction"
+            . TL.replace
+                "\n"
+                " "
+            . TL.toLazyText
+            . build
 
 decodeUtxo
     :: forall crypto. (Crypto crypto)
@@ -364,7 +382,7 @@ decodeTip json =
         pure $ Tip (SlotNo slot) hash (BlockNo blockNo)
 
 decodeTxId
-    :: forall crypto. PraosCrypto crypto
+    :: forall crypto. Crypto crypto
     => Json.Value
     -> Json.Parser (GenTxId (CardanoBlock crypto))
 decodeTxId = Json.withText "TxId" $ \(encodeUtf8 -> utf8) -> do

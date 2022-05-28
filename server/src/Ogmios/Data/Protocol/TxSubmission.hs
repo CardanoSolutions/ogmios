@@ -44,22 +44,26 @@ module Ogmios.Data.Protocol.TxSubmission
     , EvaluateTxError (..)
     , evaluateExecutionUnits
     , incompatibleEra
+    , eraDiscrepancy
     , _encodeEvaluateTxResponse
+    , CanEvaluateScriptsInEra
+    , SomeUTxOInAnyEra (..)
 
       -- ** Re-exports
     , AlonzoEra
+    , BabbageEra
     , EpochInfo
     , ExUnits
     , GenTxId
     , HasTxId
-    , PParams
     , PastHorizonException
     , RdmrPtr
     , ScriptFailure
     , SerializedTx
     , SubmitTxError
     , SystemStart
-    , Tx
+    , Core.PParams
+    , Core.Tx
     , TxIn
     , UTxO (..)
     ) where
@@ -67,22 +71,32 @@ module Ogmios.Data.Protocol.TxSubmission
 import Ogmios.Data.Json.Prelude
 
 import Ogmios.Data.Protocol
-    ( MostRecentEra )
+    ()
 
 import Cardano.Ledger.Alonzo
     ( AlonzoEra )
-import Cardano.Ledger.Alonzo.PParams
-    ( PParams' (_costmdls) )
+import Cardano.Ledger.Alonzo.Data
+    ( Data )
 import Cardano.Ledger.Alonzo.Scripts
-    ( ExUnits (..) )
+    ( CostModels (..), ExUnits (..), Script )
 import Cardano.Ledger.Alonzo.Tools
     ( BasicFailure (..), ScriptFailure, evaluateTransactionExecutionUnits )
+import Cardano.Ledger.Alonzo.Tx
+    ( DataHash )
+import Cardano.Ledger.Alonzo.TxInfo
+    ( ExtendedUTxO )
 import Cardano.Ledger.Alonzo.TxWitness
-    ( RdmrPtr )
-import Cardano.Ledger.Core
-    ( PParams, Tx )
+    ( RdmrPtr (..), Redeemers, TxDats )
+import Cardano.Ledger.Babbage
+    ( BabbageEra )
+import Cardano.Ledger.BaseTypes
+    ( ProtVer )
 import Cardano.Ledger.Crypto
     ( StandardCrypto )
+import Cardano.Ledger.Era
+    ( Era )
+import Cardano.Ledger.Shelley.TxBody
+    ( DCert, Wdrl )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..) )
 import Cardano.Ledger.TxIn
@@ -95,12 +109,21 @@ import Cardano.Slotting.Time
     ( SystemStart )
 import Control.Monad.Trans.Except
     ( Except )
+import Data.Aeson
+    ( FromJSON (..) )
+import Data.Sequence.Strict
+    ( StrictSeq )
+import GHC.Records
+    ( HasField (..) )
 import Ouroboros.Consensus.HardFork.History
     ( PastHorizonException )
 import Ouroboros.Consensus.Ledger.SupportsMempool
     ( HasTxId (..) )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..) )
+
+import qualified Cardano.Ledger.Core as Core
+import qualified Cardano.Ledger.Era as Era
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Data.Aeson.Types as Json
@@ -134,7 +157,7 @@ data TxSubmissionCodecs block = TxSubmissionCodecs
 mkTxSubmissionCodecs
     :: forall block.
         ( FromJSON (SerializedTx block)
-        , FromJSON (UTxO (MostRecentEra block))
+        , FromJSON (SomeUTxOInAnyEra block)
         )
     => (GenTxId block -> Json)
     -> (SubmitTxError block -> Json)
@@ -291,22 +314,47 @@ mkSubmitTxResponse tx = \case
 -- EvaluateTx
 --
 
+data SomeUTxOInAnyEra block where
+    SomeUTxOInAlonzoEra
+        :: UTxO (AlonzoEra (Crypto block))
+        -> SomeUTxOInAnyEra block
+
+    SomeUTxOInBabbageEra
+        :: UTxO (BabbageEra (Crypto block))
+        -> SomeUTxOInAnyEra block
+
+    deriving (Generic)
+
+deriving instance
+    ( Show (UTxO (AlonzoEra (Crypto block)))
+    , Show (UTxO (BabbageEra (Crypto block)))
+    ) => Show (SomeUTxOInAnyEra block)
+
+instance
+    ( FromJSON (UTxO (AlonzoEra (Crypto block)))
+    , FromJSON (UTxO (BabbageEra (Crypto block)))
+    ) => FromJSON (SomeUTxOInAnyEra block)
+  where
+    parseJSON val =
+        (SomeUTxOInAlonzoEra <$> parseJSON val)
+        <|>
+        (SomeUTxOInBabbageEra <$> parseJSON val)
+
 data EvaluateTx block
     = EvaluateTx
         { evaluate :: SerializedTx block
-        , additionalUtxoSet :: UTxO (MostRecentEra block)
+        , additionalUtxoSet :: SomeUTxOInAnyEra block
         }
     deriving (Generic)
 deriving instance
     ( Show (SerializedTx block)
-    , Show (UTxO (MostRecentEra block))
+    , Show (SomeUTxOInAnyEra block)
     ) => Show (EvaluateTx block)
 
 _decodeEvaluateTx
-    :: forall block era.
-        ( era ~ MostRecentEra block
-        , FromJSON (SerializedTx block)
-        , FromJSON (UTxO era)
+    :: forall block.
+        ( FromJSON (SerializedTx block)
+        , FromJSON (SomeUTxOInAnyEra block)
         )
     => Json.Value
     -> Json.Parser (Wsp.Request (EvaluateTx block))
@@ -330,11 +378,17 @@ data EvaluateTxError block
     | EvaluateTxIncompatibleEra Text
     | EvaluateTxUncomputableSlotArithmetic PastHorizonException
     | EvaluateTxAdditionalUtxoOverlap (Set (TxIn (Crypto block)))
+    -- TODO: Make more informative
+    | EvaluateTxEraDiscrepancy
     deriving (Show)
 
 -- | Shorthand constructor for 'EvaluateTxResponse'
 incompatibleEra :: Text -> EvaluateTxResponse block
 incompatibleEra = EvaluationFailure . EvaluateTxIncompatibleEra
+
+-- | Shorthand constructor for 'EvaluateTxResponse'
+eraDiscrepancy :: EvaluateTxResponse block
+eraDiscrepancy = EvaluationFailure EvaluateTxEraDiscrepancy
 
 _encodeEvaluateTxResponse
     :: forall block. ()
@@ -400,18 +454,40 @@ _encodeEvaluateTxResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFail
   where
     proxy = Proxy @(Wsp.Request (EvaluateTx block))
 
+-- | A constraint synonym to bundle together constraints needed to run a script
+-- evaluation in any era after Alonzo (incl.).
+type CanEvaluateScriptsInEra era =
+      ( Era era
+      , ExtendedUTxO era
+      , HasField "inputs" (Core.TxBody era) (Set (TxIn (Era.Crypto era)))
+      , HasField "certs" (Core.TxBody era) (StrictSeq (DCert (Era.Crypto era)))
+      , HasField "wdrls" (Core.TxBody era) (Wdrl (Era.Crypto era))
+      , HasField "txdats" (Core.Witnesses era) (TxDats era)
+      , HasField "txrdmrs" (Core.Witnesses era) (Redeemers era)
+      , HasField "datahash" (Core.TxOut era) (StrictMaybe (DataHash (Era.Crypto era)))
+      , HasField "datum" (Core.TxOut era) (StrictMaybe (Data era))
+      , HasField "_maxTxExUnits" (Core.PParams era) ExUnits
+      , HasField "_protocolVersion" (Core.PParams era) ProtVer
+      , HasField "_costmdls" (Core.PParams era) CostModels
+      , Core.Script era ~ Script era
+      , Era.Crypto era ~ StandardCrypto
+      )
+
 -- | Evaluate script executions units for the given transaction.
 evaluateExecutionUnits
-    :: forall block. (Crypto block ~ StandardCrypto)
-    => PParams (AlonzoEra (Crypto block))
+    :: forall era block.
+      ( CanEvaluateScriptsInEra era
+      , Era.Crypto era ~ Crypto block
+      )
+    => Core.PParams era
         -- ^ Protocol parameters
     -> SystemStart
         -- ^ Start of the blockchain, for converting slots to UTC times
     -> EpochInfo (Except PastHorizonException)
         -- ^ Information about epoch sizes, for converting slots to UTC times
-    -> UTxO (AlonzoEra (Crypto block))
+    -> UTxO era
         -- ^ A UTXO needed to resolve inputs
-    -> Tx (AlonzoEra (Crypto block))
+    -> Core.Tx era
         -- ^ The actual transaction
     -> EvaluateTxResponse block
 evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation of
@@ -419,6 +495,8 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
         EvaluationFailure (EvaluateTxUncomputableSlotArithmetic pastHorizonException)
     Right (Left (UnknownTxIns inputs)) ->
         EvaluationFailure (EvaluateTxUnknownInputs inputs)
+    Right (Left (BadTranslation err)) ->
+        undefined
     Right (Right reports) ->
         let (failures, successes) =
                 Map.foldrWithKey aggregateReports (mempty, mempty)  reports
@@ -428,9 +506,9 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
   where
     aggregateReports
         :: RdmrPtr
-        -> Either (ScriptFailure (Crypto block)) ExUnits
-        -> (Map RdmrPtr [ScriptFailure (Crypto block)], Map RdmrPtr ExUnits)
-        -> (Map RdmrPtr [ScriptFailure (Crypto block)], Map RdmrPtr ExUnits)
+        -> Either (ScriptFailure (Era.Crypto era)) ExUnits
+        -> (Map RdmrPtr [ScriptFailure (Era.Crypto era)], Map RdmrPtr ExUnits)
+        -> (Map RdmrPtr [ScriptFailure (Era.Crypto era)], Map RdmrPtr ExUnits)
     aggregateReports ptr result (failures, successes) = case result of
         Left scriptFailure ->
             ( Map.unionWith (++) (Map.singleton ptr [scriptFailure]) failures
@@ -445,8 +523,8 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
         :: Either
               PastHorizonException
               (Either
-                  (BasicFailure (Crypto block))
-                  (Map RdmrPtr (Either (ScriptFailure (Crypto block)) ExUnits))
+                  (BasicFailure (Era.Crypto era))
+                  (Map RdmrPtr (Either (ScriptFailure (Era.Crypto era)) ExUnits))
               )
     evaluation =
         runIdentity $
@@ -457,4 +535,4 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
               utxo
               epochInfo
               systemStart
-              (mapToArray (_costmdls pparams))
+              (mapToArray (unCostModels (getField @"_costmdls" pparams)))

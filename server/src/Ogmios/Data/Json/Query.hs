@@ -110,6 +110,8 @@ import Ouroboros.Consensus.HardFork.History.Qry
     ( Interpreter )
 import Ouroboros.Consensus.HardFork.History.Summary
     ( Bound (..), EraEnd (..), EraSummary (..), Summary (..) )
+import Ouroboros.Consensus.Protocol.TPraos
+    ( TPraos )
 import Ouroboros.Consensus.Shelley.Eras
     ( AllegraEra, AlonzoEra, MaryEra, ShelleyEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
@@ -118,6 +120,8 @@ import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CompactGenesis, getCompactGenesis )
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( BlockQuery (..), NonMyopicMemberRewards (..) )
+import Ouroboros.Consensus.Shelley.Protocol.TPraos
+    ()
 import Ouroboros.Network.Block
     ( BlockNo, pattern BlockPoint, pattern GenesisPoint, Point (..) )
 import Ouroboros.Network.Point
@@ -125,8 +129,9 @@ import Ouroboros.Network.Point
 
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Data.Aeson as Json
+import qualified Data.Aeson.Key as Json
+import qualified Data.Aeson.KeyMap as Json
 import qualified Data.Aeson.Types as Json
-import qualified Data.HashMap.Strict as HMap
 import qualified Data.Map.Merge.Strict as Map
 import qualified Data.Text as T
 
@@ -142,14 +147,11 @@ import qualified Cardano.Ledger.BaseTypes as Ledger
 import qualified Cardano.Ledger.Coin as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Credential as Ledger
-import qualified Cardano.Ledger.Era as Ledger
 import qualified Cardano.Ledger.Hashes as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
 import qualified Cardano.Ledger.Mary.Value as Ledger.Mary
 import qualified Cardano.Ledger.PoolDistr as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
-
-import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 
 import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
 import qualified Cardano.Ledger.Shelley.PParams as Sh
@@ -630,7 +632,7 @@ parseGetEraStart genResult =
 
 parseGetLedgerTip
     :: forall crypto f. (Crypto crypto)
-    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Point (ShelleyBlock era)))
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Point (ShelleyBlock (TPraos crypto) era)))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetLedgerTip genResultInEra =
@@ -1302,11 +1304,11 @@ decodeAssets
     => Json.Value
     -> Json.Parser [(Ledger.Mary.PolicyID crypto, Ledger.Mary.AssetName, Integer)]
 decodeAssets =
-    Json.withObject "Assets" $ HMap.foldrWithKey' fn (pure mempty)
+    Json.withObject "Assets" $ Json.foldrWithKey fn (pure mempty)
   where
     fn k v p = do
         xs <- p
-        (policyId, assetName) <- decodeAssetId k
+        (policyId, assetName) <- decodeAssetId (Json.toText k)
         quantity <- Json.parseJSON v
         pure $ (policyId, assetName, quantity) : xs
 
@@ -1404,7 +1406,7 @@ decodeTxIn
 decodeTxIn = Json.withObject "TxIn" $ \o -> do
     txid <- o .: "txId" >>= fromBase16
     ix <- o .: "index"
-    pure $ Ledger.TxIn (Ledger.TxId txid) ix
+    pure $ Ledger.TxIn (Ledger.TxId txid) (Ledger.TxIx ix)
   where
     fromBase16 =
         maybe empty (pure . unsafeMakeSafeHash) . hashFromTextAsHex @(HASH crypto)
@@ -1437,11 +1439,11 @@ decodeValue = Json.withObject "Value" $ \o -> do
 -- Ouroboros.Network.Block anymore! May revisit in future upgrade of the
 -- dependencies.
 castPoint
-    :: forall era crypto. (Ledger.Crypto era ~ crypto, Crypto crypto)
-    => Point (ShelleyBlock era)
+    :: forall era crypto. (Crypto crypto)
+    => Point (ShelleyBlock (TPraos crypto) era)
     -> Point (CardanoBlock crypto)
 castPoint = \case
     GenesisPoint -> GenesisPoint
     BlockPoint slot h -> BlockPoint slot (cast h)
   where
-    cast (TPraos.unHashHeader . unShelleyHash -> UnsafeHash h) = coerce h
+    cast (unShelleyHash -> UnsafeHash h) = coerce h

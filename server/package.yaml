@@ -52,6 +52,7 @@ library:
     - cardano-crypto-wrapper
     - cardano-data
     - cardano-ledger-alonzo
+    - cardano-ledger-babbage
     - cardano-ledger-byron
     - cardano-ledger-core
     - cardano-ledger-shelley
@@ -84,6 +85,7 @@ library:
     - ouroboros-consensus
     - ouroboros-consensus-byron
     - ouroboros-consensus-cardano
+    - ouroboros-consensus-protocol
     - ouroboros-consensus-shelley
     - ouroboros-network
     - prettyprinter
@@ -138,6 +140,7 @@ tests:
     - bytestring
     - cardano-client
     - cardano-ledger-alonzo
+    - cardano-ledger-babbage
     - cardano-ledger-core
     - cardano-ledger-shelley
     - cardano-ledger-shelley-test
