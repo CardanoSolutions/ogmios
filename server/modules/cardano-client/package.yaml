@@ -37,6 +37,7 @@ library:
     - iohk-monitoring
     - network-mux
     - ouroboros-consensus
+    - ouroboros-consensus-protocol
     - ouroboros-consensus-byron
     - ouroboros-consensus-cardano
     - ouroboros-consensus-shelley

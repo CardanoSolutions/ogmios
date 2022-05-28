@@ -105,8 +105,12 @@ import Ouroboros.Consensus.Network.NodeToClient
     ( ClientCodecs, Codecs' (..), clientCodecs )
 import Ouroboros.Consensus.Node.NetworkProtocolVersion
     ( SupportedNetworkProtocolVersion (..) )
+import Ouroboros.Consensus.Protocol.Praos.Translate
+    ()
 import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CodecConfig (..) )
+import Ouroboros.Consensus.Shelley.Ledger.SupportsProtocol
+    ()
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 import Ouroboros.Network.Channel
@@ -374,10 +378,11 @@ codecs epochSlots nodeToClientV =
     clientCodecs cfg (supportedVersions ! nodeToClientV) nodeToClientV
   where
     supportedVersions = supportedNodeToClientVersions (Proxy @Block)
-    cfg = CardanoCodecConfig byron shelley allegra mary alonzo
+    cfg = CardanoCodecConfig byron shelley allegra mary alonzo babbage
       where
         byron   = ByronCodecConfig epochSlots
         shelley = ShelleyCodecConfig
         allegra = ShelleyCodecConfig
         mary    = ShelleyCodecConfig
         alonzo  = ShelleyCodecConfig
+        babbage = ShelleyCodecConfig
