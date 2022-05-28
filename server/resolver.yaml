@@ -9,20 +9,25 @@ flags:
     external-libsodium-vrf: false
 
 packages:
+- aeson-2.0.3.0
 - async-timer-0.2.0.0
 - canonical-json-0.6.0.0
 - composition-prelude-3.0.0.2
 - constraints-extras-0.3.1.0
 - dom-lt-0.2.3
 - gray-code-0.3.1
+- hedgehog-1.1.1
 - lazy-search-0.1.2.1
 - markov-chain-usage-model-0.0.0
 - monoidal-containers-0.6.2.0
 - moo-1.2
 - network-3.1.2.2
 - nothunks-0.1.3
+- OneTuple-0.3.1
 - partial-order-0.2.0.0
 - quickcheck-state-machine-0.7.1
+- ral-0.1
+- semialign-1.2.0.1
 - size-based-0.1.2.0
 - statistics-linreg-0.3
 - streaming-binary-0.2.2.0
@@ -30,7 +35,7 @@ packages:
 - Unique-0.4.7.9
 
 - git: https://github.com/input-output-hk/cardano-base
-  commit: 41545ba3ac6b3095966316a99883d678b5ab8da8
+  commit: 631cb6cf1fa01ab346233b610a38b3b4cba6e6ab
   subdirs:
   - base-deriving-via
   - binary
@@ -47,10 +52,12 @@ packages:
   commit: f73079303f663e028288f9f4a9e08bcca39a923e
 
 - git: https://github.com/input-output-hk/cardano-ledger
-  commit: 1a9ec4ae9e0b09d54e49b2a40c4ead37edadcce5
+  commit: c415253fff9a5ce9d7575230fc9098bcfee97653
   subdirs:
   - eras/alonzo/impl
   - eras/alonzo/test-suite
+  - eras/babbage/impl
+  - eras/babbage/test-suite
   - eras/byron/chain/executable-spec
   - eras/byron/crypto
   - eras/byron/crypto/test
@@ -65,14 +72,14 @@ packages:
   - libs/cardano-ledger-core
   - libs/cardano-ledger-pretty
   - libs/cardano-protocol-tpraos
-  - libs/compact-map
   - libs/non-integral
   - libs/set-algebra
   - libs/small-steps
   - libs/small-steps-test
+  - libs/vector-map
 
 - git: https://github.com/input-output-hk/cardano-node
-  commit: 73f9a746362695dc2cb63ba757fbcabb81733d23
+  commit: 82067b797c3f53a9d8adb982622ac58f9d675d24
   subdirs:
   - cardano-api
 
@@ -89,10 +96,10 @@ packages:
   commit: cde90a2b27f79187ca8310b6549331e59595e7ba
 
 - git: https://github.com/input-output-hk/hedgehog-extras
-  commit: edf6945007177a638fbeb8802397f3a6f4e47c14
+  commit: 967d79533c21e33387d0227a5f6cc185203fe658
 
 - git: https://github.com/input-output-hk/iohk-monitoring-framework
-  commit: 808724ff8a19a33d0ed06f9ef59fbd900b08553c
+  commit: eb7854d1337637b8672af1227b276aa33a658f47
   subdirs:
   - contra-tracer
   - iohk-monitoring
@@ -104,10 +111,8 @@ packages:
   - tracer-transformers
 
 - git: https://github.com/input-output-hk/ouroboros-network
-  commit: 4fac197b6f0d2ff60dc3486c593b68dc00969fbf
+  commit: ea202b7b21983140d1944ccfde8750b891b59699
   subdirs:
-  - io-classes
-  - io-sim
   - monoidal-synchronisation
   - network-mux
   - ouroboros-consensus
@@ -123,13 +128,9 @@ packages:
   - ouroboros-network
   - ouroboros-network-framework
   - ouroboros-network-testing
-  - strict-stm
-  - typed-protocols
-  - typed-protocols-cborg
-  - typed-protocols-examples
 
 - git: https://github.com/CardanoSolutions/plutus
-  commit: ce0ab0ae72e0995ba23f29247e97c1beeb466905
+  commit: 5f5de28063920788f2dac9bafae1d42aec63d9b3
   subdirs:
   - plutus-core
   - plutus-core-testlib
@@ -140,8 +141,28 @@ packages:
   - stubs/plutus-ghc-stub
   - word-array
 
+- git: https://github.com/input-output-hk/typed-protocols
+  commit: 91c3fba44d68439df207796171cd6f867354b76b
+  subdirs:
+  - typed-protocols
+  - typed-protocols-cborg
+  - typed-protocols-examples
+
+- git: https://github.com/input-output-hk/io-sim
+  commit: 606de33fa2f467d108fb1efb86daeb3348bf34e3
+  subdirs:
+  - io-classes
+  - io-sim
+  - strict-stm
+
 - git: https://github.com/input-output-hk/Win32-network
   commit: 3825d3abf75f83f406c1f7161883c438dac7277d
+
+- git: https://github.com/input-output-hk/optparse-applicative
+  commit: 7497a29cb998721a9068d5725d49461f2bba0e7a
+
+- git: https://github.com/vshabanov/ekg-json
+  commit: 00ebe7211c981686e65730b7144fbf5350462608
 
 - git: https://github.com/KtorZ/hjsonpointer
   commit: 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e

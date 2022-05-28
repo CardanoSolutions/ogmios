@@ -22,6 +22,17 @@ Ogmios in itself is a rather small project, yet it's using library directly from
 - `libpcre3-dev 2.8.*`
 - `libsystemd-dev`
 - `zlib1g-dev 1.2.*`
+- A custom revision of bitcoin-core's secp256k1, with Schnorr signature support enabled:
+  ```console
+  git clone https://github.com/bitcoin-core/secp256k1.git
+  cd secp256k1
+  git reset --hard ac83be33d0956faf6b7f61a60ab524ef7d6a473a
+  ./autogen.sh
+  ./configure --prefix=/usr --enable-module-schnorrsig --enable-experimental
+  make
+  make check
+  sudo make install
+  ```
 
 ## 🔨 Server
 
