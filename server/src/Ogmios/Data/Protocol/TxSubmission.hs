@@ -44,10 +44,9 @@ module Ogmios.Data.Protocol.TxSubmission
     , EvaluateTxError (..)
     , evaluateExecutionUnits
     , incompatibleEra
-    , eraDiscrepancy
+    , notEnoughSynced
     , _encodeEvaluateTxResponse
     , CanEvaluateScriptsInEra
-    , SomeUTxOInAnyEra (..)
 
       -- ** Re-exports
     , AlonzoEra
@@ -84,7 +83,7 @@ import Cardano.Ledger.Alonzo.Tools
 import Cardano.Ledger.Alonzo.Tx
     ( DataHash )
 import Cardano.Ledger.Alonzo.TxInfo
-    ( ExtendedUTxO )
+    ( ExtendedUTxO, TranslationError (..) )
 import Cardano.Ledger.Alonzo.TxWitness
     ( RdmrPtr (..), Redeemers, TxDats )
 import Cardano.Ledger.Babbage
@@ -109,12 +108,12 @@ import Cardano.Slotting.Time
     ( SystemStart )
 import Control.Monad.Trans.Except
     ( Except )
-import Data.Aeson
-    ( FromJSON (..) )
 import Data.Sequence.Strict
     ( StrictSeq )
 import GHC.Records
     ( HasField (..) )
+import Ogmios.Data.EraTranslation
+    ( MultiEraUTxO )
 import Ouroboros.Consensus.HardFork.History
     ( PastHorizonException )
 import Ouroboros.Consensus.Ledger.SupportsMempool
@@ -157,7 +156,7 @@ data TxSubmissionCodecs block = TxSubmissionCodecs
 mkTxSubmissionCodecs
     :: forall block.
         ( FromJSON (SerializedTx block)
-        , FromJSON (SomeUTxOInAnyEra block)
+        , FromJSON (MultiEraUTxO block)
         )
     => (GenTxId block -> Json)
     -> (SubmitTxError block -> Json)
@@ -165,8 +164,9 @@ mkTxSubmissionCodecs
     -> (ExUnits -> Json)
     -> (ScriptFailure (Crypto block) -> Json)
     -> (TxIn (Crypto block) -> Json)
+    -> (TranslationError -> Json)
     -> TxSubmissionCodecs block
-mkTxSubmissionCodecs encodeTxId encodeSubmitTxError stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn =
+mkTxSubmissionCodecs encodeTxId encodeSubmitTxError stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError =
     TxSubmissionCodecs
         { decodeBackwardCompatibleSubmitTx =
             decodeWith _decodeBackwardCompatibleSubmitTx
@@ -187,6 +187,7 @@ mkTxSubmissionCodecs encodeTxId encodeSubmitTxError stringifyRdmrPtr encodeExUni
                 encodeExUnits
                 encodeScriptFailure
                 encodeTxIn
+                encodeTranslationError
         }
 
 --
@@ -314,47 +315,21 @@ mkSubmitTxResponse tx = \case
 -- EvaluateTx
 --
 
-data SomeUTxOInAnyEra block where
-    SomeUTxOInAlonzoEra
-        :: UTxO (AlonzoEra (Crypto block))
-        -> SomeUTxOInAnyEra block
-
-    SomeUTxOInBabbageEra
-        :: UTxO (BabbageEra (Crypto block))
-        -> SomeUTxOInAnyEra block
-
-    deriving (Generic)
-
-deriving instance
-    ( Show (UTxO (AlonzoEra (Crypto block)))
-    , Show (UTxO (BabbageEra (Crypto block)))
-    ) => Show (SomeUTxOInAnyEra block)
-
-instance
-    ( FromJSON (UTxO (AlonzoEra (Crypto block)))
-    , FromJSON (UTxO (BabbageEra (Crypto block)))
-    ) => FromJSON (SomeUTxOInAnyEra block)
-  where
-    parseJSON val =
-        (SomeUTxOInAlonzoEra <$> parseJSON val)
-        <|>
-        (SomeUTxOInBabbageEra <$> parseJSON val)
-
 data EvaluateTx block
     = EvaluateTx
         { evaluate :: SerializedTx block
-        , additionalUtxoSet :: SomeUTxOInAnyEra block
+        , additionalUtxoSet :: MultiEraUTxO block
         }
     deriving (Generic)
 deriving instance
     ( Show (SerializedTx block)
-    , Show (SomeUTxOInAnyEra block)
+    , Show (MultiEraUTxO block)
     ) => Show (EvaluateTx block)
 
 _decodeEvaluateTx
     :: forall block.
         ( FromJSON (SerializedTx block)
-        , FromJSON (SomeUTxOInAnyEra block)
+        , FromJSON (MultiEraUTxO block)
         )
     => Json.Value
     -> Json.Parser (Wsp.Request (EvaluateTx block))
@@ -378,17 +353,29 @@ data EvaluateTxError block
     | EvaluateTxIncompatibleEra Text
     | EvaluateTxUncomputableSlotArithmetic PastHorizonException
     | EvaluateTxAdditionalUtxoOverlap (Set (TxIn (Crypto block)))
-    -- TODO: Make more informative
-    | EvaluateTxEraDiscrepancy
+    | EvaluateTxNotEnoughSynced NotEnoughSyncedError
+    | EvaluateTxCannotCreateEvaluationContext TranslationError
+    deriving (Show)
+
+data NotEnoughSyncedError = NotEnoughSynced
+    { currentNodeEra :: Text
+    , minimumRequiredEra :: Text
+    }
     deriving (Show)
 
 -- | Shorthand constructor for 'EvaluateTxResponse'
 incompatibleEra :: Text -> EvaluateTxResponse block
-incompatibleEra = EvaluationFailure . EvaluateTxIncompatibleEra
+incompatibleEra =
+    EvaluationFailure . EvaluateTxIncompatibleEra
 
 -- | Shorthand constructor for 'EvaluateTxResponse'
-eraDiscrepancy :: EvaluateTxResponse block
-eraDiscrepancy = EvaluationFailure EvaluateTxEraDiscrepancy
+notEnoughSynced :: Text -> EvaluateTxResponse block
+notEnoughSynced currentNodeEra =
+    EvaluationFailure (EvaluateTxNotEnoughSynced $
+        NotEnoughSynced { currentNodeEra, minimumRequiredEra }
+    )
+  where
+    minimumRequiredEra = "Alonzo"
 
 _encodeEvaluateTxResponse
     :: forall block. ()
@@ -397,9 +384,10 @@ _encodeEvaluateTxResponse
     -> (ExUnits -> Json)
     -> (ScriptFailure (Crypto block) -> Json)
     -> (TxIn (Crypto block) -> Json)
+    -> (TranslationError -> Json)
     -> Wsp.Response (EvaluateTxResponse block)
     -> Json
-_encodeEvaluateTxResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn =
+_encodeEvaluateTxResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError =
     Wsp.mkResponse Wsp.defaultOptions proxy $ \case
         EvaluationResult result -> encodeObject
             [ ( "EvaluationResult"
@@ -451,6 +439,28 @@ _encodeEvaluateTxResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFail
                 ]
               )
             ]
+        EvaluationFailure (EvaluateTxNotEnoughSynced err) -> encodeObject
+            [ ( "EvaluationFailure"
+              , encodeObject
+                [ ( "NotEnoughSynced"
+                  , encodeObject
+                    [ ( "currentNodeEra", encodeText (currentNodeEra err) )
+                    , ( "minimumRequiredEra", encodeText (minimumRequiredEra err) )
+                    ]
+                  )
+                ]
+              )
+            ]
+        EvaluationFailure (EvaluateTxCannotCreateEvaluationContext err) -> encodeObject
+            [ ( "EvaluationFailure"
+              , encodeObject
+                [ ( "CannotCreateEvaluationContext"
+                  , encodeObject
+                    [ ( "reason" , encodeTranslationError err) ]
+                  )
+                ]
+              )
+            ]
   where
     proxy = Proxy @(Wsp.Request (EvaluateTx block))
 
@@ -496,7 +506,7 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
     Right (Left (UnknownTxIns inputs)) ->
         EvaluationFailure (EvaluateTxUnknownInputs inputs)
     Right (Left (BadTranslation err)) ->
-        undefined
+        EvaluationFailure (EvaluateTxCannotCreateEvaluationContext err)
     Right (Right reports) ->
         let (failures, successes) =
                 Map.foldrWithKey aggregateReports (mempty, mempty)  reports

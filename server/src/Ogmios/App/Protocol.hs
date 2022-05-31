@@ -15,6 +15,8 @@ import Cardano.Network.Protocol.NodeToClient
     ( SerializedTx )
 import GHC.Generics
     ( Rep )
+import Ogmios.Data.EraTranslation
+    ( MultiEraUTxO )
 import Ogmios.Data.Json
     ( FromJSON, Json )
 import Ogmios.Data.Protocol
@@ -37,12 +39,7 @@ import Ogmios.Data.Protocol.TxMonitor
     , _decodeSizeAndCapacity
     )
 import Ogmios.Data.Protocol.TxSubmission
-    ( EvaluateTx
-    , SomeUTxOInAnyEra
-    , SubmitTx
-    , _decodeEvaluateTx
-    , _decodeSubmitTx
-    )
+    ( EvaluateTx, SubmitTx, _decodeEvaluateTx, _decodeSubmitTx )
 import Ouroboros.Network.Block
     ( Point (..) )
 
@@ -84,7 +81,7 @@ onUnmatchedMessage
         , FromJSON (Query Proxy block)
         , FromJSON (Point block)
         , FromJSON (GenTxId block)
-        , FromJSON (SomeUTxOInAnyEra block)
+        , FromJSON (MultiEraUTxO block)
         )
     => ByteString
     -> Json

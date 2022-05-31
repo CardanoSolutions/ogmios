@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -47,8 +48,25 @@ module Ogmios.Data.Json.Query
     , encodeRewardProvenance
 
       -- * Decoders
+    , decodeAddress
+    , decodeAssetId
+    , decodeAssetName
+    , decodeAssets
+    , decodeCoin
+    , decodeCredential
+    , decodeDatumHash
+    , decodeHash
+    , decodeOneEraHash
+    , decodePoint
+    , decodePolicyId
+    , decodePoolId
+    , decodeSerializedTx
+    , decodeTip
+    , decodeTxId
     , decodeTxIn
     , decodeTxOut
+    , decodeUtxo
+    , decodeValue
 
       -- * Parsers
     , parseGetBlockHeight
@@ -78,26 +96,38 @@ import Ogmios.Data.Json.Prelude
 
 import Cardano.Api
     ( ShelleyBasedEra (..) )
+import Cardano.Binary
+    ( DecoderError, FromCBOR (..), decodeFull )
 import Cardano.Crypto.Hash
     ( pattern UnsafeHash, hashFromBytes, hashFromTextAsHex )
+import Cardano.Crypto.Hash.Class
+    ( Hash, HashAlgorithm )
 import Cardano.Ledger.Crypto
     ( Crypto, HASH )
 import Cardano.Ledger.Keys
     ( KeyRole (..) )
 import Cardano.Ledger.SafeHash
     ( unsafeMakeSafeHash )
+import Cardano.Network.Protocol.NodeToClient
+    ( GenTx, GenTxId, SerializedTx )
+import Cardano.Slotting.Block
+    ( BlockNo (..) )
 import Cardano.Slotting.Slot
-    ( EpochNo (..), WithOrigin (..) )
+    ( EpochNo (..), SlotNo (..), WithOrigin (..) )
 import Codec.Serialise
     ( deserialise, serialise )
 import Data.Aeson
     ( toJSON )
 import Data.SOP.Strict
     ( NS (..) )
+import Formatting.Buildable
+    ( build )
+import Ogmios.Data.EraTranslation
+    ( MostRecentEra, MultiEraTxOut (..), MultiEraUTxO (..) )
 import Ouroboros.Consensus.BlockchainTime
     ( SystemStart (..) )
 import Ouroboros.Consensus.Cardano.Block
-    ( BlockQuery (..), CardanoBlock, CardanoEras )
+    ( BlockQuery (..), CardanoBlock, CardanoEras, GenTx (..), TxId (..) )
 import Ouroboros.Consensus.HardFork.Combinator
     ( EraIndex (..), MismatchEraInfo, OneEraHash (..) )
 import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
@@ -110,39 +140,56 @@ import Ouroboros.Consensus.HardFork.History.Qry
     ( Interpreter )
 import Ouroboros.Consensus.HardFork.History.Summary
     ( Bound (..), EraEnd (..), EraSummary (..), Summary (..) )
-import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos )
+import Ouroboros.Consensus.Protocol.Praos
+    ( Praos, PraosCrypto )
 import Ouroboros.Consensus.Shelley.Eras
-    ( AllegraEra, AlonzoEra, MaryEra, ShelleyEra )
+    ( AllegraEra, AlonzoEra, BabbageEra, MaryEra, ShelleyEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..), ShelleyHash (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CompactGenesis, getCompactGenesis )
+import Ouroboros.Consensus.Shelley.Ledger.Mempool
+    ( TxId (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( BlockQuery (..), NonMyopicMemberRewards (..) )
+import Ouroboros.Consensus.Shelley.Protocol.Abstract
+    ( ProtoCrypto )
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
 import Ouroboros.Network.Block
-    ( BlockNo, pattern BlockPoint, pattern GenesisPoint, Point (..) )
+    ( pattern BlockPoint
+    , pattern GenesisPoint
+    , Point (..)
+    , Tip (..)
+    , genesisPoint
+    , wrapCBORinCBOR
+    )
 import Ouroboros.Network.Point
     ( Block (..) )
 
 import qualified Codec.Binary.Bech32 as Bech32
+import qualified Codec.CBOR.Encoding as Cbor
+import qualified Codec.CBOR.Write as Cbor
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Key as Json
 import qualified Data.Aeson.KeyMap as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.Map.Merge.Strict as Map
+import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.Builder as TL
 
 import qualified Ouroboros.Consensus.HardFork.Combinator.Ledger.Query as LSQ
 import qualified Ouroboros.Consensus.Ledger.Query as LSQ
 
-import qualified Cardano.Crypto.Hash.Class as CC
+import qualified Cardano.Crypto.Hashing as CC
+import qualified Cardano.Protocol.TPraos.API as TPraos
 
 import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Alonzo.Data as Ledger.Alonzo
 import qualified Cardano.Ledger.Alonzo.TxBody as Ledger.Alonzo
+import qualified Cardano.Ledger.Babbage.TxBody as Ledger.Babbage
 import qualified Cardano.Ledger.BaseTypes as Ledger
 import qualified Cardano.Ledger.Coin as Ledger
 import qualified Cardano.Ledger.Core as Ledger
@@ -151,6 +198,7 @@ import qualified Cardano.Ledger.Hashes as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
 import qualified Cardano.Ledger.Mary.Value as Ledger.Mary
 import qualified Cardano.Ledger.PoolDistr as Ledger
+import qualified Cardano.Ledger.SafeHash as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
 
 import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
@@ -161,6 +209,7 @@ import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
+import qualified Ogmios.Data.Json.Babbage as Babbage
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
@@ -240,6 +289,7 @@ instance ToJSON SomeShelleyEra where
         SomeShelleyEra ShelleyBasedEraAllegra -> toJSON @Text "Allegra"
         SomeShelleyEra ShelleyBasedEraMary -> toJSON @Text "Mary"
         SomeShelleyEra ShelleyBasedEraAlonzo -> toJSON @Text "Alonzo"
+        SomeShelleyEra ShelleyBasedEraBabbage -> toJSON @Text "Babbage"
 
 -- | Convert an 'EraIndex' to a Shelley-based era.
 fromEraIndex
@@ -247,11 +297,12 @@ fromEraIndex
     => EraIndex (CardanoEras crypto)
     -> Maybe SomeShelleyEra
 fromEraIndex = \case
-    EraIndex             Z{}     -> Nothing
-    EraIndex          (S Z{})    -> Just (SomeShelleyEra ShelleyBasedEraShelley)
-    EraIndex       (S (S Z{}))   -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
-    EraIndex    (S (S (S Z{})))  -> Just (SomeShelleyEra ShelleyBasedEraMary)
-    EraIndex (S (S (S (S Z{})))) -> Just (SomeShelleyEra ShelleyBasedEraAlonzo)
+    EraIndex                Z{}      -> Nothing
+    EraIndex             (S Z{})     -> Just (SomeShelleyEra ShelleyBasedEraShelley)
+    EraIndex          (S (S Z{}))    -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
+    EraIndex       (S (S (S Z{})))   -> Just (SomeShelleyEra ShelleyBasedEraMary)
+    EraIndex    (S (S (S (S Z{}))))  -> Just (SomeShelleyEra ShelleyBasedEraAlonzo)
+    EraIndex (S (S (S (S (S Z{}))))) -> Just (SomeShelleyEra ShelleyBasedEraBabbage)
 
 --
 -- Encoders
@@ -628,11 +679,13 @@ parseGetEraStart genResult =
                     LSQ.BlockQuery $ QueryAnytimeMary GetEraStart
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     LSQ.BlockQuery $ QueryAnytimeAlonzo GetEraStart
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    LSQ.BlockQuery $ QueryAnytimeBabbage GetEraStart
             )
 
 parseGetLedgerTip
     :: forall crypto f. (Crypto crypto)
-    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Point (ShelleyBlock (TPraos crypto) era)))
+    => (forall era proto. Typeable era => Proxy era -> GenResult crypto f (Point (ShelleyBlock (proto crypto) era)))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseGetLedgerTip genResultInEra =
@@ -674,6 +727,15 @@ parseGetLedgerTip genResultInEra =
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
+            SomeShelleyEra ShelleyBasedEraBabbage ->
+                Just $ SomeQuery
+                { query =
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetLedgerTip
+                , encodeResult =
+                    const (either encodeMismatchEraInfo (encodePoint . castPoint @(Praos crypto)))
+                , genResult =
+                    genResultInEra (Proxy @(BabbageEra crypto))
+                }
 
 parseGetEpochNo
     :: forall crypto f. ()
@@ -700,6 +762,8 @@ parseGetEpochNo genResult =
                     LSQ.BlockQuery $ QueryIfCurrentMary GetEpochNo
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetEpochNo
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetEpochNo
             )
 
 parseGetNonMyopicMemberRewards
@@ -728,6 +792,8 @@ parseGetNonMyopicMemberRewards genResult =
                     LSQ.BlockQuery $ QueryIfCurrentMary (GetNonMyopicMemberRewards credentials)
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetNonMyopicMemberRewards credentials)
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage (GetNonMyopicMemberRewards credentials)
             )
   where
     decodeCredentials
@@ -767,6 +833,8 @@ parseGetFilteredDelegationsAndRewards genResult =
                     LSQ.BlockQuery $ QueryIfCurrentMary (GetFilteredDelegationsAndRewardAccounts credentials)
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetFilteredDelegationsAndRewardAccounts credentials)
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage (GetFilteredDelegationsAndRewardAccounts credentials)
             )
   where
     decodeCredentials
@@ -819,6 +887,16 @@ parseGetCurrentPParams genResultInEra =
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
+            SomeShelleyEra ShelleyBasedEraBabbage ->
+                Just $ SomeQuery
+                { query =
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetCurrentPParams
+                , encodeResult =
+                    const (either encodeMismatchEraInfo (Babbage.encodePParams' id))
+                , genResult =
+                    genResultInEra (Proxy @(BabbageEra crypto))
+                }
+
 
 parseGetProposedPParamsUpdates
     :: forall crypto f. (Crypto crypto)
@@ -864,6 +942,16 @@ parseGetProposedPParamsUpdates genResultInEra =
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
+            SomeShelleyEra ShelleyBasedEraBabbage ->
+                Just $ SomeQuery
+                { query =
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetProposedPParamsUpdates
+                , encodeResult =
+                    const (either encodeMismatchEraInfo Babbage.encodeProposedPPUpdates)
+                , genResult =
+                    genResultInEra (Proxy @(BabbageEra crypto))
+                }
+
 
 parseGetStakeDistribution
     :: forall crypto f. (Crypto crypto)
@@ -890,6 +978,8 @@ parseGetStakeDistribution genResult =
                     LSQ.BlockQuery $ QueryIfCurrentMary GetStakeDistribution
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetStakeDistribution
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetStakeDistribution
             )
 
 parseGetSystemStart
@@ -950,6 +1040,15 @@ parseGetUTxO genResultInEra =
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
+            SomeShelleyEra ShelleyBasedEraBabbage ->
+                Just $ SomeQuery
+                { query =
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetUTxOWhole
+                , encodeResult =
+                    either encodeMismatchEraInfo . Babbage.encodeUtxoWithMode
+                , genResult =
+                    genResultInEra (Proxy @(BabbageEra crypto))
+                }
 
 parseGetUTxOByAddress
     :: forall crypto f. (Crypto crypto)
@@ -994,6 +1093,15 @@ parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
                 either encodeMismatchEraInfo . Alonzo.encodeUtxoWithMode
             , genResult =
                 genResultInEra (Proxy @(AlonzoEra crypto))
+            }
+        SomeShelleyEra ShelleyBasedEraBabbage ->
+            Just $ SomeQuery
+            { query =
+                LSQ.BlockQuery $ QueryIfCurrentBabbage (GetUTxOByAddress addrs)
+            , encodeResult =
+                either encodeMismatchEraInfo . Babbage.encodeUtxoWithMode
+            , genResult =
+                genResultInEra (Proxy @(BabbageEra crypto))
             }
   where
     decodeAddresses
@@ -1045,6 +1153,15 @@ parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
                 either encodeMismatchEraInfo . Alonzo.encodeUtxoWithMode
             , genResult =
                 genResultInEra (Proxy @(AlonzoEra crypto))
+            }
+        SomeShelleyEra ShelleyBasedEraBabbage ->
+            Just $ SomeQuery
+            { query =
+                LSQ.BlockQuery $ QueryIfCurrentBabbage (GetUTxOByTxIn ins)
+            , encodeResult =
+                either encodeMismatchEraInfo . Babbage.encodeUtxoWithMode
+            , genResult =
+                genResultInEra (Proxy @(BabbageEra crypto))
             }
   where
     decodeTxIns
@@ -1112,6 +1229,18 @@ parseGetGenesisConfig genResultInEra = do
                 , genResult =
                     genResultInEra (Proxy @(AlonzoEra crypto))
                 }
+            SomeShelleyEra ShelleyBasedEraBabbage ->
+                Just $ SomeQuery
+                { query =
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetGenesisConfig
+                , encodeResult =
+                    let encodeGenesis =
+                            Shelley.encodeGenesis . getCompactGenesis
+                     in const (either encodeMismatchEraInfo encodeGenesis)
+                , genResult =
+                    genResultInEra (Proxy @(BabbageEra crypto))
+                }
+
 
 parseGetRewardProvenance
     :: forall crypto f. (Crypto crypto)
@@ -1138,6 +1267,8 @@ parseGetRewardProvenance genResult =
                     LSQ.BlockQuery $ QueryIfCurrentMary GetRewardProvenance
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetRewardProvenance
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetRewardProvenance
             )
 
 parseGetRewardInfoPools
@@ -1165,6 +1296,8 @@ parseGetRewardInfoPools genResult =
                     LSQ.BlockQuery $ QueryIfCurrentMary GetRewardInfoPools
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetRewardInfoPools
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetRewardInfoPools
             )
 
 parseGetPoolIds
@@ -1192,6 +1325,8 @@ parseGetPoolIds genResult =
                     LSQ.BlockQuery $ QueryIfCurrentMary GetStakePools
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetStakePools
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetStakePools
             )
 
 parseGetPoolParameters
@@ -1220,6 +1355,8 @@ parseGetPoolParameters genResult =
                     LSQ.BlockQuery $ QueryIfCurrentMary (GetStakePoolParams ids)
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetStakePoolParams ids)
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage (GetStakePoolParams ids)
             )
   where
     decodePoolIds
@@ -1253,6 +1390,8 @@ parseGetPoolsRanking genResult =
                     LSQ.BlockQuery $ QueryIfCurrentMary GetRewardProvenance
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetRewardProvenance
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetRewardProvenance
             )
 
 parseGetInterpreter
@@ -1359,11 +1498,32 @@ decodeDatumHash =
     fmap unsafeMakeSafeHash . decodeHash
 
 decodeHash
-    :: CC.HashAlgorithm alg
+    :: HashAlgorithm alg
     => Json.Value
-    -> Json.Parser (CC.Hash alg a)
+    -> Json.Parser (Hash alg a)
 decodeHash =
-    Json.parseJSON >=> maybe empty pure . CC.hashFromTextAsHex
+    Json.parseJSON >=> maybe empty pure . hashFromTextAsHex
+
+decodeOneEraHash
+    :: Text
+    -> Json.Parser (OneEraHash (CardanoEras crypto))
+decodeOneEraHash =
+    either (const mempty) (pure . OneEraHash . toShort . CC.hashToBytes) . CC.decodeHash
+
+decodePoint
+    :: Json.Value
+    -> Json.Parser (Point (CardanoBlock crypto))
+decodePoint json =
+    parseOrigin json <|> parsePoint json
+  where
+    parseOrigin = Json.withText "Point" $ \case
+        txt | txt == "origin" -> pure genesisPoint
+        _ -> empty
+
+    parsePoint = Json.withObject "Point" $ \obj -> do
+        slot <- obj .: "slot"
+        hash <- obj .: "hash" >>= decodeOneEraHash
+        pure $ Point $ At $ Block (SlotNo slot) hash
 
 decodePolicyId
     :: Crypto crypto
@@ -1373,7 +1533,7 @@ decodePolicyId =
     maybe
         invalidPolicyId
         (pure . Ledger.Mary.PolicyID . Ledger.ScriptHash)
-    . CC.hashFromTextAsHex
+    . hashFromTextAsHex
   where
     invalidPolicyId = fail "failed to decode policy id for a given asset."
 
@@ -1399,6 +1559,103 @@ decodePoolId = Json.withText "PoolId" $ choice "poolId"
     fromBase16 =
         decodeBase16 . encodeUtf8
 
+decodeSerializedTx
+    :: forall crypto.
+        ( PraosCrypto crypto
+        , TPraos.PraosCrypto crypto
+        )
+    => Json.Value
+    -> Json.Parser (SerializedTx (CardanoBlock crypto))
+decodeSerializedTx = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
+    bytes <- decodeBase16 utf8 <|> decodeBase64 utf8 <|> invalidEncodingError
+    -- NOTE: Avoiding 'asum' here because it generates poor errors on failures
+    deserialiseCBOR @(MostRecentEra (CardanoBlock crypto) ~ BabbageEra crypto) GenTxBabbage (fromStrict bytes)
+        <|> deserialiseCBOR @(MostRecentEra (CardanoBlock crypto) ~ BabbageEra crypto) GenTxBabbage (wrap bytes)
+        <|> deserialiseCBOR @() GenTxAlonzo (fromStrict bytes)
+        <|> deserialiseCBOR @() GenTxAlonzo (wrap bytes)
+        <|> deserialiseCBOR @() GenTxMary (fromStrict bytes)
+        <|> deserialiseCBOR @() GenTxMary (wrap bytes)
+  where
+    invalidEncodingError :: Json.Parser a
+    invalidEncodingError =
+        fail "failed to decode payload from base64 or base16."
+
+    -- Cardano tools have a tendency to wrap cbor in cbor (e.g cardano-cli).
+    -- In particular, a `GenTx` is expected to be prefixed with a cbor tag
+    -- `24` and serialized as CBOR bytes `58xx`.
+    wrap :: ByteString -> LByteString
+    wrap = Cbor.toLazyByteString . wrapCBORinCBOR Cbor.encodePreEncoded
+
+    deserialiseCBOR
+        :: forall constraint era.
+            ( FromCBOR (GenTx era)
+            , constraint
+            )
+        => (GenTx era -> GenTx (CardanoBlock crypto))
+        -> LByteString
+        -> Json.Parser (GenTx (CardanoBlock crypto))
+    deserialiseCBOR mk =
+        either (fail . prettyDecoderError @era) (pure . mk)
+        .
+        decodeFull
+      where
+        -- We use this extra constraint when decoding transactions to generate a
+        -- compiler warning in case a new era becomes available, to not forget to update
+        -- this bit of code. The constraint is purely artificial but will generate a
+        -- compilation error which will catch our attention.
+        --
+        -- Generally speaking, we still want to deserialise previous eras, but we want
+        -- to make sure to have support for the latest as well. In case a more recent is
+        -- available, this will generate a compiler error looking like:
+        --
+        --    • Couldn't match type ‘BabbageEra crypto’ with ‘AlonzoEra crypto’ arising from a use of ‘deserialiseCBOR’
+        _compilerWarning = keepRedundantConstraint (Proxy @constraint)
+
+    prettyDecoderError
+        :: forall era.
+            ( FromCBOR (GenTx era)
+            )
+        => DecoderError
+        -> String
+    prettyDecoderError =
+        toString
+            . TL.replace
+                (toLazy $ label (Proxy @(GenTx era)))
+                "serialised transaction"
+            . TL.replace
+                "\n"
+                " "
+            . TL.toLazyText
+            . build
+
+decodeTip
+    :: Json.Value
+    -> Json.Parser (Tip (CardanoBlock crypto))
+decodeTip json =
+    parseOrigin json <|> parseTip json
+  where
+    parseOrigin = Json.withText "Tip" $ \case
+        txt | txt == "origin" -> pure TipGenesis
+        _ -> empty
+
+    parseTip = Json.withObject "Tip" $ \obj -> do
+        slot <- obj .: "slot"
+        hash <- obj .: "hash" >>= decodeOneEraHash
+        blockNo <- obj .: "blockNo"
+        pure $ Tip (SlotNo slot) hash (BlockNo blockNo)
+
+decodeTxId
+    :: forall crypto. Crypto crypto
+    => Json.Value
+    -> Json.Parser (GenTxId (CardanoBlock crypto))
+decodeTxId = Json.withText "TxId" $ \(encodeUtf8 -> utf8) -> do
+    bytes <- decodeBase16 utf8
+    case hashFromBytes bytes of
+        Nothing ->
+            fail "couldn't interpret bytes as blake2b-256 digest."
+        Just h ->
+            pure $ GenTxIdAlonzo $ ShelleyTxId $ Ledger.TxId (Ledger.unsafeMakeSafeHash h)
+
 decodeTxIn
     :: forall crypto. (Crypto crypto)
     => Json.Value
@@ -1414,12 +1671,53 @@ decodeTxIn = Json.withObject "TxIn" $ \o -> do
 decodeTxOut
     :: forall crypto. (Crypto crypto)
     => Json.Value
-    -> Json.Parser (Ledger.TxOut (AlonzoEra crypto))
+    -> Json.Parser (MultiEraTxOut (CardanoBlock crypto))
 decodeTxOut = Json.withObject "TxOut" $ \o -> do
     address <- o .: "address" >>= decodeAddress
     value <- o .: "value" >>= decodeValue
     datum <- o .:? "datum" >>= maybe (pure SNothing) (fmap SJust . decodeDatumHash)
-    pure (Ledger.Alonzo.TxOut address value datum)
+    -- FIXME: Allow decoding TxOut in Babbage era
+    pure $ TxOutInAlonzoEra $ Ledger.Alonzo.TxOut address value datum
+
+decodeUtxo
+    :: forall crypto block. (Crypto crypto, block ~ CardanoBlock crypto)
+    => Json.Value
+    -> Json.Parser (MultiEraUTxO block)
+decodeUtxo v = do
+    xs <- Json.parseJSONList v
+    (UTxOInAlonzoEra . Sh.UTxO . Map.fromList <$> traverse decodeAlonzoUtxoEntry xs) <|>
+        (UTxOInBabbageEra . Sh.UTxO . Map.fromList <$> traverse decodeBabbageUtxoEntry xs)
+  where
+    hint :: String
+    hint =
+        "Failed to decode utxo entry. Expected an array of length \
+        \2 as [output-reference, output]"
+
+    decodeAlonzoUtxoEntry
+        :: Json.Value
+        -> Json.Parser (Ledger.TxIn crypto, Ledger.Alonzo.TxOut (AlonzoEra crypto))
+    decodeAlonzoUtxoEntry =
+        Json.parseJSONList >=> \case
+            [i, o] ->
+                (,) <$> decodeTxIn i <*> (decodeTxOut o >>= \case
+                    TxOutInAlonzoEra o' -> pure o'
+                    TxOutInBabbageEra{} -> empty
+                )
+            _ ->
+                fail hint
+
+    decodeBabbageUtxoEntry
+        :: Json.Value
+        -> Json.Parser (Ledger.TxIn crypto, Ledger.Babbage.TxOut (BabbageEra crypto))
+    decodeBabbageUtxoEntry =
+        Json.parseJSONList >=> \case
+            [i, o] ->
+                (,) <$> decodeTxIn i <*> (decodeTxOut o >>= \case
+                    TxOutInAlonzoEra{}   -> empty
+                    TxOutInBabbageEra o' -> pure o'
+                )
+            _ ->
+                fail hint
 
 decodeValue
     :: forall crypto. (Crypto crypto)
@@ -1439,9 +1737,9 @@ decodeValue = Json.withObject "Value" $ \o -> do
 -- Ouroboros.Network.Block anymore! May revisit in future upgrade of the
 -- dependencies.
 castPoint
-    :: forall era crypto. (Crypto crypto)
-    => Point (ShelleyBlock (TPraos crypto) era)
-    -> Point (CardanoBlock crypto)
+    :: forall proto era. (Crypto (ProtoCrypto proto))
+    => Point (ShelleyBlock proto era)
+    -> Point (CardanoBlock (ProtoCrypto proto))
 castPoint = \case
     GenesisPoint -> GenesisPoint
     BlockPoint slot h -> BlockPoint slot (cast h)

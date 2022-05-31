@@ -90,6 +90,7 @@ import Ogmios.Data.Json
     , encodeScriptFailure
     , encodeSubmitTxError
     , encodeTip
+    , encodeTranslationError
     , encodeTx
     , encodeTxId
     , encodeTxIn
@@ -356,6 +357,7 @@ withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator conn action = 
             encodeExUnits
             encodeScriptFailure
             encodeTxIn
+            encodeTranslationError
 
 --
 -- Logging

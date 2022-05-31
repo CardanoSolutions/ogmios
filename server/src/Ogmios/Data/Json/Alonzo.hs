@@ -10,8 +10,6 @@ import Ogmios.Data.Json.Prelude
 
 import Cardano.Binary
     ( serialize' )
-import Cardano.Ledger.Alonzo.TxInfo
-    ( exBudgetToExUnits )
 import Cardano.Ledger.Crypto
     ( Crypto )
 import Codec.Serialise
@@ -59,6 +57,8 @@ import qualified Cardano.Ledger.Alonzo.Rules.Utxow as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.Tx as Al
 import qualified Cardano.Ledger.Alonzo.TxBody as Al
+import qualified Cardano.Ledger.Alonzo.TxInfo as Al hiding
+    ( txscripts )
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 import qualified Cardano.Ledger.Alonzo.TxWitness as Al
 
@@ -167,6 +167,8 @@ encodeCollectError = \case
         encodeObject [ ( "noWitness", Shelley.encodeScriptHash hash ) ]
     Al.NoCostModel lang ->
         encodeObject [ ( "noCostModel", encodeLanguage lang ) ]
+    Al.BadTranslation err ->
+        encodeObject [ ( "badTranslation", encodeTranslationError err ) ]
 
 encodeCostModel
     :: Al.CostModel
@@ -772,7 +774,7 @@ encodeScriptFailure = \case
     Al.Tools.IncompatibleBudget budget ->
         encodeObject
             [ ( "illFormedExecutionBudget"
-              , encodeMaybe encodeExUnits (exBudgetToExUnits budget)
+              , encodeMaybe encodeExUnits (Al.exBudgetToExUnits budget)
               )
             ]
     Al.Tools.NoCostModel lang ->
@@ -781,6 +783,40 @@ encodeScriptFailure = \case
               , encodeLanguage lang
               )
             ]
+    Al.Tools.CorruptCostModel lang ->
+        encodeObject
+            [ ( "corruptCostModelForLanguage"
+              , encodeLanguage lang
+              )
+            ]
+
+encodeTranslationError
+    :: Al.TranslationError
+    -> Json
+encodeTranslationError err = encodeText $ case err of
+    Al.ByronInputInContext ->
+       "Found inputs locked by a (legacy) Byron/Bootstrap address. Don't use those."
+    Al.ByronOutputInContext ->
+       "Found outputs to a (legacy) Byron/Bootstrap address. Don't use those."
+    Al.TranslationLogicErrorInput ->
+       "Found unknown inputs. Perhaps, provide extra inputs via 'additionalUtxoSet'."
+    Al.TranslationLogicErrorRedeemer ->
+       "Couldn't resolve redeemer pointer. Verify your transaction construction."
+    Al.TranslationLogicErrorDoubleDatum ->
+       "Couldn't resolve datum for output. Should never happen, this is not your fault."
+    Al.LanguageNotSupported ->
+       "Unsupported language in era. Did you try to use PlutusV2 while still in Alonzo?"
+    Al.InlineDatumsNotSupported ->
+       "Inline datums not supported in PlutusV1. Use PlutusV2."
+    Al.ReferenceScriptsNotSupported ->
+       "Reference scripts not supported in PlutusV1. Use PlutusV2."
+    Al.ReferenceInputsNotSupported ->
+       "Reference inputs not supported in PlutusV1. Use PlutusV2."
+    -- FIXME: Present in more recent versions or cardano-ledger,
+    -- which will likely be included after the first release candidate.
+    --
+    -- TimeTranslationPastHorizon ->
+    --    "Validity interval is past (safe) foreseeable horizon. Use smaller validity upper-bound or wait for hard-fork to happen."
 
 encodeWitnessSet
     :: Crypto crypto

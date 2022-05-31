@@ -20,6 +20,8 @@ import Cardano.Network.Protocol.NodeToClient
     ( GenTx, GenTxId )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient, encodeTraceClient )
+import Ogmios.Data.EraTranslation
+    ( MultiEraUTxO (..) )
 import Ogmios.Data.Json
     ( decodePoint
     , decodeSerializedTx
@@ -89,11 +91,8 @@ instance
 instance PraosCrypto crypto => FromJSON (GenTxId (CardanoBlock crypto)) where
     parseJSON = decodeTxId
 
-instance Crypto crypto => FromJSON (UTxO (AlonzoEra crypto)) where
+instance Crypto crypto => FromJSON (MultiEraUTxO (CardanoBlock crypto)) where
     parseJSON = decodeUtxo
-
-instance Crypto crypto => FromJSON (UTxO (BabbageEra crypto)) where
-    parseJSON = undefined
 
 instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
     parseJSON = decodePoint
@@ -106,3 +105,4 @@ instance Crypto crypto => FromJSON (Tip (CardanoBlock crypto)) where
 --
 
 deriving newtype instance Monoid (UTxO (AlonzoEra crypto))
+deriving newtype instance Monoid (UTxO (BabbageEra crypto))

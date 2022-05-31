@@ -48,7 +48,7 @@ import GHC.Records
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TQueue, newEmptyTMVar, putTMVar, readTQueue, takeTMVar )
 import Ogmios.Data.EraTranslation
-    ( translateTx, translateUTxO )
+    ( MultiEraUTxO (..), translateTx, translateUTxO )
 import Ogmios.Data.Json
     ( Json )
 import Ogmios.Data.Protocol.TxSubmission
@@ -64,7 +64,6 @@ import Ogmios.Data.Protocol.TxSubmission
     , PParams
     , PastHorizonException
     , SerializedTx
-    , SomeUTxOInAnyEra (..)
     , SubmitTx (..)
     , SubmitTxError
     , SystemStart
@@ -73,10 +72,10 @@ import Ogmios.Data.Protocol.TxSubmission
     , TxSubmissionCodecs (..)
     , TxSubmissionMessage (..)
     , UTxO (..)
-    , eraDiscrepancy
     , evaluateExecutionUnits
     , incompatibleEra
     , mkSubmitTxResponse
+    , notEnoughSynced
     )
 import Ouroboros.Consensus.Cardano.Block
     ( BlockQuery (..)
@@ -157,7 +156,7 @@ mkTxSubmissionClient TxSubmissionCodecs{..} ExecutionUnitsEvaluator{..} queue yi
 -- | A thin abstraction for evaluating transaction units.
 data ExecutionUnitsEvaluator m block = ExecutionUnitsEvaluator
     { evaluateExecutionUnitsM
-        :: (SomeUTxOInAnyEra block, GenTx block)
+        :: (MultiEraUTxO block, GenTx block)
         -> m (EvaluateTxResponse block)
     }
 
@@ -195,14 +194,18 @@ newExecutionUnitsEvaluator = do
                     return (incompatibleEra "Allegra")
                 (_, GenTxMary{}) ->
                     return (incompatibleEra "Mary")
-                (SomeUTxOInAlonzoEra utxo, GenTxAlonzo (ShelleyTx _id tx)) -> do
+                (UTxOInAlonzoEra utxo, GenTxAlonzo (ShelleyTx _id tx)) -> do
                     atomically $ putTMVar evaluateExecutionUnitsRequest $ SomeEvaluationInAnyEra utxo tx
                     atomically $ takeTMVar evaluateExecutionUnitsResponse
-                (SomeUTxOInBabbageEra utxo, GenTxBabbage (ShelleyTx _id tx)) -> do
+                (UTxOInAlonzoEra utxo, GenTxBabbage (ShelleyTx _id tx)) -> do
+                    atomically $ putTMVar evaluateExecutionUnitsRequest $ SomeEvaluationInAnyEra (translateUTxO utxo) tx
+                    atomically $ takeTMVar evaluateExecutionUnitsResponse
+                (UTxOInBabbageEra utxo, GenTxAlonzo (ShelleyTx _id tx)) -> do
+                    atomically $ putTMVar evaluateExecutionUnitsRequest $ SomeEvaluationInAnyEra utxo (translateTx tx)
+                    atomically $ takeTMVar evaluateExecutionUnitsResponse
+                (UTxOInBabbageEra utxo, GenTxBabbage (ShelleyTx _id tx)) -> do
                     atomically $ putTMVar evaluateExecutionUnitsRequest $ SomeEvaluationInAnyEra utxo tx
                     atomically $ takeTMVar evaluateExecutionUnitsResponse
-                (_, _) ->
-                    return eraDiscrepancy
             }
         , localStateQueryClient
             (atomically $ takeTMVar evaluateExecutionUnitsRequest)
@@ -229,7 +232,7 @@ newExecutionUnitsEvaluator = do
                 { LSQ.recvMsgAcquired = pure $ selectEra
                     -- Default / Fallback
                     (\era -> do
-                        reply (incompatibleEra era)
+                        reply (notEnoughSynced era)
                         pure $ LSQ.SendMsgRelease clientStIdle
                     )
                     -- Alonzo
@@ -319,7 +322,13 @@ newExecutionUnitsEvaluator = do
                     Right (UTxO networkUtxo) -> do
                         let result = case translateToNetworkEra @era args of
                                 Nothing ->
-                                    eraDiscrepancy
+                                    error "impossible: arguments are not translatable to network era. \
+                                          \This can't happen because 'selectEra' enforces that queries \
+                                          \are only executed if the network is either in 'Alonzo' or \
+                                          \'Babbage'. The arguments themselves can also only be 'Alonzo' \
+                                          \or 'Babbage'. Thus, we can't reach this point with any other \
+                                          \eras. We _could_ potentially capture this proof in the types \
+                                          \to convince the compiler of this. Let's say: TODO."
                                 Just (UTxO userProvidedUtxo, tx) ->
                                     let intersection = Map.intersection userProvidedUtxo networkUtxo in
                                     if null intersection
@@ -353,7 +362,7 @@ inputsInAnyEra (SomeEvaluationInAnyEra _ tx) =
 -- the previous era, even after the hard-fork has happened. We take the burden of detecting the era and
 -- translating the request.
 translateToNetworkEra
-    :: forall eraNetwork block crypto.
+    :: forall eraNetwork.
         ( CanEvaluateScriptsInEra eraNetwork
         )
     => SomeEvaluationInAnyEra

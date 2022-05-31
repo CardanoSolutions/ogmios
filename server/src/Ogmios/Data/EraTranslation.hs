@@ -10,6 +10,10 @@ module Ogmios.Data.EraTranslation
       MostRecentEra
     , BlockEra
 
+      -- * GADTs
+    , MultiEraUTxO (..)
+    , MultiEraTxOut  (..)
+
       -- * Translations
     , translateUTxO
     , translateTx
@@ -17,21 +21,35 @@ module Ogmios.Data.EraTranslation
 
 import Ogmios.Prelude
 
-import Cardano.Ledger.Crypto
-    ( Crypto )
+import Cardano.Ledger.Babbage.Translation
+    ( translateTxOut )
+import Cardano.Ledger.Babbage.Tx
+    ( ValidatedTx (..) )
 import Cardano.Ledger.Era
     ( PreviousEra )
+import Cardano.Ledger.Serialization
+    ( translateViaCBORAnn )
 import Cardano.Ledger.Shelley.UTxO
-    ( UTxO )
+    ( UTxO (..) )
+import Cardano.Network.Protocol.NodeToClient
+    ( Crypto )
+import Control.Monad.Trans.Except
+    ( runExcept )
+import Data.Maybe.Strict
+    ( StrictMaybe (..) )
 import Ouroboros.Consensus.Cardano
     ( CardanoBlock )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras )
+    ( AlonzoEra, BabbageEra, CardanoEras )
 import Ouroboros.Consensus.Shelley.Ledger
     ( ShelleyBlock )
 
+import qualified Cardano.Ledger.Alonzo.Scripts as Alonzo
+import qualified Cardano.Ledger.Alonzo.Tx as Alonzo
+import qualified Cardano.Ledger.Alonzo.TxBody as Alonzo
+import qualified Cardano.Ledger.Babbage.TxBody as Babbage
 import qualified Cardano.Ledger.Core as Core
-import qualified Cardano.Ledger.Era as Era
+import qualified Cardano.Ledger.Crypto as Ledger
 
 type family MostRecentEra block :: Type where
     MostRecentEra (CardanoBlock crypto) = BlockEra (LastElem (CardanoEras crypto))
@@ -44,21 +62,63 @@ type family BlockEra block :: Type where
 translateUTxO
     :: forall crypto era.
         ( era ~ MostRecentEra (CardanoBlock crypto)
-        , Crypto crypto
+        , Ledger.Crypto crypto
         )
     => UTxO (PreviousEra era)
     -> UTxO era
 translateUTxO =
-    undefined
+    UTxO . fmap translateTxOut . unUTxO
 
 -- Promote a Tx from the previous era into the current one. This supposes
 -- a forward-compatible format, which has been true since Shelley was introduced.
 translateTx
     :: forall crypto era.
         ( era ~ MostRecentEra (CardanoBlock crypto)
-        , Crypto crypto
+        , Ledger.Crypto crypto
+        , Core.Script era ~ Alonzo.Script era
         )
     => Core.Tx (PreviousEra era)
     -> Core.Tx era
-translateTx =
-    undefined
+translateTx tx = unsafeFromRight $ runExcept $ do
+    body <- translateViaCBORAnn "body" $ Alonzo.body tx
+    wits <- translateViaCBORAnn "wits" $ Alonzo.wits tx
+    auxiliaryData <- case Alonzo.auxiliaryData tx of
+      SNothing -> pure SNothing
+      SJust axd -> SJust <$> translateViaCBORAnn "auxiliarydata" axd
+    let isValid = Alonzo.isValid tx
+    pure $ ValidatedTx{body,wits,auxiliaryData,isValid}
+  where
+    unsafeFromRight :: (HasCallStack, Show e) => Either e a -> a
+    unsafeFromRight = either (error . show) id
+
+
+-- Era-specific GADTs
+
+data MultiEraUTxO block where
+    UTxOInAlonzoEra
+        :: UTxO (AlonzoEra (Crypto block))
+        -> MultiEraUTxO block
+
+    UTxOInBabbageEra
+        :: UTxO (BabbageEra (Crypto block))
+        -> MultiEraUTxO block
+
+deriving instance
+    ( Show (UTxO (AlonzoEra (Crypto block)))
+    , Show (UTxO (BabbageEra (Crypto block)))
+    ) => Show (MultiEraUTxO block)
+
+
+data MultiEraTxOut block where
+    TxOutInAlonzoEra
+        :: Alonzo.TxOut (AlonzoEra (Crypto block))
+        -> MultiEraTxOut block
+
+    TxOutInBabbageEra
+        :: Babbage.TxOut (BabbageEra (Crypto block))
+        -> MultiEraTxOut block
+
+deriving instance
+    ( Show (Alonzo.TxOut (AlonzoEra (Crypto block)))
+    , Show (Babbage.TxOut (BabbageEra (Crypto block)))
+    ) => Show (MultiEraTxOut block)

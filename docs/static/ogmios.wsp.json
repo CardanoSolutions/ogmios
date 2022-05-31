@@ -2648,6 +2648,7 @@
             , { "$ref": "#/definitions/EvaluationFailure[IncompatibleEra]" }
             , { "$ref": "#/definitions/EvaluationFailure[UncomputableSlotArithmetic]" }
             , { "$ref": "#/definitions/EvaluationFailure[AdditionalUtxoOverlap]" }
+            , { "$ref": "#/definitions/EvaluationFailure[NotEnoughSynced]" }
             ]
         }
       }
@@ -2714,6 +2715,24 @@
       { "AdditionalUtxoOverlap":
         { "type": "array"
         , "items": { "$ref": "#/definitions/TxIn" }
+        }
+      }
+    }
+
+  , "EvaluationFailure[NotEnoughSynced]":
+    { "type": "object"
+    , "description": "Happens when attempting to evaluate execution units on a node that isn't enough synchronized."
+    , "additionalProperties": false
+    , "required": [ "NotEnoughSynced" ]
+    , "properties":
+      { "NotEnoughSynced":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "minimumRequiredEra", "currentNodeEra" ]
+        , "properties":
+          { "minimumRequiredEra": { "$ref": "#/definitions/Era" }
+          , "currentNodeEra": { "$ref": "#/definitions/Era" }
+          }
         }
       }
     }
@@ -3855,6 +3874,7 @@
         , { "$ref": "#/definitions/ScriptFailure[nonScriptInputReferencedByRedeemer]" }
         , { "$ref": "#/definitions/ScriptFailure[illFormedExecutionBudget]" }
         , { "$ref": "#/definitions/ScriptFailure[noCostModelForLanguage]" }
+        , { "$ref": "#/definitions/ScriptFailure[corruptCostModelForLanguage]" }
         ]
       }
     }
@@ -3948,6 +3968,17 @@
     , "required": [ "noCostModelForLanguage" ]
     , "properties":
       { "noCostModelForLanguage": { "$ref": "#/definitions/Language" }
+      }
+    }
+
+  , "ScriptFailure[corruptCostModelForLanguage]":
+    { "title": "corruptCostModelForLanguage"
+    , "description": "An artifact from a distant past. This is unused but somehow still present in the ledger internal definitions. Should be removed eventually."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "corruptCostModelForLanguage" ]
+    , "properties":
+      { "corruptCostModelForLanguage": { "$ref": "#/definitions/Language" }
       }
     }
 
@@ -4073,6 +4104,7 @@
         , { "$ref": "#/definitions/SubmitTxError[mirTransferNotCurrentlyAllowed]" }
         , { "$ref": "#/definitions/SubmitTxError[mirNegativeTransferNotCurrentlyAllowed]" }
         , { "$ref": "#/definitions/SubmitTxError[mirProducesNegativeUpdate]" }
+        , { "$ref": "#/definitions/SubmitTxError[mirNegativeTransfer]" }
         , { "$ref": "#/definitions/SubmitTxError[duplicateGenesisVrf]" }
         , { "$ref": "#/definitions/SubmitTxError[nonGenesisVoters]" }
         , { "$ref": "#/definitions/SubmitTxError[updateWrongEpoch]" }
@@ -4660,6 +4692,24 @@
     , "properties":
       { "mirProducesNegativeUpdate":
         { "type": "null"
+        }
+      }
+    }
+
+  , "SubmitTxError[mirNegativeTransfer]":
+    { "type": "object"
+    , "title": "mirNegativeTransfer"
+    , "additionalProperties": false
+    , "required": [ "mirNegativeTransfer" ]
+    , "properties":
+      { "insufficientFundsForMir":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "rewardSource", "attemptedTransfer" ]
+        , "properties":
+          { "rewardSource": { "$ref": "#/definitions/RewardPot" }
+          , "attemptedTransfer": { "$ref": "#/definitions/Lovelace" }
+          }
         }
       }
     }

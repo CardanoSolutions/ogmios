@@ -419,6 +419,14 @@ encodeDelegFailure = \case
         encodeObject
             [ ( "mirProducesNegativeUpdate", encodeNull )
             ]
+    Sh.MIRNegativeTransfer pot coin ->
+        encodeObject
+            [ ( "mirNegativeTransfer", encodeObject
+                [ ( "rewardSource", encodeMIRPot pot )
+                , ( "attemptedTransfer", encodeCoin coin )
+                ]
+              )
+            ]
     Sh.DuplicateGenesisVRFDELEG vrfHash ->
         encodeObject
             [ ( "duplicateGenesisVrf", encodeHash vrfHash )
