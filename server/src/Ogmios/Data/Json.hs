@@ -84,7 +84,6 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Type
 import qualified Cardano.Protocol.TPraos.API as TPraos
 import qualified Codec.CBOR.Write as Cbor
 
-
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage

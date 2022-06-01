@@ -63,6 +63,7 @@ import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 import qualified Cardano.Ledger.Alonzo.TxWitness as Al
 
 import qualified Cardano.Ledger.Alonzo.Tools as Al.Tools
+import qualified Cardano.Ledger.Core as Ledger.Core
 
 --
 -- Encoders
@@ -126,8 +127,8 @@ encodeUtxowPredicateFail = \case
         Shelley.encodeUtxowFailure  encodeUtxoFailure e
 
 encodeAuxiliaryData
-    :: Crypto crypto
-    => Al.AuxiliaryData (AlonzoEra crypto)
+    :: (Ledger.Era era, Ledger.Core.Script era ~ Al.Script era)
+    => Al.AuxiliaryData era
     -> Json
 encodeAuxiliaryData (Al.AuxiliaryData blob scripts) = encodeObject
     [ ( "blob"
@@ -364,8 +365,8 @@ encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
     encodeMap Shelley.stringifyKeyHash (encodePParams' encodeStrictMaybe) m
 
 encodeRedeemers
-    :: Crypto crypto
-    => Al.Redeemers (AlonzoEra crypto)
+    :: Ledger.Era era
+    => Al.Redeemers era
     -> Json
 encodeRedeemers (Al.Redeemers redeemers) =
     encodeMap stringifyRdmrPtr encodeDataAndUnits redeemers
@@ -379,8 +380,8 @@ encodeRedeemers (Al.Redeemers redeemers) =
         ]
 
 encodeScript
-    :: Crypto crypto
-    => Al.Script (AlonzoEra crypto)
+    :: (Crypto (Ledger.Crypto era))
+    => Al.Script era
     -> Json
 encodeScript = \case
     Al.TimelockScript nativeScript -> encodeObject
@@ -823,8 +824,8 @@ encodeTranslationError err = encodeText $ case err of
     --    "Validity interval is past (safe) foreseeable horizon. Use smaller validity upper-bound or wait for hard-fork to happen."
 
 encodeWitnessSet
-    :: Crypto crypto
-    => Al.TxWitness (AlonzoEra crypto)
+    :: (Ledger.Era era, Ledger.Core.Script era ~ Al.Script era)
+    => Al.TxWitness era
     -> Json
 encodeWitnessSet x = encodeObject
     [ ( "signatures"
