@@ -97,11 +97,13 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Api
     ( ShelleyBasedEra (..) )
 import Cardano.Binary
-    ( DecoderError, FromCBOR (..), decodeFull )
+    ( Annotator, DecoderError, FromCBOR (..), decodeAnnotator, decodeFull )
 import Cardano.Crypto.Hash
     ( pattern UnsafeHash, hashFromBytes, hashFromTextAsHex )
 import Cardano.Crypto.Hash.Class
     ( Hash, HashAlgorithm )
+import Cardano.Ledger.Babbage
+    ()
 import Cardano.Ledger.Crypto
     ( Crypto, HASH )
 import Cardano.Ledger.Keys
@@ -179,6 +181,7 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TL
+import qualified Text.Read as T
 
 import qualified Ouroboros.Consensus.HardFork.Combinator.Ledger.Query as LSQ
 import qualified Ouroboros.Consensus.Ledger.Query as LSQ
@@ -186,8 +189,12 @@ import qualified Ouroboros.Consensus.Ledger.Query as LSQ
 import qualified Cardano.Crypto.Hashing as CC
 import qualified Cardano.Protocol.TPraos.API as TPraos
 
+import qualified Cardano.Ledger.Era as Era
+
 import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Alonzo.Data as Ledger.Alonzo
+import qualified Cardano.Ledger.Alonzo.Language as Ledger.Alonzo
+import qualified Cardano.Ledger.Alonzo.Scripts as Ledger.Alonzo
 import qualified Cardano.Ledger.Alonzo.TxBody as Ledger.Alonzo
 import qualified Cardano.Ledger.Babbage.TxBody as Ledger.Babbage
 import qualified Cardano.Ledger.BaseTypes as Ledger
@@ -199,6 +206,7 @@ import qualified Cardano.Ledger.Keys as Ledger
 import qualified Cardano.Ledger.Mary.Value as Ledger.Mary
 import qualified Cardano.Ledger.PoolDistr as Ledger
 import qualified Cardano.Ledger.SafeHash as Ledger
+import qualified Cardano.Ledger.ShelleyMA.Timelocks as Ledger.Mary
 import qualified Cardano.Ledger.TxIn as Ledger
 
 import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
@@ -207,6 +215,7 @@ import qualified Cardano.Ledger.Shelley.RewardProvenance as Sh
 import qualified Cardano.Ledger.Shelley.TxBody as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
+import qualified Data.Sequence.Strict as StrictSeq
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -1471,6 +1480,17 @@ decodeAssetName
 decodeAssetName =
     fmap Ledger.Mary.AssetName . decodeBase16 . encodeUtf8
 
+decodeBinaryData
+    :: Json.Value
+    -> Json.Parser (Ledger.Alonzo.BinaryData era)
+decodeBinaryData =
+    Json.withText "BinaryData" $ \t -> do
+        bytes <- toShort <$> decodeBase16 (encodeUtf8 t)
+        either
+            fail
+            pure
+            (Ledger.Alonzo.makeBinaryData bytes)
+
 decodeCoin
     :: Json.Value
     -> Json.Parser Coin
@@ -1559,6 +1579,39 @@ decodePoolId = Json.withText "PoolId" $ choice "poolId"
     fromBase16 =
         decodeBase16 . encodeUtf8
 
+decodeScript
+    :: forall era crypto.
+        ( crypto ~ Era.Crypto era
+        , Ledger.Script era ~ Ledger.Alonzo.Script era
+        , Crypto crypto
+        , Typeable era
+        )
+    => Json.Value
+    -> Json.Parser (Ledger.Script era)
+decodeScript v =
+    (Json.withText "Script::CBOR" decodeFromBase16Cbor v)
+    <|>
+    (Json.withObject "Script::JSON" decodeFromWrappedJson v)
+  where
+    decodeFromBase16Cbor :: forall a. (FromCBOR (Annotator a)) => Text -> Json.Parser a
+    decodeFromBase16Cbor t = do
+        bytes <- toLazy <$> decodeBase16 (encodeUtf8 t)
+        either
+            (fail . toString . TL.toLazyText . build)
+            pure
+            (decodeAnnotator "Script" fromCBOR bytes)
+
+    decodeFromWrappedJson :: Json.Object -> Json.Parser (Ledger.Script era)
+    decodeFromWrappedJson o =
+        (Ledger.Alonzo.TimelockScript <$> ((o .: "native") >>= decodeTimeLock))
+        <|>
+        (Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV1 <$> ((o .: "plutus:v1") >>= decodePlutusScript))
+        <|>
+        (Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV2 <$> ((o .: "plutus:v2") >>= decodePlutusScript))
+      where
+        decodePlutusScript :: Text -> Json.Parser ShortByteString
+        decodePlutusScript = fmap toShort . decodeBase16 . encodeUtf8
+
 decodeSerializedTx
     :: forall crypto.
         ( PraosCrypto crypto
@@ -1628,6 +1681,48 @@ decodeSerializedTx = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
             . TL.toLazyText
             . build
 
+decodeTimeLock
+    :: Crypto crypto
+    => Json.Value
+    -> Json.Parser (Ledger.Mary.Timelock crypto)
+decodeTimeLock json =
+    (decodeRequireSignature json)
+    <|>
+    (Json.withObject "Timelock::AllOf" decodeAllOf json)
+    <|>
+    (Json.withObject "Timelock::AnyOf" decodeAnyOf json)
+    <|>
+    (Json.withObject "Timelocks::MOf" decodeMOf json)
+    <|>
+    (Json.withObject "Timelocks::TimeExpire" decodeTimeExpire json)
+    <|>
+    (Json.withObject "Timelocks::TimeStart" decodeTimeStart json)
+  where
+    decodeRequireSignature t = do
+        Ledger.Mary.RequireSignature
+            <$> fmap Ledger.KeyHash (decodeHash t)
+    decodeAllOf o = do
+        xs <- StrictSeq.fromList <$> (o .: "all")
+        Ledger.Mary.RequireAllOf <$> traverse decodeTimeLock xs
+    decodeAnyOf o = do
+        xs <- StrictSeq.fromList <$> (o .: "any")
+        Ledger.Mary.RequireAnyOf <$> traverse decodeTimeLock xs
+    decodeMOf o =
+        case Json.toList o of
+            [(k, v)] -> do
+                case T.readMaybe (Json.toString k) of
+                    Just n -> do
+                        xs <- StrictSeq.fromList <$> Json.parseJSON v
+                        Ledger.Mary.RequireMOf n <$> traverse decodeTimeLock xs
+                    Nothing ->
+                        empty
+            _ ->
+                empty
+    decodeTimeExpire o = do
+        Ledger.Mary.RequireTimeExpire . SlotNo <$> (o .: "expiresAt")
+    decodeTimeStart o = do
+        Ledger.Mary.RequireTimeExpire . SlotNo <$> (o .: "startsAt")
+
 decodeTip
     :: Json.Value
     -> Json.Parser (Tip (CardanoBlock crypto))
@@ -1673,11 +1768,46 @@ decodeTxOut
     => Json.Value
     -> Json.Parser (MultiEraTxOut (CardanoBlock crypto))
 decodeTxOut = Json.withObject "TxOut" $ \o -> do
-    address <- o .: "address" >>= decodeAddress
-    value <- o .: "value" >>= decodeValue
-    datum <- o .:? "datum" >>= maybe (pure SNothing) (fmap SJust . decodeDatumHash)
-    -- FIXME: Allow decoding TxOut in Babbage era
-    pure $ TxOutInAlonzoEra $ Ledger.Alonzo.TxOut address value datum
+    decodeTxOutAlonzo o <|> decodeTxOutBabbage o
+  where
+    isPlutusData :: Ledger.Alonzo.DataHash crypto -> Bool
+    isPlutusData =
+        isRight . Ledger.Alonzo.makeBinaryData . toShort . Ledger.originalBytes
+
+    decodeTxOutAlonzo o = do
+        address <- o .: "address" >>= decodeAddress
+        value <- o .: "value" >>= decodeValue
+        -- NOTE: Prior to Babbage, 'datum' was unambiguous in the context of outputs
+        -- and always referred to datum hash digests. Babbage introduces inline datums,
+        -- which can, from a decoding perspective, be mixed up with datum hashes.
+        --
+        -- For this matter, we now expect datum hashes to be provided explicitly as
+        -- 'datumHash'. Yet, to keep backward-compatibility, it is still possible to
+        -- provide a hash digest as 'datum'. The only condition being that, the
+        -- assumed hash must not be a valid Plutus data.
+        datum <- (o .:? "datumHash" <|> o .:? "datum")
+            >>= maybe (pure SNothing) (fmap SJust . decodeDatumHash)
+        whenSJust datum (guard . not . isPlutusData)
+        pure $ TxOutInAlonzoEra $ Ledger.Alonzo.TxOut address value datum
+
+    decodeTxOutBabbage o = do
+        address <- o .: "address" >>= decodeAddress
+        value <- o .: "value" >>= decodeValue
+        datum <-
+            (o .:? "datumHash" >>= maybe
+                (pure Ledger.Babbage.NoDatum)
+                (fmap Ledger.Babbage.DatumHash . decodeDatumHash)
+            )
+            <|>
+            (o .:? "datum" >>= maybe
+                (pure Ledger.Babbage.NoDatum)
+                (fmap Ledger.Babbage.Datum . decodeBinaryData)
+            )
+        script <-
+            o .:? "script" >>= maybe
+                (pure SNothing)
+                (fmap SJust . decodeScript)
+        pure $ TxOutInBabbageEra $ Ledger.Babbage.TxOut address value datum script
 
 decodeUtxo
     :: forall crypto block. (Crypto crypto, block ~ CardanoBlock crypto)
@@ -1745,3 +1875,8 @@ castPoint = \case
     BlockPoint slot h -> BlockPoint slot (cast h)
   where
     cast (unShelleyHash -> UnsafeHash h) = coerce h
+
+-- | Execute an applicative computation using the 'SJust' side of a 'StrictMaybe'.
+whenSJust :: Applicative m => StrictMaybe a -> (a -> m ()) -> m ()
+whenSJust (SJust a) fn = fn a
+whenSJust SNothing   _ = pure ()

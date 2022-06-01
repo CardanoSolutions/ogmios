@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -11,6 +12,7 @@
 -- redundant constraints in order to enforce some restriction at the type-level
 -- to not shoot ourselves in the foot by accident.
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
+{-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
 
 module Ogmios.Prelude
     ( -- * relude, minus STM
@@ -33,6 +35,7 @@ module Ogmios.Prelude
     , Elem
     , Or
     , HKD
+    , (:\:)
     ) where
 
 import Data.Array
@@ -117,6 +120,12 @@ type family Or (a :: Constraint) (b :: Constraint) :: Constraint where
 type family HKD f a where
   HKD Identity a = a
   HKD f a = f a
+
+infixr 5 :\:
+type family (:\:) (any :: k) (excluded :: k) :: Constraint where
+    excluded :\: excluded =
+        TypeError ( 'Text "Usage of this function forbids the type '" :<>: 'ShowType excluded :<>: 'Text "'." )
+    _ :\: _ = ()
 
 mapToArray :: Ix k => Map k v -> Array k v
 mapToArray m =

@@ -2376,8 +2376,7 @@
 
   , "Datum":
     { "type": "string"
-    , "contentEncoding": "base64"
-    , "pattern": "^[A-Za-z0-9+/]*=?=?$"
+    , "contentEncoding": "base16"
     }
 
   , "DelegationsAndRewards":
@@ -3487,7 +3486,7 @@
 
   , "RedeemerData":
     { "type": "string"
-    , "contentEncoding": "base64"
+    , "contentEncoding": "base16"
     , "description": "Plutus data, CBOR-serialised."
     }
 
@@ -3857,8 +3856,7 @@
   , "Script[Plutus]":
     { "type": "string"
     , "description": "A phase-2 Plutus script; or said differently, a serialized Plutus-core program."
-    , "contentEncoding": "base64"
-    , "pattern": "^[A-Za-z0-9+/]*=?=?$"
+    , "contentEncoding": "base16"
     }
 
   , "ScriptFailure":
@@ -5460,7 +5458,7 @@
 
   , "TxOut":
     { "type": "object"
-    , "description": "A transaction output. Since Mary, 'value' always return a multi-asset value. Since Alonzo, 'datum' is always present (albeit sometimes 'null')"
+    , "description": "A transaction output. Since Mary, 'value' always return a multi-asset value. Since Alonzo, 'datumHash' is always present (albeit sometimes 'null'). Since Babbage, 'datum' & 'script' are always present (albeit sometimes 'null')."
     , "examples":
       [ { "address": "addr_test1qz66ue36465w2qq40005h2hadad6pnjht8mu6sgplsfj74qdjnshguewlx4ww0eet26y2pal4xpav5prcydf28cvxtjqx46x7f"
         , "value":
@@ -5470,7 +5468,9 @@
             , "b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54": 2
             }
           }
+        , "datumHash": null
         , "datum": null
+        , "script": null
         }
       ]
     , "additionalProperties": false
@@ -5478,9 +5478,26 @@
     , "properties":
       { "address": { "$ref": "#/definitions/Address" }
       , "value": { "$ref": "#/definitions/Value" }
-      , "datum":
+      , "datumHash":
         { "oneOf":
           [ { "$ref": "#/definitions/Digest[Blake2b]::Datum" }
+          , { "$ref": "#/definitions/Null"}
+          ]
+        }
+      , "datum":
+        { "oneOf":
+          [ { "$allOf":
+              [ { "$ref": "#/definitions/Digest[Blake2b]::Datum" }
+              , { "description": "Only in Alonzo transactions, for backward-compatibility." }
+              ]
+            }
+          , { "$ref": "#/definitions/Datum" }
+          , { "$ref": "#/definitions/Null"}
+          ]
+        }
+      , "script":
+        { "oneOf":
+          [ { "$ref": "#/definitions/Script" }
           , { "$ref": "#/definitions/Null"}
           ]
         }

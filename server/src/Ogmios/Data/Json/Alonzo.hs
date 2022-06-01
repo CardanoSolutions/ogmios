@@ -390,7 +390,7 @@ encodeScript = \case
         ]
     Al.PlutusScript lang serializedScript -> encodeObject
         [ ( stringifyLanguage lang
-          , encodeShortByteString encodeByteStringBase64 serializedScript
+          , encodeShortByteString encodeByteStringBase16 serializedScript
           )
         ]
 
@@ -494,6 +494,10 @@ encodeTxOut (Al.TxOut addr value datum) = encodeObject
     , ( "value"
       , Mary.encodeValue value
       )
+    , ( "datumHash"
+      , encodeStrictMaybe encodeDataHash datum
+      )
+    -- NOTE: backward-compatibility, since v5.5.0
     , ( "datum"
       , encodeStrictMaybe encodeDataHash datum
       )

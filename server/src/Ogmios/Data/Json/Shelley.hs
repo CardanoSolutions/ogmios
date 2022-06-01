@@ -28,8 +28,6 @@ import Data.ByteString.Base16
     ( encodeBase16 )
 import Data.ByteString.Bech32
     ( HumanReadablePart (..), encodeBech32 )
-import GHC.TypeLits
-    ( ErrorMessage (..), TypeError )
 import Ouroboros.Consensus.Cardano.Block
     ( ShelleyEra )
 import Ouroboros.Consensus.Protocol.TPraos
@@ -1360,18 +1358,6 @@ stringifyVKey
     -> Text
 stringifyVKey =
     encodeBase16 . CC.rawSerialiseVerKeyDSIGN . Ledger.unVKey
-
---
--- Helpers
---
-
-infixr 5 :\:
-type family (:\:) (any :: KeyRole) (excluded :: KeyRole) :: Constraint where
-    excluded :\: excluded = TypeError
-        ( 'Text "Cannot use this function for the " :<>: 'ShowType excluded :<>: 'Text " role." :$$:
-          'Text "Use a dedicated function instead."
-        )
-    _ :\: _ = ()
 
 --
 -- CIP-0005 Human-Readable Prefixes
