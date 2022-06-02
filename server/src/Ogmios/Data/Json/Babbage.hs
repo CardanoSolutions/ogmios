@@ -2,10 +2,6 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# OPTIONS_GHC -fno-warn-unused-imports #-}
-{-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
-{-# OPTIONS_GHC -fno-warn-deprecations #-}
-
 {-# LANGUAGE TypeApplications #-}
 
 module Ogmios.Data.Json.Babbage where
@@ -22,26 +18,33 @@ import Ouroboros.Consensus.Cardano.Block
     ( BabbageEra )
 import Ouroboros.Consensus.Protocol.Praos
     ( Praos )
-import Ouroboros.Consensus.Protocol.Praos.Header
-    ( Header (..), HeaderBody (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
-import Ouroboros.Consensus.Shelley.Protocol.Abstract
-    ( ShelleyProtocolHeader )
+import Ouroboros.Consensus.Shelley.Protocol.Praos
+    ()
 
 import qualified Data.Map.Strict as Map
 
-import qualified Cardano.Ledger.Alonzo.TxSeq as Ledger
+import qualified Ouroboros.Consensus.Protocol.Praos.Header as Praos
+
 import qualified Cardano.Ledger.AuxiliaryData as Ledger
+import qualified Cardano.Ledger.Block as Ledger
+import qualified Cardano.Ledger.Core as Ledger
+import qualified Cardano.Ledger.Era as Ledger
+import qualified Cardano.Ledger.TxIn as Ledger
+
+import qualified Cardano.Ledger.Shelley.API as Ledger.Shelley
+import qualified Cardano.Ledger.Shelley.PParams as Ledger.Shelley
+
+import qualified Cardano.Ledger.Alonzo.TxSeq as Ledger.Alonzo
+
 import qualified Cardano.Ledger.Babbage.PParams as Ledger.Babbage
+import qualified Cardano.Ledger.Babbage.Rules.Utxo as Ledger.Babbage
 import qualified Cardano.Ledger.Babbage.Tx as Ledger.Babbage
 import qualified Cardano.Ledger.Babbage.TxBody as Ledger.Babbage
-import qualified Cardano.Ledger.Block as Ledger
-import qualified Cardano.Ledger.Era as Ledger
-import qualified Cardano.Ledger.Shelley.API as Ledger
-import qualified Cardano.Ledger.Shelley.PParams as Ledger
-import qualified Cardano.Ledger.Shelley.Rules.Ledger as Ledger
-import qualified Cardano.Ledger.TxIn as Ledger
+
+import qualified Cardano.Ledger.Shelley.Rules.Ledger as Rules.Shelley
+
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Mary as Mary
@@ -54,7 +57,7 @@ encodeBlock
     -> Json
 encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) = encodeObject
     [ ( "body"
-      , encodeFoldable (encodeTx mode) (Ledger.txSeqTxns txs)
+      , encodeFoldable (encodeTx mode) (Ledger.Alonzo.txSeqTxns txs)
       )
     , ( "header"
       , encodeHeader mode blkHeader
@@ -67,143 +70,171 @@ encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) = encode
 encodeHeader
     :: Crypto crypto
     => SerializationMode
-    -> ShelleyProtocolHeader (Praos crypto)
+    -> Praos.Header crypto
     -> Json
-encodeHeader mode (Header hBody _hSig) = encodeObjectWithMode mode
+encodeHeader mode (Praos.Header hBody hSig) = encodeObjectWithMode mode
     [ ( "blockHeight"
-      , encodeBlockNo (hbBlockNo hBody)
+      , encodeBlockNo (Praos.hbBlockNo hBody)
       )
     , ( "slot"
-      , encodeSlotNo (hbSlotNo hBody)
+      , encodeSlotNo (Praos.hbSlotNo hBody)
       )
     , ( "prevHash"
-      , Shelley.encodePrevHash (hbPrev hBody)
+      , Shelley.encodePrevHash (Praos.hbPrev hBody)
       )
-    -- , ( "issuerVk"
-    --   , encodeVKey (hbVrfVk hBody)
-    --   )
-    -- , ( "issuerVrf"
-    --   , encodeVerKeyVRF (hbVrfVk hBody)
-    --   )
+    , ( "issuerVk"
+      , Shelley.encodeVKey (Praos.hbVk hBody)
+      )
+    , ( "issuerVrf"
+      , Shelley.encodeVerKeyVRF (Praos.hbVrfVk hBody)
+      )
     , ( "blockSize"
-      , encodeWord32 (hbBodySize hBody)
+      , encodeWord32 (Praos.hbBodySize hBody)
       )
     , ( "blockHash"
-      , Shelley.encodeHash (hbBodyHash hBody)
+      , Shelley.encodeHash (Praos.hbBodyHash hBody)
       )
     ]
     [ ( "protocolVersion"
-      , Shelley.encodeProtVer (hbProtVer hBody)
+      , Shelley.encodeProtVer (Praos.hbProtVer hBody)
       )
     , ( "opCert"
-      , Shelley.encodeOCert (hbOCert hBody)
+      , Shelley.encodeOCert (Praos.hbOCert hBody)
       )
-    -- , ( "nonce" TODO: Review name
-    --   , encodeCertifiedVRF (hbVrfRes hBody)
-    --   )
+    , ( "signature"
+      , Shelley.encodeSignedKES hSig
+      )
+    , ( "vrfInput"
+      , Shelley.encodeCertifiedVRF (Praos.hbVrfRes hBody)
+      )
     ]
 
+encodeUtxoFailure
+    :: Crypto crypto
+    => Rules.Shelley.PredicateFailure (Ledger.EraRule "UTXO" (BabbageEra crypto))
+    -> Json
+encodeUtxoFailure = \case
+    Ledger.Babbage.FromAlonzoUtxowFail e ->
+        Alonzo.encodeUtxowPredicateFail encodeUtxoFailure e
+    Ledger.Babbage.FromAlonzoUtxoFail e ->
+        Alonzo.encodeUtxoFailure encodeUtxo encodeTxOut e
+    Ledger.Babbage.UnequalCollateralReturn needed returned ->
+        encodeObject
+            [ ( "collateralReturnMismatch"
+              , encodeObject
+                [ ( "needed", encodeCoin needed )
+                , ( "returned", encodeCoin returned )
+                ]
+              )
+            ]
+    Ledger.Babbage.MalformedScripts scripts ->
+        encodeObject
+            [ ( "malformedOutputScripts"
+              , encodeFoldable  Shelley.encodeScriptHash scripts
+              )
+            ]
+    Ledger.Babbage.BabbageOutputTooSmallUTxO outs ->
+        encodeObject
+            [ ( "outputTooSmall"
+              , encodeFoldable
+                    (\(out, minimumValue) -> encodeObject
+                        [ ( "output", encodeTxOut out )
+                        , ( "minimumRequiredValue", encodeInteger minimumValue )
+                        ]
+                    )
+                    outs
+              )
+            ]
 
 encodeLedgerFailure
     :: Crypto crypto
-    => Ledger.LedgerPredicateFailure (BabbageEra crypto)
+    => Rules.Shelley.LedgerPredicateFailure (BabbageEra crypto)
     -> Json
 encodeLedgerFailure = \case
-    Ledger.UtxowFailure _e ->
-        undefined
-        -- encodeUtxowPredicateFail e
-    Ledger.DelegsFailure _e ->
-        undefined
-        -- Shelley.encodeDelegsFailure e
+    Rules.Shelley.UtxowFailure e ->
+        encodeUtxoFailure e
+    Rules.Shelley.DelegsFailure e ->
+        Shelley.encodeDelegsFailure e
 
 encodeProposedPPUpdates
     :: Crypto crypto
-    => Ledger.ProposedPPUpdates (BabbageEra crypto)
+    => Ledger.Shelley.ProposedPPUpdates (BabbageEra crypto)
     -> Json
-encodeProposedPPUpdates (Ledger.ProposedPPUpdates _m) =
-    undefined
---    encodeMap Shelley.stringifyKeyHash (encodePParams' encodeStrictMaybe) m
+encodeProposedPPUpdates (Ledger.Shelley.ProposedPPUpdates m) =
+    encodeMap Shelley.stringifyKeyHash (encodePParams' encodeStrictMaybe) m
 
 encodePParams'
-    :: (forall a. (a -> Json) -> HKD f a -> Json)
+    :: (forall a. (a -> Json) -> Ledger.Shelley.HKD f a -> Json)
     -> Ledger.Babbage.PParams' f era
     -> Json
-encodePParams' _encodeF _x =
-    undefined
--- encodeObject
---    [ ( "minFeeCoefficient"
---      , encodeF encodeNatural (Al._minfeeA x)
---      )
---    , ( "minFeeConstant"
---      , encodeF encodeNatural (Al._minfeeB x)
---      )
---    , ( "maxBlockBodySize"
---      , encodeF encodeNatural (Al._maxBBSize x)
---      )
---    , ( "maxBlockHeaderSize"
---      , encodeF encodeNatural (Al._maxBHSize x)
---      )
---    , ( "maxTxSize"
---      , encodeF encodeNatural (Al._maxTxSize x)
---      )
---    , ( "stakeKeyDeposit"
---      , encodeF encodeCoin (Al._keyDeposit x)
---      )
---    , ( "poolDeposit"
---      , encodeF encodeCoin (Al._poolDeposit x)
---      )
---    , ( "poolRetirementEpochBound"
---      , encodeF encodeEpochNo (Al._eMax x)
---      )
---    , ( "desiredNumberOfPools"
---      , encodeF encodeNatural (Al._nOpt x)
---      )
---    , ( "poolInfluence"
---      , encodeF encodeNonNegativeInterval (Al._a0 x)
---      )
---    , ( "monetaryExpansion"
---      , encodeF encodeUnitInterval (Al._rho x)
---      )
---    , ( "treasuryExpansion"
---      , encodeF encodeUnitInterval (Al._tau x)
---      )
---    , ( "decentralizationParameter"
---      , encodeF encodeUnitInterval (Al._d x)
---      )
---    , ( "extraEntropy"
---      , encodeF Shelley.encodeNonce (Al._extraEntropy x)
---      )
---    , ( "protocolVersion"
---      , encodeF Shelley.encodeProtVer (Al._protocolVersion x)
---      )
---    , ( "minPoolCost"
---      , encodeF encodeCoin (Al._minPoolCost x)
---      )
---    , ( "coinsPerUtxoWord"
---      , encodeF encodeCoin (Al._coinsPerUTxOWord x)
---      )
---    , ( "costModels"
---      , encodeF encodeCostModels (Al._costmdls x)
---      )
---    , ( "prices"
---      , encodeF encodePrices (Al._prices x)
---      )
---    , ( "maxExecutionUnitsPerTransaction"
---      , encodeF encodeExUnits (Al._maxTxExUnits x)
---      )
---    , ( "maxExecutionUnitsPerBlock"
---      , encodeF encodeExUnits (Al._maxBlockExUnits x)
---      )
---    , ( "maxValueSize"
---      , encodeF encodeNatural (Al._maxValSize x)
---      )
---    , ( "collateralPercentage"
---      , encodeF encodeNatural (Al._collateralPercentage x)
---      )
---    , ( "maxCollateralInputs"
---      , encodeF encodeNatural (Al._maxCollateralInputs x)
---      )
---    ]
+encodePParams' encodeF x = encodeObject
+    [ ( "minFeeCoefficient"
+      , encodeF encodeNatural (Ledger.Babbage._minfeeA x)
+      )
+    , ( "minFeeConstant"
+      , encodeF encodeNatural (Ledger.Babbage._minfeeB x)
+      )
+    , ( "maxBlockBodySize"
+      , encodeF encodeNatural (Ledger.Babbage._maxBBSize x)
+      )
+    , ( "maxBlockHeaderSize"
+      , encodeF encodeNatural (Ledger.Babbage._maxBHSize x)
+      )
+    , ( "maxTxSize"
+      , encodeF encodeNatural (Ledger.Babbage._maxTxSize x)
+      )
+    , ( "stakeKeyDeposit"
+      , encodeF encodeCoin (Ledger.Babbage._keyDeposit x)
+      )
+    , ( "poolDeposit"
+      , encodeF encodeCoin (Ledger.Babbage._poolDeposit x)
+      )
+    , ( "poolRetirementEpochBound"
+      , encodeF encodeEpochNo (Ledger.Babbage._eMax x)
+      )
+    , ( "desiredNumberOfPools"
+      , encodeF encodeNatural (Ledger.Babbage._nOpt x)
+      )
+    , ( "poolInfluence"
+      , encodeF encodeNonNegativeInterval (Ledger.Babbage._a0 x)
+      )
+    , ( "monetaryExpansion"
+      , encodeF encodeUnitInterval (Ledger.Babbage._rho x)
+      )
+    , ( "treasuryExpansion"
+      , encodeF encodeUnitInterval (Ledger.Babbage._tau x)
+      )
+    , ( "protocolVersion"
+      , encodeF Shelley.encodeProtVer (Ledger.Babbage._protocolVersion x)
+      )
+    , ( "minPoolCost"
+      , encodeF encodeCoin (Ledger.Babbage._minPoolCost x)
+      )
+    , ( "coinsPerUtxoByte"
+      , encodeF encodeCoin (Ledger.Babbage._coinsPerUTxOByte x)
+      )
+    , ( "costModels"
+      , encodeF Alonzo.encodeCostModels (Ledger.Babbage._costmdls x)
+      )
+    , ( "prices"
+      , encodeF Alonzo.encodePrices (Ledger.Babbage._prices x)
+      )
+    , ( "maxExecutionUnitsPerTransaction"
+      , encodeF Alonzo.encodeExUnits (Ledger.Babbage._maxTxExUnits x)
+      )
+    , ( "maxExecutionUnitsPerBlock"
+      , encodeF Alonzo.encodeExUnits (Ledger.Babbage._maxBlockExUnits x)
+      )
+    , ( "maxValueSize"
+      , encodeF encodeNatural (Ledger.Babbage._maxValSize x)
+      )
+    , ( "collateralPercentage"
+      , encodeF encodeNatural (Ledger.Babbage._collateralPercentage x)
+      )
+    , ( "maxCollateralInputs"
+      , encodeF encodeNatural (Ledger.Babbage._maxCollateralInputs x)
+      )
+    ]
 
 encodeTx
     :: forall crypto. Crypto crypto
@@ -313,9 +344,9 @@ encodeTxOut x@(Ledger.Babbage.TxOut addr value _datum script) = encodeObject
 
 encodeUpdate
     :: Crypto crypto
-    => Ledger.Update (BabbageEra crypto)
+    => Ledger.Shelley.Update (BabbageEra crypto)
     -> Json
-encodeUpdate (Ledger.Update update epoch) = encodeObject
+encodeUpdate (Ledger.Shelley.Update update epoch) = encodeObject
     [ ( "proposal"
       , encodeProposedPPUpdates update
       )
@@ -324,12 +355,21 @@ encodeUpdate (Ledger.Update update epoch) = encodeObject
       )
     ]
 
+encodeUtxo
+    :: Crypto crypto
+    => Ledger.Shelley.UTxO (BabbageEra crypto)
+    -> Json
+encodeUtxo =
+    encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Ledger.Shelley.unUTxO
+  where
+    encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
+
 encodeUtxoWithMode
     :: Crypto crypto
     => SerializationMode
-    -> Ledger.UTxO (BabbageEra crypto)
+    -> Ledger.Shelley.UTxO (BabbageEra crypto)
     -> Json
 encodeUtxoWithMode mode =
-    encodeListWithMode mode id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Ledger.unUTxO
+    encodeListWithMode mode id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Ledger.Shelley.unUTxO
   where
     encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)

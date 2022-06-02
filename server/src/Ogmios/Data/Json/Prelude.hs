@@ -466,7 +466,6 @@ encodeListWithMode mode =
                   ++
                   [ encodeText ("..." <> show r <> " more element(s)") | r > 0 ]
                 )
-
 {-# INLINABLE encodeListWithMode #-}
 
 encodeMap :: (k -> Text) -> (v -> Json) -> Map k v -> Json
