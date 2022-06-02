@@ -165,7 +165,7 @@ packages:
   commit: 00ebe7211c981686e65730b7144fbf5350462608
 
 - git: https://github.com/KtorZ/hjsonpointer
-  commit: 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e
+  commit: 879f0e74d55eef76ceaec8f60ed07657ab84bad7
 
 - git: https://github.com/KtorZ/hjsonschema
   commit: fde6e676f79f3f3320a558f20492ad816a2543a7
