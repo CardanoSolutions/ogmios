@@ -168,7 +168,7 @@ packages:
   commit: 879f0e74d55eef76ceaec8f60ed07657ab84bad7
 
 - git: https://github.com/KtorZ/hjsonschema
-  commit: fde6e676f79f3f3320a558f20492ad816a2543a7
+  commit: 35e0b05c3867463363e67f00a5092cd39fa33313
 
 - git: https://github.com/KtorZ/wai-routes
   commit: d74b39683792649c01113f40bf57724dcf95c96a
