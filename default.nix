@@ -8,7 +8,7 @@
     (builtins.fetchTarball
       "https://github.com/input-output-hk/iohk-nix/archive/edb2d2df2ebe42bbdf03a0711115cf6213c9d366.tar.gz")
     { }
-, nixpkgsSrc ? haskellNix.sources.nixpkgs-2111
+, nixpkgsSrc ? haskellNix.sources.nixpkgs-unstable
 , nixpkgsArgs ? haskellNix.nixpkgsArgs
 }:
 let
