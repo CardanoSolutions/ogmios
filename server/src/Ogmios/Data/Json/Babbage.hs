@@ -117,7 +117,7 @@ encodeUtxoFailure = \case
     Ledger.Babbage.FromAlonzoUtxowFail e ->
         Alonzo.encodeUtxowPredicateFail encodeUtxoFailure e
     Ledger.Babbage.FromAlonzoUtxoFail e ->
-        Alonzo.encodeUtxoFailure encodeUtxo encodeTxOut e
+        Alonzo.encodeUtxoFailure encodeUtxo encodeTxOut (\(Ledger.Babbage.TxOut addr _ _ _) -> addr)  e
     Ledger.Babbage.UnequalCollateralReturn needed returned ->
         encodeObject
             [ ( "collateralReturnMismatch"

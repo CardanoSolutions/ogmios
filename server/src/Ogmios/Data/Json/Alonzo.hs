@@ -265,7 +265,7 @@ encodeLedgerFailure
     -> Json
 encodeLedgerFailure = \case
     Sh.UtxowFailure e ->
-        encodeUtxowPredicateFail (encodeUtxoFailure encodeUtxo encodeTxOut) e
+        encodeUtxowPredicateFail (encodeUtxoFailure encodeUtxo encodeTxOut (\(Al.TxOut addr _ _) -> addr)) e
     Sh.DelegsFailure e ->
         Shelley.encodeDelegsFailure e
 
@@ -556,9 +556,10 @@ encodeUtxoFailure
         )
     => (Sh.UTxO era -> Json)
     -> (Ledger.Core.TxOut era -> Json)
+    -> (Ledger.Core.TxOut era -> Sh.Addr crypto)
     -> Rules.Alonzo.UtxoPredicateFailure era
     -> Json
-encodeUtxoFailure encodeUtxoInEra encodeTxOutInEra = \case
+encodeUtxoFailure encodeUtxoInEra encodeTxOutInEra extractAddress = \case
     Rules.Alonzo.BadInputsUTxO inputs ->
         encodeObject
             [ ( "badInputs"
@@ -646,9 +647,7 @@ encodeUtxoFailure encodeUtxoInEra encodeTxOutInEra = \case
     Rules.Alonzo.OutputBootAddrAttrsTooBig outs ->
         encodeObject
             [ ( "addressAttributesTooLarge"
-              -- FIXME: should return addresses.
-              -- , encodeFoldable Shelley.encodeAddress ((\(Al.TxOut addr _ _) -> addr) <$> outs)
-              , encodeFoldable encodeTxOutInEra outs
+              , encodeFoldable Shelley.encodeAddress (extractAddress <$> outs)
               )
             ]
     Rules.Alonzo.TriesToForgeADA ->

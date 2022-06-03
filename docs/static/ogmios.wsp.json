@@ -705,7 +705,7 @@
       , "result":
         { "oneOf":
           [ { "$ref": "#/definitions/TxId" }
-          , { "$ref": "#/definitions/Tx[Alonzo]" }
+          , { "$ref": "#/definitions/Tx[Babbage]" }
           , { "$ref": "#/definitions/Null" }
           ]
         }
@@ -1313,6 +1313,7 @@
         { "anyOf":
           [ { "$ref": "#/definitions/ProtocolParameters[Shelley]" }
           , { "$ref": "#/definitions/ProtocolParameters[Alonzo]" }
+          , { "$ref": "#/definitions/ProtocolParameters[Babbage]" }
           , { "$ref": "#/definitions/EraMismatch" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
           ]
@@ -1355,6 +1356,11 @@
             , "title": "ProposedProtocolParameters[Alonzo]"
             , "propertyNames": { "contentEncoding": "bech32" , "pattern": "^[0-9a-f]+$" }
             , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Alonzo]" }
+            }
+          , { "type": "object"
+            , "title": "ProposedProtocolParameters[Babbage]"
+            , "propertyNames": { "contentEncoding": "bech32" , "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Babbage]" }
             }
           , { "$ref": "#/definitions/EraMismatch" }
           , { "$ref": "#/definitions/QueryUnavailableInCurrentEra" }
@@ -1845,6 +1851,14 @@
     { "description": "A Cardano Block, which can take different forms depending on the era."
     , "oneOf":
       [ { "type": "object"
+        , "required": [ "babbage" ]
+        , "title": "babbage"
+        , "additionalProperties": false
+        , "properties":
+          { "babbage": { "$ref": "#/definitions/Block[Babbage]" }
+          }
+        }
+      , { "type": "object"
         , "required": [ "alonzo" ]
         , "title": "alonzo"
         , "additionalProperties": false
@@ -2061,6 +2075,40 @@
         }
       , "headerHash": { "$ref": "#/definitions/Block[Shelley]/properties/headerHash" }
       , "header": { "$ref": "#/definitions/Block[Shelley]/properties/header" }
+      }
+    }
+
+  , "Block[Babbage]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "body":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Tx[Babbage]" }
+        }
+      , "headerHash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].header" }
+      , "header":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required":
+          [ "blockHeight","slot","prevHash","issuerVk","issuerVrf","vrfInput"
+          , "blockSize", "blockHash","opCert","protocolVersion","signature"
+          ]
+        , "$omitted-if-compact": ["signature", "vrfInput", "opCert", "protocolVersion"]
+        , "properties":
+          { "blockHeight": { "$ref": "#/definitions/BlockNo" }
+          , "slot": { "$ref": "#/definitions/Slot" }
+          , "prevHash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].header" }
+          , "issuerVk": { "$ref": "#/definitions/VerificationKey" }
+          , "issuerVrf": { "$ref": "#/definitions/IssuerVrfVerificationKey" }
+          , "blockSize": { "$ref": "#/definitions/BlockSize" }
+          , "blockHash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
+          , "opCert": { "$ref": "#/definitions/OpCert" }
+          , "protocolVersion": { "$ref": "#/definitions/ProtocolVersion" }
+          , "signature": { "$ref": "#/definitions/IssuerSignature" }
+          , "vrfInput": { "$ref": "#/definitions/CertifiedVrf" }
+          }
+        }
       }
     }
 
@@ -2418,13 +2466,19 @@
     }
 
   , "Digest[Blake2b]::Block[*].header":
-    { "type": "string"
-    , "description": "A Blake2b 32-byte digest of an era-independent block header, serialised as CBOR."
-    , "contentEncoding": "base16"
-    , "minLength": 64
-    , "maxLength": 64
-    , "examples":
-      [ "c248757d390181c517a5beadc9c3fe64bf821d3e889a963fc717003ec248757d"
+    { "oneOf":
+      [ { "type": "string"
+        , "description": "A Blake2b 32-byte digest of an era-independent block header, serialised as CBOR."
+        , "contentEncoding": "base16"
+        , "minLength": 64
+        , "maxLength": 64
+        , "examples":
+          [ "c248757d390181c517a5beadc9c3fe64bf821d3e889a963fc717003ec248757d"
+          ]
+        }
+      , { "type": "string"
+        , "enum": [ "genesis" ]
+        }
       ]
     }
 
@@ -2580,7 +2634,7 @@
 
   , "Era":
     { "type": "string"
-    , "enum": ["Byron", "Shelley", "Allegra", "Mary", "Alonzo"]
+    , "enum": ["Byron", "Shelley", "Allegra", "Mary", "Alonzo", "Babbage"]
     }
 
   , "EraMismatch":
@@ -2648,6 +2702,7 @@
             , { "$ref": "#/definitions/EvaluationFailure[UncomputableSlotArithmetic]" }
             , { "$ref": "#/definitions/EvaluationFailure[AdditionalUtxoOverlap]" }
             , { "$ref": "#/definitions/EvaluationFailure[NotEnoughSynced]" }
+            , { "$ref": "#/definitions/EvaluationFailure[CannotCreateEvaluationContext]" }
             ]
         }
       }
@@ -2731,6 +2786,23 @@
         , "properties":
           { "minimumRequiredEra": { "$ref": "#/definitions/Era" }
           , "currentNodeEra": { "$ref": "#/definitions/Era" }
+          }
+        }
+      }
+    }
+
+  , "EvaluationFailure[CannotCreateEvaluationContext]":
+    { "type": "object"
+    , "description": "Happens when the ledger fails to create an evaluation context from a given transaction. This is mostly due to the transaction being malformed (e.g. wrong redeemer pointer, missing UTxO)."
+    , "additionalProperties": false
+    , "required": [ "CannotCreateEvaluationContext" ]
+    , "properties":
+      { "CannotCreateEvaluationContext":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "reason" ]
+        , "properties":
+          { "reason": { "type": "string" }
           }
         }
       }
@@ -3439,6 +3511,84 @@
       }
     }
 
+  , "ProtocolParameters[Babbage]":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required":
+      [ "minFeeCoefficient"
+      , "minFeeConstant"
+      , "maxBlockBodySize"
+      , "maxBlockHeaderSize"
+      , "maxTxSize"
+      , "stakeKeyDeposit"
+      , "poolDeposit"
+      , "poolRetirementEpochBound"
+      , "desiredNumberOfPools"
+      , "poolInfluence"
+      , "monetaryExpansion"
+      , "treasuryExpansion"
+      , "minPoolCost"
+      , "coinsPerUtxoByte"
+      , "maxValueSize"
+      , "collateralPercentage"
+      , "maxCollateralInputs"
+      , "protocolVersion"
+      , "costModels"
+      , "prices"
+      , "maxExecutionUnitsPerTransaction"
+      , "maxExecutionUnitsPerBlock"
+      ]
+    , "properties":
+      { "minFeeCoefficient": { "$ref": "#/definitions/NullableUInt64" }
+      , "minFeeConstant": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxBlockBodySize": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxBlockHeaderSize": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxTxSize": { "$ref": "#/definitions/NullableUInt64" }
+      , "stakeKeyDeposit": { "$ref": "#/definitions/NullableUInt64" }
+      , "poolDeposit": { "$ref": "#/definitions/NullableUInt64" }
+      , "poolRetirementEpochBound": { "$ref": "#/definitions/NullableUInt64" }
+      , "desiredNumberOfPools": { "$ref": "#/definitions/NullableUInt64" }
+      , "poolInfluence": { "$ref": "#/definitions/NullableRatio" }
+      , "monetaryExpansion": { "$ref": "#/definitions/NullableRatio" }
+      , "treasuryExpansion": { "$ref": "#/definitions/NullableRatio" }
+      , "minPoolCost": { "$ref": "#/definitions/NullableUInt64" }
+      , "coinsPerUtxoByte": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxValueSize": { "$ref": "#/definitions/NullableUInt64" }
+      , "collateralPercentage": { "$ref": "#/definitions/NullableUInt64" }
+      , "maxCollateralInputs": { "$ref": "#/definitions/NullableUInt64" }
+      , "protocolVersion":
+        { "oneOf":
+          [ { "$ref": "#/definitions/ProtocolVersion" }
+          , { "$ref": "#/definitions/Null"}
+          ]
+        }
+      , "costModels":
+        { "oneOf":
+          [ { "$ref": "#/definitions/CostModels" }
+          , { "$ref": "#/definitions/Null"}
+          ]
+        }
+      , "prices":
+        { "oneOf":
+          [ { "$ref": "#/definitions/Prices" }
+          , { "$ref": "#/definitions/Null"}
+          ]
+        }
+      , "maxExecutionUnitsPerTransaction":
+        { "oneOf":
+          [ { "$ref": "#/definitions/ExUnits" }
+          , { "$ref": "#/definitions/Null"}
+          ]
+        }
+      , "maxExecutionUnitsPerBlock":
+        { "oneOf":
+          [ { "$ref": "#/definitions/ExUnits" }
+          , { "$ref": "#/definitions/Null"}
+          ]
+        }
+      }
+    }
+
   , "ProtocolVersion":
     { "type": "object"
     , "additionalProperties": false
@@ -3774,7 +3924,7 @@
           }
         }
       , { "type": "object"
-        , "title": "Plutus"
+        , "title": "PlutusV1"
         , "additionalProperties": false
         , "required": [ "plutus:v1" ]
         , "properties":
@@ -3782,7 +3932,7 @@
           }
         }
       , { "type": "object"
-        , "title": "Plutus"
+        , "title": "PlutusV2"
         , "additionalProperties": false
         , "required": [ "plutus:v2" ]
         , "properties":
@@ -4102,7 +4252,6 @@
         , { "$ref": "#/definitions/SubmitTxError[mirTransferNotCurrentlyAllowed]" }
         , { "$ref": "#/definitions/SubmitTxError[mirNegativeTransferNotCurrentlyAllowed]" }
         , { "$ref": "#/definitions/SubmitTxError[mirProducesNegativeUpdate]" }
-        , { "$ref": "#/definitions/SubmitTxError[mirNegativeTransfer]" }
         , { "$ref": "#/definitions/SubmitTxError[duplicateGenesisVrf]" }
         , { "$ref": "#/definitions/SubmitTxError[nonGenesisVoters]" }
         , { "$ref": "#/definitions/SubmitTxError[updateWrongEpoch]" }
@@ -4125,6 +4274,9 @@
         , { "$ref": "#/definitions/SubmitTxError[validationTagMismatch]" }
         , { "$ref": "#/definitions/SubmitTxError[collectErrors]" }
         , { "$ref": "#/definitions/SubmitTxError[extraScriptWitnesses]" }
+        , { "$ref": "#/definitions/SubmitTxError[mirNegativeTransfer]" }
+        , { "$ref": "#/definitions/SubmitTxError[collateralReturnMismatch]" }
+        , { "$ref": "#/definitions/SubmitTxError[malformedOutputScripts]" }
         ]
       }
     }
@@ -4401,7 +4553,19 @@
     , "properties":
       { "outputTooSmall":
         { "type": "array"
-        , "items":{ "$ref": "#/definitions/TxOut" }
+        , "items":
+          { "oneOf":
+            [ { "$ref": "#/definitions/TxOut" }
+            , { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "output", "minimumRequiredValue" ]
+              , "properties":
+                { "output": { "$ref": "#/definitions/TxOut" }
+                , "minimumRequiredValue": { "$ref": "#/definitions/Lovelace" }
+                }
+              }
+            ]
+          }
         }
       }
     }
@@ -5062,6 +5226,37 @@
       }
     }
 
+  , "SubmitTxError[collateralReturnMismatch]":
+    { "type": "object"
+    , "title": "collateralReturnMismatch"
+    , "additionalProperties": false
+    , "required": ["collateralReturnMismatch"]
+    , "properties":
+      { "collateralReturnMismatch":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "needed", "returned" ]
+        , "properties":
+          { "needed": { "$ref": "#/definitions/Lovelace" }
+          , "returned": { "$ref": "#/definitions/Lovelace" }
+          }
+        }
+      }
+    }
+
+  , "SubmitTxError[malformedOutputScripts]":
+    { "type": "object"
+    , "title": "malformedOutputScripts"
+    , "additionalProperties": false
+    , "required": ["malformedOutputScripts"]
+    , "properties":
+      { "malformedOutputScripts":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Digest[Blake2b]::Script" }
+        }
+      }
+    }
+
   , "TipOrOrigin":
     { "oneOf":
       [ { "type": "object"
@@ -5425,6 +5620,139 @@
       }
     }
 
+  , "Tx[Babbage]":
+    { "type": "object"
+    , "$omitted-if-compact": ["witness", "raw"]
+    , "additionalProperties": false
+    , "required": [ "id", "body", "witness", "metadata", "inputSource", "raw" ]
+    , "properties":
+      { "id": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].body" }
+      , "inputSource":
+        { "type": "string"
+        , "enum":
+          [ "inputs"
+          , "collaterals"
+          ]
+        }
+      , "body":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required":
+          [ "inputs", "collaterals", "outputs", "certificates"
+          , "withdrawals", "fee", "validityInterval", "update", "mint"
+          , "network", "scriptIntegrityHash", "requiredExtraSignatures"
+          ]
+        , "properties":
+          { "inputs":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxIn" }
+            }
+          , "references":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxIn" }
+            }
+          , "collaterals":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxIn" }
+            }
+          , "collateralReturn":
+            { "oneOf":
+              [ { "$ref": "#/definitions/TxOut" }
+              , { "$ref": "#/definitions/Null" }
+              ]
+            }
+          , "totalCollateral":
+            { "oneOf":
+              [ { "$ref": "#/definitions/Lovelace" }
+              , { "$ref": "#/definitions/Null" }
+              ]
+            }
+          , "outputs":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/TxOut" }
+            }
+          , "certificates":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Certificate" }
+            }
+          , "withdrawals":
+            { "$ref": "#/definitions/Withdrawals"
+            }
+          , "fee":
+            { "$ref": "#/definitions/Lovelace"
+            }
+          , "validityInterval":
+            { "$ref": "#/definitions/ValidityInterval"
+            }
+          , "update":
+            { "$ref": "#/definitions/Update[Babbage]"
+            }
+          , "mint":
+            { "$ref": "#/definitions/Value"
+            }
+          , "network":
+            { "oneOf":
+              [ { "$ref": "#/definitions/Network" }
+              , { "$ref": "#/definitions/Null"}
+              ]
+            }
+          , "scriptIntegrityHash":
+            { "oneOf":
+              [ { "$ref": "#/definitions/Digest[Blake2b]::ScriptIntegrity" }
+              , { "$ref": "#/definitions/Null"}
+              ]
+            }
+          , "requiredExtraSignatures":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/Digest[Blake2b]::VerificationKey" }
+            }
+          }
+        }
+      , "witness":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["signatures","scripts","bootstrap", "datums", "redeemers"]
+        , "properties":
+          { "signatures":
+            { "type": "object"
+            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/Signature" }
+            }
+          , "scripts":
+            { "type": "object"
+            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/Script" }
+            }
+          , "bootstrap":
+            { "type": "array"
+            , "items": { "$ref": "#/definitions/BootstrapWitness" }
+            }
+          , "datums":
+            { "type": "object"
+            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+            , "additionalProperties": { "$ref": "#/definitions/Datum" }
+            }
+          , "redeemers":
+            { "type": "object"
+            , "propertyNames": { "$ref": "#/definitions/RedeemerPointer" }
+            , "additionalProperties": { "$ref": "#/definitions/Redeemer" }
+            }
+          }
+        }
+      , "metadata":
+        { "oneOf":
+          [ { "$ref": "#/definitions/AuxiliaryData" }
+          , { "$ref": "#/definitions/Null"}
+          ]
+        }
+      , "raw":
+        { "type": "string"
+        , "contentEncoding": "base64"
+        , "description": "The raw serialized transaction, as found on-chain."
+        }
+      }
+    }
+
   , "TxFeePolicy":
     { "type": "object"
     , "additionalProperties": false
@@ -5593,6 +5921,25 @@
         }
       ]
     }
+
+  , "Update[Babbage]":
+    { "oneOf":
+      [ { "$ref": "#/definitions/Null"}
+      , { "type": "object"
+        , "title": "UpdateProposal[Babbage]"
+        , "additionalProperties": false
+        , "required": ["proposal", "epoch"]
+        , "properties":
+          { "epoch": { "$ref": "#/definitions/Epoch" }
+          , "proposal":
+            { "type": "object"
+            , "additionalProperties": { "$ref": "#/definitions/ProtocolParameters[Babbage]" }
+            }
+          }
+        }
+      ]
+    }
+
 
   , "UtcTime":
     { "type": "string"

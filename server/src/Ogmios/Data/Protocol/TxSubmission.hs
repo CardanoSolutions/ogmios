@@ -42,6 +42,7 @@ module Ogmios.Data.Protocol.TxSubmission
     , _decodeEvaluateTx
     , EvaluateTxResponse (..)
     , EvaluateTxError (..)
+    , NotEnoughSyncedError (..)
     , evaluateExecutionUnits
     , incompatibleEra
     , notEnoughSynced

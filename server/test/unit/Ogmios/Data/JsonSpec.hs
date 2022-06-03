@@ -816,6 +816,7 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                     , SomeShelleyEra ShelleyBasedEraAllegra
                     , SomeShelleyEra ShelleyBasedEraMary
                     , SomeShelleyEra ShelleyBasedEraAlonzo
+                    , SomeShelleyEra ShelleyBasedEraBabbage
                     ]
             forM_ eras $ \(era, SomeQuery{genResult,encodeResult}) -> do
                 let encodeQueryResponse
@@ -825,7 +826,7 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                         . encodeResult FullSerialization
 
                 case era of
-                    SomeShelleyEra ShelleyBasedEraAlonzo -> do
+                    SomeShelleyEra ShelleyBasedEraBabbage -> do
                         generateTestVectors (n, vectorFilepath)
                             (genResult Proxy)
                             encodeQueryResponse

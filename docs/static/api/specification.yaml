@@ -1,4 +1,4 @@
-asyncapi: '2.3.0'
+asyncapi: '2.4.0'
 info:
   title: Ogmios
   version: '5.4.0'
@@ -148,6 +148,7 @@ components:
   messages:
     RequestNext:
       title: RequestNext
+      name: "since v3.0.0"
       description: |
         Request next block from the current cardano-node's cursor.
       payload:
@@ -155,6 +156,7 @@ components:
 
     RequestNextResponse:
       title: RequestNextResponse
+      name: "since v3.0.0"
       description: |
         Response to a `RequestNext`.
       payload:
@@ -162,6 +164,7 @@ components:
 
     FindIntersect:
       title: FindIntersect
+      name: "since v3.0.0"
       description: |
         Ask for an intersection between the server's local chain and the given points.
       payload:
@@ -169,6 +172,7 @@ components:
 
     FindIntersectResponse:
       title: FindIntersectResponse
+      name: "since v3.0.0"
       description: |
         Response to a `FindIntersect`.
       payload:
@@ -176,6 +180,7 @@ components:
 
     SubmitTx:
       title: SubmitTx
+      name: "since v3.0.0"
       description: |
         Submit a signed and serialized transaction to the network.
       payload:
@@ -183,6 +188,7 @@ components:
 
     SubmitTxResponse:
       title: SubmitTxResponse
+      name: "since v3.0.0"
       description: |
         Response to a `SubmitTx`.
       payload:
@@ -190,6 +196,7 @@ components:
 
     EvaluateTx:
       title: EvaluateTx
+      name: "since v5.2.0"
       description: |
         Evaluate execution units of scripts in a well-formed transaction.
       payload:
@@ -197,6 +204,7 @@ components:
 
     EvaluateTxResponse:
       title: EvaluateTxResponse
+      name: "since v5.2.0"
       description: |
         Response to a `EvaluateTx`.
       payload:
@@ -204,6 +212,7 @@ components:
 
     AwaitAcquire:
       title: AwaitAcquire
+      name: "since v5.1.0"
       description: |
         Acquire a mempool snapshot. This is blocking until a new (i.e different) snapshot is available.
       payload:
@@ -211,6 +220,7 @@ components:
 
     AwaitAcquireResponse:
       title: AwaitAcquireResponse
+      name: "since v5.1.0"
       description: |
         Response to a `AwaitAcquire`.
       payload:
@@ -218,6 +228,7 @@ components:
 
     NextTx:
       title: NextTx
+      name: "since v5.1.0"
       description: |
         Request the next mempool transaction from an acquired snapshot.
       payload:
@@ -225,6 +236,7 @@ components:
 
     NextTxResponse:
       title: NextTxResponse
+      name: "since v5.1.0"
       description: |
         Response to a `NextTx`.
       payload:
@@ -232,6 +244,7 @@ components:
 
     HasTx:
       title: HasTx
+      name: "since v5.1.0"
       description: |
         Ask whether a given transaction is present in the acquired mempool snapshot.
       payload:
@@ -239,6 +252,7 @@ components:
 
     HasTxResponse:
       title: HasTxResponse
+      name: "since v5.1.0"
       description: |
         Response to a `HasTx`.
       payload:
@@ -246,6 +260,7 @@ components:
 
     SizeAndCapacity:
       title: SizeAndCapacity
+      name: "since v5.1.0"
       description: |
         Get size and capacities of the mempool (acquired snapshot).
       payload:
@@ -253,6 +268,7 @@ components:
 
     SizeAndCapacityResponse:
       title: SizeAndCapacityResponse
+      name: "since v5.1.0"
       description: |
         Response to a `SizeAndCapacity`.
       payload:
@@ -260,6 +276,7 @@ components:
 
     ReleaseMempool:
       title: ReleaseMempool
+      name: "since v5.1.0"
       description: |
         Release a previously acquired mempool snapshot
       payload:
@@ -267,6 +284,7 @@ components:
 
     ReleaseMempoolResponse:
       title: ReleaseMempoolResponse
+      name: "since v5.1.0"
       description: |
         Response to a `ReleaseMempool`.
       payload:
@@ -274,6 +292,7 @@ components:
 
     Acquire:
       title: Acquire
+      name: "since v3.0.0"
       description: |
         Acquire a point on chain from which run queries.
       payload:
@@ -281,6 +300,7 @@ components:
 
     AcquireResponse:
       title: AcquireResponse
+      name: "since v3.0.0"
       description: |
         Response to a `Acquire`.
       payload:
@@ -288,6 +308,7 @@ components:
 
     Query:
       title: Query
+      name: "since v3.0.0"
       description: |
         Query the ledger / node.
       payload:
@@ -295,82 +316,103 @@ components:
 
     QueryResponse[blockHeight]:
       title: QueryResponse[blockHeight]
+      name: "since v5.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[blockHeight]"
     QueryResponse[chainTip]:
       title: QueryResponse[chainTip]
+      name: "since v5.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[chainTip]"
     QueryResponse[currentEpoch]:
       title: QueryResponse[currentEpoch]
+      name: "since v3.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[currentEpoch]"
     QueryResponse[currentProtocolParameters]:
       title: QueryResponse[currentProtocolParameters]
+      name: "since v3.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[currentProtocolParameters]"
     QueryResponse[delegationsAndRewards]:
       title: QueryResponse[delegationsAndRewards]
+      name: "since v3.1.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[delegationsAndRewards]"
     QueryResponse[eraStart]:
       title: QueryResponse[eraStart]
+      name: "since v3.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[eraStart]"
     QueryResponse[eraSummaries]:
       title: QueryResponse[eraSummaries]
+      name: "since v5.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[eraSummaries]"
     QueryResponse[genesisConfig]:
       title: QueryResponse[genesisConfig]
+      name: "since v3.1.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
     QueryResponse[ledgerTip]:
       title: QueryResponse[ledgerTip]
+      name: "since v3.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[ledgerTip]"
     QueryResponse[nonMyopicMemberRewards]:
       title: QueryResponse[nonMyopicMemberRewards]
+      name: "since v3.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
     QueryResponse[poolIds]:
       title: QueryResponse[poolIds]
+      name: "since v4.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[poolIds]"
     QueryResponse[poolParameters]:
       title: QueryResponse[poolParameters]
+      name: "since v4.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[poolParameters]"
     QueryResponse[poolsRanking]:
       title: QueryResponse[poolsRanking]
+      name: "since v4.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[poolsRanking]"
     QueryResponse[proposedProtocolParameters]:
       title: QueryResponse[proposedProtocolParameters]
+      name: "since v3.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[proposedProtocolParameters]"
     QueryResponse[rewardsProvenance]:
       title: QueryResponse[rewardsProvenance]
+      name: "since v3.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[rewardsProvenance]"
     QueryResponse[rewardsProvenance']:
       title: QueryResponse[rewardsProvenance']
+      name: "since v4.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[rewardsProvenance']"
     QueryResponse[stakeDistribution]:
       title: QueryResponse[stakeDistribution]
+      name: "since v3.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[stakeDistribution]"
     QueryResponse[systemStart]:
       title: QueryResponse[systemStart]
+      name: "since v5.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[systemStart]"
     QueryResponse[utxo]:
       title: QueryResponse[utxo]
+      name: "since v3.0.0"
       payload:
         $ref: "/ogmios.wsp.json#/properties/QueryResponse[utxo]"
+
     Release:
       title: Release
+      name: "since v3.0.0"
       description: |
         Release a point on chain previously acquired.
       payload:
@@ -378,10 +420,8 @@ components:
 
     ReleaseResponse:
       title: ReleaseResponse
+      name: "since v3.0.0"
       description: |
         Response to a `Release`.
       payload:
         $ref: "/ogmios.wsp.json#/properties/ReleaseResponse"
-
-
-
