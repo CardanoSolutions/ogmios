@@ -120,10 +120,10 @@ encodeUtxoFailure = \case
         Alonzo.encodeUtxoFailure encodeUtxo encodeTxOut (\(Ledger.Babbage.TxOut addr _ _ _) -> addr)  e
     Ledger.Babbage.UnequalCollateralReturn needed returned ->
         encodeObject
-            [ ( "collateralReturnMismatch"
+            [ ( "totalCollateralMismatch"
               , encodeObject
                 [ ( "needed", encodeCoin needed )
-                , ( "returned", encodeCoin returned )
+                , ( "specified", encodeCoin returned )
                 ]
               )
             ]

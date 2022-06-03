@@ -4275,7 +4275,7 @@
         , { "$ref": "#/definitions/SubmitTxError[collectErrors]" }
         , { "$ref": "#/definitions/SubmitTxError[extraScriptWitnesses]" }
         , { "$ref": "#/definitions/SubmitTxError[mirNegativeTransfer]" }
-        , { "$ref": "#/definitions/SubmitTxError[collateralReturnMismatch]" }
+        , { "$ref": "#/definitions/SubmitTxError[totalCollateralMismatch]" }
         , { "$ref": "#/definitions/SubmitTxError[malformedOutputScripts]" }
         ]
       }
@@ -5226,19 +5226,19 @@
       }
     }
 
-  , "SubmitTxError[collateralReturnMismatch]":
+  , "SubmitTxError[totalCollateralMismatch]":
     { "type": "object"
-    , "title": "collateralReturnMismatch"
+    , "title": "totalCollateralMismatch"
     , "additionalProperties": false
-    , "required": ["collateralReturnMismatch"]
+    , "required": ["totalCollateralMismatch"]
     , "properties":
-      { "collateralReturnMismatch":
+      { "totalCollateralMismatch":
         { "type": "object"
         , "additionalProperties": false
-        , "required": [ "needed", "returned" ]
+        , "required": [ "needed", "specified" ]
         , "properties":
           { "needed": { "$ref": "#/definitions/Lovelace" }
-          , "returned": { "$ref": "#/definitions/Lovelace" }
+          , "specified": { "$ref": "#/definitions/Lovelace" }
           }
         }
       }

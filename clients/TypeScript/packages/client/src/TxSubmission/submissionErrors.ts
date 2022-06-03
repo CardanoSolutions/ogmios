@@ -6,7 +6,6 @@ import {
   BadInputs,
   CollateralHasNonAdaAssets,
   CollateralIsScript,
-  CollateralReturnMismatch,
   CollateralTooSmall,
   CollectErrors,
   DelegateNotRegistered,
@@ -54,6 +53,7 @@ import {
   TooLateForMir,
   TooManyAssetsInOutput,
   TooManyCollateralInputs,
+  TotalCollateralMismatch,
   TriesToForgeAda,
   TxMetadataHashMismatch,
   TxTooLarge,
@@ -76,7 +76,6 @@ export type SubmitTxErrorShelley =
   | BadInputs
   | CollateralHasNonAdaAssets
   | CollateralIsScript
-  | CollateralReturnMismatch
   | CollateralTooSmall
   | CollectErrors
   | DelegateNotRegistered
@@ -124,6 +123,7 @@ export type SubmitTxErrorShelley =
   | TooLateForMir
   | TooManyAssetsInOutput
   | TooManyCollateralInputs
+  | TotalCollateralMismatch
   | TriesToForgeAda
   | TxMetadataHashMismatch
   | TxTooLarge
@@ -780,13 +780,13 @@ export const errors = {
       }
     }
   },
-  CollateralReturnMismatch: {
-    assert: (item: SubmitTxErrorShelley): item is CollateralReturnMismatch =>
-      (item as CollateralReturnMismatch).collateralReturnMismatch !== undefined,
-    Error: class CollateralReturnMismatchError extends CustomError {
-      public constructor (rawError: CollateralReturnMismatch) {
+  TotalCollateralMismatch: {
+    assert: (item: SubmitTxErrorShelley): item is TotalCollateralMismatch =>
+      (item as TotalCollateralMismatch).totalCollateralMismatch !== undefined,
+    Error: class TotalCollateralMismatchError extends CustomError {
+      public constructor (rawError: TotalCollateralMismatch) {
         super()
-        this.message = safeJSON.stringify(rawError.collateralReturnMismatch)
+        this.message = safeJSON.stringify(rawError.totalCollateralMismatch)
       }
     }
   },

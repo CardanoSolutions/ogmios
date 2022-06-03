@@ -283,7 +283,7 @@ export type SubmitTxError = (
   | CollectErrors
   | ExtraScriptWitnesses
   | MirNegativeTransfer
-  | CollateralReturnMismatch
+  | TotalCollateralMismatch
   | MalformedOutputScripts
 )[];
 export type RedeemerPointer = string;
@@ -2071,10 +2071,10 @@ export interface MirNegativeTransfer {
     attemptedTransfer: Lovelace;
   };
 }
-export interface CollateralReturnMismatch {
-  collateralReturnMismatch: {
+export interface TotalCollateralMismatch {
+  totalCollateralMismatch: {
     needed: Lovelace;
-    returned: Lovelace;
+    specified: Lovelace;
   };
 }
 export interface MalformedOutputScripts {
