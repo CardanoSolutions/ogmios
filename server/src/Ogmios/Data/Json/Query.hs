@@ -144,6 +144,8 @@ import Ouroboros.Consensus.HardFork.History.Summary
     ( Bound (..), EraEnd (..), EraSummary (..), Summary (..) )
 import Ouroboros.Consensus.Protocol.Praos
     ( Praos, PraosCrypto )
+import Ouroboros.Consensus.Protocol.TPraos
+    ( TPraos )
 import Ouroboros.Consensus.Shelley.Eras
     ( AllegraEra, AlonzoEra, BabbageEra, MaryEra, ShelleyEra )
 import Ouroboros.Consensus.Shelley.Ledger.Block
@@ -250,7 +252,7 @@ instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
         , \raw -> Query raw <$> parseGetFilteredDelegationsAndRewards id raw
         , \raw -> Query raw <$> parseGetGenesisConfig (const id) raw
         , \raw -> Query raw <$> parseGetInterpreter id raw
-        , \raw -> Query raw <$> parseGetLedgerTip (const id) raw
+        , \raw -> Query raw <$> parseGetLedgerTip (const id) (const id) raw
         , \raw -> Query raw <$> parseGetNonMyopicMemberRewards id raw
         , \raw -> Query raw <$> parseGetPoolIds id raw
         , \raw -> Query raw <$> parseGetPoolParameters id raw
@@ -694,10 +696,11 @@ parseGetEraStart genResult =
 
 parseGetLedgerTip
     :: forall crypto f. (Crypto crypto)
-    => (forall era proto. Typeable era => Proxy era -> GenResult crypto f (Point (ShelleyBlock (proto crypto) era)))
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Point (ShelleyBlock (TPraos crypto) era)))
+    -> (forall era. Typeable era => Proxy era -> GenResult crypto f (Point (ShelleyBlock (Praos crypto) era)))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetLedgerTip genResultInEra =
+parseGetLedgerTip genResultInEraTPraos genResultInEraPraos =
     Json.withText "SomeQuery" $ \text -> do
         guard (text == "ledgerTip") $> \case
             SomeShelleyEra ShelleyBasedEraShelley ->
@@ -707,7 +710,7 @@ parseGetLedgerTip genResultInEra =
                 , encodeResult =
                     const (either encodeMismatchEraInfo (encodePoint . castPoint))
                 , genResult =
-                    genResultInEra (Proxy @(ShelleyEra crypto))
+                    genResultInEraTPraos (Proxy @(ShelleyEra crypto))
                 }
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeQuery
@@ -716,7 +719,7 @@ parseGetLedgerTip genResultInEra =
                 , encodeResult =
                     const (either encodeMismatchEraInfo (encodePoint . castPoint))
                 , genResult =
-                    genResultInEra (Proxy @(AllegraEra crypto))
+                    genResultInEraTPraos (Proxy @(AllegraEra crypto))
                 }
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeQuery
@@ -725,7 +728,7 @@ parseGetLedgerTip genResultInEra =
                 , encodeResult =
                     const (either encodeMismatchEraInfo (encodePoint . castPoint))
                 , genResult =
-                    genResultInEra (Proxy @(MaryEra crypto))
+                    genResultInEraTPraos (Proxy @(MaryEra crypto))
                 }
             SomeShelleyEra ShelleyBasedEraAlonzo ->
                 Just $ SomeQuery
@@ -734,7 +737,7 @@ parseGetLedgerTip genResultInEra =
                 , encodeResult =
                     const (either encodeMismatchEraInfo (encodePoint . castPoint))
                 , genResult =
-                    genResultInEra (Proxy @(AlonzoEra crypto))
+                    genResultInEraTPraos (Proxy @(AlonzoEra crypto))
                 }
             SomeShelleyEra ShelleyBasedEraBabbage ->
                 Just $ SomeQuery
@@ -743,7 +746,7 @@ parseGetLedgerTip genResultInEra =
                 , encodeResult =
                     const (either encodeMismatchEraInfo (encodePoint . castPoint @(Praos crypto)))
                 , genResult =
-                    genResultInEra (Proxy @(BabbageEra crypto))
+                    genResultInEraPraos (Proxy @(BabbageEra crypto))
                 }
 
 parseGetEpochNo

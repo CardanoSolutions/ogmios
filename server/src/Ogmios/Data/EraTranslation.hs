@@ -104,10 +104,14 @@ data MultiEraUTxO block where
         -> MultiEraUTxO block
 
 deriving instance
+    ( Eq (UTxO (AlonzoEra (Crypto block)))
+    , Eq (UTxO (BabbageEra (Crypto block)))
+    ) => Eq (MultiEraUTxO block)
+
+deriving instance
     ( Show (UTxO (AlonzoEra (Crypto block)))
     , Show (UTxO (BabbageEra (Crypto block)))
     ) => Show (MultiEraUTxO block)
-
 
 data MultiEraTxOut block where
     TxOutInAlonzoEra
@@ -117,6 +121,11 @@ data MultiEraTxOut block where
     TxOutInBabbageEra
         :: Babbage.TxOut (BabbageEra (Crypto block))
         -> MultiEraTxOut block
+
+deriving instance
+    ( Eq (Alonzo.TxOut (AlonzoEra (Crypto block)))
+    , Eq (Babbage.TxOut (BabbageEra (Crypto block)))
+    ) => Eq (MultiEraTxOut block)
 
 deriving instance
     ( Show (Alonzo.TxOut (AlonzoEra (Crypto block)))

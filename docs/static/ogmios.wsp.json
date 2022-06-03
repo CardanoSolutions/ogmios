@@ -4700,7 +4700,7 @@
     , "additionalProperties": false
     , "required": [ "mirNegativeTransfer" ]
     , "properties":
-      { "insufficientFundsForMir":
+      { "mirNegativeTransfer":
         { "type": "object"
         , "additionalProperties": false
         , "required": [ "rewardSource", "attemptedTransfer" ]
@@ -5485,7 +5485,7 @@
           ]
         }
       , "datum":
-        { "oneOf":
+        { "anyOf":
           [ { "$allOf":
               [ { "$ref": "#/definitions/Digest[Blake2b]::Datum" }
               , { "description": "Only in Alonzo transactions, for backward-compatibility." }

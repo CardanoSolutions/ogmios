@@ -134,7 +134,6 @@ library
     , cardano-crypto
     , cardano-crypto-class
     , cardano-crypto-wrapper
-    , cardano-data
     , cardano-ledger-alonzo
     , cardano-ledger-babbage
     , cardano-ledger-byron
@@ -314,7 +313,6 @@ test-suite unit
     , bytestring
     , cardano-client
     , cardano-ledger-alonzo
-    , cardano-ledger-babbage
     , cardano-ledger-core
     , cardano-ledger-shelley
     , cardano-ledger-shelley-test
@@ -336,6 +334,7 @@ test-suite unit
     , ouroboros-consensus-byron
     , ouroboros-consensus-cardano
     , ouroboros-consensus-cardano-test
+    , ouroboros-consensus-protocol
     , ouroboros-consensus-shelley
     , ouroboros-network
     , ouroboros-network-framework

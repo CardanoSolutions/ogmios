@@ -28,7 +28,6 @@ module Ogmios.Data.Json
     , encodeTxId
     , Shelley.encodeTxIn
     , Alonzo.stringifyRdmrPtr
-    , Alonzo.encodeUtxo
     , Alonzo.encodeTranslationError
 
       -- * Decoders

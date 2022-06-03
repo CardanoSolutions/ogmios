@@ -116,18 +116,23 @@ packages:
   - monoidal-synchronisation
   - network-mux
   - ouroboros-consensus
-  - ouroboros-consensus-test
   - ouroboros-consensus-byron
   - ouroboros-consensus-byronspec
-  - ouroboros-consensus-byron-test
   - ouroboros-consensus-cardano
   - ouroboros-consensus-protocol
   - ouroboros-consensus-shelley
-  - ouroboros-consensus-shelley-test
-  - ouroboros-consensus-cardano-test
   - ouroboros-network
   - ouroboros-network-framework
   - ouroboros-network-testing
+
+- git: https://github.com/CardanoSolutions/ouroboros-network
+  commit: 60f242b370e040924589c6cc6a867ef89288f0f3
+  subdirs:
+  - ouroboros-consensus-test
+  - ouroboros-consensus-byron-test
+  - ouroboros-consensus-shelley-test
+  - ouroboros-consensus-cardano-test
+  - ouroboros-consensus-protocol-test
 
 - git: https://github.com/CardanoSolutions/plutus
   commit: 5f5de28063920788f2dac9bafae1d42aec63d9b3

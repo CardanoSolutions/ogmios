@@ -62,8 +62,17 @@ import Ouroboros.Consensus.HardFork.Combinator.Mempool
     ( HardForkApplyTxErr (..) )
 import Ouroboros.Consensus.HardFork.History.Summary
     ( Bound (..) )
+import Ouroboros.Consensus.Protocol.Praos
+    ( Praos )
+import Ouroboros.Consensus.Protocol.TPraos
+    ( TPraos )
 import Ouroboros.Consensus.Shelley.Eras
-    ( StandardAllegra, StandardAlonzo, StandardMary, StandardShelley )
+    ( StandardAllegra
+    , StandardAlonzo
+    , StandardBabbage
+    , StandardMary
+    , StandardShelley
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
 import Ouroboros.Consensus.Shelley.Ledger.Config
@@ -137,7 +146,7 @@ genBlock = reasonablySized $ oneof
             , Mock (Crypto era)
             , Arbitrary (Ledger.Tx era)
             )
-        => Gen (ShelleyBlock era)
+        => Gen (ShelleyBlock (TPraos (Crypto era)) era)
     genBlockFrom = ShelleyBlock
         <$> (Ledger.Block <$> arbitrary <*> (toTxSeq @era <$> arbitrary))
         <*> arbitrary
@@ -284,7 +293,7 @@ genMismatchEraInfo = MismatchEraInfo <$> elements
     eraInfoByron =
         singleEraInfo (Proxy @ByronBlock)
     eraInfoShelley =
-        singleEraInfo (Proxy @(ShelleyBlock StandardShelley))
+        singleEraInfo (Proxy @(ShelleyBlock (TPraos StandardCrypto) StandardShelley))
 
 genBoundResult
     :: Proxy (Maybe Bound)
@@ -298,12 +307,15 @@ genInterpreterResult
 genInterpreterResult _ =
     arbitrary
 
-genPointResult
-    :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
+genPointResultTPraos
+    :: forall crypto era.
+        ( crypto ~ StandardCrypto
+        , Typeable era
+        )
     => Proxy era
-    -> Proxy (QueryResult crypto (Point (ShelleyBlock era)))
-    -> Gen (QueryResult crypto (Point (ShelleyBlock era)))
-genPointResult _era _result =
+    -> Proxy (QueryResult crypto (Point (ShelleyBlock (TPraos crypto) era)))
+    -> Gen (QueryResult crypto (Point (ShelleyBlock (TPraos crypto) era)))
+genPointResultTPraos _era _result =
     fromMaybe (error "genPointResult: unsupported era")
         (genShelley <|> genAllegra <|> genMary <|> genAlonzo)
   where
@@ -336,6 +348,28 @@ genPointResult _era _result =
                 Nothing
     genAlonzo =
         case testEquality (typeRep @era) (typeRep @StandardAlonzo) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+
+genPointResultPraos
+    :: forall crypto era.
+        ( crypto ~ StandardCrypto
+        , Typeable era
+        )
+    => Proxy era
+    -> Proxy (QueryResult crypto (Point (ShelleyBlock (Praos crypto) era)))
+    -> Gen (QueryResult crypto (Point (ShelleyBlock (Praos crypto) era)))
+genPointResultPraos _era _result =
+    fromMaybe (error "genPointResult: unsupported era")
+        (genBabbage)
+  where
+    genBabbage =
+        case testEquality (typeRep @era) (typeRep @StandardBabbage) of
             Just Refl{} ->
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)
@@ -416,7 +450,6 @@ genPParamsResult _ _ =
                     ]
             Nothing ->
                 Nothing
-
 
 genProposedPParamsResult
     :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
@@ -518,7 +551,6 @@ genUTxOResult _ _ =
                     ]
             Nothing ->
                 Nothing
-
 
 genCompactGenesisResult
     :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
