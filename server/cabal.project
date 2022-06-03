@@ -53,7 +53,7 @@ source-repository-package
   type: git
   location: https://github.com/input-output-hk/cardano-node
   tag: 82067b797c3f53a9d8adb982622ac58f9d675d24
-  --sha256: 1hh53whcj5y9kw4qpkiza7rmkniz18r493vv4dzl1a8r5fy3b2bv
+  --sha256: 09widqxlrkga3p170qd6da63mzb7gdjsl9qv83s59b206a0xn9fa
   subdir:
     cardano-api
 
@@ -228,14 +228,14 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/KtorZ/hjsonpointer
-  tag: 75ed0d049c33274a6cb4c36c8538d4bf2ef9c30e
-  --sha256: 0nf24m8kj5m6x4x5cawb194rzmir0wbz66jjd97sj6ajvsj9jqcp
+  tag: 879f0e74d55eef76ceaec8f60ed07657ab84bad7
+  --sha256: 0dpc11fillbg9h8vm8n9iykzf9bd2w7l13n7y0drpra8lnsh4mfb
 
 source-repository-package
   type: git
   location: https://github.com/KtorZ/hjsonschema
-  tag: fde6e676f79f3f3320a558f20492ad816a2543a7
-  --sha256: 0683m28348xcqhhp7l84jwknakjn966mv5mx6zbrzipdd8f7kslm
+  tag: 35e0b05c3867463363e67f00a5092cd39fa33313
+  --sha256: 1w78d0lk1gi908lklixpzpa2xkzbyhg77aixm9i4rznrzsnbwhfm
 
 source-repository-package
   type: git
@@ -253,5 +253,6 @@ constraints:
   , graphviz >= 2999.20.1.0
 
 allow-newer:
+  *:aeson,
   monoidal-containers:aeson,
   size-based:template-haskell
