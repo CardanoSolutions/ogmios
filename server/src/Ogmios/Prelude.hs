@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -11,6 +12,7 @@
 -- redundant constraints in order to enforce some restriction at the type-level
 -- to not shoot ourselves in the foot by accident.
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
+{-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
 
 module Ogmios.Prelude
     ( -- * relude, minus STM
@@ -30,8 +32,10 @@ module Ogmios.Prelude
       -- * type-level helpers
     , keepRedundantConstraint
     , LastElem
+    , Elem
     , Or
     , HKD
+    , (:\:)
     ) where
 
 import Data.Array
@@ -103,6 +107,10 @@ type family LastElem xs where
     LastElem (x : '[]) = x
     LastElem (x : xs)  = LastElem xs
 
+type family Elem e es where
+    Elem e ('[]) = TypeError ('Text "Elem: not found.")
+    Elem e (x : es) = Or (e ~ x) (Elem e es)
+
 type family Or (a :: Constraint) (b :: Constraint) :: Constraint where
     Or () b = ()
     Or (x ~ x) b = Or () b
@@ -112,6 +120,12 @@ type family Or (a :: Constraint) (b :: Constraint) :: Constraint where
 type family HKD f a where
   HKD Identity a = a
   HKD f a = f a
+
+infixr 5 :\:
+type family (:\:) (any :: k) (excluded :: k) :: Constraint where
+    excluded :\: excluded =
+        TypeError ( 'Text "Usage of this function forbids the type '" :<>: 'ShowType excluded :<>: 'Text "'." )
+    _ :\: _ = ()
 
 mapToArray :: Ix k => Map k v -> Array k v
 mapToArray m =

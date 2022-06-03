@@ -123,8 +123,6 @@ import Data.ByteString.Base64
     ( encodeBase64 )
 import Data.ByteString.Bech32
     ( HumanReadablePart, encodeBech32 )
-import Data.HashMap.Strict
-    ( (!?) )
 import Data.IP
     ( IPv4, IPv6 )
 import Data.Scientific
@@ -140,6 +138,8 @@ import Ouroboros.Consensus.BlockchainTime.WallClock.Types
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
+import qualified Data.Aeson.Key as Json
+import qualified Data.Aeson.KeyMap as Json
 import qualified Data.Aeson.Parser.Internal as Json hiding
     ( scientific )
 import qualified Data.Aeson.Types as Json
@@ -168,9 +168,9 @@ choice :: (Alternative f, MonadFail f) => String -> [a -> f b] -> a -> f b
 choice entity xs a =
     asum (xs <*> pure a) <|> fail ("invalid " <> entity)
 
-at :: Text -> Json.Value -> Maybe Json.Value
+at :: Json.Key -> Json.Value -> Maybe Json.Value
 at key = \case
-    Json.Object m -> m !? key
+    Json.Object m -> Json.lookup key m
     _ -> Nothing
 
 -- | Converts a 'Json.Encoding' to a 'Json.Value'. This is inefficient because
@@ -439,7 +439,7 @@ encodeFoldable encodeElem =
 
 encodeFoldable' :: Foldable f => (a -> Text) -> (a -> Json) -> f a -> Json
 encodeFoldable' encodeKey encodeValue =
-    Json.pairs . foldr (\a -> (<>) (Json.pair (encodeKey a) (encodeValue a))) mempty
+    Json.pairs . foldr (\a -> (<>) (Json.pair (Json.fromText (encodeKey a)) (encodeValue a))) mempty
 {-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> [a] -> Json #-}
 {-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> NonEmpty a -> Json #-}
 {-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> Vector a -> Json #-}
@@ -466,7 +466,6 @@ encodeListWithMode mode =
                   ++
                   [ encodeText ("..." <> show r <> " more element(s)") | r > 0 ]
                 )
-
 {-# INLINABLE encodeListWithMode #-}
 
 encodeMap :: (k -> Text) -> (v -> Json) -> Map k v -> Json
@@ -480,7 +479,7 @@ encodeMapWithMode mode encodeKey encodeValue m =
         FullSerialization ->
             encodeMap encodeKey encodeValue m
         CompactSerialization ->
-            let reducer k v = (:) (Json.pairs $ Json.pair (encodeKey k) (encodeValue v))
+            let reducer k v = (:) (Json.pairs $ Json.pair (Json.fromText (encodeKey k)) (encodeValue v))
                 zero = [ encodeText ("..." <> show r <> " more element(s)") | r > 0 ]
                 r = Map.size m - n
                 n = 5
@@ -494,7 +493,7 @@ encodeMaybe =
 
 encodeObject :: [(Text, Json)] -> Json
 encodeObject =
-    Json.pairs . foldr (\(k, v) -> (<>) (Json.pair k v)) mempty
+    Json.pairs . foldr (\(Json.fromText -> k, v) -> (<>) (Json.pair k v)) mempty
 {-# INLINABLE encodeObject #-}
 
 encodeObjectWithMode

@@ -5,7 +5,7 @@ cabal-version: 2.0
 -- see: https://github.com/sol/hpack
 
 name:           ogmios
-version:        5.4.0
+version:        5.5.0
 synopsis:       A JSON-WSP WebSocket client for cardano-node
 description:    Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server#ogmios-server>
 category:       Web
@@ -55,10 +55,12 @@ library
       Ogmios.Control.MonadOuroboros
       Ogmios.Control.MonadSTM
       Ogmios.Control.MonadWebSocket
+      Ogmios.Data.EraTranslation
       Ogmios.Data.Health
       Ogmios.Data.Json
       Ogmios.Data.Json.Allegra
       Ogmios.Data.Json.Alonzo
+      Ogmios.Data.Json.Babbage
       Ogmios.Data.Json.Byron
       Ogmios.Data.Json.Mary
       Ogmios.Data.Json.Orphans
@@ -132,8 +134,8 @@ library
     , cardano-crypto
     , cardano-crypto-class
     , cardano-crypto-wrapper
-    , cardano-data
     , cardano-ledger-alonzo
+    , cardano-ledger-babbage
     , cardano-ledger-byron
     , cardano-ledger-core
     , cardano-ledger-shelley
@@ -166,6 +168,7 @@ library
     , ouroboros-consensus
     , ouroboros-consensus-byron
     , ouroboros-consensus-cardano
+    , ouroboros-consensus-protocol
     , ouroboros-consensus-shelley
     , ouroboros-network
     , prettyprinter
@@ -331,6 +334,7 @@ test-suite unit
     , ouroboros-consensus-byron
     , ouroboros-consensus-cardano
     , ouroboros-consensus-cardano-test
+    , ouroboros-consensus-protocol
     , ouroboros-consensus-shelley
     , ouroboros-network
     , ouroboros-network-framework

@@ -1,7 +1,7 @@
 _config: !include ".hpack.config.yaml"
 
 name:                ogmios
-version:             5.4.0
+version:             5.5.0
 stability:           stable
 github:              "cardanosolutions/ogmios"
 license:             MPL-2.0
@@ -50,8 +50,8 @@ library:
     - cardano-crypto
     - cardano-crypto-class
     - cardano-crypto-wrapper
-    - cardano-data
     - cardano-ledger-alonzo
+    - cardano-ledger-babbage
     - cardano-ledger-byron
     - cardano-ledger-core
     - cardano-ledger-shelley
@@ -84,6 +84,7 @@ library:
     - ouroboros-consensus
     - ouroboros-consensus-byron
     - ouroboros-consensus-cardano
+    - ouroboros-consensus-protocol
     - ouroboros-consensus-shelley
     - ouroboros-network
     - prettyprinter
@@ -160,6 +161,7 @@ tests:
     - ouroboros-consensus-cardano
     - ouroboros-consensus-cardano-test
     - ouroboros-consensus-shelley
+    - ouroboros-consensus-protocol
     - ouroboros-network
     - ouroboros-network-framework
     - QuickCheck

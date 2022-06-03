@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.0] -- 2022-05-27 
+
+- Use aeson>2.0.0.0:
+  - `onMissingField` is now `Key -> Parser Value`;
+  - `ErrMissingKey` and `ErrInvalidKey` now wraps an aeson's `Key` instead of a plain `Text`.
+
 ## [1.3.1] -- 2022-05-21
 
 - `gWSPFromJSON` will now fail with a user-friendly error when encountering a key `reflection` in the body of a **request**. See [#217](https://github.com/CardanoSolutions/ogmios/issues/217)

@@ -170,6 +170,12 @@ export const handleSubmitTxResponse = (response: Ogmios['SubmitTxResponse']) : (
             return new errors.ExtraRedeemers.Error(failure)
           } else if (errors.ExtraScriptWitnesses.assert(failure)) {
             return new errors.ExtraScriptWitnesses.Error(failure)
+          } else if (errors.MirNegativeTransfer.assert(failure)) {
+            return new errors.MirNegativeTransfer.Error(failure)
+          } else if (errors.TotalCollateralMismatch.assert(failure)) {
+            return new errors.TotalCollateralMismatch.Error(failure)
+          } else if (errors.MalformedOutputScripts.assert(failure)) {
+            return new errors.MalformedOutputScripts.Error(failure)
           } else {
             return new Error(failure)
           }

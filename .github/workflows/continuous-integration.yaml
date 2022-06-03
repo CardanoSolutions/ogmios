@@ -28,6 +28,18 @@ jobs:
       with:
         apt-get: libgmp-dev libssl-dev libsystemd-dev libsodium-dev zlib1g-dev
 
+    - name: 🧱 Setup secp256k1 w/ Schnorr Signatures
+      run: |
+        sudo apt-get -y install autoconf automake libtool
+        git clone https://github.com/bitcoin-core/secp256k1.git
+        cd secp256k1
+        git reset --hard ac83be33d0956faf6b7f61a60ab524ef7d6a473a
+        ./autogen.sh
+        ./configure --prefix=/usr --enable-module-schnorrsig --enable-experimental
+        make
+        make check
+        sudo make install
+
     - name: 📥 Checkout repository
       uses: actions/checkout@v2.3.3
       with:
@@ -76,6 +88,18 @@ jobs:
       uses: mstksg/get-package@2a4b48d55d72d43ca89ae58ec9ca1397d34a1c35
       with:
         apt-get: libgmp-dev libssl-dev libsystemd-dev libsodium-dev zlib1g-dev
+
+    - name: 🧱 Setup secp256k1 w/ Schnorr Signatures
+      run: |
+        sudo apt-get -y install autoconf automake libtool
+        git clone https://github.com/bitcoin-core/secp256k1.git
+        cd secp256k1
+        git reset --hard ac83be33d0956faf6b7f61a60ab524ef7d6a473a
+        ./autogen.sh
+        ./configure --prefix=/usr --enable-module-schnorrsig --enable-experimental
+        make
+        make check
+        sudo make install
 
     - name: 📥 Checkout repository
       uses: actions/checkout@v2.3.3
@@ -161,7 +185,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04]
         network: [testnet]
-        cardanoNodeVersion: [1.34.1]
+        cardanoNodeVersion: [1.35.0-rc1]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -169,6 +193,18 @@ jobs:
       uses: mstksg/get-package@2a4b48d55d72d43ca89ae58ec9ca1397d34a1c35
       with:
         apt-get: libgmp-dev libssl-dev libsystemd-dev libsodium-dev zlib1g-dev
+
+    - name: 🧱 Setup secp256k1 w/ Schnorr Signatures
+      run: |
+        sudo apt-get -y install autoconf automake libtool
+        git clone https://github.com/bitcoin-core/secp256k1.git
+        cd secp256k1
+        git reset --hard ac83be33d0956faf6b7f61a60ab524ef7d6a473a
+        ./autogen.sh
+        ./configure --prefix=/usr --enable-module-schnorrsig --enable-experimental
+        make
+        make check
+        sudo make install
 
     - name: 📥 Checkout repository
       uses: actions/checkout@v2.3.3

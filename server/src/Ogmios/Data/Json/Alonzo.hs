@@ -12,16 +12,20 @@ import Cardano.Binary
     ( serialize' )
 import Cardano.Ledger.Crypto
     ( Crypto )
+import Codec.Serialise
+    ( serialise )
 import Data.ByteString.Base16
     ( encodeBase16 )
-import Data.MemoBytes
-    ( memobytes )
 import GHC.Records
     ( getField )
 import Ouroboros.Consensus.Cardano.Block
     ( AlonzoEra )
+import Ouroboros.Consensus.Protocol.TPraos
+    ( TPraos )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
+import Ouroboros.Consensus.Shelley.Protocol.TPraos
+    ()
 import Prettyprinter
     ( pretty )
 
@@ -47,35 +51,47 @@ import qualified Cardano.Ledger.Alonzo.Genesis as Al
 import qualified Cardano.Ledger.Alonzo.Language as Al
 import qualified Cardano.Ledger.Alonzo.PlutusScriptApi as Al
 import qualified Cardano.Ledger.Alonzo.PParams as Al
-import qualified Cardano.Ledger.Alonzo.Rules.Utxo as Al
-import qualified Cardano.Ledger.Alonzo.Rules.Utxos as Al
-import qualified Cardano.Ledger.Alonzo.Rules.Utxow as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.Tx as Al
 import qualified Cardano.Ledger.Alonzo.TxBody as Al
-import qualified Cardano.Ledger.Alonzo.TxInfo as Al
+import qualified Cardano.Ledger.Alonzo.TxInfo as Al hiding
+    ( txscripts )
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 import qualified Cardano.Ledger.Alonzo.TxWitness as Al
 
-import qualified Cardano.Ledger.Alonzo.Tools as Al.Tools
+import qualified Cardano.Ledger.Alonzo.Tools as Ledger.Tools
+import qualified Cardano.Ledger.Core as Ledger.Core
+
+import qualified Cardano.Ledger.Mary.Value as Ledger.Mary
+
+import qualified Cardano.Ledger.Shelley.Rules.Deleg as Rules.Shelley
+import qualified Cardano.Ledger.Shelley.Rules.Ppup as Rules.Shelley
+
+import qualified Cardano.Ledger.Alonzo.Rules.Utxo as Rules.Alonzo
+import qualified Cardano.Ledger.Alonzo.Rules.Utxos as Rules.Alonzo
+import qualified Cardano.Ledger.Alonzo.Rules.Utxow as Rules.Alonzo
 
 --
 -- Encoders
 --
 
-encodeAlonzoPredFail
-    :: Crypto crypto
-    => Al.AlonzoPredFail (AlonzoEra crypto)
+encodeUtxowPredicateFail
+    :: forall era crypto.
+        ( crypto ~ Ledger.Crypto era
+        , Ledger.Era era
+        )
+    => (Rules.Shelley.PredicateFailure (Ledger.Core.EraRule "UTXO" era) -> Json)
+    -> Rules.Alonzo.UtxowPredicateFail era
     -> Json
-encodeAlonzoPredFail = \case
-    Al.MissingRedeemers missing ->
+encodeUtxowPredicateFail encodeUtxoFailureInEra = \case
+    Rules.Alonzo.MissingRedeemers missing ->
         encodeObject
             [ ( "missingRequiredRedeemers", encodeObject
                 [ ( "missing", encodeFoldable encodeMissingRedeemer missing)
                 ]
               )
             ]
-    Al.MissingRequiredDatums missing provided ->
+    Rules.Alonzo.MissingRequiredDatums missing provided ->
         encodeObject
             [ ( "missingRequiredDatums", encodeObject
                 [ ( "provided", encodeFoldable encodeDataHash provided )
@@ -83,7 +99,7 @@ encodeAlonzoPredFail = \case
                 ]
               )
             ]
-    Al.NonOutputSupplimentaryDatums unallowed acceptable ->
+    Rules.Alonzo.NonOutputSupplimentaryDatums unallowed acceptable ->
         encodeObject
             [ ( "unspendableDatums", encodeObject
                 [ ( "nonSpendable", encodeFoldable encodeDataHash unallowed )
@@ -91,7 +107,7 @@ encodeAlonzoPredFail = \case
                 ]
               )
             ]
-    Al.PPViewHashesDontMatch provided inferred ->
+    Rules.Alonzo.PPViewHashesDontMatch provided inferred ->
         encodeObject
             [ ( "extraDataMismatch", encodeObject
                 [ ( "provided", encodeStrictMaybe encodeScriptIntegrityHash provided )
@@ -99,30 +115,30 @@ encodeAlonzoPredFail = \case
                 ]
               )
             ]
-    Al.MissingRequiredSigners keys ->
+    Rules.Alonzo.MissingRequiredSigners keys ->
         encodeObject
             [ ( "missingRequiredSignatures"
               , encodeFoldable Shelley.encodeKeyHash keys
               )
             ]
-    Al.UnspendableUTxONoDatumHash utxos ->
+    Rules.Alonzo.UnspendableUTxONoDatumHash utxos ->
         encodeObject
             [ ( "unspendableScriptInputs"
               , encodeFoldable Shelley.encodeTxIn utxos
               )
             ]
-    Al.ExtraRedeemers redeemers ->
+    Rules.Alonzo.ExtraRedeemers redeemers ->
         encodeObject
             [ ( "extraRedeemers"
               , encodeFoldable (encodeText . stringifyRdmrPtr) redeemers
               )
             ]
-    Al.WrappedShelleyEraFailure e ->
-        Shelley.encodeUtxowFailure  encodeUtxoFailure e
+    Rules.Alonzo.WrappedShelleyEraFailure e ->
+        Shelley.encodeUtxowFailure encodeUtxoFailureInEra e
 
 encodeAuxiliaryData
-    :: Crypto crypto
-    => Al.AuxiliaryData (AlonzoEra crypto)
+    :: (Ledger.Era era, Ledger.Core.Script era ~ Al.Script era)
+    => Al.AuxiliaryData era
     -> Json
 encodeAuxiliaryData (Al.AuxiliaryData blob scripts) = encodeObject
     [ ( "blob"
@@ -136,7 +152,7 @@ encodeAuxiliaryData (Al.AuxiliaryData blob scripts) = encodeObject
 encodeBlock
     :: Crypto crypto
     => SerializationMode
-    -> ShelleyBlock (AlonzoEra crypto)
+    -> ShelleyBlock (TPraos crypto) (AlonzoEra crypto)
     -> Json
 encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
@@ -162,18 +178,26 @@ encodeCollectError = \case
         encodeObject [ ( "noWitness", Shelley.encodeScriptHash hash ) ]
     Al.NoCostModel lang ->
         encodeObject [ ( "noCostModel", encodeLanguage lang ) ]
+    Al.BadTranslation err ->
+        encodeObject [ ( "badTranslation", encodeTranslationError err ) ]
 
 encodeCostModel
     :: Al.CostModel
     -> Json
-encodeCostModel (Al.CostModel model) =
-    encodeMap id encodeInteger model
+encodeCostModel model =
+    encodeMap id encodeInteger (Al.getCostModelParams model)
+
+encodeCostModels
+    :: Al.CostModels
+    -> Json
+encodeCostModels =
+    encodeMap stringifyLanguage encodeCostModel . Al.unCostModels
 
 encodeData
     :: Al.Data era
     -> Json
-encodeData (Al.DataConstr datum) =
-    encodeShortByteString encodeByteStringBase64 (memobytes datum)
+encodeData (Al.Data datum) =
+    encodeByteStringBase16 (toStrict (serialise datum))
 
 encodeDataHash
     :: Crypto crypto
@@ -198,7 +222,7 @@ encodeGenesis x = encodeObject
       , encodeCoin (Al.coinsPerUTxOWord x)
       )
     , ( "costModels"
-      , encodeMap stringifyLanguage encodeCostModel (Al.costmdls x)
+      , encodeCostModels (Al.costmdls x)
       )
     , ( "prices"
       , encodePrices (Al.prices x)
@@ -236,12 +260,12 @@ encodeLanguage =
     encodeText . stringifyLanguage
 
 encodeLedgerFailure
-    :: Crypto crypto
+    :: (Crypto crypto)
     => Sh.LedgerPredicateFailure (AlonzoEra crypto)
     -> Json
 encodeLedgerFailure = \case
     Sh.UtxowFailure e ->
-        encodeAlonzoPredFail e
+        encodeUtxowPredicateFail (encodeUtxoFailure encodeUtxo encodeTxOut (\(Al.TxOut addr _ _) -> addr)) e
     Sh.DelegsFailure e ->
         Shelley.encodeDelegsFailure e
 
@@ -313,7 +337,7 @@ encodePParams' encodeF x = encodeObject
       , encodeF encodeCoin (Al._coinsPerUTxOWord x)
       )
     , ( "costModels"
-      , encodeF (encodeMap stringifyLanguage encodeCostModel) (Al._costmdls x)
+      , encodeF encodeCostModels (Al._costmdls x)
       )
     , ( "prices"
       , encodeF encodePrices (Al._prices x)
@@ -351,8 +375,8 @@ encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
     encodeMap Shelley.stringifyKeyHash (encodePParams' encodeStrictMaybe) m
 
 encodeRedeemers
-    :: Crypto crypto
-    => Al.Redeemers (AlonzoEra crypto)
+    :: Ledger.Era era
+    => Al.Redeemers era
     -> Json
 encodeRedeemers (Al.Redeemers redeemers) =
     encodeMap stringifyRdmrPtr encodeDataAndUnits redeemers
@@ -366,8 +390,8 @@ encodeRedeemers (Al.Redeemers redeemers) =
         ]
 
 encodeScript
-    :: Crypto crypto
-    => Al.Script (AlonzoEra crypto)
+    :: (Crypto (Ledger.Crypto era))
+    => Al.Script era
     -> Json
 encodeScript = \case
     Al.TimelockScript nativeScript -> encodeObject
@@ -377,7 +401,7 @@ encodeScript = \case
         ]
     Al.PlutusScript lang serializedScript -> encodeObject
         [ ( stringifyLanguage lang
-          , encodeShortByteString encodeByteStringBase64 serializedScript
+          , encodeShortByteString encodeByteStringBase16 serializedScript
           )
         ]
 
@@ -481,6 +505,10 @@ encodeTxOut (Al.TxOut addr value datum) = encodeObject
     , ( "value"
       , Mary.encodeValue value
       )
+    , ( "datumHash"
+      , encodeStrictMaybe encodeDataHash datum
+      )
+    -- NOTE: backward-compatibility, since v5.5.0
     , ( "datum"
       , encodeStrictMaybe encodeDataHash datum
       )
@@ -519,17 +547,26 @@ encodeUtxoWithMode mode =
     encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
 
 encodeUtxoFailure
-    :: forall crypto. Crypto crypto
-    => Al.UtxoPredicateFailure (AlonzoEra crypto)
+    :: forall era crypto.
+        ( crypto ~ Ledger.Crypto era
+        , Ledger.Era era
+        , Rules.Shelley.PredicateFailure (Ledger.Core.EraRule "UTXOS" era) ~ Rules.Alonzo.UtxosPredicateFailure era
+        , Rules.Shelley.PredicateFailure (Ledger.Core.EraRule "PPUP" era)  ~ Rules.Shelley.PpupPredicateFailure era
+        , Ledger.Core.Value era ~ Ledger.Mary.Value crypto
+        )
+    => (Sh.UTxO era -> Json)
+    -> (Ledger.Core.TxOut era -> Json)
+    -> (Ledger.Core.TxOut era -> Sh.Addr crypto)
+    -> Rules.Alonzo.UtxoPredicateFailure era
     -> Json
-encodeUtxoFailure = \case
-    Al.BadInputsUTxO inputs ->
+encodeUtxoFailure encodeUtxoInEra encodeTxOutInEra extractAddress = \case
+    Rules.Alonzo.BadInputsUTxO inputs ->
         encodeObject
             [ ( "badInputs"
               , encodeFoldable Shelley.encodeTxIn inputs
               )
             ]
-    Al.OutsideValidityIntervalUTxO itv currentSlot ->
+    Rules.Alonzo.OutsideValidityIntervalUTxO itv currentSlot ->
         encodeObject
             [ ( "outsideOfValidityInterval", encodeObject
                 [ ( "interval" , Allegra.encodeValidityInterval itv )
@@ -537,7 +574,7 @@ encodeUtxoFailure = \case
                 ]
               )
             ]
-    Al.MaxTxSizeUTxO actualSize maxSize ->
+    Rules.Alonzo.MaxTxSizeUTxO actualSize maxSize ->
         encodeObject
             [ ( "txTooLarge", encodeObject
                 [ ( "maximumSize", encodeInteger maxSize )
@@ -545,11 +582,11 @@ encodeUtxoFailure = \case
                 ]
               )
             ]
-    Al.InputSetEmptyUTxO ->
+    Rules.Alonzo.InputSetEmptyUTxO ->
         encodeObject
             [ ( "missingAtLeastOneInputUtxo", encodeNull )
             ]
-    Al.FeeTooSmallUTxO required actual ->
+    Rules.Alonzo.FeeTooSmallUTxO required actual ->
         encodeObject
             [ ( "feeTooSmall", encodeObject
                 [ ( "requiredFee", encodeCoin required )
@@ -557,7 +594,7 @@ encodeUtxoFailure = \case
                 ]
               )
             ]
-    Al.ValueNotConservedUTxO consumed produced ->
+    Rules.Alonzo.ValueNotConservedUTxO consumed produced ->
         encodeObject
             [ ( "valueNotConserved", encodeObject
                 [ ( "consumed", Mary.encodeValue consumed )
@@ -565,7 +602,7 @@ encodeUtxoFailure = \case
                 ]
               )
             ]
-    Al.WrongNetwork expected invalidAddrs ->
+    Rules.Alonzo.WrongNetwork expected invalidAddrs ->
         encodeObject
             [ ( "networkMismatch", encodeObject
                 [ ( "expectedNetwork"
@@ -577,7 +614,7 @@ encodeUtxoFailure = \case
                 ]
               )
             ]
-    Al.WrongNetworkWithdrawal expected invalidAccts ->
+    Rules.Alonzo.WrongNetworkWithdrawal expected invalidAccts ->
         encodeObject
             [ ( "networkMismatch", encodeObject
                 [ ( "expectedNetwork"
@@ -589,7 +626,7 @@ encodeUtxoFailure = \case
                 ]
               )
             ]
-    Al.WrongNetworkInTxBody expected actual ->
+    Rules.Alonzo.WrongNetworkInTxBody expected actual ->
         encodeObject
             [ ( "networkMismatch", encodeObject
                 [ ( "expectedNetwork"
@@ -601,33 +638,33 @@ encodeUtxoFailure = \case
                 ]
               )
             ]
-    Al.OutputTooSmallUTxO outs ->
+    Rules.Alonzo.OutputTooSmallUTxO outs ->
         encodeObject
             [ ( "outputTooSmall"
-              , encodeFoldable encodeTxOut outs
+              , encodeFoldable encodeTxOutInEra outs
               )
             ]
-    Al.OutputBootAddrAttrsTooBig outs ->
+    Rules.Alonzo.OutputBootAddrAttrsTooBig outs ->
         encodeObject
             [ ( "addressAttributesTooLarge"
-              , encodeFoldable Shelley.encodeAddress ((\(Al.TxOut addr _ _) -> addr) <$> outs)
+              , encodeFoldable Shelley.encodeAddress (extractAddress <$> outs)
               )
             ]
-    Al.TriesToForgeADA ->
+    Rules.Alonzo.TriesToForgeADA ->
         encodeObject
             [ ( "triesToForgeAda", encodeNull )
             ]
-    Al.OutputTooBigUTxO outs ->
+    Rules.Alonzo.OutputTooBigUTxO outs ->
         encodeObject
             [ ( "tooManyAssetsInOutput"
-              , encodeFoldable (\(_, _, o) -> encodeTxOut o)  outs
+              , encodeFoldable (\(_, _, o) -> encodeTxOutInEra o)  outs
               )
             ]
-    Al.NoCollateralInputs ->
+    Rules.Alonzo.NoCollateralInputs ->
         encodeObject
             [ ( "missingCollateralInputs", encodeNull )
             ]
-    Al.InsufficientCollateral actual required ->
+    Rules.Alonzo.InsufficientCollateral actual required ->
         encodeObject
             [ ( "collateralTooSmall", encodeObject
                 [ ( "requiredCollateral", encodeCoin required )
@@ -635,15 +672,15 @@ encodeUtxoFailure = \case
                 ]
               )
             ]
-    Al.ScriptsNotPaidUTxO utxo ->
+    Rules.Alonzo.ScriptsNotPaidUTxO utxo ->
         encodeObject
-            [ ( "collateralIsScript", encodeUtxo utxo )
+            [ ( "collateralIsScript", encodeUtxoInEra utxo )
             ]
-    Al.CollateralContainsNonADA value ->
+    Rules.Alonzo.CollateralContainsNonADA value ->
         encodeObject
             [ ( "collateralHasNonAdaAssets", Mary.encodeValue value )
             ]
-    Al.TooManyCollateralInputs maxInputs actualInputs ->
+    Rules.Alonzo.TooManyCollateralInputs maxInputs actualInputs ->
         encodeObject
             [ ( "tooManyCollateralInputs", encodeObject
                 [ ( "maximumCollateralInputs", encodeNatural maxInputs )
@@ -651,7 +688,7 @@ encodeUtxoFailure = \case
                 ]
               )
             ]
-    Al.ExUnitsTooBigUTxO maxUnit actualUnit ->
+    Rules.Alonzo.ExUnitsTooBigUTxO maxUnit actualUnit ->
         encodeObject
             [ ( "executionUnitsTooLarge", encodeObject
                 [ ( "maximumExecutionUnits", encodeExUnits maxUnit )
@@ -659,27 +696,30 @@ encodeUtxoFailure = \case
                 ]
               )
             ]
-    Al.OutsideForecast slot ->
+    Rules.Alonzo.OutsideForecast slot ->
         encodeObject
             [ ( "outsideForecast", encodeSlotNo slot )
             ]
-    Al.UtxosFailure e ->
+    Rules.Alonzo.UtxosFailure e ->
         encodeUtxosPredicateFailure e
 
 encodeUtxosPredicateFailure
-    :: Crypto crypto
-    => Al.UtxosPredicateFailure (AlonzoEra crypto)
+    :: forall era.
+        ( Sh.PredicateFailure (Ledger.Core.EraRule "PPUP" era) ~ Rules.Shelley.PpupPredicateFailure era
+        , Ledger.Era era
+        )
+    => Rules.Alonzo.UtxosPredicateFailure era
     -> Json
 encodeUtxosPredicateFailure = \case
-    Al.ValidationTagMismatch{} ->
+    Rules.Alonzo.ValidationTagMismatch{} ->
         encodeObject
             [ ( "validationTagMismatch", encodeNull )
             ]
-    Al.CollectErrors errors ->
+    Rules.Alonzo.CollectErrors errors ->
         encodeObject
             [ ( "collectErrors", encodeFoldable encodeCollectError errors )
             ]
-    Al.UpdateFailure e ->
+    Rules.Alonzo.UpdateFailure e ->
         Shelley.encodeUpdateFailure e
 
 encodeScriptIntegrityHash
@@ -691,16 +731,16 @@ encodeScriptIntegrityHash =
 
 encodeScriptFailure
     :: Crypto crypto
-    => Al.Tools.ScriptFailure crypto
+    => Ledger.Tools.ScriptFailure crypto
     -> Json
 encodeScriptFailure = \case
-    Al.Tools.RedeemerNotNeeded ptr ->
+    Ledger.Tools.RedeemerNotNeeded ptr ->
         encodeObject
             [ ( "extraRedeemers"
               , encodeFoldable (encodeText . stringifyRdmrPtr) [ptr]
               )
             ]
-    Al.Tools.MissingScript ptr ->
+    Ledger.Tools.MissingScript ptr ->
         encodeObject
             [ ( "missingRequiredScripts"
               , encodeObject
@@ -710,7 +750,7 @@ encodeScriptFailure = \case
                   ]
               )
             ]
-    Al.Tools.MissingDatum h ->
+    Ledger.Tools.MissingDatum h ->
         encodeObject
             [ ( "missingRequiredDatums"
               , encodeObject
@@ -720,7 +760,7 @@ encodeScriptFailure = \case
                   ]
               )
             ]
-    Al.Tools.ValidationFailedV1 err traces ->
+    Ledger.Tools.ValidationFailedV1 err traces ->
         encodeObject
             [ ( "validatorFailed"
               , encodeObject
@@ -733,7 +773,7 @@ encodeScriptFailure = \case
                   ]
               )
             ]
-    Al.Tools.ValidationFailedV2 err traces ->
+    Ledger.Tools.ValidationFailedV2 err traces ->
         encodeObject
             [ ( "validatorFailed"
               , encodeObject
@@ -746,34 +786,68 @@ encodeScriptFailure = \case
                   ]
               )
             ]
-    Al.Tools.UnknownTxIn i ->
+    Ledger.Tools.UnknownTxIn i ->
         encodeObject
             [ ( "unknownInputReferencedByRedeemer"
               , Shelley.encodeTxIn i
               )
             ]
-    Al.Tools.InvalidTxIn i ->
+    Ledger.Tools.InvalidTxIn i ->
         encodeObject
             [ ( "nonScriptInputReferencedByRedeemer"
               , Shelley.encodeTxIn i
               )
             ]
-    Al.Tools.IncompatibleBudget budget ->
+    Ledger.Tools.IncompatibleBudget budget ->
         encodeObject
             [ ( "illFormedExecutionBudget"
               , encodeMaybe encodeExUnits (Al.exBudgetToExUnits budget)
               )
             ]
-    Al.Tools.NoCostModel lang ->
+    Ledger.Tools.NoCostModel lang ->
         encodeObject
             [ ( "noCostModelForLanguage"
               , encodeLanguage lang
               )
             ]
+    Ledger.Tools.CorruptCostModel lang ->
+        encodeObject
+            [ ( "corruptCostModelForLanguage"
+              , encodeLanguage lang
+              )
+            ]
+
+encodeTranslationError
+    :: Al.TranslationError
+    -> Json
+encodeTranslationError err = encodeText $ case err of
+    Al.ByronInputInContext ->
+       "Found inputs locked by a (legacy) Byron/Bootstrap address. Don't use those."
+    Al.ByronOutputInContext ->
+       "Found outputs to a (legacy) Byron/Bootstrap address. Don't use those."
+    Al.TranslationLogicErrorInput ->
+       "Found unknown inputs. Perhaps, provide extra inputs via 'additionalUtxoSet'."
+    Al.TranslationLogicErrorRedeemer ->
+       "Couldn't resolve redeemer pointer. Verify your transaction construction."
+    Al.TranslationLogicErrorDoubleDatum ->
+       "Couldn't resolve datum for output. Should never happen, this is not your fault."
+    Al.LanguageNotSupported ->
+       "Unsupported language in era. Did you try to use PlutusV2 while still in Alonzo?"
+    Al.InlineDatumsNotSupported ->
+       "Inline datums not supported in PlutusV1. Use PlutusV2."
+    Al.ReferenceScriptsNotSupported ->
+       "Reference scripts not supported in PlutusV1. Use PlutusV2."
+    Al.ReferenceInputsNotSupported ->
+       "Reference inputs not supported in PlutusV1. Use PlutusV2."
+    -- FIXME: Present in more recent versions or cardano-ledger,
+    -- which will likely be included after the first release candidate.
+    --
+    -- TimeTranslationPastHorizon ->
+    --    "Validity interval is past (safe) foreseeable horizon. Use smaller validity upper-bound or wait for hard-fork to happen."
 
 encodeWitnessSet
-    :: Crypto crypto
-    => Al.TxWitness (AlonzoEra crypto)
+    :: (Ledger.Era era, Ledger.Core.Script era ~ Al.Script era)
+    => Al.TxWitness era
     -> Json
 encodeWitnessSet x = encodeObject
     [ ( "signatures"

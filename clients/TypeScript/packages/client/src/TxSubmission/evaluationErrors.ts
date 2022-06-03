@@ -1,10 +1,13 @@
 import { CustomError } from 'ts-custom-error'
 import { safeJSON } from '../util'
 import {
+  CorruptCostModelForLanguage,
   EvaluationFailureAdditionalUtxoOverlap,
-  EvaluationFailureUnknownInputs,
+  EvaluationFailureCannotCreateEvaluationContext,
   EvaluationFailureIncompatibleEra,
+  EvaluationFailureNotEnoughSynced,
   EvaluationFailureUncomputableSlotArithmetic,
+  EvaluationFailureUnknownInputs,
   ExtraRedeemers,
   IllFormedExecutionBudget,
   MissingRequiredDatums,
@@ -19,9 +22,13 @@ export type AdditionalUtxoOverlap = EvaluationFailureAdditionalUtxoOverlap;
 export type IncompatibleEra = EvaluationFailureIncompatibleEra;
 export type UncomputableSlotArithmetic = EvaluationFailureUncomputableSlotArithmetic;
 export type UnknownInputs = EvaluationFailureUnknownInputs;
+export type NotEnoughSynced = EvaluationFailureNotEnoughSynced;
+export type CannotCreateEvaluationContext = EvaluationFailureCannotCreateEvaluationContext;
 
 export type EvaluateTxError =
   | AdditionalUtxoOverlap
+  | CannotCreateEvaluationContext
+  | CorruptCostModelForLanguage
   | ExtraRedeemers
   | IllFormedExecutionBudget
   | IncompatibleEra
@@ -29,6 +36,7 @@ export type EvaluateTxError =
   | MissingRequiredScripts
   | NoCostModelForLanguage
   | NonScriptInputReferencedByRedeemer
+  | NotEnoughSynced
   | UncomputableSlotArithmetic
   | UnknownInputReferencedByRedeemer
   | UnknownInputs
@@ -153,6 +161,36 @@ export const errors = {
       public constructor (rawError: ValidatorFailed) {
         super()
         this.message = safeJSON.stringify(rawError.validatorFailed)
+      }
+    }
+  },
+  CorruptCostModelForLanguage: {
+    assert: (item: EvaluateTxError): item is CorruptCostModelForLanguage =>
+      (item as CorruptCostModelForLanguage).corruptCostModelForLanguage !== undefined,
+    Error: class CorruptCostModelForLanguageError extends CustomError {
+      public constructor (rawError: CorruptCostModelForLanguage) {
+        super()
+        this.message = safeJSON.stringify(rawError.corruptCostModelForLanguage)
+      }
+    }
+  },
+  NotEnoughSynced: {
+    assert: (item: EvaluateTxError): item is NotEnoughSynced =>
+      (item as NotEnoughSynced).NotEnoughSynced !== undefined,
+    Error: class NotEnoughSyncedError extends CustomError {
+      public constructor (rawError: NotEnoughSynced) {
+        super()
+        this.message = safeJSON.stringify(rawError.NotEnoughSynced)
+      }
+    }
+  },
+  CannotCreateEvaluationContext: {
+    assert: (item: EvaluateTxError): item is CannotCreateEvaluationContext =>
+      (item as CannotCreateEvaluationContext).CannotCreateEvaluationContext !== undefined,
+    Error: class CannotCreateEvaluationContextError extends CustomError {
+      public constructor (rawError: CannotCreateEvaluationContext) {
+        super()
+        this.message = safeJSON.stringify(rawError.CannotCreateEvaluationContext)
       }
     }
   }

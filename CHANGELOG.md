@@ -5,6 +5,74 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.5.0-rc1] - 2022-06-03
+
+#### Added 
+
+##### 🏢 Server 
+
+- Added Vasil/Babbage support, including:
+  - A new block type `babbage` with:
+    - New (optional) transaction fields `references`, `collateralReturn`, `totalCollateral`;
+    - New (optional) transaction output's fields `datum` and `script`;
+  - A new `plutus:v2` script language;
+- New transaction error submission failures in the Babbage era:
+  - `mirNegativeTransfer`: return when attempting to perform a negative MIR transfer from a reward pot to another;
+  - `totalCollateralMismatch`: returned when `totalCollateral` is set but does not match what is actually computed by the ledger (i.e. sum of collateral inputs minus collateral return);
+  - `malformedOutputScripts`: returned when the `script` specified in an output isn't actually a well-formed Plutus script;
+- New script evaluation failures in the Babbage era:
+  - `corruptCostModelForLanguage`: An artifact from a distant past. This is unused but somehow still present in the ledger internal definitions. Should be removed eventually.
+- New server evaluation failures:
+  - `NotEnoughSynced`: Happens when attempting to evaluate execution units on a node that isn't enough synchronized. This is, if the node is still in an era prior to Alonzo, evaluation of execution units won't be possible.
+  - `CannotCreateEvaluationContext`: Happens when the ledger fails to create an evaluation context from a given transaction. This is mostly due to the transaction being malformed (e.g. wrong redeemer pointer, missing UTxO).
+
+<p align="right">See the <a href="https://ogmios.dev/api">📘 API reference</a> for more details.</p>
+
+##### 🚗 TypeScript Client
+
+- Incorporated changes coming from the server's update.
+
+#### Changed
+
+##### 🏢 Server 
+
+- The introduction of the Babbage era comes with some minor (albeit possibly breaking) changes and deprecations:
+  - ⚠️  `datums`, `redeemerData` and `plutus:v1` scripts are no longer encoded as `base64` strings, but are encoded as `base16` strings. The data payload remains however identical. 
+       This change is meant for more compatibility across the API since those data-types can now also be submitted to the server when evaluating execution units for transactions. Using
+       `base64` for input data here is a bit awkward since most existing interfaces in the ecosystem favor `base16`;
+
+  - ⚠️ When passing transaction outputs to the server (e.g. when providing an additional UTxO for script evaluation), datum hashes in output must now be specified as `datumHash` (instead of `datum`). However, the server does a best-effort for the sake of backward compatibility and should still work if provided with a valid hash under `datum`. However, after the Vasil hard-fork, it'll be possible to also pass inline-datums using `datum`, while datum hash digest are expected to be specified as `datumHash`. Said differently, existing applications relying on this functionality will keep working without a change on this release, but applications willing to make use of the new inline-datum functionality coming in Vasil must abide by the new notation;
+
+  - ⚠️ Similarly, Alonzo transaction outputs will now contain a `datumHash` field, carrying the datum hash digest. However, they will also contain a `datum` field with the exact same value for backward compatibility reason. In Babbage however, transaction outputs will carry either `datum` or `datumHash` depending on the case; and `datum` will only contain inline datums;
+
+  - ⚠️  The `outputTooSmall` errors from transaction submission will slightly change format for transactions submitted during the Babbage era. Instead of an array of outputs, it is an array of 
+    objects with `output` and `minimumRequiredValue` fields;
+
+  - ⚠️  A slightly modified block header: `leaderValue` and `nounce` fields are gone and replaced by a single `inputVrf` field;
+
+  - ⚠️ Few protocol parameters changes:
+
+    - A new protocol parameter `coinsPerUTxOByte` comes to replace `coinsPerUtxoWord` with a slightly different semantic. `coinsPerUTxOByte` is meant to compute the minimum Lovelace requirement on transaction outputs, and is simply a coefficient in a linear function of the serialized (CBOR) output:
+
+      ```
+      minUTxOValue(output) =  |serialise(output)| * coinsPerUTxOByte
+      ```
+
+    - The `decentralizationParameter` no longer exists.<br/>
+      The block production is forever decentralized :tada:!
+  
+    - The `extraEntropy` no longer exists.
+
+<p align="right">See the <a href="https://ogmios.dev/api">📘 API reference</a> for more details.</p>
+
+##### 🚗 TypeScript Client
+
+- Incorporated changes coming from the server's update.
+
+#### Removed
+
+N/A
+
 ### [5.4.0] - 2022-05-22
 
 #### Added
@@ -37,7 +105,7 @@ pre: "<b>6. </b>"
 
 ##### 🏢 Server 
 
-- The complete API reference for the server is available in a new form at: https://ogmios.dev/api/. This should make the various protocol messages easier to explore and provide a less awkward visualization of the server API than the previous TypeScript documentation. The old TypeScript documentation remains however available at: https://ogmios.dev/typescript/api/.
+- The complete [API reference][] for the server is available in a new form at: https://ogmios.dev/api/. This should make the various protocol messages easier to explore and provide a less awkward visualization of the server API than the previous TypeScript documentation. The old TypeScript documentation remains however available at: https://ogmios.dev/typescript/api/.
 
 - Upgrade internal dependencies to `cardano-node@1.34.1`
 
@@ -482,7 +550,7 @@ N/A
   - Providing titles to 'oneOf' items
   - Adding descriptions to top-level definitions
   - Adding examples to top-level definitions
-- Customized API reference's stylesheet to enhance readability.
+- Customized [API reference][]'s stylesheet to enhance readability.
 - Upgrade dependency and code to work with GHC-8.10.4 (from GHC 8.6.5)
 - Handle more gracefully unknown exceptions (avoid infinite fast loop of retries on errors).
 - Handle more gracefully network mismatches (e.g. connecting Ogmios in testnet mode to a mainnet network)
@@ -582,3 +650,5 @@ N/A
 #### Removed
 
 N/A
+
+[API reference]: https://ogmios.dev/api/

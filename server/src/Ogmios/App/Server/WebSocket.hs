@@ -90,6 +90,7 @@ import Ogmios.Data.Json
     , encodeScriptFailure
     , encodeSubmitTxError
     , encodeTip
+    , encodeTranslationError
     , encodeTx
     , encodeTxId
     , encodeTxIn
@@ -117,6 +118,8 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Client
 import System.TimeManager
     ( TimeoutThread (..) )
 
+import qualified Cardano.Ledger.Alonzo.PParams
+import qualified Cardano.Ledger.Babbage.PParams
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
 
@@ -354,6 +357,7 @@ withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator conn action = 
             encodeExUnits
             encodeScriptFailure
             encodeTxIn
+            encodeTranslationError
 
 --
 -- Logging

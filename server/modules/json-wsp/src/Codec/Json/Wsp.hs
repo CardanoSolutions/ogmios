@@ -60,8 +60,6 @@ import Data.Maybe
     ( isJust )
 import Data.Proxy
     ( Proxy (..) )
-import Data.Text
-    ( Text )
 import Data.Void
     ( Void )
 import GHC.TypeLits
@@ -71,6 +69,7 @@ import GHC.Generics
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
+import qualified Data.Aeson.Key as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.Text as T
 
@@ -103,7 +102,7 @@ type ToFault = FaultCode -> String -> Fault
 data Options = Options
     { fieldLabelModifier :: String -> String
     , constructorTagModifier :: String -> String
-    , onMissingField :: Text -> Json.Parser Json.Value
+    , onMissingField :: Json.Key -> Json.Parser Json.Value
     }
 
 -- | Default options for the generic parsing: do nothing.
@@ -301,7 +300,7 @@ instance (GWSPFromJSON f, GWSPFromJSON g) => GWSPFromJSON (f :*: g) where
 -- to map the WSP arguments to their corresponding position in the constructor.
 instance (Selector s, GWSPFromJSON f) => GWSPFromJSON (S1 s f) where
     gWSPFromJSON opts = Json.withObject "S1" $ \obj -> do
-        let fieldName = T.pack $ fieldLabelModifier opts $ selName (undefined :: S1 s f a)
+        let fieldName = Json.fromString $ fieldLabelModifier opts $ selName (undefined :: S1 s f a)
         (_, k1) <- obj .: "args"
             >>= (.:? fieldName)
             >>= maybe
@@ -335,7 +334,7 @@ instance (Constructor c, GWSPToJSON f) => GWSPToJSON (C1 c f) where
     gWSPToJSON opts (M1 f) =
         Json.object [ fieldName .= gWSPToJSON opts f ]
       where
-        fieldName = T.pack $ constructorTagModifier opts $ conName (undefined :: C1 c f a)
+        fieldName = Json.fromString $ constructorTagModifier opts $ conName (undefined :: C1 c f a)
 
 instance (GWSPToJSON f, GWSPToJSON g) => GWSPToJSON (f :+: g) where
     gWSPToJSON opts = \case
@@ -356,7 +355,7 @@ instance (Selector s, GWSPToJSON f) => GWSPToJSON (S1 s f) where
     gWSPToJSON opts (M1 f) =
         Json.object [ fieldName .= gWSPToJSON opts f ]
       where
-        fieldName = T.pack $ fieldLabelModifier opts $ selName (undefined :: S1 s f a)
+        fieldName = Json.fromString $ fieldLabelModifier opts $ selName (undefined :: S1 s f a)
 
 -- Arguments are expected to have JSON instances.
 instance ToJSON c => GWSPToJSON (K1 i c) where
@@ -366,7 +365,7 @@ instance ToJSON c => GWSPToJSON (K1 i c) where
 -- Validations (Internal)
 --
 
-parseKey :: (Eq a, FromJSON a, ToJSON a) => Json.Object -> Text -> a -> Json.Parser a
+parseKey :: (Eq a, FromJSON a, ToJSON a) => Json.Object -> Json.Key -> a -> Json.Parser a
 parseKey obj key expected =
     case Json.parseMaybe (.:? key) obj of
         Just Nothing -> fail $ prettyErrValidateKey
@@ -384,17 +383,17 @@ data ErrValidateKey
     deriving (Show, Eq)
 
 data ErrMissingKey = ErrMissingKey
-    { missingKey :: Text }
+    { missingKey :: Json.Key }
     deriving (Show, Eq)
 
 data ErrInvalidKey = ErrInvalidKey
-    { invalidKey :: Text, expectedValue :: Json.Value }
+    { invalidKey :: Json.Key, expectedValue :: Json.Value }
     deriving (Show, Eq)
 
 prettyErrValidateKey :: ErrValidateKey -> String
 prettyErrValidateKey = \case
     ErrValidateKeyMissing ErrMissingKey{missingKey} ->
-        "missing required field '"<>T.unpack missingKey<>"'."
+        T.unpack ("missing required field '"<>Json.toText missingKey<>"'.")
 
     ErrValidateKeyInvalid ErrInvalidKey{invalidKey,expectedValue} ->
         let
@@ -406,4 +405,4 @@ prettyErrValidateKey = \case
                 _ ->
                     "."
         in
-            "invalid value for field '"<>T.unpack invalidKey<>"'"<>expected
+            "invalid value for field '"<>T.unpack (Json.toText invalidKey)<>"'"<>expected
