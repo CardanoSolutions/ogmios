@@ -1626,13 +1626,23 @@ decodeSerializedTx
     -> Json.Parser (SerializedTx (CardanoBlock crypto))
 decodeSerializedTx = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
     bytes <- decodeBase16 utf8 <|> decodeBase64 utf8 <|> invalidEncodingError
-    -- NOTE: Avoiding 'asum' here because it generates poor errors on failures
-    deserialiseCBOR @(MostRecentEra (CardanoBlock crypto) ~ BabbageEra crypto) GenTxBabbage (fromStrict bytes)
-        <|> deserialiseCBOR @(MostRecentEra (CardanoBlock crypto) ~ BabbageEra crypto) GenTxBabbage (wrap bytes)
+    -- NOTE (1):
+    -- The order in which we parser matters! Older eras first. formats
+    -- are forward-compatible, and near hard-forks, there's a period where the
+    -- software can understand the next era but, that era isn't available yet.
+    --
+    -- Therefore, we need to favor parsing older eras so that existing code keep
+    -- working. Transactions are only decoded in the new era when they are using
+    -- features not available in older ones.
+    --
+    -- NOTE (2):
+    -- Avoiding 'asum' here because it generates poor errors on failures
+    deserialiseCBOR @() GenTxMary (fromStrict bytes)
+        <|> deserialiseCBOR @() GenTxMary (wrap bytes)
         <|> deserialiseCBOR @() GenTxAlonzo (fromStrict bytes)
         <|> deserialiseCBOR @() GenTxAlonzo (wrap bytes)
-        <|> deserialiseCBOR @() GenTxMary (fromStrict bytes)
-        <|> deserialiseCBOR @() GenTxMary (wrap bytes)
+        <|> deserialiseCBOR @(MostRecentEra (CardanoBlock crypto) ~ BabbageEra crypto) GenTxBabbage (wrap bytes)
+        <|> deserialiseCBOR @(MostRecentEra (CardanoBlock crypto) ~ BabbageEra crypto) GenTxBabbage (fromStrict bytes)
   where
     invalidEncodingError :: Json.Parser a
     invalidEncodingError =
