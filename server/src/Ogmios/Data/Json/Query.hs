@@ -125,7 +125,7 @@ import Data.SOP.Strict
 import Formatting.Buildable
     ( build )
 import Ogmios.Data.EraTranslation
-    ( MostRecentEra, MultiEraTxOut (..), MultiEraUTxO (..) )
+    ( MostRecentEra, MultiEraTxOut (..), MultiEraUTxO (..), translateTxOut )
 import Ouroboros.Consensus.BlockchainTime
     ( SystemStart (..) )
 import Ouroboros.Consensus.Cardano.Block
@@ -1488,11 +1488,11 @@ decodeBinaryData
     -> Json.Parser (Ledger.Alonzo.BinaryData era)
 decodeBinaryData =
     Json.withText "BinaryData" $ \t -> do
-        bytes <- toShort <$> decodeBase16 (encodeUtf8 t)
+        bytes <- toLazy <$> decodeBase16 (encodeUtf8 t)
         either
-            fail
-            pure
-            (Ledger.Alonzo.makeBinaryData bytes)
+            (fail . toString . TL.toLazyText . build)
+            (pure . Ledger.Alonzo.dataToBinaryData . Ledger.Alonzo.Data)
+            (decodeAnnotator "Data" fromCBOR bytes)
 
 decodeCoin
     :: Json.Value
@@ -1525,7 +1525,9 @@ decodeHash
     => Json.Value
     -> Json.Parser (Hash alg a)
 decodeHash =
-    Json.parseJSON >=> maybe empty pure . hashFromTextAsHex
+    Json.parseJSON >=> maybe err pure . hashFromTextAsHex
+  where
+    err = fail "cannot decode given hash digest from base16 text."
 
 decodeOneEraHash
     :: Text
@@ -1718,13 +1720,13 @@ decodeTimeLock json =
                         xs <- StrictSeq.fromList <$> Json.parseJSON v
                         Ledger.Mary.RequireMOf n <$> traverse decodeTimeLock xs
                     Nothing ->
-                        empty
+                        fail "cannot decode MOfN constructor, key isn't a natural."
             _ ->
-                empty
+                fail "cannot decode MOfN, not a list."
     decodeTimeExpire o = do
         Ledger.Mary.RequireTimeExpire . SlotNo <$> (o .: "expiresAt")
     decodeTimeStart o = do
-        Ledger.Mary.RequireTimeExpire . SlotNo <$> (o .: "startsAt")
+        Ledger.Mary.RequireTimeStart . SlotNo <$> (o .: "startsAt")
 
 decodeTip
     :: Json.Value
@@ -1773,13 +1775,16 @@ decodeTxOut
 decodeTxOut = Json.withObject "TxOut" $ \o -> do
     decodeTxOutAlonzo o <|> decodeTxOutBabbage o
   where
-    isPlutusData :: Ledger.Alonzo.DataHash crypto -> Bool
-    isPlutusData =
-        isRight . Ledger.Alonzo.makeBinaryData . toShort . Ledger.originalBytes
+    isPlutusData :: Json.Value -> Bool
+    isPlutusData x =
+        case Json.parse decodeBinaryData x of
+            Json.Error{} -> False
+            Json.Success{} -> True
 
     decodeTxOutAlonzo o = do
         address <- o .: "address" >>= decodeAddress
         value <- o .: "value" >>= decodeValue
+
         -- NOTE: Prior to Babbage, 'datum' was unambiguous in the context of outputs
         -- and always referred to datum hash digests. Babbage introduces inline datums,
         -- which can, from a decoding perspective, be mixed up with datum hashes.
@@ -1788,28 +1793,54 @@ decodeTxOut = Json.withObject "TxOut" $ \o -> do
         -- 'datumHash'. Yet, to keep backward-compatibility, it is still possible to
         -- provide a hash digest as 'datum'. The only condition being that, the
         -- assumed hash must not be a valid Plutus data.
-        datum <- (o .:? "datumHash" <|> o .:? "datum")
-            >>= maybe (pure SNothing) (fmap SJust . decodeDatumHash)
-        whenSJust datum (guard . not . isPlutusData)
+        datumHash <- o .:? "datumHash"
+        inlineDatum <- o .:? "datum"
+        datum <- case (datumHash, inlineDatum) of
+            (Nothing, Nothing) ->
+                pure SNothing
+            (Just Json.Null, Just Json.Null) ->
+                pure SNothing
+            (Just x, Nothing) | not (isPlutusData x) ->
+                SJust <$> decodeDatumHash x
+            (Nothing, Just x) | not (isPlutusData x) ->
+                SJust <$> decodeDatumHash x
+            (Just x, Just y) | x == y ->
+                SJust <$> decodeDatumHash x
+            (Just{}, Just{}) ->
+                fail "specified both 'datumHash' & 'datum'"
+            (_, _) ->
+                fail "inline-datum in assumed-Alonzo output."
+
+        -- NOTE: Similarly, if a 'script' field is present, we assume the output
+        -- to be of the 'Babbage' era, and we make this decoder fail.
+        script <- o .:? "script"
+        when (isJust @Json.Value script) empty
+
         pure $ TxOutInAlonzoEra $ Ledger.Alonzo.TxOut address value datum
 
     decodeTxOutBabbage o = do
         address <- o .: "address" >>= decodeAddress
         value <- o .: "value" >>= decodeValue
-        datum <-
-            (o .:? "datumHash" >>= maybe
-                (pure Ledger.Babbage.NoDatum)
-                (fmap Ledger.Babbage.DatumHash . decodeDatumHash)
-            )
-            <|>
-            (o .:? "datum" >>= maybe
-                (pure Ledger.Babbage.NoDatum)
-                (fmap Ledger.Babbage.Datum . decodeBinaryData)
-            )
+
+        datumHash <- o .:? "datumHash"
+        inlineDatum <- o .:? "datum"
+        datum <- case (datumHash, inlineDatum) of
+            (Nothing, Nothing) ->
+                pure Ledger.Babbage.NoDatum
+            (Just Json.Null, Just Json.Null) ->
+                pure Ledger.Babbage.NoDatum
+            (Just x, Nothing) ->
+                Ledger.Babbage.DatumHash <$> decodeDatumHash x
+            (Nothing, Just x) ->
+                Ledger.Babbage.Datum <$> decodeBinaryData x
+            (Just{}, Just{}) ->
+                fail "specified both 'datumHash' & 'datum'"
+
         script <-
             o .:? "script" >>= maybe
                 (pure SNothing)
                 (fmap SJust . decodeScript)
+
         pure $ TxOutInBabbageEra $ Ledger.Babbage.TxOut address value datum script
 
 decodeUtxo
@@ -1846,7 +1877,7 @@ decodeUtxo v = do
         Json.parseJSONList >=> \case
             [i, o] ->
                 (,) <$> decodeTxIn i <*> (decodeTxOut o >>= \case
-                    TxOutInAlonzoEra{}   -> empty
+                    TxOutInAlonzoEra o'   -> pure (translateTxOut o')
                     TxOutInBabbageEra o' -> pure o'
                 )
             _ ->
@@ -1878,8 +1909,3 @@ castPoint = \case
     BlockPoint slot h -> BlockPoint slot (cast h)
   where
     cast (unShelleyHash -> UnsafeHash h) = coerce h
-
--- | Execute an applicative computation using the 'SJust' side of a 'StrictMaybe'.
-whenSJust :: Applicative m => StrictMaybe a -> (a -> m ()) -> m ()
-whenSJust (SJust a) fn = fn a
-whenSJust SNothing   _ = pure ()

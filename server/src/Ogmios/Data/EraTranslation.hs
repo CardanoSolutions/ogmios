@@ -15,14 +15,13 @@ module Ogmios.Data.EraTranslation
     , MultiEraTxOut  (..)
 
       -- * Translations
-    , translateUTxO
+    , translateUtxo
+    , translateTxOut
     , translateTx
     ) where
 
 import Ogmios.Prelude
 
-import Cardano.Ledger.Babbage.Translation
-    ( translateTxOut )
 import Cardano.Ledger.Babbage.Tx
     ( ValidatedTx (..) )
 import Cardano.Ledger.Era
@@ -47,6 +46,7 @@ import Ouroboros.Consensus.Shelley.Ledger
 import qualified Cardano.Ledger.Alonzo.Scripts as Alonzo
 import qualified Cardano.Ledger.Alonzo.Tx as Alonzo
 import qualified Cardano.Ledger.Alonzo.TxBody as Alonzo
+import qualified Cardano.Ledger.Babbage.Translation as Babbage
 import qualified Cardano.Ledger.Babbage.TxBody as Babbage
 import qualified Cardano.Ledger.Core as Core
 import qualified Cardano.Ledger.Crypto as Ledger
@@ -57,17 +57,29 @@ type family MostRecentEra block :: Type where
 type family BlockEra block :: Type where
    BlockEra (ShelleyBlock protocol era) = era
 
+translateTxOut
+    :: forall crypto era.
+        ( era ~ MostRecentEra (CardanoBlock crypto)
+        , Ledger.Crypto crypto
+        )
+    => Alonzo.TxOut (PreviousEra era)
+    -> Babbage.TxOut era
+translateTxOut =
+    Babbage.translateTxOut
+{-# INLINABLE translateTxOut #-}
+
 -- Promote a UTxO from the previous era into the current one. This supposes
 -- a forward-compatible format, which has been true since Shelley was introduced.
-translateUTxO
+translateUtxo
     :: forall crypto era.
         ( era ~ MostRecentEra (CardanoBlock crypto)
         , Ledger.Crypto crypto
         )
     => UTxO (PreviousEra era)
     -> UTxO era
-translateUTxO =
+translateUtxo =
     UTxO . fmap translateTxOut . unUTxO
+{-# INLINABLE translateUtxo #-}
 
 -- Promote a Tx from the previous era into the current one. This supposes
 -- a forward-compatible format, which has been true since Shelley was introduced.
@@ -90,7 +102,7 @@ translateTx tx = unsafeFromRight $ runExcept $ do
   where
     unsafeFromRight :: (HasCallStack, Show e) => Either e a -> a
     unsafeFromRight = either (error . show) id
-
+{-# INLINABLE translateTx #-}
 
 -- Era-specific GADTs
 

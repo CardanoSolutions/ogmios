@@ -49,8 +49,7 @@ import Ogmios.Data.Protocol.TxSubmission
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock )
 import Ouroboros.Consensus.Cardano.Block
-    ( AlonzoEra
-    , CardanoEras
+    ( CardanoEras
     , GenTx (..)
     , HardForkApplyTxErr (..)
     , HardForkBlock (..)
@@ -712,14 +711,23 @@ genMirror = oneof
     , Just . Json.toJSON <$> arbitrary @Int
     ]
 
-genUtxo
-    :: Gen (UTxO (AlonzoEra StandardCrypto))
-genUtxo =
+genUtxoAlonzo
+    :: Gen (UTxO StandardAlonzo)
+genUtxoAlonzo =
+    reasonablySized arbitrary
+
+genUtxoBabbage
+    :: Gen (UTxO StandardBabbage)
+genUtxoBabbage =
     reasonablySized arbitrary
 
 shrinkUtxo
-    :: UTxO (AlonzoEra StandardCrypto)
-    -> [UTxO (AlonzoEra StandardCrypto)]
+    :: forall era.
+        ( Era era
+        , Arbitrary (Ledger.TxOut era)
+        )
+    => UTxO era
+    -> [UTxO era]
 shrinkUtxo (UTxO u) =
     UTxO . Map.fromList <$> shrinkList shrink (Map.toList u)
 

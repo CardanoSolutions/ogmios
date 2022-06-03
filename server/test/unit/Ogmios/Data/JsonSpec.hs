@@ -27,7 +27,7 @@ import Data.Aeson.QQ.Simple
 import Data.Maybe
     ( fromJust )
 import Ogmios.Data.EraTranslation
-    ( MultiEraUTxO (..) )
+    ( MultiEraUTxO (..), translateUtxo )
 import Ogmios.Data.Json
     ( Json
     , SerializationMode (..)
@@ -178,7 +178,8 @@ import Test.Generators
     , genTx
     , genTxId
     , genUTxOResult
-    , genUtxo
+    , genUtxoAlonzo
+    , genUtxoBabbage
     , genWithOrigin
     , generateWith
     , reasonablySized
@@ -215,6 +216,7 @@ import Test.QuickCheck.Arbitrary.Generic
     ( genericArbitrary )
 
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
+import qualified Ogmios.Data.Json.Babbage as Babbage
 
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
@@ -278,15 +280,29 @@ goldenToJSON golden ref = parallel $ do
 spec :: Spec
 spec = do
     context "JSON roundtrips" $ do
-        prop "encodeUtxo / decodeUtxo (Alonzo)" $ forAllShrinkBlind genUtxo shrinkUtxo $ \utxo ->
+        prop "encodeUtxo / decodeUtxo (Alonzo)" $ forAllShrinkBlind genUtxoAlonzo shrinkUtxo $ \utxo ->
             let encoded = inefficientEncodingToValue (Alonzo.encodeUtxo utxo) in
             case Json.parse decodeUtxo encoded of
                 Json.Error e ->
                     property False
                         & counterexample e
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
-                Json.Success u ->
-                    UTxOInAlonzoEra utxo === u
+                Json.Success utxo' ->
+                    UTxOInAlonzoEra utxo === utxo'
+                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+
+        prop "encodeUtxo / decodeUtxo (Babbage)" $ forAllShrinkBlind genUtxoBabbage shrinkUtxo $ \utxo ->
+            let encoded = inefficientEncodingToValue (Babbage.encodeUtxo utxo) in
+            case Json.parse decodeUtxo encoded of
+                Json.Error e ->
+                    property False
+                        & counterexample e
+                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+                Json.Success (UTxOInAlonzoEra utxo') ->
+                    translateUtxo utxo' === utxo
+                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+                Json.Success (UTxOInBabbageEra utxo') ->
+                    utxo' === utxo
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
 
     context "validate chain-sync request/response against JSON-schema" $ do

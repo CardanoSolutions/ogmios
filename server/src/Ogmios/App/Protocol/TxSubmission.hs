@@ -48,7 +48,7 @@ import GHC.Records
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TQueue, newEmptyTMVar, putTMVar, readTQueue, takeTMVar )
 import Ogmios.Data.EraTranslation
-    ( MultiEraUTxO (..), translateTx, translateUTxO )
+    ( MultiEraUTxO (..), translateTx, translateUtxo )
 import Ogmios.Data.Json
     ( Json )
 import Ogmios.Data.Protocol.TxSubmission
@@ -198,7 +198,7 @@ newExecutionUnitsEvaluator = do
                     atomically $ putTMVar evaluateExecutionUnitsRequest $ SomeEvaluationInAnyEra utxo tx
                     atomically $ takeTMVar evaluateExecutionUnitsResponse
                 (UTxOInAlonzoEra utxo, GenTxBabbage (ShelleyTx _id tx)) -> do
-                    atomically $ putTMVar evaluateExecutionUnitsRequest $ SomeEvaluationInAnyEra (translateUTxO utxo) tx
+                    atomically $ putTMVar evaluateExecutionUnitsRequest $ SomeEvaluationInAnyEra (translateUtxo utxo) tx
                     atomically $ takeTMVar evaluateExecutionUnitsResponse
                 (UTxOInBabbageEra utxo, GenTxAlonzo (ShelleyTx _id tx)) -> do
                     atomically $ putTMVar evaluateExecutionUnitsRequest $ SomeEvaluationInAnyEra utxo (translateTx tx)
@@ -394,7 +394,7 @@ translateToNetworkEra (SomeEvaluationInAnyEra utxoOrig txOrig) =
             alonzoToBabbage =
                 case (testEquality eraNetwork eraBabbage, testEquality eraArgs eraAlonzo) of
                     (Just Refl, Just Refl) -> do
-                        Just (translateUTxO utxo, translateTx tx)
+                        Just (translateUtxo utxo, translateTx tx)
                     _ ->
                         Nothing
           in
