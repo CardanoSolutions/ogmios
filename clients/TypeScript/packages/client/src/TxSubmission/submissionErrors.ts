@@ -6,6 +6,7 @@ import {
   BadInputs,
   CollateralHasNonAdaAssets,
   CollateralIsScript,
+  CollateralReturnMismatch,
   CollateralTooSmall,
   CollectErrors,
   DelegateNotRegistered,
@@ -21,6 +22,8 @@ import {
   InsufficientGenesisSignatures,
   InvalidMetadata,
   InvalidWitnesses,
+  MalformedOutputScripts,
+  MirNegativeTransfer,
   MirNegativeTransferNotCurrentlyAllowed,
   MirProducesNegativeUpdate,
   MirTransferNotCurrentlyAllowed,
@@ -73,6 +76,7 @@ export type SubmitTxErrorShelley =
   | BadInputs
   | CollateralHasNonAdaAssets
   | CollateralIsScript
+  | CollateralReturnMismatch
   | CollateralTooSmall
   | CollectErrors
   | DelegateNotRegistered
@@ -88,6 +92,8 @@ export type SubmitTxErrorShelley =
   | InsufficientGenesisSignatures
   | InvalidMetadata
   | InvalidWitnesses
+  | MalformedOutputScripts
+  | MirNegativeTransfer
   | MirNegativeTransferNotCurrentlyAllowed
   | MirProducesNegativeUpdate
   | MirTransferNotCurrentlyAllowed
@@ -761,6 +767,36 @@ export const errors = {
       public constructor (rawError: ExtraScriptWitnesses) {
         super()
         this.message = safeJSON.stringify(rawError.extraScriptWitnesses)
+      }
+    }
+  },
+  MirNegativeTransfer: {
+    assert: (item: SubmitTxErrorShelley): item is MirNegativeTransfer =>
+      (item as MirNegativeTransfer).mirNegativeTransfer !== undefined,
+    Error: class MirNegativeTransferError extends CustomError {
+      public constructor (rawError: MirNegativeTransfer) {
+        super()
+        this.message = safeJSON.stringify(rawError.mirNegativeTransfer)
+      }
+    }
+  },
+  CollateralReturnMismatch: {
+    assert: (item: SubmitTxErrorShelley): item is CollateralReturnMismatch =>
+      (item as CollateralReturnMismatch).collateralReturnMismatch !== undefined,
+    Error: class CollateralReturnMismatchError extends CustomError {
+      public constructor (rawError: CollateralReturnMismatch) {
+        super()
+        this.message = safeJSON.stringify(rawError.collateralReturnMismatch)
+      }
+    }
+  },
+  MalformedOutputScripts: {
+    assert: (item: SubmitTxErrorShelley): item is MalformedOutputScripts =>
+      (item as MalformedOutputScripts).malformedOutputScripts !== undefined,
+    Error: class MalformedOutputScriptsError extends CustomError {
+      public constructor (rawError: MalformedOutputScripts) {
+        super()
+        this.message = safeJSON.stringify(rawError.malformedOutputScripts)
       }
     }
   }

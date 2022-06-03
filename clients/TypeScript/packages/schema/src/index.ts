@@ -8,7 +8,7 @@
 /**
  * A Cardano Block, which can take different forms depending on the era.
  */
-export type Block = Alonzo | Mary | Allegra | Shelley | Byron;
+export type Block = Babbage | Alonzo | Mary | Allegra | Shelley | Byron;
 /**
  * A Blake2b 32-byte digest of an era-independent block body.
  */
@@ -34,6 +34,24 @@ export type AssetQuantity = bigint;
  */
 export type DigestBlake2BDatum = string;
 export type Null = null;
+export type Datum = string;
+export type Script = Native | PlutusV1 | PlutusV2;
+/**
+ * A phase-1 monetary script. Timelocks constraints are only supported since Allegra.
+ */
+export type ScriptNative = DigestBlake2BVerificationKey | Any | All | NOf | ExpiresAt | StartsAt;
+/**
+ * A Blake2b 28-byte digest of an Ed25519 verification key.
+ */
+export type DigestBlake2BVerificationKey = string;
+/**
+ * An absolute slot number.
+ */
+export type Slot = number;
+/**
+ * A phase-2 Plutus script; or said differently, a serialized Plutus-core program.
+ */
+export type ScriptPlutus = string;
 export type Certificate =
   | StakeDelegation
   | StakeKeyRegistration
@@ -50,10 +68,6 @@ export type DigestBlake2BCredential = string;
  * A Blake2b 32-byte digest of a pool's verification key.
  */
 export type PoolId = string;
-/**
- * A Blake2b 28-byte digest of an Ed25519 verification key.
- */
-export type DigestBlake2BVerificationKey = string;
 /**
  * A ratio of two integers, to express exact fractions.
  */
@@ -83,20 +97,10 @@ export type LovelaceDelta = number;
  * Source of rewards as defined by the protocol parameters.
  */
 export type RewardPot = "reserves" | "treasury";
-/**
- * An absolute slot number.
- */
-export type Slot = number;
-export type UpdateAlonzo = Null | UpdateProposalAlonzo;
+export type UpdateBabbage = Null | UpdateProposalBabbage;
 export type NullableUInt64 = UInt64 | Null;
 export type UInt64 = number;
 export type NullableRatio = Ratio | Null;
-export type Nonce = Neutral | DigestBlake2BNonce;
-export type Neutral = "neutral";
-/**
- * A Blake2b 32-byte digest of some arbitrary to make a nonce.
- */
-export type DigestBlake2BNonce = string;
 export type UInt32 = number;
 export type Int64 = number;
 /**
@@ -111,15 +115,6 @@ export type DigestBlake2BScriptIntegrity = string;
  * A signature coming from an Ed25519 or Ed25519-BIP32 signing key.
  */
 export type Signature = string;
-export type Script = Native | Plutus | Plutus1;
-/**
- * A phase-1 monetary script. Timelocks constraints are only supported since Allegra.
- */
-export type ScriptNative = DigestBlake2BVerificationKey | Any | All | NOf | ExpiresAt | StartsAt;
-/**
- * A phase-2 Plutus script; or said differently, a serialized Plutus-core program.
- */
-export type ScriptPlutus = string;
 /**
  * An Ed25519-BIP32 chain-code for key deriviation.
  */
@@ -132,7 +127,6 @@ export type AddressAttributes = string;
  * An Ed25519 verification key.
  */
 export type VerificationKey = string;
-export type Datum = string;
 /**
  * Plutus data, CBOR-serialised.
  */
@@ -142,10 +136,7 @@ export type RedeemerData = string;
  */
 export type DigestBlake2BAuxiliaryDataBody = string;
 export type Metadatum = Int | String | Bytes | List | Map;
-/**
- * A Blake2b 32-byte digest of an era-independent block header, serialised as CBOR.
- */
-export type DigestBlake2BBlockHeader = string;
+export type DigestBlake2BBlockHeader = string | "genesis";
 /**
  * A block number, the i-th block to be minted is number i.
  */
@@ -154,8 +145,6 @@ export type BlockNo = number;
  * A key identifying a block issuer.
  */
 export type IssuerVrfVerificationKey = string;
-export type VrfProof = string;
-export type VrfOutput = string;
 /**
  * The size of the block in bytes.
  */
@@ -165,6 +154,15 @@ export type KesVerificationKey = string;
  * Signature proving a block was issued by a given issuer VRF key.
  */
 export type IssuerSignature = string;
+export type VrfProof = string;
+export type VrfOutput = string;
+export type UpdateAlonzo = Null | UpdateProposalAlonzo;
+export type Nonce = Neutral | DigestBlake2BNonce;
+export type Neutral = "neutral";
+/**
+ * A Blake2b 32-byte digest of some arbitrary to make a nonce.
+ */
+export type DigestBlake2BNonce = string;
 export type UpdateShelley = Null | UpdateProposalShelley;
 /**
  * A block in the Byron era. Most blocks are stanard blocks, but once at the beginning of each era is an additional epoch boundary block (a.k.a. EBB)
@@ -198,7 +196,7 @@ export type TipOrOrigin = Tip | Origin;
  */
 export type Origin = "origin";
 export type PointOrOrigin = Point | Origin;
-export type Era = "Byron" | "Shelley" | "Allegra" | "Mary" | "Alonzo";
+export type Era = "Byron" | "Shelley" | "Allegra" | "Mary" | "Alonzo" | "Babbage";
 /**
  * A Blake2b 32-byte digest of a phase-1 or phase-2 script, CBOR-encoded.
  */
@@ -284,6 +282,9 @@ export type SubmitTxError = (
   | ValidationTagMismatch
   | CollectErrors
   | ExtraScriptWitnesses
+  | MirNegativeTransfer
+  | CollateralReturnMismatch
+  | MalformedOutputScripts
 )[];
 export type RedeemerPointer = string;
 export type Language = "plutus:v1" | "plutus:v2";
@@ -299,6 +300,7 @@ export type ScriptFailure = (
   | NonScriptInputReferencedByRedeemer
   | IllFormedExecutionBudget
   | NoCostModelForLanguage
+  | CorruptCostModelForLanguage
 )[];
 export type AcquireFailureDetails = "pointTooOld" | "pointNotOnChain";
 export type GetEraStart = "eraStart";
@@ -606,7 +608,7 @@ export interface Ogmios {
     version: "1.0";
     servicename: "ogmios";
     methodname: "NextTx";
-    result: TxId | TxAlonzo | Null;
+    result: TxId | TxBabbage | Null;
     /**
      * Any value that was set by a client request in the 'mirror' field.
      */
@@ -834,7 +836,12 @@ export interface Ogmios {
     version: "1.0";
     servicename: "ogmios";
     methodname: "Query";
-    result: ProtocolParametersShelley | ProtocolParametersAlonzo | EraMismatch | QueryUnavailableInCurrentEra;
+    result:
+      | ProtocolParametersShelley
+      | ProtocolParametersAlonzo
+      | ProtocolParametersBabbage
+      | EraMismatch
+      | QueryUnavailableInCurrentEra;
     /**
      * Any value that was set by a client request in the 'mirror' field.
      */
@@ -850,6 +857,7 @@ export interface Ogmios {
     result:
       | ProposedProtocolParametersShelley
       | ProposedProtocolParametersAlonzo
+      | ProposedProtocolParametersBabbage
       | EraMismatch
       | QueryUnavailableInCurrentEra;
     /**
@@ -1036,11 +1044,11 @@ export interface RollForward {
     tip: TipOrOrigin;
   };
 }
-export interface Alonzo {
-  alonzo: BlockAlonzo;
+export interface Babbage {
+  babbage: BlockBabbage;
 }
-export interface BlockAlonzo {
-  body?: TxAlonzo[];
+export interface BlockBabbage {
+  body?: TxBabbage[];
   headerHash?: DigestBlake2BBlockHeader;
   header?: {
     blockHeight: BlockNo;
@@ -1048,27 +1056,29 @@ export interface BlockAlonzo {
     prevHash: DigestBlake2BBlockHeader;
     issuerVk: VerificationKey;
     issuerVrf: IssuerVrfVerificationKey;
-    nonce?: CertifiedVrf;
-    leaderValue: CertifiedVrf;
     blockSize: BlockSize;
     blockHash: DigestBlake2BBlockBody;
     opCert: OpCert;
     protocolVersion: ProtocolVersion;
     signature: IssuerSignature;
+    vrfInput: CertifiedVrf;
   };
 }
-export interface TxAlonzo {
+export interface TxBabbage {
   id: DigestBlake2BBlockBody;
   inputSource: "inputs" | "collaterals";
   body: {
     inputs: TxIn[];
+    references?: TxIn[];
     collaterals: TxIn[];
+    collateralReturn?: TxOut | Null;
+    totalCollateral?: Lovelace | Null;
     outputs: TxOut[];
     certificates: Certificate[];
     withdrawals: Withdrawals;
     fee: Lovelace;
     validityInterval: ValidityInterval;
-    update: UpdateAlonzo;
+    update: UpdateBabbage;
     mint: Value;
     network: Network | Null;
     scriptIntegrityHash: DigestBlake2BScriptIntegrity | Null;
@@ -1100,18 +1110,49 @@ export interface TxIn {
   index: number;
 }
 /**
- * A transaction output. Since Mary, 'value' always return a multi-asset value. Since Alonzo, 'datum' is always present (albeit sometimes 'null')
+ * A transaction output. Since Mary, 'value' always return a multi-asset value. Since Alonzo, 'datumHash' is always present (albeit sometimes 'null'). Since Babbage, 'datum' & 'script' are always present (albeit sometimes 'null').
  */
 export interface TxOut {
   address: Address;
   value: Value;
-  datum?: DigestBlake2BDatum | Null;
+  datumHash?: DigestBlake2BDatum | Null;
+  datum?:
+    | {
+        [k: string]: unknown;
+      }
+    | Datum
+    | Null;
+  script?: Script | Null;
 }
 export interface Value {
   coins: Lovelace;
   assets?: {
     [k: string]: AssetQuantity;
   };
+}
+export interface Native {
+  native: ScriptNative;
+}
+export interface Any {
+  any: ScriptNative[];
+}
+export interface All {
+  all: ScriptNative[];
+}
+export interface NOf {
+  [k: string]: ScriptNative[];
+}
+export interface ExpiresAt {
+  expiresAt: Slot;
+}
+export interface StartsAt {
+  startsAt: Slot;
+}
+export interface PlutusV1 {
+  "plutus:v1": ScriptPlutus;
+}
+export interface PlutusV2 {
+  "plutus:v2": ScriptPlutus;
 }
 /**
  * A stake delegation certificate, from a delegator to a stake pool.
@@ -1200,13 +1241,13 @@ export interface ValidityInterval {
   invalidBefore: Slot | Null;
   invalidHereafter: Slot | Null;
 }
-export interface UpdateProposalAlonzo {
+export interface UpdateProposalBabbage {
   epoch: Epoch;
   proposal: {
-    [k: string]: ProtocolParametersAlonzo;
+    [k: string]: ProtocolParametersBabbage;
   };
 }
-export interface ProtocolParametersAlonzo {
+export interface ProtocolParametersBabbage {
   minFeeCoefficient: NullableUInt64;
   minFeeConstant: NullableUInt64;
   maxBlockBodySize: NullableUInt64;
@@ -1219,13 +1260,11 @@ export interface ProtocolParametersAlonzo {
   poolInfluence: NullableRatio;
   monetaryExpansion: NullableRatio;
   treasuryExpansion: NullableRatio;
-  decentralizationParameter: NullableRatio;
   minPoolCost: NullableUInt64;
-  coinsPerUtxoWord: NullableUInt64;
+  coinsPerUtxoByte: NullableUInt64;
   maxValueSize: NullableUInt64;
   collateralPercentage: NullableUInt64;
   maxCollateralInputs: NullableUInt64;
-  extraEntropy: Nonce | Null;
   protocolVersion: ProtocolVersion | Null;
   costModels: CostModels | Null;
   prices: Prices | Null;
@@ -1250,30 +1289,6 @@ export interface Prices {
 export interface ExUnits {
   memory: UInt64;
   steps: UInt64;
-}
-export interface Native {
-  native: ScriptNative;
-}
-export interface Any {
-  any: ScriptNative[];
-}
-export interface All {
-  all: ScriptNative[];
-}
-export interface NOf {
-  [k: string]: ScriptNative[];
-}
-export interface ExpiresAt {
-  expiresAt: Slot;
-}
-export interface StartsAt {
-  startsAt: Slot;
-}
-export interface Plutus {
-  "plutus:v1": ScriptPlutus;
-}
-export interface Plutus1 {
-  "plutus:v2": ScriptPlutus;
 }
 export interface BootstrapWitness {
   signature?: Signature;
@@ -1315,10 +1330,6 @@ export interface MetadatumMap {
   k: Metadatum;
   v: Metadatum;
 }
-export interface CertifiedVrf {
-  proof?: VrfProof;
-  output?: VrfOutput;
-}
 /**
  * Certificate identifying a stake pool operator.
  */
@@ -1327,6 +1338,101 @@ export interface OpCert {
   sigma?: Signature;
   kesPeriod?: UInt64;
   hotVk?: KesVerificationKey;
+}
+export interface CertifiedVrf {
+  proof?: VrfProof;
+  output?: VrfOutput;
+}
+export interface Alonzo {
+  alonzo: BlockAlonzo;
+}
+export interface BlockAlonzo {
+  body?: TxAlonzo[];
+  headerHash?: DigestBlake2BBlockHeader;
+  header?: {
+    blockHeight: BlockNo;
+    slot: Slot;
+    prevHash: DigestBlake2BBlockHeader;
+    issuerVk: VerificationKey;
+    issuerVrf: IssuerVrfVerificationKey;
+    nonce?: CertifiedVrf;
+    leaderValue: CertifiedVrf;
+    blockSize: BlockSize;
+    blockHash: DigestBlake2BBlockBody;
+    opCert: OpCert;
+    protocolVersion: ProtocolVersion;
+    signature: IssuerSignature;
+  };
+}
+export interface TxAlonzo {
+  id: DigestBlake2BBlockBody;
+  inputSource: "inputs" | "collaterals";
+  body: {
+    inputs: TxIn[];
+    collaterals: TxIn[];
+    outputs: TxOut[];
+    certificates: Certificate[];
+    withdrawals: Withdrawals;
+    fee: Lovelace;
+    validityInterval: ValidityInterval;
+    update: UpdateAlonzo;
+    mint: Value;
+    network: Network | Null;
+    scriptIntegrityHash: DigestBlake2BScriptIntegrity | Null;
+    requiredExtraSignatures: DigestBlake2BVerificationKey[];
+  };
+  witness: {
+    signatures: {
+      [k: string]: Signature;
+    };
+    scripts: {
+      [k: string]: Script;
+    };
+    bootstrap: BootstrapWitness[];
+    datums: {
+      [k: string]: Datum;
+    };
+    redeemers: {
+      [k: string]: Redeemer;
+    };
+  };
+  metadata: AuxiliaryData | Null;
+  /**
+   * The raw serialized transaction, as found on-chain.
+   */
+  raw: string;
+}
+export interface UpdateProposalAlonzo {
+  epoch: Epoch;
+  proposal: {
+    [k: string]: ProtocolParametersAlonzo;
+  };
+}
+export interface ProtocolParametersAlonzo {
+  minFeeCoefficient: NullableUInt64;
+  minFeeConstant: NullableUInt64;
+  maxBlockBodySize: NullableUInt64;
+  maxBlockHeaderSize: NullableUInt64;
+  maxTxSize: NullableUInt64;
+  stakeKeyDeposit: NullableUInt64;
+  poolDeposit: NullableUInt64;
+  poolRetirementEpochBound: NullableUInt64;
+  desiredNumberOfPools: NullableUInt64;
+  poolInfluence: NullableRatio;
+  monetaryExpansion: NullableRatio;
+  treasuryExpansion: NullableRatio;
+  decentralizationParameter: NullableRatio;
+  minPoolCost: NullableUInt64;
+  coinsPerUtxoWord: NullableUInt64;
+  maxValueSize: NullableUInt64;
+  collateralPercentage: NullableUInt64;
+  maxCollateralInputs: NullableUInt64;
+  extraEntropy: Nonce | Null;
+  protocolVersion: ProtocolVersion | Null;
+  costModels: CostModels | Null;
+  prices: Prices | Null;
+  maxExecutionUnitsPerTransaction: ExUnits | Null;
+  maxExecutionUnitsPerBlock: ExUnits | Null;
 }
 export interface Mary {
   mary: BlockMary;
@@ -1748,7 +1854,13 @@ export interface NetworkMismatch {
   };
 }
 export interface OutputTooSmall {
-  outputTooSmall: TxOut[];
+  outputTooSmall: (
+    | TxOut
+    | {
+        output: TxOut;
+        minimumRequiredValue: Lovelace;
+      }
+  )[];
 }
 /**
  * Only since Mary.
@@ -1953,6 +2065,21 @@ export interface CollectErrors {
 export interface ExtraScriptWitnesses {
   extraScriptWitnesses: DigestBlake2BScript[];
 }
+export interface MirNegativeTransfer {
+  mirNegativeTransfer: {
+    rewardSource: RewardPot;
+    attemptedTransfer: Lovelace;
+  };
+}
+export interface CollateralReturnMismatch {
+  collateralReturnMismatch: {
+    needed: Lovelace;
+    returned: Lovelace;
+  };
+}
+export interface MalformedOutputScripts {
+  malformedOutputScripts: DigestBlake2BScript[];
+}
 export interface EvaluationResult {
   EvaluationResult: {
     [k: string]: ExUnits;
@@ -1964,7 +2091,9 @@ export interface EvaluationFailure {
     | EvaluationFailureUnknownInputs
     | EvaluationFailureIncompatibleEra
     | EvaluationFailureUncomputableSlotArithmetic
-    | EvaluationFailureAdditionalUtxoOverlap;
+    | EvaluationFailureAdditionalUtxoOverlap
+    | EvaluationFailureNotEnoughSynced
+    | EvaluationFailureCannotCreateEvaluationContext;
 }
 export interface EvaluationFailureScriptFailures {
   ScriptFailures: {
@@ -2012,6 +2141,12 @@ export interface IllFormedExecutionBudget {
 export interface NoCostModelForLanguage {
   noCostModelForLanguage: Language;
 }
+/**
+ * An artifact from a distant past. This is unused but somehow still present in the ledger internal definitions. Should be removed eventually.
+ */
+export interface CorruptCostModelForLanguage {
+  corruptCostModelForLanguage: Language;
+}
 export interface EvaluationFailureUnknownInputs {
   UnknownInputs: TxIn[];
 }
@@ -2038,6 +2173,23 @@ export interface EvaluationFailureUncomputableSlotArithmetic {
  */
 export interface EvaluationFailureAdditionalUtxoOverlap {
   AdditionalUtxoOverlap: TxIn[];
+}
+/**
+ * Happens when attempting to evaluate execution units on a node that isn't enough synchronized.
+ */
+export interface EvaluationFailureNotEnoughSynced {
+  NotEnoughSynced: {
+    minimumRequiredEra: Era;
+    currentNodeEra: Era;
+  };
+}
+/**
+ * Happens when the ledger fails to create an evaluation context from a given transaction. This is mostly due to the transaction being malformed (e.g. wrong redeemer pointer, missing UTxO).
+ */
+export interface EvaluationFailureCannotCreateEvaluationContext {
+  CannotCreateEvaluationContext: {
+    reason: string;
+  };
 }
 export interface AcquireSuccess {
   AcquireSuccess: {
@@ -2118,6 +2270,9 @@ export interface ProposedProtocolParametersShelley {
 }
 export interface ProposedProtocolParametersAlonzo {
   [k: string]: ProtocolParametersAlonzo;
+}
+export interface ProposedProtocolParametersBabbage {
+  [k: string]: ProtocolParametersBabbage;
 }
 /**
  * Distribution of stake across registered stake pools. Each key in the map corresponds to a pool id.

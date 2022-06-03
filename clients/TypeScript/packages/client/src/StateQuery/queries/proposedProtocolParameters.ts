@@ -1,4 +1,10 @@
-import { EraMismatch, Ogmios, ProposedProtocolParametersAlonzo, ProposedProtocolParametersShelley } from '@cardano-ogmios/schema'
+import {
+  EraMismatch,
+  Ogmios,
+  ProposedProtocolParametersAlonzo,
+  ProposedProtocolParametersBabbage,
+  ProposedProtocolParametersShelley
+} from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError } from '../../errors'
 import { InteractionContext } from '../../Connection'
 import { isEmptyObject } from '../../util'
@@ -14,11 +20,11 @@ const isEraMismatch = (result: Ogmios['QueryResponse[proposedProtocolParameters]
  */
 export const proposedProtocolParameters = (
   context: InteractionContext
-): Promise<ProposedProtocolParametersShelley | ProposedProtocolParametersAlonzo | null> =>
+): Promise<ProposedProtocolParametersShelley | ProposedProtocolParametersAlonzo | ProposedProtocolParametersBabbage | null> =>
   Query<
     Ogmios['Query'],
     Ogmios['QueryResponse[proposedProtocolParameters]'],
-    ProposedProtocolParametersShelley | ProposedProtocolParametersAlonzo | null
+    ProposedProtocolParametersShelley | ProposedProtocolParametersAlonzo | ProposedProtocolParametersBabbage | null
   >({
     methodName: 'Query',
     args: {
