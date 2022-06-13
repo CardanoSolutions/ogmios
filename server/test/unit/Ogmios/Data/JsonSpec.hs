@@ -26,6 +26,8 @@ import Data.Aeson.QQ.Simple
     ( aesonQQ )
 import Data.Maybe
     ( fromJust )
+import Ogmios.Data.EraTranslation
+    ( MultiEraUTxO (..), translateUtxo )
 import Ogmios.Data.Json
     ( Json
     , SerializationMode (..)
@@ -38,9 +40,10 @@ import Ogmios.Data.Json
     , encodeScriptFailure
     , encodeSubmitTxError
     , encodeTip
+    , encodeTranslationError
+    , encodeTx
     , encodeTxId
     , encodeTxIn
-    , encodeUtxo
     , inefficientEncodingToValue
     , jsonToByteString
     , stringifyRdmrPtr
@@ -107,6 +110,7 @@ import Ogmios.Data.Protocol.TxMonitor
     , HasTxResponse (..)
     , MempoolSizeAndCapacity
     , NextTx
+    , NextTxFields (..)
     , NextTxResponse (..)
     , ReleaseMempool
     , ReleaseMempoolResponse (..)
@@ -161,7 +165,8 @@ import Test.Generators
     , genNonMyopicMemberRewardsResult
     , genPParamsResult
     , genPoint
-    , genPointResult
+    , genPointResultPraos
+    , genPointResultTPraos
     , genPoolDistrResult
     , genPoolIdsResult
     , genPoolParametersResult
@@ -172,9 +177,11 @@ import Test.Generators
     , genSubmitResult
     , genSystemStart
     , genTip
+    , genTx
     , genTxId
     , genUTxOResult
-    , genUtxo
+    , genUtxoAlonzo
+    , genUtxoBabbage
     , genWithOrigin
     , generateWith
     , reasonablySized
@@ -209,6 +216,9 @@ import Test.QuickCheck
     )
 import Test.QuickCheck.Arbitrary.Generic
     ( genericArbitrary )
+
+import qualified Ogmios.Data.Json.Alonzo as Alonzo
+import qualified Ogmios.Data.Json.Babbage as Babbage
 
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
@@ -249,9 +259,14 @@ validateFromJSON
 validateFromJSON gen (encode, decode) (n, vectorFilePath) ref = parallel $ do
     runIO $ generateTestVectors (n, vectorFilePath) gen encode
     refs <- runIO $ unsafeReadSchemaRef ref
-    specify (toString $ getSchemaRef ref) $ forAllBlind gen $ \a -> conjoin
+    specify (toString $ getSchemaRef ref) $ forAllBlind gen $ \a ->
+        let leftSide = decodeWith decode (jsonToByteString (encode a)) in
+        conjoin
         [ prop_validateToJSON (jsonifierToAeson . encode) refs a
-        , decodeWith decode (jsonToByteString (encode a)) === Just a
+        , leftSide == Just a
+            & counterexample (decodeUtf8 $ Json.encodePretty $ inefficientEncodingToValue $ encode a)
+            & counterexample ("Got:  " <> show leftSide)
+            & counterexample ("Want: " <> show (Just a))
         ]
 
 goldenToJSON
@@ -267,15 +282,29 @@ goldenToJSON golden ref = parallel $ do
 spec :: Spec
 spec = do
     context "JSON roundtrips" $ do
-        prop "encodeUtxo / decodeUtxo" $ forAllShrinkBlind genUtxo shrinkUtxo $ \utxo ->
-            let encoded = inefficientEncodingToValue (encodeUtxo utxo) in
+        prop "encodeUtxo / decodeUtxo (Alonzo)" $ forAllShrinkBlind genUtxoAlonzo shrinkUtxo $ \utxo ->
+            let encoded = inefficientEncodingToValue (Alonzo.encodeUtxo utxo) in
             case Json.parse decodeUtxo encoded of
                 Json.Error e ->
                     property False
                         & counterexample e
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
-                Json.Success u ->
-                    utxo === u
+                Json.Success utxo' ->
+                    UTxOInAlonzoEra utxo === utxo'
+                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+
+        prop "encodeUtxo / decodeUtxo (Babbage)" $ forAllShrinkBlind genUtxoBabbage shrinkUtxo $ \utxo ->
+            let encoded = inefficientEncodingToValue (Babbage.encodeUtxo utxo) in
+            case Json.parse decodeUtxo encoded of
+                Json.Error e ->
+                    property False
+                        & counterexample e
+                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+                Json.Success (UTxOInAlonzoEra utxo') ->
+                    translateUtxo utxo' === utxo
+                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+                Json.Success (UTxOInBabbageEra utxo') ->
+                    utxo' === utxo
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
 
     context "validate chain-sync request/response against JSON-schema" $ do
@@ -303,10 +332,6 @@ spec = do
             (200, "ChainSync/Response/RequestNext")
             "ogmios.wsp.json#/properties/RequestNextResponse"
 
-        goldenToJSON
-            "RequestNextResponse_1.json"
-            "ogmios.wsp.json#/properties/RequestNextResponse"
-
     context "validate tx-submission request/response against JSON-schema" $ do
         prop "deserialise signed transactions" prop_parseSubmitTx
 
@@ -318,7 +343,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Wsp.Response (EvaluateTxResponse Block)))
-            (_encodeEvaluateTxResponse (Proxy @Block) stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn)
+            (_encodeEvaluateTxResponse (Proxy @Block) stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError)
             (100, "TxSubmission/Response/EvaluateTx")
             "ogmios.wsp.json#/properties/EvaluateTxResponse"
 
@@ -347,7 +372,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Wsp.Response (NextTxResponse Block)))
-            (_encodeNextTxResponse encodeTxId)
+            (_encodeNextTxResponse encodeTxId (encodeTx FullSerialization))
             (10, "TxMonitor/Response/NextTx")
             "ogmios.wsp.json#/properties/NextTxResponse"
 
@@ -415,7 +440,7 @@ spec = do
 
         validateQuery
             [aesonQQ|"ledgerTip"|]
-            ( parseGetLedgerTip genPointResult
+            ( parseGetLedgerTip genPointResultTPraos genPointResultPraos
             ) (10, "StateQuery/Response/Query[ledgerTip]")
             "ogmios.wsp.json#/properties/QueryResponse[ledgerTip]"
 
@@ -613,16 +638,16 @@ instance Arbitrary RequestNext where
 
 instance Arbitrary (SubmitTxResponse Block) where
     shrink = genericShrink
-    arbitrary = genericArbitrary
+    arbitrary = reasonablySized genericArbitrary
 
 instance Arbitrary (HardForkApplyTxErr (CardanoEras StandardCrypto)) where
     arbitrary = genHardForkApplyTxErr
 
 instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto))) where
-    arbitrary = genSubmitResult
+    arbitrary = reasonablySized genSubmitResult
 
 instance Arbitrary (EvaluateTxResponse Block) where
-    arbitrary = genEvaluateTxResponse
+    arbitrary = reasonablySized genEvaluateTxResponse
 
 instance Arbitrary (Acquire Block) where
     shrink = genericShrink
@@ -654,6 +679,10 @@ instance Arbitrary AwaitAcquireResponse where
 instance Arbitrary NextTx where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
+
+instance Arbitrary NextTxFields where
+    shrink = genericShrink
+    arbitrary = genericArbitrary
 
 instance Arbitrary (NextTxResponse Block) where
     shrink = genericShrink
@@ -690,7 +719,10 @@ instance Arbitrary (Tip Block) where
     arbitrary = genTip
 
 instance Arbitrary Block where
-    arbitrary = genBlock
+    arbitrary = reasonablySized genBlock
+
+instance Arbitrary (GenTx Block) where
+    arbitrary = genTx
 
 instance Arbitrary (GenTxId Block) where
     arbitrary = genTxId
@@ -802,6 +834,7 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                     , SomeShelleyEra ShelleyBasedEraAllegra
                     , SomeShelleyEra ShelleyBasedEraMary
                     , SomeShelleyEra ShelleyBasedEraAlonzo
+                    , SomeShelleyEra ShelleyBasedEraBabbage
                     ]
             forM_ eras $ \(era, SomeQuery{genResult,encodeResult}) -> do
                 let encodeQueryResponse
@@ -811,7 +844,7 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                         . encodeResult FullSerialization
 
                 case era of
-                    SomeShelleyEra ShelleyBasedEraAlonzo -> do
+                    SomeShelleyEra ShelleyBasedEraBabbage -> do
                         generateTestVectors (n, vectorFilepath)
                             (genResult Proxy)
                             encodeQueryResponse
@@ -822,8 +855,8 @@ validateQuery json parser (n, vectorFilepath) resultRef =
 
                 -- NOTE: Queries are mostly identical between eras, since we run
                 -- the test for each era, we can reduce the number of expected
-                -- max success. In the end, the property run 4 times!
-                runQuickCheck $ withMaxSuccess 25 $ forAllBlind
+                -- max success. In the end, the property run 1 time per era!
+                runQuickCheck $ withMaxSuccess 20 $ forAllBlind
                     (genResult Proxy)
                     (prop_validateToJSON (jsonifierToAeson . encodeQueryResponse) resultRefs)
 

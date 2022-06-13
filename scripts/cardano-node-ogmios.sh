@@ -11,29 +11,21 @@
 #
 # Usage: ./cardano-node-ogmios.sh
 
-set -m
-
-cardano-node run\
-  --topology /config/cardano-node/topology.json\
-  --database-path /db\
-  --port 3000\
-  --host-addr 0.0.0.0\
-  --config /config/cardano-node/config.json\
-  --socket-path /ipc/node.socket &
-status=$?
-if [ $status -ne 0 ]; then
-  echo "Failed to start cardano-node: $status"
-  exit $status
-fi
-
 ogmios \
-  --host 0.0.0.0\
+  --host 0.0.0.0 \
   --node-config /config/cardano-node/config.json \
   --node-socket /ipc/node.socket &
-status=$?
-if [ $status -ne 0 ]; then
-  echo "Failed to start ogmios: $status"
-  exit $status
+ogmios_status=$?
+
+if [ $ogmios_status -ne 0 ]; then
+  echo "Failed to start ogmios: $ogmios_status"
+  exit $ogmios_status
 fi
 
-fg %1
+cardano-node run \
+  --topology /config/cardano-node/topology.json \
+  --database-path /db \
+  --port 3000 \
+  --host-addr 0.0.0.0 \
+  --config /config/cardano-node/config.json \
+  --socket-path /ipc/node.socket

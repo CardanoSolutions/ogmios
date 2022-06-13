@@ -71,6 +71,8 @@ import Ouroboros.Consensus.HardFork.Combinator.Abstract.SingleEraBlock
     ( EraIndex (..) )
 import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
     ( QueryHardFork (..) )
+import Ouroboros.Consensus.Protocol.TPraos
+    ( TPraos )
 import Ouroboros.Consensus.Shelley.Ledger
     ( ShelleyBlock )
 import Ouroboros.Consensus.Shelley.Ledger.Query
@@ -258,11 +260,11 @@ stateQueryMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
 -- Constructing EraIndex, shameless copied from: Ouroboros.Consensus.Cardano.Block
 --
 
-pattern IxByron   :: f ByronBlock                    -> NS f (CardanoEras c)
-pattern IxShelley :: f (ShelleyBlock (ShelleyEra c)) -> NS f (CardanoEras c)
-pattern IxAllegra :: f (ShelleyBlock (AllegraEra c)) -> NS f (CardanoEras c)
-pattern IxMary    :: f (ShelleyBlock (MaryEra    c)) -> NS f (CardanoEras c)
-pattern IxAlonzo  :: f (ShelleyBlock (AlonzoEra  c)) -> NS f (CardanoEras c)
+pattern IxByron   :: f ByronBlock                               -> NS f (CardanoEras c)
+pattern IxShelley :: f (ShelleyBlock (TPraos c) (ShelleyEra c)) -> NS f (CardanoEras c)
+pattern IxAllegra :: f (ShelleyBlock (TPraos c) (AllegraEra c)) -> NS f (CardanoEras c)
+pattern IxMary    :: f (ShelleyBlock (TPraos c) (MaryEra    c)) -> NS f (CardanoEras c)
+pattern IxAlonzo  :: f (ShelleyBlock (TPraos c) (AlonzoEra  c)) -> NS f (CardanoEras c)
 
 pattern IxByron   x =             Z x
 pattern IxShelley x =          S (Z x)

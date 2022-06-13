@@ -17,7 +17,7 @@ We won't be covering the JSON-WSP standard in this guide but gives a few extra i
 
 ### Requests
 
-Requests messages are sent by client applications (you) to Ogmios. Requests have 3 fields of interest: `methodname`, `args` and `mirror`. The `methodname` identifies the request itself and translates to a corresponding message of one of the 3 Ouroboros mini-protocols. Possible values for the `methodname` are described in [section 3 - Ouroboros mini-protocols](../../mini-protocols) and the complete reference is available in [section 4 - API Reference](../../api-reference).
+Requests messages are sent by client applications (you) to Ogmios. Requests have 3 fields of interest: `methodname`, `args` and `mirror`. The `methodname` identifies the request itself and translates to a corresponding message of one of the 3 Ouroboros mini-protocols. Possible values for the `methodname` are described in [section 3 - Ouroboros mini-protocols](../../mini-protocols) and the complete reference is available in [section 4 - API Reference](../../api).
 
 Here is an example of valid request message:
 
@@ -58,7 +58,7 @@ Let's start with a possible response to the request above:
 }
 ```
 
-The response kindly indicates which requests it corresponds to and has the same `methodname` as the matching request. It also gives a result under a specific field. Responses can have various results which are fully specified in [section 4. - API Reference](../../api-reference). Also, notice the `reflection` field which reflects exactly the `mirror` field that was set for the request.
+The response kindly indicates which requests it corresponds to and has the same `methodname` as the matching request. It also gives a result under a specific field. Responses can have various results which are fully specified in [section 4. - API Reference](../../api). Also, notice the `reflection` field which reflects exactly the `mirror` field that was set for the request.
 
 {{% notice info %}}
 Ogmios' responses may correspond to possible errors that are part of the Ouroboros mini-protocols. For example, if you submit an invalid transaction, you'll get back a message of type `jsonwsp/response` because it is a valid message in the context of the mini-protocols. Yet, Ogmios will yield a message of type `jsonwsp/fault` if you submit an invalid Ogmios message (for instance, an unknown request constructor, or something that is not a valid JSON-WSP message).

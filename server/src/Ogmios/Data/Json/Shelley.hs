@@ -12,6 +12,8 @@ module Ogmios.Data.Json.Shelley where
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Binary
+    ( serialize' )
 import Cardano.Ledger.Crypto
     ( Crypto )
 import Cardano.Ledger.Era
@@ -26,12 +28,14 @@ import Data.ByteString.Base16
     ( encodeBase16 )
 import Data.ByteString.Bech32
     ( HumanReadablePart (..), encodeBech32 )
-import GHC.TypeLits
-    ( ErrorMessage (..), TypeError )
 import Ouroboros.Consensus.Cardano.Block
     ( ShelleyEra )
+import Ouroboros.Consensus.Protocol.TPraos
+    ( TPraos )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..), ShelleyHash (..) )
+import Ouroboros.Consensus.Shelley.Protocol.TPraos
+    ()
 
 import qualified Ogmios.Data.Json.Byron as Byron
 
@@ -157,7 +161,7 @@ encodeBHeader mode (TPraos.BHeader hBody hSig) = encodeObjectWithMode mode
 encodeBlock
     :: Crypto crypto
     => SerializationMode
-    -> ShelleyBlock (ShelleyEra crypto)
+    -> ShelleyBlock (TPraos crypto) (ShelleyEra crypto)
     -> Json
 encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
@@ -412,6 +416,14 @@ encodeDelegFailure = \case
     Sh.MIRProducesNegativeUpdate ->
         encodeObject
             [ ( "mirProducesNegativeUpdate", encodeNull )
+            ]
+    Sh.MIRNegativeTransfer pot coin ->
+        encodeObject
+            [ ( "mirNegativeTransfer", encodeObject
+                [ ( "rewardSource", encodeMIRPot pot )
+                , ( "attemptedTransfer", encodeCoin coin )
+                ]
+              )
             ]
     Sh.DuplicateGenesisVRFDELEG vrfHash ->
         encodeObject
@@ -847,10 +859,11 @@ encodeSignedKES (CC.SignedKES raw) =
     encodeByteStringBase64 . CC.rawSerialiseSigKES $ raw
 
 encodeShelleyHash
-    :: ShelleyHash crypto
+    :: Crypto crypto
+    => ShelleyHash crypto
     -> Json
 encodeShelleyHash =
-    encodeHashHeader . unShelleyHash
+    encodeHash . unShelleyHash
 
 encodeSignedDSIGN
     :: CC.DSIGNAlgorithm alg
@@ -912,6 +925,9 @@ encodeTx mode x = encodeObjectWithMode mode
     [ ( "witness"
       , encodeWitnessSet (Sh.wits x)
       )
+    , ( "raw"
+      , encodeByteStringBase64 (serialize' x)
+      )
     ]
 
 encodeTxBody
@@ -953,12 +969,12 @@ encodeTxIn
     :: Crypto crypto
     => Ledger.TxIn crypto
     -> Json
-encodeTxIn (Ledger.TxIn txid ix) = encodeObject
+encodeTxIn (Ledger.TxIn txid (Ledger.TxIx ix)) = encodeObject
     [ ( "txId"
       , encodeTxId txid
       )
     , ( "index"
-      , encodeNatural ix
+      , encodeWord16 ix
       )
     ]
 
@@ -1342,18 +1358,6 @@ stringifyVKey
     -> Text
 stringifyVKey =
     encodeBase16 . CC.rawSerialiseVerKeyDSIGN . Ledger.unVKey
-
---
--- Helpers
---
-
-infixr 5 :\:
-type family (:\:) (any :: KeyRole) (excluded :: KeyRole) :: Constraint where
-    excluded :\: excluded = TypeError
-        ( 'Text "Cannot use this function for the " :<>: 'ShowType excluded :<>: 'Text " role." :$$:
-          'Text "Use a dedicated function instead."
-        )
-    _ :\: _ = ()
 
 --
 -- CIP-0005 Human-Readable Prefixes

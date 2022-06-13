@@ -81,9 +81,26 @@ Note that you can explicitly specify the target build when building the multi-st
 
 ## Ogmios standalone (more advanced)
 
-### Running
+### Running (bare hands)
 
-Docker's [compose](https://docs.docker.com/compose/) is a handy tool to orchestrate multiple services packaged as containers. The tool works from a compose file which is available in the Ogmios repository, get it via:
+Assuming that you have a cardano-node running, with its domain socket (`node.socket`) available under `./ipc`, you may start a standalone Ogmios container as follows:
+
+```console
+$ docker run --rm \
+  --name ogmios \
+  -p 1337:1337 \
+  -v ./ipc:/ipc \
+  cardanosolutions/ogmios:latest \
+    --node-socket /ipc/node.socket \
+    --node-config /config/cardano-node/config.json \
+    --host 0.0.0.0 
+```
+
+Note that the `--host` argument is necessary to bind the server from within the container. Notice also how configuration files are available from within the image under `/config`. 
+
+### Running (docker-compose)
+
+Alternatively, you may use Docker's [compose](https://docs.docker.com/compose/) to run either Ogmios standalone, or an orchestration of cardano-node and Ogmios talking to each other. Compose is a handy tool to orchestrate multiple services packaged as containers. It works from a compose file which is available in the project repository, get it via:
 
 ```console
 $ git clone --depth 1 git@github.com:cardanosolutions/ogmios.git

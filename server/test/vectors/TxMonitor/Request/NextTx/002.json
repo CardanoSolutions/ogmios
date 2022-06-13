@@ -1,1 +1,1 @@
-{"type":"jsonwsp/request","version":"1.0","servicename":"ogmios","methodname":"NextTx","args":{},"mirror":"patate"}
+{"type":"jsonwsp/request","version":"1.0","servicename":"ogmios","methodname":"NextTx","args":{"fields":"all"},"mirror":"patate"}

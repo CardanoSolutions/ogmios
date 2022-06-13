@@ -52,7 +52,7 @@
                 }
               },
               "address": "EqGAuA8vHnP8zRHTpYAq6raRzvcMep1Vf4ceR7AvTzguQroTYtvNsjosfb3HSpMaKwMpd58c5YouBeH97ZkgaxxpSc9eP6aze8q6MMbhnae4XRVqSC5HYYA",
-              "datum": "95c3003a78585e0db8c9496f6deef4de0ff000994b8534cd66d4fe96bb21ddd3"
+              "datumHash": "95c3003a78585e0db8c9496f6deef4de0ff000994b8534cd66d4fe96bb21ddd3"
             }
           ],
           [
@@ -70,7 +70,7 @@
                 }
               },
               "address": "2RhQhCGqYPDopNqqXS5Fzj9PfApNbji2rL5bhEx1tt1uvptcnjyAWi1rLayYVbWVNuNxYVL8fDcV3JLmYxdCWr6Uq3pc3brxtwipbw4XfajvMy",
-              "datum": "ee155ace9c40292074cb6aff8c9ccdd273c81648ff1149ef36bcea6ebb8a3e25"
+              "datumHash": "ee155ace9c40292074cb6aff8c9ccdd273c81648ff1149ef36bcea6ebb8a3e25"
             }
           ],
           [
@@ -84,7 +84,7 @@
                 "assets": {}
               },
               "address": "EqGAuA8vHnNfpApaiebYt44vKFkL5tku8Q9kTUWAqsCNryHMSBUygqMmRj9kwmjqwR2tiqwsxnetAPrnL9cq1k4sG9E7nAyFMtz5bK51xPH3t9KWfcPV5iC",
-              "datum": "2208e439244a1d0ef238352e3693098aba9de9dd0154f9056551636c8ed15dc1"
+              "datumHash": "2208e439244a1d0ef238352e3693098aba9de9dd0154f9056551636c8ed15dc1"
             }
           ],
           [
@@ -100,7 +100,7 @@
                 }
               },
               "address": "addr_test1qpmwvp7m9gcungkryasaysc6rp492rxry8meekxk4q4jnw8ve0a4ccvkw0cxfzjzeshcytype0p54mjpyarr36y60t6shunvvh",
-              "datum": null
+              "datumHash": null
             }
           ],
           [
@@ -122,7 +122,7 @@
                 }
               },
               "address": "EqGAuA8vHnNsXFxDf3dg8dmi8RnxMcQFbjoGTuPWqzFd4Mcq1XG3pFb9HDs3RJxzNUJwzTvsWTCcFVRsKURJ9UZekr2tBFAVddTzGzuajjwm4t24darPjQo",
-              "datum": "873e4fe9e41e924911bba3ec53ff4782efc8c0f244fb75c879f8a4328d0142ca"
+              "datumHash": "873e4fe9e41e924911bba3ec53ff4782efc8c0f244fb75c879f8a4328d0142ca"
             }
           ],
           [
@@ -136,7 +136,7 @@
                 "assets": {}
               },
               "address": "addr_test1xrkvh76uvxt88ury3fpvctuz9jquhs62aeqjw33cazd84a2ty7dr3r0ydw6dx0zd7ex6x4myp05spvzxykjrv5dhkpvst0ffq5",
-              "datum": "ee155ace9c40292074cb6aff8c9ccdd273c81648ff1149ef36bcea6ebb8a3e25"
+              "datumHash": "ee155ace9c40292074cb6aff8c9ccdd273c81648ff1149ef36bcea6ebb8a3e25"
             }
           ],
           [
@@ -153,7 +153,7 @@
                 }
               },
               "address": "EqGAuA8vHnP8AQMNFJ97QjNtHA6oE3zFySWHPsDWfLnJ13gFmAGwxfRYGkVNDoG8CNcgz4SFEBEQBcFDR2w6HRiZZ3Cp1CFUE71LzdtypEaZGGTW79UqHpK",
-              "datum": null
+              "datumHash": null
             }
           ],
           [
@@ -174,7 +174,7 @@
                 }
               },
               "address": "addr_test1yz7s88u4da9nqte6km78cjavxdg22s85ftup4pyjr9xa9snkucrak233ex3vxfmp6fp35xr225xvxg0hnnvdd2pt9xuq2p3cud",
-              "datum": null
+              "datumHash": null
             }
           ]
         ]

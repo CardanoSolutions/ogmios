@@ -8,14 +8,20 @@ module Ogmios.Data.Json.Allegra where
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Binary
+    ( serialize' )
 import Cardano.Ledger.Crypto
     ( Crypto )
 import GHC.Records
     ( getField )
 import Ouroboros.Consensus.Cardano.Block
     ( AllegraEra )
+import Ouroboros.Consensus.Protocol.TPraos
+    ( TPraos )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
+import Ouroboros.Consensus.Shelley.Protocol.TPraos
+    ()
 
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
@@ -56,7 +62,7 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
 encodeBlock
     :: Crypto crypto
     => SerializationMode
-    -> ShelleyBlock (AllegraEra crypto)
+    -> ShelleyBlock (TPraos crypto) (AllegraEra crypto)
     -> Json
 encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
@@ -141,6 +147,9 @@ encodeTx mode x = encodeObjectWithMode mode
     ]
     [ ( "witness"
       , encodeWitnessSet (Sh.wits x)
+      )
+    , ( "raw"
+      , encodeByteStringBase64 (serialize' x)
       )
     ]
   where

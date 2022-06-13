@@ -8,33 +8,46 @@
 
 ## Features
 
-- [Fast synchronization of blocks from the Cardano network(s)](https://ogmios.dev/mini-protocols/local-chain-sync/)
-- [Transaction submission with enhanced error messages](https://ogmios.dev/mini-protocols/local-tx-submission/#submittx)
-- [Evaluation of Plutus script execution units](https://ogmios.dev/mini-protocols/local-tx-submission/#evaluatetx)
-- [Local mempool monitoring](https://ogmios.dev/mini-protocols/local-tx-monitor/)
-- [Full ledger state query support:](https://ogmios.dev/mini-protocols/local-state-query/)
-  - `blockHeight`
-  - `chainTip`
-  - `currentEpoch`
-  - `currentProtocolParameters`
-  - `delegationsAndRewards`
-  - `eraStart`
-  - `eraSummaries`
-  - `genesisConfig`
-  - `ledgerTip`
-  - `nonMyopicMemberRewards`
-  - `poolIds`
-  - `poolParameters`
-  - `poolsRanking`
-  - `proposedProtocolParameters`
-  - `rewardsProvenance`
-  - `stakeDistribution`
-  - `systemStart`
-  - `utxo`
-- [TypeScript client & REPL](https://github.com/CardanoSolutions/ogmios/tree/master/clients/TypeScript#cardano-ogmios-typescript-client-packages)
-- [Structured JSON logging](https://ogmios.dev/getting-started/monitoring/)
-- [Health monitoring, with runtime and application statistics](https://ogmios.dev/getting-started/monitoring/)
-- [Fully documented API with JSON-schema](https://ogmios.dev/api-reference/)
+<table>
+  <tr><td>Fast synchronization of blocks from the Cardano network(s)</td><td><a href="https://ogmios.dev/mini-protocols/local-chain-sync/" target="_blank">↗️</a></td></tr>
+  <tr><td>Transaction submission with enhanced error messages</td><td><a href="https://ogmios.dev/mini-protocols/local-tx-submission/#submittx" target="_blank">↗️</a></td></tr>
+  <tr><td>Evaluation of Plutus script execution units</td><td><a href="https://ogmios.dev/mini-protocols/local-tx-submission/#evaluatetx" target="_blank">↗️</a></td></tr>
+  <tr><td>Local mempool monitoring</td><td><a href="https://ogmios.dev/mini-protocols/local-tx-monitor/" target="_blank">↗️</a></td></tr>
+  <tr>
+  <td>
+  <details>
+  <summary>Full ledger state query support</summary>
+
+  Query                        | Result
+  ---                          | ---
+  `blockHeight`                | The chain's highest block number.
+  `chainTip`                   | The chain's current tip.
+  `currentEpoch`               | The current epoch of the ledger.
+  `currentProtocolParameters`  | The current protocol parameters.
+  `delegationsAndRewards`      | Current delegation settings and rewards of given reward accounts.
+  `eraStart`                   | The information regarding the beginning of the current era.
+  `eraSummaries`               | Era bounds and slotting parameters details, required for proper slot arithmetic.
+  `genesisConfig`              | Get a compact version of the era's genesis configuration.
+  `ledgerTip`                  | The most recent block tip known of the ledger.
+  `nonMyopicMemberRewards`     | Non-myopic member rewards for each pool. Used in ranking.
+  `poolIds`                    | The list of all pool identifiers currently registered and active.
+  `poolParameters`             | Stake pool parameters submitted with registration certificates.
+  `poolsRanking`               | Retrieve stake pools ranking (a.k.a desirabilities).
+  `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
+  `rewardsProvenance'`         | Get details about rewards calculation for the ongoing epoch.
+  `stakeDistribution`          | Distribution of the stake across all known stake pools.
+  `systemStart`                | The chain's start time (UTC).
+  `utxo`                       | Current UTXO, possibly filtered by output reference.
+
+  </details>
+  </td>
+  <td>
+    <a href="https://ogmios.dev/mini-protocols/local-state-query/" target="_blank">↗️</a>
+  </td>
+  </tr> 
+  <tr><td>Structured JSON logging</td><td><a href="https://ogmios.dev/getting-started/monitoring/" target="_blank">↗️</a></td></tr>
+  <tr><td>Health monitoring, with runtime and application statistics</td><td><a href="https://ogmios.dev/getting-started/monitoring/" target="_blank">↗️</a></td></tr>
+</table>
 
 ## Preview
 
@@ -42,22 +55,31 @@
   <img src=".github/preview.png" alt="Ogmios TypeScript Client Preview">
 </p>
 
-## Sponsors :heart:
+## Clients / SDKs
+
+- <a href="https://ogmios.dev/typescript-client/overview/">TypeScript</a>
+- <a href="https://github.com/savaki/ogmigo/#readme">Go</a>
+- <a href="https://github.com/projectNEWM/kogmios#readme">Kotlin</a>
+
+## Sponsors 💖 
 
 <p align="center">
-  <a href="https://rraayy.com/"><img src="https://avatars.githubusercontent.com/u/65092852?s=55&v=4" width=55 height=55 /></a>
-  <a href="https://sundaeswap.finance/"><img src="https://avatars.githubusercontent.com/u/83610786?s=55&v=4" width=55 height=55 /></a>
-  <a href="https://github.com/savaki"><img src="https://avatars.githubusercontent.com/u/108710?s=55&v=4" width=55 height=55 /></a>
-  <a href="https://blockfrost.io/"><img src="https://avatars.githubusercontent.com/u/70073210?s=55&v=4" width=55 height=55 /></a>
-  <a href="https://github.com/jacoblambda"><img src="https://avatars.githubusercontent.com/u/9424043?s=55&v=4" width=55 height=55 /></a>
-  <a href="https://ccvault.io/"><img src="https://avatars.githubusercontent.com/u/86010408?s=55&v=4" width=55 height=55 /></a>
-  <a href="https://github.com/codybutz"><img src="https://avatars.githubusercontent.com/u/3670430?s=55&v=4" width=55 height=55 /></a>
-  <a href="https://github.com/scarmuega"><img src="https://avatars.githubusercontent.com/u/653886?s=55&v=4" width=55 height=55 /></a>
-  <a href="https://github.com/minswap"><img src="https://avatars.githubusercontent.com/u/80548193?s=55&v=4" width=55 height=55 /></a>
-  <a href="https://github.com/mrbrinker"><img src="https://avatars.githubusercontent.com/u/41247403?s=55&v=4" width=55 height=55 /></a>
-  <a href="https://github.com/artemwright"><img src="https://avatars.githubusercontent.com/u/83517471?s=55&v=4" width=55 height=55 /></a>
-  <a href="https://github.com/kayandra"><img src="https://avatars.githubusercontent.com/u/5002506?s=55&v=4" width=55 height=55 /></a>
-  <a href="https://github.com/tapiocapool"><img src="https://avatars.githubusercontent.com/u/80033713?s=55&v=4" width=55 height=55 /></a>
+  <a href="https://rraayy.com/"><img src="https://avatars.githubusercontent.com/u/65092852?s=45&v=4" width=45 height=45 /></a>
+  <a href="https://sundaeswap.finance/"><img src="https://avatars.githubusercontent.com/u/83610786?s=45&v=4" width=45 height=45 /></a>
+  <a href="https://github.com/savaki"><img src="https://avatars.githubusercontent.com/u/108710?s=45&v=4" width=45 height=45 /></a>
+  <a href="https://blockfrost.io/"><img src="https://avatars.githubusercontent.com/u/70073210?s=45&v=4" width=45 height=45 /></a>
+  <a href="https://jpeg.store/"><img src="https://avatars.githubusercontent.com/u/98781883?s=200&v=4" width=45 height=45 /></a>
+  <a href="https://github.com/jacoblambda"><img src="https://avatars.githubusercontent.com/u/9424043?s=45&v=4" width=45 height=45 /></a>
+  <a href="https://github.com/minswap"><img src="https://avatars.githubusercontent.com/u/80548193?s=45&v=4" width=45 height=45 /></a>
+  <a href="https://github.com/Quantumplation"><img src="https://avatars.githubusercontent.com/u/49870?v=4" width=45 height=45 /></a>
+  <a href="https://github.com/codybutz"><img src="https://avatars.githubusercontent.com/u/3670430?s=45&v=4" width=45 height=45 /></a>
+  <a href="https://github.com/scarmuega"><img src="https://avatars.githubusercontent.com/u/653886?s=45&v=4" width=45 height=45 /></a>
+  <a href="https://github.com/mrbrinker"><img src="https://avatars.githubusercontent.com/u/41247403?s=45&v=4" width=45 height=45 /></a>
+  <a href="https://github.com/sacrelege"><img src="https://avatars.githubusercontent.com/u/7289595?v=4" width=45 height=45 /></a>
+  <a href="https://ccvault.io/"><img src="https://avatars.githubusercontent.com/u/86010408?s=45&v=4" width=45 height=45 /></a>
+  <a href="https://github.com/artemwright"><img src="https://avatars.githubusercontent.com/u/83517471?s=45&v=4" width=45 height=45 /></a>
+  <a href="https://github.com/kayandra"><img src="https://avatars.githubusercontent.com/u/5002506?s=45&v=4" width=45 height=45 /></a>
+  <a href="https://github.com/tapiocapool"><img src="https://avatars.githubusercontent.com/u/80033713?s=45&v=4" width=45 height=45 /></a>
 </p>
 
 <hr/>

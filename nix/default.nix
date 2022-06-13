@@ -1,16 +1,11 @@
 { src
 , inputs
 , pkgs
-, plutus
 , static
-, doCoverage ? false
-, deferPluginErrors ? true
 , ...
 }:
 
 let
-  plutusPkgs = plutus.pkgs;
-
   musl64 = pkgs.pkgsCross.musl64;
 
   pkgSet = if static then musl64 else pkgs;
@@ -23,6 +18,8 @@ let
     compiler-nix-name = "ghc8107";
 
     shell = {
+      inputsFrom = [ pkgs.libsodium-vrf ];
+
       # Make sure to keep this list updated after upgrading git dependencies!
       additional = ps: with ps; [
         cardano-api
@@ -55,33 +52,22 @@ let
 
       withHoogle = true;
 
-      tools.cabal = "latest";
+      tools = {
+        cabal = "latest";
+        haskell-language-server = "latest";
+      };
 
       exactDeps = true;
 
-      nativeBuildInputs = with pkgs;
-        [
-          # Use plutus for these packages for now, the versions from haskell.nix
-          # nixpkgs are too new and require builds
-          plutusPkgs.haskellPackages.fourmolu
-          plutus.plutus.haskell-language-server
-          plutus.plutus.hlint
-        ];
+      nativeBuildInputs = [ pkgs.libsodium-vrf ];
     };
 
     modules = [{
       packages = {
-        eventful-sql-common.doHaddock = false;
-        eventful-sql-common.ghcOptions = [
-          ''
-            -XDerivingStrategies -XStandaloneDeriving -XUndecidableInstances
-                    -XDataKinds -XFlexibleInstances -XMultiParamTypeClasses''
-        ];
-
         cardano-crypto-praos.components.library.pkgconfig =
-          plutusPkgs.lib.mkForce [ [ plutusPkgs.libsodium-vrf ] ];
+          pkgs.lib.mkForce [ [ pkgs.libsodium-vrf ] ];
         cardano-crypto-class.components.library.pkgconfig =
-          plutusPkgs.lib.mkForce [ [ plutusPkgs.libsodium-vrf ] ];
+          pkgs.lib.mkForce [ [ pkgs.libsodium-vrf ] ];
       } // pkgs.lib.mkIf static {
         ogmios.components.exes.ogmios.configureFlags = pkgs.lib.optionals
           musl64.stdenv.hostPlatform.isMusl [
@@ -122,6 +108,8 @@ let
         subdirs = [
           "eras/alonzo/impl"
           "eras/alonzo/test-suite"
+          "eras/babbage/impl"
+          "eras/babbage/test-suite"
           "eras/byron/chain/executable-spec"
           "eras/byron/crypto"
           "eras/byron/crypto/test"
@@ -136,11 +124,11 @@ let
           "libs/cardano-ledger-core"
           "libs/cardano-ledger-pretty"
           "libs/cardano-protocol-tpraos"
-          "libs/compact-map"
           "libs/non-integral"
           "libs/set-algebra"
           "libs/small-steps"
           "libs/small-steps-test"
+          "libs/vector-map"
         ];
       }
       {
@@ -154,6 +142,12 @@ let
         subdirs = [
           "cardano-prelude"
           "cardano-prelude-test"
+        ];
+      }
+      {
+        src = inputs.ekg-json;
+        subdirs = [
+          "."
         ];
       }
       {
@@ -187,6 +181,14 @@ let
         ];
       }
       {
+        src = inputs.io-sim;
+        subdirs = [
+          "io-classes"
+          "io-sim"
+          "strict-stm"
+        ];
+      }
+      {
         src = inputs.iohk-monitoring-framework;
         subdirs = [
           "contra-tracer"
@@ -200,10 +202,14 @@ let
         ];
       }
       {
+        src = inputs.optparse-applicative;
+        subdirs = [
+          "."
+        ];
+      }
+      {
         src = inputs.ouroboros-network;
         subdirs = [
-          "io-classes"
-          "io-sim"
           "monoidal-synchronisation"
           "network-mux"
           "ouroboros-consensus"
@@ -215,28 +221,29 @@ let
           "ouroboros-consensus-protocol"
           "ouroboros-consensus-shelley"
           "ouroboros-consensus-shelley-test"
-          "ouroboros-consensus-cardano"
           "ouroboros-consensus-cardano-test"
-          "ouroboros-consensus-mock"
           "ouroboros-network"
           "ouroboros-network-framework"
           "ouroboros-network-testing"
-          "strict-stm"
-          "typed-protocols"
-          "typed-protocols-cborg"
-          "typed-protocols-examples"
         ];
       }
       {
         src = inputs.plutus;
         subdirs = [
-          "freer-extras"
           "plutus-core"
           "plutus-ledger-api"
           "plutus-tx"
           "prettyprinter-configurable"
           "stubs/plutus-ghc-stub"
           "word-array"
+        ];
+      }
+      {
+        src = inputs.typed-protocols;
+        subdirs = [
+          "typed-protocols"
+          "typed-protocols-cborg"
+          "typed-protocols-examples"
         ];
       }
       {
