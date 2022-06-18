@@ -33,9 +33,10 @@ packages:
 - streaming-binary-0.2.2.0
 - transformers-except-0.1.2
 - Unique-0.4.7.9
+# - HSOpenSSL-0.11.7.2
 
 - git: https://github.com/input-output-hk/cardano-base
-  commit: 631cb6cf1fa01ab346233b610a38b3b4cba6e6ab
+  commit: 0f3a867493059e650cda69e20a5cbf1ace289a57
   subdirs:
   - base-deriving-via
   - binary
@@ -52,7 +53,7 @@ packages:
   commit: f73079303f663e028288f9f4a9e08bcca39a923e
 
 - git: https://github.com/input-output-hk/cardano-ledger
-  commit: c415253fff9a5ce9d7575230fc9098bcfee97653
+  commit: 52da70e5a0472cd4433876289f1aebaa0c6e5c85
   subdirs:
   - eras/alonzo/impl
   - eras/alonzo/test-suite
@@ -79,7 +80,7 @@ packages:
   - libs/vector-map
 
 - git: https://github.com/input-output-hk/cardano-node
-  commit: 82067b797c3f53a9d8adb982622ac58f9d675d24
+  commit: 6471c31f8b61798df57a9f3345548703295cac9e
   subdirs:
   - cardano-api
 
@@ -99,7 +100,7 @@ packages:
   commit: 967d79533c21e33387d0227a5f6cc185203fe658
 
 - git: https://github.com/input-output-hk/iohk-monitoring-framework
-  commit: eb7854d1337637b8672af1227b276aa33a658f47
+  commit: 066f7002aac5a0efc20e49643fea45454f226caa
   subdirs:
   - contra-tracer
   - iohk-monitoring
@@ -111,7 +112,7 @@ packages:
   - tracer-transformers
 
 - git: https://github.com/input-output-hk/ouroboros-network
-  commit: ea202b7b21983140d1944ccfde8750b891b59699
+  commit: a65c29b6a85e90d430c7f58d362b7eb097fd4949
   subdirs:
   - monoidal-synchronisation
   - network-mux
@@ -126,7 +127,7 @@ packages:
   - ouroboros-network-testing
 
 - git: https://github.com/CardanoSolutions/ouroboros-network
-  commit: 60f242b370e040924589c6cc6a867ef89288f0f3
+  commit: 7744eadda4aa2f2e32749b9abbdee78330d5c175
   subdirs:
   - ouroboros-consensus-test
   - ouroboros-consensus-byron-test
@@ -135,7 +136,7 @@ packages:
   - ouroboros-consensus-protocol-test
 
 - git: https://github.com/CardanoSolutions/plutus
-  commit: 5f5de28063920788f2dac9bafae1d42aec63d9b3
+  commit: 248e264a5ebcd791f0b2db8aab188b1520aafc0f
   subdirs:
   - plutus-core
   - plutus-core-testlib
@@ -147,7 +148,7 @@ packages:
   - word-array
 
 - git: https://github.com/input-output-hk/typed-protocols
-  commit: 91c3fba44d68439df207796171cd6f867354b76b
+  commit: 181601bc3d9e9d21a671ce01e0b481348b3ca104
   subdirs:
   - typed-protocols
   - typed-protocols-cborg
