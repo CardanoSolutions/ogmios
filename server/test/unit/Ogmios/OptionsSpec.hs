@@ -100,10 +100,10 @@ spec = parallel $ do
             systemStart   params `shouldBe` mkSystemStart 1563999616
             slotsPerEpoch params `shouldBe` EpochSlots 21600
 
-        specify "alonzo-white" $ do
-            params <- parseNetworkParameters (getConfigFile "alonzo-white")
-            networkMagic  params `shouldBe` NetworkMagic 7
-            systemStart   params `shouldBe` mkSystemStart 1625593493
+        specify "vasil-dev" $ do
+            params <- parseNetworkParameters (getConfigFile "vasil-dev")
+            networkMagic  params `shouldBe` NetworkMagic 9
+            systemStart   params `shouldBe` mkSystemStart 1654524000
             slotsPerEpoch params `shouldBe` EpochSlots 360
   where
     matrix =

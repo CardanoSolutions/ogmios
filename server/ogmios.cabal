@@ -262,6 +262,7 @@ test-suite unit
       Ogmios.OptionsSpec
       Test.App.Protocol.Util
       Test.Generators
+      Test.Generators.Orphans
       Test.Instances.Util
       Test.Path.Util
       Paths_ogmios

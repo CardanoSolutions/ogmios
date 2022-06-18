@@ -130,7 +130,7 @@ describe('TxSubmission', () => {
           )
         } catch (errors) {
           expect(errors).toHaveLength(1)
-          expect(errors[0]).toBeInstanceOf(TxSubmission.evaluationErrors.errors.UnknownInputs.Error)
+          expect(errors[0]).toBeInstanceOf(TxSubmission.evaluationErrors.errors.CannotCreateEvaluationContext.Error)
         }
       })
 

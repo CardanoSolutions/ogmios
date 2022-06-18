@@ -284,7 +284,8 @@ export type SubmitTxError = (
   | ExtraScriptWitnesses
   | MirNegativeTransfer
   | TotalCollateralMismatch
-  | MalformedOutputScripts
+  | MalformedReferenceScripts
+  | MalformedScriptWitnesses
 )[];
 export type RedeemerPointer = string;
 export type Language = "plutus:v1" | "plutus:v2";
@@ -300,7 +301,6 @@ export type ScriptFailure = (
   | NonScriptInputReferencedByRedeemer
   | IllFormedExecutionBudget
   | NoCostModelForLanguage
-  | CorruptCostModelForLanguage
 )[];
 export type AcquireFailureDetails = "pointTooOld" | "pointNotOnChain";
 export type GetEraStart = "eraStart";
@@ -1069,10 +1069,10 @@ export interface TxBabbage {
   inputSource: "inputs" | "collaterals";
   body: {
     inputs: TxIn[];
-    references?: TxIn[];
+    references: TxIn[];
     collaterals: TxIn[];
-    collateralReturn?: TxOut | Null;
-    totalCollateral?: Lovelace | Null;
+    collateralReturn: TxOut | Null;
+    totalCollateral: Lovelace | Null;
     outputs: TxOut[];
     certificates: Certificate[];
     withdrawals: Withdrawals;
@@ -2073,12 +2073,15 @@ export interface MirNegativeTransfer {
 }
 export interface TotalCollateralMismatch {
   totalCollateralMismatch: {
-    needed: Lovelace;
-    specified: Lovelace;
+    computedFromDelta: Lovelace;
+    declaredInField: Lovelace;
   };
 }
-export interface MalformedOutputScripts {
-  malformedOutputScripts: DigestBlake2BScript[];
+export interface MalformedReferenceScripts {
+  malformedReferenceScripts: DigestBlake2BScript[];
+}
+export interface MalformedScriptWitnesses {
+  malformedScriptWitnesses: DigestBlake2BScript[];
 }
 export interface EvaluationResult {
   EvaluationResult: {
@@ -2088,9 +2091,7 @@ export interface EvaluationResult {
 export interface EvaluationFailure {
   EvaluationFailure:
     | EvaluationFailureScriptFailures
-    | EvaluationFailureUnknownInputs
     | EvaluationFailureIncompatibleEra
-    | EvaluationFailureUncomputableSlotArithmetic
     | EvaluationFailureAdditionalUtxoOverlap
     | EvaluationFailureNotEnoughSynced
     | EvaluationFailureCannotCreateEvaluationContext;
@@ -2106,6 +2107,9 @@ export interface EvaluationFailureScriptFailures {
 export interface MissingRequiredScripts {
   missingRequiredScripts: {
     missing: RedeemerPointer[];
+    resolved: {
+      [k: string]: DigestBlake2BScript;
+    };
   };
 }
 /**
@@ -2142,15 +2146,6 @@ export interface NoCostModelForLanguage {
   noCostModelForLanguage: Language;
 }
 /**
- * An artifact from a distant past. This is unused but somehow still present in the ledger internal definitions. Should be removed eventually.
- */
-export interface CorruptCostModelForLanguage {
-  corruptCostModelForLanguage: Language;
-}
-export interface EvaluationFailureUnknownInputs {
-  UnknownInputs: TxIn[];
-}
-/**
  * Returned when trying to evaluate execution units of a pre-Alonzo transaction. Note that this isn't possible with Ogmios because transactions are always de-serialized as Alonzo transactions.
  */
 export interface EvaluationFailureIncompatibleEra {
@@ -2158,15 +2153,6 @@ export interface EvaluationFailureIncompatibleEra {
    * The era in which the transaction has been identified.
    */
   IncompatibleEra: "Byron" | "Shelley" | "Allegra" | "Mary";
-}
-/**
- * May happen when evaluating a transaction with validity bounds that goes past the foreseeable end of the current era (i.e. near a hardfork).
- */
-export interface EvaluationFailureUncomputableSlotArithmetic {
-  /**
-   * An error message, possibly meaningful but likely unreadable.
-   */
-  UncomputableSlotArithmetic: string;
 }
 /**
  * Happens when providing an additional UTXO set which overlaps with the UTXO on-chain.

@@ -25,7 +25,7 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
 
-import qualified Data.ByteString as BS
+import qualified Data.ByteString.Short as BS
 import qualified Data.Map.Strict as Map
 
 import qualified Ogmios.Data.Json.Allegra as Allegra
@@ -344,4 +344,4 @@ encodeWitnessSet x = encodeObject
 stringifyAssetId :: Crypto crypto => (MA.PolicyID crypto, MA.AssetName) -> Text
 stringifyAssetId (MA.PolicyID pid, MA.AssetName bytes)
     | BS.null bytes = Shelley.stringifyScriptHash pid
-    | otherwise     = Shelley.stringifyScriptHash pid <> "." <> encodeBase16 bytes
+    | otherwise     = Shelley.stringifyScriptHash pid <> "." <> encodeBase16 (fromShort bytes)

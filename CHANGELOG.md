@@ -5,6 +5,48 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.5.0-rc3] - 2022-06-18
+
+#### Added 
+
+##### 🏢 Server 
+
+- The `missingRequiredScripts` error now contains an extra field `resolved` that is a map of (pointer → script hash) that have been correctly resolved by said pointers. 
+
+- New possible transaction submission error (only for Babbage transactions):
+
+  - `malformedScriptWitnesses`, occurs when a script witness specified in the transaction does not properly deserialize to a Plutus sccript.
+
+##### 🚗 TypeScript Client
+
+- Same as Server. 
+
+#### Changed
+
+##### 🏢 Server 
+
+- The fields of the `totalCollateralMismatch` error introduced in `-rc1` have been renamed as follows:
+  - `needed` →  `computedFromDelta`
+  - `specified` → `declaredInField` 
+
+- The submission error `malformedOutputScripts` introduced in `-rc1` has been renamed as `malformedReferenceScripts`.
+
+##### 🚗 TypeScript Client
+
+- Same as Server. 
+
+#### Removed
+
+##### 🏢 Server 
+
+- `UnknownInputs` and `UncomputableSlotArithmetic` errors have been removed from the top-level possible cases of `EvaluationFailure`. Instead, those errors are now comprised in the `CannotCreateEvaluationContext` case.
+
+- The `corruptCostModelForLanguage` error has been removed from the top-level possible cases of `ScriptFailure`. This one was effectively dead-code that couldn't be reached and was there for completeness. The code has now been removed upstream. 
+
+##### 🚗 TypeScript Client
+
+- Same as Server. 
+
 ### [5.5.0-rc1] - 2022-06-03
 
 #### Added 
