@@ -1,6 +1,6 @@
 {
   "name": "cardano-ogmios",
-  "version": "5.5.0-rc.1",
+  "version": "5.5.0-rc.3",
   "private": true,
   "description": "TypeScript monorepo with client libraries for Cardano Ogmios",
   "engines": {
