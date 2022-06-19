@@ -1352,6 +1352,20 @@ stringifyScriptHash
 stringifyScriptHash (Sh.ScriptHash (CC.UnsafeHash h)) =
     encodeBase16 (fromShort h)
 
+stringifyTxId
+    :: Crypto crypto
+    => Ledger.TxId crypto
+    -> Text
+stringifyTxId (Ledger.TxId (Ledger.originalBytes -> bytes)) =
+    encodeBase16 bytes
+
+stringifyTxIn
+    :: Crypto crypto
+    => Ledger.TxIn crypto
+    -> Text
+stringifyTxIn (Ledger.TxIn txid (Ledger.TxIx ix)) =
+    stringifyTxId txid <> "#" <> show ix
+
 stringifyVKey
     :: Crypto crypto
     => Ledger.VKey any crypto

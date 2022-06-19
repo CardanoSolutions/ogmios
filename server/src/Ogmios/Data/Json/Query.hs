@@ -1481,7 +1481,7 @@ decodeAssetName
     :: Text
     -> Json.Parser Ledger.Mary.AssetName
 decodeAssetName =
-    fmap Ledger.Mary.AssetName . decodeBase16 . encodeUtf8
+    fmap (Ledger.Mary.AssetName . toShort) . decodeBase16 . encodeUtf8
 
 decodeBinaryData
     :: Json.Value

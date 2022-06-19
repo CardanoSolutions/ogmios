@@ -21,7 +21,8 @@ import {
   InsufficientGenesisSignatures,
   InvalidMetadata,
   InvalidWitnesses,
-  MalformedOutputScripts,
+  MalformedReferenceScripts,
+  MalformedScriptWitnesses,
   MirNegativeTransfer,
   MirNegativeTransferNotCurrentlyAllowed,
   MirProducesNegativeUpdate,
@@ -91,7 +92,8 @@ export type SubmitTxErrorShelley =
   | InsufficientGenesisSignatures
   | InvalidMetadata
   | InvalidWitnesses
-  | MalformedOutputScripts
+  | MalformedReferenceScripts
+  | MalformedScriptWitnesses
   | MirNegativeTransfer
   | MirNegativeTransferNotCurrentlyAllowed
   | MirProducesNegativeUpdate
@@ -790,13 +792,23 @@ export const errors = {
       }
     }
   },
-  MalformedOutputScripts: {
-    assert: (item: SubmitTxErrorShelley): item is MalformedOutputScripts =>
-      (item as MalformedOutputScripts).malformedOutputScripts !== undefined,
-    Error: class MalformedOutputScriptsError extends CustomError {
-      public constructor (rawError: MalformedOutputScripts) {
+  MalformedReferenceScripts: {
+    assert: (item: SubmitTxErrorShelley): item is MalformedReferenceScripts =>
+      (item as MalformedReferenceScripts).malformedReferenceScripts !== undefined,
+    Error: class MalformedReferenceScriptsError extends CustomError {
+      public constructor (rawError: MalformedReferenceScripts) {
         super()
-        this.message = safeJSON.stringify(rawError.malformedOutputScripts)
+        this.message = safeJSON.stringify(rawError.malformedReferenceScripts)
+      }
+    }
+  },
+  MalformedScriptWitnesses: {
+    assert: (item: SubmitTxErrorShelley): item is MalformedScriptWitnesses =>
+      (item as MalformedScriptWitnesses).malformedScriptWitnesses !== undefined,
+    Error: class MalformedScriptWitnessesError extends CustomError {
+      public constructor (rawError: MalformedScriptWitnesses) {
+        super()
+        this.message = safeJSON.stringify(rawError.malformedScriptWitnesses)
       }
     }
   }
