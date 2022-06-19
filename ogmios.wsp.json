@@ -705,6 +705,7 @@
       , "result":
         { "oneOf":
           [ { "$ref": "#/definitions/TxId" }
+          , { "$ref": "#/definitions/Tx[Alonzo]" }
           , { "$ref": "#/definitions/Tx[Babbage]" }
           , { "$ref": "#/definitions/Null" }
           ]
@@ -2697,9 +2698,7 @@
       { "EvaluationFailure":
         { "oneOf":
             [ { "$ref": "#/definitions/EvaluationFailure[ScriptFailures]" }
-            , { "$ref": "#/definitions/EvaluationFailure[UnknownInputs]" }
             , { "$ref": "#/definitions/EvaluationFailure[IncompatibleEra]" }
-            , { "$ref": "#/definitions/EvaluationFailure[UncomputableSlotArithmetic]" }
             , { "$ref": "#/definitions/EvaluationFailure[AdditionalUtxoOverlap]" }
             , { "$ref": "#/definitions/EvaluationFailure[NotEnoughSynced]" }
             , { "$ref": "#/definitions/EvaluationFailure[CannotCreateEvaluationContext]" }
@@ -2721,18 +2720,6 @@
       }
     }
 
-  , "EvaluationFailure[UnknownInputs]":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "UnknownInputs" ]
-    , "properties":
-      { "UnknownInputs":
-        { "type": "array"
-        , "items": { "$ref": "#/definitions/TxIn" }
-        }
-      }
-    }
-
   , "EvaluationFailure[IncompatibleEra]":
     { "type": "object"
     , "description": "Returned when trying to evaluate execution units of a pre-Alonzo transaction. Note that this isn't possible with Ogmios because transactions are always de-serialized as Alonzo transactions."
@@ -2743,19 +2730,6 @@
         { "type": "string"
         , "description": "The era in which the transaction has been identified."
         , "enum": [ "Byron", "Shelley", "Allegra", "Mary" ]
-        }
-      }
-    }
-
-  , "EvaluationFailure[UncomputableSlotArithmetic]":
-    { "type": "object"
-    , "description": "May happen when evaluating a transaction with validity bounds that goes past the foreseeable end of the current era (i.e. near a hardfork)."
-    , "additionalProperties": false
-    , "required": [ "UncomputableSlotArithmetic" ]
-    , "properties":
-      { "UncomputableSlotArithmetic":
-        { "type": "string"
-        , "description": "An error message, possibly meaningful but likely unreadable."
         }
       }
     }
@@ -4022,7 +3996,6 @@
         , { "$ref": "#/definitions/ScriptFailure[nonScriptInputReferencedByRedeemer]" }
         , { "$ref": "#/definitions/ScriptFailure[illFormedExecutionBudget]" }
         , { "$ref": "#/definitions/ScriptFailure[noCostModelForLanguage]" }
-        , { "$ref": "#/definitions/ScriptFailure[corruptCostModelForLanguage]" }
         ]
       }
     }
@@ -4037,11 +4010,16 @@
       { "missingRequiredScripts":
         { "type": "object"
         , "additionalProperties": false
-        , "required": [ "missing" ]
+        , "required": [ "missing", "resolved" ]
         , "properties":
           { "missing":
             { "type": "array"
             , "items": { "$ref": "#/definitions/RedeemerPointer" }
+            }
+          , "resolved":
+            { "type": "object"
+            , "additionalProperties": { "$ref": "#/definitions/Digest[Blake2b]::Script" }
+            , "propertyNames": { "$ref": "#/definitions/RedeemerPointer" }
             }
           }
         }
@@ -4116,17 +4094,6 @@
     , "required": [ "noCostModelForLanguage" ]
     , "properties":
       { "noCostModelForLanguage": { "$ref": "#/definitions/Language" }
-      }
-    }
-
-  , "ScriptFailure[corruptCostModelForLanguage]":
-    { "title": "corruptCostModelForLanguage"
-    , "description": "An artifact from a distant past. This is unused but somehow still present in the ledger internal definitions. Should be removed eventually."
-    , "type": "object"
-    , "additionalProperties": false
-    , "required": [ "corruptCostModelForLanguage" ]
-    , "properties":
-      { "corruptCostModelForLanguage": { "$ref": "#/definitions/Language" }
       }
     }
 
@@ -4276,7 +4243,8 @@
         , { "$ref": "#/definitions/SubmitTxError[extraScriptWitnesses]" }
         , { "$ref": "#/definitions/SubmitTxError[mirNegativeTransfer]" }
         , { "$ref": "#/definitions/SubmitTxError[totalCollateralMismatch]" }
-        , { "$ref": "#/definitions/SubmitTxError[malformedOutputScripts]" }
+        , { "$ref": "#/definitions/SubmitTxError[malformedReferenceScripts]" }
+        , { "$ref": "#/definitions/SubmitTxError[malformedScriptWitnesses]" }
         ]
       }
     }
@@ -5235,22 +5203,35 @@
       { "totalCollateralMismatch":
         { "type": "object"
         , "additionalProperties": false
-        , "required": [ "needed", "specified" ]
+        , "required": [ "computedFromDelta", "declaredInField" ]
         , "properties":
-          { "needed": { "$ref": "#/definitions/Lovelace" }
-          , "specified": { "$ref": "#/definitions/Lovelace" }
+          { "computedFromDelta": { "$ref": "#/definitions/Lovelace" }
+          , "declaredInField": { "$ref": "#/definitions/Lovelace" }
           }
         }
       }
     }
 
-  , "SubmitTxError[malformedOutputScripts]":
+  , "SubmitTxError[malformedReferenceScripts]":
     { "type": "object"
-    , "title": "malformedOutputScripts"
+    , "title": "malformedReferenceScripts"
     , "additionalProperties": false
-    , "required": ["malformedOutputScripts"]
+    , "required": ["malformedReferenceScripts"]
     , "properties":
-      { "malformedOutputScripts":
+      { "malformedReferenceScripts":
+        { "type": "array"
+        , "items": { "$ref": "#/definitions/Digest[Blake2b]::Script" }
+        }
+      }
+    }
+
+  , "SubmitTxError[malformedScriptWitnesses]":
+    { "type": "object"
+    , "title": "malformedScriptWitnesses"
+    , "additionalProperties": false
+    , "required": ["malformedScriptWitnesses"]
+    , "properties":
+      { "malformedScriptWitnesses":
         { "type": "array"
         , "items": { "$ref": "#/definitions/Digest[Blake2b]::Script" }
         }
@@ -5641,6 +5622,7 @@
           [ "inputs", "collaterals", "outputs", "certificates"
           , "withdrawals", "fee", "validityInterval", "update", "mint"
           , "network", "scriptIntegrityHash", "requiredExtraSignatures"
+          , "collateralReturn", "references", "totalCollateral"
           ]
         , "properties":
           { "inputs":
