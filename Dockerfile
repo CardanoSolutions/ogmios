@@ -46,7 +46,7 @@ ENTRYPOINT ["/bin/ogmios"]
 # --------------------- RUN (cardano-node & ogmios) -------------------------- #
 #                                                                              #
 
-FROM inputoutput/cardano-node:1.35.0-rc1 as cardano-node-ogmios
+FROM inputoutput/cardano-node:1.35.0-rc3 as cardano-node-ogmios
 
 ARG NETWORK=mainnet
 ENV TINI_VERSION v0.19.0
