@@ -4,6 +4,7 @@ import {
   Block,
   BlockAllegra,
   BlockAlonzo,
+  BlockBabbage,
   BlockByron,
   BlockMary,
   BlockShelley,
@@ -128,6 +129,10 @@ export const isAllegraBlock = (block: Block): block is { allegra: BlockAllegra }
 /** @category Helper */
 export const isAlonzoBlock = (block: Block): block is { alonzo: BlockAlonzo } =>
   (block as { alonzo: BlockAlonzo }).alonzo !== undefined
+
+/** @category Helper */
+export const isBabbageBlock = (block: Block): block is { babbage: BlockBabbage } =>
+  (block as { babbage: BlockBabbage }).babbage !== undefined
 
 /** @category Helper */
 export const isByronBlock = (block: Block): block is { byron: BlockByron } =>
