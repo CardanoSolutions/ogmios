@@ -171,6 +171,7 @@ library
     , ouroboros-consensus-protocol
     , ouroboros-consensus-shelley
     , ouroboros-network
+    , plutus-ledger-api
     , prettyprinter
     , profunctors
     , relude
