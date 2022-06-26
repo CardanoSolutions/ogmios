@@ -52,7 +52,7 @@ jobs:
       matrix:
         os: [ ubuntu-20.04 ]
         target: [ ogmios, cardano-node-ogmios ]
-        network: [ "mainnet", "testnet" ]
+        network: [ "mainnet", "testnet", "vasil-dev" ]
 
     runs-on: ${{ matrix.os }}
     steps:

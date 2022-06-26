@@ -8,6 +8,8 @@
 
 FROM nixos/nix:2.3.11 as build
 
+ARG CARDANO_CONFIG_REV=08e6c0572d5d48049fab521995b29607e0a91a9e
+
 RUN echo "substituters = https://cache.nixos.org https://hydra.iohk.io" >> /etc/nix/nix.conf &&\
     echo "trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=" >> /etc/nix/nix.conf
 
@@ -22,11 +24,14 @@ RUN nix-build -A ogmios.components.exes.ogmios -o dist
 RUN cp -r dist/* . && chmod +w dist/bin && chmod +x dist/bin/ogmios
 COPY scripts scripts
 
+WORKDIR /app/cardano-configurations
+RUN nix-shell -p git --command "git fetch origin && git reset --hard ${CARDANO_CONFIG_REV}"
+
 #                                                                              #
 # --------------------------- BUILD (ogmios) --------------------------------- #
 #                                                                              #
 
-FROM busybox as ogmios
+FROM busybox:1.35 as ogmios
 
 ARG NETWORK=mainnet
 
