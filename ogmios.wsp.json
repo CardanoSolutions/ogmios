@@ -260,10 +260,18 @@
         , "required": ["submit"]
         , "properties":
           { "submit":
-            { "type": "string"
-            , "description": "CBOR-serialized signed transaction, in base64 (or base16)"
-            , "contentEncoding": "base64"
-            , "pattern": "^[A-Za-z0-9+/]=?=?$"
+            { "anyOf":
+              [ { "type": "string"
+                , "description": "CBOR-serialized signed transaction (base64)"
+                , "contentEncoding": "base64"
+                , "pattern": "^[A-Za-z0-9]+=?=?$"
+                }
+              , { "type": "string"
+                , "description": "CBOR-serialized signed transaction (base16)"
+                , "contentEncoding": "base16"
+                , "pattern": "^[0-9a-f]+$"
+                }
+              ]
             }
           }
         }
@@ -355,10 +363,18 @@
         , "required": ["evaluate"]
         , "properties":
           { "evaluate":
-            { "type": "string"
-            , "description": "CBOR-serialized signed transaction, in base64 (or base16)"
-            , "contentEncoding": "base64"
-            , "pattern": "^[A-Za-z0-9+/]=?=?$"
+            { "anyOf":
+              [ { "type": "string"
+                , "description": "CBOR-serialized signed transaction (base64)"
+                , "contentEncoding": "base64"
+                , "pattern": "^[A-Za-z0-9]+=?=?$"
+                }
+              , { "type": "string"
+                , "description": "CBOR-serialized signed transaction (base16)"
+                , "contentEncoding": "base16"
+                , "pattern": "^[0-9a-f]+$"
+                }
+              ]
             }
           , "additionalUtxoSet":
             { "$ref": "#/definitions/Utxo"
