@@ -1435,14 +1435,14 @@ decodeAddress = Json.withText "Address" $ choice "address"
     ]
   where
     addressFromBytes decode =
-        decode >=> maybe mempty pure . Ledger.deserialiseAddr
+        decode >=> maybe empty pure . Ledger.deserialiseAddr
 
     fromBech32 txt =
         case Bech32.decodeLenient txt of
             Left e ->
                 fail (show e)
             Right (_, dataPart) ->
-                maybe mempty pure $ Bech32.dataPartToBytes dataPart
+                maybe empty pure $ Bech32.dataPartToBytes dataPart
 
     fromBase58 =
         decodeBase58 . encodeUtf8
@@ -1533,7 +1533,9 @@ decodeOneEraHash
     :: Text
     -> Json.Parser (OneEraHash (CardanoEras crypto))
 decodeOneEraHash =
-    either (const mempty) (pure . OneEraHash . toShort . CC.hashToBytes) . CC.decodeHash
+    either (const err) (pure . OneEraHash . toShort . CC.hashToBytes) . CC.decodeHash
+  where
+    err = fail "cannot decode given hash digest from base16 text."
 
 decodePoint
     :: Json.Value
@@ -1887,7 +1889,7 @@ decodeUtxo v = do
         Json.parseJSONList >=> \case
             [i, o] ->
                 (,) <$> decodeTxIn i <*> (decodeTxOut o >>= \case
-                    TxOutInAlonzoEra o'   -> pure (translateTxOut o')
+                    TxOutInAlonzoEra  o' -> pure (translateTxOut o')
                     TxOutInBabbageEra o' -> pure o'
                 )
             _ ->
@@ -1899,7 +1901,7 @@ decodeValue
     -> Json.Parser (Ledger.Value (AlonzoEra crypto))
 decodeValue = Json.withObject "Value" $ \o -> do
     coins <- o .: "coins" >>= decodeCoin
-    assets <- o .:? "assets" >>= maybe mempty decodeAssets
+    assets <- o .:? "assets" >>= maybe (pure mempty) decodeAssets
     pure (Ledger.Mary.valueFromList (Ledger.unCoin coins) assets)
 
 --
