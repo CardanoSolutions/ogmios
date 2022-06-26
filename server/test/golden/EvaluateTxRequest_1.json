@@ -1,0 +1,24 @@
+{
+  "type": "jsonwsp/request",
+  "version": "1.0",
+  "servicename": "ogmios",
+  "methodname": "EvaluateTx",
+  "args": {
+    "evaluate":"83a4008182582039786f186d94d8dd0b4fcf05d1458b18cd5fd8c6823364612f4a3c11b77e7cc700018282581d60f8a68cd18e59a6ace848155a0e967af64f4d00cf8acee8adc95a6b0d1a05f5e10082581d60f8a68cd18e59a6ace848155a0e967af64f4d00cf8acee8adc95a6b0d1b000000d18635a3cf021a0002a331031878a10081825820eb94e8236e2099357fa499bfbc415968691573f25ec77435b7949f5fdfaa5da05840c8c0c016b714adb318a9495849c8ec647bc9742ef2b4cd03b9bc8694b65a42dbe3a2275ebcfe482c246fc8fbc34aa8dcebf18a4c3836b3ce8473e990d61c1506f6",
+    "additionalUtxoSet": [
+      [
+        {
+          "txId": "e7eabf0367fe570e5723079b06c3a6623b205909162058103e5a74e3b518aad0",
+          "index": 1
+        },
+        {
+          "address": "addr_test1wqag3rt979nep9g2wtdwu8mr4gz6m4kjdpp5zp705km8wys6t2kla",
+          "value": { "coins": 1094740 },
+          "script": { "plutus:v2": "d8184c820249480100002221200101" },
+          "datum": null,
+          "datumHash": null
+        }
+      ]
+    ]
+  }
+}

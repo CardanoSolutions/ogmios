@@ -305,6 +305,16 @@ spec = do
                     utxo' === utxo
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
 
+        specify "Golden: Utxo_1.json" $ do
+            json <- decodeFileThrow "Utxo_1.json"
+            case Json.parse (decodeUtxo @StandardCrypto) json of
+                Json.Error e ->
+                    fail (show e)
+                Json.Success UTxOInAlonzoEra{} ->
+                    fail "wrongly decoded Babbage UTxO as Alonzo's"
+                Json.Success UTxOInBabbageEra{} ->
+                    pure ()
+
     context "validate chain-sync request/response against JSON-schema" $ do
         validateFromJSON
             (arbitrary @(Wsp.Request (FindIntersect Block)))
@@ -348,6 +358,10 @@ spec = do
         goldenToJSON
             "SubmitTxResponse_1.json"
             "ogmios.wsp.json#/properties/SubmitTxResponse"
+
+        goldenToJSON
+            "EvaluateTxRequest_1.json"
+            "ogmios.wsp.json#/properties/EvaluateTx"
 
     context "validate tx monitor request/response against JSON-schema" $ do
         validateFromJSON
