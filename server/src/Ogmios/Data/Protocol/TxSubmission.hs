@@ -449,6 +449,8 @@ type CanEvaluateScriptsInEra era =
       ( Era era
       , ExtendedUTxO era
       , HasField "inputs" (Core.TxBody era) (Set (TxIn (Era.Crypto era)))
+      , HasField "collateral" (Core.TxBody era) (Set (TxIn (Era.Crypto era)))
+      , HasField "referenceInputs" (Core.TxBody era) (Set (TxIn (Era.Crypto era)))
       , HasField "certs" (Core.TxBody era) (StrictSeq (DCert (Era.Crypto era)))
       , HasField "wdrls" (Core.TxBody era) (Wdrl (Era.Crypto era))
       , HasField "txdats" (Core.Witnesses era) (TxDats era)
