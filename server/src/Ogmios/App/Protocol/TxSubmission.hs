@@ -216,8 +216,13 @@ newExecutionUnitsEvaluator = do
       where
         clientStIdle
             :: m (LSQ.ClientStIdle block (Point block) (Query block) m ())
-        clientStIdle = do
-            await <&> LSQ.SendMsgAcquire Nothing . clientStAcquiring
+        clientStIdle = pure $ do
+            LSQ.SendMsgAcquire Nothing $ LSQ.ClientStAcquiring
+                { LSQ.recvMsgAcquired = do
+                    reAcquire <$> await
+                , LSQ.recvMsgFailure =
+                    const clientStIdle
+                }
 
         clientStAcquiring
             :: SomeEvaluationInAnyEra
