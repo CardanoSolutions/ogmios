@@ -217,6 +217,16 @@ newExecutionUnitsEvaluator = do
         clientStIdle
             :: m (LSQ.ClientStIdle block (Point block) (Query block) m ())
         clientStIdle = pure $ do
+            -- NOTE: This little 'dance' of acquiring first is needed because of:
+            --
+            --     https://github.com/CardanoSolutions/ogmios/issues/230
+            --
+            -- and ideally, can be removed once the upstream fix:
+            --
+            --     https://github.com/input-output-hk/ouroboros-network/pull/3844
+            --
+            -- has shipped with cardano-node (and it's been long-enough that we
+            -- can exclude old clients from needing this).
             LSQ.SendMsgAcquire Nothing $ LSQ.ClientStAcquiring
                 { LSQ.recvMsgAcquired = do
                     reAcquire <$> await
