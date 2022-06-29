@@ -33,7 +33,6 @@ packages:
 - streaming-binary-0.2.2.0
 - transformers-except-0.1.2
 - Unique-0.4.7.9
-# - HSOpenSSL-0.11.7.2
 
 - git: https://github.com/input-output-hk/cardano-base
   commit: 0f3a867493059e650cda69e20a5cbf1ace289a57
@@ -53,7 +52,7 @@ packages:
   commit: f73079303f663e028288f9f4a9e08bcca39a923e
 
 - git: https://github.com/input-output-hk/cardano-ledger
-  commit: 52da70e5a0472cd4433876289f1aebaa0c6e5c85
+  commit: ce3057e0863304ccb3f79d78c77136219dc786c6
   subdirs:
   - eras/alonzo/impl
   - eras/alonzo/test-suite
@@ -80,7 +79,7 @@ packages:
   - libs/vector-map
 
 - git: https://github.com/input-output-hk/cardano-node
-  commit: 6471c31f8b61798df57a9f3345548703295cac9e
+  commit: 9f1d7dc163ee66410d912e48509d6a2300cfa68a
   subdirs:
   - cardano-api
 
@@ -136,7 +135,7 @@ packages:
   - ouroboros-consensus-protocol-test
 
 - git: https://github.com/CardanoSolutions/plutus
-  commit: 248e264a5ebcd791f0b2db8aab188b1520aafc0f
+  commit: d3309931398e2df7e7c150d152bb77e85fb92b07
   subdirs:
   - plutus-core
   - plutus-core-testlib

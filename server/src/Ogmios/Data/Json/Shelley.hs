@@ -974,7 +974,7 @@ encodeTxIn (Ledger.TxIn txid (Ledger.TxIx ix)) = encodeObject
       , encodeTxId txid
       )
     , ( "index"
-      , encodeWord16 ix
+      , encodeWord64 ix
       )
     ]
 

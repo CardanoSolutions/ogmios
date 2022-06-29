@@ -5,49 +5,7 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
-### [5.5.0-rc3] - 2022-06-19
-
-#### Added 
-
-##### 🏢 Server 
-
-- The `missingRequiredScripts` error now contains an extra field `resolved` that is a map of (pointer → script hash) that have been correctly resolved by said pointers. 
-
-- New possible transaction submission error (only for Babbage transactions):
-
-  - `malformedScriptWitnesses`, occurs when a script witness specified in the transaction does not properly deserialize to a Plutus sccript.
-
-##### 🚗 TypeScript Client
-
-- Same as Server. 
-
-#### Changed
-
-##### 🏢 Server 
-
-- The fields of the `totalCollateralMismatch` error introduced in `-rc1` have been renamed as follows:
-  - `needed` →  `computedFromDelta`
-  - `specified` → `declaredInField` 
-
-- The submission error `malformedOutputScripts` introduced in `-rc1` has been renamed as `malformedReferenceScripts`.
-
-##### 🚗 TypeScript Client
-
-- Same as Server. 
-
-#### Removed
-
-##### 🏢 Server 
-
-- `UnknownInputs` and `UncomputableSlotArithmetic` errors have been removed from the top-level possible cases of `EvaluationFailure`. Instead, those errors are now comprised in the `CannotCreateEvaluationContext` case.
-
-- The `corruptCostModelForLanguage` error has been removed from the top-level possible cases of `ScriptFailure`. This one was effectively dead-code that couldn't be reached and was there for completeness. The code has now been removed upstream. 
-
-##### 🚗 TypeScript Client
-
-- Same as Server. 
-
-### [5.5.0-rc1] - 2022-06-03
+### [5.5.0] - 2022-06-29
 
 #### Added 
 
@@ -61,7 +19,8 @@ pre: "<b>6. </b>"
 - New transaction error submission failures in the Babbage era:
   - `mirNegativeTransfer`: return when attempting to perform a negative MIR transfer from a reward pot to another;
   - `totalCollateralMismatch`: returned when `totalCollateral` is set but does not match what is actually computed by the ledger (i.e. sum of collateral inputs minus collateral return);
-  - `malformedOutputScripts`: returned when the `script` specified in an output isn't actually a well-formed Plutus script;
+  - `malformedReferenceScripts`: returned when the `script` specified in an output isn't actually a well-formed Plutus script;
+  - `malformedScriptWitnesses`, occurs when a script witness specified in the transaction does not properly deserialize to a Plutus sccript.
 - New script evaluation failures in the Babbage era:
   - `corruptCostModelForLanguage`: An artifact from a distant past. This is unused but somehow still present in the ledger internal definitions. Should be removed eventually.
 - New server evaluation failures:
@@ -72,7 +31,7 @@ pre: "<b>6. </b>"
 
 ##### 🚗 TypeScript Client
 
-- Incorporated changes coming from the server's update.
+- Same as Server. 
 
 #### Changed
 
@@ -105,15 +64,25 @@ pre: "<b>6. </b>"
   
     - The `extraEntropy` no longer exists.
 
+- The `missingRequiredScripts` error now contains an extra field `resolved` that is a map of (pointer → script hash) that have been correctly resolved by said pointers. 
+
 <p align="right">See the <a href="https://ogmios.dev/api">📘 API reference</a> for more details.</p>
 
 ##### 🚗 TypeScript Client
 
-- Incorporated changes coming from the server's update.
+- Same as Server. 
 
 #### Removed
 
-N/A
+##### 🏢 Server 
+
+- `UnknownInputs` and `UncomputableSlotArithmetic` errors have been removed from the top-level possible cases of `EvaluationFailure`. Instead, those errors are now comprised in the `CannotCreateEvaluationContext` case.
+
+- The `corruptCostModelForLanguage` error has been removed from the top-level possible cases of `ScriptFailure`. This one was effectively dead-code that couldn't be reached and was there for completeness. The code has now been removed upstream. 
+
+##### 🚗 TypeScript Client
+
+- Same as Server. 
 
 ### [5.4.0] - 2022-05-22
 
@@ -130,6 +99,9 @@ N/A
 - The server now returns slightly better faults when detecting a misuse of the `TxMonitor` protocol (e.g. when sending a `HasTx` before an `AwaitAcquire`).
 
 - The server now fails with an explicit error when given a `Request` containing a `reflection` field; `reflection` are only used in responses, while requests use `mirror`. See [#217](https://github.com/CardanoSolutions/ogmios/issues/217).
+
+---
+---
 
 ### [5.3.0] - 2022-05-07
 
