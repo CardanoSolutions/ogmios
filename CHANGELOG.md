@@ -5,7 +5,7 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
-### [5.5.0-rc1] - 2022-06-03
+### [5.5.0] - 2022-06-29
 
 #### Added 
 
@@ -19,7 +19,8 @@ pre: "<b>6. </b>"
 - New transaction error submission failures in the Babbage era:
   - `mirNegativeTransfer`: return when attempting to perform a negative MIR transfer from a reward pot to another;
   - `totalCollateralMismatch`: returned when `totalCollateral` is set but does not match what is actually computed by the ledger (i.e. sum of collateral inputs minus collateral return);
-  - `malformedOutputScripts`: returned when the `script` specified in an output isn't actually a well-formed Plutus script;
+  - `malformedReferenceScripts`: returned when the `script` specified in an output isn't actually a well-formed Plutus script;
+  - `malformedScriptWitnesses`, occurs when a script witness specified in the transaction does not properly deserialize to a Plutus script.
 - New script evaluation failures in the Babbage era:
   - `corruptCostModelForLanguage`: An artifact from a distant past. This is unused but somehow still present in the ledger internal definitions. Should be removed eventually.
 - New server evaluation failures:
@@ -30,11 +31,17 @@ pre: "<b>6. </b>"
 
 ##### 🚗 TypeScript Client
 
-- Incorporated changes coming from the server's update.
+- Same as Server. 
 
 #### Changed
 
 ##### 🏢 Server 
+
+- Updated [cardano-configurations](https://github.com/input-output-hk/cardano-configurations) to include the `vasil-dev` network and switch to [cardano-world](https://github.com/input-output-hk/cardano-world) as a source instead of Hydra artifacts -- now being deprecated. 
+
+- _Partially fixed_ an issue ([#230](https://github.com/CardanoSolutions/ogmios/issues/230), [#208](https://github.com/CardanoSolutions/ogmios/issues/208)) causing websocket connection to be terminated by the server when p2p is enabled on the underlying node. Ogmios now has a workaround which makes the issue _less likely_, but the real fix belongs in the upstream networking stack 
+
+- The `missingRequiredScripts` error now contains an extra field `resolved` that is a map of (pointer → script hash) that have been correctly resolved by said pointers. 
 
 - The introduction of the Babbage era comes with some minor (albeit possibly breaking) changes and deprecations:
   - ⚠️  `datums`, `redeemerData` and `plutus:v1` scripts are no longer encoded as `base64` strings, but are encoded as `base16` strings. The data payload remains however identical. 
@@ -45,8 +52,7 @@ pre: "<b>6. </b>"
 
   - ⚠️ Similarly, Alonzo transaction outputs will now contain a `datumHash` field, carrying the datum hash digest. However, they will also contain a `datum` field with the exact same value for backward compatibility reason. In Babbage however, transaction outputs will carry either `datum` or `datumHash` depending on the case; and `datum` will only contain inline datums;
 
-  - ⚠️  The `outputTooSmall` errors from transaction submission will slightly change format for transactions submitted during the Babbage era. Instead of an array of outputs, it is an array of 
-    objects with `output` and `minimumRequiredValue` fields;
+  - ⚠️  The `outputTooSmall` errors from transaction submission will slightly change format for transactions submitted during the Babbage era. Instead of an array of outputs, it is an array of objects with `output` and `minimumRequiredValue` fields;
 
   - ⚠️  A slightly modified block header: `leaderValue` and `nounce` fields are gone and replaced by a single `inputVrf` field;
 
@@ -67,11 +73,19 @@ pre: "<b>6. </b>"
 
 ##### 🚗 TypeScript Client
 
-- Incorporated changes coming from the server's update.
+- Same as Server. 
 
 #### Removed
 
-N/A
+##### 🏢 Server 
+
+- `UnknownInputs` and `UncomputableSlotArithmetic` errors have been removed from the top-level possible cases of `EvaluationFailure`. Instead, those errors are now comprised in the `CannotCreateEvaluationContext` case.
+
+- The `corruptCostModelForLanguage` error has been removed from the top-level possible cases of `ScriptFailure`. This one was effectively dead-code that couldn't be reached and was there for completeness. The code has now been removed upstream. 
+
+##### 🚗 TypeScript Client
+
+- Same as Server. 
 
 ### [5.4.0] - 2022-05-22
 
@@ -88,6 +102,9 @@ N/A
 - The server now returns slightly better faults when detecting a misuse of the `TxMonitor` protocol (e.g. when sending a `HasTx` before an `AwaitAcquire`).
 
 - The server now fails with an explicit error when given a `Request` containing a `reflection` field; `reflection` are only used in responses, while requests use `mirror`. See [#217](https://github.com/CardanoSolutions/ogmios/issues/217).
+
+---
+---
 
 ### [5.3.0] - 2022-05-07
 

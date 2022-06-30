@@ -188,7 +188,15 @@ import Test.Generators
     , shrinkUtxo
     )
 import Test.Hspec
-    ( Spec, SpecWith, context, expectationFailure, parallel, runIO, specify )
+    ( Spec
+    , SpecWith
+    , context
+    , expectationFailure
+    , parallel
+    , runIO
+    , shouldContain
+    , specify
+    )
 import Test.Hspec.Json.Schema
     ( SchemaRef (..), prop_validateToJSON, unsafeReadSchemaRef )
 import Test.Hspec.QuickCheck
@@ -307,6 +315,49 @@ spec = do
                     utxo' === utxo
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
 
+        specify "Golden: Utxo_1.json" $ do
+            json <- decodeFileThrow "Utxo_1.json"
+            case Json.parse (decodeUtxo @StandardCrypto) json of
+                Json.Error e -> do
+                    show e `shouldContain` "couldn't decode plutus script"
+                    show e `shouldContain` "Please drop 'd8184c820249'"
+                Json.Success UTxOInAlonzoEra{} ->
+                    fail "successfully decoded an invalid payload (as Alonzo Utxo)?"
+                Json.Success UTxOInBabbageEra{} ->
+                    fail "successfully decoded an invalid payload( as Babbage Utxo)?"
+
+        specify "Golden: Utxo_2.json" $ do
+            json <- decodeFileThrow "Utxo_2.json"
+            case Json.parse (decodeUtxo @StandardCrypto) json of
+                Json.Error e ->
+                    fail (show e)
+                Json.Success UTxOInAlonzoEra{} ->
+                    fail "wrongly decoded Babbage UTxO as Alonzo's"
+                Json.Success UTxOInBabbageEra{} ->
+                    pure ()
+
+        specify "Golden: Utxo_3.json" $ do
+            json <- decodeFileThrow "Utxo_3.json"
+            case Json.parse (decodeUtxo @StandardCrypto) json of
+                Json.Error e ->
+                    fail (show e)
+                Json.Success UTxOInAlonzoEra{} ->
+                    fail "wrongly decoded Babbage UTxO as Alonzo's"
+                Json.Success UTxOInBabbageEra{} ->
+                    pure ()
+
+        specify "Golden: Utxo_4.json" $ do
+            json <- decodeFileThrow "Utxo_4.json"
+            case Json.parse (decodeUtxo @StandardCrypto) json of
+                Json.Error e -> do
+                    show e `shouldContain` "couldn't decode plutus script"
+                    show e `shouldContain` "Please drop '820249'"
+                Json.Success UTxOInAlonzoEra{} ->
+                    fail "successfully decoded an invalid payload (as Alonzo Utxo)?"
+                Json.Success UTxOInBabbageEra{} ->
+                    fail "successfully decoded an invalid payload( as Babbage Utxo)?"
+
+
     context "validate chain-sync request/response against JSON-schema" $ do
         validateFromJSON
             (arbitrary @(Wsp.Request (FindIntersect Block)))
@@ -350,6 +401,10 @@ spec = do
         goldenToJSON
             "SubmitTxResponse_1.json"
             "ogmios.wsp.json#/properties/SubmitTxResponse"
+
+        goldenToJSON
+            "EvaluateTxRequest_1.json"
+            "ogmios.wsp.json#/properties/EvaluateTx"
 
     context "validate tx monitor request/response against JSON-schema" $ do
         validateFromJSON

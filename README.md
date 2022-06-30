@@ -49,6 +49,10 @@
   <tr><td>Health monitoring, with runtime and application statistics</td><td><a href="https://ogmios.dev/getting-started/monitoring/" target="_blank">↗️</a></td></tr>
 </table>
 
+## Roadmap 
+
+See [projects 🎯](https://github.com/CardanoSolutions/ogmios/projects).
+
 ## Preview
 
 <p align="center">
@@ -90,6 +94,14 @@
   <a href="CONTRIBUTING.md">:triangular_ruler: Contributing</a>
   |
   <a href="CHANGELOG.md">:floppy_disk: Changelog</a>
+  |
+  <a href="https://discord.gg/ZeyDn65t5v"><img src=".github/discord.svg" alt="Discord">Discord (#ogmios)</a>
+  |
+  <a href="https://twitter.com/_KtorZ_"><img src=".github/twitter.svg" alt="Twitter"> Twitter (@_KtorZ_)</a>
+</p>
+
+<p align="center">
+  Need more information? Have a look at the <a href="https://ogmios.dev/faq/" alt="F.A.Q">Frequently Asked Questions</a>.
 </p>
 
 <p align="center"><a href="https://github.com/cardanosolutions/ogmios/blob/master/LICENSE"><img src=".github/license.svg" alt="license=MPL-2.0" /></a></p>

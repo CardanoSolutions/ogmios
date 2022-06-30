@@ -15,7 +15,7 @@
 
     # all inputs below here are for use with haskell.nix
     cardano-base = {
-      url = "github:input-output-hk/cardano-base/631cb6cf1fa01ab346233b610a38b3b4cba6e6ab";
+      url = "github:input-output-hk/cardano-base/0f3a867493059e650cda69e20a5cbf1ace289a57";
       flake = false;
     };
     cardano-crypto = {
@@ -23,11 +23,11 @@
       flake = false;
     };
     cardano-ledger = {
-      url = "github:input-output-hk/cardano-ledger/c415253fff9a5ce9d7575230fc9098bcfee97653";
+      url = "github:input-output-hk/cardano-ledger/ce3057e0863304ccb3f79d78c77136219dc786c6";
       flake = false;
     };
     cardano-node = {
-      url = "github:input-output-hk/cardano-node/82067b797c3f53a9d8adb982622ac58f9d675d24";
+      url = "github:input-output-hk/cardano-node/9f1d7dc163ee66410d912e48509d6a2300cfa68a";
       flake = false;
     };
     cardano-prelude = {
@@ -59,11 +59,11 @@
       flake = false;
     };
     io-sim = {
-      url = "github:input-output-hk/io-sim/606de33fa2f467d108fb1efb86daeb3348bf34e3";
+      url = "github:input-output-hk/io-sim/f4183f274d88d0ad15817c7052df3a6a8b40e6dc";
       flake = false;
     };
     iohk-monitoring-framework = {
-      url = "github:input-output-hk/iohk-monitoring-framework/eb7854d1337637b8672af1227b276aa33a658f47";
+      url = "github:input-output-hk/iohk-monitoring-framework/066f7002aac5a0efc20e49643fea45454f226caa";
       flake = false;
     };
     optparse-applicative = {
@@ -71,15 +71,15 @@
       flake = false;
     };
     ouroboros-network = {
-      url = "github:input-output-hk/ouroboros-network/ea202b7b21983140d1944ccfde8750b891b59699";
+      url = "github:input-output-hk/ouroboros-network/a65c29b6a85e90d430c7f58d362b7eb097fd4949";
       flake = false;
     };
     plutus = {
-      url = "github:input-output-hk/plutus/fec94223a985e34d3b270460c8f150002f41b85b";
+      url = "github:input-output-hk/plutus/f680ac6979e069fcc013e4389ee607ff5fa6672f";
       flake = false;
     };
     typed-protocols = {
-      url = "github:input-output-hk/typed-protocols/91c3fba44d68439df207796171cd6f867354b76b";
+      url = "github:input-output-hk/typed-protocols/181601bc3d9e9d21a671ce01e0b481348b3ca104";
       flake = false;
     };
     wai-routes = {

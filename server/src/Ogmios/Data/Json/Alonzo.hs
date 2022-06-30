@@ -149,6 +149,12 @@ encodeAuxiliaryData (Al.AuxiliaryData blob scripts) = encodeObject
       )
     ]
 
+encodeBinaryData
+    :: Al.BinaryData era
+    -> Json
+encodeBinaryData =
+    encodeByteStringBase16 . Ledger.originalBytes
+
 encodeBlock
     :: Crypto crypto
     => SerializationMode
@@ -731,21 +737,33 @@ encodeScriptIntegrityHash =
 
 encodeScriptFailure
     :: Crypto crypto
-    => Ledger.Tools.ScriptFailure crypto
+    => Ledger.Tools.TransactionScriptFailure crypto
     -> Json
 encodeScriptFailure = \case
-    Ledger.Tools.RedeemerNotNeeded ptr ->
+    -- NOTE: This 'RedeemerNotNeeded' error is likely redundant and misleading
+    -- in the ledger code. It is raised when the script's language pointed by
+    -- the redeemer is unknown.
+    Ledger.Tools.RedeemerNotNeeded ptr _ ->
         encodeObject
             [ ( "extraRedeemers"
               , encodeFoldable (encodeText . stringifyRdmrPtr) [ptr]
               )
             ]
-    Ledger.Tools.MissingScript ptr ->
+    Ledger.Tools.RedeemerPointsToUnknownScriptHash ptr ->
+        encodeObject
+            [ ( "extraRedeemers"
+              , encodeFoldable (encodeText . stringifyRdmrPtr) [ptr]
+              )
+            ]
+    Ledger.Tools.MissingScript ptr resolved ->
         encodeObject
             [ ( "missingRequiredScripts"
               , encodeObject
                   [ ( "missing"
                     , encodeFoldable (encodeText . stringifyRdmrPtr) [ptr]
+                    )
+                  , ( "resolved"
+                    , encodeMap stringifyRdmrPtr (\(_, _, h) -> Shelley.encodeScriptHash h) resolved
                     )
                   ]
               )
@@ -804,46 +822,38 @@ encodeScriptFailure = \case
               , encodeMaybe encodeExUnits (Al.exBudgetToExUnits budget)
               )
             ]
-    Ledger.Tools.NoCostModel lang ->
+    Ledger.Tools.NoCostModelInLedgerState lang ->
         encodeObject
             [ ( "noCostModelForLanguage"
               , encodeLanguage lang
               )
             ]
-    Ledger.Tools.CorruptCostModel lang ->
-        encodeObject
-            [ ( "corruptCostModelForLanguage"
-              , encodeLanguage lang
-              )
-            ]
 
 encodeTranslationError
-    :: Al.TranslationError
+    :: Crypto crypto
+    => Al.TranslationError crypto
     -> Json
 encodeTranslationError err = encodeText $ case err of
-    Al.ByronInputInContext ->
-       "Found inputs locked by a (legacy) Byron/Bootstrap address. Don't use those."
-    Al.ByronOutputInContext ->
-       "Found outputs to a (legacy) Byron/Bootstrap address. Don't use those."
-    Al.TranslationLogicErrorInput ->
-       "Found unknown inputs. Perhaps, provide extra inputs via 'additionalUtxoSet'."
-    Al.TranslationLogicErrorRedeemer ->
-       "Couldn't resolve redeemer pointer. Verify your transaction construction."
-    Al.TranslationLogicErrorDoubleDatum ->
-       "Couldn't resolve datum for output. Should never happen, this is not your fault."
-    Al.LanguageNotSupported ->
-       "Unsupported language in era. Did you try to use PlutusV2 while still in Alonzo?"
-    Al.InlineDatumsNotSupported ->
+    Al.ByronTxOutInContext Al.TxOutFromInput{} ->
+        "Found inputs locked by a (legacy) Byron/Bootstrap address. Don't use those."
+    Al.ByronTxOutInContext Al.TxOutFromOutput{} ->
+        "Found outputs to a (legacy) Byron/Bootstrap address. Don't use those."
+    Al.TranslationLogicMissingInput i ->
+        "Unknown transaction input (missing from UTxO set): " <> Shelley.stringifyTxIn i
+    Al.LanguageNotSupported Al.PlutusV1 ->
+       "Unsupported language in era."
+    Al.LanguageNotSupported Al.PlutusV2 ->
+       "Unsupported language in era. Did you try to use PlutusV2 before Babbage is enabled?"
+    Al.InlineDatumsNotSupported{} ->
        "Inline datums not supported in PlutusV1. Use PlutusV2."
-    Al.ReferenceScriptsNotSupported ->
+    Al.ReferenceScriptsNotSupported{} ->
        "Reference scripts not supported in PlutusV1. Use PlutusV2."
-    Al.ReferenceInputsNotSupported ->
+    Al.ReferenceInputsNotSupported{} ->
        "Reference inputs not supported in PlutusV1. Use PlutusV2."
-    -- FIXME: Present in more recent versions or cardano-ledger,
-    -- which will likely be included after the first release candidate.
-    --
-    -- TimeTranslationPastHorizon ->
-    --    "Validity interval is past (safe) foreseeable horizon. Use smaller validity upper-bound or wait for hard-fork to happen."
+    Al.RdmrPtrPointsToNothing ptr ->
+       "Couldn't resolve redeemer pointer (" <> stringifyRdmrPtr ptr <> "). Verify your transaction's construction."
+    Al.TimeTranslationPastHorizon e ->
+        "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
 
 encodeWitnessSet
     :: (Ledger.Era era, Ledger.Core.Script era ~ Al.Script era)

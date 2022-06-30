@@ -37,6 +37,8 @@ import Ogmios.Prelude
 
 import Cardano.Ledger.Crypto
     ( StandardCrypto )
+import Cardano.Ledger.Era
+    ( Crypto )
 import Control.Monad.Trans.Except
     ( Except )
 import Data.SOP.Strict
@@ -81,7 +83,6 @@ import Ouroboros.Consensus.Cardano.Block
     ( BlockQuery (..)
     , CardanoBlock
     , CardanoEras
-    , CardanoQuery
     , CardanoQueryResult
     , GenTx (..)
     )
@@ -160,13 +161,6 @@ data ExecutionUnitsEvaluator m block = ExecutionUnitsEvaluator
         -> m (EvaluateTxResponse block)
     }
 
-data SomeEvaluationInAnyEra where
-    SomeEvaluationInAnyEra
-        :: forall era. (CanEvaluateScriptsInEra era)
-        => UTxO era
-        -> Tx era
-        -> SomeEvaluationInAnyEra
-
 -- | Construct an effectful 'ExecutionUnitsEvaluator'; this requires to wire a
 -- local-state-query client to the node.
 newExecutionUnitsEvaluator
@@ -183,29 +177,30 @@ newExecutionUnitsEvaluator
 newExecutionUnitsEvaluator = do
     evaluateExecutionUnitsRequest  <- atomically newEmptyTMVar
     evaluateExecutionUnitsResponse <- atomically newEmptyTMVar
+
+    let runEvaluation = either return $ \eval -> do
+            atomically $ putTMVar evaluateExecutionUnitsRequest eval
+            atomically $ takeTMVar evaluateExecutionUnitsResponse
+
     return
         ( ExecutionUnitsEvaluator
-            { evaluateExecutionUnitsM = \case
+            { evaluateExecutionUnitsM = runEvaluation . \case
                 (_, GenTxByron{}) ->
-                    return (incompatibleEra "Byron")
+                    Left (incompatibleEra "Byron")
                 (_, GenTxShelley{}) ->
-                    return (incompatibleEra "Shelley")
+                    Left (incompatibleEra "Shelley")
                 (_, GenTxAllegra{}) ->
-                    return (incompatibleEra "Allegra")
+                    Left (incompatibleEra "Allegra")
                 (_, GenTxMary{}) ->
-                    return (incompatibleEra "Mary")
+                    Left (incompatibleEra "Mary")
                 (UTxOInAlonzoEra utxo, GenTxAlonzo (ShelleyTx _id tx)) -> do
-                    atomically $ putTMVar evaluateExecutionUnitsRequest $ SomeEvaluationInAnyEra utxo tx
-                    atomically $ takeTMVar evaluateExecutionUnitsResponse
+                    Right (SomeEvaluationInAnyEra utxo tx)
                 (UTxOInAlonzoEra utxo, GenTxBabbage (ShelleyTx _id tx)) -> do
-                    atomically $ putTMVar evaluateExecutionUnitsRequest $ SomeEvaluationInAnyEra (translateUtxo utxo) tx
-                    atomically $ takeTMVar evaluateExecutionUnitsResponse
+                    Right (SomeEvaluationInAnyEra (translateUtxo utxo) tx)
                 (UTxOInBabbageEra utxo, GenTxAlonzo (ShelleyTx _id tx)) -> do
-                    atomically $ putTMVar evaluateExecutionUnitsRequest $ SomeEvaluationInAnyEra utxo (translateTx tx)
-                    atomically $ takeTMVar evaluateExecutionUnitsResponse
+                    Right (SomeEvaluationInAnyEra utxo (translateTx tx))
                 (UTxOInBabbageEra utxo, GenTxBabbage (ShelleyTx _id tx)) -> do
-                    atomically $ putTMVar evaluateExecutionUnitsRequest $ SomeEvaluationInAnyEra utxo tx
-                    atomically $ takeTMVar evaluateExecutionUnitsResponse
+                    Right (SomeEvaluationInAnyEra utxo tx)
             }
         , localStateQueryClient
             (atomically $ takeTMVar evaluateExecutionUnitsRequest)
@@ -221,8 +216,23 @@ newExecutionUnitsEvaluator = do
       where
         clientStIdle
             :: m (LSQ.ClientStIdle block (Point block) (Query block) m ())
-        clientStIdle = do
-            await <&> LSQ.SendMsgAcquire Nothing . clientStAcquiring
+        clientStIdle = pure $ do
+            -- NOTE: This little 'dance' of acquiring first is needed because of:
+            --
+            --     https://github.com/CardanoSolutions/ogmios/issues/230
+            --
+            -- and ideally, can be removed once the upstream fix:
+            --
+            --     https://github.com/input-output-hk/ouroboros-network/pull/3844
+            --
+            -- has shipped with cardano-node (and it's been long-enough that we
+            -- can exclude old clients from needing this).
+            LSQ.SendMsgAcquire Nothing $ LSQ.ClientStAcquiring
+                { LSQ.recvMsgAcquired = do
+                    reAcquire <$> await
+                , LSQ.recvMsgFailure =
+                    const clientStIdle
+                }
 
         clientStAcquiring
             :: SomeEvaluationInAnyEra
@@ -236,9 +246,9 @@ newExecutionUnitsEvaluator = do
                         pure $ LSQ.SendMsgRelease clientStIdle
                     )
                     -- Alonzo
-                    (clientStAcquired0 args evaluateExecutionUnits)
+                    (clientStAcquired0 @_ @(AlonzoEra crypto) args evaluateExecutionUnits)
                     -- Babbage
-                    (clientStAcquired0 args evaluateExecutionUnits)
+                    (clientStAcquired0 @_ @(BabbageEra crypto) args evaluateExecutionUnits)
                 , LSQ.recvMsgFailure =
                     const $ pure $ LSQ.SendMsgAcquire Nothing (clientStAcquiring args)
                 }
@@ -259,7 +269,7 @@ newExecutionUnitsEvaluator = do
                -> Tx era
                -> EvaluateTxResponse block
                )
-            -> (forall result a. (CardanoQueryResult crypto result ~ a) => BlockQuery (ShelleyBlock (proto crypto) era) result -> CardanoQuery crypto a)
+            -> HoistQuery proto era
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
         clientStAcquired0 args callback hoistQuery = do
             let query = BlockQuery (hoistQuery GetCurrentPParams)
@@ -280,7 +290,7 @@ newExecutionUnitsEvaluator = do
                -> Tx era
                -> EvaluateTxResponse block
                )
-            -> (forall result a. (CardanoQueryResult crypto result ~ a) => BlockQuery (ShelleyBlock (proto crypto) era) result -> CardanoQuery crypto a)
+            -> HoistQuery proto era
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
         clientStAcquired1 args callback hoistQuery = do
             let query = GetSystemStart
@@ -297,7 +307,7 @@ newExecutionUnitsEvaluator = do
                -> Tx era
                -> EvaluateTxResponse block
                )
-            -> (forall result a. (CardanoQueryResult crypto result ~ a) => BlockQuery (ShelleyBlock (proto crypto) era) result -> CardanoQuery crypto a)
+            -> HoistQuery proto era
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
         clientStAcquired2 args callback hoistQuery = do
             let query = BlockQuery $ QueryHardFork GetInterpreter
@@ -313,40 +323,115 @@ newExecutionUnitsEvaluator = do
                -> Tx era
                -> EvaluateTxResponse block
                )
-            -> (forall result a. (CardanoQueryResult crypto result ~ a) => BlockQuery (ShelleyBlock (proto crypto) era) result -> CardanoQuery crypto a)
+            -> HoistQuery proto era
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
         clientStAcquired3 args callback hoistQuery = do
             let query = BlockQuery $ hoistQuery $ GetUTxOByTxIn (inputsInAnyEra args)
              in LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
                 { LSQ.recvMsgResult = \case
-                    Right (UTxO networkUtxo) -> do
-                        let result = case translateToNetworkEra @era args of
-                                Nothing ->
-                                    error "impossible: arguments are not translatable to network era. \
-                                          \This can't happen because 'selectEra' enforces that queries \
-                                          \are only executed if the network is either in 'Alonzo' or \
-                                          \'Babbage'. The arguments themselves can also only be 'Alonzo' \
-                                          \or 'Babbage'. Thus, we can't reach this point with any other \
-                                          \eras. We _could_ potentially capture this proof in the types \
-                                          \to convince the compiler of this. Let's say: TODO."
-                                Just (UTxO userProvidedUtxo, tx) ->
-                                    let intersection = Map.intersection userProvidedUtxo networkUtxo in
-                                    if null intersection
-                                    then
-                                        callback (UTxO $ userProvidedUtxo <> networkUtxo) tx
-                                    else
-                                        let failure = EvaluateTxAdditionalUtxoOverlap $ Map.keysSet intersection
-                                         in EvaluationFailure failure
-                        reply result $> LSQ.SendMsgRelease clientStIdle
+                    Right networkUtxo -> do
+                        reply (mkEvaluateTxResponse @era callback networkUtxo args)
+                        pure (LSQ.SendMsgRelease clientStIdle)
                     Left{} ->
                         pure $ reAcquire args
                 }
 
+type HoistQuery proto era =
+    forall r a crypto. (crypto ~ Crypto era, CardanoQueryResult crypto r ~ a)
+        => BlockQuery (ShelleyBlock (proto crypto) era) r
+        -> BlockQuery (CardanoBlock crypto) a
+
+-- | Run local-state queries in either Alonzo or Babbage, depending on where the network is at.
+--
+-- This is crucial to allow the server to *dynamically* switch to the right era after the hard-fork.
+selectEra
+    :: forall block crypto m.
+        ( block ~ HardForkBlock (CardanoEras crypto)
+        , Applicative m
+        )
+
+    -- Default selector, when the network era is older than Alonzo and doesn't support Phase-2 scripts.
+    => ( Text -> m (LSQ.ClientStAcquired block (Point block) (Query block) m ())
+       )
+
+    -- Selector for the Alonzo era.
+    -> ( HoistQuery TPraos (AlonzoEra crypto) -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
+       )
+
+    -- Selector for the Babbage era.
+    -> ( HoistQuery Praos (BabbageEra crypto) -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
+       )
+
+    -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
+selectEra fallback asAlonzo asBabbage =
+    LSQ.SendMsgQuery (Ledger.BlockQuery $ LSQ.QueryHardFork LSQ.GetCurrentEra) $
+    LSQ.ClientStQuerying
+        { LSQ.recvMsgResult = \case
+            EraIndex                Z{}      -> fallback "Byron"
+            EraIndex             (S Z{})     -> fallback "Shelley"
+            EraIndex          (S (S Z{}))    -> fallback "Allegra"
+            EraIndex       (S (S (S Z{})))   -> fallback "Mary"
+            EraIndex    (S (S (S (S Z{}))))  -> pure (asAlonzo QueryIfCurrentAlonzo)
+            EraIndex (S (S (S (S (S Z{}))))) -> pure (asBabbage QueryIfCurrentBabbage)
+        }
+
+--
+-- SomeEvaluationInAnyEra
+--
+
+data SomeEvaluationInAnyEra where
+    SomeEvaluationInAnyEra
+        :: forall era. (CanEvaluateScriptsInEra era)
+        => UTxO era
+        -> Tx era
+        -> SomeEvaluationInAnyEra
+
+-- | Return all unspent transaction outputs needed for evaluation. This includes
+-- standard inputs, but also reference ones and collaterals.
 inputsInAnyEra
     :: SomeEvaluationInAnyEra
     -> Set (TxIn StandardCrypto)
 inputsInAnyEra (SomeEvaluationInAnyEra _ tx) =
-    getField @"inputs" (getField @"body" tx)
+    getField @"inputs" body
+    <>
+    getField @"collateral" body
+    <>
+    getField @"referenceInputs" body
+  where
+    body = getField @"body" tx
+
+mkEvaluateTxResponse
+    :: forall era block crypto.
+        ( CanEvaluateScriptsInEra era
+        , block ~ HardForkBlock (CardanoEras crypto)
+        , crypto ~ StandardCrypto
+        )
+    => (UTxO era -> Tx era -> EvaluateTxResponse block)
+    -> UTxO era -- ^ Utxo fetched from the network
+    -> SomeEvaluationInAnyEra -- ^ Tx & additional utxo
+    -> EvaluateTxResponse block
+mkEvaluateTxResponse callback (UTxO networkUtxo) args =
+    case translateToNetworkEra @era args of
+        Nothing ->
+            error "impossible: arguments are not translatable to network era. \
+                  \This can't happen because 'selectEra' enforces that queries \
+                  \are only executed if the network is either in 'Alonzo' or \
+                  \'Babbage'. The arguments themselves can also only be 'Alonzo' \
+                  \or 'Babbage'. Thus, we can't reach this point with any other \
+                  \eras. We _could_ potentially capture this proof in the types \
+                  \to convince the compiler of this. Let's say: TODO."
+        Just (UTxO userProvidedUtxo, tx) ->
+            let
+                intersection = Map.intersection userProvidedUtxo networkUtxo
+            in
+                if null intersection
+                then
+                    callback (UTxO $ userProvidedUtxo <> networkUtxo) tx
+                else
+                    intersection
+                    & Map.keysSet
+                    & EvaluateTxAdditionalUtxoOverlap
+                    & EvaluationFailure
 
 -- | 99% of the time, we only need to worry about one era: the current one; yet, near hard-forks,
 -- there is a time where the application needs to be compatible with both the current era and the
@@ -399,39 +484,3 @@ translateToNetworkEra (SomeEvaluationInAnyEra utxoOrig txOrig) =
                         Nothing
           in
             sameEra <|> alonzoToBabbage
-
--- | Run local-state queries in either Alonzo or Babbage, depending on where the network is at.
---
--- This is crucial to allow the server to *dynamically* switch to the right era after the hard-fork.
-selectEra
-    :: forall block c m.
-        ( block ~ HardForkBlock (CardanoEras c)
-        , Applicative m
-        )
-
-    -- Default selector, when the network era is older than Alonzo and doesn't support Phase-2 scripts.
-    => ( Text -> m (LSQ.ClientStAcquired block (Point block) (Query block) m ())
-       )
-
-    -- Selector for the Alonzo era.
-    -> ( (forall r a. (CardanoQueryResult c r ~ a) => BlockQuery (ShelleyBlock (TPraos c) (AlonzoEra c)) r -> BlockQuery (CardanoBlock c) a)
-         -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
-       )
-
-    -- Selector for the Babbage era.
-    -> ( (forall r a. (CardanoQueryResult c r ~ a) => BlockQuery (ShelleyBlock (Praos c) (BabbageEra c)) r -> BlockQuery (CardanoBlock c) a)
-         -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
-       )
-
-    -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
-selectEra fallback asAlonzo asBabbage =
-    LSQ.SendMsgQuery (Ledger.BlockQuery $ LSQ.QueryHardFork LSQ.GetCurrentEra) $
-    LSQ.ClientStQuerying
-        { LSQ.recvMsgResult = \case
-            EraIndex                Z{}      -> fallback "Byron"
-            EraIndex             (S Z{})     -> fallback "Shelley"
-            EraIndex          (S (S Z{}))    -> fallback "Allegra"
-            EraIndex       (S (S (S Z{})))   -> fallback "Mary"
-            EraIndex    (S (S (S (S Z{}))))  -> pure (asAlonzo QueryIfCurrentAlonzo)
-            EraIndex (S (S (S (S (S Z{}))))) -> pure (asBabbage QueryIfCurrentBabbage)
-        }

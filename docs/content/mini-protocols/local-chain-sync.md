@@ -93,10 +93,34 @@ As a client, it is therefore crucial to be able to rollback to a previous point 
 
 Ogmios will do its best to [pipeline](https://en.wikipedia.org/wiki/HTTP_pipelining) requests to the Cardano node. Yet unlike WebSocket, the local chain-sync protocol only allows for finite pipelining. Said differently, Ogmios cannot pipeline an arbitrary and potentially infinite number of requests and will actually starts collecting responses if too many requests are pipelined. Pipelining with WebSocket is however straightforward for most clients permit sending many requests at once and handle responses using callbacks on event handlers. 
 
-A good rule of thumb with Ogmios is to pipeline some requests when starting a long-run chain-sync, and then simply put back a new request in the queue every time you receive a response back. In that way, there are always some requests in flight and Ogmios can make a good use of the available bandwith. How many requests to pipeline depends on various factors including the network latency and machine resources. In a local setup where Ogmios and its client are located on the same machine, pipelining a few requests (up to 1000) can be quite effective and drastically speed up the chain-sync.
+![](/pipelining.png) 
+
+To leverage pipelining using the WebSocket, you will need send multiple requests at once and have your client handler send new requests for each response. Behind the scene, the server will translate that to explicit pipelining with the cardano-node and maximize the bandwith utilization. Note that you also probably want to send requests for the next message before you even start processing the last received message. This permits the server to start working on fetching and sending you the next result while you process the current one. 
+
+```js
+const requestNext = JSON.stringify({
+  "type": "jsonwsp/request",
+  "version": "1.0",
+  "servicename": "ogmios",
+  "methodname": "RequestNext",
+  "args": {}
+});
+
+client.on('open', () => {
+  // Burst the server's queue with a few requests.
+  for (let i = 0; i < 100; i += 1) {
+    client.send(requestNext);
+  }
+});
+
+client.on('message', msg => {
+  client.send(requestNext); // Ask for next request immediately 
+  doSomething(msg);
+})
+```
 
 {{% notice warning %}}
-Exact numbers depends on your application and machine resources. But this charts give an order of magnitude. If you're pipelining many requests in a client application, make sure to also take times to collect some responses because there will be no extra benefits coming from _too much pipelining_. A good rule of thumb on most standard machine is to pipeline **50-100 requests**.
+How many requests to pipeline depends on your application and machine resources. If you're pipelining many requests in a client application, make sure to also take times to collect and handle responses because there will be no extra benefits coming from _too much pipelining_. A good rule of thumb on most standard machines is to pipeline **50-100 requests**.
 {{% /notice %}}
 
 ## FindIntersect

@@ -23,10 +23,10 @@ data-files:
     test/golden/*.json
     test/config/network/mainnet/cardano-node/*.json
     test/config/network/testnet/cardano-node/*.json
-    test/config/network/alonzo-white/cardano-node/*.json
+    test/config/network/vasil-dev/cardano-node/*.json
     test/config/network/mainnet/genesis/*.json
     test/config/network/testnet/genesis/*.json
-    test/config/network/alonzo-white/genesis/*.json
+    test/config/network/vasil-dev/genesis/*.json
 
 source-repository head
   type: git
@@ -181,6 +181,7 @@ library
     , ouroboros-consensus-protocol
     , ouroboros-consensus-shelley
     , ouroboros-network
+    , plutus-ledger-api
     , prettyprinter
     , profunctors
     , relude
@@ -242,6 +243,7 @@ test-suite unit
       Ogmios.OptionsSpec
       Test.App.Protocol.Util
       Test.Generators
+      Test.Generators.Orphans
       Test.Instances.Util
       Test.Path.Util
       Paths_ogmios

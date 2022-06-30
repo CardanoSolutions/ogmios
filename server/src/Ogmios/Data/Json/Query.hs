@@ -97,7 +97,13 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Api
     ( ShelleyBasedEra (..) )
 import Cardano.Binary
-    ( Annotator, DecoderError, FromCBOR (..), decodeAnnotator, decodeFull )
+    ( Annotator
+    , DecoderError
+    , FromCBOR (..)
+    , decodeAnnotator
+    , decodeFull
+    , decodeFullDecoder
+    )
 import Cardano.Crypto.Hash
     ( pattern UnsafeHash, hashFromBytes, hashFromTextAsHex )
 import Cardano.Crypto.Hash.Class
@@ -117,9 +123,11 @@ import Cardano.Slotting.Block
 import Cardano.Slotting.Slot
     ( EpochNo (..), SlotNo (..), WithOrigin (..) )
 import Codec.Serialise
-    ( deserialise, serialise )
+    ( deserialise, deserialiseOrFail, serialise )
 import Data.Aeson
     ( toJSON )
+import Data.ByteString.Base16
+    ( encodeBase16 )
 import Data.SOP.Strict
     ( NS (..) )
 import Formatting.Buildable
@@ -188,6 +196,8 @@ import qualified Text.Read as T
 import qualified Ouroboros.Consensus.HardFork.Combinator.Ledger.Query as LSQ
 import qualified Ouroboros.Consensus.Ledger.Query as LSQ
 
+import qualified Plutus.V1.Ledger.Api as Plutus
+
 import qualified Cardano.Crypto.Hashing as CC
 import qualified Cardano.Protocol.TPraos.API as TPraos
 
@@ -217,6 +227,7 @@ import qualified Cardano.Ledger.Shelley.RewardProvenance as Sh
 import qualified Cardano.Ledger.Shelley.TxBody as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
+import qualified Codec.CBOR.Decoding as Cbor
 import qualified Data.Sequence.Strict as StrictSeq
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
@@ -1435,14 +1446,14 @@ decodeAddress = Json.withText "Address" $ choice "address"
     ]
   where
     addressFromBytes decode =
-        decode >=> maybe mempty pure . Ledger.deserialiseAddr
+        decode >=> maybe empty pure . Ledger.deserialiseAddr
 
     fromBech32 txt =
         case Bech32.decodeLenient txt of
             Left e ->
                 fail (show e)
             Right (_, dataPart) ->
-                maybe mempty pure $ Bech32.dataPartToBytes dataPart
+                maybe empty pure $ Bech32.dataPartToBytes dataPart
 
     fromBase58 =
         decodeBase58 . encodeUtf8
@@ -1481,7 +1492,7 @@ decodeAssetName
     :: Text
     -> Json.Parser Ledger.Mary.AssetName
 decodeAssetName =
-    fmap Ledger.Mary.AssetName . decodeBase16 . encodeUtf8
+    fmap (Ledger.Mary.AssetName . toShort) . decodeBase16 . encodeUtf8
 
 decodeBinaryData
     :: Json.Value
@@ -1533,7 +1544,9 @@ decodeOneEraHash
     :: Text
     -> Json.Parser (OneEraHash (CardanoEras crypto))
 decodeOneEraHash =
-    either (const mempty) (pure . OneEraHash . toShort . CC.hashToBytes) . CC.decodeHash
+    either (const err) (pure . OneEraHash . toShort . CC.hashToBytes) . CC.decodeHash
+  where
+    err = fail "cannot decode given hash digest from base16 text."
 
 decodePoint
     :: Json.Value
@@ -1600,22 +1613,78 @@ decodeScript v =
   where
     decodeFromBase16Cbor :: forall a. (FromCBOR (Annotator a)) => Text -> Json.Parser a
     decodeFromBase16Cbor t = do
-        bytes <- toLazy <$> decodeBase16 (encodeUtf8 t)
+        taggedScript <- toLazy <$> decodeBase16 (encodeUtf8 t)
         either
             (fail . toString . TL.toLazyText . build)
             pure
-            (decodeAnnotator "Script" fromCBOR bytes)
+            $ do
+                annotatedScript <- decodeFullDecoder "Script" decodeTaggedScript taggedScript
+                decodeAnnotator "Script" fromCBOR (toLazy annotatedScript)
 
     decodeFromWrappedJson :: Json.Object -> Json.Parser (Ledger.Script era)
     decodeFromWrappedJson o =
-        (Ledger.Alonzo.TimelockScript <$> ((o .: "native") >>= decodeTimeLock))
+        (Ledger.Alonzo.TimelockScript <$>
+            (let lang = "native" in (o .: lang) >>= decodeTimeLock)
+        )
         <|>
-        (Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV1 <$> ((o .: "plutus:v1") >>= decodePlutusScript))
+        (Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV1 <$>
+            (let lang = "plutus:v1" in (o .: lang) >>= decodePlutusScript lang)
+        )
         <|>
-        (Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV2 <$> ((o .: "plutus:v2") >>= decodePlutusScript))
+        (Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV2 <$>
+            (let lang = "plutus:v2" in (o .: lang) >>= decodePlutusScript lang)
+        )
       where
-        decodePlutusScript :: Text -> Json.Parser ShortByteString
-        decodePlutusScript = fmap toShort . decodeBase16 . encodeUtf8
+        decodePlutusScript :: Json.Key -> Text -> Json.Parser ShortByteString
+        decodePlutusScript (Json.toText -> lang) str = do
+            bytes <- decodeBase16 (encodeUtf8 str)
+            let lbytes = toLazy bytes
+            when (isLeft (deserialiseOrFail @Plutus.Script lbytes)) $ do
+                let err = "couldn't decode plutus script"
+                let hint =
+                        case decodeFullDecoder "Script" decodeRawScript lbytes of
+                            Left{} ->
+                                case decodeFullDecoder "Script" decodeAnnotatedScript lbytes of
+                                    Left{} ->
+                                        ""
+                                    Right (encodeBase16 -> expected) ->
+                                        let suffix = fromMaybe "???" (T.stripSuffix expected str)
+                                         in unwords
+                                            [ ": when using the explicit JSON notation,"
+                                            , "the script must be given raw, without tag."
+                                            , "Please drop '" <> suffix <> "' from the"
+                                            , "beginning of the script payload."
+                                            ]
+                            Right (encodeBase16 -> expected) ->
+                                let suffix = fromMaybe "???" (T.stripSuffix expected str)
+                                 in unwords
+                                    [ ": when using the explicit JSON notation,"
+                                    , "the script must be given raw, without tag."
+                                    , "Please drop '" <> suffix <> "' from the"
+                                    , "beginning of the script payload or provide"
+                                    , "it without '" <> lang <> "' JSON key."
+                                    ]
+                fail (toString (err <> hint))
+            pure (toShort bytes)
+
+    decodeRawScript :: forall s. Cbor.Decoder s ByteString
+    decodeRawScript = do
+        bytes <- toLazy <$> decodeTaggedScript
+        either
+            (fail . show)
+            pure
+            (decodeFullDecoder "Annotated(Script)" decodeAnnotatedScript bytes)
+
+    decodeTaggedScript :: forall s. Cbor.Decoder s ByteString
+    decodeTaggedScript = do
+        _tag <- Cbor.decodeTag
+        Cbor.decodeBytes
+
+    decodeAnnotatedScript :: forall s. Cbor.Decoder s ByteString
+    decodeAnnotatedScript = do
+        _len <- Cbor.decodeListLen
+        _typ <- Cbor.decodeWord
+        Cbor.decodeBytes
 
 decodeSerializedTx
     :: forall crypto.
@@ -1887,7 +1956,7 @@ decodeUtxo v = do
         Json.parseJSONList >=> \case
             [i, o] ->
                 (,) <$> decodeTxIn i <*> (decodeTxOut o >>= \case
-                    TxOutInAlonzoEra o'   -> pure (translateTxOut o')
+                    TxOutInAlonzoEra  o' -> pure (translateTxOut o')
                     TxOutInBabbageEra o' -> pure o'
                 )
             _ ->
@@ -1899,7 +1968,7 @@ decodeValue
     -> Json.Parser (Ledger.Value (AlonzoEra crypto))
 decodeValue = Json.withObject "Value" $ \o -> do
     coins <- o .: "coins" >>= decodeCoin
-    assets <- o .:? "assets" >>= maybe mempty decodeAssets
+    assets <- o .:? "assets" >>= maybe (pure mempty) decodeAssets
     pure (Ledger.Mary.valueFromList (Ledger.unCoin coins) assets)
 
 --

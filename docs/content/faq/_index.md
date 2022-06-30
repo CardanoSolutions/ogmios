@@ -12,9 +12,11 @@ Ogmios is a lightweight bridge interface for [cardano-node](https://github.com/i
 
 #### Can you explain Ogmios to me like I'm five? 
 
-To understand what Ogmios is, you must first understand where it fits in Cardano landscape. Cardano is a network of programs (a.k.a nodes) connected to each other and exchanging messages to run the Cardano blockchain. A Cardano node has an interface that allows for other programs to interact with it (very much like buttons on a remote to control the TV). However, that interface relies on novel communication methods, that were designed in-house by the networking team at IOG. To this day, the only tooling that can implement those unique communication methods is written in Haskell (as if all the buttons on the remote control were in Chinese, but you only speak French). So to interact with a Cardano node, one has no other choice than to write a Haskell program, which is a bummer for many application developers.  
+To understand what Ogmios is, you must first understand where it fits in Cardano landscape. Cardano is a network of programs (a.k.a nodes) connected to each other and exchanging messages to run the Cardano blockchain. A Cardano node has an interface that allows for other programs to interact with it (very much like buttons on a remote to control the TV). However, that interface relies on novel communication methods, that were designed in-house by the networking team at IOG. To this day, the only tooling that fully implement those unique communication methods is written in Haskell<sup>\*</sup> (as if all the buttons on the remote control were in Chinese, but you only speak French). So to interact with a Cardano node, one has no other choice than to write a Haskell program, which is a bummer for many application developers.  
 
 This is where Ogmios comes into play. Ogmios is written in Haskell, so it can speak with Cardano nodes just fine. But it also  translates all the interfaces provided by the node using communication methods that are more common and accessible to the vast majority of developers (namely, WebSockets & JSON). Ogmios is a sort of translator; instead of speaking to a Cardano node directly, applications can speak to Ogmios using a language they know, and Ogmios translates it to the node and back to the applications.
+
+> (\*) Since 2022, [Pallas](https://github.com/txpipe/pallas#readme) now provides most of the primitives also in Rust. 
 
 #### Where does the name come from?
 
@@ -40,9 +42,15 @@ We secretly keep a hope that someday, many operators will deploy Ogmios alongsid
 
 #### Is there any client for Ogmios?
 
-As a matter of fact, there is. A [TypeScript client library and REPL](https://github.com/cardanosolutions/ogmios/tree/master/clients/TypeScript#cardano-ogmios-typescript-client-packages) is available on the same repository. This is huge and comparable to what [web3.js](https://web3js.readthedocs.io/en/v1.3.4/) is for Ethereum. And this is only a beginning. We'll keep working on this to grow the client into a more capable SDK for Cardano. In a future where Ogmios is deployed alongside relays, it could become dead simple to get started with web applications development for Cardano. Simply import the TypeScript client, connect to a relay nearby and start hacking. 
+As a matter of fact, there is. A [TypeScript client library and REPL](https://github.com/cardanosolutions/ogmios/tree/master/clients/TypeScript#cardano-ogmios-typescript-client-packages) is available on the same repository. This client is also a first-class citizen within this user-guide so make sure to check out the [TypeScript Client](/typescript-client/) section.
 
-Besides, it goes without saying that as an open-source project Ogmios welcomes contributions; especially on the client library and/or around tools built on top. 
+Since then, there has been other clients built by the community: 
+
+- [Kogmios (Kotlin)](https://github.com/projectNEWM/kogmios)
+- [Ogmigo (Go)](https://github.com/savaki/ogmigo/)
+
+
+Besides, it goes without saying that as an open-source project Ogmios welcomes contributions; especially on the client library and/or around tools built on top. Should you be working on a new client, let us know, we're happy to help. 
 
 #### Does Ogmios require the PAB (Plutus Application Backend) to work?
 
@@ -50,7 +58,7 @@ No it does not. The PAB is an application framework which provides DApp develope
 
 #### Can I use Ogmios in a remote setup? 
 
-Yes. The easiest way is probably by using a reverse-proxy like [NGINX](https://www.nginx.com/) to also promote the WebSocket connection to a secure connection. A more interesting question however is: should you? Ogmios is an interface for the so-called **local client protocols** which are, by design, intended to be used in a local setup: where Ogmios and cardano-node are on the same host. It would be ill-advised to expose the server to many clients without any restriction as each client can drain a quite large amount of resources from the local node. Rather, Ogmios ought to be used in a backend stack for a service which requires an access to the blockchain. 
+Yes. The easiest way is probably by using a reverse-proxy like [NGINX](https://www.nginx.com/) to also promote the WebSocket connection to a secure connection. A more interesting question however is: should you? Ogmios is an interface for the so-called **local** client protocols which are, by design, intended to be used in a local setup: where Ogmios and cardano-node are on the same host. It would be ill-advised to expose the server to many clients without any restriction as each client can drain a quite large amount of resources from the local node. This is however totally acceptable in a controlled environment, where for example, your own stack would leverage a single Ogmios instance to power few remote services.
 
 #### Why do Ogmios returns JSON with integers larger than `MAX_SAFE_INTEGER`?
 
@@ -68,23 +76,24 @@ Beside, Ogmios also comes with **structured logging and monitoring** out of the 
 
 Finally, if you ventured through this page and user-guide, you have also noticed that the project is **well-documented**. And this includes the [API reference](/api), the [ChangeLog](/changelog) as well as the [architectural decisions](https://github.com/CardanoSolutions/ogmios/tree/master/architectural-decisions) going over rationales for decisions we made along the way. 
 
-Thus, is Ogmios production-ready? **Probably, yes**. At least, this is as good as it gets for an open-source project. We've been incorporating feedback from various users over the past year which has been great so far. For the rest, everything is open-source licensed under [MPL-2.0](https://choosealicense.com/licenses/mpl-2.0/) and **you're the best judge.**
+Thus, is Ogmios production-ready? **Yes**. At least, this is as good as it gets for an open-source project. We've been incorporating feedback from various users over the past year which has been great so far. For the rest, everything is open-source licensed under [MPL-2.0](https://choosealicense.com/licenses/mpl-2.0/) and **you're the best judge.**
 
-#### Are there any projects using it?
+#### Are there any projects/companies using it?
 
-We've heard of a handful happy users! And it keeps growing...
+We've heard of a handful happy users! And it keeps growing! To name a few...:
 
 - https://blockfrost.io/
 - https://eternl.io/
 - https://www.sundaeswap.finance/
+- https://jpeg.store/ 
 - https://spacebudz.io/
 - https://www.tangocrypto.com/
+- https://projectnewm.io/
 - https://github.com/input-output-hk/cardano-graphql 
-- https://www.f2lb.org/
+- https://mlabs.city/
 - https://gimbalabs.com/
+- https://www.f2lb.org/
 
-There are also projects still in preparation which looked into Ogmios as a lightweight alternative to cardano-db-sync for it better suited their need. 
-
-{{% notice tip %}}
+{{% notice note %}}
 Are you using Ogmios for a project? [Let us know on Github!](https://github.com/CardanoSolutions/ogmios/issues/new?assignees=&labels=&template=project.md)
 {{% /notice %}}

@@ -156,4 +156,4 @@ $ DOCKER_BUILDKIT=1 docker build \
     https://github.com/cardanosolutions/ogmios.git
 ```
 
-[networks]: https://github.com/CardanoSolutions/ogmios/blob/master/.github/workflows/docker.yaml#L16
+[networks]: https://github.com/CardanoSolutions/ogmios/blob/c7c0ed912baed176092f38ed19c281e2e26ada1b/.github/workflows/package.yaml#L55

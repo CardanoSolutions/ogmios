@@ -1,1 +1,1 @@
-{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"EvaluateTx","result":{"EvaluationFailure":{"ScriptFailures":{"withdrawal:4":[{"noCostModelForLanguage":"plutus:v1"},{"illFormedExecutionBudget":{"memory":8392497568271506703,"steps":2026082727118729222}}]}}},"reflection":null}
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"EvaluateTx","result":{"EvaluationFailure":{"NotEnoughSynced":{"currentNodeEra":"Byron","minimumRequiredEra":"Shelley"}}},"reflection":null}

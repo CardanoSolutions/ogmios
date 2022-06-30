@@ -50,7 +50,7 @@ spec :: Spec
 spec = parallel $ do
     testnetConfig <- liftGetConfigFile "testnet"
     mainnetConfig <- liftGetConfigFile "mainnet"
-    alonzoConfig <- liftGetConfigFile "alonzo-white"
+    vasilConfig <- liftGetConfigFile "vasil-dev"
 
     context "parseOptions(Pure)" $ do
         forM_ matrix $ \(args, expect) -> do
@@ -102,10 +102,10 @@ spec = parallel $ do
             systemStart   params `shouldBe` mkSystemStart 1563999616
             slotsPerEpoch params `shouldBe` EpochSlots 21600
 
-        specify "alonzo-white" $ do
-            params <- parseNetworkParameters alonzoConfig
-            networkMagic  params `shouldBe` NetworkMagic 7
-            systemStart   params `shouldBe` mkSystemStart 1625593493
+        specify "vasil-dev" $ do
+            params <- parseNetworkParameters vasilConfig
+            networkMagic  params `shouldBe` NetworkMagic 9
+            systemStart   params `shouldBe` mkSystemStart 1654524000
             slotsPerEpoch params `shouldBe` EpochSlots 360
   where
     liftGetConfigFile = runIO . getConfigFile

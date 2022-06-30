@@ -2,6 +2,7 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+
 {-# LANGUAGE TypeApplications #-}
 
 module Test.Generators where
@@ -9,7 +10,7 @@ module Test.Generators where
 import Ogmios.Prelude
 
 import Cardano.Ledger.Alonzo.Tools
-    ( ScriptFailure (..) )
+    ( TransactionScriptFailure (..) )
 import Cardano.Ledger.Alonzo.TxInfo
     ( TranslationError (..), transExUnits )
 import Cardano.Ledger.Crypto
@@ -114,6 +115,8 @@ import Type.Reflection
     ( typeRep )
 
 import Test.Consensus.Cardano.Generators
+    ()
+import Test.Generators.Orphans
     ()
 
 import qualified Data.Aeson as Json
@@ -225,31 +228,31 @@ genEvaluateTxError = frequency
         ptrs <- vector (length failures)
         pure (zip ptrs failures)
       ))
-    , (1, EvaluateTxUnknownInputs <$> reasonablySized arbitrary)
     , (1, EvaluateTxIncompatibleEra <$> genPreAlonzoEra)
     , (1, EvaluateTxAdditionalUtxoOverlap <$> reasonablySized arbitrary)
     , (1, do
         notEnoughSynced <- NotEnoughSynced <$> genPreAlonzoEra <*> genPreAlonzoEra
         pure (EvaluateTxNotEnoughSynced notEnoughSynced)
       )
-    , (1, EvaluateTxCannotCreateEvaluationContext <$> genTranslationError)
+    , (10, EvaluateTxCannotCreateEvaluationContext <$> genTranslationError)
     ]
 
-genTranslationError :: Gen TranslationError
+genTranslationError :: Gen (TranslationError StandardCrypto)
 genTranslationError = genericArbitrary
 
 genPreAlonzoEra :: Gen Text
 genPreAlonzoEra = elements [ "Byron", "Shelley", "Allegra", "Mary" ]
 
-genScriptFailure :: Gen (ScriptFailure StandardCrypto)
+genScriptFailure :: Gen (TransactionScriptFailure StandardCrypto)
 genScriptFailure = oneof
-    [ RedeemerNotNeeded <$> arbitrary
-    , MissingScript <$> arbitrary
+    [ RedeemerNotNeeded <$> arbitrary <*> arbitrary
+    , RedeemerPointsToUnknownScriptHash <$> arbitrary
+    , MissingScript <$> arbitrary <*> reasonablySized arbitrary
     , MissingDatum <$> arbitrary
     , UnknownTxIn <$> arbitrary
     , InvalidTxIn <$> arbitrary
     , IncompatibleBudget . transExUnits <$> arbitrary
-    , NoCostModel <$> arbitrary
+    , NoCostModelInLedgerState <$> arbitrary
     -- TODO: Also cover ValidationFailedV1 & ValidationFailedV2.
     -- This requires to also generate arbitrary instances for plutus' 'EvaluationError'
     -- which do not exists :'( ...

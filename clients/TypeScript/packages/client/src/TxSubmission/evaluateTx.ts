@@ -78,19 +78,13 @@ export const handleEvaluateTxResponse = (response: Ogmios['EvaluateTxResponse'])
               return new errors.UnknownInputReferencedByRedeemer.Error(failure)
             } else if (errors.ValidatorFailed.assert(failure)) {
               return new errors.ValidatorFailed.Error(failure)
-            } else if (errors.CorruptCostModelForLanguage.assert(failure)) {
-              return new errors.CorruptCostModelForLanguage.Error(failure)
             } else {
               return new Error(failure)
             }
           })
         }
-      } else if (errors.UnknownInputs.assert(EvaluationFailure)) {
-        return [new errors.UnknownInputs.Error(EvaluationFailure)]
       } else if (errors.IncompatibleEra.assert(EvaluationFailure)) {
         return [new errors.IncompatibleEra.Error(EvaluationFailure)]
-      } else if (errors.UncomputableSlotArithmetic.assert(EvaluationFailure)) {
-        return [new errors.UncomputableSlotArithmetic.Error(EvaluationFailure)]
       } else if (errors.AdditionalUtxoOverlap.assert(EvaluationFailure)) {
         return [new errors.AdditionalUtxoOverlap.Error(EvaluationFailure)]
       } else if (errors.NotEnoughSynced.assert(EvaluationFailure)) {

@@ -22,8 +22,12 @@ entire application is stitched together in a very thin layer.
 
 ### Modules Overview
 
+##### Top-Level
+
+Where top-level code lies, stitching together the various parts of the applications and exposing a high-level interface for building an executable.
+
 <details>
-  <summary>Application</summary>
+  <summary>Modules</summary>
 
 ```tree
              ^  ─── Ogmios.hs
@@ -33,11 +37,16 @@ Application  |      ├── Prelude.hs
 ```
 </details>
 
+##### Data
+
+Contains data-structures and non-effectful code. Since Ogmios is mainly a codec translation layer, this is where most of the code (75%) lies. In particular, all the JSON encoders and decoders are defined here, as well as the JSON-WSP machinery behind all requests and responses.
+
 <details>
-  <summary>Data</summary>
+  <summary>Modules</summary>
 
 ```tree
              ^  ─── Data
+             |       ├── EraTranslation.hs
              |       ├── Health.hs
              |       ├── Json.hs
              |       ├── Json
@@ -48,7 +57,8 @@ Application  |      ├── Prelude.hs
              |       │   ├── Shelley.hs
              |       │   ├── Allegra.hs
              |       │   ├── Mary.hs
-       Data  |       │   └── Alonzo.hs
+             |       │   ├── Alonzo.hs
+       Data  |       │   └── Babbage.hs
              |       ├── Metrics.hs
              |       ├── Protocol.hs
              |       └── Protocol
@@ -59,8 +69,12 @@ Application  |      ├── Prelude.hs
 ```
 </details>
 
+##### App
+
+Effectful code written leveraging Haskell's type-class as an effect system. This is where the client-side (where cardano-node acts as a server) implementation of ouroboros mini-protocols resides. This is also where we define the HTTP server and WebSocket server handlers. 
+
 <details>
-  <summary>Logic</summary>
+  <summary>Modules</summary>
 
 ```tree
              ^  ─── App
@@ -81,8 +95,12 @@ Application  |      ├── Prelude.hs
 ```
 </details>
 
+##### Control
+
+A thin abstraction layer for I/O effects. This is based off [io-sim](https://github.com/input-output-hk/io-sim) with a few additions custom to Ogmios. The goal of these modules isn't to be a generic all-purpose I/O abstraction, but rather, something tailored to the project, that defines a clear interface for effects and that encapsulate their actual interpretation in one place. This allows for the rest of the code to remains mostly IO-free.
+
 <details>
-  <summary>Effects</summary>
+  <summary>Modules</summary>
 
 ```tree
              ^  ─── Control
