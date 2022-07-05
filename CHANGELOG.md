@@ -5,6 +5,23 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.5.1] - 2022-07-05
+
+#### Added 
+
+N/A
+
+#### Changed
+
+##### 🏢 Server 
+
+- [#233](https://github.com/CardanoSolutions/ogmios/issues/233) Fixed Health endpoint wrongly reporting 'Alonzo' while in the 'Babbage era'.
+
+#### Removed
+
+N/A
+
+
 ### [5.5.0] - 2022-06-29
 
 #### Added 
