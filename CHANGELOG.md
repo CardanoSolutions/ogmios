@@ -9,7 +9,9 @@ pre: "<b>6. </b>"
 
 #### Added 
 
-N/A
+##### 🚗 TypeScript Client
+
+- [#234](https://github.com/CardanoSolutions/ogmios/pull/234) New `isBabbageProtocolParameters` helper function, and extended support of the existing ones to Babbage.
 
 #### Changed
 
@@ -21,6 +23,8 @@ N/A
 
 N/A
 
+---
+---
 
 ### [5.5.0] - 2022-06-29
 
@@ -103,6 +107,9 @@ N/A
 ##### 🚗 TypeScript Client
 
 - Same as Server. 
+
+---
+---
 
 ### [5.4.0] - 2022-05-22
 
