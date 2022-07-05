@@ -1,7 +1,7 @@
 asyncapi: '2.4.0'
 info:
   title: Ogmios
-  version: '5.5.0-rc3'
+  version: '5.5.1'
   description: |
     ### Protocols
 
