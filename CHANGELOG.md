@@ -5,6 +5,29 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.5.2] - 2022-07-11
+
+#### Added 
+
+N/A
+
+#### Changed
+
+##### 🏢 Server 
+
+- Bumped cardano-node's version (continuous integration & docker image) to 1.35.1.
+
+##### 🚗 TypeScript Client
+
+- [#236](https://github.com/CardanoSolutions/ogmios/pull/236)  Remove superfluous string concatenation in `UnknownResultError`'s message.
+
+#### Removed
+
+N/A
+
+---
+---
+
 ### [5.5.1] - 2022-07-05
 
 #### Added 
