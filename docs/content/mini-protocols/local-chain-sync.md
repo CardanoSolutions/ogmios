@@ -181,7 +181,8 @@ For several applications, it may be quite useful to know the last point of each 
     {{% era-boundary network="testnet" era="Shelley" blockNumber=2143527 slotNumber=13694363 headerHash="b596f9739b647ab5af901c8fc6f75791e262b0aeba81994a1d622543459734f2" %}}
     {{% era-boundary network="testnet" era="Allegra" blockNumber=2287019 slotNumber=18014387 headerHash="9914c8da22a833a777d8fc1f735d2dbba70b99f15d765b6c6ee45fe322d92d93" %}}
     {{% era-boundary network="testnet" era="Mary"    blockNumber=2877843 slotNumber=36158304 headerHash="2b95ce628d36c3f8f37a32c2942b48e4f9295ccfe8190bcbc1f012e1e97c79eb" %}}
-    {{% era-boundary network="testnet" era="Alonzo"  blockNumber="N/A"   slotNumber="N/A"    headerHash="N/A" %}}
+    {{% era-boundary network="testnet" era="Alonzo"  blockNumber=3680594 slotNumber=62510369 headerHash="d931221f9bc4cae34de422d9f4281a2b0344e86aac6b31eb54e2ee90f44a09b9" %}}
+    {{% era-boundary network="testnet" era="Babbage" blockNumber="N/A"   slotNumber="N/A"    headerHash="N/A" %}}
   {{% /era-boundaries %}}
 
 {{% /tab %}}
