@@ -2,7 +2,7 @@
   description = "ogmios";
 
   inputs = {
-    haskell-nix.url = "github:mlabs-haskell/haskell.nix/cf1f0460b65efadac6dc96169ef1e497410fa4f4";
+    haskell-nix.url = "github:mlabs-haskell/haskell.nix";
 
     nixpkgs.follows = "haskell-nix/nixpkgs-unstable";
 
