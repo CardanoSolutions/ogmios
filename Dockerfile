@@ -6,6 +6,8 @@
 # ------------------------------- SETUP  ------------------------------------- #
 #                                                                              #
 
+ARG CARDANO_NODE_VERSION=1.35.2
+
 FROM nixos/nix:2.3.11 as build
 
 ARG CARDANO_CONFIG_REV=08e6c0572d5d48049fab521995b29607e0a91a9e
@@ -14,7 +16,7 @@ RUN echo "substituters = https://cache.nixos.org https://hydra.iohk.io" >> /etc/
     echo "trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=" >> /etc/nix/nix.conf
 
 WORKDIR /app
-RUN nix-shell -p git --command "git clone --depth 1 https://github.com/input-output-hk/cardano-configurations.git"
+RUN nix-shell -p git --command "git clone https://github.com/input-output-hk/cardano-configurations.git"
 
 WORKDIR /app/ogmios
 RUN nix-env -iA cachix -f https://cachix.org/api/v1/install && cachix use cardano-ogmios
@@ -51,7 +53,8 @@ ENTRYPOINT ["/bin/ogmios"]
 # --------------------- RUN (cardano-node & ogmios) -------------------------- #
 #                                                                              #
 
-FROM inputoutput/cardano-node:1.35.2 as cardano-node-ogmios
+ARG CARDANO_NODE_VERSION=1.35.2
+FROM inputoutput/cardano-node:${CARDANO_NODE_VERSION} as cardano-node-ogmios
 
 ARG NETWORK=mainnet
 ENV TINI_VERSION v0.19.0
