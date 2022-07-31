@@ -70,8 +70,8 @@ import System.FilePath.Posix
 
 import Options.Applicative
 
+import qualified Data.Text as T
 import qualified Data.Yaml as Yaml
-import qualified Data.Yaml.Pretty as Yaml
 
 --
 -- Command-line commands
@@ -277,18 +277,32 @@ parseNetworkParameters configFile = runOrDie $ do
         Just (toString -> byronGenesisFile, toString -> shelleyGenesisFile) -> do
             byronGenesis   <- decodeYaml (replaceFileName configFile byronGenesisFile)
             shelleyGenesis <- decodeYaml (replaceFileName configFile shelleyGenesisFile)
-            let params = (,,)
-                    <$> (shelleyGenesis ^? key "networkMagic" . _Integer)
-                    <*> (iso8601ParseM . toString =<< shelleyGenesis ^? key "systemStart" . _String)
-                    <*> (byronGenesis ^? key "protocolConsts" . key "k" . _Integer)
-            case params of
+
+            let mSecurityParam = byronGenesis ^? key "protocolConsts" . key "k" . _Integer
+            let mNetworkMagic = shelleyGenesis ^? key "networkMagic" . _Integer
+            let mSystemStart = iso8601ParseM . toString =<< shelleyGenesis ^? key "systemStart" . _String
+
+            case (,,) <$> mNetworkMagic <*> mSystemStart <*> mSecurityParam of
                 Nothing -> do
-                    let prettyYaml = decodeUtf8 (Yaml.encodePretty Yaml.defConfig shelleyGenesis)
-                    throwE $ toString $ unwords
-                        [ "Couldn't find (or failed to parse) required network"
-                        , "parameters (networkMagic, systemStart and/or epochLength)"
-                        , "in genesis file: \n" <> prettyYaml
-                        ]
+                    let
+                        invalidParams = catMaybes
+                            [ mSecurityParam & maybe
+                                    (Just "ByronGenesis^protocolConsts.k")
+                                    (const Nothing)
+                            , mNetworkMagic & maybe
+                                    (Just "ShelleyGenesis^networkMagic")
+                                    (const Nothing)
+                            , mSystemStart & maybe
+                                    (Just "ShelleyGenesis^systemStart")
+                                    (const Nothing)
+                            ]
+                      in
+                        throwE $ toString $ unlines
+                            [ "Failed to parse genesis parameters."
+                            , "There's an issue with the following parameters:"
+                            , ""
+                            , "\t- " <> T.intercalate "\n\t- " invalidParams
+                            ]
                 Just (nm, ss, k) ->
                     return NetworkParameters
                         { networkMagic =
