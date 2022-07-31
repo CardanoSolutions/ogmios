@@ -5,6 +5,37 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.5.3] - 2022-07-31
+
+#### Added 
+
+N/A
+
+#### Changed
+
+##### 🏢 Server 
+
+- Bumped cardano-node's version (continuous integration & docker image) to 1.35.2. 
+
+- ⚠️  Fixed Plutus' data / datum serialization function. See [3f614c3c](https://github.com/CardanoSolutions/ogmios/commit/3f614c3cf15b6e418fd461a34853b750a3408c4f) for details. As a consequence, some datums (either inline or in the witness set) that have been reported in the past (since `v5.5.0`) may have been wrong. Note that the datum hashes were however correct, so it is possible to identify the _"corrupted"_ ones by trying to re-hash (blake2b-256) them and see whether they match their associated hash digest.
+
+- Changed the Docker image tagging's scheme of `cardano-node-ogmios` to now include the cardano-node's version. This allows to more easily bundle more recent version of cardano-node with old versions of Ogmios without the need to make a whole new release. This is in effect from `v5.5.2` and onwards.
+
+  | image               | repository                                                                                      | tags               |
+  | ---                 | ---                                                                                             | ---                |
+  | cardano-node-ogmios | [cardanosolutions/cardano-node-ogmios](https://hub.docker.com/repository/docker/cardanosolutions/cardano-node-ogmios) | `latest`<br/>`latest-{NETWORK}`<br/>`v*.*.*_{CARDANO_NODE_VERSION}`<br/>`v*.*.*_{CARDANO_NODE_VERSION}-{NETWORK}` |
+  | ogmios              | [cardanosolutions/ogmios](https://hub.docker.com/repository/docker/cardanosolutions/ogmios)                           | `latest`<br/>`latest-{NETWORK}`<br/>`v*.*.*`<br/>`v*.*.*-{NETWORK}` |
+
+- [#242](https://github.com/CardanoSolutions/ogmios/issues/242) Fixed incongruous error message from the command-line when failing to parse protocol parameters from genesis files. The error reporting has been slightly improved to give a more fine-grained error per invalid parameter.
+
+#### Removed
+
+N/A
+
+---
+---
+
+
 ### [5.5.2] - 2022-07-11
 
 #### Added 

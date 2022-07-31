@@ -16,8 +16,8 @@ living on the edge. If using the `mainnet` image you can omit the network name.
 
 | image               | repository                                                                                      | tags               |
 | ---                 | ---                                                                                             | ---                |
-| cardano-node-ogmios | [cardanosolutions/cardano-node-ogmios](https://hub.docker.com/repository/docker/cardanosolutions/cardano-node-ogmios) | `latest`, `latest-{NETWORK}`, `v*.*.*`, `v*.*.*-{NETWORK}` |
-| ogmios              | [cardanosolutions/ogmios](https://hub.docker.com/repository/docker/cardanosolutions/ogmios)                           | `latest`, `latest-{NETWORK}`, `v*.*.*`, `v*.*.*-{NETWORK}` |
+| cardano-node-ogmios | [cardanosolutions/cardano-node-ogmios](https://hub.docker.com/repository/docker/cardanosolutions/cardano-node-ogmios) | `latest`<br/>`latest-{NETWORK}`<br/>`v*.*.*_{CARDANO_NODE_VERSION}`<br/>`v*.*.*_{CARDANO_NODE_VERSION}-{NETWORK}` |
+| ogmios              | [cardanosolutions/ogmios](https://hub.docker.com/repository/docker/cardanosolutions/ogmios)                           | `latest`<br/>`latest-{NETWORK}`<br/>`v*.*.*`<br/>`v*.*.*-{NETWORK}` |
 
 ## cardano-node-ogmios (easiest)
 
