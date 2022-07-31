@@ -140,6 +140,8 @@ import Ogmios.Data.Protocol.TxSubmission
     )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras, GenTx, HardForkApplyTxErr (..) )
+import Ouroboros.Consensus.Shelley.Eras
+    ( StandardAlonzo )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
@@ -154,6 +156,7 @@ import Test.Generators
     , genBlockNo
     , genBoundResult
     , genCompactGenesisResult
+    , genData
     , genDelegationAndRewardsResult
     , genEpochResult
     , genEvaluateTxResponse
@@ -210,6 +213,7 @@ import Test.QuickCheck
     , conjoin
     , counterexample
     , elements
+    , forAll
     , forAllBlind
     , forAllShrinkBlind
     , genericShrink
@@ -226,17 +230,20 @@ import Test.QuickCheck.Arbitrary.Generic
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
 
+import qualified Cardano.Ledger.Alonzo.Data as Ledger
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encode.Pretty as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Base16 as B16
+import qualified Data.Text.Encoding as T
 import qualified Test.QuickCheck as QC
 
-jsonifierToAeson
+encodingToValue
     :: Json
     -> Json.Value
-jsonifierToAeson =
+encodingToValue =
     fromJust . Json.decodeStrict . jsonToByteString
 
 -- | Generate arbitrary value of a data-type and verify they match a given
@@ -251,7 +258,7 @@ validateToJSON gen encode (n, vectorFilePath) ref = parallel $ do
     runIO $ generateTestVectors (n, vectorFilePath) gen encode
     refs <- runIO $ unsafeReadSchemaRef ref
     specify (toString $ getSchemaRef ref) $ forAllBlind gen
-        (prop_validateToJSON (jsonifierToAeson . encode) refs)
+        (prop_validateToJSON (encodingToValue . encode) refs)
 
 -- | Similar to 'validateToJSON', but also check that the produce value can be
 -- decoded back to the expected form.
@@ -268,7 +275,7 @@ validateFromJSON gen (encode, decode) (n, vectorFilePath) ref = parallel $ do
     specify (toString $ getSchemaRef ref) $ forAllBlind gen $ \a ->
         let leftSide = decodeWith decode (jsonToByteString (encode a)) in
         conjoin
-        [ prop_validateToJSON (jsonifierToAeson . encode) refs a
+        [ prop_validateToJSON (encodingToValue . encode) refs a
         , leftSide == Just a
             & counterexample (decodeUtf8 $ Json.encodePretty $ inefficientEncodingToValue $ encode a)
             & counterexample ("Got:  " <> show leftSide)
@@ -312,7 +319,6 @@ spec = do
                 Json.Success (UTxOInBabbageEra utxo') ->
                     utxo' === utxo
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
-
         specify "Golden: Utxo_1.json" $ do
             json <- decodeFileThrow "Utxo_1.json"
             case Json.parse (decodeUtxo @StandardCrypto) json of
@@ -355,6 +361,21 @@ spec = do
                 Json.Success UTxOInBabbageEra{} ->
                     fail "successfully decoded an invalid payload( as Babbage Utxo)?"
 
+        context "Data / BinaryData" $ do
+            prop "arbitrary" $
+                forAll genData propBinaryDataRoundtrip
+
+            prop "Golden (1)" $
+                propBinaryDataRoundtrip $ unsafeDataFromBytes
+                    "D8668219019E8201D8668219010182D866821903158140D8668219020C\
+                    \83230505"
+
+            prop "Golden (2)" $
+                propBinaryDataRoundtrip $ unsafeDataFromBytes
+                    "D8798441FFD87982D87982D87982D87981581CC279A3FB3B4E62BBC78E\
+                    \288783B58045D4AE82A18867D8352D02775AD87981D87981D87981581C\
+                    \121FD22E0B57AC206FEFC763F8BFA0771919F5218B40691EEA4514D0D8\
+                    \7A80D87A801A002625A0D87983D879801A000F4240D879811A000FA92E"
 
     context "validate chain-sync request/response against JSON-schema" $ do
         validateFromJSON
@@ -862,6 +883,31 @@ instance Arbitrary SerializedTx where
           \ce8473e990d61c1506f6"
         ]
 
+
+propBinaryDataRoundtrip :: Ledger.Data StandardAlonzo -> Property
+propBinaryDataRoundtrip dat =
+    let json = jsonToByteString (Alonzo.encodeData @StandardAlonzo dat)
+     in case B16.decodeBase16 . T.encodeUtf8 <$> Json.decode (toLazy json) of
+            Just (Right bytes) ->
+                let
+                    dataFromBytes = Ledger.makeBinaryData (toShort bytes)
+                    originalData  = Ledger.dataToBinaryData dat
+                  in conjoin
+                    [ dataFromBytes
+                        === Right originalData
+                    , (Ledger.hashBinaryData <$> dataFromBytes)
+                        === Right (Ledger.hashBinaryData originalData)
+                    ] & counterexample (decodeUtf8 json)
+            _ ->
+                property False
+
+unsafeDataFromBytes :: ByteString -> Ledger.Data era
+unsafeDataFromBytes =
+    either (error . show) Ledger.binaryDataToData
+    . Ledger.makeBinaryData
+    . either error toShort
+    . B16.decodeBase16
+
 --
 -- Local State Query
 --
@@ -911,10 +957,10 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                 -- max success. In the end, the property run 1 time per era!
                 runQuickCheck $ withMaxSuccess 20 $ forAllBlind
                     (genResult Proxy)
-                    (prop_validateToJSON (jsonifierToAeson . encodeQueryResponse) resultRefs)
+                    (prop_validateToJSON (encodingToValue . encodeQueryResponse) resultRefs)
 
                 let encodeQueryUnavailableInCurrentEra
-                        = jsonifierToAeson
+                        = encodingToValue
                         . _encodeQueryResponse encodeAcquireFailure
                         . Wsp.Response Nothing
 

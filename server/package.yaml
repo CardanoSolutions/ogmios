@@ -137,6 +137,7 @@ tests:
     dependencies:
     - aeson
     - aeson-pretty
+    - base16
     - bytestring
     - cardano-client
     - cardano-ledger-alonzo
