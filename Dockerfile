@@ -53,7 +53,6 @@ ENTRYPOINT ["/bin/ogmios"]
 # --------------------- RUN (cardano-node & ogmios) -------------------------- #
 #                                                                              #
 
-ARG CARDANO_NODE_VERSION=1.35.2
 FROM inputoutput/cardano-node:${CARDANO_NODE_VERSION} as cardano-node-ogmios
 
 ARG NETWORK=mainnet
