@@ -218,6 +218,7 @@ export type UInt8 = number;
 export type VotingPeriod = "voteForThisEpoch" | "voteForNextEpoch";
 export type ScriptPurpose = Spend | Mint | Certificate1 | Withdrawal;
 export type Utxo = [TxIn, TxOut][];
+export type Language = "plutus:v1" | "plutus:v2";
 export type SubmitTxError = (
   | EraMismatch
   | InvalidWitnesses
@@ -288,7 +289,6 @@ export type SubmitTxError = (
   | MalformedScriptWitnesses
 )[];
 export type RedeemerPointer = string;
-export type Language = "plutus:v1" | "plutus:v2";
 /**
  * Errors whcih may occur when evaluating an on-chain script.
  */
@@ -424,9 +424,6 @@ export interface Ogmios {
     servicename: "ogmios";
     methodname: "SubmitTx";
     args?: {
-      /**
-       * CBOR-serialized signed transaction, in base64 (or base16)
-       */
       submit: string;
     };
     /**
@@ -458,9 +455,6 @@ export interface Ogmios {
     servicename: "ogmios";
     methodname: "EvaluateTx";
     args?: {
-      /**
-       * CBOR-serialized signed transaction, in base64 (or base16)
-       */
       evaluate: string;
       additionalUtxoSet?: Utxo;
     };
@@ -608,7 +602,7 @@ export interface Ogmios {
     version: "1.0";
     servicename: "ogmios";
     methodname: "NextTx";
-    result: TxId | TxBabbage | Null;
+    result: TxId | TxAlonzo | TxBabbage | Null;
     /**
      * Any value that was set by a client request in the 'mirror' field.
      */
@@ -2060,7 +2054,22 @@ export interface ValidationTagMismatch {
   validationTagMismatch: null;
 }
 export interface CollectErrors {
-  collectErrors: unknown[];
+  collectErrors: (NoRedeemer | NoWitness | NoCostModel | BadTranslation)[];
+}
+export interface NoRedeemer {
+  noRedeemer: ScriptPurpose;
+}
+export interface NoWitness {
+  noWitness: DigestBlake2BScript;
+}
+export interface NoCostModel {
+  noCostModel: Language;
+}
+export interface BadTranslation {
+  /**
+   * An (hopefully) informative error about the transaction execution failure.
+   */
+  badTranslation: string;
 }
 export interface ExtraScriptWitnesses {
   extraScriptWitnesses: DigestBlake2BScript[];
