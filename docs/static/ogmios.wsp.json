@@ -5193,6 +5193,45 @@
     , "properties":
       { "collectErrors":
         { "type": "array"
+        , "items":
+          { "oneOf":
+            [ { "type": "object"
+              , "title": "noRedeemer"
+              , "additionalProperties": false
+              , "required": [ "noRedeemer" ]
+              , "properties":
+                { "noRedeemer": { "$ref": "#/definitions/ScriptPurpose" }
+                }
+              }
+            , { "type": "object"
+              , "title": "noWitness"
+              , "additionalProperties": false
+              , "required": [ "noWitness" ]
+              , "properties":
+                { "noWitness": { "$ref": "#/definitions/Digest[Blake2b]::Script" }
+                }
+              }
+            , { "type": "object"
+              , "title": "noCostModel"
+              , "additionalProperties": false
+              , "required": [ "noCostModel" ]
+              , "properties":
+                { "noCostModel": { "$ref": "#/definitions/Language" }
+                }
+              }
+            , { "type": "object"
+              , "title": "badTranslation"
+              , "additionalProperties": false
+              , "required": [ "badTranslation" ]
+              , "properties":
+                { "badTranslation":
+                  { "type": "string"
+                  , "description": "An (hopefully) informative error about the transaction execution failure."
+                  }
+                }
+              }
+            ]
+          }
         }
       }
     }
