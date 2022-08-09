@@ -1042,9 +1042,9 @@ export interface Babbage {
   babbage: BlockBabbage;
 }
 export interface BlockBabbage {
-  body?: TxBabbage[];
-  headerHash?: DigestBlake2BBlockHeader;
-  header?: {
+  body: TxBabbage[];
+  headerHash: DigestBlake2BBlockHeader;
+  header: {
     blockHeight: BlockNo;
     slot: Slot;
     prevHash: DigestBlake2BBlockHeader;
@@ -1341,9 +1341,9 @@ export interface Alonzo {
   alonzo: BlockAlonzo;
 }
 export interface BlockAlonzo {
-  body?: TxAlonzo[];
-  headerHash?: DigestBlake2BBlockHeader;
-  header?: {
+  body: TxAlonzo[];
+  headerHash: DigestBlake2BBlockHeader;
+  header: {
     blockHeight: BlockNo;
     slot: Slot;
     prevHash: DigestBlake2BBlockHeader;
@@ -1432,9 +1432,9 @@ export interface Mary {
   mary: BlockMary;
 }
 export interface BlockMary {
-  body?: TxMary[];
-  headerHash?: DigestBlake2BBlockHeader;
-  header?: {
+  body: TxMary[];
+  headerHash: DigestBlake2BBlockHeader;
+  header: {
     blockHeight: BlockNo;
     slot: Slot;
     prevHash: DigestBlake2BBlockHeader;
@@ -1505,9 +1505,9 @@ export interface Allegra {
   allegra: BlockAllegra;
 }
 export interface BlockAllegra {
-  body?: TxAllegra[];
-  headerHash?: DigestBlake2BBlockHeader;
-  header?: {
+  body: TxAllegra[];
+  headerHash: DigestBlake2BBlockHeader;
+  header: {
     blockHeight: BlockNo;
     slot: Slot;
     prevHash: DigestBlake2BBlockHeader;
@@ -1552,9 +1552,9 @@ export interface Shelley {
   shelley: BlockShelley;
 }
 export interface BlockShelley {
-  body?: TxShelley[];
-  headerHash?: DigestBlake2BBlockHeader;
-  header?: {
+  body: TxShelley[];
+  headerHash: DigestBlake2BBlockHeader;
+  header: {
     blockHeight: BlockNo;
     slot: Slot;
     prevHash: DigestBlake2BBlockHeader;
