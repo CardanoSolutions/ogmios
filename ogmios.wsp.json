@@ -1921,9 +1921,9 @@
   , "Block[Byron]":
     { "description": "A block in the Byron era. Most blocks are stanard blocks, but once at the beginning of each era is an additional epoch boundary block (a.k.a. EBB)"
     , "oneOf":
-      [ { "required": [ "hash", "header", "body" ]
-        , "title": "standard block"
+      [ { "title": "standard block"
         , "additionalProperties": false
+        , "required": [ "hash", "header", "body" ]
         , "properties":
           { "hash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].header" }
           , "header":
@@ -2024,6 +2024,7 @@
   , "Block[Shelley]":
     { "type": "object"
     , "additionalProperties": false
+    , "required": [ "header", "headerHash", "body" ]
     , "properties":
       { "body":
         { "type": "array"
@@ -2059,6 +2060,7 @@
   , "Block[Allegra]":
     { "type": "object"
     , "additionalProperties": false
+    , "required": [ "header", "headerHash", "body" ]
     , "properties":
       { "body":
         { "type": "array"
@@ -2072,6 +2074,7 @@
   , "Block[Mary]":
     { "type": "object"
     , "additionalProperties": false
+    , "required": [ "header", "headerHash", "body" ]
     , "properties":
       { "body":
         { "type": "array"
@@ -2085,6 +2088,7 @@
   , "Block[Alonzo]":
     { "type": "object"
     , "additionalProperties": false
+    , "required": [ "header", "headerHash", "body" ]
     , "properties":
       { "body":
         { "type": "array"
@@ -2098,6 +2102,7 @@
   , "Block[Babbage]":
     { "type": "object"
     , "additionalProperties": false
+    , "required": [ "header", "headerHash", "body" ]
     , "properties":
       { "body":
         { "type": "array"
