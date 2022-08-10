@@ -18,6 +18,8 @@ import Cardano.Ledger.Crypto
     ( StandardCrypto )
 import Cardano.Network.Protocol.NodeToClient
     ( Block, GenTxId )
+import Cardano.Slotting.Time
+    ( mkSlotLength )
 import Control.Monad.Class.MonadAsync
     ( forConcurrently_ )
 import Data.Aeson
@@ -50,6 +52,8 @@ import Ogmios.Data.Json
     )
 import Ogmios.Data.Json.Orphans
     ()
+import Ogmios.Data.Json.Prelude
+    ( encodeSlotLength )
 import Ogmios.Data.Json.Query
     ( QueryInEra
     , ShelleyBasedEra (..)
@@ -194,6 +198,7 @@ import Test.Hspec
     , expectationFailure
     , parallel
     , runIO
+    , shouldBe
     , shouldContain
     , specify
     )
@@ -231,6 +236,7 @@ import qualified Ogmios.Data.Json.Babbage as Babbage
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encode.Pretty as Json
+import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString as BS
 import qualified Test.QuickCheck as QC
@@ -357,6 +363,14 @@ spec = do
                 Json.Success UTxOInBabbageEra{} ->
                     fail "successfully decoded an invalid payload( as Babbage Utxo)?"
 
+
+    context "SlotLength" $ do
+        let matrix = [ ( mkSlotLength 1, Json.double 1 )
+                     , ( mkSlotLength 0.1, Json.double 0.1 )
+                     ]
+        forM_ matrix $ \(slotLength, json) ->
+            specify (show slotLength <> " → " <> show json) $ do
+                encodeSlotLength slotLength `shouldBe` json
 
     context "validate chain-sync request/response against JSON-schema" $ do
         validateFromJSON

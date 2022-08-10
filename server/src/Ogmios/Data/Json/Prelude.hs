@@ -112,7 +112,7 @@ import Cardano.Slotting.Block
 import Cardano.Slotting.Slot
     ( EpochNo (..), EpochSize (..), SlotNo (..), WithOrigin (..) )
 import Cardano.Slotting.Time
-    ( SlotLength (..), SystemStart (..), slotLengthToSec )
+    ( SlotLength (..), SystemStart (..) )
 import Data.Aeson
     ( FromJSON, ToJSON, (.:), (.:?) )
 import Data.ByteArray
@@ -296,7 +296,7 @@ encodeNatural =
 
 encodeNominalDiffTime :: NominalDiffTime -> Json
 encodeNominalDiffTime =
-    encodeInteger . round
+    Json.double . fromRational . toRational
 {-# INLINABLE encodeNominalDiffTime #-}
 
 encodeNonNegativeInterval :: NonNegativeInterval -> Json
@@ -341,7 +341,7 @@ encodeShortByteString encodeByteString =
 
 encodeSlotLength :: SlotLength -> Json
 encodeSlotLength =
-    encodeInteger . slotLengthToSec
+    encodeNominalDiffTime . getSlotLength
 {-# INLINABLE encodeSlotLength #-}
 
 encodeSlotNo :: SlotNo -> Json
