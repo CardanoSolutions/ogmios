@@ -330,7 +330,7 @@ export type RelativeTime = number;
  */
 export type QueryUnavailableInCurrentEra = "QueryUnavailableInCurrentEra";
 /**
- * A slot length, in seconds.
+ * A slot length, in seconds. Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
  */
 export type SlotLength = number;
 /**
