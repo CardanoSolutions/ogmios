@@ -3641,10 +3641,9 @@
     }
 
   , "RelativeTime":
-    { "type": "integer"
-    , "description": "A time in seconds relative to another one (typically, system start or era start)."
+    { "type": "number"
+    , "description": "A time in seconds relative to another one (typically, system start or era start). Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second."
     , "minimum": 0
-    , "maximum": 18446744073709552999
     }
 
   , "Relay":
@@ -4169,9 +4168,8 @@
     }
 
   , "SlotLength":
-    { "type": "integer"
-    , "description": "A slot length, in seconds."
-    , "maximum": 18446744073709552000
+    { "type": "number"
+    , "description": "A slot length, in seconds. Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second."
     }
 
   , "SoftwareVersion":
