@@ -64,6 +64,7 @@ See [projects 🎯](https://github.com/CardanoSolutions/ogmios/projects).
 - <a href="https://ogmios.dev/typescript-client/overview/">TypeScript</a>
 - <a href="https://github.com/savaki/ogmigo/#readme">Go</a>
 - <a href="https://github.com/projectNEWM/kogmios#readme">Kotlin</a>
+- <a href="https://github.com/adabox-aio/ogmios-java-client.git#readme">Java</a>
 
 ## Sponsors 💖 
 
