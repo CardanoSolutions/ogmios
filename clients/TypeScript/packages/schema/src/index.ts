@@ -290,7 +290,7 @@ export type SubmitTxError = (
 )[];
 export type RedeemerPointer = string;
 /**
- * Errors whcih may occur when evaluating an on-chain script.
+ * Errors which may occur when evaluating an on-chain script.
  */
 export type ScriptFailure = (
   | ExtraRedeemers
@@ -322,7 +322,7 @@ export type GetChainTip = "chainTip";
 export type GetBlockHeight = "blockHeight";
 export type GetSystemStart = "systemStart";
 /**
- * A time in seconds relative to another one (typically, system start or era start).
+ * A time in seconds relative to another one (typically, system start or era start). Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
  */
 export type RelativeTime = number;
 /**

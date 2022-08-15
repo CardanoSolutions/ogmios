@@ -37,3 +37,4 @@ jobs:
       with:
         db-dir: ${{ runner.temp }}/db-${{ matrix.network }}
         network: ${{ matrix.network }}
+        version: v5.5.4_1.35.2
