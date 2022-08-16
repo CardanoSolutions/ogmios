@@ -9,6 +9,8 @@ module Test.Generators where
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.Alonzo.Data
+    ( Data )
 import Cardano.Ledger.Alonzo.Tools
     ( TransactionScriptFailure (..) )
 import Cardano.Ledger.Alonzo.TxInfo
@@ -722,6 +724,11 @@ genUtxoAlonzo =
 genUtxoBabbage
     :: Gen (UTxO StandardBabbage)
 genUtxoBabbage =
+    reasonablySized arbitrary
+
+genData
+    :: Gen (Data era)
+genData =
     reasonablySized arbitrary
 
 shrinkUtxo

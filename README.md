@@ -8,7 +8,7 @@
 
 ## Features
 
-<table>
+<table align="center">
   <tr><td>Fast synchronization of blocks from the Cardano network(s)</td><td><a href="https://ogmios.dev/mini-protocols/local-chain-sync/" target="_blank">↗️</a></td></tr>
   <tr><td>Transaction submission with enhanced error messages</td><td><a href="https://ogmios.dev/mini-protocols/local-tx-submission/#submittx" target="_blank">↗️</a></td></tr>
   <tr><td>Evaluation of Plutus script execution units</td><td><a href="https://ogmios.dev/mini-protocols/local-tx-submission/#evaluatetx" target="_blank">↗️</a></td></tr>
@@ -61,9 +61,12 @@ See [projects 🎯](https://github.com/CardanoSolutions/ogmios/projects).
 
 ## Clients / SDKs
 
-- <a href="https://ogmios.dev/typescript-client/overview/">TypeScript</a>
-- <a href="https://github.com/savaki/ogmigo/#readme">Go</a>
-- <a href="https://github.com/projectNEWM/kogmios#readme">Kotlin</a>
+<table align="center"><thead><tr>
+<td align="center"><img height=72 width=72 src=".github/clients/typescript.png" alt="Logo:TypeScript"><br/><a href="https://ogmios.dev/typescript-client/overview"><strong>TypeScript</strong></a></td>
+<td align="center"><img height=72 width=72 src=".github/clients/go.png" alt="Logo:Go"><br/><a href="https://github.com/savaki/ogmigo/#readme"><strong>Go</strong></a></td>
+<td align="center"><img height=72 width=72 src=".github/clients/kotlin.png" alt="Logo:Kotlin"><br/><a href="https://github.com/projectNEWM/kogmios#readme"><strong>Kotlin</strong></a></td>
+<td align="center"><img height=72 width=72 src=".github/clients/java.png" alt="Logo:Java"><br/><a href="https://github.com/adabox-aio/ogmios-java-client.git#readme"><strong>Java</strong></a></td>
+</tr><thead></table> 
 
 ## Sponsors 💖 
 

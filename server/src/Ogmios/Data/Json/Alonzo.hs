@@ -12,8 +12,6 @@ import Cardano.Binary
     ( serialize' )
 import Cardano.Ledger.Crypto
     ( Crypto )
-import Codec.Serialise
-    ( serialise )
 import Data.ByteString.Base16
     ( encodeBase16 )
 import GHC.Records
@@ -200,10 +198,11 @@ encodeCostModels =
     encodeMap stringifyLanguage encodeCostModel . Al.unCostModels
 
 encodeData
-    :: Al.Data era
+    :: Ledger.Era era
+    => Al.Data era
     -> Json
-encodeData (Al.Data datum) =
-    encodeByteStringBase16 (toStrict (serialise datum))
+encodeData =
+    encodeByteStringBase16 . serialize'
 
 encodeDataHash
     :: Crypto crypto
@@ -381,7 +380,7 @@ encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
     encodeMap Shelley.stringifyKeyHash (encodePParams' encodeStrictMaybe) m
 
 encodeRedeemers
-    :: Ledger.Era era
+    :: forall era. (Ledger.Era era)
     => Al.Redeemers era
     -> Json
 encodeRedeemers (Al.Redeemers redeemers) =

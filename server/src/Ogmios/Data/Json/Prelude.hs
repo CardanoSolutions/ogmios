@@ -125,6 +125,8 @@ import Data.ByteString.Bech32
     ( HumanReadablePart, encodeBech32 )
 import Data.IP
     ( IPv4, IPv6 )
+import Data.Ratio
+    ( (%) )
 import Data.Scientific
     ( Scientific )
 import Data.Sequence.Strict
@@ -295,8 +297,13 @@ encodeNatural =
 {-# INLINABLE encodeNatural #-}
 
 encodeNominalDiffTime :: NominalDiffTime -> Json
-encodeNominalDiffTime =
-    Json.double . fromRational . toRational
+encodeNominalDiffTime t =
+    -- TODO / NOTE: Backward-compatibility prior to v5.5.4. Should encode only
+    -- as Double in v6+
+    if i % 1 == r then Json.integer i else Json.double (fromRational r)
+  where
+    r = toRational t
+    i = round t
 {-# INLINABLE encodeNominalDiffTime #-}
 
 encodeNonNegativeInterval :: NonNegativeInterval -> Json

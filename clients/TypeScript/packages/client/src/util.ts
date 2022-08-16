@@ -11,6 +11,7 @@ import {
   EpochBoundaryBlock,
   Point,
   ProtocolParametersAlonzo,
+  ProtocolParametersBabbage,
   ProtocolParametersShelley,
   StandardBlock
 } from '@cardano-ogmios/schema'
@@ -159,9 +160,19 @@ export const isEmptyObject = (obj: Object): boolean =>
   obj !== undefined && Object.keys(obj).length === 0 && (obj.constructor === Object || obj.constructor === undefined)
 
 /** @category Helper */
-export const isAlonzoProtocolParameters = (params: ProtocolParametersShelley | ProtocolParametersAlonzo): params is ProtocolParametersAlonzo =>
+export const isShelleyProtocolParameters = (
+  params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
+): params is ProtocolParametersShelley =>
+  (params as ProtocolParametersShelley).minUtxoValue !== undefined
+
+/** @category Helper */
+export const isAlonzoProtocolParameters = (
+  params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
+): params is ProtocolParametersAlonzo =>
   (params as ProtocolParametersAlonzo).coinsPerUtxoWord !== undefined
 
 /** @category Helper */
-export const isShelleyProtocolParameters = (params: ProtocolParametersShelley | ProtocolParametersAlonzo): params is ProtocolParametersShelley =>
-  (params as ProtocolParametersShelley).minUtxoValue !== undefined
+export const isBabbageProtocolParameters = (
+  params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
+): params is ProtocolParametersBabbage =>
+  (params as ProtocolParametersBabbage).coinsPerUtxoByte !== undefined

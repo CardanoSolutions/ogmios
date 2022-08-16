@@ -24,3 +24,6 @@
 [submodule "clients/Kotlin"]
 	path = clients/Kotlin
 	url = https://github.com/projectNEWM/kogmios.git
+[submodule "clients/Java"]
+	path = clients/Java
+	url = https://github.com/adabox-aio/ogmios-java-client.git

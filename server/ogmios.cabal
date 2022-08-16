@@ -1,6 +1,6 @@
 cabal-version:  2.4
 name:           ogmios
-version:        5.5.0
+version:        5.5.4
 synopsis:       A JSON-WSP WebSocket client for cardano-node
 description:    Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server#ogmios-server>
 category:       Web
@@ -254,6 +254,7 @@ test-suite unit
     , aeson
     , aeson-pretty
     , base >=4.7 && <5
+    , base16
     , bytestring
     , cardano-client
     , cardano-ledger-alonzo

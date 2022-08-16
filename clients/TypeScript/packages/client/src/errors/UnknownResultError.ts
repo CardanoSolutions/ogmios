@@ -10,6 +10,6 @@ import { safeJSON } from '../util'
 export class UnknownResultError extends CustomError {
   public constructor (result: object | string) {
     super()
-    this.message = `${safeJSON.stringify(result)} is an unknown result`
+    this.message = safeJSON.stringify(result)
   }
 }

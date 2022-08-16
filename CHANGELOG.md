@@ -5,11 +5,93 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
-### [5.5.0] - 2022-06-29
+### [5.5.4] - 2022-08-11
 
 #### Added 
 
-##### 🏢 Server 
+- Missing JSON specification (and therefore, documentation) for `collectErrors`. See [#244](https://github.com/CardanoSolutions/ogmios/issues/244).
+
+#### Changed
+
+- Slot lengths are now encoded as floating numbers (double precision) instead of integers (still representing a number of seconds). However, to maintain backward-compatibility, integers value are encoded without decimal, as they used to. [#245](https://github.com/CardanoSolutions/ogmios/issues/245) 
+
+- ![TypeScript][] Blocks' properties (`header`, `headerHash`, `body`) are no longer marked as _optional_ in the JSON specification (and consequently, in the TypeScript SDK). [#238](https://github.com/CardanoSolutions/ogmios/issues/238) 
+
+#### Removed
+
+N/A
+
+---
+---
+
+### [5.5.3] - 2022-07-31
+
+#### Added 
+
+N/A
+
+#### Changed
+
+- Bumped cardano-node's version (continuous integration & docker image) to 1.35.2. 
+
+- ⚠️  Fixed Plutus' data / datum serialization function. See [3f614c3c](https://github.com/CardanoSolutions/ogmios/commit/3f614c3cf15b6e418fd461a34853b750a3408c4f) for details. As a consequence, some datums (either inline or in the witness set) that have been reported in the past (since `v5.5.0`) may have been wrong. Note that the datum hashes were however correct, so it is possible to identify the _"corrupted"_ ones by trying to re-hash (blake2b-256) them and see whether they match their associated hash digest.
+
+- Changed the Docker image tagging's scheme of `cardano-node-ogmios` to now include the cardano-node's version. This allows to more easily bundle more recent version of cardano-node with old versions of Ogmios without the need to make a whole new release. This is in effect from `v5.5.2` and onwards.
+
+  | image               | repository                                                                                      | tags               |
+  | ---                 | ---                                                                                             | ---                |
+  | cardano-node-ogmios | [cardanosolutions/cardano-node-ogmios](https://hub.docker.com/repository/docker/cardanosolutions/cardano-node-ogmios) | `latest`<br/>`latest-{NETWORK}`<br/>`v*.*.*_{CARDANO_NODE_VERSION}`<br/>`v*.*.*_{CARDANO_NODE_VERSION}-{NETWORK}` |
+  | ogmios              | [cardanosolutions/ogmios](https://hub.docker.com/repository/docker/cardanosolutions/ogmios)                           | `latest`<br/>`latest-{NETWORK}`<br/>`v*.*.*`<br/>`v*.*.*-{NETWORK}` |
+
+- Fixed incongruous error message from the command-line when failing to parse protocol parameters from genesis files. The error reporting has been slightly improved to give a more fine-grained error per invalid parameter. See [#242](https://github.com/CardanoSolutions/ogmios/issues/242).
+
+#### Removed
+
+N/A
+
+---
+---
+
+
+### [5.5.2] - 2022-07-11
+
+#### Added 
+
+N/A
+
+#### Changed
+
+- Bumped cardano-node's version (continuous integration & docker image) to 1.35.1.
+
+- ![TypeScript][] Remove superfluous string concatenation in `UnknownResultError`'s message. See [#236](https://github.com/CardanoSolutions/ogmios/pull/236).
+
+#### Removed
+
+N/A
+
+---
+---
+
+### [5.5.1] - 2022-07-05
+
+#### Added 
+
+- ![TypeScript][] New `isBabbageProtocolParameters` helper function, and extended support of the existing ones to Babbage. See [#234](https://github.com/CardanoSolutions/ogmios/pull/234).
+
+#### Changed
+
+- Fixed Health endpoint wrongly reporting 'Alonzo' while in the 'Babbage era'. See [#233](https://github.com/CardanoSolutions/ogmios/issues/233).
+
+#### Removed
+
+N/A
+
+---
+---
+
+### [5.5.0] - 2022-06-29
+
+#### Added 
 
 - Added Vasil/Babbage support, including:
   - A new block type `babbage` with:
@@ -29,17 +111,11 @@ pre: "<b>6. </b>"
 
 <p align="right">See the <a href="https://ogmios.dev/api">📘 API reference</a> for more details.</p>
 
-##### 🚗 TypeScript Client
-
-- Same as Server. 
-
 #### Changed
-
-##### 🏢 Server 
 
 - Updated [cardano-configurations](https://github.com/input-output-hk/cardano-configurations) to include the `vasil-dev` network and switch to [cardano-world](https://github.com/input-output-hk/cardano-world) as a source instead of Hydra artifacts -- now being deprecated. 
 
-- _Partially fixed_ an issue ([#230](https://github.com/CardanoSolutions/ogmios/issues/230), [#208](https://github.com/CardanoSolutions/ogmios/issues/208)) causing websocket connection to be terminated by the server when p2p is enabled on the underlying node. Ogmios now has a workaround which makes the issue _less likely_, but the real fix belongs in the upstream networking stack 
+- _Partially fixed_ an issue causing websocket connection to be terminated by the server when p2p is enabled on the underlying node. Ogmios now has a workaround which makes the issue _less likely_, but the real fix belongs in the upstream networking stack. See [#230](https://github.com/CardanoSolutions/ogmios/issues/230), [#208](https://github.com/CardanoSolutions/ogmios/issues/208).
 
 - The `missingRequiredScripts` error now contains an extra field `resolved` that is a map of (pointer → script hash) that have been correctly resolved by said pointers. 
 
@@ -71,33 +147,22 @@ pre: "<b>6. </b>"
 
 <p align="right">See the <a href="https://ogmios.dev/api">📘 API reference</a> for more details.</p>
 
-##### 🚗 TypeScript Client
-
-- Same as Server. 
-
 #### Removed
-
-##### 🏢 Server 
 
 - `UnknownInputs` and `UncomputableSlotArithmetic` errors have been removed from the top-level possible cases of `EvaluationFailure`. Instead, those errors are now comprised in the `CannotCreateEvaluationContext` case.
 
 - The `corruptCostModelForLanguage` error has been removed from the top-level possible cases of `ScriptFailure`. This one was effectively dead-code that couldn't be reached and was there for completeness. The code has now been removed upstream. 
 
-##### 🚗 TypeScript Client
-
-- Same as Server. 
+---
+---
 
 ### [5.4.0] - 2022-05-22
 
 #### Added
 
-##### 🚗 TypeScript Client
-
-- TypeScript client for the 'TxMonitor' mini-protocol. Documentation available at https://ogmios.dev/typescript-client/tx-monitor/.
+- ![TypeScript][] TypeScript client for the 'TxMonitor' mini-protocol. Documentation available at https://ogmios.dev/typescript-client/tx-monitor/.
 
 #### Changed
-
-##### 🏢 Server 
 
 - The server now returns slightly better faults when detecting a misuse of the `TxMonitor` protocol (e.g. when sending a `HasTx` before an `AwaitAcquire`).
 
@@ -110,8 +175,6 @@ pre: "<b>6. </b>"
 
 #### Added
 
-##### 🏢 Server 
-
 - In the Local-Tx-Monitor protocol, `NextTx` can now take an (optional) extra argument `{ "fields": "all" }` to instrument the server in returning not only a transaction id in `NextTxResponse`, but a full transaction object. See [#190](https://github.com/CardanoSolutions/ogmios/issues/190).
 
 - Transaction JSON objects from all eras now contains an extra field `raw`, which represents the raw serialized transaction (CBOR) as a base64-encoded text string. This is the case of the chain-sync protocol, but also for the tx-monitor protocol. The field is however absent in the `ogmios.v1:compact` mode. See [#190](https://github.com/CardanoSolutions/ogmios/issues/190).
@@ -120,21 +183,17 @@ pre: "<b>6. </b>"
 
 #### Changed
 
-##### 🏢 Server 
-
 - The complete [API reference][] for the server is available in a new form at: https://ogmios.dev/api/. This should make the various protocol messages easier to explore and provide a less awkward visualization of the server API than the previous TypeScript documentation. The old TypeScript documentation remains however available at: https://ogmios.dev/typescript/api/.
 
 - Upgrade internal dependencies to `cardano-node@1.34.1`
 
 - Fixed the supervisor script for the `cardano-node-ogmios` Docker image, which would wrongly ignore signals sent from the Docker daemon (e.g. `docker container stop ...`). See [#168](https://github.com/CardanoSolutions/ogmios/issues/168)
 
-##### 🚗 TypeScript Client
+- ![TypeScript][] The tx-submission client now only creates a single event listener to interact with the server. This solves the Node.js warning "possible memory leak detected" when firing many submission requests at once (and going beyond the internal default `maxNumberOfListeners` set by node.js on event emitters). See [#197](https://github.com/CardanoSolutions/ogmios/issues/197).
 
-- The tx-submission client now only creates a single event listener to interact with the server. This solves the Node.js warning "possible memory leak detected" when firing many submission requests at once (and going beyond the internal default `maxNumberOfListeners` set by node.js on event emitters). See [#197](https://github.com/CardanoSolutions/ogmios/issues/197).
+- ![TypeScript][] The options passed to the WebSocket constructors are now ignored on the browser, since they aren't supported and were causing the constructor to "crash". See [#194](https://github.com/CardanoSolutions/ogmios/issues/194).
 
-- The options passed to the WebSocket constructors are now ignored on the browser, since they aren't supported and were causing the constructor to "crash". See [#194](https://github.com/CardanoSolutions/ogmios/issues/194).
-
-- ⚠️  Some schema type interface renaming:
+- ![TypeScript][] ⚠️  Some schema type interface renaming:
     - `Tx` → `TxByron`
     - `BlockBodyShelley` → `TxShelley`
     - `BlockBodyAllegra` → `TxAllegra`
@@ -152,29 +211,21 @@ N/A
 
 #### Added
 
-##### 🏢 Server 
->
 - Extended the local-tx-submission protocol with a [new `EvaluateTx` query](https://ogmios.dev/mini-protocols/local-tx-submission/#evaluatetx) which evaluates execution units of scripts present in a transaction. This effectively piggybacks on the Alonzo's tools from the cardano-ledger while providing a more user-friendly interface regarding network parameters. The API offers well-detailed errors and an interface similar to the `SubmitTx`. See discussion on [#172](https://github.com/CardanoSolutions/ogmios/issues/172). 
 >
 - New `rewardsProvenance'` query coming as a replacement for the now-deprecated `rewardsProvenance` query. See discussion on [#171](https://github.com/CardanoSolutions/ogmios/issues/171).
 >
-##### 🚗 TypeScript Client
->
-- Support for the new `evaluateTx` query in the `TxSubmissionClient` & repl.
-- Support for the new `rewardsProvenance'` query as `rewardsProvenanceNew` in the `StateQueryClient` & repl.
+- ![TypeScript][] Support for the new `evaluateTx` query in the `TxSubmissionClient` & repl.
+
+- ![TypeScript][] Support for the new `rewardsProvenance'` query as `rewardsProvenanceNew` in the `StateQueryClient` & repl.
 
 #### Changed
 
-##### 🏢 Server 
->
 - Added transaction id as part of the successful response to a `SubmitTx`. While this is technically a breaking-change, it was introduced in a backward-compatible way. Existing applications using the existing `SubmitTx` query will see no change and will keep receiving successes as `"SubmitSuccessful"` text responses. However, queries which pass transactions using the `submit` field (instead of the currently expected `bytes` field) will receive, on success, an augmented response which contains a transaction id `"SubmitSuccessful": { "txId": "..." }`. See discussion on [#174](https://github.com/CardanoSolutions/ogmios/issues/174).
 >
 - Improved error reporting for the `SubmitTx` protocol which should gives a little clearer errors for ill-formed transactions.
 >
->
-##### 🚗 TypeScript Client
->
-- :warning: Renamed client's `TxSubmission/errors.ts` into `TxSubmission/submissionErrors.ts`. Similarly, the submission are also now nested under a `submissionErrors` field in the `TxSubmission` top-level object. 
+- ![TypeScript][] ⚠️  Renamed client's `TxSubmission/errors.ts` into `TxSubmission/submissionErrors.ts`. Similarly, the submission are also now nested under a `submissionErrors` field in the `TxSubmission` top-level object. 
 
 #### Removed
 
@@ -187,8 +238,6 @@ N/A
 
 #### Added
 
-##### 🏢 Server 
->
 - New `LocalTxMonitor` support in Ogmios. See [The user guide](https://ogmios.dev/mini-protocols/local-tx-monitor/) for more details.
 >
   ⚠️  This new protocol is **NOT** enabled in `cardano-node@1.33.*`. Until its inclusion in a next release, a custom build of cardano-node is required to include a more recent version of `ouroboros-network` which adds support for that protocol to the Ouroboros' mini-protocols; namely: [`32af9168`](https://github.com/input-output-hk/ouroboros-network/commit/32af9168). 
@@ -208,16 +257,10 @@ N/A
 
 #### Changed
 
-##### 🏢 Server 
-
 - `networkSynchronization` and `currentEra` can be `null` when the server isn't connected to a node. [#154](https://github.com/CardanoSolutions/ogmios/issues/154)
 - The `Metrics` trace is now correctly tagged with `MetricsRuntimeStatsDisabled`.
 - Fixed an issue with the Docker monitoring scripts of cardano-node-ogmios, causing issues on restart. [#159](https://github.com/CardanoSolutions/ogmios/pulls/159)
-
->
-##### 🚗 TypeScript Client
->
-- Relax upper-bound constraint on required node.js engine. This should make it possible to install the TypeScript packages on more recent versions on node.js than the one specified on the repository.
+- ![TypeScript][] Relax upper-bound constraint on required node.js engine. This should make it possible to install the TypeScript packages on more recent versions on node.js than the one specified on the repository.
 
 #### Removed
 
@@ -230,8 +273,6 @@ N/A
 
 #### Added
 
-##### 🏢 Server 
->
 - New state-query `systemStart` to access the blockchain start time (UTC).
 
 - New state-query `chainTip` to access the blockchain current tip (may slightly differ from the `ledgerTip` which may be behind catching up).
@@ -246,9 +287,7 @@ N/A
 >
 - Static binaries for Linux are now produced by the Nix build and uploaded as build artifacts for the corresponding Github workflow (i.e. Nix).
 >
-##### 🚗 TypeScript Client
->
-- Add support for `systemStart`, `chainTip`, `blockHeight` & `eraSummaries` in the `client` and `repl`.
+- ![TypeScript][] Add support for `systemStart`, `chainTip`, `blockHeight` & `eraSummaries` in the `client` and `repl`.
 
 #### Changed
 
@@ -271,17 +310,13 @@ N/A
 >
 - Upgraded internal dependencies to Cardano eco-system 1.31.0
 
-##### 🚗 TypeScript Client
+- ⚠️  ![TypeScript][] `Lovelace` is now a native BigInt.
 >
-- ⚠️ `Lovelace` is now a native BigInt.
->
-- ⚠️ `getServerHealth`'s `connection` argument is now wrapped into an object, mapped to the field `connection`. (see [#135](https://github.com/CardanoSolutions/ogmios/issues/135))
+- ⚠️  ![TypeScript][] `getServerHealth`'s `connection` argument is now wrapped into an object, mapped to the field `connection`. (see [#135](https://github.com/CardanoSolutions/ogmios/issues/135))
 
-- ⚠️ Replaced schema definitions for `Hash16` and `Hash64` with more precise type definitions. For hashes, definitions now follows a convention `Digest[ALGORITHM]::PRE-IMAGE` where `ALGORITHM` and `PRE-IMAGE` points to the corresponding has algorithm used to hash the `PRE-IMAGE`. The length of the digest is given by `minLength` and `maxLength` JSON-schema constraints. Consequently, TypeScript types / interfaces generated from the JSON-schema definitions have been altered. 
+- ⚠️  ![TypeScript][] Replaced schema definitions for `Hash16` and `Hash64` with more precise type definitions. For hashes, definitions now follows a convention `Digest[ALGORITHM]::PRE-IMAGE` where `ALGORITHM` and `PRE-IMAGE` points to the corresponding has algorithm used to hash the `PRE-IMAGE`. The length of the digest is given by `minLength` and `maxLength` JSON-schema constraints. Consequently, TypeScript types / interfaces generated from the JSON-schema definitions have been altered. 
 
 #### Removed
-
-##### 🏢 Server
 
 - ⚠️ Log level severities `critical`, `alert` and `emergency` have been removed. `error` is now the highest severity.
 
@@ -298,8 +333,6 @@ N / A
 
 #### Changed
 
-##### 🏢 Server
-
 - Fixed configuration parsing which would wrongly use Shelley's slots per epoch instead of Byron's. This had an impact on the reported slot number in the chain-sync protocol, where slot numbers would be wrongly offset by `432000` per epoch after the first epoch. 
  
 #### Removed
@@ -309,8 +342,6 @@ N/A
 ### [4.2.0] - 2021-11-05
 
 #### Added
-
-##### 🏢 Server
 
 - Enabled Alonzo transaction in the submission protocol (oversight from previous releases). Doing so, explicit compiler warnings have been added to the relevant code to avoid overseeing this in the next upgrade.
 
@@ -322,15 +353,11 @@ N/A
 >
 - Bumped cardano-node's integration to 1.31.0
 
-##### 🚗 TypeScript Client
-
-- The State-Query client can now `release` acquired points to perform queries against the most recent tip (which was also the default when creating a client with no point).
+- ![TypeScript][] The State-Query client can now `release` acquired points to perform queries against the most recent tip (which was also the default when creating a client with no point).
 
 #### Changed
 
-##### 🚗 TypeScript Client
-
-- Some internal rework and cleanup; mostly chasing dangling promises by avoiding attaching even handlers when not needed. 
+- ![TypeScript][] Some internal rework and cleanup; mostly chasing dangling promises by avoiding attaching even handlers when not needed. 
 
 #### Removed
 
@@ -343,26 +370,20 @@ N/A
 
 #### Added
 
-##### 🏢 Server
-
 - Generate and store [test vectors](https://github.com/CardanoSolutions/ogmios/tree/master/server/test/vectors) for various JSON requests and responses. This should ease integration for many clients who seek for good coverage of the server inputs/outputs.
 
 - Documented [example state queries](https://ogmios.dev/mini-protocols/local-state-query/#example-queries) in the user-guide.
 
-##### 🚗 TypeScript Client
+- ![TypeScript][] The `ConnectionConfig` has an additional, optional, configuration parameter `maxPayload` to configure the maximum allowed message size in bytes. The default is chosen quite large as the `utxo` query can result in large payloads.
 
-- The `ConnectionConfig` has an additional, optional, configuration parameter `maxPayload` to configure the maximum allowed message size in bytes. The default is chosen quite large as the `utxo` query can result in large payloads.
-
-- New helpers `isByronEpochBoundaryBlock` and `isByronStandardBlock`.
+- ![TypeScript][] New helpers `isByronEpochBoundaryBlock` and `isByronStandardBlock`.
 
 #### Changed
 
-##### 🚗 TypeScript Client
-
-- The `StateQueryClient` now wraps every query in a try/catch to cope with malformed queries leading to client `fault` results from the server.
-- Type definitions for `QueryResponse[poolIds]` and `QueryResponse[poolParameters]` are no longer marked as "optional".
-- Fixed bug #125 where empty results of `delegationAndRewards` would cause the client to throw an exception.
-- Handled some floating promises.
+- ![TypeScript][] The `StateQueryClient` now wraps every query in a try/catch to cope with malformed queries leading to client `fault` results from the server.
+- ![TypeScript][] Type definitions for `QueryResponse[poolIds]` and `QueryResponse[poolParameters]` are no longer marked as "optional".
+- ![TypeScript][] Fixed bug #125 where empty results of `delegationAndRewards` would cause the client to throw an exception.
+- ![TypeScript][] Handled some floating promises.
 
 #### Removed
 
@@ -374,8 +395,6 @@ N/A
 ### [4.0.0] - 2021-09-06
 
 #### Added
-
-##### 🏢 Server
 
 - Integrated with the Cardano eco-system corresponding to [cardano-node@1.29.0](https://github.com/input-output-hk/cardano-node/releases/tag/1.29.0) (Alonzo!) & latest testnet(s).
 >
@@ -423,19 +442,15 @@ N/A
   - `unspendableScriptInputs`
   - `validationTagMismatch`
 
-##### 🚗 TypeScript Client
+- ![TypeScript][] Compatibility with aforementioned server additions.
 
-- Compatibility with aforementioned server additions.
+- ![TypeScript][] The `ChainSyncClient` now implements an in-memory queue to ensure `requestNext` responses are processed sequentially when there are async operations in the message handlers.  This behaviour can be bypassed where sequential processsing is not required, by setting the new construction option `sequential` to `false`.
 
-- The TypeScript `ChainSyncClient` now implements an in-memory queue to ensure `requestNext` responses are processed sequentially when there are async operations in the message handlers.  This behaviour can be bypassed where sequential processsing is not required, by setting the new construction option `sequential` to `false`.
+- ![TypeScript][] The `StateQueryClient` can now re-acquire new points at will, useful for long-running clients for which previously acquired points may expire.
 
-- The TypeScript `StateQueryClient` can now re-acquire new points at will, useful for long-running clients for which previously acquired points may expire.
-
-- The TypeScript client is now [fully documented](https://ogmios.dev/api/modules/_cardano_ogmios_client.html)!
+- ![TypeScript][] The TypeScript client is now [fully documented](https://ogmios.dev/api/modules/_cardano_ogmios_client.html)!
 
 #### Changed
-
-##### 🏢 Server
 
 - ⚠️  The `utxo` query can now accept a list `TxIn` as argument, and still supports list of `Address`. Note that lists can't be heterogeneous and it's not possible to mix `TxIn` and `Address`.
 
@@ -459,17 +474,15 @@ N/A
 
 - The `TxOut` (and thus Utxo) model definitions have been unified and harmonized across all eras. That is, pre-Mary eras now also wrap Ada values in an object with a field `"coins": ...`. This reduces the discrepancy between eras for there's now a single TxOut representation valid across all eras. Some fields are however optional and only present in some eras (e.g. `datum` starting from Alonzo)
 
-##### 🚗 TypeScript Client
+- ⚠️  ![TypeScript][] State queries (resp. the `StateQueryClient`) now automatically runs queries against the last known tip if no explicit point is provided. It used to acquire a point on the first query which would eventually become too old. The behavior is now equivalent to acquiring a new point on **every** query!
 
-- ⚠️  State queries (resp. the `StateQueryClient`) now automatically runs queries against the last known tip if no explicit point is provided. It used to acquire a point on the first query which would eventually become too old. The behavior is now equivalent to acquiring a new point on **every** query!
+- ⚠️  ![TypeScript][] `SubmitTx` no-longer returns Byron errors. Consequently, submit errors are no longer scoped under `errors.byron` or `errors.shelley` but simply `errors`.
 
-- ⚠️  `SubmitTx` no-longer returns Byron errors. Consequently, submit errors are no longer scoped under `errors.byron` or `errors.shelley` but simply `errors`.
+- ⚠️  ![TypeScript][] Fixed `proposedProtocolParameters` query. All fields are actually required AND, more importantly, it can now return either Shelley protocol parameters or, Alonzo protocol parameters.
 
-- ⚠️  Fixed `proposedProtocolParameters` query. All fields are actually required AND, more importantly, it can now return either Shelley protocol parameters or, Alonzo protocol parameters.
+- ![TypeScript][] The `ChainSyncClientMessageHandlers` methods now must return a promise.
 
-- The `ChainSyncClientMessageHandlers` methods now must return a promise.
-
-- Various reworks and renaming of the TypeScript types
+- ![TypeScript][] Various reworks and renaming of the TypeScript types
   - `AssetQuantity` is now a native `bigint`
   - Metadatum's `Int` are now native `bigint`
   - Type `DelegationsAndRewards` renamed into `DelegationsAndRewardsByAccounts`
@@ -486,8 +499,6 @@ N/A
 
 #### Removed
 
-##### 🏢 Server
-
 - `datumsMismatch`, a previously introduced error from the transaction submission has been removed / replaced.
 
 - `SubmitTx` can no longer return `SubmitTxError[Byron]`. All the child error types have been removed accordingly, namely:
@@ -495,11 +506,9 @@ N/A
   - `TxValidationError`
   - `LovelaceError`
 
-##### 🚗 TypeScript Client
+- ![TypeScript][] `ChainSyncClient` no longer exposes a requestNext function. Instead you must invoke the callback provided as the second argument in each of rollBackward and rollForward handlers.
 
-- `ChainSyncClient` no longer exposes a requestNext function. Instead you must invoke the callback provided as the second argument in each of rollBackward and rollForward handlers.
-
-- `ChainSyncClient` no longer exposes JSON-WSP reflection as there would be unexpected results given the first n messages would all share the same reflected value.
+- ![TypeScript][] `ChainSyncClient` no longer exposes JSON-WSP reflection as there would be unexpected results given the first n messages would all share the same reflected value.
 
 ---
 ---
@@ -669,3 +678,5 @@ N/A
 N/A
 
 [API reference]: https://ogmios.dev/api/
+
+[TypeScript]: https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Typescript_logo_2020.svg/16px-Typescript_logo_2020.svg.png

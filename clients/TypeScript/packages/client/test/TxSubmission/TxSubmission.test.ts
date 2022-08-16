@@ -106,7 +106,7 @@ describe('TxSubmission', () => {
         expect(result).toEqual({
           'spend:0': {
             memory: 1700,
-            steps: 476468
+            steps: 368100
           }
         })
       })
@@ -162,7 +162,7 @@ describe('TxSubmission', () => {
         expect(result).toEqual({
           'spend:0': {
             memory: 1700,
-            steps: 476468
+            steps: 368100
           }
         })
       })

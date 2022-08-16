@@ -1921,9 +1921,9 @@
   , "Block[Byron]":
     { "description": "A block in the Byron era. Most blocks are stanard blocks, but once at the beginning of each era is an additional epoch boundary block (a.k.a. EBB)"
     , "oneOf":
-      [ { "required": [ "hash", "header", "body" ]
-        , "title": "standard block"
+      [ { "title": "standard block"
         , "additionalProperties": false
+        , "required": [ "hash", "header", "body" ]
         , "properties":
           { "hash": { "$ref": "#/definitions/Digest[Blake2b]::Block[*].header" }
           , "header":
@@ -2024,6 +2024,7 @@
   , "Block[Shelley]":
     { "type": "object"
     , "additionalProperties": false
+    , "required": [ "header", "headerHash", "body" ]
     , "properties":
       { "body":
         { "type": "array"
@@ -2059,6 +2060,7 @@
   , "Block[Allegra]":
     { "type": "object"
     , "additionalProperties": false
+    , "required": [ "header", "headerHash", "body" ]
     , "properties":
       { "body":
         { "type": "array"
@@ -2072,6 +2074,7 @@
   , "Block[Mary]":
     { "type": "object"
     , "additionalProperties": false
+    , "required": [ "header", "headerHash", "body" ]
     , "properties":
       { "body":
         { "type": "array"
@@ -2085,6 +2088,7 @@
   , "Block[Alonzo]":
     { "type": "object"
     , "additionalProperties": false
+    , "required": [ "header", "headerHash", "body" ]
     , "properties":
       { "body":
         { "type": "array"
@@ -2098,6 +2102,7 @@
   , "Block[Babbage]":
     { "type": "object"
     , "additionalProperties": false
+    , "required": [ "header", "headerHash", "body" ]
     , "properties":
       { "body":
         { "type": "array"
@@ -3636,10 +3641,9 @@
     }
 
   , "RelativeTime":
-    { "type": "integer"
-    , "description": "A time in seconds relative to another one (typically, system start or era start)."
+    { "type": "number"
+    , "description": "A time in seconds relative to another one (typically, system start or era start). Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second."
     , "minimum": 0
-    , "maximum": 18446744073709552999
     }
 
   , "Relay":
@@ -4164,9 +4168,8 @@
     }
 
   , "SlotLength":
-    { "type": "integer"
-    , "description": "A slot length, in seconds."
-    , "maximum": 18446744073709552000
+    { "type": "number"
+    , "description": "A slot length, in seconds. Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second."
     }
 
   , "SoftwareVersion":
@@ -5193,6 +5196,45 @@
     , "properties":
       { "collectErrors":
         { "type": "array"
+        , "items":
+          { "oneOf":
+            [ { "type": "object"
+              , "title": "noRedeemer"
+              , "additionalProperties": false
+              , "required": [ "noRedeemer" ]
+              , "properties":
+                { "noRedeemer": { "$ref": "#/definitions/ScriptPurpose" }
+                }
+              }
+            , { "type": "object"
+              , "title": "noWitness"
+              , "additionalProperties": false
+              , "required": [ "noWitness" ]
+              , "properties":
+                { "noWitness": { "$ref": "#/definitions/Digest[Blake2b]::Script" }
+                }
+              }
+            , { "type": "object"
+              , "title": "noCostModel"
+              , "additionalProperties": false
+              , "required": [ "noCostModel" ]
+              , "properties":
+                { "noCostModel": { "$ref": "#/definitions/Language" }
+                }
+              }
+            , { "type": "object"
+              , "title": "badTranslation"
+              , "additionalProperties": false
+              , "required": [ "badTranslation" ]
+              , "properties":
+                { "badTranslation":
+                  { "type": "string"
+                  , "description": "An (hopefully) informative error about the transaction execution failure."
+                  }
+                }
+              }
+            ]
+          }
         }
       }
     }
