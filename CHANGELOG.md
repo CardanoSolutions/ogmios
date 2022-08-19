@@ -5,6 +5,22 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.5.5] - 2022-08-19
+
+#### Added
+
+- ![TypeScript][] Support for the _TxMonitor_ mini-protocol in the REPL.
+
+- Link to a new Java client for Ogmios.
+
+#### Changed
+
+- ![TypeScript][] Fixed parsing of `ScriptFailures` coming out of the `evaluateTx` command. Before this patch, the client would simply throw `undefined` when such an error was encountered. They are now properly transcribed as `EvaluateTxError`.
+
+#### Removed
+
+- `testnet` has been removed from the target networks by the Docker workflow; which means that until further notice, there will be no more Docker images pushed for testnet. However, support for `preprod` and `preview` environment has been added.
+
 ### [5.5.4] - 2022-08-11
 
 #### Added 
