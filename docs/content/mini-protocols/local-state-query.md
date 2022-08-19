@@ -308,7 +308,7 @@ Be aware that it is possible for an `Acquire` request to fail even if (and in pa
 ```json
 {
   "query": {
-    "delegationAndRewards": [
+    "delegationsAndRewards": [
       "7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8"
     ]
   }
