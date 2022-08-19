@@ -103,8 +103,20 @@ spec = parallel $ do
         specify "vasil-dev" $ do
             params <- parseNetworkParameters (getConfigFile "vasil-dev")
             networkMagic  params `shouldBe` NetworkMagic 9
-            systemStart   params `shouldBe` mkSystemStart 1654524000
+            systemStart   params `shouldBe` mkSystemStart 1659636000
             slotsPerEpoch params `shouldBe` EpochSlots 360
+
+        specify "preview" $ do
+            params <- parseNetworkParameters (getConfigFile "preview")
+            networkMagic  params `shouldBe` NetworkMagic 2
+            systemStart   params `shouldBe` mkSystemStart 1660003200
+            slotsPerEpoch params `shouldBe` EpochSlots 4320
+
+        specify "preprod" $ do
+            params <- parseNetworkParameters (getConfigFile "preprod")
+            networkMagic  params `shouldBe` NetworkMagic 1
+            systemStart   params `shouldBe` mkSystemStart 1654041600
+            slotsPerEpoch params `shouldBe` EpochSlots 21600
   where
     matrix =
         [ ( [], shouldFail )
