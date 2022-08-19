@@ -4005,7 +4005,7 @@
 
   , "ScriptFailure":
     { "type": "array"
-    , "description": "Errors whcih may occur when evaluating an on-chain script."
+    , "description": "Errors which may occur when evaluating an on-chain script."
     , "items":
       { "oneOf":
         [ { "$ref": "#/definitions/SubmitTxError[extraRedeemers]" }
