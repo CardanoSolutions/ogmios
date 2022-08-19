@@ -61,7 +61,7 @@ export const handleEvaluateTxResponse = (response: Ogmios['EvaluateTxResponse'])
       if ('ScriptFailures' in EvaluationFailure) {
         const { ScriptFailures } = EvaluationFailure
         return Object.keys(ScriptFailures).map(k => {
-          const failure = Object.values(ScriptFailures[k])[0] as EvaluateTxError;
+          const failure = Object.values(ScriptFailures[k])[0] as EvaluateTxError
           if (errors.ExtraRedeemers.assert(failure)) {
             return new errors.ExtraRedeemers.Error(failure)
           } else if (errors.IllFormedExecutionBudget.assert(failure)) {
