@@ -100,6 +100,9 @@ jobs:
         push: true
         tags: ${{ steps.base-variables.outputs.image }}:latest
         target: ${{ matrix.target }}
+        platforms:
+          - linux/amd64
+          - linux/arm64
         cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest
         cache-to: type=inline
 
@@ -113,6 +116,9 @@ jobs:
         push: true
         tags: ${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
         target: ${{ matrix.target }}
+        platforms:
+          - linux/amd64
+          - linux/arm64
         cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
         cache-to: type=inline
 
@@ -140,6 +146,9 @@ jobs:
         push: true
         tags: ${{ steps.base-variables.outputs.image }}:${{ steps.tag-variables.outputs.tag }}_${{ matrix.cardano_node_version }}
         target: ${{ matrix.target }}
+        platforms:
+          - linux/amd64
+          - linux/arm64
         cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest
         cache-to: type=inline
 
@@ -167,5 +176,8 @@ jobs:
         push: true
         tags: ${{ steps.base-variables.outputs.image }}:${{ steps.tag-variables.outputs.tag }}-${{ matrix.network }}
         target: ${{ matrix.target }}
+        platforms:
+          - linux/amd64
+          - linux/arm64
         cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
         cache-to: type=inline
