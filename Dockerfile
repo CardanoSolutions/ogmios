@@ -8,7 +8,7 @@
 
 ARG CARDANO_NODE_VERSION=1.35.3
 
-FROM nixos/nix:2.3.11 as build
+FROM --platform=$BUILDPLATFORM nixos/nix:2.11.0 as build
 
 ARG CARDANO_CONFIG_REV=f1263df513f4cc5666bc49245e07fd3055097fee
 
