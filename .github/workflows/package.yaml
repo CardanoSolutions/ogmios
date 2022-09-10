@@ -9,6 +9,10 @@ on:
 
 jobs:
   nix:
+    strategy:
+      matrix:
+        arch: [amd64]
+
     runs-on: ubuntu-latest
     steps:
 
@@ -32,7 +36,7 @@ jobs:
 
     - name: 🔨 Build
       run: |
-        nix-build -A ogmios.components.exes.ogmios -o dist
+        nix-build -A platform.${{ matrix.arch }} -o dist
         cp -r dist/* . && mkdir -p share && chmod +w share
         mkdir -p share/zsh/site-functions          && ./bin/ogmios --zsh-completion-script  ogmios > share/zsh/site-functions/_ogmios
         mkdir -p share/bash-completion/completions && ./bin/ogmios --bash-completion-script ogmios > share/bash-completion/completions/ogmios
@@ -41,7 +45,7 @@ jobs:
     - name: 📎 Upload Artifact
       uses: actions/upload-artifact@v2
       with:
-        name: ogmios-x86_64-linux
+        name: ogmios-${{ matrix.arch }}-linux
         path: |
           bin
           share

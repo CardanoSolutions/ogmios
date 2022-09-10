@@ -16,19 +16,26 @@ let
     overlays =
       # iohkNix overlay needed for cardano-api wich uses a patched libsodium
       haskellNix.overlays ++ iohkNix.overlays.crypto;
-  });
-  musl64 = pkgs.pkgsCross.musl64;
-in
-musl64.haskell-nix.project {
-  compiler-nix-name = compiler;
-  projectFileName = "cabal.project";
-  src = musl64.haskell-nix.haskellLib.cleanSourceWith {
-    name = "ogmios-src";
-    src = ./.;
-    subDir = "server";
-    filter = path: type:
-      builtins.all (x: x) [
-        (baseNameOf path != "package.yaml")
-      ];
+    });
+
+  mkProject = arch:
+    ( arch.haskell-nix.project {
+        compiler-nix-name = compiler;
+        projectFileName = "cabal.project";
+        src = arch.haskell-nix.haskellLib.cleanSourceWith {
+          name = "ogmios-src";
+          src = ./.;
+          subDir = "server";
+          filter = path: type:
+            builtins.all (x: x) [
+              (baseNameOf path != "package.yaml")
+            ];
+        };
+      }
+    ).ogmios.components.exes.ogmios;
+in {
+  platform = {
+    # arm64 = (mkProject pkgs.pkgsCross.aarch64-multiplatform-musl);
+    amd64 = (mkProject pkgs.pkgsCross.musl64);
   };
 }
