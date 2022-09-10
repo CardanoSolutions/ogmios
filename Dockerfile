@@ -22,7 +22,7 @@ WORKDIR /app/ogmios
 RUN nix-env -iA cachix -f https://cachix.org/api/v1/install && cachix use cardano-ogmios
 COPY default.nix default.nix
 COPY server server
-RUN nix-build -A ogmios.components.exes.ogmios -o dist
+RUN nix-build -A platform.amd64 -o dist
 RUN cp -r dist/* . && chmod +w dist/bin && chmod +x dist/bin/ogmios
 COPY scripts scripts
 
@@ -53,7 +53,7 @@ ENTRYPOINT ["/bin/ogmios"]
 # --------------------- RUN (cardano-node & ogmios) -------------------------- #
 #                                                                              #
 
-FROM --platform=${TARGETPLATFORM:-linux/amd64} inputoutput/cardano-node:${CARDANO_NODE_VERSION} as cardano-node-ogmios
+FROM inputoutput/cardano-node:${CARDANO_NODE_VERSION} as cardano-node-ogmios
 
 ARG NETWORK=mainnet
 ENV TINI_VERSION v0.19.0
