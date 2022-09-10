@@ -70,7 +70,7 @@ jobs:
       with:
         dockerfile: "./Dockerfile"
         failure-threshold: warning
-        ignore: DL3059 SC2086
+        ignore: DL3029 DL3059
 
     - name: 🐳 Login to DockerHub
       if: ${{ github.event_name == 'push' }}

@@ -8,7 +8,7 @@
 
 ARG CARDANO_NODE_VERSION=1.35.3
 
-FROM --platform=$BUILDPLATFORM nixos/nix:2.11.0 as build
+FROM --platform=${TARGETPLATFORM:-linux/amd64} nixos/nix:2.11.0 as build
 
 ARG CARDANO_CONFIG_REV=f1263df513f4cc5666bc49245e07fd3055097fee
 
@@ -33,7 +33,7 @@ RUN nix-shell -p git --command "git fetch origin && git reset --hard ${CARDANO_C
 # --------------------------- BUILD (ogmios) --------------------------------- #
 #                                                                              #
 
-FROM busybox:1.35 as ogmios
+FROM --platform=${TARGETPLATFORM:-linux/amd64} busybox:1.35 as ogmios
 
 ARG NETWORK=mainnet
 
@@ -53,7 +53,7 @@ ENTRYPOINT ["/bin/ogmios"]
 # --------------------- RUN (cardano-node & ogmios) -------------------------- #
 #                                                                              #
 
-FROM inputoutput/cardano-node:${CARDANO_NODE_VERSION} as cardano-node-ogmios
+FROM --platform=${TARGETPLATFORM:-linux/amd64} inputoutput/cardano-node:${CARDANO_NODE_VERSION} as cardano-node-ogmios
 
 ARG NETWORK=mainnet
 ENV TINI_VERSION v0.19.0
