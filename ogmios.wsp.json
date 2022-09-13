@@ -6024,7 +6024,6 @@
 
   , "Value":
     { "type": "object"
-    , "description": "Patate"
     , "additionalProperties": false
     , "required": [ "coins" ]
     , "properties":
