@@ -1,5 +1,4 @@
 {{ partial "header.html" . }}
-
 <div id="asyncapi"></div>
 <link rel="stylesheet" href="https://unpkg.com/@asyncapi/react-component@1.0.0-next.38/styles/default.min.css" />
 <div className="loader"></div>
@@ -23,6 +22,18 @@
 
   #body #body-inner {
     margin-bottom: 0;
+  }
+
+  pre {
+    line-height: 1.2em !important;
+    font-family: 'Courrier New', monospace !important;
+    white-space: pre !important;
+  }
+  pre > code {
+    border: unset !important;
+    border-radius: unset !important;
+    font-size: unset !important;
+    font-family: unset !important;
   }
 
   #navigation,
