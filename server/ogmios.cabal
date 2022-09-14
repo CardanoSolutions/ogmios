@@ -39,6 +39,7 @@ library
       Ogmios.App.Configuration
       Ogmios.App.Health
       Ogmios.App.Metrics
+      Ogmios.App.Metrics.Prometheus
       Ogmios.App.Protocol
       Ogmios.App.Protocol.ChainSync
       Ogmios.App.Protocol.StateQuery
@@ -174,6 +175,7 @@ library
     , plutus-ledger-api
     , prettyprinter
     , profunctors
+    , prometheus
     , relude
     , safe
     , safe-exceptions
