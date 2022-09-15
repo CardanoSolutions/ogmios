@@ -4,7 +4,7 @@
 
 {-# LANGUAGE RecordWildCards #-}
 
-module Ogmios.App.Metrics.Prometheus where
+module Ogmios.Data.Metrics.Prometheus where
 
 import Ogmios.Prelude
 
@@ -42,8 +42,8 @@ import qualified Data.Scientific as Scientific
 import qualified Ogmios.Data.Metrics as Metrics
 
 -- | Convert `Health` status and metrics into Prometheus format builder
-asPrometheusMetrics :: Health block -> Builder
-asPrometheusMetrics Health{..} =
+mkPrometheusMetrics :: Health block -> Builder
+mkPrometheusMetrics Health{..} =
     prometheusMetrics
     & Map.fromList
     & Map.mapKeys (\k -> (MetricId (makeName $ "ogmios_" <> k) (Labels mempty)))

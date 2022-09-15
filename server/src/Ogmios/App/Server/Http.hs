@@ -28,9 +28,10 @@ import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TVar )
 import Ogmios.Data.Health
     ( ConnectionStatus (..), Health (..), Tip (..), modifyHealth )
+import Ogmios.Data.Metrics.Prometheus
+    ( mkPrometheusMetrics )
 
 import qualified Ogmios.App.Metrics as Metrics
-import qualified Ogmios.App.Metrics.Prometheus as PrometheusMetrics
 
 import Data.Aeson
     ( ToJSON (..) )
@@ -117,8 +118,9 @@ getHealthR = runHandlerM $ do
 getMetricsR :: Handler Server
 getMetricsR = runHandlerM $ do
     header "Access-Control-Allow-Origin" "*"
+    header "Content-Type" "text/plain; charset=utf-8"
     Server unliftIO EnvServer{health,sensors,sampler} <- sub
-    (rawBuilder . PrometheusMetrics.asPrometheusMetrics) =<< liftIO (unliftIO (do
+    (rawBuilder . mkPrometheusMetrics) =<< liftIO (unliftIO (do
         metrics <- Metrics.sample sampler sensors
         modifyHealth health (\h -> h { metrics })))
 

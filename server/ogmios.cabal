@@ -39,7 +39,6 @@ library
       Ogmios.App.Configuration
       Ogmios.App.Health
       Ogmios.App.Metrics
-      Ogmios.App.Metrics.Prometheus
       Ogmios.App.Protocol
       Ogmios.App.Protocol.ChainSync
       Ogmios.App.Protocol.StateQuery
@@ -69,6 +68,7 @@ library
       Ogmios.Data.Json.Query
       Ogmios.Data.Json.Shelley
       Ogmios.Data.Metrics
+      Ogmios.Data.Metrics.Prometheus
       Ogmios.Data.Protocol
       Ogmios.Data.Protocol.ChainSync
       Ogmios.Data.Protocol.StateQuery
