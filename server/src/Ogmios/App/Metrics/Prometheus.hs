@@ -8,74 +8,148 @@ module Ogmios.App.Metrics.Prometheus where
 
 import Ogmios.Prelude
 
+import Cardano.Slotting.Block
+    ( BlockNo (..) )
+import Cardano.Slotting.Slot
+    ( SlotNo (..) )
+import Data.ByteString.Builder
+    ( Builder )
 import Ogmios.App.Metrics
-    ( RuntimeStats(..), Metrics(..) )
+    ( Metrics (..), RuntimeStats (..) )
 import Ogmios.Data.Health
-    ( ConnectionStatus (..), Health (..), Tip (..), SlotInEpoch (..), NetworkSynchronization (..), EpochNo (..) )
+    ( ConnectionStatus (..)
+    , EpochNo (..)
+    , Health (..)
+    , NetworkSynchronization (..)
+    , SlotInEpoch (..)
+    , Tip (..)
+    )
+import System.Metrics.Prometheus.Encode.Text
+    ( encodeMetrics )
+import System.Metrics.Prometheus.Metric
+    ( MetricSample (..) )
+import System.Metrics.Prometheus.Metric.Counter
+    ( CounterSample (..) )
+import System.Metrics.Prometheus.Metric.Gauge
+    ( GaugeSample (..) )
+import System.Metrics.Prometheus.MetricId
+    ( Labels (..), MetricId (..), makeName )
+import System.Metrics.Prometheus.Registry
+    ( RegistrySample (..) )
 
+import qualified Data.Map as Map
+import qualified Data.Scientific as Scientific
 import qualified Ogmios.Data.Metrics as Metrics
 
-import Cardano.Slotting.Block (BlockNo(..))
-import Cardano.Slotting.Slot (SlotNo(..))
-
-import Data.ByteString.Builder (Builder)
-
-import System.Metrics.Prometheus.Metric (MetricSample(..))
-import System.Metrics.Prometheus.Metric.Counter (CounterSample(..))
-import System.Metrics.Prometheus.Metric.Gauge (GaugeSample(..))
-import System.Metrics.Prometheus.MetricId (Labels(..), MetricId(..), makeName)
-import System.Metrics.Prometheus.Registry (RegistrySample (..))
-import System.Metrics.Prometheus.Encode.Text (encodeMetrics)
-
-import qualified Data.Map
-import qualified Data.Scientific
-
--- | Convert `Health` status and metrics into
--- Prometheus format builder
+-- | Convert `Health` status and metrics into Prometheus format builder
 asPrometheusMetrics :: Health block -> Builder
 asPrometheusMetrics Health{..} =
-  let Metrics{..} = metrics
-      RuntimeStats{..} = runtimeStats
+    prometheusMetrics
+    & Map.fromList
+    & Map.mapKeys (\k -> (MetricId (makeName $ "ogmios_" <> k) (Labels mempty)))
+    & RegistrySample
+    & encodeMetrics
+  where
+    Metrics{..} = metrics
+    RuntimeStats{..} = runtimeStats
 
-      gaugeSample :: Double -> MetricSample
-      gaugeSample = GaugeMetricSample . GaugeSample
+    mkGauge :: Double -> MetricSample
+    mkGauge = GaugeMetricSample . GaugeSample
 
-      counterSample :: Int -> MetricSample
-      counterSample = CounterMetricSample . CounterSample
+    mkCounter :: Int -> MetricSample
+    mkCounter = CounterMetricSample . CounterSample
 
-      converted :: [(Text, MetricSample)]
-      converted =
-        [ ("connected", if connectionStatus == Connected then gaugeSample 1 else gaugeSample 0) ]
-        <> (maybe mempty (\(NetworkSynchronization ns) -> pure ("network_synchronization", gaugeSample $ Data.Scientific.toRealFloat ns)) networkSynchronization)
-        <> (maybe mempty (\e -> pure ("current_epoch", counterSample $ fromEnum $ unEpochNo e)) currentEpoch)
-        <> (maybe mempty (\s -> pure ("slot_in_epoch", counterSample $ fromEnum $ getSlotInEpoch s)) slotInEpoch)
-        <>
-        [ -- Metrics
-          ("active_connections", gaugeSample $ fromInteger activeConnections)
-        , ("total_connections", counterSample $ fromInteger totalConnections)
-        , ("total_messages", counterSample $ fromInteger totalMessages)
-        , ("total_unrouted", counterSample $ fromInteger totalUnrouted)
-          -- Runtime stats
-        , ("max_heap_size", gaugeSample $ fromInteger maxHeapSize)
-        , ("current_heap_size", gaugeSample $ fromInteger currentHeapSize)
-        , ("cpu_time", counterSample $ fromInteger cpuTime)
-        , ("gc_cpu_time", counterSample $ fromInteger gcCpuTime)
-          -- Session durations
-        , ("session_duration_mean", gaugeSample $ Metrics.mean sessionDurations)
-        , ("session_duration_mix", gaugeSample $ Metrics.min sessionDurations)
-        , ("session_duration_max", gaugeSample $ Metrics.max sessionDurations)
+    prometheusMetrics :: [(Text, MetricSample)]
+    prometheusMetrics = mconcat
+        [ [ ( "connected"
+            , mkGauge $ case connectionStatus of
+                Connected -> 1
+                Disconnected -> 0
+            )
+          ]
+
+        , [ ( "network_synchronization"
+            , mkGauge $ Scientific.toRealFloat ns
+            ) | Just (NetworkSynchronization ns) <- [networkSynchronization]
+          ]
+
+        , [ ( "current_epoch"
+            , mkCounter $ fromEnum $ unEpochNo e
+            ) | Just e <- [currentEpoch]
+          ]
+
+        , [ ( "slot_in_epoch"
+            , mkCounter $ fromEnum $ getSlotInEpoch s
+            ) | Just s <- [slotInEpoch]
+          ]
+
+        , [ ( "active_connections"
+            , mkGauge $ fromInteger activeConnections
+            )
+          ]
+
+        , [ ( "total_connections"
+            , mkCounter $ fromInteger totalConnections
+            )
+          ]
+
+        , [ ( "total_messages"
+            , mkCounter $ fromInteger totalMessages
+            )
+          ]
+
+        , [ ( "total_unrouted"
+            , mkCounter $ fromInteger totalUnrouted
+            )
+          ]
+
+        , [ ( "max_heap_size"
+            , mkGauge $ fromInteger maxHeapSize
+            )
+          ]
+
+        , [ ( "current_heap_size"
+            , mkGauge $ fromInteger currentHeapSize
+            )
+          ]
+
+        , [ ( "cpu_time"
+            , mkCounter $ fromInteger cpuTime
+            )
+          ]
+
+        , [ ( "gc_cpu_time"
+            , mkCounter $ fromInteger gcCpuTime
+            )
+          ]
+
+        , [ ( "session_duration_mean"
+            , mkGauge $ Metrics.mean sessionDurations
+            )
+          ]
+
+        , [ ( "session_duration_mix"
+            , mkGauge $ Metrics.min sessionDurations
+            )
+          ]
+
+        , [ ( "session_duration_max"
+            , mkGauge $ Metrics.max sessionDurations
+            )
+          ]
+
+        , case lastKnownTip of
+            TipGenesis ->
+                [ ( "tip_at_genesis"
+                  , mkGauge 1
+                  )
+                ]
+            Tip slot _hash block ->
+                [ ( "tip_block"
+                  , mkCounter $ fromEnum $ unBlockNo block
+                  )
+                , ( "tip_slot"
+                  , mkCounter $ fromEnum $ unSlotNo slot
+                  )
+                ]
         ]
-        ++
-        case lastKnownTip of
-          TipGenesis -> pure ("tip_at_genesis", gaugeSample 1)
-          Tip slot _hash block -> [
-              ("tip_block", counterSample $ fromEnum $ unBlockNo block)
-            , ("tip_slot", counterSample $ fromEnum $ unSlotNo slot)
-            ]
-
-  in encodeMetrics
-   $ RegistrySample
-   $ Data.Map.mapKeys
-      (\k -> (MetricId (makeName $ "ogmios_" <> k) (Labels mempty)))
-   $ Data.Map.fromList
-     converted

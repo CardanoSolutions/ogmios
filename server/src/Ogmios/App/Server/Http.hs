@@ -19,7 +19,7 @@ module Ogmios.App.Server.Http
 import Ogmios.Prelude
 
 import Ogmios.App.Metrics
-    ( RuntimeStats(..), Sampler, Sensors )
+    ( RuntimeStats (..), Sampler, Sensors )
 import Ogmios.Control.MonadClock
     ( MonadClock )
 import Ogmios.Control.MonadMetrics

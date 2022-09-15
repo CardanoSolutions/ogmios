@@ -90,6 +90,7 @@ library:
     - plutus-ledger-api
     - prettyprinter
     - profunctors
+    - prometheus
     - relude
     - safe
     - safe-exceptions
