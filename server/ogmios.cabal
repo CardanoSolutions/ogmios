@@ -1,6 +1,6 @@
 cabal-version: 2.0
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.34.6.
 --
 -- see: https://github.com/sol/hpack
 
@@ -68,6 +68,7 @@ library
       Ogmios.Data.Json.Query
       Ogmios.Data.Json.Shelley
       Ogmios.Data.Metrics
+      Ogmios.Data.Metrics.Prometheus
       Ogmios.Data.Protocol
       Ogmios.Data.Protocol.ChainSync
       Ogmios.Data.Protocol.StateQuery
@@ -77,6 +78,8 @@ library
       Ogmios.Prelude
       Ogmios.Version
   other-modules:
+      Paths_ogmios
+  autogen-modules:
       Paths_ogmios
   hs-source-dirs:
       src
@@ -174,6 +177,7 @@ library
     , plutus-ledger-api
     , prettyprinter
     , profunctors
+    , prometheus
     , relude
     , safe
     , safe-exceptions
@@ -203,6 +207,8 @@ library
 executable ogmios
   main-is: Main.hs
   other-modules:
+      Paths_ogmios
+  autogen-modules:
       Paths_ogmios
   hs-source-dirs:
       app
@@ -266,6 +272,8 @@ test-suite unit
       Test.Generators.Orphans
       Test.Instances.Util
       Test.Path.Util
+      Paths_ogmios
+  autogen-modules:
       Paths_ogmios
   hs-source-dirs:
       test/unit

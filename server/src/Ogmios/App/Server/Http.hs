@@ -19,7 +19,7 @@ module Ogmios.App.Server.Http
 import Ogmios.Prelude
 
 import Ogmios.App.Metrics
-    ( RuntimeStats, Sampler, Sensors )
+    ( RuntimeStats (..), Sampler, Sensors )
 import Ogmios.Control.MonadClock
     ( MonadClock )
 import Ogmios.Control.MonadMetrics
@@ -28,6 +28,8 @@ import Ogmios.Control.MonadSTM
     ( MonadSTM (..), TVar )
 import Ogmios.Data.Health
     ( ConnectionStatus (..), Health (..), Tip (..), modifyHealth )
+import Ogmios.Data.Metrics.Prometheus
+    ( mkPrometheusMetrics )
 
 import qualified Ogmios.App.Metrics as Metrics
 
@@ -85,6 +87,7 @@ mkRoute "Server" [parseRoutes|
 /                      DashboardR           GET
 /dashboard.js          DashboardJsR         GET
 /health                HealthR              GET
+/metrics               MetricsR             GET
 /assets/logo.png       LogoR                GET
 /favicon.ico           FaviconR             GET
 |]
@@ -111,6 +114,15 @@ getHealthR = runHandlerM $ do
     json a = do
       header "Content-Type" "application/json; charset=utf-8"
       rawBuilder $ Json.fromEncoding $ toEncoding a
+
+getMetricsR :: Handler Server
+getMetricsR = runHandlerM $ do
+    header "Access-Control-Allow-Origin" "*"
+    header "Content-Type" "text/plain; charset=utf-8"
+    Server unliftIO EnvServer{health,sensors,sampler} <- sub
+    (rawBuilder . mkPrometheusMetrics) =<< liftIO (unliftIO (do
+        metrics <- Metrics.sample sampler sensors
+        modifyHealth health (\h -> h { metrics })))
 
 getLogoR :: Handler Server
 getLogoR = runHandlerM $ do
