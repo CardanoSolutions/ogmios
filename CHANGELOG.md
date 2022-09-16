@@ -5,6 +5,12 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [next] - 2022-MM-DD
+
+#### Added
+
+- Prometheus metrics exported at `/metrics` endpoint
+
 ### [5.5.5] - 2022-08-19
 
 #### Added
