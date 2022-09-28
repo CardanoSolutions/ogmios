@@ -114,8 +114,8 @@ ogmios_network_synchronization  0.99999
 ogmios_session_duration_max  0.0
 # TYPE ogmios_session_duration_mean gauge
 ogmios_session_duration_mean  0.0
-# TYPE ogmios_session_duration_mix gauge
-ogmios_session_duration_mix  0.0
+# TYPE ogmios_session_duration_min gauge
+ogmios_session_duration_min  0.0
 # TYPE ogmios_slot_in_epoch counter
 ogmios_slot_in_epoch  150361
 # TYPE ogmios_tip_block counter

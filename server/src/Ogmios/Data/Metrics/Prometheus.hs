@@ -128,7 +128,7 @@ mkPrometheusMetrics Health{..} =
             )
           ]
 
-        , [ ( "session_duration_mix"
+        , [ ( "session_duration_min"
             , mkGauge $ Metrics.min sessionDurations
             )
           ]
