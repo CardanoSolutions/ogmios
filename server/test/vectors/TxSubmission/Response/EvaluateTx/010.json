@@ -1,1 +1,1 @@
-{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"EvaluateTx","result":{"EvaluationResult":{"spend:16":{"memory":8213356235601613447,"steps":2311919889174425794},"withdrawal:7":{"memory":2601955387184401816,"steps":5779268214026265442}}},"reflection":null}
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"EvaluateTx","result":{"EvaluationResult":{"spend:0":{"memory":7425195338392539783,"steps":2773102022741127362},"withdrawal:0":{"memory":6619685211402292632,"steps":2557258429458408290}}},"reflection":null}

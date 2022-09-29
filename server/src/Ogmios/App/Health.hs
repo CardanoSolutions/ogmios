@@ -62,6 +62,7 @@ import Ogmios.Data.Health
     , NetworkSynchronization
     , SlotInEpoch (..)
     , emptyHealth
+    , eraIndexToCardanoEra
     , mkNetworkSynchronization
     , modifyHealth
     )
@@ -79,7 +80,7 @@ import Network.TypedProtocol.Pipelined
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( HardForkBlock, eraIndexToInt )
+    ( HardForkBlock )
 import Ouroboros.Consensus.HardFork.History.Qry
     ( interpretQuery, slotToEpoch', slotToWallclock )
 import Ouroboros.Network.Block
@@ -355,12 +356,7 @@ newTimeInterpreterClient = do
         let query = Ledger.BlockQuery $ LSQ.QueryHardFork LSQ.GetCurrentEra in
         LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
             { LSQ.recvMsgResult = \eraIndex -> do
-                notifyResult $ case eraIndexToInt eraIndex of
-                    0 -> Byron
-                    1 -> Shelley
-                    2 -> Allegra
-                    3 -> Mary
-                    _ -> Alonzo
+                notifyResult (eraIndexToCardanoEra eraIndex)
                 continue
             }
 

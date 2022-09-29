@@ -1,18 +1,47 @@
-index-state: 2021-12-07T00:00:00Z
+index-state: 2022-02-18T00:00:00Z
 
 packages:
   ./server
   ./server/modules/cardano-client
+  ./server/modules/contra-tracers
   ./server/modules/fast-bech32
   ./server/modules/git-th
   ./server/modules/hspec-json-schema
   ./server/modules/json-wsp
-  ./server/modules/contra-tracers
 
 test-show-details: direct
 
 package ogmios
   flags: +production
+
+test-show-details: direct
+
+package cardano-client
+  tests: false
+
+package git-th
+  tests: false
+
+package fast-bech32
+  tests: false
+
+package hspec-json-schema
+  tests: false
+
+package json-wsp
+  tests: false
+
+-- Using RDRAND instead of /dev/urandom as an entropy source for key
+-- generation is dubious. Set the flag so we use /dev/urandom by default.
+package cryptonite
+  flags: -support_rdrand
+
+package cardano-crypto-praos
+  flags: -external-libsodium-vrf
+
+allow-newer:
+  monoidal-containers:aeson,
+  size-based:template-haskell
 
 -- Using RDRAND instead of /dev/urandom as an entropy source for key
 -- generation is dubious. Set the flag so we use /dev/urandom by default.
@@ -36,21 +65,16 @@ package cardano-api
   optimization: False
 
 constraints:
-    hedgehog >= 1.0
+    hedgehog >= 1.1
   , bimap >= 0.4.0
   , libsystemd-journal >= 1.4.4
   , systemd >= 2.3.0
   , network >= 3.1.1.0
   , relude == 0.7.0.0
   , graphviz >= 2999.20.1.0
-  , singletons < 3.0
-  , dependent-sum > 0.6.2.0
+  , HSOpenSSL >= 0.11.7.2
 
 allow-newer:
+  *:aeson,
+  monoidal-containers:aeson,
   size-based:template-haskell
-  , monoidal-containers:aeson
-  , ouroboros-consensus-byron:formatting
-  , beam-core:aeson
-  , beam-sqlite:aeson
-  , beam-sqlite:dlist
-  , beam-migrate:aeson

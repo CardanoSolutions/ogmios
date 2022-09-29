@@ -2,9 +2,9 @@ import { CustomError } from 'ts-custom-error'
 import { safeJSON } from '../util'
 import {
   EvaluationFailureAdditionalUtxoOverlap,
-  EvaluationFailureUnknownInputs,
+  EvaluationFailureCannotCreateEvaluationContext,
   EvaluationFailureIncompatibleEra,
-  EvaluationFailureUncomputableSlotArithmetic,
+  EvaluationFailureNotEnoughSynced,
   ExtraRedeemers,
   IllFormedExecutionBudget,
   MissingRequiredDatums,
@@ -17,11 +17,12 @@ import {
 
 export type AdditionalUtxoOverlap = EvaluationFailureAdditionalUtxoOverlap;
 export type IncompatibleEra = EvaluationFailureIncompatibleEra;
-export type UncomputableSlotArithmetic = EvaluationFailureUncomputableSlotArithmetic;
-export type UnknownInputs = EvaluationFailureUnknownInputs;
+export type NotEnoughSynced = EvaluationFailureNotEnoughSynced;
+export type CannotCreateEvaluationContext = EvaluationFailureCannotCreateEvaluationContext;
 
 export type EvaluateTxError =
   | AdditionalUtxoOverlap
+  | CannotCreateEvaluationContext
   | ExtraRedeemers
   | IllFormedExecutionBudget
   | IncompatibleEra
@@ -29,9 +30,8 @@ export type EvaluateTxError =
   | MissingRequiredScripts
   | NoCostModelForLanguage
   | NonScriptInputReferencedByRedeemer
-  | UncomputableSlotArithmetic
+  | NotEnoughSynced
   | UnknownInputReferencedByRedeemer
-  | UnknownInputs
   | ValidatorFailed;
 
 /** @category TxSubmission */
@@ -116,26 +116,6 @@ export const errors = {
       }
     }
   },
-  UncomputableSlotArithmetic: {
-    assert: (item: EvaluateTxError): item is UncomputableSlotArithmetic =>
-      (item as UncomputableSlotArithmetic).UncomputableSlotArithmetic !== undefined,
-    Error: class UncomputableSlotArithmeticError extends CustomError {
-      public constructor (rawError: UncomputableSlotArithmetic) {
-        super()
-        this.message = safeJSON.stringify(rawError.UncomputableSlotArithmetic)
-      }
-    }
-  },
-  UnknownInputs: {
-    assert: (item: EvaluateTxError): item is UnknownInputs =>
-      (item as UnknownInputs).UnknownInputs !== undefined,
-    Error: class UnknownInputsError extends CustomError {
-      public constructor (rawError: UnknownInputs) {
-        super()
-        this.message = safeJSON.stringify(rawError.UnknownInputs)
-      }
-    }
-  },
   UnknownInputReferencedByRedeemer: {
     assert: (item: EvaluateTxError): item is UnknownInputReferencedByRedeemer =>
       (item as UnknownInputReferencedByRedeemer).unknownInputReferencedByRedeemer !== undefined,
@@ -153,6 +133,26 @@ export const errors = {
       public constructor (rawError: ValidatorFailed) {
         super()
         this.message = safeJSON.stringify(rawError.validatorFailed)
+      }
+    }
+  },
+  NotEnoughSynced: {
+    assert: (item: EvaluateTxError): item is NotEnoughSynced =>
+      (item as NotEnoughSynced).NotEnoughSynced !== undefined,
+    Error: class NotEnoughSyncedError extends CustomError {
+      public constructor (rawError: NotEnoughSynced) {
+        super()
+        this.message = safeJSON.stringify(rawError.NotEnoughSynced)
+      }
+    }
+  },
+  CannotCreateEvaluationContext: {
+    assert: (item: EvaluateTxError): item is CannotCreateEvaluationContext =>
+      (item as CannotCreateEvaluationContext).CannotCreateEvaluationContext !== undefined,
+    Error: class CannotCreateEvaluationContextError extends CustomError {
+      public constructor (rawError: CannotCreateEvaluationContext) {
+        super()
+        this.message = safeJSON.stringify(rawError.CannotCreateEvaluationContext)
       }
     }
   }

@@ -112,7 +112,7 @@ import Cardano.Slotting.Block
 import Cardano.Slotting.Slot
     ( EpochNo (..), EpochSize (..), SlotNo (..), WithOrigin (..) )
 import Cardano.Slotting.Time
-    ( SlotLength (..), SystemStart (..), slotLengthToSec )
+    ( SlotLength (..), SystemStart (..) )
 import Data.Aeson
     ( FromJSON, ToJSON, (.:), (.:?) )
 import Data.ByteArray
@@ -123,10 +123,10 @@ import Data.ByteString.Base64
     ( encodeBase64 )
 import Data.ByteString.Bech32
     ( HumanReadablePart, encodeBech32 )
-import Data.HashMap.Strict
-    ( (!?) )
 import Data.IP
     ( IPv4, IPv6 )
+import Data.Ratio
+    ( (%) )
 import Data.Scientific
     ( Scientific )
 import Data.Sequence.Strict
@@ -140,6 +140,8 @@ import Ouroboros.Consensus.BlockchainTime.WallClock.Types
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
+import qualified Data.Aeson.Key as Json
+import qualified Data.Aeson.KeyMap as Json
 import qualified Data.Aeson.Parser.Internal as Json hiding
     ( scientific )
 import qualified Data.Aeson.Types as Json
@@ -168,9 +170,9 @@ choice :: (Alternative f, MonadFail f) => String -> [a -> f b] -> a -> f b
 choice entity xs a =
     asum (xs <*> pure a) <|> fail ("invalid " <> entity)
 
-at :: Text -> Json.Value -> Maybe Json.Value
+at :: Json.Key -> Json.Value -> Maybe Json.Value
 at key = \case
-    Json.Object m -> m !? key
+    Json.Object m -> Json.lookup key m
     _ -> Nothing
 
 -- | Converts a 'Json.Encoding' to a 'Json.Value'. This is inefficient because
@@ -295,8 +297,13 @@ encodeNatural =
 {-# INLINABLE encodeNatural #-}
 
 encodeNominalDiffTime :: NominalDiffTime -> Json
-encodeNominalDiffTime =
-    encodeInteger . round
+encodeNominalDiffTime t =
+    -- TODO / NOTE: Backward-compatibility prior to v5.5.4. Should encode only
+    -- as Double in v6+
+    if i % 1 == r then Json.integer i else Json.double (fromRational r)
+  where
+    r = toRational t
+    i = round t
 {-# INLINABLE encodeNominalDiffTime #-}
 
 encodeNonNegativeInterval :: NonNegativeInterval -> Json
@@ -341,7 +348,7 @@ encodeShortByteString encodeByteString =
 
 encodeSlotLength :: SlotLength -> Json
 encodeSlotLength =
-    encodeInteger . slotLengthToSec
+    encodeNominalDiffTime . getSlotLength
 {-# INLINABLE encodeSlotLength #-}
 
 encodeSlotNo :: SlotNo -> Json
@@ -439,7 +446,7 @@ encodeFoldable encodeElem =
 
 encodeFoldable' :: Foldable f => (a -> Text) -> (a -> Json) -> f a -> Json
 encodeFoldable' encodeKey encodeValue =
-    Json.pairs . foldr (\a -> (<>) (Json.pair (encodeKey a) (encodeValue a))) mempty
+    Json.pairs . foldr (\a -> (<>) (Json.pair (Json.fromText (encodeKey a)) (encodeValue a))) mempty
 {-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> [a] -> Json #-}
 {-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> NonEmpty a -> Json #-}
 {-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> Vector a -> Json #-}
@@ -466,7 +473,6 @@ encodeListWithMode mode =
                   ++
                   [ encodeText ("..." <> show r <> " more element(s)") | r > 0 ]
                 )
-
 {-# INLINABLE encodeListWithMode #-}
 
 encodeMap :: (k -> Text) -> (v -> Json) -> Map k v -> Json
@@ -480,7 +486,7 @@ encodeMapWithMode mode encodeKey encodeValue m =
         FullSerialization ->
             encodeMap encodeKey encodeValue m
         CompactSerialization ->
-            let reducer k v = (:) (Json.pairs $ Json.pair (encodeKey k) (encodeValue v))
+            let reducer k v = (:) (Json.pairs $ Json.pair (Json.fromText (encodeKey k)) (encodeValue v))
                 zero = [ encodeText ("..." <> show r <> " more element(s)") | r > 0 ]
                 r = Map.size m - n
                 n = 5
@@ -494,7 +500,7 @@ encodeMaybe =
 
 encodeObject :: [(Text, Json)] -> Json
 encodeObject =
-    Json.pairs . foldr (\(k, v) -> (<>) (Json.pair k v)) mempty
+    Json.pairs . foldr (\(Json.fromText -> k, v) -> (<>) (Json.pair k v)) mempty
 {-# INLINABLE encodeObject #-}
 
 encodeObjectWithMode

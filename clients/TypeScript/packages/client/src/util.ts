@@ -4,17 +4,20 @@ import {
   Block,
   BlockAllegra,
   BlockAlonzo,
+  BlockBabbage,
   BlockByron,
   BlockMary,
   BlockShelley,
   EpochBoundaryBlock,
   Point,
   ProtocolParametersAlonzo,
+  ProtocolParametersBabbage,
   ProtocolParametersShelley,
   StandardBlock
 } from '@cardano-ogmios/schema'
 import { findIntersect } from './ChainSync'
 import { WebSocketClosed, TipIsOriginError } from './errors'
+import { EventEmitter } from 'events'
 const JSONBig = require('@cardanosolutions/json-bigint')
 
 /** @internal */
@@ -91,6 +94,35 @@ export const ensureSocketIsOpen = (socket: WebSocket) => {
   }
 }
 
+/** @internal */
+export function eventEmitterToGenerator <T> (eventEmitter: EventEmitter, eventName: string, match: (e: string) => T|null) {
+  const events = [] as T[]
+  const listeners = [] as ((t: T) => void)[]
+
+  eventEmitter.on(eventName, async (e: string) => {
+    const matched = match(e)
+    if (matched !== null) {
+      if (listeners.length > 0) {
+        listeners.shift()(matched)
+      } else {
+        events.push(matched)
+      }
+    }
+  })
+
+  return async function * generator () {
+    while (true) {
+      yield new Promise((resolve) => {
+        if (events.length > 0) {
+          resolve(events.shift())
+        } else {
+          listeners.push(resolve)
+        }
+      })
+    }
+  }
+}
+
 /** @category Helper */
 export const isAllegraBlock = (block: Block): block is { allegra: BlockAllegra } =>
   (block as { allegra: BlockAllegra }).allegra !== undefined
@@ -98,6 +130,10 @@ export const isAllegraBlock = (block: Block): block is { allegra: BlockAllegra }
 /** @category Helper */
 export const isAlonzoBlock = (block: Block): block is { alonzo: BlockAlonzo } =>
   (block as { alonzo: BlockAlonzo }).alonzo !== undefined
+
+/** @category Helper */
+export const isBabbageBlock = (block: Block): block is { babbage: BlockBabbage } =>
+  (block as { babbage: BlockBabbage }).babbage !== undefined
 
 /** @category Helper */
 export const isByronBlock = (block: Block): block is { byron: BlockByron } =>
@@ -124,9 +160,19 @@ export const isEmptyObject = (obj: Object): boolean =>
   obj !== undefined && Object.keys(obj).length === 0 && (obj.constructor === Object || obj.constructor === undefined)
 
 /** @category Helper */
-export const isAlonzoProtocolParameters = (params: ProtocolParametersShelley | ProtocolParametersAlonzo): params is ProtocolParametersAlonzo =>
+export const isShelleyProtocolParameters = (
+  params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
+): params is ProtocolParametersShelley =>
+  (params as ProtocolParametersShelley).minUtxoValue !== undefined
+
+/** @category Helper */
+export const isAlonzoProtocolParameters = (
+  params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
+): params is ProtocolParametersAlonzo =>
   (params as ProtocolParametersAlonzo).coinsPerUtxoWord !== undefined
 
 /** @category Helper */
-export const isShelleyProtocolParameters = (params: ProtocolParametersShelley | ProtocolParametersAlonzo): params is ProtocolParametersShelley =>
-  (params as ProtocolParametersShelley).minUtxoValue !== undefined
+export const isBabbageProtocolParameters = (
+  params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
+): params is ProtocolParametersBabbage =>
+  (params as ProtocolParametersBabbage).coinsPerUtxoByte !== undefined

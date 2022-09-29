@@ -1,0 +1,15 @@
+[
+  [
+    {
+      "txId": "e7eabf0367fe570e5723079b06c3a6623b205909162058103e5a74e3b518aad0",
+      "index": 1
+    },
+    {
+      "address": "addr_test1wqag3rt979nep9g2wtdwu8mr4gz6m4kjdpp5zp705km8wys6t2kla",
+      "value": { "coins": 1094740 },
+      "script": { "plutus:v2": "480100002221200101" },
+      "datum": null,
+      "datumHash": null
+    }
+  ]
+]

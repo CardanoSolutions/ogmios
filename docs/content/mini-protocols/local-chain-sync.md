@@ -4,7 +4,6 @@ chapter = false
 weight = 1
 +++
 
-
 {{% ascii-drawing-split %}}
 ┌───────────┐                                              
 │ Intersect │◀══════════════════════════════╗              
@@ -94,21 +93,34 @@ As a client, it is therefore crucial to be able to rollback to a previous point 
 
 Ogmios will do its best to [pipeline](https://en.wikipedia.org/wiki/HTTP_pipelining) requests to the Cardano node. Yet unlike WebSocket, the local chain-sync protocol only allows for finite pipelining. Said differently, Ogmios cannot pipeline an arbitrary and potentially infinite number of requests and will actually starts collecting responses if too many requests are pipelined. Pipelining with WebSocket is however straightforward for most clients permit sending many requests at once and handle responses using callbacks on event handlers. 
 
-A good rule of thumb with Ogmios is to pipeline some requests when starting a long-run chain-sync, and then simply put back a new request in the queue every time you receive a response back. In that way, there are always some requests in flight and Ogmios can make a good use of the available bandwith. How many requests to pipeline depends on various factors including the network latency and machine resources. In a local setup where Ogmios and its client are located on the same machine, pipelining a few requests (up to 1000) can be quite effective and drastically speed up the chain-sync.
+![](/pipelining.png) 
 
-For example, here below is a comparison of the effect of pipelining on a full synchronization of the Mary era: 
+To leverage pipelining using the WebSocket, you will need send multiple requests at once and have your client handler send new requests for each response. Behind the scene, the server will translate that to explicit pipelining with the cardano-node and maximize the bandwith utilization. Note that you also probably want to send requests for the next message before you even start processing the last received message. This permits the server to start working on fetching and sending you the next result while you process the current one. 
 
-| Num pipelined / in-flight requests | Time     |
-| ---                                | ---      |
-| 1 (i.e. no pipelining)             | 6min 22s |
-| 10                                 | 4min 51s |
-| 25                                 | 3min 44s |
-| 50                                 | 2min 40s |
-| 100                                | 2min 37s |
-| 1000                               | 2min 38s |
+```js
+const requestNext = JSON.stringify({
+  "type": "jsonwsp/request",
+  "version": "1.0",
+  "servicename": "ogmios",
+  "methodname": "RequestNext",
+  "args": {}
+});
+
+client.on('open', () => {
+  // Burst the server's queue with a few requests.
+  for (let i = 0; i < 100; i += 1) {
+    client.send(requestNext);
+  }
+});
+
+client.on('message', msg => {
+  client.send(requestNext); // Ask for next request immediately 
+  doSomething(msg);
+})
+```
 
 {{% notice warning %}}
-Exact numbers depends on your application and machine resources. But this charts give an order of magnitude. If you're pipelining many requests in a client application, make sure to also take times to collect some responses because there will be no extra benefits coming from _too much pipelining_.
+How many requests to pipeline depends on your application and machine resources. If you're pipelining many requests in a client application, make sure to also take times to collect and handle responses because there will be no extra benefits coming from _too much pipelining_. A good rule of thumb on most standard machines is to pipeline **50-100 requests**.
 {{% /notice %}}
 
 ## FindIntersect
@@ -123,9 +135,9 @@ On the first connection with the node, clients will likely synchronize from the 
     "servicename": "ogmios",
     "methodname": "FindIntersect",
     "args": { 
-        "points": [ 
-            "9e871633f7aa356ef11cdcabb6fdd6d8f4b00bc919c57aed71a91af8f86df590",
-            "d184f428159290bf3558b4d1d139e6a07ec6589738c28a0925a7ab776bde4d62",
+        "points": [
+            { "slot": 39916796, "hash": "e72579ff89dc9ed325b723a33624b596c08141c7bd573ecfff56a1f7229e4d09" },
+            { "slot": 23068793, "hash": "69c44ac1dda2ec74646e4223bc804d9126f719b1c245dadc2ad65e8de1b276d7" },
             "origin" 
         ]
     },
@@ -149,17 +161,36 @@ The order of the list matters! The node will intersect with the best match, cons
 
 For several applications, it may be quite useful to know the last point of each era; This allows to start syncing blocks from the beginning of a particular era. For instance, after seeking an intersection with the last point of the Shelley, `RequestNext` would yield the first block of the Allegra era. Handy!
 
-#### Mainnet
+{{< tabs >}}
+{{% tab name="Mainnet" %}}
 
-| Era Bound            | SlotNo     | Hash                                                               |
-| ---                  | ---        | ---                                                                |
-| Last _Byron_ Block   | `4492799`  | `f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457` |
-| Last _Shelley_ Block | `16588737` | `4e9bbbb67e3ae262133d94c3da5bffce7b1127fc436e7433b87668dba34c354a` |
-| Last _Allegra_ Block | `23068793` | `69c44ac1dda2ec74646e4223bc804d9126f719b1c245dadc2ad65e8de1b276d7` |
-| Last _Mary_ Block    | `39916796` | `e72579ff89dc9ed325b723a33624b596c08141c7bd573ecfff56a1f7229e4d09` |
-| Last _Alonzo_ Block  | N/A        | N/A                                                                |
+  {{% era-boundaries %}}
+    {{% era-boundary network="mainnet" era="Byron"   blockNumber=4490510 slotNumber=4492799  headerHash="f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457" %}}
+    {{% era-boundary network="mainnet" era="Shelley" blockNumber=5086523 slotNumber=16588737 headerHash="4e9bbbb67e3ae262133d94c3da5bffce7b1127fc436e7433b87668dba34c354a" %}}
+    {{% era-boundary network="mainnet" era="Allegra" blockNumber=5406746 slotNumber=23068793 headerHash="69c44ac1dda2ec74646e4223bc804d9126f719b1c245dadc2ad65e8de1b276d7" %}}
+    {{% era-boundary network="mainnet" era="Mary"    blockNumber=6236059 slotNumber=39916796 headerHash="e72579ff89dc9ed325b723a33624b596c08141c7bd573ecfff56a1f7229e4d09" %}}
+    {{% era-boundary network="mainnet" era="Alonzo"  blockNumber="N/A"   slotNumber="N/A"    headerHash="N/A" %}}
+  {{% /era-boundaries %}}
 
-Remember also that `"origin"` is a special point that can be queried and will always yield a success.
+{{% /tab %}}
+
+{{% tab name="Testnet" %}}
+
+  {{% era-boundaries %}}
+    {{% era-boundary network="testnet" era="Byron"   blockNumber=1597132 slotNumber=1598399  headerHash="7e16781b40ebf8b6da18f7b5e8ade855d6738095ef2f1c58c77e88b6e45997a4" %}}
+    {{% era-boundary network="testnet" era="Shelley" blockNumber=2143527 slotNumber=13694363 headerHash="b596f9739b647ab5af901c8fc6f75791e262b0aeba81994a1d622543459734f2" %}}
+    {{% era-boundary network="testnet" era="Allegra" blockNumber=2287019 slotNumber=18014387 headerHash="9914c8da22a833a777d8fc1f735d2dbba70b99f15d765b6c6ee45fe322d92d93" %}}
+    {{% era-boundary network="testnet" era="Mary"    blockNumber=2877843 slotNumber=36158304 headerHash="2b95ce628d36c3f8f37a32c2942b48e4f9295ccfe8190bcbc1f012e1e97c79eb" %}}
+    {{% era-boundary network="testnet" era="Alonzo"  blockNumber=3680594 slotNumber=62510369 headerHash="d931221f9bc4cae34de422d9f4281a2b0344e86aac6b31eb54e2ee90f44a09b9" %}}
+    {{% era-boundary network="testnet" era="Babbage" blockNumber="N/A"   slotNumber="N/A"    headerHash="N/A" %}}
+  {{% /era-boundaries %}}
+
+{{% /tab %}}
+{{< /tabs >}}
+
+{{% notice tip %}}
+Remember also that `"origin"` is a special point whichs refers to the beginning of the blockchain; An intersection with `"origin"` will **always** be found.
+{{% /notice %}}
 
 ## Full Example
 
@@ -240,4 +271,4 @@ Since version `v3.2.0`, Ogmios supports a WebSocket sub-protocol which has an in
 ogmios.v1:compact
 ```
 
-as a sub-protocol when establishing the WebSocket connection. Omitted fields are documented in the [API reference](../../api-reference) using the `$omitted-if-compact` field of relevant objects.
+as a sub-protocol when establishing the WebSocket connection. Omitted fields are documented in the [API reference](../../api) using the `$omitted-if-compact` field of relevant objects.

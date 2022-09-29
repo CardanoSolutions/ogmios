@@ -55,6 +55,23 @@ theme = "learn"
   # Change the title separator. Default to "::".
   titleSeparator = "-"
 
+[[menu.shortcuts]]
+  name = "<i class='fab fa-github'></i> Source code"
+  url = "https://github.com/cardanosolutions/ogmios"
+  weight = 100
+[[menu.shortcuts]]
+  name = "<i class='fab fa-solid fa-bullseye'></i> Issues Tracking"
+  url = "https://github.com/cardanosolutions/ogmios/issues"
+  weight = 101
+[[menu.shortcuts]]
+  name = "<i class='fab fa-discord'></i> Discord (#ogmios)"
+  url = "https://discord.gg/ZeyDn65t5v"
+  weight = 102
+[[menu.shortcuts]]
+  name = "<i class='fab fa-solid fa-file-code'></i> Architectural Decisions Record"
+  url = "https://github.com/CardanoSolutions/ogmios/tree/master/architectural-decisions/accepted"
+  weight = 103
+
 [Languages]
 [Languages.en]
   landingPageURL = "/"

@@ -96,7 +96,7 @@ describe('Local state queries', () => {
       expect(bound.slot).toBeDefined()
 
       const eraSummaries = await client.eraSummaries()
-      expect(eraSummaries).toHaveLength(5)
+      expect(eraSummaries).toHaveLength(6)
 
       const compactGenesis = await client.genesisConfig()
       expect(compactGenesis.systemStart).toBeDefined()
@@ -290,7 +290,7 @@ describe('Local state queries', () => {
     describe('eraSummaries', () => {
       it('can fetch era summaries for slotting arithmetic', async () => {
         const eraSummaries = await StateQuery.eraSummaries(context)
-        expect(eraSummaries).toHaveLength(5)
+        expect(eraSummaries).toHaveLength(6)
         eraSummaries.forEach(s => {
           expect(s.start).toBeDefined()
           expect(s.end).toBeDefined()

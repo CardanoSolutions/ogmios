@@ -1,1 +1,1 @@
-{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"Query","result":{"time":1487796917,"slot":7798284,"epoch":15244552},"reflection":null}
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"Query","result":{"time":4.172127088312721e8,"slot":7798284,"epoch":15244552},"reflection":null}

@@ -34,7 +34,6 @@ import Ogmios.Prelude
 
 import Cardano.Network.Protocol.NodeToClient
     ( Block )
-import qualified Control.Concurrent.Async as Async
 import Control.Monad.Class.MonadST
     ( MonadST )
 import Ogmios.App.Configuration
@@ -75,6 +74,7 @@ import System.Posix.Signals
     , softwareTermination
     )
 
+import qualified Control.Concurrent.Async as Async
 import qualified Control.Concurrent.STM.TBQueue as STM
 import qualified Control.Concurrent.STM.TMVar as STM
 import qualified Control.Concurrent.STM.TQueue as STM

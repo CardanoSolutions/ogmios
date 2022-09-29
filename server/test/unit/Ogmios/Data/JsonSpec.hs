@@ -18,6 +18,8 @@ import Cardano.Ledger.Crypto
     ( StandardCrypto )
 import Cardano.Network.Protocol.NodeToClient
     ( Block, GenTxId )
+import Cardano.Slotting.Time
+    ( mkSlotLength )
 import Control.Monad.Class.MonadAsync
     ( forConcurrently_ )
 import Data.Aeson
@@ -26,6 +28,8 @@ import Data.Aeson.QQ.Simple
     ( aesonQQ )
 import Data.Maybe
     ( fromJust )
+import Ogmios.Data.EraTranslation
+    ( MultiEraUTxO (..), translateUtxo )
 import Ogmios.Data.Json
     ( Json
     , SerializationMode (..)
@@ -38,15 +42,18 @@ import Ogmios.Data.Json
     , encodeScriptFailure
     , encodeSubmitTxError
     , encodeTip
+    , encodeTranslationError
+    , encodeTx
     , encodeTxId
     , encodeTxIn
-    , encodeUtxo
     , inefficientEncodingToValue
     , jsonToByteString
     , stringifyRdmrPtr
     )
 import Ogmios.Data.Json.Orphans
     ()
+import Ogmios.Data.Json.Prelude
+    ( encodeSlotLength )
 import Ogmios.Data.Json.Query
     ( QueryInEra
     , ShelleyBasedEra (..)
@@ -107,6 +114,7 @@ import Ogmios.Data.Protocol.TxMonitor
     , HasTxResponse (..)
     , MempoolSizeAndCapacity
     , NextTx
+    , NextTxFields (..)
     , NextTxResponse (..)
     , ReleaseMempool
     , ReleaseMempoolResponse (..)
@@ -136,6 +144,8 @@ import Ogmios.Data.Protocol.TxSubmission
     )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras, GenTx, HardForkApplyTxErr (..) )
+import Ouroboros.Consensus.Shelley.Eras
+    ( StandardAlonzo )
 import Ouroboros.Network.Block
     ( Point (..), Tip (..) )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
@@ -152,6 +162,7 @@ import Test.Generators
     , genBlockNo
     , genBoundResult
     , genCompactGenesisResult
+    , genData
     , genDelegationAndRewardsResult
     , genEpochResult
     , genEvaluateTxResponse
@@ -161,7 +172,8 @@ import Test.Generators
     , genNonMyopicMemberRewardsResult
     , genPParamsResult
     , genPoint
-    , genPointResult
+    , genPointResultPraos
+    , genPointResultTPraos
     , genPoolDistrResult
     , genPoolIdsResult
     , genPoolParametersResult
@@ -172,16 +184,27 @@ import Test.Generators
     , genSubmitResult
     , genSystemStart
     , genTip
+    , genTx
     , genTxId
     , genUTxOResult
-    , genUtxo
+    , genUtxoAlonzo
+    , genUtxoBabbage
     , genWithOrigin
     , generateWith
     , reasonablySized
     , shrinkUtxo
     )
 import Test.Hspec
-    ( Spec, SpecWith, context, expectationFailure, parallel, runIO, specify )
+    ( Spec
+    , SpecWith
+    , context
+    , expectationFailure
+    , parallel
+    , runIO
+    , shouldBe
+    , shouldContain
+    , specify
+    )
 import Test.Hspec.Json.Schema
     ( SchemaRef (..), prop_validateToJSON, unsafeReadSchemaRef )
 import Test.Hspec.QuickCheck
@@ -197,6 +220,7 @@ import Test.QuickCheck
     , conjoin
     , counterexample
     , elements
+    , forAll
     , forAllBlind
     , forAllShrinkBlind
     , genericShrink
@@ -210,17 +234,24 @@ import Test.QuickCheck
 import Test.QuickCheck.Arbitrary.Generic
     ( genericArbitrary )
 
+import qualified Ogmios.Data.Json.Alonzo as Alonzo
+import qualified Ogmios.Data.Json.Babbage as Babbage
+
+import qualified Cardano.Ledger.Alonzo.Data as Ledger
 import qualified Codec.Json.Wsp.Handler as Wsp
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encode.Pretty as Json
+import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Base16 as B16
+import qualified Data.Text.Encoding as T
 import qualified Test.QuickCheck as QC
 
-jsonifierToAeson
+encodingToValue
     :: Json
     -> Json.Value
-jsonifierToAeson =
+encodingToValue =
     fromJust . Json.decodeStrict . jsonToByteString
 
 -- | Generate arbitrary value of a data-type and verify they match a given
@@ -235,7 +266,7 @@ validateToJSON gen encode (n, vectorFilePath) ref = parallel $ do
     runIO $ generateTestVectors (n, vectorFilePath) gen encode
     refs <- runIO $ unsafeReadSchemaRef ref
     specify (toString $ getSchemaRef ref) $ forAllBlind gen
-        (prop_validateToJSON (jsonifierToAeson . encode) refs)
+        (prop_validateToJSON (encodingToValue . encode) refs)
 
 -- | Similar to 'validateToJSON', but also check that the produce value can be
 -- decoded back to the expected form.
@@ -249,9 +280,14 @@ validateFromJSON
 validateFromJSON gen (encode, decode) (n, vectorFilePath) ref = parallel $ do
     runIO $ generateTestVectors (n, vectorFilePath) gen encode
     refs <- runIO $ unsafeReadSchemaRef ref
-    specify (toString $ getSchemaRef ref) $ forAllBlind gen $ \a -> conjoin
-        [ prop_validateToJSON (jsonifierToAeson . encode) refs a
-        , decodeWith decode (jsonToByteString (encode a)) === Just a
+    specify (toString $ getSchemaRef ref) $ forAllBlind gen $ \a ->
+        let leftSide = decodeWith decode (jsonToByteString (encode a)) in
+        conjoin
+        [ prop_validateToJSON (encodingToValue . encode) refs a
+        , leftSide == Just a
+            & counterexample (decodeUtf8 $ Json.encodePretty $ inefficientEncodingToValue $ encode a)
+            & counterexample ("Got:  " <> show leftSide)
+            & counterexample ("Want: " <> show (Just a))
         ]
 
 goldenToJSON
@@ -267,16 +303,96 @@ goldenToJSON golden ref = parallel $ do
 spec :: Spec
 spec = do
     context "JSON roundtrips" $ do
-        prop "encodeUtxo / decodeUtxo" $ forAllShrinkBlind genUtxo shrinkUtxo $ \utxo ->
-            let encoded = inefficientEncodingToValue (encodeUtxo utxo) in
+        prop "encodeUtxo / decodeUtxo (Alonzo)" $ forAllShrinkBlind genUtxoAlonzo shrinkUtxo $ \utxo ->
+            let encoded = inefficientEncodingToValue (Alonzo.encodeUtxo utxo) in
             case Json.parse decodeUtxo encoded of
                 Json.Error e ->
                     property False
                         & counterexample e
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
-                Json.Success u ->
-                    utxo === u
+                Json.Success utxo' ->
+                    UTxOInAlonzoEra utxo === utxo'
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+
+        prop "encodeUtxo / decodeUtxo (Babbage)" $ forAllShrinkBlind genUtxoBabbage shrinkUtxo $ \utxo ->
+            let encoded = inefficientEncodingToValue (Babbage.encodeUtxo utxo) in
+            case Json.parse decodeUtxo encoded of
+                Json.Error e ->
+                    property False
+                        & counterexample e
+                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+                Json.Success (UTxOInAlonzoEra utxo') ->
+                    translateUtxo utxo' === utxo
+                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+                Json.Success (UTxOInBabbageEra utxo') ->
+                    utxo' === utxo
+                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+
+        specify "Golden: Utxo_1.json" $ do
+            json <- decodeFileThrow "Utxo_1.json"
+            case Json.parse (decodeUtxo @StandardCrypto) json of
+                Json.Error e -> do
+                    show e `shouldContain` "couldn't decode plutus script"
+                    show e `shouldContain` "Please drop 'd8184c820249'"
+                Json.Success UTxOInAlonzoEra{} ->
+                    fail "successfully decoded an invalid payload (as Alonzo Utxo)?"
+                Json.Success UTxOInBabbageEra{} ->
+                    fail "successfully decoded an invalid payload( as Babbage Utxo)?"
+
+        specify "Golden: Utxo_2.json" $ do
+            json <- decodeFileThrow "Utxo_2.json"
+            case Json.parse (decodeUtxo @StandardCrypto) json of
+                Json.Error e ->
+                    fail (show e)
+                Json.Success UTxOInAlonzoEra{} ->
+                    fail "wrongly decoded Babbage UTxO as Alonzo's"
+                Json.Success UTxOInBabbageEra{} ->
+                    pure ()
+
+        specify "Golden: Utxo_3.json" $ do
+            json <- decodeFileThrow "Utxo_3.json"
+            case Json.parse (decodeUtxo @StandardCrypto) json of
+                Json.Error e ->
+                    fail (show e)
+                Json.Success UTxOInAlonzoEra{} ->
+                    fail "wrongly decoded Babbage UTxO as Alonzo's"
+                Json.Success UTxOInBabbageEra{} ->
+                    pure ()
+
+        specify "Golden: Utxo_4.json" $ do
+            json <- decodeFileThrow "Utxo_4.json"
+            case Json.parse (decodeUtxo @StandardCrypto) json of
+                Json.Error e -> do
+                    show e `shouldContain` "couldn't decode plutus script"
+                    show e `shouldContain` "Please drop '820249'"
+                Json.Success UTxOInAlonzoEra{} ->
+                    fail "successfully decoded an invalid payload (as Alonzo Utxo)?"
+                Json.Success UTxOInBabbageEra{} ->
+                    fail "successfully decoded an invalid payload( as Babbage Utxo)?"
+
+        context "Data / BinaryData" $ do
+            prop "arbitrary" $
+                forAll genData propBinaryDataRoundtrip
+
+            prop "Golden (1)" $
+                propBinaryDataRoundtrip $ unsafeDataFromBytes
+                    "D8668219019E8201D8668219010182D866821903158140D8668219020C\
+                    \83230505"
+
+            prop "Golden (2)" $
+                propBinaryDataRoundtrip $ unsafeDataFromBytes
+                    "D8798441FFD87982D87982D87982D87981581CC279A3FB3B4E62BBC78E\
+                    \288783B58045D4AE82A18867D8352D02775AD87981D87981D87981581C\
+                    \121FD22E0B57AC206FEFC763F8BFA0771919F5218B40691EEA4514D0D8\
+                    \7A80D87A801A002625A0D87983D879801A000F4240D879811A000FA92E"
+
+    context "SlotLength" $ do
+        let matrix = [ ( mkSlotLength 1, Json.integer 1 )
+                     , ( mkSlotLength 0.1, Json.double 0.1 )
+                     ]
+        forM_ matrix $ \(slotLength, json) ->
+            specify (show slotLength <> " → " <> show json) $ do
+                encodeSlotLength slotLength `shouldBe` json
 
     context "validate chain-sync request/response against JSON-schema" $ do
         validateFromJSON
@@ -303,10 +419,6 @@ spec = do
             (200, "ChainSync/Response/RequestNext")
             "ogmios.wsp.json#/properties/RequestNextResponse"
 
-        goldenToJSON
-            "RequestNextResponse_1.json"
-            "ogmios.wsp.json#/properties/RequestNextResponse"
-
     context "validate tx-submission request/response against JSON-schema" $ do
         prop "deserialise signed transactions" prop_parseSubmitTx
 
@@ -318,13 +430,17 @@ spec = do
 
         validateToJSON
             (arbitrary @(Wsp.Response (EvaluateTxResponse Block)))
-            (_encodeEvaluateTxResponse (Proxy @Block) stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn)
+            (_encodeEvaluateTxResponse (Proxy @Block) stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError)
             (100, "TxSubmission/Response/EvaluateTx")
             "ogmios.wsp.json#/properties/EvaluateTxResponse"
 
         goldenToJSON
             "SubmitTxResponse_1.json"
             "ogmios.wsp.json#/properties/SubmitTxResponse"
+
+        goldenToJSON
+            "EvaluateTxRequest_1.json"
+            "ogmios.wsp.json#/properties/EvaluateTx"
 
     context "validate tx monitor request/response against JSON-schema" $ do
         validateFromJSON
@@ -347,7 +463,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Wsp.Response (NextTxResponse Block)))
-            (_encodeNextTxResponse encodeTxId)
+            (_encodeNextTxResponse encodeTxId (encodeTx FullSerialization))
             (10, "TxMonitor/Response/NextTx")
             "ogmios.wsp.json#/properties/NextTxResponse"
 
@@ -415,7 +531,7 @@ spec = do
 
         validateQuery
             [aesonQQ|"ledgerTip"|]
-            ( parseGetLedgerTip genPointResult
+            ( parseGetLedgerTip genPointResultTPraos genPointResultPraos
             ) (10, "StateQuery/Response/Query[ledgerTip]")
             "ogmios.wsp.json#/properties/QueryResponse[ledgerTip]"
 
@@ -613,16 +729,16 @@ instance Arbitrary RequestNext where
 
 instance Arbitrary (SubmitTxResponse Block) where
     shrink = genericShrink
-    arbitrary = genericArbitrary
+    arbitrary = reasonablySized genericArbitrary
 
 instance Arbitrary (HardForkApplyTxErr (CardanoEras StandardCrypto)) where
     arbitrary = genHardForkApplyTxErr
 
 instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto))) where
-    arbitrary = genSubmitResult
+    arbitrary = reasonablySized genSubmitResult
 
 instance Arbitrary (EvaluateTxResponse Block) where
-    arbitrary = genEvaluateTxResponse
+    arbitrary = reasonablySized genEvaluateTxResponse
 
 instance Arbitrary (Acquire Block) where
     shrink = genericShrink
@@ -654,6 +770,10 @@ instance Arbitrary AwaitAcquireResponse where
 instance Arbitrary NextTx where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
+
+instance Arbitrary NextTxFields where
+    shrink = genericShrink
+    arbitrary = genericArbitrary
 
 instance Arbitrary (NextTxResponse Block) where
     shrink = genericShrink
@@ -690,7 +810,10 @@ instance Arbitrary (Tip Block) where
     arbitrary = genTip
 
 instance Arbitrary Block where
-    arbitrary = genBlock
+    arbitrary = reasonablySized genBlock
+
+instance Arbitrary (GenTx Block) where
+    arbitrary = genTx
 
 instance Arbitrary (GenTxId Block) where
     arbitrary = genTxId
@@ -777,6 +900,31 @@ instance Arbitrary SerializedTx where
           \ce8473e990d61c1506f6"
         ]
 
+
+propBinaryDataRoundtrip :: Ledger.Data StandardAlonzo -> Property
+propBinaryDataRoundtrip dat =
+    let json = jsonToByteString (Alonzo.encodeData @StandardAlonzo dat)
+     in case B16.decodeBase16 . T.encodeUtf8 <$> Json.decode (toLazy json) of
+            Just (Right bytes) ->
+                let
+                    dataFromBytes = Ledger.makeBinaryData (toShort bytes)
+                    originalData  = Ledger.dataToBinaryData dat
+                  in conjoin
+                    [ dataFromBytes
+                        === Right originalData
+                    , (Ledger.hashBinaryData <$> dataFromBytes)
+                        === Right (Ledger.hashBinaryData originalData)
+                    ] & counterexample (decodeUtf8 json)
+            _ ->
+                property False
+
+unsafeDataFromBytes :: ByteString -> Ledger.Data era
+unsafeDataFromBytes =
+    either (error . show) Ledger.binaryDataToData
+    . Ledger.makeBinaryData
+    . either error toShort
+    . B16.decodeBase16
+
 --
 -- Local State Query
 --
@@ -802,6 +950,7 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                     , SomeShelleyEra ShelleyBasedEraAllegra
                     , SomeShelleyEra ShelleyBasedEraMary
                     , SomeShelleyEra ShelleyBasedEraAlonzo
+                    , SomeShelleyEra ShelleyBasedEraBabbage
                     ]
             forM_ eras $ \(era, SomeQuery{genResult,encodeResult}) -> do
                 let encodeQueryResponse
@@ -811,7 +960,7 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                         . encodeResult FullSerialization
 
                 case era of
-                    SomeShelleyEra ShelleyBasedEraAlonzo -> do
+                    SomeShelleyEra ShelleyBasedEraBabbage -> do
                         generateTestVectors (n, vectorFilepath)
                             (genResult Proxy)
                             encodeQueryResponse
@@ -822,13 +971,13 @@ validateQuery json parser (n, vectorFilepath) resultRef =
 
                 -- NOTE: Queries are mostly identical between eras, since we run
                 -- the test for each era, we can reduce the number of expected
-                -- max success. In the end, the property run 4 times!
-                runQuickCheck $ withMaxSuccess 25 $ forAllBlind
+                -- max success. In the end, the property run 1 time per era!
+                runQuickCheck $ withMaxSuccess 20 $ forAllBlind
                     (genResult Proxy)
-                    (prop_validateToJSON (jsonifierToAeson . encodeQueryResponse) resultRefs)
+                    (prop_validateToJSON (encodingToValue . encodeQueryResponse) resultRefs)
 
                 let encodeQueryUnavailableInCurrentEra
-                        = jsonifierToAeson
+                        = encodingToValue
                         . _encodeQueryResponse encodeAcquireFailure
                         . Wsp.Response Nothing
 

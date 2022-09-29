@@ -1,6 +1,6 @@
 {
   "theme": "./docs/theme",
-  "out": "../../docs/static/api",
+  "out": "../../docs/static/typescript/api",
   "excludeInternal": true,
   "toc": [""],
   "categorizeByGroup": true,

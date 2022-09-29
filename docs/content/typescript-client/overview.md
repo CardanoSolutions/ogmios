@@ -16,6 +16,10 @@ It provides a fully typed interface for interacting with Ogmios as well as many 
 
 The package is divided into a few modules: one per Ouroboros mini-protocols and some for managing WebSocket connections or utils. Let's start with the `Connection` module which is a necessary step regardless of which protocol you'll then use.
 
+{{% notice tip %}}
+The complete API reference for the TypeScript client is [available here](/typescript/api/modules/_cardano_ogmios_client.html). Have a look!
+{{% /notice %}}
+
 ### InteractionContext
 
 This module allows you to define an `InteractionContext` which tells the client how to create and manage WebSocket connections. The creation of an `InteractionContext` returns a `Promise` which is rejected if the server isn't reachable _yet_. That can happen when you first start your service stack; Ogmios is only ready when the underlying cardano-node is itself ready. Cardano-node runs a serie of integrity checks on its database on start, which can often takes a few seconds if not minutes. While doing so, the node does not allow any connections. Using the interaction context, you can implement retry mechanism on failures until it finally resolves.

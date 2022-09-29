@@ -107,7 +107,7 @@ withStdoutTracers version tracers action = do
 
     mkEnvelop :: forall m msg. (ToJSON msg, MonadIO m) => msg -> Severity -> String -> m Encoding
     mkEnvelop msg severity tracerName = do
-        let context = toText (dropWhile isLower tracerName)
+        let context = fromString (dropWhile isLower tracerName)
         timestamp <- liftIO getCurrentTime
         threadId <- drop 9 . show <$> liftIO myThreadId
         pure $ pairs $

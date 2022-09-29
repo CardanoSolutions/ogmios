@@ -10,18 +10,22 @@
 module Ogmios.Data.Health
     ( -- * Heath
       Health (..)
-    , CardanoEra (..)
     , ConnectionStatus (..)
     , Tip (..)
     , SlotInEpoch (..)
     , EpochNo (..)
     , emptyHealth
     , modifyHealth
+
       -- ** NetworkSynchronization
     , NetworkSynchronization (..)
     , SystemStart (..)
     , RelativeTime (..)
     , mkNetworkSynchronization
+
+      -- ** CardanoEra
+    , CardanoEra (..)
+    , eraIndexToCardanoEra
     ) where
 
 import Ogmios.Prelude
@@ -41,15 +45,21 @@ import Data.Ratio
     ( (%) )
 import Data.Scientific
     ( Scientific, unsafeFromRational )
+import Data.SOP.Strict
+    ( NS (..) )
 import Data.Time.Clock
     ( UTCTime, diffUTCTime )
 import Ouroboros.Consensus.BlockchainTime.WallClock.Types
     ( RelativeTime (..), SystemStart (..) )
+import Ouroboros.Consensus.HardFork.Combinator
+    ( EraIndex (..) )
 import Ouroboros.Network.Block
     ( Tip (..) )
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
+import Ouroboros.Consensus.Cardano.Block
+    ( CardanoEras )
 
 -- | Reflect the current state of the connection with the underlying node.
 data ConnectionStatus
@@ -81,7 +91,7 @@ data Health block = Health
     , metrics :: !Metrics
     -- ^ Application metrics measured at regular interval.
     , connectionStatus :: !ConnectionStatus
-    -- ^ State of the connectino with the underlying node.
+    -- ^ State of the connection with the underlying node.
     , currentEpoch :: !(Maybe EpochNo)
     -- ^ Current known epoch number
     , slotInEpoch :: !(Maybe SlotInEpoch)
@@ -173,5 +183,18 @@ data CardanoEra
     | Allegra
     | Mary
     | Alonzo
+    | Babbage
     deriving stock (Generic, Show, Eq, Enum, Bounded)
     deriving anyclass (ToJSON)
+
+eraIndexToCardanoEra
+    :: forall crypto. ()
+    => EraIndex (CardanoEras crypto)
+    -> CardanoEra
+eraIndexToCardanoEra = \case
+    EraIndex                Z{}      -> Byron
+    EraIndex             (S Z{})     -> Shelley
+    EraIndex          (S (S Z{}))    -> Allegra
+    EraIndex       (S (S (S Z{})))   -> Mary
+    EraIndex    (S (S (S (S Z{}))))  -> Alonzo
+    EraIndex (S (S (S (S (S Z{}))))) -> Babbage

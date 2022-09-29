@@ -8,6 +8,8 @@ module Ogmios.Data.Json.Mary where
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Binary
+    ( serialize' )
 import Cardano.Ledger.Crypto
     ( Crypto )
 import Data.ByteString.Base16
@@ -16,10 +18,14 @@ import GHC.Records
     ( getField )
 import Ouroboros.Consensus.Cardano.Block
     ( MaryEra )
+import Ouroboros.Consensus.Protocol.TPraos
+    ( TPraos )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..) )
+import Ouroboros.Consensus.Shelley.Protocol.TPraos
+    ()
 
-import qualified Data.ByteString as BS
+import qualified Data.ByteString.Short as BS
 import qualified Data.Map.Strict as Map
 
 import qualified Ogmios.Data.Json.Allegra as Allegra
@@ -62,7 +68,7 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
 encodeBlock
     :: Crypto crypto
     => SerializationMode
-    -> ShelleyBlock (MaryEra crypto)
+    -> ShelleyBlock (TPraos crypto) (MaryEra crypto)
     -> Json
 encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
@@ -129,6 +135,9 @@ encodeTx mode x = encodeObjectWithMode mode
     ]
     [ ( "witness"
       , encodeWitnessSet (Sh.wits x)
+      )
+    , ( "raw"
+      , encodeByteStringBase64 (serialize' x)
       )
     ]
   where
@@ -335,4 +344,4 @@ encodeWitnessSet x = encodeObject
 stringifyAssetId :: Crypto crypto => (MA.PolicyID crypto, MA.AssetName) -> Text
 stringifyAssetId (MA.PolicyID pid, MA.AssetName bytes)
     | BS.null bytes = Shelley.stringifyScriptHash pid
-    | otherwise     = Shelley.stringifyScriptHash pid <> "." <> encodeBase16 bytes
+    | otherwise     = Shelley.stringifyScriptHash pid <> "." <> encodeBase16 (fromShort bytes)
