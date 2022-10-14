@@ -23,51 +23,29 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-    - name: 💽 Install OS Packages
-      uses: mstksg/get-package@2a4b48d55d72d43ca89ae58ec9ca1397d34a1c35
-      with:
-        apt-get: libgmp-dev libssl-dev libsystemd-dev libsodium-dev zlib1g-dev
-
-    - name: 🧱 Setup secp256k1 w/ Schnorr Signatures
-      run: |
-        sudo apt-get -y install autoconf automake libtool
-        git clone https://github.com/bitcoin-core/secp256k1.git
-        cd secp256k1
-        git reset --hard ac83be33d0956faf6b7f61a60ab524ef7d6a473a
-        ./autogen.sh
-        ./configure --prefix=/usr --enable-module-schnorrsig --enable-experimental
-        make
-        make check
-        sudo make install
-
     - name: 📥 Checkout repository
       uses: actions/checkout@v2.3.3
       with:
         submodules: true
 
-    - name: 🧰 Setup Stack
-      uses: timbod7/setup-stack@1f68f27c99094a718fe60a2790550aafd042f729
-
-    - name: 💾 Cache Dependencies
-      id: cache
-      uses: actions/cache@v2.1.1
+    - name: ❄️  Install Nix
+      uses: cachix/install-nix-action@v13
       with:
-        path: ~/.stack
-        key: ${{ matrix.os }}-${{ hashFiles('server/resolver.yaml') }}
+        extra_nix_config: |
+          trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+          substituters = https://hydra.iohk.io https://cache.nixos.org/
 
-    - name: 📸 Build Snapshot
-      if: steps.cache.outputs.cache-hit != 'true'
-      working-directory: server
-      run: |
-        stack --no-terminal build --only-snapshot --haddock --no-haddock-deps
+    - name: 💾 Cache Build
+      uses: cachix/cachix-action@v10
+      with:
+        name: cardano-ogmios
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
 
     - name: 🔨 Build
-      working-directory: server
       shell: bash
       run: |
-        stack --no-terminal install --flag ogmios:production ogmios
-        stack --no-terminal test    --flag ogmios:production --no-run-tests
-        mv $(stack path --local-bin)/ogmios ogmios
+        nix-build -A platform.amd64 -o dist
+        cp dist/bin/ogmios server/ogmios
 
     - name: 📤 Upload binary
       uses: actions/upload-artifact@v2
@@ -75,51 +53,6 @@ jobs:
         name: ogmios
         path: |
           server/ogmios
-
-  server_test:
-    needs: [server_build]
-    strategy:
-      matrix:
-        os: [ubuntu-20.04]
-
-    runs-on: ${{ matrix.os }}
-    steps:
-    - name: 💽 Install OS Packages
-      uses: mstksg/get-package@2a4b48d55d72d43ca89ae58ec9ca1397d34a1c35
-      with:
-        apt-get: libgmp-dev libssl-dev libsystemd-dev libsodium-dev zlib1g-dev
-
-    - name: 🧱 Setup secp256k1 w/ Schnorr Signatures
-      run: |
-        sudo apt-get -y install autoconf automake libtool
-        git clone https://github.com/bitcoin-core/secp256k1.git
-        cd secp256k1
-        git reset --hard ac83be33d0956faf6b7f61a60ab524ef7d6a473a
-        ./autogen.sh
-        ./configure --prefix=/usr --enable-module-schnorrsig --enable-experimental
-        make
-        make check
-        sudo make install
-
-    - name: 📥 Checkout repository
-      uses: actions/checkout@v2.3.3
-      with:
-        submodules: true
-
-    - name: 🧰 Setup Stack
-      uses: timbod7/setup-stack@1f68f27c99094a718fe60a2790550aafd042f729
-
-    - name: 💾 Cache Dependencies
-      id: cache
-      uses: actions/cache@v2.1.1
-      with:
-        path: ~/.stack
-        key: ${{ matrix.os }}-${{ hashFiles('server/resolver.yaml') }}
-
-    - name: 🔨 Test
-      working-directory: server
-      run: |
-        stack --no-terminal test --flag ogmios:production ogmios:unit
 
   #  _______  _______  ______    __   __  _______  ______            ___      ___   __    _  _______
   # |       ||       ||    _ |  |  | |  ||       ||    _ |          |   |    |   | |  |  | ||       |
@@ -189,23 +122,6 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-    - name: 💽 Install OS Packages
-      uses: mstksg/get-package@2a4b48d55d72d43ca89ae58ec9ca1397d34a1c35
-      with:
-        apt-get: libgmp-dev libssl-dev libsystemd-dev libsodium-dev zlib1g-dev
-
-    - name: 🧱 Setup secp256k1 w/ Schnorr Signatures
-      run: |
-        sudo apt-get -y install autoconf automake libtool
-        git clone https://github.com/bitcoin-core/secp256k1.git
-        cd secp256k1
-        git reset --hard ac83be33d0956faf6b7f61a60ab524ef7d6a473a
-        ./autogen.sh
-        ./configure --prefix=/usr --enable-module-schnorrsig --enable-experimental
-        make
-        make check
-        sudo make install
-
     - name: 📥 Checkout repository
       uses: actions/checkout@v2.3.3
       with:
