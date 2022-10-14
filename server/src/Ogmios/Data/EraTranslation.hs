@@ -23,25 +23,37 @@ module Ogmios.Data.EraTranslation
 import Ogmios.Prelude
 
 import Cardano.Ledger.Babbage.Tx
-    ( ValidatedTx (..) )
+    ( ValidatedTx (..)
+    )
 import Cardano.Ledger.Era
-    ( PreviousEra )
+    ( PreviousEra
+    )
 import Cardano.Ledger.Serialization
-    ( translateViaCBORAnn )
+    ( translateViaCBORAnn
+    )
 import Cardano.Ledger.Shelley.UTxO
-    ( UTxO (..) )
+    ( UTxO (..)
+    )
 import Cardano.Network.Protocol.NodeToClient
-    ( Crypto )
+    ( Crypto
+    )
 import Control.Monad.Trans.Except
-    ( runExcept )
+    ( runExcept
+    )
 import Data.Maybe.Strict
-    ( StrictMaybe (..) )
+    ( StrictMaybe (..)
+    )
 import Ouroboros.Consensus.Cardano
-    ( CardanoBlock )
+    ( CardanoBlock
+    )
 import Ouroboros.Consensus.Cardano.Block
-    ( AlonzoEra, BabbageEra, CardanoEras )
+    ( AlonzoEra
+    , BabbageEra
+    , CardanoEras
+    )
 import Ouroboros.Consensus.Shelley.Ledger
-    ( ShelleyBlock )
+    ( ShelleyBlock
+    )
 
 import qualified Cardano.Ledger.Alonzo.Scripts as Alonzo
 import qualified Cardano.Ledger.Alonzo.Tx as Alonzo

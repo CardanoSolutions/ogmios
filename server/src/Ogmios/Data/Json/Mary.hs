@@ -9,19 +9,26 @@ module Ogmios.Data.Json.Mary where
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Binary
-    ( serialize' )
+    ( serialize'
+    )
 import Cardano.Ledger.Crypto
-    ( Crypto )
+    ( Crypto
+    )
 import Data.ByteString.Base16
-    ( encodeBase16 )
+    ( encodeBase16
+    )
 import GHC.Records
-    ( getField )
+    ( getField
+    )
 import Ouroboros.Consensus.Cardano.Block
-    ( MaryEra )
+    ( MaryEra
+    )
 import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos )
+    ( TPraos
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
-    ( ShelleyBlock (..) )
+    ( ShelleyBlock (..)
+    )
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
 

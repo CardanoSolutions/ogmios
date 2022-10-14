@@ -92,8 +92,8 @@ jobs:
         PACKAGE: stylish-haskell
         REPOSITORY: jaspervdj/stylish-haskell
         PLATFORM: linux-x86_64
-        RELEASE: v0.11.0.0
-        VERSION: v0.11.0.0
+        RELEASE: v0.13.0.0
+        VERSION: v0.13.0.0
       run: |
         curl -sSL https://raw.github.com/cardanosolutions/ogmios/master/scripts/exec-from-github.sh | sh -s $(find src test app -type f -name '*.hs' ! -path '*.stack-work*') -i -c .stylish-haskell.yaml
         if [ -z "$(git status --porcelain)" ]; then

@@ -16,7 +16,8 @@ module Ogmios.OptionsSpec
 import Ogmios.Prelude
 
 import Data.List
-    ( isInfixOf )
+    ( isInfixOf
+    )
 import Ogmios.App.Configuration
     ( Configuration (..)
     , EpochSlots (..)
@@ -25,7 +26,10 @@ import Ogmios.App.Configuration
     , mkSystemStart
     )
 import Ogmios.Control.MonadLog
-    ( Severity (..), TracerDefinition (..), defaultTracers )
+    ( Severity (..)
+    , TracerDefinition (..)
+    , defaultTracers
+    )
 import Ogmios.Options
     ( Command (..)
     , Tracers (..)
@@ -34,7 +38,8 @@ import Ogmios.Options
     , parseOptionsPure
     )
 import System.Environment
-    ( withArgs )
+    ( withArgs
+    )
 import Test.Hspec
     ( Expectation
     , Spec
@@ -46,7 +51,8 @@ import Test.Hspec
     , specify
     )
 import Test.Path.Util
-    ( getProjectRoot )
+    ( getProjectRoot
+    )
 
 spec :: Spec
 spec = parallel $ do

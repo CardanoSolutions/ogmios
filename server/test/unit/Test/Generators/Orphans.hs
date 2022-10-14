@@ -10,15 +10,20 @@ module Test.Generators.Orphans () where
 import Ogmios.Prelude
 
 import Cardano.Ledger.Alonzo.TxInfo
-    ( TxOutSource (..) )
+    ( TxOutSource (..)
+    )
 import Cardano.Ledger.Crypto
-    ( StandardCrypto )
+    ( StandardCrypto
+    )
 import Test.QuickCheck
-    ( Arbitrary (..) )
+    ( Arbitrary (..)
+    )
 import Test.QuickCheck.Arbitrary.Generic
-    ( genericArbitrary )
+    ( genericArbitrary
+    )
 import Test.QuickCheck.Modifiers
-    ( PrintableString (..) )
+    ( PrintableString (..)
+    )
 
 import qualified Cardano.Ledger.TxIn as Ledger
 

@@ -9,13 +9,18 @@ module Ogmios.Data.Metrics.Prometheus where
 import Ogmios.Prelude
 
 import Cardano.Slotting.Block
-    ( BlockNo (..) )
+    ( BlockNo (..)
+    )
 import Cardano.Slotting.Slot
-    ( SlotNo (..) )
+    ( SlotNo (..)
+    )
 import Data.ByteString.Builder
-    ( Builder )
+    ( Builder
+    )
 import Ogmios.App.Metrics
-    ( Metrics (..), RuntimeStats (..) )
+    ( Metrics (..)
+    , RuntimeStats (..)
+    )
 import Ogmios.Data.Health
     ( ConnectionStatus (..)
     , EpochNo (..)
@@ -25,17 +30,25 @@ import Ogmios.Data.Health
     , Tip (..)
     )
 import System.Metrics.Prometheus.Encode.Text
-    ( encodeMetrics )
+    ( encodeMetrics
+    )
 import System.Metrics.Prometheus.Metric
-    ( MetricSample (..) )
+    ( MetricSample (..)
+    )
 import System.Metrics.Prometheus.Metric.Counter
-    ( CounterSample (..) )
+    ( CounterSample (..)
+    )
 import System.Metrics.Prometheus.Metric.Gauge
-    ( GaugeSample (..) )
+    ( GaugeSample (..)
+    )
 import System.Metrics.Prometheus.MetricId
-    ( Labels (..), MetricId (..), makeName )
+    ( Labels (..)
+    , MetricId (..)
+    , makeName
+    )
 import System.Metrics.Prometheus.Registry
-    ( RegistrySample (..) )
+    ( RegistrySample (..)
+    )
 
 import qualified Data.Map as Map
 import qualified Data.Scientific as Scientific

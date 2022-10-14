@@ -41,13 +41,20 @@ module Ogmios.Data.Json
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Binary
-    ( ToCBOR (..) )
+    ( ToCBOR (..)
+    )
 import Cardano.Ledger.Crypto
-    ( Crypto )
+    ( Crypto
+    )
 import Cardano.Ledger.Shelley.API
-    ( ApplyTxError (..) )
+    ( ApplyTxError (..)
+    )
 import Cardano.Network.Protocol.NodeToClient
-    ( GenTx, GenTxId, SerializedTx, SubmitTxError )
+    ( GenTx
+    , GenTxId
+    , SerializedTx
+    , SubmitTxError
+    )
 import Ogmios.Data.Json.Query
     ( decodeOneEraHash
     , decodePoint
@@ -60,9 +67,11 @@ import Ogmios.Data.Json.Query
     , encodePoint
     )
 import Ouroboros.Consensus.Byron.Ledger.Block
-    ( ByronBlock (..) )
+    ( ByronBlock (..)
+    )
 import Ouroboros.Consensus.Byron.Ledger.Mempool
-    ( encodeByronGenTx )
+    ( encodeByronGenTx
+    )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoBlock
     , GenTx (..)
@@ -71,13 +80,18 @@ import Ouroboros.Consensus.Cardano.Block
     , TxId (..)
     )
 import Ouroboros.Consensus.Protocol.Praos
-    ( PraosCrypto )
+    ( PraosCrypto
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Mempool
-    ( GenTx (..), TxId (..) )
+    ( GenTx (..)
+    , TxId (..)
+    )
 import Ouroboros.Network.Block
-    ( Tip (..) )
+    ( Tip (..)
+    )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
-    ( AcquireFailure (..) )
+    ( AcquireFailure (..)
+    )
 
 import qualified Cardano.Protocol.TPraos.API as TPraos
 import qualified Codec.CBOR.Write as Cbor

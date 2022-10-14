@@ -13,15 +13,22 @@ module Ogmios.Data.Json.Orphans () where
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Ledger.Crypto
-    ( Crypto )
+    ( Crypto
+    )
 import Cardano.Ledger.Shelley.UTxO
-    ( UTxO (..) )
+    ( UTxO (..)
+    )
 import Cardano.Network.Protocol.NodeToClient
-    ( GenTx, GenTxId )
+    ( GenTx
+    , GenTxId
+    )
 import Cardano.Network.Protocol.NodeToClient.Trace
-    ( TraceClient, encodeTraceClient )
+    ( TraceClient
+    , encodeTraceClient
+    )
 import Ogmios.Data.EraTranslation
-    ( MultiEraUTxO (..) )
+    ( MultiEraUTxO (..)
+    )
 import Ogmios.Data.Json
     ( decodePoint
     , decodeSerializedTx
@@ -33,15 +40,24 @@ import Ogmios.Data.Json
     , encodeTip
     )
 import Ogmios.Data.Json.Query
-    ( encodePoint )
+    ( encodePoint
+    )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoBlock, CardanoEras, HardForkApplyTxErr (..) )
+    ( CardanoBlock
+    , CardanoEras
+    , HardForkApplyTxErr (..)
+    )
 import Ouroboros.Consensus.Protocol.Praos
-    ( PraosCrypto )
+    ( PraosCrypto
+    )
 import Ouroboros.Consensus.Shelley.Eras
-    ( AlonzoEra, BabbageEra )
+    ( AlonzoEra
+    , BabbageEra
+    )
 import Ouroboros.Network.Block
-    ( Point (..), Tip (..) )
+    ( Point (..)
+    , Tip (..)
+    )
 
 import qualified Cardano.Protocol.TPraos.API as TPraos
 import qualified Data.Aeson as Json

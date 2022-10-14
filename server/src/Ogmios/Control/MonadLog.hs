@@ -29,17 +29,30 @@ module Ogmios.Control.MonadLog
 import Ogmios.Prelude
 
 import Control.Concurrent
-    ( myThreadId )
+    ( myThreadId
+    )
 import Control.Monad.IOSim
-    ( IOSim )
+    ( IOSim
+    )
 import Control.Tracer
-    ( Tracer (..), natTracer, nullTracer, traceWith )
+    ( Tracer (..)
+    , natTracer
+    , nullTracer
+    , traceWith
+    )
 import Data.Aeson
-    ( ToJSON (..), toEncoding )
+    ( ToJSON (..)
+    , toEncoding
+    )
 import Data.Aeson.Encoding
-    ( Encoding, encodingToLazyByteString, pair, pairs )
+    ( Encoding
+    , encodingToLazyByteString
+    , pair
+    , pairs
+    )
 import Data.Char
-    ( isLower )
+    ( isLower
+    )
 import Data.Generics.Tracers
     ( IsRecordOfTracers
     , SomeMsg (..)
@@ -49,13 +62,22 @@ import Data.Generics.Tracers
     , defaultTracers
     )
 import Data.Severity
-    ( HasSeverityAnnotation (..), Severity (..) )
+    ( HasSeverityAnnotation (..)
+    , Severity (..)
+    )
 import Ogmios.Control.MonadClock
-    ( getCurrentTime )
+    ( getCurrentTime
+    )
 import Ogmios.Control.MonadSTM
-    ( newTMVarIO, withTMVar )
+    ( newTMVarIO
+    , withTMVar
+    )
 import System.IO
-    ( BufferMode (..), hSetBuffering, hSetEncoding, utf8 )
+    ( BufferMode (..)
+    , hSetBuffering
+    , hSetEncoding
+    , utf8
+    )
 
 import qualified Cardano.BM.Data.Severity as BM
 import qualified Cardano.BM.Data.Tracer as BM

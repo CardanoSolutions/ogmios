@@ -40,7 +40,9 @@ import Ogmios.Data.Protocol
     ()
 
 import Ouroboros.Network.Block
-    ( Point (..), Tip (..) )
+    ( Point (..)
+    , Tip (..)
+    )
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Data.Aeson.Types as Json

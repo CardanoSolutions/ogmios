@@ -12,9 +12,12 @@ module Ogmios.Version
 import Ogmios.Prelude
 
 import Data.Git.Revision.TH
-    ( gitDescribeHEAD, unknownRevision )
+    ( gitDescribeHEAD
+    , unknownRevision
+    )
 import Data.Version
-    ( showVersion )
+    ( showVersion
+    )
 
 import qualified Paths_ogmios as Pkg
 

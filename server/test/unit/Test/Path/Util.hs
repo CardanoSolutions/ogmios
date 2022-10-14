@@ -9,9 +9,13 @@ module Test.Path.Util
 import Ogmios.Prelude
 
 import Data.FileEmbed
-    ( makeRelativeToProject )
+    ( makeRelativeToProject
+    )
 import Language.Haskell.TH.Syntax
-    ( Exp, Q, liftData )
+    ( Exp
+    , Q
+    , liftData
+    )
 
 getProjectRoot :: Q Exp
 getProjectRoot =

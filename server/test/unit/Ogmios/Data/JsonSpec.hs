@@ -15,21 +15,32 @@ module Ogmios.Data.JsonSpec
 import Ogmios.Prelude
 
 import Cardano.Ledger.Crypto
-    ( StandardCrypto )
+    ( StandardCrypto
+    )
 import Cardano.Network.Protocol.NodeToClient
-    ( Block, GenTxId )
+    ( Block
+    , GenTxId
+    )
 import Cardano.Slotting.Time
-    ( mkSlotLength )
+    ( mkSlotLength
+    )
 import Control.Monad.Class.MonadAsync
-    ( forConcurrently_ )
+    ( forConcurrently_
+    )
 import Data.Aeson
-    ( parseJSON, toJSON )
+    ( parseJSON
+    , toJSON
+    )
 import Data.Aeson.QQ.Simple
-    ( aesonQQ )
+    ( aesonQQ
+    )
 import Data.Maybe
-    ( fromJust )
+    ( fromJust
+    )
 import Ogmios.Data.EraTranslation
-    ( MultiEraUTxO (..), translateUtxo )
+    ( MultiEraUTxO (..)
+    , translateUtxo
+    )
 import Ogmios.Data.Json
     ( Json
     , SerializationMode (..)
@@ -53,7 +64,8 @@ import Ogmios.Data.Json
 import Ogmios.Data.Json.Orphans
     ()
 import Ogmios.Data.Json.Prelude
-    ( encodeSlotLength )
+    ( encodeSlotLength
+    )
 import Ogmios.Data.Json.Query
     ( QueryInEra
     , ShelleyBasedEra (..)
@@ -143,17 +155,26 @@ import Ogmios.Data.Protocol.TxSubmission
     , _encodeSubmitTxResponse
     )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras, GenTx, HardForkApplyTxErr (..) )
+    ( CardanoEras
+    , GenTx
+    , HardForkApplyTxErr (..)
+    )
 import Ouroboros.Consensus.Shelley.Eras
-    ( StandardAlonzo )
+    ( StandardAlonzo
+    )
 import Ouroboros.Network.Block
-    ( Point (..), Tip (..) )
+    ( Point (..)
+    , Tip (..)
+    )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
-    ( AcquireFailure (..) )
+    ( AcquireFailure (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
-    ( SubmitResult (..) )
+    ( SubmitResult (..)
+    )
 import System.Directory
-    ( createDirectoryIfMissing )
+    ( createDirectoryIfMissing
+    )
 import Test.Generators
     ( genAcquireFailure
     , genBlock
@@ -204,11 +225,16 @@ import Test.Hspec
     , specify
     )
 import Test.Hspec.Json.Schema
-    ( SchemaRef (..), prop_validateToJSON, unsafeReadSchemaRef )
+    ( SchemaRef (..)
+    , prop_validateToJSON
+    , unsafeReadSchemaRef
+    )
 import Test.Hspec.QuickCheck
-    ( prop )
+    ( prop
+    )
 import Test.Path.Util
-    ( getProjectRoot )
+    ( getProjectRoot
+    )
 import Test.QuickCheck
     ( Arbitrary (..)
     , Args (..)
@@ -230,7 +256,8 @@ import Test.QuickCheck
     , (===)
     )
 import Test.QuickCheck.Arbitrary.Generic
-    ( genericArbitrary )
+    ( genericArbitrary
+    )
 
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage

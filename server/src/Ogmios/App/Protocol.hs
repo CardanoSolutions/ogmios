@@ -12,19 +12,35 @@ module Ogmios.App.Protocol
 import Ogmios.Prelude
 
 import Cardano.Network.Protocol.NodeToClient
-    ( SerializedTx )
+    ( SerializedTx
+    )
 import GHC.Generics
-    ( Rep )
+    ( Rep
+    )
 import Ogmios.Data.EraTranslation
-    ( MultiEraUTxO )
+    ( MultiEraUTxO
+    )
 import Ogmios.Data.Json
-    ( FromJSON, Json )
+    ( FromJSON
+    , Json
+    )
 import Ogmios.Data.Protocol
-    ( MethodName )
+    ( MethodName
+    )
 import Ogmios.Data.Protocol.ChainSync
-    ( FindIntersect, RequestNext, _decodeFindIntersect, _decodeRequestNext )
+    ( FindIntersect
+    , RequestNext
+    , _decodeFindIntersect
+    , _decodeRequestNext
+    )
 import Ogmios.Data.Protocol.StateQuery
-    ( Acquire, Query, Release, _decodeAcquire, _decodeQuery, _decodeRelease )
+    ( Acquire
+    , Query
+    , Release
+    , _decodeAcquire
+    , _decodeQuery
+    , _decodeRelease
+    )
 import Ogmios.Data.Protocol.TxMonitor
     ( AwaitAcquire
     , GenTxId
@@ -39,9 +55,14 @@ import Ogmios.Data.Protocol.TxMonitor
     , _decodeSizeAndCapacity
     )
 import Ogmios.Data.Protocol.TxSubmission
-    ( EvaluateTx, SubmitTx, _decodeEvaluateTx, _decodeSubmitTx )
+    ( EvaluateTx
+    , SubmitTx
+    , _decodeEvaluateTx
+    , _decodeSubmitTx
+    )
 import Ouroboros.Network.Block
-    ( Point (..) )
+    ( Point (..)
+    )
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Codec.Json.Wsp.Handler as Wsp

@@ -44,14 +44,18 @@ module Ogmios.Data.Protocol.StateQuery
 import Ogmios.Data.Json.Prelude
 
 import Ogmios.Data.Json.Query
-    ( Query (..) )
+    ( Query (..)
+    )
 import Ogmios.Data.Protocol
     ()
 
 import Ouroboros.Network.Block
-    ( Point (..), StandardHash )
+    ( Point (..)
+    , StandardHash
+    )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
-    ( AcquireFailure )
+    ( AcquireFailure
+    )
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Data.Aeson.Types as Json

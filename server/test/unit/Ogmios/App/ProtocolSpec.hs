@@ -12,17 +12,25 @@ module Ogmios.App.ProtocolSpec
 import Ogmios.Prelude
 
 import Cardano.Network.Protocol.NodeToClient
-    ( Block )
+    ( Block
+    )
 import Data.Aeson
-    ( encode )
+    ( encode
+    )
 import Data.Aeson.Lens
-    ( key, _String, _Value )
+    ( _String
+    , _Value
+    , key
+    )
 import Data.Aeson.QQ.Simple
-    ( aesonQQ )
+    ( aesonQQ
+    )
 import Ogmios.App.Protocol
-    ( onUnmatchedMessage )
+    ( onUnmatchedMessage
+    )
 import Ogmios.Data.Json
-    ( inefficientEncodingToValue )
+    ( inefficientEncodingToValue
+    )
 import Ogmios.Data.Json.Orphans
     ()
 import Test.Hspec

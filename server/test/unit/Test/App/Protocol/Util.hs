@@ -20,33 +20,58 @@ module Test.App.Protocol.Util
 import Ogmios.Prelude
 
 import Control.Exception
-    ( evaluate )
+    ( evaluate
+    )
 import Control.Monad.Class.MonadTimer
-    ( MonadDelay )
+    ( MonadDelay
+    )
 import Control.Monad.IOSim
-    ( runSimOrThrow )
+    ( runSimOrThrow
+    )
 import GHC.TypeLits
-    ( KnownSymbol, Symbol, symbolVal )
+    ( KnownSymbol
+    , Symbol
+    , symbolVal
+    )
 import Ogmios.Control.Exception
-    ( MonadCatch (..), MonadThrow (..) )
+    ( MonadCatch (..)
+    , MonadThrow (..)
+    )
 import Ogmios.Control.MonadAsync
-    ( race )
+    ( race
+    )
 import Ogmios.Control.MonadLog
-    ( MonadLog )
+    ( MonadLog
+    )
 import Ogmios.Control.MonadOuroboros
-    ( MonadOuroboros )
+    ( MonadOuroboros
+    )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), newTQueue, readTQueue, writeTQueue )
+    ( MonadSTM (..)
+    , newTQueue
+    , readTQueue
+    , writeTQueue
+    )
 import Ogmios.Data.Json.Prelude
-    ( at, inefficientEncodingToValue )
+    ( at
+    , inefficientEncodingToValue
+    )
 import Ouroboros.Network.Channel
-    ( Channel (..) )
+    ( Channel (..)
+    )
 import System.Random
-    ( StdGen, mkStdGen )
+    ( StdGen
+    , mkStdGen
+    )
 import Test.QuickCheck
-    ( Arbitrary (..), Property )
+    ( Arbitrary (..)
+    , Property
+    )
 import Test.QuickCheck.Monadic
-    ( monadicIO, pick, run )
+    ( monadicIO
+    , pick
+    , run
+    )
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Data.Aeson as Json

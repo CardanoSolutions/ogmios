@@ -36,23 +36,40 @@ module Ogmios.App.Protocol.TxSubmission
 import Ogmios.Prelude
 
 import Cardano.Ledger.Crypto
-    ( StandardCrypto )
+    ( StandardCrypto
+    )
 import Cardano.Ledger.Era
-    ( Crypto )
+    ( Crypto
+    )
 import Control.Monad.Trans.Except
-    ( Except )
+    ( Except
+    )
 import Data.SOP.Strict
-    ( NS (..) )
+    ( NS (..)
+    )
 import Data.Type.Equality
-    ( (:~:) (..), testEquality )
+    ( testEquality
+    , (:~:) (..)
+    )
 import GHC.Records
-    ( HasField (..) )
+    ( HasField (..)
+    )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), TQueue, newEmptyTMVar, putTMVar, readTQueue, takeTMVar )
+    ( MonadSTM (..)
+    , TQueue
+    , newEmptyTMVar
+    , putTMVar
+    , readTQueue
+    , takeTMVar
+    )
 import Ogmios.Data.EraTranslation
-    ( MultiEraUTxO (..), translateTx, translateUtxo )
+    ( MultiEraUTxO (..)
+    , translateTx
+    , translateUtxo
+    )
 import Ogmios.Data.Json
-    ( Json )
+    ( Json
+    )
 import Ogmios.Data.Protocol.TxSubmission
     ( AlonzoEra
     , BabbageEra
@@ -87,31 +104,46 @@ import Ouroboros.Consensus.Cardano.Block
     , GenTx (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( EraIndex (..), HardForkBlock )
+    ( EraIndex (..)
+    , HardForkBlock
+    )
 import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
-    ( QueryHardFork (..) )
+    ( QueryHardFork (..)
+    )
 import Ouroboros.Consensus.HardFork.History
-    ( interpreterToEpochInfo )
+    ( interpreterToEpochInfo
+    )
 import Ouroboros.Consensus.Ledger.Query
-    ( Query (..) )
+    ( Query (..)
+    )
 import Ouroboros.Consensus.Protocol.Praos
-    ( Praos )
+    ( Praos
+    )
 import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos )
+    ( TPraos
+    )
 import Ouroboros.Consensus.Shelley.Ledger
-    ( GenTx (..) )
+    ( GenTx (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
-    ( ShelleyBlock )
+    ( ShelleyBlock
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Query
-    ( BlockQuery (..) )
+    ( BlockQuery (..)
+    )
 import Ouroboros.Network.Block
-    ( Point (..) )
+    ( Point (..)
+    )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
-    ( LocalStateQueryClient (..) )
+    ( LocalStateQueryClient (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
-    ( LocalTxClientStIdle (..), LocalTxSubmissionClient (..) )
+    ( LocalTxClientStIdle (..)
+    , LocalTxSubmissionClient (..)
+    )
 import Type.Reflection
-    ( typeRep )
+    ( typeRep
+    )
 
 import qualified Data.Map.Strict as Map
 import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ

@@ -29,32 +29,53 @@ import Cardano.Network.Protocol.NodeToClient
     , mkClient
     )
 import Cardano.Network.Protocol.NodeToClient.Trace
-    ( TraceClient )
+    ( TraceClient
+    )
 import Network.HTTP.Types.Header
-    ( hUserAgent )
+    ( hUserAgent
+    )
 import Ogmios.App.Configuration
-    ( Configuration (..), NetworkParameters (..) )
+    ( Configuration (..)
+    , NetworkParameters (..)
+    )
 import Ogmios.App.Metrics
-    ( Sensors (..), recordSession )
+    ( Sensors (..)
+    , recordSession
+    )
 import Ogmios.App.Protocol
-    ( onUnmatchedMessage )
+    ( onUnmatchedMessage
+    )
 import Ogmios.App.Protocol.ChainSync
-    ( MaxInFlight, mkChainSyncClient )
+    ( MaxInFlight
+    , mkChainSyncClient
+    )
 import Ogmios.App.Protocol.StateQuery
-    ( TraceStateQuery, mkStateQueryClient )
+    ( TraceStateQuery
+    , mkStateQueryClient
+    )
 import Ogmios.App.Protocol.TxMonitor
-    ( mkTxMonitorClient )
+    ( mkTxMonitorClient
+    )
 import Ogmios.App.Protocol.TxSubmission
     ( ExecutionUnitsEvaluator
     , mkTxSubmissionClient
     , newExecutionUnitsEvaluator
     )
 import Ogmios.Control.Exception
-    ( IOException, MonadCatch (..), MonadThrow (..) )
+    ( IOException
+    , MonadCatch (..)
+    , MonadThrow (..)
+    )
 import Ogmios.Control.MonadAsync
-    ( ExceptionInLinkedThread (..), MonadAsync (..), MonadLink, link )
+    ( ExceptionInLinkedThread (..)
+    , MonadAsync (..)
+    , MonadLink
+    , link
+    )
 import Ogmios.Control.MonadClock
-    ( MonadClock (..), idle )
+    ( MonadClock (..)
+    , idle
+    )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
     , Logger
@@ -64,11 +85,17 @@ import Ogmios.Control.MonadLog
     , natTracer
     )
 import Ogmios.Control.MonadMetrics
-    ( MonadMetrics (..) )
+    ( MonadMetrics (..)
+    )
 import Ogmios.Control.MonadOuroboros
-    ( MonadOuroboros )
+    ( MonadOuroboros
+    )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), TQueue, newTQueue, writeTQueue )
+    ( MonadSTM (..)
+    , TQueue
+    , newTQueue
+    , writeTQueue
+    )
 import Ogmios.Control.MonadWebSocket
     ( Connection
     , ConnectionException (..)
@@ -100,23 +127,40 @@ import Ogmios.Data.Json
 import Ogmios.Data.Json.Orphans
     ()
 import Ogmios.Data.Protocol.ChainSync
-    ( ChainSyncCodecs (..), ChainSyncMessage (..), mkChainSyncCodecs )
+    ( ChainSyncCodecs (..)
+    , ChainSyncMessage (..)
+    , mkChainSyncCodecs
+    )
 import Ogmios.Data.Protocol.StateQuery
-    ( StateQueryCodecs (..), StateQueryMessage (..), mkStateQueryCodecs )
+    ( StateQueryCodecs (..)
+    , StateQueryMessage (..)
+    , mkStateQueryCodecs
+    )
 import Ogmios.Data.Protocol.TxMonitor
-    ( TxMonitorCodecs (..), TxMonitorMessage (..), mkTxMonitorCodecs )
+    ( TxMonitorCodecs (..)
+    , TxMonitorMessage (..)
+    , mkTxMonitorCodecs
+    )
 import Ogmios.Data.Protocol.TxSubmission
-    ( TxSubmissionCodecs (..), TxSubmissionMessage (..), mkTxSubmissionCodecs )
+    ( TxSubmissionCodecs (..)
+    , TxSubmissionMessage (..)
+    , mkTxSubmissionCodecs
+    )
 import Ouroboros.Network.NodeToClient.Version
-    ( NodeToClientVersionData (NodeToClientVersionData) )
+    ( NodeToClientVersionData (NodeToClientVersionData)
+    )
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
-    ( ChainSyncClientPipelined (..) )
+    ( ChainSyncClientPipelined (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxMonitor.Client
-    ( LocalTxMonitorClient (..) )
+    ( LocalTxMonitorClient (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
-    ( LocalTxSubmissionClient (..) )
+    ( LocalTxSubmissionClient (..)
+    )
 import System.TimeManager
-    ( TimeoutThread (..) )
+    ( TimeoutThread (..)
+    )
 
 import qualified Cardano.Ledger.Alonzo.PParams
 import qualified Cardano.Ledger.Babbage.PParams

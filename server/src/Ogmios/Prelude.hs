@@ -39,18 +39,28 @@ module Ogmios.Prelude
     ) where
 
 import Data.Array
-    ( Array, array )
+    ( Array
+    , array
+    )
 import Data.Generics.Internal.VL.Lens
-    ( view, (^.) )
+    ( view
+    , (^.)
+    )
 import Data.Generics.Product.Typed
-    ( HasType, typed )
+    ( HasType
+    , typed
+    )
 import qualified Data.Map as Map
 import Data.Profunctor.Unsafe
-    ( ( #. ) )
+    ( (#.)
+    )
 import GHC.Ix
-    ( Ix )
+    ( Ix
+    )
 import GHC.TypeLits
-    ( ErrorMessage (..), TypeError )
+    ( ErrorMessage (..)
+    , TypeError
+    )
 import Relude hiding
     ( MVar
     , Nat

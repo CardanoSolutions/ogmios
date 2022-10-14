@@ -28,18 +28,26 @@ module Ogmios.App.Configuration
 import Ogmios.Prelude
 
 import Ogmios.Control.MonadLog
-    ( HasSeverityAnnotation (..), Severity (..) )
+    ( HasSeverityAnnotation (..)
+    , Severity (..)
+    )
 
 import Cardano.Chain.Slotting
-    ( EpochSlots (..) )
+    ( EpochSlots (..)
+    )
 import Data.Aeson
-    ( ToJSON, genericToEncoding )
+    ( ToJSON
+    , genericToEncoding
+    )
 import Data.Time.Clock.POSIX
-    ( posixSecondsToUTCTime )
+    ( posixSecondsToUTCTime
+    )
 import Ouroboros.Consensus.BlockchainTime.WallClock.Types
-    ( SystemStart (..) )
+    ( SystemStart (..)
+    )
 import Ouroboros.Network.Magic
-    ( NetworkMagic (..) )
+    ( NetworkMagic (..)
+    )
 
 import qualified Data.Aeson as Json
 

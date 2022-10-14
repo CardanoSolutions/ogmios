@@ -20,29 +20,52 @@ import Cardano.Network.Protocol.NodeToClient
     , runPeer
     )
 import Data.Aeson
-    ( ToJSON (..) )
+    ( ToJSON (..)
+    )
 import Data.List
-    ( delete, (!!) )
+    ( delete
+    , (!!)
+    )
 import GHC.TypeLits
-    ( KnownSymbol, symbolVal )
+    ( KnownSymbol
+    , symbolVal
+    )
 import Network.TypedProtocol.Codec
-    ( Codec (..), PeerHasAgency (..), SomeMessage (..), runDecoder )
+    ( Codec (..)
+    , PeerHasAgency (..)
+    , SomeMessage (..)
+    , runDecoder
+    )
 import Ogmios.App.Configuration
-    ( EpochSlots (..) )
+    ( EpochSlots (..)
+    )
 import Ogmios.App.Protocol.TxMonitor
-    ( mkTxMonitorClient )
+    ( mkTxMonitorClient
+    )
 import Ogmios.Control.Exception
-    ( MonadThrow (..) )
+    ( MonadThrow (..)
+    )
 import Ogmios.Control.MonadAsync
-    ( race )
+    ( race
+    )
 import Ogmios.Control.MonadLog
-    ( nullTracer )
+    ( nullTracer
+    )
 import Ogmios.Control.MonadOuroboros
-    ( MonadOuroboros )
+    ( MonadOuroboros
+    )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), newTQueue, readTQueue, writeTQueue )
+    ( MonadSTM (..)
+    , newTQueue
+    , readTQueue
+    , writeTQueue
+    )
 import Ogmios.Data.Json
-    ( Json, SerializationMode (..), encodeTx, encodeTxId )
+    ( Json
+    , SerializationMode (..)
+    , encodeTx
+    , encodeTxId
+    )
 import Ogmios.Data.Json.Orphans
     ()
 import Ogmios.Data.Protocol.TxMonitor
@@ -58,7 +81,8 @@ import Ogmios.Data.Protocol.TxMonitor
     , mkTxMonitorCodecs
     )
 import Ouroboros.Consensus.Ledger.SupportsMempool
-    ( HasTxId (..) )
+    ( HasTxId (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxMonitor.Type
     ( ClientHasAgency (..)
     , LocalTxMonitor (..)
@@ -66,7 +90,9 @@ import Ouroboros.Network.Protocol.LocalTxMonitor.Type
     , TokBusyKind (..)
     )
 import System.Random
-    ( StdGen, random )
+    ( StdGen
+    , random
+    )
 import Test.App.Protocol.Util
     ( FailedToDecodeMsg (..)
     , PeerTerminatedUnexpectedly (..)
@@ -84,9 +110,13 @@ import Test.Generators
     , reasonablySized
     )
 import Test.Hspec
-    ( Spec, context, parallel )
+    ( Spec
+    , context
+    , parallel
+    )
 import Test.Hspec.QuickCheck
-    ( prop )
+    ( prop
+    )
 import Test.QuickCheck
     ( Confidence (..)
     , Gen

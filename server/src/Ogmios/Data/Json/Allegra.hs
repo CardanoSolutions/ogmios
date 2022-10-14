@@ -9,17 +9,23 @@ module Ogmios.Data.Json.Allegra where
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Binary
-    ( serialize' )
+    ( serialize'
+    )
 import Cardano.Ledger.Crypto
-    ( Crypto )
+    ( Crypto
+    )
 import GHC.Records
-    ( getField )
+    ( getField
+    )
 import Ouroboros.Consensus.Cardano.Block
-    ( AllegraEra )
+    ( AllegraEra
+    )
 import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos )
+    ( TPraos
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
-    ( ShelleyBlock (..) )
+    ( ShelleyBlock (..)
+    )
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
 

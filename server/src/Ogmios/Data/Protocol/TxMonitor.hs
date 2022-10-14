@@ -66,17 +66,22 @@ module Ogmios.Data.Protocol.TxMonitor
     ) where
 
 import Ogmios.Data.Json.Prelude hiding
-    ( id )
+    ( id
+    )
 
 import Ogmios.Data.Protocol
     ()
 
 import Cardano.Network.Protocol.NodeToClient
-    ( GenTx, GenTxId )
+    ( GenTx
+    , GenTxId
+    )
 import Cardano.Slotting.Slot
-    ( SlotNo (..) )
+    ( SlotNo (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxMonitor.Type
-    ( MempoolSizeAndCapacity (..) )
+    ( MempoolSizeAndCapacity (..)
+    )
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Data.Aeson as Json

@@ -95,7 +95,8 @@ module Ogmios.Data.Json.Query
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Api
-    ( ShelleyBasedEra (..) )
+    ( ShelleyBasedEra (..)
+    )
 import Cardano.Binary
     ( Annotator
     , DecoderError
@@ -105,79 +106,142 @@ import Cardano.Binary
     , decodeFullDecoder
     )
 import Cardano.Crypto.Hash
-    ( pattern UnsafeHash, hashFromBytes, hashFromTextAsHex )
+    ( hashFromBytes
+    , hashFromTextAsHex
+    , pattern UnsafeHash
+    )
 import Cardano.Crypto.Hash.Class
-    ( Hash, HashAlgorithm )
+    ( Hash
+    , HashAlgorithm
+    )
 import Cardano.Ledger.Babbage
     ()
 import Cardano.Ledger.Crypto
-    ( Crypto, HASH )
+    ( Crypto
+    , HASH
+    )
 import Cardano.Ledger.Keys
-    ( KeyRole (..) )
+    ( KeyRole (..)
+    )
 import Cardano.Ledger.SafeHash
-    ( unsafeMakeSafeHash )
+    ( unsafeMakeSafeHash
+    )
 import Cardano.Network.Protocol.NodeToClient
-    ( GenTx, GenTxId, SerializedTx )
+    ( GenTx
+    , GenTxId
+    , SerializedTx
+    )
 import Cardano.Slotting.Block
-    ( BlockNo (..) )
+    ( BlockNo (..)
+    )
 import Cardano.Slotting.Slot
-    ( EpochNo (..), SlotNo (..), WithOrigin (..) )
+    ( EpochNo (..)
+    , SlotNo (..)
+    , WithOrigin (..)
+    )
 import Codec.Serialise
-    ( deserialise, deserialiseOrFail, serialise )
+    ( deserialise
+    , deserialiseOrFail
+    , serialise
+    )
 import Data.Aeson
-    ( toJSON )
+    ( toJSON
+    )
 import Data.ByteString.Base16
-    ( encodeBase16 )
+    ( encodeBase16
+    )
 import Data.SOP.Strict
-    ( NS (..) )
+    ( NS (..)
+    )
 import Formatting.Buildable
-    ( build )
+    ( build
+    )
 import Ogmios.Data.EraTranslation
-    ( MostRecentEra, MultiEraTxOut (..), MultiEraUTxO (..), translateTxOut )
+    ( MostRecentEra
+    , MultiEraTxOut (..)
+    , MultiEraUTxO (..)
+    , translateTxOut
+    )
 import Ouroboros.Consensus.BlockchainTime
-    ( SystemStart (..) )
+    ( SystemStart (..)
+    )
 import Ouroboros.Consensus.Cardano.Block
-    ( BlockQuery (..), CardanoBlock, CardanoEras, GenTx (..), TxId (..) )
+    ( BlockQuery (..)
+    , CardanoBlock
+    , CardanoEras
+    , GenTx (..)
+    , TxId (..)
+    )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( EraIndex (..), MismatchEraInfo, OneEraHash (..) )
+    ( EraIndex (..)
+    , MismatchEraInfo
+    , OneEraHash (..)
+    )
 import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
-    ( EraMismatch (..), mkEraMismatch )
+    ( EraMismatch (..)
+    , mkEraMismatch
+    )
 import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
-    ( QueryAnytime (..) )
+    ( QueryAnytime (..)
+    )
 import Ouroboros.Consensus.HardFork.History.EraParams
-    ( EraParams (..), SafeZone (..) )
+    ( EraParams (..)
+    , SafeZone (..)
+    )
 import Ouroboros.Consensus.HardFork.History.Qry
-    ( Interpreter )
+    ( Interpreter
+    )
 import Ouroboros.Consensus.HardFork.History.Summary
-    ( Bound (..), EraEnd (..), EraSummary (..), Summary (..) )
+    ( Bound (..)
+    , EraEnd (..)
+    , EraSummary (..)
+    , Summary (..)
+    )
 import Ouroboros.Consensus.Protocol.Praos
-    ( Praos, PraosCrypto )
+    ( Praos
+    , PraosCrypto
+    )
 import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos )
+    ( TPraos
+    )
 import Ouroboros.Consensus.Shelley.Eras
-    ( AllegraEra, AlonzoEra, BabbageEra, MaryEra, ShelleyEra )
+    ( AllegraEra
+    , AlonzoEra
+    , BabbageEra
+    , MaryEra
+    , ShelleyEra
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
-    ( ShelleyBlock (..), ShelleyHash (..) )
+    ( ShelleyBlock (..)
+    , ShelleyHash (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Config
-    ( CompactGenesis, getCompactGenesis )
+    ( CompactGenesis
+    , getCompactGenesis
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Mempool
-    ( TxId (..) )
+    ( TxId (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Query
-    ( BlockQuery (..), NonMyopicMemberRewards (..) )
+    ( BlockQuery (..)
+    , NonMyopicMemberRewards (..)
+    )
 import Ouroboros.Consensus.Shelley.Protocol.Abstract
-    ( ProtoCrypto )
+    ( ProtoCrypto
+    )
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
 import Ouroboros.Network.Block
-    ( pattern BlockPoint
-    , pattern GenesisPoint
-    , Point (..)
+    ( Point (..)
     , Tip (..)
     , genesisPoint
+    , pattern BlockPoint
+    , pattern GenesisPoint
     , wrapCBORinCBOR
     )
 import Ouroboros.Network.Point
-    ( Block (..) )
+    ( Block (..)
+    )
 
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Codec.CBOR.Encoding as Cbor
