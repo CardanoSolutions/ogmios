@@ -25,7 +25,8 @@ const logObject = (obj: Object) =>
   const connection = {
     maxPayload: _512MB,
     host: args.host,
-    port: args.port
+    port: args.port,
+    tls: args.tls
   } as ConnectionConfig
   const context = await createInteractionContext(console.error, () => {}, { connection })
   const chainSync = await createChainSyncClient(context, {
@@ -48,7 +49,7 @@ const logObject = (obj: Object) =>
   }
   )
   const cardanoOgmiosRepl = repl.start({
-    prompt: 'ogmios> ',
+    prompt: `${args.host}> `,
     ignoreUndefined: true
   })
 
