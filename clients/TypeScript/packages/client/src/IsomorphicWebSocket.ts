@@ -82,4 +82,4 @@ const browserPolyfill = (target : EventTarget) : IsoWebSocket => {
 /**
  * @Internal
  */
-const isBrowser = typeof process === 'undefined'
+const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined'
