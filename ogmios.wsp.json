@@ -2874,7 +2874,8 @@
           , "description": "The stake pool's active stake share (portion of the active stake)."
           }
       , "ownerStake":
-          { "$ref": "#/definitions/OwnerStake"
+          { "$ref": "#/definitions/Lovelace"
+          , "description": "The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch."
           }
       , "parameters":
           { "$ref": "#/definitions/PoolParameters" }
@@ -3169,11 +3170,6 @@
     , "description": "The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point."
     , "title": "origin"
     , "enum": [ "origin" ]
-    }
-
-  , "OwnerStake":
-    { "type": "integer"
-    , "description": "The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch."
     }
 
   , "PointOrOrigin":
@@ -3722,7 +3718,10 @@
     , "required": [ "stake", "ownerStake", "approximatePerformance", "poolParameters" ]
     , "properties":
       { "stake": { "$ref": "#/definitions/Lovelace" }
-      , "ownerStake": { "$ref": "#/definitions/OwnerStake" }
+      , "ownerStake":
+        { "$ref": "#/definitions/Lovelace"
+        , "description": "The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch."
+        }
       , "approximatePerformance":
         { "type": "number"
         , "description": "Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky."
@@ -3772,14 +3771,10 @@
       , "totalRewards":
         { "type": "integer"
         , "description": "Total rewards available for the given epoch."
-        , "minimum": 0
-        , "maximum": 18446744073709552999
         }
       , "activeStake":
         { "type": "integer"
         , "description": "The total amount of staked Lovelace during this epoch."
-        , "minimum": 0
-        , "maximum": 18446744073709552999
         }
       , "pools":
         { "type": "object"
