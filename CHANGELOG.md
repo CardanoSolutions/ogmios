@@ -11,6 +11,8 @@ pre: "<b>6. </b>"
 
 - Prometheus metrics exported at `/metrics` endpoint
 
+- Schema definitions are now included in the [📘 API reference](https://ogmios.dev/api/). This makes it a little easier to find a specific schema without having to drill into a messages definitions.
+
 #### Changed
 
 - Fixed network synchronization reporting `0.99999` even when fully synchronized. There was sometimes a possible discrepancy between the ledger internal clock and Ogmios' clock, causing a few seconds of drift time.
