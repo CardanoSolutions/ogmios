@@ -590,7 +590,7 @@ spec = do
                 ]
             }|]
             ( parseGetFilteredDelegationsAndRewards genDelegationAndRewardsResult
-            ) (10, "StateQuery/Response/Query[nonMyopicMemberRewards]")
+            ) (10, "StateQuery/Response/Query[delegationsAndRewards]")
             "ogmios.wsp.json#/properties/QueryResponse[delegationsAndRewards]"
 
         validateQuery

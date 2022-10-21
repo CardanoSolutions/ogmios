@@ -15,6 +15,10 @@ pre: "<b>6. </b>"
 
 - Fixed network synchronization reporting `0.99999` even when fully synchronized. There was sometimes a possible discrepancy between the ledger internal clock and Ogmios' clock, causing a few seconds of drift time.
 
+- ![TypeScript][] Fixed a couple of data-types with fields parsed as `number` instead of `bigint`. See [#274](https://github.com/CardanoSolutions/ogmios/issues/274)
+
+  > **Warning** This is technically an internal breaking-change, however it actually comes as a bug fix since this does not change the announced _interface_ in the TypeScript schema (which was correctly indicated 'bigint'). Still, this may cause issues with those using `number` where there will now be `bigint`.
+
 #### Removed
 
 N/A

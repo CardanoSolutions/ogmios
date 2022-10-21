@@ -342,10 +342,6 @@ export type UtcTime = string;
  * A magic number for telling networks apart. (e.g. 764824073)
  */
 export type NetworkMagic = number;
-/**
- * The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch.
- */
-export type OwnerStake = bigint;
 export type BlockNoOrOrigin = BlockNo | Origin;
 
 export interface Ogmios {
@@ -2357,7 +2353,10 @@ export interface IndividualPoolRewardsProvenance {
    * A ratio of two integers, to express exact fractions.
    */
   activeStakeShare: string;
-  ownerStake: OwnerStake;
+  /**
+   * A number of lovelace, possibly large when summed up.
+   */
+  ownerStake: bigint;
   parameters: PoolParameters;
   /**
    * A ratio of two integers, to express exact fractions.
@@ -2395,18 +2394,21 @@ export interface RewardsProvenance1 {
   /**
    * Total rewards available for the given epoch.
    */
-  totalRewards: number;
+  totalRewards: bigint;
   /**
    * The total amount of staked Lovelace during this epoch.
    */
-  activeStake: number;
+  activeStake: bigint;
   pools: {
     [k: string]: RewardInfoPool;
   };
 }
 export interface RewardInfoPool {
   stake: Lovelace;
-  ownerStake: OwnerStake;
+  /**
+   * A number of lovelace, possibly large when summed up.
+   */
+  ownerStake: bigint;
   /**
    * Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky.
    */
