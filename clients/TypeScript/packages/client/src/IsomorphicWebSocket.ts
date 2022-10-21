@@ -92,10 +92,7 @@ const isBrowser =
  * @Internal
  */
 const isPolyfilled = (o : any) =>
-  typeof o.on === 'function'
-  &&
-  typeof o.once === 'function'
-  &&
-  typeof o.removeListener === 'function'
-  &&
+  typeof o.on === 'function' &&
+  typeof o.once === 'function' &&
+  typeof o.removeListener === 'function' &&
   typeof o.removeAllListeners === 'function'
