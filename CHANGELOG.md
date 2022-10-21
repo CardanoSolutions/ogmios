@@ -5,7 +5,7 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
-### [5.5.6] - 2022-MM-DD
+### [5.5.6] - 2022-10-21
 
 #### Added
 
@@ -18,6 +18,8 @@ pre: "<b>6. </b>"
 - ![TypeScript][] Fixed a couple of data-types with fields parsed as `number` instead of `bigint`. See [#274](https://github.com/CardanoSolutions/ogmios/issues/274)
 
   > **Warning** This is technically an internal breaking-change, however it actually comes as a bug fix since this does not change the announced _interface_ in the TypeScript schema (which was correctly indicated 'bigint'). Still, this may cause issues with those using `number` where there will now be `bigint`.
+
+- ![TypeScript][] Fixed browser detection for the `IsomorphicWebSocket` abstraction. See [#273](https://github.com/CardanoSolutions/ogmios/issues/274)
 
 #### Removed
 
