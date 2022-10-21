@@ -1,1 +1,1 @@
-{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SubmitTx","result":{"SubmitFail":[{"missingRequiredDatums":{"provided":[],"missing":[]}}]},"reflection":14}
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SubmitTx","result":{"SubmitFail":[{"missingRequiredDatums":{"provided":[],"missing":[]}}]},"reflection":"st"}
