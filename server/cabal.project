@@ -15,7 +15,7 @@ test-show-details: direct
 
 package ogmios
   flags: +production
-  tests: false
+  tests: true
 
 package cardano-client
   tests: false

@@ -247,6 +247,7 @@ import Test.QuickCheck
     , forAll
     , forAllBlind
     , forAllShrinkBlind
+    , frequency
     , genericShrink
     , oneof
     , property
@@ -727,13 +728,13 @@ spec = do
 instance Arbitrary a => Arbitrary (Wsp.Response a) where
     arbitrary = oneof
         [ Wsp.Response Nothing <$> arbitrary
-        , Wsp.Response (Just $ toJSON @Int 14) <$> arbitrary
+        , Wsp.Response (Just $ toJSON @String "st") <$> arbitrary
         ]
 
 instance Arbitrary a => Arbitrary (Wsp.Request a) where
     arbitrary = oneof
         [ Wsp.Request Nothing <$> arbitrary
-        , Wsp.Request (Just $ toJSON @String "patate") <$> arbitrary
+        , Wsp.Request (Just $ toJSON @String "st") <$> arbitrary
         ]
 
 instance Arbitrary (FindIntersect Block) where
@@ -746,7 +747,10 @@ instance Arbitrary (FindIntersectResponse Block) where
 
 instance Arbitrary (RequestNextResponse Block) where
     shrink = genericShrink
-    arbitrary = reasonablySized genericArbitrary
+    arbitrary = frequency
+        [ ( 10, RollForward  <$> reasonablySized arbitrary <*> arbitrary )
+        , (  1, RollBackward <$> arbitrary <*> arbitrary )
+        ]
 
 instance Arbitrary RequestNext where
     shrink = genericShrink

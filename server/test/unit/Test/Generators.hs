@@ -145,6 +145,7 @@ import Test.QuickCheck
     , oneof
     , scale
     , shrinkList
+    , suchThat
     , vector
     )
 import Test.QuickCheck.Arbitrary.Generic
@@ -170,6 +171,7 @@ import Test.Generators.Orphans
 
 import qualified Data.Aeson as Json
 import qualified Data.Map as Map
+
 import qualified Ouroboros.Network.Point as Point
 
 import qualified Cardano.Ledger.Block as Ledger
@@ -199,9 +201,22 @@ genBlock = reasonablySized $ oneof
             , Arbitrary (Ledger.Tx era)
             )
         => Gen (ShelleyBlock (TPraos (Crypto era)) era)
-    genTPraosBlockFrom = ShelleyBlock
-        <$> (Ledger.Block <$> arbitrary <*> (toTxSeq @era <$> arbitrary))
-        <*> arbitrary
+    genTPraosBlockFrom =
+        frequency
+            [ (50
+              , ShelleyBlock
+                  <$> (Ledger.Block
+                        <$> arbitrary
+                        <*> (toTxSeq @era <$> arbitrary `suchThat` (not . null))
+                      )
+                  <*> arbitrary
+              )
+            , (1
+              , ShelleyBlock
+                  <$> (Ledger.Block <$> arbitrary <*> (pure (toTxSeq @era mempty)))
+                  <*> arbitrary
+              )
+            ]
 
     genPraosBlockFrom
         :: forall era.
@@ -211,10 +226,22 @@ genBlock = reasonablySized $ oneof
             , Arbitrary (Ledger.Tx era)
             )
         => Gen (ShelleyBlock (Praos (Crypto era)) era)
-    genPraosBlockFrom = ShelleyBlock
-        <$> (Ledger.Block <$> arbitrary <*> (toTxSeq @era <$> arbitrary))
-        <*> arbitrary
-
+    genPraosBlockFrom =
+        frequency
+            [ (50
+              , ShelleyBlock
+                  <$> (Ledger.Block
+                        <$> arbitrary
+                        <*> (toTxSeq @era <$> arbitrary `suchThat` (not . null))
+                      )
+                  <*> arbitrary
+              )
+            , (1
+              , ShelleyBlock
+                  <$> (Ledger.Block <$> arbitrary <*> (pure (toTxSeq @era mempty)))
+                  <*> arbitrary
+              )
+            ]
 
 genTxId :: Gen (GenTxId Block)
 genTxId =
