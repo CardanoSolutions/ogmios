@@ -60,7 +60,7 @@ export const createTxSubmissionClient = async (
           ...baseRequest,
           methodname: 'EvaluateTx',
           args: {
-            ...(additionalUtxoSet !== undefined ? {} : { additionalUtxoSet }),
+            ...(additionalUtxoSet !== undefined ? { additionalUtxoSet } : {}),
             evaluate: bytes
           }
         } as unknown as Ogmios['EvaluateTx']))

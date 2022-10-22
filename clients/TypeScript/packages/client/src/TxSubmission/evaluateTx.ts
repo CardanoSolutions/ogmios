@@ -36,7 +36,7 @@ export const evaluateTx = (context: InteractionContext, bytes: string, additiona
   >({
     methodName: 'EvaluateTx',
     args: {
-      ...(additionalUtxoSet !== undefined ? {} : { additionalUtxoSet }),
+      ...(additionalUtxoSet !== undefined ? { additionalUtxoSet } : {}),
       evaluate: bytes
     }
   }, {
