@@ -5,6 +5,28 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.5.7] - 2022-10-27
+
+#### Added
+
+- `delegationAndRewards` and `nonMyopicMemberRewards` queries now both accept credentials in the form of bech32 strings as parameters, with the following expected prefixes and semantic (according to [CIP-0005](https://github.com/cardano-foundation/CIPs/tree/master/CIP-0005#specification):
+
+  - `stake` (resp. `stake_test` on test networks) for stake addresses
+  - `stake_vkh` for stake key hash digests
+  - `script` for stake script hash digests
+
+  See also [#277](https://github.com/CardanoSolutions/ogmios/issues/277).
+
+- ![TypeScript][] Allow `additionalUtxoSet` to be passed as argument in the repl.
+
+#### Changed
+
+- ![TypeScript][] Fixed `additionalUtxoSet` being ignored in the `TxSubmissionClient` of the TypeScript client.
+
+#### Removed
+
+N/A
+
 ### [5.5.6] - 2022-10-21
 
 #### Added

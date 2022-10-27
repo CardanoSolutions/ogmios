@@ -577,6 +577,10 @@ spec = do
             [aesonQQ|
             { "nonMyopicMemberRewards":
                 [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
+                , "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
+                , "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
+                , "stake179kzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjcek9u8h"
+                , "stake_test17pkzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjc7u07r2"
                 ]
             }|]
             ( parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult
@@ -587,6 +591,10 @@ spec = do
             [aesonQQ|
             { "delegationsAndRewards":
                 [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
+                , "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
+                , "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
+                , "stake179kzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjcek9u8h"
+                , "stake_test17pkzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjc7u07r2"
                 ]
             }|]
             ( parseGetFilteredDelegationsAndRewards genDelegationAndRewardsResult

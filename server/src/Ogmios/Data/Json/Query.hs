@@ -4,6 +4,7 @@
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Ogmios.Data.Json.Query
@@ -138,6 +139,9 @@ import Cardano.Slotting.Slot
     ( EpochNo (..)
     , SlotNo (..)
     , WithOrigin (..)
+    )
+import Codec.Binary.Bech32.TH
+    ( humanReadablePart
     )
 import Codec.Serialise
     ( deserialise
@@ -356,7 +360,7 @@ type RewardAccounts crypto =
 
 type RewardProvenance' crypto =
     ( Sh.Api.RewardParams
-    , Map (Ledger.KeyHash 'StakePool crypto) (Sh.Api.RewardInfoPool)
+    , Map (Ledger.KeyHash 'StakePool crypto) Sh.Api.RewardInfoPool
     )
 
 
@@ -1575,18 +1579,76 @@ decodeCoin
 decodeCoin =
     fmap Ledger.word64ToCoin . Json.parseJSON
 
--- TODO: Makes it possible to distinguish between KeyHash and ScriptHash
--- credentials. Both are encoded as hex-encoded strings. Encoding them as
--- object is ill-advised because we also need them as key of the non-myopic
--- member rewards map.
---
--- A possible option: encode them as Bech32 strings with different prefixes.
 decodeCredential
-    :: Crypto crypto
+    :: forall crypto. Crypto crypto
     => Json.Value
     -> Json.Parser (Ledger.Credential 'Staking crypto)
-decodeCredential =
-    fmap (Ledger.KeyHashObj . Ledger.KeyHash) . decodeHash
+decodeCredential = Json.withText "Credential" $ \(encodeUtf8 -> str) ->
+    asum
+        [ decodeBase16 str >>=
+            decodeAsKeyHash
+        , decodeBech32 str >>=
+            whenHrp (`elem` [[humanReadablePart|stake|], [humanReadablePart|stake_test|]])
+                decodeAsStakeAddress
+        , decodeBech32 str >>=
+            whenHrp (== [humanReadablePart|script|])
+                decodeAsScriptHash
+        , decodeBech32 str >>=
+            whenHrp (== [humanReadablePart|stake_vkh|])
+                decodeAsKeyHash
+        ]
+       <|>
+        fail "Unable to decode credential. It must be either a base16-encoded \
+             \stake key hash or a bech32-encoded stake address, stake key hash \
+             \or script hash with one of the following respective prefixes: \
+             \stake, stake_vkh or script."
+  where
+    invalidStakeKeyHash =
+        fail "invalid stake key hash"
+
+    invalidStakeAddress =
+        fail "invalid stake address"
+
+    whenHrp
+        :: (Bech32.HumanReadablePart -> Bool)
+        -> (ByteString -> Json.Parser a)
+        -> (Bech32.HumanReadablePart, Bech32.DataPart)
+        -> Json.Parser a
+    whenHrp predicate parser (hrp, bytes) =
+        if predicate hrp then
+            maybe mempty parser (Bech32.dataPartToBytes bytes)
+        else
+            mempty
+
+    decodeBech32
+        :: ByteString
+        -> Json.Parser (Bech32.HumanReadablePart, Bech32.DataPart)
+    decodeBech32 =
+        either (fail . show) pure . Bech32.decodeLenient . decodeUtf8
+
+    decodeAsKeyHash
+        :: ByteString
+        -> Json.Parser (Ledger.Credential 'Staking crypto)
+    decodeAsKeyHash =
+        fmap (Ledger.KeyHashObj . Ledger.KeyHash)
+            . maybe invalidStakeKeyHash pure
+            . hashFromBytes
+
+    decodeAsScriptHash
+        :: ByteString
+        -> Json.Parser (Ledger.Credential 'Staking crypto)
+    decodeAsScriptHash =
+        fmap (Ledger.ScriptHashObj . Ledger.ScriptHash)
+            . maybe invalidStakeKeyHash pure
+            . hashFromBytes
+
+    decodeAsStakeAddress
+        :: ByteString
+        -> Json.Parser (Ledger.Credential 'Staking crypto)
+    decodeAsStakeAddress =
+        fmap Ledger.getRwdCred
+            . maybe invalidStakeAddress pure
+            . Ledger.deserialiseRewardAcnt
 
 decodeDatumHash
     :: Crypto crypto

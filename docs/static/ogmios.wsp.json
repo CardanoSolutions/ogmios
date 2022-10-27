@@ -980,12 +980,10 @@
                   { "nonMyopicMemberRewards":
                     { "oneOf":
                       [ { "type": "array"
-                        , "title": "Lovelaces"
                         , "items": { "$ref": "ogmios.wsp.json#/definitions/Lovelace" }
                         }
                       , { "type": "array"
-                        , "title": "Credentials"
-                        , "items": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Credential" }
+                        , "items": { "$ref": "ogmios.wsp.json#/definitions/StakeCredential" }
                         }
                       ]
                     }
@@ -998,7 +996,7 @@
                 , "properties":
                   { "delegationsAndRewards":
                     { "type": "array"
-                    , "items": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Credential" }
+                    , "items": { "$ref": "ogmios.wsp.json#/definitions/StakeCredential" }
                     }
                   }
                 }
@@ -4187,6 +4185,37 @@
       , "minThreshold": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
       , "decrementThreshold": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
       }
+    }
+
+  , "StakeAddress":
+    { "type": "string"
+    , "description": "A stake address (a.k.a reward account)"
+    , "contentEncoding": "bech32"
+    , "pattern": "^(stake|stake_test)1[0-9a-z]*$"
+    , "examples":
+      [ "stake179kzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjcek9u8h"
+      ]
+    }
+
+  , "StakeCredential":
+    { "oneOf":
+      [ { "title": "Base16"
+        , "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Credential"
+        }
+      , { "title": "Bech32"
+        , "type": "string"
+        , "description": "A Blake2b 28-byte digest of a verification key or script."
+        , "contentEncoding": "bech32"
+        , "pattern": "^(stake_vkh|script)1[0-9a-z]*$"
+        , "examples":
+          [ "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
+          , "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
+          ]
+        }
+      , { "title": "Stake Address"
+        , "$ref": "ogmios.wsp.json#/definitions/StakeAddress"
+        }
+      ]
     }
 
   , "SubmitTxError":

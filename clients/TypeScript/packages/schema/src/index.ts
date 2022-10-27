@@ -307,8 +307,19 @@ export type GetEraStart = "eraStart";
 export type GetEraSummaries = "eraSummaries";
 export type GetLedgerTip = "ledgerTip";
 export type GetCurrentEpoch = "currentEpoch";
-export type Lovelaces = Lovelace[];
-export type Credentials = DigestBlake2BCredential[];
+export type StakeCredential = Base16 | Bech32 | StakeAddress;
+/**
+ * A Blake2b 28-byte digest of a verification key or a script.
+ */
+export type Base16 = string;
+/**
+ * A Blake2b 28-byte digest of a verification key or script.
+ */
+export type Bech32 = string;
+/**
+ * A stake address (a.k.a reward account)
+ */
+export type StakeAddress = string;
 export type GetCurrentProtocolParameters = "currentProtocolParameters";
 export type GetProposedProtocolParameters = "proposedProtocolParameters";
 export type GetStakeDistribution = "stakeDistribution";
@@ -2203,10 +2214,10 @@ export interface MempoolSizeAndCapacity {
   numberOfTxs: UInt32;
 }
 export interface GetNonMyopicMemberRewards {
-  nonMyopicMemberRewards: Lovelaces | Credentials;
+  nonMyopicMemberRewards: Lovelace[] | StakeCredential[];
 }
 export interface GetDelegationsAndRewards {
-  delegationsAndRewards: DigestBlake2BCredential[];
+  delegationsAndRewards: StakeCredential[];
 }
 export interface GetUtxoByAddress {
   utxo: Address[];
