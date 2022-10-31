@@ -20,8 +20,11 @@ import Control.Monad.Class.MonadAsync
     , link
     )
 import Control.Monad.Class.MonadFork
-    ( MonadFork, MonadThread )
+    ( MonadFork
+    , MonadThread
+    )
 import Control.Monad.Class.MonadThrow
-    ( MonadMask )
+    ( MonadMask
+    )
 
 type MonadLink m = (MonadFork m, MonadMask m)

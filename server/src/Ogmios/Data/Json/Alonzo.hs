@@ -9,23 +9,31 @@ module Ogmios.Data.Json.Alonzo where
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Binary
-    ( serialize' )
+    ( serialize'
+    )
 import Cardano.Ledger.Crypto
-    ( Crypto )
+    ( Crypto
+    )
 import Data.ByteString.Base16
-    ( encodeBase16 )
+    ( encodeBase16
+    )
 import GHC.Records
-    ( getField )
+    ( getField
+    )
 import Ouroboros.Consensus.Cardano.Block
-    ( AlonzoEra )
+    ( AlonzoEra
+    )
 import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos )
+    ( TPraos
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
-    ( ShelleyBlock (..) )
+    ( ShelleyBlock (..)
+    )
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
 import Prettyprinter
-    ( pretty )
+    ( pretty
+    )
 
 import qualified Data.Map.Strict as Map
 
@@ -47,13 +55,14 @@ import qualified Cardano.Ledger.Shelley.Rules.Ledger as Sh
 import qualified Cardano.Ledger.Alonzo.Data as Al
 import qualified Cardano.Ledger.Alonzo.Genesis as Al
 import qualified Cardano.Ledger.Alonzo.Language as Al
-import qualified Cardano.Ledger.Alonzo.PlutusScriptApi as Al
 import qualified Cardano.Ledger.Alonzo.PParams as Al
+import qualified Cardano.Ledger.Alonzo.PlutusScriptApi as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.Tx as Al
 import qualified Cardano.Ledger.Alonzo.TxBody as Al
 import qualified Cardano.Ledger.Alonzo.TxInfo as Al hiding
-    ( txscripts )
+    ( txscripts
+    )
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 import qualified Cardano.Ledger.Alonzo.TxWitness as Al
 

@@ -9,9 +9,14 @@ module Test.Instances.Util
 import Ogmios.Prelude
 
 import Data.Aeson
-    ( ToJSON (..) )
+    ( ToJSON (..)
+    )
 import Test.Hspec
-    ( Expectation, SpecWith, shouldBe, specify )
+    ( Expectation
+    , SpecWith
+    , shouldBe
+    , specify
+    )
 
 -- | Non-interesting test meant to tick coverage for Eq, Show and JSON
 -- instances, as well as record-fields.

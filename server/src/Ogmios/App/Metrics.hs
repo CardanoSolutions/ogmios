@@ -30,12 +30,20 @@ module Ogmios.App.Metrics
     ) where
 
 import Ogmios.Prelude hiding
-    ( max, min )
+    ( max
+    , min
+    )
 
 import Ogmios.Control.MonadClock
-    ( MonadClock (..), diffTimeToMilliseconds )
+    ( MonadClock (..)
+    , diffTimeToMilliseconds
+    )
 import Ogmios.Control.MonadLog
-    ( HasSeverityAnnotation (..), Logger, MonadLog (..), Severity (..) )
+    ( HasSeverityAnnotation (..)
+    , Logger
+    , MonadLog (..)
+    , Severity (..)
+    )
 import Ogmios.Control.MonadMetrics
     ( MonadMetrics (Counter, Distribution, Gauge)
     , count
@@ -47,18 +55,30 @@ import Ogmios.Control.MonadMetrics
     , record
     )
 import Ogmios.Data.Metrics
-    ( DistributionStats (..), Metrics (..), RuntimeStats (..), Sampler )
+    ( DistributionStats (..)
+    , Metrics (..)
+    , RuntimeStats (..)
+    , Sampler
+    )
 
 import qualified Ogmios.Control.MonadMetrics as Metrics
 
 import Data.Aeson
-    ( ToJSON (..), genericToEncoding )
+    ( ToJSON (..)
+    , genericToEncoding
+    )
 import Data.Time.Clock
-    ( DiffTime )
+    ( DiffTime
+    )
 import GHC.Stats
-    ( GCDetails (..), RTSStats (..), getRTSStats, getRTSStatsEnabled )
+    ( GCDetails (..)
+    , RTSStats (..)
+    , getRTSStats
+    , getRTSStatsEnabled
+    )
 import Relude.Extra.Map
-    ( lookup )
+    ( lookup
+    )
 
 import qualified Data.Aeson as Json
 import qualified System.Metrics as Ekg

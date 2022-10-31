@@ -74,51 +74,85 @@ import Ogmios.Data.Protocol
     ()
 
 import Cardano.Ledger.Alonzo
-    ( AlonzoEra )
+    ( AlonzoEra
+    )
 import Cardano.Ledger.Alonzo.Scripts
-    ( CostModels (..), ExUnits (..), Script )
+    ( CostModels (..)
+    , ExUnits (..)
+    , Script
+    )
 import Cardano.Ledger.Alonzo.Tools
-    ( TransactionScriptFailure, evaluateTransactionExecutionUnits )
+    ( TransactionScriptFailure
+    , evaluateTransactionExecutionUnits
+    )
 import Cardano.Ledger.Alonzo.TxInfo
-    ( ExtendedUTxO, TranslationError (..) )
+    ( ExtendedUTxO
+    , TranslationError (..)
+    )
 import Cardano.Ledger.Alonzo.TxWitness
-    ( RdmrPtr (..), Redeemers, TxDats )
+    ( RdmrPtr (..)
+    , Redeemers
+    , TxDats
+    )
 import Cardano.Ledger.Babbage
-    ( BabbageEra )
+    ( BabbageEra
+    )
 import Cardano.Ledger.BaseTypes
-    ( ProtVer )
+    ( ProtVer
+    )
 import Cardano.Ledger.Crypto
-    ( StandardCrypto )
+    ( StandardCrypto
+    )
 import Cardano.Ledger.Era
-    ( Era )
+    ( Era
+    )
 import Cardano.Ledger.Shelley.TxBody
-    ( DCert, Wdrl )
+    ( DCert
+    , Wdrl
+    )
 import Cardano.Ledger.Shelley.UTxO
-    ( UTxO (..) )
+    ( UTxO (..)
+    )
 import Cardano.Ledger.TxIn
-    ( TxIn )
+    ( TxIn
+    )
 import Cardano.Network.Protocol.NodeToClient
-    ( Crypto, GenTxId, SerializedTx, SubmitTxError )
+    ( Crypto
+    , GenTxId
+    , SerializedTx
+    , SubmitTxError
+    )
 import Cardano.Slotting.EpochInfo
-    ( EpochInfo, hoistEpochInfo )
+    ( EpochInfo
+    , hoistEpochInfo
+    )
 import Cardano.Slotting.Time
-    ( SystemStart )
+    ( SystemStart
+    )
 import Control.Arrow
-    ( left )
+    ( left
+    )
 import Control.Monad.Trans.Except
-    ( Except )
+    ( Except
+    )
 import Data.Sequence.Strict
-    ( StrictSeq )
+    ( StrictSeq
+    )
 import GHC.Records
-    ( HasField (..) )
+    ( HasField (..)
+    )
 import Ogmios.Data.EraTranslation
-    ( MultiEraUTxO )
+    ( MultiEraUTxO
+    )
 import Ouroboros.Consensus.HardFork.History
-    ( PastHorizonException )
+    ( PastHorizonException
+    )
 import Ouroboros.Consensus.Ledger.SupportsMempool
-    ( HasTxId (..) )
+    ( HasTxId (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
-    ( SubmitResult (..) )
+    ( SubmitResult (..)
+    )
 
 import qualified Cardano.Ledger.Core as Core
 import qualified Cardano.Ledger.Era as Era

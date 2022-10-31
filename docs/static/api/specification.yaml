@@ -1,14 +1,36 @@
 asyncapi: '2.4.0'
 info:
   title: Ogmios
-  version: '5.5.3'
+  version: '5.5.7'
   description: |
+
     ### Protocols
 
     - [Local Chain-Sync](#operation-publish-/?Local-Chain-Sync)
     - [Local Tx-Submission](#operation-publish-/?Local-Tx-Submission)
     - [Local Tx-Monitor](#operation-publish-/?Local-Tx-Monitor)
     - [Local State-Query](#operation-publish-/?Local-State-Query)
+
+    ### Schemas
+
+    Here's a shortlist that contains a few handpicked schema definitions. Find **all definitions** at the bottom of this document.
+
+    - [Block](#schema-Block)
+    - [EvaluationFailure](#schema-EvaluationFailure)
+    - Protocol Parameters
+      - [Byron](#schema-ProtocolParameters[Byron])
+      - [Shelley](#schema-ProtocolParameters[Shelley])
+      - [Alonzo](#schema-ProtocolParameters[Alonzo])
+      - [Babbage](#schema-ProtocolParameters[Babbage])
+    - Transaction
+      - [Byron](#schema-Tx[Byron])
+      - [Shelley](#schema-Tx[Shelley])
+      - [Allegra](#schema-Tx[Allegra])
+      - [Mary](#schema-Tx[Mary])
+      - [Alonzo](#schema-Tx[Alonzo])
+      - [Babbage](#schema-Tx[Babbage])
+    - [SubmitTxError](#schema-SubmitTxError)
+    - [Value](#schema-Value)
 
   license:
     name: MPL-2.0
@@ -425,3 +447,221 @@ components:
         Response to a `Release`.
       payload:
         $ref: "/ogmios.wsp.json#/properties/ReleaseResponse"
+
+  schemas:
+    AcquireFailureDetails: { "$ref": "/ogmios.wsp.json#/definitions/AcquireFailureDetails" }
+    Address: { "$ref": "/ogmios.wsp.json#/definitions/Address" }
+    AddressAttributes: { "$ref": "/ogmios.wsp.json#/definitions/AddressAttributes" }
+    AssetQuantity: { "$ref": "/ogmios.wsp.json#/definitions/AssetQuantity" }
+    AuxiliaryData: { "$ref": "/ogmios.wsp.json#/definitions/AuxiliaryData" }
+    AuxiliaryDataBody: { "$ref": "/ogmios.wsp.json#/definitions/AuxiliaryDataBody" }
+    Block : { "$ref": "/ogmios.wsp.json#/definitions/Block" }
+    Block[Byron]: { "$ref": "/ogmios.wsp.json#/definitions/Block[Byron]" }
+    Block[Shelley]: { "$ref": "/ogmios.wsp.json#/definitions/Block[Shelley]" }
+    Block[Allegra]: { "$ref": "/ogmios.wsp.json#/definitions/Block[Allegra]" }
+    Block[Mary]: { "$ref": "/ogmios.wsp.json#/definitions/Block[Mary]" }
+    Block[Alonzo]: { "$ref": "/ogmios.wsp.json#/definitions/Block[Alonzo]" }
+    Block[Babbage]: { "$ref": "/ogmios.wsp.json#/definitions/Block[Babbage]" }
+    BootstrapWitness: { "$ref": "/ogmios.wsp.json#/definitions/BootstrapWitness" }
+    BlockNo: { "$ref": "/ogmios.wsp.json#/definitions/BlockNo" }
+    BlockNoOrOrigin: { "$ref": "/ogmios.wsp.json#/definitions/BlockNoOrOrigin" }
+    BlockProof: { "$ref": "/ogmios.wsp.json#/definitions/BlockProof" }
+    BlockSignature: { "$ref": "/ogmios.wsp.json#/definitions/BlockSignature" }
+    BlockSize: { "$ref": "/ogmios.wsp.json#/definitions/BlockSize" }
+    Bound : { "$ref": "/ogmios.wsp.json#/definitions/Bound " }
+    Certificate : { "$ref": "/ogmios.wsp.json#/definitions/Certificate " }
+    CertifiedVrf: { "$ref": "/ogmios.wsp.json#/definitions/CertifiedVrf" }
+    ChainCode : { "$ref": "/ogmios.wsp.json#/definitions/ChainCode " }
+    CompactGenesis: { "$ref": "/ogmios.wsp.json#/definitions/CompactGenesis" }
+    CostModel: { "$ref": "/ogmios.wsp.json#/definitions/CostModel" }
+    CostModels: { "$ref": "/ogmios.wsp.json#/definitions/CostModels" }
+    Datum : { "$ref": "/ogmios.wsp.json#/definitions/Datum " }
+    DelegationsAndRewards : { "$ref": "/ogmios.wsp.json#/definitions/DelegationsAndRewards " }
+    Digest[Blake2b]::Block[*].body: { "$ref": "/ogmios.wsp.json#/definitions/Digest[Blake2b]::Block[*].body" }
+    Digest[Blake2b]::Block[*].header: { "$ref": "/ogmios.wsp.json#/definitions/Digest[Blake2b]::Block[*].header" }
+    Digest[Blake2b]::Block[Byron].body.dlgPayload: { "$ref": "/ogmios.wsp.json#/definitions/Digest[Blake2b]::Block[Byron].body.dlgPayload" }
+    Digest[Blake2b]::Block[Byron].body.txPayload[].witness: { "$ref": "/ogmios.wsp.json#/definitions/Digest[Blake2b]::Block[Byron].body.txPayload[].witness" }
+    Digest[Blake2b]::Block[Byron].body.updatePayload: { "$ref": "/ogmios.wsp.json#/definitions/Digest[Blake2b]::Block[Byron].body.updatePayload" }
+    Digest[Blake2b]::Credential: { "$ref": "/ogmios.wsp.json#/definitions/Digest[Blake2b]::Credential" }
+    Digest[Blake2b]::Datum: { "$ref": "/ogmios.wsp.json#/definitions/Digest[Blake2b]::Datum" }
+    Digest[Blake2b]::MerkleRoot: { "$ref": "/ogmios.wsp.json#/definitions/Digest[Blake2b]::MerkleRoot" }
+    Digest[Blake2b]::Nonce: { "$ref": "/ogmios.wsp.json#/definitions/Digest[Blake2b]::Nonce" }
+    Digest[Blake2b]::PoolMetadata: { "$ref": "/ogmios.wsp.json#/definitions/Digest[Blake2b]::PoolMetadata" }
+    Digest[Blake2b]::Script: { "$ref": "/ogmios.wsp.json#/definitions/Digest[Blake2b]::Script" }
+    Digest[Blake2b]::ScriptIntegrity: { "$ref": "/ogmios.wsp.json#/definitions/Digest[Blake2b]::ScriptIntegrity" }
+    Digest[Blake2b]::VerificationKey: { "$ref": "/ogmios.wsp.json#/definitions/Digest[Blake2b]::VerificationKey" }
+    Digest[Blake2b]::VrfVerificationKey: { "$ref": "/ogmios.wsp.json#/definitions/Digest[Blake2b]::VrfVerificationKey" }
+    DlgCertificate: { "$ref": "/ogmios.wsp.json#/definitions/DlgCertificate" }
+    Epoch: { "$ref": "/ogmios.wsp.json#/definitions/Epoch" }
+    Era: { "$ref": "/ogmios.wsp.json#/definitions/Era" }
+    EraMismatch: { "$ref": "/ogmios.wsp.json#/definitions/EraMismatch" }
+    EraParameters: { "$ref": "/ogmios.wsp.json#/definitions/EraParameters" }
+    EraSummary: { "$ref": "/ogmios.wsp.json#/definitions/EraSummary" }
+    EvaluationFailure: { "$ref": "/ogmios.wsp.json#/definitions/EvaluationFailure" }
+    EvaluationFailure[AdditionalUtxoOverlap]: { "$ref": "/ogmios.wsp.json#/definitions/EvaluationFailure[AdditionalUtxoOverlap]" }
+    EvaluationFailure[CannotCreateEvaluationContext]: { "$ref": "/ogmios.wsp.json#/definitions/EvaluationFailure[CannotCreateEvaluationContext]" }
+    EvaluationFailure[IncompatibleEra]: { "$ref": "/ogmios.wsp.json#/definitions/EvaluationFailure[IncompatibleEra]" }
+    EvaluationFailure[NotEnoughSynced]: { "$ref": "/ogmios.wsp.json#/definitions/EvaluationFailure[NotEnoughSynced]" }
+    EvaluationFailure[ScriptFailures]: { "$ref": "/ogmios.wsp.json#/definitions/EvaluationFailure[ScriptFailures]" }
+    EvaluationResult: { "$ref": "/ogmios.wsp.json#/definitions/EvaluationResult" }
+    ExUnits: { "$ref": "/ogmios.wsp.json#/definitions/ExUnits" }
+    GenesisVerificationKey: { "$ref": "/ogmios.wsp.json#/definitions/GenesisVerificationKey" }
+    IndividualPoolRewardsProvenance: { "$ref": "/ogmios.wsp.json#/definitions/IndividualPoolRewardsProvenance" }
+    Int64: { "$ref": "/ogmios.wsp.json#/definitions/Int64" }
+    InvalidEntity: { "$ref": "/ogmios.wsp.json#/definitions/InvalidEntity" }
+    IssuerSignature: { "$ref": "/ogmios.wsp.json#/definitions/IssuerSignature" }
+    IssuerVrfVerificationKey: { "$ref": "/ogmios.wsp.json#/definitions/IssuerVrfVerificationKey" }
+    KesVerificationKey: { "$ref": "/ogmios.wsp.json#/definitions/KesVerificationKey" }
+    Language: { "$ref": "/ogmios.wsp.json#/definitions/Language" }
+    Lovelace: { "$ref": "/ogmios.wsp.json#/definitions/Lovelace" }
+    LovelaceDelta: { "$ref": "/ogmios.wsp.json#/definitions/LovelaceDelta" }
+    MempoolSizeAndCapacity: { "$ref": "/ogmios.wsp.json#/definitions/MempoolSizeAndCapacity" }
+    Metadata: { "$ref": "/ogmios.wsp.json#/definitions/Metadata" }
+    Metadatum: { "$ref": "/ogmios.wsp.json#/definitions/Metadatum" }
+    MetadatumMap: { "$ref": "/ogmios.wsp.json#/definitions/MetadatumMap" }
+    Network: { "$ref": "/ogmios.wsp.json#/definitions/Network" }
+    NetworkMagic: { "$ref": "/ogmios.wsp.json#/definitions/NetworkMagic" }
+    NonMyopicMemberRewards: { "$ref": "/ogmios.wsp.json#/definitions/NonMyopicMemberRewards" }
+    Nonce: { "$ref": "/ogmios.wsp.json#/definitions/Nonce" }
+    Null: { "$ref": "/ogmios.wsp.json#/definitions/Null" }
+    NullableRatio: { "$ref": "/ogmios.wsp.json#/definitions/NullableRatio" }
+    NullableUInt64: { "$ref": "/ogmios.wsp.json#/definitions/NullableUInt64" }
+    OpCert: { "$ref": "/ogmios.wsp.json#/definitions/OpCert" }
+    Origin: { "$ref": "/ogmios.wsp.json#/definitions/Origin" }
+    PointOrOrigin: { "$ref": "/ogmios.wsp.json#/definitions/PointOrOrigin" }
+    PolicyId: { "$ref": "/ogmios.wsp.json#/definitions/PolicyId" }
+    PoolDistribution: { "$ref": "/ogmios.wsp.json#/definitions/PoolDistribution" }
+    PoolId: { "$ref": "/ogmios.wsp.json#/definitions/PoolId" }
+    PoolParameters: { "$ref": "/ogmios.wsp.json#/definitions/PoolParameters" }
+    PoolsRanking: { "$ref": "/ogmios.wsp.json#/definitions/PoolsRanking" }
+    Prices: { "$ref": "/ogmios.wsp.json#/definitions/Prices" }
+    ProtocolMagicId: { "$ref": "/ogmios.wsp.json#/definitions/ProtocolMagicId" }
+    ProtocolParameters[Byron]: { "$ref": "/ogmios.wsp.json#/definitions/ProtocolParameters[Byron]" }
+    ProtocolParameters[Shelley]: { "$ref": "/ogmios.wsp.json#/definitions/ProtocolParameters[Shelley]" }
+    ProtocolParameters[Alonzo]: { "$ref": "/ogmios.wsp.json#/definitions/ProtocolParameters[Alonzo]" }
+    ProtocolParameters[Babbage]: { "$ref": "/ogmios.wsp.json#/definitions/ProtocolParameters[Babbage]" }
+    ProtocolVersion: { "$ref": "/ogmios.wsp.json#/definitions/ProtocolVersion" }
+    QueryUnavailableInCurrentEra: { "$ref": "/ogmios.wsp.json#/definitions/QueryUnavailableInCurrentEra" }
+    Ratio: { "$ref": "/ogmios.wsp.json#/definitions/Ratio" }
+    Redeemer: { "$ref": "/ogmios.wsp.json#/definitions/Redeemer" }
+    RedeemerData: { "$ref": "/ogmios.wsp.json#/definitions/RedeemerData" }
+    RedeemerPointer: { "$ref": "/ogmios.wsp.json#/definitions/RedeemerPointer" }
+    RelativeTime: { "$ref": "/ogmios.wsp.json#/definitions/RelativeTime" }
+    Relay: { "$ref": "/ogmios.wsp.json#/definitions/Relay" }
+    RewardAccount: { "$ref": "/ogmios.wsp.json#/definitions/RewardAccount" }
+    RewardInfoPool: { "$ref": "/ogmios.wsp.json#/definitions/RewardInfoPool" }
+    RewardPot: { "$ref": "/ogmios.wsp.json#/definitions/RewardPot" }
+    Rewards: { "$ref": "/ogmios.wsp.json#/definitions/Rewards" }
+    RewardsProvenance': { "$ref": "/ogmios.wsp.json#/definitions/RewardsProvenance'" }
+    RewardsProvenance: { "$ref": "/ogmios.wsp.json#/definitions/RewardsProvenance" }
+    SafeZone: { "$ref": "/ogmios.wsp.json#/definitions/SafeZone" }
+    Script: { "$ref": "/ogmios.wsp.json#/definitions/Script" }
+    ScriptFailure: { "$ref": "/ogmios.wsp.json#/definitions/ScriptFailure" }
+    ScriptFailure[illFormedExecutionBudget]: { "$ref": "/ogmios.wsp.json#/definitions/ScriptFailure[illFormedExecutionBudget]" }
+    ScriptFailure[missingRequiredScripts]: { "$ref": "/ogmios.wsp.json#/definitions/ScriptFailure[missingRequiredScripts]" }
+    ScriptFailure[noCostModelForLanguage]: { "$ref": "/ogmios.wsp.json#/definitions/ScriptFailure[noCostModelForLanguage]" }
+    ScriptFailure[nonScriptInputReferencedByRedeemer]: { "$ref": "/ogmios.wsp.json#/definitions/ScriptFailure[nonScriptInputReferencedByRedeemer]" }
+    ScriptFailure[unknownInputReferencedByRedeemer]: { "$ref": "/ogmios.wsp.json#/definitions/ScriptFailure[unknownInputReferencedByRedeemer]" }
+    ScriptFailure[validatorFailed]: { "$ref": "/ogmios.wsp.json#/definitions/ScriptFailure[validatorFailed]" }
+    ScriptPurpose: { "$ref": "/ogmios.wsp.json#/definitions/ScriptPurpose" }
+    Script[Native]: { "$ref": "/ogmios.wsp.json#/definitions/Script[Native]" }
+    Script[Plutus]: { "$ref": "/ogmios.wsp.json#/definitions/Script[Plutus]" }
+    Signature: { "$ref": "/ogmios.wsp.json#/definitions/Signature" }
+    Slot: { "$ref": "/ogmios.wsp.json#/definitions/Slot" }
+    SlotLength: { "$ref": "/ogmios.wsp.json#/definitions/SlotLength" }
+    SoftForkRule: { "$ref": "/ogmios.wsp.json#/definitions/SoftForkRule" }
+    SoftwareVersion: { "$ref": "/ogmios.wsp.json#/definitions/SoftwareVersion" }
+    SubmitTxError: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError" }
+    SubmitTxError[addressAttributesTooLarge]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[addressAttributesTooLarge]" }
+    SubmitTxError[alreadyDelegating]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[alreadyDelegating]" }
+    SubmitTxError[badInputs]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[badInputs]" }
+    SubmitTxError[collateralHasNonAdaAssets]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[collateralHasNonAdaAssets]" }
+    SubmitTxError[collateralIsScript]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[collateralIsScript]" }
+    SubmitTxError[collateralTooSmall]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[collateralTooSmall]" }
+    SubmitTxError[collectErrors]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[collectErrors]" }
+    SubmitTxError[delegateNotRegistered]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[delegateNotRegistered]" }
+    SubmitTxError[duplicateGenesisVrf]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[duplicateGenesisVrf]" }
+    SubmitTxError[executionUnitsTooLarge]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[executionUnitsTooLarge]" }
+    SubmitTxError[expiredUtxo]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[expiredUtxo]" }
+    SubmitTxError[extraDataMismatch]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[extraDataMismatch]" }
+    SubmitTxError[extraRedeemers]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[extraRedeemers]" }
+    SubmitTxError[extraScriptWitnesses]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[extraScriptWitnesses]" }
+    SubmitTxError[feeTooSmall]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[feeTooSmall]" }
+    SubmitTxError[insufficientFundsForMir]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[insufficientFundsForMir]" }
+    SubmitTxError[insufficientGenesisSignatures]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[insufficientGenesisSignatures]" }
+    SubmitTxError[invalidMetadata]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[invalidMetadata]" }
+    SubmitTxError[invalidWitnesses]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[invalidWitnesses]" }
+    SubmitTxError[malformedReferenceScripts]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[malformedReferenceScripts]" }
+    SubmitTxError[malformedScriptWitnesses]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[malformedScriptWitnesses]" }
+    SubmitTxError[mirNegativeTransferNotCurrentlyAllowed]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[mirNegativeTransferNotCurrentlyAllowed]" }
+    SubmitTxError[mirNegativeTransfer]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[mirNegativeTransfer]" }
+    SubmitTxError[mirProducesNegativeUpdate]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[mirProducesNegativeUpdate]" }
+    SubmitTxError[mirTransferNotCurrentlyAllowed]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[mirTransferNotCurrentlyAllowed]" }
+    SubmitTxError[missingAtLeastOneInputUtxo]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[missingAtLeastOneInputUtxo]" }
+    SubmitTxError[missingCollateralInputs]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[missingCollateralInputs]" }
+    SubmitTxError[missingDatumHashesForInputs]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[missingDatumHashesForInputs]" }
+    SubmitTxError[missingRequiredDatums]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[missingRequiredDatums]" }
+    SubmitTxError[missingRequiredRedeemers]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[missingRequiredRedeemers]" }
+    SubmitTxError[missingRequiredSignatures]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[missingRequiredSignatures]" }
+    SubmitTxError[missingScriptWitnesses]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[missingScriptWitnesses]" }
+    SubmitTxError[missingTxMetadataHash]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[missingTxMetadataHash]" }
+    SubmitTxError[missingTxMetadata]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[missingTxMetadata]" }
+    SubmitTxError[missingVkWitnesses]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[missingVkWitnesses]" }
+    SubmitTxError[networkMismatch]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[networkMismatch]" }
+    SubmitTxError[nonGenesisVoters]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[nonGenesisVoters]" }
+    SubmitTxError[outputTooSmall]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[outputTooSmall]" }
+    SubmitTxError[outsideForecast]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[outsideForecast]" }
+    SubmitTxError[outsideOfValidityInterval]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[outsideOfValidityInterval]" }
+    SubmitTxError[poolCostTooSmall]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[poolCostTooSmall]" }
+    SubmitTxError[poolMetadataHashTooBig]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[poolMetadataHashTooBig]" }
+    SubmitTxError[protocolVersionCannotFollow]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[protocolVersionCannotFollow]" }
+    SubmitTxError[rewardAccountNotEmpty]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[rewardAccountNotEmpty]" }
+    SubmitTxError[rewardAccountNotExisting]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[rewardAccountNotExisting]" }
+    SubmitTxError[scriptWitnessNotValidating]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[scriptWitnessNotValidating]" }
+    SubmitTxError[stakeKeyAlreadyRegistered]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[stakeKeyAlreadyRegistered]" }
+    SubmitTxError[stakeKeyNotRegistered]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[stakeKeyNotRegistered]" }
+    SubmitTxError[stakePoolNotRegistered]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[stakePoolNotRegistered]" }
+    SubmitTxError[tooLateForMir]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[tooLateForMir]" }
+    SubmitTxError[tooManyAssetsInOutput]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[tooManyAssetsInOutput]" }
+    SubmitTxError[tooManyCollateralInputs]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[tooManyCollateralInputs]" }
+    SubmitTxError[totalCollateralMismatch]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[totalCollateralMismatch]" }
+    SubmitTxError[triesToForgeAda]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[triesToForgeAda]" }
+    SubmitTxError[txMetadataHashMismatch]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[txMetadataHashMismatch]" }
+    SubmitTxError[txTooLarge]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[txTooLarge]" }
+    SubmitTxError[unknownGenesisKey]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[unknownGenesisKey]" }
+    SubmitTxError[unknownOrIncompleteWithdrawals]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[unknownOrIncompleteWithdrawals]" }
+    SubmitTxError[unspendableDatums]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[unspendableDatums]" }
+    SubmitTxError[unspendableScriptInputs]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[unspendableScriptInputs]" }
+    SubmitTxError[updateWrongEpoch]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[updateWrongEpoch]" }
+    SubmitTxError[validationTagMismatch]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[validationTagMismatch]" }
+    SubmitTxError[valueNotConserved]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[valueNotConserved]" }
+    SubmitTxError[wrongCertificateType]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[wrongCertificateType]" }
+    SubmitTxError[wrongPoolCertificate]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[wrongPoolCertificate]" }
+    SubmitTxError[wrongRetirementEpoch]: { "$ref": "/ogmios.wsp.json#/definitions/SubmitTxError[wrongRetirementEpoch]" }
+    TipOrOrigin: { "$ref": "/ogmios.wsp.json#/definitions/TipOrOrigin" }
+    TxFeePolicy: { "$ref": "/ogmios.wsp.json#/definitions/TxFeePolicy" }
+    TxId: { "$ref": "/ogmios.wsp.json#/definitions/TxId" }
+    TxIn: { "$ref": "/ogmios.wsp.json#/definitions/TxIn" }
+    TxOut: { "$ref": "/ogmios.wsp.json#/definitions/TxOut" }
+    TxWitness: { "$ref": "/ogmios.wsp.json#/definitions/TxWitness" }
+    Tx[Byron]: { "$ref": "/ogmios.wsp.json#/definitions/Tx[Byron]" }
+    Tx[Shelley]: { "$ref": "/ogmios.wsp.json#/definitions/Tx[Shelley]" }
+    Tx[Allegra]: { "$ref": "/ogmios.wsp.json#/definitions/Tx[Allegra]" }
+    Tx[Mary]: { "$ref": "/ogmios.wsp.json#/definitions/Tx[Mary]" }
+    Tx[Alonzo]: { "$ref": "/ogmios.wsp.json#/definitions/Tx[Alonzo]" }
+    Tx[Babbage]: { "$ref": "/ogmios.wsp.json#/definitions/Tx[Babbage]" }
+    UInt32: { "$ref": "/ogmios.wsp.json#/definitions/UInt32" }
+    UInt64: { "$ref": "/ogmios.wsp.json#/definitions/UInt64" }
+    UInt8: { "$ref": "/ogmios.wsp.json#/definitions/UInt8" }
+    Update[Shelley]: { "$ref": "/ogmios.wsp.json#/definitions/Update[Shelley]" }
+    Update[Alonzo]: { "$ref": "/ogmios.wsp.json#/definitions/Update[Alonzo]" }
+    Update[Babbage]: { "$ref": "/ogmios.wsp.json#/definitions/Update[Babbage]" }
+    Utxo: { "$ref": "/ogmios.wsp.json#/definitions/Utxo" }
+    ValidityInterval: { "$ref": "/ogmios.wsp.json#/definitions/ValidityInterval" }
+    Value: { "$ref": "/ogmios.wsp.json#/definitions/Value" }
+    VerificationKey: { "$ref": "/ogmios.wsp.json#/definitions/VerificationKey" }
+    Vote: { "$ref": "/ogmios.wsp.json#/definitions/Vote" }
+    VotingPeriod: { "$ref": "/ogmios.wsp.json#/definitions/VotingPeriod" }
+    VrfOutput: { "$ref": "/ogmios.wsp.json#/definitions/VrfOutput" }
+    VrfProof: { "$ref": "/ogmios.wsp.json#/definitions/VrfProof" }
+    Withdrawals: { "$ref": "/ogmios.wsp.json#/definitions/Withdrawals" }

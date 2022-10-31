@@ -290,7 +290,7 @@ export type SubmitTxError = (
 )[];
 export type RedeemerPointer = string;
 /**
- * Errors whcih may occur when evaluating an on-chain script.
+ * Errors which may occur when evaluating an on-chain script.
  */
 export type ScriptFailure = (
   | ExtraRedeemers
@@ -307,8 +307,19 @@ export type GetEraStart = "eraStart";
 export type GetEraSummaries = "eraSummaries";
 export type GetLedgerTip = "ledgerTip";
 export type GetCurrentEpoch = "currentEpoch";
-export type Lovelaces = Lovelace[];
-export type Credentials = DigestBlake2BCredential[];
+export type StakeCredential = Base16 | Bech32 | StakeAddress;
+/**
+ * A Blake2b 28-byte digest of a verification key or a script.
+ */
+export type Base16 = string;
+/**
+ * A Blake2b 28-byte digest of a verification key or script.
+ */
+export type Bech32 = string;
+/**
+ * A stake address (a.k.a reward account)
+ */
+export type StakeAddress = string;
 export type GetCurrentProtocolParameters = "currentProtocolParameters";
 export type GetProposedProtocolParameters = "proposedProtocolParameters";
 export type GetStakeDistribution = "stakeDistribution";
@@ -322,7 +333,7 @@ export type GetChainTip = "chainTip";
 export type GetBlockHeight = "blockHeight";
 export type GetSystemStart = "systemStart";
 /**
- * A time in seconds relative to another one (typically, system start or era start).
+ * A time in seconds relative to another one (typically, system start or era start). Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
  */
 export type RelativeTime = number;
 /**
@@ -342,10 +353,6 @@ export type UtcTime = string;
  * A magic number for telling networks apart. (e.g. 764824073)
  */
 export type NetworkMagic = number;
-/**
- * The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch.
- */
-export type OwnerStake = bigint;
 export type BlockNoOrOrigin = BlockNo | Origin;
 
 export interface Ogmios {
@@ -2207,10 +2214,10 @@ export interface MempoolSizeAndCapacity {
   numberOfTxs: UInt32;
 }
 export interface GetNonMyopicMemberRewards {
-  nonMyopicMemberRewards: Lovelaces | Credentials;
+  nonMyopicMemberRewards: Lovelace[] | StakeCredential[];
 }
 export interface GetDelegationsAndRewards {
-  delegationsAndRewards: DigestBlake2BCredential[];
+  delegationsAndRewards: StakeCredential[];
 }
 export interface GetUtxoByAddress {
   utxo: Address[];
@@ -2357,7 +2364,10 @@ export interface IndividualPoolRewardsProvenance {
    * A ratio of two integers, to express exact fractions.
    */
   activeStakeShare: string;
-  ownerStake: OwnerStake;
+  /**
+   * A number of lovelace, possibly large when summed up.
+   */
+  ownerStake: bigint;
   parameters: PoolParameters;
   /**
    * A ratio of two integers, to express exact fractions.
@@ -2395,18 +2405,21 @@ export interface RewardsProvenance1 {
   /**
    * Total rewards available for the given epoch.
    */
-  totalRewards: number;
+  totalRewards: bigint;
   /**
    * The total amount of staked Lovelace during this epoch.
    */
-  activeStake: number;
+  activeStake: bigint;
   pools: {
     [k: string]: RewardInfoPool;
   };
 }
 export interface RewardInfoPool {
   stake: Lovelace;
-  ownerStake: OwnerStake;
+  /**
+   * A number of lovelace, possibly large when summed up.
+   */
+  ownerStake: bigint;
   /**
    * Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky.
    */

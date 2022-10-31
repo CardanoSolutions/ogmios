@@ -22,7 +22,6 @@
 !server/test/
 server/test/vectors
 !server/modules/
-server/modules/**/.stack-work
 server/modules/hjsonpointer
 server/modules/hjsonschema
 server/modules/wai-routes

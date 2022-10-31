@@ -1,1 +1,1 @@
-{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"AwaitAcquire","result":{"AwaitAcquired":{"slot":256}},"reflection":14}
+{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"AwaitAcquire","result":{"AwaitAcquired":{"slot":256}},"reflection":"st"}

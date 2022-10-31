@@ -29,45 +29,94 @@ export const safeJSON = {
    *
    * Note that, this is potentially _slow_ since it needs to traverse the entire JSON.
    */
-  sanitize (json : any) : [any, boolean] {
+  sanitize (json : any, parentKey? : string) : any {
     if (typeof json === 'object' && json !== null) {
       const len = Object.getOwnPropertyNames(json).length
 
       // AssetQuantity
       if (len === 2 && json.coins !== undefined && json.assets !== undefined) {
-        for (const k in json.assets) {
-          const v = json.assets[k]
-          json.assets[k] = typeof v === 'number' ? BigInt(v) : v
-        }
-        return [json, true]
+        const coins = json.coins
+        json.coins = typeof coins === 'number' ? BigInt(coins) : coins
+
+        return this.sanitizeAdditionalFields(json.assets)
+      }
+
+      // Transaction
+      if (parentKey === 'body' && json.fee !== undefined) {
+        return this.sanitizeFields(json, ['fee', 'totalCollateral'])
+      }
+
+      // Withdrawals
+      if (parentKey === 'withdrawals') {
+        return this.sanitizeAdditionalFields(json)
       }
 
       // Metadatum@Int
       if (len === 1 && json.int !== undefined) {
-        const v = json.int
-        json.int = typeof v === 'number' ? BigInt(v) : v
-        return [json, true]
+        return this.sanitizeFields(json, ['int'])
+      }
+
+      // RewardsProvenance1
+      if (json.poolInfluence !== undefined && json.pools !== undefined) {
+        return this.sanitizeFields(json, ['totalRewards', 'activeStake'])
+      }
+
+      // RewardsInfoPool
+      if (json.stake !== undefined && json.approximatePerformance !== undefined) {
+        return this.sanitizeFields(json, ['stake', 'ownerStake'])
+      }
+
+      // PoolParameters
+      if (parentKey === 'poolParameters' || (json.vrf !== undefined && json.pledge !== undefined)) {
+        return this.sanitizeFields(json, ['cost', 'pledge'])
+      }
+
+      // MoveInstantaneousRewards
+      if (parentKey === 'moveInstantaneousRewards') {
+        this.sanitizeAdditionalFields(json.rewards)
+        return this.sanitizeFields(json, ['value'])
+      }
+
+      // DelegationsAndRewardsByAccounts
+      if (json.rewards !== undefined) {
+        return this.sanitizeFields(json, ['rewards'])
       }
 
       // Otherwise...
-      let anyChanged = false
       for (const k in json) {
-        const [v, changed] = this.sanitize(json[k])
-        // Only re-write the object if it _has_ changed. To keep things relatively fast.
-        if (changed) {
-          json[k] = v
-          anyChanged = true
-        }
+        this.sanitize(json[k], k)
       }
 
-      return [json, anyChanged]
+      return json
     }
+  },
 
-    return [json, false]
+  // Recursively sanitize an object and its nested fields, making sure to sanitize
+  // top-level fields given as parameter.
+  sanitizeFields (json : any, fields: string[]) : any {
+    for (const k in json) {
+      const v = json[k]
+      if (fields.includes(k)) {
+        json[k] = typeof v === 'number' ? BigInt(v) : v
+      } else {
+        this.sanitize(v, k)
+      }
+    }
+    return json
+  },
+
+  // Sanitize additional fields of an object explicitly, for objects that are maps
+  // with undetermined keys.
+  sanitizeAdditionalFields (json : any) : any {
+    for (const k in json) {
+      const v = json[k]
+      json[k] = typeof v === 'number' ? BigInt(v) : v
+    }
+    return json
   },
 
   parse (raw : string) : any {
-    return this.sanitize(this.$.parse(raw))[0]
+    return this.sanitize(this.$.parse(raw))
   },
 
   stringify (...args : any[]) : string {

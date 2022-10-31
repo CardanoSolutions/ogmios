@@ -9,6 +9,7 @@ import {
   getServerHealth,
   Schema,
   StateQuery,
+  TxMonitor,
   TxSubmission
 } from '@cardano-ogmios/client'
 import chalk from 'chalk'
@@ -24,7 +25,8 @@ const logObject = (obj: Object) =>
   const connection = {
     maxPayload: _512MB,
     host: args.host,
-    port: args.port
+    port: args.port,
+    tls: args.tls
   } as ConnectionConfig
   const context = await createInteractionContext(console.error, () => {}, { connection })
   const chainSync = await createChainSyncClient(context, {
@@ -47,7 +49,7 @@ const logObject = (obj: Object) =>
   }
   )
   const cardanoOgmiosRepl = repl.start({
-    prompt: 'ogmios> ',
+    prompt: `${args.host}> `,
     ignoreUndefined: true
   })
 
@@ -61,7 +63,7 @@ const logObject = (obj: Object) =>
       (stakeKeyHashes: Schema.DigestBlake2BCredential[]) => StateQuery.delegationsAndRewards(context, stakeKeyHashes),
     eraStart: () => StateQuery.eraStart(context),
     eraSummaries: () => StateQuery.eraSummaries(context),
-    evaluateTx: (bytes: string) => TxSubmission.evaluateTx(context, bytes),
+    evaluateTx: (bytes: string, additionalUtxoSet?: Schema.Utxo) => TxSubmission.evaluateTx(context, bytes, additionalUtxoSet),
     genesisConfig: () => StateQuery.genesisConfig(context),
     getServerHealth: () => getServerHealth({ connection: createConnectionObject(connection) }),
     findIntersect: (points: Schema.Point[]) => ChainSync.findIntersect(context, points),
@@ -78,6 +80,11 @@ const logObject = (obj: Object) =>
     stakeDistribution: () => StateQuery.stakeDistribution(context),
     systemStart: () => StateQuery.systemStart(context),
     submitTx: (bytes: string) => TxSubmission.submitTx(context, bytes),
+    awaitAcquire: () => TxMonitor.awaitAcquire(context),
+    hasTx: (id: Schema.TxId) => TxMonitor.hasTx(context, id),
+    nextTx: (args: { fields?: 'all' } = {}) => TxMonitor.nextTx(context, args),
+    sizeAndCapacity: () => TxMonitor.sizeAndCapacity(context),
+    releaseMempool: () => TxMonitor.release(context),
     utxo: (filters?: Schema.Address[]|Schema.TxIn[]) => StateQuery.utxo(context, filters)
   })
 

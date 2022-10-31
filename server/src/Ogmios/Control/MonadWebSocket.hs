@@ -23,7 +23,11 @@ module Ogmios.Control.MonadWebSocket
 import Ogmios.Prelude
 
 import Network.WebSockets
-    ( Connection, ConnectionException (..), Headers, PendingConnection )
+    ( Connection
+    , ConnectionException (..)
+    , Headers
+    , PendingConnection
+    )
 
 import qualified Network.WebSockets as WS
 

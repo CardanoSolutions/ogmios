@@ -19,28 +19,51 @@ module Ogmios.App.Server.Http
 import Ogmios.Prelude
 
 import Ogmios.App.Metrics
-    ( RuntimeStats, Sampler, Sensors )
+    ( RuntimeStats (..)
+    , Sampler
+    , Sensors
+    )
 import Ogmios.Control.MonadClock
-    ( MonadClock )
+    ( MonadClock
+    )
 import Ogmios.Control.MonadMetrics
-    ( MonadMetrics )
+    ( MonadMetrics
+    )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), TVar )
+    ( MonadSTM (..)
+    , TVar
+    )
 import Ogmios.Data.Health
-    ( ConnectionStatus (..), Health (..), Tip (..), modifyHealth )
+    ( ConnectionStatus (..)
+    , Health (..)
+    , Tip (..)
+    , modifyHealth
+    )
+import Ogmios.Data.Metrics.Prometheus
+    ( mkPrometheusMetrics
+    )
 
 import qualified Ogmios.App.Metrics as Metrics
 
 import Data.Aeson
-    ( ToJSON (..) )
+    ( ToJSON (..)
+    )
 import Data.FileEmbed
-    ( embedFile )
+    ( embedFile
+    )
 import Network.HTTP.Client
-    ( defaultManagerSettings, httpLbs, newManager, parseRequest, responseBody )
+    ( defaultManagerSettings
+    , httpLbs
+    , newManager
+    , parseRequest
+    , responseBody
+    )
 import Relude.Extra
-    ( lookup )
+    ( lookup
+    )
 import System.Exit
-    ( ExitCode (..) )
+    ( ExitCode (..)
+    )
 import Wai.Routes
     ( Handler
     , RenderRoute (..)
@@ -85,6 +108,7 @@ mkRoute "Server" [parseRoutes|
 /                      DashboardR           GET
 /dashboard.js          DashboardJsR         GET
 /health                HealthR              GET
+/metrics               MetricsR             GET
 /assets/logo.png       LogoR                GET
 /favicon.ico           FaviconR             GET
 |]
@@ -111,6 +135,15 @@ getHealthR = runHandlerM $ do
     json a = do
       header "Content-Type" "application/json; charset=utf-8"
       rawBuilder $ Json.fromEncoding $ toEncoding a
+
+getMetricsR :: Handler Server
+getMetricsR = runHandlerM $ do
+    header "Access-Control-Allow-Origin" "*"
+    header "Content-Type" "text/plain; charset=utf-8"
+    Server unliftIO EnvServer{health,sensors,sampler} <- sub
+    (rawBuilder . mkPrometheusMetrics) =<< liftIO (unliftIO (do
+        metrics <- Metrics.sample sampler sensors
+        modifyHealth health (\h -> h { metrics })))
 
 getLogoR :: Handler Server
 getLogoR = runHandlerM $ do

@@ -5,17 +5,77 @@ chapter: false
 pre: "<b>6. </b>"
 ---
 
+### [5.5.7] - 2022-10-27
+
+#### Added
+
+- `delegationAndRewards` and `nonMyopicMemberRewards` queries now both accept credentials in the form of bech32 strings as parameters, with the following expected prefixes and semantic (according to [CIP-0005](https://github.com/cardano-foundation/CIPs/tree/master/CIP-0005#specification):
+
+  - `stake` (resp. `stake_test` on test networks) for stake addresses
+  - `stake_vkh` for stake key hash digests
+  - `script` for stake script hash digests
+
+  See also [#277](https://github.com/CardanoSolutions/ogmios/issues/277).
+
+- ![TypeScript][] Allow `additionalUtxoSet` to be passed as argument in the repl.
+
+#### Changed
+
+- ![TypeScript][] Fixed `additionalUtxoSet` being ignored in the `TxSubmissionClient` of the TypeScript client.
+
+#### Removed
+
+N/A
+
+### [5.5.6] - 2022-10-21
+
+#### Added
+
+- Prometheus metrics exported at `/metrics` endpoint
+
+- Schema definitions are now included in the [📘 API reference](https://ogmios.dev/api/). This makes it a little easier to find a specific schema without having to drill into a messages definitions.
+
+#### Changed
+
+- Fixed network synchronization reporting `0.99999` even when fully synchronized. There was sometimes a possible discrepancy between the ledger internal clock and Ogmios' clock, causing a few seconds of drift time.
+
+- ![TypeScript][] Fixed a couple of data-types with fields parsed as `number` instead of `bigint`. See [#274](https://github.com/CardanoSolutions/ogmios/issues/274)
+
+  > **Warning** This is technically an internal breaking-change, however it actually comes as a bug fix since this does not change the announced _interface_ in the TypeScript schema (which was correctly indicated 'bigint'). Still, this may cause issues with those using `number` where there will now be `bigint`.
+
+- ![TypeScript][] Fixed browser detection for the `IsomorphicWebSocket` abstraction. See [#273](https://github.com/CardanoSolutions/ogmios/issues/274)
+
+#### Removed
+
+N/A
+
+### [5.5.5] - 2022-08-19
+
+#### Added
+
+- ![TypeScript][] Support for the _TxMonitor_ mini-protocol in the REPL.
+
+- Link to a new Java client for Ogmios.
+
+#### Changed
+
+- ![TypeScript][] Fixed parsing of `ScriptFailures` coming out of the `evaluateTx` command. Before this patch, the client would simply throw `undefined` when such an error was encountered. They are now properly transcribed as `EvaluateTxError`.
+
+#### Removed
+
+- `testnet` has been removed from the target networks by the Docker workflow; which means that until further notice, there will be no more Docker images pushed for testnet. However, support for `preprod` and `preview` environment has been added.
+
 ### [5.5.4] - 2022-08-11
 
-#### Added 
+#### Added
 
 - Missing JSON specification (and therefore, documentation) for `collectErrors`. See [#244](https://github.com/CardanoSolutions/ogmios/issues/244).
 
 #### Changed
 
-- Slot lengths are now encoded as floating numbers (double precision) instead of integers (still representing a number of seconds). However, to maintain backward-compatibility, integers value are encoded without decimal, as they used to. [#245](https://github.com/CardanoSolutions/ogmios/issues/245) 
+- Slot lengths are now encoded as floating numbers (double precision) instead of integers (still representing a number of seconds). However, to maintain backward-compatibility, integers value are encoded without decimal, as they used to. [#245](https://github.com/CardanoSolutions/ogmios/issues/245)
 
-- ![TypeScript][] Blocks' properties (`header`, `headerHash`, `body`) are no longer marked as _optional_ in the JSON specification (and consequently, in the TypeScript SDK). [#238](https://github.com/CardanoSolutions/ogmios/issues/238) 
+- ![TypeScript][] Blocks' properties (`header`, `headerHash`, `body`) are no longer marked as _optional_ in the JSON specification (and consequently, in the TypeScript SDK). [#238](https://github.com/CardanoSolutions/ogmios/issues/238)
 
 #### Removed
 
@@ -26,13 +86,13 @@ N/A
 
 ### [5.5.3] - 2022-07-31
 
-#### Added 
+#### Added
 
 N/A
 
 #### Changed
 
-- Bumped cardano-node's version (continuous integration & docker image) to 1.35.2. 
+- Bumped cardano-node's version (continuous integration & docker image) to 1.35.2.
 
 - ⚠️  Fixed Plutus' data / datum serialization function. See [3f614c3c](https://github.com/CardanoSolutions/ogmios/commit/3f614c3cf15b6e418fd461a34853b750a3408c4f) for details. As a consequence, some datums (either inline or in the witness set) that have been reported in the past (since `v5.5.0`) may have been wrong. Note that the datum hashes were however correct, so it is possible to identify the _"corrupted"_ ones by trying to re-hash (blake2b-256) them and see whether they match their associated hash digest.
 
@@ -55,7 +115,7 @@ N/A
 
 ### [5.5.2] - 2022-07-11
 
-#### Added 
+#### Added
 
 N/A
 
@@ -74,7 +134,7 @@ N/A
 
 ### [5.5.1] - 2022-07-05
 
-#### Added 
+#### Added
 
 - ![TypeScript][] New `isBabbageProtocolParameters` helper function, and extended support of the existing ones to Babbage. See [#234](https://github.com/CardanoSolutions/ogmios/pull/234).
 
@@ -91,7 +151,7 @@ N/A
 
 ### [5.5.0] - 2022-06-29
 
-#### Added 
+#### Added
 
 - Added Vasil/Babbage support, including:
   - A new block type `babbage` with:
@@ -113,14 +173,14 @@ N/A
 
 #### Changed
 
-- Updated [cardano-configurations](https://github.com/input-output-hk/cardano-configurations) to include the `vasil-dev` network and switch to [cardano-world](https://github.com/input-output-hk/cardano-world) as a source instead of Hydra artifacts -- now being deprecated. 
+- Updated [cardano-configurations](https://github.com/input-output-hk/cardano-configurations) to include the `vasil-dev` network and switch to [cardano-world](https://github.com/input-output-hk/cardano-world) as a source instead of Hydra artifacts -- now being deprecated.
 
 - _Partially fixed_ an issue causing websocket connection to be terminated by the server when p2p is enabled on the underlying node. Ogmios now has a workaround which makes the issue _less likely_, but the real fix belongs in the upstream networking stack. See [#230](https://github.com/CardanoSolutions/ogmios/issues/230), [#208](https://github.com/CardanoSolutions/ogmios/issues/208).
 
-- The `missingRequiredScripts` error now contains an extra field `resolved` that is a map of (pointer → script hash) that have been correctly resolved by said pointers. 
+- The `missingRequiredScripts` error now contains an extra field `resolved` that is a map of (pointer → script hash) that have been correctly resolved by said pointers.
 
 - The introduction of the Babbage era comes with some minor (albeit possibly breaking) changes and deprecations:
-  - ⚠️  `datums`, `redeemerData` and `plutus:v1` scripts are no longer encoded as `base64` strings, but are encoded as `base16` strings. The data payload remains however identical. 
+  - ⚠️  `datums`, `redeemerData` and `plutus:v1` scripts are no longer encoded as `base64` strings, but are encoded as `base16` strings. The data payload remains however identical.
        This change is meant for more compatibility across the API since those data-types can now also be submitted to the server when evaluating execution units for transactions. Using
        `base64` for input data here is a bit awkward since most existing interfaces in the ecosystem favor `base16`;
 
@@ -142,7 +202,7 @@ N/A
 
     - The `decentralizationParameter` no longer exists.<br/>
       The block production is forever decentralized :tada:!
-  
+
     - The `extraEntropy` no longer exists.
 
 <p align="right">See the <a href="https://ogmios.dev/api">📘 API reference</a> for more details.</p>
@@ -151,7 +211,7 @@ N/A
 
 - `UnknownInputs` and `UncomputableSlotArithmetic` errors have been removed from the top-level possible cases of `EvaluationFailure`. Instead, those errors are now comprised in the `CannotCreateEvaluationContext` case.
 
-- The `corruptCostModelForLanguage` error has been removed from the top-level possible cases of `ScriptFailure`. This one was effectively dead-code that couldn't be reached and was there for completeness. The code has now been removed upstream. 
+- The `corruptCostModelForLanguage` error has been removed from the top-level possible cases of `ScriptFailure`. This one was effectively dead-code that couldn't be reached and was there for completeness. The code has now been removed upstream.
 
 ---
 ---
@@ -179,7 +239,7 @@ N/A
 
 - Transaction JSON objects from all eras now contains an extra field `raw`, which represents the raw serialized transaction (CBOR) as a base64-encoded text string. This is the case of the chain-sync protocol, but also for the tx-monitor protocol. The field is however absent in the `ogmios.v1:compact` mode. See [#190](https://github.com/CardanoSolutions/ogmios/issues/190).
 
-- Transaction JSON objects from the **Alonzo** era now contains an extra field `inputSource` which a string set to either `inputs` or `collaterals`. This captures the fact that since the introduction of Plutus scripts in Alonzo, some transactions may be recorded as _failed_ transactions in the ledger. Those transactions do not successfully spend their inputs but instead, consume their collaterals as an input source to compensate block validators for their work. 
+- Transaction JSON objects from the **Alonzo** era now contains an extra field `inputSource` which a string set to either `inputs` or `collaterals`. This captures the fact that since the introduction of Plutus scripts in Alonzo, some transactions may be recorded as _failed_ transactions in the ledger. Those transactions do not successfully spend their inputs but instead, consume their collaterals as an input source to compensate block validators for their work.
 
 #### Changed
 
@@ -211,7 +271,7 @@ N/A
 
 #### Added
 
-- Extended the local-tx-submission protocol with a [new `EvaluateTx` query](https://ogmios.dev/mini-protocols/local-tx-submission/#evaluatetx) which evaluates execution units of scripts present in a transaction. This effectively piggybacks on the Alonzo's tools from the cardano-ledger while providing a more user-friendly interface regarding network parameters. The API offers well-detailed errors and an interface similar to the `SubmitTx`. See discussion on [#172](https://github.com/CardanoSolutions/ogmios/issues/172). 
+- Extended the local-tx-submission protocol with a [new `EvaluateTx` query](https://ogmios.dev/mini-protocols/local-tx-submission/#evaluatetx) which evaluates execution units of scripts present in a transaction. This effectively piggybacks on the Alonzo's tools from the cardano-ledger while providing a more user-friendly interface regarding network parameters. The API offers well-detailed errors and an interface similar to the `SubmitTx`. See discussion on [#172](https://github.com/CardanoSolutions/ogmios/issues/172).
 >
 - New `rewardsProvenance'` query coming as a replacement for the now-deprecated `rewardsProvenance` query. See discussion on [#171](https://github.com/CardanoSolutions/ogmios/issues/171).
 >
@@ -225,7 +285,7 @@ N/A
 >
 - Improved error reporting for the `SubmitTx` protocol which should gives a little clearer errors for ill-formed transactions.
 >
-- ![TypeScript][] ⚠️  Renamed client's `TxSubmission/errors.ts` into `TxSubmission/submissionErrors.ts`. Similarly, the submission are also now nested under a `submissionErrors` field in the `TxSubmission` top-level object. 
+- ![TypeScript][] ⚠️  Renamed client's `TxSubmission/errors.ts` into `TxSubmission/submissionErrors.ts`. Similarly, the submission are also now nested under a `submissionErrors` field in the `TxSubmission` top-level object.
 
 #### Removed
 
@@ -240,7 +300,7 @@ N/A
 
 - New `LocalTxMonitor` support in Ogmios. See [The user guide](https://ogmios.dev/mini-protocols/local-tx-monitor/) for more details.
 >
-  ⚠️  This new protocol is **NOT** enabled in `cardano-node@1.33.*`. Until its inclusion in a next release, a custom build of cardano-node is required to include a more recent version of `ouroboros-network` which adds support for that protocol to the Ouroboros' mini-protocols; namely: [`32af9168`](https://github.com/input-output-hk/ouroboros-network/commit/32af9168). 
+  ⚠️  This new protocol is **NOT** enabled in `cardano-node@1.33.*`. Until its inclusion in a next release, a custom build of cardano-node is required to include a more recent version of `ouroboros-network` which adds support for that protocol to the Ouroboros' mini-protocols; namely: [`32af9168`](https://github.com/input-output-hk/ouroboros-network/commit/32af9168).
 >
   A version of `cardano-node@1.33.0` patched with the necessary commits can be found at [CardanoSolutions/cardano-node@1.33.0+local-tx-monitor](https://github.com/CardanoSolutions/cardano-node/releases/tag/1.33.0+local-tx-monitor).
 >
@@ -314,7 +374,7 @@ N/A
 >
 - ⚠️  ![TypeScript][] `getServerHealth`'s `connection` argument is now wrapped into an object, mapped to the field `connection`. (see [#135](https://github.com/CardanoSolutions/ogmios/issues/135))
 
-- ⚠️  ![TypeScript][] Replaced schema definitions for `Hash16` and `Hash64` with more precise type definitions. For hashes, definitions now follows a convention `Digest[ALGORITHM]::PRE-IMAGE` where `ALGORITHM` and `PRE-IMAGE` points to the corresponding has algorithm used to hash the `PRE-IMAGE`. The length of the digest is given by `minLength` and `maxLength` JSON-schema constraints. Consequently, TypeScript types / interfaces generated from the JSON-schema definitions have been altered. 
+- ⚠️  ![TypeScript][] Replaced schema definitions for `Hash16` and `Hash64` with more precise type definitions. For hashes, definitions now follows a convention `Digest[ALGORITHM]::PRE-IMAGE` where `ALGORITHM` and `PRE-IMAGE` points to the corresponding has algorithm used to hash the `PRE-IMAGE`. The length of the digest is given by `minLength` and `maxLength` JSON-schema constraints. Consequently, TypeScript types / interfaces generated from the JSON-schema definitions have been altered.
 
 #### Removed
 
@@ -333,8 +393,8 @@ N / A
 
 #### Changed
 
-- Fixed configuration parsing which would wrongly use Shelley's slots per epoch instead of Byron's. This had an impact on the reported slot number in the chain-sync protocol, where slot numbers would be wrongly offset by `432000` per epoch after the first epoch. 
- 
+- Fixed configuration parsing which would wrongly use Shelley's slots per epoch instead of Byron's. This had an impact on the reported slot number in the chain-sync protocol, where slot numbers would be wrongly offset by `432000` per epoch after the first epoch.
+
 #### Removed
 
 N/A
@@ -357,7 +417,7 @@ N/A
 
 #### Changed
 
-- ![TypeScript][] Some internal rework and cleanup; mostly chasing dangling promises by avoiding attaching even handlers when not needed. 
+- ![TypeScript][] Some internal rework and cleanup; mostly chasing dangling promises by avoiding attaching even handlers when not needed.
 
 #### Removed
 

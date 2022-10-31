@@ -34,7 +34,6 @@ describe('TxMonitor', () => {
     beforeEach(async () => {
       context = await dummyInteractionContext()
       client = await createTxMonitorClient(context)
-      await client.awaitAcquire()
     })
     afterEach(async () => {
       await client.shutdown()

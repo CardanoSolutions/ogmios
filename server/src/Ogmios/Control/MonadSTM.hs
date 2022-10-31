@@ -10,9 +10,12 @@ module Ogmios.Control.MonadSTM
 import Ogmios.Prelude
 
 import Control.Monad.Class.MonadSTM
-    ( MonadSTM (..) )
+    ( MonadSTM (..)
+    )
 import Control.Monad.Class.MonadThrow
-    ( MonadCatch (..), MonadMask (..) )
+    ( MonadCatch (..)
+    , MonadMask (..)
+    )
 
 -- | An exception-safe bracket-style acquisition of a TMVar.
 withTMVar :: (MonadSTM m, MonadMask m) => TMVar m a -> (a -> m b) -> m b

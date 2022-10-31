@@ -23,17 +23,27 @@ module Ogmios.Control.MonadClock
 
 import Ogmios.Prelude
 
-import Ogmios.Control.MonadAsync
-    ( MonadAsync (..) )
-import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), newTMVarIO, putTMVar, tryTakeTMVar )
-
 import Control.Exception
-    ( evaluate )
+    ( evaluate
+    )
 import Control.Monad.Reader
-    ( mapReaderT )
+    ( mapReaderT
+    )
 import Data.Time.Clock
-    ( DiffTime, NominalDiffTime, UTCTime, diffUTCTime )
+    ( DiffTime
+    , NominalDiffTime
+    , UTCTime
+    , diffUTCTime
+    )
+import Ogmios.Control.MonadAsync
+    ( MonadAsync (..)
+    )
+import Ogmios.Control.MonadSTM
+    ( MonadSTM (..)
+    , newTMVarIO
+    , putTMVar
+    , tryTakeTMVar
+    )
 
 import qualified Control.Concurrent as IO
 import qualified Data.Time.Clock as IO

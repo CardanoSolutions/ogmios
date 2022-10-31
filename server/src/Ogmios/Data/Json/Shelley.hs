@@ -13,27 +13,43 @@ module Ogmios.Data.Json.Shelley where
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Binary
-    ( serialize' )
+    ( serialize'
+    )
 import Cardano.Ledger.Crypto
-    ( Crypto )
+    ( Crypto
+    )
 import Cardano.Ledger.Era
-    ( Era )
+    ( Era
+    )
 import Cardano.Ledger.Keys
-    ( KeyRole (..) )
+    ( KeyRole (..)
+    )
 import Cardano.Ledger.Shelley.Constraints
-    ( UsesAuxiliary, UsesScript, UsesTxBody, UsesValue )
+    ( UsesAuxiliary
+    , UsesScript
+    , UsesTxBody
+    , UsesValue
+    )
 import Control.State.Transition
-    ( STS (..) )
+    ( STS (..)
+    )
 import Data.ByteString.Base16
-    ( encodeBase16 )
+    ( encodeBase16
+    )
 import Data.ByteString.Bech32
-    ( HumanReadablePart (..), encodeBech32 )
+    ( HumanReadablePart (..)
+    , encodeBech32
+    )
 import Ouroboros.Consensus.Cardano.Block
-    ( ShelleyEra )
+    ( ShelleyEra
+    )
 import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos )
+    ( TPraos
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
-    ( ShelleyBlock (..), ShelleyHash (..) )
+    ( ShelleyBlock (..)
+    , ShelleyHash (..)
+    )
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
 

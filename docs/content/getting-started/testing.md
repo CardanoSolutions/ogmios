@@ -16,10 +16,10 @@ First, make sure to pull and update git submodules:
 $ git submodule update --init
 ```
 
-Then, simply use stack as follows:
+Then, simply use cabal as follows:
 
 ```console
-$ stack test ogmios:unit
+$ cabal test all
 ```
 
 ## 💨 Smoke Tests

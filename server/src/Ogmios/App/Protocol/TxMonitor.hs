@@ -42,12 +42,15 @@ module Ogmios.App.Protocol.TxMonitor
     ) where
 
 import Ogmios.Prelude hiding
-    ( id )
+    ( id
+    )
 
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..) )
+    ( MonadSTM (..)
+    )
 import Ogmios.Data.Json
-    ( Json )
+    ( Json
+    )
 import Ogmios.Data.Protocol.TxMonitor
     ( AwaitAcquire (..)
     , AwaitAcquireResponse (..)
@@ -67,9 +70,13 @@ import Ogmios.Data.Protocol.TxMonitor
     , TxMonitorMessage (..)
     )
 import Ouroboros.Consensus.Ledger.SupportsMempool
-    ( HasTxId (..) )
+    ( HasTxId (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxMonitor.Client
-    ( ClientStAcquired (..), ClientStIdle (..), LocalTxMonitorClient (..) )
+    ( ClientStAcquired (..)
+    , ClientStIdle (..)
+    , LocalTxMonitorClient (..)
+    )
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Prelude

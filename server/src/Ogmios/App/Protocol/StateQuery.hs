@@ -51,17 +51,34 @@ module Ogmios.App.Protocol.StateQuery
 import Ogmios.Prelude
 
 import Data.Aeson
-    ( ToJSON (..), genericToEncoding )
+    ( ToJSON (..)
+    , genericToEncoding
+    )
 import Ogmios.Control.Exception
-    ( MonadThrow )
+    ( MonadThrow
+    )
 import Ogmios.Control.MonadLog
-    ( HasSeverityAnnotation (..), Logger, MonadLog (..), Severity (..) )
+    ( HasSeverityAnnotation (..)
+    , Logger
+    , MonadLog (..)
+    , Severity (..)
+    )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), TQueue, readTQueue )
+    ( MonadSTM (..)
+    , TQueue
+    , readTQueue
+    )
 import Ogmios.Data.Json
-    ( Json, SerializationMode (..), ViaEncoding (..) )
+    ( Json
+    , SerializationMode (..)
+    , ViaEncoding (..)
+    )
 import Ogmios.Data.Json.Query
-    ( QueryInEra, SomeQuery (..), SomeShelleyEra (..), fromEraIndex )
+    ( QueryInEra
+    , SomeQuery (..)
+    , SomeShelleyEra (..)
+    , fromEraIndex
+    )
 import Ogmios.Data.Protocol.StateQuery
     ( Acquire (..)
     , AcquireResponse (..)
@@ -73,13 +90,17 @@ import Ogmios.Data.Protocol.StateQuery
     , StateQueryMessage (..)
     )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras )
+    ( CardanoEras
+    )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( HardForkBlock )
+    ( HardForkBlock
+    )
 import Ouroboros.Network.Block
-    ( Point (..) )
+    ( Point (..)
+    )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
-    ( LocalStateQueryClient (..) )
+    ( LocalStateQueryClient (..)
+    )
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Data.Aeson as Json

@@ -21,35 +21,63 @@ import Cardano.Network.Protocol.NodeToClient
     , runPeer
     )
 import Data.Aeson
-    ( ToJSON (..), object, (.=) )
+    ( ToJSON (..)
+    , object
+    , (.=)
+    )
 import Data.SOP.Strict
-    ( NS (..) )
-import Generics.SOP
-    ( K (..) )
+    ( NS (..)
+    )
 import GHC.TypeLits
-    ( KnownSymbol )
+    ( KnownSymbol
+    )
+import Generics.SOP
+    ( K (..)
+    )
 import Network.TypedProtocol.Codec
-    ( Codec (..), PeerHasAgency (..), SomeMessage (..), runDecoder )
+    ( Codec (..)
+    , PeerHasAgency (..)
+    , SomeMessage (..)
+    , runDecoder
+    )
 import Ogmios.App.Configuration
-    ( EpochSlots (..) )
+    ( EpochSlots (..)
+    )
 import Ogmios.App.Protocol.StateQuery
-    ( mkStateQueryClient )
+    ( mkStateQueryClient
+    )
 import Ogmios.Control.Exception
-    ( MonadCatch (..), MonadThrow (..) )
+    ( MonadCatch (..)
+    , MonadThrow (..)
+    )
 import Ogmios.Control.MonadAsync
-    ( race )
+    ( race
+    )
 import Ogmios.Control.MonadLog
-    ( MonadLog, nullTracer )
+    ( MonadLog
+    , nullTracer
+    )
 import Ogmios.Control.MonadOuroboros
-    ( MonadOuroboros )
+    ( MonadOuroboros
+    )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), newTQueue, readTQueue, writeTQueue )
+    ( MonadSTM (..)
+    , newTQueue
+    , readTQueue
+    , writeTQueue
+    )
 import Ogmios.Data.Json
-    ( Json, encodeAcquireFailure, encodePoint )
+    ( Json
+    , encodeAcquireFailure
+    , encodePoint
+    )
 import Ogmios.Data.Json.Orphans
     ()
 import Ogmios.Data.Json.Query
-    ( SomeQuery (..), encodeEpochNo, encodeMismatchEraInfo )
+    ( SomeQuery (..)
+    , encodeEpochNo
+    , encodeMismatchEraInfo
+    )
 import Ogmios.Data.Protocol.StateQuery
     ( Acquire (..)
     , Query (..)
@@ -58,7 +86,8 @@ import Ogmios.Data.Protocol.StateQuery
     , mkStateQueryCodecs
     )
 import Ouroboros.Consensus.Byron.Ledger.Block
-    ( ByronBlock )
+    ( ByronBlock
+    )
 import Ouroboros.Consensus.Cardano.Block
     ( AllegraEra
     , AlonzoEra
@@ -68,21 +97,32 @@ import Ouroboros.Consensus.Cardano.Block
     , ShelleyEra
     )
 import Ouroboros.Consensus.HardFork.Combinator.Abstract.SingleEraBlock
-    ( EraIndex (..) )
+    ( EraIndex (..)
+    )
 import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
-    ( QueryHardFork (..) )
+    ( QueryHardFork (..)
+    )
 import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos )
+    ( TPraos
+    )
 import Ouroboros.Consensus.Shelley.Ledger
-    ( ShelleyBlock )
+    ( ShelleyBlock
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Query
-    ( BlockQuery (..) )
+    ( BlockQuery (..)
+    )
 import Ouroboros.Network.Block
-    ( Point (..) )
+    ( Point (..)
+    )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
-    ( ClientHasAgency (..), LocalStateQuery (..), ServerHasAgency (..) )
+    ( ClientHasAgency (..)
+    , LocalStateQuery (..)
+    , ServerHasAgency (..)
+    )
 import System.Random
-    ( StdGen, random )
+    ( StdGen
+    , random
+    )
 import Test.App.Protocol.Util
     ( FailedToDecodeMsg (..)
     , PeerTerminatedUnexpectedly (..)
@@ -91,11 +131,20 @@ import Test.App.Protocol.Util
     , withMockChannel
     )
 import Test.Generators
-    ( genAcquireFailure, genEpochResult, genMirror, genPoint, generateWith )
+    ( genAcquireFailure
+    , genEpochResult
+    , genMirror
+    , genPoint
+    , generateWith
+    )
 import Test.Hspec
-    ( Spec, context, parallel )
+    ( Spec
+    , context
+    , parallel
+    )
 import Test.Hspec.QuickCheck
-    ( prop )
+    ( prop
+    )
 import Test.QuickCheck
     ( Gen
     , Property

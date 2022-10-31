@@ -62,7 +62,7 @@ Find more about run options in the docker user documentation.
 To build the image yourself, we encourage you to leverage the existing build-cache layers from the registry. Building the entire image from scratch can take up to an hour! You can
 
 ```console
-$ DOCKER_BUILDKIT=1 docker build \
+$ docker buildx build \
     --cache-from cardanosolutions/cardano-node-ogmios:latest \
     --tag cardanosolutions/cardano-node-ogmios:latest \
     https://github.com/cardanosolutions/ogmios.git
@@ -149,7 +149,7 @@ $ NETWORK=testnet OGMIOS_PORT=1338 docker-compose --project-name cardano-ogmios-
 To build the Ogmios image from sources, pass the `--build` flag to compose. This is useful if you need a different version than the latest one available on Dockerhub. Alternatively, you can resort to building the image directly from the Dockerfile. Note that the same Dockerfile is used to produced both the `ogmios` image and the `cardano-node-ogmios` image using multi-stage docker builds. To build only the `ogmios` image, you'll have to explicitly specify the build target using the `--target ogmios` option. So in brief:
 
 ```console
-$ DOCKER_BUILDKIT=1 docker build \
+$ docker buildx build \
     --cache-from cardanosolutions/ogmios:latest \
     --tag cardanosolutions/ogmios:latest \
     --target ogmios \

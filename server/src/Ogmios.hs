@@ -33,39 +33,77 @@ module Ogmios
 import Ogmios.Prelude
 
 import Cardano.Network.Protocol.NodeToClient
-    ( Block )
+    ( Block
+    )
 import Control.Monad.Class.MonadST
-    ( MonadST )
+    ( MonadST
+    )
 import Ogmios.App.Configuration
-    ( Configuration (..), NetworkParameters (..), TraceConfiguration (..) )
+    ( Configuration (..)
+    , NetworkParameters (..)
+    , TraceConfiguration (..)
+    )
 import Ogmios.App.Health
-    ( Health, connectHealthCheckClient, emptyHealth, newHealthCheckClient )
+    ( Health
+    , connectHealthCheckClient
+    , emptyHealth
+    , newHealthCheckClient
+    )
 import Ogmios.App.Metrics
-    ( RuntimeStats, Sampler, Sensors, newSampler, newSensors )
+    ( RuntimeStats
+    , Sampler
+    , Sensors
+    , newSampler
+    , newSensors
+    )
 import Ogmios.App.Server
-    ( connectHybridServer )
+    ( connectHybridServer
+    )
 import Ogmios.App.Server.Http
-    ( healthCheck, mkHttpApp )
+    ( healthCheck
+    , mkHttpApp
+    )
 import Ogmios.App.Server.WebSocket
-    ( newWebSocketApp )
+    ( newWebSocketApp
+    )
 import Ogmios.Control.Exception
-    ( MonadCatch, MonadMask, MonadThrow )
+    ( MonadCatch
+    , MonadMask
+    , MonadThrow
+    )
 import Ogmios.Control.MonadAsync
-    ( MonadAsync (..), MonadFork, MonadThread )
+    ( MonadAsync (..)
+    , MonadFork
+    , MonadThread
+    )
 import Ogmios.Control.MonadClock
-    ( MonadClock, getCurrentTime, withDebouncer, _10s )
+    ( MonadClock
+    , _10s
+    , getCurrentTime
+    , withDebouncer
+    )
 import Ogmios.Control.MonadLog
-    ( MonadLog (..), TracerDefinition (..), withStdoutTracers )
+    ( MonadLog (..)
+    , TracerDefinition (..)
+    , withStdoutTracers
+    )
 import Ogmios.Control.MonadMetrics
-    ( MonadMetrics )
+    ( MonadMetrics
+    )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..) )
+    ( MonadSTM (..)
+    )
 import Ogmios.Control.MonadWebSocket
-    ( MonadWebSocket )
+    ( MonadWebSocket
+    )
 import Ogmios.Options
-    ( Command (..), Tracers (..), parseOptions )
+    ( Command (..)
+    , Tracers (..)
+    , parseOptions
+    )
 import Ogmios.Version
-    ( version )
+    ( version
+    )
 import System.Posix.Signals
     ( Handler (..)
     , installHandler

@@ -20,25 +20,46 @@ import Cardano.Network.Protocol.NodeToClient
     , runPipelinedPeer
     )
 import Data.Aeson
-    ( ToJSON (..) )
+    ( ToJSON (..)
+    )
 import Network.TypedProtocol.Codec
-    ( Codec (..), PeerHasAgency (..), SomeMessage (..), runDecoder )
+    ( Codec (..)
+    , PeerHasAgency (..)
+    , SomeMessage (..)
+    , runDecoder
+    )
 import Ogmios.App.Configuration
-    ( EpochSlots (..) )
+    ( EpochSlots (..)
+    )
 import Ogmios.App.Protocol.ChainSync
-    ( MaxInFlight, mkChainSyncClient )
+    ( MaxInFlight
+    , mkChainSyncClient
+    )
 import Ogmios.Control.Exception
-    ( MonadThrow (..) )
+    ( MonadThrow (..)
+    )
 import Ogmios.Control.MonadAsync
-    ( race )
+    ( race
+    )
 import Ogmios.Control.MonadLog
-    ( nullTracer )
+    ( nullTracer
+    )
 import Ogmios.Control.MonadOuroboros
-    ( MonadOuroboros )
+    ( MonadOuroboros
+    )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), newTQueue, readTQueue, writeTQueue )
+    ( MonadSTM (..)
+    , newTQueue
+    , readTQueue
+    , writeTQueue
+    )
 import Ogmios.Data.Json
-    ( Json, SerializationMode (..), encodeBlock, encodePoint, encodeTip )
+    ( Json
+    , SerializationMode (..)
+    , encodeBlock
+    , encodePoint
+    , encodeTip
+    )
 import Ogmios.Data.Json.Orphans
     ()
 import Ogmios.Data.Protocol.ChainSync
@@ -48,7 +69,9 @@ import Ogmios.Data.Protocol.ChainSync
     , mkChainSyncCodecs
     )
 import Ouroboros.Network.Block
-    ( Point (..), Tip (..) )
+    ( Point (..)
+    , Tip (..)
+    )
 import Ouroboros.Network.Protocol.ChainSync.Type
     ( ChainSync (..)
     , ClientHasAgency (..)
@@ -56,7 +79,9 @@ import Ouroboros.Network.Protocol.ChainSync.Type
     , TokNextKind (..)
     )
 import System.Random
-    ( StdGen, random )
+    ( StdGen
+    , random
+    )
 import Test.App.Protocol.Util
     ( FailedToDecodeMsg (..)
     , PeerTerminatedUnexpectedly (..)
@@ -66,11 +91,20 @@ import Test.App.Protocol.Util
     , withMockChannel
     )
 import Test.Generators
-    ( genBlock, genMirror, genPoint, genTip, generateWith )
+    ( genBlock
+    , genMirror
+    , genPoint
+    , genTip
+    , generateWith
+    )
 import Test.Hspec
-    ( Spec, context, parallel )
+    ( Spec
+    , context
+    , parallel
+    )
 import Test.Hspec.QuickCheck
-    ( prop )
+    ( prop
+    )
 import Test.QuickCheck
     ( Confidence (..)
     , Gen

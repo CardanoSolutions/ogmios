@@ -1,6 +1,6 @@
 import { InteractionContext } from '../Connection'
 import { UnknownResultError } from '../errors'
-import { errors } from './evaluationErrors'
+import { EvaluateTxError, errors } from './evaluationErrors'
 import { Ogmios, ExUnits, Utxo } from '@cardano-ogmios/schema'
 import { Query } from '../StateQuery'
 
@@ -36,7 +36,7 @@ export const evaluateTx = (context: InteractionContext, bytes: string, additiona
   >({
     methodName: 'EvaluateTx',
     args: {
-      ...(additionalUtxoSet !== undefined ? {} : { additionalUtxoSet }),
+      ...(additionalUtxoSet !== undefined ? { additionalUtxoSet } : {}),
       evaluate: bytes
     }
   }, {
@@ -60,29 +60,28 @@ export const handleEvaluateTxResponse = (response: Ogmios['EvaluateTxResponse'])
       const { EvaluationFailure } = result
       if ('ScriptFailures' in EvaluationFailure) {
         const { ScriptFailures } = EvaluationFailure
-        if (Array.isArray(ScriptFailures)) {
-          return ScriptFailures.map(failure => {
-            if (errors.ExtraRedeemers.assert(failure)) {
-              return new errors.ExtraRedeemers.Error(failure)
-            } else if (errors.IllFormedExecutionBudget.assert(failure)) {
-              return new errors.IllFormedExecutionBudget.Error(failure)
-            } else if (errors.MissingRequiredDatums.assert(failure)) {
-              return new errors.MissingRequiredDatums.Error(failure)
-            } else if (errors.MissingRequiredScripts.assert(failure)) {
-              return new errors.MissingRequiredScripts.Error(failure)
-            } else if (errors.NoCostModelForLanguage.assert(failure)) {
-              return new errors.NoCostModelForLanguage.Error(failure)
-            } else if (errors.NonScriptInputReferencedByRedeemer.assert(failure)) {
-              return new errors.NonScriptInputReferencedByRedeemer.Error(failure)
-            } else if (errors.UnknownInputReferencedByRedeemer.assert(failure)) {
-              return new errors.UnknownInputReferencedByRedeemer.Error(failure)
-            } else if (errors.ValidatorFailed.assert(failure)) {
-              return new errors.ValidatorFailed.Error(failure)
-            } else {
-              return new Error(failure)
-            }
-          })
-        }
+        return Object.keys(ScriptFailures).map(k => {
+          const failure = Object.values(ScriptFailures[k])[0] as EvaluateTxError
+          if (errors.ExtraRedeemers.assert(failure)) {
+            return new errors.ExtraRedeemers.Error(failure)
+          } else if (errors.IllFormedExecutionBudget.assert(failure)) {
+            return new errors.IllFormedExecutionBudget.Error(failure)
+          } else if (errors.MissingRequiredDatums.assert(failure)) {
+            return new errors.MissingRequiredDatums.Error(failure)
+          } else if (errors.MissingRequiredScripts.assert(failure)) {
+            return new errors.MissingRequiredScripts.Error(failure)
+          } else if (errors.NoCostModelForLanguage.assert(failure)) {
+            return new errors.NoCostModelForLanguage.Error(failure)
+          } else if (errors.NonScriptInputReferencedByRedeemer.assert(failure)) {
+            return new errors.NonScriptInputReferencedByRedeemer.Error(failure)
+          } else if (errors.UnknownInputReferencedByRedeemer.assert(failure)) {
+            return new errors.UnknownInputReferencedByRedeemer.Error(failure)
+          } else if (errors.ValidatorFailed.assert(failure)) {
+            return new errors.ValidatorFailed.Error(failure)
+          } else {
+            return new UnknownResultError(failure)
+          }
+        })
       } else if (errors.IncompatibleEra.assert(EvaluationFailure)) {
         return [new errors.IncompatibleEra.Error(EvaluationFailure)]
       } else if (errors.AdditionalUtxoOverlap.assert(EvaluationFailure)) {

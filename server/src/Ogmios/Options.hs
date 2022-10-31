@@ -33,26 +33,44 @@ module Ogmios.Options
 import Ogmios.Prelude
 
 import Ogmios.App.Health
-    ( Health, TraceHealth )
+    ( Health
+    , TraceHealth
+    )
 import Ogmios.App.Metrics
-    ( TraceMetrics )
+    ( TraceMetrics
+    )
 import Ogmios.App.Server
-    ( TraceServer )
+    ( TraceServer
+    )
 import Ogmios.App.Server.WebSocket
-    ( TraceWebSocket )
+    ( TraceWebSocket
+    )
 import Ogmios.Control.MonadLog
-    ( Severity (..), Tracer, TracerDefinition (..), TracerHKD, defaultTracers )
+    ( Severity (..)
+    , Tracer
+    , TracerDefinition (..)
+    , TracerHKD
+    , defaultTracers
+    )
 
 import Cardano.Network.Protocol.NodeToClient
-    ( Block )
+    ( Block
+    )
 import Control.Monad.Trans.Except
-    ( throwE, withExceptT )
+    ( throwE
+    , withExceptT
+    )
 import Data.Aeson.Lens
-    ( key, _Integer, _String )
+    ( _Integer
+    , _String
+    , key
+    )
 import Data.Char
-    ( toUpper )
+    ( toUpper
+    )
 import Data.Time.Format.ISO8601
-    ( iso8601ParseM )
+    ( iso8601ParseM
+    )
 import Ogmios.App.Configuration
     ( Configuration (..)
     , EpochSlots (..)
@@ -62,11 +80,16 @@ import Ogmios.App.Configuration
     , TraceConfiguration (..)
     )
 import Options.Applicative.Help.Pretty
-    ( indent, string, vsep )
+    ( indent
+    , string
+    , vsep
+    )
 import Safe
-    ( readMay )
+    ( readMay
+    )
 import System.FilePath.Posix
-    ( replaceFileName )
+    ( replaceFileName
+    )
 
 import Options.Applicative
 

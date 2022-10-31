@@ -14,9 +14,14 @@ import Ogmios
     ()
 
 import Cardano.Network.Protocol.NodeToClient
-    ( Block )
+    ( Block
+    )
 import Data.Time.Clock
-    ( UTCTime (..), addUTCTime, getCurrentTime )
+    ( UTCTime (..)
+    , addUTCTime
+    , diffUTCTime
+    , getCurrentTime
+    )
 import Ogmios.Data.Health
     ( ConnectionStatus (..)
     , Health (..)
@@ -28,15 +33,34 @@ import Ogmios.Data.Health
     , mkNetworkSynchronization
     )
 import Ogmios.Data.Metrics
-    ( emptyMetrics )
+    ( emptyMetrics
+    )
 import Test.Hspec
-    ( Spec, context, parallel, runIO, shouldBe, specify )
+    ( Spec
+    , context
+    , parallel
+    , runIO
+    , shouldBe
+    , specify
+    )
 import Test.Hspec.QuickCheck
-    ( prop )
+    ( prop
+    )
 import Test.Instances.Util
-    ( eqShowJson )
+    ( eqShowJson
+    )
 import Test.QuickCheck
-    ( Gen, Property, choose, counterexample, forAll, (==>) )
+    ( Gen
+    , Property
+    , choose
+    , counterexample
+    , disjoin
+    , expectFailure
+    , forAll
+    , property
+    , (===)
+    , (==>)
+    )
 
 import qualified Data.Aeson as Json
 
@@ -70,32 +94,63 @@ spec = parallel $ do
                 let title = show networkSync <> " -> " <> show expectation in
                 specify title $ Json.encode networkSync `shouldBe` expectation
         context "properties" $ do
+            prop "not always equal to 1"
+                (expectFailure prop_alwaysEqualTo1)
             prop "always between 0 and 1"
                 prop_boundedNetworkSynchronization
             prop "increasing relative time increases synchronization"
                 prop_monotonicallyIncreasingRelativeTime
+            prop "is precise with a margin of 60s, rounded up"
+                prop_isPreciseWithMargin
 
 prop_boundedNetworkSynchronization
     :: Property
 prop_boundedNetworkSynchronization =
     forAll genSystemStart $ \start ->
-        forAll (genCurrentTime $ getSystemStart start) $ \now  ->
-            forAll genRelativeTime $ \rel ->
-                let sync = mkNetworkSynchronization start now rel
-                 in counterexample (show sync)
-                  $ sync >= NetworkSynchronization 0
-                 && sync <= NetworkSynchronization 1
+    forAll (genCurrentTime (getSystemStart start)) $ \now  ->
+    forAll genRelativeTime $ \rel ->
+        let sync = mkNetworkSynchronization start now rel
+         in counterexample (show sync)
+          $ sync >= NetworkSynchronization 0
+         && sync <= NetworkSynchronization 1
 
+prop_alwaysEqualTo1
+    :: Property
+prop_alwaysEqualTo1 =
+    forAll genSystemStart $ \start ->
+    forAll (genCurrentTime (getSystemStart start)) $ \now  ->
+    forAll genRelativeTime $ \rel ->
+        mkNetworkSynchronization start now rel === NetworkSynchronization 1
 
 prop_monotonicallyIncreasingRelativeTime
     :: Property
 prop_monotonicallyIncreasingRelativeTime =
-    forAll genSystemStart $ \start ->
-        forAll genRelativeTime $ \(RelativeTime rel) -> rel /= 0 ==>
-            let now = addUTCTime (3 * rel) (getSystemStart start)
-             in mkNetworkSynchronization start now (RelativeTime rel)
-                <
+    forAll genSystemStart  $ \start ->
+    forAll genRelativeTime $ \(RelativeTime rel) -> rel /= 0 ==>
+        let now = addUTCTime (3 * rel) (getSystemStart start)
+         in disjoin
+            [ property $
+                mkNetworkSynchronization start now (RelativeTime rel)
+                  <
                 mkNetworkSynchronization start now (RelativeTime $ 2 * rel)
+
+            , mkNetworkSynchronization start now (RelativeTime rel)
+                ===
+              NetworkSynchronization 1
+            ]
+
+prop_isPreciseWithMargin
+    :: Property
+prop_isPreciseWithMargin =
+    forAll genSystemStart $ \systemStart ->
+    forAll (genCurrentTime (getSystemStart systemStart)) $ \currentTime ->
+    forAll (choose (1, 60)) $ \δ ->
+        let
+            relativeTime = round $ currentTime `diffUTCTime` getSystemStart systemStart
+            mkRelativeTime = RelativeTime . fromInteger . (* 1_000_000_000_000)
+            sync = mkNetworkSynchronization systemStart currentTime . mkRelativeTime
+          in
+            sync relativeTime === sync (relativeTime - δ)
 
 --
 -- Generators

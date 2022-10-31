@@ -4,6 +4,7 @@
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Ogmios.Data.Json.Query
@@ -95,7 +96,8 @@ module Ogmios.Data.Json.Query
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Api
-    ( ShelleyBasedEra (..) )
+    ( ShelleyBasedEra (..)
+    )
 import Cardano.Binary
     ( Annotator
     , DecoderError
@@ -105,79 +107,145 @@ import Cardano.Binary
     , decodeFullDecoder
     )
 import Cardano.Crypto.Hash
-    ( pattern UnsafeHash, hashFromBytes, hashFromTextAsHex )
+    ( hashFromBytes
+    , hashFromTextAsHex
+    , pattern UnsafeHash
+    )
 import Cardano.Crypto.Hash.Class
-    ( Hash, HashAlgorithm )
+    ( Hash
+    , HashAlgorithm
+    )
 import Cardano.Ledger.Babbage
     ()
 import Cardano.Ledger.Crypto
-    ( Crypto, HASH )
+    ( Crypto
+    , HASH
+    )
 import Cardano.Ledger.Keys
-    ( KeyRole (..) )
+    ( KeyRole (..)
+    )
 import Cardano.Ledger.SafeHash
-    ( unsafeMakeSafeHash )
+    ( unsafeMakeSafeHash
+    )
 import Cardano.Network.Protocol.NodeToClient
-    ( GenTx, GenTxId, SerializedTx )
+    ( GenTx
+    , GenTxId
+    , SerializedTx
+    )
 import Cardano.Slotting.Block
-    ( BlockNo (..) )
+    ( BlockNo (..)
+    )
 import Cardano.Slotting.Slot
-    ( EpochNo (..), SlotNo (..), WithOrigin (..) )
+    ( EpochNo (..)
+    , SlotNo (..)
+    , WithOrigin (..)
+    )
+import Codec.Binary.Bech32.TH
+    ( humanReadablePart
+    )
 import Codec.Serialise
-    ( deserialise, deserialiseOrFail, serialise )
+    ( deserialise
+    , deserialiseOrFail
+    , serialise
+    )
 import Data.Aeson
-    ( toJSON )
+    ( toJSON
+    )
 import Data.ByteString.Base16
-    ( encodeBase16 )
+    ( encodeBase16
+    )
 import Data.SOP.Strict
-    ( NS (..) )
+    ( NS (..)
+    )
 import Formatting.Buildable
-    ( build )
+    ( build
+    )
 import Ogmios.Data.EraTranslation
-    ( MostRecentEra, MultiEraTxOut (..), MultiEraUTxO (..), translateTxOut )
+    ( MostRecentEra
+    , MultiEraTxOut (..)
+    , MultiEraUTxO (..)
+    , translateTxOut
+    )
 import Ouroboros.Consensus.BlockchainTime
-    ( SystemStart (..) )
+    ( SystemStart (..)
+    )
 import Ouroboros.Consensus.Cardano.Block
-    ( BlockQuery (..), CardanoBlock, CardanoEras, GenTx (..), TxId (..) )
+    ( BlockQuery (..)
+    , CardanoBlock
+    , CardanoEras
+    , GenTx (..)
+    , TxId (..)
+    )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( EraIndex (..), MismatchEraInfo, OneEraHash (..) )
+    ( EraIndex (..)
+    , MismatchEraInfo
+    , OneEraHash (..)
+    )
 import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
-    ( EraMismatch (..), mkEraMismatch )
+    ( EraMismatch (..)
+    , mkEraMismatch
+    )
 import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
-    ( QueryAnytime (..) )
+    ( QueryAnytime (..)
+    )
 import Ouroboros.Consensus.HardFork.History.EraParams
-    ( EraParams (..), SafeZone (..) )
+    ( EraParams (..)
+    , SafeZone (..)
+    )
 import Ouroboros.Consensus.HardFork.History.Qry
-    ( Interpreter )
+    ( Interpreter
+    )
 import Ouroboros.Consensus.HardFork.History.Summary
-    ( Bound (..), EraEnd (..), EraSummary (..), Summary (..) )
+    ( Bound (..)
+    , EraEnd (..)
+    , EraSummary (..)
+    , Summary (..)
+    )
 import Ouroboros.Consensus.Protocol.Praos
-    ( Praos, PraosCrypto )
+    ( Praos
+    , PraosCrypto
+    )
 import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos )
+    ( TPraos
+    )
 import Ouroboros.Consensus.Shelley.Eras
-    ( AllegraEra, AlonzoEra, BabbageEra, MaryEra, ShelleyEra )
+    ( AllegraEra
+    , AlonzoEra
+    , BabbageEra
+    , MaryEra
+    , ShelleyEra
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
-    ( ShelleyBlock (..), ShelleyHash (..) )
+    ( ShelleyBlock (..)
+    , ShelleyHash (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Config
-    ( CompactGenesis, getCompactGenesis )
+    ( CompactGenesis
+    , getCompactGenesis
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Mempool
-    ( TxId (..) )
+    ( TxId (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Query
-    ( BlockQuery (..), NonMyopicMemberRewards (..) )
+    ( BlockQuery (..)
+    , NonMyopicMemberRewards (..)
+    )
 import Ouroboros.Consensus.Shelley.Protocol.Abstract
-    ( ProtoCrypto )
+    ( ProtoCrypto
+    )
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
 import Ouroboros.Network.Block
-    ( pattern BlockPoint
-    , pattern GenesisPoint
-    , Point (..)
+    ( Point (..)
     , Tip (..)
     , genesisPoint
+    , pattern BlockPoint
+    , pattern GenesisPoint
     , wrapCBORinCBOR
     )
 import Ouroboros.Network.Point
-    ( Block (..) )
+    ( Block (..)
+    )
 
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Codec.CBOR.Encoding as Cbor
@@ -292,7 +360,7 @@ type RewardAccounts crypto =
 
 type RewardProvenance' crypto =
     ( Sh.Api.RewardParams
-    , Map (Ledger.KeyHash 'StakePool crypto) (Sh.Api.RewardInfoPool)
+    , Map (Ledger.KeyHash 'StakePool crypto) Sh.Api.RewardInfoPool
     )
 
 
@@ -1511,18 +1579,76 @@ decodeCoin
 decodeCoin =
     fmap Ledger.word64ToCoin . Json.parseJSON
 
--- TODO: Makes it possible to distinguish between KeyHash and ScriptHash
--- credentials. Both are encoded as hex-encoded strings. Encoding them as
--- object is ill-advised because we also need them as key of the non-myopic
--- member rewards map.
---
--- A possible option: encode them as Bech32 strings with different prefixes.
 decodeCredential
-    :: Crypto crypto
+    :: forall crypto. Crypto crypto
     => Json.Value
     -> Json.Parser (Ledger.Credential 'Staking crypto)
-decodeCredential =
-    fmap (Ledger.KeyHashObj . Ledger.KeyHash) . decodeHash
+decodeCredential = Json.withText "Credential" $ \(encodeUtf8 -> str) ->
+    asum
+        [ decodeBase16 str >>=
+            decodeAsKeyHash
+        , decodeBech32 str >>=
+            whenHrp (`elem` [[humanReadablePart|stake|], [humanReadablePart|stake_test|]])
+                decodeAsStakeAddress
+        , decodeBech32 str >>=
+            whenHrp (== [humanReadablePart|script|])
+                decodeAsScriptHash
+        , decodeBech32 str >>=
+            whenHrp (== [humanReadablePart|stake_vkh|])
+                decodeAsKeyHash
+        ]
+       <|>
+        fail "Unable to decode credential. It must be either a base16-encoded \
+             \stake key hash or a bech32-encoded stake address, stake key hash \
+             \or script hash with one of the following respective prefixes: \
+             \stake, stake_vkh or script."
+  where
+    invalidStakeKeyHash =
+        fail "invalid stake key hash"
+
+    invalidStakeAddress =
+        fail "invalid stake address"
+
+    whenHrp
+        :: (Bech32.HumanReadablePart -> Bool)
+        -> (ByteString -> Json.Parser a)
+        -> (Bech32.HumanReadablePart, Bech32.DataPart)
+        -> Json.Parser a
+    whenHrp predicate parser (hrp, bytes) =
+        if predicate hrp then
+            maybe mempty parser (Bech32.dataPartToBytes bytes)
+        else
+            mempty
+
+    decodeBech32
+        :: ByteString
+        -> Json.Parser (Bech32.HumanReadablePart, Bech32.DataPart)
+    decodeBech32 =
+        either (fail . show) pure . Bech32.decodeLenient . decodeUtf8
+
+    decodeAsKeyHash
+        :: ByteString
+        -> Json.Parser (Ledger.Credential 'Staking crypto)
+    decodeAsKeyHash =
+        fmap (Ledger.KeyHashObj . Ledger.KeyHash)
+            . maybe invalidStakeKeyHash pure
+            . hashFromBytes
+
+    decodeAsScriptHash
+        :: ByteString
+        -> Json.Parser (Ledger.Credential 'Staking crypto)
+    decodeAsScriptHash =
+        fmap (Ledger.ScriptHashObj . Ledger.ScriptHash)
+            . maybe invalidStakeKeyHash pure
+            . hashFromBytes
+
+    decodeAsStakeAddress
+        :: ByteString
+        -> Json.Parser (Ledger.Credential 'Staking crypto)
+    decodeAsStakeAddress =
+        fmap Ledger.getRwdCred
+            . maybe invalidStakeAddress pure
+            . Ledger.deserialiseRewardAcnt
 
 decodeDatumHash
     :: Crypto crypto

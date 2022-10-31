@@ -14,10 +14,16 @@ module Ogmios.Control.MonadMetrics
     ) where
 
 import Ogmios.Prelude hiding
-    ( max, min )
+    ( max
+    , min
+    )
 
 import System.Metrics.Distribution
-    ( Stats, max, mean, min )
+    ( Stats
+    , max
+    , mean
+    , min
+    )
 
 import qualified System.Metrics.Counter as Ekg.Counter
 import qualified System.Metrics.Distribution as Ekg.Distribution

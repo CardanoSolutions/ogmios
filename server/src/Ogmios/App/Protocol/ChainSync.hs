@@ -42,9 +42,14 @@ module Ogmios.App.Protocol.ChainSync
 import Ogmios.Prelude
 
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), TQueue, readTQueue, tryReadTQueue )
+    ( MonadSTM (..)
+    , TQueue
+    , readTQueue
+    , tryReadTQueue
+    )
 import Ogmios.Data.Json
-    ( Json )
+    ( Json
+    )
 import Ogmios.Data.Protocol.ChainSync
     ( ChainSyncCodecs (..)
     , ChainSyncMessage (..)
@@ -55,11 +60,17 @@ import Ogmios.Data.Protocol.ChainSync
     )
 
 import Data.Sequence
-    ( Seq (..), (|>) )
+    ( Seq (..)
+    , (|>)
+    )
 import Network.TypedProtocol.Pipelined
-    ( Nat (..), natToInt )
+    ( Nat (..)
+    , natToInt
+    )
 import Ouroboros.Network.Block
-    ( Point (..), Tip (..) )
+    ( Point (..)
+    , Tip (..)
+    )
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     ( ChainSyncClientPipelined (..)
     , ClientPipelinedStIdle (..)

@@ -1,6 +1,7 @@
 cabal-version:  2.4
+
 name:           ogmios
-version:        5.5.4
+version:        5.5.7
 synopsis:       A JSON-WSP WebSocket client for cardano-node
 description:    Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server#ogmios-server>
 category:       Web
@@ -116,6 +117,7 @@ library
       Ogmios.Data.Json.Query
       Ogmios.Data.Json.Shelley
       Ogmios.Data.Metrics
+      Ogmios.Data.Metrics.Prometheus
       Ogmios.Data.Protocol
       Ogmios.Data.Protocol.ChainSync
       Ogmios.Data.Protocol.StateQuery
@@ -125,6 +127,8 @@ library
       Ogmios.Prelude
       Ogmios.Version
   other-modules:
+      Paths_ogmios
+  autogen-modules:
       Paths_ogmios
   hs-source-dirs:
       src
@@ -137,6 +141,7 @@ library
     , base58-bytestring
     , base64
     , bech32
+    , bech32-th
     , bytestring
     , cardano-api
     , cardano-binary
@@ -184,6 +189,7 @@ library
     , plutus-ledger-api
     , prettyprinter
     , profunctors
+    , prometheus
     , relude
     , safe
     , safe-exceptions
@@ -217,6 +223,8 @@ executable ogmios
   main-is: Main.hs
   other-modules:
       Paths_ogmios
+  autogen-modules:
+      Paths_ogmios
   hs-source-dirs:
       app
   build-depends:
@@ -246,6 +254,8 @@ test-suite unit
       Test.Generators.Orphans
       Test.Instances.Util
       Test.Path.Util
+      Paths_ogmios
+  autogen-modules:
       Paths_ogmios
   hs-source-dirs:
       test/unit

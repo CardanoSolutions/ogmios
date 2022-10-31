@@ -9,17 +9,23 @@ module Ogmios.Data.Json.Babbage where
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Binary
-    ( serialize' )
+    ( serialize'
+    )
 import Cardano.Ledger.Crypto
-    ( Crypto )
+    ( Crypto
+    )
 import GHC.Records
-    ( getField )
+    ( getField
+    )
 import Ouroboros.Consensus.Cardano.Block
-    ( BabbageEra )
+    ( BabbageEra
+    )
 import Ouroboros.Consensus.Protocol.Praos
-    ( Praos )
+    ( Praos
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
-    ( ShelleyBlock (..) )
+    ( ShelleyBlock (..)
+    )
 import Ouroboros.Consensus.Shelley.Protocol.Praos
     ()
 

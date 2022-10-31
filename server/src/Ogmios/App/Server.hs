@@ -18,16 +18,24 @@ module Ogmios.App.Server
 import Ogmios.Prelude
 
 import Ogmios.App.Configuration
-    ( Configuration (..) )
+    ( Configuration (..)
+    )
 import Ogmios.Control.MonadLog
-    ( HasSeverityAnnotation (..), Logger, MonadLog (..), Severity (..) )
+    ( HasSeverityAnnotation (..)
+    , Logger
+    , MonadLog (..)
+    , Severity (..)
+    )
 import Ogmios.Control.MonadWebSocket
-    ( WebSocketApp )
+    ( WebSocketApp
+    )
 import Ogmios.Data.Json
-    ( ToJSON )
+    ( ToJSON
+    )
 
 import System.Directory
-    ( doesPathExist )
+    ( doesPathExist
+    )
 
 import qualified Network.Wai as Wai
 import qualified Network.Wai.Handler.Warp as Warp

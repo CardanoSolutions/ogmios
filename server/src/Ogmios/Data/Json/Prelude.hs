@@ -91,7 +91,8 @@ module Ogmios.Data.Json.Prelude
 import Ogmios.Prelude
 
 import Cardano.Binary
-    ( Annotated (..) )
+    ( Annotated (..)
+    )
 import Cardano.Ledger.BaseTypes
     ( DnsName
     , NonNegativeInterval
@@ -106,44 +107,71 @@ import Cardano.Ledger.BaseTypes
     , urlToText
     )
 import Cardano.Ledger.Coin
-    ( Coin (..) )
+    ( Coin (..)
+    )
 import Cardano.Slotting.Block
-    ( BlockNo (..) )
+    ( BlockNo (..)
+    )
 import Cardano.Slotting.Slot
-    ( EpochNo (..), EpochSize (..), SlotNo (..), WithOrigin (..) )
+    ( EpochNo (..)
+    , EpochSize (..)
+    , SlotNo (..)
+    , WithOrigin (..)
+    )
 import Cardano.Slotting.Time
-    ( SlotLength (..), SystemStart (..) )
+    ( SlotLength (..)
+    , SystemStart (..)
+    )
 import Data.Aeson
-    ( FromJSON, ToJSON, (.:), (.:?) )
+    ( FromJSON
+    , ToJSON
+    , (.:)
+    , (.:?)
+    )
 import Data.ByteArray
-    ( ByteArrayAccess )
+    ( ByteArrayAccess
+    )
 import Data.ByteString.Base16
-    ( encodeBase16 )
+    ( encodeBase16
+    )
 import Data.ByteString.Base64
-    ( encodeBase64 )
+    ( encodeBase64
+    )
 import Data.ByteString.Bech32
-    ( HumanReadablePart, encodeBech32 )
+    ( HumanReadablePart
+    , encodeBech32
+    )
 import Data.IP
-    ( IPv4, IPv6 )
+    ( IPv4
+    , IPv6
+    )
 import Data.Ratio
-    ( (%) )
+    ( (%)
+    )
 import Data.Scientific
-    ( Scientific )
+    ( Scientific
+    )
 import Data.Sequence.Strict
-    ( StrictSeq )
+    ( StrictSeq
+    )
 import Data.Time.Clock
-    ( NominalDiffTime, UTCTime )
+    ( NominalDiffTime
+    , UTCTime
+    )
 import Data.Vector
-    ( Vector )
+    ( Vector
+    )
 import Ouroboros.Consensus.BlockchainTime.WallClock.Types
-    ( RelativeTime (..) )
+    ( RelativeTime (..)
+    )
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.Key as Json
 import qualified Data.Aeson.KeyMap as Json
 import qualified Data.Aeson.Parser.Internal as Json hiding
-    ( scientific )
+    ( scientific
+    )
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteArray as BA
 import qualified Data.ByteString.Base16 as B16

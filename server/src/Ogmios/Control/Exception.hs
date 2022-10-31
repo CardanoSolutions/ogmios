@@ -23,13 +23,20 @@ module Ogmios.Control.Exception
 import Ogmios.Prelude
 
 import Control.Exception.Safe
-    ( IOException, isAsyncException )
+    ( IOException
+    , isAsyncException
+    )
 import Control.Monad.Class.MonadThrow
-    ( MonadCatch (..), MonadMask (..), MonadThrow (..) )
+    ( MonadCatch (..)
+    , MonadMask (..)
+    , MonadThrow (..)
+    )
 import Data.List
-    ( isInfixOf )
+    ( isInfixOf
+    )
 import System.IO.Error
-    ( isDoesNotExistError )
+    ( isDoesNotExistError
+    )
 
 isTryAgainError :: IOException -> Bool
 isTryAgainError = isInfixOf "resource exhausted" . show

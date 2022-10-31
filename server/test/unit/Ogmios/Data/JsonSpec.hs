@@ -15,21 +15,32 @@ module Ogmios.Data.JsonSpec
 import Ogmios.Prelude
 
 import Cardano.Ledger.Crypto
-    ( StandardCrypto )
+    ( StandardCrypto
+    )
 import Cardano.Network.Protocol.NodeToClient
-    ( Block, GenTxId )
+    ( Block
+    , GenTxId
+    )
 import Cardano.Slotting.Time
-    ( mkSlotLength )
+    ( mkSlotLength
+    )
 import Control.Monad.Class.MonadAsync
-    ( forConcurrently_ )
+    ( forConcurrently_
+    )
 import Data.Aeson
-    ( parseJSON, toJSON )
+    ( parseJSON
+    , toJSON
+    )
 import Data.Aeson.QQ.Simple
-    ( aesonQQ )
+    ( aesonQQ
+    )
 import Data.Maybe
-    ( fromJust )
+    ( fromJust
+    )
 import Ogmios.Data.EraTranslation
-    ( MultiEraUTxO (..), translateUtxo )
+    ( MultiEraUTxO (..)
+    , translateUtxo
+    )
 import Ogmios.Data.Json
     ( Json
     , SerializationMode (..)
@@ -53,7 +64,8 @@ import Ogmios.Data.Json
 import Ogmios.Data.Json.Orphans
     ()
 import Ogmios.Data.Json.Prelude
-    ( encodeSlotLength )
+    ( encodeSlotLength
+    )
 import Ogmios.Data.Json.Query
     ( QueryInEra
     , ShelleyBasedEra (..)
@@ -143,19 +155,29 @@ import Ogmios.Data.Protocol.TxSubmission
     , _encodeSubmitTxResponse
     )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras, GenTx, HardForkApplyTxErr (..) )
+    ( CardanoEras
+    , GenTx
+    , HardForkApplyTxErr (..)
+    )
 import Ouroboros.Consensus.Shelley.Eras
-    ( StandardAlonzo )
+    ( StandardAlonzo
+    )
 import Ouroboros.Network.Block
-    ( Point (..), Tip (..) )
+    ( Point (..)
+    , Tip (..)
+    )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
-    ( AcquireFailure (..) )
+    ( AcquireFailure (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
-    ( SubmitResult (..) )
+    ( SubmitResult (..)
+    )
 import Paths_ogmios
-    ( getDataFileName )
+    ( getDataFileName
+    )
 import System.Directory
-    ( createDirectoryIfMissing )
+    ( createDirectoryIfMissing
+    )
 import Test.Generators
     ( genAcquireFailure
     , genBlock
@@ -206,11 +228,16 @@ import Test.Hspec
     , specify
     )
 import Test.Hspec.Json.Schema
-    ( SchemaRef (..), prop_validateToJSON, unsafeReadSchemaRef )
+    ( SchemaRef (..)
+    , prop_validateToJSON
+    , unsafeReadSchemaRef
+    )
 import Test.Hspec.QuickCheck
-    ( prop )
+    ( prop
+    )
 import Test.Path.Util
-    ( getProjectRoot )
+    ( getProjectRoot
+    )
 import Test.QuickCheck
     ( Arbitrary (..)
     , Args (..)
@@ -223,6 +250,7 @@ import Test.QuickCheck
     , forAll
     , forAllBlind
     , forAllShrinkBlind
+    , frequency
     , genericShrink
     , oneof
     , property
@@ -232,7 +260,8 @@ import Test.QuickCheck
     , (===)
     )
 import Test.QuickCheck.Arbitrary.Generic
-    ( genericArbitrary )
+    ( genericArbitrary
+    )
 
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -551,6 +580,10 @@ spec = do
             [aesonQQ|
             { "nonMyopicMemberRewards":
                 [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
+                , "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
+                , "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
+                , "stake179kzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjcek9u8h"
+                , "stake_test17pkzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjc7u07r2"
                 ]
             }|]
             ( parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult
@@ -561,10 +594,14 @@ spec = do
             [aesonQQ|
             { "delegationsAndRewards":
                 [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
+                , "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
+                , "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
+                , "stake179kzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjcek9u8h"
+                , "stake_test17pkzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjc7u07r2"
                 ]
             }|]
             ( parseGetFilteredDelegationsAndRewards genDelegationAndRewardsResult
-            ) (10, "StateQuery/Response/Query[nonMyopicMemberRewards]")
+            ) (10, "StateQuery/Response/Query[delegationsAndRewards]")
             "ogmios.wsp.json#/properties/QueryResponse[delegationsAndRewards]"
 
         validateQuery
@@ -702,13 +739,13 @@ spec = do
 instance Arbitrary a => Arbitrary (Wsp.Response a) where
     arbitrary = oneof
         [ Wsp.Response Nothing <$> arbitrary
-        , Wsp.Response (Just $ toJSON @Int 14) <$> arbitrary
+        , Wsp.Response (Just $ toJSON @String "st") <$> arbitrary
         ]
 
 instance Arbitrary a => Arbitrary (Wsp.Request a) where
     arbitrary = oneof
         [ Wsp.Request Nothing <$> arbitrary
-        , Wsp.Request (Just $ toJSON @String "patate") <$> arbitrary
+        , Wsp.Request (Just $ toJSON @String "st") <$> arbitrary
         ]
 
 instance Arbitrary (FindIntersect Block) where
@@ -721,7 +758,10 @@ instance Arbitrary (FindIntersectResponse Block) where
 
 instance Arbitrary (RequestNextResponse Block) where
     shrink = genericShrink
-    arbitrary = reasonablySized genericArbitrary
+    arbitrary = frequency
+        [ ( 10, RollForward  <$> reasonablySized arbitrary <*> arbitrary )
+        , (  1, RollBackward <$> arbitrary <*> arbitrary )
+        ]
 
 instance Arbitrary RequestNext where
     shrink = genericShrink
@@ -898,8 +938,27 @@ instance Arbitrary SerializedTx where
           \949f5fdfaa5da05840c8c0c016b714adb318a9495849c8ec647bc9742ef2b4cd\
           \03b9bc8694b65a42dbe3a2275ebcfe482c246fc8fbc34aa8dcebf18a4c3836b3\
           \ce8473e990d61c1506f6"
-        ]
 
+         -- base16, Babbage era
+        , "84A600818258207D93519864ACAD5714A4057FF16950632D45BB0B5644DD81AB\
+          \13103464FC76D4000182825839015C2B1A505AAD911F3F2B1932DC37679995B3\
+          \C352ECFF08070682E8365E7DD93FF18E14F79BB80924ECFD775081CE0020A19B\
+          \7E06070266D11A05D49B93825839015C2B1A505AAD911F3F2B1932DC37679995\
+          \B3C352ECFF08070682E8365E7DD93FF18E14F79BB80924ECFD775081CE0020A1\
+          \9B7E06070266D1821A001E8480A1581CDF9E841D704A10F1D7709A7B0F0F5205\
+          \9B6C20B92E8CA2E11CA88295A14557494E44591B7FFFFFFFFFFFFFFF021A0002\
+          \C0ED031A0472486409A1581CDF9E841D704A10F1D7709A7B0F0F52059B6C20B9\
+          \2E8CA2E11CA88295A14557494E44591B7FFFFFFFFFFFFFFF0E81581C8DDC4881\
+          \655E51EF6B24C8259480D92538914F9BC955F07BCE78556DA200828258207237\
+          \FE8383F77820B5A463047065E0AB4214E57BFBF0DEF3C426B68522DE2E2F5840\
+          \4D833545F27245EDE7072A8DF2716B519C09CCEE44F3ABFEDDEFB9EF5E1BF4BD\
+          \60AA0AF3C3C4479543B2BDA28ECDE71DBCF0463E4AF9425BF7F58F045C9E5305\
+          \825820166FB97EF0865FA3FE2C1A85631D5DE79DA97536103D5CD35A80428CEC\
+          \C494385840F067A931BDDFE0B0D475E902E61ECEFA124D86E1E7C9973ADD37AE\
+          \FF905E5B1BB5129093CEF516969B25B50F8F24887810BB57D5908806F523A524\
+          \63E93C9100018182018282051A047248648200581C8DDC4881655E51EF6B24C8\
+          \259480D92538914F9BC955F07BCE78556DF5F6"
+        ]
 
 propBinaryDataRoundtrip :: Ledger.Data StandardAlonzo -> Property
 propBinaryDataRoundtrip dat =

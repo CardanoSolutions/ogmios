@@ -10,7 +10,10 @@ export class WebSocket extends IsoWebSocket {
     } else {
       super(addr, opts)
     }
-    return isBrowser ? Object.assign(this, browserPolyfill(this as unknown as EventTarget)) : this
+
+    return (isBrowser && !isPolyfilled(this))
+      ? Object.assign(this, browserPolyfill(this as unknown as EventTarget))
+      : this
   }
 }
 
@@ -82,4 +85,14 @@ const browserPolyfill = (target : EventTarget) : IsoWebSocket => {
 /**
  * @Internal
  */
-const isBrowser = typeof process === 'undefined'
+const isBrowser =
+    typeof window !== 'undefined' && typeof window.document !== 'undefined'
+
+/**
+ * @Internal
+ */
+const isPolyfilled = (o : any) =>
+  typeof o.on === 'function' &&
+  typeof o.once === 'function' &&
+  typeof o.removeListener === 'function' &&
+  typeof o.removeAllListeners === 'function'

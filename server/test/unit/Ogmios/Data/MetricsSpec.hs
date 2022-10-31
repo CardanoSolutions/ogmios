@@ -7,7 +7,9 @@ module Ogmios.Data.MetricsSpec
     ) where
 
 import Ogmios.Prelude hiding
-    ( max, min )
+    ( max
+    , min
+    )
 
 import Ogmios.Data.Metrics
     ( DistributionStats (..)
@@ -18,9 +20,14 @@ import Ogmios.Data.Metrics
     , emptyRuntimeStats
     )
 import Test.Hspec
-    ( Spec, context, parallel, shouldBe )
+    ( Spec
+    , context
+    , parallel
+    , shouldBe
+    )
 import Test.Instances.Util
-    ( eqShowJson )
+    ( eqShowJson
+    )
 
 spec :: Spec
 spec = parallel $ do

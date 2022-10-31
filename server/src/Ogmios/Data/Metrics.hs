@@ -21,7 +21,9 @@ module Ogmios.Data.Metrics
 import Ogmios.Prelude
 
 import Data.Aeson
-    ( ToJSON (..), genericToJSON )
+    ( ToJSON (..)
+    , genericToJSON
+    )
 
 import qualified Data.Aeson as Json
 

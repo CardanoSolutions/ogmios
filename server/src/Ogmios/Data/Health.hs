@@ -31,35 +31,58 @@ module Ogmios.Data.Health
 import Ogmios.Prelude
 
 import Ogmios.Control.MonadSTM
-    ( MonadSTM, TVar, atomically, readTVar, writeTVar )
+    ( MonadSTM
+    , TVar
+    , atomically
+    , readTVar
+    , writeTVar
+    )
 import Ogmios.Data.Metrics
-    ( Metrics, emptyMetrics )
+    ( Metrics
+    , emptyMetrics
+    )
 
 import Cardano.Slotting.Slot
-    ( EpochNo (..) )
+    ( EpochNo (..)
+    )
 import Data.Aeson
-    ( ToJSON (..), genericToEncoding )
+    ( ToJSON (..)
+    , genericToEncoding
+    )
 import Data.ByteString.Builder.Scientific
-    ( FPFormat (Fixed), formatScientificBuilder )
+    ( FPFormat (Fixed)
+    , formatScientificBuilder
+    )
 import Data.Ratio
-    ( (%) )
-import Data.Scientific
-    ( Scientific, unsafeFromRational )
+    ( (%)
+    )
 import Data.SOP.Strict
-    ( NS (..) )
+    ( NS (..)
+    )
+import Data.Scientific
+    ( Scientific
+    , unsafeFromRational
+    )
 import Data.Time.Clock
-    ( UTCTime, diffUTCTime )
+    ( UTCTime
+    , diffUTCTime
+    )
 import Ouroboros.Consensus.BlockchainTime.WallClock.Types
-    ( RelativeTime (..), SystemStart (..) )
+    ( RelativeTime (..)
+    , SystemStart (..)
+    )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( EraIndex (..) )
+    ( EraIndex (..)
+    )
 import Ouroboros.Network.Block
-    ( Tip (..) )
+    ( Tip (..)
+    )
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras )
+    ( CardanoEras
+    )
 
 -- | Reflect the current state of the connection with the underlying node.
 data ConnectionStatus
@@ -172,9 +195,15 @@ mkNetworkSynchronization systemStart now relativeSlotTime =
     let
         num = round $ getRelativeTime relativeSlotTime :: Integer
         den = round $ now `diffUTCTime` getSystemStart systemStart :: Integer
+        tolerance = 60
         p = 100000
     in
-        NetworkSynchronization $ unsafeFromRational $ min 1 ((num * p `div` den) % p)
+        if abs (num - den) <= tolerance then
+            NetworkSynchronization 1
+        else
+            NetworkSynchronization
+                $ unsafeFromRational
+                $ min 1 (((num * p) `div` den) % p)
 
 -- | A Cardano era, starting from Byron and onwards.
 data CardanoEra

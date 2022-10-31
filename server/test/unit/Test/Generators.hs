@@ -10,31 +10,49 @@ module Test.Generators where
 import Ogmios.Prelude
 
 import Cardano.Ledger.Alonzo.Data
-    ( Data )
+    ( Data
+    )
 import Cardano.Ledger.Alonzo.Tools
-    ( TransactionScriptFailure (..) )
+    ( TransactionScriptFailure (..)
+    )
 import Cardano.Ledger.Alonzo.TxInfo
-    ( TranslationError (..), transExUnits )
+    ( TranslationError (..)
+    , transExUnits
+    )
 import Cardano.Ledger.Crypto
-    ( StandardCrypto )
+    ( StandardCrypto
+    )
 import Cardano.Ledger.Era
-    ( Crypto, Era, SupportsSegWit (..) )
+    ( Crypto
+    , Era
+    , SupportsSegWit (..)
+    )
 import Cardano.Ledger.Keys
-    ( KeyRole (..) )
+    ( KeyRole (..)
+    )
 import Cardano.Ledger.Serialization
-    ( ToCBORGroup )
+    ( ToCBORGroup
+    )
 import Cardano.Ledger.Shelley.UTxO
-    ( UTxO (..) )
+    ( UTxO (..)
+    )
 import Cardano.Network.Protocol.NodeToClient
-    ( Block, GenTxId )
+    ( Block
+    , GenTxId
+    )
 import Cardano.Slotting.Slot
-    ( EpochNo (..) )
+    ( EpochNo (..)
+    )
 import Cardano.Slotting.Time
-    ( SystemStart )
+    ( SystemStart
+    )
 import Data.SOP.Strict
-    ( NS (..) )
+    ( NS (..)
+    )
 import Data.Type.Equality
-    ( (:~:) (..), testEquality )
+    ( testEquality
+    , (:~:) (..)
+    )
 import Ogmios.Data.Json.Query
     ( Delegations
     , Interpreter
@@ -50,7 +68,8 @@ import Ogmios.Data.Protocol.TxSubmission
     , NotEnoughSyncedError (..)
     )
 import Ouroboros.Consensus.Byron.Ledger.Block
-    ( ByronBlock )
+    ( ByronBlock
+    )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras
     , GenTx (..)
@@ -59,15 +78,23 @@ import Ouroboros.Consensus.Cardano.Block
     , TxId (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( LedgerEraInfo (..), Mismatch (..), MismatchEraInfo (..), singleEraInfo )
+    ( LedgerEraInfo (..)
+    , Mismatch (..)
+    , MismatchEraInfo (..)
+    , singleEraInfo
+    )
 import Ouroboros.Consensus.HardFork.Combinator.Mempool
-    ( HardForkApplyTxErr (..) )
+    ( HardForkApplyTxErr (..)
+    )
 import Ouroboros.Consensus.HardFork.History.Summary
-    ( Bound (..) )
+    ( Bound (..)
+    )
 import Ouroboros.Consensus.Protocol.Praos
-    ( Praos )
+    ( Praos
+    )
 import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos )
+    ( TPraos
+    )
 import Ouroboros.Consensus.Shelley.Eras
     ( StandardAllegra
     , StandardAlonzo
@@ -76,23 +103,38 @@ import Ouroboros.Consensus.Shelley.Eras
     , StandardShelley
     )
 import Ouroboros.Consensus.Shelley.Ledger.Block
-    ( ShelleyBlock (..) )
+    ( ShelleyBlock (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Config
-    ( CompactGenesis, compactGenesis )
+    ( CompactGenesis
+    , compactGenesis
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Mempool
-    ( GenTx (..), TxId (..) )
+    ( GenTx (..)
+    , TxId (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Query
-    ( NonMyopicMemberRewards (..) )
+    ( NonMyopicMemberRewards (..)
+    )
 import Ouroboros.Network.Block
-    ( BlockNo (..), HeaderHash, Point (..), SlotNo (..), Tip (..) )
+    ( BlockNo (..)
+    , HeaderHash
+    , Point (..)
+    , SlotNo (..)
+    , Tip (..)
+    )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
-    ( AcquireFailure (..) )
+    ( AcquireFailure (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxMonitor.Type
-    ( MempoolSizeAndCapacity (..) )
+    ( MempoolSizeAndCapacity (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
-    ( SubmitResult (..) )
+    ( SubmitResult (..)
+    )
 import Test.Cardano.Ledger.Shelley.Serialisation.Generators.Genesis
-    ( genPParams )
+    ( genPParams
+    )
 import Test.QuickCheck
     ( Arbitrary (..)
     , Gen
@@ -103,18 +145,24 @@ import Test.QuickCheck
     , oneof
     , scale
     , shrinkList
+    , suchThat
     , vector
     )
 import Test.QuickCheck.Arbitrary.Generic
-    ( genericArbitrary )
+    ( genericArbitrary
+    )
 import Test.QuickCheck.Gen
-    ( Gen (..) )
+    ( Gen (..)
+    )
 import Test.QuickCheck.Hedgehog
-    ( hedgehog )
+    ( hedgehog
+    )
 import Test.QuickCheck.Random
-    ( mkQCGen )
+    ( mkQCGen
+    )
 import Type.Reflection
-    ( typeRep )
+    ( typeRep
+    )
 
 import Test.Consensus.Cardano.Generators
     ()
@@ -123,6 +171,7 @@ import Test.Generators.Orphans
 
 import qualified Data.Aeson as Json
 import qualified Data.Map as Map
+
 import qualified Ouroboros.Network.Point as Point
 
 import qualified Cardano.Ledger.Block as Ledger
@@ -152,9 +201,22 @@ genBlock = reasonablySized $ oneof
             , Arbitrary (Ledger.Tx era)
             )
         => Gen (ShelleyBlock (TPraos (Crypto era)) era)
-    genTPraosBlockFrom = ShelleyBlock
-        <$> (Ledger.Block <$> arbitrary <*> (toTxSeq @era <$> arbitrary))
-        <*> arbitrary
+    genTPraosBlockFrom =
+        frequency
+            [ (50
+              , ShelleyBlock
+                  <$> (Ledger.Block
+                        <$> arbitrary
+                        <*> (toTxSeq @era <$> arbitrary `suchThat` (not . null))
+                      )
+                  <*> arbitrary
+              )
+            , (1
+              , ShelleyBlock
+                  <$> (Ledger.Block <$> arbitrary <*> (pure (toTxSeq @era mempty)))
+                  <*> arbitrary
+              )
+            ]
 
     genPraosBlockFrom
         :: forall era.
@@ -164,10 +226,22 @@ genBlock = reasonablySized $ oneof
             , Arbitrary (Ledger.Tx era)
             )
         => Gen (ShelleyBlock (Praos (Crypto era)) era)
-    genPraosBlockFrom = ShelleyBlock
-        <$> (Ledger.Block <$> arbitrary <*> (toTxSeq @era <$> arbitrary))
-        <*> arbitrary
-
+    genPraosBlockFrom =
+        frequency
+            [ (50
+              , ShelleyBlock
+                  <$> (Ledger.Block
+                        <$> arbitrary
+                        <*> (toTxSeq @era <$> arbitrary `suchThat` (not . null))
+                      )
+                  <*> arbitrary
+              )
+            , (1
+              , ShelleyBlock
+                  <$> (Ledger.Block <$> arbitrary <*> (pure (toTxSeq @era mempty)))
+                  <*> arbitrary
+              )
+            ]
 
 genTxId :: Gen (GenTxId Block)
 genTxId =

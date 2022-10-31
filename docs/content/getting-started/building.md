@@ -10,9 +10,9 @@ You may **skip this section** if you're using **Docker 🐳.**
 
 ## Pre-requisites (Server)
 
-Ogmios is built using the great Haskell build tool [stack](https://docs.haskellstack.org/en/stable/README/). You'll also need [git](https://git-scm.com/) to clone the source code, that is:
+Ogmios is built using the great Haskell build tool [cabal](https://cabal.readthedocs.io/en). You'll also need [git](https://git-scm.com/) to clone the source code, that is:
 - `git 2.11.*`
-- `stack 2.*.*`
+- `cabal 3.*.*`
 
 Ogmios in itself is a rather small project, yet it's using library directly from the ouroboros-network, cardano-ledger-specs and cardano-node projects. This is handy for re-using existing logic, but comes at the cost of several system dependencies that are required for building everything. Some may already be installed on your system, but the complete list is:
 
@@ -43,24 +43,24 @@ $ git clone --depth 1 --recursive --shallow-submodules git@github.com:cardanosol
 $ cd cardano-ogmios/server
 ```
 
-Then, use Stack to compile the project source code from the `server` directory:
+Then, use cabal to compile the project source code from the `server` directory:
 
 ```console
-$ stack build ogmios
+$ cabal build all
 ```
 
-The first time, this may take a while as Stack needs to setup a compilation environment and to download a lot of dependencies. Subsequent executions are much faster.
+The first time, this may take a while as cabal needs to setup a compilation environment and to download a lot of dependencies. Subsequent executions are much faster.
 
-From there, you can run Ogmios via stack using the `exec` command:
+From there, you can run Ogmios via cabal using the `run` command:
 
 ```console
-$ stack exec -- ogmios --help
+$ cabal run ogmios:exe:ogmios -- --help
 ```
 
-Alternatively, you can instrument Stack to copy the compiled executable elsewhere so that you can run Ogmios all by itself:
+Alternatively, you can instrument cabal to copy the compiled executable elsewhere so that you can run Ogmios all by itself:
 
 ```console
-$ stack install ogmios
+$ cabal install ogmios:exe:ogmios --install-method=copy --overwrite-policy=always
 $ ogmios --help
 ```
 
@@ -77,7 +77,7 @@ Then, use Yarn to install dependencies and compile the project source code from 
 `client/TypeScript` directory:
 
 ```console
-$ yarn install \ 
+$ yarn install \
   && yarn build
 ```
 

@@ -1,1 +1,1 @@
-{"type":"jsonwsp/request","version":"1.0","servicename":"ogmios","methodname":"FindIntersect","args":{"points":[]},"mirror":"patate"}
+{"type":"jsonwsp/request","version":"1.0","servicename":"ogmios","methodname":"FindIntersect","args":{"points":[]},"mirror":"st"}

@@ -25,9 +25,14 @@ module Ogmios.App.Health
 import Ogmios.Prelude
 
 import Ogmios.App.Configuration
-    ( Configuration (..), NetworkParameters (..) )
+    ( Configuration (..)
+    , NetworkParameters (..)
+    )
 import Ogmios.App.Metrics
-    ( RuntimeStats, Sampler, Sensors )
+    ( RuntimeStats
+    , Sampler
+    , Sensors
+    )
 import Ogmios.Control.Exception
     ( IOException
     , MonadCatch (..)
@@ -38,9 +43,15 @@ import Ogmios.Control.Exception
     , isTryAgainError
     )
 import Ogmios.Control.MonadAsync
-    ( MonadAsync )
+    ( MonadAsync
+    )
 import Ogmios.Control.MonadClock
-    ( Debouncer (..), MonadClock (..), foreverCalmly, idle, _5s )
+    ( Debouncer (..)
+    , MonadClock (..)
+    , foreverCalmly
+    , idle
+    , _5s
+    )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
     , Logger
@@ -49,11 +60,18 @@ import Ogmios.Control.MonadLog
     , nullTracer
     )
 import Ogmios.Control.MonadMetrics
-    ( MonadMetrics )
+    ( MonadMetrics
+    )
 import Ogmios.Control.MonadOuroboros
-    ( MonadOuroboros )
+    ( MonadOuroboros
+    )
 import Ogmios.Control.MonadSTM
-    ( MonadSTM (..), TVar, newEmptyTMVarIO, putTMVar, takeTMVar )
+    ( MonadSTM (..)
+    , TVar
+    , newEmptyTMVarIO
+    , putTMVar
+    , takeTMVar
+    )
 import Ogmios.Data.Health
     ( CardanoEra (..)
     , ConnectionStatus (..)
@@ -70,23 +88,42 @@ import Ogmios.Data.Health
 import qualified Ogmios.App.Metrics as Metrics
 
 import Cardano.Network.Protocol.NodeToClient
-    ( Block, Clients (..), connectClient, mkClient )
+    ( Block
+    , Clients (..)
+    , connectClient
+    , mkClient
+    )
 import Data.Aeson
-    ( ToJSON (..), genericToEncoding )
+    ( ToJSON (..)
+    , genericToEncoding
+    )
 import Data.Time.Clock
-    ( DiffTime, UTCTime )
+    ( DiffTime
+    , UTCTime
+    )
 import Network.TypedProtocol.Pipelined
-    ( N (..) )
+    ( N (..)
+    )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras )
+    ( CardanoEras
+    )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( HardForkBlock )
+    ( HardForkBlock
+    )
 import Ouroboros.Consensus.HardFork.History.Qry
-    ( interpretQuery, slotToEpoch', slotToWallclock )
+    ( interpretQuery
+    , slotToEpoch'
+    , slotToWallclock
+    )
 import Ouroboros.Network.Block
-    ( Point (..), Tip (..), genesisPoint, getTipPoint )
+    ( Point (..)
+    , Tip (..)
+    , genesisPoint
+    , getTipPoint
+    )
 import Ouroboros.Network.NodeToClient
-    ( NodeToClientVersionData (NodeToClientVersionData) )
+    ( NodeToClientVersionData (NodeToClientVersionData)
+    )
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     ( ChainSyncClientPipelined (..)
     , ClientPipelinedStIdle (..)
@@ -94,11 +131,14 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     , ClientStNext (..)
     )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
-    ( LocalStateQueryClient (..) )
+    ( LocalStateQueryClient (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxMonitor.Client
-    ( LocalTxMonitorClient (..) )
+    ( LocalTxMonitorClient (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
-    ( LocalTxSubmissionClient (..) )
+    ( LocalTxSubmissionClient (..)
+    )
 
 import qualified Data.Aeson as Json
 import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ
