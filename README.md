@@ -49,10 +49,6 @@
   <tr><td>Health monitoring, with runtime and application statistics</td><td><a href="https://ogmios.dev/getting-started/monitoring/" target="_blank">↗️</a></td></tr>
 </table>
 
-## Roadmap 
-
-See [projects 🎯](https://github.com/CardanoSolutions/ogmios/projects).
-
 ## Preview
 
 <p align="center">
