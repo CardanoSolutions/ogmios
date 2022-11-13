@@ -28,13 +28,10 @@ window.addEventListener('load', function () {
   function createClient(url) {
     const client = new WebSocket(url);
 
-    client.addEventListener('open', () => {
-      client.addEventListener('message', function $eraStart({ data }) {
-        eraStart = JSON.parse(data).result;
-        client.removeEventListener('message', $eraStart);
-        monitorHealth(client);
-      });
-      client.ogmios('Query', { query: "eraStart" });
+    client.addEventListener('open', async () => {
+      dispatch("current_network", { network: await getCurrentNetwork(client) });
+      eraStart = await getEraStart(client);
+      monitorHealth(client);
     });
 
     return client;
@@ -49,6 +46,44 @@ window.addEventListener('load', function () {
       client = createClient(WEBSOCKET_URL);
     }
   }, 5000)
+
+  /* --------------------------------------------------------------------------
+   * Initialization
+   * ------------------------------------------------------------------------ */
+
+  async function getCurrentNetwork(client) {
+    return new Promise(resolve => {
+      client.addEventListener('message', function $eraStart({ data }) {
+        client.removeEventListener('message', $eraStart);
+        const result = JSON.parse(data).result || {};
+        switch (result.networkMagic) {
+          case 764824073:
+            return resolve("mainnet");
+          case 1097911063:
+            return resolve("testnet");
+          case 1:
+            return resolve("preprod");
+          case 2:
+            return resolve("preview");
+          case 9:
+            return resolve("vasil-dev");
+          default:
+            return resolve("unknown");
+        }
+      });
+      client.ogmios('Query', { query: "genesisConfig" });
+    });
+  }
+
+  async function getEraStart(client) {
+    return new Promise(resolve => {
+      client.addEventListener('message', function $eraStart({ data }) {
+        client.removeEventListener('message', $eraStart);
+        resolve(JSON.parse(data).result);
+      });
+      client.ogmios('Query', { query: "eraStart" });
+    });
+  }
 
   /* --------------------------------------------------------------------------
    * Monitoring

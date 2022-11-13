@@ -82,9 +82,9 @@
         flex-direction: row;
       }
 
-      div#overview > p {
+      div#overview p {
         text-align: center;
-        width: 200px;
+        width: 250px;
       }
 
       img.logo { width: 400px; }
@@ -117,7 +117,10 @@
     <script src="/dashboard.js"></script>
 
     <div id="overview">
-      <p>Status: <code class="ogmios-status">?</code></p>
+      <div style="display: flex; flex-direction: column;">
+        <p>Status: <code class="ogmios-status">?</code></p>
+        <p>Network: <code class="ogmios-network">?</code></p>
+      </div>
       <img class="logo" src="/assets/logo.png" />
       <p>Url: <code class="ogmios-url"></code></p>
     </div>
@@ -137,9 +140,15 @@
           }
         });
 
+        const network = () => document.querySelector('div#overview code.ogmios-network');
+        window.addEventListener('current_network', ({ detail }) => {
+          network().innerHTML = detail.network;
+        });
+
         window.addEventListener('health_error', () => {
           status().innerHTML = 'KO 🕱';
         });
+
       } ());
     </script>
 
@@ -149,12 +158,15 @@
         <progress></progress>
         <span class="tooltip-text display-none"></span>
       </div>
+      <br/>
+      <span class="absolut_slot"></span>
     </div>
     <script>
       (function () {
         const epoch = () => document.querySelector('div#epoch span.epoch');
         const tooltip = () => document.querySelector('div#epoch span.tooltip-text');
         const progress = () => document.querySelector('div#epoch progress');
+        const absolutSlot = () => document.querySelector('div#epoch span.absolut_slot');
 
         window.addEventListener('tip_change', ({ detail }) => {
           const percent = (100 * (detail.slotInEpoch / detail.epochLength)).toFixed(2);
@@ -162,10 +174,11 @@
           progress().setAttribute('value', detail.slotInEpoch);
           tooltip().innerHTML = percent + '% (' + detail.slotInEpoch + '/' + detail.epochLength + ')';
           tooltip().classList.remove('display-none');
+          absolutSlot().innerHTML = `Absolute slot: ${detail.lastKnownTip.slot}`;
         });
 
         window.addEventListener('epoch_change', ({ detail }) => {
-          epoch().innerHTML = 'Epoch ' + detail.epoch;
+          epoch().innerHTML = 'Epoch: ' + detail.epoch;
         });
       } ());
     </script>
@@ -216,21 +229,6 @@
           },
         });
 
-        const slotNumber = new Chart(document.querySelector('canvas#slot-number').getContext('2d'), {
-          type: 'line',
-          options,
-          data: {
-            labels: [],
-            datasets: [{
-              label: 'Slot number',
-              fill: false,
-              data: [],
-              backgroundColor: '#cf6a87',
-              borderColor: '#cf6a87',
-            }]
-          },
-        });
-
         const MAXP = 5;
 
         function addPoint(chart, x, y) {
@@ -250,11 +248,6 @@
         }
 
         const getTimestamp = () => (new Date()).toISOString().slice(11,-5);
-
-        window.addEventListener('tip_change', ({ detail }) => {
-          const timestamp = getTimestamp();
-          addPoint(slotNumber, timestamp, detail.lastKnownTip.slot);
-        });
 
         window.addEventListener('health_tick', ({ detail }) => {
           const timestamp = getTimestamp();
