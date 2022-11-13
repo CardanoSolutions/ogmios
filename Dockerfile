@@ -10,7 +10,7 @@ ARG CARDANO_NODE_VERSION=1.35.3
 
 FROM --platform=${TARGETPLATFORM:-linux/amd64} nixos/nix:2.11.0 as build
 
-ARG CARDANO_CONFIG_REV=f1263df513f4cc5666bc49245e07fd3055097fee
+ARG CARDANO_CONFIG_REV=c0d11b5ff0c0200da00a50c17c38d9fd752ba532
 
 RUN echo "substituters = https://cache.nixos.org https://hydra.iohk.io" >> /etc/nix/nix.conf &&\
     echo "trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=" >> /etc/nix/nix.conf
