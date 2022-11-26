@@ -58,6 +58,14 @@ import Network.HTTP.Client
     , parseRequest
     , responseBody
     )
+import Network.HTTP.Types
+    ( status200
+    , status400
+    , status500
+    )
+import Ogmios.App.Configuration
+    ( Configuration (..)
+    )
 import Relude.Extra
     ( lookup
     )
@@ -75,20 +83,26 @@ import Wai.Routes
     , parseRoutes
     , raw
     , rawBuilder
+    , request
     , route
     , runHandlerM
     , showRoute
+    , status
     , sub
     , waiApp
     )
 
 import qualified Data.Aeson as Json
+import qualified Data.Aeson.KeyMap as Json.KeyMap
+import qualified Data.Binary.Builder as Builder
 import qualified Network.Wai as Wai
+import qualified Network.WebSockets as WS
 
 data EnvServer block m = EnvServer
-    { health   :: TVar m (Health block)
-    , sensors  :: Sensors m
-    , sampler  :: Sampler RuntimeStats m
+    { health        :: TVar m (Health block)
+    , sensors       :: Sensors m
+    , sampler       :: Sampler RuntimeStats m
+    , configuration :: !Configuration
     }
 
 data Server where
@@ -105,7 +119,7 @@ data Server where
 -- - A quick'n'dirty "benchmark" script used for rapid smoke testing.
 --
 mkRoute "Server" [parseRoutes|
-/                      DashboardR           GET
+/                      RootR                GET POST
 /dashboard.js          DashboardJsR         GET
 /health                HealthR              GET
 /metrics               MetricsR             GET
@@ -113,13 +127,37 @@ mkRoute "Server" [parseRoutes|
 /favicon.ico           FaviconR             GET
 |]
 
-getDashboardR :: Handler Server
-getDashboardR = runHandlerM $ do
+-- Dashboard
+getRootR :: Handler Server
+getRootR = runHandlerM $ do
     html $ decodeUtf8 $(embedFile "static/dashboard.html")
+
+-- Proxy simple request/response events from HTTP into the WebSocket.
+postRootR :: Handler Server
+postRootR = runHandlerM $ do
+    header "Access-Control-Allow-Origin" "*"
+    Server _unliftIO EnvServer{configuration} <- sub
+    req <- Wai.lazyRequestBody <$> request
+    let Configuration{serverHost, serverPort} = configuration
+    res <- liftIO $ WS.runClient serverHost serverPort "/" $ \ws -> do
+        WS.sendTextData ws =<< req
+        WS.receiveData ws
+    case Json.decode res of
+        Just (Json.Object obj) -> do
+            header "Content-Type" "application/json; charset=utf-8"
+            case Json.KeyMap.lookup "type" obj of
+                Just (Json.String "jsonwsp/fault") -> do
+                    status status400
+                _ ->
+                    status status200
+        _otherwise -> do
+            status status500
+    rawBuilder $ Builder.fromLazyByteString res
 
 getDashboardJsR :: Handler Server
 getDashboardJsR = runHandlerM $ do
     javascript $ decodeUtf8 $(embedFile "static/dashboard.js")
+
 
 getHealthR :: Handler Server
 getHealthR = runHandlerM $ do
@@ -184,6 +222,7 @@ mkHttpApp
         , HasType (TVar m (Health block)) env
         , HasType (Sensors m) env
         , HasType (Sampler RuntimeStats m) env
+        , HasType Configuration env
         , ToJSON (Tip block)
         )
     => (forall a. m a -> IO a)
@@ -191,6 +230,7 @@ mkHttpApp
 mkHttpApp unliftIO = do
     env <- EnvServer @block @m
         <$> asks (view typed)
+        <*> asks (view typed)
         <*> asks (view typed)
         <*> asks (view typed)
     pure $ waiApp $ route (Server unliftIO env)

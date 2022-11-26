@@ -6,6 +6,26 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
+### [6.0.0] - UNRELEASED
+
+#### Added
+
+- Ogmios now accept queries via HTTP (POST). Request bodies are the same as those passed to the websocket and so are responses. In fact, most Ogmios queries follow a simple request/response pattern and are therefore well-suited to be run over HTTP. While there's an obvious performance trade-off (especially for the local-chain-sync protocol), it is a reasonable approach for many queries (e.g. the local-state-query protocol).
+
+  > **Note**
+  > The HTTP server and the WebSocket server are both mounted on the same port. So, it suffices to route HTTP requests through `/`. The JSON payload is the same.
+
+#### Changed
+
+N/A
+
+#### Removed
+
+N/A
+
+---
+---
+
 ### [5.5.7] - 2022-10-27
 
 #### Added
@@ -27,6 +47,9 @@ pre: "<b>5. </b>"
 #### Removed
 
 N/A
+
+---
+---
 
 ### [5.5.6] - 2022-10-21
 
@@ -50,6 +73,9 @@ N/A
 
 N/A
 
+---
+---
+
 ### [5.5.5] - 2022-08-19
 
 #### Added
@@ -65,6 +91,9 @@ N/A
 #### Removed
 
 - `testnet` has been removed from the target networks by the Docker workflow; which means that until further notice, there will be no more Docker images pushed for testnet. However, support for `preprod` and `preview` environment has been added.
+
+---
+---
 
 ### [5.5.4] - 2022-08-11
 

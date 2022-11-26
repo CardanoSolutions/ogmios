@@ -44,6 +44,7 @@ library:
     - base58-bytestring
     - bech32
     - bech32-th
+    - binary
     - bytestring
     - cardano-api
     - cardano-binary

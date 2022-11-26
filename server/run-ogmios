@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+CFG=/usr/local/share/cardano/network/$1
+
+cabal run ogmios -- \
+  --node-config $CFG/cardano-node/config.json \
+  --node-socket /tmp/node.socket ${@:2}

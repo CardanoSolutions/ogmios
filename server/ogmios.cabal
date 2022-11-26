@@ -131,6 +131,7 @@ library
     , base64
     , bech32
     , bech32-th
+    , binary
     , bytestring
     , cardano-api
     , cardano-binary
