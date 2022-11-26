@@ -1,8 +1,9 @@
 ---
 title: "Changelog"
-weight: 6
+weight: 5
 chapter: false
-pre: "<b>6. </b>"
+layout: changelog
+pre: "<b>5. </b>"
 ---
 
 ### [5.5.7] - 2022-10-27
