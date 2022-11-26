@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Deployment on Ogmios</title><link>https://ogmios.dev/deployment/</link><description>Recent content in Deployment on Ogmios</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://ogmios.dev/deployment/index.xml" rel="self" type="application/rss+xml"/><item><title>AWS</title><link>https://ogmios.dev/deployment/aws/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://ogmios.dev/deployment/aws/</guid><description>Pre-Requisites Make sure to have an AWS account, and an AWS_ACCESS_KEY_ID &amp;amp; AWS_SECRET_ACCESS_KEY.
-Make sure to grant AmazonEC2FullAccess to your AWS user.
-You&amp;rsquo;ll need to create a security group which allows inbound TCP connections. See also: Working With Security Groups.
-Install docker-machine
-Create an SSH key/pair $ ssh-keygen -t rsa -b 4096 -C &amp;quot;your_email@example.com&amp;quot; -f aws_rsa $ eval &amp;quot;$(ssh-agent -s)&amp;quot; $ ssh-add ~/.</description></item></channel></rss>
