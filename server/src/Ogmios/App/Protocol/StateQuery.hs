@@ -176,7 +176,7 @@ mkStateQueryClient tr StateQueryCodecs{..} queue yield =
                         yield $ encodeQueryResponse $ toResponse response
                         pure $ LSQ.SendMsgRelease clientStIdle
 
-                    Just (era, SomeQuery qry encodeResult _) -> do
+                    Just (era, SomeStandardQuery qry encodeResult _) -> do
                         logWith tr $ StateQueryRequest { query, point = Nothing, era }
                         pure $ LSQ.SendMsgQuery qry $ LSQ.ClientStQuerying
                             { LSQ.recvMsgResult = \result -> do
@@ -186,6 +186,9 @@ mkStateQueryClient tr StateQueryCodecs{..} queue yield =
                                     encodeResult FullSerialization result
                                 pure $ LSQ.SendMsgRelease clientStIdle
                             }
+
+                    Just (_era, SomeAdHocQuery _qry _encodeResult _) -> do
+                        error "not implemented: ad-hoc queries"
 
             , LSQ.recvMsgFailure = \failure -> do
                 let response = QueryAcquireFailure failure
@@ -209,7 +212,10 @@ mkStateQueryClient tr StateQueryCodecs{..} queue yield =
                     yield $ encodeQueryResponse $ toResponse response
                     clientStAcquired pt
 
-                Just (era, SomeQuery qry encodeResult _) -> do
+                Just (_era, SomeAdHocQuery _qry _encodeResult _) -> do
+                    error "not implemented: ad-hoc queries"
+
+                Just (era, SomeStandardQuery qry encodeResult _) -> do
                     logWith tr $ StateQueryRequest { query, point = Just pt, era }
                     pure $ LSQ.SendMsgQuery qry $ LSQ.ClientStQuerying
                         { LSQ.recvMsgResult = \result -> do

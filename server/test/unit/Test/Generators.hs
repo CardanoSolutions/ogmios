@@ -12,6 +12,9 @@ import Ogmios.Prelude
 import Cardano.Ledger.Alonzo.Data
     ( Data
     )
+import Cardano.Ledger.Alonzo.Genesis
+    ( AlonzoGenesis (..)
+    )
 import Cardano.Ledger.Alonzo.Tools
     ( TransactionScriptFailure (..)
     )
@@ -54,7 +57,9 @@ import Data.Type.Equality
     , (:~:) (..)
     )
 import Ogmios.Data.Json.Query
-    ( Delegations
+    ( ByronEra
+    , Delegations
+    , GenesisConfig
     , Interpreter
     , PoolParams
     , QueryResult
@@ -104,10 +109,6 @@ import Ouroboros.Consensus.Shelley.Eras
     )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
-    )
-import Ouroboros.Consensus.Shelley.Ledger.Config
-    ( CompactGenesis
-    , compactGenesis
     )
 import Ouroboros.Consensus.Shelley.Ledger.Mempool
     ( GenTx (..)
@@ -472,7 +473,7 @@ genPointResultPraos
     -> Gen (QueryResult crypto (Point (ShelleyBlock (Praos crypto) era)))
 genPointResultPraos _era _result =
     fromMaybe (error "genPointResult: unsupported era")
-        (genBabbage)
+        genBabbage
   where
     genBabbage =
         case testEquality (typeRep @era) (typeRep @StandardBabbage) of
@@ -685,60 +686,34 @@ genUTxOResult _ _ =
             Nothing ->
                 Nothing
 
-genCompactGenesisResult
-    :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
-    => Proxy era
-    -> Proxy (QueryResult crypto (CompactGenesis era))
-    -> Gen (QueryResult crypto (CompactGenesis era))
-genCompactGenesisResult _ _ =
-    maybe (error "genCompactGenesisResult: unsupported era") reasonablySized
-        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage)
-  where
-    genShelley =
-        case testEquality (typeRep @era) (typeRep @StandardShelley) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right . compactGenesis <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genAllegra =
-        case testEquality (typeRep @era) (typeRep @StandardAllegra) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right . compactGenesis <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genMary =
-        case testEquality (typeRep @era) (typeRep @StandardMary) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right . compactGenesis <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genAlonzo =
-        case testEquality (typeRep @era) (typeRep @StandardAlonzo) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right . compactGenesis <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
-    genBabbage =
-        case testEquality (typeRep @era) (typeRep @StandardBabbage) of
-            Just Refl{} ->
-                Just $ frequency
-                    [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right . compactGenesis <$> arbitrary)
-                    ]
-            Nothing ->
-                Nothing
+genGenesisConfig
+    :: ( Gen (GenesisConfig ByronEra)
+       , Gen (GenesisConfig StandardShelley)
+       , Gen (GenesisConfig StandardAlonzo)
+       )
+genGenesisConfig =
+    ( error "todo: ByronEra"
+    , genGenesisConfigShelley
+    , genGenesisConfigAlonzo
+    )
+
+genGenesisConfigShelley
+    :: Gen (GenesisConfig StandardShelley)
+genGenesisConfigShelley =
+    reasonablySized arbitrary
+
+genGenesisConfigAlonzo
+    :: Gen (GenesisConfig StandardAlonzo)
+genGenesisConfigAlonzo =
+    AlonzoGenesis
+        <$> arbitrary
+        <*> reasonablySized arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
 
 genRewardInfoPoolsResult
     :: forall crypto. (crypto ~ StandardCrypto)

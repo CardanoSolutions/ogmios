@@ -252,12 +252,12 @@ stateQueryMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
     req <- lift recv
 
     msg <- lift (try @_ @SomeException (decodeOrThrow TokIdle req)) >>= \case
-        (Right (SomeMessage LSQ.MsgDone)) ->
+        Right (SomeMessage LSQ.MsgDone) ->
             pure Nothing
-        (Right (SomeMessage LSQ.MsgAcquire{})) -> do
+        Right (SomeMessage LSQ.MsgAcquire{}) -> do
             SomeResponse msg <- generateWith genAcquireResponse <$> state random
             pure $ Just $ encode codec (ServerAgency TokAcquiring) msg
-        (Left{}) -> lift (decodeOrThrow TokAcquired req) >>= \case
+        Left{} -> lift (decodeOrThrow TokAcquired req) >>= \case
             SomeMessage (LSQ.MsgQuery query) -> do
                 SomeResponse msg <- generateWith (genQueryResponse query) <$> state random
                 pure $ Just $ encode codec (ServerAgency $ TokQuerying query) msg
@@ -302,7 +302,7 @@ stateQueryMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
             , SomeResponse $ LSQ.MsgResult query (EraIndex (IxMary    (K ())))
             , SomeResponse $ LSQ.MsgResult query (EraIndex (IxAlonzo  (K ())))
             ]
-        _ ->
+        _unsupportedQuery ->
             error $ "No generator for query: " <> show query
 
 --
@@ -355,8 +355,7 @@ queryAny mirror =
     MsgQuery Query{rawQuery,queryInEra} (Wsp.Response mirror) (Wsp.Fault mirror)
   where
     rawQuery = object [ "query" .= ("currentEpoch" :: String) ]
-    queryInEra _ = Just $ SomeQuery
-        { query = Ledger.BlockQuery $ QueryIfCurrentAlonzo GetEpochNo
-        , genResult = const Proxy
-        , encodeResult = const (either encodeMismatchEraInfo encodeEpochNo)
-        }
+    queryInEra _ = Just $ SomeStandardQuery
+        (Ledger.BlockQuery $ QueryIfCurrentAlonzo GetEpochNo)
+        (const (either encodeMismatchEraInfo encodeEpochNo))
+        (const Proxy)

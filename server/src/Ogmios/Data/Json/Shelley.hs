@@ -22,7 +22,8 @@ import Cardano.Ledger.Era
     ( Era
     )
 import Cardano.Ledger.Keys
-    ( KeyRole (..)
+    ( GenDelegPair (..)
+    , KeyRole (..)
     )
 import Cardano.Ledger.Shelley.Constraints
     ( UsesAuxiliary
@@ -476,7 +477,8 @@ encodeEntities tag encodeEntity = encodeFoldable $ \e -> encodeObject
     ]
 
 encodeGenesis
-    :: Sh.ShelleyGenesis era
+    :: Era era
+    => Sh.ShelleyGenesis era
     -> Json
 encodeGenesis x = encodeObject
     [ ( "systemStart"
@@ -515,6 +517,21 @@ encodeGenesis x = encodeObject
     , ( "protocolParameters"
       , encodePParams' id (Sh.sgProtocolParams x)
       )
+    , ( "initialDelegates"
+      , encodeMap stringifyKeyHash encodeGenDelegPair (Sh.sgGenDelegs x)
+      )
+    , ( "initialFunds"
+      , encodeMap stringifyAddress encodeCoin (Sh.sgInitialFunds x)
+      )
+    , ( "initialPools"
+      , encodeShelleyGenesisStaking (Sh.sgStaking x)
+      )
+    ]
+
+encodeGenDelegPair :: Crypto crypto => GenDelegPair crypto -> Json
+encodeGenDelegPair x = encodeObject
+    [ ( "delegate", encodeKeyHash (genDelegKeyHash x) )
+    , ( "vrf", encodeHash (genDelegVrfHash x))
     ]
 
 encodeHash
@@ -873,6 +890,16 @@ encodeSignedKES
     -> Json
 encodeSignedKES (CC.SignedKES raw) =
     encodeByteStringBase64 . CC.rawSerialiseSigKES $ raw
+
+encodeShelleyGenesisStaking :: Crypto crypto => Sh.ShelleyGenesisStaking crypto -> Json
+encodeShelleyGenesisStaking x = encodeObject
+    [ ( "pools"
+      , encodeMap stringifyPoolId encodePoolParams (Sh.sgsPools x)
+      )
+    , ( "delegators"
+      , encodeMap stringifyKeyHash encodePoolId (Sh.sgsStake x)
+      )
+    ]
 
 encodeShelleyHash
     :: Crypto crypto
@@ -1318,6 +1345,19 @@ encodeWitVKeys = encodeFoldable'
 --
 -- Conversion To Text
 --
+
+stringifyAddress
+    :: Ledger.Addr crypto
+    -> Text
+stringifyAddress = \case
+    Ledger.AddrBootstrap addr ->
+        Byron.stringifyAddress (Ledger.unBootstrapAddress addr)
+    addr@(Ledger.Addr network _ _) ->
+        encodeBech32 (hrp network) (Ledger.serialiseAddr addr)
+  where
+    hrp = \case
+        Ledger.Mainnet -> hrpAddrMainnet
+        Ledger.Testnet -> hrpAddrTestnet
 
 stringifyCoin
     :: Coin

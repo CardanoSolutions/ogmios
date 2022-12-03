@@ -178,6 +178,12 @@ encodeADlgPayload
 encodeADlgPayload =
     encodeList encodeACertificate . By.Dlg.getPayload
 
+encodeGenesisData
+    :: By.GenesisData
+    -> Json
+encodeGenesisData =
+    error "unimplemented: encodeGenesisData (Byron)"
+
 encodeTx
     :: By.Tx
     -> Json
@@ -669,3 +675,9 @@ encodeVerificationKey
     -> Json
 encodeVerificationKey =
     encodeByteStringBase16 . CC.unXPub . By.unVerificationKey
+
+stringifyAddress
+    :: By.Address
+    -> Text
+stringifyAddress =
+    decodeUtf8 . By.addrToBase58
