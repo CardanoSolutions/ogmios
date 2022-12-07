@@ -1,28 +1,41 @@
-import { CompactGenesis, EraMismatch, Ogmios } from '@cardano-ogmios/schema'
+import {
+  GenesisAlonzo,
+  GenesisShelley,
+  EraMismatch,
+  Ogmios
+} from '@cardano-ogmios/schema'
 import { EraMismatchError, QueryUnavailableInCurrentEraError, UnknownResultError } from '../../errors'
 import { InteractionContext } from '../../Connection'
 import { Query } from '../Query'
 
+export type EraWithGenesis = 'Byron' | 'Shelley' | 'Alonzo'
+
+export type GenesisConfig = GenesisShelley | GenesisAlonzo
+
 const isEraMismatch = (result: Ogmios['QueryResponse[currentProtocolParameters]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
 
-const isGenesisConfig = (result: Ogmios['QueryResponse[genesisConfig]']['result']): result is CompactGenesis =>
-  (result as CompactGenesis).systemStart !== undefined
+const isGenesisConfig = (result: Ogmios['QueryResponse[genesisConfig]']['result']): result is GenesisConfig =>
+  (result as GenesisShelley).systemStart !== undefined
+  ||
+  (result as GenesisAlonzo).coinsPerUtxoWord !== undefined
 
 /**
  * Get the Shelley's genesis configuration.
  *
  * @category StateQuery
  */
-export const genesisConfig = (context: InteractionContext): Promise<CompactGenesis> =>
+export const genesisConfig = (context: InteractionContext, era: EraWithGenesis): Promise<GenesisConfig> =>
   Query<
     Ogmios['Query'],
     Ogmios['QueryResponse[genesisConfig]'],
-    CompactGenesis
+    GenesisConfig
   >({
     methodName: 'Query',
     args: {
-      query: 'genesisConfig'
+      query: {
+        genesisConfig: String(era).toLowerCase(),
+      }
     }
   }, {
     handler: (response, resolve, reject) => {

@@ -324,7 +324,6 @@ export type GetCurrentProtocolParameters = "currentProtocolParameters";
 export type GetProposedProtocolParameters = "proposedProtocolParameters";
 export type GetStakeDistribution = "stakeDistribution";
 export type GetUtxo = "utxo";
-export type GetGenesisConfig = "genesisConfig";
 export type GetRewardsProvenanceDeprecated = "rewardsProvenance";
 export type GetRewardsProvenance = "rewardsProvenance'";
 export type GetPoolsRanking = "poolsRanking";
@@ -899,7 +898,7 @@ export interface Ogmios {
     version: "1.0";
     servicename: "ogmios";
     methodname: "Query";
-    result: CompactGenesis | EraMismatch | QueryUnavailableInCurrentEra;
+    result: GenesisShelley | GenesisAlonzo | EraMismatch | QueryUnavailableInCurrentEra;
     /**
      * Any value that was set by a client request in the 'mirror' field.
      */
@@ -2225,6 +2224,9 @@ export interface GetUtxoByAddress {
 export interface GetUtxoByTxIn {
   utxo: TxIn[];
 }
+export interface GetGenesisConfig {
+  genesisConfig: "byron" | "shelley" | "alonzo";
+}
 export interface GetPoolParameters {
   poolParameters: (PoolId | string)[];
 }
@@ -2286,9 +2288,9 @@ export interface PoolDistribution {
   };
 }
 /**
- * A compact (without genesis UTxO) representation of the genesis configuration.
+ * A Shelley genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
  */
-export interface CompactGenesis {
+export interface GenesisShelley {
   systemStart: UtcTime;
   networkMagic: NetworkMagic;
   network: Network;
@@ -2301,6 +2303,46 @@ export interface CompactGenesis {
   updateQuorum: UInt64;
   maxLovelaceSupply: UInt64;
   protocolParameters: ProtocolParametersShelley;
+  initialDelegates: InitialDelegates;
+  initialFunds: InitialFunds;
+  initialPools: GenesisPools;
+}
+export interface InitialDelegates {
+  [k: string]: GenesisDelegate;
+}
+/**
+ * A Genesis delegate, in charge of Cardano's governance.
+ */
+export interface GenesisDelegate {
+  delegate: DigestBlake2BVerificationKey;
+  vrf: DigestBlake2BVrfVerificationKey;
+}
+export interface InitialFunds {
+  [k: string]: Lovelace;
+}
+/**
+ * A Genesis stake pools configuration; primarily used for bootstrapping test networks.
+ */
+export interface GenesisPools {
+  pools: {
+    [k: string]: PoolParameters;
+  };
+  delegators: {
+    [k: string]: PoolId;
+  };
+}
+/**
+ * An Alonzo genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
+ */
+export interface GenesisAlonzo {
+  coinsPerUtxoWord: UInt64;
+  collateralPercentage: UInt64;
+  costModels: CostModels;
+  maxCollateralInputs: NullableUInt64;
+  maxExecutionUnitsPerBlock: ExUnits;
+  maxExecutionUnitsPerTransaction: ExUnits;
+  maxValueSize: NullableUInt64;
+  prices: Prices;
 }
 /**
  * Details about how rewards are calculated for the ongoing epoch.
