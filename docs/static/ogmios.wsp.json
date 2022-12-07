@@ -2199,6 +2199,7 @@
         }
       ]
     , "additionalProperties": false
+    , "required": [ "signature", "chainCode", "addressAttributes", "key" ]
     , "properties":
       { "signature": { "$ref": "ogmios.wsp.json#/definitions/Signature" }
       , "chainCode":

@@ -1292,10 +1292,10 @@ export interface ExUnits {
   steps: UInt64;
 }
 export interface BootstrapWitness {
-  signature?: Signature;
-  chainCode?: ChainCode | Null;
-  addressAttributes?: AddressAttributes | Null;
-  key?: VerificationKey;
+  signature: Signature;
+  chainCode: ChainCode | Null;
+  addressAttributes: AddressAttributes | Null;
+  key: VerificationKey;
 }
 export interface Redeemer {
   redeemer: RedeemerData;
