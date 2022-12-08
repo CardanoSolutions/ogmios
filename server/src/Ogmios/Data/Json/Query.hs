@@ -349,17 +349,17 @@ data SomeQuery (f :: Type -> Type) block where
             -- Useful when `f ~ Gen` for testing.
         -> SomeQuery f block
 
-data ByronEra
+data ByronEra crypto
 
 data AdHocQuery result where
     GetByronGenesis   :: AdHocQuery (GenesisConfig ByronEra)
-    GetShelleyGenesis :: forall era. () => Proxy era -> AdHocQuery (GenesisConfig era)
-    GetAlonzoGenesis  :: AdHocQuery (GenesisConfig (AlonzoEra StandardCrypto))
+    GetShelleyGenesis :: AdHocQuery (GenesisConfig ShelleyEra)
+    GetAlonzoGenesis  :: AdHocQuery (GenesisConfig AlonzoEra)
 
-type family GenesisConfig (era :: Type) :: Type where
+type family GenesisConfig (era :: Type -> Type) :: Type where
     GenesisConfig ByronEra = Byron.GenesisData
-    GenesisConfig (ShelleyEra crypto) = ShelleyGenesis (ShelleyEra crypto)
-    GenesisConfig (AlonzoEra crypto) = AlonzoGenesis
+    GenesisConfig ShelleyEra = ShelleyGenesis (ShelleyEra StandardCrypto)
+    GenesisConfig AlonzoEra = AlonzoGenesis
 
 instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
     parseJSON = choice "query"
@@ -1178,10 +1178,10 @@ parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
         obj .: "utxo" >>= traverse decodeTxIn
 
 parseGetGenesisConfig
-    :: forall f crypto. (Crypto crypto)
+    :: forall f crypto. ()
     => ( f (GenesisConfig ByronEra)
-       , f (GenesisConfig (ShelleyEra crypto))
-       , f (GenesisConfig (AlonzoEra crypto))
+       , f (GenesisConfig ShelleyEra)
+       , f (GenesisConfig AlonzoEra)
        )
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
@@ -1195,7 +1195,7 @@ parseGetGenesisConfig (genByron, genShelley, genAlonzo) = do
                     (const genByron)
             "shelley" -> do
                 pure $ const $ Just $ SomeAdHocQuery
-                    (GetShelleyGenesis (Proxy @(ShelleyEra crypto)))
+                    GetShelleyGenesis
                     (const Shelley.encodeGenesis)
                     (const genShelley)
             "alonzo" -> do

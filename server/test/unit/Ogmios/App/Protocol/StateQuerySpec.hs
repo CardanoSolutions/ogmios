@@ -158,6 +158,7 @@ import Test.QuickCheck
 
 import qualified Codec.Json.Wsp as Wsp
 import qualified Codec.Json.Wsp.Handler as Wsp
+import qualified Ogmios.Data.Protocol.StateQuery as StateQuery
 import qualified Ouroboros.Consensus.Ledger.Query as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Type as LSQ
 
@@ -224,7 +225,8 @@ withStateQueryClient
 withStateQueryClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
     let innerCodecs = mkStateQueryCodecs encodePoint encodeAcquireFailure
-    let client = mkStateQueryClient nullTracer innerCodecs recvQ (atomically . writeTQueue sendQ)
+    let getGenesisConfig = let nope = error "unimplemented" in StateQuery.GetGenesisConfig nope nope nope
+    let client = mkStateQueryClient nullTracer innerCodecs getGenesisConfig recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cStateQueryCodec
     withMockChannel (stateQueryMockPeer seed codec) $ \channel -> do
         result <- race

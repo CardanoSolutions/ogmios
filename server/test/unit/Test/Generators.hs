@@ -101,7 +101,9 @@ import Ouroboros.Consensus.Protocol.TPraos
     ( TPraos
     )
 import Ouroboros.Consensus.Shelley.Eras
-    ( StandardAllegra
+    ( AlonzoEra
+    , ShelleyEra
+    , StandardAllegra
     , StandardAlonzo
     , StandardBabbage
     , StandardMary
@@ -688,8 +690,8 @@ genUTxOResult _ _ =
 
 genGenesisConfig
     :: ( Gen (GenesisConfig ByronEra)
-       , Gen (GenesisConfig StandardShelley)
-       , Gen (GenesisConfig StandardAlonzo)
+       , Gen (GenesisConfig ShelleyEra)
+       , Gen (GenesisConfig AlonzoEra)
        )
 genGenesisConfig =
     ( error "todo: ByronEra"
@@ -698,12 +700,12 @@ genGenesisConfig =
     )
 
 genGenesisConfigShelley
-    :: Gen (GenesisConfig StandardShelley)
+    :: Gen (GenesisConfig ShelleyEra)
 genGenesisConfigShelley =
     reasonablySized arbitrary
 
 genGenesisConfigAlonzo
-    :: Gen (GenesisConfig StandardAlonzo)
+    :: Gen (GenesisConfig AlonzoEra)
 genGenesisConfigAlonzo =
     AlonzoGenesis
         <$> arbitrary
