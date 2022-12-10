@@ -2,12 +2,15 @@
 , system ? builtins.currentSystem
 , haskellNix ? import
     (builtins.fetchTarball
-      "https://github.com/input-output-hk/haskell.nix/archive/974a61451bb1d41b32090eb51efd7ada026d16d9.tar.gz")
+      "https://github.com/input-output-hk/haskell.nix/archive/0.0.117.tar.gz")
     { }
 , iohkNix ? import
     (builtins.fetchTarball
       "https://github.com/input-output-hk/iohk-nix/archive/edb2d2df2ebe42bbdf03a0711115cf6213c9d366.tar.gz")
     { }
+, cardanoPkgs ?
+    (builtins.fetchTarball
+    "https://github.com/input-output-hk/cardano-haskell-packages/archive/316e0a626fed1a928e659c7fc2577c7773770f7f.tar.gz")
 , nixpkgsSrc ? haskellNix.sources.nixpkgs-unstable
 , nixpkgsArgs ? haskellNix.nixpkgsArgs
 }:
@@ -22,6 +25,7 @@ let
     ( arch.haskell-nix.project {
         compiler-nix-name = compiler;
         projectFileName = "cabal.project";
+        inputMap = { "https://input-output-hk.github.io/cardano-haskell-packages" = cardanoPkgs; };
         src = arch.haskell-nix.haskellLib.cleanSourceWith {
           name = "ogmios-src";
           src = ./.;
