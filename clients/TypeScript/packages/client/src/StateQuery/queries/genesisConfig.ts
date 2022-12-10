@@ -1,5 +1,6 @@
 import {
   GenesisAlonzo,
+  GenesisByron,
   GenesisShelley,
   EraMismatch,
   Ogmios
@@ -10,15 +11,17 @@ import { Query } from '../Query'
 
 export type EraWithGenesis = 'Byron' | 'Shelley' | 'Alonzo'
 
-export type GenesisConfig = GenesisShelley | GenesisAlonzo
+export type GenesisConfig = GenesisByron | GenesisShelley | GenesisAlonzo
 
 const isEraMismatch = (result: Ogmios['QueryResponse[currentProtocolParameters]']['result']): result is EraMismatch =>
   (result as EraMismatch).eraMismatch !== undefined
 
 const isGenesisConfig = (result: Ogmios['QueryResponse[genesisConfig]']['result']): result is GenesisConfig =>
-  (result as GenesisShelley).systemStart !== undefined
+  (result as GenesisByron).initialCoinOffering !== undefined
   ||
-  (result as GenesisAlonzo).coinsPerUtxoWord !== undefined
+  (result as GenesisShelley).initialPools !== undefined
+  ||
+  (result as GenesisAlonzo).costModels !== undefined
 
 /**
  * Get the Shelley's genesis configuration.

@@ -694,7 +694,7 @@ genGenesisConfig
        , Gen (GenesisConfig AlonzoEra)
        )
 genGenesisConfig =
-    ( error "todo: ByronEra"
+    ( error "TODO: genGenesisConfig@ByronEra"
     , genGenesisConfigShelley
     , genGenesisConfigAlonzo
     )

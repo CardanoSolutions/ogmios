@@ -82,6 +82,11 @@ export const safeJSON = {
         return this.sanitizeFields(json, ['rewards'])
       }
 
+      // InitialFunds & InitialCoinOffering
+      if (parentKey === 'initialFunds' || parentKey == 'initialCoinOffering') {
+        return this.sanitizeAdditionalFields(json)
+      }
+
       // Otherwise...
       for (const k in json) {
         this.sanitize(json[k], k)

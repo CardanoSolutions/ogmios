@@ -1486,7 +1486,8 @@
         }
       , "result":
         { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/Genesis[Shelley]" }
+          [ { "$ref": "ogmios.wsp.json#/definitions/Genesis[Byron]" }
+          , { "$ref": "ogmios.wsp.json#/definitions/Genesis[Shelley]" }
           , { "$ref": "ogmios.wsp.json#/definitions/Genesis[Alonzo]" }
           , { "$ref": "ogmios.wsp.json#/definitions/EraMismatch" }
           , { "$ref": "ogmios.wsp.json#/definitions/QueryUnavailableInCurrentEra" }
@@ -2808,6 +2809,47 @@
     , "properties":
       { "memory": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
       , "steps": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      }
+    }
+
+  , "Genesis[Byron]":
+    { "type": "object"
+    , "description": "A Byron genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
+    , "additionalProperties": false
+    , "required":
+      [ "genesisKeyHashes"
+      , "genesisDelegations"
+      , "systemStart"
+      , "initialFunds"
+      , "initialCoinOffering"
+      , "securityParameter"
+      , "networkMagic"
+      , "protocolParameters"
+      ]
+    , "properties":
+      { "genesisKeyHashes":
+        { "type": "array"
+        , "items": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        }
+      , "genesisDelegations":
+        { "type": "object"
+        , "propertyNames": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/DlgCertificate" }
+        }
+      , "systemStart": { "$ref": "ogmios.wsp.json#/definitions/UtcTime" }
+      , "initialFunds":
+        { "type": "object"
+        , "propertyNames": { "$ref": "ogmios.wsp.json#/definitions/Address" }
+        , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/Lovelace" }
+        }
+      , "initialCoinOffering":
+        { "type": "object"
+        , "propertyNames": { "$ref": "ogmios.wsp.json#/definitions/VerificationKey" }
+        , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/Lovelace" }
+        }
+      , "securityParameter": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "networkMagic": { "$ref": "ogmios.wsp.json#/definitions/NetworkMagic" }
+      , "protocolParameters": { "$ref": "ogmios.wsp.json#/definitions/ProtocolParameters[Byron]" }
       }
     }
 

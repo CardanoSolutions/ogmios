@@ -898,7 +898,7 @@ export interface Ogmios {
     version: "1.0";
     servicename: "ogmios";
     methodname: "Query";
-    result: GenesisShelley | GenesisAlonzo | EraMismatch | QueryUnavailableInCurrentEra;
+    result: GenesisByron | GenesisShelley | GenesisAlonzo | EraMismatch | QueryUnavailableInCurrentEra;
     /**
      * Any value that was set by a client request in the 'mirror' field.
      */
@@ -2286,6 +2286,25 @@ export interface PoolDistribution {
     stake: Ratio;
     vrf: DigestBlake2BVrfVerificationKey;
   };
+}
+/**
+ * A Byron genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
+ */
+export interface GenesisByron {
+  genesisKeyHashes: DigestBlake2BVerificationKey[];
+  genesisDelegations: {
+    [k: string]: DlgCertificate;
+  };
+  systemStart: UtcTime;
+  initialFunds: {
+    [k: string]: Lovelace;
+  };
+  initialCoinOffering: {
+    [k: string]: Lovelace;
+  };
+  securityParameter: UInt64;
+  networkMagic: NetworkMagic;
+  protocolParameters: ProtocolParametersByron;
 }
 /**
  * A Shelley genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.

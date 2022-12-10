@@ -3,6 +3,7 @@ import {
   DigestBlake2BBlockHeader,
   DigestBlake2BCredential,
   GenesisAlonzo,
+  GenesisByron,
   GenesisShelley,
   Point,
   Slot
@@ -100,8 +101,8 @@ describe('Local state queries', () => {
       const eraSummaries = await client.eraSummaries()
       expect(eraSummaries).toHaveLength(6)
 
-      // const byronGenesis = await client.genesisConfig('Byron')
-      // expect(byronGenesis.startTime).toBeDefined()
+      const byronGenesis = await client.genesisConfig('Byron')
+      expect((byronGenesis as GenesisByron).initialCoinOffering).toBeDefined()
 
       const shelleyGenesis = await client.genesisConfig('Shelley')
       expect((shelleyGenesis as GenesisShelley).systemStart).toBeDefined()
