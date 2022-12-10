@@ -17,10 +17,8 @@ const isEraMismatch = (result: Ogmios['QueryResponse[currentProtocolParameters]'
   (result as EraMismatch).eraMismatch !== undefined
 
 const isGenesisConfig = (result: Ogmios['QueryResponse[genesisConfig]']['result']): result is GenesisConfig =>
-  (result as GenesisByron).initialCoinOffering !== undefined
-  ||
-  (result as GenesisShelley).initialPools !== undefined
-  ||
+  (result as GenesisByron).initialCoinOffering !== undefined ||
+  (result as GenesisShelley).initialPools !== undefined ||
   (result as GenesisAlonzo).costModels !== undefined
 
 /**
@@ -37,7 +35,7 @@ export const genesisConfig = (context: InteractionContext, era: EraWithGenesis):
     methodName: 'Query',
     args: {
       query: {
-        genesisConfig: String(era).toLowerCase(),
+        genesisConfig: String(era).toLowerCase()
       }
     }
   }, {

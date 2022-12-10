@@ -83,7 +83,7 @@ export const safeJSON = {
       }
 
       // InitialFunds & InitialCoinOffering
-      if (parentKey === 'initialFunds' || parentKey == 'initialCoinOffering') {
+      if (parentKey === 'initialFunds' || parentKey === 'initialCoinOffering') {
         return this.sanitizeAdditionalFields(json)
       }
 

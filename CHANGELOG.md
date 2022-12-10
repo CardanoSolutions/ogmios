@@ -15,13 +15,15 @@ pre: "<b>5. </b>"
   > **Note**
   > The HTTP server and the WebSocket server are both mounted on the same port. So, it suffices to route HTTP requests through `/`. The JSON payload is the same.
 
+- Ability to retrieve any genesis configuration (Byron, Shelley or Alonzo) via the local-state-query protocol.
+
 #### Changed
 
-N/A
+- **⚠️ BREAKING-CHANGE ⚠️** The `genesisConfig` local-state-query now expects one era as argument (either 'byron', 'shelley' or 'alonzo') to retrieve the corresponding genesis configuration.
 
 #### Removed
 
-N/A
+- N/A
 
 ---
 ---

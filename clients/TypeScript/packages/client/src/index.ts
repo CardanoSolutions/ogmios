@@ -8,7 +8,7 @@ export * from './util'
 export { createChainSyncClient } from './ChainSync'
 export * as ChainSync from './ChainSync'
 
-export { createStateQueryClient } from './StateQuery'
+export { createStateQueryClient, EraWithGenesis, GenesisConfig } from './StateQuery'
 export * as StateQuery from './StateQuery'
 
 export { createTxSubmissionClient } from './TxSubmission'
