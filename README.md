@@ -6,6 +6,10 @@
 
 **Ogmios** is a lightweight bridge interface for [cardano-node](https://github.com/input-output-hk/cardano-node/). It offers a **WebSocket API** that enables local clients to speak [Ouroboros' mini-protocols](https://hydra.iohk.io/build/1070091/download/1/network.pdf#chapter.3) via **JSON/RPC**.
 
+## QuickStart
+
+See our [Ogmios client starter kit](https://github.com/CardanoSolutions/ogmios-ts-client-starter-kit#ogmios-client-starter-kit) or jump right into the [user manual](https://ogmios.dev).
+
 ## Features
 
 <table align="center">
@@ -16,7 +20,7 @@
   <tr>
   <td>
   <details>
-  <summary>Full ledger state query support</summary>
+  <summary>Ledger state queries</summary>
 
   Query                        | Result
   ---                          | ---
@@ -44,31 +48,38 @@
   <td>
     <a href="https://ogmios.dev/mini-protocols/local-state-query/" target="_blank">↗️</a>
   </td>
-  </tr> 
+  </tr>
+  <tr><td>Dual WebSocket/HTTP support</td><td><a href="https://ogmios.dev/getting-started/basics" target="_blank">↗️</a></td></tr>
   <tr><td>Structured JSON logging</td><td><a href="https://ogmios.dev/getting-started/monitoring/" target="_blank">↗️</a></td></tr>
   <tr><td>Health monitoring, with runtime and application statistics</td><td><a href="https://ogmios.dev/getting-started/monitoring/" target="_blank">↗️</a></td></tr>
 </table>
 
-## Roadmap 
+# Roadmap
 
-See [projects 🎯](https://github.com/CardanoSolutions/ogmios/projects).
+### Cutting-edge work
 
-## Preview
+The project keeps a [changelog 💾](./CHANGELOG.md) in which all past changes and _recent-but-not-yet-released_ changes can be seen. Changes in the changelog have been implemented and are available in latest builds from the `master` branch.
 
-<p align="center">
-  <img src=".github/preview.png" alt="Ogmios TypeScript Client Preview">
-</p>
+### Planned work
+
+The [github issues & milestones 🎯][milestones] list planned tasks that haven't been implemented but have reached enough maturity to be well-defined and scoped. Milestones have end-dates to give a broad estimate of when it is expected.
+
+### Future work
+
+Finally, [discussions 💡][discussions] contains ongoing discussions regarding the future of Ogmios, with design decisions still under consideration.
 
 ## Clients / SDKs
+
+Ogmios provides a language-agnostic API which can be implemented using any WebSocket or HTTP client. If you prefer using a SDK in your favorite language, see below the available clients (_maintained by the community_):
 
 <table align="center"><thead><tr>
 <td align="center"><img height=72 width=72 src=".github/clients/typescript.png" alt="Logo:TypeScript"><br/><a href="https://ogmios.dev/typescript-client/overview"><strong>TypeScript</strong></a></td>
 <td align="center"><img height=72 width=72 src=".github/clients/go.png" alt="Logo:Go"><br/><a href="https://github.com/savaki/ogmigo/#readme"><strong>Go</strong></a></td>
 <td align="center"><img height=72 width=72 src=".github/clients/kotlin.png" alt="Logo:Kotlin"><br/><a href="https://github.com/projectNEWM/kogmios#readme"><strong>Kotlin</strong></a></td>
 <td align="center"><img height=72 width=72 src=".github/clients/java.png" alt="Logo:Java"><br/><a href="https://github.com/adabox-aio/ogmios-java-client.git#readme"><strong>Java</strong></a></td>
-</tr><thead></table> 
+</tr><thead></table>
 
-## Sponsors 💖 
+## Sponsors 💖
 
 <p align="center">
   <a href="https://rraayy.com/"><img src="https://avatars.githubusercontent.com/u/65092852?s=45&v=4" width=45 height=45 /></a>
@@ -108,3 +119,6 @@ See [projects 🎯](https://github.com/CardanoSolutions/ogmios/projects).
 </p>
 
 <p align="center"><a href="https://github.com/cardanosolutions/ogmios/blob/master/LICENSE"><img src=".github/license.svg" alt="license=MPL-2.0" /></a></p>
+
+[discussions]: https://github.com/CardanoSolutions/ogmios/discussions/categories/ideas-feature-requests?discussions_q=sort%3Atop+category%3A%22Ideas+%2F+Feature+Requests%22
+[milestones]: https://github.com/CardanoSolutions/ogmios/milestones
