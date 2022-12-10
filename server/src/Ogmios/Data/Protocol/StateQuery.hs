@@ -17,6 +17,9 @@ module Ogmios.Data.Protocol.StateQuery
       StateQueryCodecs (..)
     , mkStateQueryCodecs
 
+      -- * Genesis Configuration
+    , GetGenesisConfig (..)
+
       -- * Messages
     , StateQueryMessage (..)
 
@@ -44,11 +47,17 @@ module Ogmios.Data.Protocol.StateQuery
 import Ogmios.Data.Json.Prelude
 
 import Ogmios.Data.Json.Query
-    ( Query (..)
+    ( ByronEra
+    , GenesisConfig
+    , Query (..)
     )
 import Ogmios.Data.Protocol
     ()
 
+import Ouroboros.Consensus.Shelley.Eras
+    ( AlonzoEra
+    , ShelleyEra
+    )
 import Ouroboros.Network.Block
     ( Point (..)
     , StandardHash
@@ -106,6 +115,16 @@ mkStateQueryCodecs encodePoint encodeAcquireFailure =
         , encodeQueryResponse =
             _encodeQueryResponse encodeAcquireFailure
         }
+
+--
+-- GetGenesisConfig
+--
+
+data GetGenesisConfig (m :: Type -> Type) = GetGenesisConfig
+    { getByronGenesis :: m (GenesisConfig ByronEra)
+    , getShelleyGenesis :: m (GenesisConfig ShelleyEra)
+    , getAlonzoGenesis :: m (GenesisConfig AlonzoEra)
+    }
 
 --
 -- Messages

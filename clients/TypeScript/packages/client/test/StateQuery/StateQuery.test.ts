@@ -2,6 +2,9 @@ import {
   DelegationsAndRewards,
   DigestBlake2BBlockHeader,
   DigestBlake2BCredential,
+  GenesisAlonzo,
+  GenesisByron,
+  GenesisShelley,
   Point,
   Slot
 } from '@cardano-ogmios/schema'
@@ -98,8 +101,14 @@ describe('Local state queries', () => {
       const eraSummaries = await client.eraSummaries()
       expect(eraSummaries).toHaveLength(6)
 
-      const compactGenesis = await client.genesisConfig()
-      expect(compactGenesis.systemStart).toBeDefined()
+      const byronGenesis = await client.genesisConfig('Byron')
+      expect((byronGenesis as GenesisByron).initialCoinOffering).toBeDefined()
+
+      const shelleyGenesis = await client.genesisConfig('Shelley')
+      expect((shelleyGenesis as GenesisShelley).systemStart).toBeDefined()
+
+      const alonzoGenesis = await client.genesisConfig('Alonzo')
+      expect((alonzoGenesis as GenesisAlonzo).coinsPerUtxoWord).toBeDefined()
 
       const point = await client.ledgerTip() as { slot: Slot, hash: DigestBlake2BBlockHeader }
       expect(point.slot).toBeDefined()
@@ -187,9 +196,9 @@ describe('Local state queries', () => {
     })
     describe('genesisConfig', () => {
       it('fetches the config used to bootstrap the blockchain, excluding the genesis UTXO', async () => {
-        const config = await StateQuery.genesisConfig(context)
-        expect(config.systemStart).toBeDefined()
-        expect(config.networkMagic).toBeDefined()
+        const config = await StateQuery.genesisConfig(context, 'Shelley')
+        expect((config as GenesisShelley).systemStart).toBeDefined()
+        expect((config as GenesisShelley).networkMagic).toBeDefined()
       })
     })
     describe('ledgerTip', () => {

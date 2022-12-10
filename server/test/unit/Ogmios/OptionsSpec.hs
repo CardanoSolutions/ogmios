@@ -115,7 +115,7 @@ spec = parallel $ do
         specify "preview" $ do
             params <- parseNetworkParameters (getConfigFile "preview")
             networkMagic  params `shouldBe` NetworkMagic 2
-            systemStart   params `shouldBe` mkSystemStart 1660003200
+            systemStart   params `shouldBe` mkSystemStart 1666656000
             slotsPerEpoch params `shouldBe` EpochSlots 4320
 
         specify "preprod" $ do

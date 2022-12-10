@@ -180,11 +180,11 @@ import Test.Generators
     , genBlock
     , genBlockNo
     , genBoundResult
-    , genCompactGenesisResult
     , genData
     , genDelegationAndRewardsResult
     , genEpochResult
     , genEvaluateTxResponse
+    , genGenesisConfig
     , genHardForkApplyTxErr
     , genInterpreterResult
     , genMempoolSizeAndCapacity
@@ -658,9 +658,15 @@ spec = do
             "ogmios.wsp.json#/properties/QueryResponse[utxo]"
 
         validateQuery
-            [aesonQQ|"genesisConfig"|]
-            ( parseGetGenesisConfig genCompactGenesisResult
-            ) (100, "StateQuery/Response/Query[genesisConfig]")
+            [aesonQQ|{ "genesisConfig": "shelley" }|]
+            ( parseGetGenesisConfig genGenesisConfig
+            ) (20, "StateQuery/Response/Query[genesisConfig]")
+            "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
+
+        validateQuery
+            [aesonQQ|{ "genesisConfig": "alonzo" }|]
+            ( parseGetGenesisConfig genGenesisConfig
+            ) (20, "StateQuery/Response/Query[genesisConfig]")
             "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
 
         validateQuery
@@ -1008,29 +1014,50 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                     , SomeShelleyEra ShelleyBasedEraAlonzo
                     , SomeShelleyEra ShelleyBasedEraBabbage
                     ]
-            forM_ eras $ \(era, SomeQuery{genResult,encodeResult}) -> do
-                let encodeQueryResponse
+
+            let nEras = length eras
+
+            forM_ eras $ \(era, qry) ->  do
+                resultRefs <- unsafeReadSchemaRef resultRef
+
+                let encodeQueryResponse encodeResult
                         = _encodeQueryResponse encodeAcquireFailure
                         . Wsp.Response Nothing
                         . QueryResponse
                         . encodeResult FullSerialization
 
-                case era of
-                    SomeShelleyEra ShelleyBasedEraBabbage -> do
-                        generateTestVectors (n, vectorFilepath)
-                            (genResult Proxy)
-                            encodeQueryResponse
-                    _ ->
-                        pure ()
-
-                resultRefs <- unsafeReadSchemaRef resultRef
-
                 -- NOTE: Queries are mostly identical between eras, since we run
                 -- the test for each era, we can reduce the number of expected
                 -- max success. In the end, the property run 1 time per era!
-                runQuickCheck $ withMaxSuccess 20 $ forAllBlind
-                    (genResult Proxy)
-                    (prop_validateToJSON (encodingToValue . encodeQueryResponse) resultRefs)
+                case qry of
+                    SomeStandardQuery _ encodeResult genResult -> do
+                        case era of
+                            SomeShelleyEra ShelleyBasedEraBabbage -> do
+                                generateTestVectors (n, vectorFilepath)
+                                    (genResult Proxy)
+                                    (encodeQueryResponse encodeResult)
+                            _someOtherEra ->
+                                pure ()
+                        runQuickCheck $ withMaxSuccess (n `div` nEras) $ forAllBlind
+                            (genResult Proxy)
+                            (prop_validateToJSON
+                                (encodingToValue . encodeQueryResponse encodeResult)
+                                resultRefs
+                            )
+                    SomeAdHocQuery _ encodeResult genResult -> do
+                        case era of
+                            SomeShelleyEra ShelleyBasedEraBabbage -> do
+                                generateTestVectors (n, vectorFilepath)
+                                    (genResult Proxy)
+                                    (encodeQueryResponse encodeResult)
+                            _someOtherEra ->
+                                pure ()
+                        runQuickCheck $ withMaxSuccess (n `div` nEras) $ forAllBlind
+                            (genResult Proxy)
+                            (prop_validateToJSON
+                                (encodingToValue . encodeQueryResponse encodeResult)
+                                resultRefs
+                            )
 
                 let encodeQueryUnavailableInCurrentEra
                         = encodingToValue

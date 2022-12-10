@@ -16,6 +16,7 @@ import {
   UnknownResultError
 } from '../errors'
 import {
+  EraWithGenesis,
   blockHeight,
   chainTip,
   currentEpoch,
@@ -55,7 +56,7 @@ export interface StateQueryClient {
   delegationsAndRewards: (stakeKeyHashes: DigestBlake2BCredential[]) => ReturnType<typeof delegationsAndRewards>
   eraStart: () => ReturnType<typeof eraStart>
   eraSummaries: () => ReturnType<typeof eraSummaries>
-  genesisConfig: () => ReturnType<typeof genesisConfig>
+  genesisConfig: (era: EraWithGenesis) => ReturnType<typeof genesisConfig>
   ledgerTip: () => ReturnType<typeof ledgerTip>
   nonMyopicMemberRewards: (input: Lovelace[] | DigestBlake2BCredential[]) => ReturnType<typeof nonMyopicMemberRewards>
   poolIds: () => ReturnType<typeof poolIds>
@@ -143,9 +144,9 @@ export const createStateQueryClient = async (
         ensureSocketIsOpen(socket)
         return eraSummaries(context)
       },
-      genesisConfig: () => {
+      genesisConfig: (era) => {
         ensureSocketIsOpen(socket)
-        return genesisConfig(context)
+        return genesisConfig(context, era)
       },
       ledgerTip: () => {
         ensureSocketIsOpen(socket)

@@ -15,6 +15,9 @@ import Codec.CBOR.Encoding
 import Codec.CBOR.Write
     ( toStrictByteString
     )
+import Data.ByteString.Base16
+    ( encodeBase16
+    )
 
 import qualified Cardano.Chain.Block as By hiding
     ( Proof
@@ -177,6 +180,55 @@ encodeADlgPayload
     -> Json
 encodeADlgPayload =
     encodeList encodeACertificate . By.Dlg.getPayload
+
+encodeBlockCount :: By.BlockCount -> Json
+encodeBlockCount =
+    encodeWord64 . By.unBlockCount
+
+encodeGenesisData
+    :: By.GenesisData
+    -> Json
+encodeGenesisData x = encodeObject
+    [ ( "genesisKeyHashes"
+      , encodeFoldable
+            encodeKeyHash
+            (By.unGenesisKeyHashes (By.gdGenesisKeyHashes x))
+      )
+    , ( "genesisDelegations"
+      , encodeMap
+            stringifyKeyHash
+            encodeACertificate
+            (By.unGenesisDelegation (By.gdHeavyDelegation x))
+      )
+    , ( "systemStart"
+      , encodeUtcTime (By.gdStartTime x)
+      )
+    , ( "initialFunds"
+      , encodeMap
+            stringifyAddress
+            encodeLovelace
+            (By.unGenesisNonAvvmBalances (By.gdNonAvvmBalances x))
+      )
+    , ( "initialCoinOffering"
+      , encodeMap
+            (stringifyRedeemVerificationKey . By.fromCompactRedeemVerificationKey)
+            encodeLovelace
+            (By.unGenesisAvvmBalances (By.gdAvvmDistr x))
+      )
+    , ( "securityParameter"
+      , encodeBlockCount (By.gdK x)
+      )
+    , ( "networkMagic"
+      , encodeProtocolMagicId (By.gdProtocolMagicId x)
+      )
+    , ( "protocolParameters"
+      , encodeProtocolParameters (By.gdProtocolParameters x)
+      )
+    ]
+
+encodeKeyHash :: By.KeyHash -> Json
+encodeKeyHash =
+    encodeHash . By.unKeyHash
 
 encodeTx
     :: By.Tx
@@ -370,7 +422,7 @@ encodeGenesisHash =
     encodeHash . By.unGenesisHash
 
 encodeHash
-    :: By.Hash a
+    :: By.AbstractHash alg a
     -> Json
 encodeHash =
     encodeByteStringBase16 . By.hashToBytes
@@ -426,6 +478,55 @@ encodeProtocolMagicId
     -> Json
 encodeProtocolMagicId =
     encodeWord32 . By.unProtocolMagicId
+
+encodeProtocolParameters
+    :: By.ProtocolParameters
+    -> Json
+encodeProtocolParameters x = encodeObject
+    [ ( "scriptVersion"
+      , encodeWord16 (By.ppScriptVersion x)
+      )
+    , ( "slotDuration"
+      , encodeNatural (By.ppSlotDuration x)
+      )
+    , ( "maxBlockSize"
+      , encodeNatural (By.ppMaxBlockSize x)
+      )
+    , ( "maxHeaderSize"
+      , encodeNatural (By.ppMaxHeaderSize x)
+      )
+    , ( "maxTxSize"
+      , encodeNatural (By.ppMaxTxSize x)
+      )
+    , ( "maxProposalSize"
+      , encodeNatural (By.ppMaxProposalSize x)
+      )
+    , ( "mpcThreshold"
+      , encodeLovelacePortion (By.ppMpcThd x)
+      )
+    , ( "heavyDlgThreshold"
+      , encodeLovelacePortion (By.ppHeavyDelThd x)
+      )
+    , ( "updateVoteThreshold"
+      , encodeLovelacePortion (By.ppUpdateVoteThd x)
+      )
+    , ( "updateProposalThreshold"
+      , encodeLovelacePortion (By.ppUpdateProposalThd x)
+      )
+    , ( "updateProposalTimeToLive"
+      , encodeSlotNumber (By.ppUpdateProposalTTL x)
+      )
+    , ( "softforkRule"
+      , encodeSoftforkRule (By.ppSoftforkRule x)
+      )
+    , ( "txFeePolicy"
+      , encodeTxFeePolicy (By.ppTxFeePolicy x)
+      )
+    , ( "unlockStakeEpoch"
+      , encodeEpochNumber (By.ppUnlockStakeEpoch x)
+      )
+    ]
+
 
 encodeProtocolParametersUpdate
     :: By.ProtocolParametersUpdate
@@ -669,3 +770,17 @@ encodeVerificationKey
     -> Json
 encodeVerificationKey =
     encodeByteStringBase16 . CC.unXPub . By.unVerificationKey
+
+stringifyAddress
+    :: By.Address
+    -> Text
+stringifyAddress =
+    decodeUtf8 . By.addrToBase58
+
+stringifyKeyHash :: By.KeyHash -> Text
+stringifyKeyHash =
+    encodeBase16 . By.hashToBytes . By.unKeyHash
+
+stringifyRedeemVerificationKey :: By.RedeemVerificationKey -> Text
+stringifyRedeemVerificationKey (By.RedeemVerificationKey x) =
+    encodeBase16 (By.fromVerificationKeyToByteString x)

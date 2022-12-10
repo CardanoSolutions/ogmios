@@ -1038,9 +1038,16 @@
                     }
                   }
                 }
-              , { "type": "string"
+              , { "type": "object"
                 , "title": "GetGenesisConfig"
-                , "enum": ["genesisConfig"]
+                , "additionalProperties": false
+                , "required": ["genesisConfig"]
+                , "properties":
+                  { "genesisConfig":
+                    { "type": "string"
+                    , "enum": ["byron", "shelley", "alonzo"]
+                    }
+                  }
                 }
               , { "type": "string"
                 , "title": "GetRewardsProvenance (deprecated)"
@@ -1479,7 +1486,9 @@
         }
       , "result":
         { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/CompactGenesis" }
+          [ { "$ref": "ogmios.wsp.json#/definitions/Genesis[Byron]" }
+          , { "$ref": "ogmios.wsp.json#/definitions/Genesis[Shelley]" }
+          , { "$ref": "ogmios.wsp.json#/definitions/Genesis[Alonzo]" }
           , { "$ref": "ogmios.wsp.json#/definitions/EraMismatch" }
           , { "$ref": "ogmios.wsp.json#/definitions/QueryUnavailableInCurrentEra" }
           ]
@@ -2199,6 +2208,7 @@
         }
       ]
     , "additionalProperties": false
+    , "required": [ "signature", "chainCode", "addressAttributes", "key" ]
     , "properties":
       { "signature": { "$ref": "ogmios.wsp.json#/definitions/Signature" }
       , "chainCode":
@@ -2389,40 +2399,6 @@
     { "type": "string"
     , "description": "An Ed25519-BIP32 chain-code for key deriviation."
     , "contentEncoding": "base16"
-    }
-
-  , "CompactGenesis":
-    { "type": "object"
-    , "description": "A compact (without genesis UTxO) representation of the genesis configuration."
-    , "additionalProperties": false
-    , "required":
-      [ "systemStart"
-      , "networkMagic"
-      , "network"
-      , "activeSlotsCoefficient"
-      , "securityParameter"
-      , "epochLength"
-      , "slotsPerKesPeriod"
-      , "maxKesEvolutions"
-      , "slotLength"
-      , "updateQuorum"
-      , "maxLovelaceSupply"
-      , "protocolParameters"
-      ]
-    , "properties":
-      { "systemStart": { "$ref": "ogmios.wsp.json#/definitions/UtcTime" }
-      , "networkMagic": { "$ref": "ogmios.wsp.json#/definitions/NetworkMagic" }
-      , "network": { "$ref": "ogmios.wsp.json#/definitions/Network" }
-      , "activeSlotsCoefficient": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
-      , "securityParameter": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
-      , "epochLength": { "$ref": "ogmios.wsp.json#/definitions/Epoch" }
-      , "slotsPerKesPeriod": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
-      , "maxKesEvolutions": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
-      , "slotLength": { "$ref": "ogmios.wsp.json#/definitions/SlotLength" }
-      , "updateQuorum": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
-      , "maxLovelaceSupply": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
-      , "protocolParameters": { "$ref": "ogmios.wsp.json#/definitions/ProtocolParameters[Shelley]" }
-      }
     }
 
   , "CostModels":
@@ -2833,6 +2809,159 @@
     , "properties":
       { "memory": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
       , "steps": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      }
+    }
+
+  , "Genesis[Byron]":
+    { "type": "object"
+    , "description": "A Byron genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
+    , "additionalProperties": false
+    , "required":
+      [ "genesisKeyHashes"
+      , "genesisDelegations"
+      , "systemStart"
+      , "initialFunds"
+      , "initialCoinOffering"
+      , "securityParameter"
+      , "networkMagic"
+      , "protocolParameters"
+      ]
+    , "properties":
+      { "genesisKeyHashes":
+        { "type": "array"
+        , "items": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        }
+      , "genesisDelegations":
+        { "type": "object"
+        , "propertyNames": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/DlgCertificate" }
+        }
+      , "systemStart": { "$ref": "ogmios.wsp.json#/definitions/UtcTime" }
+      , "initialFunds":
+        { "type": "object"
+        , "propertyNames": { "$ref": "ogmios.wsp.json#/definitions/Address" }
+        , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/Lovelace" }
+        }
+      , "initialCoinOffering":
+        { "type": "object"
+        , "propertyNames": { "$ref": "ogmios.wsp.json#/definitions/VerificationKey" }
+        , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/Lovelace" }
+        }
+      , "securityParameter": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "networkMagic": { "$ref": "ogmios.wsp.json#/definitions/NetworkMagic" }
+      , "protocolParameters": { "$ref": "ogmios.wsp.json#/definitions/ProtocolParameters[Byron]" }
+      }
+    }
+
+  , "Genesis[Shelley]":
+    { "type": "object"
+    , "description": "A Shelley genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
+    , "additionalProperties": false
+    , "required":
+      [ "systemStart"
+      , "networkMagic"
+      , "network"
+      , "activeSlotsCoefficient"
+      , "securityParameter"
+      , "epochLength"
+      , "slotsPerKesPeriod"
+      , "maxKesEvolutions"
+      , "slotLength"
+      , "updateQuorum"
+      , "maxLovelaceSupply"
+      , "protocolParameters"
+      , "initialDelegates"
+      , "initialFunds"
+      , "initialPools"
+      ]
+    , "properties":
+      { "systemStart": { "$ref": "ogmios.wsp.json#/definitions/UtcTime" }
+      , "networkMagic": { "$ref": "ogmios.wsp.json#/definitions/NetworkMagic" }
+      , "network": { "$ref": "ogmios.wsp.json#/definitions/Network" }
+      , "activeSlotsCoefficient": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "securityParameter": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "epochLength": { "$ref": "ogmios.wsp.json#/definitions/Epoch" }
+      , "slotsPerKesPeriod": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxKesEvolutions": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "slotLength": { "$ref": "ogmios.wsp.json#/definitions/SlotLength" }
+      , "updateQuorum": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxLovelaceSupply": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "protocolParameters": { "$ref": "ogmios.wsp.json#/definitions/ProtocolParameters[Shelley]" }
+      , "initialDelegates":
+        { "type": "object"
+        , "title": "InitialDelegates"
+        , "propertyNames": { "ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/GenesisDelegate" }
+        }
+      , "initialFunds":
+        { "type": "object"
+        , "title": "InitialFunds"
+        , "propertyNames": { "$ref": "ogmios.wsp.json#/definitions/Address" }
+        , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/Lovelace" }
+        }
+      , "initialPools": { "$ref": "ogmios.wsp.json#/definitions/GenesisPools" }
+      }
+    }
+
+  , "Genesis[Alonzo]":
+    { "type": "object"
+    , "description": "An Alonzo genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
+    , "additionalProperties": false
+    , "required":
+      [ "coinsPerUtxoWord"
+      , "collateralPercentage"
+      , "costModels"
+      , "maxCollateralInputs"
+      , "maxExecutionUnitsPerBlock"
+      , "maxExecutionUnitsPerTransaction"
+      , "maxValueSize"
+      , "prices"
+      ]
+    , "properties":
+      { "coinsPerUtxoWord": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "collateralPercentage": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "costModels": { "$ref": "ogmios.wsp.json#/definitions/CostModels" }
+      , "maxCollateralInputs": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
+      , "maxExecutionUnitsPerBlock": { "$ref": "ogmios.wsp.json#/definitions/ExUnits" }
+      , "maxExecutionUnitsPerTransaction": { "$ref": "ogmios.wsp.json#/definitions/ExUnits" }
+      , "maxValueSize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
+      , "prices": { "$ref": "ogmios.wsp.json#/definitions/Prices" }
+      }
+    }
+
+  , "GenesisDelegate":
+    { "type": "object"
+    , "description": "A Genesis delegate, in charge of Cardano's governance."
+    , "additionalProperties": false
+    , "required":
+      [ "delegate"
+      , "vrf"
+      ]
+    , "properties":
+      { "delegate": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::VerificationKey" }
+      , "vrf": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::VrfVerificationKey" }
+      }
+    }
+
+  , "GenesisPools":
+    { "type": "object"
+    , "description": "A Genesis stake pools configuration; primarily used for bootstrapping test networks."
+    , "additionalProperties": false
+    , "required":
+      [ "pools"
+      , "delegators"
+      ]
+    , "properties":
+      { "pools":
+        { "type": "object"
+        , "propertyNames": { "$ref": "ogmios.wsp.json#/definitions/PoolId" }
+        , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/PoolParameters" }
+        }
+      , "delegators":
+        { "type": "object"
+        , "propertyNames": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/PoolId" }
+        }
       }
     }
 

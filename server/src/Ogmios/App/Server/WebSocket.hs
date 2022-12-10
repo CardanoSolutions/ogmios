@@ -37,6 +37,9 @@ import Network.HTTP.Types.Header
 import Ogmios.App.Configuration
     ( Configuration (..)
     , NetworkParameters (..)
+    , readAlonzoGenesis
+    , readByronGenesis
+    , readShelleyGenesis
     )
 import Ogmios.App.Metrics
     ( Sensors (..)
@@ -132,7 +135,8 @@ import Ogmios.Data.Protocol.ChainSync
     , mkChainSyncCodecs
     )
 import Ogmios.Data.Protocol.StateQuery
-    ( StateQueryCodecs (..)
+    ( GetGenesisConfig (..)
+    , StateQueryCodecs (..)
     , StateQueryMessage (..)
     , mkStateQueryCodecs
     )
@@ -173,7 +177,7 @@ import qualified Data.Aeson as Json
 
 newWebSocketApp
     :: forall m env.
-        ( MonadIO m -- Needed by 'connectClient'
+        ( MonadIO m -- Needed by 'connectClient' & for reading genesis configurations
         , MonadClock m
         , MonadLink m
         , MonadMetrics m
@@ -190,15 +194,20 @@ newWebSocketApp
     -> m WebSocketApp
 newWebSocketApp tr unliftIO = do
     NetworkParameters{slotsPerEpoch,networkMagic} <- asks (view typed)
-    Configuration{nodeSocket,maxInFlight} <- asks (view typed)
+    Configuration{nodeSocket,maxInFlight,nodeConfig} <- asks (view typed)
     sensors <- asks (view typed)
+    let getGenesisConfig = GetGenesisConfig
+            { getByronGenesis = readByronGenesis nodeConfig
+            , getShelleyGenesis = readShelleyGenesis nodeConfig
+            , getAlonzoGenesis = readAlonzoGenesis nodeConfig
+            }
     return $ \pending -> unliftIO $ do
         let (mode, sub) = choseSerializationMode pending
         logWith tr $ WebSocketConnectionAccepted (userAgent pending) mode
         recordSession sensors $ onExceptions $ acceptRequest pending sub $ \conn -> do
             let trClient = contramap WebSocketClient tr
             withExecutionUnitsEvaluator $ \exUnitsEvaluator exUnitsClients -> do
-                withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator conn $ \protocolsClients -> do
+                withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator getGenesisConfig conn $ \protocolsClients -> do
                     let clientA = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch protocolsClients
                     let clientB = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch exUnitsClients
                     let vData  = NodeToClientVersionData networkMagic
@@ -299,10 +308,11 @@ withOuroborosClients
     -> MaxInFlight
     -> Sensors m
     -> ExecutionUnitsEvaluator m Block
+    -> GetGenesisConfig m
     -> Connection
     -> (Clients m Block -> m a)
     -> m a
-withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator conn action = do
+withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator getGenesisConfig conn action = do
     (chainSyncQ, stateQueryQ, txSubmissionQ, txMonitorQ) <-
         atomically $ (,,,)
             <$> newTQueue
@@ -316,7 +326,7 @@ withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator conn action = 
              { chainSyncClient =
                  mkChainSyncClient maxInFlight chainSyncCodecs chainSyncQ yield
              , stateQueryClient =
-                 mkStateQueryClient (contramap WebSocketStateQuery tr) stateQueryCodecs stateQueryQ yield
+                 mkStateQueryClient (contramap WebSocketStateQuery tr) stateQueryCodecs getGenesisConfig stateQueryQ yield
              , txSubmissionClient =
                  mkTxSubmissionClient txSubmissionCodecs exUnitsEvaluator txSubmissionQ yield
              , txMonitorClient =
