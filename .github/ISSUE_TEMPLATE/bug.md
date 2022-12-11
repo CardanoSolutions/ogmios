@@ -1,18 +1,14 @@
 ---
 name: bug
 about: Create a bug report
-
 ---
 
-#### What Git revision are you using? 
+### What Git revision / release tag are you using?
 
-#### What operating system are you using, and which version?
+### Do you use any client SDK? If yes, which one?
 
-- [ ] Linux / Ubuntu
-- [ ] Linux / Other
-- [ ] OSX
-- [ ] Windows
+### Describe what the problem is?
 
-#### Describe what the problem is? 
+### What should be the expected behavior?
 
-#### What should be the expected behavior?
+### If applicable, what are the logs from the server around the occurence of the problem?
