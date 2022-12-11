@@ -16,7 +16,6 @@ info:
     Here's a shortlist that contains a few handpicked schema definitions. Find **all definitions** at the bottom of this document.
 
     - [Block](#schema-Block)
-    - [EvaluationFailure](#schema-EvaluationFailure)
     - Protocol Parameters
       - [Byron](#schema-ProtocolParameters[Byron])
       - [Shelley](#schema-ProtocolParameters[Shelley])
@@ -29,7 +28,8 @@ info:
       - [Mary](#schema-Tx[Mary])
       - [Alonzo](#schema-Tx[Alonzo])
       - [Babbage](#schema-Tx[Babbage])
-    - [SubmitTxError](#schema-SubmitTxError)
+    - [Transaction Submission Errors](#schema-SubmitTxError)
+    - [Transaction Evaluation Failures](#schema-EvaluationFailure)
     - [Value](#schema-Value)
 
   license:
@@ -472,7 +472,9 @@ components:
     Certificate : { "$ref": "/ogmios.wsp.json#/definitions/Certificate " }
     CertifiedVrf: { "$ref": "/ogmios.wsp.json#/definitions/CertifiedVrf" }
     ChainCode : { "$ref": "/ogmios.wsp.json#/definitions/ChainCode " }
-    CompactGenesis: { "$ref": "/ogmios.wsp.json#/definitions/CompactGenesis" }
+    Genesis[Byron]: { "$ref": "/ogmios.wsp.json#/definitions/Genesis[Byron]" }
+    Genesis[Shelley]: { "$ref": "/ogmios.wsp.json#/definitions/Genesis[Shelley]" }
+    Genesis[Alonzo]: { "$ref": "/ogmios.wsp.json#/definitions/Genesis[Alonzo]" }
     CostModel: { "$ref": "/ogmios.wsp.json#/definitions/CostModel" }
     CostModels: { "$ref": "/ogmios.wsp.json#/definitions/CostModels" }
     Datum : { "$ref": "/ogmios.wsp.json#/definitions/Datum " }
