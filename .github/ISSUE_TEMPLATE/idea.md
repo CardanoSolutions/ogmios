@@ -1,11 +1,10 @@
 ---
 name: idea
-about: Propose a new idea
-
+about: Propose a new idea or request a feature.
 ---
 
-#### Describe your idea, in simple words.
+### What is your idea? Provide a use case.
 
-#### Why is it a good idea?
+### Why is it a good idea?
 
-#### Are you willing to work on it yourself?
+### What is the current alternative and why is it not good enough?
