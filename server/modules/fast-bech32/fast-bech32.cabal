@@ -1,10 +1,8 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.35.0.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: c90aa64d9b573bd74e26c606bccc9065e63e43f351c94f930b404bfa961fc685
 
 name:           fast-bech32
 version:        1.0.0
@@ -76,9 +74,9 @@ library
     , bytestring
     , relude
     , text
+  default-language: Haskell2010
   if true
     ghc-options: -O2
-  default-language: Haskell2010
 
 test-suite unit
   type: exitcode-stdio-1.0
