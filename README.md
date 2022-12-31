@@ -79,26 +79,9 @@ Ogmios provides a language-agnostic API which can be implemented using any WebSo
 <td align="center"><img height=72 width=72 src=".github/clients/java.png" alt="Logo:Java"><br/><a href="https://github.com/adabox-aio/ogmios-java-client.git#readme"><strong>Java</strong></a></td>
 </tr><thead></table>
 
-## Sponsors 💖
+## Sponsors
 
-<p align="center">
-  <a href="https://rraayy.com/"><img src="https://avatars.githubusercontent.com/u/65092852?s=45&v=4" width=45 height=45 /></a>
-  <a href="https://sundaeswap.finance/"><img src="https://avatars.githubusercontent.com/u/83610786?s=45&v=4" width=45 height=45 /></a>
-  <a href="https://github.com/savaki"><img src="https://avatars.githubusercontent.com/u/108710?s=45&v=4" width=45 height=45 /></a>
-  <a href="https://blockfrost.io/"><img src="https://avatars.githubusercontent.com/u/70073210?s=45&v=4" width=45 height=45 /></a>
-  <a href="https://jpeg.store/"><img src="https://avatars.githubusercontent.com/u/98781883?s=200&v=4" width=45 height=45 /></a>
-  <a href="https://github.com/jacoblambda"><img src="https://avatars.githubusercontent.com/u/9424043?s=45&v=4" width=45 height=45 /></a>
-  <a href="https://github.com/minswap"><img src="https://avatars.githubusercontent.com/u/80548193?s=45&v=4" width=45 height=45 /></a>
-  <a href="https://github.com/Quantumplation"><img src="https://avatars.githubusercontent.com/u/49870?v=4" width=45 height=45 /></a>
-  <a href="https://github.com/codybutz"><img src="https://avatars.githubusercontent.com/u/3670430?s=45&v=4" width=45 height=45 /></a>
-  <a href="https://github.com/scarmuega"><img src="https://avatars.githubusercontent.com/u/653886?s=45&v=4" width=45 height=45 /></a>
-  <a href="https://github.com/mrbrinker"><img src="https://avatars.githubusercontent.com/u/41247403?s=45&v=4" width=45 height=45 /></a>
-  <a href="https://github.com/sacrelege"><img src="https://avatars.githubusercontent.com/u/7289595?v=4" width=45 height=45 /></a>
-  <a href="https://ccvault.io/"><img src="https://avatars.githubusercontent.com/u/86010408?s=45&v=4" width=45 height=45 /></a>
-  <a href="https://github.com/artemwright"><img src="https://avatars.githubusercontent.com/u/83517471?s=45&v=4" width=45 height=45 /></a>
-  <a href="https://github.com/kayandra"><img src="https://avatars.githubusercontent.com/u/5002506?s=45&v=4" width=45 height=45 /></a>
-  <a href="https://github.com/tapiocapool"><img src="https://avatars.githubusercontent.com/u/80033713?s=45&v=4" width=45 height=45 /></a>
-</p>
+A big thank to [all our sponsors 💖](https://github.com/CardanoSolutions#-sponsors).
 
 <hr/>
 
