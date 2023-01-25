@@ -6,7 +6,7 @@
 # ------------------------------- SETUP  ------------------------------------- #
 #                                                                              #
 
-ARG CARDANO_NODE_VERSION=1.35.3
+ARG CARDANO_NODE_VERSION=1.35.4
 
 FROM --platform=${TARGETPLATFORM:-linux/amd64} nixos/nix:2.11.0 as build
 
