@@ -57,7 +57,7 @@ jobs:
         os: [ ubuntu-20.04 ]
         target: [ ogmios, cardano-node-ogmios ]
         network: [ "mainnet", "preprod", "preview" ]
-        cardano_node_version: [ "1.35.3" ]
+        cardano_node_version: [ "1.35.4" ]
 
     runs-on: ${{ matrix.os }}
     steps:
