@@ -101,8 +101,8 @@ describe('TxMonitor', () => {
     })
 
     const methods = [
-      async (args?: { fields?: 'all' }) => await TxMonitor.nextTx(context, args),
-      async (args?: { fields?: 'all' }) => await client.nextTx(args)
+      async (args?: { fields: 'all' }) => await TxMonitor.nextTx(context, args),
+      async (args?: { fields: 'all' }) => await client.nextTx(args)
     ]
 
     methods.forEach(nextTx => {
