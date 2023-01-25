@@ -82,7 +82,7 @@ const logObject = (obj: Object) =>
     submitTx: (bytes: string) => TxSubmission.submitTx(context, bytes),
     awaitAcquire: () => TxMonitor.awaitAcquire(context),
     hasTx: (id: Schema.TxId) => TxMonitor.hasTx(context, id),
-    nextTx: (args: { fields?: 'all' } = {}) => TxMonitor.nextTx(context, args),
+    nextTx: (args?: { fields: 'all' }) => TxMonitor.nextTx(context, args),
     sizeAndCapacity: () => TxMonitor.sizeAndCapacity(context),
     releaseMempool: () => TxMonitor.release(context),
     utxo: (filters?: Schema.Address[]|Schema.TxIn[]) => StateQuery.utxo(context, filters)
