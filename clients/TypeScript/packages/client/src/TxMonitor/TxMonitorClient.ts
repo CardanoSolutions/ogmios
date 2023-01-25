@@ -15,12 +15,13 @@ import { handleSizeAndCapacityResponse } from './sizeAndCapacity'
  **/
 export interface TxMonitorClient {
     context: InteractionContext
-    awaitAcquire: (args?: {}) => Promise<Slot>
-    hasTx: (id: TxId) => Promise<boolean>
-    nextTx: (args?: { fields?: 'all' }) => Promise<TxId | TxAlonzo | null>
-    sizeAndCapacity: (args?: {}) => Promise<MempoolSizeAndCapacity>
-    release: (args?: {}) => Promise<void>
-    shutdown: () => Promise<void>
+    awaitAcquire(args?: {}): Promise<Slot>
+    hasTx(id: TxId): Promise<boolean>
+    nextTx(): Promise<TxId | null>
+    nextTx(args: { fields: 'all' }): Promise<TxAlonzo | null>
+    sizeAndCapacity(args?: {}): Promise<MempoolSizeAndCapacity>
+    release(args?: {}): Promise<void>
+    shutdown(): Promise<void>
 }
 
 /**
@@ -77,13 +78,13 @@ export const createTxMonitorClient = async (
         return handleHasTxResponse((await response.next()).value)
       }, context)
     },
-    nextTx: (args?: {fields?: 'all'}) => {
+    nextTx: (args?: {fields: 'all'}) => {
       ensureSocketIsOpen(socket)
       return send<TxId | TxAlonzo | null>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
           methodname: 'NextTx',
-          args: args
+          args: args || {}
         } as unknown as Ogmios['NextTx']))
 
         return handleNextTxResponse((await response.next()).value, args)
