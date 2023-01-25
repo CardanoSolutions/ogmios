@@ -28,6 +28,29 @@ pre: "<b>5. </b>"
 ---
 ---
 
+### [5.5.8] - 2023-01-25
+
+#### Added
+
+N/A
+
+#### Changed
+
+- Bump internal packages to match cardano-node@1.35.4 dependencies set.
+
+- Bundle the docker image with more recent versions of the cardano-configurations.
+
+- ![TypeScript][] Fix `TxMonitorClient`'s `nextTx` wrongly throwing an error when called with no argument. The signature of that method has also been reworked slightly to provide better usage at call-site.
+
+- ![TypeScript][] Add missing `required` constraints in the JSON schema for Byron witness representation that caused TypeScript types to be generated as optional.
+
+#### Removed
+
+N/A
+
+---
+---
+
 ### [5.5.7] - 2022-10-27
 
 #### Added
