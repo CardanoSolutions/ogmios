@@ -10,13 +10,13 @@ import { Query } from '../StateQuery'
  *
  * @category TxMonitor
  */
-export function nextTx (context: InteractionContext, args?: { fields: 'all' }) : Promise<TxAlonzo|null>
-export function nextTx (context: InteractionContext, args?: {}) : Promise<TxId|null>
-export function nextTx (context: InteractionContext, args?: { fields: 'all' }) : Promise<TxId|TxAlonzo|null> {
+export function nextTx (context: InteractionContext, args: { fields: 'all' }) : Promise<TxAlonzo|null>
+export function nextTx (context: InteractionContext) : Promise<TxId|null>
+export function nextTx (context: InteractionContext, args?: { fields: 'all' }) : Promise<TxAlonzo|TxId|null> {
   return Query<
         Ogmios['NextTx'],
         Ogmios['NextTxResponse'],
-        TxAlonzo | null
+        TxAlonzo | TxId | null
     >({
       methodName: 'NextTx',
       args: args
@@ -46,12 +46,12 @@ export const isNextTxResultAll = (result: any): result is TxAlonzo | null =>
 /**
  * @internal
  */
-export function handleNextTxResponse (response: Ogmios['NextTxResponse'], args?: { fields: 'all' }): (TxAlonzo | null)
-export function handleNextTxResponse (response: Ogmios['NextTxResponse'], args?: {}): (TxId | null)
+export function handleNextTxResponse (response: Ogmios['NextTxResponse'], args: { fields: 'all' }): (TxAlonzo | null)
+export function handleNextTxResponse (response: Ogmios['NextTxResponse']): (TxId | null)
 export function handleNextTxResponse (response: Ogmios['NextTxResponse'], args?: { fields: 'all' }): (TxId | TxAlonzo | null) {
   const { result } = response
 
-  if (args.fields === 'all') {
+  if (args?.fields === 'all') {
     if (isNextTxResultAll(result)) {
       return result
     }
