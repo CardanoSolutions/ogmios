@@ -33,12 +33,16 @@ export const safeJSON = {
     if (typeof json === 'object' && json !== null) {
       const len = Object.getOwnPropertyNames(json).length
 
-      // AssetQuantity
-      if (len === 2 && json.coins !== undefined && json.assets !== undefined) {
+      // Lovelace & AssetQuantity
+      if (json.coins !== undefined) {
         const coins = json.coins
         json.coins = typeof coins === 'number' ? BigInt(coins) : coins
 
-        return this.sanitizeAdditionalFields(json.assets)
+        if (json.assets !== undefined) {
+          return this.sanitizeAdditionalFields(json.assets)
+        }
+
+        return json
       }
 
       // Transaction
