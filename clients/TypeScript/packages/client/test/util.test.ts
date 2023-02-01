@@ -238,6 +238,19 @@ describe('util', () => {
         expect(typeof result.pools[poolId].poolParameters.cost).toEqual('bigint')
         expect(typeof result.pools[poolId].poolParameters.pledge).toEqual('bigint')
       })
+
+      it('value without assets', () => {
+        const json = `
+          {
+            "value": {
+              "coins": 42
+            }
+          }
+        `
+
+        const result = safeJSON.parse(json) as Pick<TxOut, 'value'>
+        expect(typeof result.value.coins).toEqual('bigint')
+      })
     })
   })
 })
