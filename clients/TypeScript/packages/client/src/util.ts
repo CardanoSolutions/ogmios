@@ -9,6 +9,8 @@ import {
   BlockMary,
   BlockShelley,
   EpochBoundaryBlock,
+  Metadatum,
+  MetadatumMap,
   Point,
   ProtocolParametersAlonzo,
   ProtocolParametersBabbage,
@@ -179,6 +181,56 @@ export function eventEmitterToGenerator <T> (eventEmitter: EventEmitter, eventNa
       })
     }
   }
+}
+
+/** Convert a CBOR-description as raw JSON object, or throw if given an invalid
+ * representation. This function is meant to use for converting transaction's
+ * metadata into plain JSON in context where that conversion is expected to work.
+ *
+ * It isn't generally possible to do so because not every CBOR object have a 1:1
+ * mapping to a JSON object. This function should therefore work for metadata
+ * coming from CIP-0025, and likely a few other standards but is unsound in the
+ * general case and isn't expected to work on *any* metadata that can be found on
+ * chain.
+ *
+ * @category Helper */
+export function unsafeMetadatumAsJSON (metadatum: Metadatum): any {
+  function fromMetadatum (o: Metadatum): any {
+    if (Object.keys(o).length > 1) {
+      throw new Error('Malformed metadatum object. A JSON object that describes CBOR encoded datum is expected.')
+    }
+
+    if ('int' in o) {
+      return o.int
+    } else if ('string' in o) {
+      return o.string
+    } else if ('bytes' in o) {
+      return Buffer.from(o.bytes, 'hex')
+    } else if ('list' in o) {
+      return o.list.map(fromMetadatum)
+    } else if ('map' in o) {
+      return o.map.reduce(fromMetadatumMap, {})
+    } else {
+      const type = Object.keys(o)[0]
+      const msg = `Unexpected metadatum type '${type}'.`
+      let hint = ''
+      if (Number.isInteger(Number.parseInt(type, 10))) {
+        hint = ' Hint: this function expects metadatum objects without metadatum label.'
+      }
+      throw new Error(`${msg}${hint}`)
+    }
+  }
+
+  function fromMetadatumMap (acc: { [k: string]: any }, { k, v }: MetadatumMap) {
+    const kStr = fromMetadatum(k)
+    if (typeof kStr !== 'string') {
+      throw new Error(`Invalid non-string key: ${k}.`)
+    }
+    acc[kStr] = fromMetadatum(v)
+    return acc
+  }
+
+  return fromMetadatum(metadatum)
 }
 
 /** @category Helper */
