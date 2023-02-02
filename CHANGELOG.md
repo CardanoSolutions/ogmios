@@ -6,6 +6,30 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
+### [5.6.0] - 2023-02-02
+
+#### Added
+
+- ![TypeScript][] Add a new helper function `unsafeMetatumAsJSON` which converts a detailed metadata schema into plain JavaScript, whenever possible.
+  For example:
+
+  `{ "list": [ { "string": "foo" }, { "int": 42 } ] }` → `["foo", 42]`
+
+  This should work for any [CIP-0025](https://cips.cardano.org/cips/cip25/) metadata, and a few other formats. Yet it is _unsound_ in the general case since not every on-chain metadata can actually be represented as JavaScript objects.
+
+#### Changed
+
+- ![TypeScript][] Now targets ES2020.
+
+- ![TypeScript][] Fixed a bug in the JSON parser where `coins` quantities from all eras prior to Mary would be parsed as `Number` instead of `BigInt`.
+
+#### Removed
+
+N/A
+
+---
+---
+
 ### [5.5.8] - 2023-01-25
 
 #### Added
