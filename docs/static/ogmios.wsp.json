@@ -4329,6 +4329,7 @@
   , "StakeCredential":
     { "oneOf":
       [ { "title": "Base16"
+        , "description": "A stake *key* hash in base16. If you need to represent a *script* hash, use bech32."
         , "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Credential"
         }
       , { "title": "Bech32"
