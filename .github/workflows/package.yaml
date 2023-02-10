@@ -1,11 +1,8 @@
 name: Package
 
 on:
-  pull_request:
-    branches: [ "master" ]
   push:
-    branches: [ "master" ]
-    tags: [ "*.*.*" ]
+    branches: [ "minor/v5.6.0" ]
 
 jobs:
   nix:
@@ -57,7 +54,7 @@ jobs:
         os: [ ubuntu-20.04 ]
         target: [ ogmios, cardano-node-ogmios ]
         network: [ "mainnet", "preprod", "preview" ]
-        cardano_node_version: [ "1.35.4" ]
+        cardano_node_version: [ "1.35.5" ]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -123,20 +120,20 @@ jobs:
         cache-to: type=inline
 
     - name: 🏷️ Build and push (default tag)
-      if: ${{ github.event_name == 'push' && matrix.network == 'mainnet' && startsWith(github.ref, 'refs/tags') && matrix.target == 'cardano-node-ogmios' }}
+      if: ${{ github.event_name == 'push' && matrix.network == 'mainnet' && matrix.target == 'cardano-node-ogmios' }}
       uses: docker/build-push-action@v2
       with:
         build-args: |
           NETWORK=${{ matrix.network }}
         context: .
         push: true
-        tags: ${{ steps.base-variables.outputs.image }}:${{ steps.tag-variables.outputs.tag }}_${{ matrix.cardano_node_version }}
+        tags: ${{ steps.base-variables.outputs.image }}:v5.6.0_${{ matrix.cardano_node_version }}
         target: ${{ matrix.target }}
         cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest
         cache-to: type=inline
 
-    - name: 🏷️ Build and push (default tag)
-      if: ${{ github.event_name == 'push' && matrix.network == 'mainnet' && startsWith(github.ref, 'refs/tags') && matrix.target == 'ogmios' }}
+    - name: 🏷️ Build and push (network tags)
+      if: ${{ github.event_name == 'push' && matrix.target == 'cardano-node-ogmios' }}
       uses: docker/build-push-action@v2
       with:
         build-args: |
@@ -144,36 +141,7 @@ jobs:
           CARDANO_NODE_VERSION=${{ matrix.cardano_node_version }}
         context: .
         push: true
-        tags: ${{ steps.base-variables.outputs.image }}:${{ steps.tag-variables.outputs.tag }}_${{ matrix.cardano_node_version }}
+        tags: ${{ steps.base-variables.outputs.image }}:v5.6.0_${{ matrix.cardano_node_version }}-${{ matrix.network }}
         target: ${{ matrix.target }}
-        platforms: linux/amd64
-        cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest
-        cache-to: type=inline
-
-    - name: 🏷️ Build and push (network tags)
-      if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && matrix.target == 'cardano-node-ogmios' }}
-      uses: docker/build-push-action@v2
-      with:
-        build-args: |
-          NETWORK=${{ matrix.network }}
-          CARDANO_NODE_VERSION=${{ matrix.cardano_node_version }}
-        context: .
-        push: true
-        tags: ${{ steps.base-variables.outputs.image }}:${{ steps.tag-variables.outputs.tag }}_${{ matrix.cardano_node_version }}-${{ matrix.network }}
-        target: ${{ matrix.target }}
-        cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
-        cache-to: type=inline
-
-    - name: 🏷️ Build and push (network tags)
-      if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && matrix.target == 'ogmios' }}
-      uses: docker/build-push-action@v2
-      with:
-        build-args: |
-          NETWORK=${{ matrix.network }}
-        context: .
-        push: true
-        tags: ${{ steps.base-variables.outputs.image }}:${{ steps.tag-variables.outputs.tag }}-${{ matrix.network }}
-        target: ${{ matrix.target }}
-        platforms: linux/amd64
         cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
         cache-to: type=inline
