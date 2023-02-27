@@ -132,10 +132,9 @@ encodeAuxiliaryDataHash =
 
 encodeBHeader
     :: Crypto crypto
-    => SerializationMode
-    -> TPraos.BHeader crypto
+    => TPraos.BHeader crypto
     -> Json
-encodeBHeader mode (TPraos.BHeader hBody hSig) = encodeObjectWithMode mode
+encodeBHeader (TPraos.BHeader hBody hSig) = encodeObject
     [ ( "blockHeight"
       , encodeBlockNo (TPraos.bheaderBlockNo hBody)
       )
@@ -157,8 +156,7 @@ encodeBHeader mode (TPraos.BHeader hBody hSig) = encodeObjectWithMode mode
     , ( "blockHash"
       , encodeHash (TPraos.bhash hBody)
       )
-    ]
-    [ ( "signature"
+    , ( "signature"
       , encodeSignedKES hSig
       )
     , ( "nonce"
@@ -177,16 +175,15 @@ encodeBHeader mode (TPraos.BHeader hBody hSig) = encodeObjectWithMode mode
 
 encodeBlock
     :: Crypto crypto
-    => SerializationMode
-    -> ShelleyBlock (TPraos crypto) (ShelleyEra crypto)
+    => ShelleyBlock (TPraos crypto) (ShelleyEra crypto)
     -> Json
-encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
+encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
     [ ( "body"
-      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
+      , encodeFoldable encodeTx (Sh.txSeqTxns' txs)
       )
     , ( "header"
-      , encodeBHeader mode blkHeader
+      , encodeBHeader blkHeader
       )
     , ( "headerHash"
       , encodeShelleyHash headerHash
@@ -949,10 +946,9 @@ encodeStakePoolRelay = \case
 
 encodeTx
     :: forall crypto. (Crypto crypto)
-    => SerializationMode
-    -> Sh.Tx (ShelleyEra crypto)
+    => Sh.Tx (ShelleyEra crypto)
     -> Json
-encodeTx mode x = encodeObjectWithMode mode
+encodeTx x = encodeObject
     [ ( "id"
       , encodeTxId (Ledger.txid @(ShelleyEra crypto) (Sh.body x))
       )
@@ -964,8 +960,7 @@ encodeTx mode x = encodeObjectWithMode mode
             <*> fmap (("body",) . encodeMetadata) (Sh.auxiliaryData x)
         & encodeStrictMaybe (\(a, b) -> encodeObject [a,b])
       )
-    ]
-    [ ( "witness"
+    , ( "witness"
       , encodeWitnessSet (Sh.wits x)
       )
     , ( "raw"
@@ -1087,20 +1082,6 @@ encodeUtxo
     -> Json
 encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
-  where
-    encodeIO = curry (encode2Tuple encodeTxIn encodeTxOut)
-
-encodeUtxoWithMode
-    :: forall era.
-        ( ShelleyBased era
-        , Ledger.Value era ~ Coin
-        , Ledger.TxOut era ~ Sh.TxOut era
-        )
-    => SerializationMode
-    -> Sh.UTxO era
-    -> Json
-encodeUtxoWithMode mode =
-    encodeListWithMode mode id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
   where
     encodeIO = curry (encode2Tuple encodeTxIn encodeTxOut)
 

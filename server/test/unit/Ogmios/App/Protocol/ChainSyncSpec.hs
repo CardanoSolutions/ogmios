@@ -55,7 +55,6 @@ import Ogmios.Control.MonadSTM
     )
 import Ogmios.Data.Json
     ( Json
-    , SerializationMode (..)
     , encodeBlock
     , encodePoint
     , encodeTip
@@ -206,8 +205,7 @@ withChainSyncClient
     -> m a
 withChainSyncClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
-    let mode = CompactSerialization
-    let innerCodecs = mkChainSyncCodecs (encodeBlock mode) encodePoint encodeTip
+    let innerCodecs = mkChainSyncCodecs encodeBlock encodePoint encodeTip
     let client = mkChainSyncClient maxInFlight innerCodecs recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cChainSyncCodec
     withMockChannel (chainSyncMockPeer seed codec) $ \channel -> do

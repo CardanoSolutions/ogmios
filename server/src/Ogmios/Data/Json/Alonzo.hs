@@ -164,16 +164,15 @@ encodeBinaryData =
 
 encodeBlock
     :: Crypto crypto
-    => SerializationMode
-    -> ShelleyBlock (TPraos crypto) (AlonzoEra crypto)
+    => ShelleyBlock (TPraos crypto) (AlonzoEra crypto)
     -> Json
-encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
+encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
     [ ( "body"
-      , encodeFoldable (encodeTx mode) (Al.txSeqTxns txs)
+      , encodeFoldable encodeTx (Al.txSeqTxns txs)
       )
     , ( "header"
-      , Shelley.encodeBHeader mode blkHeader
+      , Shelley.encodeBHeader blkHeader
       )
     , ( "headerHash"
       , Shelley.encodeShelleyHash headerHash
@@ -197,8 +196,8 @@ encodeCollectError = \case
 encodeCostModel
     :: Al.CostModel
     -> Json
-encodeCostModel model =
-    encodeMap id encodeInteger (Al.getCostModelParams model)
+encodeCostModel =
+    encodeMap id encodeInteger . Al.getCostModelParams
 
 encodeCostModels
     :: Al.CostModels
@@ -435,10 +434,9 @@ encodeScriptPurpose = \case
 
 encodeTx
     :: forall crypto. Crypto crypto
-    => SerializationMode
-    -> Al.ValidatedTx (AlonzoEra crypto)
+    => Al.ValidatedTx (AlonzoEra crypto)
     -> Json
-encodeTx mode x = encodeObjectWithMode mode
+encodeTx x = encodeObject
     [ ( "id"
       , Shelley.encodeTxId (Ledger.txid @(AlonzoEra crypto) (Al.body x))
       )
@@ -453,8 +451,7 @@ encodeTx mode x = encodeObjectWithMode mode
     , ( "inputSource"
       , encodeIsValid (Al.isValid x)
       )
-    ]
-    [ ( "witness"
+    , ( "witness"
       , encodeWitnessSet (Al.wits x)
       )
     , ( "raw"
@@ -547,16 +544,6 @@ encodeUtxo
     -> Json
 encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
-  where
-    encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
-
-encodeUtxoWithMode
-    :: Crypto crypto
-    => SerializationMode
-    -> Sh.UTxO (AlonzoEra crypto)
-    -> Json
-encodeUtxoWithMode mode =
-    encodeListWithMode mode id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
   where
     encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
 

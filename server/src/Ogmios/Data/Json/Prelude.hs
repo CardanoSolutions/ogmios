@@ -2,7 +2,6 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 
 module Ogmios.Data.Json.Prelude
@@ -11,7 +10,6 @@ module Ogmios.Data.Json.Prelude
     , Json
     , FromJSON
     , ToJSON
-    , SerializationMode(..)
     , ViaEncoding (..)
     , jsonToByteString
     , decodeWith
@@ -76,12 +74,9 @@ module Ogmios.Data.Json.Prelude
     , encodeFoldable
     , encodeFoldable'
     , encodeList
-    , encodeListWithMode
     , encodeMap
-    , encodeMapWithMode
     , encodeMaybe
     , encodeObject
-    , encodeObjectWithMode
     , encode2Tuple
     , encode3Tuple
     , encode4Tuple
@@ -230,20 +225,6 @@ newtype ViaEncoding = ViaEncoding { unViaEncoding :: Json }
 instance ToJSON ViaEncoding where
     toJSON = inefficientEncodingToValue . unViaEncoding
     toEncoding = unViaEncoding
-
---
--- Serialization Mode
---
-
--- | The 'SerializationMode' allows for selectively run different JSON
--- serializers. The 'CompactSerialization' mode will omit some fields deemed
--- non-necessary in a trustless setup (for example, when clients fully trust the
--- node / ogmios server they're connecting to).
-data SerializationMode
-    = FullSerialization
-    | CompactSerialization
-    deriving stock (Generic, Show)
-    deriving anyclass (ToJSON)
 
 --
 -- Basic Types
@@ -487,39 +468,10 @@ encodeList =
     Json.list
 {-# INLINABLE encodeList #-}
 
-encodeListWithMode :: SerializationMode -> (a -> Json) -> [a] -> Json
-encodeListWithMode mode =
-    case mode of
-        FullSerialization ->
-            Json.list
-        CompactSerialization -> \encodeVal xs ->
-            let n = 5
-                r = length xs - n
-             in
-            Json.list id
-                ( (encodeVal <$> take n xs)
-                  ++
-                  [ encodeText ("..." <> show r <> " more element(s)") | r > 0 ]
-                )
-{-# INLINABLE encodeListWithMode #-}
-
 encodeMap :: (k -> Text) -> (v -> Json) -> Map k v -> Json
 encodeMap encodeKey encodeValue =
     encodeObject . Map.foldrWithKey (\k v -> (:) (encodeKey k, encodeValue v)) []
 {-# INLINABLE encodeMap #-}
-
-encodeMapWithMode :: SerializationMode -> (k -> Text) -> (v -> Json) -> Map k v -> Json
-encodeMapWithMode mode encodeKey encodeValue m =
-    case mode of
-        FullSerialization ->
-            encodeMap encodeKey encodeValue m
-        CompactSerialization ->
-            let reducer k v = (:) (Json.pairs $ Json.pair (Json.fromText (encodeKey k)) (encodeValue v))
-                zero = [ encodeText ("..." <> show r <> " more element(s)") | r > 0 ]
-                r = Map.size m - n
-                n = 5
-             in (Json.list id . Map.foldrWithKey reducer zero . Map.take n) m
-{-# INLINABLE encodeMapWithMode #-}
 
 encodeMaybe :: (a -> Json) -> Maybe a -> Json
 encodeMaybe =
@@ -530,22 +482,6 @@ encodeObject :: [(Text, Json)] -> Json
 encodeObject =
     Json.pairs . foldr (\(Json.fromText -> k, v) -> (<>) (Json.pair k v)) mempty
 {-# INLINABLE encodeObject #-}
-
-encodeObjectWithMode
-    :: SerializationMode
-    -> [(Text, Json)]
-        -- ^ Common fields
-    -> [(Text, Json)]
-        -- ^ Field when mode = full
-    -> Json
-encodeObjectWithMode mode common whenFull =
-    let
-        rest = case mode of
-            CompactSerialization -> []
-            FullSerialization -> whenFull
-    in
-        encodeObject (rest ++ common)
-{-# INLINABLE encodeObjectWithMode #-}
 
 encode2Tuple
     :: (a -> Json)

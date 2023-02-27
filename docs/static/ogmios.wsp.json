@@ -1938,7 +1938,6 @@
             { "type": "object"
             , "additionalProperties": false
             , "required": [ "blockHeight", "genesisKey", "prevHash", "proof", "protocolMagicId", "protocolVersion", "signature", "slot", "softwareVersion" ]
-            , "$omitted-if-compact": ["proof", "signature"]
             , "properties":
               { "blockHeight": { "$ref": "ogmios.wsp.json#/definitions/BlockNo" }
               , "genesisKey": { "$ref": "ogmios.wsp.json#/definitions/GenesisVerificationKey" }
@@ -1955,7 +1954,6 @@
             { "type": "object"
             , "additionalProperties": false
             , "required": [ "txPayload", "dlgPayload", "updatePayload" ]
-            , "$omitted-if-compact": ["dlgPayload"]
             , "properties":
               { "txPayload":
                 { "type": "array"
@@ -1969,7 +1967,6 @@
                 { "type": "object"
                 , "additionalProperties": false
                 , "required": [ "proposal", "votes" ]
-                , "$omitted-if-compact": ["votes"]
                 , "properties":
                   { "proposal":
                     { "oneOf":
@@ -2046,7 +2043,6 @@
           [ "blockHeight","slot","prevHash","issuerVk","issuerVrf","leaderValue"
           , "blockSize", "blockHash","opCert","protocolVersion","signature"
           ]
-        , "$omitted-if-compact": ["signature", "nonce", "leaderValue", "opCert", "protocolVersion"]
         , "properties":
           { "blockHeight": { "$ref": "ogmios.wsp.json#/definitions/BlockNo" }
           , "slot": { "$ref": "ogmios.wsp.json#/definitions/Slot" }
@@ -2124,7 +2120,6 @@
           [ "blockHeight","slot","prevHash","issuerVk","issuerVrf","vrfInput"
           , "blockSize", "blockHash","opCert","protocolVersion","signature"
           ]
-        , "$omitted-if-compact": ["signature", "vrfInput", "opCert", "protocolVersion"]
         , "properties":
           { "blockHeight": { "$ref": "ogmios.wsp.json#/definitions/BlockNo" }
           , "slot": { "$ref": "ogmios.wsp.json#/definitions/Slot" }
@@ -5471,7 +5466,6 @@
     { "type": "object"
     , "additionalProperties": false
     , "required": [ "id", "body", "witness", "raw" ]
-    , "$omitted-if-compact": ["witness", "raw"]
     , "properties":
       { "id": { "$ref": "ogmios.wsp.json#/definitions/TxId" }
       , "body":
@@ -5505,7 +5499,6 @@
     { "type": "object"
     , "additionalProperties": false
     , "required": [ "id", "body", "witness", "metadata", "raw" ]
-    , "$omitted-if-compact": ["witness", "raw"]
     , "properties":
       { "id": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Block[*].body" }
       , "body":
@@ -5570,7 +5563,6 @@
     { "type": "object"
     , "additionalProperties": false
     , "required": [ "id", "body", "witness", "metadata", "raw" ]
-    , "$omitted-if-compact": ["witness", "raw"]
     , "properties":
       { "id": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Block[*].body" }
       , "body":
@@ -5635,7 +5627,6 @@
     { "type": "object"
     , "additionalProperties": false
     , "required": [ "id", "body", "witness", "metadata", "raw" ]
-    , "$omitted-if-compact": ["witness", "raw"]
     , "properties":
       { "id": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Block[*].body" }
       , "body":
@@ -5701,7 +5692,6 @@
     { "type": "object"
     , "additionalProperties": false
     , "required": [ "id", "body", "witness", "metadata", "inputSource", "raw" ]
-    , "$omitted-if-compact": ["witness", "raw"]
     , "properties":
       { "id": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Block[*].body" }
       , "inputSource":
@@ -5816,7 +5806,6 @@
 
   , "Tx[Babbage]":
     { "type": "object"
-    , "$omitted-if-compact": ["witness", "raw"]
     , "additionalProperties": false
     , "required": [ "id", "body", "witness", "metadata", "inputSource", "raw" ]
     , "properties":

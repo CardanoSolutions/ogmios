@@ -359,5 +359,5 @@ queryAny mirror =
     rawQuery = object [ "query" .= ("currentEpoch" :: String) ]
     queryInEra _ = Just $ SomeStandardQuery
         (Ledger.BlockQuery $ QueryIfCurrentAlonzo GetEpochNo)
-        (const (either encodeMismatchEraInfo encodeEpochNo))
+        (either encodeMismatchEraInfo encodeEpochNo)
         (const Proxy)

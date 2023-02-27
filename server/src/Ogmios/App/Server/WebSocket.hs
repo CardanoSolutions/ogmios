@@ -104,14 +104,11 @@ import Ogmios.Control.MonadWebSocket
     , ConnectionException (..)
     , MonadWebSocket (..)
     , PendingConnection
-    , SubProtocol
     , WebSocketApp
     , headers
-    , subProtocols
     )
 import Ogmios.Data.Json
     ( Json
-    , SerializationMode (..)
     , ToJSON
     , encodeAcquireFailure
     , encodeBlock
@@ -202,12 +199,11 @@ newWebSocketApp tr unliftIO = do
             , getAlonzoGenesis = readAlonzoGenesis nodeConfig
             }
     return $ \pending -> unliftIO $ do
-        let (mode, sub) = choseSerializationMode pending
-        logWith tr $ WebSocketConnectionAccepted (userAgent pending) mode
-        recordSession sensors $ onExceptions $ acceptRequest pending sub $ \conn -> do
+        logWith tr $ WebSocketConnectionAccepted (userAgent pending)
+        recordSession sensors $ onExceptions $ acceptRequest pending $ \conn -> do
             let trClient = contramap WebSocketClient tr
             withExecutionUnitsEvaluator $ \exUnitsEvaluator exUnitsClients -> do
-                withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator getGenesisConfig conn $ \protocolsClients -> do
+                withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig conn $ \protocolsClients -> do
                     let clientA = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch protocolsClients
                     let clientB = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch exUnitsClients
                     let vData  = NodeToClientVersionData networkMagic
@@ -258,22 +254,6 @@ newWebSocketApp tr unliftIO = do
         e ->
             throwIO e
 
--- | Chose a serialization mode based on the sub-protocols given by the client
--- websocket. If the client specifies "compact" as a sub-protocol, then Ogmios
--- will not return proofs, signatures and other voluminous data from the
--- chain-sync protocol.
-choseSerializationMode
-    :: PendingConnection
-    -> (SerializationMode, Maybe SubProtocol)
-choseSerializationMode conn =
-    case subProtocols conn of
-        sub:_ | sub == compact -> (CompactSerialization, Just compact)
-        sub:_ | sub == full -> (FullSerialization, Nothing)
-        _ -> (FullSerialization, Nothing)
-  where
-    full = "ogmios.v1"
-    compact = full<>":compact"
-
 withExecutionUnitsEvaluator
     :: forall m a.
         ( MonadClock m
@@ -304,7 +284,6 @@ withOuroborosClients
         , MonadWebSocket m
         )
     => Logger TraceWebSocket
-    -> SerializationMode
     -> MaxInFlight
     -> Sensors m
     -> ExecutionUnitsEvaluator m Block
@@ -312,7 +291,7 @@ withOuroborosClients
     -> Connection
     -> (Clients m Block -> m a)
     -> m a
-withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator getGenesisConfig conn action = do
+withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig conn action = do
     (chainSyncQ, stateQueryQ, txSubmissionQ, txMonitorQ) <-
         atomically $ (,,,)
             <$> newTQueue
@@ -396,13 +375,13 @@ withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator getGenesisConf
                 routeMessage matched chainSyncQ stateQueryQ txSubmissionQ txMonitorQ
 
     chainSyncCodecs@ChainSyncCodecs{..} =
-        mkChainSyncCodecs (encodeBlock mode) encodePoint encodeTip
+        mkChainSyncCodecs encodeBlock encodePoint encodeTip
     stateQueryCodecs@StateQueryCodecs{..} =
         mkStateQueryCodecs encodePoint encodeAcquireFailure
     txMonitorCodecs@TxMonitorCodecs{..} =
         mkTxMonitorCodecs
             encodeTxId
-            (encodeTx mode)
+            encodeTx
     txSubmissionCodecs@TxSubmissionCodecs{..} =
         mkTxSubmissionCodecs
             encodeTxId
@@ -431,7 +410,7 @@ data TraceWebSocket where
         -> TraceWebSocket
 
     WebSocketConnectionAccepted
-        :: { userAgent :: Text, mode :: SerializationMode }
+        :: { userAgent :: Text }
         -> TraceWebSocket
 
     WebSocketConnectionEnded

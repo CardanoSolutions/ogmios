@@ -62,7 +62,6 @@ import Ogmios.Control.MonadSTM
     )
 import Ogmios.Data.Json
     ( Json
-    , SerializationMode (..)
     , encodeTx
     , encodeTxId
     )
@@ -208,7 +207,7 @@ withTxMonitorClient
     -> m a
 withTxMonitorClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
-    let innerCodecs = mkTxMonitorCodecs encodeTxId (encodeTx FullSerialization)
+    let innerCodecs = mkTxMonitorCodecs encodeTxId encodeTx
     let client = mkTxMonitorClient innerCodecs recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cTxMonitorCodec
     withMockChannel (txMonitorMockPeer seed codec) $ \channel -> do

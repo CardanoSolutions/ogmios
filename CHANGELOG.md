@@ -23,7 +23,7 @@ pre: "<b>5. </b>"
 
 #### Removed
 
-- N/A
+- **⚠️ BREAKING-CHANGE ⚠️** Compact mode is no more. Responses are more compact by default already and it is no longer possible to ask for a compact mode.
 
 ---
 ---

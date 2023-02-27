@@ -53,19 +53,18 @@ encodeAddress =
     encodeText . decodeUtf8 . By.addrToBase58
 
 encodeABlockOrBoundary
-    :: SerializationMode
-    -> By.ABlockOrBoundary ByteString
+    :: By.ABlockOrBoundary ByteString
     -> Json
-encodeABlockOrBoundary mode = \case
+encodeABlockOrBoundary = \case
     By.ABOBBlock x -> encodeObject
         [ ( "body"
-          , encodeABody mode (By.blockBody x)
+          , encodeABody (By.blockBody x)
           )
         , ( "hash"
           , encodeHash (By.blockHashAnnotated x)
           )
         , ( "header"
-          , encodeAHeader mode (By.blockHeader x)
+          , encodeAHeader (By.blockHeader x)
           )
         ]
 
@@ -91,18 +90,16 @@ encodeABlockSignature x = encodeObject
     ]
 
 encodeABody
-    :: SerializationMode
-    -> By.ABody any
+    :: By.ABody any
     -> Json
-encodeABody mode x = encodeObjectWithMode mode
+encodeABody x = encodeObject
     [ ( "txPayload"
-      , encodeATxPayload mode (By.bodyTxPayload x)
+      , encodeATxPayload (By.bodyTxPayload x)
       )
     , ( "updatePayload"
-      , encodeAUpdPayload mode (By.bodyUpdatePayload x)
+      , encodeAUpdPayload (By.bodyUpdatePayload x)
       )
-    ]
-    [ ( "dlgPayload"
+    , ( "dlgPayload"
       , encodeADlgPayload (By.bodyDlgPayload x)
       )
     ]
@@ -141,10 +138,9 @@ encodeACertificate x = encodeObject
     ]
 
 encodeAHeader
-    :: SerializationMode
-    -> By.AHeader any
+    :: By.AHeader any
     -> Json
-encodeAHeader mode x = encodeObjectWithMode mode
+encodeAHeader x = encodeObject
     [ ( "protocolMagicId"
       , encodeAnnotated encodeProtocolMagicId (By.aHeaderProtocolMagicId x)
       )
@@ -166,8 +162,7 @@ encodeAHeader mode x = encodeObjectWithMode mode
     , ( "genesisKey"
       , encodeVerificationKey (By.headerGenesisKey x)
       )
-    ]
-    [ ( "proof"
+    , ( "proof"
       , encodeAnnotated encodeBlockProof (By.aHeaderProof x)
       )
     , ( "signature"
@@ -274,18 +269,16 @@ encodeTxOut x = encodeObject
     ]
 
 encodeATxAux
-    :: SerializationMode
-    -> By.ATxAux any
+    :: By.ATxAux any
     -> Json
-encodeATxAux mode x = encodeObjectWithMode mode
+encodeATxAux x = encodeObject
     [ ( "id"
       , encodeHash (By.serializeCborHash (By.taTx x))
       )
     , ( "body"
       , encodeAnnotated encodeTx (By.aTaTx x)
       )
-    ]
-    [ ( "witness"
+    , ( "witness"
       , encodeAnnotated encodeTxWitness (By.aTaWitness x)
       )
     , ( "raw"
@@ -298,22 +291,19 @@ encodeATxAux mode x = encodeObjectWithMode mode
     ]
 
 encodeATxPayload
-    :: SerializationMode
-    -> By.ATxPayload any
+    :: By.ATxPayload any
     -> Json
-encodeATxPayload mode =
-    encodeList (encodeATxAux mode) . By.aUnTxPayload
+encodeATxPayload =
+    encodeList encodeATxAux . By.aUnTxPayload
 
 encodeAUpdPayload
-    :: SerializationMode
-    -> By.Upd.APayload any
+    :: By.Upd.APayload any
     -> Json
-encodeAUpdPayload mode x = encodeObjectWithMode mode
+encodeAUpdPayload x = encodeObject
     [ ( "proposal"
       , encodeMaybe encodeAUpdProposal (By.Upd.payloadProposal x)
       )
-    ]
-    [ ( "votes"
+    , ( "votes"
       , encodeList encodeAVote (By.Upd.payloadVotes x)
       )
     ]

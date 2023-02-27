@@ -74,16 +74,15 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
 
 encodeBlock
     :: Crypto crypto
-    => SerializationMode
-    -> ShelleyBlock (TPraos crypto) (MaryEra crypto)
+    => ShelleyBlock (TPraos crypto) (MaryEra crypto)
     -> Json
-encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
+encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
     [ ( "body"
-      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
+      , encodeFoldable encodeTx (Sh.txSeqTxns' txs)
       )
     , ( "header"
-      , Shelley.encodeBHeader mode blkHeader
+      , Shelley.encodeBHeader blkHeader
       )
     , ( "headerHash"
       , Shelley.encodeShelleyHash headerHash
@@ -124,10 +123,9 @@ encodeProposedPPUpdates =
 
 encodeTx
     :: forall crypto. (Crypto crypto)
-    => SerializationMode
-    -> Sh.Tx (MaryEra crypto)
+    => Sh.Tx (MaryEra crypto)
     -> Json
-encodeTx mode x = encodeObjectWithMode mode
+encodeTx x = encodeObject
     [ ( "id"
       , Shelley.encodeTxId (Ledger.txid @(MaryEra crypto) (Sh.body x))
       )
@@ -139,8 +137,7 @@ encodeTx mode x = encodeObjectWithMode mode
             <*> fmap (("body",) . encodeAuxiliaryData) (Sh.auxiliaryData x)
         & encodeStrictMaybe (\(a, b) -> encodeObject [a,b])
       )
-    ]
-    [ ( "witness"
+    , ( "witness"
       , encodeWitnessSet (Sh.wits x)
       )
     , ( "raw"
@@ -201,16 +198,6 @@ encodeUtxo
     -> Json
 encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
-  where
-    encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
-
-encodeUtxoWithMode
-    :: Crypto crypto
-    => SerializationMode
-    -> Sh.UTxO (MaryEra crypto)
-    -> Json
-encodeUtxoWithMode mode =
-    encodeListWithMode mode id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
   where
     encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
 

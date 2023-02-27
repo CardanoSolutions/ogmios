@@ -60,15 +60,14 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 
 encodeBlock
     :: Crypto crypto
-    => SerializationMode
-    -> ShelleyBlock (Praos crypto) (BabbageEra crypto)
+    => ShelleyBlock (Praos crypto) (BabbageEra crypto)
     -> Json
-encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) = encodeObject
+encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) = encodeObject
     [ ( "body"
-      , encodeFoldable (encodeTx mode) (Ledger.Alonzo.txSeqTxns txs)
+      , encodeFoldable encodeTx (Ledger.Alonzo.txSeqTxns txs)
       )
     , ( "header"
-      , encodeHeader mode blkHeader
+      , encodeHeader blkHeader
       )
     , ( "headerHash"
       , Shelley.encodeShelleyHash headerHash
@@ -77,10 +76,9 @@ encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) = encode
 
 encodeHeader
     :: Crypto crypto
-    => SerializationMode
-    -> Praos.Header crypto
+    => Praos.Header crypto
     -> Json
-encodeHeader mode (Praos.Header hBody hSig) = encodeObjectWithMode mode
+encodeHeader (Praos.Header hBody hSig) = encodeObject
     [ ( "blockHeight"
       , encodeBlockNo (Praos.hbBlockNo hBody)
       )
@@ -102,8 +100,7 @@ encodeHeader mode (Praos.Header hBody hSig) = encodeObjectWithMode mode
     , ( "blockHash"
       , Shelley.encodeHash (Praos.hbBodyHash hBody)
       )
-    ]
-    [ ( "protocolVersion"
+    , ( "protocolVersion"
       , Shelley.encodeProtVer (Praos.hbProtVer hBody)
       )
     , ( "opCert"
@@ -260,10 +257,9 @@ encodePParams' encodeF x = encodeObject
 
 encodeTx
     :: forall crypto. Crypto crypto
-    => SerializationMode
-    -> Ledger.Babbage.ValidatedTx (BabbageEra crypto)
+    => Ledger.Babbage.ValidatedTx (BabbageEra crypto)
     -> Json
-encodeTx mode x = encodeObjectWithMode mode
+encodeTx x = encodeObject
    [ ( "id"
      , Shelley.encodeTxId (Ledger.txid @(BabbageEra crypto) (Ledger.Babbage.body x))
      )
@@ -278,8 +274,7 @@ encodeTx mode x = encodeObjectWithMode mode
    , ( "inputSource"
      , Alonzo.encodeIsValid (Ledger.Babbage.isValid x)
      )
-   ]
-   [ ( "witness"
+   , ( "witness"
      , Alonzo.encodeWitnessSet (Ledger.Babbage.wits x)
      )
    , ( "raw"
@@ -389,15 +384,5 @@ encodeUtxo
     -> Json
 encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Ledger.Shelley.unUTxO
-  where
-    encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
-
-encodeUtxoWithMode
-    :: Crypto crypto
-    => SerializationMode
-    -> Ledger.Shelley.UTxO (BabbageEra crypto)
-    -> Json
-encodeUtxoWithMode mode =
-    encodeListWithMode mode id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Ledger.Shelley.unUTxO
   where
     encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)

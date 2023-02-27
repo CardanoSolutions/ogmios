@@ -67,16 +67,15 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
 
 encodeBlock
     :: Crypto crypto
-    => SerializationMode
-    -> ShelleyBlock (TPraos crypto) (AllegraEra crypto)
+    => ShelleyBlock (TPraos crypto) (AllegraEra crypto)
     -> Json
-encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
+encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
     [ ( "body"
-      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
+      , encodeFoldable encodeTx (Sh.txSeqTxns' txs)
       )
     , ( "header"
-      , Shelley.encodeBHeader mode blkHeader
+      , Shelley.encodeBHeader blkHeader
       )
     , ( "headerHash"
       , Shelley.encodeShelleyHash headerHash
@@ -135,10 +134,9 @@ encodeTimelock = \case
 
 encodeTx
     :: forall crypto. (Crypto crypto)
-    => SerializationMode
-    -> Sh.Tx (AllegraEra crypto)
+    => Sh.Tx (AllegraEra crypto)
     -> Json
-encodeTx mode x = encodeObjectWithMode mode
+encodeTx x = encodeObject
     [ ( "id"
       , Shelley.encodeTxId (Ledger.txid @(AllegraEra crypto) (Sh.body x))
       )
@@ -150,8 +148,7 @@ encodeTx mode x = encodeObjectWithMode mode
             <*> fmap (("body",) . encodeAuxiliaryData) (Sh.auxiliaryData x)
         & encodeStrictMaybe (\(a, b) -> encodeObject [a,b])
       )
-    ]
-    [ ( "witness"
+    , ( "witness"
       , encodeWitnessSet (Sh.wits x)
       )
     , ( "raw"
@@ -196,14 +193,6 @@ encodeUtxo
     -> Json
 encodeUtxo =
     Shelley.encodeUtxo
-
-encodeUtxoWithMode
-    :: Crypto crypto
-    => SerializationMode
-    -> Sh.UTxO (AllegraEra crypto)
-    -> Json
-encodeUtxoWithMode =
-    Shelley.encodeUtxoWithMode
 
 encodeUtxoFailure
     :: Crypto crypto

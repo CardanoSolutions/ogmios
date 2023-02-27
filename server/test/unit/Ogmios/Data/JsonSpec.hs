@@ -43,7 +43,6 @@ import Ogmios.Data.EraTranslation
     )
 import Ogmios.Data.Json
     ( Json
-    , SerializationMode (..)
     , decodeUtxo
     , decodeWith
     , encodeAcquireFailure
@@ -441,7 +440,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Wsp.Response (RequestNextResponse Block)))
-            (_encodeRequestNextResponse (encodeBlock FullSerialization) encodePoint encodeTip)
+            (_encodeRequestNextResponse encodeBlock encodePoint encodeTip)
             (200, "ChainSync/Response/RequestNext")
             "ogmios.wsp.json#/properties/RequestNextResponse"
 
@@ -489,7 +488,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Wsp.Response (NextTxResponse Block)))
-            (_encodeNextTxResponse encodeTxId (encodeTx FullSerialization))
+            (_encodeNextTxResponse encodeTxId encodeTx)
             (10, "TxMonitor/Response/NextTx")
             "ogmios.wsp.json#/properties/NextTxResponse"
 
@@ -1024,7 +1023,7 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                         = _encodeQueryResponse encodeAcquireFailure
                         . Wsp.Response Nothing
                         . QueryResponse
-                        . encodeResult FullSerialization
+                        . encodeResult
 
                 -- NOTE: Queries are mostly identical between eras, since we run
                 -- the test for each era, we can reduce the number of expected

@@ -6,7 +6,6 @@
 
 module Ogmios.Data.Json
     ( Json
-    , SerializationMode (..)
     , ViaEncoding (..)
     , jsonToByteString
     , FromJSON
@@ -118,38 +117,37 @@ encodeAcquireFailure = \case
 
 encodeBlock
     :: Crypto crypto
-    => SerializationMode
-    -> CardanoBlock crypto
+    => CardanoBlock crypto
     -> Json
-encodeBlock mode = \case
+encodeBlock = \case
     BlockByron blk -> encodeObject
         [ ( "byron"
-          , Byron.encodeABlockOrBoundary mode (byronBlockRaw blk)
+          , Byron.encodeABlockOrBoundary (byronBlockRaw blk)
           )
         ]
     BlockShelley blk -> encodeObject
         [ ( "shelley"
-          , Shelley.encodeBlock mode blk
+          , Shelley.encodeBlock blk
           )
         ]
     BlockAllegra blk -> encodeObject
         [ ( "allegra"
-          , Allegra.encodeBlock mode blk
+          , Allegra.encodeBlock blk
           )
         ]
     BlockMary blk -> encodeObject
         [ ( "mary"
-          , Mary.encodeBlock mode blk
+          , Mary.encodeBlock blk
           )
         ]
     BlockAlonzo blk -> encodeObject
         [ ( "alonzo"
-          , Alonzo.encodeBlock mode blk
+          , Alonzo.encodeBlock blk
           )
         ]
     BlockBabbage blk -> encodeObject
         [ ( "babbage"
-          , Babbage.encodeBlock mode blk
+          , Babbage.encodeBlock blk
           )
         ]
 
@@ -212,20 +210,19 @@ encodeTx
     :: forall crypto.
         ( Crypto crypto
         )
-    => SerializationMode
-    -> GenTx (CardanoBlock crypto)
+    => GenTx (CardanoBlock crypto)
     -> Json
-encodeTx mode = \case
+encodeTx = \case
     GenTxBabbage (ShelleyTx _ x) ->
-        Babbage.encodeTx mode x
+        Babbage.encodeTx x
     GenTxAlonzo (ShelleyTx _ x) ->
-        Alonzo.encodeTx mode x
+        Alonzo.encodeTx x
     GenTxMary (ShelleyTx _ x) ->
-        Mary.encodeTx mode x
+        Mary.encodeTx x
     GenTxAllegra (ShelleyTx _ x) ->
-        Allegra.encodeTx mode x
+        Allegra.encodeTx x
     GenTxShelley (ShelleyTx _ x) ->
-        Shelley.encodeTx mode x
+        Shelley.encodeTx x
     GenTxByron _ ->
         error "encodeTx: unsupported Byron transaction."
 

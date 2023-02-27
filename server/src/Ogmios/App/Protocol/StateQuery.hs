@@ -4,6 +4,7 @@
 
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE ViewPatterns #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-fields #-}
 
@@ -70,7 +71,6 @@ import Ogmios.Control.MonadSTM
     )
 import Ogmios.Data.Json
     ( Json
-    , SerializationMode (..)
     , ViaEncoding (..)
     )
 import Ogmios.Data.Json.Query
@@ -183,30 +183,25 @@ mkStateQueryClient tr StateQueryCodecs{..} GetGenesisConfig{..} queue yield =
                     Just (era, SomeStandardQuery qry encodeResult _proxy) -> do
                         logWith tr $ StateQueryRequest { query, point = Nothing, era }
                         pure $ LSQ.SendMsgQuery qry $ LSQ.ClientStQuerying
-                            { LSQ.recvMsgResult = \result -> do
-                                logWith tr $ StateQueryResponse
-                                    { result = ViaEncoding $ encodeResult CompactSerialization result }
-                                yield $ encodeQueryResponse $ toResponse $ QueryResponse $
-                                    encodeResult FullSerialization result
+                            { LSQ.recvMsgResult = \(encodeResult -> result) -> do
+                                logWith tr $ StateQueryResponse { result = ViaEncoding result }
+                                yield $ encodeQueryResponse $ toResponse $ QueryResponse result
                                 pure $ LSQ.SendMsgRelease clientStIdle
                             }
 
                     Just (_era, SomeAdHocQuery qry encodeResult _proxy) -> do
                         case qry of
                             GetByronGenesis -> do
-                                result <- getByronGenesis
-                                yield $ encodeQueryResponse $ toResponse $ QueryResponse $
-                                    encodeResult FullSerialization result
+                                result <- encodeResult <$> getByronGenesis
+                                yield $ encodeQueryResponse $ toResponse $ QueryResponse result
                                 pure $ LSQ.SendMsgRelease clientStIdle
                             GetShelleyGenesis -> do
-                                result <- getShelleyGenesis
-                                yield $ encodeQueryResponse $ toResponse $ QueryResponse $
-                                    encodeResult FullSerialization result
+                                result <- encodeResult <$> getShelleyGenesis
+                                yield $ encodeQueryResponse $ toResponse $ QueryResponse result
                                 pure $ LSQ.SendMsgRelease clientStIdle
                             GetAlonzoGenesis -> do
-                                result <- getAlonzoGenesis
-                                yield $ encodeQueryResponse $ toResponse $ QueryResponse $
-                                    encodeResult FullSerialization result
+                                result <- encodeResult <$> getAlonzoGenesis
+                                yield $ encodeQueryResponse $ toResponse $ QueryResponse result
                                 pure $ LSQ.SendMsgRelease clientStIdle
 
             , LSQ.recvMsgFailure = \failure -> do
@@ -234,30 +229,25 @@ mkStateQueryClient tr StateQueryCodecs{..} GetGenesisConfig{..} queue yield =
                 Just (_era, SomeAdHocQuery qry encodeResult _proxy) -> do
                     case qry of
                         GetByronGenesis -> do
-                            result <- getByronGenesis
-                            yield $ encodeQueryResponse $ toResponse $ QueryResponse $
-                                encodeResult FullSerialization result
+                            result <- encodeResult <$> getByronGenesis
+                            yield $ encodeQueryResponse $ toResponse $ QueryResponse result
                             pure $ LSQ.SendMsgRelease clientStIdle
                         GetShelleyGenesis -> do
-                            result <- getShelleyGenesis
-                            yield $ encodeQueryResponse $ toResponse $ QueryResponse $
-                                encodeResult FullSerialization result
+                            result <- encodeResult <$> getShelleyGenesis
+                            yield $ encodeQueryResponse $ toResponse $ QueryResponse result
                             pure $ LSQ.SendMsgRelease clientStIdle
                         GetAlonzoGenesis -> do
-                            result <- getAlonzoGenesis
-                            yield $ encodeQueryResponse $ toResponse $ QueryResponse $
-                                encodeResult FullSerialization result
+                            result <- encodeResult <$> getAlonzoGenesis
+                            yield $ encodeQueryResponse $ toResponse $ QueryResponse result
                             pure $ LSQ.SendMsgRelease clientStIdle
 
 
                 Just (era, SomeStandardQuery qry encodeResult _proxy) -> do
                     logWith tr $ StateQueryRequest { query, point = Just pt, era }
                     pure $ LSQ.SendMsgQuery qry $ LSQ.ClientStQuerying
-                        { LSQ.recvMsgResult = \result -> do
-                            logWith tr $ StateQueryResponse
-                                {result = ViaEncoding $ encodeResult CompactSerialization result}
-                            yield $ encodeQueryResponse $ toResponse $ QueryResponse $
-                                encodeResult FullSerialization result
+                        { LSQ.recvMsgResult = \(encodeResult -> result) -> do
+                            logWith tr $ StateQueryResponse { result = ViaEncoding result }
+                            yield $ encodeQueryResponse $ toResponse $ QueryResponse result
                             clientStAcquired pt
                         }
 
