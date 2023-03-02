@@ -17,8 +17,8 @@ export const currentEpoch = (context: InteractionContext): Promise<Epoch> =>
     Ogmios['QueryResponse[currentEpoch]'],
     Epoch
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: 'currentEpoch'
     }
   }, {

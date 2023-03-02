@@ -48,15 +48,12 @@ origin
 
 ## RequestNext
 
-Clients may ask for the next block where 'next' refers directly to that implicit cursor. This translates to a message with `RequestNext` as a method name. This request does not accept any arguments.
+Clients may ask for the next block where 'next' refers directly to that implicit cursor. This translates to a message with `RequestNext` as a method name. This request does not accept any arguments (i.e. `params).
 
 ```json
 {
-    "type": "jsonwsp/request",
-    "version": "1.0",
-    "servicename": "ogmios",
-    "methodname": "RequestNext",
-    "args": {}
+    "jsonrpc": "2.0",
+    "method": "RequestNext"
 }
 ```
 
@@ -99,11 +96,8 @@ To leverage pipelining using the WebSocket, you will need send multiple requests
 
 ```js
 const requestNext = JSON.stringify({
-  "type": "jsonwsp/request",
-  "version": "1.0",
-  "servicename": "ogmios",
-  "methodname": "RequestNext",
-  "args": {}
+  "jsonrpc": "2.0",
+  "method": "RequestNext",
 });
 
 client.on('open', () => {
@@ -130,11 +124,9 @@ On the first connection with the node, clients will likely synchronize from the 
 
 ```json
 {
-    "type": "jsonwsp/request",
-    "version": "1.0",
-    "servicename": "ogmios",
-    "methodname": "FindIntersect",
-    "args": {
+    "jsonrpc": "2.0",
+    "method": "FindIntersect",
+    "params": {
         "points": [
             { "slot": 39916796, "hash": "e72579ff89dc9ed325b723a33624b596c08141c7bd573ecfff56a1f7229e4d09" },
             { "slot": 23068793, "hash": "69c44ac1dda2ec74646e4223bc804d9126f719b1c245dadc2ad65e8de1b276d7" },
@@ -200,14 +192,12 @@ Let's see a full example that is synchronizing the first 14 blocks of the **Shel
 const WebSocket = require('ws');
 const client = new WebSocket("ws://localhost:1337");
 
-function wsp(methodname, args, mirror) {
+function rpc(method, params, id) {
     client.send(JSON.stringify({
-        type: "jsonwsp/request",
-        version: "1.0",
-        servicename: "ogmios",
-        methodname,
-        args,
-        mirror
+        jsonrpc: "2.0",
+        method,
+        params,
+        id
     }));
 }
 
@@ -216,26 +206,25 @@ client.once('open', () => {
         slot: 4492799,
         hash: "f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457"
     };
-    wsp("FindIntersect", { points: [lastByronBlock] });
+    rpc("FindIntersect", { points: [lastByronBlock] }, "find-intersect");
 });
 
 client.on('message', function(msg) {
     const response = JSON.parse(msg);
 
-    switch (response.methodname) {
-        case "FindIntersect":
+    switch (response.id) {
+        case "find-intersect":
             if (!response.result.IntersectionFound) { throw "Whoops? Last Byron block disappeared?" }
-            wsp("RequestNext", {}, { n: 14 });
+            rpc("RequestNext", {}, 14);
             break;
 
-
-        case "RequestNext":
+        default:
             if (response.result.RollForward) {
                 console.log(response.result);
             }
 
-            if (response.reflection.n > 0) {
-                wsp("RequestNext", {}, { n: response.reflection.n - 1 });
+            if (response.id > 0) {
+                rpc("RequestNext", {}, response.id - 1);
             } else {
                 client.close();
             }
@@ -250,13 +239,13 @@ A few important takes from this excerpt:
 
 - After successfully finding an intersection, the node will **always** ask to roll backward to that intersection point. This is because it is possible to provide many points when looking for an intersection and the protocol makes sure that both the node and the client are in sync. This allows clients applications to be somewhat "dumb" and blindly follow instructions from the node.
 
-- In this schema, we are sending each request one-by-one, using the `mirror` field as counter. An alternative could have been:
+- In this schema, we are sending each request one-by-one, using the `id` field as counter. An alternative could have been:
 
   ```js
   case "FindIntersect":
       if (!response.result.IntersectionFound) { throw "Whoops? First Shelley block disappeared?" }
       for (let i = 14; i > 0; i += 1) {
-          wsp("RequestNext", {});
+          rpc("RequestNext");
       }
       break;
   ```

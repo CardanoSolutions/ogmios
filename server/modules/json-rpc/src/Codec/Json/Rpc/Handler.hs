@@ -2,6 +2,8 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE TypeApplications #-}
+
 {-# OPTIONS_HADDOCK prune #-}
 
 -- |
@@ -9,15 +11,19 @@
 -- License: MPL-2.0
 -- Stability: Stable
 -- Portability: Unix
-module Codec.Json.Wsp.Handler
+module Codec.Json.Rpc.Handler
     ( -- * Types
       Request (..)
     , Response (..)
     , Mirror
     , Fault (..)
     , FaultCode (..)
-    , serverFault
-    , clientFault
+    , parseError
+    , invalidRequest
+    , methodNotFound
+    , invalidParams
+    , internalError
+    , serverError
 
       -- * Routing
     , Handler (..)
@@ -43,7 +49,7 @@ import qualified Data.Aeson as Json
 -- Types
 --
 
--- | Represent a JSON-WSP request (from a client to the server)
+-- | Represent a JSON-RPC request (from a client to the server)
 --
 -- @since 1.0.0
 data Request a = Request Mirror a
@@ -52,7 +58,7 @@ data Request a = Request Mirror a
 instance Functor Request where
     fmap fn (Request mirror a) = Request mirror (fn a)
 
--- | Represent a JSON-WSP response (from the server to a client)
+-- | Represent a JSON-RPC response (from the server to a client)
 --
 -- @since 1.0.0
 data Response a = Response Mirror a
@@ -70,14 +76,22 @@ type Mirror = Maybe Json.Value
 --
 -- @since 1.0.0
 data FaultCode
-    = FaultIncompatible
-    | FaultClient
-    | FaultServer
+    = FaultParseError
+    | FaultInvalidRequest
+    | FaultMethodNotFound
+    | FaultInvalidParams
+    | FaultInternalError
+    | FaultServerError Int
     deriving (Generic, Show)
 
 instance ToJSON FaultCode where
-    toJSON = genericToJSON $ Json.defaultOptions
-        { Json.constructorTagModifier = fmap toLower . drop 5 }
+    toJSON = \case
+        FaultParseError -> toJSON (negate @Int 32700)
+        FaultInvalidRequest -> toJSON (negate @Int 32600)
+        FaultMethodNotFound -> toJSON (negate @Int 32601)
+        FaultInvalidParams -> toJSON (negate @Int 32602)
+        FaultInternalError -> toJSON (negate @Int 32603)
+        FaultServerError i -> toJSON i
 
 -- | Wrapper for a 'FaultCode'
 --
@@ -85,24 +99,48 @@ instance ToJSON FaultCode where
 data Fault = Fault
     { faultMirror :: Mirror
     , faultCode :: FaultCode
-    , faultString :: String
+    , faultMessage :: String
     } deriving (Generic, Show)
 
 instance ToJSON Fault where
     toJSON = genericToJSON Json.defaultOptions
         { Json.fieldLabelModifier = fmap toLower . drop 5 }
 
--- | Smart constructor for a client 'Fault'
+-- | Smart constructor for a 'Fault'
 --
--- @since 2.0.0
-clientFault :: Mirror -> String -> Fault
-clientFault mirror = Fault mirror FaultClient
+-- @since 1.0.0
+parseError :: Mirror -> String -> Fault
+parseError mirror = Fault mirror FaultParseError
 
--- | Smart constructor for a server 'Fault'
+-- | Smart constructor for a 'Fault'
 --
--- @since 2.0.0
-serverFault :: Mirror -> String -> Fault
-serverFault mirror = Fault mirror FaultServer
+-- @since 1.0.0
+invalidRequest :: Mirror -> String -> Fault
+invalidRequest mirror = Fault mirror FaultInvalidRequest
+
+-- | Smart constructor for a 'Fault'
+--
+-- @since 1.0.0
+methodNotFound :: Mirror -> String -> Fault
+methodNotFound mirror = Fault mirror FaultMethodNotFound
+
+-- | Smart constructor for a 'Fault'
+--
+-- @since 1.0.0
+invalidParams :: Mirror -> String -> Fault
+invalidParams mirror = Fault mirror FaultInvalidParams
+
+-- | Smart constructor for a 'Fault'
+--
+-- @since 1.0.0
+internalError :: Mirror -> String -> Fault
+internalError mirror = Fault mirror FaultInternalError
+
+-- | Smart constructor for a 'Fault'
+--
+-- @since 1.0.0
+serverError :: Mirror -> Int -> String -> Fault
+serverError mirror code = Fault mirror (FaultServerError code)
 
 -- | A data-type to capture the logic to 'handle' any request.
 --
@@ -124,7 +162,7 @@ type Matched m = (ByteString, m ())
 -- look again for a route). This is useful when the same handler gets repeatedly
 -- triggered by identical messages.
 --
--- @since 2.0.0
+-- @since 1.0.0
 match
     :: Monad m
     => ByteString

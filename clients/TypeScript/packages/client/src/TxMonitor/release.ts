@@ -8,14 +8,14 @@ import { Query } from '../StateQuery'
  *
  * @category TxMonitor
  */
-export const release = (context: InteractionContext, args?: {}) =>
+export const release = (context: InteractionContext, params?: {}) =>
   Query<
         Ogmios['ReleaseMempool'],
         Ogmios['ReleaseMempoolResponse'],
         void
     >({
-      methodName: 'ReleaseMempool',
-      args: args
+      method: 'ReleaseMempool',
+      params: params
     }, {
       handler: (response, resolve, reject) => {
         try {

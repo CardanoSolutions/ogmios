@@ -51,9 +51,6 @@ import Ogmios.Data.Json.Query
     , GenesisConfig
     , Query (..)
     )
-import Ogmios.Data.Protocol
-    ()
-
 import Ouroboros.Consensus.Shelley.Eras
     ( AlonzoEra
     , ShelleyEra
@@ -66,7 +63,7 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure
     )
 
-import qualified Codec.Json.Wsp as Wsp
+import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Types as Json
 import qualified Text.Show as T
 
@@ -77,21 +74,21 @@ import qualified Text.Show as T
 data StateQueryCodecs block = StateQueryCodecs
     { decodeAcquire
         :: ByteString
-        -> Maybe (Wsp.Request (Acquire block))
+        -> Maybe (Rpc.Request (Acquire block))
     , encodeAcquireResponse
-        :: Wsp.Response (AcquireResponse block)
+        :: Rpc.Response (AcquireResponse block)
         -> Json
     , decodeRelease
         :: ByteString
-        -> Maybe (Wsp.Request Release)
+        -> Maybe (Rpc.Request Release)
     , encodeReleaseResponse
-        :: Wsp.Response ReleaseResponse
+        :: Rpc.Response ReleaseResponse
         -> Json
     , decodeQuery
         :: ByteString
-        -> Maybe (Wsp.Request (Query Proxy block))
+        -> Maybe (Rpc.Request (Query Proxy block))
     , encodeQueryResponse
-        :: Wsp.Response (QueryResponse block)
+        :: Rpc.Response (QueryResponse block)
         -> Json
     }
 
@@ -133,16 +130,16 @@ data GetGenesisConfig (m :: Type -> Type) = GetGenesisConfig
 data StateQueryMessage block
     = MsgAcquire
         (Acquire block)
-        (Wsp.ToResponse (AcquireResponse block))
-        Wsp.ToFault
+        (Rpc.ToResponse (AcquireResponse block))
+        Rpc.ToFault
     | MsgRelease
         Release
-        (Wsp.ToResponse ReleaseResponse)
-        Wsp.ToFault
+        (Rpc.ToResponse ReleaseResponse)
+        Rpc.ToFault
     | MsgQuery
         (Query Proxy block)
-        (Wsp.ToResponse (QueryResponse block))
-        Wsp.ToFault
+        (Rpc.ToResponse (QueryResponse block))
+        Rpc.ToFault
 
 instance StandardHash block => Show (StateQueryMessage block) where
     showsPrec i = \case
@@ -164,10 +161,10 @@ data Acquire block
 _encodeAcquire
     :: forall block. ()
     => (Point block -> Json)
-    -> Wsp.Request (Acquire block)
+    -> Rpc.Request (Acquire block)
     -> Json
 _encodeAcquire encodePoint =
-    Wsp.mkRequest Wsp.defaultOptions $ encodeObject . \case
+    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
         Acquire{point} ->
             "point" .=
                 encodePoint point
@@ -175,9 +172,9 @@ _encodeAcquire encodePoint =
 _decodeAcquire
     :: FromJSON (Point block)
     => Json.Value
-    -> Json.Parser (Wsp.Request (Acquire block))
+    -> Json.Parser (Rpc.Request (Acquire block))
 _decodeAcquire =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    Rpc.genericFromJSON Rpc.defaultOptions
 
 data AcquireResponse block
     = AcquireSuccess { point :: Point block }
@@ -188,10 +185,10 @@ _encodeAcquireResponse
     :: forall block. ()
     => (Point block -> Json)
     -> (AcquireFailure -> Json)
-    -> Wsp.Response (AcquireResponse block)
+    -> Rpc.Response (AcquireResponse block)
     -> Json
 _encodeAcquireResponse encodePoint encodeAcquireFailure =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ encodeObject . \case
+    Rpc.mkResponse $ encodeObject . \case
         AcquireSuccess{point} ->
             "AcquireSuccess" .= encodeObject
                 ( "point" .=
@@ -202,8 +199,6 @@ _encodeAcquireResponse encodePoint encodeAcquireFailure =
                 ( "failure" .=
                     encodeAcquireFailure failure
                 )
-  where
-    proxy = Proxy @(Wsp.Request (Acquire block))
 
 --
 -- Release
@@ -214,32 +209,30 @@ data Release
     deriving (Generic, Show, Eq)
 
 _encodeRelease
-    :: Wsp.Request Release
+    :: Rpc.Request Release
     -> Json
 _encodeRelease =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
+    Rpc.mkRequest Rpc.defaultOptions $ \case
         Release ->
             encodeObject mempty
 
 _decodeRelease
     :: Json.Value
-    -> Json.Parser (Wsp.Request Release)
+    -> Json.Parser (Rpc.Request Release)
 _decodeRelease =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    Rpc.genericFromJSON Rpc.defaultOptions
 
 data ReleaseResponse
     = Released
     deriving (Generic, Show)
 
 _encodeReleaseResponse
-    :: Wsp.Response ReleaseResponse
+    :: Rpc.Response ReleaseResponse
     -> Json
 _encodeReleaseResponse =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
+    Rpc.mkResponse $ \case
         Released ->
             encodeText "Released"
-  where
-    proxy = Proxy @(Wsp.Request Release)
 
 --
 -- Query
@@ -251,9 +244,9 @@ newtype QueryT block = Query { query :: Query Proxy block }
 _decodeQuery
     :: FromJSON (Query Proxy block)
     => Json.Value
-    -> Json.Parser (Wsp.Request (Query Proxy block))
+    -> Json.Parser (Rpc.Request (Query Proxy block))
 _decodeQuery =
-    fmap (fmap query) . Wsp.genericFromJSON Wsp.defaultOptions
+    fmap (fmap query) . Rpc.genericFromJSON Rpc.defaultOptions
 
 data QueryResponse block
     = QueryResponse { unQueryResponse :: Json }
@@ -275,10 +268,10 @@ instance Show (QueryResponse block) where
 _encodeQueryResponse
     :: forall block. ()
     => (AcquireFailure -> Json)
-    -> Wsp.Response (QueryResponse block)
+    -> Rpc.Response (QueryResponse block)
     -> Json
 _encodeQueryResponse encodeAcquireFailure =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
+    Rpc.mkResponse $ \case
         QueryResponse json ->
             json
         QueryUnavailableInCurrentEra ->
@@ -289,5 +282,3 @@ _encodeQueryResponse encodeAcquireFailure =
                     encodeAcquireFailure failure
                 )
             & encodeObject
-  where
-    proxy = Proxy @(Wsp.Request (Query Proxy block))

@@ -126,11 +126,11 @@ parseOptionsPure args =
 
 parserInfo :: ParserInfo (Command Proxy)
 parserInfo = info (helper <*> parser) $ mempty
-    <> progDesc "Ogmios - A JSON-WSP WebSocket adaptor for cardano-node"
+    <> progDesc "Ogmios - A JSON-RPC adaptor for cardano-node"
     <> header (toString $ unwords
         [ "Provides a bridge between cardano-node and WebSocket clients."
         , "Ogmios translates the existing CBOR-based Ouroboros mini-protocols"
-        , "into JSON-WSP-based protocols, through WebSocket channels."
+        , "into JSON-RPC-based protocols, through WebSocket & HTTP."
         ])
     <> footerDoc (Just $ vsep
         [ string "Examples:"

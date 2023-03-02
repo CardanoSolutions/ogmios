@@ -78,7 +78,7 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     , ClientStNext (..)
     )
 
-import qualified Codec.Json.Wsp as Wsp
+import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Sequence as Seq
 
 type MaxInFlight = Int
@@ -108,7 +108,7 @@ mkChainSyncClient maxInFlight ChainSyncCodecs{..} queue yield =
     clientStIdle
         :: forall n. ()
         => Nat n
-        -> Seq (Wsp.ToResponse (RequestNextResponse block))
+        -> Seq (Rpc.ToResponse (RequestNextResponse block))
         -> m (ClientPipelinedStIdle n block (Point block) (Tip block) m ())
     clientStIdle Zero buffer = await <&> \case
         MsgRequestNext RequestNext toResponse _ ->
@@ -139,12 +139,12 @@ mkChainSyncClient maxInFlight ChainSyncCodecs{..} queue yield =
 
         Just (MsgFindIntersect _FindIntersect _toResponse toFault) -> do
             let fault = "'FindIntersect' requests cannot be interleaved with 'RequestNext'."
-            yield $ Wsp.mkFault $ toFault Wsp.FaultClient fault
+            yield $ Rpc.mkFault $ toFault Rpc.FaultInternalError fault
             clientStIdle n buffer
 
     clientStNext
         :: Nat n
-        -> Seq (Wsp.ToResponse (RequestNextResponse block))
+        -> Seq (Rpc.ToResponse (RequestNextResponse block))
         -> ClientStNext n block (Point block) (Tip block) m ()
     clientStNext _ Empty =
         error "invariant violation: empty buffer on clientStNext"
@@ -159,7 +159,7 @@ mkChainSyncClient maxInFlight ChainSyncCodecs{..} queue yield =
             }
 
     clientStIntersect
-        :: Wsp.ToResponse (FindIntersectResponse block)
+        :: Rpc.ToResponse (FindIntersectResponse block)
         -> ClientPipelinedStIntersect block (Point block) (Tip block) m ()
     clientStIntersect toResponse = ClientPipelinedStIntersect
         { recvMsgIntersectFound = \point tip -> do

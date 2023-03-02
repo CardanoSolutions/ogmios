@@ -10,20 +10,20 @@ import { Query } from '../StateQuery'
  *
  * @category TxMonitor
  */
-export function nextTx (context: InteractionContext, args: { fields: 'all' }) : Promise<TxAlonzo|null>
+export function nextTx (context: InteractionContext, params: { fields: 'all' }) : Promise<TxAlonzo|null>
 export function nextTx (context: InteractionContext) : Promise<TxId|null>
-export function nextTx (context: InteractionContext, args?: { fields: 'all' }) : Promise<TxAlonzo|TxId|null> {
+export function nextTx (context: InteractionContext, params?: { fields: 'all' }) : Promise<TxAlonzo|TxId|null> {
   return Query<
         Ogmios['NextTx'],
         Ogmios['NextTxResponse'],
         TxAlonzo | TxId | null
     >({
-      methodName: 'NextTx',
-      args: args
+      method: 'NextTx',
+      params: params
     }, {
       handler: (response, resolve, reject) => {
         try {
-          resolve(handleNextTxResponse(response, args))
+          resolve(handleNextTxResponse(response, params))
         } catch (e) {
           reject(e)
         }
@@ -46,12 +46,12 @@ export const isNextTxResultAll = (result: any): result is TxAlonzo | null =>
 /**
  * @internal
  */
-export function handleNextTxResponse (response: Ogmios['NextTxResponse'], args: { fields: 'all' }): (TxAlonzo | null)
+export function handleNextTxResponse (response: Ogmios['NextTxResponse'], params: { fields: 'all' }): (TxAlonzo | null)
 export function handleNextTxResponse (response: Ogmios['NextTxResponse']): (TxId | null)
-export function handleNextTxResponse (response: Ogmios['NextTxResponse'], args?: { fields: 'all' }): (TxId | TxAlonzo | null) {
+export function handleNextTxResponse (response: Ogmios['NextTxResponse'], params?: { fields: 'all' }): (TxId | TxAlonzo | null) {
   const { result } = response
 
-  if (args?.fields === 'all') {
+  if (params?.fields === 'all') {
     if (isNextTxResultAll(result)) {
       return result
     }

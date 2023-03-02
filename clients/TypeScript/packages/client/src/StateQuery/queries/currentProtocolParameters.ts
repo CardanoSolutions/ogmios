@@ -28,8 +28,8 @@ export const currentProtocolParameters = (context: InteractionContext): Promise<
     Ogmios['QueryResponse[currentProtocolParameters]'],
     ProtocolParametersBabbage | ProtocolParametersAlonzo | ProtocolParametersShelley
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: 'currentProtocolParameters'
     }
   }, {

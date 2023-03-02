@@ -20,8 +20,8 @@ export const ledgerTip = (context: InteractionContext): Promise<PointOrOrigin> =
     Ogmios['QueryResponse[ledgerTip]'],
     PointOrOrigin
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: 'ledgerTip'
     }
   }, {

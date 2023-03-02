@@ -3,9 +3,7 @@ import { InteractionContext } from './Connection'
 
 /** @internal */
 export const baseRequest = {
-  type: 'jsonwsp/request',
-  version: '1.0',
-  servicename: 'ogmios'
+  jsonrpc: '2.0'
 }
 
 /** @internal */

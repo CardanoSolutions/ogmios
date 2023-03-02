@@ -70,7 +70,7 @@ export const createChainSyncClient = async (
       : messageHandler
     socket.on('message', async (message: string) => {
       const response: Ogmios['RequestNextResponse'] = safeJSON.parse(message)
-      if (response.methodname === 'RequestNext') {
+      if (response.id?.method === 'requestNext') {
         try {
           await responseHandler(response)
         } catch (error) {
@@ -92,7 +92,7 @@ export const createChainSyncClient = async (
         )
         ensureSocketIsOpen(socket)
         for (let n = 0; n < (inFlight || 100); n += 1) {
-          requestNext(socket)
+          requestNext(socket, { id: { method: 'requestNext' } })
         }
         return intersection
       }

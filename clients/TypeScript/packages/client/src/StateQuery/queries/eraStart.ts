@@ -19,8 +19,8 @@ export const eraStart = (context: InteractionContext): Promise<Bound> =>
     Ogmios['QueryResponse[eraStart]'],
     Bound
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: 'eraStart'
     }
   }, {

@@ -37,8 +37,8 @@ export const delegationsAndRewards = (
     Ogmios['QueryResponse[delegationsAndRewards]'],
     DelegationsAndRewardsByAccounts
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: { delegationsAndRewards: stakeKeyHashes }
     }
   }, {

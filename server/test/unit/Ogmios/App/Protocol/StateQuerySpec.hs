@@ -126,7 +126,7 @@ import System.Random
 import Test.App.Protocol.Util
     ( FailedToDecodeMsg (..)
     , PeerTerminatedUnexpectedly (..)
-    , expectWSPResponse
+    , expectRpcResponse
     , prop_inIOSim
     , withMockChannel
     )
@@ -156,8 +156,8 @@ import Test.QuickCheck
     , listOf1
     )
 
-import qualified Codec.Json.Wsp as Wsp
-import qualified Codec.Json.Wsp.Handler as Wsp
+import qualified Codec.Json.Rpc as Rpc
+import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Ogmios.Data.Protocol.StateQuery as StateQuery
 import qualified Ouroboros.Consensus.Ledger.Query as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Type as LSQ
@@ -183,7 +183,7 @@ spec = parallel $ do
         cover 5 (isDoubleAcquire False messages) "Double acquire" $
         checkCoverage $ prop_inIOSim $ withStateQueryClient $ \send receive -> do
             forM_ messages $ \(msg, mirror, SomeProxy proxy) -> do
-                send msg >> expectWSPResponse proxy receive (toJSON mirror)
+                send msg >> expectRpcResponse proxy receive (toJSON mirror)
       where
         isDirectQuery hasAcquired = \case
             [] -> False
@@ -330,7 +330,7 @@ pattern IxAlonzo  x = S (S (S (S (Z x))))
 data SomeProxy = forall method. KnownSymbol method => SomeProxy (Proxy method)
 deriving instance Show SomeProxy
 
-genMessages :: Gen [(StateQueryMessage Block, Wsp.Mirror, SomeProxy)]
+genMessages :: Gen [(StateQueryMessage Block, Rpc.Mirror, SomeProxy)]
 genMessages = do
     mirror <- genMirror
     point  <- genPoint
@@ -344,17 +344,17 @@ genMessages = do
 -- Helpers
 --
 
-acquire :: Wsp.Mirror -> Point Block -> StateQueryMessage Block
+acquire :: Rpc.Mirror -> Point Block -> StateQueryMessage Block
 acquire mirror point =
-    MsgAcquire Acquire{point} (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgAcquire Acquire{point} (Rpc.Response mirror) (Rpc.Fault mirror)
 
-release :: Wsp.Mirror -> StateQueryMessage Block
+release :: Rpc.Mirror -> StateQueryMessage Block
 release mirror =
-    MsgRelease Release (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgRelease Release (Rpc.Response mirror) (Rpc.Fault mirror)
 
-queryAny :: Wsp.Mirror -> StateQueryMessage Block
+queryAny :: Rpc.Mirror -> StateQueryMessage Block
 queryAny mirror =
-    MsgQuery Query{rawQuery,queryInEra} (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgQuery Query{rawQuery,queryInEra} (Rpc.Response mirror) (Rpc.Fault mirror)
   where
     rawQuery = object [ "query" .= ("currentEpoch" :: String) ]
     queryInEra _ = Just $ SomeStandardQuery

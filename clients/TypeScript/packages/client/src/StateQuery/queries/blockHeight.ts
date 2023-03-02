@@ -14,8 +14,8 @@ export const blockHeight = (context: InteractionContext): Promise<BlockNoOrOrigi
     Ogmios['QueryResponse[blockHeight]'],
     BlockNoOrOrigin
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: 'blockHeight'
     }
   }, {

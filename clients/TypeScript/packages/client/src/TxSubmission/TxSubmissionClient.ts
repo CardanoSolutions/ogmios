@@ -20,7 +20,7 @@ export interface TxSubmissionClient {
 /** @Internal */
 const matchSubmitTx = (data: string) => {
   const response = safeJSON.parse(data) as Ogmios['SubmitTxResponse']
-  if ((response.type as string) !== 'jsonwsp/fault' && response.methodname !== 'SubmitTx') {
+  if (typeof (response as unknown as Ogmios['Fault']).error === 'undefined' && response.id?.method !== 'SubmitTx') {
     return null
   }
   return response
@@ -29,7 +29,7 @@ const matchSubmitTx = (data: string) => {
 /** @Internal */
 const matchEvaluateTx = (data: string) => {
   const response = safeJSON.parse(data) as Ogmios['EvaluateTxResponse']
-  if ((response.type as string) !== 'jsonwsp/fault' && response.methodname !== 'EvaluateTx') {
+  if (typeof (response as unknown as Ogmios['Fault']).error === 'undefined' && response.id?.method !== 'EvaluateTx') {
     return null
   }
   return response
@@ -58,11 +58,12 @@ export const createTxSubmissionClient = async (
       return send<EvaluationResult>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          methodname: 'EvaluateTx',
-          args: {
+          method: 'EvaluateTx',
+          params: {
             ...(additionalUtxoSet !== undefined ? { additionalUtxoSet } : {}),
             evaluate: bytes
-          }
+          },
+          id: { method: 'evaluateTx' }
         } as unknown as Ogmios['EvaluateTx']))
 
         const response = handleEvaluateTxResponse((await evaluateTxResponse.next()).value)
@@ -79,8 +80,9 @@ export const createTxSubmissionClient = async (
       return send<TxId>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          methodname: 'SubmitTx',
-          args: { submit: bytes }
+          method: 'SubmitTx',
+          params: { submit: bytes },
+          id: { method: 'submitTx' }
         } as unknown as Ogmios['SubmitTx']))
 
         const response = handleSubmitTxResponse((await submitTxResponse.next()).value)

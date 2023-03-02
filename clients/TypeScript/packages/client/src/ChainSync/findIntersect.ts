@@ -1,5 +1,5 @@
 import { Ogmios, PointOrOrigin, TipOrOrigin } from '@cardano-ogmios/schema'
-import { IntersectionNotFoundError, UnknownResultError } from '../errors'
+import { IntersectionNotFoundError } from '../errors'
 import { InteractionContext } from '../Connection'
 import { Query } from '../StateQuery/'
 
@@ -16,21 +16,17 @@ export const findIntersect = (
     Ogmios['FindIntersectResponse'],
     Intersection
   >({
-    methodName: 'FindIntersect',
-    args: {
+    method: 'FindIntersect',
+    params: {
       points
     }
   }, {
     handler: (response, resolve, reject) => {
-      if (response.methodname === 'FindIntersect') {
-        const { result } = response
-        if ('IntersectionFound' in result) {
-          return resolve(result.IntersectionFound)
-        } else if ('IntersectionNotFound' in result) {
-          return reject(new IntersectionNotFoundError(points))
-        }
-      } else {
-        return reject(new UnknownResultError(response))
+      const { result } = response
+      if ('IntersectionFound' in result) {
+        return resolve(result.IntersectionFound)
+      } else if ('IntersectionNotFound' in result) {
+        return reject(new IntersectionNotFoundError(points))
       }
     }
   }, context)

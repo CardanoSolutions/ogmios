@@ -36,15 +36,12 @@ module Ogmios.Data.Protocol.ChainSync
 
 import Ogmios.Data.Json.Prelude
 
-import Ogmios.Data.Protocol
-    ()
-
 import Ouroboros.Network.Block
     ( Point (..)
     , Tip (..)
     )
 
-import qualified Codec.Json.Wsp as Wsp
+import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Types as Json
 
 --
@@ -54,15 +51,15 @@ import qualified Data.Aeson.Types as Json
 data ChainSyncCodecs block = ChainSyncCodecs
     { decodeFindIntersect
         :: ByteString
-        -> Maybe (Wsp.Request (FindIntersect block))
+        -> Maybe (Rpc.Request (FindIntersect block))
     , encodeFindIntersectResponse
-        :: Wsp.Response (FindIntersectResponse block)
+        :: Rpc.Response (FindIntersectResponse block)
         -> Json
     , decodeRequestNext
         :: ByteString
-        -> Maybe (Wsp.Request RequestNext)
+        -> Maybe (Rpc.Request RequestNext)
     , encodeRequestNextResponse
-        :: Wsp.Response (RequestNextResponse block)
+        :: Rpc.Response (RequestNextResponse block)
         -> Json
     }
 
@@ -91,12 +88,12 @@ mkChainSyncCodecs encodeBlock encodePoint encodeTip =
 data ChainSyncMessage block
     = MsgFindIntersect
         (FindIntersect block)
-        (Wsp.ToResponse (FindIntersectResponse block))
-        Wsp.ToFault
+        (Rpc.ToResponse (FindIntersectResponse block))
+        Rpc.ToFault
     | MsgRequestNext
         RequestNext
-        (Wsp.ToResponse (RequestNextResponse block))
-        Wsp.ToFault
+        (Rpc.ToResponse (RequestNextResponse block))
+        Rpc.ToFault
 
 --
 -- FindIntersect
@@ -109,10 +106,10 @@ data FindIntersect block
 _encodeFindIntersect
     :: forall block. ()
     => (Point block -> Json)
-    -> Wsp.Request (FindIntersect block)
+    -> Rpc.Request (FindIntersect block)
     -> Json
 _encodeFindIntersect encodePoint =
-    Wsp.mkRequest Wsp.defaultOptions $ encodeObject . \case
+    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
         FindIntersect{points} ->
             "points" .=
                 encodeList encodePoint points
@@ -120,9 +117,9 @@ _encodeFindIntersect encodePoint =
 _decodeFindIntersect
     :: FromJSON (Point block)
     => Json.Value
-    -> Json.Parser (Wsp.Request (FindIntersect block))
+    -> Json.Parser (Rpc.Request (FindIntersect block))
 _decodeFindIntersect =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    Rpc.genericFromJSON Rpc.defaultOptions
 
 data FindIntersectResponse block
     = IntersectionFound { point :: Point block, tip :: Tip block }
@@ -133,10 +130,10 @@ _encodeFindIntersectResponse
     :: forall block. ()
     => (Point block -> Json)
     -> (Tip block -> Json)
-    -> Wsp.Response (FindIntersectResponse block)
+    -> Rpc.Response (FindIntersectResponse block)
     -> Json
 _encodeFindIntersectResponse encodePoint encodeTip =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ encodeObject . \case
+    Rpc.mkResponse $ encodeObject . \case
         IntersectionFound{point,tip} ->
             "IntersectionFound" .= encodeObject
                 ( "point" .= encodePoint point <>
@@ -146,8 +143,6 @@ _encodeFindIntersectResponse encodePoint encodeTip =
             "IntersectionNotFound" .= encodeObject
                 ( "tip" .= encodeTip tip
                 )
-  where
-    proxy = Proxy @(Wsp.Request (FindIntersect block))
 
 --
 -- Requestnext
@@ -158,18 +153,18 @@ data RequestNext
     deriving (Generic, Show, Eq)
 
 _encodeRequestNext
-    :: Wsp.Request RequestNext
+    :: Rpc.Request RequestNext
     -> Json
 _encodeRequestNext =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
+    Rpc.mkRequest Rpc.defaultOptions $ \case
         RequestNext ->
             encodeObject mempty
 
 _decodeRequestNext
     :: Json.Value
-    -> Json.Parser (Wsp.Request RequestNext)
+    -> Json.Parser (Rpc.Request RequestNext)
 _decodeRequestNext =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    Rpc.genericFromJSON Rpc.defaultOptions
 
 data RequestNextResponse block
     = RollForward { block :: block, tip :: Tip block }
@@ -180,10 +175,10 @@ _encodeRequestNextResponse
     :: (block -> Json)
     -> (Point block -> Json)
     -> (Tip block -> Json)
-    -> Wsp.Response (RequestNextResponse block)
+    -> Rpc.Response (RequestNextResponse block)
     -> Json
 _encodeRequestNextResponse encodeBlock encodePoint encodeTip =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ encodeObject . \case
+    Rpc.mkResponse $ encodeObject . \case
         RollForward{block,tip} ->
             "RollForward" .= encodeObject
                 ( "block" .= encodeBlock block <>
@@ -194,5 +189,3 @@ _encodeRequestNextResponse encodeBlock encodePoint encodeTip =
                 ( "point" .= encodePoint point <>
                   "tip" .= encodeTip tip
                 )
-  where
-    proxy = Proxy @(Wsp.Request RequestNext)

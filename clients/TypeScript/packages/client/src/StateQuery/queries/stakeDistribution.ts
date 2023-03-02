@@ -26,8 +26,8 @@ export const stakeDistribution = (
     Ogmios['QueryResponse[stakeDistribution]'],
     PoolDistribution
     >({
-      methodName: 'Query',
-      args: {
+      method: 'Query',
+      params: {
         query: 'stakeDistribution'
       }
     }, {

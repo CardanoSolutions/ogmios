@@ -263,7 +263,7 @@ import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
 
 import qualified Cardano.Ledger.Alonzo.Data as Ledger
-import qualified Codec.Json.Wsp.Handler as Wsp
+import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encode.Pretty as Json
 import qualified Data.Aeson.Encoding as Json
@@ -421,156 +421,156 @@ spec = do
 
     context "validate chain-sync request/response against JSON-schema" $ do
         validateFromJSON
-            (arbitrary @(Wsp.Request (FindIntersect Block)))
+            (arbitrary @(Rpc.Request (FindIntersect Block)))
             (_encodeFindIntersect encodePoint, _decodeFindIntersect)
             (10, "ChainSync/Request/FindIntersect")
-            "ogmios.wsp.json#/properties/FindIntersect"
+            "ogmios.json#/properties/FindIntersect"
 
         validateToJSON
-            (arbitrary @(Wsp.Response (FindIntersectResponse Block)))
+            (arbitrary @(Rpc.Response (FindIntersectResponse Block)))
             (_encodeFindIntersectResponse encodePoint encodeTip)
             (10, "ChainSync/Response/FindIntersect")
-            "ogmios.wsp.json#/properties/FindIntersectResponse"
+            "ogmios.json#/properties/FindIntersectResponse"
 
         validateFromJSON
-            (arbitrary @(Wsp.Request RequestNext))
+            (arbitrary @(Rpc.Request RequestNext))
             (_encodeRequestNext, _decodeRequestNext)
             (3, "ChainSync/Request/RequestNext")
-            "ogmios.wsp.json#/properties/RequestNext"
+            "ogmios.json#/properties/RequestNext"
 
         validateToJSON
-            (arbitrary @(Wsp.Response (RequestNextResponse Block)))
+            (arbitrary @(Rpc.Response (RequestNextResponse Block)))
             (_encodeRequestNextResponse encodeBlock encodePoint encodeTip)
             (200, "ChainSync/Response/RequestNext")
-            "ogmios.wsp.json#/properties/RequestNextResponse"
+            "ogmios.json#/properties/RequestNextResponse"
 
     context "validate tx-submission request/response against JSON-schema" $ do
         prop "deserialise signed transactions" prop_parseSubmitTx
 
         validateToJSON
-            (arbitrary @(Wsp.Response (SubmitTxResponse Block)))
+            (arbitrary @(Rpc.Response (SubmitTxResponse Block)))
             (_encodeSubmitTxResponse (Proxy @Block) encodeTxId encodeSubmitTxError)
             (200, "TxSubmission/Response/SubmitTx")
-            "ogmios.wsp.json#/properties/SubmitTxResponse"
+            "ogmios.json#/properties/SubmitTxResponse"
 
         validateToJSON
-            (arbitrary @(Wsp.Response (EvaluateTxResponse Block)))
+            (arbitrary @(Rpc.Response (EvaluateTxResponse Block)))
             (_encodeEvaluateTxResponse (Proxy @Block) stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError)
             (100, "TxSubmission/Response/EvaluateTx")
-            "ogmios.wsp.json#/properties/EvaluateTxResponse"
+            "ogmios.json#/properties/EvaluateTxResponse"
 
         goldenToJSON
             "SubmitTxResponse_1.json"
-            "ogmios.wsp.json#/properties/SubmitTxResponse"
+            "ogmios.json#/properties/SubmitTxResponse"
 
         goldenToJSON
             "EvaluateTxRequest_1.json"
-            "ogmios.wsp.json#/properties/EvaluateTx"
+            "ogmios.json#/properties/EvaluateTx"
 
     context "validate tx monitor request/response against JSON-schema" $ do
         validateFromJSON
-            (arbitrary @(Wsp.Request AwaitAcquire))
+            (arbitrary @(Rpc.Request AwaitAcquire))
             (_encodeAwaitAcquire, _decodeAwaitAcquire)
             (10, "TxMonitor/Request/AwaitAcquire")
-            "ogmios.wsp.json#/properties/AwaitAcquire"
+            "ogmios.json#/properties/AwaitAcquire"
 
         validateToJSON
-            (arbitrary @(Wsp.Response AwaitAcquireResponse))
+            (arbitrary @(Rpc.Response AwaitAcquireResponse))
             _encodeAwaitAcquireResponse
             (10, "TxMonitor/Response/AwaitAcquire")
-            "ogmios.wsp.json#/properties/AwaitAcquireResponse"
+            "ogmios.json#/properties/AwaitAcquireResponse"
 
         validateFromJSON
-            (arbitrary @(Wsp.Request NextTx))
+            (arbitrary @(Rpc.Request NextTx))
             (_encodeNextTx, _decodeNextTx)
             (10, "TxMonitor/Request/NextTx")
-            "ogmios.wsp.json#/properties/NextTx"
+            "ogmios.json#/properties/NextTx"
 
         validateToJSON
-            (arbitrary @(Wsp.Response (NextTxResponse Block)))
+            (arbitrary @(Rpc.Response (NextTxResponse Block)))
             (_encodeNextTxResponse encodeTxId encodeTx)
             (10, "TxMonitor/Response/NextTx")
-            "ogmios.wsp.json#/properties/NextTxResponse"
+            "ogmios.json#/properties/NextTxResponse"
 
         validateFromJSON
-            (arbitrary @(Wsp.Request (HasTx Block)))
+            (arbitrary @(Rpc.Request (HasTx Block)))
             (_encodeHasTx encodeTxId, _decodeHasTx)
             (10, "TxMonitor/Request/HasTx")
-            "ogmios.wsp.json#/properties/HasTx"
+            "ogmios.json#/properties/HasTx"
 
         validateToJSON
-            (arbitrary @(Wsp.Response HasTxResponse))
+            (arbitrary @(Rpc.Response HasTxResponse))
             _encodeHasTxResponse
             (10, "TxMonitor/Response/HasTx")
-            "ogmios.wsp.json#/properties/HasTxResponse"
+            "ogmios.json#/properties/HasTxResponse"
 
         validateFromJSON
-            (arbitrary @(Wsp.Request SizeAndCapacity))
+            (arbitrary @(Rpc.Request SizeAndCapacity))
             (_encodeSizeAndCapacity, _decodeSizeAndCapacity)
             (10, "TxMonitor/Request/SizeAndCapacity")
-            "ogmios.wsp.json#/properties/SizeAndCapacity"
+            "ogmios.json#/properties/SizeAndCapacity"
 
         validateToJSON
-            (arbitrary @(Wsp.Response SizeAndCapacityResponse))
+            (arbitrary @(Rpc.Response SizeAndCapacityResponse))
             _encodeSizeAndCapacityResponse
             (10, "TxMonitor/Response/SizeAndCapacity")
-            "ogmios.wsp.json#/properties/SizeAndCapacityResponse"
+            "ogmios.json#/properties/SizeAndCapacityResponse"
 
         validateFromJSON
-            (arbitrary @(Wsp.Request ReleaseMempool))
+            (arbitrary @(Rpc.Request ReleaseMempool))
             (_encodeReleaseMempool, _decodeReleaseMempool)
             (10, "TxMonitor/Request/ReleaseMempool")
-            "ogmios.wsp.json#/properties/ReleaseMempool"
+            "ogmios.json#/properties/ReleaseMempool"
 
         validateToJSON
-            (arbitrary @(Wsp.Response ReleaseMempoolResponse))
+            (arbitrary @(Rpc.Response ReleaseMempoolResponse))
             _encodeReleaseMempoolResponse
             (10, "TxMonitor/Response/ReleaseMempool")
-            "ogmios.wsp.json#/properties/ReleaseMempoolResponse"
+            "ogmios.json#/properties/ReleaseMempoolResponse"
 
     context "validate acquire request/response against JSON-schema" $ do
         validateFromJSON
-            (arbitrary @(Wsp.Request (Acquire Block)))
+            (arbitrary @(Rpc.Request (Acquire Block)))
             (_encodeAcquire encodePoint, _decodeAcquire)
             (10, "StateQuery/Request/Acquire")
-            "ogmios.wsp.json#/properties/Acquire"
+            "ogmios.json#/properties/Acquire"
 
         validateToJSON
-            (arbitrary @(Wsp.Response (AcquireResponse Block)))
+            (arbitrary @(Rpc.Response (AcquireResponse Block)))
             (_encodeAcquireResponse encodePoint encodeAcquireFailure)
             (10, "StateQuery/Response/Acquire")
-            "ogmios.wsp.json#/properties/AcquireResponse"
+            "ogmios.json#/properties/AcquireResponse"
 
     context "validate local state queries against JSON-schema" $ do
         validateQuery
             [aesonQQ|"eraStart"|]
             ( parseGetEraStart genBoundResult
             ) (10, "StateQuery/Response/Query[eraStart]")
-            "ogmios.wsp.json#/properties/QueryResponse[eraStart]"
+            "ogmios.json#/properties/QueryResponse[eraStart]"
 
         validateQuery
             [aesonQQ|"eraSummaries"|]
             ( parseGetInterpreter genInterpreterResult
             ) (10, "StateQuery/Response/Query[eraSummaries]")
-            "ogmios.wsp.json#/properties/QueryResponse[eraSummaries]"
+            "ogmios.json#/properties/QueryResponse[eraSummaries]"
 
         validateQuery
             [aesonQQ|"ledgerTip"|]
             ( parseGetLedgerTip genPointResultTPraos genPointResultPraos
             ) (10, "StateQuery/Response/Query[ledgerTip]")
-            "ogmios.wsp.json#/properties/QueryResponse[ledgerTip]"
+            "ogmios.json#/properties/QueryResponse[ledgerTip]"
 
         validateQuery
             [aesonQQ|"currentEpoch"|]
             ( parseGetEpochNo genEpochResult
             ) (3, "StateQuery/Response/Query[currentEpoch]")
-            "ogmios.wsp.json#/properties/QueryResponse[currentEpoch]"
+            "ogmios.json#/properties/QueryResponse[currentEpoch]"
 
         validateQuery
             [aesonQQ|{ "nonMyopicMemberRewards": [14, 42] }|]
             ( parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult
             ) (10, "StateQuery/Response/Query[nonMyopicMemberRewards]")
-            "ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
+            "ogmios.json#/properties/QueryResponse[nonMyopicMemberRewards]"
 
         validateQuery
             [aesonQQ|
@@ -584,7 +584,7 @@ spec = do
             }|]
             ( parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult
             ) (0, "StateQuery/Response/Query[nonMyopicMemberRewards]")
-            "ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
+            "ogmios.json#/properties/QueryResponse[nonMyopicMemberRewards]"
 
         validateQuery
             [aesonQQ|
@@ -598,31 +598,31 @@ spec = do
             }|]
             ( parseGetFilteredDelegationsAndRewards genDelegationAndRewardsResult
             ) (10, "StateQuery/Response/Query[delegationsAndRewards]")
-            "ogmios.wsp.json#/properties/QueryResponse[delegationsAndRewards]"
+            "ogmios.json#/properties/QueryResponse[delegationsAndRewards]"
 
         validateQuery
             [aesonQQ|"currentProtocolParameters"|]
             ( parseGetCurrentPParams genPParamsResult
             ) (100, "StateQuery/Response/Query[currentProtocolParameters]")
-            "ogmios.wsp.json#/properties/QueryResponse[currentProtocolParameters]"
+            "ogmios.json#/properties/QueryResponse[currentProtocolParameters]"
 
         validateQuery
             [aesonQQ|"proposedProtocolParameters"|]
             ( parseGetProposedPParamsUpdates genProposedPParamsResult
             ) (100, "StateQuery/Response/Query[proposedProtocolParameters]")
-            "ogmios.wsp.json#/properties/QueryResponse[proposedProtocolParameters]"
+            "ogmios.json#/properties/QueryResponse[proposedProtocolParameters]"
 
         validateQuery
             [aesonQQ|"stakeDistribution"|]
             ( parseGetStakeDistribution genPoolDistrResult
             ) (10, "StateQuery/Response/Query[stakeDistribution]")
-            "ogmios.wsp.json#/properties/QueryResponse[stakeDistribution]"
+            "ogmios.json#/properties/QueryResponse[stakeDistribution]"
 
         validateQuery
             [aesonQQ|"utxo"|]
             ( parseGetUTxO genUTxOResult
             ) (100, "StateQuery/Response/Query[utxo]")
-            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            "ogmios.json#/properties/QueryResponse[utxo]"
 
         validateQuery
             [aesonQQ|
@@ -630,7 +630,7 @@ spec = do
             }|]
             ( parseGetUTxOByAddress genUTxOResult
             ) (0, "StateQuery/Response/Query[utxo]")
-            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            "ogmios.json#/properties/QueryResponse[utxo]"
 
         validateQuery
             [aesonQQ|
@@ -642,7 +642,7 @@ spec = do
             }|]
             ( parseGetUTxOByAddress genUTxOResult
             ) (0, "StateQuery/Response/Query[utxo]")
-            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            "ogmios.json#/properties/QueryResponse[utxo]"
 
         validateQuery
             [aesonQQ|
@@ -654,37 +654,37 @@ spec = do
             }|]
             ( parseGetUTxOByTxIn genUTxOResult
             ) (0, "StateQuery/Response/Query[utxo]")
-            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            "ogmios.json#/properties/QueryResponse[utxo]"
 
         validateQuery
             [aesonQQ|{ "genesisConfig": "shelley" }|]
             ( parseGetGenesisConfig genGenesisConfig
             ) (20, "StateQuery/Response/Query[genesisConfig]")
-            "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
+            "ogmios.json#/properties/QueryResponse[genesisConfig]"
 
         validateQuery
             [aesonQQ|{ "genesisConfig": "alonzo" }|]
             ( parseGetGenesisConfig genGenesisConfig
             ) (20, "StateQuery/Response/Query[genesisConfig]")
-            "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
+            "ogmios.json#/properties/QueryResponse[genesisConfig]"
 
         validateQuery
             [aesonQQ|"rewardsProvenance"|]
             ( parseGetRewardProvenance genRewardProvenanceResult
             ) (100, "StateQuery/Response/Query[rewardsProvenance]")
-            "ogmios.wsp.json#/properties/QueryResponse[rewardsProvenance]"
+            "ogmios.json#/properties/QueryResponse[rewardsProvenance]"
 
         validateQuery
             [aesonQQ|"rewardsProvenance'"|]
             ( parseGetRewardInfoPools genRewardInfoPoolsResult
             ) (100, "StateQuery/Response/Query[rewardsProvenance']")
-            "ogmios.wsp.json#/properties/QueryResponse[rewardsProvenance']"
+            "ogmios.json#/properties/QueryResponse[rewardsProvenance']"
 
         validateQuery
             [aesonQQ|"poolIds"|]
             ( parseGetPoolIds genPoolIdsResult
             ) (10, "StateQuery/Response/Query[poolIds]")
-            "ogmios.wsp.json#/properties/QueryResponse[poolIds]"
+            "ogmios.json#/properties/QueryResponse[poolIds]"
 
         validateQuery
             [aesonQQ|
@@ -695,59 +695,59 @@ spec = do
             }|]
             ( parseGetPoolParameters genPoolParametersResult
             ) (50, "StateQuery/Response/Query[poolParameters]")
-            "ogmios.wsp.json#/properties/QueryResponse[poolParameters]"
+            "ogmios.json#/properties/QueryResponse[poolParameters]"
 
         validateQuery
             [aesonQQ|"poolsRanking"|]
             ( parseGetPoolsRanking genPoolsRankingResult
             ) (10, "StateQuery/Response/Query[poolsRanking]")
-            "ogmios.wsp.json#/properties/QueryResponse[poolsRanking]"
+            "ogmios.json#/properties/QueryResponse[poolsRanking]"
 
         validateQuery
             [aesonQQ|"chainTip"|]
             ( parseGetChainTip (const genPoint)
             ) (10, "StateQuery/Response/Query[chainTip]")
-            "ogmios.wsp.json#/properties/QueryResponse[chainTip]"
+            "ogmios.json#/properties/QueryResponse[chainTip]"
 
         validateQuery
             [aesonQQ|"systemStart"|]
             ( parseGetSystemStart (const genSystemStart)
             ) (10, "StateQuery/Response/Query[systemStart]")
-            "ogmios.wsp.json#/properties/QueryResponse[systemStart]"
+            "ogmios.json#/properties/QueryResponse[systemStart]"
 
         validateQuery
             [aesonQQ|"blockHeight"|]
             ( parseGetBlockHeight (const $ genWithOrigin genBlockNo)
             ) (10, "StateQuery/Response/Query[blockHeight]")
-            "ogmios.wsp.json#/properties/QueryResponse[blockHeight]"
+            "ogmios.json#/properties/QueryResponse[blockHeight]"
 
         goldenToJSON
             "QueryResponse-utxo_1.json"
-            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            "ogmios.json#/properties/QueryResponse[utxo]"
 
     context "validate release request/response against JSON-schema" $ do
         validateFromJSON
-            (arbitrary @(Wsp.Request Release))
+            (arbitrary @(Rpc.Request Release))
             (_encodeRelease, _decodeRelease)
             (3, "StateQuery/Request/Release")
-            "ogmios.wsp.json#/properties/Release"
+            "ogmios.json#/properties/Release"
 
         validateToJSON
-            (arbitrary @(Wsp.Response ReleaseResponse))
+            (arbitrary @(Rpc.Response ReleaseResponse))
             _encodeReleaseResponse
             (3, "StateQuery/Response/Release")
-            "ogmios.wsp.json#/properties/ReleaseResponse"
+            "ogmios.json#/properties/ReleaseResponse"
 
-instance Arbitrary a => Arbitrary (Wsp.Response a) where
+instance Arbitrary a => Arbitrary (Rpc.Response a) where
     arbitrary = oneof
-        [ Wsp.Response Nothing <$> arbitrary
-        , Wsp.Response (Just $ toJSON @String "st") <$> arbitrary
+        [ Rpc.Response Nothing <$> arbitrary
+        , Rpc.Response (Just $ toJSON @String "st") <$> arbitrary
         ]
 
-instance Arbitrary a => Arbitrary (Wsp.Request a) where
+instance Arbitrary a => Arbitrary (Rpc.Request a) where
     arbitrary = oneof
-        [ Wsp.Request Nothing <$> arbitrary
-        , Wsp.Request (Just $ toJSON @String "st") <$> arbitrary
+        [ Rpc.Request Nothing <$> arbitrary
+        , Rpc.Request (Just $ toJSON @String "st") <$> arbitrary
         ]
 
 instance Arbitrary (FindIntersect Block) where
@@ -1021,7 +1021,7 @@ validateQuery json parser (n, vectorFilepath) resultRef =
 
                 let encodeQueryResponse encodeResult
                         = _encodeQueryResponse encodeAcquireFailure
-                        . Wsp.Response Nothing
+                        . Rpc.Response Nothing
                         . QueryResponse
                         . encodeResult
 
@@ -1061,14 +1061,14 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                 let encodeQueryUnavailableInCurrentEra
                         = encodingToValue
                         . _encodeQueryResponse encodeAcquireFailure
-                        . Wsp.Response Nothing
+                        . Rpc.Response Nothing
 
                 runQuickCheck $ withMaxSuccess 1 $ forAllBlind
                     (pure QueryUnavailableInCurrentEra)
                     (prop_validateToJSON encodeQueryUnavailableInCurrentEra resultRefs)
   where
     queryRef :: SchemaRef
-    queryRef = "ogmios.wsp.json#/properties/Query/properties/args/properties/query"
+    queryRef = "ogmios.json#/properties/Query/properties/args/properties/query"
 
 generateTestVectors
     :: (Int, String)

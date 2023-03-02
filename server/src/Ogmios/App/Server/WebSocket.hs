@@ -165,7 +165,7 @@ import System.TimeManager
 
 import qualified Cardano.Ledger.Alonzo.PParams
 import qualified Cardano.Ledger.Babbage.PParams
-import qualified Codec.Json.Wsp.Handler as Wsp
+import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
 
 --
@@ -222,7 +222,7 @@ newWebSocketApp tr unliftIO = do
     onIOException conn e = do
         logWith tr $ WebSocketFailedToConnect $ show e
         let msg = "Connection with the node lost or failed."
-        close conn $ toStrict $ Json.encode $ Wsp.serverFault Nothing msg
+        close conn $ toStrict $ Json.encode $ Rpc.serverError Nothing (negate 32000) msg
 
     onExceptions :: m () -> m ()
     onExceptions
@@ -336,40 +336,40 @@ withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig co
                 again *> routeMessage cache chainSyncQ stateQueryQ txSubmissionQ txMonitorQ
 
             _ -> do
-                matched <- Wsp.match bytes
+                matched <- Rpc.match bytes
                     (count (totalUnroutedCounter sensors) *> defaultHandler bytes)
                     -- ChainSync
-                    [ Wsp.Handler decodeRequestNext
+                    [ Rpc.Handler decodeRequestNext
                         (\r t -> push chainSyncQ . MsgRequestNext r t)
-                    , Wsp.Handler decodeFindIntersect
+                    , Rpc.Handler decodeFindIntersect
                         (\r t -> push chainSyncQ . MsgFindIntersect r t)
 
                     -- TxSubmission
-                    , Wsp.Handler decodeSubmitTx
+                    , Rpc.Handler decodeSubmitTx
                         (\r t -> push txSubmissionQ .  MsgSubmitTx r t)
-                    , Wsp.Handler decodeBackwardCompatibleSubmitTx
+                    , Rpc.Handler decodeBackwardCompatibleSubmitTx
                         (\r t -> push txSubmissionQ .  MsgBackwardCompatibleSubmitTx r t)
-                    , Wsp.Handler decodeEvaluateTx
+                    , Rpc.Handler decodeEvaluateTx
                         (\r t -> push txSubmissionQ .  MsgEvaluateTx r t)
 
                     -- StateQuery
-                    , Wsp.Handler decodeAcquire
+                    , Rpc.Handler decodeAcquire
                         (\r t -> push stateQueryQ . MsgAcquire r t)
-                    , Wsp.Handler decodeRelease
+                    , Rpc.Handler decodeRelease
                         (\r t -> push stateQueryQ . MsgRelease r t)
-                    , Wsp.Handler decodeQuery
+                    , Rpc.Handler decodeQuery
                         (\r t -> push stateQueryQ . MsgQuery r t)
 
                     -- TxMonitor
-                    , Wsp.Handler decodeAwaitAcquire
+                    , Rpc.Handler decodeAwaitAcquire
                         (\r t -> push txMonitorQ . MsgAwaitAcquire r t)
-                    , Wsp.Handler decodeNextTx
+                    , Rpc.Handler decodeNextTx
                         (\r t -> push txMonitorQ . MsgNextTx r t)
-                    , Wsp.Handler decodeHasTx
+                    , Rpc.Handler decodeHasTx
                         (\r t -> push txMonitorQ . MsgHasTx r t)
-                    , Wsp.Handler decodeSizeAndCapacity
+                    , Rpc.Handler decodeSizeAndCapacity
                         (\r t -> push txMonitorQ . MsgSizeAndCapacity r t)
-                    , Wsp.Handler decodeReleaseMempool
+                    , Rpc.Handler decodeReleaseMempool
                         (\r t -> push txMonitorQ . MsgReleaseMempool r t)
                     ]
                 routeMessage matched chainSyncQ stateQueryQ txSubmissionQ txMonitorQ

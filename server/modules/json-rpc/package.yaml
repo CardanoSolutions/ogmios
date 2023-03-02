@@ -1,14 +1,14 @@
 _config: !include "../../.hpack.config.yaml"
 
-name:                json-wsp
-version:             2.0.0
+name:                json-rpc
+version:             1.0.0
 github:              "cardanosolutions/ogmios"
 license:             MPL-2.0
 author:              "KtorZ <matthias.benkort@gmail.com>"
 maintainer:          "matthias.benkort@gmail.com"
 copyright:           "2020-2021 KtorZ"
-description:         Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server/modules/json-wsp>
-synopsis:            An implementation of JSON-WSP in Haskell
+description:         Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server/modules/json-rpc>
+synopsis:            An implementation of JSON-RPC in Haskell
 category:            Web
 
 extra-source-files:
@@ -37,6 +37,6 @@ tests:
     dependencies:
     - aeson
     - hspec
-    - json-wsp
+    - json-rpc
     build-tools:
     - hspec-discover

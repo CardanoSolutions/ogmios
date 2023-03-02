@@ -95,8 +95,8 @@ import System.Random
 import Test.App.Protocol.Util
     ( FailedToDecodeMsg (..)
     , PeerTerminatedUnexpectedly (..)
-    , expectWSPFault
-    , expectWSPResponse
+    , expectRpcFault
+    , expectRpcResponse
     , prop_inIOSim
     , withMockChannel
     )
@@ -133,8 +133,8 @@ import Test.QuickCheck
     , vectorOf
     )
 
-import qualified Codec.Json.Wsp as Wsp
-import qualified Codec.Json.Wsp.Handler as Wsp
+import qualified Codec.Json.Rpc as Rpc
+import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
 import qualified Ouroboros.Network.Protocol.LocalTxMonitor.Type as TxMonitor
 
@@ -158,12 +158,12 @@ spec = parallel $ do
       where
         p msgs = prop_inIOSim $ withTxMonitorClient $ \send receive -> do
             send $ awaitAcquire Nothing
-            expectWSPResponse @"AwaitAcquire" Proxy receive Json.Null
+            expectRpcResponse @"AwaitAcquire" Proxy receive Json.Null
             forM_ msgs  $ \(msg, mirror, SomeProxy proxy) -> do
                 send msg
-                expectWSPResponse proxy receive (toJSON mirror)
+                expectRpcResponse proxy receive (toJSON mirror)
             send $ releaseMempool Nothing
-            expectWSPResponse @"ReleaseMempool" Proxy receive Json.Null
+            expectRpcResponse @"ReleaseMempool" Proxy receive Json.Null
 
         multipleNextTx nNextTx nNextTxMax = \case
             [] -> max nNextTx nNextTxMax > 5
@@ -196,7 +196,7 @@ spec = parallel $ do
       where
         p (msg, mirror, _) = prop_inIOSim $ withTxMonitorClient $ \send receive -> do
             send msg
-            expectWSPFault receive Wsp.FaultClient (toJSON mirror)
+            expectRpcFault receive Rpc.FaultInvalidRequest (toJSON mirror)
 
 type Protocol = LocalTxMonitor (GenTxId Block) (GenTx Block) SlotNo
 
@@ -372,7 +372,7 @@ genServerAction xs = frequency $ mconcat
 data SomeProxy = forall method. KnownSymbol method => SomeProxy (Proxy method)
 deriving instance Show SomeProxy
 
-genTxMonitorAcquiredMessage :: Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
+genTxMonitorAcquiredMessage :: Gen (TxMonitorMessage Block, Rpc.Mirror, SomeProxy)
 genTxMonitorAcquiredMessage = do
     mirror <- genMirror
     plausible <- elements plausibleTxsIds
@@ -387,15 +387,15 @@ genTxMonitorAcquiredMessage = do
         ]
 
 withoutReleaseMempool
-    :: Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
-    -> Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
+    :: Gen (TxMonitorMessage Block, Rpc.Mirror, SomeProxy)
+    -> Gen (TxMonitorMessage Block, Rpc.Mirror, SomeProxy)
 withoutReleaseMempool = flip suchThat $ \case
     (MsgReleaseMempool{}, _, _) -> False
     _ -> True
 
 withoutAwaitAcquire
-    :: Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
-    -> Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
+    :: Gen (TxMonitorMessage Block, Rpc.Mirror, SomeProxy)
+    -> Gen (TxMonitorMessage Block, Rpc.Mirror, SomeProxy)
 withoutAwaitAcquire = flip suchThat $ \case
     (MsgAwaitAcquire{}, _, _) -> False
     _ -> True
@@ -404,25 +404,25 @@ withoutAwaitAcquire = flip suchThat $ \case
 -- Messages
 --
 
-awaitAcquire :: Wsp.Mirror -> TxMonitorMessage Block
+awaitAcquire :: Rpc.Mirror -> TxMonitorMessage Block
 awaitAcquire mirror =
-    MsgAwaitAcquire AwaitAcquire (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgAwaitAcquire AwaitAcquire (Rpc.Response mirror) (Rpc.Fault mirror)
 
-nextTx :: Wsp.Mirror -> TxMonitorMessage Block
+nextTx :: Rpc.Mirror -> TxMonitorMessage Block
 nextTx mirror =
-    MsgNextTx (NextTx Nothing) (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgNextTx (NextTx Nothing) (Rpc.Response mirror) (Rpc.Fault mirror)
 
-hasTx :: Wsp.Mirror -> GenTxId Block -> TxMonitorMessage Block
+hasTx :: Rpc.Mirror -> GenTxId Block -> TxMonitorMessage Block
 hasTx mirror tx =
-    MsgHasTx (HasTx tx) (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgHasTx (HasTx tx) (Rpc.Response mirror) (Rpc.Fault mirror)
 
-sizeAndCapacity :: Wsp.Mirror -> TxMonitorMessage Block
+sizeAndCapacity :: Rpc.Mirror -> TxMonitorMessage Block
 sizeAndCapacity mirror =
-    MsgSizeAndCapacity SizeAndCapacity (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgSizeAndCapacity SizeAndCapacity (Rpc.Response mirror) (Rpc.Fault mirror)
 
-releaseMempool :: Wsp.Mirror -> TxMonitorMessage Block
+releaseMempool :: Rpc.Mirror -> TxMonitorMessage Block
 releaseMempool mirror =
-    MsgReleaseMempool ReleaseMempool (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgReleaseMempool ReleaseMempool (Rpc.Response mirror) (Rpc.Fault mirror)
 
 --
 -- Helpers
@@ -434,7 +434,7 @@ stateLeft fn = state (\(l, r) -> second (,r) (fn l))
 modifyRight :: Monad m => (r -> r) -> StateT (l, r) m ()
 modifyRight = modify . second
 
-showTxMonitorMessage :: (TxMonitorMessage Block, Wsp.Mirror, SomeProxy) -> String
+showTxMonitorMessage :: (TxMonitorMessage Block, Rpc.Mirror, SomeProxy) -> String
 showTxMonitorMessage (_, _, SomeProxy proxy) = symbolVal proxy
 
 confidence :: Double -> Double -> Confidence

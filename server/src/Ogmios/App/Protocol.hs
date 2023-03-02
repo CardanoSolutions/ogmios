@@ -24,9 +24,6 @@ import Ogmios.Data.Json
     ( FromJSON
     , Json
     )
-import Ogmios.Data.Protocol
-    ( MethodName
-    )
 import Ogmios.Data.Protocol.ChainSync
     ( FindIntersect
     , RequestNext
@@ -64,8 +61,8 @@ import Ouroboros.Network.Block
     ( Point (..)
     )
 
-import qualified Codec.Json.Wsp as Wsp
-import qualified Codec.Json.Wsp.Handler as Wsp
+import qualified Codec.Json.Rpc as Rpc
+import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.KeyMap as Json
 import qualified Data.Aeson.Types as Json
@@ -107,7 +104,7 @@ onUnmatchedMessage
     => ByteString
     -> Json
 onUnmatchedMessage blob = do
-    Wsp.mkFault $ Wsp.clientFault reflection $ T.unpack fault
+    Rpc.mkFault $ Rpc.invalidRequest reflection $ T.unpack fault
   where
     (fault, reflection) =
         ( "Invalid request: " <> modifyAesonFailure details <> "."
@@ -117,7 +114,7 @@ onUnmatchedMessage blob = do
         (details, reflection') = case Json.decode' (fromStrict blob) of
             Just (Json.Object obj) ->
                 ( either toText absurd $ Json.parseEither userFriendlyParser obj
-                , Json.lookup "mirror" obj
+                , Json.lookup "id" obj
                 )
             _ ->
                 ( "must be a well-formed JSON object."
@@ -141,42 +138,42 @@ onUnmatchedMessage blob = do
     userFriendlyParser :: Json.Object -> Json.Parser Void
     userFriendlyParser obj = do
         methodName <-
-            case Json.lookup "methodname" obj of
+            case Json.lookup "method" obj of
                 Just (Json.String t) -> pure (toString t)
-                _ -> fail "field 'methodname' must be present and be a string."
+                _ -> fail "field 'method' must be present and be a string."
         match methodName (Json.Object obj)
 
-    match :: MethodName -> Json.Value -> Json.Parser Void
+    match :: String -> Json.Value -> Json.Parser Void
     match methodName json = do
         -- Chain-Sync
-        if | methodName == Wsp.gWSPMethodName (Proxy @(Rep (FindIntersect block) _)) ->
+        if | methodName == Rpc.gRpcMethodName (Proxy @(Rep (FindIntersect block) _)) ->
                 void $ _decodeFindIntersect @block json
-           | methodName == Wsp.gWSPMethodName (Proxy @(Rep RequestNext _)) ->
+           | methodName == Rpc.gRpcMethodName (Proxy @(Rep RequestNext _)) ->
                 void $ _decodeRequestNext json
         -- State-Query
-           | methodName == Wsp.gWSPMethodName (Proxy @(Rep (Acquire block) _)) ->
+           | methodName == Rpc.gRpcMethodName (Proxy @(Rep (Acquire block) _)) ->
                 void $ _decodeAcquire @block json
-           | methodName == Wsp.gWSPMethodName (Proxy @(Rep Release _)) ->
+           | methodName == Rpc.gRpcMethodName (Proxy @(Rep Release _)) ->
                 void $ _decodeRelease json
-           | methodName == Wsp.gWSPMethodName (Proxy @(Rep (Query Proxy block) _)) ->
+           | methodName == Rpc.gRpcMethodName (Proxy @(Rep (Query Proxy block) _)) ->
                 void $ _decodeQuery @block json
         -- Tx-Submission
-           | methodName == Wsp.gWSPMethodName (Proxy @(Rep (SubmitTx block) _)) ->
+           | methodName == Rpc.gRpcMethodName (Proxy @(Rep (SubmitTx block) _)) ->
                 void $ _decodeSubmitTx @block json
-           | methodName == Wsp.gWSPMethodName (Proxy @(Rep (EvaluateTx block) _)) ->
+           | methodName == Rpc.gRpcMethodName (Proxy @(Rep (EvaluateTx block) _)) ->
                 void $ _decodeEvaluateTx @block json
         -- Tx-Monitor
-           | methodName == Wsp.gWSPMethodName (Proxy @(Rep AwaitAcquire _)) ->
+           | methodName == Rpc.gRpcMethodName (Proxy @(Rep AwaitAcquire _)) ->
                 void $ _decodeAwaitAcquire json
-           | methodName == Wsp.gWSPMethodName (Proxy @(Rep NextTx _)) ->
+           | methodName == Rpc.gRpcMethodName (Proxy @(Rep NextTx _)) ->
                 void $ _decodeNextTx json
-           | methodName == Wsp.gWSPMethodName (Proxy @(Rep (HasTx block) _)) ->
+           | methodName == Rpc.gRpcMethodName (Proxy @(Rep (HasTx block) _)) ->
                 void $ _decodeHasTx @block json
-           | methodName == Wsp.gWSPMethodName (Proxy @(Rep SizeAndCapacity _)) ->
+           | methodName == Rpc.gRpcMethodName (Proxy @(Rep SizeAndCapacity _)) ->
                 void $ _decodeSizeAndCapacity json
-           | methodName == Wsp.gWSPMethodName (Proxy @(Rep ReleaseMempool _)) ->
+           | methodName == Rpc.gRpcMethodName (Proxy @(Rep ReleaseMempool _)) ->
                 void $ _decodeReleaseMempool json
         -- Fallback
            | otherwise ->
                 pure ()
-        fail "unknown method in 'methodname' (beware names are case-sensitive)."
+        fail "unknown method in 'method' (beware names are case-sensitive)."

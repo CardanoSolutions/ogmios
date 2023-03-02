@@ -9,13 +9,13 @@ weight = 2
                 ┌───────────────┐
         ┌──────▶│     Idle      │⇦ START
         │       └───┬───────────┘
-        │           │       ▲ 
-        │   Acquire │       │ Failure 
+        │           │       ▲
+        │   Acquire │       │ Failure
         │           ▼       │
-        │       ┌───────────┴───┐                   
+        │       ┌───────────┴───┐
 Release │       │   Acquiring   │◀─────────────────┐
         │       └───┬───────────┘                  │
-        │           │       ▲                      │ Result 
+        │           │       ▲                      │ Result
         │  Acquired │       │ ReAcquire            │
         │           ▼       │                      │
         │       ┌───────────┴───┐         ┌────────┴───────┐
@@ -25,7 +25,7 @@ Release │       │   Acquiring   │◀────────────�
 
 ## Overview
 
-The state query protocol is likely the most versatile of the three Ouroboros mini-protocols. As a matter of fact, it allows for querying various types of information directly from the ledger. In essence, it is like a very simpler request/response pattern where the types of questions one can ask are specified by the protocols. Those questions include: information about the chain tip, information about stake pools but also the balance of a particular address. 
+The state query protocol is likely the most versatile of the three Ouroboros mini-protocols. As a matter of fact, it allows for querying various types of information directly from the ledger. In essence, it is like a very simpler request/response pattern where the types of questions one can ask are specified by the protocols. Those questions include: information about the chain tip, information about stake pools but also the balance of a particular address.
 
 In order to run a question by the ledger, one must first acquire a particular position on the chain, so that the node can reliably answer a few questions on a chosen, frozen state while continuing maintaining more recent version of the ledger on the side. It is important to note that:
 
@@ -35,26 +35,24 @@ In order to run a question by the ledger, one must first acquire a particular po
 
 ## How To Use
 
-Ogmios uses a simplified version of the above state-machine. Or more exactly, it exposes a simplified version and handles some of the complexity behind the scene for you. As clients, Ogmios will give you 3 possible requests: Acquire, Query, Release. A typical sequence would be to start by Acquiring a state on a given point and then make a few queries, and then release. The release step is optional although it is a bit more polite to say goodbye at the end of a conversation. 
+Ogmios uses a simplified version of the above state-machine. Or more exactly, it exposes a simplified version and handles some of the complexity behind the scene for you. As clients, Ogmios will give you 3 possible requests: Acquire, Query, Release. A typical sequence would be to start by Acquiring a state on a given point and then make a few queries, and then release. The release step is optional although it is a bit more polite to say goodbye at the end of a conversation.
 
-It is also possible to submit queries directly without acquiring. As a consequence, Ogmios will acquire the tip of the chain, run the query and release it for you. This is the easiest way to send 
-queries if you don't care about capturing a particular state. Note however that this may create race conditions if you send multiple queries via this method. Indeed, the tip is changing quite often on the network, and two subsequent queries may actually run on two different points of the chain. While this is generally safe for most queries, it may also put your application in an unexpected state when crossing epoch boundaries or hard-forks. 
+It is also possible to submit queries directly without acquiring. As a consequence, Ogmios will acquire the tip of the chain, run the query and release it for you. This is the easiest way to send
+queries if you don't care about capturing a particular state. Note however that this may create race conditions if you send multiple queries via this method. Indeed, the tip is changing quite often on the network, and two subsequent queries may actually run on two different points of the chain. While this is generally safe for most queries, it may also put your application in an unexpected state when crossing epoch boundaries or hard-forks.
 
 ## Acquire
 
 The `Acquire` request expect one argument named `point`. The point has the same format as points in the local-chain-sync protocol. That is, they can be block header hashes or the special keyword `"origin"` (though there's very little chance that one will be able to acquire the origin!).
 
 ```json
-{ 
-    "type": "jsonwsp/request",
-    "version": "1.0",
-    "servicename": "ogmios",
-    "methodname": "Acquire",
-    "args": { "point": "9e871633f7aa356ef11cdcabb6fdd6d8f4b00bc919c57aed71a91af8f86df590" }
+{
+    "jsonrpc": "2.0",
+    "method": "Acquire",
+    "params": { "point": "9e871633f7aa356ef11cdcabb6fdd6d8f4b00bc919c57aed71a91af8f86df590" }
 }
 ```
 
-One thing that doesn't strike as obvious is that, as clients, you need points to query any information. There are many ways to get those hashes but in the context of Ogmios, the most logical way is via the [local-chain-sync](../local-chain-sync/) protocol. 
+One thing that doesn't strike as obvious is that, as clients, you need points to query any information. There are many ways to get those hashes but in the context of Ogmios, the most logical way is via the [local-chain-sync](../local-chain-sync/) protocol.
 
 {{% notice tip %}}
 You can acquire multiple times, the last one will prevail. If you need to re-acquire, simply send another `Acquire` request.
@@ -65,16 +63,14 @@ You can acquire multiple times, the last one will prevail. If you need to re-acq
 There are many queries that can be sent to the ledger, and the list is growing days after days as the Cardano team implements new ones. With Ogmios, all queries follow the same pattern and use the method name `Query`. All of them also take one argument named `query` which specifies the query to run and, optionally some extra argument given to the query. For example:
 
 ```
-{ 
-    "type": "jsonwsp/request",
-    "version": "1.0",
-    "servicename": "ogmios",
-    "methodname": "Query",
-    "args": { "query": "ledgerTip" }
+{
+    "jsonrpc": "2.0",
+    "method": "Query",
+    "params": { "query": "ledgerTip" }
 }
 ```
 
-At the moment of writing this guide, the following queries are available: 
+At the moment of writing this guide, the following queries are available:
 
 Query                        | Result
 ---                          | ---
@@ -116,18 +112,17 @@ In this example, we'll consider a simple direct query on the network tip to fetc
 const WebSocket = require('ws');
 const client = new WebSocket("ws://localhost:1337");
 
-function wsp(methodname, args) {
+function rpc(method, params, id) {
     client.send(JSON.stringify({
-        type: "jsonwsp/request",
-        version: "1.0",
-        servicename: "ogmios",
-        methodname,
-        args
+        jsonrpc: "2.0",
+        method,
+        params,
+        id
     }));
 }
 
 client.once('open', () => {
-    wsp("Query", { query: "currentProtocolParameters" } );
+    rpc("Query", { query: "currentProtocolParameters" } );
 });
 
 client.on('message', function(msg) {
@@ -166,40 +161,39 @@ This little excerpt outputs the most recent protocol parameters in a nice JSON:
 
 ## Full Example
 
-Let's see a full example getting the stake distribution of all stake pools of the Cardano mainnet. In the example, we'll also use the `FindIntersect` method from the [local-chain-sync](../local-chain-sync) protocol to get an easy point to acquire.  
+Let's see a full example getting the stake distribution of all stake pools of the Cardano mainnet. In the example, we'll also use the `FindIntersect` method from the [local-chain-sync](../local-chain-sync) protocol to get an easy point to acquire.
 
 ```js
 const WebSocket = require('ws');
 const client = new WebSocket("ws://localhost:1337");
 
-function wsp(methodname, args) {
+function rpc(method, params, id) {
     client.send(JSON.stringify({
-        type: "jsonwsp/request",
-        version: "1.0",
-        servicename: "ogmios",
-        methodname,
-        args
+        jsonrpc: "2.0",
+        method,
+        params,
+        id
     }));
 }
 
 client.once('open', () => {
-    wsp("FindIntersect", { points: ["origin"] });
+    rpc("FindIntersect", { points: ["origin"] }, "find-intersect");
 });
 
 client.on('message', function(msg) {
     const response = JSON.parse(msg);
 
-    switch (response.methodname) {
-        case "FindIntersect":
+    switch (response.id) {
+        case "find-intersect":
             const point = response.result.IntersectionFound.tip;
-            wsp("Acquire", { point });
+            rpc("Acquire", { point }, "acquire");
             break;
 
-        case "Acquire":
-            wsp("Query", { query: "stakeDistribution" });
+        case "acquire":
+            rpc("Query", { query: "stakeDistribution" });
             break;
 
-        case "Query":
+        default:
             console.log(response.result);
             client.close();
             break;
@@ -214,10 +208,7 @@ Here's a walk-though describing what happens when running the above script:
     {{% expand "IntersectionFound" %}}
 ```json
 {
-    "version": "1.0",
-    "servicename": "ogmios",
-    "type": "jsonwsp/response",
-    "methodname": "FindIntersect",
+    "jsonrpc": "2.0",
     "result": {
         "IntersectionFound": {
             "point": "origin",
@@ -228,7 +219,7 @@ Here's a walk-though describing what happens when running the above script:
             }
         }
     },
-    "reflection": null
+    "id": "find-intersect"
 }
 ```
     {{% /expand %}}
@@ -238,10 +229,7 @@ Here's a walk-though describing what happens when running the above script:
     {{% expand "AcquireSuccess" %}}
 ```json
 {
-    "version": "1.0",
-    "servicename": "ogmios",
-    "type": "jsonwsp/response",
-    "methodname": "Acquire",
+    "jsonrpc": "2.0",
     "result": {
         "AcquireSuccess": {
             "acquired": {
@@ -250,7 +238,7 @@ Here's a walk-though describing what happens when running the above script:
             }
         }
     },
-    "reflection": null
+    "id": "acquire"
 }
 ```
     {{% /expand %}}
@@ -260,10 +248,7 @@ Here's a walk-though describing what happens when running the above script:
     {{% expand "QueryResponse" %}}
 ```json
 {
-    "version": "1.0",
-    "servicename": "ogmios",
-    "type": "jsonwsp/response",
-    "methodname": "Query",
+    "jsonrpc": "1.0",
     "result": {
         "pool1w3s6gk83y2g3670emy3yfjw9myz3u4whph7peah653rmsfegyj3": {
             "stake": 0,
@@ -274,15 +259,14 @@ Here's a walk-though describing what happens when running the above script:
             "vrf": "7e363eb8bfd8fef018da4c397d6a6ec25998363434e92276e40ee6c706da3ae5"
         },
         "..."
-    },
-    "reflection": null
+    }
 }
 ```
     {{% /expand %}}
 
 
 {{% notice warning %}}
-Be aware that it is possible for an `Acquire` request to fail even if (and in particular if) made immediately after finding the ledger tip. In Ouroboros Praos frequent small rollbacks of the chain are not rare and the few last blocks of the chain can be a bit volatile. A real application may require more elaborate error handling than the toy example above. 
+Be aware that it is possible for an `Acquire` request to fail even if (and in particular if) made immediately after finding the ledger tip. In Ouroboros Praos frequent small rollbacks of the chain are not rare and the few last blocks of the chain can be a bit volatile. A real application may require more elaborate error handling than the toy example above.
 {{% /notice %}}
 
 ## Example Queries
@@ -303,7 +287,7 @@ Be aware that it is possible for an `Acquire` request to fail even if (and in pa
 }
 ```
 
-#### delegationsAndRewards   
+#### delegationsAndRewards
 
 ```json
 {

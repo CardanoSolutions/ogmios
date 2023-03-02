@@ -34,8 +34,8 @@ export const evaluateTx = (context: InteractionContext, bytes: string, additiona
     Ogmios['EvaluateTxResponse'],
     EvaluationResult
   >({
-    methodName: 'EvaluateTx',
-    args: {
+    method: 'EvaluateTx',
+    params: {
       ...(additionalUtxoSet !== undefined ? { additionalUtxoSet } : {}),
       evaluate: bytes
     }

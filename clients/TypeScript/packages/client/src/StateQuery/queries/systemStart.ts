@@ -14,8 +14,8 @@ export const systemStart = (context: InteractionContext): Promise<Date> =>
     Ogmios['QueryResponse[systemStart]'],
     Date
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: 'systemStart'
     }
   }, {

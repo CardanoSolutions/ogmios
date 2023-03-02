@@ -1,6 +1,6 @@
 {
-  "reflection": null,
-  "methodname": "Query",
+  "jsonrpc": "2.0",
+  "method": "Query",
   "result": [
     [
       {
@@ -26,8 +26,5 @@
         "address": "2RhQhCGqYPDqAydwiQvfu853oqB2r5DQbXRgAF6U8TgHTNFQDmuPdERgB9J3cvQJT2dSpPxJZjRZ1KRVBLcgEJcTg95qtoCceN7Soy5GKbrzzD"
       }
     ]
-  ],
-  "version": "1.0",
-  "servicename": "ogmios",
-  "type": "jsonwsp/response"
+  ]
 }

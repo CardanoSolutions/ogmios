@@ -28,8 +28,8 @@ export const poolsRanking = (context: InteractionContext): Promise<PoolsRanking>
     Ogmios['QueryResponse[poolsRanking]'],
     PoolsRanking
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: 'poolsRanking'
     }
   }, {

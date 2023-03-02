@@ -70,9 +70,6 @@ module Ogmios.Data.Protocol.TxSubmission
 
 import Ogmios.Data.Json.Prelude
 
-import Ogmios.Data.Protocol
-    ()
-
 import Cardano.Ledger.Alonzo
     ( AlonzoEra
     )
@@ -157,7 +154,7 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Type
 import qualified Cardano.Ledger.Core as Core
 import qualified Cardano.Ledger.Era as Era
 
-import qualified Codec.Json.Wsp as Wsp
+import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Types as Json
 import qualified Data.Map as Map
 
@@ -168,21 +165,21 @@ import qualified Data.Map as Map
 data TxSubmissionCodecs block = TxSubmissionCodecs
     { decodeBackwardCompatibleSubmitTx
         :: ByteString
-        -> Maybe (Wsp.Request (BackwardCompatibleSubmitTx block))
+        -> Maybe (Rpc.Request (BackwardCompatibleSubmitTx block))
     , encodeBackwardCompatibleSubmitTxResponse
-        :: Wsp.Response (BackwardCompatibleSubmitTxResponse block)
+        :: Rpc.Response (BackwardCompatibleSubmitTxResponse block)
         -> Json
     , decodeSubmitTx
         :: ByteString
-        -> Maybe (Wsp.Request (SubmitTx block))
+        -> Maybe (Rpc.Request (SubmitTx block))
     , encodeSubmitTxResponse
-        :: Wsp.Response (SubmitTxResponse block)
+        :: Rpc.Response (SubmitTxResponse block)
         -> Json
     , decodeEvaluateTx
         :: ByteString
-        -> Maybe (Wsp.Request (EvaluateTx block))
+        -> Maybe (Rpc.Request (EvaluateTx block))
     , encodeEvaluateTxResponse
-        :: Wsp.Response (EvaluateTxResponse block)
+        :: Rpc.Response (EvaluateTxResponse block)
         -> Json
     }
 
@@ -230,16 +227,16 @@ mkTxSubmissionCodecs encodeTxId encodeSubmitTxError stringifyRdmrPtr encodeExUni
 data TxSubmissionMessage block
     = MsgBackwardCompatibleSubmitTx
         (BackwardCompatibleSubmitTx block)
-        (Wsp.ToResponse (BackwardCompatibleSubmitTxResponse block))
-        Wsp.ToFault
+        (Rpc.ToResponse (BackwardCompatibleSubmitTxResponse block))
+        Rpc.ToFault
     | MsgSubmitTx
         (SubmitTx block)
-        (Wsp.ToResponse (SubmitTxResponse block))
-        Wsp.ToFault
+        (Rpc.ToResponse (SubmitTxResponse block))
+        Rpc.ToFault
     | MsgEvaluateTx
         (EvaluateTx block)
-        (Wsp.ToResponse (EvaluateTxResponse block))
-        Wsp.ToFault
+        (Rpc.ToResponse (EvaluateTxResponse block))
+        Rpc.ToFault
 
 --
 -- BackwardCompatibleSubmitTx
@@ -253,9 +250,9 @@ deriving instance Show (SerializedTx block) => Show (BackwardCompatibleSubmitTx 
 _decodeBackwardCompatibleSubmitTx
     :: FromJSON (SerializedTx block)
     => Json.Value
-    -> Json.Parser (Wsp.Request (BackwardCompatibleSubmitTx block))
+    -> Json.Parser (Rpc.Request (BackwardCompatibleSubmitTx block))
 _decodeBackwardCompatibleSubmitTx =
-    Wsp.genericFromJSON backwardCompatibleOptions
+    Rpc.genericFromJSON backwardCompatibleOptions
 
 type BackwardCompatibleSubmitTxResponse block =
     SubmitResult (SubmitTxError block)
@@ -264,21 +261,19 @@ _encodeBackwardCompatibleSubmitTxResponse
     :: forall block. ()
     => Proxy block
     -> (SubmitTxError block -> Json)
-    -> Wsp.Response (BackwardCompatibleSubmitTxResponse block)
+    -> Rpc.Response (BackwardCompatibleSubmitTxResponse block)
     -> Json
 _encodeBackwardCompatibleSubmitTxResponse _proxy encodeSubmitTxError =
-    Wsp.mkResponse backwardCompatibleOptions proxy $ \case
+    Rpc.mkResponse $ \case
         SubmitSuccess ->
             encodeText "SubmitSuccess"
         (SubmitFail e) ->
             encodeObject ("SubmitFail" .= encodeSubmitTxError e)
-  where
-    proxy = Proxy @(Wsp.Request (BackwardCompatibleSubmitTx block))
 
-backwardCompatibleOptions :: Wsp.Options
+backwardCompatibleOptions :: Rpc.Options
 backwardCompatibleOptions =
-    Wsp.defaultOptions
-        { Wsp.constructorTagModifier =
+    Rpc.defaultOptions
+        { Rpc.constructorTagModifier =
             drop (length ("BackwardCompatible" :: String))
         }
 
@@ -294,9 +289,9 @@ deriving instance Show (SerializedTx block) => Show (SubmitTx block)
 _decodeSubmitTx
     :: FromJSON (SerializedTx block)
     => Json.Value
-    -> Json.Parser (Wsp.Request (SubmitTx block))
+    -> Json.Parser (Rpc.Request (SubmitTx block))
 _decodeSubmitTx =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    Rpc.genericFromJSON Rpc.defaultOptions
 
 data SubmitTxResponse block
     = SubmitTxSuccess (GenTxId block)
@@ -312,10 +307,10 @@ _encodeSubmitTxResponse
     => Proxy block
     -> (GenTxId block -> Json)
     -> (SubmitTxError block -> Json)
-    -> Wsp.Response (SubmitTxResponse block)
+    -> Rpc.Response (SubmitTxResponse block)
     -> Json
 _encodeSubmitTxResponse _proxy encodeTxId encodeSubmitTxError =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ encodeObject . \case
+    Rpc.mkResponse $ encodeObject . \case
         SubmitTxSuccess i ->
             "SubmitSuccess" .= encodeObject
                 ( "txId" .= encodeTxId i
@@ -323,8 +318,6 @@ _encodeSubmitTxResponse _proxy encodeTxId encodeSubmitTxError =
         (SubmitTxFail e) ->
             "SubmitFail" .=
                 encodeSubmitTxError e
-  where
-    proxy = Proxy @(Wsp.Request (SubmitTx block))
 
 -- | Translate an ouroboros-network's 'SubmitResult' into our own
 -- 'SubmitTxResponse' which also carries a transaction id.
@@ -360,14 +353,14 @@ _decodeEvaluateTx
         , FromJSON (MultiEraUTxO block)
         )
     => Json.Value
-    -> Json.Parser (Wsp.Request (EvaluateTx block))
+    -> Json.Parser (Rpc.Request (EvaluateTx block))
 _decodeEvaluateTx =
-    Wsp.genericFromJSON $ Wsp.defaultOptions
-        { Wsp.onMissingField = \fieldName ->
+    Rpc.genericFromJSON $ Rpc.defaultOptions
+        { Rpc.onMissingField = \fieldName ->
             if fieldName == "additionalUtxoSet" then
                 pure (Json.Array mempty)
             else
-                Wsp.onMissingField Wsp.defaultOptions fieldName
+                Rpc.onMissingField Rpc.defaultOptions fieldName
         }
 
 data EvaluateTxResponse block
@@ -411,10 +404,10 @@ _encodeEvaluateTxResponse
     -> (TransactionScriptFailure (Crypto block) -> Json)
     -> (TxIn (Crypto block) -> Json)
     -> (TranslationError (Crypto block) -> Json)
-    -> Wsp.Response (EvaluateTxResponse block)
+    -> Rpc.Response (EvaluateTxResponse block)
     -> Json
 _encodeEvaluateTxResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ encodeObject . \case
+    Rpc.mkResponse $ encodeObject . \case
         EvaluationResult result ->
             "EvaluationResult" .=
                 encodeMap stringifyRdmrPtr encodeExUnits result
@@ -451,8 +444,6 @@ _encodeEvaluateTxResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFail
                     ( "reason" .= encodeTranslationError err
                     )
                 )
-  where
-    proxy = Proxy @(Wsp.Request (EvaluateTx block))
 
 -- | A constraint synonym to bundle together constraints needed to run a script
 -- evaluation in any era after Alonzo (incl.).

@@ -28,8 +28,8 @@ export const rewardsProvenanceNew = (context: InteractionContext): Promise<Rewar
     Ogmios['QueryResponse[rewardsProvenance\']'],
     RewardsProvenance1
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: 'rewardsProvenance\''
     }
   }, {

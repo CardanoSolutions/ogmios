@@ -7,12 +7,12 @@ import { UnknownResultError } from '../errors'
 /** @internal */
 export const Query = <
   Request,
-  QueryResponse extends { reflection?: { requestId?: string } },
+  QueryResponse extends { id?: { requestId?: string } },
   Response
   >(
     request: {
-    methodName: string,
-    args?: any
+    method: string,
+    params?: any
   },
     response: {
     handler: (
@@ -29,7 +29,7 @@ export const Query = <
 
         async function listener (data: string) {
           const queryResponse = safeJSON.parse(data) as QueryResponse
-          if (queryResponse.reflection?.requestId !== requestId) { return }
+          if (queryResponse.id?.requestId !== requestId) { return }
           socket.removeListener('message', listener)
           try {
             await response.handler(
@@ -45,8 +45,8 @@ export const Query = <
         socket.on('message', listener)
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          methodname: request.methodName,
-          args: request.args,
-          mirror: { requestId }
+          method: request.method,
+          params: request.params,
+          id: { requestId }
         } as unknown as Request))
       }), context)

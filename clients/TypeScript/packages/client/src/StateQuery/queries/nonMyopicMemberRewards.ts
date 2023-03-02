@@ -33,8 +33,8 @@ export const nonMyopicMemberRewards = (
     Ogmios['QueryResponse[nonMyopicMemberRewards]'],
     NonMyopicMemberRewards
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: {
         nonMyopicMemberRewards: input
       }

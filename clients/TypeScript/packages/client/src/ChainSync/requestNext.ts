@@ -11,11 +11,11 @@ export type Mirror = { [k: string]: unknown }
 /** @category ChainSync */
 export const requestNext = (
   socket: WebSocket,
-  options?: { mirror?: Mirror }
+  options?: { id?: Mirror }
 ): void => {
   socket.send(safeJSON.stringify({
     ...baseRequest,
-    methodname: 'RequestNext',
-    mirror: options?.mirror
+    method: 'RequestNext',
+    id: options?.id
   } as Ogmios['RequestNext']))
 }

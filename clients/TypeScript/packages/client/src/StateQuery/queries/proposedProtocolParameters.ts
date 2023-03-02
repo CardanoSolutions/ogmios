@@ -26,8 +26,8 @@ export const proposedProtocolParameters = (
     Ogmios['QueryResponse[proposedProtocolParameters]'],
     ProposedProtocolParametersShelley | ProposedProtocolParametersAlonzo | ProposedProtocolParametersBabbage | null
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: 'proposedProtocolParameters'
     }
   }, {

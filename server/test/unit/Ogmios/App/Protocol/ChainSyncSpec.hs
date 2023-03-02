@@ -84,8 +84,8 @@ import System.Random
 import Test.App.Protocol.Util
     ( FailedToDecodeMsg (..)
     , PeerTerminatedUnexpectedly (..)
-    , expectWSPFault
-    , expectWSPResponse
+    , expectRpcFault
+    , expectRpcResponse
     , prop_inIOSim
     , withMockChannel
     )
@@ -116,8 +116,8 @@ import Test.QuickCheck
     , oneof
     )
 
-import qualified Codec.Json.Wsp as Wsp
-import qualified Codec.Json.Wsp.Handler as Wsp
+import qualified Codec.Json.Rpc as Rpc
+import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Ouroboros.Network.Protocol.ChainSync.Type as ChainSync
 
 spec :: Spec
@@ -138,10 +138,10 @@ spec = parallel $ do
       where
         p mirror = prop_inIOSim $ withChainSyncClient $ \send receive -> do
             send $ requestNext mirror
-            expectWSPResponse @"RequestNext" Proxy receive (toJSON mirror)
+            expectRpcResponse @"RequestNext" Proxy receive (toJSON mirror)
 
             send $ findIntersect mirror []
-            expectWSPResponse @"FindIntersect" Proxy receive (toJSON mirror)
+            expectRpcResponse @"FindIntersect" Proxy receive (toJSON mirror)
 
     -- The chain-sync client will pipeline requests up to a certain point.
     -- Indeed, WebSockets do allow for (theorically) infinite pipelining,
@@ -164,7 +164,7 @@ spec = parallel $ do
                 let mirror = Just $ toJSON i
                 mirror <$ send (requestNext mirror)
             forM_ mirrors $ \mirror -> do
-                expectWSPResponse @"RequestNext" Proxy receive (toJSON mirror)
+                expectRpcResponse @"RequestNext" Proxy receive (toJSON mirror)
 
         genMaxInFlight :: Gen MaxInFlight
         genMaxInFlight = oneof
@@ -190,8 +190,8 @@ spec = parallel $ do
         p mirror mirror' = prop_inIOSim $ withChainSyncClient $ \send receive -> do
             send $ requestNext mirror
             send $ findIntersect mirror' []
-            expectWSPFault receive Wsp.FaultClient (toJSON mirror')
-            expectWSPResponse @"RequestNext" Proxy receive (toJSON mirror)
+            expectRpcFault receive Rpc.FaultInvalidRequest (toJSON mirror')
+            expectRpcResponse @"RequestNext" Proxy receive (toJSON mirror)
 
 type Protocol = ChainSync Block (Point Block) (Tip Block)
 
@@ -264,13 +264,13 @@ chainSyncMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
 -- Helpers
 --
 
-requestNext :: Wsp.Mirror -> ChainSyncMessage Block
+requestNext :: Rpc.Mirror -> ChainSyncMessage Block
 requestNext mirror =
-    MsgRequestNext RequestNext (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgRequestNext RequestNext (Rpc.Response mirror) (Rpc.Fault mirror)
 
-findIntersect :: Wsp.Mirror -> [Point Block] -> ChainSyncMessage Block
+findIntersect :: Rpc.Mirror -> [Point Block] -> ChainSyncMessage Block
 findIntersect mirror points =
-    MsgFindIntersect (FindIntersect points) (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgFindIntersect (FindIntersect points) (Rpc.Response mirror) (Rpc.Fault mirror)
 
 confidence :: Double -> Double -> Confidence
 confidence (round -> certainty) tolerance =

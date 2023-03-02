@@ -8,14 +8,14 @@ import { Query } from '../StateQuery'
  *
  * @category TxMonitor
  */
-export const sizeAndCapacity = (context: InteractionContext, args?: {}) =>
+export const sizeAndCapacity = (context: InteractionContext, params?: {}) =>
   Query<
         Ogmios['SizeAndCapacity'],
         Ogmios['SizeAndCapacityResponse'],
         MempoolSizeAndCapacity
     >({
-      methodName: 'SizeAndCapacity',
-      args: args
+      method: 'SizeAndCapacity',
+      params: params
     }, {
       handler: (response, resolve, reject) => {
         try {

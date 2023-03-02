@@ -37,8 +37,8 @@ export const utxo = (
     Ogmios['QueryResponse[utxo]'],
     Utxo
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: Array.isArray(filters) && filters.length > 0 && filters[0] !== null
         ? { utxo: filters }
         : 'utxo'

@@ -7,8 +7,8 @@
 
 module Test.App.Protocol.Util
     ( prop_inIOSim
-    , expectWSPResponse
-    , expectWSPFault
+    , expectRpcResponse
+    , expectRpcFault
     , withMockChannel
 
       -- * Exceptions
@@ -73,14 +73,21 @@ import Test.QuickCheck.Monadic
     , run
     )
 
-import qualified Codec.Json.Wsp as Wsp
+import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
 
 -- | Run a function in IOSim, with a 'StdGen' input which can used to compute
 -- random numbers deterministically within the simulation. The random generator
 -- is however randomly seeded for each property run.
 prop_inIOSim
-    :: (forall m. (MonadSTM m, MonadCatch m, MonadOuroboros m, MonadDelay m, MonadLog m) => StdGen -> m ())
+    :: ( forall m.
+        ( MonadSTM m
+        , MonadCatch m
+        , MonadOuroboros m
+        , MonadDelay m
+        , MonadLog m
+        ) => StdGen -> m ()
+       )
     -> Property
 prop_inIOSim action = monadicIO $ do
     seed <- mkStdGen <$> pick arbitrary
@@ -106,46 +113,46 @@ withMockChannel mockPeer action = do
     result <- race (mockPeer (sendDual, recvDual)) (action channel)
     either (const $ error "mockNode terminated?") pure result
 
--- | Assert that a given JSON object is a JSON-WSP response for the given
+-- | Assert that a given JSON object is a JSON-Rpc response for the given
 -- method.
 --
--- >>> expectWSPResponse @"RequestNext" recv Nothing
+-- >>> expectRpcResponse @"RequestNext" recv Nothing
 -- ()
-expectWSPResponse
+expectRpcResponse
     :: forall (method :: Symbol) m. (MonadThrow m, KnownSymbol method)
     => Proxy method
     -> m Json.Encoding
     -> Json.Value
     -> m ()
-expectWSPResponse _proxy recv wantMirror = do
+expectRpcResponse _proxy recv wantMirror = do
     json <- inefficientEncodingToValue <$> recv
 
-    let gotMethod = "methodname" `at` json
+    let gotMethod = "method" `at` json
     let wantMethod = Json.toJSON $ symbolVal (Proxy @method)
     when (gotMethod /= Just wantMethod) $
-        throwIO $ UnexpectedResponse "methodname" json gotMethod wantMethod
+        throwIO $ UnexpectedResponse "method" json gotMethod wantMethod
 
-    let gotMirror = "reflection" `at` json
+    let gotMirror = "id" `at` json
     when (gotMirror /= Just wantMirror) $
-        throwIO $ UnexpectedResponse "reflection" json gotMirror wantMirror
+        throwIO $ UnexpectedResponse "id" json gotMirror wantMirror
 
-expectWSPFault
+expectRpcFault
     :: (MonadThrow m)
     => m Json.Encoding
-    -> Wsp.FaultCode
+    -> Rpc.FaultCode
     -> Json.Value
     -> m ()
-expectWSPFault recv wantCode wantMirror = do
+expectRpcFault recv wantCode wantMirror = do
     json <- inefficientEncodingToValue <$> recv
 
-    let gotCode = ("fault" `at` json) >>= at "code"
+    let gotCode = ("error" `at` json) >>= at "code"
     let wantCode' = Json.toJSON wantCode
     when (gotCode /= Just wantCode') $
-        throwIO $ UnexpectedResponse "fault" json gotCode wantCode'
+        throwIO $ UnexpectedResponse "error" json gotCode wantCode'
 
-    let gotMirror = "reflection" `at` json
+    let gotMirror = "id" `at` json
     when (gotMirror /= Just wantMirror) $
-        throwIO $ UnexpectedResponse "reflection" json gotMirror wantMirror
+        throwIO $ UnexpectedResponse "id" json gotMirror wantMirror
 
 --
 -- Exceptions

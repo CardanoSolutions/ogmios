@@ -104,7 +104,7 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..)
     )
 
-import qualified Codec.Json.Wsp as Wsp
+import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
 import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ
 import qualified Ouroboros.Consensus.Ledger.Query as Ledger
@@ -155,7 +155,7 @@ mkStateQueryClient tr StateQueryCodecs{..} GetGenesisConfig{..} queue yield =
 
     clientStAcquiring
         :: Point block
-        -> Wsp.ToResponse (AcquireResponse block)
+        -> Rpc.ToResponse (AcquireResponse block)
         -> LSQ.ClientStAcquiring block point query m ()
     clientStAcquiring pt toResponse =
         LSQ.ClientStAcquiring
@@ -169,7 +169,7 @@ mkStateQueryClient tr StateQueryCodecs{..} GetGenesisConfig{..} queue yield =
 
     clientStAcquiringTip
         :: Query Proxy block
-        -> Wsp.ToResponse (QueryResponse block)
+        -> Rpc.ToResponse (QueryResponse block)
         -> LSQ.ClientStAcquiring block point query m ()
     clientStAcquiringTip Query{rawQuery = query, queryInEra} toResponse =
         LSQ.ClientStAcquiring

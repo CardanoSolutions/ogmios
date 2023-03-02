@@ -69,7 +69,6 @@ library
       Ogmios.Data.Json.Shelley
       Ogmios.Data.Metrics
       Ogmios.Data.Metrics.Prometheus
-      Ogmios.Data.Protocol
       Ogmios.Data.Protocol.ChainSync
       Ogmios.Data.Protocol.StateQuery
       Ogmios.Data.Protocol.TxMonitor
@@ -165,7 +164,7 @@ library
     , io-sim
     , iohk-monitoring
     , iproute
-    , json-wsp
+    , json-rpc
     , lens-aeson
     , memory
     , mtl
@@ -340,7 +339,7 @@ test-suite unit
     , hspec-json-schema
     , io-classes
     , io-sim
-    , json-wsp
+    , json-rpc
     , lens-aeson
     , ogmios
     , ouroboros-consensus

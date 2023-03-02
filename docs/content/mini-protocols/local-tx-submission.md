@@ -28,7 +28,7 @@ In case of success, Ogmios / the node returns an empty response. Otherwise, it r
 
 ## Disclaimer
 
-The local tx-submission protocol is the simplest one in appearance. It nevertheless a quite extensive knowledge of the on-chain data-types used by Cardano. Indeed, the protocol in itself is straightforward so long as you already know how to produce and sign a transaction. 
+The local tx-submission protocol is the simplest one in appearance. It nevertheless a quite extensive knowledge of the on-chain data-types used by Cardano. Indeed, the protocol in itself is straightforward so long as you already know how to produce and sign a transaction.
 
 This guide doesn't cover the creation and serialization of Cardano transactions. This is a rather vast topic and there is a handful of tools out there to help on the matter already, in particular:
 
@@ -44,23 +44,21 @@ In any case, one can always refer to the source [CDDL specifications](https://gi
 Providing a more user-friendly interface with regards to transactions in Ogmios is still under consideration. Yet, since in order to handle and sign transactions, one needs some knowledge about the on-chain binary format anyway, I've made the (effortless) choice to only treat with already serialized blobs in Ogmios. I am open to suggestions about how this could be made better, drop me a message on Github if you have ideas!
 {{% /notice %}}
 
-## SubmitTx 
+## SubmitTx
 
-Sending a transaction through the Cardano network requires one message using the method `SubmitTx`, and with a single mandatory arguments with `bytes`, representing a serialized signed transactions with its full witness. 
+Sending a transaction through the Cardano network requires one message using the method `SubmitTx`, and with a single mandatory arguments with `bytes`, representing a serialized signed transactions with its full witness.
 
-Note that JSON does not support embedding raw bytes in objects. Bytes needs therefore to be encoded in either `Base16` or `Base64`; Ogmios will try both encoding. 
+Note that JSON does not support embedding raw bytes in objects. Bytes needs therefore to be encoded in either `Base16` or `Base64`; Ogmios will try both encoding.
 
 ```json
-{ 
-    "type": "jsonwsp/request",
-    "version": "1.0",
-    "servicename": "ogmios",
-    "methodname": "SubmitTx",
-    "args": { "submit": "<base16 or base64>" }
+{
+    "jsonrpc": "2.0",
+    "method": "SubmitTx",
+    "params": { "submit": "<base16 or base64>" }
 }
 ```
 
-The response will indicate either a `SubmitSuccess` or `SubmitFail`. In case of failure, Ogmios will return a list of failures reported by the underlying node. Note that, if the transaction fails to parse, Ogmios will reply with a generic error. 
+The response will indicate either a `SubmitSuccess` or `SubmitFail`. In case of failure, Ogmios will return a list of failures reported by the underlying node. Note that, if the transaction fails to parse, Ogmios will reply with a generic error.
 
 Transactions in Shelley are rather _complicated_ and there is **a lot of** possible validation errors that can be returned. Be sure to have a look at the [API reference](../../api) for an exhaustive list.
 
@@ -77,12 +75,10 @@ The API is purposely similar to the `SubmitTx` command, with a few semantic chan
 From there, the endpoint works similarly to `SubmitTx`, but with different method and argument names:
 
 ```json
-{ 
-    "type": "jsonwsp/request",
-    "version": "1.0",
-    "servicename": "ogmios",
-    "methodname": "EvaluateTx",
-    "args": { "evaluate": "<base16 or base64>" }
+{
+    "jsonrpc": "2.0",
+    "method": "EvaluateTx",
+    "params": { "evaluate": "<base16 or base64>" }
 }
 ```
 
@@ -92,10 +88,8 @@ For example `spend:0` points to the first transaction input; `mint:2` would poin
 
 ```json
 {
-  "type": "jsonwsp/response",
-  "version": "1.0",
-  "servicename": "ogmios",
-  "methodname": "EvaluateTx",
+  "jsonrpc": "2.0",
+  "method": "EvaluateTx",
   "result": {
     "EvaluationResult": {
       "spend:0": {
@@ -103,8 +97,7 @@ For example `spend:0` points to the first transaction input; `mint:2` would poin
         "steps": 476468
       }
     }
-  },
-  "reflection": null
+  }
 }
 ```
 
@@ -127,21 +120,19 @@ The [structure of the additional UTXO set](/api/modules/_cardano_ogmios_schema.h
 For example:
 
 ```json
-{ 
-    "type": "jsonwsp/request",
-    "version": "1.0",
-    "servicename": "ogmios",
-    "methodname": "EvaluateTx",
-    "args": { 
+{
+    "jsonrpc": "2.0",
+    "method": "EvaluateTx",
+    "params": {
       "evaluate": "<base16 or base64>",
       "additionalUtxoSet": [
-        [ 
+        [
           { "txId":"97b2af6dfc6a4825e934146f424cdd6ede43ff98c355d2ae3aa95b0f70b63949"
           , "index": 3
           },
           { "address": "addr_test1qp9zjnc775anpndl0jh3w7vyy25syfezf70m7qmleaky0fdu9mqe2tg33xyxlcqcy98w630c82cyzuwyrumn65cv57nqwxm2yd"
           , "value": { "coins": 10000000 }
-          } 
+          }
         ]
       ]
     }
@@ -151,19 +142,17 @@ For example:
 
 ## Full Example
 
-For what it's worth, here's an example of a transaction submission to the Cardano mainnet via Ogmios. This transaction is using dummy data and will obviously fail. It is however structurally valid, so useful to test if an integration works correctly. 
+For what it's worth, here's an example of a transaction submission to the Cardano mainnet via Ogmios. This transaction is using dummy data and will obviously fail. It is however structurally valid, so useful to test if an integration works correctly.
 
 ```js
 const WebSocket = require('ws');
 const client = new WebSocket("ws://localhost:1337");
 
-function wsp(methodname, args) {
+function rpc(method, params) {
     client.send(JSON.stringify({
-        type: "jsonwsp/request",
-        version: "1.0",
-        servicename: "ogmios",
-        methodname,
-        args
+        jsonrpc: "2.0",
+        method,
+        params
     }));
 }
 
@@ -176,7 +165,7 @@ client.once('open', () => {
       "AAAAAFhA169grjPSrzUUEcFEXHlZBSaZC/pzy7NzK1TvMi2qFC5ohAI0EPi+PBbpvVIHbyuz"+
       "a/ON/gNKnwRljp9WGXq4D/Y=";
 
-    wsp("SubmitTx", { submit });
+    rpc("SubmitTx", { submit });
 });
 
 client.on('message', function(msg) {
@@ -191,10 +180,7 @@ Ogmios replies negatively to the request, returning 4 errors reported by the led
 {{% expand "SubmitFail" %}}
 ```json
 {
-  "version": "1.0",
-  "servicename": "ogmios",
-  "type": "jsonwsp/response",
-  "methodname": "SubmitTx",
+  "version": "2.0",
   "result": {
     "SubmitTxResponse": {
       "error": {
@@ -228,8 +214,7 @@ Ogmios replies negatively to the request, returning 4 errors reported by the led
         ]
       }
     }
-  },
-  "reflection": null
+  }
 }
 ```
 {{% /expand %}}

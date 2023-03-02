@@ -93,7 +93,7 @@ export const createStateQueryClient = async (
         return new Promise((resolve, reject) => {
           socket.once('message', (message: string) => {
             const response: Ogmios['ReleaseResponse'] = safeJSON.parse(message)
-            if (response.reflection.requestId !== requestId) { return }
+            if (response.id?.requestId !== requestId) { return }
             if (response.result === 'Released') {
               resolve()
             } else {
@@ -102,9 +102,9 @@ export const createStateQueryClient = async (
           })
           socket.send(safeJSON.stringify({
             ...baseRequest,
-            methodname: 'Release',
-            args: {},
-            mirror: { requestId }
+            method: 'Release',
+            params: {},
+            id: { requestId }
           } as Ogmios['Release']))
         })
       },
@@ -202,7 +202,7 @@ export const createStateQueryClient = async (
       socket.once('error', e => reject(new UnknownResultError(e)))
       socket.once('message', (message: string) => {
         const response: Ogmios['AcquireResponse'] = safeJSON.parse(message)
-        if (response.reflection.requestId !== requestId) { return }
+        if (response.id?.requestId !== requestId) { return }
         if ('AcquireSuccess' in response.result) {
           createClient()
         } else {
@@ -229,9 +229,9 @@ export const createStateQueryClient = async (
       })
       socket.send(safeJSON.stringify({
         ...baseRequest,
-        methodname: 'Acquire',
-        args: { point },
-        mirror: { requestId }
+        method: 'Acquire',
+        params: { point },
+        id: { requestId }
       } as Ogmios['Acquire']))
     } else {
       createClient()

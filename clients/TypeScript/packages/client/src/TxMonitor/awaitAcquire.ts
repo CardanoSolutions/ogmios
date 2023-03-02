@@ -8,14 +8,14 @@ import { Query } from '../StateQuery'
  *
  * @category TxMonitor
  */
-export const awaitAcquire = (context: InteractionContext, args?: {}) =>
+export const awaitAcquire = (context: InteractionContext, params?: {}) =>
   Query<
         Ogmios['AwaitAcquire'],
         Ogmios['AwaitAcquireResponse'],
         Slot
     >({
-      methodName: 'AwaitAcquire',
-      args: args
+      method: 'AwaitAcquire',
+      params: params
     }, {
       handler: (response, resolve, reject) => {
         try {

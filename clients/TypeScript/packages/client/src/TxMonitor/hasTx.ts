@@ -14,8 +14,8 @@ export const hasTx = (context: InteractionContext, id: TxId) =>
         Ogmios['HasTxResponse'],
         boolean
     >({
-      methodName: 'HasTx',
-      args: { id }
+      method: 'HasTx',
+      params: { id }
     }, {
       handler: (response, resolve, reject) => {
         try {

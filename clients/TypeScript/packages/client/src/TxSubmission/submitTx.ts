@@ -20,8 +20,8 @@ export const submitTx = (context: InteractionContext, bytes: string) =>
     Ogmios['SubmitTxResponse'],
     TxId
   >({
-    methodName: 'SubmitTx',
-    args: { submit: bytes }
+    method: 'SubmitTx',
+    params: { submit: bytes }
   }, {
     handler: (response, resolve, reject) => {
       const result = handleSubmitTxResponse(response)

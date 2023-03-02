@@ -1,9 +1,6 @@
 {
-  "version": "1.0",
-  "servicename": "ogmios",
-  "type": "jsonwsp/response",
-  "reflection": 14,
-  "methodname": "SubmitTx",
+  "jsonrpc": "2.0",
+  "id": 14,
   "result": {
     "SubmitFail": [
       {
@@ -99,8 +96,7 @@
                   "4b279a388de46bb4d33c4df64da357640be900b04625a43651b7b059.b9c8aa09": 18
                 }
               },
-              "address": "addr_test1qpmwvp7m9gcungkryasaysc6rp492rxry8meekxk4q4jnw8ve0a4ccvkw0cxfzjzeshcytype0p54mjpyarr36y60t6shunvvh",
-              "datumHash": null
+              "address": "addr_test1qpmwvp7m9gcungkryasaysc6rp492rxry8meekxk4q4jnw8ve0a4ccvkw0cxfzjzeshcytype0p54mjpyarr36y60t6shunvvh"
             }
           ],
           [
@@ -152,8 +148,7 @@
                   "76e607db2a31c9a2c32761d2431a186a550cc321f79cd8d6a82b29b8.b9af": 26
                 }
               },
-              "address": "EqGAuA8vHnP8AQMNFJ97QjNtHA6oE3zFySWHPsDWfLnJ13gFmAGwxfRYGkVNDoG8CNcgz4SFEBEQBcFDR2w6HRiZZ3Cp1CFUE71LzdtypEaZGGTW79UqHpK",
-              "datumHash": null
+              "address": "EqGAuA8vHnP8AQMNFJ97QjNtHA6oE3zFySWHPsDWfLnJ13gFmAGwxfRYGkVNDoG8CNcgz4SFEBEQBcFDR2w6HRiZZ3Cp1CFUE71LzdtypEaZGGTW79UqHpK"
             }
           ],
           [
@@ -173,8 +168,7 @@
                   "a646474b8f5431261506b6c273d307c7569a4eb6c96b42dd4a29520a.8adad7beb7dfa3": 28
                 }
               },
-              "address": "addr_test1yz7s88u4da9nqte6km78cjavxdg22s85ftup4pyjr9xa9snkucrak233ex3vxfmp6fp35xr225xvxg0hnnvdd2pt9xuq2p3cud",
-              "datumHash": null
+              "address": "addr_test1yz7s88u4da9nqte6km78cjavxdg22s85ftup4pyjr9xa9snkucrak233ex3vxfmp6fp35xr225xvxg0hnnvdd2pt9xuq2p3cud"
             }
           ]
         ]

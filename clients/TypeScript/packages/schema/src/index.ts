@@ -33,7 +33,6 @@ export type AssetQuantity = bigint;
  * A Blake2b 32-byte digest of a serialized datum, CBOR-encoded.
  */
 export type DigestBlake2BDatum = string;
-export type Null = null;
 export type Datum = string;
 export type Script = Native | PlutusV1 | PlutusV2;
 /**
@@ -97,10 +96,7 @@ export type LovelaceDelta = number;
  * Source of rewards as defined by the protocol parameters.
  */
 export type RewardPot = "reserves" | "treasury";
-export type UpdateBabbage = Null | UpdateProposalBabbage;
-export type NullableUInt64 = UInt64 | Null;
 export type UInt64 = number;
-export type NullableRatio = Ratio | Null;
 export type UInt32 = number;
 export type Int64 = number;
 /**
@@ -116,6 +112,10 @@ export type DigestBlake2BScriptIntegrity = string;
  */
 export type Signature = string;
 /**
+ * An Ed25519 verification key.
+ */
+export type VerificationKey = string;
+/**
  * An Ed25519-BIP32 chain-code for key deriviation.
  */
 export type ChainCode = string;
@@ -123,10 +123,6 @@ export type ChainCode = string;
  * Extra attributes carried by Byron addresses (network magic and/or HD payload).
  */
 export type AddressAttributes = string;
-/**
- * An Ed25519 verification key.
- */
-export type VerificationKey = string;
 /**
  * Plutus data, CBOR-serialised.
  */
@@ -156,14 +152,12 @@ export type KesVerificationKey = string;
 export type IssuerSignature = string;
 export type VrfProof = string;
 export type VrfOutput = string;
-export type UpdateAlonzo = Null | UpdateProposalAlonzo;
 export type Nonce = Neutral | DigestBlake2BNonce;
 export type Neutral = "neutral";
 /**
  * A Blake2b 32-byte digest of some arbitrary to make a nonce.
  */
 export type DigestBlake2BNonce = string;
-export type UpdateShelley = Null | UpdateProposalShelley;
 /**
  * A block in the Byron era. Most blocks are stanard blocks, but once at the beginning of each era is an additional epoch boundary block (a.k.a. EBB)
  */
@@ -303,6 +297,7 @@ export type ScriptFailure = (
   | NoCostModelForLanguage
 )[];
 export type AcquireFailureDetails = "pointTooOld" | "pointNotOnChain";
+export type Null = null;
 export type GetEraStart = "eraStart";
 export type GetEraSummaries = "eraSummaries";
 export type GetLedgerTip = "ledgerTip";
@@ -359,15 +354,12 @@ export interface Ogmios {
    * Request next block from the current cardano-node's cursor.
    */
   RequestNext: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "RequestNext";
-    args?: {};
+    jsonrpc: "2.0";
+    method: "RequestNext";
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
      */
-    mirror?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -375,15 +367,12 @@ export interface Ogmios {
    * Request next block from the current cardano-node's cursor.
    */
   RequestNextResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "RequestNext";
+    jsonrpc: "2.0";
     result: RollForward | RollBackward;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -391,33 +380,28 @@ export interface Ogmios {
    * Ask cardano-node to find an intersection between its local chain and the given points.
    */
   FindIntersect: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "FindIntersect";
-    args?: {
+    jsonrpc: "2.0";
+    method: "FindIntersect";
+    params: {
       points?: PointOrOrigin[];
     };
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
      */
-    mirror?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   FindIntersectResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "FindIntersect";
+    jsonrpc: "2.0";
     /**
      * Intersection found if any, alongside the cardano-node's current tip.
      */
     result: IntersectionFound | IntersectionNotFound;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -425,30 +409,25 @@ export interface Ogmios {
    * Submit a signed and serialized transaction to the network.
    */
   SubmitTx: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "SubmitTx";
-    args?: {
+    jsonrpc: "2.0";
+    method: "SubmitTx";
+    params: {
       submit: string;
     };
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
      */
-    mirror?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   SubmitTxResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "SubmitTx";
+    jsonrpc: "2.0";
     result: SubmitSuccess | SubmitFail;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -456,31 +435,25 @@ export interface Ogmios {
    * Evaluate execution units for which redeemers's budget hasn't yet been set.
    */
   EvaluateTx: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "EvaluateTx";
-    args?: {
+    jsonrpc: "2.0";
+    params: {
       evaluate: string;
       additionalUtxoSet?: Utxo;
     };
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
      */
-    mirror?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   EvaluateTxResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "EvaluateTx";
+    jsonrpc: "2.0";
     result: EvaluationResult | EvaluationFailure;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -488,17 +461,15 @@ export interface Ogmios {
    * Acquire a point on chain from which run queries.
    */
   Acquire: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Acquire";
-    args?: {
+    jsonrpc: "2.0";
+    method: "Acquire";
+    params: {
       point: PointOrOrigin;
     };
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
      */
-    mirror?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -506,15 +477,12 @@ export interface Ogmios {
    * Response to an 'Acquire' request.
    */
   AcquireResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Acquire";
+    jsonrpc: "2.0";
     result: AcquireSuccess | AcquireFailure;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -522,15 +490,12 @@ export interface Ogmios {
    * Release a point on chain previously acquired.
    */
   Release: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Release";
-    args?: {};
+    jsonrpc: "2.0";
+    method: "Release";
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
      */
-    mirror?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -538,15 +503,12 @@ export interface Ogmios {
    * Response to a 'Release' request.
    */
   ReleaseResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Release";
+    jsonrpc: "2.0";
     result: "Released";
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -554,15 +516,12 @@ export interface Ogmios {
    * Acquire a mempool snapshot. This is blocking until a new (i.e different) snapshot is available.
    */
   AwaitAcquire: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "AwaitAcquire";
-    args?: {};
+    jsonrpc: "2.0";
+    method: "AwaitAcquire";
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
      */
-    mirror?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -570,15 +529,12 @@ export interface Ogmios {
    * Response to a 'AwaitAcquire' request.
    */
   AwaitAcquireResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "AwaitAcquire";
+    jsonrpc: "2.0";
     result: AwaitAcquired;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -586,17 +542,15 @@ export interface Ogmios {
    * Request the next transaction from an acquired snapshot.
    */
   NextTx: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "NextTx";
-    args?: {
+    jsonrpc: "2.0";
+    method: "NextTx";
+    params?: {
       fields?: "all";
     };
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
      */
-    mirror?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -604,15 +558,12 @@ export interface Ogmios {
    * Response to a 'NextTx' request.
    */
   NextTxResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "NextTx";
+    jsonrpc: "2.0";
     result: TxId | TxAlonzo | TxBabbage | Null;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -620,17 +571,15 @@ export interface Ogmios {
    * Ask whether a given transaction is present in the acquired mempool snapshot.
    */
   HasTx: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "HasTx";
-    args?: {
+    jsonrpc: "2.0";
+    method: "HasTx";
+    params: {
       id: TxId;
     };
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
      */
-    mirror?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -638,15 +587,12 @@ export interface Ogmios {
    * Response to a 'HasTx' request.
    */
   HasTxResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "HasTx";
+    jsonrpc: "2.0";
     result: boolean;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -654,15 +600,12 @@ export interface Ogmios {
    * Get size and capacities of the mempool (acquired snapshot).
    */
   SizeAndCapacity: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "SizeAndCapacity";
-    args?: {};
+    jsonrpc: "2.0";
+    method: "SizeAndCapacity";
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
      */
-    mirror?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -670,15 +613,12 @@ export interface Ogmios {
    * Response to a 'SizeAndCapacity' request.
    */
   SizeAndCapacityResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "SizeAndCapacity";
+    jsonrpc: "2.0";
     result: MempoolSizeAndCapacity;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -686,15 +626,12 @@ export interface Ogmios {
    * Release a previously acquired mempool snapshot.
    */
   ReleaseMempool?: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "ReleaseMempool";
-    args?: {};
+    jsonrpc: "2.0";
+    method: "ReleaseMempool";
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
      */
-    mirror?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -702,15 +639,12 @@ export interface Ogmios {
    * Response to a 'ReleaseMempool' request.
    */
   ReleaseMempoolResponse?: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "ReleaseMempool";
+    jsonrpc: "2.0";
     result: "Released";
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -718,11 +652,9 @@ export interface Ogmios {
    * Query the ledger / node.
    */
   Query: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    args?: {
+    jsonrpc: "2.0";
+    method: "Query";
+    params: {
       query:
         | GetEraStart
         | GetEraSummaries
@@ -749,93 +681,72 @@ export interface Ogmios {
     /**
      * An arbitrary JSON value that will be mirrored back in the response.
      */
-    mirror?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[eraStart]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: Bound | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[eraSummaries]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: QueryUnavailableInCurrentEra | EraSummary[];
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[ledgerTip]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: PointOrOrigin | EraMismatch | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[currentEpoch]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: Epoch | EraMismatch | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[nonMyopicMemberRewards]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: NonMyopicMemberRewards | EraMismatch | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[delegationsAndRewards]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: DelegationsAndRewardsByAccounts | EraMismatch | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[currentProtocolParameters]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result:
       | ProtocolParametersShelley
       | ProtocolParametersAlonzo
@@ -843,17 +754,14 @@ export interface Ogmios {
       | EraMismatch
       | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[proposedProtocolParameters]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result:
       | ProposedProtocolParametersShelley
       | ProposedProtocolParametersAlonzo
@@ -861,48 +769,39 @@ export interface Ogmios {
       | EraMismatch
       | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[stakeDistribution]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: PoolDistribution | EraMismatch | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[utxo]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: Utxo | EraMismatch | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[genesisConfig]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: GenesisByron | GenesisShelley | GenesisAlonzo | EraMismatch | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
@@ -910,49 +809,37 @@ export interface Ogmios {
    * This query is now deprecated. Use /rewardsProvenance'/ instead.
    */
   "QueryResponse[rewardsProvenance]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: RewardsProvenance | EraMismatch | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[rewardsProvenance']": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: RewardsProvenance1 | EraMismatch | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[poolIds]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: PoolId[] | EraMismatch | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[poolParameters]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result:
       | {
           [k: string]: PoolParameters;
@@ -960,80 +847,72 @@ export interface Ogmios {
       | EraMismatch
       | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[poolsRanking]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: PoolsRanking | EraMismatch | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[blockHeight]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: BlockNoOrOrigin | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[chainTip]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: PointOrOrigin | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   "QueryResponse[systemStart]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
+    jsonrpc: "2.0";
     result: UtcTime | QueryUnavailableInCurrentEra;
     /**
-     * Any value that was set by a client request in the 'mirror' field.
+     * Any value that was set by a client request in the 'id' field.
      */
-    reflection?: {
+    id?: {
       [k: string]: unknown;
     };
   };
   /**
-   * A fault in the JSON-WSP protocol. This is returned by the server when a request from clients is deemed invalid or, when the server was unable to reply to a well-formed request.
+   * A fault in the JSON-RPC protocol. This is returned by the server when a request from clients is deemed invalid or, when the server was unable to reply to a well-formed request.
    */
   Fault: {
-    type: "jsonwsp/fault";
-    version: "1.0";
-    servicename: "ogmios";
-    fault: {
+    jsonrpc: "2.0";
+    error: {
       /**
-       * An error code telling about the nature of the fault.
+       * An error code telling about the nature of the error.
        */
-      code: "incompatible" | "server" | "client";
+      code: number;
       /**
-       * A descriptive error message giving hints about the fault.
+       * A descriptive error message giving hints about the error.
        */
-      string: string;
+      message?: string;
+    };
+    /**
+     * Any value that was set by a client request in the 'id' field.
+     */
+    id?: {
+      [k: string]: unknown;
     };
   };
   [k: string]: unknown;
@@ -1069,20 +948,20 @@ export interface TxBabbage {
   inputSource: "inputs" | "collaterals";
   body: {
     inputs: TxIn[];
-    references: TxIn[];
-    collaterals: TxIn[];
-    collateralReturn: TxOut | Null;
-    totalCollateral: Lovelace | Null;
+    references?: TxIn[];
+    collaterals?: TxIn[];
+    collateralReturn?: TxOut;
+    totalCollateral?: Lovelace;
     outputs: TxOut[];
-    certificates: Certificate[];
-    withdrawals: Withdrawals;
+    certificates?: Certificate[];
+    withdrawals?: Withdrawals;
     fee: Lovelace;
     validityInterval: ValidityInterval;
-    update: UpdateBabbage;
-    mint: Value;
-    network: Network | Null;
-    scriptIntegrityHash: DigestBlake2BScriptIntegrity | Null;
-    requiredExtraSignatures: DigestBlake2BVerificationKey[];
+    update?: UpdateProposalBabbage;
+    mint?: Value;
+    network?: Network;
+    scriptIntegrityHash?: DigestBlake2BScriptIntegrity;
+    requiredExtraSignatures?: DigestBlake2BVerificationKey[];
   };
   witness: {
     signatures: {
@@ -1099,7 +978,7 @@ export interface TxBabbage {
       [k: string]: Redeemer;
     };
   };
-  metadata: AuxiliaryData | Null;
+  metadata?: AuxiliaryData;
   /**
    * The raw serialized transaction, as found on-chain.
    */
@@ -1115,14 +994,9 @@ export interface TxIn {
 export interface TxOut {
   address: Address;
   value: Value;
-  datumHash?: DigestBlake2BDatum | Null;
-  datum?:
-    | {
-        [k: string]: unknown;
-      }
-    | Datum
-    | Null;
-  script?: Script | Null;
+  datumHash?: DigestBlake2BDatum;
+  datum?: Datum;
+  script?: Script;
 }
 export interface Value {
   coins: Lovelace;
@@ -1182,13 +1056,13 @@ export interface PoolRegistration {
   poolRegistration: PoolParameters;
 }
 export interface PoolParameters {
+  id: PoolId;
   owners: DigestBlake2BVerificationKey[];
   cost: Lovelace;
   margin: Ratio;
   pledge: Lovelace;
   vrf: DigestBlake2BVrfVerificationKey;
-  metadata: Null | PoolMetadata;
-  id: PoolId;
+  metadata?: PoolMetadata;
   relays: Relay[];
   rewardAccount: RewardAccount;
 }
@@ -1197,13 +1071,13 @@ export interface PoolMetadata {
   url: string;
 }
 export interface ByAddress {
-  ipv4: string | Null;
-  ipv6: string | Null;
-  port: number | Null;
+  ipv4?: string;
+  ipv6?: string;
+  port?: number;
 }
 export interface ByName {
   hostname: string;
-  port: number | Null;
+  port?: number;
 }
 /**
  * A pool retirement certificate.
@@ -1238,8 +1112,8 @@ export interface Withdrawals {
   [k: string]: Lovelace;
 }
 export interface ValidityInterval {
-  invalidBefore: Slot | Null;
-  invalidHereafter: Slot | Null;
+  invalidBefore?: Slot;
+  invalidHereafter?: Slot;
 }
 export interface UpdateProposalBabbage {
   epoch: Epoch;
@@ -1248,28 +1122,28 @@ export interface UpdateProposalBabbage {
   };
 }
 export interface ProtocolParametersBabbage {
-  minFeeCoefficient: NullableUInt64;
-  minFeeConstant: NullableUInt64;
-  maxBlockBodySize: NullableUInt64;
-  maxBlockHeaderSize: NullableUInt64;
-  maxTxSize: NullableUInt64;
-  stakeKeyDeposit: NullableUInt64;
-  poolDeposit: NullableUInt64;
-  poolRetirementEpochBound: NullableUInt64;
-  desiredNumberOfPools: NullableUInt64;
-  poolInfluence: NullableRatio;
-  monetaryExpansion: NullableRatio;
-  treasuryExpansion: NullableRatio;
-  minPoolCost: NullableUInt64;
-  coinsPerUtxoByte: NullableUInt64;
-  maxValueSize: NullableUInt64;
-  collateralPercentage: NullableUInt64;
-  maxCollateralInputs: NullableUInt64;
-  protocolVersion: ProtocolVersion | Null;
-  costModels: CostModels | Null;
-  prices: Prices | Null;
-  maxExecutionUnitsPerTransaction: ExUnits | Null;
-  maxExecutionUnitsPerBlock: ExUnits | Null;
+  minFeeCoefficient?: UInt64;
+  minFeeConstant?: UInt64;
+  maxBlockBodySize?: UInt64;
+  maxBlockHeaderSize?: UInt64;
+  maxTxSize?: UInt64;
+  stakeKeyDeposit?: UInt64;
+  poolDeposit?: UInt64;
+  poolRetirementEpochBound?: UInt64;
+  desiredNumberOfPools?: UInt64;
+  poolInfluence?: Ratio;
+  monetaryExpansion?: Ratio;
+  treasuryExpansion?: Ratio;
+  minPoolCost?: UInt64;
+  coinsPerUtxoByte?: UInt64;
+  maxValueSize?: UInt64;
+  collateralPercentage?: UInt64;
+  maxCollateralInputs?: UInt64;
+  protocolVersion?: ProtocolVersion;
+  costModels?: CostModels;
+  prices?: Prices;
+  maxExecutionUnitsPerTransaction?: ExUnits;
+  maxExecutionUnitsPerBlock?: ExUnits;
 }
 export interface ProtocolVersion {
   major: UInt32;
@@ -1291,10 +1165,10 @@ export interface ExUnits {
   steps: UInt64;
 }
 export interface BootstrapWitness {
-  signature: Signature;
-  chainCode: ChainCode | Null;
-  addressAttributes: AddressAttributes | Null;
   key: VerificationKey;
+  signature: Signature;
+  chainCode?: ChainCode;
+  addressAttributes?: AddressAttributes;
 }
 export interface Redeemer {
   redeemer: RedeemerData;
@@ -1369,17 +1243,17 @@ export interface TxAlonzo {
   inputSource: "inputs" | "collaterals";
   body: {
     inputs: TxIn[];
-    collaterals: TxIn[];
+    collaterals?: TxIn[];
     outputs: TxOut[];
-    certificates: Certificate[];
-    withdrawals: Withdrawals;
+    certificates?: Certificate[];
+    withdrawals?: Withdrawals;
     fee: Lovelace;
     validityInterval: ValidityInterval;
-    update: UpdateAlonzo;
-    mint: Value;
-    network: Network | Null;
-    scriptIntegrityHash: DigestBlake2BScriptIntegrity | Null;
-    requiredExtraSignatures: DigestBlake2BVerificationKey[];
+    update?: UpdateProposalAlonzo;
+    mint?: Value;
+    network?: Network;
+    scriptIntegrityHash?: DigestBlake2BScriptIntegrity;
+    requiredExtraSignatures?: DigestBlake2BVerificationKey[];
   };
   witness: {
     signatures: {
@@ -1396,7 +1270,7 @@ export interface TxAlonzo {
       [k: string]: Redeemer;
     };
   };
-  metadata: AuxiliaryData | Null;
+  metadata?: AuxiliaryData;
   /**
    * The raw serialized transaction, as found on-chain.
    */
@@ -1409,30 +1283,30 @@ export interface UpdateProposalAlonzo {
   };
 }
 export interface ProtocolParametersAlonzo {
-  minFeeCoefficient: NullableUInt64;
-  minFeeConstant: NullableUInt64;
-  maxBlockBodySize: NullableUInt64;
-  maxBlockHeaderSize: NullableUInt64;
-  maxTxSize: NullableUInt64;
-  stakeKeyDeposit: NullableUInt64;
-  poolDeposit: NullableUInt64;
-  poolRetirementEpochBound: NullableUInt64;
-  desiredNumberOfPools: NullableUInt64;
-  poolInfluence: NullableRatio;
-  monetaryExpansion: NullableRatio;
-  treasuryExpansion: NullableRatio;
-  decentralizationParameter: NullableRatio;
-  minPoolCost: NullableUInt64;
-  coinsPerUtxoWord: NullableUInt64;
-  maxValueSize: NullableUInt64;
-  collateralPercentage: NullableUInt64;
-  maxCollateralInputs: NullableUInt64;
-  extraEntropy: Nonce | Null;
-  protocolVersion: ProtocolVersion | Null;
-  costModels: CostModels | Null;
-  prices: Prices | Null;
-  maxExecutionUnitsPerTransaction: ExUnits | Null;
-  maxExecutionUnitsPerBlock: ExUnits | Null;
+  minFeeCoefficient?: UInt64;
+  minFeeConstant?: UInt64;
+  maxBlockBodySize?: UInt64;
+  maxBlockHeaderSize?: UInt64;
+  maxTxSize?: UInt64;
+  stakeKeyDeposit?: UInt64;
+  poolDeposit?: UInt64;
+  poolRetirementEpochBound?: UInt64;
+  desiredNumberOfPools?: UInt64;
+  poolInfluence?: Ratio;
+  monetaryExpansion?: Ratio;
+  treasuryExpansion?: Ratio;
+  decentralizationParameter?: Ratio;
+  minPoolCost?: UInt64;
+  coinsPerUtxoWord?: UInt64;
+  maxValueSize?: UInt64;
+  collateralPercentage?: UInt64;
+  maxCollateralInputs?: UInt64;
+  extraEntropy?: Nonce;
+  protocolVersion?: ProtocolVersion;
+  costModels?: CostModels;
+  prices?: Prices;
+  maxExecutionUnitsPerTransaction?: ExUnits;
+  maxExecutionUnitsPerBlock?: ExUnits;
 }
 export interface Mary {
   mary: BlockMary;
@@ -1460,12 +1334,12 @@ export interface TxMary {
   body: {
     inputs: TxIn[];
     outputs: TxOut[];
-    certificates: Certificate[];
-    withdrawals: Withdrawals;
+    certificates?: Certificate[];
+    withdrawals?: Withdrawals;
     fee: Lovelace;
     validityInterval: ValidityInterval;
-    update: UpdateShelley;
-    mint: Value;
+    update?: UpdateProposalShelley;
+    mint?: Value;
   };
   witness: {
     signatures: {
@@ -1476,7 +1350,7 @@ export interface TxMary {
     };
     bootstrap: BootstrapWitness[];
   };
-  metadata: AuxiliaryData | Null;
+  metadata?: AuxiliaryData;
   /**
    * The raw serialized transaction, as found on-chain.
    */
@@ -1489,23 +1363,23 @@ export interface UpdateProposalShelley {
   };
 }
 export interface ProtocolParametersShelley {
-  minFeeCoefficient: NullableUInt64;
-  minFeeConstant: NullableUInt64;
-  maxBlockBodySize: NullableUInt64;
-  maxBlockHeaderSize: NullableUInt64;
-  maxTxSize: NullableUInt64;
-  stakeKeyDeposit: NullableUInt64;
-  poolDeposit: NullableUInt64;
-  poolRetirementEpochBound: NullableUInt64;
-  desiredNumberOfPools: NullableUInt64;
-  poolInfluence: NullableRatio;
-  monetaryExpansion: NullableRatio;
-  treasuryExpansion: NullableRatio;
-  decentralizationParameter: NullableRatio;
-  minUtxoValue: NullableUInt64;
-  minPoolCost: NullableUInt64;
-  extraEntropy: Nonce | Null;
-  protocolVersion: ProtocolVersion | Null;
+  minFeeCoefficient?: UInt64;
+  minFeeConstant?: UInt64;
+  maxBlockBodySize?: UInt64;
+  maxBlockHeaderSize?: UInt64;
+  maxTxSize?: UInt64;
+  stakeKeyDeposit?: UInt64;
+  poolDeposit?: UInt64;
+  poolRetirementEpochBound?: UInt64;
+  desiredNumberOfPools?: UInt64;
+  poolInfluence?: Ratio;
+  monetaryExpansion?: Ratio;
+  treasuryExpansion?: Ratio;
+  decentralizationParameter?: Ratio;
+  minUtxoValue?: UInt64;
+  minPoolCost?: UInt64;
+  extraEntropy?: Nonce;
+  protocolVersion?: ProtocolVersion;
 }
 export interface Allegra {
   allegra: BlockAllegra;
@@ -1533,11 +1407,11 @@ export interface TxAllegra {
   body: {
     inputs: TxIn[];
     outputs: TxOut[];
-    certificates: Certificate[];
-    withdrawals: Withdrawals;
+    certificates?: Certificate[];
+    withdrawals?: Withdrawals;
     fee: Lovelace;
     validityInterval: ValidityInterval;
-    update: UpdateShelley;
+    update?: UpdateProposalShelley;
   };
   witness: {
     signatures: {
@@ -1548,7 +1422,7 @@ export interface TxAllegra {
     };
     bootstrap: BootstrapWitness[];
   };
-  metadata: AuxiliaryData | Null;
+  metadata?: AuxiliaryData;
   /**
    * The raw serialized transaction, as found on-chain.
    */
@@ -1580,22 +1454,22 @@ export interface TxShelley {
   body: {
     inputs: TxIn[];
     outputs: TxOut[];
-    certificates: Certificate[];
-    withdrawals: Withdrawals;
+    certificates?: Certificate[];
+    withdrawals?: Withdrawals;
     fee: Lovelace;
     timeToLive: Slot;
-    update: UpdateShelley;
+    update?: UpdateProposalShelley;
   };
   witness: {
-    signatures: {
+    signatures?: {
       [k: string]: Signature;
     };
-    scripts: {
+    scripts?: {
       [k: string]: Script;
     };
-    bootstrap: BootstrapWitness[];
+    bootstrap?: BootstrapWitness[];
   };
-  metadata: AuxiliaryData | Null;
+  metadata?: AuxiliaryData;
   /**
    * The raw serialized transaction, as found on-chain.
    */
@@ -1621,7 +1495,7 @@ export interface StandardBlock {
     txPayload: TxByron[];
     dlgPayload: DlgCertificate[];
     updatePayload: {
-      proposal: Null | UpdateProposalByron;
+      proposal?: UpdateProposalByron;
       votes: Vote[];
     };
   };
@@ -1689,29 +1563,29 @@ export interface UpdateProposalByron {
   signature: IssuerSignature;
 }
 export interface ProtocolParametersByron {
-  heavyDlgThreshold: NullableRatio;
-  maxBlockSize: NullableUInt64;
-  maxHeaderSize: NullableUInt64;
-  maxProposalSize: NullableUInt64;
-  maxTxSize: NullableUInt64;
-  mpcThreshold: NullableRatio;
-  scriptVersion: NullableUInt64;
-  slotDuration: NullableUInt64;
-  unlockStakeEpoch: NullableUInt64;
-  updateProposalThreshold: NullableRatio;
-  updateProposalTimeToLive: NullableUInt64;
-  updateVoteThreshold: NullableRatio;
-  txFeePolicy: TxFeePolicy | Null;
-  softforkRule: SoftForkRule | Null;
+  heavyDlgThreshold?: Ratio;
+  maxBlockSize?: UInt64;
+  maxHeaderSize?: UInt64;
+  maxProposalSize?: UInt64;
+  maxTxSize?: UInt64;
+  mpcThreshold?: Ratio;
+  scriptVersion?: UInt64;
+  slotDuration?: UInt64;
+  unlockStakeEpoch?: UInt64;
+  updateProposalThreshold?: Ratio;
+  updateProposalTimeToLive?: UInt64;
+  updateVoteThreshold?: Ratio;
+  txFeePolicy?: TxFeePolicy;
+  softforkRule?: SoftForkRule;
 }
 export interface TxFeePolicy {
   coefficient: Ratio;
   constant: number;
 }
 export interface SoftForkRule {
-  initThreshold: NullableRatio;
-  minThreshold: NullableRatio;
-  decrementThreshold: NullableRatio;
+  initThreshold: Ratio;
+  minThreshold: Ratio;
+  decrementThreshold: Ratio;
 }
 export interface Vote {
   voterVk: VerificationKey;
@@ -2004,8 +1878,8 @@ export interface UnspendableDatums {
 }
 export interface ExtraDataMismatch {
   extraDataMismatch: {
-    provided: DigestBlake2BScriptIntegrity | Null;
-    inferredFromParameters: DigestBlake2BScriptIntegrity | Null;
+    provided?: DigestBlake2BScriptIntegrity;
+    inferredFromParameters?: DigestBlake2BScriptIntegrity;
   };
 }
 export interface MissingRequiredSignatures {
@@ -2152,7 +2026,7 @@ export interface NonScriptInputReferencedByRedeemer {
  * Invalid execution budget set for a redeemer. In principle, cannot happen in the context of Ogmios.
  */
 export interface IllFormedExecutionBudget {
-  illFormedExecutionBudget: ExUnits | Null;
+  illFormedExecutionBudget?: ExUnits;
 }
 /**
  * Input locked by a script which language has no cost model in current protocol parameters. In principle, cannot happen in the context of Ogmios.
@@ -2357,10 +2231,10 @@ export interface GenesisAlonzo {
   coinsPerUtxoWord: UInt64;
   collateralPercentage: UInt64;
   costModels: CostModels;
-  maxCollateralInputs: NullableUInt64;
+  maxCollateralInputs: UInt64;
   maxExecutionUnitsPerBlock: ExUnits;
   maxExecutionUnitsPerTransaction: ExUnits;
-  maxValueSize: NullableUInt64;
+  maxValueSize: UInt64;
   prices: Prices;
 }
 /**

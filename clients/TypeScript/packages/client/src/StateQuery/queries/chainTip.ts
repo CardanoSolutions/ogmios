@@ -14,8 +14,8 @@ export const chainTip = (context: InteractionContext): Promise<PointOrOrigin> =>
     Ogmios['QueryResponse[chainTip]'],
     PointOrOrigin
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: 'chainTip'
     }
   }, {

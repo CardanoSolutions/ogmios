@@ -4,14 +4,12 @@ window.addEventListener('load', function () {
   const HEALTH_URL = window.location.protocol + "//" + window.location.host + '/health';
 
   // Augment the 'WebSocket' prototype for convenient use with Ogmios.
-  WebSocket.prototype.ogmios = function ogmios(methodname, args, mirror = {}) {
+  WebSocket.prototype.ogmios = function ogmios(method, params, id = {}) {
     this.send(JSON.stringify({
-      type: "jsonwsp/request",
-      version: "1.0",
-      servicename: "ogmios",
-      methodname,
-      args,
-      mirror
+      jsonrpc: "2.0",
+      method,
+      params,
+      id
     }));
   };
 

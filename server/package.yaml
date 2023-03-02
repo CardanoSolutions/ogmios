@@ -78,7 +78,7 @@ library:
     - io-sim
     - iohk-monitoring
     - iproute
-    - json-wsp
+    - json-rpc
     - lens-aeson
     - memory
     - mtl
@@ -158,7 +158,7 @@ tests:
     - hspec-json-schema
     - io-sim
     - io-classes
-    - json-wsp
+    - json-rpc
     - lens-aeson
     - ogmios
     - ouroboros-consensus

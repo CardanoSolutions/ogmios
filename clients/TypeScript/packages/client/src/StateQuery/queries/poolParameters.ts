@@ -31,8 +31,8 @@ export const poolParameters = (
     Ogmios['QueryResponse[poolParameters]'],
     { [k: string]: PoolParameters }
   >({
-    methodName: 'Query',
-    args: { query: { poolParameters: pools } }
+    method: 'Query',
+    params: { query: { poolParameters: pools } }
   }, {
     handler: (response, resolve, reject) => {
       if (response.result === 'QueryUnavailableInCurrentEra') {

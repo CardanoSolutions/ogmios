@@ -22,8 +22,8 @@ export const eraSummaries = (context: InteractionContext): Promise<[EraSummary]>
     Ogmios['QueryResponse[eraSummaries]'],
     [EraSummary]
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: 'eraSummaries'
     }
   }, {

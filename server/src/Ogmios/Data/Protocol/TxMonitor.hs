@@ -69,9 +69,6 @@ import Ogmios.Data.Json.Prelude hiding
     ( id
     )
 
-import Ogmios.Data.Protocol
-    ()
-
 import Cardano.Network.Protocol.NodeToClient
     ( GenTx
     , GenTxId
@@ -83,7 +80,7 @@ import Ouroboros.Network.Protocol.LocalTxMonitor.Type
     ( MempoolSizeAndCapacity (..)
     )
 
-import qualified Codec.Json.Wsp as Wsp
+import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.Types as Json
@@ -95,33 +92,33 @@ import qualified Data.Aeson.Types as Json
 data TxMonitorCodecs block = TxMonitorCodecs
     { decodeAwaitAcquire
         :: ByteString
-        -> Maybe (Wsp.Request AwaitAcquire)
+        -> Maybe (Rpc.Request AwaitAcquire)
     , encodeAwaitAcquireResponse
-        :: Wsp.Response AwaitAcquireResponse
+        :: Rpc.Response AwaitAcquireResponse
         -> Json
     , decodeNextTx
         :: ByteString
-        -> Maybe (Wsp.Request NextTx)
+        -> Maybe (Rpc.Request NextTx)
     , encodeNextTxResponse
-        :: Wsp.Response (NextTxResponse block)
+        :: Rpc.Response (NextTxResponse block)
         -> Json
     , decodeHasTx
         :: ByteString
-        -> Maybe (Wsp.Request (HasTx block))
+        -> Maybe (Rpc.Request (HasTx block))
     , encodeHasTxResponse
-        :: Wsp.Response HasTxResponse
+        :: Rpc.Response HasTxResponse
         -> Json
     , decodeSizeAndCapacity
         :: ByteString
-        -> Maybe (Wsp.Request SizeAndCapacity)
+        -> Maybe (Rpc.Request SizeAndCapacity)
     , encodeSizeAndCapacityResponse
-        :: Wsp.Response SizeAndCapacityResponse
+        :: Rpc.Response SizeAndCapacityResponse
         -> Json
     , decodeReleaseMempool
         :: ByteString
-        -> Maybe (Wsp.Request ReleaseMempool)
+        -> Maybe (Rpc.Request ReleaseMempool)
     , encodeReleaseMempoolResponse
-        :: Wsp.Response ReleaseMempoolResponse
+        :: Rpc.Response ReleaseMempoolResponse
         -> Json
     }
 
@@ -151,24 +148,24 @@ mkTxMonitorCodecs encodeTxId encodeTx =
 data TxMonitorMessage block
     = MsgAwaitAcquire
         AwaitAcquire
-        (Wsp.ToResponse AwaitAcquireResponse)
-        Wsp.ToFault
+        (Rpc.ToResponse AwaitAcquireResponse)
+        Rpc.ToFault
     | MsgNextTx
         NextTx
-        (Wsp.ToResponse (NextTxResponse block))
-        Wsp.ToFault
+        (Rpc.ToResponse (NextTxResponse block))
+        Rpc.ToFault
     | MsgHasTx
         (HasTx block)
-        (Wsp.ToResponse HasTxResponse)
-        Wsp.ToFault
+        (Rpc.ToResponse HasTxResponse)
+        Rpc.ToFault
     | MsgSizeAndCapacity
         SizeAndCapacity
-        (Wsp.ToResponse SizeAndCapacityResponse)
-        Wsp.ToFault
+        (Rpc.ToResponse SizeAndCapacityResponse)
+        Rpc.ToFault
     | MsgReleaseMempool
         ReleaseMempool
-        (Wsp.ToResponse ReleaseMempoolResponse)
-        Wsp.ToFault
+        (Rpc.ToResponse ReleaseMempoolResponse)
+        Rpc.ToFault
 
 --
 -- AwaitAcquire
@@ -179,34 +176,32 @@ data AwaitAcquire
     deriving (Generic, Show, Eq)
 
 _encodeAwaitAcquire
-    :: Wsp.Request AwaitAcquire
+    :: Rpc.Request AwaitAcquire
     -> Json
 _encodeAwaitAcquire =
-    Wsp.mkRequest Wsp.defaultOptions $ encodeObject . \case
+    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
         AwaitAcquire ->
             mempty
 
 _decodeAwaitAcquire
     :: Json.Value
-    -> Json.Parser (Wsp.Request AwaitAcquire)
+    -> Json.Parser (Rpc.Request AwaitAcquire)
 _decodeAwaitAcquire =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    Rpc.genericFromJSON Rpc.defaultOptions
 
 data AwaitAcquireResponse
     = AwaitAcquired { slot :: SlotNo }
     deriving (Generic, Show, Eq)
 
 _encodeAwaitAcquireResponse
-    :: Wsp.Response AwaitAcquireResponse
+    :: Rpc.Response AwaitAcquireResponse
     -> Json
 _encodeAwaitAcquireResponse =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ encodeObject . \case
+    Rpc.mkResponse $ encodeObject . \case
         AwaitAcquired{slot} ->
             "AwaitAcquired" .= encodeObject
                 ( "slot" .= encodeSlotNo slot
                 )
-      where
-        proxy = Proxy @(Wsp.Request AwaitAcquire)
 
 --
 -- NextTx
@@ -217,10 +212,10 @@ data NextTx
     deriving (Generic, Show, Eq)
 
 _encodeNextTx
-    :: Wsp.Request NextTx
+    :: Rpc.Request NextTx
     -> Json
 _encodeNextTx =
-    Wsp.mkRequest Wsp.defaultOptions $ encodeObject . \case
+    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
         NextTx{fields} ->
             case fields of
                 Nothing ->
@@ -230,14 +225,14 @@ _encodeNextTx =
 
 _decodeNextTx
     :: Json.Value
-    -> Json.Parser (Wsp.Request NextTx)
+    -> Json.Parser (Rpc.Request NextTx)
 _decodeNextTx =
-    Wsp.genericFromJSON Wsp.defaultOptions
-        { Wsp.onMissingField = \case
+    Rpc.genericFromJSON Rpc.defaultOptions
+        { Rpc.onMissingField = \case
             "fields" ->
                 pure Json.Null
             k ->
-                Wsp.onMissingField  Wsp.defaultOptions k
+                Rpc.onMissingField Rpc.defaultOptions k
         }
 
 data NextTxFields
@@ -279,16 +274,14 @@ _encodeNextTxResponse
     :: forall block. ()
     => (GenTxId block -> Json)
     -> (GenTx block -> Json)
-    -> Wsp.Response (NextTxResponse block)
+    -> Rpc.Response (NextTxResponse block)
     -> Json
 _encodeNextTxResponse encodeTxId encodeTx =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
+    Rpc.mkResponse $ \case
         NextTxResponseId{nextId} ->
             encodeMaybe encodeTxId nextId
         NextTxResponseTx{nextTx} ->
             encodeMaybe encodeTx nextTx
-  where
-    proxy = Proxy @(Wsp.Request NextTx)
 
 --
 -- HasTx
@@ -302,19 +295,19 @@ deriving instance   Eq (GenTxId block) =>   Eq (HasTx block)
 _encodeHasTx
     :: forall block. ()
     => (GenTxId block -> Json)
-    -> Wsp.Request (HasTx block)
+    -> Rpc.Request (HasTx block)
     -> Json
 _encodeHasTx encodeTxId =
-    Wsp.mkRequest Wsp.defaultOptions $ encodeObject . \case
+    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
         HasTx{id} ->
             "id" .= encodeTxId id
 
 _decodeHasTx
     :: forall block. (FromJSON (GenTxId block))
     => Json.Value
-    -> Json.Parser (Wsp.Request (HasTx block))
+    -> Json.Parser (Rpc.Request (HasTx block))
 _decodeHasTx =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    Rpc.genericFromJSON Rpc.defaultOptions
 
 data HasTxResponse
     = HasTxResponse { has :: Bool }
@@ -322,14 +315,12 @@ data HasTxResponse
 
 _encodeHasTxResponse
     :: forall block. ()
-    => Wsp.Response HasTxResponse
+    => Rpc.Response HasTxResponse
     -> Json
 _encodeHasTxResponse =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
+    Rpc.mkResponse $ \case
         HasTxResponse{has} ->
             encodeBool has
-  where
-    proxy = Proxy @(Wsp.Request (HasTx block))
 
 --
 -- SizeAndCapacity
@@ -340,28 +331,28 @@ data SizeAndCapacity
     deriving (Generic, Show, Eq)
 
 _encodeSizeAndCapacity
-    :: Wsp.Request SizeAndCapacity
+    :: Rpc.Request SizeAndCapacity
     -> Json
 _encodeSizeAndCapacity =
-    Wsp.mkRequest Wsp.defaultOptions $ encodeObject . \case
+    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
         SizeAndCapacity ->
             mempty
 
 _decodeSizeAndCapacity
     :: Json.Value
-    -> Json.Parser (Wsp.Request SizeAndCapacity)
+    -> Json.Parser (Rpc.Request SizeAndCapacity)
 _decodeSizeAndCapacity =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    Rpc.genericFromJSON Rpc.defaultOptions
 
 data SizeAndCapacityResponse
     = SizeAndCapacityResponse { sizes :: MempoolSizeAndCapacity }
     deriving (Generic, Show)
 
 _encodeSizeAndCapacityResponse
-    :: Wsp.Response SizeAndCapacityResponse
+    :: Rpc.Response SizeAndCapacityResponse
     -> Json
 _encodeSizeAndCapacityResponse =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ encodeObject . \case
+    Rpc.mkResponse $ encodeObject . \case
         SizeAndCapacityResponse{sizes} ->
             "capacity" .=
                 encodeWord32 (capacityInBytes sizes) <>
@@ -369,8 +360,6 @@ _encodeSizeAndCapacityResponse =
                 encodeWord32 (sizeInBytes sizes) <>
             "numberOfTxs" .=
                 encodeWord32 (numberOfTxs sizes)
-  where
-    proxy = Proxy @(Wsp.Request SizeAndCapacity)
 
 --
 -- ReleaseMempool
@@ -381,29 +370,27 @@ data ReleaseMempool
     deriving (Generic, Show, Eq)
 
 _encodeReleaseMempool
-    :: Wsp.Request ReleaseMempool
+    :: Rpc.Request ReleaseMempool
     -> Json
 _encodeReleaseMempool =
-    Wsp.mkRequest Wsp.defaultOptions $ encodeObject . \case
+    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
         ReleaseMempool ->
             mempty
 
 _decodeReleaseMempool
     :: Json.Value
-    -> Json.Parser (Wsp.Request ReleaseMempool)
+    -> Json.Parser (Rpc.Request ReleaseMempool)
 _decodeReleaseMempool =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    Rpc.genericFromJSON Rpc.defaultOptions
 
 data ReleaseMempoolResponse
     = Released
     deriving (Generic, Show)
 
 _encodeReleaseMempoolResponse
-    :: Wsp.Response ReleaseMempoolResponse
+    :: Rpc.Response ReleaseMempoolResponse
     -> Json
 _encodeReleaseMempoolResponse =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
+    Rpc.mkResponse $ \case
         Released ->
             encodeText "Released"
-  where
-    proxy = Proxy @(Wsp.Request ReleaseMempool)

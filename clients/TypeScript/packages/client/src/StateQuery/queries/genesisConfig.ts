@@ -32,8 +32,8 @@ export const genesisConfig = (context: InteractionContext, era: EraWithGenesis):
     Ogmios['QueryResponse[genesisConfig]'],
     GenesisConfig
   >({
-    methodName: 'Query',
-    args: {
+    method: 'Query',
+    params: {
       query: {
         genesisConfig: String(era).toLowerCase()
       }

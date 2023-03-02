@@ -15,12 +15,12 @@ import { handleSizeAndCapacityResponse } from './sizeAndCapacity'
  **/
 export interface TxMonitorClient {
     context: InteractionContext
-    awaitAcquire(args?: {}): Promise<Slot>
+    awaitAcquire(params?: {}): Promise<Slot>
     hasTx(id: TxId): Promise<boolean>
     nextTx(): Promise<TxId | null>
-    nextTx(args: { fields: 'all' }): Promise<TxAlonzo | null>
-    sizeAndCapacity(args?: {}): Promise<MempoolSizeAndCapacity>
-    release(args?: {}): Promise<void>
+    nextTx(params: { fields: 'all' }): Promise<TxAlonzo | null>
+    sizeAndCapacity(params?: {}): Promise<MempoolSizeAndCapacity>
+    release(params?: {}): Promise<void>
     shutdown(): Promise<void>
 }
 
@@ -37,7 +37,7 @@ export const createTxMonitorClient = async (
   const matchAny = (data: string) => {
     const json = safeJSON.parse(data)
     const methods = ['AwaitAcquire', 'HasTx', 'NextTx', 'SizeAndCapacity', 'ReleaseMempool']
-    if (json.type !== 'jsonwsp/fault' && !methods.includes(json.methodname)) {
+    if (typeof json.error === 'undefined' && !methods.includes(json.method)) {
       return null
     }
     return json
@@ -54,13 +54,13 @@ export const createTxMonitorClient = async (
 
   return Promise.resolve({
     context,
-    awaitAcquire: (args?: {}) => {
+    awaitAcquire: (params?: {}) => {
       ensureSocketIsOpen(socket)
       return send<Slot>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          methodname: 'AwaitAcquire',
-          args: args
+          method: 'AwaitAcquire',
+          params: params
         } as unknown as Ogmios['AwaitAcquire']))
 
         return handleAwaitAcquireResponse((await response.next()).value)
@@ -71,44 +71,44 @@ export const createTxMonitorClient = async (
       return send<boolean>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          methodname: 'HasTx',
-          args: { id }
+          method: 'HasTx',
+          params: { id }
         } as unknown as Ogmios['HasTx']))
 
         return handleHasTxResponse((await response.next()).value)
       }, context)
     },
-    nextTx: (args?: {fields: 'all'}) => {
+    nextTx: (params?: {fields: 'all'}) => {
       ensureSocketIsOpen(socket)
       return send<TxId | TxAlonzo | null>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          methodname: 'NextTx',
-          args: args || {}
+          method: 'NextTx',
+          params: params || {}
         } as unknown as Ogmios['NextTx']))
 
-        return handleNextTxResponse((await response.next()).value, args)
+        return handleNextTxResponse((await response.next()).value, params)
       }, context)
     },
-    sizeAndCapacity: (args?: {}) => {
+    sizeAndCapacity: (params?: {}) => {
       ensureSocketIsOpen(socket)
       return send<MempoolSizeAndCapacity>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          methodname: 'SizeAndCapacity',
-          args: args
+          method: 'SizeAndCapacity',
+          params: params
         } as unknown as Ogmios['SizeAndCapacity']))
 
         return handleSizeAndCapacityResponse((await response.next()).value)
       }, context)
     },
-    release: (args?: {}) => {
+    release: (params?: {}) => {
       ensureSocketIsOpen(socket)
       return send<void>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          methodname: 'ReleaseMempool',
-          args: args
+          method: 'ReleaseMempool',
+          params: params
         } as unknown as Ogmios['ReleaseMempool']))
 
         return handleReleaseResponse((await response.next()).value)

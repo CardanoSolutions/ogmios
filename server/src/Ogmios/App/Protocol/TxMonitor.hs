@@ -78,7 +78,7 @@ import Ouroboros.Network.Protocol.LocalTxMonitor.Client
     , LocalTxMonitorClient (..)
     )
 
-import qualified Codec.Json.Wsp as Wsp
+import qualified Codec.Json.Rpc as Rpc
 import qualified Prelude
 
 mkTxMonitorClient
@@ -99,11 +99,11 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
     await :: m (TxMonitorMessage block)
     await = atomically (readTQueue queue)
 
-    mustAcquireFirst :: forall a. (Show a) => a -> Wsp.ToFault -> m ()
+    mustAcquireFirst :: forall a. (Show a) => a -> Rpc.ToFault -> m ()
     mustAcquireFirst query toFault = do
         let constructor = toString $ Prelude.head $ words $ show query
         let fault = "'" <> constructor <> "' must be called after at least one 'AwaitAcquire'."
-        yield $ Wsp.mkFault $ toFault Wsp.FaultClient fault
+        yield $ Rpc.mkFault $ toFault Rpc.FaultInvalidRequest fault
 
     clientStIdle
         :: m (ClientStIdle (GenTxId block) (GenTx block) SlotNo m ())
