@@ -119,37 +119,25 @@ encodeBlock
     :: Crypto crypto
     => CardanoBlock crypto
     -> Json
-encodeBlock = \case
-    BlockByron blk -> encodeObject
-        [ ( "byron"
-          , Byron.encodeABlockOrBoundary (byronBlockRaw blk)
-          )
-        ]
-    BlockShelley blk -> encodeObject
-        [ ( "shelley"
-          , Shelley.encodeBlock blk
-          )
-        ]
-    BlockAllegra blk -> encodeObject
-        [ ( "allegra"
-          , Allegra.encodeBlock blk
-          )
-        ]
-    BlockMary blk -> encodeObject
-        [ ( "mary"
-          , Mary.encodeBlock blk
-          )
-        ]
-    BlockAlonzo blk -> encodeObject
-        [ ( "alonzo"
-          , Alonzo.encodeBlock blk
-          )
-        ]
-    BlockBabbage blk -> encodeObject
-        [ ( "babbage"
-          , Babbage.encodeBlock blk
-          )
-        ]
+encodeBlock = encodeObject . \case
+    BlockByron blk ->
+        "byron" .=
+            Byron.encodeABlockOrBoundary (byronBlockRaw blk)
+    BlockShelley blk ->
+        "shelley" .=
+            Shelley.encodeBlock blk
+    BlockAllegra blk ->
+        "allegra" .=
+            Allegra.encodeBlock blk
+    BlockMary blk ->
+        "mary" .=
+            Mary.encodeBlock blk
+    BlockAlonzo blk ->
+        "alonzo" .=
+            Alonzo.encodeBlock blk
+    BlockBabbage blk ->
+        "babbage" .=
+            Babbage.encodeBlock blk
 
 encodeSubmitTxError
     :: Crypto crypto
@@ -193,18 +181,16 @@ encodeTip
     :: Tip (CardanoBlock crypto)
     -> Json
 encodeTip = \case
-    TipGenesis -> encodeText "origin"
-    Tip slot hash blockNo -> encodeObject
-        [ ( "slot"
-          , encodeSlotNo slot
-          )
-        , ( "hash"
-          , encodeOneEraHash hash
-          )
-        , ( "blockNo"
-          , encodeBlockNo blockNo
-          )
-        ]
+    TipGenesis ->
+        encodeText "origin"
+    Tip slot hash blockNo ->
+        "slot" .=
+            encodeSlotNo slot <>
+        "hash" .=
+            encodeOneEraHash hash <>
+        "blockNo" .=
+            encodeBlockNo blockNo
+        & encodeObject
 
 encodeTx
     :: forall crypto.

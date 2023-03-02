@@ -1966,35 +1966,31 @@
               , "updatePayload":
                 { "type": "object"
                 , "additionalProperties": false
-                , "required": [ "proposal", "votes" ]
+                , "required": [ "votes" ]
                 , "properties":
                   { "proposal":
-                    { "oneOf":
-                      [ { "$ref": "ogmios.wsp.json#/definitions/Null"}
-                      , { "type": "object"
-                        , "title": "UpdateProposal[Byron]"
+                    { "type": "object"
+                    , "title": "UpdateProposal[Byron]"
+                    , "additionalProperties": false
+                    , "required": [ "body", "issuer", "signature" ]
+                    , "properties":
+                      { "body":
+                        { "type": "object"
                         , "additionalProperties": false
-                        , "required": [ "body", "issuer", "signature" ]
+                        , "required": [ "protocolVersion", "parametersUpdate", "softwareVersion", "metadata" ]
                         , "properties":
-                          { "body":
+                          { "protocolVersion": { "$ref": "ogmios.wsp.json#/definitions/ProtocolVersion" }
+                          , "softwareVersion": { "$ref": "ogmios.wsp.json#/definitions/SoftwareVersion" }
+                          , "metadata":
                             { "type": "object"
-                            , "additionalProperties": false
-                            , "required": [ "protocolVersion", "parametersUpdate", "softwareVersion", "metadata" ]
-                            , "properties":
-                              { "protocolVersion": { "$ref": "ogmios.wsp.json#/definitions/ProtocolVersion" }
-                              , "softwareVersion": { "$ref": "ogmios.wsp.json#/definitions/SoftwareVersion" }
-                              , "metadata":
-                                { "type": "object"
-                                , "additionalProperties": { "type": "string" }
-                                }
-                              , "parametersUpdate": { "$ref": "ogmios.wsp.json#/definitions/ProtocolParameters[Byron]" }
-                              }
+                            , "additionalProperties": { "type": "string" }
                             }
-                          , "issuer": { "$ref": "ogmios.wsp.json#/definitions/IssuerVrfVerificationKey" }
-                          , "signature": { "$ref": "ogmios.wsp.json#/definitions/IssuerSignature" }
+                          , "parametersUpdate": { "$ref": "ogmios.wsp.json#/definitions/ProtocolParameters[Byron]" }
                           }
                         }
-                      ]
+                      , "issuer": { "$ref": "ogmios.wsp.json#/definitions/IssuerVrfVerificationKey" }
+                      , "signature": { "$ref": "ogmios.wsp.json#/definitions/IssuerSignature" }
+                      }
                     }
                   , "votes":
                     { "type": "array"
@@ -2198,27 +2194,15 @@
         }
       , { "signature": "KYCDveFX76KYEg6Axad/RG5+b5QbJdtYQSNA6kPjqsHh5cIwYPQyqquLJcwo9uDDfqUNmu7n2NUG+o7t2a1Hjg=="
         , "key": "0c02af01eaacc939b3d0d817f4eb57d323ea5686cb1fecb8de821df1296b84a7"
-        , "chainCode": null
-        , "addressAttributes": null
         }
       ]
     , "additionalProperties": false
-    , "required": [ "signature", "chainCode", "addressAttributes", "key" ]
+    , "required": [ "signature", "key" ]
     , "properties":
-      { "signature": { "$ref": "ogmios.wsp.json#/definitions/Signature" }
-      , "chainCode":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/ChainCode" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "addressAttributes":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/AddressAttributes" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "key": { "$ref": "ogmios.wsp.json#/definitions/VerificationKey" }
+      { "key": { "$ref": "ogmios.wsp.json#/definitions/VerificationKey" }
+      , "signature": { "$ref": "ogmios.wsp.json#/definitions/Signature" }
+      , "chainCode": { "$ref": "ogmios.wsp.json#/definitions/ChainCode" }
+      , "addressAttributes": { "$ref": "ogmios.wsp.json#/definitions/AddressAttributes" }
       }
     }
 
@@ -2916,10 +2900,10 @@
       { "coinsPerUtxoWord": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
       , "collateralPercentage": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
       , "costModels": { "$ref": "ogmios.wsp.json#/definitions/CostModels" }
-      , "maxCollateralInputs": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
+      , "maxCollateralInputs": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
       , "maxExecutionUnitsPerBlock": { "$ref": "ogmios.wsp.json#/definitions/ExUnits" }
       , "maxExecutionUnitsPerTransaction": { "$ref": "ogmios.wsp.json#/definitions/ExUnits" }
-      , "maxValueSize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
+      , "maxValueSize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
       , "prices": { "$ref": "ogmios.wsp.json#/definitions/Prices" }
       }
     }
@@ -3262,20 +3246,6 @@
     { "type": "null"
     }
 
-  , "NullableUInt64":
-    { "oneOf":
-      [ { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
-      , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-      ]
-    }
-
-  , "NullableRatio":
-    { "oneOf":
-      [ { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
-      , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-      ]
-    }
-
   , "OpCert":
     { "type": "object"
     , "description": "Certificate identifying a stake pool operator."
@@ -3355,9 +3325,10 @@
   , "PoolParameters":
     { "type": "object"
     , "additionalProperties": false
-    , "required": ["owners","cost","margin","pledge","vrf","metadata","id","relays","rewardAccount"]
+    , "required": ["owners", "cost", "margin", "pledge", "vrf", "id", "relays", "rewardAccount"]
     , "properties":
-      { "owners":
+      { "id": { "$ref": "ogmios.wsp.json#/definitions/PoolId" }
+      , "owners":
         { "type": "array"
         , "items": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::VerificationKey" }
         }
@@ -3366,23 +3337,18 @@
       , "pledge": { "$ref": "ogmios.wsp.json#/definitions/Lovelace" }
       , "vrf": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::VrfVerificationKey" }
       , "metadata":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          , { "type": "object"
-            , "title": "poolMetadata"
-            , "additionalProperties": false
-            , "required": ["hash","url"]
-            , "properties":
-              { "hash": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::PoolMetadata" }
-              , "url":
-                { "type": "string"
-                , "format": "uri"
-                }
-              }
+        { "type": "object"
+        , "title": "poolMetadata"
+        , "additionalProperties": false
+        , "required": ["hash","url"]
+        , "properties":
+          { "hash": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::PoolMetadata" }
+          , "url":
+            { "type": "string"
+            , "format": "uri"
             }
-          ]
+          }
         }
-      , "id": { "$ref": "ogmios.wsp.json#/definitions/PoolId" }
       , "relays":
         { "type": "array"
         , "items": { "$ref": "ogmios.wsp.json#/definitions/Relay" }
@@ -3441,265 +3407,105 @@
   , "ProtocolParameters[Byron]":
     { "type": "object"
     , "additionalProperties": false
-    , "required":
-      [ "heavyDlgThreshold"
-      , "maxBlockSize"
-      , "maxHeaderSize"
-      , "maxProposalSize"
-      , "maxTxSize"
-      , "mpcThreshold"
-      , "scriptVersion"
-      , "slotDuration"
-      , "unlockStakeEpoch"
-      , "updateProposalThreshold"
-      , "updateProposalTimeToLive"
-      , "updateVoteThreshold"
-      , "txFeePolicy"
-      , "softforkRule"
-      ]
     , "properties":
-      { "heavyDlgThreshold": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "maxBlockSize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxHeaderSize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxProposalSize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxTxSize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "mpcThreshold": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "scriptVersion": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "slotDuration": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "unlockStakeEpoch": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "updateProposalThreshold": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "updateProposalTimeToLive": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "updateVoteThreshold": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "txFeePolicy":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/TxFeePolicy" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "softforkRule":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/SoftForkRule" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
+      { "heavyDlgThreshold": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "maxBlockSize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxHeaderSize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxProposalSize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxTxSize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "mpcThreshold": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "scriptVersion": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "slotDuration": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "unlockStakeEpoch": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "updateProposalThreshold": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "updateProposalTimeToLive": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "updateVoteThreshold": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "txFeePolicy": { "$ref": "ogmios.wsp.json#/definitions/TxFeePolicy" }
+      , "softforkRule": { "$ref": "ogmios.wsp.json#/definitions/SoftForkRule" }
       }
     }
 
   , "ProtocolParameters[Shelley]":
     { "type": "object"
     , "additionalProperties": false
-    , "required":
-      [ "minFeeCoefficient"
-      , "minFeeConstant"
-      , "maxBlockBodySize"
-      , "maxBlockHeaderSize"
-      , "maxTxSize"
-      , "stakeKeyDeposit"
-      , "poolDeposit"
-      , "poolRetirementEpochBound"
-      , "desiredNumberOfPools"
-      , "poolInfluence"
-      , "monetaryExpansion"
-      , "treasuryExpansion"
-      , "decentralizationParameter"
-      , "minUtxoValue"
-      , "minPoolCost"
-      , "extraEntropy"
-      , "protocolVersion"
-      ]
     , "properties":
-      { "minFeeCoefficient": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "minFeeConstant": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxBlockBodySize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxBlockHeaderSize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxTxSize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "stakeKeyDeposit": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "poolDeposit": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "poolRetirementEpochBound": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "desiredNumberOfPools": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "poolInfluence": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "monetaryExpansion": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "treasuryExpansion": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "decentralizationParameter": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "minUtxoValue": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "minPoolCost": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "extraEntropy":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/Nonce" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "protocolVersion":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/ProtocolVersion" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
+      { "minFeeCoefficient": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "minFeeConstant": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxBlockBodySize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxBlockHeaderSize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxTxSize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "stakeKeyDeposit": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "poolDeposit": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "poolRetirementEpochBound": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "desiredNumberOfPools": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "poolInfluence": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "monetaryExpansion": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "treasuryExpansion": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "decentralizationParameter": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "minUtxoValue": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "minPoolCost": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "extraEntropy": { "$ref": "ogmios.wsp.json#/definitions/Nonce" }
+      , "protocolVersion": { "$ref": "ogmios.wsp.json#/definitions/ProtocolVersion" }
       }
     }
 
   , "ProtocolParameters[Alonzo]":
     { "type": "object"
     , "additionalProperties": false
-    , "required":
-      [ "minFeeCoefficient"
-      , "minFeeConstant"
-      , "maxBlockBodySize"
-      , "maxBlockHeaderSize"
-      , "maxTxSize"
-      , "stakeKeyDeposit"
-      , "poolDeposit"
-      , "poolRetirementEpochBound"
-      , "desiredNumberOfPools"
-      , "poolInfluence"
-      , "monetaryExpansion"
-      , "treasuryExpansion"
-      , "decentralizationParameter"
-      , "minPoolCost"
-      , "coinsPerUtxoWord"
-      , "maxValueSize"
-      , "collateralPercentage"
-      , "maxCollateralInputs"
-      , "extraEntropy"
-      , "protocolVersion"
-      , "costModels"
-      , "prices"
-      , "maxExecutionUnitsPerTransaction"
-      , "maxExecutionUnitsPerBlock"
-      ]
     , "properties":
-      { "minFeeCoefficient": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "minFeeConstant": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxBlockBodySize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxBlockHeaderSize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxTxSize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "stakeKeyDeposit": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "poolDeposit": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "poolRetirementEpochBound": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "desiredNumberOfPools": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "poolInfluence": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "monetaryExpansion": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "treasuryExpansion": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "decentralizationParameter": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "minPoolCost": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "coinsPerUtxoWord": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxValueSize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "collateralPercentage": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxCollateralInputs": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "extraEntropy":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/Nonce" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "protocolVersion":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/ProtocolVersion" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "costModels":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/CostModels" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "prices":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/Prices" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "maxExecutionUnitsPerTransaction":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/ExUnits" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "maxExecutionUnitsPerBlock":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/ExUnits" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
+      { "minFeeCoefficient": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "minFeeConstant": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxBlockBodySize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxBlockHeaderSize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxTxSize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "stakeKeyDeposit": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "poolDeposit": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "poolRetirementEpochBound": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "desiredNumberOfPools": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "poolInfluence": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "monetaryExpansion": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "treasuryExpansion": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "decentralizationParameter": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "minPoolCost": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "coinsPerUtxoWord": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxValueSize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "collateralPercentage": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxCollateralInputs": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "extraEntropy": { "$ref": "ogmios.wsp.json#/definitions/Nonce" }
+      , "protocolVersion": { "$ref": "ogmios.wsp.json#/definitions/ProtocolVersion" }
+      , "costModels": { "$ref": "ogmios.wsp.json#/definitions/CostModels" }
+      , "prices": { "$ref": "ogmios.wsp.json#/definitions/Prices" }
+      , "maxExecutionUnitsPerTransaction": { "$ref": "ogmios.wsp.json#/definitions/ExUnits" }
+      , "maxExecutionUnitsPerBlock": { "$ref": "ogmios.wsp.json#/definitions/ExUnits" }
       }
     }
 
   , "ProtocolParameters[Babbage]":
     { "type": "object"
     , "additionalProperties": false
-    , "required":
-      [ "minFeeCoefficient"
-      , "minFeeConstant"
-      , "maxBlockBodySize"
-      , "maxBlockHeaderSize"
-      , "maxTxSize"
-      , "stakeKeyDeposit"
-      , "poolDeposit"
-      , "poolRetirementEpochBound"
-      , "desiredNumberOfPools"
-      , "poolInfluence"
-      , "monetaryExpansion"
-      , "treasuryExpansion"
-      , "minPoolCost"
-      , "coinsPerUtxoByte"
-      , "maxValueSize"
-      , "collateralPercentage"
-      , "maxCollateralInputs"
-      , "protocolVersion"
-      , "costModels"
-      , "prices"
-      , "maxExecutionUnitsPerTransaction"
-      , "maxExecutionUnitsPerBlock"
-      ]
     , "properties":
-      { "minFeeCoefficient": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "minFeeConstant": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxBlockBodySize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxBlockHeaderSize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxTxSize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "stakeKeyDeposit": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "poolDeposit": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "poolRetirementEpochBound": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "desiredNumberOfPools": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "poolInfluence": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "monetaryExpansion": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "treasuryExpansion": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "minPoolCost": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "coinsPerUtxoByte": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxValueSize": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "collateralPercentage": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "maxCollateralInputs": { "$ref": "ogmios.wsp.json#/definitions/NullableUInt64" }
-      , "protocolVersion":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/ProtocolVersion" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "costModels":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/CostModels" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "prices":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/Prices" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "maxExecutionUnitsPerTransaction":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/ExUnits" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "maxExecutionUnitsPerBlock":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/ExUnits" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
+      { "minFeeCoefficient": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "minFeeConstant": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxBlockBodySize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxBlockHeaderSize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxTxSize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "stakeKeyDeposit": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "poolDeposit": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "poolRetirementEpochBound": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "desiredNumberOfPools": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "poolInfluence": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "monetaryExpansion": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "treasuryExpansion": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "minPoolCost": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "coinsPerUtxoByte": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxValueSize": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "collateralPercentage": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "maxCollateralInputs": { "$ref": "ogmios.wsp.json#/definitions/UInt64" }
+      , "protocolVersion": { "$ref": "ogmios.wsp.json#/definitions/ProtocolVersion" }
+      , "costModels": { "$ref": "ogmios.wsp.json#/definitions/CostModels" }
+      , "prices": { "$ref": "ogmios.wsp.json#/definitions/Prices" }
+      , "maxExecutionUnitsPerTransaction": { "$ref": "ogmios.wsp.json#/definitions/ExUnits" }
+      , "maxExecutionUnitsPerBlock": { "$ref": "ogmios.wsp.json#/definitions/ExUnits" }
       }
     }
 
@@ -3770,45 +3576,30 @@
       [ { "type": "object"
         , "title": "by address"
         , "additionalProperties": false
-        , "required": ["ipv4","ipv6","port"]
         , "properties":
           { "ipv4":
-            { "oneOf":
-              [ { "type": "string" }
-              , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-              ]
+            { "type": "string"
             }
           , "ipv6":
-            { "oneOf":
-              [ { "type": "string" }
-              , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-              ]
+            { "type": "string"
             }
           , "port":
-            { "oneOf":
-              [ { "type": "integer"
-                , "minimum": 0
-                , "maximum": 65535
-                }
-              , { "$ref": "ogmios.wsp.json#/definitions/Null" }
-              ]
+            { "type": "integer"
+            , "minimum": 0
+            , "maximum": 65535
             }
           }
         }
       , { "type": "object"
         , "title": "by name"
         , "additionalProperties": false
-        , "required": ["hostname","port"]
+        , "required": ["hostname"]
         , "properties":
           { "hostname": { "type": "string" }
           , "port":
-            { "oneOf":
-              [ { "type": "integer"
-                , "minimum": 0
-                , "maximum": 65535
-                }
-              , { "$ref": "ogmios.wsp.json#/definitions/Null" }
-              ]
+            { "type": "integer"
+            , "minimum": 0
+            , "maximum": 65535
             }
           }
         }
@@ -4213,14 +4004,8 @@
     , "description": "Invalid execution budget set for a redeemer. In principle, cannot happen in the context of Ogmios."
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "illFormedExecutionBudget" ]
     , "properties":
-      { "illFormedExecutionBudget":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/ExUnits" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null" }
-          ]
-        }
+      { "illFormedExecutionBudget": { "$ref": "ogmios.wsp.json#/definitions/ExUnits" }
       }
     }
 
@@ -4305,9 +4090,9 @@
     , "additionalProperties": false
     , "required": [ "initThreshold", "minThreshold", "decrementThreshold" ]
     , "properties":
-      { "initThreshold": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "minThreshold": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
-      , "decrementThreshold": { "$ref": "ogmios.wsp.json#/definitions/NullableRatio" }
+      { "initThreshold": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "minThreshold": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
+      , "decrementThreshold": { "$ref": "ogmios.wsp.json#/definitions/Ratio" }
       }
     }
 
@@ -5157,19 +4942,12 @@
       { "extraDataMismatch":
         { "type": "object"
         , "additionalProperties": false
-        , "required": [ "provided", "inferredFromParameters" ]
         , "properties":
           { "provided":
-            { "oneOf":
-              [ { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::ScriptIntegrity" }
-              , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-              ]
+            { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::ScriptIntegrity"
             }
           , "inferredFromParameters":
-            { "oneOf":
-              [ { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::ScriptIntegrity" }
-              , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-              ]
+            { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::ScriptIntegrity"
             }
           }
         }
@@ -5498,13 +5276,13 @@
   , "Tx[Shelley]":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "metadata", "raw" ]
+    , "required": [ "id", "body", "witness", "raw" ]
     , "properties":
       { "id": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Block[*].body" }
       , "body":
         { "type": "object"
         , "additionalProperties": false
-        , "required": ["inputs","outputs","certificates","withdrawals","fee","timeToLive","update"]
+        , "required": ["inputs", "outputs", "fee", "timeToLive"]
         , "properties":
           { "inputs":
             { "type": "array"
@@ -5527,7 +5305,6 @@
       , "witness":
         { "type": "object"
         , "additionalProperties": false
-        , "required": ["signatures","scripts","bootstrap"]
         , "properties":
           { "signatures":
             { "type": "object"
@@ -5545,12 +5322,7 @@
             }
           }
         }
-      , "metadata":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/AuxiliaryData" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
+      , "metadata": { "$ref": "ogmios.wsp.json#/definitions/AuxiliaryData" }
       , "raw":
         { "type": "string"
         , "contentEncoding": "base64"
@@ -5562,13 +5334,13 @@
   , "Tx[Allegra]":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "metadata", "raw" ]
+    , "required": [ "id", "body", "witness", "raw" ]
     , "properties":
       { "id": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Block[*].body" }
       , "body":
         { "type": "object"
         , "additionalProperties": false
-        , "required": ["inputs","outputs","certificates","withdrawals","fee","validityInterval","update"]
+        , "required": ["inputs", "outputs", "fee", "validityInterval"]
         , "properties":
           { "inputs":
             { "type": "array"
@@ -5610,11 +5382,7 @@
           }
         }
       , "metadata":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/AuxiliaryData" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
+        { "$ref": "ogmios.wsp.json#/definitions/AuxiliaryData" }
       , "raw":
         { "type": "string"
         , "contentEncoding": "base64"
@@ -5626,13 +5394,13 @@
   , "Tx[Mary]":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "metadata", "raw" ]
+    , "required": [ "id", "body", "witness", "raw" ]
     , "properties":
       { "id": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Block[*].body" }
       , "body":
         { "type": "object"
         , "additionalProperties": false
-        , "required": ["inputs","outputs","certificates","withdrawals","fee","validityInterval","mint","update"]
+        , "required": ["inputs", "outputs", "fee", "validityInterval"]
         , "properties":
           { "inputs":
             { "type": "array"
@@ -5674,12 +5442,7 @@
             }
           }
         }
-      , "metadata":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/AuxiliaryData" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
+      , "metadata": { "$ref": "ogmios.wsp.json#/definitions/AuxiliaryData" }
       , "raw":
         { "type": "string"
         , "contentEncoding": "base64"
@@ -5691,7 +5454,7 @@
   , "Tx[Alonzo]":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "metadata", "inputSource", "raw" ]
+    , "required": [ "id", "body", "witness", "inputSource", "raw" ]
     , "properties":
       { "id": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Block[*].body" }
       , "inputSource":
@@ -5704,11 +5467,7 @@
       , "body":
         { "type": "object"
         , "additionalProperties": false
-        , "required":
-          [ "inputs", "collaterals", "outputs", "certificates"
-          , "withdrawals", "fee", "validityInterval", "update", "mint"
-          , "network", "scriptIntegrityHash", "requiredExtraSignatures"
-          ]
+        , "required": [ "inputs", "outputs", "fee", "validityInterval" ]
         , "properties":
           { "inputs":
             { "type": "array"
@@ -5742,16 +5501,10 @@
             { "$ref": "ogmios.wsp.json#/definitions/Value"
             }
           , "network":
-            { "oneOf":
-              [ { "$ref": "ogmios.wsp.json#/definitions/Network" }
-              , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-              ]
+            { "$ref": "ogmios.wsp.json#/definitions/Network"
             }
           , "scriptIntegrityHash":
-            { "oneOf":
-              [ { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::ScriptIntegrity" }
-              , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-              ]
+            { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::ScriptIntegrity"
             }
           , "requiredExtraSignatures":
             { "type": "array"
@@ -5791,10 +5544,7 @@
           }
         }
       , "metadata":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/AuxiliaryData" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
+        { "$ref": "ogmios.wsp.json#/definitions/AuxiliaryData"
         }
       , "raw":
         { "type": "string"
@@ -5807,7 +5557,7 @@
   , "Tx[Babbage]":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "metadata", "inputSource", "raw" ]
+    , "required": [ "id", "body", "witness", "inputSource", "raw" ]
     , "properties":
       { "id": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Block[*].body" }
       , "inputSource":
@@ -5820,12 +5570,7 @@
       , "body":
         { "type": "object"
         , "additionalProperties": false
-        , "required":
-          [ "inputs", "collaterals", "outputs", "certificates"
-          , "withdrawals", "fee", "validityInterval", "update", "mint"
-          , "network", "scriptIntegrityHash", "requiredExtraSignatures"
-          , "collateralReturn", "references", "totalCollateral"
-          ]
+        , "required": [ "inputs", "outputs", "fee", "validityInterval" ]
         , "properties":
           { "inputs":
             { "type": "array"
@@ -5840,16 +5585,10 @@
             , "items": { "$ref": "ogmios.wsp.json#/definitions/TxIn" }
             }
           , "collateralReturn":
-            { "oneOf":
-              [ { "$ref": "ogmios.wsp.json#/definitions/TxOut" }
-              , { "$ref": "ogmios.wsp.json#/definitions/Null" }
-              ]
+            { "$ref": "ogmios.wsp.json#/definitions/TxOut"
             }
           , "totalCollateral":
-            { "oneOf":
-              [ { "$ref": "ogmios.wsp.json#/definitions/Lovelace" }
-              , { "$ref": "ogmios.wsp.json#/definitions/Null" }
-              ]
+            { "$ref": "ogmios.wsp.json#/definitions/Lovelace"
             }
           , "outputs":
             { "type": "array"
@@ -5875,16 +5614,10 @@
             { "$ref": "ogmios.wsp.json#/definitions/Value"
             }
           , "network":
-            { "oneOf":
-              [ { "$ref": "ogmios.wsp.json#/definitions/Network" }
-              , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-              ]
+            { "$ref": "ogmios.wsp.json#/definitions/Network"
             }
           , "scriptIntegrityHash":
-            { "oneOf":
-              [ { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::ScriptIntegrity" }
-              , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-              ]
+            { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::ScriptIntegrity"
             }
           , "requiredExtraSignatures":
             { "type": "array"
@@ -5924,10 +5657,7 @@
           }
         }
       , "metadata":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/AuxiliaryData" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
+        { "$ref": "ogmios.wsp.json#/definitions/AuxiliaryData"
         }
       , "raw":
         { "type": "string"
@@ -5990,29 +5720,9 @@
     , "properties":
       { "address": { "$ref": "ogmios.wsp.json#/definitions/Address" }
       , "value": { "$ref": "ogmios.wsp.json#/definitions/Value" }
-      , "datumHash":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Datum" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "datum":
-        { "anyOf":
-          [ { "$allOf":
-              [ { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Datum" }
-              , { "description": "Only in Alonzo transactions, for backward-compatibility." }
-              ]
-            }
-          , { "$ref": "ogmios.wsp.json#/definitions/Datum" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
-      , "script":
-        { "oneOf":
-          [ { "$ref": "ogmios.wsp.json#/definitions/Script" }
-          , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-          ]
-        }
+      , "datumHash": { "$ref": "ogmios.wsp.json#/definitions/Digest[Blake2b]::Datum" }
+      , "datum": { "$ref": "ogmios.wsp.json#/definitions/Datum" }
+      , "script": { "$ref": "ogmios.wsp.json#/definitions/Script" }
       }
     }
 
@@ -6071,59 +5781,46 @@
     }
 
   , "Update[Shelley]":
-    { "oneOf":
-      [ { "$ref": "ogmios.wsp.json#/definitions/Null"}
-      , { "type": "object"
-        , "title": "UpdateProposal[Shelley]"
-        , "additionalProperties": false
-        , "required": ["proposal", "epoch"]
-        , "properties":
-          { "epoch": { "$ref": "ogmios.wsp.json#/definitions/Epoch" }
-          , "proposal":
-            { "type": "object"
-            , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/ProtocolParameters[Shelley]" }
-            }
-          }
+    { "type": "object"
+    , "title": "UpdateProposal[Shelley]"
+    , "additionalProperties": false
+    , "required": ["proposal", "epoch"]
+    , "properties":
+      { "epoch": { "$ref": "ogmios.wsp.json#/definitions/Epoch" }
+      , "proposal":
+        { "type": "object"
+        , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/ProtocolParameters[Shelley]" }
         }
-      ]
+      }
     }
 
   , "Update[Alonzo]":
-    { "oneOf":
-      [ { "$ref": "ogmios.wsp.json#/definitions/Null"}
-      , { "type": "object"
-        , "title": "UpdateProposal[Alonzo]"
-        , "additionalProperties": false
-        , "required": ["proposal", "epoch"]
-        , "properties":
-          { "epoch": { "$ref": "ogmios.wsp.json#/definitions/Epoch" }
-          , "proposal":
-            { "type": "object"
-            , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/ProtocolParameters[Alonzo]" }
-            }
-          }
+    { "type": "object"
+    , "title": "UpdateProposal[Alonzo]"
+    , "additionalProperties": false
+    , "required": ["proposal", "epoch"]
+    , "properties":
+      { "epoch": { "$ref": "ogmios.wsp.json#/definitions/Epoch" }
+      , "proposal":
+        { "type": "object"
+        , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/ProtocolParameters[Alonzo]" }
         }
-      ]
+      }
     }
 
   , "Update[Babbage]":
-    { "oneOf":
-      [ { "$ref": "ogmios.wsp.json#/definitions/Null"}
-      , { "type": "object"
-        , "title": "UpdateProposal[Babbage]"
-        , "additionalProperties": false
-        , "required": ["proposal", "epoch"]
-        , "properties":
-          { "epoch": { "$ref": "ogmios.wsp.json#/definitions/Epoch" }
-          , "proposal":
-            { "type": "object"
-            , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/ProtocolParameters[Babbage]" }
-            }
-          }
+    { "type": "object"
+    , "title": "UpdateProposal[Babbage]"
+    , "additionalProperties": false
+    , "required": ["proposal", "epoch"]
+    , "properties":
+      { "epoch": { "$ref": "ogmios.wsp.json#/definitions/Epoch" }
+      , "proposal":
+        { "type": "object"
+        , "additionalProperties": { "$ref": "ogmios.wsp.json#/definitions/ProtocolParameters[Babbage]" }
         }
-      ]
+      }
     }
-
 
   , "UtcTime":
     { "type": "string"
@@ -6149,20 +5846,9 @@
   , "ValidityInterval":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "invalidBefore", "invalidHereafter" ]
     , "properties":
-      { "invalidBefore":
-          { "oneOf":
-            [ { "$ref": "ogmios.wsp.json#/definitions/Slot" }
-            , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-            ]
-          }
-      , "invalidHereafter":
-          { "oneOf":
-            [ { "$ref": "ogmios.wsp.json#/definitions/Slot" }
-            , { "$ref": "ogmios.wsp.json#/definitions/Null"}
-            ]
-          }
+      { "invalidBefore": { "$ref": "ogmios.wsp.json#/definitions/Slot" }
+      , "invalidHereafter": { "$ref": "ogmios.wsp.json#/definitions/Slot" }
       }
     }
 

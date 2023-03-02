@@ -271,7 +271,7 @@ _encodeBackwardCompatibleSubmitTxResponse _proxy encodeSubmitTxError =
         SubmitSuccess ->
             encodeText "SubmitSuccess"
         (SubmitFail e) ->
-            encodeObject [ ( "SubmitFail", encodeSubmitTxError e ) ]
+            encodeObject ("SubmitFail" .= encodeSubmitTxError e)
   where
     proxy = Proxy @(Wsp.Request (BackwardCompatibleSubmitTx block))
 
@@ -315,19 +315,14 @@ _encodeSubmitTxResponse
     -> Wsp.Response (SubmitTxResponse block)
     -> Json
 _encodeSubmitTxResponse _proxy encodeTxId encodeSubmitTxError =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
+    Wsp.mkResponse Wsp.defaultOptions proxy $ encodeObject . \case
         SubmitTxSuccess i ->
-            encodeObject
-                [ ( "SubmitSuccess"
-                  , encodeObject [ ( "txId", encodeTxId i) ]
-                  )
-                ]
+            "SubmitSuccess" .= encodeObject
+                ( "txId" .= encodeTxId i
+                )
         (SubmitTxFail e) ->
-            encodeObject
-                [ ( "SubmitFail"
-                  , encodeSubmitTxError e
-                  )
-                ]
+            "SubmitFail" .=
+                encodeSubmitTxError e
   where
     proxy = Proxy @(Wsp.Request (SubmitTx block))
 
@@ -419,61 +414,43 @@ _encodeEvaluateTxResponse
     -> Wsp.Response (EvaluateTxResponse block)
     -> Json
 _encodeEvaluateTxResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        EvaluationResult result -> encodeObject
-            [ ( "EvaluationResult"
-              , encodeMap stringifyRdmrPtr encodeExUnits result
-              )
-            ]
-        EvaluationFailure (EvaluateTxScriptFailures failures) -> encodeObject
-            [ ( "EvaluationFailure"
-              , encodeObject
-                [ ( "ScriptFailures"
-                  , encodeMap stringifyRdmrPtr (encodeList encodeScriptFailure) failures
-                  )
-                ]
-              )
-            ]
-        EvaluationFailure (EvaluateTxIncompatibleEra era) -> encodeObject
-            [ ( "EvaluationFailure"
-              , encodeObject
-                [ ( "IncompatibleEra"
-                  , encodeText era
-                  )
-                ]
-              )
-            ]
-        EvaluationFailure (EvaluateTxAdditionalUtxoOverlap inputs) -> encodeObject
-            [ ( "EvaluationFailure"
-              , encodeObject
-                [ ( "AdditionalUtxoOverlap"
-                  , encodeFoldable encodeTxIn inputs
-                  )
-                ]
-              )
-            ]
-        EvaluationFailure (EvaluateTxNotEnoughSynced err) -> encodeObject
-            [ ( "EvaluationFailure"
-              , encodeObject
-                [ ( "NotEnoughSynced"
-                  , encodeObject
-                    [ ( "currentNodeEra", encodeText (currentNodeEra err) )
-                    , ( "minimumRequiredEra", encodeText (minimumRequiredEra err) )
-                    ]
-                  )
-                ]
-              )
-            ]
-        EvaluationFailure (EvaluateTxCannotCreateEvaluationContext err) -> encodeObject
-            [ ( "EvaluationFailure"
-              , encodeObject
-                [ ( "CannotCreateEvaluationContext"
-                  , encodeObject
-                    [ ( "reason" , encodeTranslationError err) ]
-                  )
-                ]
-              )
-            ]
+    Wsp.mkResponse Wsp.defaultOptions proxy $ encodeObject . \case
+        EvaluationResult result ->
+            "EvaluationResult" .=
+                encodeMap stringifyRdmrPtr encodeExUnits result
+        EvaluationFailure (EvaluateTxScriptFailures failures) ->
+            "EvaluationFailure" .= encodeObject
+                ( "ScriptFailures" .=
+                    encodeMap
+                        stringifyRdmrPtr
+                        (encodeList encodeScriptFailure)
+                        failures
+                )
+        EvaluationFailure (EvaluateTxIncompatibleEra era) ->
+            "EvaluationFailure" .= encodeObject
+                ( "IncompatibleEra" .=
+                    encodeText era
+                )
+        EvaluationFailure (EvaluateTxAdditionalUtxoOverlap inputs) ->
+            "EvaluationFailure" .= encodeObject
+                ( "AdditionalUtxoOverlap" .=
+                    encodeFoldable encodeTxIn inputs
+                )
+        EvaluationFailure (EvaluateTxNotEnoughSynced err) ->
+            "EvaluationFailure" .= encodeObject
+                ( "NotEnoughSynced" .= encodeObject
+                    ( "currentNodeEra" .=
+                        encodeText (currentNodeEra err) <>
+                      "minimumRequiredEra" .=
+                        encodeText (minimumRequiredEra err)
+                    )
+                )
+        EvaluationFailure (EvaluateTxCannotCreateEvaluationContext err) ->
+            "EvaluationFailure" .= encodeObject
+                ( "CannotCreateEvaluationContext" .= encodeObject
+                    ( "reason" .= encodeTranslationError err
+                    )
+                )
   where
     proxy = Proxy @(Wsp.Request (EvaluateTx block))
 

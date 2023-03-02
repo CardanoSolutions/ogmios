@@ -8,6 +8,7 @@ module Ogmios.Data.Json.Prelude
     ( -- * Prelude
       module Ogmios.Prelude
     , Json
+    , Json.Series
     , FromJSON
     , ToJSON
     , ViaEncoding (..)
@@ -17,6 +18,9 @@ module Ogmios.Data.Json.Prelude
     , inefficientEncodingToValue
     , (.:)
     , (.:?)
+    , (.=)
+    , (.=?)
+    , Optional (..)
     , at
 
       -- * Re-Exports
@@ -81,6 +85,9 @@ module Ogmios.Data.Json.Prelude
     , encode3Tuple
     , encode4Tuple
     , encodeStrictMaybe
+
+      -- * Helper
+    , encodeUnless
     ) where
 
 import Ogmios.Prelude
@@ -470,7 +477,14 @@ encodeList =
 
 encodeMap :: (k -> Text) -> (v -> Json) -> Map k v -> Json
 encodeMap encodeKey encodeValue =
-    encodeObject . Map.foldrWithKey (\k v -> (:) (encodeKey k, encodeValue v)) []
+    Json.pairs . Map.foldrWithKey
+        (\k v -> (<>)
+            (Json.pair
+                (Json.fromText (encodeKey k))
+                (encodeValue v)
+            )
+        )
+        mempty
 {-# INLINABLE encodeMap #-}
 
 encodeMaybe :: (a -> Json) -> Maybe a -> Json
@@ -478,9 +492,9 @@ encodeMaybe =
     maybe encodeNull
 {-# INLINABLE encodeMaybe #-}
 
-encodeObject :: [(Text, Json)] -> Json
+encodeObject :: Json.Series -> Json
 encodeObject =
-    Json.pairs . foldr (\(Json.fromText -> k, v) -> (<>) (Json.pair k v)) mempty
+    Json.pairs
 {-# INLINABLE encodeObject #-}
 
 encode2Tuple
@@ -518,6 +532,44 @@ encodeStrictMaybe encodeElem = \case
     SNothing -> encodeNull
     SJust a  -> encodeElem a
 {-# INLINABLE encodeStrictMaybe #-}
+
+--
+-- Helper
+--
+
+encodeUnless :: (a -> Bool) -> Text  -> (a -> Json) -> a -> Json.Series
+encodeUnless predicate k encode a
+    | predicate a = mempty
+    | otherwise = Json.pair (Json.fromText k) (encode a)
+{-# INLINABLE encodeUnless #-}
+
+infixl 7 .=
+(.=) :: Text -> Json -> Json.Series
+k .= v = Json.pair (Json.fromText k) v
+
+infixl 7 .=?
+(.=?) :: Text -> Optional a -> Json.Series
+k .=? v =
+    case v of
+        OmitWhenNothing _ SNothing ->
+            mempty
+        OmitWhen predicate _encode value | predicate value ->
+            mempty
+        OmitWhen _predicate encode value ->
+            Json.pair (Json.fromText k) (encode value)
+        OmitWhenNothing encode (SJust value) ->
+            Json.pair (Json.fromText k) (encode value)
+
+data (Optional a) where
+    OmitWhen
+        :: (a -> Bool)
+        -> (a -> Json)
+        -> a
+        -> Optional a
+    OmitWhenNothing
+        :: (a -> Json)
+        -> StrictMaybe a
+        -> Optional a
 
 --
 -- Decoder

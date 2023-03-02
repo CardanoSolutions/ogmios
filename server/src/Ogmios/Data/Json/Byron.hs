@@ -18,6 +18,9 @@ import Codec.CBOR.Write
 import Data.ByteString.Base16
     ( encodeBase16
     )
+import Data.Maybe.Strict
+    ( maybeToStrictMaybe
+    )
 
 import qualified Cardano.Chain.Block as By hiding
     ( Proof
@@ -56,119 +59,93 @@ encodeABlockOrBoundary
     :: By.ABlockOrBoundary ByteString
     -> Json
 encodeABlockOrBoundary = \case
-    By.ABOBBlock x -> encodeObject
-        [ ( "body"
-          , encodeABody (By.blockBody x)
-          )
-        , ( "hash"
-          , encodeHash (By.blockHashAnnotated x)
-          )
-        , ( "header"
-          , encodeAHeader (By.blockHeader x)
-          )
-        ]
+    By.ABOBBlock x ->
+        "body" .=
+            encodeABody (By.blockBody x) <>
+        "hash" .=
+            encodeHash (By.blockHashAnnotated x) <>
+        "header" .=
+            encodeAHeader (By.blockHeader x)
+        & encodeObject
 
-    By.ABOBBoundary x -> encodeObject
-        [ ( "hash"
-          , encodeHash (By.boundaryHashAnnotated x)
-          )
-        , ( "header"
-          , encodeABoundaryHeader (By.boundaryHeader x)
-          )
-        ]
+    By.ABOBBoundary x ->
+        "hash" .=
+            encodeHash (By.boundaryHashAnnotated x) <>
+        "header" .=
+            encodeABoundaryHeader (By.boundaryHeader x)
+        & encodeObject
 
 encodeABlockSignature
     :: By.ABlockSignature any
     -> Json
-encodeABlockSignature x = encodeObject
-    [ ( "dlgCertificate"
-      , encodeACertificate (By.delegationCertificate x)
-      )
-    , ( "signature"
-      , encodeSignature (By.Block.signature x)
-      )
-    ]
+encodeABlockSignature x =
+    "dlgCertificate" .=
+        encodeACertificate (By.delegationCertificate x) <>
+     "signature" .=
+        encodeSignature (By.Block.signature x)
+    & encodeObject
 
 encodeABody
     :: By.ABody any
     -> Json
-encodeABody x = encodeObject
-    [ ( "txPayload"
-      , encodeATxPayload (By.bodyTxPayload x)
-      )
-    , ( "updatePayload"
-      , encodeAUpdPayload (By.bodyUpdatePayload x)
-      )
-    , ( "dlgPayload"
-      , encodeADlgPayload (By.bodyDlgPayload x)
-      )
-    ]
+encodeABody x =
+    "txPayload" .=
+        encodeATxPayload (By.bodyTxPayload x) <>
+    "updatePayload" .=
+        encodeAUpdPayload (By.bodyUpdatePayload x) <>
+    "dlgPayload" .=
+        encodeADlgPayload (By.bodyDlgPayload x)
+    & encodeObject
 
 encodeABoundaryHeader
     :: By.ABoundaryHeader any
     -> Json
-encodeABoundaryHeader x = encodeObject
-    [ ( "prevHash"
-      , either encodeGenesisHash encodeHash (By.boundaryPrevHash x)
-      )
-    , ( "epoch"
-      , encodeWord64 (By.boundaryEpoch x)
-      )
-    , ( "blockHeight"
-      , encodeChainDifficulty (By.boundaryDifficulty x)
-      )
-    ]
+encodeABoundaryHeader x =
+    "prevHash" .=
+        either encodeGenesisHash encodeHash (By.boundaryPrevHash x) <>
+    "epoch" .=
+        encodeWord64 (By.boundaryEpoch x) <>
+    "blockHeight" .=
+        encodeChainDifficulty (By.boundaryDifficulty x)
+    & encodeObject
 
 encodeACertificate
     :: By.ACertificate any
     -> Json
-encodeACertificate x = encodeObject
-    [ ( "epoch"
-      , encodeAnnotated encodeEpochNumber (By.Dlg.aEpoch x)
-      )
-    , ( "issuerVk"
-      , encodeVerificationKey (By.Dlg.issuerVK x)
-      )
-    , ( "delegateVk"
-      , encodeVerificationKey (By.Dlg.delegateVK x)
-      )
-    , ( "signature"
-      , encodeSignature (By.Dlg.signature x)
-      )
-    ]
+encodeACertificate x =
+    "epoch" .=
+        encodeAnnotated encodeEpochNumber (By.Dlg.aEpoch x) <>
+    "issuerVk" .=
+        encodeVerificationKey (By.Dlg.issuerVK x) <>
+    "delegateVk" .=
+        encodeVerificationKey (By.Dlg.delegateVK x) <>
+    "signature" .=
+        encodeSignature (By.Dlg.signature x)
+    & encodeObject
 
 encodeAHeader
     :: By.AHeader any
     -> Json
-encodeAHeader x = encodeObject
-    [ ( "protocolMagicId"
-      , encodeAnnotated encodeProtocolMagicId (By.aHeaderProtocolMagicId x)
-      )
-    , ( "prevHash"
-      , encodeAnnotated encodeHash (By.aHeaderPrevHash x)
-      )
-    , ( "slot"
-      , encodeAnnotated encodeSlotNumber (By.aHeaderSlot x)
-      )
-    , ( "blockHeight"
-      , encodeAnnotated encodeChainDifficulty (By.aHeaderDifficulty x)
-      )
-    , ( "protocolVersion"
-      , encodeProtocolVersion (By.headerProtocolVersion x)
-      )
-    , ( "softwareVersion"
-      , encodeSoftwareVersion (By.headerSoftwareVersion x)
-      )
-    , ( "genesisKey"
-      , encodeVerificationKey (By.headerGenesisKey x)
-      )
-    , ( "proof"
-      , encodeAnnotated encodeBlockProof (By.aHeaderProof x)
-      )
-    , ( "signature"
-      , encodeABlockSignature (By.headerSignature x)
-      )
-    ]
+encodeAHeader x =
+    "protocolMagicId" .=
+        encodeAnnotated encodeProtocolMagicId (By.aHeaderProtocolMagicId x) <>
+    "prevHash" .=
+        encodeAnnotated encodeHash (By.aHeaderPrevHash x) <>
+    "slot" .=
+        encodeAnnotated encodeSlotNumber (By.aHeaderSlot x) <>
+    "blockHeight" .=
+        encodeAnnotated encodeChainDifficulty (By.aHeaderDifficulty x) <>
+    "protocolVersion" .=
+        encodeProtocolVersion (By.headerProtocolVersion x) <>
+    "softwareVersion" .=
+        encodeSoftwareVersion (By.headerSoftwareVersion x) <>
+    "genesisKey" .=
+        encodeVerificationKey (By.headerGenesisKey x) <>
+    "proof" .=
+        encodeAnnotated encodeBlockProof (By.aHeaderProof x) <>
+    "signature" .=
+        encodeABlockSignature (By.headerSignature x)
+    & encodeObject
 
 encodeADlgPayload
     :: By.Dlg.APayload any
@@ -183,43 +160,35 @@ encodeBlockCount =
 encodeGenesisData
     :: By.GenesisData
     -> Json
-encodeGenesisData x = encodeObject
-    [ ( "genesisKeyHashes"
-      , encodeFoldable
+encodeGenesisData x =
+    "genesisKeyHashes" .=
+        encodeFoldable
             encodeKeyHash
-            (By.unGenesisKeyHashes (By.gdGenesisKeyHashes x))
-      )
-    , ( "genesisDelegations"
-      , encodeMap
+            (By.unGenesisKeyHashes (By.gdGenesisKeyHashes x)) <>
+    "genesisDelegations" .=
+        encodeMap
             stringifyKeyHash
             encodeACertificate
-            (By.unGenesisDelegation (By.gdHeavyDelegation x))
-      )
-    , ( "systemStart"
-      , encodeUtcTime (By.gdStartTime x)
-      )
-    , ( "initialFunds"
-      , encodeMap
+            (By.unGenesisDelegation (By.gdHeavyDelegation x)) <>
+    "systemStart" .=
+        encodeUtcTime (By.gdStartTime x) <>
+    "initialFunds" .=
+        encodeMap
             stringifyAddress
             encodeLovelace
-            (By.unGenesisNonAvvmBalances (By.gdNonAvvmBalances x))
-      )
-    , ( "initialCoinOffering"
-      , encodeMap
+            (By.unGenesisNonAvvmBalances (By.gdNonAvvmBalances x)) <>
+    "initialCoinOffering" .=
+        encodeMap
             (stringifyRedeemVerificationKey . By.fromCompactRedeemVerificationKey)
             encodeLovelace
-            (By.unGenesisAvvmBalances (By.gdAvvmDistr x))
-      )
-    , ( "securityParameter"
-      , encodeBlockCount (By.gdK x)
-      )
-    , ( "networkMagic"
-      , encodeProtocolMagicId (By.gdProtocolMagicId x)
-      )
-    , ( "protocolParameters"
-      , encodeProtocolParameters (By.gdProtocolParameters x)
-      )
-    ]
+            (By.unGenesisAvvmBalances (By.gdAvvmDistr x)) <>
+    "securityParameter" .=
+        encodeBlockCount (By.gdK x) <>
+    "networkMagic" .=
+        encodeProtocolMagicId (By.gdProtocolMagicId x) <>
+    "protocolParameters" .=
+        encodeProtocolParameters (By.gdProtocolParameters x)
+    & encodeObject
 
 encodeKeyHash :: By.KeyHash -> Json
 encodeKeyHash =
@@ -228,67 +197,55 @@ encodeKeyHash =
 encodeTx
     :: By.Tx
     -> Json
-encodeTx x = encodeObject
-    [ ( "inputs"
-      , encodeFoldable encodeTxIn (By.txInputs x)
-      )
-    , ( "outputs"
-      , encodeFoldable encodeTxOut (By.txOutputs x)
-      )
-    ]
+encodeTx x =
+    "inputs" .=
+        encodeFoldable encodeTxIn (By.txInputs x) <>
+    "outputs" .=
+        encodeFoldable encodeTxOut (By.txOutputs x)
+    & encodeObject
 
 encodeTxIn
     :: By.TxIn
     -> Json
-encodeTxIn (By.TxInUtxo txid ix) = encodeObject
-    [ ( "txId"
-      , encodeHash txid
-      )
-    , ( "index"
-      , encodeWord16 ix
-      )
-    ]
+encodeTxIn (By.TxInUtxo txid ix) =
+    "txId" .=
+        encodeHash txid <>
+    "index" .=
+        encodeWord16 ix
+    & encodeObject
 
 encodeValue
     :: By.Lovelace
     -> Json
-encodeValue coins = encodeObject
-    [ ( "coins", encodeLovelace coins )
-    ]
+encodeValue coins =
+    "coins" .= encodeLovelace coins
+    & encodeObject
 
 encodeTxOut
     :: By.TxOut
     -> Json
-encodeTxOut x = encodeObject
-    [ ( "address"
-      , encodeAddress (By.txOutAddress x)
-      )
-    , ( "value"
-      , encodeValue (By.txOutValue x)
-      )
-    ]
+encodeTxOut x =
+    "address" .=
+        encodeAddress (By.txOutAddress x) <>
+    "value" .=
+        encodeValue (By.txOutValue x)
+    & encodeObject
 
 encodeATxAux
     :: By.ATxAux any
     -> Json
-encodeATxAux x = encodeObject
-    [ ( "id"
-      , encodeHash (By.serializeCborHash (By.taTx x))
-      )
-    , ( "body"
-      , encodeAnnotated encodeTx (By.aTaTx x)
-      )
-    , ( "witness"
-      , encodeAnnotated encodeTxWitness (By.aTaWitness x)
-      )
-    , ( "raw"
-      , encodeByteStringBase64 $ toStrictByteString $ mconcat
-        [ encodeListLen 2
-        , toCBOR (By.taTx x)
-        , toCBOR (By.taWitness x)
-        ]
-      )
-    ]
+encodeATxAux x =
+    "id" .=
+        encodeHash (By.serializeCborHash (By.taTx x)) <>
+    "body" .=
+        encodeAnnotated encodeTx (By.aTaTx x) <>
+    "witness" .=
+        encodeAnnotated encodeTxWitness (By.aTaWitness x) <>
+    "raw" .=
+        ( let bytes = mconcat [ encodeListLen 2 , toCBOR (By.taTx x) , toCBOR (By.taWitness x) ]
+           in encodeByteStringBase64 (toStrictByteString bytes)
+        )
+    & encodeObject
 
 encodeATxPayload
     :: By.ATxPayload any
@@ -299,62 +256,50 @@ encodeATxPayload =
 encodeAUpdPayload
     :: By.Upd.APayload any
     -> Json
-encodeAUpdPayload x = encodeObject
-    [ ( "proposal"
-      , encodeMaybe encodeAUpdProposal (By.Upd.payloadProposal x)
-      )
-    , ( "votes"
-      , encodeList encodeAVote (By.Upd.payloadVotes x)
-      )
-    ]
+encodeAUpdPayload x =
+    "proposal" .=? OmitWhenNothing
+        encodeAUpdProposal (maybeToStrictMaybe (By.Upd.payloadProposal x)) <>
+    "votes" .=
+        encodeList encodeAVote (By.Upd.payloadVotes x)
+    & encodeObject
 
 encodeAUpdProposal
     :: By.Upd.Proposal.AProposal any
     -> Json
-encodeAUpdProposal x = encodeObject
-    [ ( "body"
-      , encodeAnnotated encodeAUpdProposalBody (By.Upd.Proposal.aBody x)
-      )
-    , ( "issuer"
-      , encodeVerificationKey (By.Upd.Proposal.issuer x)
-      )
-    , ( "signature"
-      , encodeSignature (By.Upd.Proposal.signature x)
-      )
-    ]
+encodeAUpdProposal x =
+    "body" .=
+        encodeAnnotated encodeAUpdProposalBody (By.Upd.Proposal.aBody x) <>
+    "issuer" .=
+        encodeVerificationKey (By.Upd.Proposal.issuer x) <>
+    "signature" .=
+        encodeSignature (By.Upd.Proposal.signature x)
+    & encodeObject
 
 encodeAUpdProposalBody
     :: By.Upd.Proposal.ProposalBody
     -> Json
-encodeAUpdProposalBody x = encodeObject
-    [ ( "protocolVersion"
-      , encodeProtocolVersion (By.Upd.Proposal.protocolVersion x)
-      )
-    , ( "parametersUpdate"
-      , encodeProtocolParametersUpdate (By.Upd.Proposal.protocolParametersUpdate x)
-      )
-    , ( "softwareVersion"
-      , encodeSoftwareVersion (By.Upd.Proposal.softwareVersion x)
-      )
-    , ( "metadata"
-      , encodeMap By.Upd.getSystemTag encodeInstallerHash (By.Upd.Proposal.metadata x)
-      )
-    ]
+encodeAUpdProposalBody x =
+    "protocolVersion" .=
+        encodeProtocolVersion (By.Upd.Proposal.protocolVersion x) <>
+    "parametersUpdate" .=
+        encodeProtocolParametersUpdate (By.Upd.Proposal.protocolParametersUpdate x) <>
+    "softwareVersion" .=
+        encodeSoftwareVersion (By.Upd.Proposal.softwareVersion x) <>
+    "metadata" .=
+        encodeMap By.Upd.getSystemTag encodeInstallerHash (By.Upd.Proposal.metadata x)
+    & encodeObject
 
 encodeAVote
     :: By.Upd.Vote.AVote any
     -> Json
-encodeAVote x = encodeObject
-    [ ( "voterVk"
-      , encodeVerificationKey (By.Upd.Vote.voterVK x)
-      )
-    , ( "proposalId"
-      , encodeAnnotated encodeHash (By.Upd.Vote.aProposalId x)
-      )
-    , ( "signature"
-      , encodeSignature (By.Upd.Vote.signature x)
-      )
-    ]
+encodeAVote x =
+    "voterVk" .=
+        encodeVerificationKey (By.Upd.Vote.voterVK x) <>
+    "proposalId" .=
+        encodeAnnotated encodeHash (By.Upd.Vote.aProposalId x) <>
+    "signature" .=
+        encodeSignature (By.Upd.Vote.signature x)
+    & encodeObject
 
 encodeApplicationName
     :: By.ApplicationName
@@ -381,17 +326,14 @@ encodeApplyMempoolPayloadErr = \case
 encodeBlockProof
     :: By.Block.Proof
     -> Json
-encodeBlockProof x = encodeObject
-    [ ( "utxo"
-      , encodeTxProof (By.proofUTxO x)
-      )
-    , ( "delegation"
-      , encodeHash (By.proofDelegation x)
-      )
-    , ( "update"
-      , encodeHash (By.proofUpdate x)
-      )
-    ]
+encodeBlockProof x =
+    "utxo" .=
+        encodeTxProof (By.proofUTxO x) <>
+    "delegation" .=
+        encodeHash (By.proofDelegation x) <>
+    "update" .=
+        encodeHash (By.proofUpdate x)
+    & encodeObject
 
 encodeChainDifficulty
     :: By.ChainDifficulty
@@ -434,13 +376,13 @@ encodeLovelaceError
     -> Json
 encodeLovelaceError = \case
     By.LovelaceOverflow x ->
-        encodeObject [ ( "overflow", encodeWord64 x ) ]
+        encodeObject ("overflow" .= encodeWord64 x)
     By.LovelaceTooLarge x ->
-        encodeObject [ ( "tooLarge", encodeInteger x ) ]
+        encodeObject ("tooLarge" .= encodeInteger x)
     By.LovelaceTooSmall x ->
-        encodeObject [ ( "tooSmall",  encodeInteger x ) ]
+        encodeObject ("tooSmall" .= encodeInteger x)
     By.LovelaceUnderflow x y ->
-        encodeObject [ ( "underflow", encodeList encodeWord64 [x,y] ) ]
+        encodeObject ("underflow" .= encodeList encodeWord64 [x,y])
 
 encodeLovelacePortion
     :: By.LovelacePortion
@@ -461,7 +403,7 @@ encodeNetworkMagic = \case
     By.NetworkMainOrStage ->
         encodeText "mainnet"
     By.NetworkTestnet pm ->
-        encodeObject [ ( "testnet", encodeWord32 pm ) ]
+        encodeObject ("testnet" .= encodeWord32 pm)
 
 encodeProtocolMagicId
     :: By.ProtocolMagicId
@@ -472,114 +414,83 @@ encodeProtocolMagicId =
 encodeProtocolParameters
     :: By.ProtocolParameters
     -> Json
-encodeProtocolParameters x = encodeObject
-    [ ( "scriptVersion"
-      , encodeWord16 (By.ppScriptVersion x)
-      )
-    , ( "slotDuration"
-      , encodeNatural (By.ppSlotDuration x)
-      )
-    , ( "maxBlockSize"
-      , encodeNatural (By.ppMaxBlockSize x)
-      )
-    , ( "maxHeaderSize"
-      , encodeNatural (By.ppMaxHeaderSize x)
-      )
-    , ( "maxTxSize"
-      , encodeNatural (By.ppMaxTxSize x)
-      )
-    , ( "maxProposalSize"
-      , encodeNatural (By.ppMaxProposalSize x)
-      )
-    , ( "mpcThreshold"
-      , encodeLovelacePortion (By.ppMpcThd x)
-      )
-    , ( "heavyDlgThreshold"
-      , encodeLovelacePortion (By.ppHeavyDelThd x)
-      )
-    , ( "updateVoteThreshold"
-      , encodeLovelacePortion (By.ppUpdateVoteThd x)
-      )
-    , ( "updateProposalThreshold"
-      , encodeLovelacePortion (By.ppUpdateProposalThd x)
-      )
-    , ( "updateProposalTimeToLive"
-      , encodeSlotNumber (By.ppUpdateProposalTTL x)
-      )
-    , ( "softforkRule"
-      , encodeSoftforkRule (By.ppSoftforkRule x)
-      )
-    , ( "txFeePolicy"
-      , encodeTxFeePolicy (By.ppTxFeePolicy x)
-      )
-    , ( "unlockStakeEpoch"
-      , encodeEpochNumber (By.ppUnlockStakeEpoch x)
-      )
-    ]
+encodeProtocolParameters x =
+    "scriptVersion" .=
+        encodeWord16 (By.ppScriptVersion x) <>
+    "slotDuration" .=
+        encodeNatural (By.ppSlotDuration x) <>
+    "maxBlockSize" .=
+        encodeNatural (By.ppMaxBlockSize x) <>
+    "maxHeaderSize" .=
+        encodeNatural (By.ppMaxHeaderSize x) <>
+    "maxTxSize" .=
+        encodeNatural (By.ppMaxTxSize x) <>
+    "maxProposalSize" .=
+        encodeNatural (By.ppMaxProposalSize x) <>
+    "mpcThreshold" .=
+        encodeLovelacePortion (By.ppMpcThd x) <>
+    "heavyDlgThreshold" .=
+        encodeLovelacePortion (By.ppHeavyDelThd x) <>
+    "updateVoteThreshold" .=
+        encodeLovelacePortion (By.ppUpdateVoteThd x) <>
+    "updateProposalThreshold" .=
+        encodeLovelacePortion (By.ppUpdateProposalThd x) <>
+    "updateProposalTimeToLive" .=
+        encodeSlotNumber (By.ppUpdateProposalTTL x) <>
+    "softforkRule" .=
+        encodeSoftforkRule (By.ppSoftforkRule x) <>
+    "txFeePolicy" .=
+        encodeTxFeePolicy (By.ppTxFeePolicy x) <>
+    "unlockStakeEpoch" .=
+        encodeEpochNumber (By.ppUnlockStakeEpoch x)
+    & encodeObject
 
 
 encodeProtocolParametersUpdate
     :: By.ProtocolParametersUpdate
     -> Json
-encodeProtocolParametersUpdate x = encodeObject
-    [ ( "scriptVersion"
-      , encodeMaybe encodeWord16 (By.ppuScriptVersion x)
-      )
-    , ( "slotDuration"
-      , encodeMaybe encodeNatural (By.ppuSlotDuration x)
-      )
-    , ( "maxBlockSize"
-      , encodeMaybe encodeNatural (By.ppuMaxBlockSize x)
-      )
-    , ( "maxHeaderSize"
-      , encodeMaybe encodeNatural (By.ppuMaxHeaderSize x)
-      )
-    , ( "maxTxSize"
-      , encodeMaybe encodeNatural (By.ppuMaxTxSize x)
-      )
-    , ( "maxProposalSize"
-      , encodeMaybe encodeNatural (By.ppuMaxProposalSize x)
-      )
-    , ( "mpcThreshold"
-      , encodeMaybe encodeLovelacePortion (By.ppuMpcThd x)
-      )
-    , ( "heavyDlgThreshold"
-      , encodeMaybe encodeLovelacePortion (By.ppuHeavyDelThd x)
-      )
-    , ( "updateVoteThreshold"
-      , encodeMaybe encodeLovelacePortion (By.ppuUpdateVoteThd x)
-      )
-    , ( "updateProposalThreshold"
-      , encodeMaybe encodeLovelacePortion (By.ppuUpdateProposalThd x)
-      )
-    , ( "updateProposalTimeToLive"
-      , encodeMaybe encodeSlotNumber (By.ppuUpdateProposalTTL x)
-      )
-    , ( "softforkRule"
-      , encodeMaybe encodeSoftforkRule (By.ppuSoftforkRule x)
-      )
-    , ( "txFeePolicy"
-      , encodeMaybe encodeTxFeePolicy (By.ppuTxFeePolicy x)
-      )
-    , ( "unlockStakeEpoch"
-      , encodeMaybe encodeEpochNumber (By.ppuUnlockStakeEpoch x)
-      )
-    ]
+encodeProtocolParametersUpdate x =
+    "scriptVersion" .=? OmitWhenNothing
+        encodeWord16 (maybeToStrictMaybe (By.ppuScriptVersion x)) <>
+    "slotDuration" .=? OmitWhenNothing
+        encodeNatural (maybeToStrictMaybe (By.ppuSlotDuration x)) <>
+    "maxBlockSize" .=? OmitWhenNothing
+        encodeNatural (maybeToStrictMaybe (By.ppuMaxBlockSize x)) <>
+    "maxHeaderSize" .=? OmitWhenNothing
+        encodeNatural (maybeToStrictMaybe (By.ppuMaxHeaderSize x)) <>
+    "maxTxSize" .=? OmitWhenNothing
+        encodeNatural (maybeToStrictMaybe (By.ppuMaxTxSize x)) <>
+    "maxProposalSize" .=? OmitWhenNothing
+        encodeNatural (maybeToStrictMaybe (By.ppuMaxProposalSize x)) <>
+    "mpcThreshold" .=? OmitWhenNothing
+        encodeLovelacePortion (maybeToStrictMaybe (By.ppuMpcThd x)) <>
+    "heavyDlgThreshold" .=? OmitWhenNothing
+        encodeLovelacePortion (maybeToStrictMaybe (By.ppuHeavyDelThd x)) <>
+    "updateVoteThreshold" .=? OmitWhenNothing
+        encodeLovelacePortion (maybeToStrictMaybe (By.ppuUpdateVoteThd x)) <>
+    "updateProposalThreshold" .=? OmitWhenNothing
+        encodeLovelacePortion (maybeToStrictMaybe (By.ppuUpdateProposalThd x)) <>
+    "updateProposalTimeToLive" .=? OmitWhenNothing
+        encodeSlotNumber (maybeToStrictMaybe (By.ppuUpdateProposalTTL x)) <>
+    "softforkRule" .=? OmitWhenNothing
+        encodeSoftforkRule (maybeToStrictMaybe (By.ppuSoftforkRule x)) <>
+    "txFeePolicy" .=? OmitWhenNothing
+        encodeTxFeePolicy (maybeToStrictMaybe (By.ppuTxFeePolicy x)) <>
+    "unlockStakeEpoch" .=? OmitWhenNothing
+        encodeEpochNumber (maybeToStrictMaybe (By.ppuUnlockStakeEpoch x))
+    & encodeObject
 
 encodeProtocolVersion
     :: By.ProtocolVersion
     -> Json
-encodeProtocolVersion x = encodeObject
-    [ ( "major"
-      , encodeWord16 (By.pvMajor x)
-      )
-    , ( "minor"
-      , encodeWord16 (By.pvMinor x)
-      )
-    , ( "patch"
-      , encodeWord8 (By.pvAlt x)
-      )
-    ]
+encodeProtocolVersion x =
+    "major" .=
+        encodeWord16 (By.pvMajor x) <>
+    "minor" .=
+        encodeWord16 (By.pvMinor x) <>
+    "patch" .=
+        encodeWord8 (By.pvAlt x)
+    & encodeObject
 
 encodeRedeemSignature
     :: By.RedeemSignature any
@@ -608,56 +519,46 @@ encodeSlotNumber =
 encodeSoftforkRule
     :: By.SoftforkRule
     -> Json
-encodeSoftforkRule x = encodeObject
-    [ ( "initThreshold"
-      , encodeLovelacePortion (By.srInitThd x)
-      )
-    , ( "minThreshold"
-      , encodeLovelacePortion (By.srMinThd x)
-      )
-    , ( "decrementThreshold"
-      , encodeLovelacePortion (By.srThdDecrement x)
-      )
-    ]
+encodeSoftforkRule x =
+    "initThreshold" .=
+        encodeLovelacePortion (By.srInitThd x) <>
+    "minThreshold" .=
+        encodeLovelacePortion (By.srMinThd x) <>
+    "decrementThreshold" .=
+        encodeLovelacePortion (By.srThdDecrement x)
+    & encodeObject
 
 encodeSoftwareVersion
     :: By.SoftwareVersion
     -> Json
-encodeSoftwareVersion x = encodeObject
-    [ ( "appName"
-      , encodeApplicationName (By.svAppName x)
-      )
-    , ( "number"
-      , encodeWord32 (By.svNumber x)
-      )
-    ]
+encodeSoftwareVersion x =
+    "appName" .=
+        encodeApplicationName (By.svAppName x) <>
+    "number" .=
+        encodeWord32 (By.svNumber x)
+    & encodeObject
 
 encodeTxFeePolicy
     :: By.TxFeePolicy
     -> Json
-encodeTxFeePolicy (By.TxFeePolicyTxSizeLinear (By.TxSizeLinear cst coeff)) = encodeObject
-    [ ( "constant"
-      , encodeLovelace cst
-      )
-    , ( "coefficient"
-      , encodeRational coeff
-      )
-    ]
+encodeTxFeePolicy (By.TxFeePolicyTxSizeLinear (By.TxSizeLinear cst coeff)) =
+    "constant" .=
+        encodeLovelace cst <>
+    "coefficient" .=
+        encodeRational coeff
+    & encodeObject
 
 encodeTxProof
     :: By.TxProof
     -> Json
-encodeTxProof x = encodeObject
-    [ ( "number"
-      , encodeWord32 (By.txpNumber x)
-      )
-    , ( "root"
-      , encodeMerkleRoot (By.txpRoot x)
-      )
-    , ( "witnessesHash"
-      , encodeHash (By.txpWitnessesHash x)
-      )
-    ]
+encodeTxProof x =
+    "number" .=
+        encodeWord32 (By.txpNumber x) <>
+    "root" .=
+        encodeMerkleRoot (By.txpRoot x) <>
+    "witnessesHash" .=
+        encodeHash (By.txpWitnessesHash x)
+    & encodeObject
 
 encodeTxWitness
     :: By.TxWitness
@@ -669,69 +570,72 @@ encodeTxInWitness
     :: By.TxInWitness
     -> Json
 encodeTxInWitness = \case
-    By.VKWitness key sig -> encodeObject
-        [ ( "witnessVk", encodeObject
-            [ ( "key", encodeVerificationKey key )
-            , ( "signature", encodeSignature sig )
-            ]
-          )
-        ]
-    By.RedeemWitness key sig -> encodeObject
-        [ ( "redeemWitness", encodeObject
-            [ ( "key", encodeRedeemVerificationKey key )
-            , ( "signature", encodeRedeemSignature sig )
-            ]
-          )
-        ]
+    By.VKWitness key sig ->
+        "witnessVk" .=
+            ( "key" .=
+                encodeVerificationKey key <>
+              "signature" .=
+                encodeSignature sig
+              & encodeObject
+            )
+        & encodeObject
+    By.RedeemWitness key sig ->
+        "redeemWitness" .=
+            ( "key" .=
+                encodeRedeemVerificationKey key <>
+              "signature" .=
+                  encodeRedeemSignature sig
+              & encodeObject
+            )
+        & encodeObject
 
 encodeTxValidationError :: By.TxValidationError -> Json
 encodeTxValidationError = \case
-    By.TxValidationLovelaceError lbl e -> encodeObject
-        [ ( "lovelaceError", encodeObject
-            [ ( "label", encodeText lbl )
-            , ( "error", encodeLovelaceError e )
-            ]
+    By.TxValidationLovelaceError lbl e ->
+        "lovelaceError" .=
+            ( "label" .= encodeText lbl <>
+              "error" .= encodeLovelaceError e
+              & encodeObject
+            )
+        & encodeObject
+    By.TxValidationFeeTooSmall _tx required actual ->
+        "feeTooSmall" .=
+          ( "requiredFee" .= encodeLovelace required <>
+            "actualFee" .= encodeLovelace actual
+            & encodeObject
           )
-        ]
-    By.TxValidationFeeTooSmall _tx required actual -> encodeObject
-        [ ( "feeTooSmall", encodeObject
-            [ ( "requiredFee", encodeLovelace required )
-            , ( "actualFee", encodeLovelace actual )
-            ]
-          )
-        ]
-    By.TxValidationWitnessWrongSignature wit pm _ -> encodeObject
-        [ ( "wrongSignature", encodeObject
-            [ ( "witness", encodeTxInWitness wit )
-            , ( "protocolMagic", encodeProtocolMagicId pm )
-            ]
-          )
-        ]
-    By.TxValidationWitnessWrongKey wit addr -> encodeObject
-        [ ( "wrongKey", encodeObject
-            [ ( "witness", encodeTxInWitness wit )
-            , ( "address", encodeAddress addr )
-            ]
-          )
-        ]
-    By.TxValidationMissingInput txin -> encodeObject
-        [ ( "missingInput", encodeTxIn txin
-          )
-        ]
-    By.TxValidationNetworkMagicMismatch expected actual -> encodeObject
-        [ ( "networkMismatch", encodeObject
-            [ ( "expectedNetwork", encodeNetworkMagic expected )
-            , ( "foundInAddress", encodeNetworkMagic actual )
-            ]
-          )
-        ]
-    By.TxValidationTxTooLarge maxSize actualSize -> encodeObject
-        [ ( "txTooLarge", encodeObject
-            [ ( "maximumSize", encodeNatural maxSize )
-            , ( "actualSize", encodeNatural actualSize )
-            ]
-          )
-        ]
+        & encodeObject
+    By.TxValidationWitnessWrongSignature wit pm _ ->
+        "wrongSignature" .=
+            ( "witness" .= encodeTxInWitness wit <>
+              "protocolMagic" .= encodeProtocolMagicId pm
+              & encodeObject
+            )
+        & encodeObject
+    By.TxValidationWitnessWrongKey wit addr ->
+        "wrongKey" .=
+            ( "witness" .= encodeTxInWitness wit <>
+              "address" .= encodeAddress addr
+              & encodeObject
+            )
+        & encodeObject
+    By.TxValidationMissingInput txin ->
+        "missingInput" .= encodeTxIn txin
+        & encodeObject
+    By.TxValidationNetworkMagicMismatch expected actual ->
+        "networkMismatch" .=
+            ( "expectedNetwork" .= encodeNetworkMagic expected <>
+              "foundInAddress" .= encodeNetworkMagic actual
+              & encodeObject
+            )
+        & encodeObject
+    By.TxValidationTxTooLarge maxSize actualSize ->
+        "txTooLarge" .=
+            ( "maximumSize" .= encodeNatural maxSize <>
+              "actualSize" .= encodeNatural actualSize
+              & encodeObject
+            )
+        & encodeObject
     By.TxValidationUnknownAddressAttributes ->
         encodeText "unknownAddressAttributes"
     By.TxValidationUnknownAttributes ->
@@ -744,16 +648,16 @@ encodeUTxOError = \case
     By.UTxOOverlappingUnion ->
         encodeText "overlappingUnion"
     By.UTxOMissingInput txin ->
-        encodeObject [ ( "missingInput", encodeTxIn txin ) ]
+        encodeObject ( "missingInput" .= encodeTxIn txin )
 
 encodeUTxOValidationError
     :: By.UTxOValidationError
     -> Json
 encodeUTxOValidationError = \case
     By.UTxOValidationTxValidationError e ->
-        encodeObject [ ( "txValidationError", encodeTxValidationError e ) ]
+        encodeObject ( "txValidationError" .= encodeTxValidationError e )
     By.UTxOValidationUTxOError e ->
-        encodeObject [ ( "utxoValidationError", encodeUTxOError e ) ]
+        encodeObject ( "utxoValidationError" .= encodeUTxOError e )
 
 encodeVerificationKey
     :: By.VerificationKey

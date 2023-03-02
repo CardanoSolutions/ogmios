@@ -14,6 +14,9 @@ import Cardano.Binary
 import Cardano.Ledger.Crypto
     ( Crypto
     )
+import Cardano.Ledger.Val
+    ( isZero
+    )
 import Data.ByteString.Base16
     ( encodeBase16
     )
@@ -47,6 +50,7 @@ import qualified Cardano.Ledger.Shelley.BlockChain as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.Rules.Ledger as Sh
 import qualified Cardano.Ledger.Shelley.Tx as Sh
+import qualified Cardano.Ledger.Shelley.TxBody as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
 import qualified Cardano.Ledger.AuxiliaryData as MA
@@ -63,31 +67,25 @@ encodeAuxiliaryData
     :: Crypto crypto
     => MA.AuxiliaryData (MaryEra crypto)
     -> Json
-encodeAuxiliaryData (MA.AuxiliaryData blob scripts) = encodeObject
-    [ ( "blob"
-      , Shelley.encodeMetadataBlob blob
-      )
-    , ( "scripts"
-      , encodeFoldable Allegra.encodeScript scripts
-      )
-    ]
+encodeAuxiliaryData (MA.AuxiliaryData blob scripts) =
+    "blob" .=
+        Shelley.encodeMetadataBlob blob <>
+    "scripts" .=
+        encodeFoldable Allegra.encodeScript scripts
+    & encodeObject
 
 encodeBlock
     :: Crypto crypto
     => ShelleyBlock (TPraos crypto) (MaryEra crypto)
     -> Json
 encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
-    encodeObject
-    [ ( "body"
-      , encodeFoldable encodeTx (Sh.txSeqTxns' txs)
-      )
-    , ( "header"
-      , Shelley.encodeBHeader blkHeader
-      )
-    , ( "headerHash"
-      , Shelley.encodeShelleyHash headerHash
-      )
-    ]
+    "body" .=
+        encodeFoldable encodeTx (Sh.txSeqTxns' txs) <>
+    "header" .=
+        Shelley.encodeBHeader blkHeader <>
+    "headerHash" .=
+        Shelley.encodeShelleyHash headerHash
+    & encodeObject
 
 encodeLedgerFailure
     :: Crypto crypto
@@ -107,7 +105,7 @@ encodePolicyId (MA.PolicyID hash) =
     Shelley.encodeScriptHash hash
 
 encodePParams'
-    :: (forall a. (a -> Json) -> Sh.HKD f a -> Json)
+    :: (forall a. Text -> (a -> Json) -> Sh.HKD f a -> Series)
     -> Sh.PParams' f era
     -> Json
 encodePParams' =
@@ -125,72 +123,60 @@ encodeTx
     :: forall crypto. (Crypto crypto)
     => Sh.Tx (MaryEra crypto)
     -> Json
-encodeTx x = encodeObject
-    [ ( "id"
-      , Shelley.encodeTxId (Ledger.txid @(MaryEra crypto) (Sh.body x))
-      )
-    , ( "body"
-      , encodeTxBody (Sh.body x)
-      )
-    , ( "metadata"
-      , (,) <$> fmap (("hash",) . Shelley.encodeAuxiliaryDataHash) (adHash (Sh.body x))
-            <*> fmap (("body",) . encodeAuxiliaryData) (Sh.auxiliaryData x)
-        & encodeStrictMaybe (\(a, b) -> encodeObject [a,b])
-      )
-    , ( "witness"
-      , encodeWitnessSet (Sh.wits x)
-      )
-    , ( "raw"
-      , encodeByteStringBase64 (serialize' x)
-      )
-    ]
+encodeTx x =
+    "id" .=
+        Shelley.encodeTxId (Ledger.txid @(MaryEra crypto) (Sh.body x)) <>
+    "body" .=
+        encodeTxBody (Sh.body x) <>
+    "metadata" .=? OmitWhenNothing
+        identity metadata <>
+    "witness" .=
+        encodeWitnessSet (Sh.wits x) <>
+    "raw" .=
+        encodeByteStringBase64 (serialize' x)
+    & encodeObject
   where
     adHash :: MA.TxBody era -> StrictMaybe (MA.AuxiliaryDataHash (Ledger.Crypto era))
     adHash = getField @"adHash"
+
+    metadata = liftA2
+        (\hash body -> encodeObject ("hash" .= hash <> "body" .= body))
+        (Shelley.encodeAuxiliaryDataHash <$> adHash (Sh.body x))
+        (encodeAuxiliaryData <$> Sh.auxiliaryData x)
 
 encodeTxBody
     :: Crypto crypto
     => MA.TxBody (MaryEra crypto)
     -> Json
-encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ mint) = encodeObject
-    [ ( "inputs"
-      , encodeFoldable Shelley.encodeTxIn inps
-      )
-    , ( "outputs"
-      , encodeFoldable encodeTxOut outs
-      )
-    , ( "certificates"
-      , encodeFoldable Shelley.encodeDCert certs
-      )
-    , ( "withdrawals"
-      , Shelley.encodeWdrl wdrls
-      )
-    , ( "fee"
-      , encodeCoin fee
-      )
-    , ( "validityInterval"
-      , Allegra.encodeValidityInterval validity
-      )
-    , ( "update"
-      , encodeStrictMaybe Shelley.encodeUpdate updates
-      )
-    , ( "mint"
-      , encodeValue mint
-      )
-    ]
+encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ mint) =
+    "inputs" .=
+        encodeFoldable Shelley.encodeTxIn inps <>
+    "outputs" .=
+        encodeFoldable encodeTxOut outs <>
+    "withdrawals" .=? OmitWhen (null . Sh.unWdrl)
+        Shelley.encodeWdrl wdrls <>
+    "certificates" .=? OmitWhen null
+        (encodeFoldable Shelley.encodeDCert) certs <>
+    "mint" .=? OmitWhen isZero
+        encodeValue mint <>
+    "fee" .=
+        encodeCoin fee <>
+    "validityInterval" .=
+        Allegra.encodeValidityInterval validity <>
+    "update" .=? OmitWhenNothing
+        Shelley.encodeUpdate updates
+    & encodeObject
 
 encodeTxOut
     :: Crypto crypto
     => Sh.TxOut (MaryEra crypto)
     -> Json
-encodeTxOut (Sh.TxOut addr value) = encodeObject
-    [ ( "address"
-      , Shelley.encodeAddress addr
-      )
-    , ( "value"
-      , encodeValue value
-      )
-    ]
+encodeTxOut (Sh.TxOut addr value) =
+    "address" .=
+        Shelley.encodeAddress addr <>
+    "value" .=
+        encodeValue value
+    & encodeObject
 
 encodeUtxo
     :: Crypto crypto
@@ -207,93 +193,69 @@ encodeUtxoFailure
     -> Json
 encodeUtxoFailure = \case
     MA.BadInputsUTxO inputs ->
-        encodeObject
-            [ ( "badInputs"
-              , encodeFoldable Shelley.encodeTxIn inputs
-              )
-            ]
+        "badInputs" .=
+            encodeFoldable Shelley.encodeTxIn inputs
+        & encodeObject
     MA.OutsideValidityIntervalUTxO itv currentSlot ->
-        encodeObject
-            [ ( "outsideOfValidityInterval", encodeObject
-                [ ( "interval" , Allegra.encodeValidityInterval itv )
-                , ( "currentSlot" , encodeSlotNo currentSlot )
-                ]
-              )
-            ]
+        "outsideOfValidityInterval" .= encodeObject
+            ( "interval" .= Allegra.encodeValidityInterval itv <>
+              "currentSlot" .= encodeSlotNo currentSlot
+            )
+        & encodeObject
     MA.OutputTooBigUTxO outs ->
-        encodeObject
-            [ ( "tooManyAssetsInOutput"
-              , encodeFoldable encodeTxOut outs
-              )
-            ]
+        "tooManyAssetsInOutput" .=
+            encodeFoldable encodeTxOut outs
+        & encodeObject
     MA.MaxTxSizeUTxO actualSize maxSize ->
-        encodeObject
-            [ ( "txTooLarge", encodeObject
-                [ ( "maximumSize", encodeInteger maxSize )
-                , ( "actualSize", encodeInteger actualSize )
-                ]
-              )
-            ]
+        "txTooLarge" .= encodeObject
+            ( "maximumSize" .= encodeInteger maxSize <>
+              "actualSize" .= encodeInteger actualSize
+            )
+        & encodeObject
     MA.InputSetEmptyUTxO ->
-        encodeObject
-            [ ( "missingAtLeastOneInputUtxo", encodeNull )
-            ]
+        "missingAtLeastOneInputUtxo" .=
+            encodeNull
+        & encodeObject
     MA.FeeTooSmallUTxO required actual ->
-        encodeObject
-            [ ( "feeTooSmall", encodeObject
-                [ ( "requiredFee", encodeCoin required )
-                , ( "actualFee", encodeCoin actual )
-                ]
+        "feeTooSmall" .= encodeObject
+              ( "requiredFee" .= encodeCoin required <>
+                "actualFee" .= encodeCoin actual
               )
-            ]
+        & encodeObject
     MA.ValueNotConservedUTxO consumed produced ->
-        encodeObject
-            [ ( "valueNotConserved", encodeObject
-                [ ( "consumed", encodeValue consumed )
-                , ( "produced", encodeValue produced )
-                ]
-              )
-            ]
+        "valueNotConserved" .= encodeObject
+            ( "consumed" .= encodeValue consumed <>
+              "produced" .= encodeValue produced
+            )
+        & encodeObject
     MA.WrongNetwork expected invalidAddrs ->
-        encodeObject
-            [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork"
-                  , Shelley.encodeNetwork expected
-                  )
-                , ( "invalidEntities"
-                  , Shelley.encodeEntities "address" Shelley.encodeAddress invalidAddrs
-                  )
-                ]
-              )
-            ]
+        "networkMismatch" .= encodeObject
+            ( "expectedNetwork" .=
+                Shelley.encodeNetwork expected <>
+              "invalidEntities" .=
+                Shelley.encodeEntities "address" Shelley.encodeAddress invalidAddrs
+            )
+        & encodeObject
     MA.WrongNetworkWithdrawal expected invalidAccts ->
-        encodeObject
-            [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork"
-                  , Shelley.encodeNetwork expected
-                  )
-                , ( "invalidEntities"
-                  , Shelley.encodeEntities "rewardAccount" Shelley.encodeRewardAcnt invalidAccts
-                  )
-                ]
-              )
-            ]
+        "networkMismatch" .= encodeObject
+            ( "expectedNetwork" .=
+                Shelley.encodeNetwork expected <>
+              "invalidEntities" .=
+                Shelley.encodeEntities "rewardAccount" Shelley.encodeRewardAcnt invalidAccts
+            )
+        & encodeObject
     MA.OutputTooSmallUTxO outs ->
-        encodeObject
-            [ ( "outputTooSmall"
-              , encodeFoldable encodeTxOut outs
-              )
-            ]
+        "outputTooSmall" .=
+            encodeFoldable encodeTxOut outs
+        & encodeObject
     MA.OutputBootAddrAttrsTooBig outs ->
-        encodeObject
-            [ ( "addressAttributesTooLarge"
-              , encodeFoldable Shelley.encodeAddress ((\(Sh.TxOut addr _) -> addr) <$> outs)
-              )
-            ]
+        "addressAttributesTooLarge" .=
+            encodeFoldable Shelley.encodeAddress ((\(Sh.TxOut addr _) -> addr) <$> outs)
+        & encodeObject
     MA.TriesToForgeADA ->
-        encodeObject
-            [ ( "triesToForgeAda", encodeNull )
-            ]
+        "triesToForgeAda" .=
+            encodeNull
+        & encodeObject
     MA.UpdateFailure e ->
         Shelley.encodeUpdateFailure e
 
@@ -301,14 +263,12 @@ encodeValue
     :: Crypto crypto
     => MA.Value crypto
     -> Json
-encodeValue (MA.Value coins assets) = encodeObject
-    [ ( "coins"
-      , encodeInteger coins
-      )
-    , ( "assets"
-      , encodeMap stringifyAssetId encodeInteger (flatten assets)
-      )
-    ]
+encodeValue (MA.Value coins assets) =
+    "coins" .=
+        encodeInteger coins <>
+    "assets" .=
+        encodeMap stringifyAssetId encodeInteger (flatten assets)
+    & encodeObject
   where
     flatten :: (Ord k1, Ord k2) => Map k1 (Map k2 a) -> Map (k1, k2) a
     flatten = Map.foldrWithKey
@@ -319,17 +279,14 @@ encodeWitnessSet
     :: Crypto crypto
     => Sh.WitnessSet (MaryEra crypto)
     -> Json
-encodeWitnessSet x = encodeObject
-    [ ( "signatures"
-      , Shelley.encodeWitVKeys (Sh.addrWits x)
-      )
-    , ( "scripts"
-      , encodeMap Shelley.stringifyScriptHash Allegra.encodeScript (Sh.scriptWits x)
-      )
-    , ( "bootstrap"
-      , encodeFoldable Shelley.encodeBootstrapWitness (Sh.bootWits x)
-      )
-    ]
+encodeWitnessSet x =
+    "signatures" .=
+        Shelley.encodeWitVKeys (Sh.addrWits x) <>
+    "scripts" .=
+        encodeMap Shelley.stringifyScriptHash Allegra.encodeScript (Sh.scriptWits x) <>
+    "bootstrap" .=
+        encodeFoldable Shelley.encodeBootstrapWitness (Sh.bootWits x)
+    & encodeObject
 
 --
 -- Conversion To Text

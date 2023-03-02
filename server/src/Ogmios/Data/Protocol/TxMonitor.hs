@@ -182,8 +182,9 @@ _encodeAwaitAcquire
     :: Wsp.Request AwaitAcquire
     -> Json
 _encodeAwaitAcquire =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
-        AwaitAcquire -> encodeObject []
+    Wsp.mkRequest Wsp.defaultOptions $ encodeObject . \case
+        AwaitAcquire ->
+            mempty
 
 _decodeAwaitAcquire
     :: Json.Value
@@ -199,12 +200,11 @@ _encodeAwaitAcquireResponse
     :: Wsp.Response AwaitAcquireResponse
     -> Json
 _encodeAwaitAcquireResponse =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        AwaitAcquired{slot} -> encodeObject
-            [ ( "AwaitAcquired"
-              , encodeObject [ ( "slot", encodeSlotNo slot ) ]
-              )
-            ]
+    Wsp.mkResponse Wsp.defaultOptions proxy $ encodeObject . \case
+        AwaitAcquired{slot} ->
+            "AwaitAcquired" .= encodeObject
+                ( "slot" .= encodeSlotNo slot
+                )
       where
         proxy = Proxy @(Wsp.Request AwaitAcquire)
 
@@ -220,13 +220,13 @@ _encodeNextTx
     :: Wsp.Request NextTx
     -> Json
 _encodeNextTx =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
+    Wsp.mkRequest Wsp.defaultOptions $ encodeObject . \case
         NextTx{fields} ->
             case fields of
                 Nothing ->
-                    encodeObject []
+                    mempty
                 Just NextTxAllFields ->
-                    encodeObject [ ( "fields", encodeText "all" ) ]
+                    "fields" .= encodeText "all"
 
 _decodeNextTx
     :: Json.Value
@@ -234,8 +234,10 @@ _decodeNextTx
 _decodeNextTx =
     Wsp.genericFromJSON Wsp.defaultOptions
         { Wsp.onMissingField = \case
-            "fields" -> pure Json.Null
-            k -> Wsp.onMissingField  Wsp.defaultOptions k
+            "fields" ->
+                pure Json.Null
+            k ->
+                Wsp.onMissingField  Wsp.defaultOptions k
         }
 
 data NextTxFields
@@ -250,9 +252,11 @@ instance FromJSON NextTxFields where
 
 instance ToJSON NextTxFields where
     toJSON = \case
-        NextTxAllFields -> Json.String "all"
+        NextTxAllFields ->
+            Json.String "all"
     toEncoding = \case
-        NextTxAllFields -> Json.text "all"
+        NextTxAllFields ->
+            Json.text "all"
 
 data NextTxResponse block
     = NextTxResponseId
@@ -279,8 +283,10 @@ _encodeNextTxResponse
     -> Json
 _encodeNextTxResponse encodeTxId encodeTx =
     Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        NextTxResponseId{nextId} -> encodeMaybe encodeTxId nextId
-        NextTxResponseTx{nextTx} -> encodeMaybe encodeTx nextTx
+        NextTxResponseId{nextId} ->
+            encodeMaybe encodeTxId nextId
+        NextTxResponseTx{nextTx} ->
+            encodeMaybe encodeTx nextTx
   where
     proxy = Proxy @(Wsp.Request NextTx)
 
@@ -299,8 +305,9 @@ _encodeHasTx
     -> Wsp.Request (HasTx block)
     -> Json
 _encodeHasTx encodeTxId =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
-        HasTx{id} -> encodeObject [ ( "id", encodeTxId id ) ]
+    Wsp.mkRequest Wsp.defaultOptions $ encodeObject . \case
+        HasTx{id} ->
+            "id" .= encodeTxId id
 
 _decodeHasTx
     :: forall block. (FromJSON (GenTxId block))
@@ -319,7 +326,8 @@ _encodeHasTxResponse
     -> Json
 _encodeHasTxResponse =
     Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        HasTxResponse{has} -> encodeBool has
+        HasTxResponse{has} ->
+            encodeBool has
   where
     proxy = Proxy @(Wsp.Request (HasTx block))
 
@@ -335,8 +343,9 @@ _encodeSizeAndCapacity
     :: Wsp.Request SizeAndCapacity
     -> Json
 _encodeSizeAndCapacity =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
-        SizeAndCapacity -> encodeObject []
+    Wsp.mkRequest Wsp.defaultOptions $ encodeObject . \case
+        SizeAndCapacity ->
+            mempty
 
 _decodeSizeAndCapacity
     :: Json.Value
@@ -352,12 +361,14 @@ _encodeSizeAndCapacityResponse
     :: Wsp.Response SizeAndCapacityResponse
     -> Json
 _encodeSizeAndCapacityResponse =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        SizeAndCapacityResponse{sizes} -> encodeObject
-            [ ( "capacity", encodeWord32 (capacityInBytes sizes) )
-            , ( "currentSize", encodeWord32 (sizeInBytes sizes) )
-            , ( "numberOfTxs", encodeWord32 (numberOfTxs sizes) )
-            ]
+    Wsp.mkResponse Wsp.defaultOptions proxy $ encodeObject . \case
+        SizeAndCapacityResponse{sizes} ->
+            "capacity" .=
+                encodeWord32 (capacityInBytes sizes) <>
+            "currentSize" .=
+                encodeWord32 (sizeInBytes sizes) <>
+            "numberOfTxs" .=
+                encodeWord32 (numberOfTxs sizes)
   where
     proxy = Proxy @(Wsp.Request SizeAndCapacity)
 
@@ -373,8 +384,9 @@ _encodeReleaseMempool
     :: Wsp.Request ReleaseMempool
     -> Json
 _encodeReleaseMempool =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
-        ReleaseMempool -> encodeObject []
+    Wsp.mkRequest Wsp.defaultOptions $ encodeObject . \case
+        ReleaseMempool ->
+            mempty
 
 _decodeReleaseMempool
     :: Json.Value
@@ -391,6 +403,7 @@ _encodeReleaseMempoolResponse
     -> Json
 _encodeReleaseMempoolResponse =
     Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        Released -> encodeText "Released"
+        Released ->
+            encodeText "Released"
   where
     proxy = Proxy @(Wsp.Request ReleaseMempool)

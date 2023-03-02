@@ -441,11 +441,14 @@ fromEraIndex = \case
 encodeBound
     :: Bound
     -> Json
-encodeBound bound = encodeObject
-    [ ( "time", encodeRelativeTime (boundTime bound) )
-    , ( "slot", encodeSlotNo (boundSlot bound) )
-    , ( "epoch", encodeEpochNo (boundEpoch bound) )
-    ]
+encodeBound bound =
+    "time" .=
+        encodeRelativeTime (boundTime bound) <>
+    "slot" .=
+        encodeSlotNo (boundSlot bound) <>
+    "epoch".=
+        encodeEpochNo (boundEpoch bound)
+    & encodeObject
 
 encodeDelegationsAndRewards
     :: Crypto crypto
@@ -457,20 +460,19 @@ encodeDelegationsAndRewards (dlg, rwd) =
     merge = Map.merge whenDlgMissing whenRwdMissing whenBothPresent dlg rwd
 
     whenDlgMissing = Map.mapMaybeMissing
-        (\_ v -> Just $ encodeObject
-            [ ( "delegate", Shelley.encodePoolId v )
-            ]
+        (\_ v -> Just $ encodeObject $
+            "delegate" .= Shelley.encodePoolId v
         )
     whenRwdMissing = Map.mapMaybeMissing
-        (\_ v -> Just $ encodeObject
-            [ ( "rewards", encodeCoin v )
-            ]
+        (\_ v -> Just $ encodeObject $
+            "rewards" .= encodeCoin v
         )
     whenBothPresent = Map.zipWithAMatched
-        (\_ x y -> pure $ encodeObject
-            [ ( "delegate", Shelley.encodePoolId x )
-            , ( "rewards", encodeCoin y )
-            ]
+        (\_ x y -> pure $ encodeObject $
+            "delegate" .=
+                Shelley.encodePoolId x <>
+            "rewards" .=
+                encodeCoin y
         )
 
 encodeDesirabilities
@@ -478,16 +480,16 @@ encodeDesirabilities
     => Sh.RewardProvenance crypto
     -> Json
 encodeDesirabilities rp =
-    encodeMap Shelley.stringifyPoolId encodeDesirability (Sh.desirabilities rp)
+    encodeMap
+        Shelley.stringifyPoolId
+        (encodeObject . encodeDesirability)
+        (Sh.desirabilities rp)
   where
-    encodeDesirability
-        :: Sh.Desirability
-        -> Json
     encodeDesirability d =
-        encodeObject
-            [ ( "score", encodeDouble (Sh.desirabilityScore d) )
-            , ( "estimatedHitRate", encodeDouble (Sh.desirabilityScore d) )
-            ]
+        "score" .=
+            encodeDouble (Sh.desirabilityScore d) <>
+        "estimatedHitRate" .=
+            encodeDouble (Sh.desirabilityScore d)
 
 encodeEraEnd
     :: EraEnd
@@ -501,35 +503,38 @@ encodeEraEnd = \case
 encodeEraMismatch
     :: EraMismatch
     -> Json
-encodeEraMismatch x = encodeObject
-    [ ( "eraMismatch", encodeObject
-        [ ( "ledgerEra"
-          , encodeText (ledgerEraName x)
-          )
-        , ( "queryEra"
-          , encodeText (otherEraName x)
-          )
-        ]
-      )
-    ]
+encodeEraMismatch x =
+    "eraMismatch" .= encodeObject
+        ( "ledgerEra" .=
+            encodeText (ledgerEraName x) <>
+          "queryEra" .=
+            encodeText (otherEraName x)
+        )
+    & encodeObject
 
 encodeEraParams
     :: EraParams
     -> Json
-encodeEraParams x = encodeObject
-    [ ( "epochLength", encodeEpochSize (eraEpochSize x) )
-    , ( "slotLength", encodeSlotLength (eraSlotLength x) )
-    , ( "safeZone", encodeSafeZone (eraSafeZone x) )
-    ]
+encodeEraParams x =
+    "epochLength" .=
+        encodeEpochSize (eraEpochSize x) <>
+    "slotLength" .=
+        encodeSlotLength (eraSlotLength x) <>
+    "safeZone" .=
+        encodeSafeZone (eraSafeZone x)
+    & encodeObject
 
 encodeEraSummary
     :: EraSummary
     -> Json
-encodeEraSummary x = encodeObject
-    [ ( "start", encodeBound (eraStart x) )
-    , ( "end", encodeEraEnd (eraEnd x) )
-    , ( "parameters", encodeEraParams (eraParams x) )
-    ]
+encodeEraSummary x =
+    "start" .=
+        encodeBound (eraStart x) <>
+    "end" .=
+        encodeEraEnd (eraEnd x) <>
+    "parameters" .=
+        encodeEraParams (eraParams x)
+    & encodeObject
 
 encodeInterpreter
     :: forall crypto eras. (eras ~ CardanoEras crypto)
@@ -564,15 +569,14 @@ encodePoint
     :: Point (CardanoBlock crypto)
     -> Json
 encodePoint = \case
-    Point Origin -> encodeText "origin"
-    Point (At x) -> encodeObject
-        [ ( "slot"
-          , encodeSlotNo (blockPointSlot x)
-          )
-        , ( "hash"
-          , encodeOneEraHash (blockPointHash x)
-          )
-        ]
+    Point Origin ->
+        encodeText "origin"
+    Point (At x) ->
+        "slot" .=
+            encodeSlotNo (blockPointSlot x) <>
+        "hash" .=
+            encodeOneEraHash (blockPointHash x)
+        & encodeObject
 
 encodePoolDistr
     :: forall crypto. Crypto crypto
@@ -584,14 +588,12 @@ encodePoolDistr =
     encodeIndividualPoolStake
         :: Ledger.IndividualPoolStake crypto
         -> Json
-    encodeIndividualPoolStake x = encodeObject
-        [ ( "stake"
-          , encodeRational (Ledger.individualPoolStake x)
-          )
-        , ( "vrf"
-          , Shelley.encodeHash (Ledger.individualPoolStakeVrf x)
-          )
-        ]
+    encodeIndividualPoolStake x =
+        "stake" .=
+            encodeRational (Ledger.individualPoolStake x) <>
+        "vrf" .=
+            Shelley.encodeHash (Ledger.individualPoolStakeVrf x)
+        & encodeObject
 
 encodePoolParameters
     :: Crypto crypto
@@ -604,137 +606,103 @@ encodeRewardInfoPool
     :: Sh.Api.RewardInfoPool
     -> Json
 encodeRewardInfoPool info =
-    encodeObject
-        [ ( "stake"
-          , encodeCoin (Sh.Api.stake info)
-          )
-        , ( "ownerStake"
-          , encodeCoin (Sh.Api.ownerStake info)
-          )
-        , ( "approximatePerformance"
-          , encodeDouble (Sh.Api.performanceEstimate info)
-          )
-        , ( "poolParameters"
-          , encodeObject
-            [ ( "cost"
-              , encodeCoin (Sh.Api.cost info)
-              )
-            , ( "margin"
-              , encodeUnitInterval (Sh.Api.margin info)
-              )
-            , ( "pledge"
-              , encodeCoin (Sh.Api.ownerPledge info)
-              )
-            ]
-          )
-        ]
+    "stake" .=
+        encodeCoin (Sh.Api.stake info) <>
+    "ownerStake" .=
+        encodeCoin (Sh.Api.ownerStake info) <>
+    "approximatePerformance" .=
+        encodeDouble (Sh.Api.performanceEstimate info) <>
+    "poolParameters" .= encodeObject
+        ( "cost" .=
+            encodeCoin (Sh.Api.cost info) <>
+          "margin" .=
+              encodeUnitInterval (Sh.Api.margin info) <>
+          "pledge" .=
+              encodeCoin (Sh.Api.ownerPledge info)
+        )
+    & encodeObject
 
 encodeRewardInfoPools
     :: Crypto crypto
     => RewardProvenance' crypto
     -> Json
 encodeRewardInfoPools (rp, pools) =
-    encodeObject
-        [ ( "desiredNumberOfPools"
-          , encodeNatural (Sh.Api.nOpt rp)
-          )
-        , ( "poolInfluence"
-          , encodeNonNegativeInterval (Sh.Api.a0 rp)
-          )
-        , ( "totalRewards"
-          , encodeCoin (Sh.Api.rPot rp)
-          )
-        , ( "activeStake"
-          , encodeCoin (Sh.Api.totalStake rp)
-          )
-        , ( "pools"
-          , encodeMap Shelley.stringifyPoolId encodeRewardInfoPool pools
-          )
-        ]
+    "desiredNumberOfPools" .=
+        encodeNatural (Sh.Api.nOpt rp) <>
+    "poolInfluence" .=
+        encodeNonNegativeInterval (Sh.Api.a0 rp) <>
+    "totalRewards" .=
+        encodeCoin (Sh.Api.rPot rp) <>
+    "activeStake" .=
+        encodeCoin (Sh.Api.totalStake rp) <>
+    "pools" .=
+        encodeMap Shelley.stringifyPoolId encodeRewardInfoPool pools
+    & encodeObject
 
 encodeRewardProvenance
     :: forall crypto. Crypto crypto
     => Sh.RewardProvenance crypto
     -> Json
 encodeRewardProvenance rp =
-    encodeObject
-        [ ( "epochLength"
-          , encodeWord64 (Sh.spe rp)
-          )
-        , ( "decentralizationParameter"
-          , encodeRational (Sh.d rp)
-          )
-        , ( "maxLovelaceSupply"
-          , encodeCoin (Sh.maxLL rp)
-          )
-        , ( "totalMintedBlocks"
-          , encodeInteger (Sh.blocksCount rp)
-          )
-        , ( "totalExpectedBlocks"
-          , encodeInteger (Sh.expBlocks rp)
-          )
-        , ( "incentive"
-          , encodeCoin (Sh.deltaR1 rp)
-          )
-        , ( "rewardsGap"
-          , encodeCoin (Sh.deltaR2 rp)
-          )
-        , ( "availableRewards"
-          , encodeCoin (Sh.r rp)
-          )
-        , ( "totalRewards"
-          , encodeCoin (Sh.rPot rp)
-          )
-        , ( "treasuryTax"
-          , encodeCoin (Sh.deltaT1 rp)
-          )
-        , ( "activeStake"
-          , encodeCoin (Sh.activeStake rp)
-          )
-        , ( "pools"
-          , encodeMap Shelley.stringifyPoolId encodeRewardProvenancePool (Sh.pools rp)
-          )
-        , ( "mintedBlocks"
-          , encodeMap Shelley.stringifyPoolId encodeNatural (Ledger.unBlocksMade $ Sh.blocks rp)
-          )
-        ]
+    "epochLength" .=
+        encodeWord64 (Sh.spe rp) <>
+    "decentralizationParameter" .=
+        encodeRational (Sh.d rp) <>
+    "maxLovelaceSupply" .=
+        encodeCoin (Sh.maxLL rp) <>
+    "totalMintedBlocks" .=
+        encodeInteger (Sh.blocksCount rp) <>
+    "totalExpectedBlocks" .=
+        encodeInteger (Sh.expBlocks rp) <>
+    "incentive" .=
+        encodeCoin (Sh.deltaR1 rp) <>
+    "rewardsGap" .=
+        encodeCoin (Sh.deltaR2 rp) <>
+    "availableRewards" .=
+        encodeCoin (Sh.r rp) <>
+    "totalRewards" .=
+        encodeCoin (Sh.rPot rp) <>
+    "treasuryTax" .=
+        encodeCoin (Sh.deltaT1 rp) <>
+    "activeStake" .=
+        encodeCoin (Sh.activeStake rp) <>
+    "pools" .=
+        encodeMap
+            Shelley.stringifyPoolId
+            encodeRewardProvenancePool
+            (Sh.pools rp) <>
+    "mintedBlocks" .=
+        encodeMap
+            Shelley.stringifyPoolId
+            encodeNatural
+            (Ledger.unBlocksMade $ Sh.blocks rp)
+    & encodeObject
   where
     encodeRewardProvenancePool
         :: Sh.RewardProvenancePool crypto
         -> Json
     encodeRewardProvenancePool rpp =
-        encodeObject
-            [ ( "totalMintedBlocks"
-              , encodeNatural (Sh.poolBlocksP rpp)
-              )
-            , ( "totalStakeShare"
-              , encodeRational (Sh.sigmaP rpp)
-              )
-            , ( "activeStakeShare"
-              , encodeRational (Sh.sigmaAP rpp)
-              )
-            , ( "ownerStake"
-              , encodeCoin (Sh.ownerStakeP rpp)
-              )
-            , ( "parameters"
-              , Shelley.encodePoolParams (Sh.poolParamsP rpp)
-              )
-            , ( "pledgeRatio"
-              , encodeRational (Sh.pledgeRatioP rpp)
-              )
-            , ( "maxRewards"
-              , encodeCoin (Sh.maxPP rpp)
-              )
-            , ( "apparentPerformance"
-              , encodeRational (Sh.appPerfP rpp)
-              )
-            , ( "totalRewards"
-              , encodeCoin (Sh.poolRP rpp)
-              )
-            , ( "leaderRewards"
-              , encodeCoin (Sh.lRewardP rpp)
-              )
-            ]
+        "totalMintedBlocks" .=
+            encodeNatural (Sh.poolBlocksP rpp) <>
+        "totalStakeShare" .=
+            encodeRational (Sh.sigmaP rpp) <>
+        "activeStakeShare" .=
+            encodeRational (Sh.sigmaAP rpp) <>
+        "ownerStake" .=
+            encodeCoin (Sh.ownerStakeP rpp) <>
+        "parameters" .=
+            Shelley.encodePoolParams (Sh.poolParamsP rpp) <>
+        "pledgeRatio" .=
+            encodeRational (Sh.pledgeRatioP rpp) <>
+        "maxRewards" .=
+            encodeCoin (Sh.maxPP rpp) <>
+        "apparentPerformance" .=
+            encodeRational (Sh.appPerfP rpp) <>
+        "totalRewards" .=
+            encodeCoin (Sh.poolRP rpp) <>
+        "leaderRewards" .=
+            encodeCoin (Sh.lRewardP rpp)
+        & encodeObject
 
 encodeSafeZone
     :: SafeZone
@@ -958,27 +926,42 @@ parseGetCurrentPParams genResultInEra =
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentShelley GetCurrentPParams))
-                    (either encodeMismatchEraInfo (Shelley.encodePParams' id))
+                    (either
+                        encodeMismatchEraInfo
+                        (Shelley.encodePParams' (\k encode v -> k .= encode v))
+                    )
                     (genResultInEra (Proxy @(ShelleyEra crypto)))
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentAllegra GetCurrentPParams))
-                    (either encodeMismatchEraInfo (Allegra.encodePParams' id))
+                    (either
+                        encodeMismatchEraInfo
+                        (Allegra.encodePParams' (\k encode v -> k .= encode v))
+                    )
                     (genResultInEra (Proxy @(AllegraEra crypto)))
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentMary GetCurrentPParams))
-                    (either encodeMismatchEraInfo (Mary.encodePParams' id))
+                    (either
+                        encodeMismatchEraInfo
+                        (Mary.encodePParams' (\k encode v -> k .= encode v))
+                    )
                     (genResultInEra (Proxy @(MaryEra crypto)))
             SomeShelleyEra ShelleyBasedEraAlonzo ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentAlonzo GetCurrentPParams))
-                    (either encodeMismatchEraInfo (Alonzo.encodePParams' id))
+                    (either
+                        encodeMismatchEraInfo
+                        (Alonzo.encodePParams' (\k encode v -> k .= encode v))
+                    )
                     (genResultInEra (Proxy @(AlonzoEra crypto)))
             SomeShelleyEra ShelleyBasedEraBabbage ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentBabbage GetCurrentPParams))
-                    (either encodeMismatchEraInfo (Babbage.encodePParams' id))
+                    (either
+                        encodeMismatchEraInfo
+                        (Babbage.encodePParams' (\k encode v -> k .= encode v))
+                    )
                     (genResultInEra (Proxy @(BabbageEra crypto)))
 
 parseGetProposedPParamsUpdates

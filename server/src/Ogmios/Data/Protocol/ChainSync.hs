@@ -112,10 +112,10 @@ _encodeFindIntersect
     -> Wsp.Request (FindIntersect block)
     -> Json
 _encodeFindIntersect encodePoint =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
-        FindIntersect{points} -> encodeObject
-            [ ( "points", encodeList encodePoint points )
-            ]
+    Wsp.mkRequest Wsp.defaultOptions $ encodeObject . \case
+        FindIntersect{points} ->
+            "points" .=
+                encodeList encodePoint points
 
 _decodeFindIntersect
     :: FromJSON (Point block)
@@ -136,20 +136,16 @@ _encodeFindIntersectResponse
     -> Wsp.Response (FindIntersectResponse block)
     -> Json
 _encodeFindIntersectResponse encodePoint encodeTip =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        IntersectionFound{point,tip} -> encodeObject
-            [ ("IntersectionFound", encodeObject
-                [ ("point", encodePoint point)
-                , ("tip", encodeTip tip)
-                ]
-              )
-            ]
-        IntersectionNotFound{tip} -> encodeObject
-            [ ("IntersectionNotFound", encodeObject
-                [ ("tip", encodeTip tip)
-                ]
-              )
-            ]
+    Wsp.mkResponse Wsp.defaultOptions proxy $ encodeObject . \case
+        IntersectionFound{point,tip} ->
+            "IntersectionFound" .= encodeObject
+                ( "point" .= encodePoint point <>
+                  "tip" .= encodeTip tip
+                )
+        IntersectionNotFound{tip} ->
+            "IntersectionNotFound" .= encodeObject
+                ( "tip" .= encodeTip tip
+                )
   where
     proxy = Proxy @(Wsp.Request (FindIntersect block))
 
@@ -166,7 +162,8 @@ _encodeRequestNext
     -> Json
 _encodeRequestNext =
     Wsp.mkRequest Wsp.defaultOptions $ \case
-        RequestNext -> encodeObject []
+        RequestNext ->
+            encodeObject mempty
 
 _decodeRequestNext
     :: Json.Value
@@ -186,20 +183,16 @@ _encodeRequestNextResponse
     -> Wsp.Response (RequestNextResponse block)
     -> Json
 _encodeRequestNextResponse encodeBlock encodePoint encodeTip =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        RollForward{block,tip} -> encodeObject
-            [ ("RollForward", encodeObject
-                [ ("block", encodeBlock block)
-                , ("tip", encodeTip tip)
-                ]
-              )
-            ]
-        RollBackward{point,tip} -> encodeObject
-            [ ("RollBackward", encodeObject
-                [ ("point", encodePoint point)
-                , ("tip", encodeTip tip)
-                ]
-              )
-            ]
+    Wsp.mkResponse Wsp.defaultOptions proxy $ encodeObject . \case
+        RollForward{block,tip} ->
+            "RollForward" .= encodeObject
+                ( "block" .= encodeBlock block <>
+                  "tip" .= encodeTip tip
+                )
+        RollBackward{point,tip} ->
+            "RollBackward" .= encodeObject
+                ( "point" .= encodePoint point <>
+                  "tip" .= encodeTip tip
+                )
   where
     proxy = Proxy @(Wsp.Request RequestNext)

@@ -167,10 +167,10 @@ _encodeAcquire
     -> Wsp.Request (Acquire block)
     -> Json
 _encodeAcquire encodePoint =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
-        Acquire{point} -> encodeObject
-            [ ( "point", encodePoint point )
-            ]
+    Wsp.mkRequest Wsp.defaultOptions $ encodeObject . \case
+        Acquire{point} ->
+            "point" .=
+                encodePoint point
 
 _decodeAcquire
     :: FromJSON (Point block)
@@ -191,19 +191,17 @@ _encodeAcquireResponse
     -> Wsp.Response (AcquireResponse block)
     -> Json
 _encodeAcquireResponse encodePoint encodeAcquireFailure =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        AcquireSuccess{point} -> encodeObject
-            [ ("AcquireSuccess", encodeObject
-                [ ("point", encodePoint point)
-                ]
-              )
-            ]
-        AcquireFailure{failure} -> encodeObject
-            [ ( "AcquireFailure", encodeObject
-                [ ("failure", encodeAcquireFailure failure)
-                ]
-              )
-            ]
+    Wsp.mkResponse Wsp.defaultOptions proxy $ encodeObject . \case
+        AcquireSuccess{point} ->
+            "AcquireSuccess" .= encodeObject
+                ( "point" .=
+                    encodePoint point
+                )
+        AcquireFailure{failure} ->
+            "AcquireFailure" .= encodeObject
+                ( "failure" .=
+                    encodeAcquireFailure failure
+                )
   where
     proxy = Proxy @(Wsp.Request (Acquire block))
 
@@ -220,7 +218,8 @@ _encodeRelease
     -> Json
 _encodeRelease =
     Wsp.mkRequest Wsp.defaultOptions $ \case
-        Release -> encodeObject []
+        Release ->
+            encodeObject mempty
 
 _decodeRelease
     :: Json.Value
@@ -237,7 +236,8 @@ _encodeReleaseResponse
     -> Json
 _encodeReleaseResponse =
     Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        Released -> encodeText "Released"
+        Released ->
+            encodeText "Released"
   where
     proxy = Proxy @(Wsp.Request Release)
 
@@ -262,13 +262,13 @@ data QueryResponse block
     deriving (Generic)
 
 instance Show (QueryResponse block) where
-    showsPrec i = \case
-        QueryResponse json -> T.showParen (i >= 10)
-            (T.showString $ "QueryResponse (" <> str json <> ")")
-        QueryUnavailableInCurrentEra -> T.showParen (i >= 10)
-            (T.showString "QueryUnavailableInCurrentEra")
-        QueryAcquireFailure failure -> T.showParen (i >= 10)
-            (T.showString $ "QueryAcquireFailure (" <> show failure <> ")")
+    showsPrec i = T.showParen (i >=10) . T.showString . \case
+        QueryResponse json ->
+            "QueryResponse (" <> str json <> ")"
+        QueryUnavailableInCurrentEra ->
+            "QueryUnavailableInCurrentEra"
+        QueryAcquireFailure failure ->
+            "QueryAcquireFailure (" <> show failure <> ")"
       where
         str = decodeUtf8 . jsonToByteString
 
@@ -283,11 +283,11 @@ _encodeQueryResponse encodeAcquireFailure =
             json
         QueryUnavailableInCurrentEra ->
             encodeText "QueryUnavailableInCurrentEra"
-        QueryAcquireFailure{failure} -> encodeObject
-            [ ( "AcquireFailure", encodeObject
-                [ ("failure", encodeAcquireFailure failure)
-                ]
-              )
-            ]
+        QueryAcquireFailure{failure} ->
+            "AcquireFailure" .= encodeObject
+                ( "failure" .=
+                    encodeAcquireFailure failure
+                )
+            & encodeObject
   where
     proxy = Proxy @(Wsp.Request (Query Proxy block))
