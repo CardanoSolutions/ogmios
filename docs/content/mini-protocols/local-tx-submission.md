@@ -48,13 +48,13 @@ Providing a more user-friendly interface with regards to transactions in Ogmios 
 
 Sending a transaction through the Cardano network requires one message using the method `SubmitTx`, and with a single mandatory arguments with `bytes`, representing a serialized signed transactions with its full witness.
 
-Note that JSON does not support embedding raw bytes in objects. Bytes needs therefore to be encoded in either `Base16` or `Base64`; Ogmios will try both encoding.
+Note that JSON does not support embedding raw bytes in objects. Bytes needs therefore to be base16-encoded.
 
 ```json
 {
     "jsonrpc": "2.0",
     "method": "SubmitTx",
-    "params": { "submit": "<base16 or base64>" }
+    "params": { "submit": "<base16>" }
 }
 ```
 
@@ -78,7 +78,7 @@ From there, the endpoint works similarly to `SubmitTx`, but with different metho
 {
     "jsonrpc": "2.0",
     "method": "EvaluateTx",
-    "params": { "evaluate": "<base16 or base64>" }
+    "params": { "evaluate": "<base16>" }
 }
 ```
 
@@ -124,7 +124,7 @@ For example:
     "jsonrpc": "2.0",
     "method": "EvaluateTx",
     "params": {
-      "evaluate": "<base16 or base64>",
+      "evaluate": "<base16>",
       "additionalUtxoSet": [
         [
           { "txId":"97b2af6dfc6a4825e934146f424cdd6ede43ff98c355d2ae3aa95b0f70b63949"

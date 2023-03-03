@@ -9,8 +9,8 @@ export const isTxId = (result: TxId | Error[]): result is TxId =>
   (typeof (result as TxId) === 'string')
 
 /**
- * Submit a serialized transaction. This expects a base16 or base64 CBOR-encoded
- * transaction as obtained from the cardano-cli or cardano-serialization-lib.
+ * Submit a serialized transaction. This expects a base16 CBOR-encoded
+ * transaction as obtained from the cardano-cli or cardano-multiplatform-lib.
  *
  * @category TxSubmission
  */

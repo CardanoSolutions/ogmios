@@ -209,18 +209,10 @@
         , "required": ["submit"]
         , "properties":
           { "submit":
-            { "anyOf":
-              [ { "type": "string"
-                , "description": "CBOR-serialized signed transaction (base64)"
-                , "contentEncoding": "base64"
-                , "pattern": "^[A-Za-z0-9]+=?=?$"
-                }
-              , { "type": "string"
-                , "description": "CBOR-serialized signed transaction (base16)"
-                , "contentEncoding": "base16"
-                , "pattern": "^[0-9a-f]+$"
-                }
-              ]
+            { "type": "string"
+            , "description": "CBOR-serialized signed transaction (base16)"
+            , "contentEncoding": "base16"
+            , "pattern": "^[0-9a-f]+$"
             }
           }
         }
@@ -288,18 +280,10 @@
         , "required": ["evaluate"]
         , "properties":
           { "evaluate":
-            { "anyOf":
-              [ { "type": "string"
-                , "description": "CBOR-serialized signed transaction (base64)"
-                , "contentEncoding": "base64"
-                , "pattern": "^[A-Za-z0-9]+=?=?$"
-                }
-              , { "type": "string"
-                , "description": "CBOR-serialized signed transaction (base16)"
-                , "contentEncoding": "base16"
-                , "pattern": "^[0-9a-f]+$"
-                }
-              ]
+            { "type": "string"
+            , "description": "CBOR-serialized signed transaction (base16)"
+            , "contentEncoding": "base16"
+            , "pattern": "^[0-9a-f]+$"
             }
           , "additionalUtxoSet":
             { "$ref": "ogmios.json#/definitions/Utxo"
@@ -1356,7 +1340,7 @@
   , "AddressAttributes":
     { "type": "string"
     , "description": "Extra attributes carried by Byron addresses (network magic and/or HD payload)."
-    , "contentEncoding": "base64"
+    , "contentEncoding": "base16"
     }
 
   , "AssetQuantity":
@@ -2570,13 +2554,13 @@
   , "IssuerVrfVerificationKey":
     { "type": "string"
     , "description": "A key identifying a block issuer."
-    , "contentEncoding": "base64"
+    , "contentEncoding": "base16"
     }
 
   , "IssuerSignature":
     { "type": "string"
     , "description": "Signature proving a block was issued by a given issuer VRF key."
-    , "contentEncoding": "base64"
+    , "contentEncoding": "base16"
     }
 
   , "Language":
@@ -2598,7 +2582,7 @@
 
   , "KesVerificationKey":
     { "type": "string"
-    , "contentEncoding": "base64"
+    , "contentEncoding": "base16"
     }
 
   , "MempoolSizeAndCapacity":
@@ -3574,7 +3558,7 @@
   , "Signature":
     { "type": "string"
     , "description": "A signature coming from an Ed25519 or Ed25519-BIP32 signing key."
-    , "contentEncoding": "base64"
+    , "contentEncoding": "base16"
     }
 
   , "Slot":
@@ -4781,7 +4765,7 @@
         }
       , "raw":
         { "type": "string"
-        , "contentEncoding": "base64"
+        , "contentEncoding": "base16"
         , "description": "The raw serialized transaction, as found on-chain."
         }
       }
@@ -4839,7 +4823,7 @@
       , "metadata": { "$ref": "ogmios.json#/definitions/AuxiliaryData" }
       , "raw":
         { "type": "string"
-        , "contentEncoding": "base64"
+        , "contentEncoding": "base16"
         , "description": "The raw serialized transaction, as found on-chain."
         }
       }
@@ -4899,7 +4883,7 @@
         { "$ref": "ogmios.json#/definitions/AuxiliaryData" }
       , "raw":
         { "type": "string"
-        , "contentEncoding": "base64"
+        , "contentEncoding": "base16"
         , "description": "The raw serialized transaction, as found on-chain."
         }
       }
@@ -4959,7 +4943,7 @@
       , "metadata": { "$ref": "ogmios.json#/definitions/AuxiliaryData" }
       , "raw":
         { "type": "string"
-        , "contentEncoding": "base64"
+        , "contentEncoding": "base16"
         , "description": "The raw serialized transaction, as found on-chain."
         }
       }
@@ -5062,7 +5046,7 @@
         }
       , "raw":
         { "type": "string"
-        , "contentEncoding": "base64"
+        , "contentEncoding": "base16"
         , "description": "The raw serialized transaction, as found on-chain."
         }
       }
@@ -5175,7 +5159,7 @@
         }
       , "raw":
         { "type": "string"
-        , "contentEncoding": "base64"
+        , "contentEncoding": "base16"
         , "description": "The raw serialized transaction, as found on-chain."
         }
       }
@@ -5405,12 +5389,12 @@
 
   , "VrfProof":
     { "type": "string"
-    , "contentEncoding": "base64"
+    , "contentEncoding": "base16"
     }
 
   , "VrfOutput":
     { "type": "string"
-    , "contentEncoding": "base64"
+    , "contentEncoding": "base16"
     }
 
   , "Withdrawals":

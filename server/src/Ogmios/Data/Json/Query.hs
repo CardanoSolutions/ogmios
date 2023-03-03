@@ -1658,7 +1658,7 @@ decodeSerializedTx
     => Json.Value
     -> Json.Parser (SerializedTx (CardanoBlock crypto))
 decodeSerializedTx = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
-    bytes <- decodeBase16 utf8 <|> decodeBase64 utf8 <|> invalidEncodingError
+    bytes <- decodeBase16 utf8 <|> invalidEncodingError
     -- NOTE (1):
     -- The order in which we parser matters! Older eras first. formats
     -- are forward-compatible, and near hard-forks, there's a period where the
@@ -1679,7 +1679,7 @@ decodeSerializedTx = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
   where
     invalidEncodingError :: Json.Parser a
     invalidEncodingError =
-        fail "failed to decode payload from base64 or base16."
+        fail "failed to decode base16-encoded payload."
 
     -- Cardano tools have a tendency to wrap cbor in cbor (e.g cardano-cli).
     -- In particular, a `GenTx` is expected to be prefixed with a cbor tag

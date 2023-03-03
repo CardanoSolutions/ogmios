@@ -235,7 +235,7 @@ encodeTx x =
     "metadata" .=? OmitWhenNothing
         identity metadata <>
     "raw" .=
-        encodeByteStringBase64 (serialize' x)
+        encodeByteStringBase16 (serialize' x)
     & encodeObject
  where
    adHash :: Ledger.Babbage.TxBody era -> StrictMaybe (Ledger.AuxiliaryDataHash (Ledger.Crypto era))

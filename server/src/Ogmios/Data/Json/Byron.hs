@@ -243,7 +243,7 @@ encodeATxAux x =
         encodeAnnotated encodeTxWitness (By.aTaWitness x) <>
     "raw" .=
         ( let bytes = mconcat [ encodeListLen 2 , toCBOR (By.taTx x) , toCBOR (By.taWitness x) ]
-           in encodeByteStringBase64 (toStrictByteString bytes)
+           in encodeByteStringBase16 (toStrictByteString bytes)
         )
     & encodeObject
 
@@ -496,7 +496,7 @@ encodeRedeemSignature
     :: By.RedeemSignature any
     -> Json
 encodeRedeemSignature (By.RedeemSignature x) =
-    encodeByteArray encodeByteStringBase64 x
+    encodeByteArray encodeByteStringBase16 x
 
 encodeRedeemVerificationKey
     :: By.RedeemVerificationKey
@@ -508,7 +508,7 @@ encodeSignature
     :: By.Signature any
     -> Json
 encodeSignature (By.Signature x) =
-    encodeByteStringBase64 (CC.unXSignature x)
+    encodeByteStringBase16 (CC.unXSignature x)
 
 encodeSlotNumber
     :: By.SlotNumber

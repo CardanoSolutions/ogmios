@@ -133,7 +133,7 @@ encodeTx x =
     "witness" .=
         encodeWitnessSet (Sh.wits x) <>
     "raw" .=
-        encodeByteStringBase64 (serialize' x)
+        encodeByteStringBase16 (serialize' x)
     & encodeObject
   where
     adHash :: MA.TxBody era -> StrictMaybe (MA.AuxiliaryDataHash (Ledger.Crypto era))

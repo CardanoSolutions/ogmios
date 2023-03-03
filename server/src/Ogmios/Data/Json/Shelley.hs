@@ -186,7 +186,7 @@ encodeBootstrapWitness (Sh.BootstrapWitness key sig cc attr) =
     "chainCode" .=? OmitWhen BS.null
         encodeByteStringBase16 (Sh.unChainCode cc) <>
     "addressAttributes" .=? OmitWhen BS.null
-        encodeByteStringBase64 attr
+        encodeByteStringBase16 attr
     & encodeObject
 
 encodeCertVRF
@@ -194,7 +194,7 @@ encodeCertVRF
     => CC.CertVRF alg
     -> Json
 encodeCertVRF =
-    encodeByteStringBase64 . CC.rawSerialiseCertVRF
+    encodeByteStringBase16 . CC.rawSerialiseCertVRF
 
 encodeCertifiedVRF
     :: CC.VRFAlgorithm alg
@@ -558,7 +558,7 @@ encodeOutputVRF
     :: CC.OutputVRF alg
     -> Json
 encodeOutputVRF =
-    encodeByteStringBase64 . CC.getOutputVRFBytes
+    encodeByteStringBase16 . CC.getOutputVRFBytes
 
 encodePoolId
     :: Crypto crypto
@@ -738,7 +738,7 @@ encodeSignedKES
     => CC.SignedKES alg a
     -> Json
 encodeSignedKES (CC.SignedKES raw) =
-    encodeByteStringBase64 . CC.rawSerialiseSigKES $ raw
+    encodeByteStringBase16 . CC.rawSerialiseSigKES $ raw
 
 encodeShelleyGenesisStaking :: Crypto crypto => Sh.ShelleyGenesisStaking crypto -> Json
 encodeShelleyGenesisStaking x =
@@ -760,7 +760,7 @@ encodeSignedDSIGN
     => CC.SignedDSIGN alg a
     -> Json
 encodeSignedDSIGN (CC.SignedDSIGN raw) =
-    encodeByteStringBase64 . CC.rawSerialiseSigDSIGN $ raw
+    encodeByteStringBase16 . CC.rawSerialiseSigDSIGN $ raw
 
 encodeStakePoolRelay
     :: Sh.StakePoolRelay
@@ -796,7 +796,7 @@ encodeTx x =
     "witness" .=
         encodeWitnessSet (Sh.wits x) <>
     "raw" .=
-        encodeByteStringBase64 (serialize' x)
+        encodeByteStringBase16 (serialize' x)
     & encodeObject
   where
     metadata = liftA2
@@ -1042,14 +1042,14 @@ encodeVerKeyKES
     => CC.VerKeyKES alg
     -> Json
 encodeVerKeyKES =
-    encodeByteStringBase64 . CC.rawSerialiseVerKeyKES
+    encodeByteStringBase16 . CC.rawSerialiseVerKeyKES
 
 encodeVerKeyVRF
     :: (CC.VRFAlgorithm alg)
     => CC.VerKeyVRF alg
     -> Json
 encodeVerKeyVRF =
-    encodeByteStringBase64 . CC.rawSerialiseVerKeyVRF
+    encodeByteStringBase16 . CC.rawSerialiseVerKeyVRF
 
 encodeVKey
     :: Crypto crypto

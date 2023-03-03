@@ -22,9 +22,10 @@ export const isEvaluationResult = (result: EvaluationResult | Error[]): result i
   (typeof (result as EvaluationResult) === 'object' && Object.keys(result).every(x => /^(spend|mint|certificate|withdrawal):\d+$/.test(x)))
 
 /**
- * Evaluate execution units of a serialized transaction. This expects a base16 or base64 CBOR-encoded
- * transaction as obtained from the cardano-cli or cardano-serialization-lib and returns execution
- * units calculated for each of the transaction's redeemers.
+ * Evaluate execution units of a serialized transaction. This expects a base16
+ * CBOR-encoded transaction as obtained from the cardano-cli or
+ * cardano-multiplatform-lib and returns execution units calculated for each of
+ * the transaction's redeemers.
  *
  * @category TxSubmission
  */

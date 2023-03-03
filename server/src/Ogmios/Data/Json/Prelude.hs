@@ -30,14 +30,12 @@ module Ogmios.Data.Json.Prelude
       -- * Decoder
     , decodeBase16
     , decodeBase58
-    , decodeBase64
 
       -- * Basic Types
     , encodeBlockNo
     , encodeBool
     , encodeByteArray
     , encodeByteStringBase16
-    , encodeByteStringBase64
     , encodeByteStringBech32
     , encodeCoin
     , encodeDnsName
@@ -136,9 +134,6 @@ import Data.ByteArray
 import Data.ByteString.Base16
     ( encodeBase16
     )
-import Data.ByteString.Base64
-    ( encodeBase64
-    )
 import Data.ByteString.Bech32
     ( HumanReadablePart
     , encodeBech32
@@ -178,7 +173,6 @@ import qualified Data.Aeson.Types as Json
 import qualified Data.ByteArray as BA
 import qualified Data.ByteString.Base16 as B16
 import qualified Data.ByteString.Base58 as B58
-import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map.Strict as Map
 import qualified Ouroboros.Consensus.Util.Counting as Consensus
@@ -261,11 +255,6 @@ encodeByteStringBech32 :: HumanReadablePart -> ByteString -> Json
 encodeByteStringBech32 hrp =
     encodeText . encodeBech32 hrp
 {-# INLINABLE encodeByteStringBech32 #-}
-
-encodeByteStringBase64 :: ByteString -> Json
-encodeByteStringBase64 =
-    encodeText . encodeBase64
-{-# INLINABLE encodeByteStringBase64 #-}
 
 encodeCoin :: Coin -> Json
 encodeCoin =
@@ -580,6 +569,3 @@ decodeBase16 = either (fail . toString) pure . B16.decodeBase16
 
 decodeBase58 :: ByteString -> Json.Parser ByteString
 decodeBase58 = maybe mempty pure . B58.decodeBase58 B58.bitcoinAlphabet
-
-decodeBase64 :: ByteString -> Json.Parser ByteString
-decodeBase64 = either (fail . toString) pure . B64.decodeBase64
