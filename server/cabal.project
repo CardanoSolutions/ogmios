@@ -10,7 +10,7 @@ repository cardano-haskell-packages
     d4a35cd3121aa00d18544bb0ac01c3e1691d618f462c46129271bccf39f7e8ee
 
 index-state: 2022-09-27T00:00:00Z
-index-state: cardano-haskell-packages 2022-10-25T20:00:00Z
+index-state: cardano-haskell-packages 2022-10-25T23:59:59Z
 
 packages:
   ./
@@ -69,6 +69,7 @@ constraints:
   , protolude < 0.3.1
   , relude == 0.7.0.0
   , systemd >= 2.3.0
+  , unix-bytestring == 0.3.7.8
 
   , base-deriving-via == 0.1.0.0
   , cardano-binary  == 1.5.0
