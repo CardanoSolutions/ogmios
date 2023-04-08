@@ -1,6 +1,7 @@
 import { WebSocket } from './IsomorphicWebSocket'
 import { InteractionContext } from './Connection'
 import {
+  Address,
   Block,
   BlockAllegra,
   BlockAlonzo,
@@ -8,6 +9,8 @@ import {
   BlockByron,
   BlockMary,
   BlockShelley,
+  Datum,
+  DigestBlake2BDatum,
   EpochBoundaryBlock,
   Metadatum,
   MetadatumMap,
@@ -15,7 +18,11 @@ import {
   ProtocolParametersAlonzo,
   ProtocolParametersBabbage,
   ProtocolParametersShelley,
-  StandardBlock
+  Script,
+  StandardBlock,
+  TxOut,
+  UInt64,
+  Value
 } from '@cardano-ogmios/schema'
 import { findIntersect } from './ChainSync'
 import { WebSocketClosed, TipIsOriginError } from './errors'
@@ -286,3 +293,54 @@ export const isBabbageProtocolParameters = (
   params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
 ): params is ProtocolParametersBabbage =>
   (params as ProtocolParametersBabbage).coinsPerUtxoByte !== undefined
+
+
+/**
+ * Approximation of the memory overhead that comes from the associated input and entry in
+ * the ledger map data-structure. Roughly 20 words of memory times 8 bytes each.
+ *
+ * @category Helper
+ */
+export const CONSTANT_OUTPUT_SERIALIZATION_OVERHEAD = 160
+
+/**
+ * Calculate the size of an output, as seen by the ledger. This size is used when calculating
+ * for the minimum lovelace value that needs to be set on an output to be considered valid by
+ * the ledger.
+ *
+ * This calculation account for the size of the output with minimum value itself; thus, one can
+ * get the minimum value to set by simply calculating:
+ *
+ * ```
+ * const minLovelaceValue = utxoSize(output) * coinsPerUtxoByte
+ * ```
+ *
+ * where `coinsPerUtxoByte` is the corresponding protocol parameter from the Babbage era.
+ *
+ * @category Helper
+ */
+export const utxoSize = (
+  output: TxOut
+): UInt64 => {
+  return CONSTANT_OUTPUT_SERIALIZATION_OVERHEAD +
+    sizeOfAddress(output.address) +
+    sizeOfValue(output.value) +
+    sizeOfDatum(output.datum) +
+    sizeOfScript(output.script)
+
+  function sizeOfAddress(_address: Address) {
+    return 0
+  }
+
+  function sizeOfValue(_value: Value) {
+    return 0
+  }
+
+  function sizeOfDatum(_datum?: DigestBlake2BDatum | Datum) {
+    return 0
+  }
+
+  function sizeOfScript(_script?: Script) {
+    return 0
+  }
+}

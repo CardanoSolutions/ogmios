@@ -10,7 +10,13 @@ import {
   TxOut
 } from '@cardano-ogmios/schema'
 import { EventEmitter } from 'events'
-import { safeJSON, eventEmitterToGenerator, unsafeMetadatumAsJSON } from '../src'
+import {
+  CONSTANT_OUTPUT_SERIALIZATION_OVERHEAD,
+  eventEmitterToGenerator,
+  safeJSON,
+  unsafeMetadatumAsJSON,
+  utxoSize
+} from '../src'
 
 describe('util', () => {
   describe('eventToGenerator', () => {
@@ -29,6 +35,38 @@ describe('util', () => {
       expect((await generator.next()).value).toEqual(1)
       expect((await generator.next()).value).toEqual(3)
       expect((await generator.next()).value).toEqual(5)
+    })
+  })
+
+  describe('utxoSize', () => {
+    it("test vector #1", () => {
+      const output = {
+        address: "addr_test1wq659t9n5excps5nqgnq6ckrhpa8g2k3f2lc2h4uvuess8s24hsvh",
+        value: {
+          coins: 0n,
+          assets: {
+            "b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.01": 4n,
+          }
+        },
+        datum: "bb30a42c1e62f0afda5f0a4e8a562f7a13a24cea00ee81917b86b89e801314aa",
+      }
+
+      // ----- CBOR (diagnostic)
+      //
+      // { 0: h'703542ACB3A64D80C29302260D62C3B87A742AD14ABF855EBC6733081E'
+      // , 1: [0, { h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F54': {h'01': 4}}]
+      // , 2: [0, h'BB30A42C1E62F0AFDA5F0A4E8A562F7A13A24CEA00EE81917B86B89E801314AA']
+      // }
+
+      const size = Buffer.from(
+        "A300581D703542ACB3A64D80C29302260D62C3B87A742AD14ABF855EBC673308" +
+        "1E018200A1581CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC" +
+        "132F54A14101040282005820BB30A42C1E62F0AFDA5F0A4E8A562F7A13A24CEA" +
+        "00EE81917B86B89E801314AA",
+        "hex"
+      ).length
+
+      expect(utxoSize(output) - CONSTANT_OUTPUT_SERIALIZATION_OVERHEAD).toEqual(size)
     })
   })
 
