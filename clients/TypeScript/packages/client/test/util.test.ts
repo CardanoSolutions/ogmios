@@ -10,7 +10,13 @@ import {
   TxOut
 } from '@cardano-ogmios/schema'
 import { EventEmitter } from 'events'
-import { safeJSON, eventEmitterToGenerator, unsafeMetadatumAsJSON } from '../src'
+import {
+  CONSTANT_OUTPUT_SERIALIZATION_OVERHEAD,
+  eventEmitterToGenerator,
+  safeJSON,
+  unsafeMetadatumAsJSON,
+  utxoSize
+} from '../src'
 
 describe('util', () => {
   describe('eventToGenerator', () => {
@@ -29,6 +35,311 @@ describe('util', () => {
       expect((await generator.next()).value).toEqual(1)
       expect((await generator.next()).value).toEqual(3)
       expect((await generator.next()).value).toEqual(5)
+    })
+  })
+
+  describe('utxoSize', () => {
+    it('test vector #1', () => {
+      const output = {
+        address: 'addr_test1wq659t9n5excps5nqgnq6ckrhpa8g2k3f2lc2h4uvuess8s24hsvh',
+        value: {
+          coins: 0n,
+          assets: {
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.01': 4n
+          }
+        },
+        datumHash: 'bb30a42c1e62f0afda5f0a4e8a562f7a13a24cea00ee81917b86b89e801314aa'
+      }
+
+      // ----- CBOR Diagnostic
+      //
+      // { 0: h'703542ACB3A64D80C29302260D62C3B87A742AD14ABF855EBC6733081E'
+      // , 1: [0, { h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F54': {h'01': 4}}]
+      // , 2: [0, h'BB30A42C1E62F0AFDA5F0A4E8A562F7A13A24CEA00EE81917B86B89E801314AA']
+      // }
+
+      const size = Buffer.from(
+        'A300581D703542ACB3A64D80C29302260D62C3B87A742AD14ABF855EBC673308' +
+        '1E018200A1581CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC' +
+        '132F54A14101040282005820BB30A42C1E62F0AFDA5F0A4E8A562F7A13A24CEA' +
+        '00EE81917B86B89E801314AA',
+        'hex'
+      ).length
+
+      // NOTE: 4 bytes difference, because the output has currently '0' lovelace defined,
+      // but utxoSize account for the size of the output once we have allocated the min value
+      // which will cause an increase of exactly 4 bytes.
+      expect(utxoSize(output) - CONSTANT_OUTPUT_SERIALIZATION_OVERHEAD).toEqual(size + 4)
+    })
+
+    it('test vector #2', () => {
+      const output = {
+        address: 'addr1wxckk4h4asryhe4v8j4kqd0046rtxekv8hz2p4t3vq7hpegtxpwnn',
+        value: {
+          coins: 1000000n,
+          assets: {
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54: 357n
+          }
+        },
+        datum: '4171',
+        script: {
+          native: 'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54'
+        }
+      }
+
+      // ----- CBOR Diagnostic
+      //
+      // { 0: h'71B16B56F5EC064BE6AC3CAB6035EFAE86B366CC3DC4A0D571603D70E5'
+      // , 1: [1000000, {h'B16B56F5EC064BE6AC3CAB6035EFAE86B366CC3DC4A0D571603D70E5': {h'': 357}}]
+      // , 2: [1, 24(h'4171')]
+      // , 3: 24(h'82008200581CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F54')
+      // }
+
+      const size = Buffer.from(
+        'A400581D71B16B56F5EC064BE6AC3CAB6035EFAE86B366CC3DC4A0D571603D70' +
+        'E501821A000F4240A1581CB16B56F5EC064BE6AC3CAB6035EFAE86B366CC3DC4' +
+        'A0D571603D70E5A140190165028201D81842417103D818582282008200581CB5' +
+        'AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F54',
+        'hex'
+      ).length
+
+      expect(utxoSize(output) - CONSTANT_OUTPUT_SERIALIZATION_OVERHEAD).toEqual(size)
+    })
+
+    it('test vector #3', () => {
+      const output = {
+        address: 'addr_test1grs2w9p3nqfv8amnhgzwchtt8l7dt2kc2qrgqkcy0vyz2svyhpvqzqsdmflg9',
+        value: {
+          coins: 1000000n,
+          assets: {}
+        },
+        datum: '40',
+        script: {
+          'plutus:v1': '46010000220011'
+        }
+      }
+
+      // ----- CBOR Diagnostic
+      //
+      // { 0: h'40E0A714319812C3F773BA04EC5D6B3FFCD5AAD85006805B047B08254184B8580102'
+      // , 1: 1000000
+      // , 2: [1, 24(h'40')]
+      // , 3: 24(h'82014746010000220011')
+      // }
+
+      const size = Buffer.from(
+        'A400582240E0A714319812C3F773BA04EC5D6B3FFCD5AAD85006805B047B0825' +
+        '4184B8580102011A000F4240028201D818414003D8184A820147460100002200' +
+        '11',
+        'hex'
+      ).length
+
+      expect(utxoSize(output) - CONSTANT_OUTPUT_SERIALIZATION_OVERHEAD).toEqual(size)
+    })
+
+    it('test vector #4', () => {
+      const output = {
+        address: 'addr1wxckk4h4asryhe4v8j4kqd0046rtxekv8hz2p4t3vq7hpegtxpwnn',
+        value: {
+          coins: 1000000n,
+          assets: {
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.00': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.01': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.02': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.03': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.04': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.05': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.06': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.07': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.08': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.09': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.0a': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.0b': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.0c': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.0d': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.0e': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.0f': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.10': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.11': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.12': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.13': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.14': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.15': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.16': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.17': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.18': 1n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.19': 1n
+          }
+        }
+      }
+
+      // ----- CBOR Diagnostic
+      //
+      // { 0: h'703542ACB3A64D80C29302260D62C3B87A742AD14ABF855EBC6733081E'
+      // , 1:
+      //   [ 1000000
+      //   , { h'B16B56F5EC064BE6AC3CAB6035EFAE86B366CC3DC4A0D571603D70E5':
+      //       {_ h'00': 1
+      //       ,  h'01': 1
+      //       ,  h'02': 1
+      //       ,  h'03': 1
+      //       ,  h'04': 1
+      //       ,  h'05': 1
+      //       ,  h'06': 1
+      //       ,  h'07': 1
+      //       ,  h'08': 1
+      //       ,  h'09': 1
+      //       ,  h'0a': 1
+      //       ,  h'0b': 1
+      //       ,  h'0c': 1
+      //       ,  h'0d': 1
+      //       ,  h'0e': 1
+      //       ,  h'0f': 1
+      //       ,  h'10': 1
+      //       ,  h'11': 1
+      //       ,  h'12': 1
+      //       ,  h'13': 1
+      //       ,  h'14': 1
+      //       ,  h'15': 1
+      //       ,  h'16': 1
+      //       ,  h'17': 1
+      //       ,  h'18': 1
+      //       ,  h'19': 1
+      //       }
+      //     }
+      //   ]
+      // }
+
+      const size = Buffer.from(
+        'A200581D703542ACB3A64D80C29302260D62C3B87A742AD14ABF855EBC673308' +
+        '1E01821A000F4240A1581CB16B56F5EC064BE6AC3CAB6035EFAE86B366CC3DC4' +
+        'A0D571603D70E5BF410001410101410201410301410401410501410601410701' +
+        '410801410901410A01410B01410C01410D01410E01410F014110014111014112' +
+        '01411301411401411501411601411701411801411901FF',
+        'hex'
+      ).length
+
+      expect(utxoSize(output) - CONSTANT_OUTPUT_SERIALIZATION_OVERHEAD).toEqual(size)
+    })
+
+    it('test vector #5', () => {
+      const output = {
+        address: 'addr1wxckk4h4asryhe4v8j4kqd0046rtxekv8hz2p4t3vq7hpegtxpwnn',
+        value: {
+          coins: 1000000n,
+          assets: {
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f00.000000000000000000000000000000': 99999999n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f00.000000000000000000000000000001': 99999999n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f00.000000000000000000000000000002': 99999999n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f00.000000000000000000000000000003': 99999999n,
+            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f00.000000000000000000000000000004': 99999999n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f01: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f02: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f03: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f04: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f05: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f06: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f07: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f08: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f09: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0a: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0b: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0c: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0d: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0e: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0f: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f10: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f11: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f12: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f13: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f14: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f15: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f16: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f17: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f18: 1n,
+            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f19: 1n
+          }
+        }
+      }
+
+      // ----- CBOR Diagnostic
+      //
+      // { 0: h'703542ACB3A64D80C29302260D62C3B87A742AD14ABF855EBC6733081E'
+      // , 1:
+      //   [ 1000000
+      //   , {_ h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F00':
+      //       { h'000000000000000000000000000000': 99999999
+      //       , h'000000000000000000000000000001': 99999999
+      //       , h'000000000000000000000000000002': 99999999
+      //       , h'000000000000000000000000000003': 99999999
+      //       , h'000000000000000000000000000004': 99999999
+      //       }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F01': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F02': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F03': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F04': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F05': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F06': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F07': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F08': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F09': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F0A': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F0B': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F0C': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F0D': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F0E': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F0F': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F10': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F11': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F12': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F13': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F14': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F15': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F16': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F17': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F18': { h'': 1 }
+      //     , h'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F19': { h'': 1 }
+      //     }
+      //   ]
+      // }
+
+      const size = Buffer.from(
+        'A200581D703542ACB3A64D80C29302260D62C3B87A742AD14ABF855EBC673308' +
+        '1E01821A000F4240BF581CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7' +
+        'CD4101FC132F00A54F0000000000000000000000000000001A05F5E0FF4F0000' +
+        '000000000000000000000000011A05F5E0FF4F00000000000000000000000000' +
+        '00021A05F5E0FF4F0000000000000000000000000000031A05F5E0FF4F000000' +
+        '0000000000000000000000041A05F5E0FF581CB5AE663AAEA8E500157BDF4BAA' +
+        'FD6F5BA0CE5759F7CD4101FC132F01A14001581CB5AE663AAEA8E500157BDF4B' +
+        'AAFD6F5BA0CE5759F7CD4101FC132F02A14001581CB5AE663AAEA8E500157BDF' +
+        '4BAAFD6F5BA0CE5759F7CD4101FC132F03A14001581CB5AE663AAEA8E500157B' +
+        'DF4BAAFD6F5BA0CE5759F7CD4101FC132F04A14001581CB5AE663AAEA8E50015' +
+        '7BDF4BAAFD6F5BA0CE5759F7CD4101FC132F05A14001581CB5AE663AAEA8E500' +
+        '157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F06A14001581CB5AE663AAEA8E5' +
+        '00157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F07A14001581CB5AE663AAEA8' +
+        'E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F08A14001581CB5AE663AAE' +
+        'A8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F09A14001581CB5AE663A' +
+        'AEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F0AA14001581CB5AE66' +
+        '3AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F0BA14001581CB5AE' +
+        '663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F0CA14001581CB5' +
+        'AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F0DA14001581C' +
+        'B5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F0EA1400158' +
+        '1CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F0FA14001' +
+        '581CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F10A140' +
+        '01581CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F11A1' +
+        '4001581CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F12' +
+        'A14001581CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC132F' +
+        '13A14001581CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC13' +
+        '2F14A14001581CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101FC' +
+        '132F15A14001581CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD4101' +
+        'FC132F16A14001581CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD41' +
+        '01FC132F17A14001581CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7CD' +
+        '4101FC132F18A14001581CB5AE663AAEA8E500157BDF4BAAFD6F5BA0CE5759F7' +
+        'CD4101FC132F19A14001FF',
+        'hex'
+      ).length
+
+      expect(utxoSize(output) - CONSTANT_OUTPUT_SERIALIZATION_OVERHEAD).toEqual(size)
     })
   })
 
