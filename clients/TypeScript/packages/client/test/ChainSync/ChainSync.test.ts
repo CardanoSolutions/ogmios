@@ -11,6 +11,8 @@ import delay from 'delay'
 import {
   Block,
   BlockAllegra,
+  BlockAlonzo,
+  BlockBabbage,
   BlockByron,
   BlockMary,
   BlockShelley,
@@ -39,9 +41,9 @@ const messageOrderTestHandlers = (resultLog: string[]): ChainSyncMessageHandlers
     requestNext()
   },
   rollForward: async (response, requestNext) => {
-    if ('byron' in response.block) {
-      const block = response.block as { byron: BlockByron }
-      const message = `Block ${block.byron.header.blockHeight}`
+    if ('alonzo' in response.block) {
+      const block = response.block as { alonzo: BlockAlonzo }
+      const message = `Block ${block.alonzo.header.blockHeight}`
       resultLog.push(`rollForward received: ${message}`)
       // Simulate some work being done
       await delay(randomMsUpTo(25))
@@ -144,14 +146,21 @@ describe('ChainSync', () => {
         firstBlockHash = block.byron.hash
       } else if ('shelley' in blocks[0]) {
         const block = blocks[0] as { shelley: BlockShelley }
-        firstBlockHash = block.shelley.body[0].id
+        firstBlockHash = block.shelley.headerHash
       } else if ('allegra' in blocks[0]) {
         const block = blocks[0] as { allegra: BlockAllegra }
-        firstBlockHash = block.allegra.body[0].id
+        firstBlockHash = block.allegra.headerHash
       } else if ('mary' in blocks[0]) {
         const block = blocks[0] as { mary: BlockMary }
-        firstBlockHash = block.mary.body[0].id
+        firstBlockHash = block.mary.headerHash
+      } else if ('alonzo' in blocks[0]) {
+        const block = blocks[0] as { alonzo: BlockAlonzo }
+        firstBlockHash = block.alonzo.headerHash
+      } else if ('babbage' in blocks[0]) {
+        const block = blocks[0] as { babbage: BlockBabbage }
+        firstBlockHash = block.babbage.headerHash
       }
+
       expect(firstBlockHash).toBeDefined()
       expect(rollbackPoints.length).toBe(1)
       expect(blocks.length).toBe(10)

@@ -91,7 +91,7 @@ describe('Local state queries', () => {
       expect(protocolParameters.protocolVersion.major).toBeDefined()
 
       const delegationsAndRewardsResult = await client.delegationsAndRewards(
-        ['7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8']
+        ['91a1b46bacf302e91a8cba443073f7bc84cc74701a338c111e8c6591']
       )
       expect(Object.keys(delegationsAndRewardsResult).length).toBe(1)
 
@@ -114,7 +114,7 @@ describe('Local state queries', () => {
       expect(point.slot).toBeDefined()
 
       const nonMyopicMemberRewards = await client.nonMyopicMemberRewards(
-        ['7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8']
+        ['91a1b46bacf302e91a8cba443073f7bc84cc74701a338c111e8c6591']
       )
       expect(
         Object.values(Object.values(nonMyopicMemberRewards)[0])[0]
@@ -127,7 +127,7 @@ describe('Local state queries', () => {
       expect(Object.values(stakeDistribution)[0].stake).toBeDefined()
 
       const utxoSet = await client.utxo([
-        'addr_test1qqymtheun4y437fa6cms4jmtfex39wzz7jfwggudwnqkdnr8udjk6d89dcjadt7tw6hmz0aeue2jzdpl2vnkz8wdk4fqz3y5m9'
+        'addr_test1vp8cprhse9pnnv7f4l3n6pj0afq2hjm6f7r2205dz0583egagfjah'
       ])
       expect(utxoSet[0]).toBeDefined()
     })
@@ -170,7 +170,7 @@ describe('Local state queries', () => {
     })
     describe('delegationsAndRewards', () => {
       it('fetches the current delegate and rewards for given stake key hashes', async () => {
-        const stakeKeyHashes = ['7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8'] as DigestBlake2BCredential[]
+        const stakeKeyHashes = ['91a1b46bacf302e91a8cba443073f7bc84cc74701a338c111e8c6591'] as DigestBlake2BCredential[]
         const result = await StateQuery.delegationsAndRewards(context, stakeKeyHashes)
         const item = result[stakeKeyHashes[0]] as DelegationsAndRewards
         expect(item).toHaveProperty('delegate')
@@ -181,6 +181,7 @@ describe('Local state queries', () => {
         const result = await StateQuery.delegationsAndRewards(context, stakeKeyHashes)
         expect(result).toBeDefined()
       })
+
       it('returns an error when given a malformed key hash', async () => {
         const notKeyHashes = ['patate'] as DigestBlake2BCredential[]
         await expect(StateQuery.delegationsAndRewards(context, notKeyHashes)).rejects.toBeInstanceOf(StateQuery.UnknownResultError)
@@ -211,7 +212,7 @@ describe('Local state queries', () => {
     describe('nonMyopicMemberRewards', () => {
       describe('fetches the Non-myopic member rewards for each pool. Used in ranking.', () => {
         it('accepts array of values, either stake key hash or lovelace', async () => {
-          const stakeKeyHash = '7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8'
+          const stakeKeyHash = '91a1b46bacf302e91a8cba443073f7bc84cc74701a338c111e8c6591'
           const rewards = await StateQuery.nonMyopicMemberRewards(context, [stakeKeyHash])
           expect(Object.values(rewards[stakeKeyHash])[0]).toBeDefined()
         })
@@ -231,23 +232,19 @@ describe('Local state queries', () => {
         expect(pool.vrf).toBeDefined()
       })
     })
-    describe('utxo', () => {
-      // it('fetches the complete UTxO set when an empty array is provided', async () => {
-      //   const utxoSet = await StateQuery.utxo(context, [])
-      //   expect(utxoSet[0]).toBeDefined()
-      // })
-      it('fetches the UTxO for the given addresses', async () => {
-        const utxoSet = await StateQuery.utxo(context, ['addr_test1qqymtheun4y437fa6cms4jmtfex39wzz7jfwggudwnqkdnr8udjk6d89dcjadt7tw6hmz0aeue2jzdpl2vnkz8wdk4fqz3y5m9'])
+    describe('utxo (by address)', () => {
+      it('fetches the UTxO for the given transaction id', async () => {
+        const utxoSet = await StateQuery.utxo(context, ['addr_test1vqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqss739w4r'])
+        expect(utxoSet[0]).toBeDefined()
+      })
+    })
+    describe('utxo (by transaction id)', () => {
+      it('fetches the UTxO for the given transaction id', async () => {
+        const utxoSet = await StateQuery.utxo(context, [{ 'txId': '7fe0c5c3f0225f9462ae34dce1663599d506fe47cda8b3667e4c0986631fca41', 'index': 0 }])
         expect(utxoSet[0]).toBeDefined()
       })
     })
     describe('rewardsProvenance', () => {
-      it('fetches rewards provenance for the ongoing epoch (legacy)', async () => {
-        const provenance = await StateQuery.rewardsProvenance(context)
-        expect(provenance).toBeDefined()
-      })
-    })
-    describe('rewardsProvenance\'', () => {
       it('fetches rewards provenance for the ongoing epoch (new)', async () => {
         const provenance = await StateQuery.rewardsProvenanceNew(context)
         expect(provenance).toBeDefined()
@@ -281,7 +278,7 @@ describe('Local state queries', () => {
     describe('systemStart', () => {
       it('can query the blockchain start-time', async () => {
         const systemStart = await StateQuery.systemStart(context)
-        expect(systemStart).toEqual(new Date('2019-07-24T20:20:16.000Z'))
+        expect(systemStart).toEqual(new Date('2022-10-25T00:00:00.000Z'))
       })
     })
     describe('blockHeight', () => {
