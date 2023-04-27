@@ -6,13 +6,13 @@
 # ------------------------------- SETUP  ------------------------------------- #
 #                                                                              #
 
-ARG CARDANO_NODE_VERSION=1.35.4
+ARG CARDANO_NODE_VERSION=1.35.7
 
 FROM --platform=${TARGETPLATFORM:-linux/amd64} nixos/nix:2.11.0 as build
 
-ARG CARDANO_CONFIG_REV=c0d11b5ff0c0200da00a50c17c38d9fd752ba532
+ARG CARDANO_CONFIG_REV=1254c6d313dc0b0a1bd96824cca4e0bb8e53c3ec
 
-RUN echo "substituters = https://cache.nixos.org https://hydra.iohk.io" >> /etc/nix/nix.conf &&\
+RUN echo "substituters = https://cache.nixos.org https://cache.iog.io" >> /etc/nix/nix.conf &&\
     echo "trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=" >> /etc/nix/nix.conf
 
 WORKDIR /app
