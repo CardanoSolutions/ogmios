@@ -18,21 +18,43 @@ export interface TxSubmissionClient {
 }
 
 /** @Internal */
+const METHODS = {
+  SUBMIT_TX: 'SubmitTx',
+  EVALUATE_TX: 'EvaluateTx',
+}
+
+/** @Internal */
 const matchSubmitTx = (data: string) => {
-  const response = safeJSON.parse(data) as Ogmios['SubmitTxResponse']
-  if (typeof (response as unknown as Ogmios['Fault']).error === 'undefined' && response.id?.method !== 'SubmitTx') {
+  const json = safeJSON.parse(data) as Ogmios['SubmitTxResponse']
+
+  if (typeof json.id !== "object" || json.id === null) {
     return null
   }
-  return response
+
+  if ('method' in json.id) {
+    if (json.id.method !== METHODS.SUBMIT_TX) {
+      return null
+    }
+  }
+
+  return json
 }
 
 /** @Internal */
 const matchEvaluateTx = (data: string) => {
-  const response = safeJSON.parse(data) as Ogmios['EvaluateTxResponse']
-  if (typeof (response as unknown as Ogmios['Fault']).error === 'undefined' && response.id?.method !== 'EvaluateTx') {
+  const json = safeJSON.parse(data) as Ogmios['EvaluateTxResponse']
+
+  if (typeof json.id !== "object" || json.id === null) {
     return null
   }
-  return response
+
+  if ('method' in json.id) {
+    if (json.id.method !== METHODS.EVALUATE_TX) {
+      return null
+    }
+  }
+
+  return json
 }
 
 /**
@@ -55,15 +77,16 @@ export const createTxSubmissionClient = async (
     context,
     evaluateTx: (bytes, additionalUtxoSet) => {
       ensureSocketIsOpen(socket)
+      const method = METHODS.EVALUATE_TX
       return send<EvaluationResult>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          method: 'EvaluateTx',
+          method,
           params: {
             ...(additionalUtxoSet !== undefined ? { additionalUtxoSet } : {}),
             evaluate: bytes
           },
-          id: { method: 'evaluateTx' }
+          id: { method }
         } as unknown as Ogmios['EvaluateTx']))
 
         const response = handleEvaluateTxResponse((await evaluateTxResponse.next()).value)
@@ -77,12 +100,13 @@ export const createTxSubmissionClient = async (
     },
     submitTx: async (bytes) => {
       ensureSocketIsOpen(socket)
+      const method = METHODS.SUBMIT_TX
       return send<TxId>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          method: 'SubmitTx',
+          method,
           params: { submit: bytes },
-          id: { method: 'submitTx' }
+          id: { method }
         } as unknown as Ogmios['SubmitTx']))
 
         const response = handleSubmitTxResponse((await submitTxResponse.next()).value)

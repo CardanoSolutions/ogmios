@@ -37,9 +37,17 @@ export const createTxMonitorClient = async (
   const matchAny = (data: string) => {
     const json = safeJSON.parse(data)
     const methods = ['AwaitAcquire', 'HasTx', 'NextTx', 'SizeAndCapacity', 'ReleaseMempool']
-    if (typeof json.error === 'undefined' && !methods.includes(json.method)) {
+
+    if (typeof json.id !== "object" || json.id === null) {
       return null
     }
+
+    if ('method' in json.id) {
+      if (!methods.includes(json.id.method)) {
+        return null
+      }
+    }
+
     return json
   }
 
@@ -56,11 +64,13 @@ export const createTxMonitorClient = async (
     context,
     awaitAcquire: (params?: {}) => {
       ensureSocketIsOpen(socket)
+      const method = 'AwaitAcquire'
       return send<Slot>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          method: 'AwaitAcquire',
-          params: params
+          method,
+          params,
+          id: { method }
         } as unknown as Ogmios['AwaitAcquire']))
 
         return handleAwaitAcquireResponse((await response.next()).value)
@@ -68,11 +78,13 @@ export const createTxMonitorClient = async (
     },
     hasTx: (id: TxId) => {
       ensureSocketIsOpen(socket)
+      const method = 'HasTx'
       return send<boolean>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          method: 'HasTx',
-          params: { id }
+          method,
+          params: { id },
+          id: { method }
         } as unknown as Ogmios['HasTx']))
 
         return handleHasTxResponse((await response.next()).value)
@@ -80,11 +92,13 @@ export const createTxMonitorClient = async (
     },
     nextTx: (params?: {fields: 'all'}) => {
       ensureSocketIsOpen(socket)
+      const method = 'NextTx'
       return send<TxId | TxAlonzo | null>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          method: 'NextTx',
-          params: params || {}
+          method,
+          params: params || {},
+          id: { method }
         } as unknown as Ogmios['NextTx']))
 
         return handleNextTxResponse((await response.next()).value, params)
@@ -92,11 +106,13 @@ export const createTxMonitorClient = async (
     },
     sizeAndCapacity: (params?: {}) => {
       ensureSocketIsOpen(socket)
+      const method = 'SizeAndCapacity'
       return send<MempoolSizeAndCapacity>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          method: 'SizeAndCapacity',
-          params: params
+          method,
+          params,
+          id: { method }
         } as unknown as Ogmios['SizeAndCapacity']))
 
         return handleSizeAndCapacityResponse((await response.next()).value)
@@ -104,11 +120,13 @@ export const createTxMonitorClient = async (
     },
     release: (params?: {}) => {
       ensureSocketIsOpen(socket)
+      const method = 'ReleaseMempool'
       return send<void>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
-          method: 'ReleaseMempool',
-          params: params
+          method,
+          params,
+          id: { method }
         } as unknown as Ogmios['ReleaseMempool']))
 
         return handleReleaseResponse((await response.next()).value)
