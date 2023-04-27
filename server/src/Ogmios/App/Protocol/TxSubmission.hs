@@ -73,7 +73,6 @@ import Ogmios.Data.Json
 import Ogmios.Data.Protocol.TxSubmission
     ( AlonzoEra
     , BabbageEra
-    , BackwardCompatibleSubmitTx (..)
     , CanEvaluateScriptsInEra
     , EpochInfo
     , EvaluateTx (..)
@@ -173,10 +172,6 @@ mkTxSubmissionClient TxSubmissionCodecs{..} ExecutionUnitsEvaluator{..} queue yi
     clientStIdle
         :: m (LocalTxClientStIdle (SerializedTx block) (SubmitTxError block) m ())
     clientStIdle = await >>= \case
-        MsgBackwardCompatibleSubmitTx BackwardCompatibleSubmitTx{bytes = tx} toResponse _ -> do
-            pure $ SendMsgSubmitTx tx $ \result -> do
-                yield $ encodeBackwardCompatibleSubmitTxResponse $ toResponse result
-                clientStIdle
         MsgSubmitTx SubmitTx{submit = tx} toResponse _ -> do
             pure $ SendMsgSubmitTx tx $ \result -> do
                 yield $ encodeSubmitTxResponse $ toResponse $ mkSubmitTxResponse tx result

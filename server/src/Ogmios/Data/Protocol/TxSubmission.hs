@@ -24,12 +24,6 @@ module Ogmios.Data.Protocol.TxSubmission
       -- * Messages
     , TxSubmissionMessage (..)
 
-      -- ** BackwardCompatibleSubmitTx
-    , BackwardCompatibleSubmitTx (..)
-    , _decodeBackwardCompatibleSubmitTx
-    , BackwardCompatibleSubmitTxResponse
-    , _encodeBackwardCompatibleSubmitTxResponse
-
       -- ** SubmitTx
     , SubmitTx (..)
     , _decodeSubmitTx
@@ -163,13 +157,7 @@ import qualified Data.Map as Map
 --
 
 data TxSubmissionCodecs block = TxSubmissionCodecs
-    { decodeBackwardCompatibleSubmitTx
-        :: ByteString
-        -> Maybe (Rpc.Request (BackwardCompatibleSubmitTx block))
-    , encodeBackwardCompatibleSubmitTxResponse
-        :: Rpc.Response (BackwardCompatibleSubmitTxResponse block)
-        -> Json
-    , decodeSubmitTx
+    { decodeSubmitTx
         :: ByteString
         -> Maybe (Rpc.Request (SubmitTx block))
     , encodeSubmitTxResponse
@@ -198,12 +186,7 @@ mkTxSubmissionCodecs
     -> TxSubmissionCodecs block
 mkTxSubmissionCodecs encodeTxId encodeSubmitTxError stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError =
     TxSubmissionCodecs
-        { decodeBackwardCompatibleSubmitTx =
-            decodeWith _decodeBackwardCompatibleSubmitTx
-        , encodeBackwardCompatibleSubmitTxResponse =
-            _encodeBackwardCompatibleSubmitTxResponse (Proxy @block)
-                encodeSubmitTxError
-        , decodeSubmitTx =
+        { decodeSubmitTx =
             decodeWith _decodeSubmitTx
         , encodeSubmitTxResponse =
             _encodeSubmitTxResponse (Proxy @block)
@@ -225,11 +208,7 @@ mkTxSubmissionCodecs encodeTxId encodeSubmitTxError stringifyRdmrPtr encodeExUni
 --
 
 data TxSubmissionMessage block
-    = MsgBackwardCompatibleSubmitTx
-        (BackwardCompatibleSubmitTx block)
-        (Rpc.ToResponse (BackwardCompatibleSubmitTxResponse block))
-        Rpc.ToFault
-    | MsgSubmitTx
+    = MsgSubmitTx
         (SubmitTx block)
         (Rpc.ToResponse (SubmitTxResponse block))
         Rpc.ToFault
@@ -237,45 +216,6 @@ data TxSubmissionMessage block
         (EvaluateTx block)
         (Rpc.ToResponse (EvaluateTxResponse block))
         Rpc.ToFault
-
---
--- BackwardCompatibleSubmitTx
---
-
-data BackwardCompatibleSubmitTx block
-    = BackwardCompatibleSubmitTx { bytes :: SerializedTx block }
-    deriving (Generic)
-deriving instance Show (SerializedTx block) => Show (BackwardCompatibleSubmitTx block)
-
-_decodeBackwardCompatibleSubmitTx
-    :: FromJSON (SerializedTx block)
-    => Json.Value
-    -> Json.Parser (Rpc.Request (BackwardCompatibleSubmitTx block))
-_decodeBackwardCompatibleSubmitTx =
-    Rpc.genericFromJSON backwardCompatibleOptions
-
-type BackwardCompatibleSubmitTxResponse block =
-    SubmitResult (SubmitTxError block)
-
-_encodeBackwardCompatibleSubmitTxResponse
-    :: forall block. ()
-    => Proxy block
-    -> (SubmitTxError block -> Json)
-    -> Rpc.Response (BackwardCompatibleSubmitTxResponse block)
-    -> Json
-_encodeBackwardCompatibleSubmitTxResponse _proxy encodeSubmitTxError =
-    Rpc.mkResponse $ \case
-        SubmitSuccess ->
-            encodeText "SubmitSuccess"
-        (SubmitFail e) ->
-            encodeObject ("SubmitFail" .= encodeSubmitTxError e)
-
-backwardCompatibleOptions :: Rpc.Options
-backwardCompatibleOptions =
-    Rpc.defaultOptions
-        { Rpc.constructorTagModifier =
-            drop (length ("BackwardCompatible" :: String))
-        }
 
 --
 -- SubmitTx

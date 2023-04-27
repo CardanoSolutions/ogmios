@@ -347,8 +347,6 @@ withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig co
                     -- TxSubmission
                     , Rpc.Handler decodeSubmitTx
                         (\r t -> push txSubmissionQ .  MsgSubmitTx r t)
-                    , Rpc.Handler decodeBackwardCompatibleSubmitTx
-                        (\r t -> push txSubmissionQ .  MsgBackwardCompatibleSubmitTx r t)
                     , Rpc.Handler decodeEvaluateTx
                         (\r t -> push txSubmissionQ .  MsgEvaluateTx r t)
 

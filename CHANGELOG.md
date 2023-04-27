@@ -27,6 +27,8 @@ pre: "<b>5. </b>"
 
 - **⚠️ BREAKING-CHANGE ⚠️** Ogmios no longer returns null or empty fields. Where a field's value would be `null` prior to v6.0.0, Ogmios now simply omit the field altogether. This is also true for most responses that return empty lists as well. All-in-all, please refer to the documentation / JSON-schema in case of doubts (fields that may be omitted are no longer marked as `required`).
 
+- **⚠️ BREAKING-CHANGE ⚠️** Ogmios no longer supports submitting transactions using `{ "bytes": "..." }` as parameters; One must now specify either `{ "submit": "..." }` or `{ "evaluate": "..." }` to select the right method. Since `v5.2.0` (when the submission protocol was extended), Ogmios supported two notations for transaction submission (using either `bytes` or `submit`) as a backward-compatible mechanism. It now supports only one: `submit`.
+
 ---
 ---
 
