@@ -15,12 +15,13 @@ module Ogmios.Data.Json
 
       -- * Encoders
     , encodeAcquireFailure
+    , encodeAcquireExpired
     , encodeBlock
     , Alonzo.encodeExUnits
     , encodePoint
     , Alonzo.encodeScriptFailure
-    , encodeSerializedTx
-    , encodeSubmitTxError
+    , encodeSerializedTransaction
+    , encodeSubmitTransactionError
     , encodeTip
     , encodeTx
     , encodeTxId
@@ -31,7 +32,7 @@ module Ogmios.Data.Json
       -- * Decoders
     , decodeOneEraHash
     , decodePoint
-    , decodeSerializedTx
+    , decodeSerializedTransaction
     , decodeTip
     , decodeTxId
     , decodeUtxo
@@ -51,13 +52,13 @@ import Cardano.Ledger.Shelley.API
 import Cardano.Network.Protocol.NodeToClient
     ( GenTx
     , GenTxId
-    , SerializedTx
-    , SubmitTxError
+    , SerializedTransaction
+    , SubmitTransactionError
     )
 import Ogmios.Data.Json.Query
     ( decodeOneEraHash
     , decodePoint
-    , decodeSerializedTx
+    , decodeSerializedTransaction
     , decodeTip
     , decodeTxId
     , decodeUtxo
@@ -111,9 +112,18 @@ encodeAcquireFailure
     -> Json
 encodeAcquireFailure = \case
     AcquireFailurePointTooOld ->
-        encodeText "pointTooOld"
+        encodeText "Target point is too old."
     AcquireFailurePointNotOnChain ->
-        encodeText "pointNotOnChain"
+        encodeText "Target point doesn't longer exist."
+
+encodeAcquireExpired
+    :: AcquireFailure
+    -> Json
+encodeAcquireExpired = \case
+    AcquireFailurePointTooOld ->
+        encodeText "Acquired point is now too old."
+    AcquireFailurePointNotOnChain ->
+        encodeText "Acquired point no longer exist."
 
 encodeBlock
     :: Crypto crypto
@@ -139,11 +149,11 @@ encodeBlock = encodeObject . \case
         "babbage" .=
             Babbage.encodeBlock blk
 
-encodeSubmitTxError
+encodeSubmitTransactionError
     :: Crypto crypto
-    => SubmitTxError (CardanoBlock crypto)
+    => SubmitTransactionError (CardanoBlock crypto)
     -> Json
-encodeSubmitTxError = \case
+encodeSubmitTransactionError = \case
     ApplyTxErrByron e ->
         Byron.encodeApplyMempoolPayloadErr e
     ApplyTxErrShelley (ApplyTxError xs) ->
@@ -159,11 +169,11 @@ encodeSubmitTxError = \case
     ApplyTxErrWrongEra e ->
         encodeList encodeEraMismatch [ e ]
 
-encodeSerializedTx
+encodeSerializedTransaction
     :: (PraosCrypto crypto, TPraos.PraosCrypto crypto)
-    => SerializedTx (CardanoBlock crypto)
+    => SerializedTransaction (CardanoBlock crypto)
     -> Json
-encodeSerializedTx = \case
+encodeSerializedTransaction = \case
     GenTxByron tx ->
         encodeByteStringBase16 $ Cbor.toStrictByteString $ encodeByronGenTx tx
     GenTxShelley tx ->

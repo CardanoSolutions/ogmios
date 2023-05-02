@@ -3,13 +3,13 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Test.App.Protocol.Util
     ( prop_inIOSim
     , expectRpcResponse
     , expectRpcFault
     , withMockChannel
+    , ResponsePredicate (..)
 
       -- * Exceptions
     , FailedToDecodeMsg (..)
@@ -27,11 +27,6 @@ import Control.Monad.Class.MonadTimer
     )
 import Control.Monad.IOSim
     ( runSimOrThrow
-    )
-import GHC.TypeLits
-    ( KnownSymbol
-    , Symbol
-    , symbolVal
     )
 import Ogmios.Control.Exception
     ( MonadCatch (..)
@@ -75,6 +70,7 @@ import Test.QuickCheck.Monadic
 
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
+import qualified Text.Show
 
 -- | Run a function in IOSim, with a 'StdGen' input which can used to compute
 -- random numbers deterministically within the simulation. The random generator
@@ -119,22 +115,25 @@ withMockChannel mockPeer action = do
 -- >>> expectRpcResponse @"RequestNext" recv Nothing
 -- ()
 expectRpcResponse
-    :: forall (method :: Symbol) m. (MonadThrow m, KnownSymbol method)
-    => Proxy method
+    :: forall m. (MonadThrow m)
+    => ResponsePredicate
     -> m Json.Encoding
     -> Json.Value
     -> m ()
-expectRpcResponse _proxy recv wantMirror = do
+expectRpcResponse (ResponsePredicate isExpectedResponse) recv wantMirror = do
     json <- inefficientEncodingToValue <$> recv
 
-    let gotMethod = "method" `at` json
-    let wantMethod = Json.toJSON $ symbolVal (Proxy @method)
-    when (gotMethod /= Just wantMethod) $
-        throwIO $ UnexpectedResponse "method" json gotMethod wantMethod
+    unless (isExpectedResponse json) $
+        throwIO $ UnexpectedResponse "unexpected result" json (Just json) json
 
     let gotMirror = "id" `at` json
     when (gotMirror /= Just wantMirror) $
         throwIO $ UnexpectedResponse "id" json gotMirror wantMirror
+
+newtype ResponsePredicate = ResponsePredicate (Json.Value -> Bool)
+
+instance Show ResponsePredicate where
+    show _ = "ResponsePredicate"
 
 expectRpcFault
     :: (MonadThrow m)
@@ -158,7 +157,7 @@ expectRpcFault recv wantCode wantMirror = do
 -- Exceptions
 --
 
-data FailedToDecodeMsg = FailedToDecodeMsg String deriving Show
+newtype FailedToDecodeMsg = FailedToDecodeMsg String deriving Show
 instance Exception FailedToDecodeMsg
 
 data PeerTerminatedUnexpectedly = PeerTerminatedUnexpectedly deriving Show

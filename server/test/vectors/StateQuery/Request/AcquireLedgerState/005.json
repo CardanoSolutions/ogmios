@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","method":"acquireLedgerState","params":{"point":"origin"},"id":null}

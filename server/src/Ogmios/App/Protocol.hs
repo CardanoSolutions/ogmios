@@ -12,7 +12,7 @@ module Ogmios.App.Protocol
 import Ogmios.Prelude
 
 import Cardano.Network.Protocol.NodeToClient
-    ( SerializedTx
+    ( SerializedTransaction
     )
 import GHC.Generics
     ( Rep
@@ -25,37 +25,37 @@ import Ogmios.Data.Json
     , Json
     )
 import Ogmios.Data.Protocol.ChainSync
-    ( FindIntersect
-    , RequestNext
-    , _decodeFindIntersect
-    , _decodeRequestNext
+    ( FindIntersection
+    , NextBlock
+    , _decodeFindIntersection
+    , _decodeNextBlock
     )
 import Ogmios.Data.Protocol.StateQuery
-    ( Acquire
-    , Query
-    , Release
-    , _decodeAcquire
-    , _decodeQuery
-    , _decodeRelease
+    ( AcquireLedgerState
+    , QueryLedgerState
+    , ReleaseLedgerState
+    , _decodeAcquireLedgerState
+    , _decodeQueryLedgerState
+    , _decodeReleaseLedgerState
     )
 import Ogmios.Data.Protocol.TxMonitor
-    ( AwaitAcquire
+    ( AcquireMempool
     , GenTxId
-    , HasTx
-    , NextTx
+    , HasTransaction
+    , NextTransaction
     , ReleaseMempool
     , SizeAndCapacity
-    , _decodeAwaitAcquire
-    , _decodeHasTx
-    , _decodeNextTx
+    , _decodeAcquireMempool
+    , _decodeHasTransaction
+    , _decodeNextTransaction
     , _decodeReleaseMempool
     , _decodeSizeAndCapacity
     )
 import Ogmios.Data.Protocol.TxSubmission
-    ( EvaluateTx
-    , SubmitTx
-    , _decodeEvaluateTx
-    , _decodeSubmitTx
+    ( EvaluateTransaction
+    , SubmitTransaction
+    , _decodeEvaluateTransaction
+    , _decodeSubmitTransaction
     )
 import Ouroboros.Network.Block
     ( Point (..)
@@ -84,9 +84,9 @@ import qualified Data.Text as T
 -- are unclear at this stage:
 --
 -- - Is the request just a gibberish input?
--- - Is the request an almost valid 'FindIntersect' but with an error on the
+-- - Is the request an almost valid 'FindIntersection' but with an error on the
 --   argument?
--- - Is the request an almost valid 'SubmitTx' but with a slightly invalid
+-- - Is the request an almost valid 'SubmitTransaction' but with a slightly invalid
 --   transaction body?
 --
 -- This is what this function tries to answer and yield back to users. To some
@@ -95,8 +95,8 @@ import qualified Data.Text as T
 -- processing.
 onUnmatchedMessage
     :: forall block.
-        ( FromJSON (SerializedTx block)
-        , FromJSON (Query Proxy block)
+        ( FromJSON (SerializedTransaction block)
+        , FromJSON (QueryLedgerState block)
         , FromJSON (Point block)
         , FromJSON (GenTxId block)
         , FromJSON (MultiEraUTxO block)
@@ -104,7 +104,7 @@ onUnmatchedMessage
     => ByteString
     -> Json
 onUnmatchedMessage blob = do
-    Rpc.mkFault $ Rpc.invalidRequest reflection $ T.unpack fault
+    Rpc.ko $ Rpc.invalidRequest reflection $ T.unpack fault
   where
     (fault, reflection) =
         ( "Invalid request: " <> modifyAesonFailure details <> "."
@@ -146,34 +146,36 @@ onUnmatchedMessage blob = do
     match :: String -> Json.Value -> Json.Parser Void
     match methodName json = do
         -- Chain-Sync
-        if | methodName == Rpc.gRpcMethodName (Proxy @(Rep (FindIntersect block) _)) ->
-                void $ _decodeFindIntersect @block json
-           | methodName == Rpc.gRpcMethodName (Proxy @(Rep RequestNext _)) ->
-                void $ _decodeRequestNext json
+        if | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep (FindIntersection block) _)) ->
+                void $ _decodeFindIntersection @block json
+           | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep NextBlock _)) ->
+                void $ _decodeNextBlock json
         -- State-Query
-           | methodName == Rpc.gRpcMethodName (Proxy @(Rep (Acquire block) _)) ->
-                void $ _decodeAcquire @block json
-           | methodName == Rpc.gRpcMethodName (Proxy @(Rep Release _)) ->
-                void $ _decodeRelease json
-           | methodName == Rpc.gRpcMethodName (Proxy @(Rep (Query Proxy block) _)) ->
-                void $ _decodeQuery @block json
+           | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep (AcquireLedgerState block) _)) ->
+                void $ _decodeAcquireLedgerState @block json
+           | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep ReleaseLedgerState _)) ->
+                void $ _decodeReleaseLedgerState json
+           | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep (QueryLedgerState block) _)) ->
+                void $ _decodeQueryLedgerState @block json
         -- Tx-Submission
-           | methodName == Rpc.gRpcMethodName (Proxy @(Rep (SubmitTx block) _)) ->
-                void $ _decodeSubmitTx @block json
-           | methodName == Rpc.gRpcMethodName (Proxy @(Rep (EvaluateTx block) _)) ->
-                void $ _decodeEvaluateTx @block json
+           | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep (SubmitTransaction block) _)) ->
+                void $ _decodeSubmitTransaction @block json
+           | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep (EvaluateTransaction block) _)) ->
+                void $ _decodeEvaluateTransaction @block json
         -- Tx-Monitor
-           | methodName == Rpc.gRpcMethodName (Proxy @(Rep AwaitAcquire _)) ->
-                void $ _decodeAwaitAcquire json
-           | methodName == Rpc.gRpcMethodName (Proxy @(Rep NextTx _)) ->
-                void $ _decodeNextTx json
-           | methodName == Rpc.gRpcMethodName (Proxy @(Rep (HasTx block) _)) ->
-                void $ _decodeHasTx @block json
-           | methodName == Rpc.gRpcMethodName (Proxy @(Rep SizeAndCapacity _)) ->
+           | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep AcquireMempool _)) ->
+                void $ _decodeAcquireMempool json
+           | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep NextTransaction _)) ->
+                void $ _decodeNextTransaction json
+           | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep (HasTransaction block) _)) ->
+                void $ _decodeHasTransaction @block json
+           | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep SizeAndCapacity _)) ->
                 void $ _decodeSizeAndCapacity json
-           | methodName == Rpc.gRpcMethodName (Proxy @(Rep ReleaseMempool _)) ->
+           | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep ReleaseMempool _)) ->
                 void $ _decodeReleaseMempool json
         -- Fallback
            | otherwise ->
                 pure ()
         fail "unknown method in 'method' (beware names are case-sensitive)."
+      where
+        opts = Rpc.defaultOptions

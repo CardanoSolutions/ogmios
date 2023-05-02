@@ -3,7 +3,6 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- NOTE:
@@ -23,25 +22,25 @@ module Ogmios.Data.Protocol.StateQuery
       -- * Messages
     , StateQueryMessage (..)
 
-      -- ** Acquire
-    , Acquire (..)
-    , _encodeAcquire
-    , _decodeAcquire
-    , AcquireResponse (..)
-    , _encodeAcquireResponse
+      -- ** AcquireLedgerState
+    , AcquireLedgerState (..)
+    , _encodeAcquireLedgerState
+    , _decodeAcquireLedgerState
+    , AcquireLedgerStateResponse (..)
+    , _encodeAcquireLedgerStateResponse
 
-      -- ** Release
-    , Release (..)
-    , _encodeRelease
-    , _decodeRelease
-    , ReleaseResponse (..)
-    , _encodeReleaseResponse
+      -- ** ReleaseLedgerState
+    , ReleaseLedgerState (..)
+    , _encodeReleaseLedgerState
+    , _decodeReleaseLedgerState
+    , ReleaseLedgerStateResponse (..)
+    , _encodeReleaseLedgerStateResponse
 
-      -- ** Query
-    , Query (..)
-    , _decodeQuery
-    , QueryResponse (..)
-    , _encodeQueryResponse
+      -- ** QueryLedgerState
+    , QueryLedgerState
+    , _decodeQueryLedgerState
+    , QueryLedgerStateResponse (..)
+    , _encodeQueryLedgerStateResponse
     ) where
 
 import Ogmios.Data.Json.Prelude
@@ -72,23 +71,23 @@ import qualified Text.Show as T
 --
 
 data StateQueryCodecs block = StateQueryCodecs
-    { decodeAcquire
+    { decodeAcquireLedgerState
         :: ByteString
-        -> Maybe (Rpc.Request (Acquire block))
-    , encodeAcquireResponse
-        :: Rpc.Response (AcquireResponse block)
+        -> Maybe (Rpc.Request (AcquireLedgerState block))
+    , encodeAcquireLedgerStateResponse
+        :: Rpc.Response (AcquireLedgerStateResponse block)
         -> Json
-    , decodeRelease
+    , decodeReleaseLedgerState
         :: ByteString
-        -> Maybe (Rpc.Request Release)
-    , encodeReleaseResponse
-        :: Rpc.Response ReleaseResponse
+        -> Maybe (Rpc.Request ReleaseLedgerState)
+    , encodeReleaseLedgerStateResponse
+        :: Rpc.Response ReleaseLedgerStateResponse
         -> Json
-    , decodeQuery
+    , decodeQueryLedgerState
         :: ByteString
         -> Maybe (Rpc.Request (Query Proxy block))
-    , encodeQueryResponse
-        :: Rpc.Response (QueryResponse block)
+    , encodeQueryLedgerStateResponse
+        :: Rpc.Response (QueryLedgerStateResponse block)
         -> Json
     }
 
@@ -96,21 +95,24 @@ mkStateQueryCodecs
     :: (FromJSON (Query Proxy block), FromJSON (Point block))
     => (Point block -> Json)
     -> (AcquireFailure -> Json)
+        -- ^ Failure to acquire
+    -> (AcquireFailure -> Json)
+        -- ^ Acquire expired
     -> StateQueryCodecs block
-mkStateQueryCodecs encodePoint encodeAcquireFailure =
+mkStateQueryCodecs encodePoint encodeAcquireFailure encodeAcquireExpired =
     StateQueryCodecs
-        { decodeAcquire =
-            decodeWith _decodeAcquire
-        , encodeAcquireResponse =
-            _encodeAcquireResponse encodePoint encodeAcquireFailure
-        , decodeRelease =
-            decodeWith _decodeRelease
-        , encodeReleaseResponse =
-            _encodeReleaseResponse
-        , decodeQuery =
-            decodeWith _decodeQuery
-        , encodeQueryResponse =
-            _encodeQueryResponse encodeAcquireFailure
+        { decodeAcquireLedgerState =
+            decodeWith _decodeAcquireLedgerState
+        , encodeAcquireLedgerStateResponse =
+            _encodeAcquireLedgerStateResponse encodePoint encodeAcquireFailure
+        , decodeReleaseLedgerState =
+            decodeWith _decodeReleaseLedgerState
+        , encodeReleaseLedgerStateResponse =
+            _encodeReleaseLedgerStateResponse
+        , decodeQueryLedgerState =
+            decodeWith _decodeQueryLedgerState
+        , encodeQueryLedgerStateResponse =
+            _encodeQueryLedgerStateResponse encodeAcquireExpired
         }
 
 --
@@ -128,136 +130,140 @@ data GetGenesisConfig (m :: Type -> Type) = GetGenesisConfig
 --
 
 data StateQueryMessage block
-    = MsgAcquire
-        (Acquire block)
-        (Rpc.ToResponse (AcquireResponse block))
+    = MsgAcquireLedgerState
+        (AcquireLedgerState block)
+        (Rpc.ToResponse (AcquireLedgerStateResponse block))
         Rpc.ToFault
-    | MsgRelease
-        Release
-        (Rpc.ToResponse ReleaseResponse)
+    | MsgReleaseLedgerState
+        ReleaseLedgerState
+        (Rpc.ToResponse ReleaseLedgerStateResponse)
         Rpc.ToFault
-    | MsgQuery
-        (Query Proxy block)
-        (Rpc.ToResponse (QueryResponse block))
+    | MsgQueryLedgerState
+        (QueryLedgerState block)
+        (Rpc.ToResponse (QueryLedgerStateResponse block))
         Rpc.ToFault
 
 instance StandardHash block => Show (StateQueryMessage block) where
     showsPrec i = \case
-        MsgAcquire acquire _ _ -> T.showParen (i >= 10)
-            (T.showString $ "MsgAcquire " <> show acquire)
-        MsgRelease release _ _ -> T.showParen (i >= 10)
-            (T.showString $ "MsgRelease " <> show release)
-        MsgQuery{} -> T.showParen (i >= 10)
-            (T.showString "MsgQuery")
+        MsgAcquireLedgerState acquire _ _ -> T.showParen (i >= 10)
+            (T.showString $ "MsgAcquireLedgerState " <> show acquire)
+        MsgReleaseLedgerState release _ _ -> T.showParen (i >= 10)
+            (T.showString $ "MsgReleaseLedgerState " <> show release)
+        MsgQueryLedgerState{} -> T.showParen (i >= 10)
+            (T.showString "MsgQueryLedgerState")
 
 --
--- Acquire
+-- AcquireLedgerState
 --
 
-data Acquire block
-    = Acquire { point :: Point block }
+data AcquireLedgerState block
+    = AcquireLedgerState { point :: Point block }
     deriving (Generic, Show, Eq)
 
-_encodeAcquire
+_encodeAcquireLedgerState
     :: forall block. ()
     => (Point block -> Json)
-    -> Rpc.Request (Acquire block)
+    -> Rpc.Request (AcquireLedgerState block)
     -> Json
-_encodeAcquire encodePoint =
+_encodeAcquireLedgerState encodePoint =
     Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
-        Acquire{point} ->
+        AcquireLedgerState{point} ->
             "point" .=
                 encodePoint point
 
-_decodeAcquire
+_decodeAcquireLedgerState
     :: FromJSON (Point block)
     => Json.Value
-    -> Json.Parser (Rpc.Request (Acquire block))
-_decodeAcquire =
+    -> Json.Parser (Rpc.Request (AcquireLedgerState block))
+_decodeAcquireLedgerState =
     Rpc.genericFromJSON Rpc.defaultOptions
 
-data AcquireResponse block
+data AcquireLedgerStateResponse block
     = AcquireSuccess { point :: Point block }
     | AcquireFailure { failure :: AcquireFailure }
     deriving (Generic, Show)
 
-_encodeAcquireResponse
+_encodeAcquireLedgerStateResponse
     :: forall block. ()
     => (Point block -> Json)
     -> (AcquireFailure -> Json)
-    -> Rpc.Response (AcquireResponse block)
+    -> Rpc.Response (AcquireLedgerStateResponse block)
     -> Json
-_encodeAcquireResponse encodePoint encodeAcquireFailure =
-    Rpc.mkResponse $ encodeObject . \case
+_encodeAcquireLedgerStateResponse encodePoint encodeAcquireFailure =
+    Rpc.mkResponse $ \resolve reject -> \case
         AcquireSuccess{point} ->
-            "AcquireSuccess" .= encodeObject
-                ( "point" .=
-                    encodePoint point
+            resolve $ encodeObject
+                ( "acquired" .= encodeText "ledgerState" <>
+                  "point" .= encodePoint point
                 )
         AcquireFailure{failure} ->
-            "AcquireFailure" .= encodeObject
-                ( "failure" .=
-                    encodeAcquireFailure failure
-                )
+            reject (Rpc.FaultCustom 2000)
+                "Failed to acquire requested point."
+                (Just $ encodeAcquireFailure failure)
 
 --
--- Release
+-- ReleaseLedgerState
 --
 
-data Release
-    = Release
+data ReleaseLedgerState
+    = ReleaseLedgerState
     deriving (Generic, Show, Eq)
 
-_encodeRelease
-    :: Rpc.Request Release
+_encodeReleaseLedgerState
+    :: Rpc.Request ReleaseLedgerState
     -> Json
-_encodeRelease =
-    Rpc.mkRequest Rpc.defaultOptions $ \case
-        Release ->
-            encodeObject mempty
+_encodeReleaseLedgerState =
+    Rpc.mkRequestNoParams Rpc.defaultOptions
 
-_decodeRelease
+_decodeReleaseLedgerState
     :: Json.Value
-    -> Json.Parser (Rpc.Request Release)
-_decodeRelease =
+    -> Json.Parser (Rpc.Request ReleaseLedgerState)
+_decodeReleaseLedgerState =
     Rpc.genericFromJSON Rpc.defaultOptions
 
-data ReleaseResponse
-    = Released
+data ReleaseLedgerStateResponse
+    = ReleaseLedgerStateResponse
     deriving (Generic, Show)
 
-_encodeReleaseResponse
-    :: Rpc.Response ReleaseResponse
+_encodeReleaseLedgerStateResponse
+    :: Rpc.Response ReleaseLedgerStateResponse
     -> Json
-_encodeReleaseResponse =
-    Rpc.mkResponse $ \case
-        Released ->
-            encodeText "Released"
+_encodeReleaseLedgerStateResponse =
+    Rpc.ok $ \case
+        ReleaseLedgerStateResponse ->
+            encodeObject
+                ( "released" .= encodeText "ledgerState"
+                )
 
 --
 -- Query
 --
 
-newtype QueryT block = Query { query :: Query Proxy block }
+type QueryLedgerState = Query Proxy
+
+newtype QueryT block = QueryLedgerState { query :: Query Proxy block }
     deriving (Generic)
 
-_decodeQuery
-    :: FromJSON (Query Proxy block)
+_decodeQueryLedgerState
+    :: FromJSON (QueryLedgerState block)
     => Json.Value
-    -> Json.Parser (Rpc.Request (Query Proxy block))
-_decodeQuery =
+    -> Json.Parser (Rpc.Request (QueryLedgerState block))
+_decodeQueryLedgerState =
     fmap (fmap query) . Rpc.genericFromJSON Rpc.defaultOptions
 
-data QueryResponse block
+data QueryLedgerStateResponse block
     = QueryResponse { unQueryResponse :: Json }
+    | QueryEraMismatch { unEraMismatch :: Json }
     | QueryUnavailableInCurrentEra
     | QueryAcquireFailure { failure :: AcquireFailure }
     deriving (Generic)
 
-instance Show (QueryResponse block) where
+instance Show (QueryLedgerStateResponse block) where
     showsPrec i = T.showParen (i >=10) . T.showString . \case
         QueryResponse json ->
             "QueryResponse (" <> str json <> ")"
+        QueryEraMismatch hint ->
+            "QueryEraMismatch (" <> str hint <> ")"
         QueryUnavailableInCurrentEra ->
             "QueryUnavailableInCurrentEra"
         QueryAcquireFailure failure ->
@@ -265,20 +271,24 @@ instance Show (QueryResponse block) where
       where
         str = decodeUtf8 . jsonToByteString
 
-_encodeQueryResponse
+_encodeQueryLedgerStateResponse
     :: forall block. ()
     => (AcquireFailure -> Json)
-    -> Rpc.Response (QueryResponse block)
+    -> Rpc.Response (QueryLedgerStateResponse block)
     -> Json
-_encodeQueryResponse encodeAcquireFailure =
-    Rpc.mkResponse $ \case
-        QueryResponse json ->
-            json
+_encodeQueryLedgerStateResponse encodeAcquireExpired =
+    Rpc.mkResponse $ \resolve reject -> \case
+        QueryResponse response ->
+            resolve response
+        QueryEraMismatch hint ->
+            reject (Rpc.FaultCustom 2001)
+                "Era mismatch between query and ledger."
+                (Just hint)
         QueryUnavailableInCurrentEra ->
-            encodeText "QueryUnavailableInCurrentEra"
+            reject (Rpc.FaultCustom 2002)
+                "Query unavailable in the current era."
+                Nothing
         QueryAcquireFailure{failure} ->
-            "AcquireFailure" .= encodeObject
-                ( "failure" .=
-                    encodeAcquireFailure failure
-                )
-            & encodeObject
+            reject (Rpc.FaultCustom 2003)
+                "Cannot perform query from previously acquired point."
+                (Just $ encodeAcquireExpired failure)

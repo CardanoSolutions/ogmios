@@ -1,4 +1,4 @@
---  This Source Code Form is subject to the terms of the Mozilla Public
+--  This Source Code Form is ubject to the terms of the Mozilla Public
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,7 +23,7 @@ module Codec.Json.Rpc.Handler
     , methodNotFound
     , invalidParams
     , internalError
-    , serverError
+    , customError
 
       -- * Routing
     , Handler (..)
@@ -44,6 +44,7 @@ import GHC.Generics
     ( Generic )
 
 import qualified Data.Aeson as Json
+import qualified Data.Aeson.Encoding as Json
 
 --
 -- Types
@@ -81,17 +82,24 @@ data FaultCode
     | FaultMethodNotFound
     | FaultInvalidParams
     | FaultInternalError
-    | FaultServerError Int
+    | FaultCustom Int
     deriving (Generic, Show)
 
 instance ToJSON FaultCode where
+    toEncoding = \case
+        FaultParseError -> Json.int (negate @Int 32700)
+        FaultInvalidRequest -> Json.int (negate @Int 32600)
+        FaultMethodNotFound -> Json.int (negate @Int 32601)
+        FaultInvalidParams -> Json.int (negate @Int 32602)
+        FaultInternalError -> Json.int (negate @Int 32603)
+        FaultCustom i -> Json.int i
     toJSON = \case
         FaultParseError -> toJSON (negate @Int 32700)
         FaultInvalidRequest -> toJSON (negate @Int 32600)
         FaultMethodNotFound -> toJSON (negate @Int 32601)
         FaultInvalidParams -> toJSON (negate @Int 32602)
         FaultInternalError -> toJSON (negate @Int 32603)
-        FaultServerError i -> toJSON i
+        FaultCustom i -> toJSON i
 
 -- | Wrapper for a 'FaultCode'
 --
@@ -139,8 +147,8 @@ internalError mirror = Fault mirror FaultInternalError
 -- | Smart constructor for a 'Fault'
 --
 -- @since 1.0.0
-serverError :: Mirror -> Int -> String -> Fault
-serverError mirror code = Fault mirror (FaultServerError code)
+customError :: Mirror -> Int -> String -> Fault
+customError mirror = Fault mirror . FaultCustom
 
 -- | A data-type to capture the logic to 'handle' any request.
 --
@@ -176,6 +184,5 @@ match bytes defaultHandler = \case
             Just (Request refl req) -> do
                 let matched = next req (Response refl) (Fault refl)
                 Just (bytes, matched) <$ matched
-
             Nothing ->
                 match bytes defaultHandler q

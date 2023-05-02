@@ -61,10 +61,13 @@ import Ogmios.Data.Json
     )
 import Ogmios.Data.Json.Orphans
     ()
+import Ogmios.Data.Json.Prelude
+    ( at
+    )
 import Ogmios.Data.Protocol.ChainSync
     ( ChainSyncMessage (..)
-    , FindIntersect (..)
-    , RequestNext (..)
+    , FindIntersection (..)
+    , NextBlock (..)
     , mkChainSyncCodecs
     )
 import Ouroboros.Network.Block
@@ -84,6 +87,7 @@ import System.Random
 import Test.App.Protocol.Util
     ( FailedToDecodeMsg (..)
     , PeerTerminatedUnexpectedly (..)
+    , ResponsePredicate (..)
     , expectRpcFault
     , expectRpcResponse
     , prop_inIOSim
@@ -125,10 +129,10 @@ spec = parallel $ do
     context "ChainSync" $ do
         parallel $ prop "Basic send/recv" prop_basicSendRecv
         parallel $ prop "Saturate in-flight queue" prop_manyInFlight
-        parallel $ prop "Interleave findIntersect with requestNext" prop_interleave
+        parallel $ prop "Interleave findIntersection with nextBlock" prop_interleave
   where
-    -- We expect that client can submit request (either 'RequestNext' or
-    -- 'FindIntersect') and receive a corresponding response, preseving the
+    -- We expect that client can submit request (either NextBlock' or
+    -- 'FindIntersection') and receive a corresponding response, preseving the
     -- reflection value (a.k.a mirror).
     prop_basicSendRecv :: Property
     prop_basicSendRecv = forAll genMirror $ \mirror ->
@@ -137,11 +141,11 @@ spec = parallel $ do
         checkCoverageWith (confidence 1e6 0.5) (p mirror)
       where
         p mirror = prop_inIOSim $ withChainSyncClient $ \send receive -> do
-            send $ requestNext mirror
-            expectRpcResponse @"RequestNext" Proxy receive (toJSON mirror)
+            send $ nextBlock mirror
+            expectRpcResponse isNextBlockResponse receive (toJSON mirror)
 
-            send $ findIntersect mirror []
-            expectRpcResponse @"FindIntersect" Proxy receive (toJSON mirror)
+            send $ findIntersection mirror []
+            expectRpcResponse isFindIntersectionResponse receive (toJSON mirror)
 
     -- The chain-sync client will pipeline requests up to a certain point.
     -- Indeed, WebSockets do allow for (theorically) infinite pipelining,
@@ -162,9 +166,9 @@ spec = parallel $ do
         p nMax = prop_inIOSim $ withChainSyncClient $ \send receive -> do
             mirrors <- forM [0 .. nMax] $ \(i :: Int) -> do
                 let mirror = Just $ toJSON i
-                mirror <$ send (requestNext mirror)
+                mirror <$ send (nextBlock mirror)
             forM_ mirrors $ \mirror -> do
-                expectRpcResponse @"RequestNext" Proxy receive (toJSON mirror)
+                expectRpcResponse isNextBlockResponse receive (toJSON mirror)
 
         genMaxInFlight :: Gen MaxInFlight
         genMaxInFlight = oneof
@@ -188,10 +192,10 @@ spec = parallel $ do
         checkCoverageWith (confidence 1e6 0.5) (p mirror mirror')
       where
         p mirror mirror' = prop_inIOSim $ withChainSyncClient $ \send receive -> do
-            send $ requestNext mirror
-            send $ findIntersect mirror' []
-            expectRpcFault receive Rpc.FaultInvalidRequest (toJSON mirror')
-            expectRpcResponse @"RequestNext" Proxy receive (toJSON mirror)
+            send $ nextBlock mirror
+            send $ findIntersection mirror' []
+            expectRpcFault receive Rpc.FaultInternalError (toJSON mirror')
+            expectRpcResponse isNextBlockResponse receive (toJSON mirror)
 
 type Protocol = ChainSync Block (Point Block) (Tip Block)
 
@@ -231,10 +235,10 @@ chainSyncMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
     req <- lift recv
     res <- lift (decodeOrThrow req) >>= \case
         SomeMessage ChainSync.MsgRequestNext -> do
-            msg <- generateWith genRequestNextResponse <$> state random
+            msg <- generateWith genNextBlockResponse <$> state random
             pure $ Just $ encode codec (ServerAgency $ TokNext TokCanAwait) msg
         SomeMessage ChainSync.MsgFindIntersect{} -> do
-            msg <- generateWith genFindIntersectResponse <$> state random
+            msg <- generateWith genFindIntersectionResponse <$> state random
             pure $ Just $ encode codec (ServerAgency TokIntersect) msg
         SomeMessage ChainSync.MsgDone ->
             pure Nothing
@@ -246,16 +250,16 @@ chainSyncMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
             Left failure -> throwIO $ FailedToDecodeMsg (show failure)
             Right msg -> pure msg
 
-    genRequestNextResponse
+    genNextBlockResponse
         :: Gen (ChainSync.Message Protocol ('StNext any) 'StIdle)
-    genRequestNextResponse = frequency
+    genNextBlockResponse = frequency
         [ (10, ChainSync.MsgRollForward <$> genBlock <*> genTip)
         , ( 1, ChainSync.MsgRollBackward <$> genPoint <*> genTip)
         ]
 
-    genFindIntersectResponse
+    genFindIntersectionResponse
         :: Gen (ChainSync.Message Protocol 'StIntersect 'StIdle)
-    genFindIntersectResponse = frequency
+    genFindIntersectionResponse = frequency
         [ (10, ChainSync.MsgIntersectFound <$> genPoint <*> genTip)
         , ( 1, ChainSync.MsgIntersectNotFound <$> genTip)
         ]
@@ -264,13 +268,34 @@ chainSyncMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
 -- Helpers
 --
 
-requestNext :: Rpc.Mirror -> ChainSyncMessage Block
-requestNext mirror =
-    MsgRequestNext RequestNext (Rpc.Response mirror) (Rpc.Fault mirror)
+nextBlock :: Rpc.Mirror -> ChainSyncMessage Block
+nextBlock mirror =
+     MsgNextBlock NextBlock (Rpc.Response mirror) (Rpc.Fault mirror)
 
-findIntersect :: Rpc.Mirror -> [Point Block] -> ChainSyncMessage Block
-findIntersect mirror points =
-    MsgFindIntersect (FindIntersect points) (Rpc.Response mirror) (Rpc.Fault mirror)
+isNextBlockResponse :: ResponsePredicate
+isNextBlockResponse = ResponsePredicate $
+    \v -> isRollForward v || isRollBackward v
+  where
+    isRollForward v =
+        ("result" `at` v >>= at "direction") == Just (toJSON @Text "forward")
+    isRollBackward v =
+        ("result" `at` v >>= at "direction") == Just (toJSON @Text "backward")
+
+findIntersection :: Rpc.Mirror -> [Point Block] -> ChainSyncMessage Block
+findIntersection mirror points =
+    MsgFindIntersection (FindIntersection points) (Rpc.Response mirror) (Rpc.Fault mirror)
+
+isFindIntersectionResponse :: ResponsePredicate
+isFindIntersectionResponse = ResponsePredicate $
+    \v -> isIntersectionFound v || isIntersectionNotFound v
+  where
+    isIntersectionFound v =
+        isJust ("result" `at` v >>= at "intersection")
+    isIntersectionNotFound v = isJust $ do
+        err <- "error" `at` v
+        code <- "code" `at` err
+        guard (code == toJSON @Int 1000)
+
 
 confidence :: Double -> Double -> Confidence
 confidence (round -> certainty) tolerance =

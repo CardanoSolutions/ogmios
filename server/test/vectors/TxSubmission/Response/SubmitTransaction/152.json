@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"stakeKeyAlreadyRegistered":"4acf2773917c7b547c576a7ff110d2ba5733c1f1ca9cdc659aea3a56"}]},"id":"st"}

@@ -17,12 +17,12 @@
 -- @
 --   ┌──────────┐
 --   │   Busy   │◀═══════════════════════════════════════╗
---   └────┬─────┘        SubmitTx / EvaluateTx           ║
+--   └────┬─────┘        SubmitTx / EvaluateTransaction           ║
 --        │                                              ║
 --        │                                         ┌──────────┐
 --        │                                         │          │
 --        │                                         │          │
---        │  SubmitTxResponse / EvaluateTxResponse  │   Idle   │
+--        │  SubmitTxResponse / EvaluateTransactionResponse  │   Idle   │
 --        └────────────────────────────────────────▶│          │
 --                                                  │          │⇦ START
 --                                                  └──────────┘
@@ -75,15 +75,15 @@ import Ogmios.Data.Protocol.TxSubmission
     , BabbageEra
     , CanEvaluateScriptsInEra
     , EpochInfo
-    , EvaluateTx (..)
-    , EvaluateTxError (..)
-    , EvaluateTxResponse (..)
+    , EvaluateTransaction (..)
+    , EvaluateTransactionError (..)
+    , EvaluateTransactionResponse (..)
     , HasTxId
     , PParams
     , PastHorizonException
-    , SerializedTx
-    , SubmitTx (..)
-    , SubmitTxError
+    , SerializedTransaction
+    , SubmitTransaction (..)
+    , SubmitTransactionError
     , SystemStart
     , Tx
     , TxIn
@@ -92,8 +92,8 @@ import Ogmios.Data.Protocol.TxSubmission
     , UTxO (..)
     , evaluateExecutionUnits
     , incompatibleEra
-    , mkSubmitTxResponse
-    , notEnoughSynced
+    , mkSubmitTransactionResponse
+    , nodeTipTooOld
     )
 import Ouroboros.Consensus.Cardano.Block
     ( BlockQuery (..)
@@ -152,7 +152,7 @@ import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 mkTxSubmissionClient
     :: forall m block.
         ( MonadSTM m
-        , HasTxId (SerializedTx block)
+        , HasTxId (SerializedTransaction block)
         )
     => TxSubmissionCodecs block
         -- ^ For encoding Haskell types to JSON
@@ -162,7 +162,7 @@ mkTxSubmissionClient
         -- ^ Incoming request queue
     -> (Json -> m ())
         -- ^ An emitter for yielding JSON objects
-    -> LocalTxSubmissionClient (SerializedTx block) (SubmitTxError block) m ()
+    -> LocalTxSubmissionClient (SerializedTransaction block) (SubmitTransactionError block) m ()
 mkTxSubmissionClient TxSubmissionCodecs{..} ExecutionUnitsEvaluator{..} queue yield = do
     LocalTxSubmissionClient clientStIdle
   where
@@ -170,22 +170,28 @@ mkTxSubmissionClient TxSubmissionCodecs{..} ExecutionUnitsEvaluator{..} queue yi
     await = atomically (readTQueue queue)
 
     clientStIdle
-        :: m (LocalTxClientStIdle (SerializedTx block) (SubmitTxError block) m ())
+        :: m (LocalTxClientStIdle (SerializedTransaction block) (SubmitTransactionError block) m ())
     clientStIdle = await >>= \case
-        MsgSubmitTx SubmitTx{submit = tx} toResponse _ -> do
-            pure $ SendMsgSubmitTx tx $ \result -> do
-                yield $ encodeSubmitTxResponse $ toResponse $ mkSubmitTxResponse tx result
+        MsgSubmitTransaction SubmitTransaction{transaction} toResponse _ -> do
+            pure $ SendMsgSubmitTx transaction $ \result -> do
+                mkSubmitTransactionResponse transaction result
+                    & toResponse
+                    & encodeSubmitTransactionResponse
+                    & yield
                 clientStIdle
-        MsgEvaluateTx EvaluateTx{additionalUtxoSet, evaluate = tx} toResponse _ -> do
-            result <- evaluateExecutionUnitsM (additionalUtxoSet, tx)
-            yield $ encodeEvaluateTxResponse $ toResponse result
+        MsgEvaluateTransaction EvaluateTransaction{additionalUtxoSet, transaction} toResponse _ -> do
+            result <- evaluateExecutionUnitsM (additionalUtxoSet, transaction)
+            result
+                & toResponse
+                & encodeEvaluateTransactionResponse
+                & yield
             clientStIdle
 
 -- | A thin abstraction for evaluating transaction units.
 data ExecutionUnitsEvaluator m block = ExecutionUnitsEvaluator
     { evaluateExecutionUnitsM
         :: (MultiEraUTxO block, GenTx block)
-        -> m (EvaluateTxResponse block)
+        -> m (EvaluateTransactionResponse block)
     }
 
 -- | Construct an effectful 'ExecutionUnitsEvaluator'; this requires to wire a
@@ -236,7 +242,7 @@ newExecutionUnitsEvaluator = do
   where
     localStateQueryClient
         :: m SomeEvaluationInAnyEra
-        -> (EvaluateTxResponse block -> m ())
+        -> (EvaluateTransactionResponse block -> m ())
         -> LocalStateQueryClient block (Point block) (Query block) m ()
     localStateQueryClient await reply =
         LocalStateQueryClient clientStIdle
@@ -269,7 +275,7 @@ newExecutionUnitsEvaluator = do
                 { LSQ.recvMsgAcquired = pure $ selectEra
                     -- Default / Fallback
                     (\era -> do
-                        reply (notEnoughSynced era)
+                        reply (nodeTipTooOld era)
                         pure $ LSQ.SendMsgRelease clientStIdle
                     )
                     -- Alonzo
@@ -294,7 +300,7 @@ newExecutionUnitsEvaluator = do
                -> EpochInfo (Except PastHorizonException)
                -> UTxO era
                -> Tx era
-               -> EvaluateTxResponse block
+               -> EvaluateTransactionResponse block
                )
             -> HoistQuery proto era
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
@@ -315,7 +321,7 @@ newExecutionUnitsEvaluator = do
                -> EpochInfo (Except PastHorizonException)
                -> UTxO era
                -> Tx era
-               -> EvaluateTxResponse block
+               -> EvaluateTransactionResponse block
                )
             -> HoistQuery proto era
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
@@ -332,7 +338,7 @@ newExecutionUnitsEvaluator = do
             -> (  EpochInfo (Except PastHorizonException)
                -> UTxO era
                -> Tx era
-               -> EvaluateTxResponse block
+               -> EvaluateTransactionResponse block
                )
             -> HoistQuery proto era
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
@@ -348,7 +354,7 @@ newExecutionUnitsEvaluator = do
             => SomeEvaluationInAnyEra
             -> (  UTxO era
                -> Tx era
-               -> EvaluateTxResponse block
+               -> EvaluateTransactionResponse block
                )
             -> HoistQuery proto era
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
@@ -357,7 +363,7 @@ newExecutionUnitsEvaluator = do
              in LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
                 { LSQ.recvMsgResult = \case
                     Right networkUtxo -> do
-                        reply (mkEvaluateTxResponse @era callback networkUtxo args)
+                        reply (mkEvaluateTransactionResponse @era callback networkUtxo args)
                         pure (LSQ.SendMsgRelease clientStIdle)
                     Left{} ->
                         pure $ reAcquire args
@@ -427,17 +433,17 @@ inputsInAnyEra (SomeEvaluationInAnyEra _ tx) =
   where
     body = getField @"body" tx
 
-mkEvaluateTxResponse
+mkEvaluateTransactionResponse
     :: forall era block crypto.
         ( CanEvaluateScriptsInEra era
         , block ~ HardForkBlock (CardanoEras crypto)
         , crypto ~ StandardCrypto
         )
-    => (UTxO era -> Tx era -> EvaluateTxResponse block)
+    => (UTxO era -> Tx era -> EvaluateTransactionResponse block)
     -> UTxO era -- ^ Utxo fetched from the network
     -> SomeEvaluationInAnyEra -- ^ Tx & additional utxo
-    -> EvaluateTxResponse block
-mkEvaluateTxResponse callback (UTxO networkUtxo) args =
+    -> EvaluateTransactionResponse block
+mkEvaluateTransactionResponse callback (UTxO networkUtxo) args =
     case translateToNetworkEra @era args of
         Nothing ->
             error "impossible: arguments are not translatable to network era. \
@@ -457,7 +463,7 @@ mkEvaluateTxResponse callback (UTxO networkUtxo) args =
                 else
                     intersection
                     & Map.keysSet
-                    & EvaluateTxAdditionalUtxoOverlap
+                    & OverlappingAdditionalUtxo
                     & EvaluationFailure
 
 -- | 99% of the time, we only need to worry about one era: the current one; yet, near hard-forks,

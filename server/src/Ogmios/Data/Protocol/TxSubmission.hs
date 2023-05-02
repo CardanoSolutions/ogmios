@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -24,23 +25,23 @@ module Ogmios.Data.Protocol.TxSubmission
       -- * Messages
     , TxSubmissionMessage (..)
 
-      -- ** SubmitTx
-    , SubmitTx (..)
-    , _decodeSubmitTx
-    , SubmitTxResponse (..)
-    , _encodeSubmitTxResponse
-    , mkSubmitTxResponse
+      -- ** SubmitTransaction
+    , SubmitTransaction (..)
+    , _decodeSubmitTransaction
+    , SubmitTransactionResponse (..)
+    , _encodeSubmitTransactionResponse
+    , mkSubmitTransactionResponse
 
-      -- ** EvaluateTx
-    , EvaluateTx (..)
-    , _decodeEvaluateTx
-    , EvaluateTxResponse (..)
-    , EvaluateTxError (..)
-    , NotEnoughSyncedError (..)
+      -- ** EvaluateTransaction
+    , EvaluateTransaction (..)
+    , _decodeEvaluateTransaction
+    , EvaluateTransactionResponse (..)
+    , EvaluateTransactionError (..)
+    , NodeTipTooOldError (..)
     , evaluateExecutionUnits
     , incompatibleEra
-    , notEnoughSynced
-    , _encodeEvaluateTxResponse
+    , nodeTipTooOld
+    , _encodeEvaluateTransactionResponse
     , CanEvaluateScriptsInEra
 
       -- ** Re-exports
@@ -53,8 +54,8 @@ module Ogmios.Data.Protocol.TxSubmission
     , PastHorizonException
     , RdmrPtr
     , TransactionScriptFailure
-    , SerializedTx
-    , SubmitTxError
+    , SerializedTransaction
+    , SubmitTransactionError
     , SystemStart
     , Core.PParams
     , Core.Tx
@@ -110,8 +111,8 @@ import Cardano.Ledger.TxIn
 import Cardano.Network.Protocol.NodeToClient
     ( Crypto
     , GenTxId
-    , SerializedTx
-    , SubmitTxError
+    , SerializedTransaction
+    , SubmitTransactionError
     )
 import Cardano.Slotting.EpochInfo
     ( EpochInfo
@@ -157,45 +158,45 @@ import qualified Data.Map as Map
 --
 
 data TxSubmissionCodecs block = TxSubmissionCodecs
-    { decodeSubmitTx
+    { decodeSubmitTransaction
         :: ByteString
-        -> Maybe (Rpc.Request (SubmitTx block))
-    , encodeSubmitTxResponse
-        :: Rpc.Response (SubmitTxResponse block)
+        -> Maybe (Rpc.Request (SubmitTransaction block))
+    , encodeSubmitTransactionResponse
+        :: Rpc.Response (SubmitTransactionResponse block)
         -> Json
-    , decodeEvaluateTx
+    , decodeEvaluateTransaction
         :: ByteString
-        -> Maybe (Rpc.Request (EvaluateTx block))
-    , encodeEvaluateTxResponse
-        :: Rpc.Response (EvaluateTxResponse block)
+        -> Maybe (Rpc.Request (EvaluateTransaction block))
+    , encodeEvaluateTransactionResponse
+        :: Rpc.Response (EvaluateTransactionResponse block)
         -> Json
     }
 
 mkTxSubmissionCodecs
     :: forall block.
-        ( FromJSON (SerializedTx block)
+        ( FromJSON (SerializedTransaction block)
         , FromJSON (MultiEraUTxO block)
         )
     => (GenTxId block -> Json)
-    -> (SubmitTxError block -> Json)
+    -> (SubmitTransactionError block -> Json)
     -> (RdmrPtr -> Text)
     -> (ExUnits -> Json)
     -> (TransactionScriptFailure (Crypto block) -> Json)
     -> (TxIn (Crypto block) -> Json)
     -> (TranslationError (Crypto block) -> Json)
     -> TxSubmissionCodecs block
-mkTxSubmissionCodecs encodeTxId encodeSubmitTxError stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError =
+mkTxSubmissionCodecs encodeTxId encodeSubmitTransactionError stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError =
     TxSubmissionCodecs
-        { decodeSubmitTx =
-            decodeWith _decodeSubmitTx
-        , encodeSubmitTxResponse =
-            _encodeSubmitTxResponse (Proxy @block)
+        { decodeSubmitTransaction =
+            decodeWith _decodeSubmitTransaction
+        , encodeSubmitTransactionResponse =
+            _encodeSubmitTransactionResponse (Proxy @block)
                 encodeTxId
-                encodeSubmitTxError
-        , decodeEvaluateTx =
-            decodeWith _decodeEvaluateTx
-        , encodeEvaluateTxResponse =
-            _encodeEvaluateTxResponse (Proxy @block)
+                encodeSubmitTransactionError
+        , decodeEvaluateTransaction =
+            decodeWith _decodeEvaluateTransaction
+        , encodeEvaluateTransactionResponse =
+            _encodeEvaluateTransactionResponse (Proxy @block)
                 stringifyRdmrPtr
                 encodeExUnits
                 encodeScriptFailure
@@ -208,93 +209,98 @@ mkTxSubmissionCodecs encodeTxId encodeSubmitTxError stringifyRdmrPtr encodeExUni
 --
 
 data TxSubmissionMessage block
-    = MsgSubmitTx
-        (SubmitTx block)
-        (Rpc.ToResponse (SubmitTxResponse block))
+    = MsgSubmitTransaction
+        (SubmitTransaction block)
+        (Rpc.ToResponse (SubmitTransactionResponse block))
         Rpc.ToFault
-    | MsgEvaluateTx
-        (EvaluateTx block)
-        (Rpc.ToResponse (EvaluateTxResponse block))
+    | MsgEvaluateTransaction
+        (EvaluateTransaction block)
+        (Rpc.ToResponse (EvaluateTransactionResponse block))
         Rpc.ToFault
 
 --
--- SubmitTx
+-- SubmitTransaction
 --
 
-data SubmitTx block
-    = SubmitTx { submit :: SerializedTx block }
+data SubmitTransaction block
+    = SubmitTransaction { transaction :: SerializedTransaction block }
     deriving (Generic)
-deriving instance Show (SerializedTx block) => Show (SubmitTx block)
+deriving instance Show (SerializedTransaction block) => Show (SubmitTransaction block)
 
-_decodeSubmitTx
-    :: FromJSON (SerializedTx block)
+_decodeSubmitTransaction
+    :: FromJSON (SerializedTransaction block)
     => Json.Value
-    -> Json.Parser (Rpc.Request (SubmitTx block))
-_decodeSubmitTx =
+    -> Json.Parser (Rpc.Request (SubmitTransaction block))
+_decodeSubmitTransaction =
     Rpc.genericFromJSON Rpc.defaultOptions
 
-data SubmitTxResponse block
-    = SubmitTxSuccess (GenTxId block)
-    | SubmitTxFail (SubmitTxError block)
+data SubmitTransactionResponse block
+    = SubmitTransactionSuccess (GenTxId block)
+    | SubmitTransactionFailure (SubmitTransactionError block)
     deriving (Generic)
 deriving instance
-    ( Show (SubmitTxError block)
+    ( Show (SubmitTransactionError block)
     , Show (GenTxId block)
-    ) => Show (SubmitTxResponse block)
+    ) => Show (SubmitTransactionResponse block)
 
-_encodeSubmitTxResponse
+_encodeSubmitTransactionResponse
     :: forall block. ()
     => Proxy block
     -> (GenTxId block -> Json)
-    -> (SubmitTxError block -> Json)
-    -> Rpc.Response (SubmitTxResponse block)
+    -> (SubmitTransactionError block -> Json)
+    -> Rpc.Response (SubmitTransactionResponse block)
     -> Json
-_encodeSubmitTxResponse _proxy encodeTxId encodeSubmitTxError =
-    Rpc.mkResponse $ encodeObject . \case
-        SubmitTxSuccess i ->
-            "SubmitSuccess" .= encodeObject
-                ( "txId" .= encodeTxId i
+_encodeSubmitTransactionResponse _proxy encodeTransactionId encodeSubmitTransactionError =
+    Rpc.mkResponse $ \resolve reject -> \case
+        SubmitTransactionSuccess i ->
+            resolve $ encodeObject $
+                ( "transaction" .= encodeObject
+                    ( "id" .= encodeTransactionId i
+                    )
                 )
-        (SubmitTxFail e) ->
-            "SubmitFail" .=
-                encodeSubmitTxError e
+        SubmitTransactionFailure e ->
+            -- TODO: More fine-grained error codes
+            reject (Rpc.FaultCustom 3005)
+                "Transaction submission failed"
+                ( pure $ encodeSubmitTransactionError e
+                )
 
 -- | Translate an ouroboros-network's 'SubmitResult' into our own
--- 'SubmitTxResponse' which also carries a transaction id.
-mkSubmitTxResponse
-    :: HasTxId (SerializedTx block)
-    => SerializedTx block
-    -> SubmitResult (SubmitTxError block)
-    -> SubmitTxResponse block
-mkSubmitTxResponse tx = \case
+-- 'SubmitTransactionResponse' which also carries a transaction id.
+mkSubmitTransactionResponse
+    :: HasTxId (SerializedTransaction block)
+    => SerializedTransaction block
+    -> SubmitResult (SubmitTransactionError block)
+    -> SubmitTransactionResponse block
+mkSubmitTransactionResponse tx = \case
     SubmitSuccess ->
-        SubmitTxSuccess (txId tx)
+        SubmitTransactionSuccess (txId tx)
     SubmitFail e ->
-        SubmitTxFail e
+        SubmitTransactionFailure e
 
 --
--- EvaluateTx
+-- EvaluateTransaction
 --
 
-data EvaluateTx block
-    = EvaluateTx
-        { evaluate :: SerializedTx block
+data EvaluateTransaction block
+    = EvaluateTransaction
+        { transaction :: SerializedTransaction block
         , additionalUtxoSet :: MultiEraUTxO block
         }
     deriving (Generic)
 deriving instance
-    ( Show (SerializedTx block)
+    ( Show (SerializedTransaction block)
     , Show (MultiEraUTxO block)
-    ) => Show (EvaluateTx block)
+    ) => Show (EvaluateTransaction block)
 
-_decodeEvaluateTx
+_decodeEvaluateTransaction
     :: forall block.
-        ( FromJSON (SerializedTx block)
+        ( FromJSON (SerializedTransaction block)
         , FromJSON (MultiEraUTxO block)
         )
     => Json.Value
-    -> Json.Parser (Rpc.Request (EvaluateTx block))
-_decodeEvaluateTx =
+    -> Json.Parser (Rpc.Request (EvaluateTransaction block))
+_decodeEvaluateTransaction =
     Rpc.genericFromJSON $ Rpc.defaultOptions
         { Rpc.onMissingField = \fieldName ->
             if fieldName == "additionalUtxoSet" then
@@ -303,40 +309,40 @@ _decodeEvaluateTx =
                 Rpc.onMissingField Rpc.defaultOptions fieldName
         }
 
-data EvaluateTxResponse block
-    = EvaluationFailure (EvaluateTxError block)
+data EvaluateTransactionResponse block
+    = EvaluationFailure (EvaluateTransactionError block)
     | EvaluationResult (Map RdmrPtr ExUnits)
     deriving (Show)
 
-data EvaluateTxError block
-    = EvaluateTxScriptFailures (Map RdmrPtr [TransactionScriptFailure (Crypto block)])
-    | EvaluateTxIncompatibleEra Text
-    | EvaluateTxAdditionalUtxoOverlap (Set (TxIn (Crypto block)))
-    | EvaluateTxNotEnoughSynced NotEnoughSyncedError
-    | EvaluateTxCannotCreateEvaluationContext (TranslationError (Crypto block))
+data EvaluateTransactionError block
+    = ScriptExecutionFailures (Map RdmrPtr [TransactionScriptFailure (Crypto block)])
+    | IncompatibleEra Text
+    | OverlappingAdditionalUtxo (Set (TxIn (Crypto block)))
+    | NodeTipTooOldErr NodeTipTooOldError
+    | CannotCreateEvaluationContext (TranslationError (Crypto block))
     deriving (Show)
 
-data NotEnoughSyncedError = NotEnoughSynced
+data NodeTipTooOldError = NodeTipTooOld
     { currentNodeEra :: Text
     , minimumRequiredEra :: Text
     }
     deriving (Show)
 
--- | Shorthand constructor for 'EvaluateTxResponse'
-incompatibleEra :: Text -> EvaluateTxResponse block
+-- | Shorthand constructor for 'EvaluateTransactionResponse'
+incompatibleEra :: Text -> EvaluateTransactionResponse block
 incompatibleEra =
-    EvaluationFailure . EvaluateTxIncompatibleEra
+    EvaluationFailure . IncompatibleEra
 
--- | Shorthand constructor for 'EvaluateTxResponse'
-notEnoughSynced :: Text -> EvaluateTxResponse block
-notEnoughSynced currentNodeEra =
-    EvaluationFailure (EvaluateTxNotEnoughSynced $
-        NotEnoughSynced { currentNodeEra, minimumRequiredEra }
+-- | Shorthand constructor for 'EvaluateTransactionResponse'
+nodeTipTooOld :: Text -> EvaluateTransactionResponse block
+nodeTipTooOld currentNodeEra =
+    EvaluationFailure (NodeTipTooOldErr $
+        NodeTipTooOld { currentNodeEra, minimumRequiredEra }
     )
   where
     minimumRequiredEra = "Alonzo"
 
-_encodeEvaluateTxResponse
+_encodeEvaluateTransactionResponse
     :: forall block. ()
     => Proxy block
     -> (RdmrPtr -> Text)
@@ -344,45 +350,58 @@ _encodeEvaluateTxResponse
     -> (TransactionScriptFailure (Crypto block) -> Json)
     -> (TxIn (Crypto block) -> Json)
     -> (TranslationError (Crypto block) -> Json)
-    -> Rpc.Response (EvaluateTxResponse block)
+    -> Rpc.Response (EvaluateTransactionResponse block)
     -> Json
-_encodeEvaluateTxResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError =
-    Rpc.mkResponse $ encodeObject . \case
+_encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError =
+    Rpc.mkResponse $ \resolve reject -> \case
         EvaluationResult result ->
-            "EvaluationResult" .=
-                encodeMap stringifyRdmrPtr encodeExUnits result
-        EvaluationFailure (EvaluateTxScriptFailures failures) ->
-            "EvaluationFailure" .= encodeObject
-                ( "ScriptFailures" .=
-                    encodeMap
-                        stringifyRdmrPtr
-                        (encodeList encodeScriptFailure)
-                        failures
+            resolve $ encodeObject
+                ( "budgets" .= encodeMap stringifyRdmrPtr encodeExUnits result
                 )
-        EvaluationFailure (EvaluateTxIncompatibleEra era) ->
-            "EvaluationFailure" .= encodeObject
-                ( "IncompatibleEra" .=
-                    encodeText era
+        EvaluationFailure (IncompatibleEra era) ->
+            reject (Rpc.FaultCustom 3000)
+                "Trying to evaluate a transaction from an old era (prior to Alonzo)."
+                (pure $ encodeObject
+                    ( "incompatibleEra" .=
+                        encodeText era
+                    )
                 )
-        EvaluationFailure (EvaluateTxAdditionalUtxoOverlap inputs) ->
-            "EvaluationFailure" .= encodeObject
-                ( "AdditionalUtxoOverlap" .=
-                    encodeFoldable encodeTxIn inputs
+        EvaluationFailure (OverlappingAdditionalUtxo inputs) ->
+            reject (Rpc.FaultCustom 3001)
+                "Some user-provided additional UTxO entries overlap with those that exist \
+                \in the ledger."
+                (pure $ encodeObject
+                    ( "overlappingOutputReferences" .=
+                        encodeFoldable encodeTxIn inputs
+                    )
                 )
-        EvaluationFailure (EvaluateTxNotEnoughSynced err) ->
-            "EvaluationFailure" .= encodeObject
-                ( "NotEnoughSynced" .= encodeObject
+        EvaluationFailure (NodeTipTooOldErr err) ->
+            reject (Rpc.FaultCustom 3002)
+                "The node is still synchronizing and the ledger isn't yet in an era where \
+                \scripts are enabled (i.e. Alonzo and beyond)."
+                (pure $ encodeObject
                     ( "currentNodeEra" .=
                         encodeText (currentNodeEra err) <>
                       "minimumRequiredEra" .=
                         encodeText (minimumRequiredEra err)
                     )
                 )
-        EvaluationFailure (EvaluateTxCannotCreateEvaluationContext err) ->
-            "EvaluationFailure" .= encodeObject
-                ( "CannotCreateEvaluationContext" .= encodeObject
-                    ( "reason" .= encodeTranslationError err
+        EvaluationFailure (CannotCreateEvaluationContext err) ->
+            reject (Rpc.FaultCustom 3003)
+                "Unable to create the evaluation context from the given transaction."
+                (pure $ encodeObject
+                    ( "reason" .=
+                        encodeTranslationError err
                     )
+                )
+        EvaluationFailure (ScriptExecutionFailures failures) ->
+            -- TODO: Breakdown / promote nested errors into fine-grained errors
+            reject (Rpc.FaultCustom 3004)
+                "Some scripts of the transactions terminated with error(s)."
+                (pure $ encodeMap
+                    stringifyRdmrPtr
+                    (encodeList encodeScriptFailure)
+                    failures
                 )
 
 -- | A constraint synonym to bundle together constraints needed to run a script
@@ -421,16 +440,16 @@ evaluateExecutionUnits
         -- ^ A UTXO needed to resolve inputs
     -> Core.Tx era
         -- ^ The actual transaction
-    -> EvaluateTxResponse block
+    -> EvaluateTransactionResponse block
 evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation of
     Left err ->
-        EvaluationFailure (EvaluateTxCannotCreateEvaluationContext err)
+        EvaluationFailure (CannotCreateEvaluationContext err)
     Right reports ->
         let (failures, successes) =
                 Map.foldrWithKey aggregateReports (mempty, mempty)  reports
          in if null failures
             then EvaluationResult successes
-            else EvaluationFailure $ EvaluateTxScriptFailures failures
+            else EvaluationFailure $ ScriptExecutionFailures failures
   where
     aggregateReports
         :: RdmrPtr

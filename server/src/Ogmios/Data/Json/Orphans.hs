@@ -31,12 +31,12 @@ import Ogmios.Data.EraTranslation
     )
 import Ogmios.Data.Json
     ( decodePoint
-    , decodeSerializedTx
+    , decodeSerializedTransaction
     , decodeTip
     , decodeTxId
     , decodeUtxo
-    , encodeSerializedTx
-    , encodeSubmitTxError
+    , encodeSerializedTransaction
+    , encodeSubmitTransactionError
     , encodeTip
     )
 import Ogmios.Data.Json.Query
@@ -79,8 +79,8 @@ instance
       )
   where
     toJSON = encodeTraceClient
-        (inefficientEncodingToValue . encodeSerializedTx)
-        (inefficientEncodingToValue . encodeSubmitTxError)
+        (inefficientEncodingToValue . encodeSerializedTransaction)
+        (inefficientEncodingToValue . encodeSubmitTransactionError)
 
 -- Only used for logging & health
 instance ToJSON (Tip (CardanoBlock crypto)) where
@@ -102,7 +102,7 @@ instance
     ) =>
     FromJSON (GenTx (CardanoBlock crypto))
   where
-    parseJSON = decodeSerializedTx
+    parseJSON = decodeSerializedTransaction
 
 instance PraosCrypto crypto => FromJSON (GenTxId (CardanoBlock crypto)) where
     parseJSON = decodeTxId

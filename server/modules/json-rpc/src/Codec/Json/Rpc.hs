@@ -2,7 +2,6 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -18,12 +17,14 @@ module Codec.Json.Rpc
     -- * Types
       Request
     , mkRequest
+    , mkRequestNoParams
     , Response
     , mkResponse
+    , ok
+    , ko
     , ToResponse
     , Fault
     , FaultCode (..)
-    , mkFault
     , ToFault
     , Mirror
 
@@ -42,17 +43,34 @@ module Codec.Json.Rpc
 import Prelude
 
 import Codec.Json.Rpc.Handler
-    ( Fault (..), FaultCode (..), Mirror, Request (..), Response (..) )
+    ( Fault (..)
+    , FaultCode (..)
+    , Mirror
+    , Request (..)
+    , Response (..)
+    )
 import Control.Arrow
-    ( second )
+    ( second
+    )
 import Control.Monad
-    ( guard )
+    ( guard
+    )
 import Data.Aeson
-    ( FromJSON (..), ToJSON (..), (.:), (.:?), (.=) )
+    ( FromJSON (..)
+    , ToJSON (..)
+    , (.:)
+    , (.:?)
+    , (.=)
+    )
+import Data.Char
+    ( toLower
+    )
 import Data.Kind
-    ( Type )
+    ( Type
+    )
 import Data.Proxy
-    ( Proxy (..) )
+    ( Proxy (..)
+    )
 
 import GHC.Generics
 
@@ -92,7 +110,13 @@ data Options = Options
 --
 -- @since 1.0.0
 defaultOptions :: Options
-defaultOptions = Options id id (\k -> fail $ "key " ++ show k ++ " not found")
+defaultOptions = Options
+    id
+    (\case
+        [] -> []
+        x:xs -> toLower x : xs
+    )
+    (\k -> fail $ "key " ++ show k ++ " not found")
 
 -- | Parse a given Json 'Value' as a JSON-Rpc 'Request'.
 --
@@ -122,39 +146,64 @@ genericToJSON opts =
     -- into an 'Encoding'. This is not the most efficient as the whole point of
     -- using an 'Encoding' is to construct it along the way and avoid
     -- constructing an intermediate 'Value' altogether.
-    mkResponse (Json.value . gRpcToJSON opts . from)
+    ok (Json.value . gRpcToJSON opts . from)
 
 -- | Serialize a given response to JSON
 --
 -- since @1.0.0
 mkResponse
     :: forall res. ()
+    => (   (Json.Encoding -> Json.Encoding)
+        -> (FaultCode -> String -> Maybe Json.Encoding -> Json.Encoding)
+        -> res
+        -> Json.Encoding
+       )
+    -> Response res
+    -> Json.Encoding
+mkResponse choose (Response refl res) =
+    choose
+        (\result -> Json.pairs $
+            ("jsonrpc" .= V2_0)
+            <>
+            (Json.pair "result" result)
+            <>
+            ("id" .= refl)
+        )
+        (\faultCode faultMessage faultData -> Json.pairs $
+            ("jsonrpc" .= V2_0)
+            <>
+            (Json.pair "error" $ Json.pairs $
+                ("code" .= faultCode)
+                <>
+                ("message" .= faultMessage)
+                <>
+                (maybe mempty (Json.pair "data") faultData)
+            )
+            <>
+            ("id" .= refl)
+        )
+        res
+
+-- | Shorthand for returning success responses.
+--
+-- since @1.0.0
+ok  :: forall res. ()
     => (res -> Json.Encoding)
     -> Response res
     -> Json.Encoding
-mkResponse toResult (Response refl res) = Json.pairs $
-    ("jsonrpc" .= V2_0)
-    <>
-    (Json.pair "result" (toResult res))
-    <>
-    ("id" .= refl)
+ok toResult =
+    mkResponse $ \resolve _reject -> resolve . toResult
+{-# INLINEABLE ok #-}
 
--- | Serialize a given 'Fault' to JSON
+-- | Shorthand for returning failure responses.
 --
 -- since @1.0.0
-mkFault
-    :: Fault
-    -> Json.Encoding
-mkFault Fault{faultMirror,faultCode,faultMessage} = Json.pairs $
-    ("jsonrpc" .= V2_0)
-    <>
-    ("error" .= Json.object
-        [ "code" .= faultCode
-        , "message" .= faultMessage
-        ]
-    )
-    <>
-    ("id" .= faultMirror)
+ko :: Fault -> Json.Encoding
+ko Fault{faultCode,faultMessage,faultMirror} =
+    mkResponse
+        (\_resolve reject () -> reject faultCode faultMessage Nothing)
+        (Response faultMirror ())
+{-# INLINEABLE ko #-}
 
 -- | Serialize a given request to JSON
 --
@@ -176,7 +225,26 @@ mkRequest opts toArgs (Request mirror req) = Json.pairs $
     <>
     ("id" .= mirror)
   where
-    method = constructorTagModifier opts $ gRpcMethodName (Proxy :: Proxy (Rep req a))
+    method = gRpcMethodName opts (Proxy :: Proxy (Rep req a))
+
+-- | Serialize a given request to JSON, without any parameter.
+--
+-- since @1.1.0
+mkRequestNoParams
+    :: forall req.
+        ( GRpcMethodName (Rep req)
+        )
+    => Options
+    -> Request req
+    -> Json.Encoding
+mkRequestNoParams opts (Request mirror _req) = Json.pairs $
+    ("jsonrpc" .= V2_0)
+    <>
+    ("method" .= method)
+    <>
+    ("id" .= mirror)
+  where
+    method = gRpcMethodName opts (Proxy :: Proxy (Rep req a))
 
 -- | Supported JSON-Rpc versions.
 --
@@ -186,6 +254,8 @@ data RpcVersion
     deriving (Show, Eq)
 
 instance ToJSON RpcVersion where
+    toEncoding = \case
+        V2_0 -> Json.string "2.0"
     toJSON = \case
         V2_0 -> Json.String "2.0"
 
@@ -202,7 +272,7 @@ class GRpcToJSON (f :: Type -> Type) where
     gRpcToJSON :: Options -> f a -> Json.Value
 
 class GRpcMethodName (f :: Type -> Type) where
-    gRpcMethodName :: Proxy (f a) -> String
+    gRpcMethodName :: Options -> Proxy (f a) -> String
 
 --
 -- Generic Machinery for parsing 'Request'
@@ -253,10 +323,12 @@ instance (FromJSON c) => GRpcFromJSON (K1 i c) where
 --
 
 instance GRpcMethodName f => GRpcMethodName (D1 c f) where
-    gRpcMethodName _ = gRpcMethodName (Proxy :: Proxy (f a))
+    gRpcMethodName opts _ =
+        gRpcMethodName opts (Proxy :: Proxy (f a))
 
 instance (Constructor c) => GRpcMethodName (C1 c f) where
-    gRpcMethodName _ = conName (undefined :: C1 c f a)
+    gRpcMethodName opts _ =
+        constructorTagModifier opts $ conName (undefined :: C1 c f a)
 
 instance GRpcToJSON f => GRpcToJSON (D1 c f) where
     gRpcToJSON opts = gRpcToJSON opts . unM1

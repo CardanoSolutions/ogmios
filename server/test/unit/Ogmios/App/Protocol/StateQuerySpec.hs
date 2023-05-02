@@ -28,9 +28,6 @@ import Data.Aeson
 import Data.SOP.Strict
     ( NS (..)
     )
-import GHC.TypeLits
-    ( KnownSymbol
-    )
 import Generics.SOP
     ( K (..)
     )
@@ -68,20 +65,24 @@ import Ogmios.Control.MonadSTM
     )
 import Ogmios.Data.Json
     ( Json
+    , encodeAcquireExpired
     , encodeAcquireFailure
     , encodePoint
     )
 import Ogmios.Data.Json.Orphans
     ()
+import Ogmios.Data.Json.Prelude
+    ( at
+    )
 import Ogmios.Data.Json.Query
-    ( SomeQuery (..)
+    ( Query (..)
+    , SomeQuery (..)
     , encodeEpochNo
     , encodeMismatchEraInfo
     )
 import Ogmios.Data.Protocol.StateQuery
-    ( Acquire (..)
-    , Query (..)
-    , Release (..)
+    ( AcquireLedgerState (..)
+    , ReleaseLedgerState (..)
     , StateQueryMessage (..)
     , mkStateQueryCodecs
     )
@@ -126,6 +127,7 @@ import System.Random
 import Test.App.Protocol.Util
     ( FailedToDecodeMsg (..)
     , PeerTerminatedUnexpectedly (..)
+    , ResponsePredicate (..)
     , expectRpcResponse
     , prop_inIOSim
     , withMockChannel
@@ -182,38 +184,38 @@ spec = parallel $ do
         cover 5 (isDoubleRelease False messages) "Double release" $
         cover 5 (isDoubleAcquire False messages) "Double acquire" $
         checkCoverage $ prop_inIOSim $ withStateQueryClient $ \send receive -> do
-            forM_ messages $ \(msg, mirror, SomeProxy proxy) -> do
-                send msg >> expectRpcResponse proxy receive (toJSON mirror)
+            forM_ messages $ \(msg, mirror, predicate) -> do
+                send msg >> expectRpcResponse predicate receive (toJSON mirror)
       where
         isDirectQuery hasAcquired = \case
             [] -> False
-            ((MsgQuery{},_,_):q) -> not hasAcquired || isDirectQuery hasAcquired q
-            ((MsgRelease{},_,_):q) -> isDirectQuery False q
-            ((MsgAcquire{},_,_):q) -> isDirectQuery True q
+            ((MsgQueryLedgerState{},_,_):q) -> not hasAcquired || isDirectQuery hasAcquired q
+            ((MsgReleaseLedgerState{},_,_):q) -> isDirectQuery False q
+            ((MsgAcquireLedgerState{},_,_):q) -> isDirectQuery True q
 
         isManyQueries nQuery = \case
             [] -> False
-            ((MsgQuery{},_,_):q) -> nQuery >= 3 || isManyQueries (nQuery + 1) q
-            ((MsgRelease{},_,_):q) -> isManyQueries 0 q
-            ((MsgAcquire{},_,_):q) -> isManyQueries 0 q
+            ((MsgQueryLedgerState{},_,_):q) -> nQuery >= 3 || isManyQueries (nQuery + 1) q
+            ((MsgReleaseLedgerState{},_,_):q) -> isManyQueries 0 q
+            ((MsgAcquireLedgerState{},_,_):q) -> isManyQueries 0 q
 
         isAcquireThenQuery hasAcquired = \case
             [] -> False
-            ((MsgQuery{},_,_):q) -> hasAcquired || isAcquireThenQuery False q
-            ((MsgRelease{},_,_):q) -> isAcquireThenQuery False q
-            ((MsgAcquire{},_,_):q) -> isAcquireThenQuery True q
+            ((MsgQueryLedgerState{},_,_):q) -> hasAcquired || isAcquireThenQuery False q
+            ((MsgReleaseLedgerState{},_,_):q) -> isAcquireThenQuery False q
+            ((MsgAcquireLedgerState{},_,_):q) -> isAcquireThenQuery True q
 
         isDoubleRelease hasReleased = \case
             [] -> False
-            ((MsgQuery{},_,_):q) -> isDoubleRelease False q
-            ((MsgRelease{},_,_):q) -> hasReleased || isDoubleRelease True q
-            ((MsgAcquire{},_,_):q) -> isDoubleRelease False q
+            ((MsgQueryLedgerState{},_,_):q) -> isDoubleRelease False q
+            ((MsgReleaseLedgerState{},_,_):q) -> hasReleased || isDoubleRelease True q
+            ((MsgAcquireLedgerState{},_,_):q) -> isDoubleRelease False q
 
         isDoubleAcquire hasAcquired = \case
             [] -> False
-            ((MsgQuery{},_,_):q) -> isDoubleAcquire False q
-            ((MsgRelease{},_,_):q) -> isDoubleAcquire False q
-            ((MsgAcquire{},_,_):q) -> hasAcquired || isDoubleAcquire True q
+            ((MsgQueryLedgerState{},_,_):q) -> isDoubleAcquire False q
+            ((MsgReleaseLedgerState{},_,_):q) -> isDoubleAcquire False q
+            ((MsgAcquireLedgerState{},_,_):q) -> hasAcquired || isDoubleAcquire True q
 
 type Protocol = LocalStateQuery Block (Point Block) (Ledger.Query Block)
 
@@ -224,7 +226,7 @@ withStateQueryClient
     -> m a
 withStateQueryClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
-    let innerCodecs = mkStateQueryCodecs encodePoint encodeAcquireFailure
+    let innerCodecs = mkStateQueryCodecs encodePoint encodeAcquireFailure encodeAcquireExpired
     let getGenesisConfig = let nope = error "unimplemented" in StateQuery.GetGenesisConfig nope nope nope
     let client = mkStateQueryClient nullTracer innerCodecs getGenesisConfig recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cStateQueryCodec
@@ -327,17 +329,14 @@ pattern IxAlonzo  x = S (S (S (S (Z x))))
 -- Command Generator
 --
 
-data SomeProxy = forall method. KnownSymbol method => SomeProxy (Proxy method)
-deriving instance Show SomeProxy
-
-genMessages :: Gen [(StateQueryMessage Block, Rpc.Mirror, SomeProxy)]
+genMessages :: Gen [(StateQueryMessage Block, Rpc.Mirror, ResponsePredicate)]
 genMessages = do
     mirror <- genMirror
     point  <- genPoint
     listOf1 $ elements
-        [ (acquire  mirror point, mirror, SomeProxy (Proxy :: Proxy "Acquire"))
-        , (release  mirror      , mirror, SomeProxy (Proxy :: Proxy "Release"))
-        , (queryAny mirror      , mirror, SomeProxy (Proxy :: Proxy "Query"))
+        [ (acquire  mirror point, mirror, isAcquireLedgerStateResponse)
+        , (release  mirror      , mirror, isReleaseLedgerStateResponse)
+        , (queryAny mirror      , mirror, isQueryLedgerStateResponse)
         ]
 
 --
@@ -346,18 +345,42 @@ genMessages = do
 
 acquire :: Rpc.Mirror -> Point Block -> StateQueryMessage Block
 acquire mirror point =
-    MsgAcquire Acquire{point} (Rpc.Response mirror) (Rpc.Fault mirror)
+    MsgAcquireLedgerState AcquireLedgerState{point} (Rpc.Response mirror) (Rpc.Fault mirror)
+
+isAcquireLedgerStateResponse :: ResponsePredicate
+isAcquireLedgerStateResponse = ResponsePredicate $
+    \v -> isAcquireSuccess v || isAcquireFailure v
+  where
+    isAcquireSuccess v = isJust $ do
+        result <- "result" `at` v
+        acquired <- "acquired" `at` result
+        guard (acquired == toJSON @Text "ledgerState")
+    isAcquireFailure v = isJust $ do
+        err <- "error" `at` v
+        code <- "code" `at` err
+        guard (code == toJSON @Int 2000)
 
 release :: Rpc.Mirror -> StateQueryMessage Block
 release mirror =
-    MsgRelease Release (Rpc.Response mirror) (Rpc.Fault mirror)
+    MsgReleaseLedgerState ReleaseLedgerState (Rpc.Response mirror) (Rpc.Fault mirror)
+
+isReleaseLedgerStateResponse :: ResponsePredicate
+isReleaseLedgerStateResponse = ResponsePredicate $
+    \v -> ("result" `at` v >>= at "released") == Just (toJSON @Text "ledgerState")
 
 queryAny :: Rpc.Mirror -> StateQueryMessage Block
 queryAny mirror =
-    MsgQuery Query{rawQuery,queryInEra} (Rpc.Response mirror) (Rpc.Fault mirror)
+    MsgQueryLedgerState Query{rawQuery,queryInEra} (Rpc.Response mirror) (Rpc.Fault mirror)
   where
     rawQuery = object [ "query" .= ("currentEpoch" :: String) ]
     queryInEra _ = Just $ SomeStandardQuery
         (Ledger.BlockQuery $ QueryIfCurrentAlonzo GetEpochNo)
-        (either encodeMismatchEraInfo encodeEpochNo)
+        (bimap encodeMismatchEraInfo encodeEpochNo)
         (const Proxy)
+
+isQueryLedgerStateResponse :: ResponsePredicate
+isQueryLedgerStateResponse = ResponsePredicate $
+    \v -> not (_isAcquireLedgerStateResponse v) && not (_isReleaseLedgerStateResponse v)
+  where
+    ResponsePredicate _isAcquireLedgerStateResponse = isAcquireLedgerStateResponse
+    ResponsePredicate _isReleaseLedgerStateResponse = isReleaseLedgerStateResponse

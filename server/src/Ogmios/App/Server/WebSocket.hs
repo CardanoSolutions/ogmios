@@ -23,8 +23,8 @@ import Ogmios.Prelude
 import Cardano.Network.Protocol.NodeToClient
     ( Block
     , Clients (..)
-    , SerializedTx
-    , SubmitTxError
+    , SerializedTransaction
+    , SubmitTransactionError
     , connectClient
     , mkClient
     )
@@ -111,11 +111,12 @@ import Ogmios.Data.Json
     ( Json
     , ToJSON
     , encodeAcquireFailure
+    , encodeAcquireExpired
     , encodeBlock
     , encodeExUnits
     , encodePoint
     , encodeScriptFailure
-    , encodeSubmitTxError
+    , encodeSubmitTransactionError
     , encodeTip
     , encodeTranslationError
     , encodeTx
@@ -222,7 +223,7 @@ newWebSocketApp tr unliftIO = do
     onIOException conn e = do
         logWith tr $ WebSocketFailedToConnect $ show e
         let msg = "Connection with the node lost or failed."
-        close conn $ toStrict $ Json.encode $ Rpc.serverError Nothing (negate 32000) msg
+        close conn $ toStrict $ Json.encode $ Rpc.customError Nothing (negate 32000) msg
 
     onExceptions :: m () -> m ()
     onExceptions
@@ -339,32 +340,32 @@ withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig co
                 matched <- Rpc.match bytes
                     (count (totalUnroutedCounter sensors) *> defaultHandler bytes)
                     -- ChainSync
-                    [ Rpc.Handler decodeRequestNext
-                        (\r t -> push chainSyncQ . MsgRequestNext r t)
-                    , Rpc.Handler decodeFindIntersect
-                        (\r t -> push chainSyncQ . MsgFindIntersect r t)
+                    [ Rpc.Handler decodeNextBlock
+                        (\r t -> push chainSyncQ . MsgNextBlock r t)
+                    , Rpc.Handler decodeFindIntersection
+                        (\r t -> push chainSyncQ . MsgFindIntersection r t)
 
                     -- TxSubmission
-                    , Rpc.Handler decodeSubmitTx
-                        (\r t -> push txSubmissionQ .  MsgSubmitTx r t)
-                    , Rpc.Handler decodeEvaluateTx
-                        (\r t -> push txSubmissionQ .  MsgEvaluateTx r t)
+                    , Rpc.Handler decodeSubmitTransaction
+                        (\r t -> push txSubmissionQ . MsgSubmitTransaction r t)
+                    , Rpc.Handler decodeEvaluateTransaction
+                        (\r t -> push txSubmissionQ . MsgEvaluateTransaction r t)
 
                     -- StateQuery
-                    , Rpc.Handler decodeAcquire
-                        (\r t -> push stateQueryQ . MsgAcquire r t)
-                    , Rpc.Handler decodeRelease
-                        (\r t -> push stateQueryQ . MsgRelease r t)
-                    , Rpc.Handler decodeQuery
-                        (\r t -> push stateQueryQ . MsgQuery r t)
+                    , Rpc.Handler decodeAcquireLedgerState
+                        (\r t -> push stateQueryQ . MsgAcquireLedgerState r t)
+                    , Rpc.Handler decodeReleaseLedgerState
+                        (\r t -> push stateQueryQ . MsgReleaseLedgerState r t)
+                    , Rpc.Handler decodeQueryLedgerState
+                        (\r t -> push stateQueryQ . MsgQueryLedgerState r t)
 
                     -- TxMonitor
-                    , Rpc.Handler decodeAwaitAcquire
-                        (\r t -> push txMonitorQ . MsgAwaitAcquire r t)
-                    , Rpc.Handler decodeNextTx
-                        (\r t -> push txMonitorQ . MsgNextTx r t)
-                    , Rpc.Handler decodeHasTx
-                        (\r t -> push txMonitorQ . MsgHasTx r t)
+                    , Rpc.Handler decodeAcquireMempool
+                        (\r t -> push txMonitorQ . MsgAcquireMempool r t)
+                    , Rpc.Handler decodeNextTransaction
+                        (\r t -> push txMonitorQ . MsgNextTransaction r t)
+                    , Rpc.Handler decodeHasTransaction
+                        (\r t -> push txMonitorQ . MsgHasTransaction r t)
                     , Rpc.Handler decodeSizeAndCapacity
                         (\r t -> push txMonitorQ . MsgSizeAndCapacity r t)
                     , Rpc.Handler decodeReleaseMempool
@@ -375,7 +376,7 @@ withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig co
     chainSyncCodecs@ChainSyncCodecs{..} =
         mkChainSyncCodecs encodeBlock encodePoint encodeTip
     stateQueryCodecs@StateQueryCodecs{..} =
-        mkStateQueryCodecs encodePoint encodeAcquireFailure
+        mkStateQueryCodecs encodePoint encodeAcquireFailure encodeAcquireExpired
     txMonitorCodecs@TxMonitorCodecs{..} =
         mkTxMonitorCodecs
             encodeTxId
@@ -383,7 +384,7 @@ withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig co
     txSubmissionCodecs@TxSubmissionCodecs{..} =
         mkTxSubmissionCodecs
             encodeTxId
-            encodeSubmitTxError
+            encodeSubmitTransactionError
             stringifyRdmrPtr
             encodeExUnits
             encodeScriptFailure
@@ -396,7 +397,7 @@ withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig co
 
 data TraceWebSocket where
     WebSocketClient
-        :: TraceClient (SerializedTx Block) (SubmitTxError Block)
+        :: TraceClient (SerializedTransaction Block) (SubmitTransactionError Block)
         -> TraceWebSocket
 
     WebSocketStateQuery

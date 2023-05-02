@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"unknownOrIncompleteWithdrawals":{"stake_test1uz66ue36465w2qq40005h2hadad6pnjht8mu6sgplsfj74q9f9d7l":127,"stake17xnyv36t3a2rzfs4q6mvyu7nqlr4dxjwkmykkskafg54yzsenqyzz":507,"stake178s2w9p3nqfv8amnhgzwchtt8l7dt2kc2qrgqkcy0vyz2sgkr383l":354}}]},"id":"st"}

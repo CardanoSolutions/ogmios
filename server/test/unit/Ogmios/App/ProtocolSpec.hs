@@ -58,7 +58,7 @@ spec = parallel $ do
                   , "'method' must be present"
                   , Just Json.Null
                   )
-                , ( json [aesonQQ|{ "method": "Query" }|]
+                , ( json [aesonQQ|{ "method": "query" }|]
                   , "missing required field 'jsonrpc'"
                   , Just Json.Null
                   )
@@ -70,7 +70,7 @@ spec = parallel $ do
                   , Just Json.Null
                   )
                 , ( json [aesonQQ|{
-                      "method": "SubmitTx",
+                      "method": "submitTransaction",
                       "id": { "requestId": 42 }
                     }|]
                   , "missing required field 'jsonrpc'"

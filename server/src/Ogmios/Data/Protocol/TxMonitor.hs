@@ -21,27 +21,27 @@ module Ogmios.Data.Protocol.TxMonitor
       -- * Messages
     , TxMonitorMessage (..)
 
-      -- ** Acquire / AwaitAcquire
-    , AwaitAcquire (..)
-    , _encodeAwaitAcquire
-    , _decodeAwaitAcquire
-    , AwaitAcquireResponse (..)
-    , _encodeAwaitAcquireResponse
+      -- ** Acquire / AcquireMempool
+    , AcquireMempool (..)
+    , _encodeAcquireMempool
+    , _decodeAcquireMempool
+    , AcquireMempoolResponse (..)
+    , _encodeAcquireMempoolResponse
 
-      -- ** NextTx
-    , NextTx (..)
-    , NextTxFields (..)
-    , _encodeNextTx
-    , _decodeNextTx
-    , NextTxResponse (..)
-    , _encodeNextTxResponse
+      -- ** NextTransaction
+    , NextTransaction (..)
+    , NextTransactionFields (..)
+    , _encodeNextTransaction
+    , _decodeNextTransaction
+    , NextTransactionResponse (..)
+    , _encodeNextTransactionResponse
 
-      -- ** HasTx
-    , HasTx (..)
-    , _encodeHasTx
-    , _decodeHasTx
-    , HasTxResponse (..)
-    , _encodeHasTxResponse
+      -- ** HasTransaction
+    , HasTransaction (..)
+    , _encodeHasTransaction
+    , _decodeHasTransaction
+    , HasTransactionResponse (..)
+    , _encodeHasTransactionResponse
 
 
       -- ** SizeAndCapacity
@@ -90,23 +90,23 @@ import qualified Data.Aeson.Types as Json
 --
 
 data TxMonitorCodecs block = TxMonitorCodecs
-    { decodeAwaitAcquire
+    { decodeAcquireMempool
         :: ByteString
-        -> Maybe (Rpc.Request AwaitAcquire)
-    , encodeAwaitAcquireResponse
-        :: Rpc.Response AwaitAcquireResponse
+        -> Maybe (Rpc.Request AcquireMempool)
+    , encodeAcquireMempoolResponse
+        :: Rpc.Response AcquireMempoolResponse
         -> Json
-    , decodeNextTx
+    , decodeNextTransaction
         :: ByteString
-        -> Maybe (Rpc.Request NextTx)
-    , encodeNextTxResponse
-        :: Rpc.Response (NextTxResponse block)
+        -> Maybe (Rpc.Request NextTransaction)
+    , encodeNextTransactionResponse
+        :: Rpc.Response (NextTransactionResponse block)
         -> Json
-    , decodeHasTx
+    , decodeHasTransaction
         :: ByteString
-        -> Maybe (Rpc.Request (HasTx block))
-    , encodeHasTxResponse
-        :: Rpc.Response HasTxResponse
+        -> Maybe (Rpc.Request (HasTransaction block))
+    , encodeHasTransactionResponse
+        :: Rpc.Response HasTransactionResponse
         -> Json
     , decodeSizeAndCapacity
         :: ByteString
@@ -129,12 +129,12 @@ mkTxMonitorCodecs
     -> TxMonitorCodecs block
 mkTxMonitorCodecs encodeTxId encodeTx =
     TxMonitorCodecs
-        { decodeAwaitAcquire = decodeWith _decodeAwaitAcquire
-        , encodeAwaitAcquireResponse = _encodeAwaitAcquireResponse
-        , decodeNextTx = decodeWith _decodeNextTx
-        , encodeNextTxResponse = _encodeNextTxResponse encodeTxId encodeTx
-        , decodeHasTx = decodeWith _decodeHasTx
-        , encodeHasTxResponse = _encodeHasTxResponse
+        { decodeAcquireMempool = decodeWith _decodeAcquireMempool
+        , encodeAcquireMempoolResponse = _encodeAcquireMempoolResponse
+        , decodeNextTransaction = decodeWith _decodeNextTransaction
+        , encodeNextTransactionResponse = _encodeNextTransactionResponse encodeTxId encodeTx
+        , decodeHasTransaction = decodeWith _decodeHasTransaction
+        , encodeHasTransactionResponse = _encodeHasTransactionResponse
         , decodeSizeAndCapacity = decodeWith _decodeSizeAndCapacity
         , encodeSizeAndCapacityResponse = _encodeSizeAndCapacityResponse
         , decodeReleaseMempool = decodeWith _decodeReleaseMempool
@@ -146,17 +146,17 @@ mkTxMonitorCodecs encodeTxId encodeTx =
 --
 
 data TxMonitorMessage block
-    = MsgAwaitAcquire
-        AwaitAcquire
-        (Rpc.ToResponse AwaitAcquireResponse)
+    = MsgAcquireMempool
+        AcquireMempool
+        (Rpc.ToResponse AcquireMempoolResponse)
         Rpc.ToFault
-    | MsgNextTx
-        NextTx
-        (Rpc.ToResponse (NextTxResponse block))
+    | MsgNextTransaction
+        NextTransaction
+        (Rpc.ToResponse (NextTransactionResponse block))
         Rpc.ToFault
-    | MsgHasTx
-        (HasTx block)
-        (Rpc.ToResponse HasTxResponse)
+    | MsgHasTransaction
+        (HasTransaction block)
+        (Rpc.ToResponse HasTransactionResponse)
         Rpc.ToFault
     | MsgSizeAndCapacity
         SizeAndCapacity
@@ -168,65 +168,65 @@ data TxMonitorMessage block
         Rpc.ToFault
 
 --
--- AwaitAcquire
+-- AcquireMempool
 --
 
-data AwaitAcquire
-    = AwaitAcquire
+data AcquireMempool
+    = AcquireMempool
     deriving (Generic, Show, Eq)
 
-_encodeAwaitAcquire
-    :: Rpc.Request AwaitAcquire
+_encodeAcquireMempool
+    :: Rpc.Request AcquireMempool
     -> Json
-_encodeAwaitAcquire =
-    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
-        AwaitAcquire ->
-            mempty
+_encodeAcquireMempool =
+    Rpc.mkRequestNoParams Rpc.defaultOptions
 
-_decodeAwaitAcquire
+_decodeAcquireMempool
     :: Json.Value
-    -> Json.Parser (Rpc.Request AwaitAcquire)
-_decodeAwaitAcquire =
+    -> Json.Parser (Rpc.Request AcquireMempool)
+_decodeAcquireMempool =
     Rpc.genericFromJSON Rpc.defaultOptions
 
-data AwaitAcquireResponse
-    = AwaitAcquired { slot :: SlotNo }
+data AcquireMempoolResponse
+    = AcquireMempoolResponse { slot :: SlotNo }
     deriving (Generic, Show, Eq)
 
-_encodeAwaitAcquireResponse
-    :: Rpc.Response AwaitAcquireResponse
+_encodeAcquireMempoolResponse
+    :: Rpc.Response AcquireMempoolResponse
     -> Json
-_encodeAwaitAcquireResponse =
-    Rpc.mkResponse $ encodeObject . \case
-        AwaitAcquired{slot} ->
-            "AwaitAcquired" .= encodeObject
-                ( "slot" .= encodeSlotNo slot
-                )
+_encodeAcquireMempoolResponse =
+    Rpc.ok $ encodeObject . \case
+        AcquireMempoolResponse{slot} ->
+            ( "acquired" .=
+                encodeText "mempool" <>
+              "slot" .=
+                encodeSlotNo slot
+            )
 
 --
--- NextTx
+-- NextTransaction
 --
 
-data NextTx
-    = NextTx { fields :: Maybe NextTxFields }
+data NextTransaction
+    = NextTransaction { fields :: Maybe NextTransactionFields }
     deriving (Generic, Show, Eq)
 
-_encodeNextTx
-    :: Rpc.Request NextTx
+_encodeNextTransaction
+    :: Rpc.Request NextTransaction
     -> Json
-_encodeNextTx =
+_encodeNextTransaction =
     Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
-        NextTx{fields} ->
+        NextTransaction{fields} ->
             case fields of
                 Nothing ->
                     mempty
-                Just NextTxAllFields ->
+                Just NextTransactionAllFields ->
                     "fields" .= encodeText "all"
 
-_decodeNextTx
+_decodeNextTransaction
     :: Json.Value
-    -> Json.Parser (Rpc.Request NextTx)
-_decodeNextTx =
+    -> Json.Parser (Rpc.Request NextTransaction)
+_decodeNextTransaction =
     Rpc.genericFromJSON Rpc.defaultOptions
         { Rpc.onMissingField = \case
             "fields" ->
@@ -235,92 +235,95 @@ _decodeNextTx =
                 Rpc.onMissingField Rpc.defaultOptions k
         }
 
-data NextTxFields
-    = NextTxAllFields
+data NextTransactionFields
+    = NextTransactionAllFields
     deriving (Generic, Show, Eq)
 
-instance FromJSON NextTxFields where
-    parseJSON = Json.withText "NextTxFields" $ \x -> do
+instance FromJSON NextTransactionFields where
+    parseJSON = Json.withText "NextTransactionFields" $ \x -> do
         when (x /= "all") $ do
             fail "Invalid argument to 'fields'. Expected 'all'."
-        pure NextTxAllFields
+        pure NextTransactionAllFields
 
-instance ToJSON NextTxFields where
+instance ToJSON NextTransactionFields where
     toJSON = \case
-        NextTxAllFields ->
+        NextTransactionAllFields ->
             Json.String "all"
     toEncoding = \case
-        NextTxAllFields ->
+        NextTransactionAllFields ->
             Json.text "all"
 
-data NextTxResponse block
-    = NextTxResponseId
+data NextTransactionResponse block
+    = NextTransactionResponseId
         { nextId :: Maybe (GenTxId block)
         }
-    | NextTxResponseTx
+    | NextTransactionResponseTx
         { nextTx :: Maybe (GenTx block)
         }
     deriving (Generic)
 deriving instance
     ( Show (GenTxId block)
     , Show (GenTx block)
-    ) => Show (NextTxResponse block)
+    ) => Show (NextTransactionResponse block)
 deriving instance
     ( Eq (GenTxId block)
     , Eq (GenTx block)
-    ) => Eq (NextTxResponse block)
+    ) => Eq (NextTransactionResponse block)
 
-_encodeNextTxResponse
+_encodeNextTransactionResponse
     :: forall block. ()
     => (GenTxId block -> Json)
     -> (GenTx block -> Json)
-    -> Rpc.Response (NextTxResponse block)
+    -> Rpc.Response (NextTransactionResponse block)
     -> Json
-_encodeNextTxResponse encodeTxId encodeTx =
-    Rpc.mkResponse $ \case
-        NextTxResponseId{nextId} ->
-            encodeMaybe encodeTxId nextId
-        NextTxResponseTx{nextTx} ->
-            encodeMaybe encodeTx nextTx
+_encodeNextTransactionResponse encodeTxId encodeTx =
+    Rpc.ok $ encodeObject . \case
+        NextTransactionResponseId{nextId} ->
+            ( "transaction" .= encodeMaybe (\i -> encodeObject ( "id" .= encodeTxId i)) nextId
+            )
+        NextTransactionResponseTx{nextTx} ->
+            ( "transaction" .= encodeMaybe encodeTx nextTx
+            )
 
 --
--- HasTx
+-- HasTransaction
 --
-data HasTx block
-    = HasTx { id :: GenTxId block }
+data HasTransaction block
+    = HasTransaction { id :: GenTxId block }
     deriving (Generic)
-deriving instance Show (GenTxId block) => Show (HasTx block)
-deriving instance   Eq (GenTxId block) =>   Eq (HasTx block)
+deriving instance Show (GenTxId block) => Show (HasTransaction block)
+deriving instance   Eq (GenTxId block) =>   Eq (HasTransaction block)
 
-_encodeHasTx
+_encodeHasTransaction
     :: forall block. ()
     => (GenTxId block -> Json)
-    -> Rpc.Request (HasTx block)
+    -> Rpc.Request (HasTransaction block)
     -> Json
-_encodeHasTx encodeTxId =
+_encodeHasTransaction encodeTxId =
     Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
-        HasTx{id} ->
+        HasTransaction{id} ->
             "id" .= encodeTxId id
 
-_decodeHasTx
+_decodeHasTransaction
     :: forall block. (FromJSON (GenTxId block))
     => Json.Value
-    -> Json.Parser (Rpc.Request (HasTx block))
-_decodeHasTx =
+    -> Json.Parser (Rpc.Request (HasTransaction block))
+_decodeHasTransaction =
     Rpc.genericFromJSON Rpc.defaultOptions
 
-data HasTxResponse
-    = HasTxResponse { has :: Bool }
+data HasTransactionResponse
+    = HasTransactionResponse { has :: Bool }
     deriving (Generic, Show, Eq)
 
-_encodeHasTxResponse
+_encodeHasTransactionResponse
     :: forall block. ()
-    => Rpc.Response HasTxResponse
+    => Rpc.Response HasTransactionResponse
     -> Json
-_encodeHasTxResponse =
-    Rpc.mkResponse $ \case
-        HasTxResponse{has} ->
-            encodeBool has
+_encodeHasTransactionResponse =
+    Rpc.ok $ encodeObject . \case
+        HasTransactionResponse{has} ->
+            ( "hasTransaction" .= encodeBool has
+            )
 
 --
 -- SizeAndCapacity
@@ -334,9 +337,7 @@ _encodeSizeAndCapacity
     :: Rpc.Request SizeAndCapacity
     -> Json
 _encodeSizeAndCapacity =
-    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
-        SizeAndCapacity ->
-            mempty
+    Rpc.mkRequestNoParams Rpc.defaultOptions
 
 _decodeSizeAndCapacity
     :: Json.Value
@@ -352,14 +353,17 @@ _encodeSizeAndCapacityResponse
     :: Rpc.Response SizeAndCapacityResponse
     -> Json
 _encodeSizeAndCapacityResponse =
-    Rpc.mkResponse $ encodeObject . \case
+    Rpc.ok $ encodeObject . \case
         SizeAndCapacityResponse{sizes} ->
-            "capacity" .=
-                encodeWord32 (capacityInBytes sizes) <>
-            "currentSize" .=
-                encodeWord32 (sizeInBytes sizes) <>
-            "numberOfTxs" .=
-                encodeWord32 (numberOfTxs sizes)
+            ( "mempool" .= encodeObject
+                ( "maxCapacity" .= encodeObject
+                    ( "bytes" .= encodeWord32 (capacityInBytes sizes) ) <>
+                  "currentSize" .= encodeObject
+                    ( "bytes" .= encodeWord32 (sizeInBytes sizes)) <>
+                  "transactions" .= encodeObject
+                    ( "count" .= encodeWord32 (numberOfTxs sizes))
+                )
+            )
 
 --
 -- ReleaseMempool
@@ -373,9 +377,7 @@ _encodeReleaseMempool
     :: Rpc.Request ReleaseMempool
     -> Json
 _encodeReleaseMempool =
-    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
-        ReleaseMempool ->
-            mempty
+    Rpc.mkRequestNoParams Rpc.defaultOptions
 
 _decodeReleaseMempool
     :: Json.Value
@@ -391,6 +393,7 @@ _encodeReleaseMempoolResponse
     :: Rpc.Response ReleaseMempoolResponse
     -> Json
 _encodeReleaseMempoolResponse =
-    Rpc.mkResponse $ \case
+    Rpc.ok $ encodeObject . \case
         Released ->
-            encodeText "Released"
+            ( "released" .= encodeText "mempool"
+            )

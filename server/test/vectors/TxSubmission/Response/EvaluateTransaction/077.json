@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","error":{"code":3003,"message":"Unable to create the evaluation context from the given transaction.","data":{"reason":"Unknown transaction input (missing from UTxO set): 03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314#2"}},"id":null}
