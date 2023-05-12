@@ -128,13 +128,13 @@ import Ogmios.Data.Protocol.TxMonitor
     , NextTransactionResponse (..)
     , ReleaseMempool
     , ReleaseMempoolResponse (..)
-    , SizeAndCapacity
-    , SizeAndCapacityResponse (..)
+    , SizeOfMempool
+    , SizeOfMempoolResponse (..)
     , _decodeAcquireMempool
     , _decodeHasTransaction
     , _decodeNextTransaction
     , _decodeReleaseMempool
-    , _decodeSizeAndCapacity
+    , _decodeSizeOfMempool
     , _encodeAcquireMempool
     , _encodeAcquireMempoolResponse
     , _encodeHasTransaction
@@ -143,8 +143,8 @@ import Ogmios.Data.Protocol.TxMonitor
     , _encodeNextTransactionResponse
     , _encodeReleaseMempool
     , _encodeReleaseMempoolResponse
-    , _encodeSizeAndCapacity
-    , _encodeSizeAndCapacityResponse
+    , _encodeSizeOfMempool
+    , _encodeSizeOfMempoolResponse
     )
 import Ogmios.Data.Protocol.TxSubmission
     ( EvaluateTransactionResponse
@@ -490,16 +490,16 @@ spec = do
             "ogmios.json#/properties/HasTransactionResponse"
 
         validateFromJSON
-            (arbitrary @(Rpc.Request SizeAndCapacity))
-            (_encodeSizeAndCapacity, _decodeSizeAndCapacity)
-            (10, "SizeAndCapacity")
-            "ogmios.json#/properties/SizeAndCapacity"
+            (arbitrary @(Rpc.Request SizeOfMempool))
+            (_encodeSizeOfMempool, _decodeSizeOfMempool)
+            (10, "SizeOfMempool")
+            "ogmios.json#/properties/SizeOfMempool"
 
         validateToJSON
-            (arbitrary @(Rpc.Response SizeAndCapacityResponse))
-            _encodeSizeAndCapacityResponse
-            (10, "SizeAndCapacityResponse")
-            "ogmios.json#/properties/SizeAndCapacityResponse"
+            (arbitrary @(Rpc.Response SizeOfMempoolResponse))
+            _encodeSizeOfMempoolResponse
+            (10, "SizeOfMempoolResponse")
+            "ogmios.json#/properties/SizeOfMempoolResponse"
 
         validateFromJSON
             (arbitrary @(Rpc.Request ReleaseMempool))
@@ -752,11 +752,11 @@ instance Arbitrary HasTransactionResponse where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary SizeAndCapacity where
+instance Arbitrary SizeOfMempool where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary SizeAndCapacityResponse where
+instance Arbitrary SizeOfMempoolResponse where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 

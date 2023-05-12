@@ -110,8 +110,8 @@ import Ogmios.Control.MonadWebSocket
 import Ogmios.Data.Json
     ( Json
     , ToJSON
-    , encodeAcquireFailure
     , encodeAcquireExpired
+    , encodeAcquireFailure
     , encodeBlock
     , encodeExUnits
     , encodePoint
@@ -366,8 +366,8 @@ withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig co
                         (\r t -> push txMonitorQ . MsgNextTransaction r t)
                     , Rpc.Handler decodeHasTransaction
                         (\r t -> push txMonitorQ . MsgHasTransaction r t)
-                    , Rpc.Handler decodeSizeAndCapacity
-                        (\r t -> push txMonitorQ . MsgSizeAndCapacity r t)
+                    , Rpc.Handler decodeSizeOfMempool
+                        (\r t -> push txMonitorQ . MsgSizeOfMempool r t)
                     , Rpc.Handler decodeReleaseMempool
                         (\r t -> push txMonitorQ . MsgReleaseMempool r t)
                     ]

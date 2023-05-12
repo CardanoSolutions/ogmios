@@ -63,8 +63,8 @@ import Ogmios.Data.Protocol.TxMonitor
     , NextTransactionResponse (..)
     , ReleaseMempool (..)
     , ReleaseMempoolResponse (..)
-    , SizeAndCapacity (..)
-    , SizeAndCapacityResponse (..)
+    , SizeOfMempool (..)
+    , SizeOfMempoolResponse (..)
     , SlotNo (..)
     , TxMonitorCodecs (..)
     , TxMonitorMessage (..)
@@ -118,7 +118,7 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
         MsgHasTransaction q@HasTransaction{} _ toFault -> do
             mustAcquireFirst q toFault
             clientStIdle
-        MsgSizeAndCapacity q@SizeAndCapacity _ toFault -> do
+        MsgSizeOfMempool q@SizeOfMempool _ toFault -> do
             mustAcquireFirst q toFault
             clientStIdle
         MsgReleaseMempool q@ReleaseMempool _ toFault -> do
@@ -145,9 +145,9 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
             SendMsgHasTx id $ \has -> do
                 yield $ encodeHasTransactionResponse $ toResponse $ HasTransactionResponse{has}
                 clientStAcquired
-        MsgSizeAndCapacity SizeAndCapacity toResponse _ ->
-            SendMsgGetSizes $ \sizes -> do
-                yield $ encodeSizeAndCapacityResponse $ toResponse $ SizeAndCapacityResponse{sizes}
+        MsgSizeOfMempool SizeOfMempool toResponse _ ->
+            SendMsgGetSizes $ \mempool -> do
+                yield $ encodeSizeOfMempoolResponse $ toResponse $ SizeOfMempoolResponse{mempool}
                 clientStAcquired
         MsgReleaseMempool ReleaseMempool toResponse _ ->
             SendMsgRelease $ do

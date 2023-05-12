@@ -44,12 +44,12 @@ import Ogmios.Data.Protocol.TxMonitor
     , HasTransaction
     , NextTransaction
     , ReleaseMempool
-    , SizeAndCapacity
+    , SizeOfMempool
     , _decodeAcquireMempool
     , _decodeHasTransaction
     , _decodeNextTransaction
     , _decodeReleaseMempool
-    , _decodeSizeAndCapacity
+    , _decodeSizeOfMempool
     )
 import Ogmios.Data.Protocol.TxSubmission
     ( EvaluateTransaction
@@ -169,8 +169,8 @@ onUnmatchedMessage blob = do
                 void $ _decodeNextTransaction json
            | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep (HasTransaction block) _)) ->
                 void $ _decodeHasTransaction @block json
-           | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep SizeAndCapacity _)) ->
-                void $ _decodeSizeAndCapacity json
+           | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep SizeOfMempool _)) ->
+                void $ _decodeSizeOfMempool json
            | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep ReleaseMempool _)) ->
                 void $ _decodeReleaseMempool json
         -- Fallback

@@ -3,7 +3,6 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- NOTE:
@@ -44,12 +43,12 @@ module Ogmios.Data.Protocol.TxMonitor
     , _encodeHasTransactionResponse
 
 
-      -- ** SizeAndCapacity
-    , SizeAndCapacity (..)
-    , _encodeSizeAndCapacity
-    , _decodeSizeAndCapacity
-    , SizeAndCapacityResponse (..)
-    , _encodeSizeAndCapacityResponse
+      -- ** SizeOfMempool
+    , SizeOfMempool (..)
+    , _encodeSizeOfMempool
+    , _decodeSizeOfMempool
+    , SizeOfMempoolResponse (..)
+    , _encodeSizeOfMempoolResponse
 
       -- ** ReleaseMempools
     , ReleaseMempool (..)
@@ -108,11 +107,11 @@ data TxMonitorCodecs block = TxMonitorCodecs
     , encodeHasTransactionResponse
         :: Rpc.Response HasTransactionResponse
         -> Json
-    , decodeSizeAndCapacity
+    , decodeSizeOfMempool
         :: ByteString
-        -> Maybe (Rpc.Request SizeAndCapacity)
-    , encodeSizeAndCapacityResponse
-        :: Rpc.Response SizeAndCapacityResponse
+        -> Maybe (Rpc.Request SizeOfMempool)
+    , encodeSizeOfMempoolResponse
+        :: Rpc.Response SizeOfMempoolResponse
         -> Json
     , decodeReleaseMempool
         :: ByteString
@@ -135,8 +134,8 @@ mkTxMonitorCodecs encodeTxId encodeTx =
         , encodeNextTransactionResponse = _encodeNextTransactionResponse encodeTxId encodeTx
         , decodeHasTransaction = decodeWith _decodeHasTransaction
         , encodeHasTransactionResponse = _encodeHasTransactionResponse
-        , decodeSizeAndCapacity = decodeWith _decodeSizeAndCapacity
-        , encodeSizeAndCapacityResponse = _encodeSizeAndCapacityResponse
+        , decodeSizeOfMempool = decodeWith _decodeSizeOfMempool
+        , encodeSizeOfMempoolResponse = _encodeSizeOfMempoolResponse
         , decodeReleaseMempool = decodeWith _decodeReleaseMempool
         , encodeReleaseMempoolResponse = _encodeReleaseMempoolResponse
         }
@@ -158,9 +157,9 @@ data TxMonitorMessage block
         (HasTransaction block)
         (Rpc.ToResponse HasTransactionResponse)
         Rpc.ToFault
-    | MsgSizeAndCapacity
-        SizeAndCapacity
-        (Rpc.ToResponse SizeAndCapacityResponse)
+    | MsgSizeOfMempool
+        SizeOfMempool
+        (Rpc.ToResponse SizeOfMempoolResponse)
         Rpc.ToFault
     | MsgReleaseMempool
         ReleaseMempool
@@ -326,42 +325,42 @@ _encodeHasTransactionResponse =
             )
 
 --
--- SizeAndCapacity
+-- SizeOfMempool
 --
 
-data SizeAndCapacity
-    = SizeAndCapacity
+data SizeOfMempool
+    = SizeOfMempool
     deriving (Generic, Show, Eq)
 
-_encodeSizeAndCapacity
-    :: Rpc.Request SizeAndCapacity
+_encodeSizeOfMempool
+    :: Rpc.Request SizeOfMempool
     -> Json
-_encodeSizeAndCapacity =
+_encodeSizeOfMempool =
     Rpc.mkRequestNoParams Rpc.defaultOptions
 
-_decodeSizeAndCapacity
+_decodeSizeOfMempool
     :: Json.Value
-    -> Json.Parser (Rpc.Request SizeAndCapacity)
-_decodeSizeAndCapacity =
+    -> Json.Parser (Rpc.Request SizeOfMempool)
+_decodeSizeOfMempool =
     Rpc.genericFromJSON Rpc.defaultOptions
 
-data SizeAndCapacityResponse
-    = SizeAndCapacityResponse { sizes :: MempoolSizeAndCapacity }
+data SizeOfMempoolResponse
+    = SizeOfMempoolResponse { mempool :: MempoolSizeAndCapacity }
     deriving (Generic, Show)
 
-_encodeSizeAndCapacityResponse
-    :: Rpc.Response SizeAndCapacityResponse
+_encodeSizeOfMempoolResponse
+    :: Rpc.Response SizeOfMempoolResponse
     -> Json
-_encodeSizeAndCapacityResponse =
+_encodeSizeOfMempoolResponse =
     Rpc.ok $ encodeObject . \case
-        SizeAndCapacityResponse{sizes} ->
+        SizeOfMempoolResponse{mempool} ->
             ( "mempool" .= encodeObject
                 ( "maxCapacity" .= encodeObject
-                    ( "bytes" .= encodeWord32 (capacityInBytes sizes) ) <>
+                    ( "bytes" .= encodeWord32 (capacityInBytes mempool) ) <>
                   "currentSize" .= encodeObject
-                    ( "bytes" .= encodeWord32 (sizeInBytes sizes)) <>
+                    ( "bytes" .= encodeWord32 (sizeInBytes mempool)) <>
                   "transactions" .= encodeObject
-                    ( "count" .= encodeWord32 (numberOfTxs sizes))
+                    ( "count" .= encodeWord32 (numberOfTxs mempool))
                 )
             )
 

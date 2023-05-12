@@ -73,7 +73,7 @@ import Ogmios.Data.Protocol.TxMonitor
     , HasTransaction (..)
     , NextTransaction (..)
     , ReleaseMempool (..)
-    , SizeAndCapacity (..)
+    , SizeOfMempool (..)
     , SlotNo (..)
     , TxMonitorMessage (..)
     , mkTxMonitorCodecs
@@ -191,7 +191,7 @@ spec = parallel $ do
                 & cover 1 ("ReleaseMempool" == showTxMonitorMessage arg) "ReleaseMempool"
                 & cover 1 ("HasTransaction" == showTxMonitorMessage arg) "HasTransaction"
                 & cover 1 ("NextTransaction" == showTxMonitorMessage arg) "NextTransaction"
-                & cover 1 ("SizeAndCapacity" == showTxMonitorMessage arg) "SizeAndCapacity"
+                & cover 1 ("SizeOfMempool" == showTxMonitorMessage arg) "SizeOfMempool"
             )
       where
         p (msg, mirror, _) = prop_inIOSim $ withTxMonitorClient $ \send receive -> do
@@ -379,7 +379,7 @@ genTxMonitorAcquiredMessage = do
         , (75, pure (nextTx mirror           , mirror, isNextTxResponse))
         , (10, pure (hasTx mirror plausible  , mirror, isHasTxResponse))
         , (10, pure (hasTx mirror unknown    , mirror, isHasTxResponse))
-        , ( 5, pure (sizeAndCapacity mirror  , mirror, isSizeAndCapacityResponse))
+        , ( 5, pure (sizeOfMempool mirror  , mirror, isSizeOfMempoolResponse))
         , ( 5, pure (releaseMempool mirror   , mirror, isReleaseMempoolResponse))
         ]
 
@@ -425,12 +425,12 @@ isHasTxResponse :: ResponsePredicate
 isHasTxResponse = ResponsePredicate $
     \v -> isJust ("result" `at` v >>= at "hasTransaction")
 
-sizeAndCapacity :: Rpc.Mirror -> TxMonitorMessage Block
-sizeAndCapacity mirror =
-    MsgSizeAndCapacity SizeAndCapacity (Rpc.Response mirror) (Rpc.Fault mirror)
+sizeOfMempool :: Rpc.Mirror -> TxMonitorMessage Block
+sizeOfMempool mirror =
+    MsgSizeOfMempool SizeOfMempool (Rpc.Response mirror) (Rpc.Fault mirror)
 
-isSizeAndCapacityResponse :: ResponsePredicate
-isSizeAndCapacityResponse = ResponsePredicate $
+isSizeOfMempoolResponse :: ResponsePredicate
+isSizeOfMempoolResponse = ResponsePredicate $
     \v -> isJust ("result" `at` v >>= at "mempool")
 
 releaseMempool :: Rpc.Mirror -> TxMonitorMessage Block
@@ -450,7 +450,7 @@ showTxMonitorMessage (msg, _, _) =
         MsgAcquireMempool{} -> "AcquireMempool"
         MsgNextTransaction{} -> "NextTransaction"
         MsgHasTransaction{} -> "HasTransaction"
-        MsgSizeAndCapacity{} -> "SizeAndCapacity"
+        MsgSizeOfMempool{} -> "SizeOfMempool"
         MsgReleaseMempool{} -> "ReleaseMempool"
 
 stateLeft :: Monad m => (l -> (a, l)) -> StateT (l, r) m a
