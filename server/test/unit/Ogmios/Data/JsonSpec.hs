@@ -71,25 +71,25 @@ import Ogmios.Data.Json.Query
     , ShelleyBasedEra (..)
     , SomeQuery (..)
     , SomeShelleyEra (..)
-    , parseGetBlockHeight
-    , parseGetChainTip
-    , parseGetCurrentPParams
-    , parseGetEpochNo
-    , parseGetEraStart
-    , parseGetEraSummaries
-    , parseGetFilteredDelegationsAndRewards
-    , parseGetGenesisConfig
-    , parseGetLedgerTip
-    , parseGetNonMyopicMemberRewards
-    , parseGetProposedPParamsUpdates
-    , parseGetRewardsProvenance
-    , parseGetStakeDistribution
-    , parseGetStakePoolParameters
-    , parseGetStakePools
-    , parseGetSystemStart
-    , parseGetUTxO
-    , parseGetUTxOByAddress
-    , parseGetUTxOByTxIn
+    , parseQueryLedgerEpoch
+    , parseQueryLedgerEraStart
+    , parseQueryLedgerEraSummaries
+    , parseQueryLedgerLiveStakeDistribution
+    , parseQueryLedgerProjectedRewards
+    , parseQueryLedgerProposedProtocolParameters
+    , parseQueryLedgerProtocolParameters
+    , parseQueryLedgerRewardAccountSummaries
+    , parseQueryLedgerRewardsProvenance
+    , parseQueryLedgerStakePoolParameters
+    , parseQueryLedgerStakePools
+    , parseQueryLedgerTip
+    , parseQueryLedgerUtxo
+    , parseQueryLedgerUtxoByAddress
+    , parseQueryLedgerUtxoByOutputReference
+    , parseQueryNetworkBlockHeight
+    , parseQueryNetworkGenesisConfiguration
+    , parseQueryNetworkStartTime
+    , parseQueryNetworkTip
     )
 import Ogmios.Data.Protocol.ChainSync
     ( FindIntersection
@@ -268,6 +268,8 @@ import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Base16 as B16
+import qualified Data.Char as Char
+import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Test.QuickCheck as QC
 
@@ -525,172 +527,126 @@ spec = do
             "ogmios.json#/properties/AcquireLedgerStateResponse"
 
     context "validate local state queries against JSON-schema" $ do
-        validateQuery
-            [aesonQQ|"eraStart"|]
-            ( parseGetEraStart genBoundResult
-            ) (10, "QueryLedgerStateResponse/eraStart")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+        validateLedgerStateQuery 3 "epoch"
+            [aesonQQ|{}|]
+            (parseQueryLedgerEpoch genEpochResult)
 
-        validateQuery
-            [aesonQQ|"eraSummaries"|]
-            ( parseGetEraSummaries genInterpreterResult
-            ) (10, "QueryLedgerStateResponse/eraSummaries")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+        validateLedgerStateQuery 10 "eraStart"
+            [aesonQQ|{}|]
+            (parseQueryLedgerEraStart genBoundResult)
 
-        validateQuery
-            [aesonQQ|"ledgerTip"|]
-            ( parseGetLedgerTip genPointResultTPraos genPointResultPraos
-            ) (10, "QueryLedgerStateResponse/ledgerTip")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+        validateLedgerStateQuery 10 "eraSummaries"
+            [aesonQQ|{}|]
+            (parseQueryLedgerEraSummaries genInterpreterResult)
 
-        validateQuery
-            [aesonQQ|"currentEpoch"|]
-            ( parseGetEpochNo genEpochResult
-            ) (3, "QueryLedgerStateResponse/currentEpoch")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+        validateLedgerStateQuery 10 "tip"
+            [aesonQQ|{}|]
+            (parseQueryLedgerTip genPointResultTPraos genPointResultPraos)
 
-        validateQuery
-            [aesonQQ|{ "nonMyopicMemberRewards": [14, 42] }|]
-            ( parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult
-            ) (10, "QueryLedgerStateResponse/nonMyopicMemberRewards")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+        validateLedgerStateQuery 10 "projectedRewards"
+            [aesonQQ|{ "stake": [14, 42] }|]
+            (parseQueryLedgerProjectedRewards genNonMyopicMemberRewardsResult)
 
-        validateQuery
+        validateLedgerStateQuery 10 "projectedRewards"
             [aesonQQ|
-            { "nonMyopicMemberRewards":
+            { "keys":
                 [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
-                , "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
                 , "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
                 , "stake179kzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjcek9u8h"
                 , "stake_test17pkzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjc7u07r2"
                 ]
+            , "scripts":
+                [ "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
+                ]
             }|]
-            ( parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult
-            ) (10, "QueryLedgerStateResponse/nonMyopicMemberRewards")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+            (parseQueryLedgerProjectedRewards genNonMyopicMemberRewardsResult)
 
-        validateQuery
+        validateLedgerStateQuery 10 "rewardAccountSummaries"
             [aesonQQ|
-            { "delegationsAndRewards":
-                [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
-                , "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
-                , "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
+            { "keys":
+                [ "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
                 , "stake179kzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjcek9u8h"
                 , "stake_test17pkzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjc7u07r2"
                 ]
+            , "scripts":
+                [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
+                , "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
+                ]
             }|]
-            ( parseGetFilteredDelegationsAndRewards genDelegationAndRewardsResult
-            ) (0, "QueryLedgerStateResponse/delegationsAndRewards")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+            (parseQueryLedgerRewardAccountSummaries genDelegationAndRewardsResult)
 
-        validateQuery
-            [aesonQQ|"currentProtocolParameters"|]
-            ( parseGetCurrentPParams genPParamsResult
-            ) (30, "QueryLedgerStateResponse/currentProtocolParameters")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+        validateLedgerStateQuery 30 "protocolParameters"
+            [aesonQQ|{}|]
+            (parseQueryLedgerProtocolParameters genPParamsResult)
 
-        validateQuery
-            [aesonQQ|"proposedProtocolParameters"|]
-            ( parseGetProposedPParamsUpdates genProposedPParamsResult
-            ) (30, "QueryLedgerStateResponse/proposedProtocolParameters")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+        validateLedgerStateQuery 10 "proposedProtocolParameters"
+            [aesonQQ|{}|]
+            (parseQueryLedgerProposedProtocolParameters genProposedPParamsResult)
 
-        validateQuery
-            [aesonQQ|"stakeDistribution"|]
-            ( parseGetStakeDistribution genPoolDistrResult
-            ) (10, "QueryLedgerStateResponse/stakeDistribution")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+        validateLedgerStateQuery 10 "liveStakeDistribution"
+            [aesonQQ|{}|]
+            (parseQueryLedgerLiveStakeDistribution genPoolDistrResult)
 
-        validateQuery
-            [aesonQQ|"utxo"|]
-            ( parseGetUTxO genUTxOResult
-            ) (30, "QueryLedgerStateResponse/utxo")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+        validateLedgerStateQuery 10 "utxo"
+            [aesonQQ|{}|]
+            (parseQueryLedgerUtxo genUTxOResult)
 
-        validateQuery
+        validateLedgerStateQuery 10 "utxo"
             [aesonQQ|
-            { "utxo": []
-            }|]
-            ( parseGetUTxOByAddress genUTxOResult
-            ) (0, "QueryLedgerStateResponse/utxo")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
-
-        validateQuery
-            [aesonQQ|
-            { "utxo":
+            { "addresses":
                 [ "addr1vxsvu329sr8z92usevrr6scp4vxxn0j8e20avag662uesgq385tfd"
                 , "Ae2tdPwUPEZEQHoZTVq3KQhtjP32JzoEE5onUS45bFmsBSXYCXSXEQEzb4v"
                 , "82d818582183581cb0574c7a1564697578b840fd7ec9d8963fa1398415f9f2f87737a83da0001ae9e3e303"
                 ]
             }|]
-            ( parseGetUTxOByAddress genUTxOResult
-            ) (0, "QueryLedgerStateResponse/utxo")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+            (parseQueryLedgerUtxoByAddress genUTxOResult)
 
-        validateQuery
+        validateLedgerStateQuery 10 "utxo"
             [aesonQQ|
-            { "utxo":
+            { "outputReferences":
                 [ { "txId": "141933320b6e5d4522d7d3bf052dd2a26cc7eb58b66ae357f95f83715c8add5b"
                   , "index": 14
                   }
                 ]
             }|]
-            ( parseGetUTxOByTxIn genUTxOResult
-            ) (0, "QueryLedgerStateResponse/utxo]")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+            (parseQueryLedgerUtxoByOutputReference genUTxOResult)
 
-        validateQuery
-            [aesonQQ|{ "genesisConfiguration": "shelley" }|]
-            ( parseGetGenesisConfig genGenesisConfig
-            ) (20, "QueryLedgerStateResponse/genesisConfiguration/shelley")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+        validateLedgerStateQuery 30 "rewardsProvenance"
+            [aesonQQ|{}|]
+            (parseQueryLedgerRewardsProvenance genRewardsProvenanceResult)
 
-        validateQuery
-            [aesonQQ|{ "genesisConfiguration": "alonzo" }|]
-            ( parseGetGenesisConfig genGenesisConfig
-            ) (20, "QueryLedgerStateResponse/genesisConfiguration/alonzo")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+        validateLedgerStateQuery 10 "stakePools"
+            [aesonQQ|{}|]
+            (parseQueryLedgerStakePools genPoolIdsResult)
 
-        validateQuery
-            [aesonQQ|"rewardsProvenance"|]
-            ( parseGetRewardsProvenance genRewardsProvenanceResult
-            ) (30, "QueryLedgerStateResponse/rewardsProvenance")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
-
-        validateQuery
-            [aesonQQ|"stakePools"|]
-            ( parseGetStakePools genPoolIdsResult
-            ) (10, "QueryLedgerStateResponse/stakePools")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
-
-        validateQuery
+        validateLedgerStateQuery 20 "stakePoolParameters"
             [aesonQQ|
-            { "stakePoolParameters":
+            { "stakePools":
                 [ "pool1m80g9t64048p0t6yg9sps6672mgnse8ug2euudccmhkygfnf6tg"
                 , "d9de82af557d4e17af444160186b5e56d13864fc42b3ce3718ddec44"
                 ]
             }|]
-            ( parseGetStakePoolParameters genPoolParametersResult
-            ) (50, "QueryLedgerStateResponse/stakePoolParameters")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+            (parseQueryLedgerStakePoolParameters genPoolParametersResult)
 
-        validateQuery
-            [aesonQQ|"chainTip"|]
-            ( parseGetChainTip (const genPoint)
-            ) (10, "QueryLedgerStateResponse/chainTip")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+        validateNetworkQuery 10 "blockHeight"
+            [aesonQQ|{}|]
+            (parseQueryNetworkBlockHeight (const $ genWithOrigin genBlockNo))
 
-        validateQuery
-            [aesonQQ|"systemStart"|]
-            ( parseGetSystemStart (const genSystemStart)
-            ) (10, "QueryLedgerStateResponse/systemStart")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+        validateNetworkQuery 10 "genesisConfiguration"
+            [aesonQQ|{ "era": "shelley" }|]
+            (parseQueryNetworkGenesisConfiguration genGenesisConfig)
 
-        validateQuery
-            [aesonQQ|"blockHeight"|]
-            ( parseGetBlockHeight (const $ genWithOrigin genBlockNo)
-            ) (10, "QueryLedgerStateResponse/blockHeight")
-            "ogmios.json#/properties/QueryLedgerStateResponse"
+        validateNetworkQuery 20 "genesisConfiguration"
+            [aesonQQ|{ "era": "alonzo" }|]
+            (parseQueryNetworkGenesisConfiguration genGenesisConfig)
+
+        validateNetworkQuery 5 "startTime"
+            [aesonQQ|{}|]
+            (parseQueryNetworkStartTime (const genSystemStart))
+
+        validateNetworkQuery 10 "tip"
+            [aesonQQ|{}|]
+            (parseQueryNetworkTip (const genPoint))
 
     context "validate release request/response against JSON-schema" $ do
         validateFromJSON
@@ -932,20 +888,24 @@ unsafeDataFromBytes =
 
 -- | Parse a given query, generate an arbitrary value, encode it and validate
 -- the encoding against a JSON-schema.
-validateQuery
-    :: Json.Value
+validateLedgerStateQuery
+    :: Int
+    -> Text
+    -> Json.Value
     -> (Json.Value -> Json.Parser (QueryInEra Gen Block))
-    -> (Int, String)
-    -> SchemaRef
     -> SpecWith ()
-validateQuery json parser (n, vectorFilepath) resultRef =
-  parallel $ specify vectorFilepath $ do
-    queryRefs <- unsafeReadSchemaRef "ogmios.json#/properties/QueryLedgerState"
+validateLedgerStateQuery n method json parser = do
+  let category = "LedgerState"
+  let propName = "Query" <> category <> titleize method
+  let requestRef = "ogmios.json#/properties/" <> propName
+  let responseRef = requestRef <> "Response"
+  parallel $ specify (toString propName) $ do
+    queryRefs <- unsafeReadSchemaRef (SchemaRef requestRef)
     runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON
-        (\query -> Json.object
+        (\params -> Json.object
             [ "jsonrpc" .= ("2.0" :: Text)
-            , "method" .= ("query" :: Text)
-            , "params" .= Json.object [ "query" .= query ]
+            , "method" .= ("query" <> category <> "/" <> method)
+            , "params" .= params
             ]
         )
         queryRefs
@@ -965,7 +925,7 @@ validateQuery json parser (n, vectorFilepath) resultRef =
             let nEras = length eras
 
             forM_ eras $ \(era, qry) ->  do
-                resultRefs <- unsafeReadSchemaRef resultRef
+                responseRefs <- unsafeReadSchemaRef (SchemaRef responseRef)
 
                 let encodeQueryResponse encodeResult
                         = _encodeQueryLedgerStateResponse encodeAcquireExpired
@@ -980,7 +940,7 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                     SomeStandardQuery _ encodeResult genResult -> do
                         case era of
                             SomeShelleyEra ShelleyBasedEraBabbage -> do
-                                generateTestVectors (n, vectorFilepath)
+                                generateTestVectors (n, toString propName)
                                     (genResult Proxy)
                                     (encodeQueryResponse encodeResult)
                             _someOtherEra ->
@@ -989,12 +949,12 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                             (genResult Proxy)
                             (prop_validateToJSON
                                 (encodingToValue . encodeQueryResponse encodeResult)
-                                resultRefs
+                                responseRefs
                             )
                     SomeAdHocQuery _ encodeResult genResult -> do
                         case era of
                             SomeShelleyEra ShelleyBasedEraBabbage -> do
-                                generateTestVectors (n, vectorFilepath)
+                                generateTestVectors (n, toString propName)
                                     (genResult Proxy)
                                     (encodeQueryResponse encodeResult)
                             _someOtherEra ->
@@ -1003,7 +963,7 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                             (genResult Proxy)
                             (prop_validateToJSON
                                 (encodingToValue . encodeQueryResponse encodeResult)
-                                resultRefs
+                                responseRefs
                             )
 
                 let encodeQueryUnavailableInCurrentEra
@@ -1013,7 +973,67 @@ validateQuery json parser (n, vectorFilepath) resultRef =
 
                 runQuickCheck $ withMaxSuccess 1 $ forAllBlind
                     (pure QueryUnavailableInCurrentEra)
-                    (prop_validateToJSON encodeQueryUnavailableInCurrentEra resultRefs)
+                    (prop_validateToJSON encodeQueryUnavailableInCurrentEra responseRefs)
+
+-- | Parse a given network query, generate an arbitrary value, encode it and validate
+-- the encoding against a JSON-schema.
+validateNetworkQuery
+    :: Int
+    -> Text
+    -> Json.Value
+    -> (Json.Value -> Json.Parser (QueryInEra Gen Block))
+    -> SpecWith ()
+validateNetworkQuery n method json parser = do
+  let category = "Network"
+  let propName = "Query" <> category <> titleize method
+  let requestRef = "ogmios.json#/properties/" <> propName
+  let responseRef = requestRef <> "Response"
+  parallel $ specify (toString propName) $ do
+    queryRefs <- unsafeReadSchemaRef (SchemaRef requestRef)
+    runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON
+        (\params -> Json.object
+            [ "jsonrpc" .= ("2.0" :: Text)
+            , "method" .= ("query" <> category <> "/" <> method)
+            , "params" .= params
+            ]
+        )
+        queryRefs
+        json
+    case Json.parseEither parser json of
+        Left e ->
+            expectationFailure $ "failed to parse JSON: " <> show e
+        Right queryInEra -> do
+            responseRefs <- unsafeReadSchemaRef (SchemaRef responseRef)
+
+            let encodeQueryResponse encodeResult
+                    = _encodeQueryLedgerStateResponse encodeAcquireExpired
+                    . Rpc.Response Nothing
+                    . either QueryEraMismatch QueryResponse
+                    . encodeResult
+
+            case queryInEra (SomeShelleyEra ShelleyBasedEraBabbage) of
+                Just (SomeStandardQuery _ encodeResult genResult) -> do
+                    generateTestVectors (n, toString propName)
+                        (genResult Proxy)
+                        (encodeQueryResponse encodeResult)
+                    runQuickCheck $ withMaxSuccess n $ forAllBlind
+                        (genResult Proxy)
+                        (prop_validateToJSON
+                            (encodingToValue . encodeQueryResponse encodeResult)
+                            responseRefs
+                        )
+                Just (SomeAdHocQuery _ encodeResult genResult) -> do
+                    generateTestVectors (n, toString propName)
+                        (genResult Proxy)
+                        (encodeQueryResponse encodeResult)
+                    runQuickCheck $ withMaxSuccess n $ forAllBlind
+                        (genResult Proxy)
+                        (prop_validateToJSON
+                            (encodingToValue . encodeQueryResponse encodeResult)
+                            responseRefs
+                        )
+                Nothing -> do
+                    error "Failed to get network query for any era?"
 
 generateTestVectors
     :: (Int, String)
@@ -1042,3 +1062,7 @@ decodeFileThrow :: FilePath -> IO Json.Value
 decodeFileThrow filepath = do
     json <- Json.decodeFileStrict ($(getProjectRoot) <> "/test/golden/" <> filepath)
     maybe (fail $ "Unable to decode JSON file: " <> filepath) pure json
+
+titleize :: Text -> Text
+titleize txt =
+    T.map Char.toUpper (T.take 1 txt) <> T.drop 1 txt

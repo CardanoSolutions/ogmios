@@ -11,7 +11,23 @@
   , "EvaluateTransaction", "EvaluateTransactionResponse"
 
   , "AcquireLedgerState", "AcquireLedgerStateResponse"
-  , "QueryLedgerState", "QueryLedgerStateResponse"
+  , "QueryLedgerStateEpoch", "QueryLedgerStateEpochResponse"
+  , "QueryLedgerStateEraStart", "QueryLedgerStateEraStartResponse"
+  , "QueryLedgerStateEraSummaries", "QueryLedgerStateEraSummariesResponse"
+  , "QueryLedgerStateLiveStakeDistribution", "QueryLedgerStateLiveStakeDistributionResponse"
+  , "QueryLedgerStateProjectedRewards", "QueryLedgerStateProjectedRewardsResponse"
+  , "QueryLedgerStateProposedProtocolParameters", "QueryLedgerStateProposedProtocolParametersResponse"
+  , "QueryLedgerStateProtocolParameters", "QueryLedgerStateProtocolParametersResponse"
+  , "QueryLedgerStateRewardAccountSummaries", "QueryLedgerStateRewardAccountSummariesResponse"
+  , "QueryLedgerStateRewardsProvenance", "QueryLedgerStateRewardsProvenanceResponse"
+  , "QueryLedgerStateStakePoolParameters", "QueryLedgerStateStakePoolParametersResponse"
+  , "QueryLedgerStateStakePools", "QueryLedgerStateStakePoolsResponse"
+  , "QueryLedgerStateTip", "QueryLedgerStateTipResponse"
+  , "QueryLedgerStateUtxo", "QueryLedgerStateUtxoResponse"
+  , "QueryNetworkBlockHeight", "QueryNetworkBlockHeightResponse"
+  , "QueryNetworkGenesisConfiguration", "QueryNetworkGenesisConfigurationResponse"
+  , "QueryNetworkStartTime", "QueryNetworkStartTimeResponse"
+  , "QueryNetworkTip", "QueryNetworkTipResponse"
   , "ReleaseLedgerState","ReleaseLedgerStateResponse"
 
   , "AcquireMempool", "AcquireMempoolResponse"
@@ -579,11 +595,91 @@
       }
     }
 
-  , "QueryLedgerState":
-    { "title": "QueryLedgerState"
+  , "QueryLedgerStateEraMismatch":
+    { "title": "QueryLedgerStateEraMismatch"
     , "type": "object"
-    , "description": "Query the ledger."
-    , "required": [ "jsonrpc", "method", "params" ]
+    , "description": "An era mismatch between a client request and the era the ledger is in. This may occur when running queries on a syncing node and/or when the node is crossing an era."
+    , "required": [ "jsonrpc", "error" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "error":
+        { "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 2001 ] }
+          , "message": { "type": "string" }
+          , "data": { "$ref": "ogmios.json#/definitions/EraMismatch" }
+          }
+        }
+      , "id":
+        { "description": "Any value that was set by a client request in the 'id' field."
+        }
+      }
+    }
+
+  , "QueryLedgerStateUnavailableInCurrentEra":
+    { "title": "QueryLedgerStateUnavailableInCurrentEra"
+    , "type": "object"
+    , "description": "Some query is not available for the requested ledger era."
+    , "required": [ "jsonrpc", "error" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "error":
+        { "type": "object"
+        , "required": [ "code", "message" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 2002 ] }
+          , "message": { "type": "string" }
+          }
+        }
+      , "id":
+        { "description": "Any value that was set by a client request in the 'id' field."
+        }
+      }
+    }
+
+  , "QueryLedgerStateAcquiredExpire" :
+    { "title": "QueryLedgerStateAcquiredExpired"
+    , "type": "object"
+    , "description": "Previously acquired ledger state is no longer available."
+    , "required": [ "jsonrpc", "error" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "error":
+        { "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 2003 ] }
+          , "message": { "type": "string" }
+          , "data": { "type": "string", "description": "A reason for the failure." }
+          }
+        }
+      , "id":
+        { "description": "Any value that was set by a client request in the 'id' field."
+        }
+      }
+    }
+
+  , "QueryLedgerStateEpoch":
+    { "title": "QueryLedgerStateEpoch"
+    , "description": "Query the current epoch number the ledger is at."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
@@ -592,157 +688,18 @@
         }
       , "method":
         { "type": "string"
-        , "enum": [ "query" ]
+        , "enum": [ "queryLedgerState/epoch" ]
         }
-      , "params":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": ["query"]
-        , "properties":
-          { "query":
-            { "anyOf":
-              [ { "title": "GetEraStart"
-                , "type": "string"
-                , "enum": ["eraStart"]
-                }
-              , { "type": "string"
-                , "title": "GetEraSummaries"
-                , "enum": ["eraSummaries"]
-                }
-              , { "type": "string"
-                , "title": "GetLedgerTip"
-                , "enum": ["ledgerTip"]
-                }
-              , { "type": "string"
-                , "title": "GetCurrentEpoch"
-                , "enum": ["currentEpoch"]
-                }
-              , { "type": "object"
-                , "title": "GetNonMyopicMemberRewards"
-                , "additionalProperties": false
-                , "required": ["nonMyopicMemberRewards"]
-                , "properties":
-                  { "nonMyopicMemberRewards":
-                    { "oneOf":
-                      [ { "type": "array"
-                        , "items": { "$ref": "ogmios.json#/definitions/Lovelace" }
-                        }
-                      , { "type": "array"
-                        , "items": { "$ref": "ogmios.json#/definitions/StakeCredential" }
-                        }
-                      ]
-                    }
-                  }
-                }
-              , { "type": "object"
-                , "title": "GetDelegationsAndRewards"
-                , "additionalProperties": false
-                , "required": ["delegationsAndRewards"]
-                , "properties":
-                  { "delegationsAndRewards":
-                    { "type": "array"
-                    , "items": { "$ref": "ogmios.json#/definitions/StakeCredential" }
-                    }
-                  }
-                }
-              , { "type": "string"
-                , "title": "GetCurrentProtocolParameters"
-                , "enum": ["currentProtocolParameters"]
-                }
-              , { "type": "string"
-                , "title": "GetProposedProtocolParameters"
-                , "enum": ["proposedProtocolParameters"]
-                }
-              , { "type": "string"
-                , "title": "GetStakeDistribution"
-                , "enum": ["stakeDistribution"]
-                }
-              , { "type": "string"
-                , "title": "GetEntireUtxo"
-                , "enum": ["utxo"]
-                }
-              , { "type": "object"
-                , "title": "GetUtxoByAddress"
-                , "additionalProperties": false
-                , "required": ["utxo"]
-                , "properties":
-                  { "utxo":
-                    { "type": "array"
-                    , "items": { "$ref": "ogmios.json#/definitions/Address" }
-                    }
-                  }
-                }
-              , { "type": "object"
-                , "title": "GetUtxoByTransactionInput"
-                , "additionalProperties": false
-                , "required": ["utxo"]
-                , "properties":
-                  { "utxo":
-                    { "type": "array"
-                    , "items": { "$ref": "ogmios.json#/definitions/TxIn" }
-                    }
-                  }
-                }
-              , { "type": "object"
-                , "title": "GetGenesisConfiguration"
-                , "additionalProperties": false
-                , "required": ["genesisConfiguration"]
-                , "properties":
-                  { "genesisConfiguration":
-                    { "type": "string"
-                    , "enum": ["byron", "shelley", "alonzo"]
-                    }
-                  }
-                }
-              , { "type": "string"
-                , "title": "GetRewardsProvenance"
-                , "enum": ["rewardsProvenance"]
-                }
-              , { "type": "string"
-                , "title": "GetStakePools"
-                , "enum": ["stakePools"]
-                }
-              , { "type": "object"
-                , "title": "GetStakePoolParameters"
-                , "additionalProperties": false
-                , "required": ["stakePoolParameters"]
-                , "properties":
-                  { "stakePoolParameters":
-                    { "type": "array"
-                    , "items":
-                      { "oneOf":
-                        [ { "$ref": "ogmios.json#/definitions/StakePoolId" }
-                        , { "type": "string", "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-                        ]
-                      }
-                    }
-                  }
-                }
-              , { "type": "string"
-                , "title": "GetChainTip"
-                , "enum": ["chainTip"]
-                }
-              , { "type": "string"
-                , "title": "GetBlockHeight"
-                , "enum": ["blockHeight"]
-                }
-              , { "type": "string"
-                , "title": "GetSystemStart"
-                , "enum": ["systemStart"]
-                }
-              ]
-            }
-          }
-        }
+      , "params": {}
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
         }
       }
     }
 
-  , "QueryLedgerStateResponse":
+  , "QueryLedgerStateEpochResponse":
     { "oneOf":
-      [ { "title": "QueryLedgerStateResponse"
+      [ { "title": "QueryLedgerStateEpochResponse"
         , "type": "object"
         , "required": [ "jsonrpc", "result" ]
         , "additionalProperties": false
@@ -753,78 +710,298 @@
             }
           , "result":
             { "type": "object"
+            , "required": [ "epoch" ]
             , "additionalProperties": false
             , "properties":
-              { "blockHeight":
-                { "$ref": "ogmios.json#/definitions/BlockNoOrOrigin"
-                }
-              , "chainTip":
-                { "$ref": "ogmios.json#/definitions/PointOrOrigin"
-                }
-              , "currentEpoch":
+              { "epoch":
                 { "$ref": "ogmios.json#/definitions/Epoch"
                 }
-              , "currentProtocolParameters":
-                { "anyOf":
-                  [ { "$ref": "ogmios.json#/definitions/ProtocolParameters[Shelley]" }
-                  , { "$ref": "ogmios.json#/definitions/ProtocolParameters[Alonzo]" }
-                  , { "$ref": "ogmios.json#/definitions/ProtocolParameters[Babbage]" }
-                  ]
-                }
-              , "delegationsAndRewards":
-                { "title": "DelegationsAndRewardsByAccounts"
-                , "type": "object"
-                , "additionalProperties": { "$ref": "ogmios.json#/definitions/DelegationsAndRewards" }
-                , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
-                }
-              , "eraStart":
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
+    }
+
+  , "QueryLedgerStateEraStart":
+    { "title": "QueryLedgerStateEraStart"
+    , "description": "Query the start of the current ledger era."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/eraStart" ]
+        }
+      , "params": {}
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateEraStartResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateEraStartResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "result":
+            { "type": "object"
+            , "required": [ "eraStart" ]
+            , "additionalProperties": false
+            , "properties":
+              { "eraStart":
                 { "$ref": "ogmios.json#/definitions/Bound"
                 }
-              , "eraSummaries":
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
+    }
+
+  , "QueryLedgerStateEraSummaries":
+    { "title": "QueryLedgerStateEraSummaries"
+    , "description": "Query a summary of the slotting parameters and boundaries for each known era. Useful for doing slot-arithmetic and time conversions."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/eraSummaries" ]
+        }
+      , "params": {}
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateEraSummariesResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateEraSummariesResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "result":
+            { "type": "object"
+            , "required": [ "eraSummaries" ]
+            , "additionalProperties": false
+            , "properties":
+              { "eraSummaries":
                 { "type": "array"
                 , "items": { "$ref": "ogmios.json#/definitions/EraSummary" }
                 }
-              , "genesisConfiguration":
-                { "oneOf":
-                  [ { "type": "object"
-                    , "required": ["byron"]
-                    , "additionalProperties": false
-                    , "properties":
-                      { "byron": { "$ref": "ogmios.json#/definitions/Genesis[Byron]" }
-                      }
-                    }
-                  , { "type": "object"
-                    , "required": ["shelley"]
-                    , "additionalProperties": false
-                    , "properties":
-                      { "shelley": { "$ref": "ogmios.json#/definitions/Genesis[Shelley]" }
-                      }
-                    }
-                  , { "type": "object"
-                    , "required": ["alonzo"]
-                    , "additionalProperties": false
-                    , "properties":
-                      { "alonzo": { "$ref": "ogmios.json#/definitions/Genesis[Alonzo]" }
-                      }
-                    }
-                  ]
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
+    }
+
+  , "QueryLedgerStateLiveStakeDistribution":
+    { "title": "QueryLedgerStateLiveStakeDistribution"
+    , "description": "Query the current distribution of the stake across all known stake pools, relative to the TOTAL stake in the network."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/liveStakeDistribution" ]
+        }
+      , "params": {}
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateLiveStakeDistributionResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateLiveStakeDistributionResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "result":
+            { "type": "object"
+            , "required": [ "liveStakeDistribution" ]
+            , "additionalProperties": false
+            , "properties":
+              { "liveStakeDistribution":
+                { "$ref": "ogmios.json#/definitions/LiveStakeDistribution"
                 }
-              , "ledgerTip":
-                { "$ref": "ogmios.json#/definitions/PointOrOrigin"
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
+    }
+
+  , "QueryLedgerStateProjectedRewards":
+    { "title": "QueryLedgerStateProjectedRewards"
+    , "description": "Query the projected rewards of an account in a context where the top stake pools are fully saturated. This projection gives, in principle, a ranking of stake pools that maximizes delegator rewards."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method", "params" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/projectedRewards" ]
+        }
+      , "params":
+        { "type": "object"
+        , "additionalProperties": false
+        , "properties":
+          { "stake":
+            { "type": "array"
+            , "items": { "$ref": "ogmios.json#/definitions/Lovelace" }
+            }
+          , "scripts":
+            { "type": "array"
+            , "items": { "$ref": "ogmios.json#/definitions/StakeCredential" }
+            }
+          , "keys":
+            { "type": "array"
+            , "items": { "$ref": "ogmios.json#/definitions/StakeCredential" }
+            }
+          }
+        }
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateProjectedRewardsResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateProjectedRewardsResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "result":
+            { "type": "object"
+            , "required": [ "projectedRewards" ]
+            , "additionalProperties": false
+            , "properties":
+              { "projectedRewards":
+                { "$ref": "ogmios.json#/definitions/ProjectedRewards"
                 }
-              , "nonMyopicMemberRewards":
-                { "$ref": "ogmios.json#/definitions/NonMyopicMemberRewards"
-                }
-              , "stakePools":
-                { "type": "array"
-                , "items": { "$ref": "ogmios.json#/definitions/StakePoolId" }
-                }
-              , "stakePoolParameters":
-                { "type": "object"
-                , "propertyNames": { "$ref": "ogmios.json#/definitions/StakePoolId" }
-                , "additionalProperties": { "$ref": "ogmios.json#/definitions/StakePoolParameters" }
-                }
-              , "proposedProtocolParameters":
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
+    }
+
+  , "QueryLedgerStateProposedProtocolParameters":
+    { "title": "QueryLedgerStateProposedProtocolParameters"
+    , "description": "Query the last update proposal w.r.t. protocol parameters, if any."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/proposedProtocolParameters" ]
+        }
+      , "params": {}
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateProposedProtocolParametersResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateProposedProtocolParametersResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "result":
+            { "type": "object"
+            , "required": [ "proposedProtocolParameters" ]
+            , "additionalProperties": false
+            , "properties":
+              { "proposedProtocolParameters":
                 { "anyOf":
                   [ { "type": "object"
                     , "title": "ProposedProtocolParameters[Shelley]"
@@ -843,16 +1020,456 @@
                     }
                   ]
                 }
-              , "rewardsProvenance":
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
+    }
+
+  , "QueryLedgerStateProtocolParameters":
+    { "title": "QueryLedgerStateProtocolParameters"
+    , "description": "Query the current protocol parameters."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/protocolParameters" ]
+        }
+      , "params": {}
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateProtocolParametersResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateProtocolParametersResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "result":
+            { "type": "object"
+            , "required": [ "protocolParameters" ]
+            , "additionalProperties": false
+            , "properties":
+              { "protocolParameters":
+                { "anyOf":
+                  [ { "$ref": "ogmios.json#/definitions/ProtocolParameters[Shelley]" }
+                  , { "$ref": "ogmios.json#/definitions/ProtocolParameters[Alonzo]" }
+                  , { "$ref": "ogmios.json#/definitions/ProtocolParameters[Babbage]" }
+                  ]
+                }
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
+    }
+
+  , "QueryLedgerStateRewardAccountSummaries":
+    { "title": "QueryLedgerStateRewardAccountSummaries"
+    , "description": "Query current delegation settings and rewards of some given reward accounts."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method", "params" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/rewardAccountSummaries" ]
+        }
+      , "params":
+        { "type": "object"
+        , "additionalProperties": false
+        , "properties":
+          { "scripts":
+            { "type": "array"
+            , "items": { "$ref": "ogmios.json#/definitions/StakeCredential" }
+            }
+          , "keys":
+            { "type": "array"
+            , "items": { "$ref": "ogmios.json#/definitions/StakeCredential" }
+            }
+          }
+        }
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateRewardAccountSummariesResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateRewardAccountSummariesResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "result":
+            { "type": "object"
+            , "required": [ "rewardAccountSummaries" ]
+            , "additionalProperties": false
+            , "properties":
+              { "rewardAccountSummaries":
+                { "title": "RewardAccountSummaries"
+                , "type": "object"
+                , "additionalProperties": { "$ref": "ogmios.json#/definitions/RewardAccountSummary" }
+                , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
+                }
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
+    }
+
+  , "QueryLedgerStateRewardsProvenance":
+    { "title": "QueryLedgerStateRewardsProvenance"
+    , "description": "Query details about rewards calculation for the ongoing epoch."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/rewardsProvenance" ]
+        }
+      , "params": {}
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateRewardsProvenanceResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateRewardsProvenanceResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "result":
+            { "type": "object"
+            , "required": [ "rewardsProvenance" ]
+            , "additionalProperties": false
+            , "properties":
+              { "rewardsProvenance":
                 { "$ref": "ogmios.json#/definitions/RewardsProvenance"
                 }
-              , "stakeDistribution":
-                { "$ref": "ogmios.json#/definitions/PoolDistribution"
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
+    }
+
+  , "QueryLedgerStateStakePools":
+    { "title": "QueryLedgerStateStakePools"
+    , "description": "Query the list of all stake pool identifiers currently registered and active."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/stakePools" ]
+        }
+      , "params": {}
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateStakePoolsResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateStakePoolsResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "result":
+            { "type": "object"
+            , "required": [ "stakePools" ]
+            , "additionalProperties": false
+            , "properties":
+              { "stakePools":
+                { "type": "array"
+                , "items":
+                  { "type": "object"
+                  , "required": [ "id" ]
+                  , "additionalProperties": false
+                  , "properties":
+                    { "id": { "$ref": "ogmios.json#/definitions/StakePoolId" }
+                    }
+                  }
                 }
-              , "systemStart":
-                { "$ref": "ogmios.json#/definitions/UtcTime"
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
+    }
+
+  , "QueryLedgerStateStakePoolParameters":
+    { "title": "QueryLedgerStateStakePoolParameters"
+    , "description": "Query registered parameters for given stake pools."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method", "params" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/stakePoolParameters" ]
+        }
+      , "params":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "stakePools" ]
+        , "properties":
+          { "stakePools":
+            { "type": "array"
+            , "items":
+              { "oneOf":
+                [ { "$ref": "ogmios.json#/definitions/StakePoolId" }
+                , { "type": "string", "contentEncoding": "base16", "pattern": "^[0-9a-f]{56}$" }
+                ]
+              }
+            }
+          }
+        }
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateStakePoolParametersResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateStakePoolParametersResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "result":
+            { "type": "object"
+            , "required": [ "stakePoolParameters" ]
+            , "additionalProperties": false
+            , "properties":
+              { "stakePoolParameters":
+                { "type": "object"
+                , "propertyNames": { "$ref": "ogmios.json#/definitions/StakePoolId" }
+                , "additionalProperties": { "$ref": "ogmios.json#/definitions/StakePoolParameters" }
                 }
-              , "utxo":
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
+    }
+
+  , "QueryLedgerStateTip":
+    { "title": "QueryLedgerStateTip"
+    , "description": "Query the current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/tip" ]
+        }
+      , "params": {}
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateTipResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateTipResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "result":
+            { "type": "object"
+            , "required": [ "tip" ]
+            , "additionalProperties": false
+            , "properties":
+              { "tip":
+                { "$ref": "ogmios.json#/definitions/PointOrOrigin"
+                }
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
+    }
+
+  , "QueryLedgerStateUtxo":
+    { "title": "QueryLedgerStateUtxo"
+    , "description": "Query the current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/utxo" ]
+        }
+      , "params":
+        { "oneOf":
+          [ { "title": "UtxoByOutputReferences"
+            , "type": "object"
+            , "required": ["outputReferences"]
+            , "additionalProperties": false
+            , "properties":
+              { "outputReferences":
+                { "type": "array"
+                , "items": { "$ref": "ogmios.json#/definitions/TxIn" }
+                }
+              }
+            }
+          , { "title": "UtxoByAddresses"
+            , "type": "object"
+            , "required": [ "addresses" ]
+            , "additionalProperties": false
+            , "properties":
+              { "addresses":
+                { "type": "array"
+                , "items": { "$ref": "ogmios.json#/definitions/Address" }
+                }
+              }
+            }
+          , { "title": "WholeUtxo"
+            , "type": "object"
+            , "additionalProperties": false
+            }
+          ]
+        }
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateUtxoResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateUtxoResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "result":
+            { "type": "object"
+            , "required": [ "utxo" ]
+            , "additionalProperties": false
+            , "properties":
+              { "utxo":
                 { "$ref": "ogmios.json#/definitions/Utxo"
                 }
               }
@@ -862,81 +1479,234 @@
             }
           }
         }
-      , { "title": "QueryLedgerState[EraMismatch]"
-        , "type": "object"
-        , "description": "An era mismatch between a client request and the era the ledger is in. This may occur when running queries on a syncing node and/or when the node is crossing an era."
-        , "required": [ "jsonrpc", "error" ]
-        , "additionalProperties": false
-        , "properties":
-          { "jsonrpc":
-            { "type": "string"
-            , "enum": [ "2.0" ]
-            }
-          , "error":
-            { "type": "object"
-            , "required": [ "code", "message", "data" ]
-            , "additionalProperties": false
-            , "properties":
-              { "code": { "type": "integer", "enum": [ 2001 ] }
-              , "message": { "type": "string" }
-              , "data": { "$ref": "ogmios.json#/definitions/EraMismatch" }
-              }
-            }
-          , "id":
-            { "description": "Any value that was set by a client request in the 'id' field."
-            }
-          }
-        }
-      , { "title": "QueryLedgerState[UnavailableInCurrentEra]"
-        , "type": "object"
-        , "description": "Some query is not available for the requested ledger era."
-        , "required": [ "jsonrpc", "error" ]
-        , "additionalProperties": false
-        , "properties":
-          { "jsonrpc":
-            { "type": "string"
-            , "enum": [ "2.0" ]
-            }
-          , "error":
-            { "type": "object"
-            , "required": [ "code", "message" ]
-            , "additionalProperties": false
-            , "properties":
-              { "code": { "type": "integer", "enum": [ 2002 ] }
-              , "message": { "type": "string" }
-              }
-            }
-          , "id":
-            { "description": "Any value that was set by a client request in the 'id' field."
-            }
-          }
-        }
-      , { "title": "QueryLedgerState[AcquiredExpired]"
-        , "type": "object"
-        , "description": "Previously acquired ledger state is no longer available."
-        , "required": [ "jsonrpc", "error" ]
-        , "additionalProperties": false
-        , "properties":
-          { "jsonrpc":
-            { "type": "string"
-            , "enum": [ "2.0" ]
-            }
-          , "error":
-            { "type": "object"
-            , "required": [ "code", "message", "data" ]
-            , "additionalProperties": false
-            , "properties":
-              { "code": { "type": "integer", "enum": [ 2003 ] }
-              , "message": { "type": "string" }
-              , "data": { "type": "string", "description": "A reason for the failure." }
-              }
-            }
-          , "id":
-            { "description": "Any value that was set by a client request in the 'id' field."
-            }
-          }
-        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
       ]
+    }
+
+  , "QueryNetworkBlockHeight":
+    { "title": "QueryNetworkBlockHeight"
+    , "description": "Query the network’s highest block number."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryNetwork/blockHeight" ]
+        }
+      , "params": {}
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryNetworkBlockHeightResponse":
+    { "title": "QueryNetworkBlockHeightResponse"
+    , "type": "object"
+    , "required": [ "jsonrpc", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "result":
+        { "type": "object"
+        , "required": [ "blockHeight" ]
+        , "additionalProperties": false
+        , "properties":
+          { "blockHeight":
+            { "$ref": "ogmios.json#/definitions/BlockNoOrOrigin"
+            }
+          }
+        }
+      , "id":
+        { "description": "Any value that was set by a client request in the 'id' field."
+        }
+      }
+    }
+
+  , "QueryNetworkGenesisConfiguration":
+    { "title": "QueryNetworkGenesisConfiguration"
+    , "description": "Query the genesis configuration of a given era."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method", "params" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryNetwork/genesisConfiguration" ]
+        }
+      , "params":
+        { "type": "object"
+        , "required": [ "era" ]
+        , "additionalProperties": false
+        , "properties":
+          { "era":
+            { "type": "string"
+            , "enum": ["byron", "shelley", "alonzo"]
+            }
+          }
+        }
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryNetworkGenesisConfigurationResponse":
+    { "title": "QueryNetworkGenesisConfigurationResponse"
+    , "type": "object"
+    , "required": [ "jsonrpc", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "result":
+        { "type": "object"
+        , "required": [ "genesisConfiguration" ]
+        , "additionalProperties": false
+        , "properties":
+          { "genesisConfiguration":
+            { "oneOf":
+              [ { "type": "object"
+                , "required": ["byron"]
+                , "additionalProperties": false
+                , "properties":
+                  { "byron": { "$ref": "ogmios.json#/definitions/Genesis[Byron]" }
+                  }
+                }
+              , { "type": "object"
+                , "required": ["shelley"]
+                , "additionalProperties": false
+                , "properties":
+                  { "shelley": { "$ref": "ogmios.json#/definitions/Genesis[Shelley]" }
+                  }
+                }
+              , { "type": "object"
+                , "required": ["alonzo"]
+                , "additionalProperties": false
+                , "properties":
+                  { "alonzo": { "$ref": "ogmios.json#/definitions/Genesis[Alonzo]" }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      , "id":
+        { "description": "Any value that was set by a client request in the 'id' field."
+        }
+      }
+    }
+
+  , "QueryNetworkStartTime":
+    { "title": "QueryNetworkStartTime"
+    , "description": "Query the network start time."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryNetwork/startTime" ]
+        }
+      , "params": {}
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryNetworkStartTimeResponse":
+    { "title": "QueryNetworkStartTimeResponse"
+    , "type": "object"
+    , "required": [ "jsonrpc", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "result":
+        { "type": "object"
+        , "required": [ "startTime" ]
+        , "additionalProperties": false
+        , "properties":
+          { "startTime":
+            { "$ref": "ogmios.json#/definitions/UtcTime"
+            }
+          }
+        }
+      , "id":
+        { "description": "Any value that was set by a client request in the 'id' field."
+        }
+      }
+    }
+
+  , "QueryNetworkTip":
+    { "title": "QueryNetworkTip"
+    , "description": "Get the current network tip. Said differently, this is the most recent slot and block header hash that the node it aware of."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryNetwork/tip" ]
+        }
+      , "params": {}
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryNetworkTipResponse":
+    { "title": "QueryNetworkTipResponse"
+    , "type": "object"
+    , "required": [ "jsonrpc", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "result":
+        { "type": "object"
+        , "required": [ "tip" ]
+        , "additionalProperties": false
+        , "properties":
+          { "tip":
+            { "$ref": "ogmios.json#/definitions/PointOrOrigin"
+            }
+          }
+        }
+      , "id":
+        { "description": "Any value that was set by a client request in the 'id' field."
+        }
+      }
     }
 
   , "AcquireMempool":
@@ -1783,7 +2553,7 @@
             , "additionalProperties": false
             , "required": ["pot"]
             , "properties":
-              { "rewards": { "$ref": "ogmios.json#/definitions/Rewards" }
+              { "rewards": { "$ref": "ogmios.json#/definitions/RewardTransfer" }
               , "value":  { "$ref": "ogmios.json#/definitions/Lovelace" }
               , "pot": { "$ref": "ogmios.json#/definitions/RewardPot" }
               }
@@ -1829,22 +2599,6 @@
   , "Datum":
     { "type": "string"
     , "contentEncoding": "base16"
-    }
-
-  , "DelegationsAndRewards":
-    { "type": "object"
-    , "additionalProperties": false
-    , "properties":
-      { "delegate": { "$ref": "ogmios.json#/definitions/StakePoolId" }
-      , "rewards": { "$ref": "ogmios.json#/definitions/Lovelace" }
-      }
-    , "examples":
-      [ { "bc1597ad71c55d2d009a9274b3831ded155118dd769f5376decc1369":
-          { "delegate": "pool1kchver88u3kygsak8wgll7htr8uxn5v35lfrsyy842nkscrzyvj"
-          , "rewards": 219558722
-          }
-        }
-      ]
     }
 
   , "Digest[Blake2b]::AuxiliaryDataBody":
@@ -2387,6 +3141,32 @@
     , "enum": [ "plutus:v1", "plutus:v2" ]
     }
 
+  , "LiveStakeDistribution":
+    { "type": "object"
+    , "description": "Distribution of stake across registered stake pools. Each key in the map corresponds to a pool id."
+    , "propertyNames": { "$ref": "ogmios.json#/definitions/StakePoolId" }
+    , "additionalProperties":
+      { "type": "object"
+      , "additionalProperties": false
+      , "required": ["stake", "vrf"]
+      , "properties":
+        { "stake": { "$ref": "ogmios.json#/definitions/Ratio" }
+        , "vrf": { "$ref": "ogmios.json#/definitions/Digest[Blake2b]::VrfVerificationKey" }
+        }
+      }
+    , "examples":
+      [ { "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9":
+          { "stake": "64666784451745/32381463809418351"
+          , "vrf": "6de7605b2afd7e205318fc8b4329d26439b5b179b4746fea12f1ce50395f5d9e"
+          }
+        , "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc":
+          { "stake": "7072561631906/10793821269806117"
+          , "vrf": "bb862fcc397de6c06dea9a9ad8442a3d17826e01799a79b861fc083341eaed3d"
+          }
+        }
+      ]
+    }
+
   , "Lovelace":
     { "type": "integer"
     , "description": "A number of lovelace, possibly large when summed up."
@@ -2554,32 +3334,6 @@
       ]
     }
 
-  , "NonMyopicMemberRewards":
-    { "type": "object"
-    , "description": "Rewards that can be expected assuming a pool is fully saturated. Such rewards are said non-myopic, in opposition to short-sighted rewards looking at immediate benefits. Keys of the map can be either Lovelace amounts or account credentials depending on the query."
-    , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
-    , "additionalProperties":
-      { "type": "object"
-      , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
-      , "additionalProperties":
-        { "type": "number"
-        , "minimum": 0
-        }
-      }
-    , "examples":
-      [ { "1000000":
-          { "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9": 688
-          , "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc": 676
-          , "pool1qqqqzyqf8mlm70883zht60n4q6uqxg4a8x266sewv8ad2grkztl": 0
-          }
-        , "bc1597ad71c55d2d009a9274b3831ded155118dd769f5376decc1369":
-          { "pool1qfzjwrtupyvzx0atp5pa3m82v7s8z2eqyqffa0grpyf4j349h6r": 0
-          , "pool1qfxukshs4fkcrflzdnxa2fdza5lfvew3y6echg8ckaa4q8m5hyf": 103181546
-          }
-        }
-      ]
-    }
-
   , "Null":
     { "type": "null"
     }
@@ -2623,27 +3377,27 @@
     { "$ref": "ogmios.json#/definitions/Digest[Blake2b]::Script"
     }
 
-  , "PoolDistribution":
+  , "ProjectedRewards":
     { "type": "object"
-    , "description": "Distribution of stake across registered stake pools. Each key in the map corresponds to a pool id."
-    , "propertyNames": { "$ref": "ogmios.json#/definitions/StakePoolId" }
+    , "description": "Rewards that can be expected assuming a pool is fully saturated. Such rewards are said non-myopic, in opposition to short-sighted rewards looking at immediate benefits. Keys of the map can be either Lovelace amounts or account credentials depending on the query."
+    , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
     , "additionalProperties":
       { "type": "object"
-      , "additionalProperties": false
-      , "required": ["stake", "vrf"]
-      , "properties":
-        { "stake": { "$ref": "ogmios.json#/definitions/Ratio" }
-        , "vrf": { "$ref": "ogmios.json#/definitions/Digest[Blake2b]::VrfVerificationKey" }
+      , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
+      , "additionalProperties":
+        { "type": "number"
+        , "minimum": 0
         }
       }
     , "examples":
-      [ { "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9":
-          { "stake": "64666784451745/32381463809418351"
-          , "vrf": "6de7605b2afd7e205318fc8b4329d26439b5b179b4746fea12f1ce50395f5d9e"
+      [ { "1000000":
+          { "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9": 688
+          , "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc": 676
+          , "pool1qqqqzyqf8mlm70883zht60n4q6uqxg4a8x266sewv8ad2grkztl": 0
           }
-        , "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc":
-          { "stake": "7072561631906/10793821269806117"
-          , "vrf": "bb862fcc397de6c06dea9a9ad8442a3d17826e01799a79b861fc083341eaed3d"
+        , "bc1597ad71c55d2d009a9274b3831ded155118dd769f5376decc1369":
+          { "pool1qfzjwrtupyvzx0atp5pa3m82v7s8z2eqyqffa0grpyf4j349h6r": 0
+          , "pool1qfxukshs4fkcrflzdnxa2fdza5lfvew3y6echg8ckaa4q8m5hyf": 103181546
           }
         }
       ]
@@ -2692,6 +3446,35 @@
         , "items": { "$ref": "ogmios.json#/definitions/Relay" }
         }
       , "rewardAccount": { "$ref": "ogmios.json#/definitions/RewardAccount" }
+      }
+    }
+
+  , "StakePoolSummary":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "stake", "ownerStake", "approximatePerformance", "poolParameters" ]
+    , "properties":
+      { "stake": { "$ref": "ogmios.json#/definitions/Lovelace" }
+      , "ownerStake":
+        { "$ref": "ogmios.json#/definitions/Lovelace"
+        , "description": "The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch."
+        }
+      , "approximatePerformance":
+        { "type": "number"
+        , "description": "Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky."
+        , "minimum": 0
+        }
+      , "poolParameters":
+        { "type": "object"
+        , "description": "Some of the pool parameters relevant for the reward calculation."
+        , "additionalProperties": false
+        , "required": [ "cost", "margin", "pledge" ]
+        , "properties":
+          { "cost": { "$ref": "ogmios.json#/definitions/Lovelace" }
+          , "margin": { "$ref": "ogmios.json#/definitions/Ratio" }
+          , "pledge": { "$ref": "ogmios.json#/definitions/Lovelace" }
+          }
+        }
       }
     }
 
@@ -2830,12 +3613,6 @@
       }
     }
 
-  , "QueryUnavailableInCurrentEra":
-    { "type": "string"
-    , "description": "The requested query is not available in the current node era. It could be that the node is not fully synced."
-    , "enum": [ "QueryUnavailableInCurrentEra" ]
-    }
-
   , "Ratio":
     { "type": "string"
     , "description": "A ratio of two integers, to express exact fractions."
@@ -2916,12 +3693,18 @@
       ]
     }
 
-  , "Rewards":
+  , "RewardAccountSummary":
     { "type": "object"
-    , "additionalProperties": { "$ref": "ogmios.json#/definitions/LovelaceDelta" }
-    , "propertyNames": { "pattern": "[0-9a-f]{56}$" }
+    , "additionalProperties": false
+    , "properties":
+      { "delegate": { "$ref": "ogmios.json#/definitions/StakePoolId" }
+      , "rewards": { "$ref": "ogmios.json#/definitions/Lovelace" }
+      }
     , "examples":
-      [ { "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5": 123456789
+      [ { "bc1597ad71c55d2d009a9274b3831ded155118dd769f5376decc1369":
+          { "delegate": "pool1kchver88u3kygsak8wgll7htr8uxn5v35lfrsyy842nkscrzyvj"
+          , "rewards": 219558722
+          }
         }
       ]
     }
@@ -2936,39 +3719,20 @@
       ]
     }
 
-  , "RewardInfoPool":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "stake", "ownerStake", "approximatePerformance", "poolParameters" ]
-    , "properties":
-      { "stake": { "$ref": "ogmios.json#/definitions/Lovelace" }
-      , "ownerStake":
-        { "$ref": "ogmios.json#/definitions/Lovelace"
-        , "description": "The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch."
-        }
-      , "approximatePerformance":
-        { "type": "number"
-        , "description": "Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky."
-        , "minimum": 0
-        }
-      , "poolParameters":
-        { "type": "object"
-        , "description": "Some of the pool parameters relevant for the reward calculation."
-        , "additionalProperties": false
-        , "required": [ "cost", "margin", "pledge" ]
-        , "properties":
-          { "cost": { "$ref": "ogmios.json#/definitions/Lovelace" }
-          , "margin": { "$ref": "ogmios.json#/definitions/Ratio" }
-          , "pledge": { "$ref": "ogmios.json#/definitions/Lovelace" }
-          }
-        }
-      }
-    }
-
   , "RewardPot":
     { "type": "string"
     , "description": "Source of rewards as defined by the protocol parameters."
     , "enum": ["reserves", "treasury"]
+    }
+
+  , "RewardTransfer":
+    { "type": "object"
+    , "additionalProperties": { "$ref": "ogmios.json#/definitions/LovelaceDelta" }
+    , "propertyNames": { "pattern": "[0-9a-f]{56}$" }
+    , "examples":
+      [ { "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5": 123456789
+        }
+      ]
     }
 
   , "RewardsProvenance":
@@ -3002,7 +3766,7 @@
         }
       , "pools":
         { "type": "object"
-        , "additionalProperties": { "$ref": "ogmios.json#/definitions/RewardInfoPool" }
+        , "additionalProperties": { "$ref": "ogmios.json#/definitions/StakePoolSummary" }
         , "propertyNames": { "$ref": "ogmios.json#/definitions/StakePoolId" }
         }
       }
@@ -3291,7 +4055,7 @@
   , "StakeCredential":
     { "oneOf":
       [ { "title": "Base16"
-        , "description": "A stake *key* hash in base16. If you need to represent a *script* hash, use bech32."
+        , "description": "A stake key or script hash in base16."
         , "$ref": "ogmios.json#/definitions/Digest[Blake2b]::Credential"
         }
       , { "title": "Bech32"

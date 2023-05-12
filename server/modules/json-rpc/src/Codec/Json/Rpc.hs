@@ -71,6 +71,9 @@ import Data.Kind
 import Data.Proxy
     ( Proxy (..)
     )
+import Data.Text
+    ( Text
+    )
 
 import GHC.Generics
 
@@ -104,6 +107,7 @@ data Options = Options
     { fieldLabelModifier :: String -> String
     , constructorTagModifier :: String -> String
     , onMissingField :: Json.Key -> Json.Parser Json.Value
+    , methodNamePredicate :: Text -> Text -> Bool
     }
 
 -- | Default options for the generic parsing: do nothing.
@@ -117,6 +121,7 @@ defaultOptions = Options
         x:xs -> toLower x : xs
     )
     (\k -> fail $ "key " ++ show k ++ " not found")
+    (\v expected -> v == expected)
 
 -- | Parse a given Json 'Value' as a JSON-Rpc 'Request'.
 --
@@ -283,8 +288,8 @@ instance GRpcFromJSON f => GRpcFromJSON (D1 c f) where
 
 instance (Constructor c, GRpcFromJSON f) => GRpcFromJSON (C1 c f) where
     gRpcFromJSON opts value = flip (Json.withObject "U1") value $ \obj -> do
-        _ <- parseKey obj "jsonrpc" V2_0
-        _ <- parseKey obj "method" methodName
+        _ <- parseKey obj "jsonrpc" "2.0"
+        _ <- parseKeyWith (methodNamePredicate opts) obj "method" methodName
         refl <- obj .:? "id"
         (_, f) <- gRpcFromJSON opts value
         pure (refl, M1 f)
@@ -368,17 +373,39 @@ instance ToJSON c => GRpcToJSON (K1 i c) where
 -- Validations (Internal)
 --
 
-parseKey :: (Eq a, FromJSON a, ToJSON a) => Json.Object -> Json.Key -> a -> Json.Parser a
-parseKey obj key expected =
+parseKey
+    :: Json.Object
+    -> Json.Key
+    -> Text
+    -> Json.Parser ()
+parseKey =
+    parseKeyWith (==)
+
+parseKeyWith
+    :: (Text -> Text -> Bool)
+    -> Json.Object
+    -> Json.Key
+    -> Text
+    -> Json.Parser ()
+parseKeyWith checkKey obj key expected =
     case Json.parseMaybe (.:? key) obj of
-        Just Nothing -> fail $ prettyErrValidateKey
-            $ ErrValidateKeyMissing $ ErrMissingKey key
-        Nothing -> fail $ prettyErrValidateKey
-            $ ErrValidateKeyInvalid $ ErrInvalidKey key (toJSON expected)
-        Just (Just v) | v /= expected -> fail $ prettyErrValidateKey
-            $ ErrValidateKeyInvalid $ ErrInvalidKey key (toJSON expected)
-        Just (Just v) ->
-            pure v
+        Just Nothing ->
+            fail
+                $ prettyErrValidateKey
+                $ ErrValidateKeyMissing
+                $ ErrMissingKey key
+        Nothing ->
+            fail
+                $ prettyErrValidateKey
+                $ ErrValidateKeyInvalid
+                $ ErrInvalidKey key (toJSON expected)
+        Just (Just v) | not (checkKey expected v) ->
+            fail
+                $ prettyErrValidateKey
+                $ ErrValidateKeyInvalid
+                $ ErrInvalidKey key (toJSON expected)
+        Just (Just{}) ->
+            pure ()
 
 data ErrValidateKey
     = ErrValidateKeyMissing ErrMissingKey

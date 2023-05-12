@@ -29,6 +29,9 @@ module Ogmios.Prelude
     , Array
     , mapToArray
 
+      -- * Set
+    , traverset
+
       -- * type-level helpers
     , keepRedundantConstraint
     , LastElem
@@ -50,7 +53,6 @@ import Data.Generics.Product.Typed
     ( HasType
     , typed
     )
-import qualified Data.Map as Map
 import Data.Profunctor.Unsafe
     ( (#.)
     )
@@ -102,6 +104,9 @@ import Relude hiding
     , writeTVar
     )
 
+import qualified Data.Map as Map
+import qualified Data.Set as Set
+
 -- | Copied from: https://hackage.haskell.org/package/generic-lens-1.1.0.0/docs/src/Data.Generics.Internal.VL.Prism.html
 infixl 8 ^?
 (^?) :: s -> ((a -> Const (First a) a) -> s -> Const (First a) s) -> Maybe a
@@ -142,3 +147,9 @@ mapToArray m =
   array
     (fst (Map.findMin m), fst (Map.findMax m))
     (Map.toList m)
+
+traverset :: (Ord b, Applicative f) => (a -> f b) -> Set a -> f (Set b)
+traverset f =
+    Set.foldr insert (pure Set.empty)
+  where
+    insert x ys = liftA2 Set.insert (f x) ys

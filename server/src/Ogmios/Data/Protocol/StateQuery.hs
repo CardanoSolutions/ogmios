@@ -45,6 +45,9 @@ module Ogmios.Data.Protocol.StateQuery
 
 import Ogmios.Data.Json.Prelude
 
+import Data.Aeson
+    ( parseJSON
+    )
 import Ogmios.Data.Json.Query
     ( ByronEra
     , GenesisConfig
@@ -62,8 +65,10 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure
     )
 
+import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Types as Json
+import qualified Data.Text as T
 import qualified Text.Show as T
 
 --
@@ -241,15 +246,21 @@ _encodeReleaseLedgerStateResponse =
 
 type QueryLedgerState = Query Proxy
 
-newtype QueryT block = QueryLedgerState { query :: Query Proxy block }
+data QueryT = QueryLedgerState
     deriving (Generic)
 
 _decodeQueryLedgerState
     :: FromJSON (QueryLedgerState block)
     => Json.Value
     -> Json.Parser (Rpc.Request (QueryLedgerState block))
-_decodeQueryLedgerState =
-    fmap (fmap query) . Rpc.genericFromJSON Rpc.defaultOptions
+_decodeQueryLedgerState json = do
+    Rpc.Request mirror QueryLedgerState <- Rpc.genericFromJSON opts json
+    query <- parseJSON json
+    pure $ Rpc.Request mirror query
+  where
+    opts = Rpc.defaultOptions
+        { Rpc.methodNamePredicate = const ((==) "query" . T.take 5)
+        }
 
 data QueryLedgerStateResponse block
     = QueryResponse { unQueryResponse :: Json }

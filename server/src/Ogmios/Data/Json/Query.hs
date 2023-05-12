@@ -71,25 +71,25 @@ module Ogmios.Data.Json.Query
     , decodeValue
 
       -- * Parsers
-    , parseGetBlockHeight
-    , parseGetChainTip
-    , parseGetCurrentPParams
-    , parseGetEpochNo
-    , parseGetEraStart
-    , parseGetEraSummaries
-    , parseGetFilteredDelegationsAndRewards
-    , parseGetGenesisConfig
-    , parseGetLedgerTip
-    , parseGetNonMyopicMemberRewards
-    , parseGetProposedPParamsUpdates
-    , parseGetRewardsProvenance
-    , parseGetStakeDistribution
-    , parseGetStakePoolParameters
-    , parseGetStakePools
-    , parseGetSystemStart
-    , parseGetUTxO
-    , parseGetUTxOByAddress
-    , parseGetUTxOByTxIn
+    , parseQueryLedgerEpoch
+    , parseQueryLedgerEraStart
+    , parseQueryLedgerEraSummaries
+    , parseQueryLedgerLiveStakeDistribution
+    , parseQueryLedgerProjectedRewards
+    , parseQueryLedgerProposedProtocolParameters
+    , parseQueryLedgerProtocolParameters
+    , parseQueryLedgerRewardAccountSummaries
+    , parseQueryLedgerRewardsProvenance
+    , parseQueryLedgerStakePoolParameters
+    , parseQueryLedgerStakePools
+    , parseQueryLedgerTip
+    , parseQueryLedgerUtxo
+    , parseQueryLedgerUtxoByAddress
+    , parseQueryLedgerUtxoByOutputReference
+    , parseQueryNetworkBlockHeight
+    , parseQueryNetworkGenesisConfiguration
+    , parseQueryNetworkStartTime
+    , parseQueryNetworkTip
     ) where
 
 import Ogmios.Data.Json.Prelude
@@ -156,6 +156,7 @@ import Codec.Serialise
     )
 import Data.Aeson
     ( toJSON
+    , (.!=)
     )
 import Data.ByteString.Base16
     ( encodeBase16
@@ -258,6 +259,7 @@ import qualified Data.Aeson.KeyMap as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.Map.Merge.Strict as Map
 import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TL
@@ -356,27 +358,51 @@ type family GenesisConfig (era :: Type -> Type) :: Type where
     GenesisConfig AlonzoEra = AlonzoGenesis
 
 instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
-    parseJSON = choice "query"
-        [ \raw -> Query raw <$> parseGetBlockHeight id raw
-        , \raw -> Query raw <$> parseGetChainTip id raw
-        , \raw -> Query raw <$> parseGetCurrentPParams (const id) raw
-        , \raw -> Query raw <$> parseGetEpochNo id raw
-        , \raw -> Query raw <$> parseGetEraStart id raw
-        , \raw -> Query raw <$> parseGetEraSummaries id raw
-        , \raw -> Query raw <$> parseGetFilteredDelegationsAndRewards id raw
-        , \raw -> Query raw <$> parseGetGenesisConfig (Proxy, Proxy, Proxy) raw
-        , \raw -> Query raw <$> parseGetLedgerTip (const id) (const id) raw
-        , \raw -> Query raw <$> parseGetNonMyopicMemberRewards id raw
-        , \raw -> Query raw <$> parseGetProposedPParamsUpdates (const id) raw
-        , \raw -> Query raw <$> parseGetRewardsProvenance id raw
-        , \raw -> Query raw <$> parseGetStakeDistribution id raw
-        , \raw -> Query raw <$> parseGetStakePoolParameters id raw
-        , \raw -> Query raw <$> parseGetStakePools id raw
-        , \raw -> Query raw <$> parseGetSystemStart id raw
-        , \raw -> Query raw <$> parseGetUTxO (const id) raw
-        , \raw -> Query raw <$> parseGetUTxOByAddress (const id) raw
-        , \raw -> Query raw <$> parseGetUTxOByTxIn (const id) raw
-        ]
+    parseJSON json = Json.withObject "Query" (\obj -> do
+        queryName <- T.drop 5 <$> (obj .: "method")
+        queryParams <- obj .:? "params" .!= Json.object []
+        Query json <$> case queryName of
+            "LedgerState/epoch" ->
+                parseQueryLedgerEpoch id queryParams
+            "LedgerState/eraStart" ->
+                parseQueryLedgerEraStart id queryParams
+            "LedgerState/eraSummaries" ->
+                parseQueryLedgerEraSummaries id queryParams
+            "LedgerState/liveStakeDistribution" ->
+                parseQueryLedgerLiveStakeDistribution id queryParams
+            "LedgerState/projectedRewards" ->
+                parseQueryLedgerProjectedRewards id queryParams
+            "LedgerState/protocolParameters" ->
+                parseQueryLedgerProtocolParameters (const id) queryParams
+            "LedgerState/proposedProtocolParameters" ->
+                parseQueryLedgerProposedProtocolParameters (const id) queryParams
+            "LedgerState/rewardAccountSummaries" ->
+                parseQueryLedgerRewardAccountSummaries id queryParams
+            "LedgerState/rewardsProvenance" ->
+                parseQueryLedgerRewardsProvenance id queryParams
+            "LedgerState/stakePools" ->
+                parseQueryLedgerStakePools id queryParams
+            "LedgerState/stakePoolParameters" ->
+                parseQueryLedgerStakePoolParameters id queryParams
+            "LedgerState/tip" ->
+                parseQueryLedgerTip (const id) (const id) queryParams
+            "LedgerState/utxo" ->
+                parseQueryLedgerUtxoByOutputReference (const id) queryParams
+                <|>
+                parseQueryLedgerUtxoByAddress (const id) queryParams
+                <|>
+                parseQueryLedgerUtxo (const id) queryParams
+            "Network/blockHeight" ->
+                parseQueryNetworkBlockHeight id queryParams
+            "Network/genesisConfiguration" ->
+                parseQueryNetworkGenesisConfiguration (Proxy, Proxy, Proxy) queryParams
+            "Network/startTime" ->
+                parseQueryNetworkStartTime id queryParams
+            "Network/tip" ->
+                parseQueryNetworkTip id queryParams
+            _ ->
+                fail "unknown query name"
+      ) json
 
 type QueryResult crypto result =
     Either (MismatchEraInfo (CardanoEras crypto)) result
@@ -640,43 +666,43 @@ mismatchOrWrapAs query encode =
     bimap encodeMismatchEraInfo (wrapAs query encode)
 {-# INLINABLE mismatchOrWrapAs #-}
 
-parseGetBlockHeight
+parseQueryLedgerEpoch
     :: forall crypto f. ()
-    => (Proxy (WithOrigin BlockNo) -> f (WithOrigin BlockNo))
+    => GenResult crypto f EpochNo
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetBlockHeight genResult =
-    let query = "blockHeight" in
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == query)
-        pure $ const $ Just $ SomeStandardQuery
-            LSQ.GetChainBlockNo
-            (Right . wrapAs query (encodeWithOrigin encodeBlockNo))
-            genResult
+parseQueryLedgerEpoch genResult =
+    let query = "epoch" in
+    Json.withObject (toString query) $ \obj -> do
+        guard (null obj) $>
+            ( \queryDef -> Just $ SomeStandardQuery
+                queryDef
+                (mismatchOrWrapAs query encodeEpochNo)
+                genResult
+            )
+            .
+            ( \case
+                SomeShelleyEra ShelleyBasedEraShelley ->
+                    LSQ.BlockQuery $ QueryIfCurrentShelley GetEpochNo
+                SomeShelleyEra ShelleyBasedEraAllegra ->
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetEpochNo
+                SomeShelleyEra ShelleyBasedEraMary ->
+                    LSQ.BlockQuery $ QueryIfCurrentMary GetEpochNo
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetEpochNo
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetEpochNo
+            )
 
-parseGetChainTip
-    :: forall crypto f. ()
-    => (Proxy (Point (CardanoBlock crypto)) -> f (Point (CardanoBlock crypto)))
-    -> Json.Value
-    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetChainTip genResult =
-    let query = "chainTip" in
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == query)
-        pure $ const $ Just $ SomeStandardQuery
-            LSQ.GetChainPoint
-            (Right . wrapAs query encodePoint)
-            genResult
-
-parseGetEraStart
+parseQueryLedgerEraStart
     :: forall crypto f. ()
     => (Proxy (Maybe Bound) -> f (Maybe Bound))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetEraStart genResult =
+parseQueryLedgerEraStart genResult =
     let query = "eraStart" in
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == query) $>
+    Json.withObject (toString query) $ \obj -> do
+        guard (null obj) $>
             ( \queryDef -> Just $ SomeStandardQuery
                 queryDef
                 (Right . wrapAs query (encodeMaybe encodeBound))
@@ -696,16 +722,30 @@ parseGetEraStart genResult =
                     LSQ.BlockQuery $ QueryAnytimeBabbage GetEraStart
             )
 
-parseGetLedgerTip
+parseQueryLedgerEraSummaries
+    :: forall crypto f. ()
+    => (Proxy (Interpreter (CardanoEras crypto)) -> f (Interpreter (CardanoEras crypto)))
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseQueryLedgerEraSummaries genResult =
+    let query = "eraSummaries" in
+    Json.withObject (toString query) $ \obj -> do
+        guard (null obj)
+        pure $ const $ Just $ SomeStandardQuery
+            (LSQ.BlockQuery (LSQ.QueryHardFork LSQ.GetInterpreter))
+            (Right . wrapAs query encodeInterpreter)
+            genResult
+
+parseQueryLedgerTip
     :: forall crypto f. (Crypto crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (Point (ShelleyBlock (TPraos crypto) era)))
     -> (forall era. Typeable era => Proxy era -> GenResult crypto f (Point (ShelleyBlock (Praos crypto) era)))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetLedgerTip genResultInEraTPraos genResultInEraPraos =
-    let query = "ledgerTip" in
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == query) $> \case
+parseQueryLedgerTip genResultInEraTPraos genResultInEraPraos =
+    let query = "tip" in
+    Json.withObject (toString @Text query) $ \obj -> do
+        guard (null obj) $> \case
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentShelley GetLedgerTip))
@@ -732,42 +772,20 @@ parseGetLedgerTip genResultInEraTPraos genResultInEraPraos =
                     (mismatchOrWrapAs query (encodePoint . castPoint @(Praos crypto)))
                     (genResultInEraPraos (Proxy @(BabbageEra crypto)))
 
-parseGetEpochNo
-    :: forall crypto f. ()
-    => GenResult crypto f EpochNo
-    -> Json.Value
-    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetEpochNo genResult =
-    let query = "currentEpoch" in
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == query) $>
-            ( \queryDef -> Just $ SomeStandardQuery
-                queryDef
-                (mismatchOrWrapAs query encodeEpochNo)
-                genResult
-            )
-            .
-            ( \case
-                SomeShelleyEra ShelleyBasedEraShelley ->
-                    LSQ.BlockQuery $ QueryIfCurrentShelley GetEpochNo
-                SomeShelleyEra ShelleyBasedEraAllegra ->
-                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetEpochNo
-                SomeShelleyEra ShelleyBasedEraMary ->
-                    LSQ.BlockQuery $ QueryIfCurrentMary GetEpochNo
-                SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetEpochNo
-                SomeShelleyEra ShelleyBasedEraBabbage ->
-                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetEpochNo
-            )
-
-parseGetNonMyopicMemberRewards
+parseQueryLedgerProjectedRewards
     :: forall crypto f. (Crypto crypto)
     => GenResult crypto f (NonMyopicMemberRewards crypto)
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetNonMyopicMemberRewards genResult =
-    Json.withObject "SomeQuery" $ \obj -> do
-        credentials <- decodeCredentials obj
+parseQueryLedgerProjectedRewards genResult =
+    Json.withObject (toString query) $ \obj -> do
+        byStake <- obj .:? "stake" .!= Set.empty
+            >>= traverset (fmap Left . decodeCoin)
+        byScript <- obj .:? "scripts" .!= Set.empty
+            >>= traverset (fmap Right . decodeCredential @crypto decodeAsScriptHash)
+        byKey <- obj .:? "keys" .!= Set.empty
+            >>= traverset (fmap Right . decodeCredential @crypto decodeAsKeyHash)
+        let credentials = byStake <> byScript <> byKey
         pure $
             ( \queryDef -> Just $ SomeStandardQuery
                 queryDef
@@ -794,27 +812,21 @@ parseGetNonMyopicMemberRewards genResult =
             )
   where
     query :: Text
-    query = "nonMyopicMemberRewards"
+    query = "projectedRewards"
 
-    decodeCredentials
-        :: Json.Object
-        -> Json.Parser (Set (Either Ledger.Coin (Ledger.Credential 'Staking crypto)))
-    decodeCredentials obj = fmap fromList $
-        obj .: Json.fromText query >>= traverse
-            (choice "credential"
-                [ fmap Left  . decodeCoin
-                , fmap Right . decodeCredential
-                ]
-            )
-
-parseGetFilteredDelegationsAndRewards
+parseQueryLedgerRewardAccountSummaries
     :: forall crypto f. (Crypto crypto)
     => GenResult crypto f (Delegations crypto, RewardAccounts crypto)
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetFilteredDelegationsAndRewards genResult =
-    Json.withObject "SomeQuery" $ \obj -> do
-        credentials <- decodeCredentials obj
+parseQueryLedgerRewardAccountSummaries genResult =
+    let query = "rewardAccountSummaries" in
+    Json.withObject (toString @Text query) $ \obj -> do
+        byScript <- obj .:? "scripts" .!= Set.empty
+            >>= traverset (decodeCredential @crypto decodeAsScriptHash)
+        byKey <- obj .:? "keys" .!= Set.empty
+            >>= traverset (decodeCredential @crypto decodeAsKeyHash)
+        let credentials = byScript <> byKey
         pure $
             ( \queryDef -> Just $ SomeStandardQuery
                 queryDef
@@ -839,25 +851,16 @@ parseGetFilteredDelegationsAndRewards genResult =
                     LSQ.BlockQuery $ QueryIfCurrentBabbage
                         (GetFilteredDelegationsAndRewardAccounts credentials)
             )
-  where
-    query :: Text
-    query = "delegationsAndRewards"
 
-    decodeCredentials
-        :: Json.Object
-        -> Json.Parser (Set (Ledger.Credential 'Staking crypto))
-    decodeCredentials obj = fmap fromList $
-        obj .: Json.fromText query >>= traverse decodeCredential
-
-parseGetCurrentPParams
+parseQueryLedgerProtocolParameters
     :: forall crypto f. (Typeable crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (Ledger.PParams era))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetCurrentPParams genResultInEra =
-    let query = "currentProtocolParameters" in
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == query) $> \case
+parseQueryLedgerProtocolParameters genResultInEra =
+    let query = "protocolParameters" in
+    Json.withObject (toString @Text query) $ \obj -> do
+        guard (null obj) $> \case
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentShelley GetCurrentPParams))
@@ -894,15 +897,15 @@ parseGetCurrentPParams genResultInEra =
                     )
                     (genResultInEra (Proxy @(BabbageEra crypto)))
 
-parseGetProposedPParamsUpdates
+parseQueryLedgerProposedProtocolParameters
     :: forall crypto f. (Crypto crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.ProposedPPUpdates era))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetProposedPParamsUpdates genResultInEra =
+parseQueryLedgerProposedProtocolParameters genResultInEra =
     let query = "proposedProtocolParameters" in
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == query) $> \case
+    Json.withObject (toString @Text query) $ \obj -> do
+        guard (null obj) $> \case
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentShelley GetProposedPParamsUpdates))
@@ -929,15 +932,15 @@ parseGetProposedPParamsUpdates genResultInEra =
                     (mismatchOrWrapAs query Babbage.encodeProposedPPUpdates)
                     (genResultInEra (Proxy @(BabbageEra crypto)))
 
-parseGetStakeDistribution
+parseQueryLedgerLiveStakeDistribution
     :: forall crypto f. (Crypto crypto)
     => GenResult crypto f (Ledger.PoolDistr crypto)
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetStakeDistribution genResult =
-    let query = "stakeDistribution" in
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == query) $>
+parseQueryLedgerLiveStakeDistribution genResult =
+    let query = "liveStakeDistribution" in
+    Json.withObject (toString @Text query) $ \obj -> do
+        guard (null obj) $>
             ( \queryDef -> Just $ SomeStandardQuery
                 queryDef
                 (mismatchOrWrapAs query encodePoolDistr)
@@ -957,29 +960,15 @@ parseGetStakeDistribution genResult =
                     LSQ.BlockQuery $ QueryIfCurrentBabbage GetStakeDistribution
             )
 
-parseGetSystemStart
-    :: forall crypto f. ()
-    => (Proxy SystemStart -> f SystemStart)
-    -> Json.Value
-    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetSystemStart genResult =
-    let query = "systemStart" in
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == query)
-        pure $ const $ Just $ SomeStandardQuery
-            LSQ.GetSystemStart
-            (Right . wrapAs query encodeSystemStart)
-            genResult
-
-parseGetUTxO
+parseQueryLedgerUtxo
     :: forall crypto f. (Crypto crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.UTxO era))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetUTxO genResultInEra =
+parseQueryLedgerUtxo genResultInEra =
     let query = "utxo" in
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == query) $> \case
+    Json.withObject (toString @Text query) $ \obj -> do
+        guard (null obj) $> \case
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentShelley GetUTxOWhole))
@@ -1006,93 +995,79 @@ parseGetUTxO genResultInEra =
                     (mismatchOrWrapAs query Babbage.encodeUtxo)
                     (genResultInEra (Proxy @(BabbageEra crypto)))
 
-parseGetUTxOByAddress
+parseQueryLedgerUtxoByAddress
     :: forall crypto f. (Crypto crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.UTxO era))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetUTxOByAddress genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
-    addrs <- decodeAddresses obj
-    pure $ \case
-        SomeShelleyEra ShelleyBasedEraShelley ->
-            Just $ SomeStandardQuery
-                (LSQ.BlockQuery (QueryIfCurrentShelley (GetUTxOByAddress addrs)))
-                (mismatchOrWrapAs query Shelley.encodeUtxo)
-                (genResultInEra (Proxy @(ShelleyEra crypto)))
-        SomeShelleyEra ShelleyBasedEraAllegra ->
-            Just $ SomeStandardQuery
-                (LSQ.BlockQuery (QueryIfCurrentAllegra (GetUTxOByAddress addrs)))
-                (mismatchOrWrapAs query Allegra.encodeUtxo)
-                (genResultInEra (Proxy @(AllegraEra crypto)))
-        SomeShelleyEra ShelleyBasedEraMary ->
-            Just $ SomeStandardQuery
-                (LSQ.BlockQuery (QueryIfCurrentMary (GetUTxOByAddress addrs)))
-                (mismatchOrWrapAs query Mary.encodeUtxo)
-                (genResultInEra (Proxy @(MaryEra crypto)))
-        SomeShelleyEra ShelleyBasedEraAlonzo ->
-            Just $ SomeStandardQuery
-                (LSQ.BlockQuery (QueryIfCurrentAlonzo (GetUTxOByAddress addrs)))
-                (mismatchOrWrapAs query Alonzo.encodeUtxo)
-                (genResultInEra (Proxy @(AlonzoEra crypto)))
-        SomeShelleyEra ShelleyBasedEraBabbage ->
-            Just $ SomeStandardQuery
-                (LSQ.BlockQuery (QueryIfCurrentBabbage (GetUTxOByAddress addrs)))
-                (mismatchOrWrapAs query Babbage.encodeUtxo)
-                (genResultInEra (Proxy @(BabbageEra crypto)))
-  where
-    query :: Text
-    query = "utxo"
+parseQueryLedgerUtxoByAddress genResultInEra =
+    let query = "utxo" in
+    Json.withObject (toString @Text query) $ \obj -> do
+        addrs <- obj .: "addresses" >>= traverset (decodeAddress @crypto)
+        pure $ \case
+            SomeShelleyEra ShelleyBasedEraShelley ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery (QueryIfCurrentShelley (GetUTxOByAddress addrs)))
+                    (mismatchOrWrapAs query Shelley.encodeUtxo)
+                    (genResultInEra (Proxy @(ShelleyEra crypto)))
+            SomeShelleyEra ShelleyBasedEraAllegra ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery (QueryIfCurrentAllegra (GetUTxOByAddress addrs)))
+                    (mismatchOrWrapAs query Allegra.encodeUtxo)
+                    (genResultInEra (Proxy @(AllegraEra crypto)))
+            SomeShelleyEra ShelleyBasedEraMary ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery (QueryIfCurrentMary (GetUTxOByAddress addrs)))
+                    (mismatchOrWrapAs query Mary.encodeUtxo)
+                    (genResultInEra (Proxy @(MaryEra crypto)))
+            SomeShelleyEra ShelleyBasedEraAlonzo ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery (QueryIfCurrentAlonzo (GetUTxOByAddress addrs)))
+                    (mismatchOrWrapAs query Alonzo.encodeUtxo)
+                    (genResultInEra (Proxy @(AlonzoEra crypto)))
+            SomeShelleyEra ShelleyBasedEraBabbage ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery (QueryIfCurrentBabbage (GetUTxOByAddress addrs)))
+                    (mismatchOrWrapAs query Babbage.encodeUtxo)
+                    (genResultInEra (Proxy @(BabbageEra crypto)))
 
-    decodeAddresses
-        :: Json.Object
-        -> Json.Parser (Set (Ledger.Addr crypto))
-    decodeAddresses obj = fmap fromList $
-        obj .: Json.fromText query >>= traverse decodeAddress
-
-parseGetUTxOByTxIn
+parseQueryLedgerUtxoByOutputReference
     :: forall crypto f. (Crypto crypto)
     => (forall era. Typeable era => Proxy era -> GenResult crypto f (Sh.UTxO era))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetUTxOByTxIn genResultInEra = Json.withObject "SomeQuery" $ \obj -> do
-    ins <- decodeTxIns obj
-    pure $ \case
-        SomeShelleyEra ShelleyBasedEraShelley ->
-            Just $ SomeStandardQuery
-                (LSQ.BlockQuery $ QueryIfCurrentShelley (GetUTxOByTxIn ins))
-                (mismatchOrWrapAs query Shelley.encodeUtxo)
-                (genResultInEra (Proxy @(ShelleyEra crypto)))
-        SomeShelleyEra ShelleyBasedEraAllegra ->
-            Just $ SomeStandardQuery
-                (LSQ.BlockQuery $ QueryIfCurrentAllegra (GetUTxOByTxIn ins))
-                (mismatchOrWrapAs query Allegra.encodeUtxo)
-                (genResultInEra (Proxy @(AllegraEra crypto)))
-        SomeShelleyEra ShelleyBasedEraMary ->
-            Just $ SomeStandardQuery
-                (LSQ.BlockQuery $ QueryIfCurrentMary (GetUTxOByTxIn ins))
-                (mismatchOrWrapAs query Mary.encodeUtxo)
-                (genResultInEra (Proxy @(MaryEra crypto)))
-        SomeShelleyEra ShelleyBasedEraAlonzo ->
-            Just $ SomeStandardQuery
-                (LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetUTxOByTxIn ins))
-                (mismatchOrWrapAs query Alonzo.encodeUtxo)
-                (genResultInEra (Proxy @(AlonzoEra crypto)))
-        SomeShelleyEra ShelleyBasedEraBabbage ->
-            Just $ SomeStandardQuery
-                (LSQ.BlockQuery $ QueryIfCurrentBabbage (GetUTxOByTxIn ins))
-                (mismatchOrWrapAs query Babbage.encodeUtxo)
-                (genResultInEra (Proxy @(BabbageEra crypto)))
-  where
-    query :: Text
-    query = "utxo"
+parseQueryLedgerUtxoByOutputReference genResultInEra =
+    let query = "utxo" in
+    Json.withObject (toString @Text query) $ \obj -> do
+        ins <- obj .: "outputReferences" >>= traverset (decodeTxIn @crypto)
+        pure $ \case
+            SomeShelleyEra ShelleyBasedEraShelley ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentShelley (GetUTxOByTxIn ins))
+                    (mismatchOrWrapAs query Shelley.encodeUtxo)
+                    (genResultInEra (Proxy @(ShelleyEra crypto)))
+            SomeShelleyEra ShelleyBasedEraAllegra ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentAllegra (GetUTxOByTxIn ins))
+                    (mismatchOrWrapAs query Allegra.encodeUtxo)
+                    (genResultInEra (Proxy @(AllegraEra crypto)))
+            SomeShelleyEra ShelleyBasedEraMary ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentMary (GetUTxOByTxIn ins))
+                    (mismatchOrWrapAs query Mary.encodeUtxo)
+                    (genResultInEra (Proxy @(MaryEra crypto)))
+            SomeShelleyEra ShelleyBasedEraAlonzo ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetUTxOByTxIn ins))
+                    (mismatchOrWrapAs query Alonzo.encodeUtxo)
+                    (genResultInEra (Proxy @(AlonzoEra crypto)))
+            SomeShelleyEra ShelleyBasedEraBabbage ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentBabbage (GetUTxOByTxIn ins))
+                    (mismatchOrWrapAs query Babbage.encodeUtxo)
+                    (genResultInEra (Proxy @(BabbageEra crypto)))
 
-    decodeTxIns
-        :: Json.Object
-        -> Json.Parser (Set (Ledger.TxIn crypto))
-    decodeTxIns obj = fmap fromList $
-        obj .: Json.fromText query >>= traverse decodeTxIn
-
-parseGetGenesisConfig
+parseQueryNetworkGenesisConfiguration
     :: forall f crypto. ()
     => ( f (GenesisConfig ByronEra)
        , f (GenesisConfig ShelleyEra)
@@ -1100,38 +1075,45 @@ parseGetGenesisConfig
        )
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetGenesisConfig (genByron, genShelley, genAlonzo) =
+parseQueryNetworkGenesisConfiguration (genByron, genShelley, genAlonzo) =
     let query = "genesisConfiguration" in
-    Json.withObject "SomeQuery" $ \obj -> do
-        obj .: Json.fromText query >>= \case
+    Json.withObject (toString query) $ \obj -> do
+        era <- obj .: "era"
+        case era :: Text of
             "byron" ->
                 pure $ const $ Just $ SomeAdHocQuery
                     GetByronGenesis
-                    (Right . wrapAs query (\cfg -> encodeObject ("byron" .= Byron.encodeGenesisData cfg)))
+                    (Right . wrapAs query
+                        (\cfg -> encodeObject ("byron" .= Byron.encodeGenesisData cfg))
+                    )
                     (const genByron)
             "shelley" -> do
                 pure $ const $ Just $ SomeAdHocQuery
                     GetShelleyGenesis
-                    (Right . wrapAs query (\cfg -> encodeObject ("shelley" .= Shelley.encodeGenesis cfg)))
+                    (Right . wrapAs query
+                        (\cfg -> encodeObject ("shelley" .= Shelley.encodeGenesis cfg))
+                    )
                     (const genShelley)
             "alonzo" -> do
                 pure $ const $ Just $ SomeAdHocQuery
                     GetAlonzoGenesis
-                    (Right . wrapAs query (\cfg -> encodeObject ("alonzo" .= Alonzo.encodeGenesis cfg)))
+                    (Right . wrapAs query
+                        (\cfg -> encodeObject ("alonzo" .= Alonzo.encodeGenesis cfg))
+                    )
                     (const genAlonzo)
             (_unknownEra :: Text) -> do
                 fail "Invalid era parameter. Only 'byron', 'shelley' and \
                      \'alonzo' have a genesis configuration."
 
-parseGetRewardsProvenance
+parseQueryLedgerRewardsProvenance
     :: forall crypto f. (Crypto crypto)
     => GenResult crypto f (RewardsProvenance crypto)
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetRewardsProvenance genResult =
+parseQueryLedgerRewardsProvenance genResult =
     let query = "rewardsProvenance" in
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == query) $>
+    Json.withObject (toString query) $ \obj -> do
+        guard (null obj) $>
             ( \queryDef -> Just $ SomeStandardQuery
                 queryDef
                 (mismatchOrWrapAs query encodeRewardsProvenance)
@@ -1151,18 +1133,20 @@ parseGetRewardsProvenance genResult =
                     LSQ.BlockQuery $ QueryIfCurrentBabbage GetRewardInfoPools
             )
 
-parseGetStakePools
+parseQueryLedgerStakePools
     :: forall crypto f. (Crypto crypto)
     => GenResult crypto f (Set (Ledger.KeyHash 'StakePool crypto))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetStakePools genResult =
+parseQueryLedgerStakePools genResult =
     let query = "stakePools" in
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == query) $>
+    Json.withObject (toString query) $ \obj -> do
+        guard (null obj) $>
             ( \queryDef -> Just $ SomeStandardQuery
                 queryDef
-                (mismatchOrWrapAs query (encodeFoldable Shelley.encodePoolId))
+                (mismatchOrWrapAs query
+                    (encodeFoldable $ \i -> encodeObject ("id" .= Shelley.encodePoolId i))
+                )
                 genResult
             )
             .
@@ -1179,14 +1163,15 @@ parseGetStakePools genResult =
                     LSQ.BlockQuery $ QueryIfCurrentBabbage GetStakePools
             )
 
-parseGetStakePoolParameters
+parseQueryLedgerStakePoolParameters
     :: forall crypto f. (Crypto crypto)
     => GenResult crypto f (Map (Ledger.KeyHash 'StakePool crypto) (Sh.PoolParams crypto))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetStakePoolParameters genResult =
+parseQueryLedgerStakePoolParameters genResult =
+    let query = "stakePoolParameters" in
     Json.withObject "SomeQuery" $ \obj -> do
-        ids <- decodePoolIds obj
+        ids <- obj .: "stakePools" >>= traverset (decodePoolId @crypto)
         pure $
             (\queryDef -> Just $ SomeStandardQuery
                 queryDef
@@ -1206,28 +1191,47 @@ parseGetStakePoolParameters genResult =
                 SomeShelleyEra ShelleyBasedEraBabbage ->
                     LSQ.BlockQuery $ QueryIfCurrentBabbage (GetStakePoolParams ids)
             )
-  where
-    query :: Text
-    query = "stakePoolParameters"
 
-    decodePoolIds
-        :: Json.Object
-        -> Json.Parser (Set (Ledger.KeyHash 'StakePool crypto))
-    decodePoolIds obj = fmap fromList $
-        obj .: Json.fromText query >>= traverse decodePoolId
-
-parseGetEraSummaries
+parseQueryNetworkBlockHeight
     :: forall crypto f. ()
-    => (Proxy (Interpreter (CardanoEras crypto)) -> f (Interpreter (CardanoEras crypto)))
+    => (Proxy (WithOrigin BlockNo) -> f (WithOrigin BlockNo))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseGetEraSummaries genResult =
-    let query = "eraSummaries" in
-    Json.withText "SomeQuery" $ \text -> do
-        guard (text == query)
+parseQueryNetworkBlockHeight genResult =
+    let query = "blockHeight" in
+    Json.withObject (toString query) $ \obj -> do
+        guard (null obj)
         pure $ const $ Just $ SomeStandardQuery
-            (LSQ.BlockQuery (LSQ.QueryHardFork LSQ.GetInterpreter))
-            (Right . wrapAs query encodeInterpreter)
+            LSQ.GetChainBlockNo
+            (Right . wrapAs query (encodeWithOrigin encodeBlockNo))
+            genResult
+
+parseQueryNetworkStartTime
+    :: forall crypto f. ()
+    => (Proxy SystemStart -> f SystemStart)
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseQueryNetworkStartTime genResult =
+    let query = "startTime" in
+    Json.withObject (toString query) $ \obj -> do
+        guard (null obj)
+        pure $ const $ Just $ SomeStandardQuery
+            LSQ.GetSystemStart
+            (Right . wrapAs query encodeSystemStart)
+            genResult
+
+parseQueryNetworkTip
+    :: forall crypto f. ()
+    => (Proxy (Point (CardanoBlock crypto)) -> f (Point (CardanoBlock crypto)))
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseQueryNetworkTip genResult =
+    let query = "tip" in
+    Json.withObject (toString query) $ \obj -> do
+        guard (null obj)
+        pure $ const $ Just $ SomeStandardQuery
+            LSQ.GetChainPoint
+            (Right . wrapAs query encodePoint)
             genResult
 
 --
@@ -1312,12 +1316,13 @@ decodeCoin =
 
 decodeCredential
     :: forall crypto. Crypto crypto
-    => Json.Value
+    => (ByteString -> Json.Parser (Ledger.Credential 'Staking crypto))
+    -> Json.Value
     -> Json.Parser (Ledger.Credential 'Staking crypto)
-decodeCredential = Json.withText "Credential" $ \(encodeUtf8 -> str) ->
-    asum
+decodeCredential decodeAsKeyOrScript =
+    Json.withText "Credential" $ \(encodeUtf8 -> str) -> asum
         [ decodeBase16 str >>=
-            decodeAsKeyHash
+            decodeAsKeyOrScript
         , decodeBech32 str >>=
             whenHrp (`elem` [[humanReadablePart|stake|], [humanReadablePart|stake_test|]])
                 decodeAsStakeAddress
@@ -1334,12 +1339,6 @@ decodeCredential = Json.withText "Credential" $ \(encodeUtf8 -> str) ->
              \or script hash with one of the following respective prefixes: \
              \stake, stake_vkh or script."
   where
-    invalidStakeKeyHash =
-        fail "invalid stake key hash"
-
-    invalidStakeAddress =
-        fail "invalid stake address"
-
     whenHrp
         :: (Bech32.HumanReadablePart -> Bool)
         -> (ByteString -> Json.Parser a)
@@ -1357,22 +1356,6 @@ decodeCredential = Json.withText "Credential" $ \(encodeUtf8 -> str) ->
     decodeBech32 =
         either (fail . show) pure . Bech32.decodeLenient . decodeUtf8
 
-    decodeAsKeyHash
-        :: ByteString
-        -> Json.Parser (Ledger.Credential 'Staking crypto)
-    decodeAsKeyHash =
-        fmap (Ledger.KeyHashObj . Ledger.KeyHash)
-            . maybe invalidStakeKeyHash pure
-            . hashFromBytes
-
-    decodeAsScriptHash
-        :: ByteString
-        -> Json.Parser (Ledger.Credential 'Staking crypto)
-    decodeAsScriptHash =
-        fmap (Ledger.ScriptHashObj . Ledger.ScriptHash)
-            . maybe invalidStakeKeyHash pure
-            . hashFromBytes
-
     decodeAsStakeAddress
         :: ByteString
         -> Json.Parser (Ledger.Credential 'Staking crypto)
@@ -1380,6 +1363,33 @@ decodeCredential = Json.withText "Credential" $ \(encodeUtf8 -> str) ->
         fmap Ledger.getRwdCred
             . maybe invalidStakeAddress pure
             . Ledger.deserialiseRewardAcnt
+      where
+        invalidStakeAddress =
+            fail "invalid stake address"
+
+decodeAsKeyHash
+    :: forall crypto. (Crypto crypto)
+    => ByteString
+    -> Json.Parser (Ledger.Credential 'Staking crypto)
+decodeAsKeyHash =
+    fmap (Ledger.KeyHashObj . Ledger.KeyHash)
+        . maybe invalidStakeKeyHash pure
+        . hashFromBytes
+  where
+    invalidStakeKeyHash =
+        fail "invalid stake key hash"
+
+decodeAsScriptHash
+    :: forall crypto. (Crypto crypto)
+    => ByteString
+    -> Json.Parser (Ledger.Credential 'Staking crypto)
+decodeAsScriptHash =
+    fmap (Ledger.ScriptHashObj . Ledger.ScriptHash)
+        . maybe invalidStakeScriptHash pure
+        . hashFromBytes
+  where
+    invalidStakeScriptHash =
+        fail "invalid stake script hash"
 
 decodeDatumHash
     :: Crypto crypto
