@@ -33,7 +33,7 @@
   , "AcquireMempool", "AcquireMempoolResponse"
   , "NextTransaction", "NextTransactionResponse"
   , "HasTransaction", "HasTransactionResponse"
-  , "SizeAndCapacity", "SizeAndCapacityResponse"
+  , "SizeOfMempool", "SizeAndCapacityResponse"
   , "ReleaseMempool", "ReleaseMempoolResponse"
 
   , "RpcError"
@@ -1404,7 +1404,7 @@
 
   , "QueryLedgerStateUtxo":
     { "title": "QueryLedgerStateUtxo"
-    , "description": "Query the current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger."
+    , "description": "Query the current Utxo set, restricted to some output references or addresses."
     , "type": "object"
     , "required": [ "jsonrpc", "method" ]
     , "additionalProperties": false
@@ -1882,8 +1882,8 @@
       }
     }
 
-  , "SizeAndCapacity":
-    { "title": "SizeAndCapacity"
+  , "SizeOfMempool":
+    { "title": "SizeOfMempool"
     , "description": "Get size and capacities of the mempool (acquired snapshot)."
     , "type": "object"
     , "required": [ "jsonrpc", "method" ]
@@ -1895,7 +1895,7 @@
         }
       , "method":
         { "type": "string"
-        , "enum": [ "sizeAndCapacity" ]
+        , "enum": [ "sizeOfMempool" ]
         }
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
@@ -1903,9 +1903,9 @@
       }
     }
 
-  , "SizeAndCapacityResponse":
-    { "title": "SizeAndCapacityResponse"
-    , "description": "Response to a 'sizeAndCapacity' request."
+  , "SizeOfMempoolResponse":
+    { "title": "SizeOfMempoolResponse"
+    , "description": "Response to a 'sizeOfMempool' request."
     , "type": "object"
     , "required": [ "jsonrpc", "result" ]
     , "additionalProperties": false
@@ -3353,7 +3353,8 @@
   , "Origin":
     { "type": "string"
     , "description": "The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point."
-    , "title": "origin"
+    , "title": "Origin"
+    , "name": "Oirigin"
     , "enum": [ "origin" ]
     }
 
@@ -3361,7 +3362,8 @@
     { "oneOf":
       [ { "type": "object"
         , "description": "A point on the chain, identified by a slot and a block header hash."
-        , "title": "point"
+        , "title": "Point"
+        , "name": "Point"
         , "additionalProperties": false
         , "required": [ "slot", "hash" ]
         , "properties":

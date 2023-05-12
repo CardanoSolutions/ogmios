@@ -6,7 +6,7 @@ weight = 5
 
 ## JSON-RPC
 
-Ogmios' interface is built on top of [JSON-RPC]() which is a tiny standard to give some structure to the various messages that can be exchanged with Ogmios. The standard specifies a top-level JSON envelope by which messages must abide, as well as a semantic for some of the fields. It well suited for request/response types of protocols, such as any of the Ouroboros mini-protocols spoken by Ogmios.
+Ogmios' interface is built on top of [JSON-RPC 2.0](https://www.jsonrpc.org/specification) which is a tiny standard to give some structure to the various messages that can be exchanged with Ogmios. The standard specifies a top-level JSON envelope by which messages must abide, as well as a semantic for some of the fields. It well suited for request/response types of protocols, such as any of the Ouroboros mini-protocols spoken by Ogmios.
 
 We won't be covering the JSON-RPC standard in this guide but gives a few extra insights about how it relates to Ogmios and some good takes from it. The standard is however relatively small so we encourage you to spare 5 minutes and quickly go through it when you find an opportunity.
 
@@ -21,13 +21,13 @@ Here is an example of valid request message:
 ```json
 {
     "jsonrpc": "2.0",
-    "method": "FindIntersect",
+    "method": "findIntersection",
     "params": { "points": [ "origin" ] },
     "id": "init-1234-5678"
 }
 ```
 
-As you can see, the `method` specifies the method `FindIntersect` which relates to the _local chain-sync_ Ouroboros mini-protocol. This particular request expects one argument named `points`, which contains a list of points we want to intersect with (don't panic, this is explained in further details in the next section!). Another interesting, albeit optional, field is the `id` field. This is completely free-form and will be spit back identically by Ogmios in the response exactly as provided. This can be useful to keep track of states on the client application or pass in extra context to each request/response. Be careful though that anything you send for a request will come back in the response; send something big, get something big.
+As you can see, the `method` specifies the method `findIntersection` which relates to the _chain synchronization_ protocol. This particular request expects one argument named `points`, which contains a list of points we want to intersect with (don't panic, this is explained in further details in the next section!). Another interesting, albeit optional, field is the `id` field. This is completely free-form and will be spit back identically by Ogmios in the response exactly as provided. This can be useful to keep track of states on the client application or pass in extra context to each request/response. Be careful though that anything you send for a request will come back in the response; send something big, get something big.
 
 ### Responses
 
@@ -37,14 +37,12 @@ Let's start with a possible response to the request above:
 {
     "jsonrpc": "1.0",
     "result": {
-        "IntersectionFound": {
-            "point": "origin",
-            "tip": {
-              "hash": "d184f428159290bf3558b4d1d139e6a07ec6589738c28a0925a7ab776bde4d62",
-              "blockNo": 4870185,
-              "slot": 12176171
-            }
-        }
+      "intersection": "origin",
+      "tip": {
+        "hash": "d184f428159290bf3558b4d1d139e6a07ec6589738c28a0925a7ab776bde4d62",
+        "blockNo": 4870185,
+        "slot": 12176171
+      }
     },
     "id": "init-1234-5678"
 }
@@ -58,7 +56,7 @@ Ogmios' responses may correspond to possible errors that are part of the Ourobor
 
 ## WebSocket vs HTTP
 
-Ogmios defaults transport protocol is WebSocket. Yet some mini-protocols (e.g. the local-tx-submission or the local-state-query) can also work over HTTP under some circumstances.
+Ogmios defaults transport protocol is WebSocket. Yet some mini-protocols (e.g. the transaction submission or the ledger state query) can also work over HTTP under some circumstances.
 
 ### WebSocket
 
@@ -73,7 +71,7 @@ const client = new WebSocket("ws://localhost:1337");
 client.once('open', () => {
     const request = {
         "jsonrpc": "2.0",
-        "method: "FindIntersect",
+        "method: "findIntersection",
         "params": { "points": [ "origin" ] }
     };
     client.send(JSON.stringify(request));
@@ -97,7 +95,7 @@ fetch("http://localhost:1337", {
   method: "POST",
   data: {
     "jsonrpc": "2.0",
-    "method: "SubmitTx",
+    "method: "submitTransaction",
     "params": { "transaction": "..." }
   }
 }).then(async response => {

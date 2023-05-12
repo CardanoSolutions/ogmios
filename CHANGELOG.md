@@ -19,6 +19,84 @@ pre: "<b>5. </b>"
 
 #### Changed
 
+- **⚠️ BREAKING-CHANGE ⚠️** Many major changes in the interface. Here's a summary of those changes, yet please refer to the API reference for details and exhaustiveness.
+
+  > **Note**
+  > There are still many [test vectors]() available for every element of the Ogmios API. Use them!
+
+  1. JSON-WSP has been ditched and replaced by [JSON-RPC 2.0](https://www.jsonrpc.org/specification) with which Ogmios is now fully compatible. In particular, this means that request and response payloads are a bit more lightweight.
+
+  2. Most method names have been reworked. Here's a translation table (beware the casing):
+
+  | Old               | New                                         |
+  | ---               | ---                                         |
+  | `RequestNext`     | `nextBlock`                                 |
+  | `FindIntersect`   | `findIntersection`                          |
+  | ---               | ---                                         |
+  | `SubmitTx`        | `submitTransaction`                         |
+  | `EvaluateTx`      | `evaluateTransaction`                       |
+  | ---               | ---                                         |
+  | `Acquire`         | `acquireLedgerState`                        |
+  | `Query`           | `queryLedgerState/*` <br/> `queryNetwork/*` |
+  | `Release`         | `releaseLedgerState`                        |
+  | ---               | ---                                         |
+  | `AwaitAcquire`    | `acquireMempool`                            |
+  | `NextTx`          | `nextTransaction`                           |
+  | `HasTx`           | `hasTransaction`                            |
+  | `SizeAndCapacity` | `sizeOfMempool`                             |
+  | `ReleaseMempool`  | `releaseMempool`                            |
+
+  3. Query responses from the local-state-query protocol are now wrapped under the query name. So for example, querying the ledger tip as:
+
+  ```json
+  {
+    "jsonrpc": "2.0",
+    "method": "queryLedgerState/tip",
+  }
+  ```
+
+  returns something like:
+
+  ```json
+  {
+    "jsonrpc": "2.0",
+    "result": {
+      "tip": {
+        "slot": 1234,
+        "header": { "hash": "1234567890abcdef" }
+      }
+    }
+  }
+  ```
+
+  4. Similarly, many ledger state queries have been renamed. Here's a recap table:
+
+  | Old                          | New                          |
+  | ---                          | ---                          |
+  | `currentEpoch`               | `epoch`                      |
+  | `currentProtocolParameters`  | `protocolParameters`         |
+  | `delegationsAndRewards`      | `rewardAccountSummaries`     |
+  | `eraStart`                   | `eraStart`                   |
+  | `eraSummaries`               | `eraSummaries`               |
+  | `ledgerTip`                  | `tip`                        |
+  | `nonMyopicMemberRewards`     | `projectedRewards`           |
+  | `proposedProtocolParameters` | `proposedProtocolParameters` |
+  | `rewardsProvenance`          | N/A                          |
+  | `rewardsProvenance'`         | `rewardsProvenance`          |
+  | `stakeDistribution`          | `liveStakeDistribution`      |
+  | `utxo`                       | `utxo`                       |
+
+  Also, some queries have been moved under `queryNetwork` and are always available, in any era:
+
+  | Old             | New                    |
+  | ---             | ---                    |
+  | `blockHeight`   | `blockHeight`          |
+  | `chainTip`      | `tip`                  |
+  | `genesisConfig` | `genesisConfiguration` |
+  | `systemStart`   | `startTime`            |
+
+  5. Errors in the protocol are now returned as JSON-RPC 2.0 errors, with unique error codes. This includes unnucessful operations such as an intersection not found on `findIntersection`, a point not acquired on `acquireLedgerState` or a failed transaction submission / evaluation. Some errors contain details specific to the error. This approach should simplify both parsing and documentation, as each error is now identified by a specific code.
+
 - **⚠️ BREAKING-CHANGE ⚠️** The `genesisConfig` local-state-query now expects one era as argument (either 'byron', 'shelley' or 'alonzo') to retrieve the corresponding genesis configuration.
 
 #### Removed
@@ -27,7 +105,7 @@ pre: "<b>5. </b>"
 
 - **⚠️ BREAKING-CHANGE ⚠️** Ogmios no longer returns null or empty fields. Where a field's value would be `null` prior to v6.0.0, Ogmios now simply omit the field altogether. This is also true for most responses that return empty lists as well. All-in-all, please refer to the documentation / JSON-schema in case of doubts (fields that may be omitted are no longer marked as `required`).
 
-- **⚠️ BREAKING-CHANGE ⚠️** Ogmios no longer supports submitting transactions using `{ "bytes": "..." }` as parameters; One must now specify either `{ "submit": "..." }` or `{ "evaluate": "..." }` to select the right method. Since `v5.2.0` (when the submission protocol was extended), Ogmios supported two notations for transaction submission (using either `bytes` or `submit`) as a backward-compatible mechanism. It now supports only one: `submit`.
+- **⚠️ BREAKING-CHANGE ⚠️** Ogmios no longer supports submitting transactions using `{ "bytes": "..." }` as parameters; One must now specify the transaction as `{ "transaction": { "cbor": "..." } }`. Since `v5.2.0` (when the submission protocol was extended), Ogmios supported two notations for transaction submission (using either `bytes` or `submit`) as a backward-compatible mechanism. It now supports only one new format.
 
 ---
 ---

@@ -1,6 +1,6 @@
-{{ $host := "cardanoscan.io" }}
-{{ if eq (.Get "network") "testnet" }}
-  {{ $host = "testnet.cardanoscan.io" }}
+{{ $host := print (.Get "network") ".cardanoscan.io" }}
+{{ if eq (.Get "network") "mainnet" }}
+  {{ $host = "cardanoscan.io" }}
 {{ end }}
 
 <tr>
@@ -8,8 +8,8 @@
   {{ if eq (.Get "blockNumber") "N/A" }}
   <td>{{ .Get "blockNumber" }}</td>
   {{ else }}
-  <td><a target="_blank" href="https://{{$host}}/block/{{ .Get "blockNumber" }}">{{ .Get "blockNumber" }} <i style="font-size: 0.8rem;" class="fas fa-external-link-alt"></i></a></td>
+  <td><small><a target="_blank" href="https://{{$host}}/block/{{ .Get "blockNumber" }}">{{ .Get "blockNumber" }} <i style="font-size: 0.8rem;" class="fas fa-external-link-alt"></i></a></small></td>
   {{ end }}
-  <td><code>{{ .Get "slotNumber" }}</code></td>
-  <td><code>{{ .Get "headerHash" }}</code></td>
+  <td><small><code>{{ .Get "slotNumber" }}</code></small></td>
+  <td><small><code>{{ .Get "headerHash" }}</code></small></td>
 </tr>
