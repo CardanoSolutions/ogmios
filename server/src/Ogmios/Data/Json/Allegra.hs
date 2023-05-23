@@ -138,9 +138,9 @@ encodeTx x =
         encodeTxBody (Sh.body x) <>
     "metadata" .=? OmitWhenNothing
         identity metadata <>
-    "witness" .=
+    "witnesses" .=
         encodeWitnessSet (Sh.wits x) <>
-    "raw" .=
+    "cbor" .=
         encodeByteStringBase16 (serialize' x)
     & encodeObject
   where
@@ -169,8 +169,9 @@ encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ _) =
         encodeCoin fee <>
     "validityInterval" .=
         encodeValidityInterval validity <>
-    "update" .=? OmitWhenNothing
-        Shelley.encodeUpdate updates
+    "governanceActions" .=? OmitWhenNothing
+        (encodeFoldable identity . pure @[] . Shelley.encodeUpdate)
+        updates
     & encodeObject
 
 encodeUtxo
@@ -268,7 +269,7 @@ encodeValidityInterval
 encodeValidityInterval x =
     "invalidBefore" .=? OmitWhenNothing
         encodeSlotNo (MA.invalidBefore x) <>
-    "invalidHereafter" .=? OmitWhenNothing
+    "invalidAfter" .=? OmitWhenNothing
         encodeSlotNo (MA.invalidHereafter x)
     & encodeObject
 

@@ -793,9 +793,9 @@ encodeTx x =
         encodeTxBody (Sh.body x) <>
     "metadata" .=? OmitWhenNothing
         identity metadata <>
-    "witness" .=
+    "witnesses" .=
         encodeWitnessSet (Sh.wits x) <>
-    "raw" .=
+    "cbor" .=
         encodeByteStringBase16 (serialize' x)
     & encodeObject
   where
@@ -815,14 +815,15 @@ encodeTxBody x =
         encodeFoldable encodeTxOut (Sh._outputs x) <>
     "fee" .=
         encodeCoin (Sh._txfee x) <>
-    "timeToLive" .=
-        encodeSlotNo (Sh._ttl x) <>
+    "validityInterval" .=
+        encodeObject ("invalidAfter" .= encodeSlotNo (Sh._ttl x)) <>
     "certificates" .=? OmitWhen null
         (encodeFoldable encodeDCert) (Sh._certs x) <>
     "withdrawals" .=? OmitWhen (null . Sh.unWdrl)
         encodeWdrl (Sh._wdrls x) <>
-    "update" .=? OmitWhenNothing
-        encodeUpdate (Sh._txUpdate x)
+    "governanceActions" .=? OmitWhenNothing
+        (encodeFoldable identity . pure @[] . encodeUpdate)
+        (Sh._txUpdate x)
     & encodeObject
 
 encodeTxId

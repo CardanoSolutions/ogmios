@@ -253,7 +253,7 @@
                 , "additionalProperties": false
                 , "required": [ "id" ]
                 , "properties":
-                  { "id": { "$ref": "cardano.json#/definitions/TxId" }
+                  { "id": { "$ref": "cardano.json#/definitions/TransactionId" }
                   }
                 }
               }
@@ -1426,7 +1426,7 @@
             , "properties":
               { "outputReferences":
                 { "type": "array"
-                , "items": { "$ref": "cardano.json#/definitions/TxIn" }
+                , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
                 }
               }
             }
@@ -1810,11 +1810,10 @@
                 , "additionalProperties": false
                 , "required": [ "id" ]
                 , "properties":
-                  { "id": { "$ref": "cardano.json#/definitions/TxId" }
+                  { "id": { "$ref": "cardano.json#/definitions/TransactionId" }
                   }
                 }
-              , { "$ref": "cardano.json#/definitions/Tx[Alonzo]" }
-              , { "$ref": "cardano.json#/definitions/Tx[Babbage]" }
+              , { "$ref": "cardano.json#/definitions/Transaction" }
               , { "type": "null" }
               ]
             }
@@ -1846,7 +1845,7 @@
         , "additionalProperties": false
         , "required": [ "id" ]
         , "properties":
-          { "id": { "$ref": "cardano.json#/definitions/TxId" }
+          { "id": { "$ref": "cardano.json#/definitions/TransactionId" }
           }
         }
       , "id":

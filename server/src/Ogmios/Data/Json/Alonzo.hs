@@ -420,9 +420,9 @@ encodeTx x =
         encodeTxBody (Al.body x) <>
     "metadata" .=? OmitWhenNothing
         identity metadata <>
-    "witness" .=
+    "witnesses" .=
         encodeWitnessSet (Al.wits x) <>
-    "raw" .=
+    "cbor" .=
         encodeByteStringBase16 (serialize' x)
     & encodeObject
   where
@@ -451,7 +451,7 @@ encodeTxBody x =
         Shelley.encodeWdrl (Al.txwdrls x) <>
     "mint" .=? OmitWhen isZero
         Mary.encodeValue (Al.mint x) <>
-    "requiredExtraSignatures".=? OmitWhen null
+    "requiredExtraSignatories".=? OmitWhen null
         (encodeFoldable Shelley.encodeKeyHash) (Al.reqSignerHashes x) <>
     "network" .=? OmitWhenNothing
         Shelley.encodeNetwork (Al.txnetworkid x) <>
@@ -461,8 +461,9 @@ encodeTxBody x =
         encodeCoin (Al.txfee x) <>
     "validityInterval" .=
         Allegra.encodeValidityInterval (Al.txvldt x) <>
-    "update" .=? OmitWhenNothing
-        encodeUpdate (Al.txUpdates x)
+    "governanceActions" .=? OmitWhenNothing
+        (encodeFoldable identity . pure @[] . encodeUpdate)
+        (Al.txUpdates x)
     & encodeObject
 
 encodeTxOut

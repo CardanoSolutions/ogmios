@@ -230,11 +230,11 @@ encodeTx x =
         encodeTxBody (Ledger.Babbage.body x) <>
     "inputSource" .=
         Alonzo.encodeIsValid (Ledger.Babbage.isValid x) <>
-    "witness" .=
+    "witnesses" .=
         Alonzo.encodeWitnessSet (Ledger.Babbage.wits x) <>
     "metadata" .=? OmitWhenNothing
         identity metadata <>
-    "raw" .=
+    "cbor" .=
         encodeByteStringBase16 (serialize' x)
     & encodeObject
  where
@@ -261,7 +261,7 @@ encodeTxBody x =
         (encodeFoldable Shelley.encodeTxIn) (Ledger.Babbage.collateral x) <>
     "collateralReturn" .=? OmitWhenNothing
         encodeTxOut (Ledger.Babbage.collateralReturn' x) <>
-    "totalCollateral" .=? OmitWhenNothing
+    "collateral" .=? OmitWhenNothing
         encodeCoin (Ledger.Babbage.totalCollateral x) <>
     "certificates" .=? OmitWhen null
         (encodeFoldable Shelley.encodeDCert) (Ledger.Babbage.txcerts x) <>
@@ -269,7 +269,7 @@ encodeTxBody x =
         Shelley.encodeWdrl (Ledger.Babbage.txwdrls x) <>
     "mint" .=? OmitWhen isZero
         Mary.encodeValue (Ledger.Babbage.mint x) <>
-    "requiredExtraSignatures" .=? OmitWhen null
+    "requiredExtraSignatories" .=? OmitWhen null
         (encodeFoldable Shelley.encodeKeyHash) (Ledger.Babbage.reqSignerHashes x) <>
     "network" .=? OmitWhenNothing
         Shelley.encodeNetwork (Ledger.Babbage.txnetworkid x) <>
@@ -279,8 +279,9 @@ encodeTxBody x =
         encodeCoin (Ledger.Babbage.txfee x) <>
     "validityInterval" .=
         Allegra.encodeValidityInterval (Ledger.Babbage.txvldt x) <>
-    "update" .=? OmitWhenNothing
-        encodeUpdate (Ledger.Babbage.txUpdates x)
+    "governanceActions" .=? OmitWhenNothing
+        (encodeFoldable identity . pure @[] . encodeUpdate)
+        (Ledger.Babbage.txUpdates x)
     & encodeObject
 
 encodeTxOut

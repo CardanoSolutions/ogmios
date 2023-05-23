@@ -239,10 +239,10 @@ encodeATxAux x =
         encodeHash (By.serializeCborHash (By.taTx x)) <>
     "body" .=
         encodeAnnotated encodeTx (By.aTaTx x) <>
-    "witness" .=
+    "witnesses" .=
         encodeAnnotated encodeTxWitness (By.aTaWitness x) <>
-    "raw" .=
-        ( let bytes = mconcat [ encodeListLen 2 , toCBOR (By.taTx x) , toCBOR (By.taWitness x) ]
+    "cbor" .=
+        ( let bytes = encodeListLen 2 <> toCBOR (By.taTx x) <> toCBOR (By.taWitness x)
            in encodeByteStringBase16 (toStrictByteString bytes)
         )
     & encodeObject

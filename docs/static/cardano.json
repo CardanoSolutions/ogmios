@@ -131,7 +131,7 @@
             , "properties":
               { "txPayload":
                 { "type": "array"
-                , "items": { "$ref": "cardano.json#/definitions/Tx[Byron]" }
+                , "items": { "$ref": "cardano.json#/definitions/Transaction" }
                 }
               , "dlgPayload":
                 { "type": "array"
@@ -203,7 +203,7 @@
     , "properties":
       { "body":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Tx[Shelley]" }
+        , "items": { "$ref": "cardano.json#/definitions/Transaction" }
         }
       , "headerHash": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Block[*].header" }
       , "header":
@@ -238,7 +238,7 @@
     , "properties":
       { "body":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Tx[Allegra]" }
+        , "items": { "$ref": "cardano.json#/definitions/Transaction" }
         }
       , "headerHash": { "$ref": "cardano.json#/definitions/Block[Shelley]/properties/headerHash" }
       , "header": { "$ref": "cardano.json#/definitions/Block[Shelley]/properties/header" }
@@ -252,7 +252,7 @@
     , "properties":
       { "body":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Tx[Mary]" }
+        , "items": { "$ref": "cardano.json#/definitions/Transaction" }
         }
       , "headerHash": { "$ref": "cardano.json#/definitions/Block[Shelley]/properties/headerHash" }
       , "header": { "$ref": "cardano.json#/definitions/Block[Shelley]/properties/header" }
@@ -266,7 +266,7 @@
     , "properties":
       { "body":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Tx[Alonzo]" }
+        , "items": { "$ref": "cardano.json#/definitions/Transaction" }
         }
       , "headerHash": { "$ref": "cardano.json#/definitions/Block[Shelley]/properties/headerHash" }
       , "header": { "$ref": "cardano.json#/definitions/Block[Shelley]/properties/header" }
@@ -280,7 +280,7 @@
     , "properties":
       { "body":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Tx[Babbage]" }
+        , "items": { "$ref": "cardano.json#/definitions/Transaction" }
         }
       , "headerHash": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Block[*].header" }
       , "header":
@@ -859,7 +859,7 @@
     , "properties":
       { "overlappingOutputReferences":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/TxIn" }
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
         }
       }
     }
@@ -1742,7 +1742,7 @@
     , "additionalProperties": false
     , "required": [ "unknownInputReferencedByRedeemer" ]
     , "properties":
-      { "unknownInputReferencedByRedeemer": { "$ref": "cardano.json#/definitions/TxIn" }
+      { "unknownInputReferencedByRedeemer": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
       }
     }
 
@@ -1753,7 +1753,7 @@
     , "additionalProperties": false
     , "required": [ "nonScriptInputReferencedByRedeemer" ]
     , "properties":
-      { "nonScriptInputReferencedByRedeemer": { "$ref": "cardano.json#/definitions/TxIn" }
+      { "nonScriptInputReferencedByRedeemer": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
       }
     }
 
@@ -1785,7 +1785,7 @@
         , "additionalProperties": false
         , "required": [ "spend" ]
         , "properties":
-          { "spend": { "$ref": "cardano.json#/definitions/TxIn" }
+          { "spend": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
           }
         }
       , { "title": "mint"
@@ -2072,7 +2072,7 @@
     , "properties":
       { "badInputs":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/TxIn" }
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
         }
       }
     }
@@ -2235,12 +2235,12 @@
         { "type": "array"
         , "items":
           { "oneOf":
-            [ { "$ref": "cardano.json#/definitions/TxOut" }
+            [ { "$ref": "cardano.json#/definitions/TransactionOutput" }
             , { "type": "object"
               , "additionalProperties": false
               , "required": [ "output", "minimumRequiredValue" ]
               , "properties":
-                { "output": { "$ref": "cardano.json#/definitions/TxOut" }
+                { "output": { "$ref": "cardano.json#/definitions/TransactionOutput" }
                 , "minimumRequiredValue": { "$ref": "cardano.json#/definitions/Lovelace" }
                 }
               }
@@ -2259,7 +2259,7 @@
     , "properties":
       { "tooManyAssetsInOutput":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/TxOut" }
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutput" }
         }
       }
     }
@@ -2733,7 +2733,7 @@
     , "properties":
       { "unspendableScriptInputs":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/TxIn" }
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
         }
       }
     }
@@ -2759,7 +2759,7 @@
     , "properties":
       { "missingDatumHashesForInputs":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/TxIn" }
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
         }
       }
     }
@@ -3001,12 +3001,13 @@
       ]
     }
 
-  , "Tx[Byron]":
-    { "type": "object"
+  , "Transaction":
+    { "title": "Transaction"
+    , "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "raw" ]
+    , "required": [ "id", "body", "witnesses", "cbor" ]
     , "properties":
-      { "id": { "$ref": "cardano.json#/definitions/TxId" }
+      { "id": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Block[*].body" }
       , "body":
         { "type": "object"
         , "additionalProperties": false
@@ -3014,343 +3015,25 @@
         , "properties":
           { "inputs":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxIn" }
-            }
-          , "outputs":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxOut" }
-            }
-          }
-        }
-      , "witness":
-        { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/TxWitness" }
-        }
-      , "raw":
-        { "type": "string"
-        , "contentEncoding": "base16"
-        , "description": "The raw serialized transaction, as found on-chain."
-        }
-      }
-    }
-
-  , "Tx[Shelley]":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "raw" ]
-    , "properties":
-      { "id": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Block[*].body" }
-      , "body":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": ["inputs", "outputs", "fee", "timeToLive"]
-        , "properties":
-          { "inputs":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxIn" }
-            }
-          , "outputs":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxOut" }
-            }
-          , "certificates":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Certificate" }
-            }
-          , "withdrawals": { "$ref": "cardano.json#/definitions/Withdrawals" }
-          , "fee": { "$ref": "cardano.json#/definitions/Lovelace" }
-          , "timeToLive": { "$ref": "cardano.json#/definitions/Slot" }
-          , "update": { "$ref": "cardano.json#/definitions/Update[Shelley]" }
-          }
-        }
-      , "witness":
-        { "type": "object"
-        , "additionalProperties": false
-        , "properties":
-          { "signatures":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Signature" }
-            }
-          , "scripts":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Script" }
-            }
-          , "bootstrap":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/BootstrapWitness" }
-            }
-          }
-        }
-      , "metadata": { "$ref": "cardano.json#/definitions/AuxiliaryData" }
-      , "raw":
-        { "type": "string"
-        , "contentEncoding": "base16"
-        , "description": "The raw serialized transaction, as found on-chain."
-        }
-      }
-    }
-
-  , "Tx[Allegra]":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "raw" ]
-    , "properties":
-      { "id": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Block[*].body" }
-      , "body":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": ["inputs", "outputs", "fee", "validityInterval"]
-        , "properties":
-          { "inputs":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxIn" }
-            }
-          , "outputs":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxOut" }
-            }
-          , "certificates":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Certificate" }
-            }
-          , "withdrawals": { "$ref": "cardano.json#/definitions/Withdrawals" }
-          , "fee": { "$ref": "cardano.json#/definitions/Lovelace" }
-          , "validityInterval": { "$ref": "cardano.json#/definitions/ValidityInterval" }
-          , "update": { "$ref": "cardano.json#/definitions/Update[Shelley]" }
-          }
-        }
-      , "witness":
-        { "type": "object"
-        , "additionalProperties": false
-        , "properties":
-          { "signatures":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Signature" }
-            }
-          , "scripts":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Script" }
-            }
-          , "bootstrap":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/BootstrapWitness" }
-            }
-          }
-        }
-      , "metadata":
-        { "$ref": "cardano.json#/definitions/AuxiliaryData" }
-      , "raw":
-        { "type": "string"
-        , "contentEncoding": "base16"
-        , "description": "The raw serialized transaction, as found on-chain."
-        }
-      }
-    }
-
-  , "Tx[Mary]":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "raw" ]
-    , "properties":
-      { "id": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Block[*].body" }
-      , "body":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": ["inputs", "outputs", "fee", "validityInterval"]
-        , "properties":
-          { "inputs":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxIn" }
-            }
-          , "outputs":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxOut" }
-            }
-          , "certificates":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Certificate" }
-            }
-          , "withdrawals": { "$ref": "cardano.json#/definitions/Withdrawals" }
-          , "fee": { "$ref": "cardano.json#/definitions/Lovelace" }
-          , "validityInterval": { "$ref": "cardano.json#/definitions/ValidityInterval" }
-          , "update": { "$ref": "cardano.json#/definitions/Update[Shelley]" }
-          , "mint": { "$ref": "cardano.json#/definitions/Value" }
-          }
-        }
-      , "witness":
-        { "type": "object"
-        , "additionalProperties": false
-        , "properties":
-          { "signatures":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Signature" }
-            }
-          , "scripts":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Script" }
-            }
-          , "bootstrap":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/BootstrapWitness" }
-            }
-          }
-        }
-      , "metadata": { "$ref": "cardano.json#/definitions/AuxiliaryData" }
-      , "raw":
-        { "type": "string"
-        , "contentEncoding": "base16"
-        , "description": "The raw serialized transaction, as found on-chain."
-        }
-      }
-    }
-
-  , "Tx[Alonzo]":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "inputSource", "raw" ]
-    , "properties":
-      { "id": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Block[*].body" }
-      , "inputSource":
-        { "type": "string"
-        , "enum":
-          [ "inputs"
-          , "collaterals"
-          ]
-        }
-      , "body":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "inputs", "outputs", "fee", "validityInterval" ]
-        , "properties":
-          { "inputs":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxIn" }
-            }
-          , "collaterals":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxIn" }
-            }
-          , "outputs":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxOut" }
-            }
-          , "certificates":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Certificate" }
-            }
-          , "withdrawals":
-            { "$ref": "cardano.json#/definitions/Withdrawals"
-            }
-          , "fee":
-            { "$ref": "cardano.json#/definitions/Lovelace"
-            }
-          , "validityInterval":
-            { "$ref": "cardano.json#/definitions/ValidityInterval"
-            }
-          , "update":
-            { "$ref": "cardano.json#/definitions/Update[Alonzo]"
-            }
-          , "mint":
-            { "$ref": "cardano.json#/definitions/Value"
-            }
-          , "network":
-            { "$ref": "cardano.json#/definitions/Network"
-            }
-          , "scriptIntegrityHash":
-            { "$ref": "cardano.json#/definitions/Digest[Blake2b]::ScriptIntegrity"
-            }
-          , "requiredExtraSignatures":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
-            }
-          }
-        }
-      , "witness":
-        { "type": "object"
-        , "additionalProperties": false
-        , "properties":
-          { "signatures":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Signature" }
-            }
-          , "scripts":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Script" }
-            }
-          , "bootstrap":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/BootstrapWitness" }
-            }
-          , "datums":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Datum" }
-            }
-          , "redeemers":
-            { "type": "object"
-            , "propertyNames": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Redeemer" }
-            }
-          }
-        }
-      , "metadata":
-        { "$ref": "cardano.json#/definitions/AuxiliaryData"
-        }
-      , "raw":
-        { "type": "string"
-        , "contentEncoding": "base16"
-        , "description": "The raw serialized transaction, as found on-chain."
-        }
-      }
-    }
-
-  , "Tx[Babbage]":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "id", "body", "witness", "inputSource", "raw" ]
-    , "properties":
-      { "id": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Block[*].body" }
-      , "inputSource":
-        { "type": "string"
-        , "enum":
-          [ "inputs"
-          , "collaterals"
-          ]
-        }
-      , "body":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "inputs", "outputs", "fee", "validityInterval" ]
-        , "properties":
-          { "inputs":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxIn" }
+            , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
             }
           , "references":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxIn" }
+            , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
             }
           , "collaterals":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxIn" }
+            , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+            }
+          , "collateral":
+            { "$ref": "cardano.json#/definitions/Lovelace"
             }
           , "collateralReturn":
-            { "$ref": "cardano.json#/definitions/TxOut"
-            }
-          , "totalCollateral":
-            { "$ref": "cardano.json#/definitions/Lovelace"
+            { "$ref": "cardano.json#/definitions/TransactionOutput"
             }
           , "outputs":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TxOut" }
+            , "items": { "$ref": "cardano.json#/definitions/TransactionOutput" }
             }
           , "certificates":
             { "type": "array"
@@ -3365,9 +3048,6 @@
           , "validityInterval":
             { "$ref": "cardano.json#/definitions/ValidityInterval"
             }
-          , "update":
-            { "$ref": "cardano.json#/definitions/Update[Babbage]"
-            }
           , "mint":
             { "$ref": "cardano.json#/definitions/Value"
             }
@@ -3377,13 +3057,24 @@
           , "scriptIntegrityHash":
             { "$ref": "cardano.json#/definitions/Digest[Blake2b]::ScriptIntegrity"
             }
-          , "requiredExtraSignatures":
+          , "requiredExtraSignatories":
             { "type": "array"
             , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
             }
+          , "governanceActions":
+            { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/Update[Babbage]" }
+            }
           }
         }
-      , "witness":
+      , "inputSource":
+        { "type": "string"
+        , "enum":
+          [ "inputs"
+          , "collaterals"
+          ]
+        }
+      , "witnesses":
         { "type": "object"
         , "additionalProperties": false
         , "properties":
@@ -3416,10 +3107,10 @@
       , "metadata":
         { "$ref": "cardano.json#/definitions/AuxiliaryData"
         }
-      , "raw":
+      , "cbor":
         { "type": "string"
         , "contentEncoding": "base16"
-        , "description": "The raw serialized transaction, as found on-chain."
+        , "description": "The raw serialized (CBOR) transaction, as found on-chain."
         }
       }
     }
@@ -3434,7 +3125,7 @@
       }
     }
 
-  , "TxId":
+  , "TransactionId":
     { "type": "string"
     , "description": "A Blake2b 32-byte digest of a transaction body, CBOR-encoded."
     , "contentEncoding": "base16"
@@ -3442,20 +3133,7 @@
     , "maxLength": 64
     }
 
-  , "TxIn":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "txId", "index" ]
-    , "properties":
-      { "txId": { "$ref": "cardano.json#/definitions/TxId" }
-      , "index":
-        { "$ref": "cardano.json#/definitions/UInt32"
-        , "minimum": 0
-        }
-      }
-    }
-
-  , "TxOut":
+  , "TransactionOutput":
     { "type": "object"
     , "description": "A transaction output. Since Mary, 'value' always return a multi-asset value. Since Alonzo, 'datumHash' is always present (albeit sometimes 'null'). Since Babbage, 'datum' & 'script' are always present (albeit sometimes 'null')."
     , "examples":
@@ -3480,6 +3158,19 @@
       , "datumHash": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Datum" }
       , "datum": { "$ref": "cardano.json#/definitions/Datum" }
       , "script": { "$ref": "cardano.json#/definitions/Script" }
+      }
+    }
+
+  , "TransactionOutputReference":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "txId", "index" ]
+    , "properties":
+      { "txId": { "$ref": "cardano.json#/definitions/TransactionId" }
+      , "index":
+        { "$ref": "cardano.json#/definitions/UInt32"
+        , "minimum": 0
+        }
       }
     }
 
@@ -3594,8 +3285,8 @@
       , "minItems": 2
       , "maxItems": 2
       , "items":
-        [ { "$ref": "cardano.json#/definitions/TxIn" }
-        , { "$ref": "cardano.json#/definitions/TxOut" }
+        [ { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+        , { "$ref": "cardano.json#/definitions/TransactionOutput" }
         ]
       }
     }
@@ -3605,7 +3296,7 @@
     , "additionalProperties": false
     , "properties":
       { "invalidBefore": { "$ref": "cardano.json#/definitions/Slot" }
-      , "invalidHereafter": { "$ref": "cardano.json#/definitions/Slot" }
+      , "invalidAfter": { "$ref": "cardano.json#/definitions/Slot" }
       }
     }
 
