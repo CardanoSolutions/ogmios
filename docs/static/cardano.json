@@ -29,7 +29,7 @@
     , "additionalProperties": false
     , "required": [ "hash", "body" ]
     , "properties":
-      { "hash": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::AuxiliaryDataBody" }
+      { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Metadata>" }
       , "body": { "$ref": "cardano.json#/definitions/AuxiliaryDataBody" }
       }
     }
@@ -332,7 +332,7 @@
         , "required": [ "number", "root", "witnessesHash" ]
         , "properties":
           { "number": { "$ref": "cardano.json#/definitions/UInt32" }
-          , "root": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::MerkleRoot" }
+          , "root": { "$ref": "cardano.json#/definitions/Digest<Blake2b, MerkleRoot>" }
           , "witnessesHash": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Block[Byron].body.txPayload[].witness" }
           }
         }
@@ -383,7 +383,7 @@
             , "additionalProperties": false
             , "required": ["delegator", "delegatee"]
             , "properties":
-              { "delegator": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Credential" }
+              { "delegator": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Credential>" }
               , "delegatee": { "$ref": "cardano.json#/definitions/StakePoolId" }
               }
             }
@@ -402,7 +402,7 @@
         , "additionalProperties": false
         , "required": ["stakeKeyRegistration"]
         , "properties":
-          { "stakeKeyRegistration": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Credential" }
+          { "stakeKeyRegistration": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Credential>" }
           }
         , "examples":
           [ { "stakeKeyRegistration": "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5"
@@ -415,7 +415,7 @@
         , "additionalProperties": false
         , "required": ["stakeKeyDeregistration"]
         , "properties":
-          { "stakeKeyDeregistration": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Credential" }
+          { "stakeKeyDeregistration": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Credential>" }
           }
         , "examples":
           [ { "stakeKeyDeregistration": "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5"
@@ -489,9 +489,9 @@
             , "additionalProperties": false
             , "required": ["delegateKeyHash","verificationKeyHash","vrfVerificationKeyHash"]
             , "properties":
-              { "delegateKeyHash": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
-              , "verificationKeyHash": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
-              , "vrfVerificationKeyHash": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VrfVerificationKey" }
+              { "delegateKeyHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
+              , "verificationKeyHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
+              , "vrfVerificationKeyHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VrfVerificationKey>" }
               }
             }
           }
@@ -555,9 +555,9 @@
     , "contentEncoding": "base16"
     }
 
-  , "Digest[Blake2b]::AuxiliaryDataBody":
+  , "Digest<Blake2b, Metadata>":
     { "type": "string"
-    , "description": "A Blake2b 32-byte digest of an 'AuxiliaryDataBody', serialised as CBOR."
+    , "description": "A Blake2b 32-byte hash digest of an 'AuxiliaryDataBody', serialised as CBOR."
     , "contentEncoding": "base16"
     , "minLength": 64
     , "maxLength": 64
@@ -568,7 +568,7 @@
 
   , "Digest[Blake2b]::Block[*].body":
     { "type": "string"
-    , "description": "A Blake2b 32-byte digest of an era-independent block body."
+    , "description": "A Blake2b 32-byte hash digest of an era-independent block body."
     , "contentEncoding": "base16"
     , "minLength": 64
     , "maxLength": 64
@@ -580,7 +580,7 @@
   , "Digest[Blake2b]::Block[*].header":
     { "oneOf":
       [ { "type": "string"
-        , "description": "A Blake2b 32-byte digest of an era-independent block header, serialised as CBOR."
+        , "description": "A Blake2b 32-byte hash digest of an era-independent block header, serialised as CBOR."
         , "contentEncoding": "base16"
         , "minLength": 64
         , "maxLength": 64
@@ -596,7 +596,7 @@
 
   , "Digest[Blake2b]::Block[Byron].body.dlgPayload":
     { "type": "string"
-    , "description": "A Blake2b 32-byte digest of a Byron delegation payload, CBOR-encoded."
+    , "description": "A Blake2b 32-byte hash digest of a Byron delegation payload, CBOR-encoded."
     , "contentEncoding": "base16"
     , "minLength": 64
     , "maxLength": 64
@@ -607,7 +607,7 @@
 
   , "Digest[Blake2b]::Block[Byron].body.txPayload[].witness":
     { "type": "string"
-    , "description": "A Blake2b 32-byte digest of a Byron transaction witness set, CBOR-encoded."
+    , "description": "A Blake2b 32-byte hash digest of a Byron transaction witness set, CBOR-encoded."
     , "contentEncoding": "base16"
     , "minLength": 64
     , "maxLength": 64
@@ -618,7 +618,7 @@
 
   , "Digest[Blake2b]::Block[Byron].body.updatePayload":
     { "type": "string"
-    , "description": "A Blake2b 32-byte digest of a Byron update payload, CBOR-encoded."
+    , "description": "A Blake2b 32-byte hash digest of a Byron update payload, CBOR-encoded."
     , "contentEncoding": "base16"
     , "minLength": 64
     , "maxLength": 64
@@ -627,9 +627,9 @@
       ]
     }
 
-  , "Digest[Blake2b]::Credential":
+  , "Digest<Blake2b, Credential>":
     { "type": "string"
-    , "description": "A Blake2b 28-byte digest of a verification key or a script."
+    , "description": "A Blake2b 28-byte hash digest of a verification key or a script."
     , "contentEncoding": "base16"
     , "minLength": 56
     , "maxLength": 56
@@ -638,9 +638,9 @@
       ]
     }
 
-  , "Digest[Blake2b]::Datum":
+  , "Digest<Blake2b, Datum>":
     { "type": "string"
-    , "description": "A Blake2b 32-byte digest of a serialized datum, CBOR-encoded."
+    , "description": "A Blake2b 32-byte hash digest of a serialized datum, CBOR-encoded."
     , "contentEncoding": "base16"
     , "minLength": 64
     , "maxLength": 64
@@ -649,9 +649,9 @@
       ]
     }
 
-  , "Digest[Blake2b]::MerkleRoot":
+  , "Digest<Blake2b, MerkleRoot>":
     { "type": "string"
-    , "description": "A Blake2b 32-byte digest of a Merkle tree (or all block's transactions) root hash."
+    , "description": "A Blake2b 32-byte hash digest of a Merkle tree (or all block's transactions) root hash."
     , "contentEncoding": "base16"
     , "minLength": 64
     , "maxLength": 64
@@ -660,9 +660,9 @@
       ]
     }
 
-  , "Digest[Blake2b]::Nonce":
+  , "Digest<Blake2b, Nonce>":
     { "type": "string"
-    , "description": "A Blake2b 32-byte digest of some arbitrary to make a nonce."
+    , "description": "A Blake2b 32-byte hash digest of some arbitrary to make a nonce."
     , "contentEncoding": "base16"
     , "minLength": 64
     , "maxLength": 64
@@ -671,18 +671,9 @@
       ]
     }
 
-  , "Digest[Blake2b]::PoolMetadata":
+  , "Digest<Blake2b, Script>":
     { "type": "string"
-    , "description": "A Blake2b 32-byte digest of stake pool (canonical) JSON metadata."
-    , "contentEncoding": "base16"
-    , "examples":
-      [ "c248757d390181c517a5beadc9c3fe64bf821d3e889a963fc717003ec248757d"
-      ]
-    }
-
-  , "Digest[Blake2b]::Script":
-    { "type": "string"
-    , "description": "A Blake2b 32-byte digest of a phase-1 or phase-2 script, CBOR-encoded."
+    , "description": "A Blake2b 32-byte hash digest of a phase-1 or phase-2 script, CBOR-encoded."
     , "contentEncoding": "base16"
     , "minLength": 56
     , "maxLength": 56
@@ -691,9 +682,9 @@
       ]
     }
 
-  , "Digest[Blake2b]::ScriptIntegrity":
+  , "Digest<Blake2b, ScriptIntegrity>":
     { "type": "string"
-    , "description": "A Blake2b 32-byte digest of a script-integrity hash (i.e redeemers, datums and cost model, CBOR-encoded)."
+    , "description": "A Blake2b 32-byte hash digest of a script-integrity hash (i.e redeemers, datums and cost model, CBOR-encoded)."
     , "contentEncoding": "base16"
     , "minLength": 64
     , "maxLength": 64
@@ -702,9 +693,29 @@
       ]
     }
 
-  , "Digest[Blake2b]::VerificationKey":
+  , "Digest<Blake2b, StakePoolMetadata>":
     { "type": "string"
-    , "description": "A Blake2b 28-byte digest of an Ed25519 verification key."
+    , "description": "A Blake2b 32-byte hash digest of stake pool (canonical) JSON metadata."
+    , "contentEncoding": "base16"
+    , "examples":
+      [ "c248757d390181c517a5beadc9c3fe64bf821d3e889a963fc717003ec248757d"
+      ]
+    }
+
+  , "Digest<Blake2b, Transaction>":
+    { "type": "string"
+    , "description": "A Blake2b 32-byte hash digest of a transaction (body)."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    , "examples":
+      [ "8757d390181c7d517c24a5beadc9c3fe64bf821d3e889a963fc717003ec24875"
+      ]
+    }
+
+  , "Digest<Blake2b, VerificationKey>":
+    { "type": "string"
+    , "description": "A Blake2b 28-byte hash digest of an Ed25519 verification key."
     , "contentEncoding": "base16"
     , "minLength": 56
     , "maxLength": 56
@@ -713,9 +724,9 @@
       ]
     }
 
-  , "Digest[Blake2b]::VrfVerificationKey":
+  , "Digest<Blake2b, VrfVerificationKey>":
     { "type": "string"
-    , "description": "A Blake2b 32-byte digest of a VRF verification key."
+    , "description": "A Blake2b 32-byte hash digest of a VRF verification key."
     , "contentEncoding": "base16"
     , "minLength": 64
     , "maxLength": 64
@@ -890,11 +901,11 @@
     , "properties":
       { "genesisKeyHashes":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
         }
       , "genesisDelegations":
         { "type": "object"
-        , "propertyNames": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        , "propertyNames": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
         , "additionalProperties": { "$ref": "cardano.json#/definitions/DlgCertificate" }
         }
       , "systemStart": { "$ref": "cardano.json#/definitions/UtcTime" }
@@ -951,7 +962,7 @@
       , "initialDelegates":
         { "type": "object"
         , "title": "InitialDelegates"
-        , "propertyNames": { "ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        , "propertyNames": { "ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
         , "additionalProperties": { "$ref": "cardano.json#/definitions/GenesisDelegate" }
         }
       , "initialFunds":
@@ -999,8 +1010,8 @@
       , "vrf"
       ]
     , "properties":
-      { "delegate": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
-      , "vrf": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VrfVerificationKey" }
+      { "delegate": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
+      , "vrf": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VrfVerificationKey>" }
       }
     }
 
@@ -1020,7 +1031,7 @@
         }
       , "delegators":
         { "type": "object"
-        , "propertyNames": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        , "propertyNames": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
         , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePoolId" }
         }
       }
@@ -1226,7 +1237,7 @@
         , "enum": ["neutral"]
         , "title": "neutral"
         }
-      , { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Nonce" }
+      , { "$ref": "cardano.json#/definitions/Digest<Blake2b, Nonce>" }
       ]
     }
 
@@ -1272,12 +1283,12 @@
     }
 
   , "PolicyId":
-    { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Script"
+    { "$ref": "cardano.json#/definitions/Digest<Blake2b, Script>"
     }
 
   , "StakePoolId":
     { "type": "string"
-    , "description": "A Blake2b 32-byte digest of a pool's verification key."
+    , "description": "A Blake2b 32-byte hash digest of a pool's verification key."
     , "contentEncoding": "bech32"
     , "pattern": "^pool1[0-9a-z]*$"
     , "examples":
@@ -1294,19 +1305,19 @@
       { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
       , "owners":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
         }
       , "cost": { "$ref": "cardano.json#/definitions/Lovelace" }
       , "margin": { "$ref": "cardano.json#/definitions/Ratio" }
       , "pledge": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "vrf": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VrfVerificationKey" }
+      , "vrf": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VrfVerificationKey>" }
       , "metadata":
         { "type": "object"
         , "title": "poolMetadata"
         , "additionalProperties": false
         , "required": ["hash","url"]
         , "properties":
-          { "hash": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::PoolMetadata" }
+          { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, StakePoolMetadata>" }
           , "url":
             { "type": "string"
             , "format": "uri"
@@ -1609,7 +1620,7 @@
           }
         ]
     , "anyOf":
-      [ { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+      [ { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
       , { "type": "object"
         , "title": "any"
         , "additionalProperties": false
@@ -1683,7 +1694,7 @@
             }
           , "resolved":
             { "type": "object"
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Script" }
+            , "additionalProperties": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Script>" }
             , "propertyNames": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
             }
           }
@@ -1871,11 +1882,11 @@
     { "oneOf":
       [ { "title": "Base16"
         , "description": "A stake key or script hash in base16."
-        , "$ref": "cardano.json#/definitions/Digest[Blake2b]::Credential"
+        , "$ref": "cardano.json#/definitions/Digest<Blake2b, Credential>"
         }
       , { "title": "Bech32"
         , "type": "string"
-        , "description": "A Blake2b 28-byte digest of a verification key or script."
+        , "description": "A Blake2b 28-byte hash digest of a verification key or script."
         , "contentEncoding": "bech32"
         , "pattern": "^(stake_vkh|script)1[0-9a-z]*$"
         , "examples":
@@ -1985,7 +1996,7 @@
     , "properties":
       { "missingVkWitnesses":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
         }
       }
     }
@@ -1998,7 +2009,7 @@
     , "properties":
       { "missingScriptWitnesses":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Script" }
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Script>" }
         }
       }
     }
@@ -2011,7 +2022,7 @@
     , "properties":
       { "scriptWitnessNotValidating":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Script" }
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Script>" }
         }
       }
     }
@@ -2024,7 +2035,7 @@
     , "properties":
       { "insufficientGenesisSignatures":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
         }
       }
     }
@@ -2035,7 +2046,7 @@
     , "additionalProperties": false
     , "required": [ "missingTxMetadata" ]
     , "properties":
-      { "missingTxMetadata": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::AuxiliaryDataBody" }
+      { "missingTxMetadata": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Metadata>" }
       }
     }
 
@@ -2045,7 +2056,7 @@
     , "additionalProperties": false
     , "required": [ "missingTxMetadataHash" ]
     , "properties":
-      { "missingTxMetadataHash": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::AuxiliaryDataBody" }
+      { "missingTxMetadataHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Metadata>" }
       }
     }
 
@@ -2060,8 +2071,8 @@
         , "additionalProperties": false
         , "required": [ "includedHash", "expectedHash" ]
         , "properties":
-          { "includedHash": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::AuxiliaryDataBody" }
-          , "expectedHash": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::AuxiliaryDataBody" }
+          { "includedHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Metadata>" }
+          , "expectedHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Metadata>" }
           }
         }
       }
@@ -2358,7 +2369,7 @@
     , "additionalProperties": false
     , "required": [ "stakeKeyAlreadyRegistered" ]
     , "properties":
-      { "stakeKeyAlreadyRegistered": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+      { "stakeKeyAlreadyRegistered": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
       }
     }
 
@@ -2403,7 +2414,7 @@
     , "additionalProperties": false
     , "required": [ "stakeKeyNotRegistered" ]
     , "properties":
-      { "stakeKeyNotRegistered": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+      { "stakeKeyNotRegistered": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
       }
     }
 
@@ -2454,7 +2465,7 @@
     , "additionalProperties": false
     , "required": [ "unknownGenesisKey" ]
     , "properties":
-      { "unknownGenesisKey": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+      { "unknownGenesisKey": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
       }
     }
 
@@ -2464,7 +2475,7 @@
     , "additionalProperties": false
     , "required": [ "alreadyDelegating" ]
     , "properties":
-      { "alreadyDelegating": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+      { "alreadyDelegating": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
       }
     }
 
@@ -2565,7 +2576,7 @@
     , "additionalProperties": false
     , "required": [ "duplicateGenesisVrf" ]
     , "properties":
-      { "duplicateGenesisVrf": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VrfVerificationKey" }
+      { "duplicateGenesisVrf": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VrfVerificationKey>" }
       }
     }
 
@@ -2582,11 +2593,11 @@
         , "properties":
           { "currentlyVoting":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+            , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
             }
           , "shouldBeVoting":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+            , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
             }
           }
         }
@@ -2638,7 +2649,7 @@
             , "items":
               { "type": "object"
               , "additionalProperties": { "$ref": "cardano.json#/definitions/ScriptPurpose" }
-              , "propertyNames": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Script" }
+              , "propertyNames": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Script>" }
               }
             }
           }
@@ -2659,11 +2670,11 @@
         , "properties":
           { "provided":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Datum" }
+            , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Datum>" }
             }
           , "missing":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Datum" }
+            , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Datum>" }
             }
           }
         }
@@ -2683,11 +2694,11 @@
         , "properties":
           { "nonSpendable":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Datum" }
+            , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Datum>" }
             }
           , "acceptable":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Datum" }
+            , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Datum>" }
             }
           }
         }
@@ -2705,10 +2716,10 @@
         , "additionalProperties": false
         , "properties":
           { "provided":
-            { "$ref": "cardano.json#/definitions/Digest[Blake2b]::ScriptIntegrity"
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, Script>Integrity"
             }
           , "inferredFromParameters":
-            { "$ref": "cardano.json#/definitions/Digest[Blake2b]::ScriptIntegrity"
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, Script>Integrity"
             }
           }
         }
@@ -2723,7 +2734,7 @@
     , "properties":
       { "missingRequiredSignatures":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
         }
       }
     }
@@ -2900,7 +2911,7 @@
               , "additionalProperties": false
               , "required": [ "noWitness" ]
               , "properties":
-                { "noWitness": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Script" }
+                { "noWitness": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Script>" }
                 }
               }
             , { "type": "object"
@@ -2936,7 +2947,7 @@
     , "properties":
       { "extraScriptWitnesses":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Script" }
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Script>" }
         }
       }
     }
@@ -2967,7 +2978,7 @@
     , "properties":
       { "malformedReferenceScripts":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Script" }
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Script>" }
         }
       }
     }
@@ -2980,7 +2991,7 @@
     , "properties":
       { "malformedScriptWitnesses":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Script" }
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Script>" }
         }
       }
     }
@@ -3011,7 +3022,7 @@
     , "required": [ "id", "inputSource", "inputs", "outputs", "signatories", "cbor" ]
     , "properties":
       { "id":
-        { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Block[*].body"
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, Transaction>"
         }
       , "inputSource":
         { "type": "string"
@@ -3062,11 +3073,11 @@
         { "$ref": "cardano.json#/definitions/Network"
         }
       , "scriptIntegrityHash":
-        { "$ref": "cardano.json#/definitions/Digest[Blake2b]::ScriptIntegrity"
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, ScriptIntegrity>"
         }
       , "requiredExtraSignatories":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
         }
       , "governanceActions":
         { "type": "array"
@@ -3114,7 +3125,7 @@
 
   , "TransactionId":
     { "type": "string"
-    , "description": "A Blake2b 32-byte digest of a transaction body, CBOR-encoded."
+    , "description": "A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded."
     , "contentEncoding": "base16"
     , "minLength": 64
     , "maxLength": 64
@@ -3142,7 +3153,7 @@
     , "properties":
       { "address": { "$ref": "cardano.json#/definitions/Address" }
       , "value": { "$ref": "cardano.json#/definitions/Value" }
-      , "datumHash": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Datum" }
+      , "datumHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Datum>" }
       , "datum": { "$ref": "cardano.json#/definitions/Datum" }
       , "script": { "$ref": "cardano.json#/definitions/Script" }
       }
@@ -3173,7 +3184,7 @@
             , "additionalProperties": false
             , "required": [ "key", "signature" ]
             , "properties":
-              { "key": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+              { "key": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
               , "signature": { "$ref": "cardano.json#/definitions/Signature" }
               }
             }
@@ -3314,7 +3325,7 @@
     , "required": [ "voterVk", "proposalId", "signature" ]
     , "properties":
       { "voterVk": { "$ref": "cardano.json#/definitions/VerificationKey" }
-      , "proposalId": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+      , "proposalId": { "$ref": "cardano.json#/definitions/Digest<Blake2b, VerificationKey>" }
       , "signature": { "$ref": "cardano.json#/definitions/Signature" }
       }
     }
