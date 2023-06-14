@@ -95,9 +95,18 @@ pre: "<b>5. </b>"
   | `genesisConfig` | `genesisConfiguration` |
   | `systemStart`   | `startTime`            |
 
-  5. Errors in the protocol are now returned as JSON-RPC 2.0 errors, with unique error codes. This includes unnucessful operations such as an intersection not found on `findIntersection`, a point not acquired on `acquireLedgerState` or a failed transaction submission / evaluation. Some errors contain details specific to the error. This approach should simplify both parsing and documentation, as each error is now identified by a specific code.
 
-- **⚠️ BREAKING-CHANGE ⚠️** The `genesisConfig` local-state-query now expects one era as argument (either 'byron', 'shelley' or 'alonzo') to retrieve the corresponding genesis configuration.
+  5. The `genesisConfig` local-state-query now expects one era as argument (either 'byron', 'shelley' or 'alonzo') to retrieve the corresponding genesis configuration.
+
+  6. Errors in the protocol are now returned as JSON-RPC 2.0 errors, with unique error codes. This includes unnucessful operations such as an intersection not found on `findIntersection`, a point not acquired on `acquireLedgerState` or a failed transaction submission / evaluation. Some errors contain details specific to the error. This approach should simplify both parsing and documentation, as each error is now identified by a specific code.
+
+  7. The transaction model has been greatly reworked. The main changes are:
+    - The fields previously nested under `body` and `witnesses` have been flattened out and are now part of the top level object (e.g. `inputs` are no longer nested under `body`).
+    - Few fields have been renamed
+
+      | Old | New |
+      | --- | --- |
+      | `TODO`  | `TODO`  |
 
 #### Removed
 

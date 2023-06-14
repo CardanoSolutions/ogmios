@@ -358,28 +358,6 @@
     , "maximum": 18446744073709552999
     }
 
-  , "BootstrapWitness":
-    { "type": "object"
-    , "examples":
-      [ { "signature": "ZGdic3hnZ3RvZ2hkanB0ZXR2dGtjb2N2eWZpZHFxZ2d1cmpocmhxYWlpc3BxcnVlbGh2eXBxeGVld3ByeWZ2dw=="
-        , "key": "deeb8f82f2af5836ebbc1b450b6dbf0b03c93afe5696f10d49e8a8304ebfac01"
-        , "addressAttributes": "cA=="
-        , "chainCode": "b6dbf0b03c93afe5696f10d49e8a8304ebfac01deeb8f82f2af5836ebbc1b450"
-        }
-      , { "signature": "KYCDveFX76KYEg6Axad/RG5+b5QbJdtYQSNA6kPjqsHh5cIwYPQyqquLJcwo9uDDfqUNmu7n2NUG+o7t2a1Hjg=="
-        , "key": "0c02af01eaacc939b3d0d817f4eb57d323ea5686cb1fecb8de821df1296b84a7"
-        }
-      ]
-    , "additionalProperties": false
-    , "required": [ "signature", "key" ]
-    , "properties":
-      { "key": { "$ref": "cardano.json#/definitions/VerificationKey" }
-      , "signature": { "$ref": "cardano.json#/definitions/Signature" }
-      , "chainCode": { "$ref": "cardano.json#/definitions/ChainCode" }
-      , "addressAttributes": { "$ref": "cardano.json#/definitions/AddressAttributes" }
-      }
-    }
-
   , "Bound":
     { "type": "object"
     , "description": "An era bound which captures the time, slot and epoch at which the era start. The time is relative to the start time of the network."
@@ -1817,8 +1795,33 @@
 
   , "Signature":
     { "type": "string"
-    , "description": "A signature coming from an Ed25519 or Ed25519-BIP32 signing key."
+    , "description": "An EdCSA signature."
     , "contentEncoding": "base16"
+    , "minLength": 128
+    , "maxLength": 128
+    }
+
+  , "Signatory":
+    { "title": "Signatory"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "signature", "key" ]
+    , "properties":
+      { "key": { "$ref": "cardano.json#/definitions/VerificationKey" }
+      , "signature": { "$ref": "cardano.json#/definitions/Signature" }
+      , "chainCode": { "$ref": "cardano.json#/definitions/ChainCode" }
+      , "addressAttributes": { "$ref": "cardano.json#/definitions/AddressAttributes" }
+      }
+    , "examples":
+      [ { "signature": "deeb8f82f2af5836ebbc1b450b6dbf0b03c93afe5696f10d49e8a8304ebfac01deeb8f82f2af5836ebbc1b4ffffffff"
+        , "key": "deeb8f82f2af5836ebbc1b450b6dbf0b03c93afe5696f10d49e8a8304ebfac01"
+        , "addressAttributes": "cA=="
+        , "chainCode": "b6dbf0b03c93afe5696f10d49e8a8304ebfac01deeb8f82f2af5836ebbc1b450"
+        }
+      , { "signature": "deeb8f82f2af5836ebbc1b450b6dbf0b03c93afe5696f10d49e8a8304ebfac01deeb8f82f2af5836ebbc1b4ffffffff"
+        , "key": "0c02af01eaacc939b3d0d817f4eb57d323ea5686cb1fecb8de821df1296b84a7"
+        }
+      ]
     }
 
   , "Slot":
@@ -3005,67 +3008,10 @@
     { "title": "Transaction"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "body", "witnesses", "cbor" ]
+    , "required": [ "id", "inputSource", "inputs", "outputs", "signatories", "cbor" ]
     , "properties":
-      { "id": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Block[*].body" }
-      , "body":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "inputs", "outputs" ]
-        , "properties":
-          { "inputs":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
-            }
-          , "references":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
-            }
-          , "collaterals":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
-            }
-          , "collateral":
-            { "$ref": "cardano.json#/definitions/Lovelace"
-            }
-          , "collateralReturn":
-            { "$ref": "cardano.json#/definitions/TransactionOutput"
-            }
-          , "outputs":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/TransactionOutput" }
-            }
-          , "certificates":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Certificate" }
-            }
-          , "withdrawals":
-            { "$ref": "cardano.json#/definitions/Withdrawals"
-            }
-          , "fee":
-            { "$ref": "cardano.json#/definitions/Lovelace"
-            }
-          , "validityInterval":
-            { "$ref": "cardano.json#/definitions/ValidityInterval"
-            }
-          , "mint":
-            { "$ref": "cardano.json#/definitions/Value"
-            }
-          , "network":
-            { "$ref": "cardano.json#/definitions/Network"
-            }
-          , "scriptIntegrityHash":
-            { "$ref": "cardano.json#/definitions/Digest[Blake2b]::ScriptIntegrity"
-            }
-          , "requiredExtraSignatories":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
-            }
-          , "governanceActions":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Update[Babbage]" }
-            }
-          }
+      { "id":
+        { "$ref": "cardano.json#/definitions/Digest[Blake2b]::Block[*].body"
         }
       , "inputSource":
         { "type": "string"
@@ -3074,38 +3020,79 @@
           , "collaterals"
           ]
         }
-      , "witnesses":
-        { "type": "object"
-        , "additionalProperties": false
-        , "properties":
-          { "signatures":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Signature" }
-            }
-          , "scripts":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Script" }
-            }
-          , "bootstrap":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/BootstrapWitness" }
-            }
-          , "datums":
-            { "type": "object"
-            , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Datum" }
-            }
-          , "redeemers":
-            { "type": "object"
-            , "propertyNames": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/Redeemer" }
-            }
-          }
+      , "inputs":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+        }
+      , "references":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+        }
+      , "collaterals":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+        }
+      , "collateral":
+        { "$ref": "cardano.json#/definitions/Lovelace"
+        }
+      , "collateralReturn":
+        { "$ref": "cardano.json#/definitions/TransactionOutput"
+        }
+      , "outputs":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutput" }
+        }
+      , "certificates":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Certificate" }
+        }
+      , "withdrawals":
+        { "$ref": "cardano.json#/definitions/Withdrawals"
+        }
+      , "fee":
+        { "$ref": "cardano.json#/definitions/Lovelace"
+        }
+      , "validityInterval":
+        { "$ref": "cardano.json#/definitions/ValidityInterval"
+        }
+      , "mint":
+        { "$ref": "cardano.json#/definitions/Value"
+        }
+      , "network":
+        { "$ref": "cardano.json#/definitions/Network"
+        }
+      , "scriptIntegrityHash":
+        { "$ref": "cardano.json#/definitions/Digest[Blake2b]::ScriptIntegrity"
+        }
+      , "requiredExtraSignatories":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VerificationKey" }
+        }
+      , "governanceActions":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Update[Babbage]" }
         }
       , "metadata":
         { "$ref": "cardano.json#/definitions/AuxiliaryData"
+        }
+      , "signatories":
+        { "type": "array"
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Signatory" }
+        }
+      , "scripts":
+        { "type": "object"
+        , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Script" }
+        }
+      , "datums":
+        { "type": "object"
+        , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Datum" }
+        }
+      , "redeemers":
+        { "type": "object"
+        , "propertyNames": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Redeemer" }
         }
       , "cbor":
         { "type": "string"

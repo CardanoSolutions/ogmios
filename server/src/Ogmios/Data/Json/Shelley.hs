@@ -174,21 +174,6 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         encodeShelleyHash headerHash
     & encodeObject
 
-encodeBootstrapWitness
-    :: Crypto crypto
-    => Sh.BootstrapWitness crypto
-    -> Json
-encodeBootstrapWitness (Sh.BootstrapWitness key sig cc attr) =
-    "key" .=
-        encodeVKey key <>
-    "signature" .=
-        encodeSignedDSIGN sig <>
-    "chainCode" .=? OmitWhen BS.null
-        encodeByteStringBase16 (Sh.unChainCode cc) <>
-    "addressAttributes" .=? OmitWhen BS.null
-        encodeByteStringBase16 attr
-    & encodeObject
-
 encodeCertVRF
     :: CC.VRFAlgorithm alg
     => CC.CertVRF alg
@@ -787,17 +772,18 @@ encodeTx
     => Sh.Tx (ShelleyEra crypto)
     -> Json
 encodeTx x =
-    "id" .=
-        encodeTxId (Ledger.txid @(ShelleyEra crypto) (Sh.body x)) <>
-    "body" .=
-        encodeTxBody (Sh.body x) <>
-    "metadata" .=? OmitWhenNothing
-        identity metadata <>
-    "witnesses" .=
-        encodeWitnessSet (Sh.wits x) <>
-    "cbor" .=
-        encodeByteStringBase16 (serialize' x)
-    & encodeObject
+    "id" .= encodeTxId (Ledger.txid @(ShelleyEra crypto) (Sh.body x))
+        <>
+    "inputSource" .= encodeText "inputs"
+        <>
+    encodeTxBody (Sh.body x)
+        <>
+    "metadata" .=? OmitWhenNothing identity metadata
+        <>
+    encodeWitnessSet (Sh.wits x)
+        <>
+    "cbor" .= encodeByteStringBase16 (serialize' x)
+        & encodeObject
   where
     metadata = liftA2
         (\hash body -> encodeObject ("hash" .= hash <> "body" .= body))
@@ -807,7 +793,7 @@ encodeTx x =
 encodeTxBody
     :: Crypto crypto
     => Sh.TxBody (ShelleyEra crypto)
-    -> Json
+    -> Series
 encodeTxBody x =
     "inputs" .=
         encodeFoldable encodeTxIn (Sh._inputs x) <>
@@ -824,7 +810,6 @@ encodeTxBody x =
     "governanceActions" .=? OmitWhenNothing
         (encodeFoldable identity . pure @[] . encodeUpdate)
         (Sh._txUpdate x)
-    & encodeObject
 
 encodeTxId
     :: Crypto crypto
@@ -1077,14 +1062,41 @@ encodeWdrl =
 encodeWitnessSet
     :: Crypto crypto
     => Sh.WitnessSet (ShelleyEra crypto)
-    -> Json
+    -> Series
 encodeWitnessSet x =
-    "signatures" .=? OmitWhen null
-        encodeWitVKeys (Sh.addrWits x) <>
+    "signatories" .=
+        encodeFoldable2
+            encodeBootstrapWitness
+            encodeWitVKey
+            (Sh.bootWits x)
+            (Sh.addrWits x) <>
     "scripts" .=? OmitWhen null
-        (encodeMap stringifyScriptHash encodeScript) (Sh.scriptWits x) <>
-    "bootstrap" .=? OmitWhen null
-        (encodeFoldable encodeBootstrapWitness) (Sh.bootWits x)
+        (encodeMap stringifyScriptHash encodeScript) (Sh.scriptWits x)
+
+encodeWitVKey
+    :: Crypto crypto
+    => Sh.WitVKey Witness crypto
+    -> Json
+encodeWitVKey (Sh.WitVKey key sig) =
+    "key" .=
+        (encodeVerKeyDSign . Ledger.unVKey) key <>
+    "signature" .=
+        encodeSignedDSIGN sig
+    & encodeObject
+
+encodeBootstrapWitness
+    :: Crypto crypto
+    => Sh.BootstrapWitness crypto
+    -> Json
+encodeBootstrapWitness (Sh.BootstrapWitness key sig cc attr) =
+    "key" .=
+        encodeVKey key <>
+    "signature" .=
+        encodeSignedDSIGN sig <>
+    "chainCode" .=? OmitWhen BS.null
+        encodeByteStringBase16 (Sh.unChainCode cc) <>
+    "addressAttributes" .=? OmitWhen BS.null
+        encodeByteStringBase16 attr
     & encodeObject
 
 encodeWitHashes
@@ -1093,14 +1105,6 @@ encodeWitHashes
     -> Json
 encodeWitHashes =
     encodeFoldable encodeKeyHash . Sh.unWitHashes
-
-encodeWitVKeys
-    :: Crypto crypto
-    => Set (Sh.WitVKey Witness crypto)
-    -> Json
-encodeWitVKeys = encodeFoldable'
-    (\(Sh.WitVKey key _) -> stringifyVKey key)
-    (\(Sh.WitVKey _ sig) -> encodeSignedDSIGN sig)
 
 --
 -- Conversion To Text

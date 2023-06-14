@@ -124,17 +124,18 @@ encodeTx
     => Sh.Tx (MaryEra crypto)
     -> Json
 encodeTx x =
-    "id" .=
-        Shelley.encodeTxId (Ledger.txid @(MaryEra crypto) (Sh.body x)) <>
-    "body" .=
-        encodeTxBody (Sh.body x) <>
-    "metadata" .=? OmitWhenNothing
-        identity metadata <>
-    "witnesses" .=
-        encodeWitnessSet (Sh.wits x) <>
-    "cbor" .=
-        encodeByteStringBase16 (serialize' x)
-    & encodeObject
+    "id" .= Shelley.encodeTxId (Ledger.txid @(MaryEra crypto) (Sh.body x))
+        <>
+    "inputSource" .= encodeText "inputs"
+        <>
+    encodeTxBody (Sh.body x)
+        <>
+    "metadata" .=? OmitWhenNothing identity metadata
+        <>
+    encodeWitnessSet (Sh.wits x)
+        <>
+    "cbor" .= encodeByteStringBase16 (serialize' x)
+        & encodeObject
   where
     adHash :: MA.TxBody era -> StrictMaybe (MA.AuxiliaryDataHash (Ledger.Crypto era))
     adHash = getField @"adHash"
@@ -147,7 +148,7 @@ encodeTx x =
 encodeTxBody
     :: Crypto crypto
     => MA.TxBody (MaryEra crypto)
-    -> Json
+    -> Series
 encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ mint) =
     "inputs" .=
         encodeFoldable Shelley.encodeTxIn inps <>
@@ -166,7 +167,6 @@ encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ mint) =
     "governanceActions" .=? OmitWhenNothing
         (encodeFoldable identity . pure @[] . Shelley.encodeUpdate)
         updates
-    & encodeObject
 
 encodeTxOut
     :: Crypto crypto
@@ -279,15 +279,16 @@ encodeValue (MA.Value coins assets) =
 encodeWitnessSet
     :: Crypto crypto
     => Sh.WitnessSet (MaryEra crypto)
-    -> Json
+    -> Series
 encodeWitnessSet x =
-    "signatures" .=
-        Shelley.encodeWitVKeys (Sh.addrWits x) <>
-    "scripts" .=
-        encodeMap Shelley.stringifyScriptHash Allegra.encodeScript (Sh.scriptWits x) <>
-    "bootstrap" .=
-        encodeFoldable Shelley.encodeBootstrapWitness (Sh.bootWits x)
-    & encodeObject
+    "signatories" .=
+        encodeFoldable2
+            Shelley.encodeBootstrapWitness
+            Shelley.encodeWitVKey
+            (Sh.bootWits x)
+            (Sh.addrWits x) <>
+    "scripts" .=? OmitWhen null
+        (encodeMap Shelley.stringifyScriptHash Allegra.encodeScript) (Sh.scriptWits x)
 
 --
 -- Conversion To Text

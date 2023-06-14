@@ -74,7 +74,7 @@ module Ogmios.Data.Json.Prelude
     , encodeAnnotated
     , encodeIdentity
     , encodeFoldable
-    , encodeFoldable'
+    , encodeFoldable2
     , encodeList
     , encodeMap
     , encodeMaybe
@@ -428,7 +428,7 @@ encodeWord64 =
 -- Data-Structures
 --
 
-encodeAnnotated :: (a -> Json) -> Annotated a any -> Json
+encodeAnnotated :: (a -> codec) -> Annotated a any -> codec
 encodeAnnotated encodeElem =
     encodeElem . unAnnotated
 {-# INLINABLE encodeAnnotated #-}
@@ -449,15 +449,15 @@ encodeFoldable encodeElem =
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> StrictSeq a -> Json #-}
 {-# INLINABLE encodeFoldable #-}
 
-encodeFoldable' :: Foldable f => (a -> Text) -> (a -> Json) -> f a -> Json
-encodeFoldable' encodeKey encodeValue =
-    Json.pairs . foldr (\a -> (<>) (Json.pair (Json.fromText (encodeKey a)) (encodeValue a))) mempty
-{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> [a] -> Json #-}
-{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> NonEmpty a -> Json #-}
-{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> Vector a -> Json #-}
-{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> Set a -> Json #-}
-{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> StrictSeq a -> Json #-}
-{-# INLINABLE encodeFoldable' #-}
+encodeFoldable2 :: Foldable f => (a -> Json) -> (b -> Json) -> f a -> f b -> Json
+encodeFoldable2 encodeA encodeB as =
+    Json.list id . foldr ((:) . encodeB) (foldr ((:) . encodeA) [] as)
+{-# SPECIALIZE encodeFoldable2 :: (a -> Json) -> (b -> Json) -> [a] -> [b] -> Json #-}
+{-# SPECIALIZE encodeFoldable2 :: (a -> Json) -> (b -> Json) -> NonEmpty a -> NonEmpty b -> Json #-}
+{-# SPECIALIZE encodeFoldable2 :: (a -> Json) -> (b -> Json) -> Vector a -> Vector b -> Json #-}
+{-# SPECIALIZE encodeFoldable2 :: (a -> Json) -> (b -> Json) -> Set a -> Set b -> Json #-}
+{-# SPECIALIZE encodeFoldable2 :: (a -> Json) -> (b -> Json) -> StrictSeq a -> StrictSeq b -> Json #-}
+{-# INLINABLE encodeFoldable2 #-}
 
 encodeList :: (a -> Json) -> [a] -> Json
 encodeList =

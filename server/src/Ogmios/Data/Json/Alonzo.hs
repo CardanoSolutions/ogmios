@@ -412,19 +412,18 @@ encodeTx
     => Al.ValidatedTx (AlonzoEra crypto)
     -> Json
 encodeTx x =
-    "id" .=
-        Shelley.encodeTxId (Ledger.txid @(AlonzoEra crypto) (Al.body x)) <>
-    "inputSource" .=
-        encodeIsValid (Al.isValid x) <>
-    "body" .=
-        encodeTxBody (Al.body x) <>
-    "metadata" .=? OmitWhenNothing
-        identity metadata <>
-    "witnesses" .=
-        encodeWitnessSet (Al.wits x) <>
-    "cbor" .=
-        encodeByteStringBase16 (serialize' x)
-    & encodeObject
+    "id" .= Shelley.encodeTxId (Ledger.txid @(AlonzoEra crypto) (Al.body x))
+        <>
+    "inputSource" .= encodeIsValid (Al.isValid x)
+        <>
+    encodeTxBody (Al.body x)
+        <>
+    "metadata" .=? OmitWhenNothing identity metadata
+        <>
+    encodeWitnessSet (Al.wits x)
+        <>
+    "cbor" .= encodeByteStringBase16 (serialize' x)
+        & encodeObject
   where
     adHash :: Al.TxBody era -> StrictMaybe (Al.AuxiliaryDataHash (Ledger.Crypto era))
     adHash = getField @"adHash"
@@ -437,7 +436,7 @@ encodeTx x =
 encodeTxBody
     :: Crypto crypto
     => Al.TxBody (AlonzoEra crypto)
-    -> Json
+    -> Series
 encodeTxBody x =
     "inputs" .=
         encodeFoldable Shelley.encodeTxIn (Al.inputs x) <>
@@ -464,7 +463,6 @@ encodeTxBody x =
     "governanceActions" .=? OmitWhenNothing
         (encodeFoldable identity . pure @[] . encodeUpdate)
         (Al.txUpdates x)
-    & encodeObject
 
 encodeTxOut
     :: Crypto crypto
@@ -752,19 +750,23 @@ encodeTranslationError err = encodeText $ case err of
 encodeWitnessSet
     :: (Ledger.Era era, Ledger.Core.Script era ~ Al.Script era)
     => Al.TxWitness era
-    -> Json
+    -> Series
 encodeWitnessSet x =
-    "signatures" .=
-        Shelley.encodeWitVKeys (Al.txwitsVKey x) <>
-    "scripts" .=
-        encodeMap Shelley.stringifyScriptHash encodeScript (Al.txscripts x) <>
-    "datums" .=
-        encodeMap stringifyDataHash encodeData (Al.unTxDats $ Al.txdats x) <>
-    "redeemers" .=
-        encodeRedeemers (Al.txrdmrs x) <>
-    "bootstrap" .=
-        encodeFoldable Shelley.encodeBootstrapWitness (Al.txwitsBoot x)
-    & encodeObject
+    "signatories" .=
+        encodeFoldable2
+            Shelley.encodeBootstrapWitness
+            Shelley.encodeWitVKey
+            (Al.txwitsBoot x)
+            (Al.txwitsVKey x) <>
+    "scripts" .=? OmitWhen null
+        (encodeMap Shelley.stringifyScriptHash encodeScript)
+        (Al.txscripts x) <>
+    "datums" .=? OmitWhen null
+        (encodeMap stringifyDataHash encodeData)
+        (Al.unTxDats $ Al.txdats x) <>
+    "redeemers" .=? OmitWhen (\(Al.Redeemers redeemers) -> null redeemers)
+        encodeRedeemers
+        (Al.txrdmrs x)
 
 --
 -- Conversion To Text

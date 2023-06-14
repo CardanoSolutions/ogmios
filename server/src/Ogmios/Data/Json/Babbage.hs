@@ -224,19 +224,18 @@ encodeTx
     => Ledger.Babbage.ValidatedTx (BabbageEra crypto)
     -> Json
 encodeTx x =
-    "id" .=
-        Shelley.encodeTxId (Ledger.txid @(BabbageEra crypto) (Ledger.Babbage.body x)) <>
-    "body" .=
-        encodeTxBody (Ledger.Babbage.body x) <>
-    "inputSource" .=
-        Alonzo.encodeIsValid (Ledger.Babbage.isValid x) <>
-    "witnesses" .=
-        Alonzo.encodeWitnessSet (Ledger.Babbage.wits x) <>
-    "metadata" .=? OmitWhenNothing
-        identity metadata <>
-    "cbor" .=
-        encodeByteStringBase16 (serialize' x)
-    & encodeObject
+    "id" .= Shelley.encodeTxId (Ledger.txid @(BabbageEra crypto) (Ledger.Babbage.body x))
+        <>
+    "inputSource" .= Alonzo.encodeIsValid (Ledger.Babbage.isValid x)
+        <>
+    encodeTxBody (Ledger.Babbage.body x)
+        <>
+    "metadata" .=? OmitWhenNothing identity metadata
+        <>
+    Alonzo.encodeWitnessSet (Ledger.Babbage.wits x)
+        <>
+    "cbor" .= encodeByteStringBase16 (serialize' x)
+        & encodeObject
  where
    adHash :: Ledger.Babbage.TxBody era -> StrictMaybe (Ledger.AuxiliaryDataHash (Ledger.Crypto era))
    adHash = getField @"adHash"
@@ -249,7 +248,7 @@ encodeTx x =
 encodeTxBody
     :: Crypto crypto
     => Ledger.Babbage.TxBody (BabbageEra crypto)
-    -> Json
+    -> Series
 encodeTxBody x =
     "inputs" .=
         encodeFoldable Shelley.encodeTxIn (Ledger.Babbage.inputs x) <>
@@ -282,7 +281,6 @@ encodeTxBody x =
     "governanceActions" .=? OmitWhenNothing
         (encodeFoldable identity . pure @[] . encodeUpdate)
         (Ledger.Babbage.txUpdates x)
-    & encodeObject
 
 encodeTxOut
     :: Crypto crypto

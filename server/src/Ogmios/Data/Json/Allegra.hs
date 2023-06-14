@@ -132,17 +132,18 @@ encodeTx
     => Sh.Tx (AllegraEra crypto)
     -> Json
 encodeTx x =
-    "id" .=
-        Shelley.encodeTxId (Ledger.txid @(AllegraEra crypto) (Sh.body x)) <>
-    "body" .=
-        encodeTxBody (Sh.body x) <>
-    "metadata" .=? OmitWhenNothing
-        identity metadata <>
-    "witnesses" .=
-        encodeWitnessSet (Sh.wits x) <>
-    "cbor" .=
-        encodeByteStringBase16 (serialize' x)
-    & encodeObject
+    "id" .= Shelley.encodeTxId (Ledger.txid @(AllegraEra crypto) (Sh.body x))
+        <>
+    "inputSource" .= encodeText "inputs"
+        <>
+    encodeTxBody (Sh.body x)
+        <>
+    "metadata" .=? OmitWhenNothing identity metadata
+        <>
+    encodeWitnessSet (Sh.wits x)
+        <>
+    "cbor" .= encodeByteStringBase16 (serialize' x)
+        & encodeObject
   where
     adHash :: MA.TxBody era -> StrictMaybe (Ledger.AuxiliaryDataHash (Ledger.Crypto era))
     adHash = getField @"adHash"
@@ -155,7 +156,7 @@ encodeTx x =
 encodeTxBody
     :: Crypto crypto
     => MA.TxBody (AllegraEra crypto)
-    -> Json
+    -> Series
 encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ _) =
     "inputs" .=
         encodeFoldable Shelley.encodeTxIn inps <>
@@ -172,7 +173,6 @@ encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ _) =
     "governanceActions" .=? OmitWhenNothing
         (encodeFoldable identity . pure @[] . Shelley.encodeUpdate)
         updates
-    & encodeObject
 
 encodeUtxo
     :: Crypto crypto
@@ -276,12 +276,13 @@ encodeValidityInterval x =
 encodeWitnessSet
     :: Crypto crypto
     => Sh.WitnessSet (AllegraEra crypto)
-    -> Json
+    -> Series
 encodeWitnessSet x =
-    "signatures" .=? OmitWhen null
-        Shelley.encodeWitVKeys (Sh.addrWits x) <>
+    "signatories" .=
+        encodeFoldable2
+            Shelley.encodeBootstrapWitness
+            Shelley.encodeWitVKey
+            (Sh.bootWits x)
+            (Sh.addrWits x) <>
     "scripts" .=? OmitWhen null
-        (encodeMap Shelley.stringifyScriptHash encodeScript) (Sh.scriptWits x) <>
-    "bootstrap" .=? OmitWhen null
-        (encodeFoldable Shelley.encodeBootstrapWitness) (Sh.bootWits x)
-    & encodeObject
+        (encodeMap Shelley.stringifyScriptHash encodeScript) (Sh.scriptWits x)

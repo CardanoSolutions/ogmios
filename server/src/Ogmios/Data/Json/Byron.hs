@@ -194,16 +194,6 @@ encodeKeyHash :: By.KeyHash -> Json
 encodeKeyHash =
     encodeHash . By.unKeyHash
 
-encodeTx
-    :: By.Tx
-    -> Json
-encodeTx x =
-    "inputs" .=
-        encodeFoldable encodeTxIn (By.txInputs x) <>
-    "outputs" .=
-        encodeFoldable encodeTxOut (By.txOutputs x)
-    & encodeObject
-
 encodeTxIn
     :: By.TxIn
     -> Json
@@ -235,17 +225,28 @@ encodeATxAux
     :: By.ATxAux any
     -> Json
 encodeATxAux x =
-    "id" .=
-        encodeHash (By.serializeCborHash (By.taTx x)) <>
-    "body" .=
-        encodeAnnotated encodeTx (By.aTaTx x) <>
-    "witnesses" .=
-        encodeAnnotated encodeTxWitness (By.aTaWitness x) <>
+    "id" .= encodeHash (By.serializeCborHash (By.taTx x))
+        <>
+    "inputSource" .= encodeText "inputs"
+        <>
+    encodeAnnotated encodeTx (By.aTaTx x)
+        <>
+    "signatories" .= encodeAnnotated (encodeFoldable encodeTxInWitness) (By.aTaWitness x)
+        <>
     "cbor" .=
         ( let bytes = encodeListLen 2 <> toCBOR (By.taTx x) <> toCBOR (By.taWitness x)
            in encodeByteStringBase16 (toStrictByteString bytes)
         )
     & encodeObject
+
+encodeTx
+    :: By.Tx
+    -> Series
+encodeTx x =
+    "inputs" .=
+        encodeFoldable encodeTxIn (By.txInputs x) <>
+    "outputs" .=
+        encodeFoldable encodeTxOut (By.txOutputs x)
 
 encodeATxPayload
     :: By.ATxPayload any
@@ -548,6 +549,21 @@ encodeTxFeePolicy (By.TxFeePolicyTxSizeLinear (By.TxSizeLinear cst coeff)) =
         encodeRational coeff
     & encodeObject
 
+encodeTxInWitness
+    :: By.TxInWitness
+    -> Json
+encodeTxInWitness = encodeObject . \case
+    By.VKWitness key sig ->
+        "key" .=
+            encodeVerificationKey key <>
+        "signature" .=
+            encodeSignature sig
+    By.RedeemWitness key sig ->
+        "key" .=
+            encodeRedeemVerificationKey key <>
+        "signature" .=
+            encodeRedeemSignature sig
+
 encodeTxProof
     :: By.TxProof
     -> Json
@@ -559,35 +575,6 @@ encodeTxProof x =
     "witnessesHash" .=
         encodeHash (By.txpWitnessesHash x)
     & encodeObject
-
-encodeTxWitness
-    :: By.TxWitness
-    -> Json
-encodeTxWitness =
-    encodeFoldable encodeTxInWitness
-
-encodeTxInWitness
-    :: By.TxInWitness
-    -> Json
-encodeTxInWitness = \case
-    By.VKWitness key sig ->
-        "witnessVk" .=
-            ( "key" .=
-                encodeVerificationKey key <>
-              "signature" .=
-                encodeSignature sig
-              & encodeObject
-            )
-        & encodeObject
-    By.RedeemWitness key sig ->
-        "redeemWitness" .=
-            ( "key" .=
-                encodeRedeemVerificationKey key <>
-              "signature" .=
-                  encodeRedeemSignature sig
-              & encodeObject
-            )
-        & encodeObject
 
 encodeTxValidationError :: By.TxValidationError -> Json
 encodeTxValidationError = \case
