@@ -24,28 +24,6 @@
     , "description": "A number of asset, can be negative went burning assets."
     }
 
-  , "AuxiliaryData":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "hash", "body" ]
-    , "properties":
-      { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Metadata>" }
-      , "body": { "$ref": "cardano.json#/definitions/AuxiliaryDataBody" }
-      }
-    }
-
-  , "AuxiliaryDataBody":
-    { "type": "object"
-    , "additionalProperties": false
-    , "properties":
-      { "blob": { "$ref": "cardano.json#/definitions/Metadata" }
-      , "scripts":
-        { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Script" }
-        }
-      }
-    }
-
   , "Block":
     { "description": "A Cardano Block, which can take different forms depending on the era."
     , "oneOf":
@@ -555,7 +533,7 @@
     , "contentEncoding": "base16"
     }
 
-  , "Digest<Blake2b, Metadata>":
+  , "Digest<Blake2b, MetadataLabels>":
     { "type": "string"
     , "description": "A Blake2b 32-byte hash digest of an 'AuxiliaryDataBody', serialised as CBOR."
     , "contentEncoding": "base16"
@@ -1124,6 +1102,16 @@
     }
 
   , "Metadata":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "hash", "labels" ]
+    , "properties":
+      { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, MetadataLabels>" }
+      , "labels": { "$ref": "cardano.json#/definitions/MetadataLabels" }
+      }
+    }
+
+  , "MetadataLabels":
     { "type": "object"
     , "propertyNames": { "pattern": "^-?[0-9]+$" }
     , "examples":
@@ -2046,7 +2034,7 @@
     , "additionalProperties": false
     , "required": [ "missingTxMetadata" ]
     , "properties":
-      { "missingTxMetadata": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Metadata>" }
+      { "missingTxMetadata": { "$ref": "cardano.json#/definitions/Digest<Blake2b, MetadataLabels>" }
       }
     }
 
@@ -2056,7 +2044,7 @@
     , "additionalProperties": false
     , "required": [ "missingTxMetadataHash" ]
     , "properties":
-      { "missingTxMetadataHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Metadata>" }
+      { "missingTxMetadataHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, MetadataLabels>" }
       }
     }
 
@@ -2071,8 +2059,8 @@
         , "additionalProperties": false
         , "required": [ "includedHash", "expectedHash" ]
         , "properties":
-          { "includedHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Metadata>" }
-          , "expectedHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, Metadata>" }
+          { "includedHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, MetadataLabels>" }
+          , "expectedHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, MetadataLabels>" }
           }
         }
       }
@@ -3084,7 +3072,7 @@
         , "items": { "$ref": "cardano.json#/definitions/Update[Babbage]" }
         }
       , "metadata":
-        { "$ref": "cardano.json#/definitions/AuxiliaryData"
+        { "$ref": "cardano.json#/definitions/Metadata"
         }
       , "signatories":
         { "type": "array"

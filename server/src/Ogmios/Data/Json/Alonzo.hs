@@ -40,6 +40,9 @@ import Ouroboros.Consensus.Shelley.Protocol.TPraos
 import Prettyprinter
     ( pretty
     )
+import Data.Maybe.Strict
+    ( fromSMaybe
+    )
 
 import qualified Data.Map.Strict as Map
 
@@ -53,6 +56,8 @@ import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Era as Ledger
 import qualified Cardano.Ledger.SafeHash as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
+import qualified Cardano.Ledger.Hashes as Ledger
+import qualified Cardano.Ledger.Core as Ledger
 
 import qualified Cardano.Ledger.Shelley.API as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
@@ -73,7 +78,6 @@ import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 import qualified Cardano.Ledger.Alonzo.TxWitness as Al
 
 import qualified Cardano.Ledger.Alonzo.Tools as Ledger.Tools
-import qualified Cardano.Ledger.Core as Ledger.Core
 
 import qualified Cardano.Ledger.Mary.Value as Ledger.Mary
 
@@ -84,6 +88,9 @@ import qualified Cardano.Ledger.Alonzo.Rules.Utxo as Rules.Alonzo
 import qualified Cardano.Ledger.Alonzo.Rules.Utxos as Rules.Alonzo
 import qualified Cardano.Ledger.Alonzo.Rules.Utxow as Rules.Alonzo
 
+type AuxiliaryScripts era =
+    Map (Ledger.ScriptHash (Ledger.Crypto era)) (Ledger.Script era)
+
 --
 -- Encoders
 --
@@ -93,7 +100,7 @@ encodeUtxowPredicateFail
         ( crypto ~ Ledger.Crypto era
         , Ledger.Era era
         )
-    => (Rules.Shelley.PredicateFailure (Ledger.Core.EraRule "UTXO" era) -> Json)
+    => (Rules.Shelley.PredicateFailure (Ledger.EraRule "UTXO" era) -> Json)
     -> Rules.Alonzo.UtxowPredicateFail era
     -> Json
 encodeUtxowPredicateFail encodeUtxoFailureInEra = \case
@@ -143,15 +150,20 @@ encodeUtxowPredicateFail encodeUtxoFailureInEra = \case
         Shelley.encodeUtxowFailure encodeUtxoFailureInEra e
 
 encodeAuxiliaryData
-    :: (Ledger.Era era, Ledger.Core.Script era ~ Al.Script era)
+    :: forall era.
+        ( Ledger.Era era
+        , Ledger.ValidateScript era
+        , Ledger.Script era ~ Al.Script era
+        )
     => Al.AuxiliaryData era
-    -> Json
+    -> (Json, AuxiliaryScripts era)
 encodeAuxiliaryData (Al.AuxiliaryData blob scripts) =
-    "blob" .=
-        Shelley.encodeMetadataBlob blob <>
-    "scripts" .=
-        encodeFoldable encodeScript scripts
-    & encodeObject
+    ( Shelley.encodeMetadataBlob blob
+    , foldr
+        (\script -> Map.insert (Ledger.hashScript @era script) script)
+        mempty
+        scripts
+    )
 
 encodeBinaryData
     :: Al.BinaryData era
@@ -418,9 +430,9 @@ encodeTx x =
         <>
     encodeTxBody (Al.body x)
         <>
-    "metadata" .=? OmitWhenNothing identity metadata
+    "metadata" .=? OmitWhenNothing fst auxiliary
         <>
-    encodeWitnessSet (Al.wits x)
+    encodeWitnessSet (snd <$> auxiliary) (Al.wits x)
         <>
     "cbor" .= encodeByteStringBase16 (serialize' x)
         & encodeObject
@@ -428,10 +440,13 @@ encodeTx x =
     adHash :: Al.TxBody era -> StrictMaybe (Al.AuxiliaryDataHash (Ledger.Crypto era))
     adHash = getField @"adHash"
 
-    metadata = liftA2
-        (\hash body -> encodeObject ("hash" .= hash <> "body" .= body))
-        (Shelley.encodeAuxiliaryDataHash <$> adHash (Al.body x))
-        (encodeAuxiliaryData <$> Al.auxiliaryData x)
+    auxiliary = do
+        hash <- Shelley.encodeAuxiliaryDataHash <$> adHash (Al.body x)
+        (labels, scripts) <- encodeAuxiliaryData <$> Al.auxiliaryData x
+        pure
+            ( encodeObject ("hash" .= hash <> "labels" .= labels)
+            , scripts
+            )
 
 encodeTxBody
     :: Crypto crypto
@@ -504,15 +519,15 @@ encodeUtxoFailure
     :: forall era crypto.
         ( crypto ~ Ledger.Crypto era
         , Ledger.Era era
-        , Rules.Shelley.PredicateFailure (Ledger.Core.EraRule "UTXOS" era)
+        , Rules.Shelley.PredicateFailure (Ledger.EraRule "UTXOS" era)
             ~ Rules.Alonzo.UtxosPredicateFailure era
-        , Rules.Shelley.PredicateFailure (Ledger.Core.EraRule "PPUP" era)
+        , Rules.Shelley.PredicateFailure (Ledger.EraRule "PPUP" era)
             ~ Rules.Shelley.PpupPredicateFailure era
-        , Ledger.Core.Value era ~ Ledger.Mary.Value crypto
+        , Ledger.Value era ~ Ledger.Mary.Value crypto
         )
     => (Sh.UTxO era -> Json)
-    -> (Ledger.Core.TxOut era -> Json)
-    -> (Ledger.Core.TxOut era -> Sh.Addr crypto)
+    -> (Ledger.TxOut era -> Json)
+    -> (Ledger.TxOut era -> Sh.Addr crypto)
     -> Rules.Alonzo.UtxoPredicateFailure era
     -> Json
 encodeUtxoFailure encodeUtxoInEra encodeTxOutInEra extractAddress = \case
@@ -641,7 +656,7 @@ encodeUtxoFailure encodeUtxoInEra encodeTxOutInEra extractAddress = \case
 
 encodeUtxosPredicateFailure
     :: forall era.
-        ( Sh.PredicateFailure (Ledger.Core.EraRule "PPUP" era) ~ Rules.Shelley.PpupPredicateFailure era
+        ( Sh.PredicateFailure (Ledger.EraRule "PPUP" era) ~ Rules.Shelley.PpupPredicateFailure era
         , Ledger.Era era
         )
     => Rules.Alonzo.UtxosPredicateFailure era
@@ -748,10 +763,11 @@ encodeTranslationError err = encodeText $ case err of
         "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
 
 encodeWitnessSet
-    :: (Ledger.Era era, Ledger.Core.Script era ~ Al.Script era)
-    => Al.TxWitness era
+    :: (Ledger.Era era, Ledger.Script era ~ Al.Script era)
+    => StrictMaybe (AuxiliaryScripts era)
+    -> Al.TxWitness era
     -> Series
-encodeWitnessSet x =
+encodeWitnessSet (fromSMaybe mempty -> auxScripts) x =
     "signatories" .=
         encodeFoldable2
             Shelley.encodeBootstrapWitness
@@ -760,7 +776,7 @@ encodeWitnessSet x =
             (Al.txwitsVKey x) <>
     "scripts" .=? OmitWhen null
         (encodeMap Shelley.stringifyScriptHash encodeScript)
-        (Al.txscripts x) <>
+        (Al.txscripts x <> auxScripts) <>
     "datums" .=? OmitWhen null
         (encodeMap stringifyDataHash encodeData)
         (Al.unTxDats $ Al.txdats x) <>

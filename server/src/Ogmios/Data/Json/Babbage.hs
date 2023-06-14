@@ -230,20 +230,24 @@ encodeTx x =
         <>
     encodeTxBody (Ledger.Babbage.body x)
         <>
-    "metadata" .=? OmitWhenNothing identity metadata
+    "metadata" .=? OmitWhenNothing fst auxiliary
         <>
-    Alonzo.encodeWitnessSet (Ledger.Babbage.wits x)
+    Alonzo.encodeWitnessSet (snd <$> auxiliary) (Ledger.Babbage.wits x)
         <>
     "cbor" .= encodeByteStringBase16 (serialize' x)
         & encodeObject
- where
-   adHash :: Ledger.Babbage.TxBody era -> StrictMaybe (Ledger.AuxiliaryDataHash (Ledger.Crypto era))
-   adHash = getField @"adHash"
+  where
+    adHash :: Ledger.Babbage.TxBody era -> StrictMaybe (Ledger.AuxiliaryDataHash (Ledger.Crypto era))
+    adHash = getField @"adHash"
 
-   metadata = liftA2
-       (\hash body -> encodeObject ("hash" .= hash <> "body" .= body))
-       (Shelley.encodeAuxiliaryDataHash <$> adHash (Ledger.Babbage.body x))
-       (Alonzo.encodeAuxiliaryData <$> Ledger.Babbage.auxiliaryData x)
+    auxiliary = do
+        hash <- Shelley.encodeAuxiliaryDataHash <$> adHash (Ledger.Babbage.body x)
+        (labels, scripts) <- Alonzo.encodeAuxiliaryData <$> Ledger.Babbage.auxiliaryData x
+        pure
+            ( encodeObject ("hash" .= hash <> "labels" .= labels)
+            , scripts
+            )
+
 
 encodeTxBody
     :: Crypto crypto

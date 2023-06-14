@@ -460,9 +460,7 @@ encodeMetadata
     :: Sh.Metadata era
     -> Json
 encodeMetadata (Sh.Metadata blob) =
-    "blob" .=
-        encodeMetadataBlob blob
-    & encodeObject
+    encodeMetadataBlob blob
 
 encodeMetadataBlob
     :: Map Word64 Sh.Metadatum
@@ -786,7 +784,7 @@ encodeTx x =
         & encodeObject
   where
     metadata = liftA2
-        (\hash body -> encodeObject ("hash" .= hash <> "body" .= body))
+        (\hash body -> encodeObject ("hash" .= hash <> "labels" .= body))
         (encodeAuxiliaryDataHash <$> Sh._mdHash (Sh.body x))
         (encodeMetadata <$> Sh.auxiliaryData x)
 

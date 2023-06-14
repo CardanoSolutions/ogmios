@@ -28,6 +28,11 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
     )
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
+import Data.Maybe.Strict
+    ( fromSMaybe
+    )
+
+import qualified Data.Map as Map
 
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
@@ -36,6 +41,7 @@ import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Era as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
+import qualified Cardano.Ledger.Hashes as Ledger
 
 import qualified Cardano.Ledger.Shelley.BlockChain as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
@@ -49,20 +55,23 @@ import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
 import qualified Cardano.Ledger.ShelleyMA.Timelocks as MA
 import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
 
+type AuxiliaryScripts crypto =
+    Map (Ledger.ScriptHash crypto) (Ledger.Script (AllegraEra crypto))
+
 --
 -- Encoders
 --
-
 encodeAuxiliaryData
-    :: Crypto crypto
+    :: forall crypto. Crypto crypto
     => MA.AuxiliaryData (AllegraEra crypto)
-    -> Json
+    -> (Json, AuxiliaryScripts crypto)
 encodeAuxiliaryData (MA.AuxiliaryData blob scripts) =
-    "blob" .=? OmitWhen null
-        Shelley.encodeMetadataBlob blob <>
-    "scripts" .=? OmitWhen null
-        (encodeFoldable encodeScript) scripts
-    & encodeObject
+    ( Shelley.encodeMetadataBlob blob
+    , foldr
+        (\script -> Map.insert (Ledger.hashScript @(AllegraEra crypto) script) script)
+        mempty
+        scripts
+    )
 
 encodeBlock
     :: Crypto crypto
@@ -138,9 +147,9 @@ encodeTx x =
         <>
     encodeTxBody (Sh.body x)
         <>
-    "metadata" .=? OmitWhenNothing identity metadata
+    "metadata" .=? OmitWhenNothing fst auxiliary
         <>
-    encodeWitnessSet (Sh.wits x)
+    encodeWitnessSet (snd <$> auxiliary) (Sh.wits x)
         <>
     "cbor" .= encodeByteStringBase16 (serialize' x)
         & encodeObject
@@ -148,10 +157,13 @@ encodeTx x =
     adHash :: MA.TxBody era -> StrictMaybe (Ledger.AuxiliaryDataHash (Ledger.Crypto era))
     adHash = getField @"adHash"
 
-    metadata = liftA2
-        (\hash body -> encodeObject ("hash" .= hash <> "body" .= body))
-        (Shelley.encodeAuxiliaryDataHash <$> adHash (Sh.body x))
-        (encodeAuxiliaryData <$> Sh.auxiliaryData x)
+    auxiliary = do
+        hash <- Shelley.encodeAuxiliaryDataHash <$> adHash (Sh.body x)
+        (labels, scripts) <- encodeAuxiliaryData <$> Sh.auxiliaryData x
+        pure
+            ( encodeObject ("hash" .= hash <> "labels" .= labels)
+            , scripts
+            )
 
 encodeTxBody
     :: Crypto crypto
@@ -275,9 +287,10 @@ encodeValidityInterval x =
 
 encodeWitnessSet
     :: Crypto crypto
-    => Sh.WitnessSet (AllegraEra crypto)
+    => StrictMaybe (AuxiliaryScripts crypto)
+    -> Sh.WitnessSet (AllegraEra crypto)
     -> Series
-encodeWitnessSet x =
+encodeWitnessSet (fromSMaybe mempty -> auxScripts) x =
     "signatories" .=
         encodeFoldable2
             Shelley.encodeBootstrapWitness
@@ -285,4 +298,5 @@ encodeWitnessSet x =
             (Sh.bootWits x)
             (Sh.addrWits x) <>
     "scripts" .=? OmitWhen null
-        (encodeMap Shelley.stringifyScriptHash encodeScript) (Sh.scriptWits x)
+        (encodeMap Shelley.stringifyScriptHash encodeScript)
+        (Sh.scriptWits x <> auxScripts)
