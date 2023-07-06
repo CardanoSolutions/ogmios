@@ -58,94 +58,79 @@ encodeAddress =
 encodeABlockOrBoundary
     :: By.ABlockOrBoundary ByteString
     -> Json
-encodeABlockOrBoundary = \case
-    By.ABOBBlock x ->
-        "body" .=
-            encodeABody (By.blockBody x) <>
-        "hash" .=
-            encodeHash (By.blockHashAnnotated x) <>
-        "header" .=
-            encodeAHeader (By.blockHeader x)
-        & encodeObject
+encodeABlockOrBoundary = encodeObject . \case
+    By.ABOBBlock blk ->
+        "era" .= encodeText "byron"
+        <>
+        "header" .= encodeObject
+            ( "hash" .= encodeHash (By.blockHashAnnotated blk)
+            )
+        <>
+        "ancestor" .= encodeAnnotated encodeHash (By.aHeaderPrevHash h)
+        <>
+        "height" .= encodeAnnotated encodeChainDifficulty (By.aHeaderDifficulty h)
+        <>
+        "slot" .= encodeAnnotated encodeSlotNumber (By.aHeaderSlot h)
+        <>
+        "size" .= encodeNatural (By.blockLength blk)
+        <>
+        encodeABody (By.blockBody blk)
+        <>
+        "protocol" .= encodeObject
+            ( "magic" .= encodeAnnotated encodeProtocolMagicId (By.aHeaderProtocolMagicId h)
+            <>
+              "version" .= encodeProtocolVersion (By.headerProtocolVersion h)
+            <>
+              "software" .= encodeSoftwareVersion (By.headerSoftwareVersion h)
+            )
+        <>
+        "issuer" .= encodeObject
+            ( "verificationKey" .= encodeVerificationKey (By.Dlg.issuerVK c)
+            )
+        <>
+        "delegate" .= encodeObject
+            ( "verificationKey" .= encodeVerificationKey (By.Dlg.delegateVK c)
+            )
+      where
+        h = By.blockHeader blk
+        s = By.headerSignature h
+        c = By.delegationCertificate s
 
-    By.ABOBBoundary x ->
-        "hash" .=
-            encodeHash (By.boundaryHashAnnotated x) <>
-        "header" .=
-            encodeABoundaryHeader (By.boundaryHeader x)
-        & encodeObject
-
-encodeABlockSignature
-    :: By.ABlockSignature any
-    -> Json
-encodeABlockSignature x =
-    "dlgCertificate" .=
-        encodeACertificate (By.delegationCertificate x) <>
-     "signature" .=
-        encodeSignature (By.Block.signature x)
-    & encodeObject
+    By.ABOBBoundary blk ->
+        "era" .= encodeText "byron"
+        <>
+        "height" .= encodeChainDifficulty (By.boundaryDifficulty h)
+        <>
+        "header" .= encodeObject ("hash" .= encodeHash (By.boundaryHashAnnotated blk))
+        <>
+        "ancestor" .= either encodeGenesisHash encodeHash (By.boundaryPrevHash h)
+      where
+        h = By.boundaryHeader blk
 
 encodeABody
     :: By.ABody any
-    -> Json
+    -> Series
 encodeABody x =
-    "txPayload" .=
+    "transactions" .=
         encodeATxPayload (By.bodyTxPayload x) <>
-    "updatePayload" .=
+    "governanceAction" .=
         encodeAUpdPayload (By.bodyUpdatePayload x) <>
-    "dlgPayload" .=
+    "operationalCertificates" .=
         encodeADlgPayload (By.bodyDlgPayload x)
-    & encodeObject
-
-encodeABoundaryHeader
-    :: By.ABoundaryHeader any
-    -> Json
-encodeABoundaryHeader x =
-    "prevHash" .=
-        either encodeGenesisHash encodeHash (By.boundaryPrevHash x) <>
-    "epoch" .=
-        encodeWord64 (By.boundaryEpoch x) <>
-    "blockHeight" .=
-        encodeChainDifficulty (By.boundaryDifficulty x)
-    & encodeObject
 
 encodeACertificate
     :: By.ACertificate any
     -> Json
 encodeACertificate x =
-    "epoch" .=
-        encodeAnnotated encodeEpochNumber (By.Dlg.aEpoch x) <>
-    "issuerVk" .=
-        encodeVerificationKey (By.Dlg.issuerVK x) <>
-    "delegateVk" .=
-        encodeVerificationKey (By.Dlg.delegateVK x) <>
-    "signature" .=
-        encodeSignature (By.Dlg.signature x)
-    & encodeObject
-
-encodeAHeader
-    :: By.AHeader any
-    -> Json
-encodeAHeader x =
-    "protocolMagicId" .=
-        encodeAnnotated encodeProtocolMagicId (By.aHeaderProtocolMagicId x) <>
-    "prevHash" .=
-        encodeAnnotated encodeHash (By.aHeaderPrevHash x) <>
-    "slot" .=
-        encodeAnnotated encodeSlotNumber (By.aHeaderSlot x) <>
-    "blockHeight" .=
-        encodeAnnotated encodeChainDifficulty (By.aHeaderDifficulty x) <>
-    "protocolVersion" .=
-        encodeProtocolVersion (By.headerProtocolVersion x) <>
-    "softwareVersion" .=
-        encodeSoftwareVersion (By.headerSoftwareVersion x) <>
-    "genesisKey" .=
-        encodeVerificationKey (By.headerGenesisKey x) <>
-    "proof" .=
-        encodeAnnotated encodeBlockProof (By.aHeaderProof x) <>
-    "signature" .=
-        encodeABlockSignature (By.headerSignature x)
-    & encodeObject
+    encodeObject
+        ( "issuer" .= encodeObject
+            ( "verificationKey" .= encodeVerificationKey (By.Dlg.issuerVK x)
+            )
+        <>
+          "delegate" .= encodeObject
+            ( "verificationKey" .= encodeVerificationKey (By.Dlg.delegateVK x)
+            )
+        )
 
 encodeADlgPayload
     :: By.Dlg.APayload any
@@ -268,39 +253,40 @@ encodeAUpdProposal
     :: By.Upd.Proposal.AProposal any
     -> Json
 encodeAUpdProposal x =
-    "body" .=
-        encodeAnnotated encodeAUpdProposalBody (By.Upd.Proposal.aBody x) <>
-    "issuer" .=
-        encodeVerificationKey (By.Upd.Proposal.issuer x) <>
-    "signature" .=
-        encodeSignature (By.Upd.Proposal.signature x)
-    & encodeObject
+    encodeObject
+        ( encodeAnnotated encodeAUpdProposalBody (By.Upd.Proposal.aBody x)
+        <>
+        "issuer" .= encodeObject
+            ( "verificationKey" .= encodeVerificationKey (By.Upd.Proposal.issuer x)
+            )
+        )
 
 encodeAUpdProposalBody
     :: By.Upd.Proposal.ProposalBody
-    -> Json
+    -> Series
 encodeAUpdProposalBody x =
-    "protocolVersion" .=
-        encodeProtocolVersion (By.Upd.Proposal.protocolVersion x) <>
-    "parametersUpdate" .=
-        encodeProtocolParametersUpdate (By.Upd.Proposal.protocolParametersUpdate x) <>
-    "softwareVersion" .=
-        encodeSoftwareVersion (By.Upd.Proposal.softwareVersion x) <>
-    "metadata" .=
-        encodeMap By.Upd.getSystemTag encodeInstallerHash (By.Upd.Proposal.metadata x)
-    & encodeObject
+    "protocol" .= encodeObject
+        ( "version" .= encodeProtocolVersion (By.Upd.Proposal.protocolVersion x)
+        <>
+          "software" .= encodeSoftwareVersion (By.Upd.Proposal.softwareVersion x)
+        )
+    <>
+    "parameters" .= encodeProtocolParametersUpdate (By.Upd.Proposal.protocolParametersUpdate x)
+    <>
+    "metadata" .= encodeMap By.Upd.getSystemTag encodeInstallerHash (By.Upd.Proposal.metadata x)
 
 encodeAVote
     :: By.Upd.Vote.AVote any
     -> Json
-encodeAVote x =
-    "voterVk" .=
-        encodeVerificationKey (By.Upd.Vote.voterVK x) <>
-    "proposalId" .=
-        encodeAnnotated encodeHash (By.Upd.Vote.aProposalId x) <>
-    "signature" .=
-        encodeSignature (By.Upd.Vote.signature x)
-    & encodeObject
+encodeAVote x = encodeObject
+    ( "proposal" .= encodeObject
+        ( "hash" .= encodeAnnotated encodeHash (By.Upd.Vote.aProposalId x)
+        )
+    <> "voter" .= encodeObject
+        ( "verificationKey" .=
+            encodeVerificationKey (By.Upd.Vote.voterVK x)
+        )
+    )
 
 encodeApplicationName
     :: By.ApplicationName

@@ -98,15 +98,52 @@ pre: "<b>5. </b>"
 
   5. The `genesisConfig` local-state-query now expects one era as argument (either 'byron', 'shelley' or 'alonzo') to retrieve the corresponding genesis configuration.
 
-  6. Errors in the protocol are now returned as JSON-RPC 2.0 errors, with unique error codes. This includes unnucessful operations such as an intersection not found on `findIntersection`, a point not acquired on `acquireLedgerState` or a failed transaction submission / evaluation. Some errors contain details specific to the error. This approach should simplify both parsing and documentation, as each error is now identified by a specific code.
+  6. Errors in the protocol are now returned as JSON-RPC 2.0 errors, with unique error codes. This includes unsucessful operations such as an intersection not found on `findIntersection`, a point not acquired on `acquireLedgerState` or a failed transaction submission / evaluation. Some errors contain details specific to the error. This approach should simplify both parsing and documentation, as each error is now identified by a specific code.
 
   7. The transaction model has been greatly reworked. The main changes are:
     - The fields previously nested under `body` and `witnesses` have been flattened out and are now part of the top level object (e.g. `inputs` are no longer nested under `body`).
+
     - Few fields have been renamed
 
-      | Old | New |
-      | --- | --- |
-      | `TODO`  | `TODO`  |
+      | Old    | New    |
+      | ---    | ---    |
+      | `TODO` | `TODO` |
+
+    - Metadata now only contains user-defined labelled metadata instead of also containing extra scripts. Extra scripts have been moved to the `scripts` field and merged with witness scripts.
+      The naming is now also a bit less awkward as `body → blob` for accessing user-defined metadata is now simply `labels`.
+
+  8. The block model has also been reworked and merged together into one comprehensive block type. Fields have been renamed, some have been nested and other unnested. Here's a recap:
+
+      | Old                   | New                             |
+      | ---                   | ---                             |
+      | `hash`                | N/A (removed)                   |
+      | `header.blockSize`    | `size`                          |
+      | `header.blockHeight`  | `height`                        |
+      | `header.slot`         | `slot`                          |
+      | `header.blockHash`    | N/A (removed)                   |
+      | `headerHash`          | `header.hash`                   |
+      | `header.previousHash` | `ancestor`                      |
+      | `header.opCert`       | `issuer.operationalCertificate` |
+      | `header.issuerVk`     | `issuer.verificationKey`        |
+      | `header.issuerVrf`    | `issuer.vrfVerificationKey`     |
+      | `body`                | `transactions`                  |
+      | `header.signature`    | N/A (removed)                   |
+
+      Byron blocks are also now less "weird" than the rest of the blocks. So few changes concern only (old) Byron blocks to align them with the new model:
+
+      | Old                                          | New                        |
+      | ---                                          | ---                        |
+      | `header.genesisKey`                          | `issuer.verificationKey`   |
+      | `header.prevHash`                            | `ancestor`                 |
+      | `header.signature.signature`                 | N/A (removed)              |
+      | `header.signature.dlgCertificate.delegateVk` | `delegate.verificationKey` |
+      | `header.protocolVersion`                     | `protocol.version`         |
+      | `header.protocolMagicId`                     | `protocol.magic`           |
+      | `header.softwareVersion`                     | `protocol.software`        |
+      | `header.proof`                               | N/A (removed)              |
+      | `body.txPayload`                             | `transactions`             |
+      | `body.dlgPayload`                            | `operationalCertificates`  |
+      | `body.updatePayload`                         | `governanceAction`         |
 
 #### Removed
 

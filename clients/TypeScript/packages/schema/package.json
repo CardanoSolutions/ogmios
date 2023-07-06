@@ -17,7 +17,7 @@
     "prebuild": "yarn generate-schema-types",
     "build": "tsc --build ./src",
     "cleanup": "shx rm -rf dist node_modules index.ts",
-    "generate-schema-types": "sed \"s/ogmios.json#/#/g\" ../../../../server/ogmios.json | json2ts -o src/index.ts --enableBigInt",
+    "generate-schema-types": "bash scripts/generate-schema-types.sh",
     "lint": "shx echo No code to lint in this package",
     "prepack": "yarn build",
     "test": "shx echo No tests in this package"

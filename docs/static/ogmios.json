@@ -1004,19 +1004,19 @@
               { "proposedProtocolParameters":
                 { "anyOf":
                   [ { "type": "object"
-                    , "title": "ProposedProtocolParameters[Shelley]"
+                    , "title": "ProposedProtocolParameters<Shelley>"
                     , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
-                    , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters[Shelley]" }
+                    , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Shelley>" }
                     }
                   , { "type": "object"
-                    , "title": "ProposedProtocolParameters[Alonzo]"
+                    , "title": "ProposedProtocolParameters<Alonzo>"
                     , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
-                    , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters[Alonzo]" }
+                    , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Alonzo>" }
                     }
                   , { "type": "object"
-                    , "title": "ProposedProtocolParameters[Babbage]"
+                    , "title": "ProposedProtocolParameters<Babbage>"
                     , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
-                    , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters[Babbage]" }
+                    , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Babbage>" }
                     }
                   ]
                 }
@@ -1073,9 +1073,9 @@
             , "properties":
               { "protocolParameters":
                 { "anyOf":
-                  [ { "$ref": "cardano.json#/definitions/ProtocolParameters[Shelley]" }
-                  , { "$ref": "cardano.json#/definitions/ProtocolParameters[Alonzo]" }
-                  , { "$ref": "cardano.json#/definitions/ProtocolParameters[Babbage]" }
+                  [ { "$ref": "cardano.json#/definitions/ProtocolParameters<Shelley>" }
+                  , { "$ref": "cardano.json#/definitions/ProtocolParameters<Alonzo>" }
+                  , { "$ref": "cardano.json#/definitions/ProtocolParameters<Babbage>" }
                   ]
                 }
               }
@@ -1523,7 +1523,7 @@
         , "additionalProperties": false
         , "properties":
           { "blockHeight":
-            { "$ref": "cardano.json#/definitions/BlockNoOrOrigin"
+            { "$ref": "cardano.json#/definitions/BlockHeightOrOrigin"
             }
           }
         }
@@ -2035,7 +2035,7 @@
       , "required": ["stake", "vrf"]
       , "properties":
         { "stake": { "$ref": "cardano.json#/definitions/Ratio" }
-        , "vrf": { "$ref": "cardano.json#/definitions/Digest[Blake2b]::VrfVerificationKey" }
+        , "vrf": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
         }
       }
     , "examples":

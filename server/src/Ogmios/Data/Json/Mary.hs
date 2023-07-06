@@ -20,6 +20,9 @@ import Cardano.Ledger.Val
 import Data.ByteString.Base16
     ( encodeBase16
     )
+import Data.Maybe.Strict
+    ( fromSMaybe
+    )
 import GHC.Records
     ( getField
     )
@@ -34,9 +37,6 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
     )
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
-import Data.Maybe.Strict
-    ( fromSMaybe
-    )
 
 import qualified Data.ByteString.Short as BS
 import qualified Data.Map.Strict as Map
@@ -44,11 +44,13 @@ import qualified Data.Map.Strict as Map
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
+import qualified Cardano.Protocol.TPraos.BHeader as TPraos
+
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Era as Ledger
-import qualified Cardano.Ledger.TxIn as Ledger
 import qualified Cardano.Ledger.Hashes as Ledger
+import qualified Cardano.Ledger.TxIn as Ledger
 
 import qualified Cardano.Ledger.Shelley.BlockChain as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
@@ -82,19 +84,26 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) =
         scripts
     )
 
-
 encodeBlock
     :: Crypto crypto
     => ShelleyBlock (TPraos crypto) (MaryEra crypto)
     -> Json
 encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
-    "body" .=
-        encodeFoldable encodeTx (Sh.txSeqTxns' txs) <>
-    "header" .=
-        Shelley.encodeBHeader blkHeader <>
-    "headerHash" .=
-        Shelley.encodeShelleyHash headerHash
-    & encodeObject
+    encodeObject
+        ( "era" .= encodeText "mary"
+        <>
+          "header" .= encodeObject
+            ( "hash" .= Shelley.encodeShelleyHash headerHash
+            )
+        <>
+        Shelley.encodeBHeader blkHeader
+        <>
+        "size" .= encodeNatural (TPraos.bsize hBody)
+        <>
+        "transactions" .= encodeFoldable encodeTx (Sh.txSeqTxns' txs)
+        )
+  where
+    TPraos.BHeader hBody _ = blkHeader
 
 encodeLedgerFailure
     :: Crypto crypto

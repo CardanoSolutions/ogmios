@@ -129,25 +129,19 @@ encodeBlock
     :: Crypto crypto
     => CardanoBlock crypto
     -> Json
-encodeBlock = encodeObject . \case
+encodeBlock = \case
     BlockByron blk ->
-        "byron" .=
-            Byron.encodeABlockOrBoundary (byronBlockRaw blk)
+        Byron.encodeABlockOrBoundary (byronBlockRaw blk)
     BlockShelley blk ->
-        "shelley" .=
-            Shelley.encodeBlock blk
+        Shelley.encodeBlock blk
     BlockAllegra blk ->
-        "allegra" .=
-            Allegra.encodeBlock blk
+        Allegra.encodeBlock blk
     BlockMary blk ->
-        "mary" .=
-            Mary.encodeBlock blk
+        Mary.encodeBlock blk
     BlockAlonzo blk ->
-        "alonzo" .=
-            Alonzo.encodeBlock blk
+        Alonzo.encodeBlock blk
     BlockBabbage blk ->
-        "babbage" .=
-            Babbage.encodeBlock blk
+        Babbage.encodeBlock blk
 
 encodeSubmitTransactionError
     :: Crypto crypto

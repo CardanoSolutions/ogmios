@@ -66,42 +66,45 @@ encodeBlock
     => ShelleyBlock (Praos crypto) (BabbageEra crypto)
     -> Json
 encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
-    "body" .=
-        encodeFoldable encodeTx (Ledger.Alonzo.txSeqTxns txs) <>
-    "header" .=
-        encodeHeader blkHeader <>
-    "headerHash" .=
-        Shelley.encodeShelleyHash headerHash
-    & encodeObject
+    encodeObject
+        ( "era" .= encodeText "babbage"
+        <>
+          "header" .= encodeObject
+            ( "hash" .= Shelley.encodeShelleyHash headerHash
+            )
+        <>
+        encodeHeader blkHeader
+        <>
+        "transactions" .= encodeFoldable encodeTx (Ledger.Alonzo.txSeqTxns txs)
+        )
 
 encodeHeader
     :: Crypto crypto
     => Praos.Header crypto
-    -> Json
-encodeHeader (Praos.Header hBody hSig) =
-    "blockHeight" .=
+    -> Series
+encodeHeader (Praos.Header hBody _hSig) =
+    "size" .=
+        encodeWord32 (Praos.hbBodySize hBody) <>
+    "height" .=
         encodeBlockNo (Praos.hbBlockNo hBody) <>
     "slot" .=
         encodeSlotNo (Praos.hbSlotNo hBody) <>
-    "prevHash" .=
+    "ancestor" .=
         Shelley.encodePrevHash (Praos.hbPrev hBody) <>
-    "issuerVk" .=
-        Shelley.encodeVKey (Praos.hbVk hBody) <>
-    "issuerVrf" .=
-        Shelley.encodeVerKeyVRF (Praos.hbVrfVk hBody) <>
-    "blockSize" .=
-        encodeWord32 (Praos.hbBodySize hBody) <>
-    "blockHash" .=
-        Shelley.encodeHash (Praos.hbBodyHash hBody) <>
-    "protocolVersion" .=
-        Shelley.encodeProtVer (Praos.hbProtVer hBody) <>
-    "opCert" .=
-        Shelley.encodeOCert (Praos.hbOCert hBody) <>
-    "signature" .=
-        Shelley.encodeSignedKES hSig <>
-    "vrfInput" .=
-        Shelley.encodeCertifiedVRF (Praos.hbVrfRes hBody)
-    & encodeObject
+    "issuer" .= encodeObject
+        ( "verificationKey" .=
+            Shelley.encodeVKey (Praos.hbVk hBody) <>
+          "vrfVerificationKey" .=
+            Shelley.encodeVerKeyVRF (Praos.hbVrfVk hBody) <>
+          "operationalCertificate" .=
+            Shelley.encodeOCert (Praos.hbOCert hBody) <>
+          "leaderValue" .=
+            Shelley.encodeCertifiedVRF (Praos.hbVrfRes hBody)
+        ) <>
+    "protocol" .= encodeObject
+        ( "version" .=
+            Shelley.encodeProtVer (Praos.hbProtVer hBody)
+        )
 
 encodeUtxoFailure
     :: Crypto crypto

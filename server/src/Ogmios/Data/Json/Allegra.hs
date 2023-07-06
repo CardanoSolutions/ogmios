@@ -14,6 +14,9 @@ import Cardano.Binary
 import Cardano.Ledger.Crypto
     ( Crypto
     )
+import Data.Maybe.Strict
+    ( fromSMaybe
+    )
 import GHC.Records
     ( getField
     )
@@ -28,20 +31,19 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
     )
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
-import Data.Maybe.Strict
-    ( fromSMaybe
-    )
 
 import qualified Data.Map as Map
 
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
+import qualified Cardano.Protocol.TPraos.BHeader as TPraos
+
 import qualified Cardano.Ledger.AuxiliaryData as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Era as Ledger
-import qualified Cardano.Ledger.TxIn as Ledger
 import qualified Cardano.Ledger.Hashes as Ledger
+import qualified Cardano.Ledger.TxIn as Ledger
 
 import qualified Cardano.Ledger.Shelley.BlockChain as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
@@ -78,13 +80,21 @@ encodeBlock
     => ShelleyBlock (TPraos crypto) (AllegraEra crypto)
     -> Json
 encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
-    "body" .=
-        encodeFoldable encodeTx (Sh.txSeqTxns' txs) <>
-    "header" .=
-        Shelley.encodeBHeader blkHeader <>
-    "headerHash" .=
-        Shelley.encodeShelleyHash headerHash
-    & encodeObject
+    encodeObject
+        ( "era" .= encodeText "allegra"
+        <>
+          "header" .= encodeObject
+            ( "hash" .= Shelley.encodeShelleyHash headerHash
+            )
+        <>
+        Shelley.encodeBHeader blkHeader
+        <>
+        "size" .= encodeNatural (TPraos.bsize hBody)
+        <>
+        "transactions" .= encodeFoldable encodeTx (Sh.txSeqTxns' txs)
+        )
+  where
+    TPraos.BHeader hBody _ = blkHeader
 
 encodeLedgerFailure
     :: Crypto crypto

@@ -21,7 +21,8 @@ import Data.ByteString.Base16
     ( encodeBase16
     )
 import Data.Maybe.Strict
-    ( maybeToStrictMaybe
+    ( fromSMaybe
+    , maybeToStrictMaybe
     )
 import GHC.Records
     ( getField
@@ -40,9 +41,6 @@ import Ouroboros.Consensus.Shelley.Protocol.TPraos
 import Prettyprinter
     ( pretty
     )
-import Data.Maybe.Strict
-    ( fromSMaybe
-    )
 
 import qualified Data.Map.Strict as Map
 
@@ -50,14 +48,16 @@ import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
+import qualified Cardano.Protocol.TPraos.BHeader as TPraos
+
 import qualified Cardano.Crypto.Hash.Class as CC
 
 import qualified Cardano.Ledger.Block as Ledger
+import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Era as Ledger
+import qualified Cardano.Ledger.Hashes as Ledger
 import qualified Cardano.Ledger.SafeHash as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
-import qualified Cardano.Ledger.Hashes as Ledger
-import qualified Cardano.Ledger.Core as Ledger
 
 import qualified Cardano.Ledger.Shelley.API as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
@@ -176,13 +176,21 @@ encodeBlock
     => ShelleyBlock (TPraos crypto) (AlonzoEra crypto)
     -> Json
 encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
-    "body" .=
-        encodeFoldable encodeTx (Al.txSeqTxns txs) <>
-    "header" .=
-        Shelley.encodeBHeader blkHeader <>
-    "headerHash" .=
-        Shelley.encodeShelleyHash headerHash
-    & encodeObject
+    encodeObject
+        ( "era" .= encodeText "alonzo"
+        <>
+          "header" .= encodeObject
+            ( "hash" .= Shelley.encodeShelleyHash headerHash
+            )
+        <>
+        Shelley.encodeBHeader blkHeader
+        <>
+        "size" .= encodeNatural (TPraos.bsize hBody)
+        <>
+        "transactions" .= encodeFoldable encodeTx (Al.txSeqTxns txs)
+        )
+  where
+    TPraos.BHeader hBody _ = blkHeader
 
 encodeCollectError
     :: Crypto crypto

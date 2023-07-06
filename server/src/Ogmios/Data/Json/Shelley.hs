@@ -133,46 +133,51 @@ encodeAuxiliaryDataHash =
 encodeBHeader
     :: Crypto crypto
     => TPraos.BHeader crypto
-    -> Json
-encodeBHeader (TPraos.BHeader hBody hSig) =
-    "blockHeight" .=
-        encodeBlockNo (TPraos.bheaderBlockNo hBody) <>
-    "slot" .=
-        encodeSlotNo (TPraos.bheaderSlotNo hBody) <>
-    "prevHash" .=
+    -> Series
+encodeBHeader (TPraos.BHeader hBody _hSig) =
+    "ancestor" .=
         encodePrevHash (TPraos.bheaderPrev hBody) <>
-    "issuerVk" .=
-        encodeVKey (TPraos.bheaderVk hBody) <>
-    "issuerVrf" .=
-        encodeVerKeyVRF (TPraos.bheaderVrfVk hBody) <>
-    "blockSize" .=
-        encodeNatural (TPraos.bsize hBody) <>
-    "blockHash" .=
-        encodeHash (TPraos.bhash hBody) <>
-    "signature" .=
-        encodeSignedKES hSig <>
     "nonce" .=
         encodeCertifiedVRF (TPraos.bheaderEta hBody) <>
-    "leaderValue" .=
-        encodeCertifiedVRF (TPraos.bheaderL hBody) <>
-    "opCert" .=
-        encodeOCert (TPraos.bheaderOCert hBody) <>
-    "protocolVersion" .=
-        encodeProtVer (TPraos.bprotver hBody)
-    & encodeObject
+    "height" .=
+        encodeBlockNo (TPraos.bheaderBlockNo hBody)  <>
+    "slot" .=
+        encodeSlotNo (TPraos.bheaderSlotNo hBody) <>
+    "issuer" .= encodeObject
+        ( "verificationKey" .=
+              encodeVKey (TPraos.bheaderVk hBody) <>
+          "vrfVerificationKey" .=
+              encodeVerKeyVRF (TPraos.bheaderVrfVk hBody) <>
+          "leaderValue" .=
+              encodeCertifiedVRF (TPraos.bheaderL hBody) <>
+          "operationalCertificate" .=
+              encodeOCert (TPraos.bheaderOCert hBody)
+        ) <>
+    "protocol" .= encodeObject
+        ( "version" .=
+            encodeProtVer (TPraos.bprotver hBody)
+        )
 
 encodeBlock
     :: Crypto crypto
     => ShelleyBlock (TPraos crypto) (ShelleyEra crypto)
     -> Json
 encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
-    "body" .=
-        encodeFoldable encodeTx (Sh.txSeqTxns' txs) <>
-    "header" .=
-        encodeBHeader blkHeader <>
-    "headerHash" .=
-        encodeShelleyHash headerHash
-    & encodeObject
+    encodeObject
+        ( "era" .= encodeText "shelley"
+        <>
+          "header" .= encodeObject
+            ( "hash" .= encodeShelleyHash headerHash
+            )
+        <>
+        encodeBHeader blkHeader
+        <>
+        "size" .= encodeNatural (TPraos.bsize hBody)
+        <>
+        "transactions" .= encodeFoldable encodeTx (Sh.txSeqTxns' txs)
+        )
+  where
+    TPraos.BHeader hBody _ = blkHeader
 
 encodeCertVRF
     :: CC.VRFAlgorithm alg
@@ -527,14 +532,14 @@ encodeOCert
     => TPraos.OCert crypto
     -> Json
 encodeOCert x =
-    "hotVk" .=
-        encodeVerKeyKES (TPraos.ocertVkHot x) <>
     "count" .=
         encodeWord64 (TPraos.ocertN x) <>
-    "kesPeriod" .=
-        encodeKESPeriod (TPraos.ocertKESPeriod x) <>
-    "sigma" .=
-        encodeSignedDSIGN (TPraos.ocertSigma x)
+    "kes" .= encodeObject
+        ( "period" .=
+            encodeKESPeriod (TPraos.ocertKESPeriod x) <>
+          "verificationKey" .=
+              encodeVerKeyKES (TPraos.ocertVkHot x)
+        )
     & encodeObject
 
 encodeOutputVRF
