@@ -6,14 +6,149 @@
  */
 
 /**
+ * An absolute slot number.
+ */
+export type Slot = number;
+/**
+ * A Blake2b 32-byte hash digest, encoded in base16.
+ */
+export type DigestBlake2B256 = string;
+/**
  * The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point.
  */
 export type Origin = "origin";
-export type GenesisHash = "genesis";
+/**
+ * A block number, the i-th block to be minted is number i.
+ */
+export type BlockHeight = number;
+export type Block = BlockEBB | BlockBFT | BlockPraos;
+/**
+ * The size of the block in bytes.
+ */
+export type BlockSize = number;
+/**
+ * A Blake2b 32-byte hash digest of a transaction body
+ */
+export type TransactionId = string;
+export type UInt32 = number;
+/**
+ * A number of lovelace, possibly large when summed up.
+ */
+export type Lovelace = bigint;
+/**
+ * A Cardano address (either legacy format or new format).
+ */
+export type Address = string;
+/**
+ * A number of asset, can be negative went burning assets.
+ */
+export type AssetQuantity = bigint;
+export type Datum = string;
+export type Script = Native | PlutusV1 | PlutusV2;
+/**
+ * A phase-1 monetary script. Timelocks constraints are only supported since Allegra.
+ */
+export type ScriptNative = DigestBlake2B224 | Any | All | NOf | ExpiresAt | StartsAt;
 /**
  * A Blake2b 28-byte hash digest, encoded in base16.
  */
-export type Base16 = string;
+export type DigestBlake2B224 = string;
+/**
+ * A phase-2 Plutus script; or said differently, a serialized Plutus-core program.
+ */
+export type ScriptPlutus = string;
+export type Certificate =
+  | StakeDelegation
+  | StakeKeyRegistration
+  | StakeKeyDeregistration
+  | PoolRegistration
+  | PoolRetirement
+  | GenesisDelegation
+  | MoveInstantaneousRewards;
+/**
+ * A Blake2b 32-byte hash digest of a pool's verification key.
+ */
+export type StakePoolId = string;
+/**
+ * A ratio of two integers, to express exact fractions.
+ */
+export type Ratio = string;
+/**
+ * A hash digest from an unspecified algorithm and length.
+ */
+export type DigestAny = string;
+export type Relay = ByAddress | ByName;
+/**
+ * A reward account, also known as 'stake address'.
+ */
+export type RewardAccount = string;
+/**
+ * An epoch number or length.
+ */
+export type Epoch = number;
+/**
+ * An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada).
+ */
+export type LovelaceDelta = number;
+/**
+ * Source of rewards as defined by the protocol parameters.
+ */
+export type RewardPot = "reserves" | "treasury";
+/**
+ * A network target, as defined since the Shelley era.
+ */
+export type Network = "mainnet" | "testnet";
+export type UInt64 = number;
+export type Nonce = Neutral | DigestBlake2B256;
+export type Neutral = "neutral";
+export type UInt321 = number;
+export type Int64 = number;
+export type Metadatum = Int | String | Bytes | List | Map;
+/**
+ * Plutus data, CBOR-serialised.
+ */
+export type RedeemerData = string;
+/**
+ * An Ed25519 verification key.
+ */
+export type VerificationKey = string;
+/**
+ * An Ed25519-BIP32 Byron genesis delegate verification key with chain-code.
+ */
+export type ExtendedVerificationKey = string;
+export type ProtocolMagicId = number;
+export type GenesisHash = "genesis";
+export type VrfProof = string;
+export type VrfOutput = string;
+export type KesVerificationKey = string;
+export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage";
+export type UInt8 = number;
+export type VotingPeriod = "voteForThisEpoch" | "voteForNextEpoch";
+export type ScriptPurpose = Spend | Mint | Certificate1 | Withdrawal;
+/**
+ * A Blake2b 28-byte hash digest, encoded in base16.
+ */
+export type PolicyId = string;
+export type Utxo = [TransactionOutputReference, TransactionOutput][];
+export type Language = "plutus:v1" | "plutus:v2";
+export type RedeemerPointer = string;
+/**
+ * A time in seconds relative to another one (typically, system start or era start). Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
+ */
+export type RelativeTime = number;
+/**
+ * A slot length, in seconds. Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
+ */
+export type SlotLength = number;
+/**
+ * Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks.
+ */
+export type SafeZone = number;
+export type StakeCredential = DigestBlake2B2241 | Bech32 | StakeAddress;
+/**
+ * A Blake2b 28-byte hash digest, encoded in base16.
+ */
+export type DigestBlake2B2241 = string;
 /**
  * A Blake2b 28-byte hash digest of a verification key or script.
  */
@@ -22,7 +157,15 @@ export type Bech32 = string;
  * A stake address (a.k.a reward account)
  */
 export type StakeAddress = string;
-export type Neutral = "neutral";
+/**
+ * A number of lovelace, possibly large when summed up.
+ */
+export type Lovelace1 = bigint;
+export type UtcTime = string;
+/**
+ * A magic number for telling networks apart. (e.g. 764824073)
+ */
+export type NetworkMagic = number;
 
 export interface Ogmios {
   FindIntersection: FindIntersection;
@@ -158,14 +301,8 @@ export interface FindIntersection {
  * A point on the chain, identified by a slot and a block header hash.
  */
 export interface Point {
-  /**
-   * An absolute slot number.
-   */
-  slot: number;
-  /**
-   * A Blake2b 32-byte hash digest, encoded in base16.
-   */
-  hash: string;
+  slot: Slot;
+  hash: DigestBlake2B256;
 }
 export interface IntersectionFound {
   jsonrpc: "2.0";
@@ -181,18 +318,9 @@ export interface IntersectionFound {
   };
 }
 export interface Tip {
-  /**
-   * An absolute slot number.
-   */
-  slot: number;
-  /**
-   * A Blake2b 32-byte hash digest, encoded in base16.
-   */
-  hash: string;
-  /**
-   * A block number, the i-th block to be minted is number i.
-   */
-  blockNo: number;
+  slot: Slot;
+  hash: DigestBlake2B256;
+  blockNo: BlockHeight;
 }
 export interface IntersectionNotFound {
   jsonrpc: "2.0";
@@ -239,354 +367,158 @@ export interface NextBlockResponse {
 export interface RollForward {
   direction: "forward";
   tip: Tip;
-  block: BlockEBB | BlockBFT | BlockPraos;
+  block: Block;
 }
 export interface BlockEBB {
   era: "byron";
   header: {
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    hash: string;
+    hash: DigestBlake2B256;
   };
-  /**
-   * A Blake2b 32-byte hash digest, encoded in base16.
-   */
-  ancestor: string;
-  /**
-   * A block number, the i-th block to be minted is number i.
-   */
-  height: number;
+  ancestor: DigestBlake2B256;
+  height: BlockHeight;
 }
 export interface BlockBFT {
   era: "byron";
   header: {
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    hash: string;
+    hash: DigestBlake2B256;
   };
-  /**
-   * A Blake2b 32-byte hash digest, encoded in base16.
-   */
-  ancestor: string;
-  /**
-   * A block number, the i-th block to be minted is number i.
-   */
-  height: number;
-  /**
-   * An absolute slot number.
-   */
-  slot: number;
-  /**
-   * The size of the block in bytes.
-   */
-  size: number;
+  ancestor: DigestBlake2B256;
+  height: BlockHeight;
+  slot: Slot;
+  size: BlockSize;
   transactions?: Transaction[];
   operationalCertificates?: BootstrapOperationalCertificate[];
   governanceAction?: BootstrapGovernanceAction;
   protocol: {
-    magic: number;
-    version: {
-      major: number;
-      minor: number;
-      patch?: number;
-    };
-    software: {
-      appName: string;
-      number: number;
-    };
+    magic: ProtocolMagicId;
+    version: ProtocolVersion;
+    software: SoftwareVersion;
   };
   issuer: {
-    /**
-     * An Ed25519-BIP32 Byron genesis delegate verification key with chain-code.
-     */
-    verificationKey: string;
+    verificationKey: ExtendedVerificationKey;
   };
   delegate: {
-    /**
-     * An Ed25519-BIP32 Byron genesis delegate verification key with chain-code.
-     */
-    verificationKey: string;
+    verificationKey: ExtendedVerificationKey;
   };
 }
 export interface Transaction {
-  /**
-   * A Blake2b 32-byte hash digest, encoded in base16.
-   */
-  id: string;
+  id: DigestBlake2B256;
   inputSource: "inputs" | "collaterals";
-  inputs: {
-    /**
-     * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-     */
-    txId: string;
-    index: number;
-  }[];
-  references?: {
-    /**
-     * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-     */
-    txId: string;
-    index: number;
-  }[];
-  collaterals?: {
-    /**
-     * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-     */
-    txId: string;
-    index: number;
-  }[];
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  collateral?: bigint;
-  /**
-   * A transaction output. Since Mary, 'value' always return a multi-asset value. Since Alonzo, 'datumHash' is always present (albeit sometimes 'null'). Since Babbage, 'datum' & 'script' are always present (albeit sometimes 'null').
-   */
-  collateralReturn?: {
-    /**
-     * A Cardano address (either legacy format or new format).
-     */
-    address: string;
-    value: {
-      /**
-       * A number of lovelace, possibly large when summed up.
-       */
-      coins: bigint;
-      assets?: {
-        /**
-         * A number of asset, can be negative went burning assets.
-         */
-        [k: string]: bigint;
-      };
-    };
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    datumHash?: string;
-    datum?: string;
-    script?: Native | PlutusV1 | PlutusV2;
-  };
-  outputs: {
-    /**
-     * A Cardano address (either legacy format or new format).
-     */
-    address: string;
-    value: {
-      /**
-       * A number of lovelace, possibly large when summed up.
-       */
-      coins: bigint;
-      assets?: {
-        /**
-         * A number of asset, can be negative went burning assets.
-         */
-        [k: string]: bigint;
-      };
-    };
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    datumHash?: string;
-    datum?: string;
-    script?: Native | PlutusV1 | PlutusV2;
-  }[];
-  certificates?: (
-    | StakeDelegation
-    | StakeKeyRegistration
-    | StakeKeyDeregistration
-    | PoolRegistration
-    | PoolRetirement
-    | GenesisDelegation
-    | MoveInstantaneousRewards
-  )[];
-  withdrawals?: {
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    [k: string]: bigint;
-  };
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  fee?: bigint;
-  validityInterval?: {
-    /**
-     * An absolute slot number.
-     */
-    invalidBefore?: number;
-    /**
-     * An absolute slot number.
-     */
-    invalidAfter?: number;
-  };
-  mint?: {
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    coins: bigint;
-    assets?: {
-      /**
-       * A number of asset, can be negative went burning assets.
-       */
-      [k: string]: bigint;
-    };
-  };
-  /**
-   * A network target, as defined since the Shelley era.
-   */
-  network?: "mainnet" | "testnet";
-  /**
-   * A Blake2b 32-byte hash digest, encoded in base16.
-   */
-  scriptIntegrityHash?: string;
-  requiredExtraSignatories?: string[];
-  governanceActions?: UpdateProposalBabbage[];
-  metadata?: {
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    hash: string;
-    labels: {
-      [k: string]: Int | String | Bytes | List | Map;
-    };
-  };
+  inputs: TransactionOutputReference[];
+  references?: TransactionOutputReference[];
+  collaterals?: TransactionOutputReference[];
+  collateral?: Lovelace;
+  collateralReturn?: TransactionOutput;
+  outputs: TransactionOutput[];
+  certificates?: Certificate[];
+  withdrawals?: Withdrawals;
+  fee?: Lovelace;
+  validityInterval?: ValidityInterval;
+  mint?: Value;
+  network?: Network;
+  scriptIntegrityHash?: DigestBlake2B256;
+  requiredExtraSignatories?: DigestBlake2B224[];
+  governanceActions?: UpdateProposalShelley[] | UpdateProposalAlonzo[] | UpdateProposalBabbage[];
+  metadata?: Metadata;
   signatories: unknown[];
   scripts?: {
-    [k: string]: Native | PlutusV1 | PlutusV2;
+    [k: string]: Script;
   };
   datums?: {
-    [k: string]: string;
+    [k: string]: Datum;
   };
   redeemers?: {
-    [k: string]: {
-      /**
-       * Plutus data, CBOR-serialised.
-       */
-      redeemer: string;
-      executionUnits: {
-        memory: number;
-        steps: number;
-      };
-    };
+    [k: string]: Redeemer;
   };
   /**
    * The raw serialized (CBOR) transaction, as found on-chain.
    */
   cbor: string;
 }
+export interface TransactionOutputReference {
+  txId: TransactionId;
+  index: UInt32;
+}
+/**
+ * A transaction output. Since Mary, 'value' always return a multi-asset value. Since Alonzo, 'datumHash' is always present (albeit sometimes 'null'). Since Babbage, 'datum' & 'script' are always present (albeit sometimes 'null').
+ */
+export interface TransactionOutput {
+  address: Address;
+  value: Value;
+  datumHash?: DigestBlake2B256;
+  datum?: Datum;
+  script?: Script;
+}
+export interface Value {
+  coins: Lovelace;
+  assets?: {
+    [k: string]: AssetQuantity;
+  };
+}
 export interface Native {
-  /**
-   * A phase-1 monetary script. Timelocks constraints are only supported since Allegra.
-   */
-  native: string | Any | All | NOf | ExpiresAt | StartsAt;
+  native: ScriptNative;
 }
 export interface Any {
-  any: (string | Any | All | NOf | ExpiresAt | StartsAt)[];
+  any: ScriptNative[];
 }
 export interface All {
-  all: (string | Any | All | NOf | ExpiresAt | StartsAt)[];
+  all: ScriptNative[];
 }
 export interface NOf {
-  [k: string]: (string | Any | All | NOf | ExpiresAt | StartsAt)[];
+  [k: string]: ScriptNative[];
 }
 export interface ExpiresAt {
-  /**
-   * An absolute slot number.
-   */
-  expiresAt: number;
+  expiresAt: Slot;
 }
 export interface StartsAt {
-  /**
-   * An absolute slot number.
-   */
-  startsAt: number;
+  startsAt: Slot;
 }
 export interface PlutusV1 {
-  /**
-   * A phase-2 Plutus script; or said differently, a serialized Plutus-core program.
-   */
-  "plutus:v1": string;
+  "plutus:v1": ScriptPlutus;
 }
 export interface PlutusV2 {
-  /**
-   * A phase-2 Plutus script; or said differently, a serialized Plutus-core program.
-   */
-  "plutus:v2": string;
+  "plutus:v2": ScriptPlutus;
 }
 /**
  * A stake delegation certificate, from a delegator to a stake pool.
  */
 export interface StakeDelegation {
   stakeDelegation: {
-    /**
-     * A Blake2b 28-byte hash digest, encoded in base16.
-     */
-    delegator: string;
-    /**
-     * A Blake2b 32-byte hash digest of a pool's verification key.
-     */
-    delegatee: string;
+    delegator: DigestBlake2B224;
+    delegatee: StakePoolId;
   };
 }
 /**
  * A stake key registration certificate.
  */
 export interface StakeKeyRegistration {
-  /**
-   * A Blake2b 28-byte hash digest, encoded in base16.
-   */
-  stakeKeyRegistration: string;
+  stakeKeyRegistration: DigestBlake2B224;
 }
 /**
  * A stake key de-registration certificate.
  */
 export interface StakeKeyDeregistration {
-  /**
-   * A Blake2b 28-byte hash digest, encoded in base16.
-   */
-  stakeKeyDeregistration: string;
+  stakeKeyDeregistration: DigestBlake2B224;
 }
 /**
  * A pool registration certificate.
  */
 export interface PoolRegistration {
-  poolRegistration: {
-    /**
-     * A Blake2b 32-byte hash digest of a pool's verification key.
-     */
-    id: string;
-    owners: string[];
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    cost: bigint;
-    /**
-     * A ratio of two integers, to express exact fractions.
-     */
-    margin: string;
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    pledge: bigint;
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    vrf: string;
-    metadata?: PoolMetadata;
-    relays: (ByAddress | ByName)[];
-    /**
-     * A reward account, also known as 'stake address'.
-     */
-    rewardAccount: string;
-  };
+  poolRegistration: StakePoolParameters;
+}
+export interface StakePoolParameters {
+  id: StakePoolId;
+  owners: DigestBlake2B224[];
+  cost: Lovelace;
+  margin: Ratio;
+  pledge: Lovelace;
+  vrf: DigestBlake2B256;
+  metadata?: PoolMetadata;
+  relays: Relay[];
+  rewardAccount: RewardAccount;
 }
 export interface PoolMetadata {
-  /**
-   * A hash digest from an unspecified algorithm and length.
-   */
-  hash: string;
+  hash: DigestAny;
   url: string;
 }
 export interface ByAddress {
@@ -603,30 +535,15 @@ export interface ByName {
  */
 export interface PoolRetirement {
   poolRetirement: {
-    /**
-     * An epoch number or length.
-     */
-    retirementEpoch: number;
-    /**
-     * A Blake2b 32-byte hash digest of a pool's verification key.
-     */
-    poolId: string;
+    retirementEpoch: Epoch;
+    poolId: StakePoolId;
   };
 }
 export interface GenesisDelegation {
   genesisDelegation: {
-    /**
-     * A Blake2b 28-byte hash digest, encoded in base16.
-     */
-    delegateKeyHash: string;
-    /**
-     * A Blake2b 28-byte hash digest, encoded in base16.
-     */
-    verificationKeyHash: string;
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    vrfVerificationKeyHash: string;
+    delegateKeyHash: DigestBlake2B224;
+    verificationKeyHash: DigestBlake2B224;
+    vrfVerificationKeyHash: DigestBlake2B256;
   };
 }
 /**
@@ -634,85 +551,133 @@ export interface GenesisDelegation {
  */
 export interface MoveInstantaneousRewards {
   moveInstantaneousRewards: {
-    rewards?: {
-      /**
-       * An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada).
-       */
-      [k: string]: number;
-    };
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    value?: bigint;
-    /**
-     * Source of rewards as defined by the protocol parameters.
-     */
-    pot: "reserves" | "treasury";
+    rewards?: RewardTransfer;
+    value?: Lovelace;
+    pot: RewardPot;
   };
 }
-export interface UpdateProposalBabbage {
-  /**
-   * An epoch number or length.
-   */
-  epoch: number;
+export interface RewardTransfer {
+  [k: string]: LovelaceDelta;
+}
+export interface Withdrawals {
+  [k: string]: Lovelace;
+}
+export interface ValidityInterval {
+  invalidBefore?: Slot;
+  invalidAfter?: Slot;
+}
+export interface UpdateProposalShelley {
+  epoch: Epoch;
   proposal: {
-    [k: string]: {
-      minFeeCoefficient?: number;
-      minFeeConstant?: number;
-      maxBlockBodySize?: number;
-      maxBlockHeaderSize?: number;
-      maxTxSize?: number;
-      stakeKeyDeposit?: number;
-      poolDeposit?: number;
-      poolRetirementEpochBound?: number;
-      desiredNumberOfPools?: number;
-      /**
-       * A ratio of two integers, to express exact fractions.
-       */
-      poolInfluence?: string;
-      /**
-       * A ratio of two integers, to express exact fractions.
-       */
-      monetaryExpansion?: string;
-      /**
-       * A ratio of two integers, to express exact fractions.
-       */
-      treasuryExpansion?: string;
-      minPoolCost?: number;
-      coinsPerUtxoByte?: number;
-      maxValueSize?: number;
-      collateralPercentage?: number;
-      maxCollateralInputs?: number;
-      protocolVersion?: {
-        major: number;
-        minor: number;
-        patch?: number;
-      };
-      costModels?: {
-        [k: string]: {
-          [k: string]: number;
-        };
-      };
-      prices?: {
-        /**
-         * A ratio of two integers, to express exact fractions.
-         */
-        memory: string;
-        /**
-         * A ratio of two integers, to express exact fractions.
-         */
-        steps: string;
-      };
-      maxExecutionUnitsPerTransaction?: {
-        memory: number;
-        steps: number;
-      };
-      maxExecutionUnitsPerBlock?: {
-        memory: number;
-        steps: number;
-      };
-    };
+    [k: string]: ProtocolParametersShelley;
   };
+}
+export interface ProtocolParametersShelley {
+  minFeeCoefficient?: UInt64;
+  minFeeConstant?: UInt64;
+  maxBlockBodySize?: UInt64;
+  maxBlockHeaderSize?: UInt64;
+  maxTxSize?: UInt64;
+  stakeKeyDeposit?: UInt64;
+  poolDeposit?: UInt64;
+  poolRetirementEpochBound?: UInt64;
+  desiredNumberOfPools?: UInt64;
+  poolInfluence?: Ratio;
+  monetaryExpansion?: Ratio;
+  treasuryExpansion?: Ratio;
+  decentralizationParameter?: Ratio;
+  minUtxoValue?: UInt64;
+  minPoolCost?: UInt64;
+  extraEntropy?: Nonce;
+  protocolVersion?: ProtocolVersion;
+}
+export interface ProtocolVersion {
+  major: UInt321;
+  minor: UInt321;
+  patch?: UInt321;
+}
+export interface UpdateProposalAlonzo {
+  epoch: Epoch;
+  proposal: {
+    [k: string]: ProtocolParametersAlonzo;
+  };
+}
+export interface ProtocolParametersAlonzo {
+  minFeeCoefficient?: UInt64;
+  minFeeConstant?: UInt64;
+  maxBlockBodySize?: UInt64;
+  maxBlockHeaderSize?: UInt64;
+  maxTxSize?: UInt64;
+  stakeKeyDeposit?: UInt64;
+  poolDeposit?: UInt64;
+  poolRetirementEpochBound?: UInt64;
+  desiredNumberOfPools?: UInt64;
+  poolInfluence?: Ratio;
+  monetaryExpansion?: Ratio;
+  treasuryExpansion?: Ratio;
+  decentralizationParameter?: Ratio;
+  minPoolCost?: UInt64;
+  coinsPerUtxoWord?: UInt64;
+  maxValueSize?: UInt64;
+  collateralPercentage?: UInt64;
+  maxCollateralInputs?: UInt64;
+  extraEntropy?: Nonce;
+  protocolVersion?: ProtocolVersion;
+  costModels?: CostModels;
+  prices?: Prices;
+  maxExecutionUnitsPerTransaction?: ExecutionUnits;
+  maxExecutionUnitsPerBlock?: ExecutionUnits;
+}
+export interface CostModels {
+  [k: string]: CostModel;
+}
+export interface CostModel {
+  [k: string]: Int64;
+}
+export interface Prices {
+  memory: Ratio;
+  steps: Ratio;
+}
+export interface ExecutionUnits {
+  memory: UInt64;
+  steps: UInt64;
+}
+export interface UpdateProposalBabbage {
+  epoch: Epoch;
+  proposal: {
+    [k: string]: ProtocolParametersBabbage;
+  };
+}
+export interface ProtocolParametersBabbage {
+  minFeeCoefficient?: UInt64;
+  minFeeConstant?: UInt64;
+  maxBlockBodySize?: UInt64;
+  maxBlockHeaderSize?: UInt64;
+  maxTxSize?: UInt64;
+  stakeKeyDeposit?: UInt64;
+  poolDeposit?: UInt64;
+  poolRetirementEpochBound?: UInt64;
+  desiredNumberOfPools?: UInt64;
+  poolInfluence?: Ratio;
+  monetaryExpansion?: Ratio;
+  treasuryExpansion?: Ratio;
+  minPoolCost?: UInt64;
+  coinsPerUtxoByte?: UInt64;
+  maxValueSize?: UInt64;
+  collateralPercentage?: UInt64;
+  maxCollateralInputs?: UInt64;
+  protocolVersion?: ProtocolVersion;
+  costModels?: CostModels;
+  prices?: Prices;
+  maxExecutionUnitsPerTransaction?: ExecutionUnits;
+  maxExecutionUnitsPerBlock?: ExecutionUnits;
+}
+export interface Metadata {
+  hash: DigestBlake2B256;
+  labels: MetadataLabels;
+}
+export interface MetadataLabels {
+  [k: string]: Metadatum;
 }
 export interface Int {
   int: bigint;
@@ -724,172 +689,116 @@ export interface Bytes {
   bytes: string;
 }
 export interface List {
-  list: (Int | String | Bytes | List | Map)[];
+  list: Metadatum[];
 }
 export interface Map {
-  map: {
-    k: Int | String | Bytes | List | Map;
-    v: Int | String | Bytes | List | Map;
-  }[];
+  map: MetadatumMap[];
+}
+export interface MetadatumMap {
+  k: Metadatum;
+  v: Metadatum;
+}
+export interface Redeemer {
+  redeemer: RedeemerData;
+  executionUnits: ExecutionUnits;
 }
 /**
  * A (Byron) delegation certificate.
  */
 export interface BootstrapOperationalCertificate {
   issuer: {
-    /**
-     * An Ed25519 verification key.
-     */
-    verificationKey: string;
+    verificationKey: VerificationKey;
   };
   delegate: {
-    /**
-     * An Ed25519 verification key.
-     */
-    verificationKey: string;
+    verificationKey: VerificationKey;
   };
 }
 export interface BootstrapGovernanceAction {
   proposal?: {
     protocol: {
-      version: {
-        major: number;
-        minor: number;
-        patch?: number;
-      };
-      software: {
-        appName: string;
-        number: number;
-      };
+      version: ProtocolVersion;
+      software: SoftwareVersion;
     };
     metadata: {
       [k: string]: string;
     };
-    parameters: {
-      /**
-       * A ratio of two integers, to express exact fractions.
-       */
-      heavyDlgThreshold?: string;
-      maxBlockSize?: number;
-      maxHeaderSize?: number;
-      maxProposalSize?: number;
-      maxTxSize?: number;
-      /**
-       * A ratio of two integers, to express exact fractions.
-       */
-      mpcThreshold?: string;
-      scriptVersion?: number;
-      slotDuration?: number;
-      unlockStakeEpoch?: number;
-      /**
-       * A ratio of two integers, to express exact fractions.
-       */
-      updateProposalThreshold?: string;
-      updateProposalTimeToLive?: number;
-      /**
-       * A ratio of two integers, to express exact fractions.
-       */
-      updateVoteThreshold?: string;
-      txFeePolicy?: {
-        /**
-         * A ratio of two integers, to express exact fractions.
-         */
-        coefficient: string;
-        constant: number;
-      };
-      softforkRule?: {
-        /**
-         * A ratio of two integers, to express exact fractions.
-         */
-        initThreshold: string;
-        /**
-         * A ratio of two integers, to express exact fractions.
-         */
-        minThreshold: string;
-        /**
-         * A ratio of two integers, to express exact fractions.
-         */
-        decrementThreshold: string;
-      };
-    };
+    parameters: ProtocolParametersByron;
     issuer: {
-      /**
-       * An Ed25519-BIP32 Byron genesis delegate verification key with chain-code.
-       */
-      verificationKey: string;
+      verificationKey: ExtendedVerificationKey;
     };
   };
-  votes: {
-    voter: {
-      /**
-       * An Ed25519 verification key.
-       */
-      verificationKey: string;
-    };
-    proposal: {
-      /**
-       * A Blake2b 32-byte hash digest, encoded in base16.
-       */
-      hash: string;
-    };
-  }[];
+  votes: BootstrapVote[];
+}
+export interface SoftwareVersion {
+  appName: string;
+  number: UInt321;
+}
+export interface ProtocolParametersByron {
+  heavyDlgThreshold?: Ratio;
+  maxBlockSize?: UInt64;
+  maxHeaderSize?: UInt64;
+  maxProposalSize?: UInt64;
+  maxTxSize?: UInt64;
+  mpcThreshold?: Ratio;
+  scriptVersion?: UInt64;
+  slotDuration?: UInt64;
+  unlockStakeEpoch?: UInt64;
+  updateProposalThreshold?: Ratio;
+  updateProposalTimeToLive?: UInt64;
+  updateVoteThreshold?: Ratio;
+  txFeePolicy?: TxFeePolicy;
+  softforkRule?: SoftForkRule;
+}
+export interface TxFeePolicy {
+  coefficient: Ratio;
+  constant: number;
+}
+export interface SoftForkRule {
+  initThreshold: Ratio;
+  minThreshold: Ratio;
+  decrementThreshold: Ratio;
+}
+export interface BootstrapVote {
+  voter: {
+    verificationKey: VerificationKey;
+  };
+  proposal: {
+    hash: DigestBlake2B256;
+  };
 }
 export interface BlockPraos {
   era: "shelley" | "allegra" | "mary" | "alonzo" | "babbage";
   header: {
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    hash: string;
+    hash: DigestBlake2B256;
   };
-  ancestor: string | GenesisHash;
-  nonce?: {
-    proof?: string;
-    output?: string;
-  };
-  /**
-   * A block number, the i-th block to be minted is number i.
-   */
-  height: number;
-  /**
-   * The size of the block in bytes.
-   */
-  size: number;
-  /**
-   * An absolute slot number.
-   */
-  slot: number;
+  ancestor: DigestBlake2B256 | GenesisHash;
+  nonce?: CertifiedVrf;
+  height: BlockHeight;
+  size: BlockSize;
+  slot: Slot;
   transactions?: Transaction[];
   protocol: {
-    version: {
-      major: number;
-      minor: number;
-      patch?: number;
-    };
+    version: ProtocolVersion;
   };
   issuer: {
-    /**
-     * An Ed25519 verification key.
-     */
-    verificationKey: string;
-    /**
-     * An Ed25519 verification key.
-     */
-    vrfVerificationKey: string;
-    /**
-     * Certificate identifying a stake pool operator.
-     */
-    operationalCertificate: {
-      count: number;
-      kes: {
-        period: number;
-        verificationKey: string;
-      };
-    };
-    leaderValue: {
-      proof?: string;
-      output?: string;
-    };
+    verificationKey: VerificationKey;
+    vrfVerificationKey: VerificationKey;
+    operationalCertificate: OperationalCertificate;
+    leaderValue: CertifiedVrf;
+  };
+}
+export interface CertifiedVrf {
+  proof?: VrfProof;
+  output?: VrfOutput;
+}
+/**
+ * Certificate identifying a stake pool operator.
+ */
+export interface OperationalCertificate {
+  count: UInt64;
+  kes: {
+    period: UInt64;
+    verificationKey: KesVerificationKey;
   };
 }
 export interface RollBackward {
@@ -920,10 +829,7 @@ export interface SubmitTransactionSuccess {
   jsonrpc: "2.0";
   result: {
     transaction: {
-      /**
-       * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-       */
-      id: string;
+      id: TransactionId;
     };
   };
   /**
@@ -939,10 +845,7 @@ export interface SubmitTransactionFailure {
     code: 3005;
     message: string;
     data: (
-      | {
-          queryEra: "Byron" | "Shelley" | "Allegra" | "Mary" | "Alonzo" | "Babbage";
-          ledgerEra: "Byron" | "Shelley" | "Allegra" | "Mary" | "Alonzo" | "Babbage";
-        }
+      | EraMismatch
       | InvalidWitnesses
       | MissingVkWitnesses
       | MissingScriptWitnesses
@@ -1018,67 +921,47 @@ export interface SubmitTransactionFailure {
     [k: string]: unknown;
   };
 }
+export interface EraMismatch {
+  queryEra: Era;
+  ledgerEra: Era;
+}
 export interface InvalidWitnesses {
-  invalidWitnesses: string[];
+  invalidWitnesses: VerificationKey[];
 }
 export interface MissingVkWitnesses {
-  missingVkWitnesses: string[];
+  missingVkWitnesses: DigestBlake2B224[];
 }
 export interface MissingScriptWitnesses {
-  missingScriptWitnesses: string[];
+  missingScriptWitnesses: DigestBlake2B224[];
 }
 export interface ScriptWitnessNotValidating {
-  scriptWitnessNotValidating: string[];
+  scriptWitnessNotValidating: DigestBlake2B224[];
 }
 export interface InsufficientGenesisSignatures {
-  insufficientGenesisSignatures: string[];
+  insufficientGenesisSignatures: DigestBlake2B224[];
 }
 export interface MissingTxMetadata {
-  /**
-   * A Blake2b 32-byte hash digest, encoded in base16.
-   */
-  missingTxMetadata: string;
+  missingTxMetadata: DigestBlake2B256;
 }
 export interface MissingTxMetadataHash {
-  /**
-   * A Blake2b 32-byte hash digest, encoded in base16.
-   */
-  missingTxMetadataHash: string;
+  missingTxMetadataHash: DigestBlake2B256;
 }
 export interface TxMetadataHashMismatch {
   txMetadataHashMismatch: {
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    includedHash: string;
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    expectedHash: string;
+    includedHash: DigestBlake2B256;
+    expectedHash: DigestBlake2B256;
   };
 }
 export interface BadInputs {
-  badInputs: {
-    /**
-     * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-     */
-    txId: string;
-    index: number;
-  }[];
+  badInputs: TransactionOutputReference[];
 }
 /**
  * Only in Shelley. Replaced with 'outsideOfValidityInterval' since Allegra.
  */
 export interface ExpiredUtxo {
   expiredUtxo: {
-    /**
-     * An absolute slot number.
-     */
-    currentSlot: number;
-    /**
-     * An absolute slot number.
-     */
-    transactionTimeToLive: number;
+    currentSlot: Slot;
+    transactionTimeToLive: Slot;
   };
 }
 /**
@@ -1086,26 +969,14 @@ export interface ExpiredUtxo {
  */
 export interface OutsideOfValidityInterval {
   outsideOfValidityInterval: {
-    /**
-     * An absolute slot number.
-     */
-    currentSlot: number;
-    interval: {
-      /**
-       * An absolute slot number.
-       */
-      invalidBefore?: number;
-      /**
-       * An absolute slot number.
-       */
-      invalidAfter?: number;
-    };
+    currentSlot: Slot;
+    interval: ValidityInterval;
   };
 }
 export interface TxTooLarge {
   txTooLarge: {
-    maximumSize: number;
-    actualSize: number;
+    maximumSize: Int64;
+    actualSize: Int64;
   };
 }
 export interface MissingAtLeastOneInputUtxo {
@@ -1116,14 +987,8 @@ export interface InvalidMetadata {
 }
 export interface FeeTooSmall {
   feeTooSmall: {
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    requiredFee: bigint;
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    actualFee: bigint;
+    requiredFee: Lovelace;
+    actualFee: Lovelace;
   };
 }
 /**
@@ -1131,125 +996,35 @@ export interface FeeTooSmall {
  */
 export interface ValueNotConserved {
   valueNotConserved: {
-    consumed:
-      | number
-      | {
-          /**
-           * A number of lovelace, possibly large when summed up.
-           */
-          coins: bigint;
-          assets?: {
-            /**
-             * A number of asset, can be negative went burning assets.
-             */
-            [k: string]: bigint;
-          };
-        };
-    produced:
-      | number
-      | {
-          /**
-           * A number of lovelace, possibly large when summed up.
-           */
-          coins: bigint;
-          assets?: {
-            /**
-             * A number of asset, can be negative went burning assets.
-             */
-            [k: string]: bigint;
-          };
-        };
+    consumed: LovelaceDelta | Value;
+    produced: LovelaceDelta | Value;
   };
 }
 export interface NetworkMismatch {
   networkMismatch: {
-    /**
-     * A network target, as defined since the Shelley era.
-     */
-    expectedNetwork: "mainnet" | "testnet";
+    expectedNetwork: Network;
     invalidEntities: (
       | {
           type: "address";
-          /**
-           * A Cardano address (either legacy format or new format).
-           */
-          entity: string;
+          entity: Address;
         }
       | {
           type: "poolRegistration";
-          /**
-           * A Blake2b 32-byte hash digest of a pool's verification key.
-           */
-          entity: string;
+          entity: StakePoolId;
         }
       | {
           type: "rewardAccount";
-          /**
-           * A reward account, also known as 'stake address'.
-           */
-          entity: string;
+          entity: RewardAccount;
         }
     )[];
   };
 }
 export interface OutputTooSmall {
   outputTooSmall: (
+    | TransactionOutput
     | {
-        /**
-         * A Cardano address (either legacy format or new format).
-         */
-        address: string;
-        value: {
-          /**
-           * A number of lovelace, possibly large when summed up.
-           */
-          coins: bigint;
-          assets?: {
-            /**
-             * A number of asset, can be negative went burning assets.
-             */
-            [k: string]: bigint;
-          };
-        };
-        /**
-         * A Blake2b 32-byte hash digest, encoded in base16.
-         */
-        datumHash?: string;
-        datum?: string;
-        script?: Native | PlutusV1 | PlutusV2;
-      }
-    | {
-        /**
-         * A transaction output. Since Mary, 'value' always return a multi-asset value. Since Alonzo, 'datumHash' is always present (albeit sometimes 'null'). Since Babbage, 'datum' & 'script' are always present (albeit sometimes 'null').
-         */
-        output: {
-          /**
-           * A Cardano address (either legacy format or new format).
-           */
-          address: string;
-          value: {
-            /**
-             * A number of lovelace, possibly large when summed up.
-             */
-            coins: bigint;
-            assets?: {
-              /**
-               * A number of asset, can be negative went burning assets.
-               */
-              [k: string]: bigint;
-            };
-          };
-          /**
-           * A Blake2b 32-byte hash digest, encoded in base16.
-           */
-          datumHash?: string;
-          datum?: string;
-          script?: Native | PlutusV1 | PlutusV2;
-        };
-        /**
-         * A number of lovelace, possibly large when summed up.
-         */
-        minimumRequiredValue: bigint;
+        output: TransactionOutput;
+        minimumRequiredValue: Lovelace;
       }
   )[];
 }
@@ -1257,33 +1032,10 @@ export interface OutputTooSmall {
  * Only since Mary.
  */
 export interface TooManyAssetsInOutput {
-  tooManyAssetsInOutput: {
-    /**
-     * A Cardano address (either legacy format or new format).
-     */
-    address: string;
-    value: {
-      /**
-       * A number of lovelace, possibly large when summed up.
-       */
-      coins: bigint;
-      assets?: {
-        /**
-         * A number of asset, can be negative went burning assets.
-         */
-        [k: string]: bigint;
-      };
-    };
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    datumHash?: string;
-    datum?: string;
-    script?: Native | PlutusV1 | PlutusV2;
-  }[];
+  tooManyAssetsInOutput: TransactionOutput[];
 }
 export interface AddressAttributesTooLarge {
-  addressAttributesTooLarge: string[];
+  addressAttributesTooLarge: Address[];
 }
 /**
  * Only since Mary.
@@ -1292,125 +1044,69 @@ export interface TriesToForgeAda {
   triesToForgeAda: null;
 }
 export interface DelegateNotRegistered {
-  /**
-   * A Blake2b 32-byte hash digest of a pool's verification key.
-   */
-  delegateNotRegistered: string;
+  delegateNotRegistered: StakePoolId;
 }
 export interface UnknownOrIncompleteWithdrawals {
-  unknownOrIncompleteWithdrawals: {
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    [k: string]: bigint;
-  };
+  unknownOrIncompleteWithdrawals: Withdrawals;
 }
 export interface StakePoolNotRegistered {
-  /**
-   * A Blake2b 32-byte hash digest of a pool's verification key.
-   */
-  stakePoolNotRegistered: string;
+  stakePoolNotRegistered: StakePoolId;
 }
 export interface WrongRetirementEpoch {
   wrongRetirementEpoch: {
-    /**
-     * An epoch number or length.
-     */
-    currentEpoch: number;
-    /**
-     * An epoch number or length.
-     */
-    requestedEpoch: number;
-    /**
-     * An epoch number or length.
-     */
-    firstUnreachableEpoch: number;
+    currentEpoch: Epoch;
+    requestedEpoch: Epoch;
+    firstUnreachableEpoch: Epoch;
   };
 }
 export interface WrongPoolCertificate {
-  wrongPoolCertificate: number;
+  wrongPoolCertificate: UInt8;
 }
 export interface StakeKeyAlreadyRegistered {
-  /**
-   * A Blake2b 28-byte hash digest, encoded in base16.
-   */
-  stakeKeyAlreadyRegistered: string;
+  stakeKeyAlreadyRegistered: DigestBlake2B224;
 }
 export interface PoolCostTooSmall {
   poolCostTooSmall: {
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    minimumCost: bigint;
+    minimumCost: Lovelace;
   };
 }
 export interface PoolMetadataHashTooBig {
   poolMetadataHashTooBig: {
-    /**
-     * A Blake2b 32-byte hash digest of a pool's verification key.
-     */
-    poolId: string;
-    measuredSize: number;
+    poolId: StakePoolId;
+    measuredSize: Int64;
   };
 }
 export interface StakeKeyNotRegistered {
-  /**
-   * A Blake2b 28-byte hash digest, encoded in base16.
-   */
-  stakeKeyNotRegistered: string;
+  stakeKeyNotRegistered: DigestBlake2B224;
 }
 export interface RewardAccountNotExisting {
   rewardAccountNotExisting: null;
 }
 export interface RewardAccountNotEmpty {
   rewardAccountNotEmpty: {
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    balance: bigint;
+    balance: Lovelace;
   };
 }
 export interface WrongCertificateType {
   wrongCertificateType: null;
 }
 export interface UnknownGenesisKey {
-  /**
-   * A Blake2b 28-byte hash digest, encoded in base16.
-   */
-  unknownGenesisKey: string;
+  unknownGenesisKey: DigestBlake2B224;
 }
 export interface AlreadyDelegating {
-  /**
-   * A Blake2b 28-byte hash digest, encoded in base16.
-   */
-  alreadyDelegating: string;
+  alreadyDelegating: DigestBlake2B224;
 }
 export interface InsufficientFundsForMir {
   insufficientFundsForMir: {
-    /**
-     * Source of rewards as defined by the protocol parameters.
-     */
-    rewardSource: "reserves" | "treasury";
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    sourceSize: bigint;
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    requestedAmount: bigint;
+    rewardSource: RewardPot;
+    sourceSize: Lovelace;
+    requestedAmount: Lovelace;
   };
 }
 export interface TooLateForMir {
   tooLateForMir: {
-    /**
-     * An absolute slot number.
-     */
-    currentSlot: number;
-    /**
-     * An absolute slot number.
-     */
-    lastAllowedSlot: number;
+    currentSlot: Slot;
+    lastAllowedSlot: Slot;
   };
 }
 export interface MirTransferNotCurrentlyAllowed {
@@ -1423,122 +1119,72 @@ export interface MirProducesNegativeUpdate {
   mirProducesNegativeUpdate: null;
 }
 export interface DuplicateGenesisVrf {
-  /**
-   * A Blake2b 28-byte hash digest, encoded in base16.
-   */
-  duplicateGenesisVrf: string;
+  duplicateGenesisVrf: DigestBlake2B224;
 }
 export interface NonGenesisVoters {
   nonGenesisVoters: {
-    currentlyVoting: string[];
-    shouldBeVoting: string[];
+    currentlyVoting: DigestBlake2B224[];
+    shouldBeVoting: DigestBlake2B224[];
   };
 }
 export interface UpdateWrongEpoch {
   updateWrongEpoch: {
-    /**
-     * An epoch number or length.
-     */
-    currentEpoch: number;
-    /**
-     * An epoch number or length.
-     */
-    requestedEpoch: number;
-    votingPeriod: "voteForThisEpoch" | "voteForNextEpoch";
+    currentEpoch: Epoch;
+    requestedEpoch: Epoch;
+    votingPeriod: VotingPeriod;
   };
 }
 export interface ProtocolVersionCannotFollow {
-  protocolVersionCannotFollow: {
-    major: number;
-    minor: number;
-    patch?: number;
-  };
+  protocolVersionCannotFollow: ProtocolVersion;
 }
 export interface MissingRequiredRedeemers {
   missingRequiredRedeemers: {
     missing: {
-      [k: string]: Spend | Mint | Certificate | Withdrawal;
+      [k: string]: ScriptPurpose;
     }[];
   };
 }
 export interface Spend {
-  spend: {
-    /**
-     * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-     */
-    txId: string;
-    index: number;
-  };
+  spend: TransactionOutputReference;
 }
 export interface Mint {
-  /**
-   * A Blake2b 28-byte hash digest, encoded in base16.
-   */
-  mint: string;
+  mint: PolicyId;
 }
-export interface Certificate {
-  certificate:
-    | StakeDelegation
-    | StakeKeyRegistration
-    | StakeKeyDeregistration
-    | PoolRegistration
-    | PoolRetirement
-    | GenesisDelegation
-    | MoveInstantaneousRewards;
+export interface Certificate1 {
+  certificate: Certificate;
 }
 export interface Withdrawal {
-  /**
-   * A reward account, also known as 'stake address'.
-   */
-  withdrawal: string;
+  withdrawal: RewardAccount;
 }
 export interface MissingRequiredDatums {
   missingRequiredDatums: {
-    provided?: string[];
-    missing: string[];
+    provided?: DigestBlake2B256[];
+    missing: DigestBlake2B256[];
   };
 }
 export interface UnspendableDatums {
   unspendableDatums: {
-    nonSpendable: string[];
-    acceptable: string[];
+    nonSpendable: DigestBlake2B256[];
+    acceptable: DigestBlake2B256[];
   };
 }
 export interface ExtraDataMismatch {
   extraDataMismatch: {
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    provided?: string;
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    inferredFromParameters?: string;
+    provided?: DigestBlake2B256;
+    inferredFromParameters?: DigestBlake2B256;
   };
 }
 export interface MissingRequiredSignatures {
-  missingRequiredSignatures: string[];
+  missingRequiredSignatures: DigestBlake2B224[];
 }
 export interface UnspendableScriptInputs {
-  unspendableScriptInputs: {
-    /**
-     * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-     */
-    txId: string;
-    index: number;
-  }[];
+  unspendableScriptInputs: TransactionOutputReference[];
 }
 export interface ExtraRedeemers {
   extraRedeemers: string[];
 }
 export interface MissingDatumHashesForInputs {
-  missingDatumHashesForInputs: {
-    /**
-     * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-     */
-    txId: string;
-    index: number;
-  }[];
+  missingDatumHashesForInputs: TransactionOutputReference[];
 }
 /**
  * Only since Alonzo.
@@ -1548,88 +1194,30 @@ export interface MissingCollateralInputs {
 }
 export interface CollateralTooSmall {
   collateralTooSmall: {
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    requiredCollateral: bigint;
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    actualCollateral: bigint;
+    requiredCollateral: Lovelace;
+    actualCollateral: Lovelace;
   };
 }
 export interface CollateralIsScript {
-  collateralIsScript: [
-    {
-      /**
-       * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-       */
-      txId: string;
-      index: number;
-    },
-    {
-      /**
-       * A Cardano address (either legacy format or new format).
-       */
-      address: string;
-      value: {
-        /**
-         * A number of lovelace, possibly large when summed up.
-         */
-        coins: bigint;
-        assets?: {
-          /**
-           * A number of asset, can be negative went burning assets.
-           */
-          [k: string]: bigint;
-        };
-      };
-      /**
-       * A Blake2b 32-byte hash digest, encoded in base16.
-       */
-      datumHash?: string;
-      datum?: string;
-      script?: Native | PlutusV1 | PlutusV2;
-    }
-  ][];
+  collateralIsScript: Utxo;
 }
 export interface CollateralHasNonAdaAssets {
-  collateralHasNonAdaAssets: {
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    coins: bigint;
-    assets?: {
-      /**
-       * A number of asset, can be negative went burning assets.
-       */
-      [k: string]: bigint;
-    };
-  };
+  collateralHasNonAdaAssets: Value;
 }
 export interface TooManyCollateralInputs {
   tooManyCollateralInputs: {
-    maximumCollateralInputs: number;
-    actualCollateralInputs: number;
+    maximumCollateralInputs: UInt64;
+    actualCollateralInputs: UInt64;
   };
 }
 export interface ExecutionUnitsTooLarge {
   executionUnitsTooLarge: {
-    maximumExecutionUnits: {
-      memory: number;
-      steps: number;
-    };
-    actualExecutionUnits: {
-      memory: number;
-      steps: number;
-    };
+    maximumExecutionUnits: ExecutionUnits;
+    actualExecutionUnits: ExecutionUnits;
   };
 }
 export interface OutsideForecast {
-  /**
-   * An absolute slot number.
-   */
-  outsideForecast: number;
+  outsideForecast: Slot;
 }
 /**
  * Only since Alonzo.
@@ -1641,16 +1229,13 @@ export interface CollectErrors {
   collectErrors: (NoRedeemer | NoWitness | NoCostModel | BadTranslation)[];
 }
 export interface NoRedeemer {
-  noRedeemer: Spend | Mint | Certificate | Withdrawal;
+  noRedeemer: ScriptPurpose;
 }
 export interface NoWitness {
-  /**
-   * A Blake2b 28-byte hash digest, encoded in base16.
-   */
-  noWitness: string;
+  noWitness: DigestBlake2B224;
 }
 export interface NoCostModel {
-  noCostModel: "plutus:v1" | "plutus:v2";
+  noCostModel: Language;
 }
 export interface BadTranslation {
   /**
@@ -1659,37 +1244,25 @@ export interface BadTranslation {
   badTranslation: string;
 }
 export interface ExtraScriptWitnesses {
-  extraScriptWitnesses: string[];
+  extraScriptWitnesses: DigestBlake2B224[];
 }
 export interface MirNegativeTransfer {
   mirNegativeTransfer: {
-    /**
-     * Source of rewards as defined by the protocol parameters.
-     */
-    rewardSource: "reserves" | "treasury";
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    attemptedTransfer: bigint;
+    rewardSource: RewardPot;
+    attemptedTransfer: Lovelace;
   };
 }
 export interface TotalCollateralMismatch {
   totalCollateralMismatch: {
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    computedFromDelta: bigint;
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    declaredInField: bigint;
+    computedFromDelta: Lovelace;
+    declaredInField: Lovelace;
   };
 }
 export interface MalformedReferenceScripts {
-  malformedReferenceScripts: string[];
+  malformedReferenceScripts: DigestBlake2B224[];
 }
 export interface MalformedScriptWitnesses {
-  malformedScriptWitnesses: string[];
+  malformedScriptWitnesses: DigestBlake2B224[];
 }
 /**
  * Evaluate execution units for which redeemers's budget hasn't yet been set.
@@ -1702,39 +1275,7 @@ export interface EvaluateTransaction {
      * CBOR-serialized signed transaction (base16)
      */
     transaction: string;
-    additionalUtxoSet?: [
-      {
-        /**
-         * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-         */
-        txId: string;
-        index: number;
-      },
-      {
-        /**
-         * A Cardano address (either legacy format or new format).
-         */
-        address: string;
-        value: {
-          /**
-           * A number of lovelace, possibly large when summed up.
-           */
-          coins: bigint;
-          assets?: {
-            /**
-             * A number of asset, can be negative went burning assets.
-             */
-            [k: string]: bigint;
-          };
-        };
-        /**
-         * A Blake2b 32-byte hash digest, encoded in base16.
-         */
-        datumHash?: string;
-        datum?: string;
-        script?: Native | PlutusV1 | PlutusV2;
-      }
-    ][];
+    additionalUtxoSet?: Utxo;
   };
   /**
    * An arbitrary JSON value that will be mirrored back in the response.
@@ -1747,10 +1288,7 @@ export interface EvaluateTransactionSuccess {
   jsonrpc: "2.0";
   result: {
     budgets: {
-      [k: string]: {
-        memory: number;
-        steps: number;
-      };
+      [k: string]: ExecutionUnits;
     };
   };
   /**
@@ -1801,13 +1339,7 @@ export interface EvaluateTransactionFailureOverlappingAdditionalUtxo {
   data: OverlappingAdditionalUtxo;
 }
 export interface OverlappingAdditionalUtxo {
-  overlappingOutputReferences: {
-    /**
-     * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-     */
-    txId: string;
-    index: number;
-  }[];
+  overlappingOutputReferences: TransactionOutputReference[];
 }
 /**
  * Happens when attempting to evaluate execution units on a node that isn't enough synchronized.
@@ -1818,8 +1350,8 @@ export interface EvaluateTransactionFailureNodeTipTooOld {
   data: NodeTipTooOld;
 }
 export interface NodeTipTooOld {
-  minimumRequiredEra: "Byron" | "Shelley" | "Allegra" | "Mary" | "Alonzo" | "Babbage";
-  currentNodeEra: "Byron" | "Shelley" | "Allegra" | "Mary" | "Alonzo" | "Babbage";
+  minimumRequiredEra: Era;
+  currentNodeEra: Era;
 }
 /**
  * The transaction is malformed or missing information; making evaluation impossible.
@@ -1860,12 +1392,9 @@ export interface ScriptExecutionFailure {
  */
 export interface MissingRequiredScripts {
   missingRequiredScripts: {
-    missing: string[];
+    missing: RedeemerPointer[];
     resolved: {
-      /**
-       * A Blake2b 28-byte hash digest, encoded in base16.
-       */
-      [k: string]: string;
+      [k: string]: DigestBlake2B224;
     };
   };
 }
@@ -1882,40 +1411,25 @@ export interface ValidatorFailed {
  * Non-existing input referenced by a redeemer pointer.
  */
 export interface UnknownInputReferencedByRedeemer {
-  unknownInputReferencedByRedeemer: {
-    /**
-     * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-     */
-    txId: string;
-    index: number;
-  };
+  unknownInputReferencedByRedeemer: TransactionOutputReference;
 }
 /**
  * Input not locked by a Plutus referenced by a redeemer pointer.
  */
 export interface NonScriptInputReferencedByRedeemer {
-  nonScriptInputReferencedByRedeemer: {
-    /**
-     * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-     */
-    txId: string;
-    index: number;
-  };
+  nonScriptInputReferencedByRedeemer: TransactionOutputReference;
 }
 /**
  * Invalid execution budget set for a redeemer. In principle, cannot happen in the context of Ogmios.
  */
 export interface IllFormedExecutionBudget {
-  illFormedExecutionBudget?: {
-    memory: number;
-    steps: number;
-  };
+  illFormedExecutionBudget?: ExecutionUnits;
 }
 /**
  * Input locked by a script which language has no cost model in current protocol parameters. In principle, cannot happen in the context of Ogmios.
  */
 export interface NoCostModelForLanguage {
-  noCostModelForLanguage: "plutus:v1" | "plutus:v2";
+  noCostModelForLanguage: Language;
 }
 /**
  * Acquire a point on chain from which to run ledger-state queries.
@@ -2007,10 +1521,7 @@ export interface QueryLedgerStateEraMismatch {
   error: {
     code: 2001;
     message: string;
-    data: {
-      queryEra: "Byron" | "Shelley" | "Allegra" | "Mary" | "Alonzo" | "Babbage";
-      ledgerEra: "Byron" | "Shelley" | "Allegra" | "Mary" | "Alonzo" | "Babbage";
-    };
+    data: EraMismatch;
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -2072,10 +1583,7 @@ export interface QueryLedgerStateEpoch {
 export interface QueryLedgerStateEpochResponse {
   jsonrpc: "2.0";
   result: {
-    /**
-     * An epoch number or length.
-     */
-    epoch: number;
+    epoch: Epoch;
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -2101,23 +1609,7 @@ export interface QueryLedgerStateEraStart {
 export interface QueryLedgerStateEraStartResponse {
   jsonrpc: "2.0";
   result: {
-    /**
-     * An era bound which captures the time, slot and epoch at which the era start. The time is relative to the start time of the network.
-     */
-    eraStart: {
-      /**
-       * A time in seconds relative to another one (typically, system start or era start). Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
-       */
-      time: number;
-      /**
-       * An absolute slot number.
-       */
-      slot: number;
-      /**
-       * An epoch number or length.
-       */
-      epoch: number;
-    };
+    eraStart: Bound;
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -2125,6 +1617,14 @@ export interface QueryLedgerStateEraStartResponse {
   id?: {
     [k: string]: unknown;
   };
+}
+/**
+ * An era bound which captures the time, slot and epoch at which the era start. The time is relative to the start time of the network.
+ */
+export interface Bound {
+  time: RelativeTime;
+  slot: Slot;
+  epoch: Epoch;
 }
 /**
  * Query a summary of the slotting parameters and boundaries for each known era. Useful for doing slot-arithmetic and time conversions.
@@ -2143,53 +1643,7 @@ export interface QueryLedgerStateEraSummaries {
 export interface QueryLedgerStateEraSummariesResponse {
   jsonrpc: "2.0";
   result: {
-    eraSummaries: {
-      /**
-       * An era bound which captures the time, slot and epoch at which the era start. The time is relative to the start time of the network.
-       */
-      start: {
-        /**
-         * A time in seconds relative to another one (typically, system start or era start). Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
-         */
-        time: number;
-        /**
-         * An absolute slot number.
-         */
-        slot: number;
-        /**
-         * An epoch number or length.
-         */
-        epoch: number;
-      };
-      end: {
-        /**
-         * A time in seconds relative to another one (typically, system start or era start). Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
-         */
-        time: number;
-        /**
-         * An absolute slot number.
-         */
-        slot: number;
-        /**
-         * An epoch number or length.
-         */
-        epoch: number;
-      } | null;
-      /**
-       * Parameters that can vary across hard forks.
-       */
-      parameters: {
-        /**
-         * An epoch number or length.
-         */
-        epochLength: number;
-        /**
-         * A slot length, in seconds. Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
-         */
-        slotLength: number;
-        safeZone: number | null;
-      };
-    }[];
+    eraSummaries: EraSummary[];
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -2197,6 +1651,22 @@ export interface QueryLedgerStateEraSummariesResponse {
   id?: {
     [k: string]: unknown;
   };
+}
+/**
+ * Summary of the confirmed parts of the ledger.
+ */
+export interface EraSummary {
+  start: Bound;
+  end: Bound | null;
+  parameters: EraParameters;
+}
+/**
+ * Parameters that can vary across hard forks.
+ */
+export interface EraParameters {
+  epochLength: Epoch;
+  slotLength: SlotLength;
+  safeZone: SafeZone | null;
 }
 /**
  * Query the current distribution of the stake across all known stake pools, relative to the TOTAL stake in the network.
@@ -2229,14 +1699,8 @@ export interface QueryLedgerStateLiveStakeDistributionResponse {
  */
 export interface LiveStakeDistribution {
   [k: string]: {
-    /**
-     * A ratio of two integers, to express exact fractions.
-     */
-    stake: string;
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    vrf: string;
+    stake: Ratio;
+    vrf: DigestBlake2B256;
   };
 }
 /**
@@ -2246,9 +1710,9 @@ export interface QueryLedgerStateProjectedRewards {
   jsonrpc: "2.0";
   method: "queryLedgerState/projectedRewards";
   params: {
-    stake?: bigint[];
-    scripts?: (Base16 | Bech32 | StakeAddress)[];
-    keys?: (Base16 | Bech32 | StakeAddress)[];
+    stake?: Lovelace[];
+    scripts?: StakeCredential[];
+    keys?: StakeCredential[];
   };
   /**
    * An arbitrary JSON value that will be mirrored back in the response.
@@ -2307,162 +1771,13 @@ export interface QueryLedgerStateProposedProtocolParametersResponse {
   };
 }
 export interface ProposedProtocolParametersShelley {
-  [k: string]: {
-    minFeeCoefficient?: number;
-    minFeeConstant?: number;
-    maxBlockBodySize?: number;
-    maxBlockHeaderSize?: number;
-    maxTxSize?: number;
-    stakeKeyDeposit?: number;
-    poolDeposit?: number;
-    poolRetirementEpochBound?: number;
-    desiredNumberOfPools?: number;
-    /**
-     * A ratio of two integers, to express exact fractions.
-     */
-    poolInfluence?: string;
-    /**
-     * A ratio of two integers, to express exact fractions.
-     */
-    monetaryExpansion?: string;
-    /**
-     * A ratio of two integers, to express exact fractions.
-     */
-    treasuryExpansion?: string;
-    /**
-     * A ratio of two integers, to express exact fractions.
-     */
-    decentralizationParameter?: string;
-    minUtxoValue?: number;
-    minPoolCost?: number;
-    extraEntropy?: Neutral | string;
-    protocolVersion?: {
-      major: number;
-      minor: number;
-      patch?: number;
-    };
-  };
+  [k: string]: ProtocolParametersShelley;
 }
 export interface ProposedProtocolParametersAlonzo {
-  [k: string]: {
-    minFeeCoefficient?: number;
-    minFeeConstant?: number;
-    maxBlockBodySize?: number;
-    maxBlockHeaderSize?: number;
-    maxTxSize?: number;
-    stakeKeyDeposit?: number;
-    poolDeposit?: number;
-    poolRetirementEpochBound?: number;
-    desiredNumberOfPools?: number;
-    /**
-     * A ratio of two integers, to express exact fractions.
-     */
-    poolInfluence?: string;
-    /**
-     * A ratio of two integers, to express exact fractions.
-     */
-    monetaryExpansion?: string;
-    /**
-     * A ratio of two integers, to express exact fractions.
-     */
-    treasuryExpansion?: string;
-    /**
-     * A ratio of two integers, to express exact fractions.
-     */
-    decentralizationParameter?: string;
-    minPoolCost?: number;
-    coinsPerUtxoWord?: number;
-    maxValueSize?: number;
-    collateralPercentage?: number;
-    maxCollateralInputs?: number;
-    extraEntropy?: Neutral | string;
-    protocolVersion?: {
-      major: number;
-      minor: number;
-      patch?: number;
-    };
-    costModels?: {
-      [k: string]: {
-        [k: string]: number;
-      };
-    };
-    prices?: {
-      /**
-       * A ratio of two integers, to express exact fractions.
-       */
-      memory: string;
-      /**
-       * A ratio of two integers, to express exact fractions.
-       */
-      steps: string;
-    };
-    maxExecutionUnitsPerTransaction?: {
-      memory: number;
-      steps: number;
-    };
-    maxExecutionUnitsPerBlock?: {
-      memory: number;
-      steps: number;
-    };
-  };
+  [k: string]: ProtocolParametersAlonzo;
 }
 export interface ProposedProtocolParametersBabbage {
-  [k: string]: {
-    minFeeCoefficient?: number;
-    minFeeConstant?: number;
-    maxBlockBodySize?: number;
-    maxBlockHeaderSize?: number;
-    maxTxSize?: number;
-    stakeKeyDeposit?: number;
-    poolDeposit?: number;
-    poolRetirementEpochBound?: number;
-    desiredNumberOfPools?: number;
-    /**
-     * A ratio of two integers, to express exact fractions.
-     */
-    poolInfluence?: string;
-    /**
-     * A ratio of two integers, to express exact fractions.
-     */
-    monetaryExpansion?: string;
-    /**
-     * A ratio of two integers, to express exact fractions.
-     */
-    treasuryExpansion?: string;
-    minPoolCost?: number;
-    coinsPerUtxoByte?: number;
-    maxValueSize?: number;
-    collateralPercentage?: number;
-    maxCollateralInputs?: number;
-    protocolVersion?: {
-      major: number;
-      minor: number;
-      patch?: number;
-    };
-    costModels?: {
-      [k: string]: {
-        [k: string]: number;
-      };
-    };
-    prices?: {
-      /**
-       * A ratio of two integers, to express exact fractions.
-       */
-      memory: string;
-      /**
-       * A ratio of two integers, to express exact fractions.
-       */
-      steps: string;
-    };
-    maxExecutionUnitsPerTransaction?: {
-      memory: number;
-      steps: number;
-    };
-    maxExecutionUnitsPerBlock?: {
-      memory: number;
-      steps: number;
-    };
-  };
+  [k: string]: ProtocolParametersBabbage;
 }
 /**
  * Query the current protocol parameters.
@@ -2481,159 +1796,7 @@ export interface QueryLedgerStateProtocolParameters {
 export interface QueryLedgerStateProtocolParametersResponse {
   jsonrpc: "2.0";
   result: {
-    protocolParameters:
-      | {
-          minFeeCoefficient?: number;
-          minFeeConstant?: number;
-          maxBlockBodySize?: number;
-          maxBlockHeaderSize?: number;
-          maxTxSize?: number;
-          stakeKeyDeposit?: number;
-          poolDeposit?: number;
-          poolRetirementEpochBound?: number;
-          desiredNumberOfPools?: number;
-          /**
-           * A ratio of two integers, to express exact fractions.
-           */
-          poolInfluence?: string;
-          /**
-           * A ratio of two integers, to express exact fractions.
-           */
-          monetaryExpansion?: string;
-          /**
-           * A ratio of two integers, to express exact fractions.
-           */
-          treasuryExpansion?: string;
-          /**
-           * A ratio of two integers, to express exact fractions.
-           */
-          decentralizationParameter?: string;
-          minUtxoValue?: number;
-          minPoolCost?: number;
-          extraEntropy?: Neutral | string;
-          protocolVersion?: {
-            major: number;
-            minor: number;
-            patch?: number;
-          };
-        }
-      | {
-          minFeeCoefficient?: number;
-          minFeeConstant?: number;
-          maxBlockBodySize?: number;
-          maxBlockHeaderSize?: number;
-          maxTxSize?: number;
-          stakeKeyDeposit?: number;
-          poolDeposit?: number;
-          poolRetirementEpochBound?: number;
-          desiredNumberOfPools?: number;
-          /**
-           * A ratio of two integers, to express exact fractions.
-           */
-          poolInfluence?: string;
-          /**
-           * A ratio of two integers, to express exact fractions.
-           */
-          monetaryExpansion?: string;
-          /**
-           * A ratio of two integers, to express exact fractions.
-           */
-          treasuryExpansion?: string;
-          /**
-           * A ratio of two integers, to express exact fractions.
-           */
-          decentralizationParameter?: string;
-          minPoolCost?: number;
-          coinsPerUtxoWord?: number;
-          maxValueSize?: number;
-          collateralPercentage?: number;
-          maxCollateralInputs?: number;
-          extraEntropy?: Neutral | string;
-          protocolVersion?: {
-            major: number;
-            minor: number;
-            patch?: number;
-          };
-          costModels?: {
-            [k: string]: {
-              [k: string]: number;
-            };
-          };
-          prices?: {
-            /**
-             * A ratio of two integers, to express exact fractions.
-             */
-            memory: string;
-            /**
-             * A ratio of two integers, to express exact fractions.
-             */
-            steps: string;
-          };
-          maxExecutionUnitsPerTransaction?: {
-            memory: number;
-            steps: number;
-          };
-          maxExecutionUnitsPerBlock?: {
-            memory: number;
-            steps: number;
-          };
-        }
-      | {
-          minFeeCoefficient?: number;
-          minFeeConstant?: number;
-          maxBlockBodySize?: number;
-          maxBlockHeaderSize?: number;
-          maxTxSize?: number;
-          stakeKeyDeposit?: number;
-          poolDeposit?: number;
-          poolRetirementEpochBound?: number;
-          desiredNumberOfPools?: number;
-          /**
-           * A ratio of two integers, to express exact fractions.
-           */
-          poolInfluence?: string;
-          /**
-           * A ratio of two integers, to express exact fractions.
-           */
-          monetaryExpansion?: string;
-          /**
-           * A ratio of two integers, to express exact fractions.
-           */
-          treasuryExpansion?: string;
-          minPoolCost?: number;
-          coinsPerUtxoByte?: number;
-          maxValueSize?: number;
-          collateralPercentage?: number;
-          maxCollateralInputs?: number;
-          protocolVersion?: {
-            major: number;
-            minor: number;
-            patch?: number;
-          };
-          costModels?: {
-            [k: string]: {
-              [k: string]: number;
-            };
-          };
-          prices?: {
-            /**
-             * A ratio of two integers, to express exact fractions.
-             */
-            memory: string;
-            /**
-             * A ratio of two integers, to express exact fractions.
-             */
-            steps: string;
-          };
-          maxExecutionUnitsPerTransaction?: {
-            memory: number;
-            steps: number;
-          };
-          maxExecutionUnitsPerBlock?: {
-            memory: number;
-            steps: number;
-          };
-        };
+    protocolParameters: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage;
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -2649,8 +1812,8 @@ export interface QueryLedgerStateRewardAccountSummaries {
   jsonrpc: "2.0";
   method: "queryLedgerState/rewardAccountSummaries";
   params: {
-    scripts?: (Base16 | Bech32 | StakeAddress)[];
-    keys?: (Base16 | Bech32 | StakeAddress)[];
+    scripts?: StakeCredential[];
+    keys?: StakeCredential[];
   };
   /**
    * An arbitrary JSON value that will be mirrored back in the response.
@@ -2675,14 +1838,8 @@ export interface RewardAccountSummaries {
   [k: string]: RewardAccountSummary;
 }
 export interface RewardAccountSummary {
-  /**
-   * A Blake2b 32-byte hash digest of a pool's verification key.
-   */
-  delegate?: string;
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  rewards?: bigint;
+  delegate?: StakePoolId;
+  rewards?: Lovelace;
 }
 /**
  * Query details about rewards calculation for the ongoing epoch.
@@ -2735,14 +1892,8 @@ export interface RewardsProvenance {
   };
 }
 export interface StakePoolSummary {
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  stake: bigint;
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  ownerStake: bigint;
+  stake: Lovelace;
+  ownerStake: Lovelace1;
   /**
    * Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky.
    */
@@ -2751,18 +1902,9 @@ export interface StakePoolSummary {
    * Some of the pool parameters relevant for the reward calculation.
    */
   poolParameters: {
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    cost: bigint;
-    /**
-     * A ratio of two integers, to express exact fractions.
-     */
-    margin: string;
-    /**
-     * A number of lovelace, possibly large when summed up.
-     */
-    pledge: bigint;
+    cost: Lovelace;
+    margin: Ratio;
+    pledge: Lovelace;
   };
 }
 /**
@@ -2783,10 +1925,7 @@ export interface QueryLedgerStateStakePoolsResponse {
   jsonrpc: "2.0";
   result: {
     stakePools: {
-      /**
-       * A Blake2b 32-byte hash digest of a pool's verification key.
-       */
-      id: string;
+      id: StakePoolId;
     }[];
   };
   /**
@@ -2803,7 +1942,7 @@ export interface QueryLedgerStateStakePoolParameters {
   jsonrpc: "2.0";
   method: "queryLedgerState/stakePoolParameters";
   params: {
-    stakePools: (string | string)[];
+    stakePools: (StakePoolId | string)[];
   };
   /**
    * An arbitrary JSON value that will be mirrored back in the response.
@@ -2816,35 +1955,7 @@ export interface QueryLedgerStateStakePoolParametersResponse {
   jsonrpc: "2.0";
   result: {
     stakePoolParameters: {
-      [k: string]: {
-        /**
-         * A Blake2b 32-byte hash digest of a pool's verification key.
-         */
-        id: string;
-        owners: string[];
-        /**
-         * A number of lovelace, possibly large when summed up.
-         */
-        cost: bigint;
-        /**
-         * A ratio of two integers, to express exact fractions.
-         */
-        margin: string;
-        /**
-         * A number of lovelace, possibly large when summed up.
-         */
-        pledge: bigint;
-        /**
-         * A Blake2b 32-byte hash digest, encoded in base16.
-         */
-        vrf: string;
-        metadata?: PoolMetadata;
-        relays: (ByAddress | ByName)[];
-        /**
-         * A reward account, also known as 'stake address'.
-         */
-        rewardAccount: string;
-      };
+      [k: string]: StakePoolParameters;
     };
   };
   /**
@@ -2895,54 +2006,16 @@ export interface QueryLedgerStateUtxo {
   };
 }
 export interface UtxoByOutputReferences {
-  outputReferences: {
-    /**
-     * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-     */
-    txId: string;
-    index: number;
-  }[];
+  outputReferences: TransactionOutputReference[];
 }
 export interface UtxoByAddresses {
-  addresses: string[];
+  addresses: Address[];
 }
 export interface WholeUtxo {}
 export interface QueryLedgerStateUtxoResponse {
   jsonrpc: "2.0";
   result: {
-    utxo: [
-      {
-        /**
-         * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-         */
-        txId: string;
-        index: number;
-      },
-      {
-        /**
-         * A Cardano address (either legacy format or new format).
-         */
-        address: string;
-        value: {
-          /**
-           * A number of lovelace, possibly large when summed up.
-           */
-          coins: bigint;
-          assets?: {
-            /**
-             * A number of asset, can be negative went burning assets.
-             */
-            [k: string]: bigint;
-          };
-        };
-        /**
-         * A Blake2b 32-byte hash digest, encoded in base16.
-         */
-        datumHash?: string;
-        datum?: string;
-        script?: Native | PlutusV1 | PlutusV2;
-      }
-    ][];
+    utxo: Utxo;
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -2968,7 +2041,7 @@ export interface QueryNetworkBlockHeight {
 export interface QueryNetworkBlockHeightResponse {
   jsonrpc: "2.0";
   result: {
-    blockHeight: number | Origin;
+    blockHeight: BlockHeight | Origin;
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -2998,226 +2071,13 @@ export interface QueryNetworkGenesisConfigurationResponse {
   result: {
     genesisConfiguration:
       | {
-          /**
-           * A Byron genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
-           */
-          byron: {
-            genesisKeyHashes: string[];
-            genesisDelegations: {
-              [k: string]: BootstrapOperationalCertificate;
-            };
-            systemStart: string;
-            initialFunds: {
-              /**
-               * A number of lovelace, possibly large when summed up.
-               */
-              [k: string]: bigint;
-            };
-            initialCoinOffering: {
-              /**
-               * A number of lovelace, possibly large when summed up.
-               */
-              [k: string]: bigint;
-            };
-            securityParameter: number;
-            /**
-             * A magic number for telling networks apart. (e.g. 764824073)
-             */
-            networkMagic: number;
-            protocolParameters: {
-              /**
-               * A ratio of two integers, to express exact fractions.
-               */
-              heavyDlgThreshold?: string;
-              maxBlockSize?: number;
-              maxHeaderSize?: number;
-              maxProposalSize?: number;
-              maxTxSize?: number;
-              /**
-               * A ratio of two integers, to express exact fractions.
-               */
-              mpcThreshold?: string;
-              scriptVersion?: number;
-              slotDuration?: number;
-              unlockStakeEpoch?: number;
-              /**
-               * A ratio of two integers, to express exact fractions.
-               */
-              updateProposalThreshold?: string;
-              updateProposalTimeToLive?: number;
-              /**
-               * A ratio of two integers, to express exact fractions.
-               */
-              updateVoteThreshold?: string;
-              txFeePolicy?: {
-                /**
-                 * A ratio of two integers, to express exact fractions.
-                 */
-                coefficient: string;
-                constant: number;
-              };
-              softforkRule?: {
-                /**
-                 * A ratio of two integers, to express exact fractions.
-                 */
-                initThreshold: string;
-                /**
-                 * A ratio of two integers, to express exact fractions.
-                 */
-                minThreshold: string;
-                /**
-                 * A ratio of two integers, to express exact fractions.
-                 */
-                decrementThreshold: string;
-              };
-            };
-          };
+          byron: GenesisByron;
         }
       | {
-          /**
-           * A Shelley genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
-           */
-          shelley: {
-            systemStart: string;
-            /**
-             * A magic number for telling networks apart. (e.g. 764824073)
-             */
-            networkMagic: number;
-            /**
-             * A network target, as defined since the Shelley era.
-             */
-            network: "mainnet" | "testnet";
-            /**
-             * A ratio of two integers, to express exact fractions.
-             */
-            activeSlotsCoefficient: string;
-            securityParameter: number;
-            /**
-             * An epoch number or length.
-             */
-            epochLength: number;
-            slotsPerKesPeriod: number;
-            maxKesEvolutions: number;
-            /**
-             * A slot length, in seconds. Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
-             */
-            slotLength: number;
-            updateQuorum: number;
-            maxLovelaceSupply: number;
-            protocolParameters: {
-              minFeeCoefficient?: number;
-              minFeeConstant?: number;
-              maxBlockBodySize?: number;
-              maxBlockHeaderSize?: number;
-              maxTxSize?: number;
-              stakeKeyDeposit?: number;
-              poolDeposit?: number;
-              poolRetirementEpochBound?: number;
-              desiredNumberOfPools?: number;
-              /**
-               * A ratio of two integers, to express exact fractions.
-               */
-              poolInfluence?: string;
-              /**
-               * A ratio of two integers, to express exact fractions.
-               */
-              monetaryExpansion?: string;
-              /**
-               * A ratio of two integers, to express exact fractions.
-               */
-              treasuryExpansion?: string;
-              /**
-               * A ratio of two integers, to express exact fractions.
-               */
-              decentralizationParameter?: string;
-              minUtxoValue?: number;
-              minPoolCost?: number;
-              extraEntropy?: Neutral | string;
-              protocolVersion?: {
-                major: number;
-                minor: number;
-                patch?: number;
-              };
-            };
-            initialDelegates: InitialDelegates;
-            initialFunds: InitialFunds;
-            /**
-             * A Genesis stake pools configuration; primarily used for bootstrapping test networks.
-             */
-            initialPools: {
-              pools: {
-                [k: string]: {
-                  /**
-                   * A Blake2b 32-byte hash digest of a pool's verification key.
-                   */
-                  id: string;
-                  owners: string[];
-                  /**
-                   * A number of lovelace, possibly large when summed up.
-                   */
-                  cost: bigint;
-                  /**
-                   * A ratio of two integers, to express exact fractions.
-                   */
-                  margin: string;
-                  /**
-                   * A number of lovelace, possibly large when summed up.
-                   */
-                  pledge: bigint;
-                  /**
-                   * A Blake2b 32-byte hash digest, encoded in base16.
-                   */
-                  vrf: string;
-                  metadata?: PoolMetadata;
-                  relays: (ByAddress | ByName)[];
-                  /**
-                   * A reward account, also known as 'stake address'.
-                   */
-                  rewardAccount: string;
-                };
-              };
-              delegators: {
-                /**
-                 * A Blake2b 32-byte hash digest of a pool's verification key.
-                 */
-                [k: string]: string;
-              };
-            };
-          };
+          shelley: GenesisShelley;
         }
       | {
-          /**
-           * An Alonzo genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
-           */
-          alonzo: {
-            coinsPerUtxoWord: number;
-            collateralPercentage: number;
-            costModels: {
-              [k: string]: {
-                [k: string]: number;
-              };
-            };
-            maxCollateralInputs: number;
-            maxExecutionUnitsPerBlock: {
-              memory: number;
-              steps: number;
-            };
-            maxExecutionUnitsPerTransaction: {
-              memory: number;
-              steps: number;
-            };
-            maxValueSize: number;
-            prices: {
-              /**
-               * A ratio of two integers, to express exact fractions.
-               */
-              memory: string;
-              /**
-               * A ratio of two integers, to express exact fractions.
-               */
-              steps: string;
-            };
-          };
+          alonzo: GenesisAlonzo;
         };
   };
   /**
@@ -3227,26 +2087,81 @@ export interface QueryNetworkGenesisConfigurationResponse {
     [k: string]: unknown;
   };
 }
-export interface InitialDelegates {
-  /**
-   * A Genesis delegate, in charge of Cardano's governance.
-   */
-  [k: string]: {
-    /**
-     * A Blake2b 28-byte hash digest, encoded in base16.
-     */
-    delegate: string;
-    /**
-     * A Blake2b 32-byte hash digest, encoded in base16.
-     */
-    vrf: string;
+/**
+ * A Byron genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
+ */
+export interface GenesisByron {
+  genesisKeyHashes: DigestBlake2B224[];
+  genesisDelegations: {
+    [k: string]: BootstrapOperationalCertificate;
   };
+  systemStart: UtcTime;
+  initialFunds: {
+    [k: string]: Lovelace;
+  };
+  initialCoinOffering: {
+    [k: string]: Lovelace;
+  };
+  securityParameter: UInt64;
+  networkMagic: NetworkMagic;
+  protocolParameters: ProtocolParametersByron;
+}
+/**
+ * A Shelley genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
+ */
+export interface GenesisShelley {
+  systemStart: UtcTime;
+  networkMagic: NetworkMagic;
+  network: Network;
+  activeSlotsCoefficient: Ratio;
+  securityParameter: UInt64;
+  epochLength: Epoch;
+  slotsPerKesPeriod: UInt64;
+  maxKesEvolutions: UInt64;
+  slotLength: SlotLength;
+  updateQuorum: UInt64;
+  maxLovelaceSupply: UInt64;
+  protocolParameters: ProtocolParametersShelley;
+  initialDelegates: InitialDelegates;
+  initialFunds: InitialFunds;
+  initialPools: GenesisPools;
+}
+export interface InitialDelegates {
+  [k: string]: GenesisDelegate;
+}
+/**
+ * A Genesis delegate, in charge of Cardano's governance.
+ */
+export interface GenesisDelegate {
+  delegate: DigestBlake2B224;
+  vrf: DigestBlake2B256;
 }
 export interface InitialFunds {
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  [k: string]: bigint;
+  [k: string]: Lovelace;
+}
+/**
+ * A Genesis stake pools configuration; primarily used for bootstrapping test networks.
+ */
+export interface GenesisPools {
+  pools: {
+    [k: string]: StakePoolParameters;
+  };
+  delegators: {
+    [k: string]: StakePoolId;
+  };
+}
+/**
+ * An Alonzo genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
+ */
+export interface GenesisAlonzo {
+  coinsPerUtxoWord: UInt64;
+  collateralPercentage: UInt64;
+  costModels: CostModels;
+  maxCollateralInputs: UInt64;
+  maxExecutionUnitsPerBlock: ExecutionUnits;
+  maxExecutionUnitsPerTransaction: ExecutionUnits;
+  maxValueSize: UInt64;
+  prices: Prices;
 }
 /**
  * Query the network start time.
@@ -3265,7 +2180,7 @@ export interface QueryNetworkStartTime {
 export interface QueryNetworkStartTimeResponse {
   jsonrpc: "2.0";
   result: {
-    startTime: string;
+    startTime: UtcTime;
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -3320,10 +2235,7 @@ export interface AcquireMempoolResponse {
   jsonrpc: "2.0";
   result: {
     acquired: "mempool";
-    /**
-     * An absolute slot number.
-     */
-    slot: number;
+    slot: Slot;
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -3359,10 +2271,7 @@ export interface NextTransactionResponse {
   result: {
     transaction:
       | {
-          /**
-           * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-           */
-          id: string;
+          id: TransactionId;
         }
       | Transaction
       | null;
@@ -3381,10 +2290,7 @@ export interface HasTransaction {
   jsonrpc: "2.0";
   method: "hasTransaction";
   params: {
-    /**
-     * A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded.
-     */
-    id: string;
+    id: TransactionId;
   };
   /**
    * An arbitrary JSON value that will be mirrored back in the response.
@@ -3438,13 +2344,13 @@ export interface SizeOfMempoolResponse {
 }
 export interface MempoolSizeAndCapacity {
   maxCapacity: {
-    bytes: number;
+    bytes: UInt321;
   };
   currentSize: {
-    bytes: number;
+    bytes: UInt321;
   };
   transactions: {
-    count: number;
+    count: UInt321;
   };
 }
 /**

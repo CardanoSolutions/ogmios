@@ -3,7 +3,8 @@
 , "title": "Cardano"
 , "definitions":
   { "Address":
-    { "type": "string"
+    { "title": "Address"
+    , "type": "string"
     , "description": "A Cardano address (either legacy format or new format)."
     , "contentEncoding": "bech32|base58"
     , "pattern": "[1-9A-HJ-NP-Za-km-z]*"
@@ -14,18 +15,21 @@
     }
 
   , "AddressAttributes":
-    { "type": "string"
+    { "title": "AddressAttributes"
+    , "type": "string"
     , "description": "Extra attributes carried by Byron addresses (network magic and/or HD payload)."
     , "contentEncoding": "base16"
     }
 
   , "AssetQuantity":
-    { "type": "integer"
+    { "title": "AssetQuantity"
+    , "type": "integer"
     , "description": "A number of asset, can be negative went burning assets."
     }
 
   , "Block":
-    { "oneOf":
+    { "title": "Block"
+    , "oneOf":
       [ { "$ref": "cardano.json#/definitions/Block<EBB>" }
       , { "$ref": "cardano.json#/definitions/Block<BFT>" }
       , { "$ref": "cardano.json#/definitions/Block<Praos>" }
@@ -180,7 +184,8 @@
     }
 
   , "BlockHeight":
-    { "type": "integer"
+    { "title": "BlockHeight"
+    , "type": "integer"
     , "description": "A block number, the i-th block to be minted is number i."
     , "minimum": 0
     , "maximum": 18446744073709552999
@@ -194,7 +199,8 @@
     }
 
   , "BlockSize":
-    { "type": "integer"
+    { "title": "BlockSize"
+    , "type": "integer"
     , "description": "The size of the block in bytes."
     , "minimum": 0
     , "maximum": 18446744073709552999
@@ -271,7 +277,8 @@
     }
 
   , "BootstrapVote":
-    { "type": "object"
+    { "title": "BootstrapVote"
+    , "type": "object"
     , "additionalProperties": false
     , "required": [ "voter", "proposal" ]
     , "properties":
@@ -295,7 +302,8 @@
     }
 
   , "Bound":
-    { "type": "object"
+    { "title": "Bound"
+    , "type": "object"
     , "description": "An era bound which captures the time, slot and epoch at which the era start. The time is relative to the start time of the network."
     , "additionalProperties": false
     , "required": ["time", "slot", "epoch"]
@@ -307,7 +315,8 @@
     }
 
   , "Certificate":
-    { "oneOf":
+    { "title": "Certificate"
+    , "oneOf":
       [ { "type": "object"
         , "description": "A stake delegation certificate, from a delegator to a stake pool."
         , "title": "stakeDelegation"
@@ -454,7 +463,8 @@
     }
 
   , "CertifiedVrf":
-    { "type": "object"
+    { "title": "CertifiedVrf"
+    , "type": "object"
     , "additionalProperties": false
     , "properties":
       { "proof": { "$ref": "cardano.json#/definitions/VrfProof" }
@@ -463,13 +473,15 @@
     }
 
   , "ChainCode":
-    { "type": "string"
+    { "title": "ChainCode"
+    , "type": "string"
     , "description": "An Ed25519-BIP32 chain-code for key deriviation."
     , "contentEncoding": "base16"
     }
 
   , "CostModels":
-    { "type": "object"
+    { "title": "CostModels"
+    , "type": "object"
     , "additionalProperties": { "$ref": "cardano.json#/definitions/CostModel" }
     , "propertyNames": { "$ref": "cardano.json#/definitions/Language" }
     , "examples":
@@ -482,17 +494,20 @@
     }
 
   , "CostModel":
-    { "type": "object"
+    { "title": "CostModel"
+    , "type": "object"
     , "additionalProperties": { "$ref": "cardano.json#/definitions/Int64" }
     }
 
   , "Datum":
-    { "type": "string"
+    { "title": "Datum"
+    , "type": "string"
     , "contentEncoding": "base16"
     }
 
   , "Digest<Any>":
-    { "type": "string"
+    { "title": "Digest<Any>"
+    , "type": "string"
     , "description": "A hash digest from an unspecified algorithm and length."
     , "contentEncoding": "base16"
     , "examples":
@@ -501,7 +516,8 @@
     }
 
   , "Digest<Blake2b, 224>":
-    { "type": "string"
+    { "title": "Digest<Blake2b, 224>"
+    , "type": "string"
     , "description": "A Blake2b 28-byte hash digest, encoded in base16."
     , "contentEncoding": "base16"
     , "minLength": 56
@@ -512,7 +528,8 @@
     }
 
   , "Digest<Blake2b, 256>":
-    { "type": "string"
+    { "title": "Digest<Blake2b, 256>"
+    , "type": "string"
     , "description": "A Blake2b 32-byte hash digest, encoded in base16."
     , "contentEncoding": "base16"
     , "minLength": 64
@@ -523,19 +540,22 @@
     }
 
   , "Epoch":
-    { "type": "integer"
+    { "title": "Epoch"
+    , "type": "integer"
     , "description": "An epoch number or length."
     , "minimum": 0
     , "maximum": 18446744073709552000
     }
 
   , "Era":
-    { "type": "string"
-    , "enum": ["Byron", "Shelley", "Allegra", "Mary", "Alonzo", "Babbage"]
+    { "title": "Era"
+    , "type": "string"
+    , "enum": ["byron", "shelley", "allegra", "mary", "alonzo", "babbage"]
     }
 
   , "EraMismatch":
-    { "type": "object"
+    { "title": "EraMismatch"
+    , "type": "object"
     , "additionalProperties": false
     , "required": [ "queryEra", "ledgerEra" ]
     , "properties":
@@ -545,7 +565,8 @@
     }
 
   , "EraParameters":
-    { "type": "object"
+    { "title": "EraParameters"
+    , "type": "object"
     , "description": "Parameters that can vary across hard forks."
     , "additionalProperties": false
     , "required": [ "epochLength", "slotLength", "safeZone" ]
@@ -562,7 +583,8 @@
     }
 
   , "EraSummary":
-    { "type": "object"
+    { "title": "EraSummary"
+    , "type": "object"
     , "description": "Summary of the confirmed parts of the ledger."
     , "additionalProperties": false
     , "required": [ "start", "end", "parameters" ]
@@ -648,8 +670,9 @@
       }
     }
 
-  , "ExUnits":
-    { "type": "object"
+  , "ExecutionUnits":
+    { "title": "ExecutionUnits"
+    , "type": "object"
     , "additionalProperties": false
     , "required": [ "memory", "steps" ]
     , "properties":
@@ -658,8 +681,9 @@
       }
     }
 
-  , "Genesis[Byron]":
-    { "type": "object"
+  , "Genesis<Byron>":
+    { "title": "Genesis<Byron>"
+    , "type": "object"
     , "description": "A Byron genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
     , "additionalProperties": false
     , "required":
@@ -699,8 +723,9 @@
       }
     }
 
-  , "Genesis[Shelley]":
-    { "type": "object"
+  , "Genesis<Shelley>":
+    { "title": "Genesis<Shelley>"
+    , "type": "object"
     , "description": "A Shelley genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
     , "additionalProperties": false
     , "required":
@@ -749,8 +774,9 @@
       }
     }
 
-  , "Genesis[Alonzo]":
-    { "type": "object"
+  , "Genesis<Alonzo>":
+    { "title": "Genesis<Alonzo>"
+    , "type": "object"
     , "description": "An Alonzo genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
     , "additionalProperties": false
     , "required":
@@ -768,15 +794,16 @@
       , "collateralPercentage": { "$ref": "cardano.json#/definitions/UInt64" }
       , "costModels": { "$ref": "cardano.json#/definitions/CostModels" }
       , "maxCollateralInputs": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExUnits" }
-      , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExUnits" }
+      , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+      , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
       , "maxValueSize": { "$ref": "cardano.json#/definitions/UInt64" }
       , "prices": { "$ref": "cardano.json#/definitions/Prices" }
       }
     }
 
   , "GenesisDelegate":
-    { "type": "object"
+    { "title": "GenesisDelegate"
+    , "type": "object"
     , "description": "A Genesis delegate, in charge of Cardano's governance."
     , "additionalProperties": false
     , "required":
@@ -790,7 +817,8 @@
     }
 
   , "GenesisPools":
-    { "type": "object"
+    { "title": "GenesisPools"
+    , "type": "object"
     , "description": "A Genesis stake pools configuration; primarily used for bootstrapping test networks."
     , "additionalProperties": false
     , "required":
@@ -812,7 +840,8 @@
     }
 
   , "ExtendedVerificationKey":
-    { "type": "string"
+    { "title": "ExtendedVerificationKey"
+    , "type": "string"
     , "description": "An Ed25519-BIP32 Byron genesis delegate verification key with chain-code."
     , "contentEncoding": "base16"
     , "minLength": 128
@@ -820,7 +849,8 @@
     }
 
   , "Int64":
-    { "type": "integer"
+    { "title": "Int64"
+    , "type": "integer"
     , "minimum": -9223372036854775808
     , "maximum": 9223372036854775807
     }
@@ -864,29 +894,34 @@
     }
 
   , "Language":
-    { "type": "string"
+    { "title": "Language"
+    , "type": "string"
     , "enum": [ "plutus:v1", "plutus:v2" ]
     }
 
   , "Lovelace":
-    { "type": "integer"
+    { "title": "Lovelace"
+    , "type": "integer"
     , "description": "A number of lovelace, possibly large when summed up."
     }
 
   , "LovelaceDelta":
-    { "type": "integer"
+    { "title": "LovelaceDelta"
+    , "type": "integer"
     , "description": "An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada)."
     , "minimum": -9223372036854775808
     , "maximum": 9223372036854775807
     }
 
   , "KesVerificationKey":
-    { "type": "string"
+    { "title": "KesVerificationKey"
+    , "type": "string"
     , "contentEncoding": "base16"
     }
 
   , "Metadata":
-    { "type": "object"
+    { "title": "Metadata"
+    , "type": "object"
     , "additionalProperties": false
     , "required": [ "hash", "labels" ]
     , "properties":
@@ -896,7 +931,8 @@
     }
 
   , "MetadataLabels":
-    { "type": "object"
+    { "title": "MetadataLabels"
+    , "type": "object"
     , "propertyNames": { "pattern": "^-?[0-9]+$" }
     , "examples":
       [ { "42":
@@ -919,7 +955,8 @@
     }
 
   , "Metadatum":
-    { "oneOf":
+    { "title": "Metadatum"
+    , "oneOf":
       [ { "type": "object"
         , "title": "int"
         , "additionalProperties": false
@@ -978,7 +1015,8 @@
     }
 
   , "MetadatumMap":
-    { "type": "object"
+    { "title": "MetadatumMap"
+    , "type": "object"
     , "additionalProperties": false
     , "required": ["k", "v"]
     , "properties":
@@ -988,13 +1026,15 @@
     }
 
   , "Network":
-    { "type": "string"
+    { "title": "Network"
+    , "type": "string"
     , "description": "A network target, as defined since the Shelley era."
     , "enum": [ "mainnet", "testnet" ]
     }
 
   , "NetworkMagic":
-    { "type": "integer"
+    { "title": "NetworkMagic"
+    , "type": "integer"
     , "description": "A magic number for telling networks apart. (e.g. 764824073)"
     , "minimum": 0
     , "maximum": 4294967296
@@ -1004,7 +1044,8 @@
     }
 
   , "Nonce":
-    { "oneOf":
+    { "title": "Nonce"
+    , "oneOf":
       [ { "type": "string"
         , "enum": ["neutral"]
         , "title": "neutral"
@@ -1018,7 +1059,8 @@
     }
 
   , "OperationalCertificate":
-    { "type": "object"
+    { "title": "OperationalCertificate"
+    , "type": "object"
     , "description": "Certificate identifying a stake pool operator."
     , "additionalProperties": false
     , "required": [ "count", "kes" ]
@@ -1037,10 +1079,9 @@
     }
 
   , "Origin":
-    { "type": "string"
+    { "title": "Origin"
+    , "type": "string"
     , "description": "The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point."
-    , "title": "Origin"
-    , "name": "Oirigin"
     , "enum": [ "origin" ]
     }
 
@@ -1062,11 +1103,13 @@
     }
 
   , "PolicyId":
-    { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+    { "title": "PolicyId"
+    , "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
     }
 
   , "StakePoolId":
-    { "type": "string"
+    { "title": "StakePoolId"
+    , "type": "string"
     , "description": "A Blake2b 32-byte hash digest of a pool's verification key."
     , "contentEncoding": "bech32"
     , "pattern": "^pool1[0-9a-z]*$"
@@ -1077,7 +1120,8 @@
     }
 
   , "StakePoolParameters":
-    { "type": "object"
+    { "title": "StakePoolParameters"
+    , "type": "object"
     , "additionalProperties": false
     , "required": ["owners", "cost", "margin", "pledge", "vrf", "id", "relays", "rewardAccount"]
     , "properties":
@@ -1112,7 +1156,8 @@
     }
 
   , "Prices":
-    { "type": "object"
+    { "title": "Prices"
+    , "type": "object"
     , "additionalProperties": false
     , "required": [ "memory", "steps" ]
     , "properties":
@@ -1122,7 +1167,8 @@
     }
 
   , "ProtocolMagicId":
-    { "type": "integer"
+    { "title": "ProtocolMagicId"
+    , "type": "integer"
     , "minimum": 0
     , "maximum": 4294967295
     , "examples":
@@ -1131,7 +1177,8 @@
     }
 
   , "ProtocolParameters<Byron>":
-    { "type": "object"
+    { "title": "ProtocolParameters<Byron>"
+    , "type": "object"
     , "additionalProperties": false
     , "properties":
       { "heavyDlgThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
@@ -1152,7 +1199,8 @@
     }
 
   , "ProtocolParameters<Shelley>":
-    { "type": "object"
+    { "title": "ProtocolParameters<Shelley>"
+    , "type": "object"
     , "additionalProperties": false
     , "properties":
       { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
@@ -1176,7 +1224,8 @@
     }
 
   , "ProtocolParameters<Alonzo>":
-    { "type": "object"
+    { "title": "ProtocolParameters<Alonzo>"
+    , "type": "object"
     , "additionalProperties": false
     , "properties":
       { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
@@ -1201,13 +1250,14 @@
       , "protocolVersion": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
       , "costModels": { "$ref": "cardano.json#/definitions/CostModels" }
       , "prices": { "$ref": "cardano.json#/definitions/Prices" }
-      , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExUnits" }
-      , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExUnits" }
+      , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+      , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
       }
     }
 
   , "ProtocolParameters<Babbage>":
-    { "type": "object"
+    { "title": "ProtocolParameters<Babbage>"
+    , "type": "object"
     , "additionalProperties": false
     , "properties":
       { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
@@ -1230,13 +1280,14 @@
       , "protocolVersion": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
       , "costModels": { "$ref": "cardano.json#/definitions/CostModels" }
       , "prices": { "$ref": "cardano.json#/definitions/Prices" }
-      , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExUnits" }
-      , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExUnits" }
+      , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+      , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
       }
     }
 
   , "ProtocolVersion":
-    { "type": "object"
+    { "title": "ProtocolVersion"
+    , "type": "object"
     , "additionalProperties": false
     , "required": [ "major", "minor" ]
     , "properties":
@@ -1247,7 +1298,8 @@
     }
 
   , "Ratio":
-    { "type": "string"
+    { "title": "Ratio"
+    , "type": "string"
     , "description": "A ratio of two integers, to express exact fractions."
     , "pattern": "^-?[0-9]+/[0-9]+$"
     , "examples":
@@ -1257,7 +1309,8 @@
     }
 
   , "Redeemer":
-    { "type": "object"
+    { "title": "Redeemer"
+    , "type": "object"
     , "examples":
       [ { "executionUnits":
           { "memory": 2
@@ -1270,29 +1323,33 @@
     , "required": [ "redeemer", "executionUnits" ]
     , "properties":
       { "redeemer": { "$ref": "cardano.json#/definitions/RedeemerData" }
-      , "executionUnits": { "$ref": "cardano.json#/definitions/ExUnits" }
+      , "executionUnits": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
       }
     }
 
   , "RedeemerData":
-    { "type": "string"
+    { "title": "RedeemerData"
+    , "type": "string"
     , "contentEncoding": "base16"
     , "description": "Plutus data, CBOR-serialised."
     }
 
   , "RedeemerPointer":
-    { "type": "string"
+    { "title": "RedeemerPointer"
+    , "type": "string"
     , "pattern": "^(spend|mint|certificate|withdrawal):[0-9]+$"
     }
 
   , "RelativeTime":
-    { "type": "number"
+    { "title": "RelativeTime"
+    , "type": "number"
     , "description": "A time in seconds relative to another one (typically, system start or era start). Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second."
     , "minimum": 0
     }
 
   , "Relay":
-    { "oneOf":
+    { "title": "Relay"
+    , "oneOf":
       [ { "type": "object"
         , "title": "by address"
         , "additionalProperties": false
@@ -1327,7 +1384,8 @@
     }
 
   , "RewardAccount":
-    { "type": "string"
+    { "title": "RewardAccount"
+    , "type": "string"
     , "description": "A reward account, also known as 'stake address'."
     , "contentEncoding": "bech32"
     , "pattern": "^stake(_test)?1[0-9a-z]+$"
@@ -1337,13 +1395,15 @@
     }
 
   , "RewardPot":
-    { "type": "string"
+    { "title": "RewardPot"
+    , "type": "string"
     , "description": "Source of rewards as defined by the protocol parameters."
     , "enum": ["reserves", "treasury"]
     }
 
   , "RewardTransfer":
-    { "type": "object"
+    { "title": "RewardTransfer"
+    , "type": "object"
     , "additionalProperties": { "$ref": "cardano.json#/definitions/LovelaceDelta" }
     , "propertyNames": { "pattern": "[0-9a-f]{56}$" }
     , "examples":
@@ -1353,20 +1413,22 @@
     }
 
   , "SafeZone":
-    { "type": "integer"
+    { "title": "SafeZone"
+    , "type": "integer"
     , "description": "Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks."
     , "minimum": 0
     , "maximum": 18446744073709552999
     }
 
   , "Script":
-    { "oneOf":
+    { "title": "Script"
+    , "oneOf":
       [ { "type": "object"
         , "title": "Native"
         , "additionalProperties": false
         , "required": [ "native" ]
         , "properties":
-          { "native": { "$ref": "cardano.json#/definitions/Script[Native]" }
+          { "native": { "$ref": "cardano.json#/definitions/Script<Native>" }
           }
         }
       , { "type": "object"
@@ -1374,7 +1436,7 @@
         , "additionalProperties": false
         , "required": [ "plutus:v1" ]
         , "properties":
-          { "plutus:v1": { "$ref": "cardano.json#/definitions/Script[Plutus]" }
+          { "plutus:v1": { "$ref": "cardano.json#/definitions/Script<Plutus>" }
           }
         }
       , { "type": "object"
@@ -1382,14 +1444,15 @@
         , "additionalProperties": false
         , "required": [ "plutus:v2" ]
         , "properties":
-          { "plutus:v2": { "$ref": "cardano.json#/definitions/Script[Plutus]" }
+          { "plutus:v2": { "$ref": "cardano.json#/definitions/Script<Plutus>" }
           }
         }
       ]
     }
 
-  , "Script[Native]":
-    { "description": "A phase-1 monetary script. Timelocks constraints are only supported since Allegra."
+  , "Script<Native>":
+    { "title": "Script<Native>"
+    , "description": "A phase-1 monetary script. Timelocks constraints are only supported since Allegra."
     , "examples":
         [ "3c07030e36bfff7cd2f004356ef320f3fe3c07030e7cd2f004356437"
         , { "all":
@@ -1407,7 +1470,7 @@
         , "properties":
           { "any":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Script[Native]" }
+            , "items": { "$ref": "cardano.json#/definitions/Script<Native>" }
             }
           }
         }
@@ -1418,7 +1481,7 @@
         , "properties":
           { "all":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Script[Native]" }
+            , "items": { "$ref": "cardano.json#/definitions/Script<Native>" }
             }
           }
         }
@@ -1427,7 +1490,7 @@
         , "propertyNames": { "pattern": "^[0-9]+$" }
         , "additionalProperties":
           { "type": "array"
-          , "items": { "$ref": "cardano.json#/definitions/Script[Native]" }
+          , "items": { "$ref": "cardano.json#/definitions/Script<Native>" }
           }
         }
       , { "type": "object"
@@ -1449,8 +1512,9 @@
       ]
     }
 
-  , "Script[Plutus]":
-    { "type": "string"
+  , "Script<Plutus>":
+    { "title": "Script<Plutus>"
+    , "type": "string"
     , "description": "A phase-2 Plutus script; or said differently, a serialized Plutus-core program."
     , "contentEncoding": "base16"
     }
@@ -1531,7 +1595,7 @@
     , "type": "object"
     , "additionalProperties": false
     , "properties":
-      { "illFormedExecutionBudget": { "$ref": "cardano.json#/definitions/ExUnits" }
+      { "illFormedExecutionBudget": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
       }
     }
 
@@ -1547,7 +1611,8 @@
     }
 
   , "ScriptPurpose":
-    { "oneOf":
+    { "title": "ScriptPurpose"
+    , "oneOf":
       [ { "title": "spend"
         , "type": "object"
         , "additionalProperties": false
@@ -1584,7 +1649,8 @@
     }
 
   , "Signature":
-    { "type": "string"
+    { "title": "Signature"
+    , "type": "string"
     , "description": "An EdDSA signature."
     , "contentEncoding": "base16"
     , "minLength": 128
@@ -1615,19 +1681,22 @@
     }
 
   , "Slot":
-    { "type": "integer"
+    { "title": "Slot"
     , "description": "An absolute slot number."
+    , "type": "integer"
     , "minimum": 0
     , "maximum": 18446744073709552000
     }
 
   , "SlotLength":
-    { "type": "number"
+    { "title": "SlotLength"
     , "description": "A slot length, in seconds. Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second."
+    , "type": "number"
     }
 
   , "SoftwareVersion":
-    { "type": "object"
+    { "title": "SoftwareVersion"
+    , "type": "object"
     , "additionalProperties": false
     , "required": [ "appName", "number" ]
     , "properties":
@@ -1637,7 +1706,8 @@
     }
 
   , "SoftForkRule":
-    { "type": "object"
+    { "title": "SoftForkRule"
+    , "type": "object"
     , "additionalProperties": false
     , "required": [ "initThreshold", "minThreshold", "decrementThreshold" ]
     , "properties":
@@ -1648,7 +1718,8 @@
     }
 
   , "StakeAddress":
-    { "type": "string"
+    { "title": "StakeAddress"
+    , "type": "string"
     , "description": "A stake address (a.k.a reward account)"
     , "contentEncoding": "bech32"
     , "pattern": "^(stake|stake_test)1[0-9a-z]*$"
@@ -1658,7 +1729,8 @@
     }
 
   , "StakeCredential":
-    { "oneOf":
+    { "title": "StakeCredential"
+    , "oneOf":
       [ { "title": "Base16"
         , "description": "A stake key or script hash in base16."
         , "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
@@ -2637,8 +2709,8 @@
         , "additionalProperties": false
         , "required": [ "maximumExecutionUnits", "actualExecutionUnits" ]
         , "properties":
-          { "maximumExecutionUnits": { "$ref": "cardano.json#/definitions/ExUnits" }
-          , "actualExecutionUnits": { "$ref": "cardano.json#/definitions/ExUnits" }
+          { "maximumExecutionUnits": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+          , "actualExecutionUnits": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
           }
         }
       }
@@ -2776,8 +2848,8 @@
     }
 
   , "Tip":
-    { "type": "object"
-    , "title": "tip"
+    { "title": "tip"
+    , "type": "object"
     , "additionalProperties": false
     , "required": [ "slot", "hash", "blockNo" ]
     , "properties":
@@ -2859,8 +2931,17 @@
         , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
         }
       , "governanceActions":
-        { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Update[Babbage]" }
+        { "oneOf":
+          [ { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/Update<Shelley>" }
+            }
+          , { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/Update<Alonzo>" }
+            }
+          , { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/Update<Babbage>" }
+            }
+          ]
         }
       , "metadata":
         { "$ref": "cardano.json#/definitions/Metadata"
@@ -2893,7 +2974,8 @@
     }
 
   , "TxFeePolicy":
-    { "type": "object"
+    { "title": "TxFeePolicy"
+    , "type": "object"
     , "additionalProperties": false
     , "required": [ "coefficient", "constant" ]
     , "properties":
@@ -2903,16 +2985,18 @@
     }
 
   , "TransactionId":
-    { "type": "string"
-    , "description": "A Blake2b 32-byte hash digest of a transaction body, CBOR-encoded."
+    { "title": "TransactionId"
+    , "description": "A Blake2b 32-byte hash digest of a transaction body"
+    , "type": "string"
     , "contentEncoding": "base16"
     , "minLength": 64
     , "maxLength": 64
     }
 
   , "TransactionOutput":
-    { "type": "object"
+    { "title": "TransactionOutput"
     , "description": "A transaction output. Since Mary, 'value' always return a multi-asset value. Since Alonzo, 'datumHash' is always present (albeit sometimes 'null'). Since Babbage, 'datum' & 'script' are always present (albeit sometimes 'null')."
+    , "type": "object"
     , "examples":
       [ { "address": "addr_test1qz66ue36465w2qq40005h2hadad6pnjht8mu6sgplsfj74qdjnshguewlx4ww0eet26y2pal4xpav5prcydf28cvxtjqx46x7f"
         , "value":
@@ -2939,7 +3023,8 @@
     }
 
   , "TransactionOutputReference":
-    { "type": "object"
+    { "title": "TransactionOutputReference"
+    , "type": "object"
     , "additionalProperties": false
     , "required": [ "txId", "index" ]
     , "properties":
@@ -2951,61 +3036,28 @@
       }
     }
 
-  , "TxWitness":
-    { "type": "object"
-    , "oneOf":
-      [ { "additionalProperties": false
-        , "title": "witnessVk"
-        , "required": [ "witnessVk" ]
-        , "properties":
-          { "witnessVk":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "key", "signature" ]
-            , "properties":
-              { "key": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
-              , "signature": { "$ref": "cardano.json#/definitions/Signature" }
-              }
-            }
-          }
-        }
-      , { "additionalProperties": false
-        , "title": "redeemWitness"
-        , "required": [ "redeemWitness" ]
-        , "properties":
-          { "redeemWitness":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "key", "signature" ]
-            , "properties":
-              { "key": { "$ref": "cardano.json#/definitions/VerificationKey" }
-              , "signature": { "$ref": "cardano.json#/definitions/Signature" }
-              }
-            }
-          }
-        }
-      ]
-    }
-
   , "UInt8":
-    { "type": "integer"
+    { "title": "UInt8"
+    , "type": "integer"
     , "minimum": 0
     , "maximum": 255
     }
 
   , "UInt32":
-    { "type": "integer"
+    { "title": "UInt32"
+    , "type": "integer"
     , "minimum": 0
     , "maximum": 4294967295
     }
 
   , "UInt64":
-    { "type": "integer"
+    { "title": "UInt64"
+    , "type": "integer"
     , "minimum": 0
     , "maximum": 18446744073709552999
     }
 
-  , "Update[Shelley]":
+  , "Update<Shelley>":
     { "type": "object"
     , "title": "UpdateProposal[Shelley]"
     , "additionalProperties": false
@@ -3019,7 +3071,7 @@
       }
     }
 
-  , "Update[Alonzo]":
+  , "Update<Alonzo>":
     { "type": "object"
     , "title": "UpdateProposal[Alonzo]"
     , "additionalProperties": false
@@ -3033,7 +3085,7 @@
       }
     }
 
-  , "Update[Babbage]":
+  , "Update<Babbage>":
     { "type": "object"
     , "title": "UpdateProposal[Babbage]"
     , "additionalProperties": false
@@ -3048,13 +3100,15 @@
     }
 
   , "UtcTime":
-    { "type": "string"
+    { "title": "UtcTime"
+    , "type": "string"
     , "format": "date-time"
     , "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.?[0-9]*Z?"
     }
 
   , "Utxo":
-    { "type": "array"
+    { "title": "Utxo"
+    , "type": "array"
     , "additionalItems": false
     , "items":
       { "type": "array"
@@ -3069,7 +3123,8 @@
     }
 
   , "ValidityInterval":
-    { "type": "object"
+    { "title": "ValidityInterval"
+    , "type": "object"
     , "additionalProperties": false
     , "properties":
       { "invalidBefore": { "$ref": "cardano.json#/definitions/Slot" }
@@ -3078,7 +3133,8 @@
     }
 
   , "Value":
-    { "type": "object"
+    { "title": "Value"
+    , "type": "object"
     , "additionalProperties": false
     , "required": [ "coins" ]
     , "properties":
@@ -3099,29 +3155,34 @@
     }
 
   , "VotingPeriod":
-    { "type": "string"
+    { "title": "VotingPeriod"
+    , "type": "string"
     , "enum": [ "voteForThisEpoch", "voteForNextEpoch" ]
     }
 
   , "VrfProof":
-    { "type": "string"
+    { "title": "VrfProof"
+    , "type": "string"
     , "contentEncoding": "base16"
     }
 
   , "VrfOutput":
-    { "type": "string"
+    { "title": "VrfOutput"
+    , "type": "string"
     , "contentEncoding": "base16"
     }
 
   , "Withdrawals":
-    { "type": "object"
+    { "title": "Withdrawals"
+    , "type": "object"
     , "additionalProperties": { "$ref": "cardano.json#/definitions/Lovelace" }
     , "propertyNames": { "pattern": "^stake(_test)?1[0-9a-z]+$" }
     }
 
   , "VerificationKey":
-    { "type": "string"
+    { "title": "VerificationKey"
     , "description": "An Ed25519 verification key."
+    , "type": "string"
     , "contentEncoding": "base16"
     , "minLength": 64
     , "maxLength": 64

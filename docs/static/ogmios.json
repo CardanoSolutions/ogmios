@@ -346,7 +346,7 @@
               { "budgets":
                 { "type": "object"
                 , "propertyNames": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
-                , "additionalProperties": { "$ref": "cardano.json#/definitions/ExUnits" }
+                , "additionalProperties": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
                 }
               }
             }
@@ -1586,21 +1586,21 @@
                 , "required": ["byron"]
                 , "additionalProperties": false
                 , "properties":
-                  { "byron": { "$ref": "cardano.json#/definitions/Genesis[Byron]" }
+                  { "byron": { "$ref": "cardano.json#/definitions/Genesis<Byron>" }
                   }
                 }
               , { "type": "object"
                 , "required": ["shelley"]
                 , "additionalProperties": false
                 , "properties":
-                  { "shelley": { "$ref": "cardano.json#/definitions/Genesis[Shelley]" }
+                  { "shelley": { "$ref": "cardano.json#/definitions/Genesis<Shelley>" }
                   }
                 }
               , { "type": "object"
                 , "required": ["alonzo"]
                 , "additionalProperties": false
                 , "properties":
-                  { "alonzo": { "$ref": "cardano.json#/definitions/Genesis[Alonzo]" }
+                  { "alonzo": { "$ref": "cardano.json#/definitions/Genesis<Alonzo>"}
                   }
                 }
               ]
