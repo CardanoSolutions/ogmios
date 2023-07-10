@@ -1,6 +1,10 @@
+import { nanoid } from 'nanoid'
+
+import { ServerNotReady, UnknownResultError } from './errors'
 import { WebSocket, CloseEvent } from './IsomorphicWebSocket'
 import { getServerHealth } from './ServerHealth'
-import { ServerNotReady } from './errors'
+import { safeJSON } from './util'
+
 
 /**
  * Connection configuration parameters. Use `tls: true` to create a `wss://` using TLS
@@ -46,6 +50,13 @@ export type InteractionType = (
   | 'LongRunning'
   | 'OneTime'
 )
+
+/**
+ * A value set when sending the request, to be mirrored by the server in the corresponding response.
+ *
+ * @category Connection
+ */
+export type Mirror = { [k: string]: unknown }
 
 /** @category Connection */
 export type WebSocketErrorHandler = (error: Error) => void
@@ -122,3 +133,67 @@ export const createInteractionContext = async (
     })
   })
 }
+
+/** @internal */
+export const baseRequest = {
+  jsonrpc: '2.0'
+}
+
+/** @internal */
+export const send = async <T>(
+  send: (socket: WebSocket) => Promise<T>,
+  context: InteractionContext
+): Promise<T> => {
+  const { socket, afterEach } = context
+  return new Promise((resolve, reject) => {
+    send(socket)
+      .then(result => afterEach(resolve.bind(this, result)))
+      .catch(error => afterEach(reject.bind(this, error)))
+  })
+}
+
+/** @internal */
+export const Method = <Request, Response extends { id?: { requestId?: string } }, A>
+  (
+    req: {
+      method: string,
+      params?: any
+    },
+    res: {
+      handler: (
+        response: Response,
+        resolve: (value?: A | PromiseLike<A>) => void,
+        reject: (reason?: any) => void
+      ) => void
+    },
+    context: InteractionContext
+  ): Promise<A> =>
+    send<A>((socket) =>
+      new Promise((resolve, reject) => {
+        const requestId = nanoid(5)
+
+        async function listener (data: string) {
+          const response = safeJSON.parse(data) as Response
+          if (response.id?.requestId !== requestId) { return }
+          socket.removeListener('message', listener)
+          try {
+            await res.handler(
+              response,
+              resolve,
+              reject
+            )
+          } catch (e) {
+            return reject(new UnknownResultError(response))
+          }
+        }
+
+        socket.on('message', listener)
+
+        socket.send(safeJSON.stringify({
+          ...baseRequest,
+          method: req.method,
+          params: req.params,
+          id: { requestId }
+        } as unknown as Request))
+
+      }), context)

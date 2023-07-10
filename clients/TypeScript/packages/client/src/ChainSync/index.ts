@@ -1,7 +1,4 @@
-export * from './ChainSyncClient'
-export * from './findIntersect'
-export * from './requestNext'
-export {
-  IntersectionNotFoundError,
-  UnknownResultError
-} from '../errors'
+export * from './Client'
+
+export * from './findIntersection'
+export * from './nextBlock'

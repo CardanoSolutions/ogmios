@@ -1,20 +1,16 @@
 import { bech32 } from 'bech32'
 import { WebSocket } from './IsomorphicWebSocket'
-import { InteractionContext } from './Connection'
 import {
   Address,
+  Block,
+  BlockEBB,
+  BlockBFT,
+  BlockPraos,
+  Era,
   All,
   Any,
-  Block,
-  BlockAllegra,
-  BlockAlonzo,
-  BlockBabbage,
-  BlockByron,
-  BlockMary,
-  BlockShelley,
   Datum,
-  DigestBlake2BDatum,
-  EpochBoundaryBlock,
+  DigestBlake2B256,
   ExpiresAt,
   Metadatum,
   MetadatumMap,
@@ -22,21 +18,19 @@ import {
   Native,
   PlutusV1,
   PlutusV2,
-  Point,
   ProtocolParametersAlonzo,
   ProtocolParametersBabbage,
   ProtocolParametersShelley,
   Script,
   ScriptNative,
-  StandardBlock,
   StartsAt,
-  TxOut,
+  TransactionOutput,
   UInt64,
-  Value
+  Value,
 } from '@cardano-ogmios/schema'
-import { findIntersect } from './ChainSync'
-import { WebSocketClosed, TipIsOriginError } from './errors'
+import { WebSocketClosed } from './errors'
 import { EventEmitter } from 'events'
+
 const JSONBig = require('@cardanosolutions/json-bigint')
 
 /** @internal */
@@ -153,18 +147,6 @@ export const safeJSON = {
 }
 
 /** @internal */
-export const createPointFromCurrentTip = async (context?: InteractionContext): Promise<Point> => {
-  const { tip } = await findIntersect(context, ['origin'])
-  if (tip === 'origin') {
-    throw new TipIsOriginError()
-  }
-  return {
-    hash: tip.hash,
-    slot: tip.slot
-  } as Point
-}
-
-/** @internal */
 export const ensureSocketIsOpen = (socket: WebSocket) => {
   if (socket.readyState !== socket.OPEN) {
     throw new WebSocketClosed()
@@ -250,37 +232,19 @@ export function unsafeMetadatumAsJSON (metadatum: Metadatum): any {
   return fromMetadatum(metadatum)
 }
 
-/** @category Helper */
-export const isAllegraBlock = (block: Block): block is { allegra: BlockAllegra } =>
-  (block as { allegra: BlockAllegra }).allegra !== undefined
+const BYRON_ERA: Era = "byron"
 
 /** @category Helper */
-export const isAlonzoBlock = (block: Block): block is { alonzo: BlockAlonzo } =>
-  (block as { alonzo: BlockAlonzo }).alonzo !== undefined
+export const isBlockEBB = (block: Block): block is BlockEBB =>
+  block.era === BYRON_ERA && typeof (block as any).issuer === "undefined"
 
 /** @category Helper */
-export const isBabbageBlock = (block: Block): block is { babbage: BlockBabbage } =>
-  (block as { babbage: BlockBabbage }).babbage !== undefined
+export const isBlockBFT = (block: Block): block is BlockBFT =>
+  block.era === BYRON_ERA && typeof (block as any).issuer !== "undefined"
 
 /** @category Helper */
-export const isByronBlock = (block: Block): block is { byron: BlockByron } =>
-  (block as { byron: BlockByron }).byron !== undefined
-
-/** @category Helper */
-export const isByronStandardBlock = (block: Block): block is { byron: StandardBlock } =>
-  isByronBlock(block) && (block.byron as StandardBlock).body !== undefined
-
-/** @category Helper */
-export const isByronEpochBoundaryBlock = (block: Block): block is { byron: EpochBoundaryBlock } =>
-  isByronBlock(block) && (block.byron as StandardBlock).body === undefined
-
-/** @category Helper */
-export const isMaryBlock = (block: Block): block is { mary: BlockMary } =>
-  (block as { mary: BlockMary }).mary !== undefined
-
-/** @category Helper */
-export const isShelleyBlock = (block: Block): block is { shelley: BlockShelley } =>
-  (block as { shelley: BlockShelley }).shelley !== undefined
+export const isBlockPraos = (block: Block): block is BlockPraos =>
+  block.era !== BYRON_ERA
 
 /** @internal */
 export const isEmptyObject = (obj: Object): boolean =>
@@ -329,7 +293,7 @@ export const CONSTANT_OUTPUT_SERIALIZATION_OVERHEAD = 160
  * @category Helper
  */
 export const utxoSize = (
-  output: TxOut
+  output: TransactionOutput
 ): UInt64 => {
   return CONSTANT_OUTPUT_SERIALIZATION_OVERHEAD +
     sizeOfArrayDef(1) +
@@ -467,7 +431,7 @@ export const utxoSize = (
     return cborOverhead + datumSize
   }
 
-  function sizeOfDatumHash (datumHash?: DigestBlake2BDatum) {
+  function sizeOfDatumHash (datumHash?: DigestBlake2B256) {
     if (datumHash === undefined) {
       return 0
     }
