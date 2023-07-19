@@ -1,5 +1,4 @@
 import { bech32 } from 'bech32'
-import { WebSocket } from './IsomorphicWebSocket'
 import {
   Address,
   Block,
@@ -142,13 +141,6 @@ export const safeJSON = {
 
   stringify (...args : any[]) : string {
     return this.$.stringify(...args)
-  }
-}
-
-/** @internal */
-export const ensureSocketIsOpen = (socket: WebSocket) => {
-  if (socket.readyState !== socket.OPEN) {
-    throw new Error('WebSocket is closed')
   }
 }
 

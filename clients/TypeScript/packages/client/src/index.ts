@@ -4,14 +4,14 @@ export * from './Connection'
 export * from './ServerHealth'
 export * from './util'
 
-export { createChainSyncClient } from './ChainSync'
-export * as ChainSync from './ChainSync'
+export { createChainSynchronizationClient } from './ChainSynchronization'
+export * as ChainSynchronization from './ChainSynchronization'
+
+export { createTransactionSubmissionClient } from './TransactionSubmission'
+export * as TransactionSubmission from './TransactionSubmission'
 
 // export { createStateQueryClient, EraWithGenesis, GenesisConfig } from './StateQuery'
 // export * as StateQuery from './StateQuery'
-//
-// export { createTxSubmissionClient } from './TxSubmission'
-// export * as TxSubmission from './TxSubmission'
 //
 // export { createMempoolMonitorClient } from './MempoolMonitor'
 // export * as MempoolMonitor from './MempoolMonitor'

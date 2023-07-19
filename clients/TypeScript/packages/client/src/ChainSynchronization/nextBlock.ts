@@ -3,12 +3,12 @@ import { Mirror, baseRequest } from '../Connection'
 import { safeJSON } from '../util'
 import { WebSocket } from '../IsomorphicWebSocket'
 
-/** @category ChainSync */
-export const nextBlock = (
+/** @category ChainSynchronization */
+export function nextBlock(
   socket: WebSocket,
   options?: { id?: Mirror }
-): void => {
-  socket.send(safeJSON.stringify({
+): void {
+  return socket.send(safeJSON.stringify({
     ...baseRequest,
     method: 'nextBlock',
     id: options?.id

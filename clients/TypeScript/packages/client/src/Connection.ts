@@ -152,6 +152,13 @@ export const baseRequest = {
 }
 
 /** @internal */
+export const ensureSocketIsOpen = (socket: WebSocket) => {
+  if (socket.readyState !== socket.OPEN) {
+    throw new Error('WebSocket is closed')
+  }
+}
+
+/** @internal */
 export const send = async <T>(
   send: (socket: WebSocket) => Promise<T>,
   context: InteractionContext

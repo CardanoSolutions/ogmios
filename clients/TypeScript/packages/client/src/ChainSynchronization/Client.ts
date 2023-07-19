@@ -1,26 +1,23 @@
 import fastq from 'fastq'
 import { CustomError } from 'ts-custom-error'
-
-import { Block, Ogmios, Point, Origin, Tip } from '@cardano-ogmios/schema'
-import { InteractionContext, UnknownResultError } from '../Connection'
-import { ensureSocketIsOpen, safeJSON } from '../util'
+import { InteractionContext, ensureSocketIsOpen, UnknownResultError } from '../Connection'
+import { safeJSON } from '../util'
 import { findIntersection, Intersection } from './findIntersection'
 import { nextBlock } from './nextBlock'
-
-/** @category ChainSync */
-export class TipIsOriginError extends CustomError {
-  public constructor () {
-    super()
-    this.message = 'Unable to produce point as the chain tip is the origin'
-  }
-}
+import {
+  Block,
+  Ogmios,
+  Point,
+  Origin,
+  Tip
+} from '@cardano-ogmios/schema'
 
 /**
- * See also {@link createChainSyncClient} for creating a client.
+ * See also {@link createChainSynchronizationClient} for creating a client.
  *
- * @category ChainSync
+ * @category ChainSynchronization
  */
-export interface ChainSyncClient {
+export interface ChainSynchronizationClient {
   context: InteractionContext
   shutdown: () => Promise<void>
   startSync: (
@@ -29,8 +26,8 @@ export interface ChainSyncClient {
   ) => Promise<Intersection>
 }
 
-/** @category ChainSync */
-export interface ChainSyncMessageHandlers {
+/** @category ChainSynchronization */
+export interface ChainSynchronizationMessageHandlers {
   rollBackward: (
     response: {
       point: Point | Origin,
@@ -48,11 +45,11 @@ export interface ChainSyncMessageHandlers {
 }
 
 /** @category Constructor */
-export const createChainSyncClient = async (
+export async function createChainSynchronizationClient(
   context: InteractionContext,
-  messageHandlers: ChainSyncMessageHandlers,
+  messageHandlers: ChainSynchronizationMessageHandlers,
   options?: { sequential?: boolean }
-): Promise<ChainSyncClient> => {
+): Promise<ChainSynchronizationClient> {
   const { socket } = context
   return new Promise((resolve) => {
     const messageHandler = async (response: Ogmios['NextBlockResponse']) => {
@@ -108,9 +105,16 @@ export const createChainSyncClient = async (
   })
 }
 
+/** @category ChainSynchronization */
+export class TipIsOriginError extends CustomError {
+  public constructor () {
+    super()
+    this.message = 'Unable to produce point as the chain tip is the origin'
+  }
+}
 
 /** @internal */
-export const createPointFromCurrentTip = async (context?: InteractionContext): Promise<Point> => {
+export async function createPointFromCurrentTip(context?: InteractionContext): Promise<Point> {
   const { tip } = await findIntersection(context, ['origin'])
   if (tip === 'origin') {
     throw new TipIsOriginError()
