@@ -553,6 +553,12 @@
     , "enum": ["byron", "shelley", "allegra", "mary", "alonzo", "babbage"]
     }
 
+  , "EraWithGenesis":
+    { "title": "EraWithGenesis"
+    , "type": "string"
+    , "enum": ["byron", "shelley", "alonzo"]
+    }
+
   , "EraMismatch":
     { "title": "EraMismatch"
     , "type": "object"
@@ -608,16 +614,7 @@
     , "additionalProperties":
       { "type": "array"
       , "items":
-        { "oneOf":
-          [ { "$ref": "cardano.json#/definitions/SubmitTransactionError[extraRedeemers]" }
-          , { "$ref": "cardano.json#/definitions/SubmitTransactionError[missingRequiredDatums]" }
-          , { "$ref": "cardano.json#/definitions/ScriptFailure[missingRequiredScripts]" }
-          , { "$ref": "cardano.json#/definitions/ScriptFailure[validatorFailed]" }
-          , { "$ref": "cardano.json#/definitions/ScriptFailure[unknownInputReferencedByRedeemer]" }
-          , { "$ref": "cardano.json#/definitions/ScriptFailure[nonScriptInputReferencedByRedeemer]" }
-          , { "$ref": "cardano.json#/definitions/ScriptFailure[illFormedExecutionBudget]" }
-          , { "$ref": "cardano.json#/definitions/ScriptFailure[noCostModelForLanguage]" }
-          ]
+        { "$ref": "cardano.json#/definitions/ScriptExecutionFailureReason"
         }
       }
     }
@@ -1517,6 +1514,20 @@
     , "type": "string"
     , "description": "A phase-2 Plutus script; or said differently, a serialized Plutus-core program."
     , "contentEncoding": "base16"
+    }
+
+  , "ScriptExecutionFailureReason":
+    { "title": "ScriptExecutionFailureReason"
+    , "oneOf":
+      [ { "$ref": "cardano.json#/definitions/SubmitTransactionError[extraRedeemers]" }
+      , { "$ref": "cardano.json#/definitions/SubmitTransactionError[missingRequiredDatums]" }
+      , { "$ref": "cardano.json#/definitions/ScriptFailure[missingRequiredScripts]" }
+      , { "$ref": "cardano.json#/definitions/ScriptFailure[validatorFailed]" }
+      , { "$ref": "cardano.json#/definitions/ScriptFailure[unknownInputReferencedByRedeemer]" }
+      , { "$ref": "cardano.json#/definitions/ScriptFailure[nonScriptInputReferencedByRedeemer]" }
+      , { "$ref": "cardano.json#/definitions/ScriptFailure[illFormedExecutionBudget]" }
+      , { "$ref": "cardano.json#/definitions/ScriptFailure[noCostModelForLanguage]" }
+      ]
     }
 
   , "ScriptFailure[missingRequiredScripts]":

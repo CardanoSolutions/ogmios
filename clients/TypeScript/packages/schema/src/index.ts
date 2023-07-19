@@ -131,6 +131,15 @@ export type ScriptPurpose = Spend | Mint | Certificate1 | Withdrawal;
 export type PolicyId = string;
 export type Utxo = [TransactionOutputReference, TransactionOutput][];
 export type Language = "plutus:v1" | "plutus:v2";
+export type ScriptExecutionFailureReason =
+  | ExtraRedeemers
+  | MissingRequiredDatums
+  | MissingRequiredScripts
+  | ValidatorFailed
+  | UnknownInputReferencedByRedeemer
+  | NonScriptInputReferencedByRedeemer
+  | IllFormedExecutionBudget
+  | NoCostModelForLanguage;
 export type RedeemerPointer = string;
 /**
  * A time in seconds relative to another one (typically, system start or era start). Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
@@ -161,6 +170,7 @@ export type StakeAddress = string;
  * A number of lovelace, possibly large when summed up.
  */
 export type Lovelace1 = bigint;
+export type EraWithGenesis = "byron" | "shelley" | "alonzo";
 export type UtcTime = string;
 /**
  * A magic number for telling networks apart. (e.g. 764824073)
@@ -1376,16 +1386,7 @@ export interface EvaluateTransactionFailureScriptExecutionFailure {
  * Some script in the transaction terminated with an error.
  */
 export interface ScriptExecutionFailure {
-  [k: string]: (
-    | ExtraRedeemers
-    | MissingRequiredDatums
-    | MissingRequiredScripts
-    | ValidatorFailed
-    | UnknownInputReferencedByRedeemer
-    | NonScriptInputReferencedByRedeemer
-    | IllFormedExecutionBudget
-    | NoCostModelForLanguage
-  )[];
+  [k: string]: ScriptExecutionFailureReason[];
 }
 /**
  * Missing scripts required for validating script inputs.
@@ -2057,7 +2058,7 @@ export interface QueryNetworkGenesisConfiguration {
   jsonrpc: "2.0";
   method: "queryNetwork/genesisConfiguration";
   params: {
-    era: "byron" | "shelley" | "alonzo";
+    era: EraWithGenesis;
   };
   /**
    * An arbitrary JSON value that will be mirrored back in the response.

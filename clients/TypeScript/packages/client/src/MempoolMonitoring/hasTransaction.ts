@@ -12,7 +12,7 @@ import {
 export function hasTransaction(context: InteractionContext, id: TransactionId) {
   return Method<Ogmios['HasTransaction'], Ogmios['HasTransactionResponse'], boolean>(
     {
-      method: 'HasTransaction',
+      method: 'hasTransaction',
       params: { id }
     },
     { handler },

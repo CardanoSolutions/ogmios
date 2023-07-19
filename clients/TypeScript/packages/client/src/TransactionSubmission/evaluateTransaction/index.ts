@@ -11,6 +11,10 @@ import {
 
 export * as errors from './errors'
 
+type Request = Ogmios['EvaluateTransaction']
+type Response = Ogmios['EvaluateTransactionResponse']
+type Success = EvaluateTransactionSuccess
+
 /**
  * Evaluation results, as a map of redeemer pointers to execution units. Points are in the form of
  *
@@ -33,9 +37,9 @@ export interface EvaluationResult {
  * @category TransactionSubmission
  */
 export function evaluateTransaction(context: InteractionContext, transaction: string, additionalUtxoSet?: Utxo) {
-  return Method<Ogmios['EvaluateTransaction'], Ogmios['EvaluateTransactionResponse'], EvaluationResult>(
+  return Method<Request, Response, EvaluationResult>(
     {
-      method: 'EvaluateTransaction',
+      method: 'evaluateTransaction',
       params: {
         ...(additionalUtxoSet !== undefined ? { additionalUtxoSet } : {}),
         transaction,
@@ -48,7 +52,7 @@ export function evaluateTransaction(context: InteractionContext, transaction: st
 
 /** @Internal */
 export function handler(
-  response: Ogmios['EvaluateTransactionResponse'],
+  response: Response,
   resolve: (value?: EvaluationResult) => void,
   reject: (reason?: any) => void
 ) {
@@ -60,6 +64,6 @@ export function handler(
 }
 
 /** @Internal */
-export function isEvaluateTransactionSuccess(response: any): response is EvaluateTransactionSuccess {
-  return typeof (response as EvaluateTransactionSuccess)?.result?.budgets !== 'undefined'
+export function isEvaluateTransactionSuccess(response: any): response is Success {
+  return typeof (response as Success)?.result?.budgets !== 'undefined'
 }

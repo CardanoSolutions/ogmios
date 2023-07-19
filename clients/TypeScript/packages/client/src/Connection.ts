@@ -172,11 +172,14 @@ export const send = async <T>(
 }
 
 /** @internal */
-export const Method = <Request, Response extends { id?: { requestId?: string } }, A>
+export const Method = <
+  Request extends { method: string, params?: any },
+  Response extends { id?: { requestId?: string } },
+  A>
   (
     req: {
-      method: string,
-      params?: any
+      method: Request['method'],
+      params?: Request['params'],
     },
     res: {
       handler: (
@@ -193,7 +196,7 @@ export const Method = <Request, Response extends { id?: { requestId?: string } }
 
         async function listener (data: string) {
           const response = safeJSON.parse(data) as Response
-          if (response.id?.requestId !== requestId) { return }
+          if (response?.id?.requestId !== requestId) { return }
           socket.removeListener('message', listener)
           try {
             await res.handler(
@@ -202,11 +205,13 @@ export const Method = <Request, Response extends { id?: { requestId?: string } }
               reject
             )
           } catch (e) {
-            return reject(new UnknownResultError(response))
+            return reject(e)
           }
         }
 
         socket.on('message', listener)
+
+        ensureSocketIsOpen(socket)
 
         socket.send(safeJSON.stringify({
           ...baseRequest,

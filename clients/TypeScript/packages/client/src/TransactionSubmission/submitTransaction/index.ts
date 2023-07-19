@@ -8,6 +8,10 @@ import {
   TransactionId
 } from '@cardano-ogmios/schema'
 
+type Request = Ogmios['SubmitTransaction']
+type Response = Ogmios['SubmitTransactionResponse']
+type Success = SubmitTransactionSuccess
+
 /**
  * Submit a serialized transaction. This expects a base16 CBOR-encoded
  * transaction as obtained from the cardano-cli or cardano-multiplatform-lib.
@@ -15,9 +19,9 @@ import {
  * @category TransactionSubmission
  */
 export function submitTransaction(context: InteractionContext, transaction: string) {
-  return Method<Ogmios['SubmitTransaction'], Ogmios['SubmitTransactionResponse'], TransactionId>(
+  return Method<Request, Response, TransactionId>(
     {
-      method: 'SubmitTransaction',
+      method: 'submitTransaction',
       params: { transaction }
     },
     { handler },
@@ -27,7 +31,7 @@ export function submitTransaction(context: InteractionContext, transaction: stri
 
 /** @Internal */
 export function handler(
-  response: Ogmios['SubmitTransactionResponse'],
+  response: Response,
   resolve: (value?: TransactionId) => void,
   reject: (reason?: any) => void
 ) {
@@ -39,6 +43,6 @@ export function handler(
 }
 
 /** @Internal */
-export function isSubmitTransactionSuccess(response: any): response is SubmitTransactionSuccess {
-  return typeof (response as SubmitTransactionSuccess)?.result?.transaction?.id !== 'undefined'
+export function isSubmitTransactionSuccess(response: any): response is Success {
+  return typeof (response as Success)?.result?.transaction?.id !== 'undefined'
 }

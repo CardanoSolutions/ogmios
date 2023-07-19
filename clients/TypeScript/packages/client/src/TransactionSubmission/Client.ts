@@ -114,10 +114,13 @@ export const createTransactionSubmissionClient = async (
         return new Promise((resolve, reject) => { submitTransaction.handler(response, resolve, reject) })
       }, context)
     },
-    shutdown: () => new Promise(resolve => {
+    shutdown: () => {
       ensureSocketIsOpen(socket)
-      socket.once('close', resolve)
-      socket.close()
-    })
+      return new Promise((resolve, reject) => {
+        socket.once('close', () => resolve())
+        socket.once('error', reject)
+        socket.close()
+      })
+    }
   } as TransactionSubmissionClient)
 }
