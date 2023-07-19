@@ -1,10 +1,9 @@
 import { nanoid } from 'nanoid'
 
-import { ServerNotReady, UnknownResultError } from './errors'
 import { WebSocket, CloseEvent } from './IsomorphicWebSocket'
-import { getServerHealth } from './ServerHealth'
+import { getServerHealth, ServerNotReady } from './ServerHealth'
 import { safeJSON } from './util'
-
+import { CustomError } from 'ts-custom-error'
 
 /**
  * Connection configuration parameters. Use `tls: true` to create a `wss://` using TLS
@@ -66,6 +65,19 @@ export type WebSocketCloseHandler = (
   code: CloseEvent['code'],
   reason: CloseEvent['reason']
 ) => void
+
+/**
+ * @category ChainSync
+ * @category StateQuery
+ * @category TxSubmission
+ * @category MempoolMonitor
+ */
+export class UnknownResultError extends CustomError {
+  public constructor (result: object | string) {
+    super()
+    this.message = safeJSON.stringify(result)
+  }
+}
 
 /** @category Constructor */
 export const createConnectionObject = (config?: ConnectionConfig): Connection => {

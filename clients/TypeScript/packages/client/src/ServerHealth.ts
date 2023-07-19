@@ -1,4 +1,5 @@
 import fetch from 'cross-fetch'
+import { CustomError } from 'ts-custom-error'
 import { Connection } from './Connection'
 import { Tip } from '@cardano-ogmios/schema'
 
@@ -61,5 +62,14 @@ export const getServerHealth = async (
     return responseJson
   } else {
     throw new Error(response.statusText)
+  }
+}
+
+/** @category Connection */
+export class ServerNotReady extends CustomError {
+  public constructor (health: ServerHealth) {
+    super()
+    this.message =
+      `Server is not ready. Network synchronization at ${health.networkSynchronization}%`
   }
 }

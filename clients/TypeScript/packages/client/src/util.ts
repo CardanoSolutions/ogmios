@@ -28,7 +28,6 @@ import {
   UInt64,
   Value,
 } from '@cardano-ogmios/schema'
-import { WebSocketClosed } from './errors'
 import { EventEmitter } from 'events'
 
 const JSONBig = require('@cardanosolutions/json-bigint')
@@ -149,7 +148,7 @@ export const safeJSON = {
 /** @internal */
 export const ensureSocketIsOpen = (socket: WebSocket) => {
   if (socket.readyState !== socket.OPEN) {
-    throw new WebSocketClosed()
+    throw new Error('WebSocket is closed')
   }
 }
 
