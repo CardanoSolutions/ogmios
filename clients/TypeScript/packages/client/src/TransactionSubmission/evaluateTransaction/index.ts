@@ -5,13 +5,11 @@ import {
 import {
   Ogmios,
   EvaluateTransactionSuccess,
-  EvaluateTransactionFailure,
   ExecutionUnits,
   Utxo
 } from '@cardano-ogmios/schema'
 
 export * as errors from './errors'
-import * as errors from './errors'
 
 /**
  * Evaluation results, as a map of redeemer pointers to execution units. Points are in the form of
@@ -51,22 +49,17 @@ export function evaluateTransaction(context: InteractionContext, transaction: st
 /** @Internal */
 export function handler(
   response: Ogmios['EvaluateTransactionResponse'],
-  resolve: (value?: EvaluationResult | PromiseLike<EvaluationResult>) => void,
+  resolve: (value?: EvaluationResult) => void,
   reject: (reason?: any) => void
 ) {
   if (isEvaluateTransactionSuccess(response)) {
-    resolve((response as EvaluateTransactionSuccess).result.budgets)
+    resolve(response.result.budgets)
   } else {
-    reject((response as EvaluateTransactionFailure).error)
+    reject(response)
   }
 }
 
 /** @Internal */
-export function isEvaluationResult(result: EvaluationResult | errors.EvaluateTransactionError[]): result is EvaluationResult {
-  return !Array.isArray(result)
-}
-
-/** @Internal */
-export function isEvaluateTransactionSuccess(result: Ogmios['EvaluateTransactionResponse']): result is EvaluateTransactionSuccess {
-  return typeof (result as EvaluateTransactionSuccess).result?.budgets !== 'undefined'
+export function isEvaluateTransactionSuccess(response: any): response is EvaluateTransactionSuccess {
+  return typeof (response as EvaluateTransactionSuccess)?.result?.budgets !== 'undefined'
 }

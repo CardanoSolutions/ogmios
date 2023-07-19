@@ -5,7 +5,6 @@ import {
 import {
   Ogmios,
   SubmitTransactionSuccess,
-  SubmitTransactionFailure,
   TransactionId
 } from '@cardano-ogmios/schema'
 
@@ -29,22 +28,17 @@ export function submitTransaction(context: InteractionContext, transaction: stri
 /** @Internal */
 export function handler(
   response: Ogmios['SubmitTransactionResponse'],
-  resolve: (value?: TransactionId | PromiseLike<TransactionId>) => void,
+  resolve: (value?: TransactionId) => void,
   reject: (reason?: any) => void
 ) {
   if (isSubmitTransactionSuccess(response)) {
-    resolve((response as SubmitTransactionSuccess).result.transaction.id)
+    resolve(response.result.transaction.id)
   } else {
-    reject((response as SubmitTransactionFailure).error)
+    reject(response)
   }
 }
 
 /** @Internal */
-export function isTransactionId(result: TransactionId | Error[]): result is TransactionId {
-  return typeof (result as TransactionId) === 'string'
-}
-
-/** @Internal */
-export function isSubmitTransactionSuccess(result: Ogmios['SubmitTransactionResponse']): result is SubmitTransactionSuccess {
-  return typeof (result as SubmitTransactionSuccess).result?.transaction !== 'undefined'
+export function isSubmitTransactionSuccess(response: any): response is SubmitTransactionSuccess {
+  return typeof (response as SubmitTransactionSuccess)?.result?.transaction?.id !== 'undefined'
 }

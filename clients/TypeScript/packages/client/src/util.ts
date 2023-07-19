@@ -225,39 +225,46 @@ export function unsafeMetadatumAsJSON (metadatum: Metadatum): any {
 
 const BYRON_ERA: Era = "byron"
 
-/** @category Helper */
-export const isBlockEBB = (block: Block): block is BlockEBB =>
-  block.era === BYRON_ERA && typeof (block as any).issuer === "undefined"
-
-/** @category Helper */
-export const isBlockBFT = (block: Block): block is BlockBFT =>
-  block.era === BYRON_ERA && typeof (block as any).issuer !== "undefined"
-
-/** @category Helper */
-export const isBlockPraos = (block: Block): block is BlockPraos =>
-  block.era !== BYRON_ERA
-
 /** @internal */
-export const isEmptyObject = (obj: Object): boolean =>
-  obj !== undefined && Object.keys(obj).length === 0 && (obj.constructor === Object || obj.constructor === undefined)
+export function isObject($: any): $ is Object {
+  return typeof $ === 'object' && $ !== null
+}
 
 /** @category Helper */
-export const isShelleyProtocolParameters = (
-  params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
-): params is ProtocolParametersShelley =>
-  (params as ProtocolParametersShelley).minUtxoValue !== undefined
+export function isBlockEBB(block: Block): block is BlockEBB {
+  return block.era === BYRON_ERA && typeof (block as any).issuer === "undefined"
+}
 
 /** @category Helper */
-export const isAlonzoProtocolParameters = (
-  params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
-): params is ProtocolParametersAlonzo =>
-  (params as ProtocolParametersAlonzo).coinsPerUtxoWord !== undefined
+export function isBlockBFT(block: Block): block is BlockBFT {
+  return block.era === BYRON_ERA && typeof (block as any).issuer !== "undefined"
+}
 
 /** @category Helper */
-export const isBabbageProtocolParameters = (
+export function isBlockPraos(block: Block): block is BlockPraos {
+  return block.era !== BYRON_ERA
+}
+
+/** @category Helper */
+export function isShelleyProtocolParameters(
   params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
-): params is ProtocolParametersBabbage =>
-  (params as ProtocolParametersBabbage).coinsPerUtxoByte !== undefined
+): params is ProtocolParametersShelley {
+  return isObject(params) && (params as ProtocolParametersShelley).minUtxoValue !== undefined
+}
+
+/** @category Helper */
+export function isAlonzoProtocolParameters(
+  params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
+): params is ProtocolParametersAlonzo {
+  return isObject(params) && (params as ProtocolParametersAlonzo).coinsPerUtxoWord !== undefined
+}
+
+/** @category Helper */
+export function isBabbageProtocolParameters(
+  params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
+): params is ProtocolParametersBabbage {
+  return isObject(params) && (params as ProtocolParametersBabbage).coinsPerUtxoByte !== undefined
+}
 
 /**
  * Approximation of the memory overhead that comes from the associated input and entry in

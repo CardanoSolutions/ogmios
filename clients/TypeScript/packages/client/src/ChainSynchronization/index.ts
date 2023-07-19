@@ -1,4 +1,4 @@
 export * from './Client'
 
-export * from './findIntersection'
-export * from './nextBlock'
+export { findIntersection, Intersection } from './findIntersection'
+export { nextBlock } from './nextBlock'

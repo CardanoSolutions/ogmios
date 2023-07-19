@@ -1,6 +1,4 @@
 import { InteractionContext, Method } from '../Connection'
-import { CustomError } from 'ts-custom-error'
-import { safeJSON } from '../util'
 import {
   IntersectionFound,
   Ogmios,
@@ -11,14 +9,6 @@ import {
 
 /** @category ChainSynchronization */
 export type Intersection = { intersection: Point | Origin, tip: Tip | Origin }
-
-/** @category ChainSynchronization */
-export class IntersectionNotFoundError extends CustomError {
-  public constructor (points: (Point | Origin)[]) {
-    super()
-    this.message = `Intersection with points ${safeJSON.stringify(points)} not found`
-  }
-}
 
 /** @category ChainSynchronization */
 export function findIntersection(
@@ -37,7 +27,7 @@ export function findIntersection(
         if (isIntersectionFound(response)) {
           return resolve(response.result)
         } else {
-          return reject(new IntersectionNotFoundError(points))
+          return reject(response)
         }
       }
     },
@@ -46,6 +36,6 @@ export function findIntersection(
 }
 
 /** @internal */
-export function isIntersectionFound(response: Ogmios['FindIntersectionResponse']): response is IntersectionFound {
-  return (response as IntersectionFound).result !== undefined
+export function isIntersectionFound(response: any): response is IntersectionFound {
+  return (response as IntersectionFound)?.result?.intersection !== undefined
 }
