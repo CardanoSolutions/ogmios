@@ -19,13 +19,13 @@ type Success = QueryLedgerStateTipResponse
  *
  * @category LedgerStateQuery
  */
-export function tip(context: InteractionContext): Promise<Point | Origin> {
+export function tip (context: InteractionContext): Promise<Point | Origin> {
   return Method<Request, Response, Point | Origin>(
     {
-      method: 'queryLedgerState/tip',
+      method: 'queryLedgerState/tip'
     },
     {
-      handler(response, resolve, reject) {
+      handler (response, resolve, reject) {
         if (isQueryLedgerStateTip(response)) {
           resolve(response.result.tip)
         } else {
@@ -40,6 +40,6 @@ export function tip(context: InteractionContext): Promise<Point | Origin> {
 /**
  * @internal
  */
-export function isQueryLedgerStateTip(response: any): response is Success {
+export function isQueryLedgerStateTip (response: any): response is Success {
   return typeof (response as Success)?.result?.tip !== 'undefined'
 }

@@ -14,13 +14,13 @@ type Success = QueryLedgerStateLiveStakeDistributionResponse
  *
  * @category LedgerStateQuery
  */
-export function liveStakeDistribution(context: InteractionContext): Promise<LiveStakeDistribution> {
+export function liveStakeDistribution (context: InteractionContext): Promise<LiveStakeDistribution> {
   return Method<Request, Response, LiveStakeDistribution>(
     {
-      method: 'queryLedgerState/liveStakeDistribution',
+      method: 'queryLedgerState/liveStakeDistribution'
     },
     {
-      handler(response, resolve, reject) {
+      handler (response, resolve, reject) {
         if (isQueryLedgerStateLiveStakeDistribution(response)) {
           resolve(response.result.liveStakeDistribution)
         } else {
@@ -35,6 +35,6 @@ export function liveStakeDistribution(context: InteractionContext): Promise<Live
 /**
  * @internal
  */
-export function isQueryLedgerStateLiveStakeDistribution(response: any): response is Success {
+export function isQueryLedgerStateLiveStakeDistribution (response: any): response is Success {
   return typeof (response as Success)?.result?.liveStakeDistribution !== 'undefined'
 }

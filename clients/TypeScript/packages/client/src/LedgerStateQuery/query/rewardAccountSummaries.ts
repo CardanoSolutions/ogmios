@@ -3,7 +3,7 @@ import {
   Ogmios,
   QueryLedgerStateRewardAccountSummariesResponse,
   RewardAccountSummaries,
-  StakeCredential,
+  StakeCredential
 } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateRewardAccountSummaries']
@@ -15,7 +15,7 @@ type Success = QueryLedgerStateRewardAccountSummariesResponse
  *
  * @category LedgerStateQuery
  */
-export function rewardAccountSummaries(
+export function rewardAccountSummaries (
   context: InteractionContext,
   params: {
     scripts?: StakeCredential[],
@@ -25,10 +25,10 @@ export function rewardAccountSummaries(
   return Method<Request, Response, RewardAccountSummaries>(
     {
       method: 'queryLedgerState/rewardAccountSummaries',
-      params,
+      params
     },
     {
-      handler(response, resolve, reject) {
+      handler (response, resolve, reject) {
         if (isQueryLedgerStateRewardAccountSummaries(response)) {
           resolve(response.result.rewardAccountSummaries)
         } else {
@@ -43,6 +43,6 @@ export function rewardAccountSummaries(
 /**
  * @internal
  */
-export function isQueryLedgerStateRewardAccountSummaries(response: any): response is Success {
+export function isQueryLedgerStateRewardAccountSummaries (response: any): response is Success {
   return typeof (response as Success)?.result?.rewardAccountSummaries !== 'undefined'
 }

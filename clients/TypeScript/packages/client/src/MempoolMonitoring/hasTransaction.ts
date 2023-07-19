@@ -9,7 +9,7 @@ import {
  *
  * @category MempoolMonitoring
  */
-export function hasTransaction(context: InteractionContext, id: TransactionId) {
+export function hasTransaction (context: InteractionContext, id: TransactionId) {
   return Method<Ogmios['HasTransaction'], Ogmios['HasTransactionResponse'], boolean>(
     {
       method: 'hasTransaction',
@@ -23,10 +23,10 @@ export function hasTransaction(context: InteractionContext, id: TransactionId) {
 /**
  * @internal
  */
-export function handler(
+export function handler (
   response: Ogmios['HasTransactionResponse'],
   resolve: (value?: boolean) => void,
-  reject: (reason?: any) => void,
+  reject: (reason?: any) => void
 ) {
   if (isHasTransactionResponse(response)) {
     resolve(response.result.hasTransaction)
@@ -38,6 +38,6 @@ export function handler(
 /**
  * @internal
  */
-export function isHasTransactionResponse(response: any): response is Ogmios['HasTransactionResponse'] {
+export function isHasTransactionResponse (response: any): response is Ogmios['HasTransactionResponse'] {
   return typeof (response as Ogmios['HasTransactionResponse'])?.result?.hasTransaction === 'boolean'
 }

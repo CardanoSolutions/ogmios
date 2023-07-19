@@ -3,8 +3,14 @@ import {
   EvaluateTransactionFailureCannotCreateEvaluationContext,
   EvaluateTransactionFailureIncompatibleEra,
   EvaluateTransactionFailureNodeTipTooOld,
-  EvaluateTransactionFailureScriptExecutionFailure,
+  EvaluateTransactionFailureScriptExecutionFailure
 } from '@cardano-ogmios/schema'
+
+export type CannotCreateEvaluationContext = EvaluateTransactionFailureCannotCreateEvaluationContext
+export type IncompatibleEra = EvaluateTransactionFailureIncompatibleEra
+export type NodeTipTooOld = EvaluateTransactionFailureNodeTipTooOld
+export type OverlappingAdditionalUtxo = EvaluateTransactionFailureOverlappingAdditionalUtxo
+export type ScriptExecutionFailure = EvaluateTransactionFailureScriptExecutionFailure
 
 export type EvaluateTransactionError =
   | CannotCreateEvaluationContext
@@ -12,9 +18,3 @@ export type EvaluateTransactionError =
   | NodeTipTooOld
   | OverlappingAdditionalUtxo
   | ScriptExecutionFailure
-
-export type CannotCreateEvaluationContext = EvaluateTransactionFailureCannotCreateEvaluationContext
-export type IncompatibleEra = EvaluateTransactionFailureIncompatibleEra
-export type NodeTipTooOld = EvaluateTransactionFailureNodeTipTooOld
-export type OverlappingAdditionalUtxo = EvaluateTransactionFailureOverlappingAdditionalUtxo
-export type ScriptExecutionFailure = EvaluateTransactionFailureScriptExecutionFailure

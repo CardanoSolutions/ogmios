@@ -9,13 +9,13 @@ type Response = Ogmios['QueryNetworkTipResponse']
  *
  * @category LedgerStateQuery
  */
-export function networkTip(context: InteractionContext): Promise<Point | Origin> {
+export function networkTip (context: InteractionContext): Promise<Point | Origin> {
   return Method<Request, Response, Point | Origin>(
     {
-      method: 'queryNetwork/tip',
+      method: 'queryNetwork/tip'
     },
     {
-      handler(response, resolve, reject) {
+      handler (response, resolve, reject) {
         if (isQueryNetworkTipResponse(response)) {
           resolve(response.result.tip)
         } else {
@@ -23,13 +23,13 @@ export function networkTip(context: InteractionContext): Promise<Point | Origin>
         }
       }
     },
-    context,
+    context
   )
 }
 
 /**
  * @internal
  */
-export function isQueryNetworkTipResponse(response: any): response is Response {
+export function isQueryNetworkTipResponse (response: any): response is Response {
   return typeof (response as Response)?.result?.tip !== 'undefined'
 }

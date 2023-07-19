@@ -4,7 +4,7 @@ import { safeJSON } from '../util'
 import { WebSocket } from '../IsomorphicWebSocket'
 
 /** @category ChainSynchronization */
-export function nextBlock(
+export function nextBlock (
   socket: WebSocket,
   options?: { id?: Mirror }
 ): void {

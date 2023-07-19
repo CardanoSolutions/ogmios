@@ -3,7 +3,7 @@ import { InteractionContext, Method } from '../Connection'
 import {
   Ogmios,
   Transaction,
-  TransactionId,
+  TransactionId
 } from '@cardano-ogmios/schema'
 
 /**
@@ -13,11 +13,11 @@ import {
  */
 export function nextTransaction(context: InteractionContext, params: { fields: 'all' }) : Promise<Transaction | null>
 export function nextTransaction(context: InteractionContext) : Promise<TransactionId | null>
-export function nextTransaction(context: InteractionContext, params?: { fields: 'all' }) : Promise<Transaction | TransactionId | null> {
+export function nextTransaction (context: InteractionContext, params?: { fields: 'all' }) : Promise<Transaction | TransactionId | null> {
   return Method<Ogmios['NextTransaction'], Ogmios['NextTransactionResponse'], Transaction | TransactionId | null>(
     {
       method: 'nextTransaction',
-      params,
+      params
     },
     { handler: (response, resolve, reject) => handler(response, resolve, reject, params) },
     context
@@ -27,11 +27,11 @@ export function nextTransaction(context: InteractionContext, params?: { fields: 
 /**
  * @internal
  */
-export function handler(
+export function handler (
   response: Ogmios['NextTransactionResponse'],
   resolve: (value?: Transaction | TransactionId | null) => void,
   reject: (reason?: any) => void,
-  params?: { fields: 'all' },
+  params?: { fields: 'all' }
 ) : void {
   if (isNextTransactionResponse(response)) {
     if (response.result.transaction === null) {
@@ -49,6 +49,6 @@ export function handler(
 /**
  * @internal
  */
-export function isNextTransactionResponse(response: any): response is Ogmios['NextTransactionResponse'] {
+export function isNextTransactionResponse (response: any): response is Ogmios['NextTransactionResponse'] {
   return typeof (response as Ogmios['NextTransactionResponse'])?.result?.transaction !== 'undefined'
 }

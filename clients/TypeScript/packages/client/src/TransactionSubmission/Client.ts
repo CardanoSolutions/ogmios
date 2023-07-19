@@ -24,14 +24,14 @@ export interface TransactionSubmissionClient {
 /** @Internal */
 const METHODS = {
   SUBMIT: 'SubmitTransaction',
-  EVALUATE: 'EvaluateTransaction',
+  EVALUATE: 'EvaluateTransaction'
 }
 
 /** @Internal */
 const matchSubmitTransaction = (data: string) => {
   const json = safeJSON.parse(data) as Ogmios['SubmitTransactionResponse']
 
-  if (typeof json.id !== "object" || json.id === null) {
+  if (typeof json.id !== 'object' || json.id === null) {
     return null
   }
 
@@ -48,7 +48,7 @@ const matchSubmitTransaction = (data: string) => {
 const matchEvaluateTransaction = (data: string) => {
   const json = safeJSON.parse(data) as Ogmios['EvaluateTransactionResponse']
 
-  if (typeof json.id !== "object" || json.id === null) {
+  if (typeof json.id !== 'object' || json.id === null) {
     return null
   }
 
@@ -88,7 +88,7 @@ export const createTransactionSubmissionClient = async (
           method,
           params: {
             ...(additionalUtxoSet !== undefined ? { additionalUtxoSet } : {}),
-            transaction,
+            transaction
           },
           id: { method }
         } as unknown as Ogmios['EvaluateTransaction']))

@@ -1,10 +1,11 @@
+/* eslint no-redeclare: "off" */
 import { InteractionContext, Method } from '../../Connection'
 import {
   Ogmios,
   GenesisAlonzo,
   GenesisByron,
   GenesisShelley,
-  EraWithGenesis,
+  EraWithGenesis
 } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryNetworkGenesisConfiguration']
@@ -15,12 +16,12 @@ type Response = Ogmios['QueryNetworkGenesisConfigurationResponse']
  *
  * @category LedgerStateQuery
  */
-export function networkGenesisConfiguration(context: InteractionContext, era: "byron"): Promise<GenesisByron>
-export function networkGenesisConfiguration(context: InteractionContext, era: "shelley"): Promise<GenesisShelley>
-export function networkGenesisConfiguration(context: InteractionContext, era: "alonzo"): Promise<GenesisAlonzo>
-export function networkGenesisConfiguration(
+export function networkGenesisConfiguration(context: InteractionContext, era: 'byron'): Promise<GenesisByron>
+export function networkGenesisConfiguration(context: InteractionContext, era: 'shelley'): Promise<GenesisShelley>
+export function networkGenesisConfiguration(context: InteractionContext, era: 'alonzo'): Promise<GenesisAlonzo>
+export function networkGenesisConfiguration (
   context: InteractionContext,
-  era: EraWithGenesis,
+  era: EraWithGenesis
 ): Promise<GenesisByron | GenesisShelley | GenesisAlonzo> {
   return Method<Request, Response, GenesisByron | GenesisShelley | GenesisAlonzo>(
     {
@@ -28,7 +29,7 @@ export function networkGenesisConfiguration(
       params: { era }
     },
     {
-      handler(response, resolve, reject) {
+      handler (response, resolve, reject) {
         if (era === 'byron' && isQueryNetworkGenesisConfigurationByron(response)) {
           resolve((response.result.genesisConfiguration as { 'byron': GenesisByron }).byron)
         } else if (era === 'shelley' && isQueryNetworkGenesisConfigurationShelley(response)) {
@@ -46,7 +47,7 @@ export function networkGenesisConfiguration(
 /**
  * @internal
  */
-export function isQueryNetworkGenesisConfigurationByron(response: any): response is GenesisByron {
+export function isQueryNetworkGenesisConfigurationByron (response: any): response is GenesisByron {
   const genesisConfiguration = (response as Response)?.result?.genesisConfiguration
   return 'byron' in genesisConfiguration
 }
@@ -54,7 +55,7 @@ export function isQueryNetworkGenesisConfigurationByron(response: any): response
 /**
  * @internal
  */
-export function isQueryNetworkGenesisConfigurationShelley(response: any): response is GenesisShelley {
+export function isQueryNetworkGenesisConfigurationShelley (response: any): response is GenesisShelley {
   const genesisConfiguration = (response as Response)?.result?.genesisConfiguration
   return 'shelley' in genesisConfiguration
 }
@@ -62,7 +63,7 @@ export function isQueryNetworkGenesisConfigurationShelley(response: any): respon
 /**
  * @internal
  */
-export function isQueryNetworkGenesisConfigurationAlonzo(response: any): response is GenesisAlonzo {
+export function isQueryNetworkGenesisConfigurationAlonzo (response: any): response is GenesisAlonzo {
   const genesisConfiguration = (response as Response)?.result?.genesisConfiguration
   return 'alonzo' in genesisConfiguration
 }

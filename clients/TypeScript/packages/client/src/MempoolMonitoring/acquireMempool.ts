@@ -1,7 +1,7 @@
 import { InteractionContext, Method } from '../Connection'
 import {
   Ogmios,
-  Slot,
+  Slot
 } from '@cardano-ogmios/schema'
 
 /**
@@ -9,11 +9,11 @@ import {
  *
  * @category MempoolMonitoringing
  */
-export function acquireMempool(context: InteractionContext, params?: {}) {
+export function acquireMempool (context: InteractionContext, params?: {}) {
   return Method<Ogmios['AcquireMempool'], Ogmios['AcquireMempoolResponse'], Slot>(
     {
       method: 'acquireMempool',
-      params,
+      params
     },
     { handler },
     context
@@ -23,10 +23,10 @@ export function acquireMempool(context: InteractionContext, params?: {}) {
 /**
  * @internal
  */
-export function handler(
+export function handler (
   response: Ogmios['AcquireMempoolResponse'],
   resolve: (value?: Slot) => void,
-  reject: (reason?: any) => void,
+  reject: (reason?: any) => void
 ) {
   if (isAcquireMempoolResponse(response)) {
     resolve(response.result.slot)
@@ -38,6 +38,6 @@ export function handler(
 /**
  * @internal
  */
-export function isAcquireMempoolResponse(response: any): response is Ogmios['AcquireMempoolResponse'] {
+export function isAcquireMempoolResponse (response: any): response is Ogmios['AcquireMempoolResponse'] {
   return (response as Ogmios['AcquireMempoolResponse'])?.result?.acquired === 'mempool'
 }

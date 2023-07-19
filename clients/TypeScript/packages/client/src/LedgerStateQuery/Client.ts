@@ -4,7 +4,6 @@ import {
   networkGenesisConfiguration,
   networkStartTime,
   networkTip,
-
   epoch,
   eraStart,
   eraSummaries,
@@ -16,7 +15,7 @@ import {
   rewardsProvenance,
   stakePools,
   tip,
-  utxo,
+  utxo
 } from './query'
 import {
   Ogmios,
@@ -30,9 +29,8 @@ import {
   Point,
   StakeCredential,
   UtxoByAddresses,
-  UtxoByOutputReferences,
+  UtxoByOutputReferences
 } from '@cardano-ogmios/schema'
-
 
 /**
  * A State Query client.
@@ -78,7 +76,7 @@ export interface LedgerStateQueryClient {
  *
  * @category Constructor
  */
-export async function createLedgerStateQueryClient(
+export async function createLedgerStateQueryClient (
   context: InteractionContext,
   options?: { point?: Point | Origin }
 ): Promise<LedgerStateQueryClient> {
@@ -107,7 +105,7 @@ export async function createLedgerStateQueryClient(
     async releaseLedgerState () : Promise<void> {
       return Method<Ogmios['ReleaseLedgerState'], Ogmios['ReleaseLedgerStateResponse'], void>(
         {
-          method: 'releaseLedgerState',
+          method: 'releaseLedgerState'
         },
         {
           handler: (response, resolve, reject) => {
@@ -116,76 +114,77 @@ export async function createLedgerStateQueryClient(
             } else {
               reject(response)
             }
-          },
+          }
         },
         context
       )
     },
 
-    networkBlockHeight() {
+    networkBlockHeight () {
       return networkBlockHeight(context)
     },
-    networkGenesisConfiguration(era: EraWithGenesis) {
-      switch(era) {
-        case "byron":
+    networkGenesisConfiguration (era: EraWithGenesis) {
+      switch (era) {
+        case 'byron':
           return networkGenesisConfiguration(context, era)
-        case "shelley":
+        case 'shelley':
           return networkGenesisConfiguration(context, era)
-        case "alonzo":
+        case 'alonzo':
           return networkGenesisConfiguration(context, era)
-        default:
+        default: {
           // NOTE: This raises "Type 'string' is not assignable to type 'never'."
           // whenever a branch of 'EraWithGenesis' isn't covered in the above
           // switch case. This forces TypeScript to do an exhaustive check.
           const _era: never = era
           return networkGenesisConfiguration(context, _era)
+        }
       }
     },
-    networkStartTime() {
+    networkStartTime () {
       return networkStartTime(context)
     },
-    networkTip() {
+    networkTip () {
       return networkTip(context)
     },
 
-    epoch() {
+    epoch () {
       return epoch(context)
     },
-    eraStart() {
+    eraStart () {
       return eraStart(context)
     },
-    eraSummaries() {
+    eraSummaries () {
       return eraSummaries(context)
     },
-    liveStakeDistribution() {
+    liveStakeDistribution () {
       return liveStakeDistribution(context)
     },
-    projectedRewards(filter) {
+    projectedRewards (filter) {
       return projectedRewards(context, filter)
     },
-    proposedProtocolParameters() {
+    proposedProtocolParameters () {
       return proposedProtocolParameters(context)
     },
-    protocolParameters() {
+    protocolParameters () {
       return protocolParameters(context)
     },
-    rewardAccountSummaries(filter) {
+    rewardAccountSummaries (filter) {
       return rewardAccountSummaries(context, filter)
     },
-    rewardsProvenance() {
+    rewardsProvenance () {
       return rewardsProvenance(context)
     },
-    stakePools() {
+    stakePools () {
       return stakePools(context)
     },
-    tip() {
+    tip () {
       return tip(context)
     },
-    utxo(filter) {
+    utxo (filter) {
       return utxo(context, filter)
     },
 
-    shutdown() {
+    shutdown () {
       return new Promise(resolve => {
         ensureSocketIsOpen(socket)
         socket.once('close', resolve)
@@ -208,13 +207,13 @@ export async function createLedgerStateQueryClient(
 /**
  * @internal
  */
-export function isAcquireLedgerStateSuccess(response: any): response is AcquireLedgerStateSuccess {
+export function isAcquireLedgerStateSuccess (response: any): response is AcquireLedgerStateSuccess {
   return (response as AcquireLedgerStateSuccess)?.result?.acquired === 'ledgerState'
 }
 
 /**
  * @internal
  */
-export function isReleaseLedgerStateResponse(response: any): response is Ogmios['ReleaseLedgerStateResponse'] {
+export function isReleaseLedgerStateResponse (response: any): response is Ogmios['ReleaseLedgerStateResponse'] {
   return (response as Ogmios['ReleaseLedgerStateResponse'])?.result?.released === 'ledgerState'
 }

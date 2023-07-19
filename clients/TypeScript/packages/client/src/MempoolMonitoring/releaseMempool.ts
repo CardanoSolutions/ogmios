@@ -8,11 +8,11 @@ import {
  *
  * @category MempoolMonitoring
  */
-export function releaseMempool(context: InteractionContext, params?: {}) {
+export function releaseMempool (context: InteractionContext, params?: {}) {
   return Method<Ogmios['ReleaseMempool'], Ogmios['ReleaseMempoolResponse'], void>(
     {
       method: 'releaseMempool',
-      params,
+      params
     },
     { handler },
     context
@@ -22,10 +22,10 @@ export function releaseMempool(context: InteractionContext, params?: {}) {
 /**
  * @internal
  */
-export function handler(
+export function handler (
   response: Ogmios['ReleaseMempoolResponse'],
   resolve: (value?: void) => void,
-  reject: (reason?: any) => void,
+  reject: (reason?: any) => void
 ) {
   if (isReleaseMempoolResponse(response)) {
     resolve()
@@ -37,6 +37,6 @@ export function handler(
 /**
  * @internal
  */
-export function isReleaseMempoolResponse(response: any): response is Ogmios['ReleaseMempoolResponse'] {
+export function isReleaseMempoolResponse (response: any): response is Ogmios['ReleaseMempoolResponse'] {
   return (response as Ogmios['ReleaseMempoolResponse'])?.result?.released === 'mempool'
 }

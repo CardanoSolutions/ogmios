@@ -9,13 +9,13 @@ type Response = Ogmios['QueryNetworkBlockHeightResponse']
  *
  * @category LedgerStateQuery
  */
-export function networkBlockHeight(context: InteractionContext): Promise<BlockHeight | Origin> {
+export function networkBlockHeight (context: InteractionContext): Promise<BlockHeight | Origin> {
   return Method<Request, Response, BlockHeight | Origin>(
     {
-      method: 'queryNetwork/blockHeight',
+      method: 'queryNetwork/blockHeight'
     },
     {
-      handler(response, resolve, reject) {
+      handler (response, resolve, reject) {
         if (isQueryNetworkBlockHeightResponse(response)) {
           resolve(response.result.blockHeight)
         } else {
@@ -23,13 +23,13 @@ export function networkBlockHeight(context: InteractionContext): Promise<BlockHe
         }
       }
     },
-    context,
+    context
   )
 }
 
 /**
  * @internal
  */
-export function isQueryNetworkBlockHeightResponse(response: any): response is Response {
+export function isQueryNetworkBlockHeightResponse (response: any): response is Response {
   return typeof (response as Response)?.result?.blockHeight !== 'undefined'
 }

@@ -36,13 +36,13 @@ export interface EvaluationResult {
  *
  * @category TransactionSubmission
  */
-export function evaluateTransaction(context: InteractionContext, transaction: string, additionalUtxoSet?: Utxo) {
+export function evaluateTransaction (context: InteractionContext, transaction: string, additionalUtxoSet?: Utxo) {
   return Method<Request, Response, EvaluationResult>(
     {
       method: 'evaluateTransaction',
       params: {
         ...(additionalUtxoSet !== undefined ? { additionalUtxoSet } : {}),
-        transaction,
+        transaction
       }
     },
     { handler },
@@ -51,7 +51,7 @@ export function evaluateTransaction(context: InteractionContext, transaction: st
 }
 
 /** @Internal */
-export function handler(
+export function handler (
   response: Response,
   resolve: (value?: EvaluationResult) => void,
   reject: (reason?: any) => void
@@ -64,6 +64,6 @@ export function handler(
 }
 
 /** @Internal */
-export function isEvaluateTransactionSuccess(response: any): response is Success {
+export function isEvaluateTransactionSuccess (response: any): response is Success {
   return typeof (response as Success)?.result?.budgets !== 'undefined'
 }

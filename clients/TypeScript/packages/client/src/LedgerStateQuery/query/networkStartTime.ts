@@ -9,13 +9,13 @@ type Response = Ogmios['QueryNetworkStartTimeResponse']
  *
  * @category LedgerStateQuery
  */
-export function networkStartTime(context: InteractionContext): Promise<Date> {
+export function networkStartTime (context: InteractionContext): Promise<Date> {
   return Method <Request, Response, Date>(
     {
-      method: 'queryNetwork/startTime',
+      method: 'queryNetwork/startTime'
     },
     {
-      handler(response, resolve, reject) {
+      handler (response, resolve, reject) {
         if (isQueryNetworkStartTimeResponse(response)) {
           resolve(new Date(response.result.startTime))
         } else {
@@ -29,6 +29,6 @@ export function networkStartTime(context: InteractionContext): Promise<Date> {
 /**
  * @internal
  */
-export function isQueryNetworkStartTimeResponse(response: any): response is Response {
+export function isQueryNetworkStartTimeResponse (response: any): response is Response {
   return typeof (response as Response)?.result?.startTime !== 'undefined'
 }

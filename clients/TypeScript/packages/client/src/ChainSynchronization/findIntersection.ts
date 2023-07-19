@@ -4,14 +4,14 @@ import {
   Ogmios,
   Origin,
   Point,
-  Tip,
+  Tip
 } from '@cardano-ogmios/schema'
 
 /** @category ChainSynchronization */
 export type Intersection = { intersection: Point | Origin, tip: Tip | Origin }
 
 /** @category ChainSynchronization */
-export function findIntersection(
+export function findIntersection (
   context: InteractionContext,
   points: (Point | Origin)[]
 ): Promise<Intersection> {
@@ -36,6 +36,6 @@ export function findIntersection(
 }
 
 /** @internal */
-export function isIntersectionFound(response: any): response is IntersectionFound {
+export function isIntersectionFound (response: any): response is IntersectionFound {
   return (response as IntersectionFound)?.result?.intersection !== undefined
 }

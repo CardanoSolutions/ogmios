@@ -14,13 +14,13 @@ type Success = QueryLedgerStateStakePoolsResponse
  *
  * @category LedgerStateQuery
  */
-export function stakePools(context: InteractionContext): Promise<{ 'id': StakePoolId }[]> {
+export function stakePools (context: InteractionContext): Promise<{ 'id': StakePoolId }[]> {
   return Method<Request, Response, { 'id': StakePoolId }[]>(
     {
-      method: 'queryLedgerState/stakePools',
+      method: 'queryLedgerState/stakePools'
     },
     {
-      handler(response, resolve, reject) {
+      handler (response, resolve, reject) {
         if (isQueryLedgerStateStakePools(response)) {
           resolve(response.result.stakePools)
         } else {
@@ -35,6 +35,6 @@ export function stakePools(context: InteractionContext): Promise<{ 'id': StakePo
 /**
  * @internal
  */
-export function isQueryLedgerStateStakePools(response: any): response is Success {
+export function isQueryLedgerStateStakePools (response: any): response is Success {
   return typeof (response as Success)?.result?.stakePools !== 'undefined'
 }

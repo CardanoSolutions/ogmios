@@ -45,7 +45,7 @@ export interface ChainSynchronizationMessageHandlers {
 }
 
 /** @category Constructor */
-export async function createChainSynchronizationClient(
+export async function createChainSynchronizationClient (
   context: InteractionContext,
   messageHandlers: ChainSynchronizationMessageHandlers,
   options?: { sequential?: boolean }
@@ -53,14 +53,14 @@ export async function createChainSynchronizationClient(
   const { socket } = context
   return new Promise((resolve) => {
     const messageHandler = async (response: Ogmios['NextBlockResponse']) => {
-      if (response.result.direction === "backward") {
+      if (response.result.direction === 'backward') {
         await messageHandlers.rollBackward({
           point: response.result.point,
           tip: response.result.tip
         }, () =>
           nextBlock(socket)
         )
-      } else if (response.result.direction === "forward") {
+      } else if (response.result.direction === 'forward') {
         await messageHandlers.rollForward({
           block: response.result.block,
           tip: response.result.tip
@@ -114,7 +114,7 @@ export class TipIsOriginError extends CustomError {
 }
 
 /** @internal */
-export async function createPointFromCurrentTip(context?: InteractionContext): Promise<Point> {
+export async function createPointFromCurrentTip (context?: InteractionContext): Promise<Point> {
   const { tip } = await findIntersection(context, ['origin'])
   if (tip === 'origin') {
     throw new TipIsOriginError()

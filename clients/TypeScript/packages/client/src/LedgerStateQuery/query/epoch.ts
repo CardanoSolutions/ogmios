@@ -14,13 +14,13 @@ type Success = QueryLedgerStateEpochResponse
  *
  * @category LedgerStateQuery
  */
-export function epoch(context: InteractionContext): Promise<Epoch> {
+export function epoch (context: InteractionContext): Promise<Epoch> {
   return Method<Request, Response, Epoch>(
     {
-      method: 'queryLedgerState/epoch',
+      method: 'queryLedgerState/epoch'
     },
     {
-      handler(response, resolve, reject) {
+      handler (response, resolve, reject) {
         if (isQueryLedgerStateEpoch(response)) {
           resolve(response.result.epoch)
         } else {
@@ -35,6 +35,6 @@ export function epoch(context: InteractionContext): Promise<Epoch> {
 /**
  * @internal
  */
-export function isQueryLedgerStateEpoch(response: any): response is Success {
+export function isQueryLedgerStateEpoch (response: any): response is Success {
   return typeof (response as Success)?.result?.epoch !== 'undefined'
 }

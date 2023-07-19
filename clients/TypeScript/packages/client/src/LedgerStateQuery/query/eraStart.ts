@@ -2,7 +2,7 @@ import { InteractionContext, Method } from '../../Connection'
 import {
   Ogmios,
   Bound,
-  QueryLedgerStateEraStartResponse,
+  QueryLedgerStateEraStartResponse
 } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateEraStart']
@@ -14,13 +14,13 @@ type Success = QueryLedgerStateEraStartResponse
  *
  * @category LedgerStateQuery
  */
-export function eraStart(context: InteractionContext): Promise<Bound> {
+export function eraStart (context: InteractionContext): Promise<Bound> {
   return Method<Request, Response, Bound>(
     {
       method: 'queryLedgerState/eraStart'
     },
     {
-      handler(response, resolve, reject) {
+      handler (response, resolve, reject) {
         if (isQueryLedgerStateEraStart(response)) {
           resolve(response.result.eraStart)
         } else {
@@ -35,6 +35,6 @@ export function eraStart(context: InteractionContext): Promise<Bound> {
 /**
  * @internal
  */
-export function isQueryLedgerStateEraStart(response: any): response is Success {
+export function isQueryLedgerStateEraStart (response: any): response is Success {
   return typeof (response as Success)?.result?.eraStart !== 'undefined'
 }

@@ -2,7 +2,7 @@ import { InteractionContext, Method } from '../../Connection'
 import {
   Ogmios,
   RewardsProvenance,
-  QueryLedgerStateRewardsProvenanceResponse,
+  QueryLedgerStateRewardsProvenanceResponse
 } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateRewardsProvenance']
@@ -14,13 +14,13 @@ type Success = QueryLedgerStateRewardsProvenanceResponse
  *
  * @category LedgerStateQuery
  */
-export function rewardsProvenance(context: InteractionContext): Promise<RewardsProvenance> {
+export function rewardsProvenance (context: InteractionContext): Promise<RewardsProvenance> {
   return Method<Request, Response, RewardsProvenance>(
     {
-      method: 'queryLedgerState/rewardsProvenance',
+      method: 'queryLedgerState/rewardsProvenance'
     },
     {
-      handler(response, resolve, reject) {
+      handler (response, resolve, reject) {
         if (isQueryLedgerStateRewardsProvenance(response)) {
           resolve(response.result.rewardsProvenance)
         } else {
@@ -35,6 +35,6 @@ export function rewardsProvenance(context: InteractionContext): Promise<RewardsP
 /**
  * @internal
  */
-export function isQueryLedgerStateRewardsProvenance(response: any): response is Success {
+export function isQueryLedgerStateRewardsProvenance (response: any): response is Success {
   return typeof (response as Success)?.result?.rewardsProvenance !== 'undefined'
 }

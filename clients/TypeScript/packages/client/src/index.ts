@@ -15,4 +15,3 @@ export * as MempoolMonitoring from './MempoolMonitoring'
 
 // export { createStateQueryClient, EraWithGenesis, GenesisConfig } from './StateQuery'
 // export * as StateQuery from './StateQuery'
-

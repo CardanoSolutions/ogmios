@@ -4,7 +4,7 @@ import {
   Lovelace,
   ProjectedRewards,
   QueryLedgerStateProjectedRewardsResponse,
-  StakeCredential,
+  StakeCredential
 } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateProjectedRewards']
@@ -18,17 +18,17 @@ type Success = QueryLedgerStateProjectedRewardsResponse
  *
  * @category LedgerStateQuery
  */
-export function projectedRewards(
+export function projectedRewards (
   context: InteractionContext,
   params?: { stake?: Lovelace[], scripts?: StakeCredential[], keys?: StakeCredential[] }
 ): Promise<ProjectedRewards> {
   return Method<Request, Response, ProjectedRewards>(
     {
       method: 'queryLedgerState/projectedRewards',
-      params,
+      params
     },
     {
-      handler(response, resolve, reject) {
+      handler (response, resolve, reject) {
         if (isQueryLedgerStateProjectedRewards(response)) {
           resolve(response.result.projectedRewards)
         } else {
@@ -43,6 +43,6 @@ export function projectedRewards(
 /**
  * @internal
  */
-export function isQueryLedgerStateProjectedRewards(response: any): response is Success {
+export function isQueryLedgerStateProjectedRewards (response: any): response is Success {
   return typeof (response as Success)?.result?.projectedRewards !== 'undefined'
 }

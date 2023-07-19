@@ -4,7 +4,7 @@ import {
   QueryLedgerStateUtxoResponse,
   Utxo,
   UtxoByAddresses,
-  UtxoByOutputReferences,
+  UtxoByOutputReferences
 } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateUtxo']
@@ -18,17 +18,17 @@ type Success = QueryLedgerStateUtxoResponse
  *
  * @category LedgerStateQuery
  */
-export function utxo(
+export function utxo (
   context: InteractionContext,
-  params?: UtxoByOutputReferences | UtxoByAddresses,
+  params?: UtxoByOutputReferences | UtxoByAddresses
 ): Promise<Utxo> {
   return Method<Request, Response, Utxo>(
     {
       method: 'queryLedgerState/utxo',
-      params,
+      params
     },
     {
-      handler(response, resolve, reject) {
+      handler (response, resolve, reject) {
         if (isQueryLedgerStateUtxo(response)) {
           resolve(response.result.utxo)
         } else {
@@ -43,6 +43,6 @@ export function utxo(
 /**
  * @internal
  */
-export function isQueryLedgerStateUtxo(response: any): response is Success {
+export function isQueryLedgerStateUtxo (response: any): response is Success {
   return typeof (response as Success)?.result?.utxo !== 'undefined'
 }

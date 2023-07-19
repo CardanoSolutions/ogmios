@@ -1,6 +1,6 @@
 import {
   InteractionContext,
-  Method,
+  Method
 } from '../../Connection'
 import {
   Ogmios,
@@ -18,7 +18,7 @@ type Success = SubmitTransactionSuccess
  *
  * @category TransactionSubmission
  */
-export function submitTransaction(context: InteractionContext, transaction: string) {
+export function submitTransaction (context: InteractionContext, transaction: string) {
   return Method<Request, Response, TransactionId>(
     {
       method: 'submitTransaction',
@@ -30,7 +30,7 @@ export function submitTransaction(context: InteractionContext, transaction: stri
 }
 
 /** @Internal */
-export function handler(
+export function handler (
   response: Response,
   resolve: (value?: TransactionId) => void,
   reject: (reason?: any) => void
@@ -43,6 +43,6 @@ export function handler(
 }
 
 /** @Internal */
-export function isSubmitTransactionSuccess(response: any): response is Success {
+export function isSubmitTransactionSuccess (response: any): response is Success {
   return typeof (response as Success)?.result?.transaction?.id !== 'undefined'
 }

@@ -84,7 +84,7 @@ describe('TxSubmission', () => {
     afterAll(() => context.socket.close())
 
     const methods = [
-      async (payload: string, additionalUtxoSet?: Utxo) => await TxSubmission.evaluateTx(context, payload, additionalUtxoSet),
+      async (payload: string, additionalUtxoSet?: Utxo) => await TxSubmission.evaluateTx(context, payload, additionalUtxoSet)
       // async (payload: string, additionalUtxoSet?: Utxo) => {
       //   const client = await createTxSubmissionClient(context)
       //   return await client.evaluateTx(payload, additionalUtxoSet)
@@ -94,9 +94,9 @@ describe('TxSubmission', () => {
     methods.forEach(evaluate => {
       it('successfully evaluates execution units of well-formed tx', async () => {
         const result = await evaluate(
-          ('84A300818258204E9A66B7E310F004893EEF615E11F8AE6C3328CF2BFDB3'+
-           '2F6E40063636D42D7C00018182581D70C40F9129C2684046EB02325B96CA'+
-           '2899A6FA6478C1DDE9B5C53206A51A00D59F800200A10581840000D8799F'+
+          ('84A300818258204E9A66B7E310F004893EEF615E11F8AE6C3328CF2BFDB3' +
+           '2F6E40063636D42D7C00018182581D70C40F9129C2684046EB02325B96CA' +
+           '2899A6FA6478C1DDE9B5C53206A51A00D59F800200A10581840000D8799F' +
            '4D48656C6C6F2C20576F726C6421FF820000F5F6'
           )
         )
@@ -104,7 +104,7 @@ describe('TxSubmission', () => {
         expect(result).toEqual({
           'spend:0': {
             memory: 15694,
-            steps: 5134808,
+            steps: 5134808
           }
         })
       })
@@ -112,9 +112,9 @@ describe('TxSubmission', () => {
       it('fails to evaluate execution units when tx contains unknown inputs', async () => {
         try {
           await evaluate(
-            ('84A30081825820FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'+
-             'FFFFFFFFFFFFFFFF7C00018182581D70C40F9129C2684046EB02325B96CA'+
-             '2899A6FA6478C1DDE9B5C53206A51A00D59F800200A10581840000D8799F'+
+            ('84A30081825820FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' +
+             'FFFFFFFFFFFFFFFF7C00018182581D70C40F9129C2684046EB02325B96CA' +
+             '2899A6FA6478C1DDE9B5C53206A51A00D59F800200A10581840000D8799F' +
              '4D48656C6C6F2C20576F726C6421FF820000F5F6'
             )
           )
@@ -126,9 +126,9 @@ describe('TxSubmission', () => {
 
       it('successfully evaluate execution units when unknown inputs are provided as additional utxo', async () => {
         const bytes = (
-          '84A30081825820FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'+
-          'FFFFFFFFFFFFFFFFFF00018182581D70C40F9129C2684046EB02325B96CA'+
-          '2899A6FA6478C1DDE9B5C53206A51A00D59F800200A10581840000D8799F'+
+          '84A30081825820FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' +
+          'FFFFFFFFFFFFFFFFFF00018182581D70C40F9129C2684046EB02325B96CA' +
+          '2899A6FA6478C1DDE9B5C53206A51A00D59F800200A10581840000D8799F' +
           '4D48656C6C6F2C20576F726C6421FF820000F5F6'
         )
 
@@ -143,7 +143,7 @@ describe('TxSubmission', () => {
              datum: 'd87980',
              script: {
                'plutus:v2': '59010601000032323232323232323232322223253330083371e6eb8cc014c01c00520004890d48656c6c6f2c20576f726c642100149858cc020c94ccc020cdc3a400000226464a66601e60220042930a99806249334c6973742f5475706c652f436f6e73747220636f6e7461696e73206d6f7265206974656d73207468616e2065787065637465640016375c601e002600e0062a660149212b436f6e73747220696e64657820646964206e6f74206d6174636820616e7920747970652076617269616e740016300a37540040046600200290001111199980319b8700100300c233330050053370000890011807000801001118031baa0015734ae6d5ce2ab9d5573caae7d5d0aba201'
-             },
+             }
            } as TxOut
           ]
         ] as Utxo
@@ -167,9 +167,9 @@ describe('TxSubmission', () => {
       it('fails to evaluate execution units when there are script failures', async () => {
         try {
           await evaluate(
-            ('84A300818258204E9A66B7E310F004893EEF615E11F8AE6C3328CF2BFDB3'+
-             '2F6E40063636D42D7C00018182581D70C40F9129C2684046EB02325B96CA'+
-             '2899A6FA6478C1DDE9B5C53206A51A00D59F800200A10581840000D8799F'+
+            ('84A300818258204E9A66B7E310F004893EEF615E11F8AE6C3328CF2BFDB3' +
+             '2F6E40063636D42D7C00018182581D70C40F9129C2684046EB02325B96CA' +
+             '2899A6FA6478C1DDE9B5C53206A51A00D59F800200A10581840000D8799F' +
              '43466F6FFF820000F5F6'
             )
           )

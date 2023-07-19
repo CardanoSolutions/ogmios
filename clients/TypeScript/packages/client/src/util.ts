@@ -25,7 +25,7 @@ import {
   StartsAt,
   TransactionOutput,
   UInt64,
-  Value,
+  Value
 } from '@cardano-ogmios/schema'
 import { EventEmitter } from 'events'
 
@@ -223,44 +223,44 @@ export function unsafeMetadatumAsJSON (metadatum: Metadatum): any {
   return fromMetadatum(metadatum)
 }
 
-const BYRON_ERA: Era = "byron"
+const BYRON_ERA: Era = 'byron'
 
 /** @internal */
-export function isObject($: any): $ is Object {
+export function isObject ($: any): $ is Object {
   return typeof $ === 'object' && $ !== null
 }
 
 /** @category Helper */
-export function isBlockEBB(block: Block): block is BlockEBB {
-  return block.era === BYRON_ERA && typeof (block as any).issuer === "undefined"
+export function isBlockEBB (block: Block): block is BlockEBB {
+  return block.era === BYRON_ERA && typeof (block as any).issuer === 'undefined'
 }
 
 /** @category Helper */
-export function isBlockBFT(block: Block): block is BlockBFT {
-  return block.era === BYRON_ERA && typeof (block as any).issuer !== "undefined"
+export function isBlockBFT (block: Block): block is BlockBFT {
+  return block.era === BYRON_ERA && typeof (block as any).issuer !== 'undefined'
 }
 
 /** @category Helper */
-export function isBlockPraos(block: Block): block is BlockPraos {
+export function isBlockPraos (block: Block): block is BlockPraos {
   return block.era !== BYRON_ERA
 }
 
 /** @category Helper */
-export function isShelleyProtocolParameters(
+export function isShelleyProtocolParameters (
   params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
 ): params is ProtocolParametersShelley {
   return isObject(params) && (params as ProtocolParametersShelley).minUtxoValue !== undefined
 }
 
 /** @category Helper */
-export function isAlonzoProtocolParameters(
+export function isAlonzoProtocolParameters (
   params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
 ): params is ProtocolParametersAlonzo {
   return isObject(params) && (params as ProtocolParametersAlonzo).coinsPerUtxoWord !== undefined
 }
 
 /** @category Helper */
-export function isBabbageProtocolParameters(
+export function isBabbageProtocolParameters (
   params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
 ): params is ProtocolParametersBabbage {
   return isObject(params) && (params as ProtocolParametersBabbage).coinsPerUtxoByte !== undefined

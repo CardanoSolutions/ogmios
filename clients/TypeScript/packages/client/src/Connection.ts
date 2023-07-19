@@ -219,5 +219,4 @@ export const Method = <
           params: req.params,
           id: { requestId }
         } as unknown as Request))
-
       }), context)

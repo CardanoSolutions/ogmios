@@ -32,7 +32,7 @@ export interface MempoolMonitoringClient {
 /**
 * @internal
 */
-function matchAny(data: string) {
+function matchAny (data: string) {
   const json = safeJSON.parse(data)
 
   const methods = [
@@ -43,7 +43,7 @@ function matchAny(data: string) {
     'releaseMempool'
   ]
 
-  if (typeof json.id === "object" && json.id !== null) {
+  if (typeof json.id === 'object' && json.id !== null) {
     if ('method' in json.id) {
       if (methods.includes(json.id.method)) {
         return json

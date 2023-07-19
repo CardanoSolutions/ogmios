@@ -14,13 +14,13 @@ type Success = QueryLedgerStateEraSummariesResponse
  *
  * @category LedgerStateQuery
  */
-export function eraSummaries(context: InteractionContext): Promise<EraSummary[]> {
+export function eraSummaries (context: InteractionContext): Promise<EraSummary[]> {
   return Method<Request, Response, EraSummary[]>(
     {
-      method: 'queryLedgerState/eraSummaries',
+      method: 'queryLedgerState/eraSummaries'
     },
     {
-      handler(response, resolve, reject) {
+      handler (response, resolve, reject) {
         if (isQueryLedgerStateEraSummaries(response)) {
           resolve(response.result.eraSummaries)
         } else {
@@ -35,6 +35,6 @@ export function eraSummaries(context: InteractionContext): Promise<EraSummary[]>
 /**
  * @internal
  */
-export function isQueryLedgerStateEraSummaries(response: any): response is Success {
+export function isQueryLedgerStateEraSummaries (response: any): response is Success {
   return typeof (response as Success)?.result?.eraSummaries !== 'undefined'
 }

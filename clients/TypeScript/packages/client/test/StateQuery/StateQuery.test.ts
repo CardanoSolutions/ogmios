@@ -240,7 +240,7 @@ describe('Local state queries', () => {
     })
     describe('utxo (by transaction id)', () => {
       it('fetches the UTxO for the given transaction id', async () => {
-        const utxoSet = await StateQuery.utxo(context, [{ 'txId': '7fe0c5c3f0225f9462ae34dce1663599d506fe47cda8b3667e4c0986631fca41', 'index': 0 }])
+        const utxoSet = await StateQuery.utxo(context, [{ txId: '7fe0c5c3f0225f9462ae34dce1663599d506fe47cda8b3667e4c0986631fca41', index: 0 }])
         expect(utxoSet[0]).toBeDefined()
       })
     })
