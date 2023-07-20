@@ -33,7 +33,6 @@ export interface Connection extends Required<ConnectionConfig> {
 export interface InteractionContext {
   connection: Connection
   socket: WebSocket
-  afterEach: (cb: () => void) => void
 }
 
 /**
@@ -118,7 +117,7 @@ export const createInteractionContext = async (
   closeHandler: WebSocketCloseHandler,
   options?: {
     connection?: ConnectionConfig
-    interactionType?: InteractionType,
+    maxEventListeners?: number,
   }): Promise<InteractionContext> => {
   const connection = createConnectionObject(options?.connection)
   const health = await getServerHealth({ connection })
@@ -128,20 +127,11 @@ export const createInteractionContext = async (
     }
     const socket = new WebSocket(connection.address.webSocket, { maxPayload: connection.maxPayload })
 
-    const closeOnCompletion = (options?.interactionType || 'LongRunning') === 'OneTime'
-    const afterEach = (cb: () => void) => {
-      if (closeOnCompletion) {
-        socket.once('close', cb)
-        socket.close()
-      } else {
-        cb()
-      }
-    }
-
     const onInitialError = (error: Error) => {
       socket.removeAllListeners()
       return reject(error)
     }
+    socket.setMaxListeners(options.maxEventListeners || 10)
     socket.on('error', onInitialError)
     socket.once('close', (_code: number, reason: string) => {
       socket.removeAllListeners()
@@ -154,7 +144,6 @@ export const createInteractionContext = async (
       resolve({
         connection,
         socket,
-        afterEach
       })
     })
   })
@@ -216,7 +205,7 @@ export const Method = <
             await res.handler(
               response,
               resolve,
-              reject
+              reject,
             )
           } catch (e) {
             return reject(e)
