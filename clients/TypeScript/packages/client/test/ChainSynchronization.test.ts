@@ -7,12 +7,12 @@ import {
 } from '../src/ChainSynchronization'
 import {
   InteractionContext,
-  JSONRPCError,
+  JSONRPCError
 } from '../src'
 import {
   Block,
   Point,
-  Origin,
+  Origin
 } from '@cardano-ogmios/schema'
 
 const randomMsUpTo = (max: number) => (Math.random() * (max - 5 + 1)) << 0
@@ -107,7 +107,7 @@ describe('ChainSynchronization', () => {
           hash: '0000000000000000000000000000000000000000000000000000000000000000'
         }])
         throw new Error('Should have thrown.')
-      } catch(e) {
+      } catch (e) {
         expect(e).toBeInstanceOf(JSONRPCError)
         expect(e.code).toBe(1000)
       }

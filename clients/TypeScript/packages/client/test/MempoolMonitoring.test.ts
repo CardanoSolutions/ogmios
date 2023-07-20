@@ -2,7 +2,7 @@ import {
   InteractionContext,
   JSONRPCError,
   MempoolMonitoring,
-  createMempoolMonitoringClient,
+  createMempoolMonitoringClient
 } from '../src'
 import { MempoolMonitoringClient } from '../src/MempoolMonitoring'
 import { dummyInteractionContext } from './helpers'

@@ -5,7 +5,7 @@ import {
   createTransactionSubmissionClient,
   InteractionContext,
   JSONRPCError,
-  TransactionSubmission,
+  TransactionSubmission
 } from '../src'
 import {
   TransactionOutputReference,

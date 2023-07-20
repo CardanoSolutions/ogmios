@@ -71,16 +71,16 @@ export class JSONRPCError extends Error {
 
   public constructor (code: number, message: string, data?: any, id?: any) {
     super(message)
-    this.stack = ""
+    this.stack = ''
     this.code = code
 
     if (typeof data !== 'undefined') { this.data = data }
     if (typeof id !== 'undefined') { this.id = Object.assign({}, id || {}) }
   }
 
-  public static try_from(any: any) {
+  public static tryFrom (any: any) {
     if ('error' in any && 'jsonrpc' in any && any.jsonrpc === '2.0') {
-      const { error: e } = any;
+      const { error: e } = any
       if ('code' in e && 'message' in e) {
         if (Number.isInteger(e.code) && typeof e.message === 'string') {
           return new JSONRPCError(e.code, e.message, e?.data, any?.id)
@@ -93,7 +93,7 @@ export class JSONRPCError extends Error {
 }
 
 /** @category Constructor */
-export const createConnectionObject = (config?: ConnectionConfig): Connection => {
+export function createConnectionObject (config?: ConnectionConfig): Connection {
   const _128MB = 128 * 1024 * 1024
   const base = {
     host: config?.host ?? 'localhost',
@@ -143,7 +143,7 @@ export const createInteractionContext = async (
       socket.on('close', closeHandler)
       resolve({
         connection,
-        socket,
+        socket
       })
     })
   })
@@ -170,7 +170,7 @@ export const send = async <T>(
   return new Promise((resolve, reject) => {
     send(socket)
       .then(resolve)
-      .catch(error => reject(JSONRPCError.try_from(error) || error))
+      .catch(error => reject(JSONRPCError.tryFrom(error) || error))
   })
 }
 
@@ -205,7 +205,7 @@ export const Method = <
             await res.handler(
               response,
               resolve,
-              reject,
+              reject
             )
           } catch (e) {
             return reject(e)

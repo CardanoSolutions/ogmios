@@ -6,7 +6,7 @@ import { findIntersection, Intersection } from './findIntersection'
 import {
   nextBlock,
   handler as handleNextBlock,
-  ChainSynchronizationMessageHandlers,
+  ChainSynchronizationMessageHandlers
 } from './nextBlock'
 import { Point, Origin } from '@cardano-ogmios/schema'
 
@@ -36,7 +36,7 @@ export async function createChainSynchronizationClient (
       await handleNextBlock(
         response,
         messageHandlers,
-        () => nextBlock(socket),
+        () => nextBlock(socket)
       )
     }
 

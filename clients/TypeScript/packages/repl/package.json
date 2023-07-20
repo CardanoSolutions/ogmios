@@ -40,7 +40,6 @@
   },
   "dependencies": {
     "@cardano-ogmios/client": "5.6.0",
-    "chalk": "^4.1.0",
     "yargs-parser": "^20.2.7"
   },
   "files": [

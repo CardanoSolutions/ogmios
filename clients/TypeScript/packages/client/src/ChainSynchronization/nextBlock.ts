@@ -6,7 +6,7 @@ import {
   Block,
   Origin,
   Point,
-  Tip,
+  Tip
 } from '@cardano-ogmios/schema'
 
 /** @category ChainSynchronization */
@@ -40,10 +40,10 @@ export function nextBlock (
 }
 
 /** @internal */
-export async function handler(
+export async function handler (
   response: any,
   messageHandlers: ChainSynchronizationMessageHandlers,
-  cb: () => void,
+  cb: () => void
 ) {
   if (isNextBlockResponse(response)) {
     switch (response.result.direction) {
