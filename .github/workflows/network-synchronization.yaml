@@ -4,12 +4,20 @@ on:
   schedule:
     - cron: '00 06,18 * * *'
   workflow_dispatch:
+    inputs:
+      synchronization-level:
+        description: 'Desired % synchronization level. Between 0 and 1.'
+        required: false
+        default: 1
+        type: number
 
 jobs:
   sync_and_cache:
     strategy:
       matrix:
         network: [ preview ]
+        ogmios_version: [ v5.6.0 ]
+        cardano_node_version: [ 1.35.7 ]
 
     runs-on: ubuntu-latest
     steps:
@@ -33,8 +41,9 @@ jobs:
           cardano-node-ogmios-${{ matrix.network }}-
 
     - name: ⟲ Sync Node
-      uses: CardanoSolutions/gh-action-cardano-node-ogmios-docker-sync@v1.0.1
+      uses: CardanoSolutions/gh-action-cardano-node-ogmios-docker-sync@v1.1.0
       with:
         db-dir: ${{ runner.temp }}/db-${{ matrix.network }}
         network: ${{ matrix.network }}
-        version: v5.5.4
+        version: ${{ matrix.ogmios_version }}_${{ matrix.cardano_node_version }}
+        synchronization-level: ${{ inputs.synchronization-level }}

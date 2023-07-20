@@ -2,16 +2,15 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 
 module Ogmios.Data.Json.Prelude
     ( -- * Prelude
       module Ogmios.Prelude
     , Json
+    , Json.Series
     , FromJSON
     , ToJSON
-    , SerializationMode(..)
     , ViaEncoding (..)
     , jsonToByteString
     , decodeWith
@@ -19,6 +18,9 @@ module Ogmios.Data.Json.Prelude
     , inefficientEncodingToValue
     , (.:)
     , (.:?)
+    , (.=)
+    , (.=?)
+    , Optional (..)
     , at
 
       -- * Re-Exports
@@ -28,20 +30,19 @@ module Ogmios.Data.Json.Prelude
       -- * Decoder
     , decodeBase16
     , decodeBase58
-    , decodeBase64
 
       -- * Basic Types
     , encodeBlockNo
     , encodeBool
     , encodeByteArray
     , encodeByteStringBase16
-    , encodeByteStringBase64
     , encodeByteStringBech32
     , encodeCoin
     , encodeDnsName
     , encodeDouble
     , encodeEpochNo
     , encodeEpochSize
+    , encodeEraName
     , encodeIPv4
     , encodeIPv6
     , encodeInteger
@@ -74,18 +75,18 @@ module Ogmios.Data.Json.Prelude
     , encodeAnnotated
     , encodeIdentity
     , encodeFoldable
-    , encodeFoldable'
+    , encodeFoldable2
     , encodeList
-    , encodeListWithMode
     , encodeMap
-    , encodeMapWithMode
     , encodeMaybe
     , encodeObject
-    , encodeObjectWithMode
     , encode2Tuple
     , encode3Tuple
     , encode4Tuple
     , encodeStrictMaybe
+
+      -- * Helper
+    , encodeUnless
     ) where
 
 import Ogmios.Prelude
@@ -134,9 +135,6 @@ import Data.ByteArray
 import Data.ByteString.Base16
     ( encodeBase16
     )
-import Data.ByteString.Base64
-    ( encodeBase64
-    )
 import Data.ByteString.Bech32
     ( HumanReadablePart
     , encodeBech32
@@ -176,9 +174,9 @@ import qualified Data.Aeson.Types as Json
 import qualified Data.ByteArray as BA
 import qualified Data.ByteString.Base16 as B16
 import qualified Data.ByteString.Base58 as B58
-import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map.Strict as Map
+import qualified Data.Text as T
 import qualified Ouroboros.Consensus.Util.Counting as Consensus
 
 --
@@ -232,20 +230,6 @@ instance ToJSON ViaEncoding where
     toEncoding = unViaEncoding
 
 --
--- Serialization Mode
---
-
--- | The 'SerializationMode' allows for selectively run different JSON
--- serializers. The 'CompactSerialization' mode will omit some fields deemed
--- non-necessary in a trustless setup (for example, when clients fully trust the
--- node / ogmios server they're connecting to).
-data SerializationMode
-    = FullSerialization
-    | CompactSerialization
-    deriving stock (Generic, Show)
-    deriving anyclass (ToJSON)
-
---
 -- Basic Types
 --
 
@@ -274,11 +258,6 @@ encodeByteStringBech32 hrp =
     encodeText . encodeBech32 hrp
 {-# INLINABLE encodeByteStringBech32 #-}
 
-encodeByteStringBase64 :: ByteString -> Json
-encodeByteStringBase64 =
-    encodeText . encodeBase64
-{-# INLINABLE encodeByteStringBase64 #-}
-
 encodeCoin :: Coin -> Json
 encodeCoin =
     encodeInteger . unCoin
@@ -303,6 +282,11 @@ encodeEpochSize :: EpochSize -> Json
 encodeEpochSize =
     encodeWord64 . unEpochSize
 {-# INLINABLE encodeEpochSize #-}
+
+encodeEraName :: Text -> Json
+encodeEraName =
+    encodeText . T.toLower
+{-# INLINABLE encodeEraName #-}
 
 encodeIPv4 :: IPv4 -> Json
 encodeIPv4 =
@@ -451,7 +435,7 @@ encodeWord64 =
 -- Data-Structures
 --
 
-encodeAnnotated :: (a -> Json) -> Annotated a any -> Json
+encodeAnnotated :: (a -> codec) -> Annotated a any -> codec
 encodeAnnotated encodeElem =
     encodeElem . unAnnotated
 {-# INLINABLE encodeAnnotated #-}
@@ -472,80 +456,42 @@ encodeFoldable encodeElem =
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> StrictSeq a -> Json #-}
 {-# INLINABLE encodeFoldable #-}
 
-encodeFoldable' :: Foldable f => (a -> Text) -> (a -> Json) -> f a -> Json
-encodeFoldable' encodeKey encodeValue =
-    Json.pairs . foldr (\a -> (<>) (Json.pair (Json.fromText (encodeKey a)) (encodeValue a))) mempty
-{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> [a] -> Json #-}
-{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> NonEmpty a -> Json #-}
-{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> Vector a -> Json #-}
-{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> Set a -> Json #-}
-{-# SPECIALIZE encodeFoldable' :: (a -> Text) -> (a -> Json) -> StrictSeq a -> Json #-}
-{-# INLINABLE encodeFoldable' #-}
+encodeFoldable2 :: Foldable f => (a -> Json) -> (b -> Json) -> f a -> f b -> Json
+encodeFoldable2 encodeA encodeB as =
+    Json.list id . foldr ((:) . encodeB) (foldr ((:) . encodeA) [] as)
+{-# SPECIALIZE encodeFoldable2 :: (a -> Json) -> (b -> Json) -> [a] -> [b] -> Json #-}
+{-# SPECIALIZE encodeFoldable2 :: (a -> Json) -> (b -> Json) -> NonEmpty a -> NonEmpty b -> Json #-}
+{-# SPECIALIZE encodeFoldable2 :: (a -> Json) -> (b -> Json) -> Vector a -> Vector b -> Json #-}
+{-# SPECIALIZE encodeFoldable2 :: (a -> Json) -> (b -> Json) -> Set a -> Set b -> Json #-}
+{-# SPECIALIZE encodeFoldable2 :: (a -> Json) -> (b -> Json) -> StrictSeq a -> StrictSeq b -> Json #-}
+{-# INLINABLE encodeFoldable2 #-}
 
 encodeList :: (a -> Json) -> [a] -> Json
 encodeList =
     Json.list
 {-# INLINABLE encodeList #-}
 
-encodeListWithMode :: SerializationMode -> (a -> Json) -> [a] -> Json
-encodeListWithMode mode =
-    case mode of
-        FullSerialization ->
-            Json.list
-        CompactSerialization -> \encodeVal xs ->
-            let n = 5
-                r = length xs - n
-             in
-            Json.list id
-                ( (encodeVal <$> take n xs)
-                  ++
-                  [ encodeText ("..." <> show r <> " more element(s)") | r > 0 ]
-                )
-{-# INLINABLE encodeListWithMode #-}
-
 encodeMap :: (k -> Text) -> (v -> Json) -> Map k v -> Json
 encodeMap encodeKey encodeValue =
-    encodeObject . Map.foldrWithKey (\k v -> (:) (encodeKey k, encodeValue v)) []
+    Json.pairs . Map.foldrWithKey
+        (\k v -> (<>)
+            (Json.pair
+                (Json.fromText (encodeKey k))
+                (encodeValue v)
+            )
+        )
+        mempty
 {-# INLINABLE encodeMap #-}
-
-encodeMapWithMode :: SerializationMode -> (k -> Text) -> (v -> Json) -> Map k v -> Json
-encodeMapWithMode mode encodeKey encodeValue m =
-    case mode of
-        FullSerialization ->
-            encodeMap encodeKey encodeValue m
-        CompactSerialization ->
-            let reducer k v = (:) (Json.pairs $ Json.pair (Json.fromText (encodeKey k)) (encodeValue v))
-                zero = [ encodeText ("..." <> show r <> " more element(s)") | r > 0 ]
-                r = Map.size m - n
-                n = 5
-             in (Json.list id . Map.foldrWithKey reducer zero . Map.take n) m
-{-# INLINABLE encodeMapWithMode #-}
 
 encodeMaybe :: (a -> Json) -> Maybe a -> Json
 encodeMaybe =
     maybe encodeNull
 {-# INLINABLE encodeMaybe #-}
 
-encodeObject :: [(Text, Json)] -> Json
+encodeObject :: Json.Series -> Json
 encodeObject =
-    Json.pairs . foldr (\(Json.fromText -> k, v) -> (<>) (Json.pair k v)) mempty
+    Json.pairs
 {-# INLINABLE encodeObject #-}
-
-encodeObjectWithMode
-    :: SerializationMode
-    -> [(Text, Json)]
-        -- ^ Common fields
-    -> [(Text, Json)]
-        -- ^ Field when mode = full
-    -> Json
-encodeObjectWithMode mode common whenFull =
-    let
-        rest = case mode of
-            CompactSerialization -> []
-            FullSerialization -> whenFull
-    in
-        encodeObject (rest ++ common)
-{-# INLINABLE encodeObjectWithMode #-}
 
 encode2Tuple
     :: (a -> Json)
@@ -584,6 +530,44 @@ encodeStrictMaybe encodeElem = \case
 {-# INLINABLE encodeStrictMaybe #-}
 
 --
+-- Helper
+--
+
+encodeUnless :: (a -> Bool) -> Text  -> (a -> Json) -> a -> Json.Series
+encodeUnless predicate k encode a
+    | predicate a = mempty
+    | otherwise = Json.pair (Json.fromText k) (encode a)
+{-# INLINABLE encodeUnless #-}
+
+infixl 7 .=
+(.=) :: Text -> Json -> Json.Series
+k .= v = Json.pair (Json.fromText k) v
+
+infixl 7 .=?
+(.=?) :: Text -> Optional a -> Json.Series
+k .=? v =
+    case v of
+        OmitWhenNothing _ SNothing ->
+            mempty
+        OmitWhen predicate _encode value | predicate value ->
+            mempty
+        OmitWhen _predicate encode value ->
+            Json.pair (Json.fromText k) (encode value)
+        OmitWhenNothing encode (SJust value) ->
+            Json.pair (Json.fromText k) (encode value)
+
+data (Optional a) where
+    OmitWhen
+        :: (a -> Bool)
+        -> (a -> Json)
+        -> a
+        -> Optional a
+    OmitWhenNothing
+        :: (a -> Json)
+        -> StrictMaybe a
+        -> Optional a
+
+--
 -- Decoder
 --
 
@@ -592,6 +576,3 @@ decodeBase16 = either (fail . toString) pure . B16.decodeBase16
 
 decodeBase58 :: ByteString -> Json.Parser ByteString
 decodeBase58 = maybe mempty pure . B58.decodeBase58 B58.bitcoinAlphabet
-
-decodeBase64 :: ByteString -> Json.Parser ByteString
-decodeBase64 = either (fail . toString) pure . B64.decodeBase64

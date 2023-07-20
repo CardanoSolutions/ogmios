@@ -12,7 +12,7 @@ You may **skip this section** if you're using **Docker 🐳.**
 
 Ogmios is built using the great Haskell build tool [cabal](https://cabal.readthedocs.io/en). You'll also need [git](https://git-scm.com/) to clone the source code, that is:
 - `git 2.11.*`
-- `cabal 3.*.*`
+- `cabal 3.6.*.*` and higher
 
 Ogmios in itself is a rather small project, yet it's using library directly from the ouroboros-network, cardano-ledger-specs and cardano-node projects. This is handy for re-using existing logic, but comes at the cost of several system dependencies that are required for building everything. Some may already be installed on your system, but the complete list is:
 

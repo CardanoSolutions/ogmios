@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","error":{"code":3002,"message":"The node is still synchronizing and the ledger isn't yet in an era where scripts are enabled (i.e. Alonzo and beyond).","data":{"currentNodeEra":"mary","minimumRequiredEra":"byron"}},"id":"st"}

@@ -23,8 +23,8 @@ import Ogmios.Prelude
 import Cardano.Network.Protocol.NodeToClient
     ( Block
     , Clients (..)
-    , SerializedTx
-    , SubmitTxError
+    , SerializedTransaction
+    , SubmitTransactionError
     , connectClient
     , mkClient
     )
@@ -104,21 +104,19 @@ import Ogmios.Control.MonadWebSocket
     , ConnectionException (..)
     , MonadWebSocket (..)
     , PendingConnection
-    , SubProtocol
     , WebSocketApp
     , headers
-    , subProtocols
     )
 import Ogmios.Data.Json
     ( Json
-    , SerializationMode (..)
     , ToJSON
+    , encodeAcquireExpired
     , encodeAcquireFailure
     , encodeBlock
     , encodeExUnits
     , encodePoint
     , encodeScriptFailure
-    , encodeSubmitTxError
+    , encodeSubmitTransactionError
     , encodeTip
     , encodeTranslationError
     , encodeTx
@@ -168,7 +166,7 @@ import System.TimeManager
 
 import qualified Cardano.Ledger.Alonzo.PParams
 import qualified Cardano.Ledger.Babbage.PParams
-import qualified Codec.Json.Wsp.Handler as Wsp
+import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
 
 --
@@ -202,12 +200,11 @@ newWebSocketApp tr unliftIO = do
             , getAlonzoGenesis = readAlonzoGenesis nodeConfig
             }
     return $ \pending -> unliftIO $ do
-        let (mode, sub) = choseSerializationMode pending
-        logWith tr $ WebSocketConnectionAccepted (userAgent pending) mode
-        recordSession sensors $ onExceptions $ acceptRequest pending sub $ \conn -> do
+        logWith tr $ WebSocketConnectionAccepted (userAgent pending)
+        recordSession sensors $ onExceptions $ acceptRequest pending $ \conn -> do
             let trClient = contramap WebSocketClient tr
             withExecutionUnitsEvaluator $ \exUnitsEvaluator exUnitsClients -> do
-                withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator getGenesisConfig conn $ \protocolsClients -> do
+                withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig conn $ \protocolsClients -> do
                     let clientA = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch protocolsClients
                     let clientB = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch exUnitsClients
                     let vData  = NodeToClientVersionData networkMagic
@@ -226,7 +223,7 @@ newWebSocketApp tr unliftIO = do
     onIOException conn e = do
         logWith tr $ WebSocketFailedToConnect $ show e
         let msg = "Connection with the node lost or failed."
-        close conn $ toStrict $ Json.encode $ Wsp.serverFault Nothing msg
+        close conn $ toStrict $ Json.encode $ Rpc.customError Nothing (negate 32000) msg
 
     onExceptions :: m () -> m ()
     onExceptions
@@ -258,22 +255,6 @@ newWebSocketApp tr unliftIO = do
         e ->
             throwIO e
 
--- | Chose a serialization mode based on the sub-protocols given by the client
--- websocket. If the client specifies "compact" as a sub-protocol, then Ogmios
--- will not return proofs, signatures and other voluminous data from the
--- chain-sync protocol.
-choseSerializationMode
-    :: PendingConnection
-    -> (SerializationMode, Maybe SubProtocol)
-choseSerializationMode conn =
-    case subProtocols conn of
-        sub:_ | sub == compact -> (CompactSerialization, Just compact)
-        sub:_ | sub == full -> (FullSerialization, Nothing)
-        _ -> (FullSerialization, Nothing)
-  where
-    full = "ogmios.v1"
-    compact = full<>":compact"
-
 withExecutionUnitsEvaluator
     :: forall m a.
         ( MonadClock m
@@ -304,7 +285,6 @@ withOuroborosClients
         , MonadWebSocket m
         )
     => Logger TraceWebSocket
-    -> SerializationMode
     -> MaxInFlight
     -> Sensors m
     -> ExecutionUnitsEvaluator m Block
@@ -312,7 +292,7 @@ withOuroborosClients
     -> Connection
     -> (Clients m Block -> m a)
     -> m a
-withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator getGenesisConfig conn action = do
+withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig conn action = do
     (chainSyncQ, stateQueryQ, txSubmissionQ, txMonitorQ) <-
         atomically $ (,,,)
             <$> newTQueue
@@ -357,56 +337,54 @@ withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator getGenesisConf
                 again *> routeMessage cache chainSyncQ stateQueryQ txSubmissionQ txMonitorQ
 
             _ -> do
-                matched <- Wsp.match bytes
+                matched <- Rpc.match bytes
                     (count (totalUnroutedCounter sensors) *> defaultHandler bytes)
                     -- ChainSync
-                    [ Wsp.Handler decodeRequestNext
-                        (\r t -> push chainSyncQ . MsgRequestNext r t)
-                    , Wsp.Handler decodeFindIntersect
-                        (\r t -> push chainSyncQ . MsgFindIntersect r t)
+                    [ Rpc.Handler decodeNextBlock
+                        (\r t -> push chainSyncQ . MsgNextBlock r t)
+                    , Rpc.Handler decodeFindIntersection
+                        (\r t -> push chainSyncQ . MsgFindIntersection r t)
 
                     -- TxSubmission
-                    , Wsp.Handler decodeSubmitTx
-                        (\r t -> push txSubmissionQ .  MsgSubmitTx r t)
-                    , Wsp.Handler decodeBackwardCompatibleSubmitTx
-                        (\r t -> push txSubmissionQ .  MsgBackwardCompatibleSubmitTx r t)
-                    , Wsp.Handler decodeEvaluateTx
-                        (\r t -> push txSubmissionQ .  MsgEvaluateTx r t)
+                    , Rpc.Handler decodeSubmitTransaction
+                        (\r t -> push txSubmissionQ . MsgSubmitTransaction r t)
+                    , Rpc.Handler decodeEvaluateTransaction
+                        (\r t -> push txSubmissionQ . MsgEvaluateTransaction r t)
 
                     -- StateQuery
-                    , Wsp.Handler decodeAcquire
-                        (\r t -> push stateQueryQ . MsgAcquire r t)
-                    , Wsp.Handler decodeRelease
-                        (\r t -> push stateQueryQ . MsgRelease r t)
-                    , Wsp.Handler decodeQuery
-                        (\r t -> push stateQueryQ . MsgQuery r t)
+                    , Rpc.Handler decodeAcquireLedgerState
+                        (\r t -> push stateQueryQ . MsgAcquireLedgerState r t)
+                    , Rpc.Handler decodeReleaseLedgerState
+                        (\r t -> push stateQueryQ . MsgReleaseLedgerState r t)
+                    , Rpc.Handler decodeQueryLedgerState
+                        (\r t -> push stateQueryQ . MsgQueryLedgerState r t)
 
                     -- TxMonitor
-                    , Wsp.Handler decodeAwaitAcquire
-                        (\r t -> push txMonitorQ . MsgAwaitAcquire r t)
-                    , Wsp.Handler decodeNextTx
-                        (\r t -> push txMonitorQ . MsgNextTx r t)
-                    , Wsp.Handler decodeHasTx
-                        (\r t -> push txMonitorQ . MsgHasTx r t)
-                    , Wsp.Handler decodeSizeAndCapacity
-                        (\r t -> push txMonitorQ . MsgSizeAndCapacity r t)
-                    , Wsp.Handler decodeReleaseMempool
+                    , Rpc.Handler decodeAcquireMempool
+                        (\r t -> push txMonitorQ . MsgAcquireMempool r t)
+                    , Rpc.Handler decodeNextTransaction
+                        (\r t -> push txMonitorQ . MsgNextTransaction r t)
+                    , Rpc.Handler decodeHasTransaction
+                        (\r t -> push txMonitorQ . MsgHasTransaction r t)
+                    , Rpc.Handler decodeSizeOfMempool
+                        (\r t -> push txMonitorQ . MsgSizeOfMempool r t)
+                    , Rpc.Handler decodeReleaseMempool
                         (\r t -> push txMonitorQ . MsgReleaseMempool r t)
                     ]
                 routeMessage matched chainSyncQ stateQueryQ txSubmissionQ txMonitorQ
 
     chainSyncCodecs@ChainSyncCodecs{..} =
-        mkChainSyncCodecs (encodeBlock mode) encodePoint encodeTip
+        mkChainSyncCodecs encodeBlock encodePoint encodeTip
     stateQueryCodecs@StateQueryCodecs{..} =
-        mkStateQueryCodecs encodePoint encodeAcquireFailure
+        mkStateQueryCodecs encodePoint encodeAcquireFailure encodeAcquireExpired
     txMonitorCodecs@TxMonitorCodecs{..} =
         mkTxMonitorCodecs
             encodeTxId
-            (encodeTx mode)
+            encodeTx
     txSubmissionCodecs@TxSubmissionCodecs{..} =
         mkTxSubmissionCodecs
             encodeTxId
-            encodeSubmitTxError
+            encodeSubmitTransactionError
             stringifyRdmrPtr
             encodeExUnits
             encodeScriptFailure
@@ -419,7 +397,7 @@ withOuroborosClients tr mode maxInFlight sensors exUnitsEvaluator getGenesisConf
 
 data TraceWebSocket where
     WebSocketClient
-        :: TraceClient (SerializedTx Block) (SubmitTxError Block)
+        :: TraceClient (SerializedTransaction Block) (SubmitTransactionError Block)
         -> TraceWebSocket
 
     WebSocketStateQuery
@@ -431,7 +409,7 @@ data TraceWebSocket where
         -> TraceWebSocket
 
     WebSocketConnectionAccepted
-        :: { userAgent :: Text, mode :: SerializationMode }
+        :: { userAgent :: Text }
         -> TraceWebSocket
 
     WebSocketConnectionEnded

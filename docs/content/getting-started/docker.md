@@ -72,7 +72,7 @@ $ docker buildx build \
 argument:
 
 ```console
-  --build-arg NETWORK=testnet
+  --build-arg NETWORK=preview
 ```
 
 {{% notice info %}}
@@ -93,10 +93,10 @@ $ docker run --rm \
   cardanosolutions/ogmios:latest \
     --node-socket /ipc/node.socket \
     --node-config /config/cardano-node/config.json \
-    --host 0.0.0.0 
+    --host 0.0.0.0
 ```
 
-Note that the `--host` argument is necessary to bind the server from within the container. Notice also how configuration files are available from within the image under `/config`. 
+Note that the `--host` argument is necessary to bind the server from within the container. Notice also how configuration files are available from within the image under `/config`.
 
 ### Running (docker-compose)
 
@@ -128,19 +128,19 @@ $ docker-compose down
 
 The compose file allows for minimal (albeit useful) configuration parameters via environment variables:
 
-Variable      | Description                                                                                    | Values                 | Default
----           | ---                                                                                            | ---                    | ---
-`NETWORK`     | Which Cardano network to connect to. This impacts both Ogmios and the underlying Cardano node. | `mainnet`, `testnet`   | `mainnet`
-`OGMIOS_PORT` | Which ports to listen to (both for WebSockets and health endpoints)                            | Any valid port number. | `1337`
+Variable      | Description                                                                                    | Values                          | Default
+---           | ---                                                                                            | ---                             | ---
+`NETWORK`     | Which Cardano network to connect to. This impacts both Ogmios and the underlying Cardano node. | `mainnet`, `preview`, `preprod` | `mainnet`
+`OGMIOS_PORT` | Which ports to listen to (both for WebSockets and health endpoints)                            | Any valid port number.          | `1337`
 
 {{% notice tip %}}
-Ogmios doesn't use any form of persistent storage, but cardano-node does. The mainnet and testnet databases are not compatible, so it is recommended to instrument docker-compose to use different namespaces for different networks (so that you can switch from one another without risking any database conflicts). Compose can do this easily by passing an extra flag: `--project-name`.
+Ogmios doesn't use any form of persistent storage, but cardano-node does. The mainnet, preview and preprod databases are not compatible, so it is recommended to instrument docker-compose to use different namespaces for different networks (so that you can switch from one another without risking any database conflicts). Compose can do this easily by passing an extra flag: `--project-name`.
 {{% /notice %}}
 
-For example, for running cardano-node + ogmios on the testnet, listening to tcp/1338, do:
+For example, for running cardano-node + ogmios on the preprod network, listening to tcp/1338, do:
 
 ```console
-$ NETWORK=testnet OGMIOS_PORT=1338 docker-compose --project-name cardano-ogmios-testnet up
+$ NETWORK=preprod OGMIOS_PORT=1338 docker-compose --project-name cardano-ogmios-preprod up
 ```
 
 

@@ -6,48 +6,53 @@
  */
 
 /**
- * A Cardano Block, which can take different forms depending on the era.
+ * An absolute slot number.
  */
-export type Block = Babbage | Alonzo | Mary | Allegra | Shelley | Byron;
+export type Slot = number;
 /**
- * A Blake2b 32-byte digest of an era-independent block body.
+ * A Blake2b 32-byte hash digest, encoded in base16.
  */
-export type DigestBlake2BBlockBody = string;
+export type DigestBlake2B256 = string;
 /**
- * A Blake2b 32-byte digest of a transaction body, CBOR-encoded.
+ * The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point.
  */
-export type TxId = string;
+export type Origin = "origin";
 /**
- * A Cardano address (either legacy format or new format).
+ * A block number, the i-th block to be minted is number i.
  */
-export type Address = string;
+export type BlockHeight = number;
+export type Block = BlockEBB | BlockBFT | BlockPraos;
+/**
+ * The size of the block in bytes.
+ */
+export type BlockSize = number;
+/**
+ * A Blake2b 32-byte hash digest of a transaction body
+ */
+export type TransactionId = string;
+export type UInt32 = number;
 /**
  * A number of lovelace, possibly large when summed up.
  */
 export type Lovelace = bigint;
 /**
+ * A Cardano address (either legacy format or new format).
+ */
+export type Address = string;
+/**
  * A number of asset, can be negative went burning assets.
  */
 export type AssetQuantity = bigint;
-/**
- * A Blake2b 32-byte digest of a serialized datum, CBOR-encoded.
- */
-export type DigestBlake2BDatum = string;
-export type Null = null;
 export type Datum = string;
 export type Script = Native | PlutusV1 | PlutusV2;
 /**
  * A phase-1 monetary script. Timelocks constraints are only supported since Allegra.
  */
-export type ScriptNative = DigestBlake2BVerificationKey | Any | All | NOf | ExpiresAt | StartsAt;
+export type ScriptNative = DigestBlake2B224 | Any | All | NOf | ExpiresAt | StartsAt;
 /**
- * A Blake2b 28-byte digest of an Ed25519 verification key.
+ * A Blake2b 28-byte hash digest, encoded in base16.
  */
-export type DigestBlake2BVerificationKey = string;
-/**
- * An absolute slot number.
- */
-export type Slot = number;
+export type DigestBlake2B224 = string;
 /**
  * A phase-2 Plutus script; or said differently, a serialized Plutus-core program.
  */
@@ -61,25 +66,17 @@ export type Certificate =
   | GenesisDelegation
   | MoveInstantaneousRewards;
 /**
- * A Blake2b 28-byte digest of a verification key or a script.
+ * A Blake2b 32-byte hash digest of a pool's verification key.
  */
-export type DigestBlake2BCredential = string;
-/**
- * A Blake2b 32-byte digest of a pool's verification key.
- */
-export type PoolId = string;
+export type StakePoolId = string;
 /**
  * A ratio of two integers, to express exact fractions.
  */
 export type Ratio = string;
 /**
- * A Blake2b 32-byte digest of a VRF verification key.
+ * A hash digest from an unspecified algorithm and length.
  */
-export type DigestBlake2BVrfVerificationKey = string;
-/**
- * A Blake2b 32-byte digest of stake pool (canonical) JSON metadata.
- */
-export type DigestBlake2BPoolMetadata = string;
+export type DigestAny = string;
 export type Relay = ByAddress | ByName;
 /**
  * A reward account, also known as 'stake address'.
@@ -97,202 +94,44 @@ export type LovelaceDelta = number;
  * Source of rewards as defined by the protocol parameters.
  */
 export type RewardPot = "reserves" | "treasury";
-export type UpdateBabbage = Null | UpdateProposalBabbage;
-export type NullableUInt64 = UInt64 | Null;
-export type UInt64 = number;
-export type NullableRatio = Ratio | Null;
-export type UInt32 = number;
-export type Int64 = number;
 /**
  * A network target, as defined since the Shelley era.
  */
 export type Network = "mainnet" | "testnet";
-/**
- * A Blake2b 32-byte digest of a script-integrity hash (i.e redeemers, datums and cost model, CBOR-encoded).
- */
-export type DigestBlake2BScriptIntegrity = string;
-/**
- * A signature coming from an Ed25519 or Ed25519-BIP32 signing key.
- */
-export type Signature = string;
-/**
- * An Ed25519-BIP32 chain-code for key deriviation.
- */
-export type ChainCode = string;
-/**
- * Extra attributes carried by Byron addresses (network magic and/or HD payload).
- */
-export type AddressAttributes = string;
-/**
- * An Ed25519 verification key.
- */
-export type VerificationKey = string;
+export type UInt64 = number;
+export type Nonce = Neutral | DigestBlake2B256;
+export type Neutral = "neutral";
+export type UInt321 = number;
+export type Int64 = number;
+export type Metadatum = Int | String | Bytes | List | Map;
 /**
  * Plutus data, CBOR-serialised.
  */
 export type RedeemerData = string;
 /**
- * A Blake2b 32-byte digest of an 'AuxiliaryDataBody', serialised as CBOR.
+ * An Ed25519 verification key.
  */
-export type DigestBlake2BAuxiliaryDataBody = string;
-export type Metadatum = Int | String | Bytes | List | Map;
-export type DigestBlake2BBlockHeader = string | "genesis";
-/**
- * A block number, the i-th block to be minted is number i.
- */
-export type BlockNo = number;
-/**
- * A key identifying a block issuer.
- */
-export type IssuerVrfVerificationKey = string;
-/**
- * The size of the block in bytes.
- */
-export type BlockSize = number;
-export type KesVerificationKey = string;
-/**
- * Signature proving a block was issued by a given issuer VRF key.
- */
-export type IssuerSignature = string;
-export type VrfProof = string;
-export type VrfOutput = string;
-export type UpdateAlonzo = Null | UpdateProposalAlonzo;
-export type Nonce = Neutral | DigestBlake2BNonce;
-export type Neutral = "neutral";
-/**
- * A Blake2b 32-byte digest of some arbitrary to make a nonce.
- */
-export type DigestBlake2BNonce = string;
-export type UpdateShelley = Null | UpdateProposalShelley;
-/**
- * A block in the Byron era. Most blocks are stanard blocks, but once at the beginning of each era is an additional epoch boundary block (a.k.a. EBB)
- */
-export type BlockByron = StandardBlock | EpochBoundaryBlock;
+export type VerificationKey = string;
 /**
  * An Ed25519-BIP32 Byron genesis delegate verification key with chain-code.
  */
-export type GenesisVerificationKey = string;
-/**
- * A Blake2b 32-byte digest of a Merkle tree (or all block's transactions) root hash.
- */
-export type DigestBlake2BMerkleRoot = string;
-/**
- * A Blake2b 32-byte digest of a Byron transaction witness set, CBOR-encoded.
- */
-export type DigestBlake2BBlockByronBodyTxPayloadWitness = string;
-/**
- * A Blake2b 32-byte digest of a Byron delegation payload, CBOR-encoded.
- */
-export type DigestBlake2BBlockByronBodyDlgPayload = string;
-/**
- * A Blake2b 32-byte digest of a Byron update payload, CBOR-encoded.
- */
-export type DigestBlake2BBlockByronBodyUpdatePayload = string;
+export type ExtendedVerificationKey = string;
 export type ProtocolMagicId = number;
-export type TxWitness = WitnessVk | RedeemWitness;
-export type TipOrOrigin = Tip | Origin;
-/**
- * The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point.
- */
-export type Origin = "origin";
-export type PointOrOrigin = Point | Origin;
-export type Era = "Byron" | "Shelley" | "Allegra" | "Mary" | "Alonzo" | "Babbage";
-/**
- * A Blake2b 32-byte digest of a phase-1 or phase-2 script, CBOR-encoded.
- */
-export type DigestBlake2BScript = string;
-export type InvalidEntity =
-  | {
-      type: "address";
-      entity: Address;
-    }
-  | {
-      type: "poolRegistration";
-      entity: PoolId;
-    }
-  | {
-      type: "rewardAccount";
-      entity: RewardAccount;
-    };
+export type GenesisHash = "genesis";
+export type VrfProof = string;
+export type VrfOutput = string;
+export type KesVerificationKey = string;
+export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage";
 export type UInt8 = number;
 export type VotingPeriod = "voteForThisEpoch" | "voteForNextEpoch";
 export type ScriptPurpose = Spend | Mint | Certificate1 | Withdrawal;
-export type Utxo = [TxIn, TxOut][];
-export type Language = "plutus:v1" | "plutus:v2";
-export type SubmitTxError = (
-  | EraMismatch
-  | InvalidWitnesses
-  | MissingVkWitnesses
-  | MissingScriptWitnesses
-  | ScriptWitnessNotValidating
-  | InsufficientGenesisSignatures
-  | MissingTxMetadata
-  | MissingTxMetadataHash
-  | TxMetadataHashMismatch
-  | BadInputs
-  | ExpiredUtxo
-  | OutsideOfValidityInterval
-  | TxTooLarge
-  | MissingAtLeastOneInputUtxo
-  | InvalidMetadata
-  | FeeTooSmall
-  | ValueNotConserved
-  | NetworkMismatch
-  | OutputTooSmall
-  | TooManyAssetsInOutput
-  | AddressAttributesTooLarge
-  | TriesToForgeAda
-  | DelegateNotRegistered
-  | UnknownOrIncompleteWithdrawals
-  | StakePoolNotRegistered
-  | WrongRetirementEpoch
-  | WrongPoolCertificate
-  | StakeKeyAlreadyRegistered
-  | PoolCostTooSmall
-  | PoolMetadataHashTooBig
-  | StakeKeyNotRegistered
-  | RewardAccountNotExisting
-  | RewardAccountNotEmpty
-  | WrongCertificateType
-  | UnknownGenesisKey
-  | AlreadyDelegating
-  | InsufficientFundsForMir
-  | TooLateForMir
-  | MirTransferNotCurrentlyAllowed
-  | MirNegativeTransferNotCurrentlyAllowed
-  | MirProducesNegativeUpdate
-  | DuplicateGenesisVrf
-  | NonGenesisVoters
-  | UpdateWrongEpoch
-  | ProtocolVersionCannotFollow
-  | MissingRequiredRedeemers
-  | MissingRequiredDatums
-  | UnspendableDatums
-  | ExtraDataMismatch
-  | MissingRequiredSignatures
-  | UnspendableScriptInputs
-  | ExtraRedeemers
-  | MissingDatumHashesForInputs
-  | MissingCollateralInputs
-  | CollateralTooSmall
-  | CollateralIsScript
-  | CollateralHasNonAdaAssets
-  | TooManyCollateralInputs
-  | ExecutionUnitsTooLarge
-  | OutsideForecast
-  | ValidationTagMismatch
-  | CollectErrors
-  | ExtraScriptWitnesses
-  | MirNegativeTransfer
-  | TotalCollateralMismatch
-  | MalformedReferenceScripts
-  | MalformedScriptWitnesses
-)[];
-export type RedeemerPointer = string;
 /**
- * Errors which may occur when evaluating an on-chain script.
+ * A Blake2b 28-byte hash digest, encoded in base16.
  */
-export type ScriptFailure = (
+export type PolicyId = string;
+export type Utxo = [TransactionOutputReference, TransactionOutput][];
+export type Language = "plutus:v1" | "plutus:v2";
+export type ScriptExecutionFailureReason =
   | ExtraRedeemers
   | MissingRequiredDatums
   | MissingRequiredScripts
@@ -300,45 +139,12 @@ export type ScriptFailure = (
   | UnknownInputReferencedByRedeemer
   | NonScriptInputReferencedByRedeemer
   | IllFormedExecutionBudget
-  | NoCostModelForLanguage
-)[];
-export type AcquireFailureDetails = "pointTooOld" | "pointNotOnChain";
-export type GetEraStart = "eraStart";
-export type GetEraSummaries = "eraSummaries";
-export type GetLedgerTip = "ledgerTip";
-export type GetCurrentEpoch = "currentEpoch";
-export type StakeCredential = Base16 | Bech32 | StakeAddress;
-/**
- * A Blake2b 28-byte digest of a verification key or a script.
- */
-export type Base16 = string;
-/**
- * A Blake2b 28-byte digest of a verification key or script.
- */
-export type Bech32 = string;
-/**
- * A stake address (a.k.a reward account)
- */
-export type StakeAddress = string;
-export type GetCurrentProtocolParameters = "currentProtocolParameters";
-export type GetProposedProtocolParameters = "proposedProtocolParameters";
-export type GetStakeDistribution = "stakeDistribution";
-export type GetUtxo = "utxo";
-export type GetRewardsProvenanceDeprecated = "rewardsProvenance";
-export type GetRewardsProvenance = "rewardsProvenance'";
-export type GetPoolsRanking = "poolsRanking";
-export type GetPoolIds = "poolIds";
-export type GetChainTip = "chainTip";
-export type GetBlockHeight = "blockHeight";
-export type GetSystemStart = "systemStart";
+  | NoCostModelForLanguage;
+export type RedeemerPointer = string;
 /**
  * A time in seconds relative to another one (typically, system start or era start). Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
  */
 export type RelativeTime = number;
-/**
- * The requested query is not available in the current node era. It could be that the node is not fully synced.
- */
-export type QueryUnavailableInCurrentEra = "QueryUnavailableInCurrentEra";
 /**
  * A slot length, in seconds. Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
  */
@@ -347,782 +153,311 @@ export type SlotLength = number;
  * Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks.
  */
 export type SafeZone = number;
+export type StakeCredential = DigestBlake2B2241 | Bech32 | StakeAddress;
+/**
+ * A Blake2b 28-byte hash digest, encoded in base16.
+ */
+export type DigestBlake2B2241 = string;
+/**
+ * A Blake2b 28-byte hash digest of a verification key or script.
+ */
+export type Bech32 = string;
+/**
+ * A stake address (a.k.a reward account)
+ */
+export type StakeAddress = string;
+/**
+ * A number of lovelace, possibly large when summed up.
+ */
+export type Lovelace1 = bigint;
+export type EraWithGenesis = "byron" | "shelley" | "alonzo";
 export type UtcTime = string;
 /**
  * A magic number for telling networks apart. (e.g. 764824073)
  */
 export type NetworkMagic = number;
-export type BlockNoOrOrigin = BlockNo | Origin;
 
 export interface Ogmios {
-  /**
-   * Request next block from the current cardano-node's cursor.
-   */
-  RequestNext: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "RequestNext";
-    args?: {};
-    /**
-     * An arbitrary JSON value that will be mirrored back in the response.
-     */
-    mirror?: {
-      [k: string]: unknown;
-    };
+  FindIntersection: FindIntersection;
+  FindIntersectionResponse: IntersectionFound | IntersectionNotFound;
+  NextBlock: NextBlock;
+  NextBlockResponse: NextBlockResponse;
+  SubmitTransaction: SubmitTransaction;
+  SubmitTransactionResponse: SubmitTransactionSuccess | SubmitTransactionFailure;
+  EvaluateTransaction: EvaluateTransaction;
+  EvaluateTransactionResponse: EvaluateTransactionSuccess | EvaluateTransactionFailure;
+  AcquireLedgerState: AcquireLedgerState;
+  AcquireLedgerStateResponse: AcquireLedgerStateSuccess | AcquireLedgerStateFailure;
+  ReleaseLedgerState: ReleaseLedgerState;
+  ReleaseLedgerStateResponse: ReleaseLedgerStateResponse;
+  QueryLedgerStateEraMismatch?: QueryLedgerStateEraMismatch;
+  QueryLedgerStateUnavailableInCurrentEra?: QueryLedgerStateUnavailableInCurrentEra;
+  QueryLedgerStateAcquiredExpire?: QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateEpoch: QueryLedgerStateEpoch;
+  QueryLedgerStateEpochResponse:
+    | QueryLedgerStateEpochResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateEraStart: QueryLedgerStateEraStart;
+  QueryLedgerStateEraStartResponse:
+    | QueryLedgerStateEraStartResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateEraSummaries: QueryLedgerStateEraSummaries;
+  QueryLedgerStateEraSummariesResponse:
+    | QueryLedgerStateEraSummariesResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateLiveStakeDistribution: QueryLedgerStateLiveStakeDistribution;
+  QueryLedgerStateLiveStakeDistributionResponse:
+    | QueryLedgerStateLiveStakeDistributionResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateProjectedRewards: QueryLedgerStateProjectedRewards;
+  QueryLedgerStateProjectedRewardsResponse:
+    | QueryLedgerStateProjectedRewardsResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateProposedProtocolParameters: QueryLedgerStateProposedProtocolParameters;
+  QueryLedgerStateProposedProtocolParametersResponse:
+    | QueryLedgerStateProposedProtocolParametersResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateProtocolParameters: QueryLedgerStateProtocolParameters;
+  QueryLedgerStateProtocolParametersResponse:
+    | QueryLedgerStateProtocolParametersResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateRewardAccountSummaries: QueryLedgerStateRewardAccountSummaries;
+  QueryLedgerStateRewardAccountSummariesResponse:
+    | QueryLedgerStateRewardAccountSummariesResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateRewardsProvenance: QueryLedgerStateRewardsProvenance;
+  QueryLedgerStateRewardsProvenanceResponse:
+    | QueryLedgerStateRewardsProvenanceResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateStakePools: QueryLedgerStateStakePools;
+  QueryLedgerStateStakePoolsResponse:
+    | QueryLedgerStateStakePoolsResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateStakePoolParameters: QueryLedgerStateStakePoolParameters;
+  QueryLedgerStateStakePoolParametersResponse:
+    | QueryLedgerStateStakePoolParametersResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateTip: QueryLedgerStateTip;
+  QueryLedgerStateTipResponse:
+    | QueryLedgerStateTipResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateUtxo: QueryLedgerStateUtxo;
+  QueryLedgerStateUtxoResponse:
+    | QueryLedgerStateUtxoResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryNetworkBlockHeight: QueryNetworkBlockHeight;
+  QueryNetworkBlockHeightResponse: QueryNetworkBlockHeightResponse;
+  QueryNetworkGenesisConfiguration: QueryNetworkGenesisConfiguration;
+  QueryNetworkGenesisConfigurationResponse: QueryNetworkGenesisConfigurationResponse;
+  QueryNetworkStartTime: QueryNetworkStartTime;
+  QueryNetworkStartTimeResponse: QueryNetworkStartTimeResponse;
+  QueryNetworkTip: QueryNetworkTip;
+  QueryNetworkTipResponse: QueryNetworkTipResponse;
+  AcquireMempool: AcquireMempool;
+  AcquireMempoolResponse: AcquireMempoolResponse;
+  NextTransaction: NextTransaction;
+  NextTransactionResponse: NextTransactionResponse;
+  HasTransaction: HasTransaction;
+  HasTransactionResponse: HasTransactionResponse;
+  SizeOfMempool: SizeOfMempool;
+  SizeOfMempoolResponse?: SizeOfMempoolResponse;
+  ReleaseMempool: ReleaseMempool;
+  ReleaseMempoolResponse: ReleaseMempoolResponse;
+  RpcError: RpcError;
+}
+/**
+ * Ask cardano-node to find an intersection between its local chain and the given points.
+ */
+export interface FindIntersection {
+  jsonrpc: "2.0";
+  method: "findIntersection";
+  params: {
+    points?: (Point | Origin)[];
   };
   /**
-   * Request next block from the current cardano-node's cursor.
+   * An arbitrary JSON value that will be mirrored back in the response.
    */
-  RequestNextResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "RequestNext";
-    result: RollForward | RollBackward;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * A point on the chain, identified by a slot and a block header hash.
+ */
+export interface Point {
+  slot: Slot;
+  hash: DigestBlake2B256;
+}
+export interface IntersectionFound {
+  jsonrpc: "2.0";
+  result: {
+    intersection: Point | Origin;
+    tip: Tip | Origin;
   };
   /**
-   * Ask cardano-node to find an intersection between its local chain and the given points.
+   * Any value that was set by a client request in the 'id' field.
    */
-  FindIntersect: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "FindIntersect";
-    args?: {
-      points?: PointOrOrigin[];
-    };
-    /**
-     * An arbitrary JSON value that will be mirrored back in the response.
-     */
-    mirror?: {
-      [k: string]: unknown;
-    };
+  id?: {
+    [k: string]: unknown;
   };
-  FindIntersectResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "FindIntersect";
-    /**
-     * Intersection found if any, alongside the cardano-node's current tip.
-     */
-    result: IntersectionFound | IntersectionNotFound;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * Submit a signed and serialized transaction to the network.
-   */
-  SubmitTx: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "SubmitTx";
-    args?: {
-      submit: string;
-    };
-    /**
-     * An arbitrary JSON value that will be mirrored back in the response.
-     */
-    mirror?: {
-      [k: string]: unknown;
-    };
-  };
-  SubmitTxResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "SubmitTx";
-    result: SubmitSuccess | SubmitFail;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * Evaluate execution units for which redeemers's budget hasn't yet been set.
-   */
-  EvaluateTx: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "EvaluateTx";
-    args?: {
-      evaluate: string;
-      additionalUtxoSet?: Utxo;
-    };
-    /**
-     * An arbitrary JSON value that will be mirrored back in the response.
-     */
-    mirror?: {
-      [k: string]: unknown;
-    };
-  };
-  EvaluateTxResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "EvaluateTx";
-    result: EvaluationResult | EvaluationFailure;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * Acquire a point on chain from which run queries.
-   */
-  Acquire: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Acquire";
-    args?: {
-      point: PointOrOrigin;
-    };
-    /**
-     * An arbitrary JSON value that will be mirrored back in the response.
-     */
-    mirror?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * Response to an 'Acquire' request.
-   */
-  AcquireResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Acquire";
-    result: AcquireSuccess | AcquireFailure;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * Release a point on chain previously acquired.
-   */
-  Release: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Release";
-    args?: {};
-    /**
-     * An arbitrary JSON value that will be mirrored back in the response.
-     */
-    mirror?: {
-      [k: string]: unknown;
+}
+export interface Tip {
+  slot: Slot;
+  hash: DigestBlake2B256;
+  blockNo: BlockHeight;
+}
+export interface IntersectionNotFound {
+  jsonrpc: "2.0";
+  error: {
+    code: 1000;
+    message: string;
+    data: {
+      tip: Tip | Origin;
     };
   };
   /**
-   * Response to a 'Release' request.
+   * Any value that was set by a client request in the 'id' field.
    */
-  ReleaseResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Release";
-    result: "Released";
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
+  id?: {
+    [k: string]: unknown;
   };
+}
+/**
+ * Request next block from the current cardano-node's cursor.
+ */
+export interface NextBlock {
+  jsonrpc: "2.0";
+  method: "nextBlock";
   /**
-   * Acquire a mempool snapshot. This is blocking until a new (i.e different) snapshot is available.
+   * An arbitrary JSON value that will be mirrored back in the response.
    */
-  AwaitAcquire: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "AwaitAcquire";
-    args?: {};
-    /**
-     * An arbitrary JSON value that will be mirrored back in the response.
-     */
-    mirror?: {
-      [k: string]: unknown;
-    };
+  id?: {
+    [k: string]: unknown;
   };
+}
+/**
+ * Response to a 'nextBlock' request.
+ */
+export interface NextBlockResponse {
+  jsonrpc: "2.0";
+  result: RollForward | RollBackward;
   /**
-   * Response to a 'AwaitAcquire' request.
+   * Any value that was set by a client request in the 'id' field.
    */
-  AwaitAcquireResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "AwaitAcquire";
-    result: AwaitAcquired;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
+  id?: {
+    [k: string]: unknown;
   };
-  /**
-   * Request the next transaction from an acquired snapshot.
-   */
-  NextTx: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "NextTx";
-    args?: {
-      fields?: "all";
-    };
-    /**
-     * An arbitrary JSON value that will be mirrored back in the response.
-     */
-    mirror?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * Response to a 'NextTx' request.
-   */
-  NextTxResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "NextTx";
-    result: TxId | TxAlonzo | TxBabbage | Null;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * Ask whether a given transaction is present in the acquired mempool snapshot.
-   */
-  HasTx: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "HasTx";
-    args?: {
-      id: TxId;
-    };
-    /**
-     * An arbitrary JSON value that will be mirrored back in the response.
-     */
-    mirror?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * Response to a 'HasTx' request.
-   */
-  HasTxResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "HasTx";
-    result: boolean;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * Get size and capacities of the mempool (acquired snapshot).
-   */
-  SizeAndCapacity: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "SizeAndCapacity";
-    args?: {};
-    /**
-     * An arbitrary JSON value that will be mirrored back in the response.
-     */
-    mirror?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * Response to a 'SizeAndCapacity' request.
-   */
-  SizeAndCapacityResponse: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "SizeAndCapacity";
-    result: MempoolSizeAndCapacity;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * Release a previously acquired mempool snapshot.
-   */
-  ReleaseMempool?: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "ReleaseMempool";
-    args?: {};
-    /**
-     * An arbitrary JSON value that will be mirrored back in the response.
-     */
-    mirror?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * Response to a 'ReleaseMempool' request.
-   */
-  ReleaseMempoolResponse?: {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "ReleaseMempool";
-    result: "Released";
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * Query the ledger / node.
-   */
-  Query: {
-    type: "jsonwsp/request";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    args?: {
-      query:
-        | GetEraStart
-        | GetEraSummaries
-        | GetLedgerTip
-        | GetCurrentEpoch
-        | GetNonMyopicMemberRewards
-        | GetDelegationsAndRewards
-        | GetCurrentProtocolParameters
-        | GetProposedProtocolParameters
-        | GetStakeDistribution
-        | GetUtxo
-        | GetUtxoByAddress
-        | GetUtxoByTxIn
-        | GetGenesisConfig
-        | GetRewardsProvenanceDeprecated
-        | GetRewardsProvenance
-        | GetPoolsRanking
-        | GetPoolIds
-        | GetPoolParameters
-        | GetChainTip
-        | GetBlockHeight
-        | GetSystemStart;
-    };
-    /**
-     * An arbitrary JSON value that will be mirrored back in the response.
-     */
-    mirror?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[eraStart]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: Bound | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[eraSummaries]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: QueryUnavailableInCurrentEra | EraSummary[];
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[ledgerTip]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: PointOrOrigin | EraMismatch | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[currentEpoch]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: Epoch | EraMismatch | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[nonMyopicMemberRewards]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: NonMyopicMemberRewards | EraMismatch | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[delegationsAndRewards]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: DelegationsAndRewardsByAccounts | EraMismatch | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[currentProtocolParameters]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result:
-      | ProtocolParametersShelley
-      | ProtocolParametersAlonzo
-      | ProtocolParametersBabbage
-      | EraMismatch
-      | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[proposedProtocolParameters]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result:
-      | ProposedProtocolParametersShelley
-      | ProposedProtocolParametersAlonzo
-      | ProposedProtocolParametersBabbage
-      | EraMismatch
-      | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[stakeDistribution]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: PoolDistribution | EraMismatch | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[utxo]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: Utxo | EraMismatch | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[genesisConfig]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: GenesisByron | GenesisShelley | GenesisAlonzo | EraMismatch | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * This query is now deprecated. Use /rewardsProvenance'/ instead.
-   */
-  "QueryResponse[rewardsProvenance]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: RewardsProvenance | EraMismatch | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[rewardsProvenance']": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: RewardsProvenance1 | EraMismatch | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[poolIds]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: PoolId[] | EraMismatch | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[poolParameters]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result:
-      | {
-          [k: string]: PoolParameters;
-        }
-      | EraMismatch
-      | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[poolsRanking]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: PoolsRanking | EraMismatch | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[blockHeight]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: BlockNoOrOrigin | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[chainTip]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: PointOrOrigin | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  "QueryResponse[systemStart]": {
-    type: "jsonwsp/response";
-    version: "1.0";
-    servicename: "ogmios";
-    methodname: "Query";
-    result: UtcTime | QueryUnavailableInCurrentEra;
-    /**
-     * Any value that was set by a client request in the 'mirror' field.
-     */
-    reflection?: {
-      [k: string]: unknown;
-    };
-  };
-  /**
-   * A fault in the JSON-WSP protocol. This is returned by the server when a request from clients is deemed invalid or, when the server was unable to reply to a well-formed request.
-   */
-  Fault: {
-    type: "jsonwsp/fault";
-    version: "1.0";
-    servicename: "ogmios";
-    fault: {
-      /**
-       * An error code telling about the nature of the fault.
-       */
-      code: "incompatible" | "server" | "client";
-      /**
-       * A descriptive error message giving hints about the fault.
-       */
-      string: string;
-    };
-  };
-  [k: string]: unknown;
 }
 export interface RollForward {
-  RollForward: {
-    block: Block;
-    tip: TipOrOrigin;
-  };
+  direction: "forward";
+  tip: Tip;
+  block: Block;
 }
-export interface Babbage {
-  babbage: BlockBabbage;
-}
-export interface BlockBabbage {
-  body: TxBabbage[];
-  headerHash: DigestBlake2BBlockHeader;
+export interface BlockEBB {
+  era: "byron";
   header: {
-    blockHeight: BlockNo;
-    slot: Slot;
-    prevHash: DigestBlake2BBlockHeader;
-    issuerVk: VerificationKey;
-    issuerVrf: IssuerVrfVerificationKey;
-    blockSize: BlockSize;
-    blockHash: DigestBlake2BBlockBody;
-    opCert: OpCert;
-    protocolVersion: ProtocolVersion;
-    signature: IssuerSignature;
-    vrfInput: CertifiedVrf;
+    hash: DigestBlake2B256;
+  };
+  ancestor: DigestBlake2B256;
+  height: BlockHeight;
+}
+export interface BlockBFT {
+  era: "byron";
+  header: {
+    hash: DigestBlake2B256;
+  };
+  ancestor: DigestBlake2B256;
+  height: BlockHeight;
+  slot: Slot;
+  size: BlockSize;
+  transactions?: Transaction[];
+  operationalCertificates?: BootstrapOperationalCertificate[];
+  governanceAction?: BootstrapGovernanceAction;
+  protocol: {
+    magic: ProtocolMagicId;
+    version: ProtocolVersion;
+    software: SoftwareVersion;
+  };
+  issuer: {
+    verificationKey: ExtendedVerificationKey;
+  };
+  delegate: {
+    verificationKey: ExtendedVerificationKey;
   };
 }
-export interface TxBabbage {
-  id: DigestBlake2BBlockBody;
+export interface Transaction {
+  id: DigestBlake2B256;
   inputSource: "inputs" | "collaterals";
-  body: {
-    inputs: TxIn[];
-    references: TxIn[];
-    collaterals: TxIn[];
-    collateralReturn: TxOut | Null;
-    totalCollateral: Lovelace | Null;
-    outputs: TxOut[];
-    certificates: Certificate[];
-    withdrawals: Withdrawals;
-    fee: Lovelace;
-    validityInterval: ValidityInterval;
-    update: UpdateBabbage;
-    mint: Value;
-    network: Network | Null;
-    scriptIntegrityHash: DigestBlake2BScriptIntegrity | Null;
-    requiredExtraSignatures: DigestBlake2BVerificationKey[];
+  inputs: TransactionOutputReference[];
+  references?: TransactionOutputReference[];
+  collaterals?: TransactionOutputReference[];
+  collateral?: Lovelace;
+  collateralReturn?: TransactionOutput;
+  outputs: TransactionOutput[];
+  certificates?: Certificate[];
+  withdrawals?: Withdrawals;
+  fee?: Lovelace;
+  validityInterval?: ValidityInterval;
+  mint?: Value;
+  network?: Network;
+  scriptIntegrityHash?: DigestBlake2B256;
+  requiredExtraSignatories?: DigestBlake2B224[];
+  governanceActions?: UpdateProposalShelley[] | UpdateProposalAlonzo[] | UpdateProposalBabbage[];
+  metadata?: Metadata;
+  signatories: unknown[];
+  scripts?: {
+    [k: string]: Script;
   };
-  witness: {
-    signatures: {
-      [k: string]: Signature;
-    };
-    scripts: {
-      [k: string]: Script;
-    };
-    bootstrap: BootstrapWitness[];
-    datums: {
-      [k: string]: Datum;
-    };
-    redeemers: {
-      [k: string]: Redeemer;
-    };
+  datums?: {
+    [k: string]: Datum;
   };
-  metadata: AuxiliaryData | Null;
+  redeemers?: {
+    [k: string]: Redeemer;
+  };
   /**
-   * The raw serialized transaction, as found on-chain.
+   * The raw serialized (CBOR) transaction, as found on-chain.
    */
-  raw: string;
+  cbor: string;
 }
-export interface TxIn {
-  txId: TxId;
-  index: number;
+export interface TransactionOutputReference {
+  txId: TransactionId;
+  index: UInt32;
 }
 /**
  * A transaction output. Since Mary, 'value' always return a multi-asset value. Since Alonzo, 'datumHash' is always present (albeit sometimes 'null'). Since Babbage, 'datum' & 'script' are always present (albeit sometimes 'null').
  */
-export interface TxOut {
+export interface TransactionOutput {
   address: Address;
   value: Value;
-  datumHash?: DigestBlake2BDatum | Null;
-  datum?:
-    | {
-        [k: string]: unknown;
-      }
-    | Datum
-    | Null;
-  script?: Script | Null;
+  datumHash?: DigestBlake2B256;
+  datum?: Datum;
+  script?: Script;
 }
 export interface Value {
   coins: Lovelace;
@@ -1159,51 +494,51 @@ export interface PlutusV2 {
  */
 export interface StakeDelegation {
   stakeDelegation: {
-    delegator: DigestBlake2BCredential;
-    delegatee: PoolId;
+    delegator: DigestBlake2B224;
+    delegatee: StakePoolId;
   };
 }
 /**
  * A stake key registration certificate.
  */
 export interface StakeKeyRegistration {
-  stakeKeyRegistration: DigestBlake2BCredential;
+  stakeKeyRegistration: DigestBlake2B224;
 }
 /**
  * A stake key de-registration certificate.
  */
 export interface StakeKeyDeregistration {
-  stakeKeyDeregistration: DigestBlake2BCredential;
+  stakeKeyDeregistration: DigestBlake2B224;
 }
 /**
  * A pool registration certificate.
  */
 export interface PoolRegistration {
-  poolRegistration: PoolParameters;
+  poolRegistration: StakePoolParameters;
 }
-export interface PoolParameters {
-  owners: DigestBlake2BVerificationKey[];
+export interface StakePoolParameters {
+  id: StakePoolId;
+  owners: DigestBlake2B224[];
   cost: Lovelace;
   margin: Ratio;
   pledge: Lovelace;
-  vrf: DigestBlake2BVrfVerificationKey;
-  metadata: Null | PoolMetadata;
-  id: PoolId;
+  vrf: DigestBlake2B256;
+  metadata?: PoolMetadata;
   relays: Relay[];
   rewardAccount: RewardAccount;
 }
 export interface PoolMetadata {
-  hash: DigestBlake2BPoolMetadata;
+  hash: DigestAny;
   url: string;
 }
 export interface ByAddress {
-  ipv4: string | Null;
-  ipv6: string | Null;
-  port: number | Null;
+  ipv4?: string;
+  ipv6?: string;
+  port?: number;
 }
 export interface ByName {
   hostname: string;
-  port: number | Null;
+  port?: number;
 }
 /**
  * A pool retirement certificate.
@@ -1211,14 +546,14 @@ export interface ByName {
 export interface PoolRetirement {
   poolRetirement: {
     retirementEpoch: Epoch;
-    poolId: PoolId;
+    poolId: StakePoolId;
   };
 }
 export interface GenesisDelegation {
   genesisDelegation: {
-    delegateKeyHash: DigestBlake2BVerificationKey;
-    verificationKeyHash: DigestBlake2BVerificationKey;
-    vrfVerificationKeyHash: DigestBlake2BVrfVerificationKey;
+    delegateKeyHash: DigestBlake2B224;
+    verificationKeyHash: DigestBlake2B224;
+    vrfVerificationKeyHash: DigestBlake2B256;
   };
 }
 /**
@@ -1226,55 +561,82 @@ export interface GenesisDelegation {
  */
 export interface MoveInstantaneousRewards {
   moveInstantaneousRewards: {
-    rewards?: Rewards;
+    rewards?: RewardTransfer;
     value?: Lovelace;
     pot: RewardPot;
   };
 }
-export interface Rewards {
+export interface RewardTransfer {
   [k: string]: LovelaceDelta;
 }
 export interface Withdrawals {
   [k: string]: Lovelace;
 }
 export interface ValidityInterval {
-  invalidBefore: Slot | Null;
-  invalidHereafter: Slot | Null;
+  invalidBefore?: Slot;
+  invalidAfter?: Slot;
 }
-export interface UpdateProposalBabbage {
+export interface UpdateProposalShelley {
   epoch: Epoch;
   proposal: {
-    [k: string]: ProtocolParametersBabbage;
+    [k: string]: ProtocolParametersShelley;
   };
 }
-export interface ProtocolParametersBabbage {
-  minFeeCoefficient: NullableUInt64;
-  minFeeConstant: NullableUInt64;
-  maxBlockBodySize: NullableUInt64;
-  maxBlockHeaderSize: NullableUInt64;
-  maxTxSize: NullableUInt64;
-  stakeKeyDeposit: NullableUInt64;
-  poolDeposit: NullableUInt64;
-  poolRetirementEpochBound: NullableUInt64;
-  desiredNumberOfPools: NullableUInt64;
-  poolInfluence: NullableRatio;
-  monetaryExpansion: NullableRatio;
-  treasuryExpansion: NullableRatio;
-  minPoolCost: NullableUInt64;
-  coinsPerUtxoByte: NullableUInt64;
-  maxValueSize: NullableUInt64;
-  collateralPercentage: NullableUInt64;
-  maxCollateralInputs: NullableUInt64;
-  protocolVersion: ProtocolVersion | Null;
-  costModels: CostModels | Null;
-  prices: Prices | Null;
-  maxExecutionUnitsPerTransaction: ExUnits | Null;
-  maxExecutionUnitsPerBlock: ExUnits | Null;
+export interface ProtocolParametersShelley {
+  minFeeCoefficient?: UInt64;
+  minFeeConstant?: UInt64;
+  maxBlockBodySize?: UInt64;
+  maxBlockHeaderSize?: UInt64;
+  maxTxSize?: UInt64;
+  stakeKeyDeposit?: UInt64;
+  poolDeposit?: UInt64;
+  poolRetirementEpochBound?: UInt64;
+  desiredNumberOfPools?: UInt64;
+  poolInfluence?: Ratio;
+  monetaryExpansion?: Ratio;
+  treasuryExpansion?: Ratio;
+  decentralizationParameter?: Ratio;
+  minUtxoValue?: UInt64;
+  minPoolCost?: UInt64;
+  extraEntropy?: Nonce;
+  protocolVersion?: ProtocolVersion;
 }
 export interface ProtocolVersion {
-  major: UInt32;
-  minor: UInt32;
-  patch?: UInt32;
+  major: UInt321;
+  minor: UInt321;
+  patch?: UInt321;
+}
+export interface UpdateProposalAlonzo {
+  epoch: Epoch;
+  proposal: {
+    [k: string]: ProtocolParametersAlonzo;
+  };
+}
+export interface ProtocolParametersAlonzo {
+  minFeeCoefficient?: UInt64;
+  minFeeConstant?: UInt64;
+  maxBlockBodySize?: UInt64;
+  maxBlockHeaderSize?: UInt64;
+  maxTxSize?: UInt64;
+  stakeKeyDeposit?: UInt64;
+  poolDeposit?: UInt64;
+  poolRetirementEpochBound?: UInt64;
+  desiredNumberOfPools?: UInt64;
+  poolInfluence?: Ratio;
+  monetaryExpansion?: Ratio;
+  treasuryExpansion?: Ratio;
+  decentralizationParameter?: Ratio;
+  minPoolCost?: UInt64;
+  coinsPerUtxoWord?: UInt64;
+  maxValueSize?: UInt64;
+  collateralPercentage?: UInt64;
+  maxCollateralInputs?: UInt64;
+  extraEntropy?: Nonce;
+  protocolVersion?: ProtocolVersion;
+  costModels?: CostModels;
+  prices?: Prices;
+  maxExecutionUnitsPerTransaction?: ExecutionUnits;
+  maxExecutionUnitsPerBlock?: ExecutionUnits;
 }
 export interface CostModels {
   [k: string]: CostModel;
@@ -1286,29 +648,45 @@ export interface Prices {
   memory: Ratio;
   steps: Ratio;
 }
-export interface ExUnits {
+export interface ExecutionUnits {
   memory: UInt64;
   steps: UInt64;
 }
-export interface BootstrapWitness {
-  signature: Signature;
-  chainCode: ChainCode | Null;
-  addressAttributes: AddressAttributes | Null;
-  key: VerificationKey;
+export interface UpdateProposalBabbage {
+  epoch: Epoch;
+  proposal: {
+    [k: string]: ProtocolParametersBabbage;
+  };
 }
-export interface Redeemer {
-  redeemer: RedeemerData;
-  executionUnits: ExUnits;
-}
-export interface AuxiliaryData {
-  hash: DigestBlake2BAuxiliaryDataBody;
-  body: AuxiliaryDataBody;
-}
-export interface AuxiliaryDataBody {
-  blob?: Metadata;
-  scripts?: Script[];
+export interface ProtocolParametersBabbage {
+  minFeeCoefficient?: UInt64;
+  minFeeConstant?: UInt64;
+  maxBlockBodySize?: UInt64;
+  maxBlockHeaderSize?: UInt64;
+  maxTxSize?: UInt64;
+  stakeKeyDeposit?: UInt64;
+  poolDeposit?: UInt64;
+  poolRetirementEpochBound?: UInt64;
+  desiredNumberOfPools?: UInt64;
+  poolInfluence?: Ratio;
+  monetaryExpansion?: Ratio;
+  treasuryExpansion?: Ratio;
+  minPoolCost?: UInt64;
+  coinsPerUtxoByte?: UInt64;
+  maxValueSize?: UInt64;
+  collateralPercentage?: UInt64;
+  maxCollateralInputs?: UInt64;
+  protocolVersion?: ProtocolVersion;
+  costModels?: CostModels;
+  prices?: Prices;
+  maxExecutionUnitsPerTransaction?: ExecutionUnits;
+  maxExecutionUnitsPerBlock?: ExecutionUnits;
 }
 export interface Metadata {
+  hash: DigestBlake2B256;
+  labels: MetadataLabels;
+}
+export interface MetadataLabels {
   [k: string]: Metadatum;
 }
 export interface Int {
@@ -1330,477 +708,262 @@ export interface MetadatumMap {
   k: Metadatum;
   v: Metadatum;
 }
-/**
- * Certificate identifying a stake pool operator.
- */
-export interface OpCert {
-  count?: UInt64;
-  sigma?: Signature;
-  kesPeriod?: UInt64;
-  hotVk?: KesVerificationKey;
-}
-export interface CertifiedVrf {
-  proof?: VrfProof;
-  output?: VrfOutput;
-}
-export interface Alonzo {
-  alonzo: BlockAlonzo;
-}
-export interface BlockAlonzo {
-  body: TxAlonzo[];
-  headerHash: DigestBlake2BBlockHeader;
-  header: {
-    blockHeight: BlockNo;
-    slot: Slot;
-    prevHash: DigestBlake2BBlockHeader;
-    issuerVk: VerificationKey;
-    issuerVrf: IssuerVrfVerificationKey;
-    nonce?: CertifiedVrf;
-    leaderValue: CertifiedVrf;
-    blockSize: BlockSize;
-    blockHash: DigestBlake2BBlockBody;
-    opCert: OpCert;
-    protocolVersion: ProtocolVersion;
-    signature: IssuerSignature;
-  };
-}
-export interface TxAlonzo {
-  id: DigestBlake2BBlockBody;
-  inputSource: "inputs" | "collaterals";
-  body: {
-    inputs: TxIn[];
-    collaterals: TxIn[];
-    outputs: TxOut[];
-    certificates: Certificate[];
-    withdrawals: Withdrawals;
-    fee: Lovelace;
-    validityInterval: ValidityInterval;
-    update: UpdateAlonzo;
-    mint: Value;
-    network: Network | Null;
-    scriptIntegrityHash: DigestBlake2BScriptIntegrity | Null;
-    requiredExtraSignatures: DigestBlake2BVerificationKey[];
-  };
-  witness: {
-    signatures: {
-      [k: string]: Signature;
-    };
-    scripts: {
-      [k: string]: Script;
-    };
-    bootstrap: BootstrapWitness[];
-    datums: {
-      [k: string]: Datum;
-    };
-    redeemers: {
-      [k: string]: Redeemer;
-    };
-  };
-  metadata: AuxiliaryData | Null;
-  /**
-   * The raw serialized transaction, as found on-chain.
-   */
-  raw: string;
-}
-export interface UpdateProposalAlonzo {
-  epoch: Epoch;
-  proposal: {
-    [k: string]: ProtocolParametersAlonzo;
-  };
-}
-export interface ProtocolParametersAlonzo {
-  minFeeCoefficient: NullableUInt64;
-  minFeeConstant: NullableUInt64;
-  maxBlockBodySize: NullableUInt64;
-  maxBlockHeaderSize: NullableUInt64;
-  maxTxSize: NullableUInt64;
-  stakeKeyDeposit: NullableUInt64;
-  poolDeposit: NullableUInt64;
-  poolRetirementEpochBound: NullableUInt64;
-  desiredNumberOfPools: NullableUInt64;
-  poolInfluence: NullableRatio;
-  monetaryExpansion: NullableRatio;
-  treasuryExpansion: NullableRatio;
-  decentralizationParameter: NullableRatio;
-  minPoolCost: NullableUInt64;
-  coinsPerUtxoWord: NullableUInt64;
-  maxValueSize: NullableUInt64;
-  collateralPercentage: NullableUInt64;
-  maxCollateralInputs: NullableUInt64;
-  extraEntropy: Nonce | Null;
-  protocolVersion: ProtocolVersion | Null;
-  costModels: CostModels | Null;
-  prices: Prices | Null;
-  maxExecutionUnitsPerTransaction: ExUnits | Null;
-  maxExecutionUnitsPerBlock: ExUnits | Null;
-}
-export interface Mary {
-  mary: BlockMary;
-}
-export interface BlockMary {
-  body: TxMary[];
-  headerHash: DigestBlake2BBlockHeader;
-  header: {
-    blockHeight: BlockNo;
-    slot: Slot;
-    prevHash: DigestBlake2BBlockHeader;
-    issuerVk: VerificationKey;
-    issuerVrf: IssuerVrfVerificationKey;
-    nonce?: CertifiedVrf;
-    leaderValue: CertifiedVrf;
-    blockSize: BlockSize;
-    blockHash: DigestBlake2BBlockBody;
-    opCert: OpCert;
-    protocolVersion: ProtocolVersion;
-    signature: IssuerSignature;
-  };
-}
-export interface TxMary {
-  id: DigestBlake2BBlockBody;
-  body: {
-    inputs: TxIn[];
-    outputs: TxOut[];
-    certificates: Certificate[];
-    withdrawals: Withdrawals;
-    fee: Lovelace;
-    validityInterval: ValidityInterval;
-    update: UpdateShelley;
-    mint: Value;
-  };
-  witness: {
-    signatures: {
-      [k: string]: Signature;
-    };
-    scripts: {
-      [k: string]: Script;
-    };
-    bootstrap: BootstrapWitness[];
-  };
-  metadata: AuxiliaryData | Null;
-  /**
-   * The raw serialized transaction, as found on-chain.
-   */
-  raw: string;
-}
-export interface UpdateProposalShelley {
-  epoch: Epoch;
-  proposal: {
-    [k: string]: ProtocolParametersShelley;
-  };
-}
-export interface ProtocolParametersShelley {
-  minFeeCoefficient: NullableUInt64;
-  minFeeConstant: NullableUInt64;
-  maxBlockBodySize: NullableUInt64;
-  maxBlockHeaderSize: NullableUInt64;
-  maxTxSize: NullableUInt64;
-  stakeKeyDeposit: NullableUInt64;
-  poolDeposit: NullableUInt64;
-  poolRetirementEpochBound: NullableUInt64;
-  desiredNumberOfPools: NullableUInt64;
-  poolInfluence: NullableRatio;
-  monetaryExpansion: NullableRatio;
-  treasuryExpansion: NullableRatio;
-  decentralizationParameter: NullableRatio;
-  minUtxoValue: NullableUInt64;
-  minPoolCost: NullableUInt64;
-  extraEntropy: Nonce | Null;
-  protocolVersion: ProtocolVersion | Null;
-}
-export interface Allegra {
-  allegra: BlockAllegra;
-}
-export interface BlockAllegra {
-  body: TxAllegra[];
-  headerHash: DigestBlake2BBlockHeader;
-  header: {
-    blockHeight: BlockNo;
-    slot: Slot;
-    prevHash: DigestBlake2BBlockHeader;
-    issuerVk: VerificationKey;
-    issuerVrf: IssuerVrfVerificationKey;
-    nonce?: CertifiedVrf;
-    leaderValue: CertifiedVrf;
-    blockSize: BlockSize;
-    blockHash: DigestBlake2BBlockBody;
-    opCert: OpCert;
-    protocolVersion: ProtocolVersion;
-    signature: IssuerSignature;
-  };
-}
-export interface TxAllegra {
-  id: DigestBlake2BBlockBody;
-  body: {
-    inputs: TxIn[];
-    outputs: TxOut[];
-    certificates: Certificate[];
-    withdrawals: Withdrawals;
-    fee: Lovelace;
-    validityInterval: ValidityInterval;
-    update: UpdateShelley;
-  };
-  witness: {
-    signatures: {
-      [k: string]: Signature;
-    };
-    scripts: {
-      [k: string]: Script;
-    };
-    bootstrap: BootstrapWitness[];
-  };
-  metadata: AuxiliaryData | Null;
-  /**
-   * The raw serialized transaction, as found on-chain.
-   */
-  raw: string;
-}
-export interface Shelley {
-  shelley: BlockShelley;
-}
-export interface BlockShelley {
-  body: TxShelley[];
-  headerHash: DigestBlake2BBlockHeader;
-  header: {
-    blockHeight: BlockNo;
-    slot: Slot;
-    prevHash: DigestBlake2BBlockHeader;
-    issuerVk: VerificationKey;
-    issuerVrf: IssuerVrfVerificationKey;
-    nonce?: CertifiedVrf;
-    leaderValue: CertifiedVrf;
-    blockSize: BlockSize;
-    blockHash: DigestBlake2BBlockBody;
-    opCert: OpCert;
-    protocolVersion: ProtocolVersion;
-    signature: IssuerSignature;
-  };
-}
-export interface TxShelley {
-  id: DigestBlake2BBlockBody;
-  body: {
-    inputs: TxIn[];
-    outputs: TxOut[];
-    certificates: Certificate[];
-    withdrawals: Withdrawals;
-    fee: Lovelace;
-    timeToLive: Slot;
-    update: UpdateShelley;
-  };
-  witness: {
-    signatures: {
-      [k: string]: Signature;
-    };
-    scripts: {
-      [k: string]: Script;
-    };
-    bootstrap: BootstrapWitness[];
-  };
-  metadata: AuxiliaryData | Null;
-  /**
-   * The raw serialized transaction, as found on-chain.
-   */
-  raw: string;
-}
-export interface Byron {
-  byron: BlockByron;
-}
-export interface StandardBlock {
-  hash: DigestBlake2BBlockHeader;
-  header: {
-    blockHeight: BlockNo;
-    genesisKey: GenesisVerificationKey;
-    prevHash: DigestBlake2BBlockHeader;
-    proof: BlockProof;
-    protocolMagicId: ProtocolMagicId;
-    protocolVersion: ProtocolVersion;
-    signature: BlockSignature;
-    slot: Slot;
-    softwareVersion: SoftwareVersion;
-  };
-  body: {
-    txPayload: TxByron[];
-    dlgPayload: DlgCertificate[];
-    updatePayload: {
-      proposal: Null | UpdateProposalByron;
-      votes: Vote[];
-    };
-  };
-}
-export interface BlockProof {
-  utxo: {
-    number: UInt32;
-    root: DigestBlake2BMerkleRoot;
-    witnessesHash: DigestBlake2BBlockByronBodyTxPayloadWitness;
-  };
-  delegation: DigestBlake2BBlockByronBodyDlgPayload;
-  update: DigestBlake2BBlockByronBodyUpdatePayload;
-}
-export interface BlockSignature {
-  dlgCertificate: DlgCertificate;
-  signature: IssuerSignature;
+export interface Redeemer {
+  redeemer: RedeemerData;
+  executionUnits: ExecutionUnits;
 }
 /**
  * A (Byron) delegation certificate.
  */
-export interface DlgCertificate {
-  epoch: Epoch;
-  issuerVk: GenesisVerificationKey;
-  delegateVk: GenesisVerificationKey;
-  signature: IssuerSignature;
-}
-export interface SoftwareVersion {
-  appName: string;
-  number: UInt32;
-}
-export interface TxByron {
-  id: TxId;
-  body: {
-    inputs: TxIn[];
-    outputs: TxOut[];
+export interface BootstrapOperationalCertificate {
+  issuer: {
+    verificationKey: VerificationKey;
   };
-  witness: TxWitness[];
-  /**
-   * The raw serialized transaction, as found on-chain.
-   */
-  raw: string;
-}
-export interface WitnessVk {
-  witnessVk: {
-    key: DigestBlake2BVerificationKey;
-    signature: Signature;
+  delegate: {
+    verificationKey: VerificationKey;
   };
 }
-export interface RedeemWitness {
-  redeemWitness: {
-    key: VerificationKey;
-    signature: Signature;
-  };
-}
-export interface UpdateProposalByron {
-  body: {
-    protocolVersion: ProtocolVersion;
-    softwareVersion: SoftwareVersion;
+export interface BootstrapGovernanceAction {
+  proposal?: {
+    protocol: {
+      version: ProtocolVersion;
+      software: SoftwareVersion;
+    };
     metadata: {
       [k: string]: string;
     };
-    parametersUpdate: ProtocolParametersByron;
+    parameters: ProtocolParametersByron;
+    issuer: {
+      verificationKey: ExtendedVerificationKey;
+    };
   };
-  issuer: IssuerVrfVerificationKey;
-  signature: IssuerSignature;
+  votes: BootstrapVote[];
+}
+export interface SoftwareVersion {
+  appName: string;
+  number: UInt321;
 }
 export interface ProtocolParametersByron {
-  heavyDlgThreshold: NullableRatio;
-  maxBlockSize: NullableUInt64;
-  maxHeaderSize: NullableUInt64;
-  maxProposalSize: NullableUInt64;
-  maxTxSize: NullableUInt64;
-  mpcThreshold: NullableRatio;
-  scriptVersion: NullableUInt64;
-  slotDuration: NullableUInt64;
-  unlockStakeEpoch: NullableUInt64;
-  updateProposalThreshold: NullableRatio;
-  updateProposalTimeToLive: NullableUInt64;
-  updateVoteThreshold: NullableRatio;
-  txFeePolicy: TxFeePolicy | Null;
-  softforkRule: SoftForkRule | Null;
+  heavyDlgThreshold?: Ratio;
+  maxBlockSize?: UInt64;
+  maxHeaderSize?: UInt64;
+  maxProposalSize?: UInt64;
+  maxTxSize?: UInt64;
+  mpcThreshold?: Ratio;
+  scriptVersion?: UInt64;
+  slotDuration?: UInt64;
+  unlockStakeEpoch?: UInt64;
+  updateProposalThreshold?: Ratio;
+  updateProposalTimeToLive?: UInt64;
+  updateVoteThreshold?: Ratio;
+  txFeePolicy?: TxFeePolicy;
+  softforkRule?: SoftForkRule;
 }
 export interface TxFeePolicy {
   coefficient: Ratio;
   constant: number;
 }
 export interface SoftForkRule {
-  initThreshold: NullableRatio;
-  minThreshold: NullableRatio;
-  decrementThreshold: NullableRatio;
+  initThreshold: Ratio;
+  minThreshold: Ratio;
+  decrementThreshold: Ratio;
 }
-export interface Vote {
-  voterVk: VerificationKey;
-  proposalId: DigestBlake2BVerificationKey;
-  signature: Signature;
-}
-export interface EpochBoundaryBlock {
-  hash: DigestBlake2BBlockHeader;
-  header: {
-    blockHeight: BlockNo;
-    epoch: Epoch;
-    prevHash: DigestBlake2BBlockHeader;
+export interface BootstrapVote {
+  voter: {
+    verificationKey: VerificationKey;
+  };
+  proposal: {
+    hash: DigestBlake2B256;
   };
 }
-export interface Tip {
+export interface BlockPraos {
+  era: "shelley" | "allegra" | "mary" | "alonzo" | "babbage";
+  header: {
+    hash: DigestBlake2B256;
+  };
+  ancestor: DigestBlake2B256 | GenesisHash;
+  nonce?: CertifiedVrf;
+  height: BlockHeight;
+  size: BlockSize;
   slot: Slot;
-  hash: DigestBlake2BBlockHeader;
-  blockNo: BlockNo;
+  transactions?: Transaction[];
+  protocol: {
+    version: ProtocolVersion;
+  };
+  issuer: {
+    verificationKey: VerificationKey;
+    vrfVerificationKey: VerificationKey;
+    operationalCertificate: OperationalCertificate;
+    leaderValue: CertifiedVrf;
+  };
+}
+export interface CertifiedVrf {
+  proof?: VrfProof;
+  output?: VrfOutput;
+}
+/**
+ * Certificate identifying a stake pool operator.
+ */
+export interface OperationalCertificate {
+  count: UInt64;
+  kes: {
+    period: UInt64;
+    verificationKey: KesVerificationKey;
+  };
 }
 export interface RollBackward {
-  RollBackward: {
-    point: PointOrOrigin;
-    tip: TipOrOrigin;
-  };
+  direction: "backward";
+  tip: Tip | Origin;
+  point: Point | Origin;
 }
 /**
- * A point on the chain, identified by a slot and a block header hash.
+ * Submit a signed and serialized transaction to the network.
  */
-export interface Point {
-  slot: Slot;
-  hash: DigestBlake2BBlockHeader;
-}
-export interface IntersectionFound {
-  IntersectionFound: {
-    point: PointOrOrigin;
-    tip: TipOrOrigin;
+export interface SubmitTransaction {
+  jsonrpc: "2.0";
+  method: "submitTransaction";
+  params: {
+    /**
+     * CBOR-serialized signed transaction (base16)
+     */
+    transaction: string;
+  };
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
   };
 }
-export interface IntersectionNotFound {
-  IntersectionNotFound: {
-    tip: TipOrOrigin;
+export interface SubmitTransactionSuccess {
+  jsonrpc: "2.0";
+  result: {
+    transaction: {
+      id: TransactionId;
+    };
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
   };
 }
-export interface SubmitSuccess {
-  SubmitSuccess: {
-    txId: TxId;
+export interface SubmitTransactionFailure {
+  jsonrpc: "2.0";
+  error: {
+    code: 3005;
+    message: string;
+    data: (
+      | EraMismatch
+      | InvalidWitnesses
+      | MissingVkWitnesses
+      | MissingScriptWitnesses
+      | ScriptWitnessNotValidating
+      | InsufficientGenesisSignatures
+      | MissingTxMetadata
+      | MissingTxMetadataHash
+      | TxMetadataHashMismatch
+      | BadInputs
+      | ExpiredUtxo
+      | OutsideOfValidityInterval
+      | TxTooLarge
+      | MissingAtLeastOneInputUtxo
+      | InvalidMetadata
+      | FeeTooSmall
+      | ValueNotConserved
+      | NetworkMismatch
+      | OutputTooSmall
+      | TooManyAssetsInOutput
+      | AddressAttributesTooLarge
+      | TriesToForgeAda
+      | DelegateNotRegistered
+      | UnknownOrIncompleteWithdrawals
+      | StakePoolNotRegistered
+      | WrongRetirementEpoch
+      | WrongPoolCertificate
+      | StakeKeyAlreadyRegistered
+      | PoolCostTooSmall
+      | PoolMetadataHashTooBig
+      | StakeKeyNotRegistered
+      | RewardAccountNotExisting
+      | RewardAccountNotEmpty
+      | WrongCertificateType
+      | UnknownGenesisKey
+      | AlreadyDelegating
+      | InsufficientFundsForMir
+      | TooLateForMir
+      | MirTransferNotCurrentlyAllowed
+      | MirNegativeTransferNotCurrentlyAllowed
+      | MirProducesNegativeUpdate
+      | DuplicateGenesisVrf
+      | NonGenesisVoters
+      | UpdateWrongEpoch
+      | ProtocolVersionCannotFollow
+      | MissingRequiredRedeemers
+      | MissingRequiredDatums
+      | UnspendableDatums
+      | ExtraDataMismatch
+      | MissingRequiredSignatures
+      | UnspendableScriptInputs
+      | ExtraRedeemers
+      | MissingDatumHashesForInputs
+      | MissingCollateralInputs
+      | CollateralTooSmall
+      | CollateralIsScript
+      | CollateralHasNonAdaAssets
+      | TooManyCollateralInputs
+      | ExecutionUnitsTooLarge
+      | OutsideForecast
+      | ValidationTagMismatch
+      | CollectErrors
+      | ExtraScriptWitnesses
+      | MirNegativeTransfer
+      | TotalCollateralMismatch
+      | MalformedReferenceScripts
+      | MalformedScriptWitnesses
+    )[];
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
   };
 }
-export interface SubmitFail {
-  SubmitFail: SubmitTxError;
-}
-/**
- * An era mismatch between a client request and the era the ledger is in. This may occur when running queries on a syncing node and/or when the node is crossing an era.
- */
 export interface EraMismatch {
-  eraMismatch: {
-    queryEra: Era;
-    ledgerEra: Era;
-  };
+  queryEra: Era;
+  ledgerEra: Era;
 }
 export interface InvalidWitnesses {
   invalidWitnesses: VerificationKey[];
 }
 export interface MissingVkWitnesses {
-  missingVkWitnesses: DigestBlake2BVerificationKey[];
+  missingVkWitnesses: DigestBlake2B224[];
 }
 export interface MissingScriptWitnesses {
-  missingScriptWitnesses: DigestBlake2BScript[];
+  missingScriptWitnesses: DigestBlake2B224[];
 }
 export interface ScriptWitnessNotValidating {
-  scriptWitnessNotValidating: DigestBlake2BScript[];
+  scriptWitnessNotValidating: DigestBlake2B224[];
 }
 export interface InsufficientGenesisSignatures {
-  insufficientGenesisSignatures: DigestBlake2BVerificationKey[];
+  insufficientGenesisSignatures: DigestBlake2B224[];
 }
 export interface MissingTxMetadata {
-  missingTxMetadata: DigestBlake2BAuxiliaryDataBody;
+  missingTxMetadata: DigestBlake2B256;
 }
 export interface MissingTxMetadataHash {
-  missingTxMetadataHash: DigestBlake2BAuxiliaryDataBody;
+  missingTxMetadataHash: DigestBlake2B256;
 }
 export interface TxMetadataHashMismatch {
   txMetadataHashMismatch: {
-    includedHash: DigestBlake2BAuxiliaryDataBody;
-    expectedHash: DigestBlake2BAuxiliaryDataBody;
+    includedHash: DigestBlake2B256;
+    expectedHash: DigestBlake2B256;
   };
 }
 export interface BadInputs {
-  badInputs: TxIn[];
+  badInputs: TransactionOutputReference[];
 }
 /**
  * Only in Shelley. Replaced with 'outsideOfValidityInterval' since Allegra.
@@ -1850,14 +1013,27 @@ export interface ValueNotConserved {
 export interface NetworkMismatch {
   networkMismatch: {
     expectedNetwork: Network;
-    invalidEntities: InvalidEntity[];
+    invalidEntities: (
+      | {
+          type: "address";
+          entity: Address;
+        }
+      | {
+          type: "poolRegistration";
+          entity: StakePoolId;
+        }
+      | {
+          type: "rewardAccount";
+          entity: RewardAccount;
+        }
+    )[];
   };
 }
 export interface OutputTooSmall {
   outputTooSmall: (
-    | TxOut
+    | TransactionOutput
     | {
-        output: TxOut;
+        output: TransactionOutput;
         minimumRequiredValue: Lovelace;
       }
   )[];
@@ -1866,7 +1042,7 @@ export interface OutputTooSmall {
  * Only since Mary.
  */
 export interface TooManyAssetsInOutput {
-  tooManyAssetsInOutput: TxOut[];
+  tooManyAssetsInOutput: TransactionOutput[];
 }
 export interface AddressAttributesTooLarge {
   addressAttributesTooLarge: Address[];
@@ -1878,13 +1054,13 @@ export interface TriesToForgeAda {
   triesToForgeAda: null;
 }
 export interface DelegateNotRegistered {
-  delegateNotRegistered: PoolId;
+  delegateNotRegistered: StakePoolId;
 }
 export interface UnknownOrIncompleteWithdrawals {
   unknownOrIncompleteWithdrawals: Withdrawals;
 }
 export interface StakePoolNotRegistered {
-  stakePoolNotRegistered: PoolId;
+  stakePoolNotRegistered: StakePoolId;
 }
 export interface WrongRetirementEpoch {
   wrongRetirementEpoch: {
@@ -1897,7 +1073,7 @@ export interface WrongPoolCertificate {
   wrongPoolCertificate: UInt8;
 }
 export interface StakeKeyAlreadyRegistered {
-  stakeKeyAlreadyRegistered: DigestBlake2BVerificationKey;
+  stakeKeyAlreadyRegistered: DigestBlake2B224;
 }
 export interface PoolCostTooSmall {
   poolCostTooSmall: {
@@ -1906,12 +1082,12 @@ export interface PoolCostTooSmall {
 }
 export interface PoolMetadataHashTooBig {
   poolMetadataHashTooBig: {
-    poolId: PoolId;
+    poolId: StakePoolId;
     measuredSize: Int64;
   };
 }
 export interface StakeKeyNotRegistered {
-  stakeKeyNotRegistered: DigestBlake2BVerificationKey;
+  stakeKeyNotRegistered: DigestBlake2B224;
 }
 export interface RewardAccountNotExisting {
   rewardAccountNotExisting: null;
@@ -1925,10 +1101,10 @@ export interface WrongCertificateType {
   wrongCertificateType: null;
 }
 export interface UnknownGenesisKey {
-  unknownGenesisKey: DigestBlake2BVerificationKey;
+  unknownGenesisKey: DigestBlake2B224;
 }
 export interface AlreadyDelegating {
-  alreadyDelegating: DigestBlake2BVerificationKey;
+  alreadyDelegating: DigestBlake2B224;
 }
 export interface InsufficientFundsForMir {
   insufficientFundsForMir: {
@@ -1953,12 +1129,12 @@ export interface MirProducesNegativeUpdate {
   mirProducesNegativeUpdate: null;
 }
 export interface DuplicateGenesisVrf {
-  duplicateGenesisVrf: DigestBlake2BVrfVerificationKey;
+  duplicateGenesisVrf: DigestBlake2B224;
 }
 export interface NonGenesisVoters {
   nonGenesisVoters: {
-    currentlyVoting: DigestBlake2BVerificationKey[];
-    shouldBeVoting: DigestBlake2BVerificationKey[];
+    currentlyVoting: DigestBlake2B224[];
+    shouldBeVoting: DigestBlake2B224[];
   };
 }
 export interface UpdateWrongEpoch {
@@ -1979,10 +1155,10 @@ export interface MissingRequiredRedeemers {
   };
 }
 export interface Spend {
-  spend: TxIn;
+  spend: TransactionOutputReference;
 }
 export interface Mint {
-  mint: DigestBlake2BScript;
+  mint: PolicyId;
 }
 export interface Certificate1 {
   certificate: Certificate;
@@ -1992,33 +1168,33 @@ export interface Withdrawal {
 }
 export interface MissingRequiredDatums {
   missingRequiredDatums: {
-    provided?: DigestBlake2BDatum[];
-    missing: DigestBlake2BDatum[];
+    provided?: DigestBlake2B256[];
+    missing: DigestBlake2B256[];
   };
 }
 export interface UnspendableDatums {
   unspendableDatums: {
-    nonSpendable: DigestBlake2BDatum[];
-    acceptable: DigestBlake2BDatum[];
+    nonSpendable: DigestBlake2B256[];
+    acceptable: DigestBlake2B256[];
   };
 }
 export interface ExtraDataMismatch {
   extraDataMismatch: {
-    provided: DigestBlake2BScriptIntegrity | Null;
-    inferredFromParameters: DigestBlake2BScriptIntegrity | Null;
+    provided?: DigestBlake2B256;
+    inferredFromParameters?: DigestBlake2B256;
   };
 }
 export interface MissingRequiredSignatures {
-  missingRequiredSignatures: DigestBlake2BVerificationKey[];
+  missingRequiredSignatures: DigestBlake2B224[];
 }
 export interface UnspendableScriptInputs {
-  unspendableScriptInputs: TxIn[];
+  unspendableScriptInputs: TransactionOutputReference[];
 }
 export interface ExtraRedeemers {
   extraRedeemers: string[];
 }
 export interface MissingDatumHashesForInputs {
-  missingDatumHashesForInputs: TxIn[];
+  missingDatumHashesForInputs: TransactionOutputReference[];
 }
 /**
  * Only since Alonzo.
@@ -2046,8 +1222,8 @@ export interface TooManyCollateralInputs {
 }
 export interface ExecutionUnitsTooLarge {
   executionUnitsTooLarge: {
-    maximumExecutionUnits: ExUnits;
-    actualExecutionUnits: ExUnits;
+    maximumExecutionUnits: ExecutionUnits;
+    actualExecutionUnits: ExecutionUnits;
   };
 }
 export interface OutsideForecast {
@@ -2066,7 +1242,7 @@ export interface NoRedeemer {
   noRedeemer: ScriptPurpose;
 }
 export interface NoWitness {
-  noWitness: DigestBlake2BScript;
+  noWitness: DigestBlake2B224;
 }
 export interface NoCostModel {
   noCostModel: Language;
@@ -2078,7 +1254,7 @@ export interface BadTranslation {
   badTranslation: string;
 }
 export interface ExtraScriptWitnesses {
-  extraScriptWitnesses: DigestBlake2BScript[];
+  extraScriptWitnesses: DigestBlake2B224[];
 }
 export interface MirNegativeTransfer {
   mirNegativeTransfer: {
@@ -2093,28 +1269,124 @@ export interface TotalCollateralMismatch {
   };
 }
 export interface MalformedReferenceScripts {
-  malformedReferenceScripts: DigestBlake2BScript[];
+  malformedReferenceScripts: DigestBlake2B224[];
 }
 export interface MalformedScriptWitnesses {
-  malformedScriptWitnesses: DigestBlake2BScript[];
+  malformedScriptWitnesses: DigestBlake2B224[];
 }
-export interface EvaluationResult {
-  EvaluationResult: {
-    [k: string]: ExUnits;
+/**
+ * Evaluate execution units for which redeemers's budget hasn't yet been set.
+ */
+export interface EvaluateTransaction {
+  jsonrpc: "2.0";
+  method: "evaluateTransaction";
+  params: {
+    /**
+     * CBOR-serialized signed transaction (base16)
+     */
+    transaction: string;
+    additionalUtxoSet?: Utxo;
+  };
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
   };
 }
-export interface EvaluationFailure {
-  EvaluationFailure:
-    | EvaluationFailureScriptFailures
-    | EvaluationFailureIncompatibleEra
-    | EvaluationFailureAdditionalUtxoOverlap
-    | EvaluationFailureNotEnoughSynced
-    | EvaluationFailureCannotCreateEvaluationContext;
-}
-export interface EvaluationFailureScriptFailures {
-  ScriptFailures: {
-    [k: string]: ScriptFailure;
+export interface EvaluateTransactionSuccess {
+  jsonrpc: "2.0";
+  result: {
+    budgets: {
+      [k: string]: ExecutionUnits;
+    };
   };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Happens when attempting to evaluate execution units on a node that isn't enough synchronized.
+ */
+export interface EvaluateTransactionFailure {
+  jsonrpc: "2.0";
+  error:
+    | EvaluateTransactionFailureIncompatibleEra
+    | EvaluateTransactionFailureOverlappingAdditionalUtxo
+    | EvaluateTransactionFailureNodeTipTooOld
+    | EvaluateTransactionFailureCannotCreateEvaluationContext
+    | EvaluateTransactionFailureScriptExecutionFailure;
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Returned when trying to evaluate execution units of a pre-Alonzo transaction. Note that this isn't possible with Ogmios because transactions are always de-serialized as Alonzo transactions.
+ */
+export interface EvaluateTransactionFailureIncompatibleEra {
+  code: 3000;
+  message: string;
+  data: IncompatibleEra;
+}
+/**
+ * The era in which the transaction has been identified.
+ */
+export interface IncompatibleEra {
+  incompatibleEra: Era;
+}
+/**
+ * Happens when providing an additional UTXO set which overlaps with the UTXO on-chain.
+ */
+export interface EvaluateTransactionFailureOverlappingAdditionalUtxo {
+  code: 3001;
+  message: string;
+  data: OverlappingAdditionalUtxo;
+}
+export interface OverlappingAdditionalUtxo {
+  overlappingOutputReferences: TransactionOutputReference[];
+}
+/**
+ * Happens when attempting to evaluate execution units on a node that isn't enough synchronized.
+ */
+export interface EvaluateTransactionFailureNodeTipTooOld {
+  code: 3002;
+  message: string;
+  data: NodeTipTooOld;
+}
+export interface NodeTipTooOld {
+  minimumRequiredEra: Era;
+  currentNodeEra: Era;
+}
+/**
+ * The transaction is malformed or missing information; making evaluation impossible.
+ */
+export interface EvaluateTransactionFailureCannotCreateEvaluationContext {
+  code: 3003;
+  message: string;
+  data: CannotCreateEvaluationContext;
+}
+export interface CannotCreateEvaluationContext {
+  reason: string;
+}
+/**
+ * One or more script execution terminated with an error.
+ */
+export interface EvaluateTransactionFailureScriptExecutionFailure {
+  code: 3004;
+  message: string;
+  data: ScriptExecutionFailure;
+}
+/**
+ * Some script in the transaction terminated with an error.
+ */
+export interface ScriptExecutionFailure {
+  [k: string]: ScriptExecutionFailureReason[];
 }
 /**
  * Missing scripts required for validating script inputs.
@@ -2123,7 +1395,7 @@ export interface MissingRequiredScripts {
   missingRequiredScripts: {
     missing: RedeemerPointer[];
     resolved: {
-      [k: string]: DigestBlake2BScript;
+      [k: string]: DigestBlake2B224;
     };
   };
 }
@@ -2140,19 +1412,19 @@ export interface ValidatorFailed {
  * Non-existing input referenced by a redeemer pointer.
  */
 export interface UnknownInputReferencedByRedeemer {
-  unknownInputReferencedByRedeemer: TxIn;
+  unknownInputReferencedByRedeemer: TransactionOutputReference;
 }
 /**
  * Input not locked by a Plutus referenced by a redeemer pointer.
  */
 export interface NonScriptInputReferencedByRedeemer {
-  nonScriptInputReferencedByRedeemer: TxIn;
+  nonScriptInputReferencedByRedeemer: TransactionOutputReference;
 }
 /**
  * Invalid execution budget set for a redeemer. In principle, cannot happen in the context of Ogmios.
  */
 export interface IllFormedExecutionBudget {
-  illFormedExecutionBudget: ExUnits | Null;
+  illFormedExecutionBudget?: ExecutionUnits;
 }
 /**
  * Input locked by a script which language has no cost model in current protocol parameters. In principle, cannot happen in the context of Ogmios.
@@ -2161,74 +1433,191 @@ export interface NoCostModelForLanguage {
   noCostModelForLanguage: Language;
 }
 /**
- * Returned when trying to evaluate execution units of a pre-Alonzo transaction. Note that this isn't possible with Ogmios because transactions are always de-serialized as Alonzo transactions.
+ * Acquire a point on chain from which to run ledger-state queries.
  */
-export interface EvaluationFailureIncompatibleEra {
+export interface AcquireLedgerState {
+  jsonrpc: "2.0";
+  method: "acquireLedgerState";
+  params: {
+    point: Point | Origin;
+  };
   /**
-   * The era in which the transaction has been identified.
+   * An arbitrary JSON value that will be mirrored back in the response.
    */
-  IncompatibleEra: "Byron" | "Shelley" | "Allegra" | "Mary";
-}
-/**
- * Happens when providing an additional UTXO set which overlaps with the UTXO on-chain.
- */
-export interface EvaluationFailureAdditionalUtxoOverlap {
-  AdditionalUtxoOverlap: TxIn[];
-}
-/**
- * Happens when attempting to evaluate execution units on a node that isn't enough synchronized.
- */
-export interface EvaluationFailureNotEnoughSynced {
-  NotEnoughSynced: {
-    minimumRequiredEra: Era;
-    currentNodeEra: Era;
+  id?: {
+    [k: string]: unknown;
   };
 }
 /**
- * Happens when the ledger fails to create an evaluation context from a given transaction. This is mostly due to the transaction being malformed (e.g. wrong redeemer pointer, missing UTxO).
+ * Response to an 'acquireLedgerState' request.
  */
-export interface EvaluationFailureCannotCreateEvaluationContext {
-  CannotCreateEvaluationContext: {
-    reason: string;
+export interface AcquireLedgerStateSuccess {
+  jsonrpc: "2.0";
+  result: AcquireLedgerStateSuccess1;
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
   };
 }
-export interface AcquireSuccess {
-  AcquireSuccess: {
-    point: PointOrOrigin;
+export interface AcquireLedgerStateSuccess1 {
+  acquired: "ledgerState";
+  point: Point | Origin;
+}
+/**
+ * Unable to acquire the ledger state at the request point.
+ */
+export interface AcquireLedgerStateFailure {
+  jsonrpc: "2.0";
+  error: AcquireLedgerStateFailure1;
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
   };
 }
-export interface AcquireFailure {
-  AcquireFailure: {
-    failure: AcquireFailureDetails;
+export interface AcquireLedgerStateFailure1 {
+  code: 2000;
+  message: string;
+  /**
+   * A reason for the failure.
+   */
+  data: string;
+}
+/**
+ * Release a previously acquired ledger state.
+ */
+export interface ReleaseLedgerState {
+  jsonrpc: "2.0";
+  method: "releaseLedgerState";
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
   };
 }
-export interface AwaitAcquired {
-  AwaitAcquired: {
-    slot: Slot;
+/**
+ * Response to a 'releaseLedgerState' request.
+ */
+export interface ReleaseLedgerStateResponse {
+  jsonrpc: "2.0";
+  result: {
+    released: "ledgerState";
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
   };
 }
-export interface MempoolSizeAndCapacity {
-  capacity: UInt32;
-  currentSize: UInt32;
-  numberOfTxs: UInt32;
+/**
+ * An era mismatch between a client request and the era the ledger is in. This may occur when running queries on a syncing node and/or when the node is crossing an era.
+ */
+export interface QueryLedgerStateEraMismatch {
+  jsonrpc: "2.0";
+  error: {
+    code: 2001;
+    message: string;
+    data: EraMismatch;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
 }
-export interface GetNonMyopicMemberRewards {
-  nonMyopicMemberRewards: Lovelace[] | StakeCredential[];
+/**
+ * Some query is not available for the requested ledger era.
+ */
+export interface QueryLedgerStateUnavailableInCurrentEra {
+  jsonrpc: "2.0";
+  error: {
+    code: 2002;
+    message: string;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
 }
-export interface GetDelegationsAndRewards {
-  delegationsAndRewards: StakeCredential[];
+/**
+ * Previously acquired ledger state is no longer available.
+ */
+export interface QueryLedgerStateAcquiredExpired {
+  jsonrpc: "2.0";
+  error: {
+    code: 2003;
+    message: string;
+    /**
+     * A reason for the failure.
+     */
+    data: string;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
 }
-export interface GetUtxoByAddress {
-  utxo: Address[];
+/**
+ * Query the current epoch number the ledger is at.
+ */
+export interface QueryLedgerStateEpoch {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/epoch";
+  params?: unknown;
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
 }
-export interface GetUtxoByTxIn {
-  utxo: TxIn[];
+export interface QueryLedgerStateEpochResponse {
+  jsonrpc: "2.0";
+  result: {
+    epoch: Epoch;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
 }
-export interface GetGenesisConfig {
-  genesisConfig: "byron" | "shelley" | "alonzo";
+/**
+ * Query the start of the current ledger era.
+ */
+export interface QueryLedgerStateEraStart {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/eraStart";
+  params?: unknown;
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
 }
-export interface GetPoolParameters {
-  poolParameters: (PoolId | string)[];
+export interface QueryLedgerStateEraStartResponse {
+  jsonrpc: "2.0";
+  result: {
+    eraStart: Bound;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
 }
 /**
  * An era bound which captures the time, slot and epoch at which the era start. The time is relative to the start time of the network.
@@ -2237,6 +1626,32 @@ export interface Bound {
   time: RelativeTime;
   slot: Slot;
   epoch: Epoch;
+}
+/**
+ * Query a summary of the slotting parameters and boundaries for each known era. Useful for doing slot-arithmetic and time conversions.
+ */
+export interface QueryLedgerStateEraSummaries {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/eraSummaries";
+  params?: unknown;
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface QueryLedgerStateEraSummariesResponse {
+  jsonrpc: "2.0";
+  result: {
+    eraSummaries: EraSummary[];
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
 }
 /**
  * Summary of the confirmed parts of the ledger.
@@ -2255,19 +1670,106 @@ export interface EraParameters {
   safeZone: SafeZone | null;
 }
 /**
+ * Query the current distribution of the stake across all known stake pools, relative to the TOTAL stake in the network.
+ */
+export interface QueryLedgerStateLiveStakeDistribution {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/liveStakeDistribution";
+  params?: unknown;
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface QueryLedgerStateLiveStakeDistributionResponse {
+  jsonrpc: "2.0";
+  result: {
+    liveStakeDistribution: LiveStakeDistribution;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Distribution of stake across registered stake pools. Each key in the map corresponds to a pool id.
+ */
+export interface LiveStakeDistribution {
+  [k: string]: {
+    stake: Ratio;
+    vrf: DigestBlake2B256;
+  };
+}
+/**
+ * Query the projected rewards of an account in a context where the top stake pools are fully saturated. This projection gives, in principle, a ranking of stake pools that maximizes delegator rewards.
+ */
+export interface QueryLedgerStateProjectedRewards {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/projectedRewards";
+  params: {
+    stake?: Lovelace[];
+    scripts?: StakeCredential[];
+    keys?: StakeCredential[];
+  };
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface QueryLedgerStateProjectedRewardsResponse {
+  jsonrpc: "2.0";
+  result: {
+    projectedRewards: ProjectedRewards;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
  * Rewards that can be expected assuming a pool is fully saturated. Such rewards are said non-myopic, in opposition to short-sighted rewards looking at immediate benefits. Keys of the map can be either Lovelace amounts or account credentials depending on the query.
  */
-export interface NonMyopicMemberRewards {
+export interface ProjectedRewards {
   [k: string]: {
     [k: string]: number;
   };
 }
-export interface DelegationsAndRewardsByAccounts {
-  [k: string]: DelegationsAndRewards;
+/**
+ * Query the last update proposal w.r.t. protocol parameters, if any.
+ */
+export interface QueryLedgerStateProposedProtocolParameters {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/proposedProtocolParameters";
+  params?: unknown;
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
 }
-export interface DelegationsAndRewards {
-  delegate?: PoolId;
-  rewards?: Lovelace;
+export interface QueryLedgerStateProposedProtocolParametersResponse {
+  jsonrpc: "2.0";
+  result: {
+    proposedProtocolParameters:
+      | ProposedProtocolParametersShelley
+      | ProposedProtocolParametersAlonzo
+      | ProposedProtocolParametersBabbage;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
 }
 export interface ProposedProtocolParametersShelley {
   [k: string]: ProtocolParametersShelley;
@@ -2279,21 +1781,320 @@ export interface ProposedProtocolParametersBabbage {
   [k: string]: ProtocolParametersBabbage;
 }
 /**
- * Distribution of stake across registered stake pools. Each key in the map corresponds to a pool id.
+ * Query the current protocol parameters.
  */
-export interface PoolDistribution {
-  [k: string]: {
-    stake: Ratio;
-    vrf: DigestBlake2BVrfVerificationKey;
+export interface QueryLedgerStateProtocolParameters {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/protocolParameters";
+  params?: unknown;
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface QueryLedgerStateProtocolParametersResponse {
+  jsonrpc: "2.0";
+  result: {
+    protocolParameters: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Query current delegation settings and rewards of some given reward accounts.
+ */
+export interface QueryLedgerStateRewardAccountSummaries {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/rewardAccountSummaries";
+  params: {
+    scripts?: StakeCredential[];
+    keys?: StakeCredential[];
+  };
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface QueryLedgerStateRewardAccountSummariesResponse {
+  jsonrpc: "2.0";
+  result: {
+    rewardAccountSummaries: RewardAccountSummaries;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface RewardAccountSummaries {
+  [k: string]: RewardAccountSummary;
+}
+export interface RewardAccountSummary {
+  delegate?: StakePoolId;
+  rewards?: Lovelace;
+}
+/**
+ * Query details about rewards calculation for the ongoing epoch.
+ */
+export interface QueryLedgerStateRewardsProvenance {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/rewardsProvenance";
+  params?: unknown;
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface QueryLedgerStateRewardsProvenanceResponse {
+  jsonrpc: "2.0";
+  result: {
+    rewardsProvenance: RewardsProvenance;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Details about how rewards are calculated for the ongoing epoch.
+ */
+export interface RewardsProvenance {
+  /**
+   * Desired number of stake pools.
+   */
+  desiredNumberOfPools: number;
+  /**
+   * Influence of the pool owner's pledge on rewards, as a ratio of two integers.
+   */
+  poolInfluence: string;
+  /**
+   * Total rewards available for the given epoch.
+   */
+  totalRewards: bigint;
+  /**
+   * The total amount of staked Lovelace during this epoch.
+   */
+  activeStake: bigint;
+  pools: {
+    [k: string]: StakePoolSummary;
+  };
+}
+export interface StakePoolSummary {
+  stake: Lovelace;
+  ownerStake: Lovelace1;
+  /**
+   * Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky.
+   */
+  approximatePerformance: number;
+  /**
+   * Some of the pool parameters relevant for the reward calculation.
+   */
+  poolParameters: {
+    cost: Lovelace;
+    margin: Ratio;
+    pledge: Lovelace;
+  };
+}
+/**
+ * Query the list of all stake pool identifiers currently registered and active.
+ */
+export interface QueryLedgerStateStakePools {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/stakePools";
+  params?: unknown;
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface QueryLedgerStateStakePoolsResponse {
+  jsonrpc: "2.0";
+  result: {
+    stakePools: {
+      id: StakePoolId;
+    }[];
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Query registered parameters for given stake pools.
+ */
+export interface QueryLedgerStateStakePoolParameters {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/stakePoolParameters";
+  params: {
+    stakePools: (StakePoolId | string)[];
+  };
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface QueryLedgerStateStakePoolParametersResponse {
+  jsonrpc: "2.0";
+  result: {
+    stakePoolParameters: {
+      [k: string]: StakePoolParameters;
+    };
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Query the current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger.
+ */
+export interface QueryLedgerStateTip {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/tip";
+  params?: unknown;
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface QueryLedgerStateTipResponse {
+  jsonrpc: "2.0";
+  result: {
+    tip: Point | Origin;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Query the current Utxo set, restricted to some output references or addresses.
+ */
+export interface QueryLedgerStateUtxo {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/utxo";
+  params?: UtxoByOutputReferences | UtxoByAddresses | WholeUtxo;
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface UtxoByOutputReferences {
+  outputReferences: TransactionOutputReference[];
+}
+export interface UtxoByAddresses {
+  addresses: Address[];
+}
+export interface WholeUtxo {}
+export interface QueryLedgerStateUtxoResponse {
+  jsonrpc: "2.0";
+  result: {
+    utxo: Utxo;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Query the network’s highest block number.
+ */
+export interface QueryNetworkBlockHeight {
+  jsonrpc: "2.0";
+  method: "queryNetwork/blockHeight";
+  params?: unknown;
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface QueryNetworkBlockHeightResponse {
+  jsonrpc: "2.0";
+  result: {
+    blockHeight: BlockHeight | Origin;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Query the genesis configuration of a given era.
+ */
+export interface QueryNetworkGenesisConfiguration {
+  jsonrpc: "2.0";
+  method: "queryNetwork/genesisConfiguration";
+  params: {
+    era: EraWithGenesis;
+  };
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface QueryNetworkGenesisConfigurationResponse {
+  jsonrpc: "2.0";
+  result: {
+    genesisConfiguration:
+      | {
+          byron: GenesisByron;
+        }
+      | {
+          shelley: GenesisShelley;
+        }
+      | {
+          alonzo: GenesisAlonzo;
+        };
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
   };
 }
 /**
  * A Byron genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
  */
 export interface GenesisByron {
-  genesisKeyHashes: DigestBlake2BVerificationKey[];
+  genesisKeyHashes: DigestBlake2B224[];
   genesisDelegations: {
-    [k: string]: DlgCertificate;
+    [k: string]: BootstrapOperationalCertificate;
   };
   systemStart: UtcTime;
   initialFunds: {
@@ -2333,8 +2134,8 @@ export interface InitialDelegates {
  * A Genesis delegate, in charge of Cardano's governance.
  */
 export interface GenesisDelegate {
-  delegate: DigestBlake2BVerificationKey;
-  vrf: DigestBlake2BVrfVerificationKey;
+  delegate: DigestBlake2B224;
+  vrf: DigestBlake2B256;
 }
 export interface InitialFunds {
   [k: string]: Lovelace;
@@ -2344,10 +2145,10 @@ export interface InitialFunds {
  */
 export interface GenesisPools {
   pools: {
-    [k: string]: PoolParameters;
+    [k: string]: StakePoolParameters;
   };
   delegators: {
-    [k: string]: PoolId;
+    [k: string]: StakePoolId;
   };
 }
 /**
@@ -2357,146 +2158,255 @@ export interface GenesisAlonzo {
   coinsPerUtxoWord: UInt64;
   collateralPercentage: UInt64;
   costModels: CostModels;
-  maxCollateralInputs: NullableUInt64;
-  maxExecutionUnitsPerBlock: ExUnits;
-  maxExecutionUnitsPerTransaction: ExUnits;
-  maxValueSize: NullableUInt64;
+  maxCollateralInputs: UInt64;
+  maxExecutionUnitsPerBlock: ExecutionUnits;
+  maxExecutionUnitsPerTransaction: ExecutionUnits;
+  maxValueSize: UInt64;
   prices: Prices;
 }
 /**
- * Details about how rewards are calculated for the ongoing epoch.
+ * Query the network start time.
  */
-export interface RewardsProvenance {
-  epochLength: Epoch;
-  decentralizationParameter: Ratio;
-  maxLovelaceSupply: Lovelace;
+export interface QueryNetworkStartTime {
+  jsonrpc: "2.0";
+  method: "queryNetwork/startTime";
+  params?: unknown;
   /**
-   * Number of blocks minted by each pool.
+   * An arbitrary JSON value that will be mirrored back in the response.
    */
-  mintedBlocks: {
-    [k: string]: UInt64;
-  };
-  /**
-   * The total number of blocks minted during the given epoch.
-   */
-  totalMintedBlocks: number;
-  /**
-   * The number of blocks expected to be produced during the given epoch.
-   */
-  totalExpectedBlocks: number;
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  incentive: bigint;
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  rewardsGap: bigint;
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  availableRewards: bigint;
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  totalRewards: bigint;
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  treasuryTax: bigint;
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  activeStake: bigint;
-  pools: {
-    [k: string]: IndividualPoolRewardsProvenance;
+  id?: {
+    [k: string]: unknown;
   };
 }
-export interface IndividualPoolRewardsProvenance {
+export interface QueryNetworkStartTimeResponse {
+  jsonrpc: "2.0";
+  result: {
+    startTime: UtcTime;
+  };
   /**
-   * The number of blocks the pool produced.
+   * Any value that was set by a client request in the 'id' field.
    */
-  totalMintedBlocks: number;
-  /**
-   * A ratio of two integers, to express exact fractions.
-   */
-  totalStakeShare: string;
-  /**
-   * A ratio of two integers, to express exact fractions.
-   */
-  activeStakeShare: string;
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  ownerStake: bigint;
-  parameters: PoolParameters;
-  /**
-   * A ratio of two integers, to express exact fractions.
-   */
-  pledgeRatio: string;
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  maxRewards: bigint;
-  /**
-   * A ratio of two integers, to express exact fractions.
-   */
-  apparentPerformance: string;
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  totalRewards: bigint;
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  leaderRewards: bigint;
+  id?: {
+    [k: string]: unknown;
+  };
 }
 /**
- * Details about how rewards are calculated for the ongoing epoch.
+ * Get the current network tip. Said differently, this is the most recent slot and block header hash that the node it aware of.
  */
-export interface RewardsProvenance1 {
+export interface QueryNetworkTip {
+  jsonrpc: "2.0";
+  method: "queryNetwork/tip";
+  params?: unknown;
   /**
-   * Desired number of stake pools.
+   * An arbitrary JSON value that will be mirrored back in the response.
    */
-  desiredNumberOfPools: number;
-  /**
-   * Influence of the pool owner's pledge on rewards, as a ratio of two integers.
-   */
-  poolInfluence: string;
-  /**
-   * Total rewards available for the given epoch.
-   */
-  totalRewards: bigint;
-  /**
-   * The total amount of staked Lovelace during this epoch.
-   */
-  activeStake: bigint;
-  pools: {
-    [k: string]: RewardInfoPool;
+  id?: {
+    [k: string]: unknown;
   };
 }
-export interface RewardInfoPool {
-  stake: Lovelace;
+export interface QueryNetworkTipResponse {
+  jsonrpc: "2.0";
+  result: {
+    tip: Point | Origin;
+  };
   /**
-   * A number of lovelace, possibly large when summed up.
+   * Any value that was set by a client request in the 'id' field.
    */
-  ownerStake: bigint;
-  /**
-   * Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky.
-   */
-  approximatePerformance: number;
-  /**
-   * Some of the pool parameters relevant for the reward calculation.
-   */
-  poolParameters: {
-    cost: Lovelace;
-    margin: Ratio;
-    pledge: Lovelace;
+  id?: {
+    [k: string]: unknown;
   };
 }
-export interface PoolsRanking {
-  [k: string]: {
-    score: number;
-    estimatedHitRate: number;
+/**
+ * Acquire a mempool snapshot. This is blocking until a new (i.e different) snapshot is available.
+ */
+export interface AcquireMempool {
+  jsonrpc: "2.0";
+  method: "acquireMempool";
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Response to a 'acquireMempool' request.
+ */
+export interface AcquireMempoolResponse {
+  jsonrpc: "2.0";
+  result: {
+    acquired: "mempool";
+    slot: Slot;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Request the next transaction from an acquired mempools napshot.
+ */
+export interface NextTransaction {
+  jsonrpc: "2.0";
+  method: "nextTransaction";
+  params?: {
+    fields?: "all";
+  };
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Response to a 'nextTransaction' request.
+ */
+export interface NextTransactionResponse {
+  jsonrpc: "2.0";
+  /**
+   * A transaction (or id) or an empty object if there's no more transactions.
+   */
+  result: {
+    transaction:
+      | {
+          id: TransactionId;
+        }
+      | Transaction
+      | null;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Ask whether a given transaction is present in the acquired mempool snapshot.
+ */
+export interface HasTransaction {
+  jsonrpc: "2.0";
+  method: "hasTransaction";
+  params: {
+    id: TransactionId;
+  };
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Response to a 'HasTransaction' request.
+ */
+export interface HasTransactionResponse {
+  jsonrpc: "2.0";
+  result: {
+    hasTransaction: boolean;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Get size and capacities of the mempool (acquired snapshot).
+ */
+export interface SizeOfMempool {
+  jsonrpc: "2.0";
+  method: "sizeOfMempool";
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Response to a 'sizeOfMempool' request.
+ */
+export interface SizeOfMempoolResponse {
+  jsonrpc: "2.0";
+  result: {
+    mempool: MempoolSizeAndCapacity;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface MempoolSizeAndCapacity {
+  maxCapacity: {
+    bytes: UInt321;
+  };
+  currentSize: {
+    bytes: UInt321;
+  };
+  transactions: {
+    count: UInt321;
+  };
+}
+/**
+ * Release a previously acquired mempool snapshot.
+ */
+export interface ReleaseMempool {
+  jsonrpc: "2.0";
+  method: "releaseMempool";
+  /**
+   * An arbitrary JSON value that will be mirrored back in the response.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * Response to a 'releaseMempool' request.
+ */
+export interface ReleaseMempoolResponse {
+  jsonrpc: "2.0";
+  result: {
+    released: "mempool";
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+/**
+ * A generic error in the JSON-RPC protocol. This is returned by the server when a request from clients is deemed invalid or, when the server was unable to reply to a well-formed request.
+ */
+export interface RpcError {
+  jsonrpc: "2.0";
+  error: {
+    /**
+     * An error code telling about the nature of the error.
+     */
+    code: number;
+    /**
+     * A descriptive error message giving hints about the error.
+     */
+    message?: string;
+    /**
+     * Some optional data / context about the error. The exact type of this (optional) field depends on the error.
+     */
+    data?: {
+      [k: string]: unknown;
+    };
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
   };
 }

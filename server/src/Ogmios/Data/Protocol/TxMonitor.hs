@@ -3,7 +3,6 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- NOTE:
@@ -21,35 +20,35 @@ module Ogmios.Data.Protocol.TxMonitor
       -- * Messages
     , TxMonitorMessage (..)
 
-      -- ** Acquire / AwaitAcquire
-    , AwaitAcquire (..)
-    , _encodeAwaitAcquire
-    , _decodeAwaitAcquire
-    , AwaitAcquireResponse (..)
-    , _encodeAwaitAcquireResponse
+      -- ** Acquire / AcquireMempool
+    , AcquireMempool (..)
+    , _encodeAcquireMempool
+    , _decodeAcquireMempool
+    , AcquireMempoolResponse (..)
+    , _encodeAcquireMempoolResponse
 
-      -- ** NextTx
-    , NextTx (..)
-    , NextTxFields (..)
-    , _encodeNextTx
-    , _decodeNextTx
-    , NextTxResponse (..)
-    , _encodeNextTxResponse
+      -- ** NextTransaction
+    , NextTransaction (..)
+    , NextTransactionFields (..)
+    , _encodeNextTransaction
+    , _decodeNextTransaction
+    , NextTransactionResponse (..)
+    , _encodeNextTransactionResponse
 
-      -- ** HasTx
-    , HasTx (..)
-    , _encodeHasTx
-    , _decodeHasTx
-    , HasTxResponse (..)
-    , _encodeHasTxResponse
+      -- ** HasTransaction
+    , HasTransaction (..)
+    , _encodeHasTransaction
+    , _decodeHasTransaction
+    , HasTransactionResponse (..)
+    , _encodeHasTransactionResponse
 
 
-      -- ** SizeAndCapacity
-    , SizeAndCapacity (..)
-    , _encodeSizeAndCapacity
-    , _decodeSizeAndCapacity
-    , SizeAndCapacityResponse (..)
-    , _encodeSizeAndCapacityResponse
+      -- ** SizeOfMempool
+    , SizeOfMempool (..)
+    , _encodeSizeOfMempool
+    , _decodeSizeOfMempool
+    , SizeOfMempoolResponse (..)
+    , _encodeSizeOfMempoolResponse
 
       -- ** ReleaseMempools
     , ReleaseMempool (..)
@@ -69,9 +68,6 @@ import Ogmios.Data.Json.Prelude hiding
     ( id
     )
 
-import Ogmios.Data.Protocol
-    ()
-
 import Cardano.Network.Protocol.NodeToClient
     ( GenTx
     , GenTxId
@@ -83,7 +79,7 @@ import Ouroboros.Network.Protocol.LocalTxMonitor.Type
     ( MempoolSizeAndCapacity (..)
     )
 
-import qualified Codec.Json.Wsp as Wsp
+import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.Types as Json
@@ -93,35 +89,35 @@ import qualified Data.Aeson.Types as Json
 --
 
 data TxMonitorCodecs block = TxMonitorCodecs
-    { decodeAwaitAcquire
+    { decodeAcquireMempool
         :: ByteString
-        -> Maybe (Wsp.Request AwaitAcquire)
-    , encodeAwaitAcquireResponse
-        :: Wsp.Response AwaitAcquireResponse
+        -> Maybe (Rpc.Request AcquireMempool)
+    , encodeAcquireMempoolResponse
+        :: Rpc.Response AcquireMempoolResponse
         -> Json
-    , decodeNextTx
+    , decodeNextTransaction
         :: ByteString
-        -> Maybe (Wsp.Request NextTx)
-    , encodeNextTxResponse
-        :: Wsp.Response (NextTxResponse block)
+        -> Maybe (Rpc.Request NextTransaction)
+    , encodeNextTransactionResponse
+        :: Rpc.Response (NextTransactionResponse block)
         -> Json
-    , decodeHasTx
+    , decodeHasTransaction
         :: ByteString
-        -> Maybe (Wsp.Request (HasTx block))
-    , encodeHasTxResponse
-        :: Wsp.Response HasTxResponse
+        -> Maybe (Rpc.Request (HasTransaction block))
+    , encodeHasTransactionResponse
+        :: Rpc.Response HasTransactionResponse
         -> Json
-    , decodeSizeAndCapacity
+    , decodeSizeOfMempool
         :: ByteString
-        -> Maybe (Wsp.Request SizeAndCapacity)
-    , encodeSizeAndCapacityResponse
-        :: Wsp.Response SizeAndCapacityResponse
+        -> Maybe (Rpc.Request SizeOfMempool)
+    , encodeSizeOfMempoolResponse
+        :: Rpc.Response SizeOfMempoolResponse
         -> Json
     , decodeReleaseMempool
         :: ByteString
-        -> Maybe (Wsp.Request ReleaseMempool)
+        -> Maybe (Rpc.Request ReleaseMempool)
     , encodeReleaseMempoolResponse
-        :: Wsp.Response ReleaseMempoolResponse
+        :: Rpc.Response ReleaseMempoolResponse
         -> Json
     }
 
@@ -132,14 +128,14 @@ mkTxMonitorCodecs
     -> TxMonitorCodecs block
 mkTxMonitorCodecs encodeTxId encodeTx =
     TxMonitorCodecs
-        { decodeAwaitAcquire = decodeWith _decodeAwaitAcquire
-        , encodeAwaitAcquireResponse = _encodeAwaitAcquireResponse
-        , decodeNextTx = decodeWith _decodeNextTx
-        , encodeNextTxResponse = _encodeNextTxResponse encodeTxId encodeTx
-        , decodeHasTx = decodeWith _decodeHasTx
-        , encodeHasTxResponse = _encodeHasTxResponse
-        , decodeSizeAndCapacity = decodeWith _decodeSizeAndCapacity
-        , encodeSizeAndCapacityResponse = _encodeSizeAndCapacityResponse
+        { decodeAcquireMempool = decodeWith _decodeAcquireMempool
+        , encodeAcquireMempoolResponse = _encodeAcquireMempoolResponse
+        , decodeNextTransaction = decodeWith _decodeNextTransaction
+        , encodeNextTransactionResponse = _encodeNextTransactionResponse encodeTxId encodeTx
+        , decodeHasTransaction = decodeWith _decodeHasTransaction
+        , encodeHasTransactionResponse = _encodeHasTransactionResponse
+        , decodeSizeOfMempool = decodeWith _decodeSizeOfMempool
+        , encodeSizeOfMempoolResponse = _encodeSizeOfMempoolResponse
         , decodeReleaseMempool = decodeWith _decodeReleaseMempool
         , encodeReleaseMempoolResponse = _encodeReleaseMempoolResponse
         }
@@ -149,217 +145,224 @@ mkTxMonitorCodecs encodeTxId encodeTx =
 --
 
 data TxMonitorMessage block
-    = MsgAwaitAcquire
-        AwaitAcquire
-        (Wsp.ToResponse AwaitAcquireResponse)
-        Wsp.ToFault
-    | MsgNextTx
-        NextTx
-        (Wsp.ToResponse (NextTxResponse block))
-        Wsp.ToFault
-    | MsgHasTx
-        (HasTx block)
-        (Wsp.ToResponse HasTxResponse)
-        Wsp.ToFault
-    | MsgSizeAndCapacity
-        SizeAndCapacity
-        (Wsp.ToResponse SizeAndCapacityResponse)
-        Wsp.ToFault
+    = MsgAcquireMempool
+        AcquireMempool
+        (Rpc.ToResponse AcquireMempoolResponse)
+        Rpc.ToFault
+    | MsgNextTransaction
+        NextTransaction
+        (Rpc.ToResponse (NextTransactionResponse block))
+        Rpc.ToFault
+    | MsgHasTransaction
+        (HasTransaction block)
+        (Rpc.ToResponse HasTransactionResponse)
+        Rpc.ToFault
+    | MsgSizeOfMempool
+        SizeOfMempool
+        (Rpc.ToResponse SizeOfMempoolResponse)
+        Rpc.ToFault
     | MsgReleaseMempool
         ReleaseMempool
-        (Wsp.ToResponse ReleaseMempoolResponse)
-        Wsp.ToFault
+        (Rpc.ToResponse ReleaseMempoolResponse)
+        Rpc.ToFault
 
 --
--- AwaitAcquire
+-- AcquireMempool
 --
 
-data AwaitAcquire
-    = AwaitAcquire
+data AcquireMempool
+    = AcquireMempool
     deriving (Generic, Show, Eq)
 
-_encodeAwaitAcquire
-    :: Wsp.Request AwaitAcquire
+_encodeAcquireMempool
+    :: Rpc.Request AcquireMempool
     -> Json
-_encodeAwaitAcquire =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
-        AwaitAcquire -> encodeObject []
+_encodeAcquireMempool =
+    Rpc.mkRequestNoParams Rpc.defaultOptions
 
-_decodeAwaitAcquire
+_decodeAcquireMempool
     :: Json.Value
-    -> Json.Parser (Wsp.Request AwaitAcquire)
-_decodeAwaitAcquire =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    -> Json.Parser (Rpc.Request AcquireMempool)
+_decodeAcquireMempool =
+    Rpc.genericFromJSON Rpc.defaultOptions
 
-data AwaitAcquireResponse
-    = AwaitAcquired { slot :: SlotNo }
+data AcquireMempoolResponse
+    = AcquireMempoolResponse { slot :: SlotNo }
     deriving (Generic, Show, Eq)
 
-_encodeAwaitAcquireResponse
-    :: Wsp.Response AwaitAcquireResponse
+_encodeAcquireMempoolResponse
+    :: Rpc.Response AcquireMempoolResponse
     -> Json
-_encodeAwaitAcquireResponse =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        AwaitAcquired{slot} -> encodeObject
-            [ ( "AwaitAcquired"
-              , encodeObject [ ( "slot", encodeSlotNo slot ) ]
-              )
-            ]
-      where
-        proxy = Proxy @(Wsp.Request AwaitAcquire)
+_encodeAcquireMempoolResponse =
+    Rpc.ok $ encodeObject . \case
+        AcquireMempoolResponse{slot} ->
+            ( "acquired" .=
+                encodeText "mempool" <>
+              "slot" .=
+                encodeSlotNo slot
+            )
 
 --
--- NextTx
+-- NextTransaction
 --
 
-data NextTx
-    = NextTx { fields :: Maybe NextTxFields }
+data NextTransaction
+    = NextTransaction { fields :: Maybe NextTransactionFields }
     deriving (Generic, Show, Eq)
 
-_encodeNextTx
-    :: Wsp.Request NextTx
+_encodeNextTransaction
+    :: Rpc.Request NextTransaction
     -> Json
-_encodeNextTx =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
-        NextTx{fields} ->
+_encodeNextTransaction =
+    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
+        NextTransaction{fields} ->
             case fields of
                 Nothing ->
-                    encodeObject []
-                Just NextTxAllFields ->
-                    encodeObject [ ( "fields", encodeText "all" ) ]
+                    mempty
+                Just NextTransactionAllFields ->
+                    "fields" .= encodeText "all"
 
-_decodeNextTx
+_decodeNextTransaction
     :: Json.Value
-    -> Json.Parser (Wsp.Request NextTx)
-_decodeNextTx =
-    Wsp.genericFromJSON Wsp.defaultOptions
-        { Wsp.onMissingField = \case
-            "fields" -> pure Json.Null
-            k -> Wsp.onMissingField  Wsp.defaultOptions k
+    -> Json.Parser (Rpc.Request NextTransaction)
+_decodeNextTransaction =
+    Rpc.genericFromJSON Rpc.defaultOptions
+        { Rpc.onMissingField = \case
+            "fields" ->
+                pure Json.Null
+            k ->
+                Rpc.onMissingField Rpc.defaultOptions k
         }
 
-data NextTxFields
-    = NextTxAllFields
+data NextTransactionFields
+    = NextTransactionAllFields
     deriving (Generic, Show, Eq)
 
-instance FromJSON NextTxFields where
-    parseJSON = Json.withText "NextTxFields" $ \x -> do
+instance FromJSON NextTransactionFields where
+    parseJSON = Json.withText "NextTransactionFields" $ \x -> do
         when (x /= "all") $ do
             fail "Invalid argument to 'fields'. Expected 'all'."
-        pure NextTxAllFields
+        pure NextTransactionAllFields
 
-instance ToJSON NextTxFields where
+instance ToJSON NextTransactionFields where
     toJSON = \case
-        NextTxAllFields -> Json.String "all"
+        NextTransactionAllFields ->
+            Json.String "all"
     toEncoding = \case
-        NextTxAllFields -> Json.text "all"
+        NextTransactionAllFields ->
+            Json.text "all"
 
-data NextTxResponse block
-    = NextTxResponseId
+data NextTransactionResponse block
+    = NextTransactionResponseId
         { nextId :: Maybe (GenTxId block)
         }
-    | NextTxResponseTx
+    | NextTransactionResponseTx
         { nextTx :: Maybe (GenTx block)
         }
     deriving (Generic)
 deriving instance
     ( Show (GenTxId block)
     , Show (GenTx block)
-    ) => Show (NextTxResponse block)
+    ) => Show (NextTransactionResponse block)
 deriving instance
     ( Eq (GenTxId block)
     , Eq (GenTx block)
-    ) => Eq (NextTxResponse block)
+    ) => Eq (NextTransactionResponse block)
 
-_encodeNextTxResponse
+_encodeNextTransactionResponse
     :: forall block. ()
     => (GenTxId block -> Json)
     -> (GenTx block -> Json)
-    -> Wsp.Response (NextTxResponse block)
+    -> Rpc.Response (NextTransactionResponse block)
     -> Json
-_encodeNextTxResponse encodeTxId encodeTx =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        NextTxResponseId{nextId} -> encodeMaybe encodeTxId nextId
-        NextTxResponseTx{nextTx} -> encodeMaybe encodeTx nextTx
-  where
-    proxy = Proxy @(Wsp.Request NextTx)
+_encodeNextTransactionResponse encodeTxId encodeTx =
+    Rpc.ok $ encodeObject . \case
+        NextTransactionResponseId{nextId} ->
+            ( "transaction" .= encodeMaybe (\i -> encodeObject ( "id" .= encodeTxId i)) nextId
+            )
+        NextTransactionResponseTx{nextTx} ->
+            ( "transaction" .= encodeMaybe encodeTx nextTx
+            )
 
 --
--- HasTx
+-- HasTransaction
 --
-data HasTx block
-    = HasTx { id :: GenTxId block }
+data HasTransaction block
+    = HasTransaction { id :: GenTxId block }
     deriving (Generic)
-deriving instance Show (GenTxId block) => Show (HasTx block)
-deriving instance   Eq (GenTxId block) =>   Eq (HasTx block)
+deriving instance Show (GenTxId block) => Show (HasTransaction block)
+deriving instance   Eq (GenTxId block) =>   Eq (HasTransaction block)
 
-_encodeHasTx
+_encodeHasTransaction
     :: forall block. ()
     => (GenTxId block -> Json)
-    -> Wsp.Request (HasTx block)
+    -> Rpc.Request (HasTransaction block)
     -> Json
-_encodeHasTx encodeTxId =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
-        HasTx{id} -> encodeObject [ ( "id", encodeTxId id ) ]
+_encodeHasTransaction encodeTxId =
+    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
+        HasTransaction{id} ->
+            "id" .= encodeTxId id
 
-_decodeHasTx
+_decodeHasTransaction
     :: forall block. (FromJSON (GenTxId block))
     => Json.Value
-    -> Json.Parser (Wsp.Request (HasTx block))
-_decodeHasTx =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    -> Json.Parser (Rpc.Request (HasTransaction block))
+_decodeHasTransaction =
+    Rpc.genericFromJSON Rpc.defaultOptions
 
-data HasTxResponse
-    = HasTxResponse { has :: Bool }
+data HasTransactionResponse
+    = HasTransactionResponse { has :: Bool }
     deriving (Generic, Show, Eq)
 
-_encodeHasTxResponse
+_encodeHasTransactionResponse
     :: forall block. ()
-    => Wsp.Response HasTxResponse
+    => Rpc.Response HasTransactionResponse
     -> Json
-_encodeHasTxResponse =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        HasTxResponse{has} -> encodeBool has
-  where
-    proxy = Proxy @(Wsp.Request (HasTx block))
+_encodeHasTransactionResponse =
+    Rpc.ok $ encodeObject . \case
+        HasTransactionResponse{has} ->
+            ( "hasTransaction" .= encodeBool has
+            )
 
 --
--- SizeAndCapacity
+-- SizeOfMempool
 --
 
-data SizeAndCapacity
-    = SizeAndCapacity
+data SizeOfMempool
+    = SizeOfMempool
     deriving (Generic, Show, Eq)
 
-_encodeSizeAndCapacity
-    :: Wsp.Request SizeAndCapacity
+_encodeSizeOfMempool
+    :: Rpc.Request SizeOfMempool
     -> Json
-_encodeSizeAndCapacity =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
-        SizeAndCapacity -> encodeObject []
+_encodeSizeOfMempool =
+    Rpc.mkRequestNoParams Rpc.defaultOptions
 
-_decodeSizeAndCapacity
+_decodeSizeOfMempool
     :: Json.Value
-    -> Json.Parser (Wsp.Request SizeAndCapacity)
-_decodeSizeAndCapacity =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    -> Json.Parser (Rpc.Request SizeOfMempool)
+_decodeSizeOfMempool =
+    Rpc.genericFromJSON Rpc.defaultOptions
 
-data SizeAndCapacityResponse
-    = SizeAndCapacityResponse { sizes :: MempoolSizeAndCapacity }
+data SizeOfMempoolResponse
+    = SizeOfMempoolResponse { mempool :: MempoolSizeAndCapacity }
     deriving (Generic, Show)
 
-_encodeSizeAndCapacityResponse
-    :: Wsp.Response SizeAndCapacityResponse
+_encodeSizeOfMempoolResponse
+    :: Rpc.Response SizeOfMempoolResponse
     -> Json
-_encodeSizeAndCapacityResponse =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        SizeAndCapacityResponse{sizes} -> encodeObject
-            [ ( "capacity", encodeWord32 (capacityInBytes sizes) )
-            , ( "currentSize", encodeWord32 (sizeInBytes sizes) )
-            , ( "numberOfTxs", encodeWord32 (numberOfTxs sizes) )
-            ]
-  where
-    proxy = Proxy @(Wsp.Request SizeAndCapacity)
+_encodeSizeOfMempoolResponse =
+    Rpc.ok $ encodeObject . \case
+        SizeOfMempoolResponse{mempool} ->
+            ( "mempool" .= encodeObject
+                ( "maxCapacity" .= encodeObject
+                    ( "bytes" .= encodeWord32 (capacityInBytes mempool) ) <>
+                  "currentSize" .= encodeObject
+                    ( "bytes" .= encodeWord32 (sizeInBytes mempool)) <>
+                  "transactions" .= encodeObject
+                    ( "count" .= encodeWord32 (numberOfTxs mempool))
+                )
+            )
 
 --
 -- ReleaseMempool
@@ -370,27 +373,26 @@ data ReleaseMempool
     deriving (Generic, Show, Eq)
 
 _encodeReleaseMempool
-    :: Wsp.Request ReleaseMempool
+    :: Rpc.Request ReleaseMempool
     -> Json
 _encodeReleaseMempool =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
-        ReleaseMempool -> encodeObject []
+    Rpc.mkRequestNoParams Rpc.defaultOptions
 
 _decodeReleaseMempool
     :: Json.Value
-    -> Json.Parser (Wsp.Request ReleaseMempool)
+    -> Json.Parser (Rpc.Request ReleaseMempool)
 _decodeReleaseMempool =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    Rpc.genericFromJSON Rpc.defaultOptions
 
 data ReleaseMempoolResponse
     = Released
     deriving (Generic, Show)
 
 _encodeReleaseMempoolResponse
-    :: Wsp.Response ReleaseMempoolResponse
+    :: Rpc.Response ReleaseMempoolResponse
     -> Json
 _encodeReleaseMempoolResponse =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        Released -> encodeText "Released"
-  where
-    proxy = Proxy @(Wsp.Request ReleaseMempool)
+    Rpc.ok $ encodeObject . \case
+        Released ->
+            ( "released" .= encodeText "mempool"
+            )

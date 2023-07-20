@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"totalCollateralMismatch":{"computedFromDelta":652,"declaredInField":912}},{"unknownOrIncompleteWithdrawals":{"stake1799v7fmnj978k4ru2a48lugs62a9wv7p789fehr9nt4r54s8cvtej":228,"stake1u99v7fmnj978k4ru2a48lugs62a9wv7p789fehr9nt4r54swsstwj":161}}]},"id":null}

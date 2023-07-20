@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","result":{"mempool":{"maxCapacity":{"bytes":3},"currentSize":{"bytes":1},"transactions":{"count":3}}},"id":null}

@@ -71,6 +71,8 @@ const browserPolyfill = (target : EventTarget) : IsoWebSocket => {
       target.addEventListener(event, handler, { once: true })
     },
 
+    setMaxListeners (_n: number) {},
+
     removeListener,
 
     removeAllListeners () {

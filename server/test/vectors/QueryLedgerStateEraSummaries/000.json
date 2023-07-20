@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","result":{"eraSummaries":[{"start":{"time":1.3146501760902178e9,"slot":7895684,"epoch":8292503},"end":{"time":8.428742066233708e7,"slot":13864999,"epoch":14192025},"parameters":{"epochLength":2254112,"slotLength":2.756,"safeZone":4143885}}]},"id":null}

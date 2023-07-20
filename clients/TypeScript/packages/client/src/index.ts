@@ -2,17 +2,16 @@ export * as Schema from '@cardano-ogmios/schema'
 
 export * from './Connection'
 export * from './ServerHealth'
-export * from './errors'
 export * from './util'
 
-export { createChainSyncClient } from './ChainSync'
-export * as ChainSync from './ChainSync'
+export { createChainSynchronizationClient } from './ChainSynchronization'
+export * as ChainSynchronization from './ChainSynchronization'
 
-export { createStateQueryClient, EraWithGenesis, GenesisConfig } from './StateQuery'
-export * as StateQuery from './StateQuery'
+export { createTransactionSubmissionClient } from './TransactionSubmission'
+export * as TransactionSubmission from './TransactionSubmission'
 
-export { createTxSubmissionClient } from './TxSubmission'
-export * as TxSubmission from './TxSubmission'
+export { createMempoolMonitoringClient } from './MempoolMonitoring'
+export * as MempoolMonitoring from './MempoolMonitoring'
 
-export { createTxMonitorClient } from './TxMonitor'
-export * as TxMonitor from './TxMonitor'
+export { createLedgerStateQueryClient } from './LedgerStateQuery'
+export * as LedgerStateQuery from './LedgerStateQuery'

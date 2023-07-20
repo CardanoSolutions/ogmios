@@ -6,7 +6,6 @@
 
 module Ogmios.Data.Json
     ( Json
-    , SerializationMode (..)
     , ViaEncoding (..)
     , jsonToByteString
     , FromJSON
@@ -16,12 +15,13 @@ module Ogmios.Data.Json
 
       -- * Encoders
     , encodeAcquireFailure
+    , encodeAcquireExpired
     , encodeBlock
     , Alonzo.encodeExUnits
     , encodePoint
     , Alonzo.encodeScriptFailure
-    , encodeSerializedTx
-    , encodeSubmitTxError
+    , encodeSerializedTransaction
+    , encodeSubmitTransactionError
     , encodeTip
     , encodeTx
     , encodeTxId
@@ -32,7 +32,7 @@ module Ogmios.Data.Json
       -- * Decoders
     , decodeOneEraHash
     , decodePoint
-    , decodeSerializedTx
+    , decodeSerializedTransaction
     , decodeTip
     , decodeTxId
     , decodeUtxo
@@ -52,13 +52,13 @@ import Cardano.Ledger.Shelley.API
 import Cardano.Network.Protocol.NodeToClient
     ( GenTx
     , GenTxId
-    , SerializedTx
-    , SubmitTxError
+    , SerializedTransaction
+    , SubmitTransactionError
     )
 import Ogmios.Data.Json.Query
     ( decodeOneEraHash
     , decodePoint
-    , decodeSerializedTx
+    , decodeSerializedTransaction
     , decodeTip
     , decodeTxId
     , decodeUtxo
@@ -112,52 +112,42 @@ encodeAcquireFailure
     -> Json
 encodeAcquireFailure = \case
     AcquireFailurePointTooOld ->
-        encodeText "pointTooOld"
+        encodeText "Target point is too old."
     AcquireFailurePointNotOnChain ->
-        encodeText "pointNotOnChain"
+        encodeText "Target point doesn't longer exist."
+
+encodeAcquireExpired
+    :: AcquireFailure
+    -> Json
+encodeAcquireExpired = \case
+    AcquireFailurePointTooOld ->
+        encodeText "Acquired point is now too old."
+    AcquireFailurePointNotOnChain ->
+        encodeText "Acquired point no longer exist."
 
 encodeBlock
     :: Crypto crypto
-    => SerializationMode
-    -> CardanoBlock crypto
+    => CardanoBlock crypto
     -> Json
-encodeBlock mode = \case
-    BlockByron blk -> encodeObject
-        [ ( "byron"
-          , Byron.encodeABlockOrBoundary mode (byronBlockRaw blk)
-          )
-        ]
-    BlockShelley blk -> encodeObject
-        [ ( "shelley"
-          , Shelley.encodeBlock mode blk
-          )
-        ]
-    BlockAllegra blk -> encodeObject
-        [ ( "allegra"
-          , Allegra.encodeBlock mode blk
-          )
-        ]
-    BlockMary blk -> encodeObject
-        [ ( "mary"
-          , Mary.encodeBlock mode blk
-          )
-        ]
-    BlockAlonzo blk -> encodeObject
-        [ ( "alonzo"
-          , Alonzo.encodeBlock mode blk
-          )
-        ]
-    BlockBabbage blk -> encodeObject
-        [ ( "babbage"
-          , Babbage.encodeBlock mode blk
-          )
-        ]
+encodeBlock = \case
+    BlockByron blk ->
+        Byron.encodeABlockOrBoundary (byronBlockRaw blk)
+    BlockShelley blk ->
+        Shelley.encodeBlock blk
+    BlockAllegra blk ->
+        Allegra.encodeBlock blk
+    BlockMary blk ->
+        Mary.encodeBlock blk
+    BlockAlonzo blk ->
+        Alonzo.encodeBlock blk
+    BlockBabbage blk ->
+        Babbage.encodeBlock blk
 
-encodeSubmitTxError
+encodeSubmitTransactionError
     :: Crypto crypto
-    => SubmitTxError (CardanoBlock crypto)
+    => SubmitTransactionError (CardanoBlock crypto)
     -> Json
-encodeSubmitTxError = \case
+encodeSubmitTransactionError = \case
     ApplyTxErrByron e ->
         Byron.encodeApplyMempoolPayloadErr e
     ApplyTxErrShelley (ApplyTxError xs) ->
@@ -173,11 +163,11 @@ encodeSubmitTxError = \case
     ApplyTxErrWrongEra e ->
         encodeList encodeEraMismatch [ e ]
 
-encodeSerializedTx
+encodeSerializedTransaction
     :: (PraosCrypto crypto, TPraos.PraosCrypto crypto)
-    => SerializedTx (CardanoBlock crypto)
+    => SerializedTransaction (CardanoBlock crypto)
     -> Json
-encodeSerializedTx = \case
+encodeSerializedTransaction = \case
     GenTxByron tx ->
         encodeByteStringBase16 $ Cbor.toStrictByteString $ encodeByronGenTx tx
     GenTxShelley tx ->
@@ -195,37 +185,34 @@ encodeTip
     :: Tip (CardanoBlock crypto)
     -> Json
 encodeTip = \case
-    TipGenesis -> encodeText "origin"
-    Tip slot hash blockNo -> encodeObject
-        [ ( "slot"
-          , encodeSlotNo slot
-          )
-        , ( "hash"
-          , encodeOneEraHash hash
-          )
-        , ( "blockNo"
-          , encodeBlockNo blockNo
-          )
-        ]
+    TipGenesis ->
+        encodeText "origin"
+    Tip slot hash blockNo ->
+        "slot" .=
+            encodeSlotNo slot <>
+        "hash" .=
+            encodeOneEraHash hash <>
+        "blockNo" .=
+            encodeBlockNo blockNo
+        & encodeObject
 
 encodeTx
     :: forall crypto.
         ( Crypto crypto
         )
-    => SerializationMode
-    -> GenTx (CardanoBlock crypto)
+    => GenTx (CardanoBlock crypto)
     -> Json
-encodeTx mode = \case
+encodeTx = \case
     GenTxBabbage (ShelleyTx _ x) ->
-        Babbage.encodeTx mode x
+        Babbage.encodeTx x
     GenTxAlonzo (ShelleyTx _ x) ->
-        Alonzo.encodeTx mode x
+        Alonzo.encodeTx x
     GenTxMary (ShelleyTx _ x) ->
-        Mary.encodeTx mode x
+        Mary.encodeTx x
     GenTxAllegra (ShelleyTx _ x) ->
-        Allegra.encodeTx mode x
+        Allegra.encodeTx x
     GenTxShelley (ShelleyTx _ x) ->
-        Shelley.encodeTx mode x
+        Shelley.encodeTx x
     GenTxByron _ ->
         error "encodeTx: unsupported Byron transaction."
 

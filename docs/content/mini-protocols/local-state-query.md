@@ -1,31 +1,34 @@
 +++
-title = "Local State Query"
+title = "Ledger state queries"
 chapter = false
 weight = 2
 +++
 
 
 {{% ascii-drawing-split %}}
-                ┌───────────────┐
-        ┌──────▶│     Idle      │⇦ START
-        │       └───┬───────────┘
-        │           │       ▲ 
-        │   Acquire │       │ Failure 
-        │           ▼       │
-        │       ┌───────────┴───┐                   
-Release │       │   Acquiring   │◀─────────────────┐
-        │       └───┬───────────┘                  │
-        │           │       ▲                      │ Result 
-        │  Acquired │       │ ReAcquire            │
-        │           ▼       │                      │
-        │       ┌───────────┴───┐         ┌────────┴───────┐
-        └───────┤   Acquired    │────────▶│    Querying    │
-                └───────────────┘  Query  └────────────────┘
+                                   queryLedgerState/*
+                         START     queryNetwork/*
+                           ⇓      ╭────╮
+releaseLedgerState ┌──────────────┴┐   │
+            ╭─────▶│     Idle      │◀──╯
+            │      └───────┬───────┘
+            │              │
+            │              │ acquireLedgerState
+            │              │
+            │              │   (re)acquireLedgerState
+            │              ▼  ╭────────╮
+            │      ┌──────────┴────┐   │
+            ╰──────┤   Acquired    │◀──╯
+                   └───┬───────────┘
+                       │       ▲
+    queryLedgerState/* │       │
+        queryNetwork/* │       │
+                       ╰───────╯
 {{% /ascii-drawing-split %}}
 
 ## Overview
 
-The state query protocol is likely the most versatile of the three Ouroboros mini-protocols. As a matter of fact, it allows for querying various types of information directly from the ledger. In essence, it is like a very simpler request/response pattern where the types of questions one can ask are specified by the protocols. Those questions include: information about the chain tip, information about stake pools but also the balance of a particular address. 
+The state query protocol is likely the most versatile of the three Ouroboros mini-protocols. As a matter of fact, it allows for querying various types of information directly from the ledger. In essence, it is like a very simpler request/response pattern where the types of questions one can ask are specified by the protocols. Those questions include: information about the chain tip, information about stake pools but also the balance of a particular address.
 
 In order to run a question by the ledger, one must first acquire a particular position on the chain, so that the node can reliably answer a few questions on a chosen, frozen state while continuing maintaining more recent version of the ledger on the side. It is important to note that:
 
@@ -33,82 +36,89 @@ In order to run a question by the ledger, one must first acquire a particular po
 
 2. Should a client keep a state acquired for too long, it is likely to become unreachable at some point, forcing clients to re-acquire.
 
-## How To Use
+## How to use
 
-Ogmios uses a simplified version of the above state-machine. Or more exactly, it exposes a simplified version and handles some of the complexity behind the scene for you. As clients, Ogmios will give you 3 possible requests: Acquire, Query, Release. A typical sequence would be to start by Acquiring a state on a given point and then make a few queries, and then release. The release step is optional although it is a bit more polite to say goodbye at the end of a conversation. 
+Ogmios uses a simplified version of the above state-machine. Or more exactly, it exposes a simplified version and handles some of the complexity behind the scene for you. As clients, Ogmios will give you method to acquire a state, query that state and release the state. A typical sequence would be to start by acquiring a state on a given point and then make a few queries, and then release. The release step is optional although it is a bit more polite to say goodbye at the end of a conversation.
 
-It is also possible to submit queries directly without acquiring. As a consequence, Ogmios will acquire the tip of the chain, run the query and release it for you. This is the easiest way to send 
-queries if you don't care about capturing a particular state. Note however that this may create race conditions if you send multiple queries via this method. Indeed, the tip is changing quite often on the network, and two subsequent queries may actually run on two different points of the chain. While this is generally safe for most queries, it may also put your application in an unexpected state when crossing epoch boundaries or hard-forks. 
+It is also possible to submit queries directly without acquiring. As a consequence, Ogmios will acquire the tip of the chain, run the query and release it for you. This is the easiest way to send queries if you don't care about capturing a particular state. Note however that this may create race conditions if you send multiple queries via this method. Indeed, the tip is changing quite often on the network, and two subsequent queries may actually run on two different points of the chain. While this is generally safe for most queries, it may also put your application in an unexpected state when crossing epoch boundaries or hard-forks.
 
-## Acquire
+## Acquiring a state
 
-The `Acquire` request expect one argument named `point`. The point has the same format as points in the local-chain-sync protocol. That is, they can be block header hashes or the special keyword `"origin"` (though there's very little chance that one will be able to acquire the origin!).
+The `acquireLedgerState` method expects one argument named `point`. The point has the same format as points in the [chain synchronization protocol](../local-chain-sync). That is, they can be block header hashes or the special keyword `"origin"` (though there's very little chance that one will be able to acquire the origin!).
 
 ```json
-{ 
-    "type": "jsonwsp/request",
-    "version": "1.0",
-    "servicename": "ogmios",
-    "methodname": "Acquire",
-    "args": { "point": "9e871633f7aa356ef11cdcabb6fdd6d8f4b00bc919c57aed71a91af8f86df590" }
+{
+    "jsonrpc": "2.0",
+    "method": "acquireLedgerState",
+    "params": {
+        "point": {
+            "slot": 1234,
+            "hash": "9e871633f7aa356ef11cdcabb6fdd6d8f4b00bc919c57aed71a91af8f86df590"
+        }
+    }
 }
 ```
 
-One thing that doesn't strike as obvious is that, as clients, you need points to query any information. There are many ways to get those hashes but in the context of Ogmios, the most logical way is via the [local-chain-sync](../local-chain-sync/) protocol. 
+One thing that doesn't strike as obvious is that, as clients, you need points to query any information. There are many ways to get those hashes but in the context of Ogmios, the most logical way is via the [chain synchronization](../local-chain-sync/) protocol.
 
 {{% notice tip %}}
-You can acquire multiple times, the last one will prevail. If you need to re-acquire, simply send another `Acquire` request.
+You can acquire multiple times, the last one will prevail. If you need to re-acquire, simply send another `acquire` request.
 {{% /notice %}}
 
-## Query
+{{% notice warning %}}
+You can skip acquiring a state should you want to run a query on the current state of the chain. This is good for one-off queries, but if you need to chain multiple queries together it is **highly recommended** to acquire a state first to preserve data-consistency between queries!
+{{% /notice %}}
 
-There are many queries that can be sent to the ledger, and the list is growing days after days as the Cardano team implements new ones. With Ogmios, all queries follow the same pattern and use the method name `Query`. All of them also take one argument named `query` which specifies the query to run and, optionally some extra argument given to the query. For example:
+## Querying
+
+There are many queries that can be sent to the ledger, and the list is growing days after days as the Cardano team implements new ones. With Ogmios, all queries follow the same pattern and are identified by a method. There exists two types of queries: ledger-state queries and network queries. The former is performed on the ledger state and are era-dependent. The latter are always available (even when the node is synchronizing) and are era-independent. In both cases, queries are constructed in a similar fashion:
+
+- `queryLedgerState/*`, where `*` has to be replaced with an actual ledger-state query name (see below);
+- `queryNetwork/*`, where `*` has to be replaced with an actual network query name (see below)
+
+For example, to query the ongoing epoch of the ledger:
 
 ```
-{ 
-    "type": "jsonwsp/request",
-    "version": "1.0",
-    "servicename": "ogmios",
-    "methodname": "Query",
-    "args": { "query": "ledgerTip" }
+{
+    "jsonrpc": "2.0",
+    "method": "queryLedgerState/epoch",
 }
 ```
 
-At the moment of writing this guide, the following queries are available: 
+#### Network
 
-Query                        | Result
+At the moment of writing this guide, the following queries are available:
+
+queryNetwork                 | Information
 ---                          | ---
 `blockHeight`                | The chain's highest block number.
-`chainTip`                   | The chain's current tip.
-`currentEpoch`               | The current epoch of the ledger.
-`currentProtocolParameters`  | The current protocol parameters.
-`delegationsAndRewards`      | Current delegation settings and rewards of given reward accounts.
-`eraStart`                   | The information regarding the beginning of the current era.
-`eraSummaries`               | Era bounds and slotting parameters details, required for proper slot arithmetic.
-`genesisConfig`              | Get a compact version of the era's genesis configuration.
-`ledgerTip`                  | The most recent block tip known of the ledger.
-`nonMyopicMemberRewards`     | Non-myopic member rewards for each pool. Used in ranking.
-`poolIds`                    | The list of all pool identifiers currently registered and active.
-`poolParameters`             | Stake pool parameters submitted with registration certificates.
-`poolsRanking`               | Retrieve stake pools ranking (a.k.a desirabilities).
+`genesisConfiguration`       | Get the genesis configuration of a specific era.
+`startTime`                  | The chain's start time (UTC).
+`tip`                        | The network's current tip.
+
+#### Ledger-state
+
+queryLedgerState             | Information
+---                          | ---
+`epoch`                      | The current epoch of the ledger.
+`eraStart`                   | The information regarding the beginning of the current ledger era.
+`eraSummaries`               | Era bounds and slot parameters details, required for proper slotting arithmetic.
+`liveStakeDistribution`      | Distribution of the stake across all known stake pools, relative to the **total** stake in the network.
+`projectedRewards`           | The projected rewards of an account in a context where the top stake pools are fully saturated. This projection gives, in principle, a ranking of stake pools that maximizes delegator rewards.
+`protocolParameters`         | The current protocol parameters.
 `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
-`rewardsProvenance'`         | Get details about rewards calculation for the ongoing epoch.
-`stakeDistribution`          | Distribution of the stake across all known stake pools.
-`systemStart`                | The chain's start time (UTC).
+`rewardAccountSummaries`     | Current delegation settings and rewards of chosen reward accounts.
+`rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
+`stakePools`                 | The list of all pool identifiers currently registered and active.
+`stakePoolParameters`        | Stake pool parameters submitted with registration certificates.
+`tip`                        | The current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger.
 `utxo`                       | Current UTXO, possibly filtered by output reference.
 
-{{% notice warning %}}
-Deprecated queries. Queries or functionalities listed below will be removed in the next **major** release of Ogmios.
-
-Query               | Notice | Deprecated Since
----                 | --- | ---
-`rewardsProvenance` | Supports for this query is not longer guaranteed. The `pools` field in the result is no longer populated. Use `rewardsProvenance'` instead | [cardano-node@1.33.0](https://github.com/input-output-hk/cardano-node/releases/tag/1.33.0)
-`utxo`              | Filtering UTXO **by address** is no longer recommended with the introduction of on-disk ledger state storage. Filtering by output reference is preferred. | [cardano-node@1.33.0](https://github.com/input-output-hk/cardano-node/releases/tag/1.33.0)
+{{% notice tip %}}
+To know more about arguments and results of each query, have a look at the [API reference](../../api).
 {{% /notice %}}
 
-To know more about arguments and results of each query, have a look at the [API reference](../../api).
-
-## Simplified Example
+## Simplified example
 
 In this example, we'll consider a simple direct query on the network tip to fetch the latest protocol parameters. The next section gives a more elaborate example which shows how to acquire a specific point on chain.
 
@@ -116,23 +126,22 @@ In this example, we'll consider a simple direct query on the network tip to fetc
 const WebSocket = require('ws');
 const client = new WebSocket("ws://localhost:1337");
 
-function wsp(methodname, args) {
+function rpc(method, params = {}, id) {
     client.send(JSON.stringify({
-        type: "jsonwsp/request",
-        version: "1.0",
-        servicename: "ogmios",
-        methodname,
-        args
+        jsonrpc: "2.0",
+        method,
+        params,
+        id
     }));
 }
 
 client.once('open', () => {
-    wsp("Query", { query: "currentProtocolParameters" } );
+    rpc("queryLedgerState/protocolParameters");
 });
 
 client.on('message', function(msg) {
     const response = JSON.parse(msg);
-    console.log(JSON.stringify(response.result, null, 4));
+    console.log(JSON.stringify(response.result.protocolParameters, null, 4));
     client.close();
 });
 ```
@@ -164,43 +173,42 @@ This little excerpt outputs the most recent protocol parameters in a nice JSON:
 }
 ```
 
-## Full Example
+## Full example
 
-Let's see a full example getting the stake distribution of all stake pools of the Cardano mainnet. In the example, we'll also use the `FindIntersect` method from the [local-chain-sync](../local-chain-sync) protocol to get an easy point to acquire.  
+Let's see a full example getting the stake distribution of all stake pools of the Cardano mainnet. In the example, we'll also use a network query to find the current chain tip, and then try to acquire it for subsequent queries.
 
 ```js
 const WebSocket = require('ws');
 const client = new WebSocket("ws://localhost:1337");
 
-function wsp(methodname, args) {
+function rpc(method, params = {}, id) {
     client.send(JSON.stringify({
-        type: "jsonwsp/request",
-        version: "1.0",
-        servicename: "ogmios",
-        methodname,
-        args
+        jsonrpc: "2.0",
+        method,
+        params,
+        id
     }));
 }
 
 client.once('open', () => {
-    wsp("FindIntersect", { points: ["origin"] });
+    rpc("queryNetwork/tip", {}, "get-network-tip")
 });
 
 client.on('message', function(msg) {
     const response = JSON.parse(msg);
 
-    switch (response.methodname) {
-        case "FindIntersect":
-            const point = response.result.IntersectionFound.tip;
-            wsp("Acquire", { point });
+    switch (response.id) {
+        case "get-network-tip":
+            const point = response.result.tip;
+            rpc("acquireLedgerState", { point }, "acquire-network-tip");
             break;
 
-        case "Acquire":
-            wsp("Query", { query: "stakeDistribution" });
+        case "acquire-network-tip":
+            rpc("queryLedgerState/liveStakeDistribution");
             break;
 
-        case "Query":
-            console.log(response.result);
+        default:
+            console.log(response.result.liveStakeDistribution);
             client.close();
             break;
     }
@@ -209,109 +217,130 @@ client.on('message', function(msg) {
 
 Here's a walk-though describing what happens when running the above script:
 
-1. An initial request ask to `FindIntersect` that is guaranteed to succeed is sent. This is a little trick in order to access the ledger tip easily. As a response, Ogmios replies with:
+1. An initial request ask the network tip. That is guaranteed to succeed and is a little trick in order to access the ledger tip easily. As a response, Ogmios replies with:
 
-    {{% expand "IntersectionFound" %}}
+    {{% expand "Got network tip" %}}
 ```json
 {
-    "version": "1.0",
-    "servicename": "ogmios",
-    "type": "jsonwsp/response",
-    "methodname": "FindIntersect",
+    "jsonrpc": "2.0",
     "result": {
-        "IntersectionFound": {
-            "point": "origin",
-            "tip": {
-                "hash": "dbafebb0146b2ec45186dfba6c287ad69c83d3fd9a186b39d99ab955631539e0",
-                "blockNo": 4887546,
-                "slot": 12526684
-            }
+        "tip": {
+            "hash": "dbafebb0146b2ec45186dfba6c287ad69c83d3fd9a186b39d99ab955631539e0",
+            "slot": 12526684
         }
     },
-    "reflection": null
+    "id": "get-network-tip"
 }
 ```
     {{% /expand %}}
 
-2. Using the `tip` from the previous response, we can now safely `Acquire` a state on that particular tip which we know exists and is not too old. Ogmios replies successfully with:
+2. Using the `tip` from the previous response, we can now safely aquire a state on that particular tip which we know exists and is not too old. Ogmios replies successfully with:
 
-    {{% expand "AcquireSuccess" %}}
+    {{% expand "Acquired ledger state" %}}
 ```json
 {
-    "version": "1.0",
-    "servicename": "ogmios",
-    "type": "jsonwsp/response",
-    "methodname": "Acquire",
+    "jsonrpc": "2.0",
     "result": {
-        "AcquireSuccess": {
-            "acquired": {
-                "hash": "dbafebb0146b2ec45186dfba6c287ad69c83d3fd9a186b39d99ab955631539e0",
-                "slot": 12526684
-            }
-        }
+      "acquired": "ledgerState",
+      "point": {
+          "hash": "dbafebb0146b2ec45186dfba6c287ad69c83d3fd9a186b39d99ab955631539e0",
+          "slot": 12526684
+      }
     },
-    "reflection": null
+    "id": "acquire-network-tip"
 }
 ```
     {{% /expand %}}
 
-3. Now in a position to make an actual `Query`, we do it and ask for the stake distribution across all stake pools. The (truncated) response from the server looks like:
+3. Now in a position to make an actual query, we do it and ask for the stake distribution across all stake pools. The (truncated) response from the server looks like:
 
-    {{% expand "QueryResponse" %}}
+    {{% expand "Query response" %}}
 ```json
 {
-    "version": "1.0",
-    "servicename": "ogmios",
-    "type": "jsonwsp/response",
-    "methodname": "Query",
+    "jsonrpc": "2.0",
     "result": {
-        "pool1w3s6gk83y2g3670emy3yfjw9myz3u4whph7peah653rmsfegyj3": {
-            "stake": 0,
-            "vrf": "29c1a293c550beea756bc0c01416bacd7030ae8992e13ca242d4d6c2aebaac0d"
-        },
-        "pool1n5shd9xdt4s2gm27fxcnuejaqhhmpepn6chw2c82kqnuzdtpsem": {
-            "stake": 0.00003058882418046271,
-            "vrf": "7e363eb8bfd8fef018da4c397d6a6ec25998363434e92276e40ee6c706da3ae5"
-        },
-        "..."
-    },
-    "reflection": null
+        "liveStakeDistribution": {
+            "pool1w3s6gk83y2g3670emy3yfjw9myz3u4whph7peah653rmsfegyj3": {
+                "stake": 0,
+                "vrf": "29c1a293c550beea756bc0c01416bacd7030ae8992e13ca242d4d6c2aebaac0d"
+            },
+            "pool1n5shd9xdt4s2gm27fxcnuejaqhhmpepn6chw2c82kqnuzdtpsem": {
+                "stake": 0.00003058882418046271,
+                "vrf": "7e363eb8bfd8fef018da4c397d6a6ec25998363434e92276e40ee6c706da3ae5"
+            },
+            "..."
+        }
+    }
 }
 ```
     {{% /expand %}}
 
 
 {{% notice warning %}}
-Be aware that it is possible for an `Acquire` request to fail even if (and in particular if) made immediately after finding the ledger tip. In Ouroboros Praos frequent small rollbacks of the chain are not rare and the few last blocks of the chain can be a bit volatile. A real application may require more elaborate error handling than the toy example above. 
+Be aware that it is possible for an acquire request to fail even if (and in particular if) made immediately after finding the ledger tip. In Ouroboros Praos frequent small rollbacks of the chain are not rare and the few last blocks of the chain can be a bit volatile. A real application may require more elaborate error handling than the toy example above.
 {{% /notice %}}
 
-## Example Queries
+## Example queries
 
-#### currentEpoch
+### Network
+
+#### blockHeight
 
 ```json
 {
-  "query": "currentEpoch"
+  "jsonrpc": "2.0",
+  "method": "queryNetwork/blockHeight"
 }
 ```
 
-#### currentProtocolParameters
+#### genesisConfiguration
 
 ```json
 {
-  "query": "currentProtocolParameters"
-}
-```
-
-#### delegationsAndRewards   
-
-```json
-{
-  "query": {
-    "delegationsAndRewards": [
-      "7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8"
-    ]
+  "jsonrpc": "2.0",
+  "method": "queryNetwork/genesisConfiguration",
+  "params": {
+    "era": "shelley"
   }
+}
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryNetwork/genesisConfiguration",
+  "params": {
+    "era": "alonzo"
+  }
+}
+```
+
+#### startTime
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryNetwork/startTime"
+}
+```
+
+#### tip
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryNetwork/tip"
+}
+```
+
+### Ledger-state
+
+#### epoch
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/epoch"
 }
 ```
 
@@ -319,7 +348,8 @@ Be aware that it is possible for an `Acquire` request to fail even if (and in pa
 
 ```json
 {
-  "query": "eraStart"
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/eraStart"
 }
 ```
 
@@ -327,141 +357,170 @@ Be aware that it is possible for an `Acquire` request to fail even if (and in pa
 
 ```json
 {
-  "query": "eraSummaries"
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/eraSummaries"
 }
 ```
 
-#### genesisConfig
+#### liveStakeDistribution
 
 ```json
 {
-  "query": "genesisConfig"
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/liveStakeDistribution"
 }
 ```
 
-#### ledgerTip
+#### projectedRewards
 
 ```json
 {
-  "query": "ledgerTip"
-}
-```
-
-
-#### nonMyopicMemberRewards (by credentials)
-
-```json
-{
-  "query": {
-    "nonMyopicMemberRewards": [
-      "7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8"
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/projectedRewards",
+  "params": {
+    "stake": [
+      1000000
     ]
   }
 }
 ```
 
-#### nonMyopicMemberRewards (by amounts)
-
 ```json
 {
-  "query": {
-    "nonMyopicMemberRewards": [
-      42000000
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/projectedRewards",
+  "params": {
+    "keys": [
+      "7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8",
+      "stake_vkh10stzgpc5ag8p9dq6j98jj3tcftzffwce2ulsefs6pzh6s39tk6l"
     ]
   }
 }
 ```
 
-#### poolIds
-
 ```json
 {
-  "query": "poolIds"
-}
-```
-
-#### poolParameters
-
-```json
-{
-  "query": {
-    "poolParameters": [
-      "pool1pk2wzarn9mu64eel89dtg3g8h75c84jsy0q349glpsewgd7sdls",
-      "4acf2773917c7b547c576a7ff110d2ba5733c1f1ca9cdc659aea3a56"
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/projectedRewards",
+  "params": {
+    "scripts": [
+      "7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8",
+      "script10stzgpc5ag8p9dq6j98jj3tcftzffwce2ulsefs6pzh6snywdma"
     ]
   }
 }
 ```
 
-#### poolsRanking
-
+#### protocolParameters
 
 ```json
 {
-  "query": "poolsRanking"
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/protocolParameters"
 }
 ```
 
-#### proposedProtocolParameters
-
+#### currentProtocolParameters
 
 ```json
 {
-  "query": "proposedProtocolParameters"
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/currentProtocolParameters"
+}
+```
+
+#### rewardAccountSummaries
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/rewardAccountSummaries",
+  "params": {
+    "keys": [
+      "7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8",
+      "stake_vkh10stzgpc5ag8p9dq6j98jj3tcftzffwce2ulsefs6pzh6s39tk6l"
+    ]
+  }
+}
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/rewardAccountSummaries",
+  "params": {
+    "scripts": [
+      "7c16240714ea0e12b41a914f2945784ac494bb19573f0ca61a08afa8",
+      "script10stzgpc5ag8p9dq6j98jj3tcftzffwce2ulsefs6pzh6snywdma"
+    ]
+  }
 }
 ```
 
 #### rewardsProvenance
 
-
 ```json
 {
-  "query": "rewardsProvenance"
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/rewardsProvenance"
 }
 ```
 
-
-#### rewardsProvenance'
-
+#### stakePools
 
 ```json
 {
-  "query": "rewardsProvenance'"
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/stakePools"
 }
 ```
 
-#### stakeDistribution
+#### stakePoolParameters
 
 ```json
 {
-  "query": "stakeDistribution"
-}
-```
-
-#### utxo (by Address)
-
-```json
-{
-  "query": {
-    "utxo": [
-      "addr1wx66ue36465w2qq40005h2hadad6pnjht8mu6sgplsfj74qhpnf3s",
-      "addr1xyxefct5wvh0n2h88uu44dz9q7l6nq7k2q3uzx54ruxr9e93ddt0tmqxf0n2c09tvq67lt5xkdnvc0wy5r2hzcpawrjsjk6m63"
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/stakePoolParameters",
+  "params": {
+    "stakePools": [
+      { "id": "pool1pk2wzarn9mu64eel89dtg3g8h75c84jsy0q349glpsewgd7sdls" },
+      { "id": "4acf2773917c7b547c576a7ff110d2ba5733c1f1ca9cdc659aea3a56" }
     ]
   }
 }
 ```
 
-#### utxo (by TxIn)
+#### tip
 
 ```json
 {
-  "query": {
-    "utxo": [
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/tip"
+}
+```
+
+
+#### utxo
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/utxo"
+}
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/utxo",
+  "params": {
+    "outputReferences": [
       {
-        "txId": "ee155ace9c40292074cb6aff8c9ccdd273c81648ff1149ef36bcea6ebb8a3e25",
-        "index": 2
+        "transaction": { "id": "ee155ace9c40292074cb6aff8c9ccdd273c81648ff1149ef36bcea6ebb8a3e25" },
+        "output": { "index": 2 }
       }
     ]
+
   }
 }
 ```

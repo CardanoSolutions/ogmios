@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"missingTxMetadataHash":"ae85d245a3d00bfde01f59f3c4fe0b4bfae1cb37e9cf91929eadcea4985711de"},{"unknownOrIncompleteWithdrawals":{"stake17xnyv36t3a2rzfs4q6mvyu7nqlr4dxjwkmykkskafg54yzsenqyzz":700}},{"delegateNotRegistered":"pool1k944da0vqe97dtpu4dsrtmaws6ekdnpacjsd2utq84cw2jk52f0"}]},"id":null}

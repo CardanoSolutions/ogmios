@@ -64,13 +64,12 @@ import Ogmios.Data.Json.Query
     , PoolParams
     , QueryResult
     , RewardAccounts
-    , RewardProvenance
-    , RewardProvenance'
+    , RewardsProvenance
     )
 import Ogmios.Data.Protocol.TxSubmission
-    ( EvaluateTxError (..)
-    , EvaluateTxResponse (..)
-    , NotEnoughSyncedError (..)
+    ( EvaluateTransactionError (..)
+    , EvaluateTransactionResponse (..)
+    , NodeTipTooOldError (..)
     )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock
@@ -275,8 +274,12 @@ genPoint =
 genTip :: Gen (Tip Block)
 genTip = frequency
     [ (1, pure TipGenesis)
-    , (10, Tip <$> genSlotNo <*> genHeaderHash <*> genBlockNo)
+    , (10, genTipNoGenesis)
     ]
+
+genTipNoGenesis :: Gen (Tip Block)
+genTipNoGenesis =
+    Tip <$> genSlotNo <*> genHeaderHash <*> genBlockNo
 
 genSubmitResult :: Gen (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto)))
 genSubmitResult = frequency
@@ -294,26 +297,26 @@ genHardForkApplyTxErr = frequency
     , (30, ApplyTxErrBabbage <$> reasonablySized arbitrary)
     ]
 
-genEvaluateTxResponse :: Gen (EvaluateTxResponse Block)
-genEvaluateTxResponse = frequency
-    [ (10, EvaluationFailure <$> genEvaluateTxError)
+genEvaluateTransactionResponse :: Gen (EvaluateTransactionResponse Block)
+genEvaluateTransactionResponse = frequency
+    [ (10, EvaluationFailure <$> genEvaluateTransactionError)
     , (1, EvaluationResult <$> reasonablySized arbitrary)
     ]
 
-genEvaluateTxError :: Gen (EvaluateTxError Block)
-genEvaluateTxError = frequency
-    [ (10, EvaluateTxScriptFailures . fromList <$> reasonablySized (do
+genEvaluateTransactionError :: Gen (EvaluateTransactionError Block)
+genEvaluateTransactionError = frequency
+    [ (10, ScriptExecutionFailures . fromList <$> reasonablySized (do
         failures <- listOf1 (listOf1 genScriptFailure)
         ptrs <- vector (length failures)
         pure (zip ptrs failures)
       ))
-    , (1, EvaluateTxIncompatibleEra <$> genPreAlonzoEra)
-    , (1, EvaluateTxAdditionalUtxoOverlap <$> reasonablySized arbitrary)
+    , (1, IncompatibleEra <$> genPreAlonzoEra)
+    , (1, OverlappingAdditionalUtxo <$> reasonablySized arbitrary)
     , (1, do
-        notEnoughSynced <- NotEnoughSynced <$> genPreAlonzoEra <*> genPreAlonzoEra
-        pure (EvaluateTxNotEnoughSynced notEnoughSynced)
+        notEnoughSynced <- NodeTipTooOld <$> genPreAlonzoEra <*> genPreAlonzoEra
+        pure (NodeTipTooOldErr notEnoughSynced)
       )
-    , (10, EvaluateTxCannotCreateEvaluationContext <$> genTranslationError)
+    , (10, CannotCreateEvaluationContext <$> genTranslationError)
     ]
 
 genTranslationError :: Gen (TranslationError StandardCrypto)
@@ -375,10 +378,10 @@ genRewardParams =
         <*> arbitrary
         <*> arbitrary
 
-genRewardProvenance'
+genRewardsProvenance
     :: forall crypto. (crypto ~ StandardCrypto)
-    => Gen (RewardProvenance' crypto)
-genRewardProvenance' =
+    => Gen (RewardsProvenance crypto)
+genRewardsProvenance =
     (,) <$> genRewardParams
         <*> fmap fromList
             ( reasonablySized $ listOf1 $
@@ -717,22 +720,13 @@ genGenesisConfigAlonzo =
         <*> arbitrary
         <*> arbitrary
 
-genRewardInfoPoolsResult
+genRewardsProvenanceResult
     :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (RewardProvenance' crypto))
-    -> Gen (QueryResult crypto (RewardProvenance' crypto))
-genRewardInfoPoolsResult _ = frequency
+    => Proxy (QueryResult crypto (RewardsProvenance crypto))
+    -> Gen (QueryResult crypto (RewardsProvenance crypto))
+genRewardsProvenanceResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right <$> genRewardProvenance')
-    ]
-
-genRewardProvenanceResult
-    :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (RewardProvenance crypto))
-    -> Gen (QueryResult crypto (RewardProvenance crypto))
-genRewardProvenanceResult _ = frequency
-    [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right <$> reasonablySized arbitrary)
+    , (10, Right <$> genRewardsProvenance)
     ]
 
 genPoolIdsResult
@@ -752,13 +746,6 @@ genPoolParametersResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> reasonablySized arbitrary)
     ]
-
-genPoolsRankingResult
-    :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (RewardProvenance crypto))
-    -> Gen (QueryResult crypto (RewardProvenance crypto))
-genPoolsRankingResult =
-    genRewardProvenanceResult
 
 genMirror
     :: Gen (Maybe Json.Value)

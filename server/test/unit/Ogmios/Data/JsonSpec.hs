@@ -30,6 +30,7 @@ import Control.Monad.Class.MonadAsync
 import Data.Aeson
     ( parseJSON
     , toJSON
+    , (.=)
     )
 import Data.Aeson.QQ.Simple
     ( aesonQQ
@@ -43,15 +44,14 @@ import Ogmios.Data.EraTranslation
     )
 import Ogmios.Data.Json
     ( Json
-    , SerializationMode (..)
     , decodeUtxo
     , decodeWith
-    , encodeAcquireFailure
+    , encodeAcquireExpired
     , encodeBlock
     , encodeExUnits
     , encodePoint
     , encodeScriptFailure
-    , encodeSubmitTxError
+    , encodeSubmitTransactionError
     , encodeTip
     , encodeTranslationError
     , encodeTx
@@ -71,88 +71,86 @@ import Ogmios.Data.Json.Query
     , ShelleyBasedEra (..)
     , SomeQuery (..)
     , SomeShelleyEra (..)
-    , parseGetBlockHeight
-    , parseGetChainTip
-    , parseGetCurrentPParams
-    , parseGetEpochNo
-    , parseGetEraStart
-    , parseGetFilteredDelegationsAndRewards
-    , parseGetGenesisConfig
-    , parseGetInterpreter
-    , parseGetLedgerTip
-    , parseGetNonMyopicMemberRewards
-    , parseGetPoolIds
-    , parseGetPoolParameters
-    , parseGetPoolsRanking
-    , parseGetProposedPParamsUpdates
-    , parseGetRewardInfoPools
-    , parseGetRewardProvenance
-    , parseGetStakeDistribution
-    , parseGetSystemStart
-    , parseGetUTxO
-    , parseGetUTxOByAddress
-    , parseGetUTxOByTxIn
+    , parseQueryLedgerEpoch
+    , parseQueryLedgerEraStart
+    , parseQueryLedgerEraSummaries
+    , parseQueryLedgerLiveStakeDistribution
+    , parseQueryLedgerProjectedRewards
+    , parseQueryLedgerProposedProtocolParameters
+    , parseQueryLedgerProtocolParameters
+    , parseQueryLedgerRewardAccountSummaries
+    , parseQueryLedgerRewardsProvenance
+    , parseQueryLedgerStakePoolParameters
+    , parseQueryLedgerStakePools
+    , parseQueryLedgerTip
+    , parseQueryLedgerUtxo
+    , parseQueryLedgerUtxoByAddress
+    , parseQueryLedgerUtxoByOutputReference
+    , parseQueryNetworkBlockHeight
+    , parseQueryNetworkGenesisConfiguration
+    , parseQueryNetworkStartTime
+    , parseQueryNetworkTip
     )
 import Ogmios.Data.Protocol.ChainSync
-    ( FindIntersect
-    , FindIntersectResponse (..)
-    , RequestNext
-    , RequestNextResponse (..)
-    , _decodeFindIntersect
-    , _decodeRequestNext
-    , _encodeFindIntersect
-    , _encodeFindIntersectResponse
-    , _encodeRequestNext
-    , _encodeRequestNextResponse
+    ( FindIntersection
+    , FindIntersectionResponse (..)
+    , NextBlock
+    , NextBlockResponse (..)
+    , _decodeFindIntersection
+    , _decodeNextBlock
+    , _encodeFindIntersection
+    , _encodeFindIntersectionResponse
+    , _encodeNextBlock
+    , _encodeNextBlockResponse
     )
 import Ogmios.Data.Protocol.StateQuery
-    ( Acquire
-    , AcquireResponse (..)
-    , QueryResponse (..)
-    , Release
-    , ReleaseResponse (..)
-    , _decodeAcquire
-    , _decodeRelease
-    , _encodeAcquire
-    , _encodeAcquireResponse
-    , _encodeQueryResponse
-    , _encodeRelease
-    , _encodeReleaseResponse
+    ( AcquireLedgerState
+    , AcquireLedgerStateResponse (..)
+    , QueryLedgerStateResponse (..)
+    , ReleaseLedgerState
+    , ReleaseLedgerStateResponse (..)
+    , _decodeAcquireLedgerState
+    , _decodeReleaseLedgerState
+    , _encodeAcquireLedgerState
+    , _encodeAcquireLedgerStateResponse
+    , _encodeQueryLedgerStateResponse
+    , _encodeReleaseLedgerState
+    , _encodeReleaseLedgerStateResponse
     )
 import Ogmios.Data.Protocol.TxMonitor
-    ( AwaitAcquire
-    , AwaitAcquireResponse (..)
-    , HasTx
-    , HasTxResponse (..)
+    ( AcquireMempool
+    , AcquireMempoolResponse (..)
+    , HasTransaction
+    , HasTransactionResponse (..)
     , MempoolSizeAndCapacity
-    , NextTx
-    , NextTxFields (..)
-    , NextTxResponse (..)
+    , NextTransaction
+    , NextTransactionFields (..)
+    , NextTransactionResponse (..)
     , ReleaseMempool
     , ReleaseMempoolResponse (..)
-    , SizeAndCapacity
-    , SizeAndCapacityResponse (..)
-    , _decodeAwaitAcquire
-    , _decodeHasTx
-    , _decodeNextTx
+    , SizeOfMempool
+    , SizeOfMempoolResponse (..)
+    , _decodeAcquireMempool
+    , _decodeHasTransaction
+    , _decodeNextTransaction
     , _decodeReleaseMempool
-    , _decodeSizeAndCapacity
-    , _encodeAwaitAcquire
-    , _encodeAwaitAcquireResponse
-    , _encodeHasTx
-    , _encodeHasTxResponse
-    , _encodeNextTx
-    , _encodeNextTxResponse
+    , _decodeSizeOfMempool
+    , _encodeAcquireMempool
+    , _encodeAcquireMempoolResponse
+    , _encodeHasTransaction
+    , _encodeHasTransactionResponse
+    , _encodeNextTransaction
+    , _encodeNextTransactionResponse
     , _encodeReleaseMempool
     , _encodeReleaseMempoolResponse
-    , _encodeSizeAndCapacity
-    , _encodeSizeAndCapacityResponse
+    , _encodeSizeOfMempool
+    , _encodeSizeOfMempoolResponse
     )
 import Ogmios.Data.Protocol.TxSubmission
-    ( EvaluateTxResponse
-    , SubmitTxResponse (..)
-    , _encodeEvaluateTxResponse
-    , _encodeSubmitTxResponse
+    ( EvaluateTransactionResponse
+    , SubmitTransactionResponse (..)
+    , _encodeEvaluateTransactionResponse
+    , _encodeSubmitTransactionResponse
     )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras
@@ -183,7 +181,7 @@ import Test.Generators
     , genData
     , genDelegationAndRewardsResult
     , genEpochResult
-    , genEvaluateTxResponse
+    , genEvaluateTransactionResponse
     , genGenesisConfig
     , genHardForkApplyTxErr
     , genInterpreterResult
@@ -196,13 +194,12 @@ import Test.Generators
     , genPoolDistrResult
     , genPoolIdsResult
     , genPoolParametersResult
-    , genPoolsRankingResult
     , genProposedPParamsResult
-    , genRewardInfoPoolsResult
-    , genRewardProvenanceResult
+    , genRewardsProvenanceResult
     , genSubmitResult
     , genSystemStart
     , genTip
+    , genTipNoGenesis
     , genTx
     , genTxId
     , genUTxOResult
@@ -264,13 +261,15 @@ import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
 
 import qualified Cardano.Ledger.Alonzo.Data as Ledger
-import qualified Codec.Json.Wsp.Handler as Wsp
+import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encode.Pretty as Json
 import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Base16 as B16
+import qualified Data.Char as Char
+import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Test.QuickCheck as QC
 
@@ -291,8 +290,8 @@ validateToJSON
 validateToJSON gen encode (n, vectorFilePath) ref = parallel $ do
     runIO $ generateTestVectors (n, vectorFilePath) gen encode
     refs <- runIO $ unsafeReadSchemaRef ref
-    specify (toString $ getSchemaRef ref) $ forAllBlind gen
-        (prop_validateToJSON (encodingToValue . encode) refs)
+    specify (toString $ getSchemaRef ref) $ withMaxSuccess n $ forAllBlind gen $
+        prop_validateToJSON (encodingToValue . encode) refs
 
 -- | Similar to 'validateToJSON', but also check that the produce value can be
 -- decoded back to the expected form.
@@ -306,25 +305,18 @@ validateFromJSON
 validateFromJSON gen (encode, decode) (n, vectorFilePath) ref = parallel $ do
     runIO $ generateTestVectors (n, vectorFilePath) gen encode
     refs <- runIO $ unsafeReadSchemaRef ref
-    specify (toString $ getSchemaRef ref) $ forAllBlind gen $ \a ->
+    specify (toString $ getSchemaRef ref) $ withMaxSuccess n $ forAllBlind gen $ \a ->
         let leftSide = decodeWith decode (jsonToByteString (encode a)) in
         conjoin
         [ prop_validateToJSON (encodingToValue . encode) refs a
         , leftSide == Just a
-            & counterexample (decodeUtf8 $ Json.encodePretty $ inefficientEncodingToValue $ encode a)
-            & counterexample ("Got:  " <> show leftSide)
-            & counterexample ("Want: " <> show (Just a))
+            & counterexample
+                (decodeUtf8 $ Json.encodePretty $ inefficientEncodingToValue $ encode a)
+            & counterexample
+                ("Got:  " <> show leftSide)
+            & counterexample
+                ("Want: " <> show (Just a))
         ]
-
-goldenToJSON
-    :: FilePath
-    -> SchemaRef
-    -> SpecWith ()
-goldenToJSON golden ref = parallel $ do
-    refs <- runIO $ unsafeReadSchemaRef ref
-    a <- runIO $ decodeFileThrow golden
-    specify ("Golden: " <> golden <> " ~ " <> toString (getSchemaRef ref)) $ withMaxSuccess 1 $
-        prop_validateToJSON id refs a
 
 spec :: Spec
 spec = do
@@ -422,355 +414,285 @@ spec = do
 
     context "validate chain-sync request/response against JSON-schema" $ do
         validateFromJSON
-            (arbitrary @(Wsp.Request (FindIntersect Block)))
-            (_encodeFindIntersect encodePoint, _decodeFindIntersect)
-            (10, "ChainSync/Request/FindIntersect")
-            "ogmios.wsp.json#/properties/FindIntersect"
+            (arbitrary @(Rpc.Request (FindIntersection Block)))
+            (_encodeFindIntersection encodePoint, _decodeFindIntersection)
+            (10, "FindIntersection")
+            "ogmios.json#/properties/FindIntersection"
 
         validateToJSON
-            (arbitrary @(Wsp.Response (FindIntersectResponse Block)))
-            (_encodeFindIntersectResponse encodePoint encodeTip)
-            (10, "ChainSync/Response/FindIntersect")
-            "ogmios.wsp.json#/properties/FindIntersectResponse"
+            (arbitrary @(Rpc.Response (FindIntersectionResponse Block)))
+            (_encodeFindIntersectionResponse encodePoint encodeTip)
+            (10, "FindIntersectionResponse")
+            "ogmios.json#/properties/FindIntersectionResponse"
 
         validateFromJSON
-            (arbitrary @(Wsp.Request RequestNext))
-            (_encodeRequestNext, _decodeRequestNext)
-            (3, "ChainSync/Request/RequestNext")
-            "ogmios.wsp.json#/properties/RequestNext"
+            (arbitrary @(Rpc.Request NextBlock))
+            (_encodeNextBlock, _decodeNextBlock)
+            (3, "NextBlock")
+            "ogmios.json#/properties/NextBlock"
 
         validateToJSON
-            (arbitrary @(Wsp.Response (RequestNextResponse Block)))
-            (_encodeRequestNextResponse (encodeBlock FullSerialization) encodePoint encodeTip)
-            (200, "ChainSync/Response/RequestNext")
-            "ogmios.wsp.json#/properties/RequestNextResponse"
+            (arbitrary @(Rpc.Response (NextBlockResponse Block)))
+            (_encodeNextBlockResponse encodeBlock encodePoint encodeTip)
+            (200, "NextBlockResponse")
+            "ogmios.json#/properties/NextBlockResponse"
 
-    context "validate tx-submission request/response against JSON-schema" $ do
-        prop "deserialise signed transactions" prop_parseSubmitTx
-
-        validateToJSON
-            (arbitrary @(Wsp.Response (SubmitTxResponse Block)))
-            (_encodeSubmitTxResponse (Proxy @Block) encodeTxId encodeSubmitTxError)
-            (200, "TxSubmission/Response/SubmitTx")
-            "ogmios.wsp.json#/properties/SubmitTxResponse"
+    context "validate transaction submission request/response against JSON-schema" $ do
+        prop "deserialise signed transactions" prop_parseSubmitTransaction
 
         validateToJSON
-            (arbitrary @(Wsp.Response (EvaluateTxResponse Block)))
-            (_encodeEvaluateTxResponse (Proxy @Block) stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError)
-            (100, "TxSubmission/Response/EvaluateTx")
-            "ogmios.wsp.json#/properties/EvaluateTxResponse"
+            (arbitrary @(Rpc.Response (SubmitTransactionResponse Block)))
+            (_encodeSubmitTransactionResponse (Proxy @Block) encodeTxId encodeSubmitTransactionError)
+            (200, "SubmitTransactionResponse")
+            "ogmios.json#/properties/SubmitTransactionResponse"
 
-        goldenToJSON
-            "SubmitTxResponse_1.json"
-            "ogmios.wsp.json#/properties/SubmitTxResponse"
+        validateToJSON
+            (arbitrary @(Rpc.Response (EvaluateTransactionResponse Block)))
+            (_encodeEvaluateTransactionResponse (Proxy @Block) stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError)
+            (100, "EvaluateTransactionResponse")
+            "ogmios.json#/properties/EvaluateTransactionResponse"
 
-        goldenToJSON
-            "EvaluateTxRequest_1.json"
-            "ogmios.wsp.json#/properties/EvaluateTx"
-
-    context "validate tx monitor request/response against JSON-schema" $ do
+    context "validate mempool monitoring request/response against JSON-schema" $ do
         validateFromJSON
-            (arbitrary @(Wsp.Request AwaitAcquire))
-            (_encodeAwaitAcquire, _decodeAwaitAcquire)
-            (10, "TxMonitor/Request/AwaitAcquire")
-            "ogmios.wsp.json#/properties/AwaitAcquire"
+            (arbitrary @(Rpc.Request AcquireMempool))
+            (_encodeAcquireMempool, _decodeAcquireMempool)
+            (10, "AcquireMempool")
+            "ogmios.json#/properties/AcquireMempool"
 
         validateToJSON
-            (arbitrary @(Wsp.Response AwaitAcquireResponse))
-            _encodeAwaitAcquireResponse
-            (10, "TxMonitor/Response/AwaitAcquire")
-            "ogmios.wsp.json#/properties/AwaitAcquireResponse"
+            (arbitrary @(Rpc.Response AcquireMempoolResponse))
+            _encodeAcquireMempoolResponse
+            (10, "AcquireMempoolResponse")
+            "ogmios.json#/properties/AcquireMempoolResponse"
 
         validateFromJSON
-            (arbitrary @(Wsp.Request NextTx))
-            (_encodeNextTx, _decodeNextTx)
-            (10, "TxMonitor/Request/NextTx")
-            "ogmios.wsp.json#/properties/NextTx"
+            (arbitrary @(Rpc.Request NextTransaction))
+            (_encodeNextTransaction, _decodeNextTransaction)
+            (10, "NextTransaction")
+            "ogmios.json#/properties/NextTransaction"
 
         validateToJSON
-            (arbitrary @(Wsp.Response (NextTxResponse Block)))
-            (_encodeNextTxResponse encodeTxId (encodeTx FullSerialization))
-            (10, "TxMonitor/Response/NextTx")
-            "ogmios.wsp.json#/properties/NextTxResponse"
+            (arbitrary @(Rpc.Response (NextTransactionResponse Block)))
+            (_encodeNextTransactionResponse encodeTxId encodeTx)
+            (10, "NextTransactionResponse")
+            "ogmios.json#/properties/NextTransactionResponse"
 
         validateFromJSON
-            (arbitrary @(Wsp.Request (HasTx Block)))
-            (_encodeHasTx encodeTxId, _decodeHasTx)
-            (10, "TxMonitor/Request/HasTx")
-            "ogmios.wsp.json#/properties/HasTx"
+            (arbitrary @(Rpc.Request (HasTransaction Block)))
+            (_encodeHasTransaction encodeTxId, _decodeHasTransaction)
+            (10, "HasTransaction")
+            "ogmios.json#/properties/HasTransaction"
 
         validateToJSON
-            (arbitrary @(Wsp.Response HasTxResponse))
-            _encodeHasTxResponse
-            (10, "TxMonitor/Response/HasTx")
-            "ogmios.wsp.json#/properties/HasTxResponse"
+            (arbitrary @(Rpc.Response HasTransactionResponse))
+            _encodeHasTransactionResponse
+            (10, "HasTransactionResponse")
+            "ogmios.json#/properties/HasTransactionResponse"
 
         validateFromJSON
-            (arbitrary @(Wsp.Request SizeAndCapacity))
-            (_encodeSizeAndCapacity, _decodeSizeAndCapacity)
-            (10, "TxMonitor/Request/SizeAndCapacity")
-            "ogmios.wsp.json#/properties/SizeAndCapacity"
+            (arbitrary @(Rpc.Request SizeOfMempool))
+            (_encodeSizeOfMempool, _decodeSizeOfMempool)
+            (10, "SizeOfMempool")
+            "ogmios.json#/properties/SizeOfMempool"
 
         validateToJSON
-            (arbitrary @(Wsp.Response SizeAndCapacityResponse))
-            _encodeSizeAndCapacityResponse
-            (10, "TxMonitor/Response/SizeAndCapacity")
-            "ogmios.wsp.json#/properties/SizeAndCapacityResponse"
+            (arbitrary @(Rpc.Response SizeOfMempoolResponse))
+            _encodeSizeOfMempoolResponse
+            (10, "SizeOfMempoolResponse")
+            "ogmios.json#/properties/SizeOfMempoolResponse"
 
         validateFromJSON
-            (arbitrary @(Wsp.Request ReleaseMempool))
+            (arbitrary @(Rpc.Request ReleaseMempool))
             (_encodeReleaseMempool, _decodeReleaseMempool)
-            (10, "TxMonitor/Request/ReleaseMempool")
-            "ogmios.wsp.json#/properties/ReleaseMempool"
+            (10, "ReleaseMempoolRequest")
+            "ogmios.json#/properties/ReleaseMempool"
 
         validateToJSON
-            (arbitrary @(Wsp.Response ReleaseMempoolResponse))
+            (arbitrary @(Rpc.Response ReleaseMempoolResponse))
             _encodeReleaseMempoolResponse
-            (10, "TxMonitor/Response/ReleaseMempool")
-            "ogmios.wsp.json#/properties/ReleaseMempoolResponse"
+            (10, "ReleaseMempoolResponse")
+            "ogmios.json#/properties/ReleaseMempoolResponse"
 
     context "validate acquire request/response against JSON-schema" $ do
         validateFromJSON
-            (arbitrary @(Wsp.Request (Acquire Block)))
-            (_encodeAcquire encodePoint, _decodeAcquire)
-            (10, "StateQuery/Request/Acquire")
-            "ogmios.wsp.json#/properties/Acquire"
+            (arbitrary @(Rpc.Request (AcquireLedgerState Block)))
+            (_encodeAcquireLedgerState encodePoint, _decodeAcquireLedgerState)
+            (10, "AcquireLedgerStateRequest")
+            "ogmios.json#/properties/AcquireLedgerState"
 
         validateToJSON
-            (arbitrary @(Wsp.Response (AcquireResponse Block)))
-            (_encodeAcquireResponse encodePoint encodeAcquireFailure)
-            (10, "StateQuery/Response/Acquire")
-            "ogmios.wsp.json#/properties/AcquireResponse"
+            (arbitrary @(Rpc.Response (AcquireLedgerStateResponse Block)))
+            (_encodeAcquireLedgerStateResponse encodePoint encodeAcquireExpired)
+            (10, "AcquireLedgerStateResponse")
+            "ogmios.json#/properties/AcquireLedgerStateResponse"
 
     context "validate local state queries against JSON-schema" $ do
-        validateQuery
-            [aesonQQ|"eraStart"|]
-            ( parseGetEraStart genBoundResult
-            ) (10, "StateQuery/Response/Query[eraStart]")
-            "ogmios.wsp.json#/properties/QueryResponse[eraStart]"
+        validateLedgerStateQuery 3 "epoch"
+            [aesonQQ|{}|]
+            (parseQueryLedgerEpoch genEpochResult)
 
-        validateQuery
-            [aesonQQ|"eraSummaries"|]
-            ( parseGetInterpreter genInterpreterResult
-            ) (10, "StateQuery/Response/Query[eraSummaries]")
-            "ogmios.wsp.json#/properties/QueryResponse[eraSummaries]"
+        validateLedgerStateQuery 10 "eraStart"
+            [aesonQQ|{}|]
+            (parseQueryLedgerEraStart genBoundResult)
 
-        validateQuery
-            [aesonQQ|"ledgerTip"|]
-            ( parseGetLedgerTip genPointResultTPraos genPointResultPraos
-            ) (10, "StateQuery/Response/Query[ledgerTip]")
-            "ogmios.wsp.json#/properties/QueryResponse[ledgerTip]"
+        validateLedgerStateQuery 10 "eraSummaries"
+            [aesonQQ|{}|]
+            (parseQueryLedgerEraSummaries genInterpreterResult)
 
-        validateQuery
-            [aesonQQ|"currentEpoch"|]
-            ( parseGetEpochNo genEpochResult
-            ) (3, "StateQuery/Response/Query[currentEpoch]")
-            "ogmios.wsp.json#/properties/QueryResponse[currentEpoch]"
+        validateLedgerStateQuery 10 "tip"
+            [aesonQQ|{}|]
+            (parseQueryLedgerTip genPointResultTPraos genPointResultPraos)
 
-        validateQuery
-            [aesonQQ|{ "nonMyopicMemberRewards": [14, 42] }|]
-            ( parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult
-            ) (10, "StateQuery/Response/Query[nonMyopicMemberRewards]")
-            "ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
+        validateLedgerStateQuery 10 "projectedRewards"
+            [aesonQQ|{ "stake": [14, 42] }|]
+            (parseQueryLedgerProjectedRewards genNonMyopicMemberRewardsResult)
 
-        validateQuery
+        validateLedgerStateQuery 10 "projectedRewards"
             [aesonQQ|
-            { "nonMyopicMemberRewards":
+            { "keys":
                 [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
-                , "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
                 , "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
                 , "stake179kzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjcek9u8h"
                 , "stake_test17pkzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjc7u07r2"
                 ]
+            , "scripts":
+                [ "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
+                ]
             }|]
-            ( parseGetNonMyopicMemberRewards genNonMyopicMemberRewardsResult
-            ) (0, "StateQuery/Response/Query[nonMyopicMemberRewards]")
-            "ogmios.wsp.json#/properties/QueryResponse[nonMyopicMemberRewards]"
+            (parseQueryLedgerProjectedRewards genNonMyopicMemberRewardsResult)
 
-        validateQuery
+        validateLedgerStateQuery 10 "rewardAccountSummaries"
             [aesonQQ|
-            { "delegationsAndRewards":
-                [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
-                , "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
-                , "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
+            { "keys":
+                [ "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
                 , "stake179kzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjcek9u8h"
                 , "stake_test17pkzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjc7u07r2"
                 ]
+            , "scripts":
+                [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
+                , "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
+                ]
             }|]
-            ( parseGetFilteredDelegationsAndRewards genDelegationAndRewardsResult
-            ) (10, "StateQuery/Response/Query[delegationsAndRewards]")
-            "ogmios.wsp.json#/properties/QueryResponse[delegationsAndRewards]"
+            (parseQueryLedgerRewardAccountSummaries genDelegationAndRewardsResult)
 
-        validateQuery
-            [aesonQQ|"currentProtocolParameters"|]
-            ( parseGetCurrentPParams genPParamsResult
-            ) (100, "StateQuery/Response/Query[currentProtocolParameters]")
-            "ogmios.wsp.json#/properties/QueryResponse[currentProtocolParameters]"
+        validateLedgerStateQuery 30 "protocolParameters"
+            [aesonQQ|{}|]
+            (parseQueryLedgerProtocolParameters genPParamsResult)
 
-        validateQuery
-            [aesonQQ|"proposedProtocolParameters"|]
-            ( parseGetProposedPParamsUpdates genProposedPParamsResult
-            ) (100, "StateQuery/Response/Query[proposedProtocolParameters]")
-            "ogmios.wsp.json#/properties/QueryResponse[proposedProtocolParameters]"
+        validateLedgerStateQuery 10 "proposedProtocolParameters"
+            [aesonQQ|{}|]
+            (parseQueryLedgerProposedProtocolParameters genProposedPParamsResult)
 
-        validateQuery
-            [aesonQQ|"stakeDistribution"|]
-            ( parseGetStakeDistribution genPoolDistrResult
-            ) (10, "StateQuery/Response/Query[stakeDistribution]")
-            "ogmios.wsp.json#/properties/QueryResponse[stakeDistribution]"
+        validateLedgerStateQuery 10 "liveStakeDistribution"
+            [aesonQQ|{}|]
+            (parseQueryLedgerLiveStakeDistribution genPoolDistrResult)
 
-        validateQuery
-            [aesonQQ|"utxo"|]
-            ( parseGetUTxO genUTxOResult
-            ) (100, "StateQuery/Response/Query[utxo]")
-            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+        validateLedgerStateQuery 10 "utxo"
+            [aesonQQ|{}|]
+            (parseQueryLedgerUtxo genUTxOResult)
 
-        validateQuery
+        validateLedgerStateQuery 10 "utxo"
             [aesonQQ|
-            { "utxo": []
-            }|]
-            ( parseGetUTxOByAddress genUTxOResult
-            ) (0, "StateQuery/Response/Query[utxo]")
-            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
-
-        validateQuery
-            [aesonQQ|
-            { "utxo":
+            { "addresses":
                 [ "addr1vxsvu329sr8z92usevrr6scp4vxxn0j8e20avag662uesgq385tfd"
                 , "Ae2tdPwUPEZEQHoZTVq3KQhtjP32JzoEE5onUS45bFmsBSXYCXSXEQEzb4v"
                 , "82d818582183581cb0574c7a1564697578b840fd7ec9d8963fa1398415f9f2f87737a83da0001ae9e3e303"
                 ]
             }|]
-            ( parseGetUTxOByAddress genUTxOResult
-            ) (0, "StateQuery/Response/Query[utxo]")
-            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            (parseQueryLedgerUtxoByAddress genUTxOResult)
 
-        validateQuery
+        validateLedgerStateQuery 10 "utxo"
             [aesonQQ|
-            { "utxo":
+            { "outputReferences":
                 [ { "txId": "141933320b6e5d4522d7d3bf052dd2a26cc7eb58b66ae357f95f83715c8add5b"
                   , "index": 14
                   }
                 ]
             }|]
-            ( parseGetUTxOByTxIn genUTxOResult
-            ) (0, "StateQuery/Response/Query[utxo]")
-            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+            (parseQueryLedgerUtxoByOutputReference genUTxOResult)
 
-        validateQuery
-            [aesonQQ|{ "genesisConfig": "shelley" }|]
-            ( parseGetGenesisConfig genGenesisConfig
-            ) (20, "StateQuery/Response/Query[genesisConfig]")
-            "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
+        validateLedgerStateQuery 30 "rewardsProvenance"
+            [aesonQQ|{}|]
+            (parseQueryLedgerRewardsProvenance genRewardsProvenanceResult)
 
-        validateQuery
-            [aesonQQ|{ "genesisConfig": "alonzo" }|]
-            ( parseGetGenesisConfig genGenesisConfig
-            ) (20, "StateQuery/Response/Query[genesisConfig]")
-            "ogmios.wsp.json#/properties/QueryResponse[genesisConfig]"
+        validateLedgerStateQuery 10 "stakePools"
+            [aesonQQ|{}|]
+            (parseQueryLedgerStakePools genPoolIdsResult)
 
-        validateQuery
-            [aesonQQ|"rewardsProvenance"|]
-            ( parseGetRewardProvenance genRewardProvenanceResult
-            ) (100, "StateQuery/Response/Query[rewardsProvenance]")
-            "ogmios.wsp.json#/properties/QueryResponse[rewardsProvenance]"
-
-        validateQuery
-            [aesonQQ|"rewardsProvenance'"|]
-            ( parseGetRewardInfoPools genRewardInfoPoolsResult
-            ) (100, "StateQuery/Response/Query[rewardsProvenance']")
-            "ogmios.wsp.json#/properties/QueryResponse[rewardsProvenance']"
-
-        validateQuery
-            [aesonQQ|"poolIds"|]
-            ( parseGetPoolIds genPoolIdsResult
-            ) (10, "StateQuery/Response/Query[poolIds]")
-            "ogmios.wsp.json#/properties/QueryResponse[poolIds]"
-
-        validateQuery
+        validateLedgerStateQuery 20 "stakePoolParameters"
             [aesonQQ|
-            { "poolParameters":
+            { "stakePools":
                 [ "pool1m80g9t64048p0t6yg9sps6672mgnse8ug2euudccmhkygfnf6tg"
                 , "d9de82af557d4e17af444160186b5e56d13864fc42b3ce3718ddec44"
                 ]
             }|]
-            ( parseGetPoolParameters genPoolParametersResult
-            ) (50, "StateQuery/Response/Query[poolParameters]")
-            "ogmios.wsp.json#/properties/QueryResponse[poolParameters]"
+            (parseQueryLedgerStakePoolParameters genPoolParametersResult)
 
-        validateQuery
-            [aesonQQ|"poolsRanking"|]
-            ( parseGetPoolsRanking genPoolsRankingResult
-            ) (10, "StateQuery/Response/Query[poolsRanking]")
-            "ogmios.wsp.json#/properties/QueryResponse[poolsRanking]"
+        validateNetworkQuery 10 "blockHeight"
+            [aesonQQ|{}|]
+            (parseQueryNetworkBlockHeight (const $ genWithOrigin genBlockNo))
 
-        validateQuery
-            [aesonQQ|"chainTip"|]
-            ( parseGetChainTip (const genPoint)
-            ) (10, "StateQuery/Response/Query[chainTip]")
-            "ogmios.wsp.json#/properties/QueryResponse[chainTip]"
+        validateNetworkQuery 10 "genesisConfiguration"
+            [aesonQQ|{ "era": "shelley" }|]
+            (parseQueryNetworkGenesisConfiguration genGenesisConfig)
 
-        validateQuery
-            [aesonQQ|"systemStart"|]
-            ( parseGetSystemStart (const genSystemStart)
-            ) (10, "StateQuery/Response/Query[systemStart]")
-            "ogmios.wsp.json#/properties/QueryResponse[systemStart]"
+        validateNetworkQuery 20 "genesisConfiguration"
+            [aesonQQ|{ "era": "alonzo" }|]
+            (parseQueryNetworkGenesisConfiguration genGenesisConfig)
 
-        validateQuery
-            [aesonQQ|"blockHeight"|]
-            ( parseGetBlockHeight (const $ genWithOrigin genBlockNo)
-            ) (10, "StateQuery/Response/Query[blockHeight]")
-            "ogmios.wsp.json#/properties/QueryResponse[blockHeight]"
+        validateNetworkQuery 5 "startTime"
+            [aesonQQ|{}|]
+            (parseQueryNetworkStartTime (const genSystemStart))
 
-        goldenToJSON
-            "QueryResponse-utxo_1.json"
-            "ogmios.wsp.json#/properties/QueryResponse[utxo]"
+        validateNetworkQuery 10 "tip"
+            [aesonQQ|{}|]
+            (parseQueryNetworkTip (const genPoint))
 
     context "validate release request/response against JSON-schema" $ do
         validateFromJSON
-            (arbitrary @(Wsp.Request Release))
-            (_encodeRelease, _decodeRelease)
-            (3, "StateQuery/Request/Release")
-            "ogmios.wsp.json#/properties/Release"
+            (arbitrary @(Rpc.Request ReleaseLedgerState))
+            (_encodeReleaseLedgerState, _decodeReleaseLedgerState)
+            (3, "ReleaseLedgerState")
+            "ogmios.json#/properties/ReleaseLedgerState"
 
         validateToJSON
-            (arbitrary @(Wsp.Response ReleaseResponse))
-            _encodeReleaseResponse
-            (3, "StateQuery/Response/Release")
-            "ogmios.wsp.json#/properties/ReleaseResponse"
+            (arbitrary @(Rpc.Response ReleaseLedgerStateResponse))
+            _encodeReleaseLedgerStateResponse
+            (3, "ReleaseLedgerStateResponse")
+            "ogmios.json#/properties/ReleaseLedgerStateResponse"
 
-instance Arbitrary a => Arbitrary (Wsp.Response a) where
+instance Arbitrary a => Arbitrary (Rpc.Response a) where
     arbitrary = oneof
-        [ Wsp.Response Nothing <$> arbitrary
-        , Wsp.Response (Just $ toJSON @String "st") <$> arbitrary
+        [ Rpc.Response Nothing <$> arbitrary
+        , Rpc.Response (Just $ toJSON @String "st") <$> arbitrary
         ]
 
-instance Arbitrary a => Arbitrary (Wsp.Request a) where
+instance Arbitrary a => Arbitrary (Rpc.Request a) where
     arbitrary = oneof
-        [ Wsp.Request Nothing <$> arbitrary
-        , Wsp.Request (Just $ toJSON @String "st") <$> arbitrary
+        [ Rpc.Request Nothing <$> arbitrary
+        , Rpc.Request (Just $ toJSON @String "st") <$> arbitrary
         ]
 
-instance Arbitrary (FindIntersect Block) where
+instance Arbitrary (FindIntersection Block) where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary (FindIntersectResponse Block) where
+instance Arbitrary (FindIntersectionResponse Block) where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary (RequestNextResponse Block) where
+instance Arbitrary (NextBlockResponse Block) where
     shrink = genericShrink
     arbitrary = frequency
-        [ ( 10, RollForward  <$> reasonablySized arbitrary <*> arbitrary )
+        [ ( 10, RollForward  <$> reasonablySized arbitrary <*> genTipNoGenesis )
         , (  1, RollBackward <$> arbitrary <*> arbitrary )
         ]
 
-instance Arbitrary RequestNext where
+instance Arbitrary NextBlock where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary (SubmitTxResponse Block) where
+instance Arbitrary (SubmitTransactionResponse Block) where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
@@ -780,61 +702,61 @@ instance Arbitrary (HardForkApplyTxErr (CardanoEras StandardCrypto)) where
 instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto))) where
     arbitrary = reasonablySized genSubmitResult
 
-instance Arbitrary (EvaluateTxResponse Block) where
-    arbitrary = reasonablySized genEvaluateTxResponse
+instance Arbitrary (EvaluateTransactionResponse Block) where
+    arbitrary = reasonablySized genEvaluateTransactionResponse
 
-instance Arbitrary (Acquire Block) where
+instance Arbitrary (AcquireLedgerState Block) where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary (AcquireResponse Block) where
+instance Arbitrary (AcquireLedgerStateResponse Block) where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary Release where
+instance Arbitrary ReleaseLedgerState where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary ReleaseResponse where
+instance Arbitrary ReleaseLedgerStateResponse where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
 instance Arbitrary AcquireFailure where
     arbitrary = genAcquireFailure
 
-instance Arbitrary AwaitAcquire where
+instance Arbitrary AcquireMempool where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary AwaitAcquireResponse where
+instance Arbitrary AcquireMempoolResponse where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary NextTx where
+instance Arbitrary NextTransaction where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary NextTxFields where
+instance Arbitrary NextTransactionFields where
     shrink = genericShrink
     arbitrary = genericArbitrary
 
-instance Arbitrary (NextTxResponse Block) where
+instance Arbitrary (NextTransactionResponse Block) where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary (HasTx Block) where
+instance Arbitrary (HasTransaction Block) where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary HasTxResponse where
+instance Arbitrary HasTransactionResponse where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary SizeAndCapacity where
+instance Arbitrary SizeOfMempool where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
-instance Arbitrary SizeAndCapacityResponse where
+instance Arbitrary SizeOfMempoolResponse where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
@@ -865,21 +787,21 @@ instance Arbitrary MempoolSizeAndCapacity where
     arbitrary = genMempoolSizeAndCapacity
 
 --
--- Local Tx Submit
+-- Local Transaction Submission
 --
 
-newtype SerializedTx = SerializedTx Text deriving (Eq, Show)
+newtype SerializedTransaction = SerializedTransaction Text deriving (Eq, Show)
 
-prop_parseSubmitTx
-    :: SerializedTx
+prop_parseSubmitTransaction
+    :: SerializedTransaction
     -> Property
-prop_parseSubmitTx (SerializedTx bytes) =
+prop_parseSubmitTransaction (SerializedTransaction bytes) =
     void result === Right ()
   where
     result = Json.parseEither (parseJSON @(GenTx Block)) (Json.String bytes)
 
-instance Arbitrary SerializedTx where
-    arbitrary = SerializedTx <$> elements
+instance Arbitrary SerializedTransaction where
+    arbitrary = SerializedTransaction <$> elements
         -- base16, with CBOR-in-CBOR prefix, Mary era
         [ "D81859011F\
           \83a400818258200000000000000000000000000000000000000000000000000000\
@@ -891,19 +813,6 @@ instance Arbitrary SerializedTx where
           \000000000000000000000000000000000000000000005840d7af60ae33d2af3514\
           \11c1445c79590526990bfa73cbb3732b54ef322daa142e6884023410f8be3c16e9\
           \bd52076f2bb36bf38dfe034a9f04658e9f56197ab80ff6"
-
-        -- base64, not wrapped, Mary era
-        , "g6QAgoJYIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIJYIAAAAAAA\
-          \AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQGDglg5AQICAgICAgICAgICAgIC\
-          \AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICGgBbjYCC\
-          \WDkBAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD\
-          \AwMDAwMDAwMDAwMaAFuNgIJYOQEEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\
-          \BAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBBoAeAHgAhoAAhAgAxkeRqEAgoJY\
-          \IBMK6CIB1wcub7/AoYhPtUY2VU0UlFt5kSXPfOONR39RWEBYNf94xvxeRGahecpl\
-          \n6hcmbij+6CD8/P0K6Ng1HnGTvFpkUtSreSbGacgj9Y6bmehnEBrSCZgj9xTBwJV\
-          \BsMHglggAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABYQOjnaezQ88U4\
-          \8KWldKHIgXdfCG1vTIRbgb6beJVXKL/6fvpUKXxqXXMze9YoAgWxdZwT951Mk/KY\
-          \cfxRt4rrqA72"
 
         -- base16, with bootstrap witnesses, Mary era
         , "83a4008182582000000000000000000000000000000000000000000000000000\
@@ -917,20 +826,6 @@ instance Arbitrary SerializedTx where
           \023410f8be3c16e9bd52076f2bb36bf38dfe034a9f04658e9f56197ab80f5820\
           \0000000000000000000000000000000000000000000000000000000000000000\
           \41a0f6"
-
-        -- base64, with bootstrap witnesses, Mary era
-        , "g6QAgoJYIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIJYIAAAAAAA\
-          \AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQGDglg5AQICAgICAgICAgICAgIC\
-          \AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICGgBbjYCC\
-          \WDkBAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD\
-          \AwMDAwMDAwMDAwMaAFuNgIJYOQEEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\
-          \BAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBBoAeAHgAhoAAhAgAxkeRqECgoRY\
-          \IAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWEDo52ns0PPFOPClpXSh\
-          \yIF3Xwhtb0yEW4G+m3iVVyi/+n76VCl8al1zM3vWKAIFsXWcE/edTJPymHH8UbeK\
-          \66gOWCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEGghFggEwroIgHX\
-          \By5vv8ChiE+1RjZVTRSUW3mRJc98441Hf1FYQFg1/3jG/F5EZqF5ymWfqFyZuKP7\
-          \oIPz8/Qro2DUecZO8WmRS1Kt5JsZpyCP1jpuZ6GcQGtIJmCP3FMHAlUGwwdYIAEB\
-          \AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBQaD2"
 
         -- base16, not wrapped, Alonzo era
         , "83a4008182582039786f186d94d8dd0b4fcf05d1458b18cd5fd8c6823364612f\
@@ -993,16 +888,28 @@ unsafeDataFromBytes =
 
 -- | Parse a given query, generate an arbitrary value, encode it and validate
 -- the encoding against a JSON-schema.
-validateQuery
-    :: Json.Value
+validateLedgerStateQuery
+    :: Int
+    -> Text
+    -> Json.Value
     -> (Json.Value -> Json.Parser (QueryInEra Gen Block))
-    -> (Int, String)
-    -> SchemaRef
     -> SpecWith ()
-validateQuery json parser (n, vectorFilepath) resultRef =
-  parallel $ specify (toString $ getSchemaRef resultRef) $ do
-    queryRefs <- unsafeReadSchemaRef queryRef
-    runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON id queryRefs json
+validateLedgerStateQuery n method json parser = do
+  let category = "LedgerState"
+  let propName = "Query" <> category <> titleize method
+  let requestRef = "ogmios.json#/properties/" <> propName
+  let responseRef = requestRef <> "Response"
+  parallel $ specify (toString propName) $ do
+    queryRefs <- unsafeReadSchemaRef (SchemaRef requestRef)
+    runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON
+        (\params -> Json.object
+            [ "jsonrpc" .= ("2.0" :: Text)
+            , "method" .= ("query" <> category <> "/" <> method)
+            , "params" .= params
+            ]
+        )
+        queryRefs
+        json
     case Json.parseEither parser json of
         Left e ->
             expectationFailure $ "failed to parse JSON: " <> show e
@@ -1018,13 +925,13 @@ validateQuery json parser (n, vectorFilepath) resultRef =
             let nEras = length eras
 
             forM_ eras $ \(era, qry) ->  do
-                resultRefs <- unsafeReadSchemaRef resultRef
+                responseRefs <- unsafeReadSchemaRef (SchemaRef responseRef)
 
                 let encodeQueryResponse encodeResult
-                        = _encodeQueryResponse encodeAcquireFailure
-                        . Wsp.Response Nothing
-                        . QueryResponse
-                        . encodeResult FullSerialization
+                        = _encodeQueryLedgerStateResponse encodeAcquireExpired
+                        . Rpc.Response Nothing
+                        . either QueryEraMismatch QueryResponse
+                        . encodeResult
 
                 -- NOTE: Queries are mostly identical between eras, since we run
                 -- the test for each era, we can reduce the number of expected
@@ -1033,7 +940,7 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                     SomeStandardQuery _ encodeResult genResult -> do
                         case era of
                             SomeShelleyEra ShelleyBasedEraBabbage -> do
-                                generateTestVectors (n, vectorFilepath)
+                                generateTestVectors (n, toString propName)
                                     (genResult Proxy)
                                     (encodeQueryResponse encodeResult)
                             _someOtherEra ->
@@ -1042,12 +949,12 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                             (genResult Proxy)
                             (prop_validateToJSON
                                 (encodingToValue . encodeQueryResponse encodeResult)
-                                resultRefs
+                                responseRefs
                             )
                     SomeAdHocQuery _ encodeResult genResult -> do
                         case era of
                             SomeShelleyEra ShelleyBasedEraBabbage -> do
-                                generateTestVectors (n, vectorFilepath)
+                                generateTestVectors (n, toString propName)
                                     (genResult Proxy)
                                     (encodeQueryResponse encodeResult)
                             _someOtherEra ->
@@ -1056,20 +963,77 @@ validateQuery json parser (n, vectorFilepath) resultRef =
                             (genResult Proxy)
                             (prop_validateToJSON
                                 (encodingToValue . encodeQueryResponse encodeResult)
-                                resultRefs
+                                responseRefs
                             )
 
                 let encodeQueryUnavailableInCurrentEra
                         = encodingToValue
-                        . _encodeQueryResponse encodeAcquireFailure
-                        . Wsp.Response Nothing
+                        . _encodeQueryLedgerStateResponse encodeAcquireExpired
+                        . Rpc.Response Nothing
 
                 runQuickCheck $ withMaxSuccess 1 $ forAllBlind
                     (pure QueryUnavailableInCurrentEra)
-                    (prop_validateToJSON encodeQueryUnavailableInCurrentEra resultRefs)
-  where
-    queryRef :: SchemaRef
-    queryRef = "ogmios.wsp.json#/properties/Query/properties/args/properties/query"
+                    (prop_validateToJSON encodeQueryUnavailableInCurrentEra responseRefs)
+
+-- | Parse a given network query, generate an arbitrary value, encode it and validate
+-- the encoding against a JSON-schema.
+validateNetworkQuery
+    :: Int
+    -> Text
+    -> Json.Value
+    -> (Json.Value -> Json.Parser (QueryInEra Gen Block))
+    -> SpecWith ()
+validateNetworkQuery n method json parser = do
+  let category = "Network"
+  let propName = "Query" <> category <> titleize method
+  let requestRef = "ogmios.json#/properties/" <> propName
+  let responseRef = requestRef <> "Response"
+  parallel $ specify (toString propName) $ do
+    queryRefs <- unsafeReadSchemaRef (SchemaRef requestRef)
+    runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON
+        (\params -> Json.object
+            [ "jsonrpc" .= ("2.0" :: Text)
+            , "method" .= ("query" <> category <> "/" <> method)
+            , "params" .= params
+            ]
+        )
+        queryRefs
+        json
+    case Json.parseEither parser json of
+        Left e ->
+            expectationFailure $ "failed to parse JSON: " <> show e
+        Right queryInEra -> do
+            responseRefs <- unsafeReadSchemaRef (SchemaRef responseRef)
+
+            let encodeQueryResponse encodeResult
+                    = _encodeQueryLedgerStateResponse encodeAcquireExpired
+                    . Rpc.Response Nothing
+                    . either QueryEraMismatch QueryResponse
+                    . encodeResult
+
+            case queryInEra (SomeShelleyEra ShelleyBasedEraBabbage) of
+                Just (SomeStandardQuery _ encodeResult genResult) -> do
+                    generateTestVectors (n, toString propName)
+                        (genResult Proxy)
+                        (encodeQueryResponse encodeResult)
+                    runQuickCheck $ withMaxSuccess n $ forAllBlind
+                        (genResult Proxy)
+                        (prop_validateToJSON
+                            (encodingToValue . encodeQueryResponse encodeResult)
+                            responseRefs
+                        )
+                Just (SomeAdHocQuery _ encodeResult genResult) -> do
+                    generateTestVectors (n, toString propName)
+                        (genResult Proxy)
+                        (encodeQueryResponse encodeResult)
+                    runQuickCheck $ withMaxSuccess n $ forAllBlind
+                        (genResult Proxy)
+                        (prop_validateToJSON
+                            (encodingToValue . encodeQueryResponse encodeResult)
+                            responseRefs
+                        )
+                Nothing -> do
+                    error "Failed to get network query for any era?"
 
 generateTestVectors
     :: (Int, String)
@@ -1098,3 +1062,7 @@ decodeFileThrow :: FilePath -> IO Json.Value
 decodeFileThrow filepath = do
     json <- Json.decodeFileStrict ($(getProjectRoot) <> "/test/golden/" <> filepath)
     maybe (fail $ "Unable to decode JSON file: " <> filepath) pure json
+
+titleize :: Text -> Text
+titleize txt =
+    T.map Char.toUpper (T.take 1 txt) <> T.drop 1 txt

@@ -16,8 +16,8 @@ module Cardano.Network.Protocol.NodeToClient
     -- * Building
       Block
     , Eras
-    , SubmitTxError
-    , SerializedTx
+    , SubmitTransactionError
+    , SerializedTransaction
     , Crypto
     , Client
     , Clients(..)
@@ -159,15 +159,15 @@ type Eras = CardanoEras StandardCrypto
 
 -- | A helper to help getting more uniform type signatures by making the submit
 -- failure a function of a 'block' parameter
-type family SubmitTxError block :: Type where
-    SubmitTxError (CardanoBlock crypto) = HardForkApplyTxErr (CardanoEras crypto)
+type family SubmitTransactionError block :: Type where
+    SubmitTransactionError (CardanoBlock crypto) = HardForkApplyTxErr (CardanoEras crypto)
 
--- | Type-family helper, similar to 'SubmitTxError' but more generic.
+-- | Type-family helper, similar to 'SubmitTransactionError' but more generic.
 type family Crypto block :: Type where
     Crypto (CardanoBlock crypto) = crypto
 
 -- | A slightly more transparent type alias for 'GenTx''
-type SerializedTx = GenTx
+type SerializedTransaction = GenTx
 
 -- | Type representing a network client running two mini-protocols to sync
 -- from the chain and, submit transactions.
@@ -189,7 +189,7 @@ data Clients m block = Clients
     { chainSyncClient
         :: ChainSyncClientPipelined block (Point block) (Tip block) m ()
     , txSubmissionClient
-        :: LocalTxSubmissionClient (SerializedTx block) (SubmitTxError block) m ()
+        :: LocalTxSubmissionClient (SerializedTransaction block) (SubmitTransactionError block) m ()
     , txMonitorClient
         :: LocalTxMonitorClient (GenTxId block) (GenTx block) SlotNo m ()
     , stateQueryClient
@@ -232,7 +232,7 @@ mkClient
         )
     => (forall a. m a -> IO a)
         -- ^ A natural transformation to unlift a particular 'm' into 'IO'.
-    -> Tracer m (TraceClient (SerializedTx Block) (SubmitTxError Block))
+    -> Tracer m (TraceClient (SerializedTransaction Block) (SubmitTransactionError Block))
         -- ^ Base trace for underlying protocols
     -> EpochSlots
         -- ^ Static blockchain parameters
@@ -305,7 +305,7 @@ localChainSync unliftIO tr codec client channel =
 -- | Boilerplate for lifting a 'LocalTxSubmissionClient'
 localTxSubmission
     :: forall m protocol.
-        ( protocol ~ LocalTxSubmission (SerializedTx Block) (SubmitTxError Block)
+        ( protocol ~ LocalTxSubmission (SerializedTransaction Block) (SubmitTransactionError Block)
         , MonadThrow m
         )
     => (forall a. m a -> IO a)
@@ -314,7 +314,7 @@ localTxSubmission
         -- ^ Base tracer for the mini-protocols
     -> Codec protocol DeserialiseFailure m ByteString
         -- ^ Codec for deserializing / serializing binary data
-    -> LocalTxSubmissionClient (SerializedTx Block) (SubmitTxError Block) m ()
+    -> LocalTxSubmissionClient (SerializedTransaction Block) (SubmitTransactionError Block) m ()
         -- ^ Actual local tx submission client
     -> Channel m ByteString
         -- ^ A 'Channel' is an abstract communication instrument which

@@ -132,112 +132,70 @@ encodeAuxiliaryDataHash =
 
 encodeBHeader
     :: Crypto crypto
-    => SerializationMode
-    -> TPraos.BHeader crypto
-    -> Json
-encodeBHeader mode (TPraos.BHeader hBody hSig) = encodeObjectWithMode mode
-    [ ( "blockHeight"
-      , encodeBlockNo (TPraos.bheaderBlockNo hBody)
-      )
-    , ( "slot"
-      , encodeSlotNo (TPraos.bheaderSlotNo hBody)
-      )
-    , ( "prevHash"
-      , encodePrevHash (TPraos.bheaderPrev hBody)
-      )
-    , ( "issuerVk"
-      , encodeVKey (TPraos.bheaderVk hBody)
-      )
-    , ( "issuerVrf"
-      , encodeVerKeyVRF (TPraos.bheaderVrfVk hBody)
-      )
-    , ( "blockSize"
-      , encodeNatural (TPraos.bsize hBody)
-      )
-    , ( "blockHash"
-      , encodeHash (TPraos.bhash hBody)
-      )
-    ]
-    [ ( "signature"
-      , encodeSignedKES hSig
-      )
-    , ( "nonce"
-      , encodeCertifiedVRF (TPraos.bheaderEta hBody)
-      )
-    , ( "leaderValue"
-      , encodeCertifiedVRF (TPraos.bheaderL hBody)
-      )
-    , ( "opCert"
-      , encodeOCert (TPraos.bheaderOCert hBody)
-      )
-    , ( "protocolVersion"
-      , encodeProtVer (TPraos.bprotver hBody)
-      )
-    ]
+    => TPraos.BHeader crypto
+    -> Series
+encodeBHeader (TPraos.BHeader hBody _hSig) =
+    "ancestor" .=
+        encodePrevHash (TPraos.bheaderPrev hBody) <>
+    "nonce" .=
+        encodeCertifiedVRF (TPraos.bheaderEta hBody) <>
+    "height" .=
+        encodeBlockNo (TPraos.bheaderBlockNo hBody)  <>
+    "slot" .=
+        encodeSlotNo (TPraos.bheaderSlotNo hBody) <>
+    "issuer" .= encodeObject
+        ( "verificationKey" .=
+              encodeVKey (TPraos.bheaderVk hBody) <>
+          "vrfVerificationKey" .=
+              encodeVerKeyVRF (TPraos.bheaderVrfVk hBody) <>
+          "leaderValue" .=
+              encodeCertifiedVRF (TPraos.bheaderL hBody) <>
+          "operationalCertificate" .=
+              encodeOCert (TPraos.bheaderOCert hBody)
+        ) <>
+    "protocol" .= encodeObject
+        ( "version" .=
+            encodeProtVer (TPraos.bprotver hBody)
+        )
 
 encodeBlock
     :: Crypto crypto
-    => SerializationMode
-    -> ShelleyBlock (TPraos crypto) (ShelleyEra crypto)
+    => ShelleyBlock (TPraos crypto) (ShelleyEra crypto)
     -> Json
-encodeBlock mode (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
+encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
-    [ ( "body"
-      , encodeFoldable (encodeTx mode) (Sh.txSeqTxns' txs)
-      )
-    , ( "header"
-      , encodeBHeader mode blkHeader
-      )
-    , ( "headerHash"
-      , encodeShelleyHash headerHash
-      )
-    ]
-
-encodeBootstrapWitness
-    :: Crypto crypto
-    => Sh.BootstrapWitness crypto
-    -> Json
-encodeBootstrapWitness (Sh.BootstrapWitness key sig cc attr) = encodeObject
-    [ ( "key"
-      , encodeVKey key
-      )
-    , ( "chainCode"
-      , encodeChainCode cc
-      )
-    , ( "addressAttributes"
-      , if BS.null attr then encodeNull else encodeByteStringBase64 attr
-      )
-    , ( "signature"
-      , encodeSignedDSIGN sig
-      )
-    ]
+        ( "era" .= encodeText "shelley"
+        <>
+          "header" .= encodeObject
+            ( "hash" .= encodeShelleyHash headerHash
+            )
+        <>
+        encodeBHeader blkHeader
+        <>
+        "size" .= encodeNatural (TPraos.bsize hBody)
+        <>
+        "transactions" .= encodeFoldable encodeTx (Sh.txSeqTxns' txs)
+        )
+  where
+    TPraos.BHeader hBody _ = blkHeader
 
 encodeCertVRF
     :: CC.VRFAlgorithm alg
     => CC.CertVRF alg
     -> Json
 encodeCertVRF =
-    encodeByteStringBase64 . CC.rawSerialiseCertVRF
+    encodeByteStringBase16 . CC.rawSerialiseCertVRF
 
 encodeCertifiedVRF
     :: CC.VRFAlgorithm alg
     => CC.CertifiedVRF alg any
     -> Json
-encodeCertifiedVRF x = encodeObject
-    [ ( "output"
-      , encodeOutputVRF (CC.certifiedOutput x)
-      )
-    , ( "proof"
-      , encodeCertVRF (CC.certifiedProof x)
-      )
-    ]
-
-encodeChainCode
-    :: Sh.ChainCode
-    -> Json
-encodeChainCode cc
-    | BS.null (Sh.unChainCode cc) = encodeNull
-    | otherwise = encodeByteStringBase16 (Sh.unChainCode cc)
+encodeCertifiedVRF x =
+    "output" .=
+        encodeOutputVRF (CC.certifiedOutput x) <>
+    "proof" .=
+        encodeCertVRF (CC.certifiedProof x)
+    & encodeObject
 
 encodeCredential
     :: forall any crypto. (any :\: 'StakePool, Crypto crypto)
@@ -251,83 +209,58 @@ encodeDCert
     :: Crypto crypto
     => Sh.DCert crypto
     -> Json
-encodeDCert = \case
-    Sh.DCertDeleg (Sh.RegKey credential) -> encodeObject
-        [ ( "stakeKeyRegistration"
-          , encodeCredential credential
-          )
-        ]
-    Sh.DCertDeleg (Sh.DeRegKey credential) -> encodeObject
-        [ ( "stakeKeyDeregistration"
-          , encodeCredential credential
-          )
-        ]
-    Sh.DCertDeleg (Sh.Delegate delegation) -> encodeObject
-        [ ( "stakeDelegation"
-          , encodeDelegation delegation
-          )
-        ]
-    Sh.DCertPool (Sh.RegPool params)  -> encodeObject
-        [ ( "poolRegistration"
-          , encodePoolParams params
-          )
-        ]
-    Sh.DCertPool (Sh.RetirePool keyHash epochNo) -> encodeObject
-        [ ( "poolRetirement", encodeObject
-            [ ( "poolId"
-              , encodePoolId keyHash
-              )
-            , ( "retirementEpoch"
-              , encodeEpochNo epochNo
-              )
-            ]
-          )
-        ]
-    Sh.DCertGenesis (Sh.GenesisDelegCert key delegate vrf)  -> encodeObject
-        [ ( "genesisDelegation", encodeObject
-            [ ( "verificationKeyHash"
-              , encodeKeyHash key
-              )
-            , ( "delegateKeyHash"
-              , encodeKeyHash delegate
-              )
-            , ( "vrfVerificationKeyHash"
-              , encodeHash vrf
-              )
-            ]
-          )
-        ]
+encodeDCert = encodeObject . \case
+    Sh.DCertDeleg (Sh.RegKey credential) ->
+        "stakeKeyRegistration" .=
+            encodeCredential credential
+    Sh.DCertDeleg (Sh.DeRegKey credential) ->
+        "stakeKeyDeregistration" .=
+            encodeCredential credential
+    Sh.DCertDeleg (Sh.Delegate delegation) ->
+        "stakeDelegation" .=
+            encodeDelegation delegation
+    Sh.DCertPool (Sh.RegPool params)  ->
+        "poolRegistration" .=
+            encodePoolParams params
+    Sh.DCertPool (Sh.RetirePool keyHash epochNo) ->
+        "poolRetirement" .= encodeObject
+            ( "poolId" .=
+                  encodePoolId keyHash <>
+              "retirementEpoch" .=
+                  encodeEpochNo epochNo
+            )
+    Sh.DCertGenesis (Sh.GenesisDelegCert key delegate vrf)  ->
+        "genesisDelegation" .= encodeObject
+            ( "verificationKeyHash" .=
+                encodeKeyHash key <>
+              "delegateKeyHash" .=
+                  encodeKeyHash delegate <>
+              "vrfVerificationKeyHash" .=
+                  encodeHash vrf
+            )
     Sh.DCertMir (Sh.MIRCert pot target) ->
-        encodeObject
-            [ ( "moveInstantaneousRewards", encodeObject
-                [ ( "pot"
-                  , encodeMIRPot pot
-                  )
-                , case target of
-                    Sh.StakeAddressesMIR rewards ->
-                        ( "rewards"
-                        , encodeMap stringifyCredential encodeDeltaCoin rewards
-                        )
-                    Sh.SendToOppositePotMIR value ->
-                        ( "value"
-                        , encodeCoin value
-                        )
-                ]
-              )
-            ]
+        "moveInstantaneousRewards" .= encodeObject
+            ( "pot" .=
+                encodeMIRPot pot <>
+              case target of
+                Sh.StakeAddressesMIR rewards ->
+                    "rewards" .=
+                        encodeMap stringifyCredential encodeDeltaCoin rewards
+                Sh.SendToOppositePotMIR value ->
+                    "value" .=
+                        encodeCoin value
+            )
 
 encodeDelegation
     :: Crypto crypto
     => Sh.Delegation crypto
     -> Json
-encodeDelegation x = encodeObject
-    [ ( "delegator"
-      , encodeCredential (Sh._delegator x)
-      )
-    , ( "delegatee"
-      , encodePoolId (Sh._delegatee x)
-      )
-    ]
+encodeDelegation x =
+    "delegator" .=
+        encodeCredential (Sh._delegator x) <>
+    "delegatee" .=
+        encodePoolId (Sh._delegatee x)
+    & encodeObject
 
 encodeDelegsFailure
     :: PredicateFailure (Ledger.EraRule "DELPL" era) ~ Sh.DelplPredicateFailure era
@@ -338,17 +271,13 @@ encodeDelegsFailure
     -> Json
 encodeDelegsFailure = \case
     Sh.DelegateeNotRegisteredDELEG h ->
-        encodeObject
-            [ ( "delegateNotRegistered"
-              , encodePoolId h
-              )
-            ]
+        "delegateNotRegistered" .=
+            encodePoolId h
+        & encodeObject
     Sh.WithdrawalsNotInRewardsDELEGS withdrawals ->
-        encodeObject
-            [ ( "unknownOrIncompleteWithdrawals"
-              , encodeWdrl (Sh.Wdrl withdrawals)
-              )
-            ]
+        "unknownOrIncompleteWithdrawals" .=
+            encodeWdrl (Sh.Wdrl withdrawals)
+        & encodeObject
     Sh.DelplFailure e ->
         encodeDeplFailure e
 
@@ -356,96 +285,69 @@ encodeDelegFailure
     :: Crypto (Ledger.Crypto era)
     => Sh.DelegPredicateFailure era
     -> Json
-encodeDelegFailure = \case
+encodeDelegFailure = encodeObject . \case
     Sh.StakeKeyAlreadyRegisteredDELEG credential ->
-        encodeObject
-            [ ( "stakeKeyAlreadyRegistered", encodeCredential credential )
-            ]
+        "stakeKeyAlreadyRegistered" .=
+            encodeCredential credential
     Sh.StakeKeyInRewardsDELEG credential ->
-        encodeObject
-            [ ( "stakeKeyAlreadyRegistered", encodeCredential credential )
-            ]
+        "stakeKeyAlreadyRegistered" .=
+            encodeCredential credential
     Sh.StakeKeyNotRegisteredDELEG credential ->
-        encodeObject
-            [ ( "stakeKeyNotRegistered", encodeCredential credential )
-            ]
+        "stakeKeyNotRegistered" .=
+            encodeCredential credential
     Sh.StakeDelegationImpossibleDELEG credential ->
-        encodeObject
-            [ ( "stakeKeyNotRegistered", encodeCredential  credential )
-            ]
+        "stakeKeyNotRegistered" .=
+            encodeCredential  credential
     Sh.StakeKeyNonZeroAccountBalanceDELEG Nothing ->
-        encodeObject
-            [ ( "rewardAccountNotExisting", encodeNull )
-            ]
+        "rewardAccountNotExisting" .=
+            encodeNull
     Sh.StakeKeyNonZeroAccountBalanceDELEG (Just balance) ->
-        encodeObject
-            [ ( "rewardAccountNotEmpty", encodeObject
-                [ ( "balance" , encodeCoin  balance )
-                ]
-              )
-            ]
+        "rewardAccountNotEmpty" .= encodeObject
+            ( "balance" .= encodeCoin balance
+            )
     Sh.WrongCertificateTypeDELEG ->
-        encodeObject
-            [  ( "wrongCertificateType", encodeNull )
-            ]
+        "wrongCertificateType" .=
+            encodeNull
     Sh.GenesisKeyNotInMappingDELEG keyHash ->
-        encodeObject
-            [ ( "unknownGenesisKey", encodeKeyHash keyHash )
-            ]
+        "unknownGenesisKey" .=
+            encodeKeyHash keyHash
     Sh.DuplicateGenesisDelegateDELEG keyHash ->
-        encodeObject
-            [ ( "alreadyDelegating", encodeKeyHash keyHash )
-            ]
+        "alreadyDelegating" .=
+            encodeKeyHash keyHash
     Sh.InsufficientForInstantaneousRewardsDELEG pot requested size ->
-        encodeObject
-            [ ( "insufficientFundsForMir", encodeObject
-                [ ( "rewardSource", encodeMIRPot pot )
-                , ( "sourceSize", encodeCoin size )
-                , ( "requestedAmount", encodeCoin requested )
-                ]
-              )
-            ]
+        "insufficientFundsForMir" .= encodeObject
+            ( "rewardSource" .= encodeMIRPot pot <>
+              "sourceSize" .= encodeCoin size <>
+              "requestedAmount" .= encodeCoin requested
+            )
     Sh.MIRCertificateTooLateinEpochDELEG currentSlot lastSlot ->
-        encodeObject
-            [ ( "tooLateForMir", encodeObject
-                [ ( "currentSlot", encodeSlotNo currentSlot )
-                , ( "lastAllowedSlot", encodeSlotNo lastSlot )
-                ]
-              )
-            ]
+        "tooLateForMir" .= encodeObject
+            ( "currentSlot" .= encodeSlotNo currentSlot <>
+              "lastAllowedSlot" .= encodeSlotNo lastSlot
+            )
     Sh.MIRTransferNotCurrentlyAllowed ->
-        encodeObject
-            [ ( "mirTransferNotCurrentlyAllowed", encodeNull )
-            ]
+        "mirTransferNotCurrentlyAllowed" .=
+            encodeNull
     Sh.MIRNegativesNotCurrentlyAllowed ->
-        encodeObject
-            [ ( "mirNegativeTransferNotCurrentlyAllowed", encodeNull )
-            ]
+        "mirNegativeTransferNotCurrentlyAllowed" .=
+            encodeNull
     Sh.InsufficientForTransferDELEG pot requested size ->
-        encodeObject
-            [ ( "insufficientFundsForMir", encodeObject
-                [ ( "rewardSource", encodeMIRPot pot )
-                , ( "sourceSize", encodeCoin size )
-                , ( "requestedAmount", encodeCoin requested )
-                ]
-              )
-            ]
+        "insufficientFundsForMir" .= encodeObject
+            ( "rewardSource" .= encodeMIRPot pot <>
+              "sourceSize" .= encodeCoin size <>
+              "requestedAmount" .= encodeCoin requested
+            )
     Sh.MIRProducesNegativeUpdate ->
-        encodeObject
-            [ ( "mirProducesNegativeUpdate", encodeNull )
-            ]
+        "mirProducesNegativeUpdate" .=
+            encodeNull
     Sh.MIRNegativeTransfer pot coin ->
-        encodeObject
-            [ ( "mirNegativeTransfer", encodeObject
-                [ ( "rewardSource", encodeMIRPot pot )
-                , ( "attemptedTransfer", encodeCoin coin )
-                ]
-              )
-            ]
+        "mirNegativeTransfer" .= encodeObject
+            ( "rewardSource" .= encodeMIRPot pot <>
+              "attemptedTransfer" .= encodeCoin coin
+            )
     Sh.DuplicateGenesisVRFDELEG vrfHash ->
-        encodeObject
-            [ ( "duplicateGenesisVrf", encodeHash vrfHash )
-            ]
+        "duplicateGenesisVrf" .=
+            encodeHash vrfHash
 
 encodeDeltaCoin
     :: Ledger.DeltaCoin
@@ -471,68 +373,55 @@ encodeEntities
     -> (entity -> Json)
     -> f entity
     -> Json
-encodeEntities tag encodeEntity = encodeFoldable $ \e -> encodeObject
-    [ ( "type", encodeText tag )
-    , ( "entity", encodeEntity e )
-    ]
+encodeEntities tag encodeEntity =
+    encodeFoldable $ \e -> encodeObject $
+        "type" .= encodeText tag <>
+        "entity" .= encodeEntity e
 
 encodeGenesis
     :: Era era
     => Sh.ShelleyGenesis era
     -> Json
-encodeGenesis x = encodeObject
-    [ ( "systemStart"
-      , encodeUtcTime (Sh.sgSystemStart x)
-      )
-    , ( "networkMagic"
-      , encodeWord32 (Sh.sgNetworkMagic x)
-      )
-    , ( "network"
-      , encodeNetwork (Sh.sgNetworkId x)
-      )
-    , ( "activeSlotsCoefficient"
-      , encodePositiveUnitInterval (Sh.sgActiveSlotsCoeff x)
-      )
-    , ( "securityParameter"
-      , encodeWord64 (Sh.sgSecurityParam x)
-      )
-    , ( "epochLength"
-      , encodeEpochSize (Sh.sgEpochLength x)
-      )
-    , ( "slotsPerKesPeriod"
-      , encodeWord64 (Sh.sgSlotsPerKESPeriod x)
-      )
-    , ( "maxKesEvolutions"
-      , encodeWord64 (Sh.sgMaxKESEvolutions x)
-      )
-    , ( "slotLength"
-      , encodeNominalDiffTime (Sh.sgSlotLength x)
-      )
-    , ( "updateQuorum"
-      , encodeWord64 (Sh.sgUpdateQuorum x)
-      )
-    , ( "maxLovelaceSupply"
-      , encodeWord64 (Sh.sgMaxLovelaceSupply x)
-      )
-    , ( "protocolParameters"
-      , encodePParams' id (Sh.sgProtocolParams x)
-      )
-    , ( "initialDelegates"
-      , encodeMap stringifyKeyHash encodeGenDelegPair (Sh.sgGenDelegs x)
-      )
-    , ( "initialFunds"
-      , encodeMap stringifyAddress encodeCoin (Sh.sgInitialFunds x)
-      )
-    , ( "initialPools"
-      , encodeShelleyGenesisStaking (Sh.sgStaking x)
-      )
-    ]
+encodeGenesis x =
+    "systemStart" .=
+        encodeUtcTime (Sh.sgSystemStart x) <>
+    "networkMagic" .=
+        encodeWord32 (Sh.sgNetworkMagic x) <>
+    "network" .=
+        encodeNetwork (Sh.sgNetworkId x) <>
+    "activeSlotsCoefficient" .=
+        encodePositiveUnitInterval (Sh.sgActiveSlotsCoeff x) <>
+    "securityParameter" .=
+        encodeWord64 (Sh.sgSecurityParam x) <>
+    "epochLength" .=
+        encodeEpochSize (Sh.sgEpochLength x) <>
+    "slotsPerKesPeriod" .=
+        encodeWord64 (Sh.sgSlotsPerKESPeriod x) <>
+    "maxKesEvolutions" .=
+        encodeWord64 (Sh.sgMaxKESEvolutions x) <>
+    "slotLength" .=
+        encodeNominalDiffTime (Sh.sgSlotLength x) <>
+    "updateQuorum" .=
+        encodeWord64 (Sh.sgUpdateQuorum x) <>
+    "maxLovelaceSupply" .=
+        encodeWord64 (Sh.sgMaxLovelaceSupply x) <>
+    "protocolParameters" .=
+        encodePParams' (\k encode v -> k .= encode v) (Sh.sgProtocolParams x) <>
+    "initialDelegates" .=
+        encodeMap stringifyKeyHash encodeGenDelegPair (Sh.sgGenDelegs x) <>
+    "initialFunds" .=
+        encodeMap stringifyAddress encodeCoin (Sh.sgInitialFunds x) <>
+    "initialPools" .=
+        encodeShelleyGenesisStaking (Sh.sgStaking x)
+    & encodeObject
 
 encodeGenDelegPair :: Crypto crypto => GenDelegPair crypto -> Json
-encodeGenDelegPair x = encodeObject
-    [ ( "delegate", encodeKeyHash (genDelegKeyHash x) )
-    , ( "vrf", encodeHash (genDelegVrfHash x))
-    ]
+encodeGenDelegPair x =
+    "delegate" .=
+        encodeKeyHash (genDelegKeyHash x) <>
+    "vrf" .=
+        encodeHash (genDelegVrfHash x)
+    & encodeObject
 
 encodeHash
     :: CC.HashAlgorithm alg
@@ -575,11 +464,8 @@ encodeLedgerFailure = \case
 encodeMetadata
     :: Sh.Metadata era
     -> Json
-encodeMetadata (Sh.Metadata blob) = encodeObject
-    [ ( "blob"
-      , encodeMetadataBlob blob
-      )
-    ]
+encodeMetadata (Sh.Metadata blob) =
+    encodeMetadataBlob blob
 
 encodeMetadataBlob
     :: Map Word64 Sh.Metadatum
@@ -588,23 +474,21 @@ encodeMetadataBlob =
     encodeMap show encodeMetadatum
   where
     encodeMetadatum :: Sh.Metadatum -> Json
-    encodeMetadatum = \case
+    encodeMetadatum = encodeObject . \case
         Sh.I n ->
-            encodeObject [("int", encodeInteger n)]
+            "int" .= encodeInteger n
         Sh.B bytes ->
-            encodeObject [("bytes", encodeByteStringBase16 bytes)]
+            "bytes" .= encodeByteStringBase16 bytes
         Sh.S txt ->
-            encodeObject [("string", encodeText txt)]
+            "string" .= encodeText txt
         Sh.List xs ->
-            encodeObject [("list", encodeList encodeMetadatum xs)]
+            "list" .= encodeList encodeMetadatum xs
         Sh.Map xs ->
-            encodeObject [("map", encodeList encodeKeyPair xs)]
+            "map" .= encodeList encodeKeyPair xs
 
     encodeKeyPair :: (Sh.Metadatum, Sh.Metadatum) -> Json
-    encodeKeyPair (k, v) = encodeObject
-        [ ( "k", encodeMetadatum k )
-        , ( "v", encodeMetadatum v )
-        ]
+    encodeKeyPair (k, v) =
+        encodeObject ("k" .= encodeMetadatum k <>  "v" .= encodeMetadatum v)
 
 encodeMIRPot
     :: Sh.MIRPot
@@ -623,18 +507,18 @@ encodeMultiSig = \case
     Sh.RequireSignature sig ->
         encodeKeyHash sig
     Sh.RequireAllOf xs ->
-        encodeObject [( "all", encodeList encodeMultiSig xs )]
+        encodeObject ("all" .= encodeList encodeMultiSig xs)
     Sh.RequireAnyOf xs ->
-        encodeObject [( "any", encodeList encodeMultiSig xs )]
+        encodeObject ("any" .= encodeList encodeMultiSig xs)
     Sh.RequireMOf n xs ->
-        encodeObject [( show n, encodeList encodeMultiSig xs)]
+        encodeObject (show n .= encodeList encodeMultiSig xs)
 
 encodeNetwork
     :: Ledger.Network
     -> Json
-encodeNetwork = \case
-    Ledger.Mainnet -> encodeText "mainnet"
-    Ledger.Testnet -> encodeText "testnet"
+encodeNetwork = encodeText . \case
+    Ledger.Mainnet -> "mainnet"
+    Ledger.Testnet -> "testnet"
 
 encodeNonce
     :: Ledger.Nonce
@@ -647,26 +531,22 @@ encodeOCert
     :: Crypto crypto
     => TPraos.OCert crypto
     -> Json
-encodeOCert x = encodeObject
-    [ ( "hotVk"
-      , encodeVerKeyKES (TPraos.ocertVkHot x)
-      )
-    , ( "count"
-      , encodeWord64 (TPraos.ocertN x)
-      )
-    , ( "kesPeriod"
-      , encodeKESPeriod (TPraos.ocertKESPeriod x)
-      )
-    , ( "sigma"
-      , encodeSignedDSIGN (TPraos.ocertSigma x)
-      )
-    ]
+encodeOCert x =
+    "count" .=
+        encodeWord64 (TPraos.ocertN x) <>
+    "kes" .= encodeObject
+        ( "period" .=
+            encodeKESPeriod (TPraos.ocertKESPeriod x) <>
+          "verificationKey" .=
+              encodeVerKeyKES (TPraos.ocertVkHot x)
+        )
+    & encodeObject
 
 encodeOutputVRF
     :: CC.OutputVRF alg
     -> Json
 encodeOutputVRF =
-    encodeByteStringBase64 . CC.getOutputVRFBytes
+    encodeByteStringBase16 . CC.getOutputVRFBytes
 
 encodePoolId
     :: Crypto crypto
@@ -679,163 +559,117 @@ encodePoolFailure
     :: Crypto (Ledger.Crypto era)
     => Sh.PoolPredicateFailure era
     -> Json
-encodePoolFailure = \case
+encodePoolFailure = encodeObject . \case
     Sh.StakePoolNotRegisteredOnKeyPOOL keyHash ->
-        encodeObject
-            [ ( "stakePoolNotRegistered"
-              , encodePoolId keyHash
-              )
-            ]
+        "stakePoolNotRegistered" .=
+            encodePoolId keyHash
     Sh.StakePoolRetirementWrongEpochPOOL current retiring limit ->
-        encodeObject
-            [ ( "wrongRetirementEpoch", encodeObject
-                [ ( "currentEpoch", encodeWord64 current )
-                , ( "requestedEpoch", encodeWord64 retiring )
-                , ( "firstUnreachableEpoch", encodeWord64 limit )
-                ]
-              )
-            ]
+        "wrongRetirementEpoch" .= encodeObject
+            ( "currentEpoch" .=
+                encodeWord64 current <>
+              "requestedEpoch" .=
+                encodeWord64 retiring <>
+              "firstUnreachableEpoch" .=
+                encodeWord64 limit
+            )
     Sh.WrongCertificateTypePOOL cert ->
-        encodeObject
-            [ ( "wrongPoolCertificate"
-              , encodeWord8 cert
-              )
-            ]
+        "wrongPoolCertificate" .=
+            encodeWord8 cert
     Sh.StakePoolCostTooLowPOOL _cost minimumCost ->
-        encodeObject
-            [ ( "poolCostTooSmall", encodeObject
-                [ ( "minimumCost", encodeCoin minimumCost )
-                ]
-              )
-            ]
+        "poolCostTooSmall" .= encodeObject
+            ( "minimumCost" .=
+                encodeCoin minimumCost
+            )
     Sh.WrongNetworkPOOL _specified expected poolId ->
-        encodeObject
-            [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork"
-                  , encodeNetwork expected
-                  )
-                , ( "invalidEntities"
-                  , encodeEntities "poolRegistration" encodePoolId [poolId]
-                  )
-                ]
-              )
-            ]
+        "networkMismatch" .= encodeObject
+            ( "expectedNetwork" .=
+                encodeNetwork expected <>
+              "invalidEntities" .=
+                encodeEntities "poolRegistration" encodePoolId [poolId]
+            )
     Sh.PoolMedataHashTooBig poolId measuredSize ->
-        encodeObject
-            [ ( "poolMetadataHashTooBig", encodeObject
-                [ ( "poolId"
-                  , encodePoolId poolId
-                  )
-                , ( "measuredSize"
-                  , encodeInteger (fromIntegral measuredSize)
-                  )
-                ]
-              )
-            ]
+        "poolMetadataHashTooBig" .= encodeObject
+            ( "poolId" .=
+                encodePoolId poolId <>
+              "measuredSize" .=
+                encodeInteger (fromIntegral measuredSize)
+            )
 
 encodePoolMetadata
     :: Sh.PoolMetadata
     -> Json
-encodePoolMetadata x = encodeObject
-    [ ( "url"
-      , encodeUrl (Sh._poolMDUrl x)
-      )
-    , ( "hash"
-      , encodeByteStringBase16 (Sh._poolMDHash x)
-      )
-    ]
+encodePoolMetadata x =
+    "url" .=
+        encodeUrl (Sh._poolMDUrl x) <>
+    "hash" .=
+        encodeByteStringBase16 (Sh._poolMDHash x)
+    & encodeObject
 
 encodePoolParams
     :: Crypto crypto
     => Sh.PoolParams crypto
     -> Json
-encodePoolParams x = encodeObject
-    [ ( "id"
-      , encodePoolId (Sh._poolId x)
-      )
-    , ( "vrf"
-      , encodeHash (Sh._poolVrf x)
-      )
-    , ( "pledge"
-      , encodeCoin (Sh._poolPledge x)
-      )
-    , ( "cost"
-      , encodeCoin (Sh._poolCost x)
-      )
-    , ( "margin"
-      , encodeUnitInterval (Sh._poolMargin x)
-      )
-    , ( "rewardAccount"
-      , encodeRewardAcnt (Sh._poolRAcnt x)
-      )
-    , ( "owners"
-      , encodeFoldable encodeKeyHash (Sh._poolOwners x)
-      )
-    , ( "relays"
-      , encodeFoldable encodeStakePoolRelay (Sh._poolRelays x)
-      )
-    , ( "metadata"
-      , encodeStrictMaybe encodePoolMetadata (Sh._poolMD x)
-      )
-    ]
+encodePoolParams x =
+    "id" .=
+        encodePoolId (Sh._poolId x) <>
+    "vrf" .=
+        encodeHash (Sh._poolVrf x) <>
+    "pledge" .=
+        encodeCoin (Sh._poolPledge x) <>
+    "cost" .=
+        encodeCoin (Sh._poolCost x) <>
+    "margin" .=
+        encodeUnitInterval (Sh._poolMargin x) <>
+    "rewardAccount" .=
+        encodeRewardAcnt (Sh._poolRAcnt x) <>
+    "owners" .=
+        encodeFoldable encodeKeyHash (Sh._poolOwners x) <>
+    "relays" .=
+        encodeFoldable encodeStakePoolRelay (Sh._poolRelays x) <>
+    "metadata" .=? OmitWhenNothing
+        encodePoolMetadata (Sh._poolMD x)
+    & encodeObject
 
 encodePParams'
-    :: (forall a. (a -> Json) -> Sh.HKD f a -> Json)
+    :: (forall a. Text -> (a -> Json) -> Sh.HKD f a -> Series)
     -> Sh.PParams' f era
     -> Json
-encodePParams' encodeF x = encodeObject
-    [ ( "minFeeCoefficient"
-      , encodeF encodeNatural (Sh._minfeeA x)
-      )
-    , ( "minFeeConstant"
-      , encodeF encodeNatural (Sh._minfeeB x)
-      )
-    , ( "maxBlockBodySize"
-      , encodeF encodeNatural (Sh._maxBBSize x)
-      )
-    , ( "maxBlockHeaderSize"
-      , encodeF encodeNatural (Sh._maxBHSize x)
-      )
-    , ( "maxTxSize"
-      , encodeF encodeNatural (Sh._maxTxSize x)
-      )
-    , ( "stakeKeyDeposit"
-      , encodeF encodeCoin (Sh._keyDeposit x)
-      )
-    , ( "poolDeposit"
-      , encodeF encodeCoin (Sh._poolDeposit x)
-      )
-    , ( "poolRetirementEpochBound"
-      , encodeF encodeEpochNo (Sh._eMax x)
-      )
-    , ( "desiredNumberOfPools"
-      , encodeF encodeNatural (Sh._nOpt x)
-      )
-    , ( "poolInfluence"
-      , encodeF encodeNonNegativeInterval (Sh._a0 x)
-      )
-    , ( "monetaryExpansion"
-      , encodeF encodeUnitInterval (Sh._rho x)
-      )
-    , ( "treasuryExpansion"
-      , encodeF encodeUnitInterval (Sh._tau x)
-      )
-    , ( "decentralizationParameter"
-      , encodeF encodeUnitInterval (Sh._d x)
-      )
-    , ( "extraEntropy"
-      , encodeF encodeNonce (Sh._extraEntropy x)
-      )
-    , ( "protocolVersion"
-      , encodeF encodeProtVer (Sh._protocolVersion x)
-      )
-    , ( "minUtxoValue"
-      , encodeF encodeCoin (Sh._minUTxOValue x)
-      )
-    , ( "minPoolCost"
-      , encodeF encodeCoin (Sh._minPoolCost x)
-      )
-    ]
+encodePParams' encode x =
+    encode "minFeeCoefficient"
+        encodeNatural (Sh._minfeeA x) <>
+    encode "minFeeConstant"
+        encodeNatural (Sh._minfeeB x) <>
+    encode "maxBlockBodySize"
+        encodeNatural (Sh._maxBBSize x) <>
+    encode "maxBlockHeaderSize"
+        encodeNatural (Sh._maxBHSize x) <>
+    encode "maxTxSize"
+        encodeNatural (Sh._maxTxSize x) <>
+    encode "stakeKeyDeposit"
+        encodeCoin (Sh._keyDeposit x) <>
+    encode "poolDeposit"
+        encodeCoin (Sh._poolDeposit x) <>
+    encode "poolRetirementEpochBound"
+        encodeEpochNo (Sh._eMax x) <>
+    encode "desiredNumberOfPools"
+        encodeNatural (Sh._nOpt x) <>
+    encode "poolInfluence"
+        encodeNonNegativeInterval (Sh._a0 x) <>
+    encode "monetaryExpansion"
+        encodeUnitInterval (Sh._rho x) <>
+    encode "treasuryExpansion"
+        encodeUnitInterval (Sh._tau x) <>
+    encode "decentralizationParameter"
+        encodeUnitInterval (Sh._d x) <>
+    encode "extraEntropy"
+        encodeNonce (Sh._extraEntropy x) <>
+    encode "protocolVersion"
+        encodeProtVer (Sh._protocolVersion x) <>
+    encode "minUtxoValue"
+        encodeCoin (Sh._minUTxOValue x) <>
+    encode "minPoolCost"
+        encodeCoin (Sh._minPoolCost x)
+    & encodeObject
 
 encodePrevHash
     :: TPraos.PrevHash crypto
@@ -850,19 +684,20 @@ encodeProposedPPUpdates
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
-    encodeMap stringifyKeyHash (encodePParams' encodeStrictMaybe) m
+    encodeMap
+        stringifyKeyHash
+        (encodePParams' (\k encode v -> k .=? OmitWhenNothing encode v))
+        m
 
 encodeProtVer
     :: Ledger.ProtVer
     -> Json
-encodeProtVer x = encodeObject
-    [ ( "major"
-      , encodeNatural (Ledger.pvMajor x)
-      )
-    , ( "minor"
-      , encodeNatural (Ledger.pvMinor x)
-      )
-    ]
+encodeProtVer x =
+    "major" .=
+        encodeNatural (Ledger.pvMajor x) <>
+    "minor" .=
+        encodeNatural (Ledger.pvMinor x)
+    & encodeObject
 
 encodeRewardAcnt
     :: Sh.RewardAcnt era
@@ -874,8 +709,10 @@ encodeScript
     :: Crypto crypto
     => Sh.MultiSig crypto
     -> Json
-encodeScript script = encodeObject
-    [ ( "native", encodeMultiSig script ) ]
+encodeScript script =
+    "native" .=
+        encodeMultiSig script
+    & encodeObject
 
 encodeScriptHash
     :: Crypto crypto
@@ -889,17 +726,15 @@ encodeSignedKES
     => CC.SignedKES alg a
     -> Json
 encodeSignedKES (CC.SignedKES raw) =
-    encodeByteStringBase64 . CC.rawSerialiseSigKES $ raw
+    encodeByteStringBase16 . CC.rawSerialiseSigKES $ raw
 
 encodeShelleyGenesisStaking :: Crypto crypto => Sh.ShelleyGenesisStaking crypto -> Json
-encodeShelleyGenesisStaking x = encodeObject
-    [ ( "pools"
-      , encodeMap stringifyPoolId encodePoolParams (Sh.sgsPools x)
-      )
-    , ( "delegators"
-      , encodeMap stringifyKeyHash encodePoolId (Sh.sgsStake x)
-      )
-    ]
+encodeShelleyGenesisStaking x =
+    "pools" .=
+        encodeMap stringifyPoolId encodePoolParams (Sh.sgsPools x) <>
+    "delegators" .=
+        encodeMap stringifyKeyHash encodePoolId (Sh.sgsStake x)
+    & encodeObject
 
 encodeShelleyHash
     :: Crypto crypto
@@ -913,93 +748,71 @@ encodeSignedDSIGN
     => CC.SignedDSIGN alg a
     -> Json
 encodeSignedDSIGN (CC.SignedDSIGN raw) =
-    encodeByteStringBase64 . CC.rawSerialiseSigDSIGN $ raw
+    encodeByteStringBase16 . CC.rawSerialiseSigDSIGN $ raw
 
 encodeStakePoolRelay
     :: Sh.StakePoolRelay
     -> Json
-encodeStakePoolRelay = \case
-    Sh.SingleHostAddr port ipv4 ipv6 -> encodeObject
-        [ ( "port"
-          , encodeStrictMaybe encodePort port
-          )
-        , ( "ipv4"
-          , encodeStrictMaybe encodeIPv4 ipv4
-          )
-        , ( "ipv6"
-          , encodeStrictMaybe encodeIPv6 ipv6
-          )
-        ]
-    Sh.SingleHostName port dns -> encodeObject
-        [ ( "hostname"
-          , encodeDnsName dns
-          )
-        , ( "port"
-          , encodeStrictMaybe encodePort port
-          )
-        ]
-    Sh.MultiHostName dns -> encodeObject
-        [ ( "hostname"
-          , encodeDnsName dns
-          )
-        , ( "port"
-          , encodeNull
-          )
-        ]
+encodeStakePoolRelay = encodeObject . \case
+    Sh.SingleHostAddr port ipv4 ipv6 ->
+        "ipv4" .=? OmitWhenNothing
+            encodeIPv4 ipv4 <>
+        "ipv6" .=? OmitWhenNothing
+            encodeIPv6 ipv6 <>
+        "port" .=? OmitWhenNothing
+            encodePort port
+    Sh.SingleHostName port dns ->
+        "hostname" .=
+            encodeDnsName dns <>
+        "port" .=? OmitWhenNothing
+            encodePort port
+    Sh.MultiHostName dns ->
+        "hostname" .=
+            encodeDnsName dns
 
 encodeTx
     :: forall crypto. (Crypto crypto)
-    => SerializationMode
-    -> Sh.Tx (ShelleyEra crypto)
+    => Sh.Tx (ShelleyEra crypto)
     -> Json
-encodeTx mode x = encodeObjectWithMode mode
-    [ ( "id"
-      , encodeTxId (Ledger.txid @(ShelleyEra crypto) (Sh.body x))
-      )
-    , ( "body"
-      , encodeTxBody (Sh.body x)
-      )
-    , ( "metadata"
-      , (,) <$> fmap (("hash",) . encodeAuxiliaryDataHash) (Sh._mdHash (Sh.body x))
-            <*> fmap (("body",) . encodeMetadata) (Sh.auxiliaryData x)
-        & encodeStrictMaybe (\(a, b) -> encodeObject [a,b])
-      )
-    ]
-    [ ( "witness"
-      , encodeWitnessSet (Sh.wits x)
-      )
-    , ( "raw"
-      , encodeByteStringBase64 (serialize' x)
-      )
-    ]
+encodeTx x =
+    "id" .= encodeTxId (Ledger.txid @(ShelleyEra crypto) (Sh.body x))
+        <>
+    "inputSource" .= encodeText "inputs"
+        <>
+    encodeTxBody (Sh.body x)
+        <>
+    "metadata" .=? OmitWhenNothing identity metadata
+        <>
+    encodeWitnessSet (Sh.wits x)
+        <>
+    "cbor" .= encodeByteStringBase16 (serialize' x)
+        & encodeObject
+  where
+    metadata = liftA2
+        (\hash body -> encodeObject ("hash" .= hash <> "labels" .= body))
+        (encodeAuxiliaryDataHash <$> Sh._mdHash (Sh.body x))
+        (encodeMetadata <$> Sh.auxiliaryData x)
 
 encodeTxBody
     :: Crypto crypto
     => Sh.TxBody (ShelleyEra crypto)
-    -> Json
-encodeTxBody x = encodeObject
-    [ ( "inputs"
-      , encodeFoldable encodeTxIn (Sh._inputs x)
-      )
-    , ( "outputs"
-      , encodeFoldable encodeTxOut (Sh._outputs x)
-      )
-    , ( "certificates"
-      , encodeFoldable encodeDCert (Sh._certs x)
-      )
-    , ( "withdrawals"
-      , encodeWdrl (Sh._wdrls x)
-      )
-    , ( "fee"
-      , encodeCoin (Sh._txfee x)
-      )
-    , ( "timeToLive"
-      , encodeSlotNo (Sh._ttl x)
-      )
-    , ( "update"
-      , encodeStrictMaybe encodeUpdate (Sh._txUpdate x)
-      )
-    ]
+    -> Series
+encodeTxBody x =
+    "inputs" .=
+        encodeFoldable encodeTxIn (Sh._inputs x) <>
+    "outputs" .=
+        encodeFoldable encodeTxOut (Sh._outputs x) <>
+    "fee" .=
+        encodeCoin (Sh._txfee x) <>
+    "validityInterval" .=
+        encodeObject ("invalidAfter" .= encodeSlotNo (Sh._ttl x)) <>
+    "certificates" .=? OmitWhen null
+        (encodeFoldable encodeDCert) (Sh._certs x) <>
+    "withdrawals" .=? OmitWhen (null . Sh.unWdrl)
+        encodeWdrl (Sh._wdrls x) <>
+    "governanceActions" .=? OmitWhenNothing
+        (encodeFoldable identity . pure @[] . encodeUpdate)
+        (Sh._txUpdate x)
 
 encodeTxId
     :: Crypto crypto
@@ -1012,70 +825,60 @@ encodeTxIn
     :: Crypto crypto
     => Ledger.TxIn crypto
     -> Json
-encodeTxIn (Ledger.TxIn txid (Ledger.TxIx ix)) = encodeObject
-    [ ( "txId"
-      , encodeTxId txid
-      )
-    , ( "index"
-      , encodeWord64 ix
-      )
-    ]
+encodeTxIn (Ledger.TxIn txid (Ledger.TxIx ix)) =
+    "txId" .=
+        encodeTxId txid <>
+    "index" .=
+        encodeWord64 ix
+    & encodeObject
 
 encodeTxOut
     :: (ShelleyBased era, Ledger.Value era ~ Coin)
     => Sh.TxOut era
     -> Json
-encodeTxOut (Sh.TxOut addr value) = encodeObject
-    [ ( "address"
-      , encodeAddress addr
-      )
-    , ( "value"
-      , encodeValue value
-      )
-    ]
+encodeTxOut (Sh.TxOut addr value) =
+    "address" .=
+        encodeAddress addr <>
+    "value" .=
+        encodeValue value
+    & encodeObject
 
 encodeUpdate
     :: Ledger.PParamsDelta era ~ Sh.PParams' StrictMaybe era
     => Crypto (Ledger.Crypto era)
     => Sh.Update era
     -> Json
-encodeUpdate (Sh.Update update epoch) = encodeObject
-    [ ( "proposal"
-      , encodeProposedPPUpdates update
-      )
-    , ( "epoch"
-      , encodeEpochNo epoch
-      )
-    ]
+encodeUpdate (Sh.Update update epoch) =
+    "proposal" .=
+        encodeProposedPPUpdates update <>
+    "epoch" .=
+        encodeEpochNo epoch
+    & encodeObject
 
 encodeUpdateFailure
     :: Crypto (Ledger.Crypto era)
     => Sh.PpupPredicateFailure era
     -> Json
-encodeUpdateFailure = \case
+encodeUpdateFailure = encodeObject . \case
     Sh.NonGenesisUpdatePPUP voting shouldBeVoting ->
-        encodeObject
-            [ ( "nonGenesisVoters", encodeObject
-                [ ( "currentlyVoting", encodeFoldable encodeKeyHash voting )
-                , ( "shouldBeVoting", encodeFoldable encodeKeyHash shouldBeVoting )
-                ]
-              )
-            ]
+        "nonGenesisVoters" .= encodeObject
+            ( "currentlyVoting" .=
+                encodeFoldable encodeKeyHash voting <>
+              "shouldBeVoting" .=
+                encodeFoldable encodeKeyHash shouldBeVoting
+            )
     Sh.PPUpdateWrongEpoch currentEpoch updateEpoch votingPeriod ->
-        encodeObject
-            [ ( "updateWrongEpoch", encodeObject
-                [ ( "currentEpoch", encodeEpochNo currentEpoch )
-                , ( "requestedEpoch", encodeEpochNo updateEpoch )
-                , ( "votingPeriod", encodeVotingPeriod votingPeriod )
-                ]
-              )
-            ]
+        "updateWrongEpoch" .= encodeObject
+            ( "currentEpoch" .=
+                encodeEpochNo currentEpoch <>
+              "requestedEpoch" .=
+                encodeEpochNo updateEpoch <>
+              "votingPeriod" .=
+                encodeVotingPeriod votingPeriod
+            )
     Sh.PVCannotFollowPPUP version ->
-        encodeObject
-            [ ( "protocolVersionCannotFollow"
-              , encodeProtVer version
-              )
-            ]
+        "protocolVersionCannotFollow" .=
+            encodeProtVer version
 
 encodeUtxo
     :: forall era.
@@ -1090,103 +893,68 @@ encodeUtxo =
   where
     encodeIO = curry (encode2Tuple encodeTxIn encodeTxOut)
 
-encodeUtxoWithMode
-    :: forall era.
-        ( ShelleyBased era
-        , Ledger.Value era ~ Coin
-        , Ledger.TxOut era ~ Sh.TxOut era
-        )
-    => SerializationMode
-    -> Sh.UTxO era
-    -> Json
-encodeUtxoWithMode mode =
-    encodeListWithMode mode id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
-  where
-    encodeIO = curry (encode2Tuple encodeTxIn encodeTxOut)
-
 encodeUtxoFailure
     :: Crypto crypto
     => Sh.UtxoPredicateFailure (ShelleyEra crypto)
     -> Json
 encodeUtxoFailure = \case
     Sh.BadInputsUTxO inputs ->
-        encodeObject
-            [ ( "badInputs"
-              , encodeFoldable encodeTxIn inputs
-              )
-            ]
+        "badInputs" .=
+            encodeFoldable encodeTxIn inputs
+        & encodeObject
     Sh.ExpiredUTxO ttl currentSlot ->
-        encodeObject
-            [ ( "expiredUtxo", encodeObject
-                [ ( "transactionTimeToLive", encodeSlotNo ttl )
-                , ( "currentSlot", encodeSlotNo currentSlot )
-                ]
-              )
-            ]
+        "expiredUtxo" .= encodeObject
+            ( "transactionTimeToLive" .= encodeSlotNo ttl <>
+              "currentSlot" .= encodeSlotNo currentSlot
+            )
+        & encodeObject
     Sh.MaxTxSizeUTxO actualSize maxSize ->
-        encodeObject
-            [ ( "txTooLarge", encodeObject
-                [ ( "maximumSize", encodeInteger maxSize )
-                , ( "actualSize", encodeInteger actualSize )
-                ]
-              )
-            ]
+        "txTooLarge" .= encodeObject
+            ( "maximumSize" .= encodeInteger maxSize <>
+              "actualSize" .= encodeInteger actualSize
+            )
+        & encodeObject
     Sh.InputSetEmptyUTxO ->
-        encodeObject
-            [ ( "missingAtLeastOneInputUtxo", encodeNull )
-            ]
+        "missingAtLeastOneInputUtxo" .=
+            encodeNull
+        & encodeObject
     Sh.FeeTooSmallUTxO required actual ->
-        encodeObject
-            [ ( "feeTooSmall", encodeObject
-                [ ( "requiredFee", encodeCoin required )
-                , ( "actualFee", encodeCoin actual )
-                ]
-              )
-            ]
+        "feeTooSmall" .= encodeObject
+            ( "requiredFee" .=
+                encodeCoin required <>
+              "actualFee" .= encodeCoin actual
+            )
+        & encodeObject
     Sh.ValueNotConservedUTxO consumed produced ->
-        encodeObject
-            [ ( "valueNotConserved", encodeObject
-                [ ( "consumed", encodeCoin consumed )
-                , ( "produced", encodeCoin produced )
-                ]
-              )
-            ]
+        "valueNotConserved" .= encodeObject
+            ( "consumed" .= encodeCoin consumed <>
+              "produced" .= encodeCoin produced
+            )
+        & encodeObject
     Sh.WrongNetwork expected invalidAddrs ->
-        encodeObject
-            [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork"
-                  , encodeNetwork expected
-                  )
-                , ( "invalidEntities"
-                  , encodeEntities "address" encodeAddress invalidAddrs
-                  )
-                ]
-              )
-            ]
+        "networkMismatch" .= encodeObject
+            ( "expectedNetwork" .=
+                encodeNetwork expected <>
+              "invalidEntities" .=
+                    encodeEntities "address" encodeAddress invalidAddrs
+            )
+        & encodeObject
     Sh.WrongNetworkWithdrawal expected invalidAccts ->
-        encodeObject
-            [ ( "networkMismatch", encodeObject
-                [ ( "expectedNetwork"
-                  , encodeNetwork expected
-                  )
-                , ( "invalidEntities"
-                  , encodeEntities "rewardAccount" encodeRewardAcnt invalidAccts
-                  )
-                ]
-              )
-            ]
+        "networkMismatch" .= encodeObject
+            ( "expectedNetwork" .=
+                encodeNetwork expected <>
+              "invalidEntities" .=
+                encodeEntities "rewardAccount" encodeRewardAcnt invalidAccts
+            )
+        & encodeObject
     Sh.OutputTooSmallUTxO outs ->
-        encodeObject
-            [ ( "outputTooSmall"
-              , encodeList encodeTxOut outs
-              )
-            ]
+        "outputTooSmall" .=
+            encodeList encodeTxOut outs
+        & encodeObject
     Sh.OutputBootAddrAttrsTooBig outs ->
-        encodeObject
-            [ ( "addressAttributesTooLarge"
-              , encodeFoldable encodeAddress ((\(Sh.TxOut addr _) -> addr) <$> outs)
-              )
-            ]
+        "addressAttributesTooLarge" .=
+            encodeFoldable encodeAddress ((\(Sh.TxOut addr _) -> addr) <$> outs)
+        & encodeObject
     Sh.UpdateFailure e ->
         encodeUpdateFailure e
 
@@ -1199,74 +967,57 @@ encodeUtxowFailure
     -> Json
 encodeUtxowFailure encodeUtxoFailure_ = \case
     Sh.InvalidWitnessesUTXOW wits ->
-        encodeObject
-            [ ( "invalidWitnesses"
-              , encodeList encodeVKey wits
-              )
-            ]
+        "invalidWitnesses" .=
+            encodeList encodeVKey wits
+        & encodeObject
     Sh.MissingVKeyWitnessesUTXOW keys ->
-        encodeObject
-            [ ( "missingVkWitnesses"
-              , encodeWitHashes keys
-              )
-            ]
+        "missingVkWitnesses" .=
+            encodeWitHashes keys
+        & encodeObject
     Sh.MissingScriptWitnessesUTXOW scripts ->
-        encodeObject
-            [ ( "missingScriptWitnesses"
-              , encodeFoldable encodeScriptHash scripts
-              )
-            ]
+        "missingScriptWitnesses" .=
+            encodeFoldable encodeScriptHash scripts
+        & encodeObject
     Sh.ScriptWitnessNotValidatingUTXOW scripts ->
-        encodeObject
-            [ ( "scriptWitnessNotValidating"
-              , encodeFoldable encodeScriptHash scripts
-              )
-            ]
+        "scriptWitnessNotValidating" .=
+            encodeFoldable encodeScriptHash scripts
+        & encodeObject
     Sh.MIRInsufficientGenesisSigsUTXOW keys ->
-        encodeObject
-            [ ( "insufficientGenesisSignatures"
-              , encodeFoldable encodeKeyHash keys
-              )
-            ]
+        "insufficientGenesisSignatures" .=
+            encodeFoldable encodeKeyHash keys
+        & encodeObject
     Sh.MissingTxBodyMetadataHash hash ->
-        encodeObject
-            [ ( "missingTxMetadataHash"
-              , encodeAuxiliaryDataHash hash
-              )
-            ]
+        "missingTxMetadataHash" .=
+            encodeAuxiliaryDataHash hash
+        & encodeObject
     Sh.MissingTxMetadata hash ->
-        encodeObject
-            [ ( "missingTxMetadata"
-              , encodeAuxiliaryDataHash hash
-              )
-            ]
+        "missingTxMetadata" .=
+            encodeAuxiliaryDataHash hash
+        & encodeObject
     Sh.ConflictingMetadataHash included expected ->
-        encodeObject
-            [ ( "txMetadataHashMismatch", encodeObject
-                [ ( "includedHash" , encodeAuxiliaryDataHash included )
-                , ( "expectedHash" , encodeAuxiliaryDataHash expected )
-                ]
-              )
-            ]
+        "txMetadataHashMismatch" .= encodeObject
+            ( "includedHash" .=
+                encodeAuxiliaryDataHash included <>
+              "expectedHash" .=
+                encodeAuxiliaryDataHash expected
+            )
+        & encodeObject
     Sh.InvalidMetadata ->
-        encodeObject
-            [ ( "invalidMetadata", encodeNull )
-            ]
+        "invalidMetadata" .=
+            encodeNull
+        & encodeObject
     Sh.ExtraneousScriptWitnessesUTXOW scripts ->
-        encodeObject
-            [ ( "extraScriptWitnesses"
-              , encodeFoldable encodeScriptHash scripts
-              )
-            ]
+        "extraScriptWitnesses" .=
+            encodeFoldable encodeScriptHash scripts
+        & encodeObject
     Sh.UtxoFailure e ->
         encodeUtxoFailure_ e
 
 encodeValue
     :: Coin
     -> Json
-encodeValue coin = encodeObject
-    [ ( "coins", encodeCoin coin )
-    ]
+encodeValue coin =
+    encodeObject ("coins" .= encodeCoin coin)
 
 encodeVerKeyDSign
     :: CC.DSIGNAlgorithm alg
@@ -1280,14 +1031,14 @@ encodeVerKeyKES
     => CC.VerKeyKES alg
     -> Json
 encodeVerKeyKES =
-    encodeByteStringBase64 . CC.rawSerialiseVerKeyKES
+    encodeByteStringBase16 . CC.rawSerialiseVerKeyKES
 
 encodeVerKeyVRF
     :: (CC.VRFAlgorithm alg)
     => CC.VerKeyVRF alg
     -> Json
 encodeVerKeyVRF =
-    encodeByteStringBase64 . CC.rawSerialiseVerKeyVRF
+    encodeByteStringBase16 . CC.rawSerialiseVerKeyVRF
 
 encodeVKey
     :: Crypto crypto
@@ -1314,18 +1065,42 @@ encodeWdrl =
 encodeWitnessSet
     :: Crypto crypto
     => Sh.WitnessSet (ShelleyEra crypto)
+    -> Series
+encodeWitnessSet x =
+    "signatories" .=
+        encodeFoldable2
+            encodeBootstrapWitness
+            encodeWitVKey
+            (Sh.bootWits x)
+            (Sh.addrWits x) <>
+    "scripts" .=? OmitWhen null
+        (encodeMap stringifyScriptHash encodeScript) (Sh.scriptWits x)
+
+encodeWitVKey
+    :: Crypto crypto
+    => Sh.WitVKey Witness crypto
     -> Json
-encodeWitnessSet x = encodeObject
-    [ ( "signatures"
-      , encodeWitVKeys (Sh.addrWits x)
-      )
-    , ( "scripts"
-      , encodeMap stringifyScriptHash encodeScript (Sh.scriptWits x)
-      )
-    , ( "bootstrap"
-      , encodeFoldable encodeBootstrapWitness (Sh.bootWits x)
-      )
-    ]
+encodeWitVKey (Sh.WitVKey key sig) =
+    "key" .=
+        (encodeVerKeyDSign . Ledger.unVKey) key <>
+    "signature" .=
+        encodeSignedDSIGN sig
+    & encodeObject
+
+encodeBootstrapWitness
+    :: Crypto crypto
+    => Sh.BootstrapWitness crypto
+    -> Json
+encodeBootstrapWitness (Sh.BootstrapWitness key sig cc attr) =
+    "key" .=
+        encodeVKey key <>
+    "signature" .=
+        encodeSignedDSIGN sig <>
+    "chainCode" .=? OmitWhen BS.null
+        encodeByteStringBase16 (Sh.unChainCode cc) <>
+    "addressAttributes" .=? OmitWhen BS.null
+        encodeByteStringBase16 attr
+    & encodeObject
 
 encodeWitHashes
     :: Crypto crypto
@@ -1333,14 +1108,6 @@ encodeWitHashes
     -> Json
 encodeWitHashes =
     encodeFoldable encodeKeyHash . Sh.unWitHashes
-
-encodeWitVKeys
-    :: Crypto crypto
-    => Set (Sh.WitVKey Witness crypto)
-    -> Json
-encodeWitVKeys = encodeFoldable'
-    (\(Sh.WitVKey key _) -> stringifyVKey key)
-    (\(Sh.WitVKey _ sig) -> encodeSignedDSIGN sig)
 
 --
 -- Conversion To Text

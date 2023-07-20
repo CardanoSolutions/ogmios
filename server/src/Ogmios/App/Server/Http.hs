@@ -145,8 +145,8 @@ postRootR = runHandlerM $ do
     case Json.decode res of
         Just (Json.Object obj) -> do
             header "Content-Type" "application/json; charset=utf-8"
-            case Json.KeyMap.lookup "type" obj of
-                Just (Json.String "jsonwsp/fault") -> do
+            case Json.KeyMap.lookup "error" obj of
+                Just{} -> do
                     status status400
                 _ ->
                     status status200

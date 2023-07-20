@@ -19,7 +19,7 @@ packages:
   modules/fast-bech32
   modules/git-th
   modules/hspec-json-schema
-  modules/json-wsp
+  modules/json-rpc
 
 tests: False
 
@@ -41,7 +41,7 @@ package fast-bech32
 package hspec-json-schema
   tests: false
 
-package json-wsp
+package json-rpc
   tests: false
 
 -- Using RDRAND instead of /dev/urandom as an entropy source for key

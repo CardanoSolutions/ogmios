@@ -79,12 +79,12 @@ spec = parallel $ do
 
         let args =
                 [ "--node-socket", "./node.socket"
-                , "--node-config", getConfigFile "testnet"
+                , "--node-config", getConfigFile "preview"
                 ]
         specify (show args) $ withArgs args parseOptions >>= \case
             Start (Identity _) opts logLevels -> do
                 nodeSocket opts `shouldBe` "./node.socket"
-                nodeConfig opts `shouldBe` getConfigFile "testnet"
+                nodeConfig opts `shouldBe` getConfigFile "preview"
                 serverHost opts `shouldBe` "127.0.0.1"
                 serverPort opts `shouldBe` 1337
                 connectionTimeout opts `shouldBe` 90
@@ -99,18 +99,6 @@ spec = parallel $ do
             networkMagic  params `shouldBe` NetworkMagic 764824073
             systemStart   params `shouldBe` mkSystemStart 1506203091
             slotsPerEpoch params `shouldBe` EpochSlots 21600
-
-        specify "testnet" $ do
-            params <- parseNetworkParameters (getConfigFile "testnet")
-            networkMagic  params `shouldBe` NetworkMagic 1097911063
-            systemStart   params `shouldBe` mkSystemStart 1563999616
-            slotsPerEpoch params `shouldBe` EpochSlots 21600
-
-        specify "vasil-dev" $ do
-            params <- parseNetworkParameters (getConfigFile "vasil-dev")
-            networkMagic  params `shouldBe` NetworkMagic 9
-            systemStart   params `shouldBe` mkSystemStart 1659636000
-            slotsPerEpoch params `shouldBe` EpochSlots 360
 
         specify "preview" $ do
             params <- parseNetworkParameters (getConfigFile "preview")
@@ -179,10 +167,10 @@ spec = parallel $ do
           )
 
         , ( defaultArgs ++ [ "--log-level", "Debug" ]
-          , shouldSucceed defaultConfiguration (defaultTracersDebug)
+          , shouldSucceed defaultConfiguration defaultTracersDebug
           )
         , ( defaultArgs ++ [ "--log-level", "debug" ]
-          , shouldSucceed defaultConfiguration (defaultTracersDebug)
+          , shouldSucceed defaultConfiguration defaultTracersDebug
           )
         , ( defaultArgs ++ [ "--log-level", "Info" ]
           , shouldSucceed defaultConfiguration defaultTracersInfo
@@ -191,22 +179,22 @@ spec = parallel $ do
           , shouldSucceed defaultConfiguration defaultTracersInfo
           )
         , ( defaultArgs ++ [ "--log-level", "Notice" ]
-          , shouldSucceed defaultConfiguration (defaultTracersNotice)
+          , shouldSucceed defaultConfiguration defaultTracersNotice
           )
         , ( defaultArgs ++ [ "--log-level", "notice" ]
-          , shouldSucceed defaultConfiguration (defaultTracersNotice)
+          , shouldSucceed defaultConfiguration defaultTracersNotice
           )
         , ( defaultArgs ++ [ "--log-level", "Warning" ]
-          , shouldSucceed defaultConfiguration (defaultTracersWarning)
+          , shouldSucceed defaultConfiguration defaultTracersWarning
           )
         , ( defaultArgs ++ [ "--log-level", "warning" ]
-          , shouldSucceed defaultConfiguration (defaultTracersWarning)
+          , shouldSucceed defaultConfiguration defaultTracersWarning
           )
         , ( defaultArgs ++ [ "--log-level", "Error" ]
-          , shouldSucceed defaultConfiguration (defaultTracersError)
+          , shouldSucceed defaultConfiguration defaultTracersError
           )
         , ( defaultArgs ++ [ "--log-level", "error" ]
-          , shouldSucceed defaultConfiguration (defaultTracersError)
+          , shouldSucceed defaultConfiguration defaultTracersError
           )
 
         , ( defaultArgs ++ [ "--log-level-health", "Notice" ]
@@ -285,7 +273,7 @@ shouldSucceed
 shouldSucceed cfg =
     flip shouldBe . Right . Start Proxy cfg
 
-shouldFail :: (Either String (Command Proxy)) -> Expectation
+shouldFail :: Either String (Command Proxy) -> Expectation
 shouldFail = flip shouldSatisfy isLeft
 
 isLeftWith :: (err -> Bool) -> Either err result -> Bool

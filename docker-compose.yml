@@ -2,7 +2,7 @@ version: "3.5"
 
 services:
   cardano-node:
-    image: inputoutput/cardano-node:1.35.4
+    image: inputoutput/cardano-node:1.35.7
     command: [
       "run",
       "--config", "/config/config.json",

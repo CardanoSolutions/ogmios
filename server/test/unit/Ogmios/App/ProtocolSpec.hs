@@ -55,27 +55,25 @@ spec = parallel $ do
                   , Just Json.Null
                   )
                 , ( json [aesonQQ|{}|]
-                  , "'methodname' must be present"
+                  , "'method' must be present"
                   , Just Json.Null
                   )
-                , ( json [aesonQQ|{ "methodname": "Query" }|]
-                  , "missing required field 'type'"
-                  , Just Json.Null
-                  )
-                , ( json [aesonQQ|{
-                      "type": "jsonwsp/request",
-                      "version": "1.0",
-                      "servicename": "ogmios",
-                      "methodname": "??"
-                    }|]
-                  , "unknown method in 'methodname'"
+                , ( json [aesonQQ|{ "method": "query" }|]
+                  , "missing required field 'jsonrpc'"
                   , Just Json.Null
                   )
                 , ( json [aesonQQ|{
-                      "methodname": "SubmitTx",
-                      "mirror": { "requestId": 42 }
+                      "jsonrpc": "2.0",
+                      "method": "??"
                     }|]
-                  , "missing required field 'type'"
+                  , "unknown method in 'method'"
+                  , Just Json.Null
+                  )
+                , ( json [aesonQQ|{
+                      "method": "submitTransaction",
+                      "id": { "requestId": 42 }
+                    }|]
+                  , "missing required field 'jsonrpc'"
                   , Just [aesonQQ|{ "requestId": 42 }|]
                   )
                 ]
@@ -83,15 +81,13 @@ spec = parallel $ do
         forM_ matrix $ \(bytes, msg, mirror) ->
             specify (decodeUtf8 bytes <> " => " <> msg) $ do
                 let fault = inefficientEncodingToValue $ onUnmatchedMessage @Block bytes
-                fault ^? key "type" . _String `shouldBe` Just "jsonwsp/fault"
-                fault ^? key "version" . _String `shouldBe` Just "1.0"
-                fault ^? key "servicename" . _String `shouldBe` Just "ogmios"
-                case fault ^? key "fault" . key "string" . _String of
+                fault ^? key "jsonrpc" . _String `shouldBe` Just "2.0"
+                case fault ^? key "error" . key "message" . _String of
                     Nothing ->
-                        expectationFailure "Fault does not contain a 'fault' string."
+                        expectationFailure "Error does not contain a 'message' string."
                     Just str ->
                         str `shouldSatisfy` T.isInfixOf (toText msg)
-                fault ^? key "reflection" . _Value `shouldBe` mirror
+                fault ^? key "id" . _Value `shouldBe` mirror
 
 --
 -- Helpers

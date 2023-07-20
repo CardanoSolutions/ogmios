@@ -26,10 +26,6 @@ import Data.List
     ( delete
     , (!!)
     )
-import GHC.TypeLits
-    ( KnownSymbol
-    , symbolVal
-    )
 import Network.TypedProtocol.Codec
     ( Codec (..)
     , PeerHasAgency (..)
@@ -62,20 +58,22 @@ import Ogmios.Control.MonadSTM
     )
 import Ogmios.Data.Json
     ( Json
-    , SerializationMode (..)
     , encodeTx
     , encodeTxId
     )
 import Ogmios.Data.Json.Orphans
     ()
+import Ogmios.Data.Json.Prelude
+    ( at
+    )
 import Ogmios.Data.Protocol.TxMonitor
-    ( AwaitAcquire (..)
+    ( AcquireMempool (..)
     , GenTx
     , GenTxId
-    , HasTx (..)
-    , NextTx (..)
+    , HasTransaction (..)
+    , NextTransaction (..)
     , ReleaseMempool (..)
-    , SizeAndCapacity (..)
+    , SizeOfMempool (..)
     , SlotNo (..)
     , TxMonitorMessage (..)
     , mkTxMonitorCodecs
@@ -96,8 +94,9 @@ import System.Random
 import Test.App.Protocol.Util
     ( FailedToDecodeMsg (..)
     , PeerTerminatedUnexpectedly (..)
-    , expectWSPFault
-    , expectWSPResponse
+    , ResponsePredicate (..)
+    , expectRpcFault
+    , expectRpcResponse
     , prop_inIOSim
     , withMockChannel
     )
@@ -134,8 +133,8 @@ import Test.QuickCheck
     , vectorOf
     )
 
-import qualified Codec.Json.Wsp as Wsp
-import qualified Codec.Json.Wsp.Handler as Wsp
+import qualified Codec.Json.Rpc as Rpc
+import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
 import qualified Ouroboros.Network.Protocol.LocalTxMonitor.Type as TxMonitor
 
@@ -152,52 +151,52 @@ spec = parallel $ do
             (shrinkList (const []))
             (show . fmap showTxMonitorMessage)
             (\msgs -> p msgs
-                & cover 1 (acquireTwice False msgs) "AwaitAcquire twice"
-                & cover 1 (multipleNextTx (0 :: Int) 0 msgs) "Multiple NextTx"
-                & cover 1 (nextThenHas False msgs) "NextTx then HasTx"
+                & cover 1 (acquireTwice False msgs) "AcquireMempool twice"
+                & cover 1 (multipleNextTransaction (0 :: Int) 0 msgs) "Multiple NextTransaction"
+                & cover 1 (nextThenHas False msgs) "NextTransaction then HasTransaction"
             )
       where
         p msgs = prop_inIOSim $ withTxMonitorClient $ \send receive -> do
-            send $ awaitAcquire Nothing
-            expectWSPResponse @"AwaitAcquire" Proxy receive Json.Null
-            forM_ msgs  $ \(msg, mirror, SomeProxy proxy) -> do
+            send $ acquireMempool Nothing
+            expectRpcResponse isAcquireMempoolResponse receive Json.Null
+            forM_ msgs  $ \(msg, mirror, predicate) -> do
                 send msg
-                expectWSPResponse proxy receive (toJSON mirror)
+                expectRpcResponse predicate receive (toJSON mirror)
             send $ releaseMempool Nothing
-            expectWSPResponse @"ReleaseMempool" Proxy receive Json.Null
+            expectRpcResponse isReleaseMempoolResponse receive Json.Null
 
-        multipleNextTx nNextTx nNextTxMax = \case
-            [] -> max nNextTx nNextTxMax > 5
-            ((MsgNextTx{},_,_):q) -> multipleNextTx (nNextTx + 1) nNextTxMax q
-            ((MsgAwaitAcquire{},_,_):q) -> multipleNextTx 0 (max nNextTx nNextTxMax) q
-            _:q -> multipleNextTx nNextTx nNextTxMax q
+        multipleNextTransaction nNextTransaction nNextTransactionMax = \case
+            [] -> max nNextTransaction nNextTransactionMax > 5
+            ((MsgNextTransaction{},_,_):q) -> multipleNextTransaction (nNextTransaction + 1) nNextTransactionMax q
+            ((MsgAcquireMempool{},_,_):q) -> multipleNextTransaction 0 (max nNextTransaction nNextTransactionMax) q
+            _:q -> multipleNextTransaction nNextTransaction nNextTransactionMax q
 
         nextThenHas hasNext = \case
             [] -> False
-            ((MsgNextTx{},_,_):q) -> nextThenHas True q
-            ((MsgHasTx{},_,_):q) -> hasNext || nextThenHas False q
+            ((MsgNextTransaction{},_,_):q) -> nextThenHas True q
+            ((MsgHasTransaction{},_,_):q) -> hasNext || nextThenHas False q
             _:q -> nextThenHas False q
 
         acquireTwice hasAcquired = \case
             [] -> False
-            ((MsgAwaitAcquire{},_,_):q) -> hasAcquired || acquireTwice True q
+            ((MsgAcquireMempool{},_,_):q) -> hasAcquired || acquireTwice True q
             _:q -> acquireTwice False q
 
     prop_queryAfterAcquiring :: Property
     prop_queryAfterAcquiring =
         checkCoverageWith (confidence 1e6 0.5) $ forAllShow
-            (withoutAwaitAcquire genTxMonitorAcquiredMessage)
+            (withoutAcquireMempool genTxMonitorAcquiredMessage)
             showTxMonitorMessage
             (\arg -> p arg
                 & cover 1 ("ReleaseMempool" == showTxMonitorMessage arg) "ReleaseMempool"
-                & cover 1 ("HasTx" == showTxMonitorMessage arg) "HasTx"
-                & cover 1 ("NextTx" == showTxMonitorMessage arg) "NextTx"
-                & cover 1 ("SizeAndCapacity" == showTxMonitorMessage arg) "SizeAndCapacity"
+                & cover 1 ("HasTransaction" == showTxMonitorMessage arg) "HasTransaction"
+                & cover 1 ("NextTransaction" == showTxMonitorMessage arg) "NextTransaction"
+                & cover 1 ("SizeOfMempool" == showTxMonitorMessage arg) "SizeOfMempool"
             )
       where
         p (msg, mirror, _) = prop_inIOSim $ withTxMonitorClient $ \send receive -> do
             send msg
-            expectWSPFault receive Wsp.FaultClient (toJSON mirror)
+            expectRpcFault receive Rpc.FaultInvalidRequest (toJSON mirror)
 
 type Protocol = LocalTxMonitor (GenTxId Block) (GenTx Block) SlotNo
 
@@ -208,7 +207,7 @@ withTxMonitorClient
     -> m a
 withTxMonitorClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
-    let innerCodecs = mkTxMonitorCodecs encodeTxId (encodeTx FullSerialization)
+    let innerCodecs = mkTxMonitorCodecs encodeTxId encodeTx
     let client = mkTxMonitorClient innerCodecs recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cTxMonitorCodec
     withMockChannel (txMonitorMockPeer seed codec) $ \channel -> do
@@ -250,7 +249,7 @@ txMonitorMockPeer seed codec (recv, send) = flip evalStateT (seed, emptyServerSt
         Right (SomeMessage TxMonitor.MsgNextTx) -> do
             case snapshot of
                 Nothing ->
-                    error "NextTx before acquiring."
+                    error "NextTransaction before acquiring."
                 Just xs | length xs > cursor -> do
                     modifyRight (\st -> st { cursor = succ cursor })
                     let msg = TxMonitor.MsgReplyNextTx (Just (xs !! cursor))
@@ -261,7 +260,7 @@ txMonitorMockPeer seed codec (recv, send) = flip evalStateT (seed, emptyServerSt
         Right (SomeMessage (TxMonitor.MsgHasTx x)) -> do
             case snapshot of
                 Nothing ->
-                    error "HasTx before acquiring."
+                    error "HasTransaction before acquiring."
                 Just (fmap txId -> xs) -> do
                     let msg = TxMonitor.MsgReplyHasTx (x `elem` xs)
                     pure $ Just $ encode codec (ServerAgency (TokBusy TokHasTx)) msg
@@ -370,73 +369,95 @@ genServerAction xs = frequency $ mconcat
     , [ (10, pure ServerRemoveTx ) | not (null xs) ]
     ]
 
-data SomeProxy = forall method. KnownSymbol method => SomeProxy (Proxy method)
-deriving instance Show SomeProxy
-
-genTxMonitorAcquiredMessage :: Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
+genTxMonitorAcquiredMessage :: Gen (TxMonitorMessage Block, Rpc.Mirror, ResponsePredicate)
 genTxMonitorAcquiredMessage = do
     mirror <- genMirror
     plausible <- elements plausibleTxsIds
     unknown <- genTxId `suchThat` (`notElem` plausibleTxsIds)
     frequency
-        [ (20, pure (awaitAcquire mirror     , mirror, SomeProxy (Proxy :: Proxy "AwaitAcquire")))
-        , (75, pure (nextTx mirror           , mirror, SomeProxy (Proxy :: Proxy "NextTx")))
-        , (10, pure (hasTx mirror plausible  , mirror, SomeProxy (Proxy :: Proxy "HasTx")))
-        , (10, pure (hasTx mirror unknown    , mirror, SomeProxy (Proxy :: Proxy "HasTx")))
-        , ( 5, pure (sizeAndCapacity mirror  , mirror, SomeProxy (Proxy :: Proxy "SizeAndCapacity")))
-        , ( 5, pure (releaseMempool mirror   , mirror, SomeProxy (Proxy :: Proxy "ReleaseMempool")))
+        [ (20, pure (acquireMempool mirror     , mirror, isAcquireMempoolResponse))
+        , (75, pure (nextTx mirror           , mirror, isNextTxResponse))
+        , (10, pure (hasTx mirror plausible  , mirror, isHasTxResponse))
+        , (10, pure (hasTx mirror unknown    , mirror, isHasTxResponse))
+        , ( 5, pure (sizeOfMempool mirror  , mirror, isSizeOfMempoolResponse))
+        , ( 5, pure (releaseMempool mirror   , mirror, isReleaseMempoolResponse))
         ]
 
 withoutReleaseMempool
-    :: Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
-    -> Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
+    :: Gen (TxMonitorMessage Block, b0, c0)
+    -> Gen (TxMonitorMessage Block, b0, c0)
 withoutReleaseMempool = flip suchThat $ \case
     (MsgReleaseMempool{}, _, _) -> False
     _ -> True
 
-withoutAwaitAcquire
-    :: Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
-    -> Gen (TxMonitorMessage Block, Wsp.Mirror, SomeProxy)
-withoutAwaitAcquire = flip suchThat $ \case
-    (MsgAwaitAcquire{}, _, _) -> False
+withoutAcquireMempool
+    :: Gen (TxMonitorMessage Block, b0, c0)
+    -> Gen (TxMonitorMessage Block, b0, c0)
+withoutAcquireMempool = flip suchThat $ \case
+    (MsgAcquireMempool{}, _, _) -> False
     _ -> True
 
 --
 -- Messages
 --
 
-awaitAcquire :: Wsp.Mirror -> TxMonitorMessage Block
-awaitAcquire mirror =
-    MsgAwaitAcquire AwaitAcquire (Wsp.Response mirror) (Wsp.Fault mirror)
+acquireMempool :: Rpc.Mirror -> TxMonitorMessage Block
+acquireMempool mirror =
+    MsgAcquireMempool AcquireMempool (Rpc.Response mirror) (Rpc.Fault mirror)
 
-nextTx :: Wsp.Mirror -> TxMonitorMessage Block
+isAcquireMempoolResponse :: ResponsePredicate
+isAcquireMempoolResponse = ResponsePredicate $
+    \v -> ("result" `at` v >>= at "acquired") == Just (toJSON @Text "mempool")
+
+nextTx :: Rpc.Mirror -> TxMonitorMessage Block
 nextTx mirror =
-    MsgNextTx (NextTx Nothing) (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgNextTransaction (NextTransaction Nothing) (Rpc.Response mirror) (Rpc.Fault mirror)
 
-hasTx :: Wsp.Mirror -> GenTxId Block -> TxMonitorMessage Block
+isNextTxResponse :: ResponsePredicate
+isNextTxResponse = ResponsePredicate $
+    \v -> isJust ("result" `at` v >>= at "transaction")
+
+hasTx :: Rpc.Mirror -> GenTxId Block -> TxMonitorMessage Block
 hasTx mirror tx =
-    MsgHasTx (HasTx tx) (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgHasTransaction (HasTransaction tx) (Rpc.Response mirror) (Rpc.Fault mirror)
 
-sizeAndCapacity :: Wsp.Mirror -> TxMonitorMessage Block
-sizeAndCapacity mirror =
-    MsgSizeAndCapacity SizeAndCapacity (Wsp.Response mirror) (Wsp.Fault mirror)
+isHasTxResponse :: ResponsePredicate
+isHasTxResponse = ResponsePredicate $
+    \v -> isJust ("result" `at` v >>= at "hasTransaction")
 
-releaseMempool :: Wsp.Mirror -> TxMonitorMessage Block
+sizeOfMempool :: Rpc.Mirror -> TxMonitorMessage Block
+sizeOfMempool mirror =
+    MsgSizeOfMempool SizeOfMempool (Rpc.Response mirror) (Rpc.Fault mirror)
+
+isSizeOfMempoolResponse :: ResponsePredicate
+isSizeOfMempoolResponse = ResponsePredicate $
+    \v -> isJust ("result" `at` v >>= at "mempool")
+
+releaseMempool :: Rpc.Mirror -> TxMonitorMessage Block
 releaseMempool mirror =
-    MsgReleaseMempool ReleaseMempool (Wsp.Response mirror) (Wsp.Fault mirror)
+    MsgReleaseMempool ReleaseMempool (Rpc.Response mirror) (Rpc.Fault mirror)
 
+isReleaseMempoolResponse :: ResponsePredicate
+isReleaseMempoolResponse = ResponsePredicate $
+    \v -> ("result" `at` v >>= at "released") == Just (toJSON @Text "mempool")
 --
 -- Helpers
 --
+
+showTxMonitorMessage :: (TxMonitorMessage Block, Rpc.Mirror, ResponsePredicate) -> String
+showTxMonitorMessage (msg, _, _) =
+    case msg of
+        MsgAcquireMempool{} -> "AcquireMempool"
+        MsgNextTransaction{} -> "NextTransaction"
+        MsgHasTransaction{} -> "HasTransaction"
+        MsgSizeOfMempool{} -> "SizeOfMempool"
+        MsgReleaseMempool{} -> "ReleaseMempool"
 
 stateLeft :: Monad m => (l -> (a, l)) -> StateT (l, r) m a
 stateLeft fn = state (\(l, r) -> second (,r) (fn l))
 
 modifyRight :: Monad m => (r -> r) -> StateT (l, r) m ()
 modifyRight = modify . second
-
-showTxMonitorMessage :: (TxMonitorMessage Block, Wsp.Mirror, SomeProxy) -> String
-showTxMonitorMessage (_, _, SomeProxy proxy) = symbolVal proxy
 
 confidence :: Double -> Double -> Confidence
 confidence (round -> certainty) tolerance =

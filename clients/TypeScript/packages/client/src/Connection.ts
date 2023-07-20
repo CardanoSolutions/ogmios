@@ -1,6 +1,7 @@
+import { nanoid } from 'nanoid'
 import { WebSocket, CloseEvent } from './IsomorphicWebSocket'
-import { getServerHealth } from './ServerHealth'
-import { ServerNotReady } from './errors'
+import { getServerHealth, ServerNotReady } from './ServerHealth'
+import { safeJSON } from './util'
 
 /**
  * Connection configuration parameters. Use `tls: true` to create a `wss://` using TLS
@@ -32,7 +33,6 @@ export interface Connection extends Required<ConnectionConfig> {
 export interface InteractionContext {
   connection: Connection
   socket: WebSocket
-  afterEach: (cb: () => void) => void
 }
 
 /**
@@ -47,6 +47,13 @@ export type InteractionType = (
   | 'OneTime'
 )
 
+/**
+ * A value set when sending the request, to be mirrored by the server in the corresponding response.
+ *
+ * @category Connection
+ */
+export type Mirror = { [k: string]: unknown }
+
 /** @category Connection */
 export type WebSocketErrorHandler = (error: Error) => void
 
@@ -56,8 +63,37 @@ export type WebSocketCloseHandler = (
   reason: CloseEvent['reason']
 ) => void
 
+/** @category Connection */
+export class JSONRPCError extends Error {
+  code: number
+  data?: any
+  id?: any
+
+  public constructor (code: number, message: string, data?: any, id?: any) {
+    super(message)
+    this.stack = ''
+    this.code = code
+
+    if (typeof data !== 'undefined') { this.data = data }
+    if (typeof id !== 'undefined') { this.id = Object.assign({}, id || {}) }
+  }
+
+  public static tryFrom (any: any) {
+    if ('error' in any && 'jsonrpc' in any && any.jsonrpc === '2.0') {
+      const { error: e } = any
+      if ('code' in e && 'message' in e) {
+        if (Number.isInteger(e.code) && typeof e.message === 'string') {
+          return new JSONRPCError(e.code, e.message, e?.data, any?.id)
+        }
+      }
+    }
+
+    return null
+  }
+}
+
 /** @category Constructor */
-export const createConnectionObject = (config?: ConnectionConfig): Connection => {
+export function createConnectionObject (config?: ConnectionConfig): Connection {
   const _128MB = 128 * 1024 * 1024
   const base = {
     host: config?.host ?? 'localhost',
@@ -81,7 +117,7 @@ export const createInteractionContext = async (
   closeHandler: WebSocketCloseHandler,
   options?: {
     connection?: ConnectionConfig
-    interactionType?: InteractionType,
+    maxEventListeners?: number,
   }): Promise<InteractionContext> => {
   const connection = createConnectionObject(options?.connection)
   const health = await getServerHealth({ connection })
@@ -91,20 +127,11 @@ export const createInteractionContext = async (
     }
     const socket = new WebSocket(connection.address.webSocket, { maxPayload: connection.maxPayload })
 
-    const closeOnCompletion = (options?.interactionType || 'LongRunning') === 'OneTime'
-    const afterEach = (cb: () => void) => {
-      if (closeOnCompletion) {
-        socket.once('close', cb)
-        socket.close()
-      } else {
-        cb()
-      }
-    }
-
     const onInitialError = (error: Error) => {
       socket.removeAllListeners()
       return reject(error)
     }
+    socket.setMaxListeners(options.maxEventListeners || 10)
     socket.on('error', onInitialError)
     socket.once('close', (_code: number, reason: string) => {
       socket.removeAllListeners()
@@ -116,9 +143,83 @@ export const createInteractionContext = async (
       socket.on('close', closeHandler)
       resolve({
         connection,
-        socket,
-        afterEach
+        socket
       })
     })
   })
 }
+
+/** @internal */
+export const baseRequest = {
+  jsonrpc: '2.0'
+}
+
+/** @internal */
+export const ensureSocketIsOpen = (socket: WebSocket) => {
+  if (socket.readyState !== socket.OPEN) {
+    throw new Error('WebSocket is closed')
+  }
+}
+
+/** @internal */
+export const send = async <T>(
+  send: (socket: WebSocket) => Promise<T>,
+  context: InteractionContext
+): Promise<T> => {
+  const { socket } = context
+  return new Promise((resolve, reject) => {
+    send(socket)
+      .then(resolve)
+      .catch(error => reject(JSONRPCError.tryFrom(error) || error))
+  })
+}
+
+/** @internal */
+export const Method = <
+  Request extends { method: string, params?: any },
+  Response extends { id?: { requestId?: string } },
+  A>
+  (
+    req: {
+      method: Request['method'],
+      params?: Request['params'],
+    },
+    res: {
+      handler: (
+        response: Response,
+        resolve: (value?: A | PromiseLike<A>) => void,
+        reject: (reason?: any) => void
+      ) => void
+    },
+    context: InteractionContext
+  ): Promise<A> =>
+    send<A>((socket) =>
+      new Promise((resolve, reject) => {
+        const requestId = nanoid(16)
+
+        async function listener (data: string) {
+          const response = safeJSON.parse(data) as Response
+          if (response?.id?.requestId !== requestId) { return }
+          socket.removeListener('message', listener)
+          try {
+            await res.handler(
+              response,
+              resolve,
+              reject
+            )
+          } catch (e) {
+            return reject(e)
+          }
+        }
+
+        socket.on('message', listener)
+
+        ensureSocketIsOpen(socket)
+
+        socket.send(safeJSON.stringify({
+          ...baseRequest,
+          method: req.method,
+          params: req.params,
+          id: { requestId }
+        } as unknown as Request))
+      }), context)

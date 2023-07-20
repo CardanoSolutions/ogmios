@@ -19,32 +19,29 @@ module Ogmios.Data.Protocol.ChainSync
       -- * Messages
     , ChainSyncMessage (..)
 
-      -- ** FindIntersect
-    , FindIntersect (..)
-    , _encodeFindIntersect
-    , _decodeFindIntersect
-    , FindIntersectResponse (..)
-    , _encodeFindIntersectResponse
+      -- ** FindIntersection
+    , FindIntersection (..)
+    , _encodeFindIntersection
+    , _decodeFindIntersection
+    , FindIntersectionResponse (..)
+    , _encodeFindIntersectionResponse
 
-      -- ** RequestNext
-    , RequestNext (..)
-    , _encodeRequestNext
-    , _decodeRequestNext
-    , RequestNextResponse (..)
-    , _encodeRequestNextResponse
+      -- ** NextBlock
+    , NextBlock (..)
+    , _encodeNextBlock
+    , _decodeNextBlock
+    , NextBlockResponse (..)
+    , _encodeNextBlockResponse
     ) where
 
 import Ogmios.Data.Json.Prelude
-
-import Ogmios.Data.Protocol
-    ()
 
 import Ouroboros.Network.Block
     ( Point (..)
     , Tip (..)
     )
 
-import qualified Codec.Json.Wsp as Wsp
+import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Types as Json
 
 --
@@ -52,17 +49,17 @@ import qualified Data.Aeson.Types as Json
 --
 
 data ChainSyncCodecs block = ChainSyncCodecs
-    { decodeFindIntersect
+    { decodeFindIntersection
         :: ByteString
-        -> Maybe (Wsp.Request (FindIntersect block))
-    , encodeFindIntersectResponse
-        :: Wsp.Response (FindIntersectResponse block)
+        -> Maybe (Rpc.Request (FindIntersection block))
+    , encodeFindIntersectionResponse
+        :: Rpc.Response (FindIntersectionResponse block)
         -> Json
-    , decodeRequestNext
+    , decodeNextBlock
         :: ByteString
-        -> Maybe (Wsp.Request RequestNext)
-    , encodeRequestNextResponse
-        :: Wsp.Response (RequestNextResponse block)
+        -> Maybe (Rpc.Request NextBlock)
+    , encodeNextBlockResponse
+        :: Rpc.Response (NextBlockResponse block)
         -> Json
     }
 
@@ -74,14 +71,14 @@ mkChainSyncCodecs
     -> ChainSyncCodecs block
 mkChainSyncCodecs encodeBlock encodePoint encodeTip =
     ChainSyncCodecs
-        { decodeFindIntersect =
-            decodeWith _decodeFindIntersect
-        , encodeFindIntersectResponse =
-            _encodeFindIntersectResponse encodePoint encodeTip
-        , decodeRequestNext =
-            decodeWith _decodeRequestNext
-        , encodeRequestNextResponse =
-            _encodeRequestNextResponse encodeBlock encodePoint encodeTip
+        { decodeFindIntersection =
+            decodeWith _decodeFindIntersection
+        , encodeFindIntersectionResponse =
+            _encodeFindIntersectionResponse encodePoint encodeTip
+        , decodeNextBlock =
+            decodeWith _decodeNextBlock
+        , encodeNextBlockResponse =
+            _encodeNextBlockResponse encodeBlock encodePoint encodeTip
         }
 
 --
@@ -89,117 +86,107 @@ mkChainSyncCodecs encodeBlock encodePoint encodeTip =
 --
 
 data ChainSyncMessage block
-    = MsgFindIntersect
-        (FindIntersect block)
-        (Wsp.ToResponse (FindIntersectResponse block))
-        Wsp.ToFault
-    | MsgRequestNext
-        RequestNext
-        (Wsp.ToResponse (RequestNextResponse block))
-        Wsp.ToFault
+    = MsgFindIntersection
+        (FindIntersection block)
+        (Rpc.ToResponse (FindIntersectionResponse block))
+        Rpc.ToFault
+    | MsgNextBlock
+        NextBlock
+        (Rpc.ToResponse (NextBlockResponse block))
+        Rpc.ToFault
 
 --
--- FindIntersect
+-- FindIntersection
 --
 
-data FindIntersect block
-    = FindIntersect { points :: [Point block] }
+data FindIntersection block
+    = FindIntersection { points :: [Point block] }
     deriving (Generic, Show, Eq)
 
-_encodeFindIntersect
+_encodeFindIntersection
     :: forall block. ()
     => (Point block -> Json)
-    -> Wsp.Request (FindIntersect block)
+    -> Rpc.Request (FindIntersection block)
     -> Json
-_encodeFindIntersect encodePoint =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
-        FindIntersect{points} -> encodeObject
-            [ ( "points", encodeList encodePoint points )
-            ]
+_encodeFindIntersection encodePoint =
+    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
+        FindIntersection{points} ->
+            "points" .=
+                encodeList encodePoint points
 
-_decodeFindIntersect
+_decodeFindIntersection
     :: FromJSON (Point block)
     => Json.Value
-    -> Json.Parser (Wsp.Request (FindIntersect block))
-_decodeFindIntersect =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    -> Json.Parser (Rpc.Request (FindIntersection block))
+_decodeFindIntersection =
+    Rpc.genericFromJSON Rpc.defaultOptions
 
-data FindIntersectResponse block
+data FindIntersectionResponse block
     = IntersectionFound { point :: Point block, tip :: Tip block }
     | IntersectionNotFound { tip :: Tip block }
     deriving (Generic, Show)
 
-_encodeFindIntersectResponse
+_encodeFindIntersectionResponse
     :: forall block. ()
     => (Point block -> Json)
     -> (Tip block -> Json)
-    -> Wsp.Response (FindIntersectResponse block)
+    -> Rpc.Response (FindIntersectionResponse block)
     -> Json
-_encodeFindIntersectResponse encodePoint encodeTip =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        IntersectionFound{point,tip} -> encodeObject
-            [ ("IntersectionFound", encodeObject
-                [ ("point", encodePoint point)
-                , ("tip", encodeTip tip)
-                ]
-              )
-            ]
-        IntersectionNotFound{tip} -> encodeObject
-            [ ("IntersectionNotFound", encodeObject
-                [ ("tip", encodeTip tip)
-                ]
-              )
-            ]
-  where
-    proxy = Proxy @(Wsp.Request (FindIntersect block))
+_encodeFindIntersectionResponse encodePoint encodeTip =
+    Rpc.mkResponse $ \resolve reject -> \case
+        IntersectionFound{point,tip} ->
+            resolve $ encodeObject
+                ( "intersection" .= encodePoint point <>
+                  "tip" .= encodeTip tip
+                )
+        IntersectionNotFound{tip} ->
+            reject (Rpc.FaultCustom 1000)
+                "No intersection found."
+                (Just $ encodeObject
+                    ( "tip" .= encodeTip tip
+                    )
+                )
 
 --
 -- Requestnext
 --
 
-data RequestNext
-    = RequestNext
+data NextBlock
+    = NextBlock
     deriving (Generic, Show, Eq)
 
-_encodeRequestNext
-    :: Wsp.Request RequestNext
+_encodeNextBlock
+    :: Rpc.Request NextBlock
     -> Json
-_encodeRequestNext =
-    Wsp.mkRequest Wsp.defaultOptions $ \case
-        RequestNext -> encodeObject []
+_encodeNextBlock =
+    Rpc.mkRequestNoParams Rpc.defaultOptions
 
-_decodeRequestNext
+_decodeNextBlock
     :: Json.Value
-    -> Json.Parser (Wsp.Request RequestNext)
-_decodeRequestNext =
-    Wsp.genericFromJSON Wsp.defaultOptions
+    -> Json.Parser (Rpc.Request NextBlock)
+_decodeNextBlock =
+    Rpc.genericFromJSON Rpc.defaultOptions
 
-data RequestNextResponse block
+data NextBlockResponse block
     = RollForward { block :: block, tip :: Tip block }
     | RollBackward { point :: Point block, tip :: Tip block }
     deriving (Generic, Show)
 
-_encodeRequestNextResponse
+_encodeNextBlockResponse
     :: (block -> Json)
     -> (Point block -> Json)
     -> (Tip block -> Json)
-    -> Wsp.Response (RequestNextResponse block)
+    -> Rpc.Response (NextBlockResponse block)
     -> Json
-_encodeRequestNextResponse encodeBlock encodePoint encodeTip =
-    Wsp.mkResponse Wsp.defaultOptions proxy $ \case
-        RollForward{block,tip} -> encodeObject
-            [ ("RollForward", encodeObject
-                [ ("block", encodeBlock block)
-                , ("tip", encodeTip tip)
-                ]
-              )
-            ]
-        RollBackward{point,tip} -> encodeObject
-            [ ("RollBackward", encodeObject
-                [ ("point", encodePoint point)
-                , ("tip", encodeTip tip)
-                ]
-              )
-            ]
-  where
-    proxy = Proxy @(Wsp.Request RequestNext)
+_encodeNextBlockResponse encodeBlock encodePoint encodeTip =
+    Rpc.ok $ encodeObject . \case
+        RollForward{block,tip} ->
+            ( "direction" .= encodeText "forward" <>
+              "block" .= encodeBlock block <>
+              "tip" .= encodeTip tip
+            )
+        RollBackward{point,tip} ->
+            ( "direction" .= encodeText "backward" <>
+              "point" .= encodePoint point <>
+              "tip" .= encodeTip tip
+            )

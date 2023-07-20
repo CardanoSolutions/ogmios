@@ -53,10 +53,10 @@ import Ogmios.Data.Json
 import Ogmios.Data.Protocol.ChainSync
     ( ChainSyncCodecs (..)
     , ChainSyncMessage (..)
-    , FindIntersect (..)
-    , FindIntersectResponse (..)
-    , RequestNext (..)
-    , RequestNextResponse (..)
+    , FindIntersection (..)
+    , FindIntersectionResponse (..)
+    , NextBlock (..)
+    , NextBlockResponse (..)
     )
 
 import Data.Sequence
@@ -78,7 +78,7 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     , ClientStNext (..)
     )
 
-import qualified Codec.Json.Wsp as Wsp
+import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Sequence as Seq
 
 type MaxInFlight = Int
@@ -108,17 +108,17 @@ mkChainSyncClient maxInFlight ChainSyncCodecs{..} queue yield =
     clientStIdle
         :: forall n. ()
         => Nat n
-        -> Seq (Wsp.ToResponse (RequestNextResponse block))
+        -> Seq (Rpc.ToResponse (NextBlockResponse block))
         -> m (ClientPipelinedStIdle n block (Point block) (Tip block) m ())
     clientStIdle Zero buffer = await <&> \case
-        MsgRequestNext RequestNext toResponse _ ->
+        MsgNextBlock NextBlock toResponse _ ->
             let buffer' = buffer |> toResponse
                 collect = CollectResponse
                     (Just $ clientStIdle (Succ Zero) buffer')
                     (clientStNext Zero buffer')
             in SendMsgRequestNextPipelined collect
 
-        MsgFindIntersect FindIntersect{points} toResponse _ ->
+        MsgFindIntersection FindIntersection{points} toResponse _ ->
             SendMsgFindIntersect points (clientStIntersect toResponse)
 
     clientStIdle n@(Succ prev) buffer = tryAwait >>= \case
@@ -130,42 +130,42 @@ mkChainSyncClient maxInFlight ChainSyncCodecs{..} queue yield =
         -- Yet, if we have already received a new message from the client, we
         -- prioritize it and pipeline it right away unless there are already too
         -- many requests in flights.
-        Just (MsgRequestNext RequestNext toResponse _) -> do
+        Just (MsgNextBlock NextBlock toResponse _) -> do
             let buffer' = buffer |> toResponse
             let collect = CollectResponse
                     (guard (natToInt n < maxInFlight) $> clientStIdle (Succ n) buffer')
                     (clientStNext n buffer')
             pure $ SendMsgRequestNextPipelined collect
 
-        Just (MsgFindIntersect _FindIntersect _toResponse toFault) -> do
-            let fault = "'FindIntersect' requests cannot be interleaved with 'RequestNext'."
-            yield $ Wsp.mkFault $ toFault Wsp.FaultClient fault
+        Just (MsgFindIntersection _FindIntersection _toResponse toFault) -> do
+            let fault = "'FindIntersection' requests cannot be interleaved with 'NextBlock'."
+            yield $ Rpc.ko $ toFault Rpc.FaultInternalError fault
             clientStIdle n buffer
 
     clientStNext
         :: Nat n
-        -> Seq (Wsp.ToResponse (RequestNextResponse block))
+        -> Seq (Rpc.ToResponse (NextBlockResponse block))
         -> ClientStNext n block (Point block) (Tip block) m ()
     clientStNext _ Empty =
         error "invariant violation: empty buffer on clientStNext"
     clientStNext n (toResponse :<| buffer) =
         ClientStNext
             { recvMsgRollForward = \block tip -> do
-                yield $ encodeRequestNextResponse $ toResponse $ RollForward block tip
+                yield $ encodeNextBlockResponse $ toResponse $ RollForward block tip
                 clientStIdle n buffer
             , recvMsgRollBackward = \point tip -> do
-                yield $ encodeRequestNextResponse $ toResponse $ RollBackward point tip
+                yield $ encodeNextBlockResponse $ toResponse $ RollBackward point tip
                 clientStIdle n buffer
             }
 
     clientStIntersect
-        :: Wsp.ToResponse (FindIntersectResponse block)
+        :: Rpc.ToResponse (FindIntersectionResponse block)
         -> ClientPipelinedStIntersect block (Point block) (Tip block) m ()
     clientStIntersect toResponse = ClientPipelinedStIntersect
         { recvMsgIntersectFound = \point tip -> do
-            yield $ encodeFindIntersectResponse $ toResponse $ IntersectionFound point tip
+            yield $ encodeFindIntersectionResponse $ toResponse $ IntersectionFound point tip
             clientStIdle Zero Seq.empty
         , recvMsgIntersectNotFound = \tip -> do
-            yield $ encodeFindIntersectResponse $ toResponse $ IntersectionNotFound tip
+            yield $ encodeFindIntersectionResponse $ toResponse $ IntersectionNotFound tip
             clientStIdle Zero Seq.empty
         }
