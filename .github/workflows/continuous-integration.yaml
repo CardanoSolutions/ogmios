@@ -24,7 +24,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v2.3.3
+      uses: actions/checkout@v3.5.3
       with:
         submodules: true
 
@@ -70,7 +70,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v2.3.3
+      uses: actions/checkout@v3.5.3
       with:
         submodules: true
 
@@ -124,7 +124,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v2.3.3
+      uses: actions/checkout@v3.5.3
       with:
         submodules: true
 
@@ -135,9 +135,9 @@ jobs:
         echo "::set-output name=value::$(/bin/date -u "+%Y%m%d-%H%M%S")"
 
     - name: 🧰 Setup Node.js
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v3.7.0
       with:
-        node-version: 14.15.0
+        node-version: lts/Gallium
 
     - name: 🔨 Build
       working-directory: clients/TypeScript
@@ -195,12 +195,12 @@ jobs:
         target: [linux,macos,win.exe]
     steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v2.3.3
+      uses: actions/checkout@v3.5.3
 
     - name: 🧰 Setup Node.js
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v3.7.0
       with:
-        node-version: 14.15.0
+        node-version: lts/Gallium
 
     - name: 📦 Package REPL
       working-directory: clients/TypeScript
@@ -224,12 +224,12 @@ jobs:
         package: [schema,client,repl]
     steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v2.3.3
+      uses: actions/checkout@v3.5.3
 
     - name: 🧰 Setup Node.js
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v3.7.0
       with:
-        node-version: 14.15.0
+        node-version: lts/Gallium
 
     - name: 📦 Pack
       working-directory: clients/TypeScript

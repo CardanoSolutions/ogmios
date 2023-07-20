@@ -10,17 +10,17 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
-    steps:
 
+    steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v2.3.3
+      uses: actions/checkout@v3.5.3
       with:
         submodules: true
 
     - name: 🧰 Setup Node.js
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v3.7.0
       with:
-        node-version: 14.15.0
+        node-version: lts/Gallium
 
     - name: 🧰 Download Hugo
       run: |
@@ -42,7 +42,7 @@ jobs:
 
     - name: 📘 Publish Artifacts
       if: matrix.os == 'ubuntu-latest' && github.event_name == 'push'
-      uses: peaceiris/actions-gh-pages@v3
+      uses: peaceiris/actions-gh-pages@v3.9.3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: docs/public
