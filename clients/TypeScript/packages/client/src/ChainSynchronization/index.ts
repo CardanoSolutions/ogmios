@@ -1,4 +1,4 @@
 export * from './Client'
 
 export { findIntersection, Intersection } from './findIntersection'
-export { nextBlock } from './nextBlock'
+export { nextBlock, ChainSynchronizationMessageHandlers } from './nextBlock'

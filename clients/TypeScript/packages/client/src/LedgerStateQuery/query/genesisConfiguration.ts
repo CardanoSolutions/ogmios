@@ -16,10 +16,10 @@ type Response = Ogmios['QueryNetworkGenesisConfigurationResponse']
  *
  * @category LedgerStateQuery
  */
-export function networkGenesisConfiguration(context: InteractionContext, era: 'byron'): Promise<GenesisByron>
-export function networkGenesisConfiguration(context: InteractionContext, era: 'shelley'): Promise<GenesisShelley>
-export function networkGenesisConfiguration(context: InteractionContext, era: 'alonzo'): Promise<GenesisAlonzo>
-export function networkGenesisConfiguration (
+export function genesisConfiguration(context: InteractionContext, era: 'byron'): Promise<GenesisByron>
+export function genesisConfiguration(context: InteractionContext, era: 'shelley'): Promise<GenesisShelley>
+export function genesisConfiguration(context: InteractionContext, era: 'alonzo'): Promise<GenesisAlonzo>
+export function genesisConfiguration (
   context: InteractionContext,
   era: EraWithGenesis
 ): Promise<GenesisByron | GenesisShelley | GenesisAlonzo> {

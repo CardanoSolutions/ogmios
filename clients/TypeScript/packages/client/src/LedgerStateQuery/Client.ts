@@ -1,20 +1,20 @@
 import { InteractionContext, Method, ensureSocketIsOpen } from '../Connection'
 import {
-  networkBlockHeight,
-  networkGenesisConfiguration,
-  networkStartTime,
-  networkTip,
   epoch,
   eraStart,
   eraSummaries,
+  genesisConfiguration,
+  ledgerTip,
   liveStakeDistribution,
+  networkBlockHeight,
+  networkStartTime,
+  networkTip,
   projectedRewards,
   proposedProtocolParameters,
   protocolParameters,
   rewardAccountSummaries,
   rewardsProvenance,
   stakePools,
-  tip,
   utxo
 } from './query'
 import {
@@ -43,17 +43,17 @@ export interface LedgerStateQueryClient {
   releaseLedgerState(): Promise<void>
   shutdown(): Promise<void>
 
-  networkBlockHeight(): ReturnType<typeof networkBlockHeight>
-  networkGenesisConfiguration(era: 'byron'): Promise<GenesisByron>
-  networkGenesisConfiguration(era: 'shelley'): Promise<GenesisShelley>
-  networkGenesisConfiguration(era: 'alonzo'): Promise<GenesisAlonzo>
-  networkStartTime(): ReturnType<typeof networkStartTime>
-  networkTip(): ReturnType<typeof networkTip>
-
   epoch(): ReturnType<typeof epoch>
   eraStart(): ReturnType<typeof eraStart>
   eraSummaries: () => ReturnType<typeof eraSummaries>
+  genesisConfiguration(era: 'byron'): Promise<GenesisByron>
+  genesisConfiguration(era: 'shelley'): Promise<GenesisShelley>
+  genesisConfiguration(era: 'alonzo'): Promise<GenesisAlonzo>
+  ledgerTip(): ReturnType<typeof ledgerTip>
   liveStakeDistribution(): ReturnType<typeof liveStakeDistribution>
+  networkBlockHeight(): ReturnType<typeof networkBlockHeight>
+  networkStartTime(): ReturnType<typeof networkStartTime>
+  networkTip(): ReturnType<typeof networkTip>
   projectedRewards(filter: {
     stake?: Lovelace[],
     scripts?: StakeCredential[],
@@ -67,7 +67,6 @@ export interface LedgerStateQueryClient {
   }): ReturnType<typeof rewardAccountSummaries>
   rewardsProvenance(): ReturnType<typeof rewardsProvenance>
   stakePools(): ReturnType<typeof stakePools>
-  tip(): ReturnType<typeof tip>
   utxo(filter?: UtxoByOutputReferences | UtxoByAddresses): ReturnType<typeof utxo>
 }
 
@@ -120,33 +119,6 @@ export async function createLedgerStateQueryClient (
       )
     },
 
-    networkBlockHeight () {
-      return networkBlockHeight(context)
-    },
-    networkGenesisConfiguration (era: EraWithGenesis) {
-      switch (era) {
-        case 'byron':
-          return networkGenesisConfiguration(context, era)
-        case 'shelley':
-          return networkGenesisConfiguration(context, era)
-        case 'alonzo':
-          return networkGenesisConfiguration(context, era)
-        default: {
-          // NOTE: This raises "Type 'string' is not assignable to type 'never'."
-          // whenever a branch of 'EraWithGenesis' isn't covered in the above
-          // switch case. This forces TypeScript to do an exhaustive check.
-          const _era: never = era
-          return networkGenesisConfiguration(context, _era)
-        }
-      }
-    },
-    networkStartTime () {
-      return networkStartTime(context)
-    },
-    networkTip () {
-      return networkTip(context)
-    },
-
     epoch () {
       return epoch(context)
     },
@@ -156,8 +128,37 @@ export async function createLedgerStateQueryClient (
     eraSummaries () {
       return eraSummaries(context)
     },
+    genesisConfiguration (era: EraWithGenesis) {
+      switch (era) {
+        case 'byron':
+          return genesisConfiguration(context, era)
+        case 'shelley':
+          return genesisConfiguration(context, era)
+        case 'alonzo':
+          return genesisConfiguration(context, era)
+        default: {
+          // NOTE: This raises "Type 'string' is not assignable to type 'never'."
+          // whenever a branch of 'EraWithGenesis' isn't covered in the above
+          // switch case. This forces TypeScript to do an exhaustive check.
+          const _era: never = era
+          return genesisConfiguration(context, _era)
+        }
+      }
+    },
+    ledgerTip () {
+      return ledgerTip(context)
+    },
     liveStakeDistribution () {
       return liveStakeDistribution(context)
+    },
+    networkBlockHeight () {
+      return networkBlockHeight(context)
+    },
+    networkStartTime () {
+      return networkStartTime(context)
+    },
+    networkTip () {
+      return networkTip(context)
     },
     projectedRewards (filter) {
       return projectedRewards(context, filter)
@@ -176,9 +177,6 @@ export async function createLedgerStateQueryClient (
     },
     stakePools () {
       return stakePools(context)
-    },
-    tip () {
-      return tip(context)
     },
     utxo (filter) {
       return utxo(context, filter)

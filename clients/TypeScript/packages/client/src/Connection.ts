@@ -1,9 +1,7 @@
 import { nanoid } from 'nanoid'
-
 import { WebSocket, CloseEvent } from './IsomorphicWebSocket'
 import { getServerHealth, ServerNotReady } from './ServerHealth'
 import { safeJSON } from './util'
-import { CustomError } from 'ts-custom-error'
 
 /**
  * Connection configuration parameters. Use `tls: true` to create a `wss://` using TLS
@@ -66,16 +64,32 @@ export type WebSocketCloseHandler = (
   reason: CloseEvent['reason']
 ) => void
 
-/**
- * @category ChainSync
- * @category StateQuery
- * @category TxSubmission
- * @category MempoolMonitor
- */
-export class UnknownResultError extends CustomError {
-  public constructor (result: object | string) {
-    super()
-    this.message = safeJSON.stringify(result)
+/** @category Connection */
+export class JSONRPCError extends Error {
+  code: number
+  data?: any
+  id?: any
+
+  public constructor (code: number, message: string, data?: any, id?: any) {
+    super(message)
+    this.stack = ""
+    this.code = code
+
+    if (typeof data !== 'undefined') { this.data = data }
+    if (typeof id !== 'undefined') { this.id = Object.assign({}, id || {}) }
+  }
+
+  public static try_from(any: any) {
+    if ('error' in any && 'jsonrpc' in any && any.jsonrpc === '2.0') {
+      const { error: e } = any;
+      if ('code' in e && 'message' in e) {
+        if (Number.isInteger(e.code) && typeof e.message === 'string') {
+          return new JSONRPCError(e.code, e.message, e?.data, any?.id)
+        }
+      }
+    }
+
+    return null
   }
 }
 
@@ -163,11 +177,11 @@ export const send = async <T>(
   send: (socket: WebSocket) => Promise<T>,
   context: InteractionContext
 ): Promise<T> => {
-  const { socket, afterEach } = context
+  const { socket } = context
   return new Promise((resolve, reject) => {
     send(socket)
-      .then(result => afterEach(resolve.bind(this, result)))
-      .catch(error => afterEach(reject.bind(this, error)))
+      .then(resolve)
+      .catch(error => reject(JSONRPCError.try_from(error) || error))
   })
 }
 
@@ -192,7 +206,7 @@ export const Method = <
   ): Promise<A> =>
     send<A>((socket) =>
       new Promise((resolve, reject) => {
-        const requestId = nanoid(5)
+        const requestId = nanoid(16)
 
         async function listener (data: string) {
           const response = safeJSON.parse(data) as Response

@@ -13,6 +13,10 @@ export const dummyInteractionContext = async (
   return createInteractionContext(
     console.error,
     () => {},
-    { connection: { port: 1338, ...connection }, interactionType }
+    {
+      connection: { port: 1338, ...connection },
+      interactionType,
+      maxEventListeners: 99
+    }
   )
 }

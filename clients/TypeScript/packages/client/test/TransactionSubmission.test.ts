@@ -1,46 +1,56 @@
-import { TxIn, TxOut, Utxo } from '@cardano-ogmios/schema'
-import * as EvaluateTx from '../../src/TxSubmission/evaluationErrors'
-import { createTxSubmissionClient, InteractionContext, TxSubmission, UnknownResultError } from '../../src'
-import { dummyInteractionContext } from '../util'
+import {
+  dummyInteractionContext
+} from './helpers'
+import {
+  createTransactionSubmissionClient,
+  InteractionContext,
+  JSONRPCError,
+  TransactionSubmission,
+} from '../src'
+import {
+  TransactionOutputReference,
+  TransactionOutput,
+  Utxo
+} from '@cardano-ogmios/schema'
 
-describe('TxSubmission', () => {
-  describe('TxSubmissionClient', () => {
+describe('TransactionSubmission', () => {
+  describe('TransactionSubmissionClient', () => {
     it('opens a connection on construction, and closes it after shutdown', async () => {
       const context = await dummyInteractionContext()
-      const client = await TxSubmission.createTxSubmissionClient(context)
+      const client = await TransactionSubmission.createTransactionSubmissionClient(context)
       await client.shutdown()
       expect(context.socket.readyState).not.toBe(context.socket.OPEN)
     })
     it('rejects with the Websocket errors on failed connection', async () => {
       try {
         const context = await dummyInteractionContext('LongRunning', { host: 'non-existent' })
-        await TxSubmission.createTxSubmissionClient(context)
+        await TransactionSubmission.createTransactionSubmissionClient(context)
       } catch (error) {
         await expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
       }
       try {
         const context = await dummyInteractionContext('LongRunning', { port: 1111 })
-        await TxSubmission.createTxSubmissionClient(context)
+        await TransactionSubmission.createTransactionSubmissionClient(context)
       } catch (error) {
         expect(error.code).toBe('ECONNREFUSED')
       }
     })
   })
-  describe('submitTx', () => {
+  describe('submitTransaction', () => {
     let context: InteractionContext
     beforeAll(async () => { context = await dummyInteractionContext() })
     afterAll(() => context.socket.close())
 
     const methods = [
-      async (payload: string) => await TxSubmission.submitTx(context, payload),
+      async (payload: string) => await TransactionSubmission.submitTransaction(context, payload),
       async (payload: string) => {
-        const client = await createTxSubmissionClient(context)
-        return await client.submitTx(payload)
+        const client = await createTransactionSubmissionClient(context)
+        return await client.submitTransaction(payload)
       }
     ]
 
     methods.forEach(submit => {
-      it('rejects with an array of named errors (submitTx)', async () => {
+      it('rejects with an array of named errors (submitTransaction)', async () => {
         try {
           const someTransaction =
             '83a40081825820e1e86da6446c7f81da8d5e440bb0d4eed0f1530ba15bf77e49c33d' +
@@ -49,18 +59,13 @@ describe('TxSubmission', () => {
             'cecab8e1f5447bde551946804057332825e26e64ee43079dd408355840247c5e6092' +
             '1130fa1df800d310f39788f4ae04837534ade6727875dbb87218f5b45e96ccd125a1' +
             '4c4510e81694e7aad3ba8a24458aaf6b6f9c4f1a4801beba05f6'
-
           await submit(someTransaction)
-        } catch (errors) {
-          expect(errors).toHaveLength(2)
-          // NOTE: We can't predict in which order will the server return the errors.
-          try {
-            expect(errors[0]).toBeInstanceOf(TxSubmission.submissionErrors.errors.BadInputs.Error)
-            expect(errors[1]).toBeInstanceOf(TxSubmission.submissionErrors.errors.ValueNotConserved.Error)
-          } catch (e) {
-            expect(errors[1]).toBeInstanceOf(TxSubmission.submissionErrors.errors.BadInputs.Error)
-            expect(errors[0]).toBeInstanceOf(TxSubmission.submissionErrors.errors.ValueNotConserved.Error)
-          }
+        } catch (e) {
+          expect(e).toBeInstanceOf(JSONRPCError)
+          expect(e?.data).toHaveLength(2)
+          // TODO: Assert on error codes
+          //   expect(errors[0]).toBeInstanceOf(TransactionSubmission.submissionErrors.errors.BadInputs.Error)
+          //   expect(errors[1]).toBeInstanceOf(TransactionSubmission.submissionErrors.errors.ValueNotConserved.Error)
         }
       })
 
@@ -70,25 +75,27 @@ describe('TxSubmission', () => {
             ('80'
             )
           )
-        } catch (errors) {
-          expect(errors).toHaveLength(1)
-          expect(errors[0]).toBeInstanceOf(UnknownResultError)
+        } catch (e) {
+          expect(e).toBeInstanceOf(JSONRPCError)
+          expect(e.code).toBe(-32600)
         }
       })
     })
   })
 
-  describe('evaluateTx', () => {
+  describe('evaluateTransaction', () => {
     let context: InteractionContext
     beforeAll(async () => { context = await dummyInteractionContext() })
     afterAll(() => context.socket.close())
 
     const methods = [
-      async (payload: string, additionalUtxoSet?: Utxo) => await TxSubmission.evaluateTx(context, payload, additionalUtxoSet)
-      // async (payload: string, additionalUtxoSet?: Utxo) => {
-      //   const client = await createTxSubmissionClient(context)
-      //   return await client.evaluateTx(payload, additionalUtxoSet)
-      // }
+      async (payload: string, additionalUtxoSet?: Utxo) => {
+        return await TransactionSubmission.evaluateTransaction(context, payload, additionalUtxoSet)
+      },
+      async (payload: string, additionalUtxoSet?: Utxo) => {
+        const client = await createTransactionSubmissionClient(context)
+        return await client.evaluateTransaction(payload, additionalUtxoSet)
+      }
     ]
 
     methods.forEach(evaluate => {
@@ -118,9 +125,10 @@ describe('TxSubmission', () => {
              '4D48656C6C6F2C20576F726C6421FF820000F5F6'
             )
           )
-        } catch (errors) {
-          expect(errors).toHaveLength(1)
-          expect(errors[0]).toBeInstanceOf(TxSubmission.evaluationErrors.errors.ExtraRedeemers.Error)
+        } catch (e) {
+          expect(e).toBeInstanceOf(JSONRPCError)
+          // TODO: Assert on error code
+          // expect(errors[0]).toBeInstanceOf(TransactionSubmission.evaluationErrors.errors.ExtraRedeemers.Error)
         }
       })
 
@@ -136,7 +144,7 @@ describe('TxSubmission', () => {
           [{
             txId: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
             index: 0
-          } as TxIn,
+          } as TransactionOutputReference,
            {
              address: 'addr_test1wrzqlyffcf5yq3htqge9h9k29zv6d7ny0rqam6d4c5eqdfgg0h7yw',
              value: { coins: BigInt(14000000) },
@@ -144,15 +152,16 @@ describe('TxSubmission', () => {
              script: {
                'plutus:v2': '59010601000032323232323232323232322223253330083371e6eb8cc014c01c00520004890d48656c6c6f2c20576f726c642100149858cc020c94ccc020cdc3a400000226464a66601e60220042930a99806249334c6973742f5475706c652f436f6e73747220636f6e7461696e73206d6f7265206974656d73207468616e2065787065637465640016375c601e002600e0062a660149212b436f6e73747220696e64657820646964206e6f74206d6174636820616e7920747970652076617269616e740016300a37540040046600200290001111199980319b8700100300c233330050053370000890011807000801001118031baa0015734ae6d5ce2ab9d5573caae7d5d0aba201'
              }
-           } as TxOut
+           } as TransactionOutput
           ]
         ] as Utxo
 
         try {
           await evaluate(bytes)
-        } catch (errors) {
-          expect(errors).toHaveLength(1)
-          expect(errors[0]).toBeInstanceOf(TxSubmission.evaluationErrors.errors.ExtraRedeemers.Error)
+        } catch (e) {
+          expect(e).toBeInstanceOf(JSONRPCError)
+          // TODO: assert on error code
+          // expect(errors[0]).toBeInstanceOf(TransactionSubmission.evaluationErrors.errors.ExtraRedeemers.Error)
         }
 
         const result = await evaluate(bytes, additionalUtxoSet)
@@ -173,9 +182,10 @@ describe('TxSubmission', () => {
              '43466F6FFF820000F5F6'
             )
           )
-        } catch (errors) {
-          expect(errors).toHaveLength(1)
-          expect(errors[0]).toBeInstanceOf(EvaluateTx.errors.ValidatorFailed.Error)
+        } catch (e) {
+          expect(e).toBeInstanceOf(JSONRPCError)
+          // TODO: assert on error code
+          // expect(errors[0]).toBeInstanceOf(EvaluateTx.errors.ValidatorFailed.Error)
         }
       })
 
@@ -193,9 +203,9 @@ describe('TxSubmission', () => {
              '06f6'
             )
           )
-        } catch (errors) {
-          expect(errors).toHaveLength(1)
-          expect(errors[0]).toBeInstanceOf(TxSubmission.evaluationErrors.errors.IncompatibleEra.Error)
+        } catch (e) {
+          expect(e).toBeInstanceOf(JSONRPCError)
+          expect(e.code).toBe(3000)
         }
       })
 
@@ -205,9 +215,9 @@ describe('TxSubmission', () => {
             ('80'
             )
           )
-        } catch (errors) {
-          expect(errors).toHaveLength(1)
-          expect(errors[0]).toBeInstanceOf(UnknownResultError)
+        } catch (e) {
+          expect(e).toBeInstanceOf(JSONRPCError)
+          expect(e.code).toBe(-32600)
         }
       })
     })

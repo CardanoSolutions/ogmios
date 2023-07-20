@@ -8,7 +8,10 @@ import {
 } from '@cardano-ogmios/schema'
 
 /** @category ChainSynchronization */
-export type Intersection = { intersection: Point | Origin, tip: Tip | Origin }
+export type Intersection = {
+  intersection: Point | Origin,
+  tip: Tip | Origin,
+}
 
 /** @category ChainSynchronization */
 export function findIntersection (
@@ -25,9 +28,9 @@ export function findIntersection (
     {
       handler: (response, resolve, reject) => {
         if (isIntersectionFound(response)) {
-          return resolve(response.result)
+          resolve(response.result)
         } else {
-          return reject(response)
+          reject(response)
         }
       }
     },

@@ -57,8 +57,8 @@ export const safeJSON = {
       }
 
       // Transaction
-      if (parentKey === 'body' && json.fee !== undefined) {
-        return this.sanitizeFields(json, ['fee', 'totalCollateral'])
+      if (json.fee !== undefined && json.cbor !== undefined && json.id !== undefined) {
+        return this.sanitizeFields(json, ['fee', 'collateral'])
       }
 
       // Withdrawals

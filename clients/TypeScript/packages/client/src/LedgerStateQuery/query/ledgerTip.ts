@@ -19,7 +19,7 @@ type Success = QueryLedgerStateTipResponse
  *
  * @category LedgerStateQuery
  */
-export function tip (context: InteractionContext): Promise<Point | Origin> {
+export function ledgerTip (context: InteractionContext): Promise<Point | Origin> {
   return Method<Request, Response, Point | Origin>(
     {
       method: 'queryLedgerState/tip'

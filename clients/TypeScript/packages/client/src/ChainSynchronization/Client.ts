@@ -1,16 +1,14 @@
 import fastq from 'fastq'
 import { CustomError } from 'ts-custom-error'
-import { InteractionContext, ensureSocketIsOpen, UnknownResultError } from '../Connection'
+import { InteractionContext, ensureSocketIsOpen } from '../Connection'
 import { safeJSON } from '../util'
 import { findIntersection, Intersection } from './findIntersection'
-import { nextBlock } from './nextBlock'
 import {
-  Block,
-  Ogmios,
-  Point,
-  Origin,
-  Tip
-} from '@cardano-ogmios/schema'
+  nextBlock,
+  handler as handleNextBlock,
+  ChainSynchronizationMessageHandlers,
+} from './nextBlock'
+import { Point, Origin } from '@cardano-ogmios/schema'
 
 /**
  * See also {@link createChainSynchronizationClient} for creating a client.
@@ -20,28 +18,10 @@ import {
 export interface ChainSynchronizationClient {
   context: InteractionContext
   shutdown: () => Promise<void>
-  startSync: (
+  resume: (
     points?: (Point | Origin)[],
     inFlight?: number
   ) => Promise<Intersection>
-}
-
-/** @category ChainSynchronization */
-export interface ChainSynchronizationMessageHandlers {
-  rollBackward: (
-    response: {
-      point: Point | Origin,
-      tip: Tip | Origin
-    },
-    nextBlock: () => void
-  ) => Promise<void>
-  rollForward: (
-    response: {
-      block: Block,
-      tip: Tip | Origin
-    },
-    nextBlock: () => void
-  ) => Promise<void>
 }
 
 /** @category Constructor */
@@ -52,24 +32,12 @@ export async function createChainSynchronizationClient (
 ): Promise<ChainSynchronizationClient> {
   const { socket } = context
   return new Promise((resolve) => {
-    const messageHandler = async (response: Ogmios['NextBlockResponse']) => {
-      if (response.result.direction === 'backward') {
-        await messageHandlers.rollBackward({
-          point: response.result.point,
-          tip: response.result.tip
-        }, () =>
-          nextBlock(socket)
-        )
-      } else if (response.result.direction === 'forward') {
-        await messageHandlers.rollForward({
-          block: response.result.block,
-          tip: response.result.tip
-        }, () => {
-          nextBlock(socket)
-        })
-      } else {
-        throw new UnknownResultError(response.result)
-      }
+    const messageHandler = async (response: any) => {
+      await handleNextBlock(
+        response,
+        messageHandlers,
+        () => nextBlock(socket),
+      )
     }
 
     const responseHandler = options?.sequential !== false
@@ -77,10 +45,7 @@ export async function createChainSynchronizationClient (
       : messageHandler
 
     socket.on('message', async (message: string) => {
-      const response: Ogmios['NextBlockResponse'] = safeJSON.parse(message)
-      if (response.result.direction !== undefined) {
-        await responseHandler(response)
-      }
+      await responseHandler(safeJSON.parse(message))
     })
 
     return resolve({
@@ -90,12 +55,11 @@ export async function createChainSynchronizationClient (
         socket.once('close', resolve)
         socket.close()
       }),
-      startSync: async (points, inFlight) => {
+      resume: async (points, inFlight) => {
         const intersection = await findIntersection(
           context,
           points || [await createPointFromCurrentTip(context)]
         )
-        ensureSocketIsOpen(socket)
         for (let n = 0; n < (inFlight || 100); n += 1) {
           nextBlock(socket)
         }

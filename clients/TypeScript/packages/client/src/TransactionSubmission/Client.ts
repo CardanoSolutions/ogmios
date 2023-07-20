@@ -22,10 +22,15 @@ export interface TransactionSubmissionClient {
 }
 
 /** @Internal */
-const METHODS = {
-  SUBMIT: 'SubmitTransaction',
-  EVALUATE: 'EvaluateTransaction'
-}
+const METHODS:
+  {
+    SUBMIT: Ogmios['SubmitTransaction']['method'],
+    EVALUATE: Ogmios['EvaluateTransaction']['method']
+  } =
+  {
+    SUBMIT: 'submitTransaction',
+    EVALUATE: 'evaluateTransaction'
+  }
 
 /** @Internal */
 const matchSubmitTransaction = (data: string) => {
@@ -80,7 +85,6 @@ export const createTransactionSubmissionClient = async (
   return Promise.resolve({
     context,
     evaluateTransaction: (transaction, additionalUtxoSet) => {
-      ensureSocketIsOpen(socket)
       const method = METHODS.EVALUATE
       return send<EvaluationResult>(async (socket) => {
         socket.send(safeJSON.stringify({
@@ -99,7 +103,6 @@ export const createTransactionSubmissionClient = async (
       }, context)
     },
     submitTransaction: async (transaction) => {
-      ensureSocketIsOpen(socket)
       const method = METHODS.SUBMIT
       return send<TransactionId>(async (socket) => {
         socket.send(safeJSON.stringify({

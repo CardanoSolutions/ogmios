@@ -76,7 +76,6 @@ export const createMempoolMonitoringClient = async (
   return Promise.resolve({
     context,
     acquireMempool: (params?: {}) => {
-      ensureSocketIsOpen(socket)
       const method = 'acquireMempool'
       return send<Slot>(async (socket) => {
         socket.send(safeJSON.stringify({
@@ -92,7 +91,6 @@ export const createMempoolMonitoringClient = async (
       }, context)
     },
     hasTransaction: (id: TransactionId) => {
-      ensureSocketIsOpen(socket)
       const method = 'hasTransaction'
       return send<boolean>(async (socket) => {
         socket.send(safeJSON.stringify({
@@ -108,7 +106,6 @@ export const createMempoolMonitoringClient = async (
       }, context)
     },
     nextTransaction: (params?: {fields: 'all'}) => {
-      ensureSocketIsOpen(socket)
       const method = 'nextTransaction'
       return send<TransactionId | Transaction | null>(async (socket) => {
         socket.send(safeJSON.stringify({
@@ -124,7 +121,6 @@ export const createMempoolMonitoringClient = async (
       }, context)
     },
     sizeOfMempool: (params?: {}) => {
-      ensureSocketIsOpen(socket)
       const method = 'sizeOfMempool'
       return send<MempoolSizeAndCapacity>(async (socket) => {
         socket.send(safeJSON.stringify({
@@ -140,7 +136,6 @@ export const createMempoolMonitoringClient = async (
       }, context)
     },
     releaseMempool: (params?: {}) => {
-      ensureSocketIsOpen(socket)
       const method = 'releaseMempool'
       return send<void>(async (socket) => {
         socket.send(safeJSON.stringify({
