@@ -118,8 +118,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04]
-        network: [testnet]
-        cardanoNodeVersion: [1.35.2]
+        network: [preview]
+        cardanoNodeVersion: [1.35.7]
 
     runs-on: ${{ matrix.os }}
     steps:
