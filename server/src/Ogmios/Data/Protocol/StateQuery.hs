@@ -65,8 +65,8 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure
     )
 
-import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Codec.Json.Rpc as Rpc
+import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson.Types as Json
 import qualified Data.Text as T
 import qualified Text.Show as T
