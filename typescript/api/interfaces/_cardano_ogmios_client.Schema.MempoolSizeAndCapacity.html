@@ -45,13 +45,13 @@
 						<a href="_cardano_ogmios_client.Schema.MempoolSizeAndCapacity.html" class="tsd-kind-icon">Mempool<wbr>Size<wbr>And<wbr>Capacity</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.MempoolSizeAndCapacity.html#capacity" class="tsd-kind-icon">capacity</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_client.Schema.MempoolSizeAndCapacity.html#currentSize" class="tsd-kind-icon">current<wbr>Size</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.MempoolSizeAndCapacity.html#numberOfTxs" class="tsd-kind-icon">number<wbr>OfTxs</a>
+								<a href="_cardano_ogmios_client.Schema.MempoolSizeAndCapacity.html#maxCapacity" class="tsd-kind-icon">max<wbr>Capacity</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_client.Schema.MempoolSizeAndCapacity.html#transactions" class="tsd-kind-icon">transactions</a>
 							</li>
 						</ul>
 					</li>
@@ -94,9 +94,9 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.MempoolSizeAndCapacity.html#capacity" class="tsd-kind-icon">capacity</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.MempoolSizeAndCapacity.html#currentSize" class="tsd-kind-icon">current<wbr>Size</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.MempoolSizeAndCapacity.html#numberOfTxs" class="tsd-kind-icon">number<wbr>OfTxs</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.MempoolSizeAndCapacity.html#maxCapacity" class="tsd-kind-icon">max<wbr>Capacity</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.MempoolSizeAndCapacity.html#transactions" class="tsd-kind-icon">transactions</a></li>
 							</ul>
 						</section>
 					</div>
@@ -105,34 +105,58 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="capacity" class="tsd-anchor"></a>
-					<h3>capacity</h3>
-					<div class="tsd-signature tsd-kind-icon">capacity<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:1612</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="currentSize" class="tsd-anchor"></a>
 					<h3>current<wbr>Size</h3>
-					<div class="tsd-signature tsd-kind-icon">current<wbr>Size<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<div class="tsd-signature tsd-kind-icon">current<wbr>Size<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:1613</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:1629</li>
 						</ul>
 					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>bytes<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+							</li>
+						</ul>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="numberOfTxs" class="tsd-anchor"></a>
-					<h3>number<wbr>OfTxs</h3>
-					<div class="tsd-signature tsd-kind-icon">number<wbr>OfTxs<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<a name="maxCapacity" class="tsd-anchor"></a>
+					<h3>max<wbr>Capacity</h3>
+					<div class="tsd-signature tsd-kind-icon">max<wbr>Capacity<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:1614</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:1626</li>
 						</ul>
 					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>bytes<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="transactions" class="tsd-anchor"></a>
+					<h3>transactions</h3>
+					<div class="tsd-signature tsd-kind-icon">transactions<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:1632</li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>count<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+							</li>
+						</ul>
+					</div>
 				</section>
 			</section>
 		</div>

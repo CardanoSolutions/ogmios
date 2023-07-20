@@ -45,7 +45,13 @@
 						<a href="_cardano_ogmios_client.Schema.IntersectionFound.html" class="tsd-kind-icon">Intersection<wbr>Found</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.IntersectionFound.html#IntersectionFound" class="tsd-kind-icon">Intersection<wbr>Found</a>
+								<a href="_cardano_ogmios_client.Schema.IntersectionFound.html#id" class="tsd-kind-icon">id</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_client.Schema.IntersectionFound.html#jsonrpc" class="tsd-kind-icon">jsonrpc</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_client.Schema.IntersectionFound.html#result" class="tsd-kind-icon">result</a>
 							</li>
 						</ul>
 					</li>
@@ -88,7 +94,9 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.IntersectionFound.html#IntersectionFound" class="tsd-kind-icon">Intersection<wbr>Found</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.IntersectionFound.html#id" class="tsd-kind-icon">id</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.IntersectionFound.html#jsonrpc" class="tsd-kind-icon">jsonrpc</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.IntersectionFound.html#result" class="tsd-kind-icon">result</a></li>
 							</ul>
 						</section>
 					</div>
@@ -97,22 +105,50 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="IntersectionFound" class="tsd-anchor"></a>
-					<h3>Intersection<wbr>Found</h3>
-					<div class="tsd-signature tsd-kind-icon">Intersection<wbr>Found<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<a name="id" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> id</h3>
+					<div class="tsd-signature tsd-kind-icon">id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:1217</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:143</li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-index-signature">
+								<h5><span class="tsd-signature-symbol">[</span>k: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><span class="tsd-signature-type">unknown</span></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="jsonrpc" class="tsd-anchor"></a>
+					<h3>jsonrpc</h3>
+					<div class="tsd-signature tsd-kind-icon">jsonrpc<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"2.0"</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:138</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="result" class="tsd-anchor"></a>
+					<h3>result</h3>
+					<div class="tsd-signature tsd-kind-icon">result<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:139</li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
 							<li class="tsd-parameter">
-								<h5>point<span class="tsd-signature-symbol">: </span><a href="../modules/_cardano_ogmios_client.Schema.html#PointOrOrigin" class="tsd-signature-type">PointOrOrigin</a></h5>
+								<h5>intersection<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"origin"</span><span class="tsd-signature-symbol"> | </span><a href="_cardano_ogmios_client.Schema.Point.html" class="tsd-signature-type">Point</a></h5>
 							</li>
 							<li class="tsd-parameter">
-								<h5>tip<span class="tsd-signature-symbol">: </span><a href="../modules/_cardano_ogmios_client.Schema.html#TipOrOrigin" class="tsd-signature-type">TipOrOrigin</a></h5>
+								<h5>tip<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"origin"</span><span class="tsd-signature-symbol"> | </span><a href="_cardano_ogmios_client.Schema.Tip.html" class="tsd-signature-type">Tip</a></h5>
 							</li>
 						</ul>
 					</div>
