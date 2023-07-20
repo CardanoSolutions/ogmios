@@ -36,10 +36,13 @@ let
             ];
         };
       }
-    ).ogmios.components.exes.ogmios;
+    );
 in {
   platform = {
     # arm64 = (mkProject pkgs.pkgsCross.aarch64-multiplatform-musl);
-    amd64 = (mkProject pkgs.pkgsCross.musl64);
+    amd64 = (mkProject pkgs.pkgsCross.musl64).ogmios.components.exes.ogmios
   };
+  tests = {
+    unit = (mkProject pkgs.pkgsCross.musl64).ogmios.components.tests.unit
+  }
 }
