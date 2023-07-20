@@ -29,8 +29,9 @@ jobs:
         submodules: true
 
     - name: ❄️  Install Nix
-      uses: cachix/install-nix-action@v13
+      uses: cachix/install-nix-action@v20
       with:
+        nix_path: nixpkgs=channel:nixos-unstable
         extra_nix_config: |
           trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
           substituters = https://cache.iog.io https://cache.nixos.org/
