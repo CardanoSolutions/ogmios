@@ -253,7 +253,7 @@ _encodeSubmitTransactionResponse
 _encodeSubmitTransactionResponse _proxy encodeTransactionId encodeSubmitTransactionError =
     Rpc.mkResponse $ \resolve reject -> \case
         SubmitTransactionSuccess i ->
-            resolve $ encodeObject $
+            resolve $ encodeObject
                 ( "transaction" .= encodeObject
                     ( "id" .= encodeTransactionId i
                     )
