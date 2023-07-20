@@ -507,9 +507,9 @@ encodeEraMismatch
     -> Json
 encodeEraMismatch x =
     "ledgerEra" .=
-        encodeText (ledgerEraName x) <>
+        encodeEraName (ledgerEraName x) <>
     "queryEra" .=
-        encodeText (otherEraName x)
+        encodeEraName (otherEraName x)
     & encodeObject
 
 encodeEraParams
@@ -1079,7 +1079,7 @@ parseQueryNetworkGenesisConfiguration (genByron, genShelley, genAlonzo) =
     let query = "genesisConfiguration" in
     Json.withObject (toString query) $ \obj -> do
         era <- obj .: "era"
-        case era :: Text of
+        case T.toLower era of
             "byron" ->
                 pure $ const $ Just $ SomeAdHocQuery
                     GetByronGenesis

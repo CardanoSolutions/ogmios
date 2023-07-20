@@ -42,6 +42,7 @@ module Ogmios.Data.Json.Prelude
     , encodeDouble
     , encodeEpochNo
     , encodeEpochSize
+    , encodeEraName
     , encodeIPv4
     , encodeIPv6
     , encodeInteger
@@ -175,6 +176,7 @@ import qualified Data.ByteString.Base16 as B16
 import qualified Data.ByteString.Base58 as B58
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map.Strict as Map
+import qualified Data.Text as T
 import qualified Ouroboros.Consensus.Util.Counting as Consensus
 
 --
@@ -280,6 +282,11 @@ encodeEpochSize :: EpochSize -> Json
 encodeEpochSize =
     encodeWord64 . unEpochSize
 {-# INLINABLE encodeEpochSize #-}
+
+encodeEraName :: Text -> Json
+encodeEraName =
+    encodeText . T.toLower
+{-# INLINABLE encodeEraName #-}
 
 encodeIPv4 :: IPv4 -> Json
 encodeIPv4 =

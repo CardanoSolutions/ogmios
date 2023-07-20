@@ -626,10 +626,7 @@
     , "additionalProperties": false
     , "required": [ "incompatibleEra" ]
     , "properties":
-      { "incompatibleEra":
-        { "type": "string"
-        , "enum": [ "Byron", "Shelley", "Allegra", "Mary" ]
-        }
+      { "incompatibleEra": { "$ref": "cardano.json#/definitions/Era" }
       }
     }
 
@@ -2942,7 +2939,7 @@
         , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
         }
       , "governanceActions":
-        { "oneOf":
+        { "anyOf":
           [ { "type": "array"
             , "items": { "$ref": "cardano.json#/definitions/Update<Shelley>" }
             }

@@ -219,13 +219,13 @@ newExecutionUnitsEvaluator = do
         ( ExecutionUnitsEvaluator
             { evaluateExecutionUnitsM = runEvaluation . \case
                 (_, GenTxByron{}) ->
-                    Left (incompatibleEra "Byron")
+                    Left (incompatibleEra "byron")
                 (_, GenTxShelley{}) ->
-                    Left (incompatibleEra "Shelley")
+                    Left (incompatibleEra "shelley")
                 (_, GenTxAllegra{}) ->
-                    Left (incompatibleEra "Allegra")
+                    Left (incompatibleEra "allegra")
                 (_, GenTxMary{}) ->
-                    Left (incompatibleEra "Mary")
+                    Left (incompatibleEra "mary")
                 (UTxOInAlonzoEra utxo, GenTxAlonzo (ShelleyTx _id tx)) -> do
                     Right (SomeEvaluationInAnyEra utxo tx)
                 (UTxOInAlonzoEra utxo, GenTxBabbage (ShelleyTx _id tx)) -> do

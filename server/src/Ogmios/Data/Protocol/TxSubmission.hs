@@ -340,7 +340,7 @@ nodeTipTooOld currentNodeEra =
         NodeTipTooOld { currentNodeEra, minimumRequiredEra }
     )
   where
-    minimumRequiredEra = "Alonzo"
+    minimumRequiredEra = "alonzo"
 
 _encodeEvaluateTransactionResponse
     :: forall block. ()
@@ -363,7 +363,7 @@ _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeS
                 "Trying to evaluate a transaction from an old era (prior to Alonzo)."
                 (pure $ encodeObject
                     ( "incompatibleEra" .=
-                        encodeText era
+                        encodeEraName era
                     )
                 )
         EvaluationFailure (OverlappingAdditionalUtxo inputs) ->
@@ -381,9 +381,9 @@ _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeS
                 \scripts are enabled (i.e. Alonzo and beyond)."
                 (pure $ encodeObject
                     ( "currentNodeEra" .=
-                        encodeText (currentNodeEra err) <>
+                        encodeEraName (currentNodeEra err) <>
                       "minimumRequiredEra" .=
-                        encodeText (minimumRequiredEra err)
+                        encodeEraName (minimumRequiredEra err)
                     )
                 )
         EvaluationFailure (CannotCreateEvaluationContext err) ->

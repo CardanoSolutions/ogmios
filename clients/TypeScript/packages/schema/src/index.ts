@@ -1338,7 +1338,7 @@ export interface EvaluateTransactionFailureIncompatibleEra {
  * The era in which the transaction has been identified.
  */
 export interface IncompatibleEra {
-  incompatibleEra: "Byron" | "Shelley" | "Allegra" | "Mary";
+  incompatibleEra: Era;
 }
 /**
  * Happens when providing an additional UTXO set which overlaps with the UTXO on-chain.
