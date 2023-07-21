@@ -4,7 +4,7 @@
 <img src="server/static/assets/logo.png" height=200 width=256 alt="ogmios" align="center">
 </p>
 
-**Ogmios** is a lightweight bridge interface for [cardano-node](https://github.com/input-output-hk/cardano-node/). It offers a **WebSocket API** that enables local clients to speak [Ouroboros' mini-protocols](https://hydra.iohk.io/build/1070091/download/1/network.pdf#chapter.3) via **JSON/RPC**.
+**Ogmios** is a lightweight bridge interface for [cardano-node](https://github.com/input-output-hk/cardano-node/). It offers a **WebSocket API** that enables local clients to speak [Ouroboros' mini-protocols](https://input-output-hk.github.io/ouroboros-network/pdfs/network-spec/network-spec.pdf#chapter.3) via **JSON/RPC**.
 
 ## QuickStart
 
