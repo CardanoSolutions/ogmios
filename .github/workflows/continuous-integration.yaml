@@ -187,7 +187,7 @@ jobs:
       env:
         CONFDIR: /home/runner/work/ogmios/ogmios/server/config/network/${{ matrix.network }}
       run: |
-        chmod +x ../../server/ogmios
+        chmod +x ../../server/bin/ogmios
         sudo ../../server/bin/ogmios --port 1338 --log-level error --node-socket ${{ runner.temp }}/ipc/node.socket --node-config $CONFDIR/cardano-node/config.json &
 
         docker pull inputoutput/cardano-node:${{ matrix.cardanoNodeVersion }}
