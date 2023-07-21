@@ -10,14 +10,21 @@ The easiest way to get started with Ogmios is to use [docker](https://www.docker
 
 Ogmios docker images come in two flavours: `cardano-node-ogmios` and `ogmios`. The former is used to run a single container that bundles both a Cardano-node and an Ogmios server running side-by-side. It is likely the easiest way to get started. The latter is a standalone Ogmios server, and you'll need to run that container in orchestration with a cardano-node; this is made relatively easy with [Docker compose](https://docs.docker.com/compose/).
 
-Images are uploaded to [Dockerhub](https://hub.docker.com/u/cardanosolutions) and are tagged using release versions
-combined with the [supported network name][networks], or with `:latest` if you're
-living on the edge. If using the `mainnet` image you can omit the network name.
+Images are uploaded to [Dockerhub](https://hub.docker.com/u/cardanosolutions)
+and are tagged using release versions combined with the supported network name,
+or with `:latest` if you're living on the edge. If using the `mainnet` image
+you can omit the network name.
 
 | image               | repository                                                                                      | tags               |
 | ---                 | ---                                                                                             | ---                |
 | cardano-node-ogmios | [cardanosolutions/cardano-node-ogmios](https://hub.docker.com/repository/docker/cardanosolutions/cardano-node-ogmios) | `latest`<br/>`latest-{NETWORK}`<br/>`v*.*.*_{CARDANO_NODE_VERSION}`<br/>`v*.*.*_{CARDANO_NODE_VERSION}-{NETWORK}` |
 | ogmios              | [cardanosolutions/ogmios](https://hub.docker.com/repository/docker/cardanosolutions/ogmios)                           | `latest`<br/>`latest-{NETWORK}`<br/>`v*.*.*`<br/>`v*.*.*-{NETWORK}` |
+
+Supported NETWORK names:
+
+- `mainnet`
+- `preview`
+- `preprod`
 
 ## cardano-node-ogmios (easiest)
 
@@ -29,7 +36,7 @@ Assuming you've pulled or build the image (otherwise, see below), you can start 
 $ docker run -it \
   --name cardano-node-ogmios \
   -p 1337:1337 \
-  -v cardano-node-ogmios-db:/db \
+  -v cardano-node-ogmios-mainnet-db:/db \
   cardanosolutions/cardano-node-ogmios:latest
 ```
 
@@ -50,10 +57,10 @@ Let's explore a bit the various options:
 
 - `-v` mounts a shared volume with the container on your host machine, either via bind mounts or named volumes.
 
-  | Mount Point        | Description |
-  | ---                | ---         |
-  | `db/{NETWORK_NAME}` | Persist the cardano-node's database to avoid re-syncing the chain whenever a new container is run. This is done on every version upgrade and is recommended for most use-cases. |
-  | `ipc`               | Bind `/ipc` to get access to the cardano-node's local socket if you use the image in a multi-container stack with an external Haskell client. |
+  | Mount Point | Description                                                                                                                                                                     |
+  | ---         | ---                                                                                                                                                                             |
+  | `db`        | Persist the cardano-node's database to avoid re-syncing the chain whenever a new container is run. This is done on every version upgrade and is recommended for most use-cases. Make sure to use different names for different networks as the data aren't compatible between them! |
+  | `ipc`       | Bind `/ipc` to get access to the cardano-node's local socket if you use the image in a multi-container stack with an external Haskell client.                                   |
 
 Find more about run options in the docker user documentation.
 
@@ -68,8 +75,7 @@ $ docker buildx build \
     https://github.com/cardanosolutions/ogmios.git
 ```
 
-**_Optionally_**  specify a [network][networks] name, other than `mainnet`, using a build
-argument:
+**_Optionally_** specify a network name, other than `mainnet`, using a build argument:
 
 ```console
   --build-arg NETWORK=preview
@@ -155,5 +161,3 @@ $ docker buildx build \
     --target ogmios \
     https://github.com/cardanosolutions/ogmios.git
 ```
-
-[networks]: https://github.com/CardanoSolutions/ogmios/blob/c7c0ed912baed176092f38ed19c281e2e26ada1b/.github/workflows/package.yaml#L55
