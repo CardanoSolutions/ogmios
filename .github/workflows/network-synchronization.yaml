@@ -46,4 +46,4 @@ jobs:
         db-dir: ${{ runner.temp }}/db-${{ matrix.network }}
         network: ${{ matrix.network }}
         version: ${{ matrix.ogmios_version }}_${{ matrix.cardano_node_version }}
-        synchronization-level: ${{ inputs.synchronization-level }}
+        synchronization-level: ${{ inputs.synchronization-level || 1 }}
