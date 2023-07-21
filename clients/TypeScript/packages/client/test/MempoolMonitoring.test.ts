@@ -19,13 +19,13 @@ describe('MempoolMonitoring', () => {
 
     it('rejects with the Websocket errors on failed connection', async () => {
       try {
-        const context = await dummyInteractionContext('LongRunning', { host: 'non-existent' })
+        const context = await dummyInteractionContext({ host: 'non-existent' })
         await MempoolMonitoring.createMempoolMonitoringClient(context)
       } catch (error) {
         await expect(error.code).toMatch(/EAI_AGAIN|ENOTFOUND/)
       }
       try {
-        const context = await dummyInteractionContext('LongRunning', { port: 1111 })
+        const context = await dummyInteractionContext({ port: 1111 })
         await MempoolMonitoring.createMempoolMonitoringClient(context)
       } catch (error) {
         expect(error.code).toBe('ECONNREFUSED')
