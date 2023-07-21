@@ -19,30 +19,32 @@ See our [Ogmios client starter kit](https://github.com/CardanoSolutions/ogmios-t
   <tr><td>Local mempool monitoring</td><td><a href="https://ogmios.dev/mini-protocols/local-tx-monitor/" target="_blank">↗️</a></td></tr>
   <tr>
   <td>
-  <details>
-  <summary>Ledger state queries</summary>
+  State queries<br/>
+  <details><summary>Network</summary>
 
-  Query                        | Result
+  queryNetwork                 | Information
   ---                          | ---
   `blockHeight`                | The chain's highest block number.
-  `chainTip`                   | The chain's current tip.
-  `currentEpoch`               | The current epoch of the ledger.
-  `currentProtocolParameters`  | The current protocol parameters.
-  `delegationsAndRewards`      | Current delegation settings and rewards of given reward accounts.
-  `eraStart`                   | The information regarding the beginning of the current era.
-  `eraSummaries`               | Era bounds and slotting parameters details, required for proper slot arithmetic.
-  `genesisConfig`              | Get a compact version of the era's genesis configuration.
-  `ledgerTip`                  | The most recent block tip known of the ledger.
-  `nonMyopicMemberRewards`     | Non-myopic member rewards for each pool. Used in ranking.
-  `poolIds`                    | The list of all pool identifiers currently registered and active.
-  `poolParameters`             | Stake pool parameters submitted with registration certificates.
-  `poolsRanking`               | Retrieve stake pools ranking (a.k.a desirabilities).
-  `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
-  `rewardsProvenance'`         | Get details about rewards calculation for the ongoing epoch.
-  `stakeDistribution`          | Distribution of the stake across all known stake pools.
-  `systemStart`                | The chain's start time (UTC).
-  `utxo`                       | Current UTXO, possibly filtered by output reference.
+  `genesisConfiguration`       | Get the genesis configuration of a specific era.
+  `startTime`                  | The chain's start time (UTC).
+  `tip`                        | The network's current tip.
+  </details>
+  <details><summary>Ledger</summary>
 
+  queryLedgerState             | Information
+  ---                          | ---
+  `epoch`                      | The current epoch of the ledger.
+  `eraStart`                   | The information regarding the beginning of the current ledger era.
+  `eraSummaries`               | Era bounds and slot parameters details, required for proper slotting arithmetic.
+  `liveStakeDistribution`      | Distribution of the stake across all known stake pools, relative to the **total** stake in the network.
+  `projectedRewards`           | The projected rewards of an account in a context where the top stake pools are fully saturated. This projection gives, in principle, a ranking of stake pools that maximizes delegator rewards.
+  `protocolParameters`         | The current protocol parameters.
+  `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
+  `rewardAccountSummaries`     | Current delegation settings and rewards of chosen reward accounts.
+  `rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
+  `stakePools`                 | The list of all pool identifiers currently registered and active.
+  `tip`                        | The current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger.
+  `utxo`                       | Current UTXO, possibly filtered by output reference.
   </details>
   </td>
   <td>
