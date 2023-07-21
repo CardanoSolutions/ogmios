@@ -181,7 +181,7 @@ jobs:
           cardano-node-ogmios-${{ matrix.network }}-
 
     - name: 🔬 Test
-      if: matrix.network == 'testnet'
+      if: matrix.network == 'preview'
       working-directory: clients/TypeScript
       shell: bash
       env:
