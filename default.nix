@@ -6,11 +6,11 @@
     { }
 , iohkNix ? import
     (builtins.fetchTarball
-      "https://github.com/input-output-hk/iohk-nix/archive/0ca907c6f63863ad24b950c5e50d976ac788b0d1.tar.gz")
+      "https://github.com/input-output-hk/iohk-nix/archive/a476b842872e7ad924af5cd6a6ca92915a6e41ed.tar.gz")
     { }
 , cardanoPkgs ?
     (builtins.fetchTarball
-    "https://github.com/input-output-hk/cardano-haskell-packages/archive/3b9f3cc4c7cdfe3cbbb15d00c4d6de38865d87d1.tar.gz")
+    "https://github.com/input-output-hk/cardano-haskell-packages/archive/62882b0af7cf842652134badcd2d3f8013a85c09.tar.gz")
 , nixpkgsSrc ? haskellNix.sources.nixpkgs-unstable
 , nixpkgsArgs ? haskellNix.nixpkgsArgs
 }:
