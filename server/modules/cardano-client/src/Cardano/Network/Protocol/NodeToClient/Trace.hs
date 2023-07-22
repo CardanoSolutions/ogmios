@@ -10,27 +10,44 @@ module Cardano.Network.Protocol.NodeToClient.Trace
 import Prelude
 
 import Cardano.BM.Data.Severity
-    ( Severity (..) )
+    ( Severity (..)
+    )
 import Cardano.BM.Data.Tracer
-    ( HasPrivacyAnnotation (..), HasSeverityAnnotation (..) )
+    ( HasPrivacyAnnotation (..)
+    , HasSeverityAnnotation (..)
+    )
 import Codec.CBOR.Term
-    ( Term )
+    ( Term
+    )
 import Data.Aeson
-    ( (.=) )
+    ( (.=)
+    )
 import GHC.Generics
-    ( Generic )
+    ( Generic
+    )
 import Network.Mux
-    ( WithMuxBearer (..) )
+    ( WithMuxBearer (..)
+    )
 import Network.TypedProtocol.Codec
-    ( AnyMessageAndAgency (..) )
+    ( AnyMessageAndAgency (..)
+    )
 import Ouroboros.Network.Driver.Simple
-    ( TraceSendRecv (..) )
+    ( TraceSendRecv (..)
+    )
 import Ouroboros.Network.NodeToClient
-    ( ConnectionId (..), LocalAddress, NodeToClientVersion )
+    ( ConnectionId (..)
+    , LocalAddress
+    , NodeToClientVersion
+    )
 import Ouroboros.Network.Protocol.Handshake.Type
-    ( Handshake, Message (..), RefuseReason (..) )
+    ( Handshake
+    , Message (..)
+    , RefuseReason (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
-    ( LocalTxSubmission, Message (..) )
+    ( LocalTxSubmission
+    , Message (..)
+    )
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
@@ -123,6 +140,10 @@ encodeTraceClient encodeTx encodeErr = \case
             MsgRefuse reason ->
                 [ "tag" .= ("RefuseVersions" :: String)
                 , "reason" .= encodeRefuseReason reason
+                ]
+            MsgQueryReply versions ->
+                [ "tag" .= ("QueryReply" :: String)
+                , "Versions" .= (show <$> Map.keys versions)
                 ]
 
         encodeRefuseReason

@@ -206,7 +206,7 @@ newWebSocketApp tr unliftIO = do
                 withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig conn $ \protocolsClients -> do
                     let clientA = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch protocolsClients
                     let clientB = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch exUnitsClients
-                    let vData  = NodeToClientVersionData networkMagic True
+                    let vData  = NodeToClientVersionData networkMagic False
                     concurrently_
                         (connectClient trClient clientA vData nodeSocket)
                         (connectClient trClient clientB vData nodeSocket)

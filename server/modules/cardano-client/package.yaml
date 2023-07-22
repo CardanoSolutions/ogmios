@@ -1,7 +1,7 @@
 _config: !include "../../.hpack.config.yaml"
 
 name:                cardano-client
-version:             1.0.0
+version:             1.1.0
 github:              "cardanosolutions/ogmios"
 license:             MPL-2.0
 author:              "KtorZ <matthias.benkort@gmail.com>"
