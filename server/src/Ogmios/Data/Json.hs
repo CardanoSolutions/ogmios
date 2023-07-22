@@ -100,6 +100,7 @@ import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
 import qualified Ogmios.Data.Json.Byron as Byron
+import qualified Ogmios.Data.Json.Conway as Conway
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
@@ -142,6 +143,8 @@ encodeBlock = \case
         Alonzo.encodeBlock blk
     BlockBabbage blk ->
         Babbage.encodeBlock blk
+    BlockConway blk ->
+        Conway.encodeBlock blk
 
 encodeSubmitTransactionError
     :: Crypto crypto
@@ -160,6 +163,8 @@ encodeSubmitTransactionError = \case
         encodeList Alonzo.encodeLedgerFailure xs
     ApplyTxErrBabbage (ApplyTxError xs) ->
         encodeList Babbage.encodeLedgerFailure xs
+    ApplyTxErrConway (ApplyTxError xs) ->
+        encodeList Conway.encodeLedgerFailure xs
     ApplyTxErrWrongEra e ->
         encodeList encodeEraMismatch [ e ]
 
@@ -179,6 +184,8 @@ encodeSerializedTransaction = \case
     GenTxAlonzo tx ->
         encodeByteStringBase16 $ Cbor.toStrictByteString $ toCBOR tx
     GenTxBabbage tx ->
+        encodeByteStringBase16 $ Cbor.toStrictByteString $ toCBOR tx
+    GenTxConway tx ->
         encodeByteStringBase16 $ Cbor.toStrictByteString $ toCBOR tx
 
 encodeTip
@@ -203,6 +210,8 @@ encodeTx
     => GenTx (CardanoBlock crypto)
     -> Json
 encodeTx = \case
+    GenTxConway (ShelleyTx _ x) ->
+        Conway.encodeTx x
     GenTxBabbage (ShelleyTx _ x) ->
         Babbage.encodeTx x
     GenTxAlonzo (ShelleyTx _ x) ->
@@ -221,6 +230,8 @@ encodeTxId
     => GenTxId (CardanoBlock crypto)
     -> Json
 encodeTxId = \case
+    GenTxIdConway (ShelleyTxId x) ->
+        Shelley.encodeTxId x
     GenTxIdBabbage (ShelleyTxId x) ->
         Shelley.encodeTxId x
     GenTxIdAlonzo (ShelleyTxId x) ->

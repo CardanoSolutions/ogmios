@@ -18,9 +18,6 @@ import Codec.CBOR.Write
 import Data.ByteString.Base16
     ( encodeBase16
     )
-import Data.Maybe.Strict
-    ( maybeToStrictMaybe
-    )
 
 import qualified Cardano.Chain.Block as By hiding
     ( Proof

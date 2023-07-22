@@ -3,7 +3,6 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -40,12 +39,14 @@ module Ogmios.Data.Protocol.TxSubmission
     , NodeTipTooOldError (..)
     , evaluateExecutionUnits
     , incompatibleEra
+    , unsupportedEra
     , nodeTipTooOld
     , _encodeEvaluateTransactionResponse
     , CanEvaluateScriptsInEra
 
       -- ** Re-exports
     , AlonzoEra
+    , ConwayEra
     , BabbageEra
     , EpochInfo
     , ExUnits
@@ -69,44 +70,50 @@ import Cardano.Ledger.Alonzo
     ( AlonzoEra
     )
 import Cardano.Ledger.Alonzo.Scripts
-    ( CostModels (..)
+    ( AlonzoScript
     , ExUnits (..)
     , Script
     )
-import Cardano.Ledger.Alonzo.Tools
-    ( TransactionScriptFailure
-    , evaluateTransactionExecutionUnits
+import Cardano.Ledger.Alonzo.Tx
+    ( AlonzoEraTx
     )
 import Cardano.Ledger.Alonzo.TxInfo
     ( ExtendedUTxO
     , TranslationError (..)
     )
-import Cardano.Ledger.Alonzo.TxWitness
+import Cardano.Ledger.Alonzo.TxWits
     ( RdmrPtr (..)
-    , Redeemers
-    , TxDats
+    )
+import Cardano.Ledger.Alonzo.UTxO
+    ( AlonzoScriptsNeeded (..)
+    )
+import Cardano.Ledger.Api
+    ( TransactionScriptFailure
+    , evalTxExUnits
     )
 import Cardano.Ledger.Babbage
     ( BabbageEra
     )
-import Cardano.Ledger.BaseTypes
-    ( ProtVer
+import Cardano.Ledger.Babbage.TxBody
+    ( BabbageEraTxBody
+    )
+import Cardano.Ledger.Conway
+    ( ConwayEra
     )
 import Cardano.Ledger.Crypto
     ( StandardCrypto
     )
 import Cardano.Ledger.Era
-    ( Era
-    )
-import Cardano.Ledger.Shelley.TxBody
-    ( DCert
-    , Wdrl
+    ( EraCrypto
     )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
     )
 import Cardano.Ledger.TxIn
     ( TxIn
+    )
+import Cardano.Ledger.UTxO
+    ( EraUTxO (..)
     )
 import Cardano.Network.Protocol.NodeToClient
     ( Crypto
@@ -126,12 +133,6 @@ import Control.Arrow
     )
 import Control.Monad.Trans.Except
     ( Except
-    )
-import Data.Sequence.Strict
-    ( StrictSeq
-    )
-import GHC.Records
-    ( HasField (..)
     )
 import Ogmios.Data.EraTranslation
     ( MultiEraUTxO
@@ -317,6 +318,7 @@ data EvaluateTransactionResponse block
 data EvaluateTransactionError block
     = ScriptExecutionFailures (Map RdmrPtr [TransactionScriptFailure (Crypto block)])
     | IncompatibleEra Text
+    | UnsupportedEra Text
     | OverlappingAdditionalUtxo (Set (TxIn (Crypto block)))
     | NodeTipTooOldErr NodeTipTooOldError
     | CannotCreateEvaluationContext (TranslationError (Crypto block))
@@ -327,6 +329,11 @@ data NodeTipTooOldError = NodeTipTooOld
     , minimumRequiredEra :: Text
     }
     deriving (Show)
+
+-- | Shorthand constructor for 'EvaluateTransactionResponse'
+unsupportedEra :: Text -> EvaluateTransactionResponse block
+unsupportedEra =
+    EvaluationFailure . UnsupportedEra
 
 -- | Shorthand constructor for 'EvaluateTransactionResponse'
 incompatibleEra :: Text -> EvaluateTransactionResponse block
@@ -366,8 +373,17 @@ _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeS
                         encodeEraName era
                     )
                 )
-        EvaluationFailure (OverlappingAdditionalUtxo inputs) ->
+        EvaluationFailure (UnsupportedEra era) ->
             reject (Rpc.FaultCustom 3001)
+                "Trying to evaluate a transaction from an era that's no longer supported \
+                \(e.g. Alonzo). Please use a more recent transaction format."
+                (pure $ encodeObject
+                    ( "unsupportedEra" .=
+                        encodeEraName era
+                    )
+                )
+        EvaluationFailure (OverlappingAdditionalUtxo inputs) ->
+            reject (Rpc.FaultCustom 3002)
                 "Some user-provided additional UTxO entries overlap with those that exist \
                 \in the ledger."
                 (pure $ encodeObject
@@ -376,7 +392,7 @@ _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeS
                     )
                 )
         EvaluationFailure (NodeTipTooOldErr err) ->
-            reject (Rpc.FaultCustom 3002)
+            reject (Rpc.FaultCustom 3003)
                 "The node is still synchronizing and the ledger isn't yet in an era where \
                 \scripts are enabled (i.e. Alonzo and beyond)."
                 (pure $ encodeObject
@@ -387,7 +403,7 @@ _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeS
                     )
                 )
         EvaluationFailure (CannotCreateEvaluationContext err) ->
-            reject (Rpc.FaultCustom 3003)
+            reject (Rpc.FaultCustom 3004)
                 "Unable to create the evaluation context from the given transaction."
                 (pure $ encodeObject
                     ( "reason" .=
@@ -396,7 +412,7 @@ _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeS
                 )
         EvaluationFailure (ScriptExecutionFailures failures) ->
             -- TODO: Breakdown / promote nested errors into fine-grained errors
-            reject (Rpc.FaultCustom 3004)
+            reject (Rpc.FaultCustom 3005)
                 "Some scripts of the transactions terminated with error(s)."
                 (pure $ encodeMap
                     stringifyRdmrPtr
@@ -407,28 +423,20 @@ _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeS
 -- | A constraint synonym to bundle together constraints needed to run a script
 -- evaluation in any era after Alonzo (incl.).
 type CanEvaluateScriptsInEra era =
-      ( Era era
+      ( AlonzoEraTx era
+      , BabbageEraTxBody era
       , ExtendedUTxO era
-      , HasField "inputs" (Core.TxBody era) (Set (TxIn (Era.Crypto era)))
-      , HasField "collateral" (Core.TxBody era) (Set (TxIn (Era.Crypto era)))
-      , HasField "referenceInputs" (Core.TxBody era) (Set (TxIn (Era.Crypto era)))
-      , HasField "certs" (Core.TxBody era) (StrictSeq (DCert (Era.Crypto era)))
-      , HasField "wdrls" (Core.TxBody era) (Wdrl (Era.Crypto era))
-      , HasField "txdats" (Core.Witnesses era) (TxDats era)
-      , HasField "txrdmrs" (Core.Witnesses era) (Redeemers era)
-      , HasField "_maxTxExUnits" (Core.PParams era) ExUnits
-      , HasField "_protocolVersion" (Core.PParams era) ProtVer
-      , HasField "_costmdls" (Core.PParams era) CostModels
-      , HasField "certs" (Core.TxBody era) (StrictSeq (DCert (Era.Crypto era)))
-      , Core.Script era ~ Script era
-      , Era.Crypto era ~ StandardCrypto
+      , EraUTxO era
+      , ScriptsNeeded era ~ AlonzoScriptsNeeded era
+      , Script era ~ AlonzoScript era
+      , EraCrypto era ~ StandardCrypto
       )
 
 -- | Evaluate script executions units for the given transaction.
 evaluateExecutionUnits
     :: forall era block.
       ( CanEvaluateScriptsInEra era
-      , Era.Crypto era ~ Crypto block
+      , Era.EraCrypto era ~ Crypto block
       )
     => Core.PParams era
         -- ^ Protocol parameters
@@ -453,9 +461,9 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
   where
     aggregateReports
         :: RdmrPtr
-        -> Either (TransactionScriptFailure (Era.Crypto era)) ExUnits
-        -> (Map RdmrPtr [TransactionScriptFailure (Era.Crypto era)], Map RdmrPtr ExUnits)
-        -> (Map RdmrPtr [TransactionScriptFailure (Era.Crypto era)], Map RdmrPtr ExUnits)
+        -> Either (TransactionScriptFailure (Era.EraCrypto era)) ExUnits
+        -> (Map RdmrPtr [TransactionScriptFailure (Era.EraCrypto era)], Map RdmrPtr ExUnits)
+        -> (Map RdmrPtr [TransactionScriptFailure (Era.EraCrypto era)], Map RdmrPtr ExUnits)
     aggregateReports ptr result (failures, successes) = case result of
         Left scriptFailure ->
             ( Map.unionWith (++) (Map.singleton ptr [scriptFailure]) failures
@@ -469,12 +477,11 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
     evaluation
         :: Either
             (TranslationError (Crypto block))
-            (Map RdmrPtr (Either (TransactionScriptFailure (Era.Crypto era)) ExUnits))
+            (Map RdmrPtr (Either (TransactionScriptFailure (Era.EraCrypto era)) ExUnits))
     evaluation =
-        evaluateTransactionExecutionUnits
+        evalTxExUnits
           pparams
           tx
           utxo
           (hoistEpochInfo (left show . runIdentity . runExceptT) epochInfo)
           systemStart
-          (mapToArray (unCostModels (getField @"_costmdls" pparams)))

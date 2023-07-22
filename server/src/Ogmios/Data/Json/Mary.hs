@@ -2,8 +2,6 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE TypeApplications #-}
-
 module Ogmios.Data.Json.Mary where
 
 import Ogmios.Data.Json.Prelude
@@ -14,17 +12,14 @@ import Cardano.Binary
 import Cardano.Ledger.Crypto
     ( Crypto
     )
-import Cardano.Ledger.Val
-    ( isZero
+import Cardano.Ledger.Era
+    ( Era
     )
 import Data.ByteString.Base16
     ( encodeBase16
     )
 import Data.Maybe.Strict
     ( fromSMaybe
-    )
-import GHC.Records
-    ( getField
     )
 import Ouroboros.Consensus.Cardano.Block
     ( MaryEra
@@ -46,24 +41,23 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 
 import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 
+import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
-import qualified Cardano.Ledger.Era as Ledger
-import qualified Cardano.Ledger.Hashes as Ledger
-import qualified Cardano.Ledger.TxIn as Ledger
 
 import qualified Cardano.Ledger.Shelley.BlockChain as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
-import qualified Cardano.Ledger.Shelley.Rules.Ledger as Sh
+import qualified Cardano.Ledger.Shelley.Rules as Sh
 import qualified Cardano.Ledger.Shelley.Tx as Sh
 import qualified Cardano.Ledger.Shelley.TxBody as Sh
+import qualified Cardano.Ledger.Shelley.TxWits as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
-import qualified Cardano.Ledger.AuxiliaryData as MA
+import qualified Cardano.Ledger.Allegra.Rules as MA
+import qualified Cardano.Ledger.Allegra.TxAuxData as MA
+
+import qualified Cardano.Ledger.Mary.TxBody as MA
 import qualified Cardano.Ledger.Mary.Value as MA
-import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
-import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
-import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
 
 type AuxiliaryScripts crypto =
     Map (Ledger.ScriptHash crypto) (Ledger.Script (MaryEra crypto))
@@ -74,9 +68,9 @@ type AuxiliaryScripts crypto =
 
 encodeAuxiliaryData
     :: forall crypto. Crypto crypto
-    => MA.AuxiliaryData (MaryEra crypto)
+    => MA.AllegraTxAuxData (MaryEra crypto)
     -> (Json, AuxiliaryScripts crypto)
-encodeAuxiliaryData (MA.AuxiliaryData blob scripts) =
+encodeAuxiliaryData (MA.AllegraTxAuxData blob scripts) =
     ( Shelley.encodeMetadataBlob blob
     , foldr
         (\script -> Map.insert (Ledger.hashScript @(MaryEra crypto) script) script)
@@ -85,7 +79,8 @@ encodeAuxiliaryData (MA.AuxiliaryData blob scripts) =
     )
 
 encodeBlock
-    :: Crypto crypto
+    :: ( Crypto crypto
+       )
     => ShelleyBlock (TPraos crypto) (MaryEra crypto)
     -> Json
 encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
@@ -107,13 +102,25 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
 
 encodeLedgerFailure
     :: Crypto crypto
-    => Sh.LedgerPredicateFailure (MaryEra crypto)
+    => Sh.ShelleyLedgerPredFailure (MaryEra crypto)
     -> Json
 encodeLedgerFailure = \case
     Sh.UtxowFailure e  ->
         Shelley.encodeUtxowFailure encodeUtxoFailure e
     Sh.DelegsFailure e ->
         Shelley.encodeDelegsFailure e
+
+encodeMultiAsset
+    :: Crypto crypto
+    => MA.MultiAsset crypto
+    -> Json
+encodeMultiAsset (MA.MultiAsset assets) =
+    encodeMap stringifyAssetId encodeInteger (flatten assets)
+  where
+    flatten :: (Ord k1, Ord k2) => Map k1 (Map k2 a) -> Map (k1, k2) a
+    flatten = Map.foldrWithKey
+        (\k inner -> Map.union (Map.mapKeys (k,) inner))
+        mempty
 
 encodePolicyId
     :: Crypto crypto
@@ -122,24 +129,21 @@ encodePolicyId
 encodePolicyId (MA.PolicyID hash) =
     Shelley.encodeScriptHash hash
 
-encodePParams'
-    :: (forall a. Text -> (a -> Json) -> Sh.HKD f a -> Series)
-    -> Sh.PParams' f era
-    -> Json
-encodePParams' =
-    Shelley.encodePParams'
-
 encodeProposedPPUpdates
-    :: Ledger.PParamsDelta era ~ Sh.PParamsUpdate era
-    => Crypto (Ledger.Crypto era)
+    :: forall era.
+        ( Era era
+        , Ledger.PParamsHKD StrictMaybe era ~ Sh.ShelleyPParams StrictMaybe era
+        )
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates =
     Shelley.encodeProposedPPUpdates
 
 encodeTx
-    :: forall crypto. (Crypto crypto)
-    => Sh.Tx (MaryEra crypto)
+    :: forall crypto.
+       ( Crypto crypto
+       )
+    => Sh.ShelleyTx (MaryEra crypto)
     -> Json
 encodeTx x =
     "id" .= Shelley.encodeTxId (Ledger.txid @(MaryEra crypto) (Sh.body x))
@@ -155,11 +159,8 @@ encodeTx x =
     "cbor" .= encodeByteStringBase16 (serialize' x)
         & encodeObject
   where
-    adHash :: MA.TxBody era -> StrictMaybe (MA.AuxiliaryDataHash (Ledger.Crypto era))
-    adHash = getField @"adHash"
-
     auxiliary = do
-        hash <- Shelley.encodeAuxiliaryDataHash <$> adHash (Sh.body x)
+        hash <- Shelley.encodeAuxiliaryDataHash <$> MA.mtbAuxDataHash (Sh.body x)
         (labels, scripts) <- encodeAuxiliaryData <$> Sh.auxiliaryData x
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
@@ -168,19 +169,19 @@ encodeTx x =
 
 encodeTxBody
     :: Crypto crypto
-    => MA.TxBody (MaryEra crypto)
+    => MA.MaryTxBody (MaryEra crypto)
     -> Series
-encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ mint) =
+encodeTxBody (MA.MaryTxBody inps outs certs wdrls fee validity updates _ mint) =
     "inputs" .=
         encodeFoldable Shelley.encodeTxIn inps <>
     "outputs" .=
         encodeFoldable encodeTxOut outs <>
-    "withdrawals" .=? OmitWhen (null . Sh.unWdrl)
+    "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         Shelley.encodeWdrl wdrls <>
     "certificates" .=? OmitWhen null
         (encodeFoldable Shelley.encodeDCert) certs <>
-    "mint" .=? OmitWhen isZero
-        encodeValue mint <>
+    "mint" .=? OmitWhen (== mempty)
+        encodeMultiAsset mint <>
     "fee" .=
         encodeCoin fee <>
     "validityInterval" .=
@@ -193,7 +194,7 @@ encodeTxOut
     :: Crypto crypto
     => Sh.TxOut (MaryEra crypto)
     -> Json
-encodeTxOut (Sh.TxOut addr value) =
+encodeTxOut (Sh.ShelleyTxOut addr value) =
     "address" .=
         Shelley.encodeAddress addr <>
     "value" .=
@@ -211,7 +212,7 @@ encodeUtxo =
 
 encodeUtxoFailure
     :: Crypto crypto
-    => MA.UtxoPredicateFailure (MaryEra crypto)
+    => MA.AllegraUtxoPredFailure (MaryEra crypto)
     -> Json
 encodeUtxoFailure = \case
     MA.BadInputsUTxO inputs ->
@@ -272,7 +273,7 @@ encodeUtxoFailure = \case
         & encodeObject
     MA.OutputBootAddrAttrsTooBig outs ->
         "addressAttributesTooLarge" .=
-            encodeFoldable Shelley.encodeAddress ((\(Sh.TxOut addr _) -> addr) <$> outs)
+            encodeFoldable Shelley.encodeAddress ((\(Sh.ShelleyTxOut addr _) -> addr) <$> outs)
         & encodeObject
     MA.TriesToForgeADA ->
         "triesToForgeAda" .=
@@ -283,24 +284,19 @@ encodeUtxoFailure = \case
 
 encodeValue
     :: Crypto crypto
-    => MA.Value crypto
+    => MA.MaryValue crypto
     -> Json
-encodeValue (MA.Value coins assets) =
+encodeValue (MA.MaryValue coins assets) =
     "coins" .=
         encodeInteger coins <>
     "assets" .=
-        encodeMap stringifyAssetId encodeInteger (flatten assets)
+        encodeMultiAsset assets
     & encodeObject
-  where
-    flatten :: (Ord k1, Ord k2) => Map k1 (Map k2 a) -> Map (k1, k2) a
-    flatten = Map.foldrWithKey
-        (\k inner -> Map.union (Map.mapKeys (k,) inner))
-        mempty
 
 encodeWitnessSet
     :: Crypto crypto
     => StrictMaybe (AuxiliaryScripts crypto)
-    -> Sh.WitnessSet (MaryEra crypto)
+    -> Sh.ShelleyTxWits (MaryEra crypto)
     -> Series
 encodeWitnessSet (fromSMaybe mempty -> auxScripts) x =
     "signatories" .=

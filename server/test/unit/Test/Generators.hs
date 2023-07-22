@@ -2,39 +2,35 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-
-{-# LANGUAGE TypeApplications #-}
-
 module Test.Generators where
 
 import Ogmios.Prelude
 
-import Cardano.Ledger.Alonzo.Data
-    ( Data
-    )
 import Cardano.Ledger.Alonzo.Genesis
     ( AlonzoGenesis (..)
     )
-import Cardano.Ledger.Alonzo.Tools
-    ( TransactionScriptFailure (..)
+import Cardano.Ledger.Alonzo.Scripts.Data
+    ( Data
     )
 import Cardano.Ledger.Alonzo.TxInfo
     ( TranslationError (..)
     , transExUnits
     )
+import Cardano.Ledger.Api
+    ( TransactionScriptFailure (..)
+    )
+import Cardano.Ledger.Core
+    ( EraSegWits (..)
+    )
 import Cardano.Ledger.Crypto
     ( StandardCrypto
     )
 import Cardano.Ledger.Era
-    ( Crypto
-    , Era
-    , SupportsSegWit (..)
+    ( Era
+    , EraCrypto
     )
 import Cardano.Ledger.Keys
     ( KeyRole (..)
-    )
-import Cardano.Ledger.Serialization
-    ( ToCBORGroup
     )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
@@ -101,6 +97,7 @@ import Ouroboros.Consensus.Protocol.TPraos
     )
 import Ouroboros.Consensus.Shelley.Eras
     ( AlonzoEra
+    , ConwayEra
     , ShelleyEra
     , StandardAllegra
     , StandardAlonzo
@@ -134,9 +131,6 @@ import Ouroboros.Network.Protocol.LocalTxMonitor.Type
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..)
     )
-import Test.Cardano.Ledger.Shelley.Serialisation.Generators.Genesis
-    ( genPParams
-    )
 import Test.QuickCheck
     ( Arbitrary (..)
     , Gen
@@ -156,9 +150,6 @@ import Test.QuickCheck.Arbitrary.Generic
 import Test.QuickCheck.Gen
     ( Gen (..)
     )
-import Test.QuickCheck.Hedgehog
-    ( hedgehog
-    )
 import Test.QuickCheck.Random
     ( mkQCGen
     )
@@ -166,6 +157,8 @@ import Type.Reflection
     ( typeRep
     )
 
+import Test.Cardano.Ledger.Shelley.Serialisation.Generators
+    ()
 import Test.Consensus.Cardano.Generators
     ()
 import Test.Generators.Orphans
@@ -193,16 +186,16 @@ genBlock = reasonablySized $ oneof
     , BlockMary <$> genTPraosBlockFrom @StandardMary
     , BlockAlonzo <$> genTPraosBlockFrom @StandardAlonzo
     , BlockBabbage <$> genPraosBlockFrom @StandardBabbage
+    -- TODO: BlockConway
     ]
   where
     genTPraosBlockFrom
         :: forall era.
-            ( Era era
-            , Crypto era ~ StandardCrypto
-            , ToCBORGroup (TxSeq era)
+            ( EraCrypto era ~ StandardCrypto
             , Arbitrary (Ledger.Tx era)
+            , EraSegWits era
             )
-        => Gen (ShelleyBlock (TPraos (Crypto era)) era)
+        => Gen (ShelleyBlock (TPraos (EraCrypto era)) era)
     genTPraosBlockFrom =
         frequency
             [ (50
@@ -215,19 +208,18 @@ genBlock = reasonablySized $ oneof
               )
             , (1
               , ShelleyBlock
-                  <$> (Ledger.Block <$> arbitrary <*> (pure (toTxSeq @era mempty)))
+                  <$> (Ledger.Block <$> arbitrary <*> pure (toTxSeq @era mempty))
                   <*> arbitrary
               )
             ]
 
     genPraosBlockFrom
         :: forall era.
-            ( Era era
-            , Crypto era ~ StandardCrypto
-            , ToCBORGroup (TxSeq era)
+            ( EraCrypto era ~ StandardCrypto
             , Arbitrary (Ledger.Tx era)
+            , EraSegWits era
             )
-        => Gen (ShelleyBlock (Praos (Crypto era)) era)
+        => Gen (ShelleyBlock (Praos (EraCrypto era)) era)
     genPraosBlockFrom =
         frequency
             [ (50
@@ -240,7 +232,7 @@ genBlock = reasonablySized $ oneof
               )
             , (1
               , ShelleyBlock
-                  <$> (Ledger.Block <$> arbitrary <*> (pure (toTxSeq @era mempty)))
+                  <$> (Ledger.Block <$> arbitrary <*> pure (toTxSeq @era mempty))
                   <*> arbitrary
               )
             ]
@@ -289,7 +281,7 @@ genSubmitResult = frequency
 
 genHardForkApplyTxErr :: Gen (HardForkApplyTxErr (CardanoEras StandardCrypto))
 genHardForkApplyTxErr = frequency
-    [ ( 1, HardForkApplyTxErrWrongEra <$> genMismatchEraInfo)
+    [ (1, HardForkApplyTxErrWrongEra <$> genMismatchEraInfo)
     , (5, ApplyTxErrShelley <$> reasonablySized arbitrary)
     , (5, ApplyTxErrAllegra <$> reasonablySized arbitrary)
     , (5, ApplyTxErrMary <$> reasonablySized arbitrary)
@@ -323,7 +315,7 @@ genTranslationError :: Gen (TranslationError StandardCrypto)
 genTranslationError = genericArbitrary
 
 genPreAlonzoEra :: Gen Text
-genPreAlonzoEra = elements [ "Byron", "Shelley", "Allegra", "Mary" ]
+genPreAlonzoEra = elements [ "byron", "shelley", "allegra", "mary" ]
 
 genScriptFailure :: Gen (TransactionScriptFailure StandardCrypto)
 genScriptFailure = oneof
@@ -531,7 +523,7 @@ genPParamsResult _ _ =
             Just Refl{} ->
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> hedgehog (genPParams @era))
+                    , (10, Right <$> arbitrary)
                     ]
             Nothing ->
                 Nothing
@@ -540,7 +532,7 @@ genPParamsResult _ _ =
             Just Refl{} ->
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> hedgehog (genPParams @era))
+                    , (10, Right <$> arbitrary)
                     ]
             Nothing ->
                 Nothing
@@ -549,7 +541,7 @@ genPParamsResult _ _ =
             Just Refl{} ->
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> hedgehog (genPParams @era))
+                    , (10, Right <$> arbitrary)
                     ]
             Nothing ->
                 Nothing
@@ -695,11 +687,13 @@ genGenesisConfig
     :: ( Gen (GenesisConfig ByronEra)
        , Gen (GenesisConfig ShelleyEra)
        , Gen (GenesisConfig AlonzoEra)
+       , Gen (GenesisConfig ConwayEra)
        )
 genGenesisConfig =
     ( error "TODO: genGenesisConfig@ByronEra"
     , genGenesisConfigShelley
     , genGenesisConfigAlonzo
+    , genGenesisConfigConway
     )
 
 genGenesisConfigShelley
@@ -719,6 +713,11 @@ genGenesisConfigAlonzo =
         <*> arbitrary
         <*> arbitrary
         <*> arbitrary
+
+genGenesisConfigConway
+    :: Gen (GenesisConfig ConwayEra)
+genGenesisConfigConway =
+    reasonablySized arbitrary
 
 genRewardsProvenanceResult
     :: forall crypto. (crypto ~ StandardCrypto)
@@ -765,7 +764,8 @@ genUtxoBabbage =
     reasonablySized arbitrary
 
 genData
-    :: Gen (Data era)
+    :: Era era
+    => Gen (Data era)
 genData =
     reasonablySized arbitrary
 

@@ -395,13 +395,26 @@
                   }
                 }
 
+              , { "title": "EvaluateTransactionFailure[UnsupportedEra]"
+                , "description": "Returned when trying to evaluate execution units of an era that is now considered too old and is no longer supported. This can solved by using a more recent transaction format."
+                , "type": "object"
+                , "required": [ "code", "message", "data" ]
+                , "additionalProperties": false
+                , "properties":
+                  { "code": { "type": "integer", "enum": [ 3001 ] }
+                  , "message": { "type": "string" }
+                  , "data": { "$ref": "cardano.json#/definitions/EvaluateTransactionFailure[UnsupportedEra]" }
+                  }
+                }
+
+
               , { "title": "EvaluateTransactionFailure[OverlappingAdditionalUtxo]"
                 , "description": "Happens when providing an additional UTXO set which overlaps with the UTXO on-chain."
                 , "type": "object"
                 , "required": [ "code", "message", "data" ]
                 , "additionalProperties": false
                 , "properties":
-                  { "code": { "type": "integer", "enum": [ 3001 ] }
+                  { "code": { "type": "integer", "enum": [ 3002 ] }
                   , "message": { "type": "string" }
                   , "data": { "$ref": "cardano.json#/definitions/EvaluateTransactionFailure[OverlappingAdditionalUtxo]" }
                   }
@@ -412,7 +425,7 @@
                 , "required": [ "code", "message", "data" ]
                 , "additionalProperties": false
                 , "properties":
-                  { "code": { "type": "integer", "enum": [ 3002 ] }
+                  { "code": { "type": "integer", "enum": [ 3003 ] }
                   , "message": { "type": "string" }
                   , "data": { "$ref": "cardano.json#/definitions/EvaluateTransactionFailure[NodeTipTooOld]" }
                   }
@@ -423,7 +436,7 @@
                 , "required": [ "code", "message", "data" ]
                 , "additionalProperties": false
                 , "properties":
-                  { "code": { "type": "integer", "enum": [ 3003 ] }
+                  { "code": { "type": "integer", "enum": [ 3004 ] }
                   , "message": { "type": "string" }
                   , "data": { "$ref": "cardano.json#/definitions/EvaluateTransactionFailure[CannotCreateEvaluationContext]" }
                   }
@@ -434,7 +447,7 @@
                 , "required": [ "code", "message", "data" ]
                 , "additionalProperties": false
                 , "properties":
-                  { "code": { "type": "integer", "enum": [ 3004 ] }
+                  { "code": { "type": "integer", "enum": [ 3005 ] }
                   , "message": { "type": "string" }
                   , "data": { "$ref": "cardano.json#/definitions/EvaluateTransactionFailure[ScriptExecutionFailure]" }
                   }

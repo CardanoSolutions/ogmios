@@ -4,7 +4,6 @@
 
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeApplications #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -16,6 +15,9 @@ import Ogmios.Prelude
 
 import Cardano.Ledger.Crypto
     ( StandardCrypto
+    )
+import Cardano.Ledger.Era
+    ( Era
     )
 import Cardano.Network.Protocol.NodeToClient
     ( Block
@@ -40,7 +42,7 @@ import Data.Maybe
     )
 import Ogmios.Data.EraTranslation
     ( MultiEraUTxO (..)
-    , translateUtxo
+    , Upgrade (..)
     )
 import Ogmios.Data.Json
     ( Json
@@ -203,7 +205,6 @@ import Test.Generators
     , genTx
     , genTxId
     , genUTxOResult
-    , genUtxoAlonzo
     , genUtxoBabbage
     , genWithOrigin
     , generateWith
@@ -260,7 +261,7 @@ import Test.QuickCheck.Arbitrary.Generic
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
 
-import qualified Cardano.Ledger.Alonzo.Data as Ledger
+import qualified Cardano.Ledger.Alonzo.Scripts.Data as Ledger
 import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encode.Pretty as Json
@@ -321,17 +322,6 @@ validateFromJSON gen (encode, decode) (n, vectorFilePath) ref = parallel $ do
 spec :: Spec
 spec = do
     context "JSON roundtrips" $ do
-        prop "encodeUtxo / decodeUtxo (Alonzo)" $ forAllShrinkBlind genUtxoAlonzo shrinkUtxo $ \utxo ->
-            let encoded = inefficientEncodingToValue (Alonzo.encodeUtxo utxo) in
-            case Json.parse decodeUtxo encoded of
-                Json.Error e ->
-                    property False
-                        & counterexample e
-                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
-                Json.Success utxo' ->
-                    UTxOInAlonzoEra utxo === utxo'
-                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
-
         prop "encodeUtxo / decodeUtxo (Babbage)" $ forAllShrinkBlind genUtxoBabbage shrinkUtxo $ \utxo ->
             let encoded = inefficientEncodingToValue (Babbage.encodeUtxo utxo) in
             case Json.parse decodeUtxo encoded of
@@ -339,11 +329,11 @@ spec = do
                     property False
                         & counterexample e
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
-                Json.Success (UTxOInAlonzoEra utxo') ->
-                    translateUtxo utxo' === utxo
-                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
                 Json.Success (UTxOInBabbageEra utxo') ->
                     utxo' === utxo
+                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+                Json.Success (UTxOInConwayEra utxo') ->
+                    utxo' === upgrade utxo
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
 
         specify "Golden: Utxo_1.json" $ do
@@ -352,30 +342,30 @@ spec = do
                 Json.Error e -> do
                     show e `shouldContain` "couldn't decode plutus script"
                     show e `shouldContain` "Please drop 'd8184c820249'"
-                Json.Success UTxOInAlonzoEra{} ->
-                    fail "successfully decoded an invalid payload (as Alonzo Utxo)?"
                 Json.Success UTxOInBabbageEra{} ->
-                    fail "successfully decoded an invalid payload( as Babbage Utxo)?"
+                    fail "successfully decoded an invalid payload (as Babbage Utxo)?"
+                Json.Success UTxOInConwayEra{} ->
+                    fail "successfully decoded an invalid payload( as Conway Utxo)?"
 
         specify "Golden: Utxo_2.json" $ do
             json <- decodeFileThrow "Utxo_2.json"
             case Json.parse (decodeUtxo @StandardCrypto) json of
                 Json.Error e ->
                     fail (show e)
-                Json.Success UTxOInAlonzoEra{} ->
-                    fail "wrongly decoded Babbage UTxO as Alonzo's"
                 Json.Success UTxOInBabbageEra{} ->
                     pure ()
+                Json.Success _ ->
+                    fail "successfully decoded Babbage Utxo as another era?"
 
         specify "Golden: Utxo_3.json" $ do
             json <- decodeFileThrow "Utxo_3.json"
             case Json.parse (decodeUtxo @StandardCrypto) json of
                 Json.Error e ->
                     fail (show e)
-                Json.Success UTxOInAlonzoEra{} ->
-                    fail "wrongly decoded Babbage UTxO as Alonzo's"
                 Json.Success UTxOInBabbageEra{} ->
                     pure ()
+                Json.Success _ ->
+                    fail "successfully decoded Babbage Utxo as another era?"
 
         specify "Golden: Utxo_4.json" $ do
             json <- decodeFileThrow "Utxo_4.json"
@@ -383,10 +373,10 @@ spec = do
                 Json.Error e -> do
                     show e `shouldContain` "couldn't decode plutus script"
                     show e `shouldContain` "Please drop '820249'"
-                Json.Success UTxOInAlonzoEra{} ->
-                    fail "successfully decoded an invalid payload (as Alonzo Utxo)?"
                 Json.Success UTxOInBabbageEra{} ->
                     fail "successfully decoded an invalid payload( as Babbage Utxo)?"
+                Json.Success UTxOInConwayEra{} ->
+                    fail "successfully decoded an invalid payload (as Conway Utxo)?"
 
         context "Data / BinaryData" $ do
             prop "arbitrary" $
@@ -405,7 +395,7 @@ spec = do
                     \7A80D87A801A002625A0D87983D879801A000F4240D879811A000FA92E"
 
     context "SlotLength" $ do
-        let matrix = [ ( mkSlotLength 1, Json.integer 1 )
+        let matrix = [ ( mkSlotLength 1, Json.double 1.0 )
                      , ( mkSlotLength 0.1, Json.double 0.1 )
                      ]
         forM_ matrix $ \(slotLength, json) ->
@@ -875,7 +865,7 @@ propBinaryDataRoundtrip dat =
             _ ->
                 property False
 
-unsafeDataFromBytes :: ByteString -> Ledger.Data era
+unsafeDataFromBytes :: Era era => ByteString -> Ledger.Data era
 unsafeDataFromBytes =
     either (error . show) Ledger.binaryDataToData
     . Ledger.makeBinaryData

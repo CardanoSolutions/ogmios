@@ -3,7 +3,6 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Ogmios.App.Protocol.TxMonitorSpec
     ( spec

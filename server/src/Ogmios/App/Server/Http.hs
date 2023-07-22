@@ -6,7 +6,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeApplications #-}
 
 -- NOTE: Needed because of auto-generated template-haskell code for wai-routes.
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}

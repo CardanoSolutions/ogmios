@@ -7,7 +7,6 @@
 
 module Test.Generators.Orphans () where
 
-import Ogmios.Prelude
 
 import Cardano.Ledger.Alonzo.TxInfo
     ( TxOutSource (..)
@@ -21,9 +20,6 @@ import Test.QuickCheck
 import Test.QuickCheck.Arbitrary.Generic
     ( genericArbitrary
     )
-import Test.QuickCheck.Modifiers
-    ( PrintableString (..)
-    )
 
 import qualified Cardano.Ledger.TxIn as Ledger
 
@@ -33,7 +29,3 @@ instance
     ) => Arbitrary (TxOutSource StandardCrypto)
   where
     arbitrary = genericArbitrary
-
-instance Arbitrary Text where
-    arbitrary = toText . getPrintableString <$> arbitrary
-

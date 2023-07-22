@@ -3,7 +3,6 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeApplications #-}
 
 -- Used to partially pattern match result of parsing default arguments. Okay-ish
 -- because it's test code and, having it fail would be instantly caught.

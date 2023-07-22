@@ -37,12 +37,13 @@ library:
     - iohk-monitoring
     - network-mux
     - ouroboros-consensus
+    - ouroboros-consensus-diffusion
     - ouroboros-consensus-protocol
-    - ouroboros-consensus-byron
     - ouroboros-consensus-cardano
-    - ouroboros-consensus-shelley
     - ouroboros-network
+    - ouroboros-network-api
     - ouroboros-network-framework
+    - ouroboros-network-protocols
     - typed-protocols
     - typed-protocols-cborg
   build-tools:

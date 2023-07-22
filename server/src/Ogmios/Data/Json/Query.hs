@@ -5,7 +5,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Ogmios.Data.Json.Query
     ( -- * Types
@@ -97,14 +96,6 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Api
     ( ShelleyBasedEra (..)
     )
-import Cardano.Binary
-    ( Annotator
-    , DecoderError
-    , FromCBOR (..)
-    , decodeAnnotator
-    , decodeFull
-    , decodeFullDecoder
-    )
 import Cardano.Crypto.Hash
     ( hashFromBytes
     , hashFromTextAsHex
@@ -119,10 +110,23 @@ import Cardano.Ledger.Alonzo.Genesis
     )
 import Cardano.Ledger.Babbage
     ()
+import Cardano.Ledger.Binary
+    ( Annotator
+    , FromCBOR (..)
+    , decCBOR
+    , decodeFullAnnotator
+    , decodeFullDecoder
+    )
+import Cardano.Ledger.Conway.Genesis
+    ( ConwayGenesis
+    )
 import Cardano.Ledger.Crypto
     ( Crypto
     , HASH
     , StandardCrypto
+    )
+import Cardano.Ledger.Era
+    ( Era
     )
 import Cardano.Ledger.Keys
     ( KeyRole (..)
@@ -151,7 +155,6 @@ import Codec.Binary.Bech32.TH
     )
 import Codec.Serialise
     ( deserialise
-    , deserialiseOrFail
     , serialise
     )
 import Data.Aeson
@@ -171,7 +174,7 @@ import Ogmios.Data.EraTranslation
     ( MostRecentEra
     , MultiEraTxOut (..)
     , MultiEraUTxO (..)
-    , translateTxOut
+    , Upgrade (..)
     )
 import Ouroboros.Consensus.BlockchainTime
     ( SystemStart (..)
@@ -219,6 +222,7 @@ import Ouroboros.Consensus.Shelley.Eras
     ( AllegraEra
     , AlonzoEra
     , BabbageEra
+    , ConwayEra
     , MaryEra
     , ShelleyEra
     )
@@ -250,7 +254,9 @@ import Ouroboros.Network.Point
     ( Block (..)
     )
 
+import qualified Cardano.Ledger.Binary.Decoding as Binary
 import qualified Codec.Binary.Bech32 as Bech32
+import qualified Codec.CBOR.Decoding as Cbor
 import qualified Codec.CBOR.Encoding as Cbor
 import qualified Codec.CBOR.Write as Cbor
 import qualified Data.Aeson as Json
@@ -259,40 +265,33 @@ import qualified Data.Aeson.KeyMap as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.Map.Merge.Strict as Map
 import qualified Data.Map.Strict as Map
+import qualified Data.Sequence.Strict as StrictSeq
 import qualified Data.Set as Set
 import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TL
 import qualified Text.Read as T
 
-import qualified Ouroboros.Consensus.HardFork.Combinator.Ledger.Query as LSQ
-import qualified Ouroboros.Consensus.Ledger.Query as LSQ
-
-import qualified Plutus.V1.Ledger.Api as Plutus
-
+import qualified Cardano.Chain.Genesis as Byron
 import qualified Cardano.Crypto.Hashing as CC
 import qualified Cardano.Protocol.TPraos.API as TPraos
-
-import qualified Cardano.Ledger.Era as Era
-
-import qualified Cardano.Chain.Genesis as Byron
+import qualified Ouroboros.Consensus.HardFork.Combinator.Ledger.Query as LSQ
+import qualified Ouroboros.Consensus.Ledger.Query as LSQ
+import qualified PlutusLedgerApi.Common as Plutus
 
 import qualified Cardano.Ledger.Address as Ledger
-import qualified Cardano.Ledger.Alonzo.Data as Ledger.Alonzo
+import qualified Cardano.Ledger.Allegra.Scripts as Ledger.Allegra
 import qualified Cardano.Ledger.Alonzo.Language as Ledger.Alonzo
 import qualified Cardano.Ledger.Alonzo.Scripts as Ledger.Alonzo
-import qualified Cardano.Ledger.Alonzo.TxBody as Ledger.Alonzo
+import qualified Cardano.Ledger.Alonzo.Scripts.Data as Ledger.Alonzo
 import qualified Cardano.Ledger.Babbage.TxBody as Ledger.Babbage
 import qualified Cardano.Ledger.BaseTypes as Ledger
 import qualified Cardano.Ledger.Coin as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Credential as Ledger
-import qualified Cardano.Ledger.Hashes as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
 import qualified Cardano.Ledger.Mary.Value as Ledger.Mary
 import qualified Cardano.Ledger.PoolDistr as Ledger
 import qualified Cardano.Ledger.SafeHash as Ledger
-import qualified Cardano.Ledger.ShelleyMA.Timelocks as Ledger.Mary
 import qualified Cardano.Ledger.TxIn as Ledger
 
 import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
@@ -301,12 +300,11 @@ import qualified Cardano.Ledger.Shelley.RewardProvenance as Sh
 import qualified Cardano.Ledger.Shelley.TxBody as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
-import qualified Codec.CBOR.Decoding as Cbor
-import qualified Data.Sequence.Strict as StrictSeq
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
 import qualified Ogmios.Data.Json.Byron as Byron
+import qualified Ogmios.Data.Json.Conway as Conway
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
@@ -351,11 +349,13 @@ data AdHocQuery result where
     GetByronGenesis   :: AdHocQuery (GenesisConfig ByronEra)
     GetShelleyGenesis :: AdHocQuery (GenesisConfig ShelleyEra)
     GetAlonzoGenesis  :: AdHocQuery (GenesisConfig AlonzoEra)
+    GetConwayGenesis  :: AdHocQuery (GenesisConfig ConwayEra)
 
 type family GenesisConfig (era :: Type -> Type) :: Type where
     GenesisConfig ByronEra = Byron.GenesisData
-    GenesisConfig ShelleyEra = ShelleyGenesis (ShelleyEra StandardCrypto)
+    GenesisConfig ShelleyEra = ShelleyGenesis StandardCrypto
     GenesisConfig AlonzoEra = AlonzoGenesis
+    GenesisConfig ConwayEra = ConwayGenesis StandardCrypto
 
 instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
     parseJSON json = Json.withObject "Query" (\obj -> do
@@ -395,7 +395,7 @@ instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
             "Network/blockHeight" ->
                 parseQueryNetworkBlockHeight id queryParams
             "Network/genesisConfiguration" ->
-                parseQueryNetworkGenesisConfiguration (Proxy, Proxy, Proxy) queryParams
+                parseQueryNetworkGenesisConfiguration (Proxy, Proxy, Proxy, Proxy) queryParams
             "Network/startTime" ->
                 parseQueryNetworkStartTime id queryParams
             "Network/tip" ->
@@ -433,11 +433,12 @@ deriving instance Show SomeShelleyEra
 
 instance ToJSON SomeShelleyEra where
     toJSON = \case
-        SomeShelleyEra ShelleyBasedEraShelley -> toJSON @Text "Shelley"
-        SomeShelleyEra ShelleyBasedEraAllegra -> toJSON @Text "Allegra"
-        SomeShelleyEra ShelleyBasedEraMary -> toJSON @Text "Mary"
-        SomeShelleyEra ShelleyBasedEraAlonzo -> toJSON @Text "Alonzo"
-        SomeShelleyEra ShelleyBasedEraBabbage -> toJSON @Text "Babbage"
+        SomeShelleyEra ShelleyBasedEraShelley -> toJSON @Text "shelley"
+        SomeShelleyEra ShelleyBasedEraAllegra -> toJSON @Text "allegra"
+        SomeShelleyEra ShelleyBasedEraMary -> toJSON @Text "mary"
+        SomeShelleyEra ShelleyBasedEraAlonzo -> toJSON @Text "alonzo"
+        SomeShelleyEra ShelleyBasedEraBabbage -> toJSON @Text "babbage"
+        SomeShelleyEra ShelleyBasedEraConway -> toJSON @Text "conway"
 
 -- | Convert an 'EraIndex' to a Shelley-based era.
 fromEraIndex
@@ -445,12 +446,13 @@ fromEraIndex
     => EraIndex (CardanoEras crypto)
     -> Maybe SomeShelleyEra
 fromEraIndex = \case
-    EraIndex                Z{}      -> Nothing
-    EraIndex             (S Z{})     -> Just (SomeShelleyEra ShelleyBasedEraShelley)
-    EraIndex          (S (S Z{}))    -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
-    EraIndex       (S (S (S Z{})))   -> Just (SomeShelleyEra ShelleyBasedEraMary)
-    EraIndex    (S (S (S (S Z{}))))  -> Just (SomeShelleyEra ShelleyBasedEraAlonzo)
-    EraIndex (S (S (S (S (S Z{}))))) -> Just (SomeShelleyEra ShelleyBasedEraBabbage)
+    EraIndex                   Z{}       -> Nothing
+    EraIndex                (S Z{})      -> Just (SomeShelleyEra ShelleyBasedEraShelley)
+    EraIndex             (S (S Z{}))     -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
+    EraIndex          (S (S (S Z{})))    -> Just (SomeShelleyEra ShelleyBasedEraMary)
+    EraIndex       (S (S (S (S Z{}))))   -> Just (SomeShelleyEra ShelleyBasedEraAlonzo)
+    EraIndex    (S (S (S (S (S Z{})))))  -> Just (SomeShelleyEra ShelleyBasedEraBabbage)
+    EraIndex (S (S (S (S (S (S Z{})))))) -> Just (SomeShelleyEra ShelleyBasedEraConway)
 
 --
 -- Encoders
@@ -692,6 +694,8 @@ parseQueryLedgerEpoch genResult =
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetEpochNo
                 SomeShelleyEra ShelleyBasedEraBabbage ->
                     LSQ.BlockQuery $ QueryIfCurrentBabbage GetEpochNo
+                SomeShelleyEra ShelleyBasedEraConway ->
+                    LSQ.BlockQuery $ QueryIfCurrentConway GetEpochNo
             )
 
 parseQueryLedgerEraStart
@@ -720,6 +724,8 @@ parseQueryLedgerEraStart genResult =
                     LSQ.BlockQuery $ QueryAnytimeAlonzo GetEraStart
                 SomeShelleyEra ShelleyBasedEraBabbage ->
                     LSQ.BlockQuery $ QueryAnytimeBabbage GetEraStart
+                SomeShelleyEra ShelleyBasedEraConway ->
+                    LSQ.BlockQuery $ QueryAnytimeConway GetEraStart
             )
 
 parseQueryLedgerEraSummaries
@@ -771,6 +777,11 @@ parseQueryLedgerTip genResultInEraTPraos genResultInEraPraos =
                     (LSQ.BlockQuery (QueryIfCurrentBabbage GetLedgerTip))
                     (mismatchOrWrapAs query (encodePoint . castPoint @(Praos crypto)))
                     (genResultInEraPraos (Proxy @(BabbageEra crypto)))
+            SomeShelleyEra ShelleyBasedEraConway ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery (QueryIfCurrentConway GetLedgerTip))
+                    (mismatchOrWrapAs query (encodePoint . castPoint @(Praos crypto)))
+                    (genResultInEraPraos (Proxy @(ConwayEra crypto)))
 
 parseQueryLedgerProjectedRewards
     :: forall crypto f. (Crypto crypto)
@@ -808,6 +819,9 @@ parseQueryLedgerProjectedRewards genResult =
                         (GetNonMyopicMemberRewards credentials)
                 SomeShelleyEra ShelleyBasedEraBabbage ->
                     LSQ.BlockQuery $ QueryIfCurrentBabbage
+                        (GetNonMyopicMemberRewards credentials)
+                SomeShelleyEra ShelleyBasedEraConway ->
+                    LSQ.BlockQuery $ QueryIfCurrentConway
                         (GetNonMyopicMemberRewards credentials)
             )
   where
@@ -850,6 +864,9 @@ parseQueryLedgerRewardAccountSummaries genResult =
                 SomeShelleyEra ShelleyBasedEraBabbage ->
                     LSQ.BlockQuery $ QueryIfCurrentBabbage
                         (GetFilteredDelegationsAndRewardAccounts credentials)
+                SomeShelleyEra ShelleyBasedEraConway ->
+                    LSQ.BlockQuery $ QueryIfCurrentConway
+                        (GetFilteredDelegationsAndRewardAccounts credentials)
             )
 
 parseQueryLedgerProtocolParameters
@@ -864,38 +881,33 @@ parseQueryLedgerProtocolParameters genResultInEra =
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentShelley GetCurrentPParams))
-                    (mismatchOrWrapAs query
-                        (Shelley.encodePParams' (\k encode v -> k .= encode v))
-                    )
+                    (mismatchOrWrapAs query Shelley.encodePParams)
                     (genResultInEra (Proxy @(ShelleyEra crypto)))
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentAllegra GetCurrentPParams))
-                    (mismatchOrWrapAs query
-                        (Allegra.encodePParams' (\k encode v -> k .= encode v))
-                    )
+                    (mismatchOrWrapAs query Shelley.encodePParams)
                     (genResultInEra (Proxy @(AllegraEra crypto)))
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentMary GetCurrentPParams))
-                    (mismatchOrWrapAs query
-                        (Mary.encodePParams' (\k encode v -> k .= encode v))
-                    )
+                    (mismatchOrWrapAs query Shelley.encodePParams)
                     (genResultInEra (Proxy @(MaryEra crypto)))
             SomeShelleyEra ShelleyBasedEraAlonzo ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentAlonzo GetCurrentPParams))
-                    (mismatchOrWrapAs query
-                        (Alonzo.encodePParams' (\k encode v -> k .= encode v))
-                    )
+                    (mismatchOrWrapAs query Alonzo.encodePParams)
                     (genResultInEra (Proxy @(AlonzoEra crypto)))
             SomeShelleyEra ShelleyBasedEraBabbage ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentBabbage GetCurrentPParams))
-                    (mismatchOrWrapAs query
-                        (Babbage.encodePParams' (\k encode v -> k .= encode v))
-                    )
+                    (mismatchOrWrapAs query Babbage.encodePParams)
                     (genResultInEra (Proxy @(BabbageEra crypto)))
+            SomeShelleyEra ShelleyBasedEraConway ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery (QueryIfCurrentConway GetCurrentPParams))
+                    (mismatchOrWrapAs query Babbage.encodePParams)
+                    (genResultInEra (Proxy @(ConwayEra crypto)))
 
 parseQueryLedgerProposedProtocolParameters
     :: forall crypto f. (Crypto crypto)
@@ -931,6 +943,11 @@ parseQueryLedgerProposedProtocolParameters genResultInEra =
                     (LSQ.BlockQuery (QueryIfCurrentBabbage GetProposedPParamsUpdates))
                     (mismatchOrWrapAs query Babbage.encodeProposedPPUpdates)
                     (genResultInEra (Proxy @(BabbageEra crypto)))
+            SomeShelleyEra ShelleyBasedEraConway ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery (QueryIfCurrentConway GetProposedPParamsUpdates))
+                    (mismatchOrWrapAs query Conway.encodeProposedPPUpdates)
+                    (genResultInEra (Proxy @(ConwayEra crypto)))
 
 parseQueryLedgerLiveStakeDistribution
     :: forall crypto f. (Crypto crypto)
@@ -958,6 +975,8 @@ parseQueryLedgerLiveStakeDistribution genResult =
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetStakeDistribution
                 SomeShelleyEra ShelleyBasedEraBabbage ->
                     LSQ.BlockQuery $ QueryIfCurrentBabbage GetStakeDistribution
+                SomeShelleyEra ShelleyBasedEraConway ->
+                    LSQ.BlockQuery $ QueryIfCurrentConway GetStakeDistribution
             )
 
 parseQueryLedgerUtxo
@@ -994,6 +1013,11 @@ parseQueryLedgerUtxo genResultInEra =
                     (LSQ.BlockQuery (QueryIfCurrentBabbage GetUTxOWhole))
                     (mismatchOrWrapAs query Babbage.encodeUtxo)
                     (genResultInEra (Proxy @(BabbageEra crypto)))
+            SomeShelleyEra ShelleyBasedEraConway ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery (QueryIfCurrentConway GetUTxOWhole))
+                    (mismatchOrWrapAs query Babbage.encodeUtxo)
+                    (genResultInEra (Proxy @(ConwayEra crypto)))
 
 parseQueryLedgerUtxoByAddress
     :: forall crypto f. (Crypto crypto)
@@ -1030,6 +1054,11 @@ parseQueryLedgerUtxoByAddress genResultInEra =
                     (LSQ.BlockQuery (QueryIfCurrentBabbage (GetUTxOByAddress addrs)))
                     (mismatchOrWrapAs query Babbage.encodeUtxo)
                     (genResultInEra (Proxy @(BabbageEra crypto)))
+            SomeShelleyEra ShelleyBasedEraConway ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery (QueryIfCurrentConway (GetUTxOByAddress addrs)))
+                    (mismatchOrWrapAs query Babbage.encodeUtxo)
+                    (genResultInEra (Proxy @(ConwayEra crypto)))
 
 parseQueryLedgerUtxoByOutputReference
     :: forall crypto f. (Crypto crypto)
@@ -1066,16 +1095,22 @@ parseQueryLedgerUtxoByOutputReference genResultInEra =
                     (LSQ.BlockQuery $ QueryIfCurrentBabbage (GetUTxOByTxIn ins))
                     (mismatchOrWrapAs query Babbage.encodeUtxo)
                     (genResultInEra (Proxy @(BabbageEra crypto)))
+            SomeShelleyEra ShelleyBasedEraConway ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentConway (GetUTxOByTxIn ins))
+                    (mismatchOrWrapAs query Babbage.encodeUtxo)
+                    (genResultInEra (Proxy @(ConwayEra crypto)))
 
 parseQueryNetworkGenesisConfiguration
     :: forall f crypto. ()
     => ( f (GenesisConfig ByronEra)
        , f (GenesisConfig ShelleyEra)
        , f (GenesisConfig AlonzoEra)
+       , f (GenesisConfig ConwayEra)
        )
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseQueryNetworkGenesisConfiguration (genByron, genShelley, genAlonzo) =
+parseQueryNetworkGenesisConfiguration (genByron, genShelley, genAlonzo, genConway) =
     let query = "genesisConfiguration" in
     Json.withObject (toString query) $ \obj -> do
         era <- obj .: "era"
@@ -1101,9 +1136,16 @@ parseQueryNetworkGenesisConfiguration (genByron, genShelley, genAlonzo) =
                         (\cfg -> encodeObject ("alonzo" .= Alonzo.encodeGenesis cfg))
                     )
                     (const genAlonzo)
+            "conway" -> do
+                pure $ const $ Just $ SomeAdHocQuery
+                    GetConwayGenesis
+                    (Right . wrapAs query
+                        (\cfg -> encodeObject ("conway" .= Conway.encodeGenesis cfg))
+                    )
+                    (const genConway)
             (_unknownEra :: Text) -> do
-                fail "Invalid era parameter. Only 'byron', 'shelley' and \
-                     \'alonzo' have a genesis configuration."
+                fail "Invalid era parameter. Only 'byron', 'shelley', \
+                     \'alonzo' and 'conway' have a genesis configuration."
 
 parseQueryLedgerRewardsProvenance
     :: forall crypto f. (Crypto crypto)
@@ -1131,6 +1173,8 @@ parseQueryLedgerRewardsProvenance genResult =
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetRewardInfoPools
                 SomeShelleyEra ShelleyBasedEraBabbage ->
                     LSQ.BlockQuery $ QueryIfCurrentBabbage GetRewardInfoPools
+                SomeShelleyEra ShelleyBasedEraConway ->
+                    LSQ.BlockQuery $ QueryIfCurrentConway GetRewardInfoPools
             )
 
 parseQueryLedgerStakePools
@@ -1161,6 +1205,8 @@ parseQueryLedgerStakePools genResult =
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo GetStakePools
                 SomeShelleyEra ShelleyBasedEraBabbage ->
                     LSQ.BlockQuery $ QueryIfCurrentBabbage GetStakePools
+                SomeShelleyEra ShelleyBasedEraConway ->
+                    LSQ.BlockQuery $ QueryIfCurrentConway GetStakePools
             )
 
 parseQueryLedgerStakePoolParameters
@@ -1190,6 +1236,8 @@ parseQueryLedgerStakePoolParameters genResult =
                     LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetStakePoolParams ids)
                 SomeShelleyEra ShelleyBasedEraBabbage ->
                     LSQ.BlockQuery $ QueryIfCurrentBabbage (GetStakePoolParams ids)
+                SomeShelleyEra ShelleyBasedEraConway ->
+                    LSQ.BlockQuery $ QueryIfCurrentConway (GetStakePoolParams ids)
             )
 
 parseQueryNetworkBlockHeight
@@ -1298,15 +1346,13 @@ decodeAssetName =
     fmap (Ledger.Mary.AssetName . toShort) . decodeBase16 . encodeUtf8
 
 decodeBinaryData
-    :: Json.Value
+    :: forall era. (Era era)
+    => Json.Value
     -> Json.Parser (Ledger.Alonzo.BinaryData era)
 decodeBinaryData =
     Json.withText "BinaryData" $ \t -> do
         bytes <- toLazy <$> decodeBase16 (encodeUtf8 t)
-        either
-            (fail . toString . TL.toLazyText . build)
-            (pure . Ledger.Alonzo.dataToBinaryData . Ledger.Alonzo.Data)
-            (decodeAnnotator "Data" fromCBOR bytes)
+        Ledger.Alonzo.dataToBinaryData <$> decodeAnnotatedCbor @era "Data" decCBOR bytes
 
 decodeCoin
     :: Json.Value
@@ -1465,11 +1511,9 @@ decodePoolId = Json.withText "PoolId" $ choice "poolId"
         decodeBase16 . encodeUtf8
 
 decodeScript
-    :: forall era crypto.
-        ( crypto ~ Era.Crypto era
-        , Ledger.Script era ~ Ledger.Alonzo.Script era
-        , Crypto crypto
-        , Typeable era
+    :: forall era.
+        ( Era era
+        , Ledger.Script era ~ Ledger.Alonzo.AlonzoScript era
         )
     => Json.Value
     -> Json.Parser (Ledger.Script era)
@@ -1478,41 +1522,48 @@ decodeScript v =
     <|>
     Json.withObject "Script::JSON" decodeFromWrappedJson v
   where
-    decodeFromBase16Cbor :: forall a. (FromCBOR (Annotator a)) => Text -> Json.Parser a
+    decodeFromBase16Cbor :: forall a. (Binary.DecCBOR (Annotator a)) => Text -> Json.Parser a
     decodeFromBase16Cbor t = do
         taggedScript <- toLazy <$> decodeBase16 (encodeUtf8 t)
-        either
-            (fail . toString . TL.toLazyText . build)
-            pure
-            $ do
-                annotatedScript <- decodeFullDecoder "Script" decodeTaggedScript taggedScript
-                decodeAnnotator "Script" fromCBOR (toLazy annotatedScript)
+        annotatedScript <- toLazy <$> decodeCbor @era "Script" decodeTaggedScript taggedScript
+        decodeAnnotatedCbor @era "Script" decCBOR annotatedScript
 
     decodeFromWrappedJson :: Json.Object -> Json.Parser (Ledger.Script era)
-    decodeFromWrappedJson o =
-        (Ledger.Alonzo.TimelockScript <$>
-            (let lang = "native" in (o .: lang) >>= decodeTimeLock)
-        )
-        <|>
-        (Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV1 <$>
-            (let lang = "plutus:v1" in (o .: lang) >>= decodePlutusScript lang)
-        )
-        <|>
-        (Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV2 <$>
-            (let lang = "plutus:v2" in (o .: lang) >>= decodePlutusScript lang)
-        )
+    decodeFromWrappedJson o = do
+        native <- o .:? "native"
+        plutusV1 <- o .:? "plutus:v1"
+        plutusV2 <- o .:? "plutus:v2"
+        plutusV3 <- o .:? "plutus:v3"
+        case (native, plutusV1, plutusV2, plutusV3) of
+            (Just script, Nothing, Nothing, Nothing) ->
+                Ledger.Alonzo.TimelockScript
+                    <$> decodeTimeLock script
+            (Nothing, Just script, Nothing, Nothing) ->
+                Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV1
+                    <$> decodePlutusScript Plutus.PlutusV1 "plutus:v1" script
+            (Nothing, Nothing, Just script, Nothing) ->
+                Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV2
+                    <$> decodePlutusScript Plutus.PlutusV2 "plutus:v2" script
+            (Nothing, Nothing, Nothing, Just script) ->
+                Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV3
+                    <$> decodePlutusScript Plutus.PlutusV3 "plutus:v3" script
+            (Nothing, Nothing, Nothing, Nothing) ->
+                fail "missing or unknown script language."
+            (_, _, _, _) ->
+                fail "ambiguous script language."
       where
-        decodePlutusScript :: Json.Key -> Text -> Json.Parser ShortByteString
-        decodePlutusScript (Json.toText -> lang) str = do
+        decodePlutusScript :: Plutus.PlutusLedgerLanguage -> Json.Key -> Text -> Json.Parser ShortByteString
+        decodePlutusScript ledgerLang (Json.toText -> lang) str = do
             bytes <- decodeBase16 (encodeUtf8 str)
             let lbytes = toLazy bytes
-            when (isLeft (deserialiseOrFail @Plutus.Script lbytes)) $ do
+            let protocolVersion = Plutus.ledgerLanguageIntroducedIn ledgerLang
+            when (isLeft (Plutus.assertScriptWellFormed ledgerLang protocolVersion (toShort bytes))) $ do
                 let err = "couldn't decode plutus script"
                 let hint =
-                        case decodeFullDecoder "Script" decodeRawScript lbytes of
-                            Left{} ->
-                                case decodeFullDecoder "Script" decodeAnnotatedScript lbytes of
-                                    Left{} ->
+                        case decodeCbor @era "Script" decodeRawScript lbytes of
+                            Left (_ :: String) ->
+                                case decodeCbor @era "Script" decodeAnnotatedScript lbytes of
+                                    Left (_ :: String) ->
                                         ""
                                     Right (encodeBase16 -> expected) ->
                                         let suffix = fromMaybe "???" (T.stripSuffix expected str)
@@ -1534,21 +1585,21 @@ decodeScript v =
                 fail (toString (err <> hint))
             pure (toShort bytes)
 
-    decodeRawScript :: forall s. Cbor.Decoder s ByteString
+    decodeRawScript :: forall s. Binary.Decoder s ByteString
     decodeRawScript = do
         bytes <- toLazy <$> decodeTaggedScript
+        version <- Binary.getDecoderVersion
         either
             (fail . show)
             pure
-            (decodeFullDecoder "Annotated(Script)" decodeAnnotatedScript bytes)
+            (decodeFullDecoder version "Annotated(Script)" decodeAnnotatedScript bytes)
 
-    decodeTaggedScript :: forall s. Cbor.Decoder s ByteString
-    decodeTaggedScript = do
-        _tag <- Cbor.decodeTag
-        Cbor.decodeBytes
+    decodeTaggedScript :: forall s. Binary.Decoder s ByteString
+    decodeTaggedScript =
+        Binary.decodeNestedCborBytes
 
-    decodeAnnotatedScript :: forall s. Cbor.Decoder s ByteString
-    decodeAnnotatedScript = do
+    decodeAnnotatedScript :: forall s. Binary.Decoder s ByteString
+    decodeAnnotatedScript = Binary.fromPlainDecoder $ do
         _len <- Cbor.decodeListLen
         _typ <- Cbor.decodeWord
         Cbor.decodeBytes
@@ -1573,12 +1624,14 @@ decodeSerializedTransaction = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
     --
     -- NOTE (2):
     -- Avoiding 'asum' here because it generates poor errors on failures
-    deserialiseCBOR @() GenTxMary (fromStrict bytes)
-        <|> deserialiseCBOR @() GenTxMary (wrap bytes)
-        <|> deserialiseCBOR @() GenTxAlonzo (fromStrict bytes)
-        <|> deserialiseCBOR @() GenTxAlonzo (wrap bytes)
-        <|> deserialiseCBOR @(MostRecentEra (CardanoBlock crypto) ~ BabbageEra crypto) GenTxBabbage (wrap bytes)
-        <|> deserialiseCBOR @(MostRecentEra (CardanoBlock crypto) ~ BabbageEra crypto) GenTxBabbage (fromStrict bytes)
+    deserialiseCBOR @() @(MaryEra crypto) GenTxMary (fromStrict bytes)
+        <|> deserialiseCBOR @() @(MaryEra crypto) GenTxMary (wrap bytes)
+        <|> deserialiseCBOR @() @(AlonzoEra crypto) GenTxAlonzo (fromStrict bytes)
+        <|> deserialiseCBOR @() @(AlonzoEra crypto) GenTxAlonzo (wrap bytes)
+        <|> deserialiseCBOR @() @(BabbageEra crypto) GenTxBabbage (fromStrict bytes)
+        <|> deserialiseCBOR @() @(BabbageEra crypto) GenTxBabbage (wrap bytes)
+        <|> deserialiseCBOR @(MostRecentEra (CardanoBlock crypto) ~ ConwayEra crypto) @(ConwayEra crypto) GenTxConway (wrap bytes)
+        <|> deserialiseCBOR @(MostRecentEra (CardanoBlock crypto) ~ ConwayEra crypto) @(ConwayEra crypto) GenTxConway (fromStrict bytes)
   where
     invalidEncodingError :: Json.Parser a
     invalidEncodingError =
@@ -1591,17 +1644,16 @@ decodeSerializedTransaction = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
     wrap = Cbor.toLazyByteString . wrapCBORinCBOR Cbor.encodePreEncoded
 
     deserialiseCBOR
-        :: forall constraint era.
-            ( FromCBOR (GenTx era)
+        :: forall constraint era sub.
+            ( FromCBOR (GenTx sub)
+            , Era era
             , constraint
             )
-        => (GenTx era -> GenTx (CardanoBlock crypto))
+        => (GenTx sub -> GenTx (CardanoBlock crypto))
         -> LByteString
         -> Json.Parser (GenTx (CardanoBlock crypto))
     deserialiseCBOR mk =
-        either (fail . prettyDecoderError @era) (pure . mk)
-        .
-        decodeFull
+        fmap mk <$> decodeCbor @era "Transaction" (Binary.fromPlainDecoder fromCBOR)
       where
         -- We use this extra constraint when decoding transactions to generate a
         -- compiler warning in case a new era becomes available, to not forget to update
@@ -1615,27 +1667,10 @@ decodeSerializedTransaction = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
         --    • Couldn't match type ‘BabbageEra crypto’ with ‘AlonzoEra crypto’ arising from a use of ‘deserialiseCBOR’
         _compilerWarning = keepRedundantConstraint (Proxy @constraint)
 
-    prettyDecoderError
-        :: forall era.
-            ( FromCBOR (GenTx era)
-            )
-        => DecoderError
-        -> String
-    prettyDecoderError =
-        toString
-            . TL.replace
-                (toLazy $ label (Proxy @(GenTx era)))
-                "serialised transaction"
-            . TL.replace
-                "\n"
-                " "
-            . TL.toLazyText
-            . build
-
 decodeTimeLock
-    :: Crypto crypto
+    :: Era era
     => Json.Value
-    -> Json.Parser (Ledger.Mary.Timelock crypto)
+    -> Json.Parser (Ledger.Allegra.Timelock era)
 decodeTimeLock json =
     decodeRequireSignature json
     <|>
@@ -1650,29 +1685,29 @@ decodeTimeLock json =
     Json.withObject "Timelocks::TimeStart" decodeTimeStart json
   where
     decodeRequireSignature t = do
-        Ledger.Mary.RequireSignature
+        Ledger.Allegra.RequireSignature
             <$> fmap Ledger.KeyHash (decodeHash t)
     decodeAllOf o = do
         xs <- StrictSeq.fromList <$> (o .: "all")
-        Ledger.Mary.RequireAllOf <$> traverse decodeTimeLock xs
+        Ledger.Allegra.RequireAllOf <$> traverse decodeTimeLock xs
     decodeAnyOf o = do
         xs <- StrictSeq.fromList <$> (o .: "any")
-        Ledger.Mary.RequireAnyOf <$> traverse decodeTimeLock xs
+        Ledger.Allegra.RequireAnyOf <$> traverse decodeTimeLock xs
     decodeMOf o =
         case Json.toList o of
             [(k, v)] -> do
                 case T.readMaybe (Json.toString k) of
                     Just n -> do
                         xs <- StrictSeq.fromList <$> Json.parseJSON v
-                        Ledger.Mary.RequireMOf n <$> traverse decodeTimeLock xs
+                        Ledger.Allegra.RequireMOf n <$> traverse decodeTimeLock xs
                     Nothing ->
                         fail "cannot decode MOfN constructor, key isn't a natural."
             _malformed ->
                 fail "cannot decode MOfN, not a list."
     decodeTimeExpire o = do
-        Ledger.Mary.RequireTimeExpire . SlotNo <$> (o .: "expiresAt")
+        Ledger.Allegra.RequireTimeExpire . SlotNo <$> (o .: "expiresAt")
     decodeTimeStart o = do
-        Ledger.Mary.RequireTimeStart . SlotNo <$> (o .: "startsAt")
+        Ledger.Allegra.RequireTimeStart . SlotNo <$> (o .: "startsAt")
 
 decodeTip
     :: Json.Value
@@ -1719,51 +1754,8 @@ decodeTxOut
     => Json.Value
     -> Json.Parser (MultiEraTxOut (CardanoBlock crypto))
 decodeTxOut = Json.withObject "TxOut" $ \o -> do
-    decodeTxOutAlonzo o <|> decodeTxOutBabbage o
+    decodeTxOutBabbage o <|> decodeTxOutConway o
   where
-    isPlutusData :: Json.Value -> Bool
-    isPlutusData x =
-        case Json.parse decodeBinaryData x of
-            Json.Error{} -> False
-            Json.Success{} -> True
-
-    decodeTxOutAlonzo o = do
-        address <- o .: "address" >>= decodeAddress
-        value <- o .: "value" >>= decodeValue
-
-        -- NOTE: Prior to Babbage, 'datum' was unambiguous in the context of outputs
-        -- and always referred to datum hash digests. Babbage introduces inline datums,
-        -- which can, from a decoding perspective, be mixed up with datum hashes.
-        --
-        -- For this matter, we now expect datum hashes to be provided explicitly as
-        -- 'datumHash'. Yet, to keep backward-compatibility, it is still possible to
-        -- provide a hash digest as 'datum'. The only condition being that, the
-        -- assumed hash must not be a valid Plutus data.
-        datumHash <- o .:? "datumHash"
-        inlineDatum <- o .:? "datum"
-        datum <- case (datumHash, inlineDatum) of
-            (Nothing, Nothing) ->
-                pure SNothing
-            (Just Json.Null, Just Json.Null) ->
-                pure SNothing
-            (Just x, Nothing) | not (isPlutusData x) ->
-                SJust <$> decodeDatumHash x
-            (Nothing, Just x) | not (isPlutusData x) ->
-                SJust <$> decodeDatumHash x
-            (Just x, Just y) | x == y ->
-                SJust <$> decodeDatumHash x
-            (Just{}, Just{}) ->
-                fail "specified both 'datumHash' & 'datum'"
-            (_, _) ->
-                fail "inline-datum in assumed-Alonzo output."
-
-        -- NOTE: Similarly, if a 'script' field is present, we assume the output
-        -- to be of the 'Babbage' era, and we make this decoder fail.
-        script <- o .:? "script"
-        when (isJust @Json.Value script) empty
-
-        pure $ TxOutInAlonzoEra $ Ledger.Alonzo.TxOut address value datum
-
     decodeTxOutBabbage o = do
         address <- o .: "address" >>= decodeAddress
         value <- o .: "value" >>= decodeValue
@@ -1778,7 +1770,7 @@ decodeTxOut = Json.withObject "TxOut" $ \o -> do
             (Just x, Nothing) ->
                 Ledger.Babbage.DatumHash <$> decodeDatumHash x
             (Nothing, Just x) ->
-                Ledger.Babbage.Datum <$> decodeBinaryData x
+                Ledger.Babbage.Datum <$> decodeBinaryData @(BabbageEra crypto) x
             (Just{}, Just{}) ->
                 fail "specified both 'datumHash' & 'datum'"
 
@@ -1787,7 +1779,32 @@ decodeTxOut = Json.withObject "TxOut" $ \o -> do
                 (pure SNothing)
                 (fmap SJust . decodeScript)
 
-        pure $ TxOutInBabbageEra $ Ledger.Babbage.TxOut address value datum script
+        pure $ TxOutInBabbageEra $ Ledger.Babbage.BabbageTxOut address value datum script
+
+    decodeTxOutConway o = do
+        address <- o .: "address" >>= decodeAddress
+        value <- o .: "value" >>= decodeValue
+
+        datumHash <- o .:? "datumHash"
+        inlineDatum <- o .:? "datum"
+        datum <- case (datumHash, inlineDatum) of
+            (Nothing, Nothing) ->
+                pure Ledger.Babbage.NoDatum
+            (Just Json.Null, Just Json.Null) ->
+                pure Ledger.Babbage.NoDatum
+            (Just x, Nothing) ->
+                Ledger.Babbage.DatumHash <$> decodeDatumHash x
+            (Nothing, Just x) ->
+                Ledger.Babbage.Datum <$> decodeBinaryData @(ConwayEra crypto) x
+            (Just{}, Just{}) ->
+                fail "specified both 'datumHash' & 'datum'"
+
+        script <-
+            o .:? "script" >>= maybe
+                (pure SNothing)
+                (fmap SJust . decodeScript)
+
+        pure $ TxOutInConwayEra $ Ledger.Babbage.BabbageTxOut address value datum script
 
 decodeUtxo
     :: forall crypto block. (Crypto crypto, block ~ CardanoBlock crypto)
@@ -1795,36 +1812,36 @@ decodeUtxo
     -> Json.Parser (MultiEraUTxO block)
 decodeUtxo v = do
     xs <- Json.parseJSONList v
-    (UTxOInAlonzoEra . Sh.UTxO . Map.fromList <$> traverse decodeAlonzoUtxoEntry xs) <|>
-        (UTxOInBabbageEra . Sh.UTxO . Map.fromList <$> traverse decodeBabbageUtxoEntry xs)
+    (UTxOInBabbageEra . Sh.UTxO . Map.fromList <$> traverse decodeBabbageUtxoEntry xs) <|>
+        (UTxOInConwayEra . Sh.UTxO . Map.fromList <$> traverse decodeConwayUtxoEntry xs)
   where
     hint :: String
     hint =
         "Failed to decode utxo entry. Expected an array of length \
         \2 as [output-reference, output]"
 
-    decodeAlonzoUtxoEntry
-        :: Json.Value
-        -> Json.Parser (Ledger.TxIn crypto, Ledger.Alonzo.TxOut (AlonzoEra crypto))
-    decodeAlonzoUtxoEntry =
-        Json.parseJSONList >=> \case
-            [i, o] ->
-                (,) <$> decodeTxIn i <*> (decodeTxOut o >>= \case
-                    TxOutInAlonzoEra o' -> pure o'
-                    TxOutInBabbageEra{} -> empty
-                )
-            _notKeyValue ->
-                fail hint
-
     decodeBabbageUtxoEntry
         :: Json.Value
-        -> Json.Parser (Ledger.TxIn crypto, Ledger.Babbage.TxOut (BabbageEra crypto))
+        -> Json.Parser (Ledger.TxIn crypto, Ledger.Babbage.BabbageTxOut (BabbageEra crypto))
     decodeBabbageUtxoEntry =
         Json.parseJSONList >=> \case
             [i, o] ->
                 (,) <$> decodeTxIn i <*> (decodeTxOut o >>= \case
-                    TxOutInAlonzoEra  o' -> pure (translateTxOut o')
                     TxOutInBabbageEra o' -> pure o'
+                    TxOutInConwayEra{}   -> empty
+                )
+            _notKeyValue ->
+                fail hint
+
+    decodeConwayUtxoEntry
+        :: Json.Value
+        -> Json.Parser (Ledger.TxIn crypto, Ledger.Babbage.BabbageTxOut (ConwayEra crypto))
+    decodeConwayUtxoEntry =
+        Json.parseJSONList >=> \case
+            [i, o] ->
+                (,) <$> decodeTxIn i <*> (decodeTxOut o >>= \case
+                    TxOutInBabbageEra o' -> pure (upgrade o')
+                    TxOutInConwayEra  o' -> pure o'
                 )
             _notKeyValue ->
                 fail hint
@@ -1855,3 +1872,42 @@ castPoint = \case
     BlockPoint slot h -> BlockPoint slot (cast h)
   where
     cast (unShelleyHash -> UnsafeHash h) = coerce h
+
+-- Try decoding data using various decoders of a specific era. This happens
+-- when an intra-era hard-fork changes the serialization format for some reason.
+--
+-- This decoder tries all era decoders and stops at the first one that succeeds,
+-- starting from the most recent one in the era downwards.
+decodeAnnotatedCbor
+    :: forall era m a. (Era era, MonadFail m, Alternative m)
+    => Text
+    -> (forall s. Binary.Decoder s (Annotator a))
+    -> LByteString
+    -> m a
+decodeAnnotatedCbor lbl decoder bytes =
+    asum (decodeVersionedData <$> reverse [minVersion .. maxVersion])
+  where
+    minVersion = Ledger.eraProtVerLow @era
+    maxVersion = Ledger.eraProtVerHigh @era
+    decodeVersionedData version =
+        either
+            (fail . toString . TL.toLazyText . build)
+            pure
+            (decodeFullAnnotator version lbl decoder bytes)
+
+decodeCbor
+    :: forall era m a. (Era era, MonadFail m, Alternative m)
+    => Text
+    -> (forall s. Binary.Decoder s a)
+    -> LByteString
+    -> m a
+decodeCbor lbl decoder bytes =
+    asum (decodeVersionedData <$> reverse [minVersion .. maxVersion])
+  where
+    minVersion = Ledger.eraProtVerLow @era
+    maxVersion = Ledger.eraProtVerHigh @era
+    decodeVersionedData version =
+        either
+            (fail . toString . TL.toLazyText . build)
+            pure
+            (decodeFullDecoder version lbl decoder bytes)

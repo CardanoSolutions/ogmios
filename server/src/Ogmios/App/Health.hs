@@ -68,7 +68,6 @@ import Ogmios.Control.MonadOuroboros
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..)
     , TVar
-    , newEmptyTMVar
     , putTMVar
     , takeTMVar
     )
@@ -224,7 +223,7 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
     NetworkParameters{slotsPerEpoch,networkMagic} <- asks (view typed)
     Configuration{nodeSocket} <- asks (view typed)
     let client = mkClient embed nullTracer slotsPerEpoch clients
-    connectClient nullTracer client (NodeToClientVersionData networkMagic) nodeSocket
+    connectClient nullTracer client (NodeToClientVersionData networkMagic False) nodeSocket
         & onExceptions nodeSocket
         & foreverCalmly
   where
@@ -320,8 +319,8 @@ newTimeInterpreterClient
          , Tip block -> m (UTCTime, NetworkSynchronization, (EpochNo, SlotInEpoch), CardanoEra)
          )
 newTimeInterpreterClient = do
-    notifyTip <- atomically newEmptyTMVar
-    getResult <- atomically newEmptyTMVar
+    notifyTip <- newEmptyTMVarIO
+    getResult <- newEmptyTMVarIO
     return
         ( LocalStateQueryClient $ clientStIdle
             (atomically $ takeTMVar notifyTip)
@@ -360,7 +359,7 @@ newTimeInterpreterClient = do
 
     clientStQuerySlotTime
         :: (UTCTime -> NetworkSynchronization -> (EpochNo, SlotInEpoch) -> CardanoEra -> m ())
-        -> (Tip block)
+        -> Tip block
         -> m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
         -> LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ()
     clientStQuerySlotTime notifyResult tip continue =

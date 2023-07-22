@@ -44,7 +44,7 @@ export type Address = string;
  */
 export type AssetQuantity = bigint;
 export type Datum = string;
-export type Script = Native | PlutusV1 | PlutusV2;
+export type Script = Native | PlutusV1 | PlutusV2 | PlutusV3;
 /**
  * A phase-1 monetary script. Timelocks constraints are only supported since Allegra.
  */
@@ -103,6 +103,7 @@ export type Nonce = Neutral | DigestBlake2B256;
 export type Neutral = "neutral";
 export type UInt321 = number;
 export type Int64 = number;
+export type CostModel = Int64[];
 export type Metadatum = Int | String | Bytes | List | Map;
 /**
  * Plutus data, CBOR-serialised.
@@ -130,7 +131,7 @@ export type ScriptPurpose = Spend | Mint | Certificate1 | Withdrawal;
  */
 export type PolicyId = string;
 export type Utxo = [TransactionOutputReference, TransactionOutput][];
-export type Language = "plutus:v1" | "plutus:v2";
+export type Language = "plutus:v1" | "plutus:v2" | "plutus:v3";
 export type ScriptExecutionFailureReason =
   | ExtraRedeemers
   | MissingRequiredDatums
@@ -142,11 +143,11 @@ export type ScriptExecutionFailureReason =
   | NoCostModelForLanguage;
 export type RedeemerPointer = string;
 /**
- * A time in seconds relative to another one (typically, system start or era start). Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
+ * A time in seconds relative to another one (typically, system start or era start).
  */
 export type RelativeTime = number;
 /**
- * A slot length, in seconds. Starting from v5.5.4, this can be a floating number. Before v5.5.4, the floating value would be rounded to the nearest second.
+ * A slot length, in seconds, possibly with decimals.
  */
 export type SlotLength = number;
 /**
@@ -424,7 +425,7 @@ export interface Transaction {
   withdrawals?: Withdrawals;
   fee?: Lovelace;
   validityInterval?: ValidityInterval;
-  mint?: Value;
+  mint?: MintValue;
   network?: Network;
   scriptIntegrityHash?: DigestBlake2B256;
   requiredExtraSignatories?: DigestBlake2B224[];
@@ -488,6 +489,9 @@ export interface PlutusV1 {
 }
 export interface PlutusV2 {
   "plutus:v2": ScriptPlutus;
+}
+export interface PlutusV3 {
+  "plutus:v3": ScriptPlutus;
 }
 /**
  * A stake delegation certificate, from a delegator to a stake pool.
@@ -576,6 +580,9 @@ export interface ValidityInterval {
   invalidBefore?: Slot;
   invalidAfter?: Slot;
 }
+export interface MintValue {
+  [k: string]: AssetQuantity;
+}
 export interface UpdateProposalShelley {
   epoch: Epoch;
   proposal: {
@@ -640,9 +647,6 @@ export interface ProtocolParametersAlonzo {
 }
 export interface CostModels {
   [k: string]: CostModel;
-}
-export interface CostModel {
-  [k: string]: Int64;
 }
 export interface Prices {
   memory: Ratio;
@@ -1129,7 +1133,7 @@ export interface MirProducesNegativeUpdate {
   mirProducesNegativeUpdate: null;
 }
 export interface DuplicateGenesisVrf {
-  duplicateGenesisVrf: DigestBlake2B224;
+  duplicateGenesisVrf: DigestBlake2B256;
 }
 export interface NonGenesisVoters {
   nonGenesisVoters: {
@@ -1315,6 +1319,7 @@ export interface EvaluateTransactionFailure {
   jsonrpc: "2.0";
   error:
     | EvaluateTransactionFailureIncompatibleEra
+    | EvaluateTransactionFailureUnsupportedEra
     | EvaluateTransactionFailureOverlappingAdditionalUtxo
     | EvaluateTransactionFailureNodeTipTooOld
     | EvaluateTransactionFailureCannotCreateEvaluationContext
@@ -1341,10 +1346,24 @@ export interface IncompatibleEra {
   incompatibleEra: Era;
 }
 /**
+ * Returned when trying to evaluate execution units of an era that is now considered too old and is no longer supported. This can solved by using a more recent transaction format.
+ */
+export interface EvaluateTransactionFailureUnsupportedEra {
+  code: 3001;
+  message: string;
+  data: UnsupportedEra;
+}
+/**
+ * The era in which the transaction has been identified.
+ */
+export interface UnsupportedEra {
+  unsupportedEra: Era;
+}
+/**
  * Happens when providing an additional UTXO set which overlaps with the UTXO on-chain.
  */
 export interface EvaluateTransactionFailureOverlappingAdditionalUtxo {
-  code: 3001;
+  code: 3002;
   message: string;
   data: OverlappingAdditionalUtxo;
 }
@@ -1355,7 +1374,7 @@ export interface OverlappingAdditionalUtxo {
  * Happens when attempting to evaluate execution units on a node that isn't enough synchronized.
  */
 export interface EvaluateTransactionFailureNodeTipTooOld {
-  code: 3002;
+  code: 3003;
   message: string;
   data: NodeTipTooOld;
 }
@@ -1367,7 +1386,7 @@ export interface NodeTipTooOld {
  * The transaction is malformed or missing information; making evaluation impossible.
  */
 export interface EvaluateTransactionFailureCannotCreateEvaluationContext {
-  code: 3003;
+  code: 3004;
   message: string;
   data: CannotCreateEvaluationContext;
 }
@@ -1378,7 +1397,7 @@ export interface CannotCreateEvaluationContext {
  * One or more script execution terminated with an error.
  */
 export interface EvaluateTransactionFailureScriptExecutionFailure {
-  code: 3004;
+  code: 3005;
   message: string;
   data: ScriptExecutionFailure;
 }

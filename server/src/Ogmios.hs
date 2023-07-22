@@ -4,7 +4,6 @@
 
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-fields #-}
@@ -113,10 +112,14 @@ import System.Posix.Signals
     )
 
 import qualified Control.Concurrent.Async as Async
+import qualified Control.Concurrent.STM.TArray as STM
 import qualified Control.Concurrent.STM.TBQueue as STM
+import qualified Control.Concurrent.STM.TChan as STM
 import qualified Control.Concurrent.STM.TMVar as STM
 import qualified Control.Concurrent.STM.TQueue as STM
+import qualified Control.Concurrent.STM.TSem as STM
 import qualified Control.Concurrent.STM.TVar as STM
+import qualified Control.Monad.Class.MonadSTM.Internal
 import qualified Control.Monad.STM as STM
 
 --
@@ -191,7 +194,7 @@ newEnvironment
     -> Configuration
     -> IO (Env App)
 newEnvironment Tracers{tracerMetrics} network configuration = do
-    health  <- getCurrentTime >>= atomically . newTVar . emptyHealth
+    health  <- getCurrentTime >>= newTVarIO . emptyHealth
     sensors <- newSensors
     sampler <- newSampler tracerMetrics
     pure $ Env{health,sensors,sampler,network,configuration}
@@ -215,27 +218,24 @@ newtype WrappedSTM a = WrappedSTM { unwrapSTM :: STM.STM a }
     deriving newtype (Functor, Applicative, Alternative, Monad, MonadPlus, MonadThrow)
 
 instance MonadSTM App where
-  type STM     App = WrappedSTM
-  type TVar    App = STM.TVar
-  type TMVar   App = STM.TMVar
-  type TQueue  App = STM.TQueue
-  type TBQueue App = STM.TBQueue
+  type STM App = WrappedSTM
+  atomically   = App . lift . STM.atomically . unwrapSTM
+  retry        = WrappedSTM STM.retry
+  orElse       = \a0 a1 -> WrappedSTM (STM.orElse (unwrapSTM a0) (unwrapSTM a1))
+  check        = WrappedSTM . STM.check
 
-  atomically      = App . lift . STM.atomically . unwrapSTM
-  retry           = WrappedSTM STM.retry
-  orElse          = \a0 a1 -> WrappedSTM (STM.orElse (unwrapSTM a0) (unwrapSTM a1))
-  check           = WrappedSTM . STM.check
+  type TVar App = STM.TVar
+  newTVar       = WrappedSTM . STM.newTVar
+  newTVarIO     = App . lift . STM.newTVarIO
+  readTVar      = WrappedSTM . STM.readTVar
+  readTVarIO    = App . lift . STM.readTVarIO
+  writeTVar     = \a0 -> WrappedSTM . STM.writeTVar a0
+  modifyTVar    = \a0 -> WrappedSTM . STM.modifyTVar a0
+  modifyTVar'   = \a0 -> WrappedSTM . STM.modifyTVar' a0
+  stateTVar     = \a0 -> WrappedSTM . STM.stateTVar a0
+  swapTVar      = \a0 -> WrappedSTM . STM.swapTVar a0
 
-  newTVar         = WrappedSTM . STM.newTVar
-  newTVarIO       = App . lift . STM.newTVarIO
-  readTVar        = WrappedSTM . STM.readTVar
-  readTVarIO      = App . lift . STM.readTVarIO
-  writeTVar       = \a0 -> WrappedSTM . STM.writeTVar a0
-  modifyTVar      = \a0 -> WrappedSTM . STM.modifyTVar a0
-  modifyTVar'     = \a0 -> WrappedSTM . STM.modifyTVar' a0
-  stateTVar       = \a0 -> WrappedSTM . STM.stateTVar a0
-  swapTVar        = \a0 -> WrappedSTM . STM.swapTVar a0
-
+  type TMVar App  = STM.TMVar
   newTMVar        = WrappedSTM . STM.newTMVar
   newTMVarIO      = App . lift . STM.newTMVarIO
   newEmptyTMVar   = WrappedSTM STM.newEmptyTMVar
@@ -249,6 +249,7 @@ instance MonadSTM App where
   swapTMVar       = \a0 -> WrappedSTM . STM.swapTMVar a0
   isEmptyTMVar    = WrappedSTM . STM.isEmptyTMVar
 
+  type TQueue App = STM.TQueue
   newTQueue       = WrappedSTM STM.newTQueue
   newTQueueIO     = App (lift STM.newTQueueIO)
   readTQueue      = WrappedSTM . STM.readTQueue
@@ -258,17 +259,42 @@ instance MonadSTM App where
   flushTBQueue    = WrappedSTM . STM.flushTBQueue
   writeTQueue     = \a0 -> WrappedSTM . STM.writeTQueue a0
   isEmptyTQueue   = WrappedSTM . STM.isEmptyTQueue
+  flushTQueue     = WrappedSTM . STM.flushTQueue
+  unGetTQueue     = \a0 -> WrappedSTM . STM.unGetTQueue a0
 
-  newTBQueue      = WrappedSTM . STM.newTBQueue
-  newTBQueueIO    = App . lift . STM.newTBQueueIO
-  readTBQueue     = WrappedSTM . STM.readTBQueue
-  tryReadTBQueue  = WrappedSTM . STM.tryReadTBQueue
-  peekTBQueue     = WrappedSTM . STM.peekTBQueue
-  tryPeekTBQueue  = WrappedSTM . STM.tryPeekTBQueue
-  writeTBQueue    = \a0 -> WrappedSTM . STM.writeTBQueue a0
-  lengthTBQueue   = WrappedSTM . STM.lengthTBQueue
-  isEmptyTBQueue  = WrappedSTM . STM.isEmptyTBQueue
-  isFullTBQueue   = WrappedSTM . STM.isFullTBQueue
+  type TBQueue App = STM.TBQueue
+  newTBQueue       = WrappedSTM . STM.newTBQueue
+  newTBQueueIO     = App . lift . STM.newTBQueueIO
+  readTBQueue      = WrappedSTM . STM.readTBQueue
+  tryReadTBQueue   = WrappedSTM . STM.tryReadTBQueue
+  peekTBQueue      = WrappedSTM . STM.peekTBQueue
+  tryPeekTBQueue   = WrappedSTM . STM.tryPeekTBQueue
+  writeTBQueue     = \a0 -> WrappedSTM . STM.writeTBQueue a0
+  lengthTBQueue    = WrappedSTM . STM.lengthTBQueue
+  isEmptyTBQueue   = WrappedSTM . STM.isEmptyTBQueue
+  isFullTBQueue    = WrappedSTM . STM.isFullTBQueue
+  unGetTBQueue     = \a0 -> WrappedSTM . STM.unGetTBQueue a0
+
+  type TArray App = STM.TArray
+
+  type TSem App = STM.TSem
+  newTSem       = WrappedSTM . STM.newTSem
+  waitTSem      = WrappedSTM . STM.waitTSem
+  signalTSem    = WrappedSTM . STM.signalTSem
+  signalTSemN   = \a0 -> WrappedSTM . STM.signalTSemN a0
+
+  type TChan App    = STM.TChan
+  newTChan          = WrappedSTM STM.newTChan
+  newBroadcastTChan = WrappedSTM STM.newBroadcastTChan
+  dupTChan          = WrappedSTM . STM.dupTChan
+  cloneTChan        = WrappedSTM . STM.cloneTChan
+  readTChan         = WrappedSTM . STM.readTChan
+  tryReadTChan      = WrappedSTM . STM.tryReadTChan
+  peekTChan         = WrappedSTM . STM.peekTChan
+  tryPeekTChan      = WrappedSTM . STM.tryPeekTChan
+  writeTChan        = \a0 -> WrappedSTM . STM.writeTChan a0
+  unGetTChan        = \a0 -> WrappedSTM . STM.unGetTChan a0
+  isEmptyTChan      = WrappedSTM . STM.isEmptyTChan
 
 newtype WrappedAsync a = WrappedAsync { unwrapAsync :: Async.Async a }
     deriving newtype (Functor)
@@ -276,6 +302,8 @@ newtype WrappedAsync a = WrappedAsync { unwrapAsync :: Async.Async a }
 instance MonadAsync App where
   type Async App  = WrappedAsync
   async           = \(App (ReaderT m)) -> App (ReaderT $ \r -> WrappedAsync <$> async (m r))
+  asyncBound      = \(App (ReaderT m)) -> App (ReaderT $ \r -> WrappedAsync <$> asyncBound (m r))
+  asyncOn         = \n (App (ReaderT m)) -> App (ReaderT $ \r -> WrappedAsync <$> asyncOn n (m r))
   asyncThreadId   = Async.asyncThreadId . unwrapAsync
   pollSTM         = WrappedSTM . Async.pollSTM . unwrapAsync
   waitCatchSTM    = WrappedSTM . Async.waitCatchSTM . unwrapAsync
@@ -287,3 +315,10 @@ instance MonadAsync App where
     where
       liftF :: (IO a -> IO a) -> App a -> App a
       liftF g (App (ReaderT f)) = App (ReaderT (g . f))
+  asyncOnWithUnmask = \n restore -> App $ ReaderT $ \r ->
+      fmap WrappedAsync $ Async.asyncOnWithUnmask n $ \unmask ->
+        runReaderT (unApp (restore (liftF unmask))) r
+    where
+      liftF :: (IO a -> IO a) -> App a -> App a
+      liftF g (App (ReaderT f)) = App (ReaderT (g . f))
+

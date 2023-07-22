@@ -5,7 +5,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-fields #-}
@@ -39,6 +38,7 @@ import Ogmios.App.Configuration
     , NetworkParameters (..)
     , readAlonzoGenesis
     , readByronGenesis
+    , readConwayGenesis
     , readShelleyGenesis
     )
 import Ogmios.App.Metrics
@@ -164,8 +164,6 @@ import System.TimeManager
     ( TimeoutThread (..)
     )
 
-import qualified Cardano.Ledger.Alonzo.PParams
-import qualified Cardano.Ledger.Babbage.PParams
 import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
 
@@ -198,6 +196,7 @@ newWebSocketApp tr unliftIO = do
             { getByronGenesis = readByronGenesis nodeConfig
             , getShelleyGenesis = readShelleyGenesis nodeConfig
             , getAlonzoGenesis = readAlonzoGenesis nodeConfig
+            , getConwayGenesis = readConwayGenesis nodeConfig
             }
     return $ \pending -> unliftIO $ do
         logWith tr $ WebSocketConnectionAccepted (userAgent pending)
@@ -207,7 +206,7 @@ newWebSocketApp tr unliftIO = do
                 withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig conn $ \protocolsClients -> do
                     let clientA = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch protocolsClients
                     let clientB = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch exUnitsClients
-                    let vData  = NodeToClientVersionData networkMagic
+                    let vData  = NodeToClientVersionData networkMagic True
                     concurrently_
                         (connectClient trClient clientA vData nodeSocket)
                         (connectClient trClient clientB vData nodeSocket)

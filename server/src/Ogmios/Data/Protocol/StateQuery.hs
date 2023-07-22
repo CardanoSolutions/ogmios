@@ -55,6 +55,7 @@ import Ogmios.Data.Json.Query
     )
 import Ouroboros.Consensus.Shelley.Eras
     ( AlonzoEra
+    , ConwayEra
     , ShelleyEra
     )
 import Ouroboros.Network.Block
@@ -128,6 +129,7 @@ data GetGenesisConfig (m :: Type -> Type) = GetGenesisConfig
     { getByronGenesis :: m (GenesisConfig ByronEra)
     , getShelleyGenesis :: m (GenesisConfig ShelleyEra)
     , getAlonzoGenesis :: m (GenesisConfig AlonzoEra)
+    , getConwayGenesis :: m (GenesisConfig ConwayEra)
     }
 
 --

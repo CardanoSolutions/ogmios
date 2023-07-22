@@ -31,7 +31,7 @@
 --            └───────┤   Acquired    │
 --                    └───┬───────────┘
 --                        │       ▲
---  HasTransaction|NextTransaction|GetSizes │       │ Reply (HasTransaction|NextTransaction|GetSizes)
+--  HasTx|NextTx|GetSizes │       │ Reply (HasTx|NextTx|GetSizes)
 --                        ▼       │
 --                    ┌───────────┴───┐
 --                    │      Busy     │

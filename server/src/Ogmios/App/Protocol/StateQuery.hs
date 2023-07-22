@@ -207,6 +207,11 @@ mkStateQueryClient tr StateQueryCodecs{..} GetGenesisConfig{..} queue yield =
                                 yield $ encodeQueryLedgerStateResponse $ toResponse $
                                     either QueryEraMismatch QueryResponse result
                                 pure $ LSQ.SendMsgRelease clientStIdle
+                            GetConwayGenesis -> do
+                                result <- encodeResult <$> getConwayGenesis
+                                yield $ encodeQueryLedgerStateResponse $ toResponse $
+                                    either QueryEraMismatch QueryResponse result
+                                pure $ LSQ.SendMsgRelease clientStIdle
 
             , LSQ.recvMsgFailure = \failure -> do
                 let response = QueryAcquireFailure failure
@@ -247,7 +252,11 @@ mkStateQueryClient tr StateQueryCodecs{..} GetGenesisConfig{..} queue yield =
                             yield $ encodeQueryLedgerStateResponse $ toResponse $
                                 either QueryEraMismatch QueryResponse result
                             pure $ LSQ.SendMsgRelease clientStIdle
-
+                        GetConwayGenesis -> do
+                            result <- encodeResult <$> getConwayGenesis
+                            yield $ encodeQueryLedgerStateResponse $ toResponse $
+                                either QueryEraMismatch QueryResponse result
+                            pure $ LSQ.SendMsgRelease clientStIdle
 
                 Just (era, SomeStandardQuery qry encodeResult _proxy) -> do
                     logWith tr $ StateQueryRequest { query, point = Just pt, era }

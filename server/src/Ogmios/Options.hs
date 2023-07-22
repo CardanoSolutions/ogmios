@@ -3,8 +3,8 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
+
 {-# OPTIONS_GHC -fno-warn-partial-fields #-}
 
 module Ogmios.Options

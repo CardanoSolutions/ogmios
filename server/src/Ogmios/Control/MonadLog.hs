@@ -73,9 +73,7 @@ import Ogmios.Control.MonadSTM
     , withTMVar
     )
 import System.IO
-    ( BufferMode (..)
-    , hSetBuffering
-    , hSetEncoding
+    ( hSetEncoding
     , utf8
     )
 

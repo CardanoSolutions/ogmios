@@ -4,7 +4,6 @@
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Ogmios.App.Protocol.StateQuerySpec
     ( spec
@@ -227,7 +226,7 @@ withStateQueryClient
 withStateQueryClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
     let innerCodecs = mkStateQueryCodecs encodePoint encodeAcquireFailure encodeAcquireExpired
-    let getGenesisConfig = let nope = error "unimplemented" in StateQuery.GetGenesisConfig nope nope nope
+    let getGenesisConfig = let nope = error "unimplemented" in StateQuery.GetGenesisConfig nope nope nope nope
     let client = mkStateQueryClient nullTracer innerCodecs getGenesisConfig recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cStateQueryCodec
     withMockChannel (stateQueryMockPeer seed codec) $ \channel -> do

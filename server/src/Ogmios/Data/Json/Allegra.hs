@@ -2,8 +2,6 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE TypeApplications #-}
-
 module Ogmios.Data.Json.Allegra where
 
 import Ogmios.Data.Json.Prelude
@@ -14,11 +12,11 @@ import Cardano.Binary
 import Cardano.Ledger.Crypto
     ( Crypto
     )
+import Cardano.Ledger.Era
+    ( Era
+    )
 import Data.Maybe.Strict
     ( fromSMaybe
-    )
-import GHC.Records
-    ( getField
     )
 import Ouroboros.Consensus.Cardano.Block
     ( AllegraEra
@@ -38,24 +36,21 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 
 import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 
-import qualified Cardano.Ledger.AuxiliaryData as Ledger
+import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
-import qualified Cardano.Ledger.Era as Ledger
-import qualified Cardano.Ledger.Hashes as Ledger
-import qualified Cardano.Ledger.TxIn as Ledger
 
 import qualified Cardano.Ledger.Shelley.BlockChain as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
-import qualified Cardano.Ledger.Shelley.Rules.Ledger as Sh
+import qualified Cardano.Ledger.Shelley.Rules as Sh
 import qualified Cardano.Ledger.Shelley.Tx as Sh
-import qualified Cardano.Ledger.Shelley.TxBody as Sh
+import qualified Cardano.Ledger.Shelley.TxWits as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
-import qualified Cardano.Ledger.ShelleyMA.AuxiliaryData as MA
-import qualified Cardano.Ledger.ShelleyMA.Rules.Utxo as MA
-import qualified Cardano.Ledger.ShelleyMA.Timelocks as MA
-import qualified Cardano.Ledger.ShelleyMA.TxBody as MA
+import qualified Cardano.Ledger.Allegra.Rules as Al
+import qualified Cardano.Ledger.Allegra.Scripts as Al
+import qualified Cardano.Ledger.Allegra.TxAuxData as Al
+import qualified Cardano.Ledger.Allegra.TxBody as Al
 
 type AuxiliaryScripts crypto =
     Map (Ledger.ScriptHash crypto) (Ledger.Script (AllegraEra crypto))
@@ -65,9 +60,9 @@ type AuxiliaryScripts crypto =
 --
 encodeAuxiliaryData
     :: forall crypto. Crypto crypto
-    => MA.AuxiliaryData (AllegraEra crypto)
+    => Al.AllegraTxAuxData (AllegraEra crypto)
     -> (Json, AuxiliaryScripts crypto)
-encodeAuxiliaryData (MA.AuxiliaryData blob scripts) =
+encodeAuxiliaryData (Al.AllegraTxAuxData blob scripts) =
     ( Shelley.encodeMetadataBlob blob
     , foldr
         (\script -> Map.insert (Ledger.hashScript @(AllegraEra crypto) script) script)
@@ -98,7 +93,7 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
 
 encodeLedgerFailure
     :: Crypto crypto
-    => Sh.LedgerPredicateFailure (AllegraEra crypto)
+    => Sh.ShelleyLedgerPredFailure (AllegraEra crypto)
     -> Json
 encodeLedgerFailure = \case
     Sh.UtxowFailure e  ->
@@ -106,49 +101,44 @@ encodeLedgerFailure = \case
     Sh.DelegsFailure e ->
         Shelley.encodeDelegsFailure e
 
-encodePParams'
-    :: (forall a. Text -> (a -> Json) -> Sh.HKD f a -> Series)
-    -> Sh.PParams' f era
-    -> Json
-encodePParams' =
-    Shelley.encodePParams'
-
 encodeProposedPPUpdates
-    :: Ledger.PParamsDelta era ~ Sh.PParamsUpdate era
-    => Crypto (Ledger.Crypto era)
+    :: forall era.
+        ( Era era
+        , Ledger.PParamsHKD StrictMaybe era ~ Sh.ShelleyPParams StrictMaybe era
+        )
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates =
     Shelley.encodeProposedPPUpdates
 
 encodeScript
-    :: Crypto crypto
-    => MA.Timelock crypto
+    :: Era era
+    => Al.Timelock era
     -> Json
 encodeScript timelock =
     encodeObject ("native" .= encodeTimelock timelock)
 
 encodeTimelock
-    :: Crypto crypto
-    => MA.Timelock crypto
+    :: Era era
+    => Al.Timelock era
     -> Json
 encodeTimelock = \case
-    MA.RequireSignature sig ->
+    Al.RequireSignature sig ->
         Shelley.encodeKeyHash sig
-    MA.RequireAllOf xs ->
+    Al.RequireAllOf xs ->
         encodeObject ("all" .= encodeFoldable encodeTimelock xs)
-    MA.RequireAnyOf xs ->
+    Al.RequireAnyOf xs ->
         encodeObject ("any" .= encodeFoldable encodeTimelock xs)
-    MA.RequireMOf n xs ->
+    Al.RequireMOf n xs ->
         encodeObject (show n .= encodeFoldable encodeTimelock xs)
-    MA.RequireTimeExpire s ->
+    Al.RequireTimeExpire s ->
         encodeObject ("expiresAt" .= encodeSlotNo s)
-    MA.RequireTimeStart s ->
+    Al.RequireTimeStart s ->
         encodeObject ("startsAt" .= encodeSlotNo s)
 
 encodeTx
     :: forall crypto. (Crypto crypto)
-    => Sh.Tx (AllegraEra crypto)
+    => Sh.ShelleyTx (AllegraEra crypto)
     -> Json
 encodeTx x =
     "id" .= Shelley.encodeTxId (Ledger.txid @(AllegraEra crypto) (Sh.body x))
@@ -164,11 +154,8 @@ encodeTx x =
     "cbor" .= encodeByteStringBase16 (serialize' x)
         & encodeObject
   where
-    adHash :: MA.TxBody era -> StrictMaybe (Ledger.AuxiliaryDataHash (Ledger.Crypto era))
-    adHash = getField @"adHash"
-
     auxiliary = do
-        hash <- Shelley.encodeAuxiliaryDataHash <$> adHash (Sh.body x)
+        hash <- Shelley.encodeAuxiliaryDataHash <$> Al.atbAuxDataHash (Sh.body x)
         (labels, scripts) <- encodeAuxiliaryData <$> Sh.auxiliaryData x
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
@@ -177,14 +164,14 @@ encodeTx x =
 
 encodeTxBody
     :: Crypto crypto
-    => MA.TxBody (AllegraEra crypto)
+    => Al.AllegraTxBody (AllegraEra crypto)
     -> Series
-encodeTxBody (MA.TxBody inps outs certs wdrls fee validity updates _ _) =
+encodeTxBody (Al.AllegraTxBody inps outs certs wdrls fee validity updates _) =
     "inputs" .=
         encodeFoldable Shelley.encodeTxIn inps <>
     "outputs" .=
         encodeFoldable Shelley.encodeTxOut outs <>
-    "withdrawals" .=? OmitWhen (null . Sh.unWdrl)
+    "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         Shelley.encodeWdrl wdrls <>
     "certificates" .=? OmitWhen null
         (encodeFoldable Shelley.encodeDCert) certs <>
@@ -205,24 +192,24 @@ encodeUtxo =
 
 encodeUtxoFailure
     :: Crypto crypto
-    => MA.UtxoPredicateFailure (AllegraEra crypto)
+    => Al.AllegraUtxoPredFailure (AllegraEra crypto)
     -> Json
 encodeUtxoFailure = \case
-    MA.BadInputsUTxO inputs ->
+    Al.BadInputsUTxO inputs ->
         "badInputs" .=
             encodeFoldable Shelley.encodeTxIn inputs
         & encodeObject
-    MA.OutsideValidityIntervalUTxO itv currentSlot ->
+    Al.OutsideValidityIntervalUTxO itv currentSlot ->
         "outsideOfValidityInterval" .= encodeObject
             ( "interval" .= encodeValidityInterval itv <>
               "currentSlot" .= encodeSlotNo currentSlot
             )
         & encodeObject
-    MA.OutputTooBigUTxO outs ->
+    Al.OutputTooBigUTxO outs ->
         "tooManyAssetsInOutput" .=
             encodeFoldable Shelley.encodeTxOut outs
         & encodeObject
-    MA.MaxTxSizeUTxO actualSize maxSize ->
+    Al.MaxTxSizeUTxO actualSize maxSize ->
         "txTooLarge" .= encodeObject
             ( "maximumSize" .=
                 encodeInteger maxSize <>
@@ -230,11 +217,11 @@ encodeUtxoFailure = \case
                 encodeInteger actualSize
             )
         & encodeObject
-    MA.InputSetEmptyUTxO ->
+    Al.InputSetEmptyUTxO ->
         "missingAtLeastOneInputUtxo" .=
             encodeNull
         & encodeObject
-    MA.FeeTooSmallUTxO required actual ->
+    Al.FeeTooSmallUTxO required actual ->
         "feeTooSmall" .= encodeObject
             ( "requiredFee" .=
                 encodeCoin required <>
@@ -242,7 +229,7 @@ encodeUtxoFailure = \case
                 encodeCoin actual
             )
         & encodeObject
-    MA.ValueNotConservedUTxO consumed produced ->
+    Al.ValueNotConservedUTxO consumed produced ->
         "valueNotConserved" .= encodeObject
             ( "consumed" .=
                 encodeCoin consumed <>
@@ -250,7 +237,7 @@ encodeUtxoFailure = \case
                 encodeCoin produced
             )
         & encodeObject
-    MA.WrongNetwork expected invalidAddrs ->
+    Al.WrongNetwork expected invalidAddrs ->
         "networkMismatch" .= encodeObject
             ( "expectedNetwork" .=
                 Shelley.encodeNetwork expected <>
@@ -258,7 +245,7 @@ encodeUtxoFailure = \case
                 Shelley.encodeEntities "address" Shelley.encodeAddress invalidAddrs
             )
         & encodeObject
-    MA.WrongNetworkWithdrawal expected invalidAccts ->
+    Al.WrongNetworkWithdrawal expected invalidAccts ->
         "networkMismatch" .= encodeObject
             ( "expectedNetwork" .=
                 Shelley.encodeNetwork expected <>
@@ -268,37 +255,37 @@ encodeUtxoFailure = \case
                     Shelley.encodeRewardAcnt invalidAccts
             )
         & encodeObject
-    MA.OutputTooSmallUTxO outs ->
+    Al.OutputTooSmallUTxO outs ->
         "outputTooSmall" .=
             encodeFoldable Shelley.encodeTxOut outs
         & encodeObject
-    MA.OutputBootAddrAttrsTooBig outs ->
+    Al.OutputBootAddrAttrsTooBig outs ->
         "addressAttributesTooLarge" .=
             encodeFoldable
                 Shelley.encodeAddress
-                ((\(Sh.TxOut addr _) -> addr) <$> outs)
+                ((\(Sh.ShelleyTxOut addr _) -> addr) <$> outs)
         & encodeObject
-    MA.TriesToForgeADA ->
+    Al.TriesToForgeADA ->
         "triesToForgeAda" .=
             encodeNull
         & encodeObject
-    MA.UpdateFailure e ->
+    Al.UpdateFailure e ->
         Shelley.encodeUpdateFailure e
 
 encodeValidityInterval
-    :: MA.ValidityInterval
+    :: Al.ValidityInterval
     -> Json
 encodeValidityInterval x =
     "invalidBefore" .=? OmitWhenNothing
-        encodeSlotNo (MA.invalidBefore x) <>
+        encodeSlotNo (Al.invalidBefore x) <>
     "invalidAfter" .=? OmitWhenNothing
-        encodeSlotNo (MA.invalidHereafter x)
+        encodeSlotNo (Al.invalidHereafter x)
     & encodeObject
 
 encodeWitnessSet
     :: Crypto crypto
     => StrictMaybe (AuxiliaryScripts crypto)
-    -> Sh.WitnessSet (AllegraEra crypto)
+    -> Sh.ShelleyTxWits (AllegraEra crypto)
     -> Series
 encodeWitnessSet (fromSMaybe mempty -> auxScripts) x =
     "signatories" .=

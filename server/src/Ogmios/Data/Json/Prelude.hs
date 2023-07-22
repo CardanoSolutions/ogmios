@@ -48,6 +48,7 @@ module Ogmios.Data.Json.Prelude
     , encodeInteger
     , encodeNatural
     , encodeNominalDiffTime
+    , encodeNominalDiffTimeMicro
     , encodeNonNegativeInterval
     , encodeNull
     , encodePort
@@ -64,6 +65,7 @@ module Ogmios.Data.Json.Prelude
     , encodeUnitInterval
     , encodeUrl
     , encodeUtcTime
+    , encodeVersion
     , encodeWithOrigin
     , encodeWord
     , encodeWord16
@@ -77,6 +79,7 @@ module Ogmios.Data.Json.Prelude
     , encodeFoldable
     , encodeFoldable2
     , encodeList
+    , encodeListMap
     , encodeMap
     , encodeMaybe
     , encodeObject
@@ -91,9 +94,6 @@ module Ogmios.Data.Json.Prelude
 
 import Ogmios.Prelude
 
-import Cardano.Binary
-    ( Annotated (..)
-    )
 import Cardano.Ledger.BaseTypes
     ( DnsName
     , NonNegativeInterval
@@ -107,8 +107,18 @@ import Cardano.Ledger.BaseTypes
     , unboundRational
     , urlToText
     )
+import Cardano.Ledger.Binary
+    ( Annotated (..)
+    )
+import Cardano.Ledger.Binary.Version
+    ( Version
+    , getVersion
+    )
 import Cardano.Ledger.Coin
     ( Coin (..)
+    )
+import Cardano.Ledger.Shelley.Genesis
+    ( NominalDiffTimeMicro
     )
 import Cardano.Slotting.Block
     ( BlockNo (..)
@@ -143,8 +153,8 @@ import Data.IP
     ( IPv4
     , IPv6
     )
-import Data.Ratio
-    ( (%)
+import Data.ListMap
+    ( ListMap
     )
 import Data.Scientific
     ( Scientific
@@ -175,9 +185,10 @@ import qualified Data.ByteArray as BA
 import qualified Data.ByteString.Base16 as B16
 import qualified Data.ByteString.Base58 as B58
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.ListMap as LM
 import qualified Data.Map.Strict as Map
+import qualified Data.SOP.Counting as Consensus
 import qualified Data.Text as T
-import qualified Ouroboros.Consensus.Util.Counting as Consensus
 
 --
 -- Prelude
@@ -309,14 +320,14 @@ encodeNatural =
 {-# INLINABLE encodeNatural #-}
 
 encodeNominalDiffTime :: NominalDiffTime -> Json
-encodeNominalDiffTime t =
-    -- TODO / NOTE: Backward-compatibility prior to v5.5.4. Should encode only
-    -- as Double in v6+
-    if i % 1 == r then Json.integer i else Json.double (fromRational r)
-  where
-    r = toRational t
-    i = round t
+encodeNominalDiffTime =
+    Json.double . fromRational @Double . toRational
 {-# INLINABLE encodeNominalDiffTime #-}
+
+encodeNominalDiffTimeMicro :: NominalDiffTimeMicro -> Json
+encodeNominalDiffTimeMicro =
+    Json.double . fromRational @Double . toRational
+{-# INLINABLE encodeNominalDiffTimeMicro #-}
 
 encodeNonNegativeInterval :: NonNegativeInterval -> Json
 encodeNonNegativeInterval =
@@ -406,6 +417,11 @@ encodeWithOrigin encodeA = \case
     At a -> encodeA a
 {-# INLINABLE encodeWithOrigin #-}
 
+encodeVersion :: Version -> Json
+encodeVersion =
+    Json.word64 . getVersion
+{-# INLINABLE encodeVersion #-}
+
 encodeWord :: Word -> Json
 encodeWord =
     Json.word
@@ -470,6 +486,18 @@ encodeList :: (a -> Json) -> [a] -> Json
 encodeList =
     Json.list
 {-# INLINABLE encodeList #-}
+
+encodeListMap :: (k -> Text) -> (v -> Json) -> ListMap k v -> Json
+encodeListMap encodeKey encodeValue =
+    Json.pairs . LM.foldrWithKey
+        (\(k, v) -> (<>)
+            (Json.pair
+                (Json.fromText (encodeKey k))
+                (encodeValue v)
+            )
+        )
+        mempty
+{-# INLINABLE encodeListMap #-}
 
 encodeMap :: (k -> Text) -> (v -> Json) -> Map k v -> Json
 encodeMap encodeKey encodeValue =

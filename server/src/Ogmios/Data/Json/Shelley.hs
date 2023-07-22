@@ -2,7 +2,6 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -24,12 +23,6 @@ import Cardano.Ledger.Era
 import Cardano.Ledger.Keys
     ( GenDelegPair (..)
     , KeyRole (..)
-    )
-import Cardano.Ledger.Shelley.Constraints
-    ( UsesAuxiliary
-    , UsesScript
-    , UsesTxBody
-    , UsesValue
     )
 import Control.State.Transition
     ( STS (..)
@@ -74,37 +67,22 @@ import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Coin as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Credential as Ledger
-import qualified Cardano.Ledger.Era as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
+import qualified Cardano.Ledger.Keys.Bootstrap as Ledger
 import qualified Cardano.Ledger.SafeHash as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
 
-import qualified Cardano.Ledger.Shelley.Address.Bootstrap as Sh
 import qualified Cardano.Ledger.Shelley.BlockChain as Sh
 import qualified Cardano.Ledger.Shelley.Delegation.Certificates as Sh
 import qualified Cardano.Ledger.Shelley.Genesis as Sh
-import qualified Cardano.Ledger.Shelley.LedgerState as Sh
-import qualified Cardano.Ledger.Shelley.Metadata as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
-import qualified Cardano.Ledger.Shelley.Rules.Deleg as Sh
-import qualified Cardano.Ledger.Shelley.Rules.Delegs as Sh
-import qualified Cardano.Ledger.Shelley.Rules.Delpl as Sh
-import qualified Cardano.Ledger.Shelley.Rules.Ledger as Sh
-import qualified Cardano.Ledger.Shelley.Rules.Pool as Sh
-import qualified Cardano.Ledger.Shelley.Rules.Ppup as Sh
-import qualified Cardano.Ledger.Shelley.Rules.Utxo as Sh
-import qualified Cardano.Ledger.Shelley.Rules.Utxow as Sh
+import qualified Cardano.Ledger.Shelley.Rules as Sh
 import qualified Cardano.Ledger.Shelley.Scripts as Sh
 import qualified Cardano.Ledger.Shelley.Tx as Sh
+import qualified Cardano.Ledger.Shelley.TxAuxData as Sh
 import qualified Cardano.Ledger.Shelley.TxBody as Sh
+import qualified Cardano.Ledger.Shelley.TxWits as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
-
-type ShelleyBased era =
-  ( UsesValue era
-  , UsesTxBody era
-  , UsesScript era
-  , UsesAuxiliary era
-  )
 
 --
 -- Encoders
@@ -229,7 +207,7 @@ encodeDCert = encodeObject . \case
               "retirementEpoch" .=
                   encodeEpochNo epochNo
             )
-    Sh.DCertGenesis (Sh.GenesisDelegCert key delegate vrf)  ->
+    Sh.DCertGenesis (Sh.ConstitutionalDelegCert key delegate vrf)  ->
         "genesisDelegation" .= encodeObject
             ( "verificationKeyHash" .=
                 encodeKeyHash key <>
@@ -257,17 +235,17 @@ encodeDelegation
     -> Json
 encodeDelegation x =
     "delegator" .=
-        encodeCredential (Sh._delegator x) <>
+        encodeCredential (Sh.dDelegator x) <>
     "delegatee" .=
-        encodePoolId (Sh._delegatee x)
+        encodePoolId (Sh.dDelegatee x)
     & encodeObject
 
 encodeDelegsFailure
-    :: PredicateFailure (Ledger.EraRule "DELPL" era) ~ Sh.DelplPredicateFailure era
-    => PredicateFailure (Ledger.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
-    => PredicateFailure (Ledger.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
-    => Crypto (Ledger.Crypto era)
-    => Sh.DelegsPredicateFailure era
+    :: PredicateFailure (Ledger.EraRule "DELPL" era) ~ Sh.ShelleyDelplPredFailure era
+    => PredicateFailure (Ledger.EraRule "POOL" era)  ~ Sh.ShelleyPoolPredFailure era
+    => PredicateFailure (Ledger.EraRule "DELEG" era) ~ Sh.ShelleyDelegPredFailure era
+    => Crypto (Ledger.EraCrypto era)
+    => Sh.ShelleyDelegsPredFailure era
     -> Json
 encodeDelegsFailure = \case
     Sh.DelegateeNotRegisteredDELEG h ->
@@ -276,14 +254,14 @@ encodeDelegsFailure = \case
         & encodeObject
     Sh.WithdrawalsNotInRewardsDELEGS withdrawals ->
         "unknownOrIncompleteWithdrawals" .=
-            encodeWdrl (Sh.Wdrl withdrawals)
+            encodeWdrl (Ledger.Withdrawals withdrawals)
         & encodeObject
     Sh.DelplFailure e ->
         encodeDeplFailure e
 
 encodeDelegFailure
-    :: Crypto (Ledger.Crypto era)
-    => Sh.DelegPredicateFailure era
+    :: Crypto (Ledger.EraCrypto era)
+    => Sh.ShelleyDelegPredFailure era
     -> Json
 encodeDelegFailure = encodeObject . \case
     Sh.StakeKeyAlreadyRegisteredDELEG credential ->
@@ -356,10 +334,10 @@ encodeDeltaCoin (Ledger.DeltaCoin delta) =
     encodeInteger delta
 
 encodeDeplFailure
-    :: PredicateFailure (Ledger.EraRule "POOL" era)  ~ Sh.PoolPredicateFailure era
-    => PredicateFailure (Ledger.EraRule "DELEG" era) ~ Sh.DelegPredicateFailure era
-    => Crypto (Ledger.Crypto era)
-    => Sh.DelplPredicateFailure era
+    :: PredicateFailure (Ledger.EraRule "POOL" era)  ~ Sh.ShelleyPoolPredFailure era
+    => PredicateFailure (Ledger.EraRule "DELEG" era) ~ Sh.ShelleyDelegPredFailure era
+    => Crypto (Ledger.EraCrypto era)
+    => Sh.ShelleyDelplPredFailure era
     -> Json
 encodeDeplFailure = \case
     Sh.PoolFailure e ->
@@ -379,8 +357,8 @@ encodeEntities tag encodeEntity =
         "entity" .= encodeEntity e
 
 encodeGenesis
-    :: Era era
-    => Sh.ShelleyGenesis era
+    :: Crypto crypto
+    => Sh.ShelleyGenesis crypto
     -> Json
 encodeGenesis x =
     "systemStart" .=
@@ -400,17 +378,17 @@ encodeGenesis x =
     "maxKesEvolutions" .=
         encodeWord64 (Sh.sgMaxKESEvolutions x) <>
     "slotLength" .=
-        encodeNominalDiffTime (Sh.sgSlotLength x) <>
+        encodeNominalDiffTimeMicro (Sh.sgSlotLength x) <>
     "updateQuorum" .=
         encodeWord64 (Sh.sgUpdateQuorum x) <>
     "maxLovelaceSupply" .=
         encodeWord64 (Sh.sgMaxLovelaceSupply x) <>
     "protocolParameters" .=
-        encodePParams' (\k encode v -> k .= encode v) (Sh.sgProtocolParams x) <>
+        encodePParams (Sh.sgProtocolParams x) <>
     "initialDelegates" .=
         encodeMap stringifyKeyHash encodeGenDelegPair (Sh.sgGenDelegs x) <>
     "initialFunds" .=
-        encodeMap stringifyAddress encodeCoin (Sh.sgInitialFunds x) <>
+        encodeListMap stringifyAddress encodeCoin (Sh.sgInitialFunds x) <>
     "initialPools" .=
         encodeShelleyGenesisStaking (Sh.sgStaking x)
     & encodeObject
@@ -453,18 +431,19 @@ encodeKESPeriod =
 
 encodeLedgerFailure
     :: Crypto crypto
-    => Sh.LedgerPredicateFailure (ShelleyEra crypto)
+    => Sh.ShelleyLedgerPredFailure (ShelleyEra crypto)
     -> Json
 encodeLedgerFailure = \case
-    Sh.UtxowFailure e ->
+    Sh.UtxowFailure e  ->
         encodeUtxowFailure encodeUtxoFailure e
     Sh.DelegsFailure e ->
         encodeDelegsFailure e
 
 encodeMetadata
-    :: Sh.Metadata era
+    :: Era era
+    => Sh.ShelleyTxAuxData era
     -> Json
-encodeMetadata (Sh.Metadata blob) =
+encodeMetadata (Sh.ShelleyTxAuxData blob) =
     encodeMetadataBlob blob
 
 encodeMetadataBlob
@@ -500,8 +479,8 @@ encodeMIRPot = \case
         encodeText "treasury"
 
 encodeMultiSig
-    :: Crypto crypto
-    => Sh.MultiSig crypto
+    :: Era era
+    => Sh.MultiSig era
     -> Json
 encodeMultiSig = \case
     Sh.RequireSignature sig ->
@@ -556,8 +535,8 @@ encodePoolId =
     encodeText . stringifyPoolId
 
 encodePoolFailure
-    :: Crypto (Ledger.Crypto era)
-    => Sh.PoolPredicateFailure era
+    :: Crypto (Ledger.EraCrypto era)
+    => Sh.ShelleyPoolPredFailure era
     -> Json
 encodePoolFailure = encodeObject . \case
     Sh.StakePoolNotRegisteredOnKeyPOOL keyHash ->
@@ -566,11 +545,11 @@ encodePoolFailure = encodeObject . \case
     Sh.StakePoolRetirementWrongEpochPOOL current retiring limit ->
         "wrongRetirementEpoch" .= encodeObject
             ( "currentEpoch" .=
-                encodeWord64 current <>
+                encodeEpochNo current <>
               "requestedEpoch" .=
-                encodeWord64 retiring <>
+                encodeEpochNo retiring <>
               "firstUnreachableEpoch" .=
-                encodeWord64 limit
+                encodeEpochNo limit
             )
     Sh.WrongCertificateTypePOOL cert ->
         "wrongPoolCertificate" .=
@@ -600,9 +579,9 @@ encodePoolMetadata
     -> Json
 encodePoolMetadata x =
     "url" .=
-        encodeUrl (Sh._poolMDUrl x) <>
+        encodeUrl (Sh.pmUrl x) <>
     "hash" .=
-        encodeByteStringBase16 (Sh._poolMDHash x)
+        encodeByteStringBase16 (Sh.pmHash x)
     & encodeObject
 
 encodePoolParams
@@ -611,64 +590,79 @@ encodePoolParams
     -> Json
 encodePoolParams x =
     "id" .=
-        encodePoolId (Sh._poolId x) <>
+        encodePoolId (Sh.ppId x) <>
     "vrf" .=
-        encodeHash (Sh._poolVrf x) <>
+        encodeHash (Sh.ppVrf x) <>
     "pledge" .=
-        encodeCoin (Sh._poolPledge x) <>
+        encodeCoin (Sh.ppPledge x) <>
     "cost" .=
-        encodeCoin (Sh._poolCost x) <>
+        encodeCoin (Sh.ppCost x) <>
     "margin" .=
-        encodeUnitInterval (Sh._poolMargin x) <>
+        encodeUnitInterval (Sh.ppMargin x) <>
     "rewardAccount" .=
-        encodeRewardAcnt (Sh._poolRAcnt x) <>
+        encodeRewardAcnt (Sh.ppRewardAcnt x) <>
     "owners" .=
-        encodeFoldable encodeKeyHash (Sh._poolOwners x) <>
+        encodeFoldable encodeKeyHash (Sh.ppOwners x) <>
     "relays" .=
-        encodeFoldable encodeStakePoolRelay (Sh._poolRelays x) <>
+        encodeFoldable encodeStakePoolRelay (Sh.ppRelays x) <>
     "metadata" .=? OmitWhenNothing
-        encodePoolMetadata (Sh._poolMD x)
+        encodePoolMetadata (Sh.ppMetadata x)
     & encodeObject
 
-encodePParams'
-    :: (forall a. Text -> (a -> Json) -> Sh.HKD f a -> Series)
-    -> Sh.PParams' f era
+encodePParams
+    :: (Ledger.PParamsHKD Identity era ~ Sh.ShelleyPParams Identity era)
+    => Ledger.PParams era
     -> Json
-encodePParams' encode x =
+encodePParams (Ledger.PParams x) =
+    encodePParamsHKD (\k encode v -> k .= encode v) x
+
+encodePParamsUpdate
+    :: (Ledger.PParamsHKD StrictMaybe era ~ Sh.ShelleyPParams StrictMaybe era)
+    => Ledger.PParamsUpdate era
+    -> Json
+encodePParamsUpdate (Ledger.PParamsUpdate x) =
+    encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) x
+
+encodePParamsHKD
+    :: forall f era. (Ledger.PParamsHKD f era ~ Sh.ShelleyPParams f era)
+    => (forall a. Text -> (a -> Json) -> Sh.HKD f a -> Series)
+    -> Ledger.PParamsHKD f era
+    -> Json
+encodePParamsHKD encode x =
     encode "minFeeCoefficient"
-        encodeNatural (Sh._minfeeA x) <>
+        encodeCoin (Sh.sppMinFeeA x) <>
     encode "minFeeConstant"
-        encodeNatural (Sh._minfeeB x) <>
+        encodeCoin (Sh.sppMinFeeB x) <>
     encode "maxBlockBodySize"
-        encodeNatural (Sh._maxBBSize x) <>
+        encodeNatural (Sh.sppMaxBBSize x) <>
     encode "maxBlockHeaderSize"
-        encodeNatural (Sh._maxBHSize x) <>
+        encodeNatural (Sh.sppMaxBHSize x) <>
     encode "maxTxSize"
-        encodeNatural (Sh._maxTxSize x) <>
+        encodeNatural (Sh.sppMaxTxSize x) <>
     encode "stakeKeyDeposit"
-        encodeCoin (Sh._keyDeposit x) <>
+        encodeCoin (Sh.sppKeyDeposit x) <>
     encode "poolDeposit"
-        encodeCoin (Sh._poolDeposit x) <>
+        encodeCoin (Sh.sppPoolDeposit x) <>
     encode "poolRetirementEpochBound"
-        encodeEpochNo (Sh._eMax x) <>
+        encodeEpochNo (Sh.sppEMax x) <>
     encode "desiredNumberOfPools"
-        encodeNatural (Sh._nOpt x) <>
+        encodeNatural (Sh.sppNOpt x) <>
     encode "poolInfluence"
-        encodeNonNegativeInterval (Sh._a0 x) <>
+        encodeNonNegativeInterval (Sh.sppA0 x) <>
     encode "monetaryExpansion"
-        encodeUnitInterval (Sh._rho x) <>
+        encodeUnitInterval (Sh.sppRho x) <>
     encode "treasuryExpansion"
-        encodeUnitInterval (Sh._tau x) <>
+        encodeUnitInterval (Sh.sppTau x) <>
     encode "decentralizationParameter"
-        encodeUnitInterval (Sh._d x) <>
+        encodeUnitInterval (Sh.sppD x) <>
     encode "extraEntropy"
-        encodeNonce (Sh._extraEntropy x) <>
+        encodeNonce (Sh.sppExtraEntropy x) <>
     encode "protocolVersion"
-        encodeProtVer (Sh._protocolVersion x) <>
+        encodeProtVer (Sh.sppProtocolVersion x) <>
     encode "minUtxoValue"
-        encodeCoin (Sh._minUTxOValue x) <>
+        encodeCoin (Sh.sppMinUTxOValue x) <>
     encode "minPoolCost"
-        encodeCoin (Sh._minPoolCost x)
+        encodeCoin (Sh.sppMinPoolCost x)
     & encodeObject
 
 encodePrevHash
@@ -679,22 +673,21 @@ encodePrevHash = \case
     TPraos.BlockHash h -> encodeHashHeader h
 
 encodeProposedPPUpdates
-    :: Ledger.PParamsDelta era ~ Sh.PParams' StrictMaybe era
-    => Crypto (Ledger.Crypto era)
+    :: forall era.
+        ( Era era
+        , Ledger.PParamsHKD StrictMaybe era ~ Sh.ShelleyPParams StrictMaybe era
+        )
     => Sh.ProposedPPUpdates era
     -> Json
 encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
-    encodeMap
-        stringifyKeyHash
-        (encodePParams' (\k encode v -> k .=? OmitWhenNothing encode v))
-        m
+    encodeMap stringifyKeyHash encodePParamsUpdate m
 
 encodeProtVer
     :: Ledger.ProtVer
     -> Json
 encodeProtVer x =
     "major" .=
-        encodeNatural (Ledger.pvMajor x) <>
+        encodeVersion (Ledger.pvMajor x) <>
     "minor" .=
         encodeNatural (Ledger.pvMinor x)
     & encodeObject
@@ -706,8 +699,8 @@ encodeRewardAcnt =
     encodeText . stringifyRewardAcnt
 
 encodeScript
-    :: Crypto crypto
-    => Sh.MultiSig crypto
+    :: Era era
+    => Sh.MultiSig era
     -> Json
 encodeScript script =
     "native" .=
@@ -731,9 +724,9 @@ encodeSignedKES (CC.SignedKES raw) =
 encodeShelleyGenesisStaking :: Crypto crypto => Sh.ShelleyGenesisStaking crypto -> Json
 encodeShelleyGenesisStaking x =
     "pools" .=
-        encodeMap stringifyPoolId encodePoolParams (Sh.sgsPools x) <>
+        encodeListMap stringifyPoolId encodePoolParams (Sh.sgsPools x) <>
     "delegators" .=
-        encodeMap stringifyKeyHash encodePoolId (Sh.sgsStake x)
+        encodeListMap stringifyKeyHash encodePoolId (Sh.sgsStake x)
     & encodeObject
 
 encodeShelleyHash
@@ -772,7 +765,7 @@ encodeStakePoolRelay = encodeObject . \case
 
 encodeTx
     :: forall crypto. (Crypto crypto)
-    => Sh.Tx (ShelleyEra crypto)
+    => Sh.ShelleyTx (ShelleyEra crypto)
     -> Json
 encodeTx x =
     "id" .= encodeTxId (Ledger.txid @(ShelleyEra crypto) (Sh.body x))
@@ -790,36 +783,36 @@ encodeTx x =
   where
     metadata = liftA2
         (\hash body -> encodeObject ("hash" .= hash <> "labels" .= body))
-        (encodeAuxiliaryDataHash <$> Sh._mdHash (Sh.body x))
+        (encodeAuxiliaryDataHash <$> Sh.stbMDHash (Sh.body x))
         (encodeMetadata <$> Sh.auxiliaryData x)
 
 encodeTxBody
     :: Crypto crypto
-    => Sh.TxBody (ShelleyEra crypto)
+    => Sh.ShelleyTxBody (ShelleyEra crypto)
     -> Series
 encodeTxBody x =
     "inputs" .=
-        encodeFoldable encodeTxIn (Sh._inputs x) <>
+        encodeFoldable encodeTxIn (Sh.stbInputs x) <>
     "outputs" .=
-        encodeFoldable encodeTxOut (Sh._outputs x) <>
+        encodeFoldable encodeTxOut (Sh.stbOutputs x) <>
     "fee" .=
-        encodeCoin (Sh._txfee x) <>
+        encodeCoin (Sh.stbTxFee x) <>
     "validityInterval" .=
-        encodeObject ("invalidAfter" .= encodeSlotNo (Sh._ttl x)) <>
+        encodeObject ("invalidAfter" .= encodeSlotNo (Sh.stbTTL x)) <>
     "certificates" .=? OmitWhen null
-        (encodeFoldable encodeDCert) (Sh._certs x) <>
-    "withdrawals" .=? OmitWhen (null . Sh.unWdrl)
-        encodeWdrl (Sh._wdrls x) <>
+        (encodeFoldable encodeDCert) (Sh.stbCerts x) <>
+    "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
+        encodeWdrl (Sh.stbWithdrawals x) <>
     "governanceActions" .=? OmitWhenNothing
         (encodeFoldable identity . pure @[] . encodeUpdate)
-        (Sh._txUpdate x)
+        (Sh.stbUpdate x)
 
 encodeTxId
     :: Crypto crypto
     => Ledger.TxId crypto
     -> Json
 encodeTxId =
-    encodeHash . Ledger.extractHash . Ledger._unTxId
+    encodeHash . Ledger.extractHash . Ledger.unTxId
 
 encodeTxIn
     :: Crypto crypto
@@ -833,10 +826,10 @@ encodeTxIn (Ledger.TxIn txid (Ledger.TxIx ix)) =
     & encodeObject
 
 encodeTxOut
-    :: (ShelleyBased era, Ledger.Value era ~ Coin)
-    => Sh.TxOut era
+    :: (Era era, Ledger.Value era ~ Coin)
+    => Sh.ShelleyTxOut era
     -> Json
-encodeTxOut (Sh.TxOut addr value) =
+encodeTxOut (Sh.ShelleyTxOut addr value) =
     "address" .=
         encodeAddress addr <>
     "value" .=
@@ -844,8 +837,9 @@ encodeTxOut (Sh.TxOut addr value) =
     & encodeObject
 
 encodeUpdate
-    :: Ledger.PParamsDelta era ~ Sh.PParams' StrictMaybe era
-    => Crypto (Ledger.Crypto era)
+    :: ( Era era
+       , Ledger.PParamsHKD StrictMaybe era ~ Sh.ShelleyPParams StrictMaybe era
+       )
     => Sh.Update era
     -> Json
 encodeUpdate (Sh.Update update epoch) =
@@ -856,8 +850,8 @@ encodeUpdate (Sh.Update update epoch) =
     & encodeObject
 
 encodeUpdateFailure
-    :: Crypto (Ledger.Crypto era)
-    => Sh.PpupPredicateFailure era
+    :: Crypto (Ledger.EraCrypto era)
+    => Sh.ShelleyPpupPredFailure era
     -> Json
 encodeUpdateFailure = encodeObject . \case
     Sh.NonGenesisUpdatePPUP voting shouldBeVoting ->
@@ -882,9 +876,9 @@ encodeUpdateFailure = encodeObject . \case
 
 encodeUtxo
     :: forall era.
-        ( ShelleyBased era
+        ( Era era
         , Ledger.Value era ~ Coin
-        , Ledger.TxOut era ~ Sh.TxOut era
+        , Ledger.TxOut era ~ Sh.ShelleyTxOut era
         )
     => Sh.UTxO era
     -> Json
@@ -895,7 +889,7 @@ encodeUtxo =
 
 encodeUtxoFailure
     :: Crypto crypto
-    => Sh.UtxoPredicateFailure (ShelleyEra crypto)
+    => Sh.ShelleyUtxoPredFailure (ShelleyEra crypto)
     -> Json
 encodeUtxoFailure = \case
     Sh.BadInputsUTxO inputs ->
@@ -953,7 +947,7 @@ encodeUtxoFailure = \case
         & encodeObject
     Sh.OutputBootAddrAttrsTooBig outs ->
         "addressAttributesTooLarge" .=
-            encodeFoldable encodeAddress ((\(Sh.TxOut addr _) -> addr) <$> outs)
+            encodeFoldable encodeAddress ((\(Sh.ShelleyTxOut addr _) -> addr) <$> outs)
         & encodeObject
     Sh.UpdateFailure e ->
         encodeUpdateFailure e
@@ -963,7 +957,7 @@ encodeUtxowFailure
         ( Era era
         )
     => (PredicateFailure (Ledger.EraRule "UTXO" era) -> Json)
-    -> Sh.UtxowPredicateFailure era
+    -> Sh.ShelleyUtxowPredFailure era
     -> Json
 encodeUtxowFailure encodeUtxoFailure_ = \case
     Sh.InvalidWitnessesUTXOW wits ->
@@ -972,7 +966,7 @@ encodeUtxowFailure encodeUtxoFailure_ = \case
         & encodeObject
     Sh.MissingVKeyWitnessesUTXOW keys ->
         "missingVkWitnesses" .=
-            encodeWitHashes keys
+            encodeFoldable encodeKeyHash keys
         & encodeObject
     Sh.MissingScriptWitnessesUTXOW scripts ->
         "missingScriptWitnesses" .=
@@ -1057,14 +1051,14 @@ encodeVotingPeriod = \case
         encodeText "voteForNextEpoch"
 
 encodeWdrl
-    :: Sh.Wdrl era
+    :: Ledger.Withdrawals era
     -> Json
 encodeWdrl =
-    encodeMap stringifyRewardAcnt encodeCoin . Sh.unWdrl
+    encodeMap stringifyRewardAcnt encodeCoin . Ledger.unWithdrawals
 
 encodeWitnessSet
     :: Crypto crypto
-    => Sh.WitnessSet (ShelleyEra crypto)
+    => Sh.ShelleyTxWits (ShelleyEra crypto)
     -> Series
 encodeWitnessSet x =
     "signatories" .=
@@ -1089,25 +1083,19 @@ encodeWitVKey (Sh.WitVKey key sig) =
 
 encodeBootstrapWitness
     :: Crypto crypto
-    => Sh.BootstrapWitness crypto
+    => Ledger.BootstrapWitness crypto
     -> Json
-encodeBootstrapWitness (Sh.BootstrapWitness key sig cc attr) =
+encodeBootstrapWitness (Ledger.BootstrapWitness key sig cc attr) =
     "key" .=
         encodeVKey key <>
     "signature" .=
         encodeSignedDSIGN sig <>
     "chainCode" .=? OmitWhen BS.null
-        encodeByteStringBase16 (Sh.unChainCode cc) <>
+        encodeByteStringBase16 (Ledger.unChainCode cc) <>
     "addressAttributes" .=? OmitWhen BS.null
         encodeByteStringBase16 attr
     & encodeObject
 
-encodeWitHashes
-    :: Crypto crypto
-    => Sh.WitHashes crypto
-    -> Json
-encodeWitHashes =
-    encodeFoldable encodeKeyHash . Sh.unWitHashes
 
 --
 -- Conversion To Text

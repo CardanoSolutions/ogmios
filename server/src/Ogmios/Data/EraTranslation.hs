@@ -15,21 +15,22 @@ module Ogmios.Data.EraTranslation
     , MultiEraTxOut  (..)
 
       -- * Translations
-    , translateUtxo
-    , translateTxOut
-    , translateTx
+    , Upgrade (..)
     ) where
 
 import Ogmios.Prelude
 
 import Cardano.Ledger.Babbage.Tx
-    ( ValidatedTx (..)
+    ( AlonzoTx (..)
+    )
+import Cardano.Ledger.Babbage.TxOut
+    ( BabbageTxOut
+    )
+import Cardano.Ledger.Core
+    ( translateEraThroughCBOR
     )
 import Cardano.Ledger.Era
     ( PreviousEra
-    )
-import Cardano.Ledger.Serialization
-    ( translateViaCBORAnn
     )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
@@ -47,20 +48,17 @@ import Ouroboros.Consensus.Cardano
     ( CardanoBlock
     )
 import Ouroboros.Consensus.Cardano.Block
-    ( AlonzoEra
-    , BabbageEra
+    ( BabbageEra
     , CardanoEras
+    , ConwayEra
     )
 import Ouroboros.Consensus.Shelley.Ledger
     ( ShelleyBlock
     )
 
-import qualified Cardano.Ledger.Alonzo.Scripts as Alonzo
 import qualified Cardano.Ledger.Alonzo.Tx as Alonzo
-import qualified Cardano.Ledger.Alonzo.TxBody as Alonzo
-import qualified Cardano.Ledger.Babbage.Translation as Babbage
 import qualified Cardano.Ledger.Babbage.TxBody as Babbage
-import qualified Cardano.Ledger.Core as Core
+import qualified Cardano.Ledger.Conway.Translation as Conway
 import qualified Cardano.Ledger.Crypto as Ledger
 
 type family MostRecentEra block :: Type where
@@ -69,89 +67,80 @@ type family MostRecentEra block :: Type where
 type family BlockEra block :: Type where
    BlockEra (ShelleyBlock protocol era) = era
 
-translateTxOut
-    :: forall crypto era.
-        ( era ~ MostRecentEra (CardanoBlock crypto)
-        , Ledger.Crypto crypto
-        )
-    => Alonzo.TxOut (PreviousEra era)
-    -> Babbage.TxOut era
-translateTxOut =
-    Babbage.translateTxOut
-{-# INLINABLE translateTxOut #-}
+class Upgrade (f :: Type -> Type) era where
+    type Upgraded f :: Type -> Type
+    upgrade :: f (PreviousEra era) -> Upgraded f era
 
--- Promote a UTxO from the previous era into the current one. This supposes
--- a forward-compatible format, which has been true since Shelley was introduced.
-translateUtxo
-    :: forall crypto era.
-        ( era ~ MostRecentEra (CardanoBlock crypto)
-        , Ledger.Crypto crypto
-        )
-    => UTxO (PreviousEra era)
-    -> UTxO era
-translateUtxo =
-    UTxO . fmap translateTxOut . unUTxO
-{-# INLINABLE translateUtxo #-}
+----------
+-- TxOut
+----------
 
--- Promote a Tx from the previous era into the current one. This supposes
--- a forward-compatible format, which has been true since Shelley was introduced.
-translateTx
-    :: forall crypto era.
-        ( era ~ MostRecentEra (CardanoBlock crypto)
-        , Ledger.Crypto crypto
-        , Core.Script era ~ Alonzo.Script era
-        )
-    => Core.Tx (PreviousEra era)
-    -> Core.Tx era
-translateTx tx = unsafeFromRight $ runExcept $ do
-    body <- translateViaCBORAnn "body" $ Alonzo.body tx
-    wits <- translateViaCBORAnn "wits" $ Alonzo.wits tx
-    auxiliaryData <- case Alonzo.auxiliaryData tx of
-      SNothing -> pure SNothing
-      SJust axd -> SJust <$> translateViaCBORAnn "auxiliarydata" axd
-    let isValid = Alonzo.isValid tx
-    pure $ ValidatedTx{body,wits,auxiliaryData,isValid}
-  where
-    unsafeFromRight :: (HasCallStack, Show e) => Either e a -> a
-    unsafeFromRight = either (error . show) id
-{-# INLINABLE translateTx #-}
+instance Ledger.Crypto crypto => Upgrade BabbageTxOut (ConwayEra crypto) where
+    type Upgraded BabbageTxOut = BabbageTxOut
+    upgrade = Conway.translateTxOut
+
+----------
+-- UTxO
+----------
+
+instance Ledger.Crypto crypto => Upgrade UTxO (ConwayEra crypto) where
+    type Upgraded UTxO = UTxO
+    upgrade = UTxO . fmap upgrade . unUTxO
+
+----------
+-- Tx
+----------
+
+instance Ledger.Crypto crypto => Upgrade AlonzoTx (ConwayEra crypto) where
+    type Upgraded AlonzoTx = AlonzoTx
+    upgrade tx = unsafeFromRight $ runExcept $ do
+        body <- translateEraThroughCBOR "body" $ Alonzo.body tx
+        wits <- translateEraThroughCBOR "witness" $ Alonzo.body tx
+        auxiliaryData <- case Alonzo.auxiliaryData tx of
+          SNothing -> pure SNothing
+          SJust auxData -> SJust <$> translateEraThroughCBOR "auxiliaryData" auxData
+        let isValid = Alonzo.isValid tx
+        pure $ AlonzoTx{body,wits,auxiliaryData,isValid}
+
+unsafeFromRight :: (HasCallStack, Show e) => Either e a -> a
+unsafeFromRight = either (error . show) id
 
 -- Era-specific GADTs
 
 data MultiEraUTxO block where
-    UTxOInAlonzoEra
-        :: UTxO (AlonzoEra (Crypto block))
-        -> MultiEraUTxO block
-
     UTxOInBabbageEra
         :: UTxO (BabbageEra (Crypto block))
         -> MultiEraUTxO block
 
+    UTxOInConwayEra
+        :: UTxO (ConwayEra (Crypto block))
+        -> MultiEraUTxO block
+
 deriving instance
-    ( Eq (UTxO (AlonzoEra (Crypto block)))
-    , Eq (UTxO (BabbageEra (Crypto block)))
+    ( Eq (UTxO (BabbageEra (Crypto block)))
+    , Eq (UTxO (ConwayEra (Crypto block)))
     ) => Eq (MultiEraUTxO block)
 
 deriving instance
-    ( Show (UTxO (AlonzoEra (Crypto block)))
-    , Show (UTxO (BabbageEra (Crypto block)))
+    ( Show (UTxO (BabbageEra (Crypto block)))
+    , Show (UTxO (ConwayEra (Crypto block)))
     ) => Show (MultiEraUTxO block)
 
 data MultiEraTxOut block where
-    TxOutInAlonzoEra
-        :: Alonzo.TxOut (AlonzoEra (Crypto block))
+    TxOutInBabbageEra
+        :: Babbage.BabbageTxOut (BabbageEra (Crypto block))
         -> MultiEraTxOut block
 
-    TxOutInBabbageEra
-        :: Babbage.TxOut (BabbageEra (Crypto block))
+    TxOutInConwayEra
+        :: Babbage.BabbageTxOut (ConwayEra (Crypto block))
         -> MultiEraTxOut block
 
 deriving instance
-    ( Eq (Alonzo.TxOut (AlonzoEra (Crypto block)))
-    , Eq (Babbage.TxOut (BabbageEra (Crypto block)))
+    ( Eq (Babbage.BabbageTxOut (BabbageEra (Crypto block)))
+    , Eq (Babbage.BabbageTxOut (ConwayEra (Crypto block)))
     ) => Eq (MultiEraTxOut block)
 
 deriving instance
-    ( Show (Alonzo.TxOut (AlonzoEra (Crypto block)))
-    , Show (Babbage.TxOut (BabbageEra (Crypto block)))
+    ( Show (Babbage.BabbageTxOut (BabbageEra (Crypto block)))
+    , Show (Babbage.BabbageTxOut (ConwayEra (Crypto block)))
     ) => Show (MultiEraTxOut block)

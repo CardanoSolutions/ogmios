@@ -2,8 +2,6 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE TypeApplications #-}
-
 {-# OPTIONS_HADDOCK prune #-}
 
 -- |
@@ -55,70 +53,114 @@ module Cardano.Network.Protocol.NodeToClient
     ) where
 
 import Prelude hiding
-    ( read )
+    ( read
+    )
 
 import Cardano.Chain.Slotting
-    ( EpochSlots (..) )
+    ( EpochSlots (..)
+    )
 import Cardano.Ledger.Crypto
-    ( StandardCrypto )
+    ( StandardCrypto
+    )
 import Cardano.Network.Protocol.NodeToClient.Trace
-    ( TraceClient (..) )
+    ( TraceClient (..)
+    )
 import Cardano.Slotting.Slot
-    ( SlotNo )
+    ( SlotNo
+    )
 import Control.Monad.Class.MonadAsync
-    ( MonadAsync )
+    ( MonadAsync
+    )
 import Control.Monad.Class.MonadST
-    ( MonadST )
+    ( MonadST
+    )
 import Control.Monad.Class.MonadThrow
-    ( MonadThrow )
+    ( MonadThrow
+    )
 import Control.Monad.IO.Class
-    ( MonadIO (..) )
+    ( MonadIO (..)
+    )
 import Control.Tracer
-    ( Tracer (..), contramap, nullTracer )
+    ( Tracer (..)
+    , contramap
+    , nullTracer
+    )
 import Data.ByteString.Lazy
-    ( ByteString )
+    ( ByteString
+    )
 import Data.Kind
-    ( Type )
+    ( Type
+    )
 import Data.Map.Strict
-    ( (!) )
+    ( (!)
+    )
 import Data.Proxy
-    ( Proxy (..) )
+    ( Proxy (..)
+    )
 import Data.Void
-    ( Void )
+    ( Void
+    )
 import Network.Mux
-    ( MuxError (..), MuxMode (..) )
+    ( MuxError (..)
+    , MuxMode (..)
+    )
 import Network.TypedProtocol.Codec
-    ( Codec )
+    ( Codec
+    )
 import Network.TypedProtocol.Codec.CBOR
-    ( DeserialiseFailure )
+    ( DeserialiseFailure
+    )
 import Ouroboros.Consensus.Byron.Ledger.Config
-    ( CodecConfig (..) )
+    ( CodecConfig (..)
+    )
 import Ouroboros.Consensus.Cardano
-    ( CardanoBlock )
+    ( CardanoBlock
+    )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras, CodecConfig (..), HardForkApplyTxErr )
+    ( CardanoEras
+    , CodecConfig (..)
+    , HardForkApplyTxErr
+    )
 import Ouroboros.Consensus.Ledger.Query
-    ( Query (..) )
+    ( Query (..)
+    )
 import Ouroboros.Consensus.Ledger.SupportsMempool
-    ( GenTx, GenTxId )
+    ( GenTx
+    , GenTxId
+    )
 import Ouroboros.Consensus.Network.NodeToClient
-    ( ClientCodecs, Codecs' (..), clientCodecs )
+    ( ClientCodecs
+    , Codecs' (..)
+    , clientCodecs
+    )
 import Ouroboros.Consensus.Node.NetworkProtocolVersion
-    ( SupportedNetworkProtocolVersion (..) )
+    ( SupportedNetworkProtocolVersion (..)
+    )
 import Ouroboros.Consensus.Protocol.Praos.Translate
     ()
 import Ouroboros.Consensus.Shelley.Ledger.Config
-    ( CodecConfig (..) )
+    ( CodecConfig (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger.SupportsProtocol
     ()
 import Ouroboros.Network.Block
-    ( Point (..), Tip (..) )
+    ( Point (..)
+    , Tip (..)
+    )
 import Ouroboros.Network.Channel
-    ( Channel, hoistChannel )
+    ( Channel
+    , hoistChannel
+    )
 import Ouroboros.Network.Driver.Simple
-    ( TraceSendRecv, runPeer, runPipelinedPeer )
+    ( TraceSendRecv
+    , runPeer
+    , runPipelinedPeer
+    )
 import Ouroboros.Network.Mux
-    ( MuxPeer (..), OuroborosApplication (..), RunMiniProtocol (..) )
+    ( MuxPeer (..)
+    , OuroborosApplication (..)
+    , RunMiniProtocol (..)
+    )
 import Ouroboros.Network.NodeToClient
     ( LocalAddress
     , NetworkConnectTracers (..)
@@ -131,25 +173,40 @@ import Ouroboros.Network.NodeToClient
     , withIOManager
     )
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
-    ( ChainSyncClientPipelined, chainSyncClientPeerPipelined )
+    ( ChainSyncClientPipelined
+    , chainSyncClientPeerPipelined
+    )
 import Ouroboros.Network.Protocol.ChainSync.Type
-    ( ChainSync )
+    ( ChainSync
+    )
 import Ouroboros.Network.Protocol.Handshake.Type
-    ( HandshakeProtocolError (..) )
+    ( HandshakeProtocolError (..)
+    )
 import Ouroboros.Network.Protocol.Handshake.Version
-    ( combineVersions, simpleSingletonVersions )
+    ( combineVersions
+    , simpleSingletonVersions
+    )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
-    ( LocalStateQueryClient, localStateQueryClientPeer )
+    ( LocalStateQueryClient
+    , localStateQueryClientPeer
+    )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
-    ( LocalStateQuery )
+    ( LocalStateQuery
+    )
 import Ouroboros.Network.Protocol.LocalTxMonitor.Client
-    ( LocalTxMonitorClient, localTxMonitorClientPeer )
+    ( LocalTxMonitorClient
+    , localTxMonitorClientPeer
+    )
 import Ouroboros.Network.Protocol.LocalTxMonitor.Type
-    ( LocalTxMonitor )
+    ( LocalTxMonitor
+    )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
-    ( LocalTxSubmissionClient, localTxSubmissionClientPeer )
+    ( LocalTxSubmissionClient
+    , localTxSubmissionClientPeer
+    )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
-    ( LocalTxSubmission )
+    ( LocalTxSubmission
+    )
 
 -- | Concrete block type.
 type Block = CardanoBlock StandardCrypto
@@ -378,11 +435,11 @@ codecs epochSlots nodeToClientV =
     clientCodecs cfg (supportedVersions ! nodeToClientV) nodeToClientV
   where
     supportedVersions = supportedNodeToClientVersions (Proxy @Block)
-    cfg = CardanoCodecConfig byron shelley allegra mary alonzo babbage
-      where
-        byron   = ByronCodecConfig epochSlots
-        shelley = ShelleyCodecConfig
-        allegra = ShelleyCodecConfig
-        mary    = ShelleyCodecConfig
-        alonzo  = ShelleyCodecConfig
-        babbage = ShelleyCodecConfig
+    cfg = CardanoCodecConfig
+        (let byron   = ByronCodecConfig epochSlots in byron)
+        (let shelley = ShelleyCodecConfig in shelley)
+        (let allegra = ShelleyCodecConfig in allegra)
+        (let mary    = ShelleyCodecConfig in mary)
+        (let alonzo  = ShelleyCodecConfig in alonzo)
+        (let babbage = ShelleyCodecConfig in babbage)
+        (let conway  = ShelleyCodecConfig in conway)

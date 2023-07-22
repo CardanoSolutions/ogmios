@@ -51,14 +51,20 @@ library:
     - cardano-crypto
     - cardano-crypto-class
     - cardano-crypto-wrapper
+    - cardano-data
+    - cardano-ledger-allegra
     - cardano-ledger-alonzo
+    - cardano-ledger-api
     - cardano-ledger-babbage
+    - cardano-ledger-binary
     - cardano-ledger-byron
+    - cardano-ledger-conway
     - cardano-ledger-core
+    - cardano-ledger-mary
     - cardano-ledger-shelley
-    - cardano-ledger-shelley-ma
     - cardano-protocol-tpraos
     - cardano-slotting
+    - cardano-strict-containers
     - cborg
     - containers
     - contra-tracer
@@ -83,11 +89,11 @@ library:
     - mtl
     - optparse-applicative
     - ouroboros-consensus
-    - ouroboros-consensus-byron
     - ouroboros-consensus-cardano
     - ouroboros-consensus-protocol
-    - ouroboros-consensus-shelley
     - ouroboros-network
+    - ouroboros-network-api
+    - ouroboros-network-protocols
     - plutus-ledger-api
     - prettyprinter
     - profunctors
@@ -99,7 +105,6 @@ library:
     - serialise
     - small-steps
     - stm
-    - strict-containers
     - text
     - time
     - time-manager
@@ -114,8 +119,6 @@ library:
     - wai-websockets
     - warp
     - websockets
-  system-build-tools:
-  - git
 
 executables:
   ogmios:
@@ -142,17 +145,18 @@ tests:
     - base16
     - bytestring
     - cardano-client
+    - cardano-ledger-api
     - cardano-ledger-alonzo
     - cardano-ledger-core
     - cardano-ledger-shelley
     - cardano-ledger-shelley-test
     - cardano-slotting
+    - ouroboros-consensus-cardano:cardano-testlib
     - containers
     - directory
     - file-embed
     - generic-arbitrary
     - generics-sop
-    - hedgehog-quickcheck
     - hspec
     - hspec-json-schema
     - io-sim
@@ -161,13 +165,11 @@ tests:
     - lens-aeson
     - ogmios
     - ouroboros-consensus
-    - ouroboros-consensus-byron
     - ouroboros-consensus-cardano
-    - ouroboros-consensus-cardano-test
-    - ouroboros-consensus-shelley
     - ouroboros-consensus-protocol
-    - ouroboros-network
+    - ouroboros-network-api
     - ouroboros-network-framework
+    - ouroboros-network-protocols
     - QuickCheck
     - random
     - relude

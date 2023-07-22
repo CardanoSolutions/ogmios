@@ -213,6 +213,7 @@ data CardanoEra
     | Mary
     | Alonzo
     | Babbage
+    | Conway
     deriving stock (Generic, Show, Eq, Enum, Bounded)
     deriving anyclass (ToJSON)
 
@@ -221,9 +222,10 @@ eraIndexToCardanoEra
     => EraIndex (CardanoEras crypto)
     -> CardanoEra
 eraIndexToCardanoEra = \case
-    EraIndex                Z{}      -> Byron
-    EraIndex             (S Z{})     -> Shelley
-    EraIndex          (S (S Z{}))    -> Allegra
-    EraIndex       (S (S (S Z{})))   -> Mary
-    EraIndex    (S (S (S (S Z{}))))  -> Alonzo
-    EraIndex (S (S (S (S (S Z{}))))) -> Babbage
+    EraIndex                   Z{}       -> Byron
+    EraIndex                (S Z{})      -> Shelley
+    EraIndex             (S (S Z{}))     -> Allegra
+    EraIndex          (S (S (S Z{})))    -> Mary
+    EraIndex       (S (S (S (S Z{}))))   -> Alonzo
+    EraIndex    (S (S (S (S (S Z{})))))  -> Babbage
+    EraIndex (S (S (S (S (S (S Z{})))))) -> Conway

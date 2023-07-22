@@ -4,7 +4,6 @@
 
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- | This package provides an implementation of the bech32 encoding. In essence,

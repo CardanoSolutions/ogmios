@@ -36,6 +36,7 @@ language_extensions: &default-extensions
 - ScopedTypeVariables
 - StandaloneDeriving
 - TupleSections
+- TypeApplications
 - TypeFamilies
 - TypeSynonymInstances
 - ViewPatterns

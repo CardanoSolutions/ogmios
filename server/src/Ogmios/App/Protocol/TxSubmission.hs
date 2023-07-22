@@ -3,7 +3,6 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeApplications #-}
 
 -- | Transaction submission is pretty simple & works by submitting an already
 -- serialized and signed transaction as one single message.
@@ -17,12 +16,12 @@
 -- @
 --   ┌──────────┐
 --   │   Busy   │◀═══════════════════════════════════════╗
---   └────┬─────┘        SubmitTx / EvaluateTransaction           ║
+--   └────┬─────┘        SubmitTx / EvaluateTx           ║
 --        │                                              ║
 --        │                                         ┌──────────┐
 --        │                                         │          │
 --        │                                         │          │
---        │  SubmitTxResponse / EvaluateTransactionResponse  │   Idle   │
+--        │  SubmitTxResponse / EvaluateTxResponse  │   Idle   │
 --        └────────────────────────────────────────▶│          │
 --                                                  │          │⇦ START
 --                                                  └──────────┘
@@ -35,11 +34,21 @@ module Ogmios.App.Protocol.TxSubmission
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.Alonzo.TxBody
+    ( AlonzoEraTxBody (..)
+    )
+import Cardano.Ledger.Babbage.TxBody
+    ( BabbageEraTxBody (..)
+    )
+import Cardano.Ledger.Core
+    ( EraTx (..)
+    , EraTxBody (..)
+    )
 import Cardano.Ledger.Crypto
     ( StandardCrypto
     )
 import Cardano.Ledger.Era
-    ( Crypto
+    ( EraCrypto
     )
 import Control.Monad.Trans.Except
     ( Except
@@ -51,29 +60,24 @@ import Data.Type.Equality
     ( testEquality
     , (:~:) (..)
     )
-import GHC.Records
-    ( HasField (..)
-    )
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..)
     , TQueue
-    , newEmptyTMVar
     , putTMVar
     , readTQueue
     , takeTMVar
     )
 import Ogmios.Data.EraTranslation
     ( MultiEraUTxO (..)
-    , translateTx
-    , translateUtxo
+    , Upgrade (..)
     )
 import Ogmios.Data.Json
     ( Json
     )
 import Ogmios.Data.Protocol.TxSubmission
-    ( AlonzoEra
-    , BabbageEra
+    ( BabbageEra
     , CanEvaluateScriptsInEra
+    , ConwayEra
     , EpochInfo
     , EvaluateTransaction (..)
     , EvaluateTransactionError (..)
@@ -85,7 +89,6 @@ import Ogmios.Data.Protocol.TxSubmission
     , SubmitTransaction (..)
     , SubmitTransactionError
     , SystemStart
-    , Tx
     , TxIn
     , TxSubmissionCodecs (..)
     , TxSubmissionMessage (..)
@@ -94,6 +97,7 @@ import Ogmios.Data.Protocol.TxSubmission
     , incompatibleEra
     , mkSubmitTransactionResponse
     , nodeTipTooOld
+    , unsupportedEra
     )
 import Ouroboros.Consensus.Cardano.Block
     ( BlockQuery (..)
@@ -117,9 +121,6 @@ import Ouroboros.Consensus.Ledger.Query
     )
 import Ouroboros.Consensus.Protocol.Praos
     ( Praos
-    )
-import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos
     )
 import Ouroboros.Consensus.Shelley.Ledger
     ( GenTx (..)
@@ -201,15 +202,15 @@ newExecutionUnitsEvaluator
         ( MonadSTM m
         , block ~ HardForkBlock (CardanoEras crypto)
         , crypto ~ StandardCrypto
-        , CanEvaluateScriptsInEra (AlonzoEra crypto)
         , CanEvaluateScriptsInEra (BabbageEra crypto)
+        , CanEvaluateScriptsInEra (ConwayEra crypto)
         )
     => m ( ExecutionUnitsEvaluator m block
          , LocalStateQueryClient block (Point block) (Query block) m ()
          )
 newExecutionUnitsEvaluator = do
-    evaluateExecutionUnitsRequest  <- atomically newEmptyTMVar
-    evaluateExecutionUnitsResponse <- atomically newEmptyTMVar
+    evaluateExecutionUnitsRequest  <- newEmptyTMVarIO
+    evaluateExecutionUnitsResponse <- newEmptyTMVarIO
 
     let runEvaluation = either return $ \eval -> do
             atomically $ putTMVar evaluateExecutionUnitsRequest eval
@@ -220,19 +221,29 @@ newExecutionUnitsEvaluator = do
             { evaluateExecutionUnitsM = runEvaluation . \case
                 (_, GenTxByron{}) ->
                     Left (incompatibleEra "byron")
+
                 (_, GenTxShelley{}) ->
                     Left (incompatibleEra "shelley")
+
                 (_, GenTxAllegra{}) ->
                     Left (incompatibleEra "allegra")
+
                 (_, GenTxMary{}) ->
                     Left (incompatibleEra "mary")
-                (UTxOInAlonzoEra utxo, GenTxAlonzo (ShelleyTx _id tx)) -> do
-                    Right (SomeEvaluationInAnyEra utxo tx)
-                (UTxOInAlonzoEra utxo, GenTxBabbage (ShelleyTx _id tx)) -> do
-                    Right (SomeEvaluationInAnyEra (translateUtxo utxo) tx)
-                (UTxOInBabbageEra utxo, GenTxAlonzo (ShelleyTx _id tx)) -> do
-                    Right (SomeEvaluationInAnyEra utxo (translateTx tx))
+
+                (_, GenTxAlonzo{}) ->
+                    Left (unsupportedEra "alonzo")
+
                 (UTxOInBabbageEra utxo, GenTxBabbage (ShelleyTx _id tx)) -> do
+                    Right (SomeEvaluationInAnyEra utxo tx)
+
+                (UTxOInBabbageEra utxo, GenTxConway (ShelleyTx _id tx)) -> do
+                    Right (SomeEvaluationInAnyEra (upgrade utxo) tx)
+
+                (UTxOInConwayEra utxo, GenTxBabbage (ShelleyTx _id tx)) -> do
+                    Right (SomeEvaluationInAnyEra utxo (upgrade tx))
+
+                (UTxOInConwayEra utxo, GenTxConway (ShelleyTx _id tx)) -> do
                     Right (SomeEvaluationInAnyEra utxo tx)
             }
         , localStateQueryClient
@@ -278,10 +289,10 @@ newExecutionUnitsEvaluator = do
                         reply (nodeTipTooOld era)
                         pure $ LSQ.SendMsgRelease clientStIdle
                     )
-                    -- Alonzo
-                    (clientStAcquired0 @_ @(AlonzoEra crypto) args evaluateExecutionUnits)
                     -- Babbage
                     (clientStAcquired0 @_ @(BabbageEra crypto) args evaluateExecutionUnits)
+                    -- Conway
+                    (clientStAcquired0 @_ @(ConwayEra crypto) args evaluateExecutionUnits)
                 , LSQ.recvMsgFailure =
                     const $ pure $ LSQ.SendMsgAcquire Nothing (clientStAcquiring args)
                 }
@@ -370,11 +381,11 @@ newExecutionUnitsEvaluator = do
                 }
 
 type HoistQuery proto era =
-    forall r a crypto. (crypto ~ Crypto era, CardanoQueryResult crypto r ~ a)
+    forall r a crypto. (crypto ~ EraCrypto era, CardanoQueryResult crypto r ~ a)
         => BlockQuery (ShelleyBlock (proto crypto) era) r
         -> BlockQuery (CardanoBlock crypto) a
 
--- | Run local-state queries in either Alonzo or Babbage, depending on where the network is at.
+-- | Run local-state queries in either Babbage or Conway depending on where the network is at.
 --
 -- This is crucial to allow the server to *dynamically* switch to the right era after the hard-fork.
 selectEra
@@ -387,25 +398,26 @@ selectEra
     => ( Text -> m (LSQ.ClientStAcquired block (Point block) (Query block) m ())
        )
 
-    -- Selector for the Alonzo era.
-    -> ( HoistQuery TPraos (AlonzoEra crypto) -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
-       )
-
     -- Selector for the Babbage era.
     -> ( HoistQuery Praos (BabbageEra crypto) -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
        )
 
+    -- Selector for the Babbage era.
+    -> ( HoistQuery Praos (ConwayEra crypto) -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
+       )
+
     -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
-selectEra fallback asAlonzo asBabbage =
+selectEra fallback asBabbage asConway =
     LSQ.SendMsgQuery (Ledger.BlockQuery $ LSQ.QueryHardFork LSQ.GetCurrentEra) $
     LSQ.ClientStQuerying
         { LSQ.recvMsgResult = \case
-            EraIndex                Z{}      -> fallback "Byron"
-            EraIndex             (S Z{})     -> fallback "Shelley"
-            EraIndex          (S (S Z{}))    -> fallback "Allegra"
-            EraIndex       (S (S (S Z{})))   -> fallback "Mary"
-            EraIndex    (S (S (S (S Z{}))))  -> pure (asAlonzo QueryIfCurrentAlonzo)
-            EraIndex (S (S (S (S (S Z{}))))) -> pure (asBabbage QueryIfCurrentBabbage)
+            EraIndex                   Z{}       -> fallback "Byron"
+            EraIndex                (S Z{})      -> fallback "Shelley"
+            EraIndex             (S (S Z{}))     -> fallback "Allegra"
+            EraIndex          (S (S (S Z{})))    -> fallback "Mary"
+            EraIndex       (S (S (S (S Z{}))))   -> fallback "Alonzo"
+            EraIndex    (S (S (S (S (S Z{})))))  -> pure (asBabbage QueryIfCurrentBabbage)
+            EraIndex (S (S (S (S (S (S Z{})))))) -> pure (asConway QueryIfCurrentConway)
         }
 
 --
@@ -425,13 +437,11 @@ inputsInAnyEra
     :: SomeEvaluationInAnyEra
     -> Set (TxIn StandardCrypto)
 inputsInAnyEra (SomeEvaluationInAnyEra _ tx) =
-    getField @"inputs" body
+    tx ^. bodyTxL . inputsTxBodyL
     <>
-    getField @"collateral" body
+    tx ^. bodyTxL . collateralInputsTxBodyL
     <>
-    getField @"referenceInputs" body
-  where
-    body = getField @"body" tx
+    tx ^. bodyTxL . referenceInputsTxBodyL
 
 mkEvaluateTransactionResponse
     :: forall era block crypto.
@@ -448,9 +458,9 @@ mkEvaluateTransactionResponse callback (UTxO networkUtxo) args =
         Nothing ->
             error "impossible: arguments are not translatable to network era. \
                   \This can't happen because 'selectEra' enforces that queries \
-                  \are only executed if the network is either in 'Alonzo' or \
-                  \'Babbage'. The arguments themselves can also only be 'Alonzo' \
-                  \or 'Babbage'. Thus, we can't reach this point with any other \
+                  \are only executed if the network is either in 'Babbage' or \
+                  \'Conway'. The arguments themselves can also only be 'Babbage' \
+                  \or 'Conway'. Thus, we can't reach this point with any other \
                   \eras. We _could_ potentially capture this proof in the types \
                   \to convince the compiler of this. Let's say: TODO."
         Just (UTxO userProvidedUtxo, tx) ->
@@ -498,22 +508,22 @@ translateToNetworkEra (SomeEvaluationInAnyEra utxoOrig txOrig) =
     translate utxo tx =
         let
             eraNetwork = typeRep @eraNetwork
-            eraAlonzo  = typeRep @(AlonzoEra StandardCrypto)
             eraArgs    = typeRep @eraArgs
             eraBabbage = typeRep @(BabbageEra StandardCrypto)
+            eraConway  = typeRep @(ConwayEra StandardCrypto)
 
             sameEra =
-                case (testEquality eraNetwork eraArgs) of
+                case testEquality eraNetwork eraArgs of
                     Just Refl ->
                         Just (utxo, tx)
                     _ ->
                         Nothing
 
-            alonzoToBabbage =
-                case (testEquality eraNetwork eraBabbage, testEquality eraArgs eraAlonzo) of
+            babbageToConway =
+                case (testEquality eraNetwork eraConway, testEquality eraArgs eraBabbage) of
                     (Just Refl, Just Refl) -> do
-                        Just (translateUtxo utxo, translateTx tx)
+                        Just (upgrade utxo, upgrade tx)
                     _ ->
                         Nothing
           in
-            sameEra <|> alonzoToBabbage
+            sameEra <|> babbageToConway

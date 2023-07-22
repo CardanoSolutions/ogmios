@@ -66,6 +66,7 @@ library
       ScopedTypeVariables
       StandaloneDeriving
       TupleSections
+      TypeApplications
       TypeFamilies
       TypeSynonymInstances
       ViewPatterns
@@ -117,6 +118,7 @@ test-suite unit
       ScopedTypeVariables
       StandaloneDeriving
       TupleSections
+      TypeApplications
       TypeFamilies
       TypeSynonymInstances
       ViewPatterns

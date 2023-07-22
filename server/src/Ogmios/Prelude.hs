@@ -25,6 +25,10 @@ module Ogmios.Prelude
     , (^?)
     , (^.)
 
+      -- * StrictMaybe
+    , StrictMaybe
+    , maybeToStrictMaybe
+
       -- * Array
     , Array
     , mapToArray
@@ -53,6 +57,10 @@ import Data.Generics.Product.Typed
     ( HasType
     , typed
     )
+import Data.Maybe.Strict
+    ( StrictMaybe
+    , maybeToStrictMaybe
+    )
 import Data.Profunctor.Unsafe
     ( (#.)
     )
@@ -66,7 +74,6 @@ import GHC.TypeLits
 import Relude hiding
     ( MVar
     , Nat
-    , Option
     , STM
     , TMVar
     , TVar

@@ -7,7 +7,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Ogmios.App.Configuration
     (
@@ -19,6 +18,7 @@ module Ogmios.App.Configuration
     , readByronGenesis
     , readShelleyGenesis
     , readAlonzoGenesis
+    , readConwayGenesis
 
     -- * NetworkParameters
     , NetworkParameters (..)
@@ -60,6 +60,7 @@ import Ouroboros.Consensus.BlockchainTime.WallClock.Types
     )
 import Ouroboros.Consensus.Cardano.Block
     ( AlonzoEra
+    , ConwayEra
     , ShelleyEra
     )
 import Ouroboros.Network.Magic
@@ -124,6 +125,15 @@ readAlonzoGenesis configFile = do
     case nodeConfig ^? key "AlonzoGenesisFile" . _String of
         Nothing ->
             liftIO $ fail "Missing 'AlonzoGenesisFile' from node's configuration."
+        Just (toString -> genesisFile) -> do
+            Yaml.decodeFileThrow (replaceFileName configFile genesisFile)
+
+readConwayGenesis :: MonadIO m => FilePath -> m (GenesisConfig ConwayEra)
+readConwayGenesis configFile = do
+    nodeConfig <- Yaml.decodeFileThrow @_ @Json.Value configFile
+    case nodeConfig ^? key "ConwayGenesisFile" . _String of
+        Nothing ->
+            liftIO $ fail "Missing 'ConwayGenesisFile' from node's configuration."
         Just (toString -> genesisFile) -> do
             Yaml.decodeFileThrow (replaceFileName configFile genesisFile)
 
