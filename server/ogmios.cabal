@@ -133,7 +133,6 @@ library
     , bytestring
     , cardano-api
     , cardano-binary
-    , cardano-client
     , cardano-crypto
     , cardano-crypto-class
     , cardano-crypto-wrapper
@@ -179,6 +178,7 @@ library
     , ouroboros-consensus-protocol
     , ouroboros-network
     , ouroboros-network-api
+    , ouroboros-network-ogmios
     , ouroboros-network-protocols
     , plutus-ledger-api
     , prettyprinter
@@ -329,7 +329,6 @@ test-suite unit
     , base >=4.7 && <5
     , base16
     , bytestring
-    , cardano-client
     , cardano-ledger-alonzo
     , cardano-ledger-api
     , cardano-ledger-core
@@ -354,6 +353,7 @@ test-suite unit
     , ouroboros-consensus-protocol
     , ouroboros-network-api
     , ouroboros-network-framework
+    , ouroboros-network-ogmios
     , ouroboros-network-protocols
     , random
     , relude

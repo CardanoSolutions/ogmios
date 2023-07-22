@@ -15,7 +15,7 @@ index-state:
 
 packages:
   ./
-  modules/cardano-client
+  modules/ouroboros-network-ogmios
   modules/contra-tracers
   modules/fast-bech32
   modules/git-th
@@ -30,7 +30,7 @@ package ogmios
   flags: +production
   tests: true
 
-package cardano-client
+package ouroboros-network-ogmios
   tests: false
 
 package git-th

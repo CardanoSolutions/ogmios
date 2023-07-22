@@ -1,4 +1,4 @@
-# cardano-client
+# ouroboros-network-ogmios
 
 ## Overview
 

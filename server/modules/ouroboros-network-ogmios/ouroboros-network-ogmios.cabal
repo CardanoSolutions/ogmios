@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 
-name:           cardano-client
-version:        1.1.0
+name:           ouroboros-network-ogmios
+version:        0.0.0
 synopsis:       Utilities to build a cardano client using the Ouroboros mini-protocols
-description:    Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server/modules/cardano-client>
+description:    Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server/modules/ouroboros-network-ogmios>
 category:       Cardano
 homepage:       https://github.com/cardanosolutions/ogmios#readme
 bug-reports:    https://github.com/cardanosolutions/ogmios/issues
@@ -31,7 +31,7 @@ library
       Cardano.Network.Protocol.NodeToClient
       Cardano.Network.Protocol.NodeToClient.Trace
   other-modules:
-      Paths_cardano_client
+      Paths_ouroboros_network_ogmios
   hs-source-dirs:
       src
   default-extensions:
