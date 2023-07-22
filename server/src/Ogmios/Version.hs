@@ -13,10 +13,10 @@ import Ogmios.Prelude
 
 import Data.Git.Revision.TH
     ( gitDescribeHEAD
-    , unknownRevision
     )
 import Data.Version
-    ( showVersion
+    ( makeVersion
+    , showVersion
     )
 
 import qualified Paths_ogmios as Pkg
@@ -28,9 +28,10 @@ import qualified Paths_ogmios as Pkg
 -- This is impure in disguise but safe if 'git' is available in the app context.
 -- If not available, we fallback to the version listed in the cabal file.
 version :: Text
-version =
-    case $(gitDescribeHEAD) of
-        rev | rev == unknownRevision ->
-            toText ("v" <> showVersion Pkg.version)
-        rev ->
-            toText rev
+version
+    | Pkg.version == makeVersion [0] =
+        toText ("nightly (" <> sha <> ")")
+    | otherwise =
+        toText ("v" <> showVersion Pkg.version <> " (" <> sha <> ")")
+  where
+    sha = $(gitDescribeHEAD)

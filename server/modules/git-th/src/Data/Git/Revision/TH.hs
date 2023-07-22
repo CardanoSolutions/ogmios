@@ -27,19 +27,36 @@ module Data.Git.Revision.TH
 import Prelude
 
 import Control.Arrow
-    ( second )
+    ( second
+    )
 import Control.Exception
-    ( SomeException, try )
+    ( SomeException
+    , try
+    )
 import Control.Monad
-    ( void )
+    ( void
+    )
+import Data.Functor
+    ( (<&>)
+    )
 import Data.List
-    ( dropWhileEnd )
+    ( dropWhileEnd
+    )
 import Language.Haskell.TH
-    ( Exp (..), Lit (..), Q, runIO )
+    ( Exp (..)
+    , Lit (..)
+    , Q
+    , runIO
+    )
+import System.Environment
+    ( lookupEnv
+    )
 import System.Exit
-    ( ExitCode (..) )
+    ( ExitCode (..)
+    )
 import System.Process
-    ( readProcessWithExitCode )
+    ( readProcessWithExitCode
+    )
 
 -- | Give a human readable name based of the current HEAD revision
 --
@@ -63,7 +80,6 @@ gitDescribeHEAD =
             Right (ExitSuccess, revision) -> pure revision
             _                             -> pure unknownRevision
 
-
 -- | Get the current HEAD revision (long format).
 --
 -- The resulting splice is a 'String'.
@@ -80,8 +96,14 @@ gitRevParseHEAD =
     runGitRevParse = do
         result <- git ["rev-parse", "--verify", "HEAD"]
         case result of
-            Right (ExitSuccess, revision) -> pure revision
-            _                             -> pure unknownRevision
+            Right (ExitSuccess, revision) ->
+                pure revision
+            _ ->
+                lookupEnv "GIT_SHA" <&> \case
+                    Nothing ->
+                        unknownRevision
+                    Just revision ->
+                        revision
 
 -- | Get a list of tags, ordered by descending date.
 --
