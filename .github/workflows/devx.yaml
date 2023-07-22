@@ -1,0 +1,33 @@
+name: DevX
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  devx:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        arch: [amd64]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install GHC and Cabal
+        uses: input-output-hk/actions/devx@latest
+        with:
+          platform: x86_64-linux
+          target-platform: -static
+          compiler-nix-name: ghc8107
+          minimal: true
+          iog: true
+
+      - name: cabal update
+        run: cabal update
+
+      - name: cabal build
+        working-directory: server
+        run: cabal build --enable-executable-static exe:ogmios
