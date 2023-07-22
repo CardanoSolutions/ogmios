@@ -6,7 +6,7 @@
     { }
 , iohkNix ? import
     (builtins.fetchTarball
-      "https://github.com/input-output-hk/iohk-nix/archive/edb2d2df2ebe42bbdf03a0711115cf6213c9d366.tar.gz")
+      "https://github.com/input-output-hk/iohk-nix/archive/0ca907c6f63863ad24b950c5e50d976ac788b0d1.tar.gz")
     { }
 , cardanoPkgs ?
     (builtins.fetchTarball
