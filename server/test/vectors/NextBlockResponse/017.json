@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"direction":"backward","point":{"slot":6348,"hash":"4f539156bfbefc070a3b61cad3d1cedab3050e2b2a62f0ffe16a43eb0edc1ce8"},"tip":{"slot":86551,"hash":"9d997fe4d16bf3866ce14645aa54134db998b203851fecaeeefad08f64e32a61","blockNo":791937}},"id":"st"}
+{"jsonrpc":"2.0","result":{"direction":"backward","point":{"slot":6348,"hash":"3a45e3f99f3ab1a0572403ff6e68420573ef2d51334f4114b70ce96fea5c7718"},"tip":{"slot":86551,"hash":"9d997fe4d16bf3866ce14645aa54134db998b203851fecaeeefad08f64e32a61","blockNo":791937}},"id":"st"}

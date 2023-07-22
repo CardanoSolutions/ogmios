@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","method":"acquireLedgerState","params":{"point":{"slot":68939,"hash":"fb3d635c7cb573d1b9e9bff4a64ab4f25190d29b6fd8db94c605a218a23fa9ad"}},"id":null}
+{"jsonrpc":"2.0","method":"acquireLedgerState","params":{"point":{"slot":68939,"hash":"96be8d8821d6e3957a8b5ce14228ee8298d1367dc60b1c111a8f7727c3baaf55"}},"id":null}

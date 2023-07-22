@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3004,"message":"Some scripts of the transactions terminated with error(s).","data":{"withdrawal:1":[{"extraRedeemers":["certificate:4"]}]}},"id":"st"}
+{"jsonrpc":"2.0","error":{"code":3005,"message":"Some scripts of the transactions terminated with error(s).","data":{"withdrawal:1":[{"extraRedeemers":["certificate:4"]}]}},"id":"st"}

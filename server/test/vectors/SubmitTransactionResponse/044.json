@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"insufficientGenesisSignatures":["0d94e174732ef9aae73f395ab44507bfa983d65023c11a951f0c32e4","e0a714319812c3f773ba04ec5d6b3ffcd5aad85006805b047b082541"]}]},"id":null}
+{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"insufficientGenesisSignatures":["48e8431a3e4087d5408c19043df6c7c97a628bda28a0c7f5f1658433","698785305cbdcdb9a1dc2f8f585699ea1a452e65c4f33c8050cd1703"]}]},"id":null}

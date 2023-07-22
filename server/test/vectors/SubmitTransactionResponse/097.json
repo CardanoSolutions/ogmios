@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"protocolVersionCannotFollow":{"major":540,"minor":269}},{"insufficientFundsForMir":{"rewardSource":"reserves","sourceSize":342,"requestedAmount":39}}]},"id":null}
+{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"protocolVersionCannotFollow":{"major":3,"minor":1}},{"insufficientFundsForMir":{"rewardSource":"reserves","sourceSize":383318,"requestedAmount":970791}}]},"id":null}

@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"unknownOrIncompleteWithdrawals":{}},{"poolMetadataHashTooBig":{"poolId":"pool1kkhxvw4w4rjsq9tmma964lt0twsvu46e7lx5zq0uzvh4ge9n0hc","measuredSize":-2}}]},"id":null}
+{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"unknownOrIncompleteWithdrawals":{}},{"poolMetadataHashTooBig":{"poolId":"pool1x4a6hzpujx2ylt3u3gj66alt3j8rzn4nss60mcm50w99qjcf8f9","measuredSize":-2}}]},"id":null}

@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"direction":"backward","point":{"slot":92267,"hash":"6487fa2e6f0e85ef6e887931381057146060bfd2ed7324f7829c369c3628dc16"},"tip":{"slot":4744,"hash":"92cdf578c47085a5992256f0dcf97d0b19f1f1c9de4d5fe30c3ace6191b6e5db","blockNo":3015040}},"id":null}
+{"jsonrpc":"2.0","result":{"direction":"backward","point":{"slot":92267,"hash":"b5f556f2ff67952ca1237ccb40dbf33f213ce15b769597d12188e9ab8fbd7bdf"},"tip":{"slot":4744,"hash":"669ea8a00b7307b08fae2a6eb3a59d42f7d32e80860320208938019789bef05f","blockNo":3015040}},"id":null}

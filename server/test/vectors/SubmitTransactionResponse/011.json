@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"unknownOrIncompleteWithdrawals":{"stake17xckk4h4asryhe4v8j4kqd0046rtxekv8hz2p4t3vq7hpeghvpg0p":40,"stake1ux66ue36465w2qq40005h2hadad6pnjht8mu6sgplsfj74qzr006z":19}}]},"id":null}
+{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"unknownOrIncompleteWithdrawals":{"stake179k2jgvn98ce25jtyrekrt70q6qt93a5dy0m50v23x725yg5ehda3":306216,"stake1uynxqea3znwpakvn0qae0e2sn8hceryrgjjdn0edjd4k8ec7642p6":839699}}]},"id":null}

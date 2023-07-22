@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"malformedReferenceScripts":["0d94e174732ef9aae73f395ab44507bfa983d65023c11a951f0c32e4","4acf2773917c7b547c576a7ff110d2ba5733c1f1ca9cdc659aea3a56"]},{"unknownOrIncompleteWithdrawals":{}}]},"id":null}
+{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"malformedReferenceScripts":["02aa9fa731cb6794a58e39cf467195aeceba6136ac337a256260697e","8b080cf0fc985ca64cd22e506846647c6122199abefb4c7a3e26b79a"]},{"unknownOrIncompleteWithdrawals":{}}]},"id":null}

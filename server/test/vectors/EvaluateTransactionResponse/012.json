@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3003,"message":"Unable to create the evaluation context from the given transaction.","data":{"reason":"Unknown transaction input (missing from UTxO set): f63498b4ae65be466e4a71878971b9c524458996450b0ff8262cddf3f0d99229#4"}},"id":"st"}
+{"jsonrpc":"2.0","error":{"code":3004,"message":"Unable to create the evaluation context from the given transaction.","data":{"reason":"Unknown transaction input (missing from UTxO set): 233502e6b5327a849639a90ea6f17ed9b0f85d3395e9884450e5c0827806ef1e#4"}},"id":"st"}

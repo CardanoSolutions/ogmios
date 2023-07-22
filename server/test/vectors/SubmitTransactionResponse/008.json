@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"delegateNotRegistered":"pool1k944da0vqe97dtpu4dsrtmaws6ekdnpacjsd2utq84cw2jk52f0"}]},"id":null}
+{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"delegateNotRegistered":"pool1z3fu7cdgtsa05f5udtg39up9h4j8g03k3nftzpcr3fg2jxdpn2t"}]},"id":null}
