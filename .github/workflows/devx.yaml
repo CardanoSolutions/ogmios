@@ -27,8 +27,12 @@ jobs:
 
       - name: cabal update
         working-directory: server
-        run: cabal update
+        run: |
+          cabal update
 
       - name: cabal build
         working-directory: server
-        run: cabal build --enable-executable-static exe:ogmios
+        run: |
+          ghc --version
+          cabal configure --with-compiler ghc-8.10.7
+          cabal build --enable-executable-static exe:ogmios
