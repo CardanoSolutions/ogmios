@@ -2,7 +2,7 @@
 , system ? builtins.currentSystem
 , haskellNix ? import
     (builtins.fetchTarball
-      "https://github.com/input-output-hk/haskell.nix/archive/0.0.117.tar.gz")
+      "https://github.com/input-output-hk/haskell.nix/archive/4d0cd7c33decb1d9141d5af55c8807f656343d2e.tar.gz")
     { }
 , iohkNix ? import
     (builtins.fetchTarball
@@ -10,7 +10,7 @@
     { }
 , cardanoPkgs ?
     (builtins.fetchTarball
-    "https://github.com/input-output-hk/cardano-haskell-packages/archive/316e0a626fed1a928e659c7fc2577c7773770f7f.tar.gz")
+    "https://github.com/input-output-hk/cardano-haskell-packages/archive/3b9f3cc4c7cdfe3cbbb15d00c4d6de38865d87d1.tar.gz")
 , nixpkgsSrc ? haskellNix.sources.nixpkgs-unstable
 , nixpkgsArgs ? haskellNix.nixpkgsArgs
 }:
