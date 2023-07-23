@@ -27,10 +27,6 @@ jobs:
 
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-latest' }}
 
-    defaults:
-      run:
-        shell: devx {0}
-
     steps:
     - name: 📥 Checkout repository
       uses: actions/checkout@v3
@@ -48,6 +44,7 @@ jobs:
 
     - name: ❄️ Prepare cache
       working-directory: server
+      shell: devx {0}
       run: |
         echo "$CABAL_PROJECT_LOCAL_TEMPLATE" > cabal.project.local
         cabal update
@@ -64,28 +61,29 @@ jobs:
 
     - name: 🔨 Build
       working-directory: server
+      shell: devx {0}
       run: |
         cabal build --enable-executable-static exe:ogmios
 
-    - name: 📦 Package
-      run:
-        mkdir -p bin
-        cp ./server/dist-newstyle/build/*/ghc-8.10.7/ogmios-*/x/ogmios/build/ogmios/ogmios bin/ogmios
-        ldd ./bin/ogmios
-        mkdir -p share && chmod +w share
-        mkdir -p share/zsh/site-functions
-        ./bin/ogmios --zsh-completion-script ogmios > ./share/zsh/site-functions/_ogmios
-        mkdir -p share/bash-completion/completions
-        ./bin/ogmios --bash-completion-script ogmios > ./share/bash-completion/completions/ogmios
-        chmod -w share
-
-    - name: 📎 Upload Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: ogmios-${{ matrix.arch }}-{{ matrix.os }}
-        path: |
-          bin
-          share
+#    - name: 📦 Package
+#      run:
+#        mkdir -p bin
+#        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' }}/ogmios-0/x/ogmios/build/ogmios/ogmios bin/ogmios
+#        ldd ./bin/ogmios
+#        mkdir -p share && chmod +w share
+#        mkdir -p share/zsh/site-functions
+#        ./bin/ogmios --zsh-completion-script ogmios > ./share/zsh/site-functions/_ogmios
+#        mkdir -p share/bash-completion/completions
+#        ./bin/ogmios --bash-completion-script ogmios > ./share/bash-completion/completions/ogmios
+#        chmod -w share
+#
+#    - name: 📎 Upload Artifact
+#      uses: actions/upload-artifact@v3
+#      with:
+#        name: ogmios-${{ matrix.arch }}-{{ matrix.os }}
+#        path: |
+#          bin
+#          share
 
   #   █████████                                                       █████        ███              █████
   #  ███░░░░░███                                                     ░░███        ░░░              ░░███
