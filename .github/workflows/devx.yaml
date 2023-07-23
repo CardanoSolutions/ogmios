@@ -9,6 +9,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04]
         arch: [amd64]
+        compiler: [ghc8107]
 
     defaults:
       run:
@@ -20,21 +21,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install GHC and Cabal
+      - name: Setup
         uses: input-output-hk/actions/devx@latest
         with:
-          platform: x86_64-linux
+          platform: ${{ matrix.os == 'ubuntu-20.04' && 'x86_64-linux' || '' }}
           target-platform: -static
-          compiler-nix-name: ghc8107
+          compiler-nix-name: ${{ matrix.compiler }}
           minimal: true
           iog: true
 
-      - name: cabal update
+      - name: Update
         working-directory: server
         run: |
           cabal update
+          cabal freeze
 
-      - name: cabal build
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            server/dist-newstyle
+          key: ${{ runner.os }}-cabal-${{ matrix.compiler }}-${{ hashFiles('cabal.project.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-cabal-${{ matrix.compiler }}
+
+      - name: Build
         working-directory: server
         run: |
           cabal build --enable-executable-static exe:ogmios
