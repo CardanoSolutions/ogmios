@@ -49,6 +49,7 @@ jobs:
     - name: ❄️ Prepare cache
       working-directory: server
       run: |
+        echo "$CABAL_PROJECT_LOCAL_TEMPLATE" > cabal.project.local
         cabal update
         cabal freeze
 
@@ -64,11 +65,14 @@ jobs:
     - name: 🔨 Build
       working-directory: server
       run: |
+        cabal build --enable-executable-static exe:ogmios
+
+    - name: 🔨 Install
+      working-directory: server
+      run: |
         mkdir -p bin
         cabal install --enable-executable-static --install-method=copy --installdir=bin exe:ogmios
         ldd ./bin/ogmios
-      env:
-        GIT_SHA: ${{ github.sha }}
 
     - name: 📦 Package
       working-directory: server
