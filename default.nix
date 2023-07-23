@@ -18,7 +18,7 @@ let
   pkgs = import nixpkgsSrc (nixpkgsArgs // {
     overlays =
       # iohkNix overlay needed for cardano-api wich uses a patched libsodium
-      haskellNix.overlays ++ iohkNix.overlays.crypto;
+      iohkNix.overlays.crypto ++ haskellNix.overlay;
     });
 
   mkProject = arch:

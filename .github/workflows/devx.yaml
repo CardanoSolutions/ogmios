@@ -10,6 +10,10 @@ jobs:
         os: [ubuntu-20.04]
         arch: [amd64]
 
+    defaults:
+      run:
+        shell: devx {0}
+
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -33,6 +37,4 @@ jobs:
       - name: cabal build
         working-directory: server
         run: |
-          ghc --version
-          cabal configure --with-compiler ghc-8.10.7
           cabal build --enable-executable-static exe:ogmios
