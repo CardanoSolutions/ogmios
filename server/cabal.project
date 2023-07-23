@@ -50,9 +50,6 @@ package json-rpc
 package cryptonite
   flags: -support_rdrand
 
-package cardano-crypto-praos
-  flags: -external-libsodium-vrf
-
 source-repository-package
   type: git
   location: https://github.com/CardanoSolutions/hjsonpointer
