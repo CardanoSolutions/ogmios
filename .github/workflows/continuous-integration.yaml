@@ -54,8 +54,10 @@ jobs:
       uses: actions/cache@v3
       with:
         path: |
+          ~/.cabal/packages
+          ~/.cabal/store
           server/dist-newstyle
-        key: ${{ runner.os }}-cabal-${{ matrix.compiler }}-${{ hashFiles('cabal.project.freeze') }}
+        key: ${{ runner.os }}-cabal-${{ matrix.compiler }}-${{ hashFiles('server/cabal.project.freeze') }}
         restore-keys: |
           ${{ runner.os }}-cabal-${{ matrix.compiler }}
 
@@ -65,25 +67,27 @@ jobs:
       run: |
         cabal build --enable-executable-static exe:ogmios
 
-#    - name: 📦 Package
-#      run:
-#        mkdir -p bin
-#        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' }}/ogmios-0/x/ogmios/build/ogmios/ogmios bin/ogmios
-#        ldd ./bin/ogmios
-#        mkdir -p share && chmod +w share
-#        mkdir -p share/zsh/site-functions
-#        ./bin/ogmios --zsh-completion-script ogmios > ./share/zsh/site-functions/_ogmios
-#        mkdir -p share/bash-completion/completions
-#        ./bin/ogmios --bash-completion-script ogmios > ./share/bash-completion/completions/ogmios
-#        chmod -w share
-#
-#    - name: 📎 Upload Artifact
-#      uses: actions/upload-artifact@v3
-#      with:
-#        name: ogmios-${{ matrix.arch }}-{{ matrix.os }}
-#        path: |
-#          bin
-#          share
+    - name: 📦 Package
+      continue-on-error: true
+      run:
+        mkdir -p bin
+        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' }}/ogmios-0/x/ogmios/build/ogmios/ogmios ./bin/ogmios
+        ldd ./bin/ogmios
+        mkdir -p share && chmod +w share
+        mkdir -p share/zsh/site-functions
+        ./bin/ogmios --zsh-completion-script ogmios > ./share/zsh/site-functions/_ogmios
+        mkdir -p share/bash-completion/completions
+        ./bin/ogmios --bash-completion-script ogmios > ./share/bash-completion/completions/ogmios
+        chmod -w share
+
+    - name: 📎 Upload Artifact
+      continue-on-error: true
+      uses: actions/upload-artifact@v3
+      with:
+        name: ogmios-${{ matrix.arch }}-{{ matrix.os }}
+        path: |
+          bin
+          share
 
   #   █████████                                                       █████        ███              █████
   #  ███░░░░░███                                                     ░░███        ░░░              ░░███
