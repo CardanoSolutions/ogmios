@@ -61,22 +61,13 @@ jobs:
         restore-keys: |
           cabal-cache-${{ runner.os }}-${{ matrix.compiler }}
 
-    - name: 🔨 Build dependencies
-      continue-on-error: true
-      working-directory: server
-      shell: devx {0}
-      run: |
-        cabal build --enable-executable-static --only-dependencies exe:ogmios
-
     - name: 🔨 Build
-      continue-on-error: true
       working-directory: server
       shell: devx {0}
       run: |
         cabal build --enable-executable-static exe:ogmios
 
     - name: 📦 Package
-      continue-on-error: true
       run: |
         mkdir -p bin
         cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' }}/ogmios-0/x/ogmios/build/ogmios/ogmios ./bin/ogmios
@@ -89,10 +80,9 @@ jobs:
         chmod -w share
 
     - name: 📎 Upload Artifact
-      continue-on-error: true
       uses: actions/upload-artifact@v3
       with:
-        name: ogmios-${{ matrix.arch }}-{{ matrix.os }}
+        name: ogmios-${{ matrix.arch }}-${{ matrix.os }}
         path: |
           bin
           share
@@ -165,15 +155,15 @@ jobs:
     needs: [server_build]
     strategy:
       matrix:
-        os: [ubuntu-20.04]
-        arch: [amd64]
+        os: [linux]
+        arch: [x86_64]
         network: [preview]
-        cardanoNodeVersion: [1.35.7]
+        cardano-node: [1.35.7]
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os == 'linux' && 'ubuntu-latest' }}
     steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v3.5.3
+      uses: actions/checkout@v3
       with:
         submodules: true
 
@@ -196,14 +186,14 @@ jobs:
         yarn lint
 
     - name: 📥 Download
-      uses: actions/download-artifact@v3.0.2
+      uses: actions/download-artifact@v3
       with:
-        name: ogmios-${{ matrix.arch }}-linux
+        name: ogmios-${{ matrix.arch }}-${{ matrix.os }}
         path: server
 
     - name: 💾 Cache cardano-node DB
       id: cache
-      uses: actions/cache@v2.1.1
+      uses: actions/cache@v3
       with:
         path: ${{ runner.temp }}/db-${{ matrix.network }}
         key: cardano-node-ogmios-${{ matrix.network }}-${{ steps.date-time.outputs.value }}
@@ -220,13 +210,13 @@ jobs:
         chmod +x ../../server/bin/ogmios
         sudo ../../server/bin/ogmios --port 1338 --log-level error --node-socket ${{ runner.temp }}/ipc/node.socket --node-config $CONFDIR/cardano-node/config.json &
 
-        docker pull inputoutput/cardano-node:${{ matrix.cardanoNodeVersion }}
+        docker pull inputoutput/cardano-node:${{ matrix.cardano-node }}
         docker run -d --name cardano-node \
           -v ${{ runner.temp }}/db-${{ matrix.network }}:/db \
           -v ${{ runner.temp }}/ipc:/ipc \
           -v $CONFDIR/cardano-node:/config \
           -v $CONFDIR/genesis:/genesis \
-          inputoutput/cardano-node:${{ matrix.cardanoNodeVersion }} run --config /config/config.json --database-path /db --socket-path /ipc/node.socket --topology /config/topology.json
+          inputoutput/cardano-node:${{ matrix.cardano-node }} run --config /config/config.json --database-path /db --socket-path /ipc/node.socket --topology /config/topology.json
 
         ../../scripts/wait-for-sync.sh 1338 1
 
