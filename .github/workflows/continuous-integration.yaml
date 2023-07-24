@@ -69,7 +69,7 @@ jobs:
 
     - name: 📦 Package
       continue-on-error: true
-      run:
+      run: |
         mkdir -p bin
         cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' }}/ogmios-0/x/ogmios/build/ogmios/ogmios ./bin/ogmios
         ldd ./bin/ogmios
