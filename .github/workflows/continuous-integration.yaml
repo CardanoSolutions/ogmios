@@ -54,14 +54,22 @@ jobs:
       uses: actions/cache@v3
       with:
         path: |
-          ~/.cabal/packages
-          ~/.cabal/store
+          ~/.cabal-static/packages
+          ~/.cabal-static/store
           server/dist-newstyle
-        key: ${{ runner.os }}-cabal-${{ matrix.compiler }}-${{ hashFiles('server/cabal.project.freeze') }}
+        key: cabal-cache-${{ runner.os }}-${{ matrix.compiler }}-${{ hashFiles('server/cabal.project.freeze') }}
         restore-keys: |
-          ${{ runner.os }}-cabal-${{ matrix.compiler }}
+          cabal-cache-${{ runner.os }}-${{ matrix.compiler }}
+
+    - name: 🔨 Build dependencies
+      continue-on-error: true
+      working-directory: server
+      shell: devx {0}
+      run: |
+        cabal build --enable-executable-static --only-dependencies exe:ogmios
 
     - name: 🔨 Build
+      continue-on-error: true
       working-directory: server
       shell: devx {0}
       run: |
@@ -72,7 +80,7 @@ jobs:
       run: |
         mkdir -p bin
         cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' }}/ogmios-0/x/ogmios/build/ogmios/ogmios ./bin/ogmios
-        ldd ./bin/ogmios
+        ./bin/ogmios --version
         mkdir -p share && chmod +w share
         mkdir -p share/zsh/site-functions
         ./bin/ogmios --zsh-completion-script ogmios > ./share/zsh/site-functions/_ogmios
