@@ -67,6 +67,7 @@ import Ogmios.Data.EraTranslation
     )
 import Ogmios.Data.Json
     ( Json
+    , MultiEraDecoder (..)
     )
 import Ogmios.Data.Protocol.TxSubmission
     ( CanEvaluateScriptsInEra
@@ -80,6 +81,7 @@ import Ogmios.Data.Protocol.TxSubmission
     , SerializedTransaction
     , SubmitTransaction (..)
     , SubmitTransactionError
+    , SubmitTransactionResponse (..)
     , SystemStart
     , TxIn
     , TxSubmissionCodecs (..)
@@ -163,20 +165,37 @@ mkTxSubmissionClient TxSubmissionCodecs{..} ExecutionUnitsEvaluator{..} queue yi
     clientStIdle
         :: m (LocalTxClientStIdle (SerializedTransaction block) (SubmitTransactionError block) m ())
     clientStIdle = await >>= \case
-        MsgSubmitTransaction SubmitTransaction{transaction} toResponse _ -> do
-            pure $ SendMsgSubmitTx transaction $ \result -> do
-                mkSubmitTransactionResponse transaction result
-                    & toResponse
-                    & encodeSubmitTransactionResponse
-                    & yield
-                clientStIdle
-        MsgEvaluateTransaction EvaluateTransaction{additionalUtxoSet, transaction} toResponse _ -> do
-            result <- evaluateExecutionUnitsM (additionalUtxoSet, transaction)
-            result
-                & toResponse
-                & encodeEvaluateTransactionResponse
-                & yield
-            clientStIdle
+        MsgSubmitTransaction SubmitTransaction{transaction = request} toResponse _ -> do
+            case request of
+                MultiEraDecoderSuccess transaction ->
+                    pure $ SendMsgSubmitTx transaction $ \result -> do
+                        mkSubmitTransactionResponse transaction result
+                            & toResponse
+                            & encodeSubmitTransactionResponse
+                            & yield
+                        clientStIdle
+                MultiEraDecoderErrors errs -> do
+                    SubmitTransactionDeserialisationFailure errs
+                        & toResponse
+                        & encodeSubmitTransactionResponse
+                        & yield
+                    clientStIdle
+
+        MsgEvaluateTransaction EvaluateTransaction{additionalUtxoSet, transaction = request} toResponse _ -> do
+            case request of
+                MultiEraDecoderSuccess transaction -> do
+                    result <- evaluateExecutionUnitsM (additionalUtxoSet, transaction)
+                    result
+                        & toResponse
+                        & encodeEvaluateTransactionResponse
+                        & yield
+                    clientStIdle
+                MultiEraDecoderErrors errs -> do
+                    EvaluateTransactionDeserialisationFailure errs
+                        & toResponse
+                        & encodeEvaluateTransactionResponse
+                        & yield
+                    clientStIdle
 
 -- | A thin abstraction for evaluating transaction units.
 data ExecutionUnitsEvaluator m block = ExecutionUnitsEvaluator

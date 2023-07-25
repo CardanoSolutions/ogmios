@@ -92,7 +92,7 @@ instance
     ( TPraos.PraosCrypto crypto
     , PraosCrypto crypto
     ) =>
-    FromJSON (GenTx (CardanoBlock crypto))
+    FromJSON (MultiEraDecoder (GenTx (CardanoBlock crypto)))
   where
     parseJSON = decodeSerializedTransaction
 

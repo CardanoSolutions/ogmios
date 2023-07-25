@@ -40,6 +40,7 @@ import Ogmios.Data.EraTranslation
     )
 import Ogmios.Data.Json
     ( Json
+    , MultiEraDecoder (..)
     , decodeUtxo
     , decodeWith
     , encodeAcquireExpired
@@ -253,6 +254,7 @@ import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
 
 import qualified Cardano.Ledger.Alonzo.Scripts.Data as Ledger
+import qualified Cardano.Ledger.Binary as Binary
 import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encode.Pretty as Json
@@ -674,8 +676,23 @@ instance Arbitrary NextBlock where
     arbitrary = reasonablySized genericArbitrary
 
 instance Arbitrary (SubmitTransactionResponse Block) where
-    shrink = genericShrink
-    arbitrary = reasonablySized genericArbitrary
+    shrink = \case
+        SubmitTransactionSuccess{} -> []
+        SubmitTransactionDeserialisationFailure{} -> []
+        SubmitTransactionFailure e -> SubmitTransactionFailure <$> shrink e
+    arbitrary = frequency
+        [ (1, SubmitTransactionSuccess <$> arbitrary)
+        , (50, reasonablySized (SubmitTransactionFailure <$> arbitrary))
+        , (1, pure $ SubmitTransactionDeserialisationFailure
+            [ ( SomeShelleyEra ShelleyBasedEraShelley, Binary.DecoderErrorVoid )
+            , ( SomeShelleyEra ShelleyBasedEraAllegra, Binary.DecoderErrorVoid )
+            , ( SomeShelleyEra ShelleyBasedEraMary,    Binary.DecoderErrorVoid )
+            , ( SomeShelleyEra ShelleyBasedEraAlonzo,  Binary.DecoderErrorVoid )
+            , ( SomeShelleyEra ShelleyBasedEraBabbage, Binary.DecoderErrorVoid )
+            , ( SomeShelleyEra ShelleyBasedEraConway,  Binary.DecoderErrorVoid )
+            ]
+          )
+        ]
 
 instance Arbitrary (HardForkApplyTxErr (CardanoEras StandardCrypto)) where
     arbitrary = genHardForkApplyTxErr
@@ -777,9 +794,11 @@ prop_parseSubmitTransaction
     :: SerializedTransaction
     -> Property
 prop_parseSubmitTransaction (SerializedTransaction bytes) =
-    void result === Right ()
+    case result of
+        Right MultiEraDecoderSuccess{} -> property ()
+        _ -> property False
   where
-    result = Json.parseEither (parseJSON @(GenTx Block)) (Json.String bytes)
+    result = Json.parseEither (parseJSON @(MultiEraDecoder (GenTx Block))) (Json.String bytes)
 
 instance Arbitrary SerializedTransaction where
     arbitrary = SerializedTransaction <$> elements

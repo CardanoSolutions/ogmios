@@ -22,6 +22,7 @@ import Ogmios.Data.EraTranslation
 import Ogmios.Data.Json
     ( FromJSON
     , Json
+    , MultiEraDecoder
     )
 import Ogmios.Data.Protocol.ChainSync
     ( FindIntersection
@@ -94,7 +95,7 @@ import qualified Data.Text as T
 -- processing.
 onUnmatchedMessage
     :: forall block.
-        ( FromJSON (SerializedTransaction block)
+        ( FromJSON (MultiEraDecoder (SerializedTransaction block))
         , FromJSON (QueryLedgerState block)
         , FromJSON (Point block)
         , FromJSON (GenTxId block)
@@ -123,13 +124,8 @@ onUnmatchedMessage blob = do
     modifyAesonFailure :: Text -> Text
     modifyAesonFailure
         = T.dropWhileEnd (== '.')
-        . T.replace
-            "field \"submit\" not found"
-            "field \"submit\" not found. If you're using the legacy \"bytes\" \
-            \field, change it to \"submit\" to get a (hopefully) more \
-            \informative error."
-        . T.replace "Error in $["    "invalid item ["
-        . T.replace "Error in $: "    ""
+        . T.replace "Error in $[" "invalid item ["
+        . T.replace "Error in $: " ""
         . T.replace "Error in $: key" "field"
 
     -- A parser that never resolves, yet yield proper error messages based on

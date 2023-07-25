@@ -30,6 +30,7 @@ module Ogmios.Data.Json
     , Alonzo.encodeTranslationError
 
       -- * Decoders
+    , MultiEraDecoder (..)
     , decodeOneEraHash
     , decodePoint
     , decodeSerializedTransaction

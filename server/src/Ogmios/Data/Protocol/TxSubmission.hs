@@ -159,7 +159,7 @@ data TxSubmissionCodecs block = TxSubmissionCodecs
 
 mkTxSubmissionCodecs
     :: forall block.
-        ( FromJSON (SerializedTransaction block)
+        ( FromJSON (MultiEraDecoder (SerializedTransaction block))
         , FromJSON (MultiEraUTxO block)
         )
     => (GenTxId block -> Json)
@@ -208,12 +208,12 @@ data TxSubmissionMessage block
 --
 
 data SubmitTransaction block
-    = SubmitTransaction { transaction :: SerializedTransaction block }
+    = SubmitTransaction { transaction :: MultiEraDecoder (SerializedTransaction block) }
     deriving (Generic)
 deriving instance Show (SerializedTransaction block) => Show (SubmitTransaction block)
 
 _decodeSubmitTransaction
-    :: FromJSON (SerializedTransaction block)
+    :: FromJSON (MultiEraDecoder (SerializedTransaction block))
     => Json.Value
     -> Json.Parser (Rpc.Request (SubmitTransaction block))
 _decodeSubmitTransaction =
@@ -222,6 +222,7 @@ _decodeSubmitTransaction =
 data SubmitTransactionResponse block
     = SubmitTransactionSuccess (GenTxId block)
     | SubmitTransactionFailure (SubmitTransactionError block)
+    | SubmitTransactionDeserialisationFailure [(SomeShelleyEra, Binary.DecoderError)]
     deriving (Generic)
 deriving instance
     ( Show (SubmitTransactionError block)
@@ -249,6 +250,8 @@ _encodeSubmitTransactionResponse _proxy encodeTransactionId encodeSubmitTransact
                 "Transaction submission failed"
                 ( pure $ encodeSubmitTransactionError e
                 )
+        SubmitTransactionDeserialisationFailure errs ->
+            encodeDeserialisationFailure reject errs
 
 -- | Translate an ouroboros-network's 'SubmitResult' into our own
 -- 'SubmitTransactionResponse' which also carries a transaction id.
@@ -269,7 +272,7 @@ mkSubmitTransactionResponse tx = \case
 
 data EvaluateTransaction block
     = EvaluateTransaction
-        { transaction :: SerializedTransaction block
+        { transaction :: MultiEraDecoder (SerializedTransaction block)
         , additionalUtxoSet :: MultiEraUTxO block
         }
     deriving (Generic)
@@ -280,7 +283,7 @@ deriving instance
 
 _decodeEvaluateTransaction
     :: forall block.
-        ( FromJSON (SerializedTransaction block)
+        ( FromJSON (MultiEraDecoder (SerializedTransaction block))
         , FromJSON (MultiEraUTxO block)
         )
     => Json.Value
@@ -297,15 +300,16 @@ _decodeEvaluateTransaction =
 data EvaluateTransactionResponse block
     = EvaluationFailure (EvaluateTransactionError block)
     | EvaluationResult (Map RdmrPtr ExUnits)
+    | EvaluateTransactionDeserialisationFailure [(SomeShelleyEra, Binary.DecoderError)]
     deriving (Show)
 
 data EvaluateTransactionError block
-    = ScriptExecutionFailures (Map RdmrPtr [TransactionScriptFailure (Crypto block)])
+    = ScriptExecutionFailures (Map RdmrPtr [TransactionScriptFailure (BlockCrypto block)])
     | IncompatibleEra Text
     | UnsupportedEra Text
-    | OverlappingAdditionalUtxo (Set (TxIn (Crypto block)))
+    | OverlappingAdditionalUtxo (Set (TxIn (BlockCrypto block)))
     | NodeTipTooOldErr NodeTipTooOldError
-    | CannotCreateEvaluationContext (TranslationError (Crypto block))
+    | CannotCreateEvaluationContext (TranslationError (BlockCrypto block))
     deriving (Show)
 
 data NodeTipTooOldError = NodeTipTooOld
@@ -349,6 +353,8 @@ _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeS
             resolve $ encodeObject
                 ( "budgets" .= encodeMap stringifyRdmrPtr encodeExUnits result
                 )
+        EvaluateTransactionDeserialisationFailure errs ->
+            encodeDeserialisationFailure reject errs
         EvaluationFailure (IncompatibleEra era) ->
             reject (Rpc.FaultCustom 3000)
                 "Trying to evaluate a transaction from an old era (prior to Alonzo)."
@@ -469,3 +475,38 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
           utxo
           (hoistEpochInfo (left show . runIdentity . runExceptT) epochInfo)
           systemStart
+
+--
+-- Deserialisation failure
+--
+
+encodeDeserialisationFailure
+    :: (Rpc.FaultCode -> String -> Maybe Json -> Json)
+    -> [(SomeShelleyEra, Binary.DecoderError)]
+    -> Json
+encodeDeserialisationFailure reject errs =
+    reject Rpc.FaultInvalidParams
+        "Invalid transaction; It looks like the given transaction wasn't \
+        \well-formed. Note that I try to decode the transaction in every \
+        \possible era and it was malformed in ALL eras. \
+        \Yet, I can't pinpoint the exact issue for I do not know in which \
+        \era / format you intended the transaction to be. The 'data' field \
+        \,therefore, contains errors for each era."
+        (pure $ encodeObject $ mconcat
+            [ encodeDecoderError e era | (SomeShelleyEra era, e) <- errs ]
+        )
+  where
+    encodeDecoderError :: forall era. Binary.DecoderError -> ShelleyBasedEra era -> Json.Series
+    encodeDecoderError e = \case
+        ShelleyBasedEraShelley ->
+            "shelley" .= encodeText (show e)
+        ShelleyBasedEraAllegra ->
+            "allegra" .= encodeText (show e)
+        ShelleyBasedEraMary ->
+            "mary" .= encodeText (show e)
+        ShelleyBasedEraAlonzo ->
+            "alonzo" .= encodeText (show e)
+        ShelleyBasedEraBabbage ->
+            "babbage" .= encodeText (show e)
+        ShelleyBasedEraConway ->
+            "conway" .= encodeText (show e)

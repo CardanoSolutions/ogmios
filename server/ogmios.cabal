@@ -331,6 +331,7 @@ test-suite unit
     , bytestring
     , cardano-ledger-alonzo
     , cardano-ledger-api
+    , cardano-ledger-binary
     , cardano-ledger-core
     , cardano-ledger-shelley
     , cardano-ledger-shelley-test

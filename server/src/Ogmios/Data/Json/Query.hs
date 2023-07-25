@@ -1230,14 +1230,20 @@ decodeAddress = Json.withText "Address" $ choice "address"
     ]
   where
     addressFromBytes decode =
-        decode >=> maybe empty pure . Ledger.deserialiseAddr
+        decode >=> maybe
+            (fail "couldn't deserialise address from bytes")
+            pure
+            . Ledger.deserialiseAddr
 
     fromBech32 txt =
         case Bech32.decodeLenient txt of
             Left e ->
                 fail (show e)
             Right (_, dataPart) ->
-                maybe empty pure $ Bech32.dataPartToBytes dataPart
+                maybe
+                    (fail "couldn't convert decoded bech32 payload of an address?")
+                    pure
+                    (Bech32.dataPartToBytes dataPart)
 
     fromBase58 =
         decodeBase58 . encodeUtf8
@@ -1430,15 +1436,18 @@ decodePoolId = Json.withText "PoolId" $ choice "poolId"
     , poolIdFromBytes fromBase16
     ]
   where
+    failure =
+        fail "couldn't decode stake pool id in neither bech32 nor base16"
+
     poolIdFromBytes decode =
-        decode >=> maybe empty (pure . Ledger.KeyHash) . hashFromBytes
+        decode >=> maybe failure (pure . Ledger.KeyHash) . hashFromBytes
 
     fromBech32 txt =
         case Bech32.decodeLenient txt of
             Left e ->
                 fail (show e)
             Right (_, dataPart) ->
-                maybe empty pure $ Bech32.dataPartToBytes dataPart
+                maybe failure pure $ Bech32.dataPartToBytes dataPart
 
     fromBase16 =
         decodeBase16 . encodeUtf8
@@ -1538,13 +1547,14 @@ decodeScript v =
         Cbor.decodeBytes
 
 decodeSerializedTransaction
-    :: forall crypto.
+    :: forall crypto constraint.
         ( PraosCrypto crypto
         , TPraos.PraosCrypto crypto
+        , constraint ~ (MostRecentEra (CardanoBlock crypto) ~ ConwayEra crypto)
         )
     => Json.Value
-    -> Json.Parser (SerializedTransaction (CardanoBlock crypto))
-decodeSerializedTransaction = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
+    -> Json.Parser (MultiEraDecoder (SerializedTransaction (CardanoBlock crypto)))
+decodeSerializedTransaction = Json.withText "Transaction" $ \(encodeUtf8 -> utf8) -> do
     bytes <- decodeBase16 utf8 <|> invalidEncodingError
     -- NOTE (1):
     -- The order in which we parser matters! Older eras first. formats
@@ -1556,49 +1566,56 @@ decodeSerializedTransaction = Json.withText "Tx" $ \(encodeUtf8 -> utf8) -> do
     -- features not available in older ones.
     --
     -- NOTE (2):
-    -- Avoiding 'asum' here because it generates poor errors on failures
-    deserialiseCBOR @() @(MaryEra crypto) GenTxMary (fromStrict bytes)
-        <|> deserialiseCBOR @() @(MaryEra crypto) GenTxMary (wrap bytes)
-        <|> deserialiseCBOR @() @(AlonzoEra crypto) GenTxAlonzo (fromStrict bytes)
-        <|> deserialiseCBOR @() @(AlonzoEra crypto) GenTxAlonzo (wrap bytes)
-        <|> deserialiseCBOR @() @(BabbageEra crypto) GenTxBabbage (fromStrict bytes)
-        <|> deserialiseCBOR @() @(BabbageEra crypto) GenTxBabbage (wrap bytes)
-        <|> deserialiseCBOR @(MostRecentEra (CardanoBlock crypto) ~ ConwayEra crypto) @(ConwayEra crypto) GenTxConway (wrap bytes)
-        <|> deserialiseCBOR @(MostRecentEra (CardanoBlock crypto) ~ ConwayEra crypto) @(ConwayEra crypto) GenTxConway (fromStrict bytes)
+    -- Avoiding 'asum' here because it generates poor errors on failures.
+    pure $  deserialiseCBOR @(BabbageEra crypto) GenTxBabbage bytes
+        <|> deserialiseCBOR @(ConwayEra crypto)  GenTxConway  bytes
+        <|> deserialiseCBOR @(AlonzoEra crypto)  GenTxAlonzo  bytes
+        <|> deserialiseCBOR @(MaryEra crypto)    GenTxMary    bytes
+        <|> deserialiseCBOR @(AllegraEra crypto) GenTxAllegra bytes
+        <|> deserialiseCBOR @(ShelleyEra crypto) GenTxShelley bytes
   where
+    -- We use this extra constraint when decoding transactions to generate a
+    -- compiler warning in case a new era becomes available, to not forget to update
+    -- this bit of code. The constraint is purely artificial but will generate a
+    -- compilation error which will catch our attention.
+    --
+    -- Generally speaking, we still want to deserialise previous eras, but we want
+    -- to make sure to have support for the latest as well. In case a more recent is
+    -- available, this will generate a compiler error looking like:
+    --
+    --    • Couldn't match type ‘BabbageEra crypto’ with ‘AlonzoEra crypto’ arising from a use of ‘deserialiseCBOR’
+    _compilerWarning = keepRedundantConstraint (Proxy @constraint)
+
     invalidEncodingError :: Json.Parser a
     invalidEncodingError =
         fail "failed to decode base16-encoded payload."
 
-    -- Cardano tools have a tendency to wrap cbor in cbor (e.g cardano-cli).
-    -- In particular, a `GenTx` is expected to be prefixed with a cbor tag
-    -- `24` and serialized as CBOR bytes `58xx`.
-    wrap :: ByteString -> LByteString
-    wrap = Cbor.toLazyByteString . wrapCBORinCBOR Cbor.encodePreEncoded
-
     deserialiseCBOR
-        :: forall constraint era sub.
+        :: forall era sub.
             ( FromCBOR (GenTx sub)
+            , IsShelleyBasedEra era
             , Era era
-            , constraint
+            , sub ~ ShelleyBlock (EraProto era) era
             )
         => (GenTx sub -> GenTx (CardanoBlock crypto))
-        -> LByteString
-        -> Json.Parser (GenTx (CardanoBlock crypto))
-    deserialiseCBOR mk =
-        fmap mk <$> decodeCbor @era "Transaction" (Binary.fromPlainDecoder fromCBOR)
+        -> ByteString
+        -> MultiEraDecoder (GenTx (CardanoBlock crypto))
+    deserialiseCBOR mk bytes =
+        mk <$> decodeCborWith @era "Transaction"
+            (\e -> MultiEraDecoderErrors [(SomeShelleyEra (shelleyBasedEra @era), e)])
+            (Binary.fromPlainDecoder fromCBOR)
+            (if  wrapper `BS.isPrefixOf` bytes
+               then fromStrict bytes
+               else wrap bytes
+            )
       where
-        -- We use this extra constraint when decoding transactions to generate a
-        -- compiler warning in case a new era becomes available, to not forget to update
-        -- this bit of code. The constraint is purely artificial but will generate a
-        -- compilation error which will catch our attention.
-        --
-        -- Generally speaking, we still want to deserialise previous eras, but we want
-        -- to make sure to have support for the latest as well. In case a more recent is
-        -- available, this will generate a compiler error looking like:
-        --
-        --    • Couldn't match type ‘BabbageEra crypto’ with ‘AlonzoEra crypto’ arising from a use of ‘deserialiseCBOR’
-        _compilerWarning = keepRedundantConstraint (Proxy @constraint)
+        wrapper = BS.pack [216, 24] -- D818...
+
+        -- Cardano tools have a tendency to wrap cbor in cbor (e.g cardano-cli).
+        -- In particular, a `GenTx` is expected to be prefixed with a cbor tag
+        -- `24` and serialized as CBOR bytes `58xx`.
+        wrap :: ByteString -> LByteString
+        wrap = Cbor.toLazyByteString . wrapCBORinCBOR Cbor.encodePreEncoded
 
 decodeTimeLock
     :: Era era
@@ -1666,7 +1683,7 @@ decodeTxId = Json.withText "TxId" $ \(encodeUtf8 -> utf8) -> do
     bytes <- decodeBase16 utf8
     case hashFromBytes bytes of
         Nothing ->
-            fail "couldn't interpret bytes as blake2b-256 digest."
+            fail "couldn't interpret bytes as blake2b-256 digest"
         Just h ->
             pure $ GenTxIdAlonzo $ ShelleyTxId $ Ledger.TxId (Ledger.unsafeMakeSafeHash h)
 
@@ -1679,8 +1696,10 @@ decodeTxIn = Json.withObject "TxIn" $ \o -> do
     ix <- o .: "index"
     pure $ Ledger.TxIn (Ledger.TxId txid) (Ledger.TxIx ix)
   where
+    failure =
+        fail "couldn't decode transaction id from base16"
     fromBase16 =
-        maybe empty (pure . unsafeMakeSafeHash) . hashFromTextAsHex @(HASH crypto)
+        maybe failure (pure . unsafeMakeSafeHash) . hashFromTextAsHex @(HASH crypto)
 
 decodeTxOut
     :: forall crypto. (Crypto crypto)

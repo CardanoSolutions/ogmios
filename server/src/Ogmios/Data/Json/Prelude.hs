@@ -28,6 +28,7 @@ module Ogmios.Data.Json.Prelude
     , StrictMaybe (..)
 
       -- * Decoder
+    , MultiEraDecoder (..)
     , decodeBase16
     , decodeBase58
 
@@ -173,6 +174,7 @@ import Ouroboros.Consensus.BlockchainTime.WallClock.Types
     ( RelativeTime (..)
     )
 
+import qualified Cardano.Ledger.Binary.Decoding as Binary
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.Key as Json
@@ -594,6 +596,43 @@ data (Optional a) where
         :: (a -> Json)
         -> StrictMaybe a
         -> Optional a
+
+data MultiEraDecoder a
+    = MultiEraDecoderSuccess a
+    | MultiEraDecoderErrors
+        [ (SomeShelleyEra, Binary.DecoderError)
+        ]
+    deriving (Show)
+
+instance Functor MultiEraDecoder where
+    f `fmap` m =
+        case m of
+            MultiEraDecoderSuccess a ->
+                MultiEraDecoderSuccess (f a)
+            MultiEraDecoderErrors errs ->
+                MultiEraDecoderErrors errs
+
+instance Applicative MultiEraDecoder where
+    pure = MultiEraDecoderSuccess
+    f <*> m =
+        case m of
+            MultiEraDecoderSuccess a ->
+                case f of
+                    MultiEraDecoderSuccess g ->
+                        MultiEraDecoderSuccess (g a)
+
+                    MultiEraDecoderErrors errs ->
+                        MultiEraDecoderErrors errs
+
+            MultiEraDecoderErrors errs ->
+                MultiEraDecoderErrors errs
+
+instance Alternative MultiEraDecoder where
+    empty = MultiEraDecoderErrors []
+    a@MultiEraDecoderSuccess{} <|> _ = a
+    _ <|> b@MultiEraDecoderSuccess{} = b
+    MultiEraDecoderErrors a <|> MultiEraDecoderErrors b =
+        MultiEraDecoderErrors (a <|> b)
 
 --
 -- Decoder
