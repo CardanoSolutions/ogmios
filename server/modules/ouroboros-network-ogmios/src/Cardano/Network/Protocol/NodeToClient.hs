@@ -16,7 +16,6 @@ module Cardano.Network.Protocol.NodeToClient
     , Eras
     , SubmitTransactionError
     , SerializedTransaction
-    , Crypto
     , Client
     , Clients(..)
     , mkClient
@@ -218,10 +217,6 @@ type Eras = CardanoEras StandardCrypto
 -- failure a function of a 'block' parameter
 type family SubmitTransactionError block :: Type where
     SubmitTransactionError (CardanoBlock crypto) = HardForkApplyTxErr (CardanoEras crypto)
-
--- | Type-family helper, similar to 'SubmitTransactionError' but more generic.
-type family Crypto block :: Type where
-    Crypto (CardanoBlock crypto) = crypto
 
 -- | A slightly more transparent type alias for 'GenTx''
 type SerializedTransaction = GenTx

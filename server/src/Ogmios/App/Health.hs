@@ -103,9 +103,6 @@ import Data.Time.Clock
 import Network.TypedProtocol.Pipelined
     ( N (..)
     )
-import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras
-    )
 import Ouroboros.Consensus.HardFork.Combinator
     ( HardForkBlock
     )

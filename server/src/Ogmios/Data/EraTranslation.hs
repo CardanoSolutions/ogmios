@@ -35,9 +35,6 @@ import Cardano.Ledger.Era
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
     )
-import Cardano.Network.Protocol.NodeToClient
-    ( Crypto
-    )
 import Control.Monad.Trans.Except
     ( runExcept
     )
@@ -46,11 +43,6 @@ import Data.Maybe.Strict
     )
 import Ouroboros.Consensus.Cardano
     ( CardanoBlock
-    )
-import Ouroboros.Consensus.Cardano.Block
-    ( BabbageEra
-    , CardanoEras
-    , ConwayEra
     )
 import Ouroboros.Consensus.Shelley.Ledger
     ( ShelleyBlock
@@ -109,38 +101,38 @@ unsafeFromRight = either (error . show) id
 
 data MultiEraUTxO block where
     UTxOInBabbageEra
-        :: UTxO (BabbageEra (Crypto block))
+        :: UTxO (BabbageEra (BlockCrypto block))
         -> MultiEraUTxO block
 
     UTxOInConwayEra
-        :: UTxO (ConwayEra (Crypto block))
+        :: UTxO (ConwayEra (BlockCrypto block))
         -> MultiEraUTxO block
 
 deriving instance
-    ( Eq (UTxO (BabbageEra (Crypto block)))
-    , Eq (UTxO (ConwayEra (Crypto block)))
+    ( Eq (UTxO (BabbageEra (BlockCrypto block)))
+    , Eq (UTxO (ConwayEra (BlockCrypto block)))
     ) => Eq (MultiEraUTxO block)
 
 deriving instance
-    ( Show (UTxO (BabbageEra (Crypto block)))
-    , Show (UTxO (ConwayEra (Crypto block)))
+    ( Show (UTxO (BabbageEra (BlockCrypto block)))
+    , Show (UTxO (ConwayEra (BlockCrypto block)))
     ) => Show (MultiEraUTxO block)
 
 data MultiEraTxOut block where
     TxOutInBabbageEra
-        :: Babbage.BabbageTxOut (BabbageEra (Crypto block))
+        :: Babbage.BabbageTxOut (BabbageEra (BlockCrypto block))
         -> MultiEraTxOut block
 
     TxOutInConwayEra
-        :: Babbage.BabbageTxOut (ConwayEra (Crypto block))
+        :: Babbage.BabbageTxOut (ConwayEra (BlockCrypto block))
         -> MultiEraTxOut block
 
 deriving instance
-    ( Eq (Babbage.BabbageTxOut (BabbageEra (Crypto block)))
-    , Eq (Babbage.BabbageTxOut (ConwayEra (Crypto block)))
+    ( Eq (Babbage.BabbageTxOut (BabbageEra (BlockCrypto block)))
+    , Eq (Babbage.BabbageTxOut (ConwayEra (BlockCrypto block)))
     ) => Eq (MultiEraTxOut block)
 
 deriving instance
-    ( Show (Babbage.BabbageTxOut (BabbageEra (Crypto block)))
-    , Show (Babbage.BabbageTxOut (ConwayEra (Crypto block)))
+    ( Show (Babbage.BabbageTxOut (BabbageEra (BlockCrypto block)))
+    , Show (Babbage.BabbageTxOut (ConwayEra (BlockCrypto block)))
     ) => Show (MultiEraTxOut block)

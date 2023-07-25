@@ -12,17 +12,8 @@ import Cardano.Binary
 import Cardano.Ledger.Binary
     ( sizedValue
     )
-import Cardano.Ledger.Crypto
-    ( Crypto
-    )
-import Cardano.Ledger.Era
-    ( Era
-    )
 import Cardano.Ledger.Val
     ( Val (..)
-    )
-import Ouroboros.Consensus.Cardano.Block
-    ( BabbageEra
     )
 import Ouroboros.Consensus.Protocol.Praos
     ( Praos

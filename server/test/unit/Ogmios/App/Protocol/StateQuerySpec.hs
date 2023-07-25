@@ -89,15 +89,7 @@ import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock
     )
 import Ouroboros.Consensus.Cardano.Block
-    ( AllegraEra
-    , AlonzoEra
-    , BlockQuery (..)
-    , CardanoEras
-    , MaryEra
-    , ShelleyEra
-    )
-import Ouroboros.Consensus.HardFork.Combinator.Abstract.SingleEraBlock
-    ( EraIndex (..)
+    ( BlockQuery (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
     ( QueryHardFork (..)

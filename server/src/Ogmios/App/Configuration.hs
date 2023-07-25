@@ -52,16 +52,10 @@ import Ogmios.Control.MonadLog
     , Severity (..)
     )
 import Ogmios.Data.Json.Query
-    ( ByronEra
-    , GenesisConfig
+    ( GenesisConfig
     )
 import Ouroboros.Consensus.BlockchainTime.WallClock.Types
     ( SystemStart (..)
-    )
-import Ouroboros.Consensus.Cardano.Block
-    ( AlonzoEra
-    , ConwayEra
-    , ShelleyEra
     )
 import Ouroboros.Network.Magic
     ( NetworkMagic (..)

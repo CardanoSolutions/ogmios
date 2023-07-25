@@ -9,20 +9,11 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Binary
     ( serialize'
     )
-import Cardano.Ledger.Crypto
-    ( Crypto
-    )
-import Cardano.Ledger.Era
-    ( Era
-    )
 import Data.ByteString.Base16
     ( encodeBase16
     )
 import Data.Maybe.Strict
     ( fromSMaybe
-    )
-import Ouroboros.Consensus.Cardano.Block
-    ( AlonzoEra
     )
 import Ouroboros.Consensus.Protocol.TPraos
     ( TPraos

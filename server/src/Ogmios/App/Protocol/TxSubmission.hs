@@ -44,12 +44,6 @@ import Cardano.Ledger.Core
     ( EraTx (..)
     , EraTxBody (..)
     )
-import Cardano.Ledger.Crypto
-    ( StandardCrypto
-    )
-import Cardano.Ledger.Era
-    ( EraCrypto
-    )
 import Control.Monad.Trans.Except
     ( Except
     )
@@ -75,9 +69,7 @@ import Ogmios.Data.Json
     ( Json
     )
 import Ogmios.Data.Protocol.TxSubmission
-    ( BabbageEra
-    , CanEvaluateScriptsInEra
-    , ConwayEra
+    ( CanEvaluateScriptsInEra
     , EpochInfo
     , EvaluateTransaction (..)
     , EvaluateTransactionError (..)
@@ -102,13 +94,11 @@ import Ogmios.Data.Protocol.TxSubmission
 import Ouroboros.Consensus.Cardano.Block
     ( BlockQuery (..)
     , CardanoBlock
-    , CardanoEras
     , CardanoQueryResult
     , GenTx (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( EraIndex (..)
-    , HardForkBlock
+    ( HardForkBlock
     )
 import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
     ( QueryHardFork (..)

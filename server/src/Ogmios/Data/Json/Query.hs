@@ -16,12 +16,6 @@ module Ogmios.Data.Json.Query
       -- ** AdHocQuery
     , AdHocQuery (..)
 
-      -- ** Eras
-    , ByronEra
-    , ShelleyBasedEra (..)
-    , SomeShelleyEra (..)
-    , fromEraIndex
-
       -- ** Types in queries
     , Delegations
     , GenesisConfig
@@ -93,9 +87,6 @@ module Ogmios.Data.Json.Query
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Api
-    ( ShelleyBasedEra (..)
-    )
 import Cardano.Crypto.Hash
     ( hashFromBytes
     , hashFromTextAsHex
@@ -114,19 +105,13 @@ import Cardano.Ledger.Binary
     ( Annotator
     , FromCBOR (..)
     , decCBOR
-    , decodeFullAnnotator
     , decodeFullDecoder
     )
 import Cardano.Ledger.Conway.Genesis
     ( ConwayGenesis
     )
 import Cardano.Ledger.Crypto
-    ( Crypto
-    , HASH
-    , StandardCrypto
-    )
-import Cardano.Ledger.Era
-    ( Era
+    ( HASH
     )
 import Cardano.Ledger.Keys
     ( KeyRole (..)
@@ -158,17 +143,10 @@ import Codec.Serialise
     , serialise
     )
 import Data.Aeson
-    ( toJSON
-    , (.!=)
+    ( (.!=)
     )
 import Data.ByteString.Base16
     ( encodeBase16
-    )
-import Data.SOP.Strict
-    ( NS (..)
-    )
-import Formatting.Buildable
-    ( build
     )
 import Ogmios.Data.EraTranslation
     ( MostRecentEra
@@ -182,13 +160,11 @@ import Ouroboros.Consensus.BlockchainTime
 import Ouroboros.Consensus.Cardano.Block
     ( BlockQuery (..)
     , CardanoBlock
-    , CardanoEras
     , GenTx (..)
     , TxId (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator
-    ( EraIndex (..)
-    , MismatchEraInfo
+    ( MismatchEraInfo
     , OneEraHash (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
@@ -217,14 +193,6 @@ import Ouroboros.Consensus.Protocol.Praos
     )
 import Ouroboros.Consensus.Protocol.TPraos
     ( TPraos
-    )
-import Ouroboros.Consensus.Shelley.Eras
-    ( AllegraEra
-    , AlonzoEra
-    , BabbageEra
-    , ConwayEra
-    , MaryEra
-    , ShelleyEra
     )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
@@ -263,12 +231,12 @@ import qualified Data.Aeson as Json
 import qualified Data.Aeson.Key as Json
 import qualified Data.Aeson.KeyMap as Json
 import qualified Data.Aeson.Types as Json
+import qualified Data.ByteString as BS
 import qualified Data.Map.Merge.Strict as Map
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence.Strict as StrictSeq
 import qualified Data.Set as Set
 import qualified Data.Text as T
-import qualified Data.Text.Lazy.Builder as TL
 import qualified Text.Read as T
 
 import qualified Cardano.Chain.Genesis as Byron
@@ -342,8 +310,6 @@ data SomeQuery (f :: Type -> Type) block where
             -- ^ Yield results in some applicative 'f' from some type definition.
             -- Useful when `f ~ Gen` for testing.
         -> SomeQuery f block
-
-data ByronEra crypto
 
 data AdHocQuery result where
     GetByronGenesis   :: AdHocQuery (GenesisConfig ByronEra)
@@ -420,39 +386,6 @@ type RewardsProvenance crypto =
     ( Sh.Api.RewardParams
     , Map (Ledger.KeyHash 'StakePool crypto) Sh.Api.RewardInfoPool
     )
-
-
---
--- SomeShelleyEra
---
-
-data SomeShelleyEra =
-    forall era. SomeShelleyEra (ShelleyBasedEra era)
-
-deriving instance Show SomeShelleyEra
-
-instance ToJSON SomeShelleyEra where
-    toJSON = \case
-        SomeShelleyEra ShelleyBasedEraShelley -> toJSON @Text "shelley"
-        SomeShelleyEra ShelleyBasedEraAllegra -> toJSON @Text "allegra"
-        SomeShelleyEra ShelleyBasedEraMary -> toJSON @Text "mary"
-        SomeShelleyEra ShelleyBasedEraAlonzo -> toJSON @Text "alonzo"
-        SomeShelleyEra ShelleyBasedEraBabbage -> toJSON @Text "babbage"
-        SomeShelleyEra ShelleyBasedEraConway -> toJSON @Text "conway"
-
--- | Convert an 'EraIndex' to a Shelley-based era.
-fromEraIndex
-    :: forall crypto. ()
-    => EraIndex (CardanoEras crypto)
-    -> Maybe SomeShelleyEra
-fromEraIndex = \case
-    EraIndex                   Z{}       -> Nothing
-    EraIndex                (S Z{})      -> Just (SomeShelleyEra ShelleyBasedEraShelley)
-    EraIndex             (S (S Z{}))     -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
-    EraIndex          (S (S (S Z{})))    -> Just (SomeShelleyEra ShelleyBasedEraMary)
-    EraIndex       (S (S (S (S Z{}))))   -> Just (SomeShelleyEra ShelleyBasedEraAlonzo)
-    EraIndex    (S (S (S (S (S Z{})))))  -> Just (SomeShelleyEra ShelleyBasedEraBabbage)
-    EraIndex (S (S (S (S (S (S Z{})))))) -> Just (SomeShelleyEra ShelleyBasedEraConway)
 
 --
 -- Encoders
@@ -1352,7 +1285,7 @@ decodeBinaryData
 decodeBinaryData =
     Json.withText "BinaryData" $ \t -> do
         bytes <- toLazy <$> decodeBase16 (encodeUtf8 t)
-        Ledger.Alonzo.dataToBinaryData <$> decodeAnnotatedCbor @era "Data" decCBOR bytes
+        Ledger.Alonzo.dataToBinaryData <$> decodeCborAnn @era "Data" decCBOR bytes
 
 decodeCoin
     :: Json.Value
@@ -1526,7 +1459,7 @@ decodeScript v =
     decodeFromBase16Cbor t = do
         taggedScript <- toLazy <$> decodeBase16 (encodeUtf8 t)
         annotatedScript <- toLazy <$> decodeCbor @era "Script" decodeTaggedScript taggedScript
-        decodeAnnotatedCbor @era "Script" decCBOR annotatedScript
+        decodeCborAnn @era "Script" decCBOR annotatedScript
 
     decodeFromWrappedJson :: Json.Object -> Json.Parser (Ledger.Script era)
     decodeFromWrappedJson o = do
@@ -1872,42 +1805,3 @@ castPoint = \case
     BlockPoint slot h -> BlockPoint slot (cast h)
   where
     cast (unShelleyHash -> UnsafeHash h) = coerce h
-
--- Try decoding data using various decoders of a specific era. This happens
--- when an intra-era hard-fork changes the serialization format for some reason.
---
--- This decoder tries all era decoders and stops at the first one that succeeds,
--- starting from the most recent one in the era downwards.
-decodeAnnotatedCbor
-    :: forall era m a. (Era era, MonadFail m, Alternative m)
-    => Text
-    -> (forall s. Binary.Decoder s (Annotator a))
-    -> LByteString
-    -> m a
-decodeAnnotatedCbor lbl decoder bytes =
-    asum (decodeVersionedData <$> reverse [minVersion .. maxVersion])
-  where
-    minVersion = Ledger.eraProtVerLow @era
-    maxVersion = Ledger.eraProtVerHigh @era
-    decodeVersionedData version =
-        either
-            (fail . toString . TL.toLazyText . build)
-            pure
-            (decodeFullAnnotator version lbl decoder bytes)
-
-decodeCbor
-    :: forall era m a. (Era era, MonadFail m, Alternative m)
-    => Text
-    -> (forall s. Binary.Decoder s a)
-    -> LByteString
-    -> m a
-decodeCbor lbl decoder bytes =
-    asum (decodeVersionedData <$> reverse [minVersion .. maxVersion])
-  where
-    minVersion = Ledger.eraProtVerLow @era
-    maxVersion = Ledger.eraProtVerHigh @era
-    decodeVersionedData version =
-        either
-            (fail . toString . TL.toLazyText . build)
-            pure
-            (decodeFullDecoder version lbl decoder bytes)

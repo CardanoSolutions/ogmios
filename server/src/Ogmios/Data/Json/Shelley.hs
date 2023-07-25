@@ -14,12 +14,6 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Binary
     ( serialize'
     )
-import Cardano.Ledger.Crypto
-    ( Crypto
-    )
-import Cardano.Ledger.Era
-    ( Era
-    )
 import Cardano.Ledger.Keys
     ( GenDelegPair (..)
     , KeyRole (..)
@@ -33,9 +27,6 @@ import Data.ByteString.Base16
 import Data.ByteString.Bech32
     ( HumanReadablePart (..)
     , encodeBech32
-    )
-import Ouroboros.Consensus.Cardano.Block
-    ( ShelleyEra
     )
 import Ouroboros.Consensus.Protocol.TPraos
     ( TPraos

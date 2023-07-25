@@ -13,12 +13,6 @@ module Ogmios.Data.JsonSpec
 
 import Ogmios.Prelude
 
-import Cardano.Ledger.Crypto
-    ( StandardCrypto
-    )
-import Cardano.Ledger.Era
-    ( Era
-    )
 import Cardano.Network.Protocol.NodeToClient
     ( Block
     , GenTxId
@@ -70,9 +64,7 @@ import Ogmios.Data.Json.Prelude
     )
 import Ogmios.Data.Json.Query
     ( QueryInEra
-    , ShelleyBasedEra (..)
     , SomeQuery (..)
-    , SomeShelleyEra (..)
     , parseQueryLedgerEpoch
     , parseQueryLedgerEraStart
     , parseQueryLedgerEraSummaries
@@ -155,8 +147,7 @@ import Ogmios.Data.Protocol.TxSubmission
     , _encodeSubmitTransactionResponse
     )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras
-    , GenTx
+    ( GenTx
     , HardForkApplyTxErr (..)
     )
 import Ouroboros.Consensus.Shelley.Eras

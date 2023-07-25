@@ -12,9 +12,6 @@ module Ogmios.Data.Json.Orphans () where
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Ledger.Crypto
-    ( Crypto
-    )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
     )
@@ -44,15 +41,10 @@ import Ogmios.Data.Json.Query
     )
 import Ouroboros.Consensus.Cardano.Block
     ( CardanoBlock
-    , CardanoEras
     , HardForkApplyTxErr (..)
     )
 import Ouroboros.Consensus.Protocol.Praos
     ( PraosCrypto
-    )
-import Ouroboros.Consensus.Shelley.Eras
-    ( AlonzoEra
-    , BabbageEra
     )
 import Ouroboros.Network.Block
     ( Point (..)

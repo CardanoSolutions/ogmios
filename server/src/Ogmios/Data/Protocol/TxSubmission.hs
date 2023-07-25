@@ -66,9 +66,6 @@ module Ogmios.Data.Protocol.TxSubmission
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Ledger.Alonzo
-    ( AlonzoEra
-    )
 import Cardano.Ledger.Alonzo.Scripts
     ( AlonzoScript
     , ExUnits (..)
@@ -91,20 +88,8 @@ import Cardano.Ledger.Api
     ( TransactionScriptFailure
     , evalTxExUnits
     )
-import Cardano.Ledger.Babbage
-    ( BabbageEra
-    )
 import Cardano.Ledger.Babbage.TxBody
     ( BabbageEraTxBody
-    )
-import Cardano.Ledger.Conway
-    ( ConwayEra
-    )
-import Cardano.Ledger.Crypto
-    ( StandardCrypto
-    )
-import Cardano.Ledger.Era
-    ( EraCrypto
     )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
@@ -116,8 +101,7 @@ import Cardano.Ledger.UTxO
     ( EraUTxO (..)
     )
 import Cardano.Network.Protocol.NodeToClient
-    ( Crypto
-    , GenTxId
+    ( GenTxId
     , SerializedTransaction
     , SubmitTransactionError
     )
@@ -147,8 +131,8 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..)
     )
 
+import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Core as Core
-import qualified Cardano.Ledger.Era as Era
 
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Types as Json
@@ -182,9 +166,9 @@ mkTxSubmissionCodecs
     -> (SubmitTransactionError block -> Json)
     -> (RdmrPtr -> Text)
     -> (ExUnits -> Json)
-    -> (TransactionScriptFailure (Crypto block) -> Json)
-    -> (TxIn (Crypto block) -> Json)
-    -> (TranslationError (Crypto block) -> Json)
+    -> (TransactionScriptFailure (BlockCrypto block) -> Json)
+    -> (TxIn (BlockCrypto block) -> Json)
+    -> (TranslationError (BlockCrypto block) -> Json)
     -> TxSubmissionCodecs block
 mkTxSubmissionCodecs encodeTxId encodeSubmitTransactionError stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError =
     TxSubmissionCodecs
@@ -354,9 +338,9 @@ _encodeEvaluateTransactionResponse
     => Proxy block
     -> (RdmrPtr -> Text)
     -> (ExUnits -> Json)
-    -> (TransactionScriptFailure (Crypto block) -> Json)
-    -> (TxIn (Crypto block) -> Json)
-    -> (TranslationError (Crypto block) -> Json)
+    -> (TransactionScriptFailure (BlockCrypto block) -> Json)
+    -> (TxIn (BlockCrypto block) -> Json)
+    -> (TranslationError (BlockCrypto block) -> Json)
     -> Rpc.Response (EvaluateTransactionResponse block)
     -> Json
 _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError =
@@ -436,7 +420,7 @@ type CanEvaluateScriptsInEra era =
 evaluateExecutionUnits
     :: forall era block.
       ( CanEvaluateScriptsInEra era
-      , Era.EraCrypto era ~ Crypto block
+      , EraCrypto era ~ BlockCrypto block
       )
     => Core.PParams era
         -- ^ Protocol parameters
@@ -461,9 +445,9 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
   where
     aggregateReports
         :: RdmrPtr
-        -> Either (TransactionScriptFailure (Era.EraCrypto era)) ExUnits
-        -> (Map RdmrPtr [TransactionScriptFailure (Era.EraCrypto era)], Map RdmrPtr ExUnits)
-        -> (Map RdmrPtr [TransactionScriptFailure (Era.EraCrypto era)], Map RdmrPtr ExUnits)
+        -> Either (TransactionScriptFailure (EraCrypto era)) ExUnits
+        -> (Map RdmrPtr [TransactionScriptFailure (EraCrypto era)], Map RdmrPtr ExUnits)
+        -> (Map RdmrPtr [TransactionScriptFailure (EraCrypto era)], Map RdmrPtr ExUnits)
     aggregateReports ptr result (failures, successes) = case result of
         Left scriptFailure ->
             ( Map.unionWith (++) (Map.singleton ptr [scriptFailure]) failures
@@ -476,8 +460,8 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
 
     evaluation
         :: Either
-            (TranslationError (Crypto block))
-            (Map RdmrPtr (Either (TransactionScriptFailure (Era.EraCrypto era)) ExUnits))
+            (TranslationError (BlockCrypto block))
+            (Map RdmrPtr (Either (TransactionScriptFailure (EraCrypto era)) ExUnits))
     evaluation =
         evalTxExUnits
           pparams

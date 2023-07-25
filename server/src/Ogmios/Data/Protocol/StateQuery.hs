@@ -49,14 +49,8 @@ import Data.Aeson
     ( parseJSON
     )
 import Ogmios.Data.Json.Query
-    ( ByronEra
-    , GenesisConfig
+    ( GenesisConfig
     , Query (..)
-    )
-import Ouroboros.Consensus.Shelley.Eras
-    ( AlonzoEra
-    , ConwayEra
-    , ShelleyEra
     )
 import Ouroboros.Network.Block
     ( Point (..)

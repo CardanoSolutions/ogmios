@@ -78,8 +78,6 @@ import Ogmios.Data.Json.Query
     , Query (..)
     , QueryInEra
     , SomeQuery (..)
-    , SomeShelleyEra (..)
-    , fromEraIndex
     )
 import Ogmios.Data.Protocol.StateQuery
     ( AcquireLedgerState (..)
@@ -90,9 +88,6 @@ import Ogmios.Data.Protocol.StateQuery
     , ReleaseLedgerStateResponse (..)
     , StateQueryCodecs (..)
     , StateQueryMessage (..)
-    )
-import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras
     )
 import Ouroboros.Consensus.HardFork.Combinator
     ( HardForkBlock

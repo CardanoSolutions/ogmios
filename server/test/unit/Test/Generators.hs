@@ -22,13 +22,6 @@ import Cardano.Ledger.Api
 import Cardano.Ledger.Core
     ( EraSegWits (..)
     )
-import Cardano.Ledger.Crypto
-    ( StandardCrypto
-    )
-import Cardano.Ledger.Era
-    ( Era
-    , EraCrypto
-    )
 import Cardano.Ledger.Keys
     ( KeyRole (..)
     )
@@ -53,8 +46,7 @@ import Data.Type.Equality
     , (:~:) (..)
     )
 import Ogmios.Data.Json.Query
-    ( ByronEra
-    , Delegations
+    ( Delegations
     , GenesisConfig
     , Interpreter
     , PoolParams
@@ -71,8 +63,7 @@ import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock
     )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras
-    , GenTx (..)
+    ( GenTx (..)
     , HardForkApplyTxErr (..)
     , HardForkBlock (..)
     , TxId (..)
@@ -96,10 +87,7 @@ import Ouroboros.Consensus.Protocol.TPraos
     ( TPraos
     )
 import Ouroboros.Consensus.Shelley.Eras
-    ( AlonzoEra
-    , ConwayEra
-    , ShelleyEra
-    , StandardAllegra
+    ( StandardAllegra
     , StandardAlonzo
     , StandardBabbage
     , StandardMary

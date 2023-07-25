@@ -43,9 +43,6 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Binary
     ( ToCBOR (..)
     )
-import Cardano.Ledger.Crypto
-    ( Crypto
-    )
 import Cardano.Ledger.Shelley.API
     ( ApplyTxError (..)
     )

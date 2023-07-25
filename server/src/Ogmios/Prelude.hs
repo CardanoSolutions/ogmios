@@ -2,6 +2,7 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -36,6 +37,25 @@ module Ogmios.Prelude
       -- * Set
     , traverset
 
+      -- * Ledger & consensus common
+    , Era
+    , EraCrypto
+    , Crypto
+    , StandardCrypto
+    , CardanoEras
+    , AllegraEra
+    , AlonzoEra
+    , BabbageEra
+    , ConwayEra
+    , MaryEra
+    , ShelleyEra
+
+      -- * CBOR Decoding
+    , decodeCbor
+    , decodeCborWith
+    , decodeCborAnn
+    , decodeCborAnnWith
+
       -- * type-level helpers
     , keepRedundantConstraint
     , LastElem
@@ -43,8 +63,30 @@ module Ogmios.Prelude
     , Or
     , HKD
     , (:\:)
+    , EraProto
+    , SomeShelleyEra (..)
+    , ByronEra
+    , EraIndex (..)
+    , ShelleyBasedEra (..)
+    , IsShelleyBasedEra (..)
+    , BlockCrypto
+    , fromEraIndex
     ) where
 
+import Cardano.Api
+    ( ShelleyBasedEra (..)
+    )
+import Cardano.Ledger.Crypto
+    ( Crypto
+    , StandardCrypto
+    )
+import Cardano.Ledger.Era
+    ( Era
+    , EraCrypto
+    )
+import Data.Aeson
+    ( ToJSON (..)
+    )
 import Data.Array
     ( Array
     , array
@@ -64,12 +106,41 @@ import Data.Maybe.Strict
 import Data.Profunctor.Unsafe
     ( (#.)
     )
+import Data.SOP.Strict
+    ( NS (..)
+    )
+import Formatting.Buildable
+    ( build
+    )
 import GHC.Ix
     ( Ix
     )
 import GHC.TypeLits
     ( ErrorMessage (..)
     , TypeError
+    )
+import Ouroboros.Consensus.Cardano
+    ( CardanoBlock
+    )
+import Ouroboros.Consensus.Cardano.Block
+    ( CardanoEras
+    )
+import Ouroboros.Consensus.HardFork.Combinator
+    ( EraIndex (..)
+    )
+import Ouroboros.Consensus.Protocol.Praos
+    ( Praos
+    )
+import Ouroboros.Consensus.Protocol.TPraos
+    ( TPraos
+    )
+import Ouroboros.Consensus.Shelley.Eras
+    ( AllegraEra
+    , AlonzoEra
+    , BabbageEra
+    , ConwayEra
+    , MaryEra
+    , ShelleyEra
     )
 import Relude hiding
     ( MVar
@@ -111,8 +182,24 @@ import Relude hiding
     , writeTVar
     )
 
+import qualified Cardano.Api as Api
+import qualified Cardano.Ledger.Binary.Decoding as Binary
+import qualified Cardano.Ledger.Core as Ledger
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+import qualified Data.Text.Lazy.Builder as TL
+
+mapToArray :: Ix k => Map k v -> Array k v
+mapToArray m =
+  array
+    (fst (Map.findMin m), fst (Map.findMax m))
+    (Map.toList m)
+
+traverset :: (Ord b, Applicative f) => (a -> f b) -> Set a -> f (Set b)
+traverset f =
+    Set.foldr insert (pure Set.empty)
+  where
+    insert x ys = liftA2 Set.insert (f x) ys
 
 -- | Copied from: https://hackage.haskell.org/package/generic-lens-1.1.0.0/docs/src/Data.Generics.Internal.VL.Prism.html
 infixl 8 ^?
@@ -125,12 +212,12 @@ keepRedundantConstraint _ = ()
 
 -- | Access the last element of a type-level list.
 type family LastElem xs where
-    LastElem ('[])     = TypeError ('Text "LastElem: empty list.")
+    LastElem '[]       = TypeError ('Text "LastElem: empty list.")
     LastElem (x : '[]) = x
     LastElem (x : xs)  = LastElem xs
 
 type family Elem e es where
-    Elem e ('[]) = TypeError ('Text "Elem: not found.")
+    Elem e '[]      = TypeError ('Text "Elem: not found.")
     Elem e (x : es) = Or (e ~ x) (Elem e es)
 
 type family Or (a :: Constraint) (b :: Constraint) :: Constraint where
@@ -149,14 +236,118 @@ type family (:\:) (any :: k) (excluded :: k) :: Constraint where
         TypeError ( 'Text "Usage of this function forbids the type '" :<>: 'ShowType excluded :<>: 'Text "'." )
     _ :\: _ = ()
 
-mapToArray :: Ix k => Map k v -> Array k v
-mapToArray m =
-  array
-    (fst (Map.findMin m), fst (Map.findMax m))
-    (Map.toList m)
+type family EraProto era :: Type where
+    EraProto (ShelleyEra crypto) = TPraos crypto
+    EraProto (AllegraEra crypto) = TPraos crypto
+    EraProto (MaryEra crypto)    = TPraos crypto
+    EraProto (AlonzoEra crypto)  = TPraos crypto
+    EraProto (BabbageEra crypto) = Praos crypto
+    EraProto (ConwayEra crypto)  = Praos crypto
 
-traverset :: (Ord b, Applicative f) => (a -> f b) -> Set a -> f (Set b)
-traverset f =
-    Set.foldr insert (pure Set.empty)
+data ByronEra crypto
+
+data SomeShelleyEra =
+    forall era. SomeShelleyEra (ShelleyBasedEra era)
+
+deriving instance Show SomeShelleyEra
+
+instance ToJSON SomeShelleyEra where
+    toJSON = \case
+        SomeShelleyEra ShelleyBasedEraShelley -> toJSON @Text "shelley"
+        SomeShelleyEra ShelleyBasedEraAllegra -> toJSON @Text "allegra"
+        SomeShelleyEra ShelleyBasedEraMary    -> toJSON @Text "mary"
+        SomeShelleyEra ShelleyBasedEraAlonzo  -> toJSON @Text "alonzo"
+        SomeShelleyEra ShelleyBasedEraBabbage -> toJSON @Text "babbage"
+        SomeShelleyEra ShelleyBasedEraConway  -> toJSON @Text "conway"
+
+class IsShelleyBasedEra era where
+    type ApiEra era :: Type
+    shelleyBasedEra :: ShelleyBasedEra (ApiEra era)
+
+instance IsShelleyBasedEra (ShelleyEra crypto) where
+    type ApiEra (ShelleyEra crypto) = Api.ShelleyEra
+    shelleyBasedEra = ShelleyBasedEraShelley
+
+instance IsShelleyBasedEra (AllegraEra crypto) where
+    type ApiEra (AllegraEra crypto) = Api.AllegraEra
+    shelleyBasedEra = ShelleyBasedEraAllegra
+
+instance IsShelleyBasedEra (MaryEra crypto) where
+    type ApiEra (MaryEra crypto) = Api.MaryEra
+    shelleyBasedEra = ShelleyBasedEraMary
+
+instance IsShelleyBasedEra (AlonzoEra crypto) where
+    type ApiEra (AlonzoEra crypto) = Api.AlonzoEra
+    shelleyBasedEra = ShelleyBasedEraAlonzo
+
+instance IsShelleyBasedEra (BabbageEra crypto) where
+    type ApiEra (BabbageEra crypto) = Api.BabbageEra
+    shelleyBasedEra = ShelleyBasedEraBabbage
+
+instance IsShelleyBasedEra (ConwayEra crypto) where
+    type ApiEra (ConwayEra crypto) = Api.ConwayEra
+    shelleyBasedEra = ShelleyBasedEraConway
+
+type family BlockCrypto block :: Type where
+    BlockCrypto (CardanoBlock crypto) = crypto
+
+-- | Convert an 'EraIndex' to a Shelley-based era.
+fromEraIndex
+    :: forall crypto. ()
+    => EraIndex (CardanoEras crypto)
+    -> Maybe SomeShelleyEra
+fromEraIndex = \case
+    EraIndex                   Z{}       -> Nothing
+    EraIndex                (S Z{})      -> Just (SomeShelleyEra ShelleyBasedEraShelley)
+    EraIndex             (S (S Z{}))     -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
+    EraIndex          (S (S (S Z{})))    -> Just (SomeShelleyEra ShelleyBasedEraMary)
+    EraIndex       (S (S (S (S Z{}))))   -> Just (SomeShelleyEra ShelleyBasedEraAlonzo)
+    EraIndex    (S (S (S (S (S Z{})))))  -> Just (SomeShelleyEra ShelleyBasedEraBabbage)
+    EraIndex (S (S (S (S (S (S Z{})))))) -> Just (SomeShelleyEra ShelleyBasedEraConway)
+
+-- Run a CBOR decoder for a data in a particular era.
+decodeCborWith
+    :: forall era m a. (Era era, Applicative m)
+    => Text
+    -> (Binary.DecoderError -> m a)
+    -> (forall s. Binary.Decoder s a)
+    -> LByteString
+    -> m a
+decodeCborWith lbl reject decoder bytes =
+    either reject pure (Binary.decodeFullDecoder version lbl decoder bytes)
   where
-    insert x ys = liftA2 Set.insert (f x) ys
+    version = Ledger.eraProtVerLow @era
+
+decodeCbor
+    :: forall era m a. (Era era, MonadFail m)
+    => Text
+    -> (forall s. Binary.Decoder s a)
+    -> LByteString
+    -> m a
+decodeCbor lbl =
+    decodeCborWith @era lbl (fail . renderCborDecoderError)
+
+-- Run a CBOR decoder for an annotated data in a particular era.
+decodeCborAnnWith
+    :: forall era m a. (Era era, Applicative m)
+    => Text
+    -> (Binary.DecoderError -> m a)
+    -> (forall s. Binary.Decoder s (Binary.Annotator a))
+    -> LByteString
+    -> m a
+decodeCborAnnWith lbl reject decoder bytes =
+    either reject pure (Binary.decodeFullAnnotator (Ledger.eraProtVerLow @era) lbl decoder bytes)
+
+decodeCborAnn
+    :: forall era m a. (Era era, MonadFail m)
+    => Text
+    -> (forall s. Binary.Decoder s (Binary.Annotator a))
+    -> LByteString
+    -> m a
+decodeCborAnn lbl  =
+    decodeCborAnnWith @era lbl (fail . renderCborDecoderError)
+
+-- | Render a CBOR error as a String.
+renderCborDecoderError :: Binary.DecoderError -> String
+renderCborDecoderError =
+    toString . TL.toLazyText . build

@@ -6,12 +6,6 @@ module Ogmios.Data.Json.Conway where
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Ledger.Crypto
-    ( Crypto
-    )
-import Ouroboros.Consensus.Cardano.Block
-    ( ConwayEra
-    )
 import Ouroboros.Consensus.Protocol.Praos
     ( Praos
     )
