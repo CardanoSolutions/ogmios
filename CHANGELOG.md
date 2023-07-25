@@ -19,131 +19,10 @@ pre: "<b>5. </b>"
 
 #### Changed
 
-- **⚠️ BREAKING-CHANGE ⚠️** Many major changes in the interface. Here's a summary of those changes, yet please refer to the API reference for details and exhaustiveness.
+- **⚠️ BREAKING-CHANGE ⚠️** Many major changes in the interface. A complete migration guide is available in [ADR-017](https://github.com/CardanoSolutions/ogmios/blob/master/architectural-decisions/accepted/017-api-version-6-major-rewrite.md), yet please refer to the API reference for details and exhaustiveness.
 
   > **Note**
-  > There are still many [test vectors]() available for every element of the Ogmios API. Use them!
-
-  1. JSON-WSP has been ditched and replaced by [JSON-RPC 2.0](https://www.jsonrpc.org/specification) with which Ogmios is now fully compatible. In particular, this means that request and response payloads are a bit more lightweight.
-
-  2. Most method names have been reworked. Here's a translation table (beware the casing):
-
-  | Old               | New                                         |
-  | ---               | ---                                         |
-  | `RequestNext`     | `nextBlock`                                 |
-  | `FindIntersect`   | `findIntersection`                          |
-  | ---               | ---                                         |
-  | `SubmitTx`        | `submitTransaction`                         |
-  | `EvaluateTx`      | `evaluateTransaction`                       |
-  | ---               | ---                                         |
-  | `Acquire`         | `acquireLedgerState`                        |
-  | `Query`           | `queryLedgerState/*` <br/> `queryNetwork/*` |
-  | `Release`         | `releaseLedgerState`                        |
-  | ---               | ---                                         |
-  | `AwaitAcquire`    | `acquireMempool`                            |
-  | `NextTx`          | `nextTransaction`                           |
-  | `HasTx`           | `hasTransaction`                            |
-  | `SizeAndCapacity` | `sizeOfMempool`                             |
-  | `ReleaseMempool`  | `releaseMempool`                            |
-
-  3. Query responses from the local-state-query protocol are now wrapped under the query name. So for example, querying the ledger tip as:
-
-  ```json
-  {
-    "jsonrpc": "2.0",
-    "method": "queryLedgerState/tip",
-  }
-  ```
-
-  returns something like:
-
-  ```json
-  {
-    "jsonrpc": "2.0",
-    "result": {
-      "tip": {
-        "slot": 1234,
-        "header": { "hash": "1234567890abcdef" }
-      }
-    }
-  }
-  ```
-
-  4. Similarly, many ledger state queries have been renamed. Here's a recap table:
-
-  | Old                          | New                          |
-  | ---                          | ---                          |
-  | `currentEpoch`               | `epoch`                      |
-  | `currentProtocolParameters`  | `protocolParameters`         |
-  | `delegationsAndRewards`      | `rewardAccountSummaries`     |
-  | `eraStart`                   | `eraStart`                   |
-  | `eraSummaries`               | `eraSummaries`               |
-  | `ledgerTip`                  | `tip`                        |
-  | `nonMyopicMemberRewards`     | `projectedRewards`           |
-  | `proposedProtocolParameters` | `proposedProtocolParameters` |
-  | `rewardsProvenance`          | N/A                          |
-  | `rewardsProvenance'`         | `rewardsProvenance`          |
-  | `stakeDistribution`          | `liveStakeDistribution`      |
-  | `utxo`                       | `utxo`                       |
-
-  Also, some queries have been moved under `queryNetwork` and are always available, in any era:
-
-  | Old             | New                    |
-  | ---             | ---                    |
-  | `blockHeight`   | `blockHeight`          |
-  | `chainTip`      | `tip`                  |
-  | `genesisConfig` | `genesisConfiguration` |
-  | `systemStart`   | `startTime`            |
-
-
-  5. The `genesisConfig` local-state-query now expects one era as argument (either 'byron', 'shelley' or 'alonzo') to retrieve the corresponding genesis configuration.
-
-  6. Errors in the protocol are now returned as JSON-RPC 2.0 errors, with unique error codes. This includes unsucessful operations such as an intersection not found on `findIntersection`, a point not acquired on `acquireLedgerState` or a failed transaction submission / evaluation. Some errors contain details specific to the error. This approach should simplify both parsing and documentation, as each error is now identified by a specific code.
-
-  7. The transaction model has been greatly reworked. The main changes are:
-    - The fields previously nested under `body` and `witnesses` have been flattened out and are now part of the top level object (e.g. `inputs` are no longer nested under `body`).
-
-    - Few fields have been renamed
-
-      | Old    | New    |
-      | ---    | ---    |
-      | `TODO` | `TODO` |
-
-    - Metadata now only contains user-defined labelled metadata instead of also containing extra scripts. Extra scripts have been moved to the `scripts` field and merged with witness scripts.
-      The naming is now also a bit less awkward as `body → blob` for accessing user-defined metadata is now simply `labels`.
-
-  8. The block model has also been reworked and merged together into one comprehensive block type. Fields have been renamed, some have been nested and other unnested. Here's a recap:
-
-      | Old                   | New                             |
-      | ---                   | ---                             |
-      | `hash`                | N/A (removed)                   |
-      | `header.blockSize`    | `size`                          |
-      | `header.blockHeight`  | `height`                        |
-      | `header.slot`         | `slot`                          |
-      | `header.blockHash`    | N/A (removed)                   |
-      | `headerHash`          | `header.hash`                   |
-      | `header.previousHash` | `ancestor`                      |
-      | `header.opCert`       | `issuer.operationalCertificate` |
-      | `header.issuerVk`     | `issuer.verificationKey`        |
-      | `header.issuerVrf`    | `issuer.vrfVerificationKey`     |
-      | `body`                | `transactions`                  |
-      | `header.signature`    | N/A (removed)                   |
-
-      Byron blocks are also now less "weird" than the rest of the blocks. So few changes concern only (old) Byron blocks to align them with the new model:
-
-      | Old                                          | New                        |
-      | ---                                          | ---                        |
-      | `header.genesisKey`                          | `issuer.verificationKey`   |
-      | `header.prevHash`                            | `ancestor`                 |
-      | `header.signature.signature`                 | N/A (removed)              |
-      | `header.signature.dlgCertificate.delegateVk` | `delegate.verificationKey` |
-      | `header.protocolVersion`                     | `protocol.version`         |
-      | `header.protocolMagicId`                     | `protocol.magic`           |
-      | `header.softwareVersion`                     | `protocol.software`        |
-      | `header.proof`                               | N/A (removed)              |
-      | `body.txPayload`                             | `transactions`             |
-      | `body.dlgPayload`                            | `operationalCertificates`  |
-      | `body.updatePayload`                         | `governanceAction`         |
+  > There are still many [test vectors](https://github.com/CardanoSolutions/ogmios/tree/master/server/test/vectors) available for every element of the Ogmios API. Use them!
 
 #### Removed
 
@@ -152,6 +31,8 @@ pre: "<b>5. </b>"
 - **⚠️ BREAKING-CHANGE ⚠️** Ogmios no longer returns null or empty fields. Where a field's value would be `null` prior to v6.0.0, Ogmios now simply omit the field altogether. This is also true for most responses that return empty lists as well. All-in-all, please refer to the documentation / JSON-schema in case of doubts (fields that may be omitted are no longer marked as `required`).
 
 - **⚠️ BREAKING-CHANGE ⚠️** Ogmios no longer supports submitting transactions using `{ "bytes": "..." }` as parameters; One must now specify the transaction as `{ "transaction": { "cbor": "..." } }`. Since `v5.2.0` (when the submission protocol was extended), Ogmios supported two notations for transaction submission (using either `bytes` or `submit`) as a backward-compatible mechanism. It now supports only one new format.
+
+- **⚠️ BREAKING-CHANGE ⚠️** Remove support for Mary & Alonzo transactions format. Ogmios now expects serialized transactions to be in the Babbage and higher (e.g. Conway) format for both submission and evaluation.
 
 ---
 ---
