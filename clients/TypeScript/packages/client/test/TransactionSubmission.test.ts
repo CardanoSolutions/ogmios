@@ -77,7 +77,43 @@ describe('TransactionSubmission', () => {
           )
         } catch (e) {
           expect(e).toBeInstanceOf(JSONRPCError)
-          expect(e.code).toBe(-32600)
+          expect(e.code).toBe(-32602)
+          expect(e.data).toEqual({
+            babbage: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 4, but found 0.",
+            conway: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 4, but found 0.",
+            alonzo: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 4, but found 0.",
+            mary: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 0.",
+            allegra: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 0.",
+            shelley: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 0."
+          })
+        }
+      })
+
+      it('fails (client fault) to submit on ill-formed tx', async () => {
+        try {
+          await submit(
+            ('83A30081825820E1E86DA6446C7F81DA8D5E440BB0D4EED0F1530BA15BF77E49C33' +
+             'D6F050D8FB500018182581D60FF7B4521589238CFB9C26870EDFA782541E6154447' +
+             '4422D849CEB1031A001954CE031A05F5E100A10081825820CF14D1C834CECAB8E1F' +
+             '5447BDE551946804057332825E26E64EE43079DD408355840247C5E60921130FA1D' +
+             'F800D310F39788F4AE04837534ADE6727875DBB87218F5B45E96CCD125A14C4510E' +
+             '81694E7AAD3BA8A24458AAF6B6F9C4F1A4801BEBA05F6'
+            )
+          )
+        } catch (e) {
+          expect(e).toBeInstanceOf(JSONRPCError)
+          expect(e.code).toBe(-32602)
+          expect(e.data).toEqual({
+            conway: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 4, but found 3.",
+            babbage: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 4, but found 3.",
+            alonzo: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 4, but found 3.",
+            mary: "invalid or incomplete value of type 'Transaction': An error occured while decoding value of type AllegraTxBodyRaw " +
+              "(MultiAsset StandardCrypto). field atbrTxFee with key 2, not decoded.",
+            allegra: "invalid or incomplete value of type 'Transaction': An error occured while decoding value of type AllegraTxBodyRaw (). " +
+              "field atbrTxFee with key 2, not decoded.",
+            shelley: "invalid or incomplete value of type 'Transaction': An error occured while decoding value of type ShelleyTxBodyRaw. " +
+              "field fee with key 2, not decoded.",
+          })
         }
       })
     })
@@ -100,13 +136,18 @@ describe('TransactionSubmission', () => {
 
     methods.forEach(evaluate => {
       it('successfully evaluates execution units of well-formed tx', async () => {
-        const result = await evaluate(
-          ('84A300818258204E9A66B7E310F004893EEF615E11F8AE6C3328CF2BFDB3' +
-           '2F6E40063636D42D7C00018182581D70C40F9129C2684046EB02325B96CA' +
-           '2899A6FA6478C1DDE9B5C53206A51A00D59F800200A10581840000D8799F' +
-           '4D48656C6C6F2C20576F726C6421FF820000F5F6'
+        let result;
+        try {
+          result = await evaluate(
+            ('84A300818258204E9A66B7E310F004893EEF615E11F8AE6C3328CF2BFDB3' +
+             '2F6E40063636D42D7C00018182581D70C40F9129C2684046EB02325B96CA' +
+             '2899A6FA6478C1DDE9B5C53206A51A00D59F800200A10581840000D8799F' +
+             '4D48656C6C6F2C20576F726C6421FF820000F5F6'
+            )
           )
-        )
+        } catch (e) {
+          console.log("Ho no! Failed to evaluate a well-formed transaction:", e)
+        }
 
         expect(result).toEqual({
           'spend:0': {
@@ -189,7 +230,7 @@ describe('TransactionSubmission', () => {
         }
       })
 
-      it('fails to evaluate execution units of non-Alonzo tx', async () => {
+      it('fails to evaluate execution units of a Mary transaction', async () => {
         try {
           await evaluate(
             ('83a4008182582039786f186d94d8dd0b4fcf05d1458b18cd5fd8c68233' +
@@ -217,7 +258,7 @@ describe('TransactionSubmission', () => {
           )
         } catch (e) {
           expect(e).toBeInstanceOf(JSONRPCError)
-          expect(e.code).toBe(-32600)
+          expect(e.code).toBe(-32602)
         }
       })
     })

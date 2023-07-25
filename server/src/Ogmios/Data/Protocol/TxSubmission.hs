@@ -44,6 +44,9 @@ module Ogmios.Data.Protocol.TxSubmission
     , _encodeEvaluateTransactionResponse
     , CanEvaluateScriptsInEra
 
+      -- ** Deserialization failures
+    , encodeDeserialisationFailure
+
       -- ** Re-exports
     , AlonzoEra
     , ConwayEra
@@ -133,10 +136,13 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Type
 
 import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Core as Core
+import qualified Codec.CBOR.Read as Cbor
 
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Types as Json
+import qualified Data.ByteString as BS
 import qualified Data.Map as Map
+import qualified Data.Text as T
 
 --
 -- Codecs
@@ -222,7 +228,7 @@ _decodeSubmitTransaction =
 data SubmitTransactionResponse block
     = SubmitTransactionSuccess (GenTxId block)
     | SubmitTransactionFailure (SubmitTransactionError block)
-    | SubmitTransactionDeserialisationFailure [(SomeShelleyEra, Binary.DecoderError)]
+    | SubmitTransactionDeserialisationFailure [(SomeShelleyEra, Binary.DecoderError, Word)]
     deriving (Generic)
 deriving instance
     ( Show (SubmitTransactionError block)
@@ -300,7 +306,7 @@ _decodeEvaluateTransaction =
 data EvaluateTransactionResponse block
     = EvaluationFailure (EvaluateTransactionError block)
     | EvaluationResult (Map RdmrPtr ExUnits)
-    | EvaluateTransactionDeserialisationFailure [(SomeShelleyEra, Binary.DecoderError)]
+    | EvaluateTransactionDeserialisationFailure [(SomeShelleyEra, Binary.DecoderError, Word)]
     deriving (Show)
 
 data EvaluateTransactionError block
@@ -482,7 +488,7 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
 
 encodeDeserialisationFailure
     :: (Rpc.FaultCode -> String -> Maybe Json -> Json)
-    -> [(SomeShelleyEra, Binary.DecoderError)]
+    -> [(SomeShelleyEra, Binary.DecoderError, Word)]
     -> Json
 encodeDeserialisationFailure reject errs =
     reject Rpc.FaultInvalidParams
@@ -490,23 +496,63 @@ encodeDeserialisationFailure reject errs =
         \well-formed. Note that I try to decode the transaction in every \
         \possible era and it was malformed in ALL eras. \
         \Yet, I can't pinpoint the exact issue for I do not know in which \
-        \era / format you intended the transaction to be. The 'data' field \
-        \,therefore, contains errors for each era."
+        \era / format you intended the transaction to be. The 'data' field, \
+        \therefore, contains errors for each era."
         (pure $ encodeObject $ mconcat
-            [ encodeDecoderError e era | (SomeShelleyEra era, e) <- errs ]
+            [ encodeDecoderErrorInEra size e era | (SomeShelleyEra era, e, size) <- errs ]
         )
   where
-    encodeDecoderError :: forall era. Binary.DecoderError -> ShelleyBasedEra era -> Json.Series
-    encodeDecoderError e = \case
-        ShelleyBasedEraShelley ->
-            "shelley" .= encodeText (show e)
-        ShelleyBasedEraAllegra ->
-            "allegra" .= encodeText (show e)
-        ShelleyBasedEraMary ->
-            "mary" .= encodeText (show e)
-        ShelleyBasedEraAlonzo ->
-            "alonzo" .= encodeText (show e)
-        ShelleyBasedEraBabbage ->
-            "babbage" .= encodeText (show e)
-        ShelleyBasedEraConway ->
-            "conway" .= encodeText (show e)
+    encodeDecoderErrorInEra :: forall era. Word -> Binary.DecoderError -> ShelleyBasedEra era -> Json.Series
+    encodeDecoderErrorInEra size e era =
+        let
+            k = case era of
+                ShelleyBasedEraShelley -> "shelley"
+                ShelleyBasedEraAllegra -> "allegra"
+                ShelleyBasedEraMary    -> "mary"
+                ShelleyBasedEraAlonzo  -> "alonzo"
+                ShelleyBasedEraBabbage -> "babbage"
+                ShelleyBasedEraConway  -> "conway"
+         in
+            k .= encodeDecoderError size e
+
+    encodeDecoderError size = encodeText . reduceNoise . \case
+        Binary.DecoderErrorCanonicityViolation lbl ->
+            "couldn't decode due to internal constraint violations on '" <> lbl <> "': \
+            \ found CBOR that isn't canonical when I expected it to be."
+        Binary.DecoderErrorCustom lbl hint ->
+            "couldn't decode due to internal constraint violations on '" <> lbl <> "': " <> hint
+        Binary.DecoderErrorDeserialiseFailure lbl (Cbor.DeserialiseFailure offset hint) | offset >= fromIntegral size ->
+            "invalid or incomplete value of type '" <> lbl <> "': " <> toText hint
+        Binary.DecoderErrorDeserialiseFailure lbl (Cbor.DeserialiseFailure offset hint) ->
+            "invalid CBOR found at offset [" <> show offset <> "] while decoding a value of type '" <> lbl <> "': "
+            <> toText hint
+        Binary.DecoderErrorEmptyList{} ->
+            "couldn't decode due to internal constraint violations on a non-empty list: \
+            \must not be empty"
+        Binary.DecoderErrorLeftover lbl bytes ->
+            "unexpected " <> show (BS.length bytes) <> " bytes found left after \
+            \successfully deserialising a/an '" <> lbl <> "'"
+        Binary.DecoderErrorSizeMismatch lbl expected actual | expected >= actual ->
+            show (expected - actual) <> " missing element(s) in a \
+            \data-structure of type '" <> lbl <> "'"
+        Binary.DecoderErrorSizeMismatch lbl expected actual ->
+            show (actual - expected) <> " extra element(s) in a \
+            \data-structure of type '" <> lbl <> "'"
+        Binary.DecoderErrorUnknownTag lbl tag ->
+            "unknown binary tag (" <> show tag <> ") when decoding a value of type '" <> lbl <> "'\
+            \; which is probably because I am trying to decode something else than what \
+            \I encountered."
+        Binary.DecoderErrorVoid ->
+            error "impossible: attempted to decode void. Please open an issue."
+     where
+        reduceNoise
+          = T.replace "\n" " "
+          . T.replace "Error: " ""
+          . T.replace "Record" "Object / Array"
+          . T.replace "Record RecD" "Object / Array"
+          . T.replace " (ShelleyEra StandardCrypto)" ""
+          . T.replace " (AllegraEra StandardCrypto)" ""
+          . T.replace " (MaryEra StandardCrypto)" ""
+          . T.replace " (AlonzoEra StandardCrypto)" ""
+          . T.replace " (BabbageEra StandardCrypto)" ""
+          . T.replace " (ConwayEra StandardCrypto)" ""

@@ -600,8 +600,11 @@ data (Optional a) where
 data MultiEraDecoder a
     = MultiEraDecoderSuccess a
     | MultiEraDecoderErrors
-        [ (SomeShelleyEra, Binary.DecoderError)
+        [ (SomeShelleyEra, Binary.DecoderError, Word)
         ]
+    -- ^ An decoding error in a particular error, with the era, error and
+    -- the size of the payload. The size is useful to know whether the error
+    -- happened mid-way or after decoding the whole object and missing fields.
     deriving (Show)
 
 instance Functor MultiEraDecoder where

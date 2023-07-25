@@ -1602,7 +1602,13 @@ decodeSerializedTransaction = Json.withText "Transaction" $ \(encodeUtf8 -> utf8
         -> MultiEraDecoder (GenTx (CardanoBlock crypto))
     deserialiseCBOR mk bytes =
         mk <$> decodeCborWith @era "Transaction"
-            (\e -> MultiEraDecoderErrors [(SomeShelleyEra (shelleyBasedEra @era), e)])
+            (\e -> MultiEraDecoderErrors
+                [ ( SomeShelleyEra (shelleyBasedEra @era)
+                  , e
+                  , fromIntegral $ BS.length bytes
+                  )
+                ]
+            )
             (Binary.fromPlainDecoder fromCBOR)
             (if  wrapper `BS.isPrefixOf` bytes
                then fromStrict bytes
