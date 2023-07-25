@@ -17,6 +17,8 @@ pre: "<b>5. </b>"
 
 - Ability to retrieve any genesis configuration (Byron, Shelley or Alonzo) via the local-state-query protocol.
 
+- A new command `inspect transaction` to help with debugging the deserialization of transaction.
+
 #### Changed
 
 - **⚠️ BREAKING-CHANGE ⚠️** Many major changes in the interface. A complete migration guide is available in [ADR-017](https://github.com/CardanoSolutions/ogmios/blob/master/architectural-decisions/accepted/017-api-version-6-major-rewrite.md), yet please refer to the API reference for details and exhaustiveness.
@@ -31,8 +33,6 @@ pre: "<b>5. </b>"
 - **⚠️ BREAKING-CHANGE ⚠️** Ogmios no longer returns null or empty fields. Where a field's value would be `null` prior to v6.0.0, Ogmios now simply omit the field altogether. This is also true for most responses that return empty lists as well. All-in-all, please refer to the documentation / JSON-schema in case of doubts (fields that may be omitted are no longer marked as `required`).
 
 - **⚠️ BREAKING-CHANGE ⚠️** Ogmios no longer supports submitting transactions using `{ "bytes": "..." }` as parameters; One must now specify the transaction as `{ "transaction": { "cbor": "..." } }`. Since `v5.2.0` (when the submission protocol was extended), Ogmios supported two notations for transaction submission (using either `bytes` or `submit`) as a backward-compatible mechanism. It now supports only one new format.
-
-- **⚠️ BREAKING-CHANGE ⚠️** Remove support for Mary & Alonzo transactions format. Ogmios now expects serialized transactions to be in the Babbage and higher (e.g. Conway) format for both submission and evaluation.
 
 ---
 ---

@@ -15,6 +15,7 @@ module Ogmios
     , runWith
     , version
     , healthCheck
+    , module Ogmios.App.Inspect
 
     -- * Environment
     , Env (..)
@@ -22,6 +23,7 @@ module Ogmios
 
     -- * Command & Options
     , Command (..)
+    , InspectCommand (..)
     , parseOptions
 
     -- * Logging
@@ -97,6 +99,7 @@ import Ogmios.Control.MonadWebSocket
     )
 import Ogmios.Options
     ( Command (..)
+    , InspectCommand (..)
     , Tracers (..)
     , parseOptions
     )
@@ -121,6 +124,8 @@ import qualified Control.Concurrent.STM.TSem as STM
 import qualified Control.Concurrent.STM.TVar as STM
 import qualified Control.Monad.Class.MonadSTM.Internal
 import qualified Control.Monad.STM as STM
+
+import Ogmios.App.Inspect
 
 --
 -- App

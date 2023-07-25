@@ -10,6 +10,7 @@
 module Ogmios.Options
     ( -- * Command
       Command (..)
+    , InspectCommand (..)
     , parseOptions
     , parseOptionsPure
 
@@ -104,9 +105,14 @@ data Command (f :: Type -> Type)
     = Start (f NetworkParameters) Configuration (Tracers IO 'MinSeverities)
     | Version
     | HealthCheck { healthCheckPort :: !Int }
+    | Inspect InspectCommand
 
 deriving instance Eq (f NetworkParameters) => Eq (Command f)
 deriving instance Show (f NetworkParameters) => Show (Command f)
+
+data InspectCommand
+    = InspectTransaction { transaction :: Text }
+    deriving (Eq, Show)
 
 parseOptions :: IO (Command Identity)
 parseOptions =
@@ -116,6 +122,8 @@ parseOptions =
         Start _ cfg@Configuration{nodeConfig} lvl -> do
             networkParameters <- parseNetworkParameters nodeConfig
             pure $ Start (Identity networkParameters) cfg lvl
+        Inspect inspect -> do
+            pure $ Inspect inspect
 
 parseOptionsPure :: [String] -> Either String (Command Proxy)
 parseOptionsPure args =
@@ -160,6 +168,8 @@ parserInfo = info (helper <*> parser) $ mempty
                     <*> fmap Const (logLevelOption "options")
                 )
         )
+        <|>
+        inspectCommand
 
 --
 -- Command-line options
@@ -283,6 +293,35 @@ healthCheckCommand =
   where
     parser = HealthCheck <$> serverPortOption
     helpText = "Performs a health check against a running server."
+
+-- | inspect-command
+inspectCommand :: Parser (Command f)
+inspectCommand =
+    subparser $ command "inspect" $ info (helper <*> parser) $ mempty
+        <> progDesc helpText
+        <> headerDoc (Just $ vsep
+            [ string $ toString $ unwords
+                [ "A set of useful commands to help debugging various kind of"
+                , "encoded binary data."
+                ]
+            ])
+  where
+    helpText = "Useful commands for inspecting binary data (e.g. transactions)."
+    parser = Inspect <$> inspectTransactionCommand
+
+inspectTransactionCommand :: Parser InspectCommand
+inspectTransactionCommand =
+    subparser $ command "transaction" $ info (helper <*> parser) $ mempty
+        <> progDesc helpText
+        <> headerDoc (Just $ vsep
+            [ string $ toString $ unwords
+                [ "Handy command to inspect a base16-encoded transaction."
+                , "Useful for debugging deserialization failures!"
+                ]
+            ])
+  where
+    helpText = "Inspect a serialized transaction (any era)."
+    parser = InspectTransaction <$> strArgument (metavar "TRANSACTION")
 
 --
 -- Environment

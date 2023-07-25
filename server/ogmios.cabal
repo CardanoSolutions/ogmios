@@ -38,6 +38,8 @@ library
       Ogmios
       Ogmios.App.Configuration
       Ogmios.App.Health
+      Ogmios.App.Inspect
+      Ogmios.App.Inspect.InspectTransaction
       Ogmios.App.Metrics
       Ogmios.App.Protocol
       Ogmios.App.Protocol.ChainSync
