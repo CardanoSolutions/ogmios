@@ -29,7 +29,7 @@ import Ogmios.Data.Json.Orphans
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Types as Json
-import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Char8 as B8
 
 -- | Interpret a hex-encoded bytestring as a 'Transaction' and display
 -- information about it.
@@ -37,12 +37,12 @@ inspectTransaction :: Text -> IO ()
 inspectTransaction input =
     case Json.parseEither parseJSON (Json.String input) of
         Left e -> do
-            BS.putStrLn (encodeUtf8 e)
+            B8.putStrLn (encodeUtf8 e)
             exitWith (ExitFailure 1)
         Right (MultiEraDecoderErrors errs) -> do
-            BS.putStrLn $ jsonToByteString $ encodeDeserialisationFailure
+            B8.putStrLn $ jsonToByteString $ encodeDeserialisationFailure
                 (\_ _ -> encodeMaybe identity)
                 errs
             exitWith (ExitFailure 1)
         Right (MultiEraDecoderSuccess transaction) ->
-            BS.putStrLn $ jsonToByteString $ encodeTx @StandardCrypto transaction
+            B8.putStrLn $ jsonToByteString $ encodeTx @StandardCrypto transaction
