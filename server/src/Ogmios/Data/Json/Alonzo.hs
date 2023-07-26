@@ -29,13 +29,10 @@ import Prettyprinter
 
 import qualified Data.Map.Strict as Map
 
-import qualified Ogmios.Data.Json.Allegra as Allegra
-import qualified Ogmios.Data.Json.Mary as Mary
-import qualified Ogmios.Data.Json.Shelley as Shelley
-
+import qualified Cardano.Crypto.Hash.Class as CC
 import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 
-import qualified Cardano.Crypto.Hash.Class as CC
+import qualified Cardano.Ledger.Api as Ledger.Api
 
 import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Block as Ledger
@@ -46,9 +43,6 @@ import qualified Cardano.Ledger.SafeHash as Ledger
 
 import qualified Cardano.Ledger.Shelley.API as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
-import qualified Cardano.Ledger.Shelley.Rules as Sh
-
-import qualified Cardano.Ledger.Mary.Value as Ma
 
 import qualified Cardano.Ledger.Alonzo.Core as Al hiding
     ( TranslationError
@@ -57,7 +51,6 @@ import qualified Cardano.Ledger.Alonzo.Genesis as Al
 import qualified Cardano.Ledger.Alonzo.Language as Al
 import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.PlutusScriptApi as Al
-import qualified Cardano.Ledger.Alonzo.Rules as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.Scripts.Data as Al
 import qualified Cardano.Ledger.Alonzo.Tx as Al
@@ -69,8 +62,9 @@ import qualified Cardano.Ledger.Alonzo.TxInfo as Al hiding
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 import qualified Cardano.Ledger.Alonzo.TxWits as Al
 
-import qualified Cardano.Ledger.Api as Ledger.Api
-
+import qualified Ogmios.Data.Json.Allegra as Allegra
+import qualified Ogmios.Data.Json.Mary as Mary
+import qualified Ogmios.Data.Json.Shelley as Shelley
 
 
 type AuxiliaryScripts era =
@@ -79,60 +73,6 @@ type AuxiliaryScripts era =
 --
 -- Encoders
 --
-
-encodeUtxowPredicateFail
-    :: forall era crypto.
-        ( crypto ~ Ledger.EraCrypto era
-        , Ledger.Era era
-        )
-    => (Sh.PredicateFailure (Ledger.EraRule "UTXO" era) -> Json)
-    -> Al.AlonzoUtxowPredFailure era
-    -> Json
-encodeUtxowPredicateFail encodeUtxoFailureInEra = \case
-    Al.MissingRedeemers missing ->
-        "missingRequiredRedeemers" .= encodeObject
-            ( "missing" .=
-                encodeFoldable encodeMissingRedeemer missing
-            )
-        & encodeObject
-    Al.MissingRequiredDatums missing provided ->
-        "missingRequiredDatums" .= encodeObject
-            ( "provided" .=
-                encodeFoldable encodeDataHash provided <>
-              "missing" .=
-                encodeFoldable encodeDataHash missing
-            )
-        & encodeObject
-    Al.NonOutputSupplimentaryDatums unallowed acceptable ->
-        "unspendableDatums" .= encodeObject
-            ( "nonSpendable" .=
-                encodeFoldable encodeDataHash unallowed <>
-              "acceptable" .=
-                encodeFoldable encodeDataHash acceptable
-            )
-        & encodeObject
-    Al.PPViewHashesDontMatch provided inferred ->
-        "extraDataMismatch" .= encodeObject
-            ( "provided" .=? OmitWhenNothing
-                encodeScriptIntegrityHash provided <>
-              "inferredFromParameters" .=? OmitWhenNothing
-                encodeScriptIntegrityHash inferred
-            )
-        & encodeObject
-    Al.MissingRequiredSigners keys ->
-        "missingRequiredSignatures" .=
-            encodeFoldable Shelley.encodeKeyHash keys
-        & encodeObject
-    Al.UnspendableUTxONoDatumHash utxos ->
-        "unspendableScriptInputs" .=
-            encodeFoldable Shelley.encodeTxIn utxos
-        & encodeObject
-    Al.ExtraRedeemers redeemers ->
-        "extraRedeemers" .=
-            encodeFoldable (encodeText . stringifyRdmrPtr) redeemers
-        & encodeObject
-    Al.ShelleyInAlonzoUtxowPredFailure e ->
-        Shelley.encodeUtxowFailure encodeUtxoFailureInEra e
 
 encodeAuxiliaryData
     :: forall era.
@@ -185,20 +125,6 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         )
   where
     TPraos.BHeader hBody _ = blkHeader
-
-encodeCollectError
-    :: Crypto crypto
-    => Al.CollectError crypto
-    -> Json
-encodeCollectError = \case
-    Al.NoRedeemer purpose ->
-        encodeObject ("noRedeemer" .= encodeScriptPurpose purpose)
-    Al.NoWitness hash ->
-        encodeObject ("noWitness" .= Shelley.encodeScriptHash hash)
-    Al.NoCostModel lang ->
-        encodeObject ("noCostModel" .= encodeLanguage lang)
-    Al.BadTranslation err ->
-        encodeObject ("badTranslation" .= encodeTranslationError err)
 
 encodeCostModel
     :: Al.CostModel
@@ -272,21 +198,6 @@ encodeLanguage
     -> Json
 encodeLanguage =
     encodeText . stringifyLanguage
-
-encodeLedgerFailure
-    :: Crypto crypto
-    => Sh.ShelleyLedgerPredFailure (AlonzoEra crypto)
-    -> Json
-encodeLedgerFailure = \case
-    Sh.UtxowFailure e  ->
-        encodeUtxowPredicateFail
-            (encodeUtxoFailure
-                encodeUtxo
-                encodeTxOut
-                (\(Al.AlonzoTxOut addr _ _) -> addr)
-            ) e
-    Sh.DelegsFailure e ->
-        Shelley.encodeDelegsFailure e
 
 encodeMissingRedeemer
     :: Crypto crypto
@@ -529,161 +440,6 @@ encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
   where
     encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
-
-encodeUtxoFailure
-    :: forall era.
-        ( Era era
-        , Al.Value era ~ Ma.MaryValue (Ledger.EraCrypto era)
-        , Sh.PredicateFailure (Ledger.EraRule "UTXOS" era) ~ Al.AlonzoUtxosPredFailure era
-        , Sh.PPUPPredFailure era ~ Sh.ShelleyPpupPredFailure era
-        )
-    => (Sh.UTxO era -> Json)
-    -> (Ledger.TxOut era -> Json)
-    -> (Ledger.TxOut era -> Sh.Addr (Ledger.EraCrypto era))
-    -> Al.AlonzoUtxoPredFailure era
-    -> Json
-encodeUtxoFailure encodeUtxoInEra encodeTxOutInEra extractAddress = \case
-    Al.BadInputsUTxO inputs ->
-        "badInputs" .=
-            encodeFoldable Shelley.encodeTxIn inputs
-        & encodeObject
-    Al.OutsideValidityIntervalUTxO itv currentSlot ->
-        "outsideOfValidityInterval" .= encodeObject
-            ( "interval" .=
-                Allegra.encodeValidityInterval itv <>
-              "currentSlot" .=
-                encodeSlotNo currentSlot
-            )
-        & encodeObject
-    Al.MaxTxSizeUTxO actualSize maxSize ->
-        "txTooLarge" .= encodeObject
-            ( "maximumSize" .=
-                encodeInteger maxSize <>
-              "actualSize" .=
-                encodeInteger actualSize
-            )
-        & encodeObject
-    Al.InputSetEmptyUTxO ->
-        "missingAtLeastOneInputUtxo" .=
-            encodeNull
-        & encodeObject
-    Al.FeeTooSmallUTxO required actual ->
-        "feeTooSmall" .= encodeObject
-            ( "requiredFee" .=
-                encodeCoin required <>
-              "actualFee" .=
-                encodeCoin actual
-            )
-        & encodeObject
-    Al.ValueNotConservedUTxO consumed produced ->
-        "valueNotConserved" .= encodeObject
-            ( "consumed" .=
-                Mary.encodeValue @(Ledger.EraCrypto era) consumed <>
-              "produced" .=
-                Mary.encodeValue produced
-            )
-        & encodeObject
-    Al.WrongNetwork expected invalidAddrs ->
-        "networkMismatch" .= encodeObject
-            ( "expectedNetwork" .=
-                Shelley.encodeNetwork expected <>
-              "invalidEntities" .=
-                Shelley.encodeEntities "address" Shelley.encodeAddress invalidAddrs
-            )
-        & encodeObject
-    Al.WrongNetworkWithdrawal expected invalidAccts ->
-        "networkMismatch" .= encodeObject
-            ( "expectedNetwork" .=
-                Shelley.encodeNetwork expected <>
-              "invalidEntities" .=
-                Shelley.encodeEntities "rewardAccount" Shelley.encodeRewardAcnt invalidAccts
-            )
-        & encodeObject
-    Al.WrongNetworkInTxBody expected actual ->
-        "networkMismatch" .= encodeObject
-            ( "expectedNetwork" .=
-                Shelley.encodeNetwork expected<>
-              "invalidEntities" .=
-                Shelley.encodeEntities "transactionBody" Shelley.encodeNetwork [actual]
-            )
-        & encodeObject
-    Al.OutputTooSmallUTxO outs ->
-        "outputTooSmall" .=
-            encodeFoldable encodeTxOutInEra outs
-        & encodeObject
-    Al.OutputBootAddrAttrsTooBig outs ->
-        "addressAttributesTooLarge" .=
-            encodeFoldable Shelley.encodeAddress (extractAddress <$> outs)
-        & encodeObject
-    Al.TriesToForgeADA ->
-        "triesToForgeAda" .=
-            encodeNull
-        & encodeObject
-    Al.OutputTooBigUTxO outs ->
-        "tooManyAssetsInOutput" .=
-            encodeFoldable (\(_, _, o) -> encodeTxOutInEra o) outs
-        & encodeObject
-    Al.NoCollateralInputs ->
-        "missingCollateralInputs" .=
-            encodeNull
-        & encodeObject
-    Al.InsufficientCollateral actual required ->
-        "collateralTooSmall" .= encodeObject
-            ( "requiredCollateral" .=
-                encodeCoin required <>
-              "actualCollateral" .=
-                encodeCoin actual
-            )
-        & encodeObject
-    Al.ScriptsNotPaidUTxO utxo ->
-        "collateralIsScript" .=
-            encodeUtxoInEra utxo
-        & encodeObject
-    Al.CollateralContainsNonADA value ->
-        "collateralHasNonAdaAssets" .=
-            Mary.encodeValue value
-        & encodeObject
-    Al.TooManyCollateralInputs maxInputs actualInputs ->
-        "tooManyCollateralInputs" .= encodeObject
-            ( "maximumCollateralInputs" .=
-                encodeNatural maxInputs <>
-              "actualCollateralInputs" .=
-                encodeNatural actualInputs
-            )
-        & encodeObject
-    Al.ExUnitsTooBigUTxO maxUnit actualUnit ->
-        "executionUnitsTooLarge" .= encodeObject
-            ( "maximumExecutionUnits" .=
-                encodeExUnits maxUnit <>
-              "actualExecutionUnits" .=
-                encodeExUnits actualUnit
-            )
-        & encodeObject
-    Al.OutsideForecast slot ->
-        "outsideForecast" .=
-            encodeSlotNo slot
-        & encodeObject
-    Al.UtxosFailure e ->
-        encodeUtxosPredicateFailure e
-
-encodeUtxosPredicateFailure
-    :: forall era.
-        ( Sh.PPUPPredFailure era ~ Sh.ShelleyPpupPredFailure era
-        , Ledger.Era era
-        )
-    => Al.AlonzoUtxosPredFailure era
-    -> Json
-encodeUtxosPredicateFailure = \case
-    Al.ValidationTagMismatch{} ->
-        "validationTagMismatch" .=
-            encodeNull
-        & encodeObject
-    Al.CollectErrors errors ->
-        "collectErrors" .=
-            encodeFoldable encodeCollectError errors
-        & encodeObject
-    Al.UpdateFailure e ->
-        Shelley.encodeUpdateFailure e
 
 encodeScriptIntegrityHash
     :: Crypto crypto

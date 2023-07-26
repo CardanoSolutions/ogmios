@@ -71,18 +71,12 @@ import Ouroboros.Consensus.BlockchainTime.WallClock.Types
     ( RelativeTime (..)
     , SystemStart (..)
     )
-import Ouroboros.Consensus.HardFork.Combinator
-    ( EraIndex (..)
-    )
 import Ouroboros.Network.Block
     ( Tip (..)
     )
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
-import Ouroboros.Consensus.Cardano.Block
-    ( CardanoEras
-    )
 
 -- | Reflect the current state of the connection with the underlying node.
 data ConnectionStatus

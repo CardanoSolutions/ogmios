@@ -24,7 +24,6 @@ import qualified Cardano.Chain.Block as By hiding
     , signature
     )
 import qualified Cardano.Chain.Block as By.Block
-import qualified Cardano.Chain.Byron.API as By
 import qualified Cardano.Chain.Common as By
 import qualified Cardano.Chain.Delegation as By hiding
     ( APayload
@@ -291,22 +290,6 @@ encodeApplicationName
 encodeApplicationName =
     encodeText . By.unApplicationName
 
-encodeApplyMempoolPayloadErr
-    :: By.ApplyMempoolPayloadErr
-    -> Json
-encodeApplyMempoolPayloadErr = \case
-    By.MempoolTxErr e ->
-        encodeUTxOValidationError e
-    -- NOTE
-    -- branches below aren't actually used because we only submit
-    -- payment transaction through the protocol.
-    By.MempoolDlgErr _e ->
-        encodeText "mempoolDelegationError"
-    By.MempoolUpdateProposalErr _e ->
-        encodeText "mempoolUpdateProposalError"
-    By.MempoolUpdateVoteErr _e ->
-        encodeText "mempoolUpdateVoteError"
-
 encodeBlockProof
     :: By.Block.Proof
     -> Json
@@ -558,76 +541,6 @@ encodeTxProof x =
     "witnessesHash" .=
         encodeHash (By.txpWitnessesHash x)
     & encodeObject
-
-encodeTxValidationError :: By.TxValidationError -> Json
-encodeTxValidationError = \case
-    By.TxValidationLovelaceError lbl e ->
-        "lovelaceError" .=
-            ( "label" .= encodeText lbl <>
-              "error" .= encodeLovelaceError e
-              & encodeObject
-            )
-        & encodeObject
-    By.TxValidationFeeTooSmall _tx required actual ->
-        "feeTooSmall" .=
-          ( "requiredFee" .= encodeLovelace required <>
-            "actualFee" .= encodeLovelace actual
-            & encodeObject
-          )
-        & encodeObject
-    By.TxValidationWitnessWrongSignature wit pm _ ->
-        "wrongSignature" .=
-            ( "witness" .= encodeTxInWitness wit <>
-              "protocolMagic" .= encodeProtocolMagicId pm
-              & encodeObject
-            )
-        & encodeObject
-    By.TxValidationWitnessWrongKey wit addr ->
-        "wrongKey" .=
-            ( "witness" .= encodeTxInWitness wit <>
-              "address" .= encodeAddress addr
-              & encodeObject
-            )
-        & encodeObject
-    By.TxValidationMissingInput txin ->
-        "missingInput" .= encodeTxIn txin
-        & encodeObject
-    By.TxValidationNetworkMagicMismatch expected actual ->
-        "networkMismatch" .=
-            ( "expectedNetwork" .= encodeNetworkMagic expected <>
-              "foundInAddress" .= encodeNetworkMagic actual
-              & encodeObject
-            )
-        & encodeObject
-    By.TxValidationTxTooLarge maxSize actualSize ->
-        "txTooLarge" .=
-            ( "maximumSize" .= encodeNatural maxSize <>
-              "actualSize" .= encodeNatural actualSize
-              & encodeObject
-            )
-        & encodeObject
-    By.TxValidationUnknownAddressAttributes ->
-        encodeText "unknownAddressAttributes"
-    By.TxValidationUnknownAttributes ->
-        encodeText "unknownAttributes"
-
-encodeUTxOError
-    :: By.UTxOError
-    -> Json
-encodeUTxOError = \case
-    By.UTxOOverlappingUnion ->
-        encodeText "overlappingUnion"
-    By.UTxOMissingInput txin ->
-        encodeObject ( "missingInput" .= encodeTxIn txin )
-
-encodeUTxOValidationError
-    :: By.UTxOValidationError
-    -> Json
-encodeUTxOValidationError = \case
-    By.UTxOValidationTxValidationError e ->
-        encodeObject ( "txValidationError" .= encodeTxValidationError e )
-    By.UTxOValidationUTxOError e ->
-        encodeObject ( "utxoValidationError" .= encodeUTxOError e )
 
 encodeVerificationKey
     :: By.VerificationKey

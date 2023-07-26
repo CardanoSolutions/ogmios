@@ -65,11 +65,20 @@ library
       Ogmios.Data.Json.Babbage
       Ogmios.Data.Json.Byron
       Ogmios.Data.Json.Conway
+      Ogmios.Data.Json.Ledger.PredicateFailure
       Ogmios.Data.Json.Mary
       Ogmios.Data.Json.Orphans
       Ogmios.Data.Json.Prelude
       Ogmios.Data.Json.Query
       Ogmios.Data.Json.Shelley
+      Ogmios.Data.Ledger
+      Ogmios.Data.Ledger.PredicateFailure
+      Ogmios.Data.Ledger.PredicateFailure.Allegra
+      Ogmios.Data.Ledger.PredicateFailure.Alonzo
+      Ogmios.Data.Ledger.PredicateFailure.Babbage
+      Ogmios.Data.Ledger.PredicateFailure.Conway
+      Ogmios.Data.Ledger.PredicateFailure.Mary
+      Ogmios.Data.Ledger.PredicateFailure.Shelley
       Ogmios.Data.Metrics
       Ogmios.Data.Metrics.Prometheus
       Ogmios.Data.Protocol.ChainSync

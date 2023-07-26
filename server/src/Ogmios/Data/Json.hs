@@ -53,6 +53,9 @@ import Cardano.Network.Protocol.NodeToClient
     , SerializedTransaction
     , SubmitTransactionError
     )
+import Ogmios.Data.Json.Ledger.PredicateFailure
+    ( encodePredicateFailure
+    )
 import Ogmios.Data.Json.Query
     ( decodeOneEraHash
     , decodePoint
@@ -63,6 +66,9 @@ import Ogmios.Data.Json.Query
     , encodeEraMismatch
     , encodeOneEraHash
     , encodePoint
+    )
+import Ogmios.Data.Ledger.PredicateFailure
+    ( pickPredicateFailure
     )
 import Ouroboros.Consensus.Byron.Ledger.Block
     ( ByronBlock (..)
@@ -149,22 +155,28 @@ encodeSubmitTransactionError
     => SubmitTransactionError (CardanoBlock crypto)
     -> Json
 encodeSubmitTransactionError = \case
-    ApplyTxErrByron e ->
-        Byron.encodeApplyMempoolPayloadErr e
-    ApplyTxErrShelley (ApplyTxError xs) ->
-        encodeList Shelley.encodeLedgerFailure xs
-    ApplyTxErrAllegra (ApplyTxError xs) ->
-        encodeList Allegra.encodeLedgerFailure xs
-    ApplyTxErrMary (ApplyTxError xs) ->
-        encodeList Mary.encodeLedgerFailure xs
-    ApplyTxErrAlonzo (ApplyTxError xs) ->
-        encodeList Alonzo.encodeLedgerFailure xs
-    ApplyTxErrBabbage (ApplyTxError xs) ->
-        encodeList Babbage.encodeLedgerFailure xs
-    ApplyTxErrConway (ApplyTxError xs) ->
-        encodeList Conway.encodeLedgerFailure xs
     ApplyTxErrWrongEra e ->
-        encodeList encodeEraMismatch [ e ]
+        encodeEraMismatch e
+    ApplyTxErrConway (ApplyTxError xs) ->
+        (encodePredicateFailure . pickPredicateFailure)
+            (Conway.encodeLedgerFailure <$> xs)
+    ApplyTxErrBabbage (ApplyTxError xs) ->
+        (encodePredicateFailure . pickPredicateFailure)
+            (Babbage.encodeLedgerFailure <$> xs)
+    ApplyTxErrAlonzo (ApplyTxError xs) ->
+        (encodePredicateFailure . pickPredicateFailure)
+            (Alonzo.encodeLedgerFailure <$> xs)
+    ApplyTxErrMary (ApplyTxError xs) ->
+        (encodePredicateFailure . pickPredicateFailure)
+            (Mary.encodeLedgerFailure <$> xs)
+    ApplyTxErrAllegra (ApplyTxError xs) ->
+        (encodePredicateFailure . pickPredicateFailure)
+            (Allegra.encodeLedgerFailure <$> xs)
+    ApplyTxErrShelley (ApplyTxError xs) ->
+        (encodePredicateFailure . pickPredicateFailure)
+            (Shelley.encodeLedgerFailure <$> xs)
+    ApplyTxErrByron{} ->
+        error "encodeSubmitTransactionError: unsupported Byron transaction."
 
 encodeSerializedTransaction
     :: (PraosCrypto crypto, TPraos.PraosCrypto crypto)

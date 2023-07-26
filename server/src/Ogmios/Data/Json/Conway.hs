@@ -15,9 +15,6 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
 import Ouroboros.Consensus.Shelley.Protocol.Praos
     ()
 
-import qualified Ogmios.Data.Json.Babbage as Babbage
-import qualified Ogmios.Data.Json.Shelley as Shelley
-
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
@@ -30,7 +27,10 @@ import qualified Cardano.Ledger.Babbage.PParams as Ba
 import qualified Cardano.Ledger.Babbage.Tx as Ba
 
 import qualified Cardano.Ledger.Conway.Genesis as Cn
-import qualified Cardano.Ledger.Conway.Rules as Cn
+
+import qualified Ogmios.Data.Json.Babbage as Babbage
+import qualified Ogmios.Data.Json.Shelley as Shelley
+
 
 encodeBlock
     :: ( Crypto crypto
@@ -62,17 +62,6 @@ encodeGenesis x =
                 Shelley.encodeGenDelegPair
                 (Ledger.unGenDelegs (Cn.cgGenDelegs x))
         )
-
-encodeLedgerFailure
-    :: Cn.ConwayLedgerPredFailure (ConwayEra crypto)
-    -> Json
-encodeLedgerFailure = \case
-    Cn.ConwayUtxowFailure _e ->
-        error "TODO: encode Conway's UtxowFailure"
-    Cn.ConwayDelegsFailure _e ->
-        error "TODO: encode Conway's DelegsFailure"
-    Cn.ConwayTallyFailure  _e ->
-        error "TODO: encode Conway's TallyFailure"
 
 encodeProposedPPUpdates
     :: Crypto crypto

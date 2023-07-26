@@ -18,9 +18,6 @@ import Cardano.Ledger.Keys
     ( GenDelegPair (..)
     , KeyRole (..)
     )
-import Control.State.Transition
-    ( STS (..)
-    )
 import Data.ByteString.Base16
     ( encodeBase16
     )
@@ -37,8 +34,6 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
     )
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
-
-import qualified Ogmios.Data.Json.Byron as Byron
 
 import qualified Data.ByteString as BS
 import qualified Data.Map.Strict as Map
@@ -74,6 +69,9 @@ import qualified Cardano.Ledger.Shelley.TxAuxData as Sh
 import qualified Cardano.Ledger.Shelley.TxBody as Sh
 import qualified Cardano.Ledger.Shelley.TxWits as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
+
+import qualified Ogmios.Data.Json.Byron as Byron
+
 
 --
 -- Encoders
@@ -231,110 +229,11 @@ encodeDelegation x =
         encodePoolId (Sh.dDelegatee x)
     & encodeObject
 
-encodeDelegsFailure
-    :: PredicateFailure (Ledger.EraRule "DELPL" era) ~ Sh.ShelleyDelplPredFailure era
-    => PredicateFailure (Ledger.EraRule "POOL" era)  ~ Sh.ShelleyPoolPredFailure era
-    => PredicateFailure (Ledger.EraRule "DELEG" era) ~ Sh.ShelleyDelegPredFailure era
-    => Crypto (Ledger.EraCrypto era)
-    => Sh.ShelleyDelegsPredFailure era
-    -> Json
-encodeDelegsFailure = \case
-    Sh.DelegateeNotRegisteredDELEG h ->
-        "delegateNotRegistered" .=
-            encodePoolId h
-        & encodeObject
-    Sh.WithdrawalsNotInRewardsDELEGS withdrawals ->
-        "unknownOrIncompleteWithdrawals" .=
-            encodeWdrl (Ledger.Withdrawals withdrawals)
-        & encodeObject
-    Sh.DelplFailure e ->
-        encodeDeplFailure e
-
-encodeDelegFailure
-    :: Crypto (Ledger.EraCrypto era)
-    => Sh.ShelleyDelegPredFailure era
-    -> Json
-encodeDelegFailure = encodeObject . \case
-    Sh.StakeKeyAlreadyRegisteredDELEG credential ->
-        "stakeKeyAlreadyRegistered" .=
-            encodeCredential credential
-    Sh.StakeKeyInRewardsDELEG credential ->
-        "stakeKeyAlreadyRegistered" .=
-            encodeCredential credential
-    Sh.StakeKeyNotRegisteredDELEG credential ->
-        "stakeKeyNotRegistered" .=
-            encodeCredential credential
-    Sh.StakeDelegationImpossibleDELEG credential ->
-        "stakeKeyNotRegistered" .=
-            encodeCredential  credential
-    Sh.StakeKeyNonZeroAccountBalanceDELEG Nothing ->
-        "rewardAccountNotExisting" .=
-            encodeNull
-    Sh.StakeKeyNonZeroAccountBalanceDELEG (Just balance) ->
-        "rewardAccountNotEmpty" .= encodeObject
-            ( "balance" .= encodeCoin balance
-            )
-    Sh.WrongCertificateTypeDELEG ->
-        "wrongCertificateType" .=
-            encodeNull
-    Sh.GenesisKeyNotInMappingDELEG keyHash ->
-        "unknownGenesisKey" .=
-            encodeKeyHash keyHash
-    Sh.DuplicateGenesisDelegateDELEG keyHash ->
-        "alreadyDelegating" .=
-            encodeKeyHash keyHash
-    Sh.InsufficientForInstantaneousRewardsDELEG pot requested size ->
-        "insufficientFundsForMir" .= encodeObject
-            ( "rewardSource" .= encodeMIRPot pot <>
-              "sourceSize" .= encodeCoin size <>
-              "requestedAmount" .= encodeCoin requested
-            )
-    Sh.MIRCertificateTooLateinEpochDELEG currentSlot lastSlot ->
-        "tooLateForMir" .= encodeObject
-            ( "currentSlot" .= encodeSlotNo currentSlot <>
-              "lastAllowedSlot" .= encodeSlotNo lastSlot
-            )
-    Sh.MIRTransferNotCurrentlyAllowed ->
-        "mirTransferNotCurrentlyAllowed" .=
-            encodeNull
-    Sh.MIRNegativesNotCurrentlyAllowed ->
-        "mirNegativeTransferNotCurrentlyAllowed" .=
-            encodeNull
-    Sh.InsufficientForTransferDELEG pot requested size ->
-        "insufficientFundsForMir" .= encodeObject
-            ( "rewardSource" .= encodeMIRPot pot <>
-              "sourceSize" .= encodeCoin size <>
-              "requestedAmount" .= encodeCoin requested
-            )
-    Sh.MIRProducesNegativeUpdate ->
-        "mirProducesNegativeUpdate" .=
-            encodeNull
-    Sh.MIRNegativeTransfer pot coin ->
-        "mirNegativeTransfer" .= encodeObject
-            ( "rewardSource" .= encodeMIRPot pot <>
-              "attemptedTransfer" .= encodeCoin coin
-            )
-    Sh.DuplicateGenesisVRFDELEG vrfHash ->
-        "duplicateGenesisVrf" .=
-            encodeHash vrfHash
-
 encodeDeltaCoin
     :: Ledger.DeltaCoin
     -> Json
 encodeDeltaCoin (Ledger.DeltaCoin delta) =
     encodeInteger delta
-
-encodeDeplFailure
-    :: PredicateFailure (Ledger.EraRule "POOL" era)  ~ Sh.ShelleyPoolPredFailure era
-    => PredicateFailure (Ledger.EraRule "DELEG" era) ~ Sh.ShelleyDelegPredFailure era
-    => Crypto (Ledger.EraCrypto era)
-    => Sh.ShelleyDelplPredFailure era
-    -> Json
-encodeDeplFailure = \case
-    Sh.PoolFailure e ->
-        encodePoolFailure e
-    Sh.DelegFailure e ->
-        encodeDelegFailure e
 
 encodeEntities
     :: Foldable f
@@ -419,16 +318,6 @@ encodeKESPeriod
     -> Json
 encodeKESPeriod =
     encodeWord . TPraos.unKESPeriod
-
-encodeLedgerFailure
-    :: Crypto crypto
-    => Sh.ShelleyLedgerPredFailure (ShelleyEra crypto)
-    -> Json
-encodeLedgerFailure = \case
-    Sh.UtxowFailure e  ->
-        encodeUtxowFailure encodeUtxoFailure e
-    Sh.DelegsFailure e ->
-        encodeDelegsFailure e
 
 encodeMetadata
     :: Era era
@@ -524,46 +413,6 @@ encodePoolId
     -> Json
 encodePoolId =
     encodeText . stringifyPoolId
-
-encodePoolFailure
-    :: Crypto (Ledger.EraCrypto era)
-    => Sh.ShelleyPoolPredFailure era
-    -> Json
-encodePoolFailure = encodeObject . \case
-    Sh.StakePoolNotRegisteredOnKeyPOOL keyHash ->
-        "stakePoolNotRegistered" .=
-            encodePoolId keyHash
-    Sh.StakePoolRetirementWrongEpochPOOL current retiring limit ->
-        "wrongRetirementEpoch" .= encodeObject
-            ( "currentEpoch" .=
-                encodeEpochNo current <>
-              "requestedEpoch" .=
-                encodeEpochNo retiring <>
-              "firstUnreachableEpoch" .=
-                encodeEpochNo limit
-            )
-    Sh.WrongCertificateTypePOOL cert ->
-        "wrongPoolCertificate" .=
-            encodeWord8 cert
-    Sh.StakePoolCostTooLowPOOL _cost minimumCost ->
-        "poolCostTooSmall" .= encodeObject
-            ( "minimumCost" .=
-                encodeCoin minimumCost
-            )
-    Sh.WrongNetworkPOOL _specified expected poolId ->
-        "networkMismatch" .= encodeObject
-            ( "expectedNetwork" .=
-                encodeNetwork expected <>
-              "invalidEntities" .=
-                encodeEntities "poolRegistration" encodePoolId [poolId]
-            )
-    Sh.PoolMedataHashTooBig poolId measuredSize ->
-        "poolMetadataHashTooBig" .= encodeObject
-            ( "poolId" .=
-                encodePoolId poolId <>
-              "measuredSize" .=
-                encodeInteger (fromIntegral measuredSize)
-            )
 
 encodePoolMetadata
     :: Sh.PoolMetadata
@@ -840,31 +689,6 @@ encodeUpdate (Sh.Update update epoch) =
         encodeEpochNo epoch
     & encodeObject
 
-encodeUpdateFailure
-    :: Crypto (Ledger.EraCrypto era)
-    => Sh.ShelleyPpupPredFailure era
-    -> Json
-encodeUpdateFailure = encodeObject . \case
-    Sh.NonGenesisUpdatePPUP voting shouldBeVoting ->
-        "nonGenesisVoters" .= encodeObject
-            ( "currentlyVoting" .=
-                encodeFoldable encodeKeyHash voting <>
-              "shouldBeVoting" .=
-                encodeFoldable encodeKeyHash shouldBeVoting
-            )
-    Sh.PPUpdateWrongEpoch currentEpoch updateEpoch votingPeriod ->
-        "updateWrongEpoch" .= encodeObject
-            ( "currentEpoch" .=
-                encodeEpochNo currentEpoch <>
-              "requestedEpoch" .=
-                encodeEpochNo updateEpoch <>
-              "votingPeriod" .=
-                encodeVotingPeriod votingPeriod
-            )
-    Sh.PVCannotFollowPPUP version ->
-        "protocolVersionCannotFollow" .=
-            encodeProtVer version
-
 encodeUtxo
     :: forall era.
         ( Era era
@@ -877,126 +701,6 @@ encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
   where
     encodeIO = curry (encode2Tuple encodeTxIn encodeTxOut)
-
-encodeUtxoFailure
-    :: Crypto crypto
-    => Sh.ShelleyUtxoPredFailure (ShelleyEra crypto)
-    -> Json
-encodeUtxoFailure = \case
-    Sh.BadInputsUTxO inputs ->
-        "badInputs" .=
-            encodeFoldable encodeTxIn inputs
-        & encodeObject
-    Sh.ExpiredUTxO ttl currentSlot ->
-        "expiredUtxo" .= encodeObject
-            ( "transactionTimeToLive" .= encodeSlotNo ttl <>
-              "currentSlot" .= encodeSlotNo currentSlot
-            )
-        & encodeObject
-    Sh.MaxTxSizeUTxO actualSize maxSize ->
-        "txTooLarge" .= encodeObject
-            ( "maximumSize" .= encodeInteger maxSize <>
-              "actualSize" .= encodeInteger actualSize
-            )
-        & encodeObject
-    Sh.InputSetEmptyUTxO ->
-        "missingAtLeastOneInputUtxo" .=
-            encodeNull
-        & encodeObject
-    Sh.FeeTooSmallUTxO required actual ->
-        "feeTooSmall" .= encodeObject
-            ( "requiredFee" .=
-                encodeCoin required <>
-              "actualFee" .= encodeCoin actual
-            )
-        & encodeObject
-    Sh.ValueNotConservedUTxO consumed produced ->
-        "valueNotConserved" .= encodeObject
-            ( "consumed" .= encodeCoin consumed <>
-              "produced" .= encodeCoin produced
-            )
-        & encodeObject
-    Sh.WrongNetwork expected invalidAddrs ->
-        "networkMismatch" .= encodeObject
-            ( "expectedNetwork" .=
-                encodeNetwork expected <>
-              "invalidEntities" .=
-                    encodeEntities "address" encodeAddress invalidAddrs
-            )
-        & encodeObject
-    Sh.WrongNetworkWithdrawal expected invalidAccts ->
-        "networkMismatch" .= encodeObject
-            ( "expectedNetwork" .=
-                encodeNetwork expected <>
-              "invalidEntities" .=
-                encodeEntities "rewardAccount" encodeRewardAcnt invalidAccts
-            )
-        & encodeObject
-    Sh.OutputTooSmallUTxO outs ->
-        "outputTooSmall" .=
-            encodeList encodeTxOut outs
-        & encodeObject
-    Sh.OutputBootAddrAttrsTooBig outs ->
-        "addressAttributesTooLarge" .=
-            encodeFoldable encodeAddress ((\(Sh.ShelleyTxOut addr _) -> addr) <$> outs)
-        & encodeObject
-    Sh.UpdateFailure e ->
-        encodeUpdateFailure e
-
-encodeUtxowFailure
-    :: forall era.
-        ( Era era
-        )
-    => (PredicateFailure (Ledger.EraRule "UTXO" era) -> Json)
-    -> Sh.ShelleyUtxowPredFailure era
-    -> Json
-encodeUtxowFailure encodeUtxoFailure_ = \case
-    Sh.InvalidWitnessesUTXOW wits ->
-        "invalidWitnesses" .=
-            encodeList encodeVKey wits
-        & encodeObject
-    Sh.MissingVKeyWitnessesUTXOW keys ->
-        "missingVkWitnesses" .=
-            encodeFoldable encodeKeyHash keys
-        & encodeObject
-    Sh.MissingScriptWitnessesUTXOW scripts ->
-        "missingScriptWitnesses" .=
-            encodeFoldable encodeScriptHash scripts
-        & encodeObject
-    Sh.ScriptWitnessNotValidatingUTXOW scripts ->
-        "scriptWitnessNotValidating" .=
-            encodeFoldable encodeScriptHash scripts
-        & encodeObject
-    Sh.MIRInsufficientGenesisSigsUTXOW keys ->
-        "insufficientGenesisSignatures" .=
-            encodeFoldable encodeKeyHash keys
-        & encodeObject
-    Sh.MissingTxBodyMetadataHash hash ->
-        "missingTxMetadataHash" .=
-            encodeAuxiliaryDataHash hash
-        & encodeObject
-    Sh.MissingTxMetadata hash ->
-        "missingTxMetadata" .=
-            encodeAuxiliaryDataHash hash
-        & encodeObject
-    Sh.ConflictingMetadataHash included expected ->
-        "txMetadataHashMismatch" .= encodeObject
-            ( "includedHash" .=
-                encodeAuxiliaryDataHash included <>
-              "expectedHash" .=
-                encodeAuxiliaryDataHash expected
-            )
-        & encodeObject
-    Sh.InvalidMetadata ->
-        "invalidMetadata" .=
-            encodeNull
-        & encodeObject
-    Sh.ExtraneousScriptWitnessesUTXOW scripts ->
-        "extraScriptWitnesses" .=
-            encodeFoldable encodeScriptHash scripts
-        & encodeObject
-    Sh.UtxoFailure e ->
-        encodeUtxoFailure_ e
 
 encodeValue
     :: Coin

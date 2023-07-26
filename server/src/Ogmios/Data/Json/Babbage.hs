@@ -28,18 +28,12 @@ import qualified Data.Map.Strict as Map
 
 import qualified Ouroboros.Consensus.Protocol.Praos.Header as Praos
 
-import qualified Ogmios.Data.Json.Allegra as Allegra
-import qualified Ogmios.Data.Json.Alonzo as Alonzo
-import qualified Ogmios.Data.Json.Mary as Mary
-import qualified Ogmios.Data.Json.Shelley as Shelley
-
 import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 
 import qualified Cardano.Ledger.Shelley.API as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
-import qualified Cardano.Ledger.Shelley.Rules as Sh
 
 import qualified Cardano.Ledger.Mary.Value as Ma
 
@@ -50,9 +44,14 @@ import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 
 import qualified Cardano.Ledger.Babbage.Core as Ba
 import qualified Cardano.Ledger.Babbage.PParams as Ba
-import qualified Cardano.Ledger.Babbage.Rules as Ba
 import qualified Cardano.Ledger.Babbage.Tx as Ba
 import qualified Cardano.Ledger.Babbage.TxBody as Ba
+
+import qualified Ogmios.Data.Json.Allegra as Allegra
+import qualified Ogmios.Data.Json.Alonzo as Alonzo
+import qualified Ogmios.Data.Json.Mary as Mary
+import qualified Ogmios.Data.Json.Shelley as Shelley
+
 
 encodeBlock
     :: ( Crypto crypto
@@ -99,16 +98,6 @@ encodeHeader (Praos.Header hBody _hSig) =
         ( "version" .=
             Shelley.encodeProtVer (Praos.hbProtVer hBody)
         )
-
-encodeLedgerFailure
-    :: Crypto crypto
-    => Sh.ShelleyLedgerPredFailure (BabbageEra crypto)
-    -> Json
-encodeLedgerFailure = \case
-    Sh.UtxowFailure e  ->
-        encodeUtxowFailure e
-    Sh.DelegsFailure e ->
-        Shelley.encodeDelegsFailure e
 
 encodeProposedPPUpdates
     :: Crypto crypto
@@ -300,48 +289,3 @@ encodeUtxo =
     . Sh.unUTxO
   where
     encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
-
-encodeUtxoFailure
-    :: Crypto crypto
-    => Sh.PredicateFailure (Ledger.EraRule "UTXO" (BabbageEra crypto))
-    -> Json
-encodeUtxoFailure = \case
-    Ba.AlonzoInBabbageUtxoPredFailure e ->
-        Alonzo.encodeUtxoFailure
-            encodeUtxo
-            encodeTxOut
-            (\(Ba.BabbageTxOut addr _ _ _) -> addr)
-            e
-    Ba.IncorrectTotalCollateralField computed declared ->
-        "totalCollateralMismatch" .= encodeObject
-            ( "computedFromDelta" .= encodeCoin computed <>
-              "declaredInField" .= encodeCoin declared
-            )
-        & encodeObject
-    Ba.BabbageOutputTooSmallUTxO outs ->
-        "outputTooSmall" .= encodeFoldable
-            (\(out, minimumValue) -> encodeObject
-                ( "output" .= encodeTxOut out <>
-                  "minimumRequiredValue" .= encodeCoin minimumValue
-                )
-            )
-            outs
-        & encodeObject
-
-encodeUtxowFailure
-    :: Crypto crypto
-    => Sh.PredicateFailure (Ledger.EraRule "UTXOW" (BabbageEra crypto))
-    -> Json
-encodeUtxowFailure = \case
-    Ba.MalformedReferenceScripts scripts ->
-        "malformedReferenceScripts" .=
-            encodeFoldable Shelley.encodeScriptHash scripts
-        & encodeObject
-    Ba.MalformedScriptWitnesses scripts ->
-        "malformedScriptWitnesses" .=
-            encodeFoldable Shelley.encodeScriptHash scripts
-        & encodeObject
-    Ba.AlonzoInBabbageUtxowPredFailure e ->
-        Alonzo.encodeUtxowPredicateFail encodeUtxoFailure e
-    Ba.UtxoFailure e ->
-        encodeUtxoFailure e
