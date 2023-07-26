@@ -75,6 +75,7 @@ spec = parallel $ do
             Version -> pure ()
             Start{} -> expectationFailure "Expected Version but got Start."
             HealthCheck{} -> expectationFailure "Expected Version but got HealthCheck."
+            Inspect{} -> expectationFailure "Expected Version but got Inspect."
 
         let args =
                 [ "--node-socket", "./node.socket"
@@ -91,6 +92,7 @@ spec = parallel $ do
                 logLevels `shouldBe` defaultTracersInfo
             Version -> expectationFailure "Expected Start but got Version."
             HealthCheck{} -> expectationFailure "Expected Start but got HealthCheck."
+            Inspect{} -> expectationFailure "Expected Start but got Inspect."
 
     context "parseNetworkParameters" $ do
         specify "mainnet" $ do
