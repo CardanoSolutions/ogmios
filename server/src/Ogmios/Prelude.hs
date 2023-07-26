@@ -73,9 +73,6 @@ module Ogmios.Prelude
     , fromEraIndex
     ) where
 
-import Cardano.Api
-    ( ShelleyBasedEra (..)
-    )
 import Cardano.Ledger.Crypto
     ( Crypto
     , StandardCrypto
@@ -182,7 +179,6 @@ import Relude hiding
     , writeTVar
     )
 
-import qualified Cardano.Api as Api
 import qualified Cardano.Ledger.Binary.Decoding as Binary
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Data.Map as Map
@@ -246,6 +242,16 @@ type family EraProto era :: Type where
 
 data ByronEra crypto
 
+data ShelleyBasedEra era where
+    ShelleyBasedEraShelley :: forall crypto. ShelleyBasedEra (ShelleyEra crypto)
+    ShelleyBasedEraAllegra :: forall crypto. ShelleyBasedEra (AllegraEra crypto)
+    ShelleyBasedEraMary    :: forall crypto. ShelleyBasedEra (MaryEra crypto)
+    ShelleyBasedEraAlonzo  :: forall crypto. ShelleyBasedEra (AlonzoEra crypto)
+    ShelleyBasedEraBabbage :: forall crypto. ShelleyBasedEra (BabbageEra crypto)
+    ShelleyBasedEraConway  :: forall crypto. ShelleyBasedEra (ConwayEra crypto)
+
+deriving instance Show (ShelleyBasedEra era)
+
 data SomeShelleyEra =
     forall era. SomeShelleyEra (ShelleyBasedEra era)
 
@@ -261,31 +267,24 @@ instance ToJSON SomeShelleyEra where
         SomeShelleyEra ShelleyBasedEraConway  -> toJSON @Text "conway"
 
 class IsShelleyBasedEra era where
-    type ApiEra era :: Type
-    shelleyBasedEra :: ShelleyBasedEra (ApiEra era)
+    shelleyBasedEra :: ShelleyBasedEra era
 
 instance IsShelleyBasedEra (ShelleyEra crypto) where
-    type ApiEra (ShelleyEra crypto) = Api.ShelleyEra
     shelleyBasedEra = ShelleyBasedEraShelley
 
 instance IsShelleyBasedEra (AllegraEra crypto) where
-    type ApiEra (AllegraEra crypto) = Api.AllegraEra
     shelleyBasedEra = ShelleyBasedEraAllegra
 
 instance IsShelleyBasedEra (MaryEra crypto) where
-    type ApiEra (MaryEra crypto) = Api.MaryEra
     shelleyBasedEra = ShelleyBasedEraMary
 
 instance IsShelleyBasedEra (AlonzoEra crypto) where
-    type ApiEra (AlonzoEra crypto) = Api.AlonzoEra
     shelleyBasedEra = ShelleyBasedEraAlonzo
 
 instance IsShelleyBasedEra (BabbageEra crypto) where
-    type ApiEra (BabbageEra crypto) = Api.BabbageEra
     shelleyBasedEra = ShelleyBasedEraBabbage
 
 instance IsShelleyBasedEra (ConwayEra crypto) where
-    type ApiEra (ConwayEra crypto) = Api.ConwayEra
     shelleyBasedEra = ShelleyBasedEraConway
 
 type family BlockCrypto block :: Type where

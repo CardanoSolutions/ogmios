@@ -684,12 +684,12 @@ instance Arbitrary (SubmitTransactionResponse Block) where
         [ (1, SubmitTransactionSuccess <$> arbitrary)
         , (50, reasonablySized (SubmitTransactionFailure <$> arbitrary))
         , (1, pure $ SubmitTransactionDeserialisationFailure
-            [ ( SomeShelleyEra ShelleyBasedEraShelley, Binary.DecoderErrorVoid )
-            , ( SomeShelleyEra ShelleyBasedEraAllegra, Binary.DecoderErrorVoid )
-            , ( SomeShelleyEra ShelleyBasedEraMary,    Binary.DecoderErrorVoid )
-            , ( SomeShelleyEra ShelleyBasedEraAlonzo,  Binary.DecoderErrorVoid )
-            , ( SomeShelleyEra ShelleyBasedEraBabbage, Binary.DecoderErrorVoid )
-            , ( SomeShelleyEra ShelleyBasedEraConway,  Binary.DecoderErrorVoid )
+            [ ( SomeShelleyEra ShelleyBasedEraShelley, Binary.DecoderErrorVoid, 0 )
+            , ( SomeShelleyEra ShelleyBasedEraAllegra, Binary.DecoderErrorVoid, 0 )
+            , ( SomeShelleyEra ShelleyBasedEraMary,    Binary.DecoderErrorVoid, 0 )
+            , ( SomeShelleyEra ShelleyBasedEraAlonzo,  Binary.DecoderErrorVoid, 0 )
+            , ( SomeShelleyEra ShelleyBasedEraBabbage, Binary.DecoderErrorVoid, 0 )
+            , ( SomeShelleyEra ShelleyBasedEraConway,  Binary.DecoderErrorVoid, 0 )
             ]
           )
         ]

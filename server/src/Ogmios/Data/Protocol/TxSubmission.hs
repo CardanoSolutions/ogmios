@@ -502,7 +502,12 @@ encodeDeserialisationFailure reject errs =
             [ encodeDecoderErrorInEra size e era | (SomeShelleyEra era, e, size) <- errs ]
         )
   where
-    encodeDecoderErrorInEra :: forall era. Word -> Binary.DecoderError -> ShelleyBasedEra era -> Json.Series
+    encodeDecoderErrorInEra
+        :: forall era. ()
+        => Word
+        -> Binary.DecoderError
+        -> ShelleyBasedEra era
+        -> Json.Series
     encodeDecoderErrorInEra size e era =
         let
             k = case era of
@@ -543,7 +548,7 @@ encodeDeserialisationFailure reject errs =
             \; which is probably because I am trying to decode something else than what \
             \I encountered."
         Binary.DecoderErrorVoid ->
-            error "impossible: attempted to decode void. Please open an issue."
+            "impossible: attempted to decode void. Please open an issue."
      where
         reduceNoise
           = T.replace "\n" " "
