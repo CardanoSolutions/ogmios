@@ -72,7 +72,7 @@ instance
   where
     toJSON = encodeTraceClient
         (inefficientEncodingToValue . encodeSerializedTransaction)
-        (inefficientEncodingToValue . encodeSubmitTransactionError)
+        (inefficientEncodingToValue . encodeSubmitTransactionError (\_ _ -> fromMaybe (encodeObject mempty)))
 
 -- Only used for logging & health
 instance ToJSON (Tip (CardanoBlock crypto)) where

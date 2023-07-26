@@ -44,9 +44,6 @@ module Ogmios.Data.Protocol.TxSubmission
     , _encodeEvaluateTransactionResponse
     , CanEvaluateScriptsInEra
 
-      -- ** Deserialization failures
-    , encodeDeserialisationFailure
-
       -- ** Re-exports
     , AlonzoEra
     , ConwayEra
@@ -124,6 +121,9 @@ import Control.Monad.Trans.Except
 import Ogmios.Data.EraTranslation
     ( MultiEraUTxO
     )
+import Ogmios.Data.Json
+    ( encodeDeserialisationFailure
+    )
 import Ouroboros.Consensus.HardFork.History
     ( PastHorizonException
     )
@@ -136,13 +136,10 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Type
 
 import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Core as Core
-import qualified Codec.CBOR.Read as Cbor
 
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Types as Json
-import qualified Data.ByteString as BS
 import qualified Data.Map as Map
-import qualified Data.Text as T
 
 --
 -- Codecs
@@ -169,7 +166,7 @@ mkTxSubmissionCodecs
         , FromJSON (MultiEraUTxO block)
         )
     => (GenTxId block -> Json)
-    -> (SubmitTransactionError block -> Json)
+    -> ((Rpc.FaultCode -> String -> Maybe Json -> Json) -> SubmitTransactionError block -> Json)
     -> (RdmrPtr -> Text)
     -> (ExUnits -> Json)
     -> (TransactionScriptFailure (BlockCrypto block) -> Json)
@@ -239,7 +236,7 @@ _encodeSubmitTransactionResponse
     :: forall block. ()
     => Proxy block
     -> (GenTxId block -> Json)
-    -> (SubmitTransactionError block -> Json)
+    -> ((Rpc.FaultCode -> String -> Maybe Json -> Json) -> SubmitTransactionError block -> Json)
     -> Rpc.Response (SubmitTransactionResponse block)
     -> Json
 _encodeSubmitTransactionResponse _proxy encodeTransactionId encodeSubmitTransactionError =
@@ -251,11 +248,7 @@ _encodeSubmitTransactionResponse _proxy encodeTransactionId encodeSubmitTransact
                     )
                 )
         SubmitTransactionFailure e ->
-            -- TODO: More fine-grained error codes
-            reject (Rpc.FaultCustom 3005)
-                "Transaction submission failed"
-                ( pure $ encodeSubmitTransactionError e
-                )
+            encodeSubmitTransactionError reject e
         SubmitTransactionDeserialisationFailure errs ->
             encodeDeserialisationFailure reject errs
 
@@ -481,83 +474,3 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
           utxo
           (hoistEpochInfo (left show . runIdentity . runExceptT) epochInfo)
           systemStart
-
---
--- Deserialisation failure
---
-
-encodeDeserialisationFailure
-    :: (Rpc.FaultCode -> String -> Maybe Json -> Json)
-    -> [(SomeShelleyEra, Binary.DecoderError, Word)]
-    -> Json
-encodeDeserialisationFailure reject errs =
-    reject Rpc.FaultInvalidParams
-        "Invalid transaction; It looks like the given transaction wasn't \
-        \well-formed. Note that I try to decode the transaction in every \
-        \possible era and it was malformed in ALL eras. \
-        \Yet, I can't pinpoint the exact issue for I do not know in which \
-        \era / format you intended the transaction to be. The 'data' field, \
-        \therefore, contains errors for each era."
-        (pure $ encodeObject $ mconcat
-            [ encodeDecoderErrorInEra size e era | (SomeShelleyEra era, e, size) <- errs ]
-        )
-  where
-    encodeDecoderErrorInEra
-        :: forall era. ()
-        => Word
-        -> Binary.DecoderError
-        -> ShelleyBasedEra era
-        -> Json.Series
-    encodeDecoderErrorInEra size e era =
-        let
-            k = case era of
-                ShelleyBasedEraShelley -> "shelley"
-                ShelleyBasedEraAllegra -> "allegra"
-                ShelleyBasedEraMary    -> "mary"
-                ShelleyBasedEraAlonzo  -> "alonzo"
-                ShelleyBasedEraBabbage -> "babbage"
-                ShelleyBasedEraConway  -> "conway"
-         in
-            k .= encodeDecoderError size e
-
-    encodeDecoderError size = encodeText . reduceNoise . \case
-        Binary.DecoderErrorCanonicityViolation lbl ->
-            "couldn't decode due to internal constraint violations on '" <> lbl <> "': \
-            \ found CBOR that isn't canonical when I expected it to be."
-        Binary.DecoderErrorCustom lbl hint ->
-            "couldn't decode due to internal constraint violations on '" <> lbl <> "': " <> hint
-        Binary.DecoderErrorDeserialiseFailure lbl (Cbor.DeserialiseFailure offset hint) | offset >= fromIntegral size ->
-            "invalid or incomplete value of type '" <> lbl <> "': " <> toText hint
-        Binary.DecoderErrorDeserialiseFailure lbl (Cbor.DeserialiseFailure offset hint) ->
-            "invalid CBOR found at offset [" <> show offset <> "] while decoding a value of type '" <> lbl <> "': "
-            <> toText hint
-        Binary.DecoderErrorEmptyList{} ->
-            "couldn't decode due to internal constraint violations on a non-empty list: \
-            \must not be empty"
-        Binary.DecoderErrorLeftover lbl bytes ->
-            "unexpected " <> show (BS.length bytes) <> " bytes found left after \
-            \successfully deserialising a/an '" <> lbl <> "'"
-        Binary.DecoderErrorSizeMismatch lbl expected actual | expected >= actual ->
-            show (expected - actual) <> " missing element(s) in a \
-            \data-structure of type '" <> lbl <> "'"
-        Binary.DecoderErrorSizeMismatch lbl expected actual ->
-            show (actual - expected) <> " extra element(s) in a \
-            \data-structure of type '" <> lbl <> "'"
-        Binary.DecoderErrorUnknownTag lbl tag ->
-            "unknown binary tag (" <> show tag <> ") when decoding a value of type '" <> lbl <> "'\
-            \; which is probably because I am trying to decode something else than what \
-            \I encountered."
-        Binary.DecoderErrorVoid ->
-            "impossible: attempted to decode void. Please open an issue."
-     where
-        reduceNoise
-          = T.replace "\n" " "
-          . T.replace "Error: " ""
-          . T.replace "Record" "Object / Array"
-          . T.replace "Record RecD" "Object / Array"
-          . T.replace " (ShelleyEra StandardCrypto)" ""
-          . T.replace " (AllegraEra StandardCrypto)" ""
-          . T.replace " (MaryEra StandardCrypto)" ""
-          . T.replace " (AlonzoEra StandardCrypto)" ""
-          . T.replace " (BabbageEra StandardCrypto)" ""
-          . T.replace " (ConwayEra StandardCrypto)" ""

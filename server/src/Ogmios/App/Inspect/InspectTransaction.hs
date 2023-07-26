@@ -11,14 +11,12 @@ import Data.Aeson
     )
 import Ogmios.Data.Json
     ( MultiEraDecoder (..)
+    , encodeDeserialisationFailure
     , encodeTx
     , jsonToByteString
     )
 import Ogmios.Data.Json.Prelude
     ( encodeMaybe
-    )
-import Ogmios.Data.Protocol.TxSubmission
-    ( encodeDeserialisationFailure
     )
 import System.Exit
     ( ExitCode (..)

@@ -50,7 +50,6 @@ import qualified Cardano.Ledger.Alonzo.Core as Al hiding
 import qualified Cardano.Ledger.Alonzo.Genesis as Al
 import qualified Cardano.Ledger.Alonzo.Language as Al
 import qualified Cardano.Ledger.Alonzo.PParams as Al
-import qualified Cardano.Ledger.Alonzo.PlutusScriptApi as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.Scripts.Data as Al
 import qualified Cardano.Ledger.Alonzo.Tx as Al

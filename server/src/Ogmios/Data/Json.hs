@@ -19,6 +19,7 @@ module Ogmios.Data.Json
     , encodeBlock
     , Alonzo.encodeExUnits
     , encodePoint
+    , encodeDeserialisationFailure
     , Alonzo.encodeScriptFailure
     , encodeSerializedTransaction
     , encodeSubmitTransactionError
@@ -97,8 +98,14 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( AcquireFailure (..)
     )
 
+import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Protocol.TPraos.API as TPraos
+import qualified Codec.CBOR.Read as Cbor
 import qualified Codec.CBOR.Write as Cbor
+import qualified Codec.Json.Rpc as Rpc
+import qualified Data.Aeson as Json
+import qualified Data.ByteString as BS
+import qualified Data.Text as T
 
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
@@ -107,6 +114,14 @@ import qualified Ogmios.Data.Json.Byron as Byron
 import qualified Ogmios.Data.Json.Conway as Conway
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
+
+import qualified Ogmios.Data.Ledger.PredicateFailure.Allegra as Allegra
+import qualified Ogmios.Data.Ledger.PredicateFailure.Alonzo as Alonzo
+import qualified Ogmios.Data.Ledger.PredicateFailure.Babbage as Babbage
+import qualified Ogmios.Data.Ledger.PredicateFailure.Conway as Conway
+import qualified Ogmios.Data.Ledger.PredicateFailure.Mary as Mary
+import qualified Ogmios.Data.Ledger.PredicateFailure.Shelley as Shelley
+
 
 --
 -- Encoders
@@ -152,28 +167,29 @@ encodeBlock = \case
 
 encodeSubmitTransactionError
     :: Crypto crypto
-    => SubmitTransactionError (CardanoBlock crypto)
+    => (Rpc.FaultCode -> String -> Maybe Json -> Json)
+    -> SubmitTransactionError (CardanoBlock crypto)
     -> Json
-encodeSubmitTransactionError = \case
+encodeSubmitTransactionError reject = \case
     ApplyTxErrWrongEra e ->
         encodeEraMismatch e
     ApplyTxErrConway (ApplyTxError xs) ->
-        (encodePredicateFailure . pickPredicateFailure)
+        (encodePredicateFailure reject . pickPredicateFailure)
             (Conway.encodeLedgerFailure <$> xs)
     ApplyTxErrBabbage (ApplyTxError xs) ->
-        (encodePredicateFailure . pickPredicateFailure)
+        (encodePredicateFailure reject . pickPredicateFailure)
             (Babbage.encodeLedgerFailure <$> xs)
     ApplyTxErrAlonzo (ApplyTxError xs) ->
-        (encodePredicateFailure . pickPredicateFailure)
+        (encodePredicateFailure reject . pickPredicateFailure)
             (Alonzo.encodeLedgerFailure <$> xs)
     ApplyTxErrMary (ApplyTxError xs) ->
-        (encodePredicateFailure . pickPredicateFailure)
+        (encodePredicateFailure reject . pickPredicateFailure)
             (Mary.encodeLedgerFailure <$> xs)
     ApplyTxErrAllegra (ApplyTxError xs) ->
-        (encodePredicateFailure . pickPredicateFailure)
+        (encodePredicateFailure reject . pickPredicateFailure)
             (Allegra.encodeLedgerFailure <$> xs)
     ApplyTxErrShelley (ApplyTxError xs) ->
-        (encodePredicateFailure . pickPredicateFailure)
+        (encodePredicateFailure reject . pickPredicateFailure)
             (Shelley.encodeLedgerFailure <$> xs)
     ApplyTxErrByron{} ->
         error "encodeSubmitTransactionError: unsupported Byron transaction."
@@ -254,3 +270,79 @@ encodeTxId = \case
         Shelley.encodeTxId x
     GenTxIdByron _ ->
         error "encodeTxId: unsupported Byron transaction."
+
+encodeDeserialisationFailure
+    :: (Rpc.FaultCode -> String -> Maybe Json -> Json)
+    -> [(SomeShelleyEra, Binary.DecoderError, Word)]
+    -> Json
+encodeDeserialisationFailure reject errs =
+    reject Rpc.FaultInvalidParams
+        "Invalid transaction; It looks like the given transaction wasn't \
+        \well-formed. Note that I try to decode the transaction in every \
+        \possible era and it was malformed in ALL eras. \
+        \Yet, I can't pinpoint the exact issue for I do not know in which \
+        \era / format you intended the transaction to be. The 'data' field, \
+        \therefore, contains errors for each era."
+        (pure $ encodeObject $ mconcat
+            [ encodeDecoderErrorInEra size e era | (SomeShelleyEra era, e, size) <- errs ]
+        )
+  where
+    encodeDecoderErrorInEra
+        :: forall era. ()
+        => Word
+        -> Binary.DecoderError
+        -> ShelleyBasedEra era
+        -> Json.Series
+    encodeDecoderErrorInEra size e era =
+        let
+            k = case era of
+                ShelleyBasedEraShelley -> "shelley"
+                ShelleyBasedEraAllegra -> "allegra"
+                ShelleyBasedEraMary    -> "mary"
+                ShelleyBasedEraAlonzo  -> "alonzo"
+                ShelleyBasedEraBabbage -> "babbage"
+                ShelleyBasedEraConway  -> "conway"
+         in
+            k .= encodeDecoderError size e
+
+    encodeDecoderError size = encodeText . reduceNoise . \case
+        Binary.DecoderErrorCanonicityViolation lbl ->
+            "couldn't decode due to internal constraint violations on '" <> lbl <> "': \
+            \ found CBOR that isn't canonical when I expected it to be."
+        Binary.DecoderErrorCustom lbl hint ->
+            "couldn't decode due to internal constraint violations on '" <> lbl <> "': " <> hint
+        Binary.DecoderErrorDeserialiseFailure lbl (Cbor.DeserialiseFailure offset hint) | offset >= fromIntegral size ->
+            "invalid or incomplete value of type '" <> lbl <> "': " <> toText hint
+        Binary.DecoderErrorDeserialiseFailure lbl (Cbor.DeserialiseFailure offset hint) ->
+            "invalid CBOR found at offset [" <> show offset <> "] while decoding a value of type '" <> lbl <> "': "
+            <> toText hint
+        Binary.DecoderErrorEmptyList{} ->
+            "couldn't decode due to internal constraint violations on a non-empty list: \
+            \must not be empty"
+        Binary.DecoderErrorLeftover lbl bytes ->
+            "unexpected " <> show (BS.length bytes) <> " bytes found left after \
+            \successfully deserialising a/an '" <> lbl <> "'"
+        Binary.DecoderErrorSizeMismatch lbl expected actual | expected >= actual ->
+            show (expected - actual) <> " missing element(s) in a \
+            \data-structure of type '" <> lbl <> "'"
+        Binary.DecoderErrorSizeMismatch lbl expected actual ->
+            show (actual - expected) <> " extra element(s) in a \
+            \data-structure of type '" <> lbl <> "'"
+        Binary.DecoderErrorUnknownTag lbl tag ->
+            "unknown binary tag (" <> show tag <> ") when decoding a value of type '" <> lbl <> "'\
+            \; which is probably because I am trying to decode something else than what \
+            \I encountered."
+        Binary.DecoderErrorVoid ->
+            "impossible: attempted to decode void. Please open an issue."
+     where
+        reduceNoise
+          = T.replace "\n" " "
+          . T.replace "Error: " ""
+          . T.replace "Record" "Object / Array"
+          . T.replace "Record RecD" "Object / Array"
+          . T.replace " (ShelleyEra StandardCrypto)" ""
+          . T.replace " (AllegraEra StandardCrypto)" ""
+          . T.replace " (MaryEra StandardCrypto)" ""
+          . T.replace " (AlonzoEra StandardCrypto)" ""
+          . T.replace " (BabbageEra StandardCrypto)" ""
+          . T.replace " (ConwayEra StandardCrypto)" ""

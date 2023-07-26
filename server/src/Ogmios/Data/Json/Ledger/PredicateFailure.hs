@@ -7,30 +7,27 @@ module Ogmios.Data.Json.Ledger.PredicateFailure where
 import Ogmios.Data.Json.Prelude
 
 import Ogmios.Data.Ledger.PredicateFailure
-    ( Addr (..)
-    , AuxiliaryDataHash (..)
-    , Coin
-    , Credential (..)
-    , DiscriminatedEntities (..)
-    , EpochNo (..)
-    , Hash
-    , KeyHash (..)
-    , KeyRole (..)
-    , MultiEraPredicateFailure (..)
-    , Network (..)
-    , ProtVer (..)
-    , RewardAcnt (..)
-    , ScriptHash (..)
-    , SlotNo (..)
-    , TxIn (..)
-    , TxOutInAnyEra (..)
-    , VKey (..)
-    , ValueInAnyEra (..)
+    ( MultiEraPredicateFailure (..)
     )
+
+import Ogmios.Data.Json.Shelley as Shelley
+
+import qualified Codec.Json.Rpc as Rpc
 
 encodePredicateFailure
     :: Crypto crypto
-    => MultiEraPredicateFailure crypto
+    => (Rpc.FaultCode -> String -> Maybe Json -> Json)
+    -> MultiEraPredicateFailure crypto
     -> Json
-encodePredicateFailure =
-    error "TODO"
+encodePredicateFailure reject = \case
+    InvalidSignatures { culpritVerificationKeys } ->
+        reject (Rpc.FaultCustom 3006)
+            "Some signatures are invalid. 'data.verificationKeys' contains a list of \
+            \keys for which the signature didn't verify."
+            (pure $ encodeObject
+                ( "verificationKeys" .=
+                    encodeFoldable Shelley.encodeVKey culpritVerificationKeys
+                )
+            )
+    _ ->
+        error "TODO: encodePredicateFailure"
