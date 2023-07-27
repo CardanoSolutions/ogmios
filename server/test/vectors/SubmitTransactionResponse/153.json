@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"transaction":{"id":"7b056f1476652bf0087fea380b76508804f4995e61ceec04f2e99cfbfca61704"}},"id":null}
+{"jsonrpc":"2.0","error":{"code":3135,"message":"There's a mismatch between the declared total collateral amount, and the value computed from the inputs and outputs. These must match exactly. The field 'data.declaredTotalCollateral' reports the amount declared in the transaction whereas 'data.computedTotalCollateral' refers to the amount actually computed.","data":{"declaredTotalCollateral":6529,"computedTotalCollateral":910361}},"id":null}

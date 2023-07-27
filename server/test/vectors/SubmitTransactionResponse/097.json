@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"protocolVersionCannotFollow":{"major":3,"minor":1}},{"insufficientFundsForMir":{"rewardSource":"reserves","sourceSize":383318,"requestedAmount":970791}}]},"id":null}
+{"jsonrpc":"2.0","error":{"code":3148,"message":"Invalid or unauthorized genesis delegation. The genesis delegate is unknown, invalid or already in use."},"id":null}

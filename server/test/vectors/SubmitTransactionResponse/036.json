@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"unknownOrIncompleteWithdrawals":{"stake_test17rlca3gecjxwgfdjg2s3cwgqw8f9a9zs5akutfr63q79enqmylz28":120559,"stake1u8fssrkvs7jmcmd5wz6pwj0hgwlvjcpf9eky5hmcrdn0gtshpph43":635939}}]},"id":null}
+{"jsonrpc":"2.0","error":{"code":3108,"message":"Invalid metadatum found in transaction metadata. Metadata byte strings must be no longer than 64-bytes and text strings must be no longer than 64 bytes once UTF-8-encoded. Some metadatum in the transaction infringe this rule."},"id":null}

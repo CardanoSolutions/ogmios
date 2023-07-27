@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"transaction":{"id":"c240f006e23d965933fcb3b7a0f75f5d76f7fa16e1b7eacae44e5ea913a82fc6"}},"id":"st"}
+{"jsonrpc":"2.0","error":{"code":3149,"message":"Invalid MIR transfer. The resulting delta is likely negative."},"id":"st"}

@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"transaction":{"id":"c6e12e0be6fba0ff25256fefbfc56229dcd4d52c8235234fc08fa6b271d959fe"}},"id":"st"}
+{"jsonrpc":"2.0","error":{"code":3148,"message":"Invalid or unauthorized genesis delegation. The genesis delegate is unknown, invalid or already in use."},"id":"st"}

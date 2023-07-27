@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3005,"message":"Some scripts of the transactions terminated with error(s).","data":{"certificate:4":[{"missingRequiredDatums":{"missing":["e4763290c3730c04156b593f9cc1a15b5e2b5939ac1e9173dbe0e3c52144753f"]}}]}},"id":"st"}
+{"jsonrpc":"2.0","error":{"code":3010,"message":"Some scripts of the transactions terminated with error(s).","data":{"certificate:4":[{"missingRequiredDatums":{"missing":["e4763290c3730c04156b593f9cc1a15b5e2b5939ac1e9173dbe0e3c52144753f"]}}]}},"id":"st"}

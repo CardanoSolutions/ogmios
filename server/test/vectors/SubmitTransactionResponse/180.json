@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"unknownOrIncompleteWithdrawals":{"stake_test1uzz3ejsmxpu47e32curx0nl5j67zjrtq8d5jurjuh43yepgdjpsqn":652768,"stake1u8ghl4qqu3dg72sqfmvenfg2p70q074zqjua2lrhn4lq6nsq6pm4f":936143}}]},"id":null}
+{"jsonrpc":"2.0","error":{"code":3998,"message":"Unrecognized certificate type. This error is a placeholder due to how internal data-types are modeled. If you ever run into this, please report the issue as you've likely discoverd a critical bug..."},"id":null}

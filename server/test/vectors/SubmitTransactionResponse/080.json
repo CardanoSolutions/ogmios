@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"missingTxMetadataHash":"b9f805eb54d60b2c6640fb2606010d8adb7330ab67779aff6e0b7fa1ac983341"},{"unknownOrIncompleteWithdrawals":{"stake17xgnfpgrzmrncsn93re5p08rmfam23fytyapeu6wu37dz2q5rn5eq":691900}},{"delegateNotRegistered":"pool1026qe2rk6rvxl0x4zcz97mftsw5s74hls65pttht08c2jmfae6j"}]},"id":null}
+{"jsonrpc":"2.0","error":{"code":3149,"message":"Invalid MIR transfer. The resulting delta is likely negative."},"id":null}

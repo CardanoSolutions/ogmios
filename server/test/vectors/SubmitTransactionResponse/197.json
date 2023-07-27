@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"transaction":{"id":"bf524edde89ae2073027fae1ca5a34b159e510ae4d3c2d42e5e9f7e49b6bc1ad"}},"id":"st"}
+{"jsonrpc":"2.0","error":{"code":3100,"message":"Some signatures are invalid. 'data.invalidSignatories' contains a list of keys for which the signature didn't verify. As a reminder, you must only sign the serialised transaction *body*, without metadata or witnesses.","data":{"invalidSignatories":["b96e05aaaf89c05a300aa31fbeb15f112dbda298b6a72616b4206564b4727ee3","44a3eb303f501537ef8c9370815542929b2942144351a140a1f9f8021c250f0b"]}},"id":"st"}

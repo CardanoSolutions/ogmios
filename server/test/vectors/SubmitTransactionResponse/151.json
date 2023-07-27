@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"transaction":{"id":"f4bb37788f23014c61fa3819c06038a1c035cced220a7404696d1558b8fbac27"}},"id":null}
+{"jsonrpc":"2.0","error":{"code":3143,"message":"Stake pool cost declared in a registration or update certificate are below the allowed minimum. The minimum cost of a stake pool is fixed by a protocol parameter. The 'data.minimumStakePoolCost' field holds the current value of that parameter whereas 'data.declaredStakePoolCost' indicates which amount was declared.","data":{"minimumStakePoolCost":895467,"declaredStakePoolCost":184452}},"id":null}

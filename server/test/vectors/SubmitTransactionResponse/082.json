@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"transaction":{"id":"c37a5712f845648ccda3edb4b3a0243a0ec21f59981945afb326d05256261ec0"}},"id":"st"}
+{"jsonrpc":"2.0","error":{"code":3145,"message":"Trying to re-register some already known credentials. Stake credentials can only be registered once. This is true for both keys and scripts. The field 'data.knownCredential' points to an already known credential that's being re-registered by this transaction.","data":{"knownCredential":"c0c2631d3492ae9a1290bf1ba2d167c0bc5ec22855c141c4263dbf60"}},"id":"st"}

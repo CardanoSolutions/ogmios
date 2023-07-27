@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"transaction":{"id":"2015db2a76101892cb1ad45ab7cca1964728c6242721e1f31674a3c6d7e3d9e8"}},"id":"st"}
+{"jsonrpc":"2.0","error":{"code":3998,"message":"Unrecognized certificate type. This error is a placeholder due to how internal data-types are modeled. If you ever run into this, please report the issue as you've likely discoverd a critical bug..."},"id":"st"}

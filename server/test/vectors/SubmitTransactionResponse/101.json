@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"unknownOrIncompleteWithdrawals":{"stake_test17zjsdhgwzgrd7kufkv4mcvaa87n5dh5khhjp68fxpz22mfcw0l6ne":505577,"stake_test17rssfltvtqujy7kf604g3v373xrhqgv549da97mc0y2k78gwn0luk":219654,"stake17xrk8qjyvlcd2mvc6kmlv2vq8l85nsgchyweqt8nenaejzchwzgsl":697994}}]},"id":null}
+{"jsonrpc":"2.0","error":{"code":3148,"message":"Invalid or unauthorized genesis delegation. The genesis delegate is unknown, invalid or already in use."},"id":null}

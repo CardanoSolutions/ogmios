@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[{"missingVkWitnesses":["259879ff777575d26b470f55d931d0b19a0405e17476ed0f7b2bc2cf"]}]},"id":"st"}
+{"jsonrpc":"2.0","error":{"code":3149,"message":"Invalid MIR transfer. The resulting delta is likely negative."},"id":"st"}

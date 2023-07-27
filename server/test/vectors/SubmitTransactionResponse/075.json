@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"transaction":{"id":"0bf573e6608cc66073eb161abe40725c1aa1f2f4e8fedbab9456399a27a577cf"}},"id":null}
+{"jsonrpc":"2.0","error":{"code":3106,"message":"No metadata corresponding to a specified metadata hash. It appears that you might have forgotten to attach metadata to a transaction, yet included a hash digest of them in the transaction body? The field 'data.metadata.hash' contains the orphan hash found in the body.","data":{"metadata":{"hash":"7d715fe1c1a2cd8cc5f36fec2cb46e6e0243b5906f61d08a22aad38530e89a77"}}},"id":null}

@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"transaction":{"id":"89e5424efd26766531764c277ad4721e14788dbe397c5db5e585d82df0abd361"}},"id":"st"}
+{"jsonrpc":"2.0","error":{"code":3147,"message":"Trying to unregister stake credentials associated to a non empty reward account. You must empty the reward account first (or do it as part of the same transaction) to proceed. The field 'data.nonEmptyRewardAccountBalance' indicates how much Lovelace is left in the account.","data":{"nonEmptyRewardAccountBalance'":78839}},"id":"st"}

@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3005,"message":"Transaction submission failed","data":[]},"id":"st"}
+{"jsonrpc":"2.0","error":{"code":3104,"message":"Extraneous (i.e. non-required) scripts found in the transaction. A transaction must not contain scripts that aren't strictly needed for validation, that are present in metadata or that are published in an output. Perhaps you have used provided a wrong script for a validator? Anyway, the 'data.extraneousScripts' field lists hash digests of scripts found to be extraneous.","data":{"extraneousScripts":[]}},"id":"st"}
