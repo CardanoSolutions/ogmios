@@ -172,7 +172,11 @@ encodeSubmitTransactionError
     -> Json
 encodeSubmitTransactionError reject = \case
     ApplyTxErrWrongEra e ->
-        encodeEraMismatch e
+        reject (Rpc.FaultCustom 3005)
+            "Failed to submit the transaction in the current era. This may happen when trying to \
+            \submit a transaction near an era boundary (i.e. at the moment of a hard-fork). \
+            \Retrying should help."
+            (pure $ encodeEraMismatch e)
     ApplyTxErrConway (ApplyTxError xs) ->
         (encodePredicateFailure reject . pickPredicateFailure)
             (Conway.encodeLedgerFailure <$> xs)

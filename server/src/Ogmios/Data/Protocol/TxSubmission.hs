@@ -401,7 +401,7 @@ _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeS
                 )
         EvaluationFailure (ScriptExecutionFailures failures) ->
             -- TODO: Breakdown / promote nested errors into fine-grained errors
-            reject (Rpc.FaultCustom 3005)
+            reject (Rpc.FaultCustom 3010)
                 "Some scripts of the transactions terminated with error(s)."
                 (pure $ encodeMap
                     stringifyRdmrPtr
