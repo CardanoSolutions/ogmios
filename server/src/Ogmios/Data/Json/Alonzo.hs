@@ -293,6 +293,12 @@ encodeProposedPPUpdates
 encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
     encodeMap Shelley.stringifyKeyHash encodePParamsUpdate m
 
+encodeRdmrPtr
+    :: Al.RdmrPtr
+    -> Json
+encodeRdmrPtr =
+    encodeText . stringifyRdmrPtr
+
 encodeRedeemers
     :: forall era. (Ledger.Era era)
     => Al.Redeemers era
@@ -457,14 +463,14 @@ encodeScriptFailure = encodeObject . \case
     -- the redeemer is unknown.
     Ledger.Api.RedeemerNotNeeded ptr _ ->
         "extraRedeemers" .=
-            encodeFoldable (encodeText . stringifyRdmrPtr) [ptr]
+            encodeFoldable encodeRdmrPtr [ptr]
     Ledger.Api.RedeemerPointsToUnknownScriptHash ptr ->
         "extraRedeemers" .=
-            encodeFoldable (encodeText . stringifyRdmrPtr) [ptr]
+            encodeFoldable encodeRdmrPtr [ptr]
     Ledger.Api.MissingScript ptr resolved ->
         "missingRequiredScripts" .= encodeObject
             ( "missing" .=
-                encodeFoldable (encodeText . stringifyRdmrPtr) [ptr] <>
+                encodeFoldable encodeRdmrPtr [ptr] <>
               "resolved" .=
                 encodeMap
                     stringifyRdmrPtr

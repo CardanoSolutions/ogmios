@@ -27,6 +27,7 @@ import qualified Cardano.Ledger.Babbage.PParams as Ba
 import qualified Cardano.Ledger.Babbage.Tx as Ba
 
 import qualified Cardano.Ledger.Conway.Genesis as Cn
+import qualified Cardano.Ledger.Conway.Governance as Cn
 
 import qualified Ogmios.Data.Json.Babbage as Babbage
 import qualified Ogmios.Data.Json.Shelley as Shelley
@@ -41,7 +42,7 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
         ( "era" .= encodeText "babbage"
         <>
-          "header" .= encodeObject
+        "header" .= encodeObject
             ( "hash" .= Shelley.encodeShelleyHash headerHash
             )
         <>
@@ -62,6 +63,25 @@ encodeGenesis x =
                 Shelley.encodeGenDelegPair
                 (Ledger.unGenDelegs (Cn.cgGenDelegs x))
         )
+
+encodeGovernanceActionId
+    :: Crypto crypto
+    => Cn.GovernanceActionId crypto
+    -> Json
+encodeGovernanceActionId x =
+    encodeObject
+        ( "transaction" .=
+            Shelley.encodeTxId (Cn.gaidTxId x)
+        <>
+          "action" .=
+            encodeGovernanceActionIx (Cn.gaidGovActionIx x)
+        )
+
+encodeGovernanceActionIx
+    :: Cn.GovernanceActionIx
+    -> Json
+encodeGovernanceActionIx (Cn.GovernanceActionIx ix) =
+    encodeObject ("index" .= encodeWord64 ix)
 
 encodeProposedPPUpdates
     :: Crypto crypto
@@ -95,3 +115,14 @@ encodeTx x =
     encodeObject
         ( "id" .= Shelley.encodeTxId (Ledger.txid @(ConwayEra crypto) (Ba.body x))
         )
+
+encodeVoterRole
+    :: Cn.VoterRole
+    -> Json
+encodeVoterRole = encodeText . \case
+    Cn.ConstitutionalCommittee ->
+        "constitutionalCommittee"
+    Cn.DRep ->
+        "delegateRepresentative"
+    Cn.SPO ->
+        "stakePoolOperator"

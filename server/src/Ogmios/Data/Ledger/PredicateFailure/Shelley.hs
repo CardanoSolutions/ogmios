@@ -82,8 +82,8 @@ encodeUtxoFailure = \case
                 , invalidHereafter = SJust timeToLive
                 }
          in TransactionOutsideValidityInterval{ validityInterval, currentSlot }
-    Sh.MaxTxSizeUTxO actualSize maximumSize ->
-        TransactionTooLarge { actualSize, maximumSize }
+    Sh.MaxTxSizeUTxO measuredSize maximumSize ->
+        TransactionTooLarge { measuredSize, maximumSize }
     Sh.InputSetEmptyUTxO ->
         EmptyInputSet
     Sh.FeeTooSmallUTxO minimumRequiredFee suppliedFee ->

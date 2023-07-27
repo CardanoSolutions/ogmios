@@ -11,12 +11,12 @@ import Ogmios
     , InspectCommand (..)
     , application
     , healthCheck
+    , inspectTransaction
     , newEnvironment
     , parseOptions
     , runWith
     , version
     , withStdoutTracers
-    , inspectTransaction
     )
 
 main :: IO ()

@@ -48,8 +48,8 @@ encodeUtxoFailure era = \case
     Al.OutputTooBigUTxO outs ->
         let culpritOutputs = (\out -> TxOutInAnyEra (era, out)) <$> outs in
         ValueSizeAboveLimit culpritOutputs
-    Al.MaxTxSizeUTxO actualSize maximumSize ->
-        TransactionTooLarge { actualSize, maximumSize }
+    Al.MaxTxSizeUTxO measuredSize maximumSize ->
+        TransactionTooLarge { measuredSize, maximumSize }
     Al.InputSetEmptyUTxO ->
         EmptyInputSet
     Al.FeeTooSmallUTxO minimumRequiredFee suppliedFee ->

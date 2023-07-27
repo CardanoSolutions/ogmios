@@ -126,7 +126,7 @@ data MultiEraPredicateFailure crypto
 
     -- All scripts in a transaction must resolve.
     | FailingScript
-        { failingScript :: Set (ScriptHash crypto)
+        { failingScripts :: Set (ScriptHash crypto)
         }
 
     -- Transaction must not contain extraneous scripts not associated to any
@@ -204,7 +204,7 @@ data MultiEraPredicateFailure crypto
 
     -- All transaction inputs must be present in `UTxO` (inputs ⊆ dom utxo)
     | UnknownUtxoReference
-        { inputs :: Set (TxIn crypto)
+        { unknownOutputReferences :: Set (TxIn crypto)
         }
 
     -- The ttl field marks the top of an open interval, so it must be strictly
@@ -216,14 +216,14 @@ data MultiEraPredicateFailure crypto
 
     -- The size of the transaction does not exceed the maxTxSize protocol parameter
     | TransactionTooLarge
-        { actualSize :: Integer
+        { measuredSize :: Integer
         , maximumSize :: Integer
         }
 
     -- The serialized size of a 'Value' must be below the 'max value size' (4000
     -- bytes in Shelley)
     | ValueSizeAboveLimit
-        { culpritOutputs :: [TxOutInAnyEra crypto]
+        { excessivelyLargeOutputs :: [TxOutInAnyEra crypto]
         }
 
     -- There is at least one input in the transaction body (txins txb ≠ ∅)
@@ -491,21 +491,22 @@ predicateFailurePriority = \case
     ExtraneousDatums{} -> 11
 
     NonAdaValueAsCollateral{} -> 12
-    TotalCollateralMismatch{} -> 12
     MissingCollateralInputs{} -> 12
     TooManyCollateralInputs{} -> 12
 
-    IncompleteWithdrawals{} -> 13
-    RewardAccountNotEmpty{} -> 13
+    TotalCollateralMismatch{} -> 13
 
-    InsufficientCollateral{} -> 14
-    InsufficientAdaInOutput{} -> 14
+    IncompleteWithdrawals{} -> 14
+    RewardAccountNotEmpty{} -> 14
 
-    ExecutionUnitsTooLarge{} -> 15
-    TransactionTooLarge{} -> 15
+    InsufficientCollateral{} -> 15
+    InsufficientAdaInOutput{} -> 15
 
-    TransactionFeeTooSmall{} -> 16
+    ExecutionUnitsTooLarge{} -> 16
+    TransactionTooLarge{} -> 16
 
-    ValueNotConserved{} -> 17
-    ScriptIntegrityHashMismatch{} -> 17
-    ValidationTagMismatch{} -> 17
+    TransactionFeeTooSmall{} -> 17
+
+    ValueNotConserved{} -> 18
+    ScriptIntegrityHashMismatch{} -> 18
+    ValidationTagMismatch{} -> 18
