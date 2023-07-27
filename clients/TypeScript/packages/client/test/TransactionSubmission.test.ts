@@ -62,10 +62,7 @@ describe('TransactionSubmission', () => {
           await submit(someTransaction)
         } catch (e) {
           expect(e).toBeInstanceOf(JSONRPCError)
-          expect(e?.data).toHaveLength(2)
-          // TODO: Assert on error codes
-          //   expect(errors[0]).toBeInstanceOf(TransactionSubmission.submissionErrors.errors.BadInputs.Error)
-          //   expect(errors[1]).toBeInstanceOf(TransactionSubmission.submissionErrors.errors.ValueNotConserved.Error)
+          expect(e.code).toBe(3117)
         }
       })
 
@@ -168,8 +165,7 @@ describe('TransactionSubmission', () => {
           )
         } catch (e) {
           expect(e).toBeInstanceOf(JSONRPCError)
-          // TODO: Assert on error code
-          // expect(errors[0]).toBeInstanceOf(TransactionSubmission.evaluationErrors.errors.ExtraRedeemers.Error)
+          expect(e.code).toBe(3010)
         }
       })
 
@@ -201,8 +197,7 @@ describe('TransactionSubmission', () => {
           await evaluate(bytes)
         } catch (e) {
           expect(e).toBeInstanceOf(JSONRPCError)
-          // TODO: assert on error code
-          // expect(errors[0]).toBeInstanceOf(TransactionSubmission.evaluationErrors.errors.ExtraRedeemers.Error)
+          expect(e.code).toBe(3010)
         }
 
         const result = await evaluate(bytes, additionalUtxoSet)

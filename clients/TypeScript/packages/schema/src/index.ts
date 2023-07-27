@@ -122,26 +122,69 @@ export type GenesisHash = "genesis";
 export type VrfProof = string;
 export type VrfOutput = string;
 export type KesVerificationKey = string;
+export type SubmitTransactionFailure =
+  | SubmitTransactionFailureEraMismatch
+  | SubmitTransactionFailureInvalidSignatories
+  | SubmitTransactionFailureMissingSignatories
+  | SubmitTransactionFailureMissingScripts
+  | SubmitTransactionFailureFailingNativeScript
+  | SubmitTransactionFailureExtraneousScripts
+  | SubmitTransactionFailureMissingMetadataHash
+  | SubmitTransactionFailureMissingMetadata
+  | SubmitTransactionFailureMetadataHashMismatch
+  | SubmitTransactionFailureInvalidMetadata
+  | SubmitTransactionFailureMissingRedeemers
+  | SubmitTransactionFailureExtraneousRedeemers
+  | SubmitTransactionFailureMissingDatums
+  | SubmitTransactionFailureExtraneousDatums
+  | SubmitTransactionFailureScriptIntegrityHashMismatch
+  | SubmitTransactionFailureOrphanScriptInputs
+  | SubmitTransactionFailureMissingCostModels
+  | SubmitTransactionFailureMalformedScripts
+  | SubmitTransactionFailureUnknownOutputReferences
+  | SubmitTransactionFailureOutsideOfValidityInterval
+  | SubmitTransactionFailureTransactionTooLarge
+  | SubmitTransactionFailureValueTooLarge
+  | SubmitTransactionFailureEmptyInputSet
+  | SubmitTransactionFailureTransactionFeeTooSmall
+  | SubmitTransactionFailureValueNotConserved
+  | SubmitTransactionFailureNetworkMismatch
+  | SubmitTransactionFailureInsufficientlyFundedOutputs
+  | SubmitTransactionFailureBootstrapAttributesTooLarge
+  | SubmitTransactionFailureMintingOrBurningAda
+  | SubmitTransactionFailureInsufficientCollateral
+  | SubmitTransactionFailureCollateralLockedByScript
+  | SubmitTransactionFailureUnforeseeableSlot
+  | SubmitTransactionFailureTooManyCollateralInputs
+  | SubmitTransactionFailureMissingCollateralInputs
+  | SubmitTransactionFailureNonAdaCollateral
+  | SubmitTransactionFailureExecutionUnitsTooLarge
+  | SubmitTransactionFailureTotalCollateralMismatch
+  | SubmitTransactionFailureInputSourceMismatch
+  | SubmitTransactionFailureUnauthorizedVote
+  | SubmitTransactionFailureUnknownGovernanceAction
+  | SubmitTransactionFailureInvalidProtocolParametersUpdate
+  | SubmitTransactionFailureUnknownStakePool
+  | SubmitTransactionFailureIncompleteWithdrawals
+  | SubmitTransactionFailureRetirementTooLate
+  | SubmitTransactionFailureStakePoolCostTooLow
+  | SubmitTransactionFailureMetadataHashTooLarge
+  | SubmitTransactionFailureCredentialAlreadyRegistered
+  | SubmitTransactionFailureUnknownCredential
+  | SubmitTransactionFailureNonEmptyRewardAccount
+  | SubmitTransactionFailureInvalidGenesisDelegation
+  | SubmitTransactionFailureInvalidMIRTransfer
+  | SubmitTransactionFailureUnrecognizedCertificateType
+  | SubmitTransactionFailureInternalLedgerTypeConversionError;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage";
-export type UInt8 = number;
-export type VotingPeriod = "voteForThisEpoch" | "voteForNextEpoch";
-export type ScriptPurpose = Spend | Mint | Certificate1 | Withdrawal;
-/**
- * A Blake2b 28-byte hash digest, encoded in base16.
- */
-export type PolicyId = string;
 export type Utxo = [TransactionOutputReference, TransactionOutput][];
-export type Language = "plutus:v1" | "plutus:v2" | "plutus:v3";
-export type ScriptExecutionFailureReason =
-  | ExtraRedeemers
-  | MissingRequiredDatums
-  | MissingRequiredScripts
-  | ValidatorFailed
-  | UnknownInputReferencedByRedeemer
-  | NonScriptInputReferencedByRedeemer
-  | IllFormedExecutionBudget
-  | NoCostModelForLanguage;
-export type RedeemerPointer = string;
+export type EvaluateTransactionFailure =
+  | EvaluateTransactionFailureIncompatibleEra
+  | EvaluateTransactionFailureUnsupportedEra
+  | EvaluateTransactionFailureOverlappingAdditionalUtxo
+  | EvaluateTransactionFailureNodeTipTooOld
+  | EvaluateTransactionFailureCannotCreateEvaluationContext
+  | EvaluateTransactionFailureScriptExecutionFailure;
 /**
  * A time in seconds relative to another one (typically, system start or era start).
  */
@@ -184,9 +227,12 @@ export interface Ogmios {
   NextBlock: NextBlock;
   NextBlockResponse: NextBlockResponse;
   SubmitTransaction: SubmitTransaction;
-  SubmitTransactionResponse: SubmitTransactionSuccess | SubmitTransactionFailure;
+  SubmitTransactionResponse: SubmitTransactionSuccess | SubmitTransactionError | SubmitTransactionDeserialisationError;
   EvaluateTransaction: EvaluateTransaction;
-  EvaluateTransactionResponse: EvaluateTransactionSuccess | EvaluateTransactionFailure;
+  EvaluateTransactionResponse:
+    | EvaluateTransactionSuccess
+    | EvaluateTransactionError
+    | EvaluateTransactionDeserialisationError;
   AcquireLedgerState: AcquireLedgerState;
   AcquireLedgerStateResponse: AcquireLedgerStateSuccess | AcquireLedgerStateFailure;
   ReleaseLedgerState: ReleaseLedgerState;
@@ -853,81 +899,9 @@ export interface SubmitTransactionSuccess {
     [k: string]: unknown;
   };
 }
-export interface SubmitTransactionFailure {
+export interface SubmitTransactionError {
   jsonrpc: "2.0";
-  error: {
-    code: 3005;
-    message: string;
-    data: (
-      | EraMismatch
-      | InvalidWitnesses
-      | MissingVkWitnesses
-      | MissingScriptWitnesses
-      | ScriptWitnessNotValidating
-      | InsufficientGenesisSignatures
-      | MissingTxMetadata
-      | MissingTxMetadataHash
-      | TxMetadataHashMismatch
-      | BadInputs
-      | ExpiredUtxo
-      | OutsideOfValidityInterval
-      | TxTooLarge
-      | MissingAtLeastOneInputUtxo
-      | InvalidMetadata
-      | FeeTooSmall
-      | ValueNotConserved
-      | NetworkMismatch
-      | OutputTooSmall
-      | TooManyAssetsInOutput
-      | AddressAttributesTooLarge
-      | TriesToForgeAda
-      | DelegateNotRegistered
-      | UnknownOrIncompleteWithdrawals
-      | StakePoolNotRegistered
-      | WrongRetirementEpoch
-      | WrongPoolCertificate
-      | StakeKeyAlreadyRegistered
-      | PoolCostTooSmall
-      | PoolMetadataHashTooBig
-      | StakeKeyNotRegistered
-      | RewardAccountNotExisting
-      | RewardAccountNotEmpty
-      | WrongCertificateType
-      | UnknownGenesisKey
-      | AlreadyDelegating
-      | InsufficientFundsForMir
-      | TooLateForMir
-      | MirTransferNotCurrentlyAllowed
-      | MirNegativeTransferNotCurrentlyAllowed
-      | MirProducesNegativeUpdate
-      | DuplicateGenesisVrf
-      | NonGenesisVoters
-      | UpdateWrongEpoch
-      | ProtocolVersionCannotFollow
-      | MissingRequiredRedeemers
-      | MissingRequiredDatums
-      | UnspendableDatums
-      | ExtraDataMismatch
-      | MissingRequiredSignatures
-      | UnspendableScriptInputs
-      | ExtraRedeemers
-      | MissingDatumHashesForInputs
-      | MissingCollateralInputs
-      | CollateralTooSmall
-      | CollateralIsScript
-      | CollateralHasNonAdaAssets
-      | TooManyCollateralInputs
-      | ExecutionUnitsTooLarge
-      | OutsideForecast
-      | ValidationTagMismatch
-      | CollectErrors
-      | ExtraScriptWitnesses
-      | MirNegativeTransfer
-      | TotalCollateralMismatch
-      | MalformedReferenceScripts
-      | MalformedScriptWitnesses
-    )[];
-  };
+  error: SubmitTransactionFailure;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -935,348 +909,293 @@ export interface SubmitTransactionFailure {
     [k: string]: unknown;
   };
 }
+/**
+ * Failed to submit the transaction in the current era. This may happen when trying to submit a transaction near an era boundary (i.e. at the moment of a hard-fork).
+ */
+export interface SubmitTransactionFailureEraMismatch {
+  code: 3005;
+  message: string;
+  data: EraMismatch;
+}
 export interface EraMismatch {
   queryEra: Era;
   ledgerEra: Era;
 }
-export interface InvalidWitnesses {
-  invalidWitnesses: VerificationKey[];
-}
-export interface MissingVkWitnesses {
-  missingVkWitnesses: DigestBlake2B224[];
-}
-export interface MissingScriptWitnesses {
-  missingScriptWitnesses: DigestBlake2B224[];
-}
-export interface ScriptWitnessNotValidating {
-  scriptWitnessNotValidating: DigestBlake2B224[];
-}
-export interface InsufficientGenesisSignatures {
-  insufficientGenesisSignatures: DigestBlake2B224[];
-}
-export interface MissingTxMetadata {
-  missingTxMetadata: DigestBlake2B256;
-}
-export interface MissingTxMetadataHash {
-  missingTxMetadataHash: DigestBlake2B256;
-}
-export interface TxMetadataHashMismatch {
-  txMetadataHashMismatch: {
-    includedHash: DigestBlake2B256;
-    expectedHash: DigestBlake2B256;
-  };
-}
-export interface BadInputs {
-  badInputs: TransactionOutputReference[];
-}
-/**
- * Only in Shelley. Replaced with 'outsideOfValidityInterval' since Allegra.
- */
-export interface ExpiredUtxo {
-  expiredUtxo: {
-    currentSlot: Slot;
-    transactionTimeToLive: Slot;
-  };
-}
-/**
- * Since Allegra. Replaces 'expiredUtxo'.
- */
-export interface OutsideOfValidityInterval {
-  outsideOfValidityInterval: {
-    currentSlot: Slot;
-    interval: ValidityInterval;
-  };
-}
-export interface TxTooLarge {
-  txTooLarge: {
-    maximumSize: Int64;
-    actualSize: Int64;
-  };
-}
-export interface MissingAtLeastOneInputUtxo {
-  missingAtLeastOneInputUtxo: null;
-}
-export interface InvalidMetadata {
-  invalidMetadata: null;
-}
-export interface FeeTooSmall {
-  feeTooSmall: {
-    requiredFee: Lovelace;
-    actualFee: Lovelace;
-  };
-}
-/**
- * Returns 'Value' since Mary, and 'LovelaceDelta' before.
- */
-export interface ValueNotConserved {
-  valueNotConserved: {
-    consumed: LovelaceDelta | Value;
-    produced: LovelaceDelta | Value;
-  };
-}
-export interface NetworkMismatch {
-  networkMismatch: {
-    expectedNetwork: Network;
-    invalidEntities: (
-      | {
-          type: "address";
-          entity: Address;
-        }
-      | {
-          type: "poolRegistration";
-          entity: StakePoolId;
-        }
-      | {
-          type: "rewardAccount";
-          entity: RewardAccount;
-        }
-    )[];
-  };
-}
-export interface OutputTooSmall {
-  outputTooSmall: (
-    | TransactionOutput
-    | {
-        output: TransactionOutput;
-        minimumRequiredValue: Lovelace;
-      }
-  )[];
-}
-/**
- * Only since Mary.
- */
-export interface TooManyAssetsInOutput {
-  tooManyAssetsInOutput: TransactionOutput[];
-}
-export interface AddressAttributesTooLarge {
-  addressAttributesTooLarge: Address[];
-}
-/**
- * Only since Mary.
- */
-export interface TriesToForgeAda {
-  triesToForgeAda: null;
-}
-export interface DelegateNotRegistered {
-  delegateNotRegistered: StakePoolId;
-}
-export interface UnknownOrIncompleteWithdrawals {
-  unknownOrIncompleteWithdrawals: Withdrawals;
-}
-export interface StakePoolNotRegistered {
-  stakePoolNotRegistered: StakePoolId;
-}
-export interface WrongRetirementEpoch {
-  wrongRetirementEpoch: {
-    currentEpoch: Epoch;
-    requestedEpoch: Epoch;
-    firstUnreachableEpoch: Epoch;
-  };
-}
-export interface WrongPoolCertificate {
-  wrongPoolCertificate: UInt8;
-}
-export interface StakeKeyAlreadyRegistered {
-  stakeKeyAlreadyRegistered: DigestBlake2B224;
-}
-export interface PoolCostTooSmall {
-  poolCostTooSmall: {
-    minimumCost: Lovelace;
-  };
-}
-export interface PoolMetadataHashTooBig {
-  poolMetadataHashTooBig: {
-    poolId: StakePoolId;
-    measuredSize: Int64;
-  };
-}
-export interface StakeKeyNotRegistered {
-  stakeKeyNotRegistered: DigestBlake2B224;
-}
-export interface RewardAccountNotExisting {
-  rewardAccountNotExisting: null;
-}
-export interface RewardAccountNotEmpty {
-  rewardAccountNotEmpty: {
-    balance: Lovelace;
-  };
-}
-export interface WrongCertificateType {
-  wrongCertificateType: null;
-}
-export interface UnknownGenesisKey {
-  unknownGenesisKey: DigestBlake2B224;
-}
-export interface AlreadyDelegating {
-  alreadyDelegating: DigestBlake2B224;
-}
-export interface InsufficientFundsForMir {
-  insufficientFundsForMir: {
-    rewardSource: RewardPot;
-    sourceSize: Lovelace;
-    requestedAmount: Lovelace;
-  };
-}
-export interface TooLateForMir {
-  tooLateForMir: {
-    currentSlot: Slot;
-    lastAllowedSlot: Slot;
-  };
-}
-export interface MirTransferNotCurrentlyAllowed {
-  mirTransferNotCurrentlyAllowed: null;
-}
-export interface MirNegativeTransferNotCurrentlyAllowed {
-  mirNegativeTransferNotCurrentlyAllowed: null;
-}
-export interface MirProducesNegativeUpdate {
-  mirProducesNegativeUpdate: null;
-}
-export interface DuplicateGenesisVrf {
-  duplicateGenesisVrf: DigestBlake2B256;
-}
-export interface NonGenesisVoters {
-  nonGenesisVoters: {
-    currentlyVoting: DigestBlake2B224[];
-    shouldBeVoting: DigestBlake2B224[];
-  };
-}
-export interface UpdateWrongEpoch {
-  updateWrongEpoch: {
-    currentEpoch: Epoch;
-    requestedEpoch: Epoch;
-    votingPeriod: VotingPeriod;
-  };
-}
-export interface ProtocolVersionCannotFollow {
-  protocolVersionCannotFollow: ProtocolVersion;
-}
-export interface MissingRequiredRedeemers {
-  missingRequiredRedeemers: {
-    missing: {
-      [k: string]: ScriptPurpose;
-    }[];
-  };
-}
-export interface Spend {
-  spend: TransactionOutputReference;
-}
-export interface Mint {
-  mint: PolicyId;
-}
-export interface Certificate1 {
-  certificate: Certificate;
-}
-export interface Withdrawal {
-  withdrawal: RewardAccount;
-}
-export interface MissingRequiredDatums {
-  missingRequiredDatums: {
-    provided?: DigestBlake2B256[];
-    missing: DigestBlake2B256[];
-  };
-}
-export interface UnspendableDatums {
-  unspendableDatums: {
-    nonSpendable: DigestBlake2B256[];
-    acceptable: DigestBlake2B256[];
-  };
-}
-export interface ExtraDataMismatch {
-  extraDataMismatch: {
-    provided?: DigestBlake2B256;
-    inferredFromParameters?: DigestBlake2B256;
-  };
-}
-export interface MissingRequiredSignatures {
-  missingRequiredSignatures: DigestBlake2B224[];
-}
-export interface UnspendableScriptInputs {
-  unspendableScriptInputs: TransactionOutputReference[];
-}
-export interface ExtraRedeemers {
-  extraRedeemers: string[];
-}
-export interface MissingDatumHashesForInputs {
-  missingDatumHashesForInputs: TransactionOutputReference[];
-}
-/**
- * Only since Alonzo.
- */
-export interface MissingCollateralInputs {
-  missingCollateralInputs: null;
-}
-export interface CollateralTooSmall {
-  collateralTooSmall: {
-    requiredCollateral: Lovelace;
-    actualCollateral: Lovelace;
-  };
-}
-export interface CollateralIsScript {
-  collateralIsScript: Utxo;
-}
-export interface CollateralHasNonAdaAssets {
-  collateralHasNonAdaAssets: Value;
-}
-export interface TooManyCollateralInputs {
-  tooManyCollateralInputs: {
-    maximumCollateralInputs: UInt64;
-    actualCollateralInputs: UInt64;
-  };
-}
-export interface ExecutionUnitsTooLarge {
-  executionUnitsTooLarge: {
-    maximumExecutionUnits: ExecutionUnits;
-    actualExecutionUnits: ExecutionUnits;
-  };
-}
-export interface OutsideForecast {
-  outsideForecast: Slot;
-}
-/**
- * Only since Alonzo.
- */
-export interface ValidationTagMismatch {
-  validationTagMismatch: null;
-}
-export interface CollectErrors {
-  collectErrors: (NoRedeemer | NoWitness | NoCostModel | BadTranslation)[];
-}
-export interface NoRedeemer {
-  noRedeemer: ScriptPurpose;
-}
-export interface NoWitness {
-  noWitness: DigestBlake2B224;
-}
-export interface NoCostModel {
-  noCostModel: Language;
-}
-export interface BadTranslation {
+export interface SubmitTransactionFailureInvalidSignatories {
+  code: 3100;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureMissingSignatories {
+  code: 3101;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureMissingScripts {
+  code: 3102;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureFailingNativeScript {
+  code: 3103;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureExtraneousScripts {
+  code: 3104;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureMissingMetadataHash {
+  code: 3105;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureMissingMetadata {
+  code: 3106;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureMetadataHashMismatch {
+  code: 3107;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureInvalidMetadata {
+  code: 3108;
+  message: string;
+}
+export interface SubmitTransactionFailureMissingRedeemers {
+  code: 3109;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureExtraneousRedeemers {
+  code: 3110;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureMissingDatums {
+  code: 3111;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureExtraneousDatums {
+  code: 3112;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureScriptIntegrityHashMismatch {
+  code: 3113;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureOrphanScriptInputs {
+  code: 3114;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureMissingCostModels {
+  code: 3115;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureMalformedScripts {
+  code: 3116;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureUnknownOutputReferences {
+  code: 3117;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureOutsideOfValidityInterval {
+  code: 3118;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureTransactionTooLarge {
+  code: 3119;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureValueTooLarge {
+  code: 3120;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureEmptyInputSet {
+  code: 3121;
+  message: string;
+}
+export interface SubmitTransactionFailureTransactionFeeTooSmall {
+  code: 3122;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureValueNotConserved {
+  code: 3123;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureNetworkMismatch {
+  code: 3124;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureInsufficientlyFundedOutputs {
+  code: 3125;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureBootstrapAttributesTooLarge {
+  code: 3126;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureMintingOrBurningAda {
+  code: 3127;
+  message: string;
+}
+export interface SubmitTransactionFailureInsufficientCollateral {
+  code: 3128;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureCollateralLockedByScript {
+  code: 3129;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureUnforeseeableSlot {
+  code: 3130;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureTooManyCollateralInputs {
+  code: 3131;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureMissingCollateralInputs {
+  code: 3132;
+  message: string;
+}
+export interface SubmitTransactionFailureNonAdaCollateral {
+  code: 3133;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureExecutionUnitsTooLarge {
+  code: 3134;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureTotalCollateralMismatch {
+  code: 3135;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureInputSourceMismatch {
+  code: 3136;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureUnauthorizedVote {
+  code: 3137;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureUnknownGovernanceAction {
+  code: 3138;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureInvalidProtocolParametersUpdate {
+  code: 3139;
+  message: string;
+}
+export interface SubmitTransactionFailureUnknownStakePool {
+  code: 3140;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureIncompleteWithdrawals {
+  code: 3141;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureRetirementTooLate {
+  code: 3142;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureStakePoolCostTooLow {
+  code: 3143;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureMetadataHashTooLarge {
+  code: 3144;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureCredentialAlreadyRegistered {
+  code: 3145;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureUnknownCredential {
+  code: 3146;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureNonEmptyRewardAccount {
+  code: 3147;
+  message: string;
+  data: unknown;
+}
+export interface SubmitTransactionFailureInvalidGenesisDelegation {
+  code: 3148;
+  message: string;
+}
+export interface SubmitTransactionFailureInvalidMIRTransfer {
+  code: 3149;
+  message: string;
+}
+export interface SubmitTransactionFailureUnrecognizedCertificateType {
+  code: 3998;
+  message: string;
+}
+export interface SubmitTransactionFailureInternalLedgerTypeConversionError {
+  code: 3999;
+  message: string;
+}
+export interface SubmitTransactionDeserialisationError {
+  jsonrpc: "2.0";
+  error: DeserialisationFailure;
   /**
-   * An (hopefully) informative error about the transaction execution failure.
+   * Any value that was set by a client request in the 'id' field.
    */
-  badTranslation: string;
-}
-export interface ExtraScriptWitnesses {
-  extraScriptWitnesses: DigestBlake2B224[];
-}
-export interface MirNegativeTransfer {
-  mirNegativeTransfer: {
-    rewardSource: RewardPot;
-    attemptedTransfer: Lovelace;
+  id?: {
+    [k: string]: unknown;
   };
 }
-export interface TotalCollateralMismatch {
-  totalCollateralMismatch: {
-    computedFromDelta: Lovelace;
-    declaredInField: Lovelace;
+/**
+ * The input failed to deserialize in any of the known era.
+ */
+export interface DeserialisationFailure {
+  code: -32602;
+  message: string;
+  data: {
+    shelley: string;
+    allegra: string;
+    mary: string;
+    alonzo: string;
+    babbage: string;
+    conway: string;
   };
-}
-export interface MalformedReferenceScripts {
-  malformedReferenceScripts: DigestBlake2B224[];
-}
-export interface MalformedScriptWitnesses {
-  malformedScriptWitnesses: DigestBlake2B224[];
 }
 /**
  * Evaluate execution units for which redeemers's budget hasn't yet been set.
@@ -1315,15 +1234,9 @@ export interface EvaluateTransactionSuccess {
 /**
  * Happens when attempting to evaluate execution units on a node that isn't enough synchronized.
  */
-export interface EvaluateTransactionFailure {
+export interface EvaluateTransactionError {
   jsonrpc: "2.0";
-  error:
-    | EvaluateTransactionFailureIncompatibleEra
-    | EvaluateTransactionFailureUnsupportedEra
-    | EvaluateTransactionFailureOverlappingAdditionalUtxo
-    | EvaluateTransactionFailureNodeTipTooOld
-    | EvaluateTransactionFailureCannotCreateEvaluationContext
-    | EvaluateTransactionFailureScriptExecutionFailure;
+  error: EvaluateTransactionFailure;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -1337,13 +1250,12 @@ export interface EvaluateTransactionFailure {
 export interface EvaluateTransactionFailureIncompatibleEra {
   code: 3000;
   message: string;
-  data: IncompatibleEra;
-}
-/**
- * The era in which the transaction has been identified.
- */
-export interface IncompatibleEra {
-  incompatibleEra: Era;
+  /**
+   * The era in which the transaction has been identified.
+   */
+  data: {
+    incompatibleEra: Era;
+  };
 }
 /**
  * Returned when trying to evaluate execution units of an era that is now considered too old and is no longer supported. This can solved by using a more recent transaction format.
@@ -1351,13 +1263,12 @@ export interface IncompatibleEra {
 export interface EvaluateTransactionFailureUnsupportedEra {
   code: 3001;
   message: string;
-  data: UnsupportedEra;
-}
-/**
- * The era in which the transaction has been identified.
- */
-export interface UnsupportedEra {
-  unsupportedEra: Era;
+  /**
+   * The era in which the transaction has been identified.
+   */
+  data: {
+    unsupportedEra: Era;
+  };
 }
 /**
  * Happens when providing an additional UTXO set which overlaps with the UTXO on-chain.
@@ -1365,10 +1276,9 @@ export interface UnsupportedEra {
 export interface EvaluateTransactionFailureOverlappingAdditionalUtxo {
   code: 3002;
   message: string;
-  data: OverlappingAdditionalUtxo;
-}
-export interface OverlappingAdditionalUtxo {
-  overlappingOutputReferences: TransactionOutputReference[];
+  data: {
+    overlappingOutputReferences: TransactionOutputReference[];
+  };
 }
 /**
  * Happens when attempting to evaluate execution units on a node that isn't enough synchronized.
@@ -1376,11 +1286,10 @@ export interface OverlappingAdditionalUtxo {
 export interface EvaluateTransactionFailureNodeTipTooOld {
   code: 3003;
   message: string;
-  data: NodeTipTooOld;
-}
-export interface NodeTipTooOld {
-  minimumRequiredEra: Era;
-  currentNodeEra: Era;
+  data: {
+    minimumRequiredEra: Era;
+    currentNodeEra: Era;
+  };
 }
 /**
  * The transaction is malformed or missing information; making evaluation impossible.
@@ -1388,68 +1297,29 @@ export interface NodeTipTooOld {
 export interface EvaluateTransactionFailureCannotCreateEvaluationContext {
   code: 3004;
   message: string;
-  data: CannotCreateEvaluationContext;
-}
-export interface CannotCreateEvaluationContext {
-  reason: string;
+  data: {
+    reason: string;
+  };
 }
 /**
  * One or more script execution terminated with an error.
  */
 export interface EvaluateTransactionFailureScriptExecutionFailure {
-  code: 3005;
+  code: 3010;
   message: string;
-  data: ScriptExecutionFailure;
-}
-/**
- * Some script in the transaction terminated with an error.
- */
-export interface ScriptExecutionFailure {
-  [k: string]: ScriptExecutionFailureReason[];
-}
-/**
- * Missing scripts required for validating script inputs.
- */
-export interface MissingRequiredScripts {
-  missingRequiredScripts: {
-    missing: RedeemerPointer[];
-    resolved: {
-      [k: string]: DigestBlake2B224;
-    };
+  data: {
+    [k: string]: unknown;
   };
 }
-/**
- * Plutus interpreter error. Returns additional traces produced by the validator.
- */
-export interface ValidatorFailed {
-  validatorFailed: {
-    error: string;
-    traces: string[];
+export interface EvaluateTransactionDeserialisationError {
+  jsonrpc: "2.0";
+  error: DeserialisationFailure;
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
   };
-}
-/**
- * Non-existing input referenced by a redeemer pointer.
- */
-export interface UnknownInputReferencedByRedeemer {
-  unknownInputReferencedByRedeemer: TransactionOutputReference;
-}
-/**
- * Input not locked by a Plutus referenced by a redeemer pointer.
- */
-export interface NonScriptInputReferencedByRedeemer {
-  nonScriptInputReferencedByRedeemer: TransactionOutputReference;
-}
-/**
- * Invalid execution budget set for a redeemer. In principle, cannot happen in the context of Ogmios.
- */
-export interface IllFormedExecutionBudget {
-  illFormedExecutionBudget?: ExecutionUnits;
-}
-/**
- * Input locked by a script which language has no cost model in current protocol parameters. In principle, cannot happen in the context of Ogmios.
- */
-export interface NoCostModelForLanguage {
-  noCostModelForLanguage: Language;
 }
 /**
  * Acquire a point on chain from which to run ledger-state queries.

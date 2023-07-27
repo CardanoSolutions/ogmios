@@ -102,8 +102,6 @@ import Ogmios.Data.Ledger
     , ValueInAnyEra (..)
     )
 
-import qualified Prelude
-
 data MultiEraPredicateFailure crypto
     ---------------------------------------------------------------------------
     -- Rule → UTXOW
@@ -430,9 +428,12 @@ data MultiEraPredicateFailure crypto
 --
 -- Given that we only return errors one-by-one to clients, we have to prioritize
 -- which error to return from the list when presented with many.
-pickPredicateFailure :: [MultiEraPredicateFailure crypto] -> MultiEraPredicateFailure crypto
+pickPredicateFailure :: HasCallStack => [MultiEraPredicateFailure crypto] -> MultiEraPredicateFailure crypto
 pickPredicateFailure =
-    Prelude.head . sortOn predicateFailurePriority
+    head
+    . fromMaybe (error "Empty list of predicate failures from the ledger!?")
+    . nonEmpty
+    . sortOn predicateFailurePriority
 
 -- | Return a priority index for ledger rules errors. Smaller means that errors
 -- should be considered first.

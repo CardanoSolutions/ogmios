@@ -707,14 +707,14 @@ encodePredicateFailure reject = \case
             Nothing
 
     UnrecognizedCertificateType ->
-        reject (predicateFailureCode 998)
+        reject (predicateFailureCode 898)
             "Unrecognized certificate type. This error is a placeholder due to how internal \
             \data-types are modeled. If you ever run into this, please report the issue as you've \
             \likely discoverd a critical bug..."
             Nothing
 
     InternalLedgerTypeConversionError ->
-        reject (predicateFailureCode 999)
+        reject (predicateFailureCode 899)
             "Whoopsie, the ledger failed to upgrade an data-type from an earlier era into data \
             \of a newer era. If you ever run into this, please report the issue as you've \
             \likely discoverd a critical bug..."

@@ -263,7 +263,7 @@
             }
           }
         }
-      , { "title": "SubmitTransactionFailure"
+      , { "title": "SubmitTransactionError"
         , "type": "object"
         , "required": [ "jsonrpc", "error" ]
         , "additionalProperties": false
@@ -273,14 +273,24 @@
             , "enum": [ "2.0" ]
             }
           , "error":
-            { "type": "object"
-            , "required": [ "code", "message", "data" ]
-            , "additionalProperties": false
-            , "properties":
-              { "code": { "type": "integer", "enum": [ 3005 ] }
-              , "message": { "type": "string" }
-              , "data": { "$ref": "cardano.json#/definitions/SubmitTransactionErrors" }
-              }
+            { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure"
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "title": "SubmitTransactionDeserialisationError"
+        , "type": "object"
+        , "required": [ "jsonrpc", "error" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "error":
+            { "$ref": "ogmios.json#/definitions/DeserialisationFailure"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -371,7 +381,7 @@
             }
           ]
         }
-      , { "title": "EvaluateTransactionFailure"
+      , { "title": "EvaluateTransactionError"
         , "description": "Happens when attempting to evaluate execution units on a node that isn't enough synchronized."
         , "type": "object"
         , "required": [ "jsonrpc", "error" ]
@@ -382,77 +392,24 @@
             , "enum": [ "2.0" ]
             }
           , "error":
-            { "oneOf":
-              [ { "title": "EvaluateTransactionFailure[IncompatibleEra]"
-                , "description": "Returned when trying to evaluate execution units of a pre-Alonzo transaction. Note that this isn't possible with Ogmios because transactions are always de-serialized as Alonzo transactions."
-                , "type": "object"
-                , "required": [ "code", "message", "data" ]
-                , "additionalProperties": false
-                , "properties":
-                  { "code": { "type": "integer", "enum": [ 3000 ] }
-                  , "message": { "type": "string" }
-                  , "data": { "$ref": "cardano.json#/definitions/EvaluateTransactionFailure[IncompatibleEra]" }
-                  }
-                }
-
-              , { "title": "EvaluateTransactionFailure[UnsupportedEra]"
-                , "description": "Returned when trying to evaluate execution units of an era that is now considered too old and is no longer supported. This can solved by using a more recent transaction format."
-                , "type": "object"
-                , "required": [ "code", "message", "data" ]
-                , "additionalProperties": false
-                , "properties":
-                  { "code": { "type": "integer", "enum": [ 3001 ] }
-                  , "message": { "type": "string" }
-                  , "data": { "$ref": "cardano.json#/definitions/EvaluateTransactionFailure[UnsupportedEra]" }
-                  }
-                }
-
-
-              , { "title": "EvaluateTransactionFailure[OverlappingAdditionalUtxo]"
-                , "description": "Happens when providing an additional UTXO set which overlaps with the UTXO on-chain."
-                , "type": "object"
-                , "required": [ "code", "message", "data" ]
-                , "additionalProperties": false
-                , "properties":
-                  { "code": { "type": "integer", "enum": [ 3002 ] }
-                  , "message": { "type": "string" }
-                  , "data": { "$ref": "cardano.json#/definitions/EvaluateTransactionFailure[OverlappingAdditionalUtxo]" }
-                  }
-                }
-              , { "title": "EvaluateTransactionFailure[NodeTipTooOld]"
-                , "description": "Happens when attempting to evaluate execution units on a node that isn't enough synchronized."
-                , "type": "object"
-                , "required": [ "code", "message", "data" ]
-                , "additionalProperties": false
-                , "properties":
-                  { "code": { "type": "integer", "enum": [ 3003 ] }
-                  , "message": { "type": "string" }
-                  , "data": { "$ref": "cardano.json#/definitions/EvaluateTransactionFailure[NodeTipTooOld]" }
-                  }
-                }
-              , { "title": "EvaluateTransactionFailure[CannotCreateEvaluationContext]"
-                , "description": "The transaction is malformed or missing information; making evaluation impossible."
-                , "type": "object"
-                , "required": [ "code", "message", "data" ]
-                , "additionalProperties": false
-                , "properties":
-                  { "code": { "type": "integer", "enum": [ 3004 ] }
-                  , "message": { "type": "string" }
-                  , "data": { "$ref": "cardano.json#/definitions/EvaluateTransactionFailure[CannotCreateEvaluationContext]" }
-                  }
-                }
-              , { "title": "EvaluateTransactionFailure[ScriptExecutionFailure]"
-                , "description": "One or more script execution terminated with an error."
-                , "type": "object"
-                , "required": [ "code", "message", "data" ]
-                , "additionalProperties": false
-                , "properties":
-                  { "code": { "type": "integer", "enum": [ 3005 ] }
-                  , "message": { "type": "string" }
-                  , "data": { "$ref": "cardano.json#/definitions/EvaluateTransactionFailure[ScriptExecutionFailure]" }
-                  }
-                }
-              ]
+            { "$ref": "ogmios.json#/definitions/EvaluateTransactionFailure"
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "title": "EvaluateTransactionDeserialisationError"
+        , "type": "object"
+        , "required": [ "jsonrpc", "error" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "error":
+            { "$ref": "ogmios.json#/definitions/DeserialisationFailure"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -626,7 +583,7 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 2001 ] }
           , "message": { "type": "string" }
-          , "data": { "$ref": "cardano.json#/definitions/EraMismatch" }
+          , "data": { "$ref": "ogmios.json#/definitions/EraMismatch" }
           }
         }
       , "id":
@@ -2037,7 +1994,157 @@
   }
 
 , "definitions":
-  { "LiveStakeDistribution":
+  { "DeserialisationFailure":
+    { "title": "DeserialisationFailure"
+    , "description": "The input failed to deserialize in any of the known era."
+    , "type": "object"
+    , "required": [ "code", "message", "data" ]
+    , "additionalProperties": false
+    , "properties":
+      { "code": { "type": "integer", "enum": [ -32602 ] }
+      , "message": { "type": "string" }
+      , "data":
+        { "type": "object"
+        , "required": [ "shelley", "allegra", "mary", "alonzo", "babbage", "conway" ]
+        , "additionalProperties": false
+        , "properties":
+          { "shelley": { "type": "string" }
+          , "allegra": { "type": "string" }
+          , "mary": { "type": "string" }
+          , "alonzo": { "type": "string" }
+          , "babbage": { "type": "string" }
+          , "conway": { "type": "string" }
+          }
+        }
+      }
+    }
+
+  , "EraMismatch":
+    { "title": "EraMismatch"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "queryEra", "ledgerEra" ]
+    , "properties":
+      { "queryEra": { "$ref": "cardano.json#/definitions/Era" }
+      , "ledgerEra": { "$ref": "cardano.json#/definitions/Era" }
+      }
+    }
+
+  , "EvaluateTransactionFailure":
+    { "oneOf":
+      [ { "title": "EvaluateTransactionFailure<IncompatibleEra>"
+        , "description": "Returned when trying to evaluate execution units of a pre-Alonzo transaction. Note that this isn't possible with Ogmios because transactions are always de-serialized as Alonzo transactions."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3000 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "description": "The era in which the transaction has been identified."
+            , "type": "object"
+            , "additionalProperties": false
+            , "required": [ "incompatibleEra" ]
+            , "properties":
+              { "incompatibleEra": { "$ref": "cardano.json#/definitions/Era" }
+              }
+            }
+          }
+        }
+      , { "title": "EvaluateTransactionFailure<UnsupportedEra>"
+        , "description": "Returned when trying to evaluate execution units of an era that is now considered too old and is no longer supported. This can solved by using a more recent transaction format."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3001 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "description": "The era in which the transaction has been identified."
+            , "type": "object"
+            , "additionalProperties": false
+            , "required": [ "unsupportedEra" ]
+            , "properties":
+              { "unsupportedEra": { "$ref": "cardano.json#/definitions/Era" }
+              }
+            }
+          }
+        }
+      , { "title": "EvaluateTransactionFailure<OverlappingAdditionalUtxo>"
+        , "description": "Happens when providing an additional UTXO set which overlaps with the UTXO on-chain."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3002 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "overlappingOutputReferences" ]
+            , "properties":
+              { "overlappingOutputReferences":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+                }
+              }
+            }
+          }
+        }
+      , { "title": "EvaluateTransactionFailure<NodeTipTooOld>"
+        , "description": "Happens when attempting to evaluate execution units on a node that isn't enough synchronized."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3003 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "currentNodeEra", "minimumRequiredEra" ]
+            , "properties":
+              { "minimumRequiredEra": { "$ref": "cardano.json#/definitions/Era" }
+              , "currentNodeEra": { "$ref": "cardano.json#/definitions/Era" }
+              }
+            }
+          }
+        }
+      , { "title": "EvaluateTransactionFailure<CannotCreateEvaluationContext>"
+        , "description": "The transaction is malformed or missing information; making evaluation impossible."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3004 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "reason" ]
+            , "properties":
+              { "reason": { "type": "string" }
+              }
+            }
+          }
+        }
+      , { "title": "EvaluateTransactionFailure<ScriptExecutionFailure>"
+        , "description": "One or more script execution terminated with an error."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3010 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            }
+          }
+        }
+      ]
+    }
+
+  , "LiveStakeDistribution":
     { "type": "object"
     , "description": "Distribution of stake across registered stake pools. Each key in the map corresponds to a pool id."
     , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
@@ -2172,6 +2279,534 @@
         , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
         }
       }
+    }
+
+  , "SubmitTransactionFailure":
+    { "oneOf":
+      [ { "title": "SubmitTransactionFailure<EraMismatch>"
+        , "description": "Failed to submit the transaction in the current era. This may happen when trying to submit a transaction near an era boundary (i.e. at the moment of a hard-fork)."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3005 ] }
+          , "message": { "type": "string" }
+          , "data": { "$ref": "ogmios.json#/definitions/EraMismatch" }
+          }
+        }
+
+      , { "title": "SubmitTransactionFailure<InvalidSignatories>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3100 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<MissingSignatories>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3101 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<MissingScripts>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3102 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<FailingNativeScript>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3103 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<ExtraneousScripts>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3104 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<MissingMetadataHash>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3105 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<MissingMetadata>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3106 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<MetadataHashMismatch>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3107 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<InvalidMetadata>"
+        , "type": "object"
+        , "required": [ "code", "message" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3108 ] }
+          , "message": { "type": "string" }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<MissingRedeemers>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3109 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<ExtraneousRedeemers>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3110 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<MissingDatums>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3111 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<ExtraneousDatums>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3112 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<ScriptIntegrityHashMismatch>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3113 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<OrphanScriptInputs>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3114 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<MissingCostModels>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3115 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<MalformedScripts>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3116 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<UnknownOutputReferences>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3117 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<OutsideOfValidityInterval>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3118 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<TransactionTooLarge>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3119 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<ValueTooLarge>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3120 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<EmptyInputSet>"
+        , "type": "object"
+        , "required": [ "code", "message" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3121 ] }
+          , "message": { "type": "string" }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<TransactionFeeTooSmall>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3122 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<ValueNotConserved>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3123 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<NetworkMismatch>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3124 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<InsufficientlyFundedOutputs>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3125 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<BootstrapAttributesTooLarge>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3126 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<MintingOrBurningAda>"
+        , "type": "object"
+        , "required": [ "code", "message" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3127 ] }
+          , "message": { "type": "string" }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<InsufficientCollateral>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3128 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<CollateralLockedByScript>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3129 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<UnforeseeableSlot>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3130 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<TooManyCollateralInputs>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3131 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<MissingCollateralInputs>"
+        , "type": "object"
+        , "required": [ "code", "message" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3132 ] }
+          , "message": { "type": "string" }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<NonAdaCollateral>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3133 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<ExecutionUnitsTooLarge>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3134 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<TotalCollateralMismatch>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3135 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<InputSourceMismatch>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3136 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<UnauthorizedVote>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3137 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<UnknownGovernanceAction>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3138 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<InvalidProtocolParametersUpdate>"
+        , "type": "object"
+        , "required": [ "code", "message" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3139 ] }
+          , "message": { "type": "string" }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<UnknownStakePool>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3140 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<IncompleteWithdrawals>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3141 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<RetirementTooLate>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3142 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<StakePoolCostTooLow>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3143 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<MetadataHashTooLarge>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3144 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<CredentialAlreadyRegistered>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3145 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<UnknownCredential>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3146 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<NonEmptyRewardAccount>"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3147 ] }
+          , "message": { "type": "string" }
+          , "data": {}
+          }
+        }
+      , { "title": "SubmitTransactionFailure<InvalidGenesisDelegation>"
+        , "type": "object"
+        , "required": [ "code", "message" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3148 ] }
+          , "message": { "type": "string" }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<InvalidMIRTransfer>"
+        , "type": "object"
+        , "required": [ "code", "message" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3149 ] }
+          , "message": { "type": "string" }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<UnrecognizedCertificateType>"
+        , "type": "object"
+        , "required": [ "code", "message" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3998 ] }
+          , "message": { "type": "string" }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<InternalLedgerTypeConversionError>"
+        , "type": "object"
+        , "required": [ "code", "message" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3999 ] }
+          , "message": { "type": "string" }
+          }
+        }
+      ]
     }
 
   , "StakePoolSummary":

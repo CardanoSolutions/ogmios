@@ -25,6 +25,9 @@ import Cardano.Ledger.Core
 import Cardano.Ledger.Keys
     ( KeyRole (..)
     )
+import Cardano.Ledger.Shelley.API.Mempool
+    ( ApplyTxError (..)
+    )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
     )
@@ -270,12 +273,15 @@ genSubmitResult = frequency
 genHardForkApplyTxErr :: Gen (HardForkApplyTxErr (CardanoEras StandardCrypto))
 genHardForkApplyTxErr = frequency
     [ (1, HardForkApplyTxErrWrongEra <$> genMismatchEraInfo)
-    , (5, ApplyTxErrShelley <$> reasonablySized arbitrary)
-    , (5, ApplyTxErrAllegra <$> reasonablySized arbitrary)
-    , (5, ApplyTxErrMary <$> reasonablySized arbitrary)
-    , (30, ApplyTxErrAlonzo <$> reasonablySized arbitrary)
-    , (30, ApplyTxErrBabbage <$> reasonablySized arbitrary)
+    , (5, ApplyTxErrShelley <$> reasonablySized arbitrary `suchThat` isNonEmpty)
+    , (5, ApplyTxErrAllegra <$> reasonablySized arbitrary `suchThat` isNonEmpty)
+    , (5, ApplyTxErrMary <$> reasonablySized arbitrary `suchThat` isNonEmpty)
+    , (30, ApplyTxErrAlonzo <$> reasonablySized arbitrary `suchThat` isNonEmpty)
+    , (30, ApplyTxErrBabbage <$> reasonablySized arbitrary `suchThat` isNonEmpty)
     ]
+  where
+    isNonEmpty :: forall era. ApplyTxError era -> Bool
+    isNonEmpty (ApplyTxError xs) = not (null xs)
 
 genEvaluateTransactionResponse :: Gen (EvaluateTransactionResponse Block)
 genEvaluateTransactionResponse = frequency
