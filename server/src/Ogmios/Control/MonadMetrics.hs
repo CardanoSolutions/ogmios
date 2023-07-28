@@ -54,7 +54,7 @@ instance MonadMetrics IO where
     readCounter = fmap toInteger . Ekg.Counter.read
 
     type Distribution IO = Ekg.Distribution.Distribution
-    record distr = Ekg.Distribution.add distr
+    record = Ekg.Distribution.add
     readDistribution mk = fmap mk . Ekg.Distribution.read
 
 instance MonadMetrics m => MonadMetrics (ReaderT env m) where

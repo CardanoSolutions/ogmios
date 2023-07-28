@@ -49,6 +49,7 @@ library
       Ogmios.App.Server
       Ogmios.App.Server.Http
       Ogmios.App.Server.WebSocket
+      Ogmios.Control
       Ogmios.Control.Exception
       Ogmios.Control.MonadAsync
       Ogmios.Control.MonadClock

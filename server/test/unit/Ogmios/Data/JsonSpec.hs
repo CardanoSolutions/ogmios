@@ -914,7 +914,8 @@ validateLedgerStateQuery n method json parser = do
         Left e ->
             expectationFailure $ "failed to parse JSON: " <> show e
         Right queryInEra -> do
-            let eras = catMaybes $ (\e -> (e,) <$> queryInEra e) <$>
+            let eras = mapMaybe
+                    (\e -> (e,) <$> queryInEra e)
                     [ SomeShelleyEra ShelleyBasedEraShelley
                     , SomeShelleyEra ShelleyBasedEraAllegra
                     , SomeShelleyEra ShelleyBasedEraMary

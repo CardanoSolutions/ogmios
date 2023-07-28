@@ -195,7 +195,7 @@ traverset :: (Ord b, Applicative f) => (a -> f b) -> Set a -> f (Set b)
 traverset f =
     Set.foldr insert (pure Set.empty)
   where
-    insert x ys = liftA2 Set.insert (f x) ys
+    insert x = liftA2 Set.insert (f x)
 
 -- | Copied from: https://hackage.haskell.org/package/generic-lens-1.1.0.0/docs/src/Data.Generics.Internal.VL.Prism.html
 infixl 8 ^?
