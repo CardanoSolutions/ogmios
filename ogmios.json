@@ -887,11 +887,11 @@
             }
           , "scripts":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/StakeCredential" }
+            , "items": { "$ref": "ogmios.json#/definitions/AnyStakeCredential" }
             }
           , "keys":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/StakeCredential" }
+            , "items": { "$ref": "ogmios.json#/definitions/AnyStakeCredential" }
             }
           }
         }
@@ -1082,11 +1082,11 @@
         , "properties":
           { "scripts":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/StakeCredential" }
+            , "items": { "$ref": "ogmios.json#/definitions/AnyStakeCredential" }
             }
           , "keys":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/StakeCredential" }
+            , "items": { "$ref": "ogmios.json#/definitions/AnyStakeCredential" }
             }
           }
         }
@@ -1994,7 +1994,30 @@
   }
 
 , "definitions":
-  { "DeserialisationFailure":
+  { "AnyStakeCredential":
+    { "title": "AnyStakeCredential"
+    , "oneOf":
+      [ { "title": "Base16"
+        , "description": "A stake key or script hash in base16."
+        , "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+        }
+      , { "title": "Bech32"
+        , "type": "string"
+        , "description": "A Blake2b 28-byte hash digest of a verification key or script."
+        , "contentEncoding": "bech32"
+        , "pattern": "^(stake_vkh|script)1[0-9a-z]*$"
+        , "examples":
+          [ "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
+          , "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
+          ]
+        }
+      , { "title": "Stake Address"
+        , "$ref": "cardano.json#/definitions/StakeAddress"
+        }
+      ]
+    }
+
+  , "DeserialisationFailure":
     { "title": "DeserialisationFailure"
     , "description": "The input failed to deserialize in any of the known era."
     , "type": "object"
@@ -2175,22 +2198,8 @@
     , "additionalProperties": false
     , "required": [ "maxCapacity", "currentSize", "transactions" ]
     , "properties":
-      { "maxCapacity":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "bytes" ]
-        , "properties":
-          { "bytes": { "$ref": "cardano.json#/definitions/UInt32" }
-          }
-        }
-      , "currentSize":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "bytes" ]
-        , "properties":
-          { "bytes": { "$ref": "cardano.json#/definitions/UInt32" }
-          }
-        }
+      { "maxCapacity": { "$ref": "ogmios.json#/definitions/NumberOfBytes" }
+      , "currentSize": { "$ref": "ogmios.json#/definitions/NumberOfBytes" }
       , "transactions":
         { "type": "object"
         , "additionalProperties": false
@@ -2199,6 +2208,15 @@
           { "count": { "$ref": "cardano.json#/definitions/UInt32" }
           }
         }
+      }
+    }
+
+  , "NumberOfBytes":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "bytes" ]
+    , "properties":
+      { "bytes": { "$ref": "cardano.json#/definitions/Int64" }
       }
     }
 
@@ -2302,7 +2320,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3100 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "invalidSignatories" ]
+            , "properties":
+              { "invalidSignatories":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/VerificationKey" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<MissingSignatories>"
@@ -2312,7 +2340,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3101 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "missingSignatories" ]
+            , "properties":
+              { "missingSignatories":
+                  { "type": "array"
+                  , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                  }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<MissingScripts>"
@@ -2322,7 +2360,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3102 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "missingScripts" ]
+            , "properties":
+              { "missingScripts":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<FailingNativeScript>"
@@ -2332,7 +2380,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3103 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "failingNativeScripts" ]
+            , "properties":
+              { "failingNativeScripts":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<ExtraneousScripts>"
@@ -2342,7 +2400,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3104 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "extraneousScripts" ]
+            , "properties":
+              { "extraneousScripts":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<MissingMetadataHash>"
@@ -2352,7 +2420,21 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3105 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "metadata" ]
+            , "properties":
+              { "metadata":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "hash" ]
+                , "properties":
+                  { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+                  }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<MissingMetadata>"
@@ -2362,7 +2444,21 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3106 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "metadata" ]
+            , "properties":
+              { "metadata":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "hash" ]
+                , "properties":
+                  { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+                  }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<MetadataHashMismatch>"
@@ -2372,7 +2468,29 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3107 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "provided", "computed" ]
+            , "properties":
+              { "provided":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "hash" ]
+                , "properties":
+                  { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+                  }
+                }
+              , "computed":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "hash" ]
+                , "properties":
+                  { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+                  }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<InvalidMetadata>"
@@ -2391,7 +2509,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3109 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "missingRedeemers" ]
+            , "properties":
+              { "missingRedeemers":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/ScriptPurpose" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<ExtraneousRedeemers>"
@@ -2401,7 +2529,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3110 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "extraneousRedeemers" ]
+            , "properties":
+              { "extraneousRedeemers":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<MissingDatums>"
@@ -2411,7 +2549,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3111 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "missingDatums" ]
+            , "properties":
+              { "missingDatums":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<ExtraneousDatums>"
@@ -2421,7 +2569,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3112 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "extraneousDatums" ]
+            , "properties":
+              { "extraneousDatums":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<ScriptIntegrityHashMismatch>"
@@ -2431,7 +2589,25 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3113 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "providedScriptIntegrity", "computedScriptIntegrity" ]
+            , "properties":
+              { "providedScriptIntegrity":
+                { "oneOf":
+                  [ { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+                  , { "$ref": "cardano.json#/definitions/Null" }
+                  ]
+                }
+              , "computedScriptIntegrity":
+                { "oneOf":
+                  [ { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+                  , { "$ref": "cardano.json#/definitions/Null" }
+                  ]
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<OrphanScriptInputs>"
@@ -2441,7 +2617,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3114 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "orphanScriptInputs" ]
+            , "properties":
+              { "orphanInputs":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<MissingCostModels>"
@@ -2451,7 +2637,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3115 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "missingCostModels" ]
+            , "properties":
+              { "missingCostModels":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/Language" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<MalformedScripts>"
@@ -2461,7 +2657,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3116 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "malformedScripts" ]
+            , "properties":
+              { "malformedScripts":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<UnknownOutputReferences>"
@@ -2471,7 +2677,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3117 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "unknownOutputReferences" ]
+            , "properties":
+              { "unknownOutputReferences":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<OutsideOfValidityInterval>"
@@ -2481,7 +2697,15 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3118 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "validityInterval", "currentSlot" ]
+            , "properties":
+              { "validityInterval": { "$ref": "cardano.json#/definitions/ValidityInterval" }
+              , "currentSlot": { "$ref": "cardano.json#/definitions/Slot" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<TransactionTooLarge>"
@@ -2491,7 +2715,15 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3119 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "measuredTransactionSize", "maximumTransactionSize" ]
+            , "properties":
+              { "measuredTransactionSize": { "$ref": "ogmios.json#/definitions/NumberOfBytes" }
+              , "maximumTransactionSize": { "$reF": "ogmios.json#/definitions/NumberOfBytes" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<ValueTooLarge>"
@@ -2501,7 +2733,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3120 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "excessivelyLargeOutputs" ]
+            , "properties":
+              { "excessivelyLargeOutputs":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/TransactionOutput" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<EmptyInputSet>"
@@ -2520,7 +2762,15 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3122 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "minimumRequiredFee", "providedFee" ]
+            , "properties":
+              { "minimumRequiredFee": { "$ref": "cardano.json#/definitions/Lovelace" }
+              , "providedFee": { "$ref": "cardano.json#/definitions/Lovelace" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<ValueNotConserved>"
@@ -2530,7 +2780,15 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3123 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "valueConsumed", "valueProduced" ]
+            , "properties":
+              { "valueConsumed": { "$ref": "cardano.json#/definitions/Value" }
+              , "valueProduced": { "$ref": "cardano.json#/definitions/Value" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<NetworkMismatch>"
@@ -2540,7 +2798,66 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3124 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "oneOf":
+              [ { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "expectedNetwork", "discriminatedType", "invalidEntities" ]
+                , "properties":
+                  { "expectedNetwork": { "$ref": "cardano.json#/definitions/Network" }
+                  , "discriminatedType":
+                    { "type": "string"
+                    , "enum": [ "address" ]
+                    }
+                  , "invalidEntities":
+                    { "type": "array"
+                    , "items": { "$ref": "cardano.json#/definitions/Address" }
+                    }
+                  }
+                }
+              , { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "expectedNetwork", "discriminatedType", "invalidEntities" ]
+                , "properties":
+                  { "expectedNetwork": { "$ref": "cardano.json#/definitions/Network" }
+                  , "discriminatedType":
+                    { "type": "string"
+                    , "enum": [ "rewardAccount" ]
+                    }
+                  , "invalidEntities":
+                    { "type": "array"
+                    , "items": { "$ref": "cardano.json#/definitions/RewardAccount" }
+                    }
+                  }
+                }
+              , { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "expectedNetwork", "discriminatedType", "invalidEntities" ]
+                , "properties":
+                  { "expectedNetwork": { "$ref": "cardano.json#/definitions/Network" }
+                  , "discriminatedType":
+                    { "type": "string"
+                    , "enum": [ "stakePoolCertificate" ]
+                    }
+                  , "invalidEntities":
+                    { "type": "array"
+                    , "items": { "$ref": "cardano.json#/definitions/StakePoolId" }
+                    }
+                  }
+                }
+              , { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "expectedNetwork", "discriminatedType" ]
+                , "properties":
+                  { "expectedNetwork": { "$ref": "cardano.json#/definitions/Network" }
+                  , "discriminatedType":
+                    { "type": "string"
+                    , "enum": [ "transaction" ]
+                    }
+                  }
+                }
+              ]
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<InsufficientlyFundedOutputs>"
@@ -2550,7 +2867,25 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3125 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "insufficientlyFundedOutputs" ]
+            , "properties":
+              { "insufficientlyFundedOutputs":
+                { "type": "array"
+                , "items":
+                  { "type": "object"
+                  , "additionalProperties": false
+                  , "required": [ "output" ]
+                  , "properties":
+                    { "output": { "$ref": "cardano.json#/definitions/TransactionOutput" }
+                    , "minimumRequiredValue": { "$ref": "cardano.json#/definitions/Lovelace" }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<BootstrapAttributesTooLarge>"
@@ -2560,7 +2895,17 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3126 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "bootstrapOutputs" ]
+            , "properties":
+              { "bootstrapOutputs":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/TransactionOutput" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<MintingOrBurningAda>"
@@ -2579,7 +2924,15 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3128 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "providedCollateral", "minimumRequiredCollateral" ]
+            , "properties":
+              { "providedCollateral": { "$ref": "cardano.json#/definitions/Lovelace" }
+              , "minimumRequiredCollateral": { "$ref": "cardano.json#/definitions/Lovelace" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<CollateralLockedByScript>"
@@ -2589,7 +2942,14 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3129 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "unsuitableCollateralInputs" ]
+            , "properties":
+              { "unsuitableCollateralInputs": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<UnforeseeableSlot>"
@@ -2599,7 +2959,14 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3130 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "unforeseeableSlot" ]
+            , "properties":
+              { "unforeseeableSlot": { "$ref": "cardano.json#/definitions/Slot" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<TooManyCollateralInputs>"
@@ -2609,7 +2976,15 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3131 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "maximumCollateralInputs", "countedCollateralInputs" ]
+            , "properties":
+              { "maximumCollateralInputs": { "$ref": "cardano.json#/definitions/UInt32" }
+              , "countedCollateralInputs": { "$ref": "cardano.json#/definitions/UInt32" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<MissingCollateralInputs>"
@@ -2628,7 +3003,14 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3133 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "unsuitableCollateralValue" ]
+            , "properties":
+              { "unsuitableCollateralInputs'": { "$ref": "cardano.json#/definitions/Value" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<ExecutionUnitsTooLarge>"
@@ -2638,7 +3020,15 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3134 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "providedExecutionUnits", "maximumExecutionUnits" ]
+            , "properties":
+              { "providedExecutionUnits": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+              , "maximumExecutionUnits": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<TotalCollateralMismatch>"
@@ -2648,7 +3038,15 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3135 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "declaredTotalCollateral", "computedTotalCollateral" ]
+            , "properties":
+              { "declaredTotalCollateral": { "$ref": "cardano.json#/definitions/Lovelace" }
+              , "computedTotalCollateral": { "$ref": "cardano.json#/definitions/Lovelace" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<InputSourceMismatch>"
@@ -2658,7 +3056,15 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3136 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "inputSource", "mismatchReason" ]
+            , "properties":
+              { "inputSource": { "$ref": "cardano.json#/definitions/InputSource" }
+              , "mismatchReason": { "type": "string" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<UnauthorizedVote>"
@@ -2668,7 +3074,15 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3137 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "unauthorizedVoter", "requiredRole" ]
+            , "properties":
+              { "unauthorizedVoter": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+              , "requiredRole": { "$ref": "cardano.json#/definitions/VoterRole" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<UnknownGovernanceAction>"
@@ -2678,7 +3092,14 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3138 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "unknownGovernanceAction" ]
+            , "properties":
+              { "unknownGovernanceAction": { "$ref": "cardano.json#/definitions/GovernanceActionId" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<InvalidProtocolParametersUpdate>"
@@ -2697,7 +3118,14 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3140 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "unknownStakePool" ]
+            , "properties":
+              { "unknownStakePool": { "$ref": "cardano.json#/definitions/StakePoolId" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<IncompleteWithdrawals>"
@@ -2707,7 +3135,14 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3141 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "incompleteWithdrawals" ]
+            , "properties":
+              { "incompleteWithdrawals":  { "$ref": "cardano.json#/definitions/Withdrawals" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<RetirementTooLate>"
@@ -2717,7 +3152,16 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3142 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "currentEpoch", "declaredEpoch", "firstInvalidEpoch" ]
+            , "properties":
+              { "currentEpoch": { "$ref": "cardano.json#/definitions/Epoch" }
+              , "declaredEpoch": { "$ref": "cardano.json#/definitions/Epoch" }
+              , "firstInvalidEpoch": { "$ref": "cardano.json#/definitions/Epoch" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<StakePoolCostTooLow>"
@@ -2727,7 +3171,15 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3143 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "minimumStakePoolCost", "declaredStakePoolCost" ]
+            , "properties":
+              { "minimumStakePoolCost": { "$ref": "cardano.json#/definitions/Lovelace" }
+              , "declaredStakePoolCost": { "$ref": "cardano.json#/definitions/Lovelace" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<MetadataHashTooLarge>"
@@ -2737,7 +3189,15 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3144 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "infringingStakePool", "computedMetadataHashSize" ]
+            , "properties":
+              { "infringingStakePool": { "$ref": "cardano.json#/definitions/StakePoolId" }
+              , "computedMetadataHashSize": { "$ref": "ogmios.json#/definitions/NumberOfBytes" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<CredentialAlreadyRegistered>"
@@ -2747,7 +3207,14 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3145 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "knownCredential" ]
+            , "properties":
+              { "knownCredential": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<UnknownCredential>"
@@ -2757,7 +3224,14 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3146 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "unknownCredential" ]
+            , "properties":
+              { "unknownCredential": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<NonEmptyRewardAccount>"
@@ -2767,7 +3241,14 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3147 ] }
           , "message": { "type": "string" }
-          , "data": {}
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "nonEmptyRewardAccountBalance" ]
+            , "properties":
+              { "nonEmptyRewardAccountBalance": { "$ref": "cardano.json#/definitions/Lovelace" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<InvalidGenesisDelegation>"
