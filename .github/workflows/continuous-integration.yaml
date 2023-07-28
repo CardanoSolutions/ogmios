@@ -65,7 +65,7 @@ jobs:
       working-directory: server
       shell: devx {0}
       run: |
-        cabal build --enable-executable-static exe:ogmios
+        cabal build --enable-executable-static --enable-executable-stripping exe:ogmios
 
     - name: 📦 Package
       run: |
