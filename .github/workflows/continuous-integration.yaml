@@ -386,6 +386,7 @@ jobs:
       with:
         build-args: |
           NETWORK=${{ matrix.network }}
+          CARDANO_NODE_VERSION=${{ matrix.cardano-node }}
         context: .
         push: true
         tags: ${{ steps.base-variables.outputs.image }}:latest
@@ -400,6 +401,7 @@ jobs:
       with:
         build-args: |
           NETWORK=${{ matrix.network }}
+          CARDANO_NODE_VERSION=${{ matrix.cardano-node }}
         context: .
         push: true
         tags: ${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
