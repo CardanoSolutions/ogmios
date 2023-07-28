@@ -12,9 +12,11 @@
 !server/LICENSE
 
 !server/app/
+!server/bin
+!server/config/
+!server/share
 !server/src/
 !server/static/
-!server/config/
 !server/test/
 server/test/vectors
 
@@ -22,8 +24,5 @@ server/test/vectors
 server/modules/hjsonpointer
 server/modules/hjsonschema
 server/modules/wai-routes
-
-!bin
-!share
 
 !LICENSE
