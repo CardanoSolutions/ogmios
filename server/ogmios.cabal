@@ -22,7 +22,6 @@ extra-source-files:
     static/dashboard.html
     static/dashboard.js
     static/assets/favicon.ico
-    static/assets/logo.png
     static/assets/ogmios__dark.png
     static/assets/ogmios__light.png
 
@@ -69,6 +68,7 @@ library
       Ogmios.Data.Json.Byron
       Ogmios.Data.Json.Conway
       Ogmios.Data.Json.Ledger.PredicateFailure
+      Ogmios.Data.Json.Ledger.ScriptFailure
       Ogmios.Data.Json.Mary
       Ogmios.Data.Json.Orphans
       Ogmios.Data.Json.Prelude
@@ -82,6 +82,7 @@ library
       Ogmios.Data.Ledger.PredicateFailure.Conway
       Ogmios.Data.Ledger.PredicateFailure.Mary
       Ogmios.Data.Ledger.PredicateFailure.Shelley
+      Ogmios.Data.Ledger.ScriptFailure
       Ogmios.Data.Metrics
       Ogmios.Data.Metrics.Prometheus
       Ogmios.Data.Protocol.ChainSync

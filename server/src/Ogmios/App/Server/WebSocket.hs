@@ -113,8 +113,10 @@ import Ogmios.Data.Json
     , encodeAcquireExpired
     , encodeAcquireFailure
     , encodeBlock
+    , encodeDeserialisationFailure
     , encodeExUnits
     , encodePoint
+    , encodeRdmrPtr
     , encodeScriptFailure
     , encodeSubmitTransactionError
     , encodeTip
@@ -123,7 +125,6 @@ import Ogmios.Data.Json
     , encodeTxId
     , encodeTxIn
     , jsonToByteString
-    , stringifyRdmrPtr
     )
 import Ogmios.Data.Json.Orphans
     ()
@@ -383,12 +384,13 @@ withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig co
     txSubmissionCodecs@TxSubmissionCodecs{..} =
         mkTxSubmissionCodecs
             encodeTxId
-            encodeSubmitTransactionError
-            stringifyRdmrPtr
+            encodeRdmrPtr
             encodeExUnits
-            encodeScriptFailure
             encodeTxIn
             encodeTranslationError
+            encodeSubmitTransactionError
+            encodeScriptFailure
+            encodeDeserialisationFailure
 
 --
 -- Logging

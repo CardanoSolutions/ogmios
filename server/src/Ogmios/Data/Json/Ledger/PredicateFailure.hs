@@ -35,7 +35,7 @@ predicateFailureCode  = Rpc.FaultCustom . (+ 3100)
 
 encodePredicateFailure
     :: Crypto crypto
-    => (Rpc.FaultCode -> String -> Maybe Json -> Json)
+    => Rpc.EmbedFault
     -> MultiEraPredicateFailure crypto
     -> Json
 encodePredicateFailure reject = \case

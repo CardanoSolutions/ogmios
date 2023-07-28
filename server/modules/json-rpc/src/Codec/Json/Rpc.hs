@@ -26,6 +26,7 @@ module Codec.Json.Rpc
     , Fault
     , FaultCode (..)
     , ToFault
+    , EmbedFault
     , Mirror
 
     -- * ToJSON / FromJSON
@@ -96,6 +97,13 @@ type ToResponse a = a -> Response a
 --
 -- @since 2.0.0
 type ToFault = FaultCode -> String -> Fault
+
+
+-- | A type-alias to help readability in signatures
+--
+-- @since 2.0.0
+type EmbedFault = FaultCode -> String -> Maybe Json.Encoding -> Json.Encoding
+
 --
 -- Public ToJSON / FromJSON interfaces
 --
@@ -159,7 +167,7 @@ genericToJSON opts =
 mkResponse
     :: forall res. ()
     => (   (Json.Encoding -> Json.Encoding)
-        -> (FaultCode -> String -> Maybe Json.Encoding -> Json.Encoding)
+        -> EmbedFault
         -> res
         -> Json.Encoding
        )

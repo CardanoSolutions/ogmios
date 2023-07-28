@@ -23,9 +23,6 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
     )
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
-import Prettyprinter
-    ( pretty
-    )
 
 import qualified Data.Map.Strict as Map
 
@@ -452,69 +449,6 @@ encodeScriptIntegrityHash
     -> Json
 encodeScriptIntegrityHash =
     Shelley.encodeHash . Ledger.extractHash
-
-encodeScriptFailure
-    :: Crypto crypto
-    => Ledger.Api.TransactionScriptFailure crypto
-    -> Json
-encodeScriptFailure = encodeObject . \case
-    -- NOTE: This 'RedeemerNotNeeded' error is likely redundant and misleading
-    -- in the ledger code. It is raised when the script's language pointed by
-    -- the redeemer is unknown.
-    Ledger.Api.RedeemerNotNeeded ptr _ ->
-        "extraRedeemers" .=
-            encodeFoldable encodeRdmrPtr [ptr]
-    Ledger.Api.RedeemerPointsToUnknownScriptHash ptr ->
-        "extraRedeemers" .=
-            encodeFoldable encodeRdmrPtr [ptr]
-    Ledger.Api.MissingScript ptr resolved ->
-        "missingRequiredScripts" .= encodeObject
-            ( "missing" .=
-                encodeFoldable encodeRdmrPtr [ptr] <>
-              "resolved" .=
-                encodeMap
-                    stringifyRdmrPtr
-                    (\(_, _, h) -> Shelley.encodeScriptHash h)
-                    resolved
-            )
-    Ledger.Api.MissingDatum h ->
-        "missingRequiredDatums" .= encodeObject
-            ( "missing" .=
-                encodeFoldable encodeDataHash [h]
-            )
-    Ledger.Api.ValidationFailure (Ledger.Api.ValidationFailedV1 err traces _debugLang) ->
-        "validatorFailed" .= encodeObject
-            ( "error" .=
-                encodeText (show (pretty err)) <>
-              "traces" .=
-                encodeFoldable encodeText traces
-            )
-    Ledger.Api.ValidationFailure (Ledger.Api.ValidationFailedV2 err traces _debugLang) ->
-        "validatorFailed" .= encodeObject
-            ( "error" .=
-                encodeText (show (pretty err)) <>
-              "traces" .=
-                encodeFoldable encodeText traces
-            )
-    Ledger.Api.ValidationFailure (Ledger.Api.ValidationFailedV3 err traces _debugLang) ->
-        "validatorFailed" .= encodeObject
-            ( "error" .=
-                encodeText (show (pretty err)) <>
-              "traces" .=
-                encodeFoldable encodeText traces
-            )
-    Ledger.Api.UnknownTxIn i ->
-        "unknownInputReferencedByRedeemer" .=
-            Shelley.encodeTxIn i
-    Ledger.Api.InvalidTxIn i ->
-        "nonScriptInputReferencedByRedeemer" .=
-            Shelley.encodeTxIn i
-    Ledger.Api.IncompatibleBudget budget ->
-        "illFormedExecutionBudget" .=? OmitWhenNothing
-            encodeExUnits (maybeToStrictMaybe (Al.exBudgetToExUnits budget))
-    Ledger.Api.NoCostModelInLedgerState lang ->
-        "noCostModelForLanguage" .=
-            encodeLanguage lang
 
 encodeTranslationError
     :: Crypto crypto

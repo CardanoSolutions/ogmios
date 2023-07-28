@@ -193,6 +193,15 @@ export type EvaluateTransactionFailure =
   | EvaluateTransactionFailureNodeTipTooOld
   | EvaluateTransactionFailureCannotCreateEvaluationContext
   | EvaluateTransactionFailureScriptExecutionFailure;
+export type ScriptExecutionFailure =
+  | ScriptExecutionFailureMissingScript
+  | ScriptExecutionFailureValidationFailure
+  | ScriptExecutionFailureUnsuitableOutputReference
+  | SubmitTransactionFailureExtraneousRedeemers
+  | SubmitTransactionFailureMissingDatums
+  | SubmitTransactionFailureUnknownOutputReferences
+  | SubmitTransactionFailureMissingCostModels
+  | SubmitTransactionFailureInternalLedgerTypeConversionError;
 /**
  * A time in seconds relative to another one (typically, system start or era start).
  */
@@ -1381,10 +1390,9 @@ export interface EvaluateTransaction {
 export interface EvaluateTransactionSuccess {
   jsonrpc: "2.0";
   result: {
-    budgets: {
-      [k: string]: ExecutionUnits;
-    };
-  };
+    validator: RedeemerPointer;
+    budget: ExecutionUnits;
+  }[];
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -1469,7 +1477,27 @@ export interface EvaluateTransactionFailureScriptExecutionFailure {
   code: 3010;
   message: string;
   data: {
-    [k: string]: unknown;
+    validator: RedeemerPointer;
+    error: ScriptExecutionFailure;
+  }[];
+}
+export interface ScriptExecutionFailureMissingScript {
+  code: 3011;
+  message: string;
+}
+export interface ScriptExecutionFailureValidationFailure {
+  code: 3012;
+  message: string;
+  data: {
+    validationError: string;
+    traces: string[];
+  };
+}
+export interface ScriptExecutionFailureUnsuitableOutputReference {
+  code: 3013;
+  message: string;
+  data: {
+    unsuitableOutputReference: TransactionOutputReference;
   };
 }
 export interface EvaluateTransactionDeserialisationError {

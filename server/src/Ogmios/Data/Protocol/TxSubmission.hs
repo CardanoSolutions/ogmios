@@ -121,8 +121,8 @@ import Control.Monad.Trans.Except
 import Ogmios.Data.EraTranslation
     ( MultiEraUTxO
     )
-import Ogmios.Data.Json
-    ( encodeDeserialisationFailure
+import Ogmios.Data.Ledger.ScriptFailure
+    ( pickScriptFailure
     )
 import Ouroboros.Consensus.HardFork.History
     ( PastHorizonException
@@ -138,6 +138,7 @@ import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Core as Core
 
 import qualified Codec.Json.Rpc as Rpc
+import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.Map as Map
 
@@ -166,14 +167,24 @@ mkTxSubmissionCodecs
         , FromJSON (MultiEraUTxO block)
         )
     => (GenTxId block -> Json)
-    -> ((Rpc.FaultCode -> String -> Maybe Json -> Json) -> SubmitTransactionError block -> Json)
-    -> (RdmrPtr -> Text)
+    -> (RdmrPtr -> Json)
     -> (ExUnits -> Json)
-    -> (TransactionScriptFailure (BlockCrypto block) -> Json)
     -> (TxIn (BlockCrypto block) -> Json)
     -> (TranslationError (BlockCrypto block) -> Json)
+    -> (Rpc.EmbedFault -> SubmitTransactionError block -> Json)
+    -> (Rpc.EmbedFault -> TransactionScriptFailure (BlockCrypto block) -> Json)
+    -> (Rpc.EmbedFault -> [(SomeShelleyEra, Binary.DecoderError, Word)] -> Json)
     -> TxSubmissionCodecs block
-mkTxSubmissionCodecs encodeTxId encodeSubmitTransactionError stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError =
+mkTxSubmissionCodecs
+    encodeTxId
+    encodeRdmrPtr
+    encodeExUnits
+    encodeTxIn
+    encodeTranslationError
+    encodeSubmitTransactionError
+    encodeScriptFailure
+    encodeDeserialisationFailure
+    =
     TxSubmissionCodecs
         { decodeSubmitTransaction =
             decodeWith _decodeSubmitTransaction
@@ -181,15 +192,17 @@ mkTxSubmissionCodecs encodeTxId encodeSubmitTransactionError stringifyRdmrPtr en
             _encodeSubmitTransactionResponse (Proxy @block)
                 encodeTxId
                 encodeSubmitTransactionError
+                encodeDeserialisationFailure
         , decodeEvaluateTransaction =
             decodeWith _decodeEvaluateTransaction
         , encodeEvaluateTransactionResponse =
             _encodeEvaluateTransactionResponse (Proxy @block)
-                stringifyRdmrPtr
+                encodeRdmrPtr
                 encodeExUnits
-                encodeScriptFailure
                 encodeTxIn
                 encodeTranslationError
+                encodeScriptFailure
+                encodeDeserialisationFailure
         }
 
 --
@@ -236,10 +249,15 @@ _encodeSubmitTransactionResponse
     :: forall block. ()
     => Proxy block
     -> (GenTxId block -> Json)
-    -> ((Rpc.FaultCode -> String -> Maybe Json -> Json) -> SubmitTransactionError block -> Json)
+    -> (Rpc.EmbedFault -> SubmitTransactionError block -> Json)
+    -> (Rpc.EmbedFault -> [(SomeShelleyEra, Binary.DecoderError, Word)] -> Json)
     -> Rpc.Response (SubmitTransactionResponse block)
     -> Json
-_encodeSubmitTransactionResponse _proxy encodeTransactionId encodeSubmitTransactionError =
+_encodeSubmitTransactionResponse _proxy
+    encodeTransactionId
+    encodeSubmitTransactionError
+    encodeDeserialisationFailure
+    =
     Rpc.mkResponse $ \resolve reject -> \case
         SubmitTransactionSuccess i ->
             resolve $ encodeObject
@@ -339,21 +357,35 @@ nodeTipTooOld currentNodeEra =
 _encodeEvaluateTransactionResponse
     :: forall block. ()
     => Proxy block
-    -> (RdmrPtr -> Text)
+    -> (RdmrPtr -> Json)
     -> (ExUnits -> Json)
-    -> (TransactionScriptFailure (BlockCrypto block) -> Json)
     -> (TxIn (BlockCrypto block) -> Json)
     -> (TranslationError (BlockCrypto block) -> Json)
+    -> (Rpc.EmbedFault -> TransactionScriptFailure (BlockCrypto block) -> Json)
+    -> (Rpc.EmbedFault -> [(SomeShelleyEra, Binary.DecoderError, Word)] -> Json)
     -> Rpc.Response (EvaluateTransactionResponse block)
     -> Json
-_encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError =
+_encodeEvaluateTransactionResponse _proxy
+    encodeRdmrPtr
+    encodeExUnits
+    encodeTxIn
+    encodeTranslationError
+    encodeScriptFailure
+    encodeDeserialisationFailure
+    =
     Rpc.mkResponse $ \resolve reject -> \case
-        EvaluationResult result ->
-            resolve $ encodeObject
-                ( "budgets" .= encodeMap stringifyRdmrPtr encodeExUnits result
-                )
+        EvaluationResult budgets ->
+            resolve $ encodeList identity $ Map.foldrWithKey
+                (\ptr result xs ->
+                    encodeObject
+                        ( "validator" .= encodeRdmrPtr ptr
+                       <> "budget" .= encodeExUnits result
+                        ) : xs
+                ) [] budgets
+
         EvaluateTransactionDeserialisationFailure errs ->
             encodeDeserialisationFailure reject errs
+
         EvaluationFailure (IncompatibleEra era) ->
             reject (Rpc.FaultCustom 3000)
                 "Trying to evaluate a transaction from an old era (prior to Alonzo)."
@@ -362,6 +394,7 @@ _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeS
                         encodeEraName era
                     )
                 )
+
         EvaluationFailure (UnsupportedEra era) ->
             reject (Rpc.FaultCustom 3001)
                 "Trying to evaluate a transaction from an era that's no longer supported \
@@ -371,6 +404,7 @@ _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeS
                         encodeEraName era
                     )
                 )
+
         EvaluationFailure (OverlappingAdditionalUtxo inputs) ->
             reject (Rpc.FaultCustom 3002)
                 "Some user-provided additional UTxO entries overlap with those that exist \
@@ -380,6 +414,7 @@ _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeS
                         encodeFoldable encodeTxIn inputs
                     )
                 )
+
         EvaluationFailure (NodeTipTooOldErr err) ->
             reject (Rpc.FaultCustom 3003)
                 "The node is still synchronizing and the ledger isn't yet in an era where \
@@ -391,6 +426,7 @@ _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeS
                         encodeEraName (minimumRequiredEra err)
                     )
                 )
+
         EvaluationFailure (CannotCreateEvaluationContext err) ->
             reject (Rpc.FaultCustom 3004)
                 "Unable to create the evaluation context from the given transaction."
@@ -399,14 +435,25 @@ _encodeEvaluateTransactionResponse _proxy stringifyRdmrPtr encodeExUnits encodeS
                         encodeTranslationError err
                     )
                 )
+
         EvaluationFailure (ScriptExecutionFailures failures) ->
-            -- TODO: Breakdown / promote nested errors into fine-grained errors
             reject (Rpc.FaultCustom 3010)
                 "Some scripts of the transactions terminated with error(s)."
-                (pure $ encodeMap
-                    stringifyRdmrPtr
-                    (encodeList encodeScriptFailure)
-                    failures
+                (pure $ encodeList identity $ Map.foldrWithKey
+                    (\ptr e xs ->
+                        if null e then
+                            xs
+                        else
+                            let embed code msg details = encodeObject
+                                    ( "validator" .= encodeRdmrPtr ptr
+                                   <> "error" .= encodeObject
+                                        ( "code" .= Json.toEncoding code
+                                       <> "message" .= Json.toEncoding msg
+                                       <> maybe mempty (Json.pair "data") details
+                                        )
+                                    )
+                             in encodeScriptFailure embed (pickScriptFailure e) : xs
+                    ) [] failures
                 )
 
 -- | A constraint synonym to bundle together constraints needed to run a script

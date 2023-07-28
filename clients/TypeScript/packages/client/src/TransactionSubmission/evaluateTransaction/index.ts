@@ -6,6 +6,7 @@ import {
   Ogmios,
   EvaluateTransactionSuccess,
   ExecutionUnits,
+  RedeemerPointer,
   Utxo
 } from '@cardano-ogmios/schema'
 
@@ -24,8 +25,9 @@ type Success = EvaluateTransactionSuccess
  *
  * @category TransactionSubmission
  */
-export interface EvaluationResult {
-  [k: string]: ExecutionUnits
+export type EvaluationResult = {
+  validator: RedeemerPointer;
+  budget: ExecutionUnits;
 }
 
 /**
@@ -37,7 +39,7 @@ export interface EvaluationResult {
  * @category TransactionSubmission
  */
 export function evaluateTransaction (context: InteractionContext, transaction: string, additionalUtxoSet?: Utxo) {
-  return Method<Request, Response, EvaluationResult>(
+  return Method<Request, Response, EvaluationResult[]>(
     {
       method: 'evaluateTransaction',
       params: {
@@ -53,11 +55,11 @@ export function evaluateTransaction (context: InteractionContext, transaction: s
 /** @Internal */
 export function handler (
   response: Response,
-  resolve: (value?: EvaluationResult) => void,
+  resolve: (value?: EvaluationResult[]) => void,
   reject: (reason?: any) => void
 ) {
   if (isEvaluateTransactionSuccess(response)) {
-    resolve(response.result.budgets)
+    resolve(response.result)
   } else {
     reject(response)
   }
@@ -65,5 +67,5 @@ export function handler (
 
 /** @Internal */
 export function isEvaluateTransactionSuccess (response: any): response is Success {
-  return typeof (response as Success)?.result?.budgets !== 'undefined'
+  return Array.isArray((response as Success)?.result)
 }

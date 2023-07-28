@@ -14,21 +14,21 @@ module Ogmios.Data.Json
     , inefficientEncodingToValue
 
       -- * Encoders
-    , encodeAcquireFailure
     , encodeAcquireExpired
+    , encodeAcquireFailure
     , encodeBlock
+    , encodeDeserialisationFailure
     , Alonzo.encodeExUnits
     , encodePoint
-    , encodeDeserialisationFailure
-    , Alonzo.encodeScriptFailure
+    , Alonzo.encodeRdmrPtr
+    , encodeScriptFailure
     , encodeSerializedTransaction
     , encodeSubmitTransactionError
     , encodeTip
+    , Alonzo.encodeTranslationError
     , encodeTx
     , encodeTxId
     , Shelley.encodeTxIn
-    , Alonzo.stringifyRdmrPtr
-    , Alonzo.encodeTranslationError
 
       -- * Decoders
     , MultiEraDecoder (..)
@@ -56,6 +56,9 @@ import Cardano.Network.Protocol.NodeToClient
     )
 import Ogmios.Data.Json.Ledger.PredicateFailure
     ( encodePredicateFailure
+    )
+import Ogmios.Data.Json.Ledger.ScriptFailure
+    ( encodeScriptFailure
     )
 import Ogmios.Data.Json.Query
     ( decodeOneEraHash

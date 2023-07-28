@@ -45,8 +45,10 @@ import Ogmios.Data.Json
     , decodeWith
     , encodeAcquireExpired
     , encodeBlock
+    , encodeDeserialisationFailure
     , encodeExUnits
     , encodePoint
+    , encodeRdmrPtr
     , encodeScriptFailure
     , encodeSubmitTransactionError
     , encodeTip
@@ -56,7 +58,6 @@ import Ogmios.Data.Json
     , encodeTxIn
     , inefficientEncodingToValue
     , jsonToByteString
-    , stringifyRdmrPtr
     )
 import Ogmios.Data.Json.Orphans
     ()
@@ -425,13 +426,24 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response (SubmitTransactionResponse Block)))
-            (_encodeSubmitTransactionResponse (Proxy @Block) encodeTxId encodeSubmitTransactionError)
+            (_encodeSubmitTransactionResponse (Proxy @Block)
+                encodeTxId
+                encodeSubmitTransactionError
+                encodeDeserialisationFailure
+            )
             (200, "SubmitTransactionResponse")
             "ogmios.json#/properties/SubmitTransactionResponse"
 
         validateToJSON
             (arbitrary @(Rpc.Response (EvaluateTransactionResponse Block)))
-            (_encodeEvaluateTransactionResponse (Proxy @Block) stringifyRdmrPtr encodeExUnits encodeScriptFailure encodeTxIn encodeTranslationError)
+            (_encodeEvaluateTransactionResponse (Proxy @Block)
+                encodeRdmrPtr
+                encodeExUnits
+                encodeTxIn
+                encodeTranslationError
+                encodeScriptFailure
+                encodeDeserialisationFailure
+            )
             (100, "EvaluateTransactionResponse")
             "ogmios.json#/properties/EvaluateTransactionResponse"
 

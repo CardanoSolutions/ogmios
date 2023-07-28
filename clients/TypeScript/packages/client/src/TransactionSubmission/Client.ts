@@ -16,7 +16,7 @@ import {
  **/
 export interface TransactionSubmissionClient {
   context: InteractionContext
-  evaluateTransaction: (transaction: string, additionalUtxoSet?: Utxo) => Promise<EvaluationResult>
+  evaluateTransaction: (transaction: string, additionalUtxoSet?: Utxo) => Promise<EvaluationResult[]>
   submitTransaction: (transaction: string) => Promise<TransactionId>
   shutdown: () => Promise<void>
 }
@@ -86,7 +86,7 @@ export const createTransactionSubmissionClient = async (
     context,
     evaluateTransaction: (transaction, additionalUtxoSet) => {
       const method = METHODS.EVALUATE
-      return send<EvaluationResult>(async (socket) => {
+      return send<EvaluationResult[]>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
           method,
