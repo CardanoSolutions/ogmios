@@ -4,7 +4,7 @@ import {
   AnyStakeCredential,
   Lovelace,
   ProjectedRewards,
-  QueryLedgerStateProjectedRewardsResponse,
+  QueryLedgerStateProjectedRewardsResponse
 } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateProjectedRewards']

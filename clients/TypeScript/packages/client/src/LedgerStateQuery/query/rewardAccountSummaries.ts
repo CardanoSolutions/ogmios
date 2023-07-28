@@ -3,7 +3,7 @@ import {
   Ogmios,
   AnyStakeCredential,
   QueryLedgerStateRewardAccountSummariesResponse,
-  RewardAccountSummaries,
+  RewardAccountSummaries
 } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateRewardAccountSummaries']
