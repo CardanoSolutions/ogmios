@@ -42,6 +42,10 @@ jobs:
         minimal: true
         iog: true
 
+    - name: Post Setup
+      run: |
+        sudo chmod +x /usr/local/bin/devx
+
     - name: ❄️ Prepare cache
       working-directory: server
       shell: devx {0}
