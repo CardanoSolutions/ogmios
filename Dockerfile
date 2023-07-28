@@ -15,7 +15,7 @@ ARG NETWORK=mainnet
 LABEL name=ogmios
 LABEL description="A JSON WebSocket bridge for cardano-node."
 
-COPY ./bin/ogmios /bin/ogmios
+COPY ./server/bin/ogmios /bin/ogmios
 COPY ./server/config/network/${NETWORK} /config
 
 EXPOSE 1337/tcp
@@ -36,7 +36,7 @@ ENV TINI_VERSION v0.19.0
 LABEL name=cardano-node-ogmios
 LABEL description="A Cardano node, side-by-side with its JSON WebSocket bridge."
 
-COPY ./bin/ogmios /bin/ogmios
+COPY ./server/bin/ogmios /bin/ogmios
 COPY ./server/config/network/${NETWORK} /config
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static /tini
 RUN chmod +x /tini && mkdir -p /ipc
