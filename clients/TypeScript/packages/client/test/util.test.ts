@@ -43,9 +43,9 @@ describe('util', () => {
       const output = {
         address: 'addr_test1wq659t9n5excps5nqgnq6ckrhpa8g2k3f2lc2h4uvuess8s24hsvh',
         value: {
-          coins: 0n,
-          assets: {
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.01': 4n
+          ada: { lovelace: 0n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54: {
+            '01': 4n
           }
         },
         datumHash: 'bb30a42c1e62f0afda5f0a4e8a562f7a13a24cea00ee81917b86b89e801314aa'
@@ -76,9 +76,9 @@ describe('util', () => {
       const output = {
         address: 'addr1wxckk4h4asryhe4v8j4kqd0046rtxekv8hz2p4t3vq7hpegtxpwnn',
         value: {
-          coins: 1000000n,
-          assets: {
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54: 357n
+          ada: { lovelace: 1000000n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54: {
+            '': 357n
           }
         },
         datum: '4171',
@@ -110,8 +110,7 @@ describe('util', () => {
       const output = {
         address: 'addr_test1grs2w9p3nqfv8amnhgzwchtt8l7dt2kc2qrgqkcy0vyz2svyhpvqzqsdmflg9',
         value: {
-          coins: 1000000n,
-          assets: {}
+          ada: { lovelace: 1000000n }
         },
         datum: '40',
         script: {
@@ -141,34 +140,34 @@ describe('util', () => {
       const output = {
         address: 'addr1wxckk4h4asryhe4v8j4kqd0046rtxekv8hz2p4t3vq7hpegtxpwnn',
         value: {
-          coins: 1000000n,
-          assets: {
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.00': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.01': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.02': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.03': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.04': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.05': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.06': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.07': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.08': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.09': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.0a': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.0b': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.0c': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.0d': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.0e': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.0f': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.10': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.11': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.12': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.13': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.14': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.15': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.16': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.17': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.18': 1n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.19': 1n
+          ada: { lovelace: 1000000n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54: {
+            '00': 1n,
+            '01': 1n,
+            '02': 1n,
+            '03': 1n,
+            '04': 1n,
+            '05': 1n,
+            '06': 1n,
+            '07': 1n,
+            '08': 1n,
+            '09': 1n,
+            '0a': 1n,
+            '0b': 1n,
+            '0c': 1n,
+            '0d': 1n,
+            '0e': 1n,
+            '0f': 1n,
+            10: 1n,
+            11: 1n,
+            12: 1n,
+            13: 1n,
+            14: 1n,
+            15: 1n,
+            16: 1n,
+            17: 1n,
+            18: 1n,
+            19: 1n
           }
         }
       }
@@ -226,39 +225,39 @@ describe('util', () => {
       const output = {
         address: 'addr1wxckk4h4asryhe4v8j4kqd0046rtxekv8hz2p4t3vq7hpegtxpwnn',
         value: {
-          coins: 1000000n,
-          assets: {
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f00.000000000000000000000000000000': 99999999n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f00.000000000000000000000000000001': 99999999n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f00.000000000000000000000000000002': 99999999n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f00.000000000000000000000000000003': 99999999n,
-            'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f00.000000000000000000000000000004': 99999999n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f01: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f02: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f03: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f04: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f05: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f06: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f07: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f08: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f09: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0a: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0b: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0c: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0d: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0e: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0f: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f10: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f11: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f12: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f13: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f14: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f15: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f16: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f17: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f18: 1n,
-            b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f19: 1n
-          }
+          ada: { lovelace: 1000000n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f00: {
+            '000000000000000000000000000000': 99999999n,
+            '000000000000000000000000000001': 99999999n,
+            '000000000000000000000000000002': 99999999n,
+            '000000000000000000000000000003': 99999999n,
+            '000000000000000000000000000004': 99999999n
+          },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f01: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f02: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f03: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f04: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f05: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f06: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f07: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f08: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f09: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0a: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0b: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0c: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0d: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0e: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f0f: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f10: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f11: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f12: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f13: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f14: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f15: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f16: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f17: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f18: { '': 1n },
+          b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f19: { '': 1n }
         }
       }
 

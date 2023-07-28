@@ -82,7 +82,9 @@ module Ogmios.Data.Json.Prelude
     , encodeList
     , encodeListMap
     , encodeMap
+    , encodeMapSeries
     , encodeMaybe
+    , encodeSingleton
     , encodeObject
     , encode2Tuple
     , encode3Tuple
@@ -273,7 +275,7 @@ encodeByteStringBech32 hrp =
 
 encodeCoin :: Coin -> Json
 encodeCoin =
-    encodeInteger . unCoin
+    encodeSingleton "lovelace" . encodeInteger . unCoin
 {-# INLINEABLE encodeCoin #-}
 
 encodeDnsName :: DnsName -> Json
@@ -503,7 +505,12 @@ encodeListMap encodeKey encodeValue =
 
 encodeMap :: (k -> Text) -> (v -> Json) -> Map k v -> Json
 encodeMap encodeKey encodeValue =
-    Json.pairs . Map.foldrWithKey
+    Json.pairs . encodeMapSeries encodeKey encodeValue
+{-# INLINABLE encodeMap #-}
+
+encodeMapSeries :: (k -> Text) -> (v -> Json) -> Map k v -> Json.Series
+encodeMapSeries encodeKey encodeValue =
+    Map.foldrWithKey
         (\k v -> (<>)
             (Json.pair
                 (Json.fromText (encodeKey k))
@@ -511,12 +518,17 @@ encodeMap encodeKey encodeValue =
             )
         )
         mempty
-{-# INLINABLE encodeMap #-}
+{-# INLINABLE encodeMapSeries #-}
 
 encodeMaybe :: (a -> Json) -> Maybe a -> Json
 encodeMaybe =
     maybe encodeNull
 {-# INLINABLE encodeMaybe #-}
+
+encodeSingleton :: Json.Key -> Json -> Json
+encodeSingleton k =
+    Json.pairs . Json.pair k
+{-# INLINABLE encodeSingleton #-}
 
 encodeObject :: Json.Series -> Json
 encodeObject =

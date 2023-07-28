@@ -126,7 +126,7 @@ encodePParamsHKD
     -> Json
 encodePParamsHKD encode x =
     encode "minFeeCoefficient"
-        encodeCoin (Ba.bppMinFeeA x) <>
+        (encodeInteger . unCoin) (Ba.bppMinFeeA x) <>
     encode "minFeeConstant"
         encodeCoin (Ba.bppMinFeeB x) <>
     encode "maxBlockBodySize"
@@ -154,7 +154,7 @@ encodePParamsHKD encode x =
     encode "minPoolCost"
         encodeCoin (Ba.bppMinPoolCost x) <>
     encode "coinsPerUtxoByte"
-        (encodeCoin . Ba.unCoinPerByte) (Ba.bppCoinsPerUTxOByte x) <>
+        (encodeInteger . unCoin . Ba.unCoinPerByte) (Ba.bppCoinsPerUTxOByte x) <>
     encode "costModels"
         Alonzo.encodeCostModels (Ba.bppCostModels x) <>
     encode "prices"
@@ -222,7 +222,7 @@ encodeTxBody x =
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         Shelley.encodeWdrl (Ba.btbWithdrawals x) <>
     "mint" .=? OmitWhen (== mempty)
-        Mary.encodeMultiAsset (Ba.btbMint x) <>
+        (encodeObject . Mary.encodeMultiAsset) (Ba.btbMint x) <>
     "requiredExtraSignatories" .=? OmitWhen null
         (encodeFoldable Shelley.encodeKeyHash) (Ba.btbReqSignerHashes x) <>
     "network" .=? OmitWhenNothing

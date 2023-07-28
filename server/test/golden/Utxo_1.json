@@ -6,7 +6,7 @@
     },
     {
       "address": "addr_test1wqag3rt979nep9g2wtdwu8mr4gz6m4kjdpp5zp705km8wys6t2kla",
-      "value": { "coins": 1094740 },
+      "value": { "ada": { "lovelace": 1094740 } },
       "script": { "plutus:v2": "d8184c820249480100002221200101" },
       "datum": null,
       "datumHash": null

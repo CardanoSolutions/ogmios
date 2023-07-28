@@ -27,6 +27,17 @@
     , "description": "A number of asset, can be negative went burning assets."
     }
 
+  , "Assets":
+    { "title": "Assets"
+    , "type": "object"
+    , "propertyNames": { "pattern": "^[0-9a-z]{56}$" }
+    , "additionalProperties":
+      { "type": "object"
+      , "propertyNames": { "pattern": "^[0-9a-z]{0,64}$" }
+      , "additionalProperties": { "$ref": "cardano.json#/definitions/AssetQuantity" }
+      }
+    }
+
   , "Block":
     { "title": "Block"
     , "oneOf":
@@ -854,8 +865,14 @@
 
   , "Lovelace":
     { "title": "Lovelace"
-    , "type": "integer"
-    , "description": "A number of lovelace, possibly large when summed up."
+    , "additionalProperties": false
+    , "required": [ "lovelace" ]
+    , "properties":
+      { "lovelace":
+        { "type": "integer"
+        , "description": "A number of lovelace, possibly large when summed up."
+        }
+      }
     }
 
   , "LovelaceDelta":
@@ -976,20 +993,6 @@
       { "k": { "$ref": "cardano.json#/definitions/Metadatum" }
       , "v": { "$ref": "cardano.json#/definitions/Metadatum" }
       }
-    }
-
-  , "MintValue":
-    { "title": "MintValue"
-    , "type": "object"
-    , "propertyNames":
-      { "pattern": "^[0-9a-z]{56}(.[0-9a-z]{1,64})?$"
-      , "description": "A policy id with an (optional) asset name, dot-separated. Another way to visualize the regular expression given as pattern is through the following diagram:\n\n<pre>   ┏━━━━━━━━━━━┓ ╭───╮ ┏━━━━━━━━━━━━┓     \n╾┬─┫ POLICY_ID ┣─┤ . ├─┫ ASSET_NAME ┣─────┬╼\n │ ┗━━━━━━━━━━━┛ ╰───╯ ┗━━━━━━━━━━━━┛     │\n │ ┏━━━━━━━━━━━┓                          │\n └─┫ POLICY_ID ┣──────────────────────────┘\n   ┗━━━━━━━━━━━┛\n</pre>\nThe `POLICY_ID` and `ASSET_NAME` are both encoded in **base16** and are exactly 56 characters and at most 64 characters respectively."
-      , "examples":
-        [ "3542acb3a64d80c29302260d62c3b87a742ad14abf855ebc6733081e"
-        , "b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.706174617465"
-        ]
-      }
-    , "additionalProperties": { "$ref": "cardano.json#/definitions/AssetQuantity" }
     }
 
   , "Network":
@@ -1171,20 +1174,20 @@
     , "additionalProperties": false
     , "properties":
       { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "minFeeConstant": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
       , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/UInt64" }
       , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/UInt64" }
       , "maxTxSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "stakeKeyDeposit": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "poolDeposit": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "stakeKeyDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "poolDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
       , "poolRetirementEpochBound": { "$ref": "cardano.json#/definitions/UInt64" }
       , "desiredNumberOfPools": { "$ref": "cardano.json#/definitions/UInt64" }
       , "poolInfluence": { "$ref": "cardano.json#/definitions/Ratio" }
       , "monetaryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
       , "treasuryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
       , "decentralizationParameter": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "minUtxoValue": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "minPoolCost": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minUtxoValue": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "minPoolCost": { "$ref": "cardano.json#/definitions/Lovelace" }
       , "extraEntropy": { "$ref": "cardano.json#/definitions/Nonce" }
       , "protocolVersion": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
       }
@@ -1196,19 +1199,19 @@
     , "additionalProperties": false
     , "properties":
       { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "minFeeConstant": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
       , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/UInt64" }
       , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/UInt64" }
       , "maxTxSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "stakeKeyDeposit": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "poolDeposit": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "stakeKeyDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "poolDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
       , "poolRetirementEpochBound": { "$ref": "cardano.json#/definitions/UInt64" }
       , "desiredNumberOfPools": { "$ref": "cardano.json#/definitions/UInt64" }
       , "poolInfluence": { "$ref": "cardano.json#/definitions/Ratio" }
       , "monetaryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
       , "treasuryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
       , "decentralizationParameter": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "minPoolCost": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minPoolCost": { "$ref": "cardano.json#/definitions/Lovelace" }
       , "coinsPerUtxoWord": { "$ref": "cardano.json#/definitions/UInt64" }
       , "maxValueSize": { "$ref": "cardano.json#/definitions/UInt64" }
       , "collateralPercentage": { "$ref": "cardano.json#/definitions/UInt64" }
@@ -1228,18 +1231,18 @@
     , "additionalProperties": false
     , "properties":
       { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "minFeeConstant": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
       , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/UInt64" }
       , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/UInt64" }
       , "maxTxSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "stakeKeyDeposit": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "poolDeposit": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "stakeKeyDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "poolDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
       , "poolRetirementEpochBound": { "$ref": "cardano.json#/definitions/UInt64" }
       , "desiredNumberOfPools": { "$ref": "cardano.json#/definitions/UInt64" }
       , "poolInfluence": { "$ref": "cardano.json#/definitions/Ratio" }
       , "monetaryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
       , "treasuryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "minPoolCost": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minPoolCost": { "$ref": "cardano.json#/definitions/Lovelace" }
       , "coinsPerUtxoByte": { "$ref": "cardano.json#/definitions/UInt64" }
       , "maxValueSize": { "$ref": "cardano.json#/definitions/UInt64" }
       , "collateralPercentage": { "$ref": "cardano.json#/definitions/UInt64" }
@@ -1678,7 +1681,7 @@
         { "$ref": "cardano.json#/definitions/ValidityInterval"
         }
       , "mint":
-        { "$ref": "cardano.json#/definitions/MintValue"
+        { "$ref": "cardano.json#/definitions/Assets"
         }
       , "network":
         { "$ref": "cardano.json#/definitions/Network"
@@ -1740,7 +1743,7 @@
     , "required": [ "coefficient", "constant" ]
     , "properties":
       { "coefficient": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "constant": { "type": "number" }
+      , "constant": { "$ref": "cardano.json#/definitions/Lovelace" }
       }
     }
 
@@ -1895,21 +1898,21 @@
   , "Value":
     { "title": "Value"
     , "type": "object"
-    , "additionalProperties": false
-    , "required": [ "coins" ]
+    , "propertyNames": { "pattern": "^[0-9a-z]{56}$" }
+    , "additionalProperties":
+      { "type": "object"
+      , "propertyNames": { "pattern": "^[0-9a-z]{0,64}$" }
+      , "additionalProperties": { "$ref": "cardano.json#/definitions/AssetQuantity" }
+      }
+    , "required": [ "ada" ]
     , "properties":
-      { "coins": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "assets":
+      { "ada":
         { "type": "object"
-        , "propertyNames":
-          { "pattern": "^[0-9a-z]{56}(.[0-9a-z]{1,64})?$"
-          , "description": "A policy id with an (optional) asset name, dot-separated. Another way to visualize the regular expression given as pattern is through the following diagram:\n\n<pre>   ┏━━━━━━━━━━━┓ ╭───╮ ┏━━━━━━━━━━━━┓     \n╾┬─┫ POLICY_ID ┣─┤ . ├─┫ ASSET_NAME ┣─────┬╼\n │ ┗━━━━━━━━━━━┛ ╰───╯ ┗━━━━━━━━━━━━┛     │\n │ ┏━━━━━━━━━━━┓                          │\n └─┫ POLICY_ID ┣──────────────────────────┘\n   ┗━━━━━━━━━━━┛\n</pre>\nThe `POLICY_ID` and `ASSET_NAME` are both encoded in **base16** and are exactly 56 characters and at most 64 characters respectively."
-          , "examples":
-            [ "3542acb3a64d80c29302260d62c3b87a742ad14abf855ebc6733081e"
-            , "b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.706174617465"
-            ]
+        , "additionalProperties": false
+        , "required": [ "lovelace" ]
+        , "properties":
+          { "lovelace": { "type": "integer" }
           }
-        , "additionalProperties": { "$ref": "cardano.json#/definitions/AssetQuantity" }
         }
       }
     }

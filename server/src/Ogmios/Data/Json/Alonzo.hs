@@ -163,7 +163,7 @@ encodeGenesis
     -> Json
 encodeGenesis x =
     "coinsPerUtxoWord" .=
-        encodeCoin (Al.unCoinPerWord (Al.agCoinsPerUTxOWord x)) <>
+        (encodeInteger . unCoin) (Al.unCoinPerWord (Al.agCoinsPerUTxOWord x)) <>
     "costModels" .=
         encodeCostModels (Al.agCostModels x) <>
     "prices" .=
@@ -224,7 +224,7 @@ encodePParamsHKD
     -> Json
 encodePParamsHKD encode x =
     encode "minFeeCoefficient"
-        encodeCoin (Al.appMinFeeA x) <>
+        (encodeInteger . unCoin) (Al.appMinFeeA x) <>
     encode "minFeeConstant"
         encodeCoin (Al.appMinFeeB x) <>
     encode "maxBlockBodySize"
@@ -256,7 +256,7 @@ encodePParamsHKD encode x =
     encode "minPoolCost"
         encodeCoin (Al.appMinPoolCost x) <>
     encode "coinsPerUtxoWord"
-        (encodeCoin . Al.unCoinPerWord) (Al.appCoinsPerUTxOWord x) <>
+        (encodeInteger . unCoin . Al.unCoinPerWord) (Al.appCoinsPerUTxOWord x) <>
     encode "costModels"
         encodeCostModels (Al.appCostModels x) <>
     encode "prices"
@@ -392,7 +392,7 @@ encodeTxBody x =
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         Shelley.encodeWdrl (Al.atbWithdrawals x) <>
             "mint" .=? OmitWhen (== mempty)
-        Mary.encodeMultiAsset (Al.atbMint x) <>
+        (encodeObject . Mary.encodeMultiAsset) (Al.atbMint x) <>
     "requiredExtraSignatories".=? OmitWhen null
         (encodeFoldable Shelley.encodeKeyHash) (Al.atbReqSignerHashes x) <>
     "network" .=? OmitWhenNothing

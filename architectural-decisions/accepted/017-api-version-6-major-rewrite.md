@@ -259,4 +259,10 @@ TODO
 
 ##### Transaction phase-1 and phase-2 errors
 
-TODO
+All protocol errors are now identified using unique error codes. Beyond the codes specific to JSON-RPC 2.0 (i.e. -32700, -32600, -32601, -32602, -32603), Ogmios returns errors in different ranges depending on the mini-protocol. Hence the range `1000-1999` is reserved to the chain synchronization, `2000-2999` for the ledger/network state queries, `3000-3999` for the transaction submission / evaluation and 4000-4999 for the mempool monitoring.
+
+You don't have to worry too much about those ranges as it sufficient to know that each error has a unique code. The code can thus be used as a discriminant for parsing the error details, if any. With this, all the submission errors have been greatly reworked to provide extensive descriptions as 'message' and useful details when possible. In addition, Ogmios no longer returns a list of ledger errors. The list turned out to be often quite confusing as some error would trigger more error in cascade. To cope with this, Ogmios now has a built-in heuristic to figure out which error came first and is the most relevant to tackle next and thus, will only show one error at a time.
+
+##### Value
+
+The representation of `Value` has been changed to be more compact, more extensible and clearer. Values are now encoded as nested objects, where keys are respectively asset's policy id and asset name. Leaves are plain integers. The special case of Ada is encoded as a special policy id `ada` and asset name `lovelace`. This behavior is consistently applied to any amount that refers to a lovelace quantity. Transaction fees for example are now encoded as: `{ "lovelace": 1234 }`.

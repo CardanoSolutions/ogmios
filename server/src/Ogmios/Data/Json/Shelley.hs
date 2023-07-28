@@ -470,7 +470,7 @@ encodePParamsHKD
     -> Json
 encodePParamsHKD encode x =
     encode "minFeeCoefficient"
-        encodeCoin (Sh.sppMinFeeA x) <>
+        (encodeInteger . unCoin) (Sh.sppMinFeeA x) <>
     encode "minFeeConstant"
         encodeCoin (Sh.sppMinFeeB x) <>
     encode "maxBlockBodySize"
@@ -705,8 +705,8 @@ encodeUtxo =
 encodeValue
     :: Coin
     -> Json
-encodeValue coin =
-    encodeObject ("coins" .= encodeCoin coin)
+encodeValue =
+    encodeSingleton "ada" . encodeCoin
 
 encodeVerKeyDSign
     :: CC.DSIGNAlgorithm alg

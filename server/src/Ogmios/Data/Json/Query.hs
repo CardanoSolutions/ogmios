@@ -44,7 +44,6 @@ module Ogmios.Data.Json.Query
 
       -- * Decoders
     , decodeAddress
-    , decodeAssetId
     , decodeAssetName
     , decodeAssets
     , decodeCoin
@@ -1254,29 +1253,24 @@ decodeAddress = Json.withText "Address" $ choice "address"
 decodeAssets
     :: Crypto crypto
     => Json.Value
-    -> Json.Parser [(Ledger.Mary.PolicyID crypto, Ledger.Mary.AssetName, Integer)]
+    -> Json.Parser (Ledger.Mary.MultiAsset crypto)
 decodeAssets =
-    Json.withObject "Assets" $ Json.foldrWithKey fn (pure mempty)
+    fmap Ledger.Mary.MultiAsset . Json.withObject "Assets" (Json.foldrWithKey collectPolicies (pure mempty))
   where
-    fn k v p = do
-        xs <- p
-        (policyId, assetName) <- decodeAssetId (Json.toText k)
-        quantity <- Json.parseJSON v
-        pure $ (policyId, assetName, quantity) : xs
+    collectPolicies (Json.toText -> k) v parser = do
+        xs <- parser
+        policyId <- decodePolicyId k
+        assets <- Json.withObject
+            ("Assets<" <> toString k <> ">")
+            (Json.foldrWithKey collectAssets (pure mempty))
+            v
+        pure $ Map.insert policyId assets xs
 
-decodeAssetId
-    :: Crypto crypto
-    => Text
-    -> Json.Parser (Ledger.Mary.PolicyID crypto, Ledger.Mary.AssetName)
-decodeAssetId txt =
-    case T.splitOn "." txt of
-        [rawPolicyId] ->
-            let emptyAssetName = Ledger.Mary.AssetName mempty in
-            (,) <$> decodePolicyId rawPolicyId <*> pure emptyAssetName
-        [rawPolicyId, rawAssetName] ->
-            (,) <$> decodePolicyId rawPolicyId <*> decodeAssetName rawAssetName
-        _malformed ->
-            fail "invalid asset id, should be a dot-separated policy id and asset name, both base16-encoded."
+    collectAssets k v parser = do
+        xs <- parser
+        assetName <- decodeAssetName (Json.toText k)
+        quantity <- Json.parseJSON v
+        pure $ Map.insert assetName quantity xs
 
 decodeAssetName
     :: Text
@@ -1296,8 +1290,9 @@ decodeBinaryData =
 decodeCoin
     :: Json.Value
     -> Json.Parser Coin
-decodeCoin =
-    fmap Ledger.word64ToCoin . Json.parseJSON
+decodeCoin = Json.withObject "Lovelace" $ \o -> do
+    lovelace <- o .: "lovelace"
+    pure $ Ledger.word64ToCoin (lovelace)
 
 decodeCredential
     :: forall crypto. Crypto crypto
@@ -1809,9 +1804,9 @@ decodeValue
     => Json.Value
     -> Json.Parser (Ledger.Value (AlonzoEra crypto))
 decodeValue = Json.withObject "Value" $ \o -> do
-    coins <- o .: "coins" >>= decodeCoin
-    assets <- o .:? "assets" >>= maybe (pure mempty) decodeAssets
-    pure (Ledger.Mary.valueFromList (Ledger.unCoin coins) assets)
+    coins <- o .: "ada" >>= decodeCoin
+    assets <- decodeAssets (Json.Object $ Json.delete "ada" o)
+    pure (Ledger.Mary.MaryValue (unCoin coins) assets)
 
 --
 -- Helpers

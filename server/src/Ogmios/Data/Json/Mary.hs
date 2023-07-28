@@ -24,7 +24,6 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
 
-import qualified Data.ByteString.Short as BS
 import qualified Data.Map.Strict as Map
 
 import qualified Ogmios.Data.Json.Allegra as Allegra
@@ -92,14 +91,12 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
 encodeMultiAsset
     :: Crypto crypto
     => Ma.MultiAsset crypto
-    -> Json
+    -> Series
 encodeMultiAsset (Ma.MultiAsset assets) =
-    encodeMap stringifyAssetId encodeInteger (flatten assets)
-  where
-    flatten :: (Ord k1, Ord k2) => Map k1 (Map k2 a) -> Map (k1, k2) a
-    flatten = Map.foldrWithKey
-        (\k inner -> Map.union (Map.mapKeys (k,) inner))
-        mempty
+    encodeMapSeries
+        stringifyPolicyId
+        (encodeMap stringifyAssetName encodeInteger)
+        assets
 
 encodePolicyId
     :: Crypto crypto
@@ -160,7 +157,7 @@ encodeTxBody (Ma.MaryTxBody inps outs certs wdrls fee validity updates _ mint) =
     "certificates" .=? OmitWhen null
         (encodeFoldable Shelley.encodeDCert) certs <>
     "mint" .=? OmitWhen (== mempty)
-        encodeMultiAsset mint <>
+        (encodeObject . encodeMultiAsset) mint <>
     "fee" .=
         encodeCoin fee <>
     "validityInterval" .=
@@ -193,12 +190,11 @@ encodeValue
     :: Crypto crypto
     => Ma.MaryValue crypto
     -> Json
-encodeValue (Ma.MaryValue coins assets) =
-    "coins" .=
-        encodeInteger coins <>
-    "assets" .=
-        encodeMultiAsset assets
-    & encodeObject
+encodeValue (Ma.MaryValue lovelace assets) =
+    encodeObject
+        ( "ada" .= encodeObject ("lovelace" .= encodeInteger lovelace)
+       <> encodeMultiAsset assets
+        )
 
 encodeWitnessSet
     :: Crypto crypto
@@ -220,7 +216,10 @@ encodeWitnessSet (fromSMaybe mempty -> auxScripts) x =
 -- Conversion To Text
 --
 
-stringifyAssetId :: Crypto crypto => (Ma.PolicyID crypto, Ma.AssetName) -> Text
-stringifyAssetId (Ma.PolicyID pid, Ma.AssetName bytes)
-    | BS.null bytes = Shelley.stringifyScriptHash pid
-    | otherwise     = Shelley.stringifyScriptHash pid <> "." <> encodeBase16 (fromShort bytes)
+stringifyPolicyId :: Crypto crypto => Ma.PolicyID crypto -> Text
+stringifyPolicyId (Ma.PolicyID pid) =
+    Shelley.stringifyScriptHash pid
+
+stringifyAssetName :: Ma.AssetName -> Text
+stringifyAssetName (Ma.AssetName bytes) =
+    encodeBase16 (fromShort bytes)

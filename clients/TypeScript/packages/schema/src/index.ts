@@ -32,10 +32,6 @@ export type BlockSize = number;
 export type TransactionId = string;
 export type UInt32 = number;
 /**
- * A number of lovelace, possibly large when summed up.
- */
-export type Lovelace = bigint;
-/**
  * A Cardano address (either legacy format or new format).
  */
 export type Address = string;
@@ -227,10 +223,6 @@ export type Bech32 = string;
  * A stake address (a.k.a reward account)
  */
 export type StakeAddress = string;
-/**
- * A number of lovelace, possibly large when summed up.
- */
-export type Lovelace1 = bigint;
 export type EraWithGenesis = "byron" | "shelley" | "alonzo";
 export type UtcTime = string;
 /**
@@ -488,7 +480,7 @@ export interface Transaction {
   withdrawals?: Withdrawals;
   fee?: Lovelace;
   validityInterval?: ValidityInterval;
-  mint?: MintValue;
+  mint?: Assets;
   network?: Network;
   scriptIntegrityHash?: DigestBlake2B256;
   requiredExtraSignatories?: DigestBlake2B224[];
@@ -513,6 +505,12 @@ export interface TransactionOutputReference {
   txId: TransactionId;
   index: UInt32;
 }
+export interface Lovelace {
+  /**
+   * A number of lovelace, possibly large when summed up.
+   */
+  lovelace: bigint;
+}
 /**
  * A transaction output. Since Mary, 'value' always return a multi-asset value. Since Alonzo, 'datumHash' is always present (albeit sometimes 'null'). Since Babbage, 'datum' & 'script' are always present (albeit sometimes 'null').
  */
@@ -524,8 +522,10 @@ export interface TransactionOutput {
   script?: Script;
 }
 export interface Value {
-  coins: Lovelace;
-  assets?: {
+  ada: {
+    lovelace: bigint;
+  };
+  [k: string]: {
     [k: string]: AssetQuantity;
   };
 }
@@ -643,8 +643,10 @@ export interface ValidityInterval {
   invalidBefore?: Slot;
   invalidAfter?: Slot;
 }
-export interface MintValue {
-  [k: string]: AssetQuantity;
+export interface Assets {
+  [k: string]: {
+    [k: string]: AssetQuantity;
+  };
 }
 export interface UpdateProposalShelley {
   epoch: Epoch;
@@ -654,20 +656,20 @@ export interface UpdateProposalShelley {
 }
 export interface ProtocolParametersShelley {
   minFeeCoefficient?: UInt64;
-  minFeeConstant?: UInt64;
+  minFeeConstant?: Lovelace;
   maxBlockBodySize?: UInt64;
   maxBlockHeaderSize?: UInt64;
   maxTxSize?: UInt64;
-  stakeKeyDeposit?: UInt64;
-  poolDeposit?: UInt64;
+  stakeKeyDeposit?: Lovelace;
+  poolDeposit?: Lovelace;
   poolRetirementEpochBound?: UInt64;
   desiredNumberOfPools?: UInt64;
   poolInfluence?: Ratio;
   monetaryExpansion?: Ratio;
   treasuryExpansion?: Ratio;
   decentralizationParameter?: Ratio;
-  minUtxoValue?: UInt64;
-  minPoolCost?: UInt64;
+  minUtxoValue?: Lovelace;
+  minPoolCost?: Lovelace;
   extraEntropy?: Nonce;
   protocolVersion?: ProtocolVersion;
 }
@@ -684,19 +686,19 @@ export interface UpdateProposalAlonzo {
 }
 export interface ProtocolParametersAlonzo {
   minFeeCoefficient?: UInt64;
-  minFeeConstant?: UInt64;
+  minFeeConstant?: Lovelace;
   maxBlockBodySize?: UInt64;
   maxBlockHeaderSize?: UInt64;
   maxTxSize?: UInt64;
-  stakeKeyDeposit?: UInt64;
-  poolDeposit?: UInt64;
+  stakeKeyDeposit?: Lovelace;
+  poolDeposit?: Lovelace;
   poolRetirementEpochBound?: UInt64;
   desiredNumberOfPools?: UInt64;
   poolInfluence?: Ratio;
   monetaryExpansion?: Ratio;
   treasuryExpansion?: Ratio;
   decentralizationParameter?: Ratio;
-  minPoolCost?: UInt64;
+  minPoolCost?: Lovelace;
   coinsPerUtxoWord?: UInt64;
   maxValueSize?: UInt64;
   collateralPercentage?: UInt64;
@@ -727,18 +729,18 @@ export interface UpdateProposalBabbage {
 }
 export interface ProtocolParametersBabbage {
   minFeeCoefficient?: UInt64;
-  minFeeConstant?: UInt64;
+  minFeeConstant?: Lovelace;
   maxBlockBodySize?: UInt64;
   maxBlockHeaderSize?: UInt64;
   maxTxSize?: UInt64;
-  stakeKeyDeposit?: UInt64;
-  poolDeposit?: UInt64;
+  stakeKeyDeposit?: Lovelace;
+  poolDeposit?: Lovelace;
   poolRetirementEpochBound?: UInt64;
   desiredNumberOfPools?: UInt64;
   poolInfluence?: Ratio;
   monetaryExpansion?: Ratio;
   treasuryExpansion?: Ratio;
-  minPoolCost?: UInt64;
+  minPoolCost?: Lovelace;
   coinsPerUtxoByte?: UInt64;
   maxValueSize?: UInt64;
   collateralPercentage?: UInt64;
@@ -828,7 +830,7 @@ export interface ProtocolParametersByron {
 }
 export interface TxFeePolicy {
   coefficient: Ratio;
-  constant: number;
+  constant: Lovelace;
 }
 export interface SoftForkRule {
   initThreshold: Ratio;
@@ -1972,7 +1974,7 @@ export interface RewardsProvenance {
 }
 export interface StakePoolSummary {
   stake: Lovelace;
-  ownerStake: Lovelace1;
+  ownerStake: Lovelace;
   /**
    * Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky.
    */

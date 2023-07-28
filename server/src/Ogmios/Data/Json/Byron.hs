@@ -188,9 +188,8 @@ encodeTxIn (By.TxInUtxo txid ix) =
 encodeValue
     :: By.Lovelace
     -> Json
-encodeValue coins =
-    "coins" .= encodeLovelace coins
-    & encodeObject
+encodeValue =
+    encodeSingleton "ada" . encodeLovelace
 
 encodeTxOut
     :: By.TxOut
@@ -336,7 +335,7 @@ encodeLovelace
     :: By.Lovelace
     -> Json
 encodeLovelace =
-    encodeInteger . By.lovelaceToInteger
+    encodeSingleton "lovelace" . encodeInteger . By.lovelaceToInteger
 
 encodeLovelaceError
     :: By.LovelaceError

@@ -3,6 +3,7 @@ import {
   Address,
   All,
   Any,
+  Assets,
   Block,
   BlockBFT,
   BlockEBB,
@@ -360,30 +361,33 @@ export const utxoSize = (
   function sizeOfValue (value: Value) {
     const POLICY_ID_SIZE = 28
 
-    const assets = Object.keys(value.assets)
+    const { ada: { lovelace }, ...assets } = value
 
     // The 'actual minimum' value is 857690, so it's always at least 5 bytes.
-    const lovelaceSize = value.coins >= 4294967296n ? 9 : 5
+    const lovelaceSize = lovelace >= 4294967296n ? 9 : 5
 
-    const [assetsSize, policies] = assets.reduce(([total, policies], assetId: string) => {
-      // Quantity encoded as a variable-length integer.
-      const quantitySize = sizeOfInteger(value.assets[assetId])
+    const [assetsSize, policies] = Object.keys(assets).reduce(([total, policies], policyId: string) => {
+      const assetsSize = Object.keys((assets as Assets)[policyId]).reduce((assetsSize, assetName) => {
+        registerAssetId(policies, policyId, assetName)
 
-      // Asset name can be anywhere between 0 and 32 bytes and are encoded as definite byte
-      // strings. Their size + type is encoded over 1 byte when shorter than 24 bytes, and 2 bytes
-      // otherwise.
-      const assetName = assetId.substring(2 * POLICY_ID_SIZE + 1)
-      let assetSize = assetName.length / 2
-      assetSize += sizeOfBytesDef(assetSize)
+        // Quantity encoded as a variable-length integer.
+        const quantitySize = sizeOfInteger((assets as Assets)[policyId][assetName])
+
+        // Asset name can be anywhere between 0 and 32 bytes and are encoded as definite byte
+        // strings. Their size + type is encoded over 1 byte when shorter than 24 bytes, and 2 bytes
+        // otherwise.
+        const assetNameSize = assetName.length / 2
+        const assetNameOverhead = sizeOfBytesDef(assetNameSize)
+
+        return assetsSize + assetNameSize + assetNameOverhead + quantitySize
+      }, 0)
 
       // Assets are encoded as a map or map. Therefore, while every asset name has an overhead,
       // a policy id only has an overhead if it's different. Then, the overhead is a constant 2 bytes
       // because the policy id is always 28 bytes (blake2b-224 hash digest of a script).
-      const policyId = assetId.substring(0, 2 * POLICY_ID_SIZE)
-      const knownPolicy = registerAssetId(policies, policyId, assetName)
-      const policySize = knownPolicy ? 0 : (2 + POLICY_ID_SIZE)
+      const policyIdSize = 2 + POLICY_ID_SIZE
 
-      return [total + policySize + assetSize + quantitySize, policies]
+      return [total + policyIdSize + assetsSize, policies]
     }, [0, new Map()])
 
     // - CBOR Map Key '01': 1 byte
@@ -394,7 +398,7 @@ export const utxoSize = (
       return total + sizeOfArrayDef(policy.size)
     }, 0)
 
-    const cborOverhead = 1 + (assets.length === 0 ? 0 : (1 + policiesOverhead + assetsOverhead))
+    const cborOverhead = 1 + (Object.keys(assets).length === 0 ? 0 : (1 + policiesOverhead + assetsOverhead))
 
     return cborOverhead + lovelaceSize + assetsSize
 

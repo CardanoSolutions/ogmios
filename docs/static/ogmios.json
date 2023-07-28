@@ -2232,20 +2232,17 @@
     , "additionalProperties":
       { "type": "object"
       , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
-      , "additionalProperties":
-        { "type": "number"
-        , "minimum": 0
-        }
+      , "additionalProperties": { "$ref": "cardano.json#/definitions/Lovelace" }
       }
     , "examples":
       [ { "1000000":
-          { "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9": 688
-          , "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc": 676
-          , "pool1qqqqzyqf8mlm70883zht60n4q6uqxg4a8x266sewv8ad2grkztl": 0
+          { "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9": { "lovelace": 688 }
+          , "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc": { "lovelace": 676 }
+          , "pool1qqqqzyqf8mlm70883zht60n4q6uqxg4a8x266sewv8ad2grkztl": { "lovelace": 0 }
           }
         , "bc1597ad71c55d2d009a9274b3831ded155118dd769f5376decc1369":
-          { "pool1qfzjwrtupyvzx0atp5pa3m82v7s8z2eqyqffa0grpyf4j349h6r": 0
-          , "pool1qfxukshs4fkcrflzdnxa2fdza5lfvew3y6echg8ckaa4q8m5hyf": 103181546
+          { "pool1qfzjwrtupyvzx0atp5pa3m82v7s8z2eqyqffa0grpyf4j349h6r": { "lovelace": 0 }
+          , "pool1qfxukshs4fkcrflzdnxa2fdza5lfvew3y6echg8ckaa4q8m5hyf": { "lovelace": 103181546 }
           }
         }
       ]
@@ -2289,12 +2286,22 @@
           ]
         }
       , "totalRewards":
-        { "type": "integer"
-        , "description": "Total rewards available for the given epoch."
+        { "description": "Total rewards available for the given epoch."
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "lovelace" ]
+        , "properties":
+          { "lovelace": { "type": "integer" }
+          }
         }
       , "activeStake":
-        { "type": "integer"
-        , "description": "The total amount of staked Lovelace during this epoch."
+        { "description": "The total amount of staked Lovelace during this epoch."
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "lovelace" ]
+        , "properties":
+          { "lovelace": { "type": "integer" }
+          }
         }
       , "pools":
         { "type": "object"
@@ -3373,10 +3380,7 @@
     , "required": [ "stake", "ownerStake", "approximatePerformance", "poolParameters" ]
     , "properties":
       { "stake": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "ownerStake":
-        { "$ref": "cardano.json#/definitions/Lovelace"
-        , "description": "The number of Lovelace owned by the stake pool owners. If this value is not at least as large as the 'pledgeRatio', the stake pool will not earn any rewards for the given epoch."
-        }
+      , "ownerStake": { "$ref": "cardano.json#/definitions/Lovelace" }
       , "approximatePerformance":
         { "type": "number"
         , "description": "Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky."
