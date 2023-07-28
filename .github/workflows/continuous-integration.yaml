@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         os: [ linux ]
-        arch: [ x86_64, aarch64 ]
+        arch: [ aarch64 ]
         compiler: [ ghc8107 ]
 
     runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-4vcpu-ubuntu-2204-arm' || 'ubuntu-latest' }}
@@ -45,6 +45,7 @@ jobs:
     - name: Post Setup
       run: |
         sudo chmod +x /usr/local/bin/devx
+        file server
 
     - name: ❄️ Prepare cache
       working-directory: server
@@ -340,7 +341,7 @@ jobs:
         target: [ ogmios, cardano-node-ogmios ]
         network: [ mainnet, preprod, preview ]
         cardano-node: [ 8.1.1 ]
-        arch: [ x86_64, aarch64 ]
+        arch: [ aarch64 ]
 
     runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-4vcpu-ubuntu-2204-arm' || 'ubuntu-latest' }}
 
