@@ -146,12 +146,13 @@ describe('TransactionSubmission', () => {
           console.log('Ho no! Failed to evaluate a well-formed transaction:', e)
         }
 
-        expect(result).toEqual({
-          'spend:0': {
+        expect(result).toEqual([{
+          validator: 'spend:0',
+          budget: {
             memory: 15694,
             steps: 5134808
           }
-        })
+        }])
       })
 
       it('fails to evaluate execution units when tx contains unknown inputs', async () => {
