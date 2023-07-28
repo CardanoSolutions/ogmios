@@ -1173,3 +1173,7 @@ div.ascii-drawing-split > pre {
     display: inline-block;
   }
 }
+
+i.fas, i.fab {
+  margin-right: 0.25rem !important;
+}
