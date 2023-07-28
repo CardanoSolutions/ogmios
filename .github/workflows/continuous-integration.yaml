@@ -158,7 +158,7 @@ jobs:
         os: [linux]
         arch: [x86_64]
         network: [preview]
-        cardano-node: [1.35.7]
+        cardano-node: [8.1.1]
 
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-latest' }}
     steps:
