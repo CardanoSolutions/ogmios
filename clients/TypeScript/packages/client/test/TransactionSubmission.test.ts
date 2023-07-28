@@ -105,11 +105,11 @@ describe('TransactionSubmission', () => {
             babbage: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 4, but found 3.",
             alonzo: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 4, but found 3.",
             mary: "invalid or incomplete value of type 'Transaction': An error occured while decoding value of type AllegraTxBodyRaw " +
-              "(MultiAsset StandardCrypto). field atbrTxFee with key 2, not decoded.",
+              '(MultiAsset StandardCrypto). field atbrTxFee with key 2, not decoded.',
             allegra: "invalid or incomplete value of type 'Transaction': An error occured while decoding value of type AllegraTxBodyRaw (). " +
-              "field atbrTxFee with key 2, not decoded.",
+              'field atbrTxFee with key 2, not decoded.',
             shelley: "invalid or incomplete value of type 'Transaction': An error occured while decoding value of type ShelleyTxBodyRaw. " +
-              "field fee with key 2, not decoded.",
+              'field fee with key 2, not decoded.'
           })
         }
       })
@@ -133,7 +133,7 @@ describe('TransactionSubmission', () => {
 
     methods.forEach(evaluate => {
       it('successfully evaluates execution units of well-formed tx', async () => {
-        let result;
+        let result
         try {
           result = await evaluate(
             ('84A300818258204E9A66B7E310F004893EEF615E11F8AE6C3328CF2BFDB3' +
@@ -143,7 +143,7 @@ describe('TransactionSubmission', () => {
             )
           )
         } catch (e) {
-          console.log("Ho no! Failed to evaluate a well-formed transaction:", e)
+          console.log('Ho no! Failed to evaluate a well-formed transaction:', e)
         }
 
         expect(result).toEqual({
