@@ -20,6 +20,7 @@ import {
 import {
   Ogmios,
   AcquireLedgerStateSuccess,
+  AnyStakeCredential,
   EraWithGenesis,
   GenesisAlonzo,
   GenesisByron,
@@ -27,7 +28,6 @@ import {
   Lovelace,
   Origin,
   Point,
-  StakeCredential,
   UtxoByAddresses,
   UtxoByOutputReferences
 } from '@cardano-ogmios/schema'
@@ -56,14 +56,14 @@ export interface LedgerStateQueryClient {
   networkTip(): ReturnType<typeof networkTip>
   projectedRewards(filter: {
     stake?: Lovelace[],
-    scripts?: StakeCredential[],
-    keys?: StakeCredential[]
+    scripts?: AnyStakeCredential[],
+    keys?: AnyStakeCredential[]
   }): ReturnType<typeof projectedRewards>
   proposedProtocolParameters(): ReturnType<typeof proposedProtocolParameters>
   protocolParameters(): ReturnType<typeof protocolParameters>
   rewardAccountSummaries(filter: {
-    scripts?: StakeCredential[],
-    keys?: StakeCredential[],
+    scripts?: AnyStakeCredential[],
+    keys?: AnyStakeCredential[],
   }): ReturnType<typeof rewardAccountSummaries>
   rewardsProvenance(): ReturnType<typeof rewardsProvenance>
   stakePools(): ReturnType<typeof stakePools>

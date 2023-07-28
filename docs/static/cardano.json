@@ -764,6 +764,17 @@
       }
     }
 
+  , "GovernanceActionId":
+    { "title": "GovernanceActionId"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "transaction", "action" ]
+    , "properties":
+      { "transaction": { "$ref": "cardano.json#/definitions/TransactionId" }
+      , "governanceAction": { "$ref": "cardano.json#/definitions/Index" }
+      }
+    }
+
   , "ExtendedVerificationKey":
     { "title": "ExtendedVerificationKey"
     , "type": "string"
@@ -771,6 +782,15 @@
     , "contentEncoding": "base16"
     , "minLength": 128
     , "maxLength": 128
+    }
+
+  , "Index":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "index" ]
+    , "properties":
+      { "index": { "$ref": "cardano.json#/definitions/UInt32" }
+      }
     }
 
   , "Int64":
@@ -815,6 +835,14 @@
           , "entity": { "$ref": "cardano.json#/definitions/RewardAccount" }
           }
         }
+      ]
+    }
+
+  , "InputSource":
+    { "type": "string"
+    , "enum":
+      [ "inputs"
+      , "collaterals"
       ]
     }
 
@@ -1583,29 +1611,6 @@
       ]
     }
 
-  , "StakeCredential":
-    { "title": "StakeCredential"
-    , "oneOf":
-      [ { "title": "Base16"
-        , "description": "A stake key or script hash in base16."
-        , "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
-        }
-      , { "title": "Bech32"
-        , "type": "string"
-        , "description": "A Blake2b 28-byte hash digest of a verification key or script."
-        , "contentEncoding": "bech32"
-        , "pattern": "^(stake_vkh|script)1[0-9a-z]*$"
-        , "examples":
-          [ "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
-          , "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
-          ]
-        }
-      , { "title": "Stake Address"
-        , "$ref": "cardano.json#/definitions/StakeAddress"
-        }
-      ]
-    }
-
   , "Tip":
     { "title": "tip"
     , "type": "object"
@@ -1635,11 +1640,7 @@
         { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
         }
       , "inputSource":
-        { "type": "string"
-        , "enum":
-          [ "inputs"
-          , "collaterals"
-          ]
+        { "$ref": "cardano.json#/definitions/InputSource"
         }
       , "inputs":
         { "type": "array"
@@ -1911,6 +1912,12 @@
         , "additionalProperties": { "$ref": "cardano.json#/definitions/AssetQuantity" }
         }
       }
+    }
+
+  , "VoterRole":
+    { "title": "VoterRole"
+    , "type": "string"
+    , "enum": [ "constitutionalCommittee", "delegateRepresentative", "stakePoolOperator" ]
     }
 
   , "VotingPeriod":

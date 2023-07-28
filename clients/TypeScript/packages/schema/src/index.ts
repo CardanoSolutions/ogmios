@@ -177,6 +177,14 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureUnrecognizedCertificateType
   | SubmitTransactionFailureInternalLedgerTypeConversionError;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage";
+export type ScriptPurpose = Spend | Mint | Certificate1 | Withdrawal;
+/**
+ * A Blake2b 28-byte hash digest, encoded in base16.
+ */
+export type PolicyId = string;
+export type RedeemerPointer = string;
+export type Language = "plutus:v1" | "plutus:v2" | "plutus:v3";
+export type VoterRole = "constitutionalCommittee" | "delegateRepresentative" | "stakePoolOperator";
 export type Utxo = [TransactionOutputReference, TransactionOutput][];
 export type EvaluateTransactionFailure =
   | EvaluateTransactionFailureIncompatibleEra
@@ -197,7 +205,7 @@ export type SlotLength = number;
  * Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks.
  */
 export type SafeZone = number;
-export type StakeCredential = DigestBlake2B2241 | Bech32 | StakeAddress;
+export type AnyStakeCredential = DigestBlake2B2241 | Bech32 | StakeAddress;
 /**
  * A Blake2b 28-byte hash digest, encoded in base16.
  */
@@ -924,42 +932,67 @@ export interface EraMismatch {
 export interface SubmitTransactionFailureInvalidSignatories {
   code: 3100;
   message: string;
-  data: unknown;
+  data: {
+    invalidSignatories: VerificationKey[];
+  };
 }
 export interface SubmitTransactionFailureMissingSignatories {
   code: 3101;
   message: string;
-  data: unknown;
+  data: {
+    missingSignatories: DigestBlake2B224[];
+  };
 }
 export interface SubmitTransactionFailureMissingScripts {
   code: 3102;
   message: string;
-  data: unknown;
+  data: {
+    missingScripts: DigestBlake2B224[];
+  };
 }
 export interface SubmitTransactionFailureFailingNativeScript {
   code: 3103;
   message: string;
-  data: unknown;
+  data: {
+    failingNativeScripts: DigestBlake2B224[];
+  };
 }
 export interface SubmitTransactionFailureExtraneousScripts {
   code: 3104;
   message: string;
-  data: unknown;
+  data: {
+    extraneousScripts: DigestBlake2B224[];
+  };
 }
 export interface SubmitTransactionFailureMissingMetadataHash {
   code: 3105;
   message: string;
-  data: unknown;
+  data: {
+    metadata: {
+      hash: DigestBlake2B256;
+    };
+  };
 }
 export interface SubmitTransactionFailureMissingMetadata {
   code: 3106;
   message: string;
-  data: unknown;
+  data: {
+    metadata: {
+      hash: DigestBlake2B256;
+    };
+  };
 }
 export interface SubmitTransactionFailureMetadataHashMismatch {
   code: 3107;
   message: string;
-  data: unknown;
+  data: {
+    provided: {
+      hash: DigestBlake2B256;
+    };
+    computed: {
+      hash: DigestBlake2B256;
+    };
+  };
 }
 export interface SubmitTransactionFailureInvalidMetadata {
   code: 3108;
@@ -968,62 +1001,106 @@ export interface SubmitTransactionFailureInvalidMetadata {
 export interface SubmitTransactionFailureMissingRedeemers {
   code: 3109;
   message: string;
-  data: unknown;
+  data: {
+    missingRedeemers: ScriptPurpose[];
+  };
+}
+export interface Spend {
+  spend: TransactionOutputReference;
+}
+export interface Mint {
+  mint: PolicyId;
+}
+export interface Certificate1 {
+  certificate: Certificate;
+}
+export interface Withdrawal {
+  withdrawal: RewardAccount;
 }
 export interface SubmitTransactionFailureExtraneousRedeemers {
   code: 3110;
   message: string;
-  data: unknown;
+  data: {
+    extraneousRedeemers: RedeemerPointer[];
+  };
 }
 export interface SubmitTransactionFailureMissingDatums {
   code: 3111;
   message: string;
-  data: unknown;
+  data: {
+    missingDatums: DigestBlake2B256[];
+  };
 }
 export interface SubmitTransactionFailureExtraneousDatums {
   code: 3112;
   message: string;
-  data: unknown;
+  data: {
+    extraneousDatums: DigestBlake2B256[];
+  };
 }
 export interface SubmitTransactionFailureScriptIntegrityHashMismatch {
   code: 3113;
   message: string;
-  data: unknown;
+  data: {
+    providedScriptIntegrity: DigestBlake2B256 | null;
+    computedScriptIntegrity: DigestBlake2B256 | null;
+  };
 }
 export interface SubmitTransactionFailureOrphanScriptInputs {
   code: 3114;
   message: string;
-  data: unknown;
+  data: {
+    orphanInputs?: TransactionOutputReference[];
+  };
 }
 export interface SubmitTransactionFailureMissingCostModels {
   code: 3115;
   message: string;
-  data: unknown;
+  data: {
+    missingCostModels: Language[];
+  };
 }
 export interface SubmitTransactionFailureMalformedScripts {
   code: 3116;
   message: string;
-  data: unknown;
+  data: {
+    malformedScripts: DigestBlake2B224[];
+  };
 }
 export interface SubmitTransactionFailureUnknownOutputReferences {
   code: 3117;
   message: string;
-  data: unknown;
+  data: {
+    unknownOutputReferences: TransactionOutputReference[];
+  };
 }
 export interface SubmitTransactionFailureOutsideOfValidityInterval {
   code: 3118;
   message: string;
-  data: unknown;
+  data: {
+    validityInterval: ValidityInterval;
+    currentSlot: Slot;
+  };
 }
 export interface SubmitTransactionFailureTransactionTooLarge {
   code: 3119;
   message: string;
-  data: unknown;
+  data: {
+    measuredTransactionSize: NumberOfBytes;
+    maximumTransactionSize: {
+      [k: string]: unknown;
+    };
+  };
+}
+export interface NumberOfBytes {
+  bytes: Int64;
 }
 export interface SubmitTransactionFailureValueTooLarge {
   code: 3120;
   message: string;
-  data: unknown;
+  data: {
+    excessivelyLargeOutputs: TransactionOutput[];
+  };
 }
 export interface SubmitTransactionFailureEmptyInputSet {
   code: 3121;
@@ -1032,27 +1109,59 @@ export interface SubmitTransactionFailureEmptyInputSet {
 export interface SubmitTransactionFailureTransactionFeeTooSmall {
   code: 3122;
   message: string;
-  data: unknown;
+  data: {
+    minimumRequiredFee: Lovelace;
+    providedFee: Lovelace;
+  };
 }
 export interface SubmitTransactionFailureValueNotConserved {
   code: 3123;
   message: string;
-  data: unknown;
+  data: {
+    valueConsumed: Value;
+    valueProduced: Value;
+  };
 }
 export interface SubmitTransactionFailureNetworkMismatch {
   code: 3124;
   message: string;
-  data: unknown;
+  data:
+    | {
+        expectedNetwork: Network;
+        discriminatedType: "address";
+        invalidEntities: Address[];
+      }
+    | {
+        expectedNetwork: Network;
+        discriminatedType: "rewardAccount";
+        invalidEntities: RewardAccount[];
+      }
+    | {
+        expectedNetwork: Network;
+        discriminatedType: "stakePoolCertificate";
+        invalidEntities: StakePoolId[];
+      }
+    | {
+        expectedNetwork: Network;
+        discriminatedType: "transaction";
+      };
 }
 export interface SubmitTransactionFailureInsufficientlyFundedOutputs {
   code: 3125;
   message: string;
-  data: unknown;
+  data: {
+    insufficientlyFundedOutputs: {
+      output: TransactionOutput;
+      minimumRequiredValue?: Lovelace;
+    }[];
+  };
 }
 export interface SubmitTransactionFailureBootstrapAttributesTooLarge {
   code: 3126;
   message: string;
-  data: unknown;
+  data: {
+    bootstrapOutputs: TransactionOutput[];
+  };
 }
 export interface SubmitTransactionFailureMintingOrBurningAda {
   code: 3127;
@@ -1061,22 +1170,32 @@ export interface SubmitTransactionFailureMintingOrBurningAda {
 export interface SubmitTransactionFailureInsufficientCollateral {
   code: 3128;
   message: string;
-  data: unknown;
+  data: {
+    providedCollateral: Lovelace;
+    minimumRequiredCollateral: Lovelace;
+  };
 }
 export interface SubmitTransactionFailureCollateralLockedByScript {
   code: 3129;
   message: string;
-  data: unknown;
+  data: {
+    unsuitableCollateralInputs: TransactionOutputReference;
+  };
 }
 export interface SubmitTransactionFailureUnforeseeableSlot {
   code: 3130;
   message: string;
-  data: unknown;
+  data: {
+    unforeseeableSlot: Slot;
+  };
 }
 export interface SubmitTransactionFailureTooManyCollateralInputs {
   code: 3131;
   message: string;
-  data: unknown;
+  data: {
+    maximumCollateralInputs: UInt321;
+    countedCollateralInputs: UInt321;
+  };
 }
 export interface SubmitTransactionFailureMissingCollateralInputs {
   code: 3132;
@@ -1085,32 +1204,54 @@ export interface SubmitTransactionFailureMissingCollateralInputs {
 export interface SubmitTransactionFailureNonAdaCollateral {
   code: 3133;
   message: string;
-  data: unknown;
+  data: {
+    "unsuitableCollateralInputs'"?: Value;
+  };
 }
 export interface SubmitTransactionFailureExecutionUnitsTooLarge {
   code: 3134;
   message: string;
-  data: unknown;
+  data: {
+    providedExecutionUnits: ExecutionUnits;
+    maximumExecutionUnits: ExecutionUnits;
+  };
 }
 export interface SubmitTransactionFailureTotalCollateralMismatch {
   code: 3135;
   message: string;
-  data: unknown;
+  data: {
+    declaredTotalCollateral: Lovelace;
+    computedTotalCollateral: Lovelace;
+  };
 }
 export interface SubmitTransactionFailureInputSourceMismatch {
   code: 3136;
   message: string;
-  data: unknown;
+  data: {
+    inputSource: "inputs" | "collaterals";
+    mismatchReason: string;
+  };
 }
 export interface SubmitTransactionFailureUnauthorizedVote {
   code: 3137;
   message: string;
-  data: unknown;
+  data: {
+    unauthorizedVoter: DigestBlake2B224;
+    requiredRole: VoterRole;
+  };
 }
 export interface SubmitTransactionFailureUnknownGovernanceAction {
   code: 3138;
   message: string;
-  data: unknown;
+  data: {
+    unknownGovernanceAction: GovernanceActionId;
+  };
+}
+export interface GovernanceActionId {
+  transaction: TransactionId;
+  governanceAction?: {
+    index: UInt321;
+  };
 }
 export interface SubmitTransactionFailureInvalidProtocolParametersUpdate {
   code: 3139;
@@ -1119,42 +1260,62 @@ export interface SubmitTransactionFailureInvalidProtocolParametersUpdate {
 export interface SubmitTransactionFailureUnknownStakePool {
   code: 3140;
   message: string;
-  data: unknown;
+  data: {
+    unknownStakePool: StakePoolId;
+  };
 }
 export interface SubmitTransactionFailureIncompleteWithdrawals {
   code: 3141;
   message: string;
-  data: unknown;
+  data: {
+    incompleteWithdrawals: Withdrawals;
+  };
 }
 export interface SubmitTransactionFailureRetirementTooLate {
   code: 3142;
   message: string;
-  data: unknown;
+  data: {
+    currentEpoch: Epoch;
+    declaredEpoch: Epoch;
+    firstInvalidEpoch: Epoch;
+  };
 }
 export interface SubmitTransactionFailureStakePoolCostTooLow {
   code: 3143;
   message: string;
-  data: unknown;
+  data: {
+    minimumStakePoolCost: Lovelace;
+    declaredStakePoolCost: Lovelace;
+  };
 }
 export interface SubmitTransactionFailureMetadataHashTooLarge {
   code: 3144;
   message: string;
-  data: unknown;
+  data: {
+    infringingStakePool: StakePoolId;
+    computedMetadataHashSize: NumberOfBytes;
+  };
 }
 export interface SubmitTransactionFailureCredentialAlreadyRegistered {
   code: 3145;
   message: string;
-  data: unknown;
+  data: {
+    knownCredential: DigestBlake2B224;
+  };
 }
 export interface SubmitTransactionFailureUnknownCredential {
   code: 3146;
   message: string;
-  data: unknown;
+  data: {
+    unknownCredential: DigestBlake2B224;
+  };
 }
 export interface SubmitTransactionFailureNonEmptyRewardAccount {
   code: 3147;
   message: string;
-  data: unknown;
+  data: {
+    nonEmptyRewardAccountBalance: Lovelace;
+  };
 }
 export interface SubmitTransactionFailureInvalidGenesisDelegation {
   code: 3148;
@@ -1601,8 +1762,8 @@ export interface QueryLedgerStateProjectedRewards {
   method: "queryLedgerState/projectedRewards";
   params: {
     stake?: Lovelace[];
-    scripts?: StakeCredential[];
-    keys?: StakeCredential[];
+    scripts?: AnyStakeCredential[];
+    keys?: AnyStakeCredential[];
   };
   /**
    * An arbitrary JSON value that will be mirrored back in the response.
@@ -1702,8 +1863,8 @@ export interface QueryLedgerStateRewardAccountSummaries {
   jsonrpc: "2.0";
   method: "queryLedgerState/rewardAccountSummaries";
   params: {
-    scripts?: StakeCredential[];
-    keys?: StakeCredential[];
+    scripts?: AnyStakeCredential[];
+    keys?: AnyStakeCredential[];
   };
   /**
    * An arbitrary JSON value that will be mirrored back in the response.
@@ -2233,12 +2394,8 @@ export interface SizeOfMempoolResponse {
   };
 }
 export interface MempoolSizeAndCapacity {
-  maxCapacity: {
-    bytes: UInt321;
-  };
-  currentSize: {
-    bytes: UInt321;
-  };
+  maxCapacity: NumberOfBytes;
+  currentSize: NumberOfBytes;
   transactions: {
     count: UInt321;
   };

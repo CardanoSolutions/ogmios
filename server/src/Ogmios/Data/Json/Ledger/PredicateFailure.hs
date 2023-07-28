@@ -334,10 +334,11 @@ encodePredicateFailure reject = \case
             "Insufficient fee! The transaction doesn't not contain enough fee to cover the minimum \
             \required by the protocol. Note that fee depends on (a) a flat cost fixed by the \
             \protocol, (b) the size of the serialized transaction, (c) the budget allocated for \
-            \Plutus script execution. The field 'data.minimumFee' indicates the minimum required fee \
-            \whereas 'data.providedFee' refers to the fee currently supplied with the transaction."
+            \Plutus script execution. The field 'data.minimumRequiredFee' indicates the minimum \
+            \required fee whereas 'data.providedFee' refers to the fee currently supplied with \
+            \the transaction."
             (pure $ encodeObject
-                ( "minimumFee" .=
+                ( "minimumRequiredFee" .=
                     encodeCoin minimumRequiredFee
                <> "providedFee" .=
                     encodeCoin suppliedFee
@@ -395,9 +396,9 @@ encodePredicateFailure reject = \case
             \amount of Lovelace (1e6 Lovelace = 1 Ada) needed for each output."
             (pure $ encodeObject
                 ( "insufficientlyFundedOutputs" .= encodeFoldable
-                    (\(out, required) -> encodeObject
+                    (\(out, maybeToStrictMaybe -> required) -> encodeObject
                         ( "output" .= encodeTxOutInAnyEra out
-                       <> "minimumRequiredValue" .= encodeMaybe encodeCoin required
+                       <> "minimumRequiredValue" .=? OmitWhenNothing encodeCoin required
                         )
                     ) insufficientlyFundedOutputs
                 )
@@ -442,9 +443,9 @@ encodePredicateFailure reject = \case
             \validity during the first phase of validations (a.k.a phase-1). This discards any \
             \input locked by a Plutus script to be used as collateral. Note that for some reason \
             \inputs locked by native scripts are also excluded from candidates collateral. The \
-            \field 'data.collateralInputs' lists all the problematic output references."
+            \field 'data.unsuitableCollateralInputs' lists all the problematic output references."
             (pure $ encodeObject
-                ( "collateralInputs" .=
+                ( "unsuitableCollateralInputs" .=
                     encodeFoldable Shelley.encodeTxIn collateralInputs
                 )
             )
@@ -501,10 +502,10 @@ encodePredicateFailure reject = \case
             "One of the input provided as collateral carries something else than Ada tokens. Only \
             \Ada can be used as collateral. Since the Babbage era, you also have the option to set \
             \a 'collateral return' or 'collateral change' output in order to send the surplus \
-            \non-Ada tokens to it. Regardless, the field 'data.collateralValue' indicates the \
-            \actual collateral value found by the ledger"
+            \non-Ada tokens to it. Regardless, the field 'data.unsuitableCollateralValue' indicates \
+            \the actual collateral value found by the ledger"
             (pure $ encodeObject
-                ( "collateralValue" .=
+                ( "unsuitableCollateralValue" .=
                     encodeValueInAnyEra collateralValue
                 )
             )
@@ -590,11 +591,11 @@ encodePredicateFailure reject = \case
     UnknownStakePool { poolId } ->
         reject (predicateFailureCode 40)
             "The transaction references an unknown stake pool as a target for delegation or update. \
-            \Double-check the pool id mentioned in 'data.unknownPool'. Note also that order in which \
-            \transactions are submitted matters; if you're trying to register a pool and delegate to \
-            \it in one go, make sure to submit transactions in the right order."
+            \Double-check the pool id mentioned in 'data.unknownStakePool'. Note also that order in \
+            \which transactions are submitted matters; if you're trying to register a pool and \
+            \delegate to it in one go, make sure to submit transactions in the right order."
             (pure $ encodeObject
-                ( "unknownPool" .=
+                ( "unknownStakePool" .=
                     Shelley.encodePoolId poolId
                 )
             )
@@ -647,10 +648,10 @@ encodePredicateFailure reject = \case
             "Some hash digest of (optional) stake pool metadata is too long. When registering, stake \
             \pools can supply an external metadata file and a hash digest of the content. The \
             \hashing algorithm is left open but the output digest must be smaller than 32 bytes. \
-            \The field 'data.stakePool' indicates which stake pool has an invalid metadata hash and \
-            \'data.computedMetadataHashSize' documents the computed hash size."
+            \The field 'data.infringingStakePool' indicates which stake pool has an invalid \
+            \metadata hash and 'data.computedMetadataHashSize' documents the computed hash size."
             (pure $ encodeObject
-                ( "stakePool" .=
+                ( "infringingStakePool" .=
                     Shelley.encodePoolId poolId
                 <> "computedMetadataHashSize" .= encodeObject
                     ( "bytes" .= encodeInteger (toInteger computedMetadataHashSize)
@@ -690,7 +691,7 @@ encodePredicateFailure reject = \case
             \proceed. The field 'data.nonEmptyRewardAccountBalance' indicates how much Lovelace \
             \is left in the account."
             (pure $ encodeObject
-                ( "nonEmptyRewardAccountBalance'" .=
+                ( "nonEmptyRewardAccountBalance" .=
                     encodeCoin rewardAccountBalance
                 )
             )
@@ -768,7 +769,7 @@ encodeDiscriminatedEntities = \case
         <>
         "invalidEntities" .= encodeFoldable Shelley.encodeRewardAcnt accts
     DiscriminatedPoolRegistrationCertificate poolId ->
-        "discriminatedType" .= encodeText "stakePoolRegistrationCertificate"
+        "discriminatedType" .= encodeText "stakePoolCertificate"
         <>
         "invalidEntities" .= encodeFoldable Shelley.encodePoolId [poolId]
     DiscriminatedTransaction ->

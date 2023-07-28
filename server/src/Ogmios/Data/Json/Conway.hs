@@ -73,7 +73,7 @@ encodeGovernanceActionId x =
         ( "transaction" .=
             Shelley.encodeTxId (Cn.gaidTxId x)
         <>
-          "action" .=
+          "governanceAction" .=
             encodeGovernanceActionIx (Cn.gaidGovActionIx x)
         )
 

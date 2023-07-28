@@ -53,15 +53,15 @@ import {
     ) => MempoolMonitoring.nextTransaction(context, args),
     projectedRewards: (filters?: {
       stake?: Schema.Lovelace[],
-      scripts?: Schema.StakeCredential[],
-      keys?: Schema.StakeCredential[],
+      scripts?: Schema.AnyStakeCredential[],
+      keys?: Schema.AnyStakeCredential[],
     }) => LedgerStateQuery.projectedRewards(context, filters),
     proposedProtocolParameters: () => LedgerStateQuery.proposedProtocolParameters(context),
     protocolParameters: () => LedgerStateQuery.protocolParameters(context),
     releaseMempool: () => MempoolMonitoring.releaseMempool(context),
     rewardAccountSummaries: (filters?: {
-      scripts?: Schema.StakeCredential[],
-      keys?: Schema.StakeCredential[]
+      scripts?: Schema.AnyStakeCredential[],
+      keys?: Schema.AnyStakeCredential[]
     }) => LedgerStateQuery.rewardAccountSummaries(context, filters),
     rewardsProvenance: () => LedgerStateQuery.rewardsProvenance(context),
     sizeOfMempool: () => MempoolMonitoring.sizeOfMempool(context),

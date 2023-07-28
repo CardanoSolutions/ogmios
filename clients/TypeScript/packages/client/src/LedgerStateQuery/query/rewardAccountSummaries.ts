@@ -1,9 +1,9 @@
 import { InteractionContext, Method } from '../../Connection'
 import {
   Ogmios,
+  AnyStakeCredential,
   QueryLedgerStateRewardAccountSummariesResponse,
   RewardAccountSummaries,
-  StakeCredential
 } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateRewardAccountSummaries']
@@ -18,8 +18,8 @@ type Success = QueryLedgerStateRewardAccountSummariesResponse
 export function rewardAccountSummaries (
   context: InteractionContext,
   params: {
-    scripts?: StakeCredential[],
-    keys?: StakeCredential[],
+    scripts?: AnyStakeCredential[],
+    keys?: AnyStakeCredential[],
   }
 ): Promise<RewardAccountSummaries> {
   return Method<Request, Response, RewardAccountSummaries>(
