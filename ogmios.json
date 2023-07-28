@@ -349,14 +349,14 @@
             , "enum": [ "2.0" ]
             }
           , "result":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "budgets" ]
-            , "properties":
-              { "budgets":
-                { "type": "object"
-                , "propertyNames": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
-                , "additionalProperties": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+            { "type": "array"
+            , "items":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "validator", "budget" ]
+              , "properties":
+                { "validator": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
+                , "budget": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
                 }
               }
             }
@@ -367,17 +367,13 @@
         , "examples":
           [ { "jsonrpc": "2.0"
             , "result":
-              { "budgets":
-                { "spend:1":
-                  { "memory": 5236222
-                  , "cpu": 1212353
-                  }
-                , "mint:0":
-                  { "memory": 5000
-                  , "cpu": 42
-                  }
+              [ { "validator": "spend:1"
+                , "budget": { "memory": 5236222, "cpu": 1212353 }
                 }
-              }
+              , { "validator": "mint:0"
+                , "budget": { "memory": 5000, "cpu": 42 }
+                }
+              ]
             }
           ]
         }
@@ -2160,7 +2156,16 @@
           { "code": { "type": "integer", "enum": [ 3010 ] }
           , "message": { "type": "string" }
           , "data":
-            { "type": "object"
+            { "type": "array"
+            , "items":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "validator", "error" ]
+              , "properties":
+                { "validator": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
+                , "error": { "$ref": "ogmios.json#/definitions/ScriptExecutionFailure" }
+                }
+              }
             }
           }
         }
@@ -2299,6 +2304,63 @@
       }
     }
 
+  , "ScriptExecutionFailure":
+    { "oneOf":
+      [ { "title": "ScriptExecutionFailure<MissingScript>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "code", "message" ]
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3011 ] }
+          , "message": { "type": "string" }
+          }
+        }
+      , { "title": "ScriptExecutionFailure<ValidationFailure>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "code", "message", "data" ]
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3012 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "validationError", "traces" ]
+            , "properties":
+              { "validationError": { "type": "string" }
+              , "traces":
+                { "type": "array"
+                , "items": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      , { "title": "ScriptExecutionFailure<UnsuitableOutputReference>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "code", "message", "data" ]
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3013 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "unsuitableOutputReference" ]
+            , "properties":
+              { "unsuitableOutputReference": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+              }
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<ExtraneousRedeemers>" }
+      , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<MissingDatums>" }
+      , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<UnknownOutputReference>" }
+      , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<MissingCostModels>" }
+      , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<InternalLedgerTypeConversionError>" }
+      ]
+    }
+
   , "SubmitTransactionFailure":
     { "oneOf":
       [ { "title": "SubmitTransactionFailure<EraMismatch>"
@@ -2312,7 +2374,6 @@
           , "data": { "$ref": "ogmios.json#/definitions/EraMismatch" }
           }
         }
-
       , { "title": "SubmitTransactionFailure<InvalidSignatories>"
         , "type": "object"
         , "required": [ "code", "message", "data" ]
@@ -2522,46 +2583,8 @@
             }
           }
         }
-      , { "title": "SubmitTransactionFailure<ExtraneousRedeemers>"
-        , "type": "object"
-        , "required": [ "code", "message", "data" ]
-        , "additionalProperties": false
-        , "properties":
-          { "code": { "type": "integer", "enum": [ 3110 ] }
-          , "message": { "type": "string" }
-          , "data":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "extraneousRedeemers" ]
-            , "properties":
-              { "extraneousRedeemers":
-                { "type": "array"
-                , "items": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
-                }
-              }
-            }
-          }
-        }
-      , { "title": "SubmitTransactionFailure<MissingDatums>"
-        , "type": "object"
-        , "required": [ "code", "message", "data" ]
-        , "additionalProperties": false
-        , "properties":
-          { "code": { "type": "integer", "enum": [ 3111 ] }
-          , "message": { "type": "string" }
-          , "data":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "missingDatums" ]
-            , "properties":
-              { "missingDatums":
-                { "type": "array"
-                , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
-                }
-              }
-            }
-          }
-        }
+      , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<ExtraneousRedeemers>" }
+      , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<MissingDatums>" }
       , { "title": "SubmitTransactionFailure<ExtraneousDatums>"
         , "type": "object"
         , "required": [ "code", "message", "data" ]
@@ -2630,26 +2653,7 @@
             }
           }
         }
-      , { "title": "SubmitTransactionFailure<MissingCostModels>"
-        , "type": "object"
-        , "required": [ "code", "message", "data" ]
-        , "additionalProperties": false
-        , "properties":
-          { "code": { "type": "integer", "enum": [ 3115 ] }
-          , "message": { "type": "string" }
-          , "data":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "missingCostModels" ]
-            , "properties":
-              { "missingCostModels":
-                { "type": "array"
-                , "items": { "$ref": "cardano.json#/definitions/Language" }
-                }
-              }
-            }
-          }
-        }
+      , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<MissingCostModels>" }
       , { "title": "SubmitTransactionFailure<MalformedScripts>"
         , "type": "object"
         , "required": [ "code", "message", "data" ]
@@ -2670,26 +2674,7 @@
             }
           }
         }
-      , { "title": "SubmitTransactionFailure<UnknownOutputReferences>"
-        , "type": "object"
-        , "required": [ "code", "message", "data" ]
-        , "additionalProperties": false
-        , "properties":
-          { "code": { "type": "integer", "enum": [ 3117 ] }
-          , "message": { "type": "string" }
-          , "data":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "unknownOutputReferences" ]
-            , "properties":
-              { "unknownOutputReferences":
-                { "type": "array"
-                , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
-                }
-              }
-            }
-          }
-        }
+      , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<UnknownOutputReference>" }
       , { "title": "SubmitTransactionFailure<OutsideOfValidityInterval>"
         , "type": "object"
         , "required": [ "code", "message", "data" ]
@@ -3278,16 +3263,108 @@
           , "message": { "type": "string" }
           }
         }
-      , { "title": "SubmitTransactionFailure<InternalLedgerTypeConversionError>"
-        , "type": "object"
-        , "required": [ "code", "message" ]
+      , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<InternalLedgerTypeConversionError>" }
+      ]
+    }
+
+
+  , "SubmitTransactionFailure<ExtraneousRedeemers>":
+    { "title": "SubmitTransactionFailure<ExtraneousRedeemers>"
+    , "type": "object"
+    , "required": [ "code", "message", "data" ]
+    , "additionalProperties": false
+    , "properties":
+      { "code": { "type": "integer", "enum": [ 3110 ] }
+      , "message": { "type": "string" }
+      , "data":
+        { "type": "object"
         , "additionalProperties": false
+        , "required": [ "extraneousRedeemers" ]
         , "properties":
-          { "code": { "type": "integer", "enum": [ 3999 ] }
-          , "message": { "type": "string" }
+          { "extraneousRedeemers":
+            { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
+            }
           }
         }
-      ]
+      }
+    }
+
+  , "SubmitTransactionFailure<MissingDatums>":
+    { "title": "SubmitTransactionFailure<MissingDatums>"
+    , "type": "object"
+    , "required": [ "code", "message", "data" ]
+    , "additionalProperties": false
+    , "properties":
+      { "code": { "type": "integer", "enum": [ 3111 ] }
+      , "message": { "type": "string" }
+      , "data":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "missingDatums" ]
+        , "properties":
+          { "missingDatums":
+            { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+            }
+          }
+        }
+      }
+    }
+
+  , "SubmitTransactionFailure<UnknownOutputReference>":
+    { "title": "SubmitTransactionFailure<UnknownOutputReferences>"
+    , "type": "object"
+    , "required": [ "code", "message", "data" ]
+    , "additionalProperties": false
+    , "properties":
+      { "code": { "type": "integer", "enum": [ 3117 ] }
+      , "message": { "type": "string" }
+      , "data":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "unknownOutputReferences" ]
+        , "properties":
+          { "unknownOutputReferences":
+            { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+            }
+          }
+        }
+      }
+    }
+
+  , "SubmitTransactionFailure<MissingCostModels>":
+    { "title": "SubmitTransactionFailure<MissingCostModels>"
+    , "type": "object"
+    , "required": [ "code", "message", "data" ]
+    , "additionalProperties": false
+    , "properties":
+      { "code": { "type": "integer", "enum": [ 3115 ] }
+      , "message": { "type": "string" }
+      , "data":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "missingCostModels" ]
+        , "properties":
+          { "missingCostModels":
+            { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/Language" }
+            }
+          }
+        }
+      }
+    }
+
+  , "SubmitTransactionFailure<InternalLedgerTypeConversionError>":
+    { "title": "SubmitTransactionFailure<InternalLedgerTypeConversionError>"
+    , "type": "object"
+    , "required": [ "code", "message" ]
+    , "additionalProperties": false
+    , "properties":
+      { "code": { "type": "integer", "enum": [ 3999 ] }
+      , "message": { "type": "string" }
+      }
     }
 
   , "StakePoolSummary":
@@ -3318,6 +3395,5 @@
         }
       }
     }
-
   }
 }
