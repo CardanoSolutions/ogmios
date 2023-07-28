@@ -118,12 +118,12 @@ data Server where
 -- - A quick'n'dirty "benchmark" script used for rapid smoke testing.
 --
 mkRoute "Server" [parseRoutes|
-/                      RootR                GET POST
-/dashboard.js          DashboardJsR         GET
-/health                HealthR              GET
-/metrics               MetricsR             GET
-/assets/logo.png       LogoR                GET
-/favicon.ico           FaviconR             GET
+/                           RootR         GET POST
+/dashboard.js               DashboardJsR  GET
+/health                     HealthR       GET
+/metrics                    MetricsR      GET
+/assets/ogmios__light.png   LogoR         GET
+/favicon.ico                FaviconR      GET
 |]
 
 -- Dashboard
@@ -185,7 +185,7 @@ getMetricsR = runHandlerM $ do
 getLogoR :: Handler Server
 getLogoR = runHandlerM $ do
     header "Content-Type" "image/png"
-    raw $(embedFile "static/assets/logo.png")
+    raw $(embedFile "static/assets/ogmios__light.png")
 
 getFaviconR :: Handler Server
 getFaviconR = runHandlerM $ do

@@ -72,7 +72,7 @@ pre {
 b, strong, label, th {
     font-weight: 600;
 }
-.default-animation, #header #logo-svg, #header #logo-svg path, #sidebar, #sidebar ul, #body, #body .padding, #body .nav {
+.default-animation, #sidebar, #sidebar ul, #body, #body .padding, #body .nav {
     -webkit-transition: all 0.5s ease;
     -moz-transition: all 0.5s ease;
     transition: all 0.5s ease;
@@ -102,27 +102,24 @@ textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[typ
     box-shadow: inset 0 1px 3px rgba(0,0,0,.06),0 0 5px rgba(0,169,218,.7)
 }
 #header-wrapper {
-    background: #8451a1;
+    background: #E9E5D6;
     color: #fff;
     text-align: center;
-    border-bottom: 4px solid #9c6fb6;
+    border-bottom: 4px solid #926E6F;
     padding: 1rem;
 }
 #header a {
     display: inline-block;
 }
-#header #logo-svg {
-    width: 8rem;
-    height: 2rem;
-}
-#header #logo-svg path {
-    fill: #fff;
+#header img {
+    height: auto;
+    height: 7rem;
 }
 .searchbox {
     margin-top: 1rem;
     position: relative;
-    border: 1px solid #915eae;
-    background: #764890;
+    border: 1px solid #3B543B;
+    background: #313534;
     border-radius: 4px;
 }
 .searchbox label {
@@ -173,7 +170,7 @@ textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[typ
     }
 }
 #sidebar {
-    background-color: #322A38;
+    background-color: #2C302E;
     position: fixed;
     top: 0;
     width: 300px;
@@ -192,7 +189,7 @@ textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[typ
     color: rgba(204, 204, 204, 0.6);
 }
 #sidebar hr {
-    border-bottom: 1px solid #2a232f;
+    border-bottom: 1px solid #272A29;
 }
 #sidebar a.padding {
     padding: 0 1rem;
@@ -276,7 +273,7 @@ textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[typ
     margin-top: 9px;
 }
 #sidebar ul.topics > li.parent, #sidebar ul.topics > li.active {
-    background: #251f29;
+    background: #272A29;
     margin-left: -1rem;
     margin-right: -1rem;
     padding-left: 1rem;
@@ -347,7 +344,7 @@ textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[typ
     border: 1px solid #ccc;
 }
 #body .padding {
-    padding: 3rem 6rem;
+    padding: 0;
 }
 @media only all and (max-width: 59.938em) {
     #body .padding {
@@ -413,7 +410,8 @@ textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[typ
     right: 0;
 }
 #body-inner {
-    margin-bottom: 5rem;
+    margin-bottom: 0;
+    padding: 0 4rem;
 }
 #chapter {
     display: flex;

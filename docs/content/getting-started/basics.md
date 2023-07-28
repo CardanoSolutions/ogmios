@@ -33,7 +33,7 @@ As you can see, the `method` specifies the method `findIntersection` which relat
 
 Let's start with a possible response to the request above:
 
-```
+```json
 {
     "jsonrpc": "1.0",
     "result": {
@@ -71,7 +71,7 @@ const client = new WebSocket("ws://localhost:1337");
 client.once('open', () => {
     const request = {
         "jsonrpc": "2.0",
-        "method: "findIntersection",
+        "method": "findIntersection",
         "params": { "points": [ "origin" ] }
     };
     client.send(JSON.stringify(request));
@@ -95,7 +95,7 @@ fetch("http://localhost:1337", {
   method: "POST",
   data: {
     "jsonrpc": "2.0",
-    "method: "submitTransaction",
+    "method": "submitTransaction",
     "params": { "transaction": "..." }
   }
 }).then(async response => {

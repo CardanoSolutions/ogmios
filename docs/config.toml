@@ -60,7 +60,7 @@ theme = "learn"
   url = "https://github.com/cardanosolutions/ogmios"
   weight = 100
 [[menu.shortcuts]]
-  name = "<i class='fab fa-solid fa-bullseye'></i> Issues Tracking"
+  name = "<i class='fas fa-solid fa-bullseye'></i> Issues Tracking"
   url = "https://github.com/cardanosolutions/ogmios/issues"
   weight = 101
 [[menu.shortcuts]]
@@ -68,7 +68,7 @@ theme = "learn"
   url = "https://discord.gg/ZeyDn65t5v"
   weight = 102
 [[menu.shortcuts]]
-  name = "<i class='fab fa-solid fa-file-code'></i> Architectural Decisions Record"
+  name = "<i class='fas fa-solid fa-file-code'></i> Architectural Decisions Record"
   url = "https://github.com/CardanoSolutions/ogmios/tree/master/architectural-decisions/accepted"
   weight = 103
 
