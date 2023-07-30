@@ -56,10 +56,10 @@ body #chapter h1 {
     }
 }
 a {
-    color: #00bdf3;
+    color: #8CC0DE;
 }
 a:hover {
-    color: #0082a7;
+    color: #4197C8;
 }
 pre {
     position: relative;
@@ -412,6 +412,11 @@ textarea:focus, input[type="email"]:focus, input[type="number"]:focus, input[typ
 #body-inner {
     margin-bottom: 0;
     padding: 0 4rem;
+}
+@media(max-width: 959px) {
+  #body-inner {
+    padding: 0;
+  }
 }
 #chapter {
     display: flex;
