@@ -323,10 +323,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@cardanosolutions/json-bigint@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@cardanosolutions/json-bigint/-/json-bigint-1.0.0.tgz#11a66d251ae34c605a9e7d31f01421721a8677fd"
-  integrity sha512-46ts2s0W63nzqHMhaXKACeY0GDWdnPet9wqOWtb8X3Y5LzokcaDKupLO2eHUwlvQyFzD9gxJlWPi/LqZPkn4oQ==
+"@cardanosolutions/json-bigint@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@cardanosolutions/json-bigint/-/json-bigint-1.0.1.tgz#077dad78f010c2fd195cf035b1b680dc6d98d50b"
+  integrity sha512-mbYL6jtHqMFCZnTFhmkmoeDzHMBino0gMiGQnOJE7CwzZzkK2HCpH0MTBk+84QDadMEGX7iFt7uB+levm1a+bQ==
   dependencies:
     bignumber.js "^9.0.0"
 
@@ -3730,7 +3730,6 @@ json-schema-to-typescript@CardanoSolutions/json-schema-to-typescript:
 
 "json-schema-to-typescript@https://github.com/CardanoSolutions/json-schema-to-typescript":
   version "10.1.5"
-  uid "09cdb4c5d46a7eeae4fbb39b6815ad385b3160eb"
   resolved "https://github.com/CardanoSolutions/json-schema-to-typescript#09cdb4c5d46a7eeae4fbb39b6815ad385b3160eb"
   dependencies:
     "@types/json-schema" "^7.0.6"
