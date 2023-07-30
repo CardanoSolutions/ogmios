@@ -100,6 +100,8 @@ JSON-WSP has been ditched and replaced by [JSON-RPC 2.0](https://www.jsonrpc.org
 > **Note**
 >
 > Ogmios' implementation of JSON-RPC 2.0 is _slightly_ more flexible as the specification w.r.t to the `id` field. While the specification indicates that this field should be a `string`, Ogmios will still accept _anything_ as an `id` field (`string`, `number`, `object`, etc..). So it is essentially a drop-in replacement for `mirror`.
+>
+> Similarly, Ogmios will always return the `method` as part of the response field as it often help with context and parsing.
 
 ##### Requests
 
@@ -178,6 +180,7 @@ Query responses from the local-state-query protocol are now wrapped under the qu
 ```json
 {
   "jsonrpc": "2.0",
+  "method": "queryLedgerState/tip",
   "result": {
     "tip": {
       "slot": 1234,

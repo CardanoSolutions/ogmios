@@ -167,7 +167,7 @@ _encodeAcquireLedgerState
     -> Rpc.Request (AcquireLedgerState block)
     -> Json
 _encodeAcquireLedgerState encodePoint =
-    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
+    Rpc.mkRequest $ encodeObject . \case
         AcquireLedgerState{point} ->
             "point" .=
                 encodePoint point
@@ -214,7 +214,7 @@ _encodeReleaseLedgerState
     :: Rpc.Request ReleaseLedgerState
     -> Json
 _encodeReleaseLedgerState =
-    Rpc.mkRequestNoParams Rpc.defaultOptions
+    Rpc.mkRequestNoParams
 
 _decodeReleaseLedgerState
     :: Json.Value
@@ -250,9 +250,9 @@ _decodeQueryLedgerState
     => Json.Value
     -> Json.Parser (Rpc.Request (QueryLedgerState block))
 _decodeQueryLedgerState json = do
-    Rpc.Request mirror QueryLedgerState <- Rpc.genericFromJSON opts json
+    Rpc.Request method mirror QueryLedgerState <- Rpc.genericFromJSON opts json
     query <- parseJSON json
-    pure $ Rpc.Request mirror query
+    pure $ Rpc.Request method mirror query
   where
     opts = Rpc.defaultOptions
         { Rpc.methodNamePredicate = const ((==) "query" . T.take 5)

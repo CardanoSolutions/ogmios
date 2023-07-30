@@ -89,14 +89,14 @@ For example `spend:0` points to the first transaction input; `mint:2` would poin
 ```json
 {
   "jsonrpc": "2.0",
-  "result": {
-    "budgets": {
-      "spend:0": {
-        "memory": 1700,
-        "cpu": 476468
-      }
+  "method": "evaluateTransaction",
+  "result": [{
+    "validator": "spend:0",
+    "budget": {
+      "memory": 1700,
+      "cpu": 476468
     }
-  }
+  }]
 }
 ```
 

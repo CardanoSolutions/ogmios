@@ -269,32 +269,23 @@ chainSyncMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
 
 nextBlock :: Rpc.Mirror -> ChainSyncMessage Block
 nextBlock mirror =
-     MsgNextBlock NextBlock (Rpc.Response mirror) (Rpc.Fault mirror)
+    MsgNextBlock NextBlock (Rpc.Response method mirror) (Rpc.Fault mirror)
+  where
+    method = Just "nextBlock"
 
 isNextBlockResponse :: ResponsePredicate
 isNextBlockResponse = ResponsePredicate $
-    \v -> isRollForward v || isRollBackward v
-  where
-    isRollForward v =
-        ("result" `at` v >>= at "direction") == Just (toJSON @Text "forward")
-    isRollBackward v =
-        ("result" `at` v >>= at "direction") == Just (toJSON @Text "backward")
+    \v -> ("method" `at` v) == Just (toJSON @Text "nextBlock")
 
 findIntersection :: Rpc.Mirror -> [Point Block] -> ChainSyncMessage Block
 findIntersection mirror points =
-    MsgFindIntersection (FindIntersection points) (Rpc.Response mirror) (Rpc.Fault mirror)
+    MsgFindIntersection (FindIntersection points) (Rpc.Response method mirror) (Rpc.Fault mirror)
+  where
+    method = Just "findIntersection"
 
 isFindIntersectionResponse :: ResponsePredicate
 isFindIntersectionResponse = ResponsePredicate $
-    \v -> isIntersectionFound v || isIntersectionNotFound v
-  where
-    isIntersectionFound v =
-        isJust ("result" `at` v >>= at "intersection")
-    isIntersectionNotFound v = isJust $ do
-        err <- "error" `at` v
-        code <- "code" `at` err
-        guard (code == toJSON @Int 1000)
-
+    \v -> ("method" `at` v) == Just (toJSON @Text "findIntersection")
 
 confidence :: Double -> Double -> Confidence
 confidence (round -> certainty) tolerance =

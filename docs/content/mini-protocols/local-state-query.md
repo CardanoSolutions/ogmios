@@ -191,19 +191,19 @@ function rpc(method, params = {}, id) {
 }
 
 client.once('open', () => {
-    rpc("queryNetwork/tip", {}, "get-network-tip")
+    rpc("queryNetwork/tip", {})
 });
 
 client.on('message', function(msg) {
     const response = JSON.parse(msg);
 
-    switch (response.id) {
-        case "get-network-tip":
+    switch (response.method) {
+        case "queryNetwork/tip":
             const point = response.result.tip;
-            rpc("acquireLedgerState", { point }, "acquire-network-tip");
+            rpc("acquireLedgerState", { point });
             break;
 
-        case "acquire-network-tip":
+        case "acquireLedgerState":
             rpc("queryLedgerState/liveStakeDistribution");
             break;
 
@@ -223,6 +223,7 @@ Here's a walk-though describing what happens when running the above script:
 ```json
 {
     "jsonrpc": "2.0",
+    "method": "queryNetwork/tip",
     "result": {
         "tip": {
             "hash": "dbafebb0146b2ec45186dfba6c287ad69c83d3fd9a186b39d99ab955631539e0",
@@ -240,6 +241,7 @@ Here's a walk-though describing what happens when running the above script:
 ```json
 {
     "jsonrpc": "2.0",
+    "method": "acquireLedgerState",
     "result": {
       "acquired": "ledgerState",
       "point": {
@@ -258,6 +260,7 @@ Here's a walk-though describing what happens when running the above script:
 ```json
 {
     "jsonrpc": "2.0",
+    "method": "queryLedgerState/liveStakeDistribution",
     "result": {
         "liveStakeDistribution": {
             "pool1w3s6gk83y2g3670emy3yfjw9myz3u4whph7peah653rmsfegyj3": {

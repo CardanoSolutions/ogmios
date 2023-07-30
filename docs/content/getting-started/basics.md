@@ -35,7 +35,8 @@ Let's start with a possible response to the request above:
 
 ```json
 {
-    "jsonrpc": "1.0",
+    "jsonrpc": "2.0",
+    "method": "findIntersection",
     "result": {
       "intersection": "origin",
       "tip": {

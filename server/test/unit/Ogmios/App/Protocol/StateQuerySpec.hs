@@ -336,33 +336,29 @@ genMessages = do
 
 acquire :: Rpc.Mirror -> Point Block -> StateQueryMessage Block
 acquire mirror point =
-    MsgAcquireLedgerState AcquireLedgerState{point} (Rpc.Response mirror) (Rpc.Fault mirror)
+    MsgAcquireLedgerState AcquireLedgerState{point} (Rpc.Response method mirror) (Rpc.Fault mirror)
+  where
+    method = Just "acquireLedgerState"
 
 isAcquireLedgerStateResponse :: ResponsePredicate
 isAcquireLedgerStateResponse = ResponsePredicate $
-    \v -> isAcquireSuccess v || isAcquireFailure v
-  where
-    isAcquireSuccess v = isJust $ do
-        result <- "result" `at` v
-        acquired <- "acquired" `at` result
-        guard (acquired == toJSON @Text "ledgerState")
-    isAcquireFailure v = isJust $ do
-        err <- "error" `at` v
-        code <- "code" `at` err
-        guard (code == toJSON @Int 2000)
+    \v -> ("method" `at` v) == Just (toJSON @Text "acquireLedgerState")
 
 release :: Rpc.Mirror -> StateQueryMessage Block
 release mirror =
-    MsgReleaseLedgerState ReleaseLedgerState (Rpc.Response mirror) (Rpc.Fault mirror)
+    MsgReleaseLedgerState ReleaseLedgerState (Rpc.Response method mirror) (Rpc.Fault mirror)
+  where
+    method = Just "releaseLedgerState"
 
 isReleaseLedgerStateResponse :: ResponsePredicate
 isReleaseLedgerStateResponse = ResponsePredicate $
-    \v -> ("result" `at` v >>= at "released") == Just (toJSON @Text "ledgerState")
+    \v -> ("method" `at` v) == Just (toJSON @Text "releaseLedgerState")
 
 queryAny :: Rpc.Mirror -> StateQueryMessage Block
 queryAny mirror =
-    MsgQueryLedgerState Query{rawQuery,queryInEra} (Rpc.Response mirror) (Rpc.Fault mirror)
+    MsgQueryLedgerState Query{rawQuery,queryInEra} (Rpc.Response method mirror) (Rpc.Fault mirror)
   where
+    method = Just "query/*"
     rawQuery = object [ "query" .= ("currentEpoch" :: String) ]
     queryInEra _ = Just $ SomeStandardQuery
         (Ledger.BlockQuery $ QueryIfCurrentAlonzo GetEpochNo)

@@ -178,7 +178,7 @@ _encodeAcquireMempool
     :: Rpc.Request AcquireMempool
     -> Json
 _encodeAcquireMempool =
-    Rpc.mkRequestNoParams Rpc.defaultOptions
+    Rpc.mkRequestNoParams
 
 _decodeAcquireMempool
     :: Json.Value
@@ -214,7 +214,7 @@ _encodeNextTransaction
     :: Rpc.Request NextTransaction
     -> Json
 _encodeNextTransaction =
-    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
+    Rpc.mkRequest $ encodeObject . \case
         NextTransaction{fields} ->
             case fields of
                 Nothing ->
@@ -299,7 +299,7 @@ _encodeHasTransaction
     -> Rpc.Request (HasTransaction block)
     -> Json
 _encodeHasTransaction encodeTxId =
-    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
+    Rpc.mkRequest $ encodeObject . \case
         HasTransaction{id} ->
             "id" .= encodeTxId id
 
@@ -336,7 +336,7 @@ _encodeSizeOfMempool
     :: Rpc.Request SizeOfMempool
     -> Json
 _encodeSizeOfMempool =
-    Rpc.mkRequestNoParams Rpc.defaultOptions
+    Rpc.mkRequestNoParams
 
 _decodeSizeOfMempool
     :: Json.Value
@@ -376,7 +376,7 @@ _encodeReleaseMempool
     :: Rpc.Request ReleaseMempool
     -> Json
 _encodeReleaseMempool =
-    Rpc.mkRequestNoParams Rpc.defaultOptions
+    Rpc.mkRequestNoParams
 
 _decodeReleaseMempool
     :: Json.Value

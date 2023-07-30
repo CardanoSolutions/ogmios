@@ -36,6 +36,7 @@ module Codec.Json.Rpc
     , genericToJSON
 
     -- * Generic
+    , GRpcMethodName
     , gRpcFromJSON
     , gRpcToJSON
     , gRpcMethodName
@@ -50,11 +51,9 @@ import Codec.Json.Rpc.Handler
     , Request (..)
     , Response (..)
     )
-import Control.Arrow
-    ( second
-    )
 import Control.Monad
     ( guard
+    , void
     )
 import Data.Aeson
     ( FromJSON (..)
@@ -135,12 +134,15 @@ defaultOptions = Options
 --
 -- since @1.0.0
 genericFromJSON
-    :: (Generic a, GRpcFromJSON (Rep a))
+    :: forall req.
+        ( Generic req
+        , GRpcFromJSON (Rep req)
+        )
     => Options
     -> Json.Value
-    -> Json.Parser (Request a)
+    -> Json.Parser (Request req)
 genericFromJSON opts =
-    fmap (\(refl, x) -> Request refl (to x)) . gRpcFromJSON opts
+    fmap (\(method, refl, x) -> Request (T.unpack method) refl (to x)) . gRpcFromJSON opts
 
 -- | Serialize a given response to JSON, provided that the result has a generic
 -- JSON instance.
@@ -173,10 +175,12 @@ mkResponse
        )
     -> Response res
     -> Json.Encoding
-mkResponse choose (Response refl res) =
+mkResponse choose (Response method refl res) =
     choose
         (\result -> Json.pairs $
             ("jsonrpc" .= V2_0)
+            <>
+            (maybe mempty ("method" .=) method)
             <>
             (Json.pair "result" result)
             <>
@@ -184,6 +188,8 @@ mkResponse choose (Response refl res) =
         )
         (\faultCode faultMessage faultData -> Json.pairs $
             ("jsonrpc" .= V2_0)
+            <>
+            (maybe mempty ("method" .=) method)
             <>
             (Json.pair "error" $ Json.pairs $
                 ("code" .= faultCode)
@@ -215,21 +221,17 @@ ko :: Fault -> Json.Encoding
 ko Fault{faultCode,faultMessage,faultMirror} =
     mkResponse
         (\_resolve reject () -> reject faultCode faultMessage Nothing)
-        (Response faultMirror ())
+        (Response Nothing faultMirror ())
 {-# INLINEABLE ko #-}
 
 -- | Serialize a given request to JSON
 --
 -- since @1.1.0
 mkRequest
-    :: forall req.
-        ( GRpcMethodName (Rep req)
-        )
-    => Options
-    -> (req -> Json.Encoding)
+    :: (req -> Json.Encoding)
     -> Request req
     -> Json.Encoding
-mkRequest opts toArgs (Request mirror req) = Json.pairs $
+mkRequest toArgs (Request method mirror req) = Json.pairs $
     ("jsonrpc" .= V2_0)
     <>
     ("method" .= method)
@@ -237,27 +239,19 @@ mkRequest opts toArgs (Request mirror req) = Json.pairs $
     (Json.pair "params" (toArgs req))
     <>
     ("id" .= mirror)
-  where
-    method = gRpcMethodName opts (Proxy :: Proxy (Rep req a))
 
 -- | Serialize a given request to JSON, without any parameter.
 --
 -- since @1.1.0
 mkRequestNoParams
-    :: forall req.
-        ( GRpcMethodName (Rep req)
-        )
-    => Options
-    -> Request req
+    :: Request req
     -> Json.Encoding
-mkRequestNoParams opts (Request mirror _req) = Json.pairs $
+mkRequestNoParams (Request method mirror _req) = Json.pairs $
     ("jsonrpc" .= V2_0)
     <>
     ("method" .= method)
     <>
     ("id" .= mirror)
-  where
-    method = gRpcMethodName opts (Proxy :: Proxy (Rep req a))
 
 -- | Supported JSON-Rpc versions.
 --
@@ -279,7 +273,7 @@ instance FromJSON RpcVersion where
         pure V2_0
 
 class GRpcFromJSON (f :: Type -> Type) where
-    gRpcFromJSON :: Options -> Json.Value -> Json.Parser (Maybe Json.Value, f a)
+    gRpcFromJSON :: Options -> Json.Value -> Json.Parser (Text, Maybe Json.Value, f a)
 
 class GRpcToJSON (f :: Type -> Type) where
     gRpcToJSON :: Options -> f a -> Json.Value
@@ -292,44 +286,44 @@ class GRpcMethodName (f :: Type -> Type) where
 --
 
 instance GRpcFromJSON f => GRpcFromJSON (D1 c f) where
-    gRpcFromJSON opts = fmap (second M1) . gRpcFromJSON opts
+    gRpcFromJSON opts = fmap (\(a0, b0, c0) -> (a0, b0, M1 c0)) . gRpcFromJSON opts
 
 instance (Constructor c, GRpcFromJSON f) => GRpcFromJSON (C1 c f) where
     gRpcFromJSON opts value = flip (Json.withObject "U1") value $ \obj -> do
-        _ <- parseKey obj "jsonrpc" "2.0"
-        _ <- parseKeyWith (methodNamePredicate opts) obj "method" methodName
+        parseKey obj "jsonrpc" "2.0"
+        method <- parseKeyWith (methodNamePredicate opts) obj "method" methodName
         refl <- obj .:? "id"
-        (_, f) <- gRpcFromJSON opts value
-        pure (refl, M1 f)
+        (_, _, f) <- gRpcFromJSON opts value
+        pure (method, refl, M1 f)
       where
         methodName = T.pack $ constructorTagModifier opts $ conName (undefined :: C1 c U1 a)
 
 instance (GRpcFromJSON f, GRpcFromJSON g) => GRpcFromJSON (f :*: g) where
     gRpcFromJSON opts value = do
-        (_, f) <- gRpcFromJSON opts value
-        (_, g) <- gRpcFromJSON opts value
-        pure (Nothing, f :*: g)
+        (_, _, f) <- gRpcFromJSON opts value
+        (_, _, g) <- gRpcFromJSON opts value
+        pure (mempty, Nothing, f :*: g)
 
 -- Constructor *must* use the record-selector-syntax. This is necessary in order
 -- to map the Rpc arguments to their corresponding position in the constructor.
 instance (Selector s, GRpcFromJSON f) => GRpcFromJSON (S1 s f) where
     gRpcFromJSON opts = Json.withObject "S1" $ \obj -> do
         let fieldName = Json.fromString $ fieldLabelModifier opts $ selName (undefined :: S1 s f a)
-        (_, k1) <- obj .: "params"
+        (_, _, k1) <- obj .: "params"
             >>= (.:? fieldName)
             >>= maybe
                 (gRpcFromJSON opts =<< onMissingField opts fieldName)
                 (gRpcFromJSON opts)
-        pure (Nothing, M1 k1)
+        pure (mempty, Nothing, M1 k1)
 
 -- Unary constructor, nothing to do, the constructor name has been verified
 -- with the 'C1 c f' instance.
 instance GRpcFromJSON U1 where
-    gRpcFromJSON _opts _value = pure (Nothing, U1)
+    gRpcFromJSON _opts _value = pure (mempty, Nothing, U1)
 
 -- Arguments are expected to have JSON instances.
 instance (FromJSON c) => GRpcFromJSON (K1 i c) where
-    gRpcFromJSON _opts = fmap ((Nothing,) . K1) . parseJSON
+    gRpcFromJSON _opts = fmap ((mempty, Nothing,) . K1) . parseJSON
 
 --
 -- Generic Machinery for serializing 'Response'
@@ -386,15 +380,15 @@ parseKey
     -> Json.Key
     -> Text
     -> Json.Parser ()
-parseKey =
-    parseKeyWith (==)
+parseKey obj key =
+    void . parseKeyWith (==) obj key
 
 parseKeyWith
     :: (Text -> Text -> Bool)
     -> Json.Object
     -> Json.Key
     -> Text
-    -> Json.Parser ()
+    -> Json.Parser Text
 parseKeyWith checkKey obj key expected =
     case Json.parseMaybe (.:? key) obj of
         Just Nothing ->
@@ -412,8 +406,8 @@ parseKeyWith checkKey obj key expected =
                 $ prettyErrValidateKey
                 $ ErrValidateKeyInvalid
                 $ ErrInvalidKey key (toJSON expected)
-        Just (Just{}) ->
-            pure ()
+        Just (Just parsed) ->
+            pure parsed
 
 data ErrValidateKey
     = ErrValidateKeyMissing ErrMissingKey

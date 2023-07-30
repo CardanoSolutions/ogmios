@@ -108,7 +108,7 @@ _encodeFindIntersection
     -> Rpc.Request (FindIntersection block)
     -> Json
 _encodeFindIntersection encodePoint =
-    Rpc.mkRequest Rpc.defaultOptions $ encodeObject . \case
+    Rpc.mkRequest $ encodeObject . \case
         FindIntersection{points} ->
             "points" .=
                 encodeList encodePoint points
@@ -158,7 +158,7 @@ _encodeNextBlock
     :: Rpc.Request NextBlock
     -> Json
 _encodeNextBlock =
-    Rpc.mkRequestNoParams Rpc.defaultOptions
+    Rpc.mkRequestNoParams
 
 _decodeNextBlock
     :: Json.Value

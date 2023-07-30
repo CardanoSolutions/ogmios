@@ -402,43 +402,54 @@ withoutAcquireMempool = flip suchThat $ \case
 
 acquireMempool :: Rpc.Mirror -> TxMonitorMessage Block
 acquireMempool mirror =
-    MsgAcquireMempool AcquireMempool (Rpc.Response mirror) (Rpc.Fault mirror)
+    MsgAcquireMempool AcquireMempool (Rpc.Response method mirror) (Rpc.Fault mirror)
+  where
+    method = Just "acquireMempool"
 
 isAcquireMempoolResponse :: ResponsePredicate
 isAcquireMempoolResponse = ResponsePredicate $
-    \v -> ("result" `at` v >>= at "acquired") == Just (toJSON @Text "mempool")
+    \v -> ("method" `at` v)  == Just (toJSON @Text "acquireMempool")
 
 nextTx :: Rpc.Mirror -> TxMonitorMessage Block
 nextTx mirror =
-    MsgNextTransaction (NextTransaction Nothing) (Rpc.Response mirror) (Rpc.Fault mirror)
+    MsgNextTransaction (NextTransaction Nothing) (Rpc.Response method mirror) (Rpc.Fault mirror)
+  where
+    method = Just "nextTransaction"
 
 isNextTxResponse :: ResponsePredicate
 isNextTxResponse = ResponsePredicate $
-    \v -> isJust ("result" `at` v >>= at "transaction")
+    \v -> ("method" `at` v)  == Just (toJSON @Text "nextTransaction")
 
 hasTx :: Rpc.Mirror -> GenTxId Block -> TxMonitorMessage Block
 hasTx mirror tx =
-    MsgHasTransaction (HasTransaction tx) (Rpc.Response mirror) (Rpc.Fault mirror)
+    MsgHasTransaction (HasTransaction tx) (Rpc.Response method mirror) (Rpc.Fault mirror)
+  where
+    method = Just "hasTransaction"
 
 isHasTxResponse :: ResponsePredicate
 isHasTxResponse = ResponsePredicate $
-    \v -> isJust ("result" `at` v >>= at "hasTransaction")
+    \v -> ("method" `at` v)  == Just (toJSON @Text "hasTransaction")
 
 sizeOfMempool :: Rpc.Mirror -> TxMonitorMessage Block
 sizeOfMempool mirror =
-    MsgSizeOfMempool SizeOfMempool (Rpc.Response mirror) (Rpc.Fault mirror)
+    MsgSizeOfMempool SizeOfMempool (Rpc.Response method mirror) (Rpc.Fault mirror)
+  where
+    method = Just "sizeOfMempool"
 
 isSizeOfMempoolResponse :: ResponsePredicate
 isSizeOfMempoolResponse = ResponsePredicate $
-    \v -> isJust ("result" `at` v >>= at "mempool")
+    \v -> ("method" `at` v)  == Just (toJSON @Text "sizeOfMempool")
 
 releaseMempool :: Rpc.Mirror -> TxMonitorMessage Block
 releaseMempool mirror =
-    MsgReleaseMempool ReleaseMempool (Rpc.Response mirror) (Rpc.Fault mirror)
+    MsgReleaseMempool ReleaseMempool (Rpc.Response method mirror) (Rpc.Fault mirror)
+  where
+    method = Just "releaseMempool"
 
 isReleaseMempoolResponse :: ResponsePredicate
 isReleaseMempoolResponse = ResponsePredicate $
-    \v -> ("result" `at` v >>= at "released") == Just (toJSON @Text "mempool")
+    \v -> ("method" `at` v)  == Just (toJSON @Text "releaseMempool")
+
 --
 -- Helpers
 --

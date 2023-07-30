@@ -5,6 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
+export type PointOrOrigin = Point | Origin;
 /**
  * An absolute slot number.
  */
@@ -17,6 +18,7 @@ export type DigestBlake2B256 = string;
  * The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point.
  */
 export type Origin = "origin";
+export type TipOrOrigin = Tip | Origin;
 /**
  * A block number, the i-th block to be minted is number i.
  */
@@ -354,7 +356,7 @@ export interface FindIntersection {
   jsonrpc: "2.0";
   method: "findIntersection";
   params: {
-    points?: (Point | Origin)[];
+    points?: PointOrOrigin[];
   };
   /**
    * An arbitrary JSON value that will be mirrored back in the response.
@@ -372,9 +374,10 @@ export interface Point {
 }
 export interface IntersectionFound {
   jsonrpc: "2.0";
+  method: "findIntersection";
   result: {
-    intersection: Point | Origin;
-    tip: Tip | Origin;
+    intersection: PointOrOrigin;
+    tip: TipOrOrigin;
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -390,11 +393,12 @@ export interface Tip {
 }
 export interface IntersectionNotFound {
   jsonrpc: "2.0";
+  method: "findIntersection";
   error: {
     code: 1000;
     message: string;
     data: {
-      tip: Tip | Origin;
+      tip: TipOrOrigin;
     };
   };
   /**
@@ -422,6 +426,7 @@ export interface NextBlock {
  */
 export interface NextBlockResponse {
   jsonrpc: "2.0";
+  method: "nextBlock";
   result: RollForward | RollBackward;
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -882,8 +887,8 @@ export interface OperationalCertificate {
 }
 export interface RollBackward {
   direction: "backward";
-  tip: Tip | Origin;
-  point: Point | Origin;
+  tip: TipOrOrigin;
+  point: PointOrOrigin;
 }
 /**
  * Submit a signed and serialized transaction to the network.
@@ -906,6 +911,7 @@ export interface SubmitTransaction {
 }
 export interface SubmitTransactionSuccess {
   jsonrpc: "2.0";
+  method: "submitTransaction";
   result: {
     transaction: {
       id: TransactionId;
@@ -920,6 +926,7 @@ export interface SubmitTransactionSuccess {
 }
 export interface SubmitTransactionError {
   jsonrpc: "2.0";
+  method: "submitTransaction";
   error: SubmitTransactionFailure;
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -1346,6 +1353,7 @@ export interface SubmitTransactionFailureInternalLedgerTypeConversionError {
 }
 export interface SubmitTransactionDeserialisationError {
   jsonrpc: "2.0";
+  method: "submitTransaction";
   error: DeserialisationFailure;
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -1391,6 +1399,7 @@ export interface EvaluateTransaction {
 }
 export interface EvaluateTransactionSuccess {
   jsonrpc: "2.0";
+  method: "evaluateTransaction";
   result: {
     validator: RedeemerPointer;
     budget: ExecutionUnits;
@@ -1407,6 +1416,7 @@ export interface EvaluateTransactionSuccess {
  */
 export interface EvaluateTransactionError {
   jsonrpc: "2.0";
+  method: "evaluateTransaction";
   error: EvaluateTransactionFailure;
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -1504,6 +1514,7 @@ export interface ScriptExecutionFailureUnsuitableOutputReference {
 }
 export interface EvaluateTransactionDeserialisationError {
   jsonrpc: "2.0";
+  method: "evaluateTransaction";
   error: DeserialisationFailure;
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -1519,7 +1530,7 @@ export interface AcquireLedgerState {
   jsonrpc: "2.0";
   method: "acquireLedgerState";
   params: {
-    point: Point | Origin;
+    point: PointOrOrigin;
   };
   /**
    * An arbitrary JSON value that will be mirrored back in the response.
@@ -1533,6 +1544,7 @@ export interface AcquireLedgerState {
  */
 export interface AcquireLedgerStateSuccess {
   jsonrpc: "2.0";
+  method: "acquireLedgerState";
   result: AcquireLedgerStateSuccess1;
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -1543,13 +1555,14 @@ export interface AcquireLedgerStateSuccess {
 }
 export interface AcquireLedgerStateSuccess1 {
   acquired: "ledgerState";
-  point: Point | Origin;
+  point: PointOrOrigin;
 }
 /**
  * Unable to acquire the ledger state at the request point.
  */
 export interface AcquireLedgerStateFailure {
   jsonrpc: "2.0";
+  method: "acquireLedgerState";
   error: AcquireLedgerStateFailure1;
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -1584,6 +1597,7 @@ export interface ReleaseLedgerState {
  */
 export interface ReleaseLedgerStateResponse {
   jsonrpc: "2.0";
+  method: "releaseLedgerState";
   result: {
     released: "ledgerState";
   };
@@ -1599,6 +1613,20 @@ export interface ReleaseLedgerStateResponse {
  */
 export interface QueryLedgerStateEraMismatch {
   jsonrpc: "2.0";
+  method:
+    | "queryLedgerState/epoch"
+    | "queryLedgerState/eraStart"
+    | "queryLedgerState/eraSummaries"
+    | "queryLedgerState/liveStakeDistribution"
+    | "queryLedgerState/projectedRewards"
+    | "queryLedgerState/protocolParameters"
+    | "queryLedgerState/proposedProtocolParameters"
+    | "queryLedgerState/rewardAccountSummaries"
+    | "queryLedgerState/rewardsProvenance"
+    | "queryLedgerState/stakePoolParameters"
+    | "queryLedgerState/stakePools"
+    | "queryLedgerState/utxo"
+    | "queryLedgerState/tip";
   error: {
     code: 2001;
     message: string;
@@ -1616,6 +1644,20 @@ export interface QueryLedgerStateEraMismatch {
  */
 export interface QueryLedgerStateUnavailableInCurrentEra {
   jsonrpc: "2.0";
+  method:
+    | "queryLedgerState/epoch"
+    | "queryLedgerState/eraStart"
+    | "queryLedgerState/eraSummaries"
+    | "queryLedgerState/liveStakeDistribution"
+    | "queryLedgerState/projectedRewards"
+    | "queryLedgerState/protocolParameters"
+    | "queryLedgerState/proposedProtocolParameters"
+    | "queryLedgerState/rewardAccountSummaries"
+    | "queryLedgerState/rewardsProvenance"
+    | "queryLedgerState/stakePoolParameters"
+    | "queryLedgerState/stakePools"
+    | "queryLedgerState/utxo"
+    | "queryLedgerState/tip";
   error: {
     code: 2002;
     message: string;
@@ -1632,6 +1674,20 @@ export interface QueryLedgerStateUnavailableInCurrentEra {
  */
 export interface QueryLedgerStateAcquiredExpired {
   jsonrpc: "2.0";
+  method:
+    | "queryLedgerState/epoch"
+    | "queryLedgerState/eraStart"
+    | "queryLedgerState/eraSummaries"
+    | "queryLedgerState/liveStakeDistribution"
+    | "queryLedgerState/projectedRewards"
+    | "queryLedgerState/protocolParameters"
+    | "queryLedgerState/proposedProtocolParameters"
+    | "queryLedgerState/rewardAccountSummaries"
+    | "queryLedgerState/rewardsProvenance"
+    | "queryLedgerState/stakePoolParameters"
+    | "queryLedgerState/stakePools"
+    | "queryLedgerState/utxo"
+    | "queryLedgerState/tip";
   error: {
     code: 2003;
     message: string;
@@ -1663,6 +1719,7 @@ export interface QueryLedgerStateEpoch {
 }
 export interface QueryLedgerStateEpochResponse {
   jsonrpc: "2.0";
+  method: "queryLedgerState/epoch";
   result: {
     epoch: Epoch;
   };
@@ -1689,6 +1746,7 @@ export interface QueryLedgerStateEraStart {
 }
 export interface QueryLedgerStateEraStartResponse {
   jsonrpc: "2.0";
+  method: "queryLedgerState/eraStart";
   result: {
     eraStart: Bound;
   };
@@ -1723,6 +1781,7 @@ export interface QueryLedgerStateEraSummaries {
 }
 export interface QueryLedgerStateEraSummariesResponse {
   jsonrpc: "2.0";
+  method: "queryLedgerState/eraSummaries";
   result: {
     eraSummaries: EraSummary[];
   };
@@ -1765,6 +1824,7 @@ export interface QueryLedgerStateLiveStakeDistribution {
 }
 export interface QueryLedgerStateLiveStakeDistributionResponse {
   jsonrpc: "2.0";
+  method: "queryLedgerState/liveStakeDistribution";
   result: {
     liveStakeDistribution: LiveStakeDistribution;
   };
@@ -1804,6 +1864,7 @@ export interface QueryLedgerStateProjectedRewards {
 }
 export interface QueryLedgerStateProjectedRewardsResponse {
   jsonrpc: "2.0";
+  method: "queryLedgerState/projectedRewards";
   result: {
     projectedRewards: ProjectedRewards;
   };
@@ -1819,7 +1880,7 @@ export interface QueryLedgerStateProjectedRewardsResponse {
  */
 export interface ProjectedRewards {
   [k: string]: {
-    [k: string]: number;
+    [k: string]: Lovelace;
   };
 }
 /**
@@ -1838,6 +1899,7 @@ export interface QueryLedgerStateProposedProtocolParameters {
 }
 export interface QueryLedgerStateProposedProtocolParametersResponse {
   jsonrpc: "2.0";
+  method: "queryLedgerState/proposedProtocolParameters";
   result: {
     proposedProtocolParameters:
       | ProposedProtocolParametersShelley
@@ -1876,6 +1938,7 @@ export interface QueryLedgerStateProtocolParameters {
 }
 export interface QueryLedgerStateProtocolParametersResponse {
   jsonrpc: "2.0";
+  method: "queryLedgerState/protocolParameters";
   result: {
     protocolParameters: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage;
   };
@@ -1905,6 +1968,7 @@ export interface QueryLedgerStateRewardAccountSummaries {
 }
 export interface QueryLedgerStateRewardAccountSummariesResponse {
   jsonrpc: "2.0";
+  method: "queryLedgerState/rewardAccountSummaries";
   result: {
     rewardAccountSummaries: RewardAccountSummaries;
   };
@@ -1938,6 +2002,7 @@ export interface QueryLedgerStateRewardsProvenance {
 }
 export interface QueryLedgerStateRewardsProvenanceResponse {
   jsonrpc: "2.0";
+  method: "queryLedgerState/rewardsProvenance";
   result: {
     rewardsProvenance: RewardsProvenance;
   };
@@ -1963,11 +2028,15 @@ export interface RewardsProvenance {
   /**
    * Total rewards available for the given epoch.
    */
-  totalRewards: bigint;
+  totalRewards: {
+    lovelace: bigint;
+  };
   /**
    * The total amount of staked Lovelace during this epoch.
    */
-  activeStake: bigint;
+  activeStake: {
+    lovelace: bigint;
+  };
   pools: {
     [k: string]: StakePoolSummary;
   };
@@ -2004,6 +2073,7 @@ export interface QueryLedgerStateStakePools {
 }
 export interface QueryLedgerStateStakePoolsResponse {
   jsonrpc: "2.0";
+  method: "queryLedgerState/stakePools";
   result: {
     stakePools: {
       id: StakePoolId;
@@ -2034,6 +2104,7 @@ export interface QueryLedgerStateStakePoolParameters {
 }
 export interface QueryLedgerStateStakePoolParametersResponse {
   jsonrpc: "2.0";
+  method: "queryLedgerState/stakePoolParameters";
   result: {
     stakePoolParameters: {
       [k: string]: StakePoolParameters;
@@ -2062,8 +2133,9 @@ export interface QueryLedgerStateTip {
 }
 export interface QueryLedgerStateTipResponse {
   jsonrpc: "2.0";
+  method: "queryLedgerState/tip";
   result: {
-    tip: Point | Origin;
+    tip: PointOrOrigin;
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -2095,6 +2167,7 @@ export interface UtxoByAddresses {
 export interface WholeUtxo {}
 export interface QueryLedgerStateUtxoResponse {
   jsonrpc: "2.0";
+  method: "queryLedgerState/utxo";
   result: {
     utxo: Utxo;
   };
@@ -2121,6 +2194,7 @@ export interface QueryNetworkBlockHeight {
 }
 export interface QueryNetworkBlockHeightResponse {
   jsonrpc: "2.0";
+  method: "queryNetwork/blockHeight";
   result: {
     blockHeight: BlockHeight | Origin;
   };
@@ -2149,6 +2223,7 @@ export interface QueryNetworkGenesisConfiguration {
 }
 export interface QueryNetworkGenesisConfigurationResponse {
   jsonrpc: "2.0";
+  method: "queryNetwork/genesisConfiguration";
   result: {
     genesisConfiguration:
       | {
@@ -2260,6 +2335,7 @@ export interface QueryNetworkStartTime {
 }
 export interface QueryNetworkStartTimeResponse {
   jsonrpc: "2.0";
+  method: "queryNetwork/startTime";
   result: {
     startTime: UtcTime;
   };
@@ -2286,8 +2362,9 @@ export interface QueryNetworkTip {
 }
 export interface QueryNetworkTipResponse {
   jsonrpc: "2.0";
+  method: "queryNetwork/tip";
   result: {
-    tip: Point | Origin;
+    tip: PointOrOrigin;
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -2314,6 +2391,7 @@ export interface AcquireMempool {
  */
 export interface AcquireMempoolResponse {
   jsonrpc: "2.0";
+  method: "acquireMempool";
   result: {
     acquired: "mempool";
     slot: Slot;
@@ -2346,6 +2424,7 @@ export interface NextTransaction {
  */
 export interface NextTransactionResponse {
   jsonrpc: "2.0";
+  method: "nextTransaction";
   /**
    * A transaction (or id) or an empty object if there's no more transactions.
    */
@@ -2385,6 +2464,7 @@ export interface HasTransaction {
  */
 export interface HasTransactionResponse {
   jsonrpc: "2.0";
+  method: "hasTransaction";
   result: {
     hasTransaction: boolean;
   };
@@ -2413,6 +2493,7 @@ export interface SizeOfMempool {
  */
 export interface SizeOfMempoolResponse {
   jsonrpc: "2.0";
+  method: "sizeOfMempool";
   result: {
     mempool: MempoolSizeAndCapacity;
   };
@@ -2448,6 +2529,7 @@ export interface ReleaseMempool {
  */
 export interface ReleaseMempoolResponse {
   jsonrpc: "2.0";
+  method: "releaseMempool";
   result: {
     released: "mempool";
   };

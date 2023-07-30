@@ -31,15 +31,21 @@ module Codec.Json.Rpc.Handler
 import Prelude
 
 import Data.Aeson
-    ( ToJSON (..), genericToJSON )
+    ( ToJSON (..)
+    , genericToJSON
+    )
 import Data.ByteString
-    ( ByteString )
+    ( ByteString
+    )
 import Data.Char
-    ( toLower )
+    ( toLower
+    )
 import Data.Kind
-    ( Type )
+    ( Type
+    )
 import GHC.Generics
-    ( Generic )
+    ( Generic
+    )
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
@@ -51,20 +57,20 @@ import qualified Data.Aeson.Encoding as Json
 -- | Represent a JSON-RPC request (from a client to the server)
 --
 -- @since 1.0.0
-data Request a = Request Mirror a
+data Request a = Request String Mirror a
     deriving (Generic, Show, Eq)
 
 instance Functor Request where
-    fmap fn (Request mirror a) = Request mirror (fn a)
+    fmap fn (Request name mirror a) = Request name mirror (fn a)
 
 -- | Represent a JSON-RPC response (from the server to a client)
 --
 -- @since 1.0.0
-data Response a = Response Mirror a
+data Response a = Response (Maybe String) Mirror a
     deriving (Generic, Show, Eq)
 
 instance Functor Response where
-    fmap fn (Response mirror a) = Response mirror (fn a)
+    fmap fn (Response name mirror a) = Response name mirror (fn a)
 
 -- | Type alias for the optional mirror(ed) value in Request/Response
 --
@@ -179,8 +185,8 @@ match bytes defaultHandler = \case
     [] -> Nothing <$ defaultHandler
     (Handler decode next):q ->
         case decode bytes of
-            Just (Request refl req) -> do
-                let matched = next req (Response refl) (Fault refl)
+            Just (Request method refl req) -> do
+                let matched = next req (Response (Just method) refl) (Fault refl)
                 Just (bytes, matched) <$ matched
             Nothing ->
                 match bytes defaultHandler q

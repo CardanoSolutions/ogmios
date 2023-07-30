@@ -2,8 +2,10 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -33,6 +35,9 @@ import Data.Aeson.QQ.Simple
     )
 import Data.Maybe
     ( fromJust
+    )
+import GHC.Generics
+    ( Rep
     )
 import Ogmios.Data.EraTranslation
     ( MultiEraUTxO (..)
@@ -143,7 +148,9 @@ import Ogmios.Data.Protocol.TxMonitor
     , _encodeSizeOfMempoolResponse
     )
 import Ogmios.Data.Protocol.TxSubmission
-    ( EvaluateTransactionResponse
+    ( EvaluateTransaction
+    , EvaluateTransactionResponse
+    , SubmitTransaction
     , SubmitTransactionResponse (..)
     , _encodeEvaluateTransactionResponse
     , _encodeSubmitTransactionResponse
@@ -256,6 +263,7 @@ import qualified Ogmios.Data.Json.Babbage as Babbage
 
 import qualified Cardano.Ledger.Alonzo.Scripts.Data as Ledger
 import qualified Cardano.Ledger.Binary as Binary
+import qualified Codec.Json.Rpc as Rpc
 import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encode.Pretty as Json
@@ -656,25 +664,50 @@ spec = do
             (3, "ReleaseLedgerStateResponse")
             "ogmios.json#/properties/ReleaseLedgerStateResponse"
 
-instance Arbitrary a => Arbitrary (Rpc.Response a) where
+instance (Arbitrary a, Rpc.GRpcMethodName (Rep a)) => Arbitrary (Rpc.Request a) where
+    shrink (Rpc.Request method mirror a) =
+        Rpc.Request method mirror <$> shrink a
     arbitrary = oneof
-        [ Rpc.Response Nothing <$> arbitrary
-        , Rpc.Response (Just $ toJSON @String "st") <$> arbitrary
+        [ Rpc.Request method Nothing <$> arbitrary
+        , liftA2 (Rpc.Request method) (Just . toJSON <$> genNanoId) arbitrary
         ]
+      where
+        method = Rpc.gRpcMethodName @(Rep a) Rpc.defaultOptions Proxy
 
-instance Arbitrary a => Arbitrary (Rpc.Request a) where
+class IsRpcResponse res where
+    type RpcRequestFor res :: Type
+
+instance (Arbitrary a, Rpc.GRpcMethodName (Rep (RpcRequestFor a))) => Arbitrary (Rpc.Response a) where
+    shrink (Rpc.Response method mirror a) =
+        Rpc.Response method mirror <$> shrink a
     arbitrary = oneof
-        [ Rpc.Request Nothing <$> arbitrary
-        , Rpc.Request (Just $ toJSON @String "st") <$> arbitrary
+        [ Rpc.Response (Just method) Nothing <$> arbitrary
+        , liftA2 (Rpc.Response (Just method)) (Just . toJSON <$> genNanoId) arbitrary
         ]
+      where
+        method = Rpc.gRpcMethodName @(Rep (RpcRequestFor a)) Rpc.defaultOptions Proxy
+
+genNanoId :: Gen String
+genNanoId =
+  replicateM 12 (elements $ ['a' .. 'z'] ++ ['A' .. 'Z'] ++ ['0' .. '9'])
 
 instance Arbitrary (FindIntersection Block) where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
+instance IsRpcResponse (FindIntersectionResponse Block) where
+    type RpcRequestFor (FindIntersectionResponse Block) = FindIntersection Block
+
 instance Arbitrary (FindIntersectionResponse Block) where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
+
+instance Arbitrary NextBlock where
+    shrink = genericShrink
+    arbitrary = reasonablySized genericArbitrary
+
+instance IsRpcResponse (NextBlockResponse Block) where
+    type RpcRequestFor (NextBlockResponse Block) = NextBlock
 
 instance Arbitrary (NextBlockResponse Block) where
     shrink = genericShrink
@@ -683,9 +716,8 @@ instance Arbitrary (NextBlockResponse Block) where
         , (  1, RollBackward <$> arbitrary <*> arbitrary )
         ]
 
-instance Arbitrary NextBlock where
-    shrink = genericShrink
-    arbitrary = reasonablySized genericArbitrary
+instance IsRpcResponse (SubmitTransactionResponse Block) where
+    type RpcRequestFor (SubmitTransactionResponse Block) = SubmitTransaction Block
 
 instance Arbitrary (SubmitTransactionResponse Block) where
     shrink = \case
@@ -712,12 +744,18 @@ instance Arbitrary (HardForkApplyTxErr (CardanoEras StandardCrypto)) where
 instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto))) where
     arbitrary = reasonablySized genSubmitResult
 
+instance IsRpcResponse (EvaluateTransactionResponse Block) where
+    type RpcRequestFor (EvaluateTransactionResponse Block) = EvaluateTransaction Block
+
 instance Arbitrary (EvaluateTransactionResponse Block) where
     arbitrary = reasonablySized genEvaluateTransactionResponse
 
 instance Arbitrary (AcquireLedgerState Block) where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
+
+instance IsRpcResponse (AcquireLedgerStateResponse Block) where
+    type RpcRequestFor (AcquireLedgerStateResponse Block) = AcquireLedgerState Block
 
 instance Arbitrary (AcquireLedgerStateResponse Block) where
     shrink = genericShrink
@@ -726,6 +764,9 @@ instance Arbitrary (AcquireLedgerStateResponse Block) where
 instance Arbitrary ReleaseLedgerState where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
+
+instance IsRpcResponse ReleaseLedgerStateResponse where
+    type RpcRequestFor ReleaseLedgerStateResponse = ReleaseLedgerState
 
 instance Arbitrary ReleaseLedgerStateResponse where
     shrink = genericShrink
@@ -737,6 +778,9 @@ instance Arbitrary AcquireFailure where
 instance Arbitrary AcquireMempool where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
+
+instance IsRpcResponse AcquireMempoolResponse where
+    type RpcRequestFor AcquireMempoolResponse = AcquireMempool
 
 instance Arbitrary AcquireMempoolResponse where
     shrink = genericShrink
@@ -750,6 +794,9 @@ instance Arbitrary NextTransactionFields where
     shrink = genericShrink
     arbitrary = genericArbitrary
 
+instance IsRpcResponse (NextTransactionResponse Block) where
+    type RpcRequestFor (NextTransactionResponse Block) = NextTransaction
+
 instance Arbitrary (NextTransactionResponse Block) where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
@@ -757,6 +804,9 @@ instance Arbitrary (NextTransactionResponse Block) where
 instance Arbitrary (HasTransaction Block) where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
+
+instance IsRpcResponse HasTransactionResponse where
+    type RpcRequestFor HasTransactionResponse = HasTransaction Block
 
 instance Arbitrary HasTransactionResponse where
     shrink = genericShrink
@@ -766,9 +816,15 @@ instance Arbitrary SizeOfMempool where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
 
+instance IsRpcResponse SizeOfMempoolResponse where
+    type RpcRequestFor SizeOfMempoolResponse = SizeOfMempool
+
 instance Arbitrary SizeOfMempoolResponse where
     shrink = genericShrink
     arbitrary = reasonablySized genericArbitrary
+
+instance IsRpcResponse ReleaseMempoolResponse where
+    type RpcRequestFor ReleaseMempoolResponse = ReleaseMempool
 
 instance Arbitrary ReleaseMempool where
     shrink = genericShrink
@@ -906,17 +962,18 @@ validateLedgerStateQuery
     -> Json.Value
     -> (Json.Value -> Json.Parser (QueryInEra Gen Block))
     -> SpecWith ()
-validateLedgerStateQuery n method json parser = do
+validateLedgerStateQuery n subMethod json parser = do
   let category = "LedgerState"
-  let propName = "Query" <> category <> titleize method
+  let propName = "Query" <> category <> titleize subMethod
   let requestRef = "ogmios.json#/properties/" <> propName
   let responseRef = requestRef <> "Response"
+  let method = "query" <> category <> "/" <> subMethod
   parallel $ specify (toString propName) $ do
     queryRefs <- unsafeReadSchemaRef (SchemaRef requestRef)
     runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON
         (\params -> Json.object
             [ "jsonrpc" .= ("2.0" :: Text)
-            , "method" .= ("query" <> category <> "/" <> method)
+            , "method" .= method
             , "params" .= params
             ]
         )
@@ -940,11 +997,16 @@ validateLedgerStateQuery n method json parser = do
             forM_ eras $ \(era, qry) ->  do
                 responseRefs <- unsafeReadSchemaRef (SchemaRef responseRef)
 
-                let encodeQueryResponse encodeResult
-                        = _encodeQueryLedgerStateResponse encodeAcquireExpired
-                        . Rpc.Response Nothing
-                        . either QueryEraMismatch QueryResponse
-                        . encodeResult
+                let encodeQueryResponse
+                        :: forall result. ()
+                        => (result -> Either Json.Encoding Json.Encoding)
+                        -> result
+                        -> Json.Encoding
+                    encodeQueryResponse encodeResult
+                            = _encodeQueryLedgerStateResponse encodeAcquireExpired
+                            . Rpc.Response (Just $ toString method) Nothing
+                            . either QueryEraMismatch QueryResponse
+                            . encodeResult
 
                 -- NOTE: Queries are mostly identical between eras, since we run
                 -- the test for each era, we can reduce the number of expected
@@ -982,7 +1044,7 @@ validateLedgerStateQuery n method json parser = do
                 let encodeQueryUnavailableInCurrentEra
                         = encodingToValue
                         . _encodeQueryLedgerStateResponse encodeAcquireExpired
-                        . Rpc.Response Nothing
+                        . Rpc.Response (Just $ toString method) Nothing
 
                 runQuickCheck $ withMaxSuccess 1 $ forAllBlind
                     (pure QueryUnavailableInCurrentEra)
@@ -996,17 +1058,18 @@ validateNetworkQuery
     -> Json.Value
     -> (Json.Value -> Json.Parser (QueryInEra Gen Block))
     -> SpecWith ()
-validateNetworkQuery n method json parser = do
+validateNetworkQuery n subMethod json parser = do
   let category = "Network"
-  let propName = "Query" <> category <> titleize method
+  let propName = "Query" <> category <> titleize subMethod
   let requestRef = "ogmios.json#/properties/" <> propName
   let responseRef = requestRef <> "Response"
+  let method = "query" <> category <> "/" <> subMethod
   parallel $ specify (toString propName) $ do
     queryRefs <- unsafeReadSchemaRef (SchemaRef requestRef)
     runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON
         (\params -> Json.object
             [ "jsonrpc" .= ("2.0" :: Text)
-            , "method" .= ("query" <> category <> "/" <> method)
+            , "method" .= method
             , "params" .= params
             ]
         )
@@ -1018,9 +1081,14 @@ validateNetworkQuery n method json parser = do
         Right queryInEra -> do
             responseRefs <- unsafeReadSchemaRef (SchemaRef responseRef)
 
-            let encodeQueryResponse encodeResult
+            let encodeQueryResponse
+                    :: forall result. ()
+                    => (result -> Either Json.Encoding Json.Encoding)
+                    -> result
+                    -> Json.Encoding
+                encodeQueryResponse encodeResult
                     = _encodeQueryLedgerStateResponse encodeAcquireExpired
-                    . Rpc.Response Nothing
+                    . Rpc.Response (Just $ toString method) Nothing
                     . either QueryEraMismatch QueryResponse
                     . encodeResult
 
