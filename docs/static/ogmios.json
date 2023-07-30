@@ -781,14 +781,7 @@
             , "enum": [ "queryLedgerState/epoch" ]
             }
           , "result":
-            { "type": "object"
-            , "required": [ "epoch" ]
-            , "additionalProperties": false
-            , "properties":
-              { "epoch":
-                { "$ref": "cardano.json#/definitions/Epoch"
-                }
-              }
+            { "$ref": "cardano.json#/definitions/Epoch"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -839,14 +832,7 @@
             , "enum": [ "queryLedgerState/eraStart" ]
             }
           , "result":
-            { "type": "object"
-            , "required": [ "eraStart" ]
-            , "additionalProperties": false
-            , "properties":
-              { "eraStart":
-                { "$ref": "cardano.json#/definitions/Bound"
-                }
-              }
+            { "$ref": "cardano.json#/definitions/Bound"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -897,15 +883,8 @@
             , "enum": [ "queryLedgerState/eraSummaries" ]
             }
           , "result":
-            { "type": "object"
-            , "required": [ "eraSummaries" ]
-            , "additionalProperties": false
-            , "properties":
-              { "eraSummaries":
-                { "type": "array"
-                , "items": { "$ref": "cardano.json#/definitions/EraSummary" }
-                }
-              }
+            { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/EraSummary" }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -956,14 +935,7 @@
             , "enum": [ "queryLedgerState/liveStakeDistribution" ]
             }
           , "result":
-            { "type": "object"
-            , "required": [ "liveStakeDistribution" ]
-            , "additionalProperties": false
-            , "properties":
-              { "liveStakeDistribution":
-                { "$ref": "ogmios.json#/definitions/LiveStakeDistribution"
-                }
-              }
+            { "$ref": "ogmios.json#/definitions/LiveStakeDistribution"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1031,14 +1003,7 @@
             , "enum": [ "queryLedgerState/projectedRewards" ]
             }
           , "result":
-            { "type": "object"
-            , "required": [ "projectedRewards" ]
-            , "additionalProperties": false
-            , "properties":
-              { "projectedRewards":
-                { "$ref": "ogmios.json#/definitions/ProjectedRewards"
-                }
-              }
+            { "$ref": "ogmios.json#/definitions/ProjectedRewards"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1089,30 +1054,23 @@
             , "enum": [ "queryLedgerState/proposedProtocolParameters" ]
             }
           , "result":
-            { "type": "object"
-            , "required": [ "proposedProtocolParameters" ]
-            , "additionalProperties": false
-            , "properties":
-              { "proposedProtocolParameters":
-                { "anyOf":
-                  [ { "type": "object"
-                    , "title": "ProposedProtocolParameters<Shelley>"
-                    , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
-                    , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Shelley>" }
-                    }
-                  , { "type": "object"
-                    , "title": "ProposedProtocolParameters<Alonzo>"
-                    , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
-                    , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Alonzo>" }
-                    }
-                  , { "type": "object"
-                    , "title": "ProposedProtocolParameters<Babbage>"
-                    , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
-                    , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Babbage>" }
-                    }
-                  ]
+            { "anyOf":
+              [ { "type": "object"
+                , "title": "ProposedProtocolParameters<Shelley>"
+                , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
+                , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Shelley>" }
                 }
-              }
+              , { "type": "object"
+                , "title": "ProposedProtocolParameters<Alonzo>"
+                , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
+                , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Alonzo>" }
+                }
+              , { "type": "object"
+                , "title": "ProposedProtocolParameters<Babbage>"
+                , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
+                , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Babbage>" }
+                }
+              ]
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1163,18 +1121,11 @@
             , "enum": [ "queryLedgerState/protocolParameters" ]
             }
           , "result":
-            { "type": "object"
-            , "required": [ "protocolParameters" ]
-            , "additionalProperties": false
-            , "properties":
-              { "protocolParameters":
-                { "anyOf":
-                  [ { "$ref": "cardano.json#/definitions/ProtocolParameters<Shelley>" }
-                  , { "$ref": "cardano.json#/definitions/ProtocolParameters<Alonzo>" }
-                  , { "$ref": "cardano.json#/definitions/ProtocolParameters<Babbage>" }
-                  ]
-                }
-              }
+            { "anyOf":
+              [ { "$ref": "cardano.json#/definitions/ProtocolParameters<Shelley>" }
+              , { "$ref": "cardano.json#/definitions/ProtocolParameters<Alonzo>" }
+              , { "$ref": "cardano.json#/definitions/ProtocolParameters<Babbage>" }
+              ]
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1238,17 +1189,10 @@
             , "enum": [ "queryLedgerState/rewardAccountSummaries" ]
             }
           , "result":
-            { "type": "object"
-            , "required": [ "rewardAccountSummaries" ]
-            , "additionalProperties": false
-            , "properties":
-              { "rewardAccountSummaries":
-                { "title": "RewardAccountSummaries"
-                , "type": "object"
-                , "additionalProperties": { "$ref": "ogmios.json#/definitions/RewardAccountSummary" }
-                , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
-                }
-              }
+            { "title": "RewardAccountSummaries"
+            , "type": "object"
+            , "additionalProperties": { "$ref": "ogmios.json#/definitions/RewardAccountSummary" }
+            , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1299,14 +1243,7 @@
             , "enum": [ "queryLedgerState/rewardsProvenance" ]
             }
           , "result":
-            { "type": "object"
-            , "required": [ "rewardsProvenance" ]
-            , "additionalProperties": false
-            , "properties":
-              { "rewardsProvenance":
-                { "$ref": "ogmios.json#/definitions/RewardsProvenance"
-                }
-              }
+            { "$ref": "ogmios.json#/definitions/RewardsProvenance"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1357,20 +1294,13 @@
             , "enum": [ "queryLedgerState/stakePools" ]
             }
           , "result":
-            { "type": "object"
-            , "required": [ "stakePools" ]
-            , "additionalProperties": false
-            , "properties":
-              { "stakePools":
-                { "type": "array"
-                , "items":
-                  { "type": "object"
-                  , "required": [ "id" ]
-                  , "additionalProperties": false
-                  , "properties":
-                    { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
-                    }
-                  }
+            { "type": "array"
+            , "items":
+              { "type": "object"
+              , "required": [ "id" ]
+              , "additionalProperties": false
+              , "properties":
+                { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
                 }
               }
             }
@@ -1439,15 +1369,8 @@
             }
           , "result":
             { "type": "object"
-            , "required": [ "stakePoolParameters" ]
-            , "additionalProperties": false
-            , "properties":
-              { "stakePoolParameters":
-                { "type": "object"
-                , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
-                , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePoolParameters" }
-                }
-              }
+            , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
+            , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePoolParameters" }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1498,14 +1421,7 @@
             , "enum": [ "queryLedgerState/tip" ]
             }
           , "result":
-            { "type": "object"
-            , "required": [ "tip" ]
-            , "additionalProperties": false
-            , "properties":
-              { "tip":
-                { "$ref": "ogmios.json#/definitions/PointOrOrigin"
-                }
-              }
+            { "$ref": "ogmios.json#/definitions/PointOrOrigin"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1585,14 +1501,7 @@
             , "enum": [ "queryLedgerState/utxo" ]
             }
           , "result":
-            { "type": "object"
-            , "required": [ "utxo" ]
-            , "additionalProperties": false
-            , "properties":
-              { "utxo":
-                { "$ref": "cardano.json#/definitions/Utxo"
-                }
-              }
+            { "$ref": "cardano.json#/definitions/Utxo"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1642,17 +1551,10 @@
         , "enum": [ "queryNetwork/blockHeight" ]
         }
       , "result":
-        { "type": "object"
-        , "required": [ "blockHeight" ]
-        , "additionalProperties": false
-        , "properties":
-          { "blockHeight":
-            { "oneOf":
-              [ { "$ref": "cardano.json#/definitions/BlockHeight" }
-              , { "$ref": "cardano.json#/definitions/Origin" }
-              ]
-            }
-          }
+        { "oneOf":
+          [ { "$ref": "cardano.json#/definitions/BlockHeight" }
+          , { "$ref": "cardano.json#/definitions/Origin" }
+          ]
         }
       , "id":
         { "description": "Any value that was set by a client request in the 'id' field."
@@ -1706,36 +1608,29 @@
         , "enum": [ "queryNetwork/genesisConfiguration" ]
         }
       , "result":
-        { "type": "object"
-        , "required": [ "genesisConfiguration" ]
-        , "additionalProperties": false
-        , "properties":
-          { "genesisConfiguration":
-            { "oneOf":
-              [ { "type": "object"
-                , "required": ["byron"]
-                , "additionalProperties": false
-                , "properties":
-                  { "byron": { "$ref": "cardano.json#/definitions/Genesis<Byron>" }
-                  }
-                }
-              , { "type": "object"
-                , "required": ["shelley"]
-                , "additionalProperties": false
-                , "properties":
-                  { "shelley": { "$ref": "cardano.json#/definitions/Genesis<Shelley>" }
-                  }
-                }
-              , { "type": "object"
-                , "required": ["alonzo"]
-                , "additionalProperties": false
-                , "properties":
-                  { "alonzo": { "$ref": "cardano.json#/definitions/Genesis<Alonzo>"}
-                  }
-                }
-              ]
+        { "oneOf":
+          [ { "type": "object"
+            , "required": ["byron"]
+            , "additionalProperties": false
+            , "properties":
+              { "byron": { "$ref": "cardano.json#/definitions/Genesis<Byron>" }
+              }
             }
-          }
+          , { "type": "object"
+            , "required": ["shelley"]
+            , "additionalProperties": false
+            , "properties":
+              { "shelley": { "$ref": "cardano.json#/definitions/Genesis<Shelley>" }
+              }
+            }
+          , { "type": "object"
+            , "required": ["alonzo"]
+            , "additionalProperties": false
+            , "properties":
+              { "alonzo": { "$ref": "cardano.json#/definitions/Genesis<Alonzo>"}
+              }
+            }
+          ]
         }
       , "id":
         { "description": "Any value that was set by a client request in the 'id' field."
@@ -1780,14 +1675,7 @@
         , "enum": [ "queryNetwork/startTime" ]
         }
       , "result":
-        { "type": "object"
-        , "required": [ "startTime" ]
-        , "additionalProperties": false
-        , "properties":
-          { "startTime":
-            { "$ref": "cardano.json#/definitions/UtcTime"
-            }
-          }
+        { "$ref": "cardano.json#/definitions/UtcTime"
         }
       , "id":
         { "description": "Any value that was set by a client request in the 'id' field."
@@ -1832,14 +1720,7 @@
         , "enum": [ "queryNetwork/tip" ]
         }
       , "result":
-        { "type": "object"
-        , "required": [ "tip" ]
-        , "additionalProperties": false
-        , "properties":
-          { "tip":
-            { "$ref": "ogmios.json#/definitions/PointOrOrigin"
-            }
-          }
+        { "$ref": "ogmios.json#/definitions/PointOrOrigin"
         }
       , "id":
         { "description": "Any value that was set by a client request in the 'id' field."

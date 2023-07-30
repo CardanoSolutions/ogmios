@@ -14,22 +14,7 @@ export function networkTip (context: InteractionContext): Promise<Point | Origin
     {
       method: 'queryNetwork/tip'
     },
-    {
-      handler (response, resolve, reject) {
-        if (isQueryNetworkTipResponse(response)) {
-          resolve(response.result.tip)
-        } else {
-          reject(response)
-        }
-      }
-    },
+    {},
     context
   )
-}
-
-/**
- * @internal
- */
-export function isQueryNetworkTipResponse (response: any): response is Response {
-  return typeof (response as Response)?.result?.tip !== 'undefined'
 }

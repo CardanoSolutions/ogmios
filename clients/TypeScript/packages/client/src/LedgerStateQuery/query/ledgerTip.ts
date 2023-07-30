@@ -1,14 +1,8 @@
 import { InteractionContext, Method } from '../../Connection'
-import {
-  Ogmios,
-  Origin,
-  Point,
-  QueryLedgerStateTipResponse
-} from '@cardano-ogmios/schema'
+import { Ogmios, Origin, Point } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateTip']
 type Response = Ogmios['QueryLedgerStateTipResponse']
-type Success = QueryLedgerStateTipResponse
 
 /**
  * Get the current ledger {@link Tip}. Note that may be different from the
@@ -24,22 +18,7 @@ export function ledgerTip (context: InteractionContext): Promise<Point | Origin>
     {
       method: 'queryLedgerState/tip'
     },
-    {
-      handler (response, resolve, reject) {
-        if (isQueryLedgerStateTip(response)) {
-          resolve(response.result.tip)
-        } else {
-          reject(response)
-        }
-      }
-    },
+    {},
     context
   )
-}
-
-/**
- * @internal
- */
-export function isQueryLedgerStateTip (response: any): response is Success {
-  return typeof (response as Success)?.result?.tip !== 'undefined'
 }

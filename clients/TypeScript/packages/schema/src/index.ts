@@ -1720,9 +1720,7 @@ export interface QueryLedgerStateEpoch {
 export interface QueryLedgerStateEpochResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/epoch";
-  result: {
-    epoch: Epoch;
-  };
+  result: Epoch;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -1747,9 +1745,7 @@ export interface QueryLedgerStateEraStart {
 export interface QueryLedgerStateEraStartResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/eraStart";
-  result: {
-    eraStart: Bound;
-  };
+  result: Bound;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -1782,9 +1778,7 @@ export interface QueryLedgerStateEraSummaries {
 export interface QueryLedgerStateEraSummariesResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/eraSummaries";
-  result: {
-    eraSummaries: EraSummary[];
-  };
+  result: EraSummary[];
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -1825,9 +1819,7 @@ export interface QueryLedgerStateLiveStakeDistribution {
 export interface QueryLedgerStateLiveStakeDistributionResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/liveStakeDistribution";
-  result: {
-    liveStakeDistribution: LiveStakeDistribution;
-  };
+  result: LiveStakeDistribution;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -1865,9 +1857,7 @@ export interface QueryLedgerStateProjectedRewards {
 export interface QueryLedgerStateProjectedRewardsResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/projectedRewards";
-  result: {
-    projectedRewards: ProjectedRewards;
-  };
+  result: ProjectedRewards;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -1900,12 +1890,7 @@ export interface QueryLedgerStateProposedProtocolParameters {
 export interface QueryLedgerStateProposedProtocolParametersResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/proposedProtocolParameters";
-  result: {
-    proposedProtocolParameters:
-      | ProposedProtocolParametersShelley
-      | ProposedProtocolParametersAlonzo
-      | ProposedProtocolParametersBabbage;
-  };
+  result: ProposedProtocolParametersShelley | ProposedProtocolParametersAlonzo | ProposedProtocolParametersBabbage;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -1939,9 +1924,7 @@ export interface QueryLedgerStateProtocolParameters {
 export interface QueryLedgerStateProtocolParametersResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/protocolParameters";
-  result: {
-    protocolParameters: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage;
-  };
+  result: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -1969,9 +1952,7 @@ export interface QueryLedgerStateRewardAccountSummaries {
 export interface QueryLedgerStateRewardAccountSummariesResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/rewardAccountSummaries";
-  result: {
-    rewardAccountSummaries: RewardAccountSummaries;
-  };
+  result: RewardAccountSummaries;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -2003,9 +1984,7 @@ export interface QueryLedgerStateRewardsProvenance {
 export interface QueryLedgerStateRewardsProvenanceResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/rewardsProvenance";
-  result: {
-    rewardsProvenance: RewardsProvenance;
-  };
+  result: RewardsProvenance;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -2075,10 +2054,8 @@ export interface QueryLedgerStateStakePoolsResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/stakePools";
   result: {
-    stakePools: {
-      id: StakePoolId;
-    }[];
-  };
+    id: StakePoolId;
+  }[];
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -2106,9 +2083,7 @@ export interface QueryLedgerStateStakePoolParametersResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/stakePoolParameters";
   result: {
-    stakePoolParameters: {
-      [k: string]: StakePoolParameters;
-    };
+    [k: string]: StakePoolParameters;
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -2134,9 +2109,7 @@ export interface QueryLedgerStateTip {
 export interface QueryLedgerStateTipResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/tip";
-  result: {
-    tip: PointOrOrigin;
-  };
+  result: PointOrOrigin;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -2168,9 +2141,7 @@ export interface WholeUtxo {}
 export interface QueryLedgerStateUtxoResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/utxo";
-  result: {
-    utxo: Utxo;
-  };
+  result: Utxo;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -2195,9 +2166,7 @@ export interface QueryNetworkBlockHeight {
 export interface QueryNetworkBlockHeightResponse {
   jsonrpc: "2.0";
   method: "queryNetwork/blockHeight";
-  result: {
-    blockHeight: BlockHeight | Origin;
-  };
+  result: BlockHeight | Origin;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -2224,18 +2193,16 @@ export interface QueryNetworkGenesisConfiguration {
 export interface QueryNetworkGenesisConfigurationResponse {
   jsonrpc: "2.0";
   method: "queryNetwork/genesisConfiguration";
-  result: {
-    genesisConfiguration:
-      | {
-          byron: GenesisByron;
-        }
-      | {
-          shelley: GenesisShelley;
-        }
-      | {
-          alonzo: GenesisAlonzo;
-        };
-  };
+  result:
+    | {
+        byron: GenesisByron;
+      }
+    | {
+        shelley: GenesisShelley;
+      }
+    | {
+        alonzo: GenesisAlonzo;
+      };
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -2336,9 +2303,7 @@ export interface QueryNetworkStartTime {
 export interface QueryNetworkStartTimeResponse {
   jsonrpc: "2.0";
   method: "queryNetwork/startTime";
-  result: {
-    startTime: UtcTime;
-  };
+  result: UtcTime;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -2363,9 +2328,7 @@ export interface QueryNetworkTip {
 export interface QueryNetworkTipResponse {
   jsonrpc: "2.0";
   method: "queryNetwork/tip";
-  result: {
-    tip: PointOrOrigin;
-  };
+  result: PointOrOrigin;
   /**
    * Any value that was set by a client request in the 'id' field.
    */

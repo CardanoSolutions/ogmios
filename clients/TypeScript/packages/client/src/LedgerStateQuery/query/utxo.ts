@@ -1,7 +1,6 @@
 import { InteractionContext, Method } from '../../Connection'
 import {
   Ogmios,
-  QueryLedgerStateUtxoResponse,
   Utxo,
   UtxoByAddresses,
   UtxoByOutputReferences
@@ -9,7 +8,6 @@ import {
 
 type Request = Ogmios['QueryLedgerStateUtxo']
 type Response = Ogmios['QueryLedgerStateUtxoResponse']
-type Success = QueryLedgerStateUtxoResponse
 
 /**
  * Queries the {@link Utxo} associated with some {@link TransactionOutputReference} or {@link Address}.
@@ -27,22 +25,7 @@ export function utxo (
       method: 'queryLedgerState/utxo',
       params
     },
-    {
-      handler (response, resolve, reject) {
-        if (isQueryLedgerStateUtxo(response)) {
-          resolve(response.result.utxo)
-        } else {
-          reject(response)
-        }
-      }
-    },
+    {},
     context
   )
-}
-
-/**
- * @internal
- */
-export function isQueryLedgerStateUtxo (response: any): response is Success {
-  return typeof (response as Success)?.result?.utxo !== 'undefined'
 }

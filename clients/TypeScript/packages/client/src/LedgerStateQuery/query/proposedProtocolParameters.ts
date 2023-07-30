@@ -3,13 +3,11 @@ import {
   Ogmios,
   ProposedProtocolParametersAlonzo,
   ProposedProtocolParametersBabbage,
-  ProposedProtocolParametersShelley,
-  QueryLedgerStateProposedProtocolParametersResponse
+  ProposedProtocolParametersShelley
 } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateProposedProtocolParameters']
 type Response = Ogmios['QueryLedgerStateProposedProtocolParametersResponse']
-type Success = QueryLedgerStateProposedProtocolParametersResponse
 
 type ProposedProtocolParameters =
   | ProposedProtocolParametersAlonzo
@@ -26,22 +24,7 @@ export function proposedProtocolParameters (context: InteractionContext): Promis
     {
       method: 'queryLedgerState/proposedProtocolParameters'
     },
-    {
-      handler (response, resolve, reject) {
-        if (isQueryLedgerStateProposedProtocolParameters(response)) {
-          resolve(response.result.proposedProtocolParameters)
-        } else {
-          reject(response)
-        }
-      }
-    },
+    {},
     context
   )
-}
-
-/**
- * @internal
- */
-export function isQueryLedgerStateProposedProtocolParameters (response: any): response is Success {
-  return typeof (response as Success)?.result?.proposedProtocolParameters !== 'undefined'
 }

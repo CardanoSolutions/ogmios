@@ -31,11 +31,11 @@ export function genesisConfiguration (
     {
       handler (response, resolve, reject) {
         if (era === 'byron' && isQueryNetworkGenesisConfigurationByron(response)) {
-          resolve((response.result.genesisConfiguration as { 'byron': GenesisByron }).byron)
+          resolve((response.result as { 'byron': GenesisByron }).byron)
         } else if (era === 'shelley' && isQueryNetworkGenesisConfigurationShelley(response)) {
-          resolve((response.result.genesisConfiguration as { 'shelley': GenesisShelley }).shelley)
+          resolve((response.result as { 'shelley': GenesisShelley }).shelley)
         } else if (era === 'alonzo' && isQueryNetworkGenesisConfigurationAlonzo(response)) {
-          resolve((response.result.genesisConfiguration as { 'alonzo': GenesisAlonzo }).alonzo)
+          resolve((response.result as { 'alonzo': GenesisAlonzo }).alonzo)
         } else {
           reject(response)
         }
@@ -48,7 +48,7 @@ export function genesisConfiguration (
  * @internal
  */
 export function isQueryNetworkGenesisConfigurationByron (response: any): response is GenesisByron {
-  const genesisConfiguration = (response as Response)?.result?.genesisConfiguration
+  const genesisConfiguration = (response as Response)?.result
   return 'byron' in genesisConfiguration
 }
 
@@ -56,7 +56,7 @@ export function isQueryNetworkGenesisConfigurationByron (response: any): respons
  * @internal
  */
 export function isQueryNetworkGenesisConfigurationShelley (response: any): response is GenesisShelley {
-  const genesisConfiguration = (response as Response)?.result?.genesisConfiguration
+  const genesisConfiguration = (response as Response)?.result
   return 'shelley' in genesisConfiguration
 }
 
@@ -64,6 +64,6 @@ export function isQueryNetworkGenesisConfigurationShelley (response: any): respo
  * @internal
  */
 export function isQueryNetworkGenesisConfigurationAlonzo (response: any): response is GenesisAlonzo {
-  const genesisConfiguration = (response as Response)?.result?.genesisConfiguration
+  const genesisConfiguration = (response as Response)?.result
   return 'alonzo' in genesisConfiguration
 }

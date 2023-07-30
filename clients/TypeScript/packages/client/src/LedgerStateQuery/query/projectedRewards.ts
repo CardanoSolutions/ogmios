@@ -3,13 +3,11 @@ import {
   Ogmios,
   AnyStakeCredential,
   Lovelace,
-  ProjectedRewards,
-  QueryLedgerStateProjectedRewardsResponse
+  ProjectedRewards
 } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateProjectedRewards']
 type Response = Ogmios['QueryLedgerStateProjectedRewardsResponse']
-type Success = QueryLedgerStateProjectedRewardsResponse
 
 /**
  * Get non-myopic rewards from a projected delegation amount; this is used to
@@ -27,22 +25,7 @@ export function projectedRewards (
       method: 'queryLedgerState/projectedRewards',
       params
     },
-    {
-      handler (response, resolve, reject) {
-        if (isQueryLedgerStateProjectedRewards(response)) {
-          resolve(response.result.projectedRewards)
-        } else {
-          reject(response)
-        }
-      }
-    },
+    {},
     context
   )
-}
-
-/**
- * @internal
- */
-export function isQueryLedgerStateProjectedRewards (response: any): response is Success {
-  return typeof (response as Success)?.result?.projectedRewards !== 'undefined'
 }

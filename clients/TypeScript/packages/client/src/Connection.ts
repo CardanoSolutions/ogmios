@@ -177,7 +177,7 @@ export const send = async <T>(
 /** @internal */
 export const Method = <
   Request extends { method: string, params?: any },
-  Response extends { id?: { requestId?: string } },
+  Response extends { method: string, id?: { requestId?: string } },
   A>
   (
     req: {
@@ -185,7 +185,7 @@ export const Method = <
       params?: Request['params'],
     },
     res: {
-      handler: (
+      handler?: (
         response: Response,
         resolve: (value?: A | PromiseLike<A>) => void,
         reject: (reason?: any) => void
@@ -202,7 +202,14 @@ export const Method = <
           if (response?.id?.requestId !== requestId) { return }
           socket.removeListener('message', listener)
           try {
-            await res.handler(
+            const handler = res.handler || ((response, resolve, reject) => {
+              if (response.method === req.method && 'result' in response) {
+                resolve(response.result as A | PromiseLike<A>)
+              } else {
+                reject(response)
+              }
+            })
+            await handler(
               response,
               resolve,
               reject

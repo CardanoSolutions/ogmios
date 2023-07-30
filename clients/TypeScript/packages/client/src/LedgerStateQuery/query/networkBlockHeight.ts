@@ -14,22 +14,7 @@ export function networkBlockHeight (context: InteractionContext): Promise<BlockH
     {
       method: 'queryNetwork/blockHeight'
     },
-    {
-      handler (response, resolve, reject) {
-        if (isQueryNetworkBlockHeightResponse(response)) {
-          resolve(response.result.blockHeight)
-        } else {
-          reject(response)
-        }
-      }
-    },
+    {},
     context
   )
-}
-
-/**
- * @internal
- */
-export function isQueryNetworkBlockHeightResponse (response: any): response is Response {
-  return typeof (response as Response)?.result?.blockHeight !== 'undefined'
 }
