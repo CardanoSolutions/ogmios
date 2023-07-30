@@ -48,11 +48,11 @@ type AuxiliaryScripts crypto =
 -- Encoders
 --
 encodeAuxiliaryData
-    :: forall crypto. Crypto crypto
-    => Al.AllegraTxAuxData (AllegraEra crypto)
+    :: forall crypto era. (Era era, era ~ AllegraEra crypto)
+    => Al.AllegraTxAuxData era
     -> (Json, AuxiliaryScripts crypto)
 encodeAuxiliaryData (Al.AllegraTxAuxData blob scripts) =
-    ( Shelley.encodeMetadataBlob blob
+    ( Shelley.encodeMetadataBlob @era blob
     , foldr
         (\script -> Map.insert (Ledger.hashScript @(AllegraEra crypto) script) script)
         mempty

@@ -102,7 +102,13 @@ export type Neutral = "neutral";
 export type UInt321 = number;
 export type Int64 = number;
 export type CostModel = Int64[];
-export type Metadatum = Int | String | Bytes | List | Map;
+export type Metadatum =
+  | bigint
+  | string
+  | Metadatum[]
+  | {
+      [k: string]: Metadatum;
+    };
 /**
  * Plutus data, CBOR-serialised.
  */
@@ -763,26 +769,13 @@ export interface Metadata {
   labels: MetadataLabels;
 }
 export interface MetadataLabels {
-  [k: string]: Metadatum;
-}
-export interface Int {
-  int: bigint;
-}
-export interface String {
-  string: string;
-}
-export interface Bytes {
-  bytes: string;
-}
-export interface List {
-  list: Metadatum[];
-}
-export interface Map {
-  map: MetadatumMap[];
-}
-export interface MetadatumMap {
-  k: Metadatum;
-  v: Metadatum;
+  /**
+   * An associated metadatum, as a CBOR bytestring or a JSON object if possible. Some binary representations cannot be represented in plain JSON and the 'json' field is therefore omitted.
+   */
+  [k: string]: {
+    cbor: string;
+    json?: Metadatum;
+  };
 }
 export interface Redeemer {
   redeemer: RedeemerData;

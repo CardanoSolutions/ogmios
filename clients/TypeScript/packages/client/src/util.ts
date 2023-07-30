@@ -12,8 +12,6 @@ import {
   DigestBlake2B256,
   Era,
   ExpiresAt,
-  Metadatum,
-  MetadatumMap,
   NOf,
   Native,
   PlutusV1,
@@ -41,10 +39,8 @@ export const safeJSON = {
    *
    * Note that, this is potentially _slow_ since it needs to traverse the entire JSON.
    */
-  sanitize (json : any, parentKey? : string) : any {
+  sanitize (json: any, parentKey?: string) : any {
     if (typeof json === 'object' && json !== null) {
-      const len = Object.getOwnPropertyNames(json).length
-
       // Lovelace & AssetQuantity
       if (json.coins !== undefined) {
         const coins = json.coins
@@ -65,11 +61,6 @@ export const safeJSON = {
       // Withdrawals
       if (parentKey === 'withdrawals') {
         return this.sanitizeAdditionalFields(json)
-      }
-
-      // Metadatum@Int
-      if (len === 1 && json.int !== undefined) {
-        return this.sanitizeFields(json, ['int'])
       }
 
       // RewardsProvenance1
@@ -103,6 +94,10 @@ export const safeJSON = {
         return this.sanitizeAdditionalFields(json)
       }
 
+      if (parentKey === 'labels') {
+        return this.sanitizeMetadatum(json)
+      }
+
       // Otherwise...
       for (const k in json) {
         this.sanitize(json[k], k)
@@ -128,10 +123,18 @@ export const safeJSON = {
 
   // Sanitize additional fields of an object explicitly, for objects that are maps
   // with undetermined keys.
-  sanitizeAdditionalFields (json : any) : any {
+  sanitizeAdditionalFields (json: any) : any {
     for (const k in json) {
       const v = json[k]
       json[k] = typeof v === 'number' ? BigInt(v) : v
+    }
+    return json
+  },
+
+  sanitizeMetadatum (json: any) : any {
+    for (const k in json) {
+      const v = json[k]
+      json[k] = typeof v === 'number' ? BigInt(v) : this.sanitizeMetadatum(v)
     }
     return json
   },
@@ -172,56 +175,6 @@ export function eventEmitterToGenerator <T> (eventEmitter: EventEmitter, eventNa
       })
     }
   }
-}
-
-/** Convert a CBOR-description as raw JSON object, or throw if given an invalid
- * representation. This function is meant to use for converting transaction's
- * metadata into plain JSON in context where that conversion is expected to work.
- *
- * It isn't generally possible to do so because not every CBOR object have a 1:1
- * mapping to a JSON object. This function should therefore work for metadata
- * coming from CIP-0025, and likely a few other standards but is unsound in the
- * general case and isn't expected to work on *any* metadata that can be found on
- * chain.
- *
- * @category Helper */
-export function unsafeMetadatumAsJSON (metadatum: Metadatum): any {
-  function fromMetadatum (o: Metadatum): any {
-    if (Object.keys(o).length > 1) {
-      throw new Error('Malformed metadatum object. A JSON object that describes CBOR encoded datum is expected.')
-    }
-
-    if ('int' in o) {
-      return o.int
-    } else if ('string' in o) {
-      return o.string
-    } else if ('bytes' in o) {
-      return Buffer.from(o.bytes, 'hex')
-    } else if ('list' in o) {
-      return o.list.map(fromMetadatum)
-    } else if ('map' in o) {
-      return o.map.reduce(fromMetadatumMap, {})
-    } else {
-      const type = Object.keys(o)[0]
-      const msg = `Unexpected metadatum type '${type}'.`
-      let hint = ''
-      if (Number.isInteger(Number.parseInt(type, 10))) {
-        hint = ' Hint: this function expects metadatum objects without metadatum label.'
-      }
-      throw new Error(`${msg}${hint}`)
-    }
-  }
-
-  function fromMetadatumMap (acc: { [k: string]: any }, { k, v }: MetadatumMap) {
-    const kStr = fromMetadatum(k)
-    if (typeof kStr !== 'string') {
-      throw new Error(`Invalid non-string key: ${k}.`)
-    }
-    acc[kStr] = fromMetadatum(v)
-    return acc
-  }
-
-  return fromMetadatum(metadatum)
 }
 
 const BYRON_ERA: Era = 'byron'

@@ -78,7 +78,7 @@ encodeAuxiliaryData
     => Al.AlonzoTxAuxData era
     -> (Json, AuxiliaryScripts era)
 encodeAuxiliaryData (Al.AlonzoTxAuxData blob timelocks plutus) =
-    ( Shelley.encodeMetadataBlob blob
+    ( Shelley.encodeMetadataBlob @era blob
     , foldr
         (\(Al.TimelockScript -> script) -> Map.insert (Ledger.hashScript @era script) script)
         (Map.foldrWithKey

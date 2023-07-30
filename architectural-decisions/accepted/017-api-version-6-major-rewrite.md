@@ -267,3 +267,64 @@ You don't have to worry too much about those ranges as it sufficient to know tha
 ##### Value
 
 The representation of `Value` has been changed to be more compact, more extensible and clearer. Values are now encoded as nested objects, where keys are respectively asset's policy id and asset name. Leaves are plain integers. The special case of Ada is encoded as a special policy id `ada` and asset name `lovelace`. This behavior is consistently applied to any amount that refers to a lovelace quantity. Transaction fees for example are now encoded as: `{ "lovelace": 1234 }`.
+
+##### Metadata
+
+The representation of transaction metadata has been both simplified and made more user-friendly, while remaining safe for more complex use-cases.  In fact, many people in the community have grown to expect transaction metadata to be JSON objects. However, they aren't. Or more specifically, they aren't necessarily. There are actually plenty of transaction metadata on-chain that aren't representable as valid JSON. Prior to version 6, Ogmios would give a so-called detailed JSON schema representation of those metadata, by encoding the binary encoding as a JSON object. This has created a lot of confusion for rookie users not yet familiar with Cardano entrails who would be expecting a plain JSON object. Plus, the format was unpractical to parse for client down the line as it used object keys as type discriminant, leaving decoders no choice to try various encoding alternatively.
+
+Starting from version 6, Ogmios will always return metadata as a base16 CBOR encoded object, but, when it's possible, it will *also* provides a plain JSON representation of them. This way, we get the best of both worlds: the format remains friendly when it can be, but when not possible, we resort to binary encoding. In fact, when metadata aren't representable as JSON object, this is probably because they are in fact, some elaborated binary encoding and users consuming them are most seemingly capable of decoding that themselves in the way they intended.
+
+To give a concrete example:
+
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+```json
+{
+  "14": {
+    "map": [
+      {
+        "k": { "string": "foo" },
+        "v": { "int": 42 }
+      },
+      {
+        "k": { "string": "bar" },
+        "v": { "list": [ { "int": 1 }, { "int": 2 } ] }
+      }
+    ]
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+
+
+
+{
+  "14": {
+    "cbor": "A263666F6F182A63626172820102",
+    "json": {
+      "foo": 42,
+      "bar": [ 1, 2 ]
+    },
+  }
+}
+
+
+
+```
+
+</td>
+</tr>
+</table>
+
+When it isn't possible to represent the metadata as a plain JSON object, the `json` field is simply omitted and the metadata is only provided as CBOR.

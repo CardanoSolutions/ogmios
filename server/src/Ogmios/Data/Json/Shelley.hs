@@ -4,6 +4,7 @@
 
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 
 {-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
 
@@ -11,9 +12,6 @@ module Ogmios.Data.Json.Shelley where
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Binary
-    ( serialize'
-    )
 import Cardano.Ledger.Keys
     ( GenDelegPair (..)
     , KeyRole (..)
@@ -45,6 +43,8 @@ import qualified Cardano.Crypto.VRF.Class as CC
 
 import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 import qualified Cardano.Protocol.TPraos.OCert as TPraos
+
+import qualified Cardano.Ledger.Binary as Binary
 
 import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.AuxiliaryData as Ledger
@@ -322,34 +322,51 @@ encodeKESPeriod =
     encodeWord . TPraos.unKESPeriod
 
 encodeMetadata
-    :: Era era
+    :: forall era. (Era era)
     => Sh.ShelleyTxAuxData era
     -> Json
 encodeMetadata (Sh.ShelleyTxAuxData blob) =
-    encodeMetadataBlob blob
+    encodeMetadataBlob @era blob
 
 encodeMetadataBlob
-    :: Map Word64 Sh.Metadatum
+    :: forall era. (Era era)
+    => Map Word64 Sh.Metadatum
     -> Json
 encodeMetadataBlob =
     encodeMap show encodeMetadatum
   where
     encodeMetadatum :: Sh.Metadatum -> Json
-    encodeMetadatum = encodeObject . \case
-        Sh.I n ->
-            "int" .= encodeInteger n
-        Sh.B bytes ->
-            "bytes" .= encodeByteStringBase16 bytes
-        Sh.S txt ->
-            "string" .= encodeText txt
-        Sh.List xs ->
-            "list" .= encodeList encodeMetadatum xs
-        Sh.Map xs ->
-            "map" .= encodeList encodeKeyPair xs
+    encodeMetadatum meta =
+        encodeObject
+            ( "cbor" .=
+                encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) meta)
+           <> "json" .=? OmitWhenNothing
+                identity (tryEncodeMetadatumAsJson meta)
+            )
 
-    encodeKeyPair :: (Sh.Metadatum, Sh.Metadatum) -> Json
-    encodeKeyPair (k, v) =
-        encodeObject ("k" .= encodeMetadatum k <>  "v" .= encodeMetadatum v)
+    tryEncodeMetadatumAsJson :: Sh.Metadatum -> StrictMaybe Json
+    tryEncodeMetadatumAsJson = \case
+        Sh.B{} ->
+            SNothing
+        Sh.I n ->
+            pure (encodeInteger n)
+        Sh.S t ->
+            pure (encodeText t)
+        Sh.List xs ->
+            encodeList identity <$> traverse tryEncodeMetadatumAsJson xs
+        Sh.Map xs ->
+            encodeList identity <$> traverse tryEncodeKeyPairAsJson xs
+
+    tryEncodeKeyPairAsJson :: (Sh.Metadatum, Sh.Metadatum) -> StrictMaybe Json
+    tryEncodeKeyPairAsJson = \case
+        (Sh.I n, v) -> do
+            json <- tryEncodeMetadatumAsJson v
+            pure (encodeObject (show n .= json))
+        (Sh.S t, v) -> do
+            json <- tryEncodeMetadatumAsJson v
+            pure (encodeObject (t .= json))
+        _ ->
+            SNothing
 
 encodeMIRPot
     :: Sh.MIRPot
@@ -606,8 +623,8 @@ encodeStakePoolRelay = encodeObject . \case
             encodeDnsName dns
 
 encodeTx
-    :: forall crypto. (Crypto crypto)
-    => Sh.ShelleyTx (ShelleyEra crypto)
+    :: forall crypto era. (Crypto crypto, era ~ ShelleyEra crypto)
+    => Sh.ShelleyTx era
     -> Json
 encodeTx x =
     "id" .= encodeTxId (Ledger.txid @(ShelleyEra crypto) (Sh.body x))
@@ -620,7 +637,7 @@ encodeTx x =
         <>
     encodeWitnessSet (Sh.wits x)
         <>
-    "cbor" .= encodeByteStringBase16 (serialize' x)
+    "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
         & encodeObject
   where
     metadata = liftA2

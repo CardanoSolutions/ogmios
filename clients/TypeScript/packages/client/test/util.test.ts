@@ -3,12 +3,9 @@ import {
   CONSTANT_OUTPUT_SERIALIZATION_OVERHEAD,
   eventEmitterToGenerator,
   safeJSON,
-  unsafeMetadatumAsJSON,
   utxoSize
 } from '../src'
 import {
-  Int,
-  List,
   MetadataLabels,
   MoveInstantaneousRewards,
   RewardAccountSummaries,
@@ -369,14 +366,17 @@ describe('util', () => {
     it('parses metadatum int as bigint, always', () => {
       const json = `
         {
-          "1": { "int": 42 },
-          "2": { "list": [ { "int": 14 }, { "int": 123954834573123725621 } ] }
+          "labels": {
+            "1": 42,
+            "2": [14, 123954834573123725621]
+          }
         }
       `
 
       const result = safeJSON.parse(json) as MetadataLabels
-      expect(typeof (result[1] as Int).int).toEqual('bigint')
-      expect(typeof ((result[2] as List).list[1] as Int).int).toEqual('bigint')
+      expect(typeof result.labels[1]).toEqual('bigint')
+      expect(typeof (result.labels[2] as bigint[])[0]).toEqual('bigint')
+      expect(typeof (result.labels[2] as bigint[])[1]).toEqual('bigint')
     })
 
     describe('parse lovelace as bigint, always', () => {
@@ -545,175 +545,6 @@ describe('util', () => {
 
         const result = safeJSON.parse(json) as Pick<TransactionOutput, 'value'>
         expect(typeof result.value.coins).toEqual('bigint')
-      })
-    })
-  })
-
-  describe('unsafeMetadatumAsJSON', () => {
-    it('primitives :: int', () => {
-      const json = unsafeMetadatumAsJSON({
-        int: 42n
-      })
-      expect(json as number).toEqual(42n)
-    })
-
-    it('primitives :: string', () => {
-      const json = unsafeMetadatumAsJSON({
-        string: 'foo'
-      })
-      expect(json as string).toEqual('foo')
-    })
-
-    it('primitives :: bytes', () => {
-      const json = unsafeMetadatumAsJSON({
-        bytes: '626172'
-      })
-      expect(json as Buffer).toEqual(Buffer.from('bar'))
-    })
-
-    it('primitives :: list', () => {
-      const json = unsafeMetadatumAsJSON({
-        list: [{ int: 42n }]
-      })
-      expect(json as Array<any>).toEqual([42n])
-    })
-
-    it('primitives :: map', () => {
-      const json = unsafeMetadatumAsJSON({
-        map: [{ k: { string: 'foo' }, v: { int: 42n } }]
-      })
-      expect(json as Object).toEqual({ foo: 42n })
-    })
-
-    it('compound', () => {
-      const json = unsafeMetadatumAsJSON({
-        map: [
-          {
-            k: {
-              string: 'f0ff48bbb7bbe9d59a40f1ce90e9e9d0ff5002ec48f232b49ca0fb9a'
-            },
-            v: {
-              map: [
-                {
-                  k: {
-                    string: 'reactant'
-                  },
-                  v: {
-                    map: [
-                      {
-                        k: {
-                          string: 'name'
-                        },
-                        v: {
-                          string: '$reactant'
-                        }
-                      },
-                      {
-                        k: {
-                          string: 'description'
-                        },
-                        v: {
-                          string: 'The Handle Standard'
-                        }
-                      },
-                      {
-                        k: {
-                          string: 'website'
-                        },
-                        v: {
-                          string: 'https://adahandle.com'
-                        }
-                      },
-                      {
-                        k: {
-                          string: 'image'
-                        },
-                        v: {
-                          string: 'ipfs://QmWLeos8yGBE7o69wUxGYcXmS8qgc4TiyZ4VHcGmfkBiY3'
-                        }
-                      },
-                      {
-                        k: {
-                          string: 'core'
-                        },
-                        v: {
-                          map: [
-                            {
-                              k: {
-                                string: 'og'
-                              },
-                              v: {
-                                int: 0n
-                              }
-                            },
-                            {
-                              k: {
-                                string: 'termsofuse'
-                              },
-                              v: {
-                                string: 'https://adahandle.com/tou'
-                              }
-                            },
-                            {
-                              k: {
-                                string: 'handleEncoding'
-                              },
-                              v: {
-                                string: 'utf-8'
-                              }
-                            },
-                            {
-                              k: {
-                                string: 'prefix'
-                              },
-                              v: {
-                                string: '$'
-                              }
-                            },
-                            {
-                              k: {
-                                string: 'version'
-                              },
-                              v: {
-                                int: 0n
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        k: {
-                          string: 'augmentations'
-                        },
-                        v: {
-                          list: []
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      })
-      expect(json as Object).toEqual({
-        f0ff48bbb7bbe9d59a40f1ce90e9e9d0ff5002ec48f232b49ca0fb9a: {
-          reactant: {
-            augmentations: [],
-            core: {
-              handleEncoding: 'utf-8',
-              og: 0n,
-              prefix: '$',
-              termsofuse: 'https://adahandle.com/tou',
-              version: 0n
-            },
-            description: 'The Handle Standard',
-            image: 'ipfs://QmWLeos8yGBE7o69wUxGYcXmS8qgc4TiyZ4VHcGmfkBiY3',
-            name: '$reactant',
-            website: 'https://adahandle.com'
-          }
-        }
       })
     })
   })
