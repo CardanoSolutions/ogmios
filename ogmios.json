@@ -61,7 +61,7 @@
         , "properties":
           { "points":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/PointOrOrigin" }
+            , "items": { "$ref": "ogmios.json#/definitions/PointOrOrigin" }
             }
           }
         }
@@ -75,20 +75,24 @@
     { "oneOf":
       [ { "title": "IntersectionFound"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
             }
+          , "method":
+            { "type": "string"
+            , "enum": [ "findIntersection" ]
+            }
           , "result":
             { "type": "object"
             , "additionalProperties": false
             , "required": [ "intersection", "tip" ]
             , "properties":
-              { "intersection": { "$ref": "cardano.json#/definitions/PointOrOrigin" }
-              , "tip": { "$ref": "cardano.json#/definitions/TipOrOrigin" }
+              { "intersection": { "$ref": "ogmios.json#/definitions/PointOrOrigin" }
+              , "tip": { "$ref": "ogmios.json#/definitions/TipOrOrigin" }
               }
             }
           , "id":
@@ -98,12 +102,16 @@
         }
       , { "title": "IntersectionNotFound"
         , "type": "object"
-        , "required": [ "jsonrpc", "error" ]
+        , "required": [ "jsonrpc", "method", "error" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "findIntersection" ]
             }
           , "error":
             { "type": "object"
@@ -117,7 +125,7 @@
                 , "additionalProperties": false
                 , "required": [ "tip" ]
                 , "properties":
-                  { "tip": { "$ref": "cardano.json#/definitions/TipOrOrigin" }
+                  { "tip": { "$ref": "ogmios.json#/definitions/TipOrOrigin" }
                   }
                 }
               }
@@ -155,12 +163,16 @@
     { "title": "NextBlockResponse"
     , "type": "object"
     , "description": "Response to a 'nextBlock' request."
-    , "required": [ "jsonrpc", "result" ]
+    , "required": [ "jsonrpc", "method", "result" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
         { "type": "string"
         , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "nextBlock" ]
         }
       , "result":
         { "oneOf":
@@ -186,8 +198,8 @@
                 { "type": "string"
                 , "enum": [ "backward" ]
                 }
-              , "tip": { "$ref": "cardano.json#/definitions/TipOrOrigin" }
-              , "point": { "$ref": "cardano.json#/definitions/PointOrOrigin" }
+              , "tip": { "$ref": "ogmios.json#/definitions/TipOrOrigin" }
+              , "point": { "$ref": "ogmios.json#/definitions/PointOrOrigin" }
               }
             }
           ]
@@ -236,12 +248,16 @@
     { "oneOf":
       [ { "title": "SubmitTransactionSuccess"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "submitTransaction" ]
             }
           , "result":
             { "type": "object"
@@ -265,12 +281,16 @@
         }
       , { "title": "SubmitTransactionError"
         , "type": "object"
-        , "required": [ "jsonrpc", "error" ]
+        , "required": [ "jsonrpc", "method", "error" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "submitTransaction" ]
             }
           , "error":
             { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure"
@@ -282,12 +302,16 @@
         }
       , { "title": "SubmitTransactionDeserialisationError"
         , "type": "object"
-        , "required": [ "jsonrpc", "error" ]
+        , "required": [ "jsonrpc", "method", "error" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "submitTransaction" ]
             }
           , "error":
             { "$ref": "ogmios.json#/definitions/DeserialisationFailure"
@@ -341,12 +365,16 @@
     { "oneOf":
       [ { "title": "EvaluateTransactionSuccess"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "evaluateTransaction" ]
             }
           , "result":
             { "type": "array"
@@ -380,12 +408,16 @@
       , { "title": "EvaluateTransactionError"
         , "description": "Happens when attempting to evaluate execution units on a node that isn't enough synchronized."
         , "type": "object"
-        , "required": [ "jsonrpc", "error" ]
+        , "required": [ "jsonrpc", "method", "error" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "evaluateTransaction" ]
             }
           , "error":
             { "$ref": "ogmios.json#/definitions/EvaluateTransactionFailure"
@@ -397,12 +429,16 @@
         }
       , { "title": "EvaluateTransactionDeserialisationError"
         , "type": "object"
-        , "required": [ "jsonrpc", "error" ]
+        , "required": [ "jsonrpc", "method", "error" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "evaluateTransaction" ]
             }
           , "error":
             { "$ref": "ogmios.json#/definitions/DeserialisationFailure"
@@ -435,7 +471,7 @@
         , "additionalProperties": false
         , "required": ["point"]
         , "properties":
-          { "point": { "$ref": "cardano.json#/definitions/PointOrOrigin" }
+          { "point": { "$ref": "ogmios.json#/definitions/PointOrOrigin" }
           }
         }
       , "id":
@@ -449,12 +485,16 @@
       [ { "title": "AcquireLedgerStateSuccess"
         , "type": "object"
         , "description": "Response to an 'acquireLedgerState' request."
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "acquireLedgerState" ]
             }
           , "result":
             { "title": "AcquireLedgerStateSuccess"
@@ -467,7 +507,7 @@
                 , "enum": [ "ledgerState" ]
                 }
               , "point":
-                { "$ref": "cardano.json#/definitions/PointOrOrigin" }
+                { "$ref": "ogmios.json#/definitions/PointOrOrigin" }
               }
             }
           , "id":
@@ -478,12 +518,16 @@
       , { "title": "AcquireLedgerStateFailure"
         , "type": "object"
         , "description": "Unable to acquire the ledger state at the request point."
-        , "required": [ "jsonrpc", "error" ]
+        , "required": [ "jsonrpc", "method", "error" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "acquireLedgerState" ]
             }
           , "error":
             { "title": "AcquireLedgerStateFailure"
@@ -537,12 +581,16 @@
     { "title": "ReleaseLedgerStateResponse"
     , "type": "object"
     , "description": "Response to a 'releaseLedgerState' request."
-    , "required": [ "jsonrpc", "result" ]
+    , "required": [ "jsonrpc", "method", "result" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
         { "type": "string"
         , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "releaseLedgerState" ]
         }
       , "result":
         { "type": "object"
@@ -565,12 +613,30 @@
     { "title": "QueryLedgerStateEraMismatch"
     , "type": "object"
     , "description": "An era mismatch between a client request and the era the ledger is in. This may occur when running queries on a syncing node and/or when the node is crossing an era."
-    , "required": [ "jsonrpc", "error" ]
+    , "required": [ "jsonrpc", "method", "error" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
         { "type": "string"
         , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum":
+          [ "queryLedgerState/epoch"
+          , "queryLedgerState/eraStart"
+          , "queryLedgerState/eraSummaries"
+          , "queryLedgerState/liveStakeDistribution"
+          , "queryLedgerState/projectedRewards"
+          , "queryLedgerState/protocolParameters"
+          , "queryLedgerState/proposedProtocolParameters"
+          , "queryLedgerState/rewardAccountSummaries"
+          , "queryLedgerState/rewardsProvenance"
+          , "queryLedgerState/stakePoolParameters"
+          , "queryLedgerState/stakePools"
+          , "queryLedgerState/utxo"
+          , "queryLedgerState/tip"
+          ]
         }
       , "error":
         { "type": "object"
@@ -592,12 +658,30 @@
     { "title": "QueryLedgerStateUnavailableInCurrentEra"
     , "type": "object"
     , "description": "Some query is not available for the requested ledger era."
-    , "required": [ "jsonrpc", "error" ]
+    , "required": [ "jsonrpc", "method", "error" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
         { "type": "string"
         , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum":
+          [ "queryLedgerState/epoch"
+          , "queryLedgerState/eraStart"
+          , "queryLedgerState/eraSummaries"
+          , "queryLedgerState/liveStakeDistribution"
+          , "queryLedgerState/projectedRewards"
+          , "queryLedgerState/protocolParameters"
+          , "queryLedgerState/proposedProtocolParameters"
+          , "queryLedgerState/rewardAccountSummaries"
+          , "queryLedgerState/rewardsProvenance"
+          , "queryLedgerState/stakePoolParameters"
+          , "queryLedgerState/stakePools"
+          , "queryLedgerState/utxo"
+          , "queryLedgerState/tip"
+          ]
         }
       , "error":
         { "type": "object"
@@ -618,12 +702,30 @@
     { "title": "QueryLedgerStateAcquiredExpired"
     , "type": "object"
     , "description": "Previously acquired ledger state is no longer available."
-    , "required": [ "jsonrpc", "error" ]
+    , "required": [ "jsonrpc", "method", "error" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
         { "type": "string"
         , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum":
+          [ "queryLedgerState/epoch"
+          , "queryLedgerState/eraStart"
+          , "queryLedgerState/eraSummaries"
+          , "queryLedgerState/liveStakeDistribution"
+          , "queryLedgerState/projectedRewards"
+          , "queryLedgerState/protocolParameters"
+          , "queryLedgerState/proposedProtocolParameters"
+          , "queryLedgerState/rewardAccountSummaries"
+          , "queryLedgerState/rewardsProvenance"
+          , "queryLedgerState/stakePoolParameters"
+          , "queryLedgerState/stakePools"
+          , "queryLedgerState/utxo"
+          , "queryLedgerState/tip"
+          ]
         }
       , "error":
         { "type": "object"
@@ -667,22 +769,19 @@
     { "oneOf":
       [ { "title": "QueryLedgerStateEpochResponse"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
             }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/epoch" ]
+            }
           , "result":
-            { "type": "object"
-            , "required": [ "epoch" ]
-            , "additionalProperties": false
-            , "properties":
-              { "epoch":
-                { "$ref": "cardano.json#/definitions/Epoch"
-                }
-              }
+            { "$ref": "cardano.json#/definitions/Epoch"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -721,22 +820,19 @@
     { "oneOf":
       [ { "title": "QueryLedgerStateEraStartResponse"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
             }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/eraStart" ]
+            }
           , "result":
-            { "type": "object"
-            , "required": [ "eraStart" ]
-            , "additionalProperties": false
-            , "properties":
-              { "eraStart":
-                { "$ref": "cardano.json#/definitions/Bound"
-                }
-              }
+            { "$ref": "cardano.json#/definitions/Bound"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -775,23 +871,20 @@
     { "oneOf":
       [ { "title": "QueryLedgerStateEraSummariesResponse"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
             }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/eraSummaries" ]
+            }
           , "result":
-            { "type": "object"
-            , "required": [ "eraSummaries" ]
-            , "additionalProperties": false
-            , "properties":
-              { "eraSummaries":
-                { "type": "array"
-                , "items": { "$ref": "cardano.json#/definitions/EraSummary" }
-                }
-              }
+            { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/EraSummary" }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -830,22 +923,19 @@
     { "oneOf":
       [ { "title": "QueryLedgerStateLiveStakeDistributionResponse"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
             }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/liveStakeDistribution" ]
+            }
           , "result":
-            { "type": "object"
-            , "required": [ "liveStakeDistribution" ]
-            , "additionalProperties": false
-            , "properties":
-              { "liveStakeDistribution":
-                { "$ref": "ogmios.json#/definitions/LiveStakeDistribution"
-                }
-              }
+            { "$ref": "ogmios.json#/definitions/LiveStakeDistribution"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -901,22 +991,19 @@
     { "oneOf":
       [ { "title": "QueryLedgerStateProjectedRewardsResponse"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
             }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/projectedRewards" ]
+            }
           , "result":
-            { "type": "object"
-            , "required": [ "projectedRewards" ]
-            , "additionalProperties": false
-            , "properties":
-              { "projectedRewards":
-                { "$ref": "ogmios.json#/definitions/ProjectedRewards"
-                }
-              }
+            { "$ref": "ogmios.json#/definitions/ProjectedRewards"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -955,38 +1042,35 @@
     { "oneOf":
       [ { "title": "QueryLedgerStateProposedProtocolParametersResponse"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
             }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/proposedProtocolParameters" ]
+            }
           , "result":
-            { "type": "object"
-            , "required": [ "proposedProtocolParameters" ]
-            , "additionalProperties": false
-            , "properties":
-              { "proposedProtocolParameters":
-                { "anyOf":
-                  [ { "type": "object"
-                    , "title": "ProposedProtocolParameters<Shelley>"
-                    , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
-                    , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Shelley>" }
-                    }
-                  , { "type": "object"
-                    , "title": "ProposedProtocolParameters<Alonzo>"
-                    , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
-                    , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Alonzo>" }
-                    }
-                  , { "type": "object"
-                    , "title": "ProposedProtocolParameters<Babbage>"
-                    , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
-                    , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Babbage>" }
-                    }
-                  ]
+            { "anyOf":
+              [ { "type": "object"
+                , "title": "ProposedProtocolParameters<Shelley>"
+                , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
+                , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Shelley>" }
                 }
-              }
+              , { "type": "object"
+                , "title": "ProposedProtocolParameters<Alonzo>"
+                , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
+                , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Alonzo>" }
+                }
+              , { "type": "object"
+                , "title": "ProposedProtocolParameters<Babbage>"
+                , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
+                , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Babbage>" }
+                }
+              ]
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1025,26 +1109,23 @@
     { "oneOf":
       [ { "title": "QueryLedgerStateProtocolParametersResponse"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
             }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/protocolParameters" ]
+            }
           , "result":
-            { "type": "object"
-            , "required": [ "protocolParameters" ]
-            , "additionalProperties": false
-            , "properties":
-              { "protocolParameters":
-                { "anyOf":
-                  [ { "$ref": "cardano.json#/definitions/ProtocolParameters<Shelley>" }
-                  , { "$ref": "cardano.json#/definitions/ProtocolParameters<Alonzo>" }
-                  , { "$ref": "cardano.json#/definitions/ProtocolParameters<Babbage>" }
-                  ]
-                }
-              }
+            { "anyOf":
+              [ { "$ref": "cardano.json#/definitions/ProtocolParameters<Shelley>" }
+              , { "$ref": "cardano.json#/definitions/ProtocolParameters<Alonzo>" }
+              , { "$ref": "cardano.json#/definitions/ProtocolParameters<Babbage>" }
+              ]
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1096,25 +1177,22 @@
     { "oneOf":
       [ { "title": "QueryLedgerStateRewardAccountSummariesResponse"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
             }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/rewardAccountSummaries" ]
+            }
           , "result":
-            { "type": "object"
-            , "required": [ "rewardAccountSummaries" ]
-            , "additionalProperties": false
-            , "properties":
-              { "rewardAccountSummaries":
-                { "title": "RewardAccountSummaries"
-                , "type": "object"
-                , "additionalProperties": { "$ref": "ogmios.json#/definitions/RewardAccountSummary" }
-                , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
-                }
-              }
+            { "title": "RewardAccountSummaries"
+            , "type": "object"
+            , "additionalProperties": { "$ref": "ogmios.json#/definitions/RewardAccountSummary" }
+            , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1153,22 +1231,19 @@
     { "oneOf":
       [ { "title": "QueryLedgerStateRewardsProvenanceResponse"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
             }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/rewardsProvenance" ]
+            }
           , "result":
-            { "type": "object"
-            , "required": [ "rewardsProvenance" ]
-            , "additionalProperties": false
-            , "properties":
-              { "rewardsProvenance":
-                { "$ref": "ogmios.json#/definitions/RewardsProvenance"
-                }
-              }
+            { "$ref": "ogmios.json#/definitions/RewardsProvenance"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1207,28 +1282,25 @@
     { "oneOf":
       [ { "title": "QueryLedgerStateStakePoolsResponse"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
             }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/stakePools" ]
+            }
           , "result":
-            { "type": "object"
-            , "required": [ "stakePools" ]
-            , "additionalProperties": false
-            , "properties":
-              { "stakePools":
-                { "type": "array"
-                , "items":
-                  { "type": "object"
-                  , "required": [ "id" ]
-                  , "additionalProperties": false
-                  , "properties":
-                    { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
-                    }
-                  }
+            { "type": "array"
+            , "items":
+              { "type": "object"
+              , "required": [ "id" ]
+              , "additionalProperties": false
+              , "properties":
+                { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
                 }
               }
             }
@@ -1284,24 +1356,21 @@
     { "oneOf":
       [ { "title": "QueryLedgerStateStakePoolParametersResponse"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
             }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/stakePoolParameters" ]
+            }
           , "result":
             { "type": "object"
-            , "required": [ "stakePoolParameters" ]
-            , "additionalProperties": false
-            , "properties":
-              { "stakePoolParameters":
-                { "type": "object"
-                , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
-                , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePoolParameters" }
-                }
-              }
+            , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
+            , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePoolParameters" }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1340,22 +1409,19 @@
     { "oneOf":
       [ { "title": "QueryLedgerStateTipResponse"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
             }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/tip" ]
+            }
           , "result":
-            { "type": "object"
-            , "required": [ "tip" ]
-            , "additionalProperties": false
-            , "properties":
-              { "tip":
-                { "$ref": "cardano.json#/definitions/PointOrOrigin"
-                }
-              }
+            { "$ref": "ogmios.json#/definitions/PointOrOrigin"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1423,22 +1489,19 @@
     { "oneOf":
       [ { "title": "QueryLedgerStateUtxoResponse"
         , "type": "object"
-        , "required": [ "jsonrpc", "result" ]
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
         , "properties":
           { "jsonrpc":
             { "type": "string"
             , "enum": [ "2.0" ]
             }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/utxo" ]
+            }
           , "result":
-            { "type": "object"
-            , "required": [ "utxo" ]
-            , "additionalProperties": false
-            , "properties":
-              { "utxo":
-                { "$ref": "cardano.json#/definitions/Utxo"
-                }
-              }
+            { "$ref": "cardano.json#/definitions/Utxo"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1476,22 +1539,22 @@
   , "QueryNetworkBlockHeightResponse":
     { "title": "QueryNetworkBlockHeightResponse"
     , "type": "object"
-    , "required": [ "jsonrpc", "result" ]
+    , "required": [ "jsonrpc", "method", "result" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
         { "type": "string"
         , "enum": [ "2.0" ]
         }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryNetwork/blockHeight" ]
+        }
       , "result":
-        { "type": "object"
-        , "required": [ "blockHeight" ]
-        , "additionalProperties": false
-        , "properties":
-          { "blockHeight":
-            { "$ref": "cardano.json#/definitions/BlockHeightOrOrigin"
-            }
-          }
+        { "oneOf":
+          [ { "$ref": "cardano.json#/definitions/BlockHeight" }
+          , { "$ref": "cardano.json#/definitions/Origin" }
+          ]
         }
       , "id":
         { "description": "Any value that was set by a client request in the 'id' field."
@@ -1533,44 +1596,41 @@
   , "QueryNetworkGenesisConfigurationResponse":
     { "title": "QueryNetworkGenesisConfigurationResponse"
     , "type": "object"
-    , "required": [ "jsonrpc", "result" ]
+    , "required": [ "jsonrpc", "method", "result" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
         { "type": "string"
         , "enum": [ "2.0" ]
         }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryNetwork/genesisConfiguration" ]
+        }
       , "result":
-        { "type": "object"
-        , "required": [ "genesisConfiguration" ]
-        , "additionalProperties": false
-        , "properties":
-          { "genesisConfiguration":
-            { "oneOf":
-              [ { "type": "object"
-                , "required": ["byron"]
-                , "additionalProperties": false
-                , "properties":
-                  { "byron": { "$ref": "cardano.json#/definitions/Genesis<Byron>" }
-                  }
-                }
-              , { "type": "object"
-                , "required": ["shelley"]
-                , "additionalProperties": false
-                , "properties":
-                  { "shelley": { "$ref": "cardano.json#/definitions/Genesis<Shelley>" }
-                  }
-                }
-              , { "type": "object"
-                , "required": ["alonzo"]
-                , "additionalProperties": false
-                , "properties":
-                  { "alonzo": { "$ref": "cardano.json#/definitions/Genesis<Alonzo>"}
-                  }
-                }
-              ]
+        { "oneOf":
+          [ { "type": "object"
+            , "required": ["byron"]
+            , "additionalProperties": false
+            , "properties":
+              { "byron": { "$ref": "cardano.json#/definitions/Genesis<Byron>" }
+              }
             }
-          }
+          , { "type": "object"
+            , "required": ["shelley"]
+            , "additionalProperties": false
+            , "properties":
+              { "shelley": { "$ref": "cardano.json#/definitions/Genesis<Shelley>" }
+              }
+            }
+          , { "type": "object"
+            , "required": ["alonzo"]
+            , "additionalProperties": false
+            , "properties":
+              { "alonzo": { "$ref": "cardano.json#/definitions/Genesis<Alonzo>"}
+              }
+            }
+          ]
         }
       , "id":
         { "description": "Any value that was set by a client request in the 'id' field."
@@ -1603,22 +1663,19 @@
   , "QueryNetworkStartTimeResponse":
     { "title": "QueryNetworkStartTimeResponse"
     , "type": "object"
-    , "required": [ "jsonrpc", "result" ]
+    , "required": [ "jsonrpc", "method", "result" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
         { "type": "string"
         , "enum": [ "2.0" ]
         }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryNetwork/startTime" ]
+        }
       , "result":
-        { "type": "object"
-        , "required": [ "startTime" ]
-        , "additionalProperties": false
-        , "properties":
-          { "startTime":
-            { "$ref": "cardano.json#/definitions/UtcTime"
-            }
-          }
+        { "$ref": "cardano.json#/definitions/UtcTime"
         }
       , "id":
         { "description": "Any value that was set by a client request in the 'id' field."
@@ -1651,22 +1708,19 @@
   , "QueryNetworkTipResponse":
     { "title": "QueryNetworkTipResponse"
     , "type": "object"
-    , "required": [ "jsonrpc", "result" ]
+    , "required": [ "jsonrpc", "method", "result" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
         { "type": "string"
         , "enum": [ "2.0" ]
         }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryNetwork/tip" ]
+        }
       , "result":
-        { "type": "object"
-        , "required": [ "tip" ]
-        , "additionalProperties": false
-        , "properties":
-          { "tip":
-            { "$ref": "cardano.json#/definitions/PointOrOrigin"
-            }
-          }
+        { "$ref": "ogmios.json#/definitions/PointOrOrigin"
         }
       , "id":
         { "description": "Any value that was set by a client request in the 'id' field."
@@ -1699,12 +1753,16 @@
     { "title": "AcquireMempoolResponse"
     , "description": "Response to a 'acquireMempool' request."
     , "type": "object"
-    , "required": [ "jsonrpc", "result" ]
+    , "required": [ "jsonrpc", "method", "result" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
         { "type": "string"
         , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "acquireMempool" ]
         }
       , "result":
         { "type": "object"
@@ -1756,12 +1814,16 @@
     { "title": "NextTransactionResponse"
     , "description": "Response to a 'nextTransaction' request."
     , "type": "object"
-    , "required": [ "jsonrpc", "result" ]
+    , "required": [ "jsonrpc", "method", "result" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
         { "type": "string"
         , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "nextTransaction" ]
         }
       , "result":
         { "type": "object"
@@ -1823,22 +1885,19 @@
     { "title": "HasTransactionResponse"
     , "description": "Response to a 'HasTransaction' request."
     , "type": "object"
-    , "required": [ "jsonrpc", "result" ]
+    , "required": [ "jsonrpc", "method", "result" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
         { "type": "string"
         , "enum": [ "2.0" ]
         }
+      , "method":
+        { "type": "string"
+        , "enum": [ "hasTransaction" ]
+        }
       , "result":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "hasTransaction" ]
-        , "properties":
-          { "hasTransaction":
-            { "type": "boolean"
-            }
-          }
+        { "type": "boolean"
         }
       , "id":
         { "description": "Any value that was set by a client request in the 'id' field."
@@ -1871,22 +1930,19 @@
     { "title": "SizeOfMempoolResponse"
     , "description": "Response to a 'sizeOfMempool' request."
     , "type": "object"
-    , "required": [ "jsonrpc", "result" ]
+    , "required": [ "jsonrpc", "method", "result" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
         { "type": "string"
         , "enum": [ "2.0" ]
         }
+      , "method":
+        { "type": "string"
+        , "enum": [ "sizeOfMempool" ]
+        }
       , "result":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "mempool" ]
-        , "properties":
-          { "mempool":
-            { "$ref": "ogmios.json#/definitions/MempoolSizeAndCapacity"
-            }
-          }
+        { "$ref": "ogmios.json#/definitions/MempoolSizeAndCapacity"
         }
       , "id":
         { "description": "Any value that was set by a client request in the 'id' field."
@@ -1919,12 +1975,16 @@
     { "title": "ReleaseMempoolResponse"
     , "description": "Response to a 'releaseMempool' request."
     , "type": "object"
-    , "required": [ "jsonrpc", "result" ]
+    , "required": [ "jsonrpc", "method", "result" ]
     , "additionalProperties": false
     , "properties":
       { "jsonrpc":
         { "type": "string"
         , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "releaseMempool" ]
         }
       , "result":
         { "type": "object"
@@ -2223,6 +2283,23 @@
     , "properties":
       { "bytes": { "$ref": "cardano.json#/definitions/Int64" }
       }
+    }
+
+  , "PointOrOrigin":
+    { "oneOf":
+      [ { "type": "object"
+        , "description": "A point on the chain, identified by a slot and a block header hash."
+        , "title": "Point"
+        , "name": "Point"
+        , "additionalProperties": false
+        , "required": [ "slot", "hash" ]
+        , "properties":
+          { "slot": { "$ref": "cardano.json#/definitions/Slot" }
+          , "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+          }
+        }
+      , { "$ref": "cardano.json#/definitions/Origin" }
+      ]
     }
 
   , "ProjectedRewards":
@@ -3398,6 +3475,13 @@
           }
         }
       }
+    }
+
+  , "TipOrOrigin":
+    { "oneOf":
+      [ { "$ref": "cardano.json#/definitions/Tip" }
+      , { "$ref": "cardano.json#/definitions/Origin" }
+      ]
     }
   }
 }

@@ -202,13 +202,6 @@
     , "maximum": 18446744073709552999
     }
 
-  , "BlockHeightOrOrigin":
-    { "oneOf":
-      [ { "$ref": "cardano.json#/definitions/BlockHeight" }
-      , { "$ref": "cardano.json#/definitions/Origin" }
-      ]
-    }
-
   , "BlockSize":
     { "title": "BlockSize"
     , "type": "integer"
@@ -811,44 +804,6 @@
     , "maximum": 9223372036854775807
     }
 
-  , "InvalidEntity":
-    { "oneOf":
-      [ { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "type", "entity" ]
-        , "properties":
-          { "type":
-            { "type": "string"
-            , "enum": [ "address" ]
-            }
-          , "entity": { "$ref": "cardano.json#/definitions/Address" }
-          }
-        }
-      , { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "type", "entity" ]
-        , "properties":
-          { "type":
-            { "type": "string"
-            , "enum": [ "poolRegistration" ]
-            }
-          , "entity": { "$ref": "cardano.json#/definitions/StakePoolId" }
-          }
-        }
-      , { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "type", "entity" ]
-        , "properties":
-          { "type":
-            { "type": "string"
-            , "enum": [ "rewardAccount" ]
-            }
-          , "entity": { "$ref": "cardano.json#/definitions/RewardAccount" }
-          }
-        }
-      ]
-    }
-
   , "InputSource":
     { "type": "string"
     , "enum":
@@ -1053,23 +1008,6 @@
     , "type": "string"
     , "description": "The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point."
     , "enum": [ "origin" ]
-    }
-
-  , "PointOrOrigin":
-    { "oneOf":
-      [ { "type": "object"
-        , "description": "A point on the chain, identified by a slot and a block header hash."
-        , "title": "Point"
-        , "name": "Point"
-        , "additionalProperties": false
-        , "required": [ "slot", "hash" ]
-        , "properties":
-          { "slot": { "$ref": "cardano.json#/definitions/Slot" }
-          , "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
-          }
-        }
-      , { "$ref": "cardano.json#/definitions/Origin" }
-      ]
     }
 
   , "PolicyId":
@@ -1624,13 +1562,6 @@
       , "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
       , "blockNo": { "$ref": "cardano.json#/definitions/BlockHeight" }
       }
-    }
-
-  , "TipOrOrigin":
-    { "oneOf":
-      [ { "$ref": "cardano.json#/definitions/Tip" }
-      , { "$ref": "cardano.json#/definitions/Origin" }
-      ]
     }
 
   , "Transaction":
