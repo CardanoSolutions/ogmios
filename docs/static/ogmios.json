@@ -1897,14 +1897,7 @@
         , "enum": [ "hasTransaction" ]
         }
       , "result":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "hasTransaction" ]
-        , "properties":
-          { "hasTransaction":
-            { "type": "boolean"
-            }
-          }
+        { "type": "boolean"
         }
       , "id":
         { "description": "Any value that was set by a client request in the 'id' field."
@@ -1949,14 +1942,7 @@
         , "enum": [ "sizeOfMempool" ]
         }
       , "result":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "mempool" ]
-        , "properties":
-          { "mempool":
-            { "$ref": "ogmios.json#/definitions/MempoolSizeAndCapacity"
-            }
-          }
+        { "$ref": "ogmios.json#/definitions/MempoolSizeAndCapacity"
         }
       , "id":
         { "description": "Any value that was set by a client request in the 'id' field."

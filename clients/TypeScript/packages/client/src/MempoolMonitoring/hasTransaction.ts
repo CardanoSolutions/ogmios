@@ -28,16 +28,9 @@ export function handler (
   resolve: (value?: boolean) => void,
   reject: (reason?: any) => void
 ) {
-  if (isHasTransactionResponse(response)) {
-    resolve(response.result.hasTransaction)
+  if (response.method === 'hasTransaction' && 'result' in response) {
+    resolve(response.result as boolean)
   } else {
     reject(response)
   }
-}
-
-/**
- * @internal
- */
-export function isHasTransactionResponse (response: any): response is Ogmios['HasTransactionResponse'] {
-  return typeof (response as Ogmios['HasTransactionResponse'])?.result?.hasTransaction === 'boolean'
 }

@@ -319,10 +319,9 @@ _encodeHasTransactionResponse
     => Rpc.Response HasTransactionResponse
     -> Json
 _encodeHasTransactionResponse =
-    Rpc.ok $ encodeObject . \case
+    Rpc.ok $ \case
         HasTransactionResponse{has} ->
-            ( "hasTransaction" .= encodeBool has
-            )
+            encodeBool has
 
 --
 -- SizeOfMempool
@@ -354,14 +353,12 @@ _encodeSizeOfMempoolResponse
 _encodeSizeOfMempoolResponse =
     Rpc.ok $ encodeObject . \case
         SizeOfMempoolResponse{mempool} ->
-            ( "mempool" .= encodeObject
-                ( "maxCapacity" .= encodeObject
-                    ( "bytes" .= encodeWord32 (capacityInBytes mempool) ) <>
-                  "currentSize" .= encodeObject
-                    ( "bytes" .= encodeWord32 (sizeInBytes mempool)) <>
-                  "transactions" .= encodeObject
-                    ( "count" .= encodeWord32 (numberOfTxs mempool))
-                )
+            ( "maxCapacity" .= encodeObject
+                ( "bytes" .= encodeWord32 (capacityInBytes mempool) ) <>
+              "currentSize" .= encodeObject
+                ( "bytes" .= encodeWord32 (sizeInBytes mempool)) <>
+              "transactions" .= encodeObject
+                ( "count" .= encodeWord32 (numberOfTxs mempool))
             )
 
 --

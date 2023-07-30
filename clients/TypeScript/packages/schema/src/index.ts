@@ -2428,9 +2428,7 @@ export interface HasTransaction {
 export interface HasTransactionResponse {
   jsonrpc: "2.0";
   method: "hasTransaction";
-  result: {
-    hasTransaction: boolean;
-  };
+  result: boolean;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -2457,9 +2455,7 @@ export interface SizeOfMempool {
 export interface SizeOfMempoolResponse {
   jsonrpc: "2.0";
   method: "sizeOfMempool";
-  result: {
-    mempool: MempoolSizeAndCapacity;
-  };
+  result: MempoolSizeAndCapacity;
   /**
    * Any value that was set by a client request in the 'id' field.
    */

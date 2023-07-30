@@ -157,7 +157,7 @@ Also, some queries have been moved under `queryNetwork` and are always available
 
 ##### Responses
 
-Query responses from the local-state-query protocol are now wrapped under the query name. So for example, querying the ledger tip as:
+Query responses from the local-state-query protocol are now properly linked to their parent query. In prior version of ogmios, the response will simply have `query` as a method, not giving much information about which query was it a response for.
 
 <table>
 <tr>
@@ -182,10 +182,8 @@ Query responses from the local-state-query protocol are now wrapped under the qu
   "jsonrpc": "2.0",
   "method": "queryLedgerState/tip",
   "result": {
-    "tip": {
-      "slot": 1234,
-      "header": { "hash": "1234567890abcdef" }
-    }
+    "slot": 1234,
+    "header": { "hash": "1234567890abcdef" }
   }
 }
 ```

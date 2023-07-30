@@ -19,6 +19,7 @@ export function sizeOfMempool (context: InteractionContext, params?: {}) {
     context
   )
 }
+
 /**
  * @internal
  */
@@ -27,19 +28,9 @@ export function handler (
   resolve: (value?: MempoolSizeAndCapacity) => void,
   reject: (reason?: any) => void
 ) {
-  if (isSizeOfMempoolResponse(response)) {
-    resolve(response.result.mempool)
+  if (response.method === 'sizeOfMempool' && 'result' in response) {
+    resolve(response.result as MempoolSizeAndCapacity)
   } else {
     reject(response)
   }
-}
-
-/**
- * @internal
- */
-export function isSizeOfMempoolResponse (response: any): response is Ogmios['SizeOfMempoolResponse'] {
-  const mempool = (response as Ogmios['SizeOfMempoolResponse'])?.result?.mempool
-  return typeof mempool?.maxCapacity?.bytes === 'number' &&
-    typeof mempool?.currentSize?.bytes === 'number' &&
-    typeof mempool?.transactions?.count === 'number'
 }
