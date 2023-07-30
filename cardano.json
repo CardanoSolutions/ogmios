@@ -52,10 +52,14 @@
     , "type": "object"
     , "additionalProperties": false
     , "required":
-      [ "era", "header", "ancestor", "height"
+      [ "type", "era", "header", "ancestor", "height"
       ]
     , "properties":
-      { "era":
+      { "type":
+        { "type": "string"
+        , "enum": [ "ebb" ]
+        }
+      , "era":
         { "type": "string"
         , "enum": [ "byron" ]
         }
@@ -77,11 +81,15 @@
     , "type": "object"
     , "additionalProperties": false
     , "required":
-      [ "era", "header", "ancestor", "height", "size", "slot"
+      [ "era", "type", "header", "ancestor", "height", "size", "slot"
       , "protocol", "issuer", "delegate"
       ]
     , "properties":
-      { "era":
+      { "type":
+        { "type": "string"
+        , "enum": [ "bft" ]
+        }
+      , "era":
         { "type": "string"
         , "enum": [ "byron" ]
         }
@@ -142,11 +150,15 @@
     , "type": "object"
     , "additionalProperties": false
     , "required":
-      [ "era", "header", "ancestor", "height", "size", "slot"
+      [ "era", "type", "header", "ancestor", "height", "size", "slot"
       , "protocol", "issuer"
       ]
     , "properties":
-      { "era":
+      { "type":
+        { "type": "string"
+        , "enum": [ "praos" ]
+        }
+      , "era":
         { "type": "string"
         , "enum": [ "shelley", "allegra", "mary", "alonzo", "babbage" ]
         }
@@ -859,95 +871,32 @@
     { "title": "MetadataLabels"
     , "type": "object"
     , "propertyNames": { "pattern": "^-?[0-9]+$" }
-    , "examples":
-      [ { "42":
-          { "int": 14
+    , "additionalProperties":
+      { "type": "object"
+      , "description": "An associated metadatum, as a CBOR bytestring or a JSON object if possible. Some binary representations cannot be represented in plain JSON and the 'json' field is therefore omitted."
+      , "required": [ "cbor" ]
+      , "additionalProperties": false
+      , "properties":
+        { "cbor":
+          { "type": "string"
+          , "contentEncoding": "base16"
+          , "pattern": "^[0-9a-f]*$"
+          }
+        , "json":
+          { "$ref": "cardano.json#/definitions/Metadatum"
           }
         }
-      , { "42":
-          { "string": "Some Text"
-          }
-        }
-      , { "1337":
-          { "list":
-            [ { "string": "foo" }
-            , { "map": [ { "k": { "string": "bar" }, "v": { "int": 3 } } ] }
-            ]
-          }
-        }
-      ]
-    , "additionalProperties": { "$ref": "cardano.json#/definitions/Metadatum" }
+      }
     }
 
   , "Metadatum":
     { "title": "Metadatum"
     , "oneOf":
-      [ { "type": "object"
-        , "title": "int"
-        , "additionalProperties": false
-        , "required": ["int"]
-        , "properties":
-          { "int":
-              { "type": "integer"
-              }
-          }
-        }
-      , { "type": "object"
-        , "title": "string"
-        , "additionalProperties": false
-        , "required": ["string"]
-        , "properties":
-          { "string":
-              { "type": "string"
-              }
-          }
-        }
-      , { "type": "object"
-        , "title": "bytes"
-        , "additionalProperties": false
-        , "required": ["bytes"]
-        , "properties":
-          { "bytes":
-            { "type": "string"
-            , "contentEncoding": "base16"
-            , "pattern": "^[0-9a-f]*$"
-            }
-          }
-        }
-      , { "type": "object"
-        , "title": "list"
-        , "additionalProperties": false
-        , "required": ["list"]
-        , "properties":
-          { "list":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Metadatum" }
-            }
-          }
-        }
-      , { "type": "object"
-        , "title": "map"
-        , "additionalProperties": false
-        , "required": ["map"]
-        , "properties":
-          { "map":
-            { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/MetadatumMap" }
-            }
-          }
-        }
+      [ { "type": "integer" }
+      , { "type": "string" }
+      , { "type": "array", "items": { "$ref": "cardano.json#/definitions/Metadatum" } }
+      , { "type": "object", "additionalProperties": { "$ref": "cardano.json#/definitions/Metadatum" } }
       ]
-    }
-
-  , "MetadatumMap":
-    { "title": "MetadatumMap"
-    , "type": "object"
-    , "additionalProperties": false
-    , "required": ["k", "v"]
-    , "properties":
-      { "k": { "$ref": "cardano.json#/definitions/Metadatum" }
-      , "v": { "$ref": "cardano.json#/definitions/Metadatum" }
-      }
     }
 
   , "Network":
