@@ -52,10 +52,14 @@
     , "type": "object"
     , "additionalProperties": false
     , "required":
-      [ "era", "header", "ancestor", "height"
+      [ "type", "era", "header", "ancestor", "height"
       ]
     , "properties":
-      { "era":
+      { "type":
+        { "type": "string"
+        , "enum": [ "ebb" ]
+        }
+      , "era":
         { "type": "string"
         , "enum": [ "byron" ]
         }
@@ -77,11 +81,15 @@
     , "type": "object"
     , "additionalProperties": false
     , "required":
-      [ "era", "header", "ancestor", "height", "size", "slot"
+      [ "era", "type", "header", "ancestor", "height", "size", "slot"
       , "protocol", "issuer", "delegate"
       ]
     , "properties":
-      { "era":
+      { "type":
+        { "type": "string"
+        , "enum": [ "bft" ]
+        }
+      , "era":
         { "type": "string"
         , "enum": [ "byron" ]
         }
@@ -142,11 +150,15 @@
     , "type": "object"
     , "additionalProperties": false
     , "required":
-      [ "era", "header", "ancestor", "height", "size", "slot"
+      [ "era", "type", "header", "ancestor", "height", "size", "slot"
       , "protocol", "issuer"
       ]
     , "properties":
-      { "era":
+      { "type":
+        { "type": "string"
+        , "enum": [ "praos" ]
+        }
+      , "era":
         { "type": "string"
         , "enum": [ "shelley", "allegra", "mary", "alonzo", "babbage" ]
         }

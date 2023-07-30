@@ -73,7 +73,9 @@ encodeBlock
     -> Json
 encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
-        ( "era" .= encodeText "mary"
+        ( "type" .= encodeText "praos"
+        <>
+          "era" .= encodeText "mary"
         <>
           "header" .= encodeObject
             ( "hash" .= Shelley.encodeShelleyHash headerHash

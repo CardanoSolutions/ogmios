@@ -56,6 +56,8 @@ encodeABlockOrBoundary
     -> Json
 encodeABlockOrBoundary = encodeObject . \case
     By.ABOBBlock blk ->
+        "type" .= encodeText "bft"
+        <>
         "era" .= encodeText "byron"
         <>
         "header" .= encodeObject
@@ -93,6 +95,8 @@ encodeABlockOrBoundary = encodeObject . \case
         c = By.delegationCertificate s
 
     By.ABOBBoundary blk ->
+        "type" .= encodeText "ebb"
+        <>
         "era" .= encodeText "byron"
         <>
         "height" .= encodeChainDifficulty (By.boundaryDifficulty h)

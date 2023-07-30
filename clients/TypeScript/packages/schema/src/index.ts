@@ -441,6 +441,7 @@ export interface RollForward {
   block: Block;
 }
 export interface BlockEBB {
+  type: "ebb";
   era: "byron";
   header: {
     hash: DigestBlake2B256;
@@ -449,6 +450,7 @@ export interface BlockEBB {
   height: BlockHeight;
 }
 export interface BlockBFT {
+  type: "bft";
   era: "byron";
   header: {
     hash: DigestBlake2B256;
@@ -851,6 +853,7 @@ export interface BootstrapVote {
   };
 }
 export interface BlockPraos {
+  type: "praos";
   era: "shelley" | "allegra" | "mary" | "alonzo" | "babbage";
   header: {
     hash: DigestBlake2B256;
