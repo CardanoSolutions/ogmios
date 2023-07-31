@@ -398,7 +398,7 @@ export const utxoSize = (
     }
 
     let scriptSize = script.cbor.length / 2
-    if (script.language !== "native") {
+    if (script.language !== 'native') {
       scriptSize += sizeOfBytesDef(scriptSize)
     }
     scriptSize += 2
