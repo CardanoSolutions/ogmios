@@ -341,17 +341,17 @@ encodeScriptPurpose
     -> Json
 encodeScriptPurpose = encodeObject . \case
     Al.Spending txIn ->
-        "spend" .=
-            Shelley.encodeTxIn txIn
+        "purpose" .= encodeText "spend" <>
+        "outputReference" .= Shelley.encodeTxIn txIn
     Al.Minting policyId ->
-        "mint" .=
-            Mary.encodePolicyId policyId
+        "purpose" .= encodeText "mint" <>
+        "policy" .= Mary.encodePolicyId policyId
     Al.Certifying cert ->
-        "certificate" .=
-            Shelley.encodeDCert cert
+        "purpose" .= encodeText "publish" <>
+        "certificate" .= Shelley.encodeDCert cert
     Al.Rewarding acct ->
-        "withdrawal" .=
-            Shelley.encodeRewardAcnt acct
+        "purpose" .= encodeText "withdraw" <>
+        "rewardAccount" .= Shelley.encodeRewardAcnt acct
 
 encodeTx
     :: forall crypto.

@@ -1436,33 +1436,49 @@
       [ { "title": "spend"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "spend" ]
+        , "required": [ "purpose", "outputReference" ]
         , "properties":
-          { "spend": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+          { "purpose":
+            { "type": "string"
+            , "enum": [ "spend" ]
+            }
+          , "outputReference": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
           }
         }
       , { "title": "mint"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "mint" ]
+        , "required": [ "purpose", "policy" ]
         , "properties":
-          { "mint": { "$ref": "cardano.json#/definitions/PolicyId" }
+          { "purpose":
+            { "type": "string"
+            , "enum": [ "mint" ]
+            }
+          , "policy": { "$ref": "cardano.json#/definitions/PolicyId" }
           }
         }
-      , { "title": "certificate"
+      , { "title": "publish"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "certificate" ]
+        , "required": [ "purpose", "certificate" ]
         , "properties":
-          { "certificate": { "$ref": "cardano.json#/definitions/Certificate" }
+          { "purpose":
+            { "type": "string"
+            , "enum": [ "publish" ]
+            }
+          , "certificate": { "$ref": "cardano.json#/definitions/Certificate" }
           }
         }
-      , { "title": "withdrawal"
+      , { "title": "withdraw"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "withdrawal" ]
+        , "required": [ "purpose", "rewardAccount" ]
         , "properties":
-          { "withdrawal": { "$ref": "cardano.json#/definitions/RewardAccount" }
+          { "purpose":
+            { "type": "string"
+            , "enum": [ "withdraw" ]
+            }
+          , "rewardAccount": { "$ref": "cardano.json#/definitions/RewardAccount" }
           }
         }
       ]

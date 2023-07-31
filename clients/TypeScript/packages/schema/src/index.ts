@@ -177,7 +177,7 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureUnrecognizedCertificateType
   | SubmitTransactionFailureInternalLedgerTypeConversionError;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage";
-export type ScriptPurpose = Spend | Mint | Certificate1 | Withdrawal;
+export type ScriptPurpose = Spend | Mint | Publish | Withdraw;
 /**
  * A Blake2b 28-byte hash digest, encoded in base16.
  */
@@ -1023,16 +1023,20 @@ export interface SubmitTransactionFailureMissingRedeemers {
   };
 }
 export interface Spend {
-  spend: TransactionOutputReference;
+  purpose: "spend";
+  outputReference: TransactionOutputReference;
 }
 export interface Mint {
-  mint: PolicyId;
+  purpose: "mint";
+  policy: PolicyId;
 }
-export interface Certificate1 {
+export interface Publish {
+  purpose: "publish";
   certificate: Certificate;
 }
-export interface Withdrawal {
-  withdrawal: RewardAccount;
+export interface Withdraw {
+  purpose: "withdraw";
+  rewardAccount: RewardAccount;
 }
 export interface SubmitTransactionFailureExtraneousRedeemers {
   code: 3110;
