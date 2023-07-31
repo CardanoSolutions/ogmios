@@ -2,9 +2,9 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE AllowAmbiguousTypes #-}
 
 {-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
 
@@ -381,15 +381,20 @@ encodeMultiSig
     :: Era era
     => Sh.MultiSig era
     -> Json
-encodeMultiSig = \case
+encodeMultiSig = encodeObject . \case
     Sh.RequireSignature sig ->
-        encodeKeyHash sig
+        "clause" .= encodeText "signature" <>
+        "from" .= encodeKeyHash sig
     Sh.RequireAllOf xs ->
-        encodeObject ("all" .= encodeList encodeMultiSig xs)
+        "clause" .= encodeText "all" <>
+        "from" .= encodeList encodeMultiSig xs
     Sh.RequireAnyOf xs ->
-        encodeObject ("any" .= encodeList encodeMultiSig xs)
+        "clause" .= encodeText "any" <>
+        "from" .= encodeList encodeMultiSig xs
     Sh.RequireMOf n xs ->
-        encodeObject (show n .= encodeList encodeMultiSig xs)
+        "clause" .= encodeText "some" <>
+        "atLeast" .= encodeInteger (toInteger n) <>
+        "from" .= encodeList encodeMultiSig xs
 
 encodeNetwork
     :: Ledger.Network
@@ -562,8 +567,12 @@ encodeScript
     => Sh.MultiSig era
     -> Json
 encodeScript script =
-    "native" .=
-        encodeMultiSig script
+    "language" .=
+        encodeText "native" <>
+    "json" .=
+        encodeMultiSig script <>
+    "cbor" .=
+        encodeByteStringBase16 (Ledger.originalBytes script)
     & encodeObject
 
 encodeScriptHash

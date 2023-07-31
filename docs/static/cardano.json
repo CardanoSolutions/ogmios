@@ -1282,33 +1282,34 @@
       [ { "type": "object"
         , "title": "Native"
         , "additionalProperties": false
-        , "required": [ "native" ]
+        , "required": [ "language", "cbor", "json" ]
         , "properties":
-          { "native": { "$ref": "cardano.json#/definitions/Script<Native>" }
+          { "language":
+            { "type": "string"
+            , "enum": [ "native" ]
+            }
+          , "json":
+            { "$ref": "cardano.json#/definitions/Script<Native>"
+            }
+          , "cbor":
+            { "type": "string"
+            , "contentEncoding": "base16"
+            }
           }
         }
       , { "type": "object"
-        , "title": "PlutusV1"
+        , "title": "Plutus"
         , "additionalProperties": false
-        , "required": [ "plutus:v1" ]
+        , "required": [ "language", "cbor" ]
         , "properties":
-          { "plutus:v1": { "$ref": "cardano.json#/definitions/Script<Plutus>" }
-          }
-        }
-      , { "type": "object"
-        , "title": "PlutusV2"
-        , "additionalProperties": false
-        , "required": [ "plutus:v2" ]
-        , "properties":
-          { "plutus:v2": { "$ref": "cardano.json#/definitions/Script<Plutus>" }
-          }
-        }
-      , { "type": "object"
-        , "title": "PlutusV3"
-        , "additionalProperties": false
-        , "required": [ "plutus:v3" ]
-        , "properties":
-          { "plutus:v3": { "$ref": "cardano.json#/definitions/Script<Plutus>" }
+          { "language":
+            { "type": "string"
+            , "enum": [ "plutus:v1", "plutus:v2", "plutus:v3" ]
+            }
+          , "cbor":
+            { "type": "string"
+            , "contentEncoding": "base16"
+            }
           }
         }
       ]
@@ -1318,69 +1319,115 @@
     { "title": "Script<Native>"
     , "description": "A phase-1 monetary script. Timelocks constraints are only supported since Allegra."
     , "examples":
-        [ "3c07030e36bfff7cd2f004356ef320f3fe3c07030e7cd2f004356437"
-        , { "all":
-            [ "ec09e5293d384637cd2f004356ef320f3fe3c07030e36bfffe67e2e2"
-            , "3c07030e36bfff7cd2f004356ef320f3fe3c07030e7cd2f004356437"
+        [ { "clause": "signature", "from": "3c07030e36bfff7cd2f004356ef320f3fe3c07030e7cd2f004356437" }
+        , { "clause": "all"
+          , "from":
+            [ { "clause": "signature", "from": "ec09e5293d384637cd2f004356ef320f3fe3c07030e36bfffe67e2e2" }
+            , { "clause": "signature", "from": "3c07030e36bfff7cd2f004356ef320f3fe3c07030e7cd2f004356437" }
+            ]
+          }
+        , { "clause": "some"
+          , "atLeast": 2
+          , "from":
+            [ { "clause": "signature", "from": "ec09e5293d384637cd2f004356ef320f3fe3c07030e36bfffe67e2e2" }
+            , { "clause": "signature", "from": "3c07030e36bfff7cd2f004356ef320f3fe3c07030e7cd2f004356437" }
+            , { "clause": "after", "slot": 42 }
             ]
           }
         ]
-    , "anyOf":
-      [ { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
-      , { "type": "object"
-        , "title": "any"
+    , "oneOf":
+      [ { "type": "object"
+        , "title": "Signatory"
         , "additionalProperties": false
-        , "required": ["any"]
+        , "required": [ "clause", "from" ]
         , "properties":
-          { "any":
+          { "clause":
+            { "type": "string"
+            , "enum": [ "signature" ]
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "Any"
+        , "additionalProperties": false
+        , "required": [ "clause", "from" ]
+        , "properties":
+          { "clause":
+            { "type": "string"
+            , "enum": [ "any" ]
+            }
+          , "from":
+            { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/Script<Native>" }
+            }
+          }
+        }
+
+      , { "type": "object"
+        , "title": "All"
+        , "additionalProperties": false
+        , "required": [ "clause", "from" ]
+        , "properties":
+          { "clause":
+            { "type": "string"
+            , "enum": [ "all" ]
+            }
+          , "from":
             { "type": "array"
             , "items": { "$ref": "cardano.json#/definitions/Script<Native>" }
             }
           }
         }
       , { "type": "object"
-        , "title": "all"
+        , "title": "Some"
         , "additionalProperties": false
-        , "required": ["all"]
+        , "required": [ "clause", "from", "atLeast" ]
         , "properties":
-          { "all":
+          { "clause":
+            { "type": "string"
+            , "enum": [ "some" ]
+            }
+          , "atLeast":
+            { "type": "integer"
+            }
+          , "from":
             { "type": "array"
             , "items": { "$ref": "cardano.json#/definitions/Script<Native>" }
             }
           }
         }
       , { "type": "object"
-        , "title": "NOf"
-        , "propertyNames": { "pattern": "^[0-9]+$" }
-        , "additionalProperties":
-          { "type": "array"
-          , "items": { "$ref": "cardano.json#/definitions/Script<Native>" }
+        , "title": "Before"
+        , "additionalProperties": false
+        , "required": [ "clause", "slot" ]
+        , "properties":
+          { "clause":
+            { "type": "string"
+            , "enum": [ "before" ]
+            }
+          , "slot":
+            { "$ref": "cardano.json#/definitions/Slot"
+            }
           }
         }
       , { "type": "object"
-        , "title": "expiresAt"
+        , "title": "After"
         , "additionalProperties": false
-        , "required": [ "expiresAt" ]
+        , "required": [ "clause", "slot" ]
         , "properties":
-          { "expiresAt": { "$ref": "cardano.json#/definitions/Slot" }
-          }
-        }
-      , { "type": "object"
-        , "title": "startsAt"
-        , "additionalProperties": false
-        , "required": [ "startsAt" ]
-        , "properties":
-          { "startsAt": { "$ref": "cardano.json#/definitions/Slot" }
+          { "clause":
+            { "type": "string"
+            , "enum": [ "after" ]
+            }
+          , "slot":
+            { "$ref": "cardano.json#/definitions/Slot"
+            }
           }
         }
       ]
-    }
-
-  , "Script<Plutus>":
-    { "title": "Script<Plutus>"
-    , "type": "string"
-    , "description": "A phase-2 Plutus script; or said differently, a serialized Plutus-core program."
-    , "contentEncoding": "base16"
     }
 
   , "ScriptPurpose":

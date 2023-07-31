@@ -1,8 +1,6 @@
 import { bech32 } from 'bech32'
 import {
   Address,
-  All,
-  Any,
   Assets,
   Block,
   BlockBFT,
@@ -11,17 +9,10 @@ import {
   Datum,
   DigestBlake2B256,
   Era,
-  ExpiresAt,
-  NOf,
-  Native,
-  PlutusV1,
-  PlutusV2,
   ProtocolParametersAlonzo,
   ProtocolParametersBabbage,
   ProtocolParametersShelley,
   Script,
-  ScriptNative,
-  StartsAt,
   TransactionOutput,
   UInt64,
   Value
@@ -406,19 +397,11 @@ export const utxoSize = (
       return 0
     }
 
-    let scriptSize = 0
-    if ((script as PlutusV1)['plutus:v1'] !== undefined) {
-      scriptSize = (script as PlutusV1)['plutus:v1'].length / 2
-      scriptSize += sizeOfBytesDef(scriptSize)
-      scriptSize += 2
-    } else if ((script as PlutusV2)['plutus:v2'] !== undefined) {
-      scriptSize = (script as PlutusV2)['plutus:v2'].length / 2
-      scriptSize += sizeOfBytesDef(scriptSize)
-      scriptSize += 2
-    } else {
-      scriptSize = sizeOfNativeScript((script as Native).native)
+    let scriptSize = script.cbor.length / 2
+    if (script.language !== "native") {
       scriptSize += sizeOfBytesDef(scriptSize)
     }
+    scriptSize += 2
 
     // - CBOR Map Key '03': 1 byte
     // - CBOR Tag (24): 2 bytes
@@ -426,39 +409,5 @@ export const utxoSize = (
     const cborOverhead = 3 + sizeOfBytesDef(scriptSize)
 
     return cborOverhead + scriptSize
-  }
-
-  function sizeOfNativeScript (script: ScriptNative) {
-    if (typeof script === 'string') {
-      // - CBOR Def Array (size = 2): 1 byte
-      // - Native Script discriminant: 1 byte
-      // - CBOR Def Bytes (size = 28): 2 bytes
-      // - Bytes (size = 28): 28 bytes
-      return 32
-    } else if ((script as Any).any !== undefined) {
-      const { any } = script as Any
-      const cborOverhead = 2 + sizeOfArrayDef(any.length)
-      const scriptSize: UInt64 = any.reduce((total, subScript) => total + sizeOfNativeScript(subScript), 0)
-      return cborOverhead + scriptSize
-    } else if ((script as All).all !== undefined) {
-      const { all } = script as All
-      const cborOverhead = 2 + sizeOfArrayDef(all.length)
-      const scriptSize: UInt64 = all.reduce((total, subScript) => total + sizeOfNativeScript(subScript), 0)
-      return cborOverhead + scriptSize
-    } else if ((script as ExpiresAt).expiresAt !== undefined) {
-      const { expiresAt } = script as ExpiresAt
-      const cborOverhead = 2
-      return cborOverhead + sizeOfInteger(BigInt(expiresAt))
-    } else if ((script as StartsAt).startsAt !== undefined) {
-      const { startsAt } = script as StartsAt
-      const cborOverhead = 2
-      return cborOverhead + sizeOfInteger(BigInt(startsAt))
-    } else { // N-of-M Scripts
-      const n = Number.parseInt(Object.keys(script as NOf)[0], 10)
-      const nOf = (script as NOf)[n]
-      const cborOverhead = 2 + sizeOfArrayDef(nOf.length)
-      const scriptSize: UInt64 = nOf.reduce((total, subScript) => total + sizeOfNativeScript(subScript), 0)
-      return cborOverhead + sizeOfInteger(BigInt(n)) + scriptSize
-    }
   }
 }

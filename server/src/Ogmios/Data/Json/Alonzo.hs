@@ -321,15 +321,19 @@ encodeScript
        )
     => Al.Script era
     -> Json
-encodeScript = \case
+encodeScript = encodeObject . \case
     Al.TimelockScript nativeScript ->
-        "native" .=
-            Allegra.encodeTimelock nativeScript
-        & encodeObject
+        "language" .=
+            encodeText "native" <>
+        "json" .=
+            Allegra.encodeTimelock nativeScript <>
+        "cbor" .=
+            encodeByteStringBase16 (Ledger.originalBytes nativeScript)
     Al.PlutusScript lang serializedScript ->
-        stringifyLanguage lang .=
+        "language" .=
+            encodeText (stringifyLanguage lang) <>
+        "cbor" .=
             encodeShortByteString encodeByteStringBase16 serializedScript
-        & encodeObject
 
 encodeScriptPurpose
     :: Crypto crypto

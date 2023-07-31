@@ -28,6 +28,7 @@ import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
+import qualified Cardano.Ledger.SafeHash as Ledger
 
 import qualified Cardano.Ledger.Shelley.BlockChain as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
@@ -96,26 +97,39 @@ encodeScript
     :: Era era
     => Al.Timelock era
     -> Json
-encodeScript timelock =
-    encodeObject ("native" .= encodeTimelock timelock)
+encodeScript = encodeObject . \case
+    timelock ->
+        "language" .=
+            encodeText "native" <>
+        "json" .=
+            encodeTimelock timelock <>
+        "cbor" .=
+            encodeByteStringBase16 (Ledger.originalBytes timelock)
 
 encodeTimelock
     :: Era era
     => Al.Timelock era
     -> Json
-encodeTimelock = \case
+encodeTimelock = encodeObject . \case
     Al.RequireSignature sig ->
-        Shelley.encodeKeyHash sig
+        "clause" .= encodeText "signature" <>
+        "from" .= Shelley.encodeKeyHash sig
     Al.RequireAllOf xs ->
-        encodeObject ("all" .= encodeFoldable encodeTimelock xs)
+        "clause" .= encodeText "all" <>
+        "from" .= encodeFoldable encodeTimelock xs
     Al.RequireAnyOf xs ->
-        encodeObject ("any" .= encodeFoldable encodeTimelock xs)
+        "clause" .= encodeText "any" <>
+        "from" .= encodeFoldable encodeTimelock xs
     Al.RequireMOf n xs ->
-        encodeObject (show n .= encodeFoldable encodeTimelock xs)
+        "clause" .= encodeText "some" <>
+        "atLeast" .= encodeInteger (toInteger n) <>
+        "from" .= encodeFoldable encodeTimelock xs
     Al.RequireTimeExpire s ->
-        encodeObject ("expiresAt" .= encodeSlotNo s)
+        "clause" .= encodeText "before" <>
+        "slot" .= encodeSlotNo s
     Al.RequireTimeStart s ->
-        encodeObject ("startsAt" .= encodeSlotNo s)
+        "clause" .= encodeText "after" <>
+        "slot" .= encodeSlotNo s
 
 encodeTx
     :: forall crypto. (Crypto crypto)

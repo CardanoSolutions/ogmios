@@ -42,19 +42,15 @@ export type Address = string;
  */
 export type AssetQuantity = bigint;
 export type Datum = string;
-export type Script = Native | PlutusV1 | PlutusV2 | PlutusV3;
+export type Script = Native | Plutus;
 /**
  * A phase-1 monetary script. Timelocks constraints are only supported since Allegra.
  */
-export type ScriptNative = DigestBlake2B224 | Any | All | NOf | ExpiresAt | StartsAt;
+export type ScriptNative = Signatory | Any | All | Some | Before | After;
 /**
  * A Blake2b 28-byte hash digest, encoded in base16.
  */
 export type DigestBlake2B224 = string;
-/**
- * A phase-2 Plutus script; or said differently, a serialized Plutus-core program.
- */
-export type ScriptPlutus = string;
 export type Certificate =
   | StakeDelegation
   | StakeKeyRegistration
@@ -543,31 +539,38 @@ export interface Value {
   };
 }
 export interface Native {
-  native: ScriptNative;
+  language: "native";
+  json: ScriptNative;
+  cbor: string;
+}
+export interface Signatory {
+  clause: "signature";
+  from: DigestBlake2B224;
 }
 export interface Any {
-  any: ScriptNative[];
+  clause: "any";
+  from: ScriptNative[];
 }
 export interface All {
-  all: ScriptNative[];
+  clause: "all";
+  from: ScriptNative[];
 }
-export interface NOf {
-  [k: string]: ScriptNative[];
+export interface Some {
+  clause: "some";
+  atLeast: bigint;
+  from: ScriptNative[];
 }
-export interface ExpiresAt {
-  expiresAt: Slot;
+export interface Before {
+  clause: "before";
+  slot: Slot;
 }
-export interface StartsAt {
-  startsAt: Slot;
+export interface After {
+  clause: "after";
+  slot: Slot;
 }
-export interface PlutusV1 {
-  "plutus:v1": ScriptPlutus;
-}
-export interface PlutusV2 {
-  "plutus:v2": ScriptPlutus;
-}
-export interface PlutusV3 {
-  "plutus:v3": ScriptPlutus;
+export interface Plutus {
+  language: "plutus:v1" | "plutus:v2" | "plutus:v3";
+  cbor: string;
 }
 /**
  * A stake delegation certificate, from a delegator to a stake pool.

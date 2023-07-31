@@ -1,0 +1,23 @@
+[
+  {
+    "language": "native",
+    "cbor": "8200581ce7eabf0367fe570e5723079b06c3a6623b205909162058103e5a74e3"
+  },
+  {
+    "language": "native",
+    "json": {
+      "clause": "some",
+      "atLeast": 1,
+      "from": [
+        {
+          "clause": "signature",
+          "from": "e7eabf0367fe570e5723079b06c3a6623b205909162058103e5a74e3"
+        },
+        {
+          "clause": "signature",
+          "from": "103e5a74e3e7eabf0367fe570e5723079b06c3a6623b205909162058"
+        }
+      ]
+    }
+  }
+]

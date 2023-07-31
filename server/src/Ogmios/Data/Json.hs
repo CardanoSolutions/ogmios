@@ -34,6 +34,7 @@ module Ogmios.Data.Json
     , MultiEraDecoder (..)
     , decodeOneEraHash
     , decodePoint
+    , decodeScript
     , decodeSerializedTransaction
     , decodeTip
     , decodeTxId
@@ -63,6 +64,7 @@ import Ogmios.Data.Json.Ledger.ScriptFailure
 import Ogmios.Data.Json.Query
     ( decodeOneEraHash
     , decodePoint
+    , decodeScript
     , decodeSerializedTransaction
     , decodeTip
     , decodeTxId

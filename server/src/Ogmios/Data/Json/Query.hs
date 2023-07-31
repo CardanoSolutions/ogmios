@@ -54,6 +54,7 @@ module Ogmios.Data.Json.Query
     , decodePoint
     , decodePolicyId
     , decodePoolId
+    , decodeScript
     , decodeSerializedTransaction
     , decodeTip
     , decodeTxId
@@ -236,7 +237,6 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Sequence.Strict as StrictSeq
 import qualified Data.Set as Set
 import qualified Data.Text as T
-import qualified Text.Read as T
 
 import qualified Cardano.Chain.Genesis as Byron
 import qualified Cardano.Crypto.Hashing as CC
@@ -1443,27 +1443,35 @@ decodeScript v =
 
     decodeFromWrappedJson :: Json.Object -> Json.Parser (Ledger.Script era)
     decodeFromWrappedJson o = do
-        native <- o .:? "native"
-        plutusV1 <- o .:? "plutus:v1"
-        plutusV2 <- o .:? "plutus:v2"
-        plutusV3 <- o .:? "plutus:v3"
-        case (native, plutusV1, plutusV2, plutusV3) of
-            (Just script, Nothing, Nothing, Nothing) ->
-                Ledger.Alonzo.TimelockScript
-                    <$> decodeTimeLock script
-            (Nothing, Just script, Nothing, Nothing) ->
+        o .:? "language" >>= \case
+            Just "native" -> do
+                cbor <- o .:? "cbor" >>= traverse (decodeBase16 . encodeUtf8 @Text)
+                json <- o .:? "json"
+                case (cbor, json) of
+                    (Just bytes, _) -> do
+                        case decodeCborAnn @era "Script<Native>" Binary.decCBOR (toLazy bytes) of
+                            Right script ->
+                                pure (Ledger.Alonzo.TimelockScript script)
+                            Left (_ :: Text) ->
+                                fail "couldn't decode native script"
+                    (_, Just script) ->
+                        Ledger.Alonzo.TimelockScript <$> decodeTimeLock script
+                    (_, _) ->
+                        fail "missing field 'cbor' or 'json' to decode native script"
+            Just lang@"plutus:v1" -> do
+                bytes <- o .: "cbor"
                 Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV1
-                    <$> decodePlutusScript Plutus.PlutusV1 "plutus:v1" script
-            (Nothing, Nothing, Just script, Nothing) ->
+                    <$> decodePlutusScript Plutus.PlutusV1 lang bytes
+            Just lang@"plutus:v2" -> do
+                bytes <- o .: "cbor"
                 Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV2
-                    <$> decodePlutusScript Plutus.PlutusV2 "plutus:v2" script
-            (Nothing, Nothing, Nothing, Just script) ->
+                    <$> decodePlutusScript Plutus.PlutusV2 lang bytes
+            Just lang@"plutus:v3" -> do
+                bytes <- o .: "cbor"
                 Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV3
-                    <$> decodePlutusScript Plutus.PlutusV3 "plutus:v3" script
-            (Nothing, Nothing, Nothing, Nothing) ->
+                    <$> decodePlutusScript Plutus.PlutusV3 lang bytes
+            _ ->
                 fail "missing or unknown script language."
-            (_, _, _, _) ->
-                fail "ambiguous script language."
       where
         decodePlutusScript :: Plutus.PlutusLedgerLanguage -> Json.Key -> Text -> Json.Parser ShortByteString
         decodePlutusScript ledgerLang (Json.toText -> lang) str = do
@@ -1473,9 +1481,9 @@ decodeScript v =
             when (isLeft (Plutus.assertScriptWellFormed ledgerLang protocolVersion (toShort bytes))) $ do
                 let err = "couldn't decode plutus script"
                 let hint =
-                        case decodeCbor @era "Script" decodeRawScript lbytes of
+                        case decodeCbor @era "Script<Plutus>" decodeRawScript lbytes of
                             Left (_ :: String) ->
-                                case decodeCbor @era "Script" decodeAnnotatedScript lbytes of
+                                case decodeCbor @era "Script<Plutus>" decodeAnnotatedScript lbytes of
                                     Left (_ :: String) ->
                                         ""
                                     Right (encodeBase16 -> expected) ->
@@ -1598,43 +1606,41 @@ decodeTimeLock
     :: Era era
     => Json.Value
     -> Json.Parser (Ledger.Allegra.Timelock era)
-decodeTimeLock json =
-    decodeRequireSignature json
-    <|>
-    Json.withObject "Timelock::AllOf" decodeAllOf json
-    <|>
-    Json.withObject "Timelock::AnyOf" decodeAnyOf json
-    <|>
-    Json.withObject "Timelocks::MOf" decodeMOf json
-    <|>
-    Json.withObject "Timelocks::TimeExpire" decodeTimeExpire json
-    <|>
-    Json.withObject "Timelocks::TimeStart" decodeTimeStart json
+decodeTimeLock = Json.withObject "Script<Native>" $ \o -> do
+    clause <- o .: "clause"
+    case clause :: Text of
+        "signature" ->
+            decodeRequireSignature o
+        "all" ->
+            decodeAllOf o
+        "any" ->
+            decodeAnyOf o
+        "some" ->
+            decodeSomeOf o
+        "after" ->
+            decodeTimeStart o
+        "before" ->
+            decodeTimeExpire o
+        _ ->
+            fail "unknown clause type when decoding native script"
   where
-    decodeRequireSignature t = do
-        Ledger.Allegra.RequireSignature
-            <$> fmap Ledger.KeyHash (decodeHash t)
+    decodeRequireSignature o = do
+        from <- o .: "from" >>= decodeHash
+        pure $ Ledger.Allegra.RequireSignature (Ledger.KeyHash from)
     decodeAllOf o = do
-        xs <- StrictSeq.fromList <$> (o .: "all")
+        xs <- StrictSeq.fromList <$> (o .: "from")
         Ledger.Allegra.RequireAllOf <$> traverse decodeTimeLock xs
     decodeAnyOf o = do
-        xs <- StrictSeq.fromList <$> (o .: "any")
+        xs <- StrictSeq.fromList <$> (o .: "from")
         Ledger.Allegra.RequireAnyOf <$> traverse decodeTimeLock xs
-    decodeMOf o =
-        case Json.toList o of
-            [(k, v)] -> do
-                case T.readMaybe (Json.toString k) of
-                    Just n -> do
-                        xs <- StrictSeq.fromList <$> Json.parseJSON v
-                        Ledger.Allegra.RequireMOf n <$> traverse decodeTimeLock xs
-                    Nothing ->
-                        fail "cannot decode MOfN constructor, key isn't a natural."
-            _malformed ->
-                fail "cannot decode MOfN, not a list."
+    decodeSomeOf o = do
+        n <- o .: "atLeast"
+        xs <- StrictSeq.fromList <$> (o .: "from")
+        Ledger.Allegra.RequireMOf n <$> traverse decodeTimeLock xs
     decodeTimeExpire o = do
-        Ledger.Allegra.RequireTimeExpire . SlotNo <$> (o .: "expiresAt")
+        Ledger.Allegra.RequireTimeExpire . SlotNo <$> (o .: "slot")
     decodeTimeStart o = do
-        Ledger.Allegra.RequireTimeStart . SlotNo <$> (o .: "startsAt")
+        Ledger.Allegra.RequireTimeStart . SlotNo <$> (o .: "slot")
 
 decodeTip
     :: Json.Value

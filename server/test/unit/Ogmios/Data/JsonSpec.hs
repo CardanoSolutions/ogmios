@@ -46,6 +46,7 @@ import Ogmios.Data.EraTranslation
 import Ogmios.Data.Json
     ( Json
     , MultiEraDecoder (..)
+    , decodeScript
     , decodeUtxo
     , decodeWith
     , encodeAcquireExpired
@@ -379,6 +380,14 @@ spec = do
                     fail "successfully decoded an invalid payload( as Babbage Utxo)?"
                 Json.Success UTxOInConwayEra{} ->
                     fail "successfully decoded an invalid payload (as Conway Utxo)?"
+
+        specify "Golden: Script_Native_0.json" $ do
+            json <- decodeFileThrow "Script_native_0.json"
+            case traverse @[] (Json.parse (decodeScript @(BabbageEra StandardCrypto))) json of
+                Json.Error e ->
+                    fail (show e)
+                Json.Success{}  ->
+                    pure ()
 
         context "Data / BinaryData" $ do
             prop "arbitrary" $
@@ -1139,7 +1148,7 @@ runQuickCheck = quickCheckWithResult (QC.stdArgs{chatty=False}) >=> \case
     GaveUp{output} -> expectationFailure output
     NoExpectedFailure{output} -> expectationFailure output
 
-decodeFileThrow :: FilePath -> IO Json.Value
+decodeFileThrow :: Json.FromJSON a => FilePath -> IO a
 decodeFileThrow filepath = do
     json <- Json.decodeFileStrict ($(getProjectRoot) <> "/test/golden/" <> filepath)
     maybe (fail $ "Unable to decode JSON file: " <> filepath) pure json

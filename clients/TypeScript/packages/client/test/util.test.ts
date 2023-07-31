@@ -6,7 +6,7 @@ import {
   utxoSize
 } from '../src'
 import {
-  MetadataLabels,
+  Metadata,
   MoveInstantaneousRewards,
   RewardAccountSummaries,
   RewardsProvenance,
@@ -80,7 +80,9 @@ describe('util', () => {
         },
         datum: '4171',
         script: {
-          native: 'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54'
+          language: 'native' as 'native',
+          json: { clause: 'signature' as 'signature', from: 'b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54' },
+          cbor: '8200581cb5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54'
         }
       }
 
@@ -111,7 +113,8 @@ describe('util', () => {
         },
         datum: '40',
         script: {
-          'plutus:v1': '46010000220011'
+          language: 'plutus:v1' as 'plutus:v1',
+          cbor: '46010000220011'
         }
       }
 
@@ -367,16 +370,16 @@ describe('util', () => {
       const json = `
         {
           "labels": {
-            "1": 42,
-            "2": [14, 123954834573123725621]
+            "1": { "json": 42 },
+            "2": { "json": [14, 123954834573123725621] }
           }
         }
       `
 
-      const result = safeJSON.parse(json) as MetadataLabels
-      expect(typeof result.labels[1]).toEqual('bigint')
-      expect(typeof (result.labels[2] as bigint[])[0]).toEqual('bigint')
-      expect(typeof (result.labels[2] as bigint[])[1]).toEqual('bigint')
+      const result = safeJSON.parse(json) as Metadata
+      expect(typeof result.labels[1].json).toEqual('bigint')
+      expect(typeof (result.labels[2].json as bigint[])[0]).toEqual('bigint')
+      expect(typeof (result.labels[2].json as bigint[])[1]).toEqual('bigint')
     })
 
     describe('parse lovelace as bigint, always', () => {
@@ -398,7 +401,9 @@ describe('util', () => {
                 },
                 "datum": "4171",
                 "script": {
-                  "native": "b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54"
+                  "language": "native",
+                  "json": { "clause": "signature", "from": ["b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54"] },
+                  "cbor": "8200581cb5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54"
                 }
               }
             ],
