@@ -3016,7 +3016,10 @@
             , "additionalProperties": false
             , "required": [ "unsuitableCollateralInputs" ]
             , "properties":
-              { "unsuitableCollateralInputs": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+              { "unsuitableCollateralInputs":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+                }
               }
             }
           }

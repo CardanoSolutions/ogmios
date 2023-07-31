@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>PlutusV3 | cardano-ogmios</title>
+	<title>Plutus | cardano-ogmios</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -35,17 +35,26 @@
 					<li class=" ">
 						<a href="../modules.html">Modules</a>
 					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/_cardano_ogmios_client.html">@cardano-<wbr>ogmios/client</a>
+					</li>
+					<li class="current tsd-kind-module">
+						<a href="../modules/_cardano_ogmios_schema.html">@cardano-<wbr>ogmios/schema</a>
+					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
 				</ul>
 				<ul class="current">
-					<li class="current tsd-kind-interface tsd-parent-kind-namespace">
-						<a href="_cardano_ogmios_client.Schema.PlutusV3.html" class="tsd-kind-icon">Plutus<wbr>V3</a>
+					<li class="current tsd-kind-interface tsd-parent-kind-module">
+						<a href="_cardano_ogmios_schema.Plutus.html" class="tsd-kind-icon">Plutus</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.PlutusV3.html#plutus_v3" class="tsd-kind-icon">plutus:v3</a>
+								<a href="_cardano_ogmios_schema.Plutus.html#cbor" class="tsd-kind-icon">cbor</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.Plutus.html#language" class="tsd-kind-icon">language</a>
 							</li>
 						</ul>
 					</li>
@@ -62,13 +71,10 @@
 							<a href="../modules.html">#</a>
 						</li>
 						<li>
-							<a href="../modules/_cardano_ogmios_client.html">@cardano-ogmios/client</a>
+							<a href="../modules/_cardano_ogmios_schema.html">@cardano-ogmios/schema</a>
 						</li>
 						<li>
-							<a href="../modules/_cardano_ogmios_client.Schema.html">Schema</a>
-						</li>
-						<li>
-							<a href="_cardano_ogmios_client.Schema.PlutusV3.html">PlutusV3</a>
+							<a href="_cardano_ogmios_schema.Plutus.html">Plutus</a>
 						</li>
 					</ul>
 				</div>
@@ -77,7 +83,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">PlutusV3</span>
+						<span class="target">Plutus</span>
 					</li>
 				</ul>
 			</section>
@@ -88,7 +94,8 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.PlutusV3.html#plutus_v3" class="tsd-kind-icon">plutus:v3</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Plutus.html#cbor" class="tsd-kind-icon">cbor</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Plutus.html#language" class="tsd-kind-icon">language</a></li>
 							</ul>
 						</section>
 					</div>
@@ -97,12 +104,24 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="plutus_v3" class="tsd-anchor"></a>
-					<h3>plutus:v3</h3>
-					<div class="tsd-signature tsd-kind-icon">plutus:v3<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<a name="cbor" class="tsd-anchor"></a>
+					<h3>cbor</h3>
+					<div class="tsd-signature tsd-kind-icon">cbor<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:303</li>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/463ea63/clients/TypeScript/packages/schema/src/index.ts#L573">packages/schema/src/index.ts:573</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="language" class="tsd-anchor"></a>
+					<h3>language</h3>
+					<div class="tsd-signature tsd-kind-icon">language<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"plutus:v1"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"plutus:v2"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"plutus:v3"</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/463ea63/clients/TypeScript/packages/schema/src/index.ts#L572">packages/schema/src/index.ts:572</a>
+							</li>
 						</ul>
 					</aside>
 				</section>

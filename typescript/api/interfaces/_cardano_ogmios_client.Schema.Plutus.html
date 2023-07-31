@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>Certificate1 | cardano-ogmios</title>
+	<title>Plutus | cardano-ogmios</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -42,10 +42,13 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-namespace">
-						<a href="_cardano_ogmios_client.Schema.Certificate1.html" class="tsd-kind-icon">Certificate1</a>
+						<a href="_cardano_ogmios_client.Schema.Plutus.html" class="tsd-kind-icon">Plutus</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.Certificate1.html#certificate" class="tsd-kind-icon">certificate</a>
+								<a href="_cardano_ogmios_client.Schema.Plutus.html#cbor" class="tsd-kind-icon">cbor</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_client.Schema.Plutus.html#language" class="tsd-kind-icon">language</a>
 							</li>
 						</ul>
 					</li>
@@ -68,7 +71,7 @@
 							<a href="../modules/_cardano_ogmios_client.Schema.html">Schema</a>
 						</li>
 						<li>
-							<a href="_cardano_ogmios_client.Schema.Certificate1.html">Certificate1</a>
+							<a href="_cardano_ogmios_client.Schema.Plutus.html">Plutus</a>
 						</li>
 					</ul>
 				</div>
@@ -77,7 +80,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">Certificate1</span>
+						<span class="target">Plutus</span>
 					</li>
 				</ul>
 			</section>
@@ -88,7 +91,8 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Certificate1.html#certificate" class="tsd-kind-icon">certificate</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Plutus.html#cbor" class="tsd-kind-icon">cbor</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Plutus.html#language" class="tsd-kind-icon">language</a></li>
 							</ul>
 						</section>
 					</div>
@@ -97,12 +101,22 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="certificate" class="tsd-anchor"></a>
-					<h3>certificate</h3>
-					<div class="tsd-signature tsd-kind-icon">certificate<span class="tsd-signature-symbol">:</span> <a href="../modules/_cardano_ogmios_client.Schema.html#Certificate" class="tsd-signature-type">Certificate</a></div>
+					<a name="cbor" class="tsd-anchor"></a>
+					<h3>cbor</h3>
+					<div class="tsd-signature tsd-kind-icon">cbor<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:717</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:309</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="language" class="tsd-anchor"></a>
+					<h3>language</h3>
+					<div class="tsd-signature tsd-kind-icon">language<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"plutus:v1"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"plutus:v2"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"plutus:v3"</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:308</li>
 						</ul>
 					</aside>
 				</section>
