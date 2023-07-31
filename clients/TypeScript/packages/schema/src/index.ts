@@ -1200,7 +1200,7 @@ export interface SubmitTransactionFailureCollateralLockedByScript {
   code: 3129;
   message: string;
   data: {
-    unsuitableCollateralInputs: TransactionOutputReference;
+    unsuitableCollateralInputs: TransactionOutputReference[];
   };
 }
 export interface SubmitTransactionFailureUnforeseeableSlot {
