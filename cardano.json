@@ -799,14 +799,25 @@
       }
     }
 
-  , "GovernanceActionId":
-    { "title": "GovernanceActionId"
+  , "GovernanceActionReference":
+    { "title": "GovernanceActionReference"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "transaction", "action" ]
+    , "required": [ "transaction", "governanceAction" ]
     , "properties":
-      { "transaction": { "$ref": "cardano.json#/definitions/TransactionId" }
-      , "governanceAction": { "$ref": "cardano.json#/definitions/Index" }
+      { "transaction":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "id" ]
+        , "properties":
+          { "id":
+            { "$ref": "cardano.json#/definitions/TransactionId"
+            }
+          }
+        }
+      , "governanceAction":
+        { "$ref": "cardano.json#/definitions/Index"
+        }
       }
     }
 
@@ -824,7 +835,10 @@
     , "additionalProperties": false
     , "required": [ "index" ]
     , "properties":
-      { "index": { "$ref": "cardano.json#/definitions/UInt32" }
+      { "index":
+        { "$ref": "cardano.json#/definitions/UInt32"
+        , "minimum": 0
+        }
       }
     }
 
@@ -1754,12 +1768,20 @@
     { "title": "TransactionOutputReference"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "txId", "index" ]
+    , "required": [ "transaction", "output" ]
     , "properties":
-      { "txId": { "$ref": "cardano.json#/definitions/TransactionId" }
-      , "index":
-        { "$ref": "cardano.json#/definitions/UInt32"
-        , "minimum": 0
+      { "transaction":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "id" ]
+        , "properties":
+          { "id":
+            { "$ref": "cardano.json#/definitions/TransactionId"
+            }
+          }
+        }
+      , "output":
+        { "$ref": "cardano.json#/definitions/Index"
         }
       }
     }
