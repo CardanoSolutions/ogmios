@@ -15,7 +15,7 @@
   "license": "MPL-2.0",
   "scripts": {
     "build": "tsc --build ./src",
-    "build-all": "tsc --build ./src ./test",
+    "build-all": "tsc --build ./src && tsc --build ./test",
     "cleanup": "shx rm -rf dist node_modules",
     "lint": "eslint --ignore-path ../../.eslintignore \"**/*.ts\"",
     "prepack": "yarn build",
