@@ -1,0 +1,31 @@
+name: '💡 idea'
+description: Propose a new idea or request a feature.
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Have any idea? Please open a
+        [discussion](https://github.com/CardanoSolutions/ogmios/discussions/new?category=ideas-feature-requests)
+        instead! If you still open issue, fine, but it'll be moved as a
+        discussion anyway.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 'What is your idea? Provide a use case.'
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: 'Why is it a good idea?'
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 'What is the current alternative and why is it not good enough?'
+    validations:
+      required: true

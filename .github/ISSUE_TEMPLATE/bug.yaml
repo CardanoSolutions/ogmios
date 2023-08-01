@@ -1,0 +1,46 @@
+name: '🐛 bug'
+description: Create a bug report
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Before you submit an issue, please make sure to search the issue list
+        (included closed issues). If you chose to open an issue, provide as much
+        information as possible. Context is key into troubleshooting an issue!
+
+  - type: input
+    id: revision
+    attributes:
+      label: 'What Git revision / release tag are you using?'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: client-sdk
+    attributes:
+      label: 'Do you use any client SDK? If yes, which one?'
+      options:
+        - Go
+        - Java
+        - Kotlin
+        - TypeScript
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 'Describe what the problem is?'
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: 'What should be the expected behavior?'
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 'If applicable, what are the logs from the server around the occurence of the problem?'

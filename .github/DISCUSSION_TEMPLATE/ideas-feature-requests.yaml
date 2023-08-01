@@ -1,0 +1,22 @@
+title: 'Ideas / Feature Requests'
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 'What is your idea? Provide a use case.'
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: 'Why is it a good idea?'
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 'What is the current alternative and why is it not good enough?'
+    validations:
+      required: true
