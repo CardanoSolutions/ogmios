@@ -79,6 +79,13 @@
 					</ul>
 				</div>
 			</div>
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>The transaction doesn&#39;t provide any collateral inputs but it must. Indeed, when executing scripts, you must provide a collateral amount which is collected by the ledger in case of script execution failure. That collateral serves as a compensation for nodes that aren&#39;t thus able to collect normal fees set on the transaction. Note that ledger validations are split in two phases. The first phase regards pretty much every validation outside of script executions. Anything from the first phase doesn&#39;t require a collateral and will not consume the collateral in case of failure because they require little computing resources. Besides, in principle, any client application or wallet will prevent you from submitting an invalid transaction to begin with.</p>
+					</div>
+				</div>
+			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
@@ -109,7 +116,7 @@
 					<div class="tsd-signature tsd-kind-icon">code<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"3132"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e42f273/clients/TypeScript/packages/schema/src/index.ts#L1234">packages/schema/src/index.ts:1234</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/195c31f/clients/TypeScript/packages/schema/src/index.ts#L1355">packages/schema/src/index.ts:1355</a>
 							</li>
 						</ul>
 					</aside>
@@ -120,7 +127,7 @@
 					<div class="tsd-signature tsd-kind-icon">message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/e42f273/clients/TypeScript/packages/schema/src/index.ts#L1235">packages/schema/src/index.ts:1235</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/195c31f/clients/TypeScript/packages/schema/src/index.ts#L1356">packages/schema/src/index.ts:1356</a>
 							</li>
 						</ul>
 					</aside>

@@ -1,7 +1,7 @@
 asyncapi: '2.4.0'
 info:
   title: Ogmios
-  version: '5.6.0'
+  version: '6.0.0'
   description: |
 
     ### Protocols
@@ -9,28 +9,15 @@ info:
     - [Chain synchronization](#operation-publish-/?chain-synchronization)
     - [Ledger state queries](#operation-publish-/?ledger-state-queries)
     - [Transaction submission](#operation-publish-/?transaction-submission)
-    - [Mempool monitoring](#operation-publish-/?transaction-monitoring)
+    - [Mempool monitoring](#operation-publish-/?mempool-monitoring)
 
     ### Schemas
 
     Here's a shortlist that contains a few handpicked schema definitions. Find **all definitions** at the bottom of this document.
 
     - [Block](#schema-Block)
-    - Protocol Parameters
-      - [Byron](#schema-ProtocolParameters[Byron])
-      - [Shelley](#schema-ProtocolParameters[Shelley])
-      - [Alonzo](#schema-ProtocolParameters[Alonzo])
-      - [Babbage](#schema-ProtocolParameters[Babbage])
-    - Transaction
-      - [Byron](#schema-Tx[Byron])
-      - [Shelley](#schema-Tx[Shelley])
-      - [Allegra](#schema-Tx[Allegra])
-      - [Mary](#schema-Tx[Mary])
-      - [Alonzo](#schema-Tx[Alonzo])
-      - [Babbage](#schema-Tx[Babbage])
-    - [Transaction Submission Errors](#schema-SubmitTxError)
-    - [Transaction Evaluation Failures](#schema-EvaluationFailure)
-    - [Value](#schema-Value)
+    - [Protocol Parameters](#schema-Protocol-Parameters)
+    - [Transaction](#schema-Transaction)
 
   license:
     name: MPL-2.0
@@ -589,3 +576,9 @@ components:
       name: "since v6.0.0"
       payload:
         $ref: "/ogmios.json#/properties/ReleaseLedgerStateResponse"
+
+  schemas:
+    Block:
+      $ref: "/cardano.json#/definitions/Block"
+    Transaction:
+      $ref: "/cardano.json#/definitions/Transaction"
