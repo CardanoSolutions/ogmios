@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>StakeKeyRegistration | cardano-ogmios</title>
+	<title>StakePoolRegistration | cardano-ogmios</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -42,10 +42,13 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-namespace">
-						<a href="_cardano_ogmios_client.Schema.StakeKeyRegistration.html" class="tsd-kind-icon">Stake<wbr>Key<wbr>Registration</a>
+						<a href="_cardano_ogmios_client.Schema.StakePoolRegistration.html" class="tsd-kind-icon">Stake<wbr>Pool<wbr>Registration</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.StakeKeyRegistration.html#stakeKeyRegistration" class="tsd-kind-icon">stake<wbr>Key<wbr>Registration</a>
+								<a href="_cardano_ogmios_client.Schema.StakePoolRegistration.html#stakePool" class="tsd-kind-icon">stake<wbr>Pool</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_client.Schema.StakePoolRegistration.html#type" class="tsd-kind-icon">type</a>
 							</li>
 						</ul>
 					</li>
@@ -68,7 +71,7 @@
 							<a href="../modules/_cardano_ogmios_client.Schema.html">Schema</a>
 						</li>
 						<li>
-							<a href="_cardano_ogmios_client.Schema.StakeKeyRegistration.html">StakeKeyRegistration</a>
+							<a href="_cardano_ogmios_client.Schema.StakePoolRegistration.html">StakePoolRegistration</a>
 						</li>
 					</ul>
 				</div>
@@ -77,7 +80,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">StakeKeyRegistration</span>
+						<span class="target">StakePoolRegistration</span>
 					</li>
 				</ul>
 			</section>
@@ -88,7 +91,8 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.StakeKeyRegistration.html#stakeKeyRegistration" class="tsd-kind-icon">stake<wbr>Key<wbr>Registration</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.StakePoolRegistration.html#stakePool" class="tsd-kind-icon">stake<wbr>Pool</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.StakePoolRegistration.html#type" class="tsd-kind-icon">type</a></li>
 							</ul>
 						</section>
 					</div>
@@ -97,12 +101,33 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="stakeKeyRegistration" class="tsd-anchor"></a>
-					<h3>stake<wbr>Key<wbr>Registration</h3>
-					<div class="tsd-signature tsd-kind-icon">stake<wbr>Key<wbr>Registration<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<a name="stakePool" class="tsd-anchor"></a>
+					<h3>stake<wbr>Pool</h3>
+					<div class="tsd-signature tsd-kind-icon">stake<wbr>Pool<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:318</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:327</li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>parameters<span class="tsd-signature-symbol">: </span><a href="_cardano_ogmios_client.Schema.StakePoolParameters.html" class="tsd-signature-type">StakePoolParameters</a></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="type" class="tsd-anchor"></a>
+					<h3>type</h3>
+					<div class="tsd-signature tsd-kind-icon">type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"stakePoolRegistration"</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:326</li>
 						</ul>
 					</aside>
 				</section>

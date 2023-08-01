@@ -337,141 +337,160 @@
         , "description": "A stake delegation certificate, from a delegator to a stake pool."
         , "title": "stakeDelegation"
         , "additionalProperties": false
-        , "required": ["stakeDelegation"]
+        , "required": [ "type", "credential", "stakePool" ]
         , "properties":
-          { "stakeDelegation":
+          { "type":
+            { "type": "string"
+            , "enum": [ "stakeDelegation" ]
+            }
+          , "credential":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "stakePool":
             { "type": "object"
             , "additionalProperties": false
-            , "required": ["delegator", "delegatee"]
+            , "required": [ "id" ]
             , "properties":
-              { "delegator": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
-              , "delegatee": { "$ref": "cardano.json#/definitions/StakePoolId" }
-              }
-            }
-          }
-        , "examples":
-          [ { "stakeDelegation":
-              { "delegator": "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5"
-              , "delegatee": "pool1pshqcksxywy68lt04lw6uf35f4yssekh5dx2mxqmyrukke2z5y3"
-              }
-            }
-          ]
-        }
-      , { "type": "object"
-        , "description": "A stake key registration certificate."
-        , "title": "stakeKeyRegistration"
-        , "additionalProperties": false
-        , "required": ["stakeKeyRegistration"]
-        , "properties":
-          { "stakeKeyRegistration": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
-          }
-        , "examples":
-          [ { "stakeKeyRegistration": "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5"
-            }
-          ]
-        }
-      , { "type": "object"
-        , "description": "A stake key de-registration certificate."
-        , "title": "stakeKeyDeregistration"
-        , "additionalProperties": false
-        , "required": ["stakeKeyDeregistration"]
-        , "properties":
-          { "stakeKeyDeregistration": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
-          }
-        , "examples":
-          [ { "stakeKeyDeregistration": "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5"
-            }
-          ]
-        }
-      , { "type": "object"
-        , "description": "A pool registration certificate."
-        , "title": "poolRegistration"
-        , "additionalProperties": false
-        , "required": ["poolRegistration"]
-        , "properties":
-          { "poolRegistration": { "$ref": "cardano.json#/definitions/StakePoolParameters" }
-          }
-        , "examples":
-          [ { "poolRegistration":
-              { "id": "pool1agk62kg0s9606v78exurl53mqsdu44d6qeuzypur5e7ku6gpgzp"
-              , "vrf": "c91697932cef010ced94eae6854436f8f30a18dbcd16e9176514f9612816023e"
-              , "pledge": 458907757199
-              , "cost": 340000000
-              , "margin": "499/10000"
-              , "rewardAccount": "stake1uy3kcacyk50twxlzluarxwy0wv0nzyt42ecruehek9k5m8g08gvjy"
-              , "owners":
-                [ "236c7704b51eb71be2ff3a33388f731f31117556703e66f9b16d4d9d"
-                ]
-              , "relays":
-                [ { "port": 3001
-                  , "ipv4": "54.163.147.116"
-                  , "ipv6": null
-                  }
-                ]
-              , "metadata":
-                { "url": "https://www.sophias-pool.com/poolInfo"
-                , "hash": "abb6c63334b2c5d107802f932479fc146454a632e886f2b4276d6d00c1d023a2"
+              { "id":
+                { "$ref": "cardano.json#/definitions/StakePoolId"
                 }
               }
             }
-          ]
+          }
         }
       , { "type": "object"
-        , "description": "A pool retirement certificate."
+        , "description": "A stake credential (key or script) registration certificate."
+        , "title": "stakeCredentialRegistration"
         , "additionalProperties": false
-        , "title": "poolRetirement"
-        , "required": ["poolRetirement"]
+        , "required": [ "type", "credential" ]
         , "properties":
-          { "poolRetirement":
+          { "type":
+            { "type": "string"
+            , "enum": [ "stakeCredentialRegistration" ]
+            }
+          , "credential":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          }
+        }
+      , { "type": "object"
+        , "description": "A stake key de-registration certificate."
+        , "title": "stakeCredentialDeregistration"
+        , "additionalProperties": false
+        , "required": [ "type", "credential" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "stakeCredentialDeregistration" ]
+            }
+          , "credential":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          }
+        }
+      , { "type": "object"
+        , "description": "A stake pool registration certificate."
+        , "title": "stakePoolRegistration"
+        , "additionalProperties": false
+        , "required": [ "type", "stakePool" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "stakePoolRegistration" ]
+            }
+          , "stakePool":
             { "type": "object"
             , "additionalProperties": false
-            , "required": ["poolId", "retirementEpoch"]
+            , "required": [ "id", "parameters" ]
             , "properties":
-              { "retirementEpoch": { "$ref": "cardano.json#/definitions/Epoch" }
-              , "poolId": { "$ref": "cardano.json#/definitions/StakePoolId" }
+              { "id":
+                { "$ref": "cardano.json#/definitions/StakePoolId"
+                }
+              , "parameters":
+                { "$ref": "cardano.json#/definitions/StakePoolParameters"
+                }
               }
             }
           }
-        , "examples":
-          [ { "poolRetirement":
-              { "poolId": "pool14cq225dlh7qy7tcc35fgrkr9yyprlk4cppytjmdv7e0gwm4w9q6"
-              , "retirementEpoch": 237
+        }
+      , { "type": "object"
+        , "description": "A stake pool retirement certificate."
+        , "additionalProperties": false
+        , "title": "stakePoolRetirement"
+        , "required": [ "type", "stakePool"]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "stakePoolRetirement" ]
+            }
+          , "stakePool":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "id", "retirementEpoch" ]
+            , "properties":
+              { "retirementEpoch": { "$ref": "cardano.json#/definitions/Epoch" }
+              , "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
               }
             }
-          ]
+          }
         }
       , { "type": "object"
         , "title": "genesisDelegation"
         , "additionalProperties": false
-        , "required": ["genesisDelegation"]
+        , "required": [ "type", "delegate", "issuer" ]
         , "properties":
-          { "genesisDelegation":
+          { "type":
+            { "type": "string"
+            , "enum": [ "genesisDelegation" ]
+            }
+          , "delegate":
             { "type": "object"
             , "additionalProperties": false
-            , "required": ["delegateKeyHash","verificationKeyHash","vrfVerificationKeyHash"]
+            , "required": [ "verificationKeyHash" ]
             , "properties":
-              { "delegateKeyHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
-              , "verificationKeyHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
-              , "vrfVerificationKeyHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+              { "verificationKeyHash":
+                { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+                }
+              }
+            }
+          , "issuer":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "verificationKeyHash", "vrfVerificationKeyHash" ]
+            , "properties":
+              { "verificationKeyHash":
+                { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+                }
+              , "vrfVerificationKeyHash":
+                { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
+                }
               }
             }
           }
         }
       , { "type": "object"
-        , "title": "moveInstantaneousRewards"
-        , "description": "Either `value` or `rewards` will be present, but never both."
+        , "title": "treasuryTransfer"
+        , "description": "A transfer from or to the treasury / reserves authored by genesis delegates. 'rewards' is only present when target is 'rewardsAccounts'; 'value' is only present when target is 'reserves' or 'treasury'."
         , "additionalProperties": false
-        , "required": ["moveInstantaneousRewards"]
+        , "required": [ "type", "source", "target" ]
         , "properties":
-          { "moveInstantaneousRewards":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": ["pot"]
-            , "properties":
-              { "rewards": { "$ref": "cardano.json#/definitions/RewardTransfer" }
-              , "value":  { "$ref": "cardano.json#/definitions/Lovelace" }
-              , "pot": { "$ref": "cardano.json#/definitions/RewardPot" }
-              }
+          { "type":
+            { "type": "string"
+            , "enum": [ "treasuryTransfer" ]
+            }
+          , "source":
+            { "type": "string"
+            , "enum": [ "reserves", "treasury" ]
+            }
+          , "target":
+            { "type": "string"
+            , "enum": [ "reserves", "treasury", "rewardAccounts" ]
+            }
+          , "rewards":
+            { "$ref": "cardano.json#/definitions/RewardTransfer"
+            }
+          , "value":
+            { "$ref": "cardano.json#/definitions/Lovelace"
             }
           }
         }
@@ -980,17 +999,17 @@
     { "title": "StakePoolParameters"
     , "type": "object"
     , "additionalProperties": false
-    , "required": ["owners", "cost", "margin", "pledge", "vrf", "id", "relays", "rewardAccount"]
+    , "required": ["owners", "cost", "margin", "pledge", "vrfVerificationKeyHash", "relays", "rewardAccount"]
     , "properties":
-      { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
-      , "owners":
+      { "owners":
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
         }
+      , "vrfVerificationKeyHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
       , "cost": { "$ref": "cardano.json#/definitions/Lovelace" }
       , "margin": { "$ref": "cardano.json#/definitions/Ratio" }
       , "pledge": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "vrf": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+      , "rewardAccount": { "$ref": "cardano.json#/definitions/RewardAccount" }
       , "metadata":
         { "type": "object"
         , "title": "poolMetadata"
@@ -1008,7 +1027,6 @@
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Relay" }
         }
-      , "rewardAccount": { "$ref": "cardano.json#/definitions/RewardAccount" }
       }
     }
 
@@ -1209,8 +1227,13 @@
       [ { "type": "object"
         , "title": "by address"
         , "additionalProperties": false
+        , "required": [ "type" ]
         , "properties":
-          { "ipv4":
+          { "type":
+            { "type": "string"
+            , "enum": [ "ipAddress" ]
+            }
+          , "ipv4":
             { "type": "string"
             }
           , "ipv6":
@@ -1226,9 +1249,15 @@
       , { "type": "object"
         , "title": "by name"
         , "additionalProperties": false
-        , "required": ["hostname"]
+        , "required": [ "type", "hostname" ]
         , "properties":
-          { "hostname": { "type": "string" }
+          { "type":
+            { "type": "string"
+            , "enum": [ "hostname" ]
+            }
+          , "hostname":
+            { "type": "string"
+            }
           , "port":
             { "type": "integer"
             , "minimum": 0
@@ -1248,13 +1277,6 @@
     , "examples":
       [ "stake1ux7pt9adw8z46tgqn2f8fvurrhk325gcm4mf75mkmmxpx6gae9mzv"
       ]
-    }
-
-  , "RewardPot":
-    { "title": "RewardPot"
-    , "type": "string"
-    , "description": "Source of rewards as defined by the protocol parameters."
-    , "enum": ["reserves", "treasury"]
     }
 
   , "RewardTransfer":

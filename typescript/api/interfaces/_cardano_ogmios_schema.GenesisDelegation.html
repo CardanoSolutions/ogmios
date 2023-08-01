@@ -51,7 +51,13 @@
 						<a href="_cardano_ogmios_schema.GenesisDelegation.html" class="tsd-kind-icon">Genesis<wbr>Delegation</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.GenesisDelegation.html#genesisDelegation" class="tsd-kind-icon">genesis<wbr>Delegation</a>
+								<a href="_cardano_ogmios_schema.GenesisDelegation.html#delegate" class="tsd-kind-icon">delegate</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.GenesisDelegation.html#issuer" class="tsd-kind-icon">issuer</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.GenesisDelegation.html#type" class="tsd-kind-icon">type</a>
 							</li>
 						</ul>
 					</li>
@@ -91,7 +97,9 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.GenesisDelegation.html#genesisDelegation" class="tsd-kind-icon">genesis<wbr>Delegation</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.GenesisDelegation.html#delegate" class="tsd-kind-icon">delegate</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.GenesisDelegation.html#issuer" class="tsd-kind-icon">issuer</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.GenesisDelegation.html#type" class="tsd-kind-icon">type</a></li>
 							</ul>
 						</section>
 					</div>
@@ -100,12 +108,12 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="genesisDelegation" class="tsd-anchor"></a>
-					<h3>genesis<wbr>Delegation</h3>
-					<div class="tsd-signature tsd-kind-icon">genesis<wbr>Delegation<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<a name="delegate" class="tsd-anchor"></a>
+					<h3>delegate</h3>
+					<div class="tsd-signature tsd-kind-icon">delegate<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/cdf9d23/clients/TypeScript/packages/schema/src/index.ts#L636">packages/schema/src/index.ts:636</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/01d1cb3/clients/TypeScript/packages/schema/src/index.ts#L642">packages/schema/src/index.ts:642</a>
 							</li>
 						</ul>
 					</aside>
@@ -113,8 +121,24 @@
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
 							<li class="tsd-parameter">
-								<h5>delegate<wbr>Key<wbr>Hash<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+								<h5>verification<wbr>Key<wbr>Hash<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
 							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="issuer" class="tsd-anchor"></a>
+					<h3>issuer</h3>
+					<div class="tsd-signature tsd-kind-icon">issuer<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/01d1cb3/clients/TypeScript/packages/schema/src/index.ts#L645">packages/schema/src/index.ts:645</a>
+							</li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
 							<li class="tsd-parameter">
 								<h5>verification<wbr>Key<wbr>Hash<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
 							</li>
@@ -123,6 +147,17 @@
 							</li>
 						</ul>
 					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="type" class="tsd-anchor"></a>
+					<h3>type</h3>
+					<div class="tsd-signature tsd-kind-icon">type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"genesisDelegation"</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/01d1cb3/clients/TypeScript/packages/schema/src/index.ts#L641">packages/schema/src/index.ts:641</a>
+							</li>
+						</ul>
+					</aside>
 				</section>
 			</section>
 		</div>
