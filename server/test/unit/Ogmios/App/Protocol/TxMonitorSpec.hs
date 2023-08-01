@@ -94,7 +94,6 @@ import Test.App.Protocol.Util
     ( FailedToDecodeMsg (..)
     , PeerTerminatedUnexpectedly (..)
     , ResponsePredicate (..)
-    , expectRpcFault
     , expectRpcResponse
     , prop_inIOSim
     , withMockChannel
@@ -195,7 +194,7 @@ spec = parallel $ do
       where
         p (msg, mirror, _) = prop_inIOSim $ withTxMonitorClient $ \send receive -> do
             send msg
-            expectRpcFault receive Rpc.FaultInvalidRequest (toJSON mirror)
+            expectRpcResponse isMustAcquireFirst receive (toJSON mirror)
 
 type Protocol = LocalTxMonitor (GenTxId Block) (GenTx Block) SlotNo
 
@@ -402,7 +401,7 @@ withoutAcquireMempool = flip suchThat $ \case
 
 acquireMempool :: Rpc.Mirror -> TxMonitorMessage Block
 acquireMempool mirror =
-    MsgAcquireMempool AcquireMempool (Rpc.Response method mirror) (Rpc.Fault mirror)
+    MsgAcquireMempool AcquireMempool (Rpc.Response method mirror)
   where
     method = Just "acquireMempool"
 
@@ -412,7 +411,7 @@ isAcquireMempoolResponse = ResponsePredicate $
 
 nextTx :: Rpc.Mirror -> TxMonitorMessage Block
 nextTx mirror =
-    MsgNextTransaction (NextTransaction Nothing) (Rpc.Response method mirror) (Rpc.Fault mirror)
+    MsgNextTransaction (NextTransaction Nothing) (Rpc.Response method mirror)
   where
     method = Just "nextTransaction"
 
@@ -422,7 +421,7 @@ isNextTxResponse = ResponsePredicate $
 
 hasTx :: Rpc.Mirror -> GenTxId Block -> TxMonitorMessage Block
 hasTx mirror tx =
-    MsgHasTransaction (HasTransaction tx) (Rpc.Response method mirror) (Rpc.Fault mirror)
+    MsgHasTransaction (HasTransaction tx) (Rpc.Response method mirror)
   where
     method = Just "hasTransaction"
 
@@ -432,7 +431,7 @@ isHasTxResponse = ResponsePredicate $
 
 sizeOfMempool :: Rpc.Mirror -> TxMonitorMessage Block
 sizeOfMempool mirror =
-    MsgSizeOfMempool SizeOfMempool (Rpc.Response method mirror) (Rpc.Fault mirror)
+    MsgSizeOfMempool SizeOfMempool (Rpc.Response method mirror)
   where
     method = Just "sizeOfMempool"
 
@@ -442,13 +441,20 @@ isSizeOfMempoolResponse = ResponsePredicate $
 
 releaseMempool :: Rpc.Mirror -> TxMonitorMessage Block
 releaseMempool mirror =
-    MsgReleaseMempool ReleaseMempool (Rpc.Response method mirror) (Rpc.Fault mirror)
+    MsgReleaseMempool ReleaseMempool (Rpc.Response method mirror)
   where
     method = Just "releaseMempool"
 
 isReleaseMempoolResponse :: ResponsePredicate
 isReleaseMempoolResponse = ResponsePredicate $
     \v -> ("method" `at` v)  == Just (toJSON @Text "releaseMempool")
+
+isMustAcquireFirst :: ResponsePredicate
+isMustAcquireFirst = ResponsePredicate $
+    \v -> isJust $ do
+        e <- "error" `at` v
+        code <- "code" `at` e
+        guard (code == toJSON @Int 4000)
 
 --
 -- Helpers

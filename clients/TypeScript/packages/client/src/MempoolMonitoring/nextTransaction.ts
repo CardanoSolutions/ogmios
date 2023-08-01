@@ -2,6 +2,7 @@
 import { InteractionContext, Method } from '../Connection'
 import {
   Ogmios,
+  NextTransactionResponse,
   Transaction,
   TransactionId
 } from '@cardano-ogmios/schema'
@@ -49,6 +50,6 @@ export function handler (
 /**
  * @internal
  */
-export function isNextTransactionResponse (response: any): response is Ogmios['NextTransactionResponse'] {
-  return typeof (response as Ogmios['NextTransactionResponse'])?.result?.transaction !== 'undefined'
+export function isNextTransactionResponse (response: any): response is NextTransactionResponse {
+  return typeof (response as NextTransactionResponse)?.result?.transaction !== 'undefined'
 }

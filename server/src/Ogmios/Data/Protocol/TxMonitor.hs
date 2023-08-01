@@ -148,23 +148,18 @@ data TxMonitorMessage block
     = MsgAcquireMempool
         AcquireMempool
         (Rpc.ToResponse AcquireMempoolResponse)
-        Rpc.ToFault
     | MsgNextTransaction
         NextTransaction
         (Rpc.ToResponse (NextTransactionResponse block))
-        Rpc.ToFault
     | MsgHasTransaction
         (HasTransaction block)
         (Rpc.ToResponse HasTransactionResponse)
-        Rpc.ToFault
     | MsgSizeOfMempool
         SizeOfMempool
         (Rpc.ToResponse SizeOfMempoolResponse)
-        Rpc.ToFault
     | MsgReleaseMempool
         ReleaseMempool
         (Rpc.ToResponse ReleaseMempoolResponse)
-        Rpc.ToFault
 
 --
 -- AcquireMempool
@@ -194,13 +189,14 @@ _encodeAcquireMempoolResponse
     :: Rpc.Response AcquireMempoolResponse
     -> Json
 _encodeAcquireMempoolResponse =
-    Rpc.ok $ encodeObject . \case
+    Rpc.mkResponse $ \resolve _reject -> \case
         AcquireMempoolResponse{slot} ->
-            ( "acquired" .=
-                encodeText "mempool" <>
-              "slot" .=
-                encodeSlotNo slot
-            )
+            resolve $ encodeObject
+                ( "acquired" .=
+                    encodeText "mempool" <>
+                  "slot" .=
+                    encodeSlotNo slot
+                )
 
 --
 -- NextTransaction
@@ -259,6 +255,8 @@ data NextTransactionResponse block
     | NextTransactionResponseTx
         { nextTx :: Maybe (GenTx block)
         }
+
+    | NextTransactionMustAcquireFirst
     deriving (Generic)
 deriving instance
     ( Show (GenTxId block)
@@ -276,13 +274,19 @@ _encodeNextTransactionResponse
     -> Rpc.Response (NextTransactionResponse block)
     -> Json
 _encodeNextTransactionResponse encodeTxId encodeTx =
-    Rpc.ok $ encodeObject . \case
+    Rpc.mkResponse $ \resolve reject -> \case
         NextTransactionResponseId{nextId} ->
-            ( "transaction" .= encodeMaybe encodeTxId nextId
-            )
+            resolve $ encodeObject
+                ( "transaction" .= encodeMaybe encodeTxId nextId
+                )
         NextTransactionResponseTx{nextTx} ->
-            ( "transaction" .= encodeMaybe encodeTx nextTx
-            )
+            resolve $ encodeObject
+                ( "transaction" .= encodeMaybe encodeTx nextTx
+                )
+        NextTransactionMustAcquireFirst ->
+            reject (Rpc.FaultCustom 4000)
+                "You must acquire a mempool snapshot prior to accessing it."
+                Nothing
 
 --
 -- HasTransaction
@@ -312,6 +316,7 @@ _decodeHasTransaction =
 
 data HasTransactionResponse
     = HasTransactionResponse { has :: Bool }
+    | HasTransactionMustAcquireFirst
     deriving (Generic, Show, Eq)
 
 _encodeHasTransactionResponse
@@ -319,9 +324,13 @@ _encodeHasTransactionResponse
     => Rpc.Response HasTransactionResponse
     -> Json
 _encodeHasTransactionResponse =
-    Rpc.ok $ \case
+    Rpc.mkResponse $ \resolve reject -> \case
         HasTransactionResponse{has} ->
-            encodeBool has
+            resolve (encodeBool has)
+        HasTransactionMustAcquireFirst ->
+            reject (Rpc.FaultCustom 4000)
+                "You must acquire a mempool snapshot prior to accessing it."
+                Nothing
 
 --
 -- SizeOfMempool
@@ -345,21 +354,27 @@ _decodeSizeOfMempool =
 
 data SizeOfMempoolResponse
     = SizeOfMempoolResponse { mempool :: MempoolSizeAndCapacity }
+    | SizeOfMempoolMustAcquireFirst
     deriving (Generic, Show)
 
 _encodeSizeOfMempoolResponse
     :: Rpc.Response SizeOfMempoolResponse
     -> Json
 _encodeSizeOfMempoolResponse =
-    Rpc.ok $ encodeObject . \case
+    Rpc.mkResponse $ \resolve reject -> \case
         SizeOfMempoolResponse{mempool} ->
-            ( "maxCapacity" .= encodeObject
-                ( "bytes" .= encodeWord32 (capacityInBytes mempool) ) <>
-              "currentSize" .= encodeObject
-                ( "bytes" .= encodeWord32 (sizeInBytes mempool)) <>
-              "transactions" .= encodeObject
-                ( "count" .= encodeWord32 (numberOfTxs mempool))
-            )
+            resolve $ encodeObject
+                ( "maxCapacity" .= encodeObject
+                    ( "bytes" .= encodeWord32 (capacityInBytes mempool) ) <>
+                  "currentSize" .= encodeObject
+                    ( "bytes" .= encodeWord32 (sizeInBytes mempool)) <>
+                  "transactions" .= encodeObject
+                    ( "count" .= encodeWord32 (numberOfTxs mempool))
+                )
+        SizeOfMempoolMustAcquireFirst ->
+            reject (Rpc.FaultCustom 4000)
+                "You must acquire a mempool snapshot prior to accessing it."
+                Nothing
 
 --
 -- ReleaseMempool
@@ -383,13 +398,19 @@ _decodeReleaseMempool =
 
 data ReleaseMempoolResponse
     = Released
+    | ReleaseMempoolMustAcquireFirst
     deriving (Generic, Show)
 
 _encodeReleaseMempoolResponse
     :: Rpc.Response ReleaseMempoolResponse
     -> Json
 _encodeReleaseMempoolResponse =
-    Rpc.ok $ encodeObject . \case
+    Rpc.mkResponse $ \resolve reject -> \case
         Released ->
-            ( "released" .= encodeText "mempool"
-            )
+            resolve $ encodeObject
+                ( "released" .= encodeText "mempool"
+                )
+        ReleaseMempoolMustAcquireFirst ->
+            reject (Rpc.FaultCustom 4000)
+                "You must acquire a mempool snapshot prior to accessing it."
+                Nothing

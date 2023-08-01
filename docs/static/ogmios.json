@@ -135,6 +135,33 @@
             }
           }
         }
+      , { "title": "IntersectionInterleaved"
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "error" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "findIntersection" ]
+            }
+          , "error":
+            { "type": "object"
+            , "required": [ "code", "message" ]
+            , "additionalProperties": false
+            , "properties":
+              { "code": { "type": "integer", "enum": [ 1001 ] }
+              , "message": { "type": "string" }
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
       ]
     }
 
@@ -1811,45 +1838,75 @@
     }
 
   , "NextTransactionResponse":
-    { "title": "NextTransactionResponse"
-    , "description": "Response to a 'nextTransaction' request."
-    , "type": "object"
-    , "required": [ "jsonrpc", "method", "result" ]
-    , "additionalProperties": false
-    , "properties":
-      { "jsonrpc":
-        { "type": "string"
-        , "enum": [ "2.0" ]
-        }
-      , "method":
-        { "type": "string"
-        , "enum": [ "nextTransaction" ]
-        }
-      , "result":
-        { "type": "object"
-        , "description": "A transaction (or id) or an empty object if there's no more transactions."
+    { "oneOf":
+      [ { "title": "NextTransactionResponse"
+        , "description": "Response to a 'nextTransaction' request."
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
-        , "required": ["transaction"]
         , "properties":
-          { "transaction":
-            { "anyOf":
-              [ { "type": "object"
-                , "additionalProperties": false
-                , "required": [ "id" ]
-                , "properties":
-                  { "id": { "$ref": "cardano.json#/definitions/TransactionId" }
-                  }
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "nextTransaction" ]
+            }
+          , "result":
+            { "type": "object"
+            , "description": "A transaction (or id) or an empty object if there's no more transactions."
+            , "additionalProperties": false
+            , "required": ["transaction"]
+            , "properties":
+              { "transaction":
+                { "anyOf":
+                  [ { "type": "object"
+                    , "additionalProperties": false
+                    , "required": [ "id" ]
+                    , "properties":
+                      { "id": { "$ref": "cardano.json#/definitions/TransactionId" }
+                      }
+                    }
+                  , { "$ref": "cardano.json#/definitions/Transaction" }
+                  , { "type": "null" }
+                  ]
                 }
-              , { "$ref": "cardano.json#/definitions/Transaction" }
-              , { "type": "null" }
-              ]
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
             }
           }
         }
-      , "id":
-        { "description": "Any value that was set by a client request in the 'id' field."
+      , { "title": "NextTransactionMustAcquireFirst"
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "error" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "nextTransaction" ]
+            }
+          , "error":
+            { "type": "object"
+            , "required": [ "code", "message" ]
+            , "additionalProperties": false
+            , "properties":
+              { "code": { "type": "integer", "enum": [ 4000 ] }
+              , "message": { "type": "string" }
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
         }
-      }
+      ]
     }
 
   , "HasTransaction":
@@ -1882,27 +1939,57 @@
     }
 
   , "HasTransactionResponse":
-    { "title": "HasTransactionResponse"
-    , "description": "Response to a 'HasTransaction' request."
-    , "type": "object"
-    , "required": [ "jsonrpc", "method", "result" ]
-    , "additionalProperties": false
-    , "properties":
-      { "jsonrpc":
-        { "type": "string"
-        , "enum": [ "2.0" ]
+    { "oneOf":
+      [ { "title": "HasTransactionResponse"
+        , "description": "Response to a 'HasTransaction' request."
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "hasTransaction" ]
+            }
+          , "result":
+            { "type": "boolean"
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
         }
-      , "method":
-        { "type": "string"
-        , "enum": [ "hasTransaction" ]
+      , { "title": "HasTransactionMustAcquireFirst"
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "error" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "hasTransaction" ]
+            }
+          , "error":
+            { "type": "object"
+            , "required": [ "code", "message" ]
+            , "additionalProperties": false
+            , "properties":
+              { "code": { "type": "integer", "enum": [ 4000 ] }
+              , "message": { "type": "string" }
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
         }
-      , "result":
-        { "type": "boolean"
-        }
-      , "id":
-        { "description": "Any value that was set by a client request in the 'id' field."
-        }
-      }
+      ]
     }
 
   , "SizeOfMempool":
@@ -1927,27 +2014,57 @@
     }
 
   , "SizeOfMempoolResponse":
-    { "title": "SizeOfMempoolResponse"
-    , "description": "Response to a 'sizeOfMempool' request."
-    , "type": "object"
-    , "required": [ "jsonrpc", "method", "result" ]
-    , "additionalProperties": false
-    , "properties":
-      { "jsonrpc":
-        { "type": "string"
-        , "enum": [ "2.0" ]
+    { "oneOf":
+      [ { "title": "SizeOfMempoolResponse"
+        , "description": "Response to a 'sizeOfMempool' request."
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "sizeOfMempool" ]
+            }
+          , "result":
+            { "$ref": "ogmios.json#/definitions/MempoolSizeAndCapacity"
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
         }
-      , "method":
-        { "type": "string"
-        , "enum": [ "sizeOfMempool" ]
+      , { "title": "SizeOfMempoolMustAcquireFirst"
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "error" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "sizeOfMempool" ]
+            }
+          , "error":
+            { "type": "object"
+            , "required": [ "code", "message" ]
+            , "additionalProperties": false
+            , "properties":
+              { "code": { "type": "integer", "enum": [ 4000 ] }
+              , "message": { "type": "string" }
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
         }
-      , "result":
-        { "$ref": "ogmios.json#/definitions/MempoolSizeAndCapacity"
-        }
-      , "id":
-        { "description": "Any value that was set by a client request in the 'id' field."
-        }
-      }
+      ]
     }
 
   , "ReleaseMempool":
@@ -1972,35 +2089,65 @@
     }
 
   , "ReleaseMempoolResponse":
-    { "title": "ReleaseMempoolResponse"
-    , "description": "Response to a 'releaseMempool' request."
-    , "type": "object"
-    , "required": [ "jsonrpc", "method", "result" ]
-    , "additionalProperties": false
-    , "properties":
-      { "jsonrpc":
-        { "type": "string"
-        , "enum": [ "2.0" ]
-        }
-      , "method":
-        { "type": "string"
-        , "enum": [ "releaseMempool" ]
-        }
-      , "result":
-        { "type": "object"
+    { "oneOf":
+      [ { "title": "ReleaseMempoolResponse"
+        , "description": "Response to a 'releaseMempool' request."
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false
-        , "required": [ "released" ]
         , "properties":
-          { "released":
+          { "jsonrpc":
             { "type": "string"
-            , "enum": ["mempool"]
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "releaseMempool" ]
+            }
+          , "result":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "released" ]
+            , "properties":
+              { "released":
+                { "type": "string"
+                , "enum": ["mempool"]
+                }
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
             }
           }
         }
-      , "id":
-        { "description": "Any value that was set by a client request in the 'id' field."
+      , { "title": "ReleaseMempoolMustAcquireFirst"
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "error" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "releaseMempool" ]
+            }
+          , "error":
+            { "type": "object"
+            , "required": [ "code", "message" ]
+            , "additionalProperties": false
+            , "properties":
+              { "code": { "type": "integer", "enum": [ 4000 ] }
+              , "message": { "type": "string" }
+              }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
         }
-      }
+      ]
     }
 
   , "RpcError":

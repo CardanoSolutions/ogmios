@@ -165,7 +165,7 @@ mkTxSubmissionClient TxSubmissionCodecs{..} ExecutionUnitsEvaluator{..} queue yi
     clientStIdle
         :: m (LocalTxClientStIdle (SerializedTransaction block) (SubmitTransactionError block) m ())
     clientStIdle = await >>= \case
-        MsgSubmitTransaction SubmitTransaction{transaction = request} toResponse _ -> do
+        MsgSubmitTransaction SubmitTransaction{transaction = request} toResponse -> do
             case request of
                 MultiEraDecoderSuccess transaction ->
                     pure $ SendMsgSubmitTx transaction $ \result -> do
@@ -181,7 +181,7 @@ mkTxSubmissionClient TxSubmissionCodecs{..} ExecutionUnitsEvaluator{..} queue yi
                         & yield
                     clientStIdle
 
-        MsgEvaluateTransaction EvaluateTransaction{additionalUtxoSet, transaction = request} toResponse _ -> do
+        MsgEvaluateTransaction EvaluateTransaction{additionalUtxoSet, transaction = request} toResponse -> do
             case request of
                 MultiEraDecoderSuccess transaction -> do
                     result <- evaluateExecutionUnitsM (additionalUtxoSet, transaction)

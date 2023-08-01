@@ -232,7 +232,7 @@ export type NetworkMagic = number;
 
 export interface Ogmios {
   FindIntersection: FindIntersection;
-  FindIntersectionResponse: IntersectionFound | IntersectionNotFound;
+  FindIntersectionResponse: IntersectionFound | IntersectionNotFound | IntersectionInterleaved;
   NextBlock: NextBlock;
   NextBlockResponse: NextBlockResponse;
   SubmitTransaction: SubmitTransaction;
@@ -338,13 +338,13 @@ export interface Ogmios {
   AcquireMempool: AcquireMempool;
   AcquireMempoolResponse: AcquireMempoolResponse;
   NextTransaction: NextTransaction;
-  NextTransactionResponse: NextTransactionResponse;
+  NextTransactionResponse: NextTransactionResponse | NextTransactionMustAcquireFirst;
   HasTransaction: HasTransaction;
-  HasTransactionResponse: HasTransactionResponse;
+  HasTransactionResponse: HasTransactionResponse | HasTransactionMustAcquireFirst;
   SizeOfMempool: SizeOfMempool;
-  SizeOfMempoolResponse?: SizeOfMempoolResponse;
+  SizeOfMempoolResponse?: SizeOfMempoolResponse | SizeOfMempoolMustAcquireFirst;
   ReleaseMempool: ReleaseMempool;
-  ReleaseMempoolResponse: ReleaseMempoolResponse;
+  ReleaseMempoolResponse: ReleaseMempoolResponse | ReleaseMempoolMustAcquireFirst;
   RpcError: RpcError;
 }
 /**
@@ -398,6 +398,20 @@ export interface IntersectionNotFound {
     data: {
       tip: TipOrOrigin;
     };
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface IntersectionInterleaved {
+  jsonrpc: "2.0";
+  method: "findIntersection";
+  error: {
+    code: 1001;
+    message: string;
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -2423,6 +2437,20 @@ export interface NextTransactionResponse {
     [k: string]: unknown;
   };
 }
+export interface NextTransactionMustAcquireFirst {
+  jsonrpc: "2.0";
+  method: "nextTransaction";
+  error: {
+    code: 4000;
+    message: string;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
 /**
  * Ask whether a given transaction is present in the acquired mempool snapshot.
  */
@@ -2446,6 +2474,20 @@ export interface HasTransactionResponse {
   jsonrpc: "2.0";
   method: "hasTransaction";
   result: boolean;
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface HasTransactionMustAcquireFirst {
+  jsonrpc: "2.0";
+  method: "hasTransaction";
+  error: {
+    code: 4000;
+    message: string;
+  };
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -2487,6 +2529,20 @@ export interface MempoolSizeAndCapacity {
     count: UInt321;
   };
 }
+export interface SizeOfMempoolMustAcquireFirst {
+  jsonrpc: "2.0";
+  method: "sizeOfMempool";
+  error: {
+    code: 4000;
+    message: string;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
 /**
  * Release a previously acquired mempool snapshot.
  */
@@ -2508,6 +2564,20 @@ export interface ReleaseMempoolResponse {
   method: "releaseMempool";
   result: {
     released: "mempool";
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
+export interface ReleaseMempoolMustAcquireFirst {
+  jsonrpc: "2.0";
+  method: "releaseMempool";
+  error: {
+    code: 4000;
+    message: string;
   };
   /**
    * Any value that was set by a client request in the 'id' field.

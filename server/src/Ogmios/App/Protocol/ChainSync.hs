@@ -111,14 +111,14 @@ mkChainSyncClient maxInFlight ChainSyncCodecs{..} queue yield =
         -> Seq (Rpc.ToResponse (NextBlockResponse block))
         -> m (ClientPipelinedStIdle n block (Point block) (Tip block) m ())
     clientStIdle Zero buffer = await <&> \case
-        MsgNextBlock NextBlock toResponse _ ->
+        MsgNextBlock NextBlock toResponse ->
             let buffer' = buffer |> toResponse
                 collect = CollectResponse
                     (Just $ clientStIdle (Succ Zero) buffer')
                     (clientStNext Zero buffer')
             in SendMsgRequestNextPipelined collect
 
-        MsgFindIntersection FindIntersection{points} toResponse _ ->
+        MsgFindIntersection FindIntersection{points} toResponse ->
             SendMsgFindIntersect points (clientStIntersect toResponse)
 
     clientStIdle n@(Succ prev) buffer = tryAwait >>= \case
@@ -130,16 +130,15 @@ mkChainSyncClient maxInFlight ChainSyncCodecs{..} queue yield =
         -- Yet, if we have already received a new message from the client, we
         -- prioritize it and pipeline it right away unless there are already too
         -- many requests in flights.
-        Just (MsgNextBlock NextBlock toResponse _) -> do
+        Just (MsgNextBlock NextBlock toResponse) -> do
             let buffer' = buffer |> toResponse
             let collect = CollectResponse
                     (guard (natToInt n < maxInFlight) $> clientStIdle (Succ n) buffer')
                     (clientStNext n buffer')
             pure $ SendMsgRequestNextPipelined collect
 
-        Just (MsgFindIntersection _FindIntersection _toResponse toFault) -> do
-            let fault = "'FindIntersection' requests cannot be interleaved with 'NextBlock'."
-            yield $ Rpc.ko $ toFault Rpc.FaultInternalError fault
+        Just (MsgFindIntersection _FindIntersection toResponse) -> do
+            yield $ encodeFindIntersectionResponse $ toResponse IntersectionInterleaved
             clientStIdle n buffer
 
     clientStNext

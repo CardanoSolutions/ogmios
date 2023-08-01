@@ -336,7 +336,7 @@ genMessages = do
 
 acquire :: Rpc.Mirror -> Point Block -> StateQueryMessage Block
 acquire mirror point =
-    MsgAcquireLedgerState AcquireLedgerState{point} (Rpc.Response method mirror) (Rpc.Fault mirror)
+    MsgAcquireLedgerState AcquireLedgerState{point} (Rpc.Response method mirror)
   where
     method = Just "acquireLedgerState"
 
@@ -346,7 +346,7 @@ isAcquireLedgerStateResponse = ResponsePredicate $
 
 release :: Rpc.Mirror -> StateQueryMessage Block
 release mirror =
-    MsgReleaseLedgerState ReleaseLedgerState (Rpc.Response method mirror) (Rpc.Fault mirror)
+    MsgReleaseLedgerState ReleaseLedgerState (Rpc.Response method mirror)
   where
     method = Just "releaseLedgerState"
 
@@ -356,7 +356,7 @@ isReleaseLedgerStateResponse = ResponsePredicate $
 
 queryAny :: Rpc.Mirror -> StateQueryMessage Block
 queryAny mirror =
-    MsgQueryLedgerState Query{rawQuery,queryInEra} (Rpc.Response method mirror) (Rpc.Fault mirror)
+    MsgQueryLedgerState Query{rawQuery,queryInEra} (Rpc.Response method mirror)
   where
     method = Just "query/*"
     rawQuery = object [ "query" .= ("currentEpoch" :: String) ]

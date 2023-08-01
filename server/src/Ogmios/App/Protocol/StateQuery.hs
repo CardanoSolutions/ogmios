@@ -140,12 +140,12 @@ mkStateQueryClient tr StateQueryCodecs{..} GetGenesisConfig{..} queue yield =
     clientStIdle
         :: m (LSQ.ClientStIdle block point query m ())
     clientStIdle = await >>= \case
-        MsgAcquireLedgerState (AcquireLedgerState pt) toResponse _ ->
+        MsgAcquireLedgerState (AcquireLedgerState pt) toResponse ->
             pure $ LSQ.SendMsgAcquire (Just pt) (clientStAcquiring pt toResponse)
-        MsgReleaseLedgerState ReleaseLedgerState toResponse _ -> do
+        MsgReleaseLedgerState ReleaseLedgerState toResponse -> do
             yield $ encodeReleaseLedgerStateResponse (toResponse ReleaseLedgerStateResponse)
             clientStIdle
-        MsgQueryLedgerState query toResponse _ -> do
+        MsgQueryLedgerState query toResponse -> do
             pure $ LSQ.SendMsgAcquire Nothing (clientStAcquiringTip query toResponse)
 
     clientStAcquiring
@@ -218,12 +218,12 @@ mkStateQueryClient tr StateQueryCodecs{..} GetGenesisConfig{..} queue yield =
         :: Point block
         -> m (LSQ.ClientStAcquired block point query m ())
     clientStAcquired pt = await >>= \case
-        MsgAcquireLedgerState (AcquireLedgerState pt') toResponse _ ->
+        MsgAcquireLedgerState (AcquireLedgerState pt') toResponse ->
             pure $ LSQ.SendMsgReAcquire (Just pt') (clientStAcquiring pt' toResponse)
-        MsgReleaseLedgerState ReleaseLedgerState toResponse _ -> do
+        MsgReleaseLedgerState ReleaseLedgerState toResponse -> do
             yield $ encodeReleaseLedgerStateResponse (toResponse ReleaseLedgerStateResponse)
             pure $ LSQ.SendMsgRelease clientStIdle
-        MsgQueryLedgerState Query{rawQuery = query,queryInEra} toResponse _ ->
+        MsgQueryLedgerState Query{rawQuery = query,queryInEra} toResponse ->
             withCurrentEra queryInEra $ \case
                 Nothing -> do
                     let response = QueryUnavailableInCurrentEra

@@ -160,7 +160,7 @@ customError mirror = Fault mirror . FaultCustom
 data Handler (m :: Type -> Type) a where
     Handler
         :: (ByteString -> Maybe (Request req))
-        -> (req -> (res -> Response res) -> (FaultCode -> String -> Fault) -> m a)
+        -> (req -> (res -> Response res) -> m a)
         -> Handler m a
 
 type Matched m = (ByteString, m ())
@@ -186,7 +186,7 @@ match bytes defaultHandler = \case
     (Handler decode next):q ->
         case decode bytes of
             Just (Request method refl req) -> do
-                let matched = next req (Response (Just method) refl) (Fault refl)
+                let matched = next req (Response (Just method) refl)
                 Just (bytes, matched) <$ matched
             Nothing ->
                 match bytes defaultHandler q

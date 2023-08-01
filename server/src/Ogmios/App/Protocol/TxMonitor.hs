@@ -78,9 +78,6 @@ import Ouroboros.Network.Protocol.LocalTxMonitor.Client
     , LocalTxMonitorClient (..)
     )
 
-import qualified Codec.Json.Rpc as Rpc
-import qualified Prelude
-
 mkTxMonitorClient
     :: forall m block.
         ( MonadSTM m
@@ -99,40 +96,34 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
     await :: m (TxMonitorMessage block)
     await = atomically (readTQueue queue)
 
-    mustAcquireFirst :: forall a. (Show a) => a -> Rpc.ToFault -> m ()
-    mustAcquireFirst query toFault = do
-        let constructor = toString $ Prelude.head $ words $ show query
-        let fault = "'" <> constructor <> "' must be called after at least one 'AcquireMempool'."
-        yield $ Rpc.ko $ toFault Rpc.FaultInvalidRequest fault
-
     clientStIdle
         :: m (ClientStIdle (GenTxId block) (GenTx block) SlotNo m ())
     clientStIdle = await >>= \case
-        MsgAcquireMempool AcquireMempool toResponse _ ->
+        MsgAcquireMempool AcquireMempool toResponse ->
             pure $ SendMsgAcquire $ \slot -> do
                 yield $ encodeAcquireMempoolResponse $ toResponse $ AcquireMempoolResponse slot
                 clientStAcquired
-        MsgNextTransaction q@NextTransaction{} _ toFault -> do
-            mustAcquireFirst q toFault
+        MsgNextTransaction NextTransaction{} toResponse -> do
+            yield $ encodeNextTransactionResponse $ toResponse NextTransactionMustAcquireFirst
             clientStIdle
-        MsgHasTransaction q@HasTransaction{} _ toFault -> do
-            mustAcquireFirst q toFault
+        MsgHasTransaction HasTransaction{} toResponse -> do
+            yield $ encodeHasTransactionResponse $ toResponse HasTransactionMustAcquireFirst
             clientStIdle
-        MsgSizeOfMempool q@SizeOfMempool _ toFault -> do
-            mustAcquireFirst q toFault
+        MsgSizeOfMempool SizeOfMempool toResponse -> do
+            yield $ encodeSizeOfMempoolResponse $ toResponse SizeOfMempoolMustAcquireFirst
             clientStIdle
-        MsgReleaseMempool q@ReleaseMempool _ toFault -> do
-            mustAcquireFirst q toFault
+        MsgReleaseMempool ReleaseMempool toResponse -> do
+            yield $ encodeReleaseMempoolResponse $ toResponse ReleaseMempoolMustAcquireFirst
             clientStIdle
 
     clientStAcquired
         :: m (ClientStAcquired (GenTxId block) (GenTx block) SlotNo m ())
     clientStAcquired = await <&> \case
-        MsgAcquireMempool AcquireMempool toResponse _ ->
+        MsgAcquireMempool AcquireMempool toResponse ->
             SendMsgAwaitAcquire $ \slot -> do
                 yield $ encodeAcquireMempoolResponse $ toResponse $ AcquireMempoolResponse slot
                 clientStAcquired
-        MsgNextTransaction NextTransaction{fields} toResponse _ ->
+        MsgNextTransaction NextTransaction{fields} toResponse ->
             SendMsgNextTx $ \mTx -> do
                 let response = case fields of
                         Nothing ->
@@ -141,15 +132,15 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
                             NextTransactionResponseTx mTx
                 yield $ encodeNextTransactionResponse $ toResponse response
                 clientStAcquired
-        MsgHasTransaction HasTransaction{id} toResponse _ ->
+        MsgHasTransaction HasTransaction{id} toResponse ->
             SendMsgHasTx id $ \has -> do
                 yield $ encodeHasTransactionResponse $ toResponse $ HasTransactionResponse{has}
                 clientStAcquired
-        MsgSizeOfMempool SizeOfMempool toResponse _ ->
+        MsgSizeOfMempool SizeOfMempool toResponse ->
             SendMsgGetSizes $ \mempool -> do
                 yield $ encodeSizeOfMempoolResponse $ toResponse $ SizeOfMempoolResponse{mempool}
                 clientStAcquired
-        MsgReleaseMempool ReleaseMempool toResponse _ ->
+        MsgReleaseMempool ReleaseMempool toResponse ->
             SendMsgRelease $ do
                 yield $ encodeReleaseMempoolResponse $ toResponse Released
                 clientStIdle

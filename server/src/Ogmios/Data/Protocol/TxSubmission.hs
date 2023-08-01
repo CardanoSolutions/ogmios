@@ -213,11 +213,9 @@ data TxSubmissionMessage block
     = MsgSubmitTransaction
         (SubmitTransaction block)
         (Rpc.ToResponse (SubmitTransactionResponse block))
-        Rpc.ToFault
     | MsgEvaluateTransaction
         (EvaluateTransaction block)
         (Rpc.ToResponse (EvaluateTransactionResponse block))
-        Rpc.ToFault
 
 --
 -- SubmitTransaction

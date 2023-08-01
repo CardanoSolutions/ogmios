@@ -87,7 +87,6 @@ import Test.App.Protocol.Util
     ( FailedToDecodeMsg (..)
     , PeerTerminatedUnexpectedly (..)
     , ResponsePredicate (..)
-    , expectRpcFault
     , expectRpcResponse
     , prop_inIOSim
     , withMockChannel
@@ -193,7 +192,7 @@ spec = parallel $ do
         p mirror mirror' = prop_inIOSim $ withChainSyncClient $ \send receive -> do
             send $ nextBlock mirror
             send $ findIntersection mirror' []
-            expectRpcFault receive Rpc.FaultInternalError (toJSON mirror')
+            expectRpcResponse isIntersectionInterleaved receive (toJSON mirror')
             expectRpcResponse isNextBlockResponse receive (toJSON mirror)
 
 type Protocol = ChainSync Block (Point Block) (Tip Block)
@@ -269,7 +268,7 @@ chainSyncMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
 
 nextBlock :: Rpc.Mirror -> ChainSyncMessage Block
 nextBlock mirror =
-    MsgNextBlock NextBlock (Rpc.Response method mirror) (Rpc.Fault mirror)
+    MsgNextBlock NextBlock (Rpc.Response method mirror)
   where
     method = Just "nextBlock"
 
@@ -279,7 +278,7 @@ isNextBlockResponse = ResponsePredicate $
 
 findIntersection :: Rpc.Mirror -> [Point Block] -> ChainSyncMessage Block
 findIntersection mirror points =
-    MsgFindIntersection (FindIntersection points) (Rpc.Response method mirror) (Rpc.Fault mirror)
+    MsgFindIntersection (FindIntersection points) (Rpc.Response method mirror)
   where
     method = Just "findIntersection"
 
@@ -290,3 +289,14 @@ isFindIntersectionResponse = ResponsePredicate $
 confidence :: Double -> Double -> Confidence
 confidence (round -> certainty) tolerance =
     Confidence{certainty,tolerance}
+
+isIntersectionInterleaved :: ResponsePredicate
+isIntersectionInterleaved = ResponsePredicate $
+    \v ->
+        (("method" `at` v) == Just (toJSON @Text "findIntersection"))
+        &&
+        isJust (do
+            e <- "error" `at` v
+            code <- "code" `at` e
+            guard (code == toJSON @Int 1001)
+        )

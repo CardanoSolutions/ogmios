@@ -134,21 +134,18 @@ data StateQueryMessage block
     = MsgAcquireLedgerState
         (AcquireLedgerState block)
         (Rpc.ToResponse (AcquireLedgerStateResponse block))
-        Rpc.ToFault
     | MsgReleaseLedgerState
         ReleaseLedgerState
         (Rpc.ToResponse ReleaseLedgerStateResponse)
-        Rpc.ToFault
     | MsgQueryLedgerState
         (QueryLedgerState block)
         (Rpc.ToResponse (QueryLedgerStateResponse block))
-        Rpc.ToFault
 
 instance StandardHash block => Show (StateQueryMessage block) where
     showsPrec i = \case
-        MsgAcquireLedgerState acquire _ _ -> T.showParen (i >= 10)
+        MsgAcquireLedgerState acquire _ -> T.showParen (i >= 10)
             (T.showString $ "MsgAcquireLedgerState " <> show acquire)
-        MsgReleaseLedgerState release _ _ -> T.showParen (i >= 10)
+        MsgReleaseLedgerState release _ -> T.showParen (i >= 10)
             (T.showString $ "MsgReleaseLedgerState " <> show release)
         MsgQueryLedgerState{} -> T.showParen (i >= 10)
             (T.showString "MsgQueryLedgerState")

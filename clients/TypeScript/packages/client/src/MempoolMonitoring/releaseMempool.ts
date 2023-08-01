@@ -1,7 +1,5 @@
 import { InteractionContext, Method } from '../Connection'
-import {
-  Ogmios
-} from '@cardano-ogmios/schema'
+import { Ogmios, ReleaseMempoolResponse } from '@cardano-ogmios/schema'
 
 /**
  * Release a previously acquired mempool snapshot.
@@ -37,6 +35,6 @@ export function handler (
 /**
  * @internal
  */
-export function isReleaseMempoolResponse (response: any): response is Ogmios['ReleaseMempoolResponse'] {
-  return (response as Ogmios['ReleaseMempoolResponse'])?.result?.released === 'mempool'
+export function isReleaseMempoolResponse (response: any): response is ReleaseMempoolResponse {
+  return (response as ReleaseMempoolResponse)?.result?.released === 'mempool'
 }

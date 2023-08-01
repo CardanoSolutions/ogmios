@@ -341,35 +341,35 @@ withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig co
                     (count (totalUnroutedCounter sensors) *> defaultHandler bytes)
                     -- ChainSync
                     [ Rpc.Handler decodeNextBlock
-                        (\r t -> push chainSyncQ . MsgNextBlock r t)
+                        (\r -> push chainSyncQ . MsgNextBlock r)
                     , Rpc.Handler decodeFindIntersection
-                        (\r t -> push chainSyncQ . MsgFindIntersection r t)
+                        (\r -> push chainSyncQ . MsgFindIntersection r)
 
                     -- TxSubmission
                     , Rpc.Handler decodeSubmitTransaction
-                        (\r t -> push txSubmissionQ . MsgSubmitTransaction r t)
+                        (\r -> push txSubmissionQ . MsgSubmitTransaction r)
                     , Rpc.Handler decodeEvaluateTransaction
-                        (\r t -> push txSubmissionQ . MsgEvaluateTransaction r t)
+                        (\r -> push txSubmissionQ . MsgEvaluateTransaction r)
 
                     -- StateQuery
                     , Rpc.Handler decodeAcquireLedgerState
-                        (\r t -> push stateQueryQ . MsgAcquireLedgerState r t)
+                        (\r -> push stateQueryQ . MsgAcquireLedgerState r)
                     , Rpc.Handler decodeReleaseLedgerState
-                        (\r t -> push stateQueryQ . MsgReleaseLedgerState r t)
+                        (\r -> push stateQueryQ . MsgReleaseLedgerState r)
                     , Rpc.Handler decodeQueryLedgerState
-                        (\r t -> push stateQueryQ . MsgQueryLedgerState r t)
+                        (\r -> push stateQueryQ . MsgQueryLedgerState r)
 
                     -- TxMonitor
                     , Rpc.Handler decodeAcquireMempool
-                        (\r t -> push txMonitorQ . MsgAcquireMempool r t)
+                        (\r -> push txMonitorQ . MsgAcquireMempool r)
                     , Rpc.Handler decodeNextTransaction
-                        (\r t -> push txMonitorQ . MsgNextTransaction r t)
+                        (\r -> push txMonitorQ . MsgNextTransaction r)
                     , Rpc.Handler decodeHasTransaction
-                        (\r t -> push txMonitorQ . MsgHasTransaction r t)
+                        (\r -> push txMonitorQ . MsgHasTransaction r)
                     , Rpc.Handler decodeSizeOfMempool
-                        (\r t -> push txMonitorQ . MsgSizeOfMempool r t)
+                        (\r -> push txMonitorQ . MsgSizeOfMempool r)
                     , Rpc.Handler decodeReleaseMempool
-                        (\r t -> push txMonitorQ . MsgReleaseMempool r t)
+                        (\r -> push txMonitorQ . MsgReleaseMempool r)
                     ]
                 routeMessage matched chainSyncQ stateQueryQ txSubmissionQ txMonitorQ
 

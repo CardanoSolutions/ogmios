@@ -88,11 +88,9 @@ data ChainSyncMessage block
     = MsgFindIntersection
         (FindIntersection block)
         (Rpc.ToResponse (FindIntersectionResponse block))
-        Rpc.ToFault
     | MsgNextBlock
         NextBlock
         (Rpc.ToResponse (NextBlockResponse block))
-        Rpc.ToFault
 
 --
 -- FindIntersection
@@ -123,6 +121,7 @@ _decodeFindIntersection =
 data FindIntersectionResponse block
     = IntersectionFound { point :: Point block, tip :: Tip block }
     | IntersectionNotFound { tip :: Tip block }
+    | IntersectionInterleaved
     deriving (Generic, Show)
 
 _encodeFindIntersectionResponse
@@ -145,6 +144,12 @@ _encodeFindIntersectionResponse encodePoint encodeTip =
                     ( "tip" .= encodeTip tip
                     )
                 )
+        IntersectionInterleaved ->
+            reject (Rpc.FaultCustom 1001)
+                "Cannot interleave 'findIntersection' requests with 'nextBlock'. \
+                \Note that you should never face this error. If you do, please \
+                \open an issue."
+                Nothing
 
 --
 -- Requestnext
