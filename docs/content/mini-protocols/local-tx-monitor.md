@@ -125,6 +125,23 @@ client.once('open', () => {
 });
 ```
 
+## Errors
+
+Errors from the mempool monitoring protocol are in the range `4000-4999` and are listed below.
+
+{{% embed-async-api %}}
+asyncapi: '2.4.0'
+info:
+  title: ""
+  version: '6.0.0'
+servers: {}
+channels: {}
+components:
+  schemas:
+    4000:
+      $ref: "/ogmios.json#/properties/MustAcquireMempoolFirst/properties/error"
+{{% /embed-async-api %}}
+
 ## API Reference
 
 The complete description of the mempool monitoring requests and responses can be found in the [API reference](../../api).

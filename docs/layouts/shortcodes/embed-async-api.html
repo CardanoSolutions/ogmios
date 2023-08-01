@@ -1,0 +1,25 @@
+<style>
+  #asyncapi #introduction,
+  #asyncapi #schemas > h2 {
+    display: none;
+  }
+  #asyncapi .panel-item--center.px-8,
+  #asyncapi .aui-root .py-8,
+  #asyncapi .aui-root .mt-16 {
+    padding: 0;
+    margin: 0;
+  }
+</style>
+<div id="asyncapi"></div>
+<link rel="stylesheet" href="https://unpkg.com/@asyncapi/react-component@1.0.0-next.47/styles/default.min.css" />
+<script src="https://unpkg.com/@asyncapi/react-component@1.0.0-next.47/browser/standalone/index.js"></script>
+<script>
+  AsyncApiStandalone.render({
+    config: {
+      show: {
+        messages: false
+      },
+    },
+    schema: {{ .Inner }},
+  }, document.getElementById('asyncapi'));
+</script>

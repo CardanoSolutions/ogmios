@@ -180,3 +180,148 @@ client.on('message', function(msg) {
     client.close();
 });
 ```
+
+## Errors
+
+Errors from the chain synchronization protocol are in the range `3000-3999` and are listed below.
+
+{{% embed-async-api %}}
+asyncapi: '2.4.0'
+info:
+  title: ""
+  version: '6.0.0'
+servers: {}
+channels: {}
+components:
+  schemas:
+    3000:
+      $ref: "/ogmios.json#/definitions/EvaluateTransactionFailure/oneOf/0"
+    3001:
+      $ref: "/ogmios.json#/definitions/EvaluateTransactionFailure/oneOf/1"
+    3002:
+      $ref: "/ogmios.json#/definitions/EvaluateTransactionFailure/oneOf/2"
+    3003:
+      $ref: "/ogmios.json#/definitions/EvaluateTransactionFailure/oneOf/3"
+    3004:
+      $ref: "/ogmios.json#/definitions/EvaluateTransactionFailure/oneOf/4"
+    3005:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/0"
+    3010:
+      $ref: "/ogmios.json#/definitions/EvaluateTransactionFailure/oneOf/5"
+    3011:
+      $ref: "/ogmios.json#/definitions/ScriptExecutionFailure/oneOf/0"
+    3012:
+      $ref: "/ogmios.json#/definitions/ScriptExecutionFailure/oneOf/1"
+    3013:
+      $ref: "/ogmios.json#/definitions/ScriptExecutionFailure/oneOf/2"
+    3100:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/1"
+    3101:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/2"
+    3102:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/3"
+    3103:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/4"
+    3104:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/5"
+    3105:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/6"
+    3106:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/7"
+    3107:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/8"
+    3108:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/9"
+    3109:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/10"
+    3110:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/11"
+    3111:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/12"
+    3112:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/13"
+    3113:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/14"
+    3114:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/15"
+    3115:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/16"
+    3116:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/17"
+    3117:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/18"
+    3118:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/19"
+    3119:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/20"
+    3120:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/21"
+    3121:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/22"
+    3122:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/23"
+    3123:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/24"
+    3124:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/25"
+    3125:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/26"
+    3126:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/27"
+    3127:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/28"
+    3128:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/29"
+    3129:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/30"
+    3130:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/31"
+    3131:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/32"
+    3132:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/33"
+    3133:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/34"
+    3134:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/35"
+    3135:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/36"
+    3136:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/37"
+    3137:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/38"
+    3138:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/39"
+    3139:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/40"
+    3140:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/41"
+    3141:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/42"
+    3142:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/43"
+    3143:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/44"
+    3144:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/45"
+    3145:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/46"
+    3146:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/47"
+    3147:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/48"
+    3148:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/49"
+    3149:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/50"
+    3998:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/51"
+    3999:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/52"
+{{% /embed-async-api %}}
+
+## API Reference
+
+The complete description of the mempool monitoring requests and responses can be found in the [API reference](../../api).
+
+Plus, [test vectors](https://github.com/CardanoSolutions/ogmios/tree/master/server/test/vectors) are available on the repository for testing, debugging and to serve as examples.

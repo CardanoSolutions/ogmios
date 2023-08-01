@@ -527,3 +527,32 @@ Be aware that it is possible for an acquire request to fail even if (and in part
   }
 }
 ```
+
+## Errors
+
+Errors from the chain synchronization protocol are in the range `2000-2999` and are listed below.
+
+{{% embed-async-api %}}
+asyncapi: '2.4.0'
+info:
+  title: ""
+  version: '6.0.0'
+servers: {}
+channels: {}
+components:
+  schemas:
+    2000:
+      $ref: "/ogmios.json#/properties/AcquireLedgerStateFailure/properties/error"
+    2001:
+      $ref: "/ogmios.json#/properties/QueryLedgerStateEraMismatch/properties/error"
+    2002:
+      $ref: "/ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra/properties/error"
+    2003:
+      $ref: "/ogmios.json#/properties/QueryLedgerStateAcquiredExpire/properties/error"
+{{% /embed-async-api %}}
+
+## API Reference
+
+The complete description of the mempool monitoring requests and responses can be found in the [API reference](../../api).
+
+Plus, [test vectors](https://github.com/CardanoSolutions/ogmios/tree/master/server/test/vectors) are available on the repository for testing, debugging and to serve as examples.

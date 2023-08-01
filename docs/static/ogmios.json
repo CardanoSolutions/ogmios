@@ -114,7 +114,8 @@
             , "enum": [ "findIntersection" ]
             }
           , "error":
-            { "type": "object"
+            { "description": "No intersection found with the requested points."
+            , "type": "object"
             , "required": [ "code", "message", "data" ]
             , "additionalProperties": false
             , "properties":
@@ -149,7 +150,8 @@
             , "enum": [ "findIntersection" ]
             }
           , "error":
-            { "type": "object"
+            { "description": "An internal error indicating that requests were interleaved in an unexpected way. Shouldn't ever happen."
+            , "type": "object"
             , "required": [ "code", "message" ]
             , "additionalProperties": false
             , "properties":
@@ -507,6 +509,45 @@
       }
     }
 
+  , "AcquireLedgerStateFailure":
+    { "title": "AcquireLedgerStateFailure"
+    , "type": "object"
+    , "required": [ "jsonrpc", "method", "error" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "acquireLedgerState" ]
+        }
+      , "error":
+        { "description": "Unable to acquire the ledger state at the request point."
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "code", "message", "data" ]
+        , "properties":
+          { "code":
+            { "type": "integer"
+            , "enum": [ 2000 ]
+            }
+          , "message":
+            { "type": "string"
+            }
+          , "data":
+            { "type": "string"
+            , "description": "A reason for the failure."
+            }
+          }
+        }
+      , "id":
+        { "description": "Any value that was set by a client request in the 'id' field."
+        }
+      }
+    }
+
   , "AcquireLedgerStateResponse":
     { "oneOf":
       [ { "title": "AcquireLedgerStateSuccess"
@@ -542,44 +583,7 @@
             }
           }
         }
-      , { "title": "AcquireLedgerStateFailure"
-        , "type": "object"
-        , "description": "Unable to acquire the ledger state at the request point."
-        , "required": [ "jsonrpc", "method", "error" ]
-        , "additionalProperties": false
-        , "properties":
-          { "jsonrpc":
-            { "type": "string"
-            , "enum": [ "2.0" ]
-            }
-          , "method":
-            { "type": "string"
-            , "enum": [ "acquireLedgerState" ]
-            }
-          , "error":
-            { "title": "AcquireLedgerStateFailure"
-            , "type": "object"
-            , "additionalProperties": false
-            , "required": [ "code", "message", "data" ]
-            , "properties":
-              { "code":
-                { "type": "integer"
-                , "enum": [ 2000 ]
-                }
-              , "message":
-                { "type": "string"
-                }
-              , "data":
-                { "type": "string"
-                , "description": "A reason for the failure."
-                }
-              }
-            }
-          , "id":
-            { "description": "Any value that was set by a client request in the 'id' field."
-            }
-          }
-        }
+      , { "$ref": "ogmios.json#/properties/AcquireLedgerStateFailure" }
       ]
     }
 
@@ -639,7 +643,6 @@
   , "QueryLedgerStateEraMismatch":
     { "title": "QueryLedgerStateEraMismatch"
     , "type": "object"
-    , "description": "An era mismatch between a client request and the era the ledger is in. This may occur when running queries on a syncing node and/or when the node is crossing an era."
     , "required": [ "jsonrpc", "method", "error" ]
     , "additionalProperties": false
     , "properties":
@@ -667,6 +670,7 @@
         }
       , "error":
         { "type": "object"
+        , "description": "An era mismatch between a client request and the era the ledger is in. This may occur when running queries on a syncing node and/or when the node is crossing an era."
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
         , "properties":
@@ -684,7 +688,6 @@
   , "QueryLedgerStateUnavailableInCurrentEra":
     { "title": "QueryLedgerStateUnavailableInCurrentEra"
     , "type": "object"
-    , "description": "Some query is not available for the requested ledger era."
     , "required": [ "jsonrpc", "method", "error" ]
     , "additionalProperties": false
     , "properties":
@@ -711,7 +714,8 @@
           ]
         }
       , "error":
-        { "type": "object"
+        { "description": "Some query is not available for the requested ledger era."
+        , "type": "object"
         , "required": [ "code", "message" ]
         , "additionalProperties": false
         , "properties":
@@ -728,7 +732,6 @@
   , "QueryLedgerStateAcquiredExpire" :
     { "title": "QueryLedgerStateAcquiredExpired"
     , "type": "object"
-    , "description": "Previously acquired ledger state is no longer available."
     , "required": [ "jsonrpc", "method", "error" ]
     , "additionalProperties": false
     , "properties":
@@ -755,7 +758,8 @@
           ]
         }
       , "error":
-        { "type": "object"
+        { "description": "Previously acquired ledger state is no longer available."
+        , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
         , "properties":
@@ -1837,6 +1841,36 @@
       }
     }
 
+  , "MustAcquireMempoolFirst":
+      { "title": "MustAcquireMempoolFirst"
+      , "type": "object"
+      , "required": [ "jsonrpc", "method", "error" ]
+      , "additionalProperties": false
+      , "properties":
+        { "jsonrpc":
+          { "type": "string"
+          , "enum": [ "2.0" ]
+          }
+        , "method":
+          { "type": "string"
+          , "enum": [ "hasTransaction", "nextTransaction", "sizeOfMempool", "releaseMempool" ]
+          }
+        , "error":
+          { "description": "Must acquire a mempool snapshot prior to performing any query."
+          , "type": "object"
+          , "required": [ "code", "message" ]
+          , "additionalProperties": false
+          , "properties":
+            { "code": { "type": "integer", "enum": [ 4000 ] }
+            , "message": { "type": "string" }
+            }
+          }
+        , "id":
+          { "description": "Any value that was set by a client request in the 'id' field."
+          }
+        }
+      }
+
   , "NextTransactionResponse":
     { "oneOf":
       [ { "title": "NextTransactionResponse"
@@ -1879,33 +1913,7 @@
             }
           }
         }
-      , { "title": "NextTransactionMustAcquireFirst"
-        , "type": "object"
-        , "required": [ "jsonrpc", "method", "error" ]
-        , "additionalProperties": false
-        , "properties":
-          { "jsonrpc":
-            { "type": "string"
-            , "enum": [ "2.0" ]
-            }
-          , "method":
-            { "type": "string"
-            , "enum": [ "nextTransaction" ]
-            }
-          , "error":
-            { "type": "object"
-            , "required": [ "code", "message" ]
-            , "additionalProperties": false
-            , "properties":
-              { "code": { "type": "integer", "enum": [ 4000 ] }
-              , "message": { "type": "string" }
-              }
-            }
-          , "id":
-            { "description": "Any value that was set by a client request in the 'id' field."
-            }
-          }
-        }
+      , { "$ref": "ogmios.json#/properties/MustAcquireMempoolFirst" }
       ]
     }
 
@@ -1962,33 +1970,7 @@
             }
           }
         }
-      , { "title": "HasTransactionMustAcquireFirst"
-        , "type": "object"
-        , "required": [ "jsonrpc", "method", "error" ]
-        , "additionalProperties": false
-        , "properties":
-          { "jsonrpc":
-            { "type": "string"
-            , "enum": [ "2.0" ]
-            }
-          , "method":
-            { "type": "string"
-            , "enum": [ "hasTransaction" ]
-            }
-          , "error":
-            { "type": "object"
-            , "required": [ "code", "message" ]
-            , "additionalProperties": false
-            , "properties":
-              { "code": { "type": "integer", "enum": [ 4000 ] }
-              , "message": { "type": "string" }
-              }
-            }
-          , "id":
-            { "description": "Any value that was set by a client request in the 'id' field."
-            }
-          }
-        }
+      , { "$ref": "ogmios.json#/properties/MustAcquireMempoolFirst" }
       ]
     }
 
@@ -2037,33 +2019,7 @@
             }
           }
         }
-      , { "title": "SizeOfMempoolMustAcquireFirst"
-        , "type": "object"
-        , "required": [ "jsonrpc", "method", "error" ]
-        , "additionalProperties": false
-        , "properties":
-          { "jsonrpc":
-            { "type": "string"
-            , "enum": [ "2.0" ]
-            }
-          , "method":
-            { "type": "string"
-            , "enum": [ "sizeOfMempool" ]
-            }
-          , "error":
-            { "type": "object"
-            , "required": [ "code", "message" ]
-            , "additionalProperties": false
-            , "properties":
-              { "code": { "type": "integer", "enum": [ 4000 ] }
-              , "message": { "type": "string" }
-              }
-            }
-          , "id":
-            { "description": "Any value that was set by a client request in the 'id' field."
-            }
-          }
-        }
+      , { "$ref": "ogmios.json#/properties/MustAcquireMempoolFirst" }
       ]
     }
 
@@ -2120,33 +2076,7 @@
             }
           }
         }
-      , { "title": "ReleaseMempoolMustAcquireFirst"
-        , "type": "object"
-        , "required": [ "jsonrpc", "method", "error" ]
-        , "additionalProperties": false
-        , "properties":
-          { "jsonrpc":
-            { "type": "string"
-            , "enum": [ "2.0" ]
-            }
-          , "method":
-            { "type": "string"
-            , "enum": [ "releaseMempool" ]
-            }
-          , "error":
-            { "type": "object"
-            , "required": [ "code", "message" ]
-            , "additionalProperties": false
-            , "properties":
-              { "code": { "type": "integer", "enum": [ 4000 ] }
-              , "message": { "type": "string" }
-              }
-            }
-          , "id":
-            { "description": "Any value that was set by a client request in the 'id' field."
-            }
-          }
-        }
+      , { "$ref": "ogmios.json#/properties/MustAcquireMempoolFirst" }
       ]
     }
 
@@ -2538,6 +2468,7 @@
   , "ScriptExecutionFailure":
     { "oneOf":
       [ { "title": "ScriptExecutionFailure<MissingScript>"
+        , "description": "An associated script witness is missing. Indeed, any script used in a transaction (when spending, minting, withdrawing or publishing certificates) must be provided in full with the transaction. Scripts must therefore be added either to the witness set or provided as a reference inputs should you use Plutus V2+ and a format from Babbage and beyond."
         , "type": "object"
         , "additionalProperties": false
         , "required": [ "code", "message" ]
@@ -2547,6 +2478,7 @@
           }
         }
       , { "title": "ScriptExecutionFailure<ValidationFailure>"
+        , "description": "Some of the (V1) scripts failed to evaluate to a positive outcome."
         , "type": "object"
         , "additionalProperties": false
         , "required": [ "code", "message", "data" ]
@@ -2568,6 +2500,7 @@
           }
         }
       , { "title": "ScriptExecutionFailure<UnsuitableOutputReference>"
+        , "description": "Some of the (V2) scripts failed to evaluate to a positive outcome."
         , "type": "object"
         , "additionalProperties": false
         , "required": [ "code", "message", "data" ]
@@ -2606,6 +2539,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<InvalidSignatories>"
+        , "description": "Some signatures are invalid. Only the serialised transaction *body*, without metadata or witnesses, must be signed."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2626,6 +2560,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<MissingSignatories>"
+        , "description": "Some signatures are missing. A signed transaction must carry signatures for all inputs locked by verification keys or a native script. Transaction may also need signatures for each required extra signatories often required by Plutus Scripts."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2646,6 +2581,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<MissingScripts>"
+        , "description": "Some script witnesses are missing. Indeed, any script used in a transaction (when spending, minting, withdrawing or publishing certificates) must be provided in full with the transaction. Scripts must therefore be added either to the witness set or provided as a reference inputs should you use Plutus V2+ and a format from Babbage and beyond."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2666,6 +2602,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<FailingNativeScript>"
+        , "description": "The transaction contains failing phase-1 monetary scripts (a.k.a. native scripts). This can be due to either a missing or invalid signature, or because of a time validity issue. The field 'data.failingNativeScripts' contains a list of hash digests of all failing native scripts found in the transaction."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2686,6 +2623,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<ExtraneousScripts>"
+        , "description": "Extraneous (i.e. non-required) scripts found in the transaction. A transaction must not contain scripts that aren't strictly needed for validation, that are present in metadata or that are published in an output. Perhaps you have used provided a wrong script for a validator? Anyway, the 'data.extraneousScripts' field lists hash digests of scripts found to be extraneous."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2706,6 +2644,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<MissingMetadataHash>"
+        , "description": "Missing required metadata hash in the transaction body. If the transaction includes metadata, then it must also include a hash digest of these serialised metadata in its body to prevent malicious actors from tempering with the data. The field 'data.metadata.hash' contains the expected missing hash digest of the metadata found in the transaction."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2730,6 +2669,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<MissingMetadata>"
+        , "description": "No metadata corresponding to a specified metadata hash. It appears that you might have forgotten to attach metadata to a transaction, yet included a hash digest of them in the transaction body? The field 'data.metadata.hash' contains the orphan hash found in the body."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2754,6 +2694,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<MetadataHashMismatch>"
+        , "description": "There's a mismatch between the provided metadata hash digest and the one computed from the actual metadata. The two must match exactly. The field 'data.provided.hash' references the provided hash as found in the transaction body, whereas 'data.computed.hash' contains the one the ledger computed from the actual metadata."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2786,6 +2727,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<InvalidMetadata>"
+        , "description": "Invalid metadatum found in transaction metadata. Metadata byte strings must be no longer than 64-bytes and text strings must be no longer than 64 bytes once UTF-8-encoded. Some metadatum in the transaction infringe this rule."
         , "type": "object"
         , "required": [ "code", "message" ]
         , "additionalProperties": false
@@ -2795,6 +2737,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<MissingRedeemers>"
+        , "description": "Missing required redeemer(s) for Plutus scripts. There are validators needed for the transaction that do not have an associated redeemer. Redeemer are provided when trying to execute the validation logic of a script (e.g. when spending from an input locked by a script, or minting assets from a Plutus monetary policy. The field 'data.missingRedeemers' lists the different purposes for which a redeemer hasn't been provided."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2817,6 +2760,7 @@
       , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<ExtraneousRedeemers>" }
       , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<MissingDatums>" }
       , { "title": "SubmitTransactionFailure<ExtraneousDatums>"
+        , "description": "The transaction failed because it contains datums not associated with any script or output. This could be because you've left some orphan datum behind, because you've listed the wrong inputs in the transaction or because you've just forgotten to include a datum associated with an input. Either way, the field 'data.extraneousDatums' contains a set of data hashes for these extraneous datums."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2837,6 +2781,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<ScriptIntegrityHashMismatch>"
+        , "description": "The transaction failed because the provided script integrity hash doesn't match the computed one. This is crucial for ensuring the integrity of cost models and Plutus version used during script execution. The field 'data.providedScriptIntegrity' correspond to what was given, if any, and 'data.computedScriptIntegrity' is what was expected. If the latter is null, this means you shouldn't have included a script integrity hash to begin with."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2865,6 +2810,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<OrphanScriptInputs>"
+        , "description": "This is bad, you're trying to spend inputs that are locked by Plutus scripts, but have no associated datums. Those inputs are so-to-speak unspendable (at least with the current ledger rules). There's nothing you can do apart from re-creating these UTxOs but with a corresponding datum this time. The field 'data.orphanInputs' lists all such inputs found in the transaction."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2886,6 +2832,7 @@
         }
       , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<MissingCostModels>" }
       , { "title": "SubmitTransactionFailure<MalformedScripts>"
+        , "description": "Some Plutus scripts in the witness set or in an output are invalid. Scripts must be well-formed flat-encoded Plutus scripts, CBOR-encoded. Yes, there's a double binary encoding. The outer-most encoding is therefore just a plain CBOR bytestring. Note that some tools such as the cardano-cli triple encode scripts for some reasons, resulting in a double outer-most CBOR encoding. Make sure that your script are correctly encoded. The field 'data.malformedScripts' lists the hash digests of all the problematic scripts."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2907,6 +2854,7 @@
         }
       , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<UnknownOutputReference>" }
       , { "title": "SubmitTransactionFailure<OutsideOfValidityInterval>"
+        , "description": "The transaction is outside of its validity interval. It was either submitted too early or too late. A transaction that has a lower validity bound can only be accepted by the ledger (and make it to the mempool) if the ledger's current slot is greater than the specified bound. The upper bound works similarly, as a time to live. The field 'data.currentSlot' contains the current slot as known of the ledger (this may be different from the current network slot if the ledger is still catching up). The field 'data.validityInterval' is a reminder of the validity interval provided with the transaction."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2925,6 +2873,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<TransactionTooLarge>"
+        , "description": "The transaction exceeds the maximum size allowed by the protocol. Indeed, once serialized, transactions must be under a bytes limit specified by a protocol parameter. The field 'data.measuredTransactionSize' indicates the actual measured size of your serialized transaction, whereas 'data.maximumTransactionSize' indicates the current maximum size enforced by the ledger."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2943,6 +2892,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<ValueTooLarge>"
+        , "description": "Some output values in the transaction are too large. Once serialized, values must be below a certain threshold. That threshold sits around 4 KB during the Mary era, and was then made configurable as a protocol parameter in later era. The field 'data.excessivelyLargeOutputs' lists all transaction outputs with values that are above the limit."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2963,6 +2913,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<EmptyInputSet>"
+        , "description": "Transaction must have at least one input, but this one has an empty input set. One input is necessary to prevent replayability of transactions, as it piggybacks on the unique spendable property of UTxO."
         , "type": "object"
         , "required": [ "code", "message" ]
         , "additionalProperties": false
@@ -2972,6 +2923,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<TransactionFeeTooSmall>"
+        , "description": "Insufficient fee! The transaction doesn't not contain enough fee to cover the minimum required by the protocol. Note that fee depends on (a) a flat cost fixed by the protocol, (b) the size of the serialized transaction, (c) the budget allocated for Plutus script execution. The field 'data.minimumRequiredFee' indicates the minimum required fee whereas 'data.providedFee' refers to the fee currently supplied with the transaction."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -2990,6 +2942,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<ValueNotConserved>"
+        , "description": "In and out value not conserved. The transaction must *exactly* balance: every input must be accounted for. There are various things counting as 'in balance': (a) the total value locked by inputs (or collateral inputs in case of a failing script), (b) rewards coming from withdrawals and (c) return deposits from stake credential or pool de-registration. In a similar fashion, various things count towards the 'out balance': (a) the total value assigned to each transaction output, (b) the fee and (c) any deposit for stake credential or pool registration. The field 'data.valueConsumed' contains the total 'in balance', and 'data.valueProduced' indicates the total amount counting as 'out balance'."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3008,6 +2961,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<NetworkMismatch>"
+        , "description": "Some discriminated entities in the transaction are configured for another network. In fact, payment addresses, stake addresses and stake pool registration certificates are bound to a specific network identifier. This identifier must match the network you're trying to submit them to. Since the Alonzo era, transactions themselves may also contain a network identifier. The field 'data.expectedNetwork' indicates what is the currrently expected network. The field 'data.discriminatedType' indicates what type of entity is causing an issue here. And 'data.invalidEntities' lists all the culprits found in the transaction. The latter isn't present when the transaction's network identifier itself is wrong."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3077,6 +3031,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<InsufficientlyFundedOutputs>"
+        , "description": "Some outputs have an insufficient amount of Ada attached to them. In fact, any new output created in a system must pay for the resources it occupies. Because user-created assets are worthless (from the point of view of the protocol), those resources must be paid in the form of a Ada deposit. The exact depends on the size of the serialized output: the more assets, the higher the amount. The field 'data.insufficientlyFundedOutputs.[].output' contains a list of all transaction outputs that are insufficiently funded. Starting from the Babbage era, the field 'data.insufficientlyFundedOutputs.[].minimumRequiredValue' indicates the required amount of Lovelace (1e6 Lovelace = 1 Ada) needed for each output."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3105,6 +3060,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<BootstrapAttributesTooLarge>"
+        , "description": "Some output associated with legacy / bootstrap (a.k.a. Byron) addresses have attributes that are too large. The field 'data.bootstrapOutputs' lists all affected outputs."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3125,6 +3081,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<MintingOrBurningAda>"
+        , "description": "The transaction is attempting to mint or burn Ada tokens. That is, fortunately, not allowed by the ledger."
         , "type": "object"
         , "required": [ "code", "message" ]
         , "additionalProperties": false
@@ -3134,6 +3091,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<InsufficientCollateral>"
+        , "description": "Insufficient collateral value for Plutus scripts in the transaction. Indeed, when executing scripts, you must provide a collateral amount which minimum is a percentage of the total execution budget for the transaction. The exact percentage is given by a protocol parameter. The field 'data.providedCollateral' indicates the amount currently provided as collateral in the transaction, whereas 'data.minimumRequiredCollateral' indicates the minimum amount expected by the ledger"
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3152,6 +3110,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<CollateralLockedByScript>"
+        , "description": "Invalid choice of collateral: an input provided for collateral is locked by script. Collateral inputs must be spendable, and the ledger must be able to assert their validity during the first phase of validations (a.k.a phase-1). This discards any input locked by a Plutus script to be used as collateral. Note that for some reason inputs locked by native scripts are also excluded from candidates collateral. The field 'data.unsuitableCollateralInputs' lists all the problematic output references."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3172,6 +3131,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<UnforeseeableSlot>"
+        , "description": "One of the transaction validity bound is outside any foreseeable future. The vision of the ledger in the future is limited because the ledger cannot guarantee that the chain will not hard-fork into a version of the protocol working with a different set of parameters (or even, working with the same consensus protocol). However, the protocol cannot fork in less than `k` blocks, where `k` is the security parameter of the chain. Plus, Ouroboros Praos ensures that there are at least `k` blocks produced in a window of 3 * k / f slots, where `f` is the density parameter, also known as the active slot coefficient. Short story short, you can only set validity interval in a short timespan, which is around ~36h in the future on Mainnet at the moment of writing this error message. The field 'data.unforeseeableSlot' indicates the slot which couldn't be converted to a POSIX time due to hard fork uncertainty."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3189,6 +3149,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<TooManyCollateralInputs>"
+        , "description": "The transaction contains too many collateral inputs. The maximum number of collateral inputs is constrained by a protocol parameter. The field 'data.maximumCollateralInputs' contains the current value of that parameter, and 'data.countedCollateralInputs' indicates how many inputs were actually found in your transaction."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3207,6 +3168,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<MissingCollateralInputs>"
+        , "description": "The transaction doesn't provide any collateral inputs but it must. Indeed, when executing scripts, you must provide a collateral amount which is collected by the ledger in case of script execution failure. That collateral serves as a compensation for nodes that aren't thus able to collect normal fees set on the transaction. Note that ledger validations are split in two phases. The first phase regards pretty much every validation outside of script executions. Anything from the first phase doesn't require a collateral and will not consume the collateral in case of failure because they require little computing resources. Besides, in principle, any client application or wallet will prevent you from submitting an invalid transaction to begin with."
         , "type": "object"
         , "required": [ "code", "message" ]
         , "additionalProperties": false
@@ -3216,6 +3178,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<NonAdaCollateral>"
+        , "description": "One of the input provided as collateral carries something else than Ada tokens. Only Ada can be used as collateral. Since the Babbage era, you also have the option to set a 'collateral return' or 'collateral change' output in order to send the surplus non-Ada tokens to it. Regardless, the field 'data.unsuitableCollateralValue' indicates the actual collateral value found by the ledger"
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3233,6 +3196,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<ExecutionUnitsTooLarge>"
+        , "description": "The transaction execution budget for scripts execution is above the allowed limit. The protocol limits the amount of execution that a single transaction can do. This limit is set by a protocol parameter. The field 'data.maximumExecutionUnits' indicates the current limit and the field 'data.providedExecutionUnits' indicates how much the transaction requires."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3251,6 +3215,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<TotalCollateralMismatch>"
+        , "description": "There's a mismatch between the declared total collateral amount, and the value computed from the inputs and outputs. These must match exactly. The field 'data.declaredTotalCollateral' reports the amount declared in the transaction whereas 'data.computedTotalCollateral' refers to the amount actually computed."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3269,6 +3234,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<InputSourceMismatch>"
+        , "description": "Invalid transaction submitted as valid, or vice-versa. Since Alonzo, the ledger may allow invalid transactions to be submitted and included on-chain, provided that they leave a collateral value as compensation. This prevent certain class of attacks. As a consequence, transactions now have a validity tag with them. Your transaction did not match what that validity tag is stating. The field 'data.inputSource' indicates whether the transaction is valid or not (collateral as source means the transaction is invalid) and the fiel 'data.mismatchReason' provides more information about the mismatch."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3287,6 +3253,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<UnauthorizedVote>"
+        , "description": "The transaction contains vote from a voter that is unauthorized for that vote action. The field 'data.unauthorizedVoter' indicates the voter's credential and 'data.requiredRole' documents the role that the voter should have but don't."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3305,6 +3272,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<UnknownGovernanceAction>"
+        , "description": "Unknown governance action found in transaction. This may be because you've indicated a wrong identifier or because the governance action hasn't yet been submitted on-chain. Note that the order in which transactions are submitted matters. The field 'data.unknownGovernanceAction' tells you about the governance action's identifier."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3322,6 +3290,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<InvalidProtocolParametersUpdate>"
+        , "description": "The transaction contains an invalid or unauthorized protocol parameters update. This operation is reserved to genesis key holders."
         , "type": "object"
         , "required": [ "code", "message" ]
         , "additionalProperties": false
@@ -3331,6 +3300,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<UnknownStakePool>"
+        , "description": "The transaction references an unknown stake pool as a target for delegation or update. Double-check the pool id mentioned in 'data.unknownStakePool'. Note also that order in which transactions are submitted matters; if you're trying to register a pool and delegate to it in one go, make sure to submit transactions in the right order."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3348,6 +3318,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<IncompleteWithdrawals>"
+        , "description": "The transaction contains incomplete or invalid rewards withdrawals. When present, rewards withdrawals must consume rewards in full, there cannot be any leftover. The field 'data.incompleteWithdrawals' contains a map of withdrawals and their current rewards balance."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3365,6 +3336,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<RetirementTooLate>"
+        , "description": "A stake pool retirement certificate is trying to retire too late in the future. Indeed, there's a maximum delay for stake pool retirement, controlled by a protocol parameter. The field 'data.currentEpoch' indicates the current epoch known of the ledger, 'data.declaredEpoch' refers to the epoch declared in the retirement certificate and 'data.firstInvalidEpoch' is the first epoch considered invalid (too far) for retirement"
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3384,6 +3356,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<StakePoolCostTooLow>"
+        , "description": "Stake pool cost declared in a registration or update certificate are below the allowed minimum. The minimum cost of a stake pool is fixed by a protocol parameter. The 'data.minimumStakePoolCost' field holds the current value of that parameter whereas 'data.declaredStakePoolCost' indicates which amount was declared."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3402,6 +3375,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<MetadataHashTooLarge>"
+        , "description": "Some hash digest of (optional) stake pool metadata is too long. When registering, stake pools can supply an external metadata file and a hash digest of the content. The hashing algorithm is left open but the output digest must be smaller than 32 bytes. The field 'data.infringingStakePool' indicates which stake pool has an invalid metadata hash and 'data.computedMetadataHashSize' documents the computed hash size."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3420,6 +3394,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<CredentialAlreadyRegistered>"
+        , "description": "Trying to re-register some already known credentials. Stake credentials can only be registered once. This is true for both keys and scripts. The field 'data.knownCredential' points to an already known credential that's being re-registered by this transaction."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3437,6 +3412,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<UnknownCredential>"
+        , "description": "The transaction references an unknown stake credential. For example, to delegate to a stake pool, you must first register the stake key or script used for delegation. This may be done in the same transaction or in an earlier transaction but cannot happen retro-actively. The field 'data.unknownCredential' indicates what credential is used without being registered."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3454,6 +3430,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<NonEmptyRewardAccount>"
+        , "description": "Trying to unregister stake credentials associated to a non empty reward account. You must empty the reward account first (or do it as part of the same transaction) to proceed. The field 'data.nonEmptyRewardAccountBalance' indicates how much Lovelace is left in the account."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3471,6 +3448,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<InvalidGenesisDelegation>"
+        , "description": "Invalid or unauthorized genesis delegation. The genesis delegate is unknown, invalid or already in use."
         , "type": "object"
         , "required": [ "code", "message" ]
         , "additionalProperties": false
@@ -3480,6 +3458,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<InvalidMIRTransfer>"
+        , "description": "Invalid MIR transfer. The resulting delta is likely negative."
         , "type": "object"
         , "required": [ "code", "message" ]
         , "additionalProperties": false
@@ -3489,6 +3468,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<UnrecognizedCertificateType>"
+        , "description": "Unrecognized certificate type. This error is a placeholder due to how internal data-types are modeled. If you ever run into this, please report the issue as you've likely discoverd a critical bug..."
         , "type": "object"
         , "required": [ "code", "message" ]
         , "additionalProperties": false
@@ -3504,6 +3484,7 @@
 
   , "SubmitTransactionFailure<ExtraneousRedeemers>":
     { "title": "SubmitTransactionFailure<ExtraneousRedeemers>"
+    , "description": "Extraneous (non-required) redeemers found in the transaction. There are some redeemers that aren't pointing to any script. This could be because you've left some orphan redeemer behind, because they are pointing at the wrong thing or because you forgot to include their associated validator. Either way, the field 'data.extraneousRedeemers' lists the different orphan redeemer pointers."
     , "type": "object"
     , "required": [ "code", "message", "data" ]
     , "additionalProperties": false
@@ -3526,6 +3507,7 @@
 
   , "SubmitTransactionFailure<MissingDatums>":
     { "title": "SubmitTransactionFailure<MissingDatums>"
+    , "description": "Transaction failed because some Plutus scripts are missing their associated datums. 'data.missingDatums' contains a set of data hashes for the missing datums. Ensure all Plutus scripts have an associated datum in the transaction's witness set or, are provided through inline datums in reference inputs."
     , "type": "object"
     , "required": [ "code", "message", "data" ]
     , "additionalProperties": false
@@ -3548,6 +3530,7 @@
 
   , "SubmitTransactionFailure<UnknownOutputReference>":
     { "title": "SubmitTransactionFailure<UnknownOutputReferences>"
+    , "description": "The transaction contains unknown UTxO references as inputs. This can happen if the inputs you're trying to spend have already been spent, or if you've simply referred to non-existing UTxO altogether. The field 'data.unknownOutputReferences' indicates all unknown inputs."
     , "type": "object"
     , "required": [ "code", "message", "data" ]
     , "additionalProperties": false
@@ -3570,6 +3553,7 @@
 
   , "SubmitTransactionFailure<MissingCostModels>":
     { "title": "SubmitTransactionFailure<MissingCostModels>"
+    , "description": "It seems like the transaction is using a Plutus version for which there's no available cost model yet. This could be because that language version is known of the ledger but hasn't yet been enabled through hard-fork. The field 'data.missingCostModels' lists all the languages for which a cost model is missing."
     , "type": "object"
     , "required": [ "code", "message", "data" ]
     , "additionalProperties": false
@@ -3592,6 +3576,7 @@
 
   , "SubmitTransactionFailure<InternalLedgerTypeConversionError>":
     { "title": "SubmitTransactionFailure<InternalLedgerTypeConversionError>"
+    , "description": "Whoopsie, the ledger failed to upgrade an data-type from an earlier era into data of a newer era. If you ever run into this, please report the issue as you've likely discoverd a critical bug..."
     , "type": "object"
     , "required": [ "code", "message" ]
     , "additionalProperties": false
