@@ -616,6 +616,8 @@ encodeStakePoolRelay
     -> Json
 encodeStakePoolRelay = encodeObject . \case
     Sh.SingleHostAddr port ipv4 ipv6 ->
+        "type" .=
+            encodeText "ipAddress" <>
         "ipv4" .=? OmitWhenNothing
             encodeIPv4 ipv4 <>
         "ipv6" .=? OmitWhenNothing
@@ -623,11 +625,15 @@ encodeStakePoolRelay = encodeObject . \case
         "port" .=? OmitWhenNothing
             encodePort port
     Sh.SingleHostName port dns ->
+        "type" .=
+            encodeText "hostname" <>
         "hostname" .=
             encodeDnsName dns <>
         "port" .=? OmitWhenNothing
             encodePort port
     Sh.MultiHostName dns ->
+        "type" .=
+            encodeText "hostname" <>
         "hostname" .=
             encodeDnsName dns
 

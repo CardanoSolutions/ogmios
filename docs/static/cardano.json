@@ -1209,8 +1209,13 @@
       [ { "type": "object"
         , "title": "by address"
         , "additionalProperties": false
+        , "required": [ "type" ]
         , "properties":
-          { "ipv4":
+          { "type":
+            { "type": "string"
+            , "enum": [ "ipAddress" ]
+            }
+          , "ipv4":
             { "type": "string"
             }
           , "ipv6":
@@ -1226,9 +1231,15 @@
       , { "type": "object"
         , "title": "by name"
         , "additionalProperties": false
-        , "required": ["hostname"]
+        , "required": [ "type", "hostname" ]
         , "properties":
-          { "hostname": { "type": "string" }
+          { "type":
+            { "type": "string"
+            , "enum": [ "hostname" ]
+            }
+          , "hostname":
+            { "type": "string"
+            }
           , "port":
             { "type": "integer"
             , "minimum": 0
