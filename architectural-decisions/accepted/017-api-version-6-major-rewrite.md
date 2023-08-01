@@ -194,28 +194,11 @@ Query responses from the local-state-query protocol are now properly linked to t
 
 ##### Errors
 
-Errors in the protocol are now returned as JSON-RPC 2.0 errors, with unique error codes. This includes unsucessful operations such as an intersection not found on `findIntersection`, a point not acquired on `acquireLedgerState` or a failed transaction submission / evaluation. Some errors contain details specific to the error. This approach should simplify both parsing and documentation, as each error is now identified by a specific code.
+All protocol errors are now identified using unique error codes. Beyond the codes specific to JSON-RPC 2.0 (i.e. -32700, -32600, -32601, -32602, -32603), Ogmios returns errors in different ranges depending on the mini-protocol. Hence the range `1000-1999` is reserved to the chain synchronization, `2000-2999` for the ledger/network state queries, `3000-3999` for the transaction submission / evaluation and 4000-4999 for the mempool monitoring.
 
-In particular, every single phase-1 or phase-2 validation errors now have a unique error code and description attached to them.
+You don't have to worry too much about those ranges as it sufficient to know that each error has a unique code. The code can thus be used as a discriminant for parsing the error details, if any. With this, all the submission errors have been greatly reworked to provide extensive descriptions as 'message' and useful details when possible. In addition, Ogmios no longer returns a list of ledger errors. The list turned out to be often quite confusing as some error would trigger more error in cascade. To cope with this, Ogmios now has a built-in heuristic to figure out which error came first and is the most relevant to tackle next and thus, will only show one error at a time.
 
-#### Data models
-
-##### Transaction
-
-The transaction model has been greatly reworked. The main changes are:
-
-- The fields previously nested under `body` and `witnesses` have been flattened out and are now part of the top level object (e.g. `inputs` are no longer nested under `body`).
-
-- Few fields have been renamed
-
-  | Old    | New    |
-  | ---    | ---    |
-  | `TODO` | `TODO` |
-
-- Metadata now only contains user-defined labelled metadata instead of also containing extra scripts. Extra scripts have been moved to the `scripts` field and merged with witness scripts.
-  The naming is now also a bit less awkward as `body → blob` for accessing user-defined metadata is now simply `labels`.
-
-##### Block
+#### Block
 
 The block model has also been reworked and merged together into one comprehensive block type. Fields have been renamed, some have been nested and other unnested. Here's a recap:
 
@@ -250,32 +233,291 @@ Byron blocks are also now less "weird" than the rest of the blocks. So few chang
 | `body.dlgPayload`                            | `operationalCertificates`  |
 | `body.updatePayload`                         | `governanceAction`         |
 
-##### Protocol Parameters
+#### Transaction
+
+The transaction model has been greatly reworked. The main changes are:
+
+- The fields previously nested under `body` and `witnesses` have been flattened out and are now part of the top level object (e.g. `inputs` are no longer nested under `body`).
+
+- Few fields have been renamed
+
+  | Old    | New    |
+  | ---    | ---    |
+  | `TODO` | `TODO` |
+
+- Metadata now only contains user-defined labelled metadata instead of also containing extra scripts. Extra scripts have been moved to the `scripts` field and merged with witness scripts.
+  The naming is now also a bit less awkward as `body → blob` for accessing user-defined metadata is now simply `labels`.
+
+#### Protocol Parameters
 
 TODO
 
-##### Phase-1 (native) scripts
+#### Stake Pool Parameters
 
 TODO
 
-##### Transaction phase-1 and phase-2 errors
+#### Phase-1 (native) scripts
 
-All protocol errors are now identified using unique error codes. Beyond the codes specific to JSON-RPC 2.0 (i.e. -32700, -32600, -32601, -32602, -32603), Ogmios returns errors in different ranges depending on the mini-protocol. Hence the range `1000-1999` is reserved to the chain synchronization, `2000-2999` for the ledger/network state queries, `3000-3999` for the transaction submission / evaluation and 4000-4999 for the mempool monitoring.
+TODO
 
-You don't have to worry too much about those ranges as it sufficient to know that each error has a unique code. The code can thus be used as a discriminant for parsing the error details, if any. With this, all the submission errors have been greatly reworked to provide extensive descriptions as 'message' and useful details when possible. In addition, Ogmios no longer returns a list of ledger errors. The list turned out to be often quite confusing as some error would trigger more error in cascade. To cope with this, Ogmios now has a built-in heuristic to figure out which error came first and is the most relevant to tackle next and thus, will only show one error at a time.
+#### Certificate
 
-##### Value
+A discriminant value field (`type`) has been introduced to all certificate to allow parsing them with more ease. Consequently, certificates are no longer prefixed with a discriminant key. For fields have also been renamed along the way.
+
+##### Stake delegation
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+```json
+{
+  "stakeDelegation": {
+    "delegate": "<credential-digest>",
+    "delegatee": "<stake-pool-id>"
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "type": "stakeDelegation",
+  "credential": "<credential-digest>",
+  "stakePool": {
+    "id": "<stake-pool-id>"
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+##### Stake credential registration
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+```json
+{
+  "stakeKeyRegistration": "<credential-digest>"
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "type": "stakeCredentialRegistration",
+  "credential": "<credential-digest>",
+}
+```
+
+</td>
+</tr>
+</table>
+
+##### Stake credential deregistration
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+```json
+{
+  "stakeKeyDeregistration": "<credential-digest>"
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "type": "stakeCredentialDeregistration",
+  "credential": "<credential-digest>",
+}
+```
+
+</td>
+</tr>
+</table>
+
+##### Stake pool registration
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+```json
+{
+  "poolRegistration": "<stake-pool-parameters>"
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "type": "stakePoolRegistration",
+  "stakePool": {
+    "id": "<stake-pool-id>",
+    "parameters": "<stake-pool-parameters>"
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+##### Stake pool retirement
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+```json
+{
+  "poolRetirement": {
+    "poolId": "<stake-pool-id>",
+    "retirementEpoch": "<epoch>"
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "type": "stakePoolRetirement",
+  "stakePool": {
+    "id": "<stake-pool-id>",
+    "retirementEpoch": "<epoch>"
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+##### Genesis delegation
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+```json
+{
+  "genesisDelegation": {
+    "delegateKeyHash": "<credential-digest>",
+    "verificationKeyHash": "<credential-digest>",
+    "vrfVerificationKeyHash": "<vrf-digest>"
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "type": "genesisDelegation",
+  "issuer": {
+    "verificationKeyHash": "<credential-digest>",
+    "vrfVerificationKeyHash": "<vrf-digest>"
+  },
+  "delegate": {
+    "verificationKeyHash": "<credential-digest>"
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+##### Treasury transfers
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+```json
+{
+  "moveInstantaneousRewards": {
+    "pot": "<ada-source>",
+    "value": "<lovelace>",
+    "rewards": "<reward-accounts>"
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "type": "treasuryTransfer",
+  "source": "<ada-source>",
+  "target": "<ada-source>",
+  "value": "<lovelace>",
+  "rewards": "<reward-accounts>"
+}
+```
+
+</td>
+</tr>
+</table>
+
+
+#### Value
 
 The representation of `Value` has been changed to be more compact, more extensible and clearer. Values are now encoded as nested objects, where keys are respectively asset's policy id and asset name. Leaves are plain integers. The special case of Ada is encoded as a special policy id `ada` and asset name `lovelace`. This behavior is consistently applied to any amount that refers to a lovelace quantity. Transaction fees for example are now encoded as: `{ "lovelace": 1234 }`.
 
-##### Metadata
+#### Transaction's Metadata
 
 The representation of transaction metadata has been both simplified and made more user-friendly, while remaining safe for more complex use-cases.  In fact, many people in the community have grown to expect transaction metadata to be JSON objects. However, they aren't. Or more specifically, they aren't necessarily. There are actually plenty of transaction metadata on-chain that aren't representable as valid JSON. Prior to version 6, Ogmios would give a so-called detailed JSON schema representation of those metadata, by encoding the binary encoding as a JSON object. This has created a lot of confusion for rookie users not yet familiar with Cardano entrails who would be expecting a plain JSON object. Plus, the format was unpractical to parse for client down the line as it used object keys as type discriminant, leaving decoders no choice to try various encoding alternatively.
 
 Starting from version 6, Ogmios will always return metadata as a base16 CBOR encoded object, but, when it's possible, it will *also* provides a plain JSON representation of them. This way, we get the best of both worlds: the format remains friendly when it can be, but when not possible, we resort to binary encoding. In fact, when metadata aren't representable as JSON object, this is probably because they are in fact, some elaborated binary encoding and users consuming them are most seemingly capable of decoding that themselves in the way they intended.
 
 To give a concrete example:
-
 
 <table>
 <tr>

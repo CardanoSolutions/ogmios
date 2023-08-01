@@ -179,57 +179,80 @@ encodeDCert
     => Sh.DCert crypto
     -> Json
 encodeDCert = encodeObject . \case
-    Sh.DCertDeleg (Sh.RegKey credential) ->
-        "stakeKeyRegistration" .=
+    Sh.DCertDeleg (Sh.RegKey credential)
+        -> "type" .=
+            encodeText "stakeCredentialRegistration"
+        <> "credential" .=
             encodeCredential credential
-    Sh.DCertDeleg (Sh.DeRegKey credential) ->
-        "stakeKeyDeregistration" .=
+    Sh.DCertDeleg (Sh.DeRegKey credential)
+        -> "type" .=
+            encodeText "stakeCredentialDeregistration"
+        <> "credential" .=
             encodeCredential credential
-    Sh.DCertDeleg (Sh.Delegate delegation) ->
-        "stakeDelegation" .=
-            encodeDelegation delegation
-    Sh.DCertPool (Sh.RegPool params)  ->
-        "poolRegistration" .=
-            encodePoolParams params
-    Sh.DCertPool (Sh.RetirePool keyHash epochNo) ->
-        "poolRetirement" .= encodeObject
-            ( "poolId" .=
-                  encodePoolId keyHash <>
-              "retirementEpoch" .=
-                  encodeEpochNo epochNo
+    Sh.DCertDeleg (Sh.Delegate dlg)
+        -> "type" .=
+            encodeText "stakeDelegation"
+        <> "credential" .=
+                encodeCredential (Sh.dDelegator dlg)
+        <> "stakePool" .= encodeObject
+                ( "id" .=
+                    encodePoolId (Sh.dDelegatee dlg)
+                )
+    Sh.DCertPool (Sh.RegPool params)
+        -> "type" .=
+            encodeText "stakePoolRegistration"
+        <> "stakePool" .= encodeObject
+            ( "id" .=
+               encodePoolId (Sh.ppId params)
+           <> "parameters" .=
+                encodePoolParams params
             )
-    Sh.DCertGenesis (Sh.ConstitutionalDelegCert key delegate vrf)  ->
-        "genesisDelegation" .= encodeObject
+    Sh.DCertPool (Sh.RetirePool keyHash epochNo)
+        -> "type" .=
+            encodeText "stakePoolRetirement"
+        <> "stakePool" .= encodeObject
+            ( "id" .=
+                encodePoolId keyHash
+           <> "retirementEpoch" .=
+                encodeEpochNo epochNo
+            )
+    Sh.DCertGenesis (Sh.ConstitutionalDelegCert key delegate vrf)
+        -> "type" .=
+            encodeText "genesisDelegation"
+        <> "delegate" .= encodeObject
+            ( "verificationKeyHash" .=
+                encodeKeyHash delegate
+            )
+        <> "issuer" .= encodeObject
             ( "verificationKeyHash" .=
                 encodeKeyHash key <>
-              "delegateKeyHash" .=
-                  encodeKeyHash delegate <>
               "vrfVerificationKeyHash" .=
-                  encodeHash vrf
+                encodeHash vrf
             )
-    Sh.DCertMir (Sh.MIRCert pot target) ->
-        "moveInstantaneousRewards" .= encodeObject
-            ( "pot" .=
-                encodeMIRPot pot <>
-              case target of
-                Sh.StakeAddressesMIR rewards ->
-                    "rewards" .=
-                        encodeMap stringifyCredential encodeDeltaCoin rewards
-                Sh.SendToOppositePotMIR value ->
-                    "value" .=
-                        encodeCoin value
+    Sh.DCertMir (Sh.MIRCert pot target)
+        -> "type" .=
+            encodeText "treasuryTransfer"
+        <> "source" .=
+            encodeMIRPot pot
+        <> "target" .=
+            case target of
+                Sh.StakeAddressesMIR{} ->
+                    encodeText "rewardAccounts"
+                Sh.SendToOppositePotMIR{} ->
+                    encodeMIRPot $ case pot of
+                        Sh.ReservesMIR -> Sh.TreasuryMIR
+                        Sh.TreasuryMIR -> Sh.ReservesMIR
+        <> "value" .=? OmitWhenNothing encodeCoin
+            (case target of
+                Sh.StakeAddressesMIR{} -> SNothing
+                Sh.SendToOppositePotMIR coin -> SJust coin
             )
-
-encodeDelegation
-    :: Crypto crypto
-    => Sh.Delegation crypto
-    -> Json
-encodeDelegation x =
-    "delegator" .=
-        encodeCredential (Sh.dDelegator x) <>
-    "delegatee" .=
-        encodePoolId (Sh.dDelegatee x)
-    & encodeObject
+        <> "rewards" .=? OmitWhen null
+            (encodeMap stringifyCredential encodeDeltaCoin)
+            (case target of
+                Sh.StakeAddressesMIR rewards -> rewards
+                Sh.SendToOppositePotMIR{} -> mempty
+            )
 
 encodeDeltaCoin
     :: Ledger.DeltaCoin
@@ -453,9 +476,7 @@ encodePoolParams
     => Sh.PoolParams crypto
     -> Json
 encodePoolParams x =
-    "id" .=
-        encodePoolId (Sh.ppId x) <>
-    "vrf" .=
+    "vrfVerificationKeyHash" .=
         encodeHash (Sh.ppVrf x) <>
     "pledge" .=
         encodeCoin (Sh.ppPledge x) <>

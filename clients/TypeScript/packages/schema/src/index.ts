@@ -53,12 +53,12 @@ export type ScriptNative = Signatory | Any | All | Some | Before | After;
 export type DigestBlake2B224 = string;
 export type Certificate =
   | StakeDelegation
-  | StakeKeyRegistration
-  | StakeKeyDeregistration
-  | PoolRegistration
-  | PoolRetirement
+  | StakeCredentialRegistration
+  | StakeCredentialDeregistration
+  | StakePoolRegistration
+  | StakePoolRetirement
   | GenesisDelegation
-  | MoveInstantaneousRewards;
+  | TreasuryTransfer;
 /**
  * A Blake2b 32-byte hash digest of a pool's verification key.
  */
@@ -68,14 +68,14 @@ export type StakePoolId = string;
  */
 export type Ratio = string;
 /**
+ * A reward account, also known as 'stake address'.
+ */
+export type RewardAccount = string;
+/**
  * A hash digest from an unspecified algorithm and length.
  */
 export type DigestAny = string;
 export type Relay = ByAddress | ByName;
-/**
- * A reward account, also known as 'stake address'.
- */
-export type RewardAccount = string;
 /**
  * An epoch number or length.
  */
@@ -84,10 +84,6 @@ export type Epoch = number;
  * An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada).
  */
 export type LovelaceDelta = number;
-/**
- * Source of rewards as defined by the protocol parameters.
- */
-export type RewardPot = "reserves" | "treasury";
 /**
  * A network target, as defined since the Shelley era.
  */
@@ -576,78 +572,90 @@ export interface Plutus {
  * A stake delegation certificate, from a delegator to a stake pool.
  */
 export interface StakeDelegation {
-  stakeDelegation: {
-    delegator: DigestBlake2B224;
-    delegatee: StakePoolId;
+  type: "stakeDelegation";
+  credential: DigestBlake2B224;
+  stakePool: {
+    id: StakePoolId;
   };
 }
 /**
- * A stake key registration certificate.
+ * A stake credential (key or script) registration certificate.
  */
-export interface StakeKeyRegistration {
-  stakeKeyRegistration: DigestBlake2B224;
+export interface StakeCredentialRegistration {
+  type: "stakeCredentialRegistration";
+  credential: DigestBlake2B224;
 }
 /**
  * A stake key de-registration certificate.
  */
-export interface StakeKeyDeregistration {
-  stakeKeyDeregistration: DigestBlake2B224;
+export interface StakeCredentialDeregistration {
+  type: "stakeCredentialDeregistration";
+  credential: DigestBlake2B224;
 }
 /**
- * A pool registration certificate.
+ * A stake pool registration certificate.
  */
-export interface PoolRegistration {
-  poolRegistration: StakePoolParameters;
+export interface StakePoolRegistration {
+  type: "stakePoolRegistration";
+  stakePool: {
+    id: StakePoolId;
+    parameters: StakePoolParameters;
+  };
 }
 export interface StakePoolParameters {
-  id: StakePoolId;
   owners: DigestBlake2B224[];
+  vrfVerificationKeyHash: DigestBlake2B256;
   cost: Lovelace;
   margin: Ratio;
   pledge: Lovelace;
-  vrf: DigestBlake2B256;
+  rewardAccount: RewardAccount;
   metadata?: PoolMetadata;
   relays: Relay[];
-  rewardAccount: RewardAccount;
 }
 export interface PoolMetadata {
   hash: DigestAny;
   url: string;
 }
 export interface ByAddress {
+  type: "ipAddress";
   ipv4?: string;
   ipv6?: string;
   port?: number;
 }
 export interface ByName {
+  type: "hostname";
   hostname: string;
   port?: number;
 }
 /**
- * A pool retirement certificate.
+ * A stake pool retirement certificate.
  */
-export interface PoolRetirement {
-  poolRetirement: {
+export interface StakePoolRetirement {
+  type: "stakePoolRetirement";
+  stakePool: {
     retirementEpoch: Epoch;
-    poolId: StakePoolId;
+    id: StakePoolId;
   };
 }
 export interface GenesisDelegation {
-  genesisDelegation: {
-    delegateKeyHash: DigestBlake2B224;
+  type: "genesisDelegation";
+  delegate: {
+    verificationKeyHash: DigestBlake2B224;
+  };
+  issuer: {
     verificationKeyHash: DigestBlake2B224;
     vrfVerificationKeyHash: DigestBlake2B256;
   };
 }
 /**
- * Either `value` or `rewards` will be present, but never both.
+ * A transfer from or to the treasury / reserves authored by genesis delegates. 'rewards' is only present when target is 'rewardsAccounts'; 'value' is only present when target is 'reserves' or 'treasury'.
  */
-export interface MoveInstantaneousRewards {
-  moveInstantaneousRewards: {
-    rewards?: RewardTransfer;
-    value?: Lovelace;
-    pot: RewardPot;
-  };
+export interface TreasuryTransfer {
+  type: "treasuryTransfer";
+  source: "reserves" | "treasury";
+  target: "reserves" | "treasury" | "rewardAccounts";
+  rewards?: RewardTransfer;
+  value?: Lovelace;
 }
 export interface RewardTransfer {
   [k: string]: LovelaceDelta;
