@@ -180,8 +180,8 @@ describe('TransactionSubmission', () => {
 
         const additionalUtxoSet = [
           [{
-            txId: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
-            index: 0
+            transaction: { id: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' },
+            output: { index: 0 }
           } as TransactionOutputReference,
            {
              address: 'addr_test1wrzqlyffcf5yq3htqge9h9k29zv6d7ny0rqam6d4c5eqdfgg0h7yw',

@@ -180,7 +180,7 @@ encodeTx
     => Ba.AlonzoTx (BabbageEra crypto)
     -> Json
 encodeTx x =
-    "id" .= Shelley.encodeTxId (Ledger.txid @(BabbageEra crypto) (Ba.body x))
+    Shelley.encodeTxId (Ledger.txid @(BabbageEra crypto) (Ba.body x))
         <>
     "inputSource" .= Alonzo.encodeIsValid (Ba.isValid x)
         <>

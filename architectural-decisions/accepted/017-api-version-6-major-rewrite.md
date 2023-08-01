@@ -168,6 +168,8 @@ Query responses from the local-state-query protocol are now properly linked to t
 <td>
 
 ```json
+
+
 {
   "jsonrpc": "2.0",
   "method": "queryLedgerState/tip",
@@ -248,11 +250,20 @@ The transaction model has been greatly reworked. The main changes are:
 - Metadata now only contains user-defined labelled metadata instead of also containing extra scripts. Extra scripts have been moved to the `scripts` field and merged with witness scripts.
   The naming is now also a bit less awkward as `body → blob` for accessing user-defined metadata is now simply `labels`.
 
-#### Protocol Parameters
+##### Output references
+
+Transaction's output references have been aligned to follow the new context-nesting strategy on Ogmios and avoid acronyms. Thus, there's no `txId` field anymore but instead a `transaction` and nested `id` fields. Similarly, the index is now scoped under `output`.
+
+| Old     | New              |
+| ---     | ---              |
+| `txId`  | `transaction.id` |
+| `index` | `output.index`   |
+
+#### Protocol parameters
 
 TODO
 
-#### Stake Pool Parameters
+#### Stake pool parameters
 
 TODO
 
@@ -371,6 +382,8 @@ A discriminant value field (`type`) has been introduced to all certificate to al
 <td>
 
 ```json
+
+
 {
   "poolRegistration": "<stake-pool-parameters>"
 }
@@ -440,6 +453,7 @@ A discriminant value field (`type`) has been introduced to all certificate to al
 <td>
 
 ```json
+
 {
   "genesisDelegation": {
     "delegateKeyHash": "<credential-digest>",

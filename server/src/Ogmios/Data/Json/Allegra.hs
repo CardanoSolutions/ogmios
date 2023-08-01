@@ -136,7 +136,7 @@ encodeTx
     => Sh.ShelleyTx (AllegraEra crypto)
     -> Json
 encodeTx x =
-    "id" .= Shelley.encodeTxId (Ledger.txid @(AllegraEra crypto) (Sh.body x))
+    Shelley.encodeTxId (Ledger.txid @(AllegraEra crypto) (Sh.body x))
         <>
     "inputSource" .= encodeText "inputs"
         <>

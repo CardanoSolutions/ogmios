@@ -65,12 +65,12 @@ export const safeJSON = {
       }
 
       // PoolParameters
-      if (parentKey === 'poolParameters' || (json.vrf !== undefined && json.pledge !== undefined)) {
+      if (parentKey === 'parameters' || parentKey === 'poolParameters' || (json.pledge !== undefined && json.cost !== undefined)) {
         return this.sanitizeFields(json, ['cost', 'pledge'])
       }
 
       // MoveInstantaneousRewards
-      if (parentKey === 'moveInstantaneousRewards') {
+      if (json.type === 'treasuryTransfer') {
         this.sanitizeAdditionalFields(json.rewards)
         return this.sanitizeFields(json, ['value'])
       }

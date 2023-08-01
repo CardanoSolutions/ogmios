@@ -663,7 +663,7 @@ encodeTx
     => Sh.ShelleyTx era
     -> Json
 encodeTx x =
-    "id" .= encodeTxId (Ledger.txid @(ShelleyEra crypto) (Sh.body x))
+    encodeTxId (Ledger.txid @(ShelleyEra crypto) (Sh.body x))
         <>
     "inputSource" .= encodeText "inputs"
         <>
@@ -705,20 +705,24 @@ encodeTxBody x =
 encodeTxId
     :: Crypto crypto
     => Ledger.TxId crypto
-    -> Json
+    -> Series
 encodeTxId =
-    encodeHash . Ledger.extractHash . Ledger.unTxId
+    ("id" .=)
+        . encodeHash
+        . Ledger.extractHash
+        . Ledger.unTxId
 
 encodeTxIn
     :: Crypto crypto
     => Ledger.TxIn crypto
     -> Json
 encodeTxIn (Ledger.TxIn txid (Ledger.TxIx ix)) =
-    "txId" .=
-        encodeTxId txid <>
-    "index" .=
-        encodeWord64 ix
-    & encodeObject
+    encodeObject
+        ( "transaction" .=
+            encodeObject (encodeTxId txid)
+       <> "output" .=
+            encodeSingleton "index" (encodeWord64 ix)
+        )
 
 encodeTxOut
     :: (Era era, Ledger.Value era ~ Coin)

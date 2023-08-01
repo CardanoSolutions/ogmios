@@ -278,7 +278,7 @@ _encodeNextTransactionResponse
 _encodeNextTransactionResponse encodeTxId encodeTx =
     Rpc.ok $ encodeObject . \case
         NextTransactionResponseId{nextId} ->
-            ( "transaction" .= encodeMaybe (\i -> encodeObject ( "id" .= encodeTxId i)) nextId
+            ( "transaction" .= encodeMaybe encodeTxId nextId
             )
         NextTransactionResponseTx{nextTx} ->
             ( "transaction" .= encodeMaybe encodeTx nextTx
@@ -299,9 +299,9 @@ _encodeHasTransaction
     -> Rpc.Request (HasTransaction block)
     -> Json
 _encodeHasTransaction encodeTxId =
-    Rpc.mkRequest $ encodeObject . \case
+    Rpc.mkRequest $ \case
         HasTransaction{id} ->
-            "id" .= encodeTxId id
+            encodeTxId id
 
 _decodeHasTransaction
     :: forall block. (FromJSON (GenTxId block))

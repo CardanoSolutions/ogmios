@@ -7,12 +7,12 @@ import {
 } from '../src'
 import {
   Metadata,
-  MoveInstantaneousRewards,
   RewardAccountSummaries,
   RewardsProvenance,
   StakePoolParameters,
   Transaction,
-  TransactionOutput
+  TransactionOutput,
+  TreasuryTransfer
 } from '@cardano-ogmios/schema'
 
 describe('util', () => {
@@ -434,8 +434,6 @@ describe('util', () => {
       it('PoolParameters', () => {
         const json = `
           {
-            "id": "pool1pk2wzarn9mu64eel89dtg3g8h75c84jsy0q349glpsewgd7sdls",
-            "vrf": "95c3003a78585e0db8c9496f6deef4de0ff000994b8534cd66d4fe96bb21ddd3",
             "pledge": 826,
             "cost": 159,
             "margin": "1/2",
@@ -466,22 +464,22 @@ describe('util', () => {
         expect(typeof result.pledge).toEqual('bigint')
       })
 
-      it('MoveInstantaneousRewards', () => {
+      it('Treasury transfer', () => {
         const json = `
           {
-            "moveInstantaneousRewards": {
-              "pot": "treasury",
-              "value": 1000,
-              "rewards": {
-                "a646474b8f5431261506b6c273d307c7569a4eb6c96b42dd4a29520a": 1000
-              }
+            "type": "treasuryTransfer",
+            "source": "treasury",
+            "target": "rewardAccounts",
+            "value": 1000,
+            "rewards": {
+              "a646474b8f5431261506b6c273d307c7569a4eb6c96b42dd4a29520a": 1000
             }
           }
         `
 
         const stakeAddr = 'a646474b8f5431261506b6c273d307c7569a4eb6c96b42dd4a29520a'
-        const result = safeJSON.parse(json) as MoveInstantaneousRewards
-        expect(typeof result.moveInstantaneousRewards.rewards[stakeAddr]).toEqual('bigint')
+        const result = safeJSON.parse(json) as TreasuryTransfer
+        expect(typeof result.rewards[stakeAddr]).toEqual('bigint')
       })
 
       it('RewardAccountSummaries', () => {

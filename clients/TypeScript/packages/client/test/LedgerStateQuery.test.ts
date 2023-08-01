@@ -251,7 +251,12 @@ describe('Local state queries', () => {
     describe('utxo (by transaction id)', () => {
       it('fetches the UTxO for the given transaction id', async () => {
         const utxoSet = await LedgerStateQuery.utxo(context, {
-          outputReferences: [{ txId: '7fe0c5c3f0225f9462ae34dce1663599d506fe47cda8b3667e4c0986631fca41', index: 0 }]
+          outputReferences: [
+            {
+              transaction: { id: '7fe0c5c3f0225f9462ae34dce1663599d506fe47cda8b3667e4c0986631fca41' },
+              output: { index: 0 }
+            }
+          ]
         })
         expect(utxoSet[0]).toBeDefined()
       })

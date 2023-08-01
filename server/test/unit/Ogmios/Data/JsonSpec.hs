@@ -616,8 +616,8 @@ spec = do
         validateLedgerStateQuery 10 "utxo"
             [aesonQQ|
             { "outputReferences":
-                [ { "txId": "141933320b6e5d4522d7d3bf052dd2a26cc7eb58b66ae357f95f83715c8add5b"
-                  , "index": 14
+                [ { "transaction": { "id": "141933320b6e5d4522d7d3bf052dd2a26cc7eb58b66ae357f95f83715c8add5b" }
+                  , "output": { "index": 14 }
                   }
                 ]
             }|]

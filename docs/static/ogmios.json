@@ -3169,7 +3169,7 @@
             , "additionalProperties": false
             , "required": [ "unknownGovernanceAction" ]
             , "properties":
-              { "unknownGovernanceAction": { "$ref": "cardano.json#/definitions/GovernanceActionId" }
+              { "unknownGovernanceAction": { "$ref": "cardano.json#/definitions/GovernanceActionReference" }
               }
             }
           }

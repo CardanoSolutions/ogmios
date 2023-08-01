@@ -1675,8 +1675,8 @@ decodeTxIn
     => Json.Value
     -> Json.Parser (Ledger.TxIn crypto)
 decodeTxIn = Json.withObject "TxIn" $ \o -> do
-    txid <- o .: "txId" >>= fromBase16
-    ix <- o .: "index"
+    txid <- o .: "transaction" >>= (.: "id") >>= fromBase16
+    ix <- o .: "output" >>= (.: "index")
     pure $ Ledger.TxIn (Ledger.TxId txid) (Ledger.TxIx ix)
   where
     failure =

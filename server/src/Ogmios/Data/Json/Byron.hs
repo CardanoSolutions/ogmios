@@ -183,11 +183,12 @@ encodeTxIn
     :: By.TxIn
     -> Json
 encodeTxIn (By.TxInUtxo txid ix) =
-    "txId" .=
-        encodeHash txid <>
-    "index" .=
-        encodeWord16 ix
-    & encodeObject
+    encodeObject
+        ( "transaction" .=
+            encodeSingleton "id" (encodeHash txid)
+       <> "output" .=
+            encodeSingleton "index" (encodeWord16 ix)
+        )
 
 encodeValue
     :: By.Lovelace

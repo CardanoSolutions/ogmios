@@ -264,7 +264,7 @@ encodeTxId
     :: Crypto crypto
     => GenTxId (CardanoBlock crypto)
     -> Json
-encodeTxId = \case
+encodeTxId = encodeObject . \case
     GenTxIdConway (ShelleyTxId x) ->
         Shelley.encodeTxId x
     GenTxIdBabbage (ShelleyTxId x) ->

@@ -73,7 +73,7 @@ encodeGovernanceActionId
 encodeGovernanceActionId x =
     encodeObject
         ( "transaction" .=
-            Shelley.encodeTxId (Cn.gaidTxId x)
+            encodeObject (Shelley.encodeTxId (Cn.gaidTxId x))
         <>
           "governanceAction" .=
             encodeGovernanceActionIx (Cn.gaidGovActionIx x)
@@ -115,7 +115,7 @@ encodeTx
     -> Json
 encodeTx x =
     encodeObject
-        ( "id" .= Shelley.encodeTxId (Ledger.txid @(ConwayEra crypto) (Ba.body x))
+        ( Shelley.encodeTxId (Ledger.txid @(ConwayEra crypto) (Ba.body x))
         )
 
 encodeVoterRole

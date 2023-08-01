@@ -507,8 +507,12 @@ export interface Transaction {
   cbor: string;
 }
 export interface TransactionOutputReference {
-  txId: TransactionId;
-  index: UInt32;
+  transaction: {
+    id: TransactionId;
+  };
+  output: {
+    index: UInt32;
+  };
 }
 export interface Lovelace {
   /**
@@ -1273,13 +1277,15 @@ export interface SubmitTransactionFailureUnknownGovernanceAction {
   code: 3138;
   message: string;
   data: {
-    unknownGovernanceAction: GovernanceActionId;
+    unknownGovernanceAction: GovernanceActionReference;
   };
 }
-export interface GovernanceActionId {
-  transaction: TransactionId;
-  governanceAction?: {
-    index: UInt321;
+export interface GovernanceActionReference {
+  transaction: {
+    id: TransactionId;
+  };
+  governanceAction: {
+    index: UInt32;
   };
 }
 export interface SubmitTransactionFailureInvalidProtocolParametersUpdate {
