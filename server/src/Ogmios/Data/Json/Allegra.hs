@@ -70,15 +70,13 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           "era" .= encodeText "allegra"
         <>
-          "header" .= encodeObject
-            ( "hash" .= Shelley.encodeShelleyHash headerHash
-            )
+          "id" .= Shelley.encodeShelleyHash headerHash
         <>
-        Shelley.encodeBHeader blkHeader
+          Shelley.encodeBHeader blkHeader
         <>
-        "size" .= encodeNatural (TPraos.bsize hBody)
+          "size" .= encodeNatural (TPraos.bsize hBody)
         <>
-        "transactions" .= encodeFoldable encodeTx (Sh.txSeqTxns' txs)
+          "transactions" .= encodeFoldable encodeTx (Sh.txSeqTxns' txs)
         )
   where
     TPraos.BHeader hBody _ = blkHeader

@@ -508,7 +508,7 @@ encodePoint = \case
     Point (At x) ->
         "slot" .=
             encodeSlotNo (blockPointSlot x) <>
-        "hash" .=
+        "id" .=
             encodeOneEraHash (blockPointHash x)
         & encodeObject
 
@@ -1383,7 +1383,7 @@ decodePoint json =
 
     parsePoint = Json.withObject "Point" $ \obj -> do
         slot <- obj .: "slot"
-        hash <- obj .: "hash" >>= decodeOneEraHash
+        hash <- obj .: "id" >>= decodeOneEraHash
         pure $ Point $ At $ Block (SlotNo slot) hash
 
 decodePolicyId
@@ -1654,7 +1654,7 @@ decodeTip json =
 
     parseTip = Json.withObject "Tip" $ \obj -> do
         slot <- obj .: "slot"
-        hash <- obj .: "hash" >>= decodeOneEraHash
+        hash <- obj .: "id" >>= decodeOneEraHash
         blockNo <- obj .: "blockNo"
         pure $ Tip (SlotNo slot) hash (BlockNo blockNo)
 

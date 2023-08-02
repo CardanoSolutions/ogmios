@@ -211,7 +211,7 @@ The block model has also been reworked and merged together into one comprehensiv
 | `header.blockHeight`  | `height`                        |
 | `header.slot`         | `slot`                          |
 | `header.blockHash`    | N/A (removed)                   |
-| `headerHash`          | `header.hash`                   |
+| `headerHash`          | `id`                            |
 | `header.previousHash` | `ancestor`                      |
 | `header.opCert`       | `issuer.operationalCertificate` |
 | `header.issuerVk`     | `issuer.verificationKey`        |

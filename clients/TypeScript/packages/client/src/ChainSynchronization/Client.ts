@@ -84,7 +84,7 @@ export async function createPointFromCurrentTip (context?: InteractionContext): 
     throw new TipIsOriginError()
   }
   return {
-    hash: tip.hash,
+    id: tip.id,
     slot: tip.slot
   } as Point
 }

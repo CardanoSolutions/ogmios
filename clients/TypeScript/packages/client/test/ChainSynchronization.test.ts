@@ -95,7 +95,7 @@ describe('ChainSynchronization', () => {
         throw new Error('Test network is not syncing')
       } else if ('slot' in intersection && 'slot' in tip) {
         expect(intersection.slot).toEqual(tip.slot)
-        expect(intersection.hash).toEqual(tip.hash)
+        expect(intersection.id).toEqual(tip.id)
       }
     })
 
@@ -104,7 +104,7 @@ describe('ChainSynchronization', () => {
       try {
         await client.resume([{
           slot: 0,
-          hash: '0000000000000000000000000000000000000000000000000000000000000000'
+          id: '0000000000000000000000000000000000000000000000000000000000000000'
         }])
         throw new Error('Should have thrown.')
       } catch (e) {
@@ -138,7 +138,7 @@ describe('ChainSynchronization', () => {
       await client.resume(['origin'], 10)
       await delay(2000)
 
-      expect(blocks[0]?.header?.hash).toBeDefined()
+      expect(blocks[0]?.id).toBeDefined()
       expect(rollbackPoints.length).toBe(1)
       expect(blocks.length).toBe(10)
     })

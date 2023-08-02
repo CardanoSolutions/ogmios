@@ -60,9 +60,7 @@ encodeABlockOrBoundary = encodeObject . \case
         <>
         "era" .= encodeText "byron"
         <>
-        "header" .= encodeObject
-            ( "hash" .= encodeHash (By.blockHashAnnotated blk)
-            )
+        "id" .= encodeHash (By.blockHashAnnotated blk)
         <>
         "ancestor" .= encodeAnnotated encodeHash (By.aHeaderPrevHash h)
         <>
@@ -101,7 +99,7 @@ encodeABlockOrBoundary = encodeObject . \case
         <>
         "height" .= encodeChainDifficulty (By.boundaryDifficulty h)
         <>
-        "header" .= encodeObject ("hash" .= encodeHash (By.boundaryHashAnnotated blk))
+        "id" .= encodeHash (By.boundaryHashAnnotated blk)
         <>
         "ancestor" .= either encodeGenesisHash encodeHash (By.boundaryPrevHash h)
       where
@@ -280,7 +278,7 @@ encodeAVote
     -> Json
 encodeAVote x = encodeObject
     ( "proposal" .= encodeObject
-        ( "hash" .= encodeAnnotated encodeHash (By.Upd.Vote.aProposalId x)
+        ( "id" .= encodeAnnotated encodeHash (By.Upd.Vote.aProposalId x)
         )
     <> "voter" .= encodeObject
         ( "verificationKey" .=

@@ -243,6 +243,7 @@ export interface Ogmios {
     | EvaluateTransactionError
     | EvaluateTransactionDeserialisationError;
   AcquireLedgerState: AcquireLedgerState;
+  AcquireLedgerStateFailure?: AcquireLedgerStateFailure;
   AcquireLedgerStateResponse: AcquireLedgerStateSuccess | AcquireLedgerStateFailure;
   ReleaseLedgerState: ReleaseLedgerState;
   ReleaseLedgerStateResponse: ReleaseLedgerStateResponse;
@@ -338,13 +339,14 @@ export interface Ogmios {
   AcquireMempool: AcquireMempool;
   AcquireMempoolResponse: AcquireMempoolResponse;
   NextTransaction: NextTransaction;
-  NextTransactionResponse: NextTransactionResponse | NextTransactionMustAcquireFirst;
+  MustAcquireMempoolFirst?: MustAcquireMempoolFirst;
+  NextTransactionResponse: NextTransactionResponse | MustAcquireMempoolFirst;
   HasTransaction: HasTransaction;
-  HasTransactionResponse: HasTransactionResponse | HasTransactionMustAcquireFirst;
+  HasTransactionResponse: HasTransactionResponse | MustAcquireMempoolFirst;
   SizeOfMempool: SizeOfMempool;
-  SizeOfMempoolResponse?: SizeOfMempoolResponse | SizeOfMempoolMustAcquireFirst;
+  SizeOfMempoolResponse?: SizeOfMempoolResponse | MustAcquireMempoolFirst;
   ReleaseMempool: ReleaseMempool;
-  ReleaseMempoolResponse: ReleaseMempoolResponse | ReleaseMempoolMustAcquireFirst;
+  ReleaseMempoolResponse: ReleaseMempoolResponse | MustAcquireMempoolFirst;
   RpcError: RpcError;
 }
 /**
@@ -368,7 +370,7 @@ export interface FindIntersection {
  */
 export interface Point {
   slot: Slot;
-  hash: DigestBlake2B256;
+  id: DigestBlake2B256;
 }
 export interface IntersectionFound {
   jsonrpc: "2.0";
@@ -386,12 +388,15 @@ export interface IntersectionFound {
 }
 export interface Tip {
   slot: Slot;
-  hash: DigestBlake2B256;
+  id: DigestBlake2B256;
   blockNo: BlockHeight;
 }
 export interface IntersectionNotFound {
   jsonrpc: "2.0";
   method: "findIntersection";
+  /**
+   * No intersection found with the requested points.
+   */
   error: {
     code: 1000;
     message: string;
@@ -409,6 +414,9 @@ export interface IntersectionNotFound {
 export interface IntersectionInterleaved {
   jsonrpc: "2.0";
   method: "findIntersection";
+  /**
+   * An internal error indicating that requests were interleaved in an unexpected way. Shouldn't ever happen.
+   */
   error: {
     code: 1001;
     message: string;
@@ -455,18 +463,14 @@ export interface RollForward {
 export interface BlockEBB {
   type: "ebb";
   era: "byron";
-  header: {
-    hash: DigestBlake2B256;
-  };
+  id: DigestBlake2B256;
   ancestor: DigestBlake2B256;
   height: BlockHeight;
 }
 export interface BlockBFT {
   type: "bft";
   era: "byron";
-  header: {
-    hash: DigestBlake2B256;
-  };
+  id: DigestBlake2B256;
   ancestor: DigestBlake2B256;
   height: BlockHeight;
   slot: Slot;
@@ -658,10 +662,10 @@ export interface StakePoolRetirement {
 export interface GenesisDelegation {
   type: "genesisDelegation";
   delegate: {
-    verificationKeyHash: DigestBlake2B224;
+    id: DigestBlake2B224;
   };
   issuer: {
-    verificationKeyHash: DigestBlake2B224;
+    id: DigestBlake2B224;
     vrfVerificationKeyHash: DigestBlake2B256;
   };
 }
@@ -871,15 +875,13 @@ export interface BootstrapVote {
     verificationKey: VerificationKey;
   };
   proposal: {
-    hash: DigestBlake2B256;
+    id: DigestBlake2B256;
   };
 }
 export interface BlockPraos {
   type: "praos";
   era: "shelley" | "allegra" | "mary" | "alonzo" | "babbage";
-  header: {
-    hash: DigestBlake2B256;
-  };
+  id: DigestBlake2B256;
   ancestor: DigestBlake2B256 | GenesisHash;
   nonce?: CertifiedVrf;
   height: BlockHeight;
@@ -972,6 +974,9 @@ export interface EraMismatch {
   queryEra: Era;
   ledgerEra: Era;
 }
+/**
+ * Some signatures are invalid. Only the serialised transaction *body*, without metadata or witnesses, must be signed.
+ */
 export interface SubmitTransactionFailureInvalidSignatories {
   code: 3100;
   message: string;
@@ -979,6 +984,9 @@ export interface SubmitTransactionFailureInvalidSignatories {
     invalidSignatories: VerificationKey[];
   };
 }
+/**
+ * Some signatures are missing. A signed transaction must carry signatures for all inputs locked by verification keys or a native script. Transaction may also need signatures for each required extra signatories often required by Plutus Scripts.
+ */
 export interface SubmitTransactionFailureMissingSignatories {
   code: 3101;
   message: string;
@@ -986,6 +994,9 @@ export interface SubmitTransactionFailureMissingSignatories {
     missingSignatories: DigestBlake2B224[];
   };
 }
+/**
+ * Some script witnesses are missing. Indeed, any script used in a transaction (when spending, minting, withdrawing or publishing certificates) must be provided in full with the transaction. Scripts must therefore be added either to the witness set or provided as a reference inputs should you use Plutus V2+ and a format from Babbage and beyond.
+ */
 export interface SubmitTransactionFailureMissingScripts {
   code: 3102;
   message: string;
@@ -993,6 +1004,9 @@ export interface SubmitTransactionFailureMissingScripts {
     missingScripts: DigestBlake2B224[];
   };
 }
+/**
+ * The transaction contains failing phase-1 monetary scripts (a.k.a. native scripts). This can be due to either a missing or invalid signature, or because of a time validity issue. The field 'data.failingNativeScripts' contains a list of hash digests of all failing native scripts found in the transaction.
+ */
 export interface SubmitTransactionFailureFailingNativeScript {
   code: 3103;
   message: string;
@@ -1000,6 +1014,9 @@ export interface SubmitTransactionFailureFailingNativeScript {
     failingNativeScripts: DigestBlake2B224[];
   };
 }
+/**
+ * Extraneous (i.e. non-required) scripts found in the transaction. A transaction must not contain scripts that aren't strictly needed for validation, that are present in metadata or that are published in an output. Perhaps you have used provided a wrong script for a validator? Anyway, the 'data.extraneousScripts' field lists hash digests of scripts found to be extraneous.
+ */
 export interface SubmitTransactionFailureExtraneousScripts {
   code: 3104;
   message: string;
@@ -1007,6 +1024,9 @@ export interface SubmitTransactionFailureExtraneousScripts {
     extraneousScripts: DigestBlake2B224[];
   };
 }
+/**
+ * Missing required metadata hash in the transaction body. If the transaction includes metadata, then it must also include a hash digest of these serialised metadata in its body to prevent malicious actors from tempering with the data. The field 'data.metadata.hash' contains the expected missing hash digest of the metadata found in the transaction.
+ */
 export interface SubmitTransactionFailureMissingMetadataHash {
   code: 3105;
   message: string;
@@ -1016,6 +1036,9 @@ export interface SubmitTransactionFailureMissingMetadataHash {
     };
   };
 }
+/**
+ * No metadata corresponding to a specified metadata hash. It appears that you might have forgotten to attach metadata to a transaction, yet included a hash digest of them in the transaction body? The field 'data.metadata.hash' contains the orphan hash found in the body.
+ */
 export interface SubmitTransactionFailureMissingMetadata {
   code: 3106;
   message: string;
@@ -1025,6 +1048,9 @@ export interface SubmitTransactionFailureMissingMetadata {
     };
   };
 }
+/**
+ * There's a mismatch between the provided metadata hash digest and the one computed from the actual metadata. The two must match exactly. The field 'data.provided.hash' references the provided hash as found in the transaction body, whereas 'data.computed.hash' contains the one the ledger computed from the actual metadata.
+ */
 export interface SubmitTransactionFailureMetadataHashMismatch {
   code: 3107;
   message: string;
@@ -1037,10 +1063,16 @@ export interface SubmitTransactionFailureMetadataHashMismatch {
     };
   };
 }
+/**
+ * Invalid metadatum found in transaction metadata. Metadata byte strings must be no longer than 64-bytes and text strings must be no longer than 64 bytes once UTF-8-encoded. Some metadatum in the transaction infringe this rule.
+ */
 export interface SubmitTransactionFailureInvalidMetadata {
   code: 3108;
   message: string;
 }
+/**
+ * Missing required redeemer(s) for Plutus scripts. There are validators needed for the transaction that do not have an associated redeemer. Redeemer are provided when trying to execute the validation logic of a script (e.g. when spending from an input locked by a script, or minting assets from a Plutus monetary policy. The field 'data.missingRedeemers' lists the different purposes for which a redeemer hasn't been provided.
+ */
 export interface SubmitTransactionFailureMissingRedeemers {
   code: 3109;
   message: string;
@@ -1064,6 +1096,9 @@ export interface Withdraw {
   purpose: "withdraw";
   rewardAccount: RewardAccount;
 }
+/**
+ * Extraneous (non-required) redeemers found in the transaction. There are some redeemers that aren't pointing to any script. This could be because you've left some orphan redeemer behind, because they are pointing at the wrong thing or because you forgot to include their associated validator. Either way, the field 'data.extraneousRedeemers' lists the different orphan redeemer pointers.
+ */
 export interface SubmitTransactionFailureExtraneousRedeemers {
   code: 3110;
   message: string;
@@ -1071,6 +1106,9 @@ export interface SubmitTransactionFailureExtraneousRedeemers {
     extraneousRedeemers: RedeemerPointer[];
   };
 }
+/**
+ * Transaction failed because some Plutus scripts are missing their associated datums. 'data.missingDatums' contains a set of data hashes for the missing datums. Ensure all Plutus scripts have an associated datum in the transaction's witness set or, are provided through inline datums in reference inputs.
+ */
 export interface SubmitTransactionFailureMissingDatums {
   code: 3111;
   message: string;
@@ -1078,6 +1116,9 @@ export interface SubmitTransactionFailureMissingDatums {
     missingDatums: DigestBlake2B256[];
   };
 }
+/**
+ * The transaction failed because it contains datums not associated with any script or output. This could be because you've left some orphan datum behind, because you've listed the wrong inputs in the transaction or because you've just forgotten to include a datum associated with an input. Either way, the field 'data.extraneousDatums' contains a set of data hashes for these extraneous datums.
+ */
 export interface SubmitTransactionFailureExtraneousDatums {
   code: 3112;
   message: string;
@@ -1085,6 +1126,9 @@ export interface SubmitTransactionFailureExtraneousDatums {
     extraneousDatums: DigestBlake2B256[];
   };
 }
+/**
+ * The transaction failed because the provided script integrity hash doesn't match the computed one. This is crucial for ensuring the integrity of cost models and Plutus version used during script execution. The field 'data.providedScriptIntegrity' correspond to what was given, if any, and 'data.computedScriptIntegrity' is what was expected. If the latter is null, this means you shouldn't have included a script integrity hash to begin with.
+ */
 export interface SubmitTransactionFailureScriptIntegrityHashMismatch {
   code: 3113;
   message: string;
@@ -1093,6 +1137,9 @@ export interface SubmitTransactionFailureScriptIntegrityHashMismatch {
     computedScriptIntegrity: DigestBlake2B256 | null;
   };
 }
+/**
+ * This is bad, you're trying to spend inputs that are locked by Plutus scripts, but have no associated datums. Those inputs are so-to-speak unspendable (at least with the current ledger rules). There's nothing you can do apart from re-creating these UTxOs but with a corresponding datum this time. The field 'data.orphanInputs' lists all such inputs found in the transaction.
+ */
 export interface SubmitTransactionFailureOrphanScriptInputs {
   code: 3114;
   message: string;
@@ -1100,6 +1147,9 @@ export interface SubmitTransactionFailureOrphanScriptInputs {
     orphanInputs?: TransactionOutputReference[];
   };
 }
+/**
+ * It seems like the transaction is using a Plutus version for which there's no available cost model yet. This could be because that language version is known of the ledger but hasn't yet been enabled through hard-fork. The field 'data.missingCostModels' lists all the languages for which a cost model is missing.
+ */
 export interface SubmitTransactionFailureMissingCostModels {
   code: 3115;
   message: string;
@@ -1107,6 +1157,9 @@ export interface SubmitTransactionFailureMissingCostModels {
     missingCostModels: Language[];
   };
 }
+/**
+ * Some Plutus scripts in the witness set or in an output are invalid. Scripts must be well-formed flat-encoded Plutus scripts, CBOR-encoded. Yes, there's a double binary encoding. The outer-most encoding is therefore just a plain CBOR bytestring. Note that some tools such as the cardano-cli triple encode scripts for some reasons, resulting in a double outer-most CBOR encoding. Make sure that your script are correctly encoded. The field 'data.malformedScripts' lists the hash digests of all the problematic scripts.
+ */
 export interface SubmitTransactionFailureMalformedScripts {
   code: 3116;
   message: string;
@@ -1114,6 +1167,9 @@ export interface SubmitTransactionFailureMalformedScripts {
     malformedScripts: DigestBlake2B224[];
   };
 }
+/**
+ * The transaction contains unknown UTxO references as inputs. This can happen if the inputs you're trying to spend have already been spent, or if you've simply referred to non-existing UTxO altogether. The field 'data.unknownOutputReferences' indicates all unknown inputs.
+ */
 export interface SubmitTransactionFailureUnknownOutputReferences {
   code: 3117;
   message: string;
@@ -1121,6 +1177,9 @@ export interface SubmitTransactionFailureUnknownOutputReferences {
     unknownOutputReferences: TransactionOutputReference[];
   };
 }
+/**
+ * The transaction is outside of its validity interval. It was either submitted too early or too late. A transaction that has a lower validity bound can only be accepted by the ledger (and make it to the mempool) if the ledger's current slot is greater than the specified bound. The upper bound works similarly, as a time to live. The field 'data.currentSlot' contains the current slot as known of the ledger (this may be different from the current network slot if the ledger is still catching up). The field 'data.validityInterval' is a reminder of the validity interval provided with the transaction.
+ */
 export interface SubmitTransactionFailureOutsideOfValidityInterval {
   code: 3118;
   message: string;
@@ -1129,6 +1188,9 @@ export interface SubmitTransactionFailureOutsideOfValidityInterval {
     currentSlot: Slot;
   };
 }
+/**
+ * The transaction exceeds the maximum size allowed by the protocol. Indeed, once serialized, transactions must be under a bytes limit specified by a protocol parameter. The field 'data.measuredTransactionSize' indicates the actual measured size of your serialized transaction, whereas 'data.maximumTransactionSize' indicates the current maximum size enforced by the ledger.
+ */
 export interface SubmitTransactionFailureTransactionTooLarge {
   code: 3119;
   message: string;
@@ -1142,6 +1204,9 @@ export interface SubmitTransactionFailureTransactionTooLarge {
 export interface NumberOfBytes {
   bytes: Int64;
 }
+/**
+ * Some output values in the transaction are too large. Once serialized, values must be below a certain threshold. That threshold sits around 4 KB during the Mary era, and was then made configurable as a protocol parameter in later era. The field 'data.excessivelyLargeOutputs' lists all transaction outputs with values that are above the limit.
+ */
 export interface SubmitTransactionFailureValueTooLarge {
   code: 3120;
   message: string;
@@ -1149,10 +1214,16 @@ export interface SubmitTransactionFailureValueTooLarge {
     excessivelyLargeOutputs: TransactionOutput[];
   };
 }
+/**
+ * Transaction must have at least one input, but this one has an empty input set. One input is necessary to prevent replayability of transactions, as it piggybacks on the unique spendable property of UTxO.
+ */
 export interface SubmitTransactionFailureEmptyInputSet {
   code: 3121;
   message: string;
 }
+/**
+ * Insufficient fee! The transaction doesn't not contain enough fee to cover the minimum required by the protocol. Note that fee depends on (a) a flat cost fixed by the protocol, (b) the size of the serialized transaction, (c) the budget allocated for Plutus script execution. The field 'data.minimumRequiredFee' indicates the minimum required fee whereas 'data.providedFee' refers to the fee currently supplied with the transaction.
+ */
 export interface SubmitTransactionFailureTransactionFeeTooSmall {
   code: 3122;
   message: string;
@@ -1161,6 +1232,9 @@ export interface SubmitTransactionFailureTransactionFeeTooSmall {
     providedFee: Lovelace;
   };
 }
+/**
+ * In and out value not conserved. The transaction must *exactly* balance: every input must be accounted for. There are various things counting as 'in balance': (a) the total value locked by inputs (or collateral inputs in case of a failing script), (b) rewards coming from withdrawals and (c) return deposits from stake credential or pool de-registration. In a similar fashion, various things count towards the 'out balance': (a) the total value assigned to each transaction output, (b) the fee and (c) any deposit for stake credential or pool registration. The field 'data.valueConsumed' contains the total 'in balance', and 'data.valueProduced' indicates the total amount counting as 'out balance'.
+ */
 export interface SubmitTransactionFailureValueNotConserved {
   code: 3123;
   message: string;
@@ -1169,6 +1243,9 @@ export interface SubmitTransactionFailureValueNotConserved {
     valueProduced: Value;
   };
 }
+/**
+ * Some discriminated entities in the transaction are configured for another network. In fact, payment addresses, stake addresses and stake pool registration certificates are bound to a specific network identifier. This identifier must match the network you're trying to submit them to. Since the Alonzo era, transactions themselves may also contain a network identifier. The field 'data.expectedNetwork' indicates what is the currrently expected network. The field 'data.discriminatedType' indicates what type of entity is causing an issue here. And 'data.invalidEntities' lists all the culprits found in the transaction. The latter isn't present when the transaction's network identifier itself is wrong.
+ */
 export interface SubmitTransactionFailureNetworkMismatch {
   code: 3124;
   message: string;
@@ -1193,6 +1270,9 @@ export interface SubmitTransactionFailureNetworkMismatch {
         discriminatedType: "transaction";
       };
 }
+/**
+ * Some outputs have an insufficient amount of Ada attached to them. In fact, any new output created in a system must pay for the resources it occupies. Because user-created assets are worthless (from the point of view of the protocol), those resources must be paid in the form of a Ada deposit. The exact depends on the size of the serialized output: the more assets, the higher the amount. The field 'data.insufficientlyFundedOutputs.[].output' contains a list of all transaction outputs that are insufficiently funded. Starting from the Babbage era, the field 'data.insufficientlyFundedOutputs.[].minimumRequiredValue' indicates the required amount of Lovelace (1e6 Lovelace = 1 Ada) needed for each output.
+ */
 export interface SubmitTransactionFailureInsufficientlyFundedOutputs {
   code: 3125;
   message: string;
@@ -1203,6 +1283,9 @@ export interface SubmitTransactionFailureInsufficientlyFundedOutputs {
     }[];
   };
 }
+/**
+ * Some output associated with legacy / bootstrap (a.k.a. Byron) addresses have attributes that are too large. The field 'data.bootstrapOutputs' lists all affected outputs.
+ */
 export interface SubmitTransactionFailureBootstrapAttributesTooLarge {
   code: 3126;
   message: string;
@@ -1210,10 +1293,16 @@ export interface SubmitTransactionFailureBootstrapAttributesTooLarge {
     bootstrapOutputs: TransactionOutput[];
   };
 }
+/**
+ * The transaction is attempting to mint or burn Ada tokens. That is, fortunately, not allowed by the ledger.
+ */
 export interface SubmitTransactionFailureMintingOrBurningAda {
   code: 3127;
   message: string;
 }
+/**
+ * Insufficient collateral value for Plutus scripts in the transaction. Indeed, when executing scripts, you must provide a collateral amount which minimum is a percentage of the total execution budget for the transaction. The exact percentage is given by a protocol parameter. The field 'data.providedCollateral' indicates the amount currently provided as collateral in the transaction, whereas 'data.minimumRequiredCollateral' indicates the minimum amount expected by the ledger
+ */
 export interface SubmitTransactionFailureInsufficientCollateral {
   code: 3128;
   message: string;
@@ -1222,6 +1311,9 @@ export interface SubmitTransactionFailureInsufficientCollateral {
     minimumRequiredCollateral: Lovelace;
   };
 }
+/**
+ * Invalid choice of collateral: an input provided for collateral is locked by script. Collateral inputs must be spendable, and the ledger must be able to assert their validity during the first phase of validations (a.k.a phase-1). This discards any input locked by a Plutus script to be used as collateral. Note that for some reason inputs locked by native scripts are also excluded from candidates collateral. The field 'data.unsuitableCollateralInputs' lists all the problematic output references.
+ */
 export interface SubmitTransactionFailureCollateralLockedByScript {
   code: 3129;
   message: string;
@@ -1229,6 +1321,9 @@ export interface SubmitTransactionFailureCollateralLockedByScript {
     unsuitableCollateralInputs: TransactionOutputReference[];
   };
 }
+/**
+ * One of the transaction validity bound is outside any foreseeable future. The vision of the ledger in the future is limited because the ledger cannot guarantee that the chain will not hard-fork into a version of the protocol working with a different set of parameters (or even, working with the same consensus protocol). However, the protocol cannot fork in less than `k` blocks, where `k` is the security parameter of the chain. Plus, Ouroboros Praos ensures that there are at least `k` blocks produced in a window of 3 * k / f slots, where `f` is the density parameter, also known as the active slot coefficient. Short story short, you can only set validity interval in a short timespan, which is around ~36h in the future on Mainnet at the moment of writing this error message. The field 'data.unforeseeableSlot' indicates the slot which couldn't be converted to a POSIX time due to hard fork uncertainty.
+ */
 export interface SubmitTransactionFailureUnforeseeableSlot {
   code: 3130;
   message: string;
@@ -1236,6 +1331,9 @@ export interface SubmitTransactionFailureUnforeseeableSlot {
     unforeseeableSlot: Slot;
   };
 }
+/**
+ * The transaction contains too many collateral inputs. The maximum number of collateral inputs is constrained by a protocol parameter. The field 'data.maximumCollateralInputs' contains the current value of that parameter, and 'data.countedCollateralInputs' indicates how many inputs were actually found in your transaction.
+ */
 export interface SubmitTransactionFailureTooManyCollateralInputs {
   code: 3131;
   message: string;
@@ -1244,10 +1342,16 @@ export interface SubmitTransactionFailureTooManyCollateralInputs {
     countedCollateralInputs: UInt321;
   };
 }
+/**
+ * The transaction doesn't provide any collateral inputs but it must. Indeed, when executing scripts, you must provide a collateral amount which is collected by the ledger in case of script execution failure. That collateral serves as a compensation for nodes that aren't thus able to collect normal fees set on the transaction. Note that ledger validations are split in two phases. The first phase regards pretty much every validation outside of script executions. Anything from the first phase doesn't require a collateral and will not consume the collateral in case of failure because they require little computing resources. Besides, in principle, any client application or wallet will prevent you from submitting an invalid transaction to begin with.
+ */
 export interface SubmitTransactionFailureMissingCollateralInputs {
   code: 3132;
   message: string;
 }
+/**
+ * One of the input provided as collateral carries something else than Ada tokens. Only Ada can be used as collateral. Since the Babbage era, you also have the option to set a 'collateral return' or 'collateral change' output in order to send the surplus non-Ada tokens to it. Regardless, the field 'data.unsuitableCollateralValue' indicates the actual collateral value found by the ledger
+ */
 export interface SubmitTransactionFailureNonAdaCollateral {
   code: 3133;
   message: string;
@@ -1255,6 +1359,9 @@ export interface SubmitTransactionFailureNonAdaCollateral {
     "unsuitableCollateralInputs'"?: Value;
   };
 }
+/**
+ * The transaction execution budget for scripts execution is above the allowed limit. The protocol limits the amount of execution that a single transaction can do. This limit is set by a protocol parameter. The field 'data.maximumExecutionUnits' indicates the current limit and the field 'data.providedExecutionUnits' indicates how much the transaction requires.
+ */
 export interface SubmitTransactionFailureExecutionUnitsTooLarge {
   code: 3134;
   message: string;
@@ -1263,6 +1370,9 @@ export interface SubmitTransactionFailureExecutionUnitsTooLarge {
     maximumExecutionUnits: ExecutionUnits;
   };
 }
+/**
+ * There's a mismatch between the declared total collateral amount, and the value computed from the inputs and outputs. These must match exactly. The field 'data.declaredTotalCollateral' reports the amount declared in the transaction whereas 'data.computedTotalCollateral' refers to the amount actually computed.
+ */
 export interface SubmitTransactionFailureTotalCollateralMismatch {
   code: 3135;
   message: string;
@@ -1271,6 +1381,9 @@ export interface SubmitTransactionFailureTotalCollateralMismatch {
     computedTotalCollateral: Lovelace;
   };
 }
+/**
+ * Invalid transaction submitted as valid, or vice-versa. Since Alonzo, the ledger may allow invalid transactions to be submitted and included on-chain, provided that they leave a collateral value as compensation. This prevent certain class of attacks. As a consequence, transactions now have a validity tag with them. Your transaction did not match what that validity tag is stating. The field 'data.inputSource' indicates whether the transaction is valid or not (collateral as source means the transaction is invalid) and the fiel 'data.mismatchReason' provides more information about the mismatch.
+ */
 export interface SubmitTransactionFailureInputSourceMismatch {
   code: 3136;
   message: string;
@@ -1279,6 +1392,9 @@ export interface SubmitTransactionFailureInputSourceMismatch {
     mismatchReason: string;
   };
 }
+/**
+ * The transaction contains vote from a voter that is unauthorized for that vote action. The field 'data.unauthorizedVoter' indicates the voter's credential and 'data.requiredRole' documents the role that the voter should have but don't.
+ */
 export interface SubmitTransactionFailureUnauthorizedVote {
   code: 3137;
   message: string;
@@ -1287,6 +1403,9 @@ export interface SubmitTransactionFailureUnauthorizedVote {
     requiredRole: VoterRole;
   };
 }
+/**
+ * Unknown governance action found in transaction. This may be because you've indicated a wrong identifier or because the governance action hasn't yet been submitted on-chain. Note that the order in which transactions are submitted matters. The field 'data.unknownGovernanceAction' tells you about the governance action's identifier.
+ */
 export interface SubmitTransactionFailureUnknownGovernanceAction {
   code: 3138;
   message: string;
@@ -1302,10 +1421,16 @@ export interface GovernanceActionReference {
     index: UInt32;
   };
 }
+/**
+ * The transaction contains an invalid or unauthorized protocol parameters update. This operation is reserved to genesis key holders.
+ */
 export interface SubmitTransactionFailureInvalidProtocolParametersUpdate {
   code: 3139;
   message: string;
 }
+/**
+ * The transaction references an unknown stake pool as a target for delegation or update. Double-check the pool id mentioned in 'data.unknownStakePool'. Note also that order in which transactions are submitted matters; if you're trying to register a pool and delegate to it in one go, make sure to submit transactions in the right order.
+ */
 export interface SubmitTransactionFailureUnknownStakePool {
   code: 3140;
   message: string;
@@ -1313,6 +1438,9 @@ export interface SubmitTransactionFailureUnknownStakePool {
     unknownStakePool: StakePoolId;
   };
 }
+/**
+ * The transaction contains incomplete or invalid rewards withdrawals. When present, rewards withdrawals must consume rewards in full, there cannot be any leftover. The field 'data.incompleteWithdrawals' contains a map of withdrawals and their current rewards balance.
+ */
 export interface SubmitTransactionFailureIncompleteWithdrawals {
   code: 3141;
   message: string;
@@ -1320,6 +1448,9 @@ export interface SubmitTransactionFailureIncompleteWithdrawals {
     incompleteWithdrawals: Withdrawals;
   };
 }
+/**
+ * A stake pool retirement certificate is trying to retire too late in the future. Indeed, there's a maximum delay for stake pool retirement, controlled by a protocol parameter. The field 'data.currentEpoch' indicates the current epoch known of the ledger, 'data.declaredEpoch' refers to the epoch declared in the retirement certificate and 'data.firstInvalidEpoch' is the first epoch considered invalid (too far) for retirement
+ */
 export interface SubmitTransactionFailureRetirementTooLate {
   code: 3142;
   message: string;
@@ -1329,6 +1460,9 @@ export interface SubmitTransactionFailureRetirementTooLate {
     firstInvalidEpoch: Epoch;
   };
 }
+/**
+ * Stake pool cost declared in a registration or update certificate are below the allowed minimum. The minimum cost of a stake pool is fixed by a protocol parameter. The 'data.minimumStakePoolCost' field holds the current value of that parameter whereas 'data.declaredStakePoolCost' indicates which amount was declared.
+ */
 export interface SubmitTransactionFailureStakePoolCostTooLow {
   code: 3143;
   message: string;
@@ -1337,6 +1471,9 @@ export interface SubmitTransactionFailureStakePoolCostTooLow {
     declaredStakePoolCost: Lovelace;
   };
 }
+/**
+ * Some hash digest of (optional) stake pool metadata is too long. When registering, stake pools can supply an external metadata file and a hash digest of the content. The hashing algorithm is left open but the output digest must be smaller than 32 bytes. The field 'data.infringingStakePool' indicates which stake pool has an invalid metadata hash and 'data.computedMetadataHashSize' documents the computed hash size.
+ */
 export interface SubmitTransactionFailureMetadataHashTooLarge {
   code: 3144;
   message: string;
@@ -1345,6 +1482,9 @@ export interface SubmitTransactionFailureMetadataHashTooLarge {
     computedMetadataHashSize: NumberOfBytes;
   };
 }
+/**
+ * Trying to re-register some already known credentials. Stake credentials can only be registered once. This is true for both keys and scripts. The field 'data.knownCredential' points to an already known credential that's being re-registered by this transaction.
+ */
 export interface SubmitTransactionFailureCredentialAlreadyRegistered {
   code: 3145;
   message: string;
@@ -1352,6 +1492,9 @@ export interface SubmitTransactionFailureCredentialAlreadyRegistered {
     knownCredential: DigestBlake2B224;
   };
 }
+/**
+ * The transaction references an unknown stake credential. For example, to delegate to a stake pool, you must first register the stake key or script used for delegation. This may be done in the same transaction or in an earlier transaction but cannot happen retro-actively. The field 'data.unknownCredential' indicates what credential is used without being registered.
+ */
 export interface SubmitTransactionFailureUnknownCredential {
   code: 3146;
   message: string;
@@ -1359,6 +1502,9 @@ export interface SubmitTransactionFailureUnknownCredential {
     unknownCredential: DigestBlake2B224;
   };
 }
+/**
+ * Trying to unregister stake credentials associated to a non empty reward account. You must empty the reward account first (or do it as part of the same transaction) to proceed. The field 'data.nonEmptyRewardAccountBalance' indicates how much Lovelace is left in the account.
+ */
 export interface SubmitTransactionFailureNonEmptyRewardAccount {
   code: 3147;
   message: string;
@@ -1366,18 +1512,30 @@ export interface SubmitTransactionFailureNonEmptyRewardAccount {
     nonEmptyRewardAccountBalance: Lovelace;
   };
 }
+/**
+ * Invalid or unauthorized genesis delegation. The genesis delegate is unknown, invalid or already in use.
+ */
 export interface SubmitTransactionFailureInvalidGenesisDelegation {
   code: 3148;
   message: string;
 }
+/**
+ * Invalid MIR transfer. The resulting delta is likely negative.
+ */
 export interface SubmitTransactionFailureInvalidMIRTransfer {
   code: 3149;
   message: string;
 }
+/**
+ * Unrecognized certificate type. This error is a placeholder due to how internal data-types are modeled. If you ever run into this, please report the issue as you've likely discoverd a critical bug...
+ */
 export interface SubmitTransactionFailureUnrecognizedCertificateType {
   code: 3998;
   message: string;
 }
+/**
+ * Whoopsie, the ledger failed to upgrade an data-type from an earlier era into data of a newer era. If you ever run into this, please report the issue as you've likely discoverd a critical bug...
+ */
 export interface SubmitTransactionFailureInternalLedgerTypeConversionError {
   code: 3999;
   message: string;
@@ -1524,10 +1682,16 @@ export interface EvaluateTransactionFailureScriptExecutionFailure {
     error: ScriptExecutionFailure;
   }[];
 }
+/**
+ * An associated script witness is missing. Indeed, any script used in a transaction (when spending, minting, withdrawing or publishing certificates) must be provided in full with the transaction. Scripts must therefore be added either to the witness set or provided as a reference inputs should you use Plutus V2+ and a format from Babbage and beyond.
+ */
 export interface ScriptExecutionFailureMissingScript {
   code: 3011;
   message: string;
 }
+/**
+ * Some of the (V1) scripts failed to evaluate to a positive outcome.
+ */
 export interface ScriptExecutionFailureValidationFailure {
   code: 3012;
   message: string;
@@ -1536,6 +1700,9 @@ export interface ScriptExecutionFailureValidationFailure {
     traces: string[];
   };
 }
+/**
+ * Some of the (V2) scripts failed to evaluate to a positive outcome.
+ */
 export interface ScriptExecutionFailureUnsuitableOutputReference {
   code: 3013;
   message: string;
@@ -1570,6 +1737,27 @@ export interface AcquireLedgerState {
     [k: string]: unknown;
   };
 }
+export interface AcquireLedgerStateFailure {
+  jsonrpc: "2.0";
+  method: "acquireLedgerState";
+  /**
+   * Unable to acquire the ledger state at the request point.
+   */
+  error: {
+    code: 2000;
+    message: string;
+    /**
+     * A reason for the failure.
+     */
+    data: string;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
 /**
  * Response to an 'acquireLedgerState' request.
  */
@@ -1587,28 +1775,6 @@ export interface AcquireLedgerStateSuccess {
 export interface AcquireLedgerStateSuccess1 {
   acquired: "ledgerState";
   point: PointOrOrigin;
-}
-/**
- * Unable to acquire the ledger state at the request point.
- */
-export interface AcquireLedgerStateFailure {
-  jsonrpc: "2.0";
-  method: "acquireLedgerState";
-  error: AcquireLedgerStateFailure1;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
-}
-export interface AcquireLedgerStateFailure1 {
-  code: 2000;
-  message: string;
-  /**
-   * A reason for the failure.
-   */
-  data: string;
 }
 /**
  * Release a previously acquired ledger state.
@@ -1639,9 +1805,6 @@ export interface ReleaseLedgerStateResponse {
     [k: string]: unknown;
   };
 }
-/**
- * An era mismatch between a client request and the era the ledger is in. This may occur when running queries on a syncing node and/or when the node is crossing an era.
- */
 export interface QueryLedgerStateEraMismatch {
   jsonrpc: "2.0";
   method:
@@ -1658,6 +1821,9 @@ export interface QueryLedgerStateEraMismatch {
     | "queryLedgerState/stakePools"
     | "queryLedgerState/utxo"
     | "queryLedgerState/tip";
+  /**
+   * An era mismatch between a client request and the era the ledger is in. This may occur when running queries on a syncing node and/or when the node is crossing an era.
+   */
   error: {
     code: 2001;
     message: string;
@@ -1670,9 +1836,6 @@ export interface QueryLedgerStateEraMismatch {
     [k: string]: unknown;
   };
 }
-/**
- * Some query is not available for the requested ledger era.
- */
 export interface QueryLedgerStateUnavailableInCurrentEra {
   jsonrpc: "2.0";
   method:
@@ -1689,6 +1852,9 @@ export interface QueryLedgerStateUnavailableInCurrentEra {
     | "queryLedgerState/stakePools"
     | "queryLedgerState/utxo"
     | "queryLedgerState/tip";
+  /**
+   * Some query is not available for the requested ledger era.
+   */
   error: {
     code: 2002;
     message: string;
@@ -1700,9 +1866,6 @@ export interface QueryLedgerStateUnavailableInCurrentEra {
     [k: string]: unknown;
   };
 }
-/**
- * Previously acquired ledger state is no longer available.
- */
 export interface QueryLedgerStateAcquiredExpired {
   jsonrpc: "2.0";
   method:
@@ -1719,6 +1882,9 @@ export interface QueryLedgerStateAcquiredExpired {
     | "queryLedgerState/stakePools"
     | "queryLedgerState/utxo"
     | "queryLedgerState/tip";
+  /**
+   * Previously acquired ledger state is no longer available.
+   */
   error: {
     code: 2003;
     message: string;
@@ -2413,6 +2579,23 @@ export interface NextTransaction {
     [k: string]: unknown;
   };
 }
+export interface MustAcquireMempoolFirst {
+  jsonrpc: "2.0";
+  method: "hasTransaction" | "nextTransaction" | "sizeOfMempool" | "releaseMempool";
+  /**
+   * Must acquire a mempool snapshot prior to performing any query.
+   */
+  error: {
+    code: 4000;
+    message: string;
+  };
+  /**
+   * Any value that was set by a client request in the 'id' field.
+   */
+  id?: {
+    [k: string]: unknown;
+  };
+}
 /**
  * Response to a 'nextTransaction' request.
  */
@@ -2429,20 +2612,6 @@ export interface NextTransactionResponse {
         }
       | Transaction
       | null;
-  };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
-}
-export interface NextTransactionMustAcquireFirst {
-  jsonrpc: "2.0";
-  method: "nextTransaction";
-  error: {
-    code: 4000;
-    message: string;
   };
   /**
    * Any value that was set by a client request in the 'id' field.
@@ -2474,20 +2643,6 @@ export interface HasTransactionResponse {
   jsonrpc: "2.0";
   method: "hasTransaction";
   result: boolean;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
-}
-export interface HasTransactionMustAcquireFirst {
-  jsonrpc: "2.0";
-  method: "hasTransaction";
-  error: {
-    code: 4000;
-    message: string;
-  };
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -2529,20 +2684,6 @@ export interface MempoolSizeAndCapacity {
     count: UInt321;
   };
 }
-export interface SizeOfMempoolMustAcquireFirst {
-  jsonrpc: "2.0";
-  method: "sizeOfMempool";
-  error: {
-    code: 4000;
-    message: string;
-  };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
-}
 /**
  * Release a previously acquired mempool snapshot.
  */
@@ -2564,20 +2705,6 @@ export interface ReleaseMempoolResponse {
   method: "releaseMempool";
   result: {
     released: "mempool";
-  };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
-}
-export interface ReleaseMempoolMustAcquireFirst {
-  jsonrpc: "2.0";
-  method: "releaseMempool";
-  error: {
-    code: 4000;
-    message: string;
   };
   /**
    * Any value that was set by a client request in the 'id' field.

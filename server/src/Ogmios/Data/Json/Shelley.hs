@@ -135,9 +135,7 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           "era" .= encodeText "shelley"
         <>
-          "header" .= encodeObject
-            ( "hash" .= encodeShelleyHash headerHash
-            )
+          "id" .= encodeShelleyHash headerHash
         <>
         encodeBHeader blkHeader
         <>
@@ -220,11 +218,11 @@ encodeDCert = encodeObject . \case
         -> "type" .=
             encodeText "genesisDelegation"
         <> "delegate" .= encodeObject
-            ( "verificationKeyHash" .=
+            ( "id" .=
                 encodeKeyHash delegate
             )
         <> "issuer" .= encodeObject
-            ( "verificationKeyHash" .=
+            ( "id" .=
                 encodeKeyHash key <>
               "vrfVerificationKeyHash" .=
                 encodeHash vrf

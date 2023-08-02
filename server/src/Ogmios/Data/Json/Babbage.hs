@@ -64,13 +64,11 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           "era" .= encodeText "babbage"
         <>
-          "header" .= encodeObject
-            ( "hash" .= Shelley.encodeShelleyHash headerHash
-            )
+          "id" .= Shelley.encodeShelleyHash headerHash
         <>
-        encodeHeader blkHeader
+          encodeHeader blkHeader
         <>
-        "transactions" .= encodeFoldable encodeTx (Al.txSeqTxns txs)
+          "transactions" .= encodeFoldable encodeTx (Al.txSeqTxns txs)
         )
 
 encodeHeader

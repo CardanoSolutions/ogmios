@@ -69,7 +69,7 @@ describe('Local state queries', () => {
       await client.acquireLedgerState(tip)
       await client.releaseLedgerState()
       let tipAgain = await client.ledgerTip() as Point
-      while (tip.hash === tipAgain.hash) {
+      while (tip.id === tipAgain.id) {
         await delay(1000)
         tipAgain = await client.ledgerTip() as Point
       }
@@ -110,7 +110,7 @@ describe('Local state queries', () => {
       const alonzoGenesis = await client.genesisConfiguration('alonzo')
       expect((alonzoGenesis as GenesisAlonzo).coinsPerUtxoWord).toBeDefined()
 
-      const point = await client.ledgerTip() as { slot: Slot, hash: DigestBlake2B256 }
+      const point = await client.ledgerTip() as { slot: Slot, id: DigestBlake2B256 }
       expect(point.slot).toBeDefined()
 
       const nonMyopicMemberRewards = await client.projectedRewards({
@@ -210,8 +210,8 @@ describe('Local state queries', () => {
     })
     describe('ledgerTip', () => {
       it('fetches the tip of the ledger', async () => {
-        const point = await LedgerStateQuery.ledgerTip(context) as { slot: Slot, hash: DigestBlake2B224 }
-        expect(point.hash).toBeDefined()
+        const point = await LedgerStateQuery.ledgerTip(context) as { slot: Slot, id: DigestBlake2B224 }
+        expect(point.id).toBeDefined()
         expect(point.slot).toBeDefined()
       })
     })

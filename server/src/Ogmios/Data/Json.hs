@@ -232,7 +232,7 @@ encodeTip = \case
     Tip slot hash blockNo ->
         "slot" .=
             encodeSlotNo slot <>
-        "hash" .=
+        "id" .=
             encodeOneEraHash hash <>
         "blockNo" .=
             encodeBlockNo blockNo
