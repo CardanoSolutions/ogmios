@@ -99,17 +99,15 @@
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/BootstrapOperationalCertificate"}
         }
-      , "governanceAction":
-        { "$ref": "cardano.json#/definitions/BootstrapGovernanceAction"
-        }
       , "protocol":
         { "type": "object"
         , "additionalProperties": false
-        , "required": [ "magic", "version", "software" ]
+        , "required": [ "id", "version", "software" ]
         , "properties":
-          { "magic": { "$ref": "cardano.json#/definitions/ProtocolMagicId" }
+          { "id": { "$ref": "cardano.json#/definitions/BootstrapProtocolId" }
           , "version": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
           , "software": { "$ref": "cardano.json#/definitions/SoftwareVersion" }
+          , "update": { "$ref": "cardano.json#/definitions/BootstrapProtocolUpdate" }
           }
         }
       , "issuer":
@@ -201,8 +199,8 @@
     , "maximum": 18446744073709552999
     }
 
-  , "BootstrapGovernanceAction":
-    { "title": "BootstrapGovernanceAction"
+  , "BootstrapProtocolUpdate":
+    { "title": "BootstrapProtocolUpdate"
     , "type": "object"
     , "additionalProperties": false
     , "required": [ "votes" ]
@@ -210,31 +208,20 @@
       { "proposal":
         { "type": "object"
         , "additionalProperties": false
-        , "required": [ "protocol", "metadata", "parameters", "issuer" ]
+        , "required": [ "version", "software", "parameters", "metadata" ]
         , "properties":
-          { "protocol":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "version", "software" ]
-            , "properties":
-              { "version": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
-              , "software": { "$ref": "cardano.json#/definitions/SoftwareVersion" }
-              }
+          { "version":
+            { "$ref": "cardano.json#/definitions/ProtocolVersion"
+            }
+          , "software":
+            { "$ref": "cardano.json#/definitions/SoftwareVersion"
+            }
+          , "parameters":
+            { "$ref": "cardano.json#/definitions/BootstrapProtocolParameters"
             }
           , "metadata":
             { "type": "object"
             , "additionalProperties": { "type": "string" }
-            }
-          , "parameters":
-            { "$ref": "cardano.json#/definitions/ProtocolParameters<Byron>"
-            }
-          , "issuer":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "verificationKey" ]
-            , "properties":
-              { "verificationKey": { "$ref": "cardano.json#/definitions/ExtendedVerificationKey" }
-              }
             }
           }
         }
@@ -268,6 +255,41 @@
           { "verificationKey": { "$ref": "cardano.json#/definitions/VerificationKey" }
           }
         }
+      }
+    }
+
+  , "BootstrapProtocolId":
+    { "title": "BootstrapProtocolId"
+    , "type": "integer"
+    , "minimum": 0
+    , "maximum": 4294967295
+    , "examples":
+      [ 764824073
+      ]
+    }
+
+  , "BootstrapProtocolParameters":
+    { "title": "BootstrapProtocolParameters"
+    , "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "heavyDelegationThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxUpdateProposalSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "multiPartyComputationThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "scriptVersion": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "slotDuration": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "unlockStakeEpoch": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "updateProposalThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "updateProposalTimeToLive": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "updateVoteThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "softForkInitThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "softForkMinThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "softForkDecrementThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
       }
     }
 
@@ -564,13 +586,13 @@
   , "Era":
     { "title": "Era"
     , "type": "string"
-    , "enum": ["byron", "shelley", "allegra", "mary", "alonzo", "babbage"]
+    , "enum": [ "byron", "shelley", "allegra", "mary", "alonzo", "babbage", "conway" ]
     }
 
   , "EraWithGenesis":
     { "title": "EraWithGenesis"
     , "type": "string"
-    , "enum": ["byron", "shelley", "alonzo"]
+    , "enum": [ "byron", "shelley", "alonzo", "conway" ]
     }
 
   , "EraParameters":
@@ -626,17 +648,22 @@
     , "description": "A Byron genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
     , "additionalProperties": false
     , "required":
-      [ "genesisKeyHashes"
+      [ "era"
+      , "genesisKeyHashes"
       , "genesisDelegations"
-      , "systemStart"
+      , "startTime"
       , "initialFunds"
-      , "initialCoinOffering"
+      , "initialVouchers"
       , "securityParameter"
       , "networkMagic"
       , "protocolParameters"
       ]
     , "properties":
-      { "genesisKeyHashes":
+      { "era":
+        { "type": "string"
+        , "enum": [ "byron" ]
+        }
+      , "genesisKeyHashes":
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
         }
@@ -645,20 +672,20 @@
         , "propertyNames": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
         , "additionalProperties": { "$ref": "cardano.json#/definitions/BootstrapOperationalCertificate" }
         }
-      , "systemStart": { "$ref": "cardano.json#/definitions/UtcTime" }
+      , "startTime": { "$ref": "cardano.json#/definitions/UtcTime" }
       , "initialFunds":
         { "type": "object"
         , "propertyNames": { "$ref": "cardano.json#/definitions/Address" }
         , "additionalProperties": { "$ref": "cardano.json#/definitions/Lovelace" }
         }
-      , "initialCoinOffering":
+      , "initialVouchers":
         { "type": "object"
         , "propertyNames": { "$ref": "cardano.json#/definitions/VerificationKey" }
         , "additionalProperties": { "$ref": "cardano.json#/definitions/Lovelace" }
         }
       , "securityParameter": { "$ref": "cardano.json#/definitions/UInt64" }
       , "networkMagic": { "$ref": "cardano.json#/definitions/NetworkMagic" }
-      , "protocolParameters": { "$ref": "cardano.json#/definitions/ProtocolParameters<Byron>" }
+      , "protocolParameters": { "$ref": "cardano.json#/definitions/ProtocolParameters" }
       }
     }
 
@@ -668,7 +695,8 @@
     , "description": "A Shelley genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
     , "additionalProperties": false
     , "required":
-      [ "systemStart"
+      [ "era"
+      , "startTime"
       , "networkMagic"
       , "network"
       , "activeSlotsCoefficient"
@@ -679,13 +707,17 @@
       , "slotLength"
       , "updateQuorum"
       , "maxLovelaceSupply"
-      , "protocolParameters"
+      , "initialParameters"
       , "initialDelegates"
       , "initialFunds"
       , "initialPools"
       ]
     , "properties":
-      { "systemStart": { "$ref": "cardano.json#/definitions/UtcTime" }
+      { "era":
+        { "type": "string"
+        , "enum": [ "shelley" ]
+        }
+      , "startTime": { "$ref": "cardano.json#/definitions/UtcTime" }
       , "networkMagic": { "$ref": "cardano.json#/definitions/NetworkMagic" }
       , "network": { "$ref": "cardano.json#/definitions/Network" }
       , "activeSlotsCoefficient": { "$ref": "cardano.json#/definitions/Ratio" }
@@ -696,7 +728,7 @@
       , "slotLength": { "$ref": "cardano.json#/definitions/SlotLength" }
       , "updateQuorum": { "$ref": "cardano.json#/definitions/UInt64" }
       , "maxLovelaceSupply": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "protocolParameters": { "$ref": "cardano.json#/definitions/ProtocolParameters<Shelley>" }
+      , "initialParameters": { "$ref": "cardano.json#/definitions/ProtocolParameters" }
       , "initialDelegates":
         { "type": "object"
         , "title": "InitialDelegates"
@@ -719,24 +751,61 @@
     , "description": "An Alonzo genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
     , "additionalProperties": false
     , "required":
-      [ "coinsPerUtxoWord"
-      , "collateralPercentage"
-      , "costModels"
-      , "maxCollateralInputs"
-      , "maxExecutionUnitsPerBlock"
-      , "maxExecutionUnitsPerTransaction"
-      , "maxValueSize"
-      , "prices"
+      [ "era"
+      , "initialParameters"
       ]
     , "properties":
-      { "coinsPerUtxoWord": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "collateralPercentage": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "costModels": { "$ref": "cardano.json#/definitions/CostModels" }
-      , "maxCollateralInputs": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
-      , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
-      , "maxValueSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "prices": { "$ref": "cardano.json#/definitions/Prices" }
+      { "era":
+        { "type": "string"
+        , "enum": [ "alonzo" ]
+        }
+      , "initialParameters":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required":
+          [ "minUtxoDepositCoefficient"
+          , "collateralPercentage"
+          , "plutusCostModels"
+          , "maxCollateralInputs"
+          , "maxExecutionUnitsPerBlock"
+          , "maxExecutionUnitsPerTransaction"
+          , "maxValueSize"
+          , "scriptExecutionPrices"
+          ]
+        , "properties":
+          { "minUtxoDepositCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
+          , "collateralPercentage": { "$ref": "cardano.json#/definitions/UInt64" }
+          , "plutusCostModels": { "$ref": "cardano.json#/definitions/CostModels" }
+          , "maxCollateralInputs": { "$ref": "cardano.json#/definitions/UInt64" }
+          , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+          , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+          , "maxValueSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+          , "scriptExecutionPrices": { "$ref": "cardano.json#/definitions/ScriptExecutionPrices" }
+          }
+        }
+      }
+    }
+
+  , "Genesis<Conway>":
+    { "title": "Genesis<Conway>"
+    , "type": "object"
+    , "description": "An Conway genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
+    , "additionalProperties": false
+    , "required":
+      [ "era"
+      , "initialDelegates"
+      ]
+    , "properties":
+      { "era":
+        { "type": "string"
+        , "enum": [ "conway" ]
+        }
+      , "initialDelegates":
+        { "type": "object"
+        , "title": "InitialDelegates"
+        , "propertyNames": { "ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/GenesisDelegate" }
+        }
       }
     }
 
@@ -776,6 +845,25 @@
         , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePoolId" }
         }
       }
+    }
+
+  , "GovernanceAction":
+    { "oneOf":
+      [ { "title": "GovernanceAction<ProtocolParametersUpdate>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "type", "parameters" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "protocolParametersUpdate" ]
+            }
+          , "parameters":
+            { "$ref": "cardano.json#/definitions/ProposedProtocolParameters"
+            }
+          }
+        }
+      ]
     }
 
   , "GovernanceActionReference":
@@ -944,6 +1032,15 @@
     { "type": "null"
     }
 
+  , "NumberOfBytes":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "bytes" ]
+    , "properties":
+      { "bytes": { "$ref": "cardano.json#/definitions/Int64" }
+      }
+    }
+
   , "OperationalCertificate":
     { "title": "OperationalCertificate"
     , "type": "object"
@@ -1023,133 +1120,86 @@
       }
     }
 
-  , "Prices":
-    { "title": "Prices"
+  , "ProposedProtocolParameters":
+    { "title": "ProposedProtocolParameters"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "memory", "steps" ]
     , "properties":
-      { "memory": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "steps": { "$ref": "cardano.json#/definitions/Ratio" }
+      { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "minUtxoDepositCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minUtxoDepositConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxValueSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "extraEntropy": { "$ref": "cardano.json#/definitions/Nonce" }
+      , "stakeCredentialDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "stakePoolDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "stakePoolRetirementEpochBound": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "stakePoolPledgeInfluence": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "minStakePoolCost": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "desiredNumberOfStakePools": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "federatedBlockProductionRatio": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "monetaryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "treasuryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "collateralPercentage": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "maxCollateralInputs": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "plutusCostModels": { "$ref": "cardano.json#/definitions/CostModels" }
+      , "scriptExecutionPrices": { "$ref": "cardano.json#/definitions/ScriptExecutionPrices" }
+      , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+      , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+      , "version": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
       }
     }
 
-  , "ProtocolMagicId":
-    { "title": "ProtocolMagicId"
-    , "type": "integer"
-    , "minimum": 0
-    , "maximum": 4294967295
-    , "examples":
-      [ 764824073
+  , "ProtocolParameters":
+    { "title": "ProtocolParameters"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required":
+      [ "minFeeCoefficient"
+      , "minFeeConstant"
+      , "minUtxoDepositCoefficient"
+      , "minUtxoDepositConstant"
+      , "maxBlockBodySize"
+      , "maxBlockHeaderSize"
+      , "stakeCredentialDeposit"
+      , "stakePoolDeposit"
+      , "stakePoolRetirementEpochBound"
+      , "stakePoolPledgeInfluence"
+      , "minStakePoolCost"
+      , "monetaryExpansion"
+      , "treasuryExpansion"
+      , "desiredNumberOfStakePools"
+      , "version"
       ]
-    }
-
-  , "ProtocolParameters<Byron>":
-    { "title": "ProtocolParameters<Byron>"
-    , "type": "object"
-    , "additionalProperties": false
-    , "properties":
-      { "heavyDlgThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "maxBlockSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "maxHeaderSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "maxProposalSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "maxTxSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "mpcThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "scriptVersion": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "slotDuration": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "unlockStakeEpoch": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "updateProposalThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "updateProposalTimeToLive": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "updateVoteThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "txFeePolicy": { "$ref": "cardano.json#/definitions/TxFeePolicy" }
-      , "softforkRule": { "$ref": "cardano.json#/definitions/SoftForkRule" }
-      }
-    }
-
-  , "ProtocolParameters<Shelley>":
-    { "title": "ProtocolParameters<Shelley>"
-    , "type": "object"
-    , "additionalProperties": false
     , "properties":
       { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
       , "minFeeConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "maxTxSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "stakeKeyDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "poolDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "poolRetirementEpochBound": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "desiredNumberOfPools": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "poolInfluence": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "monetaryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "treasuryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "decentralizationParameter": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "minUtxoValue": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "minPoolCost": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "minUtxoDepositCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minUtxoDepositConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxValueSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "extraEntropy": { "$ref": "cardano.json#/definitions/Nonce" }
-      , "protocolVersion": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
-      }
-    }
-
-  , "ProtocolParameters<Alonzo>":
-    { "title": "ProtocolParameters<Alonzo>"
-    , "type": "object"
-    , "additionalProperties": false
-    , "properties":
-      { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "maxTxSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "stakeKeyDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "poolDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "poolRetirementEpochBound": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "desiredNumberOfPools": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "poolInfluence": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "stakeCredentialDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "stakePoolDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "stakePoolRetirementEpochBound": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "stakePoolPledgeInfluence": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "minStakePoolCost": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "desiredNumberOfStakePools": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "federatedBlockProductionRatio": { "$ref": "cardano.json#/definitions/Ratio" }
       , "monetaryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
       , "treasuryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "decentralizationParameter": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "minPoolCost": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "coinsPerUtxoWord": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "maxValueSize": { "$ref": "cardano.json#/definitions/UInt64" }
       , "collateralPercentage": { "$ref": "cardano.json#/definitions/UInt64" }
       , "maxCollateralInputs": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "extraEntropy": { "$ref": "cardano.json#/definitions/Nonce" }
-      , "protocolVersion": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
-      , "costModels": { "$ref": "cardano.json#/definitions/CostModels" }
-      , "prices": { "$ref": "cardano.json#/definitions/Prices" }
+      , "plutusCostModels": { "$ref": "cardano.json#/definitions/CostModels" }
+      , "scriptExecutionPrices": { "$ref": "cardano.json#/definitions/ScriptExecutionPrices" }
       , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
       , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
-      }
-    }
-
-  , "ProtocolParameters<Babbage>":
-    { "title": "ProtocolParameters<Babbage>"
-    , "type": "object"
-    , "additionalProperties": false
-    , "properties":
-      { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "maxTxSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "stakeKeyDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "poolDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "poolRetirementEpochBound": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "desiredNumberOfPools": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "poolInfluence": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "monetaryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "treasuryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "minPoolCost": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "coinsPerUtxoByte": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "maxValueSize": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "collateralPercentage": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "maxCollateralInputs": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "protocolVersion": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
-      , "costModels": { "$ref": "cardano.json#/definitions/CostModels" }
-      , "prices": { "$ref": "cardano.json#/definitions/Prices" }
-      , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
-      , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+      , "version": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
       }
     }
 
@@ -1445,6 +1495,17 @@
       ]
     }
 
+  , "ScriptExecutionPrices":
+    { "title": "ScriptExecutionPrices"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "memory", "steps" ]
+    , "properties":
+      { "memory": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "steps": { "$ref": "cardano.json#/definitions/Ratio" }
+      }
+    }
+
   , "ScriptPurpose":
     { "title": "ScriptPurpose"
     , "oneOf":
@@ -1542,7 +1603,14 @@
   , "SlotLength":
     { "title": "SlotLength"
     , "description": "A slot length, in seconds, possibly with decimals."
-    , "type": "number"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "seconds" ]
+    , "properties":
+      { "seconds":
+        { "type": "number"
+        }
+      }
     }
 
   , "SoftwareVersion":
@@ -1553,18 +1621,6 @@
     , "properties":
       { "appName": { "type": "string" }
       , "number": { "$ref": "cardano.json#/definitions/UInt32" }
-      }
-    }
-
-  , "SoftForkRule":
-    { "title": "SoftForkRule"
-    , "type": "object"
-    , "additionalProperties": false
-    , "required": [ "initThreshold", "minThreshold", "decrementThreshold" ]
-    , "properties":
-      { "initThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "minThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "decrementThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
       }
     }
 
@@ -1652,17 +1708,8 @@
         , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
         }
       , "governanceActions":
-        { "anyOf":
-          [ { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Update<Shelley>" }
-            }
-          , { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Update<Alonzo>" }
-            }
-          , { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Update<Babbage>" }
-            }
-          ]
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/GovernanceAction" }
         }
       , "metadata":
         { "$ref": "cardano.json#/definitions/Metadata"
@@ -1691,17 +1738,6 @@
         , "contentEncoding": "base16"
         , "description": "The raw serialized (CBOR) transaction, as found on-chain."
         }
-      }
-    }
-
-  , "TxFeePolicy":
-    { "title": "TxFeePolicy"
-    , "type": "object"
-    , "additionalProperties": false
-    , "required": [ "coefficient", "constant" ]
-    , "properties":
-      { "coefficient": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "constant": { "$ref": "cardano.json#/definitions/Lovelace" }
       }
     }
 
@@ -1786,48 +1822,6 @@
     , "maximum": 18446744073709552999
     }
 
-  , "Update<Shelley>":
-    { "type": "object"
-    , "title": "UpdateProposal[Shelley]"
-    , "additionalProperties": false
-    , "required": ["proposal", "epoch"]
-    , "properties":
-      { "epoch": { "$ref": "cardano.json#/definitions/Epoch" }
-      , "proposal":
-        { "type": "object"
-        , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Shelley>" }
-        }
-      }
-    }
-
-  , "Update<Alonzo>":
-    { "type": "object"
-    , "title": "UpdateProposal[Alonzo]"
-    , "additionalProperties": false
-    , "required": ["proposal", "epoch"]
-    , "properties":
-      { "epoch": { "$ref": "cardano.json#/definitions/Epoch" }
-      , "proposal":
-        { "type": "object"
-        , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Alonzo>" }
-        }
-      }
-    }
-
-  , "Update<Babbage>":
-    { "type": "object"
-    , "title": "UpdateProposal[Babbage]"
-    , "additionalProperties": false
-    , "required": ["proposal", "epoch"]
-    , "properties":
-      { "epoch": { "$ref": "cardano.json#/definitions/Epoch" }
-      , "proposal":
-        { "type": "object"
-        , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Babbage>" }
-        }
-      }
-    }
-
   , "UtcTime":
     { "title": "UtcTime"
     , "type": "string"
@@ -1883,6 +1877,15 @@
       }
     }
 
+  , "VerificationKey":
+    { "title": "VerificationKey"
+    , "description": "An Ed25519 verification key."
+    , "type": "string"
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
   , "VoterRole":
     { "title": "VoterRole"
     , "type": "string"
@@ -1912,15 +1915,6 @@
     , "type": "object"
     , "additionalProperties": { "$ref": "cardano.json#/definitions/Lovelace" }
     , "propertyNames": { "pattern": "^stake(_test)?1[0-9a-z]+$" }
-    }
-
-  , "VerificationKey":
-    { "title": "VerificationKey"
-    , "description": "An Ed25519 verification key."
-    , "type": "string"
-    , "contentEncoding": "base16"
-    , "minLength": 64
-    , "maxLength": 64
     }
   }
 }

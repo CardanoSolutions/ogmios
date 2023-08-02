@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>SoftForkRule | cardano-ogmios</title>
+	<title>SlotLength | cardano-ogmios</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -48,16 +48,10 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-module">
-						<a href="_cardano_ogmios_schema.SoftForkRule.html" class="tsd-kind-icon">Soft<wbr>Fork<wbr>Rule</a>
+						<a href="_cardano_ogmios_schema.SlotLength.html" class="tsd-kind-icon">Slot<wbr>Length</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.SoftForkRule.html#decrementThreshold" class="tsd-kind-icon">decrement<wbr>Threshold</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.SoftForkRule.html#initThreshold" class="tsd-kind-icon">init<wbr>Threshold</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.SoftForkRule.html#minThreshold" class="tsd-kind-icon">min<wbr>Threshold</a>
+								<a href="_cardano_ogmios_schema.SlotLength.html#seconds" class="tsd-kind-icon">seconds</a>
 							</li>
 						</ul>
 					</li>
@@ -77,16 +71,23 @@
 							<a href="../modules/_cardano_ogmios_schema.html">@cardano-ogmios/schema</a>
 						</li>
 						<li>
-							<a href="_cardano_ogmios_schema.SoftForkRule.html">SoftForkRule</a>
+							<a href="_cardano_ogmios_schema.SlotLength.html">SlotLength</a>
 						</li>
 					</ul>
 				</div>
 			</div>
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>A slot length, in seconds, possibly with decimals.</p>
+					</div>
+				</div>
+			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">SoftForkRule</span>
+						<span class="target">SlotLength</span>
 					</li>
 				</ul>
 			</section>
@@ -97,9 +98,7 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SoftForkRule.html#decrementThreshold" class="tsd-kind-icon">decrement<wbr>Threshold</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SoftForkRule.html#initThreshold" class="tsd-kind-icon">init<wbr>Threshold</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SoftForkRule.html#minThreshold" class="tsd-kind-icon">min<wbr>Threshold</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SlotLength.html#seconds" class="tsd-kind-icon">seconds</a></li>
 							</ul>
 						</section>
 					</div>
@@ -108,34 +107,12 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="decrementThreshold" class="tsd-anchor"></a>
-					<h3>decrement<wbr>Threshold</h3>
-					<div class="tsd-signature tsd-kind-icon">decrement<wbr>Threshold<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<a name="seconds" class="tsd-anchor"></a>
+					<h3>seconds</h3>
+					<div class="tsd-signature tsd-kind-icon">seconds<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc41f8c/clients/TypeScript/packages/schema/src/index.ts#L871">packages/schema/src/index.ts:871</a>
-							</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="initThreshold" class="tsd-anchor"></a>
-					<h3>init<wbr>Threshold</h3>
-					<div class="tsd-signature tsd-kind-icon">init<wbr>Threshold<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc41f8c/clients/TypeScript/packages/schema/src/index.ts#L869">packages/schema/src/index.ts:869</a>
-							</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="minThreshold" class="tsd-anchor"></a>
-					<h3>min<wbr>Threshold</h3>
-					<div class="tsd-signature tsd-kind-icon">min<wbr>Threshold<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc41f8c/clients/TypeScript/packages/schema/src/index.ts#L870">packages/schema/src/index.ts:870</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/c7a3c0e/clients/TypeScript/packages/schema/src/index.ts#L1952">packages/schema/src/index.ts:1952</a>
 							</li>
 						</ul>
 					</aside>

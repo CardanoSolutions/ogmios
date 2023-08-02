@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>Prices | cardano-ogmios</title>
+	<title>BootstrapProtocolUpdate | cardano-ogmios</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -48,13 +48,13 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-module">
-						<a href="_cardano_ogmios_schema.Prices.html" class="tsd-kind-icon">Prices</a>
+						<a href="_cardano_ogmios_schema.BootstrapProtocolUpdate.html" class="tsd-kind-icon">Bootstrap<wbr>Protocol<wbr>Update</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.Prices.html#memory" class="tsd-kind-icon">memory</a>
+								<a href="_cardano_ogmios_schema.BootstrapProtocolUpdate.html#proposal" class="tsd-kind-icon">proposal</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.Prices.html#steps" class="tsd-kind-icon">steps</a>
+								<a href="_cardano_ogmios_schema.BootstrapProtocolUpdate.html#votes" class="tsd-kind-icon">votes</a>
 							</li>
 						</ul>
 					</li>
@@ -74,7 +74,7 @@
 							<a href="../modules/_cardano_ogmios_schema.html">@cardano-ogmios/schema</a>
 						</li>
 						<li>
-							<a href="_cardano_ogmios_schema.Prices.html">Prices</a>
+							<a href="_cardano_ogmios_schema.BootstrapProtocolUpdate.html">BootstrapProtocolUpdate</a>
 						</li>
 					</ul>
 				</div>
@@ -83,7 +83,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">Prices</span>
+						<span class="target">BootstrapProtocolUpdate</span>
 					</li>
 				</ul>
 			</section>
@@ -94,8 +94,8 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Prices.html#memory" class="tsd-kind-icon">memory</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Prices.html#steps" class="tsd-kind-icon">steps</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.BootstrapProtocolUpdate.html#proposal" class="tsd-kind-icon">proposal</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.BootstrapProtocolUpdate.html#votes" class="tsd-kind-icon">votes</a></li>
 							</ul>
 						</section>
 					</div>
@@ -104,23 +104,45 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="memory" class="tsd-anchor"></a>
-					<h3>memory</h3>
-					<div class="tsd-signature tsd-kind-icon">memory<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<a name="proposal" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> proposal</h3>
+					<div class="tsd-signature tsd-kind-icon">proposal<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc41f8c/clients/TypeScript/packages/schema/src/index.ts#L763">packages/schema/src/index.ts:763</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/c7a3c0e/clients/TypeScript/packages/schema/src/index.ts#L781">packages/schema/src/index.ts:781</a>
 							</li>
 						</ul>
 					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>metadata<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span></h5>
+								<ul class="tsd-parameters">
+									<li class="tsd-parameter-index-signature">
+										<h5><span class="tsd-signature-symbol">[</span>k: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><span class="tsd-signature-type">string</span></h5>
+									</li>
+								</ul>
+							</li>
+							<li class="tsd-parameter">
+								<h5>parameters<span class="tsd-signature-symbol">: </span><a href="_cardano_ogmios_schema.BootstrapProtocolParameters.html" class="tsd-signature-type">BootstrapProtocolParameters</a></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>software<span class="tsd-signature-symbol">: </span><a href="_cardano_ogmios_schema.SoftwareVersion.html" class="tsd-signature-type">SoftwareVersion</a></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>version<span class="tsd-signature-symbol">: </span><a href="_cardano_ogmios_schema.ProtocolVersion.html" class="tsd-signature-type">ProtocolVersion</a></h5>
+							</li>
+						</ul>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="steps" class="tsd-anchor"></a>
-					<h3>steps</h3>
-					<div class="tsd-signature tsd-kind-icon">steps<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<a name="votes" class="tsd-anchor"></a>
+					<h3>votes</h3>
+					<div class="tsd-signature tsd-kind-icon">votes<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_schema.BootstrapVote.html" class="tsd-signature-type">BootstrapVote</a><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fc41f8c/clients/TypeScript/packages/schema/src/index.ts#L764">packages/schema/src/index.ts:764</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/c7a3c0e/clients/TypeScript/packages/schema/src/index.ts#L789">packages/schema/src/index.ts:789</a>
 							</li>
 						</ul>
 					</aside>
