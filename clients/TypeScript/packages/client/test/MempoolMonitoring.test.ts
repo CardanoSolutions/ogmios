@@ -88,7 +88,7 @@ describe('MempoolMonitoring', () => {
           await hasTransaction(id)
         } catch (e) {
           expect(e).toBeInstanceOf(JSONRPCError)
-          expect((e as JSONRPCError).code).toBe(-32600)
+          expect((e as JSONRPCError).code).toBe(4000)
         }
       })
     })
@@ -123,7 +123,7 @@ describe('MempoolMonitoring', () => {
           await nextTransaction({ fields: 'all' })
         } catch (e) {
           expect(e).toBeInstanceOf(JSONRPCError)
-          expect((e as JSONRPCError).code).toBe(-32600)
+          expect((e as JSONRPCError).code).toBe(4000)
         }
       })
     })
@@ -160,7 +160,7 @@ describe('MempoolMonitoring', () => {
           await sizeOfMempool()
         } catch (e) {
           expect(e).toBeInstanceOf(JSONRPCError)
-          expect((e as JSONRPCError).code).toBe(-32600)
+          expect((e as JSONRPCError).code).toBe(4000)
         }
       })
     })
@@ -194,7 +194,7 @@ describe('MempoolMonitoring', () => {
           await releaseMempool()
         } catch (e) {
           expect(e).toBeInstanceOf(JSONRPCError)
-          expect((e as JSONRPCError).code).toBe(-32600)
+          expect((e as JSONRPCError).code).toBe(4000)
         }
       })
     })
