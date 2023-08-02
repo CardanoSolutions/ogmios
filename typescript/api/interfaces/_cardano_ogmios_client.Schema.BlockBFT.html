@@ -57,10 +57,10 @@
 								<a href="_cardano_ogmios_client.Schema.BlockBFT.html#governanceAction" class="tsd-kind-icon">governance<wbr>Action</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.BlockBFT.html#header" class="tsd-kind-icon">header</a>
+								<a href="_cardano_ogmios_client.Schema.BlockBFT.html#height" class="tsd-kind-icon">height</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.BlockBFT.html#height" class="tsd-kind-icon">height</a>
+								<a href="_cardano_ogmios_client.Schema.BlockBFT.html#id" class="tsd-kind-icon">id</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_client.Schema.BlockBFT.html#issuer" class="tsd-kind-icon">issuer</a>
@@ -128,8 +128,8 @@
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.BlockBFT.html#delegate" class="tsd-kind-icon">delegate</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.BlockBFT.html#era" class="tsd-kind-icon">era</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.BlockBFT.html#governanceAction" class="tsd-kind-icon">governance<wbr>Action</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.BlockBFT.html#header" class="tsd-kind-icon">header</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.BlockBFT.html#height" class="tsd-kind-icon">height</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.BlockBFT.html#id" class="tsd-kind-icon">id</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.BlockBFT.html#issuer" class="tsd-kind-icon">issuer</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.BlockBFT.html#operationalCertificates" class="tsd-kind-icon">operational<wbr>Certificates</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.BlockBFT.html#protocol" class="tsd-kind-icon">protocol</a></li>
@@ -150,7 +150,7 @@
 					<div class="tsd-signature tsd-kind-icon">ancestor<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:217</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:213</li>
 						</ul>
 					</aside>
 				</section>
@@ -160,7 +160,7 @@
 					<div class="tsd-signature tsd-kind-icon">delegate<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:232</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:228</li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -178,7 +178,7 @@
 					<div class="tsd-signature tsd-kind-icon">era<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"byron"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:213</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:211</li>
 						</ul>
 					</aside>
 				</section>
@@ -188,27 +188,9 @@
 					<div class="tsd-signature tsd-kind-icon">governance<wbr>Action<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.BootstrapGovernanceAction.html" class="tsd-signature-type">BootstrapGovernanceAction</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:223</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:219</li>
 						</ul>
 					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="header" class="tsd-anchor"></a>
-					<h3>header</h3>
-					<div class="tsd-signature tsd-kind-icon">header<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:214</li>
-						</ul>
-					</aside>
-					<div class="tsd-type-declaration">
-						<h4>Type declaration</h4>
-						<ul class="tsd-parameters">
-							<li class="tsd-parameter">
-								<h5>hash<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
-							</li>
-						</ul>
-					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="height" class="tsd-anchor"></a>
@@ -216,7 +198,17 @@
 					<div class="tsd-signature tsd-kind-icon">height<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:218</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:214</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="id" class="tsd-anchor"></a>
+					<h3>id</h3>
+					<div class="tsd-signature tsd-kind-icon">id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:212</li>
 						</ul>
 					</aside>
 				</section>
@@ -226,7 +218,7 @@
 					<div class="tsd-signature tsd-kind-icon">issuer<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:229</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:225</li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -244,7 +236,7 @@
 					<div class="tsd-signature tsd-kind-icon">operational<wbr>Certificates<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.BootstrapOperationalCertificate.html" class="tsd-signature-type">BootstrapOperationalCertificate</a><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:222</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:218</li>
 						</ul>
 					</aside>
 				</section>
@@ -254,7 +246,7 @@
 					<div class="tsd-signature tsd-kind-icon">protocol<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:224</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:220</li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -278,7 +270,7 @@
 					<div class="tsd-signature tsd-kind-icon">size<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:220</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:216</li>
 						</ul>
 					</aside>
 				</section>
@@ -288,7 +280,7 @@
 					<div class="tsd-signature tsd-kind-icon">slot<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:219</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:215</li>
 						</ul>
 					</aside>
 				</section>
@@ -298,7 +290,7 @@
 					<div class="tsd-signature tsd-kind-icon">transactions<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.Transaction.html" class="tsd-signature-type">Transaction</a><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:221</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:217</li>
 						</ul>
 					</aside>
 				</section>
@@ -308,7 +300,7 @@
 					<div class="tsd-signature tsd-kind-icon">type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"bft"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:212</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:210</li>
 						</ul>
 					</aside>
 				</section>

@@ -2369,10 +2369,10 @@
         , "title": "Point"
         , "name": "Point"
         , "additionalProperties": false
-        , "required": [ "slot", "hash" ]
+        , "required": [ "slot", "id" ]
         , "properties":
           { "slot": { "$ref": "cardano.json#/definitions/Slot" }
-          , "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+          , "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
           }
         }
       , { "$ref": "cardano.json#/definitions/Origin" }

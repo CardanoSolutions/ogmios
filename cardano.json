@@ -52,7 +52,7 @@
     , "type": "object"
     , "additionalProperties": false
     , "required":
-      [ "type", "era", "header", "ancestor", "height"
+      [ "id", "type", "era", "ancestor", "height"
       ]
     , "properties":
       { "type":
@@ -63,14 +63,7 @@
         { "type": "string"
         , "enum": [ "byron" ]
         }
-      , "header":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "hash" ]
-        , "properties":
-          { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
-          }
-        }
+      , "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
       , "ancestor": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
       , "height": { "$ref": "cardano.json#/definitions/BlockHeight" }
       }
@@ -81,7 +74,7 @@
     , "type": "object"
     , "additionalProperties": false
     , "required":
-      [ "era", "type", "header", "ancestor", "height", "size", "slot"
+      [ "id", "era", "type", "ancestor", "height", "size", "slot"
       , "protocol", "issuer", "delegate"
       ]
     , "properties":
@@ -93,14 +86,7 @@
         { "type": "string"
         , "enum": [ "byron" ]
         }
-      , "header":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "hash" ]
-        , "properties":
-          { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
-          }
-        }
+      , "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
       , "ancestor": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
       , "height": { "$ref": "cardano.json#/definitions/BlockHeight" }
       , "slot": { "$ref": "cardano.json#/definitions/Slot" }
@@ -150,7 +136,7 @@
     , "type": "object"
     , "additionalProperties": false
     , "required":
-      [ "era", "type", "header", "ancestor", "height", "size", "slot"
+      [ "id", "era", "type", "ancestor", "height", "size", "slot"
       , "protocol", "issuer"
       ]
     , "properties":
@@ -162,14 +148,7 @@
         { "type": "string"
         , "enum": [ "shelley", "allegra", "mary", "alonzo", "babbage" ]
         }
-      , "header":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "hash" ]
-        , "properties":
-          { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
-          }
-        }
+      , "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
       , "ancestor":
         { "oneOf":
           [ { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
@@ -309,9 +288,9 @@
       , "proposal":
         { "type": "object"
         , "additionalProperties": false
-        , "required": [ "hash" ]
+        , "required": [ "id" ]
         , "properties":
-          { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+          { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
           }
         }
       }
@@ -446,9 +425,9 @@
           , "delegate":
             { "type": "object"
             , "additionalProperties": false
-            , "required": [ "verificationKeyHash" ]
+            , "required": [ "id" ]
             , "properties":
-              { "verificationKeyHash":
+              { "id":
                 { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
                 }
               }
@@ -456,9 +435,9 @@
           , "issuer":
             { "type": "object"
             , "additionalProperties": false
-            , "required": [ "verificationKeyHash", "vrfVerificationKeyHash" ]
+            , "required": [ "id", "vrfVerificationKeyHash" ]
             , "properties":
-              { "verificationKeyHash":
+              { "id":
                 { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
                 }
               , "vrfVerificationKeyHash":
@@ -1604,10 +1583,10 @@
     { "title": "tip"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "slot", "hash", "blockNo" ]
+    , "required": [ "slot", "id", "blockNo" ]
     , "properties":
       { "slot": { "$ref": "cardano.json#/definitions/Slot" }
-      , "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+      , "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
       , "blockNo": { "$ref": "cardano.json#/definitions/BlockHeight" }
       }
     }
