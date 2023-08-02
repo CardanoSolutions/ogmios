@@ -9,9 +9,6 @@ import {
   Datum,
   DigestBlake2B256,
   Era,
-  ProtocolParametersAlonzo,
-  ProtocolParametersBabbage,
-  ProtocolParametersShelley,
   Script,
   TransactionOutput,
   UInt64,
@@ -188,27 +185,6 @@ export function isBlockBFT (block: Block): block is BlockBFT {
 /** @category Helper */
 export function isBlockPraos (block: Block): block is BlockPraos {
   return block.era !== BYRON_ERA
-}
-
-/** @category Helper */
-export function isShelleyProtocolParameters (
-  params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
-): params is ProtocolParametersShelley {
-  return isObject(params) && (params as ProtocolParametersShelley).minUtxoValue !== undefined
-}
-
-/** @category Helper */
-export function isAlonzoProtocolParameters (
-  params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
-): params is ProtocolParametersAlonzo {
-  return isObject(params) && (params as ProtocolParametersAlonzo).coinsPerUtxoWord !== undefined
-}
-
-/** @category Helper */
-export function isBabbageProtocolParameters (
-  params: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage
-): params is ProtocolParametersBabbage {
-  return isObject(params) && (params as ProtocolParametersBabbage).coinsPerUtxoByte !== undefined
 }
 
 /**

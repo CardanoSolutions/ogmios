@@ -844,32 +844,32 @@ parseQueryLedgerProposedProtocolParameters genResultInEra =
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentShelley GetProposedPParamsUpdates))
-                    (eraMismatchOrResult Shelley.encodeProposedPPUpdates)
+                    (eraMismatchOrResult (\(Sh.ProposedPPUpdates m) -> encodeFoldable Shelley.encodePParamsUpdate m))
                     (genResultInEra (Proxy @(ShelleyEra crypto)))
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentAllegra GetProposedPParamsUpdates))
-                    (eraMismatchOrResult Allegra.encodeProposedPPUpdates)
+                    (eraMismatchOrResult (\(Sh.ProposedPPUpdates m) -> encodeFoldable Shelley.encodePParamsUpdate m))
                     (genResultInEra (Proxy @(AllegraEra crypto)))
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentMary GetProposedPParamsUpdates))
-                    (eraMismatchOrResult Mary.encodeProposedPPUpdates)
+                    (eraMismatchOrResult (\(Sh.ProposedPPUpdates m) -> encodeFoldable Shelley.encodePParamsUpdate m))
                     (genResultInEra (Proxy @(MaryEra crypto)))
             SomeShelleyEra ShelleyBasedEraAlonzo ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentAlonzo GetProposedPParamsUpdates))
-                    (eraMismatchOrResult Alonzo.encodeProposedPPUpdates)
+                    (eraMismatchOrResult (\(Sh.ProposedPPUpdates m) -> encodeFoldable Alonzo.encodePParamsUpdate m))
                     (genResultInEra (Proxy @(AlonzoEra crypto)))
             SomeShelleyEra ShelleyBasedEraBabbage ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentBabbage GetProposedPParamsUpdates))
-                    (eraMismatchOrResult Babbage.encodeProposedPPUpdates)
+                    (eraMismatchOrResult (\(Sh.ProposedPPUpdates m) -> encodeFoldable Babbage.encodePParamsUpdate m))
                     (genResultInEra (Proxy @(BabbageEra crypto)))
             SomeShelleyEra ShelleyBasedEraConway ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentConway GetProposedPParamsUpdates))
-                    (eraMismatchOrResult Conway.encodeProposedPPUpdates)
+                    (eraMismatchOrResult (\(Sh.ProposedPPUpdates m) -> encodeFoldable Babbage.encodePParamsUpdate m))
                     (genResultInEra (Proxy @(ConwayEra crypto)))
 
 parseQueryLedgerLiveStakeDistribution
@@ -1040,22 +1040,22 @@ parseQueryNetworkGenesisConfiguration (genByron, genShelley, genAlonzo, genConwa
             "byron" ->
                 pure $ const $ Just $ SomeAdHocQuery
                     GetByronGenesis
-                    (Right . (\cfg -> encodeObject ("byron" .= Byron.encodeGenesisData cfg)))
+                    (Right . Byron.encodeGenesisData)
                     (const genByron)
             "shelley" -> do
                 pure $ const $ Just $ SomeAdHocQuery
                     GetShelleyGenesis
-                    (Right . (\cfg -> encodeObject ("shelley" .= Shelley.encodeGenesis cfg)))
+                    (Right . Shelley.encodeGenesis)
                     (const genShelley)
             "alonzo" -> do
                 pure $ const $ Just $ SomeAdHocQuery
                     GetAlonzoGenesis
-                    (Right . (\cfg -> encodeObject ("alonzo" .= Alonzo.encodeGenesis cfg)))
+                    (Right . Alonzo.encodeGenesis)
                     (const genAlonzo)
             "conway" -> do
                 pure $ const $ Just $ SomeAdHocQuery
                     GetConwayGenesis
-                    (Right . (\cfg -> encodeObject ("conway" .= Conway.encodeGenesis cfg)))
+                    (Right . Conway.encodeGenesis)
                     (const genConway)
             (_unknownEra :: Text) -> do
                 fail "Invalid era parameter. Only 'byron', 'shelley', \

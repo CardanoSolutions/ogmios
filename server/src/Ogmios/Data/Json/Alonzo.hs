@@ -162,23 +162,27 @@ encodeGenesis
     :: Al.AlonzoGenesis
     -> Json
 encodeGenesis x =
-    "coinsPerUtxoWord" .=
-        (encodeInteger . unCoin) (Al.unCoinPerWord (Al.agCoinsPerUTxOWord x)) <>
-    "costModels" .=
-        encodeCostModels (Al.agCostModels x) <>
-    "prices" .=
-        encodePrices (Al.agPrices x) <>
-    "maxExecutionUnitsPerTransaction" .=
-        encodeExUnits (Al.agMaxTxExUnits x) <>
-    "maxExecutionUnitsPerBlock" .=
-        encodeExUnits (Al.agMaxBlockExUnits x) <>
-    "maxValueSize" .=
-        encodeNatural (Al.agMaxValSize x) <>
-    "collateralPercentage" .=
-        encodeNatural (Al.agCollateralPercentage x) <>
-    "maxCollateralInputs" .=
-        encodeNatural (Al.agMaxCollateralInputs x)
-    & encodeObject
+    encodeObject
+        ( "era" .= encodeText "alonzo"
+       <> "initialParameters" .= encodeObject
+            ( "minUtxoDepositCoefficient" .=
+                (encodeInteger . (`div` 8) . unCoin . Al.unCoinPerWord) (Al.agCoinsPerUTxOWord x) <>
+              "plutusCostModels" .=
+                  encodeCostModels (Al.agCostModels x) <>
+              "scriptExecutionPrices" .=
+                  encodePrices (Al.agPrices x) <>
+              "maxExecutionUnitsPerTransaction" .=
+                  encodeExUnits (Al.agMaxTxExUnits x) <>
+              "maxExecutionUnitsPerBlock" .=
+                  encodeExUnits (Al.agMaxBlockExUnits x) <>
+              "maxValueSize" .=
+                  (encodeSingleton "bytes" . encodeNatural) (Al.agMaxValSize x) <>
+              "collateralPercentage" .=
+                  encodeNatural (Al.agCollateralPercentage x) <>
+              "maxCollateralInputs" .=
+                    encodeNatural (Al.agMaxCollateralInputs x)
+            )
+        )
 
 encodeIsValid
     :: Al.IsValid
@@ -209,68 +213,71 @@ encodePParams
     => Ledger.PParams era
     -> Json
 encodePParams (Ledger.PParams x) =
-    encodePParamsHKD (\k encode v -> k .= encode v) x
+    encodePParamsHKD (\k encode v -> k .= encode v) identity x
 
 encodePParamsUpdate
     :: (Ledger.PParamsHKD StrictMaybe era ~ Al.AlonzoPParams StrictMaybe era)
     => Ledger.PParamsUpdate era
     -> Json
 encodePParamsUpdate (Ledger.PParamsUpdate x) =
-    encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) x
+    encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) (const SNothing) x
 
 encodePParamsHKD
     :: (forall a. Text -> (a -> Json) -> Sh.HKD f a -> Series)
+    -> (Integer -> Sh.HKD f Integer)
     -> Al.AlonzoPParams f era
     -> Json
-encodePParamsHKD encode x =
+encodePParamsHKD encode pure_ x =
     encode "minFeeCoefficient"
         (encodeInteger . unCoin) (Al.appMinFeeA x) <>
     encode "minFeeConstant"
         encodeCoin (Al.appMinFeeB x) <>
     encode "maxBlockBodySize"
-        encodeNatural (Al.appMaxBBSize x) <>
+        (encodeSingleton "bytes" . encodeNatural) (Al.appMaxBBSize x) <>
     encode "maxBlockHeaderSize"
-        encodeNatural (Al.appMaxBHSize x) <>
-    encode "maxTxSize"
-        encodeNatural (Al.appMaxTxSize x) <>
-    encode "stakeKeyDeposit"
+        (encodeSingleton "bytes" . encodeNatural) (Al.appMaxBHSize x) <>
+    encode "maxTransactionSize"
+        (encodeSingleton "bytes" . encodeNatural) (Al.appMaxTxSize x) <>
+    encode "stakeCredentialDeposit"
         encodeCoin (Al.appKeyDeposit x) <>
-    encode "poolDeposit"
+    encode "stakePoolDeposit"
         encodeCoin (Al.appPoolDeposit x) <>
-    encode "poolRetirementEpochBound"
+    encode "stakePoolRetirementEpochBound"
         encodeEpochNo (Al.appEMax x) <>
-    encode "desiredNumberOfPools"
+    encode "desiredNumberOfStakePools"
         encodeNatural (Al.appNOpt x) <>
-    encode "poolInfluence"
+    encode "stakePoolPledgeInfluence"
         encodeNonNegativeInterval (Al.appA0 x) <>
     encode "monetaryExpansion"
         encodeUnitInterval (Al.appRho x) <>
     encode "treasuryExpansion"
         encodeUnitInterval (Al.appTau x) <>
-    encode "decentralizationParameter"
+    encode "federatedBlockProductionRatio"
         encodeUnitInterval (Al.appD x) <>
     encode "extraEntropy"
         Shelley.encodeNonce (Al.appExtraEntropy x) <>
-    encode "protocolVersion"
-        Shelley.encodeProtVer (Al.appProtocolVersion x) <>
-    encode "minPoolCost"
+    encode "minStakePoolCost"
         encodeCoin (Al.appMinPoolCost x) <>
-    encode "coinsPerUtxoWord"
-        (encodeInteger . unCoin . Al.unCoinPerWord) (Al.appCoinsPerUTxOWord x) <>
-    encode "costModels"
+    encode "minUtxoDepositConstant"
+        encodeInteger (pure_ 0) <>
+    encode "minUtxoDepositCoefficient"
+        (encodeInteger . (`div` 8) . unCoin . Al.unCoinPerWord) (Al.appCoinsPerUTxOWord x) <>
+    encode "plutusCostModels"
         encodeCostModels (Al.appCostModels x) <>
-    encode "prices"
+    encode "scriptExecutionPrices"
         encodePrices (Al.appPrices x) <>
     encode "maxExecutionUnitsPerTransaction"
         (encodeExUnits . Al.unOrdExUnits) (Al.appMaxTxExUnits x) <>
     encode "maxExecutionUnitsPerBlock"
         (encodeExUnits . Al.unOrdExUnits) (Al.appMaxBlockExUnits x) <>
     encode "maxValueSize"
-        encodeNatural (Al.appMaxValSize x) <>
+        (encodeSingleton "bytes" . encodeNatural) (Al.appMaxValSize x) <>
     encode "collateralPercentage"
         encodeNatural (Al.appCollateralPercentage x) <>
     encode "maxCollateralInputs"
-        encodeNatural (Al.appMaxCollateralInputs x)
+        encodeNatural (Al.appMaxCollateralInputs x) <>
+    encode "version"
+        Shelley.encodeProtVer (Al.appProtocolVersion x)
     & encodeObject
 
 encodePrices
@@ -282,13 +289,6 @@ encodePrices prices =
     "steps" .=
         encodeNonNegativeInterval (Al.prSteps prices)
     & encodeObject
-
-encodeProposedPPUpdates
-    :: Crypto crypto
-    => Sh.ProposedPPUpdates (AlonzoEra crypto)
-    -> Json
-encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
-    encodeMap Shelley.stringifyKeyHash encodePParamsUpdate m
 
 encodeRdmrPtr
     :: Al.RdmrPtr
@@ -408,7 +408,7 @@ encodeTxBody x =
     "validityInterval" .=
         Allegra.encodeValidityInterval (Al.atbValidityInterval x) <>
     "governanceActions" .=? OmitWhenNothing
-        (encodeFoldable identity . pure @[] . encodeUpdate)
+        (Shelley.encodeUpdate encodePParamsUpdate)
         (Al.atbUpdate x)
 
 encodeTxOut
@@ -425,17 +425,6 @@ encodeTxOut (Al.AlonzoTxOut addr value datum) =
     -- NOTE: backward-compatibility, since v5.5.0
     "datum" .=? OmitWhenNothing
         encodeDataHash datum
-    & encodeObject
-
-encodeUpdate
-    :: Crypto crypto
-    => Sh.Update (AlonzoEra crypto)
-    -> Json
-encodeUpdate (Sh.Update update epoch) =
-    "proposal" .=
-        encodeProposedPPUpdates update <>
-    "epoch" .=
-        encodeEpochNo epoch
     & encodeObject
 
 encodeUtxo

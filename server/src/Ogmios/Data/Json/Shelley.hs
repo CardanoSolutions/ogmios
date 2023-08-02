@@ -274,7 +274,9 @@ encodeGenesis
     => Sh.ShelleyGenesis crypto
     -> Json
 encodeGenesis x =
-    "systemStart" .=
+    "era" .=
+        encodeText "shelley" <>
+    "startTime" .=
         encodeUtcTime (Sh.sgSystemStart x) <>
     "networkMagic" .=
         encodeWord32 (Sh.sgNetworkMagic x) <>
@@ -291,12 +293,12 @@ encodeGenesis x =
     "maxKesEvolutions" .=
         encodeWord64 (Sh.sgMaxKESEvolutions x) <>
     "slotLength" .=
-        encodeNominalDiffTimeMicro (Sh.sgSlotLength x) <>
+        encodeSingleton "seconds" (encodeNominalDiffTimeMicro (Sh.sgSlotLength x)) <>
     "updateQuorum" .=
         encodeWord64 (Sh.sgUpdateQuorum x) <>
     "maxLovelaceSupply" .=
         encodeWord64 (Sh.sgMaxLovelaceSupply x) <>
-    "protocolParameters" .=
+    "initialParameters" .=
         encodePParams (Sh.sgProtocolParams x) <>
     "initialDelegates" .=
         encodeMap stringifyKeyHash encodeGenDelegPair (Sh.sgGenDelegs x) <>
@@ -497,55 +499,60 @@ encodePParams
     => Ledger.PParams era
     -> Json
 encodePParams (Ledger.PParams x) =
-    encodePParamsHKD (\k encode v -> k .= encode v) x
+    encodePParamsHKD (\k encode v -> k .= encode v) identity x
 
 encodePParamsUpdate
     :: (Ledger.PParamsHKD StrictMaybe era ~ Sh.ShelleyPParams StrictMaybe era)
     => Ledger.PParamsUpdate era
     -> Json
 encodePParamsUpdate (Ledger.PParamsUpdate x) =
-    encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) x
+    encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) (const SNothing) x
 
 encodePParamsHKD
-    :: forall f era. (Ledger.PParamsHKD f era ~ Sh.ShelleyPParams f era)
+    :: forall f era.
+        ( Ledger.PParamsHKD f era ~ Sh.ShelleyPParams f era
+        )
     => (forall a. Text -> (a -> Json) -> Sh.HKD f a -> Series)
+    -> (Integer -> Sh.HKD f Integer)
     -> Ledger.PParamsHKD f era
     -> Json
-encodePParamsHKD encode x =
+encodePParamsHKD encode pure_ x =
     encode "minFeeCoefficient"
         (encodeInteger . unCoin) (Sh.sppMinFeeA x) <>
     encode "minFeeConstant"
         encodeCoin (Sh.sppMinFeeB x) <>
     encode "maxBlockBodySize"
-        encodeNatural (Sh.sppMaxBBSize x) <>
+        (encodeSingleton "bytes" . encodeNatural) (Sh.sppMaxBBSize x) <>
     encode "maxBlockHeaderSize"
-        encodeNatural (Sh.sppMaxBHSize x) <>
-    encode "maxTxSize"
-        encodeNatural (Sh.sppMaxTxSize x) <>
-    encode "stakeKeyDeposit"
+        (encodeSingleton "bytes" . encodeNatural) (Sh.sppMaxBHSize x) <>
+    encode "maxTransactionSize"
+        (encodeSingleton "bytes" . encodeNatural) (Sh.sppMaxTxSize x) <>
+    encode "stakeCredentialDeposit"
         encodeCoin (Sh.sppKeyDeposit x) <>
-    encode "poolDeposit"
+    encode "stakePoolDeposit"
         encodeCoin (Sh.sppPoolDeposit x) <>
-    encode "poolRetirementEpochBound"
+    encode "stakePoolRetirementEpochBound"
         encodeEpochNo (Sh.sppEMax x) <>
-    encode "desiredNumberOfPools"
+    encode "desiredNumberOfStakePools"
         encodeNatural (Sh.sppNOpt x) <>
-    encode "poolInfluence"
+    encode "stakePoolPledgeInfluence"
         encodeNonNegativeInterval (Sh.sppA0 x) <>
+    encode "minStakePoolCost"
+        encodeCoin (Sh.sppMinPoolCost x) <>
     encode "monetaryExpansion"
         encodeUnitInterval (Sh.sppRho x) <>
     encode "treasuryExpansion"
         encodeUnitInterval (Sh.sppTau x) <>
-    encode "decentralizationParameter"
+    encode "federatedBlockProductionRatio"
         encodeUnitInterval (Sh.sppD x) <>
     encode "extraEntropy"
         encodeNonce (Sh.sppExtraEntropy x) <>
-    encode "protocolVersion"
-        encodeProtVer (Sh.sppProtocolVersion x) <>
-    encode "minUtxoValue"
+    encode "minUtxoDepositConstant"
         encodeCoin (Sh.sppMinUTxOValue x) <>
-    encode "minPoolCost"
-        encodeCoin (Sh.sppMinPoolCost x)
+    encode "minUtxoDepositCoefficient"
+        encodeInteger (pure_ 0) <>
+    encode "version"
+        encodeProtVer (Sh.sppProtocolVersion x)
     & encodeObject
 
 encodePrevHash
@@ -554,16 +561,6 @@ encodePrevHash
 encodePrevHash = \case
     TPraos.GenesisHash -> encodeText "genesis"
     TPraos.BlockHash h -> encodeHashHeader h
-
-encodeProposedPPUpdates
-    :: forall era.
-        ( Era era
-        , Ledger.PParamsHKD StrictMaybe era ~ Sh.ShelleyPParams StrictMaybe era
-        )
-    => Sh.ProposedPPUpdates era
-    -> Json
-encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
-    encodeMap stringifyKeyHash encodePParamsUpdate m
 
 encodeProtVer
     :: Ledger.ProtVer
@@ -697,7 +694,7 @@ encodeTxBody x =
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         encodeWdrl (Sh.stbWithdrawals x) <>
     "governanceActions" .=? OmitWhenNothing
-        (encodeFoldable identity . pure @[] . encodeUpdate)
+        (encodeUpdate encodePParamsUpdate)
         (Sh.stbUpdate x)
 
 encodeTxId
@@ -734,17 +731,18 @@ encodeTxOut (Sh.ShelleyTxOut addr value) =
     & encodeObject
 
 encodeUpdate
-    :: ( Era era
-       , Ledger.PParamsHKD StrictMaybe era ~ Sh.ShelleyPParams StrictMaybe era
-       )
-    => Sh.Update era
+    :: (Ledger.PParamsUpdate era -> Json)
+    -> Sh.Update era
     -> Json
-encodeUpdate (Sh.Update update epoch) =
-    "proposal" .=
-        encodeProposedPPUpdates update <>
-    "epoch" .=
-        encodeEpochNo epoch
-    & encodeObject
+encodeUpdate encodePParamsUpdateInEra (Sh.Update (Sh.ProposedPPUpdates m) _epoch) =
+    encodeFoldable
+        (\p -> encodeObject
+            ( "type" .=
+                encodeText "protocolParametersUpdate"
+           <> "parameters" .=
+                encodePParamsUpdateInEra p
+            )
+        ) m
 
 encodeUtxo
     :: forall era.

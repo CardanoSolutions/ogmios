@@ -1,18 +1,8 @@
 import { InteractionContext, Method } from '../../Connection'
-import {
-  Ogmios,
-  ProposedProtocolParametersAlonzo,
-  ProposedProtocolParametersBabbage,
-  ProposedProtocolParametersShelley
-} from '@cardano-ogmios/schema'
+import { Ogmios, ProposedProtocolParameters } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateProposedProtocolParameters']
 type Response = Ogmios['QueryLedgerStateProposedProtocolParametersResponse']
-
-type ProposedProtocolParameters =
-  | ProposedProtocolParametersAlonzo
-  | ProposedProtocolParametersBabbage
-  | ProposedProtocolParametersShelley
 
 /**
  * Get protocol parameters currently proposed for a change, if any.

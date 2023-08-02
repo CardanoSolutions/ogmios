@@ -375,7 +375,7 @@ encodeShortByteString encodeByteString =
 
 encodeSlotLength :: SlotLength -> Json
 encodeSlotLength =
-    encodeNominalDiffTime . getSlotLength
+    encodeSingleton "seconds" . encodeNominalDiffTime . getSlotLength
 {-# INLINABLE encodeSlotLength #-}
 
 encodeSlotNo :: SlotNo -> Json

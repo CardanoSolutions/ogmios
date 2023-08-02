@@ -36,7 +36,6 @@ import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 
 import qualified Cardano.Ledger.Shelley.BlockChain as Sh
-import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.Tx as Sh
 import qualified Cardano.Ledger.Shelley.TxBody as Sh
 import qualified Cardano.Ledger.Shelley.TxWits as Sh
@@ -105,16 +104,6 @@ encodePolicyId
 encodePolicyId (Ma.PolicyID hash) =
     Shelley.encodeScriptHash hash
 
-encodeProposedPPUpdates
-    :: forall era.
-        ( Era era
-        , Ledger.PParamsHKD StrictMaybe era ~ Sh.ShelleyPParams StrictMaybe era
-        )
-    => Sh.ProposedPPUpdates era
-    -> Json
-encodeProposedPPUpdates =
-    Shelley.encodeProposedPPUpdates
-
 encodeTx
     :: forall crypto.
        ( Crypto crypto
@@ -163,7 +152,7 @@ encodeTxBody (Ma.MaryTxBody inps outs certs wdrls fee validity updates _ mint) =
     "validityInterval" .=
         Allegra.encodeValidityInterval validity <>
     "governanceActions" .=? OmitWhenNothing
-        (encodeFoldable identity . pure @[] . Shelley.encodeUpdate)
+        (Shelley.encodeUpdate Shelley.encodePParamsUpdate)
         updates
 
 encodeTxOut

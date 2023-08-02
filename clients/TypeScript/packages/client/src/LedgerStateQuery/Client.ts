@@ -136,6 +136,8 @@ export async function createLedgerStateQueryClient (
           return genesisConfiguration(context, era)
         case 'alonzo':
           return genesisConfiguration(context, era)
+        case 'conway':
+          return genesisConfiguration(context, era)
         default: {
           // NOTE: This raises "Type 'string' is not assignable to type 'never'."
           // whenever a branch of 'EraWithGenesis' isn't covered in the above

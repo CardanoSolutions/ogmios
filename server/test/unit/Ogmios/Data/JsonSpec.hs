@@ -406,8 +406,12 @@ spec = do
                     \7A80D87A801A002625A0D87983D879801A000F4240D879811A000FA92E"
 
     context "SlotLength" $ do
-        let matrix = [ ( mkSlotLength 1, Json.double 1.0 )
-                     , ( mkSlotLength 0.1, Json.double 0.1 )
+        let matrix = [ ( mkSlotLength 1
+                       , Json.pairs $ Json.pair "seconds" (Json.double 1.0)
+                       )
+                     , ( mkSlotLength 0.1
+                       , Json.pairs $ Json.pair "seconds" (Json.double 0.1)
+                       )
                      ]
         forM_ matrix $ \(slotLength, json) ->
             specify (show slotLength <> " → " <> show json) $ do

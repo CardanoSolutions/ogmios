@@ -73,11 +73,14 @@ encodeABlockOrBoundary = encodeObject . \case
         encodeABody (By.blockBody blk)
         <>
         "protocol" .= encodeObject
-            ( "magic" .= encodeAnnotated encodeProtocolMagicId (By.aHeaderProtocolMagicId h)
+            ( "id" .= encodeAnnotated encodeProtocolMagicId (By.aHeaderProtocolMagicId h)
             <>
               "version" .= encodeProtocolVersion (By.headerProtocolVersion h)
             <>
               "software" .= encodeSoftwareVersion (By.headerSoftwareVersion h)
+            <>
+              "update" .=? OmitWhen (\x -> isNothing (By.Upd.payloadProposal x) && null (By.Upd.payloadVotes x))
+                  encodeAUpdPayload (By.bodyUpdatePayload (By.blockBody blk))
             )
         <>
         "issuer" .= encodeObject
@@ -111,8 +114,6 @@ encodeABody
 encodeABody x =
     "transactions" .=
         encodeATxPayload (By.bodyTxPayload x) <>
-    "governanceAction" .=
-        encodeAUpdPayload (By.bodyUpdatePayload x) <>
     "operationalCertificates" .=
         encodeADlgPayload (By.bodyDlgPayload x)
 
@@ -144,6 +145,8 @@ encodeGenesisData
     :: By.GenesisData
     -> Json
 encodeGenesisData x =
+    "era" .=
+        encodeText "byron" <>
     "genesisKeyHashes" .=
         encodeFoldable
             encodeKeyHash
@@ -153,14 +156,14 @@ encodeGenesisData x =
             stringifyKeyHash
             encodeACertificate
             (By.unGenesisDelegation (By.gdHeavyDelegation x)) <>
-    "systemStart" .=
+    "startTime" .=
         encodeUtcTime (By.gdStartTime x) <>
     "initialFunds" .=
         encodeMap
             stringifyAddress
             encodeLovelace
             (By.unGenesisNonAvvmBalances (By.gdNonAvvmBalances x)) <>
-    "initialCoinOffering" .=
+    "initialVouchers" .=
         encodeMap
             (stringifyRedeemVerificationKey . By.fromCompactRedeemVerificationKey)
             encodeLovelace
@@ -169,7 +172,7 @@ encodeGenesisData x =
         encodeBlockCount (By.gdK x) <>
     "networkMagic" .=
         encodeProtocolMagicId (By.gdProtocolMagicId x) <>
-    "protocolParameters" .=
+    "updatableParameters" .=
         encodeProtocolParameters (By.gdProtocolParameters x)
     & encodeObject
 
@@ -250,28 +253,26 @@ encodeAUpdPayload x =
 encodeAUpdProposal
     :: By.Upd.Proposal.AProposal any
     -> Json
-encodeAUpdProposal x =
-    encodeObject
-        ( encodeAnnotated encodeAUpdProposalBody (By.Upd.Proposal.aBody x)
-        <>
-        "issuer" .= encodeObject
-            ( "verificationKey" .= encodeVerificationKey (By.Upd.Proposal.issuer x)
-            )
-        )
+encodeAUpdProposal =
+    encodeAnnotated encodeAUpdProposalBody . By.Upd.Proposal.aBody
 
 encodeAUpdProposalBody
     :: By.Upd.Proposal.ProposalBody
-    -> Series
+    -> Json
 encodeAUpdProposalBody x =
-    "protocol" .= encodeObject
-        ( "version" .= encodeProtocolVersion (By.Upd.Proposal.protocolVersion x)
+    encodeObject
+        ( "version" .=
+            encodeProtocolVersion (By.Upd.Proposal.protocolVersion x)
         <>
-          "software" .= encodeSoftwareVersion (By.Upd.Proposal.softwareVersion x)
+          "software" .=
+            encodeSoftwareVersion (By.Upd.Proposal.softwareVersion x)
+        <>
+          "parameters" .=
+            encodeProtocolParametersUpdate (By.Upd.Proposal.protocolParametersUpdate x)
+        <>
+          "metadata" .=
+            encodeMap By.Upd.getSystemTag encodeInstallerHash (By.Upd.Proposal.metadata x)
         )
-    <>
-    "parameters" .= encodeProtocolParametersUpdate (By.Upd.Proposal.protocolParametersUpdate x)
-    <>
-    "metadata" .= encodeMap By.Upd.getSystemTag encodeInstallerHash (By.Upd.Proposal.metadata x)
 
 encodeAVote
     :: By.Upd.Vote.AVote any
@@ -388,17 +389,17 @@ encodeProtocolParameters x =
         encodeWord16 (By.ppScriptVersion x) <>
     "slotDuration" .=
         encodeNatural (By.ppSlotDuration x) <>
-    "maxBlockSize" .=
-        encodeNatural (By.ppMaxBlockSize x) <>
-    "maxHeaderSize" .=
-        encodeNatural (By.ppMaxHeaderSize x) <>
-    "maxTxSize" .=
-        encodeNatural (By.ppMaxTxSize x) <>
-    "maxProposalSize" .=
-        encodeNatural (By.ppMaxProposalSize x) <>
-    "mpcThreshold" .=
+    "maxBlockBodySize" .=
+        (encodeSingleton "bytes" . encodeNatural) (By.ppMaxBlockSize x) <>
+    "maxBlockHeaderSize" .=
+        (encodeSingleton "bytes" . encodeNatural) (By.ppMaxHeaderSize x) <>
+    "maxTransactionSize" .=
+        (encodeSingleton "bytes" . encodeNatural) (By.ppMaxTxSize x) <>
+    "maxUpdateProposalSize" .=
+        (encodeSingleton "bytes" . encodeNatural) (By.ppMaxProposalSize x) <>
+    "multiPartyComputationThreshold" .=
         encodeLovelacePortion (By.ppMpcThd x) <>
-    "heavyDlgThreshold" .=
+    "heavyDelegationThreshold" .=
         encodeLovelacePortion (By.ppHeavyDelThd x) <>
     "updateVoteThreshold" .=
         encodeLovelacePortion (By.ppUpdateVoteThd x) <>
@@ -406,14 +407,11 @@ encodeProtocolParameters x =
         encodeLovelacePortion (By.ppUpdateProposalThd x) <>
     "updateProposalTimeToLive" .=
         encodeSlotNumber (By.ppUpdateProposalTTL x) <>
-    "softforkRule" .=
-        encodeSoftforkRule (By.ppSoftforkRule x) <>
-    "txFeePolicy" .=
-        encodeTxFeePolicy (By.ppTxFeePolicy x) <>
     "unlockStakeEpoch" .=
-        encodeEpochNumber (By.ppUnlockStakeEpoch x)
-    & encodeObject
-
+        encodeEpochNumber (By.ppUnlockStakeEpoch x) <>
+    encodeSoftforkRule (By.ppSoftforkRule x) <>
+    encodeTxFeePolicy (By.ppTxFeePolicy x)
+  & encodeObject
 
 encodeProtocolParametersUpdate
     :: By.ProtocolParametersUpdate
@@ -423,17 +421,17 @@ encodeProtocolParametersUpdate x =
         encodeWord16 (maybeToStrictMaybe (By.ppuScriptVersion x)) <>
     "slotDuration" .=? OmitWhenNothing
         encodeNatural (maybeToStrictMaybe (By.ppuSlotDuration x)) <>
-    "maxBlockSize" .=? OmitWhenNothing
-        encodeNatural (maybeToStrictMaybe (By.ppuMaxBlockSize x)) <>
-    "maxHeaderSize" .=? OmitWhenNothing
-        encodeNatural (maybeToStrictMaybe (By.ppuMaxHeaderSize x)) <>
-    "maxTxSize" .=? OmitWhenNothing
-        encodeNatural (maybeToStrictMaybe (By.ppuMaxTxSize x)) <>
-    "maxProposalSize" .=? OmitWhenNothing
-        encodeNatural (maybeToStrictMaybe (By.ppuMaxProposalSize x)) <>
-    "mpcThreshold" .=? OmitWhenNothing
+    "maxBlockBodySize" .=? OmitWhenNothing
+        (encodeSingleton "bytes" . encodeNatural) (maybeToStrictMaybe (By.ppuMaxBlockSize x)) <>
+    "maxBlockHeaderSize" .=? OmitWhenNothing
+        (encodeSingleton "bytes" . encodeNatural) (maybeToStrictMaybe (By.ppuMaxHeaderSize x)) <>
+    "maxTransactionSize" .=? OmitWhenNothing
+        (encodeSingleton "bytes" . encodeNatural) (maybeToStrictMaybe (By.ppuMaxTxSize x)) <>
+    "maxUpdateProposalSize" .=? OmitWhenNothing
+        (encodeSingleton "bytes" . encodeNatural) (maybeToStrictMaybe (By.ppuMaxProposalSize x)) <>
+    "multiPartyComputationThreshold" .=? OmitWhenNothing
         encodeLovelacePortion (maybeToStrictMaybe (By.ppuMpcThd x)) <>
-    "heavyDlgThreshold" .=? OmitWhenNothing
+    "heavyDelegationThreshold" .=? OmitWhenNothing
         encodeLovelacePortion (maybeToStrictMaybe (By.ppuHeavyDelThd x)) <>
     "updateVoteThreshold" .=? OmitWhenNothing
         encodeLovelacePortion (maybeToStrictMaybe (By.ppuUpdateVoteThd x)) <>
@@ -441,13 +439,11 @@ encodeProtocolParametersUpdate x =
         encodeLovelacePortion (maybeToStrictMaybe (By.ppuUpdateProposalThd x)) <>
     "updateProposalTimeToLive" .=? OmitWhenNothing
         encodeSlotNumber (maybeToStrictMaybe (By.ppuUpdateProposalTTL x)) <>
-    "softforkRule" .=? OmitWhenNothing
-        encodeSoftforkRule (maybeToStrictMaybe (By.ppuSoftforkRule x)) <>
-    "txFeePolicy" .=? OmitWhenNothing
-        encodeTxFeePolicy (maybeToStrictMaybe (By.ppuTxFeePolicy x)) <>
     "unlockStakeEpoch" .=? OmitWhenNothing
-        encodeEpochNumber (maybeToStrictMaybe (By.ppuUnlockStakeEpoch x))
-    & encodeObject
+        encodeEpochNumber (maybeToStrictMaybe (By.ppuUnlockStakeEpoch x)) <>
+    maybe mempty encodeTxFeePolicy (By.ppuTxFeePolicy x) <>
+    maybe mempty encodeSoftforkRule (By.ppuSoftforkRule x)
+  & encodeObject
 
 encodeProtocolVersion
     :: By.ProtocolVersion
@@ -487,15 +483,14 @@ encodeSlotNumber =
 
 encodeSoftforkRule
     :: By.SoftforkRule
-    -> Json
+    -> Series
 encodeSoftforkRule x =
-    "initThreshold" .=
+    "softForkInitThreshold" .=
         encodeLovelacePortion (By.srInitThd x) <>
-    "minThreshold" .=
+    "softForkMinThreshold" .=
         encodeLovelacePortion (By.srMinThd x) <>
-    "decrementThreshold" .=
+    "softForkDecrementThreshold" .=
         encodeLovelacePortion (By.srThdDecrement x)
-    & encodeObject
 
 encodeSoftwareVersion
     :: By.SoftwareVersion
@@ -509,13 +504,12 @@ encodeSoftwareVersion x =
 
 encodeTxFeePolicy
     :: By.TxFeePolicy
-    -> Json
+    -> Series
 encodeTxFeePolicy (By.TxFeePolicyTxSizeLinear (By.TxSizeLinear cst coeff)) =
-    "constant" .=
+    "minFeeConstant" .=
         encodeLovelace cst <>
-    "coefficient" .=
-        encodeRational coeff
-    & encodeObject
+    "minFeeCoefficient" .=
+        (encodeInteger . round) coeff
 
 encodeTxInWitness
     :: By.TxInWitness

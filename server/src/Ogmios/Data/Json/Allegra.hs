@@ -31,7 +31,6 @@ import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.SafeHash as Ledger
 
 import qualified Cardano.Ledger.Shelley.BlockChain as Sh
-import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.Tx as Sh
 import qualified Cardano.Ledger.Shelley.TxWits as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
@@ -80,16 +79,6 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         )
   where
     TPraos.BHeader hBody _ = blkHeader
-
-encodeProposedPPUpdates
-    :: forall era.
-        ( Era era
-        , Ledger.PParamsHKD StrictMaybe era ~ Sh.ShelleyPParams StrictMaybe era
-        )
-    => Sh.ProposedPPUpdates era
-    -> Json
-encodeProposedPPUpdates =
-    Shelley.encodeProposedPPUpdates
 
 encodeScript
     :: Era era
@@ -173,7 +162,7 @@ encodeTxBody (Al.AllegraTxBody inps outs certs wdrls fee validity updates _) =
     "validityInterval" .=
         encodeValidityInterval validity <>
     "governanceActions" .=? OmitWhenNothing
-        (encodeFoldable identity . pure @[] . Shelley.encodeUpdate)
+        (Shelley.encodeUpdate Shelley.encodePParamsUpdate)
         updates
 
 encodeUtxo

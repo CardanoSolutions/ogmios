@@ -99,76 +99,72 @@ encodeHeader (Praos.Header hBody _hSig) =
             Shelley.encodeProtVer (Praos.hbProtVer hBody)
         )
 
-encodeProposedPPUpdates
-    :: Crypto crypto
-    => Sh.ProposedPPUpdates (BabbageEra crypto)
-    -> Json
-encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
-    encodeMap Shelley.stringifyKeyHash encodePParamsUpdate m
-
 encodePParams
     :: (Ledger.PParamsHKD Identity era ~ Ba.BabbagePParams Identity era)
     => Ledger.PParams era
     -> Json
 encodePParams (Ledger.PParams x) =
-    encodePParamsHKD (\k encode v -> k .= encode v) x
+    encodePParamsHKD (\k encode v -> k .= encode v) identity x
 
 encodePParamsUpdate
     :: (Ledger.PParamsHKD StrictMaybe era ~ Ba.BabbagePParams StrictMaybe era)
     => Ledger.PParamsUpdate era
     -> Json
 encodePParamsUpdate (Ledger.PParamsUpdate x) =
-    encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) x
+    encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) (const SNothing) x
 
 encodePParamsHKD
     :: (forall a. Text -> (a -> Json) -> Sh.HKD f a -> Series)
+    -> (Integer -> Sh.HKD f Integer)
     -> Ba.BabbagePParams f era
     -> Json
-encodePParamsHKD encode x =
+encodePParamsHKD encode pure_ x =
     encode "minFeeCoefficient"
         (encodeInteger . unCoin) (Ba.bppMinFeeA x) <>
     encode "minFeeConstant"
         encodeCoin (Ba.bppMinFeeB x) <>
     encode "maxBlockBodySize"
-        encodeNatural (Ba.bppMaxBBSize x) <>
+        (encodeSingleton "bytes" . encodeNatural) (Ba.bppMaxBBSize x) <>
     encode "maxBlockHeaderSize"
-        encodeNatural (Ba.bppMaxBHSize x) <>
-    encode "maxTxSize"
-        encodeNatural (Ba.bppMaxTxSize x) <>
-    encode "stakeKeyDeposit"
+        (encodeSingleton "bytes" . encodeNatural) (Ba.bppMaxBHSize x) <>
+    encode "maxTransactionSize"
+        (encodeSingleton "bytes" . encodeNatural) (Ba.bppMaxTxSize x) <>
+    encode "stakeCredentialDeposit"
         encodeCoin (Ba.bppKeyDeposit x) <>
-    encode "poolDeposit"
+    encode "stakePoolDeposit"
         encodeCoin (Ba.bppPoolDeposit x) <>
-    encode "poolRetirementEpochBound"
+    encode "stakePoolRetirementEpochBound"
         encodeEpochNo (Ba.bppEMax x) <>
-    encode "desiredNumberOfPools"
+    encode "desiredNumberOfStakePools"
         encodeNatural (Ba.bppNOpt x) <>
-    encode "poolInfluence"
+    encode "stakePoolPledgeInfluence"
         encodeNonNegativeInterval (Ba.bppA0 x) <>
     encode "monetaryExpansion"
         encodeUnitInterval (Ba.bppRho x) <>
     encode "treasuryExpansion"
         encodeUnitInterval (Ba.bppTau x) <>
-    encode "protocolVersion"
-        Shelley.encodeProtVer (Ba.bppProtocolVersion x) <>
-    encode "minPoolCost"
+    encode "minStakePoolCost"
         encodeCoin (Ba.bppMinPoolCost x) <>
-    encode "coinsPerUtxoByte"
+    encode "minUtxoDepositConstant"
+        encodeInteger (pure_ 0) <>
+    encode "minUtxoDepositCoefficient"
         (encodeInteger . unCoin . Ba.unCoinPerByte) (Ba.bppCoinsPerUTxOByte x) <>
-    encode "costModels"
+    encode "plutusCostModels"
         Alonzo.encodeCostModels (Ba.bppCostModels x) <>
-    encode "prices"
+    encode "scriptExecutionPrices"
         Alonzo.encodePrices (Ba.bppPrices x) <>
     encode "maxExecutionUnitsPerTransaction"
         (Alonzo.encodeExUnits . Al.unOrdExUnits) (Ba.bppMaxTxExUnits x) <>
     encode "maxExecutionUnitsPerBlock"
         (Alonzo.encodeExUnits . Al.unOrdExUnits) (Ba.bppMaxBlockExUnits x) <>
     encode "maxValueSize"
-        encodeNatural (Ba.bppMaxValSize x) <>
+        (encodeSingleton "bytes" . encodeNatural) (Ba.bppMaxValSize x) <>
     encode "collateralPercentage"
         encodeNatural (Ba.bppCollateralPercentage x) <>
     encode "maxCollateralInputs"
-        encodeNatural (Ba.bppMaxCollateralInputs x)
+        encodeNatural (Ba.bppMaxCollateralInputs x) <>
+    encode "version"
+        Shelley.encodeProtVer (Ba.bppProtocolVersion x)
     & encodeObject
 
 encodeTx
@@ -234,7 +230,7 @@ encodeTxBody x =
     "validityInterval" .=
         Allegra.encodeValidityInterval (Ba.btbValidityInterval x) <>
     "governanceActions" .=? OmitWhenNothing
-        (encodeFoldable identity . pure @[] . encodeUpdate)
+        (Shelley.encodeUpdate encodePParamsUpdate)
         (Ba.btbUpdate x)
 
 encodeTxOut
@@ -261,17 +257,6 @@ encodeTxOut (Ba.BabbageTxOut addr value datum script) =
     ) <>
     "script" .=? OmitWhenNothing
         Alonzo.encodeScript script
-    & encodeObject
-
-encodeUpdate
-    :: Crypto crypto
-    => Sh.Update (BabbageEra crypto)
-    -> Json
-encodeUpdate (Sh.Update update epoch) =
-    "proposal" .=
-        encodeProposedPPUpdates update <>
-    "epoch" .=
-        encodeEpochNo epoch
     & encodeObject
 
 encodeUtxo

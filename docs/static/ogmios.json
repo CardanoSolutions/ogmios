@@ -1085,23 +1085,10 @@
             , "enum": [ "queryLedgerState/proposedProtocolParameters" ]
             }
           , "result":
-            { "anyOf":
-              [ { "type": "object"
-                , "title": "ProposedProtocolParameters<Shelley>"
-                , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
-                , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Shelley>" }
-                }
-              , { "type": "object"
-                , "title": "ProposedProtocolParameters<Alonzo>"
-                , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
-                , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Alonzo>" }
-                }
-              , { "type": "object"
-                , "title": "ProposedProtocolParameters<Babbage>"
-                , "propertyNames": { "contentEncoding": "base16" , "pattern": "^[0-9a-f]+$" }
-                , "additionalProperties": { "$ref": "cardano.json#/definitions/ProtocolParameters<Babbage>" }
-                }
-              ]
+            { "type": "array"
+            , "items":
+              { "$ref": "cardano.json#/definitions/ProposedProtocolParameters"
+              }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1152,11 +1139,7 @@
             , "enum": [ "queryLedgerState/protocolParameters" ]
             }
           , "result":
-            { "anyOf":
-              [ { "$ref": "cardano.json#/definitions/ProtocolParameters<Shelley>" }
-              , { "$ref": "cardano.json#/definitions/ProtocolParameters<Alonzo>" }
-              , { "$ref": "cardano.json#/definitions/ProtocolParameters<Babbage>" }
-              ]
+            { "$ref": "cardano.json#/definitions/ProtocolParameters"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -1640,27 +1623,10 @@
         }
       , "result":
         { "oneOf":
-          [ { "type": "object"
-            , "required": ["byron"]
-            , "additionalProperties": false
-            , "properties":
-              { "byron": { "$ref": "cardano.json#/definitions/Genesis<Byron>" }
-              }
-            }
-          , { "type": "object"
-            , "required": ["shelley"]
-            , "additionalProperties": false
-            , "properties":
-              { "shelley": { "$ref": "cardano.json#/definitions/Genesis<Shelley>" }
-              }
-            }
-          , { "type": "object"
-            , "required": ["alonzo"]
-            , "additionalProperties": false
-            , "properties":
-              { "alonzo": { "$ref": "cardano.json#/definitions/Genesis<Alonzo>"}
-              }
-            }
+          [ { "$ref": "cardano.json#/definitions/Genesis<Byron>" }
+          , { "$ref": "cardano.json#/definitions/Genesis<Shelley>" }
+          , { "$ref": "cardano.json#/definitions/Genesis<Alonzo>"}
+          , { "$ref": "cardano.json#/definitions/Genesis<Conway>"}
           ]
         }
       , "id":
@@ -2340,8 +2306,8 @@
     , "additionalProperties": false
     , "required": [ "maxCapacity", "currentSize", "transactions" ]
     , "properties":
-      { "maxCapacity": { "$ref": "ogmios.json#/definitions/NumberOfBytes" }
-      , "currentSize": { "$ref": "ogmios.json#/definitions/NumberOfBytes" }
+      { "maxCapacity": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "currentSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "transactions":
         { "type": "object"
         , "additionalProperties": false
@@ -2350,15 +2316,6 @@
           { "count": { "$ref": "cardano.json#/definitions/UInt32" }
           }
         }
-      }
-    }
-
-  , "NumberOfBytes":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "bytes" ]
-    , "properties":
-      { "bytes": { "$ref": "cardano.json#/definitions/Int64" }
       }
     }
 
@@ -2885,8 +2842,8 @@
             , "additionalProperties": false
             , "required": [ "measuredTransactionSize", "maximumTransactionSize" ]
             , "properties":
-              { "measuredTransactionSize": { "$ref": "ogmios.json#/definitions/NumberOfBytes" }
-              , "maximumTransactionSize": { "$reF": "ogmios.json#/definitions/NumberOfBytes" }
+              { "measuredTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+              , "maximumTransactionSize": { "$reF": "cardano.json#/definitions/NumberOfBytes" }
               }
             }
           }
@@ -3388,7 +3345,7 @@
             , "required": [ "infringingStakePool", "computedMetadataHashSize" ]
             , "properties":
               { "infringingStakePool": { "$ref": "cardano.json#/definitions/StakePoolId" }
-              , "computedMetadataHashSize": { "$ref": "ogmios.json#/definitions/NumberOfBytes" }
+              , "computedMetadataHashSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
               }
             }
           }

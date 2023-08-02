@@ -88,7 +88,7 @@ describe('Local state queries', () => {
       expect(epoch).toBeDefined()
 
       const protocolParameters = await client.protocolParameters()
-      expect(protocolParameters.protocolVersion.major).toBeDefined()
+      expect(protocolParameters.version.major).toBeDefined()
 
       const rewardAccountSummaries = await client.rewardAccountSummaries({
         keys: ['91a1b46bacf302e91a8cba443073f7bc84cc74701a338c111e8c6591']
@@ -102,13 +102,13 @@ describe('Local state queries', () => {
       expect(eraSummaries).toHaveLength(6)
 
       const byronGenesis = await client.genesisConfiguration('byron')
-      expect((byronGenesis as GenesisByron).initialCoinOffering).toBeDefined()
+      expect((byronGenesis as GenesisByron).initialVouchers).toBeDefined()
 
       const shelleyGenesis = await client.genesisConfiguration('shelley')
-      expect((shelleyGenesis as GenesisShelley).systemStart).toBeDefined()
+      expect((shelleyGenesis as GenesisShelley).startTime).toBeDefined()
 
       const alonzoGenesis = await client.genesisConfiguration('alonzo')
-      expect((alonzoGenesis as GenesisAlonzo).coinsPerUtxoWord).toBeDefined()
+      expect((alonzoGenesis as GenesisAlonzo).initialParameters.minUtxoDepositCoefficient).toBeDefined()
 
       const point = await client.ledgerTip() as { slot: Slot, id: DigestBlake2B256 }
       expect(point.slot).toBeDefined()
@@ -167,7 +167,7 @@ describe('Local state queries', () => {
       it('fetches the current protocol parameters', async () => {
         const protocolParameters = await LedgerStateQuery.protocolParameters(context)
         expect(protocolParameters.minFeeCoefficient).toBeDefined()
-        expect(protocolParameters.protocolVersion.major).toBeDefined()
+        expect(protocolParameters.version.major).toBeDefined()
       })
     })
     describe('delegationsAndRewards', () => {
@@ -204,7 +204,7 @@ describe('Local state queries', () => {
     describe('genesisConfig', () => {
       it('fetches the config used to bootstrap the blockchain, excluding the genesis UTXO', async () => {
         const config = await LedgerStateQuery.genesisConfiguration(context, 'shelley')
-        expect((config as GenesisShelley).systemStart).toBeDefined()
+        expect((config as GenesisShelley).startTime).toBeDefined()
         expect((config as GenesisShelley).networkMagic).toBeDefined()
       })
     })

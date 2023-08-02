@@ -89,11 +89,11 @@ export type LovelaceDelta = number;
  */
 export type Network = "mainnet" | "testnet";
 export type UInt64 = number;
+export type Int64 = number;
 export type Nonce = Neutral | DigestBlake2B256;
 export type Neutral = "neutral";
-export type UInt321 = number;
-export type Int64 = number;
 export type CostModel = Int64[];
+export type UInt321 = number;
 export type Metadatum =
   | bigint
   | string
@@ -109,11 +109,11 @@ export type RedeemerData = string;
  * An Ed25519 verification key.
  */
 export type VerificationKey = string;
+export type BootstrapProtocolId = number;
 /**
  * An Ed25519-BIP32 Byron genesis delegate verification key with chain-code.
  */
 export type ExtendedVerificationKey = string;
-export type ProtocolMagicId = number;
 export type GenesisHash = "genesis";
 export type VrfProof = string;
 export type VrfOutput = string;
@@ -172,7 +172,7 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureInvalidMIRTransfer
   | SubmitTransactionFailureUnrecognizedCertificateType
   | SubmitTransactionFailureInternalLedgerTypeConversionError;
-export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage";
+export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
 export type ScriptPurpose = Spend | Mint | Publish | Withdraw;
 /**
  * A Blake2b 28-byte hash digest, encoded in base16.
@@ -203,10 +203,6 @@ export type ScriptExecutionFailure =
  */
 export type RelativeTime = number;
 /**
- * A slot length, in seconds, possibly with decimals.
- */
-export type SlotLength = number;
-/**
  * Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks.
  */
 export type SafeZone = number;
@@ -223,7 +219,7 @@ export type Bech32 = string;
  * A stake address (a.k.a reward account)
  */
 export type StakeAddress = string;
-export type EraWithGenesis = "byron" | "shelley" | "alonzo";
+export type EraWithGenesis = "byron" | "shelley" | "alonzo" | "conway";
 export type UtcTime = string;
 /**
  * A magic number for telling networks apart. (e.g. 764824073)
@@ -477,11 +473,11 @@ export interface BlockBFT {
   size: BlockSize;
   transactions?: Transaction[];
   operationalCertificates?: BootstrapOperationalCertificate[];
-  governanceAction?: BootstrapGovernanceAction;
   protocol: {
-    magic: ProtocolMagicId;
+    id: BootstrapProtocolId;
     version: ProtocolVersion;
     software: SoftwareVersion;
+    update?: BootstrapProtocolUpdate;
   };
   issuer: {
     verificationKey: ExtendedVerificationKey;
@@ -507,7 +503,7 @@ export interface Transaction {
   network?: Network;
   scriptIntegrityHash?: DigestBlake2B256;
   requiredExtraSignatories?: DigestBlake2B224[];
-  governanceActions?: UpdateProposalShelley[] | UpdateProposalAlonzo[] | UpdateProposalBabbage[];
+  governanceActions?: GovernanceActionProtocolParametersUpdate[];
   metadata?: Metadata;
   signatories: unknown[];
   scripts?: {
@@ -694,72 +690,49 @@ export interface Assets {
     [k: string]: AssetQuantity;
   };
 }
-export interface UpdateProposalShelley {
-  epoch: Epoch;
-  proposal: {
-    [k: string]: ProtocolParametersShelley;
-  };
+export interface GovernanceActionProtocolParametersUpdate {
+  type: "protocolParametersUpdate";
+  parameters: ProposedProtocolParameters;
 }
-export interface ProtocolParametersShelley {
+export interface ProposedProtocolParameters {
   minFeeCoefficient?: UInt64;
   minFeeConstant?: Lovelace;
-  maxBlockBodySize?: UInt64;
-  maxBlockHeaderSize?: UInt64;
-  maxTxSize?: UInt64;
-  stakeKeyDeposit?: Lovelace;
-  poolDeposit?: Lovelace;
-  poolRetirementEpochBound?: UInt64;
-  desiredNumberOfPools?: UInt64;
-  poolInfluence?: Ratio;
-  monetaryExpansion?: Ratio;
-  treasuryExpansion?: Ratio;
-  decentralizationParameter?: Ratio;
-  minUtxoValue?: Lovelace;
-  minPoolCost?: Lovelace;
+  minUtxoDepositCoefficient?: UInt64;
+  minUtxoDepositConstant?: Lovelace;
+  maxBlockBodySize?: {
+    bytes: Int64;
+  };
+  maxBlockHeaderSize?: {
+    bytes: Int64;
+  };
+  maxTransactionSize?: {
+    bytes: Int64;
+  };
+  maxValueSize?: {
+    bytes: Int64;
+  };
   extraEntropy?: Nonce;
-  protocolVersion?: ProtocolVersion;
-}
-export interface ProtocolVersion {
-  major: UInt321;
-  minor: UInt321;
-  patch?: UInt321;
-}
-export interface UpdateProposalAlonzo {
-  epoch: Epoch;
-  proposal: {
-    [k: string]: ProtocolParametersAlonzo;
-  };
-}
-export interface ProtocolParametersAlonzo {
-  minFeeCoefficient?: UInt64;
-  minFeeConstant?: Lovelace;
-  maxBlockBodySize?: UInt64;
-  maxBlockHeaderSize?: UInt64;
-  maxTxSize?: UInt64;
-  stakeKeyDeposit?: Lovelace;
-  poolDeposit?: Lovelace;
-  poolRetirementEpochBound?: UInt64;
-  desiredNumberOfPools?: UInt64;
-  poolInfluence?: Ratio;
+  stakeCredentialDeposit?: Lovelace;
+  stakePoolDeposit?: Lovelace;
+  stakePoolRetirementEpochBound?: UInt64;
+  stakePoolPledgeInfluence?: Ratio;
+  minStakePoolCost?: Lovelace;
+  desiredNumberOfStakePools?: UInt64;
+  federatedBlockProductionRatio?: Ratio;
   monetaryExpansion?: Ratio;
   treasuryExpansion?: Ratio;
-  decentralizationParameter?: Ratio;
-  minPoolCost?: Lovelace;
-  coinsPerUtxoWord?: UInt64;
-  maxValueSize?: UInt64;
   collateralPercentage?: UInt64;
   maxCollateralInputs?: UInt64;
-  extraEntropy?: Nonce;
-  protocolVersion?: ProtocolVersion;
-  costModels?: CostModels;
-  prices?: Prices;
+  plutusCostModels?: CostModels;
+  scriptExecutionPrices?: ScriptExecutionPrices;
   maxExecutionUnitsPerTransaction?: ExecutionUnits;
   maxExecutionUnitsPerBlock?: ExecutionUnits;
+  version?: ProtocolVersion;
 }
 export interface CostModels {
   [k: string]: CostModel;
 }
-export interface Prices {
+export interface ScriptExecutionPrices {
   memory: Ratio;
   steps: Ratio;
 }
@@ -767,35 +740,10 @@ export interface ExecutionUnits {
   memory: UInt64;
   steps: UInt64;
 }
-export interface UpdateProposalBabbage {
-  epoch: Epoch;
-  proposal: {
-    [k: string]: ProtocolParametersBabbage;
-  };
-}
-export interface ProtocolParametersBabbage {
-  minFeeCoefficient?: UInt64;
-  minFeeConstant?: Lovelace;
-  maxBlockBodySize?: UInt64;
-  maxBlockHeaderSize?: UInt64;
-  maxTxSize?: UInt64;
-  stakeKeyDeposit?: Lovelace;
-  poolDeposit?: Lovelace;
-  poolRetirementEpochBound?: UInt64;
-  desiredNumberOfPools?: UInt64;
-  poolInfluence?: Ratio;
-  monetaryExpansion?: Ratio;
-  treasuryExpansion?: Ratio;
-  minPoolCost?: Lovelace;
-  coinsPerUtxoByte?: UInt64;
-  maxValueSize?: UInt64;
-  collateralPercentage?: UInt64;
-  maxCollateralInputs?: UInt64;
-  protocolVersion?: ProtocolVersion;
-  costModels?: CostModels;
-  prices?: Prices;
-  maxExecutionUnitsPerTransaction?: ExecutionUnits;
-  maxExecutionUnitsPerBlock?: ExecutionUnits;
+export interface ProtocolVersion {
+  major: UInt321;
+  minor: UInt321;
+  patch?: UInt321;
 }
 export interface Metadata {
   hash: DigestBlake2B256;
@@ -825,50 +773,47 @@ export interface BootstrapOperationalCertificate {
     verificationKey: VerificationKey;
   };
 }
-export interface BootstrapGovernanceAction {
-  proposal?: {
-    protocol: {
-      version: ProtocolVersion;
-      software: SoftwareVersion;
-    };
-    metadata: {
-      [k: string]: string;
-    };
-    parameters: ProtocolParametersByron;
-    issuer: {
-      verificationKey: ExtendedVerificationKey;
-    };
-  };
-  votes: BootstrapVote[];
-}
 export interface SoftwareVersion {
   appName: string;
   number: UInt321;
 }
-export interface ProtocolParametersByron {
-  heavyDlgThreshold?: Ratio;
-  maxBlockSize?: UInt64;
-  maxHeaderSize?: UInt64;
-  maxProposalSize?: UInt64;
-  maxTxSize?: UInt64;
-  mpcThreshold?: Ratio;
+export interface BootstrapProtocolUpdate {
+  proposal?: {
+    version: ProtocolVersion;
+    software: SoftwareVersion;
+    parameters: BootstrapProtocolParameters;
+    metadata: {
+      [k: string]: string;
+    };
+  };
+  votes: BootstrapVote[];
+}
+export interface BootstrapProtocolParameters {
+  heavyDelegationThreshold?: Ratio;
+  maxBlockBodySize?: {
+    bytes: Int64;
+  };
+  maxBlockHeaderSize?: {
+    bytes: Int64;
+  };
+  maxUpdateProposalSize?: {
+    bytes: Int64;
+  };
+  maxTransactionSize?: {
+    bytes: Int64;
+  };
+  multiPartyComputationThreshold?: Ratio;
   scriptVersion?: UInt64;
   slotDuration?: UInt64;
   unlockStakeEpoch?: UInt64;
   updateProposalThreshold?: Ratio;
   updateProposalTimeToLive?: UInt64;
   updateVoteThreshold?: Ratio;
-  txFeePolicy?: TxFeePolicy;
-  softforkRule?: SoftForkRule;
-}
-export interface TxFeePolicy {
-  coefficient: Ratio;
-  constant: Lovelace;
-}
-export interface SoftForkRule {
-  initThreshold: Ratio;
-  minThreshold: Ratio;
-  decrementThreshold: Ratio;
+  softForkInitThreshold?: Ratio;
+  softForkMinThreshold?: Ratio;
+  softForkDecrementThreshold?: Ratio;
+  minFeeCoefficient?: UInt64;
+  minFeeConstant?: Lovelace;
 }
 export interface BootstrapVote {
   voter: {
@@ -1195,14 +1140,13 @@ export interface SubmitTransactionFailureTransactionTooLarge {
   code: 3119;
   message: string;
   data: {
-    measuredTransactionSize: NumberOfBytes;
+    measuredTransactionSize: {
+      bytes: Int64;
+    };
     maximumTransactionSize: {
       [k: string]: unknown;
     };
   };
-}
-export interface NumberOfBytes {
-  bytes: Int64;
 }
 /**
  * Some output values in the transaction are too large. Once serialized, values must be below a certain threshold. That threshold sits around 4 KB during the Mary era, and was then made configurable as a protocol parameter in later era. The field 'data.excessivelyLargeOutputs' lists all transaction outputs with values that are above the limit.
@@ -1479,7 +1423,9 @@ export interface SubmitTransactionFailureMetadataHashTooLarge {
   message: string;
   data: {
     infringingStakePool: StakePoolId;
-    computedMetadataHashSize: NumberOfBytes;
+    computedMetadataHashSize: {
+      bytes: Int64;
+    };
   };
 }
 /**
@@ -2000,6 +1946,12 @@ export interface EraParameters {
   safeZone: SafeZone | null;
 }
 /**
+ * A slot length, in seconds, possibly with decimals.
+ */
+export interface SlotLength {
+  seconds: number;
+}
+/**
  * Query the current distribution of the stake across all known stake pools, relative to the TOTAL stake in the network.
  */
 export interface QueryLedgerStateLiveStakeDistribution {
@@ -2087,22 +2039,13 @@ export interface QueryLedgerStateProposedProtocolParameters {
 export interface QueryLedgerStateProposedProtocolParametersResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/proposedProtocolParameters";
-  result: ProposedProtocolParametersShelley | ProposedProtocolParametersAlonzo | ProposedProtocolParametersBabbage;
+  result: ProposedProtocolParameters[];
   /**
    * Any value that was set by a client request in the 'id' field.
    */
   id?: {
     [k: string]: unknown;
   };
-}
-export interface ProposedProtocolParametersShelley {
-  [k: string]: ProtocolParametersShelley;
-}
-export interface ProposedProtocolParametersAlonzo {
-  [k: string]: ProtocolParametersAlonzo;
-}
-export interface ProposedProtocolParametersBabbage {
-  [k: string]: ProtocolParametersBabbage;
 }
 /**
  * Query the current protocol parameters.
@@ -2121,13 +2064,48 @@ export interface QueryLedgerStateProtocolParameters {
 export interface QueryLedgerStateProtocolParametersResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/protocolParameters";
-  result: ProtocolParametersShelley | ProtocolParametersAlonzo | ProtocolParametersBabbage;
+  result: ProtocolParameters;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
   id?: {
     [k: string]: unknown;
   };
+}
+export interface ProtocolParameters {
+  minFeeCoefficient: UInt64;
+  minFeeConstant: Lovelace;
+  minUtxoDepositCoefficient: UInt64;
+  minUtxoDepositConstant: Lovelace;
+  maxBlockBodySize: {
+    bytes: Int64;
+  };
+  maxBlockHeaderSize: {
+    bytes: Int64;
+  };
+  maxTransactionSize?: {
+    bytes: Int64;
+  };
+  maxValueSize?: {
+    bytes: Int64;
+  };
+  extraEntropy?: Nonce;
+  stakeCredentialDeposit: Lovelace;
+  stakePoolDeposit: Lovelace;
+  stakePoolRetirementEpochBound: UInt64;
+  stakePoolPledgeInfluence: Ratio;
+  minStakePoolCost: Lovelace;
+  desiredNumberOfStakePools: UInt64;
+  federatedBlockProductionRatio?: Ratio;
+  monetaryExpansion: Ratio;
+  treasuryExpansion: Ratio;
+  collateralPercentage?: UInt64;
+  maxCollateralInputs?: UInt64;
+  plutusCostModels?: CostModels;
+  scriptExecutionPrices?: ScriptExecutionPrices;
+  maxExecutionUnitsPerTransaction?: ExecutionUnits;
+  maxExecutionUnitsPerBlock?: ExecutionUnits;
+  version: ProtocolVersion;
 }
 /**
  * Query current delegation settings and rewards of some given reward accounts.
@@ -2390,16 +2368,7 @@ export interface QueryNetworkGenesisConfiguration {
 export interface QueryNetworkGenesisConfigurationResponse {
   jsonrpc: "2.0";
   method: "queryNetwork/genesisConfiguration";
-  result:
-    | {
-        byron: GenesisByron;
-      }
-    | {
-        shelley: GenesisShelley;
-      }
-    | {
-        alonzo: GenesisAlonzo;
-      };
+  result: GenesisByron | GenesisShelley | GenesisAlonzo | GenesisConway;
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -2411,26 +2380,28 @@ export interface QueryNetworkGenesisConfigurationResponse {
  * A Byron genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
  */
 export interface GenesisByron {
+  era: "byron";
   genesisKeyHashes: DigestBlake2B224[];
   genesisDelegations: {
     [k: string]: BootstrapOperationalCertificate;
   };
-  systemStart: UtcTime;
+  startTime: UtcTime;
   initialFunds: {
     [k: string]: Lovelace;
   };
-  initialCoinOffering: {
+  initialVouchers: {
     [k: string]: Lovelace;
   };
   securityParameter: UInt64;
   networkMagic: NetworkMagic;
-  protocolParameters: ProtocolParametersByron;
+  protocolParameters: ProtocolParameters;
 }
 /**
  * A Shelley genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
  */
 export interface GenesisShelley {
-  systemStart: UtcTime;
+  era: "shelley";
+  startTime: UtcTime;
   networkMagic: NetworkMagic;
   network: Network;
   activeSlotsCoefficient: Ratio;
@@ -2441,7 +2412,7 @@ export interface GenesisShelley {
   slotLength: SlotLength;
   updateQuorum: UInt64;
   maxLovelaceSupply: UInt64;
-  protocolParameters: ProtocolParametersShelley;
+  initialParameters: ProtocolParameters;
   initialDelegates: InitialDelegates;
   initialFunds: InitialFunds;
   initialPools: GenesisPools;
@@ -2474,14 +2445,29 @@ export interface GenesisPools {
  * An Alonzo genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
  */
 export interface GenesisAlonzo {
-  coinsPerUtxoWord: UInt64;
-  collateralPercentage: UInt64;
-  costModels: CostModels;
-  maxCollateralInputs: UInt64;
-  maxExecutionUnitsPerBlock: ExecutionUnits;
-  maxExecutionUnitsPerTransaction: ExecutionUnits;
-  maxValueSize: UInt64;
-  prices: Prices;
+  era: "alonzo";
+  initialParameters: {
+    minUtxoDepositCoefficient: UInt64;
+    collateralPercentage: UInt64;
+    plutusCostModels: CostModels;
+    maxCollateralInputs: UInt64;
+    maxExecutionUnitsPerBlock: ExecutionUnits;
+    maxExecutionUnitsPerTransaction: ExecutionUnits;
+    maxValueSize: {
+      bytes: Int64;
+    };
+    scriptExecutionPrices: ScriptExecutionPrices;
+  };
+}
+/**
+ * An Conway genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
+ */
+export interface GenesisConway {
+  era: "conway";
+  initialDelegates: InitialDelegates1;
+}
+export interface InitialDelegates1 {
+  [k: string]: GenesisDelegate;
 }
 /**
  * Query the network start time.
@@ -2678,8 +2664,12 @@ export interface SizeOfMempoolResponse {
   };
 }
 export interface MempoolSizeAndCapacity {
-  maxCapacity: NumberOfBytes;
-  currentSize: NumberOfBytes;
+  maxCapacity: {
+    bytes: Int64;
+  };
+  currentSize: {
+    bytes: Int64;
+  };
   transactions: {
     count: UInt321;
   };

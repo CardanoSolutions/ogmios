@@ -19,8 +19,6 @@ import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
 
-import qualified Cardano.Ledger.Shelley.API as Sh
-
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 
 import qualified Cardano.Ledger.Babbage.PParams as Ba
@@ -57,7 +55,8 @@ encodeGenesis
     -> Json
 encodeGenesis x =
     encodeObject
-        ( "initialDelegates" .=
+        ( "era" .= encodeText "conway"
+       <> "initialDelegates" .=
             encodeMap
                 Shelley.stringifyKeyHash
                 Shelley.encodeGenDelegPair
@@ -83,26 +82,19 @@ encodeGovernanceActionIx
 encodeGovernanceActionIx (Cn.GovernanceActionIx ix) =
     encodeObject ("index" .= encodeWord64 ix)
 
-encodeProposedPPUpdates
-    :: Crypto crypto
-    => Sh.ProposedPPUpdates (ConwayEra crypto)
-    -> Json
-encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
-    encodeMap Shelley.stringifyKeyHash encodePParamsUpdate m
-
 encodePParams
     :: (Ledger.PParamsHKD Identity era ~ Ba.BabbagePParams Identity era)
     => Ledger.PParams era
     -> Json
 encodePParams (Ledger.PParams x) =
-    Babbage.encodePParamsHKD (\k encode v -> k .= encode v) x
+    Babbage.encodePParamsHKD (\k encode v -> k .= encode v) identity x
 
 encodePParamsUpdate
     :: (Ledger.PParamsHKD StrictMaybe era ~ Ba.BabbagePParams StrictMaybe era)
     => Ledger.PParamsUpdate era
     -> Json
 encodePParamsUpdate (Ledger.PParamsUpdate x) =
-    Babbage.encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) x
+    Babbage.encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) (const SNothing) x
 
 -- TODO: Finish ConwayEra transaction model.
 encodeTx
