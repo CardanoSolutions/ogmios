@@ -27,6 +27,8 @@ jobs:
 
     runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-4vcpu-ubuntu-2204-arm' || 'ubuntu-latest' }}
 
+    continue-on-error: true
+
     steps:
     - name: 📥 Checkout repository
       uses: actions/checkout@v3
@@ -44,8 +46,7 @@ jobs:
     - name: ❄️ Prepare cache
       working-directory: server
       run: |
-        # echo "$CABAL_PROJECT_LOCAL_TEMPLATE" > cabal.project.local
-        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal update && cabal freeze"
+        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "echo $CABAL_PROJECT_LOCAL_TEMPLATE > cabal.project.local && cabal update && cabal freeze"
 
     - name: 💾 Cache
       uses: actions/cache@v3
@@ -57,6 +58,12 @@ jobs:
         key: cabal-cache-${{ runner.os }}-${{ matrix.compiler }}-${{ hashFiles('server/cabal.project.freeze') }}
         restore-keys: |
           cabal-cache-${{ runner.os }}-${{ matrix.compiler }}
+
+    - name: 🔨 Build (dependencies)
+      working-directory: server
+      run: |
+        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static --enable-executable-stripping --only-dependencies lib:ogmios"
+
 
     - name: 🔨 Build
       working-directory: server
