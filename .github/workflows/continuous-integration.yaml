@@ -22,12 +22,10 @@ jobs:
     strategy:
       matrix:
         os: [ linux ]
-        arch: [ x86_64, aarch64 ]
-        compiler: [ ghc902 ]
+        arch: [ x86_64 ]
+        compiler: [ ghc8107 ]
 
     runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-4vcpu-ubuntu-2204-arm' || 'ubuntu-latest' }}
-
-    continue-on-error: true
 
     steps:
     - name: 📥 Checkout repository
@@ -55,15 +53,9 @@ jobs:
           ~/.cabal-static/packages
           ~/.cabal-static/store
           server/dist-newstyle
-        key: cabal-cache-${{ runner.os }}-${{ matrix.arch }}--${{ matrix.compiler }}-${{ hashFiles('server/cabal.project.freeze') }}
+        key: cabal-cache-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.compiler }}-${{ hashFiles('server/cabal.project.freeze') }}
         restore-keys: |
           cabal-cache-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.compiler }}
-
-    - name: 🔨 Build (dependencies)
-      working-directory: server
-      run: |
-        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static --enable-executable-stripping --only-dependencies lib:ogmios"
-
 
     - name: 🔨 Build
       working-directory: server
@@ -73,7 +65,7 @@ jobs:
     - name: 📦 Package
       run: |
         mkdir -p bin
-        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' || '9.0.2' }}/ogmios-0/x/ogmios/build/ogmios/ogmios ./bin/ogmios
+        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' }}/ogmios-0/x/ogmios/build/ogmios/ogmios ./bin/ogmios
         ./bin/ogmios --version
         mkdir -p share && chmod +w share
         mkdir -p share/zsh/site-functions
@@ -339,7 +331,7 @@ jobs:
         target: [ ogmios, cardano-node-ogmios ]
         network: [ mainnet, preprod, preview ]
         cardano-node: [ 8.1.1 ]
-        arch: [ x86_64, aarch64 ]
+        arch: [ x86_64 ]
 
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-latest' }}
 
