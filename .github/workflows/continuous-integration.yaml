@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         os: [ linux ]
-        arch: [ x86_64, aarch64 ]
+        arch: [ x86_64 ]
         compiler: [ ghc8107 ]
 
     runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-4vcpu-ubuntu-2204-arm' || 'ubuntu-latest' }}
@@ -33,27 +33,19 @@ jobs:
       with:
         submodules: true
 
-    - name: 🧰 Setup
-      uses: input-output-hk/actions/devx@latest
+    - name: Install Nix with good defaults
+      uses: cachix/install-nix-action@v22
       with:
-        platform: ${{ matrix.arch }}-${{ matrix.os }}
-        target-platform: -static
-        compiler-nix-name: ${{ matrix.compiler }}
-        minimal: false
-        iog: true
-
-    - name: Post Setup
-      run: |
-        sudo chmod +x /usr/local/bin/devx
-        file server
+        extra_nix_config: |
+          trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= loony-tools:pr9m4BkM/5/eSTZlkQyRt57Jz7OMBxNSUiMC4FkcNfk= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+          substituters = https://cache.iog.io/ https://cache.zw3rk.com/ https://cache.nixos.org/
+        nix_path: nixpkgs=channel:nixos-unstable
 
     - name: ❄️ Prepare cache
       working-directory: server
-      shell: devx {0}
       run: |
-        echo "$CABAL_PROJECT_LOCAL_TEMPLATE" > cabal.project.local
-        cabal update
-        cabal freeze
+        # echo "$CABAL_PROJECT_LOCAL_TEMPLATE" > cabal.project.local
+        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal update && cabal freeze"
 
     - name: 💾 Cache
       uses: actions/cache@v3
@@ -68,9 +60,8 @@ jobs:
 
     - name: 🔨 Build
       working-directory: server
-      shell: devx {0}
       run: |
-        cabal build --enable-executable-static --enable-executable-stripping exe:ogmios
+        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static --enable-executable-stripping exe:ogmios"
 
     - name: 📦 Package
       run: |
