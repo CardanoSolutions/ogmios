@@ -81,7 +81,6 @@ import Ogmios.App.Configuration
     )
 import Options.Applicative.Help.Pretty
     ( indent
-    , string
     , vsep
     )
 import Safe
@@ -133,9 +132,9 @@ parserInfo = info (helper <*> parser) $ mempty
         , "into JSON-WSP-based protocols, through WebSocket channels."
         ])
     <> footerDoc (Just $ vsep
-        [ string "Examples:"
-        , indent 2 $ string "Connecting to the mainnet:"
-        , indent 4 $ string "$ ogmios --node-socket /path/to/node.socket --node-config /path/to/node/config"
+        [ "Examples:"
+        , indent 2 "Connecting to the mainnet:"
+        , indent 4 "$ ogmios --node-socket /path/to/node.socket --node-config /path/to/node/config"
         ])
   where
     parser =
@@ -227,7 +226,7 @@ tracersOption = fmap defaultTracers $ option readSeverityM $ mempty
     <> completer (listCompleter severities)
   where
     doc =
-        vsep $ string <$> mconcat
+        vsep $ fromString <$> mconcat
             [ [ "Minimal severity of all log messages." ]
             , ("- " <>) <$> severities
             , [ "Or alternatively, to turn a logger off:" ]
@@ -246,7 +245,7 @@ logLevelOption component =
         <> completer (listCompleter severities)
   where
     doc =
-        string $ "Minimal severity of " <> toString component <> " log messages."
+        fromString $ "Minimal severity of " <> toString component <> " log messages."
 
 -- | [--version|-v] | version
 versionOptionOrCommand :: Parser (Command f)
@@ -270,12 +269,12 @@ healthCheckCommand =
     subparser $ command "health-check" $ info (helper <*> parser) $ mempty
         <> progDesc helpText
         <> headerDoc (Just $ vsep
-            [ string $ toString $ unwords
+            [ fromString $ toString $ unwords
                 [ "Handy command to check whether an Ogmios server is up-and-running,"
                 , "and correctly connected to a network / cardano-node."
                 ]
             , mempty
-            , string $ toString $ unwords
+            , fromString $ toString $ unwords
                 [ "This can, for example, be wired to Docker's HEALTHCHECK"
                 , "feature easily."
                 ]
