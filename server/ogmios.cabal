@@ -21,6 +21,7 @@ build-type:     Simple
 extra-source-files:
     static/dashboard.html
     static/dashboard.js
+    static/favicon.png
     static/assets/favicon.ico
 
 source-repository head

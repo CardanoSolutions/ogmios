@@ -1,0 +1,36 @@
+svg.feather {
+  width: 24px;
+  height: 24px;
+}
+
+.flex-c-c {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-a-c {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+#empty svg.feather {
+  color: #e85600;
+  min-width: 96px;
+  min-height: 96px;
+}
+
+#empty pre.error {
+  color: #e85600;
+  border: 1px dashed #e85600;
+  margin: 1rem auto;
+  max-width: 750px;
+  overflow-x: auto;
+  padding: 1rem;
+  text-align: left;
+}

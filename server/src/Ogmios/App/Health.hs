@@ -82,6 +82,7 @@ import Ogmios.Data.Health
     , eraIndexToCardanoEra
     , mkNetworkSynchronization
     , modifyHealth
+    , networkMagicToNetworkName
     )
 
 import qualified Ogmios.App.Metrics as Metrics
@@ -169,6 +170,7 @@ newHealthCheckClient
     -> Debouncer m
     -> m (HealthCheckClient m)
 newHealthCheckClient tr Debouncer{debounce} = do
+    NetworkParameters{networkMagic} <- asks (view typed)
     (stateQueryClient, getNetworkInformation) <- newTimeInterpreterClient
     pure $ HealthCheckClient $ Clients
         { chainSyncClient = mkHealthCheckClient $ \lastKnownTip -> debounce $ do
@@ -188,6 +190,7 @@ newHealthCheckClient tr Debouncer{debounce} = do
                 , currentEpoch
                 , slotInEpoch
                 , connectionStatus = Connected
+                , network = Just (networkMagicToNetworkName networkMagic)
                 }
             logWith tr (HealthTick health)
 

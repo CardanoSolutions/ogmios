@@ -77,7 +77,6 @@ import Wai.Routes
     , Routable (..)
     , header
     , html
-    , javascript
     , mkRoute
     , parseRoutes
     , raw
@@ -119,11 +118,9 @@ data Server where
 --
 mkRoute "Server" [parseRoutes|
 /                           RootR         GET POST
-/dashboard.js               DashboardJsR  GET
 /health                     HealthR       GET
 /metrics                    MetricsR      GET
-/assets/ogmios__light.png   LogoR         GET
-/favicon.ico                FaviconR      GET
+/favicon.png                FaviconR      GET
 |]
 
 -- Dashboard
@@ -153,11 +150,6 @@ postRootR = runHandlerM $ do
             status status500
     rawBuilder $ Builder.fromLazyByteString res
 
-getDashboardJsR :: Handler Server
-getDashboardJsR = runHandlerM $ do
-    javascript $ decodeUtf8 $(embedFile "static/dashboard.js")
-
-
 getHealthR :: Handler Server
 getHealthR = runHandlerM $ do
     header "Access-Control-Allow-Origin" "*"
@@ -182,15 +174,10 @@ getMetricsR = runHandlerM $ do
         metrics <- Metrics.sample sampler sensors
         modifyHealth health (\h -> h { metrics })))
 
-getLogoR :: Handler Server
-getLogoR = runHandlerM $ do
-    header "Content-Type" "image/png"
-    raw $(embedFile "static/assets/ogmios__light.png")
-
 getFaviconR :: Handler Server
 getFaviconR = runHandlerM $ do
-    header "Content-Type" "image/x-icon"
-    raw $(embedFile "static/assets/favicon.ico")
+    header "Content-Type" "image/png"
+    raw $(embedFile "static/favicon.png")
 
 --
 -- HealthCheck

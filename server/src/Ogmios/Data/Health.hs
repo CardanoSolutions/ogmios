@@ -2,7 +2,6 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -22,6 +21,7 @@ module Ogmios.Data.Health
     , SystemStart (..)
     , RelativeTime (..)
     , mkNetworkSynchronization
+    , networkMagicToNetworkName
 
       -- ** CardanoEra
     , CardanoEra (..)
@@ -29,18 +29,6 @@ module Ogmios.Data.Health
     ) where
 
 import Ogmios.Prelude
-
-import Ogmios.Control.MonadSTM
-    ( MonadSTM
-    , TVar
-    , atomically
-    , readTVar
-    , writeTVar
-    )
-import Ogmios.Data.Metrics
-    ( Metrics
-    , emptyMetrics
-    )
 
 import Cardano.Slotting.Slot
     ( EpochNo (..)
@@ -67,6 +55,17 @@ import Data.Time.Clock
     ( UTCTime
     , diffUTCTime
     )
+import Ogmios.Control.MonadSTM
+    ( MonadSTM
+    , TVar
+    , atomically
+    , readTVar
+    , writeTVar
+    )
+import Ogmios.Data.Metrics
+    ( Metrics
+    , emptyMetrics
+    )
 import Ouroboros.Consensus.BlockchainTime.WallClock.Types
     ( RelativeTime (..)
     , SystemStart (..)
@@ -74,9 +73,13 @@ import Ouroboros.Consensus.BlockchainTime.WallClock.Types
 import Ouroboros.Network.Block
     ( Tip (..)
     )
+import Ouroboros.Network.Magic
+    ( NetworkMagic (..)
+    )
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
+import qualified Ogmios.Version as Ogmios
 
 -- | Reflect the current state of the connection with the underlying node.
 data ConnectionStatus
@@ -113,6 +116,10 @@ data Health block = Health
     -- ^ Current known epoch number
     , slotInEpoch :: !(Maybe SlotInEpoch)
     -- ^ Relative slot number within the epoch
+    , version :: !Text
+    -- ^ Ogmios' version
+    , network :: !(Maybe Text)
+    -- ^ The network that Ogmios is configured for
     } deriving stock (Generic, Eq, Show)
 
 instance ToJSON (Tip block) => ToJSON (Health block) where
@@ -129,6 +136,8 @@ emptyHealth startTime = Health
     , connectionStatus = Disconnected
     , currentEpoch = empty
     , slotInEpoch = empty
+    , version = Ogmios.version
+    , network = empty
     }
 
 modifyHealth
@@ -199,6 +208,15 @@ mkNetworkSynchronization systemStart now relativeSlotTime =
                 $ unsafeFromRational
                 $ min 1 (((num * p) `div` den) % p)
 
+-- | Obtain text representations of a well-known network magics
+networkMagicToNetworkName :: NetworkMagic -> Text
+networkMagicToNetworkName = \case
+    NetworkMagic 764824073 -> "mainnet"
+    NetworkMagic 1097911063 -> "catastrophically-broken-testnet"
+    NetworkMagic 1 -> "preprod"
+    NetworkMagic 2 -> "preview"
+    NetworkMagic n -> "unknown (" <> show n <> ")"
+
 -- | A Cardano era, starting from Byron and onwards.
 data CardanoEra
     = Byron
@@ -209,7 +227,16 @@ data CardanoEra
     | Babbage
     | Conway
     deriving stock (Generic, Show, Eq, Enum, Bounded)
-    deriving anyclass (ToJSON)
+
+instance ToJSON CardanoEra where
+    toJSON = toJSON @Text . \case
+        Byron -> "byron"
+        Shelley -> "shelley"
+        Allegra -> "allegra"
+        Mary -> "mary"
+        Alonzo -> "alonzo"
+        Babbage -> "babbage"
+        Conway -> "conway"
 
 eraIndexToCardanoEra
     :: forall crypto. ()
