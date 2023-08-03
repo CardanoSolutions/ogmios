@@ -91,6 +91,7 @@ library:
     - ouroboros-consensus-protocol
     - ouroboros-network
     - ouroboros-network-api
+    - ouroboros-network-framework
     - ouroboros-network-ogmios
     - ouroboros-network-protocols
     - plutus-ledger-api

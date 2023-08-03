@@ -39,6 +39,8 @@ import Ogmios.Control.Exception
     , MonadThrow (..)
     , isAsyncException
     , isDoesNotExistError
+    , isInvalidArgumentOnSocket
+    , isResourceExhaustedError
     , isResourceVanishedError
     , isTryAgainError
     )
@@ -90,6 +92,7 @@ import qualified Ogmios.App.Metrics as Metrics
 import Cardano.Network.Protocol.NodeToClient
     ( Block
     , Clients (..)
+    , NodeToClientVersion
     , connectClient
     , mkClient
     )
@@ -97,12 +100,18 @@ import Data.Aeson
     ( ToJSON (..)
     , genericToEncoding
     )
+import Data.Char
+    ( isDigit
+    )
 import Data.Time.Clock
     ( DiffTime
     , UTCTime
     )
 import Network.TypedProtocol.Pipelined
     ( N (..)
+    )
+import Network.WebSockets
+    ( ConnectionException (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator
     ( HardForkBlock
@@ -118,6 +127,10 @@ import Ouroboros.Network.Block
     , genesisPoint
     , getTipPoint
     )
+import Ouroboros.Network.Mux
+    ( MuxError (..)
+    , MuxErrorType (..)
+    )
 import Ouroboros.Network.NodeToClient
     ( NodeToClientVersionData (NodeToClientVersionData)
     )
@@ -126,6 +139,9 @@ import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     , ClientPipelinedStIdle (..)
     , ClientPipelinedStIntersect (..)
     , ClientStNext (..)
+    )
+import Ouroboros.Network.Protocol.Handshake
+    ( HandshakeProtocolError (..)
     )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..)
@@ -138,8 +154,10 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     )
 
 import qualified Data.Aeson as Json
+import qualified Data.Text as T
 import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ
 import qualified Ouroboros.Consensus.Ledger.Query as Ledger
+import qualified Ouroboros.Network.Protocol.Handshake as Handshake
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 
 --
@@ -228,8 +246,10 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
         & foreverCalmly
   where
     onExceptions nodeSocket
-        = handle onUnknownException
-        . handle (onIOException nodeSocket)
+        = handle onHandshakeException
+        . handle (onRetryableException nodeSocket isRetryableIOException)
+        . handle (onRetryableException nodeSocket isRetryableMuxError)
+        . handle (onRetryableException nodeSocket isRetryableConnectionException)
         . (`onException` recordException)
 
     recordException ::  m ()
@@ -241,23 +261,70 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
             , connectionStatus = Disconnected
             }
 
-    onIOException :: FilePath -> IOException -> m ()
-    onIOException nodeSocket e
-        | isRetryable = do
+    onRetryableException :: Exception e => FilePath -> (e -> Bool) -> e -> m ()
+    onRetryableException nodeSocket isRetryable e
+        | isRetryable e = do
             logWith tr $ HealthFailedToConnect nodeSocket _5s
-        | otherwise = do
-            logWith tr $ HealthUnknownException $ show (toException e)
-      where
-        isRetryable :: Bool
-        isRetryable = isResourceVanishedError e || isDoesNotExistError e || isTryAgainError e
-
-    onUnknownException :: SomeException -> m ()
-    onUnknownException e
         | isAsyncException e = do
             logWith tr $ HealthShutdown $ show e
             throwIO e
-        | otherwise =
-            logWith tr $ HealthUnknownException $ show e
+        | otherwise = do
+            throwIO e
+
+    isRetryableIOException :: IOException -> Bool
+    isRetryableIOException e
+        =  isTryAgainError e
+        || isResourceVanishedError e
+        || isDoesNotExistError e
+        || isResourceExhaustedError e
+        || isInvalidArgumentOnSocket e
+
+    isRetryableMuxError :: MuxError -> Bool
+    isRetryableMuxError MuxError{errorType} =
+        case errorType of
+            MuxBearerClosed -> True
+            MuxSDUReadTimeout -> True
+            MuxSDUWriteTimeout -> True
+            MuxIOException e -> isRetryableIOException e
+            _notRetryable -> False
+
+    isRetryableConnectionException :: ConnectionException -> Bool
+    isRetryableConnectionException = \case
+        CloseRequest{} -> True
+        ConnectionClosed{} -> True
+        ParseException{} -> False
+        UnicodeException{} -> False
+
+    -- | Show better errors when failing to handshake with the cardano-node. This is generally
+    -- because users have misconfigured their instance.
+    onHandshakeException :: HandshakeProtocolError NodeToClientVersion -> m a
+    onHandshakeException = \case
+        HandshakeError (Handshake.Refused _version reason) -> do
+            let hint = case T.splitOn "/=" reason of
+                    [T.filter isDigit -> remoteConfig, T.filter isDigit -> localConfig] ->
+                        unwords
+                            [ "Ogmios is configured for", prettyNetwork localConfig
+                            , "but the cardano-node is running on", prettyNetwork remoteConfig <> "."
+                            , "You probably want to use a different configuration."
+                            ]
+                    _unexpectedReasonMessage ->
+                        ""
+            throwIO $ HandshakeException $ unwords
+                [ "Unable to establish the connection with the cardano-node:"
+                , "it runs on a different network!"
+                , hint
+                ]
+        e ->
+            throwIO e
+      where
+        -- | Show a named version of the network magic when we recognize it for better UX.
+        prettyNetwork :: Text -> Text
+        prettyNetwork = \case
+            "764824073" -> "'mainnet'"
+            "1097911063" -> "'testnet'"
+            "1" -> "'preview'"
+            "2" -> "'preprod'"
+            unknownMagic -> "an unknown network (id=" <> unknownMagic <> ")"
 
 --
 -- Ouroboros clients
@@ -403,6 +470,10 @@ newTimeInterpreterClient = do
 -- Logging
 --
 
+-- | Exception thrown when first establishing a connection with a remote cardano-node.
+data HandshakeException = HandshakeException Text deriving (Show)
+instance Exception HandshakeException
+
 data TraceHealth s where
     HealthTick
         :: { status :: s }
@@ -415,10 +486,6 @@ data TraceHealth s where
     HealthShutdown
         :: { reason :: Text }
         -> TraceHealth s
-
-    HealthUnknownException
-        :: { exception :: Text }
-        -> TraceHealth s
     deriving stock (Show, Generic)
 
 instance ToJSON s => ToJSON (TraceHealth s) where
@@ -429,4 +496,3 @@ instance HasSeverityAnnotation (TraceHealth s) where
         HealthTick{} -> Info
         HealthFailedToConnect{} -> Warning
         HealthShutdown{} -> Notice
-        HealthUnknownException{} -> Error

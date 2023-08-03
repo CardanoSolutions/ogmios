@@ -18,6 +18,8 @@ module Ogmios.Control.Exception
     , isDoesNotExistError
     , isTryAgainError
     , isResourceVanishedError
+    , isResourceExhaustedError
+    , isInvalidArgumentOnSocket
     ) where
 
 import Ogmios.Prelude
@@ -39,7 +41,19 @@ import System.IO.Error
     )
 
 isTryAgainError :: IOException -> Bool
-isTryAgainError = isInfixOf "resource exhausted" . show
+isTryAgainError =
+    isInfixOf "resource exhausted" . show
 
 isResourceVanishedError :: IOException -> Bool
-isResourceVanishedError = isInfixOf "resource vanished" . show
+isResourceVanishedError =
+    isInfixOf "resource vanished" . show
+
+isResourceExhaustedError :: IOException -> Bool
+isResourceExhaustedError =
+    isInfixOf "resource exhausted" . show
+
+-- NOTE: MacOS
+isInvalidArgumentOnSocket :: IOException -> Bool
+isInvalidArgumentOnSocket =
+    isInfixOf "invalid argument (Socket operation on non-socket)" . show
+
