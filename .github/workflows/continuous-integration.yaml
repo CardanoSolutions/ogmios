@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         os: [ linux ]
-        arch: [ x86_64 ]
+        arch: [ x86_64, aarch64 ]
         compiler: [ ghc8107 ]
 
     runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-4vcpu-ubuntu-2204-arm' || 'ubuntu-latest' }}
@@ -332,9 +332,9 @@ jobs:
         target: [ ogmios, cardano-node-ogmios ]
         network: [ mainnet, preprod, preview ]
         cardano-node: [ 8.1.1 ]
-        arch: [ x86_64 ]
+        arch: [ x86_64, aarch64 ]
 
-    runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-4vcpu-ubuntu-2204-arm' || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.os == 'linux' && 'ubuntu-latest' }}
 
     steps:
     - name: 📥 Checkout repository
