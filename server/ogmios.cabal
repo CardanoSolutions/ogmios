@@ -22,8 +22,6 @@ extra-source-files:
     static/dashboard.html
     static/dashboard.js
     static/assets/favicon.ico
-    static/assets/ogmios__dark.png
-    static/assets/ogmios__light.png
 
 source-repository head
   type: git

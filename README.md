@@ -4,8 +4,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: light)" srcset="./server/static/assets/ogmios__light.png">
-    <img alt="Ogmios: gateway to Cardano" src="./server/static/assets/ogmios__dark.png" width="240">
+    <source media="(prefers-color-scheme: light)" srcset="./branding/ogmios__light.png">
+    <img alt="Ogmios: gateway to Cardano" src="./branding/ogmios__dark.png" width="240">
   </picture>
 </p>
 
