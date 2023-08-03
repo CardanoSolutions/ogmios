@@ -23,7 +23,7 @@ jobs:
       matrix:
         os: [ linux ]
         arch: [ x86_64, aarch64 ]
-        compiler: [ ghc8107 ]
+        compiler: [ ghc902 ]
 
     runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-4vcpu-ubuntu-2204-arm' || 'ubuntu-latest' }}
 
@@ -73,7 +73,7 @@ jobs:
     - name: 📦 Package
       run: |
         mkdir -p bin
-        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' }}/ogmios-0/x/ogmios/build/ogmios/ogmios ./bin/ogmios
+        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' || '9.0.2' }}/ogmios-0/x/ogmios/build/ogmios/ogmios ./bin/ogmios
         ./bin/ogmios --version
         mkdir -p share && chmod +w share
         mkdir -p share/zsh/site-functions
