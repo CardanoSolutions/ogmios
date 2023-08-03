@@ -6,17 +6,17 @@ info:
 
     ### Protocols
 
-    - [Chain synchronization](#operation-publish-/?chain-synchronization)
-    - [Ledger state queries](#operation-publish-/?ledger-state-queries)
-    - [Transaction submission](#operation-publish-/?transaction-submission)
-    - [Mempool monitoring](#operation-publish-/?mempool-monitoring)
+    - [Chain synchronization](#operation-publish-/?FindIntersection)
+    - [Ledger state queries](#operation-publish-/?AcquireLedgerState)
+    - [Transaction submission](#operation-publish-/?SubmitTransaction)
+    - [Mempool monitoring](#operation-publish-/?AcquireMempool)
 
     ### Schemas
 
     Here's a shortlist that contains a few handpicked schema definitions. Find **all definitions** at the bottom of this document.
 
     - [Block](#schema-Block)
-    - [Protocol Parameters](#schema-Protocol-Parameters)
+    - [Protocol Parameters](#schema-ProtocolParameters)
     - [Transaction](#schema-Transaction)
 
   license:
@@ -67,120 +67,354 @@ servers:
           - mainnet
 
 channels:
-  /?chain-synchronization:
+  /?FindIntersection:
     description: |
-      Input & output messages regarding the [chain synchronization](/mini-protocols/local-chain-sync) protocol.
-
       <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
     publish:
-      operationId: local-chain-sync[inputs]
+      operationId: FindIntersection
+      message:
+        oneOf:
+          - $ref: "#/components/messages/FindIntersection"
+    subscribe:
+      operationId: FindIntersectionResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/FindIntersectionResponse"
+
+  /?NextBlock:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: NextBlock
       message:
         oneOf:
           - $ref: "#/components/messages/NextBlock"
-          - $ref: "#/components/messages/FindIntersection"
-
     subscribe:
-      operationId: local-chain-sync[outputs]
+      operationId: NextBlockResponse
       message:
         oneOf:
           - $ref: "#/components/messages/NextBlockResponse"
-          - $ref: "#/components/messages/FindIntersectionResponse"
 
-  /?transaction-submission:
+  /?SubmitTransaction:
     description: |
-      Input & output messages regarding the [transaction submission](/mini-protocols/local-tx-submission) protocol.
-
       <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
     publish:
-      operationId: local-tx-submission[inputs]
+      operationId: SubmitTransaction
       message:
         oneOf:
           - $ref: "#/components/messages/SubmitTransaction"
-          - $ref: "#/components/messages/EvaluateTransaction"
     subscribe:
-      operationId: local-tx-submission[outputs]
+      operationId: SubmitTransactionResponse
       message:
         oneOf:
           - $ref: "#/components/messages/SubmitTransactionResponse"
-          - $ref: "#/components/messages/EvaluateTransactionResponse"
 
-
-  /?mempool-monitoring:
+  /?EvaluateTransaction:
     description: |
-      Input & output messages regarding the [mempool monitoring](/mini-protocols/local-tx-monitor) protocol.
-
       <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
     publish:
-      operationId: local-tx-monitor[inputs]
+      operationId: EvaluateTransaction
+      message:
+        oneOf:
+          - $ref: "#/components/messages/EvaluateTransaction"
+    subscribe:
+      operationId: EvaluateTransactionResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/EvaluateTransactionResponse"
+
+  /?AcquireMempool:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: AcquireMempool
       message:
         oneOf:
           - $ref: "#/components/messages/AcquireMempool"
-          - $ref: "#/components/messages/NextTransaction"
-          - $ref: "#/components/messages/HasTransaction"
-          - $ref: "#/components/messages/SizeOfMempool"
-          - $ref: "#/components/messages/ReleaseMempool"
     subscribe:
-      operationId: local-tx-monitor[outputs]
+      operationId: AcquireMempoolResponse
       message:
         oneOf:
           - $ref: "#/components/messages/AcquireMempoolResponse"
-          - $ref: "#/components/messages/NextTransactionResponse"
-          - $ref: "#/components/messages/HasTransactionResponse"
-          - $ref: "#/components/messages/SizeOfMempoolResponse"
-          - $ref: "#/components/messages/ReleaseMempool"
 
-  /?ledger-state-queries:
+  /?NextTransaction:
     description: |
-      Input & output messages regarding the [ledger state queries](/mini-protocols/local-state-query) protocol.
-
       <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
     publish:
-      operationId: local-state-query[inputs]
+      operationId: NextTransaction
+      message:
+        oneOf:
+          - $ref: "#/components/messages/NextTransaction"
+    subscribe:
+      operationId: NextTransactionResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/NextTransactionResponse"
+
+  /?HasTransaction:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: HasTransaction
+      message:
+        oneOf:
+          - $ref: "#/components/messages/HasTransaction"
+    subscribe:
+      operationId: HasTransactionResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/HasTransactionResponse"
+
+  /?SizeOfMempool:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: SizeOfMempool
+      message:
+        oneOf:
+          - $ref: "#/components/messages/SizeOfMempool"
+    subscribe:
+      operationId: SizeOfMempoolResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/SizeOfMempoolResponse"
+
+  /?ReleaseMempool:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: ReleaseMempool
+      message:
+        oneOf:
+          - $ref: "#/components/messages/ReleaseMempool"
+    subscribe:
+      operationId: ReleaseMempoolResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/ReleaseMempoolResponse"
+
+  /?AcquireLedgerState:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: AcquireLedgerState
       message:
         oneOf:
           - $ref: "#/components/messages/AcquireLedgerState"
-          - $ref: "#/components/messages/QueryLedgerStateEpoch"
-          - $ref: "#/components/messages/QueryLedgerStateEraStart"
-          - $ref: "#/components/messages/QueryLedgerStateEraSummaries"
-          - $ref: "#/components/messages/QueryLedgerStateLiveStakeDistribution"
-          - $ref: "#/components/messages/QueryLedgerStateProjectedRewards"
-          - $ref: "#/components/messages/QueryLedgerStateProtocolParameters"
-          - $ref: "#/components/messages/QueryLedgerStateProposedProtocolParameters"
-          - $ref: "#/components/messages/QueryLedgerStateRewardAccountSummaries"
-          - $ref: "#/components/messages/QueryLedgerStateRewardsProvenance"
-          - $ref: "#/components/messages/QueryLedgerStateStakePoolParameters"
-          - $ref: "#/components/messages/QueryLedgerStateStakePools"
-          - $ref: "#/components/messages/QueryLedgerStateTip"
-          - $ref: "#/components/messages/QueryLedgerStateUtxo"
-          - $ref: "#/components/messages/QueryNetworkBlockHeight"
-          - $ref: "#/components/messages/QueryNetworkGenesisConfiguration"
-          - $ref: "#/components/messages/QueryNetworkStartTime"
-          - $ref: "#/components/messages/QueryNetworkTip"
-          - $ref: "#/components/messages/ReleaseLedgerState"
-
     subscribe:
-      operationId: local-state-query[outputs]
+      operationId: AcquireLedgerStateResponse
       message:
         oneOf:
           - $ref: "#/components/messages/AcquireLedgerStateResponse"
-          - $ref: "#/components/messages/AcquireLedgerStateResponse"
+
+  /?QueryLedgerStateEpoch:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateEpoch
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateEpoch"
+    subscribe:
+      operationId: QueryLedgerStateEpochResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/QueryLedgerStateEpochResponse"
+
+  /?QueryLedgerStateEraStart:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateEraStart
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateEraStart"
+    subscribe:
+      operationId: QueryLedgerStateEraStartResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/QueryLedgerStateEraStartResponse"
+
+  /?QueryLedgerStateEraSummaries:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateEraSummaries
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateEraSummaries"
+    subscribe:
+      operationId: QueryLedgerStateEraSummariesResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/QueryLedgerStateEraSummariesResponse"
+
+  /?QueryLedgerStateLiveStakeDistribution:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateLiveStakeDistribution
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateLiveStakeDistribution"
+    subscribe:
+      operationId: QueryLedgerStateLiveStakeDistributionResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/QueryLedgerStateLiveStakeDistributionResponse"
+
+  /?QueryLedgerStateProjectedRewards:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateProjectedRewards
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateProjectedRewards"
+    subscribe:
+      operationId: QueryLedgerStateProjectedRewardsResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/QueryLedgerStateProjectedRewardsResponse"
+
+  /?QueryLedgerStateProtocolParameters:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateProtocolParameters
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateProtocolParameters"
+    subscribe:
+      operationId: QueryLedgerStateProtocolParametersResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/QueryLedgerStateProtocolParametersResponse"
+
+  /?QueryLedgerStateProposedProtocolParameters:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateProposedProtocolParameters
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateProposedProtocolParameters"
+    subscribe:
+      operationId: QueryLedgerStateProposedProtocolParametersResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/QueryLedgerStateProposedProtocolParametersResponse"
-          - $ref: "#/components/messages/QueryLedgerStateRewardAccountSummariesResponse"
-          - $ref: "#/components/messages/QueryLedgerStateRewardsProvenanceResponse"
-          - $ref: "#/components/messages/QueryLedgerStateStakePoolParametersResponse"
+
+  /?QueryLedgerStateStakePools:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateStakePools
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateStakePools"
+    subscribe:
+      operationId: QueryLedgerStateStakePoolsResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/QueryLedgerStateStakePoolsResponse"
+
+  /?QueryLedgerStateTip:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateTip
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateTip"
+    subscribe:
+      operationId: QueryLedgerStateTipResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/QueryLedgerStateTipResponse"
+
+  /?QueryLedgerStateUtxo:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateUtxo
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateUtxo"
+    subscribe:
+      operationId: QueryLedgerStateUtxoResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/QueryLedgerStateUtxoResponse"
+
+  /?QueryNetworkBlockHeight:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryNetworkBlockHeight
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryNetworkBlockHeight"
+    subscribe:
+      operationId: QueryNetworkBlockHeightResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/QueryNetworkBlockHeightResponse"
+
+  /?QueryNetworkGenesisConfiguration:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryNetworkGenesisConfiguration
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryNetworkGenesisConfiguration"
+    subscribe:
+      operationId: QueryNetworkGenesisConfigurationResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/QueryNetworkGenesisConfigurationResponse"
+
+  /?QueryNetworkStartTime:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryNetworkStartTime
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryNetworkStartTime"
+    subscribe:
+      operationId: QueryNetworkStartTimeResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/QueryNetworkStartTimeResponse"
+
+  /?QueryNetworkTip:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryNetworkTip
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryNetworkTip"
+    subscribe:
+      operationId: QueryNetworkTipResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/QueryNetworkTipResponse"
+
+  /?ReleaseLedgerState:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: ReleaseLedgerState
+      message:
+        oneOf:
+          - $ref: "#/components/messages/ReleaseLedgerState"
+    subscribe:
+      operationId: ReleaseLedgerStateResponse
+      message:
+        oneOf:
           - $ref: "#/components/messages/ReleaseLedgerStateResponse"
 
 components:
@@ -580,5 +814,7 @@ components:
   schemas:
     Block:
       $ref: "/cardano.json#/definitions/Block"
+    ProtocolParameters:
+      $ref: "/cardano.json#/definitions/ProtocolParameters"
     Transaction:
       $ref: "/cardano.json#/definitions/Transaction"
