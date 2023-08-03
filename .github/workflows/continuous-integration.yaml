@@ -55,9 +55,9 @@ jobs:
           ~/.cabal-static/packages
           ~/.cabal-static/store
           server/dist-newstyle
-        key: cabal-cache-${{ runner.os }}-${{ matrix.compiler }}-${{ hashFiles('server/cabal.project.freeze') }}
+        key: cabal-cache-${{ runner.os }}-${{ matrix.arch }}--${{ matrix.compiler }}-${{ hashFiles('server/cabal.project.freeze') }}
         restore-keys: |
-          cabal-cache-${{ runner.os }}-${{ matrix.compiler }}
+          cabal-cache-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.compiler }}
 
     - name: 🔨 Build (dependencies)
       working-directory: server
