@@ -7,10 +7,10 @@
   "categoryOrder": [
     "Constructor",
     "Connection",
-    "ChainSync",
-    "StateQuery",
-    "TxSubmission",
-    "Health",
+    "ChainSynchronization",
+    "LedgerStateQuery",
+    "TransactionSubmission",
+    "MempoolMonitoring",
     "Helper",
     "*"
   ]
