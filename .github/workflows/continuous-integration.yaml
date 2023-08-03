@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         os: [ linux ]
-        arch: [ x86_64 ]
+        arch: [ x86_64, aarch64 ]
         compiler: [ ghc8107 ]
 
     runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-4vcpu-ubuntu-2204-arm' || 'ubuntu-latest' }}
@@ -39,7 +39,7 @@ jobs:
         platform: ${{ matrix.arch }}-${{ matrix.os }}
         target-platform: -static
         compiler-nix-name: ${{ matrix.compiler }}
-        minimal: true
+        minimal: false
         iog: true
 
     - name: Post Setup
