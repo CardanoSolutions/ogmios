@@ -9,13 +9,16 @@ svg.feather {
   align-items: center;
 }
 
-.flex-a-c {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
+svg.s-rounded {
+  border-radius: 50%;
+}
+
+.text-monospace {
+  font-family: 'Roboto Mono', 'Courrier New', monospace;
 }
 
 .flex-col {
+  display: flex;
   flex-direction: column;
 }
 

@@ -20,18 +20,24 @@
         <a href="/" class="navbar-brand mr-2">Ogmios <small><span id="version"></span></small></a>
       </section>
       <section class="navbar-section">
-          <a target="_blank" href="https://ogmios.dev/api" class="btn btn-link">
-            <svg class="feather mx-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-            </svg>
-            API Reference
-          </a>
-          <a target="_blank" href="https://github.com/CardanoSolutions/ogmios" class="btn btn-link">
-            <svg class="feather mx-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-            </svg>
-            Source Code
-          </a>
+        <a target="_blank" href="https://ogmios.dev/api" class="btn btn-link text-small flex-c-c">
+          <svg class="feather mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          API reference
+        </a>
+        <a target="_blank" href="https://ogmios.dev/changelog" class="btn btn-link flex-c-c text-small">
+          <svg class="feather mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+          Changelog
+        </a>
+        <a target="_blank" href="https://github.com/CardanoSolutions/ogmios" class="btn btn-link text-small flex-c-c">
+          <svg class="feather mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+          </svg>
+          Source code
+        </a>
       </section>
     </header>
 
@@ -107,34 +113,16 @@
 
         <!--------------- Health -->
         <div class="column col-1"></div>
-        <div class="column col-4 col-mx-auto">
+        <div class="column col-4 col-mx-auto flex-col">
+
           <div class="card">
             <div class="card-header">
-              <div class="card-title h5">Health</div>
-              <div class="card-subtitle text-gray">Check here if Ogmios is connecting to your node and if your node is correctly syncing with the network.</div>
+              <div class="card-title h5">Entrypoints</div>
+              <div class="card-subtitle text-gray">A brief summary of the server's entrypoints.</div>
             </div>
-            <div class="card-body flex-a-c">
-              <div class="flex-c-c">
-                <figure class="avatar avatar-lg flex-c-c">
-                  <svg class="feather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                  </svg>
-                  <i id="status" class="avatar-presence away tooltip" data-tooltip="?"></i>
-                </figure>
-                <span id="network-synchronization" class="badge px-2" data-badge="?"></span>
-              </div>
-              <div class="flex-c-c">
-                <figure class="avatar avatar-lg flex-c-c">
-                  <svg class="feather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                </figure>
-                <span id="uptime" class="badge px-2" data-badge="?">uptime</span>
-              </div>
-            </div>
-            <div class="card-footer flex-c-c" style="font-family: 'Roboto Mono', 'Courrier New', monospace;">
-              <span id="websocket-url" class="label label-secondary p-1 m-2"></span>
-              <span id="http-url" class="label label-secondary p-1 m-2"></span>
+            <div class="card-body columns flex-c-c text-monospace text-small">
+              <span id="websocket-url" class="label label-secondary p-1 px-2 mr-1"></span>
+              <span id="http-url" class="label label-secondary p-1 px-2 ml-1"></span>
               <script>
                 on(EVENTS.ENTRYPOINTS, ({ websocketUrl, httpUrl }) => {
                   sel('#websocket-url').innerText = websocketUrl;
@@ -143,23 +131,71 @@
               </script>
             </div>
           </div>
+
+          <div class="card" style="margin-top: auto;">
+            <div class="card-header">
+              <div class="card-title h5">Health</div>
+              <div class="card-subtitle text-gray">Check here if Ogmios is connecting to your node and if your node is correctly syncing with the network.</div>
+            </div>
+            <div class="card-body columns">
+
+              <div class="column col-1"></div>
+              <div class="column col-5 my-2">
+                <span class="chip bg-primary py-1">
+                  <svg class="feather mr-2 py-1 s-rounded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line>
+                  </svg>
+                  <span style="font-variant: small-caps;">Status</span>
+              </div>
+              <div class="column col-5 my-2 text-right">
+                <span id="status" class="label label-rounded">?</span>
+              </div>
+              <div class="column col-1"></div>
+
+              <div class="column col-1"></div>
+              <div class="column col-5 my-2">
+                <span class="chip bg-primary py-1">
+                  <svg class="feather mr-2 py-1 s-rounded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span style="font-variant: small-caps;">Last known tip</span>
+                </span>
+              </div>
+              <div class="column col-5 my-2 text-right">
+                <span id="last-update" class="badge px-2 text-monospace" data-badge="?"></span>
+              </div>
+              <div class="column col-1"></div>
+
+              <div class="column col-1"></div>
+              <div class="column col-5 my-2">
+                <span class="chip bg-primary py-1">
+                  <svg class="feather mr-2 py-1 s-rounded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                  </svg>
+                  <span style="font-variant: small-caps;">Network</span>
+              </div>
+              <div class="column col-5 my-2 text-right">
+                <span id="network-synchronization" class="badge px-2" data-badge="?"></span>
+              </div>
+              <div class="column col-1"></div>
+            </div>
+          </div>
         </div>
         <script>
           on(EVENTS.HEALTH_TICK, (health) => {
             const status = sel('#status')
+
+            status.innerText = health.connectionStatus;
             if (health.connectionStatus === 'connected') {
-              status.classList.add('online');
-              status.classList.remove('away');
-              status.classList.remove('busy');
-              status.setAttribute('data-tooltip', 'Connected');
+              status.classList.add('label-success');
+              status.classList.remove('label-error');
             } else {
-              status.classList.add('busy');
-              status.classList.remove('away');
-              status.classList.remove('online');
-              status.setAttribute('data-tooltip', 'Disconnected');
+              status.classList.remove('label-success');
+              status.classList.add('label-error');
             }
 
-            sel('#uptime').setAttribute('data-badge', uptime(health.startTime));
+            sel('#last-update').innerText = (health.lastKnownTip || {}).slot || '?';
+            sel('#last-update').setAttribute('data-badge', lastUpdate(health.lastTipUpdate));
             sel('#network-synchronization').setAttribute('data-badge', percentage(health.networkSynchronization));
             sel('#network-synchronization').innerText = health.network;
             sel('#version').innerText = `－${health.version}`

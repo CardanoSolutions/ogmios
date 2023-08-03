@@ -49,14 +49,14 @@ window.addPoint = function addPoint(chart, x, y) {
   chart.update();
 }
 
-window.uptime = function uptime(startTime) {
-  const s = ((new Date()).getTime() - (new Date(startTime)).getTime()) / 1000;
+window.lastUpdate = function lastUpdate(time) {
+  const s = ((new Date()).getTime() - (new Date(time)).getTime()) / 1000;
   if (s < 60) {
-    return `${Math.round(s)}s`;
+    return `${Math.round(s)}s ago`;
   } else if (s < 120 * 60) {
-    return `${Math.round(s / 60)}min`;
+    return `${Math.round(s / 60)}min ago`;
   } else {
-    return `${Math.round(s / 3600)}h`;
+    return `${Math.round(s / 3600)}h ago`;
   }
 }
 
@@ -83,7 +83,7 @@ async function fetchHealth(baseUrl) {
 
 window.addEventListener('load', async function () {
   try {
-    const host = window.location.host.replace('8000', '1337');
+    const host = window.location.host;
     const websocketProtocol = window.location.protocol === "http:" ? "ws" : "wss";
     const websocketUrl = websocketProtocol + "://" + host;
     const httpUrl = window.location.protocol + '//' + host;
