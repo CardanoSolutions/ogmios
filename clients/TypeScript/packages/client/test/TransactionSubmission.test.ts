@@ -150,7 +150,7 @@ describe('TransactionSubmission', () => {
           validator: 'spend:0',
           budget: {
             memory: 15694,
-            steps: 5134808
+            cpu: 5134808
           }
         }])
       })
@@ -207,7 +207,7 @@ describe('TransactionSubmission', () => {
           validator: 'spend:0',
           budget: {
             memory: 15694,
-            steps: 5134808
+            cpu: 5134808
           }
         }])
       })

@@ -154,7 +154,7 @@ encodeExUnits
 encodeExUnits units =
     "memory" .=
         encodeNatural (Al.exUnitsMem units) <>
-    "steps" .=
+    "cpu" .=
         encodeNatural (Al.exUnitsSteps units)
     & encodeObject
 
@@ -286,7 +286,7 @@ encodePrices
 encodePrices prices =
     "memory" .=
         encodeNonNegativeInterval (Al.prMem prices) <>
-    "steps" .=
+    "cpu" .=
         encodeNonNegativeInterval (Al.prSteps prices)
     & encodeObject
 

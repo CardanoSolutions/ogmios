@@ -635,10 +635,10 @@
     { "title": "ExecutionUnits"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "memory", "steps" ]
+    , "required": [ "memory", "cpu" ]
     , "properties":
       { "memory": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "steps": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "cpu": { "$ref": "cardano.json#/definitions/UInt64" }
       }
     }
 
@@ -1255,7 +1255,7 @@
     , "examples":
       [ { "executionUnits":
           { "memory": 2
-          , "steps": 2
+          , "cpu": 2
           }
         , "redeemer": "ggRCqSQ="
         }
@@ -1522,10 +1522,10 @@
     { "title": "ScriptExecutionPrices"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "memory", "steps" ]
+    , "required": [ "memory", "cpu" ]
     , "properties":
       { "memory": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "steps": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "cpu": { "$ref": "cardano.json#/definitions/Ratio" }
       }
     }
 

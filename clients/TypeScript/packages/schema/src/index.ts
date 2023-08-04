@@ -734,11 +734,11 @@ export interface CostModels {
 }
 export interface ScriptExecutionPrices {
   memory: Ratio;
-  steps: Ratio;
+  cpu: Ratio;
 }
 export interface ExecutionUnits {
   memory: UInt64;
-  steps: UInt64;
+  cpu: UInt64;
 }
 export interface ProtocolVersion {
   major: UInt321;
