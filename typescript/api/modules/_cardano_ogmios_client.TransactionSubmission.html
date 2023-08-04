@@ -108,7 +108,7 @@
 					<div class="tsd-signature tsd-kind-icon">Evaluation<wbr>Result<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6e0748a/clients/TypeScript/packages/client/src/TransactionSubmission/evaluateTransaction/index.ts#L28">packages/client/src/TransactionSubmission/evaluateTransaction/index.ts:28</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/aead473/clients/TypeScript/packages/client/src/TransactionSubmission/evaluateTransaction/index.ts#L28">packages/client/src/TransactionSubmission/evaluateTransaction/index.ts:28</a>
 							</li>
 						</ul>
 					</aside>
@@ -139,13 +139,13 @@
 					<a name="evaluateTransaction" class="tsd-anchor"></a>
 					<h3>evaluate<wbr>Transaction</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-namespace">
-						<li class="tsd-signature tsd-kind-icon">evaluate<wbr>Transaction<span class="tsd-signature-symbol">(</span>context<span class="tsd-signature-symbol">: </span><a href="../interfaces/_cardano_ogmios_client.InteractionContext.html" class="tsd-signature-type">InteractionContext</a>, transaction<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, additionalUtxoSet<span class="tsd-signature-symbol">?: </span><a href="_cardano_ogmios_client.Schema.html#Utxo" class="tsd-signature-type">Utxo</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="_cardano_ogmios_client.TransactionSubmission.html#EvaluationResult" class="tsd-signature-type">EvaluationResult</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">evaluate<wbr>Transaction<span class="tsd-signature-symbol">(</span>context<span class="tsd-signature-symbol">: </span><a href="../interfaces/_cardano_ogmios_client.InteractionContext.html" class="tsd-signature-type">InteractionContext</a>, serializedTransaction<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, additionalUtxo<span class="tsd-signature-symbol">?: </span><a href="_cardano_ogmios_client.Schema.html#Utxo" class="tsd-signature-type">Utxo</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="_cardano_ogmios_client.TransactionSubmission.html#EvaluationResult" class="tsd-signature-type">EvaluationResult</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6e0748a/clients/TypeScript/packages/client/src/TransactionSubmission/evaluateTransaction/index.ts#L41">packages/client/src/TransactionSubmission/evaluateTransaction/index.ts:41</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/aead473/clients/TypeScript/packages/client/src/TransactionSubmission/evaluateTransaction/index.ts#L41">packages/client/src/TransactionSubmission/evaluateTransaction/index.ts:41</a>
 									</li>
 								</ul>
 							</aside>
@@ -163,10 +163,10 @@
 									<h5>context: <a href="../interfaces/_cardano_ogmios_client.InteractionContext.html" class="tsd-signature-type">InteractionContext</a></h5>
 								</li>
 								<li>
-									<h5>transaction: <span class="tsd-signature-type">string</span></h5>
+									<h5>serializedTransaction: <span class="tsd-signature-type">string</span></h5>
 								</li>
 								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> additionalUtxoSet: <a href="_cardano_ogmios_client.Schema.html#Utxo" class="tsd-signature-type">Utxo</a></h5>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> additionalUtxo: <a href="_cardano_ogmios_client.Schema.html#Utxo" class="tsd-signature-type">Utxo</a></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title"><span>Returns</span> <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="_cardano_ogmios_client.TransactionSubmission.html#EvaluationResult" class="tsd-signature-type">EvaluationResult</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -177,13 +177,13 @@
 					<a name="submitTransaction" class="tsd-anchor"></a>
 					<h3>submit<wbr>Transaction</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-namespace">
-						<li class="tsd-signature tsd-kind-icon">submit<wbr>Transaction<span class="tsd-signature-symbol">(</span>context<span class="tsd-signature-symbol">: </span><a href="../interfaces/_cardano_ogmios_client.InteractionContext.html" class="tsd-signature-type">InteractionContext</a>, transaction<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">submit<wbr>Transaction<span class="tsd-signature-symbol">(</span>context<span class="tsd-signature-symbol">: </span><a href="../interfaces/_cardano_ogmios_client.InteractionContext.html" class="tsd-signature-type">InteractionContext</a>, serializedTransaction<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6e0748a/clients/TypeScript/packages/client/src/TransactionSubmission/submitTransaction/index.ts#L21">packages/client/src/TransactionSubmission/submitTransaction/index.ts:21</a>
+									<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/aead473/clients/TypeScript/packages/client/src/TransactionSubmission/submitTransaction/index.ts#L21">packages/client/src/TransactionSubmission/submitTransaction/index.ts:21</a>
 									</li>
 								</ul>
 							</aside>
@@ -199,7 +199,7 @@
 									<h5>context: <a href="../interfaces/_cardano_ogmios_client.InteractionContext.html" class="tsd-signature-type">InteractionContext</a></h5>
 								</li>
 								<li>
-									<h5>transaction: <span class="tsd-signature-type">string</span></h5>
+									<h5>serializedTransaction: <span class="tsd-signature-type">string</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title"><span>Returns</span> <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></h4>

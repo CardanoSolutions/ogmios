@@ -20,7 +20,6 @@
   , "QueryLedgerStateProtocolParameters", "QueryLedgerStateProtocolParametersResponse"
   , "QueryLedgerStateRewardAccountSummaries", "QueryLedgerStateRewardAccountSummariesResponse"
   , "QueryLedgerStateRewardsProvenance", "QueryLedgerStateRewardsProvenanceResponse"
-  , "QueryLedgerStateStakePoolParameters", "QueryLedgerStateStakePoolParametersResponse"
   , "QueryLedgerStateStakePools", "QueryLedgerStateStakePoolsResponse"
   , "QueryLedgerStateTip", "QueryLedgerStateTipResponse"
   , "QueryLedgerStateUtxo", "QueryLedgerStateUtxoResponse"
@@ -260,10 +259,17 @@
         , "required": ["transaction"]
         , "properties":
           { "transaction":
-            { "type": "string"
-            , "description": "CBOR-serialized signed transaction (base16)"
-            , "contentEncoding": "base16"
-            , "pattern": "^[0-9a-f]+$"
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "cbor" ]
+            , "properties":
+              { "cbor":
+                { "type": "string"
+                , "description": "CBOR-serialized signed transaction (base16)"
+                , "contentEncoding": "base16"
+                , "pattern": "^[0-9a-f]+$"
+                }
+              }
             }
           }
         }
@@ -374,12 +380,19 @@
         , "required": ["transaction"]
         , "properties":
           { "transaction":
-            { "type": "string"
-            , "description": "CBOR-serialized signed transaction (base16)"
-            , "contentEncoding": "base16"
-            , "pattern": "^[0-9a-f]+$"
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "cbor" ]
+            , "properties":
+              { "cbor":
+                { "type": "string"
+                , "description": "CBOR-serialized signed transaction (base16)"
+                , "contentEncoding": "base16"
+                , "pattern": "^[0-9a-f]+$"
+                }
+              }
             }
-          , "additionalUtxoSet":
+          , "additionalUtxo":
             { "$ref": "cardano.json#/definitions/Utxo"
             }
           }
@@ -662,7 +675,6 @@
           , "queryLedgerState/proposedProtocolParameters"
           , "queryLedgerState/rewardAccountSummaries"
           , "queryLedgerState/rewardsProvenance"
-          , "queryLedgerState/stakePoolParameters"
           , "queryLedgerState/stakePools"
           , "queryLedgerState/utxo"
           , "queryLedgerState/tip"
@@ -707,7 +719,6 @@
           , "queryLedgerState/proposedProtocolParameters"
           , "queryLedgerState/rewardAccountSummaries"
           , "queryLedgerState/rewardsProvenance"
-          , "queryLedgerState/stakePoolParameters"
           , "queryLedgerState/stakePools"
           , "queryLedgerState/utxo"
           , "queryLedgerState/tip"
@@ -751,7 +762,6 @@
           , "queryLedgerState/proposedProtocolParameters"
           , "queryLedgerState/rewardAccountSummaries"
           , "queryLedgerState/rewardsProvenance"
-          , "queryLedgerState/stakePoolParameters"
           , "queryLedgerState/stakePools"
           , "queryLedgerState/utxo"
           , "queryLedgerState/tip"
@@ -1317,74 +1327,6 @@
                 { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
                 }
               }
-            }
-          , "id":
-            { "description": "Any value that was set by a client request in the 'id' field."
-            }
-          }
-        }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
-      ]
-    }
-
-  , "QueryLedgerStateStakePoolParameters":
-    { "title": "QueryLedgerStateStakePoolParameters"
-    , "description": "Query registered parameters for given stake pools."
-    , "type": "object"
-    , "required": [ "jsonrpc", "method", "params" ]
-    , "additionalProperties": false
-    , "properties":
-      { "jsonrpc":
-        { "type": "string"
-        , "enum": [ "2.0" ]
-        }
-      , "method":
-        { "type": "string"
-        , "enum": [ "queryLedgerState/stakePoolParameters" ]
-        }
-      , "params":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "stakePools" ]
-        , "properties":
-          { "stakePools":
-            { "type": "array"
-            , "items":
-              { "oneOf":
-                [ { "$ref": "cardano.json#/definitions/StakePoolId" }
-                , { "type": "string", "contentEncoding": "base16", "pattern": "^[0-9a-f]{56}$" }
-                ]
-              }
-            }
-          }
-        }
-      , "id":
-        { "description": "An arbitrary JSON value that will be mirrored back in the response."
-        }
-      }
-    }
-
-  , "QueryLedgerStateStakePoolParametersResponse":
-    { "oneOf":
-      [ { "title": "QueryLedgerStateStakePoolParametersResponse"
-        , "type": "object"
-        , "required": [ "jsonrpc", "method", "result" ]
-        , "additionalProperties": false
-        , "properties":
-          { "jsonrpc":
-            { "type": "string"
-            , "enum": [ "2.0" ]
-            }
-          , "method":
-            { "type": "string"
-            , "enum": [ "queryLedgerState/stakePoolParameters" ]
-            }
-          , "result":
-            { "type": "object"
-            , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePoolParameters" }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -2363,7 +2305,14 @@
     { "type": "object"
     , "additionalProperties": false
     , "properties":
-      { "delegate": { "$ref": "cardano.json#/definitions/StakePoolId" }
+      { "delegate":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "id" ]
+        , "properties":
+          { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
+          }
+        }
       , "rewards": { "$ref": "cardano.json#/definitions/Lovelace" }
       }
     , "examples":
@@ -2379,15 +2328,21 @@
     { "type": "object"
     , "description": "Details about how rewards are calculated for the ongoing epoch."
     , "additionalProperties": false
-    , "required": [ "desiredNumberOfPools", "poolInfluence", "totalRewards", "activeStake", "pools" ]
+    , "required":
+      [ "desiredNumberOfStakePools"
+      , "stakePoolPledgeInfluence"
+      , "totalRewardsInEpoch"
+      , "activeStakeInEpoch"
+      , "stakePools"
+      ]
     , "properties":
-      { "desiredNumberOfPools":
+      { "desiredNumberOfStakePools":
         { "type": "integer"
         , "description": "Desired number of stake pools."
         , "minimum": 0
         , "maximum": 18446744073709552999
         }
-      , "poolInfluence":
+      , "stakePoolPledgeInfluence":
         { "type": "string"
         , "description": "Influence of the pool owner's pledge on rewards, as a ratio of two integers."
         , "pattern": "^-?[0-9]+/[0-9]+$"
@@ -2396,7 +2351,7 @@
           , "7/8"
           ]
         }
-      , "totalRewards":
+      , "totalRewardsInEpoch":
         { "description": "Total rewards available for the given epoch."
         , "type": "object"
         , "additionalProperties": false
@@ -2405,7 +2360,7 @@
           { "lovelace": { "type": "integer" }
           }
         }
-      , "activeStake":
+      , "activeStakeInEpoch":
         { "description": "The total amount of staked Lovelace during this epoch."
         , "type": "object"
         , "additionalProperties": false
@@ -2414,10 +2369,10 @@
           { "lovelace": { "type": "integer" }
           }
         }
-      , "pools":
+      , "stakePools":
         { "type": "object"
-        , "additionalProperties": { "$ref": "ogmios.json#/definitions/StakePoolSummary" }
         , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
+        , "additionalProperties": { "$ref": "ogmios.json#/definitions/StakePoolSummary" }
         }
       }
     }
@@ -2480,6 +2435,33 @@
       , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<MissingCostModels>" }
       , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<InternalLedgerTypeConversionError>" }
       ]
+    }
+
+  , "StakePoolSummary":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id", "stake", "ownerStake", "approximatePerformance", "parameters" ]
+    , "properties":
+      { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
+      , "stake": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "ownerStake": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "approximatePerformance":
+        { "type": "number"
+        , "description": "Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky."
+        , "minimum": 0
+        }
+      , "parameters":
+        { "type": "object"
+        , "description": "Some of the pool parameters relevant for the reward calculation."
+        , "additionalProperties": false
+        , "required": [ "cost", "margin", "pledge" ]
+        , "properties":
+          { "cost": { "$ref": "cardano.json#/definitions/Lovelace" }
+          , "margin": { "$ref": "cardano.json#/definitions/Ratio" }
+          , "pledge": { "$ref": "cardano.json#/definitions/Lovelace" }
+          }
+        }
+      }
     }
 
   , "SubmitTransactionFailure":
@@ -3147,7 +3129,7 @@
             , "additionalProperties": false
             , "required": [ "unsuitableCollateralValue" ]
             , "properties":
-              { "unsuitableCollateralInputs'": { "$ref": "cardano.json#/definitions/Value" }
+              { "unsuitableCollateralValue'": { "$ref": "cardano.json#/definitions/Value" }
               }
             }
           }
@@ -3540,32 +3522,6 @@
     , "properties":
       { "code": { "type": "integer", "enum": [ 3999 ] }
       , "message": { "type": "string" }
-      }
-    }
-
-  , "StakePoolSummary":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "stake", "ownerStake", "approximatePerformance", "poolParameters" ]
-    , "properties":
-      { "stake": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "ownerStake": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "approximatePerformance":
-        { "type": "number"
-        , "description": "Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky."
-        , "minimum": 0
-        }
-      , "poolParameters":
-        { "type": "object"
-        , "description": "Some of the pool parameters relevant for the reward calculation."
-        , "additionalProperties": false
-        , "required": [ "cost", "margin", "pledge" ]
-        , "properties":
-          { "cost": { "$ref": "cardano.json#/definitions/Lovelace" }
-          , "margin": { "$ref": "cardano.json#/definitions/Ratio" }
-          , "pledge": { "$ref": "cardano.json#/definitions/Lovelace" }
-          }
-        }
       }
     }
 

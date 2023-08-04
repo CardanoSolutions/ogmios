@@ -639,14 +639,6 @@ components:
       payload:
         $ref: "/ogmios.json#/properties/QueryLedgerStateStakePools"
 
-    QueryLedgerStateStakePoolParameters:
-      title: QueryLedgerStateStakePoolParameters
-      name: "since v6.0.0"
-      description: |
-        Query registered parameters for given stake pools.
-      payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateStakePoolParameters"
-
     QueryLedgerStateTip:
       title: QueryLedgerStateTip
       name: "since v6.0.0"
@@ -754,12 +746,6 @@ components:
       name: "since v6.0.0"
       payload:
         $ref: "/ogmios.json#/properties/QueryLedgerStateStakePoolsResponse"
-
-    QueryLedgerStateStakePoolParametersResponse:
-      title: QueryLedgerStateStakePoolParametersResponse
-      name: "since v6.0.0"
-      payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateStakePoolParametersResponse"
 
     QueryLedgerStateTipResponse:
       title: QueryLedgerStateTipResponse

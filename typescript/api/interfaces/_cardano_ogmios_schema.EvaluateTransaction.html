@@ -124,7 +124,7 @@
 					<div class="tsd-signature tsd-kind-icon">id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6e0748a/clients/TypeScript/packages/schema/src/index.ts#L1531">packages/schema/src/index.ts:1531</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/aead473/clients/TypeScript/packages/schema/src/index.ts#L1535">packages/schema/src/index.ts:1535</a>
 							</li>
 						</ul>
 					</aside>
@@ -148,7 +148,7 @@
 					<div class="tsd-signature tsd-kind-icon">jsonrpc<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"2.0"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6e0748a/clients/TypeScript/packages/schema/src/index.ts#L1519">packages/schema/src/index.ts:1519</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/aead473/clients/TypeScript/packages/schema/src/index.ts#L1521">packages/schema/src/index.ts:1521</a>
 							</li>
 						</ul>
 					</aside>
@@ -159,7 +159,7 @@
 					<div class="tsd-signature tsd-kind-icon">method<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"evaluateTransaction"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6e0748a/clients/TypeScript/packages/schema/src/index.ts#L1520">packages/schema/src/index.ts:1520</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/aead473/clients/TypeScript/packages/schema/src/index.ts#L1522">packages/schema/src/index.ts:1522</a>
 							</li>
 						</ul>
 					</aside>
@@ -170,7 +170,7 @@
 					<div class="tsd-signature tsd-kind-icon">params<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6e0748a/clients/TypeScript/packages/schema/src/index.ts#L1521">packages/schema/src/index.ts:1521</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/aead473/clients/TypeScript/packages/schema/src/index.ts#L1523">packages/schema/src/index.ts:1523</a>
 							</li>
 						</ul>
 					</aside>
@@ -178,15 +178,20 @@
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
 							<li class="tsd-parameter">
-								<h5><span class="tsd-flag ts-flagOptional">Optional</span> additional<wbr>Utxo<wbr>Set<span class="tsd-signature-symbol">?: </span><a href="../modules/_cardano_ogmios_schema.html#Utxo" class="tsd-signature-type">Utxo</a></h5>
+								<h5><span class="tsd-flag ts-flagOptional">Optional</span> additional<wbr>Utxo<span class="tsd-signature-symbol">?: </span><a href="../modules/_cardano_ogmios_schema.html#Utxo" class="tsd-signature-type">Utxo</a></h5>
 							</li>
 							<li class="tsd-parameter">
-								<h5>transaction<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
-								<div class="tsd-comment tsd-typography">
-									<div class="lead">
-										<p>CBOR-serialized signed transaction (base16)</p>
-									</div>
-								</div>
+								<h5>transaction<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span></h5>
+								<ul class="tsd-parameters">
+									<li class="tsd-parameter">
+										<h5>cbor<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>CBOR-serialized signed transaction (base16)</p>
+											</div>
+										</div>
+									</li>
+								</ul>
 							</li>
 						</ul>
 					</div>
