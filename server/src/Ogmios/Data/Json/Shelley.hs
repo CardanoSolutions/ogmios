@@ -301,7 +301,7 @@ encodeGenesis x =
     "initialParameters" .=
         encodePParams (Sh.sgProtocolParams x) <>
     "initialDelegates" .=
-        encodeMap stringifyKeyHash encodeGenDelegPair (Sh.sgGenDelegs x) <>
+        encodeInitialDelegates (Sh.sgGenDelegs x) <>
     "initialFunds" .=
         encodeListMap stringifyAddress encodeCoin (Sh.sgInitialFunds x) <>
     "initialStakePools" .=
@@ -310,9 +310,9 @@ encodeGenesis x =
 
 encodeGenDelegPair :: Crypto crypto => GenDelegPair crypto -> Json
 encodeGenDelegPair x =
-    "delegate" .=
+    "id" .=
         encodeKeyHash (genDelegKeyHash x) <>
-    "vrf" .=
+    "vrfVerificationKeyHash" .=
         encodeHash (genDelegVrfHash x)
     & encodeObject
 
@@ -328,6 +328,20 @@ encodeHashHeader
     -> Json
 encodeHashHeader =
     encodeByteStringBase16 . CC.hashToBytes . TPraos.unHashHeader
+
+encodeInitialDelegates
+    :: Crypto crypto
+    => Map (Ledger.KeyHash 'Genesis crypto) (GenDelegPair crypto)
+    -> Json
+encodeInitialDelegates =
+    encodeMapAsList
+        (\k v -> encodeObject
+            ( "issuer" .=
+                encodeSingleton "id" (encodeKeyHash k)
+           <> "delegate" .=
+                encodeGenDelegPair v
+            )
+        )
 
 encodeKeyHash
     :: forall any crypto. (any :\: StakePool, Crypto crypto)

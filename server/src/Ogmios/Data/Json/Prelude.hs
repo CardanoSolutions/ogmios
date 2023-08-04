@@ -82,6 +82,7 @@ module Ogmios.Data.Json.Prelude
     , encodeList
     , encodeListMap
     , encodeMap
+    , encodeMapAsList
     , encodeMapSeries
     , encodeMaybe
     , encodeSingleton
@@ -519,6 +520,13 @@ encodeMapSeries encodeKey encodeValue =
         )
         mempty
 {-# INLINABLE encodeMapSeries #-}
+
+encodeMapAsList :: (k -> v -> Json)  -> Map k v -> Json
+encodeMapAsList encodeKeyValue =
+    Json.list identity . Map.foldrWithKey
+        (\k v -> (:) (encodeKeyValue k v))
+        mempty
+{-# INLINABLE encodeMapAsList #-}
 
 encodeMaybe :: (a -> Json) -> Maybe a -> Json
 encodeMaybe =

@@ -729,12 +729,7 @@
       , "updateQuorum": { "$ref": "cardano.json#/definitions/UInt64" }
       , "maxLovelaceSupply": { "$ref": "cardano.json#/definitions/UInt64" }
       , "initialParameters": { "$ref": "cardano.json#/definitions/ProtocolParameters" }
-      , "initialDelegates":
-        { "type": "object"
-        , "title": "InitialDelegates"
-        , "propertyNames": { "ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
-        , "additionalProperties": { "$ref": "cardano.json#/definitions/GenesisDelegate" }
-        }
+      , "initialDelegates": { "$ref": "cardano.json#/definitions/InitialDelegates" }
       , "initialFunds":
         { "type": "object"
         , "title": "InitialFunds"
@@ -801,10 +796,7 @@
         , "enum": [ "conway" ]
         }
       , "initialDelegates":
-        { "type": "object"
-        , "title": "InitialDelegates"
-        , "propertyNames": { "ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
-        , "additionalProperties": { "$ref": "cardano.json#/definitions/GenesisDelegate" }
+        { "$ref": "cardano.json#/definitions/InitialDelegates"
         }
       }
     }
@@ -815,12 +807,12 @@
     , "description": "A Genesis delegate, in charge of Cardano's governance."
     , "additionalProperties": false
     , "required":
-      [ "delegate"
-      , "vrf"
+      [ "vrfVerificationKeyHash"
+      , "id"
       ]
     , "properties":
-      { "delegate": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
-      , "vrf": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+      { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+      , "vrfVerificationKeyHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
       }
     }
 
@@ -905,6 +897,29 @@
       { "index":
         { "$ref": "cardano.json#/definitions/UInt32"
         , "minimum": 0
+        }
+      }
+    }
+
+  , "InitialDelegates":
+    { "title": "InitialDelegates"
+    , "type": "array"
+    , "items":
+      { "type": "object"
+      , "additionalProperties": false
+      , "required": [ "issuer", "delegate" ]
+      , "properties":
+        { "issuer":
+          { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "id" ]
+          , "properties":
+            { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+            }
+          }
+        , "delegate":
+          { "$ref": "cardano.json#/definitions/GenesisDelegate"
+          }
         }
       }
     }

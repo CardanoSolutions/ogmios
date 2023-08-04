@@ -55,12 +55,10 @@ encodeGenesis
     -> Json
 encodeGenesis x =
     encodeObject
-        ( "era" .= encodeText "conway"
+        ( "era" .=
+            encodeText "conway"
        <> "initialDelegates" .=
-            encodeMap
-                Shelley.stringifyKeyHash
-                Shelley.encodeGenDelegPair
-                (Ledger.unGenDelegs (Cn.cgGenDelegs x))
+           Shelley.encodeInitialDelegates (Ledger.unGenDelegs (Cn.cgGenDelegs x))
         )
 
 encodeGovernanceActionId

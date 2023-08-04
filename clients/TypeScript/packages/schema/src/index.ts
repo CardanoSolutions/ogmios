@@ -225,6 +225,12 @@ export type UtcTime = string;
  * A magic number for telling networks apart. (e.g. 764824073)
  */
 export type NetworkMagic = number;
+export type InitialDelegates = {
+  issuer: {
+    id: DigestBlake2B224;
+  };
+  delegate: GenesisDelegate;
+}[];
 
 export interface Ogmios {
   FindIntersection: FindIntersection;
@@ -2379,15 +2385,12 @@ export interface GenesisShelley {
   initialFunds: InitialFunds;
   initialStakePools: GenesisStakePools;
 }
-export interface InitialDelegates {
-  [k: string]: GenesisDelegate;
-}
 /**
  * A Genesis delegate, in charge of Cardano's governance.
  */
 export interface GenesisDelegate {
-  delegate: DigestBlake2B224;
-  vrf: DigestBlake2B256;
+  id: DigestBlake2B224;
+  vrfVerificationKeyHash: DigestBlake2B256;
 }
 export interface InitialFunds {
   [k: string]: Lovelace;
@@ -2426,10 +2429,7 @@ export interface GenesisAlonzo {
  */
 export interface GenesisConway {
   era: "conway";
-  initialDelegates: InitialDelegates1;
-}
-export interface InitialDelegates1 {
-  [k: string]: GenesisDelegate;
+  initialDelegates: InitialDelegates;
 }
 /**
  * Query the network start time.
