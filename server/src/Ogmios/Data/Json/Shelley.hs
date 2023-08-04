@@ -304,7 +304,7 @@ encodeGenesis x =
         encodeMap stringifyKeyHash encodeGenDelegPair (Sh.sgGenDelegs x) <>
     "initialFunds" .=
         encodeListMap stringifyAddress encodeCoin (Sh.sgInitialFunds x) <>
-    "initialPools" .=
+    "initialStakePools" .=
         encodeShelleyGenesisStaking (Sh.sgStaking x)
     & encodeObject
 
@@ -607,7 +607,7 @@ encodeSignedKES (CC.SignedKES raw) =
 
 encodeShelleyGenesisStaking :: Crypto crypto => Sh.ShelleyGenesisStaking crypto -> Json
 encodeShelleyGenesisStaking x =
-    "pools" .=
+    "stakePools" .=
         encodeListMap stringifyPoolId encodePoolParams (Sh.sgsPools x) <>
     "delegators" .=
         encodeListMap stringifyKeyHash encodePoolId (Sh.sgsStake x)

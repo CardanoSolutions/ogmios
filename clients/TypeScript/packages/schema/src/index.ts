@@ -2415,7 +2415,7 @@ export interface GenesisShelley {
   initialParameters: ProtocolParameters;
   initialDelegates: InitialDelegates;
   initialFunds: InitialFunds;
-  initialPools: GenesisPools;
+  initialStakePools: GenesisStakePools;
 }
 export interface InitialDelegates {
   [k: string]: GenesisDelegate;
@@ -2433,8 +2433,8 @@ export interface InitialFunds {
 /**
  * A Genesis stake pools configuration; primarily used for bootstrapping test networks.
  */
-export interface GenesisPools {
-  pools: {
+export interface GenesisStakePools {
+  stakePools: {
     [k: string]: StakePoolParameters;
   };
   delegators: {

@@ -710,7 +710,7 @@
       , "initialParameters"
       , "initialDelegates"
       , "initialFunds"
-      , "initialPools"
+      , "initialStakePools"
       ]
     , "properties":
       { "era":
@@ -741,7 +741,7 @@
         , "propertyNames": { "$ref": "cardano.json#/definitions/Address" }
         , "additionalProperties": { "$ref": "cardano.json#/definitions/Lovelace" }
         }
-      , "initialPools": { "$ref": "cardano.json#/definitions/GenesisPools" }
+      , "initialStakePools": { "$ref": "cardano.json#/definitions/GenesisStakePools" }
       }
     }
 
@@ -824,17 +824,17 @@
       }
     }
 
-  , "GenesisPools":
-    { "title": "GenesisPools"
+  , "GenesisStakePools":
+    { "title": "GenesisStakePools"
     , "type": "object"
     , "description": "A Genesis stake pools configuration; primarily used for bootstrapping test networks."
     , "additionalProperties": false
     , "required":
-      [ "pools"
+      [ "stakePools"
       , "delegators"
       ]
     , "properties":
-      { "pools":
+      { "stakePools":
         { "type": "object"
         , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
         , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePoolParameters" }
