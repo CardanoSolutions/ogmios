@@ -1302,7 +1302,7 @@ export interface SubmitTransactionFailureNonAdaCollateral {
   code: 3133;
   message: string;
   data: {
-    "unsuitableCollateralInputs'"?: Value;
+    "unsuitableCollateralValue'"?: Value;
   };
 }
 /**
