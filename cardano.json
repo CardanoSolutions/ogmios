@@ -461,31 +461,55 @@
             }
           }
         }
-      , { "type": "object"
-        , "title": "treasuryTransfer"
-        , "description": "A transfer from or to the treasury / reserves authored by genesis delegates. 'rewards' is only present when target is 'rewardsAccounts'; 'value' is only present when target is 'reserves' or 'treasury'."
-        , "additionalProperties": false
-        , "required": [ "type", "source", "target" ]
-        , "properties":
-          { "type":
-            { "type": "string"
-            , "enum": [ "treasuryTransfer" ]
+      , { "title": "TreasuryTransfer"
+        , "oneOf":
+          [ { "type": "object"
+            , "title": "TreasuryTransfer<Internal>"
+            , "description": "A transfer from or to the treasury / reserves authored by genesis delegates."
+            , "additionalProperties": false
+            , "required": [ "type", "source", "target", "value" ]
+            , "properties":
+              { "type":
+                { "type": "string"
+                , "enum": [ "treasuryTransfer" ]
+                }
+              , "source":
+                { "type": "string"
+                , "enum": [ "reserves", "treasury" ]
+                }
+              , "target":
+                { "type": "string"
+                , "enum": [ "reserves", "treasury" ]
+                }
+              , "value":
+                { "$ref": "cardano.json#/definitions/Lovelace"
+                }
+              }
             }
-          , "source":
-            { "type": "string"
-            , "enum": [ "reserves", "treasury" ]
+          , { "type": "object"
+            , "title": "TreasuryTransfer<Rewards>"
+            , "description": "A transfer from or to the treasury / reserves authored by genesis delegates."
+            , "additionalProperties": false
+            , "required": [ "type", "source", "target", "rewards" ]
+            , "properties":
+              { "type":
+                { "type": "string"
+                , "enum": [ "treasuryTransfer" ]
+                }
+              , "source":
+                { "type": "string"
+                , "enum": [ "reserves", "treasury" ]
+                }
+              , "target":
+                { "type": "string"
+                , "enum": [ "rewardAccounts" ]
+                }
+              , "rewards":
+                { "$ref": "cardano.json#/definitions/RewardTransfer"
+                }
+              }
             }
-          , "target":
-            { "type": "string"
-            , "enum": [ "reserves", "treasury", "rewardAccounts" ]
-            }
-          , "rewards":
-            { "$ref": "cardano.json#/definitions/RewardTransfer"
-            }
-          , "value":
-            { "$ref": "cardano.json#/definitions/Lovelace"
-            }
-          }
+          ]
         }
       ]
     }
@@ -959,10 +983,17 @@
 
   , "LovelaceDelta":
     { "title": "LovelaceDelta"
-    , "type": "integer"
-    , "description": "An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada)."
-    , "minimum": -9223372036854775808
-    , "maximum": 9223372036854775807
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "lovelace" ]
+    , "properties":
+      { "lovelace":
+        { "type": "integer"
+        , "description": "An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada)."
+        , "minimum": -9223372036854775808
+        , "maximum": 9223372036854775807
+        }
+      }
     }
 
   , "KesVerificationKey":
