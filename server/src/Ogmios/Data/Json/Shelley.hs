@@ -245,18 +245,18 @@ encodeDCert = encodeObject . \case
                 Sh.StakeAddressesMIR{} -> SNothing
                 Sh.SendToOppositePotMIR coin -> SJust coin
             )
-        <> "rewards" .=? OmitWhen null
+        <> "rewards" .=? OmitWhenNothing
             (encodeMap stringifyCredential encodeDeltaCoin)
             (case target of
-                Sh.StakeAddressesMIR rewards -> rewards
-                Sh.SendToOppositePotMIR{} -> mempty
+                Sh.StakeAddressesMIR rewards -> SJust rewards
+                Sh.SendToOppositePotMIR{} -> SNothing
             )
 
 encodeDeltaCoin
     :: Ledger.DeltaCoin
     -> Json
 encodeDeltaCoin (Ledger.DeltaCoin delta) =
-    encodeInteger delta
+    encodeSingleton "lovelace" (encodeInteger delta)
 
 encodeEntities
     :: Foldable f

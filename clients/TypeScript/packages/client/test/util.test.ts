@@ -12,7 +12,8 @@ import {
   StakePoolParameters,
   Transaction,
   TransactionOutput,
-  TreasuryTransfer
+  TreasuryTransferInternal,
+  TreasuryTransferRewards
 } from '@cardano-ogmios/schema'
 
 describe('util', () => {
@@ -348,10 +349,10 @@ describe('util', () => {
         {
           "address": "addr1...",
           "value": {
-            "coins": 42,
-            "assets": {
-              "policy.asset#1": 27,
-              "policy.asset#2": 123954834573123725621
+            "ada": { "lovelace": 42 },
+            "policy": {
+              "asset#1": 27,
+              "asset#2": 123954834573123725621
             }
           },
           "datum": null
@@ -359,11 +360,13 @@ describe('util', () => {
       `
 
       const result = safeJSON.parse(json) as TransactionOutput
-      expect(typeof result.value.coins).toEqual('bigint')
-      expect(typeof result.value.assets['policy.asset#1']).toEqual('bigint')
-      expect(result.value.assets['policy.asset#1']).toEqual(BigInt(27))
-      expect(typeof result.value.assets['policy.asset#2']).toEqual('bigint')
-      expect(result.value.assets['policy.asset#2']).toEqual(BigInt('123954834573123725621'))
+      expect(typeof result.value.ada.lovelace).toEqual('bigint')
+
+      expect(typeof result.value.policy['asset#1']).toEqual('bigint')
+      expect(result.value.policy['asset#1']).toEqual(BigInt(27))
+
+      expect(typeof result.value.policy['asset#2']).toEqual('bigint')
+      expect(result.value.policy['asset#2']).toEqual(BigInt('123954834573123725621'))
     })
 
     it('parses metadatum int as bigint, always', () => {
@@ -389,33 +392,31 @@ describe('util', () => {
             "id": "3e6230bf0d2ead922e2296386e20a10f23d14796076262f152fce9e15d857bb9",
             "inputSource": "inputs",
             "inputs": [],
-            "collateral": 27,
+            "collateral": { "lovelace": 27 },
             "outputs": [
               {
                 "address": "addr1wxckk4h4asryhe4v8j4kqd0046rtxekv8hz2p4t3vq7hpegtxpwnn",
                 "value": {
-                  "coins": 2,
-                  "assets": {
-                    "b16b56f5ec064be6ac3cab6035efae86b366cc3dc4a0d571603d70e5": 3
-                  }
+                  "ada": { "lovelace": 2 },
+                  "b16b56f5ec064be6ac3cab6035efae86b366cc3dc4a0d571603d70e5": { "": 3 }
                 },
                 "datum": "4171",
                 "script": {
                   "language": "native",
-                  "json": { "clause": "signature", "from": ["b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54"] },
+                  "json": {
+                    "clause": "signature",
+                    "from": ["b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54"]
+                  },
                   "cbor": "8200581cb5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54"
                 }
               }
             ],
             "withdrawals": {
-              "stake1uy659t9n5excps5nqgnq6ckrhpa8g2k3f2lc2h4uvuess8syll2gq": 324
+              "stake1uy659t9n5excps5nqgnq6ckrhpa8g2k3f2lc2h4uvuess8syll2gq": { "lovelace": 324 }
             },
-            "fee": 311,
+            "fee": { "lovelace": 311 },
             "mint": {
-              "coins": 0,
-              "assets": {
-                "4acf2773917c7b547c576a7ff110d2ba5733c1f1ca9cdc659aea3a56.0202": -3
-              }
+              "4acf2773917c7b547c576a7ff110d2ba5733c1f1ca9cdc659aea3a56": { "0202": -3 }
             },
             "network": "mainnet",
             "cbor": ""
@@ -424,18 +425,18 @@ describe('util', () => {
 
         const stakeAddr = 'stake1uy659t9n5excps5nqgnq6ckrhpa8g2k3f2lc2h4uvuess8syll2gq'
         const result = safeJSON.parse(json) as Transaction
-        expect(typeof result.collateral).toEqual('bigint')
-        expect(typeof result.fee).toEqual('bigint')
-        expect(typeof result.withdrawals[stakeAddr]).toEqual('bigint')
-        expect(typeof result.mint.coins).toEqual('bigint')
-        expect(typeof result.outputs[0].value.coins).toEqual('bigint')
+        expect(typeof result.collateral.lovelace).toEqual('bigint')
+        expect(typeof result.fee.lovelace).toEqual('bigint')
+        expect(typeof result.withdrawals[stakeAddr].lovelace).toEqual('bigint')
+        expect(typeof result.mint['4acf2773917c7b547c576a7ff110d2ba5733c1f1ca9cdc659aea3a56']['0202']).toEqual('bigint')
+        expect(typeof result.outputs[0].value.ada.lovelace).toEqual('bigint')
       })
 
       it('PoolParameters', () => {
         const json = `
           {
-            "pledge": 826,
-            "cost": 159,
+            "pledge": { "lovelace": 826 },
+            "cost": { "lovelace": 159 },
             "margin": "1/2",
             "rewardAccount": "stake_test1up9v7fmnj978k4ru2a48lugs62a9wv7p789fehr9nt4r54sf66f20",
             "owners": [
@@ -460,67 +461,81 @@ describe('util', () => {
         `
 
         const result = safeJSON.parse(json) as StakePoolParameters
-        expect(typeof result.cost).toEqual('bigint')
-        expect(typeof result.pledge).toEqual('bigint')
+        expect(typeof result.cost.lovelace).toEqual('bigint')
+        expect(typeof result.pledge.lovelace).toEqual('bigint')
       })
 
-      it('Treasury transfer', () => {
+      it('Treasury transfer (1)', () => {
+        const json = `
+          {
+            "type": "treasuryTransfer",
+            "source": "treasury",
+            "target": "reserves",
+            "value": { "lovelace": 1000 }
+          }
+        `
+
+        const result = safeJSON.parse(json) as TreasuryTransferInternal
+        expect(typeof result.value.lovelace).toEqual('bigint')
+      })
+
+      it('Treasury transfer (2)', () => {
         const json = `
           {
             "type": "treasuryTransfer",
             "source": "treasury",
             "target": "rewardAccounts",
-            "value": 1000,
             "rewards": {
-              "a646474b8f5431261506b6c273d307c7569a4eb6c96b42dd4a29520a": 1000
+              "a646474b8f5431261506b6c273d307c7569a4eb6c96b42dd4a29520a": { "lovelace": 1000 }
             }
           }
         `
 
         const stakeAddr = 'a646474b8f5431261506b6c273d307c7569a4eb6c96b42dd4a29520a'
-        const result = safeJSON.parse(json) as TreasuryTransfer
-        expect(typeof result.rewards[stakeAddr]).toEqual('bigint')
+        const result = safeJSON.parse(json) as TreasuryTransferRewards
+        expect(typeof result.rewards[stakeAddr].lovelace).toEqual('bigint')
       })
 
       it('RewardAccountSummaries', () => {
         const json = `
           {
             "58e1b65718531b42494610c506cef10ff031fa817a8ff75c0ab180e7": {
-              "rewards": 782
+              "rewards": { "lovelace": 782 }
             },
             "eccbfb5c619673f0648a42cc2f822c81cbc34aee41274638e89a7af5": {
-              "delegate": "pool1uzn3gvvcztplwua6qnk966elln264kzsq6q9kprmpqj5zytzn03"
+              "delegate": { "id": "pool1uzn3gvvcztplwua6qnk966elln264kzsq6q9kprmpqj5zytzn03" }
             },
             "22c81cbc34aee41274638e89a7af5eccbfb5c619673f0648a42cc2f8": {
-              "delegate": "pool1uzn3gvvcztplwua6qnk966elln264kzsq6q9kprmpqj5zytzn03",
-              "rewards": 42
+              "delegate": { "id": "pool1uzn3gvvcztplwua6qnk966elln264kzsq6q9kprmpqj5zytzn03" },
+              "rewards": { "lovelace": 42 }
             }
           }
         `
 
         const result = safeJSON.parse(json) as RewardAccountSummaries
         const stakeAddr1 = '58e1b65718531b42494610c506cef10ff031fa817a8ff75c0ab180e7'
-        expect(typeof result[stakeAddr1].rewards).toEqual('bigint')
+        expect(typeof result[stakeAddr1].rewards.lovelace).toEqual('bigint')
         const stakeAddr2 = '22c81cbc34aee41274638e89a7af5eccbfb5c619673f0648a42cc2f8'
-        expect(typeof result[stakeAddr2].rewards).toEqual('bigint')
+        expect(typeof result[stakeAddr2].rewards.lovelace).toEqual('bigint')
       })
 
       it('IndividualPoolRewardsProvenance', () => {
         const json = `
           {
-            "desiredNumberOfPools": 267,
-            "poolInfluence": "2210755/330114",
-            "totalRewards": 435,
-            "activeStake": 469,
-            "pools": {
+            "desiredNumberOfStakePools": 267,
+            "stakePoolInfluence": "2210755/330114",
+            "totalRewardsInEpoch": { "lovelace": 435 },
+            "activeStakeInEpoch": { "lovelace": 469 },
+            "stakePools": {
               "pool1an9lkhrpjeelqey2gtxzlq3vs89uxjhwgyn5vw8gnfa02v6328u": {
-                "stake": 347,
-                "ownerStake": 130,
+                "id": "pool1an9lkhrpjeelqey2gtxzlq3vs89uxjhwgyn5vw8gnfa02v6328u",
+                "stake": { "lovelace": 347 },
+                "ownerStake": { "lovelace": 130 },
                 "approximatePerformance": 1.6984387720750207,
-                "poolParameters": {
-                  "cost": 386,
+                "parameters": {
+                  "cost": { "lovelace": 386 },
                   "margin": "1/15",
-                  "pledge": 136
+                  "pledge": { "lovelace": 136 }
                 }
               }
             }
@@ -529,25 +544,25 @@ describe('util', () => {
 
         const poolId = 'pool1an9lkhrpjeelqey2gtxzlq3vs89uxjhwgyn5vw8gnfa02v6328u'
         const result = safeJSON.parse(json) as RewardsProvenance
-        expect(typeof result.totalRewards).toEqual('bigint')
-        expect(typeof result.activeStake).toEqual('bigint')
-        expect(typeof result.pools[poolId].stake).toEqual('bigint')
-        expect(typeof result.pools[poolId].ownerStake).toEqual('bigint')
-        expect(typeof result.pools[poolId].poolParameters.cost).toEqual('bigint')
-        expect(typeof result.pools[poolId].poolParameters.pledge).toEqual('bigint')
+        expect(typeof result.totalRewardsInEpoch.lovelace).toEqual('bigint')
+        expect(typeof result.activeStakeInEpoch.lovelace).toEqual('bigint')
+        expect(typeof result.stakePools[poolId].stake.lovelace).toEqual('bigint')
+        expect(typeof result.stakePools[poolId].ownerStake.lovelace).toEqual('bigint')
+        expect(typeof result.stakePools[poolId].parameters.cost.lovelace).toEqual('bigint')
+        expect(typeof result.stakePools[poolId].parameters.pledge.lovelace).toEqual('bigint')
       })
 
       it('value without assets', () => {
         const json = `
           {
             "value": {
-              "coins": 42
+              "ada": { "lovelace": 42 }
             }
           }
         `
 
         const result = safeJSON.parse(json) as Pick<TransactionOutput, 'value'>
-        expect(typeof result.value.coins).toEqual('bigint')
+        expect(typeof result.value.ada.lovelace).toEqual('bigint')
       })
     })
   })

@@ -77,10 +77,7 @@ export type Relay = ByAddress | ByName;
  * An epoch number or length.
  */
 export type Epoch = number;
-/**
- * An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada).
- */
-export type LovelaceDelta = number;
+export type TreasuryTransfer = TreasuryTransferInternal | TreasuryTransferRewards;
 /**
  * A network target, as defined since the Shelley era.
  */
@@ -664,17 +661,31 @@ export interface GenesisDelegation {
   };
 }
 /**
- * A transfer from or to the treasury / reserves authored by genesis delegates. 'rewards' is only present when target is 'rewardsAccounts'; 'value' is only present when target is 'reserves' or 'treasury'.
+ * A transfer from or to the treasury / reserves authored by genesis delegates.
  */
-export interface TreasuryTransfer {
+export interface TreasuryTransferInternal {
   type: "treasuryTransfer";
   source: "reserves" | "treasury";
-  target: "reserves" | "treasury" | "rewardAccounts";
-  rewards?: RewardTransfer;
-  value?: Lovelace;
+  target: "reserves" | "treasury";
+  value: Lovelace;
+}
+/**
+ * A transfer from or to the treasury / reserves authored by genesis delegates.
+ */
+export interface TreasuryTransferRewards {
+  type: "treasuryTransfer";
+  source: "reserves" | "treasury";
+  target: "rewardAccounts";
+  rewards: RewardTransfer;
 }
 export interface RewardTransfer {
   [k: string]: LovelaceDelta;
+}
+export interface LovelaceDelta {
+  /**
+   * An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada).
+   */
+  lovelace: number;
 }
 export interface Withdrawals {
   [k: string]: Lovelace;
