@@ -24,10 +24,7 @@ export type TipOrOrigin = Tip | Origin;
  */
 export type BlockHeight = number;
 export type Block = BlockEBB | BlockBFT | BlockPraos;
-/**
- * The size of the block in bytes.
- */
-export type BlockSize = number;
+export type Int64 = number;
 /**
  * A Blake2b 32-byte hash digest of a transaction body
  */
@@ -89,7 +86,6 @@ export type LovelaceDelta = number;
  */
 export type Network = "mainnet" | "testnet";
 export type UInt64 = number;
-export type Int64 = number;
 export type Nonce = Neutral | DigestBlake2B256;
 export type Neutral = "neutral";
 export type CostModel = Int64[];
@@ -470,7 +466,9 @@ export interface BlockBFT {
   ancestor: DigestBlake2B256;
   height: BlockHeight;
   slot: Slot;
-  size: BlockSize;
+  size: {
+    bytes: Int64;
+  };
   transactions?: Transaction[];
   operationalCertificates?: BootstrapOperationalCertificate[];
   protocol: {
@@ -830,7 +828,9 @@ export interface BlockPraos {
   ancestor: DigestBlake2B256 | GenesisHash;
   nonce?: CertifiedVrf;
   height: BlockHeight;
-  size: BlockSize;
+  size: {
+    bytes: Int64;
+  };
   slot: Slot;
   transactions?: Transaction[];
   protocol: {

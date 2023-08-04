@@ -90,7 +90,7 @@
       , "ancestor": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
       , "height": { "$ref": "cardano.json#/definitions/BlockHeight" }
       , "slot": { "$ref": "cardano.json#/definitions/Slot" }
-      , "size": { "$ref": "cardano.json#/definitions/BlockSize" }
+      , "size": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "transactions":
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Transaction" }
@@ -155,7 +155,7 @@
         }
       , "nonce": { "$ref": "cardano.json#/definitions/CertifiedVrf" }
       , "height": { "$ref": "cardano.json#/definitions/BlockHeight" }
-      , "size": { "$ref": "cardano.json#/definitions/BlockSize" }
+      , "size": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "slot": { "$ref": "cardano.json#/definitions/Slot" }
       , "transactions":
         { "type": "array"
@@ -187,14 +187,6 @@
     { "title": "BlockHeight"
     , "type": "integer"
     , "description": "A block number, the i-th block to be minted is number i."
-    , "minimum": 0
-    , "maximum": 18446744073709552999
-    }
-
-  , "BlockSize":
-    { "title": "BlockSize"
-    , "type": "integer"
-    , "description": "The size of the block in bytes."
     , "minimum": 0
     , "maximum": 18446744073709552999
     }

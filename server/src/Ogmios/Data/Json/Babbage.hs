@@ -77,7 +77,7 @@ encodeHeader
     -> Series
 encodeHeader (Praos.Header hBody _hSig) =
     "size" .=
-        encodeWord32 (Praos.hbBodySize hBody) <>
+        encodeSingleton "bytes" (encodeWord32 (Praos.hbBodySize hBody)) <>
     "height" .=
         encodeBlockNo (Praos.hbBlockNo hBody) <>
     "slot" .=

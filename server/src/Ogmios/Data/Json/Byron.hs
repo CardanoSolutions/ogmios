@@ -68,7 +68,7 @@ encodeABlockOrBoundary = encodeObject . \case
         <>
         "slot" .= encodeAnnotated encodeSlotNumber (By.aHeaderSlot h)
         <>
-        "size" .= encodeNatural (By.blockLength blk)
+        "size" .= encodeSingleton "bytes" (encodeNatural (By.blockLength blk))
         <>
         encodeABody (By.blockBody blk)
         <>

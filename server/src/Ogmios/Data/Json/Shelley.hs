@@ -139,7 +139,7 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
         encodeBHeader blkHeader
         <>
-        "size" .= encodeNatural (TPraos.bsize hBody)
+        "size" .= encodeSingleton "bytes" (encodeNatural (TPraos.bsize hBody))
         <>
         "transactions" .= encodeFoldable encodeTx (Sh.txSeqTxns' txs)
         )
