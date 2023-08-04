@@ -20,7 +20,6 @@
   , "QueryLedgerStateProtocolParameters", "QueryLedgerStateProtocolParametersResponse"
   , "QueryLedgerStateRewardAccountSummaries", "QueryLedgerStateRewardAccountSummariesResponse"
   , "QueryLedgerStateRewardsProvenance", "QueryLedgerStateRewardsProvenanceResponse"
-  , "QueryLedgerStateStakePoolParameters", "QueryLedgerStateStakePoolParametersResponse"
   , "QueryLedgerStateStakePools", "QueryLedgerStateStakePoolsResponse"
   , "QueryLedgerStateTip", "QueryLedgerStateTipResponse"
   , "QueryLedgerStateUtxo", "QueryLedgerStateUtxoResponse"
@@ -662,7 +661,6 @@
           , "queryLedgerState/proposedProtocolParameters"
           , "queryLedgerState/rewardAccountSummaries"
           , "queryLedgerState/rewardsProvenance"
-          , "queryLedgerState/stakePoolParameters"
           , "queryLedgerState/stakePools"
           , "queryLedgerState/utxo"
           , "queryLedgerState/tip"
@@ -707,7 +705,6 @@
           , "queryLedgerState/proposedProtocolParameters"
           , "queryLedgerState/rewardAccountSummaries"
           , "queryLedgerState/rewardsProvenance"
-          , "queryLedgerState/stakePoolParameters"
           , "queryLedgerState/stakePools"
           , "queryLedgerState/utxo"
           , "queryLedgerState/tip"
@@ -751,7 +748,6 @@
           , "queryLedgerState/proposedProtocolParameters"
           , "queryLedgerState/rewardAccountSummaries"
           , "queryLedgerState/rewardsProvenance"
-          , "queryLedgerState/stakePoolParameters"
           , "queryLedgerState/stakePools"
           , "queryLedgerState/utxo"
           , "queryLedgerState/tip"
@@ -1317,74 +1313,6 @@
                 { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
                 }
               }
-            }
-          , "id":
-            { "description": "Any value that was set by a client request in the 'id' field."
-            }
-          }
-        }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
-      ]
-    }
-
-  , "QueryLedgerStateStakePoolParameters":
-    { "title": "QueryLedgerStateStakePoolParameters"
-    , "description": "Query registered parameters for given stake pools."
-    , "type": "object"
-    , "required": [ "jsonrpc", "method", "params" ]
-    , "additionalProperties": false
-    , "properties":
-      { "jsonrpc":
-        { "type": "string"
-        , "enum": [ "2.0" ]
-        }
-      , "method":
-        { "type": "string"
-        , "enum": [ "queryLedgerState/stakePoolParameters" ]
-        }
-      , "params":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "stakePools" ]
-        , "properties":
-          { "stakePools":
-            { "type": "array"
-            , "items":
-              { "oneOf":
-                [ { "$ref": "cardano.json#/definitions/StakePoolId" }
-                , { "type": "string", "contentEncoding": "base16", "pattern": "^[0-9a-f]{56}$" }
-                ]
-              }
-            }
-          }
-        }
-      , "id":
-        { "description": "An arbitrary JSON value that will be mirrored back in the response."
-        }
-      }
-    }
-
-  , "QueryLedgerStateStakePoolParametersResponse":
-    { "oneOf":
-      [ { "title": "QueryLedgerStateStakePoolParametersResponse"
-        , "type": "object"
-        , "required": [ "jsonrpc", "method", "result" ]
-        , "additionalProperties": false
-        , "properties":
-          { "jsonrpc":
-            { "type": "string"
-            , "enum": [ "2.0" ]
-            }
-          , "method":
-            { "type": "string"
-            , "enum": [ "queryLedgerState/stakePoolParameters" ]
-            }
-          , "result":
-            { "type": "object"
-            , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePoolParameters" }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."

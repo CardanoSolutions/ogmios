@@ -306,12 +306,6 @@ export interface Ogmios {
     | QueryLedgerStateEraMismatch
     | QueryLedgerStateUnavailableInCurrentEra
     | QueryLedgerStateAcquiredExpired;
-  QueryLedgerStateStakePoolParameters: QueryLedgerStateStakePoolParameters;
-  QueryLedgerStateStakePoolParametersResponse:
-    | QueryLedgerStateStakePoolParametersResponse
-    | QueryLedgerStateEraMismatch
-    | QueryLedgerStateUnavailableInCurrentEra
-    | QueryLedgerStateAcquiredExpired;
   QueryLedgerStateTip: QueryLedgerStateTip;
   QueryLedgerStateTipResponse:
     | QueryLedgerStateTipResponse
@@ -1763,7 +1757,6 @@ export interface QueryLedgerStateEraMismatch {
     | "queryLedgerState/proposedProtocolParameters"
     | "queryLedgerState/rewardAccountSummaries"
     | "queryLedgerState/rewardsProvenance"
-    | "queryLedgerState/stakePoolParameters"
     | "queryLedgerState/stakePools"
     | "queryLedgerState/utxo"
     | "queryLedgerState/tip";
@@ -1794,7 +1787,6 @@ export interface QueryLedgerStateUnavailableInCurrentEra {
     | "queryLedgerState/proposedProtocolParameters"
     | "queryLedgerState/rewardAccountSummaries"
     | "queryLedgerState/rewardsProvenance"
-    | "queryLedgerState/stakePoolParameters"
     | "queryLedgerState/stakePools"
     | "queryLedgerState/utxo"
     | "queryLedgerState/tip";
@@ -1824,7 +1816,6 @@ export interface QueryLedgerStateAcquiredExpired {
     | "queryLedgerState/proposedProtocolParameters"
     | "queryLedgerState/rewardAccountSummaries"
     | "queryLedgerState/rewardsProvenance"
-    | "queryLedgerState/stakePoolParameters"
     | "queryLedgerState/stakePools"
     | "queryLedgerState/utxo"
     | "queryLedgerState/tip";
@@ -2231,35 +2222,6 @@ export interface QueryLedgerStateStakePoolsResponse {
   result: {
     id: StakePoolId;
   }[];
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
-}
-/**
- * Query registered parameters for given stake pools.
- */
-export interface QueryLedgerStateStakePoolParameters {
-  jsonrpc: "2.0";
-  method: "queryLedgerState/stakePoolParameters";
-  params: {
-    stakePools: (StakePoolId | string)[];
-  };
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
-}
-export interface QueryLedgerStateStakePoolParametersResponse {
-  jsonrpc: "2.0";
-  method: "queryLedgerState/stakePoolParameters";
-  result: {
-    [k: string]: StakePoolParameters;
-  };
   /**
    * Any value that was set by a client request in the 'id' field.
    */

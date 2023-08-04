@@ -82,7 +82,6 @@ import Ogmios.Data.Json.Query
     , parseQueryLedgerProtocolParameters
     , parseQueryLedgerRewardAccountSummaries
     , parseQueryLedgerRewardsProvenance
-    , parseQueryLedgerStakePoolParameters
     , parseQueryLedgerStakePools
     , parseQueryLedgerTip
     , parseQueryLedgerUtxo
@@ -196,7 +195,6 @@ import Test.Generators
     , genPointResultTPraos
     , genPoolDistrResult
     , genPoolIdsResult
-    , genPoolParametersResult
     , genProposedPParamsResult
     , genRewardsProvenanceResult
     , genSubmitResult
@@ -634,15 +632,6 @@ spec = do
         validateLedgerStateQuery 10 "stakePools"
             [aesonQQ|{}|]
             (parseQueryLedgerStakePools genPoolIdsResult)
-
-        validateLedgerStateQuery 20 "stakePoolParameters"
-            [aesonQQ|
-            { "stakePools":
-                [ "pool1m80g9t64048p0t6yg9sps6672mgnse8ug2euudccmhkygfnf6tg"
-                , "d9de82af557d4e17af444160186b5e56d13864fc42b3ce3718ddec44"
-                ]
-            }|]
-            (parseQueryLedgerStakePoolParameters genPoolParametersResult)
 
         validateNetworkQuery 10 "blockHeight"
             [aesonQQ|{}|]
