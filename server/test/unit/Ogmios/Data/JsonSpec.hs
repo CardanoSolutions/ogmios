@@ -267,6 +267,7 @@ import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encode.Pretty as Json
 import qualified Data.Aeson.Encoding as Json
+import qualified Data.Aeson.KeyMap as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Base16 as B16
@@ -868,7 +869,8 @@ prop_parseSubmitTransaction (SerializedTransaction bytes) =
         Right MultiEraDecoderSuccess{} -> property ()
         _ -> property False
   where
-    result = Json.parseEither (parseJSON @(MultiEraDecoder (GenTx Block))) (Json.String bytes)
+    result = Json.parseEither (parseJSON @(MultiEraDecoder (GenTx Block))) json
+    json = Json.Object (Json.singleton "cbor" (Json.String bytes))
 
 instance Arbitrary SerializedTransaction where
     arbitrary = SerializedTransaction <$> elements

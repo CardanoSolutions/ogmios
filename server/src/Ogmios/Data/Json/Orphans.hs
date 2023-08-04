@@ -94,7 +94,8 @@ instance
     ) =>
     FromJSON (MultiEraDecoder (GenTx (CardanoBlock crypto)))
   where
-    parseJSON = decodeSerializedTransaction
+    parseJSON = Json.withObject "CBOR" $ \o ->
+        o .: "cbor" >>= decodeSerializedTransaction
 
 instance PraosCrypto crypto => FromJSON (GenTxId (CardanoBlock crypto)) where
     parseJSON = decodeTxId

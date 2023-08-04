@@ -869,10 +869,12 @@ export interface SubmitTransaction {
   jsonrpc: "2.0";
   method: "submitTransaction";
   params: {
-    /**
-     * CBOR-serialized signed transaction (base16)
-     */
-    transaction: string;
+    transaction: {
+      /**
+       * CBOR-serialized signed transaction (base16)
+       */
+      cbor: string;
+    };
   };
   /**
    * An arbitrary JSON value that will be mirrored back in the response.
@@ -1519,11 +1521,13 @@ export interface EvaluateTransaction {
   jsonrpc: "2.0";
   method: "evaluateTransaction";
   params: {
-    /**
-     * CBOR-serialized signed transaction (base16)
-     */
-    transaction: string;
-    additionalUtxoSet?: Utxo;
+    transaction: {
+      /**
+       * CBOR-serialized signed transaction (base16)
+       */
+      cbor: string;
+    };
+    additionalUtxo?: Utxo;
   };
   /**
    * An arbitrary JSON value that will be mirrored back in the response.

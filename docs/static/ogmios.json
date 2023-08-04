@@ -259,10 +259,17 @@
         , "required": ["transaction"]
         , "properties":
           { "transaction":
-            { "type": "string"
-            , "description": "CBOR-serialized signed transaction (base16)"
-            , "contentEncoding": "base16"
-            , "pattern": "^[0-9a-f]+$"
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "cbor" ]
+            , "properties":
+              { "cbor":
+                { "type": "string"
+                , "description": "CBOR-serialized signed transaction (base16)"
+                , "contentEncoding": "base16"
+                , "pattern": "^[0-9a-f]+$"
+                }
+              }
             }
           }
         }
@@ -373,12 +380,19 @@
         , "required": ["transaction"]
         , "properties":
           { "transaction":
-            { "type": "string"
-            , "description": "CBOR-serialized signed transaction (base16)"
-            , "contentEncoding": "base16"
-            , "pattern": "^[0-9a-f]+$"
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "cbor" ]
+            , "properties":
+              { "cbor":
+                { "type": "string"
+                , "description": "CBOR-serialized signed transaction (base16)"
+                , "contentEncoding": "base16"
+                , "pattern": "^[0-9a-f]+$"
+                }
+              }
             }
-          , "additionalUtxoSet":
+          , "additionalUtxo":
             { "$ref": "cardano.json#/definitions/Utxo"
             }
           }
@@ -3075,7 +3089,7 @@
             , "additionalProperties": false
             , "required": [ "unsuitableCollateralValue" ]
             , "properties":
-              { "unsuitableCollateralInputs'": { "$ref": "cardano.json#/definitions/Value" }
+              { "unsuitableCollateralValue'": { "$ref": "cardano.json#/definitions/Value" }
               }
             }
           }

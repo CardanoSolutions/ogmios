@@ -38,13 +38,13 @@ export type EvaluationResult = {
  *
  * @category TransactionSubmission
  */
-export function evaluateTransaction (context: InteractionContext, transaction: string, additionalUtxoSet?: Utxo) {
+export function evaluateTransaction (context: InteractionContext, serializedTransaction: string, additionalUtxo?: Utxo) {
   return Method<Request, Response, EvaluationResult[]>(
     {
       method: 'evaluateTransaction',
       params: {
-        ...(additionalUtxoSet !== undefined ? { additionalUtxoSet } : {}),
-        transaction
+        ...(additionalUtxo !== undefined ? { additionalUtxo } : {}),
+        transaction: { cbor: serializedTransaction }
       }
     },
     { handler },

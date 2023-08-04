@@ -16,8 +16,8 @@ import {
  **/
 export interface TransactionSubmissionClient {
   context: InteractionContext
-  evaluateTransaction: (transaction: string, additionalUtxoSet?: Utxo) => Promise<EvaluationResult[]>
-  submitTransaction: (transaction: string) => Promise<TransactionId>
+  evaluateTransaction: (serializedTransaction: string, additionalUtxo?: Utxo) => Promise<EvaluationResult[]>
+  submitTransaction: (serializedTransaction: string) => Promise<TransactionId>
   shutdown: () => Promise<void>
 }
 
@@ -84,15 +84,15 @@ export const createTransactionSubmissionClient = async (
 
   return Promise.resolve({
     context,
-    evaluateTransaction: (transaction, additionalUtxoSet) => {
+    evaluateTransaction: (serializedTransaction, additionalUtxo) => {
       const method = METHODS.EVALUATE
       return send<EvaluationResult[]>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
           method,
           params: {
-            ...(additionalUtxoSet !== undefined ? { additionalUtxoSet } : {}),
-            transaction
+            ...(additionalUtxo !== undefined ? { additionalUtxo } : {}),
+            transaction: { cbor: serializedTransaction }
           },
           id: { method }
         } as unknown as Ogmios['EvaluateTransaction']))
@@ -102,13 +102,13 @@ export const createTransactionSubmissionClient = async (
         return new Promise((resolve, reject) => { evaluateTransaction.handler(response, resolve, reject) })
       }, context)
     },
-    submitTransaction: async (transaction) => {
+    submitTransaction: async (serializedTransaction) => {
       const method = METHODS.SUBMIT
       return send<TransactionId>(async (socket) => {
         socket.send(safeJSON.stringify({
           ...baseRequest,
           method,
-          params: { transaction },
+          params: { transaction: { cbor: serializedTransaction } },
           id: { method }
         } as unknown as Ogmios['SubmitTransaction']))
 

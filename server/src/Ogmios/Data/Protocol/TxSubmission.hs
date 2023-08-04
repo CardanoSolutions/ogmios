@@ -284,7 +284,7 @@ mkSubmitTransactionResponse tx = \case
 data EvaluateTransaction block
     = EvaluateTransaction
         { transaction :: MultiEraDecoder (SerializedTransaction block)
-        , additionalUtxoSet :: MultiEraUTxO block
+        , additionalUtxo :: MultiEraUTxO block
         }
     deriving (Generic)
 deriving instance
@@ -302,7 +302,7 @@ _decodeEvaluateTransaction
 _decodeEvaluateTransaction =
     Rpc.genericFromJSON $ Rpc.defaultOptions
         { Rpc.onMissingField = \fieldName ->
-            if fieldName == "additionalUtxoSet" then
+            if fieldName == "additionalUtxo" then
                 pure (Json.Array mempty)
             else
                 Rpc.onMissingField Rpc.defaultOptions fieldName

@@ -18,11 +18,11 @@ type Success = SubmitTransactionSuccess
  *
  * @category TransactionSubmission
  */
-export function submitTransaction (context: InteractionContext, transaction: string) {
+export function submitTransaction (context: InteractionContext, serializedTransaction: string) {
   return Method<Request, Response, TransactionId>(
     {
       method: 'submitTransaction',
-      params: { transaction }
+      params: { transaction: { cbor: serializedTransaction } }
     },
     { handler },
     context

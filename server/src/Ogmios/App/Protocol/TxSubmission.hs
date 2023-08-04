@@ -181,10 +181,10 @@ mkTxSubmissionClient TxSubmissionCodecs{..} ExecutionUnitsEvaluator{..} queue yi
                         & yield
                     clientStIdle
 
-        MsgEvaluateTransaction EvaluateTransaction{additionalUtxoSet, transaction = request} toResponse -> do
+        MsgEvaluateTransaction EvaluateTransaction{additionalUtxo, transaction = request} toResponse -> do
             case request of
                 MultiEraDecoderSuccess transaction -> do
-                    result <- evaluateExecutionUnitsM (additionalUtxoSet, transaction)
+                    result <- evaluateExecutionUnitsM (additionalUtxo, transaction)
                     result
                         & toResponse
                         & encodeEvaluateTransactionResponse
