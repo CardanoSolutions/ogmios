@@ -2140,7 +2140,9 @@ export interface RewardAccountSummaries {
   [k: string]: RewardAccountSummary;
 }
 export interface RewardAccountSummary {
-  delegate?: StakePoolId;
+  delegate?: {
+    id: StakePoolId;
+  };
   rewards?: Lovelace;
 }
 /**
@@ -2175,28 +2177,29 @@ export interface RewardsProvenance {
   /**
    * Desired number of stake pools.
    */
-  desiredNumberOfPools: number;
+  desiredNumberOfStakePools: number;
   /**
    * Influence of the pool owner's pledge on rewards, as a ratio of two integers.
    */
-  poolInfluence: string;
+  stakePoolPledgeInfluence: string;
   /**
    * Total rewards available for the given epoch.
    */
-  totalRewards: {
+  totalRewardsInEpoch: {
     lovelace: bigint;
   };
   /**
    * The total amount of staked Lovelace during this epoch.
    */
-  activeStake: {
+  activeStakeInEpoch: {
     lovelace: bigint;
   };
-  pools: {
+  stakePools: {
     [k: string]: StakePoolSummary;
   };
 }
 export interface StakePoolSummary {
+  id: StakePoolId;
   stake: Lovelace;
   ownerStake: Lovelace;
   /**
@@ -2206,7 +2209,7 @@ export interface StakePoolSummary {
   /**
    * Some of the pool parameters relevant for the reward calculation.
    */
-  poolParameters: {
+  parameters: {
     cost: Lovelace;
     margin: Ratio;
     pledge: Lovelace;
@@ -2404,7 +2407,10 @@ export interface InitialFunds {
  */
 export interface GenesisStakePools {
   stakePools: {
-    [k: string]: StakePoolParameters;
+    [k: string]: {
+      id: StakePoolId;
+      parameters: StakePoolParameters;
+    };
   };
   delegators: {
     [k: string]: StakePoolId;

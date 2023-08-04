@@ -2305,7 +2305,14 @@
     { "type": "object"
     , "additionalProperties": false
     , "properties":
-      { "delegate": { "$ref": "cardano.json#/definitions/StakePoolId" }
+      { "delegate":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "id" ]
+        , "properties":
+          { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
+          }
+        }
       , "rewards": { "$ref": "cardano.json#/definitions/Lovelace" }
       }
     , "examples":
@@ -2321,15 +2328,21 @@
     { "type": "object"
     , "description": "Details about how rewards are calculated for the ongoing epoch."
     , "additionalProperties": false
-    , "required": [ "desiredNumberOfPools", "poolInfluence", "totalRewards", "activeStake", "pools" ]
+    , "required":
+      [ "desiredNumberOfStakePools"
+      , "stakePoolPledgeInfluence"
+      , "totalRewardsInEpoch"
+      , "activeStakeInEpoch"
+      , "stakePools"
+      ]
     , "properties":
-      { "desiredNumberOfPools":
+      { "desiredNumberOfStakePools":
         { "type": "integer"
         , "description": "Desired number of stake pools."
         , "minimum": 0
         , "maximum": 18446744073709552999
         }
-      , "poolInfluence":
+      , "stakePoolPledgeInfluence":
         { "type": "string"
         , "description": "Influence of the pool owner's pledge on rewards, as a ratio of two integers."
         , "pattern": "^-?[0-9]+/[0-9]+$"
@@ -2338,7 +2351,7 @@
           , "7/8"
           ]
         }
-      , "totalRewards":
+      , "totalRewardsInEpoch":
         { "description": "Total rewards available for the given epoch."
         , "type": "object"
         , "additionalProperties": false
@@ -2347,7 +2360,7 @@
           { "lovelace": { "type": "integer" }
           }
         }
-      , "activeStake":
+      , "activeStakeInEpoch":
         { "description": "The total amount of staked Lovelace during this epoch."
         , "type": "object"
         , "additionalProperties": false
@@ -2356,10 +2369,10 @@
           { "lovelace": { "type": "integer" }
           }
         }
-      , "pools":
+      , "stakePools":
         { "type": "object"
-        , "additionalProperties": { "$ref": "ogmios.json#/definitions/StakePoolSummary" }
         , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
+        , "additionalProperties": { "$ref": "ogmios.json#/definitions/StakePoolSummary" }
         }
       }
     }
@@ -2422,6 +2435,33 @@
       , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<MissingCostModels>" }
       , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<InternalLedgerTypeConversionError>" }
       ]
+    }
+
+  , "StakePoolSummary":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id", "stake", "ownerStake", "approximatePerformance", "parameters" ]
+    , "properties":
+      { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
+      , "stake": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "ownerStake": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "approximatePerformance":
+        { "type": "number"
+        , "description": "Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky."
+        , "minimum": 0
+        }
+      , "parameters":
+        { "type": "object"
+        , "description": "Some of the pool parameters relevant for the reward calculation."
+        , "additionalProperties": false
+        , "required": [ "cost", "margin", "pledge" ]
+        , "properties":
+          { "cost": { "$ref": "cardano.json#/definitions/Lovelace" }
+          , "margin": { "$ref": "cardano.json#/definitions/Ratio" }
+          , "pledge": { "$ref": "cardano.json#/definitions/Lovelace" }
+          }
+        }
+      }
     }
 
   , "SubmitTransactionFailure":
@@ -3482,32 +3522,6 @@
     , "properties":
       { "code": { "type": "integer", "enum": [ 3999 ] }
       , "message": { "type": "string" }
-      }
-    }
-
-  , "StakePoolSummary":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "stake", "ownerStake", "approximatePerformance", "poolParameters" ]
-    , "properties":
-      { "stake": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "ownerStake": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "approximatePerformance":
-        { "type": "number"
-        , "description": "Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky."
-        , "minimum": 0
-        }
-      , "poolParameters":
-        { "type": "object"
-        , "description": "Some of the pool parameters relevant for the reward calculation."
-        , "additionalProperties": false
-        , "required": [ "cost", "margin", "pledge" ]
-        , "properties":
-          { "cost": { "$ref": "cardano.json#/definitions/Lovelace" }
-          , "margin": { "$ref": "cardano.json#/definitions/Ratio" }
-          , "pledge": { "$ref": "cardano.json#/definitions/Lovelace" }
-          }
-        }
       }
     }
 

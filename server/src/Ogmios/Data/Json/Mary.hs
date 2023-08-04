@@ -94,7 +94,7 @@ encodeMultiAsset
 encodeMultiAsset (Ma.MultiAsset assets) =
     encodeMapSeries
         stringifyPolicyId
-        (encodeMap stringifyAssetName encodeInteger)
+        (const (encodeMap stringifyAssetName encodeInteger))
         assets
 
 encodePolicyId

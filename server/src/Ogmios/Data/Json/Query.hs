@@ -413,7 +413,7 @@ encodeDelegationsAndRewards (dlg, rwd) =
 
     whenDlgMissing = Map.mapMaybeMissing
         (\_ v -> Just $ encodeObject $
-            "delegate" .= Shelley.encodePoolId v
+            "delegate" .= encodeSingleton "id" (Shelley.encodePoolId v)
         )
     whenRwdMissing = Map.mapMaybeMissing
         (\_ v -> Just $ encodeObject $
@@ -422,7 +422,7 @@ encodeDelegationsAndRewards (dlg, rwd) =
     whenBothPresent = Map.zipWithAMatched
         (\_ x y -> pure $ encodeObject $
             "delegate" .=
-                Shelley.encodePoolId x <>
+                encodeSingleton "id" (Shelley.encodePoolId x) <>
             "rewards" .=
                 encodeCoin y
         )
@@ -537,16 +537,20 @@ encodePoolParameters =
     encodeMap Shelley.stringifyPoolId Shelley.encodePoolParams
 
 encodeRewardInfoPool
-    :: Sh.Api.RewardInfoPool
+    :: Crypto crypto
+    => Ledger.KeyHash 'StakePool crypto
+    -> Sh.Api.RewardInfoPool
     -> Json
-encodeRewardInfoPool info =
+encodeRewardInfoPool poolId info =
+    "id" .=
+        Shelley.encodePoolId poolId <>
     "stake" .=
         encodeCoin (Sh.Api.stake info) <>
     "ownerStake" .=
         encodeCoin (Sh.Api.ownerStake info) <>
     "approximatePerformance" .=
         encodeDouble (Sh.Api.performanceEstimate info) <>
-    "poolParameters" .= encodeObject
+    "parameters" .= encodeObject
         ( "cost" .=
             encodeCoin (Sh.Api.cost info) <>
           "margin" .=
@@ -561,16 +565,16 @@ encodeRewardsProvenance
     => RewardsProvenance crypto
     -> Json
 encodeRewardsProvenance (rp, pools) =
-    "desiredNumberOfPools" .=
+    "desiredNumberOfStakePools" .=
         encodeNatural (Sh.Api.nOpt rp) <>
-    "poolInfluence" .=
+    "stakePoolPledgeInfluence" .=
         encodeNonNegativeInterval (Sh.Api.a0 rp) <>
-    "totalRewards" .=
+    "totalRewardsInEpoch" .=
         encodeCoin (Sh.Api.rPot rp) <>
-    "activeStake" .=
+    "activeStakeInEpoch" .=
         encodeCoin (Sh.Api.totalStake rp) <>
-    "pools" .=
-        encodeMap Shelley.stringifyPoolId encodeRewardInfoPool pools
+    "stakePools" .=
+        encodeObject (encodeMapSeries Shelley.stringifyPoolId encodeRewardInfoPool pools)
     & encodeObject
 
 encodeSafeZone

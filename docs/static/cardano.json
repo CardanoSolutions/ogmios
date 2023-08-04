@@ -829,7 +829,15 @@
       { "stakePools":
         { "type": "object"
         , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
-        , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePoolParameters" }
+        , "additionalProperties":
+          { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "id", "parameters" ]
+          , "properties":
+            { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
+            , "parameters": { "$ref": "cardano.json#/definitions/StakePoolParameters" }
+            }
+          }
         }
       , "delegators":
         { "type": "object"

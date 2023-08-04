@@ -492,13 +492,13 @@ encodeList =
     Json.list
 {-# INLINABLE encodeList #-}
 
-encodeListMap :: (k -> Text) -> (v -> Json) -> ListMap k v -> Json
+encodeListMap :: (k -> Text) -> (k -> v -> Json) -> ListMap k v -> Json
 encodeListMap encodeKey encodeValue =
     Json.pairs . LM.foldrWithKey
         (\(k, v) -> (<>)
             (Json.pair
                 (Json.fromText (encodeKey k))
-                (encodeValue v)
+                (encodeValue k v)
             )
         )
         mempty
@@ -506,16 +506,16 @@ encodeListMap encodeKey encodeValue =
 
 encodeMap :: (k -> Text) -> (v -> Json) -> Map k v -> Json
 encodeMap encodeKey encodeValue =
-    Json.pairs . encodeMapSeries encodeKey encodeValue
+    Json.pairs . encodeMapSeries encodeKey (const encodeValue)
 {-# INLINABLE encodeMap #-}
 
-encodeMapSeries :: (k -> Text) -> (v -> Json) -> Map k v -> Json.Series
+encodeMapSeries :: (k -> Text) -> (k -> v -> Json) -> Map k v -> Json.Series
 encodeMapSeries encodeKey encodeValue =
     Map.foldrWithKey
         (\k v -> (<>)
             (Json.pair
                 (Json.fromText (encodeKey k))
-                (encodeValue v)
+                (encodeValue k v)
             )
         )
         mempty
