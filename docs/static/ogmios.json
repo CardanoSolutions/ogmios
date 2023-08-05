@@ -1281,7 +1281,7 @@
 
   , "QueryLedgerStateStakePools":
     { "title": "QueryLedgerStateStakePools"
-    , "description": "Query the list of all stake pool identifiers currently registered and active."
+    , "description": "Query the list of all stake pools currently registered and active, optionally filtered by ids."
     , "type": "object"
     , "required": [ "jsonrpc", "method" ]
     , "additionalProperties": false
@@ -1294,7 +1294,24 @@
         { "type": "string"
         , "enum": [ "queryLedgerState/stakePools" ]
         }
-      , "params": {}
+      , "params":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "stakePools" ]
+        , "properties":
+          { "stakePools":
+            { "type": "array"
+            , "items":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "id" ]
+              , "properties":
+                { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
+                }
+              }
+            }
+          }
+        }
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
         }
@@ -1317,15 +1334,9 @@
             , "enum": [ "queryLedgerState/stakePools" ]
             }
           , "result":
-            { "type": "array"
-            , "items":
-              { "type": "object"
-              , "required": [ "id" ]
-              , "additionalProperties": false
-              , "properties":
-                { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
-                }
-              }
+            { "type": "object"
+            , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePool" }
+            , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."

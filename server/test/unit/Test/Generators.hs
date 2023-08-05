@@ -722,15 +722,6 @@ genRewardsProvenanceResult _ = frequency
     , (10, Right <$> genRewardsProvenance)
     ]
 
-genPoolIdsResult
-    :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (Set (Ledger.KeyHash 'StakePool crypto)))
-    -> Gen (QueryResult crypto (Set (Ledger.KeyHash 'StakePool crypto)))
-genPoolIdsResult _ = frequency
-    [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right <$> reasonablySized arbitrary)
-    ]
-
 genPoolParametersResult
     :: forall crypto. (crypto ~ StandardCrypto)
     => Proxy (QueryResult crypto (Map (Ledger.KeyHash 'StakePool crypto) (PoolParams crypto)))

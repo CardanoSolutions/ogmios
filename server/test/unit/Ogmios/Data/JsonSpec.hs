@@ -194,7 +194,7 @@ import Test.Generators
     , genPointResultPraos
     , genPointResultTPraos
     , genPoolDistrResult
-    , genPoolIdsResult
+    , genPoolParametersResult
     , genProposedPParamsResult
     , genRewardsProvenanceResult
     , genSubmitResult
@@ -632,7 +632,16 @@ spec = do
 
         validateLedgerStateQuery 10 "stakePools"
             [aesonQQ|{}|]
-            (parseQueryLedgerStakePools genPoolIdsResult)
+            (parseQueryLedgerStakePools genPoolParametersResult)
+
+        validateLedgerStateQuery 10 "stakePools"
+            [aesonQQ|{
+                "stakePools": [
+                    { "id": "pool1lllmq2jgcqrag5c77lpc5m34fsqn63leadyx9tzx842n66ly3ql" },
+                    { "id": "pool1rutq574pcq30mn9xuytgpqyvn69zq2dnycp2fhnw0hsuyqpnh99" }
+                ]
+            }|]
+            (parseQueryLedgerStakePools genPoolParametersResult)
 
         validateNetworkQuery 10 "blockHeight"
             [aesonQQ|{}|]
@@ -1030,6 +1039,20 @@ validateLedgerStateQuery n subMethod json parser = do
                                 (encodingToValue . encodeQueryResponse encodeResult)
                                 responseRefs
                             )
+                    SomeCompoundQuery _ _ encodeResult genResult -> do
+                        case era of
+                            SomeShelleyEra ShelleyBasedEraBabbage -> do
+                                generateTestVectors (n, toString propName)
+                                    (genResult Proxy)
+                                    (encodeQueryResponse encodeResult)
+                            _someOtherEra ->
+                                pure ()
+                        runQuickCheck $ withMaxSuccess (n `div` nEras) $ forAllBlind
+                            (genResult Proxy)
+                            (prop_validateToJSON
+                                (encodingToValue . encodeQueryResponse encodeResult)
+                                responseRefs
+                            )
                     SomeAdHocQuery _ encodeResult genResult -> do
                         case era of
                             SomeShelleyEra ShelleyBasedEraBabbage -> do
@@ -1098,6 +1121,16 @@ validateNetworkQuery n subMethod json parser = do
 
             case queryInEra (SomeShelleyEra ShelleyBasedEraBabbage) of
                 Just (SomeStandardQuery _ encodeResult genResult) -> do
+                    generateTestVectors (n, toString propName)
+                        (genResult Proxy)
+                        (encodeQueryResponse encodeResult)
+                    runQuickCheck $ withMaxSuccess n $ forAllBlind
+                        (genResult Proxy)
+                        (prop_validateToJSON
+                            (encodingToValue . encodeQueryResponse encodeResult)
+                            responseRefs
+                        )
+                Just (SomeCompoundQuery _ _ encodeResult genResult) -> do
                     generateTestVectors (n, toString propName)
                         (genResult Proxy)
                         (encodeQueryResponse encodeResult)

@@ -610,10 +610,11 @@ export interface StakeCredentialDeregistration {
  */
 export interface StakePoolRegistration {
   type: "stakePoolRegistration";
-  stakePool: {
-    id: StakePoolId;
-    parameters: StakePoolParameters;
-  };
+  stakePool: StakePool;
+}
+export interface StakePool {
+  id: StakePoolId;
+  parameters: StakePoolParameters;
 }
 export interface StakePoolParameters {
   owners: DigestBlake2B224[];
@@ -2226,12 +2227,16 @@ export interface StakePoolSummary {
   };
 }
 /**
- * Query the list of all stake pool identifiers currently registered and active.
+ * Query the list of all stake pools currently registered and active, optionally filtered by ids.
  */
 export interface QueryLedgerStateStakePools {
   jsonrpc: "2.0";
   method: "queryLedgerState/stakePools";
-  params?: unknown;
+  params?: {
+    stakePools: {
+      id: StakePoolId;
+    }[];
+  };
   /**
    * An arbitrary JSON value that will be mirrored back in the response.
    */
@@ -2243,8 +2248,8 @@ export interface QueryLedgerStateStakePoolsResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/stakePools";
   result: {
-    id: StakePoolId;
-  }[];
+    [k: string]: StakePool;
+  };
   /**
    * Any value that was set by a client request in the 'id' field.
    */
@@ -2417,10 +2422,7 @@ export interface InitialFunds {
  */
 export interface GenesisStakePools {
   stakePools: {
-    [k: string]: {
-      id: StakePoolId;
-      parameters: StakePoolParameters;
-    };
+    [k: string]: StakePool;
   };
   delegators: {
     [k: string]: StakePoolId;

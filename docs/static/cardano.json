@@ -392,17 +392,7 @@
             , "enum": [ "stakePoolRegistration" ]
             }
           , "stakePool":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "id", "parameters" ]
-            , "properties":
-              { "id":
-                { "$ref": "cardano.json#/definitions/StakePoolId"
-                }
-              , "parameters":
-                { "$ref": "cardano.json#/definitions/StakePoolParameters"
-                }
-              }
+            { "$ref": "cardano.json#/definitions/StakePool"
             }
           }
         }
@@ -845,15 +835,7 @@
       { "stakePools":
         { "type": "object"
         , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
-        , "additionalProperties":
-          { "type": "object"
-          , "additionalProperties": false
-          , "required": [ "id", "parameters" ]
-          , "properties":
-            { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
-            , "parameters": { "$ref": "cardano.json#/definitions/StakePoolParameters" }
-            }
-          }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePool" }
         }
       , "delegators":
         { "type": "object"
@@ -1116,6 +1098,21 @@
   , "PolicyId":
     { "title": "PolicyId"
     , "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+    }
+
+  , "StakePool":
+    { "title": "StakePool"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id", "parameters" ]
+    , "properties":
+      { "id":
+        { "$ref": "cardano.json#/definitions/StakePoolId"
+        }
+      , "parameters":
+        { "$ref": "cardano.json#/definitions/StakePoolParameters"
+        }
+      }
     }
 
   , "StakePoolId":

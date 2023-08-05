@@ -88,9 +88,11 @@ export const safeJSON = {
   },
 
   sanitizeMetadatum (json: any) : any {
-    for (const k in json) {
-      const v = json[k]
-      json[k] = typeof v === 'number' ? BigInt(v) : this.sanitizeMetadatum(v)
+    if (typeof json === 'object' && json !== null) {
+      for (const k in json) {
+        const v = json[k]
+        json[k] = typeof v === 'number' ? BigInt(v) : this.sanitizeMetadatum(v)
+      }
     }
     return json
   },

@@ -38,7 +38,7 @@ module Ogmios.Data.Json.Query
     , encodeOneEraHash
     , encodePoint
     , encodePoolDistr
-    , encodePoolParameters
+    , encodeStakePools
     , encodeRewardInfoPool
     , encodeRewardsProvenance
 
@@ -73,7 +73,6 @@ module Ogmios.Data.Json.Query
     , parseQueryLedgerProtocolParameters
     , parseQueryLedgerRewardAccountSummaries
     , parseQueryLedgerRewardsProvenance
-    , parseQueryLedgerStakePoolParameters
     , parseQueryLedgerStakePools
     , parseQueryLedgerTip
     , parseQueryLedgerUtxo
@@ -299,6 +298,19 @@ data SomeQuery (f :: Type -> Type) block where
             -- Useful when `f ~ Gen` for testing.
         -> SomeQuery f block
 
+    SomeCompoundQuery
+        :: forall f block a b. ()
+        => LSQ.Query block a
+            -- ^ First query to run
+        -> (a -> Either Json (LSQ.Query block b))
+            -- ^ Serialize results from the first query
+        -> (b -> Either Json Json)
+            -- ^ Serialize results to JSON encoding.
+        -> (Proxy b -> f b)
+            -- ^ Yield results in some applicative 'f' from some type definition.
+            -- Useful when `f ~ Gen` for testing.
+        -> SomeQuery f block
+
     SomeAdHocQuery
         :: forall f block result. ()
         =>  AdHocQuery result
@@ -347,8 +359,6 @@ instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
                 parseQueryLedgerRewardsProvenance id queryParams
             "LedgerState/stakePools" ->
                 parseQueryLedgerStakePools id queryParams
-            "LedgerState/stakePoolParameters" ->
-                parseQueryLedgerStakePoolParameters id queryParams
             "LedgerState/tip" ->
                 parseQueryLedgerTip (const id) (const id) queryParams
             "LedgerState/utxo" ->
@@ -529,13 +539,6 @@ encodePoolDistr =
             Shelley.encodeHash (Ledger.individualPoolStakeVrf x)
         & encodeObject
 
-encodePoolParameters
-    :: Crypto crypto
-    => Map (Ledger.KeyHash 'StakePool crypto) (Sh.PoolParams crypto)
-    -> Json
-encodePoolParameters =
-    encodeMap Shelley.stringifyPoolId Shelley.encodePoolParams
-
 encodeRewardInfoPool
     :: Crypto crypto
     => Ledger.KeyHash 'StakePool crypto
@@ -586,14 +589,26 @@ encodeSafeZone = \case
     UnsafeIndefiniteSafeZone ->
         encodeNull
 
+encodeStakePools
+    :: Crypto crypto
+    => Map (Ledger.KeyHash 'StakePool crypto) (Sh.PoolParams crypto)
+    -> Json
+encodeStakePools =
+    encodeObject . encodeMapSeries Shelley.stringifyPoolId (\k v ->
+        encodeObject
+            ( "id" .= Shelley.encodePoolId k
+           <> "parameters" .= Shelley.encodePoolParams v
+            )
+    )
+
 --
 -- Parsers (Queries)
 --
 
 eraMismatchOrResult
-    :: (a -> Json.Encoding)
+    :: (a -> b)
     -> Either (MismatchEraInfo (CardanoEras crypto)) a
-    -> Either Json Json
+    -> Either Json b
 eraMismatchOrResult =
     bimap encodeMismatchEraInfo
 {-# INLINABLE eraMismatchOrResult #-}
@@ -1096,64 +1111,76 @@ parseQueryLedgerRewardsProvenance genResult =
 
 parseQueryLedgerStakePools
     :: forall crypto f. (Crypto crypto)
-    => GenResult crypto f (Set (Ledger.KeyHash 'StakePool crypto))
-    -> Json.Value
-    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseQueryLedgerStakePools genResult =
-    Json.withObject "stakePools" $ \obj -> do
-        guard (null obj) $>
-            ( \queryDef -> Just $ SomeStandardQuery
-                queryDef
-                (eraMismatchOrResult
-                    (encodeFoldable $ \i -> encodeObject ("id" .= Shelley.encodePoolId i))
-                )
-                genResult
-            )
-            .
-            ( \case
-                SomeShelleyEra ShelleyBasedEraShelley ->
-                    LSQ.BlockQuery $ QueryIfCurrentShelley GetStakePools
-                SomeShelleyEra ShelleyBasedEraAllegra ->
-                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetStakePools
-                SomeShelleyEra ShelleyBasedEraMary ->
-                    LSQ.BlockQuery $ QueryIfCurrentMary GetStakePools
-                SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetStakePools
-                SomeShelleyEra ShelleyBasedEraBabbage ->
-                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetStakePools
-                SomeShelleyEra ShelleyBasedEraConway ->
-                    LSQ.BlockQuery $ QueryIfCurrentConway GetStakePools
-            )
-
-parseQueryLedgerStakePoolParameters
-    :: forall crypto f. (Crypto crypto)
     => GenResult crypto f (Map (Ledger.KeyHash 'StakePool crypto) (Sh.PoolParams crypto))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseQueryLedgerStakePoolParameters genResult =
+parseQueryLedgerStakePools genResult =
     Json.withObject "SomeQuery" $ \obj -> do
-        ids <- obj .: "stakePools" >>= traverset (decodePoolId @crypto)
-        pure $
-            (\queryDef -> Just $ SomeStandardQuery
-                queryDef
-                (eraMismatchOrResult encodePoolParameters)
+        obj .:? "stakePools" >>= \case
+            Nothing -> pure getAllStakePools
+            Just params -> do
+                ids <- traverset (decodePoolId @crypto) params
+                pure (getFilteredStakePools ids)
+  where
+    getFilteredStakePools ids =
+        (\queryDef -> Just $ SomeStandardQuery
+            queryDef
+            (eraMismatchOrResult encodeStakePools)
+            genResult
+        )
+        .
+        ( \case
+            SomeShelleyEra ShelleyBasedEraShelley ->
+                LSQ.BlockQuery $ QueryIfCurrentShelley (GetStakePoolParams ids)
+            SomeShelleyEra ShelleyBasedEraAllegra ->
+                LSQ.BlockQuery $ QueryIfCurrentAllegra (GetStakePoolParams ids)
+            SomeShelleyEra ShelleyBasedEraMary ->
+                LSQ.BlockQuery $ QueryIfCurrentMary (GetStakePoolParams ids)
+            SomeShelleyEra ShelleyBasedEraAlonzo ->
+                LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetStakePoolParams ids)
+            SomeShelleyEra ShelleyBasedEraBabbage ->
+                LSQ.BlockQuery $ QueryIfCurrentBabbage (GetStakePoolParams ids)
+            SomeShelleyEra ShelleyBasedEraConway ->
+                LSQ.BlockQuery $ QueryIfCurrentConway (GetStakePoolParams ids)
+        )
+
+    getAllStakePools = Just . \case
+        SomeShelleyEra ShelleyBasedEraShelley ->
+            SomeCompoundQuery
+                (LSQ.BlockQuery (QueryIfCurrentShelley GetStakePools))
+                (eraMismatchOrResult (LSQ.BlockQuery . QueryIfCurrentShelley . GetStakePoolParams))
+                (eraMismatchOrResult encodeStakePools)
                 genResult
-            )
-            .
-            ( \case
-                SomeShelleyEra ShelleyBasedEraShelley ->
-                    LSQ.BlockQuery $ QueryIfCurrentShelley (GetStakePoolParams ids)
-                SomeShelleyEra ShelleyBasedEraAllegra ->
-                    LSQ.BlockQuery $ QueryIfCurrentAllegra (GetStakePoolParams ids)
-                SomeShelleyEra ShelleyBasedEraMary ->
-                    LSQ.BlockQuery $ QueryIfCurrentMary (GetStakePoolParams ids)
-                SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetStakePoolParams ids)
-                SomeShelleyEra ShelleyBasedEraBabbage ->
-                    LSQ.BlockQuery $ QueryIfCurrentBabbage (GetStakePoolParams ids)
-                SomeShelleyEra ShelleyBasedEraConway ->
-                    LSQ.BlockQuery $ QueryIfCurrentConway (GetStakePoolParams ids)
-            )
+        SomeShelleyEra ShelleyBasedEraAllegra ->
+            SomeCompoundQuery
+                (LSQ.BlockQuery (QueryIfCurrentAllegra GetStakePools))
+                (eraMismatchOrResult (LSQ.BlockQuery . QueryIfCurrentAllegra . GetStakePoolParams))
+                (eraMismatchOrResult encodeStakePools)
+                genResult
+        SomeShelleyEra ShelleyBasedEraMary ->
+            SomeCompoundQuery
+                (LSQ.BlockQuery (QueryIfCurrentMary GetStakePools))
+                (eraMismatchOrResult (LSQ.BlockQuery . QueryIfCurrentMary . GetStakePoolParams))
+                (eraMismatchOrResult encodeStakePools)
+                genResult
+        SomeShelleyEra ShelleyBasedEraAlonzo ->
+            SomeCompoundQuery
+                (LSQ.BlockQuery (QueryIfCurrentAlonzo GetStakePools))
+                (eraMismatchOrResult (LSQ.BlockQuery . QueryIfCurrentAlonzo . GetStakePoolParams))
+                (eraMismatchOrResult encodeStakePools)
+                genResult
+        SomeShelleyEra ShelleyBasedEraBabbage ->
+            SomeCompoundQuery
+                (LSQ.BlockQuery (QueryIfCurrentBabbage GetStakePools))
+                (eraMismatchOrResult (LSQ.BlockQuery . QueryIfCurrentBabbage . GetStakePoolParams))
+                (eraMismatchOrResult encodeStakePools)
+                genResult
+        SomeShelleyEra ShelleyBasedEraConway ->
+            SomeCompoundQuery
+                (LSQ.BlockQuery (QueryIfCurrentConway GetStakePools))
+                (eraMismatchOrResult (LSQ.BlockQuery . QueryIfCurrentConway . GetStakePoolParams))
+                (eraMismatchOrResult encodeStakePools)
+                genResult
 
 parseQueryNetworkBlockHeight
     :: forall crypto f. ()
@@ -1406,10 +1433,9 @@ decodePoolId
     :: Crypto crypto
     => Json.Value
     -> Json.Parser (Ledger.KeyHash 'StakePool crypto)
-decodePoolId = Json.withText "PoolId" $ choice "poolId"
-    [ poolIdFromBytes fromBech32
-    , poolIdFromBytes fromBase16
-    ]
+decodePoolId = Json.withObject "StakePoolId" $ \obj -> do
+    txt <- obj .: "id"
+    poolIdFromBytes fromBech32 txt <|> poolIdFromBytes fromBase16 txt
   where
     failure =
         fail "couldn't decode stake pool id in neither bech32 nor base16"

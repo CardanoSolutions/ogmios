@@ -268,27 +268,25 @@ describe('Local state queries', () => {
       })
     })
 
-    describe('poolIds', () => {
-      it('fetches stake pools ids', async () => {
-        const ids = await LedgerStateQuery.stakePools(context)
-        expect(ids).toBeDefined()
-      })
-    })
-    xdescribe('stakePoolParameters', () => {
-      it('no pool parameters are retrieved when none is requested', async () => {
-        // TODO: Re-enable once 'stakePoolParameters' have been merged into 'stakePools'
-        // const pools = await LedgerStateQuery.stakePoolParameters(context, [])
-        // expect(Object.entries(pools)).toHaveLength(0)
+    describe('stakePools', () => {
+      it('Fetches all stake pools', async () => {
+        const pools = await LedgerStateQuery.stakePools(context)
+        expect(Object.keys(pools).length > 0)
       })
 
-      xit('can retrieve pool parameters of pools, filtered by poolIds', async () => {
-        // TODO: Re-enable once 'stakePoolParameters' have been merged into 'stakePools'
-        // const [a, b] = await LedgerStateQuery.stakePools(context)
-        // const pools = await LedgerStateQuery.poolParameters(context, [a, b])
-        // expect(pools[a]).toBeDefined()
-        // expect(pools[b]).toBeDefined()
+      it('Fetches no stake pools', async () => {
+        const pools = await LedgerStateQuery.stakePools(context, [])
+        expect(Object.keys(pools).length).toBe(0)
+      })
+
+      it('Fetches some stake pools', async () => {
+        const [a, b, ..._rest] = Object.keys(await LedgerStateQuery.stakePools(context))
+        const pools = await LedgerStateQuery.stakePools(context, [{ id: a }, { id: b }])
+        expect(pools[a]).toBeDefined()
+        expect(pools[b]).toBeDefined()
       })
     })
+
     describe('systemStart', () => {
       it('can query the blockchain start-time', async () => {
         const systemStart = await LedgerStateQuery.networkStartTime(context)
