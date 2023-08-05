@@ -51,9 +51,6 @@
 								<a href="_cardano_ogmios_client.Schema.Transaction.html#certificates" class="tsd-kind-icon">certificates</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.Transaction.html#collateral" class="tsd-kind-icon">collateral</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_client.Schema.Transaction.html#collateralReturn" class="tsd-kind-icon">collateral<wbr>Return</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
@@ -96,6 +93,9 @@
 								<a href="_cardano_ogmios_client.Schema.Transaction.html#references" class="tsd-kind-icon">references</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_client.Schema.Transaction.html#requiredExtraScripts" class="tsd-kind-icon">required<wbr>Extra<wbr>Scripts</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_client.Schema.Transaction.html#requiredExtraSignatories" class="tsd-kind-icon">required<wbr>Extra<wbr>Signatories</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
@@ -106,6 +106,9 @@
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_client.Schema.Transaction.html#signatories" class="tsd-kind-icon">signatories</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_client.Schema.Transaction.html#totalCollateral" class="tsd-kind-icon">total<wbr>Collateral</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_client.Schema.Transaction.html#validityInterval" class="tsd-kind-icon">validity<wbr>Interval</a>
@@ -156,7 +159,6 @@
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#cbor" class="tsd-kind-icon">cbor</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#certificates" class="tsd-kind-icon">certificates</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#collateral" class="tsd-kind-icon">collateral</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#collateralReturn" class="tsd-kind-icon">collateral<wbr>Return</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#collaterals" class="tsd-kind-icon">collaterals</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#datums" class="tsd-kind-icon">datums</a></li>
@@ -171,10 +173,12 @@
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#outputs" class="tsd-kind-icon">outputs</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#redeemers" class="tsd-kind-icon">redeemers</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#references" class="tsd-kind-icon">references</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#requiredExtraScripts" class="tsd-kind-icon">required<wbr>Extra<wbr>Scripts</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#requiredExtraSignatories" class="tsd-kind-icon">required<wbr>Extra<wbr>Signatories</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#scriptIntegrityHash" class="tsd-kind-icon">script<wbr>Integrity<wbr>Hash</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#scripts" class="tsd-kind-icon">scripts</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#signatories" class="tsd-kind-icon">signatories</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#totalCollateral" class="tsd-kind-icon">total<wbr>Collateral</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#validityInterval" class="tsd-kind-icon">validity<wbr>Interval</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Transaction.html#withdrawals" class="tsd-kind-icon">withdrawals</a></li>
 							</ul>
@@ -200,17 +204,7 @@
 					<div class="tsd-signature tsd-kind-icon">certificates<span class="tsd-signature-symbol">:</span> <a href="../modules/_cardano_ogmios_client.Schema.html#Certificate" class="tsd-signature-type">Certificate</a><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:245</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="collateral" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> collateral</h3>
-					<div class="tsd-signature tsd-kind-icon">collateral<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.Lovelace.html" class="tsd-signature-type">Lovelace</a></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:242</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:244</li>
 						</ul>
 					</aside>
 				</section>
@@ -220,7 +214,7 @@
 					<div class="tsd-signature tsd-kind-icon">collateral<wbr>Return<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.TransactionOutput.html" class="tsd-signature-type">TransactionOutput</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:243</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:242</li>
 						</ul>
 					</aside>
 				</section>
@@ -230,7 +224,7 @@
 					<div class="tsd-signature tsd-kind-icon">collaterals<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.TransactionOutputReference.html" class="tsd-signature-type">TransactionOutputReference</a><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:241</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:240</li>
 						</ul>
 					</aside>
 				</section>
@@ -258,7 +252,7 @@
 					<div class="tsd-signature tsd-kind-icon">fee<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.Lovelace.html" class="tsd-signature-type">Lovelace</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:247</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:246</li>
 						</ul>
 					</aside>
 				</section>
@@ -278,7 +272,7 @@
 					<div class="tsd-signature tsd-kind-icon">id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:237</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:236</li>
 						</ul>
 					</aside>
 				</section>
@@ -288,7 +282,7 @@
 					<div class="tsd-signature tsd-kind-icon">input<wbr>Source<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"inputs"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"collaterals"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:238</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:237</li>
 						</ul>
 					</aside>
 				</section>
@@ -298,7 +292,7 @@
 					<div class="tsd-signature tsd-kind-icon">inputs<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.TransactionOutputReference.html" class="tsd-signature-type">TransactionOutputReference</a><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:239</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:238</li>
 						</ul>
 					</aside>
 				</section>
@@ -318,7 +312,7 @@
 					<div class="tsd-signature tsd-kind-icon">mint<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.Assets.html" class="tsd-signature-type">Assets</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:249</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:248</li>
 						</ul>
 					</aside>
 				</section>
@@ -328,7 +322,7 @@
 					<div class="tsd-signature tsd-kind-icon">network<span class="tsd-signature-symbol">:</span> <a href="../modules/_cardano_ogmios_client.Schema.html#Network" class="tsd-signature-type">Network</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:250</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:249</li>
 						</ul>
 					</aside>
 				</section>
@@ -338,7 +332,7 @@
 					<div class="tsd-signature tsd-kind-icon">outputs<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.TransactionOutput.html" class="tsd-signature-type">TransactionOutput</a><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:244</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:243</li>
 						</ul>
 					</aside>
 				</section>
@@ -366,7 +360,17 @@
 					<div class="tsd-signature tsd-kind-icon">references<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.TransactionOutputReference.html" class="tsd-signature-type">TransactionOutputReference</a><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:240</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:239</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="requiredExtraScripts" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> required<wbr>Extra<wbr>Scripts</h3>
+					<div class="tsd-signature tsd-kind-icon">required<wbr>Extra<wbr>Scripts<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:252</li>
 						</ul>
 					</aside>
 				</section>
@@ -376,7 +380,7 @@
 					<div class="tsd-signature tsd-kind-icon">required<wbr>Extra<wbr>Signatories<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:252</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:251</li>
 						</ul>
 					</aside>
 				</section>
@@ -386,7 +390,7 @@
 					<div class="tsd-signature tsd-kind-icon">script<wbr>Integrity<wbr>Hash<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:251</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:250</li>
 						</ul>
 					</aside>
 				</section>
@@ -419,12 +423,22 @@
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="totalCollateral" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> total<wbr>Collateral</h3>
+					<div class="tsd-signature tsd-kind-icon">total<wbr>Collateral<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.Lovelace.html" class="tsd-signature-type">Lovelace</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:241</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="validityInterval" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> validity<wbr>Interval</h3>
 					<div class="tsd-signature tsd-kind-icon">validity<wbr>Interval<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.ValidityInterval.html" class="tsd-signature-type">ValidityInterval</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:248</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:247</li>
 						</ul>
 					</aside>
 				</section>
@@ -434,7 +448,7 @@
 					<div class="tsd-signature tsd-kind-icon">withdrawals<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.Withdrawals.html" class="tsd-signature-type">Withdrawals</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:246</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:245</li>
 						</ul>
 					</aside>
 				</section>

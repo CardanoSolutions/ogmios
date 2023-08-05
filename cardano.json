@@ -392,17 +392,7 @@
             , "enum": [ "stakePoolRegistration" ]
             }
           , "stakePool":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "id", "parameters" ]
-            , "properties":
-              { "id":
-                { "$ref": "cardano.json#/definitions/StakePoolId"
-                }
-              , "parameters":
-                { "$ref": "cardano.json#/definitions/StakePoolParameters"
-                }
-              }
+            { "$ref": "cardano.json#/definitions/StakePool"
             }
           }
         }
@@ -845,15 +835,7 @@
       { "stakePools":
         { "type": "object"
         , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
-        , "additionalProperties":
-          { "type": "object"
-          , "additionalProperties": false
-          , "required": [ "id", "parameters" ]
-          , "properties":
-            { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
-            , "parameters": { "$ref": "cardano.json#/definitions/StakePoolParameters" }
-            }
-          }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePool" }
         }
       , "delegators":
         { "type": "object"
@@ -920,7 +902,6 @@
     , "properties":
       { "index":
         { "$ref": "cardano.json#/definitions/UInt32"
-        , "minimum": 0
         }
       }
     }
@@ -1117,6 +1098,21 @@
   , "PolicyId":
     { "title": "PolicyId"
     , "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+    }
+
+  , "StakePool":
+    { "title": "StakePool"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id", "parameters" ]
+    , "properties":
+      { "id":
+        { "$ref": "cardano.json#/definitions/StakePoolId"
+        }
+      , "parameters":
+        { "$ref": "cardano.json#/definitions/StakePoolParameters"
+        }
+      }
     }
 
   , "StakePoolId":
@@ -1717,7 +1713,7 @@
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
         }
-      , "collateral":
+      , "totalCollateral":
         { "$ref": "cardano.json#/definitions/Lovelace"
         }
       , "collateralReturn":
@@ -1750,6 +1746,10 @@
         { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
         }
       , "requiredExtraSignatories":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
+      , "requiredExtraScripts":
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
         }
