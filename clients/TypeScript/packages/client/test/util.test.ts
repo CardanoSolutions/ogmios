@@ -392,7 +392,7 @@ describe('util', () => {
             "id": "3e6230bf0d2ead922e2296386e20a10f23d14796076262f152fce9e15d857bb9",
             "inputSource": "inputs",
             "inputs": [],
-            "collateral": { "lovelace": 27 },
+            "totalCollateral": { "lovelace": 27 },
             "outputs": [
               {
                 "address": "addr1wxckk4h4asryhe4v8j4kqd0046rtxekv8hz2p4t3vq7hpegtxpwnn",
@@ -425,7 +425,7 @@ describe('util', () => {
 
         const stakeAddr = 'stake1uy659t9n5excps5nqgnq6ckrhpa8g2k3f2lc2h4uvuess8syll2gq'
         const result = safeJSON.parse(json) as Transaction
-        expect(typeof result.collateral.lovelace).toEqual('bigint')
+        expect(typeof result.totalCollateral.lovelace).toEqual('bigint')
         expect(typeof result.fee.lovelace).toEqual('bigint')
         expect(typeof result.withdrawals[stakeAddr].lovelace).toEqual('bigint')
         expect(typeof result.mint['4acf2773917c7b547c576a7ff110d2ba5733c1f1ca9cdc659aea3a56']['0202']).toEqual('bigint')

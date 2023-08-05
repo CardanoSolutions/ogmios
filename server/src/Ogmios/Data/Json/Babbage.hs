@@ -214,7 +214,7 @@ encodeTxBody x scripts =
         (encodeFoldable Shelley.encodeTxIn) (Ba.btbCollateral x) <>
     "collateralReturn" .=? OmitWhenNothing
         (encodeTxOut . sizedValue) (Ba.btbCollateralReturn x) <>
-    "collateral" .=? OmitWhenNothing
+    "totalCollateral" .=? OmitWhenNothing
         encodeCoin (Ba.btbTotalCollateral x) <>
     "certificates" .=? OmitWhen null
         (encodeFoldable Shelley.encodeDCert) (Ba.btbCerts x) <>

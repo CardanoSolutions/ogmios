@@ -487,7 +487,7 @@ export interface Transaction {
   inputs: TransactionOutputReference[];
   references?: TransactionOutputReference[];
   collaterals?: TransactionOutputReference[];
-  collateral?: Lovelace;
+  totalCollateral?: Lovelace;
   collateralReturn?: TransactionOutput;
   outputs: TransactionOutput[];
   certificates?: Certificate[];

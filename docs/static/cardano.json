@@ -1717,7 +1717,7 @@
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
         }
-      , "collateral":
+      , "totalCollateral":
         { "$ref": "cardano.json#/definitions/Lovelace"
         }
       , "collateralReturn":
