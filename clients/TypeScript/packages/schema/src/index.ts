@@ -498,6 +498,7 @@ export interface Transaction {
   network?: Network;
   scriptIntegrityHash?: DigestBlake2B256;
   requiredExtraSignatories?: DigestBlake2B224[];
+  requiredExtraScripts?: DigestBlake2B224[];
   governanceActions?: GovernanceActionProtocolParametersUpdate[];
   metadata?: Metadata;
   signatories: unknown[];

@@ -15,6 +15,9 @@ import Cardano.Ledger.Binary
 import Cardano.Ledger.Val
     ( Val (..)
     )
+import Data.Maybe.Strict
+    ( strictMaybe
+    )
 import Ouroboros.Consensus.Protocol.Praos
     ( Praos
     )
@@ -178,7 +181,7 @@ encodeTx x =
         <>
     "inputSource" .= Alonzo.encodeIsValid (Ba.isValid x)
         <>
-    encodeTxBody (Ba.body x)
+    encodeTxBody (Ba.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
         <>
     "metadata" .=? OmitWhenNothing fst auxiliary
         <>
@@ -196,11 +199,11 @@ encodeTx x =
             )
 
 encodeTxBody
-    :: ( Crypto crypto
-       )
+    :: Crypto crypto
     => Ba.BabbageTxBody (BabbageEra crypto)
+    -> [Ledger.ScriptHash crypto]
     -> Series
-encodeTxBody x =
+encodeTxBody x scripts =
     "inputs" .=
         encodeFoldable Shelley.encodeTxIn (Ba.btbInputs x) <>
     "references" .=? OmitWhen null
@@ -221,6 +224,8 @@ encodeTxBody x =
         (encodeObject . Mary.encodeMultiAsset) (Ba.btbMint x) <>
     "requiredExtraSignatories" .=? OmitWhen null
         (encodeFoldable Shelley.encodeKeyHash) (Ba.btbReqSignerHashes x) <>
+    "requiredExtraScripts" .=? OmitWhen null
+        (encodeFoldable Shelley.encodeScriptHash) scripts <>
     "network" .=? OmitWhenNothing
         Shelley.encodeNetwork (Ba.btbTxNetworkId x) <>
     "scriptIntegrityHash" .=? OmitWhenNothing

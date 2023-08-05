@@ -1753,6 +1753,10 @@
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
         }
+      , "requiredExtraScripts":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
       , "governanceActions":
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/GovernanceAction" }

@@ -14,6 +14,7 @@ import Data.ByteString.Base16
     )
 import Data.Maybe.Strict
     ( fromSMaybe
+    , strictMaybe
     )
 import Ouroboros.Consensus.Protocol.TPraos
     ( TPraos
@@ -115,7 +116,7 @@ encodeTx x =
         <>
     "inputSource" .= encodeText "inputs"
         <>
-    encodeTxBody (Sh.body x)
+    encodeTxBody (Sh.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
         <>
     "metadata" .=? OmitWhenNothing fst auxiliary
         <>
@@ -135,8 +136,9 @@ encodeTx x =
 encodeTxBody
     :: Crypto crypto
     => Ma.MaryTxBody (MaryEra crypto)
+    -> [Ledger.ScriptHash crypto]
     -> Series
-encodeTxBody (Ma.MaryTxBody inps outs certs wdrls fee validity updates _ mint) =
+encodeTxBody (Ma.MaryTxBody inps outs certs wdrls fee validity updates _ mint) scripts =
     "inputs" .=
         encodeFoldable Shelley.encodeTxIn inps <>
     "outputs" .=
@@ -145,6 +147,8 @@ encodeTxBody (Ma.MaryTxBody inps outs certs wdrls fee validity updates _ mint) =
         Shelley.encodeWdrl wdrls <>
     "certificates" .=? OmitWhen null
         (encodeFoldable Shelley.encodeDCert) certs <>
+    "requiredExtraScripts" .=? OmitWhen null
+        (encodeFoldable Shelley.encodeScriptHash) scripts <>
     "mint" .=? OmitWhen (== mempty)
         (encodeObject . encodeMultiAsset) mint <>
     "fee" .=

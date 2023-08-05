@@ -11,6 +11,7 @@ import Cardano.Binary
     )
 import Data.Maybe.Strict
     ( fromSMaybe
+    , strictMaybe
     )
 import Ouroboros.Consensus.Protocol.TPraos
     ( TPraos
@@ -127,7 +128,7 @@ encodeTx x =
         <>
     "inputSource" .= encodeText "inputs"
         <>
-    encodeTxBody (Sh.body x)
+    encodeTxBody (Sh.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
         <>
     "metadata" .=? OmitWhenNothing fst auxiliary
         <>
@@ -147,8 +148,9 @@ encodeTx x =
 encodeTxBody
     :: Crypto crypto
     => Al.AllegraTxBody (AllegraEra crypto)
+    -> [Ledger.ScriptHash crypto]
     -> Series
-encodeTxBody (Al.AllegraTxBody inps outs certs wdrls fee validity updates _) =
+encodeTxBody (Al.AllegraTxBody inps outs certs wdrls fee validity updates _) requiredScripts =
     "inputs" .=
         encodeFoldable Shelley.encodeTxIn inps <>
     "outputs" .=
@@ -157,6 +159,8 @@ encodeTxBody (Al.AllegraTxBody inps outs certs wdrls fee validity updates _) =
         Shelley.encodeWdrl wdrls <>
     "certificates" .=? OmitWhen null
         (encodeFoldable Shelley.encodeDCert) certs <>
+    "requiredExtraScripts" .=? OmitWhen null
+        (encodeFoldable Shelley.encodeScriptHash) requiredScripts <>
     "fee" .=
         encodeCoin fee <>
     "validityInterval" .=

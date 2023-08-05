@@ -14,6 +14,7 @@ import Data.ByteString.Base16
     )
 import Data.Maybe.Strict
     ( fromSMaybe
+    , strictMaybe
     )
 import Ouroboros.Consensus.Protocol.TPraos
     ( TPraos
@@ -362,7 +363,7 @@ encodeTx x =
         <>
     "inputSource" .= encodeIsValid (Al.isValid x)
         <>
-    encodeTxBody (Al.body x)
+    encodeTxBody (Al.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
         <>
     "metadata" .=? OmitWhenNothing fst auxiliary
         <>
@@ -380,11 +381,11 @@ encodeTx x =
             )
 
 encodeTxBody
-    :: ( Crypto crypto
-       )
+    :: Crypto crypto
     => Al.AlonzoTxBody (AlonzoEra crypto)
+    -> [Ledger.ScriptHash crypto]
     -> Series
-encodeTxBody x =
+encodeTxBody x scripts =
     "inputs" .=
         encodeFoldable Shelley.encodeTxIn (Al.atbInputs x) <>
     "outputs" .=
@@ -399,6 +400,8 @@ encodeTxBody x =
         (encodeObject . Mary.encodeMultiAsset) (Al.atbMint x) <>
     "requiredExtraSignatories".=? OmitWhen null
         (encodeFoldable Shelley.encodeKeyHash) (Al.atbReqSignerHashes x) <>
+    "requiredExtraScripts" .=? OmitWhen null
+        (encodeFoldable Shelley.encodeScriptHash) scripts <>
     "network" .=? OmitWhenNothing
         Shelley.encodeNetwork (Al.atbTxNetworkId x) <>
     "scriptIntegrityHash" .=? OmitWhenNothing
