@@ -18,6 +18,8 @@ LABEL description="A JSON WebSocket bridge for cardano-node."
 COPY ./server/bin/ogmios /bin/ogmios
 COPY ./server/config/network/${NETWORK} /config
 
+RUN chmod +x /bin/ogmios
+
 EXPOSE 1337/tcp
 HEALTHCHECK --interval=10s --timeout=5s --retries=1 CMD /bin/ogmios health-check
 
@@ -37,10 +39,10 @@ LABEL name=cardano-node-ogmios
 LABEL description="A Cardano node, side-by-side with its JSON WebSocket bridge."
 
 COPY ./server/bin/ogmios /bin/ogmios
-RUN chmod +x /bin/ogmios
 COPY ./server/config/network/${NETWORK} /config
-RUN ls /bin
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static /tini
+
+RUN chmod +x /bin/ogmios
 RUN chmod +x /tini && mkdir -p /ipc
 
 WORKDIR /root
