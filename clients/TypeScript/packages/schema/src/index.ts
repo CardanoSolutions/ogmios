@@ -86,7 +86,6 @@ export type UInt64 = number;
 export type Nonce = Neutral | DigestBlake2B256;
 export type Neutral = "neutral";
 export type CostModel = Int64[];
-export type UInt321 = number;
 export type Metadatum =
   | bigint
   | string
@@ -751,9 +750,9 @@ export interface ExecutionUnits {
   cpu: UInt64;
 }
 export interface ProtocolVersion {
-  major: UInt321;
-  minor: UInt321;
-  patch?: UInt321;
+  major: UInt32;
+  minor: UInt32;
+  patch?: UInt32;
 }
 export interface Metadata {
   hash: DigestBlake2B256;
@@ -785,7 +784,7 @@ export interface BootstrapOperationalCertificate {
 }
 export interface SoftwareVersion {
   appName: string;
-  number: UInt321;
+  number: UInt32;
 }
 export interface BootstrapProtocolUpdate {
   proposal?: {
@@ -1296,8 +1295,8 @@ export interface SubmitTransactionFailureTooManyCollateralInputs {
   code: 3131;
   message: string;
   data: {
-    maximumCollateralInputs: UInt321;
-    countedCollateralInputs: UInt321;
+    maximumCollateralInputs: UInt32;
+    countedCollateralInputs: UInt32;
   };
 }
 /**
@@ -1726,17 +1725,16 @@ export interface AcquireLedgerStateFailure {
 export interface AcquireLedgerStateSuccess {
   jsonrpc: "2.0";
   method: "acquireLedgerState";
-  result: AcquireLedgerStateSuccess1;
+  result: {
+    acquired: "ledgerState";
+    point: PointOrOrigin;
+  };
   /**
    * Any value that was set by a client request in the 'id' field.
    */
   id?: {
     [k: string]: unknown;
   };
-}
-export interface AcquireLedgerStateSuccess1 {
-  acquired: "ledgerState";
-  point: PointOrOrigin;
 }
 /**
  * Release a previously acquired ledger state.
@@ -2655,7 +2653,7 @@ export interface MempoolSizeAndCapacity {
     bytes: Int64;
   };
   transactions: {
-    count: UInt321;
+    count: UInt32;
   };
 }
 /**

@@ -578,8 +578,7 @@
             , "enum": [ "acquireLedgerState" ]
             }
           , "result":
-            { "title": "AcquireLedgerStateSuccess"
-            , "type": "object"
+            { "type": "object"
             , "additionalProperties": false
             , "required": [ "acquired", "point" ]
             , "properties":

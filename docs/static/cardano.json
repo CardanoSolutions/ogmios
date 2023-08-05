@@ -920,7 +920,6 @@
     , "properties":
       { "index":
         { "$ref": "cardano.json#/definitions/UInt32"
-        , "minimum": 0
         }
       }
     }
