@@ -2,7 +2,8 @@
 <div id="asyncapi"></div>
 <link rel="stylesheet" href="https://unpkg.com/@asyncapi/react-component@1.0.0-next.47/styles/default.min.css" />
 <div className="loader"></div>
-<script src="https://unpkg.com/@asyncapi/react-component@1.0.0-next.47/browser/standalone/index.js"></script>
+<!-- Temporary pull the local dependency until https://github.com/asyncapi/asyncapi-react/pull/744 is accepted and released -->
+<script src="/js/asyncapi@1.0.0-next.47.js"></script>
 <script>
   AsyncApiStandalone.render({
     schema: {
