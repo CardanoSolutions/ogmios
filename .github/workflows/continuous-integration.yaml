@@ -22,10 +22,10 @@ jobs:
     strategy:
       matrix:
         os: [ linux ]
-        arch: [ x86_64, aarch64 ]
+        arch: [ x86_64 ]
         compiler: [ ghc8107 ]
 
-    runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-8vcpu-ubuntu-2204-arm' || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-4vcpu-ubuntu-2204-arm' || 'ubuntu-latest' }}
 
     steps:
     - name: 📥 Checkout repository
@@ -47,7 +47,6 @@ jobs:
         nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "echo $CABAL_PROJECT_LOCAL_TEMPLATE > cabal.project.local && cabal update && cabal freeze"
 
     - name: 💾 Cache
-      if: ${{ matrix.arch == 'x86_64' }}
       uses: actions/cache@v3
       with:
         path: |
