@@ -3336,7 +3336,14 @@
             , "additionalProperties": false
             , "required": [ "infringingStakePool", "computedMetadataHashSize" ]
             , "properties":
-              { "infringingStakePool": { "$ref": "cardano.json#/definitions/StakePoolId" }
+              { "infringingStakePool":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "id" ]
+                , "properties":
+                  { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
+                  }
+                }
               , "computedMetadataHashSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
               }
             }
