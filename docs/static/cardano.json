@@ -1019,10 +1019,10 @@
   , "Metadatum":
     { "title": "Metadatum"
     , "oneOf":
-      [ { "type": "integer" }
-      , { "type": "string" }
-      , { "type": "array", "items": { "$ref": "cardano.json#/definitions/Metadatum" } }
-      , { "type": "object", "additionalProperties": { "$ref": "cardano.json#/definitions/Metadatum" } }
+      [ { "title": "Integer", "type": "integer" }
+      , { "title": "String", "type": "string" }
+      , { "title": "Array<Metadatum>", "type": "array", "items": { "$ref": "cardano.json#/definitions/Metadatum" } }
+      , { "title": "Object<Metadatum>", "type": "object", "additionalProperties": { "$ref": "cardano.json#/definitions/Metadatum" } }
       ]
     }
 

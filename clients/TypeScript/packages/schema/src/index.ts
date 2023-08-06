@@ -86,13 +86,10 @@ export type UInt64 = number;
 export type Nonce = Neutral | DigestBlake2B256;
 export type Neutral = "neutral";
 export type CostModel = Int64[];
-export type Metadatum =
-  | bigint
-  | string
-  | Metadatum[]
-  | {
-      [k: string]: Metadatum;
-    };
+export type Metadatum = Integer | String | ArrayMetadatum | ObjectMetadatum;
+export type Integer = bigint;
+export type String = string;
+export type ArrayMetadatum = Metadatum[];
 /**
  * Plutus data, CBOR-serialised.
  */
@@ -767,6 +764,9 @@ export interface MetadataLabels {
     cbor: string;
     json?: Metadatum;
   };
+}
+export interface ObjectMetadatum {
+  [k: string]: Metadatum;
 }
 export interface Redeemer {
   redeemer: RedeemerData;
