@@ -83,7 +83,7 @@ Rolling backward however may occur when, since the last request, the underlying 
                      point of rollback
 {{% /ascii-drawing %}}
 
-When rolling backward, the node will not provide a block but instead, a point which is made of a block header hash and a slot.
+When rolling backward, the node will not provide a block but instead, a point which is made of a block id and a slot.
 
 {{% notice info %}}
 As a client, it is therefore crucial to be able to rollback to a previous point of the chain. In practice, Ouroboros guarantees that forks cannot be longer than a certain length. This maximum length is called `k` in the Ouroboros protocol, and also known as _the security parameter_.
@@ -122,7 +122,7 @@ How many requests to pipeline depends on your application and machine resources.
 
 ## Finding an intersection
 
-On the first connection with the node, clients will likely synchronize from the _origin_. Yet, on subsequent connections one may want to resume syncing to a point that is much more recent than the _origin_. Ideally, one would like to carry on exactly at the point where the chain was left yet as we just saw, this is not always possible. The chain synchronization protocol gives however clients a way to find a common intersection between a client's current version of the chain and whatever version the node has. This is via the `findIntersection` method. This method accepts one argument which is a list of header hashes (or the special keyword `"origin"`).
+On the first connection with the node, clients will likely synchronize from the _origin_. Yet, on subsequent connections one may want to resume syncing to a point that is much more recent than the _origin_. Ideally, one would like to carry on exactly at the point where the chain was left yet as we just saw, this is not always possible. The chain synchronization protocol gives however clients a way to find a common intersection between a client's current version of the chain and whatever version the node has. This is via the `findIntersection` method. This method accepts one argument which is a list of points (or the special keyword `"origin"`).
 
 
 ```json
@@ -133,11 +133,11 @@ On the first connection with the node, clients will likely synchronize from the 
         "points": [
             {
               "slot": 39916796,
-              "hash": "e72579ff89dc9ed325b723a33624b596c08141c7bd573ecfff56a1f7229e4d09"
+              "id": "e72579ff89dc9ed325b723a33624b596c08141c7bd573ecfff56a1f7229e4d09"
             },
             {
               "slot": 23068793,
-              "hash": "69c44ac1dda2ec74646e4223bc804d9126f719b1c245dadc2ad65e8de1b276d7"
+              "id": "69c44ac1dda2ec74646e4223bc804d9126f719b1c245dadc2ad65e8de1b276d7"
             },
             "origin"
         ]
@@ -223,7 +223,7 @@ function rpc(method, params, id) {
 client.once('open', () => {
     const lastByronBlock = {
         slot: 4492799,
-        hash: "f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457"
+        id: "f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457"
     };
     rpc("findIntersection", { points: [lastByronBlock] }, "find-intersection");
 });

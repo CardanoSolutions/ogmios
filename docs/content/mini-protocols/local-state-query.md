@@ -109,8 +109,7 @@ queryLedgerState             | Information
 `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
 `rewardAccountSummaries`     | Current delegation settings and rewards of chosen reward accounts.
 `rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
-`stakePools`                 | The list of all pool identifiers currently registered and active.
-`stakePoolParameters`        | Stake pool parameters submitted with registration certificates.
+`stakePools`                 | The list of all currently registered and active stake pools with their current parameters.
 `tip`                        | The current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger.
 `utxo`                       | Current UTXO, possibly filtered by output reference.
 
@@ -245,7 +244,7 @@ Here's a walk-though describing what happens when running the above script:
     "result": {
       "acquired": "ledgerState",
       "point": {
-          "hash": "dbafebb0146b2ec45186dfba6c287ad69c83d3fd9a186b39d99ab955631539e0",
+          "id": "dbafebb0146b2ec45186dfba6c287ad69c83d3fd9a186b39d99ab955631539e0",
           "slot": 12526684
       }
     },

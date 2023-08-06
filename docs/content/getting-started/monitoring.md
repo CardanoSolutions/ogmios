@@ -12,7 +12,7 @@ Ogmios offers a simple dashboard through HTTP with a real-time visualization of 
 
 ## Health / Metrics
 
-Behind the scene, the dashboard is powered by metrics served over HTTP as JSON by the server. Reach `/health` (e.g. [http://localhost:1337/health](http://localhost:1337/health) to get real-time information about your running server, including runtime metrics. 
+Behind the scene, the dashboard is powered by metrics served over HTTP as JSON by the server. Reach `/health` (e.g. [http://localhost:1337/health](http://localhost:1337/health) to get real-time information about your running server, including runtime metrics.
 
 ```console
 $ curl -H 'Accept: application/json' http://localhost:1337/health
@@ -44,10 +44,12 @@ $ curl -H 'Accept: application/json' http://localhost:1337/health
         "slot": 15520688
     },
     "networkSynchronization": 0.99,
-    "currentEra": "Mary",
+    "currentEra": "mary",
     "connectionStatus": "disconnected",
     "currentEpoch": 164,
-    "slotInEpoch": 324543
+    "slotInEpoch": 324543,
+    "version": "6.0.0",
+    "network": "mainnet"
 }
 ```
 
@@ -63,6 +65,8 @@ All information are computed at runtime and **not preserved between restarts** (
 | `currentEra`                           | The **(nullable)** current Cardano era of the underlying node. Useful for state-queries and debugging.                            |
 | `currentEpoch`                         | The **(nullable)** current epoch number known of the underlying node.                                                             |
 | `slotInEpoch`                          | The **(nullable)** relative slot number within the current epoch.                                                                 |
+| `version`                              | Current Ogmios' version                                                                                                           |
+| `network`                              | The network Ogmios is configured for. `mainnet`, `preview` or `preprod`.                                                          |
 | `metrics.activeConnections`            | Number of WebSocket connections currently established with the server.                                                            |
 | `metrics.totalConnections`             | Total number of WebSocket connections established with the server since it's started.                                             |
 | `metrics.sessionDurations`             | Some time measures (`min`, `max`, `mean`) of the duration of each sessions, in milliseconds.                                      |
@@ -73,13 +77,12 @@ All information are computed at runtime and **not preserved between restarts** (
 | `metrics.runtimeStats.maxHeapSize`     | Maximum live data allocated in the heap, in kilo-bytes.                                                                           |
 | `metrics.runtimeStats.currentHeapSize` | Current live data allocated in the heap, in kilo-bytes.                                                                           |
 
-
 {{% notice note %}}
 All dates / timestamps are given as `ISO-8601` date-time strings.
 {{% /notice %}}
 
 {{% notice note %}}
-Runtime metrics (i.e. `runtimeStats`) are only available when the server is started with the `+T` runtime flag. This is the case by default, but can be manually turned on and off using the `+RTS / -RTS` options. For example `ogmios --node-socket /path/to/socket +RTS -T -RTS` will run Ogmios with runtime stats activated. 
+Runtime metrics (i.e. `runtimeStats`) are only available when the server is started with the `+T` runtime flag. This is the case by default, but can be manually turned on and off using the `+RTS / -RTS` options. For example `ogmios --node-socket /path/to/socket +RTS -T -RTS` will run Ogmios with runtime stats activated.
 {{% /notice %}}
 
 ## Prometheus Metrics

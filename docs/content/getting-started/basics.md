@@ -40,7 +40,7 @@ Let's start with a possible response to the request above:
     "result": {
       "intersection": "origin",
       "tip": {
-        "hash": "d184f428159290bf3558b4d1d139e6a07ec6589738c28a0925a7ab776bde4d62",
+        "id": "d184f428159290bf3558b4d1d139e6a07ec6589738c28a0925a7ab776bde4d62",
         "blockNo": 4870185,
         "slot": 12176171
       }

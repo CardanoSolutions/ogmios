@@ -149,15 +149,6 @@ For example, for running cardano-node + ogmios on the preprod network, listening
 $ NETWORK=preprod OGMIOS_PORT=1338 docker-compose --project-name cardano-ogmios-preprod up
 ```
 
-
 ### Building
 
-To build the Ogmios image from sources, pass the `--build` flag to compose. This is useful if you need a different version than the latest one available on Dockerhub. Alternatively, you can resort to building the image directly from the Dockerfile. Note that the same Dockerfile is used to produced both the `ogmios` image and the `cardano-node-ogmios` image using multi-stage docker builds. To build only the `ogmios` image, you'll have to explicitly specify the build target using the `--target ogmios` option. So in brief:
-
-```console
-$ docker buildx build \
-    --cache-from cardanosolutions/ogmios:latest \
-    --tag cardanosolutions/ogmios:latest \
-    --target ogmios \
-    https://github.com/cardanosolutions/ogmios.git
-```
+Building images from sources is currently not available. Building is done outside of Docker to produce a binary static executable which is then mounted as an image. Hence, building the docker image assumes that you've built the application to begin with. So refer to [the next section](/getting-started/building/) for building the image. Once a binary is available under `server/bin/ogmios`, simply run `docker buildx build --target ogmios` to build ogmios' standalone or `docker buildx build` to build the default cardano-node + ogmios image.

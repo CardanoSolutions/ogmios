@@ -77,18 +77,22 @@ Then, use Yarn to install dependencies and compile the project source code from 
 `client/TypeScript` directory:
 
 ```console
-$ yarn install \
-  && yarn build
+$ yarn && yarn build
 ```
 
 ## 📚 Documentation
 
-The documentation can be generated from the TypeScript client workbench. Follow the instruction in the README to setup the TypeScript workspace, and then run:
+The documentation is built using [Hugo](https://gohugo.io/documentation/). You'll need an `-extended` version of hugo with version `>= 0.96.0`. Then, simply run:
 
-```console
-$ yarn docs
+```
+hugo
+
+# or, alternatively for an development setup on http://localhost:1313
+
+hugo serve
 ```
 
-This will generate documentation for the API and the TypeScript clients in `/docs/static` to be served by the static website generator [Hugo](https://gohugo.io/documentation/).
+in the `./docs` folder.
 
-Alternatively, you can also look at our [User-Guide Github Workflow](https://github.com/CardanoSolutions/ogmios/blob/master/.github/workflows/user-guide.yaml#L18-L30) to see how its done.
+
+In addition, the TypeScript API reference can be generated using `yarn docs` from within the `client/TypeScript` folder. This will automatically create and copy files in the right folder for `hugo` to pick up.

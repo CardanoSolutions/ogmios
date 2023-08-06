@@ -11,6 +11,13 @@
 
 **Ogmios** is a lightweight bridge interface for [cardano-node](https://github.com/input-output-hk/cardano-node/). It provides an **HTTP / WebSocket** API that enables applications to interact with a local cardano-node via **JSON+RPC-2.0**.
 
+## Compatibility
+
+| Ogmios   | Cardano-node              |
+| ---      | ---                       |
+| `v5.6.0` | `1.35.4`, `1.35.7`        |
+| `v6.0.0` | `8.1.2`, `8.1.1`, `8.1.0`
+
 ## QuickStart
 
 See our [Ogmios client starter kit](https://github.com/CardanoSolutions/ogmios-ts-client-starter-kit#ogmios-client-starter-kit) or jump right into the [user manual](https://ogmios.dev).
