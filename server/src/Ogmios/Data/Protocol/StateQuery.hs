@@ -47,6 +47,7 @@ import Ogmios.Data.Json.Prelude
 
 import Data.Aeson
     ( parseJSON
+    , (<?>)
     )
 import Ogmios.Data.Json.Query
     ( GenesisConfig
@@ -248,7 +249,7 @@ _decodeQueryLedgerState
     -> Json.Parser (Rpc.Request (QueryLedgerState block))
 _decodeQueryLedgerState json = do
     Rpc.Request method mirror QueryLedgerState <- Rpc.genericFromJSON opts json
-    query <- parseJSON json
+    query <- parseJSON json <?> Json.Key "params"
     pure $ Rpc.Request method mirror query
   where
     opts = Rpc.defaultOptions

@@ -13,6 +13,9 @@ import Ogmios.Prelude
 import Cardano.Network.Protocol.NodeToClient
     ( SerializedTransaction
     )
+import Data.List
+    ( isInfixOf
+    )
 import GHC.Generics
     ( Rep
     )
@@ -150,7 +153,7 @@ onUnmatchedMessage blob = do
                 void $ _decodeAcquireLedgerState @block json
            | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep ReleaseLedgerState _)) ->
                 void $ _decodeReleaseLedgerState json
-           | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep (QueryLedgerState block) _)) ->
+           | "queryLedgerState" `isInfixOf` methodName || "queryNetwork" `isInfixOf` methodName ->
                 void $ _decodeQueryLedgerState @block json
         -- Tx-Submission
            | methodName == Rpc.gRpcMethodName opts (Proxy @(Rep (SubmitTransaction block) _)) ->
