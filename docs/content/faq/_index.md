@@ -80,19 +80,75 @@ Thus, is Ogmios production-ready? **Yes**. At least, this is as good as it gets 
 
 #### Are there any projects/companies using it?
 
-We've heard of a handful happy users! And it keeps growing! To name a few...:
+We've heard of a handful happy users! And it keeps growing!
 
-- https://blockfrost.io/
-- https://eternl.io/
-- https://www.sundaeswap.finance/
-- https://jpeg.store/
-- https://spacebudz.io/
-- https://www.tangocrypto.com/
-- https://projectnewm.io/
-- https://github.com/input-output-hk/cardano-graphql
-- https://mlabs.city/
-- https://gimbalabs.com/
-- https://www.f2lb.org/
+##### (Known) companies using Ogmios
+
+<table class="users" cellspacing="0" cellpadding="0">
+<tr>
+  <td><img src="https://avatars.githubusercontent.com/u/74414794"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/83610786"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/12909177"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/98781883"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/83253396"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/80576467"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/80548193"/></td>
+</tr><tr>
+  <td><a href="https://blockfrost.io/">FiveBinaries</a></td>
+  <td><a href="https://sundaeswap.finance/">SundaeSwap Labs</a></td>
+  <td><a href="https://iohk.io/">Input Output Global</a></td>
+  <td><a href="https://jpg.store/">Jpg.store</a></td>
+  <td><a href="https://projectnewm.io">NEWM</a></td>
+  <td><a href="https://mlabs.city">MLabs</a></td>
+  <td><a href="https://github.com/minswap">Minswap</a></td>
+</tr>
+<tr>
+  <td><img src="https://ccvault.io/images/eternl-256.png"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/65092852"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/75200801"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/105819836"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/37078161"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/92830323"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/90213107"/></td>
+</tr><tr>
+  <td><a href="https://eternl.io">Eternl</a></td>
+  <td><a href="https://raynetwork.io">RayNetwork</a></td>
+  <td><a href="https://dcspark.io">DCSpark</a></td>
+  <td><a href="https://spacebudz.io">Spacebudz</a></td>
+  <td><a href="https://cardanofoundation.org">Cardano Foundation</a></td>
+  <td><a href="https://txpipe.io">TxPipe</a></td>
+  <td><a href="https://koralabs.io/">Kora Labs</a></td>
+</tr>
+<tr>
+  <td><img src="https://avatars.githubusercontent.com/u/73429691"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/93930135"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/36142236"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/83718187"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/67252237"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/100535151"/></td>
+  <td><img src="https://avatars.githubusercontent.com/u/96011175"/></td>
+</tr><tr>
+  <td><a href="https://www.gimbalabs.com">Gimbalabs</a></td>
+  <td><a href="https://www.wingriders.com/">Wing Riders</a></td>
+  <td><a href="https://emurgo.io/">EMURGO</a></td>
+  <td><a href="https://liqwid.finance/">Liqwid Labs</a></td>
+  <td><a href="https://multichain.org/">Multichain</a></td>
+  <td><a href="https://tosidrop.io/">TosiDrop</a></td>
+  <td><a href="https://asterium.dev/">Asterium</a></td>
+</tr>
+</table>
+
+##### (Known) open source projects using Ogmios
+
+- [Blockfrost](https://github.com/blockfrost/blockfrost-backend-ryo)
+- [Cardano-transaction-lib](https://github.com/plutonomicon/cardano-transaction-lib)
+- [Lucid](https://github.com/spacebudz/lucid)
+- [Mesh](https://github.com/MeshJS/mesh)
+- [PyCardano](https://github.com/Python-Cardano/pycardano)
+- [Cardano (Java) client lib](https://github.com/bloxbean/cardano-client-lib)
+- [Lace](https://github.com/input-output-hk/lace)
+- [Marlowe](https://github.com/input-output-hk/marlowe-runner)
+- [Naumachia](https://github.com/free-honey/naumachia)
 
 {{% notice note %}}
 Are you using Ogmios for a project? [Let us know on Github!](https://github.com/CardanoSolutions/ogmios/issues/new?assignees=&labels=&template=project.md)
