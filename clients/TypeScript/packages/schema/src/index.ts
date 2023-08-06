@@ -1436,7 +1436,9 @@ export interface SubmitTransactionFailureMetadataHashTooLarge {
   code: 3144;
   message: string;
   data: {
-    infringingStakePool: StakePoolId;
+    infringingStakePool: {
+      id: StakePoolId;
+    };
     computedMetadataHashSize: {
       bytes: Int64;
     };

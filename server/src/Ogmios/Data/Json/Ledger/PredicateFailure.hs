@@ -652,7 +652,7 @@ encodePredicateFailure reject = \case
             \metadata hash and 'data.computedMetadataHashSize' documents the computed hash size."
             (pure $ encodeObject
                 ( "infringingStakePool" .=
-                    Shelley.encodePoolId poolId
+                    encodeSingleton "id" (Shelley.encodePoolId poolId)
                 <> "computedMetadataHashSize" .= encodeObject
                     ( "bytes" .= encodeInteger (toInteger computedMetadataHashSize)
                     )
