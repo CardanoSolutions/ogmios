@@ -51,10 +51,16 @@
 						<a href="_cardano_ogmios_schema.Signatory.html" class="tsd-kind-icon">Signatory</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.Signatory.html#clause" class="tsd-kind-icon">clause</a>
+								<a href="_cardano_ogmios_schema.Signatory.html#addressAttributes" class="tsd-kind-icon">address<wbr>Attributes</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.Signatory.html#from" class="tsd-kind-icon">from</a>
+								<a href="_cardano_ogmios_schema.Signatory.html#chainCode" class="tsd-kind-icon">chain<wbr>Code</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.Signatory.html#key" class="tsd-kind-icon">key</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.Signatory.html#signature" class="tsd-kind-icon">signature</a>
 							</li>
 						</ul>
 					</li>
@@ -94,8 +100,10 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Signatory.html#clause" class="tsd-kind-icon">clause</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Signatory.html#from" class="tsd-kind-icon">from</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Signatory.html#addressAttributes" class="tsd-kind-icon">address<wbr>Attributes</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Signatory.html#chainCode" class="tsd-kind-icon">chain<wbr>Code</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Signatory.html#key" class="tsd-kind-icon">key</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.Signatory.html#signature" class="tsd-kind-icon">signature</a></li>
 							</ul>
 						</section>
 					</div>
@@ -104,23 +112,45 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="clause" class="tsd-anchor"></a>
-					<h3>clause</h3>
-					<div class="tsd-signature tsd-kind-icon">clause<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"signature"</span></div>
+					<a name="addressAttributes" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> address<wbr>Attributes</h3>
+					<div class="tsd-signature tsd-kind-icon">address<wbr>Attributes<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/1a182ac/clients/TypeScript/packages/schema/src/index.ts#L553">packages/schema/src/index.ts:553</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/379be45/clients/TypeScript/packages/schema/src/index.ts#L754">packages/schema/src/index.ts:754</a>
 							</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="from" class="tsd-anchor"></a>
-					<h3>from</h3>
-					<div class="tsd-signature tsd-kind-icon">from<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<a name="chainCode" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> chain<wbr>Code</h3>
+					<div class="tsd-signature tsd-kind-icon">chain<wbr>Code<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/1a182ac/clients/TypeScript/packages/schema/src/index.ts#L554">packages/schema/src/index.ts:554</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/379be45/clients/TypeScript/packages/schema/src/index.ts#L753">packages/schema/src/index.ts:753</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="key" class="tsd-anchor"></a>
+					<h3>key</h3>
+					<div class="tsd-signature tsd-kind-icon">key<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/379be45/clients/TypeScript/packages/schema/src/index.ts#L751">packages/schema/src/index.ts:751</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="signature" class="tsd-anchor"></a>
+					<h3>signature</h3>
+					<div class="tsd-signature tsd-kind-icon">signature<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/379be45/clients/TypeScript/packages/schema/src/index.ts#L752">packages/schema/src/index.ts:752</a>
 							</li>
 						</ul>
 					</aside>

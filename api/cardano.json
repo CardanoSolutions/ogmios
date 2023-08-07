@@ -1099,44 +1099,41 @@
     { "title": "StakePool"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "parameters" ]
+    , "required":
+      [ "id"
+      , "cost"
+      , "margin"
+      , "owners"
+      , "pledge"
+      , "relays"
+      , "rewardAccount"
+      , "vrfVerificationKeyHash"
+      ]
     , "properties":
       { "id":
         { "$ref": "cardano.json#/definitions/StakePoolId"
         }
-      , "parameters":
-        { "$ref": "cardano.json#/definitions/StakePoolParameters"
+      , "vrfVerificationKeyHash":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
         }
-      }
-    }
-
-  , "StakePoolId":
-    { "title": "StakePoolId"
-    , "type": "string"
-    , "description": "A Blake2b 32-byte hash digest of a pool's verification key."
-    , "contentEncoding": "bech32"
-    , "pattern": "^pool1[0-9a-z]*$"
-    , "examples":
-      [ "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc"
-      , "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9"
-      ]
-    }
-
-  , "StakePoolParameters":
-    { "title": "StakePoolParameters"
-    , "type": "object"
-    , "additionalProperties": false
-    , "required": ["owners", "cost", "margin", "pledge", "vrfVerificationKeyHash", "relays", "rewardAccount"]
-    , "properties":
-      { "owners":
+      , "owners":
         { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        , "items":
+          { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+          }
         }
-      , "vrfVerificationKeyHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
-      , "cost": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "margin": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "pledge": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "rewardAccount": { "$ref": "cardano.json#/definitions/RewardAccount" }
+      , "cost":
+        { "$ref": "cardano.json#/definitions/Lovelace"
+        }
+      , "margin":
+        { "$ref": "cardano.json#/definitions/Ratio"
+        }
+      , "pledge":
+        { "$ref": "cardano.json#/definitions/Lovelace"
+        }
+      , "rewardAccount":
+        { "$ref": "cardano.json#/definitions/RewardAccount"
+        }
       , "metadata":
         { "type": "object"
         , "title": "poolMetadata"
@@ -1155,6 +1152,18 @@
         , "items": { "$ref": "cardano.json#/definitions/Relay" }
         }
       }
+    }
+
+  , "StakePoolId":
+    { "title": "StakePoolId"
+    , "type": "string"
+    , "description": "A Blake2b 32-byte hash digest of a pool's verification key."
+    , "contentEncoding": "bech32"
+    , "pattern": "^pool1[0-9a-z]*$"
+    , "examples":
+      [ "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc"
+      , "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9"
+      ]
     }
 
   , "ProposedProtocolParameters":
@@ -1439,7 +1448,7 @@
         ]
     , "oneOf":
       [ { "type": "object"
-        , "title": "Signatory"
+        , "title": "Clause<Signature>"
         , "additionalProperties": false
         , "required": [ "clause", "from" ]
         , "properties":
@@ -1453,7 +1462,7 @@
           }
         }
       , { "type": "object"
-        , "title": "Any"
+        , "title": "Clause<Any>"
         , "additionalProperties": false
         , "required": [ "clause", "from" ]
         , "properties":
@@ -1469,7 +1478,7 @@
         }
 
       , { "type": "object"
-        , "title": "All"
+        , "title": "Clause<All>"
         , "additionalProperties": false
         , "required": [ "clause", "from" ]
         , "properties":
@@ -1484,7 +1493,7 @@
           }
         }
       , { "type": "object"
-        , "title": "Some"
+        , "title": "Clause<Some>"
         , "additionalProperties": false
         , "required": [ "clause", "from", "atLeast" ]
         , "properties":
@@ -1502,7 +1511,7 @@
           }
         }
       , { "type": "object"
-        , "title": "Before"
+        , "title": "Clause<Before>"
         , "additionalProperties": false
         , "required": [ "clause", "slot" ]
         , "properties":
@@ -1516,7 +1525,7 @@
           }
         }
       , { "type": "object"
-        , "title": "After"
+        , "title": "Clause<After>"
         , "additionalProperties": false
         , "required": [ "clause", "slot" ]
         , "properties":
@@ -1757,7 +1766,7 @@
         }
       , "signatories":
         { "type": "array"
-        , "additionalProperties": { "$ref": "cardano.json#/definitions/Signatory" }
+        , "items": { "$ref": "cardano.json#/definitions/Signatory" }
         }
       , "scripts":
         { "type": "object"

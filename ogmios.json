@@ -798,7 +798,6 @@
         { "type": "string"
         , "enum": [ "queryLedgerState/epoch" ]
         }
-      , "params": {}
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
         }
@@ -849,7 +848,6 @@
         { "type": "string"
         , "enum": [ "queryLedgerState/eraStart" ]
         }
-      , "params": {}
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
         }
@@ -900,7 +898,6 @@
         { "type": "string"
         , "enum": [ "queryLedgerState/eraSummaries" ]
         }
-      , "params": {}
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
         }
@@ -952,7 +949,6 @@
         { "type": "string"
         , "enum": [ "queryLedgerState/liveStakeDistribution" ]
         }
-      , "params": {}
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
         }
@@ -1071,7 +1067,6 @@
         { "type": "string"
         , "enum": [ "queryLedgerState/proposedProtocolParameters" ]
         }
-      , "params": {}
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
         }
@@ -1125,7 +1120,6 @@
         { "type": "string"
         , "enum": [ "queryLedgerState/protocolParameters" ]
         }
-      , "params": {}
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
         }
@@ -1243,7 +1237,6 @@
         { "type": "string"
         , "enum": [ "queryLedgerState/rewardsProvenance" ]
         }
-      , "params": {}
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
         }
@@ -1364,7 +1357,6 @@
         { "type": "string"
         , "enum": [ "queryLedgerState/tip" ]
         }
-      , "params": {}
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
         }
@@ -1495,7 +1487,6 @@
         { "type": "string"
         , "enum": [ "queryNetwork/blockHeight" ]
         }
-      , "params": {}
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
         }
@@ -1602,7 +1593,6 @@
         { "type": "string"
         , "enum": [ "queryNetwork/startTime" ]
         }
-      , "params": {}
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
         }
@@ -1647,7 +1637,6 @@
         { "type": "string"
         , "enum": [ "queryNetwork/tip" ]
         }
-      , "params": {}
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
         }
@@ -2835,7 +2824,7 @@
             , "required": [ "measuredTransactionSize", "maximumTransactionSize" ]
             , "properties":
               { "measuredTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
-              , "maximumTransactionSize": { "$reF": "cardano.json#/definitions/NumberOfBytes" }
+              , "maximumTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
               }
             }
           }
