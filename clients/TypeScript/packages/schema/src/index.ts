@@ -1128,7 +1128,7 @@ export interface SubmitTransactionFailureTransactionTooLarge {
       bytes: Int64;
     };
     maximumTransactionSize: {
-      [k: string]: unknown;
+      bytes: Int64;
     };
   };
 }
@@ -1771,7 +1771,6 @@ export interface QueryLedgerStateAcquiredExpired {
 export interface QueryLedgerStateEpoch {
   jsonrpc: "2.0";
   method: "queryLedgerState/epoch";
-  params?: unknown;
   id?: unknown;
 }
 export interface QueryLedgerStateEpochResponse {
@@ -1786,7 +1785,6 @@ export interface QueryLedgerStateEpochResponse {
 export interface QueryLedgerStateEraStart {
   jsonrpc: "2.0";
   method: "queryLedgerState/eraStart";
-  params?: unknown;
   id?: unknown;
 }
 export interface QueryLedgerStateEraStartResponse {
@@ -1809,7 +1807,6 @@ export interface Bound {
 export interface QueryLedgerStateEraSummaries {
   jsonrpc: "2.0";
   method: "queryLedgerState/eraSummaries";
-  params?: unknown;
   id?: unknown;
 }
 export interface QueryLedgerStateEraSummariesResponse {
@@ -1846,7 +1843,6 @@ export interface SlotLength {
 export interface QueryLedgerStateLiveStakeDistribution {
   jsonrpc: "2.0";
   method: "queryLedgerState/liveStakeDistribution";
-  params?: unknown;
   id?: unknown;
 }
 export interface QueryLedgerStateLiveStakeDistributionResponse {
@@ -1897,7 +1893,6 @@ export interface ProjectedRewards {
 export interface QueryLedgerStateProposedProtocolParameters {
   jsonrpc: "2.0";
   method: "queryLedgerState/proposedProtocolParameters";
-  params?: unknown;
   id?: unknown;
 }
 export interface QueryLedgerStateProposedProtocolParametersResponse {
@@ -1912,7 +1907,6 @@ export interface QueryLedgerStateProposedProtocolParametersResponse {
 export interface QueryLedgerStateProtocolParameters {
   jsonrpc: "2.0";
   method: "queryLedgerState/protocolParameters";
-  params?: unknown;
   id?: unknown;
 }
 export interface QueryLedgerStateProtocolParametersResponse {
@@ -1989,7 +1983,6 @@ export interface RewardAccountSummary {
 export interface QueryLedgerStateRewardsProvenance {
   jsonrpc: "2.0";
   method: "queryLedgerState/rewardsProvenance";
-  params?: unknown;
   id?: unknown;
 }
 export interface QueryLedgerStateRewardsProvenanceResponse {
@@ -2070,7 +2063,6 @@ export interface QueryLedgerStateStakePoolsResponse {
 export interface QueryLedgerStateTip {
   jsonrpc: "2.0";
   method: "queryLedgerState/tip";
-  params?: unknown;
   id?: unknown;
 }
 export interface QueryLedgerStateTipResponse {
@@ -2107,7 +2099,6 @@ export interface QueryLedgerStateUtxoResponse {
 export interface QueryNetworkBlockHeight {
   jsonrpc: "2.0";
   method: "queryNetwork/blockHeight";
-  params?: unknown;
   id?: unknown;
 }
 export interface QueryNetworkBlockHeightResponse {
@@ -2226,7 +2217,6 @@ export interface GenesisConway {
 export interface QueryNetworkStartTime {
   jsonrpc: "2.0";
   method: "queryNetwork/startTime";
-  params?: unknown;
   id?: unknown;
 }
 export interface QueryNetworkStartTimeResponse {
@@ -2241,7 +2231,6 @@ export interface QueryNetworkStartTimeResponse {
 export interface QueryNetworkTip {
   jsonrpc: "2.0";
   method: "queryNetwork/tip";
-  params?: unknown;
   id?: unknown;
 }
 export interface QueryNetworkTipResponse {
@@ -2393,12 +2382,7 @@ export interface RpcError {
      * A descriptive error message giving hints about the error.
      */
     message?: string;
-    /**
-     * Some optional data / context about the error. The exact type of this (optional) field depends on the error.
-     */
-    data?: {
-      [k: string]: unknown;
-    };
+    data?: unknown;
   };
   id?: unknown;
 }
