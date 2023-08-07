@@ -437,15 +437,6 @@ encodeDelegationsAndRewards (dlg, rwd) =
                 encodeCoin y
         )
 
-encodeEraEnd
-    :: EraEnd
-    -> Json
-encodeEraEnd = \case
-    EraEnd bound ->
-        encodeBound bound
-    EraUnbounded ->
-        encodeNull
-
 encodeEraMismatch
     :: EraMismatch
     -> Json
@@ -474,11 +465,18 @@ encodeEraSummary
 encodeEraSummary x =
     "start" .=
         encodeBound (eraStart x) <>
-    "end" .=
-        encodeEraEnd (eraEnd x) <>
+    "end" .=? OmitWhenNothing
+        encodeBound (eraEndToMaybe (eraEnd x)) <>
     "parameters" .=
         encodeEraParams (eraParams x)
     & encodeObject
+  where
+    eraEndToMaybe :: EraEnd -> StrictMaybe Bound
+    eraEndToMaybe = \case
+        EraEnd bound ->
+            SJust bound
+        EraUnbounded ->
+            SNothing
 
 encodeInterpreter
     :: forall crypto eras. (eras ~ CardanoEras crypto)

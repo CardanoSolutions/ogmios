@@ -624,15 +624,10 @@
     , "type": "object"
     , "description": "Summary of the confirmed parts of the ledger."
     , "additionalProperties": false
-    , "required": [ "start", "end", "parameters" ]
+    , "required": [ "start", "parameters" ]
     , "properties":
       { "start": { "$ref": "cardano.json#/definitions/Bound" }
-      , "end":
-        { "oneOf":
-          [ { "$ref": "cardano.json#/definitions/Bound" }
-          , { "type": "null" }
-          ]
-        }
+      , "end": { "$ref": "cardano.json#/definitions/Bound" }
       , "parameters": { "$ref": "cardano.json#/definitions/EraParameters" }
       }
     }

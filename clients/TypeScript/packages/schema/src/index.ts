@@ -1948,7 +1948,7 @@ export interface QueryLedgerStateEraSummariesResponse {
  */
 export interface EraSummary {
   start: Bound;
-  end: Bound | null;
+  end?: Bound;
   parameters: EraParameters;
 }
 /**
