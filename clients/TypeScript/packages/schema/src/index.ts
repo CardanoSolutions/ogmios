@@ -343,12 +343,7 @@ export interface FindIntersection {
   params: {
     points?: PointOrOrigin[];
   };
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * A point on the chain, identified by a slot and a block header hash.
@@ -364,12 +359,7 @@ export interface IntersectionFound {
     intersection: PointOrOrigin;
     tip: TipOrOrigin;
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface Tip {
   slot: Slot;
@@ -389,12 +379,7 @@ export interface IntersectionNotFound {
       tip: TipOrOrigin;
     };
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface IntersectionInterleaved {
   jsonrpc: "2.0";
@@ -406,12 +391,7 @@ export interface IntersectionInterleaved {
     code: 1001;
     message: string;
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Request next block from the current cardano-node's cursor.
@@ -419,12 +399,7 @@ export interface IntersectionInterleaved {
 export interface NextBlock {
   jsonrpc: "2.0";
   method: "nextBlock";
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Response to a 'nextBlock' request.
@@ -433,12 +408,7 @@ export interface NextBlockResponse {
   jsonrpc: "2.0";
   method: "nextBlock";
   result: RollForward | RollBackward;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface RollForward {
   direction: "forward";
@@ -888,12 +858,7 @@ export interface SubmitTransaction {
       cbor: string;
     };
   };
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface SubmitTransactionSuccess {
   jsonrpc: "2.0";
@@ -903,23 +868,13 @@ export interface SubmitTransactionSuccess {
       id: TransactionId;
     };
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface SubmitTransactionError {
   jsonrpc: "2.0";
   method: "submitTransaction";
   error: SubmitTransactionFailure;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Failed to submit the transaction in the current era. This may happen when trying to submit a transaction near an era boundary (i.e. at the moment of a hard-fork).
@@ -1506,12 +1461,7 @@ export interface SubmitTransactionDeserialisationError {
   jsonrpc: "2.0";
   method: "submitTransaction";
   error: DeserialisationFailure;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * The input failed to deserialize in any of the known era.
@@ -1543,12 +1493,7 @@ export interface EvaluateTransaction {
     };
     additionalUtxo?: Utxo;
   };
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface EvaluateTransactionSuccess {
   jsonrpc: "2.0";
@@ -1557,12 +1502,7 @@ export interface EvaluateTransactionSuccess {
     validator: RedeemerPointer;
     budget: ExecutionUnits;
   }[];
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Happens when attempting to evaluate execution units on a node that isn't enough synchronized.
@@ -1571,12 +1511,7 @@ export interface EvaluateTransactionError {
   jsonrpc: "2.0";
   method: "evaluateTransaction";
   error: EvaluateTransactionFailure;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Returned when trying to evaluate execution units of a pre-Alonzo transaction. Note that this isn't possible with Ogmios because transactions are always de-serialized as Alonzo transactions.
@@ -1678,12 +1613,7 @@ export interface EvaluateTransactionDeserialisationError {
   jsonrpc: "2.0";
   method: "evaluateTransaction";
   error: DeserialisationFailure;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Acquire a point on chain from which to run ledger-state queries.
@@ -1694,12 +1624,7 @@ export interface AcquireLedgerState {
   params: {
     point: PointOrOrigin;
   };
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface AcquireLedgerStateFailure {
   jsonrpc: "2.0";
@@ -1715,12 +1640,7 @@ export interface AcquireLedgerStateFailure {
      */
     data: string;
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Response to an 'acquireLedgerState' request.
@@ -1732,12 +1652,7 @@ export interface AcquireLedgerStateSuccess {
     acquired: "ledgerState";
     point: PointOrOrigin;
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Release a previously acquired ledger state.
@@ -1745,12 +1660,7 @@ export interface AcquireLedgerStateSuccess {
 export interface ReleaseLedgerState {
   jsonrpc: "2.0";
   method: "releaseLedgerState";
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Response to a 'releaseLedgerState' request.
@@ -1761,12 +1671,7 @@ export interface ReleaseLedgerStateResponse {
   result: {
     released: "ledgerState";
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryLedgerStateEraMismatch {
   jsonrpc: "2.0";
@@ -1791,12 +1696,7 @@ export interface QueryLedgerStateEraMismatch {
     message: string;
     data: EraMismatch;
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryLedgerStateUnavailableInCurrentEra {
   jsonrpc: "2.0";
@@ -1820,12 +1720,7 @@ export interface QueryLedgerStateUnavailableInCurrentEra {
     code: 2002;
     message: string;
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryLedgerStateAcquiredExpired {
   jsonrpc: "2.0";
@@ -1853,12 +1748,7 @@ export interface QueryLedgerStateAcquiredExpired {
      */
     data: string;
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Query the current epoch number the ledger is at.
@@ -1867,23 +1757,13 @@ export interface QueryLedgerStateEpoch {
   jsonrpc: "2.0";
   method: "queryLedgerState/epoch";
   params?: unknown;
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryLedgerStateEpochResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/epoch";
   result: Epoch;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Query the start of the current ledger era.
@@ -1892,23 +1772,13 @@ export interface QueryLedgerStateEraStart {
   jsonrpc: "2.0";
   method: "queryLedgerState/eraStart";
   params?: unknown;
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryLedgerStateEraStartResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/eraStart";
   result: Bound;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * An era bound which captures the time, slot and epoch at which the era start. The time is relative to the start time of the network.
@@ -1925,23 +1795,13 @@ export interface QueryLedgerStateEraSummaries {
   jsonrpc: "2.0";
   method: "queryLedgerState/eraSummaries";
   params?: unknown;
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryLedgerStateEraSummariesResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/eraSummaries";
   result: EraSummary[];
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Summary of the confirmed parts of the ledger.
@@ -1972,23 +1832,13 @@ export interface QueryLedgerStateLiveStakeDistribution {
   jsonrpc: "2.0";
   method: "queryLedgerState/liveStakeDistribution";
   params?: unknown;
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryLedgerStateLiveStakeDistributionResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/liveStakeDistribution";
   result: LiveStakeDistribution;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Distribution of stake across registered stake pools. Each key in the map corresponds to a pool id.
@@ -2010,23 +1860,13 @@ export interface QueryLedgerStateProjectedRewards {
     scripts?: AnyStakeCredential[];
     keys?: AnyStakeCredential[];
   };
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryLedgerStateProjectedRewardsResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/projectedRewards";
   result: ProjectedRewards;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Rewards that can be expected assuming a pool is fully saturated. Such rewards are said non-myopic, in opposition to short-sighted rewards looking at immediate benefits. Keys of the map can be either Lovelace amounts or account credentials depending on the query.
@@ -2043,23 +1883,13 @@ export interface QueryLedgerStateProposedProtocolParameters {
   jsonrpc: "2.0";
   method: "queryLedgerState/proposedProtocolParameters";
   params?: unknown;
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryLedgerStateProposedProtocolParametersResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/proposedProtocolParameters";
   result: ProposedProtocolParameters[];
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Query the current protocol parameters.
@@ -2068,23 +1898,13 @@ export interface QueryLedgerStateProtocolParameters {
   jsonrpc: "2.0";
   method: "queryLedgerState/protocolParameters";
   params?: unknown;
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryLedgerStateProtocolParametersResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/protocolParameters";
   result: ProtocolParameters;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface ProtocolParameters {
   minFeeCoefficient: UInt64;
@@ -2131,23 +1951,13 @@ export interface QueryLedgerStateRewardAccountSummaries {
     scripts?: AnyStakeCredential[];
     keys?: AnyStakeCredential[];
   };
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryLedgerStateRewardAccountSummariesResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/rewardAccountSummaries";
   result: RewardAccountSummaries;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface RewardAccountSummaries {
   [k: string]: RewardAccountSummary;
@@ -2165,23 +1975,13 @@ export interface QueryLedgerStateRewardsProvenance {
   jsonrpc: "2.0";
   method: "queryLedgerState/rewardsProvenance";
   params?: unknown;
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryLedgerStateRewardsProvenanceResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/rewardsProvenance";
   result: RewardsProvenance;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Details about how rewards are calculated for the ongoing epoch.
@@ -2239,12 +2039,7 @@ export interface QueryLedgerStateStakePools {
       id: StakePoolId;
     }[];
   };
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryLedgerStateStakePoolsResponse {
   jsonrpc: "2.0";
@@ -2252,12 +2047,7 @@ export interface QueryLedgerStateStakePoolsResponse {
   result: {
     [k: string]: StakePool;
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Query the current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger.
@@ -2266,23 +2056,13 @@ export interface QueryLedgerStateTip {
   jsonrpc: "2.0";
   method: "queryLedgerState/tip";
   params?: unknown;
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryLedgerStateTipResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/tip";
   result: PointOrOrigin;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Query the current Utxo set, restricted to some output references or addresses.
@@ -2291,12 +2071,7 @@ export interface QueryLedgerStateUtxo {
   jsonrpc: "2.0";
   method: "queryLedgerState/utxo";
   params?: UtxoByOutputReferences | UtxoByAddresses | WholeUtxo;
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface UtxoByOutputReferences {
   outputReferences: TransactionOutputReference[];
@@ -2309,12 +2084,7 @@ export interface QueryLedgerStateUtxoResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/utxo";
   result: Utxo;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Query the network’s highest block number.
@@ -2323,23 +2093,13 @@ export interface QueryNetworkBlockHeight {
   jsonrpc: "2.0";
   method: "queryNetwork/blockHeight";
   params?: unknown;
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryNetworkBlockHeightResponse {
   jsonrpc: "2.0";
   method: "queryNetwork/blockHeight";
   result: BlockHeight | Origin;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Query the genesis configuration of a given era.
@@ -2350,23 +2110,13 @@ export interface QueryNetworkGenesisConfiguration {
   params: {
     era: EraWithGenesis;
   };
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryNetworkGenesisConfigurationResponse {
   jsonrpc: "2.0";
   method: "queryNetwork/genesisConfiguration";
   result: GenesisByron | GenesisShelley | GenesisAlonzo | GenesisConway;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * A Byron genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
@@ -2462,23 +2212,13 @@ export interface QueryNetworkStartTime {
   jsonrpc: "2.0";
   method: "queryNetwork/startTime";
   params?: unknown;
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryNetworkStartTimeResponse {
   jsonrpc: "2.0";
   method: "queryNetwork/startTime";
   result: UtcTime;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Get the current network tip. Said differently, this is the most recent slot and block header hash that the node it aware of.
@@ -2487,23 +2227,13 @@ export interface QueryNetworkTip {
   jsonrpc: "2.0";
   method: "queryNetwork/tip";
   params?: unknown;
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface QueryNetworkTipResponse {
   jsonrpc: "2.0";
   method: "queryNetwork/tip";
   result: PointOrOrigin;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Acquire a mempool snapshot. This is blocking until a new (i.e different) snapshot is available.
@@ -2511,12 +2241,7 @@ export interface QueryNetworkTipResponse {
 export interface AcquireMempool {
   jsonrpc: "2.0";
   method: "acquireMempool";
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Response to a 'acquireMempool' request.
@@ -2528,12 +2253,7 @@ export interface AcquireMempoolResponse {
     acquired: "mempool";
     slot: Slot;
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Request the next transaction from an acquired mempools napshot.
@@ -2544,12 +2264,7 @@ export interface NextTransaction {
   params?: {
     fields?: "all";
   };
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface MustAcquireMempoolFirst {
   jsonrpc: "2.0";
@@ -2561,12 +2276,7 @@ export interface MustAcquireMempoolFirst {
     code: 4000;
     message: string;
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Response to a 'nextTransaction' request.
@@ -2585,12 +2295,7 @@ export interface NextTransactionResponse {
       | Transaction
       | null;
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Ask whether a given transaction is present in the acquired mempool snapshot.
@@ -2601,12 +2306,7 @@ export interface HasTransaction {
   params: {
     id: TransactionId;
   };
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Response to a 'HasTransaction' request.
@@ -2615,12 +2315,7 @@ export interface HasTransactionResponse {
   jsonrpc: "2.0";
   method: "hasTransaction";
   result: boolean;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Get size and capacities of the mempool (acquired snapshot).
@@ -2628,12 +2323,7 @@ export interface HasTransactionResponse {
 export interface SizeOfMempool {
   jsonrpc: "2.0";
   method: "sizeOfMempool";
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Response to a 'sizeOfMempool' request.
@@ -2642,12 +2332,7 @@ export interface SizeOfMempoolResponse {
   jsonrpc: "2.0";
   method: "sizeOfMempool";
   result: MempoolSizeAndCapacity;
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 export interface MempoolSizeAndCapacity {
   maxCapacity: {
@@ -2666,12 +2351,7 @@ export interface MempoolSizeAndCapacity {
 export interface ReleaseMempool {
   jsonrpc: "2.0";
   method: "releaseMempool";
-  /**
-   * An arbitrary JSON value that will be mirrored back in the response.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * Response to a 'releaseMempool' request.
@@ -2682,12 +2362,7 @@ export interface ReleaseMempoolResponse {
   result: {
     released: "mempool";
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
 /**
  * A generic error in the JSON-RPC protocol. This is returned by the server when a request from clients is deemed invalid or, when the server was unable to reply to a well-formed request.
@@ -2710,10 +2385,5 @@ export interface RpcError {
       [k: string]: unknown;
     };
   };
-  /**
-   * Any value that was set by a client request in the 'id' field.
-   */
-  id?: {
-    [k: string]: unknown;
-  };
+  id?: unknown;
 }
