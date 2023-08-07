@@ -57,7 +57,7 @@ spec = parallel $ do
                   , "'method' must be present"
                   , Just Json.Null
                   )
-                , ( json [aesonQQ|{ "method": "query" }|]
+                , ( json [aesonQQ|{ "method": "queryLedgerState" }|]
                   , "missing required field 'jsonrpc'"
                   , Just Json.Null
                   )
