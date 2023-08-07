@@ -595,7 +595,7 @@ encodeStakePools =
     encodeObject . encodeMapSeries Shelley.stringifyPoolId (\k v ->
         encodeObject
             ( "id" .= Shelley.encodePoolId k
-           <> "parameters" .= Shelley.encodePoolParams v
+           <> Shelley.encodePoolParams v
             )
     )
 

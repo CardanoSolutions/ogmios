@@ -9,7 +9,7 @@ import {
   Metadata,
   RewardAccountSummaries,
   RewardsProvenance,
-  StakePoolParameters,
+  StakePool,
   Transaction,
   TransactionOutput,
   TreasuryTransferInternal,
@@ -460,7 +460,7 @@ describe('util', () => {
           }
         `
 
-        const result = safeJSON.parse(json) as StakePoolParameters
+        const result = safeJSON.parse(json) as StakePool
         expect(typeof result.cost.lovelace).toEqual('bigint')
         expect(typeof result.pledge.lovelace).toEqual('bigint')
       })

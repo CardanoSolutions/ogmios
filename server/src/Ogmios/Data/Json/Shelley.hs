@@ -202,8 +202,7 @@ encodeDCert = encodeObject . \case
         <> "stakePool" .= encodeObject
             ( "id" .=
                encodePoolId (Sh.ppId params)
-           <> "parameters" .=
-                encodePoolParams params
+           <> encodePoolParams params
             )
     Sh.DCertPool (Sh.RetirePool keyHash epochNo)
         -> "type" .=
@@ -488,7 +487,7 @@ encodePoolMetadata x =
 encodePoolParams
     :: Crypto crypto
     => Sh.PoolParams crypto
-    -> Json
+    -> Series
 encodePoolParams x =
     "vrfVerificationKeyHash" .=
         encodeHash (Sh.ppVrf x) <>
@@ -506,7 +505,6 @@ encodePoolParams x =
         encodeFoldable encodeStakePoolRelay (Sh.ppRelays x) <>
     "metadata" .=? OmitWhenNothing
         encodePoolMetadata (Sh.ppMetadata x)
-    & encodeObject
 
 encodePParams
     :: (Ledger.PParamsHKD Identity era ~ Sh.ShelleyPParams Identity era)
@@ -626,7 +624,7 @@ encodeShelleyGenesisStaking x =
             stringifyPoolId
             (\poolId params -> encodeObject
                 ( "id" .= encodePoolId poolId
-               <> "parameters" .= encodePoolParams params
+               <> encodePoolParams params
                 )
             )
             (Sh.sgsPools x) <>

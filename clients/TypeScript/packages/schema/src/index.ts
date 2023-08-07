@@ -581,11 +581,8 @@ export interface StakePoolRegistration {
 }
 export interface StakePool {
   id: StakePoolId;
-  parameters: StakePoolParameters;
-}
-export interface StakePoolParameters {
-  owners: DigestBlake2B224[];
   vrfVerificationKeyHash: DigestBlake2B256;
+  owners: DigestBlake2B224[];
   cost: Lovelace;
   margin: Ratio;
   pledge: Lovelace;
