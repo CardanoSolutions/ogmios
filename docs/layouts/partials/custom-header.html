@@ -5,14 +5,44 @@
     border: none;
     border-collapse: collapse;
   }
+
   table.users td {
     padding: 0;
     border: none;
   }
+
   table.users img {
     max-width: 100px;
     max-height: 100px;
     margin: 1rem auto !important;
     border-radius: 50%;
+  }
+
+  @media(max-width: 1200px) {
+    table.users img {
+      max-width: 70px;
+      max-height: 70px;
+      margin: 0.75rem auto !important;
+    }
+
+    table.users tr:nth-child(2n) {
+      display: none;
+    }
+  }
+
+  @media(max-width: 900px) {
+    table.users img {
+      max-width: 60px;
+      max-height: 60px;
+      margin: 0.5rem auto !important;
+    }
+  }
+
+  @media(max-width: 500px) {
+    table.users img {
+      max-width: 40px;
+      max-height: 40px;
+      margin: 0.5rem 0.25rem;
+    }
   }
 </style>

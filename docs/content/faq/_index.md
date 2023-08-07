@@ -86,55 +86,139 @@ We've heard of a handful happy users! And it keeps growing!
 
 <table class="users" cellspacing="0" cellpadding="0">
 <tr>
-  <td><img src="https://avatars.githubusercontent.com/u/74414794"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/83610786"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/12909177"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/98781883"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/83253396"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/80576467"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/80548193"/></td>
+  <td>
+    <a target="_blank" href="https://blockfrost.io/">
+      <img src="https://avatars.githubusercontent.com/u/74414794"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://sundaeswap.finance/">
+      <img src="https://avatars.githubusercontent.com/u/83610786"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://iohk.io/">
+      <img src="https://avatars.githubusercontent.com/u/12909177"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://jpg.store/">
+      <img src="https://avatars.githubusercontent.com/u/98781883"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://projectnewm.io">
+      <img src="https://avatars.githubusercontent.com/u/83253396"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://mlabs.city">
+      <img src="https://avatars.githubusercontent.com/u/80576467"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://github.com/minswap">
+      <img src="https://avatars.githubusercontent.com/u/80548193"/>
+    </a>
+  </td>
 </tr><tr>
-  <td><a href="https://blockfrost.io/">FiveBinaries</a></td>
-  <td><a href="https://sundaeswap.finance/">SundaeSwap Labs</a></td>
-  <td><a href="https://iohk.io/">Input Output Global</a></td>
-  <td><a href="https://jpg.store/">Jpg.store</a></td>
-  <td><a href="https://projectnewm.io">NEWM</a></td>
-  <td><a href="https://mlabs.city">MLabs</a></td>
-  <td><a href="https://github.com/minswap">Minswap</a></td>
+  <td><a target="_blank" href="https://blockfrost.io/">FiveBinaries</a></td>
+  <td><a target="_blank" href="https://sundaeswap.finance/">SundaeSwap Labs</a></td>
+  <td><a target="_blank" href="https://iohk.io/">Input Output Global</a></td>
+  <td><a target="_blank" href="https://jpg.store/">Jpg.store</a></td>
+  <td><a target="_blank" href="https://projectnewm.io">NEWM</a></td>
+  <td><a target="_blank" href="https://mlabs.city">MLabs</a></td>
+  <td><a target="_blank" href="https://github.com/minswap">Minswap</a></td>
 </tr>
 <tr>
-  <td><img src="https://ccvault.io/images/eternl-256.png"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/65092852"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/75200801"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/105819836"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/37078161"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/92830323"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/90213107"/></td>
+  <td>
+    <a target="_blank" href="https://eternl.io">
+      <img src="https://ccvault.io/images/eternl-256.png"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://raynetwork.io">
+      <img src="https://avatars.githubusercontent.com/u/65092852"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://dcspark.io">
+      <img src="https://avatars.githubusercontent.com/u/75200801"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://spacebudz.io">
+      <img src="https://avatars.githubusercontent.com/u/105819836"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://cardanofoundation.org">
+      <img src="https://avatars.githubusercontent.com/u/37078161"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://txpipe.io">
+      <img src="https://avatars.githubusercontent.com/u/92830323"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://koralabs.io/">
+      <img src="https://avatars.githubusercontent.com/u/90213107"/>
+    </a>
+  </td>
 </tr><tr>
-  <td><a href="https://eternl.io">Eternl</a></td>
-  <td><a href="https://raynetwork.io">RayNetwork</a></td>
-  <td><a href="https://dcspark.io">DCSpark</a></td>
-  <td><a href="https://spacebudz.io">Spacebudz</a></td>
-  <td><a href="https://cardanofoundation.org">Cardano Foundation</a></td>
-  <td><a href="https://txpipe.io">TxPipe</a></td>
-  <td><a href="https://koralabs.io/">Kora Labs</a></td>
+  <td><a target="_blank" href="https://eternl.io">Eternl</a></td>
+  <td><a target="_blank" href="https://raynetwork.io">RayNetwork</a></td>
+  <td><a target="_blank" href="https://dcspark.io">DCSpark</a></td>
+  <td><a target="_blank" href="https://spacebudz.io">Spacebudz</a></td>
+  <td><a target="_blank" href="https://cardanofoundation.org">Cardano Foundation</a></td>
+  <td><a target="_blank" href="https://txpipe.io">TxPipe</a></td>
+  <td><a target="_blank" href="https://koralabs.io/">Kora Labs</a></td>
 </tr>
 <tr>
-  <td><img src="https://avatars.githubusercontent.com/u/73429691"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/93930135"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/36142236"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/83718187"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/67252237"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/100535151"/></td>
-  <td><img src="https://avatars.githubusercontent.com/u/96011175"/></td>
+  <td>
+    <a target="_blank" href="https://www.gimbalabs.com">
+      <img src="https://avatars.githubusercontent.com/u/73429691"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://www.wingriders.com/">
+      <img src="https://avatars.githubusercontent.com/u/93930135"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://emurgo.io/">
+      <img src="https://avatars.githubusercontent.com/u/36142236"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://liqwid.finance/">
+      <img src="https://avatars.githubusercontent.com/u/83718187"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://multichain.org/">
+      <img src="https://avatars.githubusercontent.com/u/67252237"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://tosidrop.io/">
+      <img src="https://avatars.githubusercontent.com/u/100535151"/>
+    </a>
+  </td>
+  <td>
+    <a target="_blank" href="https://asterium.dev/">
+      <img src="https://avatars.githubusercontent.com/u/96011175"/>
+    </a>
+  </td>
 </tr><tr>
-  <td><a href="https://www.gimbalabs.com">Gimbalabs</a></td>
-  <td><a href="https://www.wingriders.com/">Wing Riders</a></td>
-  <td><a href="https://emurgo.io/">EMURGO</a></td>
-  <td><a href="https://liqwid.finance/">Liqwid Labs</a></td>
-  <td><a href="https://multichain.org/">Multichain</a></td>
-  <td><a href="https://tosidrop.io/">TosiDrop</a></td>
-  <td><a href="https://asterium.dev/">Asterium</a></td>
+  <td><a target="_blank" href="https://www.gimbalabs.com">Gimbalabs</a></td>
+  <td><a target="_blank" href="https://www.wingriders.com/">Wing Riders</a></td>
+  <td><a target="_blank" href="https://emurgo.io/">EMURGO</a></td>
+  <td><a target="_blank" href="https://liqwid.finance/">Liqwid Labs</a></td>
+  <td><a target="_blank" href="https://multichain.org/">Multichain</a></td>
+  <td><a target="_blank" href="https://tosidrop.io/">TosiDrop</a></td>
+  <td><a target="_blank" href="https://asterium.dev/">Asterium</a></td>
 </tr>
 </table>
 
