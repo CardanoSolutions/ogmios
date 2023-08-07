@@ -1448,7 +1448,7 @@
         ]
     , "oneOf":
       [ { "type": "object"
-        , "title": "Signatory"
+        , "title": "Clause<Signature>"
         , "additionalProperties": false
         , "required": [ "clause", "from" ]
         , "properties":
@@ -1462,7 +1462,7 @@
           }
         }
       , { "type": "object"
-        , "title": "Any"
+        , "title": "Clause<Any>"
         , "additionalProperties": false
         , "required": [ "clause", "from" ]
         , "properties":
@@ -1478,7 +1478,7 @@
         }
 
       , { "type": "object"
-        , "title": "All"
+        , "title": "Clause<All>"
         , "additionalProperties": false
         , "required": [ "clause", "from" ]
         , "properties":
@@ -1493,7 +1493,7 @@
           }
         }
       , { "type": "object"
-        , "title": "Some"
+        , "title": "Clause<Some>"
         , "additionalProperties": false
         , "required": [ "clause", "from", "atLeast" ]
         , "properties":
@@ -1511,7 +1511,7 @@
           }
         }
       , { "type": "object"
-        , "title": "Before"
+        , "title": "Clause<Before>"
         , "additionalProperties": false
         , "required": [ "clause", "slot" ]
         , "properties":
@@ -1525,7 +1525,7 @@
           }
         }
       , { "type": "object"
-        , "title": "After"
+        , "title": "Clause<After>"
         , "additionalProperties": false
         , "required": [ "clause", "slot" ]
         , "properties":
@@ -1766,7 +1766,7 @@
         }
       , "signatories":
         { "type": "array"
-        , "additionalProperties": { "$ref": "cardano.json#/definitions/Signatory" }
+        , "items": { "$ref": "cardano.json#/definitions/Signatory" }
         }
       , "scripts":
         { "type": "object"

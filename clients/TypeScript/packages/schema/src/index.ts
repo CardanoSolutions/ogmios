@@ -43,7 +43,7 @@ export type Script = Native | Plutus;
 /**
  * A phase-1 monetary script. Timelocks constraints are only supported since Allegra.
  */
-export type ScriptNative = Signatory | Any | All | Some | Before | After;
+export type ScriptNative = ClauseSignature | ClauseAny | ClauseAll | ClauseSome | ClauseBefore | ClauseAfter;
 /**
  * A Blake2b 28-byte hash digest, encoded in base16.
  */
@@ -91,13 +91,25 @@ export type Integer = bigint;
 export type String = string;
 export type ArrayMetadatum = Metadatum[];
 /**
- * Plutus data, CBOR-serialised.
- */
-export type RedeemerData = string;
-/**
  * An Ed25519 verification key.
  */
 export type VerificationKey = string;
+/**
+ * An EdDSA signature.
+ */
+export type Signature = string;
+/**
+ * An Ed25519-BIP32 chain-code for key deriviation.
+ */
+export type ChainCode = string;
+/**
+ * Extra attributes carried by Byron addresses (network magic and/or HD payload).
+ */
+export type AddressAttributes = string;
+/**
+ * Plutus data, CBOR-serialised.
+ */
+export type RedeemerData = string;
 export type BootstrapProtocolId = number;
 /**
  * An Ed25519-BIP32 Byron genesis delegate verification key with chain-code.
@@ -467,7 +479,7 @@ export interface Transaction {
   requiredExtraScripts?: DigestBlake2B224[];
   governanceActions?: GovernanceActionProtocolParametersUpdate[];
   metadata?: Metadata;
-  signatories: unknown[];
+  signatories: Signatory[];
   scripts?: {
     [k: string]: Script;
   };
@@ -519,28 +531,28 @@ export interface Native {
   json: ScriptNative;
   cbor: string;
 }
-export interface Signatory {
+export interface ClauseSignature {
   clause: "signature";
   from: DigestBlake2B224;
 }
-export interface Any {
+export interface ClauseAny {
   clause: "any";
   from: ScriptNative[];
 }
-export interface All {
+export interface ClauseAll {
   clause: "all";
   from: ScriptNative[];
 }
-export interface Some {
+export interface ClauseSome {
   clause: "some";
   atLeast: bigint;
   from: ScriptNative[];
 }
-export interface Before {
+export interface ClauseBefore {
   clause: "before";
   slot: Slot;
 }
-export interface After {
+export interface ClauseAfter {
   clause: "after";
   slot: Slot;
 }
@@ -734,6 +746,12 @@ export interface MetadataLabels {
 }
 export interface ObjectMetadatum {
   [k: string]: Metadatum;
+}
+export interface Signatory {
+  key: VerificationKey;
+  signature: Signature;
+  chainCode?: ChainCode;
+  addressAttributes?: AddressAttributes;
 }
 export interface Redeemer {
   redeemer: RedeemerData;
