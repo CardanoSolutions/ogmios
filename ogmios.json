@@ -2039,7 +2039,10 @@
     , "oneOf":
       [ { "title": "Base16"
         , "description": "A stake key or script hash in base16."
-        , "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+        , "type": "string"
+        , "contentEncoding": "base16"
+        , "minLength": 56
+        , "maxLength": 56
         }
       , { "title": "Bech32"
         , "type": "string"
@@ -3209,8 +3212,8 @@
             }
           }
         }
-      , { "title": "SubmitTransactionFailure<UnknownGovernanceAction>"
-        , "description": "Unknown governance action found in transaction. This may be because you've indicated a wrong identifier or because the governance action hasn't yet been submitted on-chain. Note that the order in which transactions are submitted matters. The field 'data.unknownGovernanceAction' tells you about the governance action's identifier."
+      , { "title": "SubmitTransactionFailure<UnknownGovernanceProposal>"
+        , "description": "Unknown governance proposal found in transaction. This may be because you've indicated a wrong identifier or because the governance proposal hasn't yet been submitted on-chain. Note that the order in which transactions are submitted matters. The field 'data.unknownProposal' tells you about the governance proposal's identifier."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3220,9 +3223,9 @@
           , "data":
             { "type": "object"
             , "additionalProperties": false
-            , "required": [ "unknownGovernanceAction" ]
+            , "required": [ "unknownProposal" ]
             , "properties":
-              { "unknownGovernanceAction": { "$ref": "cardano.json#/definitions/GovernanceActionReference" }
+              { "unknownProposal": { "$ref": "cardano.json#/definitions/GovernanceProposalReference" }
               }
             }
           }

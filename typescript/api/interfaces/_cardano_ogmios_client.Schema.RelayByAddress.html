@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>Publish | cardano-ogmios</title>
+	<title>RelayByAddress | cardano-ogmios</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -42,13 +42,19 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-namespace">
-						<a href="_cardano_ogmios_client.Schema.Publish.html" class="tsd-kind-icon">Publish</a>
+						<a href="_cardano_ogmios_client.Schema.RelayByAddress.html" class="tsd-kind-icon">Relay<wbr>ByAddress</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.Publish.html#certificate" class="tsd-kind-icon">certificate</a>
+								<a href="_cardano_ogmios_client.Schema.RelayByAddress.html#ipv4" class="tsd-kind-icon">ipv4</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.Publish.html#purpose" class="tsd-kind-icon">purpose</a>
+								<a href="_cardano_ogmios_client.Schema.RelayByAddress.html#ipv6" class="tsd-kind-icon">ipv6</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_client.Schema.RelayByAddress.html#port" class="tsd-kind-icon">port</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_client.Schema.RelayByAddress.html#type" class="tsd-kind-icon">type</a>
 							</li>
 						</ul>
 					</li>
@@ -71,7 +77,7 @@
 							<a href="../modules/_cardano_ogmios_client.Schema.html">Schema</a>
 						</li>
 						<li>
-							<a href="_cardano_ogmios_client.Schema.Publish.html">Publish</a>
+							<a href="_cardano_ogmios_client.Schema.RelayByAddress.html">RelayByAddress</a>
 						</li>
 					</ul>
 				</div>
@@ -80,7 +86,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">Publish</span>
+						<span class="target">RelayByAddress</span>
 					</li>
 				</ul>
 			</section>
@@ -91,8 +97,10 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Publish.html#certificate" class="tsd-kind-icon">certificate</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.Publish.html#purpose" class="tsd-kind-icon">purpose</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.RelayByAddress.html#ipv4" class="tsd-kind-icon">ipv4</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.RelayByAddress.html#ipv6" class="tsd-kind-icon">ipv6</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.RelayByAddress.html#port" class="tsd-kind-icon">port</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.RelayByAddress.html#type" class="tsd-kind-icon">type</a></li>
 							</ul>
 						</section>
 					</div>
@@ -101,22 +109,42 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="certificate" class="tsd-anchor"></a>
-					<h3>certificate</h3>
-					<div class="tsd-signature tsd-kind-icon">certificate<span class="tsd-signature-symbol">:</span> <a href="../modules/_cardano_ogmios_client.Schema.html#Certificate" class="tsd-signature-type">Certificate</a></div>
+					<a name="ipv4" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> ipv4</h3>
+					<div class="tsd-signature tsd-kind-icon">ipv4<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:706</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:360</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="purpose" class="tsd-anchor"></a>
-					<h3>purpose</h3>
-					<div class="tsd-signature tsd-kind-icon">purpose<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"publish"</span></div>
+					<a name="ipv6" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> ipv6</h3>
+					<div class="tsd-signature tsd-kind-icon">ipv6<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:705</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:361</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="port" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> port</h3>
+					<div class="tsd-signature tsd-kind-icon">port<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:362</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="type" class="tsd-anchor"></a>
+					<h3>type</h3>
+					<div class="tsd-signature tsd-kind-icon">type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"ipAddress"</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:359</li>
 						</ul>
 					</aside>
 				</section>

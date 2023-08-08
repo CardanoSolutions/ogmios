@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>SubmitTransactionFailureUnknownGovernanceAction | cardano-ogmios</title>
+	<title>RelayByName | cardano-ogmios</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -48,16 +48,16 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-module">
-						<a href="_cardano_ogmios_schema.SubmitTransactionFailureUnknownGovernanceAction.html" class="tsd-kind-icon">Submit<wbr>Transaction<wbr>Failure<wbr>Unknown<wbr>Governance<wbr>Action</a>
+						<a href="_cardano_ogmios_schema.RelayByName.html" class="tsd-kind-icon">Relay<wbr>ByName</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.SubmitTransactionFailureUnknownGovernanceAction.html#code" class="tsd-kind-icon">code</a>
+								<a href="_cardano_ogmios_schema.RelayByName.html#hostname" class="tsd-kind-icon">hostname</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.SubmitTransactionFailureUnknownGovernanceAction.html#data" class="tsd-kind-icon">data</a>
+								<a href="_cardano_ogmios_schema.RelayByName.html#port" class="tsd-kind-icon">port</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.SubmitTransactionFailureUnknownGovernanceAction.html#message" class="tsd-kind-icon">message</a>
+								<a href="_cardano_ogmios_schema.RelayByName.html#type" class="tsd-kind-icon">type</a>
 							</li>
 						</ul>
 					</li>
@@ -77,23 +77,16 @@
 							<a href="../modules/_cardano_ogmios_schema.html">@cardano-ogmios/schema</a>
 						</li>
 						<li>
-							<a href="_cardano_ogmios_schema.SubmitTransactionFailureUnknownGovernanceAction.html">SubmitTransactionFailureUnknownGovernanceAction</a>
+							<a href="_cardano_ogmios_schema.RelayByName.html">RelayByName</a>
 						</li>
 					</ul>
 				</div>
 			</div>
-			<section class="tsd-panel tsd-comment">
-				<div class="tsd-comment tsd-typography">
-					<div class="lead">
-						<p>Unknown governance action found in transaction. This may be because you&#39;ve indicated a wrong identifier or because the governance action hasn&#39;t yet been submitted on-chain. Note that the order in which transactions are submitted matters. The field &#39;data.unknownGovernanceAction&#39; tells you about the governance action&#39;s identifier.</p>
-					</div>
-				</div>
-			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">SubmitTransactionFailureUnknownGovernanceAction</span>
+						<span class="target">RelayByName</span>
 					</li>
 				</ul>
 			</section>
@@ -104,9 +97,9 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SubmitTransactionFailureUnknownGovernanceAction.html#code" class="tsd-kind-icon">code</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SubmitTransactionFailureUnknownGovernanceAction.html#data" class="tsd-kind-icon">data</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SubmitTransactionFailureUnknownGovernanceAction.html#message" class="tsd-kind-icon">message</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.RelayByName.html#hostname" class="tsd-kind-icon">hostname</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.RelayByName.html#port" class="tsd-kind-icon">port</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.RelayByName.html#type" class="tsd-kind-icon">type</a></li>
 							</ul>
 						</section>
 					</div>
@@ -115,42 +108,34 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="code" class="tsd-anchor"></a>
-					<h3>code</h3>
-					<div class="tsd-signature tsd-kind-icon">code<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"3138"</span></div>
+					<a name="hostname" class="tsd-anchor"></a>
+					<h3>hostname</h3>
+					<div class="tsd-signature tsd-kind-icon">hostname<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/a5cef78/clients/TypeScript/packages/schema/src/index.ts#L1338">packages/schema/src/index.ts:1338</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/3979810/clients/TypeScript/packages/schema/src/index.ts#L622">packages/schema/src/index.ts:622</a>
 							</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="data" class="tsd-anchor"></a>
-					<h3>data</h3>
-					<div class="tsd-signature tsd-kind-icon">data<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<a name="port" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> port</h3>
+					<div class="tsd-signature tsd-kind-icon">port<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/a5cef78/clients/TypeScript/packages/schema/src/index.ts#L1340">packages/schema/src/index.ts:1340</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/3979810/clients/TypeScript/packages/schema/src/index.ts#L623">packages/schema/src/index.ts:623</a>
 							</li>
 						</ul>
 					</aside>
-					<div class="tsd-type-declaration">
-						<h4>Type declaration</h4>
-						<ul class="tsd-parameters">
-							<li class="tsd-parameter">
-								<h5>unknown<wbr>Governance<wbr>Action<span class="tsd-signature-symbol">: </span><a href="_cardano_ogmios_schema.GovernanceActionReference.html" class="tsd-signature-type">GovernanceActionReference</a></h5>
-							</li>
-						</ul>
-					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="message" class="tsd-anchor"></a>
-					<h3>message</h3>
-					<div class="tsd-signature tsd-kind-icon">message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<a name="type" class="tsd-anchor"></a>
+					<h3>type</h3>
+					<div class="tsd-signature tsd-kind-icon">type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"hostname"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/a5cef78/clients/TypeScript/packages/schema/src/index.ts#L1339">packages/schema/src/index.ts:1339</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/3979810/clients/TypeScript/packages/schema/src/index.ts#L621">packages/schema/src/index.ts:621</a>
 							</li>
 						</ul>
 					</aside>

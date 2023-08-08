@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>ByName | cardano-ogmios</title>
+	<title>GovernanceVote | cardano-ogmios</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -42,16 +42,19 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-namespace">
-						<a href="_cardano_ogmios_client.Schema.ByName.html" class="tsd-kind-icon">By<wbr>Name</a>
+						<a href="_cardano_ogmios_client.Schema.GovernanceVote.html" class="tsd-kind-icon">Governance<wbr>Vote</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.ByName.html#hostname" class="tsd-kind-icon">hostname</a>
+								<a href="_cardano_ogmios_client.Schema.GovernanceVote.html#anchor" class="tsd-kind-icon">anchor</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.ByName.html#port" class="tsd-kind-icon">port</a>
+								<a href="_cardano_ogmios_client.Schema.GovernanceVote.html#issuer" class="tsd-kind-icon">issuer</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.ByName.html#type" class="tsd-kind-icon">type</a>
+								<a href="_cardano_ogmios_client.Schema.GovernanceVote.html#proposal" class="tsd-kind-icon">proposal</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_client.Schema.GovernanceVote.html#vote" class="tsd-kind-icon">vote</a>
 							</li>
 						</ul>
 					</li>
@@ -74,7 +77,7 @@
 							<a href="../modules/_cardano_ogmios_client.Schema.html">Schema</a>
 						</li>
 						<li>
-							<a href="_cardano_ogmios_client.Schema.ByName.html">ByName</a>
+							<a href="_cardano_ogmios_client.Schema.GovernanceVote.html">GovernanceVote</a>
 						</li>
 					</ul>
 				</div>
@@ -83,7 +86,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">ByName</span>
+						<span class="target">GovernanceVote</span>
 					</li>
 				</ul>
 			</section>
@@ -94,9 +97,10 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.ByName.html#hostname" class="tsd-kind-icon">hostname</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.ByName.html#port" class="tsd-kind-icon">port</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.ByName.html#type" class="tsd-kind-icon">type</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.GovernanceVote.html#anchor" class="tsd-kind-icon">anchor</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.GovernanceVote.html#issuer" class="tsd-kind-icon">issuer</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.GovernanceVote.html#proposal" class="tsd-kind-icon">proposal</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.GovernanceVote.html#vote" class="tsd-kind-icon">vote</a></li>
 							</ul>
 						</section>
 					</div>
@@ -105,32 +109,42 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="hostname" class="tsd-anchor"></a>
-					<h3>hostname</h3>
-					<div class="tsd-signature tsd-kind-icon">hostname<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<a name="anchor" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> anchor</h3>
+					<div class="tsd-signature tsd-kind-icon">anchor<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.Anchor.html" class="tsd-signature-type">Anchor</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:361</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:483</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="port" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> port</h3>
-					<div class="tsd-signature tsd-kind-icon">port<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<a name="issuer" class="tsd-anchor"></a>
+					<h3>issuer</h3>
+					<div class="tsd-signature tsd-kind-icon">issuer<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.ConstitutionalCommitteeMember.html" class="tsd-signature-type">ConstitutionalCommitteeMember</a><span class="tsd-signature-symbol"> | </span><a href="_cardano_ogmios_client.Schema.DelegateRepresentative1.html" class="tsd-signature-type">DelegateRepresentative1</a><span class="tsd-signature-symbol"> | </span><a href="_cardano_ogmios_client.Schema.StakePoolOperator.html" class="tsd-signature-type">StakePoolOperator</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:362</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:482</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="type" class="tsd-anchor"></a>
-					<h3>type</h3>
-					<div class="tsd-signature tsd-kind-icon">type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"hostname"</span></div>
+					<a name="proposal" class="tsd-anchor"></a>
+					<h3>proposal</h3>
+					<div class="tsd-signature tsd-kind-icon">proposal<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.GovernanceProposalReference.html" class="tsd-signature-type">GovernanceProposalReference</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:360</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:485</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="vote" class="tsd-anchor"></a>
+					<h3>vote</h3>
+					<div class="tsd-signature tsd-kind-icon">vote<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"abstain"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"yes"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"no"</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:484</li>
 						</ul>
 					</aside>
 				</section>

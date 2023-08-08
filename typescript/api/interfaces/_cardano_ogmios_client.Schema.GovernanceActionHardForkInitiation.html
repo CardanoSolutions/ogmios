@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>GovernanceActionReference | cardano-ogmios</title>
+	<title>GovernanceActionHardForkInitiation | cardano-ogmios</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -42,13 +42,13 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-namespace">
-						<a href="_cardano_ogmios_client.Schema.GovernanceActionReference.html" class="tsd-kind-icon">Governance<wbr>Action<wbr>Reference</a>
+						<a href="_cardano_ogmios_client.Schema.GovernanceActionHardForkInitiation.html" class="tsd-kind-icon">Governance<wbr>Action<wbr>Hard<wbr>Fork<wbr>Initiation</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.GovernanceActionReference.html#governanceAction" class="tsd-kind-icon">governance<wbr>Action</a>
+								<a href="_cardano_ogmios_client.Schema.GovernanceActionHardForkInitiation.html#type" class="tsd-kind-icon">type</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.GovernanceActionReference.html#transaction" class="tsd-kind-icon">transaction</a>
+								<a href="_cardano_ogmios_client.Schema.GovernanceActionHardForkInitiation.html#version" class="tsd-kind-icon">version</a>
 							</li>
 						</ul>
 					</li>
@@ -71,7 +71,7 @@
 							<a href="../modules/_cardano_ogmios_client.Schema.html">Schema</a>
 						</li>
 						<li>
-							<a href="_cardano_ogmios_client.Schema.GovernanceActionReference.html">GovernanceActionReference</a>
+							<a href="_cardano_ogmios_client.Schema.GovernanceActionHardForkInitiation.html">GovernanceActionHardForkInitiation</a>
 						</li>
 					</ul>
 				</div>
@@ -80,7 +80,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">GovernanceActionReference</span>
+						<span class="target">GovernanceActionHardForkInitiation</span>
 					</li>
 				</ul>
 			</section>
@@ -91,8 +91,8 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.GovernanceActionReference.html#governanceAction" class="tsd-kind-icon">governance<wbr>Action</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.GovernanceActionReference.html#transaction" class="tsd-kind-icon">transaction</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.GovernanceActionHardForkInitiation.html#type" class="tsd-kind-icon">type</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.GovernanceActionHardForkInitiation.html#version" class="tsd-kind-icon">version</a></li>
 							</ul>
 						</section>
 					</div>
@@ -101,40 +101,24 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="governanceAction" class="tsd-anchor"></a>
-					<h3>governance<wbr>Action</h3>
-					<div class="tsd-signature tsd-kind-icon">governance<wbr>Action<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<a name="type" class="tsd-anchor"></a>
+					<h3>type</h3>
+					<div class="tsd-signature tsd-kind-icon">type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"hardForkInitiation"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:941</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:478</li>
 						</ul>
 					</aside>
-					<div class="tsd-type-declaration">
-						<h4>Type declaration</h4>
-						<ul class="tsd-parameters">
-							<li class="tsd-parameter">
-								<h5>index<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
-							</li>
-						</ul>
-					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="transaction" class="tsd-anchor"></a>
-					<h3>transaction</h3>
-					<div class="tsd-signature tsd-kind-icon">transaction<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<a name="version" class="tsd-anchor"></a>
+					<h3>version</h3>
+					<div class="tsd-signature tsd-kind-icon">version<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_client.Schema.ProtocolVersion.html" class="tsd-signature-type">ProtocolVersion</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:938</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:479</li>
 						</ul>
 					</aside>
-					<div class="tsd-type-declaration">
-						<h4>Type declaration</h4>
-						<ul class="tsd-parameters">
-							<li class="tsd-parameter">
-								<h5>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
-							</li>
-						</ul>
-					</div>
 				</section>
 			</section>
 		</div>
