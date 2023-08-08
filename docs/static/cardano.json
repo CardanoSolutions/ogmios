@@ -328,7 +328,7 @@
     , "oneOf":
       [ { "type": "object"
         , "description": "A stake delegation certificate, from a delegator to a stake pool."
-        , "title": "stakeDelegation"
+        , "title": "StakeDelegation"
         , "additionalProperties": false
         , "required": [ "type", "credential", "stakePool" ]
         , "properties":
@@ -353,7 +353,7 @@
         }
       , { "type": "object"
         , "description": "A stake credential (key or script) registration certificate."
-        , "title": "stakeCredentialRegistration"
+        , "title": "StakeCredentialRegistration"
         , "additionalProperties": false
         , "required": [ "type", "credential" ]
         , "properties":
@@ -368,7 +368,7 @@
         }
       , { "type": "object"
         , "description": "A stake key de-registration certificate."
-        , "title": "stakeCredentialDeregistration"
+        , "title": "StakeCredentialDeregistration"
         , "additionalProperties": false
         , "required": [ "type", "credential" ]
         , "properties":
@@ -383,7 +383,7 @@
         }
       , { "type": "object"
         , "description": "A stake pool registration certificate."
-        , "title": "stakePoolRegistration"
+        , "title": "StakePoolRegistration"
         , "additionalProperties": false
         , "required": [ "type", "stakePool" ]
         , "properties":
@@ -399,7 +399,7 @@
       , { "type": "object"
         , "description": "A stake pool retirement certificate."
         , "additionalProperties": false
-        , "title": "stakePoolRetirement"
+        , "title": "StakePoolRetirement"
         , "required": [ "type", "stakePool"]
         , "properties":
           { "type":
@@ -418,7 +418,7 @@
           }
         }
       , { "type": "object"
-        , "title": "genesisDelegation"
+        , "title": "GenesisDelegation"
         , "additionalProperties": false
         , "required": [ "type", "delegate", "issuer" ]
         , "properties":
@@ -1044,7 +1044,7 @@
     , "oneOf":
       [ { "type": "string"
         , "enum": ["neutral"]
-        , "title": "neutral"
+        , "title": "Neutral"
         }
       , { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
       ]
@@ -1314,7 +1314,7 @@
     { "title": "Relay"
     , "oneOf":
       [ { "type": "object"
-        , "title": "by address"
+        , "title": "Relay<ByAddress>"
         , "additionalProperties": false
         , "required": [ "type" ]
         , "properties":
@@ -1336,7 +1336,7 @@
           }
         }
       , { "type": "object"
-        , "title": "by name"
+        , "title": "Relay<ByName>"
         , "additionalProperties": false
         , "required": [ "type", "hostname" ]
         , "properties":
@@ -1555,7 +1555,7 @@
   , "ScriptPurpose":
     { "title": "ScriptPurpose"
     , "oneOf":
-      [ { "title": "spend"
+      [ { "title": "ScriptPurpose<Spend>"
         , "type": "object"
         , "additionalProperties": false
         , "required": [ "purpose", "outputReference" ]
@@ -1567,7 +1567,7 @@
           , "outputReference": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
           }
         }
-      , { "title": "mint"
+      , { "title": "ScriptPurpose<Mint>"
         , "type": "object"
         , "additionalProperties": false
         , "required": [ "purpose", "policy" ]
@@ -1579,7 +1579,7 @@
           , "policy": { "$ref": "cardano.json#/definitions/PolicyId" }
           }
         }
-      , { "title": "publish"
+      , { "title": "ScriptPurpose<Publish>"
         , "type": "object"
         , "additionalProperties": false
         , "required": [ "purpose", "certificate" ]
@@ -1591,7 +1591,7 @@
           , "certificate": { "$ref": "cardano.json#/definitions/Certificate" }
           }
         }
-      , { "title": "withdraw"
+      , { "title": "ScriptPurpose<Withdraw>"
         , "type": "object"
         , "additionalProperties": false
         , "required": [ "purpose", "rewardAccount" ]
@@ -1682,7 +1682,7 @@
     }
 
   , "Tip":
-    { "title": "tip"
+    { "title": "Tip"
     , "type": "object"
     , "additionalProperties": false
     , "required": [ "slot", "id", "blockNo" ]
