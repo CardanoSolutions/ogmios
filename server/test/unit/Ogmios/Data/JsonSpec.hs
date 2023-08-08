@@ -543,124 +543,130 @@ spec = do
 
     context "validate local state queries against JSON-schema" $ do
         validateLedgerStateQuery 3 "epoch"
-            [aesonQQ|{}|]
+            Nothing
             (parseQueryLedgerEpoch genEpochResult)
 
         validateLedgerStateQuery 10 "eraStart"
-            [aesonQQ|{}|]
+            Nothing
             (parseQueryLedgerEraStart genBoundResult)
 
         validateLedgerStateQuery 10 "eraSummaries"
-            [aesonQQ|{}|]
+            Nothing
             (parseQueryLedgerEraSummaries genInterpreterResult)
 
         validateLedgerStateQuery 10 "tip"
-            [aesonQQ|{}|]
+            Nothing
             (parseQueryLedgerTip genPointResultTPraos genPointResultPraos)
 
         validateLedgerStateQuery 10 "projectedRewards"
-            [aesonQQ|{ "stake": [{ "lovelace": 14 }, { "lovelace": 42 }] }|]
+            (Just [aesonQQ|{ "stake": [{ "lovelace": 14 }, { "lovelace": 42 }] }|])
             (parseQueryLedgerProjectedRewards genNonMyopicMemberRewardsResult)
 
         validateLedgerStateQuery 10 "projectedRewards"
-            [aesonQQ|
-            { "keys":
-                [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
-                , "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
-                , "stake179kzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjcek9u8h"
-                , "stake_test17pkzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjc7u07r2"
-                ]
-            , "scripts":
-                [ "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
-                ]
-            }|]
+            (Just [aesonQQ|
+                { "keys":
+                    [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
+                    , "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
+                    , "stake179kzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjcek9u8h"
+                    , "stake_test17pkzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjc7u07r2"
+                    ]
+                , "scripts":
+                    [ "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
+                    ]
+                }
+            |])
             (parseQueryLedgerProjectedRewards genNonMyopicMemberRewardsResult)
 
         validateLedgerStateQuery 10 "rewardAccountSummaries"
-            [aesonQQ|
-            { "keys":
-                [ "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
-                , "stake179kzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjcek9u8h"
-                , "stake_test17pkzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjc7u07r2"
-                ]
-            , "scripts":
-                [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
-                , "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
-                ]
-            }|]
+            (Just [aesonQQ|
+                { "keys":
+                    [ "stake_vkh1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftyklueu8u"
+                    , "stake179kzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjcek9u8h"
+                    , "stake_test17pkzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjc7u07r2"
+                    ]
+                , "scripts":
+                    [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
+                    , "script1dss9g887v3rdmadpq3n44d5ph3ma4aha2rtxfdsnnftykaau8x7"
+                    ]
+                }
+            |])
             (parseQueryLedgerRewardAccountSummaries genDelegationAndRewardsResult)
 
         validateLedgerStateQuery 30 "protocolParameters"
-            [aesonQQ|{}|]
+            Nothing
             (parseQueryLedgerProtocolParameters genPParamsResult)
 
         validateLedgerStateQuery 10 "proposedProtocolParameters"
-            [aesonQQ|{}|]
+            Nothing
             (parseQueryLedgerProposedProtocolParameters genProposedPParamsResult)
 
         validateLedgerStateQuery 10 "liveStakeDistribution"
-            [aesonQQ|{}|]
+            Nothing
             (parseQueryLedgerLiveStakeDistribution genPoolDistrResult)
 
         validateLedgerStateQuery 10 "utxo"
-            [aesonQQ|{}|]
+            Nothing
             (parseQueryLedgerUtxo genUTxOResult)
 
         validateLedgerStateQuery 10 "utxo"
-            [aesonQQ|
-            { "addresses":
-                [ "addr1vxsvu329sr8z92usevrr6scp4vxxn0j8e20avag662uesgq385tfd"
-                , "Ae2tdPwUPEZEQHoZTVq3KQhtjP32JzoEE5onUS45bFmsBSXYCXSXEQEzb4v"
-                , "82d818582183581cb0574c7a1564697578b840fd7ec9d8963fa1398415f9f2f87737a83da0001ae9e3e303"
-                ]
-            }|]
+            (Just [aesonQQ|
+                { "addresses":
+                    [ "addr1vxsvu329sr8z92usevrr6scp4vxxn0j8e20avag662uesgq385tfd"
+                    , "Ae2tdPwUPEZEQHoZTVq3KQhtjP32JzoEE5onUS45bFmsBSXYCXSXEQEzb4v"
+                    , "82d818582183581cb0574c7a1564697578b840fd7ec9d8963fa1398415f9f2f87737a83da0001ae9e3e303"
+                    ]
+                }
+            |])
             (parseQueryLedgerUtxoByAddress genUTxOResult)
 
         validateLedgerStateQuery 10 "utxo"
-            [aesonQQ|
-            { "outputReferences":
-                [ { "transaction": { "id": "141933320b6e5d4522d7d3bf052dd2a26cc7eb58b66ae357f95f83715c8add5b" }
-                  , "output": { "index": 14 }
-                  }
-                ]
-            }|]
+            (Just [aesonQQ|
+                { "outputReferences":
+                    [ { "transaction": { "id": "141933320b6e5d4522d7d3bf052dd2a26cc7eb58b66ae357f95f83715c8add5b" }
+                      , "output": { "index": 14 }
+                      }
+                    ]
+                }
+            |])
             (parseQueryLedgerUtxoByOutputReference genUTxOResult)
 
         validateLedgerStateQuery 30 "rewardsProvenance"
-            [aesonQQ|{}|]
+            Nothing
             (parseQueryLedgerRewardsProvenance genRewardsProvenanceResult)
 
         validateLedgerStateQuery 10 "stakePools"
-            [aesonQQ|{}|]
+            Nothing
             (parseQueryLedgerStakePools genPoolParametersResult)
 
         validateLedgerStateQuery 10 "stakePools"
-            [aesonQQ|{
-                "stakePools": [
-                    { "id": "pool1lllmq2jgcqrag5c77lpc5m34fsqn63leadyx9tzx842n66ly3ql" },
-                    { "id": "pool1rutq574pcq30mn9xuytgpqyvn69zq2dnycp2fhnw0hsuyqpnh99" }
-                ]
-            }|]
+            (Just [aesonQQ|
+                {
+                    "stakePools": [
+                        { "id": "pool1lllmq2jgcqrag5c77lpc5m34fsqn63leadyx9tzx842n66ly3ql" },
+                        { "id": "pool1rutq574pcq30mn9xuytgpqyvn69zq2dnycp2fhnw0hsuyqpnh99" }
+                    ]
+                }
+            |])
             (parseQueryLedgerStakePools genPoolParametersResult)
 
         validateNetworkQuery 10 "blockHeight"
-            [aesonQQ|{}|]
+            Nothing
             (parseQueryNetworkBlockHeight (const $ genWithOrigin genBlockNo))
 
         validateNetworkQuery 10 "genesisConfiguration"
-            [aesonQQ|{ "era": "shelley" }|]
+            (Just [aesonQQ|{ "era": "shelley" }|])
             (parseQueryNetworkGenesisConfiguration genGenesisConfig)
 
         validateNetworkQuery 20 "genesisConfiguration"
-            [aesonQQ|{ "era": "alonzo" }|]
+            (Just [aesonQQ|{ "era": "alonzo" }|])
             (parseQueryNetworkGenesisConfiguration genGenesisConfig)
 
         validateNetworkQuery 5 "startTime"
-            [aesonQQ|{}|]
+            Nothing
             (parseQueryNetworkStartTime (const genSystemStart))
 
         validateNetworkQuery 10 "tip"
-            [aesonQQ|{}|]
+            Nothing
             (parseQueryNetworkTip (const genPoint))
 
     context "validate release request/response against JSON-schema" $ do
@@ -972,10 +978,10 @@ unsafeDataFromBytes =
 validateLedgerStateQuery
     :: Int
     -> Text
-    -> Json.Value
+    -> Maybe Json.Value
     -> (Json.Value -> Json.Parser (QueryInEra Gen Block))
     -> SpecWith ()
-validateLedgerStateQuery n subMethod json parser = do
+validateLedgerStateQuery n subMethod params parser = do
   let category = "LedgerState"
   let propName = "Query" <> category <> titleize subMethod
   let requestRef = "ogmios.json#/properties/" <> propName
@@ -984,15 +990,14 @@ validateLedgerStateQuery n subMethod json parser = do
   parallel $ specify (toString propName) $ do
     queryRefs <- unsafeReadSchemaRef (SchemaRef requestRef)
     runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON
-        (\params -> Json.object
+        (\_params -> Json.object $
             [ "jsonrpc" .= ("2.0" :: Text)
             , "method" .= method
-            , "params" .= params
-            ]
+            ] ++ maybe [] (\x -> ["params" .= x]) _params
         )
         queryRefs
-        json
-    case Json.parseEither parser json of
+        params
+    case Json.parseEither parser (fromMaybe Json.emptyObject params) of
         Left e ->
             expectationFailure $ "failed to parse JSON: " <> show e
         Right queryInEra -> do
@@ -1082,10 +1087,10 @@ validateLedgerStateQuery n subMethod json parser = do
 validateNetworkQuery
     :: Int
     -> Text
-    -> Json.Value
+    -> Maybe Json.Value
     -> (Json.Value -> Json.Parser (QueryInEra Gen Block))
     -> SpecWith ()
-validateNetworkQuery n subMethod json parser = do
+validateNetworkQuery n subMethod params parser = do
   let category = "Network"
   let propName = "Query" <> category <> titleize subMethod
   let requestRef = "ogmios.json#/properties/" <> propName
@@ -1094,15 +1099,14 @@ validateNetworkQuery n subMethod json parser = do
   parallel $ specify (toString propName) $ do
     queryRefs <- unsafeReadSchemaRef (SchemaRef requestRef)
     runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON
-        (\params -> Json.object
+        (\_params -> Json.object $
             [ "jsonrpc" .= ("2.0" :: Text)
             , "method" .= method
-            , "params" .= params
-            ]
+            ] ++ maybe [] (\x -> ["params" .= x]) _params
         )
         queryRefs
-        json
-    case Json.parseEither parser json of
+        params
+    case Json.parseEither parser (fromMaybe Json.emptyObject params)  of
         Left e ->
             expectationFailure $ "failed to parse JSON: " <> show e
         Right queryInEra -> do
