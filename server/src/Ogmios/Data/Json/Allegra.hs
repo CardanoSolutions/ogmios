@@ -6,9 +6,6 @@ module Ogmios.Data.Json.Allegra where
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Binary
-    ( serialize'
-    )
 import Data.Maybe.Strict
     ( fromSMaybe
     , strictMaybe
@@ -27,6 +24,7 @@ import qualified Data.Map as Map
 import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 
 import qualified Cardano.Ledger.Address as Ledger
+import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.SafeHash as Ledger
@@ -120,8 +118,11 @@ encodeTimelock = encodeObject . \case
         "slot" .= encodeSlotNo s
 
 encodeTx
-    :: forall crypto. (Crypto crypto)
-    => Sh.ShelleyTx (AllegraEra crypto)
+    :: forall era crypto.
+        ( Crypto crypto
+        , era ~ AllegraEra crypto
+        )
+    => Sh.ShelleyTx era
     -> Json
 encodeTx x =
     Shelley.encodeTxId (Ledger.txid @(AllegraEra crypto) (Sh.body x))
@@ -134,7 +135,7 @@ encodeTx x =
         <>
     encodeWitnessSet (snd <$> auxiliary) (Sh.wits x)
         <>
-    "cbor" .= encodeByteStringBase16 (serialize' x)
+    "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
         & encodeObject
   where
     auxiliary = do

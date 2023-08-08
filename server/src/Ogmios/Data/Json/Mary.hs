@@ -6,9 +6,6 @@ module Ogmios.Data.Json.Mary where
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Binary
-    ( serialize'
-    )
 import Data.ByteString.Base16
     ( encodeBase16
     )
@@ -33,6 +30,7 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 
 import qualified Cardano.Ledger.Address as Ledger
+import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 
@@ -106,10 +104,11 @@ encodePolicyId (Ma.PolicyID hash) =
     Shelley.encodeScriptHash hash
 
 encodeTx
-    :: forall crypto.
+    :: forall era crypto.
        ( Crypto crypto
+       , era ~ MaryEra crypto
        )
-    => Sh.ShelleyTx (MaryEra crypto)
+    => Sh.ShelleyTx era
     -> Json
 encodeTx x =
     Shelley.encodeTxId (Ledger.txid @(MaryEra crypto) (Sh.body x))
@@ -122,7 +121,7 @@ encodeTx x =
         <>
     encodeWitnessSet (snd <$> auxiliary) (Sh.wits x)
         <>
-    "cbor" .= encodeByteStringBase16 (serialize' x)
+    "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
         & encodeObject
   where
     auxiliary = do

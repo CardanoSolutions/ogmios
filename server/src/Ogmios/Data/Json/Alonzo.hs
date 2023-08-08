@@ -6,9 +6,6 @@ module Ogmios.Data.Json.Alonzo where
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Binary
-    ( serialize'
-    )
 import Data.ByteString.Base16
     ( encodeBase16
     )
@@ -31,6 +28,7 @@ import qualified Cardano.Crypto.Hash.Class as CC
 import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 
 import qualified Cardano.Ledger.Api as Ledger.Api
+import qualified Cardano.Ledger.Binary as Binary
 
 import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Block as Ledger
@@ -136,11 +134,13 @@ encodeCostModels =
     encodeMap stringifyLanguage encodeCostModel . Al.costModelsValid
 
 encodeData
-    :: Ledger.Era era
+    :: forall era.
+        ( Ledger.Era era
+        )
     => Al.Data era
     -> Json
 encodeData =
-    encodeByteStringBase16 . serialize'
+    encodeByteStringBase16 . Binary.serialize' (Ledger.eraProtVerLow @era)
 
 encodeDataHash
     :: Crypto crypto
@@ -353,10 +353,11 @@ encodeScriptPurpose = encodeObject . \case
         "rewardAccount" .= Shelley.encodeRewardAcnt acct
 
 encodeTx
-    :: forall crypto.
+    :: forall era crypto.
         ( Crypto crypto
+        , era ~ AlonzoEra crypto
         )
-    => Al.AlonzoTx (AlonzoEra crypto)
+    => Al.AlonzoTx era
     -> Json
 encodeTx x =
     Shelley.encodeTxId (Ledger.txid @(AlonzoEra crypto) (Al.body x))
@@ -369,7 +370,7 @@ encodeTx x =
         <>
     encodeWitnessSet (snd <$> auxiliary) (Al.wits x)
         <>
-    "cbor" .= encodeByteStringBase16 (serialize' x)
+    "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
         & encodeObject
   where
     auxiliary = do

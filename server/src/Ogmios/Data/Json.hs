@@ -43,7 +43,7 @@ module Ogmios.Data.Json
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Binary
+import Cardano.Ledger.Binary
     ( ToCBOR (..)
     )
 import Cardano.Ledger.Shelley.API
@@ -207,21 +207,22 @@ encodeSerializedTransaction
     :: (PraosCrypto crypto, TPraos.PraosCrypto crypto)
     => SerializedTransaction (CardanoBlock crypto)
     -> Json
-encodeSerializedTransaction = \case
-    GenTxByron tx ->
-        encodeByteStringBase16 $ Cbor.toStrictByteString $ encodeByronGenTx tx
-    GenTxShelley tx ->
-        encodeByteStringBase16 $ Cbor.toStrictByteString $ toCBOR tx
-    GenTxAllegra tx ->
-        encodeByteStringBase16 $ Cbor.toStrictByteString $ toCBOR tx
-    GenTxMary tx ->
-        encodeByteStringBase16 $ Cbor.toStrictByteString $ toCBOR tx
-    GenTxAlonzo tx ->
-        encodeByteStringBase16 $ Cbor.toStrictByteString $ toCBOR tx
-    GenTxBabbage tx ->
-        encodeByteStringBase16 $ Cbor.toStrictByteString $ toCBOR tx
-    GenTxConway tx ->
-        encodeByteStringBase16 $ Cbor.toStrictByteString $ toCBOR tx
+encodeSerializedTransaction =
+    encodeByteStringBase16 . Cbor.toStrictByteString . \case
+        GenTxByron tx ->
+            encodeByronGenTx tx
+        GenTxShelley tx ->
+            toCBOR tx
+        GenTxAllegra tx ->
+            toCBOR tx
+        GenTxMary tx ->
+            toCBOR tx
+        GenTxAlonzo tx ->
+            toCBOR tx
+        GenTxBabbage tx ->
+            toCBOR tx
+        GenTxConway tx ->
+            toCBOR tx
 
 encodeTip
     :: Tip (CardanoBlock crypto)

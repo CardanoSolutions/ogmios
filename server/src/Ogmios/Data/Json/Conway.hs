@@ -6,6 +6,9 @@ module Ogmios.Data.Json.Conway where
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Ledger.Binary
+    ( sizedValue
+    )
 import Ouroboros.Consensus.Protocol.Praos
     ( Praos
     )
@@ -15,6 +18,10 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
 import Ouroboros.Consensus.Shelley.Protocol.Praos
     ()
 
+import qualified Data.Map as Map
+
+import qualified Cardano.Ledger.Api as Ledger
+import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Keys as Ledger

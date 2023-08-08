@@ -6,9 +6,6 @@ module Ogmios.Data.Json.Babbage where
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Binary
-    ( serialize'
-    )
 import Cardano.Ledger.Binary
     ( sizedValue
     )
@@ -32,6 +29,7 @@ import qualified Data.Map.Strict as Map
 import qualified Ouroboros.Consensus.Protocol.Praos.Header as Praos
 
 import qualified Cardano.Ledger.Address as Ledger
+import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 
@@ -171,10 +169,11 @@ encodePParamsHKD encode pure_ x =
     & encodeObject
 
 encodeTx
-    :: forall crypto.
+    :: forall era crypto.
         ( Crypto crypto
+        , era ~ BabbageEra crypto
         )
-    => Ba.AlonzoTx (BabbageEra crypto)
+    => Ba.AlonzoTx era
     -> Json
 encodeTx x =
     Shelley.encodeTxId (Ledger.txid @(BabbageEra crypto) (Ba.body x))
@@ -187,7 +186,7 @@ encodeTx x =
         <>
     Alonzo.encodeWitnessSet (snd <$> auxiliary) (Ba.wits x)
         <>
-    "cbor" .= encodeByteStringBase16 (serialize' x)
+    "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
         & encodeObject
   where
     auxiliary = do

@@ -6,7 +6,7 @@ module Ogmios.Data.Json.Byron where
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Binary
+import Cardano.Ledger.Binary
     ( toCBOR
     )
 import Codec.CBOR.Encoding
