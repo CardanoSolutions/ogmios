@@ -185,7 +185,7 @@ Query responses from the local-state-query protocol are now properly linked to t
   "method": "queryLedgerState/tip",
   "result": {
     "slot": 1234,
-    "header": { "hash": "1234567890abcdef" }
+    "id": "1234567890abcdef"
   }
 }
 ```
@@ -241,14 +241,41 @@ The transaction model has been greatly reworked. The main changes are:
 
 - The fields previously nested under `body` and `witnesses` have been flattened out and are now part of the top level object (e.g. `inputs` are no longer nested under `body`).
 
-- Few fields have been renamed
+- Metadata now only contains user-defined labelled metadata instead of also containing extra scripts. Extra scripts have been moved to the `scripts` field and merged with witness scripts. The hash digests of those metadata-scripts are now listed as `requiredExtraScripts`. The naming of metadata is now also a bit less awkward as `body → blob` for accessing user-defined metadata is now simply `labels`.
 
-  | Old    | New    |
-  | ---    | ---    |
-  | `TODO` | `TODO` |
+- Few fields have been renamed, here's a recap:
 
-- Metadata now only contains user-defined labelled metadata instead of also containing extra scripts. Extra scripts have been moved to the `scripts` field and merged with witness scripts.
-  The naming is now also a bit less awkward as `body → blob` for accessing user-defined metadata is now simply `labels`.
+  | Old                            | New                        |
+  | ---                            | ---                        |
+  | `body.certificates`            | `certificates`             |
+  | `body.collateralReturn`        | `collateralReturn`         |
+  | `body.collaterals`             | `collaterals`              |
+  | `body.fee`                     | `fee`                      |
+  | `body.inputs`                  | `inputs`                   |
+  | `body.mint`                    | `mint`                     |
+  | `body.network`                 | `network`                  |
+  | `body.outputs`                 | `outputs`                  |
+  | `body.references`              | `references`               |
+  | `body.requiredExtraSignatures` | `requiredExtraSignatories` |
+  | `body.scriptIntegrityHash`     | `scriptIntegrityHash`      |
+  | `body.totalCollateral`         | `totalCollateral`          |
+  | `body.update`                  | `governanceActions`        |
+  | `body.validityInterval`        | `validityInterval`         |
+  | `body.withdrawals`             | `withdrawals`              |
+  | `body`                         | N/A                        |
+  | `id`                           | `id`                       |
+  | `inputSource`                  | `inputSource`              |
+  | `metadata`                     | `metadata`                 |
+  | `raw`                          | `cbor`                     |
+  | `witness.bootstrap`            | `signatories`              |
+  | `witness.datums`               | `datums`                   |
+  | `witness.redeemers`            | `redeemers`                |
+  | `witness.scripts`              | `scripts`                  |
+  | `witness.signatures`           | `signatories`              |
+  | `witness`                      | N/A                        |
+  | N/A                            | `requiredExtraScripts`     |
+
+
 
 ##### Output references
 
@@ -261,15 +288,238 @@ Transaction's output references have been aligned to follow the new context-nest
 
 #### Protocol parameters
 
-TODO
+Starting from version 6, Ogmios has only one protocol parameter data model. Era-dependent models from Shelley, Alonzo and Babbage have been merged into one. Names have been made more uniform across eras. Consequently, some parameters have been made optional as they may only be present after a certain era. And some only exist in old eras. Yet overall, if something is meant to exist across all eras it will be present and has one single name.
 
-#### Stake pool parameters
+##### Shelley
 
-TODO
+| Old                         | New                             | Presence      |
+| ---                         | ---                             | ---           |
+| `decentralizationParameter` | `federatedBlockProductionRatio` | Up to Babbage |
+| `desiredNumberOfPools`      | `desiredNumberOfStakePools`     | All eras      |
+| `extraEntropy`              | `extraEntropy`                  | Up to Babbage |
+| `maxBlockBodySize`          | `maxBlockBodySize`              | All eras      |
+| `maxBlockHeaderSize`        | `maxBlockHeaderSize`            | All eras      |
+| `maxTxSize`                 | `maxTransactionSize`            | All eras      |
+| `minFeeCoefficient`         | `minFeeCoefficient`             | All eras      |
+| `minFeeConstant`            | `minFeeConstant`                | All eras      |
+| `minPoolCost`               | `minStakePoolCost`              | All eras      |
+| `minUtxoValue`              | `minUtxoDepositConstant`        | All eras      |
+| `monetaryExpansion`         | `monetaryExpansion`             | All eras      |
+| `poolDeposit`               | `stakePoolDeposit`              | All eras      |
+| `poolInfluence`             | `stakePoolPledgeInfluence`      | All eras      |
+| `poolRetirementEpochBound`  | `stakePoolRetirementEpochBound` | All eras      |
+| `protocolVersion`           | `version`                       | All eras      |
+| `stakeKeyDeposit`           | `stakeCredentialDeposit`        | All eras      |
+| `treasuryExpansion`         | `treasuryExpansion`             | All eras      |
+
+##### Alonzo
+
+| Old                               | New                               | Presence       |
+| ---                               | ---                               | ---            |
+| `coinsPerUtxoWord`                | `minUtxoDepositCoefficient`       | All eras       |
+| `collateralPercentage`            | `collateralPercentage`            | Alonzo onwards |
+| `costModels`                      | `plutusCostModels`                | Alonzo onwards |
+| `maxCollateralInputs`             | `maxCollateralInputs`             | Alonzo onwards |
+| `maxExecutionUnitsPerBlock`       | `maxExecutionUnitsPerBlock`       | Alonzo onwards |
+| `maxExecutionUnitsPerTransaction` | `maxExecutionUnitsPerTransaction` | Alonzo onwards |
+| `maxValueSize`                    | `maxValueSize`                    | Alonzo onwards |
+| `prices`                          | `scriptExecutionPrices`           | Alonzo onwards |
+
+##### Babbage
+
+| Old                | New                         | Presence |
+| ---                | ---                         | ---      |
+| `coinsPerUtxoByte` | `minUtxoDepositCoefficient` | All eras |
+
+#### Stake pool parameters / Stake pools
+
+The stake pools data model has been unified across the entire API. In particular, queries that used to return only a list of stake pool identifiers will now return a more complete list of stake pool objects, with the registered pool parameters. Parameters have therefore been lifted up to the stake pool model. Some have been slightly renamed too. So here's a translation table of the new 'StakePool' object:
+
+| Old             | New                      |
+| ---             | ---                      |
+| `cost`          | `cost`                   |
+| `id`            | `id`                     |
+| `margin`        | `margin`                 |
+| `metadata`      | `metadata`               |
+| `owners`        | `owners`                 |
+| `pledge`        | `pledge`                 |
+| `rewardAccount` | `rewardAccount`          |
+| `vrf`           | `vrfVerificationKeyHash` |
 
 #### Phase-1 (native) scripts
 
-TODO
+Great rework of the representation of phase-1 monetary scripts (a.k.a native script). They are now easier to parse thanks to a type discriminant `clause` at the fields level which indicates how the overall object should be interpret; rather than being at the key level. Below is shown how the old model translates to the new.
+
+In addition, scripts (including Plutus scripts) are now wrapped in an object with three properties: `language`, `json` and `cbor`. The `language` is used as a discriminant for the whole script. The field `json` is only present for native scripts and contains the format detailed below. The field `cbor` contains the serialized representation of that script.
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+```json
+"<credential-digest>"
+```
+
+</td>
+<td>
+
+```json
+{
+  "clause": "signature",
+  "from": "<credential-digest>",
+}
+```
+
+</td>
+</tr>
+</table>
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+```json
+{
+  "all": [ "<native-script>" ]
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "clause": "all",
+  "from": [ "<native-script>" ]
+}
+```
+
+</td>
+</tr>
+</table>
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+```json
+{
+  "any": [ "<native-script>" ]
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "clause": "any",
+  "from": [ "<native-script>" ]
+}
+```
+
+</td>
+</tr>
+</table>
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+```json
+{
+  "NOf": {
+    "<integer>": [ "<native-script>" ]
+  }
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "clause": "some",
+  "atLeast": "<integer>",
+  "from": [ "<native-script>" ]
+}
+```
+
+</td>
+</tr>
+</table>
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+```json
+{
+  "expiresAt": "<slot>"
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "clause": "before",
+  "slot": "<slot>"
+}
+```
+
+</td>
+</tr>
+</table>
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+```json
+{
+  "startsAt": "<slot>"
+}
+```
+
+</td>
+<td>
+
+```json
+{
+  "clause": "after",
+  "slot": "<slot>"
+}
+```
+
+</td>
+</tr>
+</table>
 
 #### Certificate
 
