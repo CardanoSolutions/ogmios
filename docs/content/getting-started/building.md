@@ -16,13 +16,23 @@ Ogmios is built using the great Haskell build tool [cabal](https://cabal.readthe
 
 Ogmios in itself is a rather small project, yet it's using library directly from the ouroboros-network, cardano-ledger-specs and cardano-node projects. This is handy for re-using existing logic, but comes at the cost of several system dependencies that are required for building everything. Some may already be installed on your system, but the complete list is:
 
-- `libsodium-dev 1.0.*`
+- `libffi-dev`
 - `libgmp-dev 6.1.*`
-- `libssl-dev 1.1.*`
+- `libnuma-dev`
 - `libpcre3-dev 2.8.*`
+- `libsodium-dev 1.0.*`
+- `libssl-dev 1.1.*`
 - `libsystemd-dev`
+- `llvm 1.11.*`
+- `llvm-11-dev`
+- `pkg-config 0.29.*`
 - `zlib1g-dev 1.2.*`
+
 - A custom revision of bitcoin-core's secp256k1, with Schnorr signature support enabled:
+
+  - `autoconf 2.*`
+  - `libtool 2.*.*`
+
   ```console
   git clone https://github.com/bitcoin-core/secp256k1.git
   cd secp256k1
