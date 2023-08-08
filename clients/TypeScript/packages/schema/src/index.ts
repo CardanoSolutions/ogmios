@@ -60,6 +60,7 @@ export type Certificate =
  * A Blake2b 32-byte hash digest of a pool's verification key.
  */
 export type StakePoolId = string;
+export type DelegateRepresentative = DigestBlake2B224 | "noConfidence" | "abstain";
 /**
  * A ratio of two integers, to express exact fractions.
  */
@@ -72,7 +73,7 @@ export type RewardAccount = string;
  * A hash digest from an unspecified algorithm and length.
  */
 export type DigestAny = string;
-export type Relay = ByAddress | ByName;
+export type Relay = RelayByAddress | RelayByName;
 /**
  * An epoch number or length.
  */
@@ -159,7 +160,7 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureTotalCollateralMismatch
   | SubmitTransactionFailureInputSourceMismatch
   | SubmitTransactionFailureUnauthorizedVote
-  | SubmitTransactionFailureUnknownGovernanceAction
+  | SubmitTransactionFailureUnknownGovernanceProposal
   | SubmitTransactionFailureInvalidProtocolParametersUpdate
   | SubmitTransactionFailureUnknownStakePool
   | SubmitTransactionFailureIncompleteWithdrawals
@@ -174,7 +175,7 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureUnrecognizedCertificateType
   | SubmitTransactionFailureInternalLedgerTypeConversionError;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
-export type ScriptPurpose = Spend | Mint | Publish | Withdraw;
+export type ScriptPurpose = ScriptPurposeSpend | ScriptPurposeMint | ScriptPurposePublish | ScriptPurposeWithdraw;
 /**
  * A Blake2b 28-byte hash digest, encoded in base16.
  */
@@ -207,11 +208,11 @@ export type RelativeTime = number;
  * Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks.
  */
 export type SafeZone = number;
-export type AnyStakeCredential = DigestBlake2B2241 | Bech32 | StakeAddress;
+export type AnyStakeCredential = Base16 | Bech32 | StakeAddress;
 /**
- * A Blake2b 28-byte hash digest, encoded in base16.
+ * A stake key or script hash in base16.
  */
-export type DigestBlake2B2241 = string;
+export type Base16 = string;
 /**
  * A Blake2b 28-byte hash digest of a verification key or script.
  */
@@ -477,7 +478,8 @@ export interface Transaction {
   scriptIntegrityHash?: DigestBlake2B256;
   requiredExtraSignatories?: DigestBlake2B224[];
   requiredExtraScripts?: DigestBlake2B224[];
-  governanceActions?: GovernanceActionProtocolParametersUpdate[];
+  proposals?: GovernanceProposal[];
+  votes?: GovernanceVote[];
   metadata?: Metadata;
   signatories: Signatory[];
   scripts?: {
@@ -566,23 +568,26 @@ export interface Plutus {
 export interface StakeDelegation {
   type: "stakeDelegation";
   credential: DigestBlake2B224;
-  stakePool: {
+  stakePool?: {
     id: StakePoolId;
   };
+  delegateRepresentative?: DelegateRepresentative;
 }
 /**
- * A stake credential (key or script) registration certificate.
+ * A stake credential (key or script) registration certificate. The field 'deposit' is only present in Conway onwards.
  */
 export interface StakeCredentialRegistration {
   type: "stakeCredentialRegistration";
   credential: DigestBlake2B224;
+  deposit?: Lovelace;
 }
 /**
- * A stake key de-registration certificate.
+ * A stake key de-registration certificate. The field 'deposit' is only present in Conway onwards.
  */
 export interface StakeCredentialDeregistration {
   type: "stakeCredentialDeregistration";
   credential: DigestBlake2B224;
+  deposit?: Lovelace;
 }
 /**
  * A stake pool registration certificate.
@@ -599,20 +604,20 @@ export interface StakePool {
   margin: Ratio;
   pledge: Lovelace;
   rewardAccount: RewardAccount;
-  metadata?: PoolMetadata;
+  metadata?: Anchor;
   relays: Relay[];
 }
-export interface PoolMetadata {
+export interface Anchor {
   hash: DigestAny;
   url: string;
 }
-export interface ByAddress {
+export interface RelayByAddress {
   type: "ipAddress";
   ipv4?: string;
   ipv6?: string;
   port?: number;
 }
-export interface ByName {
+export interface RelayByName {
   type: "hostname";
   hostname: string;
   port?: number;
@@ -676,6 +681,12 @@ export interface Assets {
     [k: string]: AssetQuantity;
   };
 }
+export interface GovernanceProposal {
+  deposit?: Lovelace;
+  returnAccount?: DigestBlake2B224;
+  anchor?: Anchor;
+  action: GovernanceActionProtocolParametersUpdate | GovernanceActionHardForkInitiation | string;
+}
 export interface GovernanceActionProtocolParametersUpdate {
   type: "protocolParametersUpdate";
   parameters: ProposedProtocolParameters;
@@ -730,6 +741,38 @@ export interface ProtocolVersion {
   major: UInt32;
   minor: UInt32;
   patch?: UInt32;
+}
+export interface GovernanceActionHardForkInitiation {
+  type: "hardForkInitiation";
+  version: ProtocolVersion;
+}
+export interface GovernanceVote {
+  issuer: ConstitutionalCommitteeMember | DelegateRepresentative1 | StakePoolOperator;
+  anchor?: Anchor;
+  vote: "yes" | "no" | "abstain";
+  proposal: GovernanceProposalReference;
+}
+export interface ConstitutionalCommitteeMember {
+  role: "constitutionalCommittee";
+  credential: DigestBlake2B224;
+}
+export interface DelegateRepresentative1 {
+  role: "delegateRepresentative";
+  credential: DigestBlake2B224;
+}
+export interface StakePoolOperator {
+  role: "stakePoolOperator";
+  stakePool?: {
+    id: StakePoolId;
+  };
+}
+export interface GovernanceProposalReference {
+  transaction: {
+    id: TransactionId;
+  };
+  proposal: {
+    index: UInt32;
+  };
 }
 export interface Metadata {
   hash: DigestBlake2B256;
@@ -1009,19 +1052,19 @@ export interface SubmitTransactionFailureMissingRedeemers {
     missingRedeemers: ScriptPurpose[];
   };
 }
-export interface Spend {
+export interface ScriptPurposeSpend {
   purpose: "spend";
   outputReference: TransactionOutputReference;
 }
-export interface Mint {
+export interface ScriptPurposeMint {
   purpose: "mint";
   policy: PolicyId;
 }
-export interface Publish {
+export interface ScriptPurposePublish {
   purpose: "publish";
   certificate: Certificate;
 }
-export interface Withdraw {
+export interface ScriptPurposeWithdraw {
   purpose: "withdraw";
   rewardAccount: RewardAccount;
 }
@@ -1332,21 +1375,13 @@ export interface SubmitTransactionFailureUnauthorizedVote {
   };
 }
 /**
- * Unknown governance action found in transaction. This may be because you've indicated a wrong identifier or because the governance action hasn't yet been submitted on-chain. Note that the order in which transactions are submitted matters. The field 'data.unknownGovernanceAction' tells you about the governance action's identifier.
+ * Unknown governance proposal found in transaction. This may be because you've indicated a wrong identifier or because the governance proposal hasn't yet been submitted on-chain. Note that the order in which transactions are submitted matters. The field 'data.unknownProposal' tells you about the governance proposal's identifier.
  */
-export interface SubmitTransactionFailureUnknownGovernanceAction {
+export interface SubmitTransactionFailureUnknownGovernanceProposal {
   code: 3138;
   message: string;
   data: {
-    unknownGovernanceAction: GovernanceActionReference;
-  };
-}
-export interface GovernanceActionReference {
-  transaction: {
-    id: TransactionId;
-  };
-  governanceAction: {
-    index: UInt32;
+    unknownProposal: GovernanceProposalReference;
   };
 }
 /**

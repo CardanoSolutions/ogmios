@@ -77,6 +77,7 @@ module Ogmios.Data.Json.Prelude
       -- * Data-Structures
     , encodeAnnotated
     , encodeIdentity
+    , encodeConcatFoldable
     , encodeFoldable
     , encodeFoldable2
     , encodeList
@@ -465,6 +466,13 @@ encodeIdentity :: (a -> Json) -> Identity a -> Json
 encodeIdentity encodeElem =
     encodeElem . runIdentity
 {-# INLINABLE encodeIdentity #-}
+
+encodeConcatFoldable :: Foldable f => (a -> [Json]) -> f a -> Json
+encodeConcatFoldable encodeElem =
+    Json.list id . concatMap encodeElem
+{-# SPECIALIZE encodeConcatFoldable :: (a -> [Json]) -> [a] -> Json #-}
+{-# SPECIALIZE encodeConcatFoldable :: (a -> [Json]) -> StrictSeq a -> Json #-}
+{-# INLINABLE encodeConcatFoldable #-}
 
 encodeFoldable :: Foldable f => (a -> Json) -> f a -> Json
 encodeFoldable encodeElem =

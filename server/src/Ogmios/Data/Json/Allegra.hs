@@ -166,7 +166,7 @@ encodeTxBody (Al.AllegraTxBody inps outs certs wdrls fee validity updates _) req
         encodeCoin fee <>
     "validityInterval" .=
         encodeValidityInterval validity <>
-    "governanceActions" .=? OmitWhenNothing
+    "proposals" .=? OmitWhenNothing
         (Shelley.encodeUpdate Shelley.encodePParamsUpdate)
         updates
 

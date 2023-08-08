@@ -154,7 +154,7 @@ encodeTxBody (Ma.MaryTxBody inps outs certs wdrls fee validity updates _ mint) s
         encodeCoin fee <>
     "validityInterval" .=
         Allegra.encodeValidityInterval validity <>
-    "governanceActions" .=? OmitWhenNothing
+    "proposals" .=? OmitWhenNothing
         (Shelley.encodeUpdate Shelley.encodePParamsUpdate)
         updates
 

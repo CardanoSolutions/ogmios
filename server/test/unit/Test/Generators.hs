@@ -93,6 +93,7 @@ import Ouroboros.Consensus.Shelley.Eras
     ( StandardAllegra
     , StandardAlonzo
     , StandardBabbage
+    , StandardConway
     , StandardMary
     , StandardShelley
     )
@@ -177,7 +178,7 @@ genBlock = reasonablySized $ oneof
     , BlockMary <$> genTPraosBlockFrom @StandardMary
     , BlockAlonzo <$> genTPraosBlockFrom @StandardAlonzo
     , BlockBabbage <$> genPraosBlockFrom @StandardBabbage
-    -- TODO: BlockConway
+    , BlockConway <$> genPraosBlockFrom @StandardConway
     ]
   where
     genTPraosBlockFrom

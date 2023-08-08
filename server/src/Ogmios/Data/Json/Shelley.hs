@@ -23,6 +23,9 @@ import Data.ByteString.Bech32
     ( HumanReadablePart (..)
     , encodeBech32
     )
+import Data.Maybe.Strict
+    ( isSJust
+    )
 import Ouroboros.Consensus.Protocol.TPraos
     ( TPraos
     )
@@ -164,6 +167,20 @@ encodeCertifiedVRF x =
         encodeCertVRF (CC.certifiedProof x)
     & encodeObject
 
+encodeConstitutionalDelegCert
+    :: Crypto crypto
+    => Sh.ConstitutionalDelegCert crypto
+    -> Series
+encodeConstitutionalDelegCert (Sh.ConstitutionalDelegCert key delegate vrf) =
+    "type" .= encodeText "genesisDelegation"
+    <>
+    "delegate" .= encodeSingleton "id" (encodeKeyHash delegate)
+    <>
+    "issuer" .= encodeObject
+        ( "id" .= encodeKeyHash key
+       <> "vrfVerificationKeyHash" .= encodeHash vrf
+        )
+
 encodeCredential
     :: forall any crypto. (any :\: 'StakePool, Crypto crypto)
     => Ledger.Credential any crypto
@@ -196,36 +213,10 @@ encodeDCert = encodeObject . \case
                 ( "id" .=
                     encodePoolId (Sh.dDelegatee dlg)
                 )
-    Sh.DCertPool (Sh.RegPool params)
-        -> "type" .=
-            encodeText "stakePoolRegistration"
-        <> "stakePool" .= encodeObject
-            ( "id" .=
-               encodePoolId (Sh.ppId params)
-           <> encodePoolParams params
-            )
-    Sh.DCertPool (Sh.RetirePool keyHash epochNo)
-        -> "type" .=
-            encodeText "stakePoolRetirement"
-        <> "stakePool" .= encodeObject
-            ( "id" .=
-                encodePoolId keyHash
-           <> "retirementEpoch" .=
-                encodeEpochNo epochNo
-            )
-    Sh.DCertGenesis (Sh.ConstitutionalDelegCert key delegate vrf)
-        -> "type" .=
-            encodeText "genesisDelegation"
-        <> "delegate" .= encodeObject
-            ( "id" .=
-                encodeKeyHash delegate
-            )
-        <> "issuer" .= encodeObject
-            ( "id" .=
-                encodeKeyHash key <>
-              "vrfVerificationKeyHash" .=
-                encodeHash vrf
-            )
+    Sh.DCertPool pCert
+        -> encodePoolCert pCert
+    Sh.DCertGenesis cCert
+        -> encodeConstitutionalDelegCert cCert
     Sh.DCertMir (Sh.MIRCert pot target)
         -> "type" .=
             encodeText "treasuryTransfer"
@@ -467,6 +458,26 @@ encodeOutputVRF
 encodeOutputVRF =
     encodeByteStringBase16 . CC.getOutputVRFBytes
 
+encodePoolCert
+    :: Crypto crypto
+    => Sh.PoolCert crypto
+    -> Series
+encodePoolCert = \case
+    Sh.RegPool params ->
+        "type" .= encodeText "stakePoolRegistration"
+        <>
+        "stakePool" .= encodeObject
+            ( "id" .= encodePoolId (Sh.ppId params)
+           <> encodePoolParams params
+            )
+    Sh.RetirePool keyHash epochNo ->
+        "type" .= encodeText "stakePoolRetirement"
+        <>
+        "stakePool" .= encodeObject
+            ( "id" .= encodePoolId keyHash
+           <> "retirementEpoch" .= encodeEpochNo epochNo
+            )
+
 encodePoolId
     :: Crypto crypto
     => Ledger.KeyHash StakePool crypto
@@ -518,7 +529,36 @@ encodePParamsUpdate
     => Ledger.PParamsUpdate era
     -> Json
 encodePParamsUpdate (Ledger.PParamsUpdate x) =
-    encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) (const SNothing) x
+    encodeObject $ if isHardForkInitiation then
+        "type" .=
+            encodeText "hardForkInitiation" <>
+        "version" .=
+            encodeStrictMaybe encodeProtVer (Sh.sppProtocolVersion x)
+    else
+        "type" .=
+            encodeText "protocolParametersUpdate" <>
+        "parameters" .=
+            encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) (const SNothing) x
+  where
+    isHardForkInitiation =
+        let x' = x { Sh.sppProtocolVersion = SNothing }
+         in isSJust (Sh.sppProtocolVersion x) && x' == Sh.emptyShelleyPParamsUpdate
+
+encodeProposedPPUpdates
+    :: forall era.
+        ( Ledger.PParamsHKD StrictMaybe era ~ Sh.ShelleyPParams StrictMaybe era
+        )
+    => Sh.ProposedPPUpdates era
+    -> Json
+encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
+    encodeFoldable
+        (\(Ledger.PParamsUpdate x) ->
+            encodePParamsHKD
+                (\k encode v -> k .=? OmitWhenNothing encode v)
+                (const SNothing)
+                x
+        )
+        m
 
 encodePParamsHKD
     :: forall f era.
@@ -712,7 +752,7 @@ encodeTxBody x =
         (encodeFoldable encodeDCert) (Sh.stbCerts x) <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         encodeWdrl (Sh.stbWithdrawals x) <>
-    "governanceActions" .=? OmitWhenNothing
+    "proposals" .=? OmitWhenNothing
         (encodeUpdate encodePParamsUpdate)
         (Sh.stbUpdate x)
 
@@ -754,14 +794,7 @@ encodeUpdate
     -> Sh.Update era
     -> Json
 encodeUpdate encodePParamsUpdateInEra (Sh.Update (Sh.ProposedPPUpdates m) _epoch) =
-    encodeFoldable
-        (\p -> encodeObject
-            ( "type" .=
-                encodeText "protocolParametersUpdate"
-           <> "parameters" .=
-                encodePParamsUpdateInEra p
-            )
-        ) m
+    encodeFoldable (encodeSingleton "action" . encodePParamsUpdateInEra) m
 
 encodeUtxo
     :: forall era.

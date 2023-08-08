@@ -861,32 +861,32 @@ parseQueryLedgerProposedProtocolParameters genResultInEra =
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentShelley GetProposedPParamsUpdates))
-                    (eraMismatchOrResult (\(Sh.ProposedPPUpdates m) -> encodeFoldable Shelley.encodePParamsUpdate m))
+                    (eraMismatchOrResult Shelley.encodeProposedPPUpdates)
                     (genResultInEra (Proxy @(ShelleyEra crypto)))
             SomeShelleyEra ShelleyBasedEraAllegra ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentAllegra GetProposedPParamsUpdates))
-                    (eraMismatchOrResult (\(Sh.ProposedPPUpdates m) -> encodeFoldable Shelley.encodePParamsUpdate m))
+                    (eraMismatchOrResult Shelley.encodeProposedPPUpdates)
                     (genResultInEra (Proxy @(AllegraEra crypto)))
             SomeShelleyEra ShelleyBasedEraMary ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentMary GetProposedPParamsUpdates))
-                    (eraMismatchOrResult (\(Sh.ProposedPPUpdates m) -> encodeFoldable Shelley.encodePParamsUpdate m))
+                    (eraMismatchOrResult Shelley.encodeProposedPPUpdates)
                     (genResultInEra (Proxy @(MaryEra crypto)))
             SomeShelleyEra ShelleyBasedEraAlonzo ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentAlonzo GetProposedPParamsUpdates))
-                    (eraMismatchOrResult (\(Sh.ProposedPPUpdates m) -> encodeFoldable Alonzo.encodePParamsUpdate m))
+                    (eraMismatchOrResult Alonzo.encodeProposedPPUpdates)
                     (genResultInEra (Proxy @(AlonzoEra crypto)))
             SomeShelleyEra ShelleyBasedEraBabbage ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentBabbage GetProposedPParamsUpdates))
-                    (eraMismatchOrResult (\(Sh.ProposedPPUpdates m) -> encodeFoldable Babbage.encodePParamsUpdate m))
+                    (eraMismatchOrResult Babbage.encodeProposedPPUpdates)
                     (genResultInEra (Proxy @(BabbageEra crypto)))
             SomeShelleyEra ShelleyBasedEraConway ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentConway GetProposedPParamsUpdates))
-                    (eraMismatchOrResult (\(Sh.ProposedPPUpdates m) -> encodeFoldable Babbage.encodePParamsUpdate m))
+                    (eraMismatchOrResult Babbage.encodeProposedPPUpdates)
                     (genResultInEra (Proxy @(ConwayEra crypto)))
 
 parseQueryLedgerLiveStakeDistribution

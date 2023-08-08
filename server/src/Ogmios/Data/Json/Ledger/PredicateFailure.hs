@@ -572,12 +572,12 @@ encodePredicateFailure reject = \case
 
     UnknownGovernanceAction { governanceAction } ->
         reject (predicateFailureCode 38)
-            "Unknown governance action found in transaction. This may be because you've indicated a \
-            \wrong identifier or because the governance action hasn't yet been submitted on-chain. \
+            "Unknown proposal found in transaction. This may be because you've indicated a \
+            \wrong identifier or because the proposal hasn't yet been submitted on-chain. \
             \Note that the order in which transactions are submitted matters. The field \
-            \'data.unknownGovernanceAction' tells you about the governance action's identifier."
+            \'data.unknownProposal tells you about the governance proposal's identifier."
             (pure $ encodeObject
-                ( "unknownGovernanceAction" .=
+                ( "unknownProposal" .=
                     Conway.encodeGovernanceActionId governanceAction
                 )
             )

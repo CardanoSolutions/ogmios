@@ -11,6 +11,7 @@ import Data.ByteString.Base16
     )
 import Data.Maybe.Strict
     ( fromSMaybe
+    , isSJust
     , strictMaybe
     )
 import Ouroboros.Consensus.Protocol.TPraos
@@ -221,7 +222,36 @@ encodePParamsUpdate
     => Ledger.PParamsUpdate era
     -> Json
 encodePParamsUpdate (Ledger.PParamsUpdate x) =
-    encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) (const SNothing) x
+    encodeObject $ if isHardForkInitiation then
+        "type" .=
+            encodeText "hardForkInitiation" <>
+        "version" .=
+            encodeStrictMaybe Shelley.encodeProtVer (Al.appProtocolVersion x)
+    else
+        "type" .=
+            encodeText "protocolParametersUpdate" <>
+        "parameters" .=
+            encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) (const SNothing) x
+  where
+    isHardForkInitiation =
+        let x' = x { Al.appProtocolVersion = SNothing }
+         in isSJust (Al.appProtocolVersion x) && x' == Al.emptyAlonzoPParamsUpdate
+
+encodeProposedPPUpdates
+    :: forall era.
+        ( Ledger.PParamsHKD StrictMaybe era ~ Al.AlonzoPParams StrictMaybe era
+        )
+    => Sh.ProposedPPUpdates era
+    -> Json
+encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
+    encodeFoldable
+        (\(Ledger.PParamsUpdate x) ->
+            encodePParamsHKD
+                (\k encode v -> k .=? OmitWhenNothing encode v)
+                (const SNothing)
+                x
+        )
+        m
 
 encodePParamsHKD
     :: (forall a. Text -> (a -> Json) -> Sh.HKD f a -> Series)
@@ -411,7 +441,7 @@ encodeTxBody x scripts =
         encodeCoin (Al.atbTxFee x) <>
     "validityInterval" .=
         Allegra.encodeValidityInterval (Al.atbValidityInterval x) <>
-    "governanceActions" .=? OmitWhenNothing
+    "proposals" .=? OmitWhenNothing
         (Shelley.encodeUpdate encodePParamsUpdate)
         (Al.atbUpdate x)
 
