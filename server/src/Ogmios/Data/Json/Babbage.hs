@@ -261,15 +261,15 @@ encodeTxBody
     -> Series
 encodeTxBody x scripts =
     "inputs" .=
-        encodeFoldable Shelley.encodeTxIn (Ba.btbInputs x) <>
+        encodeFoldable (encodeObject . Shelley.encodeTxIn) (Ba.btbInputs x) <>
     "references" .=? OmitWhen null
-        (encodeFoldable Shelley.encodeTxIn) (Ba.btbReferenceInputs x) <>
+        (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Ba.btbReferenceInputs x) <>
     "outputs" .=
-        encodeFoldable (encodeTxOut . sizedValue) (Ba.btbOutputs x) <>
+        encodeFoldable (encodeObject . encodeTxOut . sizedValue) (Ba.btbOutputs x) <>
     "collaterals" .=? OmitWhen null
-        (encodeFoldable Shelley.encodeTxIn) (Ba.btbCollateral x) <>
+        (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Ba.btbCollateral x) <>
     "collateralReturn" .=? OmitWhenNothing
-        (encodeTxOut . sizedValue) (Ba.btbCollateralReturn x) <>
+        (encodeObject . encodeTxOut . sizedValue) (Ba.btbCollateralReturn x) <>
     "totalCollateral" .=? OmitWhenNothing
         encodeCoin (Ba.btbTotalCollateral x) <>
     "certificates" .=? OmitWhen null
@@ -305,7 +305,7 @@ encodeTxOut
         , Val (Ba.Value era)
         )
     => Ba.BabbageTxOut era
-    -> Json
+    -> Series
 encodeTxOut (Ba.BabbageTxOut addr value datum script) =
     "address" .=
         Shelley.encodeAddress addr <>
@@ -321,7 +321,6 @@ encodeTxOut (Ba.BabbageTxOut addr value datum script) =
     ) <>
     "script" .=? OmitWhenNothing
         Alonzo.encodeScript script
-    & encodeObject
 
 encodeUtxo
     :: forall era.
@@ -337,4 +336,4 @@ encodeUtxo =
     . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) []
     . Sh.unUTxO
   where
-    encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
+    encodeIO i o = encodeObject (Shelley.encodeTxIn i <> encodeTxOut o)

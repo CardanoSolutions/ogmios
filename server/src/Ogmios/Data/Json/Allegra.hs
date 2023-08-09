@@ -153,9 +153,9 @@ encodeTxBody
     -> Series
 encodeTxBody (Al.AllegraTxBody inps outs dCerts wdrls fee validity updates _) requiredScripts =
     "inputs" .=
-        encodeFoldable Shelley.encodeTxIn inps <>
+        encodeFoldable (encodeObject . Shelley.encodeTxIn) inps <>
     "outputs" .=
-        encodeFoldable Shelley.encodeTxOut outs <>
+        encodeFoldable (encodeObject . Shelley.encodeTxOut) outs <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         Shelley.encodeWdrl wdrls <>
     "certificates" .=? OmitWhen null

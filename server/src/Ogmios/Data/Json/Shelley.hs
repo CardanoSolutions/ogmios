@@ -791,9 +791,9 @@ encodeTxBody
     -> Series
 encodeTxBody x =
     "inputs" .=
-        encodeFoldable encodeTxIn (Sh.stbInputs x) <>
+        encodeFoldable (encodeObject . encodeTxIn) (Sh.stbInputs x) <>
     "outputs" .=
-        encodeFoldable encodeTxOut (Sh.stbOutputs x) <>
+        encodeFoldable (encodeObject . encodeTxOut) (Sh.stbOutputs x) <>
     "fee" .=
         encodeCoin (Sh.stbTxFee x) <>
     "validityInterval" .=
@@ -822,25 +822,22 @@ encodeTxId =
 encodeTxIn
     :: Crypto crypto
     => Ledger.TxIn crypto
-    -> Json
+    -> Series
 encodeTxIn (Ledger.TxIn txid (Ledger.TxIx ix)) =
-    encodeObject
-        ( "transaction" .=
-            encodeObject (encodeTxId txid)
-       <> "output" .=
-            encodeSingleton "index" (encodeWord64 ix)
-        )
+    "transaction" .=
+        encodeObject (encodeTxId txid) <>
+    "index" .=
+        encodeWord64 ix
 
 encodeTxOut
     :: (Era era, Ledger.Value era ~ Coin)
     => Sh.ShelleyTxOut era
-    -> Json
+    -> Series
 encodeTxOut (Sh.ShelleyTxOut addr value) =
     "address" .=
         encodeAddress addr <>
     "value" .=
         encodeValue value
-    & encodeObject
 
 encodeUpdate
     :: (Ledger.PParamsUpdate era -> [Json])
@@ -863,7 +860,7 @@ encodeUtxo
 encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
   where
-    encodeIO = curry (encode2Tuple encodeTxIn encodeTxOut)
+    encodeIO i o = encodeObject (encodeTxIn i <> encodeTxOut o)
 
 encodeValue
     :: Coin

@@ -1704,7 +1704,7 @@ decodeTxIn
     -> Json.Parser (Ledger.TxIn crypto)
 decodeTxIn = Json.withObject "TxIn" $ \o -> do
     txid <- o .: "transaction" >>= (.: "id") >>= fromBase16
-    ix <- o .: "output" >>= (.: "index")
+    ix <- o .: "index"
     pure $ Ledger.TxIn (Ledger.TxId txid) (Ledger.TxIx ix)
   where
     failure =
@@ -1778,36 +1778,25 @@ decodeUtxo v = do
     (UTxOInBabbageEra . Sh.UTxO . Map.fromList <$> traverse decodeBabbageUtxoEntry xs) <|>
         (UTxOInConwayEra . Sh.UTxO . Map.fromList <$> traverse decodeConwayUtxoEntry xs)
   where
-    hint :: String
-    hint =
-        "Failed to decode utxo entry. Expected an array of length \
-        \2 as [output-reference, output]"
-
     decodeBabbageUtxoEntry
         :: Json.Value
         -> Json.Parser (Ledger.TxIn crypto, Ledger.Babbage.BabbageTxOut (BabbageEra crypto))
-    decodeBabbageUtxoEntry =
-        Json.parseJSONList >=> \case
-            [i, o] ->
-                (,) <$> decodeTxIn i <*> (decodeTxOut o >>= \case
+    decodeBabbageUtxoEntry o =
+        (,) <$> decodeTxIn o
+            <*> (decodeTxOut o >>= \case
                     TxOutInBabbageEra o' -> pure o'
                     TxOutInConwayEra{}   -> empty
                 )
-            _notKeyValue ->
-                fail hint
 
     decodeConwayUtxoEntry
         :: Json.Value
         -> Json.Parser (Ledger.TxIn crypto, Ledger.Babbage.BabbageTxOut (ConwayEra crypto))
-    decodeConwayUtxoEntry =
-        Json.parseJSONList >=> \case
-            [i, o] ->
-                (,) <$> decodeTxIn i <*> (decodeTxOut o >>= \case
+    decodeConwayUtxoEntry o =
+        (,) <$> decodeTxIn o
+            <*> (decodeTxOut o >>= \case
                     TxOutInBabbageEra o' -> pure (upgrade o')
                     TxOutInConwayEra  o' -> pure o'
                 )
-            _notKeyValue ->
-                fail hint
 
 decodeValue
     :: forall crypto. (Crypto crypto)

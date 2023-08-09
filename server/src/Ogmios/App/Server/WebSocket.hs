@@ -115,6 +115,7 @@ import Ogmios.Data.Json
     , encodeBlock
     , encodeDeserialisationFailure
     , encodeExUnits
+    , encodeObject
     , encodePoint
     , encodeRdmrPtr
     , encodeScriptFailure
@@ -386,7 +387,7 @@ withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig co
             encodeTxId
             encodeRdmrPtr
             encodeExUnits
-            encodeTxIn
+            (encodeObject . encodeTxIn)
             encodeTranslationError
             encodeSubmitTransactionError
             encodeScriptFailure

@@ -189,8 +189,7 @@ encodeGovernanceActionId x =
     encodeObject
         ( "transaction" .=
             encodeObject (Shelley.encodeTxId (Cn.gaidTxId x))
-        <>
-          "proposal" .=
+        <> "index" .=
             encodeGovernanceActionIx (Cn.gaidGovActionIx x)
         )
 
@@ -198,7 +197,7 @@ encodeGovernanceActionIx
     :: Cn.GovernanceActionIx
     -> Json
 encodeGovernanceActionIx (Cn.GovernanceActionIx ix) =
-    encodeObject ("index" .= encodeWord64 ix)
+    encodeWord64 ix
 
 encodePParams
     :: (Ledger.PParamsHKD Identity era ~ Ba.BabbagePParams Identity era)
@@ -267,15 +266,15 @@ encodeTxBody
     -> Series
 encodeTxBody x scripts =
     "inputs" .=
-        encodeFoldable Shelley.encodeTxIn (Cn.ctbSpendInputs x) <>
+        encodeFoldable (encodeObject . Shelley.encodeTxIn) (Cn.ctbSpendInputs x) <>
     "references" .=? OmitWhen null
-        (encodeFoldable Shelley.encodeTxIn) (Cn.ctbReferenceInputs x) <>
+        (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Cn.ctbReferenceInputs x) <>
     "outputs" .=
-        encodeFoldable (Babbage.encodeTxOut . sizedValue) (Cn.ctbOutputs x) <>
+        encodeFoldable (encodeObject . Babbage.encodeTxOut . sizedValue) (Cn.ctbOutputs x) <>
     "collaterals" .=? OmitWhen null
-        (encodeFoldable Shelley.encodeTxIn) (Cn.ctbCollateralInputs x) <>
+        (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Cn.ctbCollateralInputs x) <>
     "collateralReturn" .=? OmitWhenNothing
-        (Babbage.encodeTxOut . sizedValue) (Cn.ctbCollateralReturn x) <>
+        (encodeObject . Babbage.encodeTxOut . sizedValue) (Cn.ctbCollateralReturn x) <>
     "totalCollateral" .=? OmitWhenNothing
         encodeCoin (Cn.ctbTotalCollateral x) <>
     "certificates" .=? OmitWhen null

@@ -92,7 +92,7 @@ encodeScriptFailure reject = \case
             \was wrongly targeted by a redeemer."
             (pure $ encodeObject
                 ( "unsuitableOutputReference" .=
-                    Shelley.encodeTxIn i
+                    encodeObject (Shelley.encodeTxIn i)
                 )
             )
 

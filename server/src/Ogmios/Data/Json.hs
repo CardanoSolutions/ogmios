@@ -12,6 +12,7 @@ module Ogmios.Data.Json
     , ToJSON
     , decodeWith
     , inefficientEncodingToValue
+    , encodeObject
 
       -- * Encoders
     , encodeAcquireExpired

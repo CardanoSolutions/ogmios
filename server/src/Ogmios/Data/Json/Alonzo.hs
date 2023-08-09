@@ -390,7 +390,7 @@ encodeScriptPurpose = fmap encodeObject . \case
     Al.Spending txIn ->
         SJust $
             "purpose" .= encodeText "spend" <>
-            "outputReference" .= Shelley.encodeTxIn txIn
+            "outputReference" .= encodeObject (Shelley.encodeTxIn txIn)
     Al.Minting policyId ->
         SJust $
             "purpose" .= encodeText "mint" <>
@@ -444,11 +444,11 @@ encodeTxBody
     -> Series
 encodeTxBody x scripts =
     "inputs" .=
-        encodeFoldable Shelley.encodeTxIn (Al.atbInputs x) <>
+        encodeFoldable (encodeObject . Shelley.encodeTxIn) (Al.atbInputs x) <>
     "outputs" .=
-        encodeFoldable encodeTxOut (Al.atbOutputs x) <>
+        encodeFoldable (encodeObject . encodeTxOut) (Al.atbOutputs x) <>
     "collaterals" .=? OmitWhen null
-        (encodeFoldable Shelley.encodeTxIn) (Al.atbCollateral x) <>
+        (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Al.atbCollateral x) <>
     "certificates" .=? OmitWhen null
         (encodeList encodeObject) certs <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
@@ -477,18 +477,14 @@ encodeTxBody x scripts =
 encodeTxOut
     :: Crypto crypto
     => Al.AlonzoTxOut (AlonzoEra crypto)
-    -> Json
+    -> Series
 encodeTxOut (Al.AlonzoTxOut addr value datum) =
     "address" .=
         Shelley.encodeAddress addr <>
     "value" .=
         Mary.encodeValue value <>
     "datumHash" .=? OmitWhenNothing
-        encodeDataHash datum <>
-    -- NOTE: backward-compatibility, since v5.5.0
-    "datum" .=? OmitWhenNothing
         encodeDataHash datum
-    & encodeObject
 
 encodeUtxo
     :: Crypto crypto
@@ -497,7 +493,7 @@ encodeUtxo
 encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
   where
-    encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
+    encodeIO i o = encodeObject (Shelley.encodeTxIn i <> encodeTxOut o)
 
 encodeScriptIntegrityHash
     :: Crypto crypto

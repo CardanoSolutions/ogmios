@@ -254,7 +254,7 @@ describe('Local state queries', () => {
           outputReferences: [
             {
               transaction: { id: '7fe0c5c3f0225f9462ae34dce1663599d506fe47cda8b3667e4c0986631fca41' },
-              output: { index: 0 }
+              index: 0
             }
           ]
         })

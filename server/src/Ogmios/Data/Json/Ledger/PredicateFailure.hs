@@ -234,7 +234,7 @@ encodePredicateFailure reject = \case
             \such inputs found in the transaction."
             (pure $ encodeObject
                 ( "orphanScriptInputs" .=
-                    encodeFoldable Shelley.encodeTxIn orphanScriptInputs
+                    encodeFoldable (encodeObject . Shelley.encodeTxIn) orphanScriptInputs
                 )
             )
 
@@ -272,7 +272,7 @@ encodePredicateFailure reject = \case
             \unknown inputs."
             (pure $ encodeObject
                 ( "unknownOutputReferences" .=
-                    encodeFoldable Shelley.encodeTxIn unknownOutputReferences
+                    encodeFoldable (encodeObject . Shelley.encodeTxIn) unknownOutputReferences
                 )
             )
 
@@ -446,7 +446,7 @@ encodePredicateFailure reject = \case
             \field 'data.unsuitableCollateralInputs' lists all the problematic output references."
             (pure $ encodeObject
                 ( "unsuitableCollateralInputs" .=
-                    encodeFoldable Shelley.encodeTxIn collateralInputs
+                    encodeFoldable (encodeObject . Shelley.encodeTxIn) collateralInputs
                 )
             )
 
@@ -728,7 +728,7 @@ encodeTagMismatchDescription = encodeText . \case
         "The transaction failed unexpectedly."
 
 encodeTxOutInAnyEra :: TxOutInAnyEra crypto -> Json
-encodeTxOutInAnyEra = \case
+encodeTxOutInAnyEra = encodeObject . \case
     TxOutInAnyEra (ShelleyBasedEraShelley, out) ->
         Shelley.encodeTxOut out
     TxOutInAnyEra (ShelleyBasedEraAllegra, out) ->

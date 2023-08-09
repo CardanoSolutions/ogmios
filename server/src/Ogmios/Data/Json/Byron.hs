@@ -187,8 +187,8 @@ encodeTxIn (By.TxInUtxo txid ix) =
     encodeObject
         ( "transaction" .=
             encodeSingleton "id" (encodeHash txid)
-       <> "output" .=
-            encodeSingleton "index" (encodeWord16 ix)
+       <> "index" .=
+            encodeWord16 ix
         )
 
 encodeValue

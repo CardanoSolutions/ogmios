@@ -181,7 +181,17 @@ export type PolicyId = string;
 export type RedeemerPointer = string;
 export type Language = "plutus:v1" | "plutus:v2" | "plutus:v3";
 export type VoterRole = "constitutionalCommittee" | "delegateRepresentative" | "stakePoolOperator";
-export type Utxo = [TransactionOutputReference, TransactionOutput][];
+export type Utxo = {
+  transaction: {
+    id: TransactionId;
+  };
+  index: UInt32;
+  address: Address;
+  value: Value;
+  datumHash?: DigestBlake2B256;
+  datum?: Datum;
+  script?: Script;
+}[];
 export type EvaluateTransactionFailure =
   | EvaluateTransactionFailureIncompatibleEra
   | EvaluateTransactionFailureUnsupportedEra
@@ -498,9 +508,7 @@ export interface TransactionOutputReference {
   transaction: {
     id: TransactionId;
   };
-  output: {
-    index: UInt32;
-  };
+  index: UInt32;
 }
 export interface Lovelace {
   /**
@@ -509,7 +517,7 @@ export interface Lovelace {
   lovelace: bigint;
 }
 /**
- * A transaction output. Since Mary, 'value' always return a multi-asset value. Since Alonzo, 'datumHash' is always present (albeit sometimes 'null'). Since Babbage, 'datum' & 'script' are always present (albeit sometimes 'null').
+ * A transaction output. 'datum' and 'datumHash' are never present together.
  */
 export interface TransactionOutput {
   address: Address;
@@ -771,9 +779,7 @@ export interface GovernanceProposalReference {
   transaction: {
     id: TransactionId;
   };
-  proposal: {
-    index: UInt32;
-  };
+  index: UInt32;
 }
 export interface Metadata {
   hash: DigestBlake2B256;

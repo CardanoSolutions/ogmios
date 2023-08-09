@@ -139,9 +139,9 @@ encodeTxBody
     -> Series
 encodeTxBody (Ma.MaryTxBody inps outs dCerts wdrls fee validity updates _ mint) scripts =
     "inputs" .=
-        encodeFoldable Shelley.encodeTxIn inps <>
+        encodeFoldable (encodeObject . Shelley.encodeTxIn) inps <>
     "outputs" .=
-        encodeFoldable encodeTxOut outs <>
+        encodeFoldable (encodeObject . encodeTxOut) outs <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         Shelley.encodeWdrl wdrls <>
     "certificates" .=? OmitWhen null
@@ -164,13 +164,12 @@ encodeTxBody (Ma.MaryTxBody inps outs dCerts wdrls fee validity updates _ mint) 
 encodeTxOut
     :: Crypto crypto
     => Sh.TxOut (MaryEra crypto)
-    -> Json
+    -> Series
 encodeTxOut (Sh.ShelleyTxOut addr value) =
     "address" .=
         Shelley.encodeAddress addr <>
     "value" .=
         encodeValue value
-    & encodeObject
 
 encodeUtxo
     :: Crypto crypto
@@ -179,7 +178,7 @@ encodeUtxo
 encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
   where
-    encodeIO = curry (encode2Tuple Shelley.encodeTxIn encodeTxOut)
+    encodeIO i o = encodeObject (Shelley.encodeTxIn i <> encodeTxOut o)
 
 encodeValue
     :: Crypto crypto
