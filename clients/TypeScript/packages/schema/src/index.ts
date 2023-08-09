@@ -54,8 +54,7 @@ export type Certificate =
   | StakeCredentialDeregistration
   | StakePoolRegistration
   | StakePoolRetirement
-  | GenesisDelegation
-  | TreasuryTransfer;
+  | GenesisDelegation;
 /**
  * A Blake2b 32-byte hash digest of a pool's verification key.
  */
@@ -78,7 +77,6 @@ export type Relay = RelayByAddress | RelayByName;
  * An epoch number or length.
  */
 export type Epoch = number;
-export type TreasuryTransfer = TreasuryTransferInternal | TreasuryTransferRewards;
 /**
  * A network target, as defined since the Shelley era.
  */
@@ -642,33 +640,6 @@ export interface GenesisDelegation {
     vrfVerificationKeyHash: DigestBlake2B256;
   };
 }
-/**
- * A transfer from or to the treasury / reserves authored by genesis delegates.
- */
-export interface TreasuryTransferInternal {
-  type: "treasuryTransfer";
-  source: "reserves" | "treasury";
-  target: "reserves" | "treasury";
-  value: Lovelace;
-}
-/**
- * A transfer from or to the treasury / reserves authored by genesis delegates.
- */
-export interface TreasuryTransferRewards {
-  type: "treasuryTransfer";
-  source: "reserves" | "treasury";
-  target: "rewardAccounts";
-  rewards: RewardTransfer;
-}
-export interface RewardTransfer {
-  [k: string]: LovelaceDelta;
-}
-export interface LovelaceDelta {
-  /**
-   * An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada).
-   */
-  lovelace: number;
-}
 export interface Withdrawals {
   [k: string]: Lovelace;
 }
@@ -685,7 +656,12 @@ export interface GovernanceProposal {
   deposit?: Lovelace;
   returnAccount?: DigestBlake2B224;
   anchor?: Anchor;
-  action: GovernanceActionProtocolParametersUpdate | GovernanceActionHardForkInitiation | string;
+  action:
+    | GovernanceActionProtocolParametersUpdate
+    | GovernanceActionHardForkInitiation
+    | GovernanceActionTreasuryTransfer
+    | GovernanceActionTreasuryWithdrawals
+    | string;
 }
 export interface GovernanceActionProtocolParametersUpdate {
   type: "protocolParametersUpdate";
@@ -745,6 +721,31 @@ export interface ProtocolVersion {
 export interface GovernanceActionHardForkInitiation {
   type: "hardForkInitiation";
   version: ProtocolVersion;
+}
+/**
+ * A transfer from or to the treasury / reserves authored by genesis delegates.
+ */
+export interface GovernanceActionTreasuryTransfer {
+  type: "treasuryTransfer";
+  source: "reserves" | "treasury";
+  target: "reserves" | "treasury";
+  value: Lovelace;
+}
+/**
+ * One of more withdrawals from the treasury.
+ */
+export interface GovernanceActionTreasuryWithdrawals {
+  type: "treasuryWithdrawals";
+  withdrawals: RewardTransfer;
+}
+export interface RewardTransfer {
+  [k: string]: LovelaceDelta;
+}
+export interface LovelaceDelta {
+  /**
+   * An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada).
+   */
+  lovelace: number;
 }
 export interface GovernanceVote {
   issuer: ConstitutionalCommitteeMember | DelegateRepresentative1 | StakePoolOperator;

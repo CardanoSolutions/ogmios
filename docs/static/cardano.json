@@ -476,56 +476,6 @@
             }
           }
         }
-      , { "title": "TreasuryTransfer"
-        , "oneOf":
-          [ { "type": "object"
-            , "title": "TreasuryTransfer<Internal>"
-            , "description": "A transfer from or to the treasury / reserves authored by genesis delegates."
-            , "additionalProperties": false
-            , "required": [ "type", "source", "target", "value" ]
-            , "properties":
-              { "type":
-                { "type": "string"
-                , "enum": [ "treasuryTransfer" ]
-                }
-              , "source":
-                { "type": "string"
-                , "enum": [ "reserves", "treasury" ]
-                }
-              , "target":
-                { "type": "string"
-                , "enum": [ "reserves", "treasury" ]
-                }
-              , "value":
-                { "$ref": "cardano.json#/definitions/Lovelace"
-                }
-              }
-            }
-          , { "type": "object"
-            , "title": "TreasuryTransfer<Rewards>"
-            , "description": "A transfer from or to the treasury / reserves authored by genesis delegates."
-            , "additionalProperties": false
-            , "required": [ "type", "source", "target", "rewards" ]
-            , "properties":
-              { "type":
-                { "type": "string"
-                , "enum": [ "treasuryTransfer" ]
-                }
-              , "source":
-                { "type": "string"
-                , "enum": [ "reserves", "treasury" ]
-                }
-              , "target":
-                { "type": "string"
-                , "enum": [ "rewardAccounts" ]
-                }
-              , "rewards":
-                { "$ref": "cardano.json#/definitions/RewardTransfer"
-                }
-              }
-            }
-          ]
-        }
       ]
     }
 
@@ -908,6 +858,44 @@
             }
           , "version":
             { "$ref": "cardano.json#/definitions/ProtocolVersion"
+            }
+          }
+        }
+      , { "title": "GovernanceAction<TreasuryTransfer>"
+        , "type": "object"
+        , "description": "A transfer from or to the treasury / reserves authored by genesis delegates."
+        , "additionalProperties": false
+        , "required": [ "type", "source", "target", "value" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "treasuryTransfer" ]
+            }
+          , "source":
+            { "type": "string"
+            , "enum": [ "reserves", "treasury" ]
+            }
+          , "target":
+            { "type": "string"
+            , "enum": [ "reserves", "treasury" ]
+            }
+          , "value":
+            { "$ref": "cardano.json#/definitions/Lovelace"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "GovernanceAction<TreasuryWithdrawals>"
+        , "description": "One of more withdrawals from the treasury."
+        , "additionalProperties": false
+        , "required": [ "type", "withdrawals" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "treasuryWithdrawals" ]
+            }
+          , "withdrawals":
+            { "$ref": "cardano.json#/definitions/RewardTransfer"
             }
           }
         }

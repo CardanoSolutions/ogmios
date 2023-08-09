@@ -137,7 +137,7 @@ encodeTxBody
     => Ma.MaryTxBody (MaryEra crypto)
     -> [Ledger.ScriptHash crypto]
     -> Series
-encodeTxBody (Ma.MaryTxBody inps outs certs wdrls fee validity updates _ mint) scripts =
+encodeTxBody (Ma.MaryTxBody inps outs dCerts wdrls fee validity updates _ mint) scripts =
     "inputs" .=
         encodeFoldable Shelley.encodeTxIn inps <>
     "outputs" .=
@@ -145,7 +145,7 @@ encodeTxBody (Ma.MaryTxBody inps outs certs wdrls fee validity updates _ mint) s
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         Shelley.encodeWdrl wdrls <>
     "certificates" .=? OmitWhen null
-        (encodeFoldable Shelley.encodeDCert) certs <>
+        (encodeList encodeObject) certs <>
     "requiredExtraScripts" .=? OmitWhen null
         (encodeFoldable Shelley.encodeScriptHash) scripts <>
     "mint" .=? OmitWhen (== mempty)
@@ -155,8 +155,11 @@ encodeTxBody (Ma.MaryTxBody inps outs certs wdrls fee validity updates _ mint) s
     "validityInterval" .=
         Allegra.encodeValidityInterval validity <>
     "proposals" .=? OmitWhenNothing
-        (Shelley.encodeUpdate Shelley.encodePParamsUpdate)
+        (Shelley.encodeUpdate Shelley.encodePParamsUpdate mirs)
         updates
+  where
+    (certs, mirs) =
+        Shelley.encodeDCerts dCerts
 
 encodeTxOut
     :: Crypto crypto

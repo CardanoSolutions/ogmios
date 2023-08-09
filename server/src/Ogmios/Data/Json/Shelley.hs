@@ -23,6 +23,9 @@ import Data.ByteString.Bech32
     ( HumanReadablePart (..)
     , encodeBech32
     )
+import Data.Sequence.Strict
+    ( StrictSeq
+    )
 import Ouroboros.Consensus.Protocol.TPraos
     ( TPraos
     )
@@ -186,58 +189,80 @@ encodeCredential x = case x of
     Ledger.KeyHashObj h -> encodeKeyHash h
     Ledger.ScriptHashObj h -> encodeScriptHash h
 
+encodeDCerts
+    :: Crypto crypto
+    => StrictSeq (Sh.DCert crypto)
+    -> ([Series], [Json])
+encodeDCerts =
+    foldr
+        (\cert (cs, ms) ->
+            let (cs', ms') = encodeDCert cert in (cs' ++ cs, ms' ++ ms)
+        )
+        ([], [])
+
 encodeDCert
     :: Crypto crypto
     => Sh.DCert crypto
-    -> Json
-encodeDCert = encodeObject . \case
-    Sh.DCertDeleg (Sh.RegKey credential)
-        -> "type" .=
-            encodeText "stakeCredentialRegistration"
-        <> "credential" .=
-            encodeCredential credential
-    Sh.DCertDeleg (Sh.DeRegKey credential)
-        -> "type" .=
-            encodeText "stakeCredentialDeregistration"
-        <> "credential" .=
-            encodeCredential credential
-    Sh.DCertDeleg (Sh.Delegate dlg)
-        -> "type" .=
-            encodeText "stakeDelegation"
-        <> "credential" .=
-                encodeCredential (Sh.dDelegator dlg)
-        <> "stakePool" .= encodeObject
+    -> ([Series], [Json])
+encodeDCert = \case
+    Sh.DCertDeleg (Sh.RegKey credential) ->
+        ( [ "type" .=
+                encodeText "stakeCredentialRegistration" <>
+            "credential" .=
+                encodeCredential credential
+          ]
+        , []
+        )
+    Sh.DCertDeleg (Sh.DeRegKey credential) ->
+        ( [ "type" .=
+                encodeText "stakeCredentialDeregistration" <>
+            "credential" .=
+                encodeCredential credential
+          ]
+        , []
+        )
+    Sh.DCertDeleg (Sh.Delegate dlg) ->
+        ( [ "type" .=
+                encodeText "stakeDelegation" <>
+            "credential" .=
+                encodeCredential (Sh.dDelegator dlg) <>
+            "stakePool" .= encodeObject
                 ( "id" .=
                     encodePoolId (Sh.dDelegatee dlg)
                 )
-    Sh.DCertPool pCert
-        -> encodePoolCert pCert
-    Sh.DCertGenesis cCert
-        -> encodeConstitutionalDelegCert cCert
-    Sh.DCertMir (Sh.MIRCert pot target)
-        -> "type" .=
-            encodeText "treasuryTransfer"
-        <> "source" .=
-            encodeMIRPot pot
-        <> "target" .=
-            case target of
-                Sh.StakeAddressesMIR{} ->
-                    encodeText "rewardAccounts"
-                Sh.SendToOppositePotMIR{} ->
-                    encodeMIRPot $ case pot of
-                        Sh.ReservesMIR -> Sh.TreasuryMIR
-                        Sh.TreasuryMIR -> Sh.ReservesMIR
-        <> "value" .=? OmitWhenNothing encodeCoin
-            (case target of
-                Sh.StakeAddressesMIR{} -> SNothing
-                Sh.SendToOppositePotMIR coin -> SJust coin
-            )
-        <> "rewards" .=? OmitWhenNothing
-            (encodeMap stringifyCredential encodeDeltaCoin)
-            (case target of
-                Sh.StakeAddressesMIR rewards -> SJust rewards
-                Sh.SendToOppositePotMIR{} -> SNothing
-            )
+          ]
+        , []
+        )
+    Sh.DCertPool pCert ->
+        ( [ encodePoolCert pCert ]
+        , []
+        )
+    Sh.DCertGenesis cCert ->
+        ( [ encodeConstitutionalDelegCert cCert ]
+        , []
+        )
+    Sh.DCertMir (Sh.MIRCert pot target) ->
+        ( []
+        , [ encodeObject $ case target of
+                Sh.StakeAddressesMIR rewards ->
+                    "type" .=
+                        encodeText "treasuryWithdrawals" <>
+                   "withdrawals" .=
+                        encodeMap stringifyCredential encodeDeltaCoin rewards
+                Sh.SendToOppositePotMIR coin ->
+                    "type" .=
+                        encodeText "treasuryTransfer" <>
+                    "source" .=
+                        encodeMIRPot pot <>
+                    "target" .=
+                        encodeMIRPot (case pot of
+                            Sh.ReservesMIR -> Sh.TreasuryMIR
+                            Sh.TreasuryMIR -> Sh.ReservesMIR
+                        ) <>
+                    "value" .=
+                        encodeCoin coin
+          ]
+        )
 
 encodeDeltaCoin
     :: Ledger.DeltaCoin
@@ -774,12 +799,15 @@ encodeTxBody x =
     "validityInterval" .=
         encodeObject ("invalidAfter" .= encodeSlotNo (Sh.stbTTL x)) <>
     "certificates" .=? OmitWhen null
-        (encodeFoldable encodeDCert) (Sh.stbCerts x) <>
+        (encodeList encodeObject) certs <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         encodeWdrl (Sh.stbWithdrawals x) <>
     "proposals" .=? OmitWhenNothing
-        (encodeUpdate encodePParamsUpdate)
+        (encodeUpdate encodePParamsUpdate mirs)
         (Sh.stbUpdate x)
+  where
+    (certs, mirs) =
+        encodeDCerts (Sh.stbCerts x)
 
 encodeTxId
     :: Crypto crypto
@@ -816,10 +844,13 @@ encodeTxOut (Sh.ShelleyTxOut addr value) =
 
 encodeUpdate
     :: (Ledger.PParamsUpdate era -> [Json])
+    -> [Json]
     -> Sh.Update era
     -> Json
-encodeUpdate encodePParamsUpdateInEra (Sh.Update (Sh.ProposedPPUpdates m) _epoch) =
-    encodeConcatFoldable (fmap (encodeSingleton "action") . encodePParamsUpdateInEra) m
+encodeUpdate encodePParamsUpdateInEra mirs (Sh.Update (Sh.ProposedPPUpdates m) _epoch) =
+    encodeFoldable
+        (encodeSingleton "action")
+        (mirs ++ concatMap encodePParamsUpdateInEra m)
 
 encodeUtxo
     :: forall era.

@@ -200,15 +200,6 @@ encodeLanguage
 encodeLanguage =
     encodeText . stringifyLanguage
 
-encodeMissingRedeemer
-    :: Crypto crypto
-    => (Al.ScriptPurpose crypto, Sh.ScriptHash crypto)
-    -> Json
-encodeMissingRedeemer (purpose, hash) =
-    Shelley.stringifyScriptHash hash .=
-        encodeScriptPurpose purpose
-    & encodeObject
-
 encodePParams
     :: (Ledger.PParamsHKD Identity era ~ Al.AlonzoPParams Identity era)
     => Ledger.PParams era
@@ -394,20 +385,28 @@ encodeScript = encodeObject . \case
 encodeScriptPurpose
     :: Crypto crypto
     => Al.ScriptPurpose crypto
-    -> Json
-encodeScriptPurpose = encodeObject . \case
+    -> StrictMaybe Json
+encodeScriptPurpose = fmap encodeObject . \case
     Al.Spending txIn ->
-        "purpose" .= encodeText "spend" <>
-        "outputReference" .= Shelley.encodeTxIn txIn
+        SJust $
+            "purpose" .= encodeText "spend" <>
+            "outputReference" .= Shelley.encodeTxIn txIn
     Al.Minting policyId ->
-        "purpose" .= encodeText "mint" <>
-        "policy" .= Mary.encodePolicyId policyId
+        SJust $
+            "purpose" .= encodeText "mint" <>
+            "policy" .= Mary.encodePolicyId policyId
     Al.Certifying cert ->
-        "purpose" .= encodeText "publish" <>
-        "certificate" .= Shelley.encodeDCert cert
+        case Shelley.encodeDCert cert of
+            ([], _) ->
+                SNothing
+            (c:_, _) ->
+                SJust $
+                    "purpose" .= encodeText "publish" <>
+                    "certificate" .= encodeObject c
     Al.Rewarding acct ->
-        "purpose" .= encodeText "withdraw" <>
-        "rewardAccount" .= Shelley.encodeRewardAcnt acct
+        SJust $
+            "purpose" .= encodeText "withdraw" <>
+            "rewardAccount" .= Shelley.encodeRewardAcnt acct
 
 encodeTx
     :: forall era crypto.
@@ -451,7 +450,7 @@ encodeTxBody x scripts =
     "collaterals" .=? OmitWhen null
         (encodeFoldable Shelley.encodeTxIn) (Al.atbCollateral x) <>
     "certificates" .=? OmitWhen null
-        (encodeFoldable Shelley.encodeDCert) (Al.atbCerts x) <>
+        (encodeList encodeObject) certs <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         Shelley.encodeWdrl (Al.atbWithdrawals x) <>
             "mint" .=? OmitWhen (== mempty)
@@ -469,8 +468,11 @@ encodeTxBody x scripts =
     "validityInterval" .=
         Allegra.encodeValidityInterval (Al.atbValidityInterval x) <>
     "proposals" .=? OmitWhenNothing
-        (Shelley.encodeUpdate encodePParamsUpdate)
+        (Shelley.encodeUpdate encodePParamsUpdate mirs)
         (Al.atbUpdate x)
+  where
+    (certs, mirs) =
+        Shelley.encodeDCerts (Al.atbCerts x)
 
 encodeTxOut
     :: Crypto crypto

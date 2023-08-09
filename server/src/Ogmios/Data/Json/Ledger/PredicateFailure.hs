@@ -167,7 +167,7 @@ encodePredicateFailure reject = \case
             \provided."
             (pure $ encodeObject
                 ( "missingRedeemers" .=
-                    encodeFoldable Alonzo.encodeScriptPurpose missingRedeemers
+                    encodeFoldableMaybe Alonzo.encodeScriptPurpose missingRedeemers
                 )
             )
 

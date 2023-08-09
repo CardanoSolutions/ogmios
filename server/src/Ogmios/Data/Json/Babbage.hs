@@ -273,7 +273,7 @@ encodeTxBody x scripts =
     "totalCollateral" .=? OmitWhenNothing
         encodeCoin (Ba.btbTotalCollateral x) <>
     "certificates" .=? OmitWhen null
-        (encodeFoldable Shelley.encodeDCert) (Ba.btbCerts x) <>
+        (encodeList encodeObject) certs <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         Shelley.encodeWdrl (Ba.btbWithdrawals x) <>
     "mint" .=? OmitWhen (== mempty)
@@ -291,8 +291,11 @@ encodeTxBody x scripts =
     "validityInterval" .=
         Allegra.encodeValidityInterval (Ba.btbValidityInterval x) <>
     "proposals" .=? OmitWhenNothing
-        (Shelley.encodeUpdate encodePParamsUpdate)
+        (Shelley.encodeUpdate encodePParamsUpdate mirs)
         (Ba.btbUpdate x)
+  where
+    (certs, mirs) =
+        Shelley.encodeDCerts (Ba.btbCerts x)
 
 encodeTxOut
     :: forall era.

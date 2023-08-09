@@ -75,22 +75,23 @@ module Ogmios.Data.Json.Prelude
     , encodeWord8
 
       -- * Data-Structures
+    , encode2Tuple
+    , encode3Tuple
+    , encode4Tuple
     , encodeAnnotated
-    , encodeIdentity
     , encodeConcatFoldable
     , encodeFoldable
     , encodeFoldable2
+    , encodeFoldableMaybe
+    , encodeIdentity
     , encodeList
     , encodeListMap
     , encodeMap
     , encodeMapAsList
     , encodeMapSeries
     , encodeMaybe
-    , encodeSingleton
     , encodeObject
-    , encode2Tuple
-    , encode3Tuple
-    , encode4Tuple
+    , encodeSingleton
     , encodeStrictMaybe
 
       -- * Helper
@@ -466,6 +467,17 @@ encodeIdentity :: (a -> Json) -> Identity a -> Json
 encodeIdentity encodeElem =
     encodeElem . runIdentity
 {-# INLINABLE encodeIdentity #-}
+
+encodeFoldableMaybe :: Foldable f => (a -> StrictMaybe Json) -> f a -> Json
+encodeFoldableMaybe encodeElem =
+    Json.list id . foldr
+        (\e es -> case encodeElem e of
+            SJust json -> json : es
+            SNothing -> es
+        ) []
+{-# SPECIALIZE encodeFoldableMaybe :: (a -> StrictMaybe Json) -> [a] -> Json #-}
+{-# SPECIALIZE encodeFoldableMaybe :: (a -> StrictMaybe Json) -> StrictSeq a -> Json #-}
+{-# INLINABLE encodeFoldableMaybe #-}
 
 encodeConcatFoldable :: Foldable f => (a -> [Json]) -> f a -> Json
 encodeConcatFoldable encodeElem =
