@@ -3174,8 +3174,8 @@
             }
           }
         }
-      , { "title": "SubmitTransactionFailure<InputSourceMismatch>"
-        , "description": "Invalid transaction submitted as valid, or vice-versa. Since Alonzo, the ledger may allow invalid transactions to be submitted and included on-chain, provided that they leave a collateral value as compensation. This prevent certain class of attacks. As a consequence, transactions now have a validity tag with them. Your transaction did not match what that validity tag is stating. The field 'data.inputSource' indicates whether the transaction is valid or not (collateral as source means the transaction is invalid) and the fiel 'data.mismatchReason' provides more information about the mismatch."
+      , { "title": "SubmitTransactionFailure<SpendsMismatch>"
+        , "description": "Invalid transaction submitted as valid, or vice-versa. Since Alonzo, the ledger may allow invalid transactions to be submitted and included on-chain, provided that they leave a collateral value as compensation. This prevent certain class of attacks. As a consequence, transactions now have a validity tag with them. Your transaction did not match what that validity tag is stating. The field 'data.declaredSpending' indicates what the transaction is supposed to consume (collaterals or inputs) and the field 'data.mismatchReason' provides more information about the mismatch."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3185,9 +3185,9 @@
           , "data":
             { "type": "object"
             , "additionalProperties": false
-            , "required": [ "inputSource", "mismatchReason" ]
+            , "required": [ "spends", "mismatchReason" ]
             , "properties":
-              { "inputSource": { "$ref": "cardano.json#/definitions/InputSource" }
+              { "declaredSpending": { "$ref": "cardano.json#/definitions/InputSource" }
               , "mismatchReason": { "type": "string" }
               }
             }

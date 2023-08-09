@@ -476,56 +476,6 @@
             }
           }
         }
-      , { "title": "TreasuryTransfer"
-        , "oneOf":
-          [ { "type": "object"
-            , "title": "TreasuryTransfer<Internal>"
-            , "description": "A transfer from or to the treasury / reserves authored by genesis delegates."
-            , "additionalProperties": false
-            , "required": [ "type", "source", "target", "value" ]
-            , "properties":
-              { "type":
-                { "type": "string"
-                , "enum": [ "treasuryTransfer" ]
-                }
-              , "source":
-                { "type": "string"
-                , "enum": [ "reserves", "treasury" ]
-                }
-              , "target":
-                { "type": "string"
-                , "enum": [ "reserves", "treasury" ]
-                }
-              , "value":
-                { "$ref": "cardano.json#/definitions/Lovelace"
-                }
-              }
-            }
-          , { "type": "object"
-            , "title": "TreasuryTransfer<Rewards>"
-            , "description": "A transfer from or to the treasury / reserves authored by genesis delegates."
-            , "additionalProperties": false
-            , "required": [ "type", "source", "target", "rewards" ]
-            , "properties":
-              { "type":
-                { "type": "string"
-                , "enum": [ "treasuryTransfer" ]
-                }
-              , "source":
-                { "type": "string"
-                , "enum": [ "reserves", "treasury" ]
-                }
-              , "target":
-                { "type": "string"
-                , "enum": [ "rewardAccounts" ]
-                }
-              , "rewards":
-                { "$ref": "cardano.json#/definitions/RewardTransfer"
-                }
-              }
-            }
-          ]
-        }
       ]
     }
 
@@ -911,6 +861,44 @@
             }
           }
         }
+      , { "title": "GovernanceAction<TreasuryTransfer>"
+        , "type": "object"
+        , "description": "A transfer from or to the treasury / reserves authored by genesis delegates."
+        , "additionalProperties": false
+        , "required": [ "type", "source", "target", "value" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "treasuryTransfer" ]
+            }
+          , "source":
+            { "type": "string"
+            , "enum": [ "reserves", "treasury" ]
+            }
+          , "target":
+            { "type": "string"
+            , "enum": [ "reserves", "treasury" ]
+            }
+          , "value":
+            { "$ref": "cardano.json#/definitions/Lovelace"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "GovernanceAction<TreasuryWithdrawals>"
+        , "description": "One of more withdrawals from the treasury."
+        , "additionalProperties": false
+        , "required": [ "type", "withdrawals" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "treasuryWithdrawals" ]
+            }
+          , "withdrawals":
+            { "$ref": "cardano.json#/definitions/RewardTransfer"
+            }
+          }
+        }
       , { "type": "string" }
       ]
     }
@@ -940,7 +928,7 @@
     { "title": "GovernanceProposalReference"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "transaction", "proposal" ]
+    , "required": [ "transaction", "index" ]
     , "properties":
       { "transaction":
         { "type": "object"
@@ -952,8 +940,8 @@
             }
           }
         }
-      , "proposal":
-        { "$ref": "cardano.json#/definitions/Index"
+      , "index":
+        { "$ref": "cardano.json#/definitions/UInt32"
         }
       }
     }
@@ -1041,17 +1029,6 @@
     , "contentEncoding": "base16"
     , "minLength": 128
     , "maxLength": 128
-    }
-
-  , "Index":
-    { "type": "object"
-    , "additionalProperties": false
-    , "required": [ "index" ]
-    , "properties":
-      { "index":
-        { "$ref": "cardano.json#/definitions/UInt32"
-        }
-      }
     }
 
   , "InitialDelegates":
@@ -1840,12 +1817,12 @@
     { "title": "Transaction"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "inputSource", "inputs", "outputs", "signatories", "cbor" ]
+    , "required": [ "id", "spends", "inputs", "outputs", "signatories", "cbor" ]
     , "properties":
       { "id":
         { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
         }
-      , "inputSource":
+      , "spends":
         { "$ref": "cardano.json#/definitions/InputSource"
         }
       , "inputs":
@@ -1980,7 +1957,7 @@
     { "title": "TransactionOutputReference"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "transaction", "output" ]
+    , "required": [ "transaction", "index" ]
     , "properties":
       { "transaction":
         { "type": "object"
@@ -1992,8 +1969,8 @@
             }
           }
         }
-      , "output":
-        { "$ref": "cardano.json#/definitions/Index"
+      , "index":
+        { "$ref": "cardano.json#/definitions/UInt32"
         }
       }
     }
@@ -2029,13 +2006,8 @@
   , "Utxo":
     { "title": "Utxo"
     , "type": "array"
-    , "additionalItems": false
     , "items":
-      { "type": "array"
-      , "additionalItems": false
-      , "minItems": 2
-      , "maxItems": 2
-      , "items":
+      { "allOf":
         [ { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
         , { "$ref": "cardano.json#/definitions/TransactionOutput" }
         ]
