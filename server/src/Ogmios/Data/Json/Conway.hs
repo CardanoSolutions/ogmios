@@ -214,7 +214,6 @@ encodePParamsUpdate
 encodePParamsUpdate (Ledger.PParamsUpdate x) =
     Babbage.encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) (const SNothing) x
 
--- TODO
 encodeProposalProcedure
     :: Crypto crypto
     => Cn.ProposalProcedure (ConwayEra crypto)
@@ -315,7 +314,6 @@ encodeVoterRole = encodeText . \case
     Cn.SPO ->
         "stakePoolOperator"
 
--- TODO
 encodeVotingProcedure
     :: Crypto crypto
     => Cn.VotingProcedure (ConwayEra crypto)

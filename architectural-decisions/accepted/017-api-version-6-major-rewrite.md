@@ -259,7 +259,7 @@ The transaction model has been greatly reworked. The main changes are:
   | `body.requiredExtraSignatures` | `requiredExtraSignatories` |
   | `body.scriptIntegrityHash`     | `scriptIntegrityHash`      |
   | `body.totalCollateral`         | `totalCollateral`          |
-  | `body.update`                  | `governanceActions`        |
+  | `body.update`                  | `proposals`                |
   | `body.validityInterval`        | `validityInterval`         |
   | `body.withdrawals`             | `withdrawals`              |
   | `body`                         | N/A                        |
@@ -274,6 +274,7 @@ The transaction model has been greatly reworked. The main changes are:
   | `witness.signatures`           | `signatories`              |
   | `witness`                      | N/A                        |
   | N/A                            | `requiredExtraScripts`     |
+  | N/A                            | `votes`                    |
 
 
 
@@ -735,41 +736,7 @@ A discriminant value field (`type`) has been introduced to all certificate to al
 
 ##### Treasury transfers
 
-<table>
-<tr>
-<th>Old</th>
-<th>New</th>
-</tr>
-<tr>
-<td>
-
-```json
-{
-  "moveInstantaneousRewards": {
-    "pot": "<ada-source>",
-    "value": "<lovelace>",
-    "rewards": "<reward-accounts>"
-  }
-}
-```
-
-</td>
-<td>
-
-```json
-{
-  "type": "treasuryTransfer",
-  "source": "<ada-source>",
-  "target": "<ada-source>",
-  "value": "<lovelace>",
-  "rewards": "<reward-accounts>"
-}
-```
-
-</td>
-</tr>
-</table>
-
+Treasury transfers have been converted into governance actions, so you'll now find them in the `proposals` field of transactions.
 
 #### Value
 

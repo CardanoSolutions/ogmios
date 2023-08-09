@@ -23,9 +23,6 @@ import Data.ByteString.Bech32
     ( HumanReadablePart (..)
     , encodeBech32
     )
-import Data.Maybe.Strict
-    ( isSJust
-    )
 import Ouroboros.Consensus.Protocol.TPraos
     ( TPraos
     )
@@ -525,24 +522,52 @@ encodePParams (Ledger.PParams x) =
     encodePParamsHKD (\k encode v -> k .= encode v) identity x
 
 encodePParamsUpdate
-    :: (Ledger.PParamsHKD StrictMaybe era ~ Sh.ShelleyPParams StrictMaybe era)
+    :: forall era.
+        ( Ledger.PParamsHKD StrictMaybe era ~ Sh.ShelleyPParams StrictMaybe era
+        )
     => Ledger.PParamsUpdate era
-    -> Json
+    -> [Json]
 encodePParamsUpdate (Ledger.PParamsUpdate x) =
-    encodeObject $ if isHardForkInitiation then
-        "type" .=
-            encodeText "hardForkInitiation" <>
-        "version" .=
-            encodeStrictMaybe encodeProtVer (Sh.sppProtocolVersion x)
-    else
-        "type" .=
-            encodeText "protocolParametersUpdate" <>
-        "parameters" .=
-            encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) (const SNothing) x
+    case (Sh.sppProtocolVersion x, x' == Sh.emptyShelleyPParamsUpdate) of
+        (SJust version, True) ->
+            [ encodeObject
+                ( "type" .=
+                    encodeText "hardForkInitiation"
+               <> "version" .=
+                    encodeProtVer version
+                )
+            ]
+        (SJust version, False) ->
+            [ encodeObject
+                ( "type" .=
+                    encodeText "hardForkInitiation"
+               <> "version" .=
+                    encodeProtVer version
+                )
+            , encodeObject
+                ( "type" .=
+                    encodeText "protocolParametersUpdate"
+               <> "parameters" .=
+                    encodePParamsHKD
+                        (\k encode v -> k .=? OmitWhenNothing encode v)
+                        (const SNothing)
+                        x'
+                )
+            ]
+        (SNothing, _) ->
+            [ encodeObject
+                ( "type" .=
+                    encodeText "protocolParametersUpdate"
+               <> "parameters" .=
+                    encodePParamsHKD
+                        (\k encode v -> k .=? OmitWhenNothing encode v)
+                        (const SNothing)
+                        x'
+                )
+            ]
   where
-    isHardForkInitiation =
-        let x' = x { Sh.sppProtocolVersion = SNothing }
-         in isSJust (Sh.sppProtocolVersion x) && x' == Sh.emptyShelleyPParamsUpdate
+    x' :: Ledger.PParamsHKD StrictMaybe era
+    x' = x { Sh.sppProtocolVersion = SNothing }
 
 encodeProposedPPUpdates
     :: forall era.
@@ -790,11 +815,11 @@ encodeTxOut (Sh.ShelleyTxOut addr value) =
     & encodeObject
 
 encodeUpdate
-    :: (Ledger.PParamsUpdate era -> Json)
+    :: (Ledger.PParamsUpdate era -> [Json])
     -> Sh.Update era
     -> Json
 encodeUpdate encodePParamsUpdateInEra (Sh.Update (Sh.ProposedPPUpdates m) _epoch) =
-    encodeFoldable (encodeSingleton "action" . encodePParamsUpdateInEra) m
+    encodeConcatFoldable (fmap (encodeSingleton "action") . encodePParamsUpdateInEra) m
 
 encodeUtxo
     :: forall era.
