@@ -769,7 +769,7 @@ encodeTx
 encodeTx x =
     encodeTxId (Ledger.txid @(ShelleyEra crypto) (Sh.body x))
         <>
-    "inputSource" .= encodeText "inputs"
+    "spends" .= encodeText "inputs"
         <>
     encodeTxBody (Sh.body x)
         <>

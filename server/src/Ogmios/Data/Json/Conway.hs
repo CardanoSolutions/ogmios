@@ -240,7 +240,7 @@ encodeTx
 encodeTx x =
     Shelley.encodeTxId (Ledger.txid @(ConwayEra crypto) (Cn.body x))
         <>
-    "inputSource" .= Alonzo.encodeIsValid (Cn.isValid x)
+    "spends" .= Alonzo.encodeIsValid (Cn.isValid x)
         <>
     encodeTxBody (Cn.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
         <>

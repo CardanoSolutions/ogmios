@@ -1828,12 +1828,12 @@
     { "title": "Transaction"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "inputSource", "inputs", "outputs", "signatories", "cbor" ]
+    , "required": [ "id", "spends", "inputs", "outputs", "signatories", "cbor" ]
     , "properties":
       { "id":
         { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
         }
-      , "inputSource":
+      , "spends":
         { "$ref": "cardano.json#/definitions/InputSource"
         }
       , "inputs":

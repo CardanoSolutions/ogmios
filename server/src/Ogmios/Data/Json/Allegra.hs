@@ -127,7 +127,7 @@ encodeTx
 encodeTx x =
     Shelley.encodeTxId (Ledger.txid @(AllegraEra crypto) (Sh.body x))
         <>
-    "inputSource" .= encodeText "inputs"
+    "spends" .= encodeText "inputs"
         <>
     encodeTxBody (Sh.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
         <>

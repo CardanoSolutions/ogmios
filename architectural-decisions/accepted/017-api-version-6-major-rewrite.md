@@ -264,7 +264,7 @@ The transaction model has been greatly reworked. The main changes are:
   | `body.withdrawals`             | `withdrawals`              |
   | `body`                         | N/A                        |
   | `id`                           | `id`                       |
-  | `inputSource`                  | `inputSource`              |
+  | `inputSource`                  | `spends`                   |
   | `metadata`                     | `metadata`                 |
   | `raw`                          | `cbor`                     |
   | `witness.bootstrap`            | `signatories`              |

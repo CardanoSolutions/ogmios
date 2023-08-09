@@ -418,7 +418,7 @@ encodeTx
 encodeTx x =
     Shelley.encodeTxId (Ledger.txid @(AlonzoEra crypto) (Al.body x))
         <>
-    "inputSource" .= encodeIsValid (Al.isValid x)
+    "spends" .= encodeIsValid (Al.isValid x)
         <>
     encodeTxBody (Al.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
         <>

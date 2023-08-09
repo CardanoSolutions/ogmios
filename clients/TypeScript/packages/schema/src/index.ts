@@ -156,7 +156,7 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureNonAdaCollateral
   | SubmitTransactionFailureExecutionUnitsTooLarge
   | SubmitTransactionFailureTotalCollateralMismatch
-  | SubmitTransactionFailureInputSourceMismatch
+  | SubmitTransactionFailureSpendsMismatch
   | SubmitTransactionFailureUnauthorizedVote
   | SubmitTransactionFailureUnknownGovernanceProposal
   | SubmitTransactionFailureInvalidProtocolParametersUpdate
@@ -460,7 +460,7 @@ export interface BlockBFT {
 }
 export interface Transaction {
   id: DigestBlake2B256;
-  inputSource: "inputs" | "collaterals";
+  spends: "inputs" | "collaterals";
   inputs: TransactionOutputReference[];
   references?: TransactionOutputReference[];
   collaterals?: TransactionOutputReference[];
@@ -1354,13 +1354,13 @@ export interface SubmitTransactionFailureTotalCollateralMismatch {
   };
 }
 /**
- * Invalid transaction submitted as valid, or vice-versa. Since Alonzo, the ledger may allow invalid transactions to be submitted and included on-chain, provided that they leave a collateral value as compensation. This prevent certain class of attacks. As a consequence, transactions now have a validity tag with them. Your transaction did not match what that validity tag is stating. The field 'data.inputSource' indicates whether the transaction is valid or not (collateral as source means the transaction is invalid) and the fiel 'data.mismatchReason' provides more information about the mismatch.
+ * Invalid transaction submitted as valid, or vice-versa. Since Alonzo, the ledger may allow invalid transactions to be submitted and included on-chain, provided that they leave a collateral value as compensation. This prevent certain class of attacks. As a consequence, transactions now have a validity tag with them. Your transaction did not match what that validity tag is stating. The field 'data.declaredSpending' indicates what the transaction is supposed to consume (collaterals or inputs) and the field 'data.mismatchReason' provides more information about the mismatch.
  */
-export interface SubmitTransactionFailureInputSourceMismatch {
+export interface SubmitTransactionFailureSpendsMismatch {
   code: 3136;
   message: string;
   data: {
-    inputSource: "inputs" | "collaterals";
+    declaredSpending?: "inputs" | "collaterals";
     mismatchReason: string;
   };
 }

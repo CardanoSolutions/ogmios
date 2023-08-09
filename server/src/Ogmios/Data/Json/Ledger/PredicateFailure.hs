@@ -545,12 +545,11 @@ encodePredicateFailure reject = \case
             \may allow invalid transactions to be submitted and included on-chain, provided that \
             \they leave a collateral value as compensation. This prevent certain class of attacks. \
             \As a consequence, transactions now have a validity tag with them. Your transaction \
-            \did not match what that validity tag is stating. The field 'data.inputSource' indicates \
-            \whether the transaction is valid or not (collateral as source means the transaction is \
-            \invalid) and the fiel 'data.mismatchReason' provides more information about the \
-            \mismatch."
+            \did not match what that validity tag is stating. The field 'data.declaredSpending' \
+            \indicates what the transaction is said to consume (collaterals or inputs) and the \
+            \field 'data.mismatchReason' provides more information about the mismatch."
             (pure $ encodeObject
-                ( "inputSource" .=
+                ( "declaredSpending" .=
                     Alonzo.encodeIsValid validationTag
                <> "mismatchReason" .=
                     encodeTagMismatchDescription mismatchReason

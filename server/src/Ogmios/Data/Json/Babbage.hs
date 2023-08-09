@@ -235,7 +235,7 @@ encodeTx
 encodeTx x =
     Shelley.encodeTxId (Ledger.txid @(BabbageEra crypto) (Ba.body x))
         <>
-    "inputSource" .= Alonzo.encodeIsValid (Ba.isValid x)
+    "spends" .= Alonzo.encodeIsValid (Ba.isValid x)
         <>
     encodeTxBody (Ba.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
         <>
