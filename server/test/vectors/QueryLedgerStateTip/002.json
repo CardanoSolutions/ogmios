@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"tip":{"slot":3077926,"hash":"b5224798719d8f618be8155696dbbcbf72bf6492e557cc32ca5e1e82b75f637b"}},"id":null}
+{"jsonrpc":"2.0","method":"queryLedgerState/tip","result":{"slot":3077926,"id":"b5224798719d8f618be8155696dbbcbf72bf6492e557cc32ca5e1e82b75f637b"},"id":null}

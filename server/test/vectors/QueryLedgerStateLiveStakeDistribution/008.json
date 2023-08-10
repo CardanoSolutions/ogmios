@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"liveStakeDistribution":{"pool1sw777szwjes8m8n7jqj9v2xaexasejcusmk0elqf44376tztch0":{"stake":"738572887931/426894273580","vrf":"5d2c0e797da85f71e41d005f3153fb0e18b2aff189f4d213421420b03672dc1e"}}},"id":null}
+{"jsonrpc":"2.0","method":"queryLedgerState/liveStakeDistribution","result":{"pool1sw777szwjes8m8n7jqj9v2xaexasejcusmk0elqf44376tztch0":{"stake":"738572887931/426894273580","vrf":"5d2c0e797da85f71e41d005f3153fb0e18b2aff189f4d213421420b03672dc1e"}},"id":null}

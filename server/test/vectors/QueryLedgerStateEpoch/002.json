@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"epoch":8935750},"id":null}
+{"jsonrpc":"2.0","method":"queryLedgerState/epoch","result":8935750,"id":null}

@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"budgets":{"mint:4":{"memory":5588749303243323971,"steps":6604371432192080604}}},"id":"st"}
+{"jsonrpc":"2.0","method":"evaluateTransaction","error":{"code":3004,"message":"Unable to create the evaluation context from the given transaction.","data":{"reason":"Reference scripts not supported in PlutusV1. Use PlutusV2."}},"id":"AurAkyniPwCb"}

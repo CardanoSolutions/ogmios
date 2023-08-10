@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"budgets":{"spend:0":{"memory":7425195338392539783,"steps":2773102022741127362},"withdrawal:0":{"memory":6619685211402292632,"steps":2557258429458408290}}},"id":null}
+{"jsonrpc":"2.0","method":"evaluateTransaction","result":[{"validator":"spend:0","budget":{"memory":7425195338392539783,"cpu":2773102022741127362}},{"validator":"withdrawal:0","budget":{"memory":6619685211402292632,"cpu":2557258429458408290}}],"id":null}

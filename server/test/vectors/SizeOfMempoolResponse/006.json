@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"mempool":{"maxCapacity":{"bytes":0},"currentSize":{"bytes":0},"transactions":{"count":3}}},"id":null}
+{"jsonrpc":"2.0","method":"sizeOfMempool","error":{"code":4000,"message":"You must acquire a mempool snapshot prior to accessing it."},"id":null}

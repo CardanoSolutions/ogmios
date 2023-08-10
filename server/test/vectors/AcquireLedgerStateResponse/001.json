@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":2000,"message":"Failed to acquire requested point.","data":"Acquired point no longer exist."},"id":"st"}
+{"jsonrpc":"2.0","method":"acquireLedgerState","error":{"code":2000,"message":"Failed to acquire requested point.","data":"Acquired point is now too old."},"id":"H07GyFhAxTb4"}

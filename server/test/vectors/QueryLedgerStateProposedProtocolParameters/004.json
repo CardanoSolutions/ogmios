@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"proposedProtocolParameters":{}},"id":null}
+{"jsonrpc":"2.0","method":"queryLedgerState/proposedProtocolParameters","result":[],"id":null}

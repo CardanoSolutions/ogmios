@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"transaction":{"id":"95e59ec83de77445bca1d26e12d287f27e2482e6b4dd8bd6f58eee304ed892bb"}},"id":"st"}
+{"jsonrpc":"2.0","method":"nextTransaction","result":{"transaction":{"id":"5241c22b8eb02fb1443c7c9b806655b5c9fef5e84b80dbacf8e9898b2c84c6fe"}},"id":"FN46wUpZUZXP"}

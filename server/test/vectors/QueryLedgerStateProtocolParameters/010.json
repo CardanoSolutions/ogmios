@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":2001,"message":"Era mismatch between query and ledger.","data":{"ledgerEra":"shelley","queryEra":"byron"}},"id":null}
+{"jsonrpc":"2.0","method":"queryLedgerState/protocolParameters","error":{"code":2001,"message":"Era mismatch between query and ledger.","data":{"ledgerEra":"shelley","queryEra":"byron"}},"id":null}

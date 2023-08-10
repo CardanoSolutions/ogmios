@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3004,"message":"Unable to create the evaluation context from the given transaction.","data":{"reason":"Inline datums not supported in PlutusV1. Use PlutusV2."}},"id":"st"}
+{"jsonrpc":"2.0","method":"evaluateTransaction","result":[{"validator":"spend:4","budget":{"memory":5081199052893085697,"cpu":4208452435355003628}},{"validator":"certificate:1","budget":{"memory":630915075677944585,"cpu":6037551368337448364}},{"validator":"certificate:3","budget":{"memory":1385778184052735209,"cpu":4880373037886163581}}],"id":"wAZGALbCokYQ"}

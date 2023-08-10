@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3004,"message":"Unable to create the evaluation context from the given transaction.","data":{"reason":"Unknown transaction input (missing from UTxO set): 233502e6b5327a849639a90ea6f17ed9b0f85d3395e9884450e5c0827806ef1e#4"}},"id":"st"}
+{"jsonrpc":"2.0","method":"evaluateTransaction","result":[{"validator":"certificate:1","budget":{"memory":2275840477517477824,"cpu":2341266782186699124}},{"validator":"certificate:3","budget":{"memory":5015146824550119206,"cpu":5860771771050791416}}],"id":"tQStWRJmeaWI"}

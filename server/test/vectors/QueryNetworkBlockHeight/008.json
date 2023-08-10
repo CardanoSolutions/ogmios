@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"blockHeight":245016},"id":null}
+{"jsonrpc":"2.0","method":"queryNetwork/blockHeight","result":245016,"id":null}

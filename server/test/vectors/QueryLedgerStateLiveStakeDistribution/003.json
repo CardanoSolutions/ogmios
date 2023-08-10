@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"liveStakeDistribution":{}},"id":null}
+{"jsonrpc":"2.0","method":"queryLedgerState/liveStakeDistribution","result":{},"id":null}

@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"direction":"backward","point":{"slot":15013,"hash":"df564c5636a9367c2303c0675e9bc94f60eee104b576b82f67c42e935f0f4c3f"},"tip":{"slot":69929,"hash":"31080ec23fe8338adf416d1cd91eb40b0683069ebc19d257daf0d1a3942a149c","blockNo":11594056}},"id":null}
+{"jsonrpc":"2.0","method":"nextBlock","result":{"direction":"backward","point":{"slot":15013,"id":"df564c5636a9367c2303c0675e9bc94f60eee104b576b82f67c42e935f0f4c3f"},"tip":{"slot":69929,"id":"31080ec23fe8338adf416d1cd91eb40b0683069ebc19d257daf0d1a3942a149c","height":11594056}},"id":null}

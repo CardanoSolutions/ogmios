@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","method":"findIntersection","params":{"points":[]},"id":"st"}
+{"jsonrpc":"2.0","method":"findIntersection","params":{"points":[{"slot":5022,"id":"9e934f1b70a3f2f342f225964263c050ee87d9741def61f8b42edf8112153171"},{"slot":28379,"id":"07b17955dbe7d1fa0946f85625fdaed68e4d1970357a702507f06cfbc0ee53fa"},{"slot":76063,"id":"eb1c18ee71da9c844fcea144bd3b53aff833ce4a4bdebe9800a877506c2b7dca"}]},"id":"2rw187OkJXf2"}

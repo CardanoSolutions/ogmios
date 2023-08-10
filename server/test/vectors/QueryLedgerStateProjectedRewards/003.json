@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"projectedRewards":{}},"id":null}
+{"jsonrpc":"2.0","method":"queryLedgerState/projectedRewards","result":{},"id":null}

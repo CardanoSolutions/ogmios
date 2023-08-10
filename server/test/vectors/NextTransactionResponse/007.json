@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"transaction":{"id":"076c61e1a139e828290bbcbc114acb77a37ae268755695b3433cee5a492a4de0"}},"id":"st"}
+{"jsonrpc":"2.0","method":"nextTransaction","error":{"code":4000,"message":"You must acquire a mempool snapshot prior to accessing it."},"id":"hxpvlE4nDVKS"}

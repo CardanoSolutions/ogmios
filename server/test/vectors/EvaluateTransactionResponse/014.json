@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":3002,"message":"Some user-provided additional UTxO entries overlap with those that exist in the ledger.","data":{"overlappingOutputReferences":[{"txId":"0f2cf2cfee1e0c0009b14f8d19f17bf1a92d2023a0bf7bad6371300f48790fd2","index":2}]}},"id":"st"}
+{"jsonrpc":"2.0","method":"evaluateTransaction","result":[{"validator":"spend:1","budget":{"memory":5543181870361291648,"cpu":2251643430894285464}},{"validator":"certificate:4","budget":{"memory":2637140371843253789,"cpu":2402106629276216153}}],"id":"kuOpGfqeiHbY"}

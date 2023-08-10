@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"acquired":"mempool","slot":3},"id":"st"}
+{"jsonrpc":"2.0","method":"acquireMempool","result":{"acquired":"mempool","slot":5},"id":"FN46wUpZUZXP"}

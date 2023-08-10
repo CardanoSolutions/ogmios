@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"hasTransaction":false},"id":null}
+{"jsonrpc":"2.0","method":"hasTransaction","error":{"code":4000,"message":"You must acquire a mempool snapshot prior to accessing it."},"id":null}

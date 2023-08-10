@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","error":{"code":1000,"message":"No intersection found.","data":{"tip":{"slot":36991,"hash":"032926d3463aff6398f4fe80076c44998abf5c3617657d44f47dcbd97026f1da","blockNo":6}}},"id":null}
+{"jsonrpc":"2.0","method":"findIntersection","error":{"code":1001,"message":"Cannot interleave 'findIntersection' requests with 'nextBlock'. Note that you should never face this error. If you do, please open an issue."},"id":null}

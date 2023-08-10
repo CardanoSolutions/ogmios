@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"intersection":"origin","tip":{"slot":62344,"hash":"bfd36e670fa4678366bdda25a1228804b4102220944a52b5932ff8b32bec7496","blockNo":4}},"id":"st"}
+{"jsonrpc":"2.0","method":"findIntersection","result":{"intersection":{"slot":5022,"id":"2263b986b6c29a3611469b0076d9a5156582f96f945dff5f51f545811d071b89"},"tip":{"slot":78536,"id":"7997f21c164d67cef8bdf3a3a903646678a2f4bb0e9209d80db1c9dfff7869a7","height":0}},"id":"2rw187OkJXf2"}

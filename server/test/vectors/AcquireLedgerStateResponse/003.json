@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"acquired":"ledgerState","point":{"slot":26813,"hash":"97bdc701e3b25b5d2328db268fd2dece2206b6cd96956674c769c6d6d9258ab0"}},"id":"st"}
+{"jsonrpc":"2.0","method":"acquireLedgerState","error":{"code":2000,"message":"Failed to acquire requested point.","data":"Acquired point no longer exist."},"id":"2rw187OkJXf2"}

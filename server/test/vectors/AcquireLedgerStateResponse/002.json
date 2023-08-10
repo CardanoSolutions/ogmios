@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"acquired":"ledgerState","point":{"slot":87058,"hash":"373bba92620913fb089ac2774383fff447465056c4d799d509373365030b4936"}},"id":"st"}
+{"jsonrpc":"2.0","method":"acquireLedgerState","result":{"acquired":"ledgerState","point":{"slot":40046,"id":"e108bc41803a751d92350dfe6c0f2476752840b907701a269aabdc798ef3d801"}},"id":"FN46wUpZUZXP"}

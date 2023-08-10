@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"mempool":{"maxCapacity":{"bytes":2},"currentSize":{"bytes":2},"transactions":{"count":3}}},"id":"st"}
+{"jsonrpc":"2.0","method":"sizeOfMempool","result":{"maxCapacity":{"bytes":1},"currentSize":{"bytes":3},"transactions":{"count":1}},"id":"hxpvlE4nDVKS"}

@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"startTime":"1864-05-18T08:25:06.989342183871Z"},"id":null}
+{"jsonrpc":"2.0","method":"queryNetwork/startTime","result":"1864-05-18T08:25:06.989342183871Z","id":null}

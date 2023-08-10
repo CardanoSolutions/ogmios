@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","result":{"budgets":{"mint:3":{"memory":8292513641626670904,"steps":5250204553238805150}}},"id":"st"}
+{"jsonrpc":"2.0","method":"evaluateTransaction","result":[{"validator":"certificate:2","budget":{"memory":7255041994612466254,"cpu":7016388029373208048}}],"id":"7gg5CabTig9W"}
