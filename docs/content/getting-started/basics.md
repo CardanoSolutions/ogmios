@@ -104,5 +104,6 @@ fetch("http://localhost:1337", {
 
   // do something with 'response'
 });
+```
 
 That's all for the basics. The rest isn't really specific to Ogmios, but is about the Ouroboros mini-protocols themselves. See the next sections for a deep dive!

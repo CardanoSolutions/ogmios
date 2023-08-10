@@ -149,26 +149,72 @@ This little excerpt outputs the most recent protocol parameters in a nice JSON:
 
 ```json
 {
-    "poolDeposit": 500000000,
-    "protocolVersion": {
-        "minor": 0,
-        "major": 3
-    },
-    "minUtxoValue": 1000000,
-    "minFeeConstant": 155381,
-    "maxTxSize": 16384,
-    "minPoolCost": 340000000,
-    "maxBlockBodySize": 65536,
-    "extraEntropy": "neutral",
-    "minFeeCoefficient": 44,
-    "poolInfluence": "3/10",
-    "maxBlockHeaderSize": 1100,
-    "stakeKeyDeposit": 2000000,
-    "decentralizationParameter": "1/5",
-    "desiredNumberOfPools": 500,
-    "poolRetirementEpochBound": 18,
-    "monetaryExpansion": "3/1000",
-    "treasuryExpansion": "1/5"
+  "minFeeCoefficient": 44,
+  "minFeeConstant": { "lovelace": 155381 },
+  "maxBlockBodySize": { "bytes": 90112 },
+  "maxBlockHeaderSize": { "bytes": 1100 },
+  "maxTransactionSize": { "bytes": 16384 },
+  "stakeCredentialDeposit": { "lovelace": 2000000 },
+  "stakePoolDeposit": { "lovelace": 500000000 },
+  "stakePoolRetirementEpochBound": 18,
+  "desiredNumberOfStakePools": 500,
+  "stakePoolPledgeInfluence": "3/10",
+  "monetaryExpansion": "3/1000",
+  "treasuryExpansion": "1/5",
+  "minStakePoolCost": { "lovelace": 340000000 },
+  "minUtxoDepositConstant": 0,
+  "minUtxoDepositCoefficient": 4310,
+  "plutusCostModels": {
+    "plutus:v1": [
+      205665,    812,      1,      1,   1000,    571,      0,       1,
+        1000,  24177,      4,      1,   1000,     32, 117366,   10475,
+           4,  23000,    100,  23000,    100,  23000,    100,   23000,
+         100,  23000,    100,  23000,    100,    100,    100,   23000,
+         100,  19537,     32, 175354,     32,  46417,      4,  221973,
+         511,      0,      1,  89141,     32, 497525,  14068,       4,
+           2, 196500, 453240,    220,      0,      1,      1,    1000,
+       28662,      4,      2, 245000, 216773,     62,      1, 1060367,
+       12586,      1, 208512,    421,      1, 187000,   1000,   52998,
+           1,  80436,     32,  43249,     32,   1000,     32,   80556,
+           1,  57667,      4,   1000,     10, 197145,    156,       1,
+      197145,    156,      1, 204924,    473,      1, 208896,     511,
+           1,  52467,     32,  64832
+    ],
+    "plutus:v2": [
+      205665,    812,      1,      1,   1000,    571,      0,       1,
+        1000,  24177,      4,      1,   1000,     32, 117366,   10475,
+           4,  23000,    100,  23000,    100,  23000,    100,   23000,
+         100,  23000,    100,  23000,    100,    100,    100,   23000,
+         100,  19537,     32, 175354,     32,  46417,      4,  221973,
+         511,      0,      1,  89141,     32, 497525,  14068,       4,
+           2, 196500, 453240,    220,      0,      1,      1,    1000,
+       28662,      4,      2, 245000, 216773,     62,      1, 1060367,
+       12586,      1, 208512,    421,      1, 187000,   1000,   52998,
+           1,  80436,     32,  43249,     32,   1000,     32,   80556,
+           1,  57667,      4,   1000,     10, 197145,    156,       1,
+      197145,    156,      1, 204924,    473,      1, 208896,     511,
+           1,  52467,     32,  64832
+    ]
+  },
+  "scriptExecutionPrices": {
+    "memory": '577/10000',
+    "cpu": '721/10000000'
+  },
+  "maxExecutionUnitsPerTransaction": {
+    "memory": 14000000,
+    "cpu": 10000000000
+  },
+  "maxExecutionUnitsPerBlock": {
+    "memory": 62000000,
+    "cpu": 20000000000
+  },
+  "maxValueSize": { "bytes": 5000 },
+  "collateralPercentage": 150,
+  "maxCollateralInputs": 3,
+  "version": {
+    "major": 8,
+    "minor": 0
+  }
 }
 ```
 
@@ -422,12 +468,12 @@ Be aware that it is possible for an acquire request to fail even if (and in part
 }
 ```
 
-#### currentProtocolParameters
+#### proposedProtocolParameters
 
 ```json
 {
   "jsonrpc": "2.0",
-  "method": "queryLedgerState/currentProtocolParameters"
+  "method": "queryLedgerState/proposedProtocolParameters"
 }
 ```
 
@@ -477,12 +523,12 @@ Be aware that it is possible for an acquire request to fail even if (and in part
 }
 ```
 
-#### stakePoolParameters
+#### stakePools (filtered)
 
 ```json
 {
   "jsonrpc": "2.0",
-  "method": "queryLedgerState/stakePoolParameters",
+  "method": "queryLedgerState/stakePools",
   "params": {
     "stakePools": [
       { "id": "pool1pk2wzarn9mu64eel89dtg3g8h75c84jsy0q349glpsewgd7sdls" },
@@ -492,12 +538,21 @@ Be aware that it is possible for an acquire request to fail even if (and in part
 }
 ```
 
-#### tip
+#### ledger tip
 
 ```json
 {
   "jsonrpc": "2.0",
   "method": "queryLedgerState/tip"
+}
+```
+
+#### network tip
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryNetwork/tip"
 }
 ```
 
@@ -519,7 +574,7 @@ Be aware that it is possible for an acquire request to fail even if (and in part
     "outputReferences": [
       {
         "transaction": { "id": "ee155ace9c40292074cb6aff8c9ccdd273c81648ff1149ef36bcea6ebb8a3e25" },
-        "output": { "index": 2 }
+        "index": 2
       }
     ]
 

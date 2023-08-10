@@ -56,7 +56,7 @@ $ cd cardano-ogmios/server
 Then, use cabal to compile the project source code from the `server` directory:
 
 ```console
-$ cabal build all
+$ cabal build ogmios:exe:ogmios
 ```
 
 The first time, this may take a while as cabal needs to setup a compilation environment and to download a lot of dependencies. Subsequent executions are much faster.
@@ -97,7 +97,7 @@ The documentation is built using [Hugo](https://gohugo.io/documentation/). You'l
 ```
 hugo
 
-# or, alternatively for an development setup on http://localhost:1313
+# or, alternatively for a development setup on http://localhost:1313
 
 hugo serve
 ```

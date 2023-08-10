@@ -6,33 +6,43 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
-### [6.0.0] - UNRELEASED
+### [6.0.0-rc] - 2023-08-10
+
+> **Note**
+>
+> Tested-with: `cardano-node@8.1.1`, `cardano-node@8.1.2`
 
 #### Added
+
+- (Premilinary) support for the Conway era. This support only covers what is currently available in the Cardano node / ledger. However, since the implementation of this era isn't finalized yet it will likely break in the future. New updates will be issued until Conway stabilizes.
 
 - Ogmios now accept queries via HTTP (POST). Request bodies are the same as those passed to the websocket and so are responses. In fact, most Ogmios queries follow a simple request/response pattern and are therefore well-suited to be run over HTTP. While there's an obvious performance trade-off (especially for the local-chain-sync protocol), it is a reasonable approach for many queries (e.g. the local-state-query protocol).
 
   > **Note**
   > The HTTP server and the WebSocket server are both mounted on the same port. So, it suffices to route HTTP requests through `/`. The JSON payload is the same.
 
-- Ability to retrieve any genesis configuration (Byron, Shelley or Alonzo) via the local-state-query protocol.
+- Ability to retrieve any genesis configuration (Byron, Shelley, Alonzo or Conway) via the state-query protocol.
 
 - A new command `inspect transaction` to help with debugging the deserialization of transaction.
 
+- The health now contains an extra `network` and `version`. Also, beware that era names are now returned in lowercase (first letter used to be capitalised!).
+
 #### Changed
 
-- **⚠️ BREAKING-CHANGE ⚠️** Many major changes in the interface. A complete migration guide is available in [ADR-017](https://github.com/CardanoSolutions/ogmios/blob/master/architectural-decisions/accepted/017-api-version-6-major-rewrite.md), yet please refer to the API reference for details and exhaustiveness.
+- **⚠️ BREAKING-CHANGE ⚠️** Many major changes in the interface. A complete migration guide is available in [ADR-017](https://github.com/CardanoSolutions/ogmios/blob/master/architectural-decisions/accepted/017-api-version-6-major-rewrite.md), yet please refer to the [API reference](https://ogmios.dev/api/) for details and exhaustiveness. Many representations have been made easier to parse and field names have been improved (more consistent across the entire API and better self-documented).
 
   > **Note**
   > There are still many [test vectors](https://github.com/CardanoSolutions/ogmios/tree/master/server/test/vectors) available for every element of the Ogmios API. Use them!
+
+- Ogmios will no longer retry connecting to a node that is configured for another network but exit with an non-zero code and a clear error message indicating the network mismatch.
+
+- The default dashboard on localhost has been greatly rework and simplified. It also better handles errors.
 
 #### Removed
 
 - **⚠️ BREAKING-CHANGE ⚠️** Compact mode is no more. Responses are more compact by default already and it is no longer possible to ask for a compact mode.
 
 - **⚠️ BREAKING-CHANGE ⚠️** Ogmios no longer returns null or empty fields. Where a field's value would be `null` prior to v6.0.0, Ogmios now simply omit the field altogether. This is also true for most responses that return empty lists as well. All-in-all, please refer to the documentation / JSON-schema in case of doubts (fields that may be omitted are no longer marked as `required`).
-
-- **⚠️ BREAKING-CHANGE ⚠️** Ogmios no longer supports submitting transactions using `{ "bytes": "..." }` as parameters; One must now specify the transaction as `{ "transaction": { "cbor": "..." } }`. Since `v5.2.0` (when the submission protocol was extended), Ogmios supported two notations for transaction submission (using either `bytes` or `submit`) as a backward-compatible mechanism. It now supports only one new format.
 
 ---
 ---
