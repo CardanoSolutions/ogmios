@@ -23,6 +23,9 @@ import Data.ByteString.Bech32
     ( HumanReadablePart (..)
     , encodeBech32
     )
+import Data.Maybe.Strict
+    ( fromSMaybe
+    )
 import Data.Sequence.Strict
     ( StrictSeq
     )
@@ -244,23 +247,23 @@ encodeDCert = \case
     Sh.DCertMir (Sh.MIRCert pot target) ->
         ( []
         , [ encodeObject $ case target of
-                Sh.StakeAddressesMIR rewards ->
-                    "type" .=
-                        encodeText "treasuryWithdrawals" <>
-                   "withdrawals" .=
-                        encodeMap stringifyCredential encodeDeltaCoin rewards
-                Sh.SendToOppositePotMIR coin ->
-                    "type" .=
-                        encodeText "treasuryTransfer" <>
-                    "source" .=
-                        encodeMIRPot pot <>
-                    "target" .=
-                        encodeMIRPot (case pot of
-                            Sh.ReservesMIR -> Sh.TreasuryMIR
-                            Sh.TreasuryMIR -> Sh.ReservesMIR
-                        ) <>
-                    "value" .=
-                        encodeCoin coin
+              Sh.StakeAddressesMIR rewards ->
+                  "type" .=
+                      encodeText "treasuryWithdrawals" <>
+                 "withdrawals" .=
+                      encodeMap stringifyCredential encodeDeltaCoin rewards
+              Sh.SendToOppositePotMIR coin ->
+                  "type" .=
+                      encodeText "treasuryTransfer" <>
+                  "source" .=
+                      encodeMIRPot pot <>
+                  "target" .=
+                      encodeMIRPot (case pot of
+                          Sh.ReservesMIR -> Sh.TreasuryMIR
+                          Sh.TreasuryMIR -> Sh.ReservesMIR
+                      ) <>
+                  "value" .=
+                      encodeCoin coin
           ]
         )
 
@@ -327,6 +330,19 @@ encodeGenDelegPair x =
     "vrfVerificationKeyHash" .=
         encodeHash (genDelegVrfHash x)
     & encodeObject
+
+encodeGenesisVote
+    :: Crypto crypto
+    => Ledger.KeyHash 'Genesis crypto
+    -> Json
+encodeGenesisVote credential =
+    encodeObject
+        ( "issuer" .= encodeObject
+            ( "role" .= encodeText "genesisDelegate"
+           <> "id" .= encodeKeyHash credential
+            )
+       <> "vote" .= encodeText "yes"
+        )
 
 encodeHash
     :: CC.HashAlgorithm alg
@@ -802,12 +818,16 @@ encodeTxBody x =
         (encodeList encodeObject) certs <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         encodeWdrl (Sh.stbWithdrawals x) <>
-    "proposals" .=? OmitWhenNothing
-        (encodeUpdate encodePParamsUpdate mirs)
-        (Sh.stbUpdate x)
+    "proposals" .=? OmitWhen null
+        (encodeList (encodeSingleton "action")) actions <>
+    "votes" .=? OmitWhen null
+        (encodeList encodeGenesisVote) votes
   where
     (certs, mirs) =
         encodeDCerts (Sh.stbCerts x)
+
+    (votes, actions) = fromSMaybe ([], mirs) $
+        encodeUpdate encodePParamsUpdate mirs <$> Sh.stbUpdate x
 
 encodeTxId
     :: Crypto crypto
@@ -840,14 +860,16 @@ encodeTxOut (Sh.ShelleyTxOut addr value) =
         encodeValue value
 
 encodeUpdate
-    :: (Ledger.PParamsUpdate era -> [Json])
+    :: forall era crypto. (crypto ~ EraCrypto era)
+    => (Ledger.PParamsUpdate era -> [Json])
     -> [Json]
     -> Sh.Update era
-    -> Json
+    -> ([Ledger.KeyHash 'Genesis crypto], [Json])
 encodeUpdate encodePParamsUpdateInEra mirs (Sh.Update (Sh.ProposedPPUpdates m) _epoch) =
-    encodeFoldable
-        (encodeSingleton "action")
-        (mirs ++ concatMap encodePParamsUpdateInEra m)
+    Map.foldrWithKey
+        (\k v (votes, proposals) -> (k : votes, encodePParamsUpdateInEra v ++ proposals))
+        ([], mirs)
+        m
 
 encodeUtxo
     :: forall era.

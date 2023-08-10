@@ -13,7 +13,8 @@ import Cardano.Ledger.Val
     ( Val (..)
     )
 import Data.Maybe.Strict
-    ( strictMaybe
+    ( fromSMaybe
+    , strictMaybe
     )
 import Ouroboros.Consensus.Protocol.Praos
     ( Praos
@@ -290,12 +291,16 @@ encodeTxBody x scripts =
         encodeCoin (Ba.btbTxFee x) <>
     "validityInterval" .=
         Allegra.encodeValidityInterval (Ba.btbValidityInterval x) <>
-    "proposals" .=? OmitWhenNothing
-        (Shelley.encodeUpdate encodePParamsUpdate mirs)
-        (Ba.btbUpdate x)
+    "proposals" .=? OmitWhen null
+        (encodeList (encodeSingleton "action")) actions <>
+    "votes" .=? OmitWhen null
+        (encodeList Shelley.encodeGenesisVote) votes
   where
     (certs, mirs) =
         Shelley.encodeDCerts (Ba.btbCerts x)
+
+    (votes, actions) = fromSMaybe ([], mirs) $
+        Shelley.encodeUpdate encodePParamsUpdate mirs <$> (Ba.btbUpdate x)
 
 encodeTxOut
     :: forall era.

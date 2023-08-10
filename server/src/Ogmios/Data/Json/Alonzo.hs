@@ -467,12 +467,16 @@ encodeTxBody x scripts =
         encodeCoin (Al.atbTxFee x) <>
     "validityInterval" .=
         Allegra.encodeValidityInterval (Al.atbValidityInterval x) <>
-    "proposals" .=? OmitWhenNothing
-        (Shelley.encodeUpdate encodePParamsUpdate mirs)
-        (Al.atbUpdate x)
+    "proposals" .=? OmitWhen null
+        (encodeList (encodeSingleton "action")) actions <>
+    "votes" .=? OmitWhen null
+        (encodeList Shelley.encodeGenesisVote) votes
   where
     (certs, mirs) =
         Shelley.encodeDCerts (Al.atbCerts x)
+
+    (votes, actions) = fromSMaybe ([], mirs) $
+        Shelley.encodeUpdate encodePParamsUpdate mirs <$> (Al.atbUpdate x)
 
 encodeTxOut
     :: Crypto crypto

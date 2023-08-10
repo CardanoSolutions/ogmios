@@ -142,11 +142,11 @@ encodeDelegatee = \case
     Cn.DelegStake poolId ->
         "stakePool" .= encodeSingleton "id" (Shelley.encodePoolId poolId)
     Cn.DelegVote drep ->
-        "delegateRepresentative" .= Shelley.encodeCredential drep
+        "delegateRepresentative" .= encodeSingleton "id" (Shelley.encodeCredential drep)
     Cn.DelegStakeVote poolId drep ->
         "stakePool" .= encodeSingleton "id" (Shelley.encodePoolId poolId)
         <>
-        "delegateRepresentative" .= Shelley.encodeCredential drep
+        "delegateRepresentative" .= encodeSingleton "id" (Shelley.encodeCredential drep)
 
 encodeGenesis
     :: Crypto crypto
@@ -161,7 +161,8 @@ encodeGenesis x =
         )
 
 encodeGovernanceAction
-    :: Cn.GovernanceAction (ConwayEra crypto)
+    :: Crypto crypto
+    => Cn.GovernanceAction (ConwayEra crypto)
     -> Json
 encodeGovernanceAction = \case
     Cn.ParameterChange pparamsUpdate ->
@@ -178,8 +179,34 @@ encodeGovernanceAction = \case
            <> "version" .=
                 Shelley.encodeProtVer version
             )
-    _ ->
-        encodeText "TODO: other governance actions"
+    Cn.TreasuryWithdrawals withdrawals ->
+        encodeObject
+            ( "type" .=
+                encodeText "treasuryWithdrawals"
+           <> "withdrawals" .=
+                encodeMap Shelley.stringifyCredential encodeCoin withdrawals
+            )
+    Cn.NewCommittee members quorum ->
+        encodeObject
+            ( "type" .=
+                encodeText "constitutionalCommittee"
+           <> "members" .=
+                encodeFoldable Shelley.encodeKeyHash members
+           <> "quorum" .=
+                encodeRational quorum
+            )
+    Cn.NewConstitution hash ->
+        encodeObject
+            ( "type" .=
+                encodeText "constitution"
+           <> "hash" .=
+                Shelley.encodeHash (extractHash hash)
+            )
+    Cn.NoConfidence ->
+        encodeObject
+            ( "type" .=
+                encodeText "noConfidence"
+            )
 
 encodeGovernanceActionId
     :: Crypto crypto
@@ -346,9 +373,9 @@ encodeVoter
 encodeVoter credential = encodeObject . \case
     role@Cn.ConstitutionalCommittee ->
         "role" .= encodeVoterRole role <>
-        "credential" .= Shelley.encodeCredential credential
+        "id" .= Shelley.encodeCredential credential
     role@Cn.DRep ->
         "role" .= encodeVoterRole role <>
-        "credential" .= Shelley.encodeCredential credential
+        "id" .= Shelley.encodeCredential credential
     role@Cn.SPO ->
         "role" .= encodeVoterRole role

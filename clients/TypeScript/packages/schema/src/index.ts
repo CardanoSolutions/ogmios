@@ -59,7 +59,18 @@ export type Certificate =
  * A Blake2b 32-byte hash digest of a pool's verification key.
  */
 export type StakePoolId = string;
-export type DelegateRepresentative = DigestBlake2B224 | "noConfidence" | "abstain";
+export type DelegateRepresentative =
+  | DelegateRepresentativeRegistered
+  | DelegateRepresentativeNoConfidence
+  | DelegateRepresentativeAbstain;
+/**
+ * A special delegate representative which always vote no, except on votes of no-confidence.
+ */
+export type DelegateRepresentativeNoConfidence = "noConfidence";
+/**
+ * A special delegate representative which always abstain.
+ */
+export type DelegateRepresentativeAbstain = "abstain";
 /**
  * A ratio of two integers, to express exact fractions.
  */
@@ -579,6 +590,9 @@ export interface StakeDelegation {
   };
   delegateRepresentative?: DelegateRepresentative;
 }
+export interface DelegateRepresentativeRegistered {
+  id: DigestBlake2B224;
+}
 /**
  * A stake credential (key or script) registration certificate. The field 'deposit' is only present in Conway onwards.
  */
@@ -669,7 +683,9 @@ export interface GovernanceProposal {
     | GovernanceActionHardForkInitiation
     | GovernanceActionTreasuryTransfer
     | GovernanceActionTreasuryWithdrawals
-    | string;
+    | GovernanceActionConstitutionalCommittee
+    | GovernanceActionConstitution
+    | GovernanceActionNoConfidence;
 }
 export interface GovernanceActionProtocolParametersUpdate {
   type: "protocolParametersUpdate";
@@ -755,25 +771,51 @@ export interface LovelaceDelta {
    */
   lovelace: number;
 }
+/**
+ * A change (partial or total) in the constitutional committee.
+ */
+export interface GovernanceActionConstitutionalCommittee {
+  type: "constitutionalCommittee";
+  members: RewardTransfer;
+  quorum: Ratio;
+}
+/**
+ * A change in the constitution. Only its hash is recorded on-chain.
+ */
+export interface GovernanceActionConstitution {
+  type: "constitution";
+  hash: DigestBlake2B256;
+}
+/**
+ * A motion of no-confidence, indicate a lack of trust in the constitutional committee.
+ */
+export interface GovernanceActionNoConfidence {
+  type: "noConfidence";
+}
+/**
+ * A vote on a governance proposal. The 'anchor' is optional and 'proposal' is only present from Conway onwards. Before Conway, a vote would always refer to all proposals part of the same transaction.
+ */
 export interface GovernanceVote {
-  issuer: ConstitutionalCommitteeMember | DelegateRepresentative1 | StakePoolOperator;
+  issuer: VoterGenesisDelegate | VoterConstitutionalCommittee | VoterDelegateRepresentative | VoterStakePoolOperator;
   anchor?: Anchor;
   vote: "yes" | "no" | "abstain";
-  proposal: GovernanceProposalReference;
+  proposal?: GovernanceProposalReference;
 }
-export interface ConstitutionalCommitteeMember {
+export interface VoterGenesisDelegate {
+  role: "genesisDelegate";
+  id: DigestBlake2B224;
+}
+export interface VoterConstitutionalCommittee {
   role: "constitutionalCommittee";
-  credential: DigestBlake2B224;
+  id: DigestBlake2B224;
 }
-export interface DelegateRepresentative1 {
+export interface VoterDelegateRepresentative {
   role: "delegateRepresentative";
-  credential: DigestBlake2B224;
+  id: DigestBlake2B224;
 }
-export interface StakePoolOperator {
+export interface VoterStakePoolOperator {
   role: "stakePoolOperator";
-  stakePool?: {
-    id: StakePoolId;
-  };
+  id?: StakePoolId;
 }
 export interface GovernanceProposalReference {
   transaction: {

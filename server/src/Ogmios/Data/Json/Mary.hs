@@ -154,12 +154,16 @@ encodeTxBody (Ma.MaryTxBody inps outs dCerts wdrls fee validity updates _ mint) 
         encodeCoin fee <>
     "validityInterval" .=
         Allegra.encodeValidityInterval validity <>
-    "proposals" .=? OmitWhenNothing
-        (Shelley.encodeUpdate Shelley.encodePParamsUpdate mirs)
-        updates
+    "proposals" .=? OmitWhen null
+        (encodeList (encodeSingleton "action")) actions <>
+    "votes" .=? OmitWhen null
+        (encodeList Shelley.encodeGenesisVote) votes
   where
     (certs, mirs) =
         Shelley.encodeDCerts dCerts
+
+    (votes, actions) = fromSMaybe ([], mirs) $
+        Shelley.encodeUpdate Shelley.encodePParamsUpdate mirs <$> updates
 
 encodeTxOut
     :: Crypto crypto
