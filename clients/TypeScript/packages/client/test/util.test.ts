@@ -6,14 +6,14 @@ import {
   utxoSize
 } from '../src'
 import {
+  GovernanceActionTreasuryTransfer,
+  GovernanceActionTreasuryWithdrawals,
   Metadata,
   RewardAccountSummaries,
   RewardsProvenance,
   StakePool,
   Transaction,
-  TransactionOutput,
-  TreasuryTransferInternal,
-  TreasuryTransferRewards
+  TransactionOutput
 } from '@cardano-ogmios/schema'
 
 describe('util', () => {
@@ -475,25 +475,23 @@ describe('util', () => {
           }
         `
 
-        const result = safeJSON.parse(json) as TreasuryTransferInternal
+        const result = safeJSON.parse(json) as GovernanceActionTreasuryTransfer
         expect(typeof result.value.lovelace).toEqual('bigint')
       })
 
       it('Treasury transfer (2)', () => {
         const json = `
           {
-            "type": "treasuryTransfer",
-            "source": "treasury",
-            "target": "rewardAccounts",
-            "rewards": {
+            "type": "treasuryWithdrawals",
+            "withdrawals": {
               "a646474b8f5431261506b6c273d307c7569a4eb6c96b42dd4a29520a": { "lovelace": 1000 }
             }
           }
         `
 
         const stakeAddr = 'a646474b8f5431261506b6c273d307c7569a4eb6c96b42dd4a29520a'
-        const result = safeJSON.parse(json) as TreasuryTransferRewards
-        expect(typeof result.rewards[stakeAddr].lovelace).toEqual('bigint')
+        const result = safeJSON.parse(json) as GovernanceActionTreasuryWithdrawals
+        expect(typeof result.withdrawals[stakeAddr].lovelace).toEqual('bigint')
       })
 
       it('RewardAccountSummaries', () => {
