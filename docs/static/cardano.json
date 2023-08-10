@@ -1805,11 +1805,11 @@
     { "title": "Tip"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "slot", "id", "blockNo" ]
+    , "required": [ "slot", "id", "height" ]
     , "properties":
       { "slot": { "$ref": "cardano.json#/definitions/Slot" }
       , "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
-      , "blockNo": { "$ref": "cardano.json#/definitions/BlockHeight" }
+      , "height": { "$ref": "cardano.json#/definitions/BlockHeight" }
       }
     }
 

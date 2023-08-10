@@ -385,7 +385,7 @@ export interface IntersectionFound {
 export interface Tip {
   slot: Slot;
   id: DigestBlake2B256;
-  blockNo: BlockHeight;
+  height: BlockHeight;
 }
 export interface IntersectionNotFound {
   jsonrpc: "2.0";

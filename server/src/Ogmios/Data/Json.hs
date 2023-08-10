@@ -236,7 +236,7 @@ encodeTip = \case
             encodeSlotNo slot <>
         "id" .=
             encodeOneEraHash hash <>
-        "blockNo" .=
+        "height" .=
             encodeBlockNo blockNo
         & encodeObject
 
