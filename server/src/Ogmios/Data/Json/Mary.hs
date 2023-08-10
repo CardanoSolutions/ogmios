@@ -54,10 +54,11 @@ type AuxiliaryScripts crypto =
 
 encodeAuxiliaryData
     :: forall crypto era. (Era era, era ~ MaryEra crypto)
-    => Al.AllegraTxAuxData era
+    => IncludeCbor
+    -> Al.AllegraTxAuxData era
     -> (Json, AuxiliaryScripts crypto)
-encodeAuxiliaryData (Al.AllegraTxAuxData blob scripts) =
-    ( Shelley.encodeMetadataBlob @era blob
+encodeAuxiliaryData opts (Al.AllegraTxAuxData blob scripts) =
+    ( Shelley.encodeMetadataBlob @era opts blob
     , foldr
         (\script -> Map.insert (Ledger.hashScript @(MaryEra crypto) script) script)
         mempty
@@ -67,9 +68,10 @@ encodeAuxiliaryData (Al.AllegraTxAuxData blob scripts) =
 encodeBlock
     :: ( Crypto crypto
        )
-    => ShelleyBlock (TPraos crypto) (MaryEra crypto)
+    => IncludeCbor
+    -> ShelleyBlock (TPraos crypto) (MaryEra crypto)
     -> Json
-encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
+encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
         ( "type" .= encodeText "praos"
         <>
@@ -81,7 +83,7 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           "size" .= encodeSingleton "bytes" (encodeNatural (TPraos.bsize hBody))
         <>
-          "transactions" .= encodeFoldable encodeTx (Sh.txSeqTxns' txs)
+          "transactions" .= encodeFoldable (encodeTx opts) (Sh.txSeqTxns' txs)
         )
   where
     TPraos.BHeader hBody _ = blkHeader
@@ -108,25 +110,30 @@ encodeTx
        ( Crypto crypto
        , era ~ MaryEra crypto
        )
-    => Sh.ShelleyTx era
+    => IncludeCbor
+    -> Sh.ShelleyTx era
     -> Json
-encodeTx x =
-    Shelley.encodeTxId (Ledger.txid @(MaryEra crypto) (Sh.body x))
-        <>
-    "spends" .= encodeText "inputs"
-        <>
-    encodeTxBody (Sh.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
-        <>
-    "metadata" .=? OmitWhenNothing fst auxiliary
-        <>
-    encodeWitnessSet (snd <$> auxiliary) (Sh.wits x)
-        <>
-    "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
-        & encodeObject
+encodeTx opts x =
+    encodeObject
+        ( Shelley.encodeTxId (Ledger.txid @(MaryEra crypto) (Sh.body x))
+       <>
+        "spends" .= encodeText "inputs"
+       <>
+        encodeTxBody (Sh.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
+       <>
+        "metadata" .=? OmitWhenNothing fst auxiliary
+       <>
+        encodeWitnessSet opts (snd <$> auxiliary) (Sh.wits x)
+       <>
+        if includeTransactionCbor opts then
+           "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
+        else
+           mempty
+       )
   where
     auxiliary = do
         hash <- Shelley.encodeAuxiliaryDataHash <$> Ma.mtbAuxDataHash (Sh.body x)
-        (labels, scripts) <- encodeAuxiliaryData <$> Sh.auxiliaryData x
+        (labels, scripts) <- encodeAuxiliaryData opts <$> Sh.auxiliaryData x
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts
@@ -196,10 +203,11 @@ encodeValue (Ma.MaryValue lovelace assets) =
 
 encodeWitnessSet
     :: Crypto crypto
-    => StrictMaybe (AuxiliaryScripts crypto)
+    => IncludeCbor
+    -> StrictMaybe (AuxiliaryScripts crypto)
     -> Sh.ShelleyTxWits (MaryEra crypto)
     -> Series
-encodeWitnessSet (fromSMaybe mempty -> auxScripts) x =
+encodeWitnessSet opts (fromSMaybe mempty -> auxScripts) x =
     "signatories" .=
         encodeFoldable2
             Shelley.encodeBootstrapWitness
@@ -207,7 +215,7 @@ encodeWitnessSet (fromSMaybe mempty -> auxScripts) x =
             (Sh.bootWits x)
             (Sh.addrWits x) <>
     "scripts" .=? OmitWhen null
-        (encodeMap Shelley.stringifyScriptHash Allegra.encodeScript)
+        (encodeMap Shelley.stringifyScriptHash (Allegra.encodeScript opts))
         (Sh.scriptWits x <> auxScripts)
 
 --

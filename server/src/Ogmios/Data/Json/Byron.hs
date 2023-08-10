@@ -1,6 +1,7 @@
 --  This Source Code Form is subject to the terms of the Mozilla Public
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+{-# LANGUAGE AllowAmbiguousTypes #-}
 
 module Ogmios.Data.Json.Byron where
 
@@ -44,6 +45,8 @@ import qualified Cardano.Crypto.Hashing as By
 import qualified Cardano.Crypto.ProtocolMagic as By
 import qualified Cardano.Crypto.Signing as By
 import qualified Cardano.Crypto.Wallet as CC
+import qualified Cardano.Ledger.Binary as Binary
+import qualified Cardano.Ledger.Core as Ledger
 
 encodeAddress
     :: By.Address
@@ -52,9 +55,11 @@ encodeAddress =
     encodeText . decodeUtf8 . By.addrToBase58
 
 encodeABlockOrBoundary
-    :: By.ABlockOrBoundary ByteString
+    :: forall crypto. (Era (ByronEra crypto))
+    => IncludeCbor
+    -> By.ABlockOrBoundary ByteString
     -> Json
-encodeABlockOrBoundary = encodeObject . \case
+encodeABlockOrBoundary opts = encodeObject . \case
     By.ABOBBlock blk ->
         "type" .= encodeText "bft"
         <>
@@ -70,7 +75,7 @@ encodeABlockOrBoundary = encodeObject . \case
         <>
         "size" .= encodeSingleton "bytes" (encodeNatural (By.blockLength blk))
         <>
-        encodeABody (By.blockBody blk)
+        encodeABody @crypto opts (By.blockBody blk)
         <>
         "protocol" .= encodeObject
             ( "id" .= encodeAnnotated encodeProtocolMagicId (By.aHeaderProtocolMagicId h)
@@ -109,11 +114,13 @@ encodeABlockOrBoundary = encodeObject . \case
         h = By.boundaryHeader blk
 
 encodeABody
-    :: By.ABody any
+    :: forall crypto any. (Era (ByronEra crypto))
+    => IncludeCbor
+    -> By.ABody any
     -> Series
-encodeABody x =
+encodeABody opts x =
     "transactions" .=
-        encodeATxPayload (By.bodyTxPayload x) <>
+        encodeATxPayload @crypto opts (By.bodyTxPayload x) <>
     "operationalCertificates" .=
         encodeADlgPayload (By.bodyDlgPayload x)
 
@@ -208,14 +215,16 @@ encodeTxOut x =
     & encodeObject
 
 encodeATxAux
-    :: By.ATxAux any
+    :: forall crypto any. (Era (ByronEra crypto))
+    => IncludeCbor
+    -> By.ATxAux any
     -> Json
-encodeATxAux x =
+encodeATxAux opts x =
     "id" .= encodeHash (By.serializeCborHash (By.taTx x))
         <>
     "inputSource" .= encodeText "inputs"
         <>
-    encodeAnnotated encodeTx (By.aTaTx x)
+    encodeAnnotated (encodeTx @crypto opts) (By.aTaTx x)
         <>
     "signatories" .= encodeAnnotated (encodeFoldable encodeTxInWitness) (By.aTaWitness x)
         <>
@@ -226,19 +235,29 @@ encodeATxAux x =
     & encodeObject
 
 encodeTx
-    :: By.Tx
+    :: forall crypto. (Era (ByronEra crypto))
+    => IncludeCbor
+    -> By.Tx
     -> Series
-encodeTx x =
+encodeTx opts x =
     "inputs" .=
-        encodeFoldable encodeTxIn (By.txInputs x) <>
+        encodeFoldable encodeTxIn (By.txInputs x)
+  <>
     "outputs" .=
         encodeFoldable encodeTxOut (By.txOutputs x)
+  <>
+     if includeTransactionCbor opts then
+        "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @(ByronEra crypto)) x)
+     else
+        mempty
 
 encodeATxPayload
-    :: By.ATxPayload any
+    :: forall crypto any. (Era (ByronEra crypto))
+    => IncludeCbor
+    -> By.ATxPayload any
     -> Json
-encodeATxPayload =
-    encodeList encodeATxAux . By.aUnTxPayload
+encodeATxPayload opts =
+    encodeList (encodeATxAux @crypto opts) . By.aUnTxPayload
 
 encodeAUpdPayload
     :: By.Upd.APayload any

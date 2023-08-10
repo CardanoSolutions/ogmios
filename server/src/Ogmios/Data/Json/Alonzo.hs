@@ -74,10 +74,11 @@ encodeAuxiliaryData
         ( Ledger.Script era ~ Al.AlonzoScript era
         , Ledger.Api.EraScript era
         )
-    => Al.AlonzoTxAuxData era
+    => IncludeCbor
+    -> Al.AlonzoTxAuxData era
     -> (Json, AuxiliaryScripts era)
-encodeAuxiliaryData (Al.AlonzoTxAuxData blob timelocks plutus) =
-    ( Shelley.encodeMetadataBlob @era blob
+encodeAuxiliaryData opts (Al.AlonzoTxAuxData blob timelocks plutus) =
+    ( Shelley.encodeMetadataBlob @era opts blob
     , foldr
         (\(Al.TimelockScript -> script) -> Map.insert (Ledger.hashScript @era script) script)
         (Map.foldrWithKey
@@ -100,11 +101,11 @@ encodeBinaryData =
     encodeByteStringBase16 . Ledger.originalBytes
 
 encodeBlock
-    :: ( Crypto crypto
-       )
-    => ShelleyBlock (TPraos crypto) (AlonzoEra crypto)
+    :: Crypto crypto
+    => IncludeCbor
+    -> ShelleyBlock (TPraos crypto) (AlonzoEra crypto)
     -> Json
-encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
+encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
         ( "type" .= encodeText "praos"
         <>
@@ -116,7 +117,7 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           "size" .= encodeSingleton "bytes" (encodeNatural (TPraos.bsize hBody))
         <>
-          "transactions" .= encodeFoldable encodeTx (Al.txSeqTxns txs)
+          "transactions" .= encodeFoldable (encodeTx opts) (Al.txSeqTxns txs)
         )
   where
     TPraos.BHeader hBody _ = blkHeader
@@ -366,16 +367,20 @@ encodeScript
     :: ( Era era
        , Ledger.Api.Script era ~ Al.AlonzoScript era
        )
-    => Al.Script era
+    => IncludeCbor
+    -> Al.Script era
     -> Json
-encodeScript = encodeObject . \case
+encodeScript opts = encodeObject . \case
     Al.TimelockScript nativeScript ->
         "language" .=
             encodeText "native" <>
         "json" .=
             Allegra.encodeTimelock nativeScript <>
-        "cbor" .=
-            encodeByteStringBase16 (Ledger.originalBytes nativeScript)
+        if includeScriptCbor opts then
+            "cbor" .=
+                encodeByteStringBase16 (Ledger.originalBytes nativeScript)
+        else
+            mempty
     Al.PlutusScript lang serializedScript ->
         "language" .=
             encodeText (stringifyLanguage lang) <>
@@ -413,25 +418,30 @@ encodeTx
         ( Crypto crypto
         , era ~ AlonzoEra crypto
         )
-    => Al.AlonzoTx era
+    => IncludeCbor
+    -> Al.AlonzoTx era
     -> Json
-encodeTx x =
-    Shelley.encodeTxId (Ledger.txid @(AlonzoEra crypto) (Al.body x))
-        <>
-    "spends" .= encodeIsValid (Al.isValid x)
-        <>
-    encodeTxBody (Al.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
-        <>
-    "metadata" .=? OmitWhenNothing fst auxiliary
-        <>
-    encodeWitnessSet (snd <$> auxiliary) (Al.wits x)
-        <>
-    "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
-        & encodeObject
+encodeTx opts x =
+    encodeObject
+        ( Shelley.encodeTxId (Ledger.txid @(AlonzoEra crypto) (Al.body x))
+       <>
+        "spends" .= encodeIsValid (Al.isValid x)
+       <>
+        encodeTxBody (Al.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
+       <>
+        "metadata" .=? OmitWhenNothing fst auxiliary
+       <>
+        encodeWitnessSet opts (snd <$> auxiliary) (Al.wits x)
+       <>
+        if includeTransactionCbor opts then
+           "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
+        else
+           mempty
+       )
   where
     auxiliary = do
         hash <- Shelley.encodeAuxiliaryDataHash <$> Al.atbAuxDataHash (Al.body x)
-        (labels, scripts) <- encodeAuxiliaryData <$> Al.auxiliaryData x
+        (labels, scripts) <- encodeAuxiliaryData opts <$> Al.auxiliaryData x
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts
@@ -476,7 +486,7 @@ encodeTxBody x scripts =
         Shelley.encodeDCerts (Al.atbCerts x)
 
     (votes, actions) = fromSMaybe ([], mirs) $
-        Shelley.encodeUpdate encodePParamsUpdate mirs <$> (Al.atbUpdate x)
+        Shelley.encodeUpdate encodePParamsUpdate mirs <$> Al.atbUpdate x
 
 encodeTxOut
     :: Crypto crypto
@@ -536,10 +546,11 @@ encodeTranslationError err = encodeText $ case err of
 
 encodeWitnessSet
     :: (Ledger.Era era, Ledger.Script era ~ Al.AlonzoScript era)
-    => StrictMaybe (AuxiliaryScripts era)
+    => IncludeCbor
+    -> StrictMaybe (AuxiliaryScripts era)
     -> Al.AlonzoTxWits era
     -> Series
-encodeWitnessSet (fromSMaybe mempty -> auxScripts) x =
+encodeWitnessSet opts (fromSMaybe mempty -> auxScripts) x =
     "signatories" .=
         encodeFoldable2
             Shelley.encodeBootstrapWitness
@@ -547,7 +558,7 @@ encodeWitnessSet (fromSMaybe mempty -> auxScripts) x =
             (Al.txwitsBoot x)
             (Al.txwitsVKey x) <>
     "scripts" .=? OmitWhen null
-        (encodeMap Shelley.stringifyScriptHash encodeScript)
+        (encodeMap Shelley.stringifyScriptHash (encodeScript opts))
         (Al.txscripts x <> auxScripts) <>
     "datums" .=? OmitWhen null
         (encodeMap stringifyDataHash encodeData)

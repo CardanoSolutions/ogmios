@@ -152,24 +152,25 @@ encodeAcquireExpired = \case
         encodeText "Acquired point no longer exist."
 
 encodeBlock
-    :: Crypto crypto
-    => CardanoBlock crypto
+    :: forall crypto. (Era (ByronEra crypto))
+    =>IncludeCbor
+    -> CardanoBlock crypto
     -> Json
-encodeBlock = \case
+encodeBlock opts = \case
     BlockByron blk ->
-        Byron.encodeABlockOrBoundary (byronBlockRaw blk)
+        Byron.encodeABlockOrBoundary @crypto opts (byronBlockRaw blk)
     BlockShelley blk ->
-        Shelley.encodeBlock blk
+        Shelley.encodeBlock opts blk
     BlockAllegra blk ->
-        Allegra.encodeBlock blk
+        Allegra.encodeBlock opts blk
     BlockMary blk ->
-        Mary.encodeBlock blk
+        Mary.encodeBlock opts blk
     BlockAlonzo blk ->
-        Alonzo.encodeBlock blk
+        Alonzo.encodeBlock opts blk
     BlockBabbage blk ->
-        Babbage.encodeBlock blk
+        Babbage.encodeBlock opts blk
     BlockConway blk ->
-        Conway.encodeBlock blk
+        Conway.encodeBlock opts blk
 
 encodeSubmitTransactionError
     :: Crypto crypto
@@ -244,21 +245,22 @@ encodeTx
     :: forall crypto.
         ( Crypto crypto
         )
-    => GenTx (CardanoBlock crypto)
+    => IncludeCbor
+    -> GenTx (CardanoBlock crypto)
     -> Json
-encodeTx = \case
+encodeTx opts = \case
     GenTxConway (ShelleyTx _ x) ->
-        Conway.encodeTx x
+        Conway.encodeTx opts x
     GenTxBabbage (ShelleyTx _ x) ->
-        Babbage.encodeTx x
+        Babbage.encodeTx opts x
     GenTxAlonzo (ShelleyTx _ x) ->
-        Alonzo.encodeTx x
+        Alonzo.encodeTx opts x
     GenTxMary (ShelleyTx _ x) ->
-        Mary.encodeTx x
+        Mary.encodeTx opts x
     GenTxAllegra (ShelleyTx _ x) ->
-        Allegra.encodeTx x
+        Allegra.encodeTx opts x
     GenTxShelley (ShelleyTx _ x) ->
-        Shelley.encodeTx x
+        Shelley.encodeTx opts x
     GenTxByron _ ->
         error "encodeTx: unsupported Byron transaction."
 

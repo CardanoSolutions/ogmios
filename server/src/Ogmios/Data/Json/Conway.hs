@@ -67,9 +67,10 @@ encodeAnchor x = encodeObject
 encodeBlock
     :: ( Crypto crypto
        )
-    => ShelleyBlock (Praos crypto) (ConwayEra crypto)
+    => IncludeCbor
+    -> ShelleyBlock (Praos crypto) (ConwayEra crypto)
     -> Json
-encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
+encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
         ( "type" .= encodeText "praos"
         <>
@@ -79,7 +80,7 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           Babbage.encodeHeader blkHeader
         <>
-          "transactions" .= encodeFoldable encodeTx (Al.txSeqTxns txs)
+          "transactions" .= encodeFoldable (encodeTx opts) (Al.txSeqTxns txs)
         )
 
 encodeDCert
@@ -261,26 +262,30 @@ encodeTx
         ( Crypto crypto
         , era ~ ConwayEra crypto
         )
-    => Ba.AlonzoTx era
+   => IncludeCbor
+    -> Ba.AlonzoTx era
     -> Json
-encodeTx x =
-    Shelley.encodeTxId (Ledger.txid @(ConwayEra crypto) (Cn.body x))
-        <>
-    "spends" .= Alonzo.encodeIsValid (Cn.isValid x)
-        <>
-    encodeTxBody (Cn.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
-        <>
-    "metadata" .=? OmitWhenNothing fst auxiliary
-        <>
-    Alonzo.encodeWitnessSet (snd <$> auxiliary) (Cn.wits x)
-        <>
-    "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
-        &
+encodeTx opts x =
     encodeObject
+        ( Shelley.encodeTxId (Ledger.txid @(ConwayEra crypto) (Cn.body x))
+       <>
+        "spends" .= Alonzo.encodeIsValid (Cn.isValid x)
+       <>
+        encodeTxBody opts (Cn.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
+       <>
+        "metadata" .=? OmitWhenNothing fst auxiliary
+       <>
+        Alonzo.encodeWitnessSet opts (snd <$> auxiliary) (Cn.wits x)
+       <>
+        if includeTransactionCbor opts then
+           "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
+        else
+           mempty
+        )
   where
     auxiliary = do
         hash <- Shelley.encodeAuxiliaryDataHash <$> Cn.ctbAdHash (Cn.body x)
-        (labels, scripts) <- Alonzo.encodeAuxiliaryData <$> Ba.auxiliaryData x
+        (labels, scripts) <- Alonzo.encodeAuxiliaryData opts <$> Ba.auxiliaryData x
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts
@@ -288,20 +293,21 @@ encodeTx x =
 
 encodeTxBody
     :: Crypto crypto
-    => Cn.ConwayTxBody (ConwayEra crypto)
+    => IncludeCbor
+    -> Cn.ConwayTxBody (ConwayEra crypto)
     -> [Ledger.ScriptHash crypto]
     -> Series
-encodeTxBody x scripts =
+encodeTxBody opts x scripts =
     "inputs" .=
         encodeFoldable (encodeObject . Shelley.encodeTxIn) (Cn.ctbSpendInputs x) <>
     "references" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Cn.ctbReferenceInputs x) <>
     "outputs" .=
-        encodeFoldable (encodeObject . Babbage.encodeTxOut . sizedValue) (Cn.ctbOutputs x) <>
+        encodeFoldable (encodeObject . Babbage.encodeTxOut opts . sizedValue) (Cn.ctbOutputs x) <>
     "collaterals" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Cn.ctbCollateralInputs x) <>
     "collateralReturn" .=? OmitWhenNothing
-        (encodeObject . Babbage.encodeTxOut . sizedValue) (Cn.ctbCollateralReturn x) <>
+        (encodeObject . Babbage.encodeTxOut opts . sizedValue) (Cn.ctbCollateralReturn x) <>
     "totalCollateral" .=? OmitWhenNothing
         encodeCoin (Cn.ctbTotalCollateral x) <>
     "certificates" .=? OmitWhen null

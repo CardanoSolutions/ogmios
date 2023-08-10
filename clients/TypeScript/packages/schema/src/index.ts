@@ -513,7 +513,7 @@ export interface Transaction {
   /**
    * The raw serialized (CBOR) transaction, as found on-chain.
    */
-  cbor: string;
+  cbor?: string;
 }
 export interface TransactionOutputReference {
   transaction: {
@@ -548,7 +548,7 @@ export interface Value {
 export interface Native {
   language: "native";
   json: ScriptNative;
-  cbor: string;
+  cbor?: string;
 }
 export interface ClauseSignature {
   clause: "signature";
@@ -832,7 +832,7 @@ export interface MetadataLabels {
    * An associated metadatum, as a CBOR bytestring or a JSON object if possible. Some binary representations cannot be represented in plain JSON and the 'json' field is therefore omitted.
    */
   [k: string]: {
-    cbor: string;
+    cbor?: string;
     json?: Metadatum;
   };
 }

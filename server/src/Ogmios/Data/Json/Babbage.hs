@@ -58,9 +58,10 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 encodeBlock
     :: ( Crypto crypto
        )
-    => ShelleyBlock (Praos crypto) (BabbageEra crypto)
+    => IncludeCbor
+    -> ShelleyBlock (Praos crypto) (BabbageEra crypto)
     -> Json
-encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
+encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
         ( "type" .= encodeText "praos"
         <>
@@ -70,7 +71,7 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           encodeHeader blkHeader
         <>
-          "transactions" .= encodeFoldable encodeTx (Al.txSeqTxns txs)
+          "transactions" .= encodeFoldable (encodeTx opts) (Al.txSeqTxns txs)
         )
 
 encodeHeader
@@ -231,25 +232,30 @@ encodeTx
         ( Crypto crypto
         , era ~ BabbageEra crypto
         )
-    => Ba.AlonzoTx era
+    => IncludeCbor
+    -> Ba.AlonzoTx era
     -> Json
-encodeTx x =
-    Shelley.encodeTxId (Ledger.txid @(BabbageEra crypto) (Ba.body x))
-        <>
-    "spends" .= Alonzo.encodeIsValid (Ba.isValid x)
-        <>
-    encodeTxBody (Ba.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
-        <>
-    "metadata" .=? OmitWhenNothing fst auxiliary
-        <>
-    Alonzo.encodeWitnessSet (snd <$> auxiliary) (Ba.wits x)
-        <>
-    "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
-        & encodeObject
+encodeTx opts x =
+    encodeObject
+        ( Shelley.encodeTxId (Ledger.txid @(BabbageEra crypto) (Ba.body x))
+       <>
+        "spends" .= Alonzo.encodeIsValid (Ba.isValid x)
+       <>
+        encodeTxBody opts (Ba.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
+       <>
+        "metadata" .=? OmitWhenNothing fst auxiliary
+       <>
+        Alonzo.encodeWitnessSet opts (snd <$> auxiliary) (Ba.wits x)
+       <>
+        if includeTransactionCbor opts then
+           "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
+        else
+           mempty
+       )
   where
     auxiliary = do
         hash <- Shelley.encodeAuxiliaryDataHash <$> Ba.btbAuxDataHash (Ba.body x)
-        (labels, scripts) <- Alonzo.encodeAuxiliaryData <$> Ba.auxiliaryData x
+        (labels, scripts) <- Alonzo.encodeAuxiliaryData opts <$> Ba.auxiliaryData x
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts
@@ -257,20 +263,21 @@ encodeTx x =
 
 encodeTxBody
     :: Crypto crypto
-    => Ba.BabbageTxBody (BabbageEra crypto)
+    => IncludeCbor
+    -> Ba.BabbageTxBody (BabbageEra crypto)
     -> [Ledger.ScriptHash crypto]
     -> Series
-encodeTxBody x scripts =
+encodeTxBody opts x scripts =
     "inputs" .=
         encodeFoldable (encodeObject . Shelley.encodeTxIn) (Ba.btbInputs x) <>
     "references" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Ba.btbReferenceInputs x) <>
     "outputs" .=
-        encodeFoldable (encodeObject . encodeTxOut . sizedValue) (Ba.btbOutputs x) <>
+        encodeFoldable (encodeObject . encodeTxOut opts . sizedValue) (Ba.btbOutputs x) <>
     "collaterals" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Ba.btbCollateral x) <>
     "collateralReturn" .=? OmitWhenNothing
-        (encodeObject . encodeTxOut . sizedValue) (Ba.btbCollateralReturn x) <>
+        (encodeObject . encodeTxOut opts . sizedValue) (Ba.btbCollateralReturn x) <>
     "totalCollateral" .=? OmitWhenNothing
         encodeCoin (Ba.btbTotalCollateral x) <>
     "certificates" .=? OmitWhen null
@@ -300,7 +307,7 @@ encodeTxBody x scripts =
         Shelley.encodeDCerts (Ba.btbCerts x)
 
     (votes, actions) = fromSMaybe ([], mirs) $
-        Shelley.encodeUpdate encodePParamsUpdate mirs <$> (Ba.btbUpdate x)
+        Shelley.encodeUpdate encodePParamsUpdate mirs <$> Ba.btbUpdate x
 
 encodeTxOut
     :: forall era.
@@ -309,9 +316,10 @@ encodeTxOut
         , Ba.Value era ~ Ma.MaryValue (Ledger.EraCrypto era)
         , Val (Ba.Value era)
         )
-    => Ba.BabbageTxOut era
+    => IncludeCbor
+    -> Ba.BabbageTxOut era
     -> Series
-encodeTxOut (Ba.BabbageTxOut addr value datum script) =
+encodeTxOut opts (Ba.BabbageTxOut addr value datum script) =
     "address" .=
         Shelley.encodeAddress addr <>
     "value" .=
@@ -325,7 +333,7 @@ encodeTxOut (Ba.BabbageTxOut addr value datum script) =
             "datum" .= Alonzo.encodeBinaryData bin
     ) <>
     "script" .=? OmitWhenNothing
-        Alonzo.encodeScript script
+        (Alonzo.encodeScript opts) script
 
 encodeUtxo
     :: forall era.
@@ -341,4 +349,4 @@ encodeUtxo =
     . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) []
     . Sh.unUTxO
   where
-    encodeIO i o = encodeObject (Shelley.encodeTxIn i <> encodeTxOut o)
+    encodeIO i o = encodeObject (Shelley.encodeTxIn i <> encodeTxOut includeAllCbor o)

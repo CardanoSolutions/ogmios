@@ -38,6 +38,14 @@ pre: "<b>5. </b>"
 
 - The default dashboard on localhost has been greatly rework and simplified. It also better handles errors.
 
+- Responses from the server no longer includes raw binary cbor by default. This was the case in particular for transactions. This behavior can be restored by configuring the server with `--include-cbor` to always include binary version of some specific objects such as transactions. This flag can be declined in more fine-grained flags if necessary:
+
+  - `--include-transaction-cbor`
+  - `--include-metadata-cbor`
+  - `--include-script-cbor`
+
+  where `--include-cbor` turns all three flags at once.
+
 #### Removed
 
 - **⚠️ BREAKING-CHANGE ⚠️** Compact mode is no more. Responses are more compact by default already and it is no longer possible to ask for a compact mode.

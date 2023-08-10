@@ -20,8 +20,10 @@ import Data.List
 import Ogmios.App.Configuration
     ( Configuration (..)
     , EpochSlots (..)
+    , IncludeCbor (..)
     , NetworkMagic (..)
     , NetworkParameters (..)
+    , includeAllCbor
     , mkSystemStart
     )
 import Ogmios.Control.MonadLog
@@ -146,6 +148,20 @@ spec = parallel $ do
                 defaultTracersInfo
           )
         , ( defaultArgs ++ [ "--port", "#" ]
+          , shouldFail
+          )
+
+        , ( defaultArgs ++ [ "--include-cbor" ]
+          , shouldSucceed
+                (defaultConfiguration { includeCbor = includeAllCbor })
+                defaultTracersInfo
+          )
+        , ( defaultArgs ++ [ "--include-transaction-cbor" ]
+          , shouldSucceed
+                (defaultConfiguration { includeCbor = IncludeCbor True False False })
+                defaultTracersInfo
+          )
+        , ( defaultArgs ++ [ "--include-cbor", "--include-transaction-cbor" ]
           , shouldFail
           )
 

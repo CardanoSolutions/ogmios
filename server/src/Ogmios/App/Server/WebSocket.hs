@@ -192,7 +192,7 @@ newWebSocketApp
     -> m WebSocketApp
 newWebSocketApp tr unliftIO = do
     NetworkParameters{slotsPerEpoch,networkMagic} <- asks (view typed)
-    Configuration{nodeSocket,maxInFlight,nodeConfig} <- asks (view typed)
+    Configuration{nodeSocket,maxInFlight,nodeConfig,includeCbor} <- asks (view typed)
     sensors <- asks (view typed)
     let getGenesisConfig = GetGenesisConfig
             { getByronGenesis = readByronGenesis nodeConfig
@@ -200,12 +200,39 @@ newWebSocketApp tr unliftIO = do
             , getAlonzoGenesis = readAlonzoGenesis nodeConfig
             , getConwayGenesis = readConwayGenesis nodeConfig
             }
+
+    let codecs =
+            ( mkChainSyncCodecs
+                (encodeBlock includeCbor)
+                encodePoint
+                encodeTip
+
+            , mkStateQueryCodecs
+                encodePoint
+                encodeAcquireFailure
+                encodeAcquireExpired
+
+            , mkTxMonitorCodecs
+                encodeTxId
+                (encodeTx includeCbor)
+
+            , mkTxSubmissionCodecs
+                encodeTxId
+                encodeRdmrPtr
+                encodeExUnits
+                (encodeObject . encodeTxIn)
+                encodeTranslationError
+                encodeSubmitTransactionError
+                encodeScriptFailure
+                encodeDeserialisationFailure
+            )
+
     return $ \pending -> unliftIO $ do
         logWith tr $ WebSocketConnectionAccepted (userAgent pending)
         recordSession sensors $ onExceptions $ acceptRequest pending $ \conn -> do
             let trClient = contramap WebSocketClient tr
             withExecutionUnitsEvaluator $ \exUnitsEvaluator exUnitsClients -> do
-                withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig conn $ \protocolsClients -> do
+                withOuroborosClients tr codecs maxInFlight sensors exUnitsEvaluator getGenesisConfig conn $ \protocolsClients -> do
                     let clientA = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch protocolsClients
                     let clientB = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch exUnitsClients
                     let vData  = NodeToClientVersionData networkMagic False
@@ -286,6 +313,7 @@ withOuroborosClients
         , MonadWebSocket m
         )
     => Logger TraceWebSocket
+    -> (ChainSyncCodecs Block, StateQueryCodecs Block, TxMonitorCodecs Block, TxSubmissionCodecs Block)
     -> MaxInFlight
     -> Sensors m
     -> ExecutionUnitsEvaluator m Block
@@ -293,7 +321,7 @@ withOuroborosClients
     -> Connection
     -> (Clients m Block -> m a)
     -> m a
-withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig conn action = do
+withOuroborosClients tr codecs maxInFlight sensors exUnitsEvaluator getGenesisConfig conn action = do
     (chainSyncQ, stateQueryQ, txSubmissionQ, txMonitorQ) <-
         atomically $ (,,,)
             <$> newTQueue
@@ -374,24 +402,11 @@ withOuroborosClients tr maxInFlight sensors exUnitsEvaluator getGenesisConfig co
                     ]
                 routeMessage matched chainSyncQ stateQueryQ txSubmissionQ txMonitorQ
 
-    chainSyncCodecs@ChainSyncCodecs{..} =
-        mkChainSyncCodecs encodeBlock encodePoint encodeTip
-    stateQueryCodecs@StateQueryCodecs{..} =
-        mkStateQueryCodecs encodePoint encodeAcquireFailure encodeAcquireExpired
-    txMonitorCodecs@TxMonitorCodecs{..} =
-        mkTxMonitorCodecs
-            encodeTxId
-            encodeTx
-    txSubmissionCodecs@TxSubmissionCodecs{..} =
-        mkTxSubmissionCodecs
-            encodeTxId
-            encodeRdmrPtr
-            encodeExUnits
-            (encodeObject . encodeTxIn)
-            encodeTranslationError
-            encodeSubmitTransactionError
-            encodeScriptFailure
-            encodeDeserialisationFailure
+    (   chainSyncCodecs@ChainSyncCodecs{..}
+      , stateQueryCodecs@StateQueryCodecs{..}
+      , txMonitorCodecs@TxMonitorCodecs{..}
+      , txSubmissionCodecs@TxSubmissionCodecs{..}
+      ) = codecs
 
 --
 -- Logging

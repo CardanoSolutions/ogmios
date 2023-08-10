@@ -33,6 +33,7 @@ import Network.TypedProtocol.Codec
     )
 import Ogmios.App.Configuration
     ( EpochSlots (..)
+    , omitOptionalCbor
     )
 import Ogmios.App.Protocol.TxMonitor
     ( mkTxMonitorClient
@@ -205,7 +206,7 @@ withTxMonitorClient
     -> m a
 withTxMonitorClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
-    let innerCodecs = mkTxMonitorCodecs encodeTxId encodeTx
+    let innerCodecs = mkTxMonitorCodecs encodeTxId (encodeTx omitOptionalCbor)
     let client = mkTxMonitorClient innerCodecs recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cTxMonitorCodec
     withMockChannel (txMonitorMockPeer seed codec) $ \channel -> do

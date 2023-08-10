@@ -738,9 +738,9 @@ encodeTxOutInAnyEra = encodeObject . \case
     TxOutInAnyEra (ShelleyBasedEraAlonzo, out) ->
         Alonzo.encodeTxOut out
     TxOutInAnyEra (ShelleyBasedEraBabbage, out) ->
-        Babbage.encodeTxOut out
+        Babbage.encodeTxOut includeAllCbor out
     TxOutInAnyEra (ShelleyBasedEraConway, out) ->
-        Babbage.encodeTxOut out
+        Babbage.encodeTxOut includeAllCbor out
 
 encodeValueInAnyEra :: ValueInAnyEra crypto -> Json
 encodeValueInAnyEra = \case

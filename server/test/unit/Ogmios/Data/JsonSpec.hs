@@ -70,6 +70,7 @@ import Ogmios.Data.Json.Orphans
     ()
 import Ogmios.Data.Json.Prelude
     ( encodeSlotLength
+    , omitOptionalCbor
     )
 import Ogmios.Data.Json.Query
     ( QueryInEra
@@ -438,7 +439,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response (NextBlockResponse Block)))
-            (_encodeNextBlockResponse encodeBlock encodePoint encodeTip)
+            (_encodeNextBlockResponse (encodeBlock omitOptionalCbor) encodePoint encodeTip)
             (200, "NextBlockResponse")
             "ogmios.json#/properties/NextBlockResponse"
 
@@ -489,7 +490,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response (NextTransactionResponse Block)))
-            (_encodeNextTransactionResponse encodeTxId encodeTx)
+            (_encodeNextTransactionResponse encodeTxId (encodeTx omitOptionalCbor))
             (10, "NextTransactionResponse")
             "ogmios.json#/properties/NextTransactionResponse"
 

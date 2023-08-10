@@ -9,6 +9,9 @@ import Ogmios.Prelude
 import Data.Aeson
     ( parseJSON
     )
+import Ogmios.App.Configuration
+    ( omitOptionalCbor
+    )
 import Ogmios.Data.Json
     ( MultiEraDecoder (..)
     , encodeDeserialisationFailure
@@ -43,4 +46,4 @@ inspectTransaction input =
                 errs
             exitWith (ExitFailure 1)
         Right (MultiEraDecoderSuccess transaction) ->
-            B8.putStrLn $ jsonToByteString $ encodeTx @StandardCrypto transaction
+            B8.putStrLn $ jsonToByteString $ encodeTx @StandardCrypto omitOptionalCbor transaction

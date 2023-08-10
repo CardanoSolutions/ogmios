@@ -12,6 +12,9 @@ module Ogmios.App.Configuration
     (
     -- * Configuration
     Configuration (..)
+    , IncludeCbor (..)
+    , includeAllCbor
+    , omitOptionalCbor
     , Severity (..)
 
     -- * Genesis Configurations
@@ -51,6 +54,11 @@ import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
     , Severity (..)
     )
+import Ogmios.Data.Json.Prelude
+    ( IncludeCbor (..)
+    , includeAllCbor
+    , omitOptionalCbor
+    )
 import Ogmios.Data.Json.Query
     ( GenesisConfig
     )
@@ -75,6 +83,7 @@ data Configuration = Configuration
     , serverPort :: !Int
     , connectionTimeout :: !Int
     , maxInFlight :: !Int
+    , includeCbor :: !IncludeCbor
     } deriving (Generic, Eq, Show)
 
 data NetworkParameters = NetworkParameters

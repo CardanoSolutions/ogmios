@@ -25,6 +25,7 @@ import Data.ByteString.Bech32
     )
 import Data.Maybe.Strict
     ( fromSMaybe
+    , isSNothing
     )
 import Data.Sequence.Strict
     ( StrictSeq
@@ -133,9 +134,10 @@ encodeBHeader (TPraos.BHeader hBody _hSig) =
 
 encodeBlock
     :: Crypto crypto
-    => ShelleyBlock (TPraos crypto) (ShelleyEra crypto)
+    => IncludeCbor
+    -> ShelleyBlock (TPraos crypto) (ShelleyEra crypto)
     -> Json
-encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
+encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
         ( "type" .= encodeText "praos"
         <>
@@ -147,7 +149,7 @@ encodeBlock (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
         "size" .= encodeSingleton "bytes" (encodeNatural (TPraos.bsize hBody))
         <>
-        "transactions" .= encodeFoldable encodeTx (Sh.txSeqTxns' txs)
+        "transactions" .= encodeFoldable (encodeTx opts) (Sh.txSeqTxns' txs)
         )
   where
     TPraos.BHeader hBody _ = blkHeader
@@ -388,26 +390,34 @@ encodeKESPeriod =
 
 encodeMetadata
     :: forall era. (Era era)
-    => Sh.ShelleyTxAuxData era
+    => IncludeCbor
+    -> Sh.ShelleyTxAuxData era
     -> Json
-encodeMetadata (Sh.ShelleyTxAuxData blob) =
-    encodeMetadataBlob @era blob
+encodeMetadata opts (Sh.ShelleyTxAuxData blob) =
+    encodeMetadataBlob @era opts blob
 
 encodeMetadataBlob
     :: forall era. (Era era)
-    => Map Word64 Sh.Metadatum
+    => IncludeCbor
+    -> Map Word64 Sh.Metadatum
     -> Json
-encodeMetadataBlob =
+encodeMetadataBlob opts =
     encodeMap show encodeMetadatum
   where
     encodeMetadatum :: Sh.Metadatum -> Json
     encodeMetadatum meta =
         encodeObject
-            ( "cbor" .=
-                encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) meta)
+            ( ( if includeMetadataCbor opts || isSNothing json then
+                "cbor" .=
+                    encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) meta)
+              else
+                mempty
+              )
            <> "json" .=? OmitWhenNothing
-                identity (tryEncodeMetadatumAsJson meta)
+                identity json
             )
+      where
+        json = tryEncodeMetadatumAsJson meta
 
     tryEncodeMetadatumAsJson :: Sh.Metadatum -> StrictMaybe Json
     tryEncodeMetadatumAsJson = \case
@@ -698,16 +708,23 @@ encodeRewardAcnt =
 
 encodeScript
     :: Era era
-    => Sh.MultiSig era
+    => IncludeCbor
+    -> Sh.MultiSig era
     -> Json
-encodeScript script =
-    "language" .=
-        encodeText "native" <>
-    "json" .=
-        encodeMultiSig script <>
-    "cbor" .=
-        encodeByteStringBase16 (Ledger.originalBytes script)
-    & encodeObject
+encodeScript opts script =
+    encodeObject
+        ( "language" .=
+            encodeText "native"
+       <>
+        "json" .=
+            encodeMultiSig script
+       <>
+        if includeScriptCbor opts then
+            "cbor" .=
+                encodeByteStringBase16 (Ledger.originalBytes script)
+        else
+            mempty
+        )
 
 encodeScriptHash
     :: Crypto crypto
@@ -780,26 +797,31 @@ encodeStakePoolRelay = encodeObject . \case
 
 encodeTx
     :: forall crypto era. (Crypto crypto, era ~ ShelleyEra crypto)
-    => Sh.ShelleyTx era
+    => IncludeCbor
+    -> Sh.ShelleyTx era
     -> Json
-encodeTx x =
-    encodeTxId (Ledger.txid @(ShelleyEra crypto) (Sh.body x))
-        <>
-    "spends" .= encodeText "inputs"
-        <>
-    encodeTxBody (Sh.body x)
-        <>
-    "metadata" .=? OmitWhenNothing identity metadata
-        <>
-    encodeWitnessSet (Sh.wits x)
-        <>
-    "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
-        & encodeObject
+encodeTx opts x =
+    encodeObject
+        ( encodeTxId (Ledger.txid @(ShelleyEra crypto) (Sh.body x))
+       <>
+        "spends" .= encodeText "inputs"
+       <>
+        encodeTxBody (Sh.body x)
+       <>
+        "metadata" .=? OmitWhenNothing identity metadata
+       <>
+        encodeWitnessSet opts (Sh.wits x)
+       <>
+        if includeTransactionCbor opts then
+           "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
+        else
+           mempty
+        )
   where
     metadata = liftA2
         (\hash body -> encodeObject ("hash" .= hash <> "labels" .= body))
         (encodeAuxiliaryDataHash <$> Sh.stbMDHash (Sh.body x))
-        (encodeMetadata <$> Sh.auxiliaryData x)
+        (encodeMetadata opts <$> Sh.auxiliaryData x)
 
 encodeTxBody
     :: Crypto crypto
@@ -935,9 +957,10 @@ encodeWdrl =
 
 encodeWitnessSet
     :: Crypto crypto
-    => Sh.ShelleyTxWits (ShelleyEra crypto)
+    => IncludeCbor
+    -> Sh.ShelleyTxWits (ShelleyEra crypto)
     -> Series
-encodeWitnessSet x =
+encodeWitnessSet opts x =
     "signatories" .=
         encodeFoldable2
             encodeBootstrapWitness
@@ -945,7 +968,7 @@ encodeWitnessSet x =
             (Sh.bootWits x)
             (Sh.addrWits x) <>
     "scripts" .=? OmitWhen null
-        (encodeMap stringifyScriptHash encodeScript) (Sh.scriptWits x)
+        (encodeMap stringifyScriptHash (encodeScript opts)) (Sh.scriptWits x)
 
 encodeWitVKey
     :: Crypto crypto

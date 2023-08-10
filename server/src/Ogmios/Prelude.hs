@@ -73,6 +73,9 @@ module Ogmios.Prelude
     , fromEraIndex
     ) where
 
+import Cardano.Ledger.Core
+    ( ByronEra
+    )
 import Cardano.Ledger.Crypto
     ( Crypto
     , StandardCrypto
@@ -239,8 +242,6 @@ type family EraProto era :: Type where
     EraProto (AlonzoEra crypto)  = TPraos crypto
     EraProto (BabbageEra crypto) = Praos crypto
     EraProto (ConwayEra crypto)  = Praos crypto
-
-data ByronEra crypto
 
 data ShelleyBasedEra era where
     ShelleyBasedEraShelley :: forall crypto. ShelleyBasedEra (ShelleyEra crypto)

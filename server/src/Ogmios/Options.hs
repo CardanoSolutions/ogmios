@@ -75,10 +75,13 @@ import Data.Time.Format.ISO8601
 import Ogmios.App.Configuration
     ( Configuration (..)
     , EpochSlots (..)
+    , IncludeCbor (..)
     , NetworkMagic (..)
     , NetworkParameters (..)
     , SystemStart (..)
     , TraceConfiguration (..)
+    , includeAllCbor
+    , omitOptionalCbor
     )
 import Options.Applicative.Help.Pretty
     ( indent
@@ -159,6 +162,11 @@ parserInfo = info (helper <*> parser) $ mempty
                     <*> serverPortOption
                     <*> connectionTimeoutOption
                     <*> maxInFlightOption
+                    <*> (includeCborFlag <|> (IncludeCbor
+                        <$> includeTransactionCborFlag
+                        <*> includeMetadataCborFlag
+                        <*> includeScriptCborFlag
+                    ))
                 )
             <*> (tracersOption <|> Tracers
                     <$> fmap Const (logLevelOption "health")
@@ -226,6 +234,38 @@ maxInFlightOption = option auto $ mempty
     <> metavar "INT"
     <> help "Max number of ChainSync requests which can be pipelined at once. Only applies to the chain-sync protocol."
     <> value 1000
+    <> showDefault
+
+-- | [--include-cbor]
+includeCborFlag :: Parser IncludeCbor
+includeCborFlag = fmap toIncludeCbor $ switch $ mempty
+    <> long "include-cbor"
+    <> help "In chain-synchronization, always include a 'cbor' field for transaction, metadata and scripts that contain the original binary serialized representation of each object."
+    <> showDefault
+  where
+    toIncludeCbor = \case
+        True -> includeAllCbor
+        False -> omitOptionalCbor
+
+-- | [--include-transaction-cbor]
+includeTransactionCborFlag :: Parser Bool
+includeTransactionCborFlag = switch $ mempty
+    <> long "include-transaction-cbor"
+    <> help "In chain-synchronization, always include a 'cbor' field for all transactions that contain the original binary serialized representation of that transaction"
+    <> showDefault
+
+-- | [--include-metadata-cbor]
+includeMetadataCborFlag :: Parser Bool
+includeMetadataCborFlag = switch $ mempty
+    <> long "include-metadata-cbor"
+    <> help "In chain-synchronization, always include a 'cbor' field for all metadata containing the original binary serialized representation of that metadata. Otherwise, the field is only present when the metadata can't be safely represented as JSON."
+    <> showDefault
+
+-- | [--include-script-cbor]
+includeScriptCborFlag :: Parser Bool
+includeScriptCborFlag = switch $ mempty
+    <> long "include-script-cbor"
+    <> help "In chain-synchronization, always include a 'cbor' field for all phase-1 native scripts that contain the original binary serialized representation of that script."
     <> showDefault
 
 -- | [--log-level=SEVERITY]

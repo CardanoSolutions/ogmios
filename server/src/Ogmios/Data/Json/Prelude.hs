@@ -12,6 +12,9 @@ module Ogmios.Data.Json.Prelude
     , FromJSON
     , ToJSON
     , ViaEncoding (..)
+    , IncludeCbor (..)
+    , omitOptionalCbor
+    , includeAllCbor
     , jsonToByteString
     , decodeWith
     , choice
@@ -202,6 +205,18 @@ import qualified Data.Text as T
 --
 
 type Json = Json.Encoding
+
+data IncludeCbor = IncludeCbor
+    { includeTransactionCbor :: !Bool
+    , includeMetadataCbor :: !Bool
+    , includeScriptCbor :: !Bool
+    } deriving (Generic, Eq, Show)
+
+includeAllCbor :: IncludeCbor
+includeAllCbor = IncludeCbor True True True
+
+omitOptionalCbor :: IncludeCbor
+omitOptionalCbor = IncludeCbor False False False
 
 jsonToByteString :: Json -> ByteString
 jsonToByteString = toStrict . Json.encodingToLazyByteString
