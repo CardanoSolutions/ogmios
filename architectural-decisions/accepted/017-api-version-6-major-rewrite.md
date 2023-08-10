@@ -53,6 +53,16 @@ The outer API of Ogmios will be rewritten, aiming to solve the various quirks th
 
 - Every single client application is now broken :) ... but here is a (hopefully exhaustive) migration guide:
 
+- The time and bandwidth necessary to transfer equivalent data has been reduced. Here's a benchmark of a synchronization of the Alonzo era on mainnet:
+
+  | version | number of blocks | synchronization time | total data transferred |
+  | ---     | ---              | ---                  | ---                    |
+  | v5.6.0  | `1 555 639`      |                      |                        |
+  | v6.0.0  | `1 555 639`      | 40min 06s            | 274.98 GB              |
+
+Done in -2406s
+Data downloaded: 281577MB
+
 ### Migration guide
 
 > **Note**
