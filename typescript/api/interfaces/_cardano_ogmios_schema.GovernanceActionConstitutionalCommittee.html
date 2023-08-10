@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>StakePoolOperator | cardano-ogmios</title>
+	<title>GovernanceActionConstitutionalCommittee | cardano-ogmios</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -48,13 +48,16 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-module">
-						<a href="_cardano_ogmios_schema.StakePoolOperator.html" class="tsd-kind-icon">Stake<wbr>Pool<wbr>Operator</a>
+						<a href="_cardano_ogmios_schema.GovernanceActionConstitutionalCommittee.html" class="tsd-kind-icon">Governance<wbr>Action<wbr>Constitutional<wbr>Committee</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.StakePoolOperator.html#role" class="tsd-kind-icon">role</a>
+								<a href="_cardano_ogmios_schema.GovernanceActionConstitutionalCommittee.html#members" class="tsd-kind-icon">members</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.StakePoolOperator.html#stakePool" class="tsd-kind-icon">stake<wbr>Pool</a>
+								<a href="_cardano_ogmios_schema.GovernanceActionConstitutionalCommittee.html#quorum" class="tsd-kind-icon">quorum</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.GovernanceActionConstitutionalCommittee.html#type" class="tsd-kind-icon">type</a>
 							</li>
 						</ul>
 					</li>
@@ -74,16 +77,23 @@
 							<a href="../modules/_cardano_ogmios_schema.html">@cardano-ogmios/schema</a>
 						</li>
 						<li>
-							<a href="_cardano_ogmios_schema.StakePoolOperator.html">StakePoolOperator</a>
+							<a href="_cardano_ogmios_schema.GovernanceActionConstitutionalCommittee.html">GovernanceActionConstitutionalCommittee</a>
 						</li>
 					</ul>
 				</div>
 			</div>
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>A change (partial or total) in the constitutional committee.</p>
+					</div>
+				</div>
+			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">StakePoolOperator</span>
+						<span class="target">GovernanceActionConstitutionalCommittee</span>
 					</li>
 				</ul>
 			</section>
@@ -94,8 +104,9 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.StakePoolOperator.html#role" class="tsd-kind-icon">role</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.StakePoolOperator.html#stakePool" class="tsd-kind-icon">stake<wbr>Pool</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.GovernanceActionConstitutionalCommittee.html#members" class="tsd-kind-icon">members</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.GovernanceActionConstitutionalCommittee.html#quorum" class="tsd-kind-icon">quorum</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.GovernanceActionConstitutionalCommittee.html#type" class="tsd-kind-icon">type</a></li>
 							</ul>
 						</section>
 					</div>
@@ -104,34 +115,37 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="role" class="tsd-anchor"></a>
-					<h3>role</h3>
-					<div class="tsd-signature tsd-kind-icon">role<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"stakePoolOperator"</span></div>
+					<a name="members" class="tsd-anchor"></a>
+					<h3>members</h3>
+					<div class="tsd-signature tsd-kind-icon">members<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_schema.RewardTransfer.html" class="tsd-signature-type">RewardTransfer</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fd5dca7/clients/TypeScript/packages/schema/src/index.ts#L773">packages/schema/src/index.ts:773</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/c835f83/clients/TypeScript/packages/schema/src/index.ts#L779">packages/schema/src/index.ts:779</a>
 							</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="stakePool" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> stake<wbr>Pool</h3>
-					<div class="tsd-signature tsd-kind-icon">stake<wbr>Pool<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<a name="quorum" class="tsd-anchor"></a>
+					<h3>quorum</h3>
+					<div class="tsd-signature tsd-kind-icon">quorum<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/fd5dca7/clients/TypeScript/packages/schema/src/index.ts#L774">packages/schema/src/index.ts:774</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/c835f83/clients/TypeScript/packages/schema/src/index.ts#L780">packages/schema/src/index.ts:780</a>
 							</li>
 						</ul>
 					</aside>
-					<div class="tsd-type-declaration">
-						<h4>Type declaration</h4>
-						<ul class="tsd-parameters">
-							<li class="tsd-parameter">
-								<h5>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="type" class="tsd-anchor"></a>
+					<h3>type</h3>
+					<div class="tsd-signature tsd-kind-icon">type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"constitutionalCommittee"</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/c835f83/clients/TypeScript/packages/schema/src/index.ts#L778">packages/schema/src/index.ts:778</a>
 							</li>
 						</ul>
-					</div>
+					</aside>
 				</section>
 			</section>
 		</div>

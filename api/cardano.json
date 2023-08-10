@@ -547,13 +547,23 @@
   , "DelegateRepresentative":
     { "title": "DelegateRepresentative"
     , "oneOf":
-      [ { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+      [ { "title": "DelegateRepresentative<Registered>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "id" ]
+        , "properties":
+          { "id":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          }
         }
-      , { "type": "string"
+      , { "title": "DelegateRepresentative<NoConfidence>"
+        , "type": "string"
         , "description": "A special delegate representative which always vote no, except on votes of no-confidence."
         , "enum": [ "noConfidence" ]
         }
-      , { "type": "string"
+      , { "title": "DelegateRepresentative<Abstain>"
+        , "type": "string"
         , "description": "A special delegate representative which always abstain."
         , "enum": [ "abstain" ]
         }
@@ -899,7 +909,51 @@
             }
           }
         }
-      , { "type": "string" }
+      , { "type": "object"
+        , "title": "GovernanceAction<ConstitutionalCommittee>"
+        , "description": "A change (partial or total) in the constitutional committee."
+        , "additionalProperties": false
+        , "required": [ "type", "members", "quorum" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "constitutionalCommittee" ]
+            }
+          , "members":
+            { "$ref": "cardano.json#/definitions/RewardTransfer"
+            }
+          , "quorum":
+            { "$ref": "cardano.json#/definitions/Ratio"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "GovernanceAction<Constitution>"
+        , "description": "A change in the constitution. Only its hash is recorded on-chain."
+        , "additionalProperties": false
+        , "required": [ "type", "hash" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "constitution" ]
+            }
+          , "hash":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "GovernanceAction<NoConfidence>"
+        , "description": "A motion of no-confidence, indicate a lack of trust in the constitutional committee."
+        , "additionalProperties": false
+        , "required": [ "type" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "noConfidence" ]
+            }
+          }
+        }
       ]
     }
 
@@ -948,9 +1002,10 @@
 
   , "GovernanceVote":
     { "title": "GovernanceVote"
+    , "description": "A vote on a governance proposal. The 'anchor' is optional and 'proposal' is only present from Conway onwards. Before Conway, a vote would always refer to all proposals part of the same transaction."
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "issuer", "vote", "proposal" ]
+    , "required": [ "issuer", "vote" ]
     , "properties":
       { "issuer":
         { "$ref": "cardano.json#/definitions/GovernanceVoter"
@@ -970,35 +1025,49 @@
 
   , "GovernanceVoter":
     { "oneOf":
-      [ { "title": "ConstitutionalCommitteeMember"
+      [ { "title": "Voter<GenesisDelegate>"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "role", "credential" ]
+        , "required": [ "role", "id" ]
+        , "properties":
+          { "role":
+            { "type": "string"
+            , "enum": [ "genesisDelegate" ]
+            }
+          , "id":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          }
+        }
+      , { "title": "Voter<ConstitutionalCommittee>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "role", "id" ]
         , "properties":
           { "role":
             { "type": "string"
             , "enum": [ "constitutionalCommittee" ]
             }
-          , "credential":
+          , "id":
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
             }
           }
         }
-      , { "title": "DelegateRepresentative"
+      , { "title": "Voter<DelegateRepresentative>"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "role", "credential" ]
+        , "required": [ "role", "id" ]
         , "properties":
           { "role":
             { "type": "string"
             , "enum": [ "delegateRepresentative" ]
             }
-          , "credential":
+          , "id":
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
             }
           }
         }
-      , { "title": "StakePoolOperator"
+      , { "title": "Voter<StakePoolOperator>"
         , "type": "object"
         , "additionalProperties": false
         , "required": [ "role" ]
@@ -1007,15 +1076,8 @@
             { "type": "string"
             , "enum": [ "stakePoolOperator" ]
             }
-          , "stakePool":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "id" ]
-            , "properties":
-              { "id":
-                { "$ref": "cardano.json#/definitions/StakePoolId"
-                }
-              }
+          , "id":
+            { "$ref": "cardano.json#/definitions/StakePoolId"
             }
           }
         }
@@ -1805,11 +1867,11 @@
     { "title": "Tip"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "slot", "id", "blockNo" ]
+    , "required": [ "slot", "id", "height" ]
     , "properties":
       { "slot": { "$ref": "cardano.json#/definitions/Slot" }
       , "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
-      , "blockNo": { "$ref": "cardano.json#/definitions/BlockHeight" }
+      , "height": { "$ref": "cardano.json#/definitions/BlockHeight" }
       }
     }
 
