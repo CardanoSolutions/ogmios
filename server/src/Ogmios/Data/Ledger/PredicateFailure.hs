@@ -342,7 +342,7 @@ data MultiEraPredicateFailure crypto
     | InvalidProtocolParametersUpdate
 
     ---------------------------------------------------------------------------
-    -- Rule → DELEGS TODO
+    -- Rule → DELEGS
     ---------------------------------------------------------------------------
 
     -- Stake pool must exist / be registered when delegating to it.
@@ -356,7 +356,7 @@ data MultiEraPredicateFailure crypto
         }
 
     ---------------------------------------------------------------------------
-    -- Rule → POOL TODO
+    -- Rule → POOL
     ---------------------------------------------------------------------------
 
     -- A stake pool must not issue a retirement certificate too far in the
@@ -382,7 +382,7 @@ data MultiEraPredicateFailure crypto
         }
 
     ---------------------------------------------------------------------------
-    -- Rule → DELEG TODO
+    -- Rule → DELEG
     ---------------------------------------------------------------------------
 
     -- One cannot register a stake credential twice

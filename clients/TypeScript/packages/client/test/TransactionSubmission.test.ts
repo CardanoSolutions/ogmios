@@ -216,8 +216,6 @@ describe('TransactionSubmission', () => {
           )
         } catch (e) {
           expect(e).toBeInstanceOf(JSONRPCError)
-          // TODO: assert on error code
-          // expect(errors[0]).toBeInstanceOf(EvaluateTx.errors.ValidatorFailed.Error)
         }
       })
 
