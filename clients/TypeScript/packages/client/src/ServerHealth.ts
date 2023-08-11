@@ -1,7 +1,7 @@
 import fetch from 'cross-fetch'
 import { CustomError } from 'ts-custom-error'
 import { Connection } from './Connection'
-import { Tip } from '@cardano-ogmios/schema'
+import { Era, Tip } from '@cardano-ogmios/schema'
 
 /**
  * Captures the health of the server, including metrics and synchronization progress.
@@ -22,7 +22,7 @@ import { Tip } from '@cardano-ogmios/schema'
  * @category Connection
  */
 export interface ServerHealth {
-  currentEra: 'Alonzo' | 'Byron' | 'Mary' | 'Shelley'
+  currentEra: Era,
   lastKnownTip: Tip,
   lastTipUpdate: string | null,
   metrics: {
@@ -43,7 +43,9 @@ export interface ServerHealth {
     activeConnections: number
   },
   startTime: string,
-  networkSynchronization: number,
+  network: 'mainnet' | 'preview' | 'preprod',
+  networkSynchronization: number
+  version: string,
 }
 
 /**
