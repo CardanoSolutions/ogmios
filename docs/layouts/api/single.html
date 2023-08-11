@@ -3,7 +3,7 @@
 <script>
   AsyncApiStandalone.render({
     schema: {
-      url: '/api/specification.yaml',
+      url: '/api/{{ .Page.File.BaseFileName }}/specification.yaml',
     },
     config: {
       show: {

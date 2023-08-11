@@ -1,0 +1,6 @@
+<div id="asyncapi"></div>
+<link rel="stylesheet" href="https://unpkg.com/@asyncapi/react-component@1.0.0-next.47/styles/default.min.css" />
+<link rel="stylesheet" href="{{ with resources.Get "css/asyncapi-override.css" }}{{ .RelPermalink }}{{ end }}" />
+<div class="loader"></div>
+<!-- Temporary pull the local dependency until https://github.com/asyncapi/asyncapi-react/pull/744 is accepted and released -->
+<script src="{{ with resources.Get "js/asyncapi@1.0.0-next.47.js" }}{{ .RelPermalink }}{{ end }}"></script>
