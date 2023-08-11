@@ -7,9 +7,9 @@ github:              "cardanosolutions/ogmios"
 license:             MPL-2.0
 author:              "KtorZ <matthias.benkort@gmail.com>"
 maintainer:          "matthias.benkort@gmail.com"
-copyright:           "2020-2021 KtorZ"
+copyright:           "2020-2024 KtorZ"
 description:         Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server#ogmios-server>
-synopsis:            A JSON-WSP WebSocket client for cardano-node
+synopsis:            A JSON/RPC-2.0 WebSocket client for cardano-node
 category:            Web
 
 extra-source-files:

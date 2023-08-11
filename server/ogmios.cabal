@@ -6,7 +6,7 @@ cabal-version: 3.0
 
 name:           ogmios
 version:        0
-synopsis:       A JSON-WSP WebSocket client for cardano-node
+synopsis:       A JSON/RPC-2.0 WebSocket client for cardano-node
 description:    Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server#ogmios-server>
 category:       Web
 stability:      stable
@@ -14,7 +14,7 @@ homepage:       https://github.com/cardanosolutions/ogmios#readme
 bug-reports:    https://github.com/cardanosolutions/ogmios/issues
 author:         KtorZ <matthias.benkort@gmail.com>
 maintainer:     matthias.benkort@gmail.com
-copyright:      2020-2021 KtorZ
+copyright:      2020-2024 KtorZ
 license:        MPL-2.0
 license-file:   LICENSE
 build-type:     Simple
