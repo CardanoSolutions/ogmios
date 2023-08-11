@@ -23,7 +23,7 @@ services:
         max-file: "20"
 
   ogmios:
-    image: cardanosolutions/ogmios:latest-${NETWORK:-mainnet}
+    image: cardanosolutions/ogmios:latest
     build:
       context: .
       target: ogmios
