@@ -331,6 +331,7 @@ jobs:
         target: [ ogmios, cardano-node-ogmios ]
         network: [ mainnet, preprod, preview ]
         cardano-node: [ 8.1.1, 8.1.2 ]
+        cardano-node-latest: [ 8.1.2 ]
         arch: [ x86_64 ]
 
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-latest' }}
@@ -381,7 +382,7 @@ jobs:
       with:
         build-args: |
           NETWORK=${{ matrix.network }}
-          CARDANO_NODE_VERSION=${{ matrix.cardano-node }}
+          CARDANO_NODE_VERSION=${{ matrix.cardano-node-latest }}
         context: .
         push: true
         tags: ${{ steps.base-variables.outputs.image }}:latest
@@ -396,7 +397,7 @@ jobs:
       with:
         build-args: |
           NETWORK=${{ matrix.network }}
-          CARDANO_NODE_VERSION=${{ matrix.cardano-node }}
+          CARDANO_NODE_VERSION=${{ matrix.cardano-node-latest }}
         context: .
         push: true
         tags: ${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
