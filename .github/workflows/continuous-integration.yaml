@@ -1,0 +1,172 @@
+name: Continuous Integration
+
+on:
+  push:
+    tags: [ "v5.6.*" ]
+
+jobs:
+
+  #   █████████                                                       ███████████              ███  ████      █████
+  #  ███░░░░░███                                                     ░░███░░░░░███            ░░░  ░░███     ░░███
+  # ░███    ░░░   ██████  ████████  █████ █████  ██████  ████████     ░███    ░███ █████ ████ ████  ░███   ███████
+  # ░░█████████  ███░░███░░███░░███░░███ ░░███  ███░░███░░███░░███    ░██████████ ░░███ ░███ ░░███  ░███  ███░░███
+  #  ░░░░░░░░███░███████  ░███ ░░░  ░███  ░███ ░███████  ░███ ░░░     ░███░░░░░███ ░███ ░███  ░███  ░███ ░███ ░███
+  #  ███    ░███░███░░░   ░███      ░░███ ███  ░███░░░   ░███         ░███    ░███ ░███ ░███  ░███  ░███ ░███ ░███
+  # ░░█████████ ░░██████  █████      ░░█████   ░░██████  █████        ███████████  ░░████████ █████ █████░░████████
+  #  ░░░░░░░░░   ░░░░░░  ░░░░░        ░░░░░     ░░░░░░  ░░░░░        ░░░░░░░░░░░    ░░░░░░░░ ░░░░░ ░░░░░  ░░░░░░░░
+
+  server_build:
+    strategy:
+      matrix:
+        os: [ linux ]
+        arch: [ x86_64 ]
+        compiler: [ ghc8107 ]
+
+    runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-4vcpu-ubuntu-2204-arm' || 'ubuntu-latest' }}
+
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Install Nix with good defaults
+      uses: cachix/install-nix-action@v22
+      with:
+        extra_nix_config: |
+          trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= loony-tools:pr9m4BkM/5/eSTZlkQyRt57Jz7OMBxNSUiMC4FkcNfk= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+          substituters = https://cache.iog.io/ https://cache.zw3rk.com/ https://cache.nixos.org/
+        nix_path: nixpkgs=channel:nixos-unstable
+
+    - name: ❄️ Prepare cache
+      working-directory: server
+      run: |
+        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "echo $CABAL_PROJECT_LOCAL_TEMPLATE > cabal.project.local && cabal update && cabal freeze"
+
+    - name: 💾 Cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cabal-static/packages
+          ~/.cabal-static/store
+          server/dist-newstyle
+        key: cabal-cache-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.compiler }}-${{ hashFiles('server/cabal.project.freeze') }}
+        restore-keys: |
+          cabal-cache-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.compiler }}
+
+    - name: 🔨 Build
+      working-directory: server
+      run: |
+        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static --enable-executable-stripping exe:ogmios"
+
+    - name: 📦 Package
+      run: |
+        mkdir -p bin
+        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' }}/ogmios-0/x/ogmios/build/ogmios/ogmios ./bin/ogmios
+        ./bin/ogmios --version
+        mkdir -p share && chmod +w share
+        mkdir -p share/zsh/site-functions
+        ./bin/ogmios --zsh-completion-script ogmios > ./share/zsh/site-functions/_ogmios
+        mkdir -p share/bash-completion/completions
+        ./bin/ogmios --bash-completion-script ogmios > ./share/bash-completion/completions/ogmios
+        chmod -w share
+
+    - name: 📎 Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ogmios-${{ matrix.arch }}-${{ matrix.os }}
+        path: |
+          bin
+          share
+
+  #  ██████████      ███████      █████████  █████   ████ ██████████ ███████████
+  # ░░███░░░░███   ███░░░░░███   ███░░░░░███░░███   ███░ ░░███░░░░░█░░███░░░░░███
+  #  ░███   ░░███ ███     ░░███ ███     ░░░  ░███  ███    ░███  █ ░  ░███    ░███
+  #  ░███    ░███░███      ░███░███          ░███████     ░██████    ░██████████
+  #  ░███    ░███░███      ░███░███          ░███░░███    ░███░░█    ░███░░░░░███
+  #  ░███    ███ ░░███     ███ ░░███     ███ ░███ ░░███   ░███ ░   █ ░███    ░███
+  #  ██████████   ░░░███████░   ░░█████████  █████ ░░████ ██████████ █████   █████
+  # ░░░░░░░░░░      ░░░░░░░      ░░░░░░░░░  ░░░░░   ░░░░ ░░░░░░░░░░ ░░░░░   ░░░░░
+
+  docker:
+    needs: [ server_build ]
+
+    strategy:
+      matrix:
+        os: [ linux ]
+        target: [ ogmios, cardano-node-ogmios ]
+        network: [ mainnet, preprod, preview ]
+        cardano-node: [ 1.35.4, 1.35.5, 1.35.7 ]
+        arch: [ x86_64 ]
+
+    runs-on: ${{ matrix.os == 'linux' && 'ubuntu-latest' }}
+
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: 🧰 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: 🧐 hadolint
+      uses: brpaz/hadolint-action@v1.5.0
+      with:
+        dockerfile: "./Dockerfile"
+        failure-threshold: warning
+        ignore: DL3029 DL3059
+
+    - name: 🐳 Login to DockerHub
+      if: ${{ github.event_name == 'push' }}
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+
+    - name: 📝 Base Variables
+      id: base-variables
+      run: |
+        echo "image=cardanosolutions/${{ matrix.target }}" >> $GITHUB_OUTPUT
+
+    - name: 📝 Tag Variables
+      if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
+      id: tag-variables
+      run: |
+        echo "tag=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
+
+    - name: 📥 Download
+      uses: actions/download-artifact@v3
+      with:
+        name: ogmios-${{ matrix.arch }}-${{ matrix.os }}
+        path: server
+
+    - name: 🏷️ Build and push (tag)
+      if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && matrix.network == 'mainnet' }}
+      uses: docker/build-push-action@v4
+      with:
+        build-args: |
+          NETWORK=${{ matrix.network }}
+          CARDANO_NODE_VERSION=${{ matrix.cardano-node }}
+        context: .
+        push: true
+        tags: ${{ steps.base-variables.outputs.image }}:${{ steps.tag-variables.outputs.tag }}${{ matrix.target == 'cardano-node-ogmios' && '_' || '' }}${{ matrix.target == 'cardano-node-ogmios' && matrix.cardano-node || '' }}
+        target: ${{ matrix.target }}
+        platforms: ${{ matrix.os }}/${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}
+        cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest
+        cache-to: type=inline
+
+    - name: 🏷️ Build and push (tag + network)
+      if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && matrix.target == 'cardano-node-ogmios' }}
+      uses: docker/build-push-action@v4
+      with:
+        build-args: |
+          NETWORK=${{ matrix.network }}
+          CARDANO_NODE_VERSION=${{ matrix.cardano-node }}
+        context: .
+        push: true
+        tags: ${{ steps.base-variables.outputs.image }}:${{ steps.tag-variables.outputs.tag }}_cardano-node-ogmios-${{ matrix.network }}
+        target: ${{ matrix.target }}
+        platforms: ${{ matrix.os }}/${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}
+        cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
+        cache-to: type=inline
