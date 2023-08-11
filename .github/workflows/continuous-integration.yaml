@@ -2,9 +2,9 @@ name: Continuous Integration
 
 on:
   pull_request:
-    branches: [ "master" ]
+    branches: [ "v6.0" ]
   push:
-    branches: [ "master" ]
+    branches: [ "v6.0" ]
     tags: [ "*.*.*" ]
 
 jobs:
@@ -134,92 +134,6 @@ jobs:
         fi
 
   #
-  #  ███████████                                █████████                      ███             █████         █████████  ████   ███                       █████
-  # ░█░░░███░░░█                               ███░░░░░███                    ░░░             ░░███         ███░░░░░███░░███  ░░░                       ░░███
-  # ░   ░███  ░  █████ ████ ████████   ██████ ░███    ░░░   ██████  ████████  ████  ████████  ███████      ███     ░░░  ░███  ████   ██████  ████████   ███████
-  #     ░███    ░░███ ░███ ░░███░░███ ███░░███░░█████████  ███░░███░░███░░███░░███ ░░███░░███░░░███░      ░███          ░███ ░░███  ███░░███░░███░░███ ░░░███░
-  #     ░███     ░███ ░███  ░███ ░███░███████  ░░░░░░░░███░███ ░░░  ░███ ░░░  ░███  ░███ ░███  ░███       ░███          ░███  ░███ ░███████  ░███ ░███   ░███
-  #     ░███     ░███ ░███  ░███ ░███░███░░░   ███    ░███░███  ███ ░███      ░███  ░███ ░███  ░███ ███   ░░███     ███ ░███  ░███ ░███░░░   ░███ ░███   ░███ ███
-  #     █████    ░░███████  ░███████ ░░██████ ░░█████████ ░░██████  █████     █████ ░███████   ░░█████     ░░█████████  █████ █████░░██████  ████ █████  ░░█████
-  #    ░░░░░      ░░░░░███  ░███░░░   ░░░░░░   ░░░░░░░░░   ░░░░░░  ░░░░░     ░░░░░  ░███░░░     ░░░░░       ░░░░░░░░░  ░░░░░ ░░░░░  ░░░░░░  ░░░░ ░░░░░    ░░░░░
-  #               ███ ░███  ░███                                                    ░███
-  #              ░░██████   █████                                                   █████
-  #               ░░░░░░   ░░░░░                                                   ░░░░░
-
-  clients_TypeScript:
-    needs: [server_build]
-    strategy:
-      matrix:
-        os: [ linux ]
-        arch: [ x86_64 ]
-        network: [ preview ]
-        cardano-node: [ 8.1.2 ]
-
-    runs-on: ${{ matrix.os == 'linux' && 'ubuntu-latest' }}
-    steps:
-    - name: 📥 Checkout repository
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-
-    - name: ⌚ Get Date/Time
-      id: date-time
-      shell: bash
-      run: |
-        echo "::set-output name=value::$(/bin/date -u "+%Y%m%d-%H%M%S")"
-
-    - name: 🧰 Setup Node.js
-      uses: actions/setup-node@v3.7.0
-      with:
-        node-version: lts/Gallium
-
-    - name: 🔨 Build
-      working-directory: clients/TypeScript
-      run: |
-        yarn install --frozen-lockfile --non-interactive --logevel=error
-        yarn build
-        yarn lint
-
-    - name: 📥 Download
-      uses: actions/download-artifact@v3
-      with:
-        name: ogmios-${{ matrix.arch }}-${{ matrix.os }}
-        path: server
-
-    - name: 💾 Cache cardano-node DB
-      id: cache
-      uses: actions/cache@v3
-      with:
-        path: ${{ runner.temp }}/db-${{ matrix.network }}
-        key: cardano-node-ogmios-${{ matrix.network }}-${{ steps.date-time.outputs.value }}
-        restore-keys: |
-          cardano-node-ogmios-${{ matrix.network }}-
-
-    - name: 🔬 Test
-      if: matrix.network == 'preview'
-      working-directory: clients/TypeScript
-      shell: bash
-      env:
-        CONFDIR: /home/runner/work/ogmios/ogmios/server/config/network/${{ matrix.network }}
-      run: |
-        chmod +x ../../server/bin/ogmios
-        sudo ../../server/bin/ogmios --port 1338 --log-level error --node-socket ${{ runner.temp }}/ipc/node.socket --node-config $CONFDIR/cardano-node/config.json &
-
-        docker pull inputoutput/cardano-node:${{ matrix.cardano-node }}
-        docker run -d --name cardano-node \
-          -v ${{ runner.temp }}/db-${{ matrix.network }}:/db \
-          -v ${{ runner.temp }}/ipc:/ipc \
-          -v $CONFDIR/cardano-node:/config \
-          -v $CONFDIR/genesis:/genesis \
-          inputoutput/cardano-node:${{ matrix.cardano-node }} run --config /config/config.json --database-path /db --socket-path /ipc/node.socket --topology /config/topology.json
-
-        ../../scripts/wait-for-sync.sh 1338 1
-
-        yarn test
-        docker stop cardano-node
-        docker rm cardano-node
-
-  #
   #  ███████████                                █████████                      ███             █████       ███████████   ██████████ ███████████  █████
   # ░█░░░███░░░█                               ███░░░░░███                    ░░░             ░░███       ░░███░░░░░███ ░░███░░░░░█░░███░░░░░███░░███
   # ░   ░███  ░  █████ ████ ████████   ██████ ░███    ░░░   ██████  ████████  ████  ████████  ███████      ░███    ░███  ░███  █ ░  ░███    ░███ ░███
@@ -235,7 +149,6 @@ jobs:
   clients_TypeScript_repl:
     if: ${{ github.event_name == 'push' }}
     runs-on: ${{ matrix.os }}
-    needs: [clients_TypeScript]
     strategy:
       matrix:
         os: [ ubuntu-20.04 ]
@@ -276,7 +189,6 @@ jobs:
   clients_TypeScript_npm:
     if: ${{ github.event_name == 'push' }}
     runs-on: ${{ matrix.os }}
-    needs: [clients_TypeScript]
     strategy:
       matrix:
         os: [ ubuntu-20.04 ]
@@ -306,7 +218,6 @@ jobs:
           clients/TypeScript/cardano-ogmios-repl-${{ github.sha }}.tgz
 
     - name: 📤 Publish client package to npm registry
-      if: ${{ startsWith(github.ref, 'refs/tags') }}
       uses: JS-DevTools/npm-publish@v2
       with:
         package: clients/TypeScript/packages/${{ matrix.package }}/package.json
