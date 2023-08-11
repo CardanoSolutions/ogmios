@@ -71,6 +71,10 @@ theme = "learn"
   name = "<i class='fas fa-solid fa-file-code'></i> Architectural Decisions Record"
   url = "https://github.com/CardanoSolutions/ogmios/tree/master/architectural-decisions/accepted"
   weight = 103
+[[menu.shortcuts]]
+  name = "<i class='fas fa-solid fa-vector-square'></i> Test vectors"
+  url = "https://github.com/CardanoSolutions/ogmios/tree/master/server/test/vectors"
+  weight = 104
 
 [Languages]
 [Languages.en]
