@@ -10,13 +10,11 @@ ARG CARDANO_NODE_VERSION=8.1.2
 
 FROM --platform=${TARGETPLATFORM:-linux/amd64} busybox:1.35 as ogmios
 
-ARG NETWORK=mainnet
-
 LABEL name=ogmios
 LABEL description="A JSON WebSocket bridge for cardano-node."
 
 COPY ./server/bin/ogmios /bin/ogmios
-COPY ./server/config/network/${NETWORK} /config
+COPY ./server/config/network /config
 
 RUN chmod +x /bin/ogmios
 
