@@ -71,6 +71,8 @@ jobs:
       working-directory: server
       run: |
         nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static --enable-executable-stripping --enable-library-stripping ogmios:exe:ogmios"
+      env:
+        GIT_SHA: ${{ github.sha }}
 
     - name: 📦 Package
       run: |
