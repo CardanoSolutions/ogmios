@@ -33,6 +33,16 @@ jobs:
       with:
         submodules: true
 
+    - name: 📝 Tag
+      id: tag
+      shell: bash
+      run: |
+        if [[ $GITHUB_REF == "refs/tags"* ]]; then
+          echo "tag=${GITHUB_REF/refs\/tags\//}" | sed "s/^v//" >> $GITHUB_OUTPUT
+        else
+          echo "tag=0" >> $GITHUB_OUTPUT
+        fi
+
     - name: Install Nix with good defaults
       uses: cachix/install-nix-action@v22
       with:
@@ -60,12 +70,12 @@ jobs:
     - name: 🔨 Build
       working-directory: server
       run: |
-        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static --enable-executable-stripping exe:ogmios"
+        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static --enable-executable-stripping --enable-library-stripping ogmios:exe:ogmios"
 
     - name: 📦 Package
       run: |
         mkdir -p bin
-        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' }}/ogmios-0/x/ogmios/build/ogmios/ogmios ./bin/ogmios
+        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' }}/ogmios-${{ steps.tag.outputs.tag }}/x/ogmios/build/ogmios/ogmios ./bin/ogmios
         ./bin/ogmios --version
         mkdir -p share && chmod +w share
         mkdir -p share/zsh/site-functions
