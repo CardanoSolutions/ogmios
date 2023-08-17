@@ -92,7 +92,7 @@ We've heard of a handful happy users! And it keeps growing!
     </a>
   </td>
   <td>
-    <a target="_blank" href="https://sundaeswap.finance/">
+    <a target="_blank" href="https://sundae.fi/">
       <img src="https://avatars.githubusercontent.com/u/83610786"/>
     </a>
   </td>
@@ -123,7 +123,7 @@ We've heard of a handful happy users! And it keeps growing!
   </td>
 </tr><tr>
   <td><a target="_blank" href="https://blockfrost.io/">FiveBinaries</a></td>
-  <td><a target="_blank" href="https://sundaeswap.finance/">SundaeSwap Labs</a></td>
+  <td><a target="_blank" href="https://sundae.fi/">Sundae Labs</a></td>
   <td><a target="_blank" href="https://iohk.io/">Input Output Global</a></td>
   <td><a target="_blank" href="https://jpg.store/">Jpg.store</a></td>
   <td><a target="_blank" href="https://projectnewm.io">NEWM</a></td>
