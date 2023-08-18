@@ -82,45 +82,18 @@ Thus, is Ogmios production-ready? **Yes**. At least, this is as good as it gets 
 
 We've heard of a handful happy users! And it keeps growing!
 
-##### (Known) companies using Ogmios
+##### (Known) projects/companies using Ogmios
+
 
 <table class="users" cellspacing="0" cellpadding="0">
 <tr>
-  <td>
-    <a target="_blank" href="https://blockfrost.io/">
-      <img src="https://avatars.githubusercontent.com/u/74414794"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://sundae.fi/">
-      <img src="https://avatars.githubusercontent.com/u/83610786"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://iohk.io/">
-      <img src="https://avatars.githubusercontent.com/u/12909177"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://jpg.store/">
-      <img src="https://avatars.githubusercontent.com/u/98781883"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://projectnewm.io">
-      <img src="https://avatars.githubusercontent.com/u/83253396"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://mlabs.city">
-      <img src="https://avatars.githubusercontent.com/u/80576467"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://github.com/minswap">
-      <img src="https://avatars.githubusercontent.com/u/80548193"/>
-    </a>
-  </td>
+  <td><a target="_blank" href="https://blockfrost.io/"><img src="https://avatars.githubusercontent.com/u/74414794"/></a></td>
+  <td><a target="_blank" href="https://sundae.fi/"><img src="https://avatars.githubusercontent.com/u/83610786"/></a></td>
+  <td><a target="_blank" href="https://iohk.io/"><img src="https://avatars.githubusercontent.com/u/12909177"/></a></td>
+  <td><a target="_blank" href="https://jpg.store/"><img src="https://avatars.githubusercontent.com/u/98781883"/></a></td>
+  <td><a target="_blank" href="https://projectnewm.io"><img src="https://avatars.githubusercontent.com/u/83253396"/></a></td>
+  <td><a target="_blank" href="https://mlabs.city"><img src="https://avatars.githubusercontent.com/u/80576467"/></a></td>
+  <td><a target="_blank" href="https://github.com/minswap"><img src="https://avatars.githubusercontent.com/u/80548193"/></a></td>
 </tr><tr>
   <td><a target="_blank" href="https://blockfrost.io/">FiveBinaries</a></td>
   <td><a target="_blank" href="https://sundae.fi/">Sundae Labs</a></td>
@@ -131,41 +104,13 @@ We've heard of a handful happy users! And it keeps growing!
   <td><a target="_blank" href="https://github.com/minswap">Minswap</a></td>
 </tr>
 <tr>
-  <td>
-    <a target="_blank" href="https://eternl.io">
-      <img src="https://ccvault.io/images/eternl-256.png"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://raynetwork.io">
-      <img src="https://avatars.githubusercontent.com/u/65092852"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://dcspark.io">
-      <img src="https://avatars.githubusercontent.com/u/75200801"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://spacebudz.io">
-      <img src="https://avatars.githubusercontent.com/u/105819836"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://cardanofoundation.org">
-      <img src="https://avatars.githubusercontent.com/u/37078161"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://txpipe.io">
-      <img src="https://avatars.githubusercontent.com/u/92830323"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://koralabs.io/">
-      <img src="https://avatars.githubusercontent.com/u/90213107"/>
-    </a>
-  </td>
+  <td><a target="_blank" href="https://eternl.io"><img src="https://ccvault.io/images/eternl-256.png"/></a></td>
+  <td><a target="_blank" href="https://raynetwork.io"><img src="https://avatars.githubusercontent.com/u/65092852"/></a></td>
+  <td><a target="_blank" href="https://dcspark.io"><img src="https://avatars.githubusercontent.com/u/75200801"/></a></td>
+  <td><a target="_blank" href="https://spacebudz.io"><img src="https://avatars.githubusercontent.com/u/105819836"/></a></td>
+  <td><a target="_blank" href="https://cardanofoundation.org"><img src="https://avatars.githubusercontent.com/u/37078161"/></a></td>
+  <td><a target="_blank" href="https://txpipe.io"><img src="https://avatars.githubusercontent.com/u/92830323"/></a></td>
+  <td><a target="_blank" href="https://koralabs.io/"><img src="https://avatars.githubusercontent.com/u/90213107"/></a></td>
 </tr><tr>
   <td><a target="_blank" href="https://eternl.io">Eternl</a></td>
   <td><a target="_blank" href="https://raynetwork.io">RayNetwork</a></td>
@@ -176,46 +121,35 @@ We've heard of a handful happy users! And it keeps growing!
   <td><a target="_blank" href="https://koralabs.io/">Kora Labs</a></td>
 </tr>
 <tr>
-  <td>
-    <a target="_blank" href="https://www.gimbalabs.com">
-      <img src="https://avatars.githubusercontent.com/u/73429691"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://www.wingriders.com/">
-      <img src="https://avatars.githubusercontent.com/u/93930135"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://emurgo.io/">
-      <img src="https://avatars.githubusercontent.com/u/36142236"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://liqwid.finance/">
-      <img src="https://avatars.githubusercontent.com/u/83718187"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://multichain.org/">
-      <img src="https://avatars.githubusercontent.com/u/67252237"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://tosidrop.io/">
-      <img src="https://avatars.githubusercontent.com/u/100535151"/>
-    </a>
-  </td>
-  <td>
-    <a target="_blank" href="https://asterium.dev/">
-      <img src="https://avatars.githubusercontent.com/u/96011175"/>
-    </a>
-  </td>
+  <td><a target="_blank" href="https://www.gomaestro.org/"><img src="https://avatars.githubusercontent.com/u/84299480"/></a></td>
+  <td><a target="_blank" href="https://blinklabs.io/"><img src="https://avatars.githubusercontent.com/u/121772544"/></a></td>
+  <td><a target="_blank" href="https://pool.pm/"><img src="https://pbs.twimg.com/profile_images/1570711473055219712/TDLy4nEf_400x400.png"/></a></td>
+  <td><a target="_blank" href="https://bloxbean.com/"><img src="https://avatars.githubusercontent.com/u/49338309"/></a></td>
+  <td><a target="_blank" href="https://www.wingriders.com/"><img src="https://avatars.githubusercontent.com/u/93930135"/></a></td>
+  <td><a target="_blank" href="https://liqwid.finance/"><img src="https://avatars.githubusercontent.com/u/83718187"/></a></td>
+  <td><a target="_blank" href="https://www.gimbalabs.com"><img src="https://avatars.githubusercontent.com/u/73429691"/></a></td>
 </tr><tr>
-  <td><a target="_blank" href="https://www.gimbalabs.com">Gimbalabs</a></td>
+  <td><a target="_blank" href="https://www.gomaestro.org/"></a>Maestro</td>
+  <td><a target="_blank" href="https://blinklabs.io/">Blinklabs</a></td>
+  <td><a target="_blank" href="https://pool.pm/">Pool.pm</a></td>
+  <td><a target="_blank" href="https://bloxbean.com/">BloxBean</a></td>
   <td><a target="_blank" href="https://www.wingriders.com/">Wing Riders</a></td>
-  <td><a target="_blank" href="https://emurgo.io/">EMURGO</a></td>
   <td><a target="_blank" href="https://liqwid.finance/">Liqwid Labs</a></td>
+  <td><a target="_blank" href="https://www.gimbalabs.com">Gimbalabs</a></td>
+</tr>
+<tr>
+  <td><a target="_blank" href="https://emurgo.io/"><img src="https://avatars.githubusercontent.com/u/36142236"/></a></td>
+  <td><a target="_blank" href="https://nescrow.xyz/"><img src="https://nescrow.xyz/crow.svg"/></a></td>
+  <td><a target="_blank" href="https://danogo.io/"><img src="https://pbs.twimg.com/profile_images/1658288019718406145/AAh0J4QI_400x400.jpg"/></a></td>
+  <td><a target="_blank" href="https://www.veralidity.com"><img src="https://avatars.githubusercontent.com/u/127054855"/></a></td>
+  <td><a target="_blank" href="https://multichain.org/"><img src="https://avatars.githubusercontent.com/u/67252237"/></a></td>
+  <td><a target="_blank" href="https://tosidrop.io/"><img src="https://avatars.githubusercontent.com/u/100535151"/></a></td>
+  <td><a target="_blank" href="https://asterium.dev/"><img src="https://avatars.githubusercontent.com/u/96011175"/></a></td>
+</tr><tr>
+  <td><a target="_blank" href="https://emurgo.io/">EMURGO</a></td>
+  <td><a target="_blank" href="https://nescrow.xyz/">Nescrow</a></td>
+  <td><a target="_blank" href="https://danogo.io/">Danogo</a></td>
+  <td><a target="_blank" href="https://www.veralidity.com">Veralidity</a></td>
   <td><a target="_blank" href="https://multichain.org/">Multichain</a></td>
   <td><a target="_blank" href="https://tosidrop.io/">TosiDrop</a></td>
   <td><a target="_blank" href="https://asterium.dev/">Asterium</a></td>
@@ -224,15 +158,20 @@ We've heard of a handful happy users! And it keeps growing!
 
 ##### (Known) open source projects using Ogmios
 
-- [Blockfrost](https://github.com/blockfrost/blockfrost-backend-ryo)
-- [Cardano-transaction-lib](https://github.com/plutonomicon/cardano-transaction-lib)
-- [Lucid](https://github.com/spacebudz/lucid)
-- [Mesh](https://github.com/MeshJS/mesh)
-- [PyCardano](https://github.com/Python-Cardano/pycardano)
-- [Cardano (Java) client lib](https://github.com/bloxbean/cardano-client-lib)
-- [Lace](https://github.com/input-output-hk/lace)
-- [Marlowe](https://github.com/input-output-hk/marlowe-runner)
-- [Naumachia](https://github.com/free-honey/naumachia)
+- [Blockfrost](https://github.com/blockfrost/blockfrost-backend-ryo): <small>An API service providing abstraction between you and Cardano blockchain data, taking away the burden of complexity, so you can focus on what really matters - developing your applications.</small>
+- [Cardano-transaction-lib](https://github.com/plutonomicon/cardano-transaction-lib): <small>A Purescript library for building smart contract transactions on Cardano</small>
+- [Lucid](https://github.com/spacebudz/lucid): <small>A library for creating Cardano transactions and off-chain code for Plutus contracts in JavaScript, Deno and Node.js.</small>
+- [Nebula](https://t.co/ErCPprmcbf): <small>A Cardano NFT marketplace contract including chain indexer and event listener for individual projects.</small>
+- [Mesh](https://github.com/MeshJS/mesh): <small>An open-source library to advance Web3 development on Cardano.</small>
+- [PyCardano](https://github.com/Python-Cardano/pycardano): <small>A lightweight Cardano SDK in Python.</small>
+- [Cardano-js-sdk](https://github.com/input-output-hk/cardano-js-sdk): <small>JavaScript SDK for interacting with Cardano, providing various key management options, with support for popular hardware wallets.</small>
+- [Cardano (Java) client lib](https://github.com/bloxbean/cardano-client-lib): <small>A client library for Cardano in Java. This library simplifies the interaction with Cardano blockchain from a Java application.</small>
+- [Yaci DevKit](https://github.com/bloxbean/yaci-devkit): <small>A set of dev tools for development on Cardano.</small>
+- [Lace](https://github.com/input-output-hk/lace): <small>A light-wallet for Cardano.</small>
+- [Marlowe](https://github.com/input-output-hk/marlowe-runner) (marlowe-runner): <small>A smart-contract DSL for Cardano.</small>
+- [Naumachia](https://github.com/free-honey/naumachia): <small>Naumachia is a framework for writing Smart Contracts on the Cardano Blockchain using Rust!</small>
+- [DenoSync](https://github.com/spacebudz/denosync): <small>Deno WebSocket Chainsync client on top of Ogmios.</small>
+- [NodeRunner](https://github.com/mandalaverse/noderunner): <small>Tooling for setting up stacks of Cardano services.</small>
 
 {{% notice note %}}
 Are you using Ogmios for a project? [Let us know on Github!](https://github.com/CardanoSolutions/ogmios/issues/new?assignees=&labels=&template=project.md)
