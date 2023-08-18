@@ -129,7 +129,7 @@ We've heard of a handful happy users! And it keeps growing!
   <td><a target="_blank" href="https://liqwid.finance/"><img src="https://avatars.githubusercontent.com/u/83718187"/></a></td>
   <td><a target="_blank" href="https://www.gimbalabs.com"><img src="https://avatars.githubusercontent.com/u/73429691"/></a></td>
 </tr><tr>
-  <td><a target="_blank" href="https://www.gomaestro.org/"></a>Maestro</td>
+  <td><a target="_blank" href="https://www.gomaestro.org/">Maestro</a></td>
   <td><a target="_blank" href="https://blinklabs.io/">Blinklabs</a></td>
   <td><a target="_blank" href="https://pool.pm/">Pool.pm</a></td>
   <td><a target="_blank" href="https://bloxbean.com/">BloxBean</a></td>
