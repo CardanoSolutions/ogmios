@@ -310,7 +310,7 @@ encodeGenesis x =
     "maxKesEvolutions" .=
         encodeWord64 (Sh.sgMaxKESEvolutions x) <>
     "slotLength" .=
-        encodeSingleton "seconds" (encodeNominalDiffTimeMicro (Sh.sgSlotLength x)) <>
+        encodeNominalDiffTimeMicro (Sh.sgSlotLength x) <>
     "updateQuorum" .=
         encodeWord64 (Sh.sgUpdateQuorum x) <>
     "maxLovelaceSupply" .=

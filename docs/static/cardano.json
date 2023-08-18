@@ -1487,8 +1487,15 @@
 
   , "RelativeTime":
     { "title": "RelativeTime"
-    , "type": "number"
     , "description": "A time in seconds relative to another one (typically, system start or era start)."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "seconds" ]
+    , "properties":
+      { "seconds":
+        { "type": "integer"
+        }
+      }
     }
 
   , "Relay":
@@ -1829,13 +1836,13 @@
 
   , "SlotLength":
     { "title": "SlotLength"
-    , "description": "A slot length, in seconds, possibly with decimals."
+    , "description": "A slot length in milliseconds"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "seconds" ]
+    , "required": [ "milliseconds" ]
     , "properties":
-      { "seconds":
-        { "type": "number"
+      { "milliseconds":
+        { "type": "integer"
         }
       }
     }

@@ -408,10 +408,13 @@ spec = do
 
     context "SlotLength" $ do
         let matrix = [ ( mkSlotLength 1
-                       , Json.pairs $ Json.pair "seconds" (Json.double 1.0)
+                       , Json.pairs $ Json.pair "milliseconds" (Json.integer 1000)
                        )
                      , ( mkSlotLength 0.1
-                       , Json.pairs $ Json.pair "seconds" (Json.double 0.1)
+                       , Json.pairs $ Json.pair "milliseconds" (Json.integer 100)
+                       )
+                     , ( mkSlotLength 42
+                       , Json.pairs $ Json.pair "milliseconds" (Json.integer 42000)
                        )
                      ]
         forM_ matrix $ \(slotLength, json) ->

@@ -6,7 +6,21 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
-### [6.0.0-rc] - 2023-08-10
+### [6.0.0-rc2] - unreleased
+
+#### Added
+
+N/A
+
+#### Changed
+
+- Slot length in era summaries and genesis is now given in milliseconds wrapped in a singleton object: `{ "milliseconds": 1234 }`. Before, it used to be given as a floating number of seconds.
+
+#### Removed
+
+N/A
+
+### [6.0.0-rc1] - 2023-08-10
 
 > **Note**
 >
