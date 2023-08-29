@@ -56,6 +56,7 @@ $ cd cardano-ogmios/server
 Then, use cabal to compile the project source code from the `server` directory:
 
 ```console
+$ cabal update
 $ cabal build ogmios:exe:ogmios
 ```
 
