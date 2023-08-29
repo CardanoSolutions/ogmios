@@ -26,6 +26,11 @@ Supported NETWORK names:
 - `preview`
 - `preprod`
 
+{{% notice info %}}
+Building images from sources is currently not available. Building is done outside of Docker to produce a binary static executable which is then mounted as an image. Hence, building the docker image assumes that you've built the application to begin with. The [Dockerfile](https://github.com/CardanoSolutions/ogmios/blob/master/Dockerfile) expects a pre-built executable in the folder `server/bin`.<br/><br/>
+Refer to [the next section](/getting-started/building/) for building Ogmios. Then simply run `docker buildx build --target ogmios` to build ogmios' standalone or `docker buildx build` to build the default cardano-node + ogmios image.
+{{% /notice %}}
+
 ## cardano-node-ogmios (easiest)
 
 ### Running
@@ -64,27 +69,6 @@ Let's explore a bit the various options:
 
 Find more about run options in the docker user documentation.
 
-### Building
-
-To build the image yourself, we encourage you to leverage the existing build-cache layers from the registry. Building the entire image from scratch can take up to an hour! You can
-
-```console
-$ docker buildx build \
-    --cache-from cardanosolutions/cardano-node-ogmios:latest \
-    --tag cardanosolutions/cardano-node-ogmios:latest \
-    https://github.com/cardanosolutions/ogmios.git
-```
-
-**_Optionally_** specify a network name, other than `mainnet`, using a build argument:
-
-```console
-  --build-arg NETWORK=preview
-```
-
-{{% notice info %}}
-Note that you can explicitly specify the target build when building the multi-stage docker image using `--target cardano-node-ogmios`. This is the default behaviour.
-{{% /notice %}}
-
 ## Ogmios standalone (more advanced)
 
 ### Running (bare hands)
@@ -102,7 +86,41 @@ $ docker run --rm \
     --host 0.0.0.0
 ```
 
-Note that the `--host` argument is necessary to bind the server from within the container. Notice also how configuration files are available from within the image under `/config`.
+Note that the `--host` argument is necessary to bind the server from within the container.
+
+### Configuration
+
+Configuration files are available from within the image under `/config` in folders named after the supported networks.
+
+```sh
+/config
+ ├── mainnet
+ │   ├── cardano-node
+ │   │   ├── config.json
+ │   │   └── topology.json
+ │   └── genesis
+ │       ├── alonzo.json
+ │       ├── byron.json
+ │       ├── conway.json
+ │       └── shelley.json
+ ├── preprod
+ │   ├── cardano-node
+ │   │   ├── config.json
+ │   │   └── topology.json
+ │   └── genesis
+ │       ├── alonzo.json
+ │       ├── byron.json
+ │       ├── conway.json
+ │       └── shelley.json
+ └── preview
+     ├── cardano-node
+     │   ├── config.json
+     │   └── topology.json
+     └── genesis
+         ├── alonzo.json
+         ├── byron.json
+         └── shelley.json
+```
 
 ### Running (docker-compose)
 
@@ -148,7 +166,3 @@ For example, for running cardano-node + ogmios on the preprod network, listening
 ```console
 $ NETWORK=preprod OGMIOS_PORT=1338 docker-compose --project-name cardano-ogmios-preprod up
 ```
-
-### Building
-
-Building images from sources is currently not available. Building is done outside of Docker to produce a binary static executable which is then mounted as an image. Hence, building the docker image assumes that you've built the application to begin with. So refer to [the next section](/getting-started/building/) for building the image. Once a binary is available under `server/bin/ogmios`, simply run `docker buildx build --target ogmios` to build ogmios' standalone or `docker buildx build` to build the default cardano-node + ogmios image.
