@@ -220,10 +220,6 @@ export type ScriptExecutionFailure =
   | SubmitTransactionFailureMissingCostModels
   | SubmitTransactionFailureInternalLedgerTypeConversionError;
 /**
- * A time in seconds relative to another one (typically, system start or era start).
- */
-export type RelativeTime = number;
-/**
  * Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks.
  */
 export type SafeZone = number;
@@ -1886,6 +1882,12 @@ export interface Bound {
   epoch: Epoch;
 }
 /**
+ * A time in seconds relative to another one (typically, system start or era start).
+ */
+export interface RelativeTime {
+  seconds: bigint;
+}
+/**
  * Query a summary of the slotting parameters and boundaries for each known era. Useful for doing slot-arithmetic and time conversions.
  */
 export interface QueryLedgerStateEraSummaries {
@@ -1916,10 +1918,10 @@ export interface EraParameters {
   safeZone: SafeZone | null;
 }
 /**
- * A slot length, in seconds, possibly with decimals.
+ * A slot length in milliseconds
  */
 export interface SlotLength {
-  seconds: number;
+  milliseconds: bigint;
 }
 /**
  * Query the current distribution of the stake across all known stake pools, relative to the TOTAL stake in the network.
@@ -2226,7 +2228,7 @@ export interface GenesisByron {
   };
   securityParameter: UInt64;
   networkMagic: NetworkMagic;
-  protocolParameters: ProtocolParameters;
+  updatableParameters?: ProtocolParameters;
 }
 /**
  * A Shelley genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.

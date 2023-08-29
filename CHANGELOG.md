@@ -15,6 +15,8 @@ N/A
 #### Changed
 
 - Slot length in era summaries and genesis is now given in milliseconds wrapped in a singleton object: `{ "milliseconds": 1234 }`. Before, it used to be given as a floating number of seconds.
+- Byron's genesis JSON-schema was wrongly pointing at `protocolParameters` instead of `updatableParameters`.
+- Fixed Plutus' cost models examples in the JSON-schema to match the new format.
 
 #### Removed
 
