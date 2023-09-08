@@ -1,6 +1,7 @@
 name: Continuous Integration
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "v6.0" ]
     tags: [ "v6.*.*" ]
@@ -35,11 +36,7 @@ jobs:
       id: tag
       shell: bash
       run: |
-        if [[ $GITHUB_REF == "refs/tags"* ]]; then
-          echo "tag=${GITHUB_REF/refs\/tags\//}" | sed "s/^v//" >> $GITHUB_OUTPUT
-        else
-          echo "tag=0" >> $GITHUB_OUTPUT
-        fi
+        echo "tag=6.0.0" >> $GITHUB_OUTPUT
 
     - name: Install Nix with good defaults
       uses: cachix/install-nix-action@v22
