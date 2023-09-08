@@ -502,10 +502,8 @@
     , "additionalProperties": { "$ref": "cardano.json#/definitions/CostModel" }
     , "propertyNames": { "$ref": "cardano.json#/definitions/Language" }
     , "examples":
-      [ { "plutus:v1":
-          { "k": 14
-          , "a": 123
-          }
+      [ { "plutus:v1": [ 14, 123 ]
+        , "plutus:v2": [ 14, 42, 131 ]
         }
       ]
     }
@@ -687,7 +685,7 @@
         }
       , "securityParameter": { "$ref": "cardano.json#/definitions/UInt64" }
       , "networkMagic": { "$ref": "cardano.json#/definitions/NetworkMagic" }
-      , "protocolParameters": { "$ref": "cardano.json#/definitions/ProtocolParameters" }
+      , "updatableParameters": { "$ref": "cardano.json#/definitions/ProtocolParameters" }
       }
     }
 
@@ -1487,8 +1485,15 @@
 
   , "RelativeTime":
     { "title": "RelativeTime"
-    , "type": "number"
     , "description": "A time in seconds relative to another one (typically, system start or era start)."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "seconds" ]
+    , "properties":
+      { "seconds":
+        { "type": "integer"
+        }
+      }
     }
 
   , "Relay":
@@ -1829,13 +1834,13 @@
 
   , "SlotLength":
     { "title": "SlotLength"
-    , "description": "A slot length, in seconds, possibly with decimals."
+    , "description": "A slot length in milliseconds"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "seconds" ]
+    , "required": [ "milliseconds" ]
     , "properties":
-      { "seconds":
-        { "type": "number"
+      { "milliseconds":
+        { "type": "integer"
         }
       }
     }
