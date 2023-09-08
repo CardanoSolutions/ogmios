@@ -6,7 +6,7 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
-### [6.0.0-rc2] - unreleased
+### [6.0.0-rc2] - 2023-09-08
 
 #### Added
 
@@ -14,9 +14,11 @@ N/A
 
 #### Changed
 
+- Fixed protocol version negotiation during handshake to actually negotiate for the latest protocol (with Conway enabled)
 - Slot length in era summaries and genesis is now given in milliseconds wrapped in a singleton object: `{ "milliseconds": 1234 }`. Before, it used to be given as a floating number of seconds.
 - Byron's genesis JSON-schema was wrongly pointing at `protocolParameters` instead of `updatableParameters`.
 - Fixed Plutus' cost models examples in the JSON-schema to match the new format.
+- Fixed version not showing software revision
 
 #### Removed
 
