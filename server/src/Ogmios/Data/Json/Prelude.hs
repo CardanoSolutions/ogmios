@@ -128,6 +128,7 @@ import Cardano.Ledger.Coin
     )
 import Cardano.Ledger.Shelley.Genesis
     ( NominalDiffTimeMicro
+    , fromNominalDiffTimeMicro
     )
 import Cardano.Slotting.Block
     ( BlockNo (..)
@@ -343,12 +344,16 @@ encodeNatural =
 
 encodeNominalDiffTime :: NominalDiffTime -> Json
 encodeNominalDiffTime =
-    Json.double . fromRational @Double . toRational
+    encodeSingleton "milliseconds"
+    . Json.integer
+    . (`div` 10^(9::Integer))
+    . toInteger
+    . fromEnum
 {-# INLINABLE encodeNominalDiffTime #-}
 
 encodeNominalDiffTimeMicro :: NominalDiffTimeMicro -> Json
 encodeNominalDiffTimeMicro =
-    Json.double . fromRational @Double . toRational
+    encodeNominalDiffTime . fromNominalDiffTimeMicro
 {-# INLINABLE encodeNominalDiffTimeMicro #-}
 
 encodeNonNegativeInterval :: NonNegativeInterval -> Json
@@ -378,7 +383,12 @@ encodeRational r =
 
 encodeRelativeTime :: RelativeTime -> Json
 encodeRelativeTime =
-    encodeNominalDiffTime . getRelativeTime
+    encodeSingleton "seconds"
+    . Json.integer
+    . (`div` 10^(12::Integer))
+    . toInteger
+    . fromEnum
+    . getRelativeTime
 {-# INLINABLE encodeRelativeTime #-}
 
 encodeScientific :: Scientific -> Json
@@ -393,7 +403,7 @@ encodeShortByteString encodeByteString =
 
 encodeSlotLength :: SlotLength -> Json
 encodeSlotLength =
-    encodeSingleton "seconds" . encodeNominalDiffTime . getSlotLength
+    encodeNominalDiffTime . getSlotLength
 {-# INLINABLE encodeSlotLength #-}
 
 encodeSlotNo :: SlotNo -> Json
