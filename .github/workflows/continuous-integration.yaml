@@ -442,7 +442,7 @@ jobs:
           CARDANO_NODE_VERSION=${{ matrix.cardano-node }}
         context: .
         push: true
-        tags: ${{ steps.base-variables.outputs.image }}:${{ steps.tag-variables.outputs.tag }}_cardano-node-ogmios-${{ matrix.network }}
+        tags: ${{ steps.base-variables.outputs.image }}:${{ steps.tag-variables.outputs.tag }}_${{ matrix.cardano-node }}-${{ matrix.network }}
         target: ${{ matrix.target }}
         platforms: ${{ matrix.os }}/${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}
         cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
