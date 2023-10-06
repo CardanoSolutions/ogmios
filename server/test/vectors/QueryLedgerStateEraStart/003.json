@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","method":"queryLedgerState/eraStart","result":{"time":-14.014334774943,"slot":11839132,"epoch":9951466},"id":null}
+{"jsonrpc":"2.0","method":"queryLedgerState/eraStart","result":{"time":{"seconds":-15},"slot":11839132,"epoch":9951466},"id":null}
