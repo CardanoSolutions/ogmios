@@ -430,16 +430,16 @@ encodeMetadataBlob opts =
         Sh.List xs ->
             encodeList identity <$> traverse tryEncodeMetadatumAsJson xs
         Sh.Map xs ->
-            encodeList identity <$> traverse tryEncodeKeyPairAsJson xs
+            encodeObject <$> foldMap tryEncodeKeyPairAsJson xs
 
-    tryEncodeKeyPairAsJson :: (Sh.Metadatum, Sh.Metadatum) -> StrictMaybe Json
+    tryEncodeKeyPairAsJson :: (Sh.Metadatum, Sh.Metadatum) -> StrictMaybe Series
     tryEncodeKeyPairAsJson = \case
         (Sh.I n, v) -> do
             json <- tryEncodeMetadatumAsJson v
-            pure (encodeObject (show n .= json))
+            pure (show n .= json)
         (Sh.S t, v) -> do
             json <- tryEncodeMetadatumAsJson v
-            pure (encodeObject (t .= json))
+            pure (t .= json)
         _ ->
             SNothing
 
