@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","method":"queryNetwork/tip","result":{"slot":24433,"id":"6a774295ffa8b9f3e4175071cfb092385243ddf31a105a4335342c4923399a5e"},"id":null}
+{"jsonrpc":"2.0","method":"queryNetwork/tip","result":{"slot":24433,"id":"c384f0fafd411ad55910862368343c0bd9eb7ad9ca6f1d6181e55b9089c8c40b"},"id":null}
