@@ -220,19 +220,24 @@ encodeATxAux
     -> By.ATxAux any
     -> Json
 encodeATxAux opts x =
-    "id" .= encodeHash (By.serializeCborHash (By.taTx x))
-        <>
-    "inputSource" .= encodeText "inputs"
-        <>
-    encodeAnnotated (encodeTx @crypto opts) (By.aTaTx x)
-        <>
-    "signatories" .= encodeAnnotated (encodeFoldable encodeTxInWitness) (By.aTaWitness x)
-        <>
-    "cbor" .=
-        ( let bytes = encodeListLen 2 <> toCBOR (By.taTx x) <> toCBOR (By.taWitness x)
-           in encodeByteStringBase16 (toStrictByteString bytes)
+    encodeObject
+        ( "id" .=
+            encodeHash (By.serializeCborHash (By.taTx x))
+       <> "inputSource" .=
+            encodeText "inputs"
+       <> encodeAnnotated
+            (encodeTx @crypto opts)
+            (By.aTaTx x)
+       <> "signatories" .=
+            encodeAnnotated (encodeFoldable encodeTxInWitness) (By.aTaWitness x)
+       <> if includeTransactionCbor opts then
+              "cbor" .=
+                  ( let bytes = encodeListLen 2 <> toCBOR (By.taTx x) <> toCBOR (By.taWitness x)
+                     in encodeByteStringBase16 (toStrictByteString bytes)
+                  )
+          else
+              mempty
         )
-    & encodeObject
 
 encodeTx
     :: forall crypto. (Era (ByronEra crypto))
