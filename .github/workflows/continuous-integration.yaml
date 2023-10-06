@@ -2,9 +2,11 @@ name: Continuous Integration
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [ "master" ]
   push:
-    branches: [ "v6.0" ]
-    tags: [ "v6.*.*" ]
+    branches: [ "master", "v*.*" ]
+    tags: [ "*.*.*" ]
 
 jobs:
 
@@ -36,7 +38,12 @@ jobs:
       id: tag
       shell: bash
       run: |
-        echo "tag=6.0.0" >> $GITHUB_OUTPUT
+        if [[ $GITHUB_REF == "refs/tags"* ]]; then
+          TAG=$(echo "${GITHUB_REF/refs\/tags\/}" | sed "s/^.*\([0-9].[0-9].[0-9]\).*$/\1/")
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+        else
+          echo "tag=0" >> $GITHUB_OUTPUT
+        fi
 
     - name: Install Nix with good defaults
       uses: cachix/install-nix-action@v22
@@ -141,6 +148,92 @@ jobs:
         fi
 
   #
+  #  ███████████                                █████████                      ███             █████         █████████  ████   ███                       █████
+  # ░█░░░███░░░█                               ███░░░░░███                    ░░░             ░░███         ███░░░░░███░░███  ░░░                       ░░███
+  # ░   ░███  ░  █████ ████ ████████   ██████ ░███    ░░░   ██████  ████████  ████  ████████  ███████      ███     ░░░  ░███  ████   ██████  ████████   ███████
+  #     ░███    ░░███ ░███ ░░███░░███ ███░░███░░█████████  ███░░███░░███░░███░░███ ░░███░░███░░░███░      ░███          ░███ ░░███  ███░░███░░███░░███ ░░░███░
+  #     ░███     ░███ ░███  ░███ ░███░███████  ░░░░░░░░███░███ ░░░  ░███ ░░░  ░███  ░███ ░███  ░███       ░███          ░███  ░███ ░███████  ░███ ░███   ░███
+  #     ░███     ░███ ░███  ░███ ░███░███░░░   ███    ░███░███  ███ ░███      ░███  ░███ ░███  ░███ ███   ░░███     ███ ░███  ░███ ░███░░░   ░███ ░███   ░███ ███
+  #     █████    ░░███████  ░███████ ░░██████ ░░█████████ ░░██████  █████     █████ ░███████   ░░█████     ░░█████████  █████ █████░░██████  ████ █████  ░░█████
+  #    ░░░░░      ░░░░░███  ░███░░░   ░░░░░░   ░░░░░░░░░   ░░░░░░  ░░░░░     ░░░░░  ░███░░░     ░░░░░       ░░░░░░░░░  ░░░░░ ░░░░░  ░░░░░░  ░░░░ ░░░░░    ░░░░░
+  #               ███ ░███  ░███                                                    ░███
+  #              ░░██████   █████                                                   █████
+  #               ░░░░░░   ░░░░░                                                   ░░░░░
+
+  clients_TypeScript:
+    needs: [server_build]
+    strategy:
+      matrix:
+        os: [ linux ]
+        arch: [ x86_64 ]
+        network: [ preview ]
+        cardano-node: [ 8.1.2 ]
+
+    runs-on: ${{ matrix.os == 'linux' && 'ubuntu-latest' }}
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: ⌚ Get Date/Time
+      id: date-time
+      shell: bash
+      run: |
+        echo "::set-output name=value::$(/bin/date -u "+%Y%m%d-%H%M%S")"
+
+    - name: 🧰 Setup Node.js
+      uses: actions/setup-node@v3.7.0
+      with:
+        node-version: lts/Gallium
+
+    - name: 🔨 Build
+      working-directory: clients/TypeScript
+      run: |
+        yarn install --frozen-lockfile --non-interactive --logevel=error
+        yarn build
+        yarn lint
+
+    - name: 📥 Download
+      uses: actions/download-artifact@v3
+      with:
+        name: ogmios-${{ matrix.arch }}-${{ matrix.os }}
+        path: server
+
+    - name: 💾 Cache cardano-node DB
+      id: cache
+      uses: actions/cache@v3
+      with:
+        path: ${{ runner.temp }}/db-${{ matrix.network }}
+        key: cardano-node-ogmios-${{ matrix.network }}-${{ steps.date-time.outputs.value }}
+        restore-keys: |
+          cardano-node-ogmios-${{ matrix.network }}-
+
+    - name: 🔬 Test
+      if: matrix.network == 'preview'
+      working-directory: clients/TypeScript
+      shell: bash
+      env:
+        CONFDIR: /home/runner/work/ogmios/ogmios/server/config/network/${{ matrix.network }}
+      run: |
+        chmod +x ../../server/bin/ogmios
+        sudo ../../server/bin/ogmios --port 1338 --log-level error --node-socket ${{ runner.temp }}/ipc/node.socket --node-config $CONFDIR/cardano-node/config.json &
+
+        docker pull inputoutput/cardano-node:${{ matrix.cardano-node }}
+        docker run -d --name cardano-node \
+          -v ${{ runner.temp }}/db-${{ matrix.network }}:/db \
+          -v ${{ runner.temp }}/ipc:/ipc \
+          -v $CONFDIR/cardano-node:/config \
+          -v $CONFDIR/genesis:/genesis \
+          inputoutput/cardano-node:${{ matrix.cardano-node }} run --config /config/config.json --database-path /db --socket-path /ipc/node.socket --topology /config/topology.json
+
+        ../../scripts/wait-for-sync.sh 1338 1
+
+        yarn test
+        docker stop cardano-node
+        docker rm cardano-node
+
+  #
   #  ███████████                                █████████                      ███             █████       ███████████   ██████████ ███████████  █████
   # ░█░░░███░░░█                               ███░░░░░███                    ░░░             ░░███       ░░███░░░░░███ ░░███░░░░░█░░███░░░░░███░░███
   # ░   ░███  ░  █████ ████ ████████   ██████ ░███    ░░░   ██████  ████████  ████  ████████  ███████      ░███    ░███  ░███  █ ░  ░███    ░███ ░███
@@ -156,6 +249,7 @@ jobs:
   clients_TypeScript_repl:
     if: ${{ github.event_name == 'push' }}
     runs-on: ${{ matrix.os }}
+    needs: [clients_TypeScript]
     strategy:
       matrix:
         os: [ ubuntu-20.04 ]
@@ -196,6 +290,7 @@ jobs:
   clients_TypeScript_npm:
     if: ${{ github.event_name == 'push' }}
     runs-on: ${{ matrix.os }}
+    needs: [clients_TypeScript]
     strategy:
       matrix:
         os: [ ubuntu-20.04 ]
@@ -225,6 +320,7 @@ jobs:
           clients/TypeScript/cardano-ogmios-repl-${{ github.sha }}.tgz
 
     - name: 📤 Publish client package to npm registry
+      if: ${{ startsWith(github.ref, 'refs/tags') }}
       uses: JS-DevTools/npm-publish@v2
       with:
         package: clients/TypeScript/packages/${{ matrix.package }}/package.json
@@ -293,6 +389,36 @@ jobs:
       with:
         name: ogmios-${{ matrix.arch }}-${{ matrix.os }}
         path: server
+
+    - name: 🔨 Build and push (latest)
+      if: ${{ github.event_name == 'push' && matrix.network == 'mainnet' && endsWith(github.ref, 'master') }}
+      uses: docker/build-push-action@v4
+      with:
+        build-args: |
+          NETWORK=${{ matrix.network }}
+          CARDANO_NODE_VERSION=${{ matrix.cardano-node-latest }}
+        context: .
+        push: true
+        tags: ${{ steps.base-variables.outputs.image }}:latest
+        target: ${{ matrix.target }}
+        platforms: ${{ matrix.os }}/${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}
+        cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest
+        cache-to: type=inline
+
+    - name: 🔨 Build and push (latest + network)
+      if: ${{ github.event_name == 'push' && matrix.target == 'cardano-node-ogmios' && endsWith(github.ref, 'master') }}
+      uses: docker/build-push-action@v4
+      with:
+        build-args: |
+          NETWORK=${{ matrix.network }}
+          CARDANO_NODE_VERSION=${{ matrix.cardano-node-latest }}
+        context: .
+        push: true
+        tags: ${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
+        target: ${{ matrix.target }}
+        platforms: ${{ matrix.os }}/${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}
+        cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest-${{ matrix.network }}
+        cache-to: type=inline
 
     - name: 🏷️ Build and push (tag)
       if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && matrix.network == 'mainnet' }}
