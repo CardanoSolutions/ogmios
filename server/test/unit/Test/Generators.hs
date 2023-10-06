@@ -63,7 +63,7 @@ import Ogmios.Data.Protocol.TxSubmission
     , NodeTipTooOldError (..)
     )
 import Ouroboros.Consensus.Byron.Ledger.Block
-    ( ByronBlock
+    ( ByronBlock (..)
     )
 import Ouroboros.Consensus.Cardano.Block
     ( GenTx (..)
@@ -171,7 +171,7 @@ import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
 genBlock :: Gen Block
-genBlock = reasonablySized $ oneof
+genBlock = oneof
     [ BlockByron <$> arbitrary
     , BlockShelley <$> genTPraosBlockFrom @StandardShelley
     , BlockAllegra <$> genTPraosBlockFrom @StandardAllegra
@@ -274,11 +274,11 @@ genSubmitResult = frequency
 genHardForkApplyTxErr :: Gen (HardForkApplyTxErr (CardanoEras StandardCrypto))
 genHardForkApplyTxErr = frequency
     [ (1, HardForkApplyTxErrWrongEra <$> genMismatchEraInfo)
-    , (5, ApplyTxErrShelley <$> reasonablySized arbitrary `suchThat` isNonEmpty)
-    , (5, ApplyTxErrAllegra <$> reasonablySized arbitrary `suchThat` isNonEmpty)
-    , (5, ApplyTxErrMary <$> reasonablySized arbitrary `suchThat` isNonEmpty)
-    , (30, ApplyTxErrAlonzo <$> reasonablySized arbitrary `suchThat` isNonEmpty)
-    , (30, ApplyTxErrBabbage <$> reasonablySized arbitrary `suchThat` isNonEmpty)
+    , (5, ApplyTxErrShelley <$> arbitrary `suchThat` isNonEmpty)
+    , (5, ApplyTxErrAllegra <$> arbitrary `suchThat` isNonEmpty)
+    , (5, ApplyTxErrMary <$> arbitrary `suchThat` isNonEmpty)
+    , (30, ApplyTxErrAlonzo <$> arbitrary `suchThat` isNonEmpty)
+    , (30, ApplyTxErrBabbage <$> arbitrary `suchThat` isNonEmpty)
     ]
   where
     isNonEmpty :: forall era. ApplyTxError era -> Bool
@@ -287,18 +287,18 @@ genHardForkApplyTxErr = frequency
 genEvaluateTransactionResponse :: Gen (EvaluateTransactionResponse Block)
 genEvaluateTransactionResponse = frequency
     [ (10, EvaluationFailure <$> genEvaluateTransactionError)
-    , (1, EvaluationResult <$> reasonablySized arbitrary)
+    , (1, EvaluationResult <$> arbitrary)
     ]
 
 genEvaluateTransactionError :: Gen (EvaluateTransactionError Block)
 genEvaluateTransactionError = frequency
-    [ (10, ScriptExecutionFailures . fromList <$> reasonablySized (do
+    [ (10, ScriptExecutionFailures . fromList <$> (do
         failures <- listOf1 (listOf1 genScriptFailure)
         ptrs <- vector (length failures)
         pure (zip ptrs failures)
       ))
     , (1, IncompatibleEra <$> genPreAlonzoEra)
-    , (1, OverlappingAdditionalUtxo <$> reasonablySized arbitrary)
+    , (1, OverlappingAdditionalUtxo <$> arbitrary)
     , (1, do
         notEnoughSynced <- NodeTipTooOld <$> genPreAlonzoEra <*> genPreAlonzoEra
         pure (NodeTipTooOldErr notEnoughSynced)
@@ -316,7 +316,7 @@ genScriptFailure :: Gen (TransactionScriptFailure StandardCrypto)
 genScriptFailure = oneof
     [ RedeemerNotNeeded <$> arbitrary <*> arbitrary
     , RedeemerPointsToUnknownScriptHash <$> arbitrary
-    , MissingScript <$> arbitrary <*> reasonablySized arbitrary
+    , MissingScript <$> arbitrary <*> arbitrary
     , MissingDatum <$> arbitrary
     , UnknownTxIn <$> arbitrary
     , InvalidTxIn <$> arbitrary
@@ -371,7 +371,7 @@ genRewardsProvenance
 genRewardsProvenance =
     (,) <$> genRewardParams
         <*> fmap fromList
-            ( reasonablySized $ listOf1 $
+            ( listOf1 $
                 (,) <$> arbitrary
                     <*> genRewardInfoPool
             )
@@ -492,7 +492,7 @@ genNonMyopicMemberRewardsResult
     -> Gen (QueryResult crypto (NonMyopicMemberRewards crypto))
 genNonMyopicMemberRewardsResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right <$> reasonablySized arbitrary)
+    , (10, Right <$> arbitrary)
     ]
 
 genDelegationAndRewardsResult
@@ -501,7 +501,7 @@ genDelegationAndRewardsResult
     -> Gen (QueryResult crypto (Delegations crypto, RewardAccounts crypto))
 genDelegationAndRewardsResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right <$> reasonablySized arbitrary)
+    , (10, Right <$> arbitrary)
     ]
 
 genPParamsResult
@@ -510,7 +510,7 @@ genPParamsResult
     -> Proxy (QueryResult crypto (Ledger.PParams era))
     -> Gen (QueryResult crypto (Ledger.PParams era))
 genPParamsResult _ _ =
-    maybe (error "genPParamsResult: unsupported era") reasonablySized
+    maybe (error "genPParamsResult: unsupported era") identity
         (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage)
   where
     genShelley =
@@ -565,7 +565,7 @@ genProposedPParamsResult
     -> Proxy (QueryResult crypto (Sh.ProposedPPUpdates era))
     -> Gen (QueryResult crypto (Sh.ProposedPPUpdates era))
 genProposedPParamsResult _ _ =
-    maybe (error "genProposedPParamsResult: unsupported era") reasonablySized
+    maybe (error "genProposedPParamsResult: unsupported era") identity
         (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage)
   where
     genShelley =
@@ -620,7 +620,7 @@ genPoolDistrResult
     -> Gen (QueryResult crypto (Ledger.PoolDistr crypto))
 genPoolDistrResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right <$> reasonablySized arbitrary)
+    , (10, Right <$> arbitrary)
     ]
 
 genUTxOResult
@@ -629,7 +629,7 @@ genUTxOResult
     -> Proxy (QueryResult crypto (Sh.UTxO era))
     -> Gen (QueryResult crypto (Sh.UTxO era))
 genUTxOResult _ _ =
-    maybe (error "genProposedPParamsResult: unsupported era") reasonablySized
+    maybe (error "genProposedPParamsResult: unsupported era") identity
         (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage)
   where
     genShelley =
@@ -694,14 +694,14 @@ genGenesisConfig =
 genGenesisConfigShelley
     :: Gen (GenesisConfig ShelleyEra)
 genGenesisConfigShelley =
-    reasonablySized arbitrary
+    arbitrary
 
 genGenesisConfigAlonzo
     :: Gen (GenesisConfig AlonzoEra)
 genGenesisConfigAlonzo =
     AlonzoGenesis
         <$> arbitrary
-        <*> reasonablySized arbitrary
+        <*> arbitrary
         <*> arbitrary
         <*> arbitrary
         <*> arbitrary
@@ -712,7 +712,7 @@ genGenesisConfigAlonzo =
 genGenesisConfigConway
     :: Gen (GenesisConfig ConwayEra)
 genGenesisConfigConway =
-    reasonablySized arbitrary
+    arbitrary
 
 genRewardsProvenanceResult
     :: forall crypto. (crypto ~ StandardCrypto)
@@ -729,7 +729,7 @@ genPoolParametersResult
     -> Gen (QueryResult crypto (Map (Ledger.KeyHash 'StakePool crypto) (PoolParams crypto)))
 genPoolParametersResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right <$> reasonablySized arbitrary)
+    , (10, Right <$> arbitrary)
     ]
 
 genMirror
@@ -742,18 +742,18 @@ genMirror = oneof
 genUtxoAlonzo
     :: Gen (UTxO StandardAlonzo)
 genUtxoAlonzo =
-    reasonablySized arbitrary
+    arbitrary
 
 genUtxoBabbage
     :: Gen (UTxO StandardBabbage)
 genUtxoBabbage =
-    reasonablySized arbitrary
+    arbitrary
 
 genData
     :: Era era
     => Gen (Data era)
 genData =
-    reasonablySized arbitrary
+    arbitrary
 
 shrinkUtxo
     :: forall era.

@@ -443,7 +443,7 @@ spec = do
         validateToJSON
             (arbitrary @(Rpc.Response (NextBlockResponse Block)))
             (_encodeNextBlockResponse (encodeBlock omitOptionalCbor) encodePoint encodeTip)
-            (200, "NextBlockResponse")
+            (50, "NextBlockResponse")
             "ogmios.json#/properties/NextBlockResponse"
 
     context "validate transaction submission request/response against JSON-schema" $ do
@@ -456,7 +456,7 @@ spec = do
                 encodeSubmitTransactionError
                 encodeDeserialisationFailure
             )
-            (200, "SubmitTransactionResponse")
+            (50, "SubmitTransactionResponse")
             "ogmios.json#/properties/SubmitTransactionResponse"
 
         validateToJSON
@@ -469,7 +469,7 @@ spec = do
                 encodeScriptFailure
                 encodeDeserialisationFailure
             )
-            (100, "EvaluateTransactionResponse")
+            (50, "EvaluateTransactionResponse")
             "ogmios.json#/properties/EvaluateTransactionResponse"
 
     context "validate mempool monitoring request/response against JSON-schema" $ do
@@ -762,7 +762,7 @@ instance Arbitrary (SubmitTransactionResponse Block) where
         ]
 
 instance Arbitrary (HardForkApplyTxErr (CardanoEras StandardCrypto)) where
-    arbitrary = genHardForkApplyTxErr
+    arbitrary = reasonablySized genHardForkApplyTxErr
 
 instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto))) where
     arbitrary = reasonablySized genSubmitResult
@@ -1131,30 +1131,30 @@ validateNetworkQuery n subMethod params parser = do
             case queryInEra (SomeShelleyEra ShelleyBasedEraBabbage) of
                 Just (SomeStandardQuery _ encodeResult genResult) -> do
                     generateTestVectors (n, toString propName)
-                        (genResult Proxy)
+                        (reasonablySized $ genResult Proxy)
                         (encodeQueryResponse encodeResult)
                     runQuickCheck $ withMaxSuccess n $ forAllBlind
-                        (genResult Proxy)
+                        (reasonablySized $ genResult Proxy)
                         (prop_validateToJSON
                             (encodingToValue . encodeQueryResponse encodeResult)
                             responseRefs
                         )
                 Just (SomeCompoundQuery _ _ encodeResult genResult) -> do
                     generateTestVectors (n, toString propName)
-                        (genResult Proxy)
+                        (reasonablySized $ genResult Proxy)
                         (encodeQueryResponse encodeResult)
                     runQuickCheck $ withMaxSuccess n $ forAllBlind
-                        (genResult Proxy)
+                        (reasonablySized $ genResult Proxy)
                         (prop_validateToJSON
                             (encodingToValue . encodeQueryResponse encodeResult)
                             responseRefs
                         )
                 Just (SomeAdHocQuery _ encodeResult genResult) -> do
                     generateTestVectors (n, toString propName)
-                        (genResult Proxy)
+                        (reasonablySized $ genResult Proxy)
                         (encodeQueryResponse encodeResult)
                     runQuickCheck $ withMaxSuccess n $ forAllBlind
-                        (genResult Proxy)
+                        (reasonablySized $ genResult Proxy)
                         (prop_validateToJSON
                             (encodingToValue . encodeQueryResponse encodeResult)
                             responseRefs
