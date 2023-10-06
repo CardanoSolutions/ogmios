@@ -1,10 +1,11 @@
 name: Continuous Integration
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [ "master" ]
   push:
-    branches: [ "master" ]
+    branches: [ "master", "v*.*" ]
     tags: [ "*.*.*" ]
 
 jobs:
@@ -38,7 +39,8 @@ jobs:
       shell: bash
       run: |
         if [[ $GITHUB_REF == "refs/tags"* ]]; then
-          echo "tag=${GITHUB_REF/refs\/tags\//}" | sed "s/^v//" >> $GITHUB_OUTPUT
+          TAG=$(echo "${GITHUB_REF/refs\/tags\/}" | sed "s/^.*\([0-9].[0-9].[0-9]\).*$/\1/")
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
         else
           echo "tag=0" >> $GITHUB_OUTPUT
         fi
@@ -389,7 +391,7 @@ jobs:
         path: server
 
     - name: 🔨 Build and push (latest)
-      if: ${{ github.event_name == 'push' && matrix.network == 'mainnet' }}
+      if: ${{ github.event_name == 'push' && matrix.network == 'mainnet' && endsWith(github.ref, 'master') }}
       uses: docker/build-push-action@v4
       with:
         build-args: |
@@ -404,7 +406,7 @@ jobs:
         cache-to: type=inline
 
     - name: 🔨 Build and push (latest + network)
-      if: ${{ github.event_name == 'push' && matrix.target == 'cardano-node-ogmios' }}
+      if: ${{ github.event_name == 'push' && matrix.target == 'cardano-node-ogmios' && endsWith(github.ref, 'master') }}
       uses: docker/build-push-action@v4
       with:
         build-args: |
