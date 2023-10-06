@@ -98,6 +98,7 @@ import Test.Generators
     , genPoint
     , genTip
     , generateWith
+    , reasonablySized
     )
 import Test.Hspec
     ( Spec
@@ -251,14 +252,14 @@ chainSyncMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
 
     genNextBlockResponse
         :: Gen (ChainSync.Message Protocol ('StNext any) 'StIdle)
-    genNextBlockResponse = frequency
+    genNextBlockResponse = reasonablySized $ frequency
         [ (10, ChainSync.MsgRollForward <$> genBlock <*> genTip)
         , ( 1, ChainSync.MsgRollBackward <$> genPoint <*> genTip)
         ]
 
     genFindIntersectionResponse
         :: Gen (ChainSync.Message Protocol 'StIntersect 'StIdle)
-    genFindIntersectionResponse = frequency
+    genFindIntersectionResponse = reasonablySized $ frequency
         [ (10, ChainSync.MsgIntersectFound <$> genPoint <*> genTip)
         , ( 1, ChainSync.MsgIntersectNotFound <$> genTip)
         ]

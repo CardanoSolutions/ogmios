@@ -223,7 +223,7 @@ encodeATxAux opts x =
     encodeObject
         ( "id" .=
             encodeHash (By.serializeCborHash (By.taTx x))
-       <> "inputSource" .=
+       <> "spends" .=
             encodeText "inputs"
        <> encodeAnnotated
             (encodeTx @crypto opts)

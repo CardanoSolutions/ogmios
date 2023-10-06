@@ -129,6 +129,7 @@ import Test.Generators
     , genMirror
     , genPoint
     , generateWith
+    , reasonablySized
     )
 import Test.Hspec
     ( Spec
@@ -273,7 +274,7 @@ stateQueryMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
 
     genAcquireResponse
         :: Gen (SomeResponse 'StAcquiring)
-    genAcquireResponse = frequency
+    genAcquireResponse = reasonablySized $ frequency
         [ (10, pure (SomeResponse LSQ.MsgAcquired))
         , ( 1, SomeResponse . LSQ.MsgFailure <$> genAcquireFailure)
         ]
@@ -281,7 +282,7 @@ stateQueryMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
     genQueryResponse
         :: Ledger.Query Block result
         -> Gen (SomeResponse ('StQuerying result))
-    genQueryResponse query = case query of
+    genQueryResponse query = reasonablySized $ case query of
         Ledger.BlockQuery (QueryIfCurrentShelley GetEpochNo) ->
             SomeResponse . LSQ.MsgResult query <$> genEpochResult Proxy
         Ledger.BlockQuery (QueryIfCurrentAllegra GetEpochNo) ->
