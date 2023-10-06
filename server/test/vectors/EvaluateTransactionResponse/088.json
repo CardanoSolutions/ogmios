@@ -1,1 +1,0 @@
-{"jsonrpc":"2.0","method":"evaluateTransaction","result":[{"validator":"mint:1","budget":{"memory":13113999829138849,"cpu":2803166077261860421}},{"validator":"certificate:2","budget":{"memory":807669359093215659,"cpu":5560237985870047540}},{"validator":"withdrawal:3","budget":{"memory":6079372822786626639,"cpu":8096229436634520795}}],"id":null}

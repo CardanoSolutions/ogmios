@@ -1,1 +1,0 @@
-{"jsonrpc":"2.0","method":"nextBlock","result":{"direction":"backward","point":{"slot":98762,"id":"6878df213c83fbc9d87378994583cc622ddce8ebf58ba89a928566fa2e415c63"},"tip":{"slot":91003,"id":"c658610fc2b95924dfbefbeee60471a7499f8394828342b5febdd9917b1c22ae","height":5021459}},"id":"SFvqcwGcCF6L"}

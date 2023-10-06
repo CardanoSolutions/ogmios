@@ -1,1 +1,0 @@
-{"jsonrpc":"2.0","method":"evaluateTransaction","error":{"code":3000,"message":"Trying to evaluate a transaction from an old era (prior to Alonzo).","data":{"incompatibleEra":"shelley"}},"id":"Hl2ZnoIz1ZKO"}
