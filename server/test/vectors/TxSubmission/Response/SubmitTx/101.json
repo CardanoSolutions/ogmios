@@ -1,1 +1,0 @@
-{"type":"jsonwsp/response","version":"1.0","servicename":"ogmios","methodname":"SubmitTx","result":{"SubmitFail":[{"unknownOrIncompleteWithdrawals":{"stake_test17p9v7fmnj978k4ru2a48lugs62a9wv7p789fehr9nt4r54sqjxfa0":518,"stake_test17z66ue36465w2qq40005h2hadad6pnjht8mu6sgplsfj74qvpedfl":745,"stake1799v7fmnj978k4ru2a48lugs62a9wv7p789fehr9nt4r54s8cvtej":650}}]},"reflection":null}
