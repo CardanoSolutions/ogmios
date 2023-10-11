@@ -388,10 +388,14 @@ encodeScript opts = encodeObject . \case
             encodeShortByteString encodeByteStringBase16 serializedScript
 
 encodeScriptPurpose
-    :: Crypto crypto
-    => Al.ScriptPurpose crypto
+    :: forall era crypto.
+        ( EraCrypto (era crypto) ~ crypto
+        , Crypto crypto
+        )
+    => (Ledger.TxCert (era crypto) -> [Series])
+    -> Al.ScriptPurpose (era crypto)
     -> StrictMaybe Json
-encodeScriptPurpose = fmap encodeObject . \case
+encodeScriptPurpose encodeTxCert = fmap encodeObject . \case
     Al.Spending txIn ->
         SJust $
             "purpose" .= encodeText "spend" <>
@@ -400,18 +404,22 @@ encodeScriptPurpose = fmap encodeObject . \case
         SJust $
             "purpose" .= encodeText "mint" <>
             "policy" .= Mary.encodePolicyId policyId
-    Al.Certifying cert ->
-        case Shelley.encodeDCert cert of
-            ([], _) ->
-                SNothing
-            (c:_, _) ->
-                SJust $
-                    "purpose" .= encodeText "publish" <>
-                    "certificate" .= encodeObject c
     Al.Rewarding acct ->
         SJust $
             "purpose" .= encodeText "withdraw" <>
             "rewardAccount" .= Shelley.encodeRewardAcnt acct
+    Al.Certifying cert ->
+        case encodeTxCert cert of
+            [] ->
+                SNothing
+            [c] ->
+                SJust $
+                    "purpose" .= encodeText "publish" <>
+                    "certificate" .= encodeObject c
+            (_:c:_) ->
+                SJust $
+                    "purpose" .= encodeText "publish" <>
+                    "certificate" .= encodeObject c
 
 encodeTx
     :: forall era crypto.
@@ -483,7 +491,7 @@ encodeTxBody x scripts =
         (encodeList Shelley.encodeGenesisVote) votes
   where
     (certs, mirs) =
-        Shelley.encodeDCerts (Al.atbCerts x)
+        Shelley.encodeTxCerts (Al.atbCerts x)
 
     (votes, actions) = fromSMaybe ([], mirs) $
         Shelley.encodeUpdate encodePParamsUpdate mirs <$> Al.atbUpdate x

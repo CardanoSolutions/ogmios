@@ -143,8 +143,6 @@ encodePoolFailure = \case
         UnknownStakePool { poolId }
     Sh.StakePoolRetirementWrongEpochPOOL currentEpoch listedEpoch firstInvalidEpoch ->
         InvalidStakePoolRetirementEpoch { currentEpoch, listedEpoch, firstInvalidEpoch }
-    Sh.WrongCertificateTypePOOL{} ->
-        UnrecognizedCertificateType
     Sh.StakePoolCostTooLowPOOL declaredCost minimumPoolCost ->
         StakePoolCostTooLow { declaredCost, minimumPoolCost }
     Sh.WrongNetworkPOOL _specified expectedNetwork poolId ->

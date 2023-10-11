@@ -13,12 +13,14 @@ import Ogmios.Data.Ledger
     )
 import Ogmios.Data.Ledger.PredicateFailure
     ( MultiEraPredicateFailure (..)
+    , ScriptPurposeInAnyEra (..)
     , TagMismatchDescription (..)
     )
 
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Encoding as Json
 
+import qualified Cardano.Ledger.Conway.Core as Ledger
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -167,7 +169,7 @@ encodePredicateFailure reject = \case
             \provided."
             (pure $ encodeObject
                 ( "missingRedeemers" .=
-                    encodeFoldableMaybe Alonzo.encodeScriptPurpose missingRedeemers
+                    encodeFoldableMaybe encodeScriptPurposeInAnyEra missingRedeemers
                 )
             )
 
@@ -556,16 +558,22 @@ encodePredicateFailure reject = \case
                 )
             )
 
-    UnauthorizedVote { voter, requiredRole } ->
+    UnauthorizedVotes { votes } ->
         reject (predicateFailureCode 37)
-            "The transaction contains vote from a voter that is unauthorized for that vote action. \
-            \The field 'data.unauthorizedVoter' indicates the voter's credential and \
-            \'data.requiredRole' documents the role that the voter should have but don't."
+            "The transaction contains votes from unauthorized voters. \
+            \The field 'data.unauthorizedVotes' indicates the faulty voters \
+            \and the action they attempted to incorrectly vote for."
             (pure $ encodeObject
-                ( "unauthorizedVoter" .=
-                    Shelley.encodeCredential voter
-               <> "requiredRole" .=
-                    Conway.encodeVoterRole requiredRole
+                ( "unauthorizedVotes" .=
+                    encodeMapAsList
+                        (\governanceActionId voter -> encodeObject
+                            ( "proposal" .=
+                                Conway.encodeGovernanceActionId governanceActionId
+                           <> "voter" .=
+                                Conway.encodeVoter voter
+                            )
+                        )
+                        votes
                 )
             )
 
@@ -706,6 +714,65 @@ encodePredicateFailure reject = \case
             "Invalid MIR transfer. The resulting delta is likely negative."
             Nothing
 
+    ForbiddenWithdrawal { marginalizedCredentials } ->
+        reject (predicateFailureCode 50)
+            "The transaction is attempting to withdraw rewards from stake credentials \
+            \that do not engage in on-chain governance. Credentials must be associated \
+            \with a delegate representative (registered, abstain or noConfidence) \
+            \before associated rewards can be withdrawn. The field \
+            \'data.marginalizedCredentials' lists all the affected credentials."
+            (pure $ encodeObject
+                ( "marginalizedCredentials" .=
+                    encodeFoldable Shelley.encodeCredential marginalizedCredentials
+                )
+            )
+
+    StakeCredentialDepositMismatch ->
+        reject (predicateFailureCode 51)
+            "The deposit specified in a stake credential registration (for delegation \
+            \or governance) does not match the current value set by protocol \
+            \parameters."
+            Nothing
+
+    DRepAlreadyRegistered { knownDelegateRepresentative } ->
+        reject (predicateFailureCode 52)
+            "Trying to re-register some already known delegate representative. \
+            \Delegate representatives can only be registered once. The field \
+            \'data.knownDelegateRepresentatives' points to an already known \
+            \credential that's being re-registered by this transaction."
+            (pure $ encodeObject
+                ( "knownDelegateRepresentative" .=
+                    Conway.encodeDRep (Ledger.DRepCredential knownDelegateRepresentative)
+                )
+            )
+
+    DRepNotRegistered { unknownDelegateRepresentative } ->
+        reject (predicateFailureCode 53)
+            "The transaction references an unknown delegate representative. \
+            \To delegate to a representative, it must first register as such. \
+            \This may be done in the same transaction or in an earlier transaction \
+            \but cannot happen retro-actively. The field \
+            \'data.unknownDelegateRepresentative' indicates what credential is used \
+            \without being registered."
+            (pure $ encodeObject
+                ( "unknownDelegateRepresentative" .=
+                    Conway.encodeDRep (Ledger.DRepCredential unknownDelegateRepresentative)
+                )
+            )
+
+    UnknownConstitutionalCommitteeMember { unknownConstitutionalCommitteeMember } ->
+        reject (predicateFailureCode 54)
+            "The transaction references an unknown constitutional committee member. \
+            \This can be either because that member does not actually \
+            \exist or because it was registered but has resigned. The field \
+            \'data.unknownConstitutionalCommitteeMember' indicates what credential is \
+            \unknown."
+            (pure $ encodeObject
+                ( "unknownConstitutionalCommitteeMember" .=
+                    Conway.encodeConstitutionalCommitteeMember unknownConstitutionalCommitteeMember
+                )
+            )
+
     UnrecognizedCertificateType ->
         reject (predicateFailureCode 898)
             "Unrecognized certificate type. This error is a placeholder due to how internal \
@@ -757,7 +824,28 @@ encodeValueInAnyEra = \case
     ValueInAnyEra (ShelleyBasedEraConway, value) ->
         Mary.encodeValue value
 
-encodeDiscriminatedEntities :: Crypto crypto => DiscriminatedEntities crypto -> Json.Series
+encodeScriptPurposeInAnyEra
+    :: Crypto crypto
+    => ScriptPurposeInAnyEra crypto
+    -> StrictMaybe Json
+encodeScriptPurposeInAnyEra = \case
+    ScriptPurposeInAnyEra (ShelleyBasedEraShelley, purpose) ->
+        Alonzo.encodeScriptPurpose (fst . Shelley.encodeTxCert) purpose
+    ScriptPurposeInAnyEra (ShelleyBasedEraAllegra, purpose) ->
+        Alonzo.encodeScriptPurpose (fst . Shelley.encodeTxCert) purpose
+    ScriptPurposeInAnyEra (ShelleyBasedEraMary, purpose) ->
+        Alonzo.encodeScriptPurpose (fst . Shelley.encodeTxCert) purpose
+    ScriptPurposeInAnyEra (ShelleyBasedEraAlonzo, purpose) ->
+        Alonzo.encodeScriptPurpose (fst . Shelley.encodeTxCert) purpose
+    ScriptPurposeInAnyEra (ShelleyBasedEraBabbage, purpose) ->
+        Alonzo.encodeScriptPurpose (fst . Shelley.encodeTxCert) purpose
+    ScriptPurposeInAnyEra (ShelleyBasedEraConway, purpose) ->
+        Alonzo.encodeScriptPurpose Conway.encodeTxCert purpose
+
+encodeDiscriminatedEntities
+    :: Crypto crypto
+    => DiscriminatedEntities crypto
+    -> Json.Series
 encodeDiscriminatedEntities = \case
     DiscriminatedAddresses addrs ->
         "discriminatedType" .= encodeText "address"

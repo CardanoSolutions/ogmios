@@ -12,10 +12,14 @@ import Ogmios.Data.Json.Ledger.PredicateFailure
 import Ogmios.Data.Ledger.PredicateFailure
     ( MultiEraPredicateFailure (..)
     )
+import Ogmios.Data.Ledger.ScriptFailure
+    ( SomeTransactionScriptFailure (..)
+    )
 import Prettyprinter
     ( pretty
     )
 
+import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
 import qualified Cardano.Ledger.Api as Ledger
@@ -37,19 +41,22 @@ encodeScriptFailure
         ( Crypto crypto
         )
     => Rpc.EmbedFault
-    -> Ledger.TransactionScriptFailure crypto
+    -> SomeTransactionScriptFailure crypto
     -> Json
 encodeScriptFailure reject = \case
-    Ledger.MissingScript{} ->
+    SomeTransactionScriptFailure (Ledger.MissingScript ptr _) ->
         reject (scriptFailureCode 0)
             "An associated script witness is missing. Indeed, any script used in a transaction \
             \(when spending, minting, withdrawing or publishing certificates) must be provided \
             \in full with the transaction. Scripts must therefore be added either to the \
             \witness set or provided as a reference inputs should you use Plutus V2+ and \
             \a format from Babbage and beyond."
-            Nothing
+            (pure $ encodeObject
+                ( "missingScripts" .= encodeFoldable Alonzo.encodeRdmrPtr [ptr]
+                )
+            )
 
-    Ledger.ValidationFailure (Ledger.ValidationFailedV1 err traces _debugLang) ->
+    SomeTransactionScriptFailure (Ledger.ValidationFailure (Ledger.ValidationFailedV1 err traces _debugLang)) ->
         reject (scriptFailureCode 1)
             "Some of the (V1) scripts failed to evaluate to a positive outcome. The field \
             \'data.validationError' informs about the nature of the error, and 'data.traces' \
@@ -60,7 +67,7 @@ encodeScriptFailure reject = \case
                 )
             )
 
-    Ledger.ValidationFailure (Ledger.ValidationFailedV2 err traces _debugLang) ->
+    SomeTransactionScriptFailure (Ledger.ValidationFailure (Ledger.ValidationFailedV2 err traces _debugLang)) ->
         reject (scriptFailureCode 1)
             "Some of the (V2) scripts failed to evaluate to a positive outcome. The field \
             \'data.validationError' informs about the nature of the error, and 'data.traces' \
@@ -71,7 +78,7 @@ encodeScriptFailure reject = \case
                 )
             )
 
-    Ledger.ValidationFailure (Ledger.ValidationFailedV3 err traces _debugLang) ->
+    SomeTransactionScriptFailure (Ledger.ValidationFailure (Ledger.ValidationFailedV3 err traces _debugLang)) ->
         reject (scriptFailureCode 1)
             "Some of the (V3) scripts failed to evaluate to a positive outcome. The field \
             \'data.validationError' informs about the nature of the error, and 'data.traces' \
@@ -82,7 +89,7 @@ encodeScriptFailure reject = \case
                 )
             )
 
-    Ledger.InvalidTxIn i ->
+    SomeTransactionScriptFailure (Ledger.InvalidTxIn i) ->
         reject (scriptFailureCode 2)
             "A redeemer points to an input that isn't locked by a Plutus script. Double-check your \
             \redeemer pointers and note that, inputs are ordered lexicographically by the ledger \
@@ -96,20 +103,20 @@ encodeScriptFailure reject = \case
                 )
             )
 
-    Ledger.RedeemerNotNeeded ptr _ ->
+    SomeTransactionScriptFailure (Ledger.RedeemerNotNeeded ptr _) ->
         encodePredicateFailure @crypto reject (ExtraneousRedeemers [ptr])
 
-    Ledger.RedeemerPointsToUnknownScriptHash ptr ->
+    SomeTransactionScriptFailure (Ledger.RedeemerPointsToUnknownScriptHash ptr) ->
         encodePredicateFailure @crypto reject (ExtraneousRedeemers [ptr])
 
-    Ledger.MissingDatum datumHash ->
+    SomeTransactionScriptFailure (Ledger.MissingDatum datumHash) ->
         encodePredicateFailure @crypto reject (MissingDatums (Set.singleton datumHash))
 
-    Ledger.UnknownTxIn i ->
+    SomeTransactionScriptFailure (Ledger.UnknownTxIn i) ->
         encodePredicateFailure @crypto reject (UnknownUtxoReference (Set.singleton i))
 
-    Ledger.IncompatibleBudget{} ->
+    SomeTransactionScriptFailure Ledger.IncompatibleBudget{} ->
         encodePredicateFailure @crypto reject InternalLedgerTypeConversionError
 
-    Ledger.NoCostModelInLedgerState lang ->
+    SomeTransactionScriptFailure (Ledger.NoCostModelInLedgerState lang) ->
         encodePredicateFailure @crypto reject (MissingCostModels [lang])

@@ -55,7 +55,7 @@ encodeUtxowFailure era = \case
     Ba.MalformedScriptWitnesses scripts ->
         MalformedScripts scripts
     Ba.AlonzoInBabbageUtxowPredFailure e ->
-        Alonzo.encodeUtxowFailure (encodeUtxoFailure era) e
+        Alonzo.encodeUtxowFailure era (encodeUtxoFailure era) e
     Ba.UtxoFailure e ->
         encodeUtxoFailure era e
 

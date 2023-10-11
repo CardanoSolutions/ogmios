@@ -57,6 +57,9 @@ import Ogmios.Data.Json.Query
     , RewardAccounts
     , RewardsProvenance
     )
+import Ogmios.Data.Ledger.ScriptFailure
+    ( SomeTransactionScriptFailure (..)
+    )
 import Ogmios.Data.Protocol.TxSubmission
     ( EvaluateTransactionError (..)
     , EvaluateTransactionResponse (..)
@@ -312,20 +315,46 @@ genTranslationError = genericArbitrary
 genPreAlonzoEra :: Gen Text
 genPreAlonzoEra = elements [ "byron", "shelley", "allegra", "mary" ]
 
-genScriptFailure :: Gen (TransactionScriptFailure StandardCrypto)
+genScriptFailure :: Gen (SomeTransactionScriptFailure StandardCrypto)
 genScriptFailure = oneof
-    [ RedeemerNotNeeded <$> arbitrary <*> arbitrary
-    , RedeemerPointsToUnknownScriptHash <$> arbitrary
-    , MissingScript <$> arbitrary <*> arbitrary
-    , MissingDatum <$> arbitrary
-    , UnknownTxIn <$> arbitrary
-    , InvalidTxIn <$> arbitrary
-    , IncompatibleBudget . transExUnits <$> arbitrary
-    , NoCostModelInLedgerState <$> arbitrary
+    [ inBabbageEra $ RedeemerNotNeeded <$> arbitrary <*> arbitrary
+    , inBabbageEra $ RedeemerPointsToUnknownScriptHash <$> arbitrary
+    , inBabbageEra $ MissingScript <$> arbitrary <*> arbitrary
+    , inBabbageEra $ MissingDatum <$> arbitrary
+    , inBabbageEra $ UnknownTxIn <$> arbitrary
+    , inBabbageEra $ InvalidTxIn <$> arbitrary
+    , inBabbageEra $ IncompatibleBudget . transExUnits <$> arbitrary
+    , inBabbageEra $ NoCostModelInLedgerState <$> arbitrary
+
+    -- NOTE: All constructors above are actually era-independent and are only
+    -- parameterized by the crypto. So we picked 'Babbage' arbitrarily.
+    --
+    -- Only 'MissingScript' can differ through era due to the 'ScriptPurpose'
+    -- now being era-dependent. Therefore we generate value in all possible eras
+    -- for it. Starting from Alonzo (no Plutus script before).
+    , inAlonzoEra $ MissingScript <$> arbitrary <*> arbitrary
+    , inBabbageEra $ MissingScript <$> arbitrary <*> arbitrary
+    , inConwayEra $ MissingScript <$> arbitrary <*> arbitrary
+
     -- TODO: Also cover ValidationFailedV1 & ValidationFailedV2.
     -- This requires to also generate arbitrary instances for plutus' 'EvaluationError'
     -- which do not exists :'( ...
     ]
+  where
+    inAlonzoEra
+        :: Gen (TransactionScriptFailure (AlonzoEra StandardCrypto))
+        -> Gen (SomeTransactionScriptFailure StandardCrypto)
+    inAlonzoEra = fmap SomeTransactionScriptFailure
+
+    inBabbageEra
+        :: Gen (TransactionScriptFailure (BabbageEra StandardCrypto))
+        -> Gen (SomeTransactionScriptFailure StandardCrypto)
+    inBabbageEra = fmap SomeTransactionScriptFailure
+
+    inConwayEra
+        :: Gen (TransactionScriptFailure (ConwayEra StandardCrypto))
+        -> Gen (SomeTransactionScriptFailure StandardCrypto)
+    inConwayEra = fmap SomeTransactionScriptFailure
 
 genAcquireFailure :: Gen AcquireFailure
 genAcquireFailure = elements

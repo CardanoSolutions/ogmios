@@ -304,7 +304,7 @@ encodeTxBody opts x scripts =
         (encodeList Shelley.encodeGenesisVote) votes
   where
     (certs, mirs) =
-        Shelley.encodeDCerts (Ba.btbCerts x)
+        Shelley.encodeTxCerts (Ba.btbCerts x)
 
     (votes, actions) = fromSMaybe ([], mirs) $
         Shelley.encodeUpdate encodePParamsUpdate mirs <$> Ba.btbUpdate x

@@ -167,7 +167,7 @@ encodeTxBody (Ma.MaryTxBody inps outs dCerts wdrls fee validity updates _ mint) 
         (encodeList Shelley.encodeGenesisVote) votes
   where
     (certs, mirs) =
-        Shelley.encodeDCerts dCerts
+        Shelley.encodeTxCerts dCerts
 
     (votes, actions) = fromSMaybe ([], mirs) $
         Shelley.encodeUpdate Shelley.encodePParamsUpdate mirs <$> updates

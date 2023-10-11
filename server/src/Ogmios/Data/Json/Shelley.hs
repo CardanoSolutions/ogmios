@@ -66,7 +66,6 @@ import qualified Cardano.Ledger.SafeHash as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
 
 import qualified Cardano.Ledger.Shelley.BlockChain as Sh
-import qualified Cardano.Ledger.Shelley.Delegation.Certificates as Sh
 import qualified Cardano.Ledger.Shelley.Genesis as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.Rules as Sh
@@ -74,6 +73,7 @@ import qualified Cardano.Ledger.Shelley.Scripts as Sh
 import qualified Cardano.Ledger.Shelley.Tx as Sh
 import qualified Cardano.Ledger.Shelley.TxAuxData as Sh
 import qualified Cardano.Ledger.Shelley.TxBody as Sh
+import qualified Cardano.Ledger.Shelley.TxCert as Sh
 import qualified Cardano.Ledger.Shelley.TxWits as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
@@ -174,9 +174,9 @@ encodeCertifiedVRF x =
 
 encodeConstitutionalDelegCert
     :: Crypto crypto
-    => Sh.ConstitutionalDelegCert crypto
+    => Sh.GenesisDelegCert crypto
     -> Series
-encodeConstitutionalDelegCert (Sh.ConstitutionalDelegCert key delegate vrf) =
+encodeConstitutionalDelegCert (Sh.GenesisDelegCert key delegate vrf) =
     "type" .= encodeText "genesisDelegation"
     <>
     "delegate" .= encodeSingleton "id" (encodeKeyHash delegate)
@@ -194,23 +194,29 @@ encodeCredential x = case x of
     Ledger.KeyHashObj h -> encodeKeyHash h
     Ledger.ScriptHashObj h -> encodeScriptHash h
 
-encodeDCerts
-    :: Crypto crypto
-    => StrictSeq (Sh.DCert crypto)
+encodeTxCerts
+    :: forall era crypto.
+        ( EraCrypto (era crypto) ~ crypto
+        , Crypto crypto
+        )
+    => StrictSeq (Sh.ShelleyTxCert (era crypto))
     -> ([Series], [Json])
-encodeDCerts =
+encodeTxCerts =
     foldr
         (\cert (cs, ms) ->
-            let (cs', ms') = encodeDCert cert in (cs' ++ cs, ms' ++ ms)
+            let (cs', ms') = encodeTxCert cert in (cs' ++ cs, ms' ++ ms)
         )
         ([], [])
 
-encodeDCert
-    :: Crypto crypto
-    => Sh.DCert crypto
+encodeTxCert
+    :: forall era crypto.
+        ( EraCrypto (era crypto) ~ crypto
+        , Crypto crypto
+        )
+    => Sh.ShelleyTxCert (era crypto)
     -> ([Series], [Json])
-encodeDCert = \case
-    Sh.DCertDeleg (Sh.RegKey credential) ->
+encodeTxCert = \case
+    Sh.ShelleyTxCertDelegCert (Sh.ShelleyRegCert credential) ->
         ( [ "type" .=
                 encodeText "stakeCredentialRegistration" <>
             "credential" .=
@@ -218,7 +224,7 @@ encodeDCert = \case
           ]
         , []
         )
-    Sh.DCertDeleg (Sh.DeRegKey credential) ->
+    Sh.ShelleyTxCertDelegCert (Sh.ShelleyUnRegCert credential) ->
         ( [ "type" .=
                 encodeText "stakeCredentialDeregistration" <>
             "credential" .=
@@ -226,27 +232,27 @@ encodeDCert = \case
           ]
         , []
         )
-    Sh.DCertDeleg (Sh.Delegate dlg) ->
+    Sh.ShelleyTxCertDelegCert (Sh.ShelleyDelegCert delegator delegatee) ->
         ( [ "type" .=
                 encodeText "stakeDelegation" <>
             "credential" .=
-                encodeCredential (Sh.dDelegator dlg) <>
+                encodeCredential delegator <>
             "stakePool" .= encodeObject
                 ( "id" .=
-                    encodePoolId (Sh.dDelegatee dlg)
+                    encodePoolId delegatee
                 )
           ]
         , []
         )
-    Sh.DCertPool pCert ->
+    Sh.ShelleyTxCertPool pCert ->
         ( [ encodePoolCert pCert ]
         , []
         )
-    Sh.DCertGenesis cCert ->
+    Sh.ShelleyTxCertGenesisDeleg cCert ->
         ( [ encodeConstitutionalDelegCert cCert ]
         , []
         )
-    Sh.DCertMir (Sh.MIRCert pot target) ->
+    Sh.ShelleyTxCertMir (Sh.MIRCert pot target) ->
         ( []
         , [ encodeObject $ case target of
               Sh.StakeAddressesMIR rewards ->
@@ -846,7 +852,7 @@ encodeTxBody x =
         (encodeList encodeGenesisVote) votes
   where
     (certs, mirs) =
-        encodeDCerts (Sh.stbCerts x)
+        encodeTxCerts (Sh.stbCerts x)
 
     (votes, actions) = fromSMaybe ([], mirs) $
         encodeUpdate encodePParamsUpdate mirs <$> Sh.stbUpdate x

@@ -343,7 +343,7 @@
     { "title": "Certificate"
     , "oneOf":
       [ { "type": "object"
-        , "description": "A stake delegation certificate, from a delegator to a stake pool."
+        , "description": "A stake delegation certificate, from a delegator to a stake pool and/or a delegate representative."
         , "title": "StakeDelegation"
         , "additionalProperties": false
         , "required": [ "type", "credential" ]
@@ -371,7 +371,7 @@
           }
         }
       , { "type": "object"
-        , "description": "A stake credential (key or script) registration certificate. The field 'deposit' is only present in Conway onwards."
+        , "description": "A stake credential (key or script) registration certificate. The field 'deposit' is only *optionally* present in Conway onwards."
         , "title": "StakeCredentialRegistration"
         , "additionalProperties": false
         , "required": [ "type", "credential" ]
@@ -389,7 +389,7 @@
           }
         }
       , { "type": "object"
-        , "description": "A stake key de-registration certificate. The field 'deposit' is only present in Conway onwards."
+        , "description": "A stake key de-registration certificate. The field 'deposit' is only *optionally* present in Conway onwards."
         , "title": "StakeCredentialDeregistration"
         , "additionalProperties": false
         , "required": [ "type", "credential" ]
@@ -476,6 +476,75 @@
             }
           }
         }
+      , { "type": "object"
+        , "title": "ConstitutionalCommitteeHotKeyRegistration"
+        , "description": "A constitutional committee member registers a hot key for voting on-chain. Constitutional committee members do not vote with their cold key directly. New registrations supersedes any preceding ones."
+        , "additionalProperties": false
+        , "required": [ "type", "member", "hotKey"]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "constitutionalCommitteeHotKeyRegistration" ]
+            }
+          , "member":
+            { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeMember"
+            }
+          , "hotKey":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "ConstitutionalCommitteeRetirement"
+        , "description": "A constitutional committee member resigns from the committee."
+        , "additionalProperties": false
+        , "required": [ "type", "member"]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "constitutionalCommitteeRetirement" ]
+            }
+          , "member":
+            { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeMember"
+            }
+          }
+        }
+      , { "type": "object"
+        , "description": "A delegate representative registration. Note that this is only possible for 'registered' representatives and not for well-known ones (abstain & noConfidence)"
+        , "title": "DelegateRepresentativeRegistration"
+        , "additionalProperties": false
+        , "required": [ "type", "delegateRepresentative", "deposit" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "delegateRepresentativeRegistration" ]
+            }
+          , "delegateRepresentative":
+            { "$ref": "cardano.json#/definitions/DelegateRepresentative"
+            }
+          , "deposit":
+            { "$ref": "cardano.json#/definitions/Lovelace"
+            }
+          }
+        }
+      , { "type": "object"
+        , "description": "A delegate representative retirement. Note that this is only possible for 'registered' representatives and not for well-known ones (abstain & noConfidence)"
+        , "title": "DelegateRepresentativeRetirement"
+        , "additionalProperties": false
+        , "required": [ "type", "delegateRepresentative", "deposit" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "delegateRepresentativeRetirement" ]
+            }
+          , "delegateRepresentative":
+            { "$ref": "cardano.json#/definitions/DelegateRepresentative"
+            }
+          , "deposit":
+            { "$ref": "cardano.json#/definitions/Lovelace"
+            }
+          }
+        }
       ]
     }
 
@@ -494,6 +563,15 @@
     , "type": "string"
     , "description": "An Ed25519-BIP32 chain-code for key deriviation."
     , "contentEncoding": "base16"
+    }
+
+  , "ConstitutionalCommitteeMember":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id" ]
+    , "properties":
+      { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+      }
     }
 
   , "CostModels":
@@ -548,22 +626,40 @@
       [ { "title": "DelegateRepresentative<Registered>"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "id" ]
+        , "required": [ "id", "type" ]
         , "properties":
           { "id":
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
             }
+          , "type":
+            { "type": "string"
+            , "enum": ["registered"]
+            }
           }
         }
       , { "title": "DelegateRepresentative<NoConfidence>"
-        , "type": "string"
-        , "description": "A special delegate representative which always vote no, except on votes of no-confidence."
-        , "enum": [ "noConfidence" ]
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "type" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "description": "A special delegate representative which always vote no, except on votes of no-confidence."
+            , "enum": [ "noConfidence" ]
+            }
+          }
         }
       , { "title": "DelegateRepresentative<Abstain>"
-        , "type": "string"
-        , "description": "A special delegate representative which always abstain."
-        , "enum": [ "abstain" ]
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "type" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "description": "A special delegate representative which always abstain."
+            , "enum": [ "abstain" ]
+            }
+          }
         }
       ]
     }
@@ -918,7 +1014,7 @@
             , "enum": [ "constitutionalCommittee" ]
             }
           , "members":
-            { "$ref": "cardano.json#/definitions/RewardTransfer"
+            { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeMember"
             }
           , "quorum":
             { "$ref": "cardano.json#/definitions/Ratio"
@@ -949,6 +1045,18 @@
           { "type":
             { "type": "string"
             , "enum": [ "noConfidence" ]
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "GovernanceAction<Information>"
+        , "description": "An action that has no effect on-chain, other than an on-chain record"
+        , "additionalProperties": false
+        , "required": [ "type" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "information" ]
             }
           }
         }
@@ -1068,7 +1176,7 @@
       , { "title": "Voter<StakePoolOperator>"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "role" ]
+        , "required": [ "role", "id" ]
         , "properties":
           { "role":
             { "type": "string"
@@ -2131,12 +2239,6 @@
     , "contentEncoding": "base16"
     , "minLength": 64
     , "maxLength": 64
-    }
-
-  , "VoterRole":
-    { "title": "VoterRole"
-    , "type": "string"
-    , "enum": [ "constitutionalCommittee", "delegateRepresentative", "stakePoolOperator" ]
     }
 
   , "VotingPeriod":

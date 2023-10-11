@@ -1,6 +1,7 @@
 --  This Source Code Form is subject to the terms of the Mozilla Public
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+{-# LANGUAGE TypeOperators #-}
 
 module Ogmios.Data.Json.Conway where
 
@@ -37,16 +38,12 @@ import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 import qualified Cardano.Ledger.Babbage.PParams as Ba
 import qualified Cardano.Ledger.Babbage.Tx as Ba
 
-import qualified Cardano.Ledger.Conway.Delegation.Certificates as Cn
 import qualified Cardano.Ledger.Conway.Genesis as Cn
 import qualified Cardano.Ledger.Conway.Governance as Cn
 import qualified Cardano.Ledger.Conway.Tx as Cn
 import qualified Cardano.Ledger.Conway.TxBody as Cn
+import qualified Cardano.Ledger.Conway.TxCert as Cn
 
-import qualified Cardano.Ledger.Credential as Ledger
-import Cardano.Ledger.Keys
-    ( KeyRole (..)
-    )
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -83,56 +80,100 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
           "transactions" .= encodeFoldable (encodeTx opts) (Al.txSeqTxns txs)
         )
 
-encodeDCert
-    :: Crypto crypto
-    => Cn.ConwayDCert crypto
-    -> [Json]
-encodeDCert = \case
-    Cn.ConwayDCertDeleg dCert ->
-        encodeObject <$> encodeDelegCert dCert
-    Cn.ConwayDCertPool pCert ->
-        [encodeObject (Shelley.encodePoolCert pCert)]
-    Cn.ConwayDCertConstitutional cCert ->
-        [encodeObject (Shelley.encodeConstitutionalDelegCert cCert)]
-
--- TODO: This has heavily changed in the recent ledger versions.
--- In this version of the ledger, registration and delegation certificates have
--- been merged into one, so we manually unwind them into two certificates.
+-- TODO: Force the purpose to 'ColdCommitteeRole in the next version of the
+-- cardano-ledger. In the current one, there's a discrepancy between the phantom
+-- type given to 'GovernanceAction' ('Voting) and the one given to the tx
+-- certificate ('CommitteeColdKey).
 --
--- This is changed in later version of the ledger which we can't rely on just
--- yet because the entire Cardano stack ain't ready for it.
+-- Although they ought to both refer to the same thing.
+encodeConstitutionalCommitteeMember
+    :: (Crypto crypto, purpose :\: 'Ledger.StakePool)
+    => Ledger.KeyHash purpose crypto
+    -> Json
+encodeConstitutionalCommitteeMember memberId =
+    encodeObject
+        ( "id" .= Shelley.encodeKeyHash memberId
+        )
+
+encodeConwayCommitteeCert
+    :: Crypto crypto
+    => Cn.ConwayCommitteeCert crypto
+    -> Series
+encodeConwayCommitteeCert = \case
+    Cn.ConwayRegDRep credential deposit ->
+        "type" .=
+            encodeText "delegateRepresentativeRegistration"
+       <>
+        "delegateRepresentative" .=
+            encodeDRep (Ledger.DRepCredential credential)
+       <>
+        "deposit" .=
+            encodeCoin deposit
+    Cn.ConwayUnRegDRep credential deposit ->
+        "type" .=
+            encodeText "delegateRepresentativeRetirement"
+       <>
+        "delegateRepresentative" .=
+            encodeDRep (Ledger.DRepCredential credential)
+       <>
+        "deposit" .=
+            encodeCoin deposit
+    Cn.ConwayAuthCommitteeHotKey coldKey hotKey ->
+        "type" .=
+            encodeText "constitutionalCommitteeHotKeyRegistration"
+       <>
+        "member" .=
+            encodeConstitutionalCommitteeMember coldKey
+       <>
+        "hotKey" .=
+            Shelley.encodeKeyHash hotKey
+    Cn.ConwayResignCommitteeColdKey coldKey ->
+        "type" .=
+            encodeText "constitutionalCommitteeRetirement"
+       <>
+        "member" .=
+            encodeConstitutionalCommitteeMember coldKey
+
 encodeDelegCert
     :: Crypto crypto
     => Cn.ConwayDelegCert crypto
     -> [Series]
 encodeDelegCert = \case
-    Cn.ConwayDeleg credential delegatee deposit ->
+    Cn.ConwayRegCert credential deposit ->
         [ "type" .=
             encodeText "stakeCredentialRegistration"
        <> "credential" .=
-              Shelley.encodeCredential credential
-       <> "deposit" .=
-              encodeCoin deposit
-        , "type" .=
-            encodeText "stakeDelegation"
-       <> "credential" .=
-              Shelley.encodeCredential credential
-       <> encodeDelegatee delegatee
+            Shelley.encodeCredential credential
+       <> "deposit" .=? OmitWhenNothing
+            encodeCoin deposit
         ]
-    Cn.ConwayReDeleg credential delegatee ->
+    Cn.ConwayUnRegCert credential deposit ->
+        [ "type" .=
+            encodeText "stakeCredentialDeregistration"
+        <> "credential" .=
+            Shelley.encodeCredential credential
+        <> "deposit" .=? OmitWhenNothing
+            encodeCoin deposit
+        ]
+    Cn.ConwayDelegCert credential delegatee ->
         [ "type" .=
             encodeText "stakeDelegation"
         <> "credential" .=
             Shelley.encodeCredential credential
         <> encodeDelegatee delegatee
         ]
-    Cn.ConwayUnDeleg credential deposit ->
+    Cn.ConwayRegDelegCert credential delegatee deposit ->
         [ "type" .=
-            encodeText "stakeCredentialDeregistration"
-        <> "credential" .=
+            encodeText "stakeCredentialRegistration"
+       <> "credential" .=
             Shelley.encodeCredential credential
-        <> "deposit" .=
+       <> "deposit" .=
             encodeCoin deposit
+        , "type" .=
+            encodeText "stakeDelegation"
+       <> "credential" .=
+            Shelley.encodeCredential credential
+       <> encodeDelegatee delegatee
         ]
 
 encodeDelegatee
@@ -143,11 +184,24 @@ encodeDelegatee = \case
     Cn.DelegStake poolId ->
         "stakePool" .= encodeSingleton "id" (Shelley.encodePoolId poolId)
     Cn.DelegVote drep ->
-        "delegateRepresentative" .= encodeSingleton "id" (Shelley.encodeCredential drep)
+        "delegateRepresentative" .= encodeDRep drep
     Cn.DelegStakeVote poolId drep ->
         "stakePool" .= encodeSingleton "id" (Shelley.encodePoolId poolId)
         <>
-        "delegateRepresentative" .= encodeSingleton "id" (Shelley.encodeCredential drep)
+        "delegateRepresentative" .= encodeDRep drep
+
+encodeDRep
+    :: Crypto crypto
+    => Ledger.DRep crypto
+    -> Json
+encodeDRep = encodeObject . \case
+    Ledger.DRepCredential credential ->
+        "type" .= encodeText "registered" <>
+        "id" .= Shelley.encodeCredential credential
+    Ledger.DRepAlwaysAbstain ->
+        "type" .= encodeText "abstain"
+    Ledger.DRepAlwaysNoConfidence ->
+        "type" .= encodeText "noConfidence"
 
 encodeGenesis
     :: Crypto crypto
@@ -192,7 +246,7 @@ encodeGovernanceAction = \case
             ( "type" .=
                 encodeText "constitutionalCommittee"
            <> "members" .=
-                encodeFoldable Shelley.encodeKeyHash members
+                encodeFoldable encodeConstitutionalCommitteeMember members
            <> "quorum" .=
                 encodeRational quorum
             )
@@ -207,6 +261,11 @@ encodeGovernanceAction = \case
         encodeObject
             ( "type" .=
                 encodeText "noConfidence"
+            )
+    Cn.InfoAction ->
+        encodeObject
+            ( "type" .=
+                encodeText "information"
             )
 
 encodeGovernanceActionId
@@ -311,7 +370,7 @@ encodeTxBody opts x scripts =
     "totalCollateral" .=? OmitWhenNothing
         encodeCoin (Cn.ctbTotalCollateral x) <>
     "certificates" .=? OmitWhen null
-        (encodeConcatFoldable encodeDCert) (Cn.ctbCerts x) <>
+        (encodeConcatFoldable (fmap encodeObject . encodeTxCert)) (Cn.ctbCerts x) <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         Shelley.encodeWdrl (Cn.ctbWithdrawals x) <>
     "mint" .=? OmitWhen (== mempty)
@@ -335,16 +394,20 @@ encodeTxBody opts x scripts =
         (encodeFoldable encodeVotingProcedure)
         (Cn.ctbVotingProcedures x)
 
-encodeVoterRole
-    :: Cn.VoterRole
-    -> Json
-encodeVoterRole = encodeText . \case
-    Cn.ConstitutionalCommittee ->
-        "constitutionalCommittee"
-    Cn.DRep ->
-        "delegateRepresentative"
-    Cn.SPO ->
-        "stakePoolOperator"
+encodeTxCert
+    :: forall era crypto.
+        ( EraCrypto (era crypto) ~ crypto
+        , Crypto crypto
+        )
+    => Cn.ConwayTxCert (era crypto)
+    -> [Series]
+encodeTxCert = \case
+    Cn.ConwayTxCertDeleg dCert ->
+        encodeDelegCert dCert
+    Cn.ConwayTxCertPool pCert ->
+        [Shelley.encodePoolCert pCert]
+    Cn.ConwayTxCertCommittee cCert ->
+        [encodeConwayCommitteeCert cCert]
 
 encodeVotingProcedure
     :: Crypto crypto
@@ -354,7 +417,7 @@ encodeVotingProcedure x = encodeObject
     ( "proposal" .=
         encodeGovernanceActionId (Cn.vProcGovActionId x)
    <> "issuer" .=
-       encodeVoter (Cn.vProcRoleKeyHash x) (Cn.vProcRole x)
+       encodeVoter (Cn.vProcVoter x)
    <> "vote" .=
        encodeVote (Cn.vProcVote x)
    <> "anchor" .=? OmitWhenNothing
@@ -369,19 +432,17 @@ encodeVote = \case
     Cn.VoteNo -> encodeText "no"
     Cn.Abstain -> encodeText "abstain"
 
--- TODO: Think about making 'stakePool' a required field in the corresponding
--- JSON schema once bumping cardano-ledger to >= 1.6.0.0
 encodeVoter
     :: Crypto crypto
-    => Ledger.Credential 'Voting crypto
-    -> Cn.VoterRole
+    => Cn.Voter crypto
     -> Json
-encodeVoter credential = encodeObject . \case
-    role@Cn.ConstitutionalCommittee ->
-        "role" .= encodeVoterRole role <>
+encodeVoter = encodeObject . \case
+    Cn.CommitteeVoter credential ->
+        "role" .= encodeText "constitutionalCommittee" <>
         "id" .= Shelley.encodeCredential credential
-    role@Cn.DRep ->
-        "role" .= encodeVoterRole role <>
+    Cn.DRepVoter credential ->
+        "role" .= encodeText "delegateRepresentative" <>
         "id" .= Shelley.encodeCredential credential
-    role@Cn.SPO ->
-        "role" .= encodeVoterRole role
+    Cn.StakePoolVoter poolId ->
+        "role" .= encodeText "stakePoolOperator" <>
+        "id" .= Shelley.encodePoolId poolId
