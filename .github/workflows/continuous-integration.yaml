@@ -167,7 +167,7 @@ jobs:
         os: [ linux ]
         arch: [ x86_64 ]
         network: [ preview ]
-        cardano-node: [ 8.1.2 ]
+        cardano-node: [ 8.5.0-pre ]
 
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-latest' }}
     steps:
@@ -219,13 +219,13 @@ jobs:
         chmod +x ../../server/bin/ogmios
         sudo ../../server/bin/ogmios --port 1338 --log-level error --node-socket ${{ runner.temp }}/ipc/node.socket --node-config $CONFDIR/cardano-node/config.json &
 
-        docker pull inputoutput/cardano-node:${{ matrix.cardano-node }}
+        docker pull ghcr.io/input-output-hk/cardano-node:${{ matrix.cardano-node }}
         docker run -d --name cardano-node \
           -v ${{ runner.temp }}/db-${{ matrix.network }}:/db \
           -v ${{ runner.temp }}/ipc:/ipc \
           -v $CONFDIR/cardano-node:/config \
           -v $CONFDIR/genesis:/genesis \
-          inputoutput/cardano-node:${{ matrix.cardano-node }} run --config /config/config.json --database-path /db --socket-path /ipc/node.socket --topology /config/topology.json
+          ghcr.io/input-output-hk/cardano-node:${{ matrix.cardano-node }} run --config /config/config.json --database-path /db --socket-path /ipc/node.socket --topology /config/topology.json
 
         ../../scripts/wait-for-sync.sh 1338 1
 
