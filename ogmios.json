@@ -2381,14 +2381,25 @@
 
   , "ScriptExecutionFailure":
     { "oneOf":
-      [ { "title": "ScriptExecutionFailure<MissingScript>"
+      [ { "title": "ScriptExecutionFailure<MissingScripts>"
         , "description": "An associated script witness is missing. Indeed, any script used in a transaction (when spending, minting, withdrawing or publishing certificates) must be provided in full with the transaction. Scripts must therefore be added either to the witness set or provided as a reference inputs should you use Plutus V2+ and a format from Babbage and beyond."
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "code", "message" ]
+        , "required": [ "code", "message", "data" ]
         , "properties":
           { "code": { "type": "integer", "enum": [ 3011 ] }
           , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "missingScripts" ]
+            , "properties":
+              { "missingScripts":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
+                }
+              }
+            }
           }
         }
       , { "title": "ScriptExecutionFailure<ValidationFailure>"
@@ -3193,8 +3204,8 @@
             }
           }
         }
-      , { "title": "SubmitTransactionFailure<UnauthorizedVote>"
-        , "description": "The transaction contains vote from a voter that is unauthorized for that vote action. The field 'data.unauthorizedVoter' indicates the voter's credential and 'data.requiredRole' documents the role that the voter should have but don't."
+      , { "title": "SubmitTransactionFailure<UnauthorizedVotes>"
+        , "description": "The transaction contains votes from unauthorized voters. The field 'data.unauthorizedVotes' indicates the faulty voters and the action they attempted to incorrectly vote for."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3204,10 +3215,20 @@
           , "data":
             { "type": "object"
             , "additionalProperties": false
-            , "required": [ "unauthorizedVoter", "requiredRole" ]
+            , "required": [ "unauthorizedVotes" ]
             , "properties":
-              { "unauthorizedVoter": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
-              , "requiredRole": { "$ref": "cardano.json#/definitions/VoterRole" }
+              { "unauthorizedVotes":
+                { "type": "array"
+                , "items":
+                  { "type": "object"
+                  , "additionalProperties": false
+                  , "required": [ "proposal", "voter" ]
+                  , "properties":
+                    { "proposal": { "$ref": "cardano.json#/definitions/GovernanceProposalReference" }
+                    , "voter": { "$ref": "cardano.json#/definitions/GovernanceVoter" }
+                    }
+                  }
+                }
               }
             }
           }
@@ -3413,6 +3434,92 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3149 ] }
           , "message": { "type": "string" }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<ForbiddenWithdrawal>"
+        , "description": "The transaction is attempting to withdraw rewards from stake credentials that do not engage in on-chain governance. Credentials must be associated with a delegate representative (registered, abstain or noConfidence) before associated rewards can be withdrawn. The field 'data.marginalizedCredentials' lists all the affected credentials."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3150 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "required": [ "marginalizedCredentials" ]
+            , "additionalProperties": false
+            , "properties":
+              { "marginalizedCredentials":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                }
+              }
+            }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<CredentialDepositMismatch>"
+        , "description": "The deposit specified in a stake credential registration (for delegation or governance) does not match the current value set by protocol parameters."
+        , "type": "object"
+        , "required": [ "code", "message" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3151 ] }
+          , "message": { "type": "string" }
+          }
+        }
+
+      , { "title": "SubmitTransactionFailure<DRepAlreadyRegistered>"
+        , "description": "Trying to re-register some already known delegate representative. Delegate representatives can only be registered once. The field 'data.knownDelegateRepresentatives' points to an already known credential that's being re-registered by this transaction."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3152 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "required": [ "knownDelegateRepresentative" ]
+            , "additionalProperties": false
+            , "properties":
+              { "knownDelegateRepresentative": { "$ref": "cardano.json#/definitions/DelegateRepresentative" }
+              }
+            }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<DRepNotRegistered>"
+        , "description": "The transaction references an unknown delegate representative. To delegate to a representative, it must first register as such. This may be done in the same transaction or in an earlier transaction but cannot happen retro-actively. The field 'data.unknownDelegateRepresentative' indicates what credential is used without being registered."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3153 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "required": [ "unknownDelegateRepresentative" ]
+            , "additionalProperties": false
+            , "properties":
+              { "unknownDelegateRepresentative": { "$ref": "cardano.json#/definitions/DelegateRepresentative" }
+              }
+            }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<UnknownConstitutionalCommitteeMember>"
+        , "description": "The transaction references an unknown constitutional committee member. This can be either because that member does not actually exist or because it was registered but has resigned. The field 'data.unknownConstitutionalCommitteeMember' indicates what credential is unknown."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3154 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "required": [ "unknownConstitutionalCommitteeMember" ]
+            , "additionalProperties": false
+            , "properties":
+              { "unknownConstitutionalCommitteeMember": { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeMember" }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<UnrecognizedCertificateType>"

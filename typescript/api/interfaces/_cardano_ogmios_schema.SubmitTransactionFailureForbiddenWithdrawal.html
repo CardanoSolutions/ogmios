@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>SubmitTransactionFailureUnauthorizedVote | cardano-ogmios</title>
+	<title>SubmitTransactionFailureForbiddenWithdrawal | cardano-ogmios</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -35,23 +35,29 @@
 					<li class=" ">
 						<a href="../modules.html">Modules</a>
 					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/_cardano_ogmios_client.html">@cardano-<wbr>ogmios/client</a>
+					</li>
+					<li class="current tsd-kind-module">
+						<a href="../modules/_cardano_ogmios_schema.html">@cardano-<wbr>ogmios/schema</a>
+					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
 				</ul>
 				<ul class="current">
-					<li class="current tsd-kind-interface tsd-parent-kind-namespace">
-						<a href="_cardano_ogmios_client.Schema.SubmitTransactionFailureUnauthorizedVote.html" class="tsd-kind-icon">Submit<wbr>Transaction<wbr>Failure<wbr>Unauthorized<wbr>Vote</a>
+					<li class="current tsd-kind-interface tsd-parent-kind-module">
+						<a href="_cardano_ogmios_schema.SubmitTransactionFailureForbiddenWithdrawal.html" class="tsd-kind-icon">Submit<wbr>Transaction<wbr>Failure<wbr>Forbidden<wbr>Withdrawal</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.SubmitTransactionFailureUnauthorizedVote.html#code" class="tsd-kind-icon">code</a>
+								<a href="_cardano_ogmios_schema.SubmitTransactionFailureForbiddenWithdrawal.html#code" class="tsd-kind-icon">code</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.SubmitTransactionFailureUnauthorizedVote.html#data" class="tsd-kind-icon">data</a>
+								<a href="_cardano_ogmios_schema.SubmitTransactionFailureForbiddenWithdrawal.html#data" class="tsd-kind-icon">data</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.SubmitTransactionFailureUnauthorizedVote.html#message" class="tsd-kind-icon">message</a>
+								<a href="_cardano_ogmios_schema.SubmitTransactionFailureForbiddenWithdrawal.html#message" class="tsd-kind-icon">message</a>
 							</li>
 						</ul>
 					</li>
@@ -68,22 +74,26 @@
 							<a href="../modules.html">#</a>
 						</li>
 						<li>
-							<a href="../modules/_cardano_ogmios_client.html">@cardano-ogmios/client</a>
+							<a href="../modules/_cardano_ogmios_schema.html">@cardano-ogmios/schema</a>
 						</li>
 						<li>
-							<a href="../modules/_cardano_ogmios_client.Schema.html">Schema</a>
-						</li>
-						<li>
-							<a href="_cardano_ogmios_client.Schema.SubmitTransactionFailureUnauthorizedVote.html">SubmitTransactionFailureUnauthorizedVote</a>
+							<a href="_cardano_ogmios_schema.SubmitTransactionFailureForbiddenWithdrawal.html">SubmitTransactionFailureForbiddenWithdrawal</a>
 						</li>
 					</ul>
 				</div>
 			</div>
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>The transaction is attempting to withdraw rewards from stake credentials that do not engage in on-chain governance. Credentials must be associated with a delegate representative (registered, abstain or noConfidence) before associated rewards can be withdrawn. The field &#39;data.marginalizedCredentials&#39; lists all the affected credentials.</p>
+					</div>
+				</div>
+			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">SubmitTransactionFailureUnauthorizedVote</span>
+						<span class="target">SubmitTransactionFailureForbiddenWithdrawal</span>
 					</li>
 				</ul>
 			</section>
@@ -94,9 +104,9 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.SubmitTransactionFailureUnauthorizedVote.html#code" class="tsd-kind-icon">code</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.SubmitTransactionFailureUnauthorizedVote.html#data" class="tsd-kind-icon">data</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.SubmitTransactionFailureUnauthorizedVote.html#message" class="tsd-kind-icon">message</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SubmitTransactionFailureForbiddenWithdrawal.html#code" class="tsd-kind-icon">code</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SubmitTransactionFailureForbiddenWithdrawal.html#data" class="tsd-kind-icon">data</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SubmitTransactionFailureForbiddenWithdrawal.html#message" class="tsd-kind-icon">message</a></li>
 							</ul>
 						</section>
 					</div>
@@ -107,10 +117,11 @@
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="code" class="tsd-anchor"></a>
 					<h3>code</h3>
-					<div class="tsd-signature tsd-kind-icon">code<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"3137"</span></div>
+					<div class="tsd-signature tsd-kind-icon">code<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"3150"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:987</li>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/d9ada0f/clients/TypeScript/packages/schema/src/index.ts#L1604">packages/schema/src/index.ts:1604</a>
+							</li>
 						</ul>
 					</aside>
 				</section>
@@ -120,17 +131,15 @@
 					<div class="tsd-signature tsd-kind-icon">data<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:989</li>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/d9ada0f/clients/TypeScript/packages/schema/src/index.ts#L1606">packages/schema/src/index.ts:1606</a>
+							</li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
 							<li class="tsd-parameter">
-								<h5>required<wbr>Role<span class="tsd-signature-symbol">: </span><a href="../modules/_cardano_ogmios_client.Schema.html#VoterRole" class="tsd-signature-type">VoterRole</a></h5>
-							</li>
-							<li class="tsd-parameter">
-								<h5>unauthorized<wbr>Voter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+								<h5>marginalized<wbr>Credentials<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
 							</li>
 						</ul>
 					</div>
@@ -141,7 +150,8 @@
 					<div class="tsd-signature tsd-kind-icon">message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:988</li>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/d9ada0f/clients/TypeScript/packages/schema/src/index.ts#L1605">packages/schema/src/index.ts:1605</a>
+							</li>
 						</ul>
 					</aside>
 				</section>
