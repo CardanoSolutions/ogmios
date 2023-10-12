@@ -6,14 +6,14 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
-### [6.0.0-rc3] - UNRELEASED
+### [6.0.0-rc3] - 2023-10-12
 
 #### Added
 
 - Integration with `cardano-node==8.5.0`. This adds new elements to the Conway era.
   - New transaction certificates: `DelegateRepresentativeRegistration`, `DelegateRepresentativeRetirement`, `ConstitutionalCommitteeHotKeyRegistration` and `ConstitutionalCommitteeRetirement`.
   - A new governance action `Information`, empty.
-  - New transaction submission errors: : `ForbiddenWithdrawal`, `CredentialDepositMismatch`, `DRepAlreadyRegistered`, `DRepNotRegistered` and `UnknownConstitutionalCommitteeMember`
+  - New transaction submission errors: `ForbiddenWithdrawal`, `CredentialDepositMismatch`, `DRepAlreadyRegistered`, `DRepNotRegistered` and `UnknownConstitutionalCommitteeMember`
 
 #### Changed
 
@@ -21,7 +21,7 @@ pre: "<b>5. </b>"
   - The `DelegateRepresentative` schema has changed to now be a JSON `object` in all cases, with at least a field `type` to discriminate over it. Abstain and NoConfidence delegate representatives have no other fields.
   - The stake pool operator id is now always included in the `GovernanceVoter` schema.
   - The `ScriptExecutionFailure<MissingScripts>` schema now includes a `data.missingScripts` field for debugging.
-  - The `SubmitTransactionFailure<UnauthorizedVote>` has been changed to `"ubmitTransactionFailure<UnauthorizedVotes>` and now contains a list of unauthorized voters.
+  - The `SubmitTransactionFailure<UnauthorizedVote>` has been changed to `SubmitTransactionFailure<UnauthorizedVotes>` and now contains a list of unauthorized voters.
 
 - Fixed `inputSource` being set on Byron transactions instead of `spends`.
 - Now conditionally include Byron's cbor bytes like for other eras (`--include-transaction-cbor`).
