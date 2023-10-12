@@ -266,7 +266,7 @@ jobs:
           -v $CONFDIR/genesis:/genesis \
           ghcr.io/input-output-hk/cardano-node:${{ matrix.cardano-node }} run --config /config/config.json --database-path /db --socket-path /ipc/node.socket --topology /config/topology.json
 
-        ../../scripts/wait-for-sync.sh 1338 1
+        ../../scripts/wait-for-sync.sh 1338 1 "docker logs --since 10s cardano-node"
 
         yarn test
         docker stop cardano-node
