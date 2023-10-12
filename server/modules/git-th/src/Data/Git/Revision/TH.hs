@@ -77,8 +77,14 @@ gitDescribeHEAD =
     runGitDescribe = do
         result <- git ["describe", "HEAD"]
         case result of
-            Right (ExitSuccess, revision) -> pure revision
-            _                             -> pure unknownRevision
+            Right (ExitSuccess, revision) ->
+                pure revision
+            _ ->
+                lookupEnv "GIT_SHA" <&> \case
+                    Nothing ->
+                        unknownRevision
+                    Just revision ->
+                        revision
 
 -- | Get the current HEAD revision (long format).
 --
