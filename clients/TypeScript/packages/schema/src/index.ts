@@ -54,7 +54,11 @@ export type Certificate =
   | StakeCredentialDeregistration
   | StakePoolRegistration
   | StakePoolRetirement
-  | GenesisDelegation;
+  | GenesisDelegation
+  | ConstitutionalCommitteeHotKeyRegistration
+  | ConstitutionalCommitteeRetirement
+  | DelegateRepresentativeRegistration
+  | DelegateRepresentativeRetirement;
 /**
  * A Blake2b 32-byte hash digest of a pool's verification key.
  */
@@ -63,14 +67,6 @@ export type DelegateRepresentative =
   | DelegateRepresentativeRegistered
   | DelegateRepresentativeNoConfidence
   | DelegateRepresentativeAbstain;
-/**
- * A special delegate representative which always vote no, except on votes of no-confidence.
- */
-export type DelegateRepresentativeNoConfidence = "noConfidence";
-/**
- * A special delegate representative which always abstain.
- */
-export type DelegateRepresentativeAbstain = "abstain";
 /**
  * A ratio of two integers, to express exact fractions.
  */
@@ -168,7 +164,7 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureExecutionUnitsTooLarge
   | SubmitTransactionFailureTotalCollateralMismatch
   | SubmitTransactionFailureSpendsMismatch
-  | SubmitTransactionFailureUnauthorizedVote
+  | SubmitTransactionFailureUnauthorizedVotes
   | SubmitTransactionFailureUnknownGovernanceProposal
   | SubmitTransactionFailureInvalidProtocolParametersUpdate
   | SubmitTransactionFailureUnknownStakePool
@@ -181,6 +177,11 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureNonEmptyRewardAccount
   | SubmitTransactionFailureInvalidGenesisDelegation
   | SubmitTransactionFailureInvalidMIRTransfer
+  | SubmitTransactionFailureForbiddenWithdrawal
+  | SubmitTransactionFailureCredentialDepositMismatch
+  | SubmitTransactionFailureDRepAlreadyRegistered
+  | SubmitTransactionFailureDRepNotRegistered
+  | SubmitTransactionFailureUnknownConstitutionalCommitteeMember
   | SubmitTransactionFailureUnrecognizedCertificateType
   | SubmitTransactionFailureInternalLedgerTypeConversionError;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
@@ -191,7 +192,6 @@ export type ScriptPurpose = ScriptPurposeSpend | ScriptPurposeMint | ScriptPurpo
 export type PolicyId = string;
 export type RedeemerPointer = string;
 export type Language = "plutus:v1" | "plutus:v2" | "plutus:v3";
-export type VoterRole = "constitutionalCommittee" | "delegateRepresentative" | "stakePoolOperator";
 export type Utxo = {
   transaction: {
     id: TransactionId;
@@ -211,7 +211,7 @@ export type EvaluateTransactionFailure =
   | EvaluateTransactionFailureCannotCreateEvaluationContext
   | EvaluateTransactionFailureScriptExecutionFailure;
 export type ScriptExecutionFailure =
-  | ScriptExecutionFailureMissingScript
+  | ScriptExecutionFailureMissingScripts
   | ScriptExecutionFailureValidationFailure
   | ScriptExecutionFailureUnsuitableOutputReference
   | SubmitTransactionFailureExtraneousRedeemers
@@ -576,7 +576,7 @@ export interface Plutus {
   cbor: string;
 }
 /**
- * A stake delegation certificate, from a delegator to a stake pool.
+ * A stake delegation certificate, from a delegator to a stake pool and/or a delegate representative.
  */
 export interface StakeDelegation {
   type: "stakeDelegation";
@@ -588,9 +588,22 @@ export interface StakeDelegation {
 }
 export interface DelegateRepresentativeRegistered {
   id: DigestBlake2B224;
+  type: "registered";
+}
+export interface DelegateRepresentativeNoConfidence {
+  /**
+   * A special delegate representative which always vote no, except on votes of no-confidence.
+   */
+  type: "noConfidence";
+}
+export interface DelegateRepresentativeAbstain {
+  /**
+   * A special delegate representative which always abstain.
+   */
+  type: "abstain";
 }
 /**
- * A stake credential (key or script) registration certificate. The field 'deposit' is only present in Conway onwards.
+ * A stake credential (key or script) registration certificate. The field 'deposit' is only *optionally* present in Conway onwards.
  */
 export interface StakeCredentialRegistration {
   type: "stakeCredentialRegistration";
@@ -598,7 +611,7 @@ export interface StakeCredentialRegistration {
   deposit?: Lovelace;
 }
 /**
- * A stake key de-registration certificate. The field 'deposit' is only present in Conway onwards.
+ * A stake key de-registration certificate. The field 'deposit' is only *optionally* present in Conway onwards.
  */
 export interface StakeCredentialDeregistration {
   type: "stakeCredentialDeregistration";
@@ -658,6 +671,41 @@ export interface GenesisDelegation {
     vrfVerificationKeyHash: DigestBlake2B256;
   };
 }
+/**
+ * A constitutional committee member registers a hot key for voting on-chain. Constitutional committee members do not vote with their cold key directly. New registrations supersedes any preceding ones.
+ */
+export interface ConstitutionalCommitteeHotKeyRegistration {
+  type: "constitutionalCommitteeHotKeyRegistration";
+  member: {
+    id: DigestBlake2B224;
+  };
+  hotKey: DigestBlake2B224;
+}
+/**
+ * A constitutional committee member resigns from the committee.
+ */
+export interface ConstitutionalCommitteeRetirement {
+  type: "constitutionalCommitteeRetirement";
+  member: {
+    id: DigestBlake2B224;
+  };
+}
+/**
+ * A delegate representative registration. Note that this is only possible for 'registered' representatives and not for well-known ones (abstain & noConfidence)
+ */
+export interface DelegateRepresentativeRegistration {
+  type: "delegateRepresentativeRegistration";
+  delegateRepresentative: DelegateRepresentative;
+  deposit: Lovelace;
+}
+/**
+ * A delegate representative retirement. Note that this is only possible for 'registered' representatives and not for well-known ones (abstain & noConfidence)
+ */
+export interface DelegateRepresentativeRetirement {
+  type: "delegateRepresentativeRetirement";
+  delegateRepresentative: DelegateRepresentative;
+  deposit: Lovelace;
+}
 export interface Withdrawals {
   [k: string]: Lovelace;
 }
@@ -681,7 +729,8 @@ export interface GovernanceProposal {
     | GovernanceActionTreasuryWithdrawals
     | GovernanceActionConstitutionalCommittee
     | GovernanceActionConstitution
-    | GovernanceActionNoConfidence;
+    | GovernanceActionNoConfidence
+    | GovernanceActionInformation;
 }
 export interface GovernanceActionProtocolParametersUpdate {
   type: "protocolParametersUpdate";
@@ -772,7 +821,9 @@ export interface LovelaceDelta {
  */
 export interface GovernanceActionConstitutionalCommittee {
   type: "constitutionalCommittee";
-  members: RewardTransfer;
+  members: {
+    id: DigestBlake2B224;
+  };
   quorum: Ratio;
 }
 /**
@@ -787,6 +838,12 @@ export interface GovernanceActionConstitution {
  */
 export interface GovernanceActionNoConfidence {
   type: "noConfidence";
+}
+/**
+ * An action that has no effect on-chain, other than an on-chain record
+ */
+export interface GovernanceActionInformation {
+  type: "information";
 }
 /**
  * A vote on a governance proposal. The 'anchor' is optional and 'proposal' is only present from Conway onwards. Before Conway, a vote would always refer to all proposals part of the same transaction.
@@ -811,7 +868,7 @@ export interface VoterDelegateRepresentative {
 }
 export interface VoterStakePoolOperator {
   role: "stakePoolOperator";
-  id?: StakePoolId;
+  id: StakePoolId;
 }
 export interface GovernanceProposalReference {
   transaction: {
@@ -1409,14 +1466,16 @@ export interface SubmitTransactionFailureSpendsMismatch {
   };
 }
 /**
- * The transaction contains vote from a voter that is unauthorized for that vote action. The field 'data.unauthorizedVoter' indicates the voter's credential and 'data.requiredRole' documents the role that the voter should have but don't.
+ * The transaction contains votes from unauthorized voters. The field 'data.unauthorizedVotes' indicates the faulty voters and the action they attempted to incorrectly vote for.
  */
-export interface SubmitTransactionFailureUnauthorizedVote {
+export interface SubmitTransactionFailureUnauthorizedVotes {
   code: 3137;
   message: string;
   data: {
-    unauthorizedVoter: DigestBlake2B224;
-    requiredRole: VoterRole;
+    unauthorizedVotes: {
+      proposal: GovernanceProposalReference;
+      voter: VoterGenesisDelegate | VoterConstitutionalCommittee | VoterDelegateRepresentative | VoterStakePoolOperator;
+    }[];
   };
 }
 /**
@@ -1537,6 +1596,55 @@ export interface SubmitTransactionFailureInvalidGenesisDelegation {
 export interface SubmitTransactionFailureInvalidMIRTransfer {
   code: 3149;
   message: string;
+}
+/**
+ * The transaction is attempting to withdraw rewards from stake credentials that do not engage in on-chain governance. Credentials must be associated with a delegate representative (registered, abstain or noConfidence) before associated rewards can be withdrawn. The field 'data.marginalizedCredentials' lists all the affected credentials.
+ */
+export interface SubmitTransactionFailureForbiddenWithdrawal {
+  code: 3150;
+  message: string;
+  data: {
+    marginalizedCredentials: DigestBlake2B224[];
+  };
+}
+/**
+ * The deposit specified in a stake credential registration (for delegation or governance) does not match the current value set by protocol parameters.
+ */
+export interface SubmitTransactionFailureCredentialDepositMismatch {
+  code: 3151;
+  message: string;
+}
+/**
+ * Trying to re-register some already known delegate representative. Delegate representatives can only be registered once. The field 'data.knownDelegateRepresentatives' points to an already known credential that's being re-registered by this transaction.
+ */
+export interface SubmitTransactionFailureDRepAlreadyRegistered {
+  code: 3152;
+  message: string;
+  data: {
+    knownDelegateRepresentative: DelegateRepresentative;
+  };
+}
+/**
+ * The transaction references an unknown delegate representative. To delegate to a representative, it must first register as such. This may be done in the same transaction or in an earlier transaction but cannot happen retro-actively. The field 'data.unknownDelegateRepresentative' indicates what credential is used without being registered.
+ */
+export interface SubmitTransactionFailureDRepNotRegistered {
+  code: 3153;
+  message: string;
+  data: {
+    unknownDelegateRepresentative: DelegateRepresentative;
+  };
+}
+/**
+ * The transaction references an unknown constitutional committee member. This can be either because that member does not actually exist or because it was registered but has resigned. The field 'data.unknownConstitutionalCommitteeMember' indicates what credential is unknown.
+ */
+export interface SubmitTransactionFailureUnknownConstitutionalCommitteeMember {
+  code: 3154;
+  message: string;
+  data: {
+    unknownConstitutionalCommitteeMember: {
+      id: DigestBlake2B224;
+    };
+  };
 }
 /**
  * Unrecognized certificate type. This error is a placeholder due to how internal data-types are modeled. If you ever run into this, please report the issue as you've likely discoverd a critical bug...
@@ -1679,9 +1787,12 @@ export interface EvaluateTransactionFailureScriptExecutionFailure {
 /**
  * An associated script witness is missing. Indeed, any script used in a transaction (when spending, minting, withdrawing or publishing certificates) must be provided in full with the transaction. Scripts must therefore be added either to the witness set or provided as a reference inputs should you use Plutus V2+ and a format from Babbage and beyond.
  */
-export interface ScriptExecutionFailureMissingScript {
+export interface ScriptExecutionFailureMissingScripts {
   code: 3011;
   message: string;
+  data: {
+    missingScripts: RedeemerPointer[];
+  };
 }
 /**
  * Some of the (V1) scripts failed to evaluate to a positive outcome.

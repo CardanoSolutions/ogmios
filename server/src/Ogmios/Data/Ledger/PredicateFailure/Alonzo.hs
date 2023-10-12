@@ -18,6 +18,7 @@ import Cardano.Ledger.UTxO
 import Ogmios.Data.Ledger.PredicateFailure
     ( DiscriminatedEntities (..)
     , MultiEraPredicateFailure (..)
+    , ScriptPurposeInAnyEra (..)
     , TxOutInAnyEra (..)
     , ValueInAnyEra (..)
     )
@@ -40,21 +41,26 @@ encodeLedgerFailure
     -> MultiEraPredicateFailure crypto
 encodeLedgerFailure = \case
     Sh.UtxowFailure e  ->
-        encodeUtxowFailure (encodeUtxoFailure ShelleyBasedEraAlonzo) e
+        encodeUtxowFailure
+            ShelleyBasedEraAlonzo
+            (encodeUtxoFailure ShelleyBasedEraAlonzo)
+            e
     Sh.DelegsFailure e ->
         encodeDelegsFailure e
 
 encodeUtxowFailure
     :: forall era crypto.
-        ( crypto ~ EraCrypto era
+        ( crypto ~ EraCrypto (era crypto)
+        , Era (era crypto)
         )
-    => (Sh.PredicateFailure (EraRule "UTXO" era) -> MultiEraPredicateFailure crypto)
-    -> Al.AlonzoUtxowPredFailure era
+    => ShelleyBasedEra (era crypto)
+    -> (Sh.PredicateFailure (EraRule "UTXO" (era crypto)) -> MultiEraPredicateFailure crypto)
+    -> Al.AlonzoUtxowPredFailure (era crypto)
     -> MultiEraPredicateFailure crypto
-encodeUtxowFailure encodeUtxoFailureInEra = \case
+encodeUtxowFailure era encodeUtxoFailureInEra = \case
     Al.MissingRedeemers redeemers ->
-        let missingRedeemers = fst <$> redeemers in
-        MissingRedeemers { missingRedeemers }
+        let missingRedeemers = ScriptPurposeInAnyEra . (era,) . fst <$> redeemers
+         in MissingRedeemers { missingRedeemers }
     Al.MissingRequiredDatums missingDatums _providedDatums ->
         MissingDatums { missingDatums }
     Al.NonOutputSupplimentaryDatums extraneousDatums _acceptableDatums ->
@@ -131,27 +137,35 @@ encodeUtxoFailure era = \case
     Al.ExUnitsTooBigUTxO maximumExUnits providedExUnits ->
         ExecutionUnitsTooLarge { maximumExUnits, providedExUnits }
     Al.UtxosFailure e ->
-        encodeUtxosFailure e
+        encodeUtxosFailure era e
 
 encodeUtxosFailure
-    :: forall era. ()
-    => Al.AlonzoUtxosPredFailure era
-    -> MultiEraPredicateFailure (EraCrypto era)
-encodeUtxosFailure = \case
+    :: forall era crypto.
+        ( crypto ~ EraCrypto (era crypto)
+        , Era (era crypto)
+        )
+    => ShelleyBasedEra (era crypto)
+    -> Al.AlonzoUtxosPredFailure (era crypto)
+    -> MultiEraPredicateFailure crypto
+encodeUtxosFailure era = \case
     Al.ValidationTagMismatch validationTag mismatchReason ->
         ValidationTagMismatch { validationTag, mismatchReason }
     Al.CollectErrors errors ->
-        encodeCollectErrors errors
+        encodeCollectErrors era errors
     Al.UpdateFailure{} ->
         InvalidProtocolParametersUpdate
 
 encodeCollectErrors
-    :: forall crypto. ()
-    => [CollectError crypto]
+    :: forall era crypto.
+        ( crypto ~ EraCrypto (era crypto)
+        , Era (era crypto)
+        )
+    => ShelleyBasedEra (era crypto)
+    -> [CollectError (era crypto)]
     -> MultiEraPredicateFailure crypto
-encodeCollectErrors errors
+encodeCollectErrors era errors
     | not (null missingRedeemers) =
-        MissingRedeemers { missingRedeemers }
+        MissingRedeemers { missingRedeemers = ScriptPurposeInAnyEra . (era,) <$> missingRedeemers }
     | not (null missingScripts) =
         MissingScriptWitnesses { missingScripts }
     | not (null missingCostModels) =

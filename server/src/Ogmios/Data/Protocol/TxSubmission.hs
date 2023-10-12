@@ -66,6 +66,9 @@ module Ogmios.Data.Protocol.TxSubmission
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Ledger.Alonzo.Language
+    ( Language (..)
+    )
 import Cardano.Ledger.Alonzo.Scripts
     ( AlonzoScript
     , ExUnits (..)
@@ -75,7 +78,8 @@ import Cardano.Ledger.Alonzo.Tx
     ( AlonzoEraTx
     )
 import Cardano.Ledger.Alonzo.TxInfo
-    ( ExtendedUTxO
+    ( EraPlutusContext
+    , ExtendedUTxO
     , TranslationError (..)
     )
 import Cardano.Ledger.Alonzo.TxWits
@@ -122,7 +126,8 @@ import Ogmios.Data.EraTranslation
     ( MultiEraUTxO
     )
 import Ogmios.Data.Ledger.ScriptFailure
-    ( pickScriptFailure
+    ( SomeTransactionScriptFailure (..)
+    , pickScriptFailure
     )
 import Ouroboros.Consensus.HardFork.History
     ( PastHorizonException
@@ -172,7 +177,7 @@ mkTxSubmissionCodecs
     -> (TxIn (BlockCrypto block) -> Json)
     -> (TranslationError (BlockCrypto block) -> Json)
     -> (Rpc.EmbedFault -> SubmitTransactionError block -> Json)
-    -> (Rpc.EmbedFault -> TransactionScriptFailure (BlockCrypto block) -> Json)
+    -> (Rpc.EmbedFault -> SomeTransactionScriptFailure (BlockCrypto block) -> Json)
     -> (Rpc.EmbedFault -> [(SomeShelleyEra, Binary.DecoderError, Word)] -> Json)
     -> TxSubmissionCodecs block
 mkTxSubmissionCodecs
@@ -312,16 +317,19 @@ data EvaluateTransactionResponse block
     = EvaluationFailure (EvaluateTransactionError block)
     | EvaluationResult (Map RdmrPtr ExUnits)
     | EvaluateTransactionDeserialisationFailure [(SomeShelleyEra, Binary.DecoderError, Word)]
-    deriving (Show)
 
+deriving instance Crypto (BlockCrypto block) => Show (EvaluateTransactionResponse block)
+
+-- TODO: Avoid duplication in branches if possible to support a multi-era script failure
 data EvaluateTransactionError block
-    = ScriptExecutionFailures (Map RdmrPtr [TransactionScriptFailure (BlockCrypto block)])
+    = ScriptExecutionFailures (Map RdmrPtr [SomeTransactionScriptFailure (BlockCrypto block)])
     | IncompatibleEra Text
     | UnsupportedEra Text
     | OverlappingAdditionalUtxo (Set (TxIn (BlockCrypto block)))
     | NodeTipTooOldErr NodeTipTooOldError
     | CannotCreateEvaluationContext (TranslationError (BlockCrypto block))
-    deriving (Show)
+
+deriving instance Crypto (BlockCrypto block) => Show (EvaluateTransactionError block)
 
 data NodeTipTooOldError = NodeTipTooOld
     { currentNodeEra :: Text
@@ -355,7 +363,7 @@ _encodeEvaluateTransactionResponse
     -> (ExUnits -> Json)
     -> (TxIn (BlockCrypto block) -> Json)
     -> (TranslationError (BlockCrypto block) -> Json)
-    -> (Rpc.EmbedFault -> TransactionScriptFailure (BlockCrypto block) -> Json)
+    -> (Rpc.EmbedFault -> SomeTransactionScriptFailure (BlockCrypto block) -> Json)
     -> (Rpc.EmbedFault -> [(SomeShelleyEra, Binary.DecoderError, Word)] -> Json)
     -> Rpc.Response (EvaluateTransactionResponse block)
     -> Json
@@ -446,7 +454,9 @@ _encodeEvaluateTransactionResponse _proxy
                                        <> maybe mempty (Json.pair "data") details
                                         )
                                     )
-                             in encodeScriptFailure embed (pickScriptFailure e) : xs
+                                x = encodeScriptFailure embed (pickScriptFailure e)
+
+                             in x : xs
                     ) [] failures
                 )
 
@@ -460,23 +470,25 @@ type CanEvaluateScriptsInEra era =
       , ScriptsNeeded era ~ AlonzoScriptsNeeded era
       , Script era ~ AlonzoScript era
       , EraCrypto era ~ StandardCrypto
+      , EraPlutusContext 'PlutusV1 era
       )
 
 -- | Evaluate script executions units for the given transaction.
 evaluateExecutionUnits
-    :: forall era block.
-      ( CanEvaluateScriptsInEra era
-      , EraCrypto era ~ BlockCrypto block
+    :: forall era block crypto.
+      ( CanEvaluateScriptsInEra (era crypto)
+      , EraCrypto (era crypto) ~ BlockCrypto block
+      , BlockCrypto block ~ crypto
       )
-    => Core.PParams era
+    => Core.PParams (era crypto)
         -- ^ Protocol parameters
     -> SystemStart
         -- ^ Start of the blockchain, for converting slots to UTC times
     -> EpochInfo (Except PastHorizonException)
         -- ^ Information about epoch sizes, for converting slots to UTC times
-    -> UTxO era
+    -> UTxO (era crypto)
         -- ^ A UTXO needed to resolve inputs
-    -> Core.Tx era
+    -> Core.Tx (era crypto)
         -- ^ The actual transaction
     -> EvaluateTransactionResponse block
 evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation of
@@ -491,12 +503,12 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
   where
     aggregateReports
         :: RdmrPtr
-        -> Either (TransactionScriptFailure (EraCrypto era)) ExUnits
-        -> (Map RdmrPtr [TransactionScriptFailure (EraCrypto era)], Map RdmrPtr ExUnits)
-        -> (Map RdmrPtr [TransactionScriptFailure (EraCrypto era)], Map RdmrPtr ExUnits)
+        -> Either (TransactionScriptFailure (era crypto)) ExUnits
+        -> (Map RdmrPtr [SomeTransactionScriptFailure crypto], Map RdmrPtr ExUnits)
+        -> (Map RdmrPtr [SomeTransactionScriptFailure crypto], Map RdmrPtr ExUnits)
     aggregateReports ptr result (failures, successes) = case result of
         Left scriptFailure ->
-            ( Map.unionWith (++) (Map.singleton ptr [scriptFailure]) failures
+            ( Map.unionWith (++) (Map.singleton ptr [SomeTransactionScriptFailure scriptFailure]) failures
             , successes
             )
         Right exUnits ->
@@ -506,8 +518,8 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
 
     evaluation
         :: Either
-            (TranslationError (BlockCrypto block))
-            (Map RdmrPtr (Either (TransactionScriptFailure (EraCrypto era)) ExUnits))
+            (TranslationError crypto)
+            (Map RdmrPtr (Either (TransactionScriptFailure (era crypto)) ExUnits))
     evaluation =
         evalTxExUnits
           pparams

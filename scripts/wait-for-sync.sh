@@ -62,6 +62,9 @@ do
   CONNECTION_STATUS=$(sed 's/.*"connectionStatus":"\([a-z]\+\)".*/\1/' <<< $HEALTH)
   if ! [[ $CONNECTION_STATUS = "connected" ]] ; then
     echo "Waiting for node.socket..."
+    if [[ -n "$3" ]] ; then
+      eval $3
+    fi
     sleep 5
   else
     NETWORK_SYNCHRONIZATION=$(sed 's/.*"networkSynchronization":\([0-9]\+\.\?[0-9]*\).*/\1/' <<< $HEALTH)

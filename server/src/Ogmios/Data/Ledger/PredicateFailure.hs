@@ -26,6 +26,7 @@ module Ogmios.Data.Ledger.PredicateFailure
     , ScriptHash (..)
     , ScriptIntegrityHash
     , ScriptPurpose (..)
+    , ScriptPurposeInAnyEra (..)
     , SlotNo (..)
     , TagMismatchDescription (..)
     , TxIn (..)
@@ -33,7 +34,7 @@ module Ogmios.Data.Ledger.PredicateFailure
     , VKey (..)
     , ValidityInterval (..)
     , ValueInAnyEra (..)
-    , VoterRole (..)
+    , Voter (..)
     ) where
 
 import Ogmios.Prelude
@@ -78,7 +79,7 @@ import Cardano.Ledger.Coin
     )
 import Cardano.Ledger.Conway.Governance
     ( GovernanceActionId (..)
-    , VoterRole (..)
+    , Voter (..)
     )
 import Cardano.Ledger.Credential
     ( Credential (..)
@@ -98,6 +99,7 @@ import Cardano.Ledger.TxIn
     )
 import Ogmios.Data.Ledger
     ( DiscriminatedEntities (..)
+    , ScriptPurposeInAnyEra (..)
     , TxOutInAnyEra (..)
     , ValueInAnyEra (..)
     )
@@ -154,7 +156,7 @@ data MultiEraPredicateFailure crypto
 
     -- All (phase-2) scripts must have an associated redeemer.
     | MissingRedeemers
-        { missingRedeemers :: [ScriptPurpose crypto]
+        { missingRedeemers :: [ScriptPurposeInAnyEra crypto]
         }
 
     -- Transaction must not have redeemers not asociated to any script
@@ -322,9 +324,8 @@ data MultiEraPredicateFailure crypto
 
     -- Voter on a specific governance action procedure must have the required
     -- votin permissions / role.
-    | UnauthorizedVote
-        { voter :: Credential 'Voting crypto
-        , requiredRole :: VoterRole
+    | UnauthorizedVotes
+        { votes :: Map (GovernanceActionId crypto) (Voter crypto)
         }
 
     -- Governance action must exist for voting
@@ -400,12 +401,41 @@ data MultiEraPredicateFailure crypto
         { rewardAccountBalance :: Coin
         }
 
+    -- Trying to withdraw from credentials that aren't delegated to a DRep
+    | ForbiddenWithdrawal
+        { marginalizedCredentials :: Set (Credential 'Staking crypto)
+        }
+
+    -- The specified deposit in the registration certificate does not match
+    -- the current protocol parameter.
+    | StakeCredentialDepositMismatch
+
     -- Genesis key must exist for delegating to it, and delegate key(s) must not already exists
     | InvalidGenesisDelegation
 
     -- MIR transfer must not be negative, and can't happen between treasury and
     -- reserve before protocol version 5.
     | InvalidMIRTransfer
+
+    ---------------------------------------------------------------------------
+    -- Rule → VDEL
+    ---------------------------------------------------------------------------
+
+    -- One cannot register as a DRep twice
+    | DRepAlreadyRegistered
+        { knownDelegateRepresentative :: Credential 'Voting crypto
+        }
+
+    -- Delegate representative must be registered for delegation
+    | DRepNotRegistered
+        { unknownDelegateRepresentative :: Credential 'Voting crypto
+        }
+
+    -- Committee member must be registered and active in order to (a) declare
+    -- hot key or (b) resign.
+    | UnknownConstitutionalCommitteeMember
+        { unknownConstitutionalCommitteeMember :: KeyHash 'CommitteeColdKey crypto
+        }
 
     ---------------------------------------------------------------------------
     -- Quirks
@@ -453,11 +483,14 @@ predicateFailurePriority = \case
     NetworkMismatch{} -> 1
     TransactionOutsideValidityInterval{} -> 1
     BootstrapAddressAttributesTooLarge{} -> 1
-    UnauthorizedVote{} -> 1
+    UnauthorizedVotes{} -> 1
     StakeCredentialAlreadyRegistered{} -> 1
+    DRepAlreadyRegistered{} -> 1
     StakePoolMetadataHashTooLarge{} -> 1
     StakeCredentialNotRegistered{} -> 1
+    DRepNotRegistered{} -> 1
     ValueSizeAboveLimit{} -> 1
+    UnknownConstitutionalCommitteeMember{} -> 1
 
     InvalidStakePoolRetirementEpoch{} -> 2
     StakePoolCostTooLow{} -> 2
@@ -496,9 +529,11 @@ predicateFailurePriority = \case
     TooManyCollateralInputs{} -> 12
 
     TotalCollateralMismatch{} -> 13
+    StakeCredentialDepositMismatch{} -> 13
 
     IncompleteWithdrawals{} -> 14
     RewardAccountNotEmpty{} -> 14
+    ForbiddenWithdrawal{} -> 14
 
     InsufficientCollateral{} -> 15
     InsufficientAdaInOutput{} -> 15

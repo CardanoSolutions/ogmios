@@ -69,7 +69,11 @@ class Upgrade (f :: Type -> Type) era where
 
 instance Ledger.Crypto crypto => Upgrade BabbageTxOut (ConwayEra crypto) where
     type Upgraded BabbageTxOut = BabbageTxOut
-    upgrade = Conway.translateTxOut
+    upgrade = fromMaybe invariant . Conway.translateTxOut
+      where
+        -- NOTE: 'translateTxOut' returns 'Nothing' when the ada value in output is
+        -- zero, which should be impossible in the context of Ogmios.
+        invariant = error "output contains zero Ada; which isn't allowed."
 
 ----------
 -- UTxO

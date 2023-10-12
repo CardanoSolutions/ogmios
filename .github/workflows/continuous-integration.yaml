@@ -34,16 +34,13 @@ jobs:
       with:
         submodules: true
 
-    - name: 📝 Tag
-      id: tag
+    - name: 📝 Version
+      id: version
       shell: bash
+      working-directory: server
       run: |
-        if [[ $GITHUB_REF == "refs/tags"* ]]; then
-          TAG=$(echo "${GITHUB_REF/refs\/tags\/}" | sed "s/^.*\([0-9].[0-9].[0-9]\).*$/\1/")
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-        else
-          echo "tag=0" >> $GITHUB_OUTPUT
-        fi
+        VERSION=$(cat package.yaml | grep "version:" | sed "s/[^0-9]*\([0-9]\)\(.[0-9].[0-9]\)*/\1\2/")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Install Nix with good defaults
       uses: cachix/install-nix-action@v22
@@ -58,8 +55,8 @@ jobs:
       run: |
         nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "echo $CABAL_PROJECT_LOCAL_TEMPLATE > cabal.project.local && cabal update && cabal freeze"
 
-    - name: 💾 Cache
-      uses: actions/cache@v3
+    - name: 💾 Download Cache
+      uses: actions/cache/restore@v3
       with:
         path: |
           ~/.cabal-static/packages
@@ -72,21 +69,63 @@ jobs:
     - name: 🔨 Build
       working-directory: server
       run: |
-        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static --enable-executable-stripping --enable-library-stripping ogmios:exe:ogmios"
+        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build ogmios:exe:ogmios"
       env:
         GIT_SHA: ${{ github.sha }}
+
+    - name: 💾 Save Cache
+      uses: actions/cache/save@v3
+      with:
+        path: |
+          ~/.cabal-static/packages
+          ~/.cabal-static/store
+          server/dist-newstyle
+        key: cabal-cache-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.compiler }}-${{ hashFiles('server/cabal.project.freeze') }}
 
     - name: 📦 Package
       run: |
         mkdir -p bin
-        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' }}/ogmios-${{ steps.tag.outputs.tag }}/x/ogmios/build/ogmios/ogmios ./bin/ogmios
-        ./bin/ogmios --version
+        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc8107' && '8.10.7' }}/ogmios-${{ steps.version.outputs.version }}/x/ogmios/build/ogmios/ogmios ./bin/ogmios
         mkdir -p share && chmod +w share
         mkdir -p share/zsh/site-functions
         ./bin/ogmios --zsh-completion-script ogmios > ./share/zsh/site-functions/_ogmios
         mkdir -p share/bash-completion/completions
         ./bin/ogmios --bash-completion-script ogmios > ./share/bash-completion/completions/ogmios
         chmod -w share
+
+    - name: 🔬 Version Sanity Check
+      shell: bash
+      run: |
+        OUTPUT=$(./bin/ogmios --version)
+
+        if [[ $CABAL == "0" ]]; then
+          VERSION="nightly"
+        else
+          VERSION="v$CABAL"
+        fi
+
+        if [[ $GITHUB_REF == "refs/tags"* ]]; then
+          TAG=$(echo ${GITHUB_REF/refs\/tags\/} | sed "s/^.*\(v[0-9].[0-9].[0-9]\).*$/\1/")
+        elif [[ $GITHUB_REF == "refs/heads/master" ]]; then
+          TAG="nightly"
+        else
+          TAG=${GITHUB_REF/refs\/heads\/}
+        fi
+
+        echo "git:    $TAG <-- ${GITHUB_REF/refs\/tags\/}"
+        echo "cabal:  $VERSION <-- $CABAL"
+        echo "bin:    $OUTPUT"
+        echo ""
+
+        if [[ $OUTPUT == $TAG* ]] && [[ $OUTPUT == $VERSION* ]]; then
+          echo "Ok."
+          exit 0
+        else
+          echo "x inconsistent versions"
+          exit 1
+        fi
+      env:
+        CABAL: ${{ steps.version.outputs.version }}
 
     - name: 📎 Upload Artifact
       uses: actions/upload-artifact@v3
@@ -167,7 +206,7 @@ jobs:
         os: [ linux ]
         arch: [ x86_64 ]
         network: [ preview ]
-        cardano-node: [ 8.1.2 ]
+        cardano-node: [ 8.5.0-pre ]
 
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-latest' }}
     steps:
@@ -219,15 +258,15 @@ jobs:
         chmod +x ../../server/bin/ogmios
         sudo ../../server/bin/ogmios --port 1338 --log-level error --node-socket ${{ runner.temp }}/ipc/node.socket --node-config $CONFDIR/cardano-node/config.json &
 
-        docker pull inputoutput/cardano-node:${{ matrix.cardano-node }}
+        docker pull ghcr.io/input-output-hk/cardano-node:${{ matrix.cardano-node }}
         docker run -d --name cardano-node \
           -v ${{ runner.temp }}/db-${{ matrix.network }}:/db \
           -v ${{ runner.temp }}/ipc:/ipc \
           -v $CONFDIR/cardano-node:/config \
           -v $CONFDIR/genesis:/genesis \
-          inputoutput/cardano-node:${{ matrix.cardano-node }} run --config /config/config.json --database-path /db --socket-path /ipc/node.socket --topology /config/topology.json
+          ghcr.io/input-output-hk/cardano-node:${{ matrix.cardano-node }} run --config /config/config.json --database-path /db --socket-path /ipc/node.socket --topology /config/topology.json
 
-        ../../scripts/wait-for-sync.sh 1338 1
+        ../../scripts/wait-for-sync.sh 1338 1 "docker logs --since 10s cardano-node"
 
         yarn test
         docker stop cardano-node
@@ -391,7 +430,7 @@ jobs:
         path: server
 
     - name: 🔨 Build and push (latest)
-      if: ${{ github.event_name == 'push' && matrix.network == 'mainnet' && endsWith(github.ref, 'master') }}
+      if: ${{ github.event_name == 'push' && matrix.network == 'mainnet' && github.ref == 'refs/heads/master' }}
       uses: docker/build-push-action@v4
       with:
         build-args: |
@@ -406,7 +445,7 @@ jobs:
         cache-to: type=inline
 
     - name: 🔨 Build and push (latest + network)
-      if: ${{ github.event_name == 'push' && matrix.target == 'cardano-node-ogmios' && endsWith(github.ref, 'master') }}
+      if: ${{ github.event_name == 'push' && matrix.target == 'cardano-node-ogmios' && github.ref == 'refs/heads/master' }}
       uses: docker/build-push-action@v4
       with:
         build-args: |

@@ -10,6 +10,9 @@ import Cardano.Ledger.Address
     ( Addr (..)
     , RewardAcnt (..)
     )
+import Cardano.Ledger.Alonzo.Tx
+    ( ScriptPurpose (..)
+    )
 import Cardano.Ledger.Core
     ( TxOut
     , Value
@@ -33,3 +36,7 @@ data DiscriminatedEntities crypto
     | DiscriminatedPoolRegistrationCertificate (KeyHash 'StakePool crypto)
     | DiscriminatedTransaction
     deriving (Show, Ord, Eq)
+
+data ScriptPurposeInAnyEra crypto =
+    forall era. Era (era crypto)
+    => ScriptPurposeInAnyEra (ShelleyBasedEra (era crypto), ScriptPurpose (era crypto))
