@@ -69,7 +69,7 @@ jobs:
     - name: 🔨 Build
       working-directory: server
       run: |
-        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build ogmios:exe:ogmios"
+        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static ogmios:exe:ogmios"
       env:
         GIT_SHA: ${{ github.sha }}
 
