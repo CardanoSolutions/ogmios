@@ -20,13 +20,19 @@ Ogmios in itself is a rather small project, yet it's using library directly from
 - `libgmp-dev 6.1.*`
 - `libnuma-dev`
 - `libpcre3-dev 2.8.*`
-- `libsodium-dev 1.0.*`
 - `libssl-dev 1.1.*`
 - `libsystemd-dev`
 - `llvm 1.11.*`
 - `llvm-11-dev`
 - `pkg-config 0.29.*`
 - `zlib1g-dev 1.2.*`
+
+- A special patched version of libsodium to include VRF support. Note that, while this is necessary to run a validator node; it is not necessary for a simple application node serving data to your client. So here, it suffices to install `libsodium-dev 1.0.*`, and to add/create the following to your `cabal.project.local` (to be placed next to the current `cabal.project`:
+
+  ```cabal
+  package cardano-crypto-praos
+    flags: -external-libsodium-vrf
+  ```
 
 - A custom revision of bitcoin-core's secp256k1, with Schnorr signature support enabled:
 
@@ -42,6 +48,32 @@ Ogmios in itself is a rather small project, yet it's using library directly from
   make
   make check
   sudo make install
+  ```
+
+- A fancy crypto library for BLS12-381, a.k.a BLST:
+
+  ```console
+  git clone https://github.com/supranational/blst
+  cd blst
+  git checkout v0.3.10
+  ./build.sh
+  cat > libblst.pc << EOF
+  prefix=/usr/local
+  exec_prefix=\${prefix}
+  libdir=\${exec_prefix}/lib
+  includedir=\${prefix}/include
+
+  Name: libblst
+  Description: Multilingual BLS12-381 signature library
+  URL: https://github.com/supranational/blst
+  Version: 0.3.10
+  Cflags: -I\${includedir}
+  Libs: -L\${libdir} -lblst
+  EOF
+  sudo cp libblst.pc /usr/local/lib/pkgconfig/
+  sudo cp bindings/blst_aux.h bindings/blst.h bindings/blst.hpp  /usr/local/include/
+  sudo cp libblst.a /usr/local/lib
+  sudo chmod u=rw,go=r /usr/local/{lib/{libblst.a,pkgconfig/libblst.pc},include/{blst.{h,hpp},blst_aux.h}}
   ```
 
 ## 🔨 Server
