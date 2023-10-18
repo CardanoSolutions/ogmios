@@ -45,10 +45,16 @@
 						<a href="_cardano_ogmios_client.Schema.GenesisConway.html" class="tsd-kind-icon">Genesis<wbr>Conway</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_client.Schema.GenesisConway.html#constitution" class="tsd-kind-icon">constitution</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_client.Schema.GenesisConway.html#constitutionalCommittee" class="tsd-kind-icon">constitutional<wbr>Committee</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_client.Schema.GenesisConway.html#era" class="tsd-kind-icon">era</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_client.Schema.GenesisConway.html#initialDelegates" class="tsd-kind-icon">initial<wbr>Delegates</a>
+								<a href="_cardano_ogmios_client.Schema.GenesisConway.html#updatableParameters" class="tsd-kind-icon">updatable<wbr>Parameters</a>
 							</li>
 						</ul>
 					</li>
@@ -91,8 +97,10 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.GenesisConway.html#constitution" class="tsd-kind-icon">constitution</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.GenesisConway.html#constitutionalCommittee" class="tsd-kind-icon">constitutional<wbr>Committee</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.GenesisConway.html#era" class="tsd-kind-icon">era</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.GenesisConway.html#initialDelegates" class="tsd-kind-icon">initial<wbr>Delegates</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_client.Schema.GenesisConway.html#updatableParameters" class="tsd-kind-icon">updatable<wbr>Parameters</a></li>
 							</ul>
 						</section>
 					</div>
@@ -101,24 +109,95 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="constitution" class="tsd-anchor"></a>
+					<h3>constitution</h3>
+					<div class="tsd-signature tsd-kind-icon">constitution<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:1782</li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>anchor<span class="tsd-signature-symbol">: </span><a href="_cardano_ogmios_client.Schema.Anchor.html" class="tsd-signature-type">Anchor</a></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5><span class="tsd-flag ts-flagOptional">Optional</span> hash<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="constitutionalCommittee" class="tsd-anchor"></a>
+					<h3>constitutional<wbr>Committee</h3>
+					<div class="tsd-signature tsd-kind-icon">constitutional<wbr>Committee<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:1786</li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>members<span class="tsd-signature-symbol">: </span><a href="_cardano_ogmios_client.Schema.ConstitutionalCommitteeMember.html" class="tsd-signature-type">ConstitutionalCommitteeMember</a><span class="tsd-signature-symbol">[]</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>quorum<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="era" class="tsd-anchor"></a>
 					<h3>era</h3>
 					<div class="tsd-signature tsd-kind-icon">era<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"conway"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:1686</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:1781</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="initialDelegates" class="tsd-anchor"></a>
-					<h3>initial<wbr>Delegates</h3>
-					<div class="tsd-signature tsd-kind-icon">initial<wbr>Delegates<span class="tsd-signature-symbol">:</span> <a href="../modules/_cardano_ogmios_client.Schema.html#InitialDelegates" class="tsd-signature-type">InitialDelegates</a></div>
+					<a name="updatableParameters" class="tsd-anchor"></a>
+					<h3>updatable<wbr>Parameters</h3>
+					<div class="tsd-signature tsd-kind-icon">updatable<wbr>Parameters<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> packages/schema/dist/index.d.ts:1687</li>
+							<li><span>Defined in</span> packages/schema/dist/index.d.ts:1790</li>
 						</ul>
 					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>constitutional<wbr>Committee<wbr>Max<wbr>Term<wbr>Length<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>constitutional<wbr>Committee<wbr>Min<wbr>Size<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>delegate<wbr>Representative<wbr>Deposit<span class="tsd-signature-symbol">: </span><a href="_cardano_ogmios_client.Schema.Lovelace.html" class="tsd-signature-type">Lovelace</a></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>delegate<wbr>Representative<wbr>Max<wbr>Idle<wbr>Time<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>delegate<wbr>Representative<wbr>Voting<wbr>Thresholds<span class="tsd-signature-symbol">: </span><a href="_cardano_ogmios_client.Schema.DelegateRepresentativeVotingThresholds.html" class="tsd-signature-type">DelegateRepresentativeVotingThresholds</a></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>governance<wbr>Action<wbr>Deposit<span class="tsd-signature-symbol">: </span><a href="_cardano_ogmios_client.Schema.Lovelace.html" class="tsd-signature-type">Lovelace</a></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>governance<wbr>Action<wbr>Lifetime<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>stake<wbr>Pool<wbr>Voting<wbr>Thresholds<span class="tsd-signature-symbol">: </span><a href="_cardano_ogmios_client.Schema.StakePoolVotingThresholds.html" class="tsd-signature-type">StakePoolVotingThresholds</a></h5>
+							</li>
+						</ul>
+					</div>
 				</section>
 			</section>
 		</div>
