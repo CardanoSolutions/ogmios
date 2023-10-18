@@ -6,6 +6,48 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
+### [6.0.0-rc4] - 2023-10-19
+
+#### Added
+
+- Integration with `cardano-ledger-conway==1.9.0.0`. The previous release did (mistakenly) include an older version of the ledger. This caused synchronization of the **Conway** era to fail unexpectedly. This release now includes the latest version of the ledger currently available. It adds new elements to the Conway era:
+  - A new certificate `DelegateRepresentativeUpdate`.
+  - New transaction submission errors:
+    - `GovernanceProposalDepositMismatch`
+    - `ConflictingCommitteeUpdate`
+    - `InvalidCommitteeUpdate`
+    - `TreasuryWithdrawalMismatch`.
+  - New protocol parameters, only present in Conway onwards:
+    - `stakePoolVotingThresholds`
+    - `constitutionalCommitteeMinSize`
+    - `constitutionalCommitteeMaxTermLength`
+    - `governanceActionLifetime`
+    - `governanceActionDeposit`
+    - `delegateRepresentativeVotingThresholds`
+    - `delegateRepresentativeDeposit`
+    - `delegateRepresentativeMaxIdleTime`
+
+#### Changed
+
+- The integration with `cardano-ledger-conway==1.9.0.0` also causes a few (breaking) changes to the existing interface. Mostly located in the **Conway** era:
+  - `UnknownGovernanceProposal` transaction submission failure is now `UnknownGovernanceProposals` and its data field now contains a list of invalid proposals instead of a single proposal.
+  - `ConstitutionalCommitteeMember` may now contain an optional `mandate` field.
+  - The `ConstitutionalCommitte` governance action `members`' field no longer holds a member id. Instead, it contains two fields `added` and `removed` pointing to a list of `ConstitutionalCommitteeMember`.
+  - The certificate `DelegateRepresentativeRegistration` may now contain an optional `anchor` field.
+  - The governance action `Constitution` now has a mandatory `anchor` field and an optional `hash` field.
+  - The `returnAccount` for all governance proposal is now a (bech32-encoded) stake address instead of a key or script hash digest.
+  - The Conway's genesis has been completely redefined and now contains fields `constitution`, `constitutionalCommittee` and `updatableParameters`.
+  - The `CredentialDepositMismatch` transaction submission failure now has extra `data`.
+
+- **⚠️ BREAKING-CHANGE ⚠️** The Alonzo's genesis `initialParameters` field has been renamed to `updatableParameters`.
+
+#### Removed
+
+N/A
+
+---
+---
+
 ### [6.0.0-rc3] - 2023-10-12
 
 #### Added
@@ -31,6 +73,9 @@ pre: "<b>5. </b>"
 
 N/A
 
+---
+---
+
 ### [6.0.0-rc2] - 2023-09-08
 
 #### Added
@@ -48,6 +93,9 @@ N/A
 #### Removed
 
 N/A
+
+---
+---
 
 ### [6.0.0-rc1] - 2023-08-10
 
