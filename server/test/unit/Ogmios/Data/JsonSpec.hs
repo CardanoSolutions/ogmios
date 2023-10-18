@@ -390,6 +390,11 @@ spec = do
                 Json.Success{}  ->
                     pure ()
 
+        specify "Golden: SubmitTransactionFailure<3133>" $ do
+            json <- decodeFileThrow "SubmitTransactionFailure_1.json"
+            refs <- unsafeReadSchemaRef "ogmios.json#/properties/SubmitTransactionResponse"
+            runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON identity refs json
+
         context "Data / BinaryData" $ do
             prop "arbitrary" $
                 forAll genData propBinaryDataRoundtrip
@@ -1013,6 +1018,7 @@ validateLedgerStateQuery n subMethod params parser = do
                     , SomeShelleyEra ShelleyBasedEraMary
                     , SomeShelleyEra ShelleyBasedEraAlonzo
                     , SomeShelleyEra ShelleyBasedEraBabbage
+                    , SomeShelleyEra ShelleyBasedEraConway
                     ]
 
             let nEras = length eras
@@ -1037,7 +1043,7 @@ validateLedgerStateQuery n subMethod params parser = do
                 case qry of
                     SomeStandardQuery _ encodeResult genResult -> do
                         case era of
-                            SomeShelleyEra ShelleyBasedEraBabbage -> do
+                            SomeShelleyEra ShelleyBasedEraConway -> do
                                 generateTestVectors (n, toString propName)
                                     (genResult Proxy)
                                     (encodeQueryResponse encodeResult)
@@ -1051,7 +1057,7 @@ validateLedgerStateQuery n subMethod params parser = do
                             )
                     SomeCompoundQuery _ _ encodeResult genResult -> do
                         case era of
-                            SomeShelleyEra ShelleyBasedEraBabbage -> do
+                            SomeShelleyEra ShelleyBasedEraConway -> do
                                 generateTestVectors (n, toString propName)
                                     (genResult Proxy)
                                     (encodeQueryResponse encodeResult)
@@ -1065,7 +1071,7 @@ validateLedgerStateQuery n subMethod params parser = do
                             )
                     SomeAdHocQuery _ encodeResult genResult -> do
                         case era of
-                            SomeShelleyEra ShelleyBasedEraBabbage -> do
+                            SomeShelleyEra ShelleyBasedEraConway -> do
                                 generateTestVectors (n, toString propName)
                                     (genResult Proxy)
                                     (encodeQueryResponse encodeResult)

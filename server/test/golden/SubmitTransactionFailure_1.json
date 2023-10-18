@@ -1,0 +1,35 @@
+{
+   "error": {
+       "code": 3133,
+       "data": {
+           "unsuitableCollateralValue": {
+               "2db8410d969b6ad6b6969703c77ebf6c44061aa51c5d6ceba46557e2": {
+                   "21d58f2959": 5376940483013899326,
+                   "30": 9114389161165880051,
+                   "8d47c19caace9d5dbfd0c344bcc0fe514f610922bd12ce": 2871612046115537197,
+                   "fb64918b5bc67dd61599b8279032ff095d": 6238378297590506313
+               },
+               "3457333009e247e5976855bc00423783bb9af7a853b7989b41ae41c1": {
+                   "32": 1882415314403952955,
+                   "33": 4801978444556724192,
+                   "8028a0b0c0075a8157cdbd942e188f7a4024e3feca2a568edcea7db1": 1419195714184121077,
+                   "c7cb38398e": 7234070947198679175
+               },
+               "ada": {
+                   "lovelace": 9213041924022929359
+               },
+               "b0c53e2bf180858da4b64eb5598c5615bba7d723d2b604a83b7f9165": {
+                   "330cb5006e96f403b89ff6eeb84523": 763040763406744373,
+                   "bf8f0a01808a49d80e7c68f214d69375": 9025563903404589887
+               },
+               "c646f797c7325e35c0a1b51d46162bc086908c68193f049244fc8445": {
+                   "30118a": 536086479940883330
+               }
+           }
+       },
+       "message": "One of the input provided as collateral carries something else than Ada tokens. Only Ada can be used as collateral. Since the Babbage era, you also have the option to set a 'collateral return' or 'collateral change' output in order to send the surplus non-Ada tokens to it. Regardless, the field 'data.unsuitableCollateralValue' indicates the actual collateral value found by the ledger"
+   },
+   "id": "19Yiuwlix900",
+   "jsonrpc": "2.0",
+   "method": "submitTransaction"
+}

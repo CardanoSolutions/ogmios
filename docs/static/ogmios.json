@@ -3142,7 +3142,7 @@
             , "additionalProperties": false
             , "required": [ "unsuitableCollateralValue" ]
             , "properties":
-              { "unsuitableCollateralValue'": { "$ref": "cardano.json#/definitions/Value" }
+              { "unsuitableCollateralValue": { "$ref": "cardano.json#/definitions/Value" }
               }
             }
           }
@@ -3233,8 +3233,8 @@
             }
           }
         }
-      , { "title": "SubmitTransactionFailure<UnknownGovernanceProposal>"
-        , "description": "Unknown governance proposal found in transaction. This may be because you've indicated a wrong identifier or because the governance proposal hasn't yet been submitted on-chain. Note that the order in which transactions are submitted matters. The field 'data.unknownProposal' tells you about the governance proposal's identifier."
+      , { "title": "SubmitTransactionFailure<UnknownGovernanceProposals>"
+        , "description": "Reference(s) to unknown governance proposals found in transaction. This may be because you've indicated a wrong identifier or because the proposal hasn't yet been submitted on-chain. Note that the order in which transactions are submitted matters. The field 'data.unknownProposals' tells you about the unknown references."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
@@ -3244,9 +3244,13 @@
           , "data":
             { "type": "object"
             , "additionalProperties": false
-            , "required": [ "unknownProposal" ]
+            , "required": [ "unknownProposals" ]
             , "properties":
-              { "unknownProposal": { "$ref": "cardano.json#/definitions/GovernanceProposalReference" }
+              { "unknownProposals":
+                { "type": "array"
+                , "items":
+                  { "$ref": "cardano.json#/definitions/GovernanceProposalReference" }
+                }
               }
             }
           }
@@ -3458,13 +3462,26 @@
           }
         }
       , { "title": "SubmitTransactionFailure<CredentialDepositMismatch>"
-        , "description": "The deposit specified in a stake credential registration (for delegation or governance) does not match the current value set by protocol parameters."
+        , "description": "The deposit specified in a stake credential registration (for delegation or governance) does not match the current value set by protocol parameters. The field 'data.expectedDeposit', when present, indicates the deposit amount as currently expected by ledger."
         , "type": "object"
-        , "required": [ "code", "message" ]
+        , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
         , "properties":
           { "code": { "type": "integer", "enum": [ 3151 ] }
           , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "required": [ "providedDeposit" ]
+            , "additionalProperties": false
+            , "properties":
+              { "providedDeposit":
+                { "$ref": "cardano.json#/definitions/Lovelace"
+                }
+              , "expectedDeposit":
+                { "$ref": "cardano.json#/definitions/Lovelace"
+                }
+              }
+            }
           }
         }
 
@@ -3517,7 +3534,113 @@
             , "required": [ "unknownConstitutionalCommitteeMember" ]
             , "additionalProperties": false
             , "properties":
-              { "unknownConstitutionalCommitteeMember": { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeMember" }
+              { "unknownConstitutionalCommitteeMember":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "id" ]
+                , "properties":
+                  { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<GovernanceProposalDepositMismatch>"
+        , "description": "There's a mismatch between the proposal deposit amount declared in the transaction and the one expected by the ledger. The deposit is actually configured by a protocol parameter. The field 'data.expectedDeposit' indicates the current configuration and amount expected by the ledger. The field 'data.providedDeposit' is a reminder of the what was set in the submitted transaction."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3155 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "required": [ "providedDeposit", "expectedDeposit" ]
+            , "additionalProperties": false
+            , "properties":
+              { "providedDeposit":
+                { "$ref": "cardano.json#/definitions/Lovelace"
+                }
+              , "expectedDeposit":
+                { "$ref": "cardano.json#/definitions/Lovelace"
+                }
+              }
+            }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<ConflictingCommitteeUpdate>"
+        , "description": "The transaction contains an invalid governance action: it tries to both add members to the committee and remove some of those same members. The field 'data.conflictingMembers' indicates which members are found on both sides."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3156 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "required": [ "conflictingMembers" ]
+            , "additionalProperties": false
+            , "properties":
+              { "conflictingMembers":
+                { "type": "array"
+                , "items":
+                  { "type": "object"
+                  , "additionalProperties": false
+                  , "required": [ "id" ]
+                  , "properties":
+                    { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<InvalidCommitteeUpdate>"
+        , "description": "The transaction contains an invalid governance action: it tries to add new members to the constitutional committee with a retirement epoch in the past. The field 'data.alreadyRetiredMembers' indicates the faulty members that would otherwise be already retired."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3157 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "required": [ "alreadyRetiredMembers" ]
+            , "additionalProperties": false
+            , "properties":
+              { "alreadyRetiredMembers":
+                { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "id" ]
+                , "properties":
+                  { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<TreasuryWithdrawalMismatch>"
+        , "description": "The transaction is trying to withdraw more funds than specified in a governance action! The field 'data.providedWithdrawal' indicates the amount specified in the transaction, whereas 'data.computedWithdrawal' is the actual amount as computed by the ledger."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3158 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "required": [ "providedWithdrawal", "computedWithdrawal" ]
+            , "additionalProperties": false
+            , "properties":
+              { "providedWithdrawal":
+                { "$ref": "cardano.json#/definitions/Lovelace"
+                }
+              , "expectedWithdrawal":
+                { "$ref": "cardano.json#/definitions/Lovelace"
+                }
               }
             }
           }
@@ -3535,8 +3658,6 @@
       , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<InternalLedgerTypeConversionError>" }
       ]
     }
-
-
   , "SubmitTransactionFailure<ExtraneousRedeemers>":
     { "title": "SubmitTransactionFailure<ExtraneousRedeemers>"
     , "description": "Extraneous (non-required) redeemers found in the transaction. There are some redeemers that aren't pointing to any script. This could be because you've left some orphan redeemer behind, because they are pointing at the wrong thing or because you forgot to include their associated validator. Either way, the field 'data.extraneousRedeemers' lists the different orphan redeemer pointers."

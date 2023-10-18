@@ -202,7 +202,9 @@ library
     , scientific
     , serialise
     , small-steps
+    , sop-extras
     , stm
+    , strict-sop-core
     , text
     , time
     , time-manager
@@ -362,7 +364,7 @@ test-suite unit
     , ogmios
     , ouroboros-consensus
     , ouroboros-consensus-cardano
-    , ouroboros-consensus-cardano:cardano-testlib
+    , ouroboros-consensus-cardano:unstable-cardano-testlib
     , ouroboros-consensus-protocol
     , ouroboros-network-api
     , ouroboros-network-framework
@@ -370,6 +372,7 @@ test-suite unit
     , ouroboros-network-protocols
     , random
     , relude
+    , strict-sop-core
     , template-haskell
     , text
     , time
