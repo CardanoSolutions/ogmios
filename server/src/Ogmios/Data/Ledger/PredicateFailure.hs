@@ -78,7 +78,7 @@ import Cardano.Ledger.Coin
     ( Coin (..)
     )
 import Cardano.Ledger.Conway.Governance
-    ( GovernanceActionId (..)
+    ( GovActionId (..)
     , Voter (..)
     )
 import Cardano.Ledger.Credential
@@ -319,18 +319,35 @@ data MultiEraPredicateFailure crypto
         }
 
     ---------------------------------------------------------------------------
-    -- Rule → Tally
+    -- Rule → GOV
     ---------------------------------------------------------------------------
 
     -- Voter on a specific governance action procedure must have the required
     -- votin permissions / role.
     | UnauthorizedVotes
-        { votes :: Map (GovernanceActionId crypto) (Voter crypto)
+        { votes :: Map (GovActionId crypto) (Voter crypto)
         }
 
     -- Governance action must exist for voting
-    | UnknownGovernanceAction
-        { governanceAction :: GovernanceActionId crypto
+    | UnknownGovernanceActions
+        { governanceActions :: Set (GovActionId crypto)
+        }
+
+    -- Mismatch between the deposit amount declared in a transaction and the
+    -- expected amount from protocol parameters.
+    | GovernanceProposalDepositMismatch
+        { providedDeposit :: Coin
+        , expectedDeposit :: StrictMaybe Coin
+        }
+
+    -- Committee members that are both added and removed in the same update.
+    | ConflictingCommitteeUpdate
+        { conflictingMembers :: Set (Credential 'ColdCommitteeRole crypto)
+        }
+
+    -- Committee members set to retire in the past. \
+    | InvalidCommitteeUpdate
+        { alreadyRetiredMembers :: Set (Credential 'ColdCommitteeRole crypto)
         }
 
     ---------------------------------------------------------------------------
@@ -406,9 +423,19 @@ data MultiEraPredicateFailure crypto
         { marginalizedCredentials :: Set (Credential 'Staking crypto)
         }
 
+    -- Trying to withdraw from the treasury an amount different from the one
+    -- specified.
+    | TreasuryWithdrawalMismatch
+        { providedWithdrawal :: Coin
+        , computedWithdrawal :: Coin
+        }
+
     -- The specified deposit in the registration certificate does not match
     -- the current protocol parameter.
     | StakeCredentialDepositMismatch
+        { providedDeposit :: Coin
+        , expectedDeposit :: StrictMaybe Coin
+        }
 
     -- Genesis key must exist for delegating to it, and delegate key(s) must not already exists
     | InvalidGenesisDelegation
@@ -418,23 +445,23 @@ data MultiEraPredicateFailure crypto
     | InvalidMIRTransfer
 
     ---------------------------------------------------------------------------
-    -- Rule → VDEL
+    -- Rule → GovCert
     ---------------------------------------------------------------------------
 
     -- One cannot register as a DRep twice
     | DRepAlreadyRegistered
-        { knownDelegateRepresentative :: Credential 'Voting crypto
+        { knownDelegateRepresentative :: Credential 'DRepRole crypto
         }
 
     -- Delegate representative must be registered for delegation
     | DRepNotRegistered
-        { unknownDelegateRepresentative :: Credential 'Voting crypto
+        { unknownDelegateRepresentative :: Credential 'DRepRole crypto
         }
 
     -- Committee member must be registered and active in order to (a) declare
     -- hot key or (b) resign.
     | UnknownConstitutionalCommitteeMember
-        { unknownConstitutionalCommitteeMember :: KeyHash 'CommitteeColdKey crypto
+        { unknownConstitutionalCommitteeMember :: Credential 'ColdCommitteeRole crypto
         }
 
     ---------------------------------------------------------------------------
@@ -499,13 +526,14 @@ predicateFailurePriority = \case
     OrphanScriptInputs{} -> 3
     CollateralInputLockedByScript{} -> 3
     UnknownStakePool{} -> 3
-    UnknownGovernanceAction{} -> 3
+    UnknownGovernanceActions{} -> 3
 
     InvalidSignatures{} -> 4
     MissingSignatures{} -> 4
     MissingCostModels{} -> 4
 
     InvalidMetadata{} -> 5
+    InvalidCommitteeUpdate{} -> 5
 
     MissingMetadata{} -> 6
     MissingMetadataHash{} -> 6
@@ -523,17 +551,20 @@ predicateFailurePriority = \case
     ExtraneousScriptWitnesses{} -> 11
     ExtraneousRedeemers{} -> 11
     ExtraneousDatums{} -> 11
+    ConflictingCommitteeUpdate{} -> 11
 
     NonAdaValueAsCollateral{} -> 12
     MissingCollateralInputs{} -> 12
     TooManyCollateralInputs{} -> 12
 
-    TotalCollateralMismatch{} -> 13
-    StakeCredentialDepositMismatch{} -> 13
+    IncompleteWithdrawals{} -> 13
+    RewardAccountNotEmpty{} -> 13
+    ForbiddenWithdrawal{} -> 13
 
-    IncompleteWithdrawals{} -> 14
-    RewardAccountNotEmpty{} -> 14
-    ForbiddenWithdrawal{} -> 14
+    TotalCollateralMismatch{} -> 14
+    StakeCredentialDepositMismatch{} -> 14
+    GovernanceProposalDepositMismatch{} -> 14
+    TreasuryWithdrawalMismatch{} -> 14
 
     InsufficientCollateral{} -> 15
     InsufficientAdaInOutput{} -> 15

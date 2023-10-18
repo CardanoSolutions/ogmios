@@ -198,7 +198,7 @@ import qualified Data.ByteString.Base58 as B58
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ListMap as LM
 import qualified Data.Map.Strict as Map
-import qualified Data.SOP.Counting as Consensus
+import qualified Data.SOP.NonEmpty as SOP
 import qualified Data.Text as T
 
 --
@@ -516,7 +516,7 @@ encodeFoldable encodeElem =
     Json.list id . foldr ((:) . encodeElem) []
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> [a] -> Json #-}
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> NonEmpty a -> Json #-}
-{-# SPECIALIZE encodeFoldable :: (a -> Json) -> Consensus.NonEmpty xs a -> Json #-}
+{-# SPECIALIZE encodeFoldable :: (a -> Json) -> SOP.NonEmpty xs a -> Json #-}
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> Vector a -> Json #-}
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> Set a -> Json #-}
 {-# SPECIALIZE encodeFoldable :: (a -> Json) -> StrictSeq a -> Json #-}

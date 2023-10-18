@@ -7,8 +7,14 @@ module Ogmios.Data.Json.Conway where
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Ledger.BaseTypes
+    ( EpochNo
+    )
 import Cardano.Ledger.Binary
     ( sizedValue
+    )
+import Cardano.Ledger.Keys
+    ( KeyRole (..)
     )
 import Cardano.Ledger.SafeHash
     ( extractHash
@@ -31,15 +37,20 @@ import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
-import qualified Cardano.Ledger.Keys as Ledger
+import qualified Cardano.Ledger.Credential as Ledger
+import qualified Cardano.Ledger.HKD as Ledger
 
+import qualified Cardano.Ledger.Shelley.PParams as Sh
+
+import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 
-import qualified Cardano.Ledger.Babbage.PParams as Ba
+import qualified Cardano.Ledger.Babbage.Core as Ba
 import qualified Cardano.Ledger.Babbage.Tx as Ba
 
 import qualified Cardano.Ledger.Conway.Genesis as Cn
 import qualified Cardano.Ledger.Conway.Governance as Cn
+import qualified Cardano.Ledger.Conway.PParams as Cn
 import qualified Cardano.Ledger.Conway.Tx as Cn
 import qualified Cardano.Ledger.Conway.TxBody as Cn
 import qualified Cardano.Ledger.Conway.TxCert as Cn
@@ -80,27 +91,45 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
           "transactions" .= encodeFoldable (encodeTx opts) (Al.txSeqTxns txs)
         )
 
--- TODO: Force the purpose to 'ColdCommitteeRole in the next version of the
--- cardano-ledger. In the current one, there's a discrepancy between the phantom
--- type given to 'GovernanceAction' ('Voting) and the one given to the tx
--- certificate ('CommitteeColdKey).
---
--- Although they ought to both refer to the same thing.
-encodeConstitutionalCommitteeMember
-    :: (Crypto crypto, purpose :\: 'Ledger.StakePool)
-    => Ledger.KeyHash purpose crypto
+encodeCommittee
+    :: Crypto crypto
+    => Cn.Committee (ConwayEra crypto)
     -> Json
-encodeConstitutionalCommitteeMember memberId =
+encodeCommittee x = encodeObject
+    ( "members" .=
+        encodeMapAsList (\k -> encodeConstitutionalCommitteeMember k . SJust) (Cn.committeeMembers x)
+   <> "quorum" .=
+        encodeUnitInterval (Cn.committeeQuorum x)
+    )
+
+encodeConstitution
+    :: Crypto crypto
+    => Cn.Constitution (ConwayEra crypto)
+    -> Series
+encodeConstitution x =
+    "anchor" .=
+        encodeAnchor (Cn.constitutionAnchor x) <>
+    "hash" .=? OmitWhenNothing
+        Shelley.encodeScriptHash (Cn.constitutionScript x)
+
+encodeConstitutionalCommitteeMember
+    :: Crypto crypto
+    => Ledger.Credential 'ColdCommitteeRole crypto
+    -> StrictMaybe EpochNo
+    -> Json
+encodeConstitutionalCommitteeMember memberId mandate =
     encodeObject
-        ( "id" .= Shelley.encodeKeyHash memberId
+        ( "id" .= Shelley.encodeCredential memberId
+       <> "mandate" .=? OmitWhenNothing
+            (encodeSingleton "epoch" . encodeEpochNo) mandate
         )
 
-encodeConwayCommitteeCert
+encodeConwayGovCert
     :: Crypto crypto
-    => Cn.ConwayCommitteeCert crypto
+    => Cn.ConwayGovCert crypto
     -> Series
-encodeConwayCommitteeCert = \case
-    Cn.ConwayRegDRep credential deposit ->
+encodeConwayGovCert = \case
+    Cn.ConwayRegDRep credential deposit anchor ->
         "type" .=
             encodeText "delegateRepresentativeRegistration"
        <>
@@ -109,6 +138,9 @@ encodeConwayCommitteeCert = \case
        <>
         "deposit" .=
             encodeCoin deposit
+       <>
+        "anchor" .=? OmitWhenNothing
+            encodeAnchor anchor
     Cn.ConwayUnRegDRep credential deposit ->
         "type" .=
             encodeText "delegateRepresentativeRetirement"
@@ -118,21 +150,30 @@ encodeConwayCommitteeCert = \case
        <>
         "deposit" .=
             encodeCoin deposit
-    Cn.ConwayAuthCommitteeHotKey coldKey hotKey ->
+    Cn.ConwayUpdateDRep credential anchor ->
+        "type" .=
+            encodeText "delegateRepresentativeUpdate"
+       <>
+        "delegateRepresentative" .=
+            encodeDRep (Ledger.DRepCredential credential)
+       <>
+        "anchor" .=
+            encodeStrictMaybe encodeAnchor anchor
+    Cn.ConwayAuthCommitteeHotKey cold hot ->
         "type" .=
             encodeText "constitutionalCommitteeHotKeyRegistration"
        <>
         "member" .=
-            encodeConstitutionalCommitteeMember coldKey
+            encodeConstitutionalCommitteeMember cold SNothing
        <>
         "hotKey" .=
-            Shelley.encodeKeyHash hotKey
-    Cn.ConwayResignCommitteeColdKey coldKey ->
+            Shelley.encodeCredential hot
+    Cn.ConwayResignCommitteeColdKey cold ->
         "type" .=
             encodeText "constitutionalCommitteeRetirement"
        <>
         "member" .=
-            encodeConstitutionalCommitteeMember coldKey
+            encodeConstitutionalCommitteeMember cold SNothing
 
 encodeDelegCert
     :: Crypto crypto
@@ -209,25 +250,42 @@ encodeGenesis
     -> Json
 encodeGenesis x =
     encodeObject
-        ( "era" .=
-            encodeText "conway"
-       <> "initialDelegates" .=
-           Shelley.encodeInitialDelegates (Ledger.unGenDelegs (Cn.cgGenDelegs x))
+        ( "era" .= encodeText "conway"
+       <> "constitution" .= encodeObject (encodeConstitution (Cn.cgConstitution x))
+       <> "constitutionalCommittee" .= encodeCommittee (Cn.cgCommittee x)
+       <> "updatableParameters" .= encodeObject
+            ( "stakePoolVotingThresholds" .=
+                encodePoolVotingThresholds (Cn.ucppPoolVotingThresholds (Cn.cgUpgradePParams x))
+           <> "delegateRepresentativeVotingThresholds" .=
+                encodeDRepVotingThresholds (Cn.ucppDRepVotingThresholds (Cn.cgUpgradePParams x))
+           <> "constitutionalCommitteeMinSize" .=
+                encodeNatural (Cn.ucppCommitteeMinSize (Cn.cgUpgradePParams x))
+           <> "constitutionalCommitteeMaxTermLength" .=
+                encodeNatural (Cn.ucppCommitteeMaxTermLength (Cn.cgUpgradePParams x))
+           <> "governanceActionLifetime" .=
+                encodeEpochNo (Cn.ucppGovActionLifetime (Cn.cgUpgradePParams x))
+           <> "governanceActionDeposit" .=
+                encodeCoin (Cn.ucppGovActionDeposit (Cn.cgUpgradePParams x))
+           <> "delegateRepresentativeDeposit" .=
+                encodeCoin (Cn.ucppDRepDeposit (Cn.cgUpgradePParams x))
+           <> "delegateRepresentativeMaxIdleTime" .=
+                encodeEpochNo (Cn.ucppDRepActivity (Cn.cgUpgradePParams x))
+            )
         )
 
-encodeGovernanceAction
+encodeGovAction
     :: Crypto crypto
-    => Cn.GovernanceAction (ConwayEra crypto)
+    => Cn.GovAction (ConwayEra crypto)
     -> Json
-encodeGovernanceAction = \case
-    Cn.ParameterChange pparamsUpdate ->
+encodeGovAction = \case
+    Cn.ParameterChange _prevGovActionId pparamsUpdate ->
         encodeObject
             ( "type" .=
                 encodeText "protocolParametersUpdate"
            <> "parameters" .=
                 encodePParamsUpdate pparamsUpdate
             )
-    Cn.HardForkInitiation version ->
+    Cn.HardForkInitiation _prevGovActionId version ->
         encodeObject
             ( "type" .=
                 encodeText "hardForkInitiation"
@@ -239,25 +297,28 @@ encodeGovernanceAction = \case
             ( "type" .=
                 encodeText "treasuryWithdrawals"
            <> "withdrawals" .=
-                encodeMap Shelley.stringifyCredential encodeCoin withdrawals
+                encodeMap Shelley.stringifyRewardAcnt encodeCoin withdrawals
             )
-    Cn.NewCommittee members quorum ->
+    Cn.UpdateCommittee _prevGovActionId removed added quorum ->
         encodeObject
             ( "type" .=
                 encodeText "constitutionalCommittee"
-           <> "members" .=
-                encodeFoldable encodeConstitutionalCommitteeMember members
+           <> "members" .= encodeObject
+                ( "added" .=
+                    encodeMapAsList (\k -> encodeConstitutionalCommitteeMember k . SJust) added
+               <> "removed" .=
+                    encodeFoldable (`encodeConstitutionalCommitteeMember` SNothing) removed
+                )
            <> "quorum" .=
-                encodeRational quorum
+                encodeUnitInterval quorum
             )
-    Cn.NewConstitution hash ->
+    Cn.NewConstitution _prevGovActionId constitution  ->
         encodeObject
             ( "type" .=
                 encodeText "constitution"
-           <> "hash" .=
-                Shelley.encodeHash (extractHash hash)
+           <> encodeConstitution constitution
             )
-    Cn.NoConfidence ->
+    Cn.NoConfidence  _prevGovActionId ->
         encodeObject
             ( "type" .=
                 encodeText "noConfidence"
@@ -268,37 +329,150 @@ encodeGovernanceAction = \case
                 encodeText "information"
             )
 
-encodeGovernanceActionId
+encodeGovActionId
     :: Crypto crypto
-    => Cn.GovernanceActionId crypto
+    => Cn.GovActionId crypto
     -> Json
-encodeGovernanceActionId x =
+encodeGovActionId x =
     encodeObject
         ( "transaction" .=
             encodeObject (Shelley.encodeTxId (Cn.gaidTxId x))
         <> "index" .=
-            encodeGovernanceActionIx (Cn.gaidGovActionIx x)
+            encodeGovActionIx (Cn.gaidGovActionIx x)
         )
 
-encodeGovernanceActionIx
-    :: Cn.GovernanceActionIx
+encodeGovActionIx
+    :: Cn.GovActionIx
     -> Json
-encodeGovernanceActionIx (Cn.GovernanceActionIx ix) =
-    encodeWord64 ix
+encodeGovActionIx (Cn.GovActionIx ix) =
+    encodeWord32 ix
 
 encodePParams
-    :: (Ledger.PParamsHKD Identity era ~ Ba.BabbagePParams Identity era)
+    :: (Ledger.PParamsHKD Identity era ~ Cn.ConwayPParams Identity era)
     => Ledger.PParams era
     -> Json
 encodePParams (Ledger.PParams x) =
-    Babbage.encodePParamsHKD (\k encode v -> k .= encode v) identity x
+    encodePParamsHKD (\k encode v -> k .= encode v) identity x
 
 encodePParamsUpdate
-    :: (Ledger.PParamsHKD StrictMaybe era ~ Ba.BabbagePParams StrictMaybe era)
+    :: (Ledger.PParamsHKD StrictMaybe era ~ Cn.ConwayPParams StrictMaybe era)
     => Ledger.PParamsUpdate era
     -> Json
 encodePParamsUpdate (Ledger.PParamsUpdate x) =
-    Babbage.encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) (const SNothing) x
+    encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) (const SNothing) x
+
+encodeProposedPPUpdates
+    :: forall era.
+        ( Ledger.PParamsHKD StrictMaybe era ~ Cn.ConwayPParams StrictMaybe era
+        )
+    => Sh.ProposedPPUpdates era
+    -> Json
+encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
+    encodeFoldable
+        (\(Ledger.PParamsUpdate x) ->
+            encodePParamsHKD
+                (\k encode v -> k .=? OmitWhenNothing encode v)
+                (const SNothing)
+                x
+        )
+        m
+encodePParamsHKD
+    :: (forall a. Text -> (a -> Json) -> Ledger.HKD f a -> Series)
+    -> (Integer -> Ledger.HKD f Integer)
+    -> Cn.ConwayPParams f era
+    -> Json
+encodePParamsHKD encode pure_ x =
+    encode "minFeeCoefficient"
+        (encodeInteger . unCoin) (Cn.cppMinFeeA x) <>
+    encode "minFeeConstant"
+        encodeCoin (Cn.cppMinFeeB x) <>
+    encode "maxBlockBodySize"
+        (encodeSingleton "bytes" . encodeNatural) (Cn.cppMaxBBSize x) <>
+    encode "maxBlockHeaderSize"
+        (encodeSingleton "bytes" . encodeNatural) (Cn.cppMaxBHSize x) <>
+    encode "maxTransactionSize"
+        (encodeSingleton "bytes" . encodeNatural) (Cn.cppMaxTxSize x) <>
+    encode "stakeCredentialDeposit"
+        encodeCoin (Cn.cppKeyDeposit x) <>
+    encode "stakePoolDeposit"
+        encodeCoin (Cn.cppPoolDeposit x) <>
+    encode "stakePoolRetirementEpochBound"
+        encodeEpochNo (Cn.cppEMax x) <>
+    encode "desiredNumberOfStakePools"
+        encodeNatural (Cn.cppNOpt x) <>
+    encode "stakePoolPledgeInfluence"
+        encodeNonNegativeInterval (Cn.cppA0 x) <>
+    encode "monetaryExpansion"
+        encodeUnitInterval (Cn.cppRho x) <>
+    encode "treasuryExpansion"
+        encodeUnitInterval (Cn.cppTau x) <>
+    encode "minStakePoolCost"
+        encodeCoin (Cn.cppMinPoolCost x) <>
+    encode "minUtxoDepositConstant"
+        encodeInteger (pure_ 0) <>
+    encode "minUtxoDepositCoefficient"
+        (encodeInteger . unCoin . Ba.unCoinPerByte) (Cn.cppCoinsPerUTxOByte x) <>
+    encode "plutusCostModels"
+        Alonzo.encodeCostModels (Cn.cppCostModels x) <>
+    encode "scriptExecutionPrices"
+        Alonzo.encodePrices (Cn.cppPrices x) <>
+    encode "maxExecutionUnitsPerTransaction"
+        (Alonzo.encodeExUnits . Al.unOrdExUnits) (Cn.cppMaxTxExUnits x) <>
+    encode "maxExecutionUnitsPerBlock"
+        (Alonzo.encodeExUnits . Al.unOrdExUnits) (Cn.cppMaxBlockExUnits x) <>
+    encode "maxValueSize"
+        (encodeSingleton "bytes" . encodeNatural) (Cn.cppMaxValSize x) <>
+    encode "collateralPercentage"
+        encodeNatural (Cn.cppCollateralPercentage x) <>
+    encode "maxCollateralInputs"
+        encodeNatural (Cn.cppMaxCollateralInputs x) <>
+    encode "version"
+        Shelley.encodeProtVer (Cn.cppProtocolVersion x) <>
+    encode "stakePoolVotingThresholds"
+        encodePoolVotingThresholds (Cn.cppPoolVotingThresholds x) <>
+    encode "delegateRepresentativeVotingThresholds"
+        encodeDRepVotingThresholds (Cn.cppDRepVotingThresholds x) <>
+    encode "constitutionalCommitteeMinSize"
+        encodeNatural (Cn.cppCommitteeMinSize x) <>
+    encode "constitutionalCommitteeMaxTermLength"
+        encodeNatural (Cn.cppCommitteeMaxTermLength x) <>
+    encode "governanceActionLifetime"
+        encodeEpochNo (Cn.cppGovActionLifetime x) <>
+    encode "governanceActionDeposit"
+        encodeCoin (Cn.cppGovActionDeposit x) <>
+    encode "delegateRepresentativeDeposit"
+        encodeCoin (Cn.cppDRepDeposit x) <>
+    encode "delegateRepresentativeMaxIdleTime"
+        encodeEpochNo (Cn.cppDRepActivity x)
+    & encodeObject
+
+encodeDRepVotingThresholds :: Cn.DRepVotingThresholds -> Json
+encodeDRepVotingThresholds x =
+    "noConfidence" .= encodeUnitInterval (Cn.dvtMotionNoConfidence x) <>
+    "constitutionalCommittee" .= encodeObject
+        ( "default" .= encodeUnitInterval (Cn.dvtCommitteeNormal x)
+       <> "stateOfNoConfidence" .= encodeUnitInterval (Cn.dvtCommitteeNoConfidence x)
+        ) <>
+    "constitution" .= encodeUnitInterval (Cn.dvtUpdateToConstitution x) <>
+    "hardForkInitiation" .= encodeUnitInterval (Cn.dvtHardForkInitiation x) <>
+    "protocolParametersUpdate" .= encodeObject
+        ( "network" .= encodeUnitInterval (Cn.dvtPPNetworkGroup x)
+       <> "economic" .= encodeUnitInterval (Cn.dvtPPEconomicGroup x)
+       <> "technical" .= encodeUnitInterval (Cn.dvtPPTechnicalGroup x)
+       <> "governance" .= encodeUnitInterval (Cn.dvtPPGovGroup x)
+        ) <>
+    "treasuryWithdrawals" .= encodeUnitInterval (Cn.dvtTreasuryWithdrawal x)
+    & encodeObject
+
+encodePoolVotingThresholds :: Cn.PoolVotingThresholds -> Json
+encodePoolVotingThresholds x =
+    "noConfidence" .= encodeUnitInterval (Cn.pvtMotionNoConfidence x) <>
+    "constitutionalCommittee" .= encodeObject
+        ( "default" .= encodeUnitInterval (Cn.pvtCommitteeNormal x)
+       <> "stateOfNoConfidence" .= encodeUnitInterval (Cn.pvtCommitteeNoConfidence x)
+        ) <>
+    "hardForkInitiation" .= encodeUnitInterval (Cn.pvtHardForkInitiation x)
+    & encodeObject
 
 encodeProposalProcedure
     :: Crypto crypto
@@ -308,12 +482,11 @@ encodeProposalProcedure x = encodeObject
     ( "deposit" .=
         encodeCoin (Cn.pProcDeposit x)
    <> "returnAccount" .=
-        Shelley.encodeKeyHash (Cn.pProcReturnAddr x)
-   <> "anchor" .=? OmitWhenNothing
-        encodeAnchor
-        (Cn.pProcAnchor x)
+        Shelley.encodeRewardAcnt (Cn.pProcReturnAddr x)
+   <> "anchor" .=
+       encodeAnchor (Cn.pProcAnchor x)
    <> "action" .=
-        encodeGovernanceAction (Cn.pProcGovernanceAction x)
+        encodeGovAction (Cn.pProcGovAction x)
     )
 
 encodeTx
@@ -390,8 +563,8 @@ encodeTxBody opts x scripts =
     "proposals" .=? OmitWhen null
         (encodeFoldable encodeProposalProcedure)
         (Cn.ctbProposalProcedures x) <>
-    "votes" .=? OmitWhen null
-        (encodeFoldable encodeVotingProcedure)
+    "votes" .=? OmitWhen (null . Cn.unVotingProcedures)
+        encodeVotingProcedures
         (Cn.ctbVotingProcedures x)
 
 encodeTxCert
@@ -406,23 +579,37 @@ encodeTxCert = \case
         encodeDelegCert dCert
     Cn.ConwayTxCertPool pCert ->
         [Shelley.encodePoolCert pCert]
-    Cn.ConwayTxCertCommittee cCert ->
-        [encodeConwayCommitteeCert cCert]
+    Cn.ConwayTxCertGov cCert ->
+        [encodeConwayGovCert cCert]
+
+encodeVotingProcedures
+    :: Crypto crypto
+    => Cn.VotingProcedures (ConwayEra crypto)
+    -> Json
+encodeVotingProcedures =
+    encodeList identity . Map.foldrWithKey encodeProcedures mempty . Cn.unVotingProcedures
+  where
+    encodeProcedures issuer =
+        flip $ Map.foldrWithKey
+            (\govActionId  -> (:) . encodeVotingProcedure issuer govActionId)
 
 encodeVotingProcedure
     :: Crypto crypto
-    => Cn.VotingProcedure (ConwayEra crypto)
+    => Cn.Voter crypto
+    -> Cn.GovActionId crypto
+    -> Cn.VotingProcedure (ConwayEra crypto)
     -> Json
-encodeVotingProcedure x = encodeObject
-    ( "proposal" .=
-        encodeGovernanceActionId (Cn.vProcGovActionId x)
-   <> "issuer" .=
-       encodeVoter (Cn.vProcVoter x)
-   <> "vote" .=
-       encodeVote (Cn.vProcVote x)
-   <> "anchor" .=? OmitWhenNothing
-        encodeAnchor (Cn.vProcAnchor x)
-    )
+encodeVotingProcedure issuer govActionId x =
+    encodeObject
+        ( "proposal" .=
+            encodeGovActionId govActionId
+       <> "issuer" .=
+           encodeVoter issuer
+       <> "vote" .=
+           encodeVote (Cn.vProcVote x)
+       <> "anchor" .=? OmitWhenNothing
+            encodeAnchor (Cn.vProcAnchor x)
+        )
 
 encodeVote
     :: Cn.Vote

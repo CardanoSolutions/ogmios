@@ -156,16 +156,18 @@ import Ouroboros.Network.Driver.Simple
     , runPipelinedPeer
     )
 import Ouroboros.Network.Mux
-    ( MuxPeer (..)
+    ( MiniProtocolCb (..)
     , OuroborosApplication (..)
     , RunMiniProtocol (..)
     )
 import Ouroboros.Network.NodeToClient
     ( LocalAddress
+    , MinimalInitiatorContext
     , NetworkConnectTracers (..)
     , NodeToClientProtocols (..)
     , NodeToClientVersion (..)
     , NodeToClientVersionData (..)
+    , ResponderContext
     , connectTo
     , localSnocket
     , nodeToClientProtocols
@@ -226,8 +228,10 @@ type SerializedTransaction = GenTx
 type Client m = OuroborosApplication
     'InitiatorMode
         -- Initiator ~ Client (as opposed to Responder / Server)
-    LocalAddress
-        -- Address type
+    (MinimalInitiatorContext LocalAddress)
+        -- Initiator context
+    (ResponderContext LocalAddress)
+        -- Responder context
     ByteString
         -- Concrete representation for bytes string
     m
@@ -292,31 +296,36 @@ mkClient
         -- ^ Clients with the driving logic
     -> (NodeToClientVersion -> Client IO)
 mkClient unlift tr epochSlots clients = \nodeToClientV ->
-    nodeToClientProtocols (const $ pure $ NodeToClientProtocols
-        { localChainSyncProtocol =
-            InitiatorProtocolOnly $ MuxPeerRaw $ \channel ->
-                localChainSync unlift trChainSync (codecChainSync nodeToClientV)
-                (chainSyncClient clients)
-                (hoistChannel liftIO channel)
+    nodeToClientProtocols
+        NodeToClientProtocols
+            { localChainSyncProtocol =
+                InitiatorProtocolOnly $ MiniProtocolCb $ \_ctx channel ->
+                    localChainSync unlift trChainSync
+                        (codecChainSync nodeToClientV)
+                        (chainSyncClient clients)
+                        (hoistChannel liftIO channel)
 
-        , localTxSubmissionProtocol =
-            InitiatorProtocolOnly $ MuxPeerRaw $ \channel ->
-                localTxSubmission unlift trTxSubmission (codecTxSubmission nodeToClientV)
-                (txSubmissionClient clients)
-                (hoistChannel liftIO channel)
+            , localTxSubmissionProtocol =
+                InitiatorProtocolOnly $ MiniProtocolCb $ \_ctx channel ->
+                    localTxSubmission unlift trTxSubmission
+                        (codecTxSubmission nodeToClientV)
+                        (txSubmissionClient clients)
+                        (hoistChannel liftIO channel)
 
-        , localTxMonitorProtocol =
-            InitiatorProtocolOnly $ MuxPeerRaw $ \channel ->
-                localTxMonitor unlift trTxMonitor (codecTxMonitor nodeToClientV)
-                (txMonitorClient clients)
-                (hoistChannel liftIO channel)
+            , localTxMonitorProtocol =
+                InitiatorProtocolOnly $ MiniProtocolCb $ \_ctx channel ->
+                    localTxMonitor unlift trTxMonitor
+                        (codecTxMonitor nodeToClientV)
+                        (txMonitorClient clients)
+                        (hoistChannel liftIO channel)
 
-        , localStateQueryProtocol =
-            InitiatorProtocolOnly $ MuxPeerRaw $ \channel ->
-                localStateQuery unlift trStateQuery (codecStateQuery nodeToClientV)
-                (stateQueryClient clients)
-                (hoistChannel liftIO channel)
-        })
+            , localStateQueryProtocol =
+                InitiatorProtocolOnly $ MiniProtocolCb $ \_ctx channel ->
+                    localStateQuery unlift trStateQuery
+                        (codecStateQuery nodeToClientV)
+                        (stateQueryClient clients)
+                        (hoistChannel liftIO channel)
+            }
         nodeToClientV
   where
     trChainSync    = nullTracer

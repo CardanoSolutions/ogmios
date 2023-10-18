@@ -84,7 +84,7 @@ encodeAuxiliaryData opts (Al.AlonzoTxAuxData blob timelocks plutus) =
         (Map.foldrWithKey
             (\lang ->
                 flip $ foldr (\(Al.BinaryPlutus bytes) ->
-                    let script = Al.PlutusScript lang bytes
+                    let script = Al.PlutusScript (Al.Plutus lang (Al.BinaryPlutus bytes))
                      in Map.insert (Ledger.hashScript @era script) script
                 )
             )
@@ -166,7 +166,7 @@ encodeGenesis
 encodeGenesis x =
     encodeObject
         ( "era" .= encodeText "alonzo"
-       <> "initialParameters" .= encodeObject
+       <> "updatableParameters" .= encodeObject
             ( "minUtxoDepositCoefficient" .=
                 (encodeInteger . (`div` 8) . unCoin . Al.unCoinPerWord) (Al.agCoinsPerUTxOWord x) <>
               "plutusCostModels" .=
@@ -381,11 +381,11 @@ encodeScript opts = encodeObject . \case
                 encodeByteStringBase16 (Ledger.originalBytes nativeScript)
         else
             mempty
-    Al.PlutusScript lang serializedScript ->
+    Al.PlutusScript Al.Plutus{Al.plutusLanguage, Al.plutusScript} ->
         "language" .=
-            encodeText (stringifyLanguage lang) <>
+            encodeText (stringifyLanguage plutusLanguage) <>
         "cbor" .=
-            encodeShortByteString encodeByteStringBase16 serializedScript
+            encodeByteStringBase16 (Ledger.originalBytes plutusScript)
 
 encodeScriptPurpose
     :: forall era crypto.

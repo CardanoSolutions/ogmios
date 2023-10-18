@@ -108,7 +108,7 @@ describe('Local state queries', () => {
       expect((shelleyGenesis as GenesisShelley).startTime).toBeDefined()
 
       const alonzoGenesis = await client.genesisConfiguration('alonzo')
-      expect((alonzoGenesis as GenesisAlonzo).initialParameters.minUtxoDepositCoefficient).toBeDefined()
+      expect((alonzoGenesis as GenesisAlonzo).updatableParameters.minUtxoDepositCoefficient).toBeDefined()
 
       const point = await client.ledgerTip() as { slot: Slot, id: DigestBlake2B256 }
       expect(point.slot).toBeDefined()

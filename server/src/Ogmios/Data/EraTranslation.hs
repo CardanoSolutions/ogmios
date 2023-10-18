@@ -50,7 +50,7 @@ import Ouroboros.Consensus.Shelley.Ledger
 
 import qualified Cardano.Ledger.Alonzo.Tx as Alonzo
 import qualified Cardano.Ledger.Babbage.TxBody as Babbage
-import qualified Cardano.Ledger.Conway.Translation as Conway
+import qualified Cardano.Ledger.Conway.Core as Conway
 import qualified Cardano.Ledger.Crypto as Ledger
 
 type family MostRecentEra block :: Type where
@@ -69,11 +69,7 @@ class Upgrade (f :: Type -> Type) era where
 
 instance Ledger.Crypto crypto => Upgrade BabbageTxOut (ConwayEra crypto) where
     type Upgraded BabbageTxOut = BabbageTxOut
-    upgrade = fromMaybe invariant . Conway.translateTxOut
-      where
-        -- NOTE: 'translateTxOut' returns 'Nothing' when the ada value in output is
-        -- zero, which should be impossible in the context of Ogmios.
-        invariant = error "output contains zero Ada; which isn't allowed."
+    upgrade = Conway.upgradeTxOut
 
 ----------
 -- UTxO

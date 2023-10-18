@@ -6,8 +6,12 @@ module Ogmios.Data.Ledger.PredicateFailure.Conway where
 
 import Ogmios.Prelude
 
+import Data.Maybe.Strict
+    ( StrictMaybe (..)
+    )
 import Ogmios.Data.Ledger.PredicateFailure
-    ( MultiEraPredicateFailure (..)
+    ( DiscriminatedEntities (..)
+    , MultiEraPredicateFailure (..)
     )
 import Ogmios.Data.Ledger.PredicateFailure.Babbage
     ( encodeUtxowFailure
@@ -17,6 +21,8 @@ import Ogmios.Data.Ledger.PredicateFailure.Shelley
     )
 
 import qualified Cardano.Ledger.Conway.Rules as Cn
+import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 encodeLedgerFailure
     :: Crypto crypto
@@ -27,17 +33,48 @@ encodeLedgerFailure = \case
         encodeUtxowFailure ShelleyBasedEraConway e
     Cn.ConwayCertsFailure e ->
         encodeCertsFailure e
-    Cn.ConwayTallyFailure e ->
-        encodeTallyFailure e
+    Cn.ConwayGovFailure e ->
+        encodeGovFailure e
     Cn.ConwayWdrlNotDelegatedToDRep marginalizedCredentials ->
         ForbiddenWithdrawal { marginalizedCredentials }
+    Cn.ConwayTreasuryValueMismatch computedWithdrawal providedWithdrawal ->
+        TreasuryWithdrawalMismatch { providedWithdrawal, computedWithdrawal }
 
-encodeTallyFailure
-    :: Cn.ConwayTallyPredFailure (ConwayEra crypto)
+encodeGovFailure
+    :: Cn.ConwayGovPredFailure (ConwayEra crypto)
     -> MultiEraPredicateFailure crypto
-encodeTallyFailure = \case
-    Cn.GovernanceActionDoesNotExist governanceAction ->
-        UnknownGovernanceAction { governanceAction }
+encodeGovFailure = \case
+    Cn.GovActionsDoNotExist governanceActions ->
+        UnknownGovernanceActions { governanceActions }
+    Cn.MalformedProposal _govAction ->
+        InvalidProtocolParametersUpdate
+    Cn.ProposalProcedureNetworkIdMismatch rewardAccount expectedNetwork ->
+        NetworkMismatch
+            { expectedNetwork
+            , invalidEntities =
+                DiscriminatedRewardAccounts (Set.singleton rewardAccount)
+            }
+    Cn.TreasuryWithdrawalsNetworkIdMismatch rewardAccounts expectedNetwork ->
+        NetworkMismatch
+            { expectedNetwork
+            , invalidEntities =
+                DiscriminatedRewardAccounts rewardAccounts
+            }
+    Cn.ProposalDepositIncorrect providedDeposit (SJust -> expectedDeposit) ->
+        GovernanceProposalDepositMismatch
+            { providedDeposit
+            , expectedDeposit
+            }
+    Cn.DisallowedVoters voters ->
+        UnauthorizedVotes voters
+    Cn.ConflictingCommitteeUpdate conflictingMembers ->
+        ConflictingCommitteeUpdate
+            { conflictingMembers
+            }
+    Cn.ExpirationEpochTooSmall members ->
+        InvalidCommitteeUpdate
+            { alreadyRetiredMembers = Map.keysSet members
+            }
 
 encodeCertsFailure
     :: Cn.ConwayCertsPredFailure (ConwayEra crypto)
@@ -58,8 +95,8 @@ encodeCertFailure = \case
         encodeDelegFailure e
     Cn.PoolFailure e ->
         encodePoolFailure e
-    Cn.VDelFailure e ->
-        encodeVDelFailure e
+    Cn.GovCertFailure e ->
+        encodeGovCertFailure e
 
 encodeDelegFailure
     :: Cn.ConwayDelegPredFailure (ConwayEra crypto)
@@ -68,31 +105,31 @@ encodeDelegFailure = \case
     -- NOTE: The discarded coin value here refers to the deposit as set in the
     -- transaction; it would be more useful and worth including if it were the
     -- expected one.
-    Cn.IncorrectDepositDELEG _coin -> -- !Coin
-        StakeCredentialDepositMismatch
-    Cn.StakeKeyAlreadyRegisteredDELEG knownCredential ->
+    Cn.IncorrectDepositDELEG providedDeposit -> -- !Coin
+        StakeCredentialDepositMismatch { providedDeposit, expectedDeposit = SNothing }
+    Cn.StakeKeyRegisteredDELEG knownCredential ->
         StakeCredentialAlreadyRegistered { knownCredential }
     Cn.StakeKeyNotRegisteredDELEG unknownCredential  ->
         StakeCredentialNotRegistered { unknownCredential }
-    Cn.StakeKeyHasNonZeroAccountBalanceDELEG rewardAccountBalance ->
+    Cn.StakeKeyHasNonZeroRewardAccountBalanceDELEG rewardAccountBalance ->
         RewardAccountNotEmpty { rewardAccountBalance }
     Cn.DRepAlreadyRegisteredForStakeKeyDELEG knownCredential ->
         StakeCredentialAlreadyRegistered { knownCredential }
     Cn.WrongCertificateTypeDELEG ->
         UnrecognizedCertificateType
 
-encodeVDelFailure
-    :: Cn.ConwayVDelPredFailure (ConwayEra crypto)
+encodeGovCertFailure
+    :: Cn.ConwayGovCertPredFailure (ConwayEra crypto)
     -> MultiEraPredicateFailure crypto
-encodeVDelFailure = \case
-    Cn.ConwayDRepAlreadyRegisteredVDEL knownDelegateRepresentative ->
+encodeGovCertFailure = \case
+    Cn.ConwayDRepAlreadyRegistered knownDelegateRepresentative ->
         DRepAlreadyRegistered { knownDelegateRepresentative }
-    Cn.ConwayDRepNotRegisteredVDEL unknownDelegateRepresentative ->
+    Cn.ConwayDRepNotRegistered unknownDelegateRepresentative ->
         DRepNotRegistered { unknownDelegateRepresentative }
     -- NOTE: The discarded coin value here refers to the deposit as set in the
     -- transaction; it would be more useful and worth including if it were the
     -- expected one.
-    Cn.ConwayDRepIncorrectDepositVDEL _coin ->
-        StakeCredentialDepositMismatch
-    Cn.ConwayCommitteeHasResignedVDEL unknownConstitutionalCommitteeMember ->
+    Cn.ConwayDRepIncorrectDeposit providedDeposit (SJust -> expectedDeposit) ->
+        StakeCredentialDepositMismatch { providedDeposit, expectedDeposit }
+    Cn.ConwayCommitteeHasPreviouslyResigned unknownConstitutionalCommitteeMember ->
         UnknownConstitutionalCommitteeMember { unknownConstitutionalCommitteeMember }

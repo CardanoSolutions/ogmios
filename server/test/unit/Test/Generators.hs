@@ -444,7 +444,7 @@ genPointResultTPraos
     -> Proxy (QueryResult crypto (Point (ShelleyBlock (TPraos crypto) era)))
     -> Gen (QueryResult crypto (Point (ShelleyBlock (TPraos crypto) era)))
 genPointResultTPraos _era _result =
-    fromMaybe (error "genPointResult: unsupported era")
+    fromMaybe (error "genPointResultTPraos: unsupported era")
         (genShelley <|> genAllegra <|> genMary <|> genAlonzo)
   where
     genShelley =
@@ -493,11 +493,20 @@ genPointResultPraos
     -> Proxy (QueryResult crypto (Point (ShelleyBlock (Praos crypto) era)))
     -> Gen (QueryResult crypto (Point (ShelleyBlock (Praos crypto) era)))
 genPointResultPraos _era _result =
-    fromMaybe (error "genPointResult: unsupported era")
-        genBabbage
+    fromMaybe (error "genPointResultPraos: unsupported era")
+        (genBabbage <|> genConway)
   where
     genBabbage =
         case testEquality (typeRep @era) (typeRep @StandardBabbage) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+    genConway =
+        case testEquality (typeRep @era) (typeRep @StandardConway) of
             Just Refl{} ->
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)
@@ -540,7 +549,7 @@ genPParamsResult
     -> Gen (QueryResult crypto (Ledger.PParams era))
 genPParamsResult _ _ =
     maybe (error "genPParamsResult: unsupported era") identity
-        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage)
+        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage <|> genConway)
   where
     genShelley =
         case testEquality (typeRep @era) (typeRep @StandardShelley) of
@@ -580,6 +589,15 @@ genPParamsResult _ _ =
                 Nothing
     genBabbage =
         case testEquality (typeRep @era) (typeRep @StandardBabbage) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+    genConway =
+        case testEquality (typeRep @era) (typeRep @StandardConway) of
             Just Refl{} ->
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)
@@ -595,7 +613,7 @@ genProposedPParamsResult
     -> Gen (QueryResult crypto (Sh.ProposedPPUpdates era))
 genProposedPParamsResult _ _ =
     maybe (error "genProposedPParamsResult: unsupported era") identity
-        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage)
+        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage <|> genConway)
   where
     genShelley =
         case testEquality (typeRep @era) (typeRep @StandardShelley) of
@@ -635,6 +653,15 @@ genProposedPParamsResult _ _ =
                 Nothing
     genBabbage =
         case testEquality (typeRep @era) (typeRep @StandardBabbage) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+    genConway =
+        case testEquality (typeRep @era) (typeRep @StandardConway) of
             Just Refl{} ->
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)
@@ -658,8 +685,8 @@ genUTxOResult
     -> Proxy (QueryResult crypto (Sh.UTxO era))
     -> Gen (QueryResult crypto (Sh.UTxO era))
 genUTxOResult _ _ =
-    maybe (error "genProposedPParamsResult: unsupported era") identity
-        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage)
+    maybe (error "genUTxOResult: unsupported era") identity
+        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage <|> genConway)
   where
     genShelley =
         case testEquality (typeRep @era) (typeRep @StandardShelley) of
@@ -699,6 +726,15 @@ genUTxOResult _ _ =
                 Nothing
     genBabbage =
         case testEquality (typeRep @era) (typeRep @StandardBabbage) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+    genConway =
+        case testEquality (typeRep @era) (typeRep @StandardConway) of
             Just Refl{} ->
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)

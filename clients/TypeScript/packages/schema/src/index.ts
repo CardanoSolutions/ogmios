@@ -58,6 +58,7 @@ export type Certificate =
   | ConstitutionalCommitteeHotKeyRegistration
   | ConstitutionalCommitteeRetirement
   | DelegateRepresentativeRegistration
+  | DelegateRepresentativeUpdate
   | DelegateRepresentativeRetirement;
 /**
  * A Blake2b 32-byte hash digest of a pool's verification key.
@@ -84,6 +85,7 @@ export type Relay = RelayByAddress | RelayByName;
  * An epoch number or length.
  */
 export type Epoch = number;
+export type None = null;
 /**
  * A network target, as defined since the Shelley era.
  */
@@ -165,7 +167,7 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureTotalCollateralMismatch
   | SubmitTransactionFailureSpendsMismatch
   | SubmitTransactionFailureUnauthorizedVotes
-  | SubmitTransactionFailureUnknownGovernanceProposal
+  | SubmitTransactionFailureUnknownGovernanceProposals
   | SubmitTransactionFailureInvalidProtocolParametersUpdate
   | SubmitTransactionFailureUnknownStakePool
   | SubmitTransactionFailureIncompleteWithdrawals
@@ -182,6 +184,10 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureDRepAlreadyRegistered
   | SubmitTransactionFailureDRepNotRegistered
   | SubmitTransactionFailureUnknownConstitutionalCommitteeMember
+  | SubmitTransactionFailureGovernanceProposalDepositMismatch
+  | SubmitTransactionFailureConflictingCommitteeUpdate
+  | SubmitTransactionFailureInvalidCommitteeUpdate
+  | SubmitTransactionFailureTreasuryWithdrawalMismatch
   | SubmitTransactionFailureUnrecognizedCertificateType
   | SubmitTransactionFailureInternalLedgerTypeConversionError;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
@@ -697,6 +703,12 @@ export interface DelegateRepresentativeRegistration {
   type: "delegateRepresentativeRegistration";
   delegateRepresentative: DelegateRepresentative;
   deposit: Lovelace;
+  anchor?: Anchor;
+}
+export interface DelegateRepresentativeUpdate {
+  type: "delegateRepresentativeUpdate";
+  delegateRepresentative: DelegateRepresentative;
+  anchor: None | Anchor;
 }
 /**
  * A delegate representative retirement. Note that this is only possible for 'registered' representatives and not for well-known ones (abstain & noConfidence)
@@ -720,7 +732,7 @@ export interface Assets {
 }
 export interface GovernanceProposal {
   deposit?: Lovelace;
-  returnAccount?: DigestBlake2B224;
+  returnAccount?: RewardAccount;
   anchor?: Anchor;
   action:
     | GovernanceActionProtocolParametersUpdate
@@ -769,6 +781,14 @@ export interface ProposedProtocolParameters {
   scriptExecutionPrices?: ScriptExecutionPrices;
   maxExecutionUnitsPerTransaction?: ExecutionUnits;
   maxExecutionUnitsPerBlock?: ExecutionUnits;
+  stakePoolVotingThresholds?: StakePoolVotingThresholds;
+  constitutionalCommitteeMinSize?: UInt64;
+  constitutionalCommitteeMaxTermLength?: UInt64;
+  governanceActionLifetime?: Epoch;
+  governanceActionDeposit?: Lovelace;
+  delegateRepresentativeVotingThresholds?: DelegateRepresentativeVotingThresholds;
+  delegateRepresentativeDeposit?: Lovelace;
+  delegateRepresentativeMaxIdleTime?: Epoch;
   version?: ProtocolVersion;
 }
 export interface CostModels {
@@ -781,6 +801,30 @@ export interface ScriptExecutionPrices {
 export interface ExecutionUnits {
   memory: UInt64;
   cpu: UInt64;
+}
+export interface StakePoolVotingThresholds {
+  noConfidence: Ratio;
+  constitutionalCommittee: {
+    default: Ratio;
+    stateOfNoConfidence: Ratio;
+  };
+  hardForkInitiation: Ratio;
+}
+export interface DelegateRepresentativeVotingThresholds {
+  noConfidence: Ratio;
+  constitution: Ratio;
+  constitutionalCommittee: {
+    default: Ratio;
+    stateOfNoConfidence: Ratio;
+  };
+  hardForkInitiation: Ratio;
+  protocolParametersUpdate: {
+    network: Ratio;
+    economic: Ratio;
+    technical: Ratio;
+    governance: Ratio;
+  };
+  treasuryWithdrawals: Ratio;
 }
 export interface ProtocolVersion {
   major: UInt32;
@@ -822,16 +866,26 @@ export interface LovelaceDelta {
 export interface GovernanceActionConstitutionalCommittee {
   type: "constitutionalCommittee";
   members: {
-    id: DigestBlake2B224;
+    added: ConstitutionalCommitteeMember[];
+    removed: {
+      id: DigestBlake2B224;
+    }[];
   };
   quorum: Ratio;
+}
+export interface ConstitutionalCommitteeMember {
+  id: DigestBlake2B224;
+  mandate: {
+    epoch: Epoch;
+  };
 }
 /**
  * A change in the constitution. Only its hash is recorded on-chain.
  */
 export interface GovernanceActionConstitution {
   type: "constitution";
-  hash: DigestBlake2B256;
+  hash?: DigestBlake2B224;
+  anchor: Anchor;
 }
 /**
  * A motion of no-confidence, indicate a lack of trust in the constitutional committee.
@@ -1429,7 +1483,7 @@ export interface SubmitTransactionFailureNonAdaCollateral {
   code: 3133;
   message: string;
   data: {
-    "unsuitableCollateralValue'"?: Value;
+    unsuitableCollateralValue: Value;
   };
 }
 /**
@@ -1479,13 +1533,13 @@ export interface SubmitTransactionFailureUnauthorizedVotes {
   };
 }
 /**
- * Unknown governance proposal found in transaction. This may be because you've indicated a wrong identifier or because the governance proposal hasn't yet been submitted on-chain. Note that the order in which transactions are submitted matters. The field 'data.unknownProposal' tells you about the governance proposal's identifier.
+ * Reference(s) to unknown governance proposals found in transaction. This may be because you've indicated a wrong identifier or because the proposal hasn't yet been submitted on-chain. Note that the order in which transactions are submitted matters. The field 'data.unknownProposals' tells you about the unknown references.
  */
-export interface SubmitTransactionFailureUnknownGovernanceProposal {
+export interface SubmitTransactionFailureUnknownGovernanceProposals {
   code: 3138;
   message: string;
   data: {
-    unknownProposal: GovernanceProposalReference;
+    unknownProposals: GovernanceProposalReference[];
   };
 }
 /**
@@ -1608,11 +1662,15 @@ export interface SubmitTransactionFailureForbiddenWithdrawal {
   };
 }
 /**
- * The deposit specified in a stake credential registration (for delegation or governance) does not match the current value set by protocol parameters.
+ * The deposit specified in a stake credential registration (for delegation or governance) does not match the current value set by protocol parameters. The field 'data.expectedDeposit', when present, indicates the deposit amount as currently expected by ledger.
  */
 export interface SubmitTransactionFailureCredentialDepositMismatch {
   code: 3151;
   message: string;
+  data: {
+    providedDeposit: Lovelace;
+    expectedDeposit?: Lovelace;
+  };
 }
 /**
  * Trying to re-register some already known delegate representative. Delegate representatives can only be registered once. The field 'data.knownDelegateRepresentatives' points to an already known credential that's being re-registered by this transaction.
@@ -1644,6 +1702,52 @@ export interface SubmitTransactionFailureUnknownConstitutionalCommitteeMember {
     unknownConstitutionalCommitteeMember: {
       id: DigestBlake2B224;
     };
+  };
+}
+/**
+ * There's a mismatch between the proposal deposit amount declared in the transaction and the one expected by the ledger. The deposit is actually configured by a protocol parameter. The field 'data.expectedDeposit' indicates the current configuration and amount expected by the ledger. The field 'data.providedDeposit' is a reminder of the what was set in the submitted transaction.
+ */
+export interface SubmitTransactionFailureGovernanceProposalDepositMismatch {
+  code: 3155;
+  message: string;
+  data: {
+    providedDeposit: Lovelace;
+    expectedDeposit: Lovelace;
+  };
+}
+/**
+ * The transaction contains an invalid governance action: it tries to both add members to the committee and remove some of those same members. The field 'data.conflictingMembers' indicates which members are found on both sides.
+ */
+export interface SubmitTransactionFailureConflictingCommitteeUpdate {
+  code: 3156;
+  message: string;
+  data: {
+    conflictingMembers: {
+      id: DigestBlake2B224;
+    }[];
+  };
+}
+/**
+ * The transaction contains an invalid governance action: it tries to add new members to the constitutional committee with a retirement epoch in the past. The field 'data.alreadyRetiredMembers' indicates the faulty members that would otherwise be already retired.
+ */
+export interface SubmitTransactionFailureInvalidCommitteeUpdate {
+  code: 3157;
+  message: string;
+  data: {
+    alreadyRetiredMembers: {
+      id: DigestBlake2B224;
+    };
+  };
+}
+/**
+ * The transaction is trying to withdraw more funds than specified in a governance action! The field 'data.providedWithdrawal' indicates the amount specified in the transaction, whereas 'data.computedWithdrawal' is the actual amount as computed by the ledger.
+ */
+export interface SubmitTransactionFailureTreasuryWithdrawalMismatch {
+  code: 3158;
+  message: string;
+  data: {
+    providedWithdrawal: Lovelace;
+    expectedWithdrawal?: Lovelace;
   };
 }
 /**
@@ -2145,6 +2249,14 @@ export interface ProtocolParameters {
   scriptExecutionPrices?: ScriptExecutionPrices;
   maxExecutionUnitsPerTransaction?: ExecutionUnits;
   maxExecutionUnitsPerBlock?: ExecutionUnits;
+  stakePoolVotingThresholds?: StakePoolVotingThresholds;
+  constitutionalCommitteeMinSize?: UInt64;
+  constitutionalCommitteeMaxTermLength?: UInt64;
+  governanceActionLifetime?: Epoch;
+  governanceActionDeposit?: Lovelace;
+  delegateRepresentativeVotingThresholds?: DelegateRepresentativeVotingThresholds;
+  delegateRepresentativeDeposit?: Lovelace;
+  delegateRepresentativeMaxIdleTime?: Epoch;
   version: ProtocolVersion;
 }
 /**
@@ -2388,7 +2500,7 @@ export interface GenesisStakePools {
  */
 export interface GenesisAlonzo {
   era: "alonzo";
-  initialParameters: {
+  updatableParameters: {
     minUtxoDepositCoefficient: UInt64;
     collateralPercentage: UInt64;
     plutusCostModels: CostModels;
@@ -2406,7 +2518,24 @@ export interface GenesisAlonzo {
  */
 export interface GenesisConway {
   era: "conway";
-  initialDelegates: InitialDelegates;
+  constitution: {
+    hash?: DigestBlake2B224;
+    anchor: Anchor;
+  };
+  constitutionalCommittee: {
+    members: ConstitutionalCommitteeMember[];
+    quorum: Ratio;
+  };
+  updatableParameters: {
+    stakePoolVotingThresholds: StakePoolVotingThresholds;
+    constitutionalCommitteeMinSize: UInt64;
+    constitutionalCommitteeMaxTermLength: UInt64;
+    governanceActionLifetime: Epoch;
+    governanceActionDeposit: Lovelace;
+    delegateRepresentativeVotingThresholds: DelegateRepresentativeVotingThresholds;
+    delegateRepresentativeDeposit: Lovelace;
+    delegateRepresentativeMaxIdleTime: Epoch;
+  };
 }
 /**
  * Query the network start time.

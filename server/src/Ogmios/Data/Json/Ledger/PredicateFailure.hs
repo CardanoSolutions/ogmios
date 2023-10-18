@@ -568,7 +568,7 @@ encodePredicateFailure reject = \case
                     encodeMapAsList
                         (\governanceActionId voter -> encodeObject
                             ( "proposal" .=
-                                Conway.encodeGovernanceActionId governanceActionId
+                                Conway.encodeGovActionId governanceActionId
                            <> "voter" .=
                                 Conway.encodeVoter voter
                             )
@@ -577,15 +577,16 @@ encodePredicateFailure reject = \case
                 )
             )
 
-    UnknownGovernanceAction { governanceAction } ->
+    UnknownGovernanceActions { governanceActions } ->
         reject (predicateFailureCode 38)
-            "Unknown proposal found in transaction. This may be because you've indicated a \
-            \wrong identifier or because the proposal hasn't yet been submitted on-chain. \
-            \Note that the order in which transactions are submitted matters. The field \
-            \'data.unknownProposal tells you about the governance proposal's identifier."
+            "Reference(s) to unknown governance proposals found in transaction. This \
+            \may be because you've indicated a wrong identifier or because the \
+            \proposal hasn't yet been submitted on-chain. Note that the order in \
+            \which transactions are submitted matters. The field 'data.unknownProposals' \
+            \tells you about the unknown references."
             (pure $ encodeObject
-                ( "unknownProposal" .=
-                    Conway.encodeGovernanceActionId governanceAction
+                ( "unknownProposals" .=
+                    encodeFoldable Conway.encodeGovActionId governanceActions
                 )
             )
 
@@ -727,12 +728,19 @@ encodePredicateFailure reject = \case
                 )
             )
 
-    StakeCredentialDepositMismatch ->
+    StakeCredentialDepositMismatch { providedDeposit, expectedDeposit } ->
         reject (predicateFailureCode 51)
             "The deposit specified in a stake credential registration (for delegation \
             \or governance) does not match the current value set by protocol \
-            \parameters."
-            Nothing
+            \parameters. The field 'data.expectedDeposit', when present, indicates \
+            \the deposit amount as currently expected by ledger."
+            (pure $ encodeObject
+                ( "providedDeposit" .=
+                    encodeCoin providedDeposit
+               <> "expectedDeposit" .=? OmitWhenNothing
+                    encodeCoin expectedDeposit
+                )
+            )
 
     DRepAlreadyRegistered { knownDelegateRepresentative } ->
         reject (predicateFailureCode 52)
@@ -769,7 +777,61 @@ encodePredicateFailure reject = \case
             \unknown."
             (pure $ encodeObject
                 ( "unknownConstitutionalCommitteeMember" .=
-                    Conway.encodeConstitutionalCommitteeMember unknownConstitutionalCommitteeMember
+                    Conway.encodeConstitutionalCommitteeMember unknownConstitutionalCommitteeMember SNothing
+                )
+            )
+
+    GovernanceProposalDepositMismatch { expectedDeposit, providedDeposit } ->
+        reject (predicateFailureCode 55)
+            "There's a mismatch between the proposal deposit amount declared in \
+            \the transaction and the one expected by the ledger. The deposit \
+            \is actually configured by a protocol parameter. The field \
+            \'data.expectedDeposit' indicates the current configuration and amount \
+            \expected by the ledger. The field 'data.providedDeposit' is a reminder \
+            \of the what was set in the submitted transaction."
+            (pure $ encodeObject
+                ( "expectedDeposit" .=? OmitWhenNothing
+                    encodeCoin expectedDeposit
+               <> "providedDeposit" .=
+                    encodeCoin providedDeposit
+                )
+            )
+
+    ConflictingCommitteeUpdate { conflictingMembers } ->
+        reject (predicateFailureCode 56)
+            "The transaction contains an invalid governance action: it tries to \
+            \both add members to the committee and remove some of those same members. \
+            \The field 'data.conflictingMembers' indicates which members are found \
+            \on both sides."
+            (pure $ encodeObject
+                ( "conflictingMembers" .=
+                    encodeFoldable (`Conway.encodeConstitutionalCommitteeMember` SNothing) conflictingMembers
+                )
+            )
+
+    InvalidCommitteeUpdate { alreadyRetiredMembers } ->
+        reject (predicateFailureCode 57)
+            "The transaction contains an invalid governance action: it tries to \
+            \add new members to the constitutional committee with a retirement epoch \
+            \in the past. The field 'data.alreadyRetiredMembers' indicates the faulty \
+            \members that would otherwise be already retired."
+            (pure $ encodeObject
+                ( "alreadyRetiredMembers" .=
+                    encodeFoldable (`Conway.encodeConstitutionalCommitteeMember` SNothing) alreadyRetiredMembers
+                )
+            )
+
+    TreasuryWithdrawalMismatch { providedWithdrawal, computedWithdrawal } ->
+        reject (predicateFailureCode 58)
+            "The transaction is trying to withdraw more funds than specified in a \
+            \governance action! The field 'data.providedWithdrawal' indicates the \
+            \amount specified in the transaction, whereas 'data.computedWithdrawal' \
+            \is the actual amount as computed by the ledger."
+            (pure $ encodeObject
+                ( "computedWithdrawal" .=
+                    encodeCoin computedWithdrawal
+               <> "providedWithdrawal" .=
+                    encodeCoin providedWithdrawal
                 )
             )
 

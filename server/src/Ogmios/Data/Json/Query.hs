@@ -846,7 +846,7 @@ parseQueryLedgerProtocolParameters genResultInEra =
             SomeShelleyEra ShelleyBasedEraConway ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentConway GetCurrentPParams))
-                    (eraMismatchOrResult Babbage.encodePParams)
+                    (eraMismatchOrResult Conway.encodePParams)
                     (genResultInEra (Proxy @(ConwayEra crypto)))
 
 parseQueryLedgerProposedProtocolParameters
@@ -886,7 +886,7 @@ parseQueryLedgerProposedProtocolParameters genResultInEra =
             SomeShelleyEra ShelleyBasedEraConway ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentConway GetProposedPParamsUpdates))
-                    (eraMismatchOrResult Babbage.encodeProposedPPUpdates)
+                    (eraMismatchOrResult Conway.encodeProposedPPUpdates)
                     (genResultInEra (Proxy @(ConwayEra crypto)))
 
 parseQueryLedgerLiveStakeDistribution
@@ -1488,20 +1488,20 @@ decodeScript v =
                         fail "missing field 'cbor' or 'json' to decode native script"
             Just lang@"plutus:v1" -> do
                 bytes <- o .: "cbor"
-                Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV1
-                    <$> decodePlutusScript Plutus.PlutusV1 lang bytes
+                plutus <- Ledger.Alonzo.Plutus Ledger.Alonzo.PlutusV1 <$> decodePlutusScript Plutus.PlutusV1 lang bytes
+                pure (Ledger.Alonzo.PlutusScript plutus)
             Just lang@"plutus:v2" -> do
                 bytes <- o .: "cbor"
-                Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV2
-                    <$> decodePlutusScript Plutus.PlutusV2 lang bytes
+                plutus <- Ledger.Alonzo.Plutus Ledger.Alonzo.PlutusV2 <$> decodePlutusScript Plutus.PlutusV2 lang bytes
+                pure (Ledger.Alonzo.PlutusScript plutus)
             Just lang@"plutus:v3" -> do
                 bytes <- o .: "cbor"
-                Ledger.Alonzo.PlutusScript Ledger.Alonzo.PlutusV3
-                    <$> decodePlutusScript Plutus.PlutusV3 lang bytes
+                plutus <- Ledger.Alonzo.Plutus Ledger.Alonzo.PlutusV3 <$> decodePlutusScript Plutus.PlutusV3 lang bytes
+                pure (Ledger.Alonzo.PlutusScript plutus)
             _ ->
                 fail "missing or unknown script language."
       where
-        decodePlutusScript :: Plutus.PlutusLedgerLanguage -> Json.Key -> Text -> Json.Parser ShortByteString
+        decodePlutusScript :: Plutus.PlutusLedgerLanguage -> Json.Key -> Text -> Json.Parser Ledger.Alonzo.BinaryPlutus
         decodePlutusScript ledgerLang (Json.toText -> lang) str = do
             bytes <- decodeBase16 (encodeUtf8 str)
             let lbytes = toLazy bytes
@@ -1532,7 +1532,7 @@ decodeScript v =
                                     , "it without '" <> lang <> "' JSON key."
                                     ]
                 fail (toString (err <> hint))
-            pure (toShort bytes)
+            pure (Ledger.Alonzo.BinaryPlutus $ toShort bytes)
 
     decodeRawScript :: forall s. Binary.Decoder s ByteString
     decodeRawScript = do

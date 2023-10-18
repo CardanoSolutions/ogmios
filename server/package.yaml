@@ -104,6 +104,8 @@ library:
     - scientific
     - serialise
     - small-steps
+    - sop-extras
+    - strict-sop-core
     - stm
     - text
     - time
@@ -165,7 +167,7 @@ tests:
     - ogmios
     - ouroboros-consensus
     - ouroboros-consensus-cardano
-    - ouroboros-consensus-cardano:cardano-testlib
+    - ouroboros-consensus-cardano:unstable-cardano-testlib
     - ouroboros-consensus-protocol
     - ouroboros-network-api
     - ouroboros-network-framework
@@ -174,6 +176,7 @@ tests:
     - QuickCheck
     - random
     - relude
+    - strict-sop-core
     - template-haskell
     - text
     - time
