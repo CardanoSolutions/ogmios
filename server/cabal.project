@@ -67,6 +67,7 @@ source-repository-package
     ouroboros-consensus
     ouroboros-consensus-cardano
     ouroboros-consensus-diffusion
+  --sha256: 05114zbhlwswi7r1wvhsajiwn2an4lz7b4659j0yp4lslhd79424
 
 source-repository-package
   type: git
