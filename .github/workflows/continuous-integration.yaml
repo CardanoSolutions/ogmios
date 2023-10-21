@@ -382,7 +382,7 @@ jobs:
       matrix:
         os: [ linux ]
         target: [ ogmios, cardano-node-ogmios ]
-        network: [ mainnet, preprod, preview ]
+        network: [ mainnet, preprod, preview, sanchonet ]
         cardano-node: [ 8.5.0-pre ]
         cardano-node-latest: [ 8.5.0-pre ]
         arch: [ x86_64 ]
