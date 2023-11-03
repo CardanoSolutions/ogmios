@@ -87,7 +87,7 @@ JSON-WSP has been ditched and replaced by [JSON-RPC 2.0](https://www.jsonrpc.org
 ```json
 {
   "jsonrpc": "2.0",
-  "method": "queryNetwork/config",
+  "method": "queryNetwork/genesisConfiguration",
   "params": { "era": "shelley" },
   "id": "foo"
 }
