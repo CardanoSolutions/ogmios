@@ -11,12 +11,12 @@ repository cardano-haskell-packages
 
 index-state:
   , hackage.haskell.org 2023-09-01T22:19:16Z
-  , cardano-haskell-packages 2023-10-05T21:00:00Z
+  , cardano-haskell-packages 2023-10-31T17:10:09Z
 
 constraints:
   , any.base == 4.14.3.0
-  , any.cardano-node == 8.5.0
-  , any.cardano-ledger-conway == 1.9.0.0
+  , any.cardano-node == 8.6.0
+  , any.cardano-ledger-conway == 1.10.1.0
   , any.text == 1.2.4.1
 
 packages:
@@ -62,7 +62,7 @@ package bitvec
 source-repository-package
   type: git
   location: https://github.com/CardanoSolutions/ouroboros-consensus
-  tag: f5f3094ff338f042800e7f4d90e63dc3bbd3e9e8
+  tag: bf5308b406de74c056cf72c9a78e20b26f96cf88
   subdir:
     ouroboros-consensus
     ouroboros-consensus-cardano

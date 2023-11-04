@@ -66,10 +66,10 @@ jobs:
         restore-keys: |
           cabal-cache-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.compiler }}
 
-    - name: 🔨 Build
+    - name: 🔨  Dependencies
       working-directory: server
       run: |
-        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static ogmios:exe:ogmios"
+        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static --only-dependencies ogmios:lib:ogmios"
       env:
         GIT_SHA: ${{ github.sha }}
 
@@ -81,6 +81,13 @@ jobs:
           ~/.cabal-static/store
           server/dist-newstyle
         key: cabal-cache-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.compiler }}-${{ hashFiles('server/cabal.project.freeze') }}
+
+    - name: 🔨 Build
+      working-directory: server
+      run: |
+        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static ogmios:exe:ogmios"
+      env:
+        GIT_SHA: ${{ github.sha }}
 
     - name: 📦 Package
       run: |
@@ -206,7 +213,7 @@ jobs:
         os: [ linux ]
         arch: [ x86_64 ]
         network: [ preview ]
-        cardano-node: [ 8.5.0-pre ]
+        cardano-node: [ 8.6.0-pre ]
 
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-latest' }}
     steps:
@@ -383,8 +390,8 @@ jobs:
         os: [ linux ]
         target: [ ogmios, cardano-node-ogmios ]
         network: [ mainnet, preprod, preview ]
-        cardano-node: [ 8.5.0-pre ]
-        cardano-node-latest: [ 8.5.0-pre ]
+        cardano-node: [ 8.6.0-pre ]
+        cardano-node-latest: [ 8.6.0-pre ]
         arch: [ x86_64 ]
 
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-latest' }}
