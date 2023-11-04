@@ -6,6 +6,23 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
+### [6.0.0-rc5] - 2023-11-04
+
+#### Added
+
+- Integration with `cardano-ledger-conway==1.10.1.0`. It adds new elements to the Conway era:
+  - A new transaction submission error:
+    - `InvalidOrMissingPreviousProposal`
+  - A new (optional) field `anchor` to `ConstitutionalCommitteeRetirement` certificates.
+
+#### Changed
+
+- N/A
+
+#### Removed
+
+- N/A
+
 ### [6.0.0-rc4] - 2023-10-19
 
 #### Added

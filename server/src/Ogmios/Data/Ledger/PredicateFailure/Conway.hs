@@ -20,6 +20,7 @@ import Ogmios.Data.Ledger.PredicateFailure.Shelley
     ( encodePoolFailure
     )
 
+import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Conway.Rules as Cn
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -75,6 +76,40 @@ encodeGovFailure = \case
         InvalidCommitteeUpdate
             { alreadyRetiredMembers = Map.keysSet members
             }
+    Cn.InvalidPrevGovActionIdsInProposals proposals ->
+        InvalidPreviousGovernanceAction $
+            foldr
+                (\proposal xs -> case Ledger.pProcGovAction proposal of
+                    Ledger.ParameterChange actionId _ ->
+                        ( Ledger.pProcAnchor proposal
+                        , Ledger.PParamUpdatePurpose
+                        , Ledger.unPrevGovActionId <$> actionId
+                        ) : xs
+                    Ledger.HardForkInitiation actionId _ ->
+                        ( Ledger.pProcAnchor proposal
+                        , Ledger.HardForkPurpose
+                        , Ledger.unPrevGovActionId <$> actionId
+                        ) : xs
+                    Ledger.UpdateCommittee actionId _ _ _ ->
+                        ( Ledger.pProcAnchor proposal
+                        , Ledger.CommitteePurpose
+                        , Ledger.unPrevGovActionId <$> actionId
+                        ) : xs
+                    Ledger.NoConfidence actionId ->
+                        ( Ledger.pProcAnchor proposal
+                        , Ledger.CommitteePurpose
+                        , Ledger.unPrevGovActionId <$> actionId
+                        ) : xs
+                    Ledger.NewConstitution actionId _ ->
+                        ( Ledger.pProcAnchor proposal
+                        , Ledger.ConstitutionPurpose
+                        , Ledger.unPrevGovActionId <$> actionId
+                        ) : xs
+                    _ ->
+                        xs
+                )
+                []
+                proposals
 
 encodeCertsFailure
     :: Cn.ConwayCertsPredFailure (ConwayEra crypto)
@@ -115,8 +150,6 @@ encodeDelegFailure = \case
         RewardAccountNotEmpty { rewardAccountBalance }
     Cn.DRepAlreadyRegisteredForStakeKeyDELEG knownCredential ->
         StakeCredentialAlreadyRegistered { knownCredential }
-    Cn.WrongCertificateTypeDELEG ->
-        UnrecognizedCertificateType
 
 encodeGovCertFailure
     :: Cn.ConwayGovCertPredFailure (ConwayEra crypto)

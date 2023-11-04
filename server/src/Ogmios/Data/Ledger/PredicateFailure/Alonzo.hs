@@ -63,7 +63,7 @@ encodeUtxowFailure era encodeUtxoFailureInEra = \case
          in MissingRedeemers { missingRedeemers }
     Al.MissingRequiredDatums missingDatums _providedDatums ->
         MissingDatums { missingDatums }
-    Al.NonOutputSupplimentaryDatums extraneousDatums _acceptableDatums ->
+    Al.NotAllowedSupplementalDatums extraneousDatums _acceptableDatums ->
         ExtraneousDatums { extraneousDatums }
     Al.ExtraRedeemers extraneousRedeemers ->
         ExtraneousRedeemers { extraneousRedeemers }

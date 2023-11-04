@@ -188,6 +188,7 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureConflictingCommitteeUpdate
   | SubmitTransactionFailureInvalidCommitteeUpdate
   | SubmitTransactionFailureTreasuryWithdrawalMismatch
+  | SubmitTransactionFailureInvalidOrMissingPreviousProposals
   | SubmitTransactionFailureUnrecognizedCertificateType
   | SubmitTransactionFailureInternalLedgerTypeConversionError;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
@@ -695,6 +696,7 @@ export interface ConstitutionalCommitteeRetirement {
   member: {
     id: DigestBlake2B224;
   };
+  anchor?: Anchor;
 }
 /**
  * A delegate representative registration. Note that this is only possible for 'registered' representatives and not for well-known ones (abstain & noConfidence)
@@ -1748,6 +1750,20 @@ export interface SubmitTransactionFailureTreasuryWithdrawalMismatch {
   data: {
     providedWithdrawal: Lovelace;
     expectedWithdrawal?: Lovelace;
+  };
+}
+/**
+ * The transaction contains invalid or missing reference to previous (ratified) governance proposals. Indeed, some governance proposals such as protocol parameters update or consitutional committee change must point to last action of the same purpose that was ratified. The field 'data.invalidOrMissingPreviousProposals' contains a list of submitted actions that are missing details. For each item, we provide the anchor of the corresponding proposal, the type of previous proposal that is expected and the invalid proposal reference if relevant.
+ */
+export interface SubmitTransactionFailureInvalidOrMissingPreviousProposals {
+  code: 3159;
+  message: string;
+  data: {
+    invalidOrMissingPreviousProposals: {
+      anchor: Anchor;
+      type: "hardForkInitiation" | "protocolParametersUpdate" | "constitutionalCommittee" | "constitution";
+      invalidPreviousProposal?: GovernanceProposalReference;
+    }[];
   };
 }
 /**

@@ -20,7 +20,7 @@ import Ogmios.Data.Ledger.PredicateFailure
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Encoding as Json
 
-import qualified Cardano.Ledger.Conway.Core as Ledger
+import qualified Cardano.Ledger.DRep as Ledger
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -832,6 +832,32 @@ encodePredicateFailure reject = \case
                     encodeCoin computedWithdrawal
                <> "providedWithdrawal" .=
                     encodeCoin providedWithdrawal
+                )
+            )
+
+    InvalidPreviousGovernanceAction { invalidPreviousActions } ->
+        reject (predicateFailureCode 59)
+            "The transaction contains invalid or missing reference to previous \
+            \(ratified) governance proposals. Indeed, some governance proposals such as \
+            \protocol parameters update or consitutional committee change \
+            \must point to last action of the same purpose that was ratified. \
+            \The field 'data.invalidOrMissingPreviousProposals' contains a list \
+            \of submitted actions that are missing details. For each item, \
+            \we provide the anchor of the corresponding proposal, the type of \
+            \previous proposal that is expected and the invalid proposal reference \
+            \if relevant."
+            (pure $ encodeObject
+                ( "invalidOrMissingPreviousProposals" .=
+                    encodeFoldable (\(anchor, purpose, actionId) ->
+                        encodeObject
+                            ( "anchor" .=
+                                Conway.encodeAnchor anchor
+                           <> "type" .=
+                                Conway.encodeGovActionPurpose purpose
+                           <> "invalidPreviousProposal" .=? OmitWhenNothing
+                                Conway.encodeGovActionId actionId
+                            )
+                    ) invalidPreviousActions
                 )
             )
 

@@ -1506,7 +1506,7 @@ decodeScript v =
             bytes <- decodeBase16 (encodeUtf8 str)
             let lbytes = toLazy bytes
             let protocolVersion = Plutus.ledgerLanguageIntroducedIn ledgerLang
-            when (isLeft (Plutus.assertScriptWellFormed ledgerLang protocolVersion (toShort bytes))) $ do
+            when (isLeft (Plutus.deserialiseScript ledgerLang protocolVersion (toShort bytes))) $ do
                 let err = "couldn't decode plutus script"
                 let hint =
                         case decodeCbor @era "Script<Plutus>" decodeRawScript lbytes of
