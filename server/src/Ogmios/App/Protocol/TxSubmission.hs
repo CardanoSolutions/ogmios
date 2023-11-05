@@ -54,6 +54,12 @@ import Data.Type.Equality
     ( testEquality
     , (:~:) (..)
     )
+import Ogmios.App.Protocol
+    ( defaultWithInternalError
+    )
+import Ogmios.Control.Exception
+    ( MonadCatch
+    )
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..)
     , TQueue
@@ -145,6 +151,7 @@ import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 mkTxSubmissionClient
     :: forall m block.
         ( MonadSTM m
+        , MonadCatch m
         , HasTxId (SerializedTransaction block)
         )
     => TxSubmissionCodecs block
@@ -166,8 +173,8 @@ mkTxSubmissionClient TxSubmissionCodecs{..} ExecutionUnitsEvaluator{..} queue yi
         :: m (LocalTxClientStIdle (SerializedTransaction block) (SubmitTransactionError block) m ())
     clientStIdle = await >>= \case
         MsgSubmitTransaction SubmitTransaction{transaction = request} toResponse -> do
-            case request of
-                MultiEraDecoderSuccess transaction ->
+            defaultWithInternalError clientStIdle yield toResponse $ case request of
+                MultiEraDecoderSuccess transaction -> do
                     pure $ SendMsgSubmitTx transaction $ \result -> do
                         mkSubmitTransactionResponse transaction result
                             & toResponse
@@ -182,7 +189,7 @@ mkTxSubmissionClient TxSubmissionCodecs{..} ExecutionUnitsEvaluator{..} queue yi
                     clientStIdle
 
         MsgEvaluateTransaction EvaluateTransaction{additionalUtxo, transaction = request} toResponse -> do
-            case request of
+            defaultWithInternalError clientStIdle yield toResponse $ case request of
                 MultiEraDecoderSuccess transaction -> do
                     result <- evaluateExecutionUnitsM (additionalUtxo, transaction)
                     result

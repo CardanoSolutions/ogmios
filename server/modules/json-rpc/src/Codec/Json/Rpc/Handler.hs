@@ -109,7 +109,7 @@ instance ToJSON FaultCode where
 --
 -- @since 1.0.0
 data Fault = Fault
-    { faultMirror :: Mirror
+    { faultId :: Mirror
     , faultCode :: FaultCode
     , faultMessage :: String
     } deriving (Generic, Show)

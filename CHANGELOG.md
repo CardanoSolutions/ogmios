@@ -17,7 +17,7 @@ pre: "<b>5. </b>"
 
 #### Changed
 
-- N/A
+- The server now return an `internalError` when an unexpected error occurs in the communication between Ogmios and the node. Before, Ogmios would simply log an exception and no response would be sent back to client applications. Now, clients correctly receive an unsuccessful response with the same `id` as present in the request. See [#346](https://github.com/CardanoSolutions/ogmios/issues/346).
 
 #### Removed
 

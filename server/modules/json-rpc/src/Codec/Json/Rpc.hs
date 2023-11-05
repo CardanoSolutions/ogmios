@@ -218,10 +218,10 @@ ok toResult =
 --
 -- since @1.0.0
 ko :: Fault -> Json.Encoding
-ko Fault{faultCode,faultMessage,faultMirror} =
+ko Fault{faultCode,faultMessage,faultId} =
     mkResponse
         (\_resolve reject () -> reject faultCode faultMessage Nothing)
-        (Response Nothing faultMirror ())
+        (Response Nothing faultId ())
 {-# INLINEABLE ko #-}
 
 -- | Serialize a given request to JSON
