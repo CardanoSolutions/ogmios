@@ -390,7 +390,7 @@ jobs:
         os: [ linux ]
         target: [ ogmios, cardano-node-ogmios ]
         network: [ mainnet, preprod, preview ]
-        cardano-node: [ 8.6.0-pre ]
+        cardano-node: [ 8.1.2, 8.6.0-pre ]
         cardano-node-latest: [ 8.6.0-pre ]
         arch: [ x86_64 ]
 
