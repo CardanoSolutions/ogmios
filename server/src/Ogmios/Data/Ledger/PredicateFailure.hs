@@ -69,7 +69,8 @@ import Cardano.Ledger.AuxiliaryData
     ( AuxiliaryDataHash (..)
     )
 import Cardano.Ledger.BaseTypes
-    ( EpochNo (..)
+    ( Anchor
+    , EpochNo (..)
     , Network (..)
     , ProtVer (..)
     , SlotNo (..)
@@ -79,6 +80,7 @@ import Cardano.Ledger.Coin
     )
 import Cardano.Ledger.Conway.Governance
     ( GovActionId (..)
+    , GovActionPurpose
     , Voter (..)
     )
 import Cardano.Ledger.Credential
@@ -350,6 +352,12 @@ data MultiEraPredicateFailure crypto
         { alreadyRetiredMembers :: Set (Credential 'ColdCommitteeRole crypto)
         }
 
+    -- A governance action (except the first) must reference the immediately
+    -- previous governance action of the same type.
+    | InvalidPreviousGovernanceAction
+        { invalidPreviousActions :: [(Anchor crypto, GovActionPurpose, StrictMaybe (GovActionId crypto))]
+        }
+
     ---------------------------------------------------------------------------
     -- Rule → PPUP
     ---------------------------------------------------------------------------
@@ -539,6 +547,7 @@ predicateFailurePriority = \case
     MissingMetadataHash{} -> 6
 
     MetadataHashMismatch{} -> 7
+    InvalidPreviousGovernanceAction{} -> 7
 
     MalformedScripts{} -> 8
 

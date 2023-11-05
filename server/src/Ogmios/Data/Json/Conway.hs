@@ -9,9 +9,13 @@ import Ogmios.Data.Json.Prelude
 
 import Cardano.Ledger.BaseTypes
     ( EpochNo
+    , ProtVer
     )
 import Cardano.Ledger.Binary
     ( sizedValue
+    )
+import Cardano.Ledger.HKD
+    ( HKDFunctor (..)
     )
 import Cardano.Ledger.Keys
     ( KeyRole (..)
@@ -38,6 +42,7 @@ import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Credential as Ledger
+import qualified Cardano.Ledger.DRep as Ledger
 import qualified Cardano.Ledger.HKD as Ledger
 
 import qualified Cardano.Ledger.Shelley.PParams as Sh
@@ -168,12 +173,15 @@ encodeConwayGovCert = \case
        <>
         "hotKey" .=
             Shelley.encodeCredential hot
-    Cn.ConwayResignCommitteeColdKey cold ->
+    Cn.ConwayResignCommitteeColdKey cold anchor ->
         "type" .=
             encodeText "constitutionalCommitteeRetirement"
        <>
         "member" .=
             encodeConstitutionalCommitteeMember cold SNothing
+       <>
+        "anchor" .=
+            encodeStrictMaybe encodeAnchor anchor
 
 encodeDelegCert
     :: Crypto crypto
@@ -347,6 +355,19 @@ encodeGovActionIx
 encodeGovActionIx (Cn.GovActionIx ix) =
     encodeWord32 ix
 
+encodeGovActionPurpose
+    :: Cn.GovActionPurpose
+    -> Json
+encodeGovActionPurpose = \case
+  Cn.PParamUpdatePurpose ->
+      encodeText "protocolParametersUpdate"
+  Cn.HardForkPurpose ->
+      encodeText "hardForkInitiation"
+  Cn.CommitteePurpose ->
+      encodeText "constitutionalCommittee"
+  Cn.ConstitutionPurpose ->
+      encodeText "constitution"
+
 encodePParams
     :: (Ledger.PParamsHKD Identity era ~ Cn.ConwayPParams Identity era)
     => Ledger.PParams era
@@ -377,8 +398,9 @@ encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
         )
         m
 encodePParamsHKD
-    :: (forall a. Text -> (a -> Json) -> Ledger.HKD f a -> Series)
-    -> (Integer -> Ledger.HKD f Integer)
+    :: forall f era. (HKDFunctor f)
+    => (forall a. Text -> (a -> Json) -> Ledger.HKD f a -> Series)
+    -> (forall a. a -> Ledger.HKD f a)
     -> Cn.ConwayPParams f era
     -> Json
 encodePParamsHKD encode pure_ x =
@@ -409,7 +431,7 @@ encodePParamsHKD encode pure_ x =
     encode "minStakePoolCost"
         encodeCoin (Cn.cppMinPoolCost x) <>
     encode "minUtxoDepositConstant"
-        encodeInteger (pure_ 0) <>
+        encodeInteger (pure_ @Integer 0) <>
     encode "minUtxoDepositCoefficient"
         (encodeInteger . unCoin . Ba.unCoinPerByte) (Cn.cppCoinsPerUTxOByte x) <>
     encode "plutusCostModels"
@@ -427,7 +449,7 @@ encodePParamsHKD encode pure_ x =
     encode "maxCollateralInputs"
         encodeNatural (Cn.cppMaxCollateralInputs x) <>
     encode "version"
-        Shelley.encodeProtVer (Cn.cppProtocolVersion x) <>
+        Shelley.encodeProtVer (fromNoUpdate @f @ProtVer (Cn.cppProtocolVersion x)) <>
     encode "stakePoolVotingThresholds"
         encodePoolVotingThresholds (Cn.cppPoolVotingThresholds x) <>
     encode "delegateRepresentativeVotingThresholds"

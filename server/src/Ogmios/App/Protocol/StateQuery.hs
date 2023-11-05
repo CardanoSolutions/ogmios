@@ -55,8 +55,12 @@ import Data.Aeson
     ( ToJSON (..)
     , genericToEncoding
     )
+import Ogmios.App.Protocol
+    ( defaultWithInternalError
+    )
 import Ogmios.Control.Exception
-    ( MonadThrow
+    ( MonadCatch
+    , MonadThrow
     )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
@@ -114,6 +118,7 @@ import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 mkStateQueryClient
     :: forall m crypto block point query.
         ( MonadThrow m
+        , MonadCatch m
         , MonadSTM m
         , MonadLog m
         , block ~ HardForkBlock (CardanoEras crypto)
@@ -141,12 +146,14 @@ mkStateQueryClient tr StateQueryCodecs{..} GetGenesisConfig{..} queue yield =
         :: m (LSQ.ClientStIdle block point query m ())
     clientStIdle = await >>= \case
         MsgAcquireLedgerState (AcquireLedgerState pt) toResponse ->
-            pure $ LSQ.SendMsgAcquire (Just pt) (clientStAcquiring pt toResponse)
+            defaultWithInternalError clientStIdle yield toResponse $ do
+                pure $ LSQ.SendMsgAcquire (Just pt) (clientStAcquiring pt toResponse)
         MsgReleaseLedgerState ReleaseLedgerState toResponse -> do
             yield $ encodeReleaseLedgerStateResponse (toResponse ReleaseLedgerStateResponse)
             clientStIdle
         MsgQueryLedgerState query toResponse -> do
-            pure $ LSQ.SendMsgAcquire Nothing (clientStAcquiringTip query toResponse)
+            defaultWithInternalError clientStIdle yield toResponse $ do
+                pure $ LSQ.SendMsgAcquire Nothing (clientStAcquiringTip query toResponse)
 
     clientStAcquiring
         :: Point block
@@ -237,12 +244,13 @@ mkStateQueryClient tr StateQueryCodecs{..} GetGenesisConfig{..} queue yield =
         -> m (LSQ.ClientStAcquired block point query m ())
     clientStAcquired pt = await >>= \case
         MsgAcquireLedgerState (AcquireLedgerState pt') toResponse ->
-            pure $ LSQ.SendMsgReAcquire (Just pt') (clientStAcquiring pt' toResponse)
+            defaultWithInternalError (clientStAcquired pt) yield toResponse $ do
+                pure $ LSQ.SendMsgReAcquire (Just pt') (clientStAcquiring pt' toResponse)
         MsgReleaseLedgerState ReleaseLedgerState toResponse -> do
             yield $ encodeReleaseLedgerStateResponse (toResponse ReleaseLedgerStateResponse)
             pure $ LSQ.SendMsgRelease clientStIdle
         MsgQueryLedgerState Query{rawQuery = query,queryInEra} toResponse ->
-            withCurrentEra queryInEra $ \case
+            defaultWithInternalError (clientStAcquired pt) yield toResponse $ withCurrentEra queryInEra $ \case
                 Nothing -> do
                     let response = QueryUnavailableInCurrentEra
                     yield $ encodeQueryLedgerStateResponse $ toResponse response

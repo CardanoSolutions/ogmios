@@ -45,6 +45,12 @@ import Ogmios.Prelude hiding
     ( id
     )
 
+import Ogmios.App.Protocol
+    ( defaultWithInternalError
+    )
+import Ogmios.Control.Exception
+    ( MonadCatch
+    )
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..)
     )
@@ -81,6 +87,7 @@ import Ouroboros.Network.Protocol.LocalTxMonitor.Client
 mkTxMonitorClient
     :: forall m block.
         ( MonadSTM m
+        , MonadCatch m
         , HasTxId (GenTx block)
         )
     => TxMonitorCodecs block
@@ -100,9 +107,10 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
         :: m (ClientStIdle (GenTxId block) (GenTx block) SlotNo m ())
     clientStIdle = await >>= \case
         MsgAcquireMempool AcquireMempool toResponse ->
-            pure $ SendMsgAcquire $ \slot -> do
-                yield $ encodeAcquireMempoolResponse $ toResponse $ AcquireMempoolResponse slot
-                clientStAcquired
+            defaultWithInternalError clientStIdle yield toResponse $ do
+                pure $ SendMsgAcquire $ \slot -> do
+                    yield $ encodeAcquireMempoolResponse $ toResponse $ AcquireMempoolResponse slot
+                    clientStAcquired
         MsgNextTransaction NextTransaction{} toResponse -> do
             yield $ encodeNextTransactionResponse $ toResponse NextTransactionMustAcquireFirst
             clientStIdle
@@ -118,29 +126,34 @@ mkTxMonitorClient TxMonitorCodecs{..} queue yield =
 
     clientStAcquired
         :: m (ClientStAcquired (GenTxId block) (GenTx block) SlotNo m ())
-    clientStAcquired = await <&> \case
+    clientStAcquired = await >>= \case
         MsgAcquireMempool AcquireMempool toResponse ->
-            SendMsgAwaitAcquire $ \slot -> do
-                yield $ encodeAcquireMempoolResponse $ toResponse $ AcquireMempoolResponse slot
-                clientStAcquired
+            defaultWithInternalError clientStAcquired yield toResponse $ do
+                pure $ SendMsgAwaitAcquire $ \slot -> do
+                    yield $ encodeAcquireMempoolResponse $ toResponse $ AcquireMempoolResponse slot
+                    clientStAcquired
         MsgNextTransaction NextTransaction{fields} toResponse ->
-            SendMsgNextTx $ \mTx -> do
-                let response = case fields of
-                        Nothing ->
-                            NextTransactionResponseId (txId <$> mTx)
-                        Just NextTransactionAllFields ->
-                            NextTransactionResponseTx mTx
-                yield $ encodeNextTransactionResponse $ toResponse response
-                clientStAcquired
+            defaultWithInternalError clientStAcquired yield toResponse $ do
+                pure $ SendMsgNextTx $ \mTx -> do
+                    let response = case fields of
+                            Nothing ->
+                                NextTransactionResponseId (txId <$> mTx)
+                            Just NextTransactionAllFields ->
+                                NextTransactionResponseTx mTx
+                    yield $ encodeNextTransactionResponse $ toResponse response
+                    clientStAcquired
         MsgHasTransaction HasTransaction{id} toResponse ->
-            SendMsgHasTx id $ \has -> do
-                yield $ encodeHasTransactionResponse $ toResponse $ HasTransactionResponse{has}
-                clientStAcquired
+            defaultWithInternalError clientStAcquired yield toResponse $ do
+                pure $ SendMsgHasTx id $ \has -> do
+                    yield $ encodeHasTransactionResponse $ toResponse $ HasTransactionResponse{has}
+                    clientStAcquired
         MsgSizeOfMempool SizeOfMempool toResponse ->
-            SendMsgGetSizes $ \mempool -> do
-                yield $ encodeSizeOfMempoolResponse $ toResponse $ SizeOfMempoolResponse{mempool}
-                clientStAcquired
+            defaultWithInternalError clientStAcquired yield toResponse $ do
+                pure $ SendMsgGetSizes $ \mempool -> do
+                    yield $ encodeSizeOfMempoolResponse $ toResponse $ SizeOfMempoolResponse{mempool}
+                    clientStAcquired
         MsgReleaseMempool ReleaseMempool toResponse ->
-            SendMsgRelease $ do
-                yield $ encodeReleaseMempoolResponse $ toResponse Released
-                clientStIdle
+            defaultWithInternalError clientStAcquired yield toResponse $ do
+                pure $ SendMsgRelease $ do
+                    yield $ encodeReleaseMempoolResponse $ toResponse Released
+                    clientStIdle

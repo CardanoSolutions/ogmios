@@ -6,6 +6,7 @@
 
 module Ogmios.App.Protocol
     ( onUnmatchedMessage
+    , defaultWithInternalError
     ) where
 
 import Ogmios.Prelude
@@ -18,6 +19,9 @@ import Data.List
     )
 import GHC.Generics
     ( Rep
+    )
+import Ogmios.Control.Exception
+    ( MonadCatch (..)
     )
 import Ogmios.Data.EraTranslation
     ( MultiEraUTxO
@@ -177,3 +181,10 @@ onUnmatchedMessage blob = do
         fail "unknown method in 'method' (beware names are case-sensitive)."
       where
         opts = Rpc.defaultOptions
+
+-- | 'catch-all' handler which turns unexpected exception as internal errors.
+defaultWithInternalError :: MonadCatch m => m a -> (Json -> m ()) -> Rpc.ToResponse r -> m a -> m a
+defaultWithInternalError continue yield toResponse = handle $ \(e :: SomeException) -> do
+    let (Rpc.Response _ mirror _) = toResponse (error "unused and unevaluated")
+    yield $ Rpc.ko $ Rpc.internalError mirror (displayException e)
+    continue

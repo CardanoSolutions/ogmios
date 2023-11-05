@@ -6,6 +6,23 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
+### [6.0.0-rc5] - 2023-11-04
+
+#### Added
+
+- Integration with `cardano-ledger-conway==1.10.1.0`. It adds new elements to the Conway era:
+  - A new transaction submission error:
+    - `InvalidOrMissingPreviousProposal`
+  - A new (optional) field `anchor` to `ConstitutionalCommitteeRetirement` certificates.
+
+#### Changed
+
+- The server now return an `internalError` when an unexpected error occurs in the communication between Ogmios and the node. Before, Ogmios would simply log an exception and no response would be sent back to client applications. Now, clients correctly receive an unsuccessful response with the same `id` as present in the request. See [#346](https://github.com/CardanoSolutions/ogmios/issues/346).
+
+#### Removed
+
+- N/A
+
 ### [6.0.0-rc4] - 2023-10-19
 
 #### Added
