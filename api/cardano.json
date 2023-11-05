@@ -517,6 +517,9 @@
               { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
               }
             }
+          , "anchor":
+            { "$ref": "cardano.json#/definitions/Anchor"
+            }
           }
         }
       , { "type": "object"

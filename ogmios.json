@@ -3645,6 +3645,48 @@
             }
           }
         }
+      , { "title": "SubmitTransactionFailure<InvalidOrMissingPreviousProposals>"
+        , "description": "The transaction contains invalid or missing reference to previous (ratified) governance proposals. Indeed, some governance proposals such as protocol parameters update or consitutional committee change must point to last action of the same purpose that was ratified. The field 'data.invalidOrMissingPreviousProposals' contains a list of submitted actions that are missing details. For each item, we provide the anchor of the corresponding proposal, the type of previous proposal that is expected and the invalid proposal reference if relevant."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3159 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "required": [ "invalidOrMissingPreviousProposals" ]
+            , "additionalProperties": false
+            , "properties":
+              { "invalidOrMissingPreviousProposals":
+                { "type": "array"
+                , "items":
+                  { "type": "object"
+                  , "required": [ "anchor", "type" ]
+                  , "additionalProperties": false
+                  , "properties":
+                    { "anchor":
+                      { "$ref": "cardano.json#/definitions/Anchor"
+                      }
+                    , "type":
+                      { "type": "string"
+                      , "enum":
+                        [ "hardForkInitiation"
+                        , "protocolParametersUpdate"
+                        , "constitutionalCommittee"
+                        , "constitution"
+                        ]
+                      }
+                    , "invalidPreviousProposal":
+                      { "$ref": "cardano.json#/definitions/GovernanceProposalReference"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       , { "title": "SubmitTransactionFailure<UnrecognizedCertificateType>"
         , "description": "Unrecognized certificate type. This error is a placeholder due to how internal data-types are modeled. If you ever run into this, please report the issue as you've likely discoverd a critical bug..."
         , "type": "object"

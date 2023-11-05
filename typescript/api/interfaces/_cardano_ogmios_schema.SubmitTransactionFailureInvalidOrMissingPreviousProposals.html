@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>SubmitTransactionFailureNonAdaCollateral | cardano-ogmios</title>
+	<title>SubmitTransactionFailureInvalidOrMissingPreviousProposals | cardano-ogmios</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -48,16 +48,16 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-module">
-						<a href="_cardano_ogmios_schema.SubmitTransactionFailureNonAdaCollateral.html" class="tsd-kind-icon">Submit<wbr>Transaction<wbr>Failure<wbr>Non<wbr>Ada<wbr>Collateral</a>
+						<a href="_cardano_ogmios_schema.SubmitTransactionFailureInvalidOrMissingPreviousProposals.html" class="tsd-kind-icon">Submit<wbr>Transaction<wbr>Failure<wbr>Invalid<wbr>OrMissing<wbr>Previous<wbr>Proposals</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.SubmitTransactionFailureNonAdaCollateral.html#code" class="tsd-kind-icon">code</a>
+								<a href="_cardano_ogmios_schema.SubmitTransactionFailureInvalidOrMissingPreviousProposals.html#code" class="tsd-kind-icon">code</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.SubmitTransactionFailureNonAdaCollateral.html#data" class="tsd-kind-icon">data</a>
+								<a href="_cardano_ogmios_schema.SubmitTransactionFailureInvalidOrMissingPreviousProposals.html#data" class="tsd-kind-icon">data</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.SubmitTransactionFailureNonAdaCollateral.html#message" class="tsd-kind-icon">message</a>
+								<a href="_cardano_ogmios_schema.SubmitTransactionFailureInvalidOrMissingPreviousProposals.html#message" class="tsd-kind-icon">message</a>
 							</li>
 						</ul>
 					</li>
@@ -77,7 +77,7 @@
 							<a href="../modules/_cardano_ogmios_schema.html">@cardano-ogmios/schema</a>
 						</li>
 						<li>
-							<a href="_cardano_ogmios_schema.SubmitTransactionFailureNonAdaCollateral.html">SubmitTransactionFailureNonAdaCollateral</a>
+							<a href="_cardano_ogmios_schema.SubmitTransactionFailureInvalidOrMissingPreviousProposals.html">SubmitTransactionFailureInvalidOrMissingPreviousProposals</a>
 						</li>
 					</ul>
 				</div>
@@ -85,7 +85,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>One of the input provided as collateral carries something else than Ada tokens. Only Ada can be used as collateral. Since the Babbage era, you also have the option to set a &#39;collateral return&#39; or &#39;collateral change&#39; output in order to send the surplus non-Ada tokens to it. Regardless, the field &#39;data.unsuitableCollateralValue&#39; indicates the actual collateral value found by the ledger</p>
+						<p>The transaction contains invalid or missing reference to previous (ratified) governance proposals. Indeed, some governance proposals such as protocol parameters update or consitutional committee change must point to last action of the same purpose that was ratified. The field &#39;data.invalidOrMissingPreviousProposals&#39; contains a list of submitted actions that are missing details. For each item, we provide the anchor of the corresponding proposal, the type of previous proposal that is expected and the invalid proposal reference if relevant.</p>
 					</div>
 				</div>
 			</section>
@@ -93,7 +93,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">SubmitTransactionFailureNonAdaCollateral</span>
+						<span class="target">SubmitTransactionFailureInvalidOrMissingPreviousProposals</span>
 					</li>
 				</ul>
 			</section>
@@ -104,9 +104,9 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SubmitTransactionFailureNonAdaCollateral.html#code" class="tsd-kind-icon">code</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SubmitTransactionFailureNonAdaCollateral.html#data" class="tsd-kind-icon">data</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SubmitTransactionFailureNonAdaCollateral.html#message" class="tsd-kind-icon">message</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SubmitTransactionFailureInvalidOrMissingPreviousProposals.html#code" class="tsd-kind-icon">code</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SubmitTransactionFailureInvalidOrMissingPreviousProposals.html#data" class="tsd-kind-icon">data</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SubmitTransactionFailureInvalidOrMissingPreviousProposals.html#message" class="tsd-kind-icon">message</a></li>
 							</ul>
 						</section>
 					</div>
@@ -117,10 +117,10 @@
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="code" class="tsd-anchor"></a>
 					<h3>code</h3>
-					<div class="tsd-signature tsd-kind-icon">code<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"3133"</span></div>
+					<div class="tsd-signature tsd-kind-icon">code<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"3159"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/43ab29a/clients/TypeScript/packages/schema/src/index.ts#L1485">packages/schema/src/index.ts:1485</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/43ab29a/clients/TypeScript/packages/schema/src/index.ts#L1759">packages/schema/src/index.ts:1759</a>
 							</li>
 						</ul>
 					</aside>
@@ -131,7 +131,7 @@
 					<div class="tsd-signature tsd-kind-icon">data<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/43ab29a/clients/TypeScript/packages/schema/src/index.ts#L1487">packages/schema/src/index.ts:1487</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/43ab29a/clients/TypeScript/packages/schema/src/index.ts#L1761">packages/schema/src/index.ts:1761</a>
 							</li>
 						</ul>
 					</aside>
@@ -139,7 +139,7 @@
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
 							<li class="tsd-parameter">
-								<h5>unsuitable<wbr>Collateral<wbr>Value<span class="tsd-signature-symbol">: </span><a href="_cardano_ogmios_schema.Value.html" class="tsd-signature-type">Value</a></h5>
+								<h5>invalid<wbr>OrMissing<wbr>Previous<wbr>Proposals<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">[]</span></h5>
 							</li>
 						</ul>
 					</div>
@@ -150,7 +150,7 @@
 					<div class="tsd-signature tsd-kind-icon">message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/43ab29a/clients/TypeScript/packages/schema/src/index.ts#L1486">packages/schema/src/index.ts:1486</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/43ab29a/clients/TypeScript/packages/schema/src/index.ts#L1760">packages/schema/src/index.ts:1760</a>
 							</li>
 						</ul>
 					</aside>
