@@ -2,7 +2,7 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-ARG CARDANO_NODE_VERSION=8.6.0-pre
+ARG CARDANO_NODE_IMAGE=ghcr.io/input-output-hk/cardano-node:8.6.0-pre
 
 #                                                                              #
 # --------------------------- BUILD (ogmios) --------------------------------- #
@@ -28,7 +28,7 @@ ENTRYPOINT ["/bin/ogmios"]
 # --------------------- RUN (cardano-node & ogmios) -------------------------- #
 #                                                                              #
 
-FROM ghcr.io/input-output-hk/cardano-node:${CARDANO_NODE_VERSION} as cardano-node-ogmios
+FROM ${CARDANO_NODE_IMAGE} as cardano-node-ogmios
 
 ARG NETWORK=mainnet
 ENV TINI_VERSION v0.19.0
