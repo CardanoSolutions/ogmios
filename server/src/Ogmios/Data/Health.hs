@@ -215,6 +215,7 @@ networkMagicToNetworkName = \case
     NetworkMagic 1097911063 -> "catastrophically-broken-testnet"
     NetworkMagic 1 -> "preprod"
     NetworkMagic 2 -> "preview"
+    NetworkMagic 4 -> "sanchonet"
     NetworkMagic n -> "unknown (" <> show n <> ")"
 
 -- | A Cardano era, starting from Byron and onwards.
