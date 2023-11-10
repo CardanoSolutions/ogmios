@@ -168,9 +168,20 @@ export const send = async <T>(
 ): Promise<T> => {
   const { socket } = context
   return new Promise((resolve, reject) => {
+    function onUnexpectedClose (code: CloseEvent['code'], reason: CloseEvent['reason']) {
+      reject(new JSONRPCError(
+        -32000,
+        'Connection closed',
+        { code, reason }
+      ))
+    }
+
+    socket.once('close', onUnexpectedClose)
+
     send(socket)
       .then(resolve)
       .catch(error => reject(JSONRPCError.tryFrom(error) || error))
+      .finally(() => socket.removeListener('close', onUnexpectedClose))
   })
 }
 
