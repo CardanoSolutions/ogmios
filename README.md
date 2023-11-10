@@ -21,6 +21,7 @@
 | ~`v6.0.0-rc3`~ | \-                        |
 | `v6.0.0-rc4`   | `8.1.2`, `8.5.0-pre` <sup>_[SanchoNet][] only_</sup> |
 | `v6.0.0-rc5`   | `8.1.2`, `8.6.0-pre` <sup>_[SanchoNet][] only_</sup> |
+| `v6.0.0-rc6`   | `8.1.2`, `8.6.0-pre` <sup>_[SanchoNet][] only_</sup> |
 
 [SanchoNet]: https://sancho.network/
 
