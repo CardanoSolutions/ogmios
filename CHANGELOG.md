@@ -6,7 +6,21 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
-### [6.0.0-rc5] - 2023-11-04
+### [6.0.0-rc6] - 2023-11-10
+
+#### Added
+
+- Add missing `sanchonet` network to the list of well-known networks. It'll now be properly displayed instead of showing `unknown (4)`.
+
+#### Changed
+
+- ![TypeScript][] Add an extra promise handler to cope with unexpected websocket disconnections when submitting messages to the server. See [#346](https://github.com/CardanoSolutions/ogmios/issues/346).
+
+#### Removed
+
+- N/A
+
+### [6.0.0-rc6] - 2023-11-04
 
 #### Added
 
