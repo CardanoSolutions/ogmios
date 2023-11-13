@@ -77,13 +77,13 @@ window.debounce = function debounce(callback, delay) {
 }
 
 async function fetchHealth(baseUrl) {
-  const healthUrl = baseUrl + '/health'
-  return fetch(healthUrl).then(response => response.json())
+  const healthUrl = baseUrl + '/health';
+  return fetch(healthUrl).then(response => response.json());
 }
 
 window.addEventListener('load', async function () {
   try {
-    const host = window.location.host;
+    const host = window.location.host + window.location.pathname.replace(/\/$/, "");
     const websocketProtocol = window.location.protocol === "http:" ? "ws" : "wss";
     const websocketUrl = websocketProtocol + "://" + host;
     const httpUrl = window.location.protocol + '//' + host;
