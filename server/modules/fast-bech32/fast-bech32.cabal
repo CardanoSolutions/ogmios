@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           fast-bech32
-version:        1.0.0
+version:        1.0.1
 synopsis:       Fast implementation of the Bech32 encoding format.
 description:    Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server/modules/fast-bech32>
 category:       Codec
@@ -71,7 +71,7 @@ library
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-packages
   build-depends:
-      base >=4.7 && <5
+      base >=4.17 && <5
     , bytestring
     , relude
     , text
@@ -128,7 +128,7 @@ test-suite unit
       hspec-discover:hspec-discover
   build-depends:
       QuickCheck
-    , base >=4.7 && <5
+    , base >=4.17 && <5
     , base16
     , bech32
     , bytestring
@@ -182,7 +182,7 @@ benchmark encoding
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-packages -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      base >=4.17 && <5
     , bech32
     , bytestring
     , criterion

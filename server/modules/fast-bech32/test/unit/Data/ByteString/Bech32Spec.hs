@@ -8,6 +8,8 @@ module Data.ByteString.Bech32Spec
 
 import Prelude
 
+import Data.Base16.Types
+    ( extractBase16 )
 import Data.ByteString
     ( ByteString )
 import Data.ByteString.Base16
@@ -48,7 +50,7 @@ prop_matchOracle (Bytes bytes) (HumanReadablePart hrp) = do
 newtype Bytes = Bytes { unBytes :: ByteString }
 
 instance Show Bytes where
-    show = T.unpack . encodeBase16 . unBytes
+    show = T.unpack . extractBase16 . encodeBase16 . unBytes
 
 genBytes :: Gen Bytes
 genBytes =
