@@ -195,7 +195,7 @@ import Relude hiding
 
 import qualified Cardano.Ledger.Binary.Decoding as Binary
 import qualified Cardano.Ledger.Core as Ledger
-import qualified Data.ByteString.Base16 as Base16
+import qualified Data.ByteString.Base16 as B16
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text.Lazy.Builder as TL
@@ -369,7 +369,7 @@ renderCborDecoderError =
 --
 
 encodeBase16 :: ByteString -> Text
-encodeBase16 = extractBase16 . Base16.encodeBase16
+encodeBase16 = extractBase16 . B16.encodeBase16
 {-# INLINEABLE encodeBase16 #-}
 
 decodeBase16 :: ByteString -> Either Text ByteString
