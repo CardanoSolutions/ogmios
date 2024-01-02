@@ -38,6 +38,7 @@ language_extensions: &default-extensions
 - TupleSections
 - TypeApplications
 - TypeFamilies
+- TypeOperators
 - TypeSynonymInstances
 - ViewPatterns
 

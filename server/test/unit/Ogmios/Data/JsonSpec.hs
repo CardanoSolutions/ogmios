@@ -272,7 +272,6 @@ import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.KeyMap as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString as BS
-import qualified Data.ByteString.Base16 as B16
 import qualified Data.Char as Char
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -958,7 +957,7 @@ instance Arbitrary SerializedTransaction where
 propBinaryDataRoundtrip :: Ledger.Data StandardAlonzo -> Property
 propBinaryDataRoundtrip dat =
     let json = jsonToByteString (Alonzo.encodeData @StandardAlonzo dat)
-     in case B16.decodeBase16 . T.encodeUtf8 <$> Json.decode (toLazy json) of
+     in case decodeBase16 . T.encodeUtf8 <$> Json.decode (toLazy json) of
             Just (Right bytes) ->
                 let
                     dataFromBytes = Ledger.makeBinaryData (toShort bytes)
@@ -977,7 +976,7 @@ unsafeDataFromBytes =
     either (error . show) Ledger.binaryDataToData
     . Ledger.makeBinaryData
     . either error toShort
-    . B16.decodeBase16
+    . decodeBase16
 
 --
 -- Local State Query

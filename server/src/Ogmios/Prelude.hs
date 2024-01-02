@@ -56,6 +56,11 @@ module Ogmios.Prelude
     , decodeCborAnn
     , decodeCborAnnWith
 
+      -- * BaseXX Encoding / Decoding
+    , encodeBase16
+    , decodeBase16
+    , unsafeDecodeBase16
+
       -- * type-level helpers
     , keepRedundantConstraint
     , LastElem
@@ -90,6 +95,12 @@ import Data.Aeson
 import Data.Array
     ( Array
     , array
+    )
+import Data.Base16.Types
+    ( extractBase16
+    )
+import Data.ByteString.Base16
+    ( decodeBase16Untyped
     )
 import Data.Generics.Internal.VL.Lens
     ( view
@@ -184,6 +195,7 @@ import Relude hiding
 
 import qualified Cardano.Ledger.Binary.Decoding as Binary
 import qualified Cardano.Ledger.Core as Ledger
+import qualified Data.ByteString.Base16 as Base16
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text.Lazy.Builder as TL
@@ -351,3 +363,20 @@ decodeCborAnn lbl  =
 renderCborDecoderError :: Binary.DecoderError -> String
 renderCborDecoderError =
     toString . TL.toLazyText . build
+
+--
+-- Encoding / Decoding
+--
+
+encodeBase16 :: ByteString -> Text
+encodeBase16 = extractBase16 . Base16.encodeBase16
+{-# INLINEABLE encodeBase16 #-}
+
+decodeBase16 :: ByteString -> Either Text ByteString
+decodeBase16 = decodeBase16Untyped
+{-# INLINABLE decodeBase16 #-}
+
+-- | An unsafe version of 'decodeBase16'. Use with caution.
+unsafeDecodeBase16 :: HasCallStack => Text -> ByteString
+unsafeDecodeBase16 =
+    either error identity . decodeBase16 . encodeUtf8

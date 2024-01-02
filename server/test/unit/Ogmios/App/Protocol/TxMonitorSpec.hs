@@ -3,6 +3,7 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE PolyKinds #-}
 
 module Ogmios.App.Protocol.TxMonitorSpec
     ( spec
@@ -39,7 +40,8 @@ import Ogmios.App.Protocol.TxMonitor
     ( mkTxMonitorClient
     )
 import Ogmios.Control.Exception
-    ( MonadThrow (..)
+    ( MonadCatch
+    , MonadThrow (..)
     )
 import Ogmios.Control.MonadAsync
     ( race
@@ -200,7 +202,7 @@ spec = parallel $ do
 type Protocol = LocalTxMonitor (GenTxId Block) (GenTx Block) SlotNo
 
 withTxMonitorClient
-    :: (MonadSTM m, MonadOuroboros m)
+    :: (MonadCatch m, MonadOuroboros m)
     => ((TxMonitorMessage Block -> m ()) ->  m Json -> m a)
     -> StdGen
     -> m a

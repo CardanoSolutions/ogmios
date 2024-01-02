@@ -93,7 +93,7 @@ prop_inIOSim action = monadicIO $ do
 -- TQueue. The peer is expected to consume and produce values from and to the
 -- TQueue to drive the channel communication.
 withMockChannel
-    :: forall m a. (MonadSTM m, MonadOuroboros m)
+    :: forall m a. (MonadOuroboros m)
     => ((m LByteString, LByteString -> m ()) -> m ())
         -- ^ A mock peer for consuming the data.
     -> (Channel m LByteString -> m a)

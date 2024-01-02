@@ -6,9 +6,6 @@ module Ogmios.Data.Json.Mary where
 
 import Ogmios.Data.Json.Prelude
 
-import Data.ByteString.Base16
-    ( encodeBase16
-    )
 import Data.Maybe.Strict
     ( fromSMaybe
     , strictMaybe

@@ -309,7 +309,6 @@ withOuroborosClients
         , MonadLink m
         , MonadLog m
         , MonadMetrics m
-        , MonadOuroboros m
         , MonadWebSocket m
         )
     => Logger TraceWebSocket

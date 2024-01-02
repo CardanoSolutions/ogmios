@@ -60,7 +60,6 @@ import Ogmios.App.Protocol
     )
 import Ogmios.Control.Exception
     ( MonadCatch
-    , MonadThrow
     )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
@@ -117,8 +116,7 @@ import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 -- In particular, it also makes it easier to run queries _in the current era_.
 mkStateQueryClient
     :: forall m crypto block point query.
-        ( MonadThrow m
-        , MonadCatch m
+        ( MonadCatch m
         , MonadSTM m
         , MonadLog m
         , block ~ HardForkBlock (CardanoEras crypto)

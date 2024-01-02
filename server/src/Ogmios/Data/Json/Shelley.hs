@@ -16,9 +16,6 @@ import Cardano.Ledger.Keys
     ( GenDelegPair (..)
     , KeyRole (..)
     )
-import Data.ByteString.Base16
-    ( encodeBase16
-    )
 import Data.ByteString.Bech32
     ( HumanReadablePart (..)
     , encodeBech32

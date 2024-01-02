@@ -144,9 +144,6 @@ import Codec.Serialise
 import Data.Aeson
     ( (.!=)
     )
-import Data.ByteString.Base16
-    ( encodeBase16
-    )
 import Ogmios.Data.EraTranslation
     ( MostRecentEra
     , MultiEraTxOut (..)

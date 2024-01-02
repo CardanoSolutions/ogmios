@@ -45,7 +45,6 @@ library:
     - bech32-th
     - binary
     - bytestring
-    - cardano-binary
     - cardano-crypto
     - cardano-crypto-class
     - cardano-crypto-wrapper
@@ -113,10 +112,8 @@ library:
     - transformers
     - typed-protocols
     - unix
-    - unordered-containers
     - vector
     - wai
-    - wai-routes
     - wai-websockets
     - warp
     - yaml
@@ -144,7 +141,6 @@ tests:
     dependencies:
     - aeson
     - aeson-pretty
-    - base16
     - bytestring
     - cardano-ledger-alonzo
     - cardano-ledger-api
@@ -175,7 +171,6 @@ tests:
     - ouroboros-network-protocols
     - QuickCheck
     - random
-    - relude
     - strict-sop-core
     - template-haskell
     - text
