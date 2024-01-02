@@ -176,8 +176,8 @@ jobs:
         PACKAGE: hlint
         REPOSITORY: ndmitchell/hlint
         PLATFORM: x86_64-linux
-        RELEASE: v3.2
-        VERSION: 3.2
+        RELEASE: v3.6.1
+        VERSION: 3.6.1
       run: |
         curl -sSL https://raw.github.com/cardanosolutions/ogmios/master/scripts/exec-from-github.sh | sh -s src test app -h .hlint.yaml
 
@@ -188,8 +188,8 @@ jobs:
         PACKAGE: stylish-haskell
         REPOSITORY: jaspervdj/stylish-haskell
         PLATFORM: linux-x86_64
-        RELEASE: v0.13.0.0
-        VERSION: v0.13.0.0
+        RELEASE: v0.14.5.0
+        VERSION: v0.14.5.0
       run: |
         curl -sSL https://raw.github.com/cardanosolutions/ogmios/master/scripts/exec-from-github.sh | sh -s $(find src test app -type f -name '*.hs' ! -path '*.stack-work*') -i -c .stylish-haskell.yaml
         if [ -z "$(git status --porcelain)" ]; then
