@@ -50,10 +50,17 @@ jobs:
           substituters = https://cache.iog.io/ https://cache.zw3rk.com/ https://cache.nixos.org/
         nix_path: nixpkgs=channel:nixos-unstable
 
-    - name: ❄️ Prepare cache
+    - name: ❄️ Prepare cache (x86_64)
+      if: ${{ matrix.arch == 'x86_64' }}
       working-directory: server
       run: |
-        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "echo $CABAL_PROJECT_LOCAL_TEMPLATE > cabal.project.local && cabal update && cabal freeze"
+        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cat /nix/store/vd865r55pdbndjwh994h90m35qq77x44-cabal.project.local >> cabal.project.local && cabal update && cabal freeze"
+
+    - name: ❄️ Prepare cache (aarch64)
+      if: ${{ matrix.arch == 'aarch64' }}
+      working-directory: server
+      run: |
+        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cat /nix/store/hviyb5sciblcyr5fc3vsqcwmfh1nz69w-cabal.project.local >> cabal.project.local && cabal update && cabal freeze"
 
     - name: 💾 Download Cache
       uses: actions/cache/restore@v3
@@ -256,7 +263,7 @@ jobs:
           cardano-node-ogmios-${{ matrix.network }}-
 
     - name: 🔬 Test
-      if: matrix.network == 'preview'
+      if: ${{ matrix.network == 'preview' }}
       working-directory: clients/TypeScript
       shell: bash
       env:
