@@ -69,6 +69,16 @@ package bitvec
 package quickcheck-state-machine
   flags: +no-vendored-treediff
 
+-- Depending on C++ for just so slightly faster utf8 parsing is a bit annoying
+-- especially as it brings in all kinds of complications for GHC.
+package text
+  flags: -simdutf
+
+-- formatting (>= 7.2) allows us do drop double-conversion (which again is one
+-- of the offending c++ dependencies)
+package formatting
+  flags: +no-double-conversion
+
 source-repository-package
   type: git
   location: https://github.com/CardanoSolutions/hjsonpointer
