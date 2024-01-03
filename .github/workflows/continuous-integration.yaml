@@ -578,7 +578,7 @@ jobs:
       if: ${{ github.event_name == 'push' }}
       uses: actions/upload-artifact@v3
       with:
-        name: digests-${{ matrix.target }}
+        name: digests
         path: /tmp/digests/*
         if-no-files-found: error
         retention-days: 1
@@ -593,7 +593,7 @@ jobs:
       - name: 📥 Download digests
         uses: actions/download-artifact@v3
         with:
-          name: digests-${{ matrix.target }}
+          name: digests
           path: /tmp/digests
 
       - name: 🧰  Set up Docker Buildx
