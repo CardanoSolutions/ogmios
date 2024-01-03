@@ -510,7 +510,6 @@ jobs:
       matrix:
         os: [ linux ]
         target: [ ogmios ]
-        network: [ mainnet, preprod, preview, sanchonet ]
         arch: [ x86_64, aarch64 ]
     steps:
     - name: 📥 Checkout repository
@@ -546,6 +545,15 @@ jobs:
       run: |
         echo "tag=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
 
+    - name: 📝 Docker metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.DOCKER_IMAGE }}
+        tags: |
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=semver,pattern=v{{version}}
+
     - name: 📥 Download
       uses: actions/download-artifact@v3
       with:
@@ -554,13 +562,10 @@ jobs:
 
     - name: 📸  Build image
       id: build
-      if: ${{ github.event_name == 'push' && matrix.network == 'mainnet' && github.ref == 'refs/heads/master' }}
+      if: ${{ github.event_name == 'push' }}
       uses: docker/build-push-action@v4
       with:
-        build-args: |
-          NETWORK=${{ matrix.network }}
         context: .
-        tags: ${{ steps.base-variables.outputs.image }}:latest
         target: ${{ matrix.target }}
         platforms: ${{ matrix.os }}/${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}
         cache-from: type=registry,ref=${{ steps.base-variables.outputs.image }}:latest
