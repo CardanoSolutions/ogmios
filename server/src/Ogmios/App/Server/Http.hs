@@ -50,6 +50,10 @@ import qualified Ogmios.App.Metrics as Metrics
 import Data.Aeson
     ( ToJSON (..)
     )
+import Data.Binary.Builder
+    ( Builder
+    , toLazyByteString
+    )
 import Data.FileEmbed
     ( embedFile
     )
@@ -67,6 +71,9 @@ import Network.HTTP.Types
     , status406
     , status500
     )
+import Network.HTTP.Types.Status
+    ( Status
+    )
 import Ogmios.App.Configuration
     ( Configuration (..)
     )
@@ -77,34 +84,8 @@ import System.Exit
     ( ExitCode (..)
     )
 
--- import Wai.Routes
---     ( Handler
---     , RenderRoute (..)
---     , Routable (..)
---     , header
---     , html
---     , mkRoute
---     , parseRoutes
---     , raw
---     , rawBuilder
---     , request
---     , route
---     , runHandlerM
---     , showRoute
---     , status
---     , sub
---     , waiApp
---     )
-import Network.HTTP.Types.Status
-    ( Status
-    )
-
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.KeyMap as Json.KeyMap
-import Data.Binary.Builder
-    ( Builder
-    , toLazyByteString
-    )
 import qualified Data.Binary.Builder as Builder
 import qualified Network.HTTP.Client as Http
 import qualified Network.Wai as Wai
@@ -153,6 +134,7 @@ postRootR = Handler $ \EnvServer{configuration} -> do
 getHealthR :: Handler
 getHealthR = Handler $ \EnvServer{health, sensors, sampler} -> do
     header "Access-Control-Allow-Origin" "*"
+    status status200
     json =<< do
         metrics <- lift $ Metrics.sample sampler sensors
         modifyHealth health (\h -> h { metrics })
@@ -161,6 +143,7 @@ getMetricsR :: Handler
 getMetricsR = Handler $ \EnvServer{health, sensors, sampler} -> do
     header "Access-Control-Allow-Origin" "*"
     header "Content-Type" "text/plain; charset=utf-8"
+    status status200
     (raw . mkPrometheusMetrics) =<< do
         metrics <- lift $ Metrics.sample sampler sensors
         modifyHealth health (\h -> h { metrics })
@@ -169,6 +152,7 @@ getFaviconR :: Handler
 getFaviconR = Handler $ \_env -> do
     header "Access-Control-Allow-Origin" "*"
     header "Content-Type" "image/png"
+    status status200
     raw $ Builder.fromByteString $(embedFile "static/favicon.png")
 
 --
