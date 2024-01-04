@@ -176,11 +176,13 @@ encodeConstitutionalDelegCert
 encodeConstitutionalDelegCert (Sh.GenesisDelegCert key delegate vrf) =
     "type" .= encodeText "genesisDelegation"
     <>
-    "delegate" .= encodeSingleton "id" (encodeKeyHash delegate)
+    "delegate" .= encodeObject
+        ( "id" .= encodeKeyHash delegate
+       <> "vrfVerificationKeyHash" .= encodeHash vrf
+        )
     <>
     "issuer" .= encodeObject
         ( "id" .= encodeKeyHash key
-       <> "vrfVerificationKeyHash" .= encodeHash vrf
         )
 
 encodeCredential
@@ -369,8 +371,9 @@ encodeInitialDelegates
 encodeInitialDelegates =
     encodeMapAsList
         (\k v -> encodeObject
-            ( "issuer" .=
-                encodeSingleton "id" (encodeKeyHash k)
+            ( "issuer" .= encodeObject
+                ( "id" .= encodeKeyHash k
+                )
            <> "delegate" .=
                 encodeGenDelegPair v
             )

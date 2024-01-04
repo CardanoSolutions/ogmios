@@ -452,25 +452,15 @@
             , "enum": [ "genesisDelegation" ]
             }
           , "delegate":
+            { "$ref": "cardano.json#/definitions/GenesisDelegate"
+            }
+          , "issuer":
             { "type": "object"
             , "additionalProperties": false
             , "required": [ "id" ]
             , "properties":
               { "id":
                 { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
-                }
-              }
-            }
-          , "issuer":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "id", "vrfVerificationKeyHash" ]
-            , "properties":
-              { "id":
-                { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
-                }
-              , "vrfVerificationKeyHash":
-                { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
                 }
               }
             }
@@ -1875,6 +1865,7 @@
       [ { "type": "object"
         , "title": "Native"
         , "additionalProperties": false
+        , "description": "A Cardano native script. Use --include-script-cbor to ALWAYS include the 'cbor' field. Omitted otherwise."
         , "required": [ "language", "json" ]
         , "properties":
           { "language":
@@ -2272,7 +2263,7 @@
       , "cbor":
         { "type": "string"
         , "contentEncoding": "base16"
-        , "description": "The raw serialized (CBOR) transaction, as found on-chain."
+        , "description": "The raw serialized (CBOR) transaction, as found on-chain. Use --include-transaction-cbor to ALWAYS include the 'cbor' field. Omitted otherwise."
         }
       }
     }
