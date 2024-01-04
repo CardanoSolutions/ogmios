@@ -13,12 +13,3 @@
 [submodule "server/config"]
 	path = server/config
 	url = https://github.com/input-output-hk/cardano-configurations.git
-[submodule "clients/Go"]
-	path = clients/Go
-	url = https://github.com/savaki/ogmigo.git
-[submodule "clients/Kotlin"]
-	path = clients/Kotlin
-	url = https://github.com/projectNEWM/kogmios.git
-[submodule "clients/Java"]
-	path = clients/Java
-	url = https://github.com/adabox-aio/ogmios-java-client.git
