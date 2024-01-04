@@ -662,7 +662,7 @@ encodePredicateFailure reject = \case
                 ( "infringingStakePool" .=
                     encodeSingleton "id" (Shelley.encodePoolId poolId)
                 <> "computedMetadataHashSize" .= encodeObject
-                    ( "bytes" .= encodeInteger (toInteger computedMetadataHashSize)
+                    ( "bytes" .= encodeInteger (toInteger (abs computedMetadataHashSize))
                     )
                 )
             )

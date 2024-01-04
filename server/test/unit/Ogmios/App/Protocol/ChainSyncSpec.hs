@@ -203,7 +203,7 @@ maxInFlight :: MaxInFlight
 maxInFlight = 3
 
 withChainSyncClient
-    :: (MonadSTM m, MonadOuroboros m)
+    :: (MonadOuroboros m)
     => ((ChainSyncMessage Block -> m ()) ->  m Json -> m a)
     -> StdGen
     -> m a

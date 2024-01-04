@@ -245,37 +245,45 @@ The transaction model has been greatly reworked. The main changes are:
 
 - Few fields have been renamed, here's a recap:
 
-  | Old                            | New                        |
-  | ---                            | ---                        |
-  | `body.certificates`            | `certificates`             |
-  | `body.collateralReturn`        | `collateralReturn`         |
-  | `body.collaterals`             | `collaterals`              |
-  | `body.fee`                     | `fee`                      |
-  | `body.inputs`                  | `inputs`                   |
-  | `body.mint`                    | `mint`                     |
-  | `body.network`                 | `network`                  |
-  | `body.outputs`                 | `outputs`                  |
-  | `body.references`              | `references`               |
-  | `body.requiredExtraSignatures` | `requiredExtraSignatories` |
-  | `body.scriptIntegrityHash`     | `scriptIntegrityHash`      |
-  | `body.totalCollateral`         | `totalCollateral`          |
-  | `body.update`                  | `proposals`                |
-  | `body.validityInterval`        | `validityInterval`         |
-  | `body.withdrawals`             | `withdrawals`              |
-  | `body`                         | N/A                        |
-  | `id`                           | `id`                       |
-  | `inputSource`                  | `spends`                   |
-  | `metadata`                     | `metadata`                 |
-  | `raw`                          | `cbor`                     |
-  | `witness.bootstrap`            | `signatories`              |
-  | `witness.datums`               | `datums`                   |
-  | `witness.redeemers`            | `redeemers`                |
-  | `witness.scripts`              | `scripts`                  |
-  | `witness.signatures`           | `signatories`              |
-  | `witness`                      | N/A                        |
-  | N/A                            | `requiredExtraScripts`     |
-  | N/A                            | `votes`                    |
+  | Old                            | New                                             |
+  | ---                            | ---                                             |
+  | `body.certificates`            | `certificates`                                  |
+  | `body.collateralReturn`        | `collateralReturn`                              |
+  | `body.collaterals`             | `collaterals`                                   |
+  | `body.fee`                     | `fee`                                           |
+  | `body.inputs`                  | `inputs`                                        |
+  | `body.mint`                    | `mint`                                          |
+  | `body.network`                 | `network`                                       |
+  | `body.outputs`                 | `outputs`                                       |
+  | `body.references`              | `references`                                    |
+  | `body.requiredExtraSignatures` | `requiredExtraSignatories`                      |
+  | `body.scriptIntegrityHash`     | `scriptIntegrityHash`                           |
+  | `body.totalCollateral`         | `totalCollateral`                               |
+  | `body.update`                  | `proposals`                                     |
+  | `body.validityInterval`        | `validityInterval`                              |
+  | `body.withdrawals`             | `withdrawals`                                   |
+  | `body`                         | N/A                                             |
+  | `id`                           | `id`                                            |
+  | `inputSource`                  | `spends`                                        |
+  | `metadata`                     | `metadata`                                      |
+  | `raw`                          | `cbor`                                          |
+  | `witness.bootstrap`            | `signatories`<sup><a href="#note-1">1</a></sup> |
+  | `witness.datums`               | `datums`                                        |
+  | `witness.redeemers`            | `redeemers`<sup><a href="#note-2">2</a><sup>    |
+  | `witness.scripts`              | `scripts`                                       |
+  | `witness.signatures`           | `signatories`<sup><a href="#note-1">1</a></sup> |
+  | `witness`                      | N/A                                             |
+  | N/A                            | `requiredExtraScripts`                          |
+  | N/A                            | `votes`                                         |
 
+> [!TIP]
+>
+> <a href="#note-1" id="note-1">[1]</a> The `bootstrap` and `signatures` fields have been merged under a single `signatories` since they were both Ed25519 signatures of the transaction body. However, a `bootstrap` signature contains some extra field needed to _verify_ the signature. Hence the `chainCode` and `addressAttributes` are only present on bootstrap signatures (when spending from a Byron/Bootstrap address)."
+>
+
+> [!WARNING]
+>
+> <a href="#note-2" id="note-2">[2]</a> The format of the redeemers field has changed from an map to an array. Map keys have been turned into object, nested under a field `validator`.
 
 
 ##### Output references
@@ -734,13 +742,13 @@ A discriminant value field (`type`) has been introduced to all certificate to al
 </tr>
 </table>
 
-##### Treasury transfers
+##### Treasury transfers (a.k.a MIR certificates)
 
 Treasury transfers have been converted into governance actions, so you'll now find them in the `proposals` field of transactions.
 
 #### Value
 
-The representation of `Value` has been changed to be more compact, more extensible and clearer. Values are now encoded as nested objects, where keys are respectively asset's policy id and asset name. Leaves are plain integers. The special case of Ada is encoded as a special policy id `ada` and asset name `lovelace`. This behavior is consistently applied to any amount that refers to a lovelace quantity. Transaction fees for example are now encoded as: `{ "lovelace": 1234 }`.
+The representation of `Value` has been changed to be more compact, more extensible and clearer. Values are now encoded as nested objects, where keys are respectively asset's policy id and asset name. Leaves are plain integers. The special case of Ada is encoded as a special policy id `ada` and asset name `lovelace`. This behavior is consistently applied to any amount that refers to a lovelace quantity. Transaction fees for example are now encoded as: `{ "ada": { "lovelace": 1234 } }`.
 
 #### Transaction's Metadata
 

@@ -199,7 +199,7 @@ encodeValue
     :: By.Lovelace
     -> Json
 encodeValue =
-    encodeSingleton "ada" . encodeLovelace
+    encodeLovelace
 
 encodeTxOut
     :: By.TxOut
@@ -360,7 +360,7 @@ encodeLovelace
     :: By.Lovelace
     -> Json
 encodeLovelace =
-    encodeSingleton "lovelace" . encodeInteger . By.lovelaceToInteger
+    encodeSingleton "ada" . encodeSingleton "lovelace" . encodeInteger . By.lovelaceToInteger
 
 encodeLovelaceError
     :: By.LovelaceError

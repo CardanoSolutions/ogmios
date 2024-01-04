@@ -206,7 +206,7 @@ encodePParamsHKD encode pure_ x =
     encode "minStakePoolCost"
         encodeCoin (Ba.bppMinPoolCost x) <>
     encode "minUtxoDepositConstant"
-        encodeInteger (pure_ 0) <>
+        (encodeCoin . Coin) (pure_ 0) <>
     encode "minUtxoDepositCoefficient"
         (encodeInteger . unCoin . Ba.unCoinPerByte) (Ba.bppCoinsPerUTxOByte x) <>
     encode "plutusCostModels"

@@ -1293,7 +1293,7 @@ decodeCoin
     :: Json.Value
     -> Json.Parser Coin
 decodeCoin = Json.withObject "Lovelace" $ \o -> do
-    lovelace <- o .: "lovelace"
+    lovelace <- o .: "ada" >>= (.: "lovelace")
     pure $ Ledger.word64ToCoin lovelace
 
 decodeCredential
@@ -1800,7 +1800,7 @@ decodeValue
     => Json.Value
     -> Json.Parser (Ledger.Value (AlonzoEra crypto))
 decodeValue = Json.withObject "Value" $ \o -> do
-    coins <- o .: "ada" >>= decodeCoin
+    coins <- decodeCoin (Json.Object o)
     assets <- decodeAssets (Json.Object $ Json.delete "ada" o)
     pure (Ledger.Mary.MaryValue (unCoin coins) assets)
 

@@ -568,7 +568,7 @@ spec = do
             (parseQueryLedgerTip genPointResultTPraos genPointResultPraos)
 
         validateLedgerStateQuery 10 "projectedRewards"
-            (Just [aesonQQ|{ "stake": [{ "lovelace": 14 }, { "lovelace": 42 }] }|])
+            (Just [aesonQQ|{ "stake": [{ "ada": { "lovelace": 14 } } , { "ada": { "lovelace": 42 } }] }|])
             (parseQueryLedgerProjectedRewards genNonMyopicMemberRewardsResult)
 
         validateLedgerStateQuery 10 "projectedRewards"

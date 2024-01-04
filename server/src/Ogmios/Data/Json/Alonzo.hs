@@ -306,7 +306,7 @@ encodePParamsHKD encode pure_ x =
     encode "minStakePoolCost"
         encodeCoin (Al.appMinPoolCost x) <>
     encode "minUtxoDepositConstant"
-        encodeInteger (pure_ 0) <>
+        (encodeCoin . Coin) (pure_ 0) <>
     encode "minUtxoDepositCoefficient"
         (encodeInteger . (`div` 8) . unCoin . Al.unCoinPerWord) (Al.appCoinsPerUTxOWord x) <>
     encode "plutusCostModels"
@@ -340,20 +340,33 @@ encodePrices prices =
 encodeRdmrPtr
     :: Al.RdmrPtr
     -> Json
-encodeRdmrPtr =
-    encodeText . stringifyRdmrPtr
+encodeRdmrPtr (Al.RdmrPtr tag ptr) =
+    encodeObject
+        ( "index" .=
+            encodeWord64 ptr
+       <> "purpose" .=
+            encodeText (case tag of
+              Al.Spend -> "spend"
+              Al.Mint -> "mint"
+              Al.Cert -> "publish"
+              Al.Rewrd -> "withdraw"
+            )
+        )
 
 encodeRedeemers
     :: forall era. (Ledger.Era era)
     => Al.Redeemers era
     -> Json
 encodeRedeemers (Al.Redeemers redeemers) =
-    encodeMap stringifyRdmrPtr encodeDataAndUnits redeemers
+    encodeMapAsList encodeDataAndUnits redeemers
   where
     encodeDataAndUnits
-        :: (Al.Data era, Al.ExUnits)
+        :: Al.RdmrPtr
+        -> (Al.Data era, Al.ExUnits)
         -> Json
-    encodeDataAndUnits (redeemer, units) =
+    encodeDataAndUnits ptr (redeemer, units) =
+        "validator" .=
+            encodeRdmrPtr ptr <>
         "redeemer" .=
             encodeData redeemer <>
         "executionUnits" .=
@@ -539,13 +552,20 @@ encodeTranslationError err = encodeText $ case err of
     Al.LanguageNotSupported Al.PlutusV3 ->
        "Unsupported language in era. Did you try to use PlutusV3 before Conway is enabled?"
     Al.InlineDatumsNotSupported{} ->
-       "Inline datums not supported in PlutusV1. Use PlutusV2."
+       "Inline datums not supported in PlutusV1. Use PlutusV2 or higher."
     Al.ReferenceScriptsNotSupported{} ->
-       "Reference scripts not supported in PlutusV1. Use PlutusV2."
+       "Reference scripts not supported in PlutusV1. Use PlutusV2 or higher."
     Al.ReferenceInputsNotSupported{} ->
-       "Reference inputs not supported in PlutusV1. Use PlutusV2."
-    Al.RdmrPtrPointsToNothing ptr ->
-       "Couldn't resolve redeemer pointer (" <> stringifyRdmrPtr ptr <> "). Verify your transaction's construction."
+       "Reference inputs not supported in PlutusV1. Use PlutusV2 or higher."
+    Al.RdmrPtrPointsToNothing (Al.RdmrPtr tag ptr) ->
+        let ptrStr =
+              ( case tag of
+                  Al.Spend -> "spending input"
+                  Al.Mint -> "minting policy"
+                  Al.Cert -> "publishing certificate"
+                  Al.Rewrd -> "withdrawing from account"
+              ) <>  " #" <> show ptr
+          in "Couldn't find corresponding redeemer for " <> ptrStr <> ". Verify your transaction's construction."
     Al.TimeTranslationPastHorizon e ->
         "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
 
@@ -590,18 +610,3 @@ stringifyLanguage = \case
     Al.PlutusV1 -> "plutus:v1"
     Al.PlutusV2 -> "plutus:v2"
     Al.PlutusV3 -> "plutus:v3"
-
-stringifyRdmrPtr
-    :: Al.RdmrPtr
-    -> Text
-stringifyRdmrPtr (Al.RdmrPtr tag ptr) =
-    stringifyTag tag <> ":" <> show ptr
-  where
-    stringifyTag
-        :: Al.Tag
-        -> Text
-    stringifyTag = \case
-        Al.Spend -> "spend"
-        Al.Mint -> "mint"
-        Al.Cert -> "certificate"
-        Al.Rewrd -> "withdrawal"

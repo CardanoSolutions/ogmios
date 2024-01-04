@@ -293,7 +293,7 @@ encodeByteStringBech32 hrp =
 
 encodeCoin :: Coin -> Json
 encodeCoin =
-    encodeSingleton "lovelace" . encodeInteger . unCoin
+    encodeSingleton "ada" . encodeSingleton "lovelace" . encodeInteger . unCoin
 {-# INLINEABLE encodeCoin #-}
 
 encodeDnsName :: DnsName -> Json

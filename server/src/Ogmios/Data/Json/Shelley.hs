@@ -276,7 +276,7 @@ encodeDeltaCoin
     :: Ledger.DeltaCoin
     -> Json
 encodeDeltaCoin (Ledger.DeltaCoin delta) =
-    encodeSingleton "lovelace" (encodeInteger delta)
+    encodeSingleton "ada" (encodeSingleton "lovelace" (encodeInteger delta))
 
 encodeEntities
     :: Foldable f
@@ -913,7 +913,7 @@ encodeValue
     :: Coin
     -> Json
 encodeValue =
-    encodeSingleton "ada" . encodeCoin
+    encodeCoin
 
 encodeVerKeyDSign
     :: CC.DSIGNAlgorithm alg
