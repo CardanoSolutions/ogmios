@@ -180,8 +180,8 @@ encodeConwayGovCert = \case
         "member" .=
             encodeConstitutionalCommitteeMember cold SNothing
        <>
-        "anchor" .=
-            encodeStrictMaybe encodeAnchor anchor
+        "anchor" .=? OmitWhenNothing
+            encodeAnchor anchor
 
 encodeDelegCert
     :: Crypto crypto

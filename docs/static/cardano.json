@@ -1416,7 +1416,7 @@
     , "propertyNames": { "pattern": "^-?[0-9]+$" }
     , "additionalProperties":
       { "type": "object"
-      , "description": "An associated metadatum, as a CBOR bytestring or a JSON object if possible. Some binary representations cannot be represented in plain JSON and the 'json' field is therefore omitted."
+      , "description": "An associated metadatum, as a CBOR bytestring or a JSON object if possible. If not possible, default to 'cbor'. Use --include-metadata-cbor to ALWAYS include the cbor field."
       , "additionalProperties": false
       , "properties":
         { "cbor":
