@@ -3,8 +3,7 @@ NETWORK := mainnet
 
 NODE_CFG := ./config/network/$(NETWORK)
 NODE_DB := ${HOME}/.cache/cardano-node/$(NETWORK).db
-NODE_RTS := "-T -I0 -N2 -A16m -qb -qg --disable-delayed-os-memory-return"
-NODE_VERSION := 8.1.2
+NODE_RTS := -T -I0 -N2 -A16m -qb -qg --disable-delayed-os-memory-return
 NODE_SOCKET := /tmp/node.socket
 
 .PHONY: dev node lint
@@ -21,7 +20,7 @@ dev: # Run local ogmios through cabal
 		--node-socket $(NODE_SOCKET) $(filter-out $@,$(MAKECMDGOALS))
 
 node: # Run a local node at the specified version.
-	cardano-node$(NODE_VERSION) \
+	cardano-node$(NODE_VERSION:-) \
 		run \
 		--port 3000 \
 		--database-path $(NODE_DB) \

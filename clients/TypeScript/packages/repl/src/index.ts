@@ -52,7 +52,7 @@ import {
       args?: { fields: 'all' }
     ) => MempoolMonitoring.nextTransaction(context, args),
     projectedRewards: (filters?: {
-      stake?: Schema.Lovelace[],
+      stake?: Schema.ValueAdaOnly[],
       scripts?: Schema.AnyStakeCredential[],
       keys?: Schema.AnyStakeCredential[],
     }) => LedgerStateQuery.projectedRewards(context, filters),

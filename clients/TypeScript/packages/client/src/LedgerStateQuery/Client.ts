@@ -25,11 +25,11 @@ import {
   GenesisAlonzo,
   GenesisByron,
   GenesisShelley,
-  Lovelace,
   Origin,
   Point,
   UtxoByAddresses,
-  UtxoByOutputReferences
+  UtxoByOutputReferences,
+  ValueAdaOnly,
 } from '@cardano-ogmios/schema'
 
 /**
@@ -55,7 +55,7 @@ export interface LedgerStateQueryClient {
   networkStartTime(): ReturnType<typeof networkStartTime>
   networkTip(): ReturnType<typeof networkTip>
   projectedRewards(filter: {
-    stake?: Lovelace[],
+    stake?: ValueAdaOnly[],
     scripts?: AnyStakeCredential[],
     keys?: AnyStakeCredential[]
   }): ReturnType<typeof projectedRewards>
