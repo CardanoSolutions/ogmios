@@ -3,7 +3,7 @@ import {
   Ogmios,
   AnyStakeCredential,
   ProjectedRewards,
-  ValueAdaOnly,
+  ValueAdaOnly
 } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateProjectedRewards']

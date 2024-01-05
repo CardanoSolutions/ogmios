@@ -29,7 +29,7 @@ import {
   Point,
   UtxoByAddresses,
   UtxoByOutputReferences,
-  ValueAdaOnly,
+  ValueAdaOnly
 } from '@cardano-ogmios/schema'
 
 /**
