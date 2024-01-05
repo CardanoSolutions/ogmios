@@ -297,7 +297,7 @@
       , "softForkMinThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
       , "softForkDecrementThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
       , "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       }
     }
 
@@ -384,7 +384,7 @@
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
             }
           , "deposit":
-            { "$ref": "cardano.json#/definitions/Lovelace"
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
             }
           }
         }
@@ -402,7 +402,7 @@
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
             }
           , "deposit":
-            { "$ref": "cardano.json#/definitions/Lovelace"
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
             }
           }
         }
@@ -452,25 +452,15 @@
             , "enum": [ "genesisDelegation" ]
             }
           , "delegate":
+            { "$ref": "cardano.json#/definitions/GenesisDelegate"
+            }
+          , "issuer":
             { "type": "object"
             , "additionalProperties": false
             , "required": [ "id" ]
             , "properties":
               { "id":
                 { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
-                }
-              }
-            }
-          , "issuer":
-            { "type": "object"
-            , "additionalProperties": false
-            , "required": [ "id", "vrfVerificationKeyHash" ]
-            , "properties":
-              { "id":
-                { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
-                }
-              , "vrfVerificationKeyHash":
-                { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
                 }
               }
             }
@@ -536,7 +526,7 @@
             { "$ref": "cardano.json#/definitions/DelegateRepresentative"
             }
           , "deposit":
-            { "$ref": "cardano.json#/definitions/Lovelace"
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
             }
           , "anchor":
             { "$ref": "cardano.json#/definitions/Anchor"
@@ -578,7 +568,7 @@
             { "$ref": "cardano.json#/definitions/DelegateRepresentative"
             }
           , "deposit":
-            { "$ref": "cardano.json#/definitions/Lovelace"
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
             }
           }
         }
@@ -858,12 +848,12 @@
       , "initialFunds":
         { "type": "object"
         , "propertyNames": { "$ref": "cardano.json#/definitions/Address" }
-        , "additionalProperties": { "$ref": "cardano.json#/definitions/Lovelace" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
         }
       , "initialVouchers":
         { "type": "object"
         , "propertyNames": { "$ref": "cardano.json#/definitions/VerificationKey" }
-        , "additionalProperties": { "$ref": "cardano.json#/definitions/Lovelace" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
         }
       , "securityParameter": { "$ref": "cardano.json#/definitions/UInt64" }
       , "networkMagic": { "$ref": "cardano.json#/definitions/NetworkMagic" }
@@ -916,7 +906,7 @@
         { "type": "object"
         , "title": "InitialFunds"
         , "propertyNames": { "$ref": "cardano.json#/definitions/Address" }
-        , "additionalProperties": { "$ref": "cardano.json#/definitions/Lovelace" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
         }
       , "initialStakePools": { "$ref": "cardano.json#/definitions/GenesisStakePools" }
       }
@@ -1024,9 +1014,9 @@
           , "constitutionalCommitteeMinSize": { "$ref": "cardano.json#/definitions/UInt64" }
           , "constitutionalCommitteeMaxTermLength": { "$ref": "cardano.json#/definitions/UInt64" }
           , "governanceActionLifetime": { "$ref": "cardano.json#/definitions/Epoch" }
-          , "governanceActionDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+          , "governanceActionDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
           , "delegateRepresentativeVotingThresholds": { "$ref": "cardano.json#/definitions/DelegateRepresentativeVotingThresholds" }
-          , "delegateRepresentativeDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+          , "delegateRepresentativeDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
           , "delegateRepresentativeMaxIdleTime": { "$ref": "cardano.json#/definitions/Epoch" }
           }
         }
@@ -1120,7 +1110,7 @@
             , "enum": [ "reserves", "treasury" ]
             }
           , "value":
-            { "$ref": "cardano.json#/definitions/Lovelace"
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
             }
           }
         }
@@ -1230,7 +1220,7 @@
     , "required": [ "action" ]
     , "properties":
       { "deposit":
-        { "$ref": "cardano.json#/definitions/Lovelace"
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
         }
       , "returnAccount":
         { "$ref": "cardano.json#/definitions/RewardAccount"
@@ -1403,33 +1393,6 @@
     , "enum": [ "plutus:v1", "plutus:v2", "plutus:v3" ]
     }
 
-  , "Lovelace":
-    { "title": "Lovelace"
-    , "additionalProperties": false
-    , "required": [ "lovelace" ]
-    , "properties":
-      { "lovelace":
-        { "type": "integer"
-        , "description": "A number of lovelace, possibly large when summed up."
-        }
-      }
-    }
-
-  , "LovelaceDelta":
-    { "title": "LovelaceDelta"
-    , "type": "object"
-    , "additionalProperties": false
-    , "required": [ "lovelace" ]
-    , "properties":
-      { "lovelace":
-        { "type": "integer"
-        , "description": "An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada)."
-        , "minimum": -9223372036854775808
-        , "maximum": 9223372036854775807
-        }
-      }
-    }
-
   , "KesVerificationKey":
     { "title": "KesVerificationKey"
     , "type": "string"
@@ -1453,7 +1416,7 @@
     , "propertyNames": { "pattern": "^-?[0-9]+$" }
     , "additionalProperties":
       { "type": "object"
-      , "description": "An associated metadatum, as a CBOR bytestring or a JSON object if possible. Some binary representations cannot be represented in plain JSON and the 'json' field is therefore omitted."
+      , "description": "An associated metadatum, as a CBOR bytestring or a JSON object if possible. If not possible, default to 'cbor'. Use --include-metadata-cbor to ALWAYS include the cbor field."
       , "additionalProperties": false
       , "properties":
         { "cbor":
@@ -1516,7 +1479,7 @@
     , "additionalProperties": false
     , "required": [ "bytes" ]
     , "properties":
-      { "bytes": { "$ref": "cardano.json#/definitions/Int64" }
+      { "bytes": { "$ref": "cardano.json#/definitions/UInt64" }
       }
     }
 
@@ -1580,13 +1543,13 @@
           }
         }
       , "cost":
-        { "$ref": "cardano.json#/definitions/Lovelace"
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
         }
       , "margin":
         { "$ref": "cardano.json#/definitions/Ratio"
         }
       , "pledge":
-        { "$ref": "cardano.json#/definitions/Lovelace"
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
         }
       , "rewardAccount":
         { "$ref": "cardano.json#/definitions/RewardAccount"
@@ -1643,19 +1606,19 @@
     , "additionalProperties": false
     , "properties":
       { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "minUtxoDepositCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "minUtxoDepositConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "minUtxoDepositConstant": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxValueSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "extraEntropy": { "$ref": "cardano.json#/definitions/Nonce" }
-      , "stakeCredentialDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "stakePoolDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "stakeCredentialDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "stakePoolDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "stakePoolRetirementEpochBound": { "$ref": "cardano.json#/definitions/UInt64" }
       , "stakePoolPledgeInfluence": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "minStakePoolCost": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "minStakePoolCost": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "desiredNumberOfStakePools": { "$ref": "cardano.json#/definitions/UInt64" }
       , "federatedBlockProductionRatio": { "$ref": "cardano.json#/definitions/Ratio" }
       , "monetaryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
@@ -1670,9 +1633,9 @@
       , "constitutionalCommitteeMinSize": { "$ref": "cardano.json#/definitions/UInt64" }
       , "constitutionalCommitteeMaxTermLength": { "$ref": "cardano.json#/definitions/UInt64" }
       , "governanceActionLifetime": { "$ref": "cardano.json#/definitions/Epoch" }
-      , "governanceActionDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "governanceActionDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "delegateRepresentativeVotingThresholds": { "$ref": "cardano.json#/definitions/DelegateRepresentativeVotingThresholds" }
-      , "delegateRepresentativeDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "delegateRepresentativeDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "delegateRepresentativeMaxIdleTime": { "$ref": "cardano.json#/definitions/Epoch" }
       , "version": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
       }
@@ -1701,19 +1664,19 @@
       ]
     , "properties":
       { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "minUtxoDepositCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
-      , "minUtxoDepositConstant": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "minUtxoDepositConstant": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxValueSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "extraEntropy": { "$ref": "cardano.json#/definitions/Nonce" }
-      , "stakeCredentialDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "stakePoolDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "stakeCredentialDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "stakePoolDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "stakePoolRetirementEpochBound": { "$ref": "cardano.json#/definitions/UInt64" }
       , "stakePoolPledgeInfluence": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "minStakePoolCost": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "minStakePoolCost": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "desiredNumberOfStakePools": { "$ref": "cardano.json#/definitions/UInt64" }
       , "federatedBlockProductionRatio": { "$ref": "cardano.json#/definitions/Ratio" }
       , "monetaryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
@@ -1728,9 +1691,9 @@
       , "constitutionalCommitteeMinSize": { "$ref": "cardano.json#/definitions/UInt64" }
       , "constitutionalCommitteeMaxTermLength": { "$ref": "cardano.json#/definitions/UInt64" }
       , "governanceActionLifetime": { "$ref": "cardano.json#/definitions/Epoch" }
-      , "governanceActionDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "governanceActionDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "delegateRepresentativeVotingThresholds": { "$ref": "cardano.json#/definitions/DelegateRepresentativeVotingThresholds" }
-      , "delegateRepresentativeDeposit": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "delegateRepresentativeDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "delegateRepresentativeMaxIdleTime": { "$ref": "cardano.json#/definitions/Epoch" }
       , "version": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
       }
@@ -1768,13 +1731,18 @@
           , "cpu": 2
           }
         , "redeemer": "ggRCqSQ="
+        , "validator":
+          { "index": 0
+          , "purpose": "spend"
+          }
         }
       ]
     , "additionalProperties": false
-    , "required": [ "redeemer", "executionUnits" ]
+    , "required": [ "redeemer", "executionUnits", "validator" ]
     , "properties":
       { "redeemer": { "$ref": "cardano.json#/definitions/RedeemerData" }
       , "executionUnits": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+      , "validator": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
       }
     }
 
@@ -1787,8 +1755,18 @@
 
   , "RedeemerPointer":
     { "title": "RedeemerPointer"
-    , "type": "string"
-    , "pattern": "^(spend|mint|certificate|withdrawal):[0-9]+$"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "purpose", "index" ]
+    , "properties":
+      { "purpose":
+        { "type": "string"
+        , "enum": [ "spend", "mint", "publish", "withdraw" ]
+        }
+      , "index":
+        { "$ref": "cardano.json#/definitions/UInt64"
+        }
+      }
     }
 
   , "RelativeTime":
@@ -1865,10 +1843,10 @@
   , "RewardTransfer":
     { "title": "RewardTransfer"
     , "type": "object"
-    , "additionalProperties": { "$ref": "cardano.json#/definitions/LovelaceDelta" }
+    , "additionalProperties": { "$ref": "cardano.json#/definitions/Value<Delta>" }
     , "propertyNames": { "pattern": "[0-9a-f]{56}$" }
     , "examples":
-      [ { "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5": 123456789
+      [ { "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5": { "ada": { "lovelace": 123456789 } }
         }
       ]
     }
@@ -1887,6 +1865,7 @@
       [ { "type": "object"
         , "title": "Native"
         , "additionalProperties": false
+        , "description": "A Cardano native script. Use --include-script-cbor to ALWAYS include the 'cbor' field. Omitted otherwise."
         , "required": [ "language", "json" ]
         , "properties":
           { "language":
@@ -2111,6 +2090,7 @@
 
   , "Signatory":
     { "title": "Signatory"
+    , "description": "A signatory (EdDSA) for the transaction. The fields 'chainCode' and 'addressAttributes' are only present on bootstrap signatures (when spending from a Byron/Bootstrap address)."
     , "type": "object"
     , "additionalProperties": false
     , "required": [ "signature", "key" ]
@@ -2212,7 +2192,7 @@
         , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
         }
       , "totalCollateral":
-        { "$ref": "cardano.json#/definitions/Lovelace"
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
         }
       , "collateralReturn":
         { "$ref": "cardano.json#/definitions/TransactionOutput"
@@ -2229,7 +2209,7 @@
         { "$ref": "cardano.json#/definitions/Withdrawals"
         }
       , "fee":
-        { "$ref": "cardano.json#/definitions/Lovelace"
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
         }
       , "validityInterval":
         { "$ref": "cardano.json#/definitions/ValidityInterval"
@@ -2277,14 +2257,13 @@
         , "additionalProperties": { "$ref": "cardano.json#/definitions/Datum" }
         }
       , "redeemers":
-        { "type": "object"
-        , "propertyNames": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
-        , "additionalProperties": { "$ref": "cardano.json#/definitions/Redeemer" }
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Redeemer" }
         }
       , "cbor":
         { "type": "string"
         , "contentEncoding": "base16"
-        , "description": "The raw serialized (CBOR) transaction, as found on-chain."
+        , "description": "The raw serialized (CBOR) transaction, as found on-chain. Use --include-transaction-cbor to ALWAYS include the 'cbor' field. Omitted otherwise."
         }
       }
     }
@@ -2305,11 +2284,9 @@
     , "examples":
       [ { "address": "addr_test1qz66ue36465w2qq40005h2hadad6pnjht8mu6sgplsfj74qdjnshguewlx4ww0eet26y2pal4xpav5prcydf28cvxtjqx46x7f"
         , "value":
-          { "coins": 2
-          , "assets":
-            { "3542acb3a64d80c29302260d62c3b87a742ad14abf855ebc6733081e": 42
-            , "b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.706174617465": 1337
-            }
+          { "ada": { "lovelace": 2 }
+          , "3542acb3a64d80c29302260d62c3b87a742ad14abf855ebc6733081e": 42
+          , "b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.706174617465": 1337
           }
         }
       ]
@@ -2432,6 +2409,45 @@
       }
     }
 
+  , "Value<AdaOnly>":
+    { "title": "Value<AdaOnly>"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "ada" ]
+    , "properties":
+      { "ada":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "lovelace" ]
+        , "properties":
+          { "lovelace": { "type": "integer" }
+          }
+        }
+      }
+    }
+
+  , "Value<Delta>":
+    { "title": "Value<Delta>"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "ada" ]
+    , "properties":
+      { "ada":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "lovelace" ]
+        , "properties":
+          { "lovelace":
+            { "type": "integer"
+            , "description": "An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada)."
+            , "minimum": -9223372036854775808
+            , "maximum": 9223372036854775807
+            }
+          }
+        }
+      }
+    }
+
   , "VerificationKey":
     { "title": "VerificationKey"
     , "description": "An Ed25519 verification key."
@@ -2462,7 +2478,7 @@
   , "Withdrawals":
     { "title": "Withdrawals"
     , "type": "object"
-    , "additionalProperties": { "$ref": "cardano.json#/definitions/Lovelace" }
+    , "additionalProperties": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
     , "propertyNames": { "pattern": "^stake(_test)?1[0-9a-z]+$" }
     }
   }
