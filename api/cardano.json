@@ -1434,11 +1434,84 @@
   , "Metadatum":
     { "title": "Metadatum"
     , "oneOf":
-      [ { "title": "Integer", "type": "integer" }
-      , { "title": "String", "type": "string" }
-      , { "title": "Array<Metadatum>", "type": "array", "items": { "$ref": "cardano.json#/definitions/Metadatum" } }
-      , { "title": "Object<Metadatum>", "type": "object", "additionalProperties": { "$ref": "cardano.json#/definitions/Metadatum" } }
+      [ { "title": "Metadatum<NoSchema>"
+        , "oneOf":
+          [ { "title": "Integer", "type": "integer" }
+          , { "title": "String", "type": "string" }
+          , { "title": "Array<Metadatum>", "type": "array", "items": { "$ref": "cardano.json#/definitions/Metadatum/oneOf/0" } }
+          , { "title": "Object<Metadatum>", "type": "object", "additionalProperties": { "$ref": "cardano.json#/definitions/Metadatum/oneOf/0" } }
+          ]
+        }
+      , { "title": "Metadatum<DetailedSchema>"
+        , "oneOf":
+          [ { "type": "object"
+            , "title": "int"
+            , "additionalProperties": false
+            , "required": ["int"]
+            , "properties":
+              { "int":
+                  { "type": "integer"
+                  }
+              }
+            }
+          , { "type": "object"
+            , "title": "string"
+            , "additionalProperties": false
+            , "required": ["string"]
+            , "properties":
+              { "string":
+                  { "type": "string"
+                  }
+              }
+            }
+          , { "type": "object"
+            , "title": "bytes"
+            , "additionalProperties": false
+            , "required": ["bytes"]
+            , "properties":
+              { "bytes":
+                { "type": "string"
+                , "contentEncoding": "base16"
+                , "pattern": "^[0-9a-f]*$"
+                }
+              }
+            }
+          , { "type": "object"
+            , "title": "list"
+            , "additionalProperties": false
+            , "required": ["list"]
+            , "properties":
+              { "list":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/Metadatum/oneOf/1" }
+                }
+              }
+            }
+          , { "type": "object"
+            , "title": "map"
+            , "additionalProperties": false
+            , "required": ["map"]
+            , "properties":
+              { "map":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/MetadatumMap" }
+                }
+              }
+            }
+          ]
+        }
       ]
+    }
+
+  , "MetadatumMap":
+    { "title": "MetadatumMap"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": ["k", "v"]
+    , "properties":
+      { "k": { "$ref": "cardano.json#/definitions/Metadatum/oneOf/1" }
+      , "v": { "$ref": "cardano.json#/definitions/Metadatum/oneOf/1" }
+      }
     }
 
   , "Network":
