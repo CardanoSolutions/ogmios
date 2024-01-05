@@ -12,7 +12,7 @@
 #
 # Examples:
 #   ./wait-for-sync.sh 1337 1
-#   ./wait-for-sync.sh 1338 0.95
+#   ./wait-for-sync.sh 1337 0.95
 
 
 set -eo pipefail
@@ -21,7 +21,7 @@ exitWithUsage () {
   echo -e "Error: missing argument(s)!\n"
   echo -e "Usage: $0 OGMIOS_PORT THRESHOLD"
   echo -e "    Wait until a running Ogmios server at OGMIOS_PORT reaches THRESHOLD network synchronization.\n"
-  echo -e "Example: \n    $0 1338 0.95"
+  echo -e "Example: \n    $0 1337 0.95"
   exit 1
 }
 

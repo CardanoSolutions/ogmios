@@ -46,7 +46,7 @@ yarn repl:start
 ```
 #### testnet
 ```console
-yarn repl:start --port 1338
+yarn repl:start --port 1337
 ```
 ### Lint
 ```console

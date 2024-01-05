@@ -21,16 +21,16 @@ describe('Connection', () => {
     it('can be passed a complete ConnectionConfig object', () => {
       expect(createConnectionObject({
         host: 'some-host',
-        port: 1338,
+        port: 1337,
         tls: true
       })).toStrictEqual({
         host: 'some-host',
-        port: 1338,
+        port: 1337,
         tls: true,
         maxPayload: 134217728,
         address: {
-          http: 'https://some-host:1338',
-          webSocket: 'wss://some-host:1338'
+          http: 'https://some-host:1337',
+          webSocket: 'wss://some-host:1337'
         }
       })
     })
@@ -50,15 +50,15 @@ describe('Connection', () => {
     })
     it('can be passed an object with just a port', () => {
       expect(createConnectionObject({
-        port: 1338
+        port: 1337
       })).toStrictEqual({
         host: 'localhost',
-        port: 1338,
+        port: 1337,
         tls: false,
         maxPayload: 134217728,
         address: {
-          http: 'http://localhost:1338',
-          webSocket: 'ws://localhost:1338'
+          http: 'http://localhost:1337',
+          webSocket: 'ws://localhost:1337'
         }
       })
     })
@@ -78,16 +78,16 @@ describe('Connection', () => {
     })
     it('can be passed an object excluding a host', () => {
       expect(createConnectionObject({
-        port: 1338,
+        port: 1337,
         tls: true
       })).toStrictEqual({
         host: 'localhost',
-        port: 1338,
+        port: 1337,
         tls: true,
         maxPayload: 134217728,
         address: {
-          http: 'https://localhost:1338',
-          webSocket: 'wss://localhost:1338'
+          http: 'https://localhost:1337',
+          webSocket: 'wss://localhost:1337'
         }
       })
     })
@@ -109,15 +109,15 @@ describe('Connection', () => {
     it('can be passed an object excluding tls', () => {
       expect(createConnectionObject({
         host: 'localhost',
-        port: 1338
+        port: 1337
       })).toStrictEqual({
         host: 'localhost',
-        port: 1338,
+        port: 1337,
         tls: false,
         maxPayload: 134217728,
         address: {
-          http: 'http://localhost:1338',
-          webSocket: 'ws://localhost:1338'
+          http: 'http://localhost:1337',
+          webSocket: 'ws://localhost:1337'
         }
       })
     })
@@ -152,19 +152,5 @@ describe('Connection', () => {
         expect(error.code).toBe('ECONNREFUSED')
       }
     })
-    // describe('connecting before the node socket is ready', () => {
-    //   // Todo: Implement https://github.com/mswjs/msw to return required health to trigger this
-    //   it('rejects if the node socket is not ready', async () => {
-    //     try {
-    //       await createInteractionContext(
-    //         (error) => console.error(error),
-    //         () => {},
-    //         { connection: { port: 1338 } }
-    //       )
-    //     } catch (error) {
-    //       expect(error.message).toBe('Ogmios is not ready')
-    //     }
-    //   })
-    // })
   })
 })

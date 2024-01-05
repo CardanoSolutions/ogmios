@@ -22,18 +22,19 @@ Then, simply use cabal as follows:
 $ cabal test all
 ```
 
-## 💨 Smoke Tests
+## 💨 End-to-end Tests
 
-Run the whole components stack using [docker-compose](https://docs.docker.com/compose) as follows:
+### Pre-requisites
+
+- A synchronized node running on the **preview** network.
+- Ogmios running and listening on `:1337`.
+
+### Running the tests
+
+From the project root, run:
 
 ```console
-$ docker-compose up
-```
-
-Assuming the default configuration, Ogmios should be listening on `:1337`. Make sure that cardano-node is up-and-running and has finished its bootstraping phase (Ogmios should no longer print any warnings about `HealthFailedToConnect`). Then, open your favorite browser and visit [http://localhost:1337/tests.html](http://localhost:1337/tests.html).
-
-To tear down, press `CTRL+C` and then run:
-
-```console
-$ docker-compose down
+$ cd clients/TypeScript
+$ yarn
+$ yarn test
 ```

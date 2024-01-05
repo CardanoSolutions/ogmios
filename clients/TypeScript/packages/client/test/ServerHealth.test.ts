@@ -24,7 +24,7 @@ describe('ServerHealth', () => {
     //   expectHealth(await getServerHealth())
     // })
     it('fetches the service metadata', async () => {
-      const connection = createConnectionObject({ port: 1338 })
+      const connection = createConnectionObject({ port: 1337 })
       expectHealth(await getServerHealth({ connection }))
     })
     it('throws fetch errors if encountered', async () => {

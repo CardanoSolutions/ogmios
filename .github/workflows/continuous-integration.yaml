@@ -272,7 +272,7 @@ jobs:
         CONFDIR: /home/runner/work/ogmios/ogmios/server/config/network/${{ matrix.network }}
       run: |
         chmod +x ../../server/bin/ogmios
-        sudo ../../server/bin/ogmios --port 1338 --log-level error --node-socket ${{ runner.temp }}/ipc/node.socket --node-config $CONFDIR/cardano-node/config.json &
+        sudo ../../server/bin/ogmios --port 1337 --log-level error --node-socket ${{ runner.temp }}/ipc/node.socket --node-config $CONFDIR/cardano-node/config.json &
 
         docker pull ghcr.io/intersectmbo/cardano-node:${{ matrix.cardano-node }}
         docker run -d --name cardano-node \
@@ -282,7 +282,7 @@ jobs:
           -v $CONFDIR/genesis:/genesis \
           ghcr.io/intersectmbo/cardano-node:${{ matrix.cardano-node }} run --config /config/config.json --database-path /db --socket-path /ipc/node.socket --topology /config/topology.json
 
-        ../../scripts/wait-for-sync.sh 1338 1 "docker logs --since 10s cardano-node"
+        ../../scripts/wait-for-sync.sh 1337 1 "docker logs --since 10s cardano-node"
 
         yarn test
         docker stop cardano-node
