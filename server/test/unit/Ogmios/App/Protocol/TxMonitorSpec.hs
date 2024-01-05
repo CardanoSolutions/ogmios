@@ -66,7 +66,8 @@ import Ogmios.Data.Json
 import Ogmios.Data.Json.Orphans
     ()
 import Ogmios.Data.Json.Prelude
-    ( at
+    ( MetadataFormat (..)
+    , at
     )
 import Ogmios.Data.Protocol.TxMonitor
     ( AcquireMempool (..)
@@ -208,7 +209,7 @@ withTxMonitorClient
     -> m a
 withTxMonitorClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
-    let innerCodecs = mkTxMonitorCodecs encodeTxId (encodeTx omitOptionalCbor)
+    let innerCodecs = mkTxMonitorCodecs encodeTxId (encodeTx (MetadataNoSchema, omitOptionalCbor))
     let client = mkTxMonitorClient innerCodecs recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cTxMonitorCodec
     withMockChannel (txMonitorMockPeer seed codec) $ \channel -> do

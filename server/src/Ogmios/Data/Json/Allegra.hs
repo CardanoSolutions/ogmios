@@ -48,7 +48,7 @@ type AuxiliaryScripts crypto =
 --
 encodeAuxiliaryData
     :: forall crypto era. (Era era, era ~ AllegraEra crypto)
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> Al.AllegraTxAuxData era
     -> (Json, AuxiliaryScripts crypto)
 encodeAuxiliaryData opts (Al.AllegraTxAuxData blob scripts) =
@@ -61,7 +61,7 @@ encodeAuxiliaryData opts (Al.AllegraTxAuxData blob scripts) =
 
 encodeBlock
     :: Crypto crypto
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> ShelleyBlock (TPraos crypto) (AllegraEra crypto)
     -> Json
 encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
@@ -128,10 +128,10 @@ encodeTx
         ( Crypto crypto
         , era ~ AllegraEra crypto
         )
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> Sh.ShelleyTx era
     -> Json
-encodeTx opts x =
+encodeTx (fmt, opts) x =
     encodeObject
         ( Shelley.encodeTxId (Ledger.txid @(AllegraEra crypto) (Sh.body x))
        <>
@@ -151,7 +151,7 @@ encodeTx opts x =
   where
     auxiliary = do
         hash <- Shelley.encodeAuxiliaryDataHash <$> Al.atbAuxDataHash (Sh.body x)
-        (labels, scripts) <- encodeAuxiliaryData opts <$> Sh.auxiliaryData x
+        (labels, scripts) <- encodeAuxiliaryData (fmt, opts) <$> Sh.auxiliaryData x
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts

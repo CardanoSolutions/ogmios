@@ -76,6 +76,7 @@ import Ogmios.App.Configuration
     ( Configuration (..)
     , EpochSlots (..)
     , IncludeCbor (..)
+    , MetadataFormat (..)
     , NetworkMagic (..)
     , NetworkParameters (..)
     , SystemStart (..)
@@ -166,6 +167,7 @@ parserInfo = info (helper <*> parser) $ mempty
                         <*> includeMetadataCborFlag
                         <*> includeScriptCborFlag
                     ))
+                    <*> metadataFormatFlag
                 )
             <*> (tracersOption <|> Tracers
                     <$> fmap Const (logLevelOption "health")
@@ -235,11 +237,23 @@ maxInFlightOption = option auto $ mempty
     <> value 1000
     <> showDefault
 
+-- | [--metadata-detailed-schema]
+metadataFormatFlag :: Parser MetadataFormat
+metadataFormatFlag = fmap toMetadataFormat $ switch $ mempty
+    <> long "metadata-detailed-schema"
+    <> help "When set, metadata will be encoded as 'detailed schema'. See <https://github.com/input-output-hk/cardano-node-wiki/wiki/tx-metadata#detailed-schema> for more details about the different metadata formats."
+    <> showDefault
+  where
+    toMetadataFormat = \case
+        True -> MetadataDetailedSchema
+        False -> MetadataNoSchema
+
+
 -- | [--include-cbor]
 includeCborFlag :: Parser IncludeCbor
 includeCborFlag = fmap toIncludeCbor $ switch $ mempty
     <> long "include-cbor"
-    <> help "In chain-synchronization, always include a 'cbor' field for transaction, metadata and scripts that contain the original binary serialized representation of each object."
+    <> help "Shorthand for: --include-transaction-cbor --include-metadata-cbor --include-script-cbor"
     <> showDefault
   where
     toIncludeCbor = \case
@@ -250,21 +264,21 @@ includeCborFlag = fmap toIncludeCbor $ switch $ mempty
 includeTransactionCborFlag :: Parser Bool
 includeTransactionCborFlag = switch $ mempty
     <> long "include-transaction-cbor"
-    <> help "In chain-synchronization, always include a 'cbor' field for all transactions that contain the original binary serialized representation of that transaction"
+    <> help "Always include a 'cbor' field for all transactions that contain the original binary serialized representation of that transaction in the server's responses."
     <> showDefault
 
 -- | [--include-metadata-cbor]
 includeMetadataCborFlag :: Parser Bool
 includeMetadataCborFlag = switch $ mempty
     <> long "include-metadata-cbor"
-    <> help "In chain-synchronization, always include a 'cbor' field for all metadata containing the original binary serialized representation of that metadata. Otherwise, the field is only present when the metadata can't be safely represented as JSON."
+    <> help "Always include a 'cbor' field for all metadata containing the original binary serialized representation of that metadata in the server's responses. Otherwise, the field is only present when the metadata can't be safely represented as JSON."
     <> showDefault
 
 -- | [--include-script-cbor]
 includeScriptCborFlag :: Parser Bool
 includeScriptCborFlag = switch $ mempty
     <> long "include-script-cbor"
-    <> help "In chain-synchronization, always include a 'cbor' field for all phase-1 native scripts that contain the original binary serialized representation of that script."
+    <> help "Always include a 'cbor' field for all phase-1 native scripts that contain the original binary serialized representation of that script in the server's responses."
     <> showDefault
 
 -- | [--log-level=SEVERITY]

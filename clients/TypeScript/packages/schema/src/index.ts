@@ -94,10 +94,12 @@ export type Nonce = Neutral | DigestBlake2B256;
 export type Neutral = "neutral";
 export type Int64 = number;
 export type CostModel = Int64[];
-export type Metadatum = Integer | String | ArrayMetadatum | ObjectMetadatum;
+export type Metadatum = MetadatumNoSchema | MetadatumDetailedSchema;
+export type MetadatumNoSchema = Integer | String | ArrayMetadatum | ObjectMetadatum;
 export type Integer = bigint;
 export type String = string;
-export type ArrayMetadatum = Metadatum[];
+export type ArrayMetadatum = MetadatumNoSchema[];
+export type MetadatumDetailedSchema = Int | String1 | Bytes | List | Map;
 /**
  * An Ed25519 verification key.
  */
@@ -951,7 +953,26 @@ export interface MetadataLabels {
   };
 }
 export interface ObjectMetadatum {
-  [k: string]: Metadatum;
+  [k: string]: MetadatumNoSchema;
+}
+export interface Int {
+  int: bigint;
+}
+export interface String1 {
+  string: string;
+}
+export interface Bytes {
+  bytes: string;
+}
+export interface List {
+  list: MetadatumDetailedSchema[];
+}
+export interface Map {
+  map: MetadatumMap[];
+}
+export interface MetadatumMap {
+  k: MetadatumDetailedSchema;
+  v: MetadatumDetailedSchema;
 }
 /**
  * A signatory (EdDSA) for the transaction. The fields 'chainCode' and 'addressAttributes' are only present on bootstrap signatures (when spending from a Byron/Bootstrap address).

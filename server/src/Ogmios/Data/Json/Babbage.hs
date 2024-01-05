@@ -58,7 +58,7 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 encodeBlock
     :: ( Crypto crypto
        )
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> ShelleyBlock (Praos crypto) (BabbageEra crypto)
     -> Json
 encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
@@ -232,10 +232,10 @@ encodeTx
         ( Crypto crypto
         , era ~ BabbageEra crypto
         )
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> Ba.AlonzoTx era
     -> Json
-encodeTx opts x =
+encodeTx (fmt, opts) x =
     encodeObject
         ( Shelley.encodeTxId (Ledger.txid @(BabbageEra crypto) (Ba.body x))
        <>
@@ -255,7 +255,7 @@ encodeTx opts x =
   where
     auxiliary = do
         hash <- Shelley.encodeAuxiliaryDataHash <$> Ba.btbAuxDataHash (Ba.body x)
-        (labels, scripts) <- Alonzo.encodeAuxiliaryData opts <$> Ba.auxiliaryData x
+        (labels, scripts) <- Alonzo.encodeAuxiliaryData (fmt, opts) <$> Ba.auxiliaryData x
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts

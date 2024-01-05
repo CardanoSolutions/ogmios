@@ -71,7 +71,7 @@ encodeAuxiliaryData
         ( Ledger.Script era ~ Al.AlonzoScript era
         , Ledger.Api.EraScript era
         )
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> Al.AlonzoTxAuxData era
     -> (Json, AuxiliaryScripts era)
 encodeAuxiliaryData opts (Al.AlonzoTxAuxData blob timelocks plutus) =
@@ -99,7 +99,7 @@ encodeBinaryData =
 
 encodeBlock
     :: Crypto crypto
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> ShelleyBlock (TPraos crypto) (AlonzoEra crypto)
     -> Json
 encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
@@ -436,10 +436,10 @@ encodeTx
         ( Crypto crypto
         , era ~ AlonzoEra crypto
         )
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> Al.AlonzoTx era
     -> Json
-encodeTx opts x =
+encodeTx (fmt, opts) x =
     encodeObject
         ( Shelley.encodeTxId (Ledger.txid @(AlonzoEra crypto) (Al.body x))
        <>
@@ -459,7 +459,7 @@ encodeTx opts x =
   where
     auxiliary = do
         hash <- Shelley.encodeAuxiliaryDataHash <$> Al.atbAuxDataHash (Al.body x)
-        (labels, scripts) <- encodeAuxiliaryData opts <$> Al.auxiliaryData x
+        (labels, scripts) <- encodeAuxiliaryData (fmt, opts) <$> Al.auxiliaryData x
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts

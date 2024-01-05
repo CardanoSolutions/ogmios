@@ -69,7 +69,8 @@ import Ogmios.Data.Json
 import Ogmios.Data.Json.Orphans
     ()
 import Ogmios.Data.Json.Prelude
-    ( encodeSlotLength
+    ( MetadataFormat (..)
+    , encodeSlotLength
     , omitOptionalCbor
     )
 import Ogmios.Data.Json.Query
@@ -446,7 +447,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response (NextBlockResponse Block)))
-            (_encodeNextBlockResponse (encodeBlock omitOptionalCbor) encodePoint encodeTip)
+            (_encodeNextBlockResponse (encodeBlock (MetadataNoSchema, omitOptionalCbor)) encodePoint encodeTip)
             (50, "NextBlockResponse")
             "ogmios.json#/properties/NextBlockResponse"
 
@@ -497,7 +498,13 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response (NextTransactionResponse Block)))
-            (_encodeNextTransactionResponse encodeTxId (encodeTx omitOptionalCbor))
+            (_encodeNextTransactionResponse encodeTxId (encodeTx (MetadataNoSchema, omitOptionalCbor)))
+            (10, "NextTransactionResponse")
+            "ogmios.json#/properties/NextTransactionResponse"
+
+        validateToJSON
+            (arbitrary @(Rpc.Response (NextTransactionResponse Block)))
+            (_encodeNextTransactionResponse encodeTxId (encodeTx (MetadataDetailedSchema, omitOptionalCbor)))
             (10, "NextTransactionResponse")
             "ogmios.json#/properties/NextTransactionResponse"
 

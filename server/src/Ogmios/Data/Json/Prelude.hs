@@ -13,6 +13,7 @@ module Ogmios.Data.Json.Prelude
     , ToJSON
     , ViaEncoding (..)
     , IncludeCbor (..)
+    , MetadataFormat (..)
     , omitOptionalCbor
     , includeAllCbor
     , jsonToByteString
@@ -205,6 +206,11 @@ import qualified Ogmios.Prelude
 --
 
 type Json = Json.Encoding
+
+data MetadataFormat
+    = MetadataNoSchema
+    | MetadataDetailedSchema
+    deriving (Generic, Eq, Show)
 
 data IncludeCbor = IncludeCbor
     { includeTransactionCbor :: !Bool

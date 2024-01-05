@@ -192,7 +192,7 @@ newWebSocketApp
     -> m WebSocketApp
 newWebSocketApp tr unliftIO = do
     NetworkParameters{slotsPerEpoch,networkMagic} <- asks (view typed)
-    Configuration{nodeSocket,maxInFlight,nodeConfig,includeCbor} <- asks (view typed)
+    Configuration{nodeSocket,maxInFlight,nodeConfig,includeCbor,metadataFormat} <- asks (view typed)
     sensors <- asks (view typed)
     let getGenesisConfig = GetGenesisConfig
             { getByronGenesis = readByronGenesis nodeConfig
@@ -203,7 +203,7 @@ newWebSocketApp tr unliftIO = do
 
     let codecs =
             ( mkChainSyncCodecs
-                (encodeBlock includeCbor)
+                (encodeBlock (metadataFormat, includeCbor))
                 encodePoint
                 encodeTip
 
@@ -214,7 +214,7 @@ newWebSocketApp tr unliftIO = do
 
             , mkTxMonitorCodecs
                 encodeTxId
-                (encodeTx includeCbor)
+                (encodeTx (metadataFormat, includeCbor))
 
             , mkTxSubmissionCodecs
                 encodeTxId

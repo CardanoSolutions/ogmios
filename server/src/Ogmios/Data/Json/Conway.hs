@@ -80,7 +80,7 @@ encodeAnchor x = encodeObject
 encodeBlock
     :: ( Crypto crypto
        )
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> ShelleyBlock (Praos crypto) (ConwayEra crypto)
     -> Json
 encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
@@ -516,10 +516,10 @@ encodeTx
         ( Crypto crypto
         , era ~ ConwayEra crypto
         )
-   => IncludeCbor
+   => (MetadataFormat, IncludeCbor)
     -> Ba.AlonzoTx era
     -> Json
-encodeTx opts x =
+encodeTx (fmt, opts) x =
     encodeObject
         ( Shelley.encodeTxId (Ledger.txid @(ConwayEra crypto) (Cn.body x))
        <>
@@ -539,7 +539,7 @@ encodeTx opts x =
   where
     auxiliary = do
         hash <- Shelley.encodeAuxiliaryDataHash <$> Cn.ctbAdHash (Cn.body x)
-        (labels, scripts) <- Alonzo.encodeAuxiliaryData opts <$> Ba.auxiliaryData x
+        (labels, scripts) <- Alonzo.encodeAuxiliaryData (fmt, opts) <$> Ba.auxiliaryData x
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts

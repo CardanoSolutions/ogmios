@@ -131,7 +131,7 @@ encodeBHeader (TPraos.BHeader hBody _hSig) =
 
 encodeBlock
     :: Crypto crypto
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> ShelleyBlock (TPraos crypto) (ShelleyEra crypto)
     -> Json
 encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
@@ -396,7 +396,7 @@ encodeKESPeriod =
 
 encodeMetadata
     :: forall era. (Era era)
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> Sh.ShelleyTxAuxData era
     -> Json
 encodeMetadata opts (Sh.ShelleyTxAuxData blob) =
@@ -404,10 +404,10 @@ encodeMetadata opts (Sh.ShelleyTxAuxData blob) =
 
 encodeMetadataBlob
     :: forall era. (Era era)
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> Map Word64 Sh.Metadatum
     -> Json
-encodeMetadataBlob opts =
+encodeMetadataBlob (fmt, opts) =
     encodeMap show encodeMetadatum
   where
     encodeMetadatum :: Sh.Metadatum -> Json
@@ -423,7 +423,31 @@ encodeMetadataBlob opts =
                 identity json
             )
       where
-        json = tryEncodeMetadatumAsJson meta
+        json = case fmt of
+            MetadataNoSchema ->
+                tryEncodeMetadatumAsJson meta
+            MetadataDetailedSchema ->
+                SJust (encodeMetadatumAsDetailedSchema meta)
+
+    encodeMetadatumAsDetailedSchema :: Sh.Metadatum -> Json
+    encodeMetadatumAsDetailedSchema = encodeObject . \case
+        Sh.I n ->
+            "int" .= encodeInteger n
+        Sh.B bytes ->
+            "bytes" .= encodeByteStringBase16 bytes
+        Sh.S txt ->
+            "string" .= encodeText txt
+        Sh.List xs ->
+            "list" .= encodeList encodeMetadatumAsDetailedSchema xs
+        Sh.Map xs ->
+            "map" .= encodeList encodeKeyPair xs
+      where
+        encodeKeyPair :: (Sh.Metadatum, Sh.Metadatum) -> Json
+        encodeKeyPair (k, v) =
+            encodeObject
+                ( "k" .= encodeMetadatumAsDetailedSchema k
+              <>  "v" .= encodeMetadatumAsDetailedSchema v
+                )
 
     tryEncodeMetadatumAsJson :: Sh.Metadatum -> StrictMaybe Json
     tryEncodeMetadatumAsJson = \case
@@ -803,10 +827,10 @@ encodeStakePoolRelay = encodeObject . \case
 
 encodeTx
     :: forall crypto era. (Crypto crypto, era ~ ShelleyEra crypto)
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> Sh.ShelleyTx era
     -> Json
-encodeTx opts x =
+encodeTx (fmt, opts) x =
     encodeObject
         ( encodeTxId (Ledger.txid @(ShelleyEra crypto) (Sh.body x))
        <>
@@ -827,7 +851,7 @@ encodeTx opts x =
     metadata = liftA2
         (\hash body -> encodeObject ("hash" .= hash <> "labels" .= body))
         (encodeAuxiliaryDataHash <$> Sh.stbMDHash (Sh.body x))
-        (encodeMetadata opts <$> Sh.auxiliaryData x)
+        (encodeMetadata (fmt, opts) <$> Sh.auxiliaryData x)
 
 encodeTxBody
     :: Crypto crypto
