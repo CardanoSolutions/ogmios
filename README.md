@@ -16,7 +16,7 @@
 | Ogmios   | Cardano-node       |
 | ---      | ---                |
 | `v5.6.0` | `1.35.4`, `1.35.7` |
-| `v6.0.0` | `8.1.2`, `8.7.2`   |
+| `v6.0.0` | `8.7.2`            |
 
 [SanchoNet]: https://sancho.network/
 
