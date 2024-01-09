@@ -6,6 +6,16 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
+### [6.0.0] - 2023-11-10
+
+#### Added
+
+-
+
+#### Changed
+
+####
+
 ### [6.0.0-rc6] - 2023-11-10
 
 #### Added
@@ -130,7 +140,7 @@ N/A
 
 ### [6.0.0-rc1] - 2023-08-10
 
-> **Note**
+> [!IMPORTANT]
 >
 > Tested-with: `cardano-node@8.1.1`, `cardano-node@8.1.2`
 
@@ -140,7 +150,7 @@ N/A
 
 - Ogmios now accept queries via HTTP (POST). Request bodies are the same as those passed to the websocket and so are responses. In fact, most Ogmios queries follow a simple request/response pattern and are therefore well-suited to be run over HTTP. While there's an obvious performance trade-off (especially for the local-chain-sync protocol), it is a reasonable approach for many queries (e.g. the local-state-query protocol).
 
-  > **Note**
+  > [!NOTE]
   > The HTTP server and the WebSocket server are both mounted on the same port. So, it suffices to route HTTP requests through `/`. The JSON payload is the same.
 
 - Ability to retrieve any genesis configuration (Byron, Shelley, Alonzo or Conway) via the state-query protocol.
@@ -153,7 +163,7 @@ N/A
 
 - **⚠️ BREAKING-CHANGE ⚠️** Many major changes in the interface. A complete migration guide is available in [ADR-017](https://github.com/CardanoSolutions/ogmios/blob/master/architectural-decisions/accepted/017-api-version-6-major-rewrite.md), yet please refer to the [API reference](https://ogmios.dev/api/) for details and exhaustiveness. Many representations have been made easier to parse and field names have been improved (more consistent across the entire API and better self-documented).
 
-  > **Note**
+  > [!NOTE]
   > There are still many [test vectors](https://github.com/CardanoSolutions/ogmios/tree/master/server/test/vectors) available for every element of the Ogmios API. Use them!
 
 - Ogmios will no longer retry connecting to a node that is configured for another network but exit with an non-zero code and a clear error message indicating the network mismatch.
@@ -263,7 +273,7 @@ N/A
 
 - ![TypeScript][] Fixed a couple of data-types with fields parsed as `number` instead of `bigint`. See [#274](https://github.com/CardanoSolutions/ogmios/issues/274)
 
-  > **Warning** This is technically an internal breaking-change, however it actually comes as a bug fix since this does not change the announced _interface_ in the TypeScript schema (which was correctly indicated 'bigint'). Still, this may cause issues with those using `number` where there will now be `bigint`.
+  > [!WARNING] This is technically an internal breaking-change, however it actually comes as a bug fix since this does not change the announced _interface_ in the TypeScript schema (which was correctly indicated 'bigint'). Still, this may cause issues with those using `number` where there will now be `bigint`.
 
 - ![TypeScript][] Fixed browser detection for the `IsomorphicWebSocket` abstraction. See [#273](https://github.com/CardanoSolutions/ogmios/issues/274)
 

@@ -55,7 +55,8 @@ The outer API of Ogmios will be rewritten, aiming to solve the various quirks th
 
 ### Migration guide
 
-> **Note**
+> [!TIP]
+>
 > There are still many [test vectors](https://github.com/CardanoSolutions/ogmios/tree/master/server/test/vectors) available for every element of the Ogmios API. Use them!
 
 #### <strike>JSON-WSP</strike> → JSON-RPC 2.0
@@ -97,7 +98,7 @@ JSON-WSP has been ditched and replaced by [JSON-RPC 2.0](https://www.jsonrpc.org
 </tr>
 </table>
 
-> **Note**
+> [!NOTE]
 >
 > Ogmios' implementation of JSON-RPC 2.0 is _slightly_ more flexible as the specification w.r.t to the `id` field. While the specification indicates that this field should be a `string`, Ogmios will still accept _anything_ as an `id` field (`string`, `number`, `object`, etc..). So it is essentially a drop-in replacement for `mirror`.
 >
@@ -151,7 +152,7 @@ Also, some queries have been moved under `queryNetwork` and are always available
 | `genesisConfig` | `genesisConfiguration` |
 | `systemStart`   | `startTime`            |
 
-> **Warning**
+> [!WARNING]
 >
 > The `queryNetwork/genesis` local-state-query now expects one era as argument (either 'byron', 'shelley' or 'alonzo') to retrieve the corresponding genesis configuration.
 

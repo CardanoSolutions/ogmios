@@ -70,7 +70,7 @@ See our [Ogmios client starter kit](https://github.com/CardanoSolutions/ogmios-t
   <tr><td>Health monitoring, with runtime and application statistics</td><td><a href="https://ogmios.dev/getting-started/monitoring/" target="_blank">↗️</a></td></tr>
 </table>
 
-> **Note**
+> [!TIP]
 >
 > Test vectors that cover every part of the protocol are [available here](https://github.com/CardanoSolutions/ogmios/tree/master/server/test/vectors). Use them without moderation for a smooth integration!
 
