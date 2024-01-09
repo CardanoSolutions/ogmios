@@ -32,7 +32,8 @@ Open a [Bug Issue](https://github.com/cardanosolutions/ogmios/issues/new?templat
 
 Feel free to bring it as a [discussion [category: idea]](https://github.com/CardanoSolutions/kupo/discussions/new?category=ideas). Make sure to highlight your use case so we can understand the design space and agree on a solution.
 
-> [!NOTE] Ideally, follow this simple template:
+> [!INFO]
+> Ideally, follow this simple template:
 >
 > - What is your idea? Describe it in simple words. Provide a use case.
 > - Why is it a good idea?
