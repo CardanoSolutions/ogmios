@@ -191,6 +191,7 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureInvalidCommitteeUpdate
   | SubmitTransactionFailureTreasuryWithdrawalMismatch
   | SubmitTransactionFailureInvalidOrMissingPreviousProposals
+  | SubmitTransactionFailureVotingOnExpiredActions
   | SubmitTransactionFailureUnrecognizedCertificateType
   | SubmitTransactionFailureInternalLedgerTypeConversionError;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
@@ -1797,6 +1798,19 @@ export interface SubmitTransactionFailureInvalidOrMissingPreviousProposals {
       anchor: Anchor;
       type: "hardForkInitiation" | "protocolParametersUpdate" | "constitutionalCommittee" | "constitution";
       invalidPreviousProposal?: GovernanceProposalReference;
+    }[];
+  };
+}
+/**
+ * The transaction contains votes for an expired proposal. The field 'data.invalidVotes' indicates the faulty voters and the proposal they attempted to vote for.
+ */
+export interface SubmitTransactionFailureVotingOnExpiredActions {
+  code: 3160;
+  message: string;
+  data: {
+    unauthorizedVotes?: {
+      proposal: GovernanceProposalReference;
+      voter: VoterGenesisDelegate | VoterConstitutionalCommittee | VoterDelegateRepresentative | VoterStakePoolOperator;
     }[];
   };
 }
