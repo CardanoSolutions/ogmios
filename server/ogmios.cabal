@@ -137,6 +137,7 @@ library
       aeson
     , array
     , async
+    , attoparsec-aeson
     , base >=4.7 && <5
     , base16
     , base58-bytestring

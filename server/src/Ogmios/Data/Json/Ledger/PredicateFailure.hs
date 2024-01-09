@@ -562,7 +562,7 @@ encodePredicateFailure reject = \case
         reject (predicateFailureCode 37)
             "The transaction contains votes from unauthorized voters. \
             \The field 'data.unauthorizedVotes' indicates the faulty voters \
-            \and the action they attempted to incorrectly vote for."
+            \and the proposal they attempted to incorrectly vote for."
             (pure $ encodeObject
                 ( "unauthorizedVotes" .=
                     encodeMapAsList
@@ -858,6 +858,25 @@ encodePredicateFailure reject = \case
                                 Conway.encodeGovActionId actionId
                             )
                     ) invalidPreviousActions
+                )
+            )
+
+    VotingOnExpiredActions { votes } ->
+        reject (predicateFailureCode 60)
+            "The transaction contains votes for an expired proposal. The field \
+            \'data.invalidVotes' indicates the faulty voters and the proposal they \
+            \attempted to vote for."
+            (pure $ encodeObject
+                ( "invalidVotes" .=
+                    encodeMapAsList
+                        (\governanceActionId voter -> encodeObject
+                            ( "proposal" .=
+                                Conway.encodeGovActionId governanceActionId
+                           <> "voter" .=
+                                Conway.encodeVoter voter
+                            )
+                        )
+                        votes
                 )
             )
 

@@ -263,8 +263,8 @@ import Test.QuickCheck.Arbitrary.Generic
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
 
-import qualified Cardano.Ledger.Alonzo.Scripts.Data as Ledger
 import qualified Cardano.Ledger.Binary as Binary
+import qualified Cardano.Ledger.Plutus.Data as Ledger
 import qualified Codec.Json.Rpc as Rpc
 import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json

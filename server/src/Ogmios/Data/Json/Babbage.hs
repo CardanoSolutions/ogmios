@@ -33,6 +33,7 @@ import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
+import qualified Cardano.Ledger.Plutus.Data as Ledger
 
 import qualified Cardano.Ledger.Shelley.API as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
@@ -41,7 +42,6 @@ import qualified Cardano.Ledger.Mary.Value as Ma
 
 import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
-import qualified Cardano.Ledger.Alonzo.Scripts.Data as Al
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 
 import qualified Cardano.Ledger.Babbage.Core as Ba
@@ -325,11 +325,11 @@ encodeTxOut opts (Ba.BabbageTxOut addr value datum script) =
     "value" .=
         Mary.encodeValue value <>
     ( case datum of
-        Al.NoDatum ->
+        Ledger.NoDatum ->
             mempty
-        Al.DatumHash h ->
+        Ledger.DatumHash h ->
             "datumHash" .= Alonzo.encodeDataHash h
-        Al.Datum bin ->
+        Ledger.Datum bin ->
             "datum" .= Alonzo.encodeBinaryData bin
     ) <>
     "script" .=? OmitWhenNothing

@@ -194,7 +194,7 @@ encodeValue
     -> Json
 encodeValue (Ma.MaryValue lovelace assets) =
     encodeObject
-        ( "ada" .= encodeObject ("lovelace" .= encodeInteger lovelace)
+        ( "ada" .= encodeSingleton "lovelace" (encodeInteger (unCoin lovelace))
        <> encodeMultiAsset assets
         )
 

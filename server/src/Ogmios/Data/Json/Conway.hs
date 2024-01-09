@@ -60,6 +60,9 @@ import qualified Cardano.Ledger.Conway.Tx as Cn
 import qualified Cardano.Ledger.Conway.TxBody as Cn
 import qualified Cardano.Ledger.Conway.TxCert as Cn
 
+import Cardano.Ledger.Conway.PParams
+    ( THKD (..)
+    )
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -269,7 +272,7 @@ encodeGenesis x =
            <> "constitutionalCommitteeMinSize" .=
                 encodeNatural (Cn.ucppCommitteeMinSize (Cn.cgUpgradePParams x))
            <> "constitutionalCommitteeMaxTermLength" .=
-                encodeNatural (Cn.ucppCommitteeMaxTermLength (Cn.cgUpgradePParams x))
+                encodeEpochNo (Cn.ucppCommitteeMaxTermLength (Cn.cgUpgradePParams x))
            <> "governanceActionLifetime" .=
                 encodeEpochNo (Cn.ucppGovActionLifetime (Cn.cgUpgradePParams x))
            <> "governanceActionDeposit" .=
@@ -405,67 +408,67 @@ encodePParamsHKD
     -> Json
 encodePParamsHKD encode pure_ x =
     encode "minFeeCoefficient"
-        (encodeInteger . unCoin) (Cn.cppMinFeeA x) <>
+        (encodeInteger . unCoin) (unTHKD (Cn.cppMinFeeA x)) <>
     encode "minFeeConstant"
-        encodeCoin (Cn.cppMinFeeB x) <>
+        encodeCoin (unTHKD (Cn.cppMinFeeB x)) <>
     encode "maxBlockBodySize"
-        (encodeSingleton "bytes" . encodeNatural) (Cn.cppMaxBBSize x) <>
+        (encodeSingleton "bytes" . encodeNatural) (unTHKD (Cn.cppMaxBBSize x)) <>
     encode "maxBlockHeaderSize"
-        (encodeSingleton "bytes" . encodeNatural) (Cn.cppMaxBHSize x) <>
+        (encodeSingleton "bytes" . encodeNatural) (unTHKD (Cn.cppMaxBHSize x)) <>
     encode "maxTransactionSize"
-        (encodeSingleton "bytes" . encodeNatural) (Cn.cppMaxTxSize x) <>
+        (encodeSingleton "bytes" . encodeNatural) (unTHKD (Cn.cppMaxTxSize x)) <>
     encode "stakeCredentialDeposit"
-        encodeCoin (Cn.cppKeyDeposit x) <>
+        encodeCoin (unTHKD (Cn.cppKeyDeposit x)) <>
     encode "stakePoolDeposit"
-        encodeCoin (Cn.cppPoolDeposit x) <>
+        encodeCoin (unTHKD (Cn.cppPoolDeposit x)) <>
     encode "stakePoolRetirementEpochBound"
-        encodeEpochNo (Cn.cppEMax x) <>
+        encodeEpochNo (unTHKD (Cn.cppEMax x)) <>
     encode "desiredNumberOfStakePools"
-        encodeNatural (Cn.cppNOpt x) <>
+        encodeNatural (unTHKD (Cn.cppNOpt x)) <>
     encode "stakePoolPledgeInfluence"
-        encodeNonNegativeInterval (Cn.cppA0 x) <>
+        encodeNonNegativeInterval (unTHKD (Cn.cppA0 x)) <>
     encode "monetaryExpansion"
-        encodeUnitInterval (Cn.cppRho x) <>
+        encodeUnitInterval (unTHKD (Cn.cppRho x)) <>
     encode "treasuryExpansion"
-        encodeUnitInterval (Cn.cppTau x) <>
+        encodeUnitInterval (unTHKD (Cn.cppTau x)) <>
     encode "minStakePoolCost"
-        encodeCoin (Cn.cppMinPoolCost x) <>
+        encodeCoin (unTHKD (Cn.cppMinPoolCost x)) <>
     encode "minUtxoDepositConstant"
         encodeCoin (pure_ (Coin 0)) <>
     encode "minUtxoDepositCoefficient"
-        (encodeInteger . unCoin . Ba.unCoinPerByte) (Cn.cppCoinsPerUTxOByte x) <>
+        (encodeInteger . unCoin . Ba.unCoinPerByte) (unTHKD (Cn.cppCoinsPerUTxOByte x)) <>
     encode "plutusCostModels"
-        Alonzo.encodeCostModels (Cn.cppCostModels x) <>
+        Alonzo.encodeCostModels (unTHKD (Cn.cppCostModels x)) <>
     encode "scriptExecutionPrices"
-        Alonzo.encodePrices (Cn.cppPrices x) <>
+        Alonzo.encodePrices (unTHKD (Cn.cppPrices x)) <>
     encode "maxExecutionUnitsPerTransaction"
-        (Alonzo.encodeExUnits . Al.unOrdExUnits) (Cn.cppMaxTxExUnits x) <>
+        (Alonzo.encodeExUnits . Al.unOrdExUnits) (unTHKD (Cn.cppMaxTxExUnits x)) <>
     encode "maxExecutionUnitsPerBlock"
-        (Alonzo.encodeExUnits . Al.unOrdExUnits) (Cn.cppMaxBlockExUnits x) <>
+        (Alonzo.encodeExUnits . Al.unOrdExUnits) (unTHKD (Cn.cppMaxBlockExUnits x)) <>
     encode "maxValueSize"
-        (encodeSingleton "bytes" . encodeNatural) (Cn.cppMaxValSize x) <>
+        (encodeSingleton "bytes" . encodeNatural) (unTHKD (Cn.cppMaxValSize x)) <>
     encode "collateralPercentage"
-        encodeNatural (Cn.cppCollateralPercentage x) <>
+        encodeNatural (unTHKD (Cn.cppCollateralPercentage x)) <>
     encode "maxCollateralInputs"
-        encodeNatural (Cn.cppMaxCollateralInputs x) <>
+        encodeNatural (unTHKD (Cn.cppMaxCollateralInputs x)) <>
     encode "version"
         Shelley.encodeProtVer (fromNoUpdate @f @ProtVer (Cn.cppProtocolVersion x)) <>
     encode "stakePoolVotingThresholds"
-        encodePoolVotingThresholds (Cn.cppPoolVotingThresholds x) <>
+        encodePoolVotingThresholds (unTHKD (Cn.cppPoolVotingThresholds x)) <>
     encode "delegateRepresentativeVotingThresholds"
-        encodeDRepVotingThresholds (Cn.cppDRepVotingThresholds x) <>
+        encodeDRepVotingThresholds (unTHKD (Cn.cppDRepVotingThresholds x)) <>
     encode "constitutionalCommitteeMinSize"
-        encodeNatural (Cn.cppCommitteeMinSize x) <>
+        encodeNatural (unTHKD (Cn.cppCommitteeMinSize x)) <>
     encode "constitutionalCommitteeMaxTermLength"
-        encodeNatural (Cn.cppCommitteeMaxTermLength x) <>
+        encodeEpochNo (unTHKD (Cn.cppCommitteeMaxTermLength x)) <>
     encode "governanceActionLifetime"
-        encodeEpochNo (Cn.cppGovActionLifetime x) <>
+        encodeEpochNo (unTHKD (Cn.cppGovActionLifetime x)) <>
     encode "governanceActionDeposit"
-        encodeCoin (Cn.cppGovActionDeposit x) <>
+        encodeCoin (unTHKD (Cn.cppGovActionDeposit x)) <>
     encode "delegateRepresentativeDeposit"
-        encodeCoin (Cn.cppDRepDeposit x) <>
+        encodeCoin (unTHKD (Cn.cppDRepDeposit x)) <>
     encode "delegateRepresentativeMaxIdleTime"
-        encodeEpochNo (Cn.cppDRepActivity x)
+        encodeEpochNo (unTHKD (Cn.cppDRepActivity x))
     & encodeObject
 
 encodeDRepVotingThresholds :: Cn.DRepVotingThresholds -> Json

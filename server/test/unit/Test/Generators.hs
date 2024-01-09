@@ -11,10 +11,7 @@ import Ogmios.Prelude
 import Cardano.Ledger.Alonzo.Genesis
     ( AlonzoGenesis (..)
     )
-import Cardano.Ledger.Alonzo.Scripts.Data
-    ( Data
-    )
-import Cardano.Ledger.Alonzo.TxInfo
+import Cardano.Ledger.Alonzo.Plutus.TxInfo
     ( TranslationError (..)
     , transExUnits
     )
@@ -26,6 +23,9 @@ import Cardano.Ledger.Core
     )
 import Cardano.Ledger.Keys
     ( KeyRole (..)
+    )
+import Cardano.Ledger.Plutus.Data
+    ( Data
     )
 import Cardano.Ledger.Shelley.API.Mempool
     ( ApplyTxError (..)

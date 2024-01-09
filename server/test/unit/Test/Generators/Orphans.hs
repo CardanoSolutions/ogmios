@@ -9,7 +9,7 @@ module Test.Generators.Orphans () where
 
 import Ogmios.Prelude
 
-import Cardano.Ledger.Alonzo.TxInfo
+import Cardano.Ledger.Plutus.TxInfo
     ( TxOutSource (..)
     )
 import Test.QuickCheck
@@ -19,7 +19,7 @@ import Test.QuickCheck.Arbitrary.Generic
     ( genericArbitrary
     )
 
-import qualified Cardano.Ledger.Language as Ledger
+import qualified Cardano.Ledger.Plutus.Language as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
 
 import Test.Consensus.Cardano.Generators

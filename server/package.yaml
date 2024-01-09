@@ -39,6 +39,7 @@ library:
     - aeson
     - array
     - async
+    - attoparsec-aeson
     - base16
     - base58-bytestring
     - bech32

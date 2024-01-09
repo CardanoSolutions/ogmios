@@ -243,9 +243,7 @@ import qualified PlutusLedgerApi.Common as Plutus
 
 import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Allegra.Scripts as Ledger.Allegra
-import qualified Cardano.Ledger.Alonzo.Language as Ledger.Alonzo
 import qualified Cardano.Ledger.Alonzo.Scripts as Ledger.Alonzo
-import qualified Cardano.Ledger.Alonzo.Scripts.Data as Ledger.Alonzo
 import qualified Cardano.Ledger.Babbage.TxBody as Ledger.Babbage
 import qualified Cardano.Ledger.BaseTypes as Ledger
 import qualified Cardano.Ledger.Coin as Ledger
@@ -253,6 +251,8 @@ import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Credential as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
 import qualified Cardano.Ledger.Mary.Value as Ledger.Mary
+import qualified Cardano.Ledger.Plutus.Data as Ledger.Plutus
+import qualified Cardano.Ledger.Plutus.Language as Ledger.Plutus
 import qualified Cardano.Ledger.PoolDistr as Ledger
 import qualified Cardano.Ledger.SafeHash as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
@@ -1283,11 +1283,11 @@ decodeAssetName =
 decodeBinaryData
     :: forall era. (Era era)
     => Json.Value
-    -> Json.Parser (Ledger.Alonzo.BinaryData era)
+    -> Json.Parser (Ledger.Plutus.BinaryData era)
 decodeBinaryData =
     Json.withText "BinaryData" $ \t -> do
         bytes <- toLazy <$> decodeBase16 (encodeUtf8 t)
-        Ledger.Alonzo.dataToBinaryData <$> decodeCborAnn @era "Data" decCBOR bytes
+        Ledger.Plutus.dataToBinaryData <$> decodeCborAnn @era "Data" decCBOR bytes
 
 decodeCoin
     :: Json.Value
@@ -1376,7 +1376,7 @@ decodeAsScriptHash =
 decodeDatumHash
     :: Crypto crypto
     => Json.Value
-    -> Json.Parser (Ledger.Alonzo.DataHash crypto)
+    -> Json.Parser (Ledger.Plutus.DataHash crypto)
 decodeDatumHash =
     fmap unsafeMakeSafeHash . decodeHash
 
@@ -1485,15 +1485,15 @@ decodeScript v =
                         fail "missing field 'cbor' or 'json' to decode native script"
             Just lang@"plutus:v1" -> do
                 bytes <- o .: "cbor"
-                plutus <- Ledger.Alonzo.Plutus Ledger.Alonzo.PlutusV1 <$> decodePlutusScript Plutus.PlutusV1 lang bytes
+                plutus <- Ledger.Plutus.Plutus Ledger.Plutus.PlutusV1 <$> decodePlutusScript Plutus.PlutusV1 lang bytes
                 pure (Ledger.Alonzo.PlutusScript plutus)
             Just lang@"plutus:v2" -> do
                 bytes <- o .: "cbor"
-                plutus <- Ledger.Alonzo.Plutus Ledger.Alonzo.PlutusV2 <$> decodePlutusScript Plutus.PlutusV2 lang bytes
+                plutus <- Ledger.Plutus.Plutus Ledger.Plutus.PlutusV2 <$> decodePlutusScript Plutus.PlutusV2 lang bytes
                 pure (Ledger.Alonzo.PlutusScript plutus)
             Just lang@"plutus:v3" -> do
                 bytes <- o .: "cbor"
-                plutus <- Ledger.Alonzo.Plutus Ledger.Alonzo.PlutusV3 <$> decodePlutusScript Plutus.PlutusV3 lang bytes
+                plutus <- Ledger.Plutus.Plutus Ledger.Plutus.PlutusV3 <$> decodePlutusScript Plutus.PlutusV3 lang bytes
                 pure (Ledger.Alonzo.PlutusScript plutus)
             _ ->
                 fail "missing or unknown script language."
@@ -1802,7 +1802,7 @@ decodeValue
 decodeValue = Json.withObject "Value" $ \o -> do
     coins <- decodeCoin (Json.Object o)
     assets <- decodeAssets (Json.Object $ Json.delete "ada" o)
-    pure (Ledger.Mary.MaryValue (unCoin coins) assets)
+    pure (Ledger.Mary.MaryValue coins assets)
 
 --
 -- Helpers

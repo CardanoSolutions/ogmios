@@ -595,13 +595,13 @@ servers: {}
 channels: {}
 components:
   schemas:
-    2000:
+    2000/AcquireFailed:
       $ref: "/ogmios.json#/properties/AcquireLedgerStateFailure/properties/error"
-    2001:
+    2001/EraMismatch:
       $ref: "/ogmios.json#/properties/QueryLedgerStateEraMismatch/properties/error"
-    2002:
+    2002/UnavailableInCurrentEra:
       $ref: "/ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra/properties/error"
-    2003:
+    2003/AcquireExpired:
       $ref: "/ogmios.json#/properties/QueryLedgerStateAcquiredExpire/properties/error"
 {{% /embed-async-api %}}
 

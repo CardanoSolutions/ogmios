@@ -32,6 +32,8 @@ import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger hiding
     ( TranslationError
     )
+import qualified Cardano.Ledger.Plutus.Data as Ledger
+import qualified Cardano.Ledger.Plutus.Language as Ledger
 import qualified Cardano.Ledger.SafeHash as Ledger
 
 import qualified Cardano.Ledger.Shelley.API as Sh
@@ -41,16 +43,14 @@ import qualified Cardano.Ledger.Alonzo.Core as Al hiding
     ( TranslationError
     )
 import qualified Cardano.Ledger.Alonzo.Genesis as Al
-import qualified Cardano.Ledger.Alonzo.Language as Al
+import qualified Cardano.Ledger.Alonzo.Plutus.TxInfo as Al hiding
+    ( txscripts
+    )
 import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
-import qualified Cardano.Ledger.Alonzo.Scripts.Data as Al
 import qualified Cardano.Ledger.Alonzo.Tx as Al
 import qualified Cardano.Ledger.Alonzo.TxAuxData as Al
 import qualified Cardano.Ledger.Alonzo.TxBody as Al
-import qualified Cardano.Ledger.Alonzo.TxInfo as Al hiding
-    ( txscripts
-    )
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 import qualified Cardano.Ledger.Alonzo.TxWits as Al
 
@@ -81,7 +81,7 @@ encodeAuxiliaryData opts (Al.AlonzoTxAuxData blob timelocks plutus) =
         (Map.foldrWithKey
             (\lang ->
                 flip $ foldr (\(Al.BinaryPlutus bytes) ->
-                    let script = Al.PlutusScript (Al.Plutus lang (Al.BinaryPlutus bytes))
+                    let script = Al.PlutusScript (Ledger.Plutus lang (Al.BinaryPlutus bytes))
                      in Map.insert (Ledger.hashScript @era script) script
                 )
             )
@@ -92,7 +92,7 @@ encodeAuxiliaryData opts (Al.AlonzoTxAuxData blob timelocks plutus) =
     )
 
 encodeBinaryData
-    :: Al.BinaryData era
+    :: Ledger.BinaryData era
     -> Json
 encodeBinaryData =
     encodeByteStringBase16 . Ledger.originalBytes
@@ -193,7 +193,7 @@ encodeIsValid = \case
         encodeText "collaterals"
 
 encodeLanguage
-    :: Al.Language
+    :: Ledger.Language
     -> Json
 encodeLanguage =
     encodeText . stringifyLanguage
@@ -391,7 +391,7 @@ encodeScript opts = encodeObject . \case
                 encodeByteStringBase16 (Ledger.originalBytes nativeScript)
         else
             mempty
-    Al.PlutusScript Al.Plutus{Al.plutusLanguage, Al.plutusScript} ->
+    Al.PlutusScript Ledger.Plutus{Ledger.plutusLanguage, Ledger.plutusScript} ->
         "language" .=
             encodeText (stringifyLanguage plutusLanguage) <>
         "cbor" .=
@@ -545,11 +545,11 @@ encodeTranslationError err = encodeText $ case err of
         "Found outputs to a (legacy) Byron/Bootstrap address. Don't use those."
     Al.TranslationLogicMissingInput i ->
         "Unknown transaction input (missing from UTxO set): " <> Shelley.stringifyTxIn i
-    Al.LanguageNotSupported Al.PlutusV1 ->
+    Al.LanguageNotSupported Ledger.PlutusV1 ->
        "Unsupported language in era."
-    Al.LanguageNotSupported Al.PlutusV2 ->
+    Al.LanguageNotSupported Ledger.PlutusV2 ->
        "Unsupported language in era. Did you try to use PlutusV2 before Babbage is enabled?"
-    Al.LanguageNotSupported Al.PlutusV3 ->
+    Al.LanguageNotSupported Ledger.PlutusV3 ->
        "Unsupported language in era. Did you try to use PlutusV3 before Conway is enabled?"
     Al.InlineDatumsNotSupported{} ->
        "Inline datums not supported in PlutusV1. Use PlutusV2 or higher."
@@ -604,9 +604,9 @@ stringifyDataHash (Ledger.extractHash -> (CC.UnsafeHash h)) =
     encodeBase16 (fromShort h)
 
 stringifyLanguage
-    :: Al.Language
+    :: Ledger.Language
     -> Text
 stringifyLanguage = \case
-    Al.PlutusV1 -> "plutus:v1"
-    Al.PlutusV2 -> "plutus:v2"
-    Al.PlutusV3 -> "plutus:v3"
+    Ledger.PlutusV1 -> "plutus:v1"
+    Ledger.PlutusV2 -> "plutus:v2"
+    Ledger.PlutusV3 -> "plutus:v3"
