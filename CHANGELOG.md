@@ -6,147 +6,11 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
-### [6.0.0] - 2023-11-10
+### [6.0.0] - 2024-01-10
 
 #### Added
 
--
-
-#### Changed
-
-####
-
-### [6.0.0-rc6] - 2023-11-10
-
-#### Added
-
-- Add missing `sanchonet` network to the list of well-known networks. It'll now be properly displayed instead of showing `unknown (4)`.
-
-#### Changed
-
-- ![TypeScript][] Add an extra promise handler to cope with unexpected websocket disconnections when submitting messages to the server. See [#346](https://github.com/CardanoSolutions/ogmios/issues/346).
-
-#### Removed
-
-- N/A
-
-### [6.0.0-rc6] - 2023-11-04
-
-#### Added
-
-- Integration with `cardano-ledger-conway==1.10.1.0`. It adds new elements to the Conway era:
-  - A new transaction submission error:
-    - `InvalidOrMissingPreviousProposal`
-  - A new (optional) field `anchor` to `ConstitutionalCommitteeRetirement` certificates.
-
-#### Changed
-
-- The server now return an `internalError` when an unexpected error occurs in the communication between Ogmios and the node. Before, Ogmios would simply log an exception and no response would be sent back to client applications. Now, clients correctly receive an unsuccessful response with the same `id` as present in the request. See [#346](https://github.com/CardanoSolutions/ogmios/issues/346).
-
-#### Removed
-
-- N/A
-
-### [6.0.0-rc4] - 2023-10-19
-
-#### Added
-
-- Integration with `cardano-ledger-conway==1.9.0.0`. The previous release did (mistakenly) include an older version of the ledger. This caused synchronization of the **Conway** era to fail unexpectedly. This release now includes the latest version of the ledger currently available. It adds new elements to the Conway era:
-  - A new certificate `DelegateRepresentativeUpdate`.
-  - New transaction submission errors:
-    - `GovernanceProposalDepositMismatch`
-    - `ConflictingCommitteeUpdate`
-    - `InvalidCommitteeUpdate`
-    - `TreasuryWithdrawalMismatch`.
-  - New protocol parameters, only present in Conway onwards:
-    - `stakePoolVotingThresholds`
-    - `constitutionalCommitteeMinSize`
-    - `constitutionalCommitteeMaxTermLength`
-    - `governanceActionLifetime`
-    - `governanceActionDeposit`
-    - `delegateRepresentativeVotingThresholds`
-    - `delegateRepresentativeDeposit`
-    - `delegateRepresentativeMaxIdleTime`
-
-#### Changed
-
-- The integration with `cardano-ledger-conway==1.9.0.0` also causes a few (breaking) changes to the existing interface. Mostly located in the **Conway** era:
-  - `UnknownGovernanceProposal` transaction submission failure is now `UnknownGovernanceProposals` and its data field now contains a list of invalid proposals instead of a single proposal.
-  - `ConstitutionalCommitteeMember` may now contain an optional `mandate` field.
-  - The `ConstitutionalCommitte` governance action `members`' field no longer holds a member id. Instead, it contains two fields `added` and `removed` pointing to a list of `ConstitutionalCommitteeMember`.
-  - The certificate `DelegateRepresentativeRegistration` may now contain an optional `anchor` field.
-  - The governance action `Constitution` now has a mandatory `anchor` field and an optional `hash` field.
-  - The `returnAccount` for all governance proposal is now a (bech32-encoded) stake address instead of a key or script hash digest.
-  - The Conway's genesis has been completely redefined and now contains fields `constitution`, `constitutionalCommittee` and `updatableParameters`.
-  - The `CredentialDepositMismatch` transaction submission failure now has extra `data`.
-
-- **⚠️ BREAKING-CHANGE ⚠️** The Alonzo's genesis `initialParameters` field has been renamed to `updatableParameters`.
-
-#### Removed
-
-N/A
-
----
----
-
-### [6.0.0-rc3] - 2023-10-12
-
-#### Added
-
-- Integration with `cardano-node==8.5.0`. This adds new elements to the Conway era.
-  - New transaction certificates: `DelegateRepresentativeRegistration`, `DelegateRepresentativeRetirement`, `ConstitutionalCommitteeHotKeyRegistration` and `ConstitutionalCommitteeRetirement`.
-  - A new governance action `Information`, empty.
-  - New transaction submission errors: `ForbiddenWithdrawal`, `CredentialDepositMismatch`, `DRepAlreadyRegistered`, `DRepNotRegistered` and `UnknownConstitutionalCommitteeMember`
-
-#### Changed
-
-- Integration with `cardano-node==8.5.0`. This introduces a few breaking-change in the Conway era:
-  - The `DelegateRepresentative` schema has changed to now be a JSON `object` in all cases, with at least a field `type` to discriminate over it. Abstain and NoConfidence delegate representatives have no other fields.
-  - The stake pool operator id is now always included in the `GovernanceVoter` schema.
-  - The `ScriptExecutionFailure<MissingScripts>` schema now includes a `data.missingScripts` field for debugging.
-  - The `SubmitTransactionFailure<UnauthorizedVote>` has been changed to `SubmitTransactionFailure<UnauthorizedVotes>` and now contains a list of unauthorized voters.
-
-- Fixed `inputSource` being set on Byron transactions instead of `spends`.
-- Now conditionally include Byron's cbor bytes like for other eras (`--include-transaction-cbor`).
-- Fixed transaction metadata's objects being encoded as lists of singletons in the JSON encoding. Now properly encoded as objects.
-
-#### Removed
-
-N/A
-
----
----
-
-### [6.0.0-rc2] - 2023-09-08
-
-#### Added
-
-N/A
-
-#### Changed
-
-- Fixed protocol version negotiation during handshake to actually negotiate for the latest protocol (with Conway enabled)
-- Slot length in era summaries and genesis is now given in milliseconds wrapped in a singleton object: `{ "milliseconds": 1234 }`. Before, it used to be given as a floating number of seconds.
-- Byron's genesis JSON-schema was wrongly pointing at `protocolParameters` instead of `updatableParameters`.
-- Fixed Plutus' cost models examples in the JSON-schema to match the new format.
-- Fixed version not showing software revision
-
-#### Removed
-
-N/A
-
----
----
-
-### [6.0.0-rc1] - 2023-08-10
-
-> [!IMPORTANT]
->
-> Tested-with: `cardano-node@8.1.1`, `cardano-node@8.1.2`
-
-#### Added
-
-- (Premilinary) support for the Conway era. This support only covers what is currently available in the Cardano node / ledger. However, since the implementation of this era isn't finalized yet it will likely break in the future. New updates will be issued until Conway stabilizes.
+- Integration with `cardano-node==8.7.2` and `cardano-ledger-conway==1.11.0.0`. It adds (preliminary) support for the Conway era. This support only covers what is currently available in the Cardano node / ledger. However, since the implementation of this era isn't finalized yet it will likely break in the future. New updates will be issued until Conway stabilizes.
 
 - Ogmios now accept queries via HTTP (POST). Request bodies are the same as those passed to the websocket and so are responses. In fact, most Ogmios queries follow a simple request/response pattern and are therefore well-suited to be run over HTTP. While there's an obvious performance trade-off (especially for the local-chain-sync protocol), it is a reasonable approach for many queries (e.g. the local-state-query protocol).
 
@@ -155,9 +19,24 @@ N/A
 
 - Ability to retrieve any genesis configuration (Byron, Shelley, Alonzo or Conway) via the state-query protocol.
 
+- A new flag `--metadata-detailed-schema` (disabled by default) to control how the server returns JSON metadata. When set, the server will return a JSON description of the encoded data; when omitted, it'll attempt to convert CBOR metadata as plain JSON object, and default to hex-encoded cbor otherwise. See also notes in [ADR-017](https://github.com/CardanoSolutions/ogmios/blob/master/architectural-decisions/accepted/017-api-version-6-major-rewrite.md).
+
 - A new command `inspect transaction` to help with debugging the deserialization of transaction.
 
 - The health now contains an extra `network` and `version`. Also, beware that era names are now returned in lowercase (first letter used to be capitalised!).
+
+- `sanchonet` network to the list of well-known networks.
+
+- `arm64` static executables for Linux are now available in the continuous delivery pipeline, and as release artifacts.
+
+#### Changed
+
+- The server now return an `internalError` when an unexpected error occurs in the communication between Ogmios and the node. Before, Ogmios would simply log an exception and no response would be sent back to client applications. Now, clients correctly receive an unsuccessful response with the same `id` as present in the request. See [#346](https://github.com/CardanoSolutions/ogmios/issues/346).
+
+- ![TypeScript][]
+  - Add an extra promise handler to cope with unexpected websocket disconnections when submitting messages to the server. See [#346](https://github.com/CardanoSolutions/ogmios/issues/346).
+
+  - Escape the word 'constructor' to `constr` when present as key in metadata, and when not using `--metadata-detailed-schema`. JavaScript (and thus TypeScript) forbids using that word as an object key.
 
 #### Changed
 
