@@ -7,9 +7,13 @@ info:
     ### Protocols
 
     - [Chain synchronization](#operation-publish-/?FindIntersection)
+      - [Error codes](/mini-protocols/local-chain-sync/#errors)
     - [Ledger state queries](#operation-publish-/?AcquireLedgerState)
+      - [Error codes](/mini-protocols/local-state-query/#errors)
     - [Transaction submission](#operation-publish-/?SubmitTransaction)
+      - [Error codes](/mini-protocols/local-tx-submission/#errors)
     - [Mempool monitoring](#operation-publish-/?AcquireMempool)
+      - [Error codes](/mini-protocols/local-tx-monitor/#errors)
 
     ### Schemas
 

@@ -3675,6 +3675,35 @@
             }
           }
         }
+      , { "title": "SubmitTransactionFailure<VotingOnExpiredActions>"
+        , "description": "The transaction contains votes for an expired proposal. The field 'data.invalidVotes' indicates the faulty voters and the proposal they attempted to vote for."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3160 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "invalidVotes" ]
+            , "properties":
+              { "unauthorizedVotes":
+                { "type": "array"
+                , "items":
+                  { "type": "object"
+                  , "additionalProperties": false
+                  , "required": [ "proposal", "voter" ]
+                  , "properties":
+                    { "proposal": { "$ref": "cardano.json#/definitions/GovernanceProposalReference" }
+                    , "voter": { "$ref": "cardano.json#/definitions/GovernanceVoter" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       , { "title": "SubmitTransactionFailure<UnrecognizedCertificateType>"
         , "description": "Unrecognized certificate type. This error is a placeholder due to how internal data-types are modeled. If you ever run into this, please report the issue as you've likely discoverd a critical bug..."
         , "type": "object"
