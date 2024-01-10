@@ -16,7 +16,7 @@
   "author": "Rhys Bartels-Waller",
   "license": "MPL-2.0",
   "scripts": {
-    "build": "yarn workspaces run build",
+    "build": "yarn workspaces run build && yarn workspaces run lint --fix",
     "cleanup": "yarn workspaces run cleanup &&  shx rm -rf docs/theme && shx rm -rf node_modules",
     "generate-schema-types": "yarn workspace @cardano-ogmios/schema run generate-schema-types",
     "lint": "yarn workspaces run lint",
