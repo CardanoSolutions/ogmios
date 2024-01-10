@@ -183,7 +183,7 @@ client.on('message', function(msg) {
 
 ## Errors
 
-Errors from the chain synchronization protocol are in the range `3000-3999` and are listed below.
+Errors from the transaction submission protocol are in the range `3000-3999` and are listed below.
 
 {{% embed-async-api %}}
 asyncapi: '2.4.0'

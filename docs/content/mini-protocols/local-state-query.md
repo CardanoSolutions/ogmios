@@ -584,7 +584,7 @@ Be aware that it is possible for an acquire request to fail even if (and in part
 
 ## Errors
 
-Errors from the chain synchronization protocol are in the range `2000-2999` and are listed below.
+Errors from the state query protocol are in the range `2000-2999` and are listed below.
 
 {{% embed-async-api %}}
 asyncapi: '2.4.0'
