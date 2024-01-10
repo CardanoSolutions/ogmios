@@ -102,8 +102,8 @@ export const safeJSON = {
       return this.sanitize(this.$.parse(raw))
     } catch (e) {
       if (e.name === 'SyntaxError' && typeof e.message === 'string' && e.message.includes('forbidden constructor')) {
-        const escaped = raw.replace(/"constructor"/g, `"constr"`);
-        return this.sanitize(this.$.parse(escaped));
+        const escaped = raw.replace(/"constructor"/g, '"constr"')
+        return this.sanitize(this.$.parse(escaped))
       }
       throw e
     }
