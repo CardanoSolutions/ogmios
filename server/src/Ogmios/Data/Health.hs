@@ -44,12 +44,12 @@ import Data.ByteString.Builder.Scientific
 import Data.Ratio
     ( (%)
     )
-import Data.SOP.Strict
-    ( NS (..)
-    )
 import Data.Scientific
     ( Scientific
     , unsafeFromRational
+    )
+import Data.SOP.Strict
+    ( NS (..)
     )
 import Data.Time.Clock
     ( UTCTime

@@ -212,7 +212,7 @@ spec = parallel $ do
 type Protocol = LocalStateQuery Block (Point Block) (Ledger.Query Block)
 
 withStateQueryClient
-    :: (MonadSTM m, MonadCatch m, MonadOuroboros m, MonadLog m)
+    :: (MonadCatch m, MonadOuroboros m, MonadLog m)
     => ((StateQueryMessage Block -> m ()) ->  m Json -> m a)
     -> StdGen
     -> m a

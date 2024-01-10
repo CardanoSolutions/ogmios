@@ -1005,7 +1005,7 @@
         , "properties":
           { "stake":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/Lovelace" }
+            , "items": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
             }
           , "scripts":
             { "type": "array"
@@ -2287,17 +2287,17 @@
     , "additionalProperties":
       { "type": "object"
       , "propertyNames": { "contentEncoding": "bech32", "pattern": "^[0-9a-f]+$" }
-      , "additionalProperties": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "additionalProperties": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       }
     , "examples":
       [ { "1000000":
-          { "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9": { "lovelace": 688 }
-          , "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc": { "lovelace": 676 }
-          , "pool1qqqqzyqf8mlm70883zht60n4q6uqxg4a8x266sewv8ad2grkztl": { "lovelace": 0 }
+          { "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9": { "ada": { "lovelace": 688 } }
+          , "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc": { "ada": { "lovelace": 676 } }
+          , "pool1qqqqzyqf8mlm70883zht60n4q6uqxg4a8x266sewv8ad2grkztl": { "ada": { "lovelace": 0 } }
           }
         , "bc1597ad71c55d2d009a9274b3831ded155118dd769f5376decc1369":
-          { "pool1qfzjwrtupyvzx0atp5pa3m82v7s8z2eqyqffa0grpyf4j349h6r": { "lovelace": 0 }
-          , "pool1qfxukshs4fkcrflzdnxa2fdza5lfvew3y6echg8ckaa4q8m5hyf": { "lovelace": 103181546 }
+          { "pool1qfzjwrtupyvzx0atp5pa3m82v7s8z2eqyqffa0grpyf4j349h6r": { "ada": { "lovelace": 0 } }
+          , "pool1qfxukshs4fkcrflzdnxa2fdza5lfvew3y6echg8ckaa4q8m5hyf": { "ada": { "lovelace": 103181546 } }
           }
         }
       ]
@@ -2315,7 +2315,7 @@
           { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
           }
         }
-      , "rewards": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "rewards": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       }
     , "examples":
       [ { "bc1597ad71c55d2d009a9274b3831ded155118dd769f5376decc1369":
@@ -2354,22 +2354,10 @@
           ]
         }
       , "totalRewardsInEpoch":
-        { "description": "Total rewards available for the given epoch."
-        , "type": "object"
-        , "additionalProperties": false
-        , "required": [ "lovelace" ]
-        , "properties":
-          { "lovelace": { "type": "integer" }
-          }
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
         }
       , "activeStakeInEpoch":
-        { "description": "The total amount of staked Lovelace during this epoch."
-        , "type": "object"
-        , "additionalProperties": false
-        , "required": [ "lovelace" ]
-        , "properties":
-          { "lovelace": { "type": "integer" }
-          }
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
         }
       , "stakePools":
         { "type": "object"
@@ -2456,8 +2444,8 @@
     , "required": [ "id", "stake", "ownerStake", "approximatePerformance", "parameters" ]
     , "properties":
       { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
-      , "stake": { "$ref": "cardano.json#/definitions/Lovelace" }
-      , "ownerStake": { "$ref": "cardano.json#/definitions/Lovelace" }
+      , "stake": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "ownerStake": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "approximatePerformance":
         { "type": "number"
         , "description": "Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky."
@@ -2469,9 +2457,9 @@
         , "additionalProperties": false
         , "required": [ "cost", "margin", "pledge" ]
         , "properties":
-          { "cost": { "$ref": "cardano.json#/definitions/Lovelace" }
+          { "cost": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
           , "margin": { "$ref": "cardano.json#/definitions/Ratio" }
-          , "pledge": { "$ref": "cardano.json#/definitions/Lovelace" }
+          , "pledge": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
           }
         }
       }
@@ -2887,8 +2875,8 @@
             , "additionalProperties": false
             , "required": [ "minimumRequiredFee", "providedFee" ]
             , "properties":
-              { "minimumRequiredFee": { "$ref": "cardano.json#/definitions/Lovelace" }
-              , "providedFee": { "$ref": "cardano.json#/definitions/Lovelace" }
+              { "minimumRequiredFee": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+              , "providedFee": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
               }
             }
           }
@@ -3003,7 +2991,7 @@
                   , "required": [ "output" ]
                   , "properties":
                     { "output": { "$ref": "cardano.json#/definitions/TransactionOutput" }
-                    , "minimumRequiredValue": { "$ref": "cardano.json#/definitions/Lovelace" }
+                    , "minimumRequiredValue": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
                     }
                   }
                 }
@@ -3055,8 +3043,8 @@
             , "additionalProperties": false
             , "required": [ "providedCollateral", "minimumRequiredCollateral" ]
             , "properties":
-              { "providedCollateral": { "$ref": "cardano.json#/definitions/Lovelace" }
-              , "minimumRequiredCollateral": { "$ref": "cardano.json#/definitions/Lovelace" }
+              { "providedCollateral": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+              , "minimumRequiredCollateral": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
               }
             }
           }
@@ -3179,8 +3167,8 @@
             , "additionalProperties": false
             , "required": [ "declaredTotalCollateral", "computedTotalCollateral" ]
             , "properties":
-              { "declaredTotalCollateral": { "$ref": "cardano.json#/definitions/Lovelace" }
-              , "computedTotalCollateral": { "$ref": "cardano.json#/definitions/Lovelace" }
+              { "declaredTotalCollateral": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+              , "computedTotalCollateral": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
               }
             }
           }
@@ -3334,8 +3322,8 @@
             , "additionalProperties": false
             , "required": [ "minimumStakePoolCost", "declaredStakePoolCost" ]
             , "properties":
-              { "minimumStakePoolCost": { "$ref": "cardano.json#/definitions/Lovelace" }
-              , "declaredStakePoolCost": { "$ref": "cardano.json#/definitions/Lovelace" }
+              { "minimumStakePoolCost": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+              , "declaredStakePoolCost": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
               }
             }
           }
@@ -3415,7 +3403,7 @@
             , "additionalProperties": false
             , "required": [ "nonEmptyRewardAccountBalance" ]
             , "properties":
-              { "nonEmptyRewardAccountBalance": { "$ref": "cardano.json#/definitions/Lovelace" }
+              { "nonEmptyRewardAccountBalance": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
               }
             }
           }
@@ -3475,10 +3463,10 @@
             , "additionalProperties": false
             , "properties":
               { "providedDeposit":
-                { "$ref": "cardano.json#/definitions/Lovelace"
+                { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
                 }
               , "expectedDeposit":
-                { "$ref": "cardano.json#/definitions/Lovelace"
+                { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
                 }
               }
             }
@@ -3560,10 +3548,10 @@
             , "additionalProperties": false
             , "properties":
               { "providedDeposit":
-                { "$ref": "cardano.json#/definitions/Lovelace"
+                { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
                 }
               , "expectedDeposit":
-                { "$ref": "cardano.json#/definitions/Lovelace"
+                { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
                 }
               }
             }
@@ -3636,10 +3624,10 @@
             , "additionalProperties": false
             , "properties":
               { "providedWithdrawal":
-                { "$ref": "cardano.json#/definitions/Lovelace"
+                { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
                 }
               , "expectedWithdrawal":
-                { "$ref": "cardano.json#/definitions/Lovelace"
+                { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
                 }
               }
             }
@@ -3680,6 +3668,35 @@
                     , "invalidPreviousProposal":
                       { "$ref": "cardano.json#/definitions/GovernanceProposalReference"
                       }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<VotingOnExpiredActions>"
+        , "description": "The transaction contains votes for an expired proposal. The field 'data.invalidVotes' indicates the faulty voters and the proposal they attempted to vote for."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3160 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "invalidVotes" ]
+            , "properties":
+              { "unauthorizedVotes":
+                { "type": "array"
+                , "items":
+                  { "type": "object"
+                  , "additionalProperties": false
+                  , "required": [ "proposal", "voter" ]
+                  , "properties":
+                    { "proposal": { "$ref": "cardano.json#/definitions/GovernanceProposalReference" }
+                    , "voter": { "$ref": "cardano.json#/definitions/GovernanceVoter" }
                     }
                   }
                 }

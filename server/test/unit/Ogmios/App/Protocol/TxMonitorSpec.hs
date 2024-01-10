@@ -3,6 +3,7 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE PolyKinds #-}
 
 module Ogmios.App.Protocol.TxMonitorSpec
     ( spec
@@ -39,7 +40,8 @@ import Ogmios.App.Protocol.TxMonitor
     ( mkTxMonitorClient
     )
 import Ogmios.Control.Exception
-    ( MonadThrow (..)
+    ( MonadCatch
+    , MonadThrow (..)
     )
 import Ogmios.Control.MonadAsync
     ( race
@@ -64,7 +66,8 @@ import Ogmios.Data.Json
 import Ogmios.Data.Json.Orphans
     ()
 import Ogmios.Data.Json.Prelude
-    ( at
+    ( MetadataFormat (..)
+    , at
     )
 import Ogmios.Data.Protocol.TxMonitor
     ( AcquireMempool (..)
@@ -200,13 +203,13 @@ spec = parallel $ do
 type Protocol = LocalTxMonitor (GenTxId Block) (GenTx Block) SlotNo
 
 withTxMonitorClient
-    :: (MonadSTM m, MonadOuroboros m)
+    :: (MonadCatch m, MonadOuroboros m)
     => ((TxMonitorMessage Block -> m ()) ->  m Json -> m a)
     -> StdGen
     -> m a
 withTxMonitorClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
-    let innerCodecs = mkTxMonitorCodecs encodeTxId (encodeTx omitOptionalCbor)
+    let innerCodecs = mkTxMonitorCodecs encodeTxId (encodeTx (MetadataNoSchema, omitOptionalCbor))
     let client = mkTxMonitorClient innerCodecs recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cTxMonitorCodec
     withMockChannel (txMonitorMockPeer seed codec) $ \channel -> do

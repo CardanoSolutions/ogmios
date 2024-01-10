@@ -153,12 +153,12 @@ encodeAcquireExpired = \case
 
 encodeBlock
     :: forall crypto. (Era (ByronEra crypto))
-    =>IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> CardanoBlock crypto
     -> Json
 encodeBlock opts = \case
     BlockByron blk ->
-        Byron.encodeABlockOrBoundary @crypto opts (byronBlockRaw blk)
+        Byron.encodeABlockOrBoundary @crypto (snd opts) (byronBlockRaw blk)
     BlockShelley blk ->
         Shelley.encodeBlock opts blk
     BlockAllegra blk ->
@@ -245,7 +245,7 @@ encodeTx
     :: forall crypto.
         ( Crypto crypto
         )
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> GenTx (CardanoBlock crypto)
     -> Json
 encodeTx opts = \case

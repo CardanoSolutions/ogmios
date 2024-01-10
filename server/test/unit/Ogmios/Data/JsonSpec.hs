@@ -69,7 +69,8 @@ import Ogmios.Data.Json
 import Ogmios.Data.Json.Orphans
     ()
 import Ogmios.Data.Json.Prelude
-    ( encodeSlotLength
+    ( MetadataFormat (..)
+    , encodeSlotLength
     , omitOptionalCbor
     )
 import Ogmios.Data.Json.Query
@@ -262,8 +263,8 @@ import Test.QuickCheck.Arbitrary.Generic
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
 
-import qualified Cardano.Ledger.Alonzo.Scripts.Data as Ledger
 import qualified Cardano.Ledger.Binary as Binary
+import qualified Cardano.Ledger.Plutus.Data as Ledger
 import qualified Codec.Json.Rpc as Rpc
 import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
@@ -272,7 +273,6 @@ import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.KeyMap as Json
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString as BS
-import qualified Data.ByteString.Base16 as B16
 import qualified Data.Char as Char
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -447,7 +447,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response (NextBlockResponse Block)))
-            (_encodeNextBlockResponse (encodeBlock omitOptionalCbor) encodePoint encodeTip)
+            (_encodeNextBlockResponse (encodeBlock (MetadataNoSchema, omitOptionalCbor)) encodePoint encodeTip)
             (50, "NextBlockResponse")
             "ogmios.json#/properties/NextBlockResponse"
 
@@ -498,7 +498,13 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response (NextTransactionResponse Block)))
-            (_encodeNextTransactionResponse encodeTxId (encodeTx omitOptionalCbor))
+            (_encodeNextTransactionResponse encodeTxId (encodeTx (MetadataNoSchema, omitOptionalCbor)))
+            (10, "NextTransactionResponse")
+            "ogmios.json#/properties/NextTransactionResponse"
+
+        validateToJSON
+            (arbitrary @(Rpc.Response (NextTransactionResponse Block)))
+            (_encodeNextTransactionResponse encodeTxId (encodeTx (MetadataDetailedSchema, omitOptionalCbor)))
             (10, "NextTransactionResponse")
             "ogmios.json#/properties/NextTransactionResponse"
 
@@ -569,7 +575,7 @@ spec = do
             (parseQueryLedgerTip genPointResultTPraos genPointResultPraos)
 
         validateLedgerStateQuery 10 "projectedRewards"
-            (Just [aesonQQ|{ "stake": [{ "lovelace": 14 }, { "lovelace": 42 }] }|])
+            (Just [aesonQQ|{ "stake": [{ "ada": { "lovelace": 14 } } , { "ada": { "lovelace": 42 } }] }|])
             (parseQueryLedgerProjectedRewards genNonMyopicMemberRewardsResult)
 
         validateLedgerStateQuery 10 "projectedRewards"
@@ -958,7 +964,7 @@ instance Arbitrary SerializedTransaction where
 propBinaryDataRoundtrip :: Ledger.Data StandardAlonzo -> Property
 propBinaryDataRoundtrip dat =
     let json = jsonToByteString (Alonzo.encodeData @StandardAlonzo dat)
-     in case B16.decodeBase16 . T.encodeUtf8 <$> Json.decode (toLazy json) of
+     in case decodeBase16 . T.encodeUtf8 <$> Json.decode (toLazy json) of
             Just (Right bytes) ->
                 let
                     dataFromBytes = Ledger.makeBinaryData (toShort bytes)
@@ -977,7 +983,7 @@ unsafeDataFromBytes =
     either (error . show) Ledger.binaryDataToData
     . Ledger.makeBinaryData
     . either error toShort
-    . B16.decodeBase16
+    . decodeBase16
 
 --
 -- Local State Query

@@ -10,14 +10,21 @@ repository cardano-haskell-packages
     d4a35cd3121aa00d18544bb0ac01c3e1691d618f462c46129271bccf39f7e8ee
 
 index-state:
-  , hackage.haskell.org 2023-09-01T22:19:16Z
-  , cardano-haskell-packages 2023-10-31T17:10:09Z
+  , hackage.haskell.org 2023-12-06T23:59:59Z
+  , cardano-haskell-packages 2023-12-06T23:59:59Z
 
 constraints:
-  , any.base == 4.14.3.0
-  , any.cardano-node == 8.6.0
-  , any.cardano-ledger-conway == 1.10.1.0
-  , any.text == 1.2.4.1
+  , any.base == 4.18.1.0
+  , any.cardano-node == 8.7.2
+  , any.cardano-ledger-conway == 1.11.0.0
+  , any.ouroboros-consensus == 0.14.0.0
+  , any.ouroboros-consensus-cardano == 0.12.1.0
+  , any.formatting == 7.2.0
+  , quickcheck-state-machine ^>= 0.7
+  , any.text source
+
+allow-newer:
+  *:formatting
 
 packages:
   ./
@@ -59,14 +66,18 @@ package cryptonite
 package bitvec
    flags: -simd
 
-source-repository-package
-  type: git
-  location: https://github.com/CardanoSolutions/ouroboros-consensus
-  tag: bf5308b406de74c056cf72c9a78e20b26f96cf88
-  subdir:
-    ouroboros-consensus
-    ouroboros-consensus-cardano
-    ouroboros-consensus-diffusion
+package quickcheck-state-machine
+  flags: +no-vendored-treediff
+
+-- Depending on C++ for just so slightly faster utf8 parsing is a bit annoying
+-- especially as it brings in all kinds of complications for GHC.
+package text
+  flags: -simdutf
+
+-- formatting (>= 7.2) allows us do drop double-conversion (which again is one
+-- of the offending c++ dependencies)
+package formatting
+  flags: +no-double-conversion
 
 source-repository-package
   type: git
@@ -79,9 +90,3 @@ source-repository-package
   location: https://github.com/CardanoSolutions/hjsonschema
   tag: 35e0b05c3867463363e67f00a5092cd39fa33313
   --sha256: 1w78d0lk1gi908lklixpzpa2xkzbyhg77aixm9i4rznrzsnbwhfm
-
-source-repository-package
-  type: git
-  location: https://github.com/CardanoSolutions/wai-routes
-  tag: d74b39683792649c01113f40bf57724dcf95c96a
-  --sha256: 117gkhcq2spmphp21nx8am6mk80wha1yvsny9y0hlkv381jjavii

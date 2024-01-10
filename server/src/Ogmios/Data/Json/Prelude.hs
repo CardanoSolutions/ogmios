@@ -13,6 +13,7 @@ module Ogmios.Data.Json.Prelude
     , ToJSON
     , ViaEncoding (..)
     , IncludeCbor (..)
+    , MetadataFormat (..)
     , omitOptionalCbor
     , includeAllCbor
     , jsonToByteString
@@ -101,7 +102,9 @@ module Ogmios.Data.Json.Prelude
     , encodeUnless
     ) where
 
-import Ogmios.Prelude
+import Ogmios.Prelude hiding
+    ( decodeBase16
+    )
 
 import Cardano.Ledger.BaseTypes
     ( DnsName
@@ -152,9 +155,6 @@ import Data.Aeson
 import Data.ByteArray
     ( ByteArrayAccess
     )
-import Data.ByteString.Base16
-    ( encodeBase16
-    )
 import Data.ByteString.Bech32
     ( HumanReadablePart
     , encodeBech32
@@ -193,19 +193,24 @@ import qualified Data.Aeson.Parser.Internal as Json hiding
     )
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteArray as BA
-import qualified Data.ByteString.Base16 as B16
 import qualified Data.ByteString.Base58 as B58
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ListMap as LM
 import qualified Data.Map.Strict as Map
 import qualified Data.SOP.NonEmpty as SOP
 import qualified Data.Text as T
+import qualified Ogmios.Prelude
 
 --
 -- Prelude
 --
 
 type Json = Json.Encoding
+
+data MetadataFormat
+    = MetadataNoSchema
+    | MetadataDetailedSchema
+    deriving (Generic, Eq, Show)
 
 data IncludeCbor = IncludeCbor
     { includeTransactionCbor :: !Bool
@@ -294,7 +299,7 @@ encodeByteStringBech32 hrp =
 
 encodeCoin :: Coin -> Json
 encodeCoin =
-    encodeSingleton "lovelace" . encodeInteger . unCoin
+    encodeSingleton "ada" . encodeSingleton "lovelace" . encodeInteger . unCoin
 {-# INLINEABLE encodeCoin #-}
 
 encodeDnsName :: DnsName -> Json
@@ -707,7 +712,7 @@ instance Alternative MultiEraDecoder where
 --
 
 decodeBase16 :: ByteString -> Json.Parser ByteString
-decodeBase16 = either (fail . toString) pure . B16.decodeBase16
+decodeBase16 = either (fail . toString) pure . Ogmios.Prelude.decodeBase16
 
 decodeBase58 :: ByteString -> Json.Parser ByteString
 decodeBase58 = maybe mempty pure . B58.decodeBase58 B58.bitcoinAlphabet

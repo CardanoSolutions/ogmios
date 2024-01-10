@@ -2,7 +2,7 @@ version: "3.5"
 
 services:
   cardano-node:
-    image: ghcr.io/input-output-hk/cardano-node:8.6.0-pre
+    image: ghcr.io/intersectmbo/cardano-node:8.7.2
     command: [
       "run",
       "--config", "/config/config.json",

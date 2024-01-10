@@ -4,7 +4,6 @@
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 -- NOTE: Needed because of auto-generated template-haskell code for wai-routes.
@@ -17,6 +16,10 @@ module Ogmios.App.Server.Http
 
 import Ogmios.Prelude
 
+import Network.HTTP.Types.Header
+    ( Header
+    , hContentType
+    )
 import Ogmios.App.Metrics
     ( RuntimeStats (..)
     , Sampler
@@ -47,6 +50,10 @@ import qualified Ogmios.App.Metrics as Metrics
 import Data.Aeson
     ( ToJSON (..)
     )
+import Data.Binary.Builder
+    ( Builder
+    , toLazyByteString
+    )
 import Data.FileEmbed
     ( embedFile
     )
@@ -55,12 +62,17 @@ import Network.HTTP.Client
     , httpLbs
     , newManager
     , parseRequest
-    , responseBody
     )
 import Network.HTTP.Types
-    ( status200
+    ( HeaderName
+    , status200
     , status400
+    , status404
+    , status406
     , status500
+    )
+import Network.HTTP.Types.Status
+    ( Status
     )
 import Ogmios.App.Configuration
     ( Configuration (..)
@@ -71,28 +83,11 @@ import Relude.Extra
 import System.Exit
     ( ExitCode (..)
     )
-import Wai.Routes
-    ( Handler
-    , RenderRoute (..)
-    , Routable (..)
-    , header
-    , html
-    , mkRoute
-    , parseRoutes
-    , raw
-    , rawBuilder
-    , request
-    , route
-    , runHandlerM
-    , showRoute
-    , status
-    , sub
-    , waiApp
-    )
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.KeyMap as Json.KeyMap
 import qualified Data.Binary.Builder as Builder
+import qualified Network.HTTP.Client as Http
 import qualified Network.Wai as Wai
 import qualified Network.WebSockets as WS
 
@@ -103,36 +98,22 @@ data EnvServer block m = EnvServer
     , configuration :: !Configuration
     }
 
-data Server where
-    Server
-        :: (MonadClock m, MonadMetrics m, MonadSTM m, ToJSON (Tip block))
-        => (forall a. m a -> IO a)
-        -> EnvServer block m
-        -> Server
-
--- The HTTP 'Server' serves multiple purposes:
---
--- - A landing page
--- - A health check to hook into monitoring systems / operations
--- - A quick'n'dirty "benchmark" script used for rapid smoke testing.
---
-mkRoute "Server" [parseRoutes|
-/                           RootR         GET POST
-/health                     HealthR       GET
-/metrics                    MetricsR      GET
-/favicon.png                FaviconR      GET
-|]
+data Handler where
+    Handler
+        :: (forall m block. (MonadIO m, MonadClock m, MonadMetrics m, MonadSTM m, ToJSON (Tip block)) => EnvServer block m -> StateT HandlerState m ())
+        -> Handler
 
 -- Dashboard
-getRootR :: Handler Server
-getRootR = runHandlerM $ do
+getRootR :: Handler
+getRootR = Handler $ \_env -> do
+    header "Access-Control-Allow-Origin" "*"
+    status status200
     html $ decodeUtf8 $(embedFile "static/dashboard.html")
 
 -- Proxy simple request/response events from HTTP into the WebSocket.
-postRootR :: Handler Server
-postRootR = runHandlerM $ do
+postRootR :: Handler
+postRootR = Handler $ \EnvServer{configuration} -> do
     header "Access-Control-Allow-Origin" "*"
-    Server _unliftIO EnvServer{configuration} <- sub
     req <- Wai.lazyRequestBody <$> request
     let Configuration{serverHost, serverPort} = configuration
     res <- liftIO $ WS.runClient serverHost serverPort "/" $ \ws -> do
@@ -148,36 +129,31 @@ postRootR = runHandlerM $ do
                     status status200
         _otherwise -> do
             status status500
-    rawBuilder $ Builder.fromLazyByteString res
+    raw $ Builder.fromLazyByteString res
 
-getHealthR :: Handler Server
-getHealthR = runHandlerM $ do
+getHealthR :: Handler
+getHealthR = Handler $ \EnvServer{health, sensors, sampler} -> do
     header "Access-Control-Allow-Origin" "*"
-    Server unliftIO EnvServer{health,sensors,sampler} <- sub
-    json =<< liftIO (unliftIO (do
-        metrics <- Metrics.sample sampler sensors
-        modifyHealth health (\h -> h { metrics })))
-  where
-    -- NOTE: Not using Wai.Routes.json because it forces 'toJSON' instead of
-    -- defaulting to 'toEncoding'. So, quickly redefining it here, relying on
-    -- 'toEncoding'.
-    json a = do
-      header "Content-Type" "application/json; charset=utf-8"
-      rawBuilder $ Json.fromEncoding $ toEncoding a
+    status status200
+    json =<< do
+        metrics <- lift $ Metrics.sample sampler sensors
+        modifyHealth health (\h -> h { metrics })
 
-getMetricsR :: Handler Server
-getMetricsR = runHandlerM $ do
+getMetricsR :: Handler
+getMetricsR = Handler $ \EnvServer{health, sensors, sampler} -> do
     header "Access-Control-Allow-Origin" "*"
     header "Content-Type" "text/plain; charset=utf-8"
-    Server unliftIO EnvServer{health,sensors,sampler} <- sub
-    (rawBuilder . mkPrometheusMetrics) =<< liftIO (unliftIO (do
-        metrics <- Metrics.sample sampler sensors
-        modifyHealth health (\h -> h { metrics })))
+    status status200
+    (raw . mkPrometheusMetrics) =<< do
+        metrics <- lift $ Metrics.sample sampler sensors
+        modifyHealth health (\h -> h { metrics })
 
-getFaviconR :: Handler Server
-getFaviconR = runHandlerM $ do
+getFaviconR :: Handler
+getFaviconR = Handler $ \_env -> do
+    header "Access-Control-Allow-Origin" "*"
     header "Content-Type" "image/png"
-    raw $(embedFile "static/favicon.png")
+    status status200
+    raw $ Builder.fromByteString $(embedFile "static/favicon.png")
 
 --
 -- HealthCheck
@@ -188,9 +164,9 @@ getFaviconR = runHandlerM $ do
 healthCheck :: Int -> IO ()
 healthCheck port = do
     response <- join $ httpLbs
-        <$> parseRequest (toString $ "http://localhost:" <> show port <> showRoute HealthR)
+        <$> parseRequest (toString $ "http://localhost:" <> show @Text port <> "/health")
         <*> newManager defaultManagerSettings
-    case Json.decode (responseBody response) >>= getConnectionStatus of
+    case Json.decode (Http.responseBody response) >>= getConnectionStatus of
         Just st | st == toJSON Connected ->
             return ()
         _ ->
@@ -205,6 +181,7 @@ mkHttpApp
         , MonadMetrics m
         , MonadSTM m
         , MonadReader env m
+        , MonadIO m
         , HasType (TVar m (Health block)) env
         , HasType (Sensors m) env
         , HasType (Sampler RuntimeStats m) env
@@ -219,4 +196,109 @@ mkHttpApp unliftIO = do
         <*> asks (view typed)
         <*> asks (view typed)
         <*> asks (view typed)
-    pure $ waiApp $ route (Server unliftIO env)
+    return $ \req send -> do
+        let (Handler mkRes) = route (Wai.requestMethod req, Wai.pathInfo req)
+        st <- unliftIO $ execStateT (mkRes env) (emptyHandlerState req)
+        send $ Wai.responseLBS (_status st) (_headers st) (_responseBody st)
+  where
+    route = \case
+        ("OPTIONS", _) ->
+            Handler $ \_env -> do
+                header "Access-Control-Allow-Origin" "*"
+                status status200
+
+        -- /
+        ("GET", []) ->
+            getRootR
+        ("POST", []) ->
+            postRootR
+        (_, []) ->
+            notAllowed
+
+        -- /health
+        ("GET", ["health"]) ->
+            getHealthR
+        (_, ["health"]) ->
+            notAllowed
+
+        -- /metrics
+        ("GET", ["metrics"]) ->
+            getMetricsR
+        (_, ["metrics"]) ->
+            notAllowed
+
+        -- /favicon.png
+        ("GET", ["favicon.png"]) ->
+            getFaviconR
+        (_, ["favicon.png"]) ->
+            notAllowed
+
+        (_, _) ->
+            notFound
+
+--
+-- Responses
+--
+
+data HandlerState = HandlerState
+    { _status :: Status
+    , _headers :: [Header]
+    , _responseBody :: LByteString
+    , _request :: Wai.Request
+    }
+
+emptyHandlerState :: Wai.Request -> HandlerState
+emptyHandlerState _request = HandlerState
+    { _status = status500
+    , _headers = []
+    , _responseBody = mempty
+    , _request
+    }
+
+status :: Monad m => Status -> StateT HandlerState m ()
+status s =
+    modify $ \st -> st
+        { _status = s
+        }
+
+header :: Monad m => HeaderName -> ByteString -> StateT HandlerState m ()
+header headerName headerValue =
+    modify $ \st -> st
+        { _headers = (headerName, headerValue) : _headers st
+        }
+
+request :: Monad m => StateT HandlerState m Wai.Request
+request =
+    gets _request
+
+html :: Monad m => Text -> StateT HandlerState m ()
+html doc =
+    modify $ \st -> st
+        { _headers = textHtml : _headers st
+        , _responseBody = encodeUtf8 doc
+        }
+  where
+    textHtml = (hContentType, "text/html; charset=utf-8")
+
+json :: (Monad m, ToJSON a) => a -> StateT HandlerState m ()
+json a =
+    modify $ \st -> st
+        { _headers = applicationJson : _headers st
+        , _responseBody = toLazyByteString $ Json.fromEncoding $ toEncoding a
+        }
+  where
+    applicationJson = (hContentType, "application/json; charset=utf-8")
+
+raw :: (Monad m) => Builder -> StateT HandlerState m ()
+raw builder =
+    modify $ \st -> st
+        { _responseBody = toLazyByteString builder
+        }
+
+notFound :: Handler
+notFound = Handler $ \_env -> do
+    status status404
+
+notAllowed :: Handler
+notAllowed = Handler $ \_env -> do
+    status status406

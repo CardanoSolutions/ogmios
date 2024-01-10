@@ -33,6 +33,7 @@ import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
+import qualified Cardano.Ledger.Plutus.Data as Ledger
 
 import qualified Cardano.Ledger.Shelley.API as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
@@ -41,7 +42,6 @@ import qualified Cardano.Ledger.Mary.Value as Ma
 
 import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
-import qualified Cardano.Ledger.Alonzo.Scripts.Data as Al
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 
 import qualified Cardano.Ledger.Babbage.Core as Ba
@@ -58,7 +58,7 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 encodeBlock
     :: ( Crypto crypto
        )
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> ShelleyBlock (Praos crypto) (BabbageEra crypto)
     -> Json
 encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
@@ -206,7 +206,7 @@ encodePParamsHKD encode pure_ x =
     encode "minStakePoolCost"
         encodeCoin (Ba.bppMinPoolCost x) <>
     encode "minUtxoDepositConstant"
-        encodeInteger (pure_ 0) <>
+        (encodeCoin . Coin) (pure_ 0) <>
     encode "minUtxoDepositCoefficient"
         (encodeInteger . unCoin . Ba.unCoinPerByte) (Ba.bppCoinsPerUTxOByte x) <>
     encode "plutusCostModels"
@@ -232,10 +232,10 @@ encodeTx
         ( Crypto crypto
         , era ~ BabbageEra crypto
         )
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> Ba.AlonzoTx era
     -> Json
-encodeTx opts x =
+encodeTx (fmt, opts) x =
     encodeObject
         ( Shelley.encodeTxId (Ledger.txid @(BabbageEra crypto) (Ba.body x))
        <>
@@ -255,7 +255,7 @@ encodeTx opts x =
   where
     auxiliary = do
         hash <- Shelley.encodeAuxiliaryDataHash <$> Ba.btbAuxDataHash (Ba.body x)
-        (labels, scripts) <- Alonzo.encodeAuxiliaryData opts <$> Ba.auxiliaryData x
+        (labels, scripts) <- Alonzo.encodeAuxiliaryData (fmt, opts) <$> Ba.auxiliaryData x
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts
@@ -325,11 +325,11 @@ encodeTxOut opts (Ba.BabbageTxOut addr value datum script) =
     "value" .=
         Mary.encodeValue value <>
     ( case datum of
-        Al.NoDatum ->
+        Ledger.NoDatum ->
             mempty
-        Al.DatumHash h ->
+        Ledger.DatumHash h ->
             "datumHash" .= Alonzo.encodeDataHash h
-        Al.Datum bin ->
+        Ledger.Datum bin ->
             "datum" .= Alonzo.encodeBinaryData bin
     ) <>
     "script" .=? OmitWhenNothing

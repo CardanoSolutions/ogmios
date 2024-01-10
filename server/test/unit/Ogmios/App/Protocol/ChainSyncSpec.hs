@@ -29,6 +29,7 @@ import Network.TypedProtocol.Codec
     )
 import Ogmios.App.Configuration
     ( EpochSlots (..)
+    , MetadataFormat (..)
     , omitOptionalCbor
     )
 import Ogmios.App.Protocol.ChainSync
@@ -203,13 +204,13 @@ maxInFlight :: MaxInFlight
 maxInFlight = 3
 
 withChainSyncClient
-    :: (MonadSTM m, MonadOuroboros m)
+    :: (MonadOuroboros m)
     => ((ChainSyncMessage Block -> m ()) ->  m Json -> m a)
     -> StdGen
     -> m a
 withChainSyncClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
-    let innerCodecs = mkChainSyncCodecs (encodeBlock omitOptionalCbor) encodePoint encodeTip
+    let innerCodecs = mkChainSyncCodecs (encodeBlock (MetadataNoSchema, omitOptionalCbor)) encodePoint encodeTip
     let client = mkChainSyncClient maxInFlight innerCodecs recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cChainSyncCodec
     withMockChannel (chainSyncMockPeer seed codec) $ \channel -> do

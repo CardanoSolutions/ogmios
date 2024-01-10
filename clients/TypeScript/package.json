@@ -25,7 +25,7 @@
     "repl:pkg": "yarn workspace @cardano-ogmios/repl run pkg",
     "repl:start": "yarn workspace @cardano-ogmios/repl run start",
     "test": "yarn workspaces run test",
-    "testnet:up": "DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 OGMIOS_PORT=1338 NETWORK=testnet docker-compose -p ogmios-testnet up",
+    "testnet:up": "DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 OGMIOS_PORT=1337 NETWORK=testnet docker-compose -p ogmios-testnet up",
     "testnet:down": "docker-compose -p ogmios-testnet down",
     "tags": "ctags $(find packages -type f -name '*.ts' ! -path 'dist/*' ! -name '*.test.ts' ! -name '*.d.ts' ! -path 'node_modules/*')",
     "docs": "tar -C docs -xf docs/ogmios-typedoc-theme.tar.gz && typedoc --packages ."

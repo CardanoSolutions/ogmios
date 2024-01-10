@@ -55,7 +55,7 @@ import Foreign.Ptr
 import Foreign.Storable
     ( peek, poke )
 import GHC.Exts
-    ( Addr#, indexWord8OffAddr#, word2Int# )
+    ( Addr#, indexWord8OffAddr#, word2Int#, word8ToWord#)
 import GHC.ForeignPtr
     ( mallocPlainForeignPtrBytes )
 import GHC.Word
@@ -268,5 +268,5 @@ peekWord5 !((.&. 7) -> !n) (Residue !r) !ptr
 -- | Fast array lookup of a word5 in an unboxed bytestring.
 lookupWord5 :: Addr# -> Word5 -> Word8
 lookupWord5 table (coerce -> (W8# i)) =
-    W8# (indexWord8OffAddr# table (word2Int# i))
+    W8# (indexWord8OffAddr# table (word2Int# (word8ToWord# i)))
 {-# INLINE lookupWord5 #-}

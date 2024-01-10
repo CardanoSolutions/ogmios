@@ -49,9 +49,6 @@ import Cardano.Ledger.Allegra.Scripts
 import Cardano.Ledger.Alonzo.Core
     ( ScriptIntegrityHash
     )
-import Cardano.Ledger.Alonzo.Language
-    ( Language (..)
-    )
 import Cardano.Ledger.Alonzo.Rules
     ( TagMismatchDescription (..)
     )
@@ -95,6 +92,9 @@ import Cardano.Ledger.Keys
     , KeyHash (..)
     , KeyRole (..)
     , VKey (..)
+    )
+import Cardano.Ledger.Plutus.Language
+    ( Language (..)
     )
 import Cardano.Ledger.TxIn
     ( TxIn (..)
@@ -335,6 +335,11 @@ data MultiEraPredicateFailure crypto
         { governanceActions :: Set (GovActionId crypto)
         }
 
+    --  Votes must be cast against non-expired action.
+    | VotingOnExpiredActions
+        { votes :: Map (GovActionId crypto) (Voter crypto)
+        }
+
     -- Mismatch between the deposit amount declared in a transaction and the
     -- expected amount from protocol parameters.
     | GovernanceProposalDepositMismatch
@@ -519,6 +524,7 @@ predicateFailurePriority = \case
     TransactionOutsideValidityInterval{} -> 1
     BootstrapAddressAttributesTooLarge{} -> 1
     UnauthorizedVotes{} -> 1
+    VotingOnExpiredActions{} -> 1
     StakeCredentialAlreadyRegistered{} -> 1
     DRepAlreadyRegistered{} -> 1
     StakePoolMetadataHashTooLarge{} -> 1

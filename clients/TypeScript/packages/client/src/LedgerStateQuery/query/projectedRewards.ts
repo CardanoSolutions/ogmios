@@ -2,8 +2,8 @@ import { InteractionContext, Method } from '../../Connection'
 import {
   Ogmios,
   AnyStakeCredential,
-  Lovelace,
-  ProjectedRewards
+  ProjectedRewards,
+  ValueAdaOnly
 } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateProjectedRewards']
@@ -18,7 +18,7 @@ type Response = Ogmios['QueryLedgerStateProjectedRewardsResponse']
  */
 export function projectedRewards (
   context: InteractionContext,
-  params?: { stake?: Lovelace[], scripts?: AnyStakeCredential[], keys?: AnyStakeCredential[] }
+  params?: { stake?: ValueAdaOnly[], scripts?: AnyStakeCredential[], keys?: AnyStakeCredential[] }
 ): Promise<ProjectedRewards> {
   return Method<Request, Response, ProjectedRewards>(
     {

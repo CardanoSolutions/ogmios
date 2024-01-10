@@ -66,8 +66,9 @@ module Ogmios.Data.Protocol.TxSubmission
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Ledger.Alonzo.Language
-    ( Language (..)
+import Cardano.Ledger.Alonzo.Plutus.TxInfo
+    ( ExtendedUTxO
+    , TranslationError (..)
     )
 import Cardano.Ledger.Alonzo.Scripts
     ( AlonzoScript
@@ -76,11 +77,6 @@ import Cardano.Ledger.Alonzo.Scripts
     )
 import Cardano.Ledger.Alonzo.Tx
     ( AlonzoEraTx
-    )
-import Cardano.Ledger.Alonzo.TxInfo
-    ( EraPlutusContext
-    , ExtendedUTxO
-    , TranslationError (..)
     )
 import Cardano.Ledger.Alonzo.TxWits
     ( RdmrPtr (..)
@@ -94,6 +90,12 @@ import Cardano.Ledger.Api
     )
 import Cardano.Ledger.Babbage.TxBody
     ( BabbageEraTxBody
+    )
+import Cardano.Ledger.Plutus.Language
+    ( Language (..)
+    )
+import Cardano.Ledger.Plutus.TxInfo
+    ( EraPlutusContext
     )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)

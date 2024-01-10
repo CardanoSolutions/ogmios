@@ -129,6 +129,7 @@ library
       TupleSections
       TypeApplications
       TypeFamilies
+      TypeOperators
       TypeSynonymInstances
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-packages
@@ -136,6 +137,7 @@ library
       aeson
     , array
     , async
+    , attoparsec-aeson
     , base >=4.7 && <5
     , base16
     , base58-bytestring
@@ -143,7 +145,6 @@ library
     , bech32-th
     , binary
     , bytestring
-    , cardano-binary
     , cardano-crypto
     , cardano-crypto-class
     , cardano-crypto-wrapper
@@ -211,10 +212,8 @@ library
     , transformers
     , typed-protocols
     , unix
-    , unordered-containers
     , vector
     , wai
-    , wai-routes
     , wai-websockets
     , warp
     , websockets
@@ -265,6 +264,7 @@ executable ogmios
       TupleSections
       TypeApplications
       TypeFamilies
+      TypeOperators
       TypeSynonymInstances
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-packages -threaded -rtsopts
@@ -331,6 +331,7 @@ test-suite unit
       TupleSections
       TypeApplications
       TypeFamilies
+      TypeOperators
       TypeSynonymInstances
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-packages -threaded -rtsopts -with-rtsopts=-N
@@ -341,7 +342,6 @@ test-suite unit
     , aeson
     , aeson-pretty
     , base >=4.7 && <5
-    , base16
     , bytestring
     , cardano-ledger-alonzo
     , cardano-ledger-api
@@ -371,7 +371,6 @@ test-suite unit
     , ouroboros-network-ogmios
     , ouroboros-network-protocols
     , random
-    , relude
     , strict-sop-core
     , template-haskell
     , text

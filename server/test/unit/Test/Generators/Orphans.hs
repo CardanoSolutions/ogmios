@@ -9,7 +9,7 @@ module Test.Generators.Orphans () where
 
 import Ogmios.Prelude
 
-import Cardano.Ledger.Alonzo.TxInfo
+import Cardano.Ledger.Plutus.TxInfo
     ( TxOutSource (..)
     )
 import Test.QuickCheck
@@ -19,9 +19,8 @@ import Test.QuickCheck.Arbitrary.Generic
     ( genericArbitrary
     )
 
-import qualified Cardano.Ledger.Language as Ledger
+import qualified Cardano.Ledger.Plutus.Language as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
-import qualified Data.ByteString.Base16 as B16
 
 import Test.Consensus.Cardano.Generators
     ()
@@ -39,8 +38,8 @@ instance Arbitrary Ledger.Plutus where
 instance Arbitrary Ledger.BinaryPlutus where
     arbitrary = pure
         $ Ledger.BinaryPlutus
-        $ either (error . show) toShort
-        $ B16.decodeBase16
+        $ toShort
+        $ unsafeDecodeBase16
             "58f2010000323232323232323222232325333008323232533300b002100114a0\
             \6644646600200200644a66602200229404c8c94ccc040cdc78010028a5113300\
             \40040013014002375c60240026eb0c038c03cc03cc03cc03cc03cc03cc03cc03\

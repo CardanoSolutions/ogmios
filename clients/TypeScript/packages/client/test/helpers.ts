@@ -9,7 +9,7 @@ export const dummyInteractionContext = async (
     console.error,
     () => {},
     {
-      connection: { port: 1338, ...connection },
+      connection: { port: 1337, ...connection },
       maxEventListeners: 99
     }
   )

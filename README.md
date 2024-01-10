@@ -13,13 +13,12 @@
 
 ## Compatibility
 
-| Ogmios       | Cardano-node              |
-| ---          | ---                       |
-| `v5.6.0`     | `1.35.4`, `1.35.7`        |
-| `v6.0.0-rc1` | `8.1.2`, `8.1.1`, `8.1.0` |
-| `v6.0.0-rc2` | `8.1.2`, `8.1.1`, `8.1.0` |
-| `v6.0.0-rc3` | `8.5.0-pre` (no Conway)   |
-| `v6.0.0-rc4` | `8.5.0-pre` (with Conway) |
+| Ogmios   | Cardano-node       |
+| ---      | ---                |
+| `v5.6.0` | `1.35.4`, `1.35.7` |
+| `v6.0.0` | `8.7.2`            |
+
+[SanchoNet]: https://sancho.network/
 
 ## QuickStart
 
@@ -71,7 +70,7 @@ See our [Ogmios client starter kit](https://github.com/CardanoSolutions/ogmios-t
   <tr><td>Health monitoring, with runtime and application statistics</td><td><a href="https://ogmios.dev/getting-started/monitoring/" target="_blank">↗️</a></td></tr>
 </table>
 
-> **Note**
+> [!TIP]
 >
 > Test vectors that cover every part of the protocol are [available here](https://github.com/CardanoSolutions/ogmios/tree/master/server/test/vectors). Use them without moderation for a smooth integration!
 
@@ -98,6 +97,7 @@ Ogmios provides a language-agnostic API which can be implemented using any WebSo
 <td align="center"><img height=72 width=72 src=".github/clients/go.png" alt="Logo:Go"><br/><a href="https://github.com/savaki/ogmigo/#readme"><strong>Go</strong></a></td>
 <td align="center"><img height=72 width=72 src=".github/clients/kotlin.png" alt="Logo:Kotlin"><br/><a href="https://github.com/projectNEWM/kogmios#readme"><strong>Kotlin</strong></a></td>
 <td align="center"><img height=72 width=72 src=".github/clients/java.png" alt="Logo:Java"><br/><a href="https://github.com/adabox-aio/ogmios-java-client.git#readme"><strong>Java</strong></a></td>
+<td align="center"><img height=72 width=72 src=".github/clients/python.png" alt="Logo:Python"><br/><a href="https://ogmios-python.readthedocs.io/en/latest/examples/index.html"><strong>Python</Strong></a></td>
 </tr><thead></table>
 
 ## Sponsors

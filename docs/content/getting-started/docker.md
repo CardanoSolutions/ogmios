@@ -82,7 +82,7 @@ $ docker run --rm \
   -v ./ipc:/ipc \
   cardanosolutions/ogmios:latest \
     --node-socket /ipc/node.socket \
-    --node-config /config/cardano-node/config.json \
+    --node-config /config/mainnet/cardano-node/config.json \
     --host 0.0.0.0
 ```
 

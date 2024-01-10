@@ -16,9 +16,6 @@ import Codec.CBOR.Encoding
 import Codec.CBOR.Write
     ( toStrictByteString
     )
-import Data.ByteString.Base16
-    ( encodeBase16
-    )
 
 import qualified Cardano.Chain.Block as By hiding
     ( Proof
@@ -33,7 +30,6 @@ import qualified Cardano.Chain.Delegation as By hiding
 import qualified Cardano.Chain.Delegation as By.Dlg
 import qualified Cardano.Chain.Genesis as By
 import qualified Cardano.Chain.Slotting as By
-import qualified Cardano.Chain.UTxO as By
 import qualified Cardano.Chain.Update as By hiding
     ( APayload
     , Proof
@@ -41,6 +37,7 @@ import qualified Cardano.Chain.Update as By hiding
 import qualified Cardano.Chain.Update as By.Upd
 import qualified Cardano.Chain.Update.Proposal as By.Upd.Proposal
 import qualified Cardano.Chain.Update.Vote as By.Upd.Vote
+import qualified Cardano.Chain.UTxO as By
 import qualified Cardano.Crypto.Hashing as By
 import qualified Cardano.Crypto.ProtocolMagic as By
 import qualified Cardano.Crypto.Signing as By
@@ -202,7 +199,7 @@ encodeValue
     :: By.Lovelace
     -> Json
 encodeValue =
-    encodeSingleton "ada" . encodeLovelace
+    encodeLovelace
 
 encodeTxOut
     :: By.TxOut
@@ -363,7 +360,7 @@ encodeLovelace
     :: By.Lovelace
     -> Json
 encodeLovelace =
-    encodeSingleton "lovelace" . encodeInteger . By.lovelaceToInteger
+    encodeSingleton "ada" . encodeSingleton "lovelace" . encodeInteger . By.lovelaceToInteger
 
 encodeLovelaceError
     :: By.LovelaceError

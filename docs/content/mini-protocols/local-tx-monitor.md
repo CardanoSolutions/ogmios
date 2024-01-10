@@ -138,7 +138,7 @@ servers: {}
 channels: {}
 components:
   schemas:
-    4000:
+    4000/MustAcquireMempoolFirst:
       $ref: "/ogmios.json#/properties/MustAcquireMempoolFirst/properties/error"
 {{% /embed-async-api %}}
 

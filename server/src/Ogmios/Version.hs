@@ -12,7 +12,7 @@ module Ogmios.Version
 import Ogmios.Prelude
 
 import Data.Git.Revision.TH
-    ( gitDescribeHEAD
+    ( gitRevParseHEAD
     )
 import Data.Version
     ( makeVersion
@@ -34,4 +34,4 @@ version
     | otherwise =
         toText ("v" <> showVersion Pkg.version <> " (" <> sha <> ")")
   where
-    sha = $(gitDescribeHEAD)
+    sha = take 8 $(gitRevParseHEAD)

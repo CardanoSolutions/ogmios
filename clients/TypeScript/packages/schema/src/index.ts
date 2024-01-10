@@ -24,7 +24,7 @@ export type TipOrOrigin = Tip | Origin;
  */
 export type BlockHeight = number;
 export type Block = BlockEBB | BlockBFT | BlockPraos;
-export type Int64 = number;
+export type UInt64 = number;
 /**
  * A Blake2b 32-byte hash digest of a transaction body
  */
@@ -90,14 +90,16 @@ export type None = null;
  * A network target, as defined since the Shelley era.
  */
 export type Network = "mainnet" | "testnet";
-export type UInt64 = number;
 export type Nonce = Neutral | DigestBlake2B256;
 export type Neutral = "neutral";
+export type Int64 = number;
 export type CostModel = Int64[];
-export type Metadatum = Integer | String | ArrayMetadatum | ObjectMetadatum;
+export type Metadatum = MetadatumNoSchema | MetadatumDetailedSchema;
+export type MetadatumNoSchema = Integer | String | ArrayMetadatum | ObjectMetadatum;
 export type Integer = bigint;
 export type String = string;
-export type ArrayMetadatum = Metadatum[];
+export type ArrayMetadatum = MetadatumNoSchema[];
+export type MetadatumDetailedSchema = Int | String1 | Bytes | List | Map;
 /**
  * An Ed25519 verification key.
  */
@@ -189,6 +191,7 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureInvalidCommitteeUpdate
   | SubmitTransactionFailureTreasuryWithdrawalMismatch
   | SubmitTransactionFailureInvalidOrMissingPreviousProposals
+  | SubmitTransactionFailureVotingOnExpiredActions
   | SubmitTransactionFailureUnrecognizedCertificateType
   | SubmitTransactionFailureInternalLedgerTypeConversionError;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
@@ -197,7 +200,6 @@ export type ScriptPurpose = ScriptPurposeSpend | ScriptPurposeMint | ScriptPurpo
  * A Blake2b 28-byte hash digest, encoded in base16.
  */
 export type PolicyId = string;
-export type RedeemerPointer = string;
 export type Language = "plutus:v1" | "plutus:v2" | "plutus:v3";
 export type Utxo = {
   transaction: {
@@ -465,7 +467,7 @@ export interface BlockBFT {
   height: BlockHeight;
   slot: Slot;
   size: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   transactions?: Transaction[];
   operationalCertificates?: BootstrapOperationalCertificate[];
@@ -488,12 +490,12 @@ export interface Transaction {
   inputs: TransactionOutputReference[];
   references?: TransactionOutputReference[];
   collaterals?: TransactionOutputReference[];
-  totalCollateral?: Lovelace;
+  totalCollateral?: ValueAdaOnly;
   collateralReturn?: TransactionOutput;
   outputs: TransactionOutput[];
   certificates?: Certificate[];
   withdrawals?: Withdrawals;
-  fee?: Lovelace;
+  fee?: ValueAdaOnly;
   validityInterval?: ValidityInterval;
   mint?: Assets;
   network?: Network;
@@ -510,11 +512,9 @@ export interface Transaction {
   datums?: {
     [k: string]: Datum;
   };
-  redeemers?: {
-    [k: string]: Redeemer;
-  };
+  redeemers?: Redeemer[];
   /**
-   * The raw serialized (CBOR) transaction, as found on-chain.
+   * The raw serialized (CBOR) transaction, as found on-chain. Use --include-transaction-cbor to ALWAYS include the 'cbor' field. Omitted otherwise.
    */
   cbor?: string;
 }
@@ -524,11 +524,10 @@ export interface TransactionOutputReference {
   };
   index: UInt32;
 }
-export interface Lovelace {
-  /**
-   * A number of lovelace, possibly large when summed up.
-   */
-  lovelace: bigint;
+export interface ValueAdaOnly {
+  ada: {
+    lovelace: bigint;
+  };
 }
 /**
  * A transaction output. 'datum' and 'datumHash' are never present together.
@@ -548,6 +547,9 @@ export interface Value {
     [k: string]: AssetQuantity;
   };
 }
+/**
+ * A Cardano native script. Use --include-script-cbor to ALWAYS include the 'cbor' field. Omitted otherwise.
+ */
 export interface Native {
   language: "native";
   json: ScriptNative;
@@ -615,7 +617,7 @@ export interface DelegateRepresentativeAbstain {
 export interface StakeCredentialRegistration {
   type: "stakeCredentialRegistration";
   credential: DigestBlake2B224;
-  deposit?: Lovelace;
+  deposit?: ValueAdaOnly;
 }
 /**
  * A stake key de-registration certificate. The field 'deposit' is only *optionally* present in Conway onwards.
@@ -623,7 +625,7 @@ export interface StakeCredentialRegistration {
 export interface StakeCredentialDeregistration {
   type: "stakeCredentialDeregistration";
   credential: DigestBlake2B224;
-  deposit?: Lovelace;
+  deposit?: ValueAdaOnly;
 }
 /**
  * A stake pool registration certificate.
@@ -636,9 +638,9 @@ export interface StakePool {
   id: StakePoolId;
   vrfVerificationKeyHash: DigestBlake2B256;
   owners: DigestBlake2B224[];
-  cost: Lovelace;
+  cost: ValueAdaOnly;
   margin: Ratio;
-  pledge: Lovelace;
+  pledge: ValueAdaOnly;
   rewardAccount: RewardAccount;
   metadata?: Anchor;
   relays: Relay[];
@@ -670,13 +672,17 @@ export interface StakePoolRetirement {
 }
 export interface GenesisDelegation {
   type: "genesisDelegation";
-  delegate: {
-    id: DigestBlake2B224;
-  };
+  delegate: GenesisDelegate;
   issuer: {
     id: DigestBlake2B224;
-    vrfVerificationKeyHash: DigestBlake2B256;
   };
+}
+/**
+ * A Genesis delegate, in charge of Cardano's governance.
+ */
+export interface GenesisDelegate {
+  id: DigestBlake2B224;
+  vrfVerificationKeyHash: DigestBlake2B256;
 }
 /**
  * A constitutional committee member registers a hot key for voting on-chain. Constitutional committee members do not vote with their cold key directly. New registrations supersedes any preceding ones.
@@ -704,7 +710,7 @@ export interface ConstitutionalCommitteeRetirement {
 export interface DelegateRepresentativeRegistration {
   type: "delegateRepresentativeRegistration";
   delegateRepresentative: DelegateRepresentative;
-  deposit: Lovelace;
+  deposit: ValueAdaOnly;
   anchor?: Anchor;
 }
 export interface DelegateRepresentativeUpdate {
@@ -718,10 +724,10 @@ export interface DelegateRepresentativeUpdate {
 export interface DelegateRepresentativeRetirement {
   type: "delegateRepresentativeRetirement";
   delegateRepresentative: DelegateRepresentative;
-  deposit: Lovelace;
+  deposit: ValueAdaOnly;
 }
 export interface Withdrawals {
-  [k: string]: Lovelace;
+  [k: string]: ValueAdaOnly;
 }
 export interface ValidityInterval {
   invalidBefore?: Slot;
@@ -733,7 +739,7 @@ export interface Assets {
   };
 }
 export interface GovernanceProposal {
-  deposit?: Lovelace;
+  deposit?: ValueAdaOnly;
   returnAccount?: RewardAccount;
   anchor?: Anchor;
   action:
@@ -752,27 +758,27 @@ export interface GovernanceActionProtocolParametersUpdate {
 }
 export interface ProposedProtocolParameters {
   minFeeCoefficient?: UInt64;
-  minFeeConstant?: Lovelace;
+  minFeeConstant?: ValueAdaOnly;
   minUtxoDepositCoefficient?: UInt64;
-  minUtxoDepositConstant?: Lovelace;
+  minUtxoDepositConstant?: ValueAdaOnly;
   maxBlockBodySize?: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   maxBlockHeaderSize?: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   maxTransactionSize?: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   maxValueSize?: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   extraEntropy?: Nonce;
-  stakeCredentialDeposit?: Lovelace;
-  stakePoolDeposit?: Lovelace;
+  stakeCredentialDeposit?: ValueAdaOnly;
+  stakePoolDeposit?: ValueAdaOnly;
   stakePoolRetirementEpochBound?: UInt64;
   stakePoolPledgeInfluence?: Ratio;
-  minStakePoolCost?: Lovelace;
+  minStakePoolCost?: ValueAdaOnly;
   desiredNumberOfStakePools?: UInt64;
   federatedBlockProductionRatio?: Ratio;
   monetaryExpansion?: Ratio;
@@ -787,9 +793,9 @@ export interface ProposedProtocolParameters {
   constitutionalCommitteeMinSize?: UInt64;
   constitutionalCommitteeMaxTermLength?: UInt64;
   governanceActionLifetime?: Epoch;
-  governanceActionDeposit?: Lovelace;
+  governanceActionDeposit?: ValueAdaOnly;
   delegateRepresentativeVotingThresholds?: DelegateRepresentativeVotingThresholds;
-  delegateRepresentativeDeposit?: Lovelace;
+  delegateRepresentativeDeposit?: ValueAdaOnly;
   delegateRepresentativeMaxIdleTime?: Epoch;
   version?: ProtocolVersion;
 }
@@ -844,7 +850,7 @@ export interface GovernanceActionTreasuryTransfer {
   type: "treasuryTransfer";
   source: "reserves" | "treasury";
   target: "reserves" | "treasury";
-  value: Lovelace;
+  value: ValueAdaOnly;
 }
 /**
  * One of more withdrawals from the treasury.
@@ -854,13 +860,15 @@ export interface GovernanceActionTreasuryWithdrawals {
   withdrawals: RewardTransfer;
 }
 export interface RewardTransfer {
-  [k: string]: LovelaceDelta;
+  [k: string]: ValueDelta;
 }
-export interface LovelaceDelta {
-  /**
-   * An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada).
-   */
-  lovelace: number;
+export interface ValueDelta {
+  ada: {
+    /**
+     * An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada).
+     */
+    lovelace: number;
+  };
 }
 /**
  * A change (partial or total) in the constitutional committee.
@@ -938,7 +946,7 @@ export interface Metadata {
 }
 export interface MetadataLabels {
   /**
-   * An associated metadatum, as a CBOR bytestring or a JSON object if possible. Some binary representations cannot be represented in plain JSON and the 'json' field is therefore omitted.
+   * An associated metadatum, as a CBOR bytestring or a JSON object if possible. If not possible, default to 'cbor'. Use --include-metadata-cbor to ALWAYS include the cbor field.
    */
   [k: string]: {
     cbor?: string;
@@ -946,8 +954,30 @@ export interface MetadataLabels {
   };
 }
 export interface ObjectMetadatum {
-  [k: string]: Metadatum;
+  [k: string]: MetadatumNoSchema;
 }
+export interface Int {
+  int: bigint;
+}
+export interface String1 {
+  string: string;
+}
+export interface Bytes {
+  bytes: string;
+}
+export interface List {
+  list: MetadatumDetailedSchema[];
+}
+export interface Map {
+  map: MetadatumMap[];
+}
+export interface MetadatumMap {
+  k: MetadatumDetailedSchema;
+  v: MetadatumDetailedSchema;
+}
+/**
+ * A signatory (EdDSA) for the transaction. The fields 'chainCode' and 'addressAttributes' are only present on bootstrap signatures (when spending from a Byron/Bootstrap address).
+ */
 export interface Signatory {
   key: VerificationKey;
   signature: Signature;
@@ -957,6 +987,11 @@ export interface Signatory {
 export interface Redeemer {
   redeemer: RedeemerData;
   executionUnits: ExecutionUnits;
+  validator: RedeemerPointer;
+}
+export interface RedeemerPointer {
+  purpose: "spend" | "mint" | "publish" | "withdraw";
+  index: UInt64;
 }
 /**
  * A (Byron) delegation certificate.
@@ -987,16 +1022,16 @@ export interface BootstrapProtocolUpdate {
 export interface BootstrapProtocolParameters {
   heavyDelegationThreshold?: Ratio;
   maxBlockBodySize?: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   maxBlockHeaderSize?: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   maxUpdateProposalSize?: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   maxTransactionSize?: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   multiPartyComputationThreshold?: Ratio;
   scriptVersion?: UInt64;
@@ -1009,7 +1044,7 @@ export interface BootstrapProtocolParameters {
   softForkMinThreshold?: Ratio;
   softForkDecrementThreshold?: Ratio;
   minFeeCoefficient?: UInt64;
-  minFeeConstant?: Lovelace;
+  minFeeConstant?: ValueAdaOnly;
 }
 export interface BootstrapVote {
   voter: {
@@ -1027,7 +1062,7 @@ export interface BlockPraos {
   nonce?: CertifiedVrf;
   height: BlockHeight;
   size: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   slot: Slot;
   transactions?: Transaction[];
@@ -1326,10 +1361,10 @@ export interface SubmitTransactionFailureTransactionTooLarge {
   message: string;
   data: {
     measuredTransactionSize: {
-      bytes: Int64;
+      bytes: UInt64;
     };
     maximumTransactionSize: {
-      bytes: Int64;
+      bytes: UInt64;
     };
   };
 }
@@ -1357,8 +1392,8 @@ export interface SubmitTransactionFailureTransactionFeeTooSmall {
   code: 3122;
   message: string;
   data: {
-    minimumRequiredFee: Lovelace;
-    providedFee: Lovelace;
+    minimumRequiredFee: ValueAdaOnly;
+    providedFee: ValueAdaOnly;
   };
 }
 /**
@@ -1408,7 +1443,7 @@ export interface SubmitTransactionFailureInsufficientlyFundedOutputs {
   data: {
     insufficientlyFundedOutputs: {
       output: TransactionOutput;
-      minimumRequiredValue?: Lovelace;
+      minimumRequiredValue?: ValueAdaOnly;
     }[];
   };
 }
@@ -1436,8 +1471,8 @@ export interface SubmitTransactionFailureInsufficientCollateral {
   code: 3128;
   message: string;
   data: {
-    providedCollateral: Lovelace;
-    minimumRequiredCollateral: Lovelace;
+    providedCollateral: ValueAdaOnly;
+    minimumRequiredCollateral: ValueAdaOnly;
   };
 }
 /**
@@ -1506,8 +1541,8 @@ export interface SubmitTransactionFailureTotalCollateralMismatch {
   code: 3135;
   message: string;
   data: {
-    declaredTotalCollateral: Lovelace;
-    computedTotalCollateral: Lovelace;
+    declaredTotalCollateral: ValueAdaOnly;
+    computedTotalCollateral: ValueAdaOnly;
   };
 }
 /**
@@ -1590,8 +1625,8 @@ export interface SubmitTransactionFailureStakePoolCostTooLow {
   code: 3143;
   message: string;
   data: {
-    minimumStakePoolCost: Lovelace;
-    declaredStakePoolCost: Lovelace;
+    minimumStakePoolCost: ValueAdaOnly;
+    declaredStakePoolCost: ValueAdaOnly;
   };
 }
 /**
@@ -1605,7 +1640,7 @@ export interface SubmitTransactionFailureMetadataHashTooLarge {
       id: StakePoolId;
     };
     computedMetadataHashSize: {
-      bytes: Int64;
+      bytes: UInt64;
     };
   };
 }
@@ -1636,7 +1671,7 @@ export interface SubmitTransactionFailureNonEmptyRewardAccount {
   code: 3147;
   message: string;
   data: {
-    nonEmptyRewardAccountBalance: Lovelace;
+    nonEmptyRewardAccountBalance: ValueAdaOnly;
   };
 }
 /**
@@ -1670,8 +1705,8 @@ export interface SubmitTransactionFailureCredentialDepositMismatch {
   code: 3151;
   message: string;
   data: {
-    providedDeposit: Lovelace;
-    expectedDeposit?: Lovelace;
+    providedDeposit: ValueAdaOnly;
+    expectedDeposit?: ValueAdaOnly;
   };
 }
 /**
@@ -1713,8 +1748,8 @@ export interface SubmitTransactionFailureGovernanceProposalDepositMismatch {
   code: 3155;
   message: string;
   data: {
-    providedDeposit: Lovelace;
-    expectedDeposit: Lovelace;
+    providedDeposit: ValueAdaOnly;
+    expectedDeposit: ValueAdaOnly;
   };
 }
 /**
@@ -1748,8 +1783,8 @@ export interface SubmitTransactionFailureTreasuryWithdrawalMismatch {
   code: 3158;
   message: string;
   data: {
-    providedWithdrawal: Lovelace;
-    expectedWithdrawal?: Lovelace;
+    providedWithdrawal: ValueAdaOnly;
+    expectedWithdrawal?: ValueAdaOnly;
   };
 }
 /**
@@ -1763,6 +1798,19 @@ export interface SubmitTransactionFailureInvalidOrMissingPreviousProposals {
       anchor: Anchor;
       type: "hardForkInitiation" | "protocolParametersUpdate" | "constitutionalCommittee" | "constitution";
       invalidPreviousProposal?: GovernanceProposalReference;
+    }[];
+  };
+}
+/**
+ * The transaction contains votes for an expired proposal. The field 'data.invalidVotes' indicates the faulty voters and the proposal they attempted to vote for.
+ */
+export interface SubmitTransactionFailureVotingOnExpiredActions {
+  code: 3160;
+  message: string;
+  data: {
+    unauthorizedVotes?: {
+      proposal: GovernanceProposalReference;
+      voter: VoterGenesisDelegate | VoterConstitutionalCommittee | VoterDelegateRepresentative | VoterStakePoolOperator;
     }[];
   };
 }
@@ -2184,7 +2232,7 @@ export interface QueryLedgerStateProjectedRewards {
   jsonrpc: "2.0";
   method: "queryLedgerState/projectedRewards";
   params: {
-    stake?: Lovelace[];
+    stake?: ValueAdaOnly[];
     scripts?: AnyStakeCredential[];
     keys?: AnyStakeCredential[];
   };
@@ -2201,7 +2249,7 @@ export interface QueryLedgerStateProjectedRewardsResponse {
  */
 export interface ProjectedRewards {
   [k: string]: {
-    [k: string]: Lovelace;
+    [k: string]: ValueAdaOnly;
   };
 }
 /**
@@ -2234,27 +2282,27 @@ export interface QueryLedgerStateProtocolParametersResponse {
 }
 export interface ProtocolParameters {
   minFeeCoefficient: UInt64;
-  minFeeConstant: Lovelace;
+  minFeeConstant: ValueAdaOnly;
   minUtxoDepositCoefficient: UInt64;
-  minUtxoDepositConstant: Lovelace;
+  minUtxoDepositConstant: ValueAdaOnly;
   maxBlockBodySize: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   maxBlockHeaderSize: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   maxTransactionSize?: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   maxValueSize?: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   extraEntropy?: Nonce;
-  stakeCredentialDeposit: Lovelace;
-  stakePoolDeposit: Lovelace;
+  stakeCredentialDeposit: ValueAdaOnly;
+  stakePoolDeposit: ValueAdaOnly;
   stakePoolRetirementEpochBound: UInt64;
   stakePoolPledgeInfluence: Ratio;
-  minStakePoolCost: Lovelace;
+  minStakePoolCost: ValueAdaOnly;
   desiredNumberOfStakePools: UInt64;
   federatedBlockProductionRatio?: Ratio;
   monetaryExpansion: Ratio;
@@ -2269,9 +2317,9 @@ export interface ProtocolParameters {
   constitutionalCommitteeMinSize?: UInt64;
   constitutionalCommitteeMaxTermLength?: UInt64;
   governanceActionLifetime?: Epoch;
-  governanceActionDeposit?: Lovelace;
+  governanceActionDeposit?: ValueAdaOnly;
   delegateRepresentativeVotingThresholds?: DelegateRepresentativeVotingThresholds;
-  delegateRepresentativeDeposit?: Lovelace;
+  delegateRepresentativeDeposit?: ValueAdaOnly;
   delegateRepresentativeMaxIdleTime?: Epoch;
   version: ProtocolVersion;
 }
@@ -2300,7 +2348,7 @@ export interface RewardAccountSummary {
   delegate?: {
     id: StakePoolId;
   };
-  rewards?: Lovelace;
+  rewards?: ValueAdaOnly;
 }
 /**
  * Query details about rewards calculation for the ongoing epoch.
@@ -2328,26 +2376,16 @@ export interface RewardsProvenance {
    * Influence of the pool owner's pledge on rewards, as a ratio of two integers.
    */
   stakePoolPledgeInfluence: string;
-  /**
-   * Total rewards available for the given epoch.
-   */
-  totalRewardsInEpoch: {
-    lovelace: bigint;
-  };
-  /**
-   * The total amount of staked Lovelace during this epoch.
-   */
-  activeStakeInEpoch: {
-    lovelace: bigint;
-  };
+  totalRewardsInEpoch: ValueAdaOnly;
+  activeStakeInEpoch: ValueAdaOnly;
   stakePools: {
     [k: string]: StakePoolSummary;
   };
 }
 export interface StakePoolSummary {
   id: StakePoolId;
-  stake: Lovelace;
-  ownerStake: Lovelace;
+  stake: ValueAdaOnly;
+  ownerStake: ValueAdaOnly;
   /**
    * Number of blocks produced divided by expected number of blocks (based on stake and epoch progress). Can be larger than 1.0 for pools that get lucky.
    */
@@ -2356,9 +2394,9 @@ export interface StakePoolSummary {
    * Some of the pool parameters relevant for the reward calculation.
    */
   parameters: {
-    cost: Lovelace;
+    cost: ValueAdaOnly;
     margin: Ratio;
-    pledge: Lovelace;
+    pledge: ValueAdaOnly;
   };
 }
 /**
@@ -2460,10 +2498,10 @@ export interface GenesisByron {
   };
   startTime: UtcTime;
   initialFunds: {
-    [k: string]: Lovelace;
+    [k: string]: ValueAdaOnly;
   };
   initialVouchers: {
-    [k: string]: Lovelace;
+    [k: string]: ValueAdaOnly;
   };
   securityParameter: UInt64;
   networkMagic: NetworkMagic;
@@ -2490,15 +2528,8 @@ export interface GenesisShelley {
   initialFunds: InitialFunds;
   initialStakePools: GenesisStakePools;
 }
-/**
- * A Genesis delegate, in charge of Cardano's governance.
- */
-export interface GenesisDelegate {
-  id: DigestBlake2B224;
-  vrfVerificationKeyHash: DigestBlake2B256;
-}
 export interface InitialFunds {
-  [k: string]: Lovelace;
+  [k: string]: ValueAdaOnly;
 }
 /**
  * A Genesis stake pools configuration; primarily used for bootstrapping test networks.
@@ -2524,7 +2555,7 @@ export interface GenesisAlonzo {
     maxExecutionUnitsPerBlock: ExecutionUnits;
     maxExecutionUnitsPerTransaction: ExecutionUnits;
     maxValueSize: {
-      bytes: Int64;
+      bytes: UInt64;
     };
     scriptExecutionPrices: ScriptExecutionPrices;
   };
@@ -2547,9 +2578,9 @@ export interface GenesisConway {
     constitutionalCommitteeMinSize: UInt64;
     constitutionalCommitteeMaxTermLength: UInt64;
     governanceActionLifetime: Epoch;
-    governanceActionDeposit: Lovelace;
+    governanceActionDeposit: ValueAdaOnly;
     delegateRepresentativeVotingThresholds: DelegateRepresentativeVotingThresholds;
-    delegateRepresentativeDeposit: Lovelace;
+    delegateRepresentativeDeposit: ValueAdaOnly;
     delegateRepresentativeMaxIdleTime: Epoch;
   };
 }
@@ -2682,10 +2713,10 @@ export interface SizeOfMempoolResponse {
 }
 export interface MempoolSizeAndCapacity {
   maxCapacity: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   currentSize: {
-    bytes: Int64;
+    bytes: UInt64;
   };
   transactions: {
     count: UInt32;

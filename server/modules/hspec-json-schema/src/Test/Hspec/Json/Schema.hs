@@ -20,19 +20,28 @@ module Test.Hspec.Json.Schema
 import Prelude
 
 import Data.List.NonEmpty
-    ( NonEmpty (..) )
+    ( NonEmpty (..)
+    )
 import Data.Maybe
-    ( isJust )
+    ( isJust
+    )
 import Data.Scientific
-    ( Scientific, toRealFloat )
+    ( Scientific
+    , toRealFloat
+    )
 import Data.String
-    ( IsString )
+    ( IsString
+    )
 import Data.Text
-    ( Text )
+    ( Text
+    )
 import GHC.Exts
-    ( IsList (..) )
+    ( IsList (..)
+    )
 import JSONPointer
-    ( Index (..), Key (..) )
+    ( Index (..)
+    , Key (..)
+    )
 import JSONSchema.Draft4
     ( Schema (..)
     , SchemaWithURI (..)
@@ -42,7 +51,8 @@ import JSONSchema.Draft4
     , referencesViaFilesystem
     )
 import JSONSchema.Fetch
-    ( URISchemaMap )
+    ( URISchemaMap
+    )
 import JSONSchema.Validator.Draft4.Any
     ( AllOfInvalid (..)
     , AnyOfInvalid (..)
@@ -92,11 +102,18 @@ import JSONSchema.Validator.Draft4.String
     , PatternValidator (..)
     )
 import Test.QuickCheck
-    ( Property, counterexample )
+    ( Property
+    , counterexample
+    )
 import Test.QuickCheck.Monadic
-    ( assert, monadicIO, monitor, run )
+    ( assert
+    , monadicIO
+    , monitor
+    , run
+    )
 import Text.PrettyPrint.ANSI.Leijen hiding
-    ( (<$>) )
+    ( (<$>)
+    )
 
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encode.Pretty as Json

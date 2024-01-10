@@ -55,7 +55,8 @@ The outer API of Ogmios will be rewritten, aiming to solve the various quirks th
 
 ### Migration guide
 
-> **Note**
+> [!TIP]
+>
 > There are still many [test vectors](https://github.com/CardanoSolutions/ogmios/tree/master/server/test/vectors) available for every element of the Ogmios API. Use them!
 
 #### <strike>JSON-WSP</strike> → JSON-RPC 2.0
@@ -87,7 +88,7 @@ JSON-WSP has been ditched and replaced by [JSON-RPC 2.0](https://www.jsonrpc.org
 ```json
 {
   "jsonrpc": "2.0",
-  "method": "queryNetwork/config",
+  "method": "queryNetwork/genesisConfiguration",
   "params": { "era": "shelley" },
   "id": "foo"
 }
@@ -97,7 +98,7 @@ JSON-WSP has been ditched and replaced by [JSON-RPC 2.0](https://www.jsonrpc.org
 </tr>
 </table>
 
-> **Note**
+> [!NOTE]
 >
 > Ogmios' implementation of JSON-RPC 2.0 is _slightly_ more flexible as the specification w.r.t to the `id` field. While the specification indicates that this field should be a `string`, Ogmios will still accept _anything_ as an `id` field (`string`, `number`, `object`, etc..). So it is essentially a drop-in replacement for `mirror`.
 >
@@ -151,7 +152,7 @@ Also, some queries have been moved under `queryNetwork` and are always available
 | `genesisConfig` | `genesisConfiguration` |
 | `systemStart`   | `startTime`            |
 
-> **Warning**
+> [!WARNING]
 >
 > The `queryNetwork/genesis` local-state-query now expects one era as argument (either 'byron', 'shelley' or 'alonzo') to retrieve the corresponding genesis configuration.
 
@@ -245,37 +246,45 @@ The transaction model has been greatly reworked. The main changes are:
 
 - Few fields have been renamed, here's a recap:
 
-  | Old                            | New                        |
-  | ---                            | ---                        |
-  | `body.certificates`            | `certificates`             |
-  | `body.collateralReturn`        | `collateralReturn`         |
-  | `body.collaterals`             | `collaterals`              |
-  | `body.fee`                     | `fee`                      |
-  | `body.inputs`                  | `inputs`                   |
-  | `body.mint`                    | `mint`                     |
-  | `body.network`                 | `network`                  |
-  | `body.outputs`                 | `outputs`                  |
-  | `body.references`              | `references`               |
-  | `body.requiredExtraSignatures` | `requiredExtraSignatories` |
-  | `body.scriptIntegrityHash`     | `scriptIntegrityHash`      |
-  | `body.totalCollateral`         | `totalCollateral`          |
-  | `body.update`                  | `proposals`                |
-  | `body.validityInterval`        | `validityInterval`         |
-  | `body.withdrawals`             | `withdrawals`              |
-  | `body`                         | N/A                        |
-  | `id`                           | `id`                       |
-  | `inputSource`                  | `spends`                   |
-  | `metadata`                     | `metadata`                 |
-  | `raw`                          | `cbor`                     |
-  | `witness.bootstrap`            | `signatories`              |
-  | `witness.datums`               | `datums`                   |
-  | `witness.redeemers`            | `redeemers`                |
-  | `witness.scripts`              | `scripts`                  |
-  | `witness.signatures`           | `signatories`              |
-  | `witness`                      | N/A                        |
-  | N/A                            | `requiredExtraScripts`     |
-  | N/A                            | `votes`                    |
+  | Old                            | New                                             |
+  | ---                            | ---                                             |
+  | `body.certificates`            | `certificates`                                  |
+  | `body.collateralReturn`        | `collateralReturn`                              |
+  | `body.collaterals`             | `collaterals`                                   |
+  | `body.fee`                     | `fee`                                           |
+  | `body.inputs`                  | `inputs`                                        |
+  | `body.mint`                    | `mint`                                          |
+  | `body.network`                 | `network`                                       |
+  | `body.outputs`                 | `outputs`                                       |
+  | `body.references`              | `references`                                    |
+  | `body.requiredExtraSignatures` | `requiredExtraSignatories`                      |
+  | `body.scriptIntegrityHash`     | `scriptIntegrityHash`                           |
+  | `body.totalCollateral`         | `totalCollateral`                               |
+  | `body.update`                  | `proposals`                                     |
+  | `body.validityInterval`        | `validityInterval`                              |
+  | `body.withdrawals`             | `withdrawals`                                   |
+  | `body`                         | N/A                                             |
+  | `id`                           | `id`                                            |
+  | `inputSource`                  | `spends`                                        |
+  | `metadata`                     | `metadata`                                      |
+  | `raw`                          | `cbor`                                          |
+  | `witness.bootstrap`            | `signatories`<sup><a href="#note-1">1</a></sup> |
+  | `witness.datums`               | `datums`                                        |
+  | `witness.redeemers`            | `redeemers`<sup><a href="#note-2">2</a><sup>    |
+  | `witness.scripts`              | `scripts`                                       |
+  | `witness.signatures`           | `signatories`<sup><a href="#note-1">1</a></sup> |
+  | `witness`                      | N/A                                             |
+  | N/A                            | `requiredExtraScripts`                          |
+  | N/A                            | `votes`                                         |
 
+> [!TIP]
+>
+> <a href="#note-1" id="note-1">[1]</a> The `bootstrap` and `signatures` fields have been merged under a single `signatories` since they were both Ed25519 signatures of the transaction body. However, a `bootstrap` signature contains some extra field needed to _verify_ the signature. Hence the `chainCode` and `addressAttributes` are only present on bootstrap signatures (when spending from a Byron/Bootstrap address)."
+>
+
+> [!WARNING]
+>
+> <a href="#note-2" id="note-2">[2]</a> The format of the redeemers field has changed from an map to an array. Map keys have been turned into object, nested under a field `validator`.
 
 
 ##### Output references
@@ -734,19 +743,19 @@ A discriminant value field (`type`) has been introduced to all certificate to al
 </tr>
 </table>
 
-##### Treasury transfers
+##### Treasury transfers (a.k.a MIR certificates)
 
 Treasury transfers have been converted into governance actions, so you'll now find them in the `proposals` field of transactions.
 
 #### Value
 
-The representation of `Value` has been changed to be more compact, more extensible and clearer. Values are now encoded as nested objects, where keys are respectively asset's policy id and asset name. Leaves are plain integers. The special case of Ada is encoded as a special policy id `ada` and asset name `lovelace`. This behavior is consistently applied to any amount that refers to a lovelace quantity. Transaction fees for example are now encoded as: `{ "lovelace": 1234 }`.
+The representation of `Value` has been changed to be more compact, more extensible and clearer. Values are now encoded as nested objects, where keys are respectively asset's policy id and asset name. Leaves are plain integers. The special case of Ada is encoded as a special policy id `ada` and asset name `lovelace`. This behavior is consistently applied to any amount that refers to a lovelace quantity. Transaction fees for example are now encoded as: `{ "ada": { "lovelace": 1234 } }`.
 
 #### Transaction's Metadata
 
 The representation of transaction metadata has been both simplified and made more user-friendly, while remaining safe for more complex use-cases.  In fact, many people in the community have grown to expect transaction metadata to be JSON objects. However, they aren't. Or more specifically, they aren't necessarily. There are actually plenty of transaction metadata on-chain that aren't representable as valid JSON. Prior to version 6, Ogmios would give a so-called detailed JSON schema representation of those metadata, by encoding the binary encoding as a JSON object. This has created a lot of confusion for rookie users not yet familiar with Cardano entrails who would be expecting a plain JSON object. Plus, the format was unpractical to parse for client down the line as it used object keys as type discriminant, leaving decoders no choice to try various encoding alternatively.
 
-Starting from version 6, Ogmios returns transaction metadata as JSON object _when possible_ and fallback to CBOR otherwise. In fact, when metadata aren't representable as JSON object, this is probably because they are some elaborated binary encoding and users consuming them are most seemingly capable of decoding that themselves in the way they intended. Ogmios can be configured to always return the CBOR output using the `--include-metadata-cbor` flag on start.
+Starting from version 6, **by default** (see note below) Ogmios returns transaction metadata as JSON object _when possible_ and fallback to CBOR otherwise. In fact, when metadata aren't representable as JSON object, this is probably because they are some elaborated binary encoding and users consuming them are most seemingly capable of decoding that themselves in the way they intended. Ogmios can be configured to always return the CBOR output using the `--include-metadata-cbor` flag on start.
 
 To give a concrete example:
 
@@ -801,3 +810,7 @@ To give a concrete example:
 </table>
 
 When it isn't possible to represent the metadata as a plain JSON object, the `json` field is simply omitted and the metadata is only provided as CBOR.
+
+> [!INFO]
+>
+> The old behavior can be requested on-demand by enabling the `--metadata-detailed-schema` flag. When enabled, the `json` metadata will always be present and use the old declarative representation. This can be used in combination with the new `--include-metadata-cbor` flag as well.

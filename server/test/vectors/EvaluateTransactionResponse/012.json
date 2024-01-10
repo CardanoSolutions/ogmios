@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","method":"evaluateTransaction","result":[{"validator":"certificate:1","budget":{"memory":2275840477517477824,"cpu":2341266782186699124}},{"validator":"certificate:3","budget":{"memory":5015146824550119206,"cpu":5860771771050791416}}],"id":"tQStWRJmeaWI"}
+{"jsonrpc":"2.0","method":"evaluateTransaction","result":[{"validator":{"index":1,"purpose":"publish"},"budget":{"memory":2275840477517477824,"cpu":2341266782186699124}},{"validator":{"index":3,"purpose":"publish"},"budget":{"memory":5015146824550119206,"cpu":5860771771050791416}}],"id":"tQStWRJmeaWI"}

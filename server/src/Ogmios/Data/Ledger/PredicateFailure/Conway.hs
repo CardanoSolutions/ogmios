@@ -110,6 +110,8 @@ encodeGovFailure = \case
                 )
                 []
                 proposals
+    Cn.VotingOnExpiredGovAction _ ->
+        error "TODO: VotingOnExpiredGovAction"
 
 encodeCertsFailure
     :: Cn.ConwayCertsPredFailure (ConwayEra crypto)

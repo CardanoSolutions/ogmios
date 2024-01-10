@@ -6,9 +6,6 @@ module Ogmios.Data.Json.Mary where
 
 import Ogmios.Data.Json.Prelude
 
-import Data.ByteString.Base16
-    ( encodeBase16
-    )
 import Data.Maybe.Strict
     ( fromSMaybe
     , strictMaybe
@@ -54,7 +51,7 @@ type AuxiliaryScripts crypto =
 
 encodeAuxiliaryData
     :: forall crypto era. (Era era, era ~ MaryEra crypto)
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> Al.AllegraTxAuxData era
     -> (Json, AuxiliaryScripts crypto)
 encodeAuxiliaryData opts (Al.AllegraTxAuxData blob scripts) =
@@ -68,7 +65,7 @@ encodeAuxiliaryData opts (Al.AllegraTxAuxData blob scripts) =
 encodeBlock
     :: ( Crypto crypto
        )
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> ShelleyBlock (TPraos crypto) (MaryEra crypto)
     -> Json
 encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
@@ -110,10 +107,10 @@ encodeTx
        ( Crypto crypto
        , era ~ MaryEra crypto
        )
-    => IncludeCbor
+    => (MetadataFormat, IncludeCbor)
     -> Sh.ShelleyTx era
     -> Json
-encodeTx opts x =
+encodeTx (fmt, opts) x =
     encodeObject
         ( Shelley.encodeTxId (Ledger.txid @(MaryEra crypto) (Sh.body x))
        <>
@@ -133,7 +130,7 @@ encodeTx opts x =
   where
     auxiliary = do
         hash <- Shelley.encodeAuxiliaryDataHash <$> Ma.mtbAuxDataHash (Sh.body x)
-        (labels, scripts) <- encodeAuxiliaryData opts <$> Sh.auxiliaryData x
+        (labels, scripts) <- encodeAuxiliaryData (fmt, opts) <$> Sh.auxiliaryData x
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts
@@ -197,7 +194,7 @@ encodeValue
     -> Json
 encodeValue (Ma.MaryValue lovelace assets) =
     encodeObject
-        ( "ada" .= encodeObject ("lovelace" .= encodeInteger lovelace)
+        ( "ada" .= encodeSingleton "lovelace" (encodeInteger (unCoin lovelace))
        <> encodeMultiAsset assets
         )
 

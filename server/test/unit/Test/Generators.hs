@@ -2,6 +2,8 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+{-# OPTIONS_GHC -fconstraint-solver-iterations=0 #-}
+
 module Test.Generators where
 
 import Ogmios.Prelude
@@ -9,10 +11,7 @@ import Ogmios.Prelude
 import Cardano.Ledger.Alonzo.Genesis
     ( AlonzoGenesis (..)
     )
-import Cardano.Ledger.Alonzo.Scripts.Data
-    ( Data
-    )
-import Cardano.Ledger.Alonzo.TxInfo
+import Cardano.Ledger.Alonzo.Plutus.TxInfo
     ( TranslationError (..)
     , transExUnits
     )
@@ -24,6 +23,9 @@ import Cardano.Ledger.Core
     )
 import Cardano.Ledger.Keys
     ( KeyRole (..)
+    )
+import Cardano.Ledger.Plutus.Data
+    ( Data
     )
 import Cardano.Ledger.Shelley.API.Mempool
     ( ApplyTxError (..)

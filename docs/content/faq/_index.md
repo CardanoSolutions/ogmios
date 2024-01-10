@@ -136,9 +136,23 @@ We've heard of a handful happy users! And it keeps growing!
   <td><a target="_blank" href="https://www.wingriders.com/">Wing Riders</a></td>
   <td><a target="_blank" href="https://liqwid.finance/">Liqwid Labs</a></td>
   <td><a target="_blank" href="https://www.gimbalabs.com">Gimbalabs</a></td>
-</tr>
-<tr>
+</tr><tr>
+  <td><a target="_blank" href="https://www.geniusyield.co/"><img src="https://avatars.githubusercontent.com/u/86468066" /></a></td>
+  <td><a target="_blank" href="https://rosen.tech/"><img src="https://avatars.githubusercontent.com/u/105315198" /></a></td>
   <td><a target="_blank" href="https://emurgo.io/"><img src="https://avatars.githubusercontent.com/u/36142236"/></a></td>
+  <td><a target="_blank" href="https://indigoprotocol.io"><img src="https://avatars.githubusercontent.com/u/86611411" /></a></td>
+  <td><a target="_blank" href="https://vacuumlabs.com/"><img src="https://avatars.githubusercontent.com/u/6526075" /></a></td>
+  <td><a target="_blank" href="https://labs.mutant-nft.com/"><img src="https://avatars.githubusercontent.com/u/95879916" /></a></td>
+  <td><a target="_blank" href="https://app.dexhunter.io/trends"><img width=100 height=100 src="https://www.dexhunter.io/_next/static/media/logo.035e4384.svg" /></a></td>
+</tr><tr>
+  <td><a target="_blank" href="https://www.geniusyield.co/">Genius Yield</a></td>
+  <td><a target="_blank" href="https://rosen.tech/">Rosen Bridge</a></td>
+  <td><a target="_blank" href="https://emurgo.io/">EMURGO</a></td>
+  <td><a target="_blank" href="https://indigoprotocol.io">Indigo Protocol</a></td>
+  <td><a target="_blank" href="https://vacuumlabs.com/">VacuumLabs</a></td>
+  <td><a target="_blank" href="https://labs.mutant-nft.com/">Mutant NFT</a></td>
+  <td><a target="_blank" href="https://app.dexhunter.io/trends">Dex Hunter</a></td>
+</tr><tr>
   <td><a target="_blank" href="https://nescrow.xyz/"><img src="https://nescrow.xyz/crow.svg"/></a></td>
   <td><a target="_blank" href="https://danogo.io/"><img src="https://pbs.twimg.com/profile_images/1658288019718406145/AAh0J4QI_400x400.jpg"/></a></td>
   <td><a target="_blank" href="https://www.veralidity.com"><img src="https://avatars.githubusercontent.com/u/127054855"/></a></td>
@@ -146,7 +160,6 @@ We've heard of a handful happy users! And it keeps growing!
   <td><a target="_blank" href="https://tosidrop.io/"><img src="https://avatars.githubusercontent.com/u/100535151"/></a></td>
   <td><a target="_blank" href="https://asterium.dev/"><img src="https://avatars.githubusercontent.com/u/96011175"/></a></td>
 </tr><tr>
-  <td><a target="_blank" href="https://emurgo.io/">EMURGO</a></td>
   <td><a target="_blank" href="https://nescrow.xyz/">Nescrow</a></td>
   <td><a target="_blank" href="https://danogo.io/">Danogo</a></td>
   <td><a target="_blank" href="https://www.veralidity.com">Veralidity</a></td>
@@ -172,6 +185,7 @@ We've heard of a handful happy users! And it keeps growing!
 - [Naumachia](https://github.com/free-honey/naumachia): <small>Naumachia is a framework for writing Smart Contracts on the Cardano Blockchain using Rust!</small>
 - [DenoSync](https://github.com/spacebudz/denosync): <small>Deno WebSocket Chainsync client on top of Ogmios.</small>
 - [NodeRunner](https://github.com/mandalaverse/noderunner): <small>Tooling for setting up stacks of Cardano services.</small>
+- [Translucent](https://github.com/txpipe/translucent): <small>A library for creating Cardano transactions and off-chain code for Plutus contracts in JavaScript.</small>
 
 {{% notice note %}}
 Are you using Ogmios for a project? [Let us know on Github!](https://github.com/CardanoSolutions/ogmios/issues/new?assignees=&labels=&template=project.md)

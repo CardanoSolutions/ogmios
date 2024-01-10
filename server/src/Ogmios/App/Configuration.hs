@@ -13,6 +13,7 @@ module Ogmios.App.Configuration
     -- * Configuration
     Configuration (..)
     , IncludeCbor (..)
+    , MetadataFormat (..)
     , includeAllCbor
     , omitOptionalCbor
     , Severity (..)
@@ -56,6 +57,7 @@ import Ogmios.Control.MonadLog
     )
 import Ogmios.Data.Json.Prelude
     ( IncludeCbor (..)
+    , MetadataFormat (..)
     , includeAllCbor
     , omitOptionalCbor
     )
@@ -84,6 +86,7 @@ data Configuration = Configuration
     , connectionTimeout :: !Int
     , maxInFlight :: !Int
     , includeCbor :: !IncludeCbor
+    , metadataFormat :: !MetadataFormat
     } deriving (Generic, Eq, Show)
 
 data NetworkParameters = NetworkParameters

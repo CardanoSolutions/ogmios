@@ -19,7 +19,8 @@ import Ogmios.Data.Json
     , jsonToByteString
     )
 import Ogmios.Data.Json.Prelude
-    ( encodeMaybe
+    ( MetadataFormat (..)
+    , encodeMaybe
     )
 import System.Exit
     ( ExitCode (..)
@@ -46,4 +47,4 @@ inspectTransaction input =
                 errs
             exitWith (ExitFailure 1)
         Right (MultiEraDecoderSuccess transaction) ->
-            B8.putStrLn $ jsonToByteString $ encodeTx @StandardCrypto omitOptionalCbor transaction
+            B8.putStrLn $ jsonToByteString $ encodeTx @StandardCrypto (MetadataDetailedSchema, omitOptionalCbor) transaction

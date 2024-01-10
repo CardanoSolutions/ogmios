@@ -288,9 +288,9 @@ servers: {}
 channels: {}
 components:
   schemas:
-    1000:
+    1000/IntersectionNotFound:
       $ref: "/ogmios.json#/properties/FindIntersectionResponse/oneOf/1/properties/error"
-    1001:
+    1001/IntersectionInterleaved:
       $ref: "/ogmios.json#/properties/FindIntersectionResponse/oneOf/2/properties/error"
 {{% /embed-async-api %}}
 

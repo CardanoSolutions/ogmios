@@ -145,7 +145,10 @@ describe('TransactionSubmission', () => {
         }
 
         expect(result).toEqual([{
-          validator: 'spend:0',
+          validator: {
+            purpose: 'spend',
+            index: 0
+          },
           budget: {
             memory: 15694,
             cpu: 5134808
@@ -197,7 +200,10 @@ describe('TransactionSubmission', () => {
 
         const result = await evaluate(bytes, additionalUtxoSet)
         expect(result).toEqual([{
-          validator: 'spend:0',
+          validator: {
+            purpose: 'spend',
+            index: 0
+          },
           budget: {
             memory: 15694,
             cpu: 5134808
