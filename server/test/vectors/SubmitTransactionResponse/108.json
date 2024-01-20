@@ -1,1 +1,0 @@
-{"jsonrpc":"2.0","method":"submitTransaction","error":{"code":3121,"message":"Transaction must have at least one input, but this one has an empty input set. One input is necessary to prevent replayability of transactions, as it piggybacks on the unique spendable property of UTxO."},"id":null}

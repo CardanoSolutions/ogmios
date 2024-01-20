@@ -46,10 +46,10 @@
   , "Assets":
     { "title": "Assets"
     , "type": "object"
-    , "propertyNames": { "pattern": "^[0-9a-z]{56}$" }
+    , "propertyNames": { "pattern": "^[0-9a-f]{56}$" }
     , "additionalProperties":
       { "type": "object"
-      , "propertyNames": { "pattern": "^[0-9a-z]{0,64}$" }
+      , "propertyNames": { "pattern": "^[0-9a-f]{0,64}$" }
       , "additionalProperties": { "$ref": "cardano.json#/definitions/AssetQuantity" }
       }
     }
@@ -1433,13 +1433,13 @@
 
   , "Metadatum":
     { "title": "Metadatum"
-    , "oneOf":
+    , "anyOf":
       [ { "title": "Metadatum<NoSchema>"
         , "oneOf":
           [ { "title": "Integer", "type": "integer" }
           , { "title": "String", "type": "string" }
-          , { "title": "Array<Metadatum>", "type": "array", "items": { "$ref": "cardano.json#/definitions/Metadatum/oneOf/0" } }
-          , { "title": "Object<Metadatum>", "type": "object", "additionalProperties": { "$ref": "cardano.json#/definitions/Metadatum/oneOf/0" } }
+          , { "title": "Array<Metadatum>", "type": "array", "items": { "$ref": "cardano.json#/definitions/Metadatum/anyOf/0" } }
+          , { "title": "Object<Metadatum>", "type": "object", "additionalProperties": { "$ref": "cardano.json#/definitions/Metadatum/anyOf/0" } }
           ]
         }
       , { "title": "Metadatum<DetailedSchema>"
@@ -1483,7 +1483,7 @@
             , "properties":
               { "list":
                 { "type": "array"
-                , "items": { "$ref": "cardano.json#/definitions/Metadatum/oneOf/1" }
+                , "items": { "$ref": "cardano.json#/definitions/Metadatum/anyOf/1" }
                 }
               }
             }
@@ -1509,8 +1509,8 @@
     , "additionalProperties": false
     , "required": ["k", "v"]
     , "properties":
-      { "k": { "$ref": "cardano.json#/definitions/Metadatum/oneOf/1" }
-      , "v": { "$ref": "cardano.json#/definitions/Metadatum/oneOf/1" }
+      { "k": { "$ref": "cardano.json#/definitions/Metadatum/anyOf/1" }
+      , "v": { "$ref": "cardano.json#/definitions/Metadatum/anyOf/1" }
       }
     }
 
@@ -1564,6 +1564,7 @@
     , "required": [ "count", "kes" ]
     , "properties":
       { "count": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "sigma": { "$ref": "cardano.json#/definitions/Signature" }
       , "kes":
         { "type": "object"
         , "additionalProperties": false

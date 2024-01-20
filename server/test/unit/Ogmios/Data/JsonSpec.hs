@@ -395,6 +395,11 @@ spec = do
             refs <- unsafeReadSchemaRef "ogmios.json#/properties/SubmitTransactionResponse"
             runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON identity refs json
 
+        specify "Golden: NextTransactionResponse_1" $ do
+            json <- decodeFileThrow "NextTransactionResponse_1.json"
+            refs <- unsafeReadSchemaRef "ogmios.json#/properties/NextTransactionResponse"
+            runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON identity refs json
+
         context "Data / BinaryData" $ do
             prop "arbitrary" $
                 forAll genData propBinaryDataRoundtrip

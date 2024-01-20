@@ -1,1 +1,0 @@
-{"jsonrpc":"2.0","method":"submitTransaction","error":{"code":3148,"message":"Invalid or unauthorized genesis delegation. The genesis delegate is unknown, invalid or already in use."},"id":"DG1aLWRAIFWb"}

@@ -1,1 +1,0 @@
-{"jsonrpc":"2.0","method":"submitTransaction","error":{"code":3139,"message":"The transaction contains an invalid or unauthorized protocol parameters update. This operation is reserved to genesis key holders."},"id":"RkyRMWy0EA8S"}
