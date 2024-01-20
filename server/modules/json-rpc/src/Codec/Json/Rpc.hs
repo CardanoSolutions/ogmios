@@ -65,6 +65,9 @@ import Data.Aeson
 import Data.Char
     ( toLower
     )
+import Data.Functor
+    ( ($>)
+    )
 import Data.Kind
     ( Type
     )
@@ -115,6 +118,7 @@ data Options = Options
     , constructorTagModifier :: String -> String
     , onMissingField :: Json.Key -> Json.Parser Json.Value
     , methodNamePredicate :: Text -> Text -> Bool
+    , omitMethodInResponse :: Bool
     }
 
 -- | Default options for the generic parsing: do nothing.
@@ -129,6 +133,8 @@ defaultOptions = Options
     )
     (\k -> fail $ "key " ++ show k ++ " not found")
     (\v expected -> v == expected)
+    False
+
 
 -- | Parse a given Json 'Value' as a JSON-Rpc 'Request'.
 --
@@ -161,26 +167,27 @@ genericToJSON opts =
     -- into an 'Encoding'. This is not the most efficient as the whole point of
     -- using an 'Encoding' is to construct it along the way and avoid
     -- constructing an intermediate 'Value' altogether.
-    ok (Json.value . gRpcToJSON opts . from)
+    ok opts (Json.value . gRpcToJSON opts . from)
 
 -- | Serialize a given response to JSON
 --
 -- since @1.0.0
 mkResponse
     :: forall res. ()
-    => (   (Json.Encoding -> Json.Encoding)
+    => Options
+    -> (   (Json.Encoding -> Json.Encoding)
         -> EmbedFault
         -> res
         -> Json.Encoding
        )
     -> Response res
     -> Json.Encoding
-mkResponse choose (Response method refl res) =
+mkResponse Options{omitMethodInResponse} choose (Response method refl res) =
     choose
         (\result -> Json.pairs $
             ("jsonrpc" .= V2_0)
             <>
-            (maybe mempty ("method" .=) method)
+            (maybe mempty ("method" .=) (guard (not omitMethodInResponse) $> method))
             <>
             (Json.pair "result" result)
             <>
@@ -207,19 +214,21 @@ mkResponse choose (Response method refl res) =
 --
 -- since @1.0.0
 ok  :: forall res. ()
-    => (res -> Json.Encoding)
+    => Options
+    -> (res -> Json.Encoding)
     -> Response res
     -> Json.Encoding
-ok toResult =
-    mkResponse $ \resolve _reject -> resolve . toResult
+ok opts toResult =
+    mkResponse opts $ \resolve _reject -> resolve . toResult
 {-# INLINEABLE ok #-}
 
 -- | Shorthand for returning failure responses.
 --
 -- since @1.0.0
-ko :: Fault -> Json.Encoding
-ko Fault{faultCode,faultMessage,faultId} =
+ko :: Options -> Fault -> Json.Encoding
+ko opts Fault{faultCode,faultMessage,faultId} =
     mkResponse
+        opts
         (\_resolve reject () -> reject faultCode faultMessage Nothing)
         (Response Nothing faultId ())
 {-# INLINEABLE ko #-}

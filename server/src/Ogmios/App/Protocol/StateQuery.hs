@@ -55,12 +55,6 @@ import Data.Aeson
     ( ToJSON (..)
     , genericToEncoding
     )
-import Ogmios.App.Protocol
-    ( defaultWithInternalError
-    )
-import Ogmios.Control.Exception
-    ( MonadCatch
-    )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
     , Logger
@@ -116,8 +110,7 @@ import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 -- In particular, it also makes it easier to run queries _in the current era_.
 mkStateQueryClient
     :: forall m crypto block point query.
-        ( MonadCatch m
-        , MonadSTM m
+        ( MonadSTM m
         , MonadLog m
         , block ~ HardForkBlock (CardanoEras crypto)
         , point ~ Point block
@@ -125,6 +118,8 @@ mkStateQueryClient
         )
     => Logger (TraceStateQuery block)
         -- ^ A tracer for logging
+    -> (forall a r. m a -> (Json -> m ()) -> Rpc.ToResponse r -> m a -> m a)
+        -- ^ A default response handler to catch errors.
     -> StateQueryCodecs block
         -- ^ For encoding Haskell types to JSON
     -> GetGenesisConfig m
@@ -134,7 +129,7 @@ mkStateQueryClient
     -> (Json -> m ())
         -- ^ An emitter for yielding JSON objects
     -> LocalStateQueryClient block point query m ()
-mkStateQueryClient tr StateQueryCodecs{..} GetGenesisConfig{..} queue yield =
+mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisConfig{..} queue yield =
     LocalStateQueryClient clientStIdle
   where
     await :: m (StateQueryMessage block)

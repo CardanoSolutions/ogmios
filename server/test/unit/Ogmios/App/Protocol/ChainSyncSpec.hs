@@ -210,7 +210,7 @@ withChainSyncClient
     -> m a
 withChainSyncClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
-    let innerCodecs = mkChainSyncCodecs (encodeBlock (MetadataNoSchema, omitOptionalCbor)) encodePoint encodeTip
+    let innerCodecs = mkChainSyncCodecs Rpc.defaultOptions (encodeBlock (MetadataNoSchema, omitOptionalCbor)) encodePoint encodeTip
     let client = mkChainSyncClient maxInFlight innerCodecs recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cChainSyncCodec
     withMockChannel (chainSyncMockPeer seed codec) $ \channel -> do

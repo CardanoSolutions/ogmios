@@ -45,12 +45,6 @@ import Ogmios.Prelude hiding
     ( id
     )
 
-import Ogmios.App.Protocol
-    ( defaultWithInternalError
-    )
-import Ogmios.Control.Exception
-    ( MonadCatch
-    )
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..)
     )
@@ -84,20 +78,23 @@ import Ouroboros.Network.Protocol.LocalTxMonitor.Client
     , LocalTxMonitorClient (..)
     )
 
+import qualified Codec.Json.Rpc as Rpc
+
 mkTxMonitorClient
     :: forall m block.
         ( MonadSTM m
-        , MonadCatch m
         , HasTxId (GenTx block)
         )
-    => TxMonitorCodecs block
+    => (forall a r. m a -> (Json -> m ()) -> Rpc.ToResponse r -> m a -> m a)
+        -- ^ A default response handler to catch errors.
+    -> TxMonitorCodecs block
         -- ^ For encoding Haskell types to JSON
     -> TQueue m (TxMonitorMessage block)
         -- ^ Incoming request queue
     -> (Json -> m ())
         -- ^ An emitter for yielding JSON objects
     -> LocalTxMonitorClient (GenTxId block) (GenTx block) SlotNo m ()
-mkTxMonitorClient TxMonitorCodecs{..} queue yield =
+mkTxMonitorClient defaultWithInternalError TxMonitorCodecs{..} queue yield =
     LocalTxMonitorClient clientStIdle
   where
     await :: m (TxMonitorMessage block)

@@ -64,20 +64,21 @@ data ChainSyncCodecs block = ChainSyncCodecs
 
 mkChainSyncCodecs
     :: (FromJSON (Point block))
-    => (block -> Json)
+    => Rpc.Options
+    -> (block -> Json)
     -> (Point block -> Json)
     -> (Tip block -> Json)
     -> ChainSyncCodecs block
-mkChainSyncCodecs encodeBlock encodePoint encodeTip =
+mkChainSyncCodecs opts encodeBlock encodePoint encodeTip =
     ChainSyncCodecs
         { decodeFindIntersection =
             decodeWith _decodeFindIntersection
         , encodeFindIntersectionResponse =
-            _encodeFindIntersectionResponse encodePoint encodeTip
+            _encodeFindIntersectionResponse opts encodePoint encodeTip
         , decodeNextBlock =
             decodeWith _decodeNextBlock
         , encodeNextBlockResponse =
-            _encodeNextBlockResponse encodeBlock encodePoint encodeTip
+            _encodeNextBlockResponse opts encodeBlock encodePoint encodeTip
         }
 
 --
@@ -126,12 +127,13 @@ data FindIntersectionResponse block
 
 _encodeFindIntersectionResponse
     :: forall block. ()
-    => (Point block -> Json)
+    => Rpc.Options
+    -> (Point block -> Json)
     -> (Tip block -> Json)
     -> Rpc.Response (FindIntersectionResponse block)
     -> Json
-_encodeFindIntersectionResponse encodePoint encodeTip =
-    Rpc.mkResponse $ \resolve reject -> \case
+_encodeFindIntersectionResponse opts encodePoint encodeTip =
+    Rpc.mkResponse opts $ \resolve reject -> \case
         IntersectionFound{point,tip} ->
             resolve $ encodeObject
                 ( "intersection" .= encodePoint point <>
@@ -177,13 +179,14 @@ data NextBlockResponse block
     deriving (Generic, Show)
 
 _encodeNextBlockResponse
-    :: (block -> Json)
+    :: Rpc.Options
+    -> (block -> Json)
     -> (Point block -> Json)
     -> (Tip block -> Json)
     -> Rpc.Response (NextBlockResponse block)
     -> Json
-_encodeNextBlockResponse encodeBlock encodePoint encodeTip =
-    Rpc.ok $ encodeObject . \case
+_encodeNextBlockResponse opts encodeBlock encodePoint encodeTip =
+    Rpc.ok opts $ encodeObject . \case
         RollForward{block,tip} ->
             ( "direction" .= encodeText "forward" <>
               "block" .= encodeBlock block <>

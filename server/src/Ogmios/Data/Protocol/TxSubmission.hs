@@ -173,7 +173,8 @@ mkTxSubmissionCodecs
         ( FromJSON (MultiEraDecoder (SerializedTransaction block))
         , FromJSON (MultiEraUTxO block)
         )
-    => (GenTxId block -> Json)
+    => Rpc.Options
+    -> (GenTxId block -> Json)
     -> (RdmrPtr -> Json)
     -> (ExUnits -> Json)
     -> (TxIn (BlockCrypto block) -> Json)
@@ -183,6 +184,7 @@ mkTxSubmissionCodecs
     -> (Rpc.EmbedFault -> [(SomeShelleyEra, Binary.DecoderError, Word)] -> Json)
     -> TxSubmissionCodecs block
 mkTxSubmissionCodecs
+    opts
     encodeTxId
     encodeRdmrPtr
     encodeExUnits
@@ -197,6 +199,7 @@ mkTxSubmissionCodecs
             decodeWith _decodeSubmitTransaction
         , encodeSubmitTransactionResponse =
             _encodeSubmitTransactionResponse (Proxy @block)
+                opts
                 encodeTxId
                 encodeSubmitTransactionError
                 encodeDeserialisationFailure
@@ -204,6 +207,7 @@ mkTxSubmissionCodecs
             decodeWith _decodeEvaluateTransaction
         , encodeEvaluateTransactionResponse =
             _encodeEvaluateTransactionResponse (Proxy @block)
+                opts
                 encodeRdmrPtr
                 encodeExUnits
                 encodeTxIn
@@ -253,17 +257,19 @@ deriving instance
 _encodeSubmitTransactionResponse
     :: forall block. ()
     => Proxy block
+    -> Rpc.Options
     -> (GenTxId block -> Json)
     -> (Rpc.EmbedFault -> SubmitTransactionError block -> Json)
     -> (Rpc.EmbedFault -> [(SomeShelleyEra, Binary.DecoderError, Word)] -> Json)
     -> Rpc.Response (SubmitTransactionResponse block)
     -> Json
 _encodeSubmitTransactionResponse _proxy
+    opts
     encodeTransactionId
     encodeSubmitTransactionError
     encodeDeserialisationFailure
     =
-    Rpc.mkResponse $ \resolve reject -> \case
+    Rpc.mkResponse opts $ \resolve reject -> \case
         SubmitTransactionSuccess i ->
             resolve $ encodeObject ("transaction" .= encodeTransactionId i)
         SubmitTransactionFailure e ->
@@ -361,6 +367,7 @@ nodeTipTooOld currentNodeEra =
 _encodeEvaluateTransactionResponse
     :: forall block. ()
     => Proxy block
+    -> Rpc.Options
     -> (RdmrPtr -> Json)
     -> (ExUnits -> Json)
     -> (TxIn (BlockCrypto block) -> Json)
@@ -370,6 +377,7 @@ _encodeEvaluateTransactionResponse
     -> Rpc.Response (EvaluateTransactionResponse block)
     -> Json
 _encodeEvaluateTransactionResponse _proxy
+    opts
     encodeRdmrPtr
     encodeExUnits
     encodeTxIn
@@ -377,7 +385,7 @@ _encodeEvaluateTransactionResponse _proxy
     encodeScriptFailure
     encodeDeserialisationFailure
     =
-    Rpc.mkResponse $ \resolve reject -> \case
+    Rpc.mkResponse opts $ \resolve reject -> \case
         EvaluationResult budgets ->
             resolve $ encodeList identity $ Map.foldrWithKey
                 (\ptr result xs ->

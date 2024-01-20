@@ -168,6 +168,7 @@ parserInfo = info (helper <*> parser) $ mempty
                         <*> includeScriptCborFlag
                     ))
                     <*> metadataFormatFlag
+                    <*> strictRpcFlag
                 )
             <*> (tracersOption <|> Tracers
                     <$> fmap Const (logLevelOption "health")
@@ -248,6 +249,12 @@ metadataFormatFlag = fmap toMetadataFormat $ switch $ mempty
         True -> MetadataDetailedSchema
         False -> MetadataNoSchema
 
+-- | [--strict-rpc]
+strictRpcFlag :: Parser Bool
+strictRpcFlag = switch $ mempty
+    <> long "strictRpc"
+    <> help "When set, removes the extra 'method' in the response to be more compliant with some stricter JSON-RPC clients."
+    <> showDefault
 
 -- | [--include-cbor]
 includeCborFlag :: Parser IncludeCbor

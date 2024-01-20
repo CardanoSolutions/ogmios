@@ -46,7 +46,8 @@ import Ogmios.App.Metrics
     , recordSession
     )
 import Ogmios.App.Protocol
-    ( onUnmatchedMessage
+    ( defaultWithInternalError
+    , onUnmatchedMessage
     )
 import Ogmios.App.Protocol.ChainSync
     ( MaxInFlight
@@ -166,6 +167,7 @@ import System.TimeManager
     ( TimeoutThread (..)
     )
 
+import qualified Codec.Json.Rpc as Rpc
 import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
 
@@ -192,7 +194,7 @@ newWebSocketApp
     -> m WebSocketApp
 newWebSocketApp tr unliftIO = do
     NetworkParameters{slotsPerEpoch,networkMagic} <- asks (view typed)
-    Configuration{nodeSocket,maxInFlight,nodeConfig,includeCbor,metadataFormat} <- asks (view typed)
+    Configuration{nodeSocket,maxInFlight,nodeConfig,includeCbor,metadataFormat,strictRpc} <- asks (view typed)
     sensors <- asks (view typed)
     let getGenesisConfig = GetGenesisConfig
             { getByronGenesis = readByronGenesis nodeConfig
@@ -201,22 +203,30 @@ newWebSocketApp tr unliftIO = do
             , getConwayGenesis = readConwayGenesis nodeConfig
             }
 
+    let opts = Rpc.defaultOptions
+            { Rpc.omitMethodInResponse = strictRpc
+            }
+
     let codecs =
             ( mkChainSyncCodecs
+                opts
                 (encodeBlock (metadataFormat, includeCbor))
                 encodePoint
                 encodeTip
 
             , mkStateQueryCodecs
+                opts
                 encodePoint
                 encodeAcquireFailure
                 encodeAcquireExpired
 
             , mkTxMonitorCodecs
+                opts
                 encodeTxId
                 (encodeTx (metadataFormat, includeCbor))
 
             , mkTxSubmissionCodecs
+                opts
                 encodeTxId
                 encodeRdmrPtr
                 encodeExUnits
@@ -232,7 +242,7 @@ newWebSocketApp tr unliftIO = do
         recordSession sensors $ onExceptions $ acceptRequest pending $ \conn -> do
             let trClient = contramap WebSocketClient tr
             withExecutionUnitsEvaluator $ \exUnitsEvaluator exUnitsClients -> do
-                withOuroborosClients tr codecs maxInFlight sensors exUnitsEvaluator getGenesisConfig conn $ \protocolsClients -> do
+                withOuroborosClients tr opts codecs maxInFlight sensors exUnitsEvaluator getGenesisConfig conn $ \protocolsClients -> do
                     let clientA = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch protocolsClients
                     let clientB = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch exUnitsClients
                     let vData  = NodeToClientVersionData networkMagic False
@@ -312,6 +322,7 @@ withOuroborosClients
         , MonadWebSocket m
         )
     => Logger TraceWebSocket
+    -> Rpc.Options
     -> (ChainSyncCodecs Block, StateQueryCodecs Block, TxMonitorCodecs Block, TxSubmissionCodecs Block)
     -> MaxInFlight
     -> Sensors m
@@ -320,7 +331,7 @@ withOuroborosClients
     -> Connection
     -> (Clients m Block -> m a)
     -> m a
-withOuroborosClients tr codecs maxInFlight sensors exUnitsEvaluator getGenesisConfig conn action = do
+withOuroborosClients tr opts codecs maxInFlight sensors exUnitsEvaluator getGenesisConfig conn action = do
     (chainSyncQ, stateQueryQ, txSubmissionQ, txMonitorQ) <-
         atomically $ (,,,)
             <$> newTQueue
@@ -334,13 +345,16 @@ withOuroborosClients tr codecs maxInFlight sensors exUnitsEvaluator getGenesisCo
              { chainSyncClient =
                  mkChainSyncClient maxInFlight chainSyncCodecs chainSyncQ yield
              , stateQueryClient =
-                 mkStateQueryClient (contramap WebSocketStateQuery tr) stateQueryCodecs getGenesisConfig stateQueryQ yield
+                 mkStateQueryClient (contramap WebSocketStateQuery tr) catchError stateQueryCodecs getGenesisConfig stateQueryQ yield
              , txSubmissionClient =
-                 mkTxSubmissionClient txSubmissionCodecs exUnitsEvaluator txSubmissionQ yield
+                 mkTxSubmissionClient catchError txSubmissionCodecs exUnitsEvaluator txSubmissionQ yield
              , txMonitorClient =
-                 mkTxMonitorClient txMonitorCodecs txMonitorQ yield
+                 mkTxMonitorClient catchError txMonitorCodecs txMonitorQ yield
              }
   where
+    catchError :: forall b r. m b -> (Json -> m ()) -> Rpc.ToResponse r -> m b -> m b
+    catchError = defaultWithInternalError opts
+
     yield :: Json -> m ()
     yield = send conn . jsonToByteString
 
@@ -348,7 +362,7 @@ withOuroborosClients tr codecs maxInFlight sensors exUnitsEvaluator getGenesisCo
     push queue = atomically . writeTQueue queue
 
     defaultHandler :: ByteString -> m ()
-    defaultHandler = yield . onUnmatchedMessage @Block
+    defaultHandler = yield . onUnmatchedMessage @Block opts
 
     routeMessage
         :: Maybe (ByteString, m ())

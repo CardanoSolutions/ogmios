@@ -39,6 +39,9 @@ import Network.TypedProtocol.Codec
 import Ogmios.App.Configuration
     ( EpochSlots (..)
     )
+import Ogmios.App.Protocol
+    ( defaultWithInternalError
+    )
 import Ogmios.App.Protocol.StateQuery
     ( mkStateQueryClient
     )
@@ -218,9 +221,10 @@ withStateQueryClient
     -> m a
 withStateQueryClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
-    let innerCodecs = mkStateQueryCodecs encodePoint encodeAcquireFailure encodeAcquireExpired
+    let innerCodecs = mkStateQueryCodecs Rpc.defaultOptions encodePoint encodeAcquireFailure encodeAcquireExpired
     let getGenesisConfig = let nope = error "unimplemented" in StateQuery.GetGenesisConfig nope nope nope nope
-    let client = mkStateQueryClient nullTracer innerCodecs getGenesisConfig recvQ (atomically . writeTQueue sendQ)
+    let catchError = defaultWithInternalError Rpc.defaultOptions
+    let client = mkStateQueryClient nullTracer catchError innerCodecs getGenesisConfig recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cStateQueryCodec
     withMockChannel (stateQueryMockPeer seed codec) $ \channel -> do
         result <- race
