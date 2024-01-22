@@ -36,6 +36,9 @@ import Ogmios.App.Configuration
     ( EpochSlots (..)
     , omitOptionalCbor
     )
+import Ogmios.App.Protocol
+    ( defaultWithInternalError
+    )
 import Ogmios.App.Protocol.TxMonitor
     ( mkTxMonitorClient
     )
@@ -209,8 +212,9 @@ withTxMonitorClient
     -> m a
 withTxMonitorClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
-    let innerCodecs = mkTxMonitorCodecs encodeTxId (encodeTx (MetadataNoSchema, omitOptionalCbor))
-    let client = mkTxMonitorClient innerCodecs recvQ (atomically . writeTQueue sendQ)
+    let opts = Rpc.defaultOptions
+    let innerCodecs = mkTxMonitorCodecs opts encodeTxId (encodeTx (MetadataNoSchema, omitOptionalCbor))
+    let client = mkTxMonitorClient (defaultWithInternalError opts) innerCodecs recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cTxMonitorCodec
     withMockChannel (txMonitorMockPeer seed codec) $ \channel -> do
         result <- race

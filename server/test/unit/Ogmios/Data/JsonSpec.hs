@@ -395,6 +395,11 @@ spec = do
             refs <- unsafeReadSchemaRef "ogmios.json#/properties/SubmitTransactionResponse"
             runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON identity refs json
 
+        specify "Golden: NextTransactionResponse_1" $ do
+            json <- decodeFileThrow "NextTransactionResponse_1.json"
+            refs <- unsafeReadSchemaRef "ogmios.json#/properties/NextTransactionResponse"
+            runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON identity refs json
+
         context "Data / BinaryData" $ do
             prop "arbitrary" $
                 forAll genData propBinaryDataRoundtrip
@@ -435,7 +440,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response (FindIntersectionResponse Block)))
-            (_encodeFindIntersectionResponse encodePoint encodeTip)
+            (_encodeFindIntersectionResponse Rpc.defaultOptions encodePoint encodeTip)
             (10, "FindIntersectionResponse")
             "ogmios.json#/properties/FindIntersectionResponse"
 
@@ -447,7 +452,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response (NextBlockResponse Block)))
-            (_encodeNextBlockResponse (encodeBlock (MetadataNoSchema, omitOptionalCbor)) encodePoint encodeTip)
+            (_encodeNextBlockResponse Rpc.defaultOptions (encodeBlock (MetadataNoSchema, omitOptionalCbor)) encodePoint encodeTip)
             (50, "NextBlockResponse")
             "ogmios.json#/properties/NextBlockResponse"
 
@@ -457,6 +462,7 @@ spec = do
         validateToJSON
             (arbitrary @(Rpc.Response (SubmitTransactionResponse Block)))
             (_encodeSubmitTransactionResponse (Proxy @Block)
+                Rpc.defaultOptions
                 encodeTxId
                 encodeSubmitTransactionError
                 encodeDeserialisationFailure
@@ -467,6 +473,7 @@ spec = do
         validateToJSON
             (arbitrary @(Rpc.Response (EvaluateTransactionResponse Block)))
             (_encodeEvaluateTransactionResponse (Proxy @Block)
+                Rpc.defaultOptions
                 encodeRdmrPtr
                 encodeExUnits
                 (encodeObject . encodeTxIn)
@@ -486,7 +493,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response AcquireMempoolResponse))
-            _encodeAcquireMempoolResponse
+            (_encodeAcquireMempoolResponse Rpc.defaultOptions)
             (10, "AcquireMempoolResponse")
             "ogmios.json#/properties/AcquireMempoolResponse"
 
@@ -498,13 +505,13 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response (NextTransactionResponse Block)))
-            (_encodeNextTransactionResponse encodeTxId (encodeTx (MetadataNoSchema, omitOptionalCbor)))
+            (_encodeNextTransactionResponse Rpc.defaultOptions encodeTxId (encodeTx (MetadataNoSchema, omitOptionalCbor)))
             (10, "NextTransactionResponse")
             "ogmios.json#/properties/NextTransactionResponse"
 
         validateToJSON
             (arbitrary @(Rpc.Response (NextTransactionResponse Block)))
-            (_encodeNextTransactionResponse encodeTxId (encodeTx (MetadataDetailedSchema, omitOptionalCbor)))
+            (_encodeNextTransactionResponse Rpc.defaultOptions encodeTxId (encodeTx (MetadataDetailedSchema, omitOptionalCbor)))
             (10, "NextTransactionResponse")
             "ogmios.json#/properties/NextTransactionResponse"
 
@@ -516,7 +523,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response HasTransactionResponse))
-            _encodeHasTransactionResponse
+            (_encodeHasTransactionResponse Rpc.defaultOptions)
             (10, "HasTransactionResponse")
             "ogmios.json#/properties/HasTransactionResponse"
 
@@ -528,7 +535,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response SizeOfMempoolResponse))
-            _encodeSizeOfMempoolResponse
+            (_encodeSizeOfMempoolResponse Rpc.defaultOptions)
             (10, "SizeOfMempoolResponse")
             "ogmios.json#/properties/SizeOfMempoolResponse"
 
@@ -540,7 +547,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response ReleaseMempoolResponse))
-            _encodeReleaseMempoolResponse
+            (_encodeReleaseMempoolResponse Rpc.defaultOptions)
             (10, "ReleaseMempoolResponse")
             "ogmios.json#/properties/ReleaseMempoolResponse"
 
@@ -553,7 +560,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response (AcquireLedgerStateResponse Block)))
-            (_encodeAcquireLedgerStateResponse encodePoint encodeAcquireExpired)
+            (_encodeAcquireLedgerStateResponse Rpc.defaultOptions encodePoint encodeAcquireExpired)
             (10, "AcquireLedgerStateResponse")
             "ogmios.json#/properties/AcquireLedgerStateResponse"
 
@@ -694,7 +701,7 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response ReleaseLedgerStateResponse))
-            _encodeReleaseLedgerStateResponse
+            (_encodeReleaseLedgerStateResponse Rpc.defaultOptions)
             (3, "ReleaseLedgerStateResponse")
             "ogmios.json#/properties/ReleaseLedgerStateResponse"
 
@@ -1038,7 +1045,7 @@ validateLedgerStateQuery n subMethod params parser = do
                         -> result
                         -> Json.Encoding
                     encodeQueryResponse encodeResult
-                            = _encodeQueryLedgerStateResponse encodeAcquireExpired
+                            = _encodeQueryLedgerStateResponse Rpc.defaultOptions encodeAcquireExpired
                             . Rpc.Response (Just $ toString method) Nothing
                             . either QueryEraMismatch QueryResponse
                             . encodeResult
@@ -1092,7 +1099,7 @@ validateLedgerStateQuery n subMethod params parser = do
 
                 let encodeQueryUnavailableInCurrentEra
                         = encodingToValue
-                        . _encodeQueryLedgerStateResponse encodeAcquireExpired
+                        . _encodeQueryLedgerStateResponse Rpc.defaultOptions encodeAcquireExpired
                         . Rpc.Response (Just $ toString method) Nothing
 
                 runQuickCheck $ withMaxSuccess 1 $ forAllBlind
@@ -1135,7 +1142,7 @@ validateNetworkQuery n subMethod params parser = do
                     -> result
                     -> Json.Encoding
                 encodeQueryResponse encodeResult
-                    = _encodeQueryLedgerStateResponse encodeAcquireExpired
+                    = _encodeQueryLedgerStateResponse Rpc.defaultOptions encodeAcquireExpired
                     . Rpc.Response (Just $ toString method) Nothing
                     . either QueryEraMismatch QueryResponse
                     . encodeResult

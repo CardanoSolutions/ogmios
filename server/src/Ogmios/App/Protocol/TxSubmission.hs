@@ -54,12 +54,6 @@ import Data.Type.Equality
     ( testEquality
     , (:~:) (..)
     )
-import Ogmios.App.Protocol
-    ( defaultWithInternalError
-    )
-import Ogmios.Control.Exception
-    ( MonadCatch
-    )
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..)
     , TQueue
@@ -143,6 +137,7 @@ import Type.Reflection
     ( typeRep
     )
 
+import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Map.Strict as Map
 import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ
 import qualified Ouroboros.Consensus.Ledger.Query as Ledger
@@ -151,10 +146,11 @@ import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 mkTxSubmissionClient
     :: forall m block.
         ( MonadSTM m
-        , MonadCatch m
         , HasTxId (SerializedTransaction block)
         )
-    => TxSubmissionCodecs block
+    => (forall a r. m a -> (Json -> m ()) -> Rpc.ToResponse r -> m a -> m a)
+        -- ^ A default response handler to catch errors.
+    -> TxSubmissionCodecs block
         -- ^ For encoding Haskell types to JSON
     -> ExecutionUnitsEvaluator m block
         -- ^ An interface for evaluating transaction execution units
@@ -163,7 +159,7 @@ mkTxSubmissionClient
     -> (Json -> m ())
         -- ^ An emitter for yielding JSON objects
     -> LocalTxSubmissionClient (SerializedTransaction block) (SubmitTransactionError block) m ()
-mkTxSubmissionClient TxSubmissionCodecs{..} ExecutionUnitsEvaluator{..} queue yield = do
+mkTxSubmissionClient defaultWithInternalError TxSubmissionCodecs{..} ExecutionUnitsEvaluator{..} queue yield = do
     LocalTxSubmissionClient clientStIdle
   where
     await :: m (TxSubmissionMessage block)

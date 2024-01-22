@@ -6,6 +6,20 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
+### [6.0.1] - 2024-01-22
+
+#### Added
+
+- Introduced a new runtime configuration flag `--strict-rpc` to allow removing the extra `'method'` field provided in the server response. While the JSON-RPC specification doesn't explicitly disallow the use of extra fields in the response, some libraries have proven being quite strict in the inputs they accept, resulting in errors when receiving Ogmios' responses. The flag is _off by default_.
+
+#### Changed
+
+- Fixed various descriptions and oversights in the JSON specifications (and thus documentation). In particular, the _Getting Started_ section on the website has been slightly reworked to be easier to navigate and to include information about configuring Ogmios.
+
+#### Removed
+
+- N/A
+
 ### [6.0.0] - 2024-01-10
 
 #### Added

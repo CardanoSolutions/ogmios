@@ -1,1 +1,0 @@
-{"jsonrpc":"2.0","method":"submitTransaction","error":{"code":3998,"message":"Unrecognized certificate type. This error is a placeholder due to how internal data-types are modeled. If you ever run into this, please report the issue as you've likely discoverd a critical bug..."},"id":"fmrT6KFUfhkb"}

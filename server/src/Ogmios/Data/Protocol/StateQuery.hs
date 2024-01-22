@@ -94,26 +94,27 @@ data StateQueryCodecs block = StateQueryCodecs
 
 mkStateQueryCodecs
     :: (FromJSON (Query Proxy block), FromJSON (Point block))
-    => (Point block -> Json)
+    => Rpc.Options
+    -> (Point block -> Json)
     -> (AcquireFailure -> Json)
         -- ^ Failure to acquire
     -> (AcquireFailure -> Json)
         -- ^ Acquire expired
     -> StateQueryCodecs block
-mkStateQueryCodecs encodePoint encodeAcquireFailure encodeAcquireExpired =
+mkStateQueryCodecs opts encodePoint encodeAcquireFailure encodeAcquireExpired =
     StateQueryCodecs
         { decodeAcquireLedgerState =
             decodeWith _decodeAcquireLedgerState
         , encodeAcquireLedgerStateResponse =
-            _encodeAcquireLedgerStateResponse encodePoint encodeAcquireFailure
+            _encodeAcquireLedgerStateResponse opts encodePoint encodeAcquireFailure
         , decodeReleaseLedgerState =
             decodeWith _decodeReleaseLedgerState
         , encodeReleaseLedgerStateResponse =
-            _encodeReleaseLedgerStateResponse
+            _encodeReleaseLedgerStateResponse opts
         , decodeQueryLedgerState =
             decodeWith _decodeQueryLedgerState
         , encodeQueryLedgerStateResponse =
-            _encodeQueryLedgerStateResponse encodeAcquireExpired
+            _encodeQueryLedgerStateResponse opts encodeAcquireExpired
         }
 
 --
@@ -184,12 +185,13 @@ data AcquireLedgerStateResponse block
 
 _encodeAcquireLedgerStateResponse
     :: forall block. ()
-    => (Point block -> Json)
+    => Rpc.Options
+    -> (Point block -> Json)
     -> (AcquireFailure -> Json)
     -> Rpc.Response (AcquireLedgerStateResponse block)
     -> Json
-_encodeAcquireLedgerStateResponse encodePoint encodeAcquireFailure =
-    Rpc.mkResponse $ \resolve reject -> \case
+_encodeAcquireLedgerStateResponse opts encodePoint encodeAcquireFailure =
+    Rpc.mkResponse opts $ \resolve reject -> \case
         AcquireSuccess{point} ->
             resolve $ encodeObject
                 ( "acquired" .= encodeText "ledgerState" <>
@@ -225,10 +227,11 @@ data ReleaseLedgerStateResponse
     deriving (Generic, Show)
 
 _encodeReleaseLedgerStateResponse
-    :: Rpc.Response ReleaseLedgerStateResponse
+    :: Rpc.Options
+    -> Rpc.Response ReleaseLedgerStateResponse
     -> Json
-_encodeReleaseLedgerStateResponse =
-    Rpc.ok $ \case
+_encodeReleaseLedgerStateResponse opts =
+    Rpc.ok opts $ \case
         ReleaseLedgerStateResponse ->
             encodeObject
                 ( "released" .= encodeText "ledgerState"
@@ -278,11 +281,12 @@ instance Show (QueryLedgerStateResponse block) where
 
 _encodeQueryLedgerStateResponse
     :: forall block. ()
-    => (AcquireFailure -> Json)
+    => Rpc.Options
+    -> (AcquireFailure -> Json)
     -> Rpc.Response (QueryLedgerStateResponse block)
     -> Json
-_encodeQueryLedgerStateResponse encodeAcquireExpired =
-    Rpc.mkResponse $ \resolve reject -> \case
+_encodeQueryLedgerStateResponse opts encodeAcquireExpired =
+    Rpc.mkResponse opts $ \resolve reject -> \case
         QueryResponse response ->
             resolve response
         QueryEraMismatch hint ->

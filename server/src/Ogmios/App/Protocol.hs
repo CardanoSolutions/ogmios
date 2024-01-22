@@ -108,10 +108,11 @@ onUnmatchedMessage
         , FromJSON (GenTxId block)
         , FromJSON (MultiEraUTxO block)
         )
-    => ByteString
+    => Rpc.Options
+    -> ByteString
     -> Json
-onUnmatchedMessage blob = do
-    Rpc.ko $ Rpc.invalidRequest reflection $ T.unpack fault
+onUnmatchedMessage opts blob = do
+    Rpc.ko opts $ Rpc.invalidRequest reflection $ T.unpack fault
   where
     (fault, reflection) =
         ( "Invalid request: " <> modifyAesonFailure details <> "."
@@ -179,12 +180,10 @@ onUnmatchedMessage blob = do
            | otherwise ->
                 pure ()
         fail "unknown method in 'method' (beware names are case-sensitive)."
-      where
-        opts = Rpc.defaultOptions
 
 -- | 'catch-all' handler which turns unexpected exception as internal errors.
-defaultWithInternalError :: MonadCatch m => m a -> (Json -> m ()) -> Rpc.ToResponse r -> m a -> m a
-defaultWithInternalError continue yield toResponse = handle $ \(e :: SomeException) -> do
+defaultWithInternalError :: MonadCatch m => Rpc.Options -> m a -> (Json -> m ()) -> Rpc.ToResponse r -> m a -> m a
+defaultWithInternalError opts continue yield toResponse = handle $ \(e :: SomeException) -> do
     let (Rpc.Response _ mirror _) = toResponse (error "unused and unevaluated")
-    yield $ Rpc.ko $ Rpc.internalError mirror (displayException e)
+    yield $ Rpc.ko opts $ Rpc.internalError mirror (displayException e)
     continue

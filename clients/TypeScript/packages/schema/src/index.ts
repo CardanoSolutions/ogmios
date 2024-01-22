@@ -220,7 +220,7 @@ export type EvaluateTransactionFailure =
   | EvaluateTransactionFailureCannotCreateEvaluationContext
   | EvaluateTransactionFailureScriptExecutionFailure;
 export type ScriptExecutionFailure =
-  | ScriptExecutionFailureMissingScripts
+  | ScriptExecutionFailureInvalidRedeemerPointers
   | ScriptExecutionFailureValidationFailure
   | ScriptExecutionFailureUnsuitableOutputReference
   | SubmitTransactionFailureExtraneousRedeemers
@@ -1085,6 +1085,7 @@ export interface CertifiedVrf {
  */
 export interface OperationalCertificate {
   count: UInt64;
+  sigma?: Signature;
   kes: {
     period: UInt64;
     verificationKey: KesVerificationKey;
@@ -1303,13 +1304,13 @@ export interface SubmitTransactionFailureScriptIntegrityHashMismatch {
   };
 }
 /**
- * This is bad, you're trying to spend inputs that are locked by Plutus scripts, but have no associated datums. Those inputs are so-to-speak unspendable (at least with the current ledger rules). There's nothing you can do apart from re-creating these UTxOs but with a corresponding datum this time. The field 'data.orphanInputs' lists all such inputs found in the transaction.
+ * This is bad, you're trying to spend inputs that are locked by Plutus scripts, but have no associated datums. Those inputs are so-to-speak unspendable (at least with the current ledger rules). There's nothing you can do apart from re-creating these UTxOs but with a corresponding datum this time. The field 'data.orphanScriptInputs' lists all such inputs found in the transaction.
  */
 export interface SubmitTransactionFailureOrphanScriptInputs {
   code: 3114;
   message: string;
   data: {
-    orphanInputs?: TransactionOutputReference[];
+    orphanScriptInputs: TransactionOutputReference[];
   };
 }
 /**
@@ -1486,7 +1487,7 @@ export interface SubmitTransactionFailureCollateralLockedByScript {
   };
 }
 /**
- * One of the transaction validity bound is outside any foreseeable future. The vision of the ledger in the future is limited because the ledger cannot guarantee that the chain will not hard-fork into a version of the protocol working with a different set of parameters (or even, working with the same consensus protocol). However, the protocol cannot fork in less than `k` blocks, where `k` is the security parameter of the chain. Plus, Ouroboros Praos ensures that there are at least `k` blocks produced in a window of 3 * k / f slots, where `f` is the density parameter, also known as the active slot coefficient. Short story short, you can only set validity interval in a short timespan, which is around ~36h in the future on Mainnet at the moment of writing this error message. The field 'data.unforeseeableSlot' indicates the slot which couldn't be converted to a POSIX time due to hard fork uncertainty.
+ * One of the transaction validity bound is outside any foreseeable future. The vision of the ledger in the future when evaluating Plutus scripts is limited because the ledger cannot guarantee that the chain will not hard-fork into a version of the protocol working with a different set of parameters (or even, working with the same consensus protocol). However, the protocol cannot fork in less than `k` blocks, where `k` is the security parameter of the chain. Plus, Ouroboros Praos ensures that there are at least `k` blocks produced in a window of 3 * k / f slots, where `f` is the density parameter, also known as the active slot coefficient. Short story short, you can only set validity interval in a short timespan, which is around ~36h in the future on Mainnet at the moment of writing this error message. The field 'data.unforeseeableSlot' indicates the slot which couldn't be converted to a POSIX time due to hard fork uncertainty.
  */
 export interface SubmitTransactionFailureUnforeseeableSlot {
   code: 3130;
@@ -1808,7 +1809,7 @@ export interface SubmitTransactionFailureVotingOnExpiredActions {
   code: 3160;
   message: string;
   data: {
-    unauthorizedVotes?: {
+    invalidVotes: {
       proposal: GovernanceProposalReference;
       voter: VoterGenesisDelegate | VoterConstitutionalCommittee | VoterDelegateRepresentative | VoterStakePoolOperator;
     }[];
@@ -1953,9 +1954,9 @@ export interface EvaluateTransactionFailureScriptExecutionFailure {
   }[];
 }
 /**
- * An associated script witness is missing. Indeed, any script used in a transaction (when spending, minting, withdrawing or publishing certificates) must be provided in full with the transaction. Scripts must therefore be added either to the witness set or provided as a reference inputs should you use Plutus V2+ and a format from Babbage and beyond.
+ * An associated script witness is missing. Indeed, any script used in a transaction (when spending, minting, withdrawing or publishing certificates) must be provided in full with the transaction. Scripts must therefore be added either to the witness set or provided as a reference inputs should you use Plutus V2+ and a format from Babbage and beyond. They must also be correctly referenced by a redeemer pointer but here, some pointer failed to resolved to a valid script.
  */
-export interface ScriptExecutionFailureMissingScripts {
+export interface ScriptExecutionFailureInvalidRedeemerPointers {
   code: 3011;
   message: string;
   data: {
@@ -1963,7 +1964,7 @@ export interface ScriptExecutionFailureMissingScripts {
   };
 }
 /**
- * Some of the (V1) scripts failed to evaluate to a positive outcome.
+ * Some of the scripts failed to evaluate to a positive outcome. The field 'data.validationError' informs about the nature of the error, and 'data.traces' lists all the execution traces collected during the script execution.
  */
 export interface ScriptExecutionFailureValidationFailure {
   code: 3012;
@@ -1974,7 +1975,7 @@ export interface ScriptExecutionFailureValidationFailure {
   };
 }
 /**
- * Some of the (V2) scripts failed to evaluate to a positive outcome.
+ * A redeemer points to an input that isn't locked by a Plutus script. Double-check your redeemer pointers and note that, inputs are ordered lexicographically by the ledger (using their transaction id and output index). This order may differ from the one you originally defined in your transaction and may be the cause of misalignment of your redeemer pointers. The field 'data.unsuitableOutputReference' indicates which input was wrongly targeted by a redeemer.
  */
 export interface ScriptExecutionFailureUnsuitableOutputReference {
   code: 3013;

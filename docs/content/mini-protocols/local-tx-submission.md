@@ -208,7 +208,7 @@ components:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/0"
     3010/ScriptExecutionFailure:
       $ref: "/ogmios.json#/definitions/EvaluateTransactionFailure/oneOf/5"
-    3011/MissingScripts:
+    3011/InvalidRedeemerPointers:
       $ref: "/ogmios.json#/definitions/ScriptExecutionFailure/oneOf/0"
     3012/ValidationFailure:
       $ref: "/ogmios.json#/definitions/ScriptExecutionFailure/oneOf/1"

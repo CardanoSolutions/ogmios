@@ -42,6 +42,7 @@ import Test.Hspec
     , specify
     )
 
+import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
 import qualified Data.Text as T
 
@@ -79,7 +80,7 @@ spec = parallel $ do
 
         forM_ matrix $ \(bytes, msg, mirror) ->
             specify (decodeUtf8 bytes <> " => " <> msg) $ do
-                let fault = inefficientEncodingToValue $ onUnmatchedMessage @Block bytes
+                let fault = inefficientEncodingToValue $ onUnmatchedMessage @Block Rpc.defaultOptions bytes
                 fault ^? key "jsonrpc" . _String `shouldBe` Just "2.0"
                 case fault ^? key "error" . key "message" . _String of
                     Nothing ->

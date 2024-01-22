@@ -87,6 +87,7 @@ data Configuration = Configuration
     , maxInFlight :: !Int
     , includeCbor :: !IncludeCbor
     , metadataFormat :: !MetadataFormat
+    , strictRpc :: !Bool
     } deriving (Generic, Eq, Show)
 
 data NetworkParameters = NetworkParameters

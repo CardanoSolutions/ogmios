@@ -522,11 +522,13 @@ encodeOCert
 encodeOCert x =
     "count" .=
         encodeWord64 (TPraos.ocertN x) <>
+    "sigma" .=
+        encodeSignedDSIGN (TPraos.ocertSigma x) <>
     "kes" .= encodeObject
         ( "period" .=
             encodeKESPeriod (TPraos.ocertKESPeriod x) <>
           "verificationKey" .=
-              encodeVerKeyKES (TPraos.ocertVkHot x)
+            encodeVerKeyKES (TPraos.ocertVkHot x)
         )
     & encodeObject
 

@@ -123,21 +123,22 @@ data TxMonitorCodecs block = TxMonitorCodecs
 
 mkTxMonitorCodecs
     :: (FromJSON (GenTxId block))
-    => (GenTxId block -> Json)
+    => Rpc.Options
+    -> (GenTxId block -> Json)
     -> (GenTx block -> Json)
     -> TxMonitorCodecs block
-mkTxMonitorCodecs encodeTxId encodeTx =
+mkTxMonitorCodecs opts encodeTxId encodeTx =
     TxMonitorCodecs
         { decodeAcquireMempool = decodeWith _decodeAcquireMempool
-        , encodeAcquireMempoolResponse = _encodeAcquireMempoolResponse
+        , encodeAcquireMempoolResponse = _encodeAcquireMempoolResponse opts
         , decodeNextTransaction = decodeWith _decodeNextTransaction
-        , encodeNextTransactionResponse = _encodeNextTransactionResponse encodeTxId encodeTx
+        , encodeNextTransactionResponse = _encodeNextTransactionResponse opts encodeTxId encodeTx
         , decodeHasTransaction = decodeWith _decodeHasTransaction
-        , encodeHasTransactionResponse = _encodeHasTransactionResponse
+        , encodeHasTransactionResponse = _encodeHasTransactionResponse opts
         , decodeSizeOfMempool = decodeWith _decodeSizeOfMempool
-        , encodeSizeOfMempoolResponse = _encodeSizeOfMempoolResponse
+        , encodeSizeOfMempoolResponse = _encodeSizeOfMempoolResponse opts
         , decodeReleaseMempool = decodeWith _decodeReleaseMempool
-        , encodeReleaseMempoolResponse = _encodeReleaseMempoolResponse
+        , encodeReleaseMempoolResponse = _encodeReleaseMempoolResponse opts
         }
 
 --
@@ -186,10 +187,11 @@ data AcquireMempoolResponse
     deriving (Generic, Show, Eq)
 
 _encodeAcquireMempoolResponse
-    :: Rpc.Response AcquireMempoolResponse
+    :: Rpc.Options
+    -> Rpc.Response AcquireMempoolResponse
     -> Json
-_encodeAcquireMempoolResponse =
-    Rpc.mkResponse $ \resolve _reject -> \case
+_encodeAcquireMempoolResponse opts =
+    Rpc.mkResponse opts $ \resolve _reject -> \case
         AcquireMempoolResponse{slot} ->
             resolve $ encodeObject
                 ( "acquired" .=
@@ -269,12 +271,13 @@ deriving instance
 
 _encodeNextTransactionResponse
     :: forall block. ()
-    => (GenTxId block -> Json)
+    => Rpc.Options
+    -> (GenTxId block -> Json)
     -> (GenTx block -> Json)
     -> Rpc.Response (NextTransactionResponse block)
     -> Json
-_encodeNextTransactionResponse encodeTxId encodeTx =
-    Rpc.mkResponse $ \resolve reject -> \case
+_encodeNextTransactionResponse opts encodeTxId encodeTx =
+    Rpc.mkResponse opts $ \resolve reject -> \case
         NextTransactionResponseId{nextId} ->
             resolve $ encodeObject
                 ( "transaction" .= encodeMaybe encodeTxId nextId
@@ -321,10 +324,11 @@ data HasTransactionResponse
 
 _encodeHasTransactionResponse
     :: forall block. ()
-    => Rpc.Response HasTransactionResponse
+    => Rpc.Options
+    -> Rpc.Response HasTransactionResponse
     -> Json
-_encodeHasTransactionResponse =
-    Rpc.mkResponse $ \resolve reject -> \case
+_encodeHasTransactionResponse opts =
+    Rpc.mkResponse opts $ \resolve reject -> \case
         HasTransactionResponse{has} ->
             resolve (encodeBool has)
         HasTransactionMustAcquireFirst ->
@@ -358,10 +362,11 @@ data SizeOfMempoolResponse
     deriving (Generic, Show)
 
 _encodeSizeOfMempoolResponse
-    :: Rpc.Response SizeOfMempoolResponse
+    :: Rpc.Options
+    -> Rpc.Response SizeOfMempoolResponse
     -> Json
-_encodeSizeOfMempoolResponse =
-    Rpc.mkResponse $ \resolve reject -> \case
+_encodeSizeOfMempoolResponse opts =
+    Rpc.mkResponse opts $ \resolve reject -> \case
         SizeOfMempoolResponse{mempool} ->
             resolve $ encodeObject
                 ( "maxCapacity" .= encodeObject
@@ -402,10 +407,11 @@ data ReleaseMempoolResponse
     deriving (Generic, Show)
 
 _encodeReleaseMempoolResponse
-    :: Rpc.Response ReleaseMempoolResponse
+    :: Rpc.Options
+    -> Rpc.Response ReleaseMempoolResponse
     -> Json
-_encodeReleaseMempoolResponse =
-    Rpc.mkResponse $ \resolve reject -> \case
+_encodeReleaseMempoolResponse opts =
+    Rpc.mkResponse opts $ \resolve reject -> \case
         Released ->
             resolve $ encodeObject
                 ( "released" .= encodeText "mempool"

@@ -1,0 +1,46 @@
+{
+   "id": null,
+   "jsonrpc": "2.0",
+   "method": "nextTransaction",
+   "result": {
+       "transaction": {
+           "certificates": [
+           ],
+           "datums": {
+               "39df024ac52722fe8ae4c1a8740e4c5624a38c3820e504a059aae8728421f8bd": "40"
+           },
+           "fee": {
+               "ada": {
+                   "lovelace": 282187
+               }
+           },
+           "id": "0b5309d2ec25a6c2e7dc9d0daaf1a50d90ddcbd723cbe2e04d991d66abdb2bbd",
+           "inputs": [
+               {
+                   "index": 1,
+                   "transaction": {
+                       "id": "8e580555ccad0bebc7b2bbddb41b1d78155c346586203aa2eff2b191e79e1175"
+                   }
+               }
+           ],
+           "metadata": {
+               "hash": "f0cecbd9e120c69374170ef673a3ce71a378bae83178167cd04b780d5bbf056b",
+               "labels": {
+                   "0": {
+                       "json": {
+                           "string": ""
+                       }
+                   }
+               }
+           },
+           "outputs": [
+           ],
+           "scriptIntegrityHash": "ab5f2d702affa8d4c2ed7c92354a4179cb72c115221055c82ee625843e569a94",
+           "signatories": [],
+           "spends": "inputs",
+           "validityInterval": {
+               "invalidAfter": 1
+           }
+       }
+   }
+}
