@@ -1,7 +1,7 @@
 +++
-title = "Docker"
+title = "Running with Docker"
 chapter = false
-weight = 1
+weight = 3
 +++
 
 ## 🐳 Overview

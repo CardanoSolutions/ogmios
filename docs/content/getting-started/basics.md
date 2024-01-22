@@ -1,5 +1,5 @@
 +++
-title = "Basics"
+title = "Using: JSON-RPC basics"
 chapter = false
 weight = 5
 +++
