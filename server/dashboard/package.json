@@ -1,6 +1,6 @@
 {
   "name": "ogmios-dashboard",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "description": "Lightweight self-hosted dashboard for Ogmios.",
   "repository": "https://github.com/CardanoSolutions/ogmios.git",
   "author": "KtorZ <matthias.benkort@gmail.com>",

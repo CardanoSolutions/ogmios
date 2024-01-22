@@ -222,7 +222,7 @@ jobs:
         os: [ linux ]
         arch: [ x86_64 ]
         network: [ preview ]
-        cardano-node: [ 8.7.2 ]
+        cardano-node: [ 8.7.3 ]
 
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-22.04' }}
     steps:
@@ -399,8 +399,8 @@ jobs:
         os: [ linux ]
         target: [ cardano-node-ogmios ]
         network: [ mainnet, preprod, preview, sanchonet ]
-        cardano-node: [ 8.7.2 ]
-        cardano-node-latest: [ 8.7.2 ]
+        cardano-node: [ 8.7.2, 8.7.3 ]
+        cardano-node-latest: [ 8.7.3 ]
         arch: [ x86_64 ]
     steps:
     - name: 📥 Checkout repository
