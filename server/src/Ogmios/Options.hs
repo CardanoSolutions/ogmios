@@ -252,7 +252,7 @@ metadataFormatFlag = fmap toMetadataFormat $ switch $ mempty
 -- | [--strict-rpc]
 strictRpcFlag :: Parser Bool
 strictRpcFlag = switch $ mempty
-    <> long "strictRpc"
+    <> long "strict-rpc"
     <> help "When set, removes the extra 'method' in the response to be more compliant with some stricter JSON-RPC clients."
     <> showDefault
 
