@@ -40,8 +40,8 @@ const matchSubmitTransaction = (data: string) => {
     return null
   }
 
-  if ('method' in json.id) {
-    if (json.id.method !== METHODS.SUBMIT) {
+  if ('method' in json) {
+    if (json.method !== METHODS.SUBMIT) {
       return null
     }
   }
@@ -57,8 +57,8 @@ const matchEvaluateTransaction = (data: string) => {
     return null
   }
 
-  if ('method' in json.id) {
-    if (json.id.method !== METHODS.EVALUATE) {
+  if ('method' in json) {
+    if (json.method !== METHODS.EVALUATE) {
       return null
     }
   }
