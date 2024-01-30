@@ -36,34 +36,26 @@ const METHODS:
 const matchSubmitTransaction = (data: string) => {
   const json = safeJSON.parse(data) as Ogmios['SubmitTransactionResponse']
 
-  if (typeof json.id !== 'object' || json.id === null) {
-    return null
-  }
-
-  if ('method' in json.id) {
-    if (json.id.method !== METHODS.SUBMIT) {
-      return null
+  if ('method' in json) {
+    if (json.method === METHODS.SUBMIT) {
+      return json
     }
   }
 
-  return json
+  return null
 }
 
 /** @Internal */
 const matchEvaluateTransaction = (data: string) => {
   const json = safeJSON.parse(data) as Ogmios['EvaluateTransactionResponse']
 
-  if (typeof json.id !== 'object' || json.id === null) {
-    return null
-  }
-
-  if ('method' in json.id) {
-    if (json.id.method !== METHODS.EVALUATE) {
-      return null
+  if ('method' in json) {
+    if (json.method === METHODS.EVALUATE) {
+      return json
     }
   }
 
-  return json
+  return null
 }
 
 /**
@@ -94,7 +86,6 @@ export const createTransactionSubmissionClient = async (
             ...(additionalUtxo !== undefined ? { additionalUtxo } : {}),
             transaction: { cbor: serializedTransaction }
           },
-          id: { method }
         } as unknown as Ogmios['EvaluateTransaction']))
 
         const { value: response } = await evaluateTransactionResponse.next()
@@ -109,7 +100,6 @@ export const createTransactionSubmissionClient = async (
           ...baseRequest,
           method,
           params: { transaction: { cbor: serializedTransaction } },
-          id: { method }
         } as unknown as Ogmios['SubmitTransaction']))
 
         const { value: response } = await submitTransactionResponse.next()
