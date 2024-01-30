@@ -108,6 +108,7 @@ jobs:
         chmod -w share
 
     - name: 🔬 Version Sanity Check
+      if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags') }}
       id: version-check
       shell: bash
       run: |
@@ -121,10 +122,8 @@ jobs:
 
         if [[ $GITHUB_REF == "refs/tags"* ]]; then
           TAG=$(echo ${GITHUB_REF/refs\/tags\/} | sed "s/^.*\(v[0-9].[0-9].[0-9]\).*$/\1/")
-        elif [[ $GITHUB_REF == "refs/heads/master" ]]; then
-          TAG="nightly"
         else
-          TAG=${GITHUB_REF/refs\/heads\/}
+          TAG="nightly"
         fi
 
         echo "git:    $TAG <-- ${GITHUB_REF/refs\/tags\/}"
