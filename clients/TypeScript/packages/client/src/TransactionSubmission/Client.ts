@@ -85,7 +85,7 @@ export const createTransactionSubmissionClient = async (
           params: {
             ...(additionalUtxo !== undefined ? { additionalUtxo } : {}),
             transaction: { cbor: serializedTransaction }
-          },
+          }
         } as unknown as Ogmios['EvaluateTransaction']))
 
         const { value: response } = await evaluateTransactionResponse.next()
@@ -99,7 +99,7 @@ export const createTransactionSubmissionClient = async (
         socket.send(safeJSON.stringify({
           ...baseRequest,
           method,
-          params: { transaction: { cbor: serializedTransaction } },
+          params: { transaction: { cbor: serializedTransaction } }
         } as unknown as Ogmios['SubmitTransaction']))
 
         const { value: response } = await submitTransactionResponse.next()

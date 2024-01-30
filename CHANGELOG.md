@@ -6,6 +6,25 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
+### [6.0.2] - 2024-01-30
+
+#### Added
+
+- N/A
+
+#### Changed
+
+- Fixed 'preview' showing as 'preprod' (and vice-versa) in error message on start-up when connecting to a wrong test network.
+- Fixed parsing of base16-encoded CBOR transaction on `ogmios inspect transaction`; would wrongly expect an extra singleton object before that.
+- ![TypeScript][] Fixes identification of submit/evaluate transaction responses, now using the `method` field instead of relying on the mirror. Should fix clashes with other requests.
+
+#### Removed
+
+- N/A
+
+---
+---
+
 ### [6.0.1] - 2024-01-22
 
 #### Added
@@ -19,6 +38,9 @@ pre: "<b>5. </b>"
 #### Removed
 
 - N/A
+
+---
+---
 
 ### [6.0.0] - 2024-01-10
 
