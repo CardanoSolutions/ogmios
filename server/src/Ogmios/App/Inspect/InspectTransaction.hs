@@ -8,6 +8,7 @@ import Ogmios.Prelude
 
 import Data.Aeson
     ( parseJSON
+    , (.=)
     )
 import Ogmios.App.Configuration
     ( omitOptionalCbor
@@ -37,7 +38,7 @@ import qualified Data.ByteString.Char8 as B8
 -- information about it.
 inspectTransaction :: Text -> IO ()
 inspectTransaction input =
-    case Json.parseEither parseJSON (Json.String input) of
+    case Json.parseEither parseJSON (Json.object ["cbor" .= Json.String input]) of
         Left e -> do
             B8.putStrLn (encodeUtf8 e)
             exitWith (ExitFailure 1)

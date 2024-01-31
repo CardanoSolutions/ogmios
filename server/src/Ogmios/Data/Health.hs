@@ -213,6 +213,7 @@ networkMagicToNetworkName :: NetworkMagic -> Text
 networkMagicToNetworkName = \case
     NetworkMagic 764824073 -> "mainnet"
     NetworkMagic 1097911063 -> "catastrophically-broken-testnet"
+    NetworkMagic 0 -> "mainnet"
     NetworkMagic 1 -> "preprod"
     NetworkMagic 2 -> "preview"
     NetworkMagic 4 -> "sanchonet"

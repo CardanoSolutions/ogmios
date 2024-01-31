@@ -23,7 +23,7 @@ Ogmios is built using the great Haskell build tool [cabal](https://cabal.readthe
 
 - `git 2.11.*`
 - `cabal 3.6.*.*` and higher
-- `ghc 9.6.0`
+- `ghc 9.6.3`
 
 {{% notice tip %}}
 We recommend using [GHCup](https://www.haskell.org/ghcup/) to install cabal & the Haskell platform.

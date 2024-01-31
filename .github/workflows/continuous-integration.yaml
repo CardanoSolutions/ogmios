@@ -26,7 +26,7 @@ jobs:
         arch: [ x86_64, aarch64 ]
         compiler: [ ghc96 ]
 
-    runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-4vcpu-ubuntu-2204-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-16vcpu-ubuntu-2204-arm' || 'ubuntu-22.04' }}
 
     steps:
     - name: 📥 Checkout repository
@@ -46,8 +46,8 @@ jobs:
       uses: cachix/install-nix-action@v22
       with:
         extra_nix_config: |
-          trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= loony-tools:pr9m4BkM/5/eSTZlkQyRt57Jz7OMBxNSUiMC4FkcNfk= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-          substituters = https://cache.iog.io/ https://cache.zw3rk.com/ https://cache.nixos.org/
+          trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
+          substituters = https://cache.iog.io/ https://cache.nixos.org/
         nix_path: nixpkgs=channel:nixos-unstable
 
     - name: ❄️ Prepare cache (x86_64)
@@ -108,6 +108,7 @@ jobs:
         chmod -w share
 
     - name: 🔬 Version Sanity Check
+      if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags') }}
       id: version-check
       shell: bash
       run: |
@@ -121,10 +122,8 @@ jobs:
 
         if [[ $GITHUB_REF == "refs/tags"* ]]; then
           TAG=$(echo ${GITHUB_REF/refs\/tags\/} | sed "s/^.*\(v[0-9].[0-9].[0-9]\).*$/\1/")
-        elif [[ $GITHUB_REF == "refs/heads/master" ]]; then
-          TAG="nightly"
         else
-          TAG=${GITHUB_REF/refs\/heads\/}
+          TAG="nightly"
         fi
 
         echo "git:    $TAG <-- ${GITHUB_REF/refs\/tags\/}"

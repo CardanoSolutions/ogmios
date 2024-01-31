@@ -26,6 +26,7 @@ import Ogmios.Prelude
 
 import Ogmios.App.Configuration
     ( Configuration (..)
+    , NetworkMagic (..)
     , NetworkParameters (..)
     )
 import Ogmios.App.Metrics
@@ -319,12 +320,8 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
       where
         -- | Show a named version of the network magic when we recognize it for better UX.
         prettyNetwork :: Text -> Text
-        prettyNetwork = \case
-            "764824073" -> "'mainnet'"
-            "1097911063" -> "'testnet'"
-            "1" -> "'preview'"
-            "2" -> "'preprod'"
-            unknownMagic -> "an unknown network (id=" <> unknownMagic <> ")"
+        prettyNetwork =
+            networkMagicToNetworkName . NetworkMagic . fromMaybe maxBound . readMaybe @Word32 . toString
 
 --
 -- Ouroboros clients
