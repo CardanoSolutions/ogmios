@@ -1436,16 +1436,16 @@
     , "anyOf":
       [ { "title": "Metadatum<NoSchema>"
         , "oneOf":
-          [ { "title": "Integer", "type": "integer" }
-          , { "title": "String", "type": "string" }
-          , { "title": "Array<Metadatum>", "type": "array", "items": { "$ref": "cardano.json#/definitions/Metadatum/anyOf/0" } }
-          , { "title": "Object<Metadatum>", "type": "object", "additionalProperties": { "$ref": "cardano.json#/definitions/Metadatum/anyOf/0" } }
+          [ { "title": "IntegerNoSchema", "type": "integer" }
+          , { "title": "StringNoSchema", "type": "string" }
+          , { "title": "Array<NoSchema>", "type": "array", "items": { "$ref": "cardano.json#/definitions/Metadatum/anyOf/0" } }
+          , { "title": "Object<NoSchema>", "type": "object", "additionalProperties": { "$ref": "cardano.json#/definitions/Metadatum/anyOf/0" } }
           ]
         }
       , { "title": "Metadatum<DetailedSchema>"
         , "oneOf":
           [ { "type": "object"
-            , "title": "int"
+            , "title": "IntegerDetailedSchema"
             , "additionalProperties": false
             , "required": ["int"]
             , "properties":
@@ -1455,7 +1455,7 @@
               }
             }
           , { "type": "object"
-            , "title": "string"
+            , "title": "StringDetailedSchema"
             , "additionalProperties": false
             , "required": ["string"]
             , "properties":
@@ -1465,7 +1465,7 @@
               }
             }
           , { "type": "object"
-            , "title": "bytes"
+            , "title": "BytesDetailedSchema"
             , "additionalProperties": false
             , "required": ["bytes"]
             , "properties":
@@ -1477,7 +1477,7 @@
               }
             }
           , { "type": "object"
-            , "title": "list"
+            , "title": "Array<DetailedSchema>"
             , "additionalProperties": false
             , "required": ["list"]
             , "properties":
@@ -1488,7 +1488,7 @@
               }
             }
           , { "type": "object"
-            , "title": "map"
+            , "title": "Object<DetailedSchema>"
             , "additionalProperties": false
             , "required": ["map"]
             , "properties":
