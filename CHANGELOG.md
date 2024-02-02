@@ -6,6 +6,25 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
+### [6.0.3] - 2024-02-02
+
+#### Added
+
+- A new transaction submission / evaluation error (`code: 3161`) returned when a script evaluation goes beyond its allocated budget.
+
+#### Changed
+
+- Mapped some internal errors to actual predicate failures. Before, Ogmios would simply return an `InternalLedgerTypeConversionError` with code `3999` in cases where it should have been returning a more meaningful error resulting from either an excessive script evaluation (see new introduced error 3161) or a failed attempt to create a script context for a given transaction.
+
+- ![TypeScript][] Renamed types regarding Metadatum in the TypeScript client to provide more meaningful names.
+
+#### Removed
+
+- N/A
+
+---
+---
+
 ### [6.0.2] - 2024-01-30
 
 #### Added

@@ -21,6 +21,7 @@ import Ogmios.Data.Ledger.PredicateFailure
     , ScriptPurposeInAnyEra (..)
     , TxOutInAnyEra (..)
     , ValueInAnyEra (..)
+    , pickPredicateFailure
     )
 import Ogmios.Data.Ledger.PredicateFailure.Shelley
     ( encodeDelegsFailure
@@ -151,7 +152,7 @@ encodeUtxosFailure era = \case
     Al.ValidationTagMismatch validationTag mismatchReason ->
         ValidationTagMismatch { validationTag, mismatchReason }
     Al.CollectErrors errors ->
-        encodeCollectErrors era errors
+        pickPredicateFailure (encodeCollectErrors era errors)
     Al.UpdateFailure{} ->
         InvalidProtocolParametersUpdate
 
@@ -162,23 +163,47 @@ encodeCollectErrors
         )
     => ShelleyBasedEra (era crypto)
     -> [CollectError (era crypto)]
-    -> MultiEraPredicateFailure crypto
-encodeCollectErrors era errors
-    | not (null missingRedeemers) =
-        MissingRedeemers { missingRedeemers = ScriptPurposeInAnyEra . (era,) <$> missingRedeemers }
-    | not (null missingScripts) =
-        MissingScriptWitnesses { missingScripts }
-    | not (null missingCostModels) =
-        MissingCostModels { missingCostModels }
-    | otherwise =
-        InternalLedgerTypeConversionError
+    -> [MultiEraPredicateFailure crypto]
+encodeCollectErrors era errors =
+    let missingRedeemersErrs
+            | not (null missingRedeemers) =
+                [ MissingRedeemers { missingRedeemers = ScriptPurposeInAnyEra . (era,) <$> missingRedeemers } ]
+            | otherwise =
+                []
+     in
+
+    let missingScriptsErrs
+            | not (null missingScripts) =
+                [ MissingScriptWitnesses { missingScripts } ]
+            | otherwise =
+                []
+     in
+
+    let missingCostModelsErrs
+            | not (null missingCostModels) =
+                [ MissingCostModels { missingCostModels } ]
+            | otherwise =
+                []
+     in
+
+    let badTranslationErrs = flip mapMaybe errors $ \case
+            -- NOTE: Keep those pattern-match explicit for exhaustiveness check.
+            BadTranslation err ->
+                Just (UnableToCreateScriptContext err)
+            NoWitness{} ->
+                Nothing
+            NoCostModel{} ->
+                Nothing
+            NoRedeemer{} ->
+                Nothing
+
+     in
+        missingRedeemersErrs ++ missingScriptsErrs ++ missingCostModelsErrs ++ badTranslationErrs
   where
     missingRedeemers = mapMaybe
         (\case
             NoRedeemer purpose -> Just purpose
-            NoWitness{} -> Nothing
-            NoCostModel{} -> Nothing
-            BadTranslation{} -> Nothing
+            _ -> Nothing
         ) errors
 
     missingScripts = fromList $ mapMaybe

@@ -3704,6 +3704,26 @@
             }
           }
         }
+      , { "title": "SubmitTransactionFailure<ExecutionBudgetOutOfBounds>"
+        , "description": "The transaction ran out of execution budget! This means that the budget granted for the execution of a particular script was too small or exceeding the maximum value allowed by the protocol. The field 'data.budgetUsed' indicates the actual execution units used by the validator before it was interrupted."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3161 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "budgetUsed" ]
+            , "properties":
+              { "budgetUsed":
+                { "$ref": "cardano.json#/definitions/ExecutionUnits"
+                }
+              }
+            }
+          }
+        }
       , { "title": "SubmitTransactionFailure<UnrecognizedCertificateType>"
         , "description": "Unrecognized certificate type. This error is a placeholder due to how internal data-types are modeled. If you ever run into this, please report the issue as you've likely discoverd a critical bug..."
         , "type": "object"

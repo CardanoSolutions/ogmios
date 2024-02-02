@@ -93,7 +93,7 @@ Finally, [discussions 💡][discussions] contains ongoing discussions regarding 
 Ogmios provides a language-agnostic API which can be implemented using any WebSocket or HTTP client. If you prefer using a SDK in your favorite language, see below the available clients (_maintained by the community_):
 
 <table align="center"><thead><tr>
-<td align="center"><img height=72 width=72 src=".github/clients/typescript.png" alt="Logo:TypeScript"><br/><a href="https://ogmios.dev/typescript-client/overview"><strong>TypeScript</strong></a></td>
+<td align="center"><img height=72 width=72 src=".github/clients/typescript.png" alt="Logo:TypeScript"><br/><a href="https://ogmios.dev/typescript/api/modules/_cardano_ogmios_client.html"><strong>TypeScript</strong></a></td>
 <td align="center"><img height=72 width=72 src=".github/clients/go.png" alt="Logo:Go"><br/><a href="https://github.com/savaki/ogmigo/#readme"><strong>Go</strong></a></td>
 <td align="center"><img height=72 width=72 src=".github/clients/kotlin.png" alt="Logo:Kotlin"><br/><a href="https://github.com/projectNEWM/kogmios#readme"><strong>Kotlin</strong></a></td>
 <td align="center"><img height=72 width=72 src=".github/clients/java.png" alt="Logo:Java"><br/><a href="https://github.com/adabox-aio/ogmios-java-client.git#readme"><strong>Java</strong></a></td>
