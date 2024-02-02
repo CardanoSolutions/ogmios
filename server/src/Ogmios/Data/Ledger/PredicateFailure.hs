@@ -14,6 +14,7 @@ module Ogmios.Data.Ledger.PredicateFailure
     , DiscriminatedEntities (..)
     , EpochNo (..)
     , ExUnits (..)
+    , ExBudget (..)
     , Hash
     , IsValid (..)
     , KeyHash (..)
@@ -48,6 +49,9 @@ import Cardano.Ledger.Allegra.Scripts
     )
 import Cardano.Ledger.Alonzo.Core
     ( ScriptIntegrityHash
+    )
+import Cardano.Ledger.Alonzo.Plutus.TxInfo
+    ( TranslationError
     )
 import Cardano.Ledger.Alonzo.Rules
     ( TagMismatchDescription (..)
@@ -105,6 +109,9 @@ import Ogmios.Data.Ledger
     , TxOutInAnyEra (..)
     , ValueInAnyEra (..)
     )
+import PlutusLedgerApi.Common
+    ( ExBudget (..)
+    )
 
 data MultiEraPredicateFailure crypto
     ---------------------------------------------------------------------------
@@ -129,6 +136,11 @@ data MultiEraPredicateFailure crypto
     -- All scripts in a transaction must resolve.
     | FailingScript
         { failingScripts :: Set (ScriptHash crypto)
+        }
+
+    -- The execution budget that was calculated by the Plutus evaluator must be within bounds
+    | ExecutionBudgetOutOfBounds
+        { budgetUsed :: ExBudget
         }
 
     -- Transaction must not contain extraneous scripts not associated to any
@@ -481,15 +493,14 @@ data MultiEraPredicateFailure crypto
     -- Quirks
     ---------------------------------------------------------------------------
 
+    | UnableToCreateScriptContext
+        { translationError :: TranslationError crypto
+        }
+
     -- A placeholder error that should never happen. Due to how ledger types are
     -- modeled.
     | UnrecognizedCertificateType
 
-    -- Internal error informing that the ledger was unable to upgrade a data
-    -- from a previous era into its expected form in the current era. This
-    -- shouldn't happen in principle as any deserialized data should be
-    -- "translatable".
-    | InternalLedgerTypeConversionError
 
 -- | Return the most relevant ledger rule from a list of errors. What does 'most
 -- relevant' means -> some errors can actually be responsible for other errors
@@ -514,7 +525,6 @@ predicateFailurePriority = \case
     InvalidProtocolParametersUpdate{} -> 0
     InvalidGenesisDelegation{} -> 0
     InvalidMIRTransfer{} -> 0
-    InternalLedgerTypeConversionError{} -> 0
     UnrecognizedCertificateType{} -> 0
 
     EmptyInputSet{} -> 1
@@ -561,34 +571,36 @@ predicateFailurePriority = \case
     MissingDatums{} -> 9
     MissingScriptWitnesses{} -> 9
 
-    FailingScript{} -> 10
+    UnableToCreateScriptContext{} -> 10
+    FailingScript{} -> 11
 
-    ExtraneousScriptWitnesses{} -> 11
-    ExtraneousRedeemers{} -> 11
-    ExtraneousDatums{} -> 11
-    ConflictingCommitteeUpdate{} -> 11
+    ExtraneousScriptWitnesses{} -> 12
+    ExtraneousRedeemers{} -> 12
+    ExtraneousDatums{} -> 12
+    ConflictingCommitteeUpdate{} -> 12
 
-    NonAdaValueAsCollateral{} -> 12
-    MissingCollateralInputs{} -> 12
-    TooManyCollateralInputs{} -> 12
+    NonAdaValueAsCollateral{} -> 13
+    MissingCollateralInputs{} -> 13
+    TooManyCollateralInputs{} -> 13
 
-    IncompleteWithdrawals{} -> 13
-    RewardAccountNotEmpty{} -> 13
-    ForbiddenWithdrawal{} -> 13
+    IncompleteWithdrawals{} -> 14
+    RewardAccountNotEmpty{} -> 14
+    ForbiddenWithdrawal{} -> 14
 
-    TotalCollateralMismatch{} -> 14
-    StakeCredentialDepositMismatch{} -> 14
-    GovernanceProposalDepositMismatch{} -> 14
-    TreasuryWithdrawalMismatch{} -> 14
+    TotalCollateralMismatch{} -> 15
+    StakeCredentialDepositMismatch{} -> 15
+    GovernanceProposalDepositMismatch{} -> 15
+    TreasuryWithdrawalMismatch{} -> 15
 
-    InsufficientCollateral{} -> 15
-    InsufficientAdaInOutput{} -> 15
+    InsufficientCollateral{} -> 16
+    InsufficientAdaInOutput{} -> 16
 
-    ExecutionUnitsTooLarge{} -> 16
-    TransactionTooLarge{} -> 16
+    ExecutionUnitsTooLarge{} -> 17
+    TransactionTooLarge{} -> 17
 
-    TransactionFeeTooSmall{} -> 17
+    ExecutionBudgetOutOfBounds{} -> 18
+    TransactionFeeTooSmall{} -> 18
 
-    ValueNotConserved{} -> 18
-    ScriptIntegrityHashMismatch{} -> 18
-    ValidationTagMismatch{} -> 18
+    ValueNotConserved{} -> 19
+    ScriptIntegrityHashMismatch{} -> 19
+    ValidationTagMismatch{} -> 19

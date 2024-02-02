@@ -880,17 +880,33 @@ encodePredicateFailure reject = \case
                 )
             )
 
+    ExecutionBudgetOutOfBounds { budgetUsed } ->
+        reject (predicateFailureCode 61)
+            "The transaction ran out of execution budget! This means that the budget granted for \
+            \the execution of a particular script was too small or exceeding the maximum value \
+            \allowed by the protocol. The field 'data.budgetUsed' indicates the actual execution \
+            \units used by the validator before it was interrupted."
+            (pure $ encodeObject
+                ( "budgetUsed" .=
+                    Alonzo.encodeExBudget budgetUsed
+                )
+            )
+
+    -- NOTE: This should match the encoding also used for 'EvaluateTransactionResponse' in
+    -- Data.Protocol.TxSubmission; hence the code.
+    UnableToCreateScriptContext { translationError } ->
+        reject (Rpc.FaultCustom 3004)
+            "Unable to create the evaluation context from the given transaction."
+            (pure $ encodeObject
+                ( "reason" .=
+                    Alonzo.encodeTranslationError translationError
+                )
+            )
+
     UnrecognizedCertificateType ->
         reject (predicateFailureCode 898)
             "Unrecognized certificate type. This error is a placeholder due to how internal \
             \data-types are modeled. If you ever run into this, please report the issue as you've \
-            \likely discoverd a critical bug..."
-            Nothing
-
-    InternalLedgerTypeConversionError ->
-        reject (predicateFailureCode 899)
-            "Whoopsie, the ledger failed to upgrade an data-type from an earlier era into data \
-            \of a newer era. If you ever run into this, please report the issue as you've \
             \likely discoverd a critical bug..."
             Nothing
 

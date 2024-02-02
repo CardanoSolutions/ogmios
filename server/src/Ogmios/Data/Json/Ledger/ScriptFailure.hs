@@ -115,8 +115,8 @@ encodeScriptFailure reject = \case
     SomeTransactionScriptFailure (Ledger.UnknownTxIn i) ->
         encodePredicateFailure @crypto reject (UnknownUtxoReference (Set.singleton i))
 
-    SomeTransactionScriptFailure Ledger.IncompatibleBudget{} ->
-        encodePredicateFailure @crypto reject InternalLedgerTypeConversionError
+    SomeTransactionScriptFailure (Ledger.IncompatibleBudget budget) ->
+        encodePredicateFailure @crypto reject (ExecutionBudgetOutOfBounds budget)
 
     SomeTransactionScriptFailure (Ledger.NoCostModelInLedgerState lang) ->
         encodePredicateFailure @crypto reject (MissingCostModels [lang])

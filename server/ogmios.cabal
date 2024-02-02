@@ -193,6 +193,7 @@ library
     , ouroboros-network-framework
     , ouroboros-network-ogmios
     , ouroboros-network-protocols
+    , plutus-core
     , plutus-ledger-api
     , prettyprinter
     , profunctors

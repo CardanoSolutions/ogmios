@@ -10,6 +10,9 @@ import Data.Maybe.Strict
     ( fromSMaybe
     , strictMaybe
     )
+import Data.SatInt
+    ( fromSatInt
+    )
 import Ouroboros.Consensus.Protocol.TPraos
     ( TPraos
     )
@@ -57,6 +60,8 @@ import qualified Cardano.Ledger.Alonzo.TxWits as Al
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
+import qualified PlutusLedgerApi.Common as Plutus
+import qualified PlutusLedgerApi.V1 as Plutus
 
 
 type AuxiliaryScripts era =
@@ -156,6 +161,19 @@ encodeExUnits units =
     "cpu" .=
         encodeNatural (Al.exUnitsSteps units)
     & encodeObject
+
+encodeExBudget
+    :: Plutus.ExBudget
+    -> Json
+encodeExBudget budget =
+    "memory" .=
+        encodeInteger (fromSatInt mem) <>
+    "cpu" .=
+        encodeInteger (fromSatInt cpu)
+    & encodeObject
+  where
+    Plutus.ExMemory mem = Plutus.exBudgetMemory budget
+    Plutus.ExCPU cpu = Plutus.exBudgetCPU budget
 
 encodeGenesis
     :: Al.AlonzoGenesis
