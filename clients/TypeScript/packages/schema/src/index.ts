@@ -95,11 +95,16 @@ export type Neutral = "neutral";
 export type Int64 = number;
 export type CostModel = Int64[];
 export type Metadatum = MetadatumNoSchema | MetadatumDetailedSchema;
-export type MetadatumNoSchema = Integer | String | ArrayMetadatum | ObjectMetadatum;
-export type Integer = bigint;
-export type String = string;
-export type ArrayMetadatum = MetadatumNoSchema[];
-export type MetadatumDetailedSchema = Int | String1 | Bytes | List | Map;
+export type MetadatumNoSchema = IntegerNoSchema | StringNoSchema | ArrayNoSchema | ObjectNoSchema;
+export type IntegerNoSchema = bigint;
+export type StringNoSchema = string;
+export type ArrayNoSchema = MetadatumNoSchema[];
+export type MetadatumDetailedSchema =
+  | IntegerDetailedSchema
+  | StringDetailedSchema
+  | BytesDetailedSchema
+  | ArrayDetailedSchema
+  | ObjectDetailedSchema;
 /**
  * An Ed25519 verification key.
  */
@@ -192,6 +197,7 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureTreasuryWithdrawalMismatch
   | SubmitTransactionFailureInvalidOrMissingPreviousProposals
   | SubmitTransactionFailureVotingOnExpiredActions
+  | SubmitTransactionFailureExecutionBudgetOutOfBounds
   | SubmitTransactionFailureUnrecognizedCertificateType
   | SubmitTransactionFailureInternalLedgerTypeConversionError;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
@@ -953,22 +959,22 @@ export interface MetadataLabels {
     json?: Metadatum;
   };
 }
-export interface ObjectMetadatum {
+export interface ObjectNoSchema {
   [k: string]: MetadatumNoSchema;
 }
-export interface Int {
+export interface IntegerDetailedSchema {
   int: bigint;
 }
-export interface String1 {
+export interface StringDetailedSchema {
   string: string;
 }
-export interface Bytes {
+export interface BytesDetailedSchema {
   bytes: string;
 }
-export interface List {
+export interface ArrayDetailedSchema {
   list: MetadatumDetailedSchema[];
 }
-export interface Map {
+export interface ObjectDetailedSchema {
   map: MetadatumMap[];
 }
 export interface MetadatumMap {
@@ -1813,6 +1819,16 @@ export interface SubmitTransactionFailureVotingOnExpiredActions {
       proposal: GovernanceProposalReference;
       voter: VoterGenesisDelegate | VoterConstitutionalCommittee | VoterDelegateRepresentative | VoterStakePoolOperator;
     }[];
+  };
+}
+/**
+ * The transaction ran out of execution budget! This means that the budget granted for the execution of a particular script was too small or exceeding the maximum value allowed by the protocol. The field 'data.budgetUsed' indicates the actual execution units used by the validator before it was interrupted.
+ */
+export interface SubmitTransactionFailureExecutionBudgetOutOfBounds {
+  code: 3161;
+  message: string;
+  data: {
+    budgetUsed: ExecutionUnits;
   };
 }
 /**
