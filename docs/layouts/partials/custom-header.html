@@ -1,4 +1,21 @@
 <style type="text/css">
+  table.clients img {
+    width: 96px !important;
+    height: 96px !important;
+  }
+
+  @media(max-width: 900px) {
+    table.clients tr {
+      display: flex;
+      flex-direction: column;
+    }
+
+    table.clients img {
+      width: 128px !important;
+      height: 128px !important;
+    }
+  }
+
   table.users {
     text-align: center;
     table-layout: fixed;
