@@ -21,12 +21,11 @@ module Ogmios.Data.Json
     , encodeDeserialisationFailure
     , Alonzo.encodeExUnits
     , encodePoint
-    , Alonzo.encodeRdmrPtr
     , encodeScriptFailure
     , encodeSerializedTransaction
+    , encodeEvaluationError
     , encodeSubmitTransactionError
     , encodeTip
-    , Alonzo.encodeTranslationError
     , encodeTx
     , encodeTxId
     , Shelley.encodeTxIn
@@ -60,7 +59,8 @@ import Ogmios.Data.Json.Ledger.PredicateFailure
     ( encodePredicateFailure
     )
 import Ogmios.Data.Json.Ledger.ScriptFailure
-    ( encodeScriptFailure
+    ( encodeEvaluationError
+    , encodeScriptFailure
     )
 import Ogmios.Data.Json.Query
     ( decodeOneEraHash

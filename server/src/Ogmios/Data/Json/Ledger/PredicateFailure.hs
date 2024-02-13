@@ -12,8 +12,10 @@ import Ogmios.Data.Ledger
     , ValueInAnyEra (..)
     )
 import Ogmios.Data.Ledger.PredicateFailure
-    ( MultiEraPredicateFailure (..)
-    , ScriptPurposeInAnyEra (..)
+    ( ContextErrorInAnyEra (..)
+    , MultiEraPredicateFailure (..)
+    , ScriptPurposeIndexInAnyEra (..)
+    , ScriptPurposeItemInAnyEra (..)
     , TagMismatchDescription (..)
     )
 
@@ -68,9 +70,9 @@ encodePredicateFailure reject = \case
     MissingScriptWitnesses { missingScripts } ->
         reject (predicateFailureCode 2)
             "Some script witnesses are missing. Indeed, any script used in a transaction \
-            \(when spending, minting, withdrawing or publishing certificates) must be provided \
+            \(when spending, minting, etc...) must be provided \
             \in full with the transaction. Scripts must therefore be added either to the \
-            \witness set or provided as a reference inputs should you use Plutus V2+ and \
+            \witness set or provided as a reference input should you use plutus:v2 or higher and \
             \a format from Babbage and beyond. The field 'data.missingScripts' contain hash \
             \digests of required but missing script."
             (pure $ encodeObject
@@ -169,7 +171,7 @@ encodePredicateFailure reject = \case
             \provided."
             (pure $ encodeObject
                 ( "missingRedeemers" .=
-                    encodeFoldableMaybe encodeScriptPurposeInAnyEra missingRedeemers
+                    encodeFoldableMaybe encodeScriptPurposeItemInAnyEra missingRedeemers
                 )
             )
 
@@ -182,7 +184,7 @@ encodePredicateFailure reject = \case
             \lists the different orphan redeemer pointers."
             (pure $ encodeObject
                 ( "extraneousRedeemers" .=
-                    encodeFoldable Alonzo.encodeRdmrPtr extraneousRedeemers
+                    encodeFoldable encodeScriptPurposeIndexInAnyEra extraneousRedeemers
                 )
             )
 
@@ -305,9 +307,9 @@ encodePredicateFailure reject = \case
             \maximum size enforced by the ledger."
             (pure $ encodeObject
                 ( "measuredTransactionSize" .= encodeObject
-                    ( "bytes" .= encodeInteger measuredSize )
+                    ( "bytes" .= encodeInteger (max 0 measuredSize) )
                <> "maximumTransactionSize" .= encodeObject
-                    ( "bytes" .= encodeInteger maximumSize )
+                    ( "bytes" .= encodeInteger (max 0 maximumSize) )
                 )
             )
 
@@ -565,8 +567,8 @@ encodePredicateFailure reject = \case
             \and the proposal they attempted to incorrectly vote for."
             (pure $ encodeObject
                 ( "unauthorizedVotes" .=
-                    encodeMapAsList
-                        (\governanceActionId voter -> encodeObject
+                    encodeList
+                        (\(voter, governanceActionId) -> encodeObject
                             ( "proposal" .=
                                 Conway.encodeGovActionId governanceActionId
                            <> "voter" .=
@@ -868,8 +870,8 @@ encodePredicateFailure reject = \case
             \attempted to vote for."
             (pure $ encodeObject
                 ( "invalidVotes" .=
-                    encodeMapAsList
-                        (\governanceActionId voter -> encodeObject
+                    encodeList
+                        (\(voter, governanceActionId) -> encodeObject
                             ( "proposal" .=
                                 Conway.encodeGovActionId governanceActionId
                            <> "voter" .=
@@ -892,6 +894,35 @@ encodePredicateFailure reject = \case
                 )
             )
 
+    InvalidHardForkVersionBump { proposedVersion, currentVersion } ->
+        reject (predicateFailureCode 62)
+            "The new proposed version for a hard-fork isn't a valid version bump. The version \
+            \(major, minor, patch) follows strict rules which can be summarized as follow: \
+            \(1) the new triplet must be greater than the current one in the usual order of \
+            \priorities (i.e. 'major' -> 'minor' -> 'patch'), (2) 'minor' must be 0 if 'major' \
+            \is bumped, (3) 'minor' can only be bumped in increments of 1 and only if 'major' \
+            \isn't bumped and (4) 'major' can only be bumped in increments of 1. The field \
+            \'data.proposedVersion' indicates the (invalid) version in the submitted proposal \
+            \whereas 'data.currentVersion' indicates the current protocol version."
+            (pure $ encodeObject
+                ( "proposedVersion" .= Shelley.encodeProtVer proposedVersion
+               <> "currentVersion" .= Shelley.encodeProtVer currentVersion
+                )
+            )
+
+    ConstitutionGuardrailsHashMismatch { providedHash, expectedHash } ->
+        reject (predicateFailureCode 63)
+            "The provided constitution guardrails hash doesn't match the expected on defined in \
+            \the constitution. Some governance actions such as treasury withdrawals or protocol \
+            \parameters updates must correctly refer to the constitution guardrails hash digest. \
+            \The latter can be 'null'. The field 'data.providedHash' indicates the hash provided \
+            \in the proposal, and the field 'data.expectedHash' the one specified in the constitution"
+            (pure $ encodeObject
+                ( "providedHash" .= encodeStrictMaybe Shelley.encodeScriptHash providedHash
+               <> "expectedHash" .= encodeStrictMaybe Shelley.encodeScriptHash expectedHash
+                )
+            )
+
     -- NOTE: This should match the encoding also used for 'EvaluateTransactionResponse' in
     -- Data.Protocol.TxSubmission; hence the code.
     UnableToCreateScriptContext { translationError } ->
@@ -899,7 +930,7 @@ encodePredicateFailure reject = \case
             "Unable to create the evaluation context from the given transaction."
             (pure $ encodeObject
                 ( "reason" .=
-                    Alonzo.encodeTranslationError translationError
+                    encodeContextErrorInAnyEra translationError
                 )
             )
 
@@ -947,23 +978,40 @@ encodeValueInAnyEra = \case
     ValueInAnyEra (ShelleyBasedEraConway, value) ->
         Mary.encodeValue value
 
-encodeScriptPurposeInAnyEra
+encodeScriptPurposeItemInAnyEra
     :: Crypto crypto
-    => ScriptPurposeInAnyEra crypto
+    => ScriptPurposeItemInAnyEra crypto
     -> StrictMaybe Json
-encodeScriptPurposeInAnyEra = \case
-    ScriptPurposeInAnyEra (ShelleyBasedEraShelley, purpose) ->
-        Alonzo.encodeScriptPurpose (fst . Shelley.encodeTxCert) purpose
-    ScriptPurposeInAnyEra (ShelleyBasedEraAllegra, purpose) ->
-        Alonzo.encodeScriptPurpose (fst . Shelley.encodeTxCert) purpose
-    ScriptPurposeInAnyEra (ShelleyBasedEraMary, purpose) ->
-        Alonzo.encodeScriptPurpose (fst . Shelley.encodeTxCert) purpose
-    ScriptPurposeInAnyEra (ShelleyBasedEraAlonzo, purpose) ->
-        Alonzo.encodeScriptPurpose (fst . Shelley.encodeTxCert) purpose
-    ScriptPurposeInAnyEra (ShelleyBasedEraBabbage, purpose) ->
-        Alonzo.encodeScriptPurpose (fst . Shelley.encodeTxCert) purpose
-    ScriptPurposeInAnyEra (ShelleyBasedEraConway, purpose) ->
-        Alonzo.encodeScriptPurpose Conway.encodeTxCert purpose
+encodeScriptPurposeItemInAnyEra = \case
+    ScriptPurposeItemInAnyEra (AlonzoBasedEraAlonzo, purpose) ->
+        Alonzo.encodeScriptPurposeItem purpose
+    ScriptPurposeItemInAnyEra (AlonzoBasedEraBabbage, purpose) ->
+        Alonzo.encodeScriptPurposeItem purpose
+    ScriptPurposeItemInAnyEra (AlonzoBasedEraConway, purpose) ->
+        SJust (Conway.encodeScriptPurposeItem purpose)
+
+encodeScriptPurposeIndexInAnyEra
+    :: ScriptPurposeIndexInAnyEra crypto
+    -> Json
+encodeScriptPurposeIndexInAnyEra = \case
+    ScriptPurposeIndexInAnyEra (AlonzoBasedEraAlonzo, purpose) ->
+        Alonzo.encodeScriptPurposeIndex purpose
+    ScriptPurposeIndexInAnyEra (AlonzoBasedEraBabbage, purpose) ->
+        Alonzo.encodeScriptPurposeIndex purpose
+    ScriptPurposeIndexInAnyEra (AlonzoBasedEraConway, purpose) ->
+        Conway.encodeScriptPurposeIndex purpose
+
+encodeContextErrorInAnyEra
+    :: (Crypto crypto)
+    => ContextErrorInAnyEra crypto
+    -> Json
+encodeContextErrorInAnyEra = \case
+    ContextErrorInAnyEra (AlonzoBasedEraAlonzo, err) ->
+        Alonzo.encodeContextError err
+    ContextErrorInAnyEra (AlonzoBasedEraBabbage, err) ->
+        Babbage.encodeContextError err
+    ContextErrorInAnyEra (AlonzoBasedEraConway, err) ->
+        Conway.encodeContextError err
 
 encodeDiscriminatedEntities
     :: Crypto crypto

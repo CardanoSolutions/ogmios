@@ -22,12 +22,12 @@ module Ogmios.Data.Ledger.PredicateFailure
     , Language (..)
     , Network (..)
     , ProtVer (..)
-    , RdmrPtr (..)
     , RewardAcnt (..)
     , ScriptHash (..)
     , ScriptIntegrityHash
-    , ScriptPurpose (..)
-    , ScriptPurposeInAnyEra (..)
+    , ScriptPurposeItemInAnyEra (..)
+    , ScriptPurposeIndexInAnyEra (..)
+    , ContextErrorInAnyEra (..)
     , SlotNo (..)
     , TagMismatchDescription (..)
     , TxIn (..)
@@ -50,9 +50,6 @@ import Cardano.Ledger.Allegra.Scripts
 import Cardano.Ledger.Alonzo.Core
     ( ScriptIntegrityHash
     )
-import Cardano.Ledger.Alonzo.Plutus.TxInfo
-    ( TranslationError
-    )
 import Cardano.Ledger.Alonzo.Rules
     ( TagMismatchDescription (..)
     )
@@ -61,10 +58,6 @@ import Cardano.Ledger.Alonzo.Scripts
     )
 import Cardano.Ledger.Alonzo.Tx
     ( IsValid (..)
-    , ScriptPurpose (..)
-    )
-import Cardano.Ledger.Alonzo.TxWits
-    ( RdmrPtr (..)
     )
 import Cardano.Ledger.AuxiliaryData
     ( AuxiliaryDataHash (..)
@@ -104,8 +97,10 @@ import Cardano.Ledger.TxIn
     ( TxIn (..)
     )
 import Ogmios.Data.Ledger
-    ( DiscriminatedEntities (..)
-    , ScriptPurposeInAnyEra (..)
+    ( ContextErrorInAnyEra (..)
+    , DiscriminatedEntities (..)
+    , ScriptPurposeIndexInAnyEra (..)
+    , ScriptPurposeItemInAnyEra (..)
     , TxOutInAnyEra (..)
     , ValueInAnyEra (..)
     )
@@ -170,12 +165,12 @@ data MultiEraPredicateFailure crypto
 
     -- All (phase-2) scripts must have an associated redeemer.
     | MissingRedeemers
-        { missingRedeemers :: [ScriptPurposeInAnyEra crypto]
+        { missingRedeemers :: [ScriptPurposeItemInAnyEra crypto]
         }
 
     -- Transaction must not have redeemers not asociated to any script
     | ExtraneousRedeemers
-        { extraneousRedeemers :: [RdmrPtr]
+        { extraneousRedeemers :: [ScriptPurposeIndexInAnyEra crypto]
         }
 
     -- All (phase-2) script must have an associated datum
@@ -339,7 +334,7 @@ data MultiEraPredicateFailure crypto
     -- Voter on a specific governance action procedure must have the required
     -- votin permissions / role.
     | UnauthorizedVotes
-        { votes :: Map (GovActionId crypto) (Voter crypto)
+        { votes :: [(Voter crypto, GovActionId crypto)]
         }
 
     -- Governance action must exist for voting
@@ -349,7 +344,7 @@ data MultiEraPredicateFailure crypto
 
     --  Votes must be cast against non-expired action.
     | VotingOnExpiredActions
-        { votes :: Map (GovActionId crypto) (Voter crypto)
+        { votes :: [(Voter crypto, GovActionId crypto)]
         }
 
     -- Mismatch between the deposit amount declared in a transaction and the
@@ -372,7 +367,23 @@ data MultiEraPredicateFailure crypto
     -- A governance action (except the first) must reference the immediately
     -- previous governance action of the same type.
     | InvalidPreviousGovernanceAction
-        { invalidPreviousActions :: [(Anchor crypto, GovActionPurpose, StrictMaybe (GovActionId crypto))]
+        { invalidPreviousActions ::
+            [ (Anchor crypto, GovActionPurpose, StrictMaybe (GovActionId crypto))
+            ]
+        }
+
+    -- A hard-fork proposal must propose a new version that _follows_ the
+    -- current version. (e.g. be in the continuity, from a sem-ver standpoint).
+    | InvalidHardForkVersionBump
+        { proposedVersion :: ProtVer
+        , currentVersion :: ProtVer
+        }
+
+    -- Some specific governance actions must contain an extra guardrails hash
+    -- digest which must match the one defined in the constitution.
+    | ConstitutionGuardrailsHashMismatch
+        { providedHash :: StrictMaybe (ScriptHash crypto)
+        , expectedHash :: StrictMaybe (ScriptHash crypto)
         }
 
     ---------------------------------------------------------------------------
@@ -494,7 +505,7 @@ data MultiEraPredicateFailure crypto
     ---------------------------------------------------------------------------
 
     | UnableToCreateScriptContext
-        { translationError :: TranslationError crypto
+        { translationError :: ContextErrorInAnyEra crypto
         }
 
     -- A placeholder error that should never happen. Due to how ledger types are
@@ -525,6 +536,7 @@ predicateFailurePriority = \case
     InvalidProtocolParametersUpdate{} -> 0
     InvalidGenesisDelegation{} -> 0
     InvalidMIRTransfer{} -> 0
+    InvalidHardForkVersionBump{} -> 0
     UnrecognizedCertificateType{} -> 0
 
     EmptyInputSet{} -> 1
@@ -564,6 +576,7 @@ predicateFailurePriority = \case
 
     MetadataHashMismatch{} -> 7
     InvalidPreviousGovernanceAction{} -> 7
+    ConstitutionGuardrailsHashMismatch{} -> 7
 
     MalformedScripts{} -> 8
 

@@ -6,15 +6,12 @@ module Ogmios.Data.Json.Alonzo where
 
 import Ogmios.Data.Json.Prelude
 
-import Data.Maybe.Strict
-    ( fromSMaybe
-    , strictMaybe
+import Cardano.Ledger.Api
+    ( AsIndex
+    , PlutusPurpose
     )
 import Data.SatInt
     ( fromSatInt
-    )
-import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos
     )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
@@ -27,15 +24,9 @@ import qualified Data.Map.Strict as Map
 import qualified Cardano.Crypto.Hash.Class as CC
 import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 
-import qualified Cardano.Ledger.Api as Ledger.Api
-import qualified Cardano.Ledger.Binary as Binary
-
-import qualified Cardano.Ledger.Address as Ledger
+import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Block as Ledger
-import qualified Cardano.Ledger.Core as Ledger hiding
-    ( TranslationError
-    )
-import qualified Cardano.Ledger.Plutus.Data as Ledger
+import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Plutus.Language as Ledger
 import qualified Cardano.Ledger.SafeHash as Ledger
 
@@ -46,9 +37,6 @@ import qualified Cardano.Ledger.Alonzo.Core as Al hiding
     ( TranslationError
     )
 import qualified Cardano.Ledger.Alonzo.Genesis as Al
-import qualified Cardano.Ledger.Alonzo.Plutus.TxInfo as Al hiding
-    ( txscripts
-    )
 import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.Tx as Al
@@ -57,6 +45,8 @@ import qualified Cardano.Ledger.Alonzo.TxBody as Al
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 import qualified Cardano.Ledger.Alonzo.TxWits as Al
 
+import qualified Cardano.Ledger.Alonzo.Plutus.TxInfo as Al
+import qualified Cardano.Ledger.Shelley.TxCert as Sh
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
@@ -74,7 +64,8 @@ type AuxiliaryScripts era =
 encodeAuxiliaryData
     :: forall era.
         ( Ledger.Script era ~ Al.AlonzoScript era
-        , Ledger.Api.EraScript era
+        , Al.AlonzoEraScript era
+        , HasCallStack
         )
     => (MetadataFormat, IncludeCbor)
     -> Al.AlonzoTxAuxData era
@@ -85,8 +76,11 @@ encodeAuxiliaryData opts (Al.AlonzoTxAuxData blob timelocks plutus) =
         (\(Al.TimelockScript -> script) -> Map.insert (Ledger.hashScript @era script) script)
         (Map.foldrWithKey
             (\lang ->
-                flip $ foldr (\(Al.BinaryPlutus bytes) ->
-                    let script = Al.PlutusScript (Ledger.Plutus lang (Al.BinaryPlutus bytes))
+                flip $ foldr (\bytes ->
+                    let script = maybe
+                            (error ("mkBinaryPlutusScript: incompatible language and script: " <> show lang <> " for " <> show bytes))
+                            Al.PlutusScript
+                            (Al.mkBinaryPlutusScript @era lang bytes)
                      in Map.insert (Ledger.hashScript @era script) script
                 )
             )
@@ -117,12 +111,23 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           Shelley.encodeBHeader blkHeader
         <>
-          "size" .= encodeSingleton "bytes" (encodeNatural (TPraos.bsize hBody))
+          "size" .= encodeSingleton "bytes" (encodeWord32 (TPraos.bsize hBody))
         <>
           "transactions" .= encodeFoldable (encodeTx opts) (Al.txSeqTxns txs)
         )
   where
     TPraos.BHeader hBody _ = blkHeader
+
+encodeContextError
+    :: Era era
+    => Al.AlonzoContextError era
+    -> Json
+encodeContextError err = encodeText $ case err of
+    Al.TranslationLogicMissingInput i ->
+        "Unknown transaction input (missing from UTxO set): " <> Shelley.stringifyTxIn i
+    Al.TimeTranslationPastHorizon e ->
+        "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
+
 
 encodeCostModel
     :: Al.CostModel
@@ -143,7 +148,7 @@ encodeData
     => Al.Data era
     -> Json
 encodeData =
-    encodeByteStringBase16 . Binary.serialize' (Ledger.eraProtVerLow @era)
+    encodeByteStringBase16 . encodeCbor @era
 
 encodeDataHash
     :: Crypto crypto
@@ -298,17 +303,17 @@ encodePParamsHKD encode pure_ x =
     encode "minFeeConstant"
         encodeCoin (Al.appMinFeeB x) <>
     encode "maxBlockBodySize"
-        (encodeSingleton "bytes" . encodeNatural) (Al.appMaxBBSize x) <>
+        (encodeSingleton "bytes" . encodeWord32) (Al.appMaxBBSize x) <>
     encode "maxBlockHeaderSize"
-        (encodeSingleton "bytes" . encodeNatural) (Al.appMaxBHSize x) <>
+        (encodeSingleton "bytes" . encodeWord16) (Al.appMaxBHSize x) <>
     encode "maxTransactionSize"
-        (encodeSingleton "bytes" . encodeNatural) (Al.appMaxTxSize x) <>
+        (encodeSingleton "bytes" . encodeWord32) (Al.appMaxTxSize x) <>
     encode "stakeCredentialDeposit"
         encodeCoin (Al.appKeyDeposit x) <>
     encode "stakePoolDeposit"
         encodeCoin (Al.appPoolDeposit x) <>
     encode "stakePoolRetirementEpochBound"
-        encodeEpochNo (Al.appEMax x) <>
+        encodeEpochInterval (Al.appEMax x) <>
     encode "desiredNumberOfStakePools"
         encodeNatural (Al.appNOpt x) <>
     encode "stakePoolPledgeInfluence"
@@ -355,36 +360,23 @@ encodePrices prices =
         encodeNonNegativeInterval (Al.prSteps prices)
     & encodeObject
 
-encodeRdmrPtr
-    :: Al.RdmrPtr
-    -> Json
-encodeRdmrPtr (Al.RdmrPtr tag ptr) =
-    encodeObject
-        ( "index" .=
-            encodeWord64 ptr
-       <> "purpose" .=
-            encodeText (case tag of
-              Al.Spend -> "spend"
-              Al.Mint -> "mint"
-              Al.Cert -> "publish"
-              Al.Rewrd -> "withdraw"
-            )
-        )
-
 encodeRedeemers
-    :: forall era. (Ledger.Era era)
-    => Al.Redeemers era
+    :: forall era.
+        ( Al.AlonzoEraScript era
+        )
+    => (PlutusPurpose AsIndex era -> Json)
+    -> Al.Redeemers era
     -> Json
-encodeRedeemers (Al.Redeemers redeemers) =
+encodeRedeemers encodeScriptPurposeIndexInEra (Al.Redeemers redeemers) =
     encodeMapAsList encodeDataAndUnits redeemers
   where
     encodeDataAndUnits
-        :: Al.RdmrPtr
+        :: PlutusPurpose AsIndex era
         -> (Al.Data era, Al.ExUnits)
         -> Json
     encodeDataAndUnits ptr (redeemer, units) =
         "validator" .=
-            encodeRdmrPtr ptr <>
+            encodeScriptPurposeIndexInEra ptr <>
         "redeemer" .=
             encodeData redeemer <>
         "executionUnits" .=
@@ -392,8 +384,8 @@ encodeRedeemers (Al.Redeemers redeemers) =
         & encodeObject
 
 encodeScript
-    :: ( Era era
-       , Ledger.Api.Script era ~ Al.AlonzoScript era
+    :: ( Ledger.Script era ~ Al.AlonzoScript era
+       , Al.AlonzoEraScript era
        )
     => IncludeCbor
     -> Al.Script era
@@ -409,45 +401,67 @@ encodeScript opts = encodeObject . \case
                 encodeByteStringBase16 (Ledger.originalBytes nativeScript)
         else
             mempty
-    Al.PlutusScript Ledger.Plutus{Ledger.plutusLanguage, Ledger.plutusScript} ->
+    Al.PlutusScript script ->
         "language" .=
-            encodeText (stringifyLanguage plutusLanguage) <>
+            encodeText (stringifyLanguage (Al.plutusScriptLanguage script)) <>
         "cbor" .=
-            encodeByteStringBase16 (Ledger.originalBytes plutusScript)
+            encodeByteStringBase16 (Ledger.originalBytes (Al.plutusScriptBinary script))
 
-encodeScriptPurpose
-    :: forall era crypto.
-        ( EraCrypto (era crypto) ~ crypto
-        , Crypto crypto
+encodeScriptPurposeIndex
+    :: Al.AlonzoPlutusPurpose Ledger.AsIndex era
+    -> Json
+encodeScriptPurposeIndex = encodeObject . \case
+    Al.AlonzoSpending (Ledger.AsIndex ix) ->
+        ( "index" .=
+            encodeWord32 ix
+       <> "purpose" .=
+            encodeText "spend"
         )
-    => (Ledger.TxCert (era crypto) -> [Series])
-    -> Al.ScriptPurpose (era crypto)
+    Al.AlonzoMinting (Ledger.AsIndex ix) ->
+        ( "index" .=
+            encodeWord32 ix
+       <> "purpose" .=
+            encodeText "mint"
+        )
+    Al.AlonzoCertifying (Ledger.AsIndex ix) ->
+        ( "index" .=
+            encodeWord32 ix
+       <> "purpose" .=
+            encodeText "publish"
+        )
+    Al.AlonzoRewarding (Ledger.AsIndex ix) ->
+        ( "index" .=
+            encodeWord32 ix
+       <> "purpose" .=
+            encodeText "withdraw"
+        )
+
+encodeScriptPurposeItem
+    :: forall era.
+        ( Era era
+        , Ledger.TxCert era ~ Sh.ShelleyTxCert era
+        )
+    => Al.AlonzoPlutusPurpose Ledger.AsItem era
     -> StrictMaybe Json
-encodeScriptPurpose encodeTxCert = fmap encodeObject . \case
-    Al.Spending txIn ->
+encodeScriptPurposeItem = fmap encodeObject . \case
+    Al.AlonzoSpending (Ledger.AsItem txIn) ->
         SJust $
             "purpose" .= encodeText "spend" <>
             "outputReference" .= encodeObject (Shelley.encodeTxIn txIn)
-    Al.Minting policyId ->
+    Al.AlonzoMinting (Ledger.AsItem policyId) ->
         SJust $
             "purpose" .= encodeText "mint" <>
             "policy" .= Mary.encodePolicyId policyId
-    Al.Rewarding acct ->
+    Al.AlonzoRewarding (Ledger.AsItem acct) ->
         SJust $
             "purpose" .= encodeText "withdraw" <>
             "rewardAccount" .= Shelley.encodeRewardAcnt acct
-    Al.Certifying cert ->
-        case encodeTxCert cert of
-            [] ->
-                SNothing
-            [c] ->
-                SJust $
-                    "purpose" .= encodeText "publish" <>
-                    "certificate" .= encodeObject c
-            (_:c:_) ->
-                SJust $
-                    "purpose" .= encodeText "publish" <>
-                    "certificate" .= encodeObject c
+    Al.AlonzoCertifying (Ledger.AsItem cert) -> do
+        -- NOTE: MIR certificate never appear in certifying purpose.
+        c <- fst (Shelley.encodeTxCert cert)
+        pure $
+            "purpose" .= encodeText "publish" <>
+            "certificate" .= encodeObject c
 
 encodeTx
     :: forall era crypto.
@@ -459,7 +473,7 @@ encodeTx
     -> Json
 encodeTx (fmt, opts) x =
     encodeObject
-        ( Shelley.encodeTxId (Ledger.txid @(AlonzoEra crypto) (Al.body x))
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @(AlonzoEra crypto) (Al.body x))
        <>
         "spends" .= encodeIsValid (Al.isValid x)
        <>
@@ -467,10 +481,10 @@ encodeTx (fmt, opts) x =
        <>
         "metadata" .=? OmitWhenNothing fst auxiliary
        <>
-        encodeWitnessSet opts (snd <$> auxiliary) (Al.wits x)
+        encodeWitnessSet opts (snd <$> auxiliary) encodeScriptPurposeIndex (Al.wits x)
        <>
         if includeTransactionCbor opts then
-           "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
+           "cbor" .= encodeByteStringBase16 (encodeCbor @era x)
         else
            mempty
        )
@@ -552,48 +566,16 @@ encodeScriptIntegrityHash
 encodeScriptIntegrityHash =
     Shelley.encodeHash . Ledger.extractHash
 
-encodeTranslationError
-    :: Crypto crypto
-    => Al.TranslationError crypto
-    -> Json
-encodeTranslationError err = encodeText $ case err of
-    Al.ByronTxOutInContext Al.TxOutFromInput{} ->
-        "Found inputs locked by a (legacy) Byron/Bootstrap address. Don't use those."
-    Al.ByronTxOutInContext Al.TxOutFromOutput{} ->
-        "Found outputs to a (legacy) Byron/Bootstrap address. Don't use those."
-    Al.TranslationLogicMissingInput i ->
-        "Unknown transaction input (missing from UTxO set): " <> Shelley.stringifyTxIn i
-    Al.LanguageNotSupported Ledger.PlutusV1 ->
-       "Unsupported language in era."
-    Al.LanguageNotSupported Ledger.PlutusV2 ->
-       "Unsupported language in era. Did you try to use PlutusV2 before Babbage is enabled?"
-    Al.LanguageNotSupported Ledger.PlutusV3 ->
-       "Unsupported language in era. Did you try to use PlutusV3 before Conway is enabled?"
-    Al.InlineDatumsNotSupported{} ->
-       "Inline datums not supported in PlutusV1. Use PlutusV2 or higher."
-    Al.ReferenceScriptsNotSupported{} ->
-       "Reference scripts not supported in PlutusV1. Use PlutusV2 or higher."
-    Al.ReferenceInputsNotSupported{} ->
-       "Reference inputs not supported in PlutusV1. Use PlutusV2 or higher."
-    Al.RdmrPtrPointsToNothing (Al.RdmrPtr tag ptr) ->
-        let ptrStr =
-              ( case tag of
-                  Al.Spend -> "spending input"
-                  Al.Mint -> "minting policy"
-                  Al.Cert -> "publishing certificate"
-                  Al.Rewrd -> "withdrawing from account"
-              ) <>  " #" <> show ptr
-          in "Couldn't find corresponding redeemer for " <> ptrStr <> ". Verify your transaction's construction."
-    Al.TimeTranslationPastHorizon e ->
-        "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
-
 encodeWitnessSet
-    :: (Ledger.Era era, Ledger.Script era ~ Al.AlonzoScript era)
+    :: ( Ledger.Script era ~ Al.AlonzoScript era
+       , Al.AlonzoEraScript era
+       )
     => IncludeCbor
     -> StrictMaybe (AuxiliaryScripts era)
+    -> (PlutusPurpose AsIndex era -> Json)
     -> Al.AlonzoTxWits era
     -> Series
-encodeWitnessSet opts (fromSMaybe mempty -> auxScripts) x =
+encodeWitnessSet opts (fromSMaybe mempty -> auxScripts) encodeScriptPurposeIndexInEra x =
     "signatories" .=
         encodeFoldable2
             Shelley.encodeBootstrapWitness
@@ -607,7 +589,7 @@ encodeWitnessSet opts (fromSMaybe mempty -> auxScripts) x =
         (encodeMap stringifyDataHash encodeData)
         (Al.unTxDats $ Al.txdats x) <>
     "redeemers" .=? OmitWhen (\(Al.Redeemers redeemers) -> null redeemers)
-        encodeRedeemers
+        (encodeRedeemers encodeScriptPurposeIndexInEra)
         (Al.txrdmrs x)
 
 --

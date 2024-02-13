@@ -7,24 +7,34 @@ module Ogmios.Data.Json.Ledger.ScriptFailure where
 import Ogmios.Data.Json.Prelude
 
 import Ogmios.Data.Json.Ledger.PredicateFailure
-    ( encodePredicateFailure
+    ( encodeContextErrorInAnyEra
+    , encodePredicateFailure
+    , encodeScriptPurposeIndexInAnyEra
+    )
+import Ogmios.Data.Json.Shelley
+    ( encodeTxIn
     )
 import Ogmios.Data.Ledger.PredicateFailure
     ( MultiEraPredicateFailure (..)
+    , ScriptPurposeIndexInAnyEra (..)
     )
 import Ogmios.Data.Ledger.ScriptFailure
-    ( SomeTransactionScriptFailure (..)
+    ( EvaluateTransactionError (..)
+    , NodeTipTooOldError (..)
+    , TransactionScriptFailureInAnyEra (..)
+    , pickScriptFailure
     )
 import Prettyprinter
     ( pretty
     )
 
-import qualified Ogmios.Data.Json.Alonzo as Alonzo
-import qualified Ogmios.Data.Json.Shelley as Shelley
-
 import qualified Cardano.Ledger.Api as Ledger
 import qualified Codec.Json.Rpc as Rpc
+import qualified Data.Aeson as Json
+import qualified Data.Aeson.Encoding as Json
+import qualified Data.Map as Map
 import qualified Data.Set as Set
+import qualified Ogmios.Data.Json.Shelley as Shelley
 
 -- NOTE: Transaction submission / evaluation error code range is 3000-4000;
 --
@@ -41,10 +51,10 @@ encodeScriptFailure
         ( Crypto crypto
         )
     => Rpc.EmbedFault
-    -> SomeTransactionScriptFailure crypto
+    -> TransactionScriptFailureInAnyEra crypto
     -> Json
 encodeScriptFailure reject = \case
-    SomeTransactionScriptFailure (Ledger.MissingScript ptr _) ->
+    TransactionScriptFailureInAnyEra (era, Ledger.MissingScript ptr _) ->
         reject (scriptFailureCode 0)
             "An associated script witness is missing. Indeed, any script used in a transaction \
             \(when spending, minting, withdrawing or publishing certificates) must be provided \
@@ -52,13 +62,13 @@ encodeScriptFailure reject = \case
             \witness set or provided as a reference inputs should you use Plutus V2+ and \
             \a format from Babbage and beyond."
             (pure $ encodeObject
-                ( "missingScripts" .= encodeFoldable Alonzo.encodeRdmrPtr [ptr]
+                ( "missingScripts" .= encodeFoldable (encodeScriptPurposeIndexInAnyEra . ScriptPurposeIndexInAnyEra . (era,)) [ptr]
                 )
             )
 
-    SomeTransactionScriptFailure (Ledger.ValidationFailure (Ledger.ValidationFailedV1 err traces _debugLang)) ->
+    TransactionScriptFailureInAnyEra (_, Ledger.ValidationFailure _exunits err traces _debugLang) ->
         reject (scriptFailureCode 1)
-            "Some of the (V1) scripts failed to evaluate to a positive outcome. The field \
+            "Some of the scripts failed to evaluate to a positive outcome. The field \
             \'data.validationError' informs about the nature of the error, and 'data.traces' \
             \lists all the execution traces collected during the script execution."
             (pure $ encodeObject
@@ -67,29 +77,7 @@ encodeScriptFailure reject = \case
                 )
             )
 
-    SomeTransactionScriptFailure (Ledger.ValidationFailure (Ledger.ValidationFailedV2 err traces _debugLang)) ->
-        reject (scriptFailureCode 1)
-            "Some of the (V2) scripts failed to evaluate to a positive outcome. The field \
-            \'data.validationError' informs about the nature of the error, and 'data.traces' \
-            \lists all the execution traces collected during the script execution."
-            (pure $ encodeObject
-                ( "validationError" .= encodeText (show (pretty err))
-               <> "traces" .= encodeFoldable encodeText traces
-                )
-            )
-
-    SomeTransactionScriptFailure (Ledger.ValidationFailure (Ledger.ValidationFailedV3 err traces _debugLang)) ->
-        reject (scriptFailureCode 1)
-            "Some of the (V3) scripts failed to evaluate to a positive outcome. The field \
-            \'data.validationError' informs about the nature of the error, and 'data.traces' \
-            \lists all the execution traces collected during the script execution."
-            (pure $ encodeObject
-                ( "validationError" .= encodeText (show (pretty err))
-               <> "traces" .= encodeFoldable encodeText traces
-                )
-            )
-
-    SomeTransactionScriptFailure (Ledger.InvalidTxIn i) ->
+    TransactionScriptFailureInAnyEra (_, Ledger.InvalidTxIn i) ->
         reject (scriptFailureCode 2)
             "A redeemer points to an input that isn't locked by a Plutus script. Double-check your \
             \redeemer pointers and note that, inputs are ordered lexicographically by the ledger \
@@ -103,20 +91,97 @@ encodeScriptFailure reject = \case
                 )
             )
 
-    SomeTransactionScriptFailure (Ledger.RedeemerNotNeeded ptr _) ->
-        encodePredicateFailure @crypto reject (ExtraneousRedeemers [ptr])
+    TransactionScriptFailureInAnyEra (era, Ledger.RedeemerPointsToUnknownScriptHash ptr) ->
+        encodePredicateFailure @crypto reject (ExtraneousRedeemers [ScriptPurposeIndexInAnyEra (era, ptr)])
 
-    SomeTransactionScriptFailure (Ledger.RedeemerPointsToUnknownScriptHash ptr) ->
-        encodePredicateFailure @crypto reject (ExtraneousRedeemers [ptr])
-
-    SomeTransactionScriptFailure (Ledger.MissingDatum datumHash) ->
+    TransactionScriptFailureInAnyEra (_, Ledger.MissingDatum datumHash) ->
         encodePredicateFailure @crypto reject (MissingDatums (Set.singleton datumHash))
 
-    SomeTransactionScriptFailure (Ledger.UnknownTxIn i) ->
+    TransactionScriptFailureInAnyEra (_, Ledger.UnknownTxIn i) ->
         encodePredicateFailure @crypto reject (UnknownUtxoReference (Set.singleton i))
 
-    SomeTransactionScriptFailure (Ledger.IncompatibleBudget budget) ->
+    TransactionScriptFailureInAnyEra (_, Ledger.IncompatibleBudget budget) ->
         encodePredicateFailure @crypto reject (ExecutionBudgetOutOfBounds budget)
 
-    SomeTransactionScriptFailure (Ledger.NoCostModelInLedgerState lang) ->
+    TransactionScriptFailureInAnyEra (_, Ledger.NoCostModelInLedgerState lang) ->
         encodePredicateFailure @crypto reject (MissingCostModels [lang])
+
+encodeEvaluationError
+    :: forall crypto.
+        ( Crypto crypto
+        )
+    => Rpc.EmbedFault
+    -> EvaluateTransactionError crypto
+    -> Json
+encodeEvaluationError reject = \case
+    IncompatibleEra era ->
+        reject (Rpc.FaultCustom 3000)
+            "Trying to evaluate a transaction from an old era (prior to Alonzo)."
+            (pure $ encodeObject
+                ( "incompatibleEra" .=
+                    encodeEraName era
+                )
+            )
+
+    UnsupportedEra era ->
+        reject (Rpc.FaultCustom 3001)
+            "Trying to evaluate a transaction from an era that's no longer supported \
+            \(e.g. Alonzo). Please use a more recent transaction format."
+            (pure $ encodeObject
+                ( "unsupportedEra" .=
+                    encodeEraName era
+                )
+            )
+
+    OverlappingAdditionalUtxo inputs ->
+        reject (Rpc.FaultCustom 3002)
+            "Some user-provided additional UTxO entries overlap with those that exist \
+            \in the ledger."
+            (pure $ encodeObject
+                ( "overlappingOutputReferences" .=
+                    encodeFoldable (encodeObject . encodeTxIn) inputs
+                )
+            )
+
+    NodeTipTooOldErr err ->
+        reject (Rpc.FaultCustom 3003)
+            "The node is still synchronizing and the ledger isn't yet in an era where \
+            \scripts are enabled (i.e. Alonzo and beyond)."
+            (pure $ encodeObject
+                ( "currentNodeEra" .=
+                    encodeEraName (currentNodeEra err) <>
+                  "minimumRequiredEra" .=
+                    encodeEraName (minimumRequiredEra err)
+                )
+            )
+
+    CannotCreateEvaluationContext err ->
+        reject (Rpc.FaultCustom 3004)
+            "Unable to create the evaluation context from the given transaction."
+            (pure $ encodeObject
+                ( "reason" .=
+                    encodeContextErrorInAnyEra err
+                )
+            )
+
+    ScriptExecutionFailures failures ->
+        reject (Rpc.FaultCustom 3010)
+            "Some scripts of the transactions terminated with error(s)."
+            (pure $ encodeList identity $ Map.foldrWithKey
+                (\ix e xs ->
+                    if null e then
+                        xs
+                    else
+                        let embed code msg details = encodeObject
+                                ( "validator" .= encodeScriptPurposeIndexInAnyEra ix
+                               <> "error" .= encodeObject
+                                    ( "code" .= Json.toEncoding code
+                                   <> "message" .= Json.toEncoding msg
+                                   <> maybe mempty (Json.pair "data") details
+                                    )
+                                )
+                            x = encodeScriptFailure embed (pickScriptFailure e)
+
+                         in x : xs
+                ) [] failures
+            )

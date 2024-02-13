@@ -336,10 +336,14 @@ components:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/60"
     3160/VotingOnExpiredActions:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/61"
+    3161/ExecutionBudgetOutOfBounds:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/62"
+    3162/InvalidHardForkVersionBump:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/63"
+    3163/ConstitutionGuardrailsHashMismatch:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/64"
     3998/UnrecognizedCertificateType:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/62"
-    3999/InternalLedgerTypeError:
-      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/63"
 {{% /embed-async-api %}}
 
 ## API Reference

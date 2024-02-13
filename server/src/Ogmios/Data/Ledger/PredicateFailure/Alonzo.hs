@@ -6,9 +6,6 @@ module Ogmios.Data.Ledger.PredicateFailure.Alonzo where
 
 import Ogmios.Prelude
 
-import Cardano.Ledger.Alonzo.PlutusScriptApi
-    ( CollectError (..)
-    )
 import Cardano.Ledger.Core
     ( EraRule
     )
@@ -16,9 +13,11 @@ import Cardano.Ledger.UTxO
     ( UTxO (..)
     )
 import Ogmios.Data.Ledger.PredicateFailure
-    ( DiscriminatedEntities (..)
+    ( ContextErrorInAnyEra (..)
+    , DiscriminatedEntities (..)
     , MultiEraPredicateFailure (..)
-    , ScriptPurposeInAnyEra (..)
+    , ScriptPurposeIndexInAnyEra (..)
+    , ScriptPurposeItemInAnyEra (..)
     , TxOutInAnyEra (..)
     , ValueInAnyEra (..)
     , pickPredicateFailure
@@ -31,6 +30,9 @@ import qualified Data.Map as Map
 
 import qualified Ogmios.Data.Ledger.PredicateFailure.Shelley as Shelley
 
+import Cardano.Ledger.Alonzo.Plutus.Evaluate
+    ( CollectError (..)
+    )
 import qualified Cardano.Ledger.Alonzo.Rules as Al
 import qualified Cardano.Ledger.Shelley.Rules as Sh
 
@@ -43,8 +45,8 @@ encodeLedgerFailure
 encodeLedgerFailure = \case
     Sh.UtxowFailure e  ->
         encodeUtxowFailure
-            ShelleyBasedEraAlonzo
-            (encodeUtxoFailure ShelleyBasedEraAlonzo)
+            AlonzoBasedEraAlonzo
+            (encodeUtxoFailure AlonzoBasedEraAlonzo)
             e
     Sh.DelegsFailure e ->
         encodeDelegsFailure e
@@ -54,20 +56,21 @@ encodeUtxowFailure
         ( crypto ~ EraCrypto (era crypto)
         , Era (era crypto)
         )
-    => ShelleyBasedEra (era crypto)
+    => AlonzoBasedEra (era crypto)
     -> (Sh.PredicateFailure (EraRule "UTXO" (era crypto)) -> MultiEraPredicateFailure crypto)
     -> Al.AlonzoUtxowPredFailure (era crypto)
     -> MultiEraPredicateFailure crypto
 encodeUtxowFailure era encodeUtxoFailureInEra = \case
     Al.MissingRedeemers redeemers ->
-        let missingRedeemers = ScriptPurposeInAnyEra . (era,) . fst <$> redeemers
+        let missingRedeemers = ScriptPurposeItemInAnyEra . (era,) . fst <$> redeemers
          in MissingRedeemers { missingRedeemers }
     Al.MissingRequiredDatums missingDatums _providedDatums ->
         MissingDatums { missingDatums }
     Al.NotAllowedSupplementalDatums extraneousDatums _acceptableDatums ->
         ExtraneousDatums { extraneousDatums }
-    Al.ExtraRedeemers extraneousRedeemers ->
-        ExtraneousRedeemers { extraneousRedeemers }
+    Al.ExtraRedeemers redeemers ->
+        let extraneousRedeemers = ScriptPurposeIndexInAnyEra . (era,) <$> redeemers
+         in ExtraneousRedeemers { extraneousRedeemers }
     Al.PPViewHashesDontMatch providedIntegrityHash computedIntegrityHash ->
         ScriptIntegrityHashMismatch { providedIntegrityHash, computedIntegrityHash }
     Al.MissingRequiredSigners keys ->
@@ -83,7 +86,7 @@ encodeUtxoFailure
         , EraCrypto (era crypto) ~ crypto
         , Sh.PredicateFailure (EraRule "UTXOS" (era crypto)) ~ Al.AlonzoUtxosPredFailure (era crypto)
         )
-    => ShelleyBasedEra (era crypto)
+    => AlonzoBasedEra (era crypto)
     -> Al.AlonzoUtxoPredFailure (era crypto)
     -> MultiEraPredicateFailure crypto
 encodeUtxoFailure era = \case
@@ -92,7 +95,7 @@ encodeUtxoFailure era = \case
     Al.OutsideValidityIntervalUTxO validityInterval currentSlot ->
         TransactionOutsideValidityInterval { validityInterval, currentSlot }
     Al.OutputTooBigUTxO outs ->
-        let culpritOutputs = (\(_, _, out) -> TxOutInAnyEra (era, out)) <$> outs in
+        let culpritOutputs = (\(_, _, out) -> TxOutInAnyEra (toShelleyBasedEra era, out)) <$> outs in
         ValueSizeAboveLimit culpritOutputs
     Al.MaxTxSizeUTxO measuredSize maximumSize ->
         TransactionTooLarge { measuredSize, maximumSize }
@@ -101,8 +104,8 @@ encodeUtxoFailure era = \case
     Al.FeeTooSmallUTxO minimumRequiredFee suppliedFee ->
         TransactionFeeTooSmall { minimumRequiredFee, suppliedFee }
     Al.ValueNotConservedUTxO consumed produced ->
-        let valueConsumed = ValueInAnyEra (era, consumed) in
-        let valueProduced = ValueInAnyEra (era, produced) in
+        let valueConsumed = ValueInAnyEra (toShelleyBasedEra era, consumed) in
+        let valueProduced = ValueInAnyEra (toShelleyBasedEra era, produced) in
         ValueNotConserved { valueConsumed, valueProduced }
     Al.WrongNetwork expectedNetwork invalidAddrs ->
         let invalidEntities = DiscriminatedAddresses invalidAddrs in
@@ -112,10 +115,10 @@ encodeUtxoFailure era = \case
         NetworkMismatch { expectedNetwork, invalidEntities }
     Al.OutputTooSmallUTxO outs ->
         let insufficientlyFundedOutputs =
-                (\out -> (TxOutInAnyEra (era, out), Nothing)) <$> outs
+                (\out -> (TxOutInAnyEra (toShelleyBasedEra era, out), Nothing)) <$> outs
          in InsufficientAdaInOutput { insufficientlyFundedOutputs }
     Al.OutputBootAddrAttrsTooBig outs ->
-        let culpritOutputs = (\out -> TxOutInAnyEra (era, out)) <$> outs in
+        let culpritOutputs = (\out -> TxOutInAnyEra (toShelleyBasedEra era, out)) <$> outs in
         BootstrapAddressAttributesTooLarge { culpritOutputs }
     Al.TriesToForgeADA ->
         MintingOrBurningAda
@@ -129,7 +132,7 @@ encodeUtxoFailure era = \case
     Al.OutsideForecast slot ->
         SlotOutsideForeseeableFuture { slot }
     Al.CollateralContainsNonADA value ->
-        let valueInAnyEra = ValueInAnyEra (era, value) in
+        let valueInAnyEra = ValueInAnyEra (toShelleyBasedEra era, value) in
         NonAdaValueAsCollateral valueInAnyEra
     Al.NoCollateralInputs{} ->
         MissingCollateralInputs
@@ -145,7 +148,7 @@ encodeUtxosFailure
         ( crypto ~ EraCrypto (era crypto)
         , Era (era crypto)
         )
-    => ShelleyBasedEra (era crypto)
+    => AlonzoBasedEra (era crypto)
     -> Al.AlonzoUtxosPredFailure (era crypto)
     -> MultiEraPredicateFailure crypto
 encodeUtxosFailure era = \case
@@ -161,13 +164,13 @@ encodeCollectErrors
         ( crypto ~ EraCrypto (era crypto)
         , Era (era crypto)
         )
-    => ShelleyBasedEra (era crypto)
+    => AlonzoBasedEra (era crypto)
     -> [CollectError (era crypto)]
     -> [MultiEraPredicateFailure crypto]
 encodeCollectErrors era errors =
     let missingRedeemersErrs
             | not (null missingRedeemers) =
-                [ MissingRedeemers { missingRedeemers = ScriptPurposeInAnyEra . (era,) <$> missingRedeemers } ]
+                [ MissingRedeemers { missingRedeemers = ScriptPurposeItemInAnyEra . (era,) <$> missingRedeemers } ]
             | otherwise =
                 []
      in
@@ -189,7 +192,7 @@ encodeCollectErrors era errors =
     let badTranslationErrs = flip mapMaybe errors $ \case
             -- NOTE: Keep those pattern-match explicit for exhaustiveness check.
             BadTranslation err ->
-                Just (UnableToCreateScriptContext err)
+                Just (UnableToCreateScriptContext (ContextErrorInAnyEra (era, err)))
             NoWitness{} ->
                 Nothing
             NoCostModel{} ->

@@ -69,11 +69,13 @@ import Ogmios.Data.Json
     ( Json
     , MultiEraDecoder (..)
     )
+import Ogmios.Data.Ledger.ScriptFailure
+    ( EvaluateTransactionError (..)
+    )
 import Ogmios.Data.Protocol.TxSubmission
     ( CanEvaluateScriptsInEra
     , EpochInfo
     , EvaluateTransaction (..)
-    , EvaluateTransactionError (..)
     , EvaluateTransactionResponse (..)
     , HasTxId
     , PParams
@@ -111,9 +113,6 @@ import Ouroboros.Consensus.HardFork.History
 import Ouroboros.Consensus.Ledger.Query
     ( Query (..)
     )
-import Ouroboros.Consensus.Protocol.Praos
-    ( Praos
-    )
 import Ouroboros.Consensus.Shelley.Ledger
     ( GenTx (..)
     )
@@ -128,6 +127,9 @@ import Ouroboros.Network.Block
     )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..)
+    )
+import Ouroboros.Network.Protocol.LocalStateQuery.Type
+    ( Target (..)
     )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxClientStIdle (..)
@@ -264,7 +266,7 @@ newExecutionUnitsEvaluator = do
         )
   where
     localStateQueryClient
-        :: m SomeEvaluationInAnyEra
+        :: m (SomeEvaluationInAnyEra crypto)
         -> (EvaluateTransactionResponse block -> m ())
         -> LocalStateQueryClient block (Point block) (Query block) m ()
     localStateQueryClient await reply =
@@ -283,7 +285,7 @@ newExecutionUnitsEvaluator = do
             --
             -- has shipped with cardano-node (and it's been long-enough that we
             -- can exclude old clients from needing this).
-            LSQ.SendMsgAcquire Nothing $ LSQ.ClientStAcquiring
+            LSQ.SendMsgAcquire VolatileTip $ LSQ.ClientStAcquiring
                 { LSQ.recvMsgAcquired = do
                     reAcquire <$> await
                 , LSQ.recvMsgFailure =
@@ -291,7 +293,7 @@ newExecutionUnitsEvaluator = do
                 }
 
         clientStAcquiring
-            :: SomeEvaluationInAnyEra
+            :: SomeEvaluationInAnyEra crypto
             -> LSQ.ClientStAcquiring block (Point block) (Query block) m ()
         clientStAcquiring args =
             LSQ.ClientStAcquiring
@@ -306,18 +308,18 @@ newExecutionUnitsEvaluator = do
                     -- Conway
                     (clientStAcquired0 @_ @(ConwayEra crypto) args evaluateExecutionUnits)
                 , LSQ.recvMsgFailure =
-                    const $ pure $ LSQ.SendMsgAcquire Nothing (clientStAcquiring args)
+                    const $ pure $ LSQ.SendMsgAcquire VolatileTip (clientStAcquiring args)
                 }
 
         reAcquire
-            :: SomeEvaluationInAnyEra
+            :: SomeEvaluationInAnyEra crypto
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
         reAcquire
-            = LSQ.SendMsgReAcquire Nothing . clientStAcquiring
+            = LSQ.SendMsgReAcquire VolatileTip . clientStAcquiring
 
         clientStAcquired0
-            :: forall proto era. (CanEvaluateScriptsInEra era)
-            => SomeEvaluationInAnyEra
+            :: forall proto era. (CanEvaluateScriptsInEra era, EraCrypto era ~ crypto)
+            => SomeEvaluationInAnyEra crypto
             -> (  PParams era
                -> SystemStart
                -> EpochInfo (Except PastHorizonException)
@@ -338,8 +340,8 @@ newExecutionUnitsEvaluator = do
                 }
 
         clientStAcquired1
-            :: forall proto era. (CanEvaluateScriptsInEra era)
-            => SomeEvaluationInAnyEra
+            :: forall proto era. (CanEvaluateScriptsInEra era, EraCrypto era ~ crypto)
+            => SomeEvaluationInAnyEra crypto
             -> (  SystemStart
                -> EpochInfo (Except PastHorizonException)
                -> UTxO era
@@ -356,8 +358,8 @@ newExecutionUnitsEvaluator = do
                 }
 
         clientStAcquired2
-            :: forall proto era. (CanEvaluateScriptsInEra era)
-            => SomeEvaluationInAnyEra
+            :: forall proto era. (CanEvaluateScriptsInEra era, EraCrypto era ~ crypto)
+            => SomeEvaluationInAnyEra crypto
             -> (  EpochInfo (Except PastHorizonException)
                -> UTxO era
                -> Tx era
@@ -373,8 +375,8 @@ newExecutionUnitsEvaluator = do
                 }
 
         clientStAcquired3
-            :: forall proto era. (CanEvaluateScriptsInEra era)
-            => SomeEvaluationInAnyEra
+            :: forall proto era. (CanEvaluateScriptsInEra era, EraCrypto era ~ crypto)
+            => SomeEvaluationInAnyEra crypto
             -> (  UTxO era
                -> Tx era
                -> EvaluateTransactionResponse block
@@ -436,18 +438,18 @@ selectEra fallback asBabbage asConway =
 -- SomeEvaluationInAnyEra
 --
 
-data SomeEvaluationInAnyEra where
+data SomeEvaluationInAnyEra crypto where
     SomeEvaluationInAnyEra
-        :: forall era. (CanEvaluateScriptsInEra era)
+        :: forall era crypto. (CanEvaluateScriptsInEra era, EraCrypto era ~ crypto)
         => UTxO era
         -> Tx era
-        -> SomeEvaluationInAnyEra
+        -> SomeEvaluationInAnyEra crypto
 
 -- | Return all unspent transaction outputs needed for evaluation. This includes
 -- standard inputs, but also reference ones and collaterals.
 inputsInAnyEra
-    :: SomeEvaluationInAnyEra
-    -> Set (TxIn StandardCrypto)
+    :: SomeEvaluationInAnyEra crypto
+    -> Set (TxIn crypto)
 inputsInAnyEra (SomeEvaluationInAnyEra _ tx) =
     tx ^. bodyTxL . inputsTxBodyL
     <>
@@ -456,14 +458,14 @@ inputsInAnyEra (SomeEvaluationInAnyEra _ tx) =
     tx ^. bodyTxL . referenceInputsTxBodyL
 
 mkEvaluateTransactionResponse
-    :: forall era block crypto.
+    :: forall era crypto block.
         ( CanEvaluateScriptsInEra era
-        , block ~ HardForkBlock (CardanoEras crypto)
-        , crypto ~ StandardCrypto
+        , crypto ~ BlockCrypto block
+        , crypto ~ EraCrypto era
         )
     => (UTxO era -> Tx era -> EvaluateTransactionResponse block)
     -> UTxO era -- ^ Utxo fetched from the network
-    -> SomeEvaluationInAnyEra -- ^ Tx & additional utxo
+    -> SomeEvaluationInAnyEra crypto -- ^ Tx & additional utxo
     -> EvaluateTransactionResponse block
 mkEvaluateTransactionResponse callback (UTxO networkUtxo) args =
     case translateToNetworkEra @era args of
@@ -505,7 +507,7 @@ translateToNetworkEra
     :: forall eraNetwork.
         ( CanEvaluateScriptsInEra eraNetwork
         )
-    => SomeEvaluationInAnyEra
+    => SomeEvaluationInAnyEra (EraCrypto eraNetwork)
     -> Maybe (UTxO eraNetwork, Tx eraNetwork)
 translateToNetworkEra (SomeEvaluationInAnyEra utxoOrig txOrig) =
     translate utxoOrig txOrig

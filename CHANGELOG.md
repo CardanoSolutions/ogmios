@@ -6,6 +6,28 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
+### [6.1.0] - UNRELEASED
+
+#### Added
+
+- Two new script purposes (available from the Conway era onward):
+  - `propose`: for proposing new governance actions. When itemized, comes with a `proposal` field that documents the associated governance proposal.
+  - `vote`: for voting on a proposed governance action. When itemized, comes with an `issuer` field that documents the associated governance issuer.
+
+- A new field `guardrails` is now present on governance proposals of type `treasuryWithdrawals` and `protocolParametersUpdate`. It is either `null` or contains a script hash (blake2b, 28 bytes) that indicates the additional guardrails script that must successfully pass for the governance proposal to be considered valid.
+
+#### Changed
+
+- Configuration files no longer contain `mainnet_p2p`, `preprod_p2p`, `preview_p2p` and `sanchonet_p2p` folders. The p2p configs are now replacing the default configurations; so we're back to configuration folders for `mainnet`, `preprod`, `preview` and `sanchonet`.
+
+- The constitution `hash` is now wrapped in a singleton object `guardrails`, to better capture its meaning. It isn't the hash of the constitution script (which is covered by the `anchor` already), but the hash of the additional script policy which controls governance proposals of certain actions (e.g. treasury withdrawals, protocol parameters).
+
+- Fixed a few minor JSON-schema oversights such as `TransactionOutputReference`'s index now being a `UInt64` (instead of `UInt32`).
+
+#### Removed
+
+- `InternalLedgerTypeConversionError` which can no longer occur.
+
 ### [6.0.3] - 2024-02-02
 
 #### Added

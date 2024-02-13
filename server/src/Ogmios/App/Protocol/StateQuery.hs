@@ -95,6 +95,9 @@ import Ouroboros.Network.Block
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..)
     )
+import Ouroboros.Network.Protocol.LocalStateQuery.Type
+    ( Target (..)
+    )
 
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
@@ -140,13 +143,13 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
     clientStIdle = await >>= \case
         MsgAcquireLedgerState (AcquireLedgerState pt) toResponse ->
             defaultWithInternalError clientStIdle yield toResponse $ do
-                pure $ LSQ.SendMsgAcquire (Just pt) (clientStAcquiring pt toResponse)
+                pure $ LSQ.SendMsgAcquire (SpecificPoint pt) (clientStAcquiring pt toResponse)
         MsgReleaseLedgerState ReleaseLedgerState toResponse -> do
             yield $ encodeReleaseLedgerStateResponse (toResponse ReleaseLedgerStateResponse)
             clientStIdle
         MsgQueryLedgerState query toResponse -> do
             defaultWithInternalError clientStIdle yield toResponse $ do
-                pure $ LSQ.SendMsgAcquire Nothing (clientStAcquiringTip query toResponse)
+                pure $ LSQ.SendMsgAcquire VolatileTip (clientStAcquiringTip query toResponse)
 
     clientStAcquiring
         :: Point block
@@ -238,7 +241,7 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
     clientStAcquired pt = await >>= \case
         MsgAcquireLedgerState (AcquireLedgerState pt') toResponse ->
             defaultWithInternalError (clientStAcquired pt) yield toResponse $ do
-                pure $ LSQ.SendMsgReAcquire (Just pt') (clientStAcquiring pt' toResponse)
+                pure $ LSQ.SendMsgReAcquire (SpecificPoint pt') (clientStAcquiring pt' toResponse)
         MsgReleaseLedgerState ReleaseLedgerState toResponse -> do
             yield $ encodeReleaseLedgerStateResponse (toResponse ReleaseLedgerStateResponse)
             pure $ LSQ.SendMsgRelease clientStIdle

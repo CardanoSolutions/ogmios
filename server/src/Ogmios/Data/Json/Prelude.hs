@@ -45,6 +45,7 @@ module Ogmios.Data.Json.Prelude
     , encodeCoin
     , encodeDnsName
     , encodeDouble
+    , encodeEpochInterval
     , encodeEpochNo
     , encodeEpochSize
     , encodeEraName
@@ -84,6 +85,7 @@ module Ogmios.Data.Json.Prelude
     , encode4Tuple
     , encodeAnnotated
     , encodeConcatFoldable
+    , encodeConcatNonEmptyFoldable
     , encodeFoldable
     , encodeFoldable2
     , encodeFoldableMaybe
@@ -108,6 +110,7 @@ import Ogmios.Prelude hiding
 
 import Cardano.Ledger.BaseTypes
     ( DnsName
+    , EpochInterval (..)
     , NonNegativeInterval
     , Port
     , PositiveUnitInterval
@@ -168,9 +171,6 @@ import Data.ListMap
     )
 import Data.Scientific
     ( Scientific
-    )
-import Data.Sequence.Strict
-    ( StrictSeq
     )
 import Data.Time.Clock
     ( NominalDiffTime
@@ -316,6 +316,11 @@ encodeEpochNo :: EpochNo -> Json
 encodeEpochNo =
     encodeWord64 . unEpochNo
 {-# INLINABLE encodeEpochNo #-}
+
+encodeEpochInterval :: EpochInterval -> Json
+encodeEpochInterval =
+    encodeWord32 . unEpochInterval
+{-# INLINABLE encodeEpochInterval #-}
 
 encodeEpochSize :: EpochSize -> Json
 encodeEpochSize =
@@ -508,6 +513,13 @@ encodeFoldableMaybe encodeElem =
 {-# SPECIALIZE encodeFoldableMaybe :: (a -> StrictMaybe Json) -> [a] -> Json #-}
 {-# SPECIALIZE encodeFoldableMaybe :: (a -> StrictMaybe Json) -> StrictSeq a -> Json #-}
 {-# INLINABLE encodeFoldableMaybe #-}
+
+encodeConcatNonEmptyFoldable :: Foldable f => (a -> NonEmpty Json) -> f a -> Json
+encodeConcatNonEmptyFoldable encodeElem =
+    encodeConcatFoldable (toList . encodeElem)
+{-# SPECIALIZE encodeConcatNonEmptyFoldable :: (a -> NonEmpty Json) -> [a] -> Json #-}
+{-# SPECIALIZE encodeConcatNonEmptyFoldable :: (a -> NonEmpty Json) -> StrictSeq a -> Json #-}
+{-# INLINABLE encodeConcatNonEmptyFoldable #-}
 
 encodeConcatFoldable :: Foldable f => (a -> [Json]) -> f a -> Json
 encodeConcatFoldable encodeElem =
