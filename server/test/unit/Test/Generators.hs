@@ -11,10 +11,6 @@ import Ogmios.Prelude
 import Cardano.Ledger.Alonzo.Genesis
     ( AlonzoGenesis (..)
     )
-import Cardano.Ledger.Alonzo.Plutus.TxInfo
-    ( TranslationError (..)
-    , transExUnits
-    )
 import Cardano.Ledger.Api
     ( TransactionScriptFailure (..)
     )
@@ -26,6 +22,9 @@ import Cardano.Ledger.Keys
     )
 import Cardano.Ledger.Plutus.Data
     ( Data
+    )
+import Cardano.Ledger.Plutus.TxInfo
+    ( transExUnits
     )
 import Cardano.Ledger.Shelley.API.Mempool
     ( ApplyTxError (..)
@@ -59,8 +58,11 @@ import Ogmios.Data.Json.Query
     , RewardAccounts
     , RewardsProvenance
     )
+import Ogmios.Data.Ledger
+    ( ContextErrorInAnyEra (..)
+    )
 import Ogmios.Data.Ledger.ScriptFailure
-    ( SomeTransactionScriptFailure (..)
+    ( TransactionScriptFailureInAnyEra (..)
     )
 import Ogmios.Data.Protocol.TxSubmission
     ( EvaluateTransactionError (..)
@@ -87,12 +89,6 @@ import Ouroboros.Consensus.HardFork.Combinator.Mempool
     )
 import Ouroboros.Consensus.HardFork.History.Summary
     ( Bound (..)
-    )
-import Ouroboros.Consensus.Protocol.Praos
-    ( Praos
-    )
-import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos
     )
 import Ouroboros.Consensus.Shelley.Eras
     ( StandardAllegra
@@ -141,9 +137,6 @@ import Test.QuickCheck
     , suchThat
     , vector
     )
-import Test.QuickCheck.Arbitrary.Generic
-    ( genericArbitrary
-    )
 import Test.QuickCheck.Gen
     ( Gen (..)
     )
@@ -154,8 +147,6 @@ import Type.Reflection
     ( typeRep
     )
 
-import Test.Cardano.Ledger.Shelley.Serialisation.Generators
-    ()
 import Test.Consensus.Cardano.Generators
     ()
 import Test.Generators.Orphans
@@ -278,16 +269,14 @@ genSubmitResult = frequency
 
 genHardForkApplyTxErr :: Gen (HardForkApplyTxErr (CardanoEras StandardCrypto))
 genHardForkApplyTxErr = frequency
-    [ (1, HardForkApplyTxErrWrongEra <$> genMismatchEraInfo)
-    , (5, ApplyTxErrShelley <$> arbitrary `suchThat` isNonEmpty)
-    , (5, ApplyTxErrAllegra <$> arbitrary `suchThat` isNonEmpty)
-    , (5, ApplyTxErrMary <$> arbitrary `suchThat` isNonEmpty)
-    , (30, ApplyTxErrAlonzo <$> arbitrary `suchThat` isNonEmpty)
-    , (30, ApplyTxErrBabbage <$> arbitrary `suchThat` isNonEmpty)
+    [ ( 1, HardForkApplyTxErrWrongEra <$> genMismatchEraInfo)
+    , ( 5, ApplyTxErrShelley . ApplyTxError . pure <$> arbitrary )
+    , ( 5, ApplyTxErrAllegra . ApplyTxError . pure <$> arbitrary )
+    , ( 5, ApplyTxErrMary . ApplyTxError . pure <$> arbitrary )
+    , ( 10, ApplyTxErrAlonzo . ApplyTxError . pure <$> arbitrary )
+    , ( 25, ApplyTxErrBabbage . ApplyTxError . pure <$> arbitrary )
+    , ( 25, ApplyTxErrConway . ApplyTxError . pure <$> arbitrary )
     ]
-  where
-    isNonEmpty :: forall era. ApplyTxError era -> Bool
-    isNonEmpty (ApplyTxError xs) = not (null xs)
 
 genEvaluateTransactionResponse :: Gen (EvaluateTransactionResponse Block)
 genEvaluateTransactionResponse = frequency
@@ -295,7 +284,7 @@ genEvaluateTransactionResponse = frequency
     , (1, EvaluationResult <$> arbitrary)
     ]
 
-genEvaluateTransactionError :: Gen (EvaluateTransactionError Block)
+genEvaluateTransactionError :: Gen (EvaluateTransactionError StandardCrypto)
 genEvaluateTransactionError = frequency
     [ (10, ScriptExecutionFailures . fromList <$> (do
         failures <- listOf1 (listOf1 genScriptFailure)
@@ -308,19 +297,22 @@ genEvaluateTransactionError = frequency
         notEnoughSynced <- NodeTipTooOld <$> genPreAlonzoEra <*> genPreAlonzoEra
         pure (NodeTipTooOldErr notEnoughSynced)
       )
-    , (10, CannotCreateEvaluationContext <$> genTranslationError)
+    , (10, CannotCreateEvaluationContext <$> genContextError)
     ]
 
-genTranslationError :: Gen (TranslationError StandardCrypto)
-genTranslationError = genericArbitrary
+genContextError :: Gen (ContextErrorInAnyEra StandardCrypto)
+genContextError = oneof
+    [ ContextErrorInAnyEra . (AlonzoBasedEraAlonzo,) <$> arbitrary
+    , ContextErrorInAnyEra . (AlonzoBasedEraBabbage,) <$> arbitrary
+    , ContextErrorInAnyEra . (AlonzoBasedEraConway,) <$> arbitrary
+    ]
 
 genPreAlonzoEra :: Gen Text
 genPreAlonzoEra = elements [ "byron", "shelley", "allegra", "mary" ]
 
-genScriptFailure :: Gen (SomeTransactionScriptFailure StandardCrypto)
+genScriptFailure :: Gen (TransactionScriptFailureInAnyEra StandardCrypto)
 genScriptFailure = oneof
-    [ inBabbageEra $ RedeemerNotNeeded <$> arbitrary <*> arbitrary
-    , inBabbageEra $ RedeemerPointsToUnknownScriptHash <$> arbitrary
+    [ inBabbageEra $ RedeemerPointsToUnknownScriptHash <$> arbitrary
     , inBabbageEra $ MissingScript <$> arbitrary <*> arbitrary
     , inBabbageEra $ MissingDatum <$> arbitrary
     , inBabbageEra $ UnknownTxIn <$> arbitrary
@@ -345,18 +337,18 @@ genScriptFailure = oneof
   where
     inAlonzoEra
         :: Gen (TransactionScriptFailure (AlonzoEra StandardCrypto))
-        -> Gen (SomeTransactionScriptFailure StandardCrypto)
-    inAlonzoEra = fmap SomeTransactionScriptFailure
+        -> Gen (TransactionScriptFailureInAnyEra StandardCrypto)
+    inAlonzoEra = fmap (TransactionScriptFailureInAnyEra . (AlonzoBasedEraAlonzo,))
 
     inBabbageEra
         :: Gen (TransactionScriptFailure (BabbageEra StandardCrypto))
-        -> Gen (SomeTransactionScriptFailure StandardCrypto)
-    inBabbageEra = fmap SomeTransactionScriptFailure
+        -> Gen (TransactionScriptFailureInAnyEra StandardCrypto)
+    inBabbageEra = fmap (TransactionScriptFailureInAnyEra . (AlonzoBasedEraBabbage,))
 
     inConwayEra
         :: Gen (TransactionScriptFailure (ConwayEra StandardCrypto))
-        -> Gen (SomeTransactionScriptFailure StandardCrypto)
-    inConwayEra = fmap SomeTransactionScriptFailure
+        -> Gen (TransactionScriptFailureInAnyEra StandardCrypto)
+    inConwayEra = fmap (TransactionScriptFailureInAnyEra . (AlonzoBasedEraConway,))
 
 genAcquireFailure :: Gen AcquireFailure
 genAcquireFailure = elements

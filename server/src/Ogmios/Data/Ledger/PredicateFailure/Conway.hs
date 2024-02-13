@@ -31,7 +31,7 @@ encodeLedgerFailure
     -> MultiEraPredicateFailure crypto
 encodeLedgerFailure = \case
     Cn.ConwayUtxowFailure e ->
-        encodeUtxowFailure ShelleyBasedEraConway e
+        encodeUtxowFailure AlonzoBasedEraConway e
     Cn.ConwayCertsFailure e ->
         encodeCertsFailure e
     Cn.ConwayGovFailure e ->
@@ -45,7 +45,7 @@ encodeGovFailure
     :: Cn.ConwayGovPredFailure (ConwayEra crypto)
     -> MultiEraPredicateFailure crypto
 encodeGovFailure = \case
-    Cn.GovActionsDoNotExist governanceActions ->
+    Cn.GovActionsDoNotExist (toList -> fromList -> governanceActions) ->
         UnknownGovernanceActions { governanceActions }
     Cn.MalformedProposal _govAction ->
         InvalidProtocolParametersUpdate
@@ -66,7 +66,7 @@ encodeGovFailure = \case
             { providedDeposit
             , expectedDeposit
             }
-    Cn.DisallowedVoters voters ->
+    Cn.DisallowedVoters (toList -> voters) ->
         UnauthorizedVotes voters
     Cn.ConflictingCommitteeUpdate conflictingMembers ->
         ConflictingCommitteeUpdate
@@ -76,42 +76,49 @@ encodeGovFailure = \case
         InvalidCommitteeUpdate
             { alreadyRetiredMembers = Map.keysSet members
             }
-    Cn.InvalidPrevGovActionIdsInProposals proposals ->
+    Cn.InvalidPrevGovActionId proposal ->
         InvalidPreviousGovernanceAction $
-            foldr
-                (\proposal xs -> case Ledger.pProcGovAction proposal of
-                    Ledger.ParameterChange actionId _ ->
-                        ( Ledger.pProcAnchor proposal
-                        , Ledger.PParamUpdatePurpose
-                        , Ledger.unPrevGovActionId <$> actionId
-                        ) : xs
-                    Ledger.HardForkInitiation actionId _ ->
-                        ( Ledger.pProcAnchor proposal
-                        , Ledger.HardForkPurpose
-                        , Ledger.unPrevGovActionId <$> actionId
-                        ) : xs
-                    Ledger.UpdateCommittee actionId _ _ _ ->
-                        ( Ledger.pProcAnchor proposal
-                        , Ledger.CommitteePurpose
-                        , Ledger.unPrevGovActionId <$> actionId
-                        ) : xs
-                    Ledger.NoConfidence actionId ->
-                        ( Ledger.pProcAnchor proposal
-                        , Ledger.CommitteePurpose
-                        , Ledger.unPrevGovActionId <$> actionId
-                        ) : xs
-                    Ledger.NewConstitution actionId _ ->
-                        ( Ledger.pProcAnchor proposal
-                        , Ledger.ConstitutionPurpose
-                        , Ledger.unPrevGovActionId <$> actionId
-                        ) : xs
-                    _ ->
-                        xs
-                )
-                []
-                proposals
-    Cn.VotingOnExpiredGovAction _ ->
-        error "TODO: VotingOnExpiredGovAction"
+            case Ledger.pProcGovAction proposal of
+                Ledger.ParameterChange actionId _ _guardrail ->
+                    [ ( Ledger.pProcAnchor proposal
+                      , Ledger.PParamUpdatePurpose
+                      , Ledger.unGovPurposeId <$> actionId
+                      )
+                    ]
+                Ledger.HardForkInitiation actionId _ ->
+                    [ ( Ledger.pProcAnchor proposal
+                      , Ledger.HardForkPurpose
+                      , Ledger.unGovPurposeId <$> actionId
+                      )
+                    ]
+                Ledger.UpdateCommittee actionId _ _ _ ->
+                    [ ( Ledger.pProcAnchor proposal
+                      , Ledger.CommitteePurpose
+                      , Ledger.unGovPurposeId <$> actionId
+                      )
+                    ]
+                Ledger.NoConfidence actionId ->
+                    [ ( Ledger.pProcAnchor proposal
+                      , Ledger.CommitteePurpose
+                      , Ledger.unGovPurposeId <$> actionId
+                      )
+                    ]
+                Ledger.NewConstitution actionId _ ->
+                    [ ( Ledger.pProcAnchor proposal
+                      , Ledger.ConstitutionPurpose
+                      , Ledger.unGovPurposeId <$> actionId
+                      )
+                    ]
+                Ledger.TreasuryWithdrawals _withdrawals _guardrail ->
+                    []
+                Ledger.InfoAction ->
+                    []
+    Cn.VotingOnExpiredGovAction (toList -> voters) ->
+        VotingOnExpiredActions voters
+    Cn.ProposalCantFollow _ proposedVersion currentVersion ->
+        InvalidHardForkVersionBump { proposedVersion, currentVersion }
+    Cn.InvalidPolicyHash providedHash expectedHash ->
+        ConstitutionGuardrailsHashMismatch { providedHash, expectedHash }
 
 encodeCertsFailure
     :: Cn.ConwayCertsPredFailure (ConwayEra crypto)

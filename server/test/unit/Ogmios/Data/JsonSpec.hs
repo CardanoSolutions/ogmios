@@ -52,19 +52,18 @@ import Ogmios.Data.Json
     , encodeAcquireExpired
     , encodeBlock
     , encodeDeserialisationFailure
+    , encodeEvaluationError
     , encodeExUnits
-    , encodeObject
     , encodePoint
-    , encodeRdmrPtr
-    , encodeScriptFailure
     , encodeSubmitTransactionError
     , encodeTip
-    , encodeTranslationError
     , encodeTx
     , encodeTxId
-    , encodeTxIn
     , inefficientEncodingToValue
     , jsonToByteString
+    )
+import Ogmios.Data.Json.Ledger.PredicateFailure
+    ( encodeScriptPurposeIndexInAnyEra
     )
 import Ogmios.Data.Json.Orphans
     ()
@@ -458,7 +457,6 @@ spec = do
 
     context "validate transaction submission request/response against JSON-schema" $ do
         prop "deserialise signed transactions" prop_parseSubmitTransaction
-
         validateToJSON
             (arbitrary @(Rpc.Response (SubmitTransactionResponse Block)))
             (_encodeSubmitTransactionResponse (Proxy @Block)
@@ -467,18 +465,16 @@ spec = do
                 encodeSubmitTransactionError
                 encodeDeserialisationFailure
             )
-            (50, "SubmitTransactionResponse")
+            (200, "SubmitTransactionResponse")
             "ogmios.json#/properties/SubmitTransactionResponse"
 
         validateToJSON
             (arbitrary @(Rpc.Response (EvaluateTransactionResponse Block)))
             (_encodeEvaluateTransactionResponse (Proxy @Block)
                 Rpc.defaultOptions
-                encodeRdmrPtr
+                encodeScriptPurposeIndexInAnyEra
                 encodeExUnits
-                (encodeObject . encodeTxIn)
-                encodeTranslationError
-                encodeScriptFailure
+                encodeEvaluationError
                 encodeDeserialisationFailure
             )
             (50, "EvaluateTransactionResponse")
@@ -764,10 +760,10 @@ instance Arbitrary (SubmitTransactionResponse Block) where
     shrink = \case
         SubmitTransactionSuccess{} -> []
         SubmitTransactionDeserialisationFailure{} -> []
-        SubmitTransactionFailure e -> SubmitTransactionFailure <$> shrink e
+        SubmitTransactionFailure{} -> []
     arbitrary = frequency
         [ (1, SubmitTransactionSuccess <$> arbitrary)
-        , (50, reasonablySized (SubmitTransactionFailure <$> arbitrary))
+        , (50, SubmitTransactionFailure <$> genHardForkApplyTxErr)
         , (1, pure $ SubmitTransactionDeserialisationFailure
             [ ( SomeShelleyEra ShelleyBasedEraShelley, Binary.DecoderErrorVoid, 0 )
             , ( SomeShelleyEra ShelleyBasedEraAllegra, Binary.DecoderErrorVoid, 0 )
@@ -778,9 +774,6 @@ instance Arbitrary (SubmitTransactionResponse Block) where
             ]
           )
         ]
-
-instance Arbitrary (HardForkApplyTxErr (CardanoEras StandardCrypto)) where
-    arbitrary = reasonablySized genHardForkApplyTxErr
 
 instance Arbitrary (SubmitResult (HardForkApplyTxErr (CardanoEras StandardCrypto))) where
     arbitrary = reasonablySized genSubmitResult

@@ -6,13 +6,6 @@ module Ogmios.Data.Json.Allegra where
 
 import Ogmios.Data.Json.Prelude
 
-import Data.Maybe.Strict
-    ( fromSMaybe
-    , strictMaybe
-    )
-import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos
-    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
     )
@@ -24,7 +17,6 @@ import qualified Data.Map as Map
 import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 
 import qualified Cardano.Ledger.Address as Ledger
-import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.SafeHash as Ledger
@@ -74,7 +66,7 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           Shelley.encodeBHeader blkHeader
         <>
-          "size" .= encodeSingleton "bytes" (encodeNatural (TPraos.bsize hBody))
+          "size" .= encodeSingleton "bytes" (encodeWord32 (TPraos.bsize hBody))
         <>
           "transactions" .= encodeFoldable (encodeTx opts) (Sh.txSeqTxns' txs)
         )
@@ -133,7 +125,7 @@ encodeTx
     -> Json
 encodeTx (fmt, opts) x =
     encodeObject
-        ( Shelley.encodeTxId (Ledger.txid @(AllegraEra crypto) (Sh.body x))
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @(AllegraEra crypto) (Sh.body x))
        <>
         "spends" .= encodeText "inputs"
        <>
@@ -144,7 +136,7 @@ encodeTx (fmt, opts) x =
         encodeWitnessSet opts (snd <$> auxiliary) (Sh.wits x)
        <>
         if includeTransactionCbor opts then
-           "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
+           "cbor" .= encodeByteStringBase16 (encodeCbor @era x)
         else
            mempty
        )

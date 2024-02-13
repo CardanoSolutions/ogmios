@@ -25,7 +25,7 @@ module Ogmios.Data.Json.Query
     , Sh.Api.RewardInfoPool
     , Sh.Api.RewardParams
     , Sh.Desirability
-    , Sh.PoolParams
+    , Ledger.PoolParams
 
       -- * Encoders
     , encodeBound
@@ -184,11 +184,7 @@ import Ouroboros.Consensus.HardFork.History.Summary
     , Summary (..)
     )
 import Ouroboros.Consensus.Protocol.Praos
-    ( Praos
-    , PraosCrypto
-    )
-import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos
+    ( PraosCrypto
     )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
@@ -254,15 +250,19 @@ import qualified Cardano.Ledger.Mary.Value as Ledger.Mary
 import qualified Cardano.Ledger.Plutus.Data as Ledger.Plutus
 import qualified Cardano.Ledger.Plutus.Language as Ledger.Plutus
 import qualified Cardano.Ledger.PoolDistr as Ledger
+import qualified Cardano.Ledger.PoolParams as Ledger
 import qualified Cardano.Ledger.SafeHash as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
 
 import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.RewardProvenance as Sh
-import qualified Cardano.Ledger.Shelley.TxBody as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
+import Cardano.Ledger.Alonzo.Core
+    ( AlonzoEraScript
+    )
+import qualified Cardano.Ledger.Api as Ledger
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -586,7 +586,7 @@ encodeSafeZone = \case
 
 encodeStakePools
     :: Crypto crypto
-    => Map (Ledger.KeyHash 'StakePool crypto) (Sh.PoolParams crypto)
+    => Map (Ledger.KeyHash 'StakePool crypto) (Ledger.PoolParams crypto)
     -> Json
 encodeStakePools =
     encodeObject . encodeMapSeries Shelley.stringifyPoolId (\k v ->
@@ -1106,7 +1106,7 @@ parseQueryLedgerRewardsProvenance genResult =
 
 parseQueryLedgerStakePools
     :: forall crypto f. (Crypto crypto)
-    => GenResult crypto f (Map (Ledger.KeyHash 'StakePool crypto) (Sh.PoolParams crypto))
+    => GenResult crypto f (Map (Ledger.KeyHash 'StakePool crypto) (Ledger.PoolParams crypto))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseQueryLedgerStakePools genResult =
@@ -1234,7 +1234,7 @@ decodeAddress = Json.withText "Address" $ choice "address"
         decode >=> maybe
             (fail "couldn't deserialise address from bytes")
             pure
-            . Ledger.deserialiseAddr
+            . Ledger.decodeAddrLenient
 
     fromBech32 txt =
         case Bech32.decodeLenient txt of
@@ -1450,7 +1450,7 @@ decodePoolId = Json.withObject "StakePoolId" $ \obj -> do
 
 decodeScript
     :: forall era.
-        ( Era era
+        ( AlonzoEraScript era
         , Ledger.Script era ~ Ledger.Alonzo.AlonzoScript era
         )
     => Json.Value
@@ -1485,20 +1485,20 @@ decodeScript v =
                         fail "missing field 'cbor' or 'json' to decode native script"
             Just lang@"plutus:v1" -> do
                 bytes <- o .: "cbor"
-                plutus <- Ledger.Plutus.Plutus Ledger.Plutus.PlutusV1 <$> decodePlutusScript Plutus.PlutusV1 lang bytes
-                pure (Ledger.Alonzo.PlutusScript plutus)
+                plutus <- Ledger.Alonzo.mkBinaryPlutusScript Ledger.Plutus.PlutusV1 <$> decodePlutusScript Plutus.PlutusV1 lang bytes
+                maybe (fail "unable to instantiate PlutusScript from binary data") (pure . Ledger.Alonzo.PlutusScript) plutus
             Just lang@"plutus:v2" -> do
                 bytes <- o .: "cbor"
-                plutus <- Ledger.Plutus.Plutus Ledger.Plutus.PlutusV2 <$> decodePlutusScript Plutus.PlutusV2 lang bytes
-                pure (Ledger.Alonzo.PlutusScript plutus)
+                plutus <- Ledger.Alonzo.mkBinaryPlutusScript Ledger.Plutus.PlutusV2 <$> decodePlutusScript Plutus.PlutusV2 lang bytes
+                maybe (fail "unable to instantiate PlutusScript from binary data") (pure . Ledger.Alonzo.PlutusScript) plutus
             Just lang@"plutus:v3" -> do
                 bytes <- o .: "cbor"
-                plutus <- Ledger.Plutus.Plutus Ledger.Plutus.PlutusV3 <$> decodePlutusScript Plutus.PlutusV3 lang bytes
-                pure (Ledger.Alonzo.PlutusScript plutus)
+                plutus <- Ledger.Alonzo.mkBinaryPlutusScript Ledger.Plutus.PlutusV3 <$> decodePlutusScript Plutus.PlutusV3 lang bytes
+                maybe (fail "unable to instantiate PlutusScript from binary data") (pure . Ledger.Alonzo.PlutusScript) plutus
             _ ->
                 fail "missing or unknown script language."
       where
-        decodePlutusScript :: Plutus.PlutusLedgerLanguage -> Json.Key -> Text -> Json.Parser Ledger.Alonzo.BinaryPlutus
+        decodePlutusScript :: Plutus.PlutusLedgerLanguage -> Json.Key -> Text -> Json.Parser Ledger.Alonzo.PlutusBinary
         decodePlutusScript ledgerLang (Json.toText -> lang) str = do
             bytes <- decodeBase16 (encodeUtf8 str)
             let lbytes = toLazy bytes
@@ -1529,7 +1529,7 @@ decodeScript v =
                                     , "it without '" <> lang <> "' JSON key."
                                     ]
                 fail (toString (err <> hint))
-            pure (Ledger.Alonzo.BinaryPlutus $ toShort bytes)
+            pure (Ledger.Alonzo.PlutusBinary $ toShort bytes)
 
     decodeRawScript :: forall s. Binary.Decoder s ByteString
     decodeRawScript = do
@@ -1724,13 +1724,13 @@ decodeTxOut = Json.withObject "TxOut" $ \o -> do
         inlineDatum <- o .:? "datum"
         datum <- case (datumHash, inlineDatum) of
             (Nothing, Nothing) ->
-                pure Ledger.Babbage.NoDatum
+                pure Ledger.Plutus.NoDatum
             (Just Json.Null, Just Json.Null) ->
-                pure Ledger.Babbage.NoDatum
+                pure Ledger.Plutus.NoDatum
             (Just x, Nothing) ->
-                Ledger.Babbage.DatumHash <$> decodeDatumHash x
+                Ledger.Plutus.DatumHash <$> decodeDatumHash x
             (Nothing, Just x) ->
-                Ledger.Babbage.Datum <$> decodeBinaryData @(BabbageEra crypto) x
+                Ledger.Plutus.Datum <$> decodeBinaryData @(BabbageEra crypto) x
             (Just{}, Just{}) ->
                 fail "specified both 'datumHash' & 'datum'"
 
@@ -1749,13 +1749,13 @@ decodeTxOut = Json.withObject "TxOut" $ \o -> do
         inlineDatum <- o .:? "datum"
         datum <- case (datumHash, inlineDatum) of
             (Nothing, Nothing) ->
-                pure Ledger.Babbage.NoDatum
+                pure Ledger.Plutus.NoDatum
             (Just Json.Null, Just Json.Null) ->
-                pure Ledger.Babbage.NoDatum
+                pure Ledger.Plutus.NoDatum
             (Just x, Nothing) ->
-                Ledger.Babbage.DatumHash <$> decodeDatumHash x
+                Ledger.Plutus.DatumHash <$> decodeDatumHash x
             (Nothing, Just x) ->
-                Ledger.Babbage.Datum <$> decodeBinaryData @(ConwayEra crypto) x
+                Ledger.Plutus.Datum <$> decodeBinaryData @(ConwayEra crypto) x
             (Just{}, Just{}) ->
                 fail "specified both 'datumHash' & 'datum'"
 

@@ -29,7 +29,6 @@ export type UInt64 = number;
  * A Blake2b 32-byte hash digest of a transaction body
  */
 export type TransactionId = string;
-export type UInt32 = number;
 /**
  * A Cardano address (either legacy format or new format).
  */
@@ -94,6 +93,7 @@ export type Nonce = Neutral | DigestBlake2B256;
 export type Neutral = "neutral";
 export type Int64 = number;
 export type CostModel = Int64[];
+export type UInt32 = number;
 export type Metadatum = MetadatumNoSchema | MetadatumDetailedSchema;
 export type MetadatumNoSchema = IntegerNoSchema | StringNoSchema | ArrayNoSchema | ObjectNoSchema;
 export type IntegerNoSchema = bigint;
@@ -198,10 +198,17 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureInvalidOrMissingPreviousProposals
   | SubmitTransactionFailureVotingOnExpiredActions
   | SubmitTransactionFailureExecutionBudgetOutOfBounds
-  | SubmitTransactionFailureUnrecognizedCertificateType
-  | SubmitTransactionFailureInternalLedgerTypeConversionError;
+  | SubmitTransactionFailureInvalidHardForkVersionBump
+  | SubmitTransactionFailureConstitutionGuardrailsHashMismatch
+  | SubmitTransactionFailureUnrecognizedCertificateType;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
-export type ScriptPurpose = ScriptPurposeSpend | ScriptPurposeMint | ScriptPurposePublish | ScriptPurposeWithdraw;
+export type ScriptPurpose =
+  | ScriptPurposeSpend
+  | ScriptPurposeMint
+  | ScriptPurposePublish
+  | ScriptPurposeWithdraw
+  | ScriptPurposePropose
+  | ScriptPurposeVote;
 /**
  * A Blake2b 28-byte hash digest, encoded in base16.
  */
@@ -233,7 +240,7 @@ export type ScriptExecutionFailure =
   | SubmitTransactionFailureMissingDatums
   | SubmitTransactionFailureUnknownOutputReferences
   | SubmitTransactionFailureMissingCostModels
-  | SubmitTransactionFailureInternalLedgerTypeConversionError;
+  | SubmitTransactionFailureExecutionBudgetOutOfBounds;
 /**
  * Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks.
  */
@@ -528,7 +535,7 @@ export interface TransactionOutputReference {
   transaction: {
     id: TransactionId;
   };
-  index: UInt32;
+  index: UInt64;
 }
 export interface ValueAdaOnly {
   ada: {
@@ -761,6 +768,9 @@ export interface GovernanceProposal {
 export interface GovernanceActionProtocolParametersUpdate {
   type: "protocolParametersUpdate";
   parameters: ProposedProtocolParameters;
+  guardrails: null | {
+    hash: DigestBlake2B224;
+  };
 }
 export interface ProposedProtocolParameters {
   minFeeCoefficient?: UInt64;
@@ -864,6 +874,9 @@ export interface GovernanceActionTreasuryTransfer {
 export interface GovernanceActionTreasuryWithdrawals {
   type: "treasuryWithdrawals";
   withdrawals: RewardTransfer;
+  guardrails: null | {
+    hash: DigestBlake2B224;
+  };
 }
 export interface RewardTransfer {
   [k: string]: ValueDelta;
@@ -900,7 +913,9 @@ export interface ConstitutionalCommitteeMember {
  */
 export interface GovernanceActionConstitution {
   type: "constitution";
-  hash?: DigestBlake2B224;
+  guardrails: null | {
+    hash: DigestBlake2B224;
+  };
   anchor: Anchor;
 }
 /**
@@ -996,7 +1011,7 @@ export interface Redeemer {
   validator: RedeemerPointer;
 }
 export interface RedeemerPointer {
-  purpose: "spend" | "mint" | "publish" | "withdraw";
+  purpose: "spend" | "mint" | "publish" | "withdraw" | "vote" | "propose";
   index: UInt64;
 }
 /**
@@ -1267,6 +1282,14 @@ export interface ScriptPurposePublish {
 export interface ScriptPurposeWithdraw {
   purpose: "withdraw";
   rewardAccount: RewardAccount;
+}
+export interface ScriptPurposePropose {
+  purpose: "propose";
+  proposal: GovernanceProposal;
+}
+export interface ScriptPurposeVote {
+  purpose: "vote";
+  issuer: VoterGenesisDelegate | VoterConstitutionalCommittee | VoterDelegateRepresentative | VoterStakePoolOperator;
 }
 /**
  * Extraneous (non-required) redeemers found in the transaction. There are some redeemers that aren't pointing to any script. This could be because you've left some orphan redeemer behind, because they are pointing at the wrong thing or because you forgot to include their associated validator. Either way, the field 'data.extraneousRedeemers' lists the different orphan redeemer pointers.
@@ -1559,7 +1582,7 @@ export interface SubmitTransactionFailureSpendsMismatch {
   code: 3136;
   message: string;
   data: {
-    declaredSpending?: "inputs" | "collaterals";
+    declaredSpending: "inputs" | "collaterals";
     mismatchReason: string;
   };
 }
@@ -1780,7 +1803,7 @@ export interface SubmitTransactionFailureInvalidCommitteeUpdate {
   data: {
     alreadyRetiredMembers: {
       id: DigestBlake2B224;
-    };
+    }[];
   };
 }
 /**
@@ -1791,7 +1814,7 @@ export interface SubmitTransactionFailureTreasuryWithdrawalMismatch {
   message: string;
   data: {
     providedWithdrawal: ValueAdaOnly;
-    expectedWithdrawal?: ValueAdaOnly;
+    computedWithdrawal: ValueAdaOnly;
   };
 }
 /**
@@ -1832,17 +1855,32 @@ export interface SubmitTransactionFailureExecutionBudgetOutOfBounds {
   };
 }
 /**
+ * The new proposed version for a hard-fork isn't a valid version bump. The version (major, minor, patch) follows strict rules which can be summarized as follow: (1) the new triplet must be greater than the current one in the usual order of priorities (i.e. 'major' -> 'minor' -> 'patch'), (2) 'minor' must be 0 if 'major' is bumped, (3) 'minor' can only be bumped in increments of 1 and only if 'major' isn't bumped and (4) 'major' can only be bumped in increments of 1. The field 'data.proposedVersion' indicates the (invalid) version in the submitted proposal whereas 'data.currentVersion' indicates the current protocol version.
+ */
+export interface SubmitTransactionFailureInvalidHardForkVersionBump {
+  code: 3162;
+  message: string;
+  data: {
+    proposedVersion: ProtocolVersion;
+    currentVersion: ProtocolVersion;
+  };
+}
+/**
+ * The provided constitution guardrails hash doesn't match the expected on defined in the constitution. Some governance actions such as treasury withdrawals or protocol parameters updates must correctly refer to the constitution guardrails hash digest. The latter can be 'null'. The field 'data.providedHash' indicates the hash provided in the proposal, and the field 'data.expectedHash' the one specified in the constitution
+ */
+export interface SubmitTransactionFailureConstitutionGuardrailsHashMismatch {
+  code: 3163;
+  message: string;
+  data: {
+    providedHash: null | DigestBlake2B224;
+    expectedHash: null | DigestBlake2B224;
+  };
+}
+/**
  * Unrecognized certificate type. This error is a placeholder due to how internal data-types are modeled. If you ever run into this, please report the issue as you've likely discoverd a critical bug...
  */
 export interface SubmitTransactionFailureUnrecognizedCertificateType {
   code: 3998;
-  message: string;
-}
-/**
- * Whoopsie, the ledger failed to upgrade an data-type from an earlier era into data of a newer era. If you ever run into this, please report the issue as you've likely discoverd a critical bug...
- */
-export interface SubmitTransactionFailureInternalLedgerTypeConversionError {
-  code: 3999;
   message: string;
 }
 export interface SubmitTransactionDeserialisationError {
@@ -1970,7 +2008,7 @@ export interface EvaluateTransactionFailureScriptExecutionFailure {
   }[];
 }
 /**
- * An associated script witness is missing. Indeed, any script used in a transaction (when spending, minting, withdrawing or publishing certificates) must be provided in full with the transaction. Scripts must therefore be added either to the witness set or provided as a reference inputs should you use Plutus V2+ and a format from Babbage and beyond. They must also be correctly referenced by a redeemer pointer but here, some pointer failed to resolved to a valid script.
+ * Some script witnesses are missing. Indeed, any script used in a transaction (when spending, minting, etc...) must be provided in full with the transaction. Scripts must therefore be added either to the witness set or provided as a reference input should you use plutus:v2 or higher and a format from Babbage and beyond. The field 'data.missingScripts' contain hash digests of required but missing script.
  */
 export interface ScriptExecutionFailureInvalidRedeemerPointers {
   code: 3011;
@@ -2583,7 +2621,9 @@ export interface GenesisAlonzo {
 export interface GenesisConway {
   era: "conway";
   constitution: {
-    hash?: DigestBlake2B224;
+    guardrails: null | {
+      hash: DigestBlake2B224;
+    };
     anchor: Anchor;
   };
   constitutionalCommittee: {

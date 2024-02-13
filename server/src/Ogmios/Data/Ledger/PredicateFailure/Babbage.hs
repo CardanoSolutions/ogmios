@@ -35,7 +35,7 @@ encodeLedgerFailure
     -> MultiEraPredicateFailure crypto
 encodeLedgerFailure = \case
     Sh.UtxowFailure e  ->
-        encodeUtxowFailure ShelleyBasedEraBabbage e
+        encodeUtxowFailure AlonzoBasedEraBabbage e
     Sh.DelegsFailure e ->
         encodeDelegsFailure e
 
@@ -46,7 +46,7 @@ encodeUtxowFailure
         , PredicateFailure (EraRule "UTXOS" (era crypto)) ~ Al.AlonzoUtxosPredFailure (era crypto)
         , PredicateFailure (EraRule "UTXO" (era crypto)) ~ Ba.BabbageUtxoPredFailure (era crypto)
         )
-    => ShelleyBasedEra (era crypto)
+    => AlonzoBasedEra (era crypto)
     -> Ba.BabbageUtxowPredFailure (era crypto)
     -> MultiEraPredicateFailure crypto
 encodeUtxowFailure era = \case
@@ -65,7 +65,7 @@ encodeUtxoFailure
         , EraCrypto (era crypto) ~ crypto
         , PredicateFailure (EraRule "UTXOS" (era crypto)) ~ Al.AlonzoUtxosPredFailure (era crypto)
         )
-    => ShelleyBasedEra (era crypto)
+    => AlonzoBasedEra (era crypto)
     -> Ba.BabbageUtxoPredFailure (era crypto)
     -> MultiEraPredicateFailure crypto
 encodeUtxoFailure era = \case
@@ -76,7 +76,7 @@ encodeUtxoFailure era = \case
     Ba.BabbageOutputTooSmallUTxO outs ->
         let insufficientlyFundedOutputs =
                 (\(out,minAda) ->
-                    ( TxOutInAnyEra (era, out)
+                    ( TxOutInAnyEra (toShelleyBasedEra era, out)
                     , Just minAda
                     )
                 ) <$> outs

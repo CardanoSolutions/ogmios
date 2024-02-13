@@ -6,18 +6,17 @@ module Ogmios.Data.Json.Babbage where
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Ledger.Alonzo.Plutus.TxInfo
+    ( TxOutSource (..)
+    )
+import Cardano.Ledger.Api
+    ( AsIndex (..)
+    )
 import Cardano.Ledger.Binary
     ( sizedValue
     )
 import Cardano.Ledger.Val
     ( Val (..)
-    )
-import Data.Maybe.Strict
-    ( fromSMaybe
-    , strictMaybe
-    )
-import Ouroboros.Consensus.Protocol.Praos
-    ( Praos
     )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
@@ -30,7 +29,6 @@ import qualified Data.Map.Strict as Map
 import qualified Ouroboros.Consensus.Protocol.Praos.Header as Praos
 
 import qualified Cardano.Ledger.Address as Ledger
-import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Plutus.Data as Ledger
@@ -49,6 +47,8 @@ import qualified Cardano.Ledger.Babbage.PParams as Ba
 import qualified Cardano.Ledger.Babbage.Tx as Ba
 import qualified Cardano.Ledger.Babbage.TxBody as Ba
 
+import qualified Cardano.Ledger.Alonzo.Plutus.TxInfo as Al
+import qualified Cardano.Ledger.Babbage.TxInfo as Ba
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Mary as Mary
@@ -73,6 +73,36 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           "transactions" .= encodeFoldable (encodeTx opts) (Al.txSeqTxns txs)
         )
+
+encodeContextError
+    :: ( Crypto (EraCrypto era)
+       , Ba.PlutusPurpose AsIndex era ~ Al.AlonzoPlutusPurpose AsIndex era
+       )
+    => Ba.BabbageContextError era
+    -> Json
+encodeContextError err = encodeText $ case err of
+    Ba.ByronTxOutInContext TxOutFromInput{} ->
+        "Found inputs locked by a (legacy) Byron/Bootstrap address. Don't use those."
+    Ba.ByronTxOutInContext TxOutFromOutput{} ->
+        "Found outputs to a (legacy) Byron/Bootstrap address. Don't use those."
+    Ba.InlineDatumsNotSupported{} ->
+       "Inline datums not supported in plutus:v1. Use plutus:v2 or higher."
+    Ba.ReferenceScriptsNotSupported{} ->
+       "Reference scripts not supported in plutus:v1. Use plutus:v2 or higher."
+    Ba.ReferenceInputsNotSupported{} ->
+       "Reference inputs not supported in plutus:v1. Use plutus:v2 or higher."
+    Ba.RedeemerPointerPointsToNothing purpose ->
+        let (title, ptr) =
+                case purpose of
+                    Al.AlonzoSpending (AsIndex ix) -> ("spending input", ix)
+                    Al.AlonzoMinting (AsIndex ix) -> ("minting policy", ix)
+                    Al.AlonzoCertifying (AsIndex ix) -> ("publishing certificate", ix)
+                    Al.AlonzoRewarding (AsIndex ix) -> ("withdrawing from account", ix)
+          in "Couldn't find corresponding redeemer for " <> title <> " #" <> show ptr <> ". Verify your transaction's construction."
+    Ba.AlonzoContextError (Al.TimeTranslationPastHorizon e) ->
+        "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
+    Ba.AlonzoContextError (Al.TranslationLogicMissingInput i) ->
+        "Unknown transaction input (missing from UTxO set): " <> Shelley.stringifyTxIn i
 
 encodeHeader
     :: Crypto crypto
@@ -184,17 +214,17 @@ encodePParamsHKD encode pure_ x =
     encode "minFeeConstant"
         encodeCoin (Ba.bppMinFeeB x) <>
     encode "maxBlockBodySize"
-        (encodeSingleton "bytes" . encodeNatural) (Ba.bppMaxBBSize x) <>
+        (encodeSingleton "bytes" . encodeWord32) (Ba.bppMaxBBSize x) <>
     encode "maxBlockHeaderSize"
-        (encodeSingleton "bytes" . encodeNatural) (Ba.bppMaxBHSize x) <>
+        (encodeSingleton "bytes" . encodeWord16) (Ba.bppMaxBHSize x) <>
     encode "maxTransactionSize"
-        (encodeSingleton "bytes" . encodeNatural) (Ba.bppMaxTxSize x) <>
+        (encodeSingleton "bytes" . encodeWord32) (Ba.bppMaxTxSize x) <>
     encode "stakeCredentialDeposit"
         encodeCoin (Ba.bppKeyDeposit x) <>
     encode "stakePoolDeposit"
         encodeCoin (Ba.bppPoolDeposit x) <>
     encode "stakePoolRetirementEpochBound"
-        encodeEpochNo (Ba.bppEMax x) <>
+        encodeEpochInterval (Ba.bppEMax x) <>
     encode "desiredNumberOfStakePools"
         encodeNatural (Ba.bppNOpt x) <>
     encode "stakePoolPledgeInfluence"
@@ -237,7 +267,7 @@ encodeTx
     -> Json
 encodeTx (fmt, opts) x =
     encodeObject
-        ( Shelley.encodeTxId (Ledger.txid @(BabbageEra crypto) (Ba.body x))
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @(BabbageEra crypto) (Ba.body x))
        <>
         "spends" .= Alonzo.encodeIsValid (Ba.isValid x)
        <>
@@ -245,10 +275,10 @@ encodeTx (fmt, opts) x =
        <>
         "metadata" .=? OmitWhenNothing fst auxiliary
        <>
-        Alonzo.encodeWitnessSet opts (snd <$> auxiliary) (Ba.wits x)
+        Alonzo.encodeWitnessSet opts (snd <$> auxiliary) Alonzo.encodeScriptPurposeIndex (Ba.wits x)
        <>
         if includeTransactionCbor opts then
-           "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @era) x)
+           "cbor" .= encodeByteStringBase16 (encodeCbor @era x)
         else
            mempty
        )
@@ -311,12 +341,11 @@ encodeTxBody opts x scripts =
 
 encodeTxOut
     :: forall era.
-        ( Era era
-        , Ba.Script era ~ Al.AlonzoScript era
+        ( Ba.Script era ~ Al.AlonzoScript era
         , Ba.Value era ~ Ma.MaryValue (Ledger.EraCrypto era)
-        , Val (Ba.Value era)
+        , Val (Ba.Value era), Ba.AlonzoEraScript era
         )
-    => IncludeCbor
+    =>IncludeCbor
     -> Ba.BabbageTxOut era
     -> Series
 encodeTxOut opts (Ba.BabbageTxOut addr value datum script) =
@@ -337,7 +366,7 @@ encodeTxOut opts (Ba.BabbageTxOut addr value datum script) =
 
 encodeUtxo
     :: forall era.
-        ( Era era
+        ( Ba.AlonzoEraScript era
         , Ba.Script era ~ Al.AlonzoScript era
         , Ba.Value era ~ Ma.MaryValue (Ledger.EraCrypto era)
         , Ba.TxOut era ~ Ba.BabbageTxOut era
