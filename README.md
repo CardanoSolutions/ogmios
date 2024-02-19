@@ -9,7 +9,7 @@
   </picture>
 </p>
 
-**Ogmios** is a lightweight bridge interface for [cardano-node](https://github.com/input-output-hk/cardano-node/). It provides an **HTTP / WebSocket** API that enables applications to interact with a local cardano-node via **JSON+RPC-2.0**.
+**Ogmios** is a lightweight bridge interface for [cardano-node](https://github.com/intersectMBO/cardano-node/). It provides an **HTTP / WebSocket** API that enables applications to interact with a local cardano-node via **JSON+RPC-2.0**.
 
 ## Compatibility
 
