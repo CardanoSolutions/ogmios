@@ -628,7 +628,7 @@ N/A
 
 #### Added
 
-- Integrated with the Cardano eco-system corresponding to [cardano-node@1.29.0](https://github.com/input-output-hk/cardano-node/releases/tag/1.29.0) (Alonzo!) & latest testnet(s).
+- Integrated with the Cardano eco-system corresponding to [cardano-node@1.29.0](https://github.com/intersectMBO/cardano-node/releases/tag/1.29.0) (Alonzo!) & latest testnet(s).
 >
 - New `alonzo` block type, with various additions related to Alonzo.
 >

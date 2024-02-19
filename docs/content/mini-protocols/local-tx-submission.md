@@ -36,7 +36,7 @@ This guide doesn't cover the creation and serialization of Cardano transactions.
 
 - [Mesh.js](https://meshjs.dev/), a JavaScript library providing numerous tools to easily build powerful dApps on the Cardano blockchain.
 
-- [cardano-cli](https://github.com/input-output-hk/cardano-node/tree/master/cardano-cli) which offers another command-line interface for constructing and signing transactions.
+- [cardano-cli](https://github.com/intersectMBO/cardano-cli/tree/main/cardano-cli) which offers another command-line interface for constructing and signing transactions.
 
 In any case, one can always refer to the source [CDDL specifications](https://github.com/input-output-hk/cardano-ledger/blob/5af4f68486680bf73ba21a9620a14e128e9fe5f7/eras/babbage/test-suite/cddl-files/babbage.cddl) to know how to construct and serialize Cardano transactions.
 

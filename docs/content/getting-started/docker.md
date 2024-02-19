@@ -139,7 +139,7 @@ $ docker-compose up
 
 👆This will run and connect:
 
-- A [Cardano node](https://github.com/input-output-hk/cardano-node/), connected to mainnet.
+- A [Cardano node](https://github.com/intersectMBO/cardano-node/), connected to mainnet.
 - An Ogmios server using the [latest Dockerhub build](https://hub.docker.com/r/cardanosolutions/ogmios), listening to localhost on port: 1337.
 
 Once finish, tear the stack down using:
