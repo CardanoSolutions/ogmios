@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","method":"evaluateTransaction","result":[{"validator":{"index":16,"purpose":"spend"},"budget":{"memory":8732405205684860116,"cpu":8430661821970404134}}],"id":"xE2s5sVi1pzm"}
+{"jsonrpc":"2.0","method":"evaluateTransaction","result":[{"validator":{"index":0,"purpose":"mint"},"budget":{"memory":8732405205684860116,"cpu":8430661821970404134}}],"id":"xE2s5sVi1pzm"}
