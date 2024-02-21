@@ -507,7 +507,7 @@
               { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
               }
             }
-          , "anchor":
+          , "metadata":
             { "$ref": "cardano.json#/definitions/Anchor"
             }
           }
@@ -528,7 +528,7 @@
           , "deposit":
             { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
             }
-          , "anchor":
+          , "metadata":
             { "$ref": "cardano.json#/definitions/Anchor"
             }
           }
@@ -537,7 +537,7 @@
         , "description": ""
         , "title": "DelegateRepresentativeUpdate"
         , "additionalProperties": false
-        , "required": [ "type", "delegateRepresentative", "anchor" ]
+        , "required": [ "type", "delegateRepresentative", "metadata" ]
         , "properties":
           { "type":
             { "type": "string"
@@ -546,7 +546,7 @@
           , "delegateRepresentative":
             { "$ref": "cardano.json#/definitions/DelegateRepresentative"
             }
-          , "anchor":
+          , "metadata":
             { "oneOf":
               [ { "type": "null", "title": "None" }
               , { "$ref": "cardano.json#/definitions/Anchor" }
@@ -596,7 +596,7 @@
     { "title": "Constitution"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "anchor", "guardrails" ]
+    , "required": [ "metadata", "guardrails" ]
     , "properties":
       { "guardrails":
         { "oneOf":
@@ -612,7 +612,7 @@
             }
           ]
         }
-      , "anchor":
+      , "metadata":
         { "$ref": "cardano.json#/definitions/Anchor"
         }
       }
@@ -1212,7 +1212,7 @@
         , "title": "GovernanceAction<Constitution>"
         , "description": "A change in the constitution. Only its hash is recorded on-chain."
         , "additionalProperties": false
-        , "required": [ "type", "anchor", "guardrails" ]
+        , "required": [ "type", "metadata", "guardrails" ]
         , "properties":
           { "type":
             { "type": "string"
@@ -1230,7 +1230,7 @@
                 }
               ]
             }
-          , "anchor":
+          , "metadata":
             { "$ref": "cardano.json#/definitions/Anchor"
             }
           }
@@ -1274,7 +1274,7 @@
       , "returnAccount":
         { "$ref": "cardano.json#/definitions/RewardAccount"
         }
-      , "anchor":
+      , "metadata":
         { "$ref": "cardano.json#/definitions/Anchor"
         }
       , "action":
@@ -1315,7 +1315,7 @@
       { "issuer":
         { "$ref": "cardano.json#/definitions/GovernanceVoter"
         }
-      , "anchor":
+      , "metadata":
         { "$ref": "cardano.json#/definitions/Anchor"
         }
       , "vote":

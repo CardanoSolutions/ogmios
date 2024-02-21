@@ -157,7 +157,7 @@ encodeConstitution
     => Cn.Constitution era
     -> Series
 encodeConstitution x =
-    "anchor" .=
+    "metadata" .=
         encodeAnchor (Cn.constitutionAnchor x) <>
     "guardrails" .=
         encodeStrictMaybe
@@ -191,7 +191,7 @@ encodeConwayGovCert = \case
         "deposit" .=
             encodeCoin deposit
        <>
-        "anchor" .=? OmitWhenNothing
+        "metadata" .=? OmitWhenNothing
             encodeAnchor anchor
     Cn.ConwayUnRegDRep credential deposit ->
         "type" .=
@@ -209,7 +209,7 @@ encodeConwayGovCert = \case
         "delegateRepresentative" .=
             encodeDRep (Ledger.DRepCredential credential)
        <>
-        "anchor" .=
+        "metadata" .=
             encodeStrictMaybe encodeAnchor anchor
     Cn.ConwayAuthCommitteeHotKey cold hot ->
         "type" .=
@@ -227,7 +227,7 @@ encodeConwayGovCert = \case
         "member" .=
             encodeConstitutionalCommitteeMember cold SNothing
        <>
-        "anchor" .=? OmitWhenNothing
+        "metadata" .=? OmitWhenNothing
             encodeAnchor anchor
 
 encodeDelegCert
@@ -557,7 +557,7 @@ encodeProposalProcedure x = encodeObject
         encodeCoin (Cn.pProcDeposit x)
    <> "returnAccount" .=
         Shelley.encodeRewardAcnt (Cn.pProcReturnAddr x)
-   <> "anchor" .=
+   <> "metadata" .=
        encodeAnchor (Cn.pProcAnchor x)
    <> "action" .=
         encodeGovAction (Cn.pProcGovAction x)
@@ -744,7 +744,7 @@ encodeVotingProcedure issuer govActionId x =
            encodeVoter issuer
        <> "vote" .=
            encodeVote (Cn.vProcVote x)
-       <> "anchor" .=? OmitWhenNothing
+       <> "metadata" .=? OmitWhenNothing
             encodeAnchor (Cn.vProcAnchor x)
         )
 

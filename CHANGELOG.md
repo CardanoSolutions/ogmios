@@ -26,8 +26,9 @@ pre: "<b>5. </b>"
 
 - The constitution `hash` is now wrapped in a singleton object `guardrails`, to better capture its meaning. It isn't the hash of the constitution script (which is covered by the `anchor` already), but the hash of the additional script policy which controls governance proposals of certain actions (e.g. treasury withdrawals, protocol parameters).
 
-- Fixed a few minor JSON-schema oversights such as `TransactionOutputReference`'s index now being a `UInt64` (instead of `UInt32`).
+- Renamed all fields `anchor` to `metadata` in the Conway era objects to be more consistent with other occurences of metadata in previous eras.
 
+- Fixed a few minor JSON-schema oversights such as `TransactionOutputReference`'s index now being a `UInt64` (instead of `UInt32`).
 
 #### Removed
 

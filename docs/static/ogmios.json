@@ -3707,10 +3707,10 @@
                 { "type": "array"
                 , "items":
                   { "type": "object"
-                  , "required": [ "anchor", "type" ]
+                  , "required": [ "metadata", "type" ]
                   , "additionalProperties": false
                   , "properties":
-                    { "anchor":
+                    { "metadata":
                       { "$ref": "cardano.json#/definitions/Anchor"
                       }
                     , "type":

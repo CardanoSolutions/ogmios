@@ -852,7 +852,7 @@ encodePredicateFailure reject = \case
                 ( "invalidOrMissingPreviousProposals" .=
                     encodeFoldable (\(anchor, purpose, actionId) ->
                         encodeObject
-                            ( "anchor" .=
+                            ( "metadata" .=
                                 Conway.encodeAnchor anchor
                            <> "type" .=
                                 Conway.encodeGovActionPurpose purpose
