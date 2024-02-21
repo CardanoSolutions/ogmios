@@ -183,7 +183,6 @@ import Test.Generators
     , genBlockNo
     , genBoundResult
     , genData
-    , genDelegationAndRewardsResult
     , genEpochResult
     , genEvaluateTransactionResponse
     , genGenesisConfig
@@ -198,6 +197,7 @@ import Test.Generators
     , genPoolDistrResult
     , genPoolParametersResult
     , genProposedPParamsResult
+    , genRewardAccountSummariesResult
     , genRewardsProvenanceResult
     , genSubmitResult
     , genSystemStart
@@ -609,7 +609,7 @@ spec = do
                     ]
                 }
             |])
-            (parseQueryLedgerRewardAccountSummaries genDelegationAndRewardsResult)
+            (parseQueryLedgerRewardAccountSummaries genRewardAccountSummariesResult)
 
         validateLedgerStateQuery 30 "protocolParameters"
             Nothing
@@ -1061,7 +1061,7 @@ validateLedgerStateQuery n subMethod params parser = do
                                 (encodingToValue . encodeQueryResponse encodeResult)
                                 responseRefs
                             )
-                    SomeCompoundQuery _ _ encodeResult genResult -> do
+                    SomeCompoundQuery _ _ _ encodeResult genResult -> do
                         case era of
                             SomeShelleyEra ShelleyBasedEraConway -> do
                                 generateTestVectors (n, toString propName)
@@ -1151,7 +1151,7 @@ validateNetworkQuery n subMethod params parser = do
                             (encodingToValue . encodeQueryResponse encodeResult)
                             responseRefs
                         )
-                Just (SomeCompoundQuery _ _ encodeResult genResult) -> do
+                Just (SomeCompoundQuery _ _ _ encodeResult genResult) -> do
                     generateTestVectors (n, toString propName)
                         (reasonablySized $ genResult Proxy)
                         (encodeQueryResponse encodeResult)

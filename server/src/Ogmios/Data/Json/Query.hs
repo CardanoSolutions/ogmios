@@ -22,6 +22,9 @@ module Ogmios.Data.Json.Query
     , Interpreter
     , RewardAccounts
     , RewardsProvenance
+    , Deposits
+    , RewardAccountSummaries
+    , RewardAccountSummary (..)
     , Sh.Api.RewardInfoPool
     , Sh.Api.RewardParams
     , Sh.Desirability
@@ -29,7 +32,6 @@ module Ogmios.Data.Json.Query
 
       -- * Encoders
     , encodeBound
-    , encodeDelegationsAndRewards
     , encodeEpochNo
     , encodeEraMismatch
     , encodeInterpreter
@@ -38,9 +40,10 @@ module Ogmios.Data.Json.Query
     , encodeOneEraHash
     , encodePoint
     , encodePoolDistr
-    , encodeStakePools
+    , encodeRewardAccountSummaries
     , encodeRewardInfoPool
     , encodeRewardsProvenance
+    , encodeStakePools
 
       -- * Decoders
     , decodeAddress
@@ -94,6 +97,9 @@ import Cardano.Crypto.Hash
 import Cardano.Crypto.Hash.Class
     ( Hash
     , HashAlgorithm
+    )
+import Cardano.Ledger.Alonzo.Core
+    ( AlonzoEraScript
     )
 import Cardano.Ledger.Alonzo.Genesis
     ( AlonzoGenesis
@@ -259,9 +265,6 @@ import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.RewardProvenance as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
-import Cardano.Ledger.Alonzo.Core
-    ( AlonzoEraScript
-    )
 import qualified Cardano.Ledger.Api as Ledger
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
@@ -296,14 +299,16 @@ data SomeQuery (f :: Type -> Type) block where
         -> SomeQuery f block
 
     SomeCompoundQuery
-        :: forall f block a b. ()
-        => LSQ.Query block a
+        :: forall f block a b result crypto. (crypto ~ BlockCrypto block)
+        => LSQ.Query block (QueryResult crypto a)
             -- ^ First query to run
-        -> (a -> Either Json (LSQ.Query block b))
+        -> (a -> LSQ.Query block (QueryResult crypto b))
             -- ^ Serialize results from the first query
-        -> (b -> Either Json Json)
+        -> (a -> b -> result)
+            -- ^ Combine results from first and second queries
+        -> (QueryResult crypto result -> Either Json Json)
             -- ^ Serialize results to JSON encoding.
-        -> (Proxy b -> f b)
+        -> GenResult crypto f result
             -- ^ Yield results in some applicative 'f' from some type definition.
             -- Useful when `f ~ Gen` for testing.
         -> SomeQuery f block
@@ -385,13 +390,25 @@ type GenResult crypto f t =
 type Delegations crypto =
     Map (Ledger.Credential 'Staking crypto) (Ledger.KeyHash 'StakePool crypto)
 
+type Deposits crypto =
+    Map (Ledger.Credential 'Staking crypto) Coin
+
 type RewardAccounts crypto =
     Map (Ledger.Credential 'Staking crypto) Coin
+
+type RewardAccountSummaries crypto =
+    Map (Ledger.Credential 'Staking crypto) (RewardAccountSummary crypto)
 
 type RewardsProvenance crypto =
     ( Sh.Api.RewardParams
     , Map (Ledger.KeyHash 'StakePool crypto) Sh.Api.RewardInfoPool
     )
+
+data RewardAccountSummary crypto = RewardAccountSummary
+    { delegate :: !(Ledger.KeyHash 'StakePool crypto)
+    , rewards :: !Coin
+    , deposit :: !Coin
+    } deriving (Eq, Show, Generic)
 
 --
 -- Encoders
@@ -409,29 +426,21 @@ encodeBound bound =
         encodeEpochNo (boundEpoch bound)
     & encodeObject
 
-encodeDelegationsAndRewards
+encodeRewardAccountSummaries
     :: Crypto crypto
-    => (Delegations crypto, RewardAccounts crypto)
+    => RewardAccountSummaries crypto
     -> Json
-encodeDelegationsAndRewards (dlg, rwd) =
-    encodeMap Shelley.stringifyCredential id merge
-  where
-    merge = Map.merge whenDlgMissing whenRwdMissing whenBothPresent dlg rwd
-
-    whenDlgMissing = Map.mapMaybeMissing
-        (\_ v -> Just $ encodeObject $
-            "delegate" .= encodeSingleton "id" (Shelley.encodePoolId v)
-        )
-    whenRwdMissing = Map.mapMaybeMissing
-        (\_ v -> Just $ encodeObject $
-            "rewards" .= encodeCoin v
-        )
-    whenBothPresent = Map.zipWithAMatched
-        (\_ x y -> pure $ encodeObject $
-            "delegate" .=
-                encodeSingleton "id" (Shelley.encodePoolId x) <>
-            "rewards" .=
-                encodeCoin y
+encodeRewardAccountSummaries =
+    encodeMap
+        Shelley.stringifyCredential
+        (\summary -> encodeObject
+            ( "delegate" .=
+                encodeSingleton "id" (Shelley.encodePoolId (delegate summary))
+           <> "rewards" .=
+                encodeCoin (rewards summary)
+           <> "deposit" .=
+                encodeCoin (deposit summary)
+            )
         )
 
 encodeEraMismatch
@@ -767,7 +776,7 @@ parseQueryLedgerProjectedRewards genResult =
 
 parseQueryLedgerRewardAccountSummaries
     :: forall crypto f. (Crypto crypto)
-    => GenResult crypto f (Delegations crypto, RewardAccounts crypto)
+    => GenResult crypto f (RewardAccountSummaries crypto)
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseQueryLedgerRewardAccountSummaries genResult =
@@ -778,33 +787,145 @@ parseQueryLedgerRewardAccountSummaries genResult =
         byKey <- obj .:? "keys" .!= Set.empty
             >>= traverset (decodeCredential @crypto decodeAsKeyHash)
         let credentials = byScript <> byKey
-        pure $
-            ( \queryDef -> Just $ SomeStandardQuery
-                queryDef
-                (eraMismatchOrResult encodeDelegationsAndRewards)
-                genResult
+        pure $ Just . \case
+            SomeShelleyEra ShelleyBasedEraShelley ->
+                SomeCompoundQuery
+                    (LSQ.BlockQuery
+                        (QueryIfCurrentShelley
+                            (GetFilteredDelegationsAndRewardAccounts credentials)
+                        )
+                    )
+                    (\_ -> LSQ.BlockQuery
+                        (QueryIfCurrentShelley
+                            (GetStakeDelegDeposits credentials)
+                        )
+                    )
+                    mergeAll
+                    (eraMismatchOrResult encodeRewardAccountSummaries)
+                    genResult
+
+            SomeShelleyEra ShelleyBasedEraAllegra ->
+                SomeCompoundQuery
+                    (LSQ.BlockQuery
+                        (QueryIfCurrentAllegra
+                            (GetFilteredDelegationsAndRewardAccounts credentials)
+                        )
+                    )
+                    (\_ -> LSQ.BlockQuery
+                        (QueryIfCurrentAllegra
+                            (GetStakeDelegDeposits credentials)
+                        )
+                    )
+                    mergeAll
+                    (eraMismatchOrResult encodeRewardAccountSummaries)
+                    genResult
+
+            SomeShelleyEra ShelleyBasedEraMary ->
+                SomeCompoundQuery
+                    (LSQ.BlockQuery
+                        (QueryIfCurrentMary
+                            (GetFilteredDelegationsAndRewardAccounts credentials)
+                        )
+                    )
+                    (\_ -> LSQ.BlockQuery
+                        (QueryIfCurrentMary
+                            (GetStakeDelegDeposits credentials)
+                        )
+                    )
+                    mergeAll
+                    (eraMismatchOrResult encodeRewardAccountSummaries)
+                    genResult
+
+            SomeShelleyEra ShelleyBasedEraAlonzo ->
+                SomeCompoundQuery
+                    (LSQ.BlockQuery
+                        (QueryIfCurrentAlonzo
+                            (GetFilteredDelegationsAndRewardAccounts credentials)
+                        )
+                    )
+                    (\_ -> LSQ.BlockQuery
+                        (QueryIfCurrentAlonzo
+                            (GetStakeDelegDeposits credentials)
+                        )
+                    )
+                    mergeAll
+                    (eraMismatchOrResult encodeRewardAccountSummaries)
+                    genResult
+
+            SomeShelleyEra ShelleyBasedEraBabbage ->
+                SomeCompoundQuery
+                    (LSQ.BlockQuery
+                        (QueryIfCurrentBabbage
+                            (GetFilteredDelegationsAndRewardAccounts credentials)
+                        )
+                    )
+                    (\_ -> LSQ.BlockQuery
+                        (QueryIfCurrentBabbage
+                            (GetStakeDelegDeposits credentials)
+                        )
+                    )
+                    mergeAll
+                    (eraMismatchOrResult encodeRewardAccountSummaries)
+                    genResult
+
+            SomeShelleyEra ShelleyBasedEraConway ->
+                SomeCompoundQuery
+                    (LSQ.BlockQuery
+                        (QueryIfCurrentConway
+                            (GetFilteredDelegationsAndRewardAccounts credentials)
+                        )
+                    )
+                    (\_ -> LSQ.BlockQuery
+                        (QueryIfCurrentConway
+                            (GetStakeDelegDeposits credentials)
+                        )
+                    )
+                    mergeAll
+                    (eraMismatchOrResult encodeRewardAccountSummaries)
+                    genResult
+  where
+    mergeAll
+        :: (Delegations crypto, RewardAccounts crypto)
+        -> Deposits crypto
+        -> RewardAccountSummaries crypto
+    mergeAll (dlg, rwd) dep =
+        Map.merge
+            Map.dropMissing
+            Map.dropMissing
+            (Map.zipWithMatched (const identity))
+            (Map.merge
+                Map.dropMissing
+                Map.dropMissing
+                (Map.zipWithMatched (const RewardAccountSummary))
+                dlg
+                rwd
             )
-            .
-            ( \case
-                SomeShelleyEra ShelleyBasedEraShelley ->
-                    LSQ.BlockQuery $ QueryIfCurrentShelley
-                        (GetFilteredDelegationsAndRewardAccounts credentials)
-                SomeShelleyEra ShelleyBasedEraAllegra ->
-                    LSQ.BlockQuery $ QueryIfCurrentAllegra
-                        (GetFilteredDelegationsAndRewardAccounts credentials)
-                SomeShelleyEra ShelleyBasedEraMary ->
-                    LSQ.BlockQuery $ QueryIfCurrentMary
-                        (GetFilteredDelegationsAndRewardAccounts credentials)
-                SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    LSQ.BlockQuery $ QueryIfCurrentAlonzo
-                        (GetFilteredDelegationsAndRewardAccounts credentials)
-                SomeShelleyEra ShelleyBasedEraBabbage ->
-                    LSQ.BlockQuery $ QueryIfCurrentBabbage
-                        (GetFilteredDelegationsAndRewardAccounts credentials)
-                SomeShelleyEra ShelleyBasedEraConway ->
-                    LSQ.BlockQuery $ QueryIfCurrentConway
-                        (GetFilteredDelegationsAndRewardAccounts credentials)
-            )
+            dep
+
+--            SomeShelleyEra ShelleyBasedEraAllegra ->
+--                LSQ.BlockQuery $ QueryIfCurrentAllegra
+--                    (GetFilteredDelegationsAndRewardAccounts credentials)
+--            SomeShelleyEra ShelleyBasedEraMary ->
+--                LSQ.BlockQuery $ QueryIfCurrentMary
+--                    (GetFilteredDelegationsAndRewardAccounts credentials)
+--            SomeShelleyEra ShelleyBasedEraAlonzo ->
+--                LSQ.BlockQuery $ QueryIfCurrentAlonzo
+--                    (GetFilteredDelegationsAndRewardAccounts credentials)
+--            SomeShelleyEra ShelleyBasedEraBabbage ->
+--                LSQ.BlockQuery $ QueryIfCurrentBabbage
+--                    (GetFilteredDelegationsAndRewardAccounts credentials)
+--            SomeShelleyEra ShelleyBasedEraConway ->
+--                LSQ.BlockQuery $ QueryIfCurrentConway
+--                    (GetFilteredDelegationsAndRewardAccounts credentials)
+
+--        pure $
+--            ( \queryDef -> Just $ SomeStandardQuery
+--                queryDef
+--                (eraMismatchOrResult encodeDelegationsAndRewards)
+--                genResult
+--            )
+--            .
+--            ( \case
 
 parseQueryLedgerProtocolParameters
     :: forall crypto f. (Typeable crypto)
@@ -1106,7 +1227,11 @@ parseQueryLedgerRewardsProvenance genResult =
 
 parseQueryLedgerStakePools
     :: forall crypto f. (Crypto crypto)
-    => GenResult crypto f (Map (Ledger.KeyHash 'StakePool crypto) (Ledger.PoolParams crypto))
+    => GenResult crypto f
+        (Map
+            (Ledger.KeyHash 'StakePool crypto)
+            (Ledger.PoolParams crypto)
+        )
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseQueryLedgerStakePools genResult =
@@ -1143,37 +1268,43 @@ parseQueryLedgerStakePools genResult =
         SomeShelleyEra ShelleyBasedEraShelley ->
             SomeCompoundQuery
                 (LSQ.BlockQuery (QueryIfCurrentShelley GetStakePools))
-                (eraMismatchOrResult (LSQ.BlockQuery . QueryIfCurrentShelley . GetStakePoolParams))
+                (LSQ.BlockQuery . QueryIfCurrentShelley . GetStakePoolParams)
+                (const identity)
                 (eraMismatchOrResult encodeStakePools)
                 genResult
         SomeShelleyEra ShelleyBasedEraAllegra ->
             SomeCompoundQuery
                 (LSQ.BlockQuery (QueryIfCurrentAllegra GetStakePools))
-                (eraMismatchOrResult (LSQ.BlockQuery . QueryIfCurrentAllegra . GetStakePoolParams))
+                (LSQ.BlockQuery . QueryIfCurrentAllegra . GetStakePoolParams)
+                (const identity)
                 (eraMismatchOrResult encodeStakePools)
                 genResult
         SomeShelleyEra ShelleyBasedEraMary ->
             SomeCompoundQuery
                 (LSQ.BlockQuery (QueryIfCurrentMary GetStakePools))
-                (eraMismatchOrResult (LSQ.BlockQuery . QueryIfCurrentMary . GetStakePoolParams))
+                (LSQ.BlockQuery . QueryIfCurrentMary . GetStakePoolParams)
+                (const identity)
                 (eraMismatchOrResult encodeStakePools)
                 genResult
         SomeShelleyEra ShelleyBasedEraAlonzo ->
             SomeCompoundQuery
                 (LSQ.BlockQuery (QueryIfCurrentAlonzo GetStakePools))
-                (eraMismatchOrResult (LSQ.BlockQuery . QueryIfCurrentAlonzo . GetStakePoolParams))
+                (LSQ.BlockQuery . QueryIfCurrentAlonzo . GetStakePoolParams)
+                (const identity)
                 (eraMismatchOrResult encodeStakePools)
                 genResult
         SomeShelleyEra ShelleyBasedEraBabbage ->
             SomeCompoundQuery
                 (LSQ.BlockQuery (QueryIfCurrentBabbage GetStakePools))
-                (eraMismatchOrResult (LSQ.BlockQuery . QueryIfCurrentBabbage . GetStakePoolParams))
+                (LSQ.BlockQuery . QueryIfCurrentBabbage . GetStakePoolParams)
+                (const identity)
                 (eraMismatchOrResult encodeStakePools)
                 genResult
         SomeShelleyEra ShelleyBasedEraConway ->
             SomeCompoundQuery
                 (LSQ.BlockQuery (QueryIfCurrentConway GetStakePools))
-                (eraMismatchOrResult (LSQ.BlockQuery . QueryIfCurrentConway . GetStakePoolParams))
+                (LSQ.BlockQuery . QueryIfCurrentConway . GetStakePoolParams)
+                (const identity)
                 (eraMismatchOrResult encodeStakePools)
                 genResult
 

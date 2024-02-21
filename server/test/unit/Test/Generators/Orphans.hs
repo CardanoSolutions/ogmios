@@ -12,6 +12,9 @@ import Ogmios.Prelude
 import Cardano.Ledger.Alonzo.Core
     ( AlonzoEraScript (..)
     )
+import Ogmios.Data.Json.Query
+    ( RewardAccountSummary (..)
+    )
 import Ogmios.Data.Ledger
     ( ScriptPurposeIndexInAnyEra (..)
     )
@@ -19,6 +22,9 @@ import Test.QuickCheck
     ( Arbitrary (..)
     , elements
     , oneof
+    )
+import Test.QuickCheck.Arbitrary.Generic
+    ( genericArbitrary
     )
 
 import qualified Cardano.Ledger.Alonzo.Core as Ledger
@@ -34,6 +40,9 @@ instance Arbitrary (ScriptPurposeIndexInAnyEra StandardCrypto) where
         , ScriptPurposeIndexInAnyEra . (AlonzoBasedEraBabbage,) <$> arbitrary
         , ScriptPurposeIndexInAnyEra . (AlonzoBasedEraConway,) <$> arbitrary
         ]
+
+instance Crypto crypto => Arbitrary (RewardAccountSummary crypto) where
+    arbitrary = genericArbitrary
 
 instance (AlonzoEraScript era, Ledger.Script era ~ Ledger.AlonzoScript era) => Arbitrary (Ledger.PlutusScript era) where
   arbitrary = do

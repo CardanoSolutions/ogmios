@@ -50,13 +50,12 @@ import Data.Type.Equality
     , (:~:) (..)
     )
 import Ogmios.Data.Json.Query
-    ( Delegations
-    , GenesisConfig
+    ( GenesisConfig
     , Interpreter
     , PoolParams
     , QueryResult
-    , RewardAccounts
     , RewardsProvenance
+    , RewardAccountSummaries
     )
 import Ogmios.Data.Ledger
     ( ContextErrorInAnyEra (..)
@@ -527,11 +526,11 @@ genNonMyopicMemberRewardsResult _ = frequency
     , (10, Right <$> arbitrary)
     ]
 
-genDelegationAndRewardsResult
+genRewardAccountSummariesResult
     :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (Delegations crypto, RewardAccounts crypto))
-    -> Gen (QueryResult crypto (Delegations crypto, RewardAccounts crypto))
-genDelegationAndRewardsResult _ = frequency
+    => Proxy (QueryResult crypto (RewardAccountSummaries crypto))
+    -> Gen (QueryResult crypto (RewardAccountSummaries crypto))
+genRewardAccountSummariesResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> arbitrary)
     ]

@@ -2400,10 +2400,11 @@ export interface RewardAccountSummaries {
   [k: string]: RewardAccountSummary;
 }
 export interface RewardAccountSummary {
-  delegate?: {
+  delegate: {
     id: StakePoolId;
   };
-  rewards?: ValueAdaOnly;
+  rewards: ValueAdaOnly;
+  deposit: ValueAdaOnly;
 }
 /**
  * Query details about rewards calculation for the ongoing epoch.
