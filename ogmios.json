@@ -11,6 +11,7 @@
   , "EvaluateTransaction", "EvaluateTransactionResponse"
 
   , "AcquireLedgerState", "AcquireLedgerStateResponse"
+  , "QueryLedgerStateConstitution", "QueryLedgerStateConstitutionResponse"
   , "QueryLedgerStateEpoch", "QueryLedgerStateEpochResponse"
   , "QueryLedgerStateEraStart", "QueryLedgerStateEraStartResponse"
   , "QueryLedgerStateEraSummaries", "QueryLedgerStateEraSummariesResponse"
@@ -781,6 +782,56 @@
         { "description": "Any value that was set by a client request in the 'id' field."
         }
       }
+    }
+
+  , "QueryLedgerStateConstitution":
+    { "title": "QueryLedgerStateConstitution"
+    , "description": "Query the current constitution definition (only available from Conway onwards)."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/constitution" ]
+        }
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateConstitutionResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateConstitutionResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/constitution" ]
+            }
+          , "result":
+            { "$ref": "cardano.json#/definitions/Constitution"
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
     }
 
   , "QueryLedgerStateEpoch":
@@ -2306,6 +2357,7 @@
   , "RewardAccountSummary":
     { "type": "object"
     , "additionalProperties": false
+    , "required": [ "delegate", "rewards", "deposit" ]
     , "properties":
       { "delegate":
         { "type": "object"
@@ -2316,11 +2368,13 @@
           }
         }
       , "rewards": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "deposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       }
     , "examples":
       [ { "bc1597ad71c55d2d009a9274b3831ded155118dd769f5376decc1369":
           { "delegate": "pool1kchver88u3kygsak8wgll7htr8uxn5v35lfrsyy842nkscrzyvj"
           , "rewards": 219558722
+          , "deposit": 2000000
           }
         }
       ]
@@ -3653,10 +3707,10 @@
                 { "type": "array"
                 , "items":
                   { "type": "object"
-                  , "required": [ "anchor", "type" ]
+                  , "required": [ "metadata", "type" ]
                   , "additionalProperties": false
                   , "properties":
-                    { "anchor":
+                    { "metadata":
                       { "$ref": "cardano.json#/definitions/Anchor"
                       }
                     , "type":
