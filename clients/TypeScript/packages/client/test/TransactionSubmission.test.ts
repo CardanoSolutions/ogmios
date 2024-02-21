@@ -74,12 +74,12 @@ describe('TransactionSubmission', () => {
           expect(e).toBeInstanceOf(JSONRPCError)
           expect(e.code).toBe(-32602)
           expect(e.data).toEqual({
-            babbage: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 4, but found 0.",
-            conway: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 4, but found 0.",
-            alonzo: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 4, but found 0.",
-            mary: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 0.",
-            allegra: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 0.",
-            shelley: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 0."
+            allegra: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 3.",
+            alonzo: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 4.",
+            babbage: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 4.",
+            conway: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 4.",
+            mary: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 3.",
+            shelley: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 3."
           })
         }
       })
@@ -99,9 +99,9 @@ describe('TransactionSubmission', () => {
           expect(e).toBeInstanceOf(JSONRPCError)
           expect(e.code).toBe(-32602)
           expect(e.data).toEqual({
-            conway: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 4, but found 3.",
-            babbage: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 4, but found 3.",
-            alonzo: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 4, but found 3.",
+            alonzo: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 4.",
+            babbage: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 4.",
+            conway: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 4.",
             mary: "invalid or incomplete value of type 'Transaction': An error occured while decoding value of type AllegraTxBodyRaw " +
               '(MultiAsset StandardCrypto). field atbrTxFee with key 2, not decoded.',
             allegra: "invalid or incomplete value of type 'Transaction': An error occured while decoding value of type AllegraTxBodyRaw (). " +
