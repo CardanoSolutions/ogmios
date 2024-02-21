@@ -38,6 +38,7 @@ import Ogmios.Control.MonadSTM
 import Ogmios.Data.Health
     ( ConnectionStatus (..)
     , Health (..)
+    , NetworkSynchronization (..)
     , Tip (..)
     , modifyHealth
     )
@@ -66,6 +67,7 @@ import Network.HTTP.Client
 import Network.HTTP.Types
     ( HeaderName
     , status200
+    , status202
     , status400
     , status404
     , status406
@@ -134,10 +136,14 @@ postRootR = Handler $ \EnvServer{configuration} -> do
 getHealthR :: Handler
 getHealthR = Handler $ \EnvServer{health, sensors, sampler} -> do
     header "Access-Control-Allow-Origin" "*"
-    status status200
-    json =<< do
+    response@Health{connectionStatus, networkSynchronization} <- do
         metrics <- lift $ Metrics.sample sampler sensors
         modifyHealth health (\h -> h { metrics })
+    status $ case (connectionStatus, networkSynchronization) of
+        (Disconnected, _) -> status500
+        (Connected, Just (NetworkSynchronization 1)) -> status200
+        (Connected, _) -> status202
+    json response
 
 getMetricsR :: Handler
 getMetricsR = Handler $ \EnvServer{health, sensors, sampler} -> do

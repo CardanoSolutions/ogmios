@@ -97,9 +97,6 @@ import Ouroboros.Consensus.Cardano.Block
 import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
     ( QueryHardFork (..)
     )
-import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos
-    )
 import Ouroboros.Consensus.Shelley.Ledger
     ( ShelleyBlock
     )

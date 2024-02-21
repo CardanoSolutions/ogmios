@@ -28,7 +28,14 @@ module Ogmios.Prelude
 
       -- * StrictMaybe
     , StrictMaybe
+    , fromSMaybe
+    , isSJust
+    , isSNothing
     , maybeToStrictMaybe
+    , strictMaybe
+
+      -- * StrictSeq
+    , StrictSeq
 
       -- * Array
     , Array
@@ -38,19 +45,22 @@ module Ogmios.Prelude
     , traverset
 
       -- * Ledger & consensus common
-    , Era
-    , EraCrypto
-    , Crypto
-    , StandardCrypto
-    , CardanoEras
     , AllegraEra
     , AlonzoEra
     , BabbageEra
+    , CardanoEras
     , ConwayEra
+    , Crypto
+    , Era
+    , EraCrypto
     , MaryEra
+    , Praos
     , ShelleyEra
+    , StandardCrypto
+    , TPraos
 
-      -- * CBOR Decoding
+      -- * CBOR Encoding/Decoding
+    , encodeCbor
     , decodeCbor
     , decodeCborWith
     , decodeCborAnn
@@ -73,11 +83,18 @@ module Ogmios.Prelude
     , ByronEra
     , EraIndex (..)
     , ShelleyBasedEra (..)
+    , ToShelleyBasedEra (..)
     , IsShelleyBasedEra (..)
+    , AlonzoBasedEra (..)
+    , IsAlonzoBasedEra (..)
     , BlockCrypto
     , fromEraIndex
     ) where
 
+import Cardano.Ledger.Binary
+    ( EncCBOR
+    , serialize'
+    )
 import Cardano.Ledger.Core
     ( ByronEra
     )
@@ -112,10 +129,17 @@ import Data.Generics.Product.Typed
     )
 import Data.Maybe.Strict
     ( StrictMaybe
+    , fromSMaybe
+    , isSJust
+    , isSNothing
     , maybeToStrictMaybe
+    , strictMaybe
     )
 import Data.Profunctor.Unsafe
     ( (#.)
+    )
+import Data.Sequence.Strict
+    ( StrictSeq
     )
 import Data.SOP.Strict
     ( NS (..)
@@ -262,8 +286,38 @@ data ShelleyBasedEra era where
     ShelleyBasedEraAlonzo  :: forall crypto. ShelleyBasedEra (AlonzoEra crypto)
     ShelleyBasedEraBabbage :: forall crypto. ShelleyBasedEra (BabbageEra crypto)
     ShelleyBasedEraConway  :: forall crypto. ShelleyBasedEra (ConwayEra crypto)
-
 deriving instance Show (ShelleyBasedEra era)
+deriving instance Eq (ShelleyBasedEra era)
+deriving instance Ord (ShelleyBasedEra era)
+
+data AlonzoBasedEra era where
+    AlonzoBasedEraAlonzo  :: forall crypto. AlonzoBasedEra (AlonzoEra crypto)
+    AlonzoBasedEraBabbage :: forall crypto. AlonzoBasedEra (BabbageEra crypto)
+    AlonzoBasedEraConway  :: forall crypto. AlonzoBasedEra (ConwayEra crypto)
+deriving instance Show (AlonzoBasedEra era)
+deriving instance Eq (AlonzoBasedEra era)
+deriving instance Ord (AlonzoBasedEra era)
+
+class ToShelleyBasedEra f where
+    toShelleyBasedEra :: f era -> ShelleyBasedEra era
+
+instance ToShelleyBasedEra AlonzoBasedEra where
+    toShelleyBasedEra = \case
+        AlonzoBasedEraAlonzo -> ShelleyBasedEraAlonzo
+        AlonzoBasedEraBabbage -> ShelleyBasedEraBabbage
+        AlonzoBasedEraConway -> ShelleyBasedEraConway
+
+class IsAlonzoBasedEra era where
+    alonzoBasedEra :: AlonzoBasedEra era
+
+instance IsAlonzoBasedEra (AlonzoEra crypto) where
+    alonzoBasedEra = AlonzoBasedEraAlonzo
+
+instance IsAlonzoBasedEra (BabbageEra crypto) where
+    alonzoBasedEra = AlonzoBasedEraBabbage
+
+instance IsAlonzoBasedEra (ConwayEra crypto) where
+    alonzoBasedEra = AlonzoBasedEraConway
 
 data SomeShelleyEra =
     forall era. SomeShelleyEra (ShelleyBasedEra era)
@@ -316,6 +370,14 @@ fromEraIndex = \case
     EraIndex       (S (S (S (S Z{}))))   -> Just (SomeShelleyEra ShelleyBasedEraAlonzo)
     EraIndex    (S (S (S (S (S Z{})))))  -> Just (SomeShelleyEra ShelleyBasedEraBabbage)
     EraIndex (S (S (S (S (S (S Z{})))))) -> Just (SomeShelleyEra ShelleyBasedEraConway)
+
+-- | Encode an object into a CBOR binary bytestring, based on the era encoder.
+encodeCbor
+    :: forall era a. (Era era, EncCBOR a)
+    => a
+    -> ByteString
+encodeCbor =
+    serialize' (Ledger.eraProtVerLow @era)
 
 -- Run a CBOR decoder for a data in a particular era.
 decodeCborWith

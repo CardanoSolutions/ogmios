@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","method":"evaluateTransaction","error":{"code":3004,"message":"Unable to create the evaluation context from the given transaction.","data":{"reason":"Inline datums not supported in PlutusV1. Use PlutusV2 or higher."}},"id":null}
+{"jsonrpc":"2.0","method":"evaluateTransaction","error":{"code":3004,"message":"Unable to create the evaluation context from the given transaction.","data":{"reason":"A script purpose in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."}},"id":null}

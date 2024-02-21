@@ -147,6 +147,9 @@ import Ouroboros.Network.Protocol.Handshake
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..)
     )
+import Ouroboros.Network.Protocol.LocalStateQuery.Type
+    ( Target (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxMonitor.Client
     ( LocalTxMonitorClient (..)
     )
@@ -399,7 +402,9 @@ newTimeInterpreterClient = do
         -> (UTCTime -> NetworkSynchronization -> (EpochNo, SlotInEpoch) -> CardanoEra -> m ())
         -> m (LSQ.ClientStIdle block (Point block) (Ledger.Query block) m ())
     clientStIdle getTip notifyResult =
-        pure $ LSQ.SendMsgAcquire Nothing $ LSQ.ClientStAcquiring
+        -- TODO: Seems like the chain-sync protocol now allows to acquire the
+        -- tip of the immutable db too; which may have some interesting use-case?
+        pure $ LSQ.SendMsgAcquire VolatileTip $ LSQ.ClientStAcquiring
             { LSQ.recvMsgAcquired = do
                 clientStAcquired getTip notifyResult
             , LSQ.recvMsgFailure = -- Impossible in practice
@@ -412,7 +417,7 @@ newTimeInterpreterClient = do
         -> m (LSQ.ClientStAcquired block (Point block) (Ledger.Query block) m ())
     clientStAcquired getTip notifyResult = do
         tip <- getTip
-        pure $ LSQ.SendMsgReAcquire Nothing $ LSQ.ClientStAcquiring
+        pure $ LSQ.SendMsgReAcquire VolatileTip $ LSQ.ClientStAcquiring
             { LSQ.recvMsgAcquired = do
                 let continuation = clientStAcquired getTip notifyResult
                 pure (clientStQuerySlotTime notifyResult tip continuation)

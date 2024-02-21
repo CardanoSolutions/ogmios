@@ -11,6 +11,7 @@
   , "EvaluateTransaction", "EvaluateTransactionResponse"
 
   , "AcquireLedgerState", "AcquireLedgerStateResponse"
+  , "QueryLedgerStateConstitution", "QueryLedgerStateConstitutionResponse"
   , "QueryLedgerStateEpoch", "QueryLedgerStateEpochResponse"
   , "QueryLedgerStateEraStart", "QueryLedgerStateEraStartResponse"
   , "QueryLedgerStateEraSummaries", "QueryLedgerStateEraSummariesResponse"
@@ -781,6 +782,56 @@
         { "description": "Any value that was set by a client request in the 'id' field."
         }
       }
+    }
+
+  , "QueryLedgerStateConstitution":
+    { "title": "QueryLedgerStateConstitution"
+    , "description": "Query the current constitution definition (only available from Conway onwards)."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/constitution" ]
+        }
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateConstitutionResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateConstitutionResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/constitution" ]
+            }
+          , "result":
+            { "$ref": "cardano.json#/definitions/Constitution"
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
     }
 
   , "QueryLedgerStateEpoch":
@@ -2306,6 +2357,7 @@
   , "RewardAccountSummary":
     { "type": "object"
     , "additionalProperties": false
+    , "required": [ "delegate", "rewards", "deposit" ]
     , "properties":
       { "delegate":
         { "type": "object"
@@ -2316,11 +2368,13 @@
           }
         }
       , "rewards": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "deposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       }
     , "examples":
       [ { "bc1597ad71c55d2d009a9274b3831ded155118dd769f5376decc1369":
           { "delegate": "pool1kchver88u3kygsak8wgll7htr8uxn5v35lfrsyy842nkscrzyvj"
           , "rewards": 219558722
+          , "deposit": 2000000
           }
         }
       ]
@@ -2370,7 +2424,7 @@
   , "ScriptExecutionFailure":
     { "oneOf":
       [ { "title": "ScriptExecutionFailure<InvalidRedeemerPointers>"
-        , "description": "An associated script witness is missing. Indeed, any script used in a transaction (when spending, minting, withdrawing or publishing certificates) must be provided in full with the transaction. Scripts must therefore be added either to the witness set or provided as a reference inputs should you use Plutus V2+ and a format from Babbage and beyond. They must also be correctly referenced by a redeemer pointer but here, some pointer failed to resolved to a valid script."
+        , "description": "Some script witnesses are missing. Indeed, any script used in a transaction (when spending, minting, etc...) must be provided in full with the transaction. Scripts must therefore be added either to the witness set or provided as a reference input should you use plutus:v2 or higher and a format from Babbage and beyond. The field 'data.missingScripts' contain hash digests of required but missing script."
         , "type": "object"
         , "additionalProperties": false
         , "required": [ "code", "message", "data" ]
@@ -2434,7 +2488,7 @@
       , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<MissingDatums>" }
       , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<UnknownOutputReference>" }
       , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<MissingCostModels>" }
-      , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<InternalLedgerTypeConversionError>" }
+      , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<ExecutionBudgetOutOfBounds>" }
       ]
     }
 
@@ -3184,7 +3238,7 @@
           , "data":
             { "type": "object"
             , "additionalProperties": false
-            , "required": [ "spends", "mismatchReason" ]
+            , "required": [ "declaredSpending", "mismatchReason" ]
             , "properties":
               { "declaredSpending": { "$ref": "cardano.json#/definitions/InputSource" }
               , "mismatchReason": { "type": "string" }
@@ -3599,11 +3653,14 @@
             , "additionalProperties": false
             , "properties":
               { "alreadyRetiredMembers":
-                { "type": "object"
-                , "additionalProperties": false
-                , "required": [ "id" ]
-                , "properties":
-                  { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                { "type": "array"
+                , "items":
+                  { "type": "object"
+                  , "additionalProperties": false
+                  , "required": [ "id" ]
+                  , "properties":
+                    { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                    }
                   }
                 }
               }
@@ -3626,7 +3683,7 @@
               { "providedWithdrawal":
                 { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
                 }
-              , "expectedWithdrawal":
+              , "computedWithdrawal":
                 { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
                 }
               }
@@ -3650,10 +3707,10 @@
                 { "type": "array"
                 , "items":
                   { "type": "object"
-                  , "required": [ "anchor", "type" ]
+                  , "required": [ "metadata", "type" ]
                   , "additionalProperties": false
                   , "properties":
-                    { "anchor":
+                    { "metadata":
                       { "$ref": "cardano.json#/definitions/Anchor"
                       }
                     , "type":
@@ -3704,21 +3761,50 @@
             }
           }
         }
-      , { "title": "SubmitTransactionFailure<ExecutionBudgetOutOfBounds>"
-        , "description": "The transaction ran out of execution budget! This means that the budget granted for the execution of a particular script was too small or exceeding the maximum value allowed by the protocol. The field 'data.budgetUsed' indicates the actual execution units used by the validator before it was interrupted."
+      , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<ExecutionBudgetOutOfBounds>" }
+      , { "title": "SubmitTransactionFailure<InvalidHardForkVersionBump>"
+        , "description": "The new proposed version for a hard-fork isn't a valid version bump. The version (major, minor, patch) follows strict rules which can be summarized as follow: (1) the new triplet must be greater than the current one in the usual order of priorities (i.e. 'major' -> 'minor' -> 'patch'), (2) 'minor' must be 0 if 'major' is bumped, (3) 'minor' can only be bumped in increments of 1 and only if 'major' isn't bumped and (4) 'major' can only be bumped in increments of 1. The field 'data.proposedVersion' indicates the (invalid) version in the submitted proposal whereas 'data.currentVersion' indicates the current protocol version."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
         , "properties":
-          { "code": { "type": "integer", "enum": [ 3161 ] }
+          { "code": { "type": "integer", "enum": [ 3162 ] }
           , "message": { "type": "string" }
           , "data":
             { "type": "object"
             , "additionalProperties": false
-            , "required": [ "budgetUsed" ]
+            , "required": [ "proposedVersion", "currentVersion" ]
             , "properties":
-              { "budgetUsed":
-                { "$ref": "cardano.json#/definitions/ExecutionUnits"
+              { "proposedVersion": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
+              , "currentVersion": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
+              }
+            }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<ConstitutionGuardrailsHashMismatch>"
+        , "description": "The provided constitution guardrails hash doesn't match the expected on defined in the constitution. Some governance actions such as treasury withdrawals or protocol parameters updates must correctly refer to the constitution guardrails hash digest. The latter can be 'null'. The field 'data.providedHash' indicates the hash provided in the proposal, and the field 'data.expectedHash' the one specified in the constitution"
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3163 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "providedHash", "expectedHash" ]
+            , "properties":
+              { "providedHash":
+                { "oneOf":
+                  [ { "$ref": "cardano.json#/definitions/Null" }
+                  , { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                  ]
+                }
+              , "expectedHash":
+                { "oneOf":
+                  [ { "$ref": "cardano.json#/definitions/Null" }
+                  , { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                  ]
                 }
               }
             }
@@ -3734,7 +3820,6 @@
           , "message": { "type": "string" }
           }
         }
-      , { "$ref": "ogmios.json#/definitions/SubmitTransactionFailure<InternalLedgerTypeConversionError>" }
       ]
     }
   , "SubmitTransactionFailure<ExtraneousRedeemers>":
@@ -3829,15 +3914,25 @@
       }
     }
 
-  , "SubmitTransactionFailure<InternalLedgerTypeConversionError>":
-    { "title": "SubmitTransactionFailure<InternalLedgerTypeConversionError>"
-    , "description": "Whoopsie, the ledger failed to upgrade an data-type from an earlier era into data of a newer era. If you ever run into this, please report the issue as you've likely discoverd a critical bug..."
+  , "SubmitTransactionFailure<ExecutionBudgetOutOfBounds>":
+    { "title": "SubmitTransactionFailure<ExecutionBudgetOutOfBounds>"
+    , "description": "The transaction ran out of execution budget! This means that the budget granted for the execution of a particular script was too small or exceeding the maximum value allowed by the protocol. The field 'data.budgetUsed' indicates the actual execution units used by the validator before it was interrupted."
     , "type": "object"
-    , "required": [ "code", "message" ]
+    , "required": [ "code", "message", "data" ]
     , "additionalProperties": false
     , "properties":
-      { "code": { "type": "integer", "enum": [ 3999 ] }
+      { "code": { "type": "integer", "enum": [ 3161 ] }
       , "message": { "type": "string" }
+      , "data":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "budgetUsed" ]
+        , "properties":
+          { "budgetUsed":
+            { "$ref": "cardano.json#/definitions/ExecutionUnits"
+            }
+          }
+        }
       }
     }
 

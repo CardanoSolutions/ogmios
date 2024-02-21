@@ -115,18 +115,17 @@ import Ogmios.Data.Json
     , encodeAcquireFailure
     , encodeBlock
     , encodeDeserialisationFailure
+    , encodeEvaluationError
     , encodeExUnits
-    , encodeObject
     , encodePoint
-    , encodeRdmrPtr
-    , encodeScriptFailure
     , encodeSubmitTransactionError
     , encodeTip
-    , encodeTranslationError
     , encodeTx
     , encodeTxId
-    , encodeTxIn
     , jsonToByteString
+    )
+import Ogmios.Data.Json.Ledger.PredicateFailure
+    ( encodeScriptPurposeIndexInAnyEra
     )
 import Ogmios.Data.Json.Orphans
     ()
@@ -228,12 +227,10 @@ newWebSocketApp tr unliftIO = do
             , mkTxSubmissionCodecs
                 opts
                 encodeTxId
-                encodeRdmrPtr
+                encodeScriptPurposeIndexInAnyEra
                 encodeExUnits
-                (encodeObject . encodeTxIn)
-                encodeTranslationError
+                encodeEvaluationError
                 encodeSubmitTransactionError
-                encodeScriptFailure
                 encodeDeserialisationFailure
             )
 

@@ -8,12 +8,32 @@ info:
 
     - [Chain synchronization](#operation-publish-/?FindIntersection)
       - [Error codes](/mini-protocols/local-chain-sync/#errors)
-    - [Ledger state queries](#operation-publish-/?AcquireLedgerState)
-      - [Error codes](/mini-protocols/local-state-query/#errors)
+
     - [Transaction submission](#operation-publish-/?SubmitTransaction)
       - [Error codes](/mini-protocols/local-tx-submission/#errors)
+
     - [Mempool monitoring](#operation-publish-/?AcquireMempool)
       - [Error codes](/mini-protocols/local-tx-monitor/#errors)
+
+    - [Ledger state queries](#operation-publish-/?AcquireLedgerState)
+      - [Error codes](/mini-protocols/local-state-query/#errors)
+      - [LedgerState/Constitution](#operation-publish-/?QueryLedgerStateConstitution)
+      - [LedgerState/Epoch](#operation-publish-/?QueryLedgerStateEpoch)
+      - [LedgerState/EraStart](#operation-publish-/?QueryLedgerStateEraStart)
+      - [LedgerState/EraSummaries](#operation-publish-/?QueryLedgerStateEraSummaries)
+      - [LedgerState/LiveStakeDistribution](#operation-publish-/?QueryLedgerStateLiveStakeDistribution)
+      - [LedgerState/ProjectedRewards](#operation-publish-/?QueryLedgerStateProjectedRewards)
+      - [LedgerState/ProtocolParameters](#operation-publish-/?QueryLedgerStateProtocolParameters)
+      - [LedgerState/ProposedProtocolParameters](#operation-publish-/?QueryLedgerStateProposedProtocolParameters)
+      - [LedgerState/RewardAccountSummaries](#operation-publish-/?QueryLedgerStateRewardAccountSummaries)
+      - [LedgerState/RewardsProvenance](#operation-publish-/?QueryLedgerStateRewardsProvenance)
+      - [LedgerState/StakePools](#operation-publish-/?QueryLedgerStateStakePools)
+      - [LedgerState/Tip](#operation-publish-/?QueryLedgerStateTip)
+      - [LedgerState/Utxo](#operation-publish-/?QueryLedgerStateUtxo)
+      - [Network/BlockHeight](#operation-publish-/?QueryNetworkBlockHeight)
+      - [Network/GenesisConfiguration](#operation-publish-/?QueryNetworkGenesisConfiguration)
+      - [Network/StartTime](#operation-publish-/?QueryNetworkStartTime)
+      - [Network/Tip](#operation-publish-/?QueryNetworkTip)
 
     ### Schemas
 
@@ -219,6 +239,20 @@ channels:
         oneOf:
           - $ref: "#/components/messages/AcquireLedgerStateResponse"
 
+  /?QueryLedgerStateConstitution:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateConstitution
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateConstitution"
+    subscribe:
+      operationId: QueryLedgerStateConstitutionResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateConstitutionResponse"
+
   /?QueryLedgerStateEpoch:
     description: |
       <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
@@ -316,6 +350,34 @@ channels:
       message:
         oneOf:
           - $ref: "#/components/messages/QueryLedgerStateProposedProtocolParametersResponse"
+
+  /?QueryLedgerStateRewardAccountSummaries:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateRewardAccountSummaries
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateRewardAccountSummaries"
+    subscribe:
+      operationId: QueryLedgerStateRewardAccountSummariesResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateRewardAccountSummariesResponse"
+
+  /?QueryLedgerStateRewardsProvenance:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateRewardsProvenance
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateRewardsProvenance"
+    subscribe:
+      operationId: QueryLedgerStateRewardsProvenanceResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateRewardsProvenanceResponse"
 
   /?QueryLedgerStateStakePools:
     description: |

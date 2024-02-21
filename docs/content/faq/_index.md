@@ -8,7 +8,7 @@ pre = "<b>6. </b>"
 #### Can you explain Ogmios in ~~one~~ three sentences?
 
 
-Ogmios is a lightweight bridge interface for [cardano-node](https://github.com/input-output-hk/cardano-node/). It offers a WebSockets API that enables local clients to speak [Ouroboros' mini-protocols](https://input-output-hk.github.io/ouroboros-network/pdfs/network-spec/network-spec.pdf#chapter.3) via JSON/RPC. Ogmios is a fast and lightweight solution that can be deployed alongside relays to create entry points on the Cardano network for various types of applications (e.g. wallets, explorers, chatbots, dashboards…)
+Ogmios is a lightweight bridge interface for [cardano-node](https://github.com/intersectMBO/cardano-node/). It offers a WebSockets API that enables local clients to speak [Ouroboros' mini-protocols](https://ouroboros-network.cardano.intersectmbo.org/pdfs/network-spec/network-spec.pdf#chapter.3) via JSON/RPC. Ogmios is a fast and lightweight solution that can be deployed alongside relays to create entry points on the Cardano network for various types of applications (e.g. wallets, explorers, chatbots, dashboards…)
 
 #### Can you explain Ogmios to me like I'm five?
 

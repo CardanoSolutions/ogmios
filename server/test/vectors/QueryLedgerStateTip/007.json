@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","method":"queryLedgerState/tip","result":{"slot":8429340,"id":"8c81d0658a67cb25ff74d579d2b95cc8efc815cb80b21df48f17cc870ae60800"},"id":null}
+{"jsonrpc":"2.0","method":"queryLedgerState/tip","result":{"slot":1215493,"id":"8c81d0658a67cb25ff74d579d2b95cc8efc815cb80b21df48f17cc870ae60800"},"id":null}

@@ -95,6 +95,9 @@ import Ouroboros.Network.Block
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( LocalStateQueryClient (..)
     )
+import Ouroboros.Network.Protocol.LocalStateQuery.Type
+    ( Target (..)
+    )
 
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
@@ -140,13 +143,13 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
     clientStIdle = await >>= \case
         MsgAcquireLedgerState (AcquireLedgerState pt) toResponse ->
             defaultWithInternalError clientStIdle yield toResponse $ do
-                pure $ LSQ.SendMsgAcquire (Just pt) (clientStAcquiring pt toResponse)
+                pure $ LSQ.SendMsgAcquire (SpecificPoint pt) (clientStAcquiring pt toResponse)
         MsgReleaseLedgerState ReleaseLedgerState toResponse -> do
             yield $ encodeReleaseLedgerStateResponse (toResponse ReleaseLedgerStateResponse)
             clientStIdle
         MsgQueryLedgerState query toResponse -> do
             defaultWithInternalError clientStIdle yield toResponse $ do
-                pure $ LSQ.SendMsgAcquire Nothing (clientStAcquiringTip query toResponse)
+                pure $ LSQ.SendMsgAcquire VolatileTip (clientStAcquiringTip query toResponse)
 
     clientStAcquiring
         :: Point block
@@ -185,22 +188,24 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
                                 pure $ LSQ.SendMsgRelease clientStIdle
                             }
 
-                    Just (era, SomeCompoundQuery qryA encodeResultA encodeResultB _proxy) -> do
+                    Just (era, SomeCompoundQuery qryA qryB combine encodeResult _proxy) -> do
                         logWith tr $ StateQueryRequest { query, point = Nothing, era }
                         pure $ LSQ.SendMsgQuery qryA $ LSQ.ClientStQuerying
-                            { LSQ.recvMsgResult = \(encodeResultA -> resultA) -> do
-                                case resultA of
-                                    Left e -> do
-                                        yield $ encodeQueryLedgerStateResponse $ toResponse $ QueryEraMismatch e
-                                        pure $ LSQ.SendMsgRelease clientStIdle
-                                    Right a ->
-                                        pure $ LSQ.SendMsgQuery a $ LSQ.ClientStQuerying
-                                            { LSQ.recvMsgResult = \(encodeResultB -> result) -> do
-                                                whenRight_ result $ logWith tr . StateQueryResponse . ViaEncoding
-                                                yield $ encodeQueryLedgerStateResponse $ toResponse $
-                                                    either QueryEraMismatch QueryResponse result
-                                                pure $ LSQ.SendMsgRelease clientStIdle
-                                            }
+                            { LSQ.recvMsgResult = \case
+                                Left e -> do
+                                    let result = encodeResult $ Left e
+                                    yield $ encodeQueryLedgerStateResponse $ toResponse $
+                                        either QueryEraMismatch QueryResponse result
+                                    pure $ LSQ.SendMsgRelease clientStIdle
+                                Right resultA ->
+                                    pure $ LSQ.SendMsgQuery (qryB resultA) $ LSQ.ClientStQuerying
+                                        { LSQ.recvMsgResult = \resultB -> do
+                                            let result = encodeResult (combine resultA <$> resultB)
+                                            whenRight_ result $ logWith tr . StateQueryResponse . ViaEncoding
+                                            yield $ encodeQueryLedgerStateResponse $ toResponse $
+                                                either QueryEraMismatch QueryResponse result
+                                            pure $ LSQ.SendMsgRelease clientStIdle
+                                        }
                             }
 
                     Just (_era, SomeAdHocQuery qry encodeResult _proxy) -> do
@@ -238,7 +243,7 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
     clientStAcquired pt = await >>= \case
         MsgAcquireLedgerState (AcquireLedgerState pt') toResponse ->
             defaultWithInternalError (clientStAcquired pt) yield toResponse $ do
-                pure $ LSQ.SendMsgReAcquire (Just pt') (clientStAcquiring pt' toResponse)
+                pure $ LSQ.SendMsgReAcquire (SpecificPoint pt') (clientStAcquiring pt' toResponse)
         MsgReleaseLedgerState ReleaseLedgerState toResponse -> do
             yield $ encodeReleaseLedgerStateResponse (toResponse ReleaseLedgerStateResponse)
             pure $ LSQ.SendMsgRelease clientStIdle
@@ -259,22 +264,24 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
                             clientStAcquired pt
                         }
 
-                Just (era, SomeCompoundQuery qryA encodeResultA encodeResultB _proxy) -> do
+                Just (era, SomeCompoundQuery qryA qryB combine encodeResult _proxy) -> do
                     logWith tr $ StateQueryRequest { query, point = Nothing, era }
                     pure $ LSQ.SendMsgQuery qryA $ LSQ.ClientStQuerying
-                        { LSQ.recvMsgResult = \(encodeResultA -> resultA) -> do
-                            case resultA of
-                                Left e -> do
-                                    yield $ encodeQueryLedgerStateResponse $ toResponse $ QueryEraMismatch e
-                                    clientStAcquired pt
-                                Right a ->
-                                    pure $ LSQ.SendMsgQuery a $ LSQ.ClientStQuerying
-                                        { LSQ.recvMsgResult = \(encodeResultB -> result) -> do
-                                            whenRight_ result $ logWith tr . StateQueryResponse . ViaEncoding
-                                            yield $ encodeQueryLedgerStateResponse $ toResponse $
-                                                either QueryEraMismatch QueryResponse result
-                                            clientStAcquired pt
-                                        }
+                        { LSQ.recvMsgResult = \case
+                            Left e -> do
+                                let result = encodeResult $ Left e
+                                yield $ encodeQueryLedgerStateResponse $ toResponse $
+                                    either QueryEraMismatch QueryResponse result
+                                clientStAcquired pt
+                            Right resultA ->
+                                pure $ LSQ.SendMsgQuery (qryB resultA) $ LSQ.ClientStQuerying
+                                    { LSQ.recvMsgResult = \resultB -> do
+                                        let result = encodeResult (combine resultA <$> resultB)
+                                        whenRight_ result $ logWith tr . StateQueryResponse . ViaEncoding
+                                        yield $ encodeQueryLedgerStateResponse $ toResponse $
+                                            either QueryEraMismatch QueryResponse result
+                                        clientStAcquired pt
+                                    }
                         }
 
                 Just (_era, SomeAdHocQuery qry encodeResult _proxy) -> do

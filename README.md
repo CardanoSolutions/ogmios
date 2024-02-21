@@ -9,14 +9,14 @@
   </picture>
 </p>
 
-**Ogmios** is a lightweight bridge interface for [cardano-node](https://github.com/input-output-hk/cardano-node/). It provides an **HTTP / WebSocket** API that enables applications to interact with a local cardano-node via **JSON+RPC-2.0**.
+**Ogmios** is a lightweight bridge interface for [cardano-node](https://github.com/intersectMBO/cardano-node/). It provides an **HTTP / WebSocket** API that enables applications to interact with a local cardano-node via **JSON+RPC-2.0**.
 
 ## Compatibility
 
-| Ogmios   | Cardano-node       |
-| ---      | ---                |
-| `v5.6.0` | `1.35.4`, `1.35.7` |
-| `v6.0.2` | `8.7.2`, `8.7.3`   |
+| Ogmios   | Cardano-node         |
+| ---      | ---                  |
+| `v5.6.0` | `1.35.4`, `1.35.7`   |
+| `v6.1.0` | `8.7.3`, `8.8.0-pre` |
 
 [SanchoNet]: https://sancho.network/
 
@@ -47,6 +47,7 @@ See our [Ogmios client starter kit](https://github.com/CardanoSolutions/ogmios-t
 
   queryLedgerState             | Information
   ---                          | ---
+  `constitution`               | The current on-chain constitution.
   `epoch`                      | The current epoch of the ledger.
   `eraStart`                   | The information regarding the beginning of the current ledger era.
   `eraSummaries`               | Era bounds and slot parameters details, required for proper slotting arithmetic.
@@ -98,6 +99,7 @@ Ogmios provides a language-agnostic API which can be implemented using any WebSo
 <td align="center"><img height=72 width=72 src=".github/clients/kotlin.png" alt="Logo:Kotlin"><br/><a href="https://github.com/projectNEWM/kogmios#readme"><strong>Kotlin</strong></a></td>
 <td align="center"><img height=72 width=72 src=".github/clients/java.png" alt="Logo:Java"><br/><a href="https://github.com/adabox-aio/ogmios-java-client.git#readme"><strong>Java</strong></a></td>
 <td align="center"><img height=72 width=72 src=".github/clients/python.png" alt="Logo:Python"><br/><a href="https://ogmios-python.readthedocs.io/en/latest/examples/index.html"><strong>Python</Strong></a></td>
+<td align="center"><img height=72 width=72 src=".github/clients/elixir.png" alt="Logo:Python"><br/><a href="https://github.com/wowica/xogmios"><strong>Elixir</Strong></a></td>
 </tr><thead></table>
 
 ## Sponsors
@@ -113,7 +115,7 @@ A big thank to [all our sponsors 💖](https://github.com/CardanoSolutions#-spon
   |
   <a href="CHANGELOG.md">:floppy_disk: Changelog</a>
   |
-  <a href="https://discord.gg/ZeyDn65t5v"><img src=".github/discord.svg" alt="Discord">Discord (#ogmios)</a>
+  <a href="https://discord.gg/zMr6EGvBpr"><img src=".github/discord.svg" alt="Discord">Discord (#ogmios)</a>
   |
   <a href="https://twitter.com/_KtorZ_"><img src=".github/twitter.svg" alt="Twitter"> Twitter (@_KtorZ_)</a>
 </p>

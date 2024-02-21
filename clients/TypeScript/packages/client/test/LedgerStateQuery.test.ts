@@ -2,7 +2,7 @@ import delay from 'delay'
 import { dummyInteractionContext } from './helpers'
 import { InteractionContext, JSONRPCError, LedgerStateQuery } from '../src'
 import {
-  RewardAccountSummaries,
+  RewardAccountSummary,
   DigestBlake2B256,
   DigestBlake2B224,
   GenesisAlonzo,
@@ -174,9 +174,10 @@ describe('Local state queries', () => {
       it('fetches the current delegate and rewards for given stake key hashes', async () => {
         const keys = ['91a1b46bacf302e91a8cba443073f7bc84cc74701a338c111e8c6591'] as DigestBlake2B224[]
         const result = await LedgerStateQuery.rewardAccountSummaries(context, { keys })
-        const item = result[keys[0]] as RewardAccountSummaries
+        const item = result[keys[0]] as RewardAccountSummary
         expect(item).toHaveProperty('delegate')
         expect(item).toHaveProperty('rewards')
+        expect(item).toHaveProperty('deposit')
       })
       it('returns an empty object when there are no rewards', async () => {
         const keys = ['00000000000000000000000000000000000000000000000000000000'] as DigestBlake2B224[]

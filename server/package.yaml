@@ -145,11 +145,12 @@ tests:
     - aeson-pretty
     - bytestring
     - cardano-ledger-alonzo
+    - cardano-ledger-alonzo:testlib
     - cardano-ledger-api
     - cardano-ledger-binary
+    - cardano-ledger-conway:testlib
     - cardano-ledger-core
     - cardano-ledger-shelley
-    - cardano-ledger-shelley-test
     - cardano-slotting
     - containers
     - directory
@@ -166,7 +167,6 @@ tests:
     - ouroboros-consensus
     - ouroboros-consensus-cardano
     - ouroboros-consensus-cardano:unstable-cardano-testlib
-    - ouroboros-consensus-protocol
     - ouroboros-network-api
     - ouroboros-network-framework
     - ouroboros-network-ogmios
