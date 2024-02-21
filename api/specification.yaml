@@ -1,7 +1,7 @@
 asyncapi: '2.4.0'
 info:
   title: Ogmios
-  version: '6.0.*'
+  version: '6.1.*'
   description: |
 
     ### Protocols
