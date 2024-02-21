@@ -291,6 +291,12 @@ export interface Ogmios {
   QueryLedgerStateEraMismatch?: QueryLedgerStateEraMismatch;
   QueryLedgerStateUnavailableInCurrentEra?: QueryLedgerStateUnavailableInCurrentEra;
   QueryLedgerStateAcquiredExpire?: QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateConstitution: QueryLedgerStateConstitution;
+  QueryLedgerStateConstitutionResponse:
+    | QueryLedgerStateConstitutionResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
   QueryLedgerStateEpoch: QueryLedgerStateEpoch;
   QueryLedgerStateEpochResponse:
     | QueryLedgerStateEpochResponse
@@ -2180,6 +2186,26 @@ export interface QueryLedgerStateAcquiredExpired {
   id?: unknown;
 }
 /**
+ * Query the current constitution definition (only available from Conway onwards).
+ */
+export interface QueryLedgerStateConstitution {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/constitution";
+  id?: unknown;
+}
+export interface QueryLedgerStateConstitutionResponse {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/constitution";
+  result: Constitution;
+  id?: unknown;
+}
+export interface Constitution {
+  guardrails: null | {
+    hash: DigestBlake2B224;
+  };
+  anchor: Anchor;
+}
+/**
  * Query the current epoch number the ledger is at.
  */
 export interface QueryLedgerStateEpoch {
@@ -2621,12 +2647,7 @@ export interface GenesisAlonzo {
  */
 export interface GenesisConway {
   era: "conway";
-  constitution: {
-    guardrails: null | {
-      hash: DigestBlake2B224;
-    };
-    anchor: Anchor;
-  };
+  constitution: Constitution;
   constitutionalCommittee: {
     members: ConstitutionalCommitteeMember[];
     quorum: Ratio;

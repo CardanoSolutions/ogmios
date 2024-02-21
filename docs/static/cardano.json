@@ -592,6 +592,32 @@
     , "contentEncoding": "base16"
     }
 
+  , "Constitution":
+    { "title": "Constitution"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "anchor", "guardrails" ]
+    , "properties":
+      { "guardrails":
+        { "oneOf":
+          [ { "$ref": "cardano.json#/definitions/Null" }
+          , { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "hash" ]
+            , "properties":
+              { "hash":
+                { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+                }
+              }
+            }
+          ]
+        }
+      , "anchor":
+        { "$ref": "cardano.json#/definitions/Anchor"
+        }
+      }
+    }
+
   , "ConstitutionalCommitteeMember":
     { "title": "ConstitutionalCommitteeMember"
     , "type": "object"
@@ -970,28 +996,7 @@
         , "enum": [ "conway" ]
         }
       , "constitution":
-        { "type": "object"
-        , "additionalProperties": false
-        , "required": [ "anchor", "guardrails" ]
-        , "properties":
-          { "guardrails":
-            { "oneOf":
-              [ { "$ref": "cardano.json#/definitions/Null" }
-              , { "type": "object"
-                , "additionalProperties": false
-                , "required": [ "hash" ]
-                , "properties":
-                  { "hash":
-                    { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
-                    }
-                  }
-                }
-              ]
-            }
-          , "anchor":
-            { "$ref": "cardano.json#/definitions/Anchor"
-            }
-          }
+        { "$ref": "cardano.json#/definitions/Constitution"
         }
       , "constitutionalCommittee":
         { "type": "object"

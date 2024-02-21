@@ -1,3 +1,4 @@
+export { constitution } from './constitution'
 export { epoch } from './epoch'
 export { eraStart } from './eraStart'
 export { eraSummaries } from './eraSummaries'

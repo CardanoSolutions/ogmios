@@ -23,12 +23,13 @@ import {
   const context = await createInteractionContext(console.error, () => {}, { connection })
 
   const cardanoOgmiosRepl = repl.start({
-    prompt: `${args.host}> `,
+    prompt: `${context.connection.address.webSocket}> `,
     ignoreUndefined: true
   })
 
   Object.assign(cardanoOgmiosRepl.context, {
     acquireMempool: () => MempoolMonitoring.acquireMempool(context),
+    constitution: () => LedgerStateQuery.constitution(context),
     epoch: () => LedgerStateQuery.epoch(context),
     eraStart: () => LedgerStateQuery.eraStart(context),
     eraSummaries: () => LedgerStateQuery.eraSummaries(context),

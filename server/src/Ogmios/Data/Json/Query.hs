@@ -67,6 +67,7 @@ module Ogmios.Data.Json.Query
     , decodeValue
 
       -- * Parsers
+    , parseQueryLedgerConstitution
     , parseQueryLedgerEpoch
     , parseQueryLedgerEraStart
     , parseQueryLedgerEraSummaries
@@ -369,6 +370,8 @@ instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
                 parseQueryLedgerUtxoByAddress (const id) queryParams
                 <|>
                 parseQueryLedgerUtxo (const id) queryParams
+            "LedgerState/constitution" ->
+                parseQueryLedgerConstitution (const id) queryParams
             "Network/blockHeight" ->
                 parseQueryNetworkBlockHeight id queryParams
             "Network/genesisConfiguration" ->
@@ -616,6 +619,30 @@ eraMismatchOrResult
 eraMismatchOrResult =
     bimap encodeMismatchEraInfo
 {-# INLINABLE eraMismatchOrResult #-}
+
+parseQueryLedgerConstitution
+    :: forall f crypto. (Crypto crypto)
+    => (forall era. (Typeable era) => Proxy era -> GenResult crypto f (Maybe (Ledger.Constitution era)))
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseQueryLedgerConstitution genResult =
+    Json.withObject "epoch" $ \obj -> do
+        guard (null obj) $> \case
+            SomeShelleyEra ShelleyBasedEraShelley ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraAllegra ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraMary ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraAlonzo ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraBabbage ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraConway ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery (QueryIfCurrentConway GetConstitution))
+                    (eraMismatchOrResult (encodeMaybe (encodeObject . Conway.encodeConstitution)))
+                    (genResult $ Proxy @(ConwayEra crypto))
 
 parseQueryLedgerEpoch
     :: forall crypto f. ()

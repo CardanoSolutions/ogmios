@@ -153,8 +153,8 @@ encodeContextError err = encodeText $ case err of
         "Unknown transaction input (missing from UTxO set): " <> Shelley.stringifyTxIn i
 
 encodeConstitution
-    :: Crypto crypto
-    => Cn.Constitution (ConwayEra crypto)
+    :: Era era
+    => Cn.Constitution era
     -> Series
 encodeConstitution x =
     "anchor" .=

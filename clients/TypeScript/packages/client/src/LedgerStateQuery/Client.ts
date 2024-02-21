@@ -1,5 +1,6 @@
 import { InteractionContext, Method, ensureSocketIsOpen } from '../Connection'
 import {
+  constitution,
   epoch,
   eraStart,
   eraSummaries,
@@ -43,6 +44,7 @@ export interface LedgerStateQueryClient {
   releaseLedgerState(): Promise<void>
   shutdown(): Promise<void>
 
+  constitution(): ReturnType<typeof constitution>
   epoch(): ReturnType<typeof epoch>
   eraStart(): ReturnType<typeof eraStart>
   eraSummaries: () => ReturnType<typeof eraSummaries>
@@ -119,6 +121,9 @@ export async function createLedgerStateQueryClient (
       )
     },
 
+    constitution () {
+      return constitution(context)
+    },
     epoch () {
       return epoch(context)
     },

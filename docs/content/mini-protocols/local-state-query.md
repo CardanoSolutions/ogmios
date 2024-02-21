@@ -100,6 +100,7 @@ queryNetwork                 | Information
 
 queryLedgerState             | Information
 ---                          | ---
+`constitution`               | The on-chain constitution.
 `epoch`                      | The current epoch of the ledger.
 `eraStart`                   | The information regarding the beginning of the current ledger era.
 `eraSummaries`               | Era bounds and slot parameters details, required for proper slotting arithmetic.
@@ -382,6 +383,16 @@ Be aware that it is possible for an acquire request to fail even if (and in part
 ```
 
 ### Ledger-state
+
+#### constitution
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/constitution"
+}
+```
+
 
 #### epoch
 
