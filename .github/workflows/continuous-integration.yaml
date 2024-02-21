@@ -403,8 +403,8 @@ jobs:
         os: [ linux ]
         target: [ cardano-node-ogmios ]
         network: [ mainnet, preprod, preview, sanchonet ]
-        cardano-node: [ 8.7.2, 8.7.3 ]
-        cardano-node-latest: [ 8.7.3 ]
+        cardano-node: [ 8.7.3, 8.8.0-pre ]
+        cardano-node-latest: [ 8.8.0-pre ]
         arch: [ x86_64 ]
     steps:
     - name: 📥 Checkout repository
