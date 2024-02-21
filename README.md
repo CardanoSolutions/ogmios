@@ -13,10 +13,10 @@
 
 ## Compatibility
 
-| Ogmios   | Cardano-node       |
-| ---      | ---                |
-| `v5.6.0` | `1.35.4`, `1.35.7` |
-| `v6.0.2` | `8.7.2`, `8.7.3`   |
+| Ogmios   | Cardano-node         |
+| ---      | ---                  |
+| `v5.6.0` | `1.35.4`, `1.35.7`   |
+| `v6.1.0` | `8.7.3`, `8.8.0-pre` |
 
 [SanchoNet]: https://sancho.network/
 
