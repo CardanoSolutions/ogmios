@@ -54,8 +54,8 @@ import Ogmios.Data.Json.Query
     , Interpreter
     , PoolParams
     , QueryResult
-    , RewardsProvenance
     , RewardAccountSummaries
+    , RewardsProvenance
     )
 import Ogmios.Data.Ledger
     ( ContextErrorInAnyEra (..)

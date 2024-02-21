@@ -915,7 +915,7 @@ parseQueryLedgerRewardAccountSummaries genResult =
         :: (Delegations crypto, RewardAccounts crypto)
         -> Deposits crypto
         -> RewardAccountSummaries crypto
-    mergeAll (dlg, rwd) dep =
+    mergeAll (dlg, rwd) =
         Map.merge
             Map.dropMissing
             Map.dropMissing
@@ -927,32 +927,6 @@ parseQueryLedgerRewardAccountSummaries genResult =
                 dlg
                 rwd
             )
-            dep
-
---            SomeShelleyEra ShelleyBasedEraAllegra ->
---                LSQ.BlockQuery $ QueryIfCurrentAllegra
---                    (GetFilteredDelegationsAndRewardAccounts credentials)
---            SomeShelleyEra ShelleyBasedEraMary ->
---                LSQ.BlockQuery $ QueryIfCurrentMary
---                    (GetFilteredDelegationsAndRewardAccounts credentials)
---            SomeShelleyEra ShelleyBasedEraAlonzo ->
---                LSQ.BlockQuery $ QueryIfCurrentAlonzo
---                    (GetFilteredDelegationsAndRewardAccounts credentials)
---            SomeShelleyEra ShelleyBasedEraBabbage ->
---                LSQ.BlockQuery $ QueryIfCurrentBabbage
---                    (GetFilteredDelegationsAndRewardAccounts credentials)
---            SomeShelleyEra ShelleyBasedEraConway ->
---                LSQ.BlockQuery $ QueryIfCurrentConway
---                    (GetFilteredDelegationsAndRewardAccounts credentials)
-
---        pure $
---            ( \queryDef -> Just $ SomeStandardQuery
---                queryDef
---                (eraMismatchOrResult encodeDelegationsAndRewards)
---                genResult
---            )
---            .
---            ( \case
 
 parseQueryLedgerProtocolParameters
     :: forall crypto f. (Typeable crypto)
