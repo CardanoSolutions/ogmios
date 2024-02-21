@@ -6,7 +6,7 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
-### [6.1.0] - UNRELEASED
+### [6.1.0] - 2024-02-21
 
 #### Added
 
@@ -18,7 +18,7 @@ pre: "<b>5. </b>"
 
 - The object returned from `ledgerState/rewardAccountSummaries` now contain an extra `deposit` field equals to the amount deposited and held by the associated stake credential.
 
-- A new query `ledgerState/constitution` to obtain the current on-chain constitution. This query is only available when the ledger is in the Conway era onwards.
+- A new query `queryLedgerState/constitution` to obtain the current on-chain constitution. This query is only available when the ledger is in the Conway era onwards.
 
 #### Changed
 
