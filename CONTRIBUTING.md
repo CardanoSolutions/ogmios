@@ -48,4 +48,4 @@ Open a [Q&A Discussion](https://github.com/CardanoSolutions/ogmios/discussions/n
 
 ## Need Help Getting Started?
 
-Should you be unsure about where to start, feel free to come and chat on <a href="https://discord.gg/ZeyDn65t5v"><img src=".github/discord.svg" alt="Discord">Discord (#ogmios)</a>.
+Should you be unsure about where to start, feel free to come and chat on <a href="https://discord.gg/zMr6EGvBpr"><img src=".github/discord.svg" alt="Discord">Discord (#ogmios)</a>.

@@ -114,7 +114,7 @@ A big thank to [all our sponsors 💖](https://github.com/CardanoSolutions#-spon
   |
   <a href="CHANGELOG.md">:floppy_disk: Changelog</a>
   |
-  <a href="https://discord.gg/ZeyDn65t5v"><img src=".github/discord.svg" alt="Discord">Discord (#ogmios)</a>
+  <a href="https://discord.gg/zMr6EGvBpr"><img src=".github/discord.svg" alt="Discord">Discord (#ogmios)</a>
   |
   <a href="https://twitter.com/_KtorZ_"><img src=".github/twitter.svg" alt="Twitter"> Twitter (@_KtorZ_)</a>
 </p>

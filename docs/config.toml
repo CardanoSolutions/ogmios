@@ -65,7 +65,7 @@ theme = "learn"
   weight = 101
 [[menu.shortcuts]]
   name = "<i class='fab fa-discord'></i> Discord (#ogmios)"
-  url = "https://discord.gg/ZeyDn65t5v"
+  url = "https://discord.gg/zMr6EGvBpr"
   weight = 102
 [[menu.shortcuts]]
   name = "<i class='fas fa-solid fa-file-code'></i> Architectural Decisions Record"
