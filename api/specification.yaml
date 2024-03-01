@@ -729,6 +729,14 @@ components:
       payload:
         $ref: "/ogmios.json#/properties/QueryLedgerStateUtxo"
 
+    QueryLedgerStateConstitution:
+      title: QueryLedgerStateConstitution
+      name: "since v6.1.0"
+      description: |
+        Query the current constitution definition (only available from Conway onwards)
+      payload:
+        $ref: "/ogmios.json#/properties/QueryLedgerStateConstitution"
+
     QueryNetworkBlockHeight:
       title: QueryNetworkBlockHeight
       name: "since v6.0.0"
@@ -832,6 +840,12 @@ components:
       name: "since v6.0.0"
       payload:
         $ref: "/ogmios.json#/properties/QueryLedgerStateUtxoResponse"
+
+    QueryLedgerStateConstitutionResponse:
+      title: QueryLedgerStateConstitutionResponse
+      name: "since v6.1.0"
+      payload:
+        $ref: "/ogmios.json#/properties/QueryLedgerStateConstitutionResponse"
 
     QueryNetworkBlockHeightResponse:
       title: QueryNetworkBlockHeightResponse
