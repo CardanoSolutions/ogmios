@@ -61,7 +61,7 @@ import Ogmios.App.Protocol.TxMonitor
     ( mkTxMonitorClient
     )
 import Ogmios.App.Protocol.TxSubmission
-    ( ExecutionUnitsEvaluator
+    ( ExecutionUnitsEvaluator (..)
     , mkTxSubmissionClient
     , newExecutionUnitsEvaluator
     )
@@ -241,9 +241,9 @@ newWebSocketApp tr unliftIO = do
                     let clientB = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch exUnitsClients
                     let vData  = NodeToClientVersionData networkMagic False
                     concurrently_
-                        (connectClient trClient clientA vData nodeSocket)
-                        (connectClient trClient clientB vData nodeSocket)
-                        & handle (onIOException conn)
+                       (connectClient trClient clientA vData nodeSocket)
+                       (connectClient trClient clientB vData nodeSocket)
+                       & handle (onIOException conn)
         logWith tr (WebSocketConnectionEnded $ userAgent pending)
   where
     userAgent :: PendingConnection -> Text
@@ -291,6 +291,7 @@ withExecutionUnitsEvaluator
     :: forall m a.
         ( MonadClock m
         , MonadSTM m
+        , MonadIO m
         )
     => (ExecutionUnitsEvaluator m Block -> Clients m Block -> m a)
     -> m a
@@ -314,6 +315,7 @@ withOuroborosClients
         , MonadLog m
         , MonadMetrics m
         , MonadWebSocket m
+        , MonadIO m
         )
     => Logger TraceWebSocket
     -> Rpc.Options

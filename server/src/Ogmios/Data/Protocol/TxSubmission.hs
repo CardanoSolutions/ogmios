@@ -44,6 +44,10 @@ module Ogmios.Data.Protocol.TxSubmission
     , _encodeEvaluateTransactionResponse
     , CanEvaluateScriptsInEra
 
+      -- ** Mempool / UTxO reconstruction
+    , utxoFromMempool
+    , mergeUtxo
+
       -- ** Re-exports
     , AlonzoEra
     , ConwayEra
@@ -59,7 +63,7 @@ module Ogmios.Data.Protocol.TxSubmission
     , SystemStart
     , Core.PParams
     , Core.Tx
-    , TxIn
+    , TxIn (..)
     , UTxO (..)
     ) where
 
@@ -86,6 +90,9 @@ import Cardano.Ledger.Api
     ( TransactionScriptFailure
     , evalTxExUnits
     )
+import Cardano.Ledger.Api.Tx.In
+    ( TxId (..)
+    )
 import Cardano.Ledger.Babbage.TxBody
     ( BabbageEraTxBody
     )
@@ -93,7 +100,7 @@ import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
     )
 import Cardano.Ledger.TxIn
-    ( TxIn
+    ( TxIn (..)
     )
 import Cardano.Ledger.UTxO
     ( EraUTxO (..)
@@ -117,7 +124,8 @@ import Control.Monad.Trans.Except
     ( Except
     )
 import Ogmios.Data.EraTranslation
-    ( MultiEraUTxO
+    ( MultiEraUTxO (..)
+    , upgrade
     )
 import Ogmios.Data.Ledger
     ( ContextErrorInAnyEra (..)
@@ -127,6 +135,10 @@ import Ogmios.Data.Ledger.ScriptFailure
     ( EvaluateTransactionError (..)
     , NodeTipTooOldError (..)
     , TransactionScriptFailureInAnyEra (..)
+    )
+import Ouroboros.Consensus.Cardano.Block
+    ( CardanoBlock
+    , GenTx (..)
     )
 import Ouroboros.Consensus.HardFork.History
     ( PastHorizonException
@@ -138,8 +150,10 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..)
     )
 
+import qualified Cardano.Ledger.Alonzo.Core as Ledger
 import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Core as Core
+import qualified Ouroboros.Consensus.Shelley.Ledger.Mempool as Consensus
 
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Types as Json
@@ -448,3 +462,102 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
           utxo
           (hoistEpochInfo (left show . runIdentity . runExceptT) epochInfo)
           systemStart
+
+--
+-- Reconstructing UTxO set from the mempool
+--
+
+utxoFromMempool
+    :: forall block crypto.
+        ( Crypto crypto
+        , block ~ CardanoBlock crypto
+        )
+    => [GenTx block]
+    -> MultiEraUTxO block
+utxoFromMempool =
+    go $ UTxOInBabbageEra mempty
+  where
+    go :: MultiEraUTxO block -> [GenTx block] -> MultiEraUTxO block
+    go utxo = \case
+        [] -> utxo
+        tx:txs -> go
+            (utxo
+                & withoutKeys (inputs tx)
+                & union (outputs tx)
+            )
+            txs
+
+    withoutKeys :: Set (TxIn crypto) -> MultiEraUTxO block -> MultiEraUTxO block
+    withoutKeys ks = \case
+        UTxOInBabbageEra (UTxO utxo) ->
+            UTxOInBabbageEra (UTxO (Map.withoutKeys utxo ks))
+        UTxOInConwayEra (UTxO utxo) ->
+            UTxOInConwayEra (UTxO (Map.withoutKeys utxo ks))
+
+    union :: MultiEraUTxO block -> MultiEraUTxO block -> MultiEraUTxO block
+    union l r = case (l, r) of
+        (UTxOInBabbageEra (UTxO ul), UTxOInBabbageEra (UTxO ur)) ->
+            UTxOInBabbageEra (UTxO (Map.union ul ur))
+        (UTxOInBabbageEra (upgrade -> (UTxO ul)), UTxOInConwayEra (UTxO ur)) ->
+            UTxOInConwayEra (UTxO (Map.union ul ur))
+        (UTxOInConwayEra (UTxO ul), UTxOInBabbageEra (upgrade -> (UTxO ur))) ->
+            UTxOInConwayEra (UTxO (Map.union ul ur))
+        (UTxOInConwayEra (UTxO ul), UTxOInConwayEra (UTxO ur)) ->
+            UTxOInConwayEra (UTxO (Map.union ul ur))
+
+    newUtxoFor :: TxId crypto -> [out] -> Map (TxIn crypto) out
+    newUtxoFor h outs =
+        Map.fromList [ (TxIn h ix, out) | (out, ix) <- zip outs [minBound ..] ]
+
+    inputs :: GenTx block -> Set (TxIn crypto)
+    inputs = \case
+        GenTxConway (Consensus.ShelleyTx _ tx) ->
+            tx ^. Ledger.bodyTxL . Ledger.inputsTxBodyL
+        GenTxBabbage (Consensus.ShelleyTx _ tx) ->
+            tx ^. Ledger.bodyTxL . Ledger.inputsTxBodyL
+        GenTxAlonzo{} ->
+            error "inputs: unsupported era."
+        GenTxMary{} ->
+            error "inputs: unsupported era."
+        GenTxAllegra{} ->
+            error "inputs: unsupported era."
+        GenTxShelley{} ->
+            error "inputs: unsupported era."
+        GenTxByron{} ->
+            error "inputs: unsupported era."
+
+    outputs :: GenTx block -> MultiEraUTxO block
+    outputs = \case
+        GenTxConway (Consensus.ShelleyTx h tx) ->
+            let
+                outs = tx ^. Ledger.bodyTxL . Ledger.outputsTxBodyL
+                utxo = newUtxoFor h (toList outs)
+             in
+                UTxOInConwayEra (UTxO utxo)
+        GenTxBabbage (Consensus.ShelleyTx h tx) ->
+            let
+                outs = tx ^. Ledger.bodyTxL . Ledger.outputsTxBodyL
+                utxo = newUtxoFor h (toList outs)
+             in
+                UTxOInBabbageEra (UTxO utxo)
+        GenTxAlonzo{} ->
+            error "outputs: unsupported era."
+        GenTxMary{} ->
+            error "outputs: unsupported era."
+        GenTxAllegra{} ->
+            error "outputs: unsupported era."
+        GenTxShelley{} ->
+            error "outputs: unsupported era."
+        GenTxByron{} ->
+            error "outputs: unsupported era."
+
+mergeUtxo :: Crypto (BlockCrypto block) => MultiEraUTxO block -> MultiEraUTxO block -> MultiEraUTxO block
+mergeUtxo a b = case (a, b) of
+    (UTxOInBabbageEra (unUTxO -> l), UTxOInBabbageEra (unUTxO -> r)) ->
+        UTxOInBabbageEra $ UTxO (Map.union l r)
+    (UTxOInBabbageEra (unUTxO -> l), UTxOInConwayEra (unUTxO -> r)) ->
+        UTxOInConwayEra $ UTxO (Map.union (upgrade <$> l) r)
+    (UTxOInConwayEra (unUTxO -> l), UTxOInBabbageEra (unUTxO -> r)) ->
+        UTxOInConwayEra $ UTxO (Map.union l (upgrade <$> r))
+    (UTxOInConwayEra (unUTxO -> l), UTxOInConwayEra (unUTxO -> r)) ->
+        UTxOInConwayEra $ UTxO (Map.union l r)

@@ -67,6 +67,7 @@ library:
     - containers
     - contra-tracer
     - contra-tracers
+    - deepseq
     - directory
     - ekg-core
     - fast-bech32

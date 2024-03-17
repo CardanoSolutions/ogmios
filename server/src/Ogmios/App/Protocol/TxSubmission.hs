@@ -89,15 +89,17 @@ import Ogmios.Data.Protocol.TxSubmission
     , SubmitTransactionError
     , SubmitTransactionResponse (..)
     , SystemStart
-    , TxIn
+    , TxIn (..)
     , TxSubmissionCodecs (..)
     , TxSubmissionMessage (..)
     , UTxO (..)
     , evaluateExecutionUnits
     , incompatibleEra
+    , mergeUtxo
     , mkSubmitTransactionResponse
     , nodeTipTooOld
     , unsupportedEra
+    , utxoFromMempool
     )
 import Ouroboros.Consensus.Cardano.Block
     ( BlockQuery (..)
@@ -142,21 +144,30 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxClientStIdle (..)
     , LocalTxSubmissionClient (..)
     )
+import Ouroboros.Network.Protocol.LocalTxSubmission.Type
+    ( SubmitResult (..)
+    )
 import Type.Reflection
     ( typeRep
     )
 
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Map.Strict as Map
+import GHC.Clock
+    ( getMonotonicTimeNSec
+    )
 import qualified Ouroboros.Consensus.HardFork.Combinator as HF
 import qualified Ouroboros.Consensus.Ledger.Query as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 import qualified Ouroboros.Network.Protocol.LocalTxMonitor.Client as LMM
 
 mkTxSubmissionClient
-    :: forall m block.
+    :: forall m block crypto.
         ( MonadSTM m
+        , MonadIO m
         , HasTxId (SerializedTransaction block)
+        , Crypto crypto
+        , block ~ CardanoBlock crypto
         )
     => (forall a r. m a -> (Json -> m ()) -> Rpc.ToResponse r -> m a -> m a)
         -- ^ A default response handler to catch errors.
@@ -182,6 +193,12 @@ mkTxSubmissionClient defaultWithInternalError TxSubmissionCodecs{..} ExecutionUn
             defaultWithInternalError clientStIdle yield toResponse $ case request of
                 MultiEraDecoderSuccess transaction -> do
                     pure $ SendMsgSubmitTx transaction $ \result -> do
+                        -- NOTE: On successful submission, clear our cached
+                        -- mempool to ensure we always use the latest available
+                        -- mempool snapshot during evaluation.
+                        case result of
+                            SubmitSuccess -> clearMempoolM
+                            SubmitFail{} -> pure ()
                         mkSubmitTransactionResponse transaction result
                             & toResponse
                             & encodeSubmitTransactionResponse
@@ -197,7 +214,11 @@ mkTxSubmissionClient defaultWithInternalError TxSubmissionCodecs{..} ExecutionUn
         MsgEvaluateTransaction EvaluateTransaction{additionalUtxo, transaction = request} toResponse -> do
             defaultWithInternalError clientStIdle yield toResponse $ case request of
                 MultiEraDecoderSuccess transaction -> do
-                    result <- evaluateExecutionUnitsM (additionalUtxo, transaction)
+                    mempoolUtxo <- utxoFromMempool <$> readMempoolM
+                    putStrLn $ "extra utxo provided by user:      " <> show additionalUtxo
+                    putStrLn $ "extra utxo inferred from mempool: " <> show mempoolUtxo
+                    result <- evaluateExecutionUnitsM (mergeUtxo mempoolUtxo additionalUtxo, transaction)
+                    putStrLn $ "evaluation result: " <> show result
                     result
                         & toResponse
                         & encodeEvaluateTransactionResponse
@@ -216,7 +237,7 @@ data ExecutionUnitsEvaluator m block = ExecutionUnitsEvaluator
         :: (MultiEraUTxO block, GenTx block)
         -> m (EvaluateTransactionResponse block)
 
-    , getMempoolM
+    , readMempoolM
         :: m [GenTx block]
 
     , clearMempoolM
@@ -228,6 +249,7 @@ data ExecutionUnitsEvaluator m block = ExecutionUnitsEvaluator
 newExecutionUnitsEvaluator
     :: forall m block crypto.
         ( MonadSTM m
+        , MonadIO m
         , block ~ HardForkBlock (CardanoEras crypto)
         , crypto ~ StandardCrypto
         , CanEvaluateScriptsInEra (BabbageEra crypto)
@@ -242,8 +264,10 @@ newExecutionUnitsEvaluator = do
     evaluateExecutionUnitsResponse <- newEmptyTMVarIO
 
     mempool <- newEmptyTMVarIO
+    mempoolSnapshot <- newEmptyTMVarIO
+    mempoolSnapshotOnLastSubmit <- newTVarIO Nothing
 
-    let runEvaluation = either return $ \eval -> do
+    let runEvaluation = either return $ \(!eval) -> do
             atomically $ putTMVar evaluateExecutionUnitsRequest eval
             atomically $ takeTMVar evaluateExecutionUnitsResponse
 
@@ -277,41 +301,64 @@ newExecutionUnitsEvaluator = do
                 (UTxOInConwayEra utxo, GenTxConway (ShelleyTx _id tx)) -> do
                     Right (SomeEvaluationInAnyEra utxo tx)
 
-            , getMempoolM = atomically (readTMVar mempool)
+            , readMempoolM = do
+                putStrLn "reading local mempool..."
+                txs <- atomically $ do
+                    snapshot <- readTMVar mempoolSnapshot
+                    readTVar mempoolSnapshotOnLastSubmit >>= \case
+                        Just snapshot' | snapshot == snapshot' -> retry
+                        _ -> readTMVar mempool
+                putStrLn $ "found " <> show (length txs) <> " transaction(s)"
+                return txs
 
-            , clearMempoolM = atomically $ do
-                unlessM (isEmptyTMVar mempool) $ do
-                    void $ takeTMVar mempool
+            , clearMempoolM = do
+                snapshot <- atomically $ do
+                    snapshot <- readTMVar mempoolSnapshot
+                    writeTVar mempoolSnapshotOnLastSubmit (Just snapshot)
+                    pure snapshot
+                putStrLn $ "successfully submitted transaction at " <> show snapshot
             }
+
         , localStateQueryClient
             (atomically $ takeTMVar evaluateExecutionUnitsRequest)
             (atomically . putTMVar evaluateExecutionUnitsResponse)
 
-        , mempoolMonitoringClient mempool
+        , mempoolMonitoringClient mempool mempoolSnapshot
         )
   where
     mempoolMonitoringClient
         :: TMVar m [GenTx block]
+        -> TMVar m (SlotNo, Word64)
         -> LocalTxMonitorClient (GenTxId block) (GenTx block) SlotNo m ()
-    mempoolMonitoringClient mempool =
-        LocalTxMonitorClient $ pure $ LMM.SendMsgAcquire (const (clientStDrain []))
+    mempoolMonitoringClient mempool mempoolSnapshot =
+        LocalTxMonitorClient $ pure $ LMM.SendMsgAcquire $ \slot -> do
+            now <- liftIO getMonotonicTimeNSec
+            putStrLn $ "received first snapshot at " <> show (slot, now)
+            atomically $ putTMVar mempoolSnapshot (slot, now)
+            clientStDrain now []
       where
-        clientStDrain :: [GenTx block] -> m (LMM.ClientStAcquired (GenTxId block) (GenTx block) SlotNo m ())
-        clientStDrain !txs =
+        clientStDrain :: Word64 -> [GenTx block] -> m (LMM.ClientStAcquired (GenTxId block) (GenTx block) SlotNo m ())
+        clientStDrain !start !txs =
             pure $ LMM.SendMsgNextTx $ \case
                 Nothing -> do
-                    atomically $ unlessM (isEmptyTMVar mempool) $ do
-                        void $ swapTMVar mempool (reverse txs)
+                    end <- liftIO getMonotonicTimeNSec
+                    atomically $ putTMVar mempool $ reverse txs
+                    putStrLn $ "done draining mempool in " <> show ((end - start) `div` 1000) <> "μs"
                     clientStAwaitChange
+
                 Just tx -> do
-                    clientStDrain (tx : txs)
+                    clientStDrain start (tx : txs)
 
         clientStAwaitChange :: m (LMM.ClientStAcquired (GenTxId block) (GenTx block) SlotNo m ())
-        clientStAwaitChange =
-            pure $ LMM.SendMsgAwaitAcquire $ \_slot -> do
-                atomically $ unlessM (isEmptyTMVar mempool) $ do
+        clientStAwaitChange = do
+            putStrLn "awaiting next mempool snapshot"
+            pure $ LMM.SendMsgAwaitAcquire $ \slot -> do
+                now <- liftIO getMonotonicTimeNSec
+                putStrLn $ "received new snapshot at " <> show slot
+                atomically $ do
+                    void $ swapTMVar mempoolSnapshot (slot, now)
                     void $ takeTMVar mempool
-                clientStDrain []
+                clientStDrain now []
 
     localStateQueryClient
         :: m (SomeEvaluationInAnyEra crypto)
@@ -432,11 +479,11 @@ newExecutionUnitsEvaluator = do
             -> HoistQuery proto era
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
         clientStAcquired3 args callback hoistQuery = do
-            let query = BlockQuery $ hoistQuery $ GetUTxOByTxIn (inputsInAnyEra args)
+            let query = BlockQuery $ hoistQuery $ GetUTxOByTxIn $ inputsInAnyEra args
              in LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
                 { LSQ.recvMsgResult = \case
                     Right networkUtxo -> do
-                        reply (mkEvaluateTransactionResponse @era callback networkUtxo args)
+                        reply $! mkEvaluateTransactionResponse @era callback networkUtxo args
                         pure (LSQ.SendMsgRelease clientStIdle)
                     Left{} ->
                         pure $ reAcquire args
@@ -489,8 +536,8 @@ selectEra fallback asBabbage asConway =
 data SomeEvaluationInAnyEra crypto where
     SomeEvaluationInAnyEra
         :: forall era crypto. (CanEvaluateScriptsInEra era, EraCrypto era ~ crypto)
-        => UTxO era
-        -> Tx era
+        => !(UTxO era)
+        -> !(Tx era)
         -> SomeEvaluationInAnyEra crypto
 
 -- | Return all unspent transaction outputs needed for evaluation. This includes
@@ -524,7 +571,7 @@ mkEvaluateTransactionResponse callback (UTxO networkUtxo) args =
                   \'Conway'. The arguments themselves can also only be 'Babbage' \
                   \or 'Conway'. Thus, we can't reach this point with any other \
                   \eras. We _could_ potentially capture this proof in the types \
-                  \to convince the compiler of this. Let's say: TODO."
+                  \to convince the compiler of this."
         Just (UTxO userProvidedUtxo, tx) ->
             let
                 intersection = Map.intersection userProvidedUtxo networkUtxo

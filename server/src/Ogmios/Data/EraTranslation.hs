@@ -20,6 +20,9 @@ module Ogmios.Data.EraTranslation
 
 import Ogmios.Prelude
 
+import Cardano.Crypto.DSIGN
+    ( DSIGNAlgorithm (..)
+    )
 import Cardano.Ledger.Babbage.Tx
     ( AlonzoTx (..)
     )
@@ -69,7 +72,7 @@ class Upgrade (f :: Type -> Type) era where
 
 instance Ledger.Crypto crypto => Upgrade BabbageTxOut (ConwayEra crypto) where
     type Upgraded BabbageTxOut = BabbageTxOut
-    upgrade = Conway.upgradeTxOut
+    upgrade = force . Conway.upgradeTxOut
 
 ----------
 -- UTxO
@@ -77,17 +80,21 @@ instance Ledger.Crypto crypto => Upgrade BabbageTxOut (ConwayEra crypto) where
 
 instance Ledger.Crypto crypto => Upgrade UTxO (ConwayEra crypto) where
     type Upgraded UTxO = UTxO
-    upgrade = UTxO . fmap upgrade . unUTxO
+    upgrade = force . UTxO . fmap upgrade . unUTxO
 
 ----------
 -- Tx
 ----------
 
-instance Ledger.Crypto crypto => Upgrade AlonzoTx (ConwayEra crypto) where
+instance
+    ( Ledger.Crypto crypto
+    , NFData (SigDSIGN (Ledger.DSIGN crypto))
+    , NFData (VerKeyDSIGN (Ledger.DSIGN crypto))
+    ) => Upgrade AlonzoTx (ConwayEra crypto) where
     type Upgraded AlonzoTx = AlonzoTx
-    upgrade tx = unsafeFromRight $ runExcept $ do
+    upgrade tx = force $ unsafeFromRight $ runExcept $ do
         body <- translateEraThroughCBOR "body" $ Alonzo.body tx
-        wits <- translateEraThroughCBOR "witness" $ Alonzo.body tx
+        wits <- translateEraThroughCBOR "witness" $ Alonzo.wits tx
         auxiliaryData <- case Alonzo.auxiliaryData tx of
           SNothing -> pure SNothing
           SJust auxData -> SJust <$> translateEraThroughCBOR "auxiliaryData" auxData
