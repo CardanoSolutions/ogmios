@@ -156,9 +156,6 @@ import Ouroboros.Network.NodeToClient.Version
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     ( ChainSyncClientPipelined (..)
     )
-import Ouroboros.Network.Protocol.LocalTxMonitor.Client
-    ( LocalTxMonitorClient (..)
-    )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxSubmissionClient (..)
     )
@@ -298,7 +295,7 @@ withExecutionUnitsEvaluator
     => (ExecutionUnitsEvaluator m Block -> Clients m Block -> m a)
     -> m a
 withExecutionUnitsEvaluator action = do
-    ( exUnitsEvaluator, stateQueryClient ) <- newExecutionUnitsEvaluator
+    ( exUnitsEvaluator, stateQueryClient, txMonitorClient ) <- newExecutionUnitsEvaluator
     action exUnitsEvaluator $ Clients
          { chainSyncClient =
             ChainSyncClientPipelined idle
@@ -307,7 +304,7 @@ withExecutionUnitsEvaluator action = do
          , txSubmissionClient =
             LocalTxSubmissionClient idle
          , txMonitorClient =
-            LocalTxMonitorClient idle
+            txMonitorClient
          }
 
 withOuroborosClients

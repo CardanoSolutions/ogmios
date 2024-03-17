@@ -40,6 +40,9 @@ import Cardano.Ledger.Alonzo.TxBody
 import Cardano.Ledger.Babbage.TxBody
     ( BabbageEraTxBody (..)
     )
+import Cardano.Ledger.BaseTypes
+    ( SlotNo
+    )
 import Cardano.Ledger.Core
     ( EraTx (..)
     , EraTxBody (..)
@@ -77,6 +80,7 @@ import Ogmios.Data.Protocol.TxSubmission
     , EpochInfo
     , EvaluateTransaction (..)
     , EvaluateTransactionResponse (..)
+    , GenTxId
     , HasTxId
     , PParams
     , PastHorizonException
@@ -131,6 +135,9 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Client
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( Target (..)
     )
+import Ouroboros.Network.Protocol.LocalTxMonitor.Client
+    ( LocalTxMonitorClient (..)
+    )
 import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxClientStIdle (..)
     , LocalTxSubmissionClient (..)
@@ -141,9 +148,10 @@ import Type.Reflection
 
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Map.Strict as Map
-import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ
+import qualified Ouroboros.Consensus.HardFork.Combinator as HF
 import qualified Ouroboros.Consensus.Ledger.Query as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
+import qualified Ouroboros.Network.Protocol.LocalTxMonitor.Client as LMM
 
 mkTxSubmissionClient
     :: forall m block.
@@ -207,6 +215,12 @@ data ExecutionUnitsEvaluator m block = ExecutionUnitsEvaluator
     { evaluateExecutionUnitsM
         :: (MultiEraUTxO block, GenTx block)
         -> m (EvaluateTransactionResponse block)
+
+    , getMempoolM
+        :: m [GenTx block]
+
+    , clearMempoolM
+        :: m ()
     }
 
 -- | Construct an effectful 'ExecutionUnitsEvaluator'; this requires to wire a
@@ -221,10 +235,13 @@ newExecutionUnitsEvaluator
         )
     => m ( ExecutionUnitsEvaluator m block
          , LocalStateQueryClient block (Point block) (Query block) m ()
+         , LocalTxMonitorClient (GenTxId block) (GenTx block) SlotNo m ()
          )
 newExecutionUnitsEvaluator = do
     evaluateExecutionUnitsRequest  <- newEmptyTMVarIO
     evaluateExecutionUnitsResponse <- newEmptyTMVarIO
+
+    mempool <- newEmptyTMVarIO
 
     let runEvaluation = either return $ \eval -> do
             atomically $ putTMVar evaluateExecutionUnitsRequest eval
@@ -259,12 +276,43 @@ newExecutionUnitsEvaluator = do
 
                 (UTxOInConwayEra utxo, GenTxConway (ShelleyTx _id tx)) -> do
                     Right (SomeEvaluationInAnyEra utxo tx)
+
+            , getMempoolM = atomically (readTMVar mempool)
+
+            , clearMempoolM = atomically $ do
+                unlessM (isEmptyTMVar mempool) $ do
+                    void $ takeTMVar mempool
             }
         , localStateQueryClient
             (atomically $ takeTMVar evaluateExecutionUnitsRequest)
             (atomically . putTMVar evaluateExecutionUnitsResponse)
+
+        , mempoolMonitoringClient mempool
         )
   where
+    mempoolMonitoringClient
+        :: TMVar m [GenTx block]
+        -> LocalTxMonitorClient (GenTxId block) (GenTx block) SlotNo m ()
+    mempoolMonitoringClient mempool =
+        LocalTxMonitorClient $ pure $ LMM.SendMsgAcquire (const (clientStDrain []))
+      where
+        clientStDrain :: [GenTx block] -> m (LMM.ClientStAcquired (GenTxId block) (GenTx block) SlotNo m ())
+        clientStDrain !txs =
+            pure $ LMM.SendMsgNextTx $ \case
+                Nothing -> do
+                    atomically $ unlessM (isEmptyTMVar mempool) $ do
+                        void $ swapTMVar mempool (reverse txs)
+                    clientStAwaitChange
+                Just tx -> do
+                    clientStDrain (tx : txs)
+
+        clientStAwaitChange :: m (LMM.ClientStAcquired (GenTxId block) (GenTx block) SlotNo m ())
+        clientStAwaitChange =
+            pure $ LMM.SendMsgAwaitAcquire $ \_slot -> do
+                atomically $ unlessM (isEmptyTMVar mempool) $ do
+                    void $ takeTMVar mempool
+                clientStDrain []
+
     localStateQueryClient
         :: m (SomeEvaluationInAnyEra crypto)
         -> (EvaluateTransactionResponse block -> m ())
@@ -422,7 +470,7 @@ selectEra
 
     -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
 selectEra fallback asBabbage asConway =
-    LSQ.SendMsgQuery (Ledger.BlockQuery $ LSQ.QueryHardFork LSQ.GetCurrentEra) $
+    LSQ.SendMsgQuery (Ledger.BlockQuery $ HF.QueryHardFork HF.GetCurrentEra) $
     LSQ.ClientStQuerying
         { LSQ.recvMsgResult = \case
             EraIndex                   Z{}       -> fallback "Byron"
