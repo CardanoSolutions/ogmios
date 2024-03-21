@@ -28,7 +28,6 @@ import Ogmios.Control.MonadAsync
     )
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..)
-    , newTMVar
     , putTMVar
     , tryTakeTMVar
     )
@@ -48,11 +47,15 @@ import Data.Time.Clock
 
 import qualified Control.Concurrent as IO
 import qualified Data.Time.Clock as IO
+import qualified GHC.Clock as IO
 
 -- | A 'Monad' to make time effects explicit.
 class Monad m => MonadClock (m :: Type -> Type) where
     getCurrentTime :: m UTCTime
     -- ^ Get the time of the current clock.
+
+    getMonotonicTimeNSec :: m Word64
+    -- ^ Return monotonic time in nanoseconds, since some unspecified starting point
 
     threadDelay :: DiffTime -> m ()
     -- ^ Mark a pause in the current thread
@@ -66,6 +69,7 @@ idle = forever $ threadDelay 43200
 
 instance MonadClock IO where
     getCurrentTime = IO.getCurrentTime
+    getMonotonicTimeNSec = IO.getMonotonicTimeNSec
     threadDelay = IO.threadDelay . diffTimeToMicroseconds
     timed action = do
         start <- IO.getCurrentTime
@@ -78,6 +82,7 @@ instance MonadClock IO where
 
 instance MonadClock m => MonadClock (ReaderT env m) where
     getCurrentTime = lift getCurrentTime
+    getMonotonicTimeNSec = lift getMonotonicTimeNSec
     threadDelay = lift . threadDelay
     timed = mapReaderT timed
 
@@ -99,7 +104,7 @@ withDebouncer
     -> (Debouncer m -> m a)
     -> m a
 withDebouncer delay action = do
-    lock <- atomically $ newTMVar ()
+    lock <- newTMVarIO ()
 
     let debouncer = Debouncer $ \io -> atomically (tryTakeTMVar lock) >>= \case
             Nothing -> return ()

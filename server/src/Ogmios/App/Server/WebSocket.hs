@@ -62,6 +62,7 @@ import Ogmios.App.Protocol.TxMonitor
     )
 import Ogmios.App.Protocol.TxSubmission
     ( ExecutionUnitsEvaluator (..)
+    , TraceTxSubmission
     , mkTxSubmissionClient
     , newExecutionUnitsEvaluator
     )
@@ -235,7 +236,7 @@ newWebSocketApp tr unliftIO = do
         logWith tr $ WebSocketConnectionAccepted (userAgent pending)
         recordSession sensors $ onExceptions $ acceptRequest pending $ \conn -> do
             let trClient = contramap WebSocketClient tr
-            withExecutionUnitsEvaluator $ \exUnitsEvaluator exUnitsClients -> do
+            withExecutionUnitsEvaluator tr $ \exUnitsEvaluator exUnitsClients -> do
                 withOuroborosClients tr opts codecs maxInFlight sensors exUnitsEvaluator getGenesisConfig conn $ \protocolsClients -> do
                     let clientA = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch protocolsClients
                     let clientB = mkClient unliftIO (natTracer liftIO trClient) slotsPerEpoch exUnitsClients
@@ -291,12 +292,13 @@ withExecutionUnitsEvaluator
     :: forall m a.
         ( MonadClock m
         , MonadSTM m
-        , MonadIO m
+        , MonadLog m
         )
-    => (ExecutionUnitsEvaluator m Block -> Clients m Block -> m a)
+    => Logger TraceWebSocket
+    -> (ExecutionUnitsEvaluator m Block -> Clients m Block -> m a)
     -> m a
-withExecutionUnitsEvaluator action = do
-    ( exUnitsEvaluator, stateQueryClient, txMonitorClient ) <- newExecutionUnitsEvaluator
+withExecutionUnitsEvaluator tr action = do
+    ( exUnitsEvaluator, stateQueryClient, txMonitorClient ) <- newExecutionUnitsEvaluator (contramap WebSocketTxSubmission tr)
     action exUnitsEvaluator $ Clients
          { chainSyncClient =
             ChainSyncClientPipelined idle
@@ -315,7 +317,6 @@ withOuroborosClients
         , MonadLog m
         , MonadMetrics m
         , MonadWebSocket m
-        , MonadIO m
         )
     => Logger TraceWebSocket
     -> Rpc.Options
@@ -343,7 +344,7 @@ withOuroborosClients tr opts codecs maxInFlight sensors exUnitsEvaluator getGene
              , stateQueryClient =
                  mkStateQueryClient (contramap WebSocketStateQuery tr) catchError stateQueryCodecs getGenesisConfig stateQueryQ yield
              , txSubmissionClient =
-                 mkTxSubmissionClient catchError txSubmissionCodecs exUnitsEvaluator txSubmissionQ yield
+                 mkTxSubmissionClient (contramap WebSocketTxSubmission tr) catchError txSubmissionCodecs exUnitsEvaluator txSubmissionQ yield
              , txMonitorClient =
                  mkTxMonitorClient catchError txMonitorCodecs txMonitorQ yield
              }
@@ -430,6 +431,10 @@ data TraceWebSocket where
         :: TraceStateQuery Block
         -> TraceWebSocket
 
+    WebSocketTxSubmission
+        :: TraceTxSubmission
+        -> TraceWebSocket
+
     WebSocketWorkerExited
         :: { exception :: Text }
         -> TraceWebSocket
@@ -456,6 +461,7 @@ instance HasSeverityAnnotation TraceWebSocket where
     getSeverityAnnotation = \case
         WebSocketClient msg           -> getSeverityAnnotation' msg
         WebSocketStateQuery msg       -> getSeverityAnnotation msg
+        WebSocketTxSubmission msg     -> getSeverityAnnotation msg
         WebSocketWorkerExited{}       -> Debug
         WebSocketConnectionAccepted{} -> Info
         WebSocketConnectionEnded{}    -> Info

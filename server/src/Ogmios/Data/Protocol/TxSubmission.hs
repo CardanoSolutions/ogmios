@@ -47,6 +47,7 @@ module Ogmios.Data.Protocol.TxSubmission
       -- ** Mempool / UTxO reconstruction
     , utxoFromMempool
     , mergeUtxo
+    , utxoReferences
 
       -- ** Re-exports
     , AlonzoEra
@@ -155,6 +156,10 @@ import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Core as Core
 import qualified Ouroboros.Consensus.Shelley.Ledger.Mempool as Consensus
 
+import qualified Cardano.Crypto.Hash.Class as CC
+import qualified Cardano.Ledger.BaseTypes as Ledger
+import qualified Cardano.Ledger.SafeHash as Ledger
+import qualified Cardano.Ledger.TxIn as Ledger
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Types as Json
 import qualified Data.Map as Map
@@ -561,3 +566,12 @@ mergeUtxo a b = case (a, b) of
         UTxOInConwayEra $ UTxO (Map.union l (upgrade <$> r))
     (UTxOInConwayEra (unUTxO -> l), UTxOInConwayEra (unUTxO -> r)) ->
         UTxOInConwayEra $ UTxO (Map.union l r)
+
+utxoReferences :: Crypto crypto => MultiEraUTxO (CardanoBlock crypto) -> [Text]
+utxoReferences = fmap txInToText . \case
+    UTxOInBabbageEra (unUTxO -> u) -> Map.keys u
+    UTxOInConwayEra  (unUTxO -> u) -> Map.keys u
+  where
+    txInToText (Ledger.TxIn txid (Ledger.TxIx ix)) =
+        let (CC.UnsafeHash h) = Ledger.extractHash (Ledger.unTxId txid)
+         in encodeBase16 (fromShort h) <> "#" <> show ix

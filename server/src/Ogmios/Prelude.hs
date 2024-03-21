@@ -44,6 +44,9 @@ module Ogmios.Prelude
       -- * Set
     , traverset
 
+      -- * Time units
+    , Microseconds (..)
+
       -- * Ledger & consensus common
     , AllegraEra
     , AlonzoEra
@@ -219,10 +222,12 @@ import Relude hiding
 
 import qualified Cardano.Ledger.Binary.Decoding as Binary
 import qualified Cardano.Ledger.Core as Ledger
+import qualified Data.Aeson.Encoding as Json
 import qualified Data.ByteString.Base16 as B16
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text.Lazy.Builder as TL
+import qualified Text.Show
 
 mapToArray :: Ix k => Map k v -> Array k v
 mapToArray m =
@@ -442,3 +447,22 @@ decodeBase16 = decodeBase16Untyped
 unsafeDecodeBase16 :: HasCallStack => Text -> ByteString
 unsafeDecodeBase16 =
     either error identity . decodeBase16 . encodeUtf8
+
+--
+-- TimeUnits
+--
+
+data Microseconds = forall a. (Num a, Integral a, Show a) => Microseconds a
+
+instance Eq Microseconds where
+    Microseconds a == Microseconds b = toInteger a == toInteger b
+
+instance Ord Microseconds where
+    Microseconds a <= Microseconds b = toInteger a <= toInteger b
+
+instance Show Microseconds where
+  show (Microseconds x) = show x ++ "µs"
+
+instance ToJSON Microseconds where
+    toJSON = toJSON . show @Text
+    toEncoding = Json.text . show @Text
