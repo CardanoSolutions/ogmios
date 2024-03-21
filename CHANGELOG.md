@@ -6,6 +6,22 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
+### [6.2.0] - UNRELEASED
+
+#### Added
+
+- Transaction evaluation now automatically UTxO available from processing the mempool. This allows for chaining smart-contract transactions without the need to track the UTxO state on from the client's side. Ogmios now internally maintains a view of the node's mempool and ensure a consistent access to it when evaluating transaction. See also [#375](https://github.com/CardanoSolutions/ogmios/issues/375).
+
+- More log traces around transaction evaluation and submission.
+
+#### Changed
+
+- N/A
+
+#### Removed
+
+- N/A
+
 ### [6.1.0] - 2024-02-21
 
 #### Added
