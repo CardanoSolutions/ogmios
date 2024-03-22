@@ -92,3 +92,18 @@ source-repository-package
   location: https://github.com/CardanoSolutions/hjsonschema
   tag: 35e0b05c3867463363e67f00a5092cd39fa33313
   --sha256: 1w78d0lk1gi908lklixpzpa2xkzbyhg77aixm9i4rznrzsnbwhfm
+
+-- NOTE: Using a fork for 8.8.0 and until https://github.com/IntersectMBO/cardano-ledger/pull/4103
+-- is merged. If it's never merged, then the patch should be re-applied on top of new ledger versions.
+--
+-- This patch is necessary to get better test coverage for the ledger predicate failures. Without it,
+-- we're missing quite numerous variants from the predicate failures, in particular from more recent
+-- eras.
+source-repository-package
+  type: git
+  location: https://github.com/CardanoSolutions/cardano-ledger
+  tag: 558cad41ef01a35ac62c28cf06e954fdfd790e28
+  subdir:
+    eras/alonzo/impl
+    eras/babbage/impl
+    eras/conway/impl
