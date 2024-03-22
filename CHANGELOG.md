@@ -6,7 +6,7 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
-### [6.2.0] - UNRELEASED
+### [6.2.0] - 2024-03-22
 
 #### Added
 
