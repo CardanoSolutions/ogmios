@@ -358,7 +358,7 @@ mkHealthCheckClient notify =
     stIdle
         :: m (ClientPipelinedStIdle Z block (Point block) (Tip block) m ())
     stIdle = pure $
-        SendMsgRequestNext stNext (pure stNext)
+        SendMsgRequestNext (pure ()) stNext
 
     stNext
         :: ClientStNext Z block (Point block) (Tip block) m ()

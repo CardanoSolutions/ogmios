@@ -39,6 +39,9 @@ import Ogmios.Control.MonadSTM
 import Ogmios.Control.MonadWebSocket
     ( MonadWebSocket
     )
+import Ouroboros.Consensus.Util.IOLike
+    ( PrimMonad
+    )
 
 import qualified Control.Monad.Class.MonadSTM.Internal
 
@@ -63,6 +66,7 @@ newtype App a = App
     { unApp :: ReaderT (Env App) IO a
     } deriving newtype
         ( Functor, Applicative, Monad
+        , PrimMonad
         , MonadIO
         , MonadReader (Env App)
         , MonadLog, MonadMetrics

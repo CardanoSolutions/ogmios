@@ -116,7 +116,7 @@ mkChainSyncClient maxInFlight ChainSyncCodecs{..} queue yield =
                 collect = CollectResponse
                     (Just $ clientStIdle (Succ Zero) buffer')
                     (clientStNext Zero buffer')
-            in SendMsgRequestNextPipelined collect
+            in SendMsgRequestNextPipelined (pure ()) collect
 
         MsgFindIntersection FindIntersection{points} toResponse ->
             SendMsgFindIntersect points (clientStIntersect toResponse)
@@ -135,7 +135,7 @@ mkChainSyncClient maxInFlight ChainSyncCodecs{..} queue yield =
             let collect = CollectResponse
                     (guard (natToInt n < maxInFlight) $> clientStIdle (Succ n) buffer')
                     (clientStNext n buffer')
-            pure $ SendMsgRequestNextPipelined collect
+            pure $ SendMsgRequestNextPipelined (pure ()) collect
 
         Just (MsgFindIntersection _FindIntersection toResponse) -> do
             yield $ encodeFindIntersectionResponse $ toResponse IntersectionInterleaved
