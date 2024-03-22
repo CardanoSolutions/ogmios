@@ -248,7 +248,7 @@ data Clients m block = Clients
     , txSubmissionClient
         :: LocalTxSubmissionClient (SerializedTransaction block) (SubmitTransactionError block) m ()
     , txMonitorClient
-        :: LocalTxMonitorClient (GenTxId block) (GenTx block) SlotNo m ()
+        :: NodeToClientVersion -> LocalTxMonitorClient (GenTxId block) (GenTx block) SlotNo m ()
     , stateQueryClient
         :: LocalStateQueryClient block (Point block) (Query block) m ()
     }
@@ -317,7 +317,7 @@ mkClient unlift tr epochSlots clients = \nodeToClientV ->
                 InitiatorProtocolOnly $ MiniProtocolCb $ \_ctx channel ->
                     localTxMonitor unlift trTxMonitor
                         (codecTxMonitor nodeToClientV)
-                        (txMonitorClient clients)
+                        (txMonitorClient clients nodeToClientV)
                         (hoistChannel liftIO channel)
 
             , localStateQueryProtocol =

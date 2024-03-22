@@ -307,7 +307,7 @@ withExecutionUnitsEvaluator tr action = do
          , txSubmissionClient =
             LocalTxSubmissionClient idle
          , txMonitorClient =
-            txMonitorClient
+            const txMonitorClient
          }
 
 withOuroborosClients

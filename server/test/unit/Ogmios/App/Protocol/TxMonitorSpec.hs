@@ -90,6 +90,9 @@ import Ouroboros.Consensus.Cardano.Block
 import Ouroboros.Consensus.Ledger.SupportsMempool
     ( HasTxId (..)
     )
+import Ouroboros.Consensus.Node.NetworkProtocolVersion
+    ( NodeToClientVersion (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger
     ( TxId (ShelleyTxId)
     )
@@ -221,7 +224,7 @@ withTxMonitorClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
     let opts = Rpc.defaultOptions
     let innerCodecs = mkTxMonitorCodecs opts encodeGenTxId (encodeTx (MetadataNoSchema, omitOptionalCbor))
-    let client = mkTxMonitorClient (defaultWithInternalError opts) innerCodecs recvQ (atomically . writeTQueue sendQ)
+    let client = mkTxMonitorClient (defaultWithInternalError opts) innerCodecs recvQ (atomically . writeTQueue sendQ) NodeToClientV_16
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cTxMonitorCodec
     withMockChannel (txMonitorMockPeer seed codec) $ \channel -> do
         result <- race

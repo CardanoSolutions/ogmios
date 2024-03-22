@@ -220,7 +220,7 @@ newHealthCheckClient tr Debouncer{debounce} = do
             LocalTxSubmissionClient idle
 
         , txMonitorClient =
-            LocalTxMonitorClient idle
+            const (LocalTxMonitorClient idle)
 
         , stateQueryClient
         }

@@ -81,6 +81,9 @@ import Ouroboros.Consensus.Cardano.Block
 import Ouroboros.Consensus.Ledger.SupportsMempool
     ( HasTxId (..)
     )
+import Ouroboros.Consensus.Node.NetworkProtocolVersion
+    ( NodeToClientVersion (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Mempool
     ( TxId (..)
     )
@@ -107,8 +110,10 @@ mkTxMonitorClient
         -- ^ Incoming request queue
     -> (Json -> m ())
         -- ^ An emitter for yielding JSON objects
+    -> NodeToClientVersion
+        -- ^ Node-to-Client protocol version that was negotiated for this client
     -> LocalTxMonitorClient (GenTxId block) (GenTx block) SlotNo m ()
-mkTxMonitorClient defaultWithInternalError TxMonitorCodecs{..} queue yield =
+mkTxMonitorClient defaultWithInternalError TxMonitorCodecs{..} queue yield nodeToClientV =
     LocalTxMonitorClient clientStIdle
   where
     await :: m (TxMonitorMessage block)
@@ -174,7 +179,7 @@ mkTxMonitorClient defaultWithInternalError TxMonitorCodecs{..} queue yield =
                 -- To be removed once the following issue is addressed:
                 --
                 --   https://github.com/IntersectMBO/ouroboros-consensus/issues/1009
-                loop (inMultipleEras id)
+                loop (inMultipleEras nodeToClientV id)
           where
             done has = do
                 yield $ encodeHasTransactionResponse $ toResponse $ HasTransactionResponse{has}
@@ -202,17 +207,23 @@ inMultipleEras
     :: forall crypto constraint.
         ( constraint ~ (MostRecentEra (CardanoBlock crypto) ~ ConwayEra crypto)
         )
-    => Ledger.TxId crypto
+    => NodeToClientVersion
+    -> Ledger.TxId crypto
     -> [GenTxId (CardanoBlock crypto)]
-inMultipleEras id =
+inMultipleEras nodeToClientV id =
     -- The list is ordered from the "most probable era", down to the least
     -- probable. This hopefully ensures that we do a minimum number of loops
     -- for the happy path.
-    [ GenTxIdBabbage (ShelleyTxId id)
-    , GenTxIdConway (ShelleyTxId id)
-    , GenTxIdAlonzo (ShelleyTxId id)
-    , GenTxIdMary (ShelleyTxId id)
-    ]
+    GenTxIdBabbage (ShelleyTxId id) :
+        if nodeToClientV >= NodeToClientV_16 then
+            [ GenTxIdConway (ShelleyTxId id)
+            , GenTxIdAlonzo (ShelleyTxId id)
+            , GenTxIdMary (ShelleyTxId id)
+            ]
+        else
+            [ GenTxIdAlonzo (ShelleyTxId id)
+            , GenTxIdMary (ShelleyTxId id)
+            ]
   where
     -- This line exists as a reminder. It will generate a compiler error
     -- when a new era becomes available. From there, one should update
