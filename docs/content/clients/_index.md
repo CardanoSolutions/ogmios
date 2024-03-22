@@ -16,6 +16,7 @@ There exists a variety of clients for Ogmios. Initially, the TypeScript client w
 <td align="center"><img src="/images/clients/java.png" alt="Logo:Java"><br/><a href="https://github.com/adabox-aio/ogmios-java-client.git#readme"><strong>Java</strong></a></td>
 <td align="center"><img src="/images/clients/python.png" alt="Logo:Python"><br/><a href="https://ogmios-python.readthedocs.io/en/latest/examples/index.html"><strong>Python</Strong></a></td>
 <td align="center"><img src="/images/clients/elixir.png" alt="Logo:Elixir"><br/><a href="https://github.com/wowica/xogmios"><strong>Elixir</Strong></a></td>
+<td align="center"><img src="/images/clients/cpp.png" alt="Logo:C++"><br/><a href="https://gitlab.com/viperscience/libogmios"><strong>C++</Strong></a></td>
 </tr><thead></table>
 
 In this manual, we cover some usage of the TypeScript client. For other clients, please refer to their respective projects and maintainers.

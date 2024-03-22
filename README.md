@@ -17,6 +17,7 @@
 | ---      | ---                  |
 | `v5.6.0` | `1.35.4`, `1.35.7`   |
 | `v6.1.0` | `8.7.3`, `8.8.0-pre` |
+| `v6.2.0` | `8.9.0`              |
 
 [SanchoNet]: https://sancho.network/
 
@@ -100,6 +101,7 @@ Ogmios provides a language-agnostic API which can be implemented using any WebSo
 <td align="center"><img height=72 width=72 src=".github/clients/java.png" alt="Logo:Java"><br/><a href="https://github.com/adabox-aio/ogmios-java-client.git#readme"><strong>Java</strong></a></td>
 <td align="center"><img height=72 width=72 src=".github/clients/python.png" alt="Logo:Python"><br/><a href="https://ogmios-python.readthedocs.io/en/latest/examples/index.html"><strong>Python</Strong></a></td>
 <td align="center"><img height=72 width=72 src=".github/clients/elixir.png" alt="Logo:Python"><br/><a href="https://github.com/wowica/xogmios"><strong>Elixir</Strong></a></td>
+<td align="center"><img height=72 width=72 src=".github/clients/cpp.png" alt="Logo:C++"><br/><a href="https://gitlab.com/viperscience/libogmios"><strong>C++</Strong></a></td>
 </tr><thead></table>
 
 ## Sponsors
