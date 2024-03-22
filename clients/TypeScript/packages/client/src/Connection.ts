@@ -96,7 +96,7 @@ export class JSONRPCError extends Error {
 export function createConnectionObject (config?: ConnectionConfig): Connection {
   const _128MB = 128 * 1024 * 1024
   const base = {
-    host: config?.host ?? 'localhost',
+    host: config?.host ?? '127.0.0.1',
     port: config?.port ?? 1337,
     tls: config?.tls ?? false,
     maxPayload: config?.maxPayload ?? _128MB

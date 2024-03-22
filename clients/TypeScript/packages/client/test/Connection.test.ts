@@ -8,13 +8,13 @@ describe('Connection', () => {
   describe('createConnectionObject', () => {
     it('can be passed undefined', () => {
       expect(createConnectionObject(undefined)).toStrictEqual({
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 1337,
         tls: false,
         maxPayload: 134217728,
         address: {
-          http: 'http://localhost:1337',
-          webSocket: 'ws://localhost:1337'
+          http: 'http://127.0.0.1:1337',
+          webSocket: 'ws://127.0.0.1:1337'
         }
       })
     })
@@ -52,13 +52,13 @@ describe('Connection', () => {
       expect(createConnectionObject({
         port: 1337
       })).toStrictEqual({
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 1337,
         tls: false,
         maxPayload: 134217728,
         address: {
-          http: 'http://localhost:1337',
-          webSocket: 'ws://localhost:1337'
+          http: 'http://127.0.0.1:1337',
+          webSocket: 'ws://127.0.0.1:1337'
         }
       })
     })
@@ -66,13 +66,13 @@ describe('Connection', () => {
       expect(createConnectionObject({
         tls: true
       })).toStrictEqual({
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 1337,
         tls: true,
         maxPayload: 134217728,
         address: {
-          http: 'https://localhost:1337',
-          webSocket: 'wss://localhost:1337'
+          http: 'https://127.0.0.1:1337',
+          webSocket: 'wss://127.0.0.1:1337'
         }
       })
     })
@@ -81,43 +81,43 @@ describe('Connection', () => {
         port: 1337,
         tls: true
       })).toStrictEqual({
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 1337,
         tls: true,
         maxPayload: 134217728,
         address: {
-          http: 'https://localhost:1337',
-          webSocket: 'wss://localhost:1337'
+          http: 'https://127.0.0.1:1337',
+          webSocket: 'wss://127.0.0.1:1337'
         }
       })
     })
     it('can be passed an object excluding a port', () => {
       expect(createConnectionObject({
-        host: 'localhost',
+        host: '127.0.0.1',
         tls: true
       })).toStrictEqual({
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 1337,
         tls: true,
         maxPayload: 134217728,
         address: {
-          http: 'https://localhost:1337',
-          webSocket: 'wss://localhost:1337'
+          http: 'https://127.0.0.1:1337',
+          webSocket: 'wss://127.0.0.1:1337'
         }
       })
     })
     it('can be passed an object excluding tls', () => {
       expect(createConnectionObject({
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 1337
       })).toStrictEqual({
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 1337,
         tls: false,
         maxPayload: 134217728,
         address: {
-          http: 'http://localhost:1337',
-          webSocket: 'ws://localhost:1337'
+          http: 'http://127.0.0.1:1337',
+          webSocket: 'ws://127.0.0.1:1337'
         }
       })
     })
