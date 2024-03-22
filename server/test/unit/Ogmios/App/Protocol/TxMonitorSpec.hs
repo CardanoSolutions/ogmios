@@ -63,8 +63,8 @@ import Ogmios.Control.MonadSTM
     )
 import Ogmios.Data.Json
     ( Json
+    , encodeGenTxId
     , encodeTx
-    , encodeTxId
     )
 import Ogmios.Data.Json.Orphans
     ()
@@ -84,8 +84,14 @@ import Ogmios.Data.Protocol.TxMonitor
     , TxMonitorMessage (..)
     , mkTxMonitorCodecs
     )
+import Ouroboros.Consensus.Cardano.Block
+    ( TxId (..)
+    )
 import Ouroboros.Consensus.Ledger.SupportsMempool
     ( HasTxId (..)
+    )
+import Ouroboros.Consensus.Shelley.Ledger
+    ( TxId (ShelleyTxId)
     )
 import Ouroboros.Network.Protocol.LocalTxMonitor.Type
     ( ClientHasAgency (..)
@@ -138,6 +144,7 @@ import Test.QuickCheck
     , vectorOf
     )
 
+import qualified Cardano.Ledger.TxIn as Ledger
 import qualified Codec.Json.Rpc as Rpc
 import qualified Codec.Json.Rpc.Handler as Rpc
 import qualified Data.Aeson as Json
@@ -213,7 +220,7 @@ withTxMonitorClient
 withTxMonitorClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
     let opts = Rpc.defaultOptions
-    let innerCodecs = mkTxMonitorCodecs opts encodeTxId (encodeTx (MetadataNoSchema, omitOptionalCbor))
+    let innerCodecs = mkTxMonitorCodecs opts encodeGenTxId (encodeTx (MetadataNoSchema, omitOptionalCbor))
     let client = mkTxMonitorClient (defaultWithInternalError opts) innerCodecs recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cTxMonitorCodec
     withMockChannel (txMonitorMockPeer seed codec) $ \channel -> do
@@ -365,8 +372,17 @@ maxCapacity = 10
 plausibleTxs :: [GenTx Block]
 plausibleTxs = generateWith (vectorOf (2 * maxCapacity) genTx) 42
 
-plausibleTxsIds :: [GenTxId Block]
-plausibleTxsIds = txId <$> plausibleTxs
+plausibleTxsIds :: [Ledger.TxId StandardCrypto]
+plausibleTxsIds = unGenTxId . txId <$> plausibleTxs
+  where
+    unGenTxId = \case
+        GenTxIdConway (ShelleyTxId x)  -> x
+        GenTxIdBabbage (ShelleyTxId x) -> x
+        GenTxIdAlonzo (ShelleyTxId x)  -> x
+        GenTxIdMary (ShelleyTxId x)    -> x
+        GenTxIdAllegra (ShelleyTxId x) -> x
+        GenTxIdShelley (ShelleyTxId x) -> x
+        GenTxIdByron _ -> error "GenTxIdByron"
 
 genServerAction :: [tx] -> Gen ServerAction
 genServerAction xs = frequency $ mconcat
@@ -427,7 +443,7 @@ isNextTxResponse :: ResponsePredicate
 isNextTxResponse = ResponsePredicate $
     \v -> ("method" `at` v)  == Just (toJSON @Text "nextTransaction")
 
-hasTx :: Rpc.Mirror -> GenTxId Block -> TxMonitorMessage Block
+hasTx :: Rpc.Mirror -> Ledger.TxId StandardCrypto -> TxMonitorMessage Block
 hasTx mirror tx =
     MsgHasTransaction (HasTransaction tx) (Rpc.Response method mirror)
   where

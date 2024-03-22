@@ -79,6 +79,7 @@ import Ouroboros.Network.Protocol.LocalTxMonitor.Type
     ( MempoolSizeAndCapacity (..)
     )
 
+import qualified Cardano.Ledger.TxIn as Ledger
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
@@ -122,7 +123,7 @@ data TxMonitorCodecs block = TxMonitorCodecs
     }
 
 mkTxMonitorCodecs
-    :: (FromJSON (GenTxId block))
+    :: (FromJSON (Ledger.TxId (BlockCrypto block)))
     => Rpc.Options
     -> (GenTxId block -> Json)
     -> (GenTx block -> Json)
@@ -295,14 +296,14 @@ _encodeNextTransactionResponse opts encodeTxId encodeTx =
 -- HasTransaction
 --
 data HasTransaction block
-    = HasTransaction { id :: GenTxId block }
+    = HasTransaction { id :: Ledger.TxId (BlockCrypto block) }
     deriving (Generic)
 deriving instance Show (GenTxId block) => Show (HasTransaction block)
 deriving instance   Eq (GenTxId block) =>   Eq (HasTransaction block)
 
 _encodeHasTransaction
     :: forall block. ()
-    => (GenTxId block -> Json)
+    => (Ledger.TxId (BlockCrypto block) -> Json)
     -> Rpc.Request (HasTransaction block)
     -> Json
 _encodeHasTransaction encodeTxId =
@@ -311,7 +312,7 @@ _encodeHasTransaction encodeTxId =
             encodeTxId id
 
 _decodeHasTransaction
-    :: forall block. (FromJSON (GenTxId block))
+    :: forall block. (FromJSON (Ledger.TxId (BlockCrypto block)))
     => Json.Value
     -> Json.Parser (Rpc.Request (HasTransaction block))
 _decodeHasTransaction =

@@ -164,6 +164,7 @@ import qualified Cardano.Ledger.PoolDistr as Ledger
 import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
+import qualified Cardano.Ledger.TxIn as Ledger
 
 genBlock :: Gen Block
 genBlock = oneof
@@ -224,9 +225,15 @@ genBlock = oneof
               )
             ]
 
-genTxId :: Gen (GenTxId Block)
-genTxId =
-    GenTxIdAlonzo . ShelleyTxId <$> arbitrary
+genTxId :: Gen (Ledger.TxId StandardCrypto)
+genTxId = arbitrary
+
+genGenTxId :: Gen (GenTxId Block)
+genGenTxId = oneof
+    [ GenTxIdConway . ShelleyTxId <$> genTxId
+    , GenTxIdBabbage . ShelleyTxId <$> genTxId
+    , GenTxIdAlonzo . ShelleyTxId <$> genTxId
+    ]
 
 genTx :: Gen (GenTx Block)
 genTx = oneof

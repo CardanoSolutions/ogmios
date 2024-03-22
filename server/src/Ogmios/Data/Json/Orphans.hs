@@ -17,7 +17,6 @@ import Cardano.Ledger.Shelley.UTxO
     )
 import Cardano.Network.Protocol.NodeToClient
     ( GenTx
-    , GenTxId
     )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient
@@ -30,7 +29,6 @@ import Ogmios.Data.Json
     ( decodePoint
     , decodeSerializedTransaction
     , decodeTip
-    , decodeTxId
     , decodeUtxo
     , encodeSerializedTransaction
     , encodeSubmitTransactionError
@@ -96,9 +94,6 @@ instance
   where
     parseJSON = Json.withObject "CBOR" $ \o ->
         o .: "cbor" >>= decodeSerializedTransaction
-
-instance PraosCrypto crypto => FromJSON (GenTxId (CardanoBlock crypto)) where
-    parseJSON = decodeTxId
 
 instance Crypto crypto => FromJSON (MultiEraUTxO (CardanoBlock crypto)) where
     parseJSON = decodeUtxo

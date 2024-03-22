@@ -118,11 +118,11 @@ import Ogmios.Data.Json
     , encodeDeserialisationFailure
     , encodeEvaluationError
     , encodeExUnits
+    , encodeGenTxId
     , encodePoint
     , encodeSubmitTransactionError
     , encodeTip
     , encodeTx
-    , encodeTxId
     , jsonToByteString
     )
 import Ogmios.Data.Json.Ledger.PredicateFailure
@@ -219,12 +219,12 @@ newWebSocketApp tr unliftIO = do
 
             , mkTxMonitorCodecs
                 opts
-                encodeTxId
+                encodeGenTxId
                 (encodeTx (metadataFormat, includeCbor))
 
             , mkTxSubmissionCodecs
                 opts
-                encodeTxId
+                encodeGenTxId
                 encodeScriptPurposeIndexInAnyEra
                 encodeExUnits
                 encodeEvaluationError

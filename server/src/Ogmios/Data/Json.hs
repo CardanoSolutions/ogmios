@@ -27,7 +27,8 @@ module Ogmios.Data.Json
     , encodeSubmitTransactionError
     , encodeTip
     , encodeTx
-    , encodeTxId
+    , encodeGenTxId
+    , Shelley.encodeTxId
     , Shelley.encodeTxIn
 
       -- * Decoders
@@ -264,11 +265,11 @@ encodeTx opts = \case
     GenTxByron _ ->
         error "encodeTx: unsupported Byron transaction."
 
-encodeTxId
+encodeGenTxId
     :: Crypto crypto
     => GenTxId (CardanoBlock crypto)
     -> Json
-encodeTxId = encodeObject . \case
+encodeGenTxId = encodeObject . \case
     GenTxIdConway (ShelleyTxId x) ->
         Shelley.encodeTxId x
     GenTxIdBabbage (ShelleyTxId x) ->

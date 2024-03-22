@@ -47,7 +47,6 @@ import Ogmios.Data.Protocol.StateQuery
     )
 import Ogmios.Data.Protocol.TxMonitor
     ( AcquireMempool
-    , GenTxId
     , HasTransaction
     , NextTransaction
     , ReleaseMempool
@@ -105,8 +104,8 @@ onUnmatchedMessage
         ( FromJSON (MultiEraDecoder (SerializedTransaction block))
         , FromJSON (QueryLedgerState block)
         , FromJSON (Point block)
-        , FromJSON (GenTxId block)
         , FromJSON (MultiEraUTxO block)
+        , Crypto (BlockCrypto block)
         )
     => Rpc.Options
     -> ByteString

@@ -48,6 +48,9 @@ import Ogmios.Prelude hiding
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..)
     )
+import Ogmios.Data.EraTranslation
+    ( MostRecentEra
+    )
 import Ogmios.Data.Json
     ( Json
     )
@@ -69,8 +72,17 @@ import Ogmios.Data.Protocol.TxMonitor
     , TxMonitorCodecs (..)
     , TxMonitorMessage (..)
     )
+import Ouroboros.Consensus.Cardano
+    ( CardanoBlock
+    )
+import Ouroboros.Consensus.Cardano.Block
+    ( TxId (..)
+    )
 import Ouroboros.Consensus.Ledger.SupportsMempool
     ( HasTxId (..)
+    )
+import Ouroboros.Consensus.Shelley.Ledger.Mempool
+    ( TxId (..)
     )
 import Ouroboros.Network.Protocol.LocalTxMonitor.Client
     ( ClientStAcquired (..)
@@ -78,12 +90,14 @@ import Ouroboros.Network.Protocol.LocalTxMonitor.Client
     , LocalTxMonitorClient (..)
     )
 
+import qualified Cardano.Ledger.TxIn as Ledger
 import qualified Codec.Json.Rpc as Rpc
 
 mkTxMonitorClient
-    :: forall m block.
+    :: forall m block crypto.
         ( MonadSTM m
         , HasTxId (GenTx block)
+        , block ~ CardanoBlock crypto
         )
     => (forall a r. m a -> (Json -> m ()) -> Rpc.ToResponse r -> m a -> m a)
         -- ^ A default response handler to catch errors.
@@ -141,9 +155,38 @@ mkTxMonitorClient defaultWithInternalError TxMonitorCodecs{..} queue yield =
                     clientStAcquired
         MsgHasTransaction HasTransaction{id} toResponse ->
             defaultWithInternalError clientStAcquired yield toResponse $ do
-                pure $ SendMsgHasTx id $ \has -> do
-                    yield $ encodeHasTransactionResponse $ toResponse $ HasTransactionResponse{has}
-                    clientStAcquired
+                -- NOTE:
+                --
+                -- Unfortunately here, we can't reliably ask the node for a
+                -- transaction id because it performs equality on the GenTxId NS
+                -- wrapper instead of the inner transaction id bytes.
+                --
+                -- As a consequence, sending a transaction id wrapped as a
+                -- GenTxIdAlonzo will not match the same transaction id wrapped
+                -- as a GenTxIdBabbage.
+                --
+                -- Yet, we cannot know upfront in what era those ids are wrapped
+                -- in the mempool although we do commit to a specific NS summand
+                -- when we deserialize it. So we have no other choice than
+                -- retrying the request on `False` with ids wrapped in different
+                -- eras.
+                --
+                -- To be removed once the following issue is addressed:
+                --
+                --   https://github.com/IntersectMBO/ouroboros-consensus/issues/1009
+                loop (inMultipleEras id)
+          where
+            done has = do
+                yield $ encodeHasTransactionResponse $ toResponse $ HasTransactionResponse{has}
+                clientStAcquired
+
+            loop = \case
+                [] -> done False
+                genId:rest -> do
+                    pure $ SendMsgHasTx genId $ \case
+                        True  -> done True
+                        False -> loop rest
+
         MsgSizeOfMempool SizeOfMempool toResponse ->
             defaultWithInternalError clientStAcquired yield toResponse $ do
                 pure $ SendMsgGetSizes $ \mempool -> do
@@ -154,3 +197,24 @@ mkTxMonitorClient defaultWithInternalError TxMonitorCodecs{..} queue yield =
                 pure $ SendMsgRelease $ do
                     yield $ encodeReleaseMempoolResponse $ toResponse Released
                     clientStIdle
+
+inMultipleEras
+    :: forall crypto constraint.
+        ( constraint ~ (MostRecentEra (CardanoBlock crypto) ~ ConwayEra crypto)
+        )
+    => Ledger.TxId crypto
+    -> [GenTxId (CardanoBlock crypto)]
+inMultipleEras id =
+    -- The list is ordered from the "most probable era", down to the least
+    -- probable. This hopefully ensures that we do a minimum number of loops
+    -- for the happy path.
+    [ GenTxIdBabbage (ShelleyTxId id)
+    , GenTxIdConway (ShelleyTxId id)
+    , GenTxIdAlonzo (ShelleyTxId id)
+    , GenTxIdMary (ShelleyTxId id)
+    ]
+  where
+    -- This line exists as a reminder. It will generate a compiler error
+    -- when a new era becomes available. From there, one should update
+    -- the list above to contain that latest era.
+    _compilerWarning = keepRedundantConstraint (Proxy @constraint)

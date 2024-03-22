@@ -130,7 +130,6 @@ import Cardano.Ledger.Shelley.Genesis
     )
 import Cardano.Network.Protocol.NodeToClient
     ( GenTx
-    , GenTxId
     , SerializedTransaction
     )
 import Cardano.Slotting.Block
@@ -164,7 +163,6 @@ import Ouroboros.Consensus.Cardano.Block
     ( BlockQuery (..)
     , CardanoBlock
     , GenTx (..)
-    , TxId (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator
     ( MismatchEraInfo
@@ -196,9 +194,6 @@ import Ouroboros.Consensus.Protocol.Praos
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
     , ShelleyHash (..)
-    )
-import Ouroboros.Consensus.Shelley.Ledger.Mempool
-    ( TxId (..)
     )
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( BlockQuery (..)
@@ -1818,14 +1813,14 @@ decodeTip json =
 decodeTxId
     :: forall crypto. Crypto crypto
     => Json.Value
-    -> Json.Parser (GenTxId (CardanoBlock crypto))
+    -> Json.Parser (Ledger.TxId crypto)
 decodeTxId = Json.withText "TxId" $ \(encodeUtf8 -> utf8) -> do
     bytes <- decodeBase16 utf8
     case hashFromBytes bytes of
         Nothing ->
             fail "couldn't interpret bytes as blake2b-256 digest"
         Just h ->
-            pure $ GenTxIdAlonzo $ ShelleyTxId $ Ledger.TxId (Ledger.unsafeMakeSafeHash h)
+            pure $ Ledger.TxId (Ledger.unsafeMakeSafeHash h)
 
 decodeTxIn
     :: forall crypto. (Crypto crypto)

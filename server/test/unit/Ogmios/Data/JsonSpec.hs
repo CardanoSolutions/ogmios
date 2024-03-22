@@ -54,6 +54,8 @@ import Ogmios.Data.Json
     , encodeDeserialisationFailure
     , encodeEvaluationError
     , encodeExUnits
+    , encodeGenTxId
+    , encodeObject
     , encodePoint
     , encodeSubmitTransactionError
     , encodeTip
@@ -185,6 +187,7 @@ import Test.Generators
     , genData
     , genEpochResult
     , genEvaluateTransactionResponse
+    , genGenTxId
     , genGenesisConfig
     , genHardForkApplyTxErr
     , genInterpreterResult
@@ -204,7 +207,6 @@ import Test.Generators
     , genTip
     , genTipNoGenesis
     , genTx
-    , genTxId
     , genUTxOResult
     , genUtxoBabbage
     , genWithOrigin
@@ -461,7 +463,7 @@ spec = do
             (arbitrary @(Rpc.Response (SubmitTransactionResponse Block)))
             (_encodeSubmitTransactionResponse (Proxy @Block)
                 Rpc.defaultOptions
-                encodeTxId
+                encodeGenTxId
                 encodeSubmitTransactionError
                 encodeDeserialisationFailure
             )
@@ -501,19 +503,19 @@ spec = do
 
         validateToJSON
             (arbitrary @(Rpc.Response (NextTransactionResponse Block)))
-            (_encodeNextTransactionResponse Rpc.defaultOptions encodeTxId (encodeTx (MetadataNoSchema, omitOptionalCbor)))
+            (_encodeNextTransactionResponse Rpc.defaultOptions encodeGenTxId (encodeTx (MetadataNoSchema, omitOptionalCbor)))
             (10, "NextTransactionResponse")
             "ogmios.json#/properties/NextTransactionResponse"
 
         validateToJSON
             (arbitrary @(Rpc.Response (NextTransactionResponse Block)))
-            (_encodeNextTransactionResponse Rpc.defaultOptions encodeTxId (encodeTx (MetadataDetailedSchema, omitOptionalCbor)))
+            (_encodeNextTransactionResponse Rpc.defaultOptions encodeGenTxId (encodeTx (MetadataDetailedSchema, omitOptionalCbor)))
             (10, "NextTransactionResponse")
             "ogmios.json#/properties/NextTransactionResponse"
 
         validateFromJSON
             (arbitrary @(Rpc.Request (HasTransaction Block)))
-            (_encodeHasTransaction encodeTxId, _decodeHasTransaction)
+            (_encodeHasTransaction (encodeObject . encodeTxId), _decodeHasTransaction)
             (10, "HasTransaction")
             "ogmios.json#/properties/HasTransaction"
 
@@ -881,7 +883,7 @@ instance Arbitrary (GenTx Block) where
     arbitrary = genTx
 
 instance Arbitrary (GenTxId Block) where
-    arbitrary = genTxId
+    arbitrary = genGenTxId
 
 instance Arbitrary MempoolSizeAndCapacity where
     arbitrary = genMempoolSizeAndCapacity

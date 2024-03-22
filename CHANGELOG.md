@@ -16,7 +16,7 @@ pre: "<b>5. </b>"
 
 #### Changed
 
-- N/A
+- Retry `HasTx` on false with id wrapped in different eras, to cope with the hard-fork combinator inability to compare transaction id across eras. See also [#376](https://github.com/CardanoSolutions/ogmios/issues/376).
 
 #### Removed
 
