@@ -721,7 +721,7 @@ export interface ConstitutionalCommitteeRetirement {
   member: {
     id: DigestBlake2B224;
   };
-  anchor?: Anchor;
+  metadata?: Anchor;
 }
 /**
  * A delegate representative registration. Note that this is only possible for 'registered' representatives and not for well-known ones (abstain & noConfidence)
@@ -730,12 +730,12 @@ export interface DelegateRepresentativeRegistration {
   type: "delegateRepresentativeRegistration";
   delegateRepresentative: DelegateRepresentative;
   deposit: ValueAdaOnly;
-  anchor?: Anchor;
+  metadata?: Anchor;
 }
 export interface DelegateRepresentativeUpdate {
   type: "delegateRepresentativeUpdate";
   delegateRepresentative: DelegateRepresentative;
-  anchor: None | Anchor;
+  metadata: None | Anchor;
 }
 /**
  * A delegate representative retirement. Note that this is only possible for 'registered' representatives and not for well-known ones (abstain & noConfidence)
@@ -760,7 +760,7 @@ export interface Assets {
 export interface GovernanceProposal {
   deposit?: ValueAdaOnly;
   returnAccount?: RewardAccount;
-  anchor?: Anchor;
+  metadata?: Anchor;
   action:
     | GovernanceActionProtocolParametersUpdate
     | GovernanceActionHardForkInitiation
@@ -922,7 +922,7 @@ export interface GovernanceActionConstitution {
   guardrails: null | {
     hash: DigestBlake2B224;
   };
-  anchor: Anchor;
+  metadata: Anchor;
 }
 /**
  * A motion of no-confidence, indicate a lack of trust in the constitutional committee.
@@ -941,7 +941,7 @@ export interface GovernanceActionInformation {
  */
 export interface GovernanceVote {
   issuer: VoterGenesisDelegate | VoterConstitutionalCommittee | VoterDelegateRepresentative | VoterStakePoolOperator;
-  anchor?: Anchor;
+  metadata?: Anchor;
   vote: "yes" | "no" | "abstain";
   proposal?: GovernanceProposalReference;
 }
@@ -1831,7 +1831,7 @@ export interface SubmitTransactionFailureInvalidOrMissingPreviousProposals {
   message: string;
   data: {
     invalidOrMissingPreviousProposals: {
-      anchor: Anchor;
+      metadata: Anchor;
       type: "hardForkInitiation" | "protocolParametersUpdate" | "constitutionalCommittee" | "constitution";
       invalidPreviousProposal?: GovernanceProposalReference;
     }[];
@@ -2203,7 +2203,7 @@ export interface Constitution {
   guardrails: null | {
     hash: DigestBlake2B224;
   };
-  anchor: Anchor;
+  metadata: Anchor;
 }
 /**
  * Query the current epoch number the ledger is at.
