@@ -141,7 +141,7 @@ client.once('open', () => {
 
 client.on('message', function(msg) {
     const response = JSON.parse(msg);
-    console.log(JSON.stringify(response.result.protocolParameters, null, 4));
+    console.log(JSON.stringify(response.result, null, 4));
     client.close();
 });
 ```
@@ -245,7 +245,7 @@ client.on('message', function(msg) {
 
     switch (response.method) {
         case "queryNetwork/tip":
-            const point = response.result.tip;
+            const point = response.result;
             rpc("acquireLedgerState", { point });
             break;
 
@@ -254,7 +254,7 @@ client.on('message', function(msg) {
             break;
 
         default:
-            console.log(response.result.liveStakeDistribution);
+            console.log(response.result);
             client.close();
             break;
     }
