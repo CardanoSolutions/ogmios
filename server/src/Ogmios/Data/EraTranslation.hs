@@ -19,6 +19,7 @@ module Ogmios.Data.EraTranslation
     ) where
 
 import Ogmios.Prelude
+import System.IO.Unsafe (unsafePerformIO)
 
 import Cardano.Crypto.DSIGN
     ( DSIGNAlgorithm (..)
@@ -64,7 +65,8 @@ type family BlockEra block :: Type where
 
 class Upgrade (f :: Type -> Type) era where
     type Upgraded f :: Type -> Type
-    upgrade :: f (PreviousEra era) -> Upgraded f era
+    -- FIXME HasCallStack is not printing the stack on errors (see unsafeFromRight)
+    upgrade :: HasCallStack => f (PreviousEra era) -> Upgraded f era
 
 ----------
 -- TxOut
@@ -101,8 +103,13 @@ instance
         let isValid = Alonzo.isValid tx
         pure $ AlonzoTx{body,wits,auxiliaryData,isValid}
 
+-- Although having HasCallStack, it's not showing errors in runtime
+-- The workaround here is to put string using IO beyond error
 unsafeFromRight :: (HasCallStack, Show e) => Either e a -> a
-unsafeFromRight = either (error . show) id
+unsafeFromRight = flip either id $ \err -> error . unsafePerformIO $ do
+    let err' = show err
+    putStrLn err'
+    pure $ toText err'
 
 -- Era-specific GADTs
 
