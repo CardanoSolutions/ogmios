@@ -165,7 +165,6 @@ import Data.ByteString.Bech32
 import Data.Fixed
     ( Fixed (..)
     , HasResolution (..)
-    , Pico
     , div'
     )
 import Data.IP
