@@ -162,6 +162,12 @@ import Data.ByteString.Bech32
     ( HumanReadablePart
     , encodeBech32
     )
+import Data.Fixed
+    ( Fixed (..)
+    , HasResolution (..)
+    , Pico
+    , div'
+    )
 import Data.IP
     ( IPv4
     , IPv6
@@ -175,6 +181,7 @@ import Data.Scientific
 import Data.Time.Clock
     ( NominalDiffTime
     , UTCTime
+    , nominalDiffTimeToSeconds
     )
 import Data.Vector
     ( Vector
@@ -395,9 +402,8 @@ encodeRelativeTime :: RelativeTime -> Json
 encodeRelativeTime =
     encodeSingleton "seconds"
     . Json.integer
-    . (`div` 10^(12::Integer))
-    . toInteger
-    . fromEnum
+    . (\f@(MkFixed n) -> n `div'` resolution f)
+    . nominalDiffTimeToSeconds
     . getRelativeTime
 {-# INLINABLE encodeRelativeTime #-}
 

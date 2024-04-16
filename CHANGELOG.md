@@ -6,6 +6,21 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
+
+### [6.2.1] - 2024-04-16
+
+#### Added
+
+- N/A
+
+#### Changed
+
+- Fixed integer overflow happening when encoding relative time bounds in era summary, causing times to be shown as negative values.
+
+#### Removed
+
+- N/A
+
 ### [6.2.0] - 2024-03-22
 
 #### Added

@@ -20,7 +20,8 @@ import Cardano.Network.Protocol.NodeToClient
     , GenTxId
     )
 import Cardano.Slotting.Time
-    ( mkSlotLength
+    ( RelativeTime (..)
+    , mkSlotLength
     )
 import Control.Monad.Class.MonadAsync
     ( forConcurrently_
@@ -71,6 +72,7 @@ import Ogmios.Data.Json.Orphans
     ()
 import Ogmios.Data.Json.Prelude
     ( MetadataFormat (..)
+    , encodeRelativeTime
     , encodeSlotLength
     , omitOptionalCbor
     )
@@ -431,6 +433,11 @@ spec = do
         forM_ matrix $ \(slotLength, json) ->
             specify (show slotLength <> " → " <> show json) $ do
                 encodeSlotLength slotLength `shouldBe` json
+
+    context "RelativeTime" $ do
+        specify "Do not overflow" $ do
+            let json = Json.pairs $ Json.pair "seconds" (Json.integer 207360000)
+            encodeRelativeTime (RelativeTime 207360000) `shouldBe` json
 
     context "validate chain-sync request/response against JSON-schema" $ do
         validateFromJSON

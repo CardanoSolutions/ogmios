@@ -486,7 +486,7 @@ encodeInterpreter
     :: forall crypto eras. (eras ~ CardanoEras crypto)
     => Interpreter eras
     -> Json
-encodeInterpreter (deserialise @(Summary eras). serialise -> Summary eraSummaries) =
+encodeInterpreter (deserialise @(Summary eras) . serialise -> Summary eraSummaries) =
     encodeFoldable encodeEraSummary eraSummaries
 
 encodeMismatchEraInfo
