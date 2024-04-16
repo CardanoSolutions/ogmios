@@ -24,7 +24,7 @@ jobs:
       matrix:
         os: [ linux ]
         arch: [ x86_64, aarch64 ]
-        compiler: [ ghc96 ]
+        compiler: [ ghc963 ]
 
     runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-16vcpu-ubuntu-2204-arm' || 'ubuntu-22.04' }}
 
@@ -104,7 +104,7 @@ jobs:
     - name: 📦 Package
       run: |
         mkdir -p bin
-        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc96' && '9.6.3' }}/ogmios-${{ steps.version.outputs.version }}/x/ogmios/build/ogmios/ogmios ./bin/ogmios
+        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc963' && '9.6.3' }}/ogmios-${{ steps.version.outputs.version }}/x/ogmios/build/ogmios/ogmios ./bin/ogmios
         mkdir -p share && chmod +w share
         mkdir -p share/zsh/site-functions
         ./bin/ogmios --zsh-completion-script ogmios > ./share/zsh/site-functions/_ogmios
