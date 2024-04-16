@@ -24,7 +24,8 @@ jobs:
       matrix:
         os: [ linux ]
         arch: [ x86_64, aarch64 ]
-        compiler: [ ghc963 ]
+        compiler: [ ghc96 ]
+        devx-version: [ 82eb2a0633de606ac9347898967deeb305b477d0 ]
 
     runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-16vcpu-ubuntu-2204-arm' || 'ubuntu-22.04' }}
 
@@ -59,13 +60,13 @@ jobs:
       if: ${{ matrix.arch == 'x86_64' }}
       working-directory: server
       run: |
-        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cat /nix/store/vd865r55pdbndjwh994h90m35qq77x44-cabal.project.local >> cabal.project.local && cabal update && cabal freeze"
+        nix develop github:input-output-hk/devx/${{ matrix.devx-version}}#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cat /nix/store/vd865r55pdbndjwh994h90m35qq77x44-cabal.project.local >> cabal.project.local && cabal update && cabal freeze"
 
     - name: ❄️ Prepare cache (aarch64)
       if: ${{ matrix.arch == 'aarch64' }}
       working-directory: server
       run: |
-        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cat /nix/store/hviyb5sciblcyr5fc3vsqcwmfh1nz69w-cabal.project.local >> cabal.project.local && cabal update && cabal freeze"
+        nix develop github:input-output-hk/devx/${{ matrix.devx-version}}#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cat /nix/store/hviyb5sciblcyr5fc3vsqcwmfh1nz69w-cabal.project.local >> cabal.project.local && cabal update && cabal freeze"
 
     - name: 💾 Download Cache
       uses: actions/cache/restore@v3
@@ -81,7 +82,7 @@ jobs:
     - name: 🔨  Dependencies
       working-directory: server
       run: |
-        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static --only-dependencies ogmios:lib:ogmios"
+        nix develop github:input-output-hk/devx/${{ matrix.devx-version }}#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static --only-dependencies ogmios:lib:ogmios"
       env:
         GIT_SHA: ${{ github.sha }}
 
@@ -97,14 +98,14 @@ jobs:
     - name: 🔨 Build
       working-directory: server
       run: |
-        nix develop github:input-output-hk/devx#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static ogmios:exe:ogmios"
+        nix develop github:input-output-hk/devx/${{ matrix.devx-version }}#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cabal build --enable-executable-static ogmios:exe:ogmios"
       env:
         GIT_SHA: ${{ github.sha }}
 
     - name: 📦 Package
       run: |
         mkdir -p bin
-        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc963' && '9.6.3' }}/ogmios-${{ steps.version.outputs.version }}/x/ogmios/build/ogmios/ogmios ./bin/ogmios
+        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc96' && '9.6.3' }}/ogmios-${{ steps.version.outputs.version }}/x/ogmios/build/ogmios/ogmios ./bin/ogmios
         mkdir -p share && chmod +w share
         mkdir -p share/zsh/site-functions
         ./bin/ogmios --zsh-completion-script ogmios > ./share/zsh/site-functions/_ogmios
