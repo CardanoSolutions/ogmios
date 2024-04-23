@@ -386,7 +386,7 @@ spec = do
                     fail "successfully decoded an invalid payload (as Conway Utxo)?"
 
         specify "Golden: Script_Native_0.json" $ do
-            json <- decodeFileThrow "Script_native_0.json"
+            json <- decodeFileThrow "Script_Native_0.json"
             case traverse @[] (Json.parse (decodeScript @(BabbageEra StandardCrypto))) json of
                 Json.Error e ->
                     fail (show e)
