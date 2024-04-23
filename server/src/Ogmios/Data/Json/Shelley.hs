@@ -581,7 +581,7 @@ encodePoolParams x =
     "margin" .=
         encodeUnitInterval (Ledger.ppMargin x) <>
     "rewardAccount" .=
-        encodeRewardAcnt (Ledger.ppRewardAcnt x) <>
+        encodeRewardAcnt (Ledger.ppRewardAccount x) <>
     "owners" .=
         encodeFoldable encodeKeyHash (Ledger.ppOwners x) <>
     "relays" .=
@@ -729,7 +729,7 @@ encodeProtVer x =
     & encodeObject
 
 encodeRewardAcnt
-    :: Sh.RewardAcnt era
+    :: Sh.RewardAccount era
     -> Json
 encodeRewardAcnt =
     encodeText . stringifyRewardAcnt
@@ -1075,10 +1075,10 @@ stringifyPoolId (Ledger.KeyHash (CC.UnsafeHash h)) =
     encodeBech32 hrpPool (fromShort h)
 
 stringifyRewardAcnt
-    :: Sh.RewardAcnt era
+    :: Sh.RewardAccount era
     -> Text
-stringifyRewardAcnt x@(Sh.RewardAcnt ntwrk _credential) =
-    encodeBech32 (hrp ntwrk) (Ledger.serialiseRewardAcnt x)
+stringifyRewardAcnt x@(Sh.RewardAccount ntwrk _credential) =
+    encodeBech32 (hrp ntwrk) (Ledger.serialiseRewardAccount x)
   where
     hrp = \case
         Ledger.Mainnet -> hrpStakeMainnet

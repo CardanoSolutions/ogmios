@@ -8,7 +8,7 @@ module Ogmios.Data.Json.Conway where
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Ledger.Api
-    ( AsIndex (..)
+    ( AsIx (..)
     , AsItem (..)
     , PlutusPurpose
     )
@@ -113,12 +113,12 @@ encodeCommittee x = encodeObject
     ( "members" .=
         encodeMapAsList (\k -> encodeConstitutionalCommitteeMember k . SJust) (Cn.committeeMembers x)
    <> "quorum" .=
-        encodeUnitInterval (Cn.committeeQuorum x)
+        encodeUnitInterval (Cn.committeeThreshold x)
     )
 
 encodeContextError
     :: ( Crypto (EraCrypto era)
-       , PlutusPurpose AsIndex era ~ Cn.ConwayPlutusPurpose AsIndex era
+       , PlutusPurpose AsIx era ~ Cn.ConwayPlutusPurpose AsIx era
        )
     => Cn.ConwayContextError era
     -> Json
@@ -140,12 +140,12 @@ encodeContextError err = encodeText $ case err of
     Cn.BabbageContextError (Ba.RedeemerPointerPointsToNothing purpose) ->
         let (title, ptr) =
                 case purpose of
-                    Cn.ConwaySpending (AsIndex ix) -> ("spending input", ix)
-                    Cn.ConwayMinting (AsIndex ix) -> ("minting policy", ix)
-                    Cn.ConwayCertifying (AsIndex ix) -> ("publishing certificate", ix)
-                    Cn.ConwayRewarding (AsIndex ix) -> ("withdrawing from account", ix)
-                    Cn.ConwayVoting (AsIndex ix) -> ("voting as voter", ix)
-                    Cn.ConwayProposing (AsIndex ix) -> ("proposing governance proposal", ix)
+                    Cn.ConwaySpending (AsIx ix) -> ("spending input", ix)
+                    Cn.ConwayMinting (AsIx ix) -> ("minting policy", ix)
+                    Cn.ConwayCertifying (AsIx ix) -> ("publishing certificate", ix)
+                    Cn.ConwayRewarding (AsIx ix) -> ("withdrawing from account", ix)
+                    Cn.ConwayVoting (AsIx ix) -> ("voting as voter", ix)
+                    Cn.ConwayProposing (AsIx ix) -> ("proposing governance proposal", ix)
           in "Couldn't find corresponding redeemer for " <> title <> " #" <> show ptr <> ". Verify your transaction's construction."
     Cn.BabbageContextError (Ba.AlonzoContextError (Al.TimeTranslationPastHorizon e)) ->
         "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
@@ -565,25 +565,25 @@ encodeProposalProcedure x = encodeObject
 
 encodeScriptPurposeIndex
     :: forall era. ()
-    => Cn.ConwayPlutusPurpose AsIndex era
+    => Cn.ConwayPlutusPurpose AsIx era
     -> Json
 encodeScriptPurposeIndex = \case
     Cn.ConwaySpending ix ->
         translate (Al.AlonzoSpending ix)
     Cn.ConwayMinting ix ->
         translate (Al.AlonzoMinting ix)
-    Cn.ConwayCertifying (AsIndex (AsIndex -> ix)) ->
+    Cn.ConwayCertifying (AsIx (AsIx -> ix)) ->
         translate (Al.AlonzoCertifying ix)
     Cn.ConwayRewarding ix ->
         translate (Al.AlonzoRewarding ix)
-    Cn.ConwayVoting (AsIndex ix) ->
+    Cn.ConwayVoting (AsIx ix) ->
         encodeObject
             ( "index" .=
                 encodeWord32 ix
            <> "purpose" .=
                 encodeText "vote"
             )
-    Cn.ConwayProposing (AsIndex ix) ->
+    Cn.ConwayProposing (AsIx ix) ->
         encodeObject
             ( "index" .=
                 encodeWord32 ix

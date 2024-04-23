@@ -76,7 +76,7 @@ import Cardano.Ledger.Alonzo.Plutus.Context
     )
 import Cardano.Ledger.Alonzo.Scripts
     ( AlonzoScript
-    , AsIndex
+    , AsIx
     , ExUnits (..)
     , PlutusPurpose
     , Script
@@ -435,7 +435,7 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
             else EvaluationFailure $ ScriptExecutionFailures failures
   where
     aggregateReports
-        :: PlutusPurpose AsIndex (era crypto)
+        :: PlutusPurpose AsIx (era crypto)
         -> Either (TransactionScriptFailure (era crypto)) ExUnits
         -> (Map ix [TransactionScriptFailureInAnyEra crypto], Map ix ExUnits)
         -> (Map ix [TransactionScriptFailureInAnyEra crypto], Map ix ExUnits)
@@ -457,7 +457,7 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
         :: Either
             (ContextError (era crypto))
             (Map
-                (PlutusPurpose AsIndex (era crypto))
+                (PlutusPurpose AsIx (era crypto))
                 (Either (TransactionScriptFailure (era crypto)) ExUnits)
             )
     evaluation =

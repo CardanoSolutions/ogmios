@@ -22,7 +22,7 @@ module Ogmios.Data.Ledger.PredicateFailure
     , Language (..)
     , Network (..)
     , ProtVer (..)
-    , RewardAcnt (..)
+    , RewardAccount (..)
     , ScriptHash (..)
     , ScriptIntegrityHash
     , ScriptPurposeItemInAnyEra (..)
@@ -42,7 +42,7 @@ import Ogmios.Prelude
 
 import Cardano.Ledger.Address
     ( Addr (..)
-    , RewardAcnt (..)
+    , RewardAccount (..)
     )
 import Cardano.Ledger.Allegra.Scripts
     ( ValidityInterval (..)
@@ -406,7 +406,7 @@ data MultiEraPredicateFailure crypto
 
     -- When present, withdrawals must withdraw rewards entirely
     | IncompleteWithdrawals
-        { withdrawals :: Map (RewardAcnt crypto) Coin
+        { withdrawals :: Map (RewardAccount crypto) Coin
         }
 
     ---------------------------------------------------------------------------

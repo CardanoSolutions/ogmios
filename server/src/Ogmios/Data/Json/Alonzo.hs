@@ -7,7 +7,7 @@ module Ogmios.Data.Json.Alonzo where
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Ledger.Api
-    ( AsIndex
+    ( AsIx
     , PlutusPurpose
     )
 import Data.SatInt
@@ -364,14 +364,14 @@ encodeRedeemers
     :: forall era.
         ( Al.AlonzoEraScript era
         )
-    => (PlutusPurpose AsIndex era -> Json)
+    => (PlutusPurpose AsIx era -> Json)
     -> Al.Redeemers era
     -> Json
 encodeRedeemers encodeScriptPurposeIndexInEra (Al.Redeemers redeemers) =
     encodeMapAsList encodeDataAndUnits redeemers
   where
     encodeDataAndUnits
-        :: PlutusPurpose AsIndex era
+        :: PlutusPurpose AsIx era
         -> (Al.Data era, Al.ExUnits)
         -> Json
     encodeDataAndUnits ptr (redeemer, units) =
@@ -408,28 +408,28 @@ encodeScript opts = encodeObject . \case
             encodeByteStringBase16 (Ledger.originalBytes (Al.plutusScriptBinary script))
 
 encodeScriptPurposeIndex
-    :: Al.AlonzoPlutusPurpose Ledger.AsIndex era
+    :: Al.AlonzoPlutusPurpose Ledger.AsIx era
     -> Json
 encodeScriptPurposeIndex = encodeObject . \case
-    Al.AlonzoSpending (Ledger.AsIndex ix) ->
+    Al.AlonzoSpending (Ledger.AsIx ix) ->
         ( "index" .=
             encodeWord32 ix
        <> "purpose" .=
             encodeText "spend"
         )
-    Al.AlonzoMinting (Ledger.AsIndex ix) ->
+    Al.AlonzoMinting (Ledger.AsIx ix) ->
         ( "index" .=
             encodeWord32 ix
        <> "purpose" .=
             encodeText "mint"
         )
-    Al.AlonzoCertifying (Ledger.AsIndex ix) ->
+    Al.AlonzoCertifying (Ledger.AsIx ix) ->
         ( "index" .=
             encodeWord32 ix
        <> "purpose" .=
             encodeText "publish"
         )
-    Al.AlonzoRewarding (Ledger.AsIndex ix) ->
+    Al.AlonzoRewarding (Ledger.AsIx ix) ->
         ( "index" .=
             encodeWord32 ix
        <> "purpose" .=
@@ -572,7 +572,7 @@ encodeWitnessSet
        )
     => IncludeCbor
     -> StrictMaybe (AuxiliaryScripts era)
-    -> (PlutusPurpose AsIndex era -> Json)
+    -> (PlutusPurpose AsIx era -> Json)
     -> Al.AlonzoTxWits era
     -> Series
 encodeWitnessSet opts (fromSMaybe mempty -> auxScripts) encodeScriptPurposeIndexInEra x =
