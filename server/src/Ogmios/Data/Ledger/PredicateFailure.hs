@@ -327,6 +327,12 @@ data MultiEraPredicateFailure crypto
         , mismatchReason :: TagMismatchDescription
         }
 
+
+    -- In Conway and future Eras, ref inputs when they are not disjoint (appears in both inputs and reference inputs).
+    | NonDisjointRefInputs
+        { culpritRefInputs :: NonEmpty (TxIn crypto)
+        }
+
     ---------------------------------------------------------------------------
     -- Rule → GOV
     ---------------------------------------------------------------------------
@@ -617,3 +623,4 @@ predicateFailurePriority = \case
     ValueNotConserved{} -> 19
     ScriptIntegrityHashMismatch{} -> 19
     ValidationTagMismatch{} -> 19
+    NonDisjointRefInputs{} -> 20

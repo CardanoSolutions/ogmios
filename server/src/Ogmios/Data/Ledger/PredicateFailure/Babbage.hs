@@ -81,3 +81,5 @@ encodeUtxoFailure era = \case
                     )
                 ) <$> outs
          in InsufficientAdaInOutput { insufficientlyFundedOutputs }
+    Ba.BabbageNonDisjointRefInputs ins ->
+        NonDisjointRefInputs ins
