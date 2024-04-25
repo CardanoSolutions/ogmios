@@ -24,6 +24,7 @@ import qualified Ogmios.Data.Ledger.PredicateFailure.Alonzo as Alonzo
 
 import qualified Cardano.Ledger.Alonzo.Rules as Al
 import qualified Cardano.Ledger.Babbage.Rules as Ba
+import qualified Cardano.Ledger.Conway.Rules as Cn
 import qualified Cardano.Ledger.Shelley.Rules as Sh
 
 encodeLedgerFailure
@@ -43,7 +44,7 @@ encodeUtxowFailure
     :: forall era crypto.
         ( Era (era crypto)
         , EraCrypto (era crypto) ~ crypto
-        , PredicateFailure (EraRule "UTXOS" (era crypto)) ~ Al.AlonzoUtxosPredFailure (era crypto)
+        , PredicateFailure (EraRule "UTXOS" (era crypto)) ~ Cn.ConwayUtxosPredFailure (era crypto)
         , PredicateFailure (EraRule "UTXO" (era crypto)) ~ Ba.BabbageUtxoPredFailure (era crypto)
         )
     => AlonzoBasedEra (era crypto)
@@ -63,7 +64,7 @@ encodeUtxoFailure
     :: forall era crypto.
         ( Era (era crypto)
         , EraCrypto (era crypto) ~ crypto
-        , PredicateFailure (EraRule "UTXOS" (era crypto)) ~ Al.AlonzoUtxosPredFailure (era crypto)
+        , PredicateFailure (EraRule "UTXOS" (era crypto)) ~ Cn.ConwayUtxosPredFailure (era crypto)
         )
     => AlonzoBasedEra (era crypto)
     -> Ba.BabbageUtxoPredFailure (era crypto)

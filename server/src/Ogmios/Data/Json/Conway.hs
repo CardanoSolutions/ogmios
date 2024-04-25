@@ -117,7 +117,7 @@ encodeCommittee x = encodeObject
     )
 
 encodeContextError
-    :: ( Crypto (EraCrypto era)
+    :: ( Ledger.EraPParams era
        , PlutusPurpose AsIx era ~ Cn.ConwayPlutusPurpose AsIx era
        )
     => Cn.ConwayContextError era
@@ -151,6 +151,14 @@ encodeContextError err = encodeText $ case err of
         "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
     Cn.BabbageContextError (Ba.AlonzoContextError (Al.TranslationLogicMissingInput i)) ->
         "Unknown transaction input (missing from UTxO set): " <> Shelley.stringifyTxIn i
+    Cn.CurrentTreasuryFieldNotSupported coin ->
+        "Current treasury field with coin " <> show coin <> " not supported"
+    Cn.TreasuryDonationFieldNotSupported coin ->
+        "Treasury donation field with coin " <> show coin <> " not supported"
+    Cn.ProposalProceduresFieldNotSupported pp ->
+        "Proposal procedures field with " <> show pp <> " not supported"
+    Cn.VotingProceduresFieldNotSupported vp ->
+        "Voting procedures field with " <> show vp <> " not supported"
 
 encodeConstitution
     :: Era era

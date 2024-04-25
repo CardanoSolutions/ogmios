@@ -34,6 +34,7 @@ import Cardano.Ledger.Alonzo.Plutus.Evaluate
     ( CollectError (..)
     )
 import qualified Cardano.Ledger.Alonzo.Rules as Al
+import qualified Cardano.Ledger.Conway.Rules as Cn
 import qualified Cardano.Ledger.Shelley.Rules as Sh
 
 encodeLedgerFailure
@@ -84,10 +85,10 @@ encodeUtxoFailure
     :: forall era crypto.
         ( Era (era crypto)
         , EraCrypto (era crypto) ~ crypto
-        , Sh.PredicateFailure (EraRule "UTXOS" (era crypto)) ~ Al.AlonzoUtxosPredFailure (era crypto)
+        , Sh.PredicateFailure (EraRule "UTXOS" (era crypto)) ~ Cn.ConwayUtxosPredFailure (era crypto)
         )
     => AlonzoBasedEra (era crypto)
-    -> Al.AlonzoUtxoPredFailure (era crypto)
+    -> Cn.ConwayUtxoPredFailure (era crypto)
     -> MultiEraPredicateFailure crypto
 encodeUtxoFailure era = \case
     Al.BadInputsUTxO inputs ->
