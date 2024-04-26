@@ -45,7 +45,7 @@ encodeLedgerFailure
     -> MultiEraPredicateFailure crypto
 encodeLedgerFailure = \case
     Sh.UtxowFailure e  ->
-        encodeUtxowFailure
+        _encodeUtxowFailure
             AlonzoBasedEraAlonzo
             (encodeUtxoFailure AlonzoBasedEraAlonzo)
             e
@@ -88,7 +88,7 @@ encodeUtxoFailure
         , Sh.PredicateFailure (EraRule "UTXOS" (era crypto)) ~ Cn.ConwayUtxosPredFailure (era crypto)
         )
     => AlonzoBasedEra (era crypto)
-    -> Cn.ConwayUtxoPredFailure (era crypto)
+    -> Al.AlonzoUtxoPredFailure (era crypto)
     -> MultiEraPredicateFailure crypto
 encodeUtxoFailure era = \case
     Al.BadInputsUTxO inputs ->
@@ -148,17 +148,16 @@ encodeUtxosFailure
     :: forall era crypto.
         ( crypto ~ EraCrypto (era crypto)
         , Era (era crypto)
+        , Sh.PredicateFailure (EraRule "UTXOS" (era crypto)) ~ Cn.ConwayUtxosPredFailure (era crypto)
         )
     => AlonzoBasedEra (era crypto)
-    -> Al.AlonzoUtxosPredFailure (era crypto)
+    -> Sh.PredicateFailure (EraRule "UTXOS" (era crypto))
     -> MultiEraPredicateFailure crypto
 encodeUtxosFailure era = \case
-    Al.ValidationTagMismatch validationTag mismatchReason ->
+    Cn.ValidationTagMismatch validationTag mismatchReason ->
         ValidationTagMismatch { validationTag, mismatchReason }
-    Al.CollectErrors errors ->
+    Cn.CollectErrors errors ->
         pickPredicateFailure (encodeCollectErrors era errors)
-    Al.UpdateFailure{} ->
-        InvalidProtocolParametersUpdate
 
 encodeCollectErrors
     :: forall era crypto.
