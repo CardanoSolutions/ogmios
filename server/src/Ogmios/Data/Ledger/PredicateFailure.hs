@@ -96,6 +96,9 @@ import Cardano.Ledger.Plutus.Language
 import Cardano.Ledger.TxIn
     ( TxIn (..)
     )
+import Data.Foldable
+    ( minimumBy
+    )
 import Ogmios.Data.Ledger
     ( ContextErrorInAnyEra (..)
     , DiscriminatedEntities (..)
@@ -107,8 +110,6 @@ import Ogmios.Data.Ledger
 import PlutusLedgerApi.Common
     ( ExBudget (..)
     )
-
-import qualified Data.List.NonEmpty as NE
 
 data MultiEraPredicateFailure crypto
     ---------------------------------------------------------------------------
@@ -529,7 +530,7 @@ data MultiEraPredicateFailure crypto
 -- which error to return from the list when presented with many.
 pickPredicateFailure :: NonEmpty (MultiEraPredicateFailure crypto) -> MultiEraPredicateFailure crypto
 pickPredicateFailure =
-    head . NE.sortBy (comparing predicateFailurePriority)
+    minimumBy (comparing predicateFailurePriority)
 
 -- | Return a priority index for ledger rules errors. Smaller means that errors
 -- should be considered first.
