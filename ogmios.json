@@ -3810,6 +3810,27 @@
             }
           }
         }
+      , { "title": "SubmitTransactionFailure<ConflictingInputsAndReferences>"
+        , "description": "Identical UTxO references were found in both the transaction inputs and references. This is redundant and no longer allowed by the ledger. Indeed, if the a UTxO is present in the inputs set, it is already in the transaction context. The field 'data.conflictingReferences' contains the culprit references present in both sets."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3164 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "conflictingReferences" ]
+            , "properties":
+              { "conflictingReferences":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+                }
+              }
+            }
+          }
+        }
       , { "title": "SubmitTransactionFailure<UnrecognizedCertificateType>"
         , "description": "Unrecognized certificate type. This error is a placeholder due to how internal data-types are modeled. If you ever run into this, please report the issue as you've likely discoverd a critical bug..."
         , "type": "object"
