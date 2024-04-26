@@ -22,7 +22,6 @@ import Ogmios.Data.Ledger.PredicateFailure.Shelley
 
 import qualified Ogmios.Data.Ledger.PredicateFailure.Alonzo as Alonzo
 
-import qualified Cardano.Ledger.Alonzo.Rules as Al
 import qualified Cardano.Ledger.Babbage.Rules as Ba
 import qualified Cardano.Ledger.Shelley.Rules as Sh
 
@@ -35,7 +34,7 @@ encodeLedgerFailure
     -> MultiEraPredicateFailure crypto
 encodeLedgerFailure = \case
     Sh.UtxowFailure e  ->
-        encodeUtxowFailure AlonzoBasedEraBabbage e
+        encodeUtxowFailure AlonzoBasedEraBabbage (Alonzo.encodeUtxosFailure AlonzoBasedEraBabbage) e
     Sh.DelegsFailure e ->
         encodeDelegsFailure e
 
@@ -43,36 +42,38 @@ encodeUtxowFailure
     :: forall era crypto.
         ( Era (era crypto)
         , EraCrypto (era crypto) ~ crypto
-        , PredicateFailure (EraRule "UTXOS" (era crypto)) ~ Al.AlonzoUtxosPredFailure (era crypto)
         , PredicateFailure (EraRule "UTXO" (era crypto)) ~ Ba.BabbageUtxoPredFailure (era crypto)
         )
     => AlonzoBasedEra (era crypto)
+    -> (PredicateFailure (EraRule "UTXOS" (era crypto)) -> MultiEraPredicateFailure crypto)
     -> Ba.BabbageUtxowPredFailure (era crypto)
     -> MultiEraPredicateFailure crypto
-encodeUtxowFailure era = \case
+encodeUtxowFailure era encodeUtxosFailure = \case
     Ba.MalformedReferenceScripts scripts ->
         MalformedScripts scripts
     Ba.MalformedScriptWitnesses scripts ->
         MalformedScripts scripts
     Ba.AlonzoInBabbageUtxowPredFailure e ->
-        Alonzo.encodeUtxowFailure era (encodeUtxoFailure era) e
+        Alonzo.encodeUtxowFailure era (encodeUtxoFailure era encodeUtxosFailure) e
     Ba.UtxoFailure e ->
-        encodeUtxoFailure era e
+        encodeUtxoFailure era encodeUtxosFailure e
 
 encodeUtxoFailure
     :: forall era crypto.
         ( Era (era crypto)
         , EraCrypto (era crypto) ~ crypto
-        , PredicateFailure (EraRule "UTXOS" (era crypto)) ~ Al.AlonzoUtxosPredFailure (era crypto)
         )
     => AlonzoBasedEra (era crypto)
+    -> (PredicateFailure (EraRule "UTXOS" (era crypto)) -> MultiEraPredicateFailure crypto)
     -> Ba.BabbageUtxoPredFailure (era crypto)
     -> MultiEraPredicateFailure crypto
-encodeUtxoFailure era = \case
+encodeUtxoFailure era encodeUtxosFailure = \case
     Ba.AlonzoInBabbageUtxoPredFailure e ->
-        Alonzo.encodeUtxoFailure era e
+        Alonzo.encodeUtxoFailure era encodeUtxosFailure e
     Ba.IncorrectTotalCollateralField computedTotalCollateral declaredTotalCollateral ->
         TotalCollateralMismatch { computedTotalCollateral, declaredTotalCollateral }
+    Ba.BabbageNonDisjointRefInputs xs ->
+        ConflictingInputsAndReferences xs
     Ba.BabbageOutputTooSmallUTxO outs ->
         let insufficientlyFundedOutputs =
                 (\(out,minAda) ->

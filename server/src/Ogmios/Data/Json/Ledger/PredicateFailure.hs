@@ -730,12 +730,12 @@ encodePredicateFailure reject = \case
                 )
             )
 
-    StakeCredentialDepositMismatch { providedDeposit, expectedDeposit } ->
+    DepositMismatch { providedDeposit, expectedDeposit } ->
         reject (predicateFailureCode 51)
-            "The deposit specified in a stake credential registration (for delegation \
-            \or governance) does not match the current value set by protocol \
-            \parameters. The field 'data.expectedDeposit', when present, indicates \
-            \the deposit amount as currently expected by ledger."
+            "The deposit (resp. refund) specified in a stake credential or drep registration \
+            \(resp. de-registration) does not match the value expected by the protocol. The \
+            \field 'data.expectedDeposit', when present, indicates the deposit amount as \
+            \currently expected by ledger."
             (pure $ encodeObject
                 ( "providedDeposit" .=
                     encodeCoin providedDeposit
@@ -920,6 +920,17 @@ encodePredicateFailure reject = \case
             (pure $ encodeObject
                 ( "providedHash" .= encodeStrictMaybe Shelley.encodeScriptHash providedHash
                <> "expectedHash" .= encodeStrictMaybe Shelley.encodeScriptHash expectedHash
+                )
+            )
+
+    ConflictingInputsAndReferences { inputsPresentInBoth } ->
+        reject (predicateFailureCode 64)
+            "Identical UTxO references were found in both the transaction inputs and references. \
+            \This is redundant and no longer allowed by the ledger. Indeed, if the a UTxO is \
+            \present in the inputs set, it is already in the transaction context. The field \
+            \'data.conflictingReferences' contains the culprit references present in both sets."
+            (pure $ encodeObject
+                ( "conflictingReferences" .= encodeFoldable (encodeObject . Shelley.encodeTxIn) inputsPresentInBoth
                 )
             )
 

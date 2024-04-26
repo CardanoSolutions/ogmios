@@ -22,7 +22,7 @@ module Ogmios.Data.Ledger.PredicateFailure
     , Language (..)
     , Network (..)
     , ProtVer (..)
-    , RewardAcnt (..)
+    , RewardAccount (..)
     , ScriptHash (..)
     , ScriptIntegrityHash
     , ScriptPurposeItemInAnyEra (..)
@@ -42,7 +42,7 @@ import Ogmios.Prelude
 
 import Cardano.Ledger.Address
     ( Addr (..)
-    , RewardAcnt (..)
+    , RewardAccount (..)
     )
 import Cardano.Ledger.Allegra.Scripts
     ( ValidityInterval (..)
@@ -107,6 +107,8 @@ import Ogmios.Data.Ledger
 import PlutusLedgerApi.Common
     ( ExBudget (..)
     )
+
+import qualified Data.List.NonEmpty as NE
 
 data MultiEraPredicateFailure crypto
     ---------------------------------------------------------------------------
@@ -317,6 +319,11 @@ data MultiEraPredicateFailure crypto
         , declaredTotalCollateral :: Coin
         }
 
+    -- A utxo reference is present in both the inputs set and reference inputs.
+    | ConflictingInputsAndReferences
+        { inputsPresentInBoth :: NonEmpty (TxIn crypto)
+        }
+
     ---------------------------------------------------------------------------
     -- Rule → UTXOS
     ---------------------------------------------------------------------------
@@ -406,7 +413,7 @@ data MultiEraPredicateFailure crypto
 
     -- When present, withdrawals must withdraw rewards entirely
     | IncompleteWithdrawals
-        { withdrawals :: Map (RewardAcnt crypto) Coin
+        { withdrawals :: Map (RewardAccount crypto) Coin
         }
 
     ---------------------------------------------------------------------------
@@ -468,7 +475,7 @@ data MultiEraPredicateFailure crypto
 
     -- The specified deposit in the registration certificate does not match
     -- the current protocol parameter.
-    | StakeCredentialDepositMismatch
+    | DepositMismatch
         { providedDeposit :: Coin
         , expectedDeposit :: StrictMaybe Coin
         }
@@ -520,12 +527,9 @@ data MultiEraPredicateFailure crypto
 --
 -- Given that we only return errors one-by-one to clients, we have to prioritize
 -- which error to return from the list when presented with many.
-pickPredicateFailure :: HasCallStack => [MultiEraPredicateFailure crypto] -> MultiEraPredicateFailure crypto
+pickPredicateFailure :: NonEmpty (MultiEraPredicateFailure crypto) -> MultiEraPredicateFailure crypto
 pickPredicateFailure =
-    head
-    . fromMaybe (error "Empty list of predicate failures from the ledger!?")
-    . nonEmpty
-    . sortOn predicateFailurePriority
+    head . NE.sortBy (comparing predicateFailurePriority)
 
 -- | Return a priority index for ledger rules errors. Smaller means that errors
 -- should be considered first.
@@ -533,87 +537,90 @@ predicateFailurePriority
     :: MultiEraPredicateFailure crypto
     -> Word
 predicateFailurePriority = \case
-    InvalidProtocolParametersUpdate{} -> 0
-    InvalidGenesisDelegation{} -> 0
-    InvalidMIRTransfer{} -> 0
-    InvalidHardForkVersionBump{} -> 0
-    UnrecognizedCertificateType{} -> 0
+    ConflictingInputsAndReferences {} -> 0
 
-    EmptyInputSet{} -> 1
-    MintingOrBurningAda{} -> 1
-    SlotOutsideForeseeableFuture{} -> 1
-    NetworkMismatch{} -> 1
-    TransactionOutsideValidityInterval{} -> 1
-    BootstrapAddressAttributesTooLarge{} -> 1
-    UnauthorizedVotes{} -> 1
-    VotingOnExpiredActions{} -> 1
-    StakeCredentialAlreadyRegistered{} -> 1
-    DRepAlreadyRegistered{} -> 1
-    StakePoolMetadataHashTooLarge{} -> 1
-    StakeCredentialNotRegistered{} -> 1
-    DRepNotRegistered{} -> 1
-    ValueSizeAboveLimit{} -> 1
-    UnknownConstitutionalCommitteeMember{} -> 1
+    InvalidProtocolParametersUpdate{} -> 1
+    InvalidGenesisDelegation{} -> 1
+    InvalidMIRTransfer{} -> 1
+    InvalidHardForkVersionBump{} -> 1
+    UnrecognizedCertificateType{} -> 1
 
-    InvalidStakePoolRetirementEpoch{} -> 2
-    StakePoolCostTooLow{} -> 2
+    EmptyInputSet{} -> 2
+    MintingOrBurningAda{} -> 2
+    SlotOutsideForeseeableFuture{} -> 2
+    NetworkMismatch{} -> 2
+    TransactionOutsideValidityInterval{} -> 2
+    BootstrapAddressAttributesTooLarge{} -> 2
+    UnauthorizedVotes{} -> 2
+    VotingOnExpiredActions{} -> 2
+    StakeCredentialAlreadyRegistered{} -> 2
+    DRepAlreadyRegistered{} -> 2
+    StakePoolMetadataHashTooLarge{} -> 2
+    StakeCredentialNotRegistered{} -> 2
+    DRepNotRegistered{} -> 2
+    ValueSizeAboveLimit{} -> 2
+    UnknownConstitutionalCommitteeMember{} -> 2
 
-    UnknownUtxoReference{} -> 3
-    OrphanScriptInputs{} -> 3
-    CollateralInputLockedByScript{} -> 3
-    UnknownStakePool{} -> 3
-    UnknownGovernanceActions{} -> 3
+    InvalidStakePoolRetirementEpoch{} -> 3
+    StakePoolCostTooLow{} -> 3
 
-    InvalidSignatures{} -> 4
-    MissingSignatures{} -> 4
-    MissingCostModels{} -> 4
+    UnknownUtxoReference{} -> 4
+    OrphanScriptInputs{} -> 4
+    CollateralInputLockedByScript{} -> 4
+    UnknownStakePool{} -> 4
+    UnknownGovernanceActions{} -> 4
 
-    InvalidMetadata{} -> 5
-    InvalidCommitteeUpdate{} -> 5
+    InvalidSignatures{} -> 5
+    MissingSignatures{} -> 5
+    MissingCostModels{} -> 5
 
-    MissingMetadata{} -> 6
-    MissingMetadataHash{} -> 6
+    InvalidMetadata{} -> 6
+    InvalidCommitteeUpdate{} -> 6
 
-    MetadataHashMismatch{} -> 7
-    InvalidPreviousGovernanceAction{} -> 7
-    ConstitutionGuardrailsHashMismatch{} -> 7
+    MissingMetadata{} -> 7
+    MissingMetadataHash{} -> 7
 
-    MalformedScripts{} -> 8
+    MetadataHashMismatch{} -> 8
+    InvalidPreviousGovernanceAction{} -> 8
+    ConstitutionGuardrailsHashMismatch{} -> 8
 
-    MissingRedeemers{} -> 9
-    MissingDatums{} -> 9
-    MissingScriptWitnesses{} -> 9
+    MalformedScripts{} -> 9
 
-    UnableToCreateScriptContext{} -> 10
-    FailingScript{} -> 11
+    MissingRedeemers{} -> 10
+    MissingDatums{} -> 10
+    MissingScriptWitnesses{} -> 10
 
-    ExtraneousScriptWitnesses{} -> 12
-    ExtraneousRedeemers{} -> 12
-    ExtraneousDatums{} -> 12
-    ConflictingCommitteeUpdate{} -> 12
+    UnableToCreateScriptContext{} -> 11
 
-    NonAdaValueAsCollateral{} -> 13
-    MissingCollateralInputs{} -> 13
-    TooManyCollateralInputs{} -> 13
+    FailingScript{} -> 12
 
-    IncompleteWithdrawals{} -> 14
-    RewardAccountNotEmpty{} -> 14
-    ForbiddenWithdrawal{} -> 14
+    ExtraneousScriptWitnesses{} -> 13
+    ExtraneousRedeemers{} -> 13
+    ExtraneousDatums{} -> 13
+    ConflictingCommitteeUpdate{} -> 13
 
-    TotalCollateralMismatch{} -> 15
-    StakeCredentialDepositMismatch{} -> 15
-    GovernanceProposalDepositMismatch{} -> 15
-    TreasuryWithdrawalMismatch{} -> 15
+    NonAdaValueAsCollateral{} -> 14
+    MissingCollateralInputs{} -> 14
+    TooManyCollateralInputs{} -> 14
 
-    InsufficientCollateral{} -> 16
-    InsufficientAdaInOutput{} -> 16
+    IncompleteWithdrawals{} -> 15
+    RewardAccountNotEmpty{} -> 15
+    ForbiddenWithdrawal{} -> 15
 
-    ExecutionUnitsTooLarge{} -> 17
-    TransactionTooLarge{} -> 17
+    TotalCollateralMismatch{} -> 16
+    DepositMismatch{} -> 16
+    GovernanceProposalDepositMismatch{} -> 16
+    TreasuryWithdrawalMismatch{} -> 16
 
-    ExecutionBudgetOutOfBounds{} -> 18
-    TransactionFeeTooSmall{} -> 18
+    InsufficientCollateral{} -> 17
+    InsufficientAdaInOutput{} -> 17
 
-    ValueNotConserved{} -> 19
-    ScriptIntegrityHashMismatch{} -> 19
-    ValidationTagMismatch{} -> 19
+    ExecutionUnitsTooLarge{} -> 18
+    TransactionTooLarge{} -> 18
+
+    ExecutionBudgetOutOfBounds{} -> 19
+    TransactionFeeTooSmall{} -> 19
+
+    ValueNotConserved{} -> 20
+    ScriptIntegrityHashMismatch{} -> 20
+    ValidationTagMismatch{} -> 20

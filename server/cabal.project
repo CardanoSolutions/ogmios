@@ -10,18 +10,16 @@ repository cardano-haskell-packages
     d4a35cd3121aa00d18544bb0ac01c3e1691d618f462c46129271bccf39f7e8ee
 
 index-state:
-  , hackage.haskell.org 2024-03-06T13:35:48Z
-  , cardano-haskell-packages 2024-03-06T12:32:14Z
+  , hackage.haskell.org 2024-03-26T06:28:59Z
+  , cardano-haskell-packages 2024-04-11T09:29:53Z
 
 constraints:
-  , any.base == 4.18.1.0
-  , any.cardano-node == 8.9.0
-  , any.cardano-api == 8.39.2.0
-  , any.cardano-ledger-conway == 1.12.0.0
-  , any.ouroboros-consensus == 0.16.0.0
-  , any.ouroboros-consensus-cardano == 0.14.0.1
-  , any.ouroboros-consensus-diffusion == 0.11.0.1
-  , any.ouroboros-network == 0.12.0.0
+  , any.cardano-node == 8.10.1
+  , any.cardano-ledger-conway == 1.13.1.0
+  , any.ouroboros-consensus == 0.17.0.0
+  , any.ouroboros-consensus-cardano == 0.15.0.0
+  , any.ouroboros-consensus-diffusion == 0.15.0.0
+  , any.ouroboros-network == 0.14.0.0
   , any.formatting == 7.2.0
   , any.text source
 
@@ -102,9 +100,8 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/CardanoSolutions/cardano-ledger
-  tag: 558cad41ef01a35ac62c28cf06e954fdfd790e28
+  tag: 837089f9b253c8a51b93a039b7e656e8ca5b6b70
   subdir:
     eras/alonzo/impl
     eras/babbage/impl
     eras/conway/impl
-  --sha256: 0vrjfhffs5m01qkhjr2vyilwk18x96x2xg3w4r9kdil3kxj3wla3

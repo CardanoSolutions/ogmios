@@ -12,12 +12,16 @@ import Data.Maybe.Strict
 import Ogmios.Data.Ledger.PredicateFailure
     ( DiscriminatedEntities (..)
     , MultiEraPredicateFailure (..)
+    , pickPredicateFailure
     )
 import Ogmios.Data.Ledger.PredicateFailure.Babbage
     ( encodeUtxowFailure
     )
 import Ogmios.Data.Ledger.PredicateFailure.Shelley
     ( encodePoolFailure
+    )
+import Ogmios.Data.Ledger.PredicateFailure.Alonzo
+    ( encodeCollectErrors
     )
 
 import qualified Cardano.Ledger.Api as Ledger
@@ -31,7 +35,7 @@ encodeLedgerFailure
     -> MultiEraPredicateFailure crypto
 encodeLedgerFailure = \case
     Cn.ConwayUtxowFailure e ->
-        encodeUtxowFailure AlonzoBasedEraConway e
+        encodeUtxowFailure AlonzoBasedEraConway encodeUtxosFailure e
     Cn.ConwayCertsFailure e ->
         encodeCertsFailure e
     Cn.ConwayGovFailure e ->
@@ -150,7 +154,7 @@ encodeDelegFailure = \case
     -- transaction; it would be more useful and worth including if it were the
     -- expected one.
     Cn.IncorrectDepositDELEG providedDeposit -> -- !Coin
-        StakeCredentialDepositMismatch { providedDeposit, expectedDeposit = SNothing }
+        DepositMismatch { providedDeposit, expectedDeposit = SNothing }
     Cn.StakeKeyRegisteredDELEG knownCredential ->
         StakeCredentialAlreadyRegistered { knownCredential }
     Cn.StakeKeyNotRegisteredDELEG unknownCredential  ->
@@ -172,6 +176,20 @@ encodeGovCertFailure = \case
     -- transaction; it would be more useful and worth including if it were the
     -- expected one.
     Cn.ConwayDRepIncorrectDeposit providedDeposit (SJust -> expectedDeposit) ->
-        StakeCredentialDepositMismatch { providedDeposit, expectedDeposit }
+        DepositMismatch { providedDeposit, expectedDeposit }
     Cn.ConwayCommitteeHasPreviouslyResigned unknownConstitutionalCommitteeMember ->
         UnknownConstitutionalCommitteeMember { unknownConstitutionalCommitteeMember }
+    Cn.ConwayDRepIncorrectRefund providedDeposit (SJust -> expectedDeposit) ->
+        DepositMismatch { providedDeposit, expectedDeposit }
+
+encodeUtxosFailure
+    :: forall crypto.
+        ( Crypto crypto
+        )
+    => Cn.ConwayUtxosPredFailure (ConwayEra crypto)
+    -> MultiEraPredicateFailure crypto
+encodeUtxosFailure = \case
+    Cn.ValidationTagMismatch validationTag mismatchReason ->
+        ValidationTagMismatch { validationTag, mismatchReason }
+    Cn.CollectErrors errors ->
+        pickPredicateFailure (encodeCollectErrors AlonzoBasedEraConway errors)

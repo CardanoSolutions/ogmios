@@ -25,14 +25,15 @@ import Ogmios.Data.Ledger.PredicateFailure
 import Ogmios.Data.Ledger.PredicateFailure.Shelley
     ( encodeDelegsFailure
     )
-
-import qualified Data.Map as Map
-
-import qualified Ogmios.Data.Ledger.PredicateFailure.Shelley as Shelley
-
 import Cardano.Ledger.Alonzo.Plutus.Evaluate
     ( CollectError (..)
     )
+import Relude.Unsafe
+    ( fromJust
+    )
+
+import qualified Data.Map as Map
+import qualified Ogmios.Data.Ledger.PredicateFailure.Shelley as Shelley
 import qualified Cardano.Ledger.Alonzo.Rules as Al
 import qualified Cardano.Ledger.Shelley.Rules as Sh
 
@@ -46,7 +47,7 @@ encodeLedgerFailure = \case
     Sh.UtxowFailure e  ->
         encodeUtxowFailure
             AlonzoBasedEraAlonzo
-            (encodeUtxoFailure AlonzoBasedEraAlonzo)
+            (let era = AlonzoBasedEraAlonzo in encodeUtxoFailure era (encodeUtxosFailure era))
             e
     Sh.DelegsFailure e ->
         encodeDelegsFailure e
@@ -84,12 +85,12 @@ encodeUtxoFailure
     :: forall era crypto.
         ( Era (era crypto)
         , EraCrypto (era crypto) ~ crypto
-        , Sh.PredicateFailure (EraRule "UTXOS" (era crypto)) ~ Al.AlonzoUtxosPredFailure (era crypto)
         )
     => AlonzoBasedEra (era crypto)
+    -> (Sh.PredicateFailure (EraRule "UTXOS" (era crypto)) -> MultiEraPredicateFailure crypto)
     -> Al.AlonzoUtxoPredFailure (era crypto)
     -> MultiEraPredicateFailure crypto
-encodeUtxoFailure era = \case
+encodeUtxoFailure era encodeUtxosFailure' = \case
     Al.BadInputsUTxO inputs ->
         UnknownUtxoReference inputs
     Al.OutsideValidityIntervalUTxO validityInterval currentSlot ->
@@ -141,7 +142,7 @@ encodeUtxoFailure era = \case
     Al.ExUnitsTooBigUTxO maximumExUnits providedExUnits ->
         ExecutionUnitsTooLarge { maximumExUnits, providedExUnits }
     Al.UtxosFailure e ->
-        encodeUtxosFailure era e
+        encodeUtxosFailure' e
 
 encodeUtxosFailure
     :: forall era crypto.
@@ -166,7 +167,7 @@ encodeCollectErrors
         )
     => AlonzoBasedEra (era crypto)
     -> [CollectError (era crypto)]
-    -> [MultiEraPredicateFailure crypto]
+    -> NonEmpty (MultiEraPredicateFailure crypto)
 encodeCollectErrors era errors =
     let missingRedeemersErrs
             | not (null missingRedeemers) =
@@ -201,7 +202,7 @@ encodeCollectErrors era errors =
                 Nothing
 
      in
-        missingRedeemersErrs ++ missingScriptsErrs ++ missingCostModelsErrs ++ badTranslationErrs
+        nonEmpty (missingRedeemersErrs ++ missingScriptsErrs ++ missingCostModelsErrs ++ badTranslationErrs) & fromJust
   where
     missingRedeemers = mapMaybe
         (\case

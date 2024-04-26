@@ -17,14 +17,14 @@ import Ogmios.Prelude
 
 import Cardano.Ledger.Address
     ( Addr (..)
-    , RewardAcnt (..)
+    , RewardAccount (..)
     )
 import Cardano.Ledger.Alonzo.Plutus.Context
     ( ContextError
     )
 import Cardano.Ledger.Api
-    ( AsIndex
-    , AsItem
+    ( AsItem
+    , AsIx
     )
 import Cardano.Ledger.Conway.Core
     ( AlonzoEraScript (..)
@@ -48,7 +48,7 @@ import qualified Prelude
 
 data DiscriminatedEntities crypto
     = DiscriminatedAddresses (Set (Addr crypto))
-    | DiscriminatedRewardAccounts (Set (RewardAcnt crypto))
+    | DiscriminatedRewardAccounts (Set (RewardAccount crypto))
     | DiscriminatedPoolRegistrationCertificate (KeyHash 'StakePool crypto)
     | DiscriminatedTransaction
     deriving (Show, Ord, Eq)
@@ -78,7 +78,7 @@ data ScriptPurposeIndexInAnyEra crypto =
     forall era. Era (era crypto) =>
         ScriptPurposeIndexInAnyEra
             ( AlonzoBasedEra (era crypto)
-            , PlutusPurpose AsIndex (era crypto)
+            , PlutusPurpose AsIx (era crypto)
             )
 
 instance Crypto crypto => Show (ScriptPurposeIndexInAnyEra crypto) where
@@ -92,12 +92,12 @@ instance Crypto crypto => Ord (ScriptPurposeIndexInAnyEra crypto) where
 
 scriptPurposeInMostRecentEra
     :: ScriptPurposeIndexInAnyEra crypto
-    -> PlutusPurpose AsIndex (MostRecentEra (CardanoBlock crypto))
+    -> PlutusPurpose AsIx (MostRecentEra (CardanoBlock crypto))
 scriptPurposeInMostRecentEra = \case
     ScriptPurposeIndexInAnyEra (AlonzoBasedEraAlonzo, ix) ->
-        upgradePlutusPurposeAsIndex (upgradePlutusPurposeAsIndex ix)
+        upgradePlutusPurposeAsIx (upgradePlutusPurposeAsIx ix)
     ScriptPurposeIndexInAnyEra (AlonzoBasedEraBabbage, ix) ->
-        upgradePlutusPurposeAsIndex ix
+        upgradePlutusPurposeAsIx ix
     ScriptPurposeIndexInAnyEra (AlonzoBasedEraConway, ix) ->
         ix
 

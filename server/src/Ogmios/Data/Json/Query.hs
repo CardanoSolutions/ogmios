@@ -617,7 +617,7 @@ eraMismatchOrResult =
 
 parseQueryLedgerConstitution
     :: forall f crypto. (Crypto crypto)
-    => (forall era. (Typeable era) => Proxy era -> GenResult crypto f (Maybe (Ledger.Constitution era)))
+    => (forall era. (Typeable era) => Proxy era -> GenResult crypto f (Ledger.Constitution era))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseQueryLedgerConstitution genResult =
@@ -636,7 +636,7 @@ parseQueryLedgerConstitution genResult =
             SomeShelleyEra ShelleyBasedEraConway ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentConway GetConstitution))
-                    (eraMismatchOrResult (encodeMaybe (encodeObject . Conway.encodeConstitution)))
+                    (eraMismatchOrResult (encodeObject . Conway.encodeConstitution))
                     (genResult $ Proxy @(ConwayEra crypto))
 
 parseQueryLedgerEpoch
@@ -1469,9 +1469,9 @@ decodeCredential decodeAsKeyOrScript =
         :: ByteString
         -> Json.Parser (Ledger.Credential 'Staking crypto)
     decodeAsStakeAddress =
-        fmap Ledger.getRwdCred
+        fmap Ledger.raCredential
             . maybe invalidStakeAddress pure
-            . Ledger.deserialiseRewardAcnt
+            . Ledger.deserialiseRewardAccount
       where
         invalidStakeAddress =
             fail "invalid stake address"

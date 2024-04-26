@@ -10,7 +10,7 @@ import Cardano.Ledger.Alonzo.Plutus.TxInfo
     ( TxOutSource (..)
     )
 import Cardano.Ledger.Api
-    ( AsIndex (..)
+    ( AsIx (..)
     )
 import Cardano.Ledger.Binary
     ( sizedValue
@@ -76,7 +76,7 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
 
 encodeContextError
     :: ( Crypto (EraCrypto era)
-       , Ba.PlutusPurpose AsIndex era ~ Al.AlonzoPlutusPurpose AsIndex era
+       , Ba.PlutusPurpose AsIx era ~ Al.AlonzoPlutusPurpose AsIx era
        )
     => Ba.BabbageContextError era
     -> Json
@@ -94,10 +94,10 @@ encodeContextError err = encodeText $ case err of
     Ba.RedeemerPointerPointsToNothing purpose ->
         let (title, ptr) =
                 case purpose of
-                    Al.AlonzoSpending (AsIndex ix) -> ("spending input", ix)
-                    Al.AlonzoMinting (AsIndex ix) -> ("minting policy", ix)
-                    Al.AlonzoCertifying (AsIndex ix) -> ("publishing certificate", ix)
-                    Al.AlonzoRewarding (AsIndex ix) -> ("withdrawing from account", ix)
+                    Al.AlonzoSpending (AsIx ix) -> ("spending input", ix)
+                    Al.AlonzoMinting (AsIx ix) -> ("minting policy", ix)
+                    Al.AlonzoCertifying (AsIx ix) -> ("publishing certificate", ix)
+                    Al.AlonzoRewarding (AsIx ix) -> ("withdrawing from account", ix)
           in "Couldn't find corresponding redeemer for " <> title <> " #" <> show ptr <> ". Verify your transaction's construction."
     Ba.AlonzoContextError (Al.TimeTranslationPastHorizon e) ->
         "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
