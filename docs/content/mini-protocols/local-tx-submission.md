@@ -342,6 +342,8 @@ components:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/63"
     3163/ConstitutionGuardrailsHashMismatch:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/64"
+    3164/ConflictingInputsAndReferences:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/65"
     3998/UnrecognizedCertificateType:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/62"
 {{% /embed-async-api %}}

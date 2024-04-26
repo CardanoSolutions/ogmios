@@ -6,12 +6,12 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
-
-### [6.2.1] - 2024-04-16
+### [6.2.1] - UNRELEASED
 
 #### Added
 
-- N/A
+- Integrated with `cardano-node==8.10.1-pre`.
+- A new transaction submission error: [ConflictingInputsAndReferences](https://ogmios.dev/mini-protocols/local-tx-submission#schema-3164/ConflictingInputsAndReferences) (`code=3164`).
 
 #### Changed
 

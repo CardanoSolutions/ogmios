@@ -200,6 +200,7 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureExecutionBudgetOutOfBounds
   | SubmitTransactionFailureInvalidHardForkVersionBump
   | SubmitTransactionFailureConstitutionGuardrailsHashMismatch
+  | SubmitTransactionFailureConflictingInputsAndReferences
   | SubmitTransactionFailureUnrecognizedCertificateType;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
 export type ScriptPurpose =
@@ -1880,6 +1881,16 @@ export interface SubmitTransactionFailureConstitutionGuardrailsHashMismatch {
   data: {
     providedHash: null | DigestBlake2B224;
     expectedHash: null | DigestBlake2B224;
+  };
+}
+/**
+ * Identical UTxO references were found in both the transaction inputs and references. This is redundant and no longer allowed by the ledger. Indeed, if the a UTxO is present in the inputs set, it is already in the transaction context. The field 'data.conflictingReferences' contains the culprit references present in both sets.
+ */
+export interface SubmitTransactionFailureConflictingInputsAndReferences {
+  code: 3164;
+  message: string;
+  data: {
+    conflictingReferences: TransactionOutputReference[];
   };
 }
 /**
