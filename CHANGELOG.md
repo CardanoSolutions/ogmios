@@ -6,7 +6,7 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
-### [6.2.1] - UNRELEASED
+### [6.3.0] - UNRELEASED
 
 #### Added
 
@@ -18,14 +18,14 @@ pre: "<b>5. </b>"
 
 #### Changed
 
-- > [!WARNING]
+  > [!WARNING]
   > Adjusted the schema of constitutional committee certificates in order to harmonize responses between certificates and the new `constitutionalCommittee` ledger query.
   >
   > <table>
   > <tr><th>before</th><th>after</th></tr>
   > <tr>
   > <td>
-  > ```json
+  > <pre>
   > {
   >   "type": "constitutionalCommitteeHotKeyRegistration",
   >   "member": {
@@ -33,10 +33,10 @@ pre: "<b>5. </b>"
   >   },
   >   "hotKey": "0000"
   > }
-  > ```
+  > </pre>
   > </td>
   > <td>
-  > ```json
+  > <pre>
   > {
   >   "type": "constitutionalCommitteeDelegation",
   >   "member": {
@@ -47,7 +47,7 @@ pre: "<b>5. </b>"
   >     "id": "000"
   >   }
   > }
-  > ```
+  > </pre>
   > </td>
   > </tr>
   > </table>
