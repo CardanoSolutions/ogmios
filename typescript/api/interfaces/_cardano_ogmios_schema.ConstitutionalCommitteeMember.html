@@ -51,10 +51,19 @@
 						<a href="_cardano_ogmios_schema.ConstitutionalCommitteeMember.html" class="tsd-kind-icon">Constitutional<wbr>Committee<wbr>Member</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.ConstitutionalCommitteeMember.html#delegate" class="tsd-kind-icon">delegate</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_schema.ConstitutionalCommitteeMember.html#id" class="tsd-kind-icon">id</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_schema.ConstitutionalCommitteeMember.html#mandate" class="tsd-kind-icon">mandate</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.ConstitutionalCommitteeMember.html#next" class="tsd-kind-icon">next</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.ConstitutionalCommitteeMember.html#status" class="tsd-kind-icon">status</a>
 							</li>
 						</ul>
 					</li>
@@ -79,6 +88,13 @@
 					</ul>
 				</div>
 			</div>
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>A constitutional committee member as seen in the context of a specific epoch. Statuses and next states are to be seen from this specific epoch. The field &#39;next&#39;, when present, refers to any change happening to this member in the following epoch.</p>
+					</div>
+				</div>
+			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
@@ -94,8 +110,11 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.ConstitutionalCommitteeMember.html#delegate" class="tsd-kind-icon">delegate</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.ConstitutionalCommitteeMember.html#id" class="tsd-kind-icon">id</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.ConstitutionalCommitteeMember.html#mandate" class="tsd-kind-icon">mandate</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.ConstitutionalCommitteeMember.html#next" class="tsd-kind-icon">next</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.ConstitutionalCommitteeMember.html#status" class="tsd-kind-icon">status</a></li>
 							</ul>
 						</section>
 					</div>
@@ -104,33 +123,63 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="delegate" class="tsd-anchor"></a>
+					<h3>delegate</h3>
+					<div class="tsd-signature tsd-kind-icon">delegate<span class="tsd-signature-symbol">:</span> <a href="../modules/_cardano_ogmios_schema.html#ConstitutionalCommitteeDelegate" class="tsd-signature-type">ConstitutionalCommitteeDelegate</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/1bc2fb1/clients/TypeScript/packages/schema/src/index.ts#L2270">packages/schema/src/index.ts:2270</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="id" class="tsd-anchor"></a>
 					<h3>id</h3>
 					<div class="tsd-signature tsd-kind-icon">id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/240c0b7/clients/TypeScript/packages/schema/src/index.ts#L913">packages/schema/src/index.ts:913</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/1bc2fb1/clients/TypeScript/packages/schema/src/index.ts#L2265">packages/schema/src/index.ts:2265</a>
 							</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="mandate" class="tsd-anchor"></a>
-					<h3>mandate</h3>
-					<div class="tsd-signature tsd-kind-icon">mandate<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> mandate</h3>
+					<div class="tsd-signature tsd-kind-icon">mandate<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_schema.Mandate.html" class="tsd-signature-type">Mandate</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/240c0b7/clients/TypeScript/packages/schema/src/index.ts#L914">packages/schema/src/index.ts:914</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/1bc2fb1/clients/TypeScript/packages/schema/src/index.ts#L2271">packages/schema/src/index.ts:2271</a>
 							</li>
 						</ul>
 					</aside>
-					<div class="tsd-type-declaration">
-						<h4>Type declaration</h4>
-						<ul class="tsd-parameters">
-							<li class="tsd-parameter">
-								<h5>epoch<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="next" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> next</h3>
+					<div class="tsd-signature tsd-kind-icon">next<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/1bc2fb1/clients/TypeScript/packages/schema/src/index.ts#L2272">packages/schema/src/index.ts:2272</a>
 							</li>
 						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="status" class="tsd-anchor"></a>
+					<h3>status</h3>
+					<div class="tsd-signature tsd-kind-icon">status<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"active"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"expired"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"unrecognized"</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/1bc2fb1/clients/TypeScript/packages/schema/src/index.ts#L2269">packages/schema/src/index.ts:2269</a>
+							</li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>A member status. &#39;active&#39; indicates that this member vote will count during the ratification of the ongoing epoch. &#39;unrecognized&#39; means that some hot credential currently points to a non-existing (or no longer existing) member.</p>
+						</div>
 					</div>
 				</section>
 			</section>
