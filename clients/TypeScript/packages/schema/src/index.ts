@@ -54,7 +54,7 @@ export type Certificate =
   | StakePoolRegistration
   | StakePoolRetirement
   | GenesisDelegation
-  | ConstitutionalCommitteeHotKeyRegistration
+  | ConstitutionalCommitteeDelegation
   | ConstitutionalCommitteeRetirement
   | DelegateRepresentativeRegistration
   | DelegateRepresentativeUpdate
@@ -84,6 +84,18 @@ export type Relay = RelayByAddress | RelayByName;
  * An epoch number or length.
  */
 export type Epoch = number;
+export type ConstitutionalCommitteeDelegate =
+  | {
+      status: "authorized";
+      id: DigestBlake2B224;
+    }
+  | {
+      status: "resigned";
+      metadata?: Anchor;
+    }
+  | {
+      status: "none";
+    };
 export type None = null;
 /**
  * A network target, as defined since the Shelley era.
@@ -295,6 +307,12 @@ export interface Ogmios {
   QueryLedgerStateConstitution: QueryLedgerStateConstitution;
   QueryLedgerStateConstitutionResponse:
     | QueryLedgerStateConstitutionResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateConstitutionalCommittee: QueryLedgerStateConstitutionalCommittee;
+  QueryLedgerStateConstitutionalCommitteeResponse:
+    | QueryLedgerStateConstitutionalCommitteeResponse
     | QueryLedgerStateEraMismatch
     | QueryLedgerStateUnavailableInCurrentEra
     | QueryLedgerStateAcquiredExpired;
@@ -705,14 +723,14 @@ export interface GenesisDelegate {
   vrfVerificationKeyHash: DigestBlake2B256;
 }
 /**
- * A constitutional committee member registers a hot key for voting on-chain. Constitutional committee members do not vote with their cold key directly. New registrations supersedes any preceding ones.
+ * A constitutional committee member delegates a hot credential for voting on-chain. Constitutional committee members do not vote with their cold key directly. New registrations supersedes any preceding ones.
  */
-export interface ConstitutionalCommitteeHotKeyRegistration {
-  type: "constitutionalCommitteeHotKeyRegistration";
+export interface ConstitutionalCommitteeDelegation {
+  type: "constitutionalCommitteeDelegation";
   member: {
     id: DigestBlake2B224;
   };
-  hotKey: DigestBlake2B224;
+  delegate: ConstitutionalCommitteeDelegate;
 }
 /**
  * A constitutional committee member resigns from the committee.
@@ -902,18 +920,19 @@ export interface ValueDelta {
 export interface GovernanceActionConstitutionalCommittee {
   type: "constitutionalCommittee";
   members: {
-    added: ConstitutionalCommitteeMember[];
+    added: ConstitutionalCommitteeMemberSummary[];
     removed: {
       id: DigestBlake2B224;
     }[];
   };
   quorum: Ratio;
 }
-export interface ConstitutionalCommitteeMember {
+export interface ConstitutionalCommitteeMemberSummary {
   id: DigestBlake2B224;
-  mandate: {
-    epoch: Epoch;
-  };
+  mandate?: Mandate;
+}
+export interface Mandate {
+  epoch: Epoch;
 }
 /**
  * A change in the constitution. Only its hash is recorded on-chain.
@@ -2122,6 +2141,8 @@ export interface ReleaseLedgerStateResponse {
 export interface QueryLedgerStateEraMismatch {
   jsonrpc: "2.0";
   method:
+    | "queryLedgerState/constitution"
+    | "queryLedgerState/constitutionalCommittee"
     | "queryLedgerState/epoch"
     | "queryLedgerState/eraStart"
     | "queryLedgerState/eraSummaries"
@@ -2147,6 +2168,8 @@ export interface QueryLedgerStateEraMismatch {
 export interface QueryLedgerStateUnavailableInCurrentEra {
   jsonrpc: "2.0";
   method:
+    | "queryLedgerState/constitution"
+    | "queryLedgerState/constitutionalCommittee"
     | "queryLedgerState/epoch"
     | "queryLedgerState/eraStart"
     | "queryLedgerState/eraSummaries"
@@ -2171,6 +2194,8 @@ export interface QueryLedgerStateUnavailableInCurrentEra {
 export interface QueryLedgerStateAcquiredExpired {
   jsonrpc: "2.0";
   method:
+    | "queryLedgerState/constitution"
+    | "queryLedgerState/constitutionalCommittee"
     | "queryLedgerState/epoch"
     | "queryLedgerState/eraStart"
     | "queryLedgerState/eraSummaries"
@@ -2215,6 +2240,49 @@ export interface Constitution {
     hash: DigestBlake2B224;
   };
   metadata: Anchor;
+}
+/**
+ * Get the state of the constitutional committee (only available from Conway onwards).
+ */
+export interface QueryLedgerStateConstitutionalCommittee {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/constitutionalCommittee";
+  id?: unknown;
+}
+export interface QueryLedgerStateConstitutionalCommitteeResponse {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/constitutionalCommittee";
+  result: null | {
+    members: ConstitutionalCommitteeMember[];
+    quorum: null | Ratio;
+  };
+  id?: unknown;
+}
+/**
+ * A constitutional committee member as seen in the context of a specific epoch. Statuses and next states are to be seen from this specific epoch. The field 'next', when present, refers to any change happening to this member in the following epoch.
+ */
+export interface ConstitutionalCommitteeMember {
+  id: DigestBlake2B224;
+  /**
+   * A member status. 'active' indicates that this member vote will count during the ratification of the ongoing epoch. 'unrecognized' means that some hot credential currently points to a non-existing (or no longer existing) member.
+   */
+  status: "active" | "expired" | "unrecognized";
+  delegate: ConstitutionalCommitteeDelegate;
+  mandate?: Mandate;
+  next?:
+    | {
+        change: "toBeEnacted";
+      }
+    | {
+        change: "toBeRemoved";
+      }
+    | {
+        change: "expiring";
+      }
+    | {
+        change: "adjustingMandate";
+        mandate: Mandate;
+      };
 }
 /**
  * Query the current epoch number the ledger is at.
@@ -2660,7 +2728,7 @@ export interface GenesisConway {
   era: "conway";
   constitution: Constitution;
   constitutionalCommittee: {
-    members: ConstitutionalCommitteeMember[];
+    members: ConstitutionalCommitteeMemberSummary[];
     quorum: Ratio;
   };
   updatableParameters: {

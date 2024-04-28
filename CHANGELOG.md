@@ -11,15 +11,57 @@ pre: "<b>5. </b>"
 #### Added
 
 - Integrated with `cardano-node==8.10.1-pre`.
+
+- A new ledger state query [`queryLedgerState/constitutionalCommittee`](https://ogmios.dev/api/#operation-publish-/?QueryLedgerStateConstitutionalCommittee).
+
 - A new transaction submission error: [ConflictingInputsAndReferences](https://ogmios.dev/mini-protocols/local-tx-submission#schema-3164/ConflictingInputsAndReferences) (`code=3164`).
 
 #### Changed
 
+- > [!WARNING]
+  > Adjusted the schema of constitutional committee certificates in order to harmonize responses between certificates and the new `constitutionalCommittee` ledger query.
+  >
+  > <table>
+  > <tr><th>before</th><th>after</th></tr>
+  > <tr>
+  > <td>
+  > ```json
+  > {
+  >   "type": "constitutionalCommitteeHotKeyRegistration",
+  >   "member": {
+  >     "id": "0000",
+  >   },
+  >   "hotKey": "0000"
+  > }
+  > ```
+  > </td>
+  > <td>
+  > ```json
+  > {
+  >   "type": "constitutionalCommitteeDelegation",
+  >   "member": {
+  >     "id": "0000",
+  >   },
+  >   "delegate": {
+  >     "status": "authorized",
+  >     "id": "000"
+  >   }
+  > }
+  > ```
+  > </td>
+  > </tr>
+  > </table>
+
 - Fixed integer overflow happening when encoding relative time bounds in era summary, causing times to be shown as negative values.
+
+- Fixed parsing of the `constitution` ledger query which now resolves properly.
 
 #### Removed
 
 - N/A
+
+---
+---
 
 ### [6.2.0] - 2024-03-22
 
@@ -36,6 +78,9 @@ pre: "<b>5. </b>"
 #### Removed
 
 - N/A
+
+---
+---
 
 ### [6.1.0] - 2024-02-21
 
@@ -64,6 +109,9 @@ pre: "<b>5. </b>"
 #### Removed
 
 - `InternalLedgerTypeConversionError` which can no longer occur.
+
+---
+---
 
 ### [6.0.3] - 2024-02-02
 

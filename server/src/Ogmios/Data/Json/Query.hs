@@ -68,6 +68,7 @@ module Ogmios.Data.Json.Query
 
       -- * Parsers
     , parseQueryLedgerConstitution
+    , parseQueryLedgerConstitutionalCommittee
     , parseQueryLedgerEpoch
     , parseQueryLedgerEraStart
     , parseQueryLedgerEraSummaries
@@ -262,6 +263,7 @@ import qualified Cardano.Ledger.Shelley.RewardProvenance as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
 import qualified Cardano.Ledger.Api as Ledger
+import qualified Cardano.Ledger.Api.State.Query as Ledger
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -367,6 +369,8 @@ instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
                 parseQueryLedgerUtxo (const id) queryParams
             "LedgerState/constitution" ->
                 parseQueryLedgerConstitution (const id) queryParams
+            "LedgerState/constitutionalCommittee" ->
+                parseQueryLedgerConstitutionalCommittee id queryParams
             "Network/blockHeight" ->
                 parseQueryNetworkBlockHeight id queryParams
             "Network/genesisConfiguration" ->
@@ -621,7 +625,7 @@ parseQueryLedgerConstitution
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseQueryLedgerConstitution genResult =
-    Json.withObject "epoch" $ \obj -> do
+    Json.withObject "constitution" $ \obj -> do
         guard (null obj) $> \case
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Nothing
@@ -638,6 +642,30 @@ parseQueryLedgerConstitution genResult =
                     (LSQ.BlockQuery (QueryIfCurrentConway GetConstitution))
                     (eraMismatchOrResult (encodeObject . Conway.encodeConstitution))
                     (genResult $ Proxy @(ConwayEra crypto))
+
+parseQueryLedgerConstitutionalCommittee
+    :: forall f crypto. (Crypto crypto)
+    => GenResult crypto f (Ledger.CommitteeMembersState crypto)
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseQueryLedgerConstitutionalCommittee genResult =
+    Json.withObject "constitutionalCommittee" $ \obj -> do
+        guard (null obj) $> \case
+            SomeShelleyEra ShelleyBasedEraShelley ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraAllegra ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraMary ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraAlonzo ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraBabbage ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraConway ->
+                Just $ SomeStandardQuery
+                    (LSQ.BlockQuery (QueryIfCurrentConway $ GetCommitteeMembersState mempty mempty mempty))
+                    (eraMismatchOrResult Conway.encodeCommitteeMembersState)
+                    genResult
 
 parseQueryLedgerEpoch
     :: forall crypto f. ()

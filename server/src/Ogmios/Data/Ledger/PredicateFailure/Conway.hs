@@ -14,14 +14,14 @@ import Ogmios.Data.Ledger.PredicateFailure
     , MultiEraPredicateFailure (..)
     , pickPredicateFailure
     )
+import Ogmios.Data.Ledger.PredicateFailure.Alonzo
+    ( encodeCollectErrors
+    )
 import Ogmios.Data.Ledger.PredicateFailure.Babbage
     ( encodeUtxowFailure
     )
 import Ogmios.Data.Ledger.PredicateFailure.Shelley
     ( encodePoolFailure
-    )
-import Ogmios.Data.Ledger.PredicateFailure.Alonzo
-    ( encodeCollectErrors
     )
 
 import qualified Cardano.Ledger.Api as Ledger

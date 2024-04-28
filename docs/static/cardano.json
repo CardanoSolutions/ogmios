@@ -467,14 +467,14 @@
           }
         }
       , { "type": "object"
-        , "title": "ConstitutionalCommitteeHotKeyRegistration"
-        , "description": "A constitutional committee member registers a hot key for voting on-chain. Constitutional committee members do not vote with their cold key directly. New registrations supersedes any preceding ones."
+        , "title": "ConstitutionalCommitteeDelegation"
+        , "description": "A constitutional committee member delegates a hot credential for voting on-chain. Constitutional committee members do not vote with their cold key directly. New registrations supersedes any preceding ones."
         , "additionalProperties": false
-        , "required": [ "type", "member", "hotKey"]
+        , "required": [ "type", "member", "delegate"]
         , "properties":
           { "type":
             { "type": "string"
-            , "enum": [ "constitutionalCommitteeHotKeyRegistration" ]
+            , "enum": [ "constitutionalCommitteeDelegation" ]
             }
           , "member":
             { "type": "object"
@@ -484,8 +484,8 @@
               { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
               }
             }
-          , "hotKey":
-            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+          , "delegate":
+            { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeDelegate"
             }
           }
         }
@@ -620,19 +620,123 @@
 
   , "ConstitutionalCommitteeMember":
     { "title": "ConstitutionalCommitteeMember"
+    , "description": "A constitutional committee member as seen in the context of a specific epoch. Statuses and next states are to be seen from this specific epoch. The field 'next', when present, refers to any change happening to this member in the following epoch."
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "mandate" ]
+    , "required": [ "id", "delegate", "status" ]
     , "properties":
       { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+      , "status":
+        { "type": "string"
+        , "description": "A member status. 'active' indicates that this member vote will count during the ratification of the ongoing epoch. 'unrecognized' means that some hot credential currently points to a non-existing (or no longer existing) member."
+        , "enum": [ "active", "expired", "unrecognized" ]
+        }
+      , "delegate":
+        { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeDelegate"
+        }
       , "mandate":
-        { "type": "object"
+        { "$ref": "cardano.json#/definitions/Mandate"
+        }
+      , "next":
+        { "oneOf":
+          [ { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "change" ]
+            , "properties":
+              { "change":
+                { "type": "string"
+                , "enum": [ "toBeEnacted" ]
+                }
+              }
+            }
+          , { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "change" ]
+            , "properties":
+              { "change":
+                { "type": "string"
+                , "enum": [ "toBeRemoved" ]
+                }
+              }
+            }
+          , { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "change" ]
+            , "properties":
+              { "change":
+                { "type": "string"
+                , "enum": [ "expiring"]
+                }
+              }
+            }
+          , { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "change", "mandate" ]
+            , "properties":
+              { "change":
+                { "type": "string"
+                , "enum": [ "adjustingMandate" ]
+                }
+              , "mandate":
+                { "$ref": "cardano.json#/definitions/Mandate"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+
+  , "ConstitutionalCommitteeDelegate":
+    { "title": "ConstitutionalCommitteeDelegate"
+    , "oneOf":
+      [ { "type": "object"
+        , "required": [ "status", "id" ]
         , "additionalProperties": false
-        , "required": [ "epoch" ]
         , "properties":
-          { "epoch": { "$ref": "cardano.json#/definitions/Epoch" }
+          { "status":
+            { "type": "string"
+            , "enum": [ "authorized" ]
+            }
+          , "id":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
           }
         }
+      , { "type": "object"
+        , "required": [ "status" ]
+        , "additionalProperties": false
+        , "properties":
+          { "status":
+            { "type": "string"
+            , "enum": [ "resigned" ]
+            }
+          , "metadata":
+            { "$ref": "cardano.json#/definitions/Anchor"
+            }
+          }
+        }
+      , { "type": "object"
+        , "required": [ "status" ]
+        , "additionalProperties": false
+        , "properties":
+          { "status":
+            { "type": "string"
+            , "enum": [ "none" ]
+            }
+          }
+        }
+      ]
+    }
+
+  , "ConstitutionalCommitteeMemberSummary":
+    { "title": "ConstitutionalCommitteeMemberSummary"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id" ]
+    , "properties":
+      { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+      , "mandate": { "$ref": "cardano.json#/definitions/Mandate" }
       }
     }
 
@@ -1005,7 +1109,7 @@
         , "properties":
           { "members":
             { "type": "array"
-            , "items": { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeMember" }
+            , "items": { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeMemberSummary" }
             }
           , "quorum":
             { "$ref": "cardano.json#/definitions/Ratio"
@@ -1187,7 +1291,7 @@
               { "added":
                 { "type": "array"
                 , "items":
-                  { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeMember"
+                  { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeMemberSummary"
                   }
                 }
               , "removed":
@@ -1446,6 +1550,16 @@
     { "title": "KesVerificationKey"
     , "type": "string"
     , "contentEncoding": "base16"
+    }
+
+  , "Mandate":
+    { "title": "Mandate"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "epoch" ]
+    , "properties":
+      { "epoch": { "$ref": "cardano.json#/definitions/Epoch" }
+      }
     }
 
   , "Metadata":

@@ -6,6 +6,9 @@ module Ogmios.Data.Ledger.PredicateFailure.Alonzo where
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.Alonzo.Plutus.Evaluate
+    ( CollectError (..)
+    )
 import Cardano.Ledger.Core
     ( EraRule
     )
@@ -25,17 +28,14 @@ import Ogmios.Data.Ledger.PredicateFailure
 import Ogmios.Data.Ledger.PredicateFailure.Shelley
     ( encodeDelegsFailure
     )
-import Cardano.Ledger.Alonzo.Plutus.Evaluate
-    ( CollectError (..)
-    )
 import Relude.Unsafe
     ( fromJust
     )
 
-import qualified Data.Map as Map
-import qualified Ogmios.Data.Ledger.PredicateFailure.Shelley as Shelley
 import qualified Cardano.Ledger.Alonzo.Rules as Al
 import qualified Cardano.Ledger.Shelley.Rules as Sh
+import qualified Data.Map as Map
+import qualified Ogmios.Data.Ledger.PredicateFailure.Shelley as Shelley
 
 encodeLedgerFailure
     :: forall crypto.

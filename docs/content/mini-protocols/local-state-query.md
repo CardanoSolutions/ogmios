@@ -101,6 +101,7 @@ queryNetwork                 | Information
 queryLedgerState             | Information
 ---                          | ---
 `constitution`               | The on-chain constitution.
+`constitutionalCommittee`    | A complete summary of the constitutional committee.
 `epoch`                      | The current epoch of the ledger.
 `eraStart`                   | The information regarding the beginning of the current ledger era.
 `eraSummaries`               | Era bounds and slot parameters details, required for proper slotting arithmetic.
@@ -332,6 +333,70 @@ Be aware that it is possible for an acquire request to fail even if (and in part
 ## Example queries
 
 ### Network
+
+#### constitution
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/constitution",
+  "result": {
+    "metadata": {
+      "url": "",
+      "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "guardrails": null
+  },
+  "id": null
+}
+```
+
+#### constitutionalCommittee
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/constitutionalCommittee",
+  "result": {
+    "members": [
+      {
+        "id": "5f1b4429fe3bda963a7b70ab81135112a785afcf55ccd695b122e794",
+        "delegate": {
+          "status": "authorized",
+          "credential": "5aa349227e4068c85c03400396bcea13c7fd57d0ec78c604bc768fc5"
+        },
+        "status": "active",
+        "mandate": {
+          "epoch": 379
+        }
+      },
+      {
+        "id": "9393c87a66b1f7dd4f9b486a49232de92e39e18b3b20ac4a539b4df2",
+        "delegate": {
+          "status": "authorized",
+          "credential": "670994283668cea40218e0ef33c51aff39ca00a74f68ed428cf305ce"
+        },
+        "status": "active",
+        "mandate": {
+          "epoch": 379
+        }
+      },
+      {
+        "id": "b7bfc26ddc6718133a204af6872149b69de83dd3350f60b257e55773",
+        "delegate": {
+          "status": "none"
+        },
+        "status": "active",
+        "mandate": {
+          "epoch": 379
+        }
+      }
+    ],
+    "quorum": "2/3"
+  },
+  "id": null
+}
+```
 
 #### blockHeight
 

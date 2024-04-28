@@ -63,6 +63,7 @@ import qualified Cardano.Ledger.Conway.TxCert as Cn
 
 import qualified Cardano.Ledger.Alonzo.Plutus.TxInfo as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
+import qualified Cardano.Ledger.Api.State.Query as Cn
 import qualified Cardano.Ledger.Babbage.TxInfo as Ba
 import qualified Cardano.Ledger.Conway.Scripts as Cn
 import qualified Cardano.Ledger.Conway.TxInfo as Cn
@@ -115,6 +116,90 @@ encodeCommittee x = encodeObject
    <> "quorum" .=
         encodeUnitInterval (Cn.committeeThreshold x)
     )
+
+encodeCommitteeMembersState
+    :: Crypto crypto
+    => Cn.CommitteeMembersState crypto
+    -> Json
+encodeCommitteeMembersState x = encodeObject
+    ( "members" .=
+        encodeMapAsList encodeConstitutionalCommitteeMemberState (Cn.csCommittee x)
+   <> "quorum" .=
+        encodeMaybe encodeUnitInterval (Cn.csThreshold x)
+    )
+
+encodeConstitutionalCommitteeMemberState
+    :: forall crypto. Crypto crypto
+    => Ledger.Credential 'ColdCommitteeRole crypto
+    -> Cn.CommitteeMemberState crypto
+    -> Json
+encodeConstitutionalCommitteeMemberState memberId st = encodeObject
+    ( "id" .=
+        Shelley.encodeCredential memberId
+   <> "delegate" .=
+        encodeHotCredAuthStatus (Cn.cmsHotCredAuthStatus st)
+   <> "status" .=
+        encodeMemberStatus (Cn.cmsStatus st)
+   <> "mandate" .=? OmitWhenNothing
+        (encodeSingleton "epoch" . encodeEpochNo) (maybeToStrictMaybe (Cn.cmsExpiration st))
+   <> "next" .=? OmitWhenNothing
+       identity (encodeNextEpochChange (Cn.cmsNextEpochChange st))
+    )
+
+encodeMemberStatus :: Cn.MemberStatus -> Json
+encodeMemberStatus = encodeText . \case
+    -- Votes of this member will count during ratification
+    Cn.Active -> "active"
+    Cn.Expired -> "expired"
+    -- This can happen when a hot credential for an unknown cold credential exists.
+    -- Such Committee member will be either removed from the state at the next
+    -- epoch boundary or enacted as a new member.
+    Cn.Unrecognized -> "unrecognized"
+
+encodeHotCredAuthStatus
+    :: Crypto crypto
+    => Cn.HotCredAuthStatus crypto
+    -> Json
+encodeHotCredAuthStatus = \case
+    Cn.MemberNotAuthorized ->
+        encodeObject
+            ( "status" .= encodeText "none"
+            )
+    Cn.MemberAuthorized hot ->
+        encodeObject
+            ( "status" .= encodeText "authorized"
+           <> "id" .= Shelley.encodeCredential hot
+            )
+    Cn.MemberResigned anchor ->
+        encodeObject
+            (  "status" .= encodeText "resigned"
+            <> "metadata" .=? OmitWhenNothing
+                encodeAnchor (maybeToStrictMaybe anchor)
+            )
+
+encodeNextEpochChange
+    :: Cn.NextEpochChange
+    -> StrictMaybe Json
+encodeNextEpochChange = fmap encodeObject . \case
+    Cn.NoChangeExpected ->
+        SNothing
+    Cn.ToBeEnacted ->
+        SJust
+            ( "change" .= encodeText "toBeEnacted"
+            )
+    Cn.ToBeRemoved ->
+        SJust
+            ( "change" .= encodeText "toBeRemoved"
+            )
+    Cn.ToBeExpired ->
+        SJust
+            ( "change" .= encodeText "expiring"
+            )
+    Cn.TermAdjusted mandate ->
+        SJust
+            ( "change" .= encodeText "adjustingMandate"
+           <> "mandate" .= encodeSingleton "epoch" (encodeEpochNo mandate)
+            )
 
 encodeContextError
     :: ( Crypto (EraCrypto era)
@@ -221,13 +306,12 @@ encodeConwayGovCert = \case
             encodeStrictMaybe encodeAnchor anchor
     Cn.ConwayAuthCommitteeHotKey cold hot ->
         "type" .=
-            encodeText "constitutionalCommitteeHotKeyRegistration"
+            encodeText "constitutionalCommitteeDelegation"
        <>
         "member" .=
             encodeConstitutionalCommitteeMember cold SNothing
        <>
-        "hotKey" .=
-            Shelley.encodeCredential hot
+        "delegate" .= encodeHotCredAuthStatus (Cn.MemberAuthorized hot)
     Cn.ConwayResignCommitteeColdKey cold anchor ->
         "type" .=
             encodeText "constitutionalCommitteeRetirement"

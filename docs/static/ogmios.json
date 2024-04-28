@@ -12,6 +12,7 @@
 
   , "AcquireLedgerState", "AcquireLedgerStateResponse"
   , "QueryLedgerStateConstitution", "QueryLedgerStateConstitutionResponse"
+  , "QueryLedgerStateConstitutionalCommittee", "QueryLedgerStateConstitutionalCommitteeResponse"
   , "QueryLedgerStateEpoch", "QueryLedgerStateEpochResponse"
   , "QueryLedgerStateEraStart", "QueryLedgerStateEraStartResponse"
   , "QueryLedgerStateEraSummaries", "QueryLedgerStateEraSummariesResponse"
@@ -666,7 +667,9 @@
       , "method":
         { "type": "string"
         , "enum":
-          [ "queryLedgerState/epoch"
+          [ "queryLedgerState/constitution"
+          , "queryLedgerState/constitutionalCommittee"
+          , "queryLedgerState/epoch"
           , "queryLedgerState/eraStart"
           , "queryLedgerState/eraSummaries"
           , "queryLedgerState/liveStakeDistribution"
@@ -710,7 +713,9 @@
       , "method":
         { "type": "string"
         , "enum":
-          [ "queryLedgerState/epoch"
+          [ "queryLedgerState/constitution"
+          , "queryLedgerState/constitutionalCommittee"
+          , "queryLedgerState/epoch"
           , "queryLedgerState/eraStart"
           , "queryLedgerState/eraSummaries"
           , "queryLedgerState/liveStakeDistribution"
@@ -753,7 +758,9 @@
       , "method":
         { "type": "string"
         , "enum":
-          [ "queryLedgerState/epoch"
+          [ "queryLedgerState/constitution"
+          , "queryLedgerState/constitutionalCommittee"
+          , "queryLedgerState/epoch"
           , "queryLedgerState/eraStart"
           , "queryLedgerState/eraSummaries"
           , "queryLedgerState/liveStakeDistribution"
@@ -833,6 +840,75 @@
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
       ]
     }
+
+  , "QueryLedgerStateConstitutionalCommittee":
+    { "title": "QueryLedgerStateConstitutionalCommittee"
+    , "description": "Get the state of the constitutional committee (only available from Conway onwards)."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/constitutionalCommittee" ]
+        }
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateConstitutionalCommitteeResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateConstitutionalCommitteeResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/constitutionalCommittee" ]
+            }
+          , "result":
+            { "oneOf":
+              [ { "type": "null" }
+              , { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "members", "quorum" ]
+                , "properties":
+                  { "members":
+                    { "type": "array"
+                    , "items": { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeMember" }
+                    }
+                  , "quorum":
+                    { "oneOf":
+                      [ { "type": "null" }
+                      , { "$ref": "cardano.json#/definitions/Ratio" }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      ]
+    }
+
 
   , "QueryLedgerStateEpoch":
     { "title": "QueryLedgerStateEpoch"

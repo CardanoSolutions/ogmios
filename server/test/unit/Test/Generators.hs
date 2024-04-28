@@ -129,12 +129,16 @@ import Test.QuickCheck
     , choose
     , elements
     , frequency
+    , listOf
     , listOf1
     , oneof
     , scale
     , shrinkList
     , suchThat
     , vector
+    )
+import Test.QuickCheck.Arbitrary.Generic
+    ( genericArbitrary
     )
 import Test.QuickCheck.Gen
     ( Gen (..)
@@ -156,11 +160,13 @@ import qualified Data.Map as Map
 
 import qualified Ouroboros.Network.Point as Point
 
+import qualified Cardano.Ledger.Api.Governance as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
 import qualified Cardano.Ledger.PoolDistr as Ledger
 
+import qualified Cardano.Ledger.Api.State.Query as Ledger
 import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
@@ -605,6 +611,63 @@ genPParamsResult _ _ =
                     ]
             Nothing ->
                 Nothing
+
+genConstitutionResult
+    :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
+    => Proxy era
+    -> Proxy (QueryResult crypto (Ledger.Constitution era))
+    -> Gen (QueryResult crypto (Ledger.Constitution era))
+genConstitutionResult _ _ =
+    maybe (error "genConstitutionResult: unsupported era") identity genConway
+  where
+    genConway =
+        case testEquality (typeRep @era) (typeRep @StandardConway) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+
+genGovStateResult
+    :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
+    => Proxy era
+    -> Proxy (QueryResult crypto (Ledger.GovState era))
+    -> Gen (QueryResult crypto (Ledger.GovState era))
+genGovStateResult _ _ =
+    maybe (error "genGovStateResult: unsupported era") identity genConway
+  where
+    genConway =
+        case testEquality (typeRep @era) (typeRep @StandardConway) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+
+genCommitteeMembersStateResult
+    :: forall crypto era. (crypto ~ StandardCrypto)
+    => Proxy era
+    -> Gen (QueryResult crypto (Ledger.CommitteeMembersState crypto))
+genCommitteeMembersStateResult _ =
+    frequency
+        [ (1, Left <$> genMismatchEraInfo)
+        , (10, fmap Right (Ledger.CommitteeMembersState <$> genMembers <*> arbitrary <*> arbitrary))
+        ]
+  where
+    genMembers = fmap Map.fromList
+        (listOf $ (,) <$> arbitrary <*> genCommitteeMemberState)
+
+genCommitteeMemberState
+    :: Gen (Ledger.CommitteeMemberState StandardCrypto)
+genCommitteeMemberState = Ledger.CommitteeMemberState
+    <$> genericArbitrary
+    <*> genericArbitrary
+    <*> arbitrary
+    <*> genericArbitrary
 
 genProposedPParamsResult
     :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)

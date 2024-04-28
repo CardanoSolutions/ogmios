@@ -79,6 +79,8 @@ import Ogmios.Data.Json.Prelude
 import Ogmios.Data.Json.Query
     ( QueryInEra
     , SomeQuery (..)
+    , parseQueryLedgerConstitution
+    , parseQueryLedgerConstitutionalCommittee
     , parseQueryLedgerEpoch
     , parseQueryLedgerEraStart
     , parseQueryLedgerEraSummaries
@@ -186,6 +188,8 @@ import Test.Generators
     , genBlock
     , genBlockNo
     , genBoundResult
+    , genCommitteeMembersStateResult
+    , genConstitutionResult
     , genData
     , genEpochResult
     , genEvaluateTransactionResponse
@@ -676,6 +680,14 @@ spec = do
                 }
             |])
             (parseQueryLedgerStakePools genPoolParametersResult)
+
+        validateLedgerStateQuery 10 "constitution"
+            Nothing
+            (parseQueryLedgerConstitution genConstitutionResult)
+
+        validateLedgerStateQuery 10 "constitutionalCommittee"
+            Nothing
+            (parseQueryLedgerConstitutionalCommittee genCommitteeMembersStateResult)
 
         validateNetworkQuery 10 "blockHeight"
             Nothing
