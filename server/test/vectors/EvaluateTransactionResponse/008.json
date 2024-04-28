@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","method":"evaluateTransaction","error":{"code":3004,"message":"Unable to create the evaluation context from the given transaction.","data":{"reason":"Unknown transaction input (missing from UTxO set): 6d32219633a77a811be94b0266195a8f8d92349e2dfc3d5fad3eff06ee0b6ac5#11"}},"id":null}
+{"jsonrpc":"2.0","method":"evaluateTransaction","error":{"code":3004,"message":"Unable to create the evaluation context from the given transaction.","data":{"reason":"Inline datums not supported in plutus:v1. Use plutus:v2 or higher."}},"id":null}
