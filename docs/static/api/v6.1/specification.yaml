@@ -1,7 +1,7 @@
 asyncapi: '2.4.0'
 info:
   title: Ogmios
-  version: '6.3.*'
+  version: '6.1.*'
   description: |
 
     ### Protocols
@@ -17,8 +17,6 @@ info:
 
     - [Ledger state queries](#operation-publish-/?AcquireLedgerState)
       - [Error codes](/mini-protocols/local-state-query/#errors)
-      - [LedgerState/Constitution](#operation-publish-/?QueryLedgerStateConstitution)
-      - [LedgerState/ConstitutionalCommittee](#operation-publish-/?QueryLedgerStateConstitutionalCommittee)
       - [LedgerState/Epoch](#operation-publish-/?QueryLedgerStateEpoch)
       - [LedgerState/EraStart](#operation-publish-/?QueryLedgerStateEraStart)
       - [LedgerState/EraSummaries](#operation-publish-/?QueryLedgerStateEraSummaries)
@@ -88,6 +86,16 @@ servers:
           - mainnet
           - preview
           - preprod
+
+  dandelion:
+    url: "ogmios-api.{network}.dandelion.link"
+    protocol: wss
+    description: |
+      Hosted Dandelion's instances, by [Gimbalabs](https://gimbalabs.com/).
+    variables:
+      network:
+        enum:
+          - mainnet
 
 channels:
   /?FindIntersection:
@@ -229,34 +237,6 @@ channels:
       message:
         oneOf:
           - $ref: "#/components/messages/AcquireLedgerStateResponse"
-
-  /?QueryLedgerStateConstitution:
-    description: |
-      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
-    publish:
-      operationId: QueryLedgerStateConstitution
-      message:
-        oneOf:
-          - $ref: "#/components/messages/QueryLedgerStateConstitution"
-    subscribe:
-      operationId: QueryLedgerStateConstitutionResponse
-      message:
-        oneOf:
-          - $ref: "#/components/messages/QueryLedgerStateConstitutionResponse"
-
-  /?QueryLedgerStateConstitutionalCommittee:
-    description: |
-      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
-    publish:
-      operationId: QueryLedgerStateConstitutionalCommittee
-      message:
-        oneOf:
-          - $ref: "#/components/messages/QueryLedgerStateConstitutionalCommittee"
-    subscribe:
-      operationId: QueryLedgerStateConstitutionalCommitteeResponse
-      message:
-        oneOf:
-          - $ref: "#/components/messages/QueryLedgerStateConstitutionalCommitteeResponse"
 
   /?QueryLedgerStateEpoch:
     description: |
@@ -504,13 +484,13 @@ components:
       description: |
         Ask for an intersection between the server's local chain and the given points.
       payload:
-        $ref: "/ogmios.json#/properties/FindIntersection"
+        $ref: "/api/v6.1/ogmios.json#/properties/FindIntersection"
 
     FindIntersectionResponse:
       title: FindIntersectionResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/FindIntersectionResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/FindIntersectionResponse"
 
     NextBlock:
       title: NextBlock
@@ -518,13 +498,13 @@ components:
       description: |
         Request next block from the current cardano-node's cursor.
       payload:
-        $ref: "/ogmios.json#/properties/NextBlock"
+        $ref: "/api/v6.1/ogmios.json#/properties/NextBlock"
 
     NextBlockResponse:
       title: NextBlockResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/NextBlockResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/NextBlockResponse"
 
     SubmitTransaction:
       title: SubmitTransaction
@@ -532,13 +512,13 @@ components:
       description: |
         Submit a signed and serialized transaction to the network.
       payload:
-        $ref: "/ogmios.json#/properties/SubmitTransaction"
+        $ref: "/api/v6.1/ogmios.json#/properties/SubmitTransaction"
 
     SubmitTransactionResponse:
       title: SubmitTransactionResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/SubmitTransactionResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/SubmitTransactionResponse"
 
     EvaluateTransaction:
       title: EvaluateTransaction
@@ -546,13 +526,13 @@ components:
       description: |
         Evaluate execution units of scripts in a well-formed transaction.
       payload:
-        $ref: "/ogmios.json#/properties/EvaluateTransaction"
+        $ref: "/api/v6.1/ogmios.json#/properties/EvaluateTransaction"
 
     EvaluateTransactionResponse:
       title: EvaluateTransactionResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/EvaluateTransactionResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/EvaluateTransactionResponse"
 
     AcquireMempool:
       title: AcquireMempool
@@ -560,13 +540,13 @@ components:
       description: |
         Acquire a mempool snapshot. This is blocking until a new (i.e different) snapshot is available.
       payload:
-        $ref: "/ogmios.json#/properties/AcquireMempool"
+        $ref: "/api/v6.1/ogmios.json#/properties/AcquireMempool"
 
     AcquireMempoolResponse:
       title: AcquireMempoolResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/AcquireMempoolResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/AcquireMempoolResponse"
 
     NextTransaction:
       title: NextTransaction
@@ -574,13 +554,13 @@ components:
       description: |
         Request the next mempool transaction from an acquired snapshot.
       payload:
-        $ref: "/ogmios.json#/properties/NextTransaction"
+        $ref: "/api/v6.1/ogmios.json#/properties/NextTransaction"
 
     NextTransactionResponse:
       title: NextTransactionResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/NextTransactionResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/NextTransactionResponse"
 
     HasTransaction:
       title: HasTransaction
@@ -588,13 +568,13 @@ components:
       description: |
         Ask whether a given transaction is present in the acquired mempool snapshot.
       payload:
-        $ref: "/ogmios.json#/properties/HasTransaction"
+        $ref: "/api/v6.1/ogmios.json#/properties/HasTransaction"
 
     HasTransactionResponse:
       title: HasTransactionResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/HasTransactionResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/HasTransactionResponse"
 
     SizeOfMempool:
       title: SizeOfMempool
@@ -602,13 +582,13 @@ components:
       description: |
         Get size and capacities of the mempool (acquired snapshot).
       payload:
-        $ref: "/ogmios.json#/properties/SizeOfMempool"
+        $ref: "/api/v6.1/ogmios.json#/properties/SizeOfMempool"
 
     SizeOfMempoolResponse:
       title: SizeOfMempoolResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/SizeOfMempoolResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/SizeOfMempoolResponse"
 
     ReleaseMempool:
       title: ReleaseMempool
@@ -616,13 +596,13 @@ components:
       description: |
         Release a previously acquired mempool snapshot
       payload:
-        $ref: "/ogmios.json#/properties/ReleaseMempool"
+        $ref: "/api/v6.1/ogmios.json#/properties/ReleaseMempool"
 
     ReleaseMempoolResponse:
       title: ReleaseMempoolResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/ReleaseMempoolResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/ReleaseMempoolResponse"
 
     AcquireLedgerState:
       title: AcquireLedgerState
@@ -630,13 +610,13 @@ components:
       description: |
         Acquire a point on chain from which to run multiple queries.
       payload:
-        $ref: "/ogmios.json#/properties/AcquireLedgerState"
+        $ref: "/api/v6.1/ogmios.json#/properties/AcquireLedgerState"
 
     AcquireLedgerStateResponse:
       title: AcquireLedgerStateResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/AcquireLedgerStateResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/AcquireLedgerStateResponse"
 
     QueryLedgerStateEpoch:
       title: QueryLedgerStateEpoch
@@ -644,7 +624,7 @@ components:
       description: |
         Query the current epoch of the ledger.
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateEpoch"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateEpoch"
 
     QueryLedgerStateEraStart:
       title: QueryLedgerStateEraStart
@@ -652,7 +632,7 @@ components:
       description: |
         Query information regarding the beginning of the current ledger era.
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateEraStart"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateEraStart"
 
     QueryLedgerStateEraSummaries:
       title: QueryLedgerStateEraSummaries
@@ -660,7 +640,7 @@ components:
       description: |
         Query era bounds and slot parameters details, required for proper sloting arithmetic.
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateEraSummaries"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateEraSummaries"
 
     QueryLedgerStateLiveStakeDistribution:
       title: QueryLedgerStateLiveStakeDistribution
@@ -668,7 +648,7 @@ components:
       description: |
         Query distribution of the stake across all known stake pools, relative to the total stake in the network.
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateLiveStakeDistribution"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateLiveStakeDistribution"
 
     QueryLedgerStateProjectedRewards:
       title: QueryLedgerStateProjectedRewards
@@ -676,7 +656,7 @@ components:
       description: |
         Query the projected rewards of an account in a context where the top stake pools are fully saturated. This projection gives, in principle, a ranking of stake pools that maximizes delegator rewards.
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateProjectedRewards"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateProjectedRewards"
 
     QueryLedgerStateProtocolParameters:
       title: QueryLedgerStateProtocolParameters
@@ -684,7 +664,7 @@ components:
       description: |
         Query the current protocol parameters.
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateProtocolParameters"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateProtocolParameters"
 
     QueryLedgerStateProposedProtocolParameters:
       title: QueryLedgerStateProposedProtocolParameters
@@ -692,7 +672,7 @@ components:
       description: |
         Query the last update proposal w.r.t. protocol parameters, if any.
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateProposedProtocolParameters"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateProposedProtocolParameters"
 
     QueryLedgerStateRewardAccountSummaries:
       title: QueryLedgerStateRewardAccountSummaries
@@ -700,7 +680,7 @@ components:
       description: |
         Query current delegation settings and rewards of chosen reward accounts.
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateRewardAccountSummaries"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateRewardAccountSummaries"
 
     QueryLedgerStateRewardsProvenance:
       title: QueryLedgerStateRewardsProvenance
@@ -708,7 +688,7 @@ components:
       description: |
         Get details about rewards calculation for the ongoing epoch.
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateRewardsProvenance"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateRewardsProvenance"
 
     QueryLedgerStateStakePools:
       title: QueryLedgerStateStakePools
@@ -716,7 +696,7 @@ components:
       description: |
         Query the list of all stake pool identifiers currently registered and active.
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateStakePools"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateStakePools"
 
     QueryLedgerStateTip:
       title: QueryLedgerStateTip
@@ -724,7 +704,7 @@ components:
       description: |
         Query the current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger.
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateTip"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateTip"
 
     QueryLedgerStateUtxo:
       title: QueryLedgerStateUtxo
@@ -732,23 +712,7 @@ components:
       description: |
         Query the current Utxo set, restricted to some output references or addresses.
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateUtxo"
-
-    QueryLedgerStateConstitution:
-      title: QueryLedgerStateConstitution
-      name: "since v6.1.0"
-      description: |
-        Query the current constitution definition (only available from Conway onwards)
-      payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateConstitution"
-
-    QueryLedgerStateConstitutionalCommittee:
-      title: QueryLedgerStateConstitutionalCommittee
-      name: "since v6.2.0"
-      description: |
-        Query the current state of the constitutional committee (only available from Conway onwards)
-      payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateConstitutionalCommittee"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateUtxo"
 
     QueryNetworkBlockHeight:
       title: QueryNetworkBlockHeight
@@ -756,7 +720,7 @@ components:
       description: |
         Query the network’s highest block number.
       payload:
-        $ref: "/ogmios.json#/properties/QueryNetworkBlockHeight"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryNetworkBlockHeight"
 
     QueryNetworkGenesisConfiguration:
       title: QueryNetworkGenesisConfiguration
@@ -764,7 +728,7 @@ components:
       description: |
         Query the genesis configuration of a given era.
       payload:
-        $ref: "/ogmios.json#/properties/QueryNetworkGenesisConfiguration"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryNetworkGenesisConfiguration"
 
     QueryNetworkStartTime:
       title: QueryNetworkStartTime
@@ -772,7 +736,7 @@ components:
       description: |
         Query the network start time.
       payload:
-        $ref: "/ogmios.json#/properties/QueryNetworkStartTime"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryNetworkStartTime"
 
     QueryNetworkTip:
       title: QueryNetworkTip
@@ -780,115 +744,103 @@ components:
       description: |
         Get the current network tip. Said differently, this is the most recent slot and block header hash that the node it aware of.
       payload:
-        $ref: "/ogmios.json#/properties/QueryNetworkTip"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryNetworkTip"
 
     QueryLedgerStateEpochResponse:
       title: QueryLedgerStateEpochResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateEpochResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateEpochResponse"
 
     QueryLedgerStateEraStartResponse:
       title: QueryLedgerStateEraStartResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateEraStartResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateEraStartResponse"
 
     QueryLedgerStateEraSummariesResponse:
       title: QueryLedgerStateEraSummariesResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateEraSummariesResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateEraSummariesResponse"
 
     QueryLedgerStateLiveStakeDistributionResponse:
       title: QueryLedgerStateLiveStakeDistributionResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateLiveStakeDistributionResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateLiveStakeDistributionResponse"
 
     QueryLedgerStateProjectedRewardsResponse:
       title: QueryLedgerStateProjectedRewardsResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateProjectedRewardsResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateProjectedRewardsResponse"
 
     QueryLedgerStateProtocolParametersResponse:
       title: QueryLedgerStateProtocolParametersResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateProtocolParametersResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateProtocolParametersResponse"
 
     QueryLedgerStateProposedProtocolParametersResponse:
       title: QueryLedgerStateProposedProtocolParametersResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateProposedProtocolParametersResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateProposedProtocolParametersResponse"
 
     QueryLedgerStateRewardAccountSummariesResponse:
       title: QueryLedgerStateRewardAccountSummariesResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateRewardAccountSummariesResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateRewardAccountSummariesResponse"
 
     QueryLedgerStateRewardsProvenanceResponse:
       title: QueryLedgerStateRewardsProvenanceResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateRewardsProvenanceResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateRewardsProvenanceResponse"
 
     QueryLedgerStateStakePoolsResponse:
       title: QueryLedgerStateStakePoolsResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateStakePoolsResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateStakePoolsResponse"
 
     QueryLedgerStateTipResponse:
       title: QueryLedgerStateTipResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateTipResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateTipResponse"
 
     QueryLedgerStateUtxoResponse:
       title: QueryLedgerStateUtxoResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateUtxoResponse"
-
-    QueryLedgerStateConstitutionResponse:
-      title: QueryLedgerStateConstitutionResponse
-      name: "since v6.1.0"
-      payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateConstitutionResponse"
-
-    QueryLedgerStateConstitutionalCommitteeResponse:
-      title: QueryLedgerStateConstitutionalCommitteeResponse
-      name: "since v6.2.0"
-      payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateConstitutionalCommitteeResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryLedgerStateUtxoResponse"
 
     QueryNetworkBlockHeightResponse:
       title: QueryNetworkBlockHeightResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryNetworkBlockHeightResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryNetworkBlockHeightResponse"
 
     QueryNetworkGenesisConfigurationResponse:
       title: QueryNetworkGenesisConfigurationResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryNetworkGenesisConfigurationResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryNetworkGenesisConfigurationResponse"
 
     QueryNetworkStartTimeResponse:
       title: QueryNetworkStartTimeResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryNetworkStartTimeResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryNetworkStartTimeResponse"
 
     QueryNetworkTipResponse:
       title: QueryNetworkTipResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/QueryNetworkTipResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/QueryNetworkTipResponse"
 
     ReleaseLedgerState:
       title: ReleaseLedgerState
@@ -896,34 +848,34 @@ components:
       description: |
         Release a point on chain previously acquired.
       payload:
-        $ref: "/ogmios.json#/properties/ReleaseLedgerState"
+        $ref: "/api/v6.1/ogmios.json#/properties/ReleaseLedgerState"
 
     ReleaseLedgerStateResponse:
       title: ReleaseLedgerStateResponse
       name: "since v6.0.0"
       payload:
-        $ref: "/ogmios.json#/properties/ReleaseLedgerStateResponse"
+        $ref: "/api/v6.1/ogmios.json#/properties/ReleaseLedgerStateResponse"
 
   schemas:
     Block:
-      $ref: "/cardano.json#/definitions/Block"
+      $ref: "/api/v6.1/cardano.json#/definitions/Block"
     Certificate:
-      $ref: "/cardano.json#/definitions/Certificate"
+      $ref: "/api/v6.1/cardano.json#/definitions/Certificate"
     DelegateRepresentative:
-      $ref: "/cardano.json#/definitions/DelegateRepresentative"
+      $ref: "/api/v6.1/cardano.json#/definitions/DelegateRepresentative"
     GovernanceAction:
-      $ref: "/cardano.json#/definitions/GovernanceAction"
+      $ref: "/api/v6.1/cardano.json#/definitions/GovernanceAction"
     GovernanceVoter:
-      $ref: "/cardano.json#/definitions/GovernanceAction"
+      $ref: "/api/v6.1/cardano.json#/definitions/GovernanceAction"
     Metadatum:
-      $ref: "/cardano.json#/definitions/Metadatum"
+      $ref: "/api/v6.1/cardano.json#/definitions/Metadatum"
     ProtocolParameters:
-      $ref: "/cardano.json#/definitions/ProtocolParameters"
+      $ref: "/api/v6.1/cardano.json#/definitions/ProtocolParameters"
     Script:
-      $ref: "/cardano.json#/definitions/Script"
+      $ref: "/api/v6.1/cardano.json#/definitions/Script"
     ScriptPurpose:
-      $ref: "/cardano.json#/definitions/ScriptPurpose"
+      $ref: "/api/v6.1/cardano.json#/definitions/ScriptPurpose"
     Transaction:
-      $ref: "/cardano.json#/definitions/Transaction"
+      $ref: "/api/v6.1/cardano.json#/definitions/Transaction"
     TransactionOutput:
-      $ref: "/cardano.json#/definitions/TransactionOutput"
+      $ref: "/api/v6.1/cardano.json#/definitions/TransactionOutput"
