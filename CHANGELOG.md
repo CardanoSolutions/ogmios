@@ -16,6 +16,8 @@ pre: "<b>5. </b>"
 
 - A new transaction submission error: [ConflictingInputsAndReferences](https://ogmios.dev/mini-protocols/local-tx-submission#schema-3164/ConflictingInputsAndReferences) (`code=3164`).
 
+- The server now reports (log) unexpected failures happening during protocol execution instead of only replying to clients with an error. See [#383](https://github.com/CardanoSolutions/ogmios/pull/383).
+
 #### Changed
 
   > [!WARNING]

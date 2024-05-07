@@ -350,7 +350,11 @@ withOuroborosClients tr opts codecs maxInFlight sensors exUnitsEvaluator getGene
              }
   where
     catchError :: forall b r. m b -> (Json -> m ()) -> Rpc.ToResponse r -> m b -> m b
-    catchError = defaultWithInternalError opts
+    catchError =
+        defaultWithInternalError reportException opts
+      where
+        reportException =
+            logWith tr . WebSocketUnknownException . toText . displayException
 
     yield :: Json -> m ()
     yield = send conn . jsonToByteString

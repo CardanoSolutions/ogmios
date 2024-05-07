@@ -220,7 +220,7 @@ withStateQueryClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
     let innerCodecs = mkStateQueryCodecs Rpc.defaultOptions encodePoint encodeAcquireFailure encodeAcquireExpired
     let getGenesisConfig = let nope = error "unimplemented" in StateQuery.GetGenesisConfig nope nope nope nope
-    let catchError = defaultWithInternalError Rpc.defaultOptions
+    let catchError = defaultWithInternalError (const $ return ()) Rpc.defaultOptions
     let client = mkStateQueryClient nullTracer catchError innerCodecs getGenesisConfig recvQ (atomically . writeTQueue sendQ)
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cStateQueryCodec
     withMockChannel (stateQueryMockPeer seed codec) $ \channel -> do

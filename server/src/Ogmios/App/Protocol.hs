@@ -181,8 +181,18 @@ onUnmatchedMessage opts blob = do
         fail "unknown method in 'method' (beware names are case-sensitive)."
 
 -- | 'catch-all' handler which turns unexpected exception as internal errors.
-defaultWithInternalError :: MonadCatch m => Rpc.Options -> m a -> (Json -> m ()) -> Rpc.ToResponse r -> m a -> m a
-defaultWithInternalError opts continue yield toResponse = handle $ \(e :: SomeException) -> do
-    let (Rpc.Response _ mirror _) = toResponse (error "unused and unevaluated")
-    yield $ Rpc.ko opts $ Rpc.internalError mirror (displayException e)
-    continue
+defaultWithInternalError
+    :: MonadCatch m
+    => (SomeException -> m ())
+    -> Rpc.Options
+    -> m a
+    -> (Json -> m ())
+    -> Rpc.ToResponse r
+    -> m a
+    -> m a
+defaultWithInternalError reportException opts continue yield toResponse = do
+    handle $ \(e :: SomeException) -> do
+        let (Rpc.Response _ mirror _) = toResponse (error "unused and unevaluated")
+        reportException e
+        yield $ Rpc.ko opts $ Rpc.internalError mirror (displayException e)
+        continue

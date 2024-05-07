@@ -224,7 +224,7 @@ withTxMonitorClient action seed = do
     (recvQ, sendQ) <- atomically $ (,) <$> newTQueue <*> newTQueue
     let opts = Rpc.defaultOptions
     let innerCodecs = mkTxMonitorCodecs opts encodeGenTxId (encodeTx (MetadataNoSchema, omitOptionalCbor))
-    let client = mkTxMonitorClient (defaultWithInternalError opts) innerCodecs recvQ (atomically . writeTQueue sendQ) NodeToClientV_16
+    let client = mkTxMonitorClient (defaultWithInternalError (const $ return ()) opts) innerCodecs recvQ (atomically . writeTQueue sendQ) NodeToClientV_16
     let codec = codecs defaultSlotsPerEpoch nodeToClientV_Latest & cTxMonitorCodec
     withMockChannel (txMonitorMockPeer seed codec) $ \channel -> do
         result <- race
