@@ -1,7 +1,7 @@
 asyncapi: '2.4.0'
 info:
   title: Ogmios
-  version: '6.2.*'
+  version: '6.3.*'
   description: |
 
     ### Protocols
@@ -88,16 +88,6 @@ servers:
           - mainnet
           - preview
           - preprod
-
-  dandelion:
-    url: "ogmios-api.{network}.dandelion.link"
-    protocol: wss
-    description: |
-      Hosted Dandelion's instances, by [Gimbalabs](https://gimbalabs.com/).
-    variables:
-      network:
-        enum:
-          - mainnet
 
 channels:
   /?FindIntersection:

@@ -1,0 +1,910 @@
+asyncapi: '2.4.0'
+info:
+  title: Ogmios
+  version: '6.2.*'
+  description: |
+
+    ### Protocols
+
+    - [Chain synchronization](#operation-publish-/?FindIntersection)
+      - [Error codes](/mini-protocols/local-chain-sync/#errors)
+
+    - [Transaction submission](#operation-publish-/?SubmitTransaction)
+      - [Error codes](/mini-protocols/local-tx-submission/#errors)
+
+    - [Mempool monitoring](#operation-publish-/?AcquireMempool)
+      - [Error codes](/mini-protocols/local-tx-monitor/#errors)
+
+    - [Ledger state queries](#operation-publish-/?AcquireLedgerState)
+      - [Error codes](/mini-protocols/local-state-query/#errors)
+      - [LedgerState/Constitution](#operation-publish-/?QueryLedgerStateConstitution)
+      - [LedgerState/Epoch](#operation-publish-/?QueryLedgerStateEpoch)
+      - [LedgerState/EraStart](#operation-publish-/?QueryLedgerStateEraStart)
+      - [LedgerState/EraSummaries](#operation-publish-/?QueryLedgerStateEraSummaries)
+      - [LedgerState/LiveStakeDistribution](#operation-publish-/?QueryLedgerStateLiveStakeDistribution)
+      - [LedgerState/ProjectedRewards](#operation-publish-/?QueryLedgerStateProjectedRewards)
+      - [LedgerState/ProtocolParameters](#operation-publish-/?QueryLedgerStateProtocolParameters)
+      - [LedgerState/ProposedProtocolParameters](#operation-publish-/?QueryLedgerStateProposedProtocolParameters)
+      - [LedgerState/RewardAccountSummaries](#operation-publish-/?QueryLedgerStateRewardAccountSummaries)
+      - [LedgerState/RewardsProvenance](#operation-publish-/?QueryLedgerStateRewardsProvenance)
+      - [LedgerState/StakePools](#operation-publish-/?QueryLedgerStateStakePools)
+      - [LedgerState/Tip](#operation-publish-/?QueryLedgerStateTip)
+      - [LedgerState/Utxo](#operation-publish-/?QueryLedgerStateUtxo)
+      - [Network/BlockHeight](#operation-publish-/?QueryNetworkBlockHeight)
+      - [Network/GenesisConfiguration](#operation-publish-/?QueryNetworkGenesisConfiguration)
+      - [Network/StartTime](#operation-publish-/?QueryNetworkStartTime)
+      - [Network/Tip](#operation-publish-/?QueryNetworkTip)
+
+    ### Schemas
+
+    Here's a shortlist that contains a few handpicked schema definitions. Find **all definitions** at the bottom of this document.
+
+    - [Block](#schema-Block)
+    - [Certificate](#schema-Certificate)
+    - [DelegateRepresentative](#schema-DelegateRepresentative)
+    - [GovernanceAction](#schema-GovernanceAction)
+    - [GovernanceVoter](#schema-GovernanceVoter)
+    - [Metadatum](#schema-Metadatum)
+    - [Protocol Parameters](#schema-ProtocolParameters)
+    - [Script](#schema-Script)
+    - [ScriptPurpose](#schema-ScriptPurpose)
+    - [Transaction](#schema-Transaction)
+    - [TransactionOutput](#schema-TransactionOutput)
+
+  license:
+    name: MPL-2.0
+    url: https://raw.githubusercontent.com/CardanoSolutions/ogmios/master/LICENSE
+
+defaultContentType: application/json
+
+tags:
+  - name: Raw JSON Schema
+    externalDocs:
+      url: https://ogmios.dev/ogmios.json
+
+servers:
+  localhost:
+    url: "127.0.0.1:{port}"
+    protocol: ws
+    description: |
+      Default instance, when running a local server.
+    variables:
+      port:
+        default: "1337"
+
+  demeter:
+    url: "ogmios-{network}-api-{project-id}.{region}.demeter.run"
+    protocol: wss
+    description: |
+      Hosted Ogmios instances on [Demeter.run](https://demeter.run), by TxPipe.
+    variables:
+      project-id: {}
+      region:
+        enum:
+          - us1
+      network:
+        enum:
+          - mainnet
+          - preview
+          - preprod
+
+  dandelion:
+    url: "ogmios-api.{network}.dandelion.link"
+    protocol: wss
+    description: |
+      Hosted Dandelion's instances, by [Gimbalabs](https://gimbalabs.com/).
+    variables:
+      network:
+        enum:
+          - mainnet
+
+channels:
+  /?FindIntersection:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: FindIntersection
+      message:
+        oneOf:
+          - $ref: "#/components/messages/FindIntersection"
+    subscribe:
+      operationId: FindIntersectionResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/FindIntersectionResponse"
+
+  /?NextBlock:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: NextBlock
+      message:
+        oneOf:
+          - $ref: "#/components/messages/NextBlock"
+    subscribe:
+      operationId: NextBlockResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/NextBlockResponse"
+
+  /?SubmitTransaction:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: SubmitTransaction
+      message:
+        oneOf:
+          - $ref: "#/components/messages/SubmitTransaction"
+    subscribe:
+      operationId: SubmitTransactionResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/SubmitTransactionResponse"
+
+  /?EvaluateTransaction:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: EvaluateTransaction
+      message:
+        oneOf:
+          - $ref: "#/components/messages/EvaluateTransaction"
+    subscribe:
+      operationId: EvaluateTransactionResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/EvaluateTransactionResponse"
+
+  /?AcquireMempool:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: AcquireMempool
+      message:
+        oneOf:
+          - $ref: "#/components/messages/AcquireMempool"
+    subscribe:
+      operationId: AcquireMempoolResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/AcquireMempoolResponse"
+
+  /?NextTransaction:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: NextTransaction
+      message:
+        oneOf:
+          - $ref: "#/components/messages/NextTransaction"
+    subscribe:
+      operationId: NextTransactionResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/NextTransactionResponse"
+
+  /?HasTransaction:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: HasTransaction
+      message:
+        oneOf:
+          - $ref: "#/components/messages/HasTransaction"
+    subscribe:
+      operationId: HasTransactionResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/HasTransactionResponse"
+
+  /?SizeOfMempool:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: SizeOfMempool
+      message:
+        oneOf:
+          - $ref: "#/components/messages/SizeOfMempool"
+    subscribe:
+      operationId: SizeOfMempoolResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/SizeOfMempoolResponse"
+
+  /?ReleaseMempool:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: ReleaseMempool
+      message:
+        oneOf:
+          - $ref: "#/components/messages/ReleaseMempool"
+    subscribe:
+      operationId: ReleaseMempoolResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/ReleaseMempoolResponse"
+
+  /?AcquireLedgerState:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: AcquireLedgerState
+      message:
+        oneOf:
+          - $ref: "#/components/messages/AcquireLedgerState"
+    subscribe:
+      operationId: AcquireLedgerStateResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/AcquireLedgerStateResponse"
+
+  /?QueryLedgerStateConstitution:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateConstitution
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateConstitution"
+    subscribe:
+      operationId: QueryLedgerStateConstitutionResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateConstitutionResponse"
+
+  /?QueryLedgerStateEpoch:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateEpoch
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateEpoch"
+    subscribe:
+      operationId: QueryLedgerStateEpochResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateEpochResponse"
+
+  /?QueryLedgerStateEraStart:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateEraStart
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateEraStart"
+    subscribe:
+      operationId: QueryLedgerStateEraStartResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateEraStartResponse"
+
+  /?QueryLedgerStateEraSummaries:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateEraSummaries
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateEraSummaries"
+    subscribe:
+      operationId: QueryLedgerStateEraSummariesResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateEraSummariesResponse"
+
+  /?QueryLedgerStateLiveStakeDistribution:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateLiveStakeDistribution
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateLiveStakeDistribution"
+    subscribe:
+      operationId: QueryLedgerStateLiveStakeDistributionResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateLiveStakeDistributionResponse"
+
+  /?QueryLedgerStateProjectedRewards:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateProjectedRewards
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateProjectedRewards"
+    subscribe:
+      operationId: QueryLedgerStateProjectedRewardsResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateProjectedRewardsResponse"
+
+  /?QueryLedgerStateProtocolParameters:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateProtocolParameters
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateProtocolParameters"
+    subscribe:
+      operationId: QueryLedgerStateProtocolParametersResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateProtocolParametersResponse"
+
+  /?QueryLedgerStateProposedProtocolParameters:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateProposedProtocolParameters
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateProposedProtocolParameters"
+    subscribe:
+      operationId: QueryLedgerStateProposedProtocolParametersResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateProposedProtocolParametersResponse"
+
+  /?QueryLedgerStateRewardAccountSummaries:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateRewardAccountSummaries
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateRewardAccountSummaries"
+    subscribe:
+      operationId: QueryLedgerStateRewardAccountSummariesResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateRewardAccountSummariesResponse"
+
+  /?QueryLedgerStateRewardsProvenance:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateRewardsProvenance
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateRewardsProvenance"
+    subscribe:
+      operationId: QueryLedgerStateRewardsProvenanceResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateRewardsProvenanceResponse"
+
+  /?QueryLedgerStateStakePools:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateStakePools
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateStakePools"
+    subscribe:
+      operationId: QueryLedgerStateStakePoolsResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateStakePoolsResponse"
+
+  /?QueryLedgerStateTip:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateTip
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateTip"
+    subscribe:
+      operationId: QueryLedgerStateTipResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateTipResponse"
+
+  /?QueryLedgerStateUtxo:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateUtxo
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateUtxo"
+    subscribe:
+      operationId: QueryLedgerStateUtxoResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateUtxoResponse"
+
+  /?QueryNetworkBlockHeight:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryNetworkBlockHeight
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryNetworkBlockHeight"
+    subscribe:
+      operationId: QueryNetworkBlockHeightResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryNetworkBlockHeightResponse"
+
+  /?QueryNetworkGenesisConfiguration:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryNetworkGenesisConfiguration
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryNetworkGenesisConfiguration"
+    subscribe:
+      operationId: QueryNetworkGenesisConfigurationResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryNetworkGenesisConfigurationResponse"
+
+  /?QueryNetworkStartTime:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryNetworkStartTime
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryNetworkStartTime"
+    subscribe:
+      operationId: QueryNetworkStartTimeResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryNetworkStartTimeResponse"
+
+  /?QueryNetworkTip:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryNetworkTip
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryNetworkTip"
+    subscribe:
+      operationId: QueryNetworkTipResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryNetworkTipResponse"
+
+  /?ReleaseLedgerState:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: ReleaseLedgerState
+      message:
+        oneOf:
+          - $ref: "#/components/messages/ReleaseLedgerState"
+    subscribe:
+      operationId: ReleaseLedgerStateResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/ReleaseLedgerStateResponse"
+
+components:
+  messages:
+    FindIntersection:
+      title: FindIntersection
+      name: "since v6.0.0"
+      description: |
+        Ask for an intersection between the server's local chain and the given points.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/FindIntersection"
+
+    FindIntersectionResponse:
+      title: FindIntersectionResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/FindIntersectionResponse"
+
+    NextBlock:
+      title: NextBlock
+      name: "since v6.0.0"
+      description: |
+        Request next block from the current cardano-node's cursor.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/NextBlock"
+
+    NextBlockResponse:
+      title: NextBlockResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/NextBlockResponse"
+
+    SubmitTransaction:
+      title: SubmitTransaction
+      name: "since v6.0.0"
+      description: |
+        Submit a signed and serialized transaction to the network.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/SubmitTransaction"
+
+    SubmitTransactionResponse:
+      title: SubmitTransactionResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/SubmitTransactionResponse"
+
+    EvaluateTransaction:
+      title: EvaluateTransaction
+      name: "since v6.0.0"
+      description: |
+        Evaluate execution units of scripts in a well-formed transaction.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/EvaluateTransaction"
+
+    EvaluateTransactionResponse:
+      title: EvaluateTransactionResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/EvaluateTransactionResponse"
+
+    AcquireMempool:
+      title: AcquireMempool
+      name: "since v6.0.0"
+      description: |
+        Acquire a mempool snapshot. This is blocking until a new (i.e different) snapshot is available.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/AcquireMempool"
+
+    AcquireMempoolResponse:
+      title: AcquireMempoolResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/AcquireMempoolResponse"
+
+    NextTransaction:
+      title: NextTransaction
+      name: "since v6.0.0"
+      description: |
+        Request the next mempool transaction from an acquired snapshot.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/NextTransaction"
+
+    NextTransactionResponse:
+      title: NextTransactionResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/NextTransactionResponse"
+
+    HasTransaction:
+      title: HasTransaction
+      name: "since v6.0.0"
+      description: |
+        Ask whether a given transaction is present in the acquired mempool snapshot.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/HasTransaction"
+
+    HasTransactionResponse:
+      title: HasTransactionResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/HasTransactionResponse"
+
+    SizeOfMempool:
+      title: SizeOfMempool
+      name: "since v6.0.0"
+      description: |
+        Get size and capacities of the mempool (acquired snapshot).
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/SizeOfMempool"
+
+    SizeOfMempoolResponse:
+      title: SizeOfMempoolResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/SizeOfMempoolResponse"
+
+    ReleaseMempool:
+      title: ReleaseMempool
+      name: "since v6.0.0"
+      description: |
+        Release a previously acquired mempool snapshot
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/ReleaseMempool"
+
+    ReleaseMempoolResponse:
+      title: ReleaseMempoolResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/ReleaseMempoolResponse"
+
+    AcquireLedgerState:
+      title: AcquireLedgerState
+      name: "since v6.0.0"
+      description: |
+        Acquire a point on chain from which to run multiple queries.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/AcquireLedgerState"
+
+    AcquireLedgerStateResponse:
+      title: AcquireLedgerStateResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/AcquireLedgerStateResponse"
+
+    QueryLedgerStateEpoch:
+      title: QueryLedgerStateEpoch
+      name: "since v6.0.0"
+      description: |
+        Query the current epoch of the ledger.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateEpoch"
+
+    QueryLedgerStateEraStart:
+      title: QueryLedgerStateEraStart
+      name: "since v6.0.0"
+      description: |
+        Query information regarding the beginning of the current ledger era.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateEraStart"
+
+    QueryLedgerStateEraSummaries:
+      title: QueryLedgerStateEraSummaries
+      name: "since v6.0.0"
+      description: |
+        Query era bounds and slot parameters details, required for proper sloting arithmetic.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateEraSummaries"
+
+    QueryLedgerStateLiveStakeDistribution:
+      title: QueryLedgerStateLiveStakeDistribution
+      name: "since v6.0.0"
+      description: |
+        Query distribution of the stake across all known stake pools, relative to the total stake in the network.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateLiveStakeDistribution"
+
+    QueryLedgerStateProjectedRewards:
+      title: QueryLedgerStateProjectedRewards
+      name: "since v6.0.0"
+      description: |
+        Query the projected rewards of an account in a context where the top stake pools are fully saturated. This projection gives, in principle, a ranking of stake pools that maximizes delegator rewards.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateProjectedRewards"
+
+    QueryLedgerStateProtocolParameters:
+      title: QueryLedgerStateProtocolParameters
+      name: "since v6.0.0"
+      description: |
+        Query the current protocol parameters.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateProtocolParameters"
+
+    QueryLedgerStateProposedProtocolParameters:
+      title: QueryLedgerStateProposedProtocolParameters
+      name: "since v6.0.0"
+      description: |
+        Query the last update proposal w.r.t. protocol parameters, if any.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateProposedProtocolParameters"
+
+    QueryLedgerStateRewardAccountSummaries:
+      title: QueryLedgerStateRewardAccountSummaries
+      name: "since v6.0.0"
+      description: |
+        Query current delegation settings and rewards of chosen reward accounts.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateRewardAccountSummaries"
+
+    QueryLedgerStateRewardsProvenance:
+      title: QueryLedgerStateRewardsProvenance
+      name: "since v6.0.0"
+      description: |
+        Get details about rewards calculation for the ongoing epoch.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateRewardsProvenance"
+
+    QueryLedgerStateStakePools:
+      title: QueryLedgerStateStakePools
+      name: "since v6.0.0"
+      description: |
+        Query the list of all stake pool identifiers currently registered and active.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateStakePools"
+
+    QueryLedgerStateTip:
+      title: QueryLedgerStateTip
+      name: "since v6.0.0"
+      description: |
+        Query the current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateTip"
+
+    QueryLedgerStateUtxo:
+      title: QueryLedgerStateUtxo
+      name: "since v6.0.0"
+      description: |
+        Query the current Utxo set, restricted to some output references or addresses.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateUtxo"
+
+    QueryLedgerStateConstitution:
+      title: QueryLedgerStateConstitution
+      name: "since v6.1.0"
+      description: |
+        Query the current constitution definition (only available from Conway onwards)
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateConstitution"
+
+    QueryNetworkBlockHeight:
+      title: QueryNetworkBlockHeight
+      name: "since v6.0.0"
+      description: |
+        Query the network’s highest block number.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryNetworkBlockHeight"
+
+    QueryNetworkGenesisConfiguration:
+      title: QueryNetworkGenesisConfiguration
+      name: "since v6.0.0"
+      description: |
+        Query the genesis configuration of a given era.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryNetworkGenesisConfiguration"
+
+    QueryNetworkStartTime:
+      title: QueryNetworkStartTime
+      name: "since v6.0.0"
+      description: |
+        Query the network start time.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryNetworkStartTime"
+
+    QueryNetworkTip:
+      title: QueryNetworkTip
+      name: "since v6.0.0"
+      description: |
+        Get the current network tip. Said differently, this is the most recent slot and block header hash that the node it aware of.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryNetworkTip"
+
+    QueryLedgerStateEpochResponse:
+      title: QueryLedgerStateEpochResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateEpochResponse"
+
+    QueryLedgerStateEraStartResponse:
+      title: QueryLedgerStateEraStartResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateEraStartResponse"
+
+    QueryLedgerStateEraSummariesResponse:
+      title: QueryLedgerStateEraSummariesResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateEraSummariesResponse"
+
+    QueryLedgerStateLiveStakeDistributionResponse:
+      title: QueryLedgerStateLiveStakeDistributionResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateLiveStakeDistributionResponse"
+
+    QueryLedgerStateProjectedRewardsResponse:
+      title: QueryLedgerStateProjectedRewardsResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateProjectedRewardsResponse"
+
+    QueryLedgerStateProtocolParametersResponse:
+      title: QueryLedgerStateProtocolParametersResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateProtocolParametersResponse"
+
+    QueryLedgerStateProposedProtocolParametersResponse:
+      title: QueryLedgerStateProposedProtocolParametersResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateProposedProtocolParametersResponse"
+
+    QueryLedgerStateRewardAccountSummariesResponse:
+      title: QueryLedgerStateRewardAccountSummariesResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateRewardAccountSummariesResponse"
+
+    QueryLedgerStateRewardsProvenanceResponse:
+      title: QueryLedgerStateRewardsProvenanceResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateRewardsProvenanceResponse"
+
+    QueryLedgerStateStakePoolsResponse:
+      title: QueryLedgerStateStakePoolsResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateStakePoolsResponse"
+
+    QueryLedgerStateTipResponse:
+      title: QueryLedgerStateTipResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateTipResponse"
+
+    QueryLedgerStateUtxoResponse:
+      title: QueryLedgerStateUtxoResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateUtxoResponse"
+
+    QueryLedgerStateConstitutionResponse:
+      title: QueryLedgerStateConstitutionResponse
+      name: "since v6.1.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryLedgerStateConstitutionResponse"
+
+    QueryNetworkBlockHeightResponse:
+      title: QueryNetworkBlockHeightResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryNetworkBlockHeightResponse"
+
+    QueryNetworkGenesisConfigurationResponse:
+      title: QueryNetworkGenesisConfigurationResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryNetworkGenesisConfigurationResponse"
+
+    QueryNetworkStartTimeResponse:
+      title: QueryNetworkStartTimeResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryNetworkStartTimeResponse"
+
+    QueryNetworkTipResponse:
+      title: QueryNetworkTipResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/QueryNetworkTipResponse"
+
+    ReleaseLedgerState:
+      title: ReleaseLedgerState
+      name: "since v6.0.0"
+      description: |
+        Release a point on chain previously acquired.
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/ReleaseLedgerState"
+
+    ReleaseLedgerStateResponse:
+      title: ReleaseLedgerStateResponse
+      name: "since v6.0.0"
+      payload:
+        $ref: "/api/v6.2/ogmios.json#/properties/ReleaseLedgerStateResponse"
+
+  schemas:
+    Block:
+      $ref: "/api/v6.2/cardano.json#/definitions/Block"
+    Certificate:
+      $ref: "/api/v6.2/cardano.json#/definitions/Certificate"
+    DelegateRepresentative:
+      $ref: "/api/v6.2/cardano.json#/definitions/DelegateRepresentative"
+    GovernanceAction:
+      $ref: "/api/v6.2/cardano.json#/definitions/GovernanceAction"
+    GovernanceVoter:
+      $ref: "/api/v6.2/cardano.json#/definitions/GovernanceAction"
+    Metadatum:
+      $ref: "/api/v6.2/cardano.json#/definitions/Metadatum"
+    ProtocolParameters:
+      $ref: "/api/v6.2/cardano.json#/definitions/ProtocolParameters"
+    Script:
+      $ref: "/api/v6.2/cardano.json#/definitions/Script"
+    ScriptPurpose:
+      $ref: "/api/v6.2/cardano.json#/definitions/ScriptPurpose"
+    Transaction:
+      $ref: "/api/v6.2/cardano.json#/definitions/Transaction"
+    TransactionOutput:
+      $ref: "/api/v6.2/cardano.json#/definitions/TransactionOutput"
