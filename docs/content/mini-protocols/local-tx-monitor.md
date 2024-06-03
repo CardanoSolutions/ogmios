@@ -104,24 +104,27 @@ const client = new WebSocket("ws://localhost:1337");
 // Helper function
 function rpc(method, params) {
     client.send(JSON.stringify({
-        jsonrpc: "2.0",
+        jsonrpc: '2.0',
         method,
         params
     }));
 }
 
 client.on('message', e => {
-  const next = JSON.parse(e).result;
-  if (next.transaction === null) {
-    client.close();
+  const message = JSON.parse(e);
+  if (message?.result?.transaction === null) {
+    rpc('acquireMempool');
   } else {
-    console.log(next.transaction);
-    rpc("nextTransaction");
+    console.log(message.result);
+    // Returns transaction id
+    rpc('nextTransaction');
+    // Returns all transaction information
+    // rpc("nextTransaction", { fields: "all" });
   }
 });
 
 client.once('open', () => {
-    rpc("acquireMempool");
+  rpc('acquireMempool');
 });
 ```
 
