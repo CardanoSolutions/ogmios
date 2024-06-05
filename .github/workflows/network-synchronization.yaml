@@ -16,8 +16,8 @@ jobs:
     strategy:
       matrix:
         network: [ preview ]
-        ogmios_version: [ v6.3.0 ]
-        cardano_node_version: [ 8.10.1-pre ]
+        ogmios_version: [ v6.4.0 ]
+        cardano_node_version: [ 8.11.0-pre ]
 
     runs-on: ubuntu-latest
     steps:

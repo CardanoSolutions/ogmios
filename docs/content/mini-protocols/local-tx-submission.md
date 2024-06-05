@@ -344,6 +344,8 @@ components:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/64"
     3164/ConflictingInputsAndReferences:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/65"
+    3165/UnauthorizedGovernanceAction:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/66"
     3998/UnrecognizedCertificateType:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/62"
 {{% /embed-async-api %}}

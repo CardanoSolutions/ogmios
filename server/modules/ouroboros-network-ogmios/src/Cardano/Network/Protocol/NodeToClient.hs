@@ -136,8 +136,6 @@ import Ouroboros.Consensus.Network.NodeToClient
 import Ouroboros.Consensus.Node.NetworkProtocolVersion
     ( SupportedNetworkProtocolVersion (..)
     )
-import Ouroboros.Consensus.Protocol.Praos.Translate
-    ()
 import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CodecConfig (..)
     )

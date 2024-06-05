@@ -133,7 +133,7 @@ encodeCostModel
     :: Al.CostModel
     -> Json
 encodeCostModel =
-    encodeList encodeInteger . Al.getCostModelParams
+    encodeList (encodeInteger . toInteger) . Al.getCostModelParams
 
 encodeCostModels
     :: Al.CostModels

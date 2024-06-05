@@ -151,6 +151,9 @@ import Codec.Serialise
 import Data.Aeson
     ( (.!=)
     )
+import Data.Reflection
+    ( give
+    )
 import Ogmios.Data.EraTranslation
     ( MostRecentEra
     , MultiEraTxOut (..)
@@ -178,6 +181,7 @@ import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
     )
 import Ouroboros.Consensus.HardFork.History.EraParams
     ( EraParams (..)
+    , EraParamsFormat (..)
     , SafeZone (..)
     )
 import Ouroboros.Consensus.HardFork.History.Qry
@@ -490,8 +494,12 @@ encodeInterpreter
     :: forall crypto eras. (eras ~ CardanoEras crypto)
     => Interpreter eras
     -> Json
-encodeInterpreter (deserialise @(Summary eras) . serialise -> Summary eraSummaries) =
+encodeInterpreter (coerceInterpreter -> Summary eraSummaries) =
     encodeFoldable encodeEraSummary eraSummaries
+
+coerceInterpreter :: forall crypto eras. (eras ~ CardanoEras crypto) => Interpreter eras -> Summary eras
+coerceInterpreter =
+    give EraParamsWithoutGenesisWindow (deserialise . serialise . give EraParamsWithoutGenesisWindow)
 
 encodeMismatchEraInfo
     :: MismatchEraInfo (CardanoEras crypto)

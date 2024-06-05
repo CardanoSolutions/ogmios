@@ -3173,7 +3173,7 @@
             , "additionalProperties": false
             , "required": [ "providedCollateral", "minimumRequiredCollateral" ]
             , "properties":
-              { "providedCollateral": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+              { "providedCollateral": { "$ref": "cardano.json#/definitions/Value<Delta>" }
               , "minimumRequiredCollateral": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
               }
             }
@@ -3298,7 +3298,7 @@
             , "required": [ "declaredTotalCollateral", "computedTotalCollateral" ]
             , "properties":
               { "declaredTotalCollateral": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
-              , "computedTotalCollateral": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+              , "computedTotalCollateral": { "$ref": "cardano.json#/definitions/Value<Delta>" }
               }
             }
           }
@@ -3905,6 +3905,16 @@
                 }
               }
             }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<UnauthorizedGovernanceAction>"
+        , "description": "The ledger is still in a bootstrapping phase. During that phase, only protocol parameters changes, hard fork initiations and info actions are authorized. The transaction contains other types of governance action and was therefore rejected"
+        , "type": "object"
+        , "required": [ "code", "message" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3164 ] }
+          , "message": { "type": "string" }
           }
         }
       , { "title": "SubmitTransactionFailure<UnrecognizedCertificateType>"

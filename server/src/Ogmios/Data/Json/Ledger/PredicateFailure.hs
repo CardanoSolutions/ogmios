@@ -434,7 +434,7 @@ encodePredicateFailure reject = \case
             \'data.minimumRequiredCollateral' indicates the minimum amount expected by the ledger"
             (pure $ encodeObject
                 (  "providedCollateral" .=
-                    encodeCoin providedCollateral
+                    Shelley.encodeDeltaCoin providedCollateral
                 <> "minimumRequiredCollateral" .=
                     encodeCoin minimumRequiredCollateral
                 )
@@ -539,7 +539,7 @@ encodePredicateFailure reject = \case
                 ( "declaredTotalCollateral" .=
                     encodeCoin declaredTotalCollateral
                <> "computedTotalCollateral" .=
-                    encodeCoin computedTotalCollateral
+                    Shelley.encodeDeltaCoin computedTotalCollateral
                 )
             )
 
@@ -933,6 +933,13 @@ encodePredicateFailure reject = \case
                 ( "conflictingReferences" .= encodeFoldable (encodeObject . Shelley.encodeTxIn) inputsPresentInBoth
                 )
             )
+
+    UnauthorizedGovernanceAction ->
+        reject (predicateFailureCode 65)
+            "The ledger is still in a bootstrapping phase. During that phase, only protocol \
+            \parameters changes, hard fork initiations and info actions are authorized. The \
+            \transaction contains other types of governance actions and was, therefore, rejected"
+            Nothing
 
     -- NOTE: This should match the encoding also used for 'EvaluateTransactionResponse' in
     -- Data.Protocol.TxSubmission; hence the code.

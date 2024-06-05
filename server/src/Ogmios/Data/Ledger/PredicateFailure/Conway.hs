@@ -12,19 +12,21 @@ import Data.Maybe.Strict
 import Ogmios.Data.Ledger.PredicateFailure
     ( DiscriminatedEntities (..)
     , MultiEraPredicateFailure (..)
+    , ScriptPurposeIndexInAnyEra (..)
+    , ScriptPurposeItemInAnyEra (..)
+    , TxOutInAnyEra (..)
+    , ValueInAnyEra (..)
     , pickPredicateFailure
     )
 import Ogmios.Data.Ledger.PredicateFailure.Alonzo
     ( encodeCollectErrors
-    )
-import Ogmios.Data.Ledger.PredicateFailure.Babbage
-    ( encodeUtxowFailure
     )
 import Ogmios.Data.Ledger.PredicateFailure.Shelley
     ( encodePoolFailure
     )
 
 import qualified Cardano.Ledger.Api as Ledger
+import qualified Cardano.Ledger.Api.UTxO as Ledger
 import qualified Cardano.Ledger.Conway.Rules as Cn
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -35,7 +37,7 @@ encodeLedgerFailure
     -> MultiEraPredicateFailure crypto
 encodeLedgerFailure = \case
     Cn.ConwayUtxowFailure e ->
-        encodeUtxowFailure AlonzoBasedEraConway encodeUtxosFailure e
+        encodeUtxowFailure e
     Cn.ConwayCertsFailure e ->
         encodeCertsFailure e
     Cn.ConwayGovFailure e ->
@@ -123,6 +125,10 @@ encodeGovFailure = \case
         InvalidHardForkVersionBump { proposedVersion, currentVersion }
     Cn.InvalidPolicyHash providedHash expectedHash ->
         ConstitutionGuardrailsHashMismatch { providedHash, expectedHash }
+    Cn.DisallowedProposalDuringBootstrap _ ->
+        UnauthorizedGovernanceAction
+    Cn.DisallowedVotesDuringBootstrap votes ->
+        UnauthorizedVotes (toList votes)
 
 encodeCertsFailure
     :: Cn.ConwayCertsPredFailure (ConwayEra crypto)
@@ -182,6 +188,82 @@ encodeGovCertFailure = \case
     Cn.ConwayDRepIncorrectRefund providedDeposit (SJust -> expectedDeposit) ->
         DepositMismatch { providedDeposit, expectedDeposit }
 
+encodeUtxoFailure
+    :: forall crypto.
+        ( Crypto crypto
+        )
+    => Cn.ConwayUtxoPredFailure (ConwayEra crypto)
+    -> MultiEraPredicateFailure crypto
+encodeUtxoFailure = \case
+    Cn.UtxosFailure e ->
+        encodeUtxosFailure e
+    Cn.BadInputsUTxO inputs ->
+        UnknownUtxoReference inputs
+    Cn.OutsideValidityIntervalUTxO validityInterval currentSlot ->
+        TransactionOutsideValidityInterval { validityInterval, currentSlot }
+    Cn.OutputTooBigUTxO outs ->
+        -- TODO: In Conway, we now have access to the output 'actualSize' and
+        -- the protocol parameters max value in addition to the output.
+        --
+        -- It would be good to report those value back in the error.
+        let culpritOutputs = (\(_, _, out) -> TxOutInAnyEra (era, out)) <$> outs in
+        ValueSizeAboveLimit culpritOutputs
+    Cn.MaxTxSizeUTxO measuredSize maximumSize ->
+        TransactionTooLarge { measuredSize, maximumSize }
+    Cn.InputSetEmptyUTxO ->
+        EmptyInputSet
+    Cn.FeeTooSmallUTxO minimumRequiredFee suppliedFee ->
+        TransactionFeeTooSmall { minimumRequiredFee, suppliedFee }
+    Cn.ValueNotConservedUTxO consumed produced ->
+        let valueConsumed = ValueInAnyEra (era, consumed) in
+        let valueProduced = ValueInAnyEra (era, produced) in
+        ValueNotConserved { valueConsumed, valueProduced }
+    Cn.WrongNetwork expectedNetwork invalidAddrs ->
+        let invalidEntities = DiscriminatedAddresses invalidAddrs in
+        NetworkMismatch { expectedNetwork, invalidEntities }
+    Cn.WrongNetworkWithdrawal expectedNetwork invalidAccts ->
+        let invalidEntities = DiscriminatedRewardAccounts invalidAccts in
+        NetworkMismatch { expectedNetwork, invalidEntities }
+    Cn.OutputTooSmallUTxO outs ->
+        let insufficientlyFundedOutputs =
+                (\out -> (TxOutInAnyEra (era, out), Nothing)) <$> outs
+         in InsufficientAdaInOutput { insufficientlyFundedOutputs }
+    Cn.OutputBootAddrAttrsTooBig outs ->
+        let culpritOutputs = (\out -> TxOutInAnyEra (era, out)) <$> outs in
+        BootstrapAddressAttributesTooLarge { culpritOutputs }
+    Cn.InsufficientCollateral providedCollateral minimumRequiredCollateral ->
+        InsufficientCollateral { providedCollateral, minimumRequiredCollateral }
+    Cn.ScriptsNotPaidUTxO utxo ->
+        CollateralInputLockedByScript (Map.keys $ Ledger.unUTxO utxo)
+    Cn.WrongNetworkInTxBody expectedNetwork _providedNetwork ->
+        let invalidEntities = DiscriminatedTransaction in
+        NetworkMismatch { expectedNetwork, invalidEntities }
+    Cn.OutsideForecast slot ->
+        SlotOutsideForeseeableFuture { slot }
+    Cn.CollateralContainsNonADA value ->
+        let valueInAnyEra = ValueInAnyEra (era, value) in
+        NonAdaValueAsCollateral valueInAnyEra
+    Cn.NoCollateralInputs{} ->
+        MissingCollateralInputs
+    Cn.TooManyCollateralInputs maximumCollateralInputs countedCollateralInputs ->
+        TooManyCollateralInputs { maximumCollateralInputs, countedCollateralInputs }
+    Cn.ExUnitsTooBigUTxO maximumExUnits providedExUnits ->
+        ExecutionUnitsTooLarge { maximumExUnits, providedExUnits }
+    Cn.IncorrectTotalCollateralField computedTotalCollateral declaredTotalCollateral ->
+        TotalCollateralMismatch { computedTotalCollateral, declaredTotalCollateral }
+    Cn.BabbageNonDisjointRefInputs xs ->
+        ConflictingInputsAndReferences xs
+    Cn.BabbageOutputTooSmallUTxO outs ->
+        let insufficientlyFundedOutputs =
+                (\(out,minAda) ->
+                    ( TxOutInAnyEra (era, out)
+                    , Just minAda
+                    )
+                ) <$> outs
+         in InsufficientAdaInOutput { insufficientlyFundedOutputs }
+  where
+    era = ShelleyBasedEraConway
+
 encodeUtxosFailure
     :: forall crypto.
         ( Crypto crypto
@@ -193,3 +275,51 @@ encodeUtxosFailure = \case
         ValidationTagMismatch { validationTag, mismatchReason }
     Cn.CollectErrors errors ->
         pickPredicateFailure (encodeCollectErrors AlonzoBasedEraConway errors)
+
+encodeUtxowFailure
+    :: forall crypto.
+        ( Crypto crypto
+        )
+    => Cn.ConwayUtxowPredFailure (ConwayEra crypto)
+    -> MultiEraPredicateFailure crypto
+encodeUtxowFailure = \case
+    Cn.UtxoFailure e ->
+        encodeUtxoFailure e
+    Cn.MissingRedeemers redeemers ->
+        let missingRedeemers = ScriptPurposeItemInAnyEra . (era,) . fst <$> redeemers
+         in MissingRedeemers { missingRedeemers }
+    Cn.MissingRequiredDatums missingDatums _providedDatums ->
+        MissingDatums { missingDatums }
+    Cn.NotAllowedSupplementalDatums extraneousDatums _acceptableDatums ->
+        ExtraneousDatums { extraneousDatums }
+    Cn.ExtraRedeemers redeemers ->
+        let extraneousRedeemers = ScriptPurposeIndexInAnyEra . (era,) <$> redeemers
+         in ExtraneousRedeemers { extraneousRedeemers }
+    Cn.PPViewHashesDontMatch providedIntegrityHash computedIntegrityHash ->
+        ScriptIntegrityHashMismatch { providedIntegrityHash, computedIntegrityHash }
+    Cn.UnspendableUTxONoDatumHash orphanScriptInputs ->
+        OrphanScriptInputs { orphanScriptInputs }
+    Cn.InvalidWitnessesUTXOW wits ->
+        InvalidSignatures wits
+    Cn.MissingVKeyWitnessesUTXOW keys ->
+        MissingSignatures keys
+    Cn.MissingScriptWitnessesUTXOW scripts ->
+        MissingScriptWitnesses scripts
+    Cn.ScriptWitnessNotValidatingUTXOW scripts ->
+        FailingScript scripts
+    Cn.MissingTxBodyMetadataHash hash ->
+        MissingMetadataHash hash
+    Cn.MissingTxMetadata hash ->
+        MissingMetadata hash
+    Cn.ConflictingMetadataHash providedAuxiliaryDataHash computedAuxiliaryDataHash ->
+        MetadataHashMismatch{providedAuxiliaryDataHash, computedAuxiliaryDataHash}
+    Cn.InvalidMetadata ->
+        InvalidMetadata
+    Cn.ExtraneousScriptWitnessesUTXOW scripts ->
+        ExtraneousScriptWitnesses scripts
+    Cn.MalformedScriptWitnesses scripts ->
+        MalformedScripts scripts
+    Cn.MalformedReferenceScripts scripts ->
+        MalformedScripts scripts
+  where
+    era = AlonzoBasedEraConway

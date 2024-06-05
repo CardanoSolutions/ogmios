@@ -38,7 +38,6 @@ library:
     - network-mux
     - ouroboros-consensus
     - ouroboros-consensus-diffusion
-    - ouroboros-consensus-protocol
     - ouroboros-consensus-cardano
     - ouroboros-network
     - ouroboros-network-api

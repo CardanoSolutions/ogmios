@@ -68,6 +68,7 @@ library
       TupleSections
       TypeApplications
       TypeFamilies
+      TypeOperators
       TypeSynonymInstances
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-packages
@@ -89,7 +90,6 @@ library
     , ouroboros-consensus
     , ouroboros-consensus-cardano
     , ouroboros-consensus-diffusion
-    , ouroboros-consensus-protocol
     , ouroboros-network
     , ouroboros-network-api
     , ouroboros-network-framework

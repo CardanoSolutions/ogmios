@@ -6,6 +6,27 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
+### [6.4.0] - 2024-05-07
+
+#### Added
+
+- Integrated with `cardano-node==8.11.1-pre`.
+
+- A new transaction submission / evaluation error:
+  - [`UnauthorizedGovernanceAction`](https://ogmios.dev/mini-protocols/local-tx-submission#schema-3165/UnauthorizedGovernanceAction) (`code=3165`).
+
+#### Changed
+
+- The `data.providedCollateral` and `data.computedTotalCollateral` from submission errors with code `3128` and `3135` can now be _negative_ Ada values.
+
+#### Removed
+
+- N/A
+
+---
+---
+
+
 ### [6.3.0] - 2024-05-07
 
 #### Added
@@ -14,7 +35,8 @@ pre: "<b>5. </b>"
 
 - A new ledger state query [`queryLedgerState/constitutionalCommittee`](https://ogmios.dev/api/#operation-publish-/?QueryLedgerStateConstitutionalCommittee).
 
-- A new transaction submission error: [ConflictingInputsAndReferences](https://ogmios.dev/mini-protocols/local-tx-submission#schema-3164/ConflictingInputsAndReferences) (`code=3164`).
+- A new transaction submission error:
+  - [`ConflictingInputsAndReferences`](https://ogmios.dev/mini-protocols/local-tx-submission#schema-3164/ConflictingInputsAndReferences) (`code=3164`).
 
 - The server now reports (log) unexpected failures happening during protocol execution instead of only replying to clients with an error. See [#383](https://github.com/CardanoSolutions/ogmios/pull/383).
 

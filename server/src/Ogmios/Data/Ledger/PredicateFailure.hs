@@ -11,6 +11,7 @@ module Ogmios.Data.Ledger.PredicateFailure
     , Coin
     , Credential (..)
     , DataHash
+    , DeltaCoin
     , DiscriminatedEntities (..)
     , EpochNo (..)
     , ExUnits (..)
@@ -71,6 +72,7 @@ import Cardano.Ledger.BaseTypes
     )
 import Cardano.Ledger.Coin
     ( Coin (..)
+    , DeltaCoin
     )
 import Cardano.Ledger.Conway.Governance
     ( GovActionId (..)
@@ -276,7 +278,7 @@ data MultiEraPredicateFailure crypto
     -- When scripts are present, transaction must include a collateral amount
     -- greater than a certain percentage of the script execution units.
     | InsufficientCollateral
-        { providedCollateral :: Coin
+        { providedCollateral :: DeltaCoin
         , minimumRequiredCollateral :: Coin
         }
 
@@ -316,7 +318,7 @@ data MultiEraPredicateFailure crypto
     -- Declared total collateral must match actual delta between collateral
     -- inputs and collateral return
     | TotalCollateralMismatch
-        { computedTotalCollateral :: Coin
+        { computedTotalCollateral :: DeltaCoin
         , declaredTotalCollateral :: Coin
         }
 
@@ -393,6 +395,10 @@ data MultiEraPredicateFailure crypto
         { providedHash :: StrictMaybe (ScriptHash crypto)
         , expectedHash :: StrictMaybe (ScriptHash crypto)
         }
+
+    -- During the bootstrapping phase, actions can only be parameter change,
+    -- hard-fork initation or info.
+    | UnauthorizedGovernanceAction
 
     ---------------------------------------------------------------------------
     -- Rule → PPUP
@@ -545,6 +551,7 @@ predicateFailurePriority = \case
     InvalidMIRTransfer{} -> 1
     InvalidHardForkVersionBump{} -> 1
     UnrecognizedCertificateType{} -> 1
+    UnauthorizedGovernanceAction{} -> 1
 
     EmptyInputSet{} -> 2
     MintingOrBurningAda{} -> 2
