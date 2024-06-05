@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>EraMismatch | cardano-ogmios</title>
+	<title>SubmitTransactionFailureUnauthorizedGovernanceAction | cardano-ogmios</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -48,13 +48,13 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-module">
-						<a href="_cardano_ogmios_schema.EraMismatch.html" class="tsd-kind-icon">Era<wbr>Mismatch</a>
+						<a href="_cardano_ogmios_schema.SubmitTransactionFailureUnauthorizedGovernanceAction.html" class="tsd-kind-icon">Submit<wbr>Transaction<wbr>Failure<wbr>Unauthorized<wbr>Governance<wbr>Action</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.EraMismatch.html#ledgerEra" class="tsd-kind-icon">ledger<wbr>Era</a>
+								<a href="_cardano_ogmios_schema.SubmitTransactionFailureUnauthorizedGovernanceAction.html#code" class="tsd-kind-icon">code</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.EraMismatch.html#queryEra" class="tsd-kind-icon">query<wbr>Era</a>
+								<a href="_cardano_ogmios_schema.SubmitTransactionFailureUnauthorizedGovernanceAction.html#message" class="tsd-kind-icon">message</a>
 							</li>
 						</ul>
 					</li>
@@ -74,16 +74,23 @@
 							<a href="../modules/_cardano_ogmios_schema.html">@cardano-ogmios/schema</a>
 						</li>
 						<li>
-							<a href="_cardano_ogmios_schema.EraMismatch.html">EraMismatch</a>
+							<a href="_cardano_ogmios_schema.SubmitTransactionFailureUnauthorizedGovernanceAction.html">SubmitTransactionFailureUnauthorizedGovernanceAction</a>
 						</li>
 					</ul>
 				</div>
 			</div>
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>The ledger is still in a bootstrapping phase. During that phase, only protocol parameters changes, hard fork initiations and info actions are authorized. The transaction contains other types of governance action and was therefore rejected</p>
+					</div>
+				</div>
+			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">EraMismatch</span>
+						<span class="target">SubmitTransactionFailureUnauthorizedGovernanceAction</span>
 					</li>
 				</ul>
 			</section>
@@ -94,8 +101,8 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.EraMismatch.html#ledgerEra" class="tsd-kind-icon">ledger<wbr>Era</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.EraMismatch.html#queryEra" class="tsd-kind-icon">query<wbr>Era</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SubmitTransactionFailureUnauthorizedGovernanceAction.html#code" class="tsd-kind-icon">code</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.SubmitTransactionFailureUnauthorizedGovernanceAction.html#message" class="tsd-kind-icon">message</a></li>
 							</ul>
 						</section>
 					</div>
@@ -104,23 +111,23 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="ledgerEra" class="tsd-anchor"></a>
-					<h3>ledger<wbr>Era</h3>
-					<div class="tsd-signature tsd-kind-icon">ledger<wbr>Era<span class="tsd-signature-symbol">:</span> <a href="../modules/_cardano_ogmios_schema.html#Era" class="tsd-signature-type">Era</a></div>
+					<a name="code" class="tsd-anchor"></a>
+					<h3>code</h3>
+					<div class="tsd-signature tsd-kind-icon">code<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"3164"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6fd2a41/clients/TypeScript/packages/schema/src/index.ts#L1189">packages/schema/src/index.ts:1189</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6fd2a41/clients/TypeScript/packages/schema/src/index.ts#L1920">packages/schema/src/index.ts:1920</a>
 							</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="queryEra" class="tsd-anchor"></a>
-					<h3>query<wbr>Era</h3>
-					<div class="tsd-signature tsd-kind-icon">query<wbr>Era<span class="tsd-signature-symbol">:</span> <a href="../modules/_cardano_ogmios_schema.html#Era" class="tsd-signature-type">Era</a></div>
+					<a name="message" class="tsd-anchor"></a>
+					<h3>message</h3>
+					<div class="tsd-signature tsd-kind-icon">message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6fd2a41/clients/TypeScript/packages/schema/src/index.ts#L1188">packages/schema/src/index.ts:1188</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6fd2a41/clients/TypeScript/packages/schema/src/index.ts#L1921">packages/schema/src/index.ts:1921</a>
 							</li>
 						</ul>
 					</aside>
