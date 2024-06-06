@@ -1,6 +1,6 @@
 {
   "name": "@cardano-ogmios/client",
-  "version": "6.3.0",
+  "version": "6.4.0",
   "description": "TypeScript client library for Cardano Ogmios",
   "engines": {
     "node": ">=14"
@@ -47,7 +47,7 @@
     "typescript": "^4.2.3"
   },
   "dependencies": {
-    "@cardano-ogmios/schema": "6.3.0",
+    "@cardano-ogmios/schema": "6.4.0",
     "@cardanosolutions/json-bigint": "^1.0.1",
     "@types/json-bigint": "^1.0.1",
     "bech32": "^2.0.0",

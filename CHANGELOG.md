@@ -10,7 +10,7 @@ pre: "<b>5. </b>"
 
 #### Added
 
-- Integrated with `cardano-node==8.11.1-pre`.
+- Integrated with `cardano-node==8.11.0-pre`.
 
 - A new transaction submission / evaluation error:
   - [`UnauthorizedGovernanceAction`](https://ogmios.dev/mini-protocols/local-tx-submission#schema-3165/UnauthorizedGovernanceAction) (`code=3165`) raised when trying to submit a governance action other than protocol parameters change, hard fork initiation or info **during the bootstrapping** phase of the Conway era.
