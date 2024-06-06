@@ -138,6 +138,13 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
     await :: m (StateQueryMessage block)
     await = atomically (readTQueue queue)
 
+    yieldResult
+        :: Rpc.ToResponse (QueryLedgerStateResponse block)
+        -> QueryLedgerStateResponse block
+        -> m ()
+    yieldResult toResponse =
+        yield . encodeQueryLedgerStateResponse . toResponse
+
     clientStIdle
         :: m (LSQ.ClientStIdle block point query m ())
     clientStIdle = await >>= \case
@@ -212,23 +219,22 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
                         case qry of
                             GetByronGenesis -> do
                                 result <- encodeResult <$> getByronGenesis
-                                yield $ encodeQueryLedgerStateResponse $ toResponse $
-                                    either QueryEraMismatch QueryResponse result
+                                yieldResult toResponse (QueryResponse result)
                                 pure $ LSQ.SendMsgRelease clientStIdle
                             GetShelleyGenesis -> do
                                 result <- encodeResult <$> getShelleyGenesis
-                                yield $ encodeQueryLedgerStateResponse $ toResponse $
-                                    either QueryEraMismatch QueryResponse result
+                                yieldResult toResponse (QueryResponse result)
                                 pure $ LSQ.SendMsgRelease clientStIdle
                             GetAlonzoGenesis -> do
                                 result <- encodeResult <$> getAlonzoGenesis
-                                yield $ encodeQueryLedgerStateResponse $ toResponse $
-                                    either QueryEraMismatch QueryResponse result
+                                yieldResult toResponse (QueryResponse result)
                                 pure $ LSQ.SendMsgRelease clientStIdle
                             GetConwayGenesis -> do
-                                result <- encodeResult <$> getConwayGenesis
-                                yield $ encodeQueryLedgerStateResponse $ toResponse $
-                                    either QueryEraMismatch QueryResponse result
+                                result <- getConwayGenesis
+                                yieldResult toResponse $ either
+                                    QueryInvalidGenesisConfiguration
+                                    (QueryResponse . encodeResult)
+                                    result
                                 pure $ LSQ.SendMsgRelease clientStIdle
 
             , LSQ.recvMsgFailure = \failure -> do
@@ -288,23 +294,22 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
                     case qry of
                         GetByronGenesis -> do
                             result <- encodeResult <$> getByronGenesis
-                            yield $ encodeQueryLedgerStateResponse $ toResponse $
-                                either QueryEraMismatch QueryResponse result
+                            yieldResult toResponse (QueryResponse result)
                             pure $ LSQ.SendMsgRelease clientStIdle
                         GetShelleyGenesis -> do
                             result <- encodeResult <$> getShelleyGenesis
-                            yield $ encodeQueryLedgerStateResponse $ toResponse $
-                                either QueryEraMismatch QueryResponse result
+                            yieldResult toResponse (QueryResponse result)
                             pure $ LSQ.SendMsgRelease clientStIdle
                         GetAlonzoGenesis -> do
                             result <- encodeResult <$> getAlonzoGenesis
-                            yield $ encodeQueryLedgerStateResponse $ toResponse $
-                                either QueryEraMismatch QueryResponse result
+                            yieldResult toResponse (QueryResponse result)
                             pure $ LSQ.SendMsgRelease clientStIdle
                         GetConwayGenesis -> do
-                            result <- encodeResult <$> getConwayGenesis
-                            yield $ encodeQueryLedgerStateResponse $ toResponse $
-                                either QueryEraMismatch QueryResponse result
+                            result <- getConwayGenesis
+                            yieldResult toResponse $ either
+                                QueryInvalidGenesisConfiguration
+                                (QueryResponse . encodeResult)
+                                result
                             pure $ LSQ.SendMsgRelease clientStIdle
 
 

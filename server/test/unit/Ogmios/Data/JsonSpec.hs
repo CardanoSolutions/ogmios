@@ -1101,13 +1101,13 @@ validateLedgerStateQuery n subMethod params parser = do
                             SomeShelleyEra ShelleyBasedEraConway -> do
                                 generateTestVectors (n, toString propName)
                                     (genResult Proxy)
-                                    (encodeQueryResponse encodeResult)
+                                    (encodeQueryResponse (Right . encodeResult))
                             _someOtherEra ->
                                 pure ()
                         runQuickCheck $ withMaxSuccess (n `div` nEras) $ forAllBlind
                             (genResult Proxy)
                             (prop_validateToJSON
-                                (encodingToValue . encodeQueryResponse encodeResult)
+                                (encodingToValue . encodeQueryResponse (Right . encodeResult))
                                 responseRefs
                             )
 
@@ -1185,11 +1185,11 @@ validateNetworkQuery n subMethod params parser = do
                 Just (SomeAdHocQuery _ encodeResult genResult) -> do
                     generateTestVectors (n, toString propName)
                         (reasonablySized $ genResult Proxy)
-                        (encodeQueryResponse encodeResult)
+                        (encodeQueryResponse (Right . encodeResult))
                     runQuickCheck $ withMaxSuccess n $ forAllBlind
                         (reasonablySized $ genResult Proxy)
                         (prop_validateToJSON
-                            (encodingToValue . encodeQueryResponse encodeResult)
+                            (encodingToValue . encodeQueryResponse (Right . encodeResult))
                             responseRefs
                         )
                 Nothing -> do

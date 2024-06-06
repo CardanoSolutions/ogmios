@@ -40,6 +40,9 @@ import Ogmios.Prelude
 import Cardano.Chain.Slotting
     ( EpochSlots (..)
     )
+import Control.Arrow
+    ( left
+    )
 import Data.Aeson
     ( ToJSON
     , genericToEncoding
@@ -76,6 +79,7 @@ import System.FilePath
 
 import qualified Cardano.Chain.Genesis as Byron
 import qualified Data.Aeson as Json
+import qualified Data.Text as T
 import qualified Data.Yaml as Yaml
 
 data Configuration = Configuration
@@ -135,14 +139,38 @@ readAlonzoGenesis configFile = do
         Just (toString -> genesisFile) -> do
             Yaml.decodeFileThrow (replaceFileName configFile genesisFile)
 
-readConwayGenesis :: MonadIO m => FilePath -> m (GenesisConfig ConwayEra)
+readConwayGenesis :: MonadIO m => FilePath -> m (Either Text (GenesisConfig ConwayEra))
 readConwayGenesis configFile = do
-    nodeConfig <- Yaml.decodeFileThrow @_ @Json.Value configFile
-    case nodeConfig ^? key "ConwayGenesisFile" . _String of
-        Nothing ->
-            liftIO $ fail "Missing 'ConwayGenesisFile' from node's configuration."
-        Just (toString -> genesisFile) -> do
-            Yaml.decodeFileThrow (replaceFileName configFile genesisFile)
+    parseConfigResult <- liftIO $ Yaml.decodeFileEither @Json.Value configFile
+    case parseConfigResult of
+        Left e -> do
+            pure $ Left $
+                "Invalid (non-JSON or non-YAML) or missing node's configuration file: " <> formatParseException e
+        Right nodeConfig ->
+            case nodeConfig ^? key "ConwayGenesisFile" . _String of
+                Nothing ->
+                    pure $ Left "Missing 'ConwayGenesisFile' from node's configuration."
+                Just (toString -> genesisFile) -> do
+                    parseGenesisResult <- liftIO $ Yaml.decodeFileEither (replaceFileName configFile genesisFile)
+                    pure $ left
+                        (\e ->
+                            "Could not decode the genesis configuration probably \
+                            \because of a mismatch between the configuration and \
+                            \the current version of the underlying ledger library \
+                            \in-use in Ogmios: " <> formatParseException e
+                        )
+                        parseGenesisResult
+  where
+    formatParseException :: Yaml.ParseException -> Text
+    formatParseException
+        = T.dropWhileEnd (== '.')
+        . T.replace "Error in $[" "invalid item ["
+        . T.replace "Error in $: " ""
+        . T.replace "Error in $: key" "field"
+        . T.replace "\n" " "
+        . T.replace "Aeson exception:\n" ""
+        . toText
+        . Yaml.prettyPrintParseException
 
 deriving newtype instance ToJSON EpochSlots
 deriving newtype instance ToJSON NetworkMagic

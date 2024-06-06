@@ -6,18 +6,23 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
-### [6.4.0] - 2024-05-07
+### [6.4.0] - 2024-06-06
 
 #### Added
 
 - Integrated with `cardano-node==8.11.1-pre`.
 
 - A new transaction submission / evaluation error:
-  - [`UnauthorizedGovernanceAction`](https://ogmios.dev/mini-protocols/local-tx-submission#schema-3165/UnauthorizedGovernanceAction) (`code=3165`).
+  - [`UnauthorizedGovernanceAction`](https://ogmios.dev/mini-protocols/local-tx-submission#schema-3165/UnauthorizedGovernanceAction) (`code=3165`) raised when trying to submit a governance action other than protocol parameters change, hard fork initiation or info **during the bootstrapping** phase of the Conway era.
+
+- A new queryNetwork error:
+  - [`InvalidGenesis`](https://ogmios.dev/mini-protocols/local-state-query#schema-2004/InvalidGenesis) (`code=2004`) raised when trying to query a genesis configuration which is invalid or missing (for instance, when there's a mismatch between the Conway configuration and the underlying ledger library parsing it).
 
 #### Changed
 
 - The `data.providedCollateral` and `data.computedTotalCollateral` from submission errors with code `3128` and `3135` can now be _negative_ Ada values.
+
+- ![TypeScript][] Fixed missing `conway` option in the state query client for the `genesisConfiguration` query.
 
 #### Removed
 

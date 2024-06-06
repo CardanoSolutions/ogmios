@@ -319,7 +319,7 @@ data SomeQuery (f :: Type -> Type) block where
         :: forall f block result. ()
         =>  AdHocQuery result
             -- ^ Query definition, bound to a result
-        -> (result -> Either Json Json)
+        -> (result -> Json)
             -- ^ Serialize results to JSON encoding.
         -> (Proxy result -> f result)
             -- ^ Yield results in some applicative 'f' from some type definition.
@@ -1207,22 +1207,22 @@ parseQueryNetworkGenesisConfiguration (genByron, genShelley, genAlonzo, genConwa
             "byron" ->
                 pure $ const $ Just $ SomeAdHocQuery
                     GetByronGenesis
-                    (Right . Byron.encodeGenesisData)
+                    (Byron.encodeGenesisData)
                     (const genByron)
             "shelley" -> do
                 pure $ const $ Just $ SomeAdHocQuery
                     GetShelleyGenesis
-                    (Right . Shelley.encodeGenesis)
+                    (Shelley.encodeGenesis)
                     (const genShelley)
             "alonzo" -> do
                 pure $ const $ Just $ SomeAdHocQuery
                     GetAlonzoGenesis
-                    (Right . Alonzo.encodeGenesis)
+                    (Alonzo.encodeGenesis)
                     (const genAlonzo)
             "conway" -> do
                 pure $ const $ Just $ SomeAdHocQuery
                     GetConwayGenesis
-                    (Right . Conway.encodeGenesis)
+                    (Conway.encodeGenesis)
                     (const genConway)
             (_unknownEra :: Text) -> do
                 fail "Invalid era parameter. Only 'byron', 'shelley', \

@@ -2,13 +2,14 @@ import delay from 'delay'
 import { dummyInteractionContext } from './helpers'
 import { InteractionContext, JSONRPCError, LedgerStateQuery } from '../src'
 import {
-  RewardAccountSummary,
-  DigestBlake2B256,
   DigestBlake2B224,
+  DigestBlake2B256,
   GenesisAlonzo,
   GenesisByron,
   GenesisShelley,
   Point,
+  QueryNetworkInvalidGenesis,
+  RewardAccountSummary,
   Slot
 } from '@cardano-ogmios/schema'
 
@@ -81,6 +82,14 @@ describe('Local state queries', () => {
       }
       await expect(createWithOldPoint).rejects
       expect(context.socket.readyState).toBe(context.socket.OPEN)
+    })
+
+    it('rejects if the query is for another era', async () => {
+      try {
+        await client.genesisConfiguration('conway')
+      } catch (e) {
+        expect((e as QueryNetworkInvalidGenesis['error']).code).toBe(2004)
+      }
     })
 
     it('exposes the queries, uses a single context, and should be shutdowned when done', async () => {

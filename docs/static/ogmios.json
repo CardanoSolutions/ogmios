@@ -745,7 +745,7 @@
       }
     }
 
-  , "QueryLedgerStateAcquiredExpire" :
+  , "QueryLedgerStateAcquiredExpired" :
     { "title": "QueryLedgerStateAcquiredExpired"
     , "type": "object"
     , "required": [ "jsonrpc", "method", "error" ]
@@ -837,7 +837,7 @@
         }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
       ]
     }
 
@@ -905,7 +905,7 @@
         }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
       ]
     }
 
@@ -956,7 +956,7 @@
         }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
       ]
     }
 
@@ -1006,7 +1006,7 @@
         }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
       ]
     }
 
@@ -1057,7 +1057,7 @@
         }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
       ]
     }
 
@@ -1107,7 +1107,7 @@
         }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
       ]
     }
 
@@ -1175,7 +1175,7 @@
         }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
       ]
     }
 
@@ -1228,7 +1228,7 @@
         }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
       ]
     }
 
@@ -1278,7 +1278,7 @@
         }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
       ]
     }
 
@@ -1345,7 +1345,7 @@
         }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
       ]
     }
 
@@ -1395,7 +1395,7 @@
         }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
       ]
     }
 
@@ -1465,7 +1465,7 @@
         }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
       ]
     }
 
@@ -1515,7 +1515,7 @@
         }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
       ]
     }
 
@@ -1595,7 +1595,7 @@
         }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
       , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpire" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
       ]
     }
 
@@ -1693,11 +1693,46 @@
         }
       , "result":
         { "oneOf":
-          [ { "$ref": "cardano.json#/definitions/Genesis<Byron>" }
-          , { "$ref": "cardano.json#/definitions/Genesis<Shelley>" }
-          , { "$ref": "cardano.json#/definitions/Genesis<Alonzo>"}
-          , { "$ref": "cardano.json#/definitions/Genesis<Conway>"}
+          [ { "$ref": "ogmios.json#/properties/QueryNetworkInvalidGenesis" }
+          , { "oneOf":
+              [ { "$ref": "cardano.json#/definitions/Genesis<Byron>" }
+              , { "$ref": "cardano.json#/definitions/Genesis<Shelley>" }
+              , { "$ref": "cardano.json#/definitions/Genesis<Alonzo>"}
+              , { "$ref": "cardano.json#/definitions/Genesis<Conway>"}
+              ]
+            }
           ]
+        }
+      , "id":
+        { "description": "Any value that was set by a client request in the 'id' field."
+        }
+      }
+    }
+
+  , "QueryNetworkInvalidGenesis":
+    { "title": "QueryNetworkInvalidGenesis"
+    , "type": "object"
+    , "required": [ "jsonrpc", "method", "result" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryNetwork/genesisConfiguration" ]
+        }
+      , "error":
+        { "description": "Something went wrong (e.g. misconfiguration) in reading genesis file for the latest era."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 2004 ] }
+          , "message": { "type": "string" }
+          , "data": { "type": "string", "description": "A reason for the failure." }
+          }
         }
       , "id":
         { "description": "Any value that was set by a client request in the 'id' field."

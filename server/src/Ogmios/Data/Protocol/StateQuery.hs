@@ -125,7 +125,7 @@ data GetGenesisConfig (m :: Type -> Type) = GetGenesisConfig
     { getByronGenesis :: m (GenesisConfig ByronEra)
     , getShelleyGenesis :: m (GenesisConfig ShelleyEra)
     , getAlonzoGenesis :: m (GenesisConfig AlonzoEra)
-    , getConwayGenesis :: m (GenesisConfig ConwayEra)
+    , getConwayGenesis :: m (Either Text (GenesisConfig ConwayEra))
     }
 
 --
@@ -264,6 +264,7 @@ data QueryLedgerStateResponse block
     | QueryEraMismatch { unEraMismatch :: Json }
     | QueryUnavailableInCurrentEra
     | QueryAcquireFailure { failure :: AcquireFailure }
+    | QueryInvalidGenesisConfiguration { diagnostic :: Text }
     deriving (Generic)
 
 instance Show (QueryLedgerStateResponse block) where
@@ -276,6 +277,8 @@ instance Show (QueryLedgerStateResponse block) where
             "QueryUnavailableInCurrentEra"
         QueryAcquireFailure failure ->
             "QueryAcquireFailure (" <> show failure <> ")"
+        QueryInvalidGenesisConfiguration { diagnostic } ->
+            "QueryInvalidGenesisConfiguration (" <> toString diagnostic <> ")"
       where
         str = decodeUtf8 . jsonToByteString
 
@@ -301,3 +304,7 @@ _encodeQueryLedgerStateResponse opts encodeAcquireExpired =
             reject (Rpc.FaultCustom 2003)
                 "Cannot perform query from previously acquired point."
                 (Just $ encodeAcquireExpired failure)
+        QueryInvalidGenesisConfiguration{diagnostic} ->
+            reject (Rpc.FaultCustom 2004)
+                "Failed to retrieve genesis configuration."
+                (Just $ encodeText diagnostic)

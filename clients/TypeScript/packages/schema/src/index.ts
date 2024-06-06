@@ -213,6 +213,7 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureInvalidHardForkVersionBump
   | SubmitTransactionFailureConstitutionGuardrailsHashMismatch
   | SubmitTransactionFailureConflictingInputsAndReferences
+  | SubmitTransactionFailureUnauthorizedGovernanceAction
   | SubmitTransactionFailureUnrecognizedCertificateType;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
 export type ScriptPurpose =
@@ -303,7 +304,7 @@ export interface Ogmios {
   ReleaseLedgerStateResponse: ReleaseLedgerStateResponse;
   QueryLedgerStateEraMismatch?: QueryLedgerStateEraMismatch;
   QueryLedgerStateUnavailableInCurrentEra?: QueryLedgerStateUnavailableInCurrentEra;
-  QueryLedgerStateAcquiredExpire?: QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateAcquiredExpired?: QueryLedgerStateAcquiredExpired;
   QueryLedgerStateConstitution: QueryLedgerStateConstitution;
   QueryLedgerStateConstitutionResponse:
     | QueryLedgerStateConstitutionResponse
@@ -392,6 +393,7 @@ export interface Ogmios {
   QueryNetworkBlockHeightResponse: QueryNetworkBlockHeightResponse;
   QueryNetworkGenesisConfiguration: QueryNetworkGenesisConfiguration;
   QueryNetworkGenesisConfigurationResponse: QueryNetworkGenesisConfigurationResponse;
+  QueryNetworkInvalidGenesis?: QueryNetworkInvalidGenesis;
   QueryNetworkStartTime: QueryNetworkStartTime;
   QueryNetworkStartTimeResponse: QueryNetworkStartTimeResponse;
   QueryNetworkTip: QueryNetworkTip;
@@ -1527,7 +1529,7 @@ export interface SubmitTransactionFailureInsufficientCollateral {
   code: 3128;
   message: string;
   data: {
-    providedCollateral: ValueAdaOnly;
+    providedCollateral: ValueDelta;
     minimumRequiredCollateral: ValueAdaOnly;
   };
 }
@@ -1598,7 +1600,7 @@ export interface SubmitTransactionFailureTotalCollateralMismatch {
   message: string;
   data: {
     declaredTotalCollateral: ValueAdaOnly;
-    computedTotalCollateral: ValueAdaOnly;
+    computedTotalCollateral: ValueDelta;
   };
 }
 /**
@@ -1911,6 +1913,13 @@ export interface SubmitTransactionFailureConflictingInputsAndReferences {
   data: {
     conflictingReferences: TransactionOutputReference[];
   };
+}
+/**
+ * The ledger is still in a bootstrapping phase. During that phase, only protocol parameters changes, hard fork initiations and info actions are authorized. The transaction contains other types of governance action and was therefore rejected
+ */
+export interface SubmitTransactionFailureUnauthorizedGovernanceAction {
+  code: 3164;
+  message: string;
 }
 /**
  * Unrecognized certificate type. This error is a placeholder due to how internal data-types are modeled. If you ever run into this, please report the issue as you've likely discoverd a critical bug...
@@ -2645,7 +2654,23 @@ export interface QueryNetworkGenesisConfiguration {
 export interface QueryNetworkGenesisConfigurationResponse {
   jsonrpc: "2.0";
   method: "queryNetwork/genesisConfiguration";
-  result: GenesisByron | GenesisShelley | GenesisAlonzo | GenesisConway;
+  result: QueryNetworkInvalidGenesis | (GenesisByron | GenesisShelley | GenesisAlonzo | GenesisConway);
+  id?: unknown;
+}
+export interface QueryNetworkInvalidGenesis {
+  jsonrpc: "2.0";
+  method: "queryNetwork/genesisConfiguration";
+  /**
+   * Something went wrong (e.g. misconfiguration) in reading genesis file for the latest era.
+   */
+  error?: {
+    code: 2004;
+    message: string;
+    /**
+     * A reason for the failure.
+     */
+    data: string;
+  };
   id?: unknown;
 }
 /**

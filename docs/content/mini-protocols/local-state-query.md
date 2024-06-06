@@ -678,7 +678,9 @@ components:
     2002/UnavailableInCurrentEra:
       $ref: "/ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra/properties/error"
     2003/AcquireExpired:
-      $ref: "/ogmios.json#/properties/QueryLedgerStateAcquiredExpire/properties/error"
+      $ref: "/ogmios.json#/properties/QueryLedgerStateAcquiredExpired/properties/error"
+    2004/InvalidGenesis:
+      $ref: "/ogmios.json#/properties/QueryNetworkInvalidGenesis/properties/error"
 {{% /embed-async-api %}}
 
 ## API Reference

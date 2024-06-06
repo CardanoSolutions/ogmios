@@ -25,6 +25,7 @@ import {
   EraWithGenesis,
   GenesisAlonzo,
   GenesisByron,
+  GenesisConway,
   GenesisShelley,
   Origin,
   Point,
@@ -51,6 +52,7 @@ export interface LedgerStateQueryClient {
   genesisConfiguration(era: 'byron'): Promise<GenesisByron>
   genesisConfiguration(era: 'shelley'): Promise<GenesisShelley>
   genesisConfiguration(era: 'alonzo'): Promise<GenesisAlonzo>
+  genesisConfiguration(era: 'conway'): Promise<GenesisConway>
   ledgerTip(): ReturnType<typeof ledgerTip>
   liveStakeDistribution(): ReturnType<typeof liveStakeDistribution>
   networkBlockHeight(): ReturnType<typeof networkBlockHeight>

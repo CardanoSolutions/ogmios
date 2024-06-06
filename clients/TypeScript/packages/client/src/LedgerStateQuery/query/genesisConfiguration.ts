@@ -52,26 +52,26 @@ export function genesisConfiguration (
  * @internal
  */
 export function isQueryNetworkGenesisConfigurationByron (response: any): response is GenesisByron {
-  return (response as Response)?.result?.era === 'byron'
+  return ((response as Response)?.result as GenesisByron)?.era === 'byron'
 }
 
 /**
  * @internal
  */
 export function isQueryNetworkGenesisConfigurationShelley (response: any): response is GenesisShelley {
-  return (response as Response)?.result?.era === 'shelley'
+  return ((response as Response)?.result as GenesisShelley)?.era === 'shelley'
 }
 
 /**
  * @internal
  */
 export function isQueryNetworkGenesisConfigurationAlonzo (response: any): response is GenesisAlonzo {
-  return (response as Response)?.result?.era === 'alonzo'
+  return ((response as Response)?.result as GenesisAlonzo)?.era === 'alonzo'
 }
 
 /**
  * @internal
  */
 export function isQueryNetworkGenesisConfigurationConway (response: any): response is GenesisConway {
-  return (response as Response)?.result?.era === 'conway'
+  return ((response as Response)?.result as GenesisConway)?.era === 'conway'
 }
