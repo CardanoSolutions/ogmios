@@ -137,6 +137,10 @@ import Ouroboros.Consensus.HardFork.History
 import Ouroboros.Consensus.Ledger.Query
     ( Query (..)
     )
+import Ouroboros.Consensus.Ledger.SupportsMempool
+    ( ConvertRawTxId (..)
+    , HasTxId (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger
     ( GenTx (..)
     )
@@ -272,6 +276,7 @@ newExecutionUnitsEvaluator
         , crypto ~ StandardCrypto
         , CanEvaluateScriptsInEra (BabbageEra crypto)
         , CanEvaluateScriptsInEra (ConwayEra crypto)
+        , ConvertRawTxId (GenTx (CardanoBlock crypto))
         )
     => Logger TraceTxSubmission
     -> m ( ExecutionUnitsEvaluator m block
@@ -331,7 +336,9 @@ newExecutionUnitsEvaluator tr = do
                     readTVar mempoolSnapshotOnLastSubmit >>= \case
                         Just snapshot' | snapshot == Just snapshot' -> retry
                         _ -> readTMVar mempool
-                txs <$ logWith tr TxSubmissionLocalMempoolCurrent { numberOfTransactions = length txs }
+                txs <$ logWith tr TxSubmissionLocalMempoolCurrent
+                    { transactions = encodeBase16 . fromShort . toRawTxIdHash . txId <$> txs
+                    }
 
             , clearMempoolM = do
                 snapshot <- atomically $ do
@@ -367,10 +374,14 @@ newExecutionUnitsEvaluator tr = do
             pure $ LMM.SendMsgNextTx $ \case
                 Nothing -> do
                     end <- getMonotonicTimeNSec
+                    let revTxs = reverse txs
                     atomically $ do
                         writeTVar mempoolSnapshot (Just (slot, start))
-                        putTMVar mempool $ reverse txs
-                    logWith tr $ TxSubmissionLocalMempoolSynchronized { took = Microseconds $ (end - start) `div` 1000 }
+                        putTMVar mempool revTxs
+                    logWith tr $ TxSubmissionLocalMempoolSynchronized
+                        { took = Microseconds $ (end - start) `div` 1000
+                        , transactions = encodeBase16 . fromShort . toRawTxIdHash . txId <$> revTxs
+                        }
                     pure $ LMM.SendMsgAwaitAcquire clientStAwaitAcquire
                 Just tx -> do
                     clientStDrain slot start (tx : txs)
@@ -663,7 +674,7 @@ data TraceTxSubmission  where
     TxSubmissionLocalMempoolTryRead
         :: TraceTxSubmission
     TxSubmissionLocalMempoolCurrent
-        :: { numberOfTransactions :: Int }
+        :: { transactions :: [Text] }
         -> TraceTxSubmission
     TxSubmissionLocalMempoolCleared
         :: { atSlot :: Word64, ns :: Word64 }
@@ -672,7 +683,7 @@ data TraceTxSubmission  where
         :: { atSlot :: Word64, ns :: Word64 }
         -> TraceTxSubmission
     TxSubmissionLocalMempoolSynchronized
-        :: { took :: Microseconds }
+        :: { took :: Microseconds, transactions :: [Text] }
         -> TraceTxSubmission
     TxSubmissionEvaluateUtxoProvidedByUser
         :: { utxoRefs :: [Text] }

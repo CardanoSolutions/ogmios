@@ -4,6 +4,7 @@
 
 {-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_HADDOCK prune #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- |
 -- Copyright: © 2020 KtorZ <matthias.benkort@gmail.com>
@@ -120,12 +121,14 @@ import Ouroboros.Consensus.Cardano.Block
     ( CardanoEras
     , CodecConfig (..)
     , HardForkApplyTxErr
+    , TxId (..)
     )
 import Ouroboros.Consensus.Ledger.Query
     ( Query (..)
     )
 import Ouroboros.Consensus.Ledger.SupportsMempool
-    ( GenTx
+    ( ConvertRawTxId (..)
+    , GenTx
     , GenTxId
     )
 import Ouroboros.Consensus.Network.NodeToClient
@@ -238,6 +241,16 @@ type Client m = OuroborosApplication
     ()
         -- Clients return type
     Void
+
+instance ConvertRawTxId (GenTx (CardanoBlock StandardCrypto)) where
+    toRawTxIdHash = \case
+        GenTxIdByron x -> toRawTxIdHash x
+        GenTxIdShelley x -> toRawTxIdHash x
+        GenTxIdAllegra x -> toRawTxIdHash x
+        GenTxIdMary x -> toRawTxIdHash x
+        GenTxIdAlonzo x -> toRawTxIdHash x
+        GenTxIdBabbage x -> toRawTxIdHash x
+        GenTxIdConway x -> toRawTxIdHash x
 
 -- | A handy type to pass clients around
 data Clients m block = Clients
