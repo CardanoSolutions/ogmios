@@ -6,6 +6,12 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
+### [6.5.0] - UNRELEASED
+
+#### Changed
+
+- Roll back down to GHC-9.4.8 in an attempt to fix [#399](https://github.com/CardanoSolutions/ogmios/issues/399) possibly caused by a bug in GHC runtime system (possibly patched on 9.4.x).
+
 ### [6.4.0] - 2024-06-06
 
 #### Added
