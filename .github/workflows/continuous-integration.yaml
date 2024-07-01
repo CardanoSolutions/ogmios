@@ -25,7 +25,7 @@ jobs:
         os: [ linux ]
         arch: [ x86_64, aarch64 ]
         compiler: [ ghc94 ]
-        devx-version: [ 82eb2a0633de606ac9347898967deeb305b477d0 ]
+        devx-version: [ 54ea65610338600bd4c4afd04b0b6ff612988fd4 ]
 
     runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-16vcpu-ubuntu-2204-arm' || 'ubuntu-22.04' }}
 
