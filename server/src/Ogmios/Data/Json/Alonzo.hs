@@ -6,6 +6,9 @@ module Ogmios.Data.Json.Alonzo where
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Ledger.Allegra.Scripts
+    ( Timelock
+    )
 import Cardano.Ledger.Api
     ( AsIx
     , PlutusPurpose
@@ -32,11 +35,13 @@ import qualified Cardano.Ledger.SafeHash as Ledger
 
 import qualified Cardano.Ledger.Shelley.API as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
+import qualified Cardano.Ledger.Shelley.TxCert as Sh
 
 import qualified Cardano.Ledger.Alonzo.Core as Al hiding
     ( TranslationError
     )
 import qualified Cardano.Ledger.Alonzo.Genesis as Al
+import qualified Cardano.Ledger.Alonzo.Plutus.TxInfo as Al
 import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.Tx as Al
@@ -45,13 +50,10 @@ import qualified Cardano.Ledger.Alonzo.TxBody as Al
 import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 import qualified Cardano.Ledger.Alonzo.TxWits as Al
 
-import qualified Cardano.Ledger.Alonzo.Plutus.TxInfo as Al
-import qualified Cardano.Ledger.Shelley.TxCert as Sh
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 import qualified PlutusLedgerApi.Common as Plutus
-import qualified PlutusLedgerApi.V1 as Plutus
 
 
 type AuxiliaryScripts era =
@@ -386,6 +388,7 @@ encodeRedeemers encodeScriptPurposeIndexInEra (Al.Redeemers redeemers) =
 encodeScript
     :: ( Ledger.Script era ~ Al.AlonzoScript era
        , Al.AlonzoEraScript era
+       , Ledger.NativeScript era ~ Timelock era
        )
     => IncludeCbor
     -> Al.Script era
@@ -569,6 +572,7 @@ encodeScriptIntegrityHash =
 encodeWitnessSet
     :: ( Ledger.Script era ~ Al.AlonzoScript era
        , Al.AlonzoEraScript era
+       , Ledger.NativeScript era ~ Timelock era
        )
     => IncludeCbor
     -> StrictMaybe (AuxiliaryScripts era)

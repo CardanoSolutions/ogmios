@@ -114,6 +114,7 @@ instance MonadSTM App where
   newTMVarIO      = App . lift . STM.newTMVarIO
   newEmptyTMVar   = WrappedSTM STM.newEmptyTMVar
   newEmptyTMVarIO = App (lift STM.newEmptyTMVarIO)
+  writeTMVar a0   = WrappedSTM . STM.writeTMVar a0
   takeTMVar       = WrappedSTM . STM.takeTMVar
   tryTakeTMVar    = WrappedSTM . STM.tryTakeTMVar
   putTMVar a0     = WrappedSTM . STM.putTMVar a0

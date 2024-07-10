@@ -6,6 +6,9 @@ module Ogmios.Data.Json.Babbage where
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Ledger.Allegra.Scripts
+    ( Timelock
+    )
 import Cardano.Ledger.Alonzo.Plutus.TxInfo
     ( TxOutSource (..)
     )
@@ -344,6 +347,7 @@ encodeTxOut
         ( Ba.Script era ~ Al.AlonzoScript era
         , Ba.Value era ~ Ma.MaryValue (Ledger.EraCrypto era)
         , Val (Ba.Value era), Ba.AlonzoEraScript era
+        , Ledger.NativeScript era ~ Timelock era
         )
     =>IncludeCbor
     -> Ba.BabbageTxOut era
@@ -370,6 +374,7 @@ encodeUtxo
         , Ba.Script era ~ Al.AlonzoScript era
         , Ba.Value era ~ Ma.MaryValue (Ledger.EraCrypto era)
         , Ba.TxOut era ~ Ba.BabbageTxOut era
+        , Ledger.NativeScript era ~ Timelock era
         )
     => Sh.UTxO era
     -> Json

@@ -113,6 +113,7 @@ queryLedgerState             | Information
 `rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
 `stakePools`                 | The list of all currently registered and active stake pools with their current parameters.
 `tip`                        | The current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger.
+`treasuryAndReserves`        | The Ada value of the treasury and reserves of the protocol.
 `utxo`                       | Current UTXO, possibly filtered by output reference.
 
 {{% notice tip %}}
@@ -613,6 +614,16 @@ Be aware that it is possible for an acquire request to fail even if (and in part
   }
 }
 ```
+
+#### treasuryAndReserves
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/treasuryAndReserves"
+}
+```
+
 
 #### ledger tip
 

@@ -46,6 +46,8 @@ encodeLedgerFailure = \case
         ForbiddenWithdrawal { marginalizedCredentials }
     Cn.ConwayTreasuryValueMismatch computedWithdrawal providedWithdrawal ->
         TreasuryWithdrawalMismatch { providedWithdrawal, computedWithdrawal }
+    Cn.ConwayTxRefScriptsSizeTooBig (toInteger -> measuredSize) (toInteger -> maximumSize) ->
+        ReferenceScriptsTooLarge { measuredSize, maximumSize }
 
 encodeGovFailure
     :: Cn.ConwayGovPredFailure (ConwayEra crypto)
@@ -129,13 +131,13 @@ encodeGovFailure = \case
         UnauthorizedGovernanceAction
     Cn.DisallowedVotesDuringBootstrap votes ->
         UnauthorizedVotes (toList votes)
+    Cn.VotersDoNotExist voters ->
+        UnknownVoters (toList voters)
 
 encodeCertsFailure
     :: Cn.ConwayCertsPredFailure (ConwayEra crypto)
     -> MultiEraPredicateFailure crypto
 encodeCertsFailure = \case
-    Cn.DelegateeNotRegisteredDELEG poolIds ->
-        UnknownStakePool poolIds
     Cn.WithdrawalsNotInRewardsCERTS credentials ->
         IncompleteWithdrawals credentials
     Cn.CertFailure e ->
@@ -169,6 +171,8 @@ encodeDelegFailure = \case
         RewardAccountNotEmpty { rewardAccountBalance }
     Cn.DRepAlreadyRegisteredForStakeKeyDELEG knownCredential ->
         StakeCredentialAlreadyRegistered { knownCredential }
+    Cn.DelegateeNotRegisteredDELEG poolId ->
+        UnknownStakePool poolId
 
 encodeGovCertFailure
     :: Cn.ConwayGovCertPredFailure (ConwayEra crypto)
@@ -187,6 +191,8 @@ encodeGovCertFailure = \case
         UnknownConstitutionalCommitteeMember { unknownConstitutionalCommitteeMember }
     Cn.ConwayDRepIncorrectRefund providedDeposit (SJust -> expectedDeposit) ->
         DepositMismatch { providedDeposit, expectedDeposit }
+    Cn.ConwayCommitteeIsUnknown unknownConstitutionalCommitteeMember ->
+        UnknownConstitutionalCommitteeMember { unknownConstitutionalCommitteeMember }
 
 encodeUtxoFailure
     :: forall crypto.

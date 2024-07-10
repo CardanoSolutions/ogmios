@@ -17,6 +17,7 @@ module Ogmios.Data.Json.Query
     , AdHocQuery (..)
 
       -- ** Types in queries
+    , AccountState
     , Delegations
     , GenesisConfig
     , Interpreter
@@ -106,6 +107,9 @@ import Cardano.Ledger.Alonzo.Core
 import Cardano.Ledger.Alonzo.Genesis
     ( AlonzoGenesis
     )
+import Cardano.Ledger.Api.State.Query
+    ( CommitteeMembersState
+    )
 import Cardano.Ledger.Babbage
     ()
 import Cardano.Ledger.Binary
@@ -128,6 +132,9 @@ import Cardano.Ledger.SafeHash
     )
 import Cardano.Ledger.Shelley.Genesis
     ( ShelleyGenesis
+    )
+import Cardano.Ledger.Shelley.LedgerState
+    ( AccountState (..)
     )
 import Cardano.Network.Protocol.NodeToClient
     ( GenTx
@@ -256,9 +263,9 @@ import qualified Cardano.Ledger.Keys as Ledger
 import qualified Cardano.Ledger.Mary.Value as Ledger.Mary
 import qualified Cardano.Ledger.Plutus.Data as Ledger.Plutus
 import qualified Cardano.Ledger.Plutus.Language as Ledger.Plutus
-import qualified Cardano.Ledger.PoolDistr as Ledger
 import qualified Cardano.Ledger.PoolParams as Ledger
 import qualified Cardano.Ledger.SafeHash as Ledger
+import qualified Cardano.Ledger.Shelley.Scripts as Ledger.Shelley
 import qualified Cardano.Ledger.TxIn as Ledger
 
 import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
@@ -267,7 +274,6 @@ import qualified Cardano.Ledger.Shelley.RewardProvenance as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
 import qualified Cardano.Ledger.Api as Ledger
-import qualified Cardano.Ledger.Api.State.Query as Ledger
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -275,6 +281,14 @@ import qualified Ogmios.Data.Json.Byron as Byron
 import qualified Ogmios.Data.Json.Conway as Conway
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
+
+-- FIXME
+-- Needed with ouroboros-cardano-consensus==0.18.0.0. Otherwise, use the following:
+--
+-- import qualified Cardano.Ledger.PoolDistr as Ledger
+-- import qualified Cardano.Ledger.Api.State.Query as Ledger
+import qualified Ouroboros.Consensus.Shelley.Ledger.Query.Types as Ledger
+
 
 --
 -- Types
@@ -375,6 +389,8 @@ instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
                 parseQueryLedgerConstitution (const id) queryParams
             "LedgerState/constitutionalCommittee" ->
                 parseQueryLedgerConstitutionalCommittee id queryParams
+            "LedgerState/treasuryAndReserves" ->
+                parseQueryLedgerTreasuryAndReserves id queryParams
             "Network/blockHeight" ->
                 parseQueryNetworkBlockHeight id queryParams
             "Network/genesisConfiguration" ->
@@ -419,6 +435,16 @@ data RewardAccountSummary crypto = RewardAccountSummary
 --
 -- Encoders
 --
+
+encodeAccountState
+    :: AccountState
+    -> Json
+encodeAccountState st =
+    "treasury" .=
+        encodeCoin (asTreasury st) <>
+    "reserves" .=
+        encodeCoin (asReserves st)
+    & encodeObject
 
 encodeBound
     :: Bound
@@ -589,10 +615,18 @@ encodeRewardsProvenance (rp, pools) =
     "totalRewardsInEpoch" .=
         encodeCoin (Sh.Api.rPot rp) <>
     "activeStakeInEpoch" .=
+        encodeCoin activeStake <>
+    "totalStakeInEpoch" .=
         encodeCoin (Sh.Api.totalStake rp) <>
     "stakePools" .=
         encodeObject (encodeMapSeries Shelley.stringifyPoolId encodeRewardInfoPool pools)
     & encodeObject
+  where
+    activeStake =
+        Map.foldr
+            (\pool -> (Sh.Api.stake pool <>))
+            mempty
+            pools
 
 encodeSafeZone
     :: SafeZone
@@ -653,7 +687,7 @@ parseQueryLedgerConstitution genResult =
 
 parseQueryLedgerConstitutionalCommittee
     :: forall f crypto. (Crypto crypto)
-    => GenResult crypto f (Ledger.CommitteeMembersState crypto)
+    => GenResult crypto f (CommitteeMembersState crypto)
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseQueryLedgerConstitutionalCommittee genResult =
@@ -786,6 +820,35 @@ parseQueryLedgerTip genResultInEraTPraos genResultInEraPraos =
                     (LSQ.BlockQuery (QueryIfCurrentConway GetLedgerTip))
                     (eraMismatchOrResult (encodePoint . castPoint @(Praos crypto)))
                     (genResultInEraPraos (Proxy @(ConwayEra crypto)))
+
+parseQueryLedgerTreasuryAndReserves
+    :: forall crypto f. ()
+    => GenResult crypto f AccountState
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseQueryLedgerTreasuryAndReserves genResult =
+    Json.withObject "treasuryAndReserves" $ \obj -> do
+        guard (null obj) $>
+            ( \queryDef -> Just $ SomeStandardQuery
+                queryDef
+                (eraMismatchOrResult encodeAccountState)
+                genResult
+            )
+            .
+            ( \case
+                SomeShelleyEra ShelleyBasedEraShelley ->
+                    LSQ.BlockQuery $ QueryIfCurrentShelley GetAccountState
+                SomeShelleyEra ShelleyBasedEraAllegra ->
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetAccountState
+                SomeShelleyEra ShelleyBasedEraMary ->
+                    LSQ.BlockQuery $ QueryIfCurrentMary GetAccountState
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetAccountState
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetAccountState
+                SomeShelleyEra ShelleyBasedEraConway ->
+                    LSQ.BlockQuery $ QueryIfCurrentConway GetAccountState
+            )
 
 parseQueryLedgerProjectedRewards
     :: forall crypto f. (Crypto crypto)
@@ -1207,22 +1270,22 @@ parseQueryNetworkGenesisConfiguration (genByron, genShelley, genAlonzo, genConwa
             "byron" ->
                 pure $ const $ Just $ SomeAdHocQuery
                     GetByronGenesis
-                    (Byron.encodeGenesisData)
+                    Byron.encodeGenesisData
                     (const genByron)
             "shelley" -> do
                 pure $ const $ Just $ SomeAdHocQuery
                     GetShelleyGenesis
-                    (Shelley.encodeGenesis)
+                    Shelley.encodeGenesis
                     (const genShelley)
             "alonzo" -> do
                 pure $ const $ Just $ SomeAdHocQuery
                     GetAlonzoGenesis
-                    (Alonzo.encodeGenesis)
+                    Alonzo.encodeGenesis
                     (const genAlonzo)
             "conway" -> do
                 pure $ const $ Just $ SomeAdHocQuery
                     GetConwayGenesis
-                    (Conway.encodeGenesis)
+                    Conway.encodeGenesis
                     (const genConway)
             (_unknownEra :: Text) -> do
                 fail "Invalid era parameter. Only 'byron', 'shelley', \
@@ -1615,6 +1678,7 @@ decodeScript
     :: forall era.
         ( AlonzoEraScript era
         , Ledger.Script era ~ Ledger.Alonzo.AlonzoScript era
+        , Ledger.NativeScript era ~ Ledger.Allegra.Timelock era
         )
     => Json.Value
     -> Json.Parser (Ledger.Script era)
@@ -1791,7 +1855,9 @@ decodeSerializedTransaction = Json.withText "Transaction" $ \(encodeUtf8 -> utf8
         wrap = Cbor.toLazyByteString . wrapCBORinCBOR Cbor.encodePreEncoded
 
 decodeTimeLock
-    :: Era era
+    :: ( Ledger.Allegra.AllegraEraScript era
+       , Ledger.NativeScript era ~ Ledger.Allegra.Timelock era
+       )
     => Json.Value
     -> Json.Parser (Ledger.Allegra.Timelock era)
 decodeTimeLock = Json.withObject "Script<Native>" $ \o -> do
@@ -1814,17 +1880,17 @@ decodeTimeLock = Json.withObject "Script<Native>" $ \o -> do
   where
     decodeRequireSignature o = do
         from <- o .: "from" >>= decodeHash
-        pure $ Ledger.Allegra.RequireSignature (Ledger.KeyHash from)
+        pure $ Ledger.Shelley.RequireSignature (Ledger.KeyHash from)
     decodeAllOf o = do
         xs <- StrictSeq.fromList <$> (o .: "from")
-        Ledger.Allegra.RequireAllOf <$> traverse decodeTimeLock xs
+        Ledger.Shelley.RequireAllOf <$> traverse decodeTimeLock xs
     decodeAnyOf o = do
         xs <- StrictSeq.fromList <$> (o .: "from")
-        Ledger.Allegra.RequireAnyOf <$> traverse decodeTimeLock xs
+        Ledger.Shelley.RequireAnyOf <$> traverse decodeTimeLock xs
     decodeSomeOf o = do
         n <- o .: "atLeast"
         xs <- StrictSeq.fromList <$> (o .: "from")
-        Ledger.Allegra.RequireMOf n <$> traverse decodeTimeLock xs
+        Ledger.Shelley.RequireMOf n <$> traverse decodeTimeLock xs
     decodeTimeExpire o = do
         Ledger.Allegra.RequireTimeExpire . SlotNo <$> (o .: "slot")
     decodeTimeStart o = do

@@ -15,7 +15,8 @@
 
 | Ogmios       | Cardano-node (mainnet, preview, preprod) | Cardano-node (sanchonet) |
 | ---          | ---                                      | ---                      |
-| **`v6.4.0`** | **`8.9.3`**                              | **`8.11.0-pre`**         |
+| **`v6.5.0`** | **`9.0.0`**                              | **`9.0.0`**              |
+| `v6.4.0`     | `8.9.3`                                  | `8.11.0-pre`             |
 | `v6.3.0`     | `8.9.2`                                  | `8.10.1-pre`             |
 | `v6.2.0`     | `8.9.0`                                  | `8.9.0`                  |
 | `v6.1.0`     | `8.7.3`                                  | `8.8.0-pre`              |
@@ -63,6 +64,7 @@ See our [Ogmios client starter kit](https://github.com/CardanoSolutions/ogmios-t
   `rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
   `stakePools`                 | The list of all pool identifiers currently registered and active.
   `tip`                        | The current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger.
+  `treasuryAndReserves`        | The Ada value of the treasury and reserves of the protocol.
   `utxo`                       | Current UTXO, possibly filtered by output reference.
   </details>
   </td>

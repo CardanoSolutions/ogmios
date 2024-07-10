@@ -941,6 +941,33 @@ encodePredicateFailure reject = \case
             \transaction contains other types of governance actions and was, therefore, rejected"
             Nothing
 
+    ReferenceScriptsTooLarge { measuredSize, maximumSize } ->
+        reject (predicateFailureCode 66)
+            "The compound size of all reference scripts exceeeds the maximum size allowed by the protocol. \
+            \Use fewer or smaller scripts to reduce the total size below acceptable limits. \
+            \The field 'data.measuredReferenceScriptsSize indicates the actual total measured size \
+            \of your reference scripts, whereas 'data.maximumReferenceScriptsSize indicates the current \
+            \maximum size enforced by the ledger."
+            (pure $ encodeObject
+                ( "measuredReferenceScriptsSize" .= encodeObject
+                    ( "bytes" .= encodeInteger (max 0 measuredSize) )
+               <> "maximumReferenceScriptsSize" .= encodeObject
+                    ( "bytes" .= encodeInteger (max 0 maximumSize) )
+                )
+            )
+
+    UnknownVoters { unknownVoters } ->
+        reject (predicateFailureCode 67)
+            "Some voters in the transaction are unknown. Voters must correspond to registered credentials \
+            \present in the ledger. They can possibly be registered in the same block, but it must imperatively \
+            \happens before they are used for voting. The field 'data.unknownVoters' indicates the credentials \
+            \that couldn't be mapped to any known voter."
+            (pure $ encodeObject
+                ( "unknownVoters" .=
+                    encodeFoldable Conway.encodeVoter unknownVoters
+                )
+            )
+
     -- NOTE: This should match the encoding also used for 'EvaluateTransactionResponse' in
     -- Data.Protocol.TxSubmission; hence the code.
     UnableToCreateScriptContext { translationError } ->
