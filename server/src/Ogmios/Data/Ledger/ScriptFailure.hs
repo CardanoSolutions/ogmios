@@ -5,17 +5,19 @@
 
 module Ogmios.Data.Ledger.ScriptFailure where
 
+import Ogmios.Prelude
+
+import Cardano.Ledger.TxIn
+    ( TxIn
+    )
 import Ogmios.Data.Ledger
     ( ContextErrorInAnyEra
     , ScriptPurposeIndexInAnyEra
     )
-import Ogmios.Prelude
 
 import qualified Cardano.Ledger.Api as Ledger
-import Cardano.Ledger.TxIn
-    ( TxIn
-    )
 import qualified Text.Show
+
 
 data EvaluateTransactionError crypto
     = ScriptExecutionFailures (Map (ScriptPurposeIndexInAnyEra crypto) [TransactionScriptFailureInAnyEra crypto])
@@ -73,6 +75,8 @@ scriptFailurePriority = \case
     TransactionScriptFailureInAnyEra (_, Ledger.InvalidTxIn{}) -> 2
 
     TransactionScriptFailureInAnyEra (_, Ledger.MissingDatum{}) -> 3
+
+    TransactionScriptFailureInAnyEra (_, Ledger.ContextError{}) -> 4
 
     TransactionScriptFailureInAnyEra (_, Ledger.ValidationFailure{}) -> 5
 

@@ -92,6 +92,7 @@ import Ogmios.Data.Json.Query
     , parseQueryLedgerRewardsProvenance
     , parseQueryLedgerStakePools
     , parseQueryLedgerTip
+    , parseQueryLedgerTreasuryAndReserves
     , parseQueryLedgerUtxo
     , parseQueryLedgerUtxoByAddress
     , parseQueryLedgerUtxoByOutputReference
@@ -184,7 +185,8 @@ import System.Directory
     ( createDirectoryIfMissing
     )
 import Test.Generators
-    ( genAcquireFailure
+    ( genAccountStateResult
+    , genAcquireFailure
     , genBlock
     , genBlockNo
     , genBoundResult
@@ -688,6 +690,10 @@ spec = do
         validateLedgerStateQuery 10 "constitutionalCommittee"
             Nothing
             (parseQueryLedgerConstitutionalCommittee genCommitteeMembersStateResult)
+
+        validateLedgerStateQuery 10 "treasuryAndReserves"
+            Nothing
+            (parseQueryLedgerTreasuryAndReserves genAccountStateResult)
 
         validateNetworkQuery 10 "blockHeight"
             Nothing

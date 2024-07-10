@@ -50,7 +50,8 @@ import Data.Type.Equality
     , (:~:) (..)
     )
 import Ogmios.Data.Json.Query
-    ( GenesisConfig
+    ( AccountState (..)
+    , GenesisConfig
     , Interpreter
     , PoolParams
     , QueryResult
@@ -171,6 +172,11 @@ import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 import qualified Cardano.Ledger.TxIn as Ledger
+
+-- FIXME
+-- Needed with ouroboros-cardano-consensus==0.18.0.0. Otherwise, use the following:
+--
+import qualified Ouroboros.Consensus.Shelley.Ledger.Query.Types as Consensus
 
 genBlock :: Gen Block
 genBlock = oneof
@@ -735,12 +741,23 @@ genProposedPParamsResult _ _ =
 
 genPoolDistrResult
     :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (Ledger.PoolDistr crypto))
-    -> Gen (QueryResult crypto (Ledger.PoolDistr crypto))
+    => Proxy (QueryResult crypto (Consensus.PoolDistr crypto))
+    -> Gen (QueryResult crypto (Consensus.PoolDistr crypto))
 genPoolDistrResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right <$> arbitrary)
+    , (10, Right . fromLedgerPoolDistr <$> arbitrary)
     ]
+  where
+    -- FIXME: See note on imports.
+    fromLedgerPoolDistr :: Ledger.PoolDistr crypto -> Consensus.PoolDistr crypto
+    fromLedgerPoolDistr =
+        Consensus.PoolDistr . Map.map fromLedgerIndividualPoolStake . Ledger.unPoolDistr
+
+    fromLedgerIndividualPoolStake :: Ledger.IndividualPoolStake crypto -> Consensus.IndividualPoolStake crypto
+    fromLedgerIndividualPoolStake ips = Consensus.IndividualPoolStake
+        { Consensus.individualPoolStake    = Ledger.individualPoolStake ips
+        , Consensus.individualPoolStakeVrf = Ledger.individualPoolStakeVrf ips
+        }
 
 genUTxOResult
     :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
@@ -850,6 +867,17 @@ genRewardsProvenanceResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> genRewardsProvenance)
     ]
+
+genAccountStateResult
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Proxy (QueryResult crypto AccountState)
+    -> Gen (QueryResult crypto AccountState)
+genAccountStateResult _ = frequency
+    [ (1, Left <$> genMismatchEraInfo)
+    , (10, Right <$> genAccountState)
+    ]
+  where
+    genAccountState = AccountState <$> arbitrary <*> arbitrary
 
 genPoolParametersResult
     :: forall crypto. (crypto ~ StandardCrypto)

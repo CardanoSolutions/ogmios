@@ -71,8 +71,7 @@ module Ogmios.Data.Protocol.TxSubmission
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Ledger.Alonzo.Plutus.Context
-    ( ContextError (..)
-    , EraPlutusContext
+    ( EraPlutusContext
     )
 import Cardano.Ledger.Alonzo.Scripts
     ( AlonzoScript
@@ -129,8 +128,7 @@ import Ogmios.Data.EraTranslation
     , upgrade
     )
 import Ogmios.Data.Ledger
-    ( ContextErrorInAnyEra (..)
-    , ScriptPurposeIndexInAnyEra (..)
+    ( ScriptPurposeIndexInAnyEra (..)
     )
 import Ogmios.Data.Ledger.ScriptFailure
     ( EvaluateTransactionError (..)
@@ -423,16 +421,12 @@ evaluateExecutionUnits
     -> Core.Tx (era crypto)
         -- ^ The actual transaction
     -> EvaluateTransactionResponse block
-evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation of
-    Left err ->
-        let errInAnyEra = ContextErrorInAnyEra (alonzoBasedEra @(era crypto), err)
-         in EvaluationFailure (CannotCreateEvaluationContext errInAnyEra)
-    Right reports ->
-        let (failures, successes) =
-                Map.foldrWithKey aggregateReports (mempty, mempty)  reports
-         in if null failures
-            then EvaluationResult successes
-            else EvaluationFailure $ ScriptExecutionFailures failures
+evaluateExecutionUnits pparams systemStart epochInfo utxo tx =
+    let (failures, successes) =
+            Map.foldrWithKey aggregateReports (mempty, mempty)  reports
+     in if null failures
+        then EvaluationResult successes
+        else EvaluationFailure $ ScriptExecutionFailures failures
   where
     aggregateReports
         :: PlutusPurpose AsIx (era crypto)
@@ -453,14 +447,11 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx = case evaluation o
       where
         ix = ScriptPurposeIndexInAnyEra (alonzoBasedEra @(era crypto), ptr)
 
-    evaluation
-        :: Either
-            (ContextError (era crypto))
-            (Map
-                (PlutusPurpose AsIx (era crypto))
-                (Either (TransactionScriptFailure (era crypto)) ExUnits)
-            )
-    evaluation =
+    reports
+        :: Map
+            (PlutusPurpose AsIx (era crypto))
+            (Either (TransactionScriptFailure (era crypto)) ExUnits)
+    reports =
         evalTxExUnits
           pparams
           tx

@@ -14,6 +14,9 @@ import Ogmios.Data.Json.Ledger.PredicateFailure
 import Ogmios.Data.Json.Shelley
     ( encodeTxIn
     )
+import Ogmios.Data.Ledger
+    ( ContextErrorInAnyEra (..)
+    )
 import Ogmios.Data.Ledger.PredicateFailure
     ( MultiEraPredicateFailure (..)
     , ScriptPurposeIndexInAnyEra (..)
@@ -106,6 +109,10 @@ encodeScriptFailure reject = \case
     TransactionScriptFailureInAnyEra (_, Ledger.NoCostModelInLedgerState lang) ->
         encodePredicateFailure @crypto reject (MissingCostModels [lang])
 
+    TransactionScriptFailureInAnyEra (era, (Ledger.ContextError err)) ->
+        let errInAnyEra = ContextErrorInAnyEra (era, err)
+         in encodeEvaluationError reject (CannotCreateEvaluationContext errInAnyEra)
+
 encodeEvaluationError
     :: forall crypto.
         ( Crypto crypto
@@ -143,6 +150,15 @@ encodeEvaluationError reject = \case
                 )
             )
 
+    CannotCreateEvaluationContext err ->
+        reject (Rpc.FaultCustom 3004)
+            "Unable to create the evaluation context from the given transaction."
+            (pure $ encodeObject
+                ( "reason" .=
+                    encodeContextErrorInAnyEra err
+                )
+            )
+
     NodeTipTooOldErr err ->
         reject (Rpc.FaultCustom 3003)
             "The node is still synchronizing and the ledger isn't yet in an era where \
@@ -152,15 +168,6 @@ encodeEvaluationError reject = \case
                     encodeEraName (currentNodeEra err) <>
                   "minimumRequiredEra" .=
                     encodeEraName (minimumRequiredEra err)
-                )
-            )
-
-    CannotCreateEvaluationContext err ->
-        reject (Rpc.FaultCustom 3004)
-            "Unable to create the evaluation context from the given transaction."
-            (pure $ encodeObject
-                ( "reason" .=
-                    encodeContextErrorInAnyEra err
                 )
             )
 
