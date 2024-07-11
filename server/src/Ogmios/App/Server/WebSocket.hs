@@ -30,6 +30,9 @@ import Cardano.Network.Protocol.NodeToClient
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient
     )
+import Data.List
+    ( isInfixOf
+    )
 import Network.HTTP.Types.Header
     ( hUserAgent
     )
@@ -245,6 +248,7 @@ newWebSocketApp tr unliftIO = do
                        (connectClient trClient clientA vData nodeSocket)
                        (connectClient trClient clientB vData nodeSocket)
                        & handle (onIOException conn)
+                       & handle (onShelleyEncoderException conn)
         logWith tr (WebSocketConnectionEnded $ userAgent pending)
   where
     userAgent :: PendingConnection -> Text
@@ -263,6 +267,17 @@ newWebSocketApp tr unliftIO = do
         = handle onUnknownException
         . handle onTimeoutThread
         . handle onConnectionClosed
+
+    onShelleyEncoderException :: Connection -> SomeException -> m ()
+    onShelleyEncoderException conn e =
+        if "ShelleyEncoderUnsupportedQuery" `isInfixOf` displayException e then do
+            let msg = "Unable to encode and send a query to the node because it is \
+                      \likely running an old version of the client protocols. Upgrade \
+                      \your node and try again."
+            logWith tr $ WebSocketNodeVersionIsTooOld msg
+            close conn $ toStrict $ Json.encode $ Rpc.customError Nothing (negate 32001) (toString msg)
+        else
+            throwIO e
 
     onUnknownException :: SomeException -> m ()
     onUnknownException e0 = case fromException e0 of
@@ -451,6 +466,10 @@ data TraceWebSocket where
         :: { userAgent :: Text }
         -> TraceWebSocket
 
+    WebSocketNodeVersionIsTooOld
+        :: { encoderException :: Text }
+        -> TraceWebSocket
+
     WebSocketUnknownException
         :: { exception :: Text }
         -> TraceWebSocket
@@ -463,11 +482,12 @@ data TraceWebSocket where
 
 instance HasSeverityAnnotation TraceWebSocket where
     getSeverityAnnotation = \case
-        WebSocketClient msg           -> getSeverityAnnotation' msg
-        WebSocketStateQuery msg       -> getSeverityAnnotation msg
-        WebSocketTxSubmission msg     -> getSeverityAnnotation msg
-        WebSocketWorkerExited{}       -> Debug
-        WebSocketConnectionAccepted{} -> Info
-        WebSocketConnectionEnded{}    -> Info
-        WebSocketUnknownException{}   -> Error
-        WebSocketFailedToConnect{}    -> Error
+        WebSocketClient msg            -> getSeverityAnnotation' msg
+        WebSocketStateQuery msg        -> getSeverityAnnotation msg
+        WebSocketTxSubmission msg      -> getSeverityAnnotation msg
+        WebSocketWorkerExited{}        -> Debug
+        WebSocketConnectionAccepted{}  -> Info
+        WebSocketConnectionEnded{}     -> Info
+        WebSocketNodeVersionIsTooOld{} -> Error
+        WebSocketUnknownException{}    -> Error
+        WebSocketFailedToConnect{}     -> Error
