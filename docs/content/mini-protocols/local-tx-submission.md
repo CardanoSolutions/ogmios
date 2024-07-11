@@ -346,6 +346,10 @@ components:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/65"
     3165/UnauthorizedGovernanceAction:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/66"
+    3166/ReferenceScriptsTooLarge:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/67"
+    3167/UnknownVoters:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/68"
     3998/UnrecognizedCertificateType:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/62"
 {{% /embed-async-api %}}

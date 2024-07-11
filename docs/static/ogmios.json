@@ -24,6 +24,7 @@
   , "QueryLedgerStateRewardsProvenance", "QueryLedgerStateRewardsProvenanceResponse"
   , "QueryLedgerStateStakePools", "QueryLedgerStateStakePoolsResponse"
   , "QueryLedgerStateTip", "QueryLedgerStateTipResponse"
+  , "QueryLedgerStateTreasuryAndReserves", "QueryLedgerStateTreasuryAndReservesResponse"
   , "QueryLedgerStateUtxo", "QueryLedgerStateUtxoResponse"
   , "QueryNetworkBlockHeight", "QueryNetworkBlockHeightResponse"
   , "QueryNetworkGenesisConfiguration", "QueryNetworkGenesisConfigurationResponse"
@@ -681,6 +682,7 @@
           , "queryLedgerState/stakePools"
           , "queryLedgerState/utxo"
           , "queryLedgerState/tip"
+          , "queryLedgerState/treasuryAndReserves"
           ]
         }
       , "error":
@@ -727,6 +729,7 @@
           , "queryLedgerState/stakePools"
           , "queryLedgerState/utxo"
           , "queryLedgerState/tip"
+          , "queryLedgerState/treasuryAndReserves"
           ]
         }
       , "error":
@@ -772,6 +775,7 @@
           , "queryLedgerState/stakePools"
           , "queryLedgerState/utxo"
           , "queryLedgerState/tip"
+          , "queryLedgerState/treasuryAndReserves"
           ]
         }
       , "error":
@@ -1507,6 +1511,62 @@
             }
           , "result":
             { "$ref": "ogmios.json#/definitions/PointOrOrigin"
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
+      ]
+    }
+
+  , "QueryLedgerStateTreasuryAndReserves":
+    { "title": "QueryLedgerStateTreasuryAndReserves"
+    , "description": "Query the Ada value of the treasury and reserves accounts."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/treasuryAndReserves" ]
+        }
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateTreasuryAndReservesResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateTreasuryAndReservesResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/treasuryAndReserves" ]
+            }
+          , "result":
+            { "type": "object"
+            , "required": [ "treasury", "reserves" ]
+            , "additionalProperties": false
+            , "properties":
+              { "treasury": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+              , "reserves": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+              }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -2500,6 +2560,7 @@
       , "stakePoolPledgeInfluence"
       , "totalRewardsInEpoch"
       , "activeStakeInEpoch"
+      , "totalStakeInEpoch"
       , "stakePools"
       ]
     , "properties":
@@ -2519,6 +2580,9 @@
           ]
         }
       , "totalRewardsInEpoch":
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+        }
+      , "totalStakeInEpoch":
         { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
         }
       , "activeStakeInEpoch":
@@ -3948,8 +4012,48 @@
         , "required": [ "code", "message" ]
         , "additionalProperties": false
         , "properties":
-          { "code": { "type": "integer", "enum": [ 3164 ] }
+          { "code": { "type": "integer", "enum": [ 3165 ] }
           , "message": { "type": "string" }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<ReferenceScriptsTooLarge>"
+        , "description": ""
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3166 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "measuredReferenceScriptsSize", "maximumReferenceScriptsSize" ]
+            , "properties":
+              { "measuredReferenceScriptsSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+              , "maximumReferenceScriptsSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+              }
+            }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<UnknownVoters>"
+        , "description": "Some voters in the transaction are unknown. Voters must correspond to registered credentials present in the ledger. They can possibly be registered in the same block, but it must imperatively happens before they are used for voting. The field 'data.unknownVoters' indicates the credentials that couldn't be mapped to any known voter."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3167 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "unknownVoters" ]
+            , "properties":
+              { "unknownVoters":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/GovernanceVoter" }
+                }
+              }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<UnrecognizedCertificateType>"

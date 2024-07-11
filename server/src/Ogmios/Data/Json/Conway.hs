@@ -13,7 +13,9 @@ import Cardano.Ledger.Api
     , PlutusPurpose
     )
 import Cardano.Ledger.BaseTypes
-    ( EpochNo
+    ( BoundedRational (..)
+    , EpochNo
+    , NonNegativeInterval
     , ProtVer
     )
 import Cardano.Ledger.Binary
@@ -407,7 +409,7 @@ encodeGenesis x =
           <> "delegateRepresentativeVotingThresholds" .=
                encodeDRepVotingThresholds (Cn.ucppDRepVotingThresholds (Cn.cgUpgradePParams x))
           <> "constitutionalCommitteeMinSize" .=
-               encodeNatural (Cn.ucppCommitteeMinSize (Cn.cgUpgradePParams x))
+               encodeWord16 (Cn.ucppCommitteeMinSize (Cn.cgUpgradePParams x))
           <> "constitutionalCommitteeMaxTermLength" .=
                encodeEpochInterval (Cn.ucppCommitteeMaxTermLength (Cn.cgUpgradePParams x))
           <> "governanceActionLifetime" .=
@@ -497,7 +499,7 @@ encodeGovActionIx
     :: Cn.GovActionIx
     -> Json
 encodeGovActionIx (Cn.GovActionIx ix) =
-    encodeWord32 ix
+    encodeWord16 ix
 
 encodeGovActionPurpose
     :: Cn.GovActionPurpose
@@ -552,12 +554,36 @@ encodePParamsHKD encode pure_ x =
         (encodeInteger . unCoin) (unTHKD (Cn.cppMinFeeA x)) <>
     encode "minFeeConstant"
         encodeCoin (unTHKD (Cn.cppMinFeeB x)) <>
+    encode "minFeeReferenceScripts"
+        (\(base :: NonNegativeInterval) -> encodeObject
+            -- NOTE: This will very likely always be an integer. The ledger
+            -- represent this as a 'NonNegativeInterval', which technically
+            -- allow any _Rational_ value between 0 and +INFINITY, but it is
+            -- highly impractical to manipulate a Rationale here from an API
+            -- standpoint.
+            --
+            -- So this is a debatable choice, but I believe it's better for
+            -- users to convert to a Double so that it is directly a number in
+            -- JSON, and we can still accomodate decimal representation so long
+            -- as they don't get _too precise_ (which should be a fair
+            -- assumption in this context).
+            ( "base" .= encodeDouble (fromRational (unboundRational base))
+            <>
+              "range" .= encodeWord32 25600
+            <>
+              "multiplier" .= encodeDouble 1.2
+            )
+        )
+        (unTHKD (Cn.cppMinFeeRefScriptCostPerByte x))
+        <>
     encode "maxBlockBodySize"
         (encodeSingleton "bytes" . encodeWord32) (unTHKD (Cn.cppMaxBBSize x)) <>
     encode "maxBlockHeaderSize"
         (encodeSingleton "bytes" . encodeWord16) (unTHKD (Cn.cppMaxBHSize x)) <>
     encode "maxTransactionSize"
         (encodeSingleton "bytes" . encodeWord32) (unTHKD (Cn.cppMaxTxSize x)) <>
+    encode "maxReferenceScriptsSize"
+        (encodeSingleton "bytes" . encodeWord32) (pure_ @Word32 204800) <> -- NOTE: Hard-coded in Conway.
     encode "stakeCredentialDeposit"
         encodeCoin (unTHKD (Cn.cppKeyDeposit x)) <>
     encode "stakePoolDeposit"
@@ -565,7 +591,7 @@ encodePParamsHKD encode pure_ x =
     encode "stakePoolRetirementEpochBound"
         encodeEpochInterval (unTHKD (Cn.cppEMax x)) <>
     encode "desiredNumberOfStakePools"
-        encodeNatural (unTHKD (Cn.cppNOpt x)) <>
+        encodeWord16 (unTHKD (Cn.cppNOpt x)) <>
     encode "stakePoolPledgeInfluence"
         encodeNonNegativeInterval (unTHKD (Cn.cppA0 x)) <>
     encode "monetaryExpansion"
@@ -587,11 +613,11 @@ encodePParamsHKD encode pure_ x =
     encode "maxExecutionUnitsPerBlock"
         (Alonzo.encodeExUnits . Al.unOrdExUnits) (unTHKD (Cn.cppMaxBlockExUnits x)) <>
     encode "maxValueSize"
-        (encodeSingleton "bytes" . encodeNatural) (unTHKD (Cn.cppMaxValSize x)) <>
+        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Cn.cppMaxValSize x)) <>
     encode "collateralPercentage"
-        encodeNatural (unTHKD (Cn.cppCollateralPercentage x)) <>
+        encodeWord16 (unTHKD (Cn.cppCollateralPercentage x)) <>
     encode "maxCollateralInputs"
-        encodeNatural (unTHKD (Cn.cppMaxCollateralInputs x)) <>
+        encodeWord16 (unTHKD (Cn.cppMaxCollateralInputs x)) <>
     encode "version"
         Shelley.encodeProtVer (fromNoUpdate @f @ProtVer (Cn.cppProtocolVersion x)) <>
     encode "stakePoolVotingThresholds"
@@ -599,7 +625,7 @@ encodePParamsHKD encode pure_ x =
     encode "delegateRepresentativeVotingThresholds"
         encodeDRepVotingThresholds (unTHKD (Cn.cppDRepVotingThresholds x)) <>
     encode "constitutionalCommitteeMinSize"
-        encodeNatural (unTHKD (Cn.cppCommitteeMinSize x)) <>
+        encodeWord16 (unTHKD (Cn.cppCommitteeMinSize x)) <>
     encode "constitutionalCommitteeMaxTermLength"
         encodeEpochInterval (unTHKD (Cn.cppCommitteeMaxTermLength x)) <>
     encode "governanceActionLifetime"

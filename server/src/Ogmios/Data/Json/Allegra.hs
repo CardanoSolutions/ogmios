@@ -22,6 +22,7 @@ import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.SafeHash as Ledger
 
 import qualified Cardano.Ledger.Shelley.BlockChain as Sh
+import qualified Cardano.Ledger.Shelley.Scripts as Sh
 import qualified Cardano.Ledger.Shelley.Tx as Sh
 import qualified Cardano.Ledger.Shelley.TxWits as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
@@ -74,7 +75,9 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     TPraos.BHeader hBody _ = blkHeader
 
 encodeScript
-    :: Era era
+    :: ( Al.AllegraEraScript era
+       , Ledger.NativeScript era ~ Al.Timelock era
+       )
     => IncludeCbor
     -> Al.Timelock era
     -> Json
@@ -91,20 +94,22 @@ encodeScript opts = encodeObject . \case
             mempty
 
 encodeTimelock
-    :: Era era
+    :: ( Al.AllegraEraScript era
+       , Ledger.NativeScript era ~ Al.Timelock era
+       )
     => Al.Timelock era
     -> Json
 encodeTimelock = encodeObject . \case
-    Al.RequireSignature sig ->
+    Sh.RequireSignature sig ->
         "clause" .= encodeText "signature" <>
         "from" .= Shelley.encodeKeyHash sig
-    Al.RequireAllOf xs ->
+    Sh.RequireAllOf xs ->
         "clause" .= encodeText "all" <>
         "from" .= encodeFoldable encodeTimelock xs
-    Al.RequireAnyOf xs ->
+    Sh.RequireAnyOf xs ->
         "clause" .= encodeText "any" <>
         "from" .= encodeFoldable encodeTimelock xs
-    Al.RequireMOf n xs ->
+    Sh.RequireMOf n xs ->
         "clause" .= encodeText "some" <>
         "atLeast" .= encodeInteger (toInteger n) <>
         "from" .= encodeFoldable encodeTimelock xs

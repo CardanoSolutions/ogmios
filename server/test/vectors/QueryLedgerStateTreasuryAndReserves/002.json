@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","method":"queryLedgerState/treasuryAndReserves","result":{"treasury":{"ada":{"lovelace":728547}},"reserves":{"ada":{"lovelace":294689}}},"id":null}

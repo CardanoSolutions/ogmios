@@ -8,9 +8,101 @@ pre: "<b>5. </b>"
 
 ### [6.5.0] - UNRELEASED
 
+### Added
+
+- Integrated with `cardano-node==9.0.0`.
+
+- New ledger-state query: `queryLedgerState/treasuryAndReserves` to retrieve the current Ada values of the treasury and reserves.
+
+- New protocol parameters in Conway:
+  - `maximumReferenceScriptsSize` which indicates the maximum total number of bytes of scripts referenced by a transaction.
+  - `minFeeReferenceScripts` with three sub fields: `range`, `base` and `multiplier` that now intervenes in the minimum fee calculation. Note that, starting in the Conway era, the min fee calculation is given by the following formula:
+
+  $$
+  minFee = A + B + C
+  $$
+
+  $$
+  \begin{array}{lll}
+  A & = & sizeOf(transaction) \times minFeeCoefficient  \\
+  B & = & minFeeConstant  \\
+  C & = & referenceScriptsTierPrice  \\
+  \end{array}
+  $$
+
+  Where $referenceScriptsTierPrice$ is a tier-price depending on the total size of the serialized reference scripts. The total size (in bytes) of reference scripts is priced according to a different, growing tier, given by the following table:
+
+  | Size range                                | Cost                                                                        |
+  | ---                                       | ---                                                                         |
+  | $[    0;  range[$                         | $\rfloor sizeOf(referenceScripts) \times base\lfloor$                       |
+  | $[range;  2 \times range[$                | $\rfloor sizeOf(referenceScripts) \times multiplier \times base\lfloor$     |
+  | $[2 \times range; 3 \times range[$        | $\rfloor sizeOf(referenceScripts) \times {multiplier}^2 \times base\lfloor$ |
+  | $[3 \times range; 4 \times range[$        | $\rfloor sizeOf(referenceScripts) \times {multiplier}^3 \times base\lfloor$ |
+  | ...                                       | ...                                                                         |
+  | $[n \times range; (n + 1) \times range [$ | $\rfloor sizeOf(referenceScripts) \times {multiplier}^n \times base\lfloor$ |
+
+  Considering $range = 25600$, $multiplier = 1.2$ and $base = 44$, we get:
+
+  <table>
+  <thead>
+    <tr>
+      <th>Size range</th>
+      <th>Price per byte</th>
+      <th>Plot</th>
+    </tr>
+  </thead>
+  <tbody>
+  <tr>
+  <td>$[    0;  25600[$</td>
+  <td>$44.000$</td>
+  <td rowspan=6><a href="https://www.geogebra.org/graphing/x2aa47uu"><img src="./docs/static/referenceScriptsTierFee.png"></a></td>
+  </tr>
+  <tr>
+  <td>$[25600; 51200[$</td>
+  <td>$52.800$</td>
+  </tr>
+  <tr>
+  <td>$[51200; 76800[$</td>
+  <td>$63.360$</td>
+  </tr>
+  <tr>
+  <td>$[76800; 102400[$</td>
+  <td>$76.032$</td>
+  </tr>
+  <tr>
+  <td>...</td>
+  <td>...</td>
+  </tr>
+  <tr>
+  <td>$[179200; 204800[$</td>
+  <td>$157.66$</td>
+  </tr>
+  </tbody>
+  </table>
+
+  > [!NOTE]
+  >
+  > In Conway, the maximum size of reference scripts is limited to **200KiB**.
+
+  Hence, a transaction that carries reference scripts adding up to 80KiB of data would be priced:
+
+  $$
+  referenceScriptTierPrice_{80KiB} = 25600 \times (44 + 52.8 + 63.36) + 5120 \times 76.032 = 4489379
+  $$
+
+- New transaction submission / evaluation errors:
+  - [`ReferenceScriptsTooLarge`](https://ogmios.dev/mini-protocols/local-tx-submission#schema-3166/ReferenceScriptsTooLarge) (`code=3166`) now raised when trying to submit a transaction that contains reference scripts whose total size is above 200KB (will become a protocol parameter in the next era).
+  - [`UnknownVoters`](https://ogmios.dev/mini-protocols/local-tx-submission#schema-3167/UnknownVoters) (`code=3167`) returned when submitting votes from unregistered pools or credentials.
+
 #### Changed
 
 - Roll back down to GHC-9.4.8 in an attempt to fix [#399](https://github.com/CardanoSolutions/ogmios/issues/399) possibly caused by a bug in GHC runtime system (possibly patched on 9.4.x).
+
+- Fixed the reported `activeStakeInEpoch` on the `queryLedgerState/rewardsProvenance`, which was mistakenly reporting the `totalStakeInEpoch`. A new value `totalStakeInEpoch` also now correctly reports that information.
+
+#### Removed
+
+- N/A
 
 ### [6.4.0] - 2024-06-06
 

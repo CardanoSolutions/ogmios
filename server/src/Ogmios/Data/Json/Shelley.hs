@@ -131,11 +131,11 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           "id" .= encodeShelleyHash headerHash
         <>
-        encodeBHeader blkHeader
+          encodeBHeader blkHeader
         <>
-        "size" .= encodeSingleton "bytes" (encodeWord32 (TPraos.bsize hBody))
+          "size" .= encodeSingleton "bytes" (encodeWord32 (TPraos.bsize hBody))
         <>
-        "transactions" .= encodeFoldable (encodeTx opts) (Sh.txSeqTxns' txs)
+          "transactions" .= encodeFoldable (encodeTx opts) (Sh.txSeqTxns' txs)
         )
   where
     TPraos.BHeader hBody _ = blkHeader
@@ -475,7 +475,10 @@ encodeMIRPot = \case
         encodeText "treasury"
 
 encodeMultiSig
-    :: Era era
+    :: forall era.
+        ( Sh.ShelleyEraScript era
+        , Ledger.NativeScript era ~ Sh.MultiSig era
+        )
     => Sh.MultiSig era
     -> Json
 encodeMultiSig = encodeObject . \case
@@ -484,14 +487,24 @@ encodeMultiSig = encodeObject . \case
         "from" .= encodeKeyHash sig
     Sh.RequireAllOf xs ->
         "clause" .= encodeText "all" <>
-        "from" .= encodeList encodeMultiSig xs
+        "from" .= encodeFoldable (encodeMultiSig @era) xs
     Sh.RequireAnyOf xs ->
         "clause" .= encodeText "any" <>
-        "from" .= encodeList encodeMultiSig xs
+        "from" .= encodeFoldable (encodeMultiSig @era) xs
     Sh.RequireMOf n xs ->
         "clause" .= encodeText "some" <>
         "atLeast" .= encodeInteger (toInteger n) <>
-        "from" .= encodeList encodeMultiSig xs
+        "from" .= encodeFoldable (encodeMultiSig @era) xs
+    -- NOTE: Necessary since 9.0.0 that introduces pattern synonymes for those
+    -- constructors without a 'COMPLETE' annotations.
+    --
+    -- *sigh*
+    --
+    -- This is relatively low-risk though since this type hasn't changed for
+    -- FOUR years and it literally cannot change (any new variants would
+    -- actually be added to a brand new type that only instantiable in chosen
+    -- eras).
+    _ -> error "incomplete pattern"
 
 encodeNetwork
     :: Ledger.Network
@@ -735,7 +748,9 @@ encodeRewardAcnt =
     encodeText . stringifyRewardAcnt
 
 encodeScript
-    :: Era era
+    :: ( Sh.ShelleyEraScript era
+       , Ledger.NativeScript era ~ Sh.MultiSig era
+       )
     => IncludeCbor
     -> Sh.MultiSig era
     -> Json

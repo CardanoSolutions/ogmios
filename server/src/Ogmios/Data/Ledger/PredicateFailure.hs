@@ -327,6 +327,13 @@ data MultiEraPredicateFailure crypto
         { inputsPresentInBoth :: NonEmpty (TxIn crypto)
         }
 
+    -- Since Conway, a transaction cannot include reference scripts beyond a
+    -- certain limit (total size of the serialized script).
+    | ReferenceScriptsTooLarge
+        { measuredSize :: Integer
+        , maximumSize :: Integer
+        }
+
     ---------------------------------------------------------------------------
     -- Rule → UTXOS
     ---------------------------------------------------------------------------
@@ -399,6 +406,11 @@ data MultiEraPredicateFailure crypto
     -- During the bootstrapping phase, actions can only be parameter change,
     -- hard-fork initation or info.
     | UnauthorizedGovernanceAction
+
+    -- Voters credentials must be registered in the ledger state.
+    | UnknownVoters
+        { unknownVoters :: [Voter crypto]
+        }
 
     ---------------------------------------------------------------------------
     -- Rule → PPUP
@@ -568,9 +580,11 @@ predicateFailurePriority = \case
     DRepNotRegistered{} -> 2
     ValueSizeAboveLimit{} -> 2
     UnknownConstitutionalCommitteeMember{} -> 2
+    UnknownVoters{} -> 2
 
     InvalidStakePoolRetirementEpoch{} -> 3
     StakePoolCostTooLow{} -> 3
+    ReferenceScriptsTooLarge{} -> 3
 
     UnknownUtxoReference{} -> 4
     OrphanScriptInputs{} -> 4
