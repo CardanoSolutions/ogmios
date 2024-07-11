@@ -101,11 +101,12 @@ export type None = null;
  * A network target, as defined since the Shelley era.
  */
 export type Network = "mainnet" | "testnet";
+export type UInt32 = number;
 export type Nonce = Neutral | DigestBlake2B256;
 export type Neutral = "neutral";
 export type Int64 = number;
 export type CostModel = Int64[];
-export type UInt32 = number;
+export type UInt16 = number;
 export type Metadatum = MetadatumNoSchema | MetadatumDetailedSchema;
 export type MetadatumNoSchema = IntegerNoSchema | StringNoSchema | ArrayNoSchema | ObjectNoSchema;
 export type IntegerNoSchema = bigint;
@@ -214,6 +215,8 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureConstitutionGuardrailsHashMismatch
   | SubmitTransactionFailureConflictingInputsAndReferences
   | SubmitTransactionFailureUnauthorizedGovernanceAction
+  | SubmitTransactionFailureReferenceScriptsTooLarge
+  | SubmitTransactionFailureUnknownVoters
   | SubmitTransactionFailureUnrecognizedCertificateType;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
 export type ScriptPurpose =
@@ -380,6 +383,12 @@ export interface Ogmios {
   QueryLedgerStateTip: QueryLedgerStateTip;
   QueryLedgerStateTipResponse:
     | QueryLedgerStateTipResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateTreasuryAndReserves: QueryLedgerStateTreasuryAndReserves;
+  QueryLedgerStateTreasuryAndReservesResponse:
+    | QueryLedgerStateTreasuryAndReservesResponse
     | QueryLedgerStateEraMismatch
     | QueryLedgerStateUnavailableInCurrentEra
     | QueryLedgerStateAcquiredExpired;
@@ -802,6 +811,11 @@ export interface GovernanceActionProtocolParametersUpdate {
 export interface ProposedProtocolParameters {
   minFeeCoefficient?: UInt64;
   minFeeConstant?: ValueAdaOnly;
+  minFeeReferenceScripts?: {
+    range: UInt32;
+    base: number;
+    multiplier: number;
+  };
   minUtxoDepositCoefficient?: UInt64;
   minUtxoDepositConstant?: ValueAdaOnly;
   maxBlockBodySize?: {
@@ -811,6 +825,9 @@ export interface ProposedProtocolParameters {
     bytes: UInt64;
   };
   maxTransactionSize?: {
+    bytes: UInt64;
+  };
+  maxReferenceScriptsSize?: {
     bytes: UInt64;
   };
   maxValueSize?: {
@@ -833,7 +850,7 @@ export interface ProposedProtocolParameters {
   maxExecutionUnitsPerTransaction?: ExecutionUnits;
   maxExecutionUnitsPerBlock?: ExecutionUnits;
   stakePoolVotingThresholds?: StakePoolVotingThresholds;
-  constitutionalCommitteeMinSize?: UInt64;
+  constitutionalCommitteeMinSize?: UInt16;
   constitutionalCommitteeMaxTermLength?: UInt64;
   governanceActionLifetime?: Epoch;
   governanceActionDeposit?: ValueAdaOnly;
@@ -1918,8 +1935,35 @@ export interface SubmitTransactionFailureConflictingInputsAndReferences {
  * The ledger is still in a bootstrapping phase. During that phase, only protocol parameters changes, hard fork initiations and info actions are authorized. The transaction contains other types of governance action and was therefore rejected
  */
 export interface SubmitTransactionFailureUnauthorizedGovernanceAction {
-  code: 3164;
+  code: 3165;
   message: string;
+}
+export interface SubmitTransactionFailureReferenceScriptsTooLarge {
+  code: 3166;
+  message: string;
+  data: {
+    measuredReferenceScriptsSize: {
+      bytes: UInt64;
+    };
+    maximumReferenceScriptsSize: {
+      bytes: UInt64;
+    };
+  };
+}
+/**
+ * Some voters in the transaction are unknown. Voters must correspond to registered credentials present in the ledger. They can possibly be registered in the same block, but it must imperatively happens before they are used for voting. The field 'data.unknownVoters' indicates the credentials that couldn't be mapped to any known voter.
+ */
+export interface SubmitTransactionFailureUnknownVoters {
+  code: 3167;
+  message: string;
+  data: {
+    unknownVoters: (
+      | VoterGenesisDelegate
+      | VoterConstitutionalCommittee
+      | VoterDelegateRepresentative
+      | VoterStakePoolOperator
+    )[];
+  };
 }
 /**
  * Unrecognized certificate type. This error is a placeholder due to how internal data-types are modeled. If you ever run into this, please report the issue as you've likely discoverd a critical bug...
@@ -2163,7 +2207,8 @@ export interface QueryLedgerStateEraMismatch {
     | "queryLedgerState/rewardsProvenance"
     | "queryLedgerState/stakePools"
     | "queryLedgerState/utxo"
-    | "queryLedgerState/tip";
+    | "queryLedgerState/tip"
+    | "queryLedgerState/treasuryAndReserves";
   /**
    * An era mismatch between a client request and the era the ledger is in. This may occur when running queries on a syncing node and/or when the node is crossing an era.
    */
@@ -2190,7 +2235,8 @@ export interface QueryLedgerStateUnavailableInCurrentEra {
     | "queryLedgerState/rewardsProvenance"
     | "queryLedgerState/stakePools"
     | "queryLedgerState/utxo"
-    | "queryLedgerState/tip";
+    | "queryLedgerState/tip"
+    | "queryLedgerState/treasuryAndReserves";
   /**
    * Some query is not available for the requested ledger era.
    */
@@ -2216,7 +2262,8 @@ export interface QueryLedgerStateAcquiredExpired {
     | "queryLedgerState/rewardsProvenance"
     | "queryLedgerState/stakePools"
     | "queryLedgerState/utxo"
-    | "queryLedgerState/tip";
+    | "queryLedgerState/tip"
+    | "queryLedgerState/treasuryAndReserves";
   /**
    * Previously acquired ledger state is no longer available.
    */
@@ -2452,6 +2499,17 @@ export interface QueryLedgerStateProtocolParametersResponse {
 export interface ProtocolParameters {
   minFeeCoefficient: UInt64;
   minFeeConstant: ValueAdaOnly;
+  minFeeReferenceScripts?: {
+    range: UInt32;
+    /**
+     * The base cost for the tier-price calculation.
+     */
+    base: number;
+    /**
+     * The multiplier increasing the cost of each tier.
+     */
+    multiplier: number;
+  };
   minUtxoDepositCoefficient: UInt64;
   minUtxoDepositConstant: ValueAdaOnly;
   maxBlockBodySize: {
@@ -2482,8 +2540,11 @@ export interface ProtocolParameters {
   scriptExecutionPrices?: ScriptExecutionPrices;
   maxExecutionUnitsPerTransaction?: ExecutionUnits;
   maxExecutionUnitsPerBlock?: ExecutionUnits;
+  maxReferenceScriptsSize?: {
+    bytes: UInt64;
+  };
   stakePoolVotingThresholds?: StakePoolVotingThresholds;
-  constitutionalCommitteeMinSize?: UInt64;
+  constitutionalCommitteeMinSize?: UInt16;
   constitutionalCommitteeMaxTermLength?: UInt64;
   governanceActionLifetime?: Epoch;
   governanceActionDeposit?: ValueAdaOnly;
@@ -2547,6 +2608,7 @@ export interface RewardsProvenance {
    */
   stakePoolPledgeInfluence: string;
   totalRewardsInEpoch: ValueAdaOnly;
+  totalStakeInEpoch: ValueAdaOnly;
   activeStakeInEpoch: ValueAdaOnly;
   stakePools: {
     [k: string]: StakePoolSummary;
@@ -2602,6 +2664,23 @@ export interface QueryLedgerStateTipResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/tip";
   result: PointOrOrigin;
+  id?: unknown;
+}
+/**
+ * Query the Ada value of the treasury and reserves accounts.
+ */
+export interface QueryLedgerStateTreasuryAndReserves {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/treasuryAndReserves";
+  id?: unknown;
+}
+export interface QueryLedgerStateTreasuryAndReservesResponse {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/treasuryAndReserves";
+  result: {
+    treasury: ValueAdaOnly;
+    reserves: ValueAdaOnly;
+  };
   id?: unknown;
 }
 /**
