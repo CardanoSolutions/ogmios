@@ -18,9 +18,9 @@ pre: "<b>5. </b>"
   - `maximumReferenceScriptsSize` which indicates the maximum total number of bytes of scripts referenced by a transaction.
   - `minFeeReferenceScripts` with three sub fields: `range`, `base` and `multiplier` that now intervenes in the minimum fee calculation. Note that, starting in the Conway era, the min fee calculation is given by the following formula:
 
-  $$
-  minFee = A + B + C
-  $$
+$$
+minFee = A + B + C
+$$
 
   $$
   \begin{array}{lll}
