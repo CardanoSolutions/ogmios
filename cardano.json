@@ -1844,11 +1844,22 @@
     , "properties":
       { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
       , "minFeeConstant": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "minFeeReferenceScripts":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "range", "base", "multiplier" ]
+        , "properties":
+          { "range": { "$ref": "cardano.json#/definitions/UInt32" }
+          , "base": { "type": "number" }
+          , "multiplier": { "type": "number" }
+          }
+        }
       , "minUtxoDepositCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
       , "minUtxoDepositConstant": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxReferenceScriptsSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxValueSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "extraEntropy": { "$ref": "cardano.json#/definitions/Nonce" }
       , "stakeCredentialDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
@@ -1867,7 +1878,7 @@
       , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
       , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
       , "stakePoolVotingThresholds": { "$ref": "cardano.json#/definitions/StakePoolVotingThresholds" }
-      , "constitutionalCommitteeMinSize": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "constitutionalCommitteeMinSize": { "$ref": "cardano.json#/definitions/UInt16" }
       , "constitutionalCommitteeMaxTermLength": { "$ref": "cardano.json#/definitions/UInt64" }
       , "governanceActionLifetime": { "$ref": "cardano.json#/definitions/Epoch" }
       , "governanceActionDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
@@ -1902,6 +1913,24 @@
     , "properties":
       { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
       , "minFeeConstant": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "minFeeReferenceScripts":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "range", "base", "multiplier" ]
+        , "properties":
+          { "range":
+            { "$ref": "cardano.json#/definitions/UInt32"
+            }
+          , "base":
+            { "type": "number"
+            , "description": "The base cost for the tier-price calculation."
+            }
+          , "multiplier":
+            { "type": "number"
+            , "description": "The multiplier increasing the cost of each tier."
+            }
+          }
+        }
       , "minUtxoDepositCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
       , "minUtxoDepositConstant": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
@@ -1924,8 +1953,9 @@
       , "scriptExecutionPrices": { "$ref": "cardano.json#/definitions/ScriptExecutionPrices" }
       , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
       , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+      , "maxReferenceScriptsSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "stakePoolVotingThresholds": { "$ref": "cardano.json#/definitions/StakePoolVotingThresholds" }
-      , "constitutionalCommitteeMinSize": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "constitutionalCommitteeMinSize": { "$ref": "cardano.json#/definitions/UInt16" }
       , "constitutionalCommitteeMaxTermLength": { "$ref": "cardano.json#/definitions/UInt64" }
       , "governanceActionLifetime": { "$ref": "cardano.json#/definitions/Epoch" }
       , "governanceActionDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
@@ -2593,6 +2623,13 @@
     , "type": "integer"
     , "minimum": 0
     , "maximum": 255
+    }
+
+  , "UInt16":
+    { "title": "UInt16"
+    , "type": "integer"
+    , "minimum": 0
+    , "maximum": 65536
     }
 
   , "UInt32":
