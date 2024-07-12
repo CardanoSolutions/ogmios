@@ -22,6 +22,10 @@ import GHC.Generics
     )
 import Ogmios.Control.Exception
     ( MonadCatch (..)
+    , MonadThrow (..)
+    )
+import Ogmios.Control.MonadAsync
+    ( AsyncCancelled (..)
     )
 import Ogmios.Data.EraTranslation
     ( MultiEraUTxO
@@ -193,6 +197,10 @@ defaultWithInternalError
 defaultWithInternalError reportException opts continue yield toResponse = do
     handle $ \(e :: SomeException) -> do
         let (Rpc.Response _ mirror _) = toResponse (error "unused and unevaluated")
-        reportException e
-        yield $ Rpc.ko opts $ Rpc.internalError mirror (displayException e)
-        continue
+        case fromException e of
+            Just AsyncCancelled ->
+                throwIO e
+            _ -> do
+                yield $ Rpc.ko opts $ Rpc.internalError mirror (displayException e)
+                reportException e
+                continue

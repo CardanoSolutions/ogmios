@@ -156,6 +156,19 @@
               <div class="column col-5 my-2">
                 <span class="chip bg-primary py-1">
                   <svg class="feather mr-2 py-1 s-rounded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  <span style="font-variant: small-caps;">Active clients</span>
+              </div>
+              <div class="column col-5 my-2 text-right">
+                <span id="active-connections">?</span>
+              </div>
+              <div class="column col-1"></div>
+
+              <div class="column col-1"></div>
+              <div class="column col-5 my-2">
+                <span class="chip bg-primary py-1">
+                  <svg class="feather mr-2 py-1 s-rounded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
                   </svg>
                   <span style="font-variant: small-caps;">Last known tip</span>
@@ -194,10 +207,11 @@
               status.classList.add('label-error');
             }
 
-            sel('#last-update').innerText = (health.lastKnownTip || {}).slot || '?';
+            sel('#last-update').innerText = health.lastKnownTip?.slot ?? '?';
             sel('#last-update').setAttribute('data-badge', lastUpdate(health.lastTipUpdate));
             sel('#network-synchronization').setAttribute('data-badge', percentage(health.networkSynchronization));
             sel('#network-synchronization').innerText = health.network;
+            sel('#active-connections').innerText = health.metrics?.activeConnections ?? '?';
             sel('#version').innerText = `－${health.version}`
             all('.era').forEach(era => {
               const currentEra = (health.currentEra || "Byron").toLowerCase();

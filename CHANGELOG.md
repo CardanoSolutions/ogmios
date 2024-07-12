@@ -6,7 +6,7 @@ layout: changelog
 pre: "<b>5. </b>"
 ---
 
-### [6.5.0] - UNRELEASED
+### [6.5.0] - 2024-07-12
 
 ### Added
 
@@ -97,6 +97,8 @@ $$
 #### Changed
 
 - Roll back down to GHC-9.4.8 in an attempt to fix [#399](https://github.com/CardanoSolutions/ogmios/issues/399) possibly caused by a bug in GHC runtime system (possibly patched on 9.4.x).
+
+- Fixed transaction evaluation internal client not being properly terminated and cleaned up after use; resulting in active connections piling up over time. See [#403](https://github.com/CardanoSolutions/ogmios/issues/399).
 
 - Fixed the reported `activeStakeInEpoch` on the `queryLedgerState/rewardsProvenance`, which was mistakenly reporting the `totalStakeInEpoch`. A new value `totalStakeInEpoch` also now correctly reports that information.
 
