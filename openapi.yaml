@@ -1,0 +1,376 @@
+openapi: 3.0.0
+
+servers:
+  - url: http://127.0.0.1:1337/
+
+info:
+  title: HTTP API Reference
+  version: nightly
+  license:
+    name: MPL-2.0
+    url: https://raw.githubusercontent.com/cardanosolutions/ogmios/master/LICENSE
+components:
+  headers: &default-headers
+    Content-Type:
+      schema:
+        type: string
+        enum:
+          - "application/json;charset=utf-8"
+
+  schemas:
+    iso8601DateTime:
+      type: string
+      format: ISO 8601
+      examples:
+        - 2021-03-15T16:16:41.470782977Z
+
+    Health:
+      type: object
+      additionalProperties: false
+      required:
+        - connectionStatus
+        - currentEpoch
+        - currentEra
+        - lastKnownTip
+        - lastTipUpdate
+        - metrics
+        - network
+        - networkSynchronization
+        - slotInEpoch
+        - startTime
+        - version
+      properties:
+        startTime:
+          $ref: "#/components/schemas/iso8601DateTime"
+          description: |
+            Time at which the application was started
+
+        lastKnownTip:
+          type: object
+          description: |
+            Last known tip of the core node.
+          oneOf:
+            - type: object
+              required:
+                - id
+                - slot
+                - height
+              additionalProperties: false
+              properties:
+                id:
+                  type: string
+                  description: |
+                    A block id as a blake2b-256 hash digest of a block header.
+                  pattern: /^[a-f0-9]{32}$/
+                slot:
+                  type: integer
+                  minimum: 0
+                  description: |
+                    The block's slot number (a.k.a block number).
+                height:
+                  type: integer
+                  minimum: 0
+                  description: |
+                    The block's height (a.k.a block number).
+            - type: string
+              enum: [ "origin" ]
+
+        lastTipUpdate:
+          $ref: "#/components/schemas/iso8601DateTime"
+          description: |
+            Date at which the last update was received.
+
+        networkSynchronization:
+          description: |
+            A fixed-precision (5 digits) indicator of how far the node is from the tip of the network.
+          oneOf:
+            - type: number
+              minimum: 0
+              maximum: 1
+            - type: null
+
+        currentEra:
+          description: |
+            Current node's era.
+          oneOf:
+            - type: string
+              enum:
+                - byron
+                - shelley
+                - allegra
+                - mary
+                - alonzo
+                - babbage
+                - conway
+            - type: null
+
+        metrics:
+          type: object
+          description: |
+            Application metrics measured at regular interval.
+          additionalProperties: false
+          required:
+            - runtimeStats
+            - activeConnections
+            - totalConnections
+            - sessionDurations
+            - totalMessages
+            - totalUnrouted
+          properties:
+            runtimeStats:
+              type: object
+              description: |
+                Runtime statistics we're interested in capturing.
+              additionalProperties: false
+              required:
+                - maxHeapSize
+                - currentHeapSize
+                - cpuTime
+                - gcCpuTime
+              properties:
+                maxHeapSize :
+                  type: integer
+                  minimum: 0
+                  description: |
+                    Maximum live data in the heap, in KB
+                currentHeapSize:
+                  type: integer
+                  minimum: 0
+                  description: |
+                    Current live data in the heap, in KB
+                cpuTime:
+                  type: integer
+                  minimum: 0
+                  description: |
+                    Total CPU time (at the previous GC), in ns
+                gcCpuTime:
+                  type: integer
+                  minimum: 0
+                  description: |
+                    Total CPU time used by the GC, in ns
+            activeConnections:
+              type: integer
+              description: |
+                Number of currently active connections
+            totalConnections:
+              type: integer
+              description: |
+                Total connections since the last restart
+            sessionDurations:
+              description: |
+                Statistics about the duration of each session, in ms
+            totalMessages:
+              type: integer
+              description: |
+                Total number of messages processed through websockets
+            totalUnrouted:
+              type: integer
+              description: |
+                Total number of messages which couldn't be routed through the protocol
+
+        connectionStatus :
+          type: string
+          description: |
+            State of the connection with the underlying node. `connected` only
+            appear for HTTP status `200` and `202` whereas `disconnected` would
+            correspond to a status `500`.
+          enum:
+            - connected
+            - disconnected
+
+        currentEpoch:
+          description: |
+            Current known epoch number
+          oneOf:
+            - type: integer
+              minimum: 0
+              examples:
+                - 432
+            - type: null
+
+        slotInEpoch:
+          description: |
+            Relative slot number within the epoch
+          oneOf:
+            - type: integer
+              minimum: 0
+              examples:
+                - 21300
+            - type: null
+
+        network:
+          description: |
+            The network that Ogmios is configured for
+          oneOf:
+            - type: string
+              enum:
+                - mainnet
+                - preview
+                - preprod
+                - sanchonet
+                - catastrophically-broken-testnet
+                - unknown (00000000)
+            - type: null
+
+        version:
+          oneOf:
+            - type: string
+              description: The server version (semver) with a possible commit sha,
+              pattern: /^v[0-9]\.[0-9]\.[0-9]\( ([a-f0-9]{8})\)?$/
+              examples:
+                - v6.5.0 (95c8799a)
+            - type: string
+              pattern: /^nightly\( ([a-f0-9]{8})\)?$/
+              description: The string 'nightly', indicating a build off a development branch.
+              examples:
+                - nightly (95c8799a)
+
+paths:
+  /:
+    get:
+      operationId: getDashboard
+      summary: Dashboard
+      description: |
+        The real-time built-in HTML [dashboard](/getting-started/monitoring/#dashboard) for Ogmios.
+      responses:
+        200:
+          description: |
+            The real-time built-in HTML dashboard for Ogmios.
+
+    post:
+      operationId: jsonRPC
+      summary: JSON-RPC
+      description: |
+        The JSON-RPC entrypoint for HTTP.
+      requestBody:
+        content:
+          "application/json;charset=utf-8":
+            schema:
+              type: object
+              description: |
+                A JSON-RPC request matching the [WebSocket API](../api), as POST data with `application/json` content-type. For example:
+
+                ```json
+                {
+                  "jsonrpc": "2.0",
+                  "method": "queryLedgerState/constitution"
+                }
+                ```
+      responses:
+        200:
+          content:
+            "application/json;charset=utf-8":
+              schema:
+                type: object
+                description: |
+                  A JSON-RPC response matching the [WebSocket API](../api).
+              examples:
+                rpc:
+                  value:
+                    {
+                      "jsonrpc": "2.0",
+                      "method": "queryLedgerState/constitution",
+                      "result": {
+                        "metadata": {
+                          "url": "",
+                          "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+                        },
+                        "guardrails": null
+                      },
+                      "id": null
+                    }
+
+  /health:
+    get:
+      operationId: getHealth
+      summary: Get Health
+      description: |
+        Ogmios' health details. See also [Getting Started - Health/Metrics](/getting-started/monitoring/#health--metrics) for additional information.
+      responses:
+        200:
+          description: |
+            Connected and synchronized.
+          headers: *default-headers
+          content:
+            "application/json;charset=utf-8":
+              schema:
+                $ref: "#/components/schemas/Health"
+
+        202:
+          description: |
+            Connected and far from the network tip.
+          headers: *default-headers
+          content:
+            "application/json;charset=utf-8":
+              schema:
+                $ref: "#/components/schemas/Health"
+
+        500:
+          description: |
+            Disconnected.
+          headers: *default-headers
+          content:
+            "application/json;charset=utf-8":
+              schema:
+                $ref: "#/components/schemas/Health"
+
+  /metrics:
+    get:
+      operationId: getMetrics
+      summary: Get Metrics
+      description: |
+      responses:
+        200:
+          description: |
+            Prometheus metrics. See also [Getting Started - Prometheus Metrics](/getting-started/monitoring/#prometheus-metrics) for additional information.
+          headers: *default-headers
+          content:
+            "text/plain":
+              schema:
+                type: string
+                description: |
+                  A key-value export compatible with Prometheus.
+
+                  - `connected` and `disconnected` status are encoded as `1.0` and `0.0` respectively.
+                  - `tip_at_genesis` is set to `1.0` when the networking tip is unknown / at genesis.
+              examples:
+                rpc:
+                  value: |
+                    # TYPE ogmios_active_connections gauge
+                    ogmios_active_connections  0.0
+
+                    # TYPE ogmios_connected gauge
+                    ogmios_connected  1.0
+
+                    # TYPE ogmios_cpu_time counter
+                    ogmios_cpu_time  0
+
+                    # TYPE ogmios_current_heap_size gauge
+                    ogmios_current_heap_size  0.0
+
+                    # TYPE ogmios_gc_cpu_time counter
+                    ogmios_gc_cpu_time  0
+
+                    # TYPE ogmios_max_heap_size gauge
+                    ogmios_max_heap_size  0.0
+
+                    # TYPE ogmios_session_duration_max gauge
+                    ogmios_session_duration_max  0.0
+
+                    # TYPE ogmios_session_duration_mean gauge
+                    ogmios_session_duration_mean  0.0
+
+                    # TYPE ogmios_session_duration_min gauge
+                    ogmios_session_duration_min  0.0
+
+                    # TYPE ogmios_tip_at_genesis gauge
+                    ogmios_tip_at_genesis 1.0
+
+                    # TYPE ogmios_total_connections counter
+                    ogmios_total_connections  0
+
+                    # TYPE ogmios_total_messages counter
+                    ogmios_total_messages  0
+
+                    # TYPE ogmios_total_unrouted counter
+                    ogmios_total_unrouted  0
