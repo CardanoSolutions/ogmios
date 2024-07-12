@@ -1,0 +1,45 @@
+{{ partial "header.html" . }}
+{{ partial "openapi-header.html" . }}
+<style>
+  #body #body-inner {
+    padding: 0;
+  }
+
+  #navigation,
+  div#body-inner > h1,
+  div#head-tags,
+  #operations > ul > li div.panel-item--center > div:nth-child(3) {
+    display: none;
+  }
+
+  table,
+  table tr td {
+    border: unset !important;
+  }
+
+  ul[role='menu'] ~ div {
+    display: none;
+  }
+</style>
+<redoc id="redoc-container"></redoc>
+<script>
+  Redoc.init(`/openapi.yaml`, {
+    disableSearch: true,
+    hideDownloadButton: true,
+    hideRequestPayloadSample: true,
+    simpleOneOfTypeLabel: true,
+    expandResponses: '200,201',
+    theme: {
+      logo: {
+        gutter: '2rem',
+      },
+      sidebar: {
+        width: '0px',
+      },
+      rightPanel: {
+        width: '45%',
+      }
+    }
+  }, document.getElementById('redoc-container'));
+</script>
+{{ partial "footer.html" . }}

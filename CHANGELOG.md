@@ -1,9 +1,9 @@
 ---
 title: "Changelog"
-weight: 5
+weight: 6
 chapter: false
 layout: changelog
-pre: "<b>5. </b>"
+pre: "<b>6. </b>"
 math: true
 ---
 
