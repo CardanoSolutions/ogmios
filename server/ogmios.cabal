@@ -5,7 +5,7 @@ cabal-version: 3.0
 -- see: https://github.com/sol/hpack
 
 name:           ogmios
-version:        0
+version:        6.5.0
 synopsis:       A JSON/RPC-2.0 WebSocket client for cardano-node
 description:    Please see the README on GitHub at <https://github.com/cardanosolutions/ogmios/tree/master/server#ogmios-server>
 category:       Web
