@@ -9,7 +9,7 @@ math: true
 
 ### [6.5.0] - 2024-07-12
 
-### Added
+#### Added
 
 - Integrated with `cardano-node==9.0.0`.
 
