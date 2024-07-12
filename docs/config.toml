@@ -9,10 +9,17 @@ theme = "learn"
 [outputs]
   home = [ "HTML", "RSS", "JSON"]
 
-# For rendering HTML directly in markdown
-[markup.goldmark.renderer]
-  unsafe = true
-
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      # For rendering HTML directly in markdown
+      unsafe = true
+    [markup.goldmark.extensions]
+      [markup.goldmark.extensions.passthrough]
+        enable = true
+        [markup.goldmark.extensions.passthrough.delimiters]
+          block = [['$$', '$$']]
+          inline = [['$', '$']]
 [params]
   # Prefix URL to edit current page. Will display an "Edit this page" button on top right hand corner of every page.
   # Useful to give opportunity to people to create merge request for your doc.
@@ -77,6 +84,6 @@ theme = "learn"
   weight = 104
 
 [Languages]
-[Languages.en]
+[Languages.en.params]
   landingPageURL = "/"
   landingPageName = "<i class='fas fa-home'></i> Overview"

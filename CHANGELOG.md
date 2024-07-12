@@ -4,6 +4,7 @@ weight: 5
 chapter: false
 layout: changelog
 pre: "<b>5. </b>"
+math: true
 ---
 
 ### [6.5.0] - 2024-07-12
@@ -55,7 +56,10 @@ $$
   <tr>
   <td>$[    0;  25600[$</td>
   <td>$44.000$</td>
-  <td rowspan=6><a href="https://www.geogebra.org/graphing/x2aa47uu"><img src="./docs/static/referenceScriptsTierFee.png"></a></td>
+  <td rowspan=6 align="center">
+    <img src="https://raw.githubusercontent.com/CardanoSolutions/ogmios/master/docs/static/referenceScriptsTierFee.png">
+    <a target="_blank" align="center" href="https://www.geogebra.org/graphing/x2aa47uu">See online calculator</a>
+  </td>
   </tr>
   <tr>
   <td>$[25600; 51200[$</td>
