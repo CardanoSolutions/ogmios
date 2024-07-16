@@ -111,7 +111,7 @@ queryLedgerState             | Information
 `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
 `rewardAccountSummaries`     | Current delegation settings and rewards of chosen reward accounts.
 `rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
-`stakePools`                 | The list of all currently registered and active stake pools with their current parameters. This query can be made with or without specifying list of target stakePools. When no stake pools are provided in the parameter, query returns list of all stake pools and their parameters in node. 
+`stakePools`                 | The list of all currently registered and active stake pools with their current parameters. This query can be made with or without specifying list of target `stakePools`. When no stake pools are provided as parameter, the query returns the list of all stake pools and their parameters from the node. 
 `tip`                        | The current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger.
 `treasuryAndReserves`        | The Ada value of the treasury and reserves of the protocol.
 `utxo`                       | Current UTXO, possibly filtered by output reference.
