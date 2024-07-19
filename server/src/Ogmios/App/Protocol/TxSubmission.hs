@@ -600,9 +600,9 @@ mkEvaluateTransactionResponse callback (UTxO networkUtxo) args =
                   \to convince the compiler of this."
         Just (UTxO userProvidedUtxo, tx) ->
             let
-                intersection = Map.intersection userProvidedUtxo networkUtxo
+                intersection = Map.intersectionWith (==) userProvidedUtxo networkUtxo
             in
-                if null intersection
+                if all intersection
                 then
                     callback (UTxO $ userProvidedUtxo <> networkUtxo) tx
                 else
