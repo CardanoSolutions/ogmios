@@ -148,9 +148,11 @@ tests:
     - cardano-ledger-alonzo
     - cardano-ledger-alonzo:testlib
     - cardano-ledger-api
+    - cardano-ledger-babbage
     - cardano-ledger-binary
     - cardano-ledger-conway:testlib
     - cardano-ledger-core
+    - cardano-ledger-mary
     - cardano-ledger-shelley
     - cardano-slotting
     - containers

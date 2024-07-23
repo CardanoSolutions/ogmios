@@ -33,6 +33,10 @@ module Ogmios.App.Protocol.TxSubmission
     , mkTxSubmissionClient
     , newExecutionUnitsEvaluator
     , TraceTxSubmission (..)
+
+    -- Internal
+    , SomeEvaluationInAnyEra (..)
+    , newEvaluateTransactionResponse
     ) where
 
 import Ogmios.Prelude
@@ -509,7 +513,8 @@ newExecutionUnitsEvaluator tr = do
              in LSQ.SendMsgQuery query $ LSQ.ClientStQuerying
                 { LSQ.recvMsgResult = \case
                     Right networkUtxo -> do
-                        reply $! mkEvaluateTransactionResponse @era callback networkUtxo args
+                        reply $! newEvaluateTransactionResponse @era
+                            callback EvaluationFailure networkUtxo args
                         pure (LSQ.SendMsgRelease clientStIdle)
                     Left{} ->
                         pure $ reAcquire args
@@ -578,17 +583,17 @@ inputsInAnyEra (SomeEvaluationInAnyEra _ tx) =
     <>
     tx ^. bodyTxL . referenceInputsTxBodyL
 
-mkEvaluateTransactionResponse
-    :: forall era crypto block.
+newEvaluateTransactionResponse
+    :: forall era crypto result.
         ( CanEvaluateScriptsInEra era
-        , crypto ~ BlockCrypto block
         , crypto ~ EraCrypto era
         )
-    => (UTxO era -> Tx era -> EvaluateTransactionResponse block)
+    => (UTxO era -> Tx era -> result)
+    -> (EvaluateTransactionError crypto -> result)
     -> UTxO era -- ^ Utxo fetched from the network
     -> SomeEvaluationInAnyEra crypto -- ^ Tx & additional utxo
-    -> EvaluateTransactionResponse block
-mkEvaluateTransactionResponse callback (UTxO networkUtxo) args =
+    -> result
+newEvaluateTransactionResponse callback onError (UTxO networkUtxo) args =
     case translateToNetworkEra @era args of
         Nothing ->
             error "impossible: arguments are not translatable to network era. \
@@ -600,16 +605,16 @@ mkEvaluateTransactionResponse callback (UTxO networkUtxo) args =
                   \to convince the compiler of this."
         Just (UTxO userProvidedUtxo, tx) ->
             let
-                intersection = Map.intersection userProvidedUtxo networkUtxo
+                intersection = Map.intersectionWith (==) userProvidedUtxo networkUtxo
             in
-                if null intersection
+                if and intersection
                 then
                     callback (UTxO $ userProvidedUtxo <> networkUtxo) tx
                 else
                     intersection
-                    & Map.keysSet
-                    & OverlappingAdditionalUtxo
-                    & EvaluationFailure
+                        & Map.keysSet
+                        & OverlappingAdditionalUtxo
+                        & onError
 
 -- | 99% of the time, we only need to worry about one era: the current one; yet, near hard-forks,
 -- there is a time where the application needs to be compatible with both the current era and the
