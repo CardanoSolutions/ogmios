@@ -284,6 +284,7 @@ test-suite unit
       Ogmios.App.Protocol.ChainSyncSpec
       Ogmios.App.Protocol.StateQuerySpec
       Ogmios.App.Protocol.TxMonitorSpec
+      Ogmios.App.Protocol.TxSubmissionSpec
       Ogmios.App.ProtocolSpec
       Ogmios.Data.HealthSpec
       Ogmios.Data.JsonSpec
@@ -348,9 +349,11 @@ test-suite unit
     , cardano-ledger-alonzo
     , cardano-ledger-alonzo:testlib
     , cardano-ledger-api
+    , cardano-ledger-babbage
     , cardano-ledger-binary
     , cardano-ledger-conway:testlib
     , cardano-ledger-core
+    , cardano-ledger-mary
     , cardano-ledger-shelley
     , cardano-slotting
     , containers
