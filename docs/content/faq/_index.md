@@ -143,7 +143,7 @@ We've heard of a handful happy users! And it keeps growing!
   <td><a target="_blank" href="https://indigoprotocol.io"><img src="https://avatars.githubusercontent.com/u/86611411" /></a></td>
   <td><a target="_blank" href="https://vacuumlabs.com/"><img src="https://avatars.githubusercontent.com/u/6526075" /></a></td>
   <td><a target="_blank" href="https://labs.mutant-nft.com/"><img src="https://avatars.githubusercontent.com/u/95879916" /></a></td>
-  <td><a target="_blank" href="https://app.dexhunter.io/trends"><img width=100 height=100 src="https://www.dexhunter.io/_next/static/media/logo.035e4384.svg" /></a></td>
+  <td><a target="_blank" href="https://app.dexhunter.io/trends"><img width=100 height=100 src="https://storage.googleapis.com/dexhunter-images/public/hunt-token.svg" /></a></td>
 </tr><tr>
   <td><a target="_blank" href="https://www.geniusyield.co/">Genius Yield</a></td>
   <td><a target="_blank" href="https://rosen.tech/">Rosen Bridge</a></td>
@@ -154,18 +154,18 @@ We've heard of a handful happy users! And it keeps growing!
   <td><a target="_blank" href="https://app.dexhunter.io/trends">Dex Hunter</a></td>
 </tr><tr>
   <td><a target="_blank" href="https://nescrow.xyz/"><img src="https://nescrow.xyz/crow.svg"/></a></td>
-  <td><a target="_blank" href="https://danogo.io/"><img src="https://pbs.twimg.com/profile_images/1658288019718406145/AAh0J4QI_400x400.jpg"/></a></td>
+  <td><a target="_blank" href="https://danogo.io/"><img src="https://pbs.twimg.com/profile_images/1792823623423823872/7VshCXVW_400x400.jpg"/></a></td>
   <td><a target="_blank" href="https://www.veralidity.com"><img src="https://avatars.githubusercontent.com/u/127054855"/></a></td>
   <td><a target="_blank" href="https://multichain.org/"><img src="https://avatars.githubusercontent.com/u/67252237"/></a></td>
   <td><a target="_blank" href="https://tosidrop.io/"><img src="https://avatars.githubusercontent.com/u/100535151"/></a></td>
-  <td><a target="_blank" href="https://asterium.dev/"><img src="https://avatars.githubusercontent.com/u/96011175"/></a></td>
+  <td><a target="_blank" href="https://wayup.io"><img src="https://pbs.twimg.com/profile_images/1659615521933803546/5Xa09TWY_400x400.jpg"/></a></td>
 </tr><tr>
   <td><a target="_blank" href="https://nescrow.xyz/">Nescrow</a></td>
   <td><a target="_blank" href="https://danogo.io/">Danogo</a></td>
   <td><a target="_blank" href="https://www.veralidity.com">Veralidity</a></td>
   <td><a target="_blank" href="https://multichain.org/">Multichain</a></td>
   <td><a target="_blank" href="https://tosidrop.io/">TosiDrop</a></td>
-  <td><a target="_blank" href="https://asterium.dev/">Asterium</a></td>
+  <td><a target="_blank" href="https://wayup.io">Wayup</a></td>
 </tr>
 </table>
 
