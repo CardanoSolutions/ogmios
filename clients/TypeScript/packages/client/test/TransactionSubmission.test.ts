@@ -151,7 +151,7 @@ describe('TransactionSubmission', () => {
           },
           budget: {
             memory: 15694,
-            cpu: 5134808
+            cpu: 3776833
           }
         }])
       })
@@ -206,7 +206,7 @@ describe('TransactionSubmission', () => {
           },
           budget: {
             memory: 15694,
-            cpu: 5134808
+            cpu: 3776833
           }
         }])
       })

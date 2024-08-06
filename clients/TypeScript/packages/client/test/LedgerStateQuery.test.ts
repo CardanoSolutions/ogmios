@@ -108,7 +108,7 @@ describe('Local state queries', () => {
       expect(bound.slot).toBeDefined()
 
       const eraSummaries = await client.eraSummaries()
-      expect(eraSummaries).toHaveLength(6)
+      expect(eraSummaries).toHaveLength(7)
 
       const byronGenesis = await client.genesisConfiguration('byron')
       expect((byronGenesis as GenesisByron).initialVouchers).toBeDefined()
@@ -318,7 +318,7 @@ describe('Local state queries', () => {
     describe('eraSummaries', () => {
       it('can fetch era summaries for slotting arithmetic', async () => {
         const eraSummaries = await LedgerStateQuery.eraSummaries(context)
-        expect(eraSummaries).toHaveLength(6)
+        expect(eraSummaries).toHaveLength(7)
         eraSummaries.forEach(s => {
           expect(s.start).toBeDefined()
           expect(s.end).toBeDefined()
