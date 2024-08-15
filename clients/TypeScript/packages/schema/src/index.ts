@@ -562,6 +562,10 @@ export interface Transaction {
     [k: string]: Datum;
   };
   redeemers?: Redeemer[];
+  treasury?: {
+    value?: ValueAdaOnly;
+    donation?: ValueAdaOnly;
+  };
   /**
    * The raw serialized (CBOR) transaction, as found on-chain. Use --include-transaction-cbor to ALWAYS include the 'cbor' field. Omitted otherwise.
    */

@@ -821,7 +821,16 @@ encodeTxBody opts x scripts =
         (Cn.ctbProposalProcedures x) <>
     "votes" .=? OmitWhen (null . Cn.unVotingProcedures)
         encodeVotingProcedures
-        (Cn.ctbVotingProcedures x)
+        (Cn.ctbVotingProcedures x) <>
+    "treasury" .=? OmitWhen (\_ -> isSJust (Cn.ctbCurrentTreasuryValue x) || Cn.ctbTreasuryDonation x /= mempty)
+        identity
+        (encodeObject
+            ( "value" .=? OmitWhenNothing
+                encodeCoin (Cn.ctbCurrentTreasuryValue x)
+           <> "donation" .=? OmitWhen (== mempty)
+                encodeCoin (Cn.ctbTreasuryDonation x)
+            )
+        )
 
 encodeTxCert
     :: forall era.

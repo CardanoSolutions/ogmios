@@ -2555,6 +2555,14 @@
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Redeemer" }
         }
+      , "treasury":
+        { "type": "object"
+        , "additionalProperties": false
+        , "properties":
+          { "value": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+          , "donation": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+          }
+        }
       , "cbor":
         { "type": "string"
         , "contentEncoding": "base16"
