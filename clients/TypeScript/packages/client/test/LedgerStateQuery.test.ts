@@ -135,6 +135,13 @@ describe('Local state queries', () => {
       const stakeDistribution = await client.liveStakeDistribution()
       expect(Object.values(stakeDistribution)[0].stake).toBeDefined()
 
+      const stakePools = await client.stakePools()
+      const [a, b, ..._rest] = Object.keys(stakePools)
+      const stakePoolsFiltered = await client.stakePools([{ id: a }, { id: b }])
+      expect(Object.keys(stakePoolsFiltered).length).toBe(2)
+      expect(stakePoolsFiltered[a]).toBeDefined()
+      expect(stakePoolsFiltered[b]).toBeDefined()
+
       const utxoSet = await client.utxo({
         addresses: [
           'addr_test1vp8cprhse9pnnv7f4l3n6pj0afq2hjm6f7r2205dz0583egagfjah'
@@ -292,6 +299,7 @@ describe('Local state queries', () => {
       it('Fetches some stake pools', async () => {
         const [a, b, ..._rest] = Object.keys(await LedgerStateQuery.stakePools(context))
         const pools = await LedgerStateQuery.stakePools(context, [{ id: a }, { id: b }])
+        expect(Object.keys(pools).length).toBe(2)
         expect(pools[a]).toBeDefined()
         expect(pools[b]).toBeDefined()
       })
