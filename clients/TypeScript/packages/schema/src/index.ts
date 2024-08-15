@@ -805,12 +805,22 @@ export interface GovernanceProposal {
     | GovernanceActionNoConfidence
     | GovernanceActionInformation;
 }
+/**
+ * The 'ancestor' is a reference to the previous governance action of this group. It is optional for the first one and required after so that they all actions of a same group form a chain.
+ */
 export interface GovernanceActionProtocolParametersUpdate {
   type: "protocolParametersUpdate";
+  ancestor?: GovernanceProposalReference;
   parameters: ProposedProtocolParameters;
   guardrails: null | {
     hash: DigestBlake2B224;
   };
+}
+export interface GovernanceProposalReference {
+  transaction: {
+    id: TransactionId;
+  };
+  index: UInt32;
 }
 export interface ProposedProtocolParameters {
   minFeeCoefficient?: UInt64;
@@ -908,6 +918,7 @@ export interface ProtocolVersion {
 }
 export interface GovernanceActionHardForkInitiation {
   type: "hardForkInitiation";
+  ancestor?: GovernanceProposalReference;
   version: ProtocolVersion;
 }
 /**
@@ -941,10 +952,11 @@ export interface ValueDelta {
   };
 }
 /**
- * A change (partial or total) in the constitutional committee.
+ * A change (partial or total) in the constitutional committee. The 'ancestor' is a reference to the previous governance action of this group (also includes no confidence actions in this case). It is optional for the first one and required after so that they all actions of a same group form a chain.
  */
 export interface GovernanceActionConstitutionalCommittee {
   type: "constitutionalCommittee";
+  ancestor?: GovernanceProposalReference;
   members: {
     added: ConstitutionalCommitteeMemberSummary[];
     removed: {
@@ -961,20 +973,22 @@ export interface Mandate {
   epoch: Epoch;
 }
 /**
- * A change in the constitution. Only its hash is recorded on-chain.
+ * A change in the constitution. Only its hash is recorded on-chain. The 'ancestor' is a reference to the previous governance action of this group. It is optional for the first one and required after so that they all actions of a same group form a chain.
  */
 export interface GovernanceActionConstitution {
   type: "constitution";
+  ancestor?: GovernanceProposalReference;
   guardrails: null | {
     hash: DigestBlake2B224;
   };
   metadata: Anchor;
 }
 /**
- * A motion of no-confidence, indicate a lack of trust in the constitutional committee.
+ * A motion of no-confidence, indicate a lack of trust in the constitutional committee. The 'ancestor' is a reference to the previous governance action of this group. It is optional for the first one and required after so that they all actions of a same group form a chain.
  */
 export interface GovernanceActionNoConfidence {
   type: "noConfidence";
+  ancestor?: GovernanceProposalReference;
 }
 /**
  * An action that has no effect on-chain, other than an on-chain record
@@ -1006,12 +1020,6 @@ export interface VoterDelegateRepresentative {
 export interface VoterStakePoolOperator {
   role: "stakePoolOperator";
   id: StakePoolId;
-}
-export interface GovernanceProposalReference {
-  transaction: {
-    id: TransactionId;
-  };
-  index: UInt32;
 }
 export interface Metadata {
   hash: DigestBlake2B256;

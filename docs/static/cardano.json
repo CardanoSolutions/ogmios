@@ -1185,12 +1185,16 @@
     { "oneOf":
       [ { "title": "GovernanceAction<ProtocolParametersUpdate>"
         , "type": "object"
+        , "description": "The 'ancestor' is a reference to the previous governance action of this group. It is optional for the first one and required after so that they all actions of a same group form a chain."
         , "additionalProperties": false
         , "required": [ "type", "parameters", "guardrails" ]
         , "properties":
           { "type":
             { "type": "string"
             , "enum": [ "protocolParametersUpdate" ]
+            }
+          , "ancestor":
+            { "$ref": "cardano.json#/definitions/GovernanceProposalReference"
             }
           , "parameters":
             { "$ref": "cardano.json#/definitions/ProposedProtocolParameters"
@@ -1217,6 +1221,9 @@
           { "type":
             { "type": "string"
             , "enum": [ "hardForkInitiation" ]
+            }
+          , "ancestor":
+            { "$ref": "cardano.json#/definitions/GovernanceProposalReference"
             }
           , "version":
             { "$ref": "cardano.json#/definitions/ProtocolVersion"
@@ -1275,13 +1282,16 @@
         }
       , { "type": "object"
         , "title": "GovernanceAction<ConstitutionalCommittee>"
-        , "description": "A change (partial or total) in the constitutional committee."
+        , "description": "A change (partial or total) in the constitutional committee. The 'ancestor' is a reference to the previous governance action of this group (also includes no confidence actions in this case). It is optional for the first one and required after so that they all actions of a same group form a chain."
         , "additionalProperties": false
         , "required": [ "type", "members", "quorum" ]
         , "properties":
           { "type":
             { "type": "string"
             , "enum": [ "constitutionalCommittee" ]
+            }
+          , "ancestor":
+            { "$ref": "cardano.json#/definitions/GovernanceProposalReference"
             }
           , "members":
             { "type": "object"
@@ -1314,13 +1324,16 @@
         }
       , { "type": "object"
         , "title": "GovernanceAction<Constitution>"
-        , "description": "A change in the constitution. Only its hash is recorded on-chain."
+        , "description": "A change in the constitution. Only its hash is recorded on-chain. The 'ancestor' is a reference to the previous governance action of this group. It is optional for the first one and required after so that they all actions of a same group form a chain."
         , "additionalProperties": false
         , "required": [ "type", "metadata", "guardrails" ]
         , "properties":
           { "type":
             { "type": "string"
             , "enum": [ "constitution" ]
+            }
+          , "ancestor":
+            { "$ref": "cardano.json#/definitions/GovernanceProposalReference"
             }
           , "guardrails":
             { "oneOf":
@@ -1341,13 +1354,16 @@
         }
       , { "type": "object"
         , "title": "GovernanceAction<NoConfidence>"
-        , "description": "A motion of no-confidence, indicate a lack of trust in the constitutional committee."
+        , "description": "A motion of no-confidence, indicate a lack of trust in the constitutional committee. The 'ancestor' is a reference to the previous governance action of this group. It is optional for the first one and required after so that they all actions of a same group form a chain."
         , "additionalProperties": false
         , "required": [ "type" ]
         , "properties":
           { "type":
             { "type": "string"
             , "enum": [ "noConfidence" ]
+            }
+          , "ancestor":
+            { "$ref": "cardano.json#/definitions/GovernanceProposalReference"
             }
           }
         }

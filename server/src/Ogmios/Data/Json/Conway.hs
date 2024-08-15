@@ -428,19 +428,23 @@ encodeGovAction
     => Cn.GovAction (ConwayEra crypto)
     -> Json
 encodeGovAction = \case
-    Cn.ParameterChange _prevGovActionId pparamsUpdate guardrails ->
+    Cn.ParameterChange ancestor pparamsUpdate guardrails ->
         encodeObject
             ( "type" .=
                 encodeText "protocolParametersUpdate"
+           <> "ancestor" .=? OmitWhenNothing
+                (encodeGovActionId . Cn.unGovPurposeId) ancestor
            <> "parameters" .=
                 encodePParamsUpdate pparamsUpdate
            <> "guardrails" .=
                 encodeStrictMaybe (\s -> encodeObject ("hash" .= Shelley.encodeScriptHash s)) guardrails
             )
-    Cn.HardForkInitiation _prevGovActionId version ->
+    Cn.HardForkInitiation ancestor version ->
         encodeObject
             ( "type" .=
                 encodeText "hardForkInitiation"
+           <> "ancestor" .=? OmitWhenNothing
+               (encodeGovActionId . Cn.unGovPurposeId) ancestor
            <> "version" .=
                 Shelley.encodeProtVer version
             )
@@ -453,10 +457,12 @@ encodeGovAction = \case
            <> "guardrails" .=
                 encodeStrictMaybe (\s -> encodeObject ("hash" .= Shelley.encodeScriptHash s)) guardrails
             )
-    Cn.UpdateCommittee _prevGovActionId removed added quorum ->
+    Cn.UpdateCommittee ancestor removed added quorum ->
         encodeObject
             ( "type" .=
                 encodeText "constitutionalCommittee"
+           <> "ancestor" .=? OmitWhenNothing
+                (encodeGovActionId . Cn.unGovPurposeId) ancestor
            <> "members" .= encodeObject
                 ( "added" .=
                     encodeMapAsList (\k -> encodeConstitutionalCommitteeMember k . SJust) added
@@ -466,16 +472,20 @@ encodeGovAction = \case
            <> "quorum" .=
                 encodeUnitInterval quorum
             )
-    Cn.NewConstitution _prevGovActionId constitution  ->
+    Cn.NewConstitution ancestor constitution  ->
         encodeObject
             ( "type" .=
                 encodeText "constitution"
+           <> "ancestor" .=? OmitWhenNothing
+               (encodeGovActionId . Cn.unGovPurposeId) ancestor
            <> encodeConstitution constitution
             )
-    Cn.NoConfidence  _prevGovActionId ->
+    Cn.NoConfidence ancestor ->
         encodeObject
             ( "type" .=
                 encodeText "noConfidence"
+           <> "ancestor" .=? OmitWhenNothing
+                (encodeGovActionId . Cn.unGovPurposeId) ancestor
             )
     Cn.InfoAction ->
         encodeObject
