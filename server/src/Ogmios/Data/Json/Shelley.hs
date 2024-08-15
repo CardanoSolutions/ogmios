@@ -176,9 +176,20 @@ encodeConstitutionalDelegCert (Sh.GenesisDelegCert key delegate vrf) =
 
 encodeCredential
     :: forall any crypto. (any :\: 'StakePool, Crypto crypto)
+    => Text
+    -> Ledger.Credential any crypto
+    -> Series
+encodeCredential k x = case x of
+    Ledger.KeyHashObj h ->
+        "from" .= "verificationKey" <> k .= encodeKeyHash h
+    Ledger.ScriptHashObj h ->
+        "from" .= "script" <> k .= encodeScriptHash h
+
+encodeCredentialRaw
+    :: forall any crypto. (any :\: 'StakePool, Crypto crypto)
     => Ledger.Credential any crypto
     -> Json
-encodeCredential x = case x of
+encodeCredentialRaw x = case x of
     Ledger.KeyHashObj h -> encodeKeyHash h
     Ledger.ScriptHashObj h -> encodeScriptHash h
 
@@ -206,8 +217,7 @@ encodeTxCert = \case
         ( SJust
             ( "type" .=
                 encodeText "stakeCredentialRegistration" <>
-              "credential" .=
-                  encodeCredential credential
+              "credential" `encodeCredential` credential
             )
         , []
         )
@@ -215,8 +225,7 @@ encodeTxCert = \case
         ( SJust
             ( "type" .=
                 encodeText "stakeCredentialDeregistration" <>
-              "credential" .=
-                encodeCredential credential
+              "credential" `encodeCredential` credential
             )
         , []
         )
@@ -224,8 +233,7 @@ encodeTxCert = \case
         ( SJust
             ( "type" .=
                 encodeText "stakeDelegation" <>
-              "credential" .=
-                  encodeCredential delegator <>
+              "credential" `encodeCredential` delegator <>
               "stakePool" .= encodeObject
                   ( "id" .=
                       encodePoolId delegatee

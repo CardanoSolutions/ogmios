@@ -59,6 +59,7 @@ export type Certificate =
   | DelegateRepresentativeRegistration
   | DelegateRepresentativeUpdate
   | DelegateRepresentativeRetirement;
+export type CredentialOrigin = "verificationKey" | "script";
 /**
  * A Blake2b 32-byte hash digest of a pool's verification key.
  */
@@ -88,6 +89,7 @@ export type ConstitutionalCommitteeDelegate =
   | {
       status: "authorized";
       id: DigestBlake2B224;
+      from: CredentialOrigin;
     }
   | {
       status: "resigned";
@@ -642,6 +644,7 @@ export interface Plutus {
  */
 export interface StakeDelegation {
   type: "stakeDelegation";
+  from: CredentialOrigin;
   credential: DigestBlake2B224;
   stakePool?: {
     id: StakePoolId;
@@ -650,6 +653,7 @@ export interface StakeDelegation {
 }
 export interface DelegateRepresentativeRegistered {
   id: DigestBlake2B224;
+  from: CredentialOrigin;
   type: "registered";
 }
 export interface DelegateRepresentativeNoConfidence {
@@ -669,6 +673,7 @@ export interface DelegateRepresentativeAbstain {
  */
 export interface StakeCredentialRegistration {
   type: "stakeCredentialRegistration";
+  from: CredentialOrigin;
   credential: DigestBlake2B224;
   deposit?: ValueAdaOnly;
 }
@@ -677,6 +682,7 @@ export interface StakeCredentialRegistration {
  */
 export interface StakeCredentialDeregistration {
   type: "stakeCredentialDeregistration";
+  from: CredentialOrigin;
   credential: DigestBlake2B224;
   deposit?: ValueAdaOnly;
 }
@@ -744,6 +750,7 @@ export interface ConstitutionalCommitteeDelegation {
   type: "constitutionalCommitteeDelegation";
   member: {
     id: DigestBlake2B224;
+    from: CredentialOrigin;
   };
   delegate: ConstitutionalCommitteeDelegate;
 }
@@ -754,6 +761,7 @@ export interface ConstitutionalCommitteeRetirement {
   type: "constitutionalCommitteeRetirement";
   member: {
     id: DigestBlake2B224;
+    from: CredentialOrigin;
   };
   metadata?: Anchor;
 }
@@ -961,12 +969,14 @@ export interface GovernanceActionConstitutionalCommittee {
     added: ConstitutionalCommitteeMemberSummary[];
     removed: {
       id: DigestBlake2B224;
+      from: CredentialOrigin;
     }[];
   };
   quorum: Ratio;
 }
 export interface ConstitutionalCommitteeMemberSummary {
   id: DigestBlake2B224;
+  from: CredentialOrigin;
   mandate?: Mandate;
 }
 export interface Mandate {
@@ -1008,14 +1018,17 @@ export interface GovernanceVote {
 export interface VoterGenesisDelegate {
   role: "genesisDelegate";
   id: DigestBlake2B224;
+  from: CredentialOrigin;
 }
 export interface VoterConstitutionalCommittee {
   role: "constitutionalCommittee";
   id: DigestBlake2B224;
+  from: CredentialOrigin;
 }
 export interface VoterDelegateRepresentative {
   role: "delegateRepresentative";
   id: DigestBlake2B224;
+  from: CredentialOrigin;
 }
 export interface VoterStakePoolOperator {
   role: "stakePoolOperator";
@@ -1742,6 +1755,7 @@ export interface SubmitTransactionFailureCredentialAlreadyRegistered {
   message: string;
   data: {
     knownCredential: DigestBlake2B224;
+    from: CredentialOrigin;
   };
 }
 /**
@@ -1752,6 +1766,7 @@ export interface SubmitTransactionFailureUnknownCredential {
   message: string;
   data: {
     unknownCredential: DigestBlake2B224;
+    from: CredentialOrigin;
   };
 }
 /**
@@ -1828,6 +1843,7 @@ export interface SubmitTransactionFailureUnknownConstitutionalCommitteeMember {
   data: {
     unknownConstitutionalCommitteeMember: {
       id: DigestBlake2B224;
+      from: CredentialOrigin;
     };
   };
 }
@@ -1851,6 +1867,7 @@ export interface SubmitTransactionFailureConflictingCommitteeUpdate {
   data: {
     conflictingMembers: {
       id: DigestBlake2B224;
+      from: CredentialOrigin;
     }[];
   };
 }
@@ -1863,6 +1880,7 @@ export interface SubmitTransactionFailureInvalidCommitteeUpdate {
   data: {
     alreadyRetiredMembers: {
       id: DigestBlake2B224;
+      from: CredentialOrigin;
     }[];
   };
 }
@@ -2334,6 +2352,7 @@ export interface QueryLedgerStateConstitutionalCommitteeResponse {
  */
 export interface ConstitutionalCommitteeMember {
   id: DigestBlake2B224;
+  from: CredentialOrigin;
   /**
    * A member status. 'active' indicates that this member vote will count during the ratification of the ongoing epoch. 'unrecognized' means that some hot credential currently points to a non-existing (or no longer existing) member.
    */

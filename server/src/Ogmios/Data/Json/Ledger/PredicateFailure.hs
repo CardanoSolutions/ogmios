@@ -676,8 +676,7 @@ encodePredicateFailure reject = \case
             \'data.knownCredential' points to an already known credential that's being re-registered \
             \by this transaction."
             (pure $ encodeObject
-                ( "knownCredential" .=
-                    Shelley.encodeCredential knownCredential
+                ( "knownCredential" `Shelley.encodeCredential` knownCredential
                 )
             )
 
@@ -689,8 +688,7 @@ encodePredicateFailure reject = \case
             \retro-actively. The field 'data.unknownCredential' indicates what credential is used \
             \without being registered."
             (pure $ encodeObject
-                ( "unknownCredential" .=
-                    Shelley.encodeCredential unknownCredential
+                ( "unknownCredential" `Shelley.encodeCredential` unknownCredential
                 )
             )
 
@@ -726,7 +724,7 @@ encodePredicateFailure reject = \case
             \'data.marginalizedCredentials' lists all the affected credentials."
             (pure $ encodeObject
                 ( "marginalizedCredentials" .=
-                    encodeFoldable Shelley.encodeCredential marginalizedCredentials
+                    encodeFoldable Shelley.encodeCredentialRaw marginalizedCredentials
                 )
             )
 

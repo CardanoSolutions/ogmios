@@ -136,8 +136,7 @@ encodeConstitutionalCommitteeMemberState
     -> Cn.CommitteeMemberState crypto
     -> Json
 encodeConstitutionalCommitteeMemberState memberId st = encodeObject
-    ( "id" .=
-        Shelley.encodeCredential memberId
+    ( "id" `Shelley.encodeCredential` memberId
    <> "delegate" .=
         encodeHotCredAuthStatus (Cn.cmsHotCredAuthStatus st)
    <> "status" .=
@@ -170,7 +169,7 @@ encodeHotCredAuthStatus = \case
     Cn.MemberAuthorized hot ->
         encodeObject
             ( "status" .= encodeText "authorized"
-           <> "id" .= Shelley.encodeCredential hot
+           <> "id" `Shelley.encodeCredential` hot
             )
     Cn.MemberResigned anchor ->
         encodeObject
@@ -266,7 +265,7 @@ encodeConstitutionalCommitteeMember
     -> Json
 encodeConstitutionalCommitteeMember memberId mandate =
     encodeObject
-        ( "id" .= Shelley.encodeCredential memberId
+        ( "id" `Shelley.encodeCredential` memberId
        <> "mandate" .=? OmitWhenNothing
             (encodeSingleton "epoch" . encodeEpochNo) mandate
         )
@@ -332,38 +331,33 @@ encodeDelegCert = \case
     Cn.ConwayRegCert credential deposit ->
         ( "type" .=
             encodeText "stakeCredentialRegistration"
-       <> "credential" .=
-            Shelley.encodeCredential credential
+       <> "credential" `Shelley.encodeCredential` credential
        <> "deposit" .=? OmitWhenNothing
             encodeCoin deposit
         ) :| []
     Cn.ConwayUnRegCert credential deposit ->
         ( "type" .=
             encodeText "stakeCredentialDeregistration"
-        <> "credential" .=
-            Shelley.encodeCredential credential
+        <> "credential" `Shelley.encodeCredential` credential
         <> "deposit" .=? OmitWhenNothing
             encodeCoin deposit
         ) :| []
     Cn.ConwayDelegCert credential delegatee ->
         ( "type" .=
             encodeText "stakeDelegation"
-        <> "credential" .=
-            Shelley.encodeCredential credential
+        <> "credential" `Shelley.encodeCredential` credential
         <> encodeDelegatee delegatee
         ) :| []
     Cn.ConwayRegDelegCert credential delegatee deposit ->
         ( "type" .=
             encodeText "stakeCredentialRegistration"
-       <> "credential" .=
-            Shelley.encodeCredential credential
+       <> "credential" `Shelley.encodeCredential` credential
        <> "deposit" .=
             encodeCoin deposit
         ) :|
         [ "type" .=
             encodeText "stakeDelegation"
-       <> "credential" .=
-            Shelley.encodeCredential credential
+       <> "credential" `Shelley.encodeCredential` credential
        <> encodeDelegatee delegatee
         ]
 
@@ -388,7 +382,7 @@ encodeDRep
 encodeDRep = encodeObject . \case
     Ledger.DRepCredential credential ->
         "type" .= encodeText "registered" <>
-        "id" .= Shelley.encodeCredential credential
+        "id" `Shelley.encodeCredential` credential
     Ledger.DRepAlwaysAbstain ->
         "type" .= encodeText "abstain"
     Ledger.DRepAlwaysNoConfidence ->
@@ -903,10 +897,10 @@ encodeVoter
 encodeVoter = encodeObject . \case
     Cn.CommitteeVoter credential ->
         "role" .= encodeText "constitutionalCommittee" <>
-        "id" .= Shelley.encodeCredential credential
+        "id" `Shelley.encodeCredential` credential
     Cn.DRepVoter credential ->
         "role" .= encodeText "delegateRepresentative" <>
-        "id" .= Shelley.encodeCredential credential
+        "id" `Shelley.encodeCredential` credential
     Cn.StakePoolVoter poolId ->
         "role" .= encodeText "stakePoolOperator" <>
         "id" .= Shelley.encodePoolId poolId

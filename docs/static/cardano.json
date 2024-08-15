@@ -346,11 +346,14 @@
         , "description": "A stake delegation certificate, from a delegator to a stake pool and/or a delegate representative."
         , "title": "StakeDelegation"
         , "additionalProperties": false
-        , "required": [ "type", "credential" ]
+        , "required": [ "type", "credential", "from" ]
         , "properties":
           { "type":
             { "type": "string"
             , "enum": [ "stakeDelegation" ]
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
             }
           , "credential":
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
@@ -374,11 +377,14 @@
         , "description": "A stake credential (key or script) registration certificate. The field 'deposit' is only *optionally* present in Conway onwards."
         , "title": "StakeCredentialRegistration"
         , "additionalProperties": false
-        , "required": [ "type", "credential" ]
+        , "required": [ "type", "credential", "from" ]
         , "properties":
           { "type":
             { "type": "string"
             , "enum": [ "stakeCredentialRegistration" ]
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
             }
           , "credential":
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
@@ -392,11 +398,14 @@
         , "description": "A stake key de-registration certificate. The field 'deposit' is only *optionally* present in Conway onwards."
         , "title": "StakeCredentialDeregistration"
         , "additionalProperties": false
-        , "required": [ "type", "credential" ]
+        , "required": [ "type", "credential", "from" ]
         , "properties":
           { "type":
             { "type": "string"
             , "enum": [ "stakeCredentialDeregistration" ]
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
             }
           , "credential":
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
@@ -479,9 +488,10 @@
           , "member":
             { "type": "object"
             , "additionalProperties": false
-            , "required": [ "id" ]
+            , "required": [ "id", "from" ]
             , "properties":
               { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+              , "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
               }
             }
           , "delegate":
@@ -502,9 +512,10 @@
           , "member":
             { "type": "object"
             , "additionalProperties": false
-            , "required": [ "id" ]
+            , "required": [ "id", "from" ]
             , "properties":
               { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+              , "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
               }
             }
           , "metadata":
@@ -623,9 +634,14 @@
     , "description": "A constitutional committee member as seen in the context of a specific epoch. Statuses and next states are to be seen from this specific epoch. The field 'next', when present, refers to any change happening to this member in the following epoch."
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "delegate", "status" ]
+    , "required": [ "id", "from", "delegate", "status" ]
     , "properties":
-      { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+      { "id":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+        }
+      , "from":
+        { "$ref": "cardano.json#/definitions/CredentialOrigin"
+        }
       , "status":
         { "type": "string"
         , "description": "A member status. 'active' indicates that this member vote will count during the ratification of the ongoing epoch. 'unrecognized' means that some hot credential currently points to a non-existing (or no longer existing) member."
@@ -691,7 +707,7 @@
     { "title": "ConstitutionalCommitteeDelegate"
     , "oneOf":
       [ { "type": "object"
-        , "required": [ "status", "id" ]
+        , "required": [ "status", "id", "from" ]
         , "additionalProperties": false
         , "properties":
           { "status":
@@ -700,6 +716,9 @@
             }
           , "id":
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
             }
           }
         }
@@ -733,10 +752,17 @@
     { "title": "ConstitutionalCommitteeMemberSummary"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "id" ]
+    , "required": [ "id", "from" ]
     , "properties":
-      { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
-      , "mandate": { "$ref": "cardano.json#/definitions/Mandate" }
+      { "id":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+        }
+      , "from":
+        { "$ref": "cardano.json#/definitions/CredentialOrigin"
+        }
+      , "mandate":
+        { "$ref": "cardano.json#/definitions/Mandate"
+        }
       }
     }
 
@@ -756,6 +782,15 @@
     { "title": "CostModel"
     , "type": "array"
     , "items": { "$ref": "cardano.json#/definitions/Int64" }
+    }
+
+  , "CredentialOrigin":
+    { "title": "CredentialOrigin"
+    , "type": "string"
+    , "enum":
+      [ "verificationKey"
+      , "script"
+      ]
     }
 
   , "Datum":
@@ -832,10 +867,13 @@
       [ { "title": "DelegateRepresentative<Registered>"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "id", "type" ]
+        , "required": [ "id", "from", "type" ]
         , "properties":
           { "id":
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
             }
           , "type":
             { "type": "string"
@@ -1309,9 +1347,10 @@
                 , "items":
                   { "type": "object"
                   , "additionalProperties": false
-                  , "required": [ "id" ]
+                  , "required": [ "id", "from" ]
                   , "properties":
                     { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                    , "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
                     }
                   }
                 }
@@ -1453,7 +1492,7 @@
       [ { "title": "Voter<GenesisDelegate>"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "role", "id" ]
+        , "required": [ "role", "id", "from" ]
         , "properties":
           { "role":
             { "type": "string"
@@ -1462,12 +1501,15 @@
           , "id":
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
             }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
           }
         }
       , { "title": "Voter<ConstitutionalCommittee>"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "role", "id" ]
+        , "required": [ "role", "id", "from" ]
         , "properties":
           { "role":
             { "type": "string"
@@ -1476,12 +1518,15 @@
           , "id":
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
             }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
           }
         }
       , { "title": "Voter<DelegateRepresentative>"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "role", "id" ]
+        , "required": [ "role", "id", "from" ]
         , "properties":
           { "role":
             { "type": "string"
@@ -1489,6 +1534,9 @@
             }
           , "id":
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
             }
           }
         }

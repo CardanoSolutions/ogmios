@@ -3594,9 +3594,10 @@
           , "data":
             { "type": "object"
             , "additionalProperties": false
-            , "required": [ "knownCredential" ]
+            , "required": [ "knownCredential", "from" ]
             , "properties":
               { "knownCredential": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+              , "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
               }
             }
           }
@@ -3612,9 +3613,10 @@
           , "data":
             { "type": "object"
             , "additionalProperties": false
-            , "required": [ "unknownCredential" ]
+            , "required": [ "unknownCredential", "from" ]
             , "properties":
               { "unknownCredential": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+              , "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
               }
             }
           }
@@ -3754,9 +3756,10 @@
               { "unknownConstitutionalCommitteeMember":
                 { "type": "object"
                 , "additionalProperties": false
-                , "required": [ "id" ]
+                , "required": [ "id", "from" ]
                 , "properties":
                   { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                  , "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
                   }
                 }
               }
@@ -3804,9 +3807,10 @@
                 , "items":
                   { "type": "object"
                   , "additionalProperties": false
-                  , "required": [ "id" ]
+                  , "required": [ "id", "from" ]
                   , "properties":
                     { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                    , "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
                     }
                   }
                 }
@@ -3832,9 +3836,10 @@
                 , "items":
                   { "type": "object"
                   , "additionalProperties": false
-                  , "required": [ "id" ]
+                  , "required": [ "id", "from" ]
                   , "properties":
                     { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                    , "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
                     }
                   }
                 }
