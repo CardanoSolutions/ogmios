@@ -27,16 +27,20 @@ import Cardano.Ledger.Babbage.Tx
     ( AlonzoTx (..)
     )
 import Cardano.Ledger.Babbage.TxOut
-    ( BabbageTxOut
+    ( BabbageTxOut (..)
     )
 import Cardano.Ledger.Core
     ( translateEraThroughCBOR
+    , upgradeTxBody
     )
 import Cardano.Ledger.Era
     ( PreviousEra
     )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
+    )
+import Control.Arrow
+    ( left
     )
 import Control.Monad.Trans.Except
     ( runExcept
@@ -92,17 +96,18 @@ instance
     , NFData (VerKeyDSIGN (Ledger.DSIGN crypto))
     ) => Upgrade AlonzoTx (ConwayEra crypto) where
     type Upgraded AlonzoTx = AlonzoTx
-    upgrade tx = force $ unsafeFromRight $ runExcept $ do
-        body <- translateEraThroughCBOR "body" $ Alonzo.body tx
-        wits <- translateEraThroughCBOR "witness" $ Alonzo.wits tx
-        auxiliaryData <- case Alonzo.auxiliaryData tx of
-          SNothing -> pure SNothing
-          SJust auxData -> SJust <$> translateEraThroughCBOR "auxiliaryData" auxData
-        let isValid = Alonzo.isValid tx
-        pure $ AlonzoTx{body,wits,auxiliaryData,isValid}
+    upgrade tx = force $ unsafeFromRight $ do
+        body <- left show $ upgradeTxBody (Alonzo.body tx)
+        left show $ runExcept $ do
+            wits <- translateEraThroughCBOR "witness" $ Alonzo.wits tx
+            auxiliaryData <- case Alonzo.auxiliaryData tx of
+              SNothing -> pure SNothing
+              SJust auxData -> SJust <$> translateEraThroughCBOR "auxiliaryData" auxData
+            let isValid = Alonzo.isValid tx
+            pure $ AlonzoTx{body,wits,auxiliaryData,isValid}
 
-unsafeFromRight :: (HasCallStack, Show e) => Either e a -> a
-unsafeFromRight = either (error . show) id
+unsafeFromRight :: (HasCallStack) => Either Text a -> a
+unsafeFromRight = either error id
 
 -- Era-specific GADTs
 

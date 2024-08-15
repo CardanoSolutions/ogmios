@@ -23,6 +23,8 @@ math: true
 
 #### Changed
 
+- Fix upgradability of Alonzo/Babbage transactions into Conway transactions. Before, Babbage transaction submitted for evaluation that spent Plutus V3 Scripts while using a Babbage serialization format would failed to upgrade into Conway transactions due to incompatibility at the binary level. The translation has been fixed, except for _truly incompatible_ transactions (e.g. those containing MIR or duplicate certificates).
+
 - Refresh embedded configuration files to match those expected by `cardano-node==9.1.0` (in particular, genesis files for mainnet, preview and preprod).
 
 - Only return `OverlappingAdditionalUtxo` error during transaction simulation when overlapping utxo differ from the ones fetched from the ledger.
