@@ -7,6 +7,33 @@ pre: "<b>6. </b>"
 math: true
 ---
 
+### [6.6.0] - UNRELEASED
+
+#### Added
+
+- Add missing `treasury.value` and `treasury.donation` for Conway transactions.
+
+- Add missing `protocolParametersUpdate.security` thresholds to stake pools voting thresholds in Conway governance actions.
+
+- Add missing `ancestor` to various governance actions, pointing to the previous action of the same group.
+
+- Add a new `from` field to objects referring to stake credential. The field allows to distinguish between verification key and script credentials.
+
+- ![TypeScript][] The `stakePools` method on the `LedgerStateQueryClient` now supports an extra `filter`. The filters were available on th standalone query but not via the client somehow.
+
+#### Changed
+
+- Refresh embedded configuration files to match those expected by `cardano-node==9.1.0` (in particular, genesis files for mainnet, preview and preprod).
+
+- Only return `OverlappingAdditionalUtxo` error during transaction simulation when overlapping utxo differ from the ones fetched from the ledger.
+
+#### Removed
+
+- ø
+
+---
+---
+
 ### [6.5.0] - 2024-07-12
 
 #### Added
