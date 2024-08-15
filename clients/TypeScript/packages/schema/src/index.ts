@@ -881,6 +881,9 @@ export interface StakePoolVotingThresholds {
     stateOfNoConfidence: Ratio;
   };
   hardForkInitiation: Ratio;
+  protocolParametersUpdate: {
+    security: Ratio;
+  };
 }
 export interface DelegateRepresentativeVotingThresholds {
   noConfidence: Ratio;

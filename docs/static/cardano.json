@@ -1821,6 +1821,7 @@
       [ "noConfidence"
       , "constitutionalCommittee"
       , "hardForkInitiation"
+      , "protocolParametersUpdate"
       ]
     , "properties":
       { "noConfidence": { "$ref": "cardano.json#/definitions/Ratio" }
@@ -1834,6 +1835,14 @@
           }
         }
       , "hardForkInitiation": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "protocolParametersUpdate":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "security" ]
+        , "properties":
+          { "security": { "$ref": "cardano.json#/definitions/Ratio" }
+          }
+        }
       }
     }
 

@@ -663,7 +663,10 @@ encodePoolVotingThresholds x =
         ( "default" .= encodeUnitInterval (Cn.pvtCommitteeNormal x)
        <> "stateOfNoConfidence" .= encodeUnitInterval (Cn.pvtCommitteeNoConfidence x)
         ) <>
-    "hardForkInitiation" .= encodeUnitInterval (Cn.pvtHardForkInitiation x)
+    "hardForkInitiation" .= encodeUnitInterval (Cn.pvtHardForkInitiation x) <>
+    "protocolParametersUpdate" .= encodeObject
+        ( "security" .= encodeUnitInterval (Cn.pvtPPSecurityGroup x)
+        )
     & encodeObject
 
 encodeProposalProcedure
