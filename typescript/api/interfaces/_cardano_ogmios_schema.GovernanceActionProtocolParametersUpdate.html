@@ -51,6 +51,9 @@
 						<a href="_cardano_ogmios_schema.GovernanceActionProtocolParametersUpdate.html" class="tsd-kind-icon">Governance<wbr>Action<wbr>Protocol<wbr>Parameters<wbr>Update</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.GovernanceActionProtocolParametersUpdate.html#ancestor" class="tsd-kind-icon">ancestor</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_schema.GovernanceActionProtocolParametersUpdate.html#guardrails" class="tsd-kind-icon">guardrails</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
@@ -82,6 +85,13 @@
 					</ul>
 				</div>
 			</div>
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>The &#39;ancestor&#39; is a reference to the previous governance action of this group. It is optional for the first one and required after so that they all actions of a same group form a chain.</p>
+					</div>
+				</div>
+			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
@@ -97,6 +107,7 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.GovernanceActionProtocolParametersUpdate.html#ancestor" class="tsd-kind-icon">ancestor</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.GovernanceActionProtocolParametersUpdate.html#guardrails" class="tsd-kind-icon">guardrails</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.GovernanceActionProtocolParametersUpdate.html#parameters" class="tsd-kind-icon">parameters</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.GovernanceActionProtocolParametersUpdate.html#type" class="tsd-kind-icon">type</a></li>
@@ -108,12 +119,23 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="ancestor" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> ancestor</h3>
+					<div class="tsd-signature tsd-kind-icon">ancestor<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_schema.GovernanceProposalReference.html" class="tsd-signature-type">GovernanceProposalReference</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/081dab6/clients/TypeScript/packages/schema/src/index.ts#L821">packages/schema/src/index.ts:821</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="guardrails" class="tsd-anchor"></a>
 					<h3>guardrails</h3>
 					<div class="tsd-signature tsd-kind-icon">guardrails<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b85be34/clients/TypeScript/packages/schema/src/index.ts#L807">packages/schema/src/index.ts:807</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/081dab6/clients/TypeScript/packages/schema/src/index.ts#L823">packages/schema/src/index.ts:823</a>
 							</li>
 						</ul>
 					</aside>
@@ -132,7 +154,7 @@
 					<div class="tsd-signature tsd-kind-icon">parameters<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_schema.ProposedProtocolParameters.html" class="tsd-signature-type">ProposedProtocolParameters</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b85be34/clients/TypeScript/packages/schema/src/index.ts#L806">packages/schema/src/index.ts:806</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/081dab6/clients/TypeScript/packages/schema/src/index.ts#L822">packages/schema/src/index.ts:822</a>
 							</li>
 						</ul>
 					</aside>
@@ -143,7 +165,7 @@
 					<div class="tsd-signature tsd-kind-icon">type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"protocolParametersUpdate"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b85be34/clients/TypeScript/packages/schema/src/index.ts#L805">packages/schema/src/index.ts:805</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/081dab6/clients/TypeScript/packages/schema/src/index.ts#L820">packages/schema/src/index.ts:820</a>
 							</li>
 						</ul>
 					</aside>

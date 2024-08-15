@@ -51,6 +51,9 @@
 						<a href="_cardano_ogmios_schema.GovernanceActionNoConfidence.html" class="tsd-kind-icon">Governance<wbr>Action<wbr>NoConfidence</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.GovernanceActionNoConfidence.html#ancestor" class="tsd-kind-icon">ancestor</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_schema.GovernanceActionNoConfidence.html#type" class="tsd-kind-icon">type</a>
 							</li>
 						</ul>
@@ -79,7 +82,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>A motion of no-confidence, indicate a lack of trust in the constitutional committee.</p>
+						<p>A motion of no-confidence, indicate a lack of trust in the constitutional committee. The &#39;ancestor&#39; is a reference to the previous governance action of this group. It is optional for the first one and required after so that they all actions of a same group form a chain.</p>
 					</div>
 				</div>
 			</section>
@@ -98,6 +101,7 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.GovernanceActionNoConfidence.html#ancestor" class="tsd-kind-icon">ancestor</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.GovernanceActionNoConfidence.html#type" class="tsd-kind-icon">type</a></li>
 							</ul>
 						</section>
@@ -107,12 +111,23 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="ancestor" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> ancestor</h3>
+					<div class="tsd-signature tsd-kind-icon">ancestor<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_schema.GovernanceProposalReference.html" class="tsd-signature-type">GovernanceProposalReference</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/081dab6/clients/TypeScript/packages/schema/src/index.ts#L1001">packages/schema/src/index.ts:1001</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="type" class="tsd-anchor"></a>
 					<h3>type</h3>
 					<div class="tsd-signature tsd-kind-icon">type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"noConfidence"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b85be34/clients/TypeScript/packages/schema/src/index.ts#L970">packages/schema/src/index.ts:970</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/081dab6/clients/TypeScript/packages/schema/src/index.ts#L1000">packages/schema/src/index.ts:1000</a>
 							</li>
 						</ul>
 					</aside>
