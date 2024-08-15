@@ -29,6 +29,7 @@ import {
   GenesisShelley,
   Origin,
   Point,
+  StakePoolId,
   UtxoByAddresses,
   UtxoByOutputReferences,
   ValueAdaOnly
@@ -70,7 +71,7 @@ export interface LedgerStateQueryClient {
     keys?: AnyStakeCredential[],
   }): ReturnType<typeof rewardAccountSummaries>
   rewardsProvenance(): ReturnType<typeof rewardsProvenance>
-  stakePools(): ReturnType<typeof stakePools>
+  stakePools(stakePools?: { id: StakePoolId }[]): ReturnType<typeof stakePools>
   utxo(filter?: UtxoByOutputReferences | UtxoByAddresses): ReturnType<typeof utxo>
 }
 
@@ -184,8 +185,8 @@ export async function createLedgerStateQueryClient (
     rewardsProvenance () {
       return rewardsProvenance(context)
     },
-    stakePools () {
-      return stakePools(context)
+    stakePools (stakePools) {
+      return stakePools(context, stakePools)
     },
     utxo (filter) {
       return utxo(context, filter)
