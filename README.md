@@ -27,6 +27,13 @@
 
 ## QuickStart
 
+Using [Homebrew](https://brew.sh/):
+
+```
+brew tap CardanoSolutions/formulas
+brew install ogmios
+```
+
 See our [Ogmios client starter kit](https://github.com/CardanoSolutions/ogmios-ts-client-starter-kit#ogmios-client-starter-kit) or jump right into the [user manual](https://ogmios.dev).
 
 ## Features
