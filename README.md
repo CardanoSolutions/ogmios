@@ -15,7 +15,8 @@
 
 | Ogmios       | Cardano-node (mainnet, preview, preprod) | Cardano-node (sanchonet) |
 | ---          | ---                                      | ---                      |
-| **`v6.5.0`** | **`9.0.0`, `9.1.0`**                     | **`9.0.0`, `9.1.0`**     |
+| **`v6.6.0`** | **`9.0.0`, `9.1.0`**                     | **`9.0.0`, `9.1.0`**     |
+| `v6.5.0`     | `9.0.0`, `9.1.0`                         | `9.0.0`, `9.1.0`         |
 | `v6.4.0`     | `8.9.3`                                  | `8.11.0-pre`             |
 | `v6.3.0`     | `8.9.2`                                  | `8.10.1-pre`             |
 | `v6.2.0`     | `8.9.0`                                  | `8.9.0`                  |
@@ -25,6 +26,13 @@
 [SanchoNet]: https://sancho.network/
 
 ## QuickStart
+
+Using [Homebrew](https://brew.sh/):
+
+```
+brew tap CardanoSolutions/formulas
+brew install ogmios
+```
 
 See our [Ogmios client starter kit](https://github.com/CardanoSolutions/ogmios-ts-client-starter-kit#ogmios-client-starter-kit) or jump right into the [user manual](https://ogmios.dev).
 

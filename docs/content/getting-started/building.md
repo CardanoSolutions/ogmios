@@ -8,12 +8,20 @@ weight = 1
 You may **skip this section** if you're using **Docker 🐳.**
 {{% /notice %}}
 
+## With Homebrew
+
+Ogmios is readily available and distributed through Homebrew. Simply do:
+
+```
+brew tap CardanoSolutions/formulas
+brew install ogmios
+```
+
 ## Pre-compiled static executable
 
 All [Ogmios releases](https://github.com/CardanoSolutions/ogmios/releases) comes with downloadable **pre-compiled static executables** for Linux (amd64 & arm64). If you like living on the edge and wants to access a not-yet-released executable, see the [_continuous integration_ workflow](https://github.com/CardanoSolutions/ogmios/actions/workflows/continuous-integration.yaml) on Github. Build artifacts are indeed continuously produced though this automated workflow. Find them at the bottom of any workflow run:
 
 ![](/build-artifacts.png)
-
 
 ## Building manually
 
