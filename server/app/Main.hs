@@ -10,6 +10,7 @@ import Ogmios
     ( Command (..)
     , InspectCommand (..)
     , application
+    , evalTransaction
     , healthCheck
     , inspectTransaction
     , newEnvironment
@@ -27,7 +28,9 @@ main = parseOptions >>= \case
             application tr `runWith` env
     HealthCheck{healthCheckPort} ->
         healthCheck healthCheckPort
-    Inspect InspectTransaction{transaction} ->
+    Inspect (InspectTransaction transaction) ->
         inspectTransaction transaction
+    Eval{transaction,inputs} ->
+        evalTransaction transaction inputs
     Version -> do
         putTextLn version

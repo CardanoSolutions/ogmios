@@ -17,6 +17,7 @@ module Ogmios
     , version
     , healthCheck
     , module Ogmios.App.Inspect
+    , module Ogmios.App.Eval
 
     -- * Environment
     , Env (..)
@@ -34,8 +35,6 @@ module Ogmios
 
 import Ogmios.Prelude
 
-import Ogmios.App.Inspect
-
 import Cardano.Network.Protocol.NodeToClient
     ( Block
     )
@@ -44,11 +43,17 @@ import Ogmios.App.Configuration
     , NetworkParameters (..)
     , TraceConfiguration (..)
     )
+import Ogmios.App.Eval
+    ( evalTransaction
+    )
 import Ogmios.App.Health
     ( Health
     , connectHealthCheckClient
     , emptyHealth
     , newHealthCheckClient
+    )
+import Ogmios.App.Inspect
+    ( inspectTransaction
     )
 import Ogmios.App.Metrics
     ( RuntimeStats

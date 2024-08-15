@@ -109,12 +109,13 @@ data Command (f :: Type -> Type)
     | Version
     | HealthCheck { healthCheckPort :: !Int }
     | Inspect InspectCommand
+    | Eval { transaction :: !Text, inputs :: ![Text] }
 
 deriving instance Eq (f NetworkParameters) => Eq (Command f)
 deriving instance Show (f NetworkParameters) => Show (Command f)
 
 data InspectCommand
-    = InspectTransaction { transaction :: Text }
+    = InspectTransaction { transaction_ :: Text }
     deriving (Eq, Show)
 
 parseOptions :: IO (Command Identity)
@@ -127,6 +128,8 @@ parseOptions =
             pure $ Start (Identity networkParameters) cfg lvl
         Inspect inspect -> do
             pure $ Inspect inspect
+        Eval{transaction, inputs} -> do
+            pure $ Eval transaction inputs
 
 parseOptionsPure :: [String] -> Either String (Command Proxy)
 parseOptionsPure args =
@@ -180,6 +183,8 @@ parserInfo = info (helper <*> parser) $ mempty
         )
         <|>
         inspectCommand
+        <|>
+        evalCommand
 
 --
 -- Command-line options
@@ -374,6 +379,24 @@ inspectTransactionCommand =
   where
     helpText = "Inspect a serialized transaction (any era)."
     parser = InspectTransaction <$> strArgument (metavar "TRANSACTION")
+
+-- | eval command
+evalCommand :: Parser (Command f)
+evalCommand =
+    subparser $ command "eval" $ info (helper <*> parser) $ mempty
+        <> progDesc helpText
+        <> headerDoc (Just $ vsep
+            [ "Simulate the execution of a transaction, producing its associated script context"
+            ])
+  where
+    helpText = "Evaluate a transaction and its scripts."
+    parser = Eval
+        <$> strArgument (metavar "TRANSACTION")
+        <*> some (option str $ mempty
+            <> long "resolved-input"
+            <> short 'i'
+            <> help "Output corresponding to the i-th input of the transaction; specified in order"
+        )
 
 --
 -- Environment
