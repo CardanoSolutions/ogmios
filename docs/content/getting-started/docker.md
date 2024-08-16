@@ -128,7 +128,7 @@ Alternatively, you may use Docker's [compose](https://docs.docker.com/compose/) 
 
 ```console
 $ git clone --depth 1 git@github.com:cardanosolutions/ogmios.git
-$ cd cardano-ogmios
+$ cd ogmios
 ```
 
 Then, starts the components stack using:
