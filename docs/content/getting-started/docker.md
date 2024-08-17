@@ -127,7 +127,7 @@ Configuration files are available from within the image under `/config` in folde
 Alternatively, you may use Docker's [compose](https://docs.docker.com/compose/) to run either Ogmios standalone, or an orchestration of cardano-node and Ogmios talking to each other. Compose is a handy tool to orchestrate multiple services packaged as containers. It works from a compose file which is available in the project repository, get it via:
 
 ```console
-$ git clone --depth 1 git@github.com:cardanosolutions/ogmios.git
+$ git clone --depth 1 --recursive --shallow-submodules git@github.com:cardanosolutions/ogmios.git
 $ cd ogmios
 ```
 
