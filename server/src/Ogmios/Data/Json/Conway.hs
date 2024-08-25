@@ -99,7 +99,7 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
         ( "type" .= encodeText "praos"
         <>
-          "era" .= encodeText "babbage"
+          "era" .= encodeText "conway"
         <>
           "id" .= Shelley.encodeShelleyHash headerHash
         <>
