@@ -7,20 +7,19 @@ pre: "<b>6. </b>"
 math: true
 ---
 
-
-### [6.6.1] - UNRELEASED
+### [6.6.1] - 2024-09-01
 
 #### Added
 
-N/A
+- N/A
 
 #### Changed
 
-- Fix Conway block reporting `"babbage"` era.
+- Fixed `"babbage"` being reported as the block era for Conway blocks.
 
 #### Removed
 
-N/A
+- N/A
 
 ### [6.6.0] - 2024-08-15
 
