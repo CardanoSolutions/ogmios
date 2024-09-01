@@ -24,10 +24,6 @@ services:
 
   ogmios:
     image: cardanosolutions/ogmios:latest
-    build:
-      context: .
-      target: ogmios
-      cache_from: [cardanosolutions/ogmios:latest]
     restart: on-failure
     command: [
       "--host", "0.0.0.0",

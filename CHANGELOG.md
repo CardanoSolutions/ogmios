@@ -7,6 +7,21 @@ pre: "<b>6. </b>"
 math: true
 ---
 
+
+### [6.6.1] - UNRELEASED
+
+#### Added
+
+N/A
+
+#### Changed
+
+- Fix Conway block reporting `"babbage"` era.
+
+#### Removed
+
+N/A
+
 ### [6.6.0] - 2024-08-15
 
 #### Added
@@ -108,7 +123,7 @@ $$
   </tr>
   <tr>
   <td>$[179200; 204800[$</td>
-  <td>$157.66$</td>
+  <td>$157.6599552$</td>
   </tr>
   </tbody>
   </table>

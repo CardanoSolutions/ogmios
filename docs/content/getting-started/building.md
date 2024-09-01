@@ -124,7 +124,7 @@ Clone the git repository from Github:
 
 ```console
 $ git clone --depth 1 --recursive --shallow-submodules git@github.com:cardanosolutions/ogmios.git
-$ cd cardano-ogmios/server
+$ cd ogmios/server
 ```
 
 Then, use cabal to compile the project source code from the `server` directory:
@@ -155,7 +155,7 @@ Clone the git repository from Github:
 
 ```console
 $ git clone --depth 1 --recursive --shallow-submodules git@github.com:cardanosolutions/ogmios.git
-$ cd cardano-ogmios/clients/TypeScript
+$ cd ogmios/clients/TypeScript
 ```
 
 Then, use Yarn to install dependencies and compile the project source code from the
