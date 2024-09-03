@@ -255,7 +255,7 @@ jobs:
         yarn lint
 
     - name: 📥 Download
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.7
       with:
         name: ogmios-${{ github.sha }}-${{ matrix.arch }}-${{ matrix.os }}
         path: server
@@ -442,7 +442,7 @@ jobs:
         echo "tag=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
 
     - name: 📥 Download
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.7
       with:
         name: ogmios-${{ github.sha }}-${{ matrix.arch }}-${{ matrix.os }}
         path: server
@@ -560,7 +560,7 @@ jobs:
           type=semver,pattern=v{{version}}
 
     - name: 📥 Download
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.7
       with:
         name: ogmios-${{ github.sha }}-${{ matrix.arch }}-${{ matrix.os }}
         path: server
@@ -601,7 +601,7 @@ jobs:
         target: [ ogmios ]
     steps:
       - name: 📥 Download digests
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: digests
           path: /tmp/digests
