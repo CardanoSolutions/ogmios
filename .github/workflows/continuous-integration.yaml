@@ -227,7 +227,7 @@ jobs:
         os: [ linux ]
         arch: [ x86_64 ]
         network: [ preview ]
-        cardano-node: [ 9.1.0 ]
+        cardano-node: [ 9.1.1 ]
 
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-22.04' }}
     steps:
@@ -379,13 +379,13 @@ jobs:
           clients/TypeScript/cardano-ogmios-schema-${{ github.sha }}.tgz
           clients/TypeScript/cardano-ogmios-repl-${{ github.sha }}.tgz
 
-    - name: 📤 Publish client package to npm registry
-      if: ${{ startsWith(github.ref, 'refs/tags') }}
-      uses: JS-DevTools/npm-publish@v2
-      with:
-        package: clients/TypeScript/packages/${{ matrix.package }}/package.json
-        strategy: upgrade
-        token: ${{ secrets.NPM_TOKEN }}
+  # - name: 📤 Publish client package to npm registry
+  #   if: ${{ startsWith(github.ref, 'refs/tags') }}
+  #   uses: JS-DevTools/npm-publish@v2
+  #   with:
+  #     package: clients/TypeScript/packages/${{ matrix.package }}/package.json
+  #     strategy: upgrade
+  #     token: ${{ secrets.NPM_TOKEN }}
 
   #  ██████████      ███████      █████████  █████   ████ ██████████ ███████████
   # ░░███░░░░███   ███░░░░░███   ███░░░░░███░░███   ███░ ░░███░░░░░█░░███░░░░░███
@@ -404,8 +404,8 @@ jobs:
         os: [ linux ]
         target: [ cardano-node-ogmios ]
         network: [ mainnet, preprod, preview, sanchonet ]
-        cardano-node: [ 9.1.0 ]
-        cardano-node-latest: [  9.1.0 ]
+        cardano-node: [ 9.1.1 ]
+        cardano-node-latest: [  9.1.1 ]
         arch: [ x86_64 ]
     steps:
     - name: 📥 Checkout repository
