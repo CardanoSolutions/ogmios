@@ -22,6 +22,19 @@ dev: # Run local ogmios through cabal
 		--node-config $(NODE_CFG)/cardano-node/config.json \
 		--node-socket $(NODE_SOCKET) $(filter-out $@,$(MAKECMDGOALS))
 
+bump: # Bump server & TypeScript client versions.
+ifeq ($(VERSION),)
+	@echo "Missing VERSION argument?"
+else
+	@echo "Bumping versions to $(VERSION)"
+	@sed -i '' 's/^version:\([^0-9]*\).*/version:\1$(VERSION)/' package.yaml
+	@sed -i '' 's/^version:\([^0-9]*\).*/version:\1$(VERSION)/' ogmios.cabal
+	@sed -i '' 's/"version": "[0-9]\.[0-9]\.[0-9]",/"version": "$(VERSION)",/' ../clients/TypeScript/package.json
+	@sed -i '' 's/"version": "[0-9]\.[0-9]\.[0-9]",/"version": "$(VERSION)",/' ../clients/TypeScript/packages/**/package.json
+	@sed -i '' 's/\("@cardano-ogmios\/.*":\) "[0-9]\.[0-9]\.[0-9]",/\1 "$(VERSION)",/' ../clients/TypeScript/packages/**/package.json
+	@echo "All set. Don't forget to ALSO update the asset files for the documentation!"
+endif
+
 node: # Run a local node at the specified version.
 	cardano-node$(NODE_VERSION:-) \
 		run \
