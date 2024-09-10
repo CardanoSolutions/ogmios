@@ -7,6 +7,20 @@ pre: "<b>6. </b>"
 math: true
 ---
 
+### [6.6.2] - 2024-09-10
+
+#### Added
+
+- N/A
+
+#### Changed
+
+- Compile with `cardano-node==9.1.1` / `cardano-ledger-shelley==1.12.3.0` carrying an important fix for pointer deserialization.
+
+#### Removed
+
+- N/A
+
 ### [6.6.1] - 2024-09-01
 
 #### Added
