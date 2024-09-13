@@ -1,0 +1,2868 @@
+{ "$schema": "https://json-schema.org/draft-07/schema"
+, "$id": "cardano.json"
+, "title": "Cardano"
+, "definitions":
+  { "Address":
+    { "title": "Address"
+    , "type": "string"
+    , "description": "A Cardano address (either legacy format or new format)."
+    , "contentEncoding": "bech32|base58"
+    , "pattern": "[1-9A-HJ-NP-Za-km-z]*"
+    , "examples":
+      [ "addr1q9d34spgg2kdy47n82e7x9pdd6vql6d2engxmpj20jmhuc2047yqd4xnh7u6u5jp4t0q3fkxzckph4tgnzvamlu7k5psuahzcp"
+      , "DdzFFzCqrht8mbSTZHqpM2u4HeND2mdspsaBhdQ1BowPJBMzbDeBMeKgqdoKqo1D4sdPusEdZJVrFJRBBxX1jUEofNDYCJSZLg8MkyCE"
+      ]
+    }
+
+  , "AddressAttributes":
+    { "title": "AddressAttributes"
+    , "type": "string"
+    , "description": "Extra attributes carried by Byron addresses (network magic and/or HD payload)."
+    , "contentEncoding": "base16"
+    }
+
+  , "Anchor":
+    { "type": "object"
+    , "title": "Anchor"
+    , "additionalProperties": false
+    , "required": ["hash","url"]
+    , "properties":
+      { "hash":
+        { "$ref": "cardano.json#/definitions/Digest<Any>"
+        }
+      , "url":
+        { "type": "string"
+        , "format": "uri"
+        }
+      }
+    }
+
+  , "AssetQuantity":
+    { "title": "AssetQuantity"
+    , "type": "integer"
+    , "description": "A number of asset, can be negative went burning assets."
+    }
+
+  , "Assets":
+    { "title": "Assets"
+    , "type": "object"
+    , "propertyNames": { "pattern": "^[0-9a-f]{56}$" }
+    , "additionalProperties":
+      { "type": "object"
+      , "propertyNames": { "pattern": "^[0-9a-f]{0,64}$" }
+      , "additionalProperties": { "$ref": "cardano.json#/definitions/AssetQuantity" }
+      }
+    }
+
+  , "Block":
+    { "title": "Block"
+    , "oneOf":
+      [ { "$ref": "cardano.json#/definitions/Block<EBB>" }
+      , { "$ref": "cardano.json#/definitions/Block<BFT>" }
+      , { "$ref": "cardano.json#/definitions/Block<Praos>" }
+      ]
+    }
+
+  , "Block<EBB>":
+    { "title": "Block<EBB>"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required":
+      [ "id", "type", "era", "ancestor", "height"
+      ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "ebb" ]
+        }
+      , "era":
+        { "type": "string"
+        , "enum": [ "byron" ]
+        }
+      , "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+      , "ancestor": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+      , "height": { "$ref": "cardano.json#/definitions/BlockHeight" }
+      }
+    }
+
+  , "Block<BFT>":
+    { "title": "Block<BFT>"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required":
+      [ "id", "era", "type", "ancestor", "height", "size", "slot"
+      , "protocol", "issuer", "delegate"
+      ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "bft" ]
+        }
+      , "era":
+        { "type": "string"
+        , "enum": [ "byron" ]
+        }
+      , "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+      , "ancestor": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+      , "height": { "$ref": "cardano.json#/definitions/BlockHeight" }
+      , "slot": { "$ref": "cardano.json#/definitions/Slot" }
+      , "size": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "transactions":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Transaction" }
+        }
+      , "operationalCertificates":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/BootstrapOperationalCertificate"}
+        }
+      , "protocol":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "id", "version", "software" ]
+        , "properties":
+          { "id": { "$ref": "cardano.json#/definitions/BootstrapProtocolId" }
+          , "version": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
+          , "software": { "$ref": "cardano.json#/definitions/SoftwareVersion" }
+          , "update": { "$ref": "cardano.json#/definitions/BootstrapProtocolUpdate" }
+          }
+        }
+      , "issuer":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "verificationKey" ]
+        , "properties":
+          { "verificationKey": { "$ref": "cardano.json#/definitions/ExtendedVerificationKey" }
+          }
+        }
+      , "delegate":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "verificationKey" ]
+        , "properties":
+          { "verificationKey": { "$ref": "cardano.json#/definitions/ExtendedVerificationKey" }
+          }
+        }
+      }
+    }
+
+  , "Block<Praos>":
+    { "title": "Block<Praos>"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required":
+      [ "id", "era", "type", "ancestor", "height", "size", "slot"
+      , "protocol", "issuer"
+      ]
+    , "properties":
+      { "type":
+        { "type": "string"
+        , "enum": [ "praos" ]
+        }
+      , "era":
+        { "type": "string"
+        , "enum": [ "shelley", "allegra", "mary", "alonzo", "babbage" ]
+        }
+      , "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+      , "ancestor":
+        { "oneOf":
+          [ { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+          , { "title": "GenesisHash", "type": "string", "enum": [ "genesis" ] }
+          ]
+        }
+      , "nonce": { "$ref": "cardano.json#/definitions/CertifiedVrf" }
+      , "height": { "$ref": "cardano.json#/definitions/BlockHeight" }
+      , "size": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "slot": { "$ref": "cardano.json#/definitions/Slot" }
+      , "transactions":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Transaction" }
+        }
+      , "protocol":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "version" ]
+        , "properties":
+          { "version": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
+          }
+        }
+      , "issuer":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "verificationKey", "vrfVerificationKey", "operationalCertificate", "leaderValue" ]
+        , "properties":
+          { "verificationKey": { "$ref": "cardano.json#/definitions/VerificationKey" }
+          , "vrfVerificationKey": { "$ref": "cardano.json#/definitions/VerificationKey" }
+          , "operationalCertificate": { "$ref": "cardano.json#/definitions/OperationalCertificate" }
+          , "leaderValue": { "$ref": "cardano.json#/definitions/CertifiedVrf" }
+          }
+        }
+      }
+    }
+
+  , "BlockHeight":
+    { "title": "BlockHeight"
+    , "type": "integer"
+    , "description": "A block number, the i-th block to be minted is number i."
+    , "minimum": 0
+    , "maximum": 18446744073709552999
+    }
+
+  , "BootstrapProtocolUpdate":
+    { "title": "BootstrapProtocolUpdate"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "votes" ]
+    , "properties":
+      { "proposal":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "version", "software", "parameters", "metadata" ]
+        , "properties":
+          { "version":
+            { "$ref": "cardano.json#/definitions/ProtocolVersion"
+            }
+          , "software":
+            { "$ref": "cardano.json#/definitions/SoftwareVersion"
+            }
+          , "parameters":
+            { "$ref": "cardano.json#/definitions/BootstrapProtocolParameters"
+            }
+          , "metadata":
+            { "type": "object"
+            , "additionalProperties": { "type": "string" }
+            }
+          }
+        }
+      , "votes":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/BootstrapVote" }
+        }
+      }
+    }
+
+  , "BootstrapOperationalCertificate":
+    { "title": "BootstrapOperationalCertificate"
+    , "type": "object"
+    , "description": "A (Byron) delegation certificate."
+    , "additionalProperties": false
+    , "required": [ "issuer", "delegate" ]
+    , "properties":
+      { "issuer":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "verificationKey" ]
+        , "properties":
+          { "verificationKey": { "$ref": "cardano.json#/definitions/VerificationKey" }
+          }
+        }
+      , "delegate":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "verificationKey" ]
+        , "properties":
+          { "verificationKey": { "$ref": "cardano.json#/definitions/VerificationKey" }
+          }
+        }
+      }
+    }
+
+  , "BootstrapProtocolId":
+    { "title": "BootstrapProtocolId"
+    , "type": "integer"
+    , "minimum": 0
+    , "maximum": 4294967295
+    , "examples":
+      [ 764824073
+      ]
+    }
+
+  , "BootstrapProtocolParameters":
+    { "title": "BootstrapProtocolParameters"
+    , "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "heavyDelegationThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxUpdateProposalSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "multiPartyComputationThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "scriptVersion": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "slotDuration": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "unlockStakeEpoch": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "updateProposalThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "updateProposalTimeToLive": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "updateVoteThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "softForkInitThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "softForkMinThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "softForkDecrementThreshold": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      }
+    }
+
+  , "BootstrapVote":
+    { "title": "BootstrapVote"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "voter", "proposal" ]
+    , "properties":
+      { "voter":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "verificationKey" ]
+        , "properties":
+          { "verificationKey": { "$ref": "cardano.json#/definitions/VerificationKey" }
+          }
+        }
+      , "proposal":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "id" ]
+        , "properties":
+          { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+          }
+        }
+      }
+    }
+
+  , "Bound":
+    { "title": "Bound"
+    , "type": "object"
+    , "description": "An era bound which captures the time, slot and epoch at which the era start. The time is relative to the start time of the network."
+    , "additionalProperties": false
+    , "required": ["time", "slot", "epoch"]
+    , "properties":
+      { "time": { "$ref": "cardano.json#/definitions/RelativeTime" }
+      , "slot": { "$ref": "cardano.json#/definitions/Slot" }
+      , "epoch": { "$ref": "cardano.json#/definitions/Epoch" }
+      }
+    }
+
+  , "Certificate":
+    { "title": "Certificate"
+    , "oneOf":
+      [ { "type": "object"
+        , "description": "A stake delegation certificate, from a delegator to a stake pool and/or a delegate representative."
+        , "title": "StakeDelegation"
+        , "additionalProperties": false
+        , "required": [ "type", "credential", "from" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "stakeDelegation" ]
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          , "credential":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "stakePool":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "id" ]
+            , "properties":
+              { "id":
+                { "$ref": "cardano.json#/definitions/StakePoolId"
+                }
+              }
+            }
+          , "delegateRepresentative":
+            { "$ref": "cardano.json#/definitions/DelegateRepresentative"
+            }
+          }
+        }
+      , { "type": "object"
+        , "description": "A stake credential (key or script) registration certificate. The field 'deposit' is only *optionally* present in Conway onwards."
+        , "title": "StakeCredentialRegistration"
+        , "additionalProperties": false
+        , "required": [ "type", "credential", "from" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "stakeCredentialRegistration" ]
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          , "credential":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "deposit":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          }
+        }
+      , { "type": "object"
+        , "description": "A stake key de-registration certificate. The field 'deposit' is only *optionally* present in Conway onwards."
+        , "title": "StakeCredentialDeregistration"
+        , "additionalProperties": false
+        , "required": [ "type", "credential", "from" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "stakeCredentialDeregistration" ]
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          , "credential":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "deposit":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          }
+        }
+      , { "type": "object"
+        , "description": "A stake pool registration certificate."
+        , "title": "StakePoolRegistration"
+        , "additionalProperties": false
+        , "required": [ "type", "stakePool" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "stakePoolRegistration" ]
+            }
+          , "stakePool":
+            { "$ref": "cardano.json#/definitions/StakePool"
+            }
+          }
+        }
+      , { "type": "object"
+        , "description": "A stake pool retirement certificate."
+        , "additionalProperties": false
+        , "title": "StakePoolRetirement"
+        , "required": [ "type", "stakePool"]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "stakePoolRetirement" ]
+            }
+          , "stakePool":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "id", "retirementEpoch" ]
+            , "properties":
+              { "retirementEpoch": { "$ref": "cardano.json#/definitions/Epoch" }
+              , "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "GenesisDelegation"
+        , "additionalProperties": false
+        , "required": [ "type", "delegate", "issuer" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "genesisDelegation" ]
+            }
+          , "delegate":
+            { "$ref": "cardano.json#/definitions/GenesisDelegate"
+            }
+          , "issuer":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "id" ]
+            , "properties":
+              { "id":
+                { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+                }
+              }
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "ConstitutionalCommitteeDelegation"
+        , "description": "A constitutional committee member delegates a hot credential for voting on-chain. Constitutional committee members do not vote with their cold key directly. New registrations supersedes any preceding ones."
+        , "additionalProperties": false
+        , "required": [ "type", "member", "delegate"]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "constitutionalCommitteeDelegation" ]
+            }
+          , "member":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "id", "from" ]
+            , "properties":
+              { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+              , "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
+              }
+            }
+          , "delegate":
+            { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeDelegate"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "ConstitutionalCommitteeRetirement"
+        , "description": "A constitutional committee member resigns from the committee."
+        , "additionalProperties": false
+        , "required": [ "type", "member"]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "constitutionalCommitteeRetirement" ]
+            }
+          , "member":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "id", "from" ]
+            , "properties":
+              { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+              , "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
+              }
+            }
+          , "metadata":
+            { "$ref": "cardano.json#/definitions/Anchor"
+            }
+          }
+        }
+      , { "type": "object"
+        , "description": "A delegate representative registration. Note that this is only possible for 'registered' representatives and not for well-known ones (abstain & noConfidence)"
+        , "title": "DelegateRepresentativeRegistration"
+        , "additionalProperties": false
+        , "required": [ "type", "delegateRepresentative", "deposit" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "delegateRepresentativeRegistration" ]
+            }
+          , "delegateRepresentative":
+            { "$ref": "cardano.json#/definitions/DelegateRepresentative"
+            }
+          , "deposit":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          , "metadata":
+            { "$ref": "cardano.json#/definitions/Anchor"
+            }
+          }
+        }
+      , { "type": "object"
+        , "description": ""
+        , "title": "DelegateRepresentativeUpdate"
+        , "additionalProperties": false
+        , "required": [ "type", "delegateRepresentative", "metadata" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "delegateRepresentativeUpdate" ]
+            }
+          , "delegateRepresentative":
+            { "$ref": "cardano.json#/definitions/DelegateRepresentative"
+            }
+          , "metadata":
+            { "oneOf":
+              [ { "type": "null", "title": "None" }
+              , { "$ref": "cardano.json#/definitions/Anchor" }
+              ]
+            }
+          }
+        }
+      , { "type": "object"
+        , "description": "A delegate representative retirement. Note that this is only possible for 'registered' representatives and not for well-known ones (abstain & noConfidence)"
+        , "title": "DelegateRepresentativeRetirement"
+        , "additionalProperties": false
+        , "required": [ "type", "delegateRepresentative", "deposit" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "delegateRepresentativeRetirement" ]
+            }
+          , "delegateRepresentative":
+            { "$ref": "cardano.json#/definitions/DelegateRepresentative"
+            }
+          , "deposit":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          }
+        }
+      ]
+    }
+
+  , "CertifiedVrf":
+    { "title": "CertifiedVrf"
+    , "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "proof": { "$ref": "cardano.json#/definitions/VrfProof" }
+      , "output": { "$ref": "cardano.json#/definitions/VrfOutput" }
+      }
+    }
+
+  , "ChainCode":
+    { "title": "ChainCode"
+    , "type": "string"
+    , "description": "An Ed25519-BIP32 chain-code for key deriviation."
+    , "contentEncoding": "base16"
+    }
+
+  , "Constitution":
+    { "title": "Constitution"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "metadata", "guardrails" ]
+    , "properties":
+      { "guardrails":
+        { "oneOf":
+          [ { "$ref": "cardano.json#/definitions/Null" }
+          , { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "hash" ]
+            , "properties":
+              { "hash":
+                { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+                }
+              }
+            }
+          ]
+        }
+      , "metadata":
+        { "$ref": "cardano.json#/definitions/Anchor"
+        }
+      }
+    }
+
+  , "ConstitutionalCommitteeMember":
+    { "title": "ConstitutionalCommitteeMember"
+    , "description": "A constitutional committee member as seen in the context of a specific epoch. Statuses and next states are to be seen from this specific epoch. The field 'next', when present, refers to any change happening to this member in the following epoch."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id", "from", "delegate", "status" ]
+    , "properties":
+      { "id":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+        }
+      , "from":
+        { "$ref": "cardano.json#/definitions/CredentialOrigin"
+        }
+      , "status":
+        { "type": "string"
+        , "description": "A member status. 'active' indicates that this member vote will count during the ratification of the ongoing epoch. 'unrecognized' means that some hot credential currently points to a non-existing (or no longer existing) member."
+        , "enum": [ "active", "expired", "unrecognized" ]
+        }
+      , "delegate":
+        { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeDelegate"
+        }
+      , "mandate":
+        { "$ref": "cardano.json#/definitions/Mandate"
+        }
+      , "next":
+        { "oneOf":
+          [ { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "change" ]
+            , "properties":
+              { "change":
+                { "type": "string"
+                , "enum": [ "toBeEnacted" ]
+                }
+              }
+            }
+          , { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "change" ]
+            , "properties":
+              { "change":
+                { "type": "string"
+                , "enum": [ "toBeRemoved" ]
+                }
+              }
+            }
+          , { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "change" ]
+            , "properties":
+              { "change":
+                { "type": "string"
+                , "enum": [ "expiring"]
+                }
+              }
+            }
+          , { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "change", "mandate" ]
+            , "properties":
+              { "change":
+                { "type": "string"
+                , "enum": [ "adjustingMandate" ]
+                }
+              , "mandate":
+                { "$ref": "cardano.json#/definitions/Mandate"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+
+  , "ConstitutionalCommitteeDelegate":
+    { "title": "ConstitutionalCommitteeDelegate"
+    , "oneOf":
+      [ { "type": "object"
+        , "required": [ "status", "id", "from" ]
+        , "additionalProperties": false
+        , "properties":
+          { "status":
+            { "type": "string"
+            , "enum": [ "authorized" ]
+            }
+          , "id":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          }
+        }
+      , { "type": "object"
+        , "required": [ "status" ]
+        , "additionalProperties": false
+        , "properties":
+          { "status":
+            { "type": "string"
+            , "enum": [ "resigned" ]
+            }
+          , "metadata":
+            { "$ref": "cardano.json#/definitions/Anchor"
+            }
+          }
+        }
+      , { "type": "object"
+        , "required": [ "status" ]
+        , "additionalProperties": false
+        , "properties":
+          { "status":
+            { "type": "string"
+            , "enum": [ "none" ]
+            }
+          }
+        }
+      ]
+    }
+
+  , "ConstitutionalCommitteeMemberSummary":
+    { "title": "ConstitutionalCommitteeMemberSummary"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id", "from" ]
+    , "properties":
+      { "id":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+        }
+      , "from":
+        { "$ref": "cardano.json#/definitions/CredentialOrigin"
+        }
+      , "mandate":
+        { "$ref": "cardano.json#/definitions/Mandate"
+        }
+      }
+    }
+
+  , "CostModels":
+    { "title": "CostModels"
+    , "type": "object"
+    , "additionalProperties": { "$ref": "cardano.json#/definitions/CostModel" }
+    , "propertyNames": { "$ref": "cardano.json#/definitions/Language" }
+    , "examples":
+      [ { "plutus:v1": [ 14, 123 ]
+        , "plutus:v2": [ 14, 42, 131 ]
+        }
+      ]
+    }
+
+  , "CostModel":
+    { "title": "CostModel"
+    , "type": "array"
+    , "items": { "$ref": "cardano.json#/definitions/Int64" }
+    }
+
+  , "CredentialOrigin":
+    { "title": "CredentialOrigin"
+    , "type": "string"
+    , "enum":
+      [ "verificationKey"
+      , "script"
+      ]
+    }
+
+  , "Datum":
+    { "title": "Datum"
+    , "type": "string"
+    , "contentEncoding": "base16"
+    }
+
+  , "DelegateRepresentativeVotingThresholds":
+    { "title": "DelegateRepresentativeVotingThresholds"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required":
+      [ "noConfidence"
+      , "constitutionalCommittee"
+      , "constitution"
+      , "hardForkInitiation"
+      , "protocolParametersUpdate"
+      , "treasuryWithdrawals"
+      ]
+    , "properties":
+      { "noConfidence": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "constitution": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "constitutionalCommittee":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "default", "stateOfNoConfidence" ]
+        , "properties":
+          { "default": { "$ref": "cardano.json#/definitions/Ratio" }
+          , "stateOfNoConfidence": { "$ref": "cardano.json#/definitions/Ratio" }
+          }
+        }
+      , "hardForkInitiation": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "protocolParametersUpdate":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "network", "economic", "technical", "governance" ]
+        , "properties":
+          { "network": { "$ref": "cardano.json#/definitions/Ratio" }
+          , "economic": { "$ref": "cardano.json#/definitions/Ratio" }
+          , "technical": { "$ref": "cardano.json#/definitions/Ratio" }
+          , "governance": { "$ref": "cardano.json#/definitions/Ratio" }
+          }
+        }
+      , "treasuryWithdrawals": { "$ref": "cardano.json#/definitions/Ratio" }
+      }
+    }
+
+  , "Digest<Any>":
+    { "title": "Digest<Any>"
+    , "type": "string"
+    , "description": "A hash digest from an unspecified algorithm and length."
+    , "contentEncoding": "base16"
+    , "examples":
+      [ "90181c517a5beadc9c3fe64bf8"
+      ]
+    }
+
+  , "Digest<Blake2b, 224>":
+    { "title": "Digest<Blake2b, 224>"
+    , "type": "string"
+    , "description": "A Blake2b 28-byte hash digest, encoded in base16."
+    , "contentEncoding": "base16"
+    , "minLength": 56
+    , "maxLength": 56
+    , "examples":
+      [ "90181c517a5beadc9c3fe64bf821d3e889a963fc717003ec248757d3"
+      ]
+    }
+
+  , "DelegateRepresentative":
+    { "title": "DelegateRepresentative"
+    , "oneOf":
+      [ { "title": "DelegateRepresentative<Registered>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "id", "from", "type" ]
+        , "properties":
+          { "id":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          , "type":
+            { "type": "string"
+            , "enum": ["registered"]
+            }
+          }
+        }
+      , { "title": "DelegateRepresentative<NoConfidence>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "type" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "description": "A special delegate representative which always vote no, except on votes of no-confidence."
+            , "enum": [ "noConfidence" ]
+            }
+          }
+        }
+      , { "title": "DelegateRepresentative<Abstain>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "type" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "description": "A special delegate representative which always abstain."
+            , "enum": [ "abstain" ]
+            }
+          }
+        }
+      ]
+    }
+
+  , "Digest<Blake2b, 256>":
+    { "title": "Digest<Blake2b, 256>"
+    , "type": "string"
+    , "description": "A Blake2b 32-byte hash digest, encoded in base16."
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    , "examples":
+      [ "c248757d390181c517a5beadc9c3fe64bf821d3e889a963fc717003ec248757d"
+      ]
+    }
+
+  , "Epoch":
+    { "title": "Epoch"
+    , "type": "integer"
+    , "description": "An epoch number or length."
+    , "minimum": 0
+    , "maximum": 18446744073709552000
+    }
+
+  , "Era":
+    { "title": "Era"
+    , "type": "string"
+    , "enum": [ "byron", "shelley", "allegra", "mary", "alonzo", "babbage", "conway" ]
+    }
+
+  , "EraWithGenesis":
+    { "title": "EraWithGenesis"
+    , "type": "string"
+    , "enum": [ "byron", "shelley", "alonzo", "conway" ]
+    }
+
+  , "EraParameters":
+    { "title": "EraParameters"
+    , "type": "object"
+    , "description": "Parameters that can vary across hard forks."
+    , "additionalProperties": false
+    , "required": [ "epochLength", "slotLength", "safeZone" ]
+    , "properties":
+      { "epochLength": { "$ref": "cardano.json#/definitions/Epoch" }
+      , "slotLength": { "$ref": "cardano.json#/definitions/SlotLength" }
+      , "safeZone":
+        { "oneOf":
+          [ { "$ref": "cardano.json#/definitions/SafeZone" }
+          , { "type": "null" }
+          ]
+        }
+      }
+    }
+
+  , "EraSummary":
+    { "title": "EraSummary"
+    , "type": "object"
+    , "description": "Summary of the confirmed parts of the ledger."
+    , "additionalProperties": false
+    , "required": [ "start", "parameters" ]
+    , "properties":
+      { "start": { "$ref": "cardano.json#/definitions/Bound" }
+      , "end": { "$ref": "cardano.json#/definitions/Bound" }
+      , "parameters": { "$ref": "cardano.json#/definitions/EraParameters" }
+      }
+    }
+
+  , "ExecutionUnits":
+    { "title": "ExecutionUnits"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "memory", "cpu" ]
+    , "properties":
+      { "memory": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "cpu": { "$ref": "cardano.json#/definitions/UInt64" }
+      }
+    }
+
+  , "Genesis<Byron>":
+    { "title": "Genesis<Byron>"
+    , "type": "object"
+    , "description": "A Byron genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
+    , "additionalProperties": false
+    , "required":
+      [ "era"
+      , "genesisKeyHashes"
+      , "genesisDelegations"
+      , "startTime"
+      , "initialFunds"
+      , "initialVouchers"
+      , "securityParameter"
+      , "networkMagic"
+      , "protocolParameters"
+      ]
+    , "properties":
+      { "era":
+        { "type": "string"
+        , "enum": [ "byron" ]
+        }
+      , "genesisKeyHashes":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
+      , "genesisDelegations":
+        { "type": "object"
+        , "propertyNames": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/BootstrapOperationalCertificate" }
+        }
+      , "startTime": { "$ref": "cardano.json#/definitions/UtcTime" }
+      , "initialFunds":
+        { "type": "object"
+        , "propertyNames": { "$ref": "cardano.json#/definitions/Address" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+        }
+      , "initialVouchers":
+        { "type": "object"
+        , "propertyNames": { "$ref": "cardano.json#/definitions/VerificationKey" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+        }
+      , "securityParameter": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "networkMagic": { "$ref": "cardano.json#/definitions/NetworkMagic" }
+      , "updatableParameters": { "$ref": "cardano.json#/definitions/ProtocolParameters" }
+      }
+    }
+
+  , "Genesis<Shelley>":
+    { "title": "Genesis<Shelley>"
+    , "type": "object"
+    , "description": "A Shelley genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
+    , "additionalProperties": false
+    , "required":
+      [ "era"
+      , "startTime"
+      , "networkMagic"
+      , "network"
+      , "activeSlotsCoefficient"
+      , "securityParameter"
+      , "epochLength"
+      , "slotsPerKesPeriod"
+      , "maxKesEvolutions"
+      , "slotLength"
+      , "updateQuorum"
+      , "maxLovelaceSupply"
+      , "initialParameters"
+      , "initialDelegates"
+      , "initialFunds"
+      , "initialStakePools"
+      ]
+    , "properties":
+      { "era":
+        { "type": "string"
+        , "enum": [ "shelley" ]
+        }
+      , "startTime": { "$ref": "cardano.json#/definitions/UtcTime" }
+      , "networkMagic": { "$ref": "cardano.json#/definitions/NetworkMagic" }
+      , "network": { "$ref": "cardano.json#/definitions/Network" }
+      , "activeSlotsCoefficient": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "securityParameter": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "epochLength": { "$ref": "cardano.json#/definitions/Epoch" }
+      , "slotsPerKesPeriod": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "maxKesEvolutions": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "slotLength": { "$ref": "cardano.json#/definitions/SlotLength" }
+      , "updateQuorum": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "maxLovelaceSupply": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "initialParameters": { "$ref": "cardano.json#/definitions/ProtocolParameters" }
+      , "initialDelegates": { "$ref": "cardano.json#/definitions/InitialDelegates" }
+      , "initialFunds":
+        { "type": "object"
+        , "title": "InitialFunds"
+        , "propertyNames": { "$ref": "cardano.json#/definitions/Address" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+        }
+      , "initialStakePools": { "$ref": "cardano.json#/definitions/GenesisStakePools" }
+      }
+    }
+
+  , "Genesis<Alonzo>":
+    { "title": "Genesis<Alonzo>"
+    , "type": "object"
+    , "description": "An Alonzo genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
+    , "additionalProperties": false
+    , "required":
+      [ "era"
+      , "updatableParameters"
+      ]
+    , "properties":
+      { "era":
+        { "type": "string"
+        , "enum": [ "alonzo" ]
+        }
+      , "updatableParameters":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required":
+          [ "minUtxoDepositCoefficient"
+          , "collateralPercentage"
+          , "plutusCostModels"
+          , "maxCollateralInputs"
+          , "maxExecutionUnitsPerBlock"
+          , "maxExecutionUnitsPerTransaction"
+          , "maxValueSize"
+          , "scriptExecutionPrices"
+          ]
+        , "properties":
+          { "minUtxoDepositCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
+          , "collateralPercentage": { "$ref": "cardano.json#/definitions/UInt64" }
+          , "plutusCostModels": { "$ref": "cardano.json#/definitions/CostModels" }
+          , "maxCollateralInputs": { "$ref": "cardano.json#/definitions/UInt64" }
+          , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+          , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+          , "maxValueSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+          , "scriptExecutionPrices": { "$ref": "cardano.json#/definitions/ScriptExecutionPrices" }
+          }
+        }
+      }
+    }
+
+  , "Genesis<Conway>":
+    { "title": "Genesis<Conway>"
+    , "type": "object"
+    , "description": "An Conway genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
+    , "additionalProperties": false
+    , "required":
+      [ "era"
+      , "constitution"
+      , "constitutionalCommittee"
+      , "updatableParameters"
+      ]
+    , "properties":
+      { "era":
+        { "type": "string"
+        , "enum": [ "conway" ]
+        }
+      , "constitution":
+        { "$ref": "cardano.json#/definitions/Constitution"
+        }
+      , "constitutionalCommittee":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "members", "quorum" ]
+        , "properties":
+          { "members":
+            { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeMemberSummary" }
+            }
+          , "quorum":
+            { "$ref": "cardano.json#/definitions/Ratio"
+            }
+          }
+        }
+      , "updatableParameters":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required":
+          [ "stakePoolVotingThresholds"
+          , "constitutionalCommitteeMinSize"
+          , "constitutionalCommitteeMaxTermLength"
+          , "governanceActionLifetime"
+          , "governanceActionDeposit"
+          , "delegateRepresentativeVotingThresholds"
+          , "delegateRepresentativeDeposit"
+          , "delegateRepresentativeMaxIdleTime"
+          ]
+        , "properties":
+          { "stakePoolVotingThresholds": { "$ref": "cardano.json#/definitions/StakePoolVotingThresholds" }
+          , "constitutionalCommitteeMinSize": { "$ref": "cardano.json#/definitions/UInt64" }
+          , "constitutionalCommitteeMaxTermLength": { "$ref": "cardano.json#/definitions/UInt64" }
+          , "governanceActionLifetime": { "$ref": "cardano.json#/definitions/Epoch" }
+          , "governanceActionDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+          , "delegateRepresentativeVotingThresholds": { "$ref": "cardano.json#/definitions/DelegateRepresentativeVotingThresholds" }
+          , "delegateRepresentativeDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+          , "delegateRepresentativeMaxIdleTime": { "$ref": "cardano.json#/definitions/Epoch" }
+          }
+        }
+      }
+    }
+
+  , "GenesisDelegate":
+    { "title": "GenesisDelegate"
+    , "type": "object"
+    , "description": "A Genesis delegate, in charge of Cardano's governance."
+    , "additionalProperties": false
+    , "required":
+      [ "vrfVerificationKeyHash"
+      , "id"
+      ]
+    , "properties":
+      { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+      , "vrfVerificationKeyHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+      }
+    }
+
+  , "GenesisStakePools":
+    { "title": "GenesisStakePools"
+    , "type": "object"
+    , "description": "A Genesis stake pools configuration; primarily used for bootstrapping test networks."
+    , "additionalProperties": false
+    , "required":
+      [ "stakePools"
+      , "delegators"
+      ]
+    , "properties":
+      { "stakePools":
+        { "type": "object"
+        , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePool" }
+        }
+      , "delegators":
+        { "type": "object"
+        , "propertyNames": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePoolId" }
+        }
+      }
+    }
+
+  , "GovernanceAction":
+    { "oneOf":
+      [ { "title": "GovernanceAction<ProtocolParametersUpdate>"
+        , "type": "object"
+        , "description": "The 'ancestor' is a reference to the previous governance action of this group. It is optional for the first one and required after so that they all actions of a same group form a chain."
+        , "additionalProperties": false
+        , "required": [ "type", "parameters", "guardrails" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "protocolParametersUpdate" ]
+            }
+          , "ancestor":
+            { "$ref": "cardano.json#/definitions/GovernanceProposalReference"
+            }
+          , "parameters":
+            { "$ref": "cardano.json#/definitions/ProposedProtocolParameters"
+            }
+          , "guardrails":
+            { "oneOf":
+              [ { "$ref": "cardano.json#/definitions/Null" }
+              , { "type": "object"
+                , "required": [ "hash" ]
+                , "additionalProperties": false
+                , "properties":
+                  { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      , { "title": "GovernanceAction<HardForkInitiation>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "type", "version" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "hardForkInitiation" ]
+            }
+          , "ancestor":
+            { "$ref": "cardano.json#/definitions/GovernanceProposalReference"
+            }
+          , "version":
+            { "$ref": "cardano.json#/definitions/ProtocolVersion"
+            }
+          }
+        }
+      , { "title": "GovernanceAction<TreasuryTransfer>"
+        , "type": "object"
+        , "description": "A transfer from or to the treasury / reserves authored by genesis delegates."
+        , "additionalProperties": false
+        , "required": [ "type", "source", "target", "value" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "treasuryTransfer" ]
+            }
+          , "source":
+            { "type": "string"
+            , "enum": [ "reserves", "treasury" ]
+            }
+          , "target":
+            { "type": "string"
+            , "enum": [ "reserves", "treasury" ]
+            }
+          , "value":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "GovernanceAction<TreasuryWithdrawals>"
+        , "description": "One of more withdrawals from the treasury."
+        , "additionalProperties": false
+        , "required": [ "type", "withdrawals", "guardrails" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "treasuryWithdrawals" ]
+            }
+          , "withdrawals":
+            { "$ref": "cardano.json#/definitions/RewardTransfer"
+            }
+          , "guardrails":
+            { "oneOf":
+              [ { "$ref": "cardano.json#/definitions/Null" }
+              , { "type": "object"
+                , "required": [ "hash" ]
+                , "additionalProperties": false
+                , "properties":
+                  { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "GovernanceAction<ConstitutionalCommittee>"
+        , "description": "A change (partial or total) in the constitutional committee. The 'ancestor' is a reference to the previous governance action of this group (also includes no confidence actions in this case). It is optional for the first one and required after so that they all actions of a same group form a chain."
+        , "additionalProperties": false
+        , "required": [ "type", "members", "quorum" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "constitutionalCommittee" ]
+            }
+          , "ancestor":
+            { "$ref": "cardano.json#/definitions/GovernanceProposalReference"
+            }
+          , "members":
+            { "type": "object"
+            , "additionalProperties": false
+            , "required": [ "added", "removed" ]
+            , "properties":
+              { "added":
+                { "type": "array"
+                , "items":
+                  { "$ref": "cardano.json#/definitions/ConstitutionalCommitteeMemberSummary"
+                  }
+                }
+              , "removed":
+                { "type": "array"
+                , "items":
+                  { "type": "object"
+                  , "additionalProperties": false
+                  , "required": [ "id", "from" ]
+                  , "properties":
+                    { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                    , "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
+                    }
+                  }
+                }
+              }
+            }
+          , "quorum":
+            { "$ref": "cardano.json#/definitions/Ratio"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "GovernanceAction<Constitution>"
+        , "description": "A change in the constitution. Only its hash is recorded on-chain. The 'ancestor' is a reference to the previous governance action of this group. It is optional for the first one and required after so that they all actions of a same group form a chain."
+        , "additionalProperties": false
+        , "required": [ "type", "metadata", "guardrails" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "constitution" ]
+            }
+          , "ancestor":
+            { "$ref": "cardano.json#/definitions/GovernanceProposalReference"
+            }
+          , "guardrails":
+            { "oneOf":
+              [ { "$ref": "cardano.json#/definitions/Null" }
+              , { "type": "object"
+                , "additionalProperties": false
+                , "required": [ "hash" ]
+                , "properties":
+                  { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                  }
+                }
+              ]
+            }
+          , "metadata":
+            { "$ref": "cardano.json#/definitions/Anchor"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "GovernanceAction<NoConfidence>"
+        , "description": "A motion of no-confidence, indicate a lack of trust in the constitutional committee. The 'ancestor' is a reference to the previous governance action of this group. It is optional for the first one and required after so that they all actions of a same group form a chain."
+        , "additionalProperties": false
+        , "required": [ "type" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "noConfidence" ]
+            }
+          , "ancestor":
+            { "$ref": "cardano.json#/definitions/GovernanceProposalReference"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "GovernanceAction<Information>"
+        , "description": "An action that has no effect on-chain, other than an on-chain record"
+        , "additionalProperties": false
+        , "required": [ "type" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "information" ]
+            }
+          }
+        }
+      ]
+    }
+
+  , "GovernanceProposal":
+    { "title": "GovernanceProposal"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "action" ]
+    , "properties":
+      { "deposit":
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+        }
+      , "returnAccount":
+        { "$ref": "cardano.json#/definitions/RewardAccount"
+        }
+      , "metadata":
+        { "$ref": "cardano.json#/definitions/Anchor"
+        }
+      , "action":
+        { "$ref": "cardano.json#/definitions/GovernanceAction"
+        }
+      }
+    }
+
+  , "GovernanceProposalReference":
+    { "title": "GovernanceProposalReference"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "transaction", "index" ]
+    , "properties":
+      { "transaction":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "id" ]
+        , "properties":
+          { "id":
+            { "$ref": "cardano.json#/definitions/TransactionId"
+            }
+          }
+        }
+      , "index":
+        { "$ref": "cardano.json#/definitions/UInt32"
+        }
+      }
+    }
+
+  , "GovernanceVote":
+    { "title": "GovernanceVote"
+    , "description": "A vote on a governance proposal. The 'anchor' is optional and 'proposal' is only present from Conway onwards. Before Conway, a vote would always refer to all proposals part of the same transaction."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "issuer", "vote" ]
+    , "properties":
+      { "issuer":
+        { "$ref": "cardano.json#/definitions/GovernanceVoter"
+        }
+      , "metadata":
+        { "$ref": "cardano.json#/definitions/Anchor"
+        }
+      , "vote":
+        { "type": "string"
+        , "enum": [ "yes", "no", "abstain" ]
+        }
+      , "proposal":
+        { "$ref": "cardano.json#/definitions/GovernanceProposalReference"
+        }
+      }
+    }
+
+  , "GovernanceVoter":
+    { "oneOf":
+      [ { "title": "Voter<GenesisDelegate>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "role", "id", "from" ]
+        , "properties":
+          { "role":
+            { "type": "string"
+            , "enum": [ "genesisDelegate" ]
+            }
+          , "id":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          }
+        }
+      , { "title": "Voter<ConstitutionalCommittee>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "role", "id", "from" ]
+        , "properties":
+          { "role":
+            { "type": "string"
+            , "enum": [ "constitutionalCommittee" ]
+            }
+          , "id":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          }
+        }
+      , { "title": "Voter<DelegateRepresentative>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "role", "id", "from" ]
+        , "properties":
+          { "role":
+            { "type": "string"
+            , "enum": [ "delegateRepresentative" ]
+            }
+          , "id":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          }
+        }
+      , { "title": "Voter<StakePoolOperator>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "role", "id" ]
+        , "properties":
+          { "role":
+            { "type": "string"
+            , "enum": [ "stakePoolOperator" ]
+            }
+          , "id":
+            { "$ref": "cardano.json#/definitions/StakePoolId"
+            }
+          }
+        }
+      ]
+    }
+
+  , "ExtendedVerificationKey":
+    { "title": "ExtendedVerificationKey"
+    , "type": "string"
+    , "description": "An Ed25519-BIP32 Byron genesis delegate verification key with chain-code."
+    , "contentEncoding": "base16"
+    , "minLength": 128
+    , "maxLength": 128
+    }
+
+  , "InitialDelegates":
+    { "title": "InitialDelegates"
+    , "type": "array"
+    , "items":
+      { "type": "object"
+      , "additionalProperties": false
+      , "required": [ "issuer", "delegate" ]
+      , "properties":
+        { "issuer":
+          { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "id" ]
+          , "properties":
+            { "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+            }
+          }
+        , "delegate":
+          { "$ref": "cardano.json#/definitions/GenesisDelegate"
+          }
+        }
+      }
+    }
+
+  , "Int64":
+    { "title": "Int64"
+    , "type": "integer"
+    , "minimum": -9223372036854775808
+    , "maximum": 9223372036854775807
+    }
+
+  , "InputSource":
+    { "type": "string"
+    , "enum":
+      [ "inputs"
+      , "collaterals"
+      ]
+    }
+
+  , "Language":
+    { "title": "Language"
+    , "type": "string"
+    , "enum": [ "plutus:v1", "plutus:v2", "plutus:v3" ]
+    }
+
+  , "KesVerificationKey":
+    { "title": "KesVerificationKey"
+    , "type": "string"
+    , "contentEncoding": "base16"
+    }
+
+  , "Mandate":
+    { "title": "Mandate"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "epoch" ]
+    , "properties":
+      { "epoch": { "$ref": "cardano.json#/definitions/Epoch" }
+      }
+    }
+
+  , "Metadata":
+    { "title": "Metadata"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "hash", "labels" ]
+    , "properties":
+      { "hash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+      , "labels": { "$ref": "cardano.json#/definitions/MetadataLabels" }
+      }
+    }
+
+  , "MetadataLabels":
+    { "title": "MetadataLabels"
+    , "type": "object"
+    , "propertyNames": { "pattern": "^-?[0-9]+$" }
+    , "additionalProperties":
+      { "type": "object"
+      , "description": "An associated metadatum, as a CBOR bytestring or a JSON object if possible. If not possible, default to 'cbor'. Use --include-metadata-cbor to ALWAYS include the cbor field."
+      , "additionalProperties": false
+      , "properties":
+        { "cbor":
+          { "type": "string"
+          , "contentEncoding": "base16"
+          , "pattern": "^[0-9a-f]*$"
+          }
+        , "json":
+          { "$ref": "cardano.json#/definitions/Metadatum"
+          }
+        }
+      }
+    }
+
+  , "Metadatum":
+    { "title": "Metadatum"
+    , "anyOf":
+      [ { "title": "Metadatum<NoSchema>"
+        , "oneOf":
+          [ { "title": "IntegerNoSchema", "type": "integer" }
+          , { "title": "StringNoSchema", "type": "string" }
+          , { "title": "Array<NoSchema>", "type": "array", "items": { "$ref": "cardano.json#/definitions/Metadatum/anyOf/0" } }
+          , { "title": "Object<NoSchema>", "type": "object", "additionalProperties": { "$ref": "cardano.json#/definitions/Metadatum/anyOf/0" } }
+          ]
+        }
+      , { "title": "Metadatum<DetailedSchema>"
+        , "oneOf":
+          [ { "type": "object"
+            , "title": "IntegerDetailedSchema"
+            , "additionalProperties": false
+            , "required": ["int"]
+            , "properties":
+              { "int":
+                  { "type": "integer"
+                  }
+              }
+            }
+          , { "type": "object"
+            , "title": "StringDetailedSchema"
+            , "additionalProperties": false
+            , "required": ["string"]
+            , "properties":
+              { "string":
+                  { "type": "string"
+                  }
+              }
+            }
+          , { "type": "object"
+            , "title": "BytesDetailedSchema"
+            , "additionalProperties": false
+            , "required": ["bytes"]
+            , "properties":
+              { "bytes":
+                { "type": "string"
+                , "contentEncoding": "base16"
+                , "pattern": "^[0-9a-f]*$"
+                }
+              }
+            }
+          , { "type": "object"
+            , "title": "Array<DetailedSchema>"
+            , "additionalProperties": false
+            , "required": ["list"]
+            , "properties":
+              { "list":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/Metadatum/anyOf/1" }
+                }
+              }
+            }
+          , { "type": "object"
+            , "title": "Object<DetailedSchema>"
+            , "additionalProperties": false
+            , "required": ["map"]
+            , "properties":
+              { "map":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/MetadatumMap" }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+
+  , "MetadatumMap":
+    { "title": "MetadatumMap"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": ["k", "v"]
+    , "properties":
+      { "k": { "$ref": "cardano.json#/definitions/Metadatum/anyOf/1" }
+      , "v": { "$ref": "cardano.json#/definitions/Metadatum/anyOf/1" }
+      }
+    }
+
+  , "Network":
+    { "title": "Network"
+    , "type": "string"
+    , "description": "A network target, as defined since the Shelley era."
+    , "enum": [ "mainnet", "testnet" ]
+    }
+
+  , "NetworkMagic":
+    { "title": "NetworkMagic"
+    , "type": "integer"
+    , "description": "A magic number for telling networks apart. (e.g. 764824073)"
+    , "minimum": 0
+    , "maximum": 4294967296
+    , "examples":
+      [ 764824073
+      ]
+    }
+
+  , "Nonce":
+    { "title": "Nonce"
+    , "oneOf":
+      [ { "type": "string"
+        , "enum": ["neutral"]
+        , "title": "Neutral"
+        }
+      , { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+      ]
+    }
+
+  , "Null":
+    { "type": "null"
+    }
+
+  , "NumberOfBytes":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "bytes" ]
+    , "properties":
+      { "bytes": { "$ref": "cardano.json#/definitions/UInt64" }
+      }
+    }
+
+  , "OperationalCertificate":
+    { "title": "OperationalCertificate"
+    , "type": "object"
+    , "description": "Certificate identifying a stake pool operator."
+    , "additionalProperties": false
+    , "required": [ "count", "kes" ]
+    , "properties":
+      { "count": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "sigma": { "$ref": "cardano.json#/definitions/Signature" }
+      , "kes":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "period", "verificationKey" ]
+        , "properties":
+          { "period": { "$ref": "cardano.json#/definitions/UInt64" }
+          , "verificationKey": { "$ref": "cardano.json#/definitions/KesVerificationKey" }
+          }
+        }
+      }
+    }
+
+  , "Origin":
+    { "title": "Origin"
+    , "type": "string"
+    , "description": "The origin of the blockchain. This point is special in the sense that it doesn't point to any existing slots, but is preceding any existing other point."
+    , "enum": [ "origin" ]
+    }
+
+  , "PolicyId":
+    { "title": "PolicyId"
+    , "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+    }
+
+  , "StakePool":
+    { "title": "StakePool"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required":
+      [ "id"
+      , "cost"
+      , "margin"
+      , "owners"
+      , "pledge"
+      , "relays"
+      , "rewardAccount"
+      , "vrfVerificationKeyHash"
+      ]
+    , "properties":
+      { "id":
+        { "$ref": "cardano.json#/definitions/StakePoolId"
+        }
+      , "vrfVerificationKeyHash":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
+        }
+      , "owners":
+        { "type": "array"
+        , "items":
+          { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+          }
+        }
+      , "cost":
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+        }
+      , "margin":
+        { "$ref": "cardano.json#/definitions/Ratio"
+        }
+      , "pledge":
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+        }
+      , "rewardAccount":
+        { "$ref": "cardano.json#/definitions/RewardAccount"
+        }
+      , "metadata":
+        { "$ref": "cardano.json#/definitions/Anchor"
+        }
+      , "relays":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Relay" }
+        }
+      }
+    }
+
+  , "StakePoolId":
+    { "title": "StakePoolId"
+    , "type": "string"
+    , "description": "A Blake2b 32-byte hash digest of a pool's verification key."
+    , "contentEncoding": "bech32"
+    , "pattern": "^pool1[0-9a-z]*$"
+    , "examples":
+      [ "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc"
+      , "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9"
+      ]
+    }
+
+  , "StakePoolVotingThresholds":
+    { "title": "StakePoolVotingThresholds"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required":
+      [ "noConfidence"
+      , "constitutionalCommittee"
+      , "hardForkInitiation"
+      , "protocolParametersUpdate"
+      ]
+    , "properties":
+      { "noConfidence": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "constitutionalCommittee":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "default", "stateOfNoConfidence" ]
+        , "properties":
+          { "default": { "$ref": "cardano.json#/definitions/Ratio" }
+          , "stateOfNoConfidence": { "$ref": "cardano.json#/definitions/Ratio" }
+          }
+        }
+      , "hardForkInitiation": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "protocolParametersUpdate":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "security" ]
+        , "properties":
+          { "security": { "$ref": "cardano.json#/definitions/Ratio" }
+          }
+        }
+      }
+    }
+
+  , "ProposedProtocolParameters":
+    { "title": "ProposedProtocolParameters"
+    , "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "minFeeReferenceScripts":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "range", "base", "multiplier" ]
+        , "properties":
+          { "range": { "$ref": "cardano.json#/definitions/UInt32" }
+          , "base": { "type": "number" }
+          , "multiplier": { "type": "number" }
+          }
+        }
+      , "minUtxoDepositCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minUtxoDepositConstant": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxReferenceScriptsSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxValueSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "extraEntropy": { "$ref": "cardano.json#/definitions/Nonce" }
+      , "stakeCredentialDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "stakePoolDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "stakePoolRetirementEpochBound": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "stakePoolPledgeInfluence": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "minStakePoolCost": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "desiredNumberOfStakePools": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "federatedBlockProductionRatio": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "monetaryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "treasuryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "collateralPercentage": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "maxCollateralInputs": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "plutusCostModels": { "$ref": "cardano.json#/definitions/CostModels" }
+      , "scriptExecutionPrices": { "$ref": "cardano.json#/definitions/ScriptExecutionPrices" }
+      , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+      , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+      , "stakePoolVotingThresholds": { "$ref": "cardano.json#/definitions/StakePoolVotingThresholds" }
+      , "constitutionalCommitteeMinSize": { "$ref": "cardano.json#/definitions/UInt16" }
+      , "constitutionalCommitteeMaxTermLength": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "governanceActionLifetime": { "$ref": "cardano.json#/definitions/Epoch" }
+      , "governanceActionDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "delegateRepresentativeVotingThresholds": { "$ref": "cardano.json#/definitions/DelegateRepresentativeVotingThresholds" }
+      , "delegateRepresentativeDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "delegateRepresentativeMaxIdleTime": { "$ref": "cardano.json#/definitions/Epoch" }
+      , "version": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
+      }
+    }
+
+  , "ProtocolParameters":
+    { "title": "ProtocolParameters"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required":
+      [ "minFeeCoefficient"
+      , "minFeeConstant"
+      , "minUtxoDepositCoefficient"
+      , "minUtxoDepositConstant"
+      , "maxBlockBodySize"
+      , "maxBlockHeaderSize"
+      , "stakeCredentialDeposit"
+      , "stakePoolDeposit"
+      , "stakePoolRetirementEpochBound"
+      , "stakePoolPledgeInfluence"
+      , "minStakePoolCost"
+      , "monetaryExpansion"
+      , "treasuryExpansion"
+      , "desiredNumberOfStakePools"
+      , "version"
+      ]
+    , "properties":
+      { "minFeeCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minFeeConstant": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "minFeeReferenceScripts":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "range", "base", "multiplier" ]
+        , "properties":
+          { "range":
+            { "$ref": "cardano.json#/definitions/UInt32"
+            }
+          , "base":
+            { "type": "number"
+            , "description": "The base cost for the tier-price calculation."
+            }
+          , "multiplier":
+            { "type": "number"
+            , "description": "The multiplier increasing the cost of each tier."
+            }
+          }
+        }
+      , "minUtxoDepositCoefficient": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "minUtxoDepositConstant": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxValueSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "extraEntropy": { "$ref": "cardano.json#/definitions/Nonce" }
+      , "stakeCredentialDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "stakePoolDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "stakePoolRetirementEpochBound": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "stakePoolPledgeInfluence": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "minStakePoolCost": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "desiredNumberOfStakePools": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "federatedBlockProductionRatio": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "monetaryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "treasuryExpansion": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "collateralPercentage": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "maxCollateralInputs": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "plutusCostModels": { "$ref": "cardano.json#/definitions/CostModels" }
+      , "scriptExecutionPrices": { "$ref": "cardano.json#/definitions/ScriptExecutionPrices" }
+      , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+      , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+      , "maxReferenceScriptsSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "stakePoolVotingThresholds": { "$ref": "cardano.json#/definitions/StakePoolVotingThresholds" }
+      , "constitutionalCommitteeMinSize": { "$ref": "cardano.json#/definitions/UInt16" }
+      , "constitutionalCommitteeMaxTermLength": { "$ref": "cardano.json#/definitions/UInt64" }
+      , "governanceActionLifetime": { "$ref": "cardano.json#/definitions/Epoch" }
+      , "governanceActionDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "delegateRepresentativeVotingThresholds": { "$ref": "cardano.json#/definitions/DelegateRepresentativeVotingThresholds" }
+      , "delegateRepresentativeDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "delegateRepresentativeMaxIdleTime": { "$ref": "cardano.json#/definitions/Epoch" }
+      , "version": { "$ref": "cardano.json#/definitions/ProtocolVersion" }
+      }
+    }
+
+  , "ProtocolVersion":
+    { "title": "ProtocolVersion"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "major", "minor" ]
+    , "properties":
+      { "major": { "$ref": "cardano.json#/definitions/UInt32" }
+      , "minor": { "$ref": "cardano.json#/definitions/UInt32" }
+      , "patch": { "$ref": "cardano.json#/definitions/UInt32" }
+      }
+    }
+
+  , "Ratio":
+    { "title": "Ratio"
+    , "type": "string"
+    , "description": "A ratio of two integers, to express exact fractions."
+    , "pattern": "^-?[0-9]+/[0-9]+$"
+    , "examples":
+      [ "2/3"
+      , "7/8"
+      ]
+    }
+
+  , "Redeemer":
+    { "title": "Redeemer"
+    , "type": "object"
+    , "examples":
+      [ { "executionUnits":
+          { "memory": 2
+          , "cpu": 2
+          }
+        , "redeemer": "ggRCqSQ="
+        , "validator":
+          { "index": 0
+          , "purpose": "spend"
+          }
+        }
+      ]
+    , "additionalProperties": false
+    , "required": [ "redeemer", "executionUnits", "validator" ]
+    , "properties":
+      { "redeemer": { "$ref": "cardano.json#/definitions/RedeemerData" }
+      , "executionUnits": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
+      , "validator": { "$ref": "cardano.json#/definitions/RedeemerPointer" }
+      }
+    }
+
+  , "RedeemerData":
+    { "title": "RedeemerData"
+    , "type": "string"
+    , "contentEncoding": "base16"
+    , "description": "Plutus data, CBOR-serialised."
+    }
+
+  , "RedeemerPointer":
+    { "title": "RedeemerPointer"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "purpose", "index" ]
+    , "properties":
+      { "purpose":
+        { "type": "string"
+        , "enum": [ "spend", "mint", "publish", "withdraw", "vote", "propose" ]
+        }
+      , "index":
+        { "$ref": "cardano.json#/definitions/UInt64"
+        }
+      }
+    }
+
+  , "RelativeTime":
+    { "title": "RelativeTime"
+    , "description": "A time in seconds relative to another one (typically, system start or era start)."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "seconds" ]
+    , "properties":
+      { "seconds":
+        { "type": "integer"
+        }
+      }
+    }
+
+  , "Relay":
+    { "title": "Relay"
+    , "oneOf":
+      [ { "type": "object"
+        , "title": "Relay<ByAddress>"
+        , "additionalProperties": false
+        , "required": [ "type" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "ipAddress" ]
+            }
+          , "ipv4":
+            { "type": "string"
+            }
+          , "ipv6":
+            { "type": "string"
+            }
+          , "port":
+            { "type": "integer"
+            , "minimum": 0
+            , "maximum": 65535
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "Relay<ByName>"
+        , "additionalProperties": false
+        , "required": [ "type", "hostname" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "enum": [ "hostname" ]
+            }
+          , "hostname":
+            { "type": "string"
+            }
+          , "port":
+            { "type": "integer"
+            , "minimum": 0
+            , "maximum": 65535
+            }
+          }
+        }
+      ]
+    }
+
+  , "RewardAccount":
+    { "title": "RewardAccount"
+    , "type": "string"
+    , "description": "A reward account, also known as 'stake address'."
+    , "contentEncoding": "bech32"
+    , "pattern": "^stake(_test)?1[0-9a-z]+$"
+    , "examples":
+      [ "stake1ux7pt9adw8z46tgqn2f8fvurrhk325gcm4mf75mkmmxpx6gae9mzv"
+      ]
+    }
+
+  , "RewardTransfer":
+    { "title": "RewardTransfer"
+    , "type": "object"
+    , "additionalProperties": { "$ref": "cardano.json#/definitions/Value<Delta>" }
+    , "propertyNames": { "pattern": "[0-9a-f]{56}$" }
+    , "examples":
+      [ { "6d06fe0a5a8cb6d2bcc352581dea626bb5b2f66edf85678b2f2fa7b5": { "ada": { "lovelace": 123456789 } }
+        }
+      ]
+    }
+
+  , "SafeZone":
+    { "title": "SafeZone"
+    , "type": "integer"
+    , "description": "Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks."
+    , "minimum": 0
+    , "maximum": 18446744073709552999
+    }
+
+  , "Script":
+    { "title": "Script"
+    , "oneOf":
+      [ { "type": "object"
+        , "title": "Native"
+        , "additionalProperties": false
+        , "description": "A Cardano native script. Use --include-script-cbor to ALWAYS include the 'cbor' field. Omitted otherwise."
+        , "required": [ "language", "json" ]
+        , "properties":
+          { "language":
+            { "type": "string"
+            , "enum": [ "native" ]
+            }
+          , "json":
+            { "$ref": "cardano.json#/definitions/Script<Native>"
+            }
+          , "cbor":
+            { "type": "string"
+            , "contentEncoding": "base16"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "Plutus"
+        , "additionalProperties": false
+        , "required": [ "language", "cbor" ]
+        , "properties":
+          { "language":
+            { "type": "string"
+            , "enum": [ "plutus:v1", "plutus:v2", "plutus:v3" ]
+            }
+          , "cbor":
+            { "type": "string"
+            , "contentEncoding": "base16"
+            }
+          }
+        }
+      ]
+    }
+
+  , "Script<Native>":
+    { "title": "Script<Native>"
+    , "description": "A phase-1 monetary script. Timelocks constraints are only supported since Allegra."
+    , "examples":
+        [ { "clause": "signature", "from": "3c07030e36bfff7cd2f004356ef320f3fe3c07030e7cd2f004356437" }
+        , { "clause": "all"
+          , "from":
+            [ { "clause": "signature", "from": "ec09e5293d384637cd2f004356ef320f3fe3c07030e36bfffe67e2e2" }
+            , { "clause": "signature", "from": "3c07030e36bfff7cd2f004356ef320f3fe3c07030e7cd2f004356437" }
+            ]
+          }
+        , { "clause": "some"
+          , "atLeast": 2
+          , "from":
+            [ { "clause": "signature", "from": "ec09e5293d384637cd2f004356ef320f3fe3c07030e36bfffe67e2e2" }
+            , { "clause": "signature", "from": "3c07030e36bfff7cd2f004356ef320f3fe3c07030e7cd2f004356437" }
+            , { "clause": "after", "slot": 42 }
+            ]
+          }
+        ]
+    , "oneOf":
+      [ { "type": "object"
+        , "title": "Clause<Signature>"
+        , "additionalProperties": false
+        , "required": [ "clause", "from" ]
+        , "properties":
+          { "clause":
+            { "type": "string"
+            , "enum": [ "signature" ]
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "Clause<Any>"
+        , "additionalProperties": false
+        , "required": [ "clause", "from" ]
+        , "properties":
+          { "clause":
+            { "type": "string"
+            , "enum": [ "any" ]
+            }
+          , "from":
+            { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/Script<Native>" }
+            }
+          }
+        }
+
+      , { "type": "object"
+        , "title": "Clause<All>"
+        , "additionalProperties": false
+        , "required": [ "clause", "from" ]
+        , "properties":
+          { "clause":
+            { "type": "string"
+            , "enum": [ "all" ]
+            }
+          , "from":
+            { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/Script<Native>" }
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "Clause<Some>"
+        , "additionalProperties": false
+        , "required": [ "clause", "from", "atLeast" ]
+        , "properties":
+          { "clause":
+            { "type": "string"
+            , "enum": [ "some" ]
+            }
+          , "atLeast":
+            { "type": "integer"
+            }
+          , "from":
+            { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/Script<Native>" }
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "Clause<Before>"
+        , "additionalProperties": false
+        , "required": [ "clause", "slot" ]
+        , "properties":
+          { "clause":
+            { "type": "string"
+            , "enum": [ "before" ]
+            }
+          , "slot":
+            { "$ref": "cardano.json#/definitions/Slot"
+            }
+          }
+        }
+      , { "type": "object"
+        , "title": "Clause<After>"
+        , "additionalProperties": false
+        , "required": [ "clause", "slot" ]
+        , "properties":
+          { "clause":
+            { "type": "string"
+            , "enum": [ "after" ]
+            }
+          , "slot":
+            { "$ref": "cardano.json#/definitions/Slot"
+            }
+          }
+        }
+      ]
+    }
+
+  , "ScriptExecutionPrices":
+    { "title": "ScriptExecutionPrices"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "memory", "cpu" ]
+    , "properties":
+      { "memory": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "cpu": { "$ref": "cardano.json#/definitions/Ratio" }
+      }
+    }
+
+  , "ScriptPurpose":
+    { "title": "ScriptPurpose"
+    , "oneOf":
+      [ { "title": "ScriptPurpose<Spend>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "purpose", "outputReference" ]
+        , "properties":
+          { "purpose":
+            { "type": "string"
+            , "enum": [ "spend" ]
+            }
+          , "outputReference": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+          }
+        }
+      , { "title": "ScriptPurpose<Mint>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "purpose", "policy" ]
+        , "properties":
+          { "purpose":
+            { "type": "string"
+            , "enum": [ "mint" ]
+            }
+          , "policy": { "$ref": "cardano.json#/definitions/PolicyId" }
+          }
+        }
+      , { "title": "ScriptPurpose<Publish>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "purpose", "certificate" ]
+        , "properties":
+          { "purpose":
+            { "type": "string"
+            , "enum": [ "publish" ]
+            }
+          , "certificate": { "$ref": "cardano.json#/definitions/Certificate" }
+          }
+        }
+      , { "title": "ScriptPurpose<Withdraw>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "purpose", "rewardAccount" ]
+        , "properties":
+          { "purpose":
+            { "type": "string"
+            , "enum": [ "withdraw" ]
+            }
+          , "rewardAccount": { "$ref": "cardano.json#/definitions/RewardAccount" }
+          }
+        }
+      , { "title": "ScriptPurpose<Propose>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "purpose", "proposal" ]
+        , "properties":
+          { "purpose":
+            { "type": "string"
+            , "enum": [ "propose" ]
+            }
+          , "proposal":
+            { "$ref": "cardano.json#/definitions/GovernanceProposal"
+            }
+          }
+        }
+      , { "title": "ScriptPurpose<Vote>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "purpose", "issuer" ]
+        , "properties":
+          { "purpose":
+            { "type": "string"
+            , "enum": [ "vote" ]
+            }
+          , "issuer":
+            { "$ref": "cardano.json#/definitions/GovernanceVoter"
+            }
+          }
+        }
+      ]
+    }
+
+  , "Signature":
+    { "title": "Signature"
+    , "type": "string"
+    , "description": "An EdDSA signature."
+    , "contentEncoding": "base16"
+    , "minLength": 128
+    , "maxLength": 128
+    }
+
+  , "Signatory":
+    { "title": "Signatory"
+    , "description": "A signatory (EdDSA) for the transaction. The fields 'chainCode' and 'addressAttributes' are only present on bootstrap signatures (when spending from a Byron/Bootstrap address)."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "signature", "key" ]
+    , "properties":
+      { "key": { "$ref": "cardano.json#/definitions/VerificationKey" }
+      , "signature": { "$ref": "cardano.json#/definitions/Signature" }
+      , "chainCode": { "$ref": "cardano.json#/definitions/ChainCode" }
+      , "addressAttributes": { "$ref": "cardano.json#/definitions/AddressAttributes" }
+      }
+    , "examples":
+      [ { "signature": "deeb8f82f2af5836ebbc1b450b6dbf0b03c93afe5696f10d49e8a8304ebfac01deeb8f82f2af5836ebbc1b4ffffffff"
+        , "key": "deeb8f82f2af5836ebbc1b450b6dbf0b03c93afe5696f10d49e8a8304ebfac01"
+        , "addressAttributes": "cA=="
+        , "chainCode": "b6dbf0b03c93afe5696f10d49e8a8304ebfac01deeb8f82f2af5836ebbc1b450"
+        }
+      , { "signature": "deeb8f82f2af5836ebbc1b450b6dbf0b03c93afe5696f10d49e8a8304ebfac01deeb8f82f2af5836ebbc1b4ffffffff"
+        , "key": "0c02af01eaacc939b3d0d817f4eb57d323ea5686cb1fecb8de821df1296b84a7"
+        }
+      ]
+    }
+
+  , "Slot":
+    { "title": "Slot"
+    , "description": "An absolute slot number."
+    , "type": "integer"
+    , "minimum": 0
+    , "maximum": 18446744073709552000
+    }
+
+  , "SlotLength":
+    { "title": "SlotLength"
+    , "description": "A slot length in milliseconds"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "milliseconds" ]
+    , "properties":
+      { "milliseconds":
+        { "type": "integer"
+        }
+      }
+    }
+
+  , "SoftwareVersion":
+    { "title": "SoftwareVersion"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "appName", "number" ]
+    , "properties":
+      { "appName": { "type": "string" }
+      , "number": { "$ref": "cardano.json#/definitions/UInt32" }
+      }
+    }
+
+  , "StakeAddress":
+    { "title": "StakeAddress"
+    , "type": "string"
+    , "description": "A stake address (a.k.a reward account)"
+    , "contentEncoding": "bech32"
+    , "pattern": "^(stake|stake_test)1[0-9a-z]*$"
+    , "examples":
+      [ "stake179kzq4qulejydh045yzxwk4ksx780khkl4gdve9kzwd9vjcek9u8h"
+      ]
+    }
+
+  , "Tip":
+    { "title": "Tip"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "slot", "id", "height" ]
+    , "properties":
+      { "slot": { "$ref": "cardano.json#/definitions/Slot" }
+      , "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+      , "height": { "$ref": "cardano.json#/definitions/BlockHeight" }
+      }
+    }
+
+  , "Transaction":
+    { "title": "Transaction"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id", "spends", "inputs", "outputs", "signatories" ]
+    , "properties":
+      { "id":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
+        }
+      , "spends":
+        { "$ref": "cardano.json#/definitions/InputSource"
+        }
+      , "inputs":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+        }
+      , "references":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+        }
+      , "collaterals":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+        }
+      , "totalCollateral":
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+        }
+      , "collateralReturn":
+        { "$ref": "cardano.json#/definitions/TransactionOutput"
+        }
+      , "outputs":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutput" }
+        }
+      , "certificates":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Certificate" }
+        }
+      , "withdrawals":
+        { "$ref": "cardano.json#/definitions/Withdrawals"
+        }
+      , "fee":
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+        }
+      , "validityInterval":
+        { "$ref": "cardano.json#/definitions/ValidityInterval"
+        }
+      , "mint":
+        { "$ref": "cardano.json#/definitions/Assets"
+        }
+      , "network":
+        { "$ref": "cardano.json#/definitions/Network"
+        }
+      , "scriptIntegrityHash":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
+        }
+      , "requiredExtraSignatories":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
+      , "requiredExtraScripts":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
+      , "proposals":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/GovernanceProposal" }
+        }
+      , "votes":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/GovernanceVote" }
+        }
+      , "metadata":
+        { "$ref": "cardano.json#/definitions/Metadata"
+        }
+      , "signatories":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Signatory" }
+        }
+      , "scripts":
+        { "type": "object"
+        , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Script" }
+        }
+      , "datums":
+        { "type": "object"
+        , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Datum" }
+        }
+      , "redeemers":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Redeemer" }
+        }
+      , "treasury":
+        { "type": "object"
+        , "additionalProperties": false
+        , "properties":
+          { "value": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+          , "donation": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+          }
+        }
+      , "cbor":
+        { "type": "string"
+        , "contentEncoding": "base16"
+        , "description": "The raw serialized (CBOR) transaction, as found on-chain. Use --include-transaction-cbor to ALWAYS include the 'cbor' field. Omitted otherwise."
+        }
+      }
+    }
+
+  , "TransactionId":
+    { "title": "TransactionId"
+    , "description": "A Blake2b 32-byte hash digest of a transaction body"
+    , "type": "string"
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
+  , "TransactionOutput":
+    { "title": "TransactionOutput"
+    , "description": "A transaction output. 'datum' and 'datumHash' are never present together."
+    , "type": "object"
+    , "examples":
+      [ { "address": "addr_test1qz66ue36465w2qq40005h2hadad6pnjht8mu6sgplsfj74qdjnshguewlx4ww0eet26y2pal4xpav5prcydf28cvxtjqx46x7f"
+        , "value":
+          { "ada": { "lovelace": 2 }
+          , "3542acb3a64d80c29302260d62c3b87a742ad14abf855ebc6733081e": 42
+          , "b5ae663aaea8e500157bdf4baafd6f5ba0ce5759f7cd4101fc132f54.706174617465": 1337
+          }
+        }
+      ]
+    , "additionalProperties": false
+    , "required": [ "address", "value" ]
+    , "properties":
+      { "address": { "$ref": "cardano.json#/definitions/Address" }
+      , "value": { "$ref": "cardano.json#/definitions/Value" }
+      , "datumHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+      , "datum": { "$ref": "cardano.json#/definitions/Datum" }
+      , "script": { "$ref": "cardano.json#/definitions/Script" }
+      }
+    }
+
+  , "TransactionOutputReference":
+    { "title": "TransactionOutputReference"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "transaction", "index" ]
+    , "properties":
+      { "transaction":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "id" ]
+        , "properties":
+          { "id":
+            { "$ref": "cardano.json#/definitions/TransactionId"
+            }
+          }
+        }
+      , "index":
+        { "$ref": "cardano.json#/definitions/UInt64"
+        }
+      }
+    }
+
+  , "UInt8":
+    { "title": "UInt8"
+    , "type": "integer"
+    , "minimum": 0
+    , "maximum": 255
+    }
+
+  , "UInt16":
+    { "title": "UInt16"
+    , "type": "integer"
+    , "minimum": 0
+    , "maximum": 65536
+    }
+
+  , "UInt32":
+    { "title": "UInt32"
+    , "type": "integer"
+    , "minimum": 0
+    , "maximum": 4294967295
+    }
+
+  , "UInt64":
+    { "title": "UInt64"
+    , "type": "integer"
+    , "minimum": 0
+    , "maximum": 18446744073709552999
+    }
+
+  , "UtcTime":
+    { "title": "UtcTime"
+    , "type": "string"
+    , "format": "date-time"
+    , "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.?[0-9]*Z?"
+    }
+
+  , "Utxo":
+    { "title": "Utxo"
+    , "type": "array"
+    , "items":
+      { "type": "object"
+      , "additionalProperties": false
+      , "required": [ "transaction", "index", "value", "address" ]
+      , "properties":
+        { "transaction":
+          { "type": "object"
+          , "additionalProperties": false
+          , "required": [ "id" ]
+          , "properties":
+            { "id": { "$ref": "cardano.json#/definitions/TransactionId" }
+            }
+          }
+        , "index": { "$ref": "cardano.json#/definitions/UInt32" }
+        , "address": { "$ref": "cardano.json#/definitions/Address" }
+        , "value": { "$ref": "cardano.json#/definitions/Value" }
+        , "datumHash": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+        , "datum": { "$ref": "cardano.json#/definitions/Datum" }
+        , "script": { "$ref": "cardano.json#/definitions/Script" }
+        }
+      }
+    }
+
+  , "ValidityInterval":
+    { "title": "ValidityInterval"
+    , "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "invalidBefore": { "$ref": "cardano.json#/definitions/Slot" }
+      , "invalidAfter": { "$ref": "cardano.json#/definitions/Slot" }
+      }
+    }
+
+  , "Value":
+    { "title": "Value"
+    , "type": "object"
+    , "propertyNames": { "pattern": "^[0-9a-f]{56}$" }
+    , "additionalProperties":
+      { "type": "object"
+      , "propertyNames": { "pattern": "^[0-9a-f]{0,64}$" }
+      , "additionalProperties": { "$ref": "cardano.json#/definitions/AssetQuantity" }
+      }
+    , "required": [ "ada" ]
+    , "properties":
+      { "ada":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "lovelace" ]
+        , "properties":
+          { "lovelace": { "type": "integer" }
+          }
+        }
+      }
+    }
+
+  , "Value<AdaOnly>":
+    { "title": "Value<AdaOnly>"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "ada" ]
+    , "properties":
+      { "ada":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "lovelace" ]
+        , "properties":
+          { "lovelace": { "type": "integer" }
+          }
+        }
+      }
+    }
+
+  , "Value<Delta>":
+    { "title": "Value<Delta>"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "ada" ]
+    , "properties":
+      { "ada":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": [ "lovelace" ]
+        , "properties":
+          { "lovelace":
+            { "type": "integer"
+            , "description": "An amount, possibly negative, in Lovelace (1e6 Lovelace = 1 Ada)."
+            , "minimum": -9223372036854775808
+            , "maximum": 9223372036854775807
+            }
+          }
+        }
+      }
+    }
+
+  , "VerificationKey":
+    { "title": "VerificationKey"
+    , "description": "An Ed25519 verification key."
+    , "type": "string"
+    , "contentEncoding": "base16"
+    , "minLength": 64
+    , "maxLength": 64
+    }
+
+  , "VotingPeriod":
+    { "title": "VotingPeriod"
+    , "type": "string"
+    , "enum": [ "voteForThisEpoch", "voteForNextEpoch" ]
+    }
+
+  , "VrfProof":
+    { "title": "VrfProof"
+    , "type": "string"
+    , "contentEncoding": "base16"
+    }
+
+  , "VrfOutput":
+    { "title": "VrfOutput"
+    , "type": "string"
+    , "contentEncoding": "base16"
+    }
+
+  , "Withdrawals":
+    { "title": "Withdrawals"
+    , "type": "object"
+    , "additionalProperties": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+    , "propertyNames": { "pattern": "^stake(_test)?1[0-9a-z]+$" }
+    }
+  }
+}
