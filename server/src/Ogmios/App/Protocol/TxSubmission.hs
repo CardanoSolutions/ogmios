@@ -53,6 +53,7 @@ import Cardano.Ledger.BaseTypes
 import Cardano.Ledger.Core
     ( EraTx (..)
     , EraTxBody (..)
+    , eraName
     )
 import Control.Monad.Trans.Except
     ( Except
@@ -85,8 +86,10 @@ import Ogmios.Control.MonadSTM
     , takeTMVar
     )
 import Ogmios.Data.EraTranslation
-    ( MultiEraUTxO (..)
+    ( MostRecentEra
+    , MultiEraUTxO (..)
     , Upgrade (..)
+    , upgradeGenTx
     )
 import Ogmios.Data.Json
     ( Json
@@ -128,9 +131,13 @@ import Ouroboros.Consensus.Cardano.Block
     , CardanoBlock
     , CardanoQueryResult
     , GenTx (..)
+    , HardForkApplyTxErr (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator
     ( HardForkBlock
+    )
+import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
+    ( EraMismatch (..)
     )
 import Ouroboros.Consensus.HardFork.Combinator.Ledger.Query
     ( QueryHardFork (..)
@@ -180,6 +187,7 @@ import Type.Reflection
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
 import qualified Data.Map.Strict as Map
+import qualified Data.Text as T
 import qualified Ouroboros.Consensus.HardFork.Combinator as HF
 import qualified Ouroboros.Consensus.Ledger.Query as Ledger
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
@@ -212,6 +220,16 @@ mkTxSubmissionClient tr defaultWithInternalError TxSubmissionCodecs{..} Executio
     await :: m (TxSubmissionMessage block)
     await = atomically (readTQueue queue)
 
+    isMostRecentEra era =
+        T.toLower (toText era) == T.toLower (toText (eraName @(MostRecentEra block)))
+
+    -- NOTE: On successful submission, clear our cached
+    -- mempool to ensure we always use the latest available
+    -- mempool snapshot during evaluation.
+    clearMempoolOnSuccess = \case
+        SubmitSuccess -> clearMempoolM
+        _ -> pure ()
+
     clientStIdle
         :: m (LocalTxClientStIdle (SerializedTransaction block) (SubmitTransactionError block) m ())
     clientStIdle = await >>= \case
@@ -219,17 +237,34 @@ mkTxSubmissionClient tr defaultWithInternalError TxSubmissionCodecs{..} Executio
             defaultWithInternalError clientStIdle yield toResponse $ case request of
                 MultiEraDecoderSuccess transaction -> do
                     pure $ SendMsgSubmitTx transaction $ \result -> do
-                        -- NOTE: On successful submission, clear our cached
-                        -- mempool to ensure we always use the latest available
-                        -- mempool snapshot during evaluation.
                         case result of
-                            SubmitSuccess -> clearMempoolM
-                            SubmitFail{} -> pure ()
-                        mkSubmitTransactionResponse transaction result
-                            & toResponse
-                            & encodeSubmitTransactionResponse
-                            & yield
-                        clientStIdle
+                            SubmitFail (ApplyTxErrWrongEra eraMismatch) | isMostRecentEra (ledgerEraName eraMismatch) -> do
+                                case upgradeGenTx transaction of
+                                    Left hint -> do
+                                        SubmitTransactionFailedToUpgrade hint
+                                            & toResponse
+                                            & encodeSubmitTransactionResponse
+                                            & yield
+                                        clientStIdle
+                                    Right upgradedTx ->
+                                        pure $ SendMsgSubmitTx upgradedTx $ \result' -> do
+                                            clearMempoolOnSuccess result'
+                                            mkSubmitTransactionResponse transaction result'
+                                                & toResponse
+                                                & encodeSubmitTransactionResponse
+                                                & yield
+                                            clientStIdle
+                            _ -> do
+                                -- NOTE: On successful submission, clear our cached
+                                -- mempool to ensure we always use the latest available
+                                -- mempool snapshot during evaluation.
+                                clearMempoolOnSuccess result
+                                mkSubmitTransactionResponse transaction result
+                                    & toResponse
+                                    & encodeSubmitTransactionResponse
+                                    & yield
+                                clientStIdle
+
                 MultiEraDecoderErrors errs -> do
                     SubmitTransactionDeserialisationFailure errs
                         & toResponse

@@ -16,6 +16,7 @@ module Ogmios.Data.EraTranslation
 
       -- * Translations
     , Upgrade (..)
+    , upgradeGenTx
     ) where
 
 import Ogmios.Prelude
@@ -51,13 +52,20 @@ import Data.Maybe.Strict
 import Ouroboros.Consensus.Cardano
     ( CardanoBlock
     )
+import Ouroboros.Consensus.Cardano.Block
+    ( GenTx (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger
     ( ShelleyBlock
+    )
+import Ouroboros.Consensus.Shelley.Ledger.Mempool
+    ( GenTx (..)
     )
 
 import qualified Cardano.Ledger.Alonzo.Tx as Alonzo
 import qualified Cardano.Ledger.Babbage.TxBody as Babbage
 import qualified Cardano.Ledger.Conway.Core as Conway
+import qualified Cardano.Ledger.Core as Core
 import qualified Cardano.Ledger.Crypto as Ledger
 
 type family MostRecentEra block :: Type where
@@ -105,6 +113,35 @@ instance
               SJust auxData -> SJust <$> translateEraThroughCBOR "auxiliaryData" auxData
             let isValid = Alonzo.isValid tx
             pure $ AlonzoTx{body,wits,auxiliaryData,isValid}
+
+----------
+-- GenTx
+----------
+
+upgradeGenTx
+    :: forall crypto.
+        ( Crypto crypto
+        )
+    => GenTx (CardanoBlock crypto)
+    -> Either Text (GenTx (CardanoBlock crypto))
+upgradeGenTx = \case
+    GenTxByron _ ->
+        Left "cannot upgrade from Byron transaction: too old, use a more recent transaction builder."
+    GenTxShelley _ ->
+        Left "cannot upgrade from Shelley transaction: too old, use a more recent transaction builder."
+    GenTxAllegra _ ->
+        Left "cannot upgrade from Allegra transaction: too old, use a more recent transaction builder."
+    GenTxMary _ ->
+        Left "cannot upgrade from Mary transaction: too old, use a more recent transaction builder."
+    GenTxAlonzo (ShelleyTx hash txInAlonzo) -> do
+        txInBabbage <- left show $ Core.upgradeTx @(BabbageEra crypto) txInAlonzo
+        txInConway  <- left show $ Core.upgradeTx @(ConwayEra crypto) txInBabbage
+        pure $ GenTxConway $ ShelleyTx hash txInConway
+    GenTxBabbage (ShelleyTx hash txInBabbage) -> do
+        txInConway <- left show $ Core.upgradeTx @(ConwayEra crypto) txInBabbage
+        pure $ GenTxConway $ ShelleyTx hash txInConway
+    latest@(GenTxConway(_))->
+        Right latest
 
 unsafeFromRight :: (HasCallStack) => Either Text a -> a
 unsafeFromRight = either error id

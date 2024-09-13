@@ -254,6 +254,7 @@ _decodeSubmitTransaction =
 data SubmitTransactionResponse block
     = SubmitTransactionSuccess (GenTxId block)
     | SubmitTransactionFailure (SubmitTransactionError block)
+    | SubmitTransactionFailedToUpgrade Text
     | SubmitTransactionDeserialisationFailure [(SomeShelleyEra, Binary.DecoderError, Word)]
     deriving (Generic)
 deriving instance
@@ -281,6 +282,16 @@ _encodeSubmitTransactionResponse _proxy
             resolve $ encodeObject ("transaction" .= encodeTransactionId i)
         SubmitTransactionFailure e ->
             encodeSubmitTransactionError reject e
+        SubmitTransactionFailedToUpgrade hint ->
+            reject Rpc.FaultInvalidParams
+                "Non-upgradable transaction; it seems that you're trying to submit a \
+                \transaction in a format that presents incompatibility with the current \
+                \ledger era. The field \"data.hint\" contains possible useful information \
+                \about what went wrong."
+                (pure $ encodeObject
+                    ( "hint" .= encodeText hint
+                    )
+                )
         SubmitTransactionDeserialisationFailure errs ->
             encodeDeserialisationFailure reject errs
 
