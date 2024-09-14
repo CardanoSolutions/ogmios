@@ -7,6 +7,20 @@ pre: "<b>6. </b>"
 math: true
 ---
 
+### [6.7.0] - 2024-09-13
+
+#### Added
+
+- Automatically upgrade transactions from previous era (up until Alonzo) on submission.
+
+#### Changed
+
+- N/A
+
+#### Removed
+
+- N/A
+
 ### [6.6.2] - 2024-09-10
 
 #### Added
