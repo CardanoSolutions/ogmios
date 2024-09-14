@@ -22,9 +22,27 @@ dev: # Run local ogmios through cabal
 		--node-config $(NODE_CFG)/cardano-node/config.json \
 		--node-socket $(NODE_SOCKET) $(filter-out $@,$(MAKECMDGOALS))
 
+formula: # Re-generate Homebrew formula
+ifeq ($(VERSION),)
+	@echo "Missing \033[1;33mVERSION\033[00m argument."
+else
+ifneq ($(filter v%,$(VERSION)),)
+	@echo "Provide \033[1;33mVERSION\033[00m without \033[1;33m\"v\"\033[00m prefix."
+else
+	@LINUX_AARCH64="$(shell find v$(VERSION) -type f -name "*aarch64-linux.zip" | sha256sum | sed "s/[^0-9a-f]*//g")"; \
+	LINUX_X86_64="$(shell find v$(VERSION) -type f -name "*x86_64-linux.zip" | sha256sum | sed "s/[^0-9a-f]*//g")"; \
+	MACOS_AARCH64="$(shell find v$(VERSION) -type f -name "*aarch64-macos.zip" | sha256sum | sed "s/[^0-9a-f]*//g")"; \
+	cat ../.github/formula.rb.template | sed \
+	  -e "s/%VERSION%/$(VERSION)/g" \
+		-e "s/%LINUX_AARCH64%/$${LINUX_AARCH64}/g" \
+		-e "s/%LINUX_X86_64%/$${LINUX_X86_64}/g" \
+		-e "s/%MACOS_AARCH64%/$${MACOS_AARCH64}/g"
+endif
+endif
+
 bump: # Bump server & TypeScript client versions.
 ifeq ($(VERSION),)
-	@echo "Missing VERSION argument?"
+	@echo "Missing \033[1;33mVERSION\033[00m argument."
 else
 	@echo "Bumping versions to $(VERSION)"
 	@sed -i '' 's/^version:\([^0-9]*\).*/version:\1$(VERSION)/' package.yaml

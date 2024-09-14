@@ -1,0 +1,30 @@
+class Ogmios < Formula
+  desc "A WebSocket JSON/RPC bridge for Cardano."
+  homepage "https://ogmios.dev"
+  version "%VERSION%"
+  license "MPL-2.0"
+
+  uses_from_macos "bzip2"
+  uses_from_macos "libffi"
+
+  if OS.mac?
+    if Hardware::CPU.arm?
+      url "https://github.com/CardanoSolutions/ogmios/releases/download/v%VERSION%/ogmios-v%VERSION%-aarch64-macos.zip"
+      sha256 "%MACOS_AARCH64%"
+    end
+  end
+  if OS.linux?
+    if Hardware::CPU.arm?
+      url "https://github.com/CardanoSolutions/ogmios/releases/download/v%VERSION%/ogmios-v%VERSION%-aarch64-linux.zip"
+      sha256 "%LINUX_AARCH64%"
+    end
+    if Hardware::CPU.intel?
+      url "https://github.com/CardanoSolutions/ogmios/releases/download/v%VERSION%/ogmios-v%VERSION%-x86_64-linux.zip"
+      sha256 "%LINUX_X86_64%"
+    end
+  end
+
+  def install
+    bin.install "bin/ogmios"
+  end
+end
