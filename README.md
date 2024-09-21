@@ -65,6 +65,7 @@ See our [Ogmios client starter kit](https://github.com/CardanoSolutions/ogmios-t
   `epoch`                      | The current epoch of the ledger.
   `eraStart`                   | The information regarding the beginning of the current ledger era.
   `eraSummaries`               | Era bounds and slot parameters details, required for proper slotting arithmetic.
+  `governanceProposals`        | Currently active governance proposals and their ratification state (i.e. votes).
   `liveStakeDistribution`      | Distribution of the stake across all known stake pools, relative to the **total** stake in the network.
   `projectedRewards`           | The projected rewards of an account in a context where the top stake pools are fully saturated. This projection gives, in principle, a ranking of stake pools that maximizes delegator rewards.
   `protocolParameters`         | The current protocol parameters.

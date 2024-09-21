@@ -340,6 +340,12 @@ export interface Ogmios {
     | QueryLedgerStateEraMismatch
     | QueryLedgerStateUnavailableInCurrentEra
     | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateGovernanceProposals: QueryLedgerStateGovernanceProposals;
+  QueryLedgerStateGovernanceProposalsResponse:
+    | QueryLedgerStateGovernanceProposalsResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
   QueryLedgerStateLiveStakeDistribution: QueryLedgerStateLiveStakeDistribution;
   QueryLedgerStateLiveStakeDistributionResponse:
     | QueryLedgerStateLiveStakeDistributionResponse
@@ -2232,6 +2238,7 @@ export interface QueryLedgerStateEraMismatch {
     | "queryLedgerState/epoch"
     | "queryLedgerState/eraStart"
     | "queryLedgerState/eraSummaries"
+    | "queryLedgerState/governanceProposals"
     | "queryLedgerState/liveStakeDistribution"
     | "queryLedgerState/projectedRewards"
     | "queryLedgerState/protocolParameters"
@@ -2260,6 +2267,7 @@ export interface QueryLedgerStateUnavailableInCurrentEra {
     | "queryLedgerState/epoch"
     | "queryLedgerState/eraStart"
     | "queryLedgerState/eraSummaries"
+    | "queryLedgerState/governanceProposals"
     | "queryLedgerState/liveStakeDistribution"
     | "queryLedgerState/projectedRewards"
     | "queryLedgerState/protocolParameters"
@@ -2287,6 +2295,7 @@ export interface QueryLedgerStateAcquiredExpired {
     | "queryLedgerState/epoch"
     | "queryLedgerState/eraStart"
     | "queryLedgerState/eraSummaries"
+    | "queryLedgerState/governanceProposals"
     | "queryLedgerState/liveStakeDistribution"
     | "queryLedgerState/projectedRewards"
     | "queryLedgerState/protocolParameters"
@@ -2451,6 +2460,47 @@ export interface EraParameters {
  */
 export interface SlotLength {
   milliseconds: bigint;
+}
+/**
+ * Query currently active governance proposals, optionally restricted to specific governance proposal references.
+ */
+export interface QueryLedgerStateGovernanceProposals {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/governanceProposals";
+  params?: GovernanceProposalsByReferences | WholeGovernanceProposals;
+  id?: unknown;
+}
+export interface GovernanceProposalsByReferences {
+  proposals: GovernanceProposalReference[];
+}
+export interface WholeGovernanceProposals {}
+export interface QueryLedgerStateGovernanceProposalsResponse {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/governanceProposals";
+  result: GovernanceProposalState[];
+  id?: unknown;
+}
+export interface GovernanceProposalState {
+  proposal: GovernanceProposalReference;
+  deposit: ValueAdaOnly;
+  returnAccount: RewardAccount;
+  metadata: Anchor;
+  action:
+    | GovernanceActionProtocolParametersUpdate
+    | GovernanceActionHardForkInitiation
+    | GovernanceActionTreasuryTransfer
+    | GovernanceActionTreasuryWithdrawals
+    | GovernanceActionConstitutionalCommittee
+    | GovernanceActionConstitution
+    | GovernanceActionNoConfidence
+    | GovernanceActionInformation;
+  since: {
+    epoch: Epoch;
+  };
+  until: {
+    epoch: Epoch;
+  };
+  votes?: GovernanceVote[];
 }
 /**
  * Query the current distribution of the stake across all known stake pools, relative to the TOTAL stake in the network.

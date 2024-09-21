@@ -676,9 +676,9 @@ encodePoolVotingThresholds x =
 encodeProposalProcedure
     :: Crypto crypto
     => Cn.ProposalProcedure (ConwayEra crypto)
-    -> Json
-encodeProposalProcedure x = encodeObject
-    ( "deposit" .=
+    -> Series
+encodeProposalProcedure x =
+      "deposit" .=
         encodeCoin (Cn.pProcDeposit x)
    <> "returnAccount" .=
         Shelley.encodeRewardAcnt (Cn.pProcReturnAddr x)
@@ -686,7 +686,6 @@ encodeProposalProcedure x = encodeObject
        encodeAnchor (Cn.pProcAnchor x)
    <> "action" .=
         encodeGovAction (Cn.pProcGovAction x)
-    )
 
 encodeScriptPurposeIndex
     :: forall era. ()
@@ -737,7 +736,7 @@ encodeScriptPurposeItem = encodeObject . \case
         "issuer" .= encodeVoter voter
     Cn.ConwayProposing (AsItem proposal) ->
         "purpose" .= encodeText "propose" <>
-        "proposal" .= encodeProposalProcedure proposal
+        "proposal" .= encodeObject (encodeProposalProcedure proposal)
     Cn.ConwayCertifying (AsItem cert) ->
         case encodeTxCert @(ConwayEra crypto) cert of
             -- Delegation certificate or credential de-registration certificate
@@ -824,7 +823,7 @@ encodeTxBody opts x scripts =
     "validityInterval" .=
         Allegra.encodeValidityInterval (Cn.ctbVldt x) <>
     "proposals" .=? OmitWhen null
-        (encodeFoldable encodeProposalProcedure)
+        (encodeFoldable (encodeObject . encodeProposalProcedure))
         (Cn.ctbProposalProcedures x) <>
     "votes" .=? OmitWhen (null . Cn.unVotingProcedures)
         encodeVotingProcedures

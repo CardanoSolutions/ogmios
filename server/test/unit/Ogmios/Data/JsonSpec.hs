@@ -84,6 +84,8 @@ import Ogmios.Data.Json.Query
     , parseQueryLedgerEpoch
     , parseQueryLedgerEraStart
     , parseQueryLedgerEraSummaries
+    , parseQueryLedgerGovernanceProposals
+    , parseQueryLedgerGovernanceProposalsByProposalReference
     , parseQueryLedgerLiveStakeDistribution
     , parseQueryLedgerProjectedRewards
     , parseQueryLedgerProposedProtocolParameters
@@ -197,6 +199,7 @@ import Test.Generators
     , genEvaluateTransactionResponse
     , genGenTxId
     , genGenesisConfig
+    , genGovActionStateResult
     , genHardForkApplyTxErr
     , genInterpreterResult
     , genMempoolSizeAndCapacity
@@ -695,6 +698,25 @@ spec = do
             Nothing
             (parseQueryLedgerTreasuryAndReserves genAccountStateResult)
 
+        validateLedgerStateQuery 10 "governanceProposals"
+            Nothing
+            (parseQueryLedgerGovernanceProposals genGovActionStateResult)
+
+        validateLedgerStateQuery 10 "governanceProposals"
+            (Just [aesonQQ|{
+                "proposals": [
+                    {
+                        "transaction": { "id": "141933320b6e5d4522d7d3bf052dd2a26cc7eb58b66ae357f95f83715c8add5b" },
+                        "index": 14
+                    },
+                    {
+                        "transaction": { "id": "7d3bf052dd2a26cc7eb58b66ae357f95f83715c8add5b141933320b6e5d4522d" },
+                        "index": 42
+                    }
+                ]
+            }|])
+            (parseQueryLedgerGovernanceProposalsByProposalReference genGovActionStateResult)
+
         validateNetworkQuery 10 "blockHeight"
             Nothing
             (parseQueryNetworkBlockHeight (const $ genWithOrigin genBlockNo))
@@ -1043,7 +1065,7 @@ validateLedgerStateQuery n subMethod params parser = do
         params
     case Json.parseEither parser (fromMaybe Json.emptyObject params) of
         Left e ->
-            expectationFailure $ "failed to parse JSON: " <> show e
+            expectationFailure $ "failed to parse JSON query params: " <> show e
         Right queryInEra -> do
             let eras = mapMaybe
                     (\e -> (e,) <$> queryInEra e)

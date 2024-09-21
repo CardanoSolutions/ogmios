@@ -105,13 +105,14 @@ queryLedgerState             | Information
 `epoch`                      | The current epoch of the ledger.
 `eraStart`                   | The information regarding the beginning of the current ledger era.
 `eraSummaries`               | Era bounds and slot parameters details, required for proper slotting arithmetic.
+`governanceProposals`        | Currently active governance proposals and their ratification state (i.e. votes).
 `liveStakeDistribution`      | Distribution of the stake across all known stake pools, relative to the **total** stake in the network.
 `projectedRewards`           | The projected rewards of an account in a context where the top stake pools are fully saturated. This projection gives, in principle, a ranking of stake pools that maximizes delegator rewards.
 `protocolParameters`         | The current protocol parameters.
 `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
 `rewardAccountSummaries`     | Current delegation settings and rewards of chosen reward accounts.
 `rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
-`stakePools`                 | The list of all currently registered and active stake pools with their current parameters. This query can be made with or without specifying list of target `stakePools`. When no stake pools are provided as parameter, the query returns the list of all stake pools and their parameters from the node. 
+`stakePools`                 | The list of all currently registered and active stake pools with their current parameters. This query can be made with or without specifying list of target `stakePools`. When no stake pools are provided as parameter, the query returns the list of all stake pools and their parameters from the node.
 `tip`                        | The current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger.
 `treasuryAndReserves`        | The Ada value of the treasury and reserves of the protocol.
 `utxo`                       | Current UTXO, possibly filtered by output reference.
@@ -484,6 +485,30 @@ Be aware that it is possible for an acquire request to fail even if (and in part
 {
   "jsonrpc": "2.0",
   "method": "queryLedgerState/eraSummaries"
+}
+```
+
+#### governanceProposals
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/governanceProposals"
+}
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/governanceProposals",
+  "params": {
+    "proposals": [
+      {
+        "transaction": { "id": "ee155ace9c40292074cb6aff8c9ccdd273c81648ff1149ef36bcea6ebb8a3e25" },
+        "index": 2
+      }
+    ]
+  }
 }
 ```
 

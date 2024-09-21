@@ -148,6 +148,13 @@ describe('Local state queries', () => {
         ]
       })
       expect(utxoSet[0]).toBeDefined()
+
+      const proposals = await client.governanceProposals()
+      if (proposals.length > 0) {
+        const filteredProposals = await client.governanceProposals([proposals[0].proposal])
+        expect(filteredProposals.length).toBe(1)
+        expect(filteredProposals[0]).toEqual(proposals[0])
+      }
     })
 
     it('can handle concurrent requests ', async () => {
@@ -276,6 +283,16 @@ describe('Local state queries', () => {
           ]
         })
         expect(utxoSet[0]).toBeDefined()
+      })
+    })
+    describe('governance proposals', () => {
+      it('fetches governance proposals, optionally by reference', async () => {
+        const proposals = await LedgerStateQuery.governanceProposals(context)
+        if (proposals.length > 0) {
+          const filteredProposals = await LedgerStateQuery.governanceProposals(context, [proposals[0].proposal])
+          expect(filteredProposals.length).toBe(1)
+          expect(filteredProposals[0]).toEqual(proposals[0])
+        }
       })
     })
     describe('rewardsProvenance', () => {

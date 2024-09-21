@@ -5,6 +5,7 @@ import {
   eraStart,
   eraSummaries,
   genesisConfiguration,
+  governanceProposals,
   ledgerTip,
   liveStakeDistribution,
   networkBlockHeight,
@@ -27,6 +28,7 @@ import {
   GenesisByron,
   GenesisConway,
   GenesisShelley,
+  GovernanceProposalReference,
   Origin,
   Point,
   StakePoolId,
@@ -50,6 +52,7 @@ export interface LedgerStateQueryClient {
   epoch(): ReturnType<typeof epoch>
   eraStart(): ReturnType<typeof eraStart>
   eraSummaries: () => ReturnType<typeof eraSummaries>
+  governanceProposals(filter?: GovernanceProposalReference[]): ReturnType<typeof governanceProposals>
   genesisConfiguration(era: 'byron'): Promise<GenesisByron>
   genesisConfiguration(era: 'shelley'): Promise<GenesisShelley>
   genesisConfiguration(era: 'alonzo'): Promise<GenesisAlonzo>
@@ -154,6 +157,9 @@ export async function createLedgerStateQueryClient (
           return genesisConfiguration(context, _era)
         }
       }
+    },
+    governanceProposals (filter) {
+      return governanceProposals(context, filter)
     },
     ledgerTip () {
       return ledgerTip(context)

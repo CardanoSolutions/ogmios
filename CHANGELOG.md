@@ -7,11 +7,12 @@ pre: "<b>6. </b>"
 math: true
 ---
 
-### [6.7.1] - 2024-09-21
+### [6.8.0] - 2024-09-21
 
 #### Added
 
-- N/A
+- Integrate `cardano-node==9.2.0` and associated dependencies.
+- Add new ledger-state query: `queryLedgerState/governanceProposals` to retrieve currently active governance proposals and their ratification state (i.e. ongoig votes).
 
 #### Changed
 

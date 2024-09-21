@@ -41,6 +41,9 @@ import {
       era: Schema.EraWithGenesis
     ) => LedgerStateQuery.genesisConfiguration(context, era as 'alonzo'),
     getServerHealth: () => getServerHealth({ connection: createConnectionObject(connection) }),
+    governanceProposals: (
+      filters?: Schema.GovernanceProposalReference[]
+    ) => LedgerStateQuery.governanceProposals(context, filters),
     hasTransaction: (
       id: Schema.TransactionId
     ) => MempoolMonitoring.hasTransaction(context, id),

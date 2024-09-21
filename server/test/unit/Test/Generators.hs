@@ -655,6 +655,24 @@ genGovStateResult _ _ =
             Nothing ->
                 Nothing
 
+genGovActionStateResult
+    :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
+    => Proxy era
+    -> Proxy (QueryResult crypto (Seq (Ledger.GovActionState era)))
+    -> Gen (QueryResult crypto (Seq (Ledger.GovActionState era)))
+genGovActionStateResult _ _ =
+    maybe (error "genGovActionStateResult: unsupported era") identity genConway
+  where
+    genConway =
+        case testEquality (typeRep @era) (typeRep @StandardConway) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> reasonablySized arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+
 genCommitteeMembersStateResult
     :: forall crypto era. (crypto ~ StandardCrypto)
     => Proxy era
