@@ -788,6 +788,7 @@ instance Arbitrary (SubmitTransactionResponse Block) where
         SubmitTransactionSuccess{} -> []
         SubmitTransactionDeserialisationFailure{} -> []
         SubmitTransactionFailure{} -> []
+        SubmitTransactionFailedToUpgrade{} -> []
     arbitrary = frequency
         [ (1, SubmitTransactionSuccess <$> arbitrary)
         , (50, SubmitTransactionFailure <$> genHardForkApplyTxErr)

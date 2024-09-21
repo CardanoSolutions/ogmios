@@ -10,20 +10,17 @@ repository cardano-haskell-packages
     d4a35cd3121aa00d18544bb0ac01c3e1691d618f462c46129271bccf39f7e8ee
 
 index-state:
-  , hackage.haskell.org 2024-06-23T23:01:13Z
-  , cardano-haskell-packages 2024-09-01T03:50:08Z
+  , hackage.haskell.org 2024-09-05T18:39:40Z
+  , cardano-haskell-packages 2024-09-10T12:51:27Z
 
 constraints:
-  , any.cardano-node == 9.1.1
-  , any.cardano-ledger-core == 1.13.2.0
-  , any.cardano-ledger-conway == 1.16.0.0
-  , any.cardano-ledger-shelley == 1.12.3.0
-  , any.ouroboros-consensus == 0.20.0.0
-  , any.ouroboros-consensus-cardano == 0.18.0.0
-  , any.ouroboros-consensus-diffusion == 0.17.0.1
-  , any.ouroboros-network == 0.16.1.1
-  , any.plutus-core == 1.30.0.0
-  , any.plutus-ledger-api == 1.30.0.0
+  , any.cardano-node == 9.2.0
+  , any.cardano-ledger-core == 1.14.0.0
+  , any.cardano-ledger-shelley == 1.13.1.0
+  , any.ouroboros-consensus == 0.20.1.0
+  , any.ouroboros-consensus-cardano == 0.19.0.0
+  , any.ouroboros-consensus-diffusion == 0.17.1.0
+  , any.ouroboros-network == 0.17.1.1
   , any.io-classes == 1.5.0.0
   , any.io-classes-mtl == 0.1.2.0
   , any.formatting == 7.2.0
@@ -38,6 +35,8 @@ packages:
   modules/contra-tracers
   modules/fast-bech32
   modules/git-th
+  modules/hjsonpointer
+  modules/hjsonschema
   modules/hspec-json-schema
   modules/json-rpc
 
@@ -85,18 +84,6 @@ package text
 package formatting
   flags: +no-double-conversion
 
-source-repository-package
-  type: git
-  location: https://github.com/CardanoSolutions/hjsonpointer
-  tag: 879f0e74d55eef76ceaec8f60ed07657ab84bad7
-  --sha256: 0dpc11fillbg9h8vm8n9iykzf9bd2w7l13n7y0drpra8lnsh4mfb
-
-source-repository-package
-  type: git
-  location: https://github.com/CardanoSolutions/hjsonschema
-  tag: 35e0b05c3867463363e67f00a5092cd39fa33313
-  --sha256: 1w78d0lk1gi908lklixpzpa2xkzbyhg77aixm9i4rznrzsnbwhfm
-
 -- NOTE: Using a fork for 8.8.0 and until https://github.com/IntersectMBO/cardano-ledger/pull/4103
 -- is merged. If it's never merged, then the patch should be re-applied on top of new ledger versions.
 --
@@ -106,7 +93,7 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/CardanoSolutions/cardano-ledger
-  tag: 9ab8b326981a94d4b57cb0427709845ab67ef975
+  tag: 8112c9872f52e5147e28fbdd76a034cdb6eb7fea
   subdir:
     eras/alonzo/impl
     eras/babbage/impl
