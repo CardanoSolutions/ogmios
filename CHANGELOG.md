@@ -7,6 +7,20 @@ pre: "<b>6. </b>"
 math: true
 ---
 
+### [6.7.1] - 2024-09-21
+
+#### Added
+
+- N/A
+
+#### Changed
+
+- Fix automatic transaction upgrade to NOT change underlying binary format during upgrade. The previous implementation would on some occasions alter the serialized form, thus causing transaction hash to change and invalidating all signatures on it. The new approach does always preserve binary serialisation, but as a result, makes more scenario not translatable (e.g. trying to translate a multi-asset UTxOs containing a 0 quantity is impossible when targetting Conway).
+
+#### Removed
+
+- N/A
+
 ### [6.7.0] - 2024-09-13
 
 #### Added
