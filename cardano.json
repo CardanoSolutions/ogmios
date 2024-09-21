@@ -160,7 +160,7 @@
         }
       , "era":
         { "type": "string"
-        , "enum": [ "shelley", "allegra", "mary", "alonzo", "babbage" ]
+        , "enum": [ "shelley", "allegra", "mary", "alonzo", "babbage", "conway" ]
         }
       , "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
       , "ancestor":
@@ -1460,6 +1460,52 @@
         }
       , "index":
         { "$ref": "cardano.json#/definitions/UInt32"
+        }
+      }
+    }
+
+  , "GovernanceProposalState":
+    { "title": "GovernanceProposalState"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "proposal", "action", "deposit", "returnAccount", "metadata", "since", "until", "votes" ]
+    , "properties":
+      { "proposal":
+        { "$ref": "cardano.json#/definitions/GovernanceProposalReference"
+        }
+      , "deposit":
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+        }
+      , "returnAccount":
+        { "$ref": "cardano.json#/definitions/RewardAccount"
+        }
+      , "metadata":
+        { "$ref": "cardano.json#/definitions/Anchor"
+        }
+      , "action":
+        { "$ref": "cardano.json#/definitions/GovernanceAction"
+        }
+      , "since":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["epoch"]
+        , "properties":
+          { "epoch": { "$ref": "cardano.json#/definitions/Epoch" }
+          }
+        }
+      , "until":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["epoch"]
+        , "properties":
+          { "epoch": { "$ref": "cardano.json#/definitions/Epoch" }
+          }
+        }
+      , "votes":
+        { "type": "array"
+        , "items":
+          { "$ref": "cardano.json#/definitions/GovernanceVote"
+          }
         }
       }
     }

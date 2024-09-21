@@ -16,6 +16,7 @@
   , "QueryLedgerStateEpoch", "QueryLedgerStateEpochResponse"
   , "QueryLedgerStateEraStart", "QueryLedgerStateEraStartResponse"
   , "QueryLedgerStateEraSummaries", "QueryLedgerStateEraSummariesResponse"
+  , "QueryLedgerStateGovernanceProposals", "QueryLedgerStateGovernanceProposalsResponse"
   , "QueryLedgerStateLiveStakeDistribution", "QueryLedgerStateLiveStakeDistributionResponse"
   , "QueryLedgerStateProjectedRewards", "QueryLedgerStateProjectedRewardsResponse"
   , "QueryLedgerStateProposedProtocolParameters", "QueryLedgerStateProposedProtocolParametersResponse"
@@ -673,6 +674,7 @@
           , "queryLedgerState/epoch"
           , "queryLedgerState/eraStart"
           , "queryLedgerState/eraSummaries"
+          , "queryLedgerState/governanceProposals"
           , "queryLedgerState/liveStakeDistribution"
           , "queryLedgerState/projectedRewards"
           , "queryLedgerState/protocolParameters"
@@ -720,6 +722,7 @@
           , "queryLedgerState/epoch"
           , "queryLedgerState/eraStart"
           , "queryLedgerState/eraSummaries"
+          , "queryLedgerState/governanceProposals"
           , "queryLedgerState/liveStakeDistribution"
           , "queryLedgerState/projectedRewards"
           , "queryLedgerState/protocolParameters"
@@ -766,6 +769,7 @@
           , "queryLedgerState/epoch"
           , "queryLedgerState/eraStart"
           , "queryLedgerState/eraSummaries"
+          , "queryLedgerState/governanceProposals"
           , "queryLedgerState/liveStakeDistribution"
           , "queryLedgerState/projectedRewards"
           , "queryLedgerState/protocolParameters"
@@ -1053,6 +1057,76 @@
           , "result":
             { "type": "array"
             , "items": { "$ref": "cardano.json#/definitions/EraSummary" }
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
+      ]
+    }
+
+  , "QueryLedgerStateGovernanceProposals":
+    { "title": "QueryLedgerStateGovernanceProposals"
+    , "description": "Query currently active governance proposals, optionally restricted to specific governance proposal references."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/governanceProposals" ]
+        }
+      , "params":
+        { "oneOf":
+          [ { "title": "GovernanceProposalsByReferences"
+            , "type": "object"
+            , "required": ["proposals"]
+            , "additionalProperties": false
+            , "properties":
+              { "proposals":
+                { "type": "array"
+                , "items": { "$ref": "cardano.json#/definitions/GovernanceProposalReference" }
+                }
+              }
+            }
+          , { "title": "WholeGovernanceProposals"
+            , "type": "object"
+            , "additionalProperties": false
+            }
+          ]
+        }
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateGovernanceProposalsResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateGovernanceProposalsResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/governanceProposals" ]
+            }
+          , "result":
+            { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/GovernanceProposalState" }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
