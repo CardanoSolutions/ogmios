@@ -29,9 +29,9 @@ else
 ifneq ($(filter v%,$(VERSION)),)
 	@echo "Provide \033[1;33mVERSION\033[00m without \033[1;33m\"v\"\033[00m prefix."
 else
-	@LINUX_AARCH64="$(shell find v$(VERSION) -type f -name "*aarch64-linux.zip" | sha256sum | sed "s/[^0-9a-f]*//g")"; \
-	LINUX_X86_64="$(shell find v$(VERSION) -type f -name "*x86_64-linux.zip" | sha256sum | sed "s/[^0-9a-f]*//g")"; \
-	MACOS_AARCH64="$(shell find v$(VERSION) -type f -name "*aarch64-macos.zip" | sha256sum | sed "s/[^0-9a-f]*//g")"; \
+	@LINUX_AARCH64="$(shell sha256sum v$(VERSION)/ogmios-v$(VERSION)-aarch64-linux.zip | sed "s/^\([0-9a-f]*\).*/\1/g")"; \
+	LINUX_X86_64="$(shell sha256sum v$(VERSION)/ogmios-v$(VERSION)-x86_64-linux.zip | sed "s/^\([0-9a-f]*\).*/\1/g")"; \
+	MACOS_AARCH64="$(shell sha256sum v$(VERSION)/ogmios-v$(VERSION)-aarch64-macos.zip | sed "s/^\([0-9a-f]*\).*/\1/g")"; \
 	cat ../.github/formula.rb.template | sed \
 	  -e "s/%VERSION%/$(VERSION)/g" \
 		-e "s/%LINUX_AARCH64%/$${LINUX_AARCH64}/g" \
@@ -51,6 +51,13 @@ else
 	@sed -i '' 's/"version": "[0-9]\.[0-9]\.[0-9]",/"version": "$(VERSION)",/' ../clients/TypeScript/packages/**/package.json
 	@sed -i '' 's/\("@cardano-ogmios\/.*":\) "[0-9]\.[0-9]\.[0-9]",/\1 "$(VERSION)",/' ../clients/TypeScript/packages/**/package.json
 	@echo "All set. Don't forget to ALSO update the asset files for the documentation!"
+endif
+
+sign:
+ifeq ($(VERSION),)
+	@echo "Missing \033[1;33mVERSION\033[00m argument."
+else
+	@codesign -s - -f -vvvvvv $(VERSION)/bin/ogmios
 endif
 
 node: # Run a local node at the specified version.
