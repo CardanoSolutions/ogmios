@@ -65,7 +65,6 @@ import Ouroboros.Consensus.Shelley.Ledger.Mempool
 import qualified Cardano.Ledger.Alonzo.Tx as Alonzo
 import qualified Cardano.Ledger.Babbage.TxBody as Babbage
 import qualified Cardano.Ledger.Conway.Core as Conway
-import qualified Cardano.Ledger.Core as Core
 import qualified Cardano.Ledger.Crypto as Ledger
 
 type family MostRecentEra block :: Type where
@@ -133,13 +132,12 @@ upgradeGenTx = \case
         Left "cannot upgrade from Allegra transaction: too old, use a more recent transaction builder."
     GenTxMary _ ->
         Left "cannot upgrade from Mary transaction: too old, use a more recent transaction builder."
-    GenTxAlonzo (ShelleyTx hash txInAlonzo) -> do
-        txInBabbage <- left show $ Core.upgradeTx @(BabbageEra crypto) txInAlonzo
-        txInConway  <- left show $ Core.upgradeTx @(ConwayEra crypto) txInBabbage
-        pure $ GenTxConway $ ShelleyTx hash txInConway
-    GenTxBabbage (ShelleyTx hash txInBabbage) -> do
-        txInConway <- left show $ Core.upgradeTx @(ConwayEra crypto) txInBabbage
-        pure $ GenTxConway $ ShelleyTx hash txInConway
+    GenTxAlonzo (ShelleyTx hash txAlonzo) -> do
+        txBabbage <- left show $ runExcept $ translateEraThroughCBOR @(BabbageEra crypto) "AlonzoTx" txAlonzo
+        upgradeGenTx $ GenTxBabbage $ ShelleyTx hash txBabbage
+    GenTxBabbage (ShelleyTx hash txBabbage) -> do
+        txConway <- left show $ runExcept $ translateEraThroughCBOR @(ConwayEra crypto) "BabbageTx" txBabbage
+        pure $ GenTxConway $ ShelleyTx hash txConway
     latest@(GenTxConway(_))->
         Right latest
 

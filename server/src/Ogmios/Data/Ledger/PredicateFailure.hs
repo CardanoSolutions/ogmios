@@ -592,9 +592,7 @@ predicateFailurePriority = \case
     UnknownStakePool{} -> 4
     UnknownGovernanceActions{} -> 4
 
-    InvalidSignatures{} -> 5
-    MissingSignatures{} -> 5
-    MissingCostModels{} -> 5
+    ScriptIntegrityHashMismatch{} -> 5
 
     InvalidMetadata{} -> 6
     InvalidCommitteeUpdate{} -> 6
@@ -607,6 +605,9 @@ predicateFailurePriority = \case
     ConstitutionGuardrailsHashMismatch{} -> 8
 
     MalformedScripts{} -> 9
+    InvalidSignatures{} -> 9
+    MissingSignatures{} -> 9
+    MissingCostModels{} -> 9
 
     MissingRedeemers{} -> 10
     MissingDatums{} -> 10
@@ -644,5 +645,4 @@ predicateFailurePriority = \case
     TransactionFeeTooSmall{} -> 19
 
     ValueNotConserved{} -> 20
-    ScriptIntegrityHashMismatch{} -> 20
     ValidationTagMismatch{} -> 20
