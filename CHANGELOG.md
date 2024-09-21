@@ -17,6 +17,8 @@ math: true
 
 - Fix automatic transaction upgrade to NOT change underlying binary format during upgrade. The previous implementation would on some occasions alter the serialized form, thus causing transaction hash to change and invalidating all signatures on it. The new approach does always preserve binary serialisation, but as a result, makes more scenario not translatable (e.g. trying to translate a multi-asset UTxOs containing a 0 quantity is impossible when targetting Conway).
 
+- ![TypeScript][] Fix JSON deserialization of metadata on web platforms.
+
 #### Removed
 
 - N/A
