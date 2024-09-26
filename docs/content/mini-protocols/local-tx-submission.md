@@ -54,7 +54,7 @@ Note that JSON does not support embedding raw bytes in objects. Bytes needs ther
 {
     "jsonrpc": "2.0",
     "method": "submitTransaction",
-    "params": { "transaction": { "cbor": { "<base16>" } } }
+    "params": { "transaction": { "cbor": "<base16>" } }
 }
 ```
 
