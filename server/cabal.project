@@ -83,18 +83,3 @@ package text
 -- of the offending c++ dependencies)
 package formatting
   flags: +no-double-conversion
-
--- NOTE: Using a fork for 8.8.0 and until https://github.com/IntersectMBO/cardano-ledger/pull/4103
--- is merged. If it's never merged, then the patch should be re-applied on top of new ledger versions.
---
--- This patch is necessary to get better test coverage for the ledger predicate failures. Without it,
--- we're missing quite numerous variants from the predicate failures, in particular from more recent
--- eras.
-source-repository-package
-  type: git
-  location: https://github.com/CardanoSolutions/cardano-ledger
-  tag: 8112c9872f52e5147e28fbdd76a034cdb6eb7fea
-  subdir:
-    eras/alonzo/impl
-    eras/babbage/impl
-    eras/conway/impl
