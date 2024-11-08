@@ -412,6 +412,9 @@ data MultiEraPredicateFailure crypto
         { unknownVoters :: [Voter crypto]
         }
 
+    -- | Treasury withdrawals that sum up to zero are not allowed
+    | EmptyTreasuryWithdrawal
+
     ---------------------------------------------------------------------------
     -- Rule → PPUP
     ---------------------------------------------------------------------------
@@ -482,7 +485,7 @@ data MultiEraPredicateFailure crypto
 
     -- Trying to withdraw from credentials that aren't delegated to a DRep
     | ForbiddenWithdrawal
-        { marginalizedCredentials :: Set (Credential 'Staking crypto)
+        { marginalizedCredentials :: Set (KeyHash 'Staking crypto)
         }
 
     -- Trying to withdraw from the treasury an amount different from the one
@@ -534,6 +537,12 @@ data MultiEraPredicateFailure crypto
         { translationError :: ContextErrorInAnyEra crypto
         }
 
+    -- Some opaque errors from the mempool. Unclear to what it refers to
+    -- exactly.
+    | UnexpectedMempoolError
+        { mempoolError :: Text
+        }
+
     -- A placeholder error that should never happen. Due to how ledger types are
     -- modeled.
     | UnrecognizedCertificateType
@@ -563,6 +572,7 @@ predicateFailurePriority = \case
     InvalidMIRTransfer{} -> 1
     InvalidHardForkVersionBump{} -> 1
     UnrecognizedCertificateType{} -> 1
+    UnexpectedMempoolError{} -> 1
     UnauthorizedGovernanceAction{} -> 1
 
     EmptyInputSet{} -> 2
@@ -585,6 +595,7 @@ predicateFailurePriority = \case
     InvalidStakePoolRetirementEpoch{} -> 3
     StakePoolCostTooLow{} -> 3
     ReferenceScriptsTooLarge{} -> 3
+    EmptyTreasuryWithdrawal{} -> 3
 
     UnknownUtxoReference{} -> 4
     OrphanScriptInputs{} -> 4

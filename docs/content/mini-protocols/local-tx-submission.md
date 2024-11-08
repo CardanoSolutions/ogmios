@@ -350,8 +350,12 @@ components:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/67"
     3167/UnknownVoters:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/68"
+    3168/EmptyTreasuryWithdrawal:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/69"
+    3997/UnexpectedMempoolError:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/70"
     3998/UnrecognizedCertificateType:
-      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/62"
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/71"
 {{% /embed-async-api %}}
 
 ## API Reference

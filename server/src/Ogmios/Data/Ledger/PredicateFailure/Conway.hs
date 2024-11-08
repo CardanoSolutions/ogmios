@@ -6,6 +6,9 @@ module Ogmios.Data.Ledger.PredicateFailure.Conway where
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.Keys
+    ( HasKeyRole (coerceKeyRole)
+    )
 import Data.Maybe.Strict
     ( StrictMaybe (..)
     )
@@ -28,6 +31,7 @@ import Ogmios.Data.Ledger.PredicateFailure.Shelley
 import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Api.UTxO as Ledger
 import qualified Cardano.Ledger.Conway.Rules as Cn
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -42,12 +46,14 @@ encodeLedgerFailure = \case
         encodeCertsFailure e
     Cn.ConwayGovFailure e ->
         encodeGovFailure e
-    Cn.ConwayWdrlNotDelegatedToDRep marginalizedCredentials ->
+    Cn.ConwayWdrlNotDelegatedToDRep ((Set.fromList . toList) -> marginalizedCredentials) ->
         ForbiddenWithdrawal { marginalizedCredentials }
     Cn.ConwayTreasuryValueMismatch computedWithdrawal providedWithdrawal ->
         TreasuryWithdrawalMismatch { providedWithdrawal, computedWithdrawal }
     Cn.ConwayTxRefScriptsSizeTooBig (toInteger -> measuredSize) (toInteger -> maximumSize) ->
         ReferenceScriptsTooLarge { measuredSize, maximumSize }
+    Cn.ConwayMempoolFailure mempoolError ->
+        UnexpectedMempoolError { mempoolError }
 
 encodeGovFailure
     :: Cn.ConwayGovPredFailure (ConwayEra crypto)
@@ -133,6 +139,12 @@ encodeGovFailure = \case
         UnauthorizedVotes (toList votes)
     Cn.VotersDoNotExist voters ->
         UnknownVoters (toList voters)
+    Cn.ZeroTreasuryWithdrawals _ ->
+        EmptyTreasuryWithdrawal
+    Cn.ProposalReturnAccountDoesNotExist (Ledger.RewardAccount _ unknownCredential) ->
+        StakeCredentialNotRegistered { unknownCredential }
+    Cn.TreasuryWithdrawalReturnAccountsDoNotExist (NE.head -> Ledger.RewardAccount _ unknownCredential) ->
+        StakeCredentialNotRegistered { unknownCredential }
 
 encodeCertsFailure
     :: Cn.ConwayCertsPredFailure (ConwayEra crypto)
@@ -169,9 +181,9 @@ encodeDelegFailure = \case
         StakeCredentialNotRegistered { unknownCredential }
     Cn.StakeKeyHasNonZeroRewardAccountBalanceDELEG rewardAccountBalance ->
         RewardAccountNotEmpty { rewardAccountBalance }
-    Cn.DRepAlreadyRegisteredForStakeKeyDELEG knownCredential ->
-        StakeCredentialAlreadyRegistered { knownCredential }
-    Cn.DelegateeNotRegisteredDELEG poolId ->
+    Cn.DelegateeDRepNotRegisteredDELEG (coerceKeyRole -> unknownCredential) ->
+        StakeCredentialNotRegistered { unknownCredential }
+    Cn.DelegateeStakePoolNotRegisteredDELEG poolId ->
         UnknownStakePool poolId
 
 encodeGovCertFailure

@@ -7,6 +7,23 @@ pre: "<b>6. </b>"
 math: true
 ---
 
+### [6.9.0] - UNRELEASED
+
+#### Added
+
+- Integrate `cardano-node==10.1.2` and associated dependencies.
+  - New transaction submission / evaluation errors:
+  - [`EmptyTreasuryWithdrawal`](https://ogmios.dev/mini-protocols/local-tx-submission#schema-3168/EmptyTreasuryWithdrawal) (`code=3168`) triggered when a transaction contains a governance proposal with an empty treasury withdrawal.
+  - [`UnexpectedMempoolError`](https://ogmios.dev/mini-protocols/local-tx-submission#schema-3997/UnexpectedMempoolError) (`code=3997`) triggered when a transaction is rejected due to custom arbitrary rules that prevented it from entering the mempool.
+
+#### Changed
+
+- N/A
+
+#### Removed
+
+- N/A
+
 ### [6.8.0] - 2024-09-21
 
 #### Added

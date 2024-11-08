@@ -219,6 +219,8 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureUnauthorizedGovernanceAction
   | SubmitTransactionFailureReferenceScriptsTooLarge
   | SubmitTransactionFailureUnknownVoters
+  | SubmitTransactionFailureEmptyTreasuryWithdrawal
+  | SubmitTransactionFailureUnexpectedMempoolError
   | SubmitTransactionFailureUnrecognizedCertificateType;
 export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
 export type ScriptPurpose =
@@ -1156,7 +1158,7 @@ export interface BootstrapVote {
 }
 export interface BlockPraos {
   type: "praos";
-  era: "shelley" | "allegra" | "mary" | "alonzo" | "babbage";
+  era: "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
   id: DigestBlake2B256;
   ancestor: DigestBlake2B256 | GenesisHash;
   nonce?: CertifiedVrf;
@@ -2005,6 +2007,23 @@ export interface SubmitTransactionFailureUnknownVoters {
   };
 }
 /**
+ * Some proposals contain empty treasury withdrawals, which is pointless and a waste of resources.
+ */
+export interface SubmitTransactionFailureEmptyTreasuryWithdrawal {
+  code: 3168;
+  message: string;
+}
+/**
+ * A transaction was rejected due to custom rules that prevented it from entering the mempool. A justification is given as 'data.error'.
+ */
+export interface SubmitTransactionFailureUnexpectedMempoolError {
+  code: 3997;
+  message: string;
+  data: {
+    [k: string]: unknown;
+  };
+}
+/**
  * Unrecognized certificate type. This error is a placeholder due to how internal data-types are modeled. If you ever run into this, please report the issue as you've likely discoverd a critical bug...
  */
 export interface SubmitTransactionFailureUnrecognizedCertificateType {
@@ -2500,7 +2519,7 @@ export interface GovernanceProposalState {
   until: {
     epoch: Epoch;
   };
-  votes?: GovernanceVote[];
+  votes: GovernanceVote[];
 }
 /**
  * Query the current distribution of the stake across all known stake pools, relative to the TOTAL stake in the network.

@@ -7,6 +7,9 @@ module Ogmios.Data.Ledger.PredicateFailure.Shelley where
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.BaseTypes
+    ( Mismatch (..)
+    )
 import Cardano.Ledger.Core
     ( EraRule
     )
@@ -60,7 +63,7 @@ encodeUtxowFailure encodeUtxoFailure_ = \case
         MissingMetadataHash hash
     Sh.MissingTxMetadata hash ->
         MissingMetadata hash
-    Sh.ConflictingMetadataHash providedAuxiliaryDataHash computedAuxiliaryDataHash ->
+    Sh.ConflictingMetadataHash (Mismatch providedAuxiliaryDataHash computedAuxiliaryDataHash) ->
         MetadataHashMismatch{providedAuxiliaryDataHash, computedAuxiliaryDataHash}
     Sh.InvalidMetadata ->
         InvalidMetadata
@@ -82,11 +85,11 @@ encodeUtxoFailure = \case
                 , invalidHereafter = SJust timeToLive
                 }
          in TransactionOutsideValidityInterval{ validityInterval, currentSlot }
-    Sh.MaxTxSizeUTxO measuredSize maximumSize ->
+    Sh.MaxTxSizeUTxO (Mismatch measuredSize maximumSize) ->
         TransactionTooLarge { measuredSize, maximumSize }
     Sh.InputSetEmptyUTxO ->
         EmptyInputSet
-    Sh.FeeTooSmallUTxO minimumRequiredFee suppliedFee ->
+    Sh.FeeTooSmallUTxO (Mismatch suppliedFee minimumRequiredFee) ->
         TransactionFeeTooSmall{minimumRequiredFee, suppliedFee}
     Sh.ValueNotConservedUTxO consumed produced ->
         let valueConsumed = ValueInAnyEra (ShelleyBasedEraShelley, consumed) in
@@ -141,11 +144,11 @@ encodePoolFailure
 encodePoolFailure = \case
     Sh.StakePoolNotRegisteredOnKeyPOOL poolId ->
         UnknownStakePool { poolId }
-    Sh.StakePoolRetirementWrongEpochPOOL currentEpoch listedEpoch firstInvalidEpoch ->
+    Sh.StakePoolRetirementWrongEpochPOOL (Mismatch currentEpoch listedEpoch) (Mismatch _ firstInvalidEpoch) ->
         InvalidStakePoolRetirementEpoch { currentEpoch, listedEpoch, firstInvalidEpoch }
-    Sh.StakePoolCostTooLowPOOL declaredCost minimumPoolCost ->
+    Sh.StakePoolCostTooLowPOOL (Mismatch declaredCost minimumPoolCost) ->
         StakePoolCostTooLow { declaredCost, minimumPoolCost }
-    Sh.WrongNetworkPOOL _specified expectedNetwork poolId ->
+    Sh.WrongNetworkPOOL (Mismatch _ expectedNetwork) poolId ->
         let invalidEntities = DiscriminatedPoolRegistrationCertificate poolId in
         NetworkMismatch { expectedNetwork, invalidEntities }
     Sh.PoolMedataHashTooBig poolId computedMetadataHashSize ->

@@ -724,7 +724,7 @@ encodePredicateFailure reject = \case
             \'data.marginalizedCredentials' lists all the affected credentials."
             (pure $ encodeObject
                 ( "marginalizedCredentials" .=
-                    encodeFoldable Shelley.encodeCredentialRaw marginalizedCredentials
+                    encodeFoldable Shelley.encodeKeyHash marginalizedCredentials
                 )
             )
 
@@ -966,6 +966,11 @@ encodePredicateFailure reject = \case
                 )
             )
 
+    EmptyTreasuryWithdrawal ->
+        reject (predicateFailureCode 68)
+            "Some proposals contain empty treasury withdrawals, which is pointless and a waste of resources."
+            Nothing
+
     -- NOTE: This should match the encoding also used for 'EvaluateTransactionResponse' in
     -- Data.Protocol.TxSubmission; hence the code.
     UnableToCreateScriptContext { translationError } ->
@@ -974,6 +979,18 @@ encodePredicateFailure reject = \case
             (pure $ encodeObject
                 ( "reason" .=
                     encodeContextErrorInAnyEra translationError
+                )
+            )
+
+    -- NOTE: Impossible to know exactly where this error comes from due to the
+    -- many layers of indirection around the ledger predicate failure. It's just
+    -- an opaque `Text`, so its semantic is unclear.
+    UnexpectedMempoolError { mempoolError } ->
+        reject (predicateFailureCode 897)
+            "A transaction was rejected due to custom rules that prevented it from entering the mempool. A justification is given as 'data.error'."
+            (pure $ encodeObject
+                ( "error" .=
+                    encodeText mempoolError
                 )
             )
 
