@@ -7,7 +7,7 @@ pre: "<b>6. </b>"
 math: true
 ---
 
-### [6.9.0] - UNRELEASED
+### [6.9.0] - 2024-11-08
 
 #### Added
 
