@@ -166,34 +166,37 @@ For several applications, it may be quite useful to know the last point of each 
 
 {{% tab name="Mainnet" %}}
 {{% era-boundaries %}}
-{{% era-boundary network="mainnet" era="Byron"   blockNumber=4490510 slotNumber=4492799  headerHash="f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457" %}}
-{{% era-boundary network="mainnet" era="Shelley" blockNumber=5086523 slotNumber=16588737 headerHash="4e9bbbb67e3ae262133d94c3da5bffce7b1127fc436e7433b87668dba34c354a" %}}
-{{% era-boundary network="mainnet" era="Allegra" blockNumber=5406746 slotNumber=23068793 headerHash="69c44ac1dda2ec74646e4223bc804d9126f719b1c245dadc2ad65e8de1b276d7" %}}
-{{% era-boundary network="mainnet" era="Mary"    blockNumber=6236059 slotNumber=39916796 headerHash="e72579ff89dc9ed325b723a33624b596c08141c7bd573ecfff56a1f7229e4d09" %}}
-{{% era-boundary network="mainnet" era="Alonzo"  blockNumber=7791698 slotNumber=72316796 headerHash="c58a24ba8203e7629422a24d9dc68ce2ed495420bf40d9dab124373655161a20" %}}
-{{% era-boundary network="mainnet" era="Babbage" blockNumber="N/A"   slotNumber="N/A"    headerHash="N/A" %}}
+{{% era-boundary network="mainnet" era="Byron"   blockNumber=4490510  slotNumber=4492799   headerHash="f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457" %}}
+{{% era-boundary network="mainnet" era="Shelley" blockNumber=5086523  slotNumber=16588737  headerHash="4e9bbbb67e3ae262133d94c3da5bffce7b1127fc436e7433b87668dba34c354a" %}}
+{{% era-boundary network="mainnet" era="Allegra" blockNumber=5406746  slotNumber=23068793  headerHash="69c44ac1dda2ec74646e4223bc804d9126f719b1c245dadc2ad65e8de1b276d7" %}}
+{{% era-boundary network="mainnet" era="Mary"    blockNumber=6236059  slotNumber=39916796  headerHash="e72579ff89dc9ed325b723a33624b596c08141c7bd573ecfff56a1f7229e4d09" %}}
+{{% era-boundary network="mainnet" era="Alonzo"  blockNumber=7791698  slotNumber=72316796  headerHash="c58a24ba8203e7629422a24d9dc68ce2ed495420bf40d9dab124373655161a20" %}}
+{{% era-boundary network="mainnet" era="Babbage" blockNumber=10781330 slotNumber=133660799 headerHash="e757d57eb8dc9500a61c60a39fadb63d9be6973ba96ae337fd24453d4d15c343" %}}
+{{% era-boundary network="mainnet" era="Conway"  blockNumber="N/A"    slotNumber="N/A"     headerHash="N/A" %}}
 {{% /era-boundaries %}}
 {{% /tab %}}
 
 {{% tab name="Preview" %}}
 {{% era-boundaries %}}
-{{% era-boundary network="preview" era="Byron"   blockNumber="N/A" slotNumber="N/A"  headerHash="N/A" %}}
-{{% era-boundary network="preview" era="Shelley" blockNumber="N/A" slotNumber="N/A"  headerHash="N/A" %}}
-{{% era-boundary network="preview" era="Allegra" blockNumber="N/A" slotNumber="N/A"  headerHash="N/A" %}}
-{{% era-boundary network="preview" era="Mary"    blockNumber="N/A" slotNumber="N/A"  headerHash="N/A" %}}
-{{% era-boundary network="preview" era="Alonzo"  blockNumber=13011 slotNumber=259180 headerHash="0ad91d3bbe350b1cfa05b13dba5263c47c5eca4f97b3a3105eba96416785a487" %}}
-{{% era-boundary network="preview" era="Babbage" blockNumber="N/A" slotNumber="N/A"  headerHash="N/A" %}}
+{{% era-boundary network="preview" era="Byron"   blockNumber="N/A"   slotNumber="N/A"    headerHash="N/A" %}}
+{{% era-boundary network="preview" era="Shelley" blockNumber="N/A"   slotNumber="N/A"    headerHash="N/A" %}}
+{{% era-boundary network="preview" era="Allegra" blockNumber="N/A"   slotNumber="N/A"    headerHash="N/A" %}}
+{{% era-boundary network="preview" era="Mary"    blockNumber="N/A"   slotNumber="N/A"    headerHash="N/A" %}}
+{{% era-boundary network="preview" era="Alonzo"  blockNumber=13011   slotNumber=259180   headerHash="0ad91d3bbe350b1cfa05b13dba5263c47c5eca4f97b3a3105eba96416785a487" %}}
+{{% era-boundary network="preview" era="Babbage" blockNumber=2344008 slotNumber=55814394 headerHash="bdd4baa2c81d0500a695f836332193ea06c2ce364e585057142220fc0782144c" %}}
+{{% era-boundary network="mainnet" era="Conway"  blockNumber="N/A"   slotNumber="N/A"    headerHash="N/A" %}}
 {{% /era-boundaries %}}
 {{% /tab %}}
 
 {{% tab name="Preprod" %}}
 {{% era-boundaries %}}
-{{% era-boundary network="preprod" era="Byron"   blockNumber=45     slotNumber=84242   headerHash="45899e8002b27df291e09188bfe3aeb5397ac03546a7d0ead93aa2500860f1af" %}}
-{{% era-boundary network="preprod" era="Shelley" blockNumber=21644  slotNumber=518360  headerHash="f9d8b6c77fedd60c3caf5de0ce63a0aeb9d1753269c9c07503d9aa09d5144481" %}}
-{{% era-boundary network="preprod" era="Allegra" blockNumber=43242  slotNumber=950340  headerHash="74c03af754bcde9cd242c5a168689edcab1756a3f7ae4d5dca1a31d86839c7b1" %}}
-{{% era-boundary network="preprod" era="Mary"    blockNumber=64902  slotNumber=1382348 headerHash="af5fddc7d16a349e1a2af8ba89f4f5d3273955a13095b3709ef6e3db576a0b33" %}}
-{{% era-boundary network="preprod" era="Alonzo"  blockNumber=172497 slotNumber=3542390 headerHash="f93e682d5b91a94d8660e748aef229c19cb285bfb9830db48941d6a78183d81f" %}}
-{{% era-boundary network="preprod" era="Babbage" blockNumber="N/A"  slotNumber="N/A"   headerHash="N/A" %}}
+{{% era-boundary network="preprod" era="Byron"   blockNumber=45      slotNumber=84242    headerHash="45899e8002b27df291e09188bfe3aeb5397ac03546a7d0ead93aa2500860f1af" %}}
+{{% era-boundary network="preprod" era="Shelley" blockNumber=21644   slotNumber=518360   headerHash="f9d8b6c77fedd60c3caf5de0ce63a0aeb9d1753269c9c07503d9aa09d5144481" %}}
+{{% era-boundary network="preprod" era="Allegra" blockNumber=43242   slotNumber=950340   headerHash="74c03af754bcde9cd242c5a168689edcab1756a3f7ae4d5dca1a31d86839c7b1" %}}
+{{% era-boundary network="preprod" era="Mary"    blockNumber=64902   slotNumber=1382348  headerHash="af5fddc7d16a349e1a2af8ba89f4f5d3273955a13095b3709ef6e3db576a0b33" %}}
+{{% era-boundary network="preprod" era="Alonzo"  blockNumber=172497  slotNumber=3542390  headerHash="f93e682d5b91a94d8660e748aef229c19cb285bfb9830db48941d6a78183d81f" %}}
+{{% era-boundary network="preprod" era="Babbage" blockNumber=2620289 slotNumber=68774372 headerHash="36f5b4a370c22fd4a5c870248f26ac72c0ac0ecc34a42e28ced1a4e15136efa4" %}}
+{{% era-boundary network="mainnet" era="Conway"  blockNumber="N/A"   slotNumber="N/A"    headerHash="N/A" %}}
 {{% /era-boundaries %}}
 {{% /tab %}}
 
