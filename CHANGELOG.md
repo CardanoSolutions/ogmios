@@ -7,6 +7,22 @@ pre: "<b>6. </b>"
 math: true
 ---
 
+### [6.10.0] - 2024-12-14
+
+#### Added
+
+- ![TypeScript][] The `ConnectionConfig` can now take an optional `address` object, so that URL with paths can be provided instead of only host/port; allowing for more flexible connection options.
+
+- New ledger-state query `ledgerState/dump` which dumps the **ENTIRE** ledger-state as base16-encoded CBOR. That query is mostly for advanced used only, and spits out **a lot** of data. Use only if you know what you're doing.
+
+#### Changed
+
+- N/A
+
+#### Removed
+
+- N/A
+
 ### [6.9.0] - 2024-11-08
 
 #### Added

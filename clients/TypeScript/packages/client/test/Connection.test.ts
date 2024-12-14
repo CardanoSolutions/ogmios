@@ -8,9 +8,6 @@ describe('Connection', () => {
   describe('createConnectionObject', () => {
     it('can be passed undefined', () => {
       expect(createConnectionObject(undefined)).toStrictEqual({
-        host: '127.0.0.1',
-        port: 1337,
-        tls: false,
         maxPayload: 134217728,
         address: {
           http: 'http://127.0.0.1:1337',
@@ -24,9 +21,6 @@ describe('Connection', () => {
         port: 1337,
         tls: true
       })).toStrictEqual({
-        host: 'some-host',
-        port: 1337,
-        tls: true,
         maxPayload: 134217728,
         address: {
           http: 'https://some-host:1337',
@@ -38,9 +32,6 @@ describe('Connection', () => {
       expect(createConnectionObject({
         host: 'some-host'
       })).toStrictEqual({
-        host: 'some-host',
-        port: 1337,
-        tls: false,
         maxPayload: 134217728,
         address: {
           http: 'http://some-host:1337',
@@ -52,9 +43,6 @@ describe('Connection', () => {
       expect(createConnectionObject({
         port: 1337
       })).toStrictEqual({
-        host: '127.0.0.1',
-        port: 1337,
-        tls: false,
         maxPayload: 134217728,
         address: {
           http: 'http://127.0.0.1:1337',
@@ -66,9 +54,6 @@ describe('Connection', () => {
       expect(createConnectionObject({
         tls: true
       })).toStrictEqual({
-        host: '127.0.0.1',
-        port: 1337,
-        tls: true,
         maxPayload: 134217728,
         address: {
           http: 'https://127.0.0.1:1337',
@@ -81,9 +66,6 @@ describe('Connection', () => {
         port: 1337,
         tls: true
       })).toStrictEqual({
-        host: '127.0.0.1',
-        port: 1337,
-        tls: true,
         maxPayload: 134217728,
         address: {
           http: 'https://127.0.0.1:1337',
@@ -96,9 +78,6 @@ describe('Connection', () => {
         host: '127.0.0.1',
         tls: true
       })).toStrictEqual({
-        host: '127.0.0.1',
-        port: 1337,
-        tls: true,
         maxPayload: 134217728,
         address: {
           http: 'https://127.0.0.1:1337',
@@ -111,15 +90,68 @@ describe('Connection', () => {
         host: '127.0.0.1',
         port: 1337
       })).toStrictEqual({
-        host: '127.0.0.1',
-        port: 1337,
-        tls: false,
         maxPayload: 134217728,
         address: {
           http: 'http://127.0.0.1:1337',
           webSocket: 'ws://127.0.0.1:1337'
         }
       })
+    })
+    it('can be passed an address directly', () => {
+      expect(createConnectionObject({
+        address: {
+          http: 'http://127.0.0.1:1442',
+          webSocket: 'ws://127.0.0.1:1442'
+        },
+      })).toStrictEqual({
+        maxPayload: 134217728,
+        address: {
+          http: 'http://127.0.0.1:1442',
+          webSocket: 'ws://127.0.0.1:1442'
+        }
+      })
+    })
+    it('can be passed an address and maxPayload', () => {
+      expect(createConnectionObject({
+        maxPayload: 1024,
+        address: {
+          http: 'http://127.0.0.1:1442',
+          webSocket: 'ws://127.0.0.1:1442'
+        },
+      })).toStrictEqual({
+        maxPayload: 1024,
+        address: {
+          http: 'http://127.0.0.1:1442',
+          webSocket: 'ws://127.0.0.1:1442'
+        }
+      })
+    })
+    it('cannot be passed an address and a host', () => {
+      expect(() => createConnectionObject({
+        host: "127.0.0.1",
+        address: {
+          http: 'http://127.0.0.1:1442',
+          webSocket: 'ws://127.0.0.1:1442'
+        },
+      })).toThrow()
+    })
+    it('cannot be passed an address and a port', () => {
+      expect(() => createConnectionObject({
+        port: 1337,
+        address: {
+          http: 'http://127.0.0.1:1442',
+          webSocket: 'ws://127.0.0.1:1442'
+        },
+      })).toThrow()
+    })
+    it('cannot be passed an address and a tls flag', () => {
+      expect(() => createConnectionObject({
+        tls: true,
+        address: {
+          http: 'http://127.0.0.1:1442',
+          webSocket: 'ws://127.0.0.1:1442'
+        },
+      })).toThrow()
     })
   })
   describe('InteractionContext', () => {

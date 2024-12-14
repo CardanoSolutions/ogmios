@@ -10,6 +10,10 @@ import { safeJSON } from './util'
  * @category Connection
  */
 export interface ConnectionConfig {
+  address?: {
+    http: string,
+    webSocket: string,
+  },
   host?: string,
   port?: number,
   tls?: boolean,
@@ -17,7 +21,7 @@ export interface ConnectionConfig {
 }
 
 /** @category Connection */
-export interface Connection extends Required<ConnectionConfig> {
+export interface Connection {
   maxPayload: number,
   address: {
     http: string
@@ -94,20 +98,28 @@ export class JSONRPCError extends Error {
 
 /** @category Constructor */
 export function createConnectionObject (config?: ConnectionConfig): Connection {
+  if (config?.address && (config?.host || config?.port || config?.tls)) {
+    throw new Error("invalid connection configuration: cannot contain both address AND host/port/tls");
+  }
+
   const _128MB = 128 * 1024 * 1024
+
   const base = {
     host: config?.host ?? '127.0.0.1',
     port: config?.port ?? 1337,
     tls: config?.tls ?? false,
-    maxPayload: config?.maxPayload ?? _128MB
   }
+
   const hostAndPort = `${base.host}:${base.port}`
+
+  const defaultAddress = {
+    http: `${base.tls ? 'https' : 'http'}://${hostAndPort}`,
+    webSocket: `${base.tls ? 'wss' : 'ws'}://${hostAndPort}`
+  }
+
   return {
-    ...base,
-    address: {
-      http: `${base.tls ? 'https' : 'http'}://${hostAndPort}`,
-      webSocket: `${base.tls ? 'wss' : 'ws'}://${hostAndPort}`
-    }
+    maxPayload: config?.maxPayload ?? _128MB,
+    address: config?.address ?? defaultAddress,
   }
 }
 
