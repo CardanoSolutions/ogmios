@@ -68,7 +68,6 @@ import Ogmios.Control.MonadSTM
     )
 import Ogmios.Data.Json
     ( Json
-    , ViaEncoding (..)
     )
 import Ogmios.Data.Json.Query
     ( AdHocQuery (..)
@@ -189,7 +188,6 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
                         logWith tr $ StateQueryRequest { query, point = Nothing, era }
                         pure $ LSQ.SendMsgQuery qry $ LSQ.ClientStQuerying
                             { LSQ.recvMsgResult = \(encodeResult -> result) -> do
-                                whenRight_ result $ logWith tr . StateQueryResponse . ViaEncoding
                                 yield $ encodeQueryLedgerStateResponse $ toResponse $
                                     either QueryEraMismatch QueryResponse result
                                 pure $ LSQ.SendMsgRelease clientStIdle
@@ -208,7 +206,6 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
                                     pure $ LSQ.SendMsgQuery (qryB resultA) $ LSQ.ClientStQuerying
                                         { LSQ.recvMsgResult = \resultB -> do
                                             let result = encodeResult (combine resultA <$> resultB)
-                                            whenRight_ result $ logWith tr . StateQueryResponse . ViaEncoding
                                             yield $ encodeQueryLedgerStateResponse $ toResponse $
                                                 either QueryEraMismatch QueryResponse result
                                             pure $ LSQ.SendMsgRelease clientStIdle
@@ -264,7 +261,6 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
                     logWith tr $ StateQueryRequest { query, point = Just pt, era }
                     pure $ LSQ.SendMsgQuery qry $ LSQ.ClientStQuerying
                         { LSQ.recvMsgResult = \(encodeResult -> result) -> do
-                            whenRight_ result $ logWith tr . StateQueryResponse . ViaEncoding
                             yield $ encodeQueryLedgerStateResponse $ toResponse $
                                 either QueryEraMismatch QueryResponse result
                             clientStAcquired pt
@@ -283,7 +279,6 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
                                 pure $ LSQ.SendMsgQuery (qryB resultA) $ LSQ.ClientStQuerying
                                     { LSQ.recvMsgResult = \resultB -> do
                                         let result = encodeResult (combine resultA <$> resultB)
-                                        whenRight_ result $ logWith tr . StateQueryResponse . ViaEncoding
                                         yield $ encodeQueryLedgerStateResponse $ toResponse $
                                             either QueryEraMismatch QueryResponse result
                                         clientStAcquired pt
@@ -358,11 +353,6 @@ data TraceStateQuery block where
            , era :: SomeShelleyEra
            }
         -> TraceStateQuery block
-
-    StateQueryResponse
-        :: { result :: ViaEncoding }
-        -> TraceStateQuery block
-
     deriving (Show, Generic)
 
 instance ToJSON (Point block) => ToJSON (TraceStateQuery block) where
@@ -371,4 +361,3 @@ instance ToJSON (Point block) => ToJSON (TraceStateQuery block) where
 instance HasSeverityAnnotation (TraceStateQuery block) where
     getSeverityAnnotation = \case
         StateQueryRequest{} -> Info
-        StateQueryResponse{} -> Info
