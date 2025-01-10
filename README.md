@@ -118,6 +118,7 @@ Ogmios provides a language-agnostic API which can be implemented using any WebSo
 <td align="center"><img height=72 width=72 src=".github/clients/python.png" alt="Logo:Python"><br/><a href="https://ogmios-python.readthedocs.io/en/latest/examples/index.html"><strong>Python</Strong></a></td>
 <td align="center"><img height=72 width=72 src=".github/clients/elixir.png" alt="Logo:Python"><br/><a href="https://github.com/wowica/xogmios"><strong>Elixir</Strong></a></td>
 <td align="center"><img height=72 width=72 src=".github/clients/cpp.png" alt="Logo:C++"><br/><a href="https://gitlab.com/viperscience/libogmios"><strong>C++</Strong></a></td>
+<td align="center"><img height=72 width=72 src=".github/clients/csharp.png" alt="Logo:CSharp"><br/><a href="https://github.com/ItsDaveB/OgmiosDotnet"><strong>C#</Strong></a></td>
 </tr><thead></table>
 
 ## Sponsors
