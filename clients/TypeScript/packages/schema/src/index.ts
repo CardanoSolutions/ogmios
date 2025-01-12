@@ -722,6 +722,9 @@ export interface StakePoolRegistration {
   type: "stakePoolRegistration";
   stakePool: StakePool;
 }
+/**
+ * The field 'stake' is only present when explicitly requested (see related state-queries).
+ */
 export interface StakePool {
   id: StakePoolId;
   vrfVerificationKeyHash: DigestBlake2B256;
@@ -732,6 +735,7 @@ export interface StakePool {
   rewardAccount: RewardAccount;
   metadata?: Anchor;
   relays: Relay[];
+  stake?: ValueAdaOnly;
 }
 export interface Anchor {
   hash: DigestAny;
@@ -2824,7 +2828,11 @@ export interface QueryLedgerStateStakePools {
   jsonrpc: "2.0";
   method: "queryLedgerState/stakePools";
   params?: {
-    stakePools: {
+    /**
+     * When provided and set to 'true', the result will also include the live stake associated to each pool. This may take some additional time the first time this is queried within an epoch.
+     */
+    includeStake?: boolean;
+    stakePools?: {
       id: StakePoolId;
     }[];
   };

@@ -1615,9 +1615,12 @@
       , "params":
         { "type": "object"
         , "additionalProperties": false
-        , "required": [ "stakePools" ]
         , "properties":
-          { "stakePools":
+          { "includeStake":
+            { "type": "boolean"
+            , "description": "When provided and set to 'true', the result will also include the live stake associated to each pool. This may take some additional time the first time this is queried within an epoch."
+            }
+          , "stakePools":
             { "type": "array"
             , "items":
               { "type": "object"

@@ -14,6 +14,9 @@ import Cardano.Ledger.Alonzo.Genesis
 import Cardano.Ledger.Api
     ( TransactionScriptFailure (..)
     )
+import Cardano.Ledger.Coin
+    ( Coin (..)
+    )
 import Cardano.Ledger.Core
     ( EraSegWits (..)
     )
@@ -918,12 +921,22 @@ genAccountStateResult _ = frequency
 
 genPoolParametersResult
     :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (Map (Ledger.KeyHash 'StakePool crypto) (PoolParams crypto)))
-    -> Gen (QueryResult crypto (Map (Ledger.KeyHash 'StakePool crypto) (PoolParams crypto)))
+    => Proxy (QueryResult crypto (Map (Ledger.KeyHash 'StakePool crypto) (PoolParams crypto, StrictMaybe Coin)))
+    -> Gen (QueryResult crypto (Map (Ledger.KeyHash 'StakePool crypto) (PoolParams crypto, StrictMaybe Coin)))
 genPoolParametersResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> arbitrary)
     ]
+
+genPoolParametersResultNoStake
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Proxy (QueryResult crypto (Map (Ledger.KeyHash 'StakePool crypto) (PoolParams crypto)))
+    -> Gen (QueryResult crypto (Map (Ledger.KeyHash 'StakePool crypto) (PoolParams crypto)))
+genPoolParametersResultNoStake _ = frequency
+    [ (1, Left <$> genMismatchEraInfo)
+    , (10, Right <$> arbitrary)
+    ]
+
 
 genMirror
     :: Gen (Maybe Json.Value)

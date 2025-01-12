@@ -212,6 +212,7 @@ import Test.Generators
     , genPointResultTPraos
     , genPoolDistrResult
     , genPoolParametersResult
+    , genPoolParametersResultNoStake
     , genProposedPParamsResult
     , genRewardAccountSummariesResult
     , genRewardsProvenanceResult
@@ -675,7 +676,7 @@ spec = do
 
         validateLedgerStateQuery 10 "stakePools"
             Nothing
-            (parseQueryLedgerStakePools genPoolParametersResult)
+            (parseQueryLedgerStakePools genPoolParametersResultNoStake genPoolParametersResult)
 
         validateLedgerStateQuery 0 "stakePools"
             (Just [aesonQQ|
@@ -686,7 +687,40 @@ spec = do
                     ]
                 }
             |])
-            (parseQueryLedgerStakePools genPoolParametersResult)
+            (parseQueryLedgerStakePools genPoolParametersResultNoStake genPoolParametersResult)
+
+        validateLedgerStateQuery 0 "stakePools"
+            (Just [aesonQQ|
+                {}
+            |])
+            (parseQueryLedgerStakePools genPoolParametersResultNoStake genPoolParametersResult)
+
+        validateLedgerStateQuery 0 "stakePools"
+            (Just [aesonQQ|
+                {
+                    "stakePools": []
+                }
+            |])
+            (parseQueryLedgerStakePools genPoolParametersResultNoStake genPoolParametersResult)
+
+        validateLedgerStateQuery 0 "stakePools"
+            (Just [aesonQQ|
+                {
+                    "includeStake": true
+                }
+            |])
+            (parseQueryLedgerStakePools genPoolParametersResultNoStake genPoolParametersResult)
+
+        validateLedgerStateQuery 0 "stakePools"
+            (Just [aesonQQ|
+                {
+                    "includeStake": false,
+                    "stakePools": [
+                        { "id": "pool1lllmq2jgcqrag5c77lpc5m34fsqn63leadyx9tzx842n66ly3ql" }
+                    ]
+                }
+            |])
+            (parseQueryLedgerStakePools genPoolParametersResultNoStake genPoolParametersResult)
 
         validateLedgerStateQuery 10 "constitution"
             Nothing

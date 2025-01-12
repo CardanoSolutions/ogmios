@@ -1941,6 +1941,7 @@
 
   , "StakePool":
     { "title": "StakePool"
+    , "description": "The field 'stake' is only present when explicitly requested (see related state-queries)."
     , "type": "object"
     , "additionalProperties": false
     , "required":
@@ -1984,6 +1985,9 @@
       , "relays":
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Relay" }
+        }
+      , "stake":
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
         }
       }
     }
