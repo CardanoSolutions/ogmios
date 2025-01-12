@@ -227,7 +227,7 @@ jobs:
         os: [ linux ]
         arch: [ x86_64 ]
         network: [ preview ]
-        cardano-node: [ 10.1.3 ]
+        cardano-node: [ 10.1.4 ]
 
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-22.04' }}
     steps:
@@ -404,8 +404,8 @@ jobs:
         os: [ linux ]
         target: [ cardano-node-ogmios ]
         network: [ mainnet, preprod, preview, sanchonet ]
-        cardano-node: [ 10.1.3 ]
-        cardano-node-latest: [  10.1.3 ]
+        cardano-node: [ 10.1.4 ]
+        cardano-node-latest: [  10.1.4 ]
         arch: [ x86_64 ]
     steps:
     - name: 📥 Checkout repository
