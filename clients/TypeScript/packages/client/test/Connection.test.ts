@@ -102,7 +102,7 @@ describe('Connection', () => {
         address: {
           http: 'http://127.0.0.1:1442',
           webSocket: 'ws://127.0.0.1:1442'
-        },
+        }
       })).toStrictEqual({
         maxPayload: 134217728,
         address: {
@@ -117,7 +117,7 @@ describe('Connection', () => {
         address: {
           http: 'http://127.0.0.1:1442',
           webSocket: 'ws://127.0.0.1:1442'
-        },
+        }
       })).toStrictEqual({
         maxPayload: 1024,
         address: {
@@ -128,11 +128,11 @@ describe('Connection', () => {
     })
     it('cannot be passed an address and a host', () => {
       expect(() => createConnectionObject({
-        host: "127.0.0.1",
+        host: '127.0.0.1',
         address: {
           http: 'http://127.0.0.1:1442',
           webSocket: 'ws://127.0.0.1:1442'
-        },
+        }
       })).toThrow()
     })
     it('cannot be passed an address and a port', () => {
@@ -141,7 +141,7 @@ describe('Connection', () => {
         address: {
           http: 'http://127.0.0.1:1442',
           webSocket: 'ws://127.0.0.1:1442'
-        },
+        }
       })).toThrow()
     })
     it('cannot be passed an address and a tls flag', () => {
@@ -150,7 +150,7 @@ describe('Connection', () => {
         address: {
           http: 'http://127.0.0.1:1442',
           webSocket: 'ws://127.0.0.1:1442'
-        },
+        }
       })).toThrow()
     })
   })

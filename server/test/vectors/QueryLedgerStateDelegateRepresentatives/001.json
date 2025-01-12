@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","method":"queryLedgerState/delegateRepresentatives","result":[{"type":"abstain","stake":{"ada":{"lovelace":142137}}}],"id":null}

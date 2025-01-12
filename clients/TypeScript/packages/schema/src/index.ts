@@ -262,19 +262,28 @@ export type ScriptExecutionFailure =
   | SubmitTransactionFailureUnknownOutputReferences
   | SubmitTransactionFailureMissingCostModels
   | SubmitTransactionFailureExecutionBudgetOutOfBounds;
+export type AnyDelegateRepresentativeCredential = Base16 | Bech32DrepVkhDrepScript;
+/**
+ * A key or script hash in base16.
+ */
+export type Base16 = string;
+/**
+ * A Blake2b 28-byte hash digest of a drep verification key or script.
+ */
+export type Bech32DrepVkhDrepScript = string;
+export type DelegateRepresentativeSummary =
+  | DelegateRepresentativeSummaryRegistered
+  | DelegateRepresentativeSummaryNoConfidence
+  | DelegateRepresentativeAbstain1;
 /**
  * Number of slots from the tip of the ledger in which it is guaranteed that no hard fork can take place. This should be (at least) the number of slots in which we are guaranteed to have k blocks.
  */
 export type SafeZone = number;
-export type AnyStakeCredential = Base16 | Bech32 | StakeAddress;
-/**
- * A stake key or script hash in base16.
- */
-export type Base16 = string;
+export type AnyStakeCredential = Base16 | Bech32StakeVkhScript | StakeAddress;
 /**
  * A Blake2b 28-byte hash digest of a verification key or script.
  */
-export type Bech32 = string;
+export type Bech32StakeVkhScript = string;
 /**
  * A stake address (a.k.a reward account)
  */
@@ -321,6 +330,18 @@ export interface Ogmios {
   QueryLedgerStateConstitutionalCommittee: QueryLedgerStateConstitutionalCommittee;
   QueryLedgerStateConstitutionalCommitteeResponse:
     | QueryLedgerStateConstitutionalCommitteeResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateDelegateRepresentatives: QueryLedgerStateDelegateRepresentatives;
+  QueryLedgerStateDelegateRepresentativesResponse:
+    | QueryLedgerStateDelegateRepresentativesResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateDump: QueryLedgerStateDump;
+  QueryLedgerStateDumpResponse:
+    | QueryLedgerStateDumpResponse
     | QueryLedgerStateEraMismatch
     | QueryLedgerStateUnavailableInCurrentEra
     | QueryLedgerStateAcquiredExpired;
@@ -2254,6 +2275,7 @@ export interface QueryLedgerStateEraMismatch {
   method:
     | "queryLedgerState/constitution"
     | "queryLedgerState/constitutionalCommittee"
+    | "queryLedgerState/delegateRepresentatives"
     | "queryLedgerState/epoch"
     | "queryLedgerState/eraStart"
     | "queryLedgerState/eraSummaries"
@@ -2283,6 +2305,7 @@ export interface QueryLedgerStateUnavailableInCurrentEra {
   method:
     | "queryLedgerState/constitution"
     | "queryLedgerState/constitutionalCommittee"
+    | "queryLedgerState/delegateRepresentatives"
     | "queryLedgerState/epoch"
     | "queryLedgerState/eraStart"
     | "queryLedgerState/eraSummaries"
@@ -2311,6 +2334,7 @@ export interface QueryLedgerStateAcquiredExpired {
   method:
     | "queryLedgerState/constitution"
     | "queryLedgerState/constitutionalCommittee"
+    | "queryLedgerState/delegateRepresentatives"
     | "queryLedgerState/epoch"
     | "queryLedgerState/eraStart"
     | "queryLedgerState/eraSummaries"
@@ -2401,6 +2425,65 @@ export interface ConstitutionalCommitteeMember {
         change: "adjustingMandate";
         mandate: Mandate;
       };
+}
+/**
+ * Query currently registered delegate representatives, their stake (i.e. voting powers) and metadata about them. Note that 'params' is optional and can be used to filter out delegates. When omitted, ALL delegates are returned. Pre-defined options (always abstain and always no confidence) are ALWAYS returned.
+ */
+export interface QueryLedgerStateDelegateRepresentatives {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/delegateRepresentatives";
+  params?: {
+    scripts?: AnyDelegateRepresentativeCredential[];
+    keys?: AnyDelegateRepresentativeCredential[];
+  };
+  id?: unknown;
+}
+export interface QueryLedgerStateDelegateRepresentativesResponse {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/delegateRepresentatives";
+  result: DelegateRepresentativeSummary[];
+  id?: unknown;
+}
+export interface DelegateRepresentativeSummaryRegistered {
+  id: DigestBlake2B224;
+  from: CredentialOrigin;
+  type: "registered";
+  mandate: Mandate;
+  metadata?: Anchor;
+  deposit: ValueAdaOnly;
+  stake: ValueAdaOnly;
+  delegators: {
+    credential: DigestBlake2B224;
+    from: CredentialOrigin;
+  }[];
+}
+export interface DelegateRepresentativeSummaryNoConfidence {
+  /**
+   * A special delegate representative which always vote no, except on votes of no-confidence.
+   */
+  type: "noConfidence";
+  stake: ValueAdaOnly;
+}
+export interface DelegateRepresentativeAbstain1 {
+  /**
+   * A special delegate representative which always abstain.
+   */
+  type: "abstain";
+  stake: ValueAdaOnly;
+}
+/**
+ * Get a dump of the entire Cardano ledger state (base16-encoded CBOR) corresponding to the 'EpochState'. Use at your own risks.
+ */
+export interface QueryLedgerStateDump {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/dump";
+  id?: unknown;
+}
+export interface QueryLedgerStateDumpResponse {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/dump";
+  result: string;
+  id?: unknown;
 }
 /**
  * Query the current epoch number the ledger is at.

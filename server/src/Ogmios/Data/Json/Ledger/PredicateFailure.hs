@@ -750,7 +750,10 @@ encodePredicateFailure reject = \case
             \credential that's being re-registered by this transaction."
             (pure $ encodeObject
                 ( "knownDelegateRepresentative" .=
-                    Conway.encodeDRep (Ledger.DRepCredential knownDelegateRepresentative)
+                    encodeObject
+                        (Conway.encodeDRep
+                            (Ledger.DRepCredential knownDelegateRepresentative)
+                        )
                 )
             )
 
@@ -764,7 +767,10 @@ encodePredicateFailure reject = \case
             \without being registered."
             (pure $ encodeObject
                 ( "unknownDelegateRepresentative" .=
-                    Conway.encodeDRep (Ledger.DRepCredential unknownDelegateRepresentative)
+                    encodeObject
+                        (Conway.encodeDRep
+                            (Ledger.DRepCredential unknownDelegateRepresentative)
+                        )
                 )
             )
 

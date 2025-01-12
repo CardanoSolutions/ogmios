@@ -51,6 +51,7 @@ import Data.Type.Equality
     )
 import Ogmios.Data.Json.Query
     ( AccountState (..)
+    , DRepSummary (..)
     , GenesisConfig
     , Interpreter
     , PoolParams
@@ -164,6 +165,7 @@ import qualified Ouroboros.Network.Point as Point
 import qualified Cardano.Ledger.Api.Governance as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
+import qualified Cardano.Ledger.DRep as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
 import qualified Cardano.Ledger.PoolDistr as Ledger
 
@@ -685,6 +687,22 @@ genCommitteeMembersStateResult _ =
   where
     genMembers = fmap Map.fromList
         (listOf $ (,) <$> arbitrary <*> genCommitteeMemberState)
+
+genDelegateRepresentativesResult
+    :: forall crypto era. (crypto ~ StandardCrypto)
+    => Proxy era
+    -> Gen (QueryResult crypto (Map (Ledger.DRep crypto) (DRepSummary crypto)))
+genDelegateRepresentativesResult _ =
+    frequency
+        [ (1, Left <$> genMismatchEraInfo)
+        , (10, Right <$> genDelegateSummaries)
+        ]
+  where
+    genDelegateSummaries = do
+        alwaysAbstain <- Map.singleton Ledger.DRepAlwaysAbstain . AlwaysAbstain <$> arbitrary
+        alwaysNoConfidence <- Map.singleton Ledger.DRepAlwaysAbstain . AlwaysAbstain <$> arbitrary
+        registered <- Map.mapKeys Ledger.DRepCredential . Map.map (uncurry Registered) <$> reasonablySized arbitrary
+        pure (alwaysAbstain <> alwaysNoConfidence <> registered)
 
 genCommitteeMemberState
     :: Gen (Ledger.CommitteeMemberState StandardCrypto)

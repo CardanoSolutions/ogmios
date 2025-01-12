@@ -81,6 +81,7 @@ import Ogmios.Data.Json.Query
     , SomeQuery (..)
     , parseQueryLedgerConstitution
     , parseQueryLedgerConstitutionalCommittee
+    , parseQueryLedgerDelegateRepresentatives
     , parseQueryLedgerEpoch
     , parseQueryLedgerEraStart
     , parseQueryLedgerEraSummaries
@@ -195,6 +196,7 @@ import Test.Generators
     , genCommitteeMembersStateResult
     , genConstitutionResult
     , genData
+    , genDelegateRepresentativesResult
     , genEpochResult
     , genEvaluateTransactionResponse
     , genGenTxId
@@ -595,7 +597,7 @@ spec = do
             Nothing
             (parseQueryLedgerTip genPointResultTPraos genPointResultPraos)
 
-        validateLedgerStateQuery 10 "projectedRewards"
+        validateLedgerStateQuery 0 "projectedRewards"
             (Just [aesonQQ|{ "stake": [{ "ada": { "lovelace": 14 } } , { "ada": { "lovelace": 42 } }] }|])
             (parseQueryLedgerProjectedRewards genNonMyopicMemberRewardsResult)
 
@@ -641,11 +643,11 @@ spec = do
             Nothing
             (parseQueryLedgerLiveStakeDistribution genPoolDistrResult)
 
-        validateLedgerStateQuery 10 "utxo"
+        validateLedgerStateQuery 20 "utxo"
             Nothing
             (parseQueryLedgerUtxo genUTxOResult)
 
-        validateLedgerStateQuery 10 "utxo"
+        validateLedgerStateQuery 0 "utxo"
             (Just [aesonQQ|
                 { "addresses":
                     [ "addr1vxsvu329sr8z92usevrr6scp4vxxn0j8e20avag662uesgq385tfd"
@@ -656,7 +658,7 @@ spec = do
             |])
             (parseQueryLedgerUtxoByAddress genUTxOResult)
 
-        validateLedgerStateQuery 10 "utxo"
+        validateLedgerStateQuery 0 "utxo"
             (Just [aesonQQ|
                 { "outputReferences":
                     [ { "transaction": { "id": "141933320b6e5d4522d7d3bf052dd2a26cc7eb58b66ae357f95f83715c8add5b" }
@@ -675,7 +677,7 @@ spec = do
             Nothing
             (parseQueryLedgerStakePools genPoolParametersResult)
 
-        validateLedgerStateQuery 10 "stakePools"
+        validateLedgerStateQuery 0 "stakePools"
             (Just [aesonQQ|
                 {
                     "stakePools": [
@@ -698,11 +700,7 @@ spec = do
             Nothing
             (parseQueryLedgerTreasuryAndReserves genAccountStateResult)
 
-        validateLedgerStateQuery 10 "governanceProposals"
-            Nothing
-            (parseQueryLedgerGovernanceProposals genGovActionStateResult)
-
-        validateLedgerStateQuery 10 "governanceProposals"
+        validateLedgerStateQuery 0 "governanceProposals"
             (Just [aesonQQ|{
                 "proposals": [
                     {
@@ -716,6 +714,54 @@ spec = do
                 ]
             }|])
             (parseQueryLedgerGovernanceProposalsByProposalReference genGovActionStateResult)
+
+        validateLedgerStateQuery 10 "governanceProposals"
+            Nothing
+            (parseQueryLedgerGovernanceProposals genGovActionStateResult)
+
+        validateLedgerStateQuery 0 "delegateRepresentatives"
+            (Just [aesonQQ|
+                { "keys":
+                    [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
+                    , "drep_vkh12rtxfdsnnftykmpq2sw0uezgmh66zpr8t2mgr0rhmtm06ygr39j"
+                    ]
+                , "scripts":
+                    [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
+                    , "drep_script1mh66zpr8t2mgr0rhmtm065xkvjmp8xjkfdkzq4qulejyst8h2gg"
+                    ]
+                }
+            |])
+            (parseQueryLedgerDelegateRepresentatives genDelegateRepresentativesResult)
+
+        validateLedgerStateQuery 0 "delegateRepresentatives"
+            (Just [aesonQQ|
+                { "keys":
+                    [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
+                    , "drep_vkh12rtxfdsnnftykmpq2sw0uezgmh66zpr8t2mgr0rhmtm06ygr39j"
+                    ]
+                }
+            |])
+            (parseQueryLedgerDelegateRepresentatives genDelegateRepresentativesResult)
+
+        validateLedgerStateQuery 0 "delegateRepresentatives"
+            (Just [aesonQQ|
+                { "scripts":
+                    [ "6c20541cfe6446ddf5a104675ab681bc77daf6fd50d664b6139a564b"
+                    , "drep_script1mh66zpr8t2mgr0rhmtm065xkvjmp8xjkfdkzq4qulejyst8h2gg"
+                    ]
+                }
+            |])
+            (parseQueryLedgerDelegateRepresentatives genDelegateRepresentativesResult)
+
+        validateLedgerStateQuery 0 "delegateRepresentatives"
+            (Just [aesonQQ|
+                {}
+            |])
+            (parseQueryLedgerDelegateRepresentatives genDelegateRepresentativesResult)
+
+        validateLedgerStateQuery 10 "delegateRepresentatives"
+            Nothing
+            (parseQueryLedgerDelegateRepresentatives genDelegateRepresentativesResult)
 
         validateNetworkQuery 10 "blockHeight"
             Nothing
@@ -1093,6 +1139,8 @@ validateLedgerStateQuery n subMethod params parser = do
                             . either QueryEraMismatch QueryResponse
                             . encodeResult
 
+                let iterations = (max nEras n) `div` nEras
+
                 -- NOTE: Queries are mostly identical between eras, since we run
                 -- the test for each era, we can reduce the number of expected
                 -- max success. In the end, the property run 1 time per era!
@@ -1105,7 +1153,7 @@ validateLedgerStateQuery n subMethod params parser = do
                                     (encodeQueryResponse encodeResult)
                             _someOtherEra ->
                                 pure ()
-                        runQuickCheck $ withMaxSuccess (n `div` nEras) $ forAllBlind
+                        runQuickCheck $ withMaxSuccess iterations $ forAllBlind
                             (genResult Proxy)
                             (prop_validateToJSON
                                 (encodingToValue . encodeQueryResponse encodeResult)
@@ -1119,7 +1167,7 @@ validateLedgerStateQuery n subMethod params parser = do
                                     (encodeQueryResponse encodeResult)
                             _someOtherEra ->
                                 pure ()
-                        runQuickCheck $ withMaxSuccess (n `div` nEras) $ forAllBlind
+                        runQuickCheck $ withMaxSuccess iterations $ forAllBlind
                             (genResult Proxy)
                             (prop_validateToJSON
                                 (encodingToValue . encodeQueryResponse encodeResult)
@@ -1133,7 +1181,7 @@ validateLedgerStateQuery n subMethod params parser = do
                                     (encodeQueryResponse (Right . encodeResult))
                             _someOtherEra ->
                                 pure ()
-                        runQuickCheck $ withMaxSuccess (n `div` nEras) $ forAllBlind
+                        runQuickCheck $ withMaxSuccess iterations $ forAllBlind
                             (genResult Proxy)
                             (prop_validateToJSON
                                 (encodingToValue . encodeQueryResponse (Right . encodeResult))

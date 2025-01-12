@@ -30,6 +30,7 @@ module Ogmios.Data.Json.Query
     , Sh.Api.RewardParams
     , Sh.Desirability
     , Ledger.PoolParams
+    , DRepSummary (..)
 
       -- * Encoders
     , encodeBound
@@ -52,7 +53,8 @@ module Ogmios.Data.Json.Query
     , decodeAssetName
     , decodeAssets
     , decodeCoin
-    , decodeCredential
+    , decodeDRepCredential
+    , decodeStakingCredential
     , decodeDatumHash
     , decodeHash
     , decodeOneEraHash
@@ -74,6 +76,7 @@ module Ogmios.Data.Json.Query
     , parseQueryLedgerEpoch
     , parseQueryLedgerEraStart
     , parseQueryLedgerEraSummaries
+    , parseQueryLedgerDelegateRepresentatives
     , parseQueryLedgerGovernanceProposals
     , parseQueryLedgerGovernanceProposalsByProposalReference
     , parseQueryLedgerLiveStakeDistribution
@@ -268,6 +271,7 @@ import qualified Cardano.Ledger.BaseTypes as Ledger
 import qualified Cardano.Ledger.Coin as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Credential as Ledger
+import qualified Cardano.Ledger.DRep as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
 import qualified Cardano.Ledger.Mary.Value as Ledger.Mary
 import qualified Cardano.Ledger.Plutus.Data as Ledger.Plutus
@@ -406,6 +410,8 @@ instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
                 parseQueryLedgerConstitutionalCommittee id queryParams
             "LedgerState/treasuryAndReserves" ->
                 parseQueryLedgerTreasuryAndReserves id queryParams
+            "LedgerState/delegateRepresentatives" ->
+                parseQueryLedgerDelegateRepresentatives id queryParams
             "LedgerState/dump" ->
                 parseQueryLedgerDump (const id) queryParams
             "Network/blockHeight" ->
@@ -448,6 +454,12 @@ data RewardAccountSummary crypto = RewardAccountSummary
     , rewards :: !Coin
     , deposit :: !Coin
     } deriving (Eq, Show, Generic)
+
+data DRepSummary crypto
+    = AlwaysAbstain Coin
+    | AlwaysNoConfidence Coin
+    | Registered Coin (Ledger.DRepState crypto)
+    deriving (Eq, Show, Generic)
 
 --
 -- Encoders
@@ -749,6 +761,111 @@ parseQueryLedgerConstitutionalCommittee genResult =
                     (eraMismatchOrResult Conway.encodeCommitteeMembersState)
                     genResult
 
+parseQueryLedgerDelegateRepresentatives
+    :: forall f crypto. (Crypto crypto)
+    => GenResult crypto f (Map (Ledger.DRep crypto) (DRepSummary crypto))
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseQueryLedgerDelegateRepresentatives genResult =
+    Json.withObject "delegateRepresentatives" $ \obj -> do
+        byKeys <- obj .:? "keys" .!= Set.empty
+            >>= traverset (decodeDRepCredential @crypto decodeAsKeyHash)
+        byScripts <- obj .:? "scripts" .!= Set.empty
+            >>= traverset (decodeDRepCredential @crypto decodeAsScriptHash)
+        let credentials =
+                byKeys <> byScripts
+        let dreps =
+                (Set.fromList [Ledger.DRepAlwaysAbstain, Ledger.DRepAlwaysNoConfidence])
+                <>
+                (Set.map Ledger.DRepCredential credentials)
+        pure $ \case
+            SomeShelleyEra ShelleyBasedEraShelley ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraAllegra ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraMary ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraAlonzo ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraBabbage ->
+                Nothing
+            SomeShelleyEra ShelleyBasedEraConway ->
+                Just $ SomeCompoundQuery
+                    (LSQ.BlockQuery
+                        (QueryIfCurrentConway
+                            (GetDRepState credentials)
+                        )
+                    )
+                    (\_ -> LSQ.BlockQuery
+                        (QueryIfCurrentConway
+                            (GetDRepStakeDistr dreps)
+                        )
+                    )
+                    (mergeAll . Map.mapKeys Ledger.DRepCredential)
+                    (eraMismatchOrResult (encodeMapAsList encodeDRepSummary))
+                    genResult
+  where
+    mergeAll
+        :: Map (Ledger.DRep crypto) (Ledger.DRepState crypto)
+        -> Map (Ledger.DRep crypto) Coin
+        -> Map (Ledger.DRep crypto) (DRepSummary  crypto)
+    mergeAll =
+        Map.merge
+            -- State but no distr
+            --
+            -- NOTE:
+            -- There shouldn't be any DRepState missing from the map... as
+            -- we expect the exact same keys to be available in both maps
+            -- (modulo the predefined DReps which are not available in the
+            -- second map).
+            --
+            -- If the case ever occurs anyway, we wouldn't know how to handle
+            -- it, so there's nothing else to do than discarding those rogue
+            -- entries.
+            Map.dropMissing
+
+            -- Distr but no state
+            --
+            -- NOTE:
+            -- Somehow, the DRepState is not accessible for pre-defined dreps;
+            -- Even though it would be pretty interesting to have ways of
+            -- querying their delegates.
+            --
+            -- So we pull them apart into a different constructor variant so we
+            -- can easily encode them differently.
+            (Map.mapMaybeMissing $ \drep coin ->
+                case drep of
+                  Ledger.DRepAlwaysAbstain -> Just (AlwaysAbstain coin)
+                  Ledger.DRepAlwaysNoConfidence -> Just (AlwaysNoConfidence coin)
+                  Ledger.DRepCredential{} -> Nothing
+            )
+
+            -- Both distr and state (only occurs for registered DReps)
+            (Map.zipWithMatched $ \_ -> flip Registered)
+
+    encodeDRepSummary
+        :: Ledger.DRep crypto
+        -> DRepSummary crypto
+        -> Json
+    encodeDRepSummary drep = encodeObject . (Conway.encodeDRep drep <>) . \case
+        AlwaysAbstain stake ->
+            "stake" .= encodeCoin stake
+        AlwaysNoConfidence stake ->
+            "stake" .= encodeCoin stake
+        Registered stake summary ->
+              "mandate" .=
+                (encodeSingleton "epoch" . encodeEpochNo) (Ledger.drepExpiry summary)
+           <> "deposit" .=
+                encodeCoin (Ledger.drepDeposit summary)
+           <> "stake" .=
+                encodeCoin stake
+           <> "metadata" .=? OmitWhenNothing
+                Conway.encodeAnchor (Ledger.drepAnchor summary)
+           <> "delegators" .=
+                encodeFoldable
+                    (encodeObject . Shelley.encodeCredential "credential")
+                    (Ledger.drepDelegs summary)
+
 parseQueryLedgerEpoch
     :: forall crypto f. ()
     => GenResult crypto f EpochNo
@@ -952,9 +1069,9 @@ parseQueryLedgerProjectedRewards genResult =
         byStake <- obj .:? "stake" .!= Set.empty
             >>= traverset (fmap Left . decodeCoin)
         byScript <- obj .:? "scripts" .!= Set.empty
-            >>= traverset (fmap Right . decodeCredential @crypto decodeAsScriptHash)
+            >>= traverset (fmap Right . decodeStakingCredential @crypto decodeAsScriptHash)
         byKey <- obj .:? "keys" .!= Set.empty
-            >>= traverset (fmap Right . decodeCredential @crypto decodeAsKeyHash)
+            >>= traverset (fmap Right . decodeStakingCredential @crypto decodeAsKeyHash)
         let credentials = byStake <> byScript <> byKey
         pure $
             ( \queryDef -> Just $ SomeStandardQuery
@@ -996,9 +1113,9 @@ parseQueryLedgerRewardAccountSummaries genResult =
     let query = "rewardAccountSummaries" in
     Json.withObject (toString @Text query) $ \obj -> do
         byScript <- obj .:? "scripts" .!= Set.empty
-            >>= traverset (decodeCredential @crypto decodeAsScriptHash)
+            >>= traverset (decodeStakingCredential @crypto decodeAsScriptHash)
         byKey <- obj .:? "keys" .!= Set.empty
-            >>= traverset (decodeCredential @crypto decodeAsKeyHash)
+            >>= traverset (decodeStakingCredential @crypto decodeAsKeyHash)
         let credentials = byScript <> byKey
         pure $ Just . \case
             SomeShelleyEra ShelleyBasedEraShelley ->
@@ -1665,13 +1782,13 @@ decodeCoin = Json.withObject "Lovelace" $ \o -> do
     lovelace <- o .: "ada" >>= (.: "lovelace")
     pure $ Ledger.word64ToCoin lovelace
 
-decodeCredential
+decodeStakingCredential
     :: forall crypto. Crypto crypto
     => (ByteString -> Json.Parser (Ledger.Credential 'Staking crypto))
     -> Json.Value
     -> Json.Parser (Ledger.Credential 'Staking crypto)
-decodeCredential decodeAsKeyOrScript =
-    Json.withText "Credential" $ \(encodeUtf8 -> str) -> asum
+decodeStakingCredential decodeAsKeyOrScript =
+    Json.withText "StakingCredential" $ \(encodeUtf8 -> str) -> asum
         [ decodeBase16 str >>=
             decodeAsKeyOrScript
         , decodeBech32 str >>=
@@ -1686,27 +1803,10 @@ decodeCredential decodeAsKeyOrScript =
         ]
        <|>
         fail "Unable to decode credential. It must be either a base16-encoded \
-             \stake key hash or a bech32-encoded stake address, stake key hash \
-             \or script hash with one of the following respective prefixes: \
-             \stake, stake_vkh or script."
+             \stake key hash, stake script hash or a bech32-encoded stake address, \
+             \stake key hash or script hash with one of the following respective \
+             \prefixes: stake, stake_vkh or script."
   where
-    whenHrp
-        :: (Bech32.HumanReadablePart -> Bool)
-        -> (ByteString -> Json.Parser a)
-        -> (Bech32.HumanReadablePart, Bech32.DataPart)
-        -> Json.Parser a
-    whenHrp predicate parser (hrp, bytes) =
-        if predicate hrp then
-            maybe mempty parser (Bech32.dataPartToBytes bytes)
-        else
-            mempty
-
-    decodeBech32
-        :: ByteString
-        -> Json.Parser (Bech32.HumanReadablePart, Bech32.DataPart)
-    decodeBech32 =
-        either (fail . show) pure . Bech32.decodeLenient . decodeUtf8
-
     decodeAsStakeAddress
         :: ByteString
         -> Json.Parser (Ledger.Credential 'Staking crypto)
@@ -1718,29 +1818,48 @@ decodeCredential decodeAsKeyOrScript =
         invalidStakeAddress =
             fail "invalid stake address"
 
+decodeDRepCredential
+    :: forall crypto. Crypto crypto
+    => (ByteString -> Json.Parser (Ledger.Credential 'DRepRole crypto))
+    -> Json.Value
+    -> Json.Parser (Ledger.Credential 'DRepRole crypto)
+decodeDRepCredential decodeAsKeyOrScript =
+    Json.withText "DRepCredential" $ \(encodeUtf8 -> str) -> asum
+        [ decodeBase16 str >>=
+            decodeAsKeyOrScript
+        , decodeBech32 str >>= whenHrp (== [humanReadablePart|drep_vkh|])
+            decodeAsKeyHash
+        , decodeBech32 str >>= whenHrp (== [humanReadablePart|drep_script|])
+            decodeAsScriptHash
+        ]
+       <|>
+        fail "Unable to decode credential. It must be either a base16-encoded \
+             \key hash, script hash or a bech32-encoded key hash or script hash \
+             \with one of the following respective prefixes: drep_vkh, drep_script."
+
 decodeAsKeyHash
-    :: forall crypto. (Crypto crypto)
+    :: forall crypto keyRole. (Crypto crypto)
     => ByteString
-    -> Json.Parser (Ledger.Credential 'Staking crypto)
+    -> Json.Parser (Ledger.Credential keyRole crypto)
 decodeAsKeyHash =
     fmap (Ledger.KeyHashObj . Ledger.KeyHash)
-        . maybe invalidStakeKeyHash pure
+        . maybe invalidKeyHash pure
         . hashFromBytes
   where
-    invalidStakeKeyHash =
-        fail "invalid stake key hash"
+    invalidKeyHash =
+        fail "invalid credential key hash"
 
 decodeAsScriptHash
-    :: forall crypto. (Crypto crypto)
+    :: forall crypto keyRole. (Crypto crypto)
     => ByteString
-    -> Json.Parser (Ledger.Credential 'Staking crypto)
+    -> Json.Parser (Ledger.Credential keyRole crypto)
 decodeAsScriptHash =
     fmap (Ledger.ScriptHashObj . Ledger.ScriptHash)
-        . maybe invalidStakeScriptHash pure
+        . maybe invalidScriptHash pure
         . hashFromBytes
   where
-    invalidStakeScriptHash =
-        fail "invalid stake script hash"
+    invalidScriptHash =
+        fail "invalid credential script hash"
 
 decodeDatumHash
     :: Crypto crypto
@@ -2208,3 +2327,20 @@ castPoint = \case
     BlockPoint slot h -> BlockPoint slot (cast h)
   where
     cast (unShelleyHash -> UnsafeHash h) = coerce h
+
+whenHrp
+    :: (Bech32.HumanReadablePart -> Bool)
+    -> (ByteString -> Json.Parser a)
+    -> (Bech32.HumanReadablePart, Bech32.DataPart)
+    -> Json.Parser a
+whenHrp predicate parser (hrp, bytes) =
+    if predicate hrp then
+        maybe mempty parser (Bech32.dataPartToBytes bytes)
+    else
+        mempty
+
+decodeBech32
+    :: ByteString
+    -> Json.Parser (Bech32.HumanReadablePart, Bech32.DataPart)
+decodeBech32 =
+    either (fail . show) pure . Bech32.decodeLenient . decodeUtf8

@@ -908,6 +908,83 @@
       ]
     }
 
+  , "DelegateRepresentativeSummary":
+    { "title": "DelegateRepresentativeSummary"
+    , "oneOf":
+      [ { "title": "DelegateRepresentativeSummary<Registered>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "id", "from", "type", "mandate", "deposit", "stake", "delegators" ]
+        , "properties":
+          { "id":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          , "type":
+            { "type": "string"
+            , "enum": ["registered"]
+            }
+          , "mandate":
+            { "$ref": "cardano.json#/definitions/Mandate"
+            }
+          , "metadata":
+            { "$ref": "cardano.json#/definitions/Anchor"
+            }
+          , "deposit":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          , "stake":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          , "delegators":
+            { "type": "array"
+            , "items":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "credential", "from" ]
+              , "properties":
+                { "credential": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                , "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
+                }
+              }
+            }
+          }
+        }
+      , { "title": "DelegateRepresentativeSummary<NoConfidence>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "type", "stake" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "description": "A special delegate representative which always vote no, except on votes of no-confidence."
+            , "enum": [ "noConfidence" ]
+            }
+          , "stake":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          }
+        }
+      , { "title": "DelegateRepresentative<Abstain>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "type", "stake" ]
+        , "properties":
+          { "type":
+            { "type": "string"
+            , "description": "A special delegate representative which always abstain."
+            , "enum": [ "abstain" ]
+            }
+          , "stake":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          }
+        }
+      ]
+    }
+
   , "Digest<Blake2b, 256>":
     { "title": "Digest<Blake2b, 256>"
     , "type": "string"

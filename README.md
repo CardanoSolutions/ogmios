@@ -63,6 +63,7 @@ See our [Ogmios client starter kit](https://github.com/CardanoSolutions/ogmios-t
   ---                          | ---
   `constitution`               | The current on-chain constitution.
   `constitutionalCommittee`    | A complete summary of the constitutional committee.
+  `delegateRepresentatives`    | A summary of registered (and pre-defined) delegate representatives, with their voting power.
   `epoch`                      | The current epoch of the ledger.
   `eraStart`                   | The information regarding the beginning of the current ledger era.
   `eraSummaries`               | Era bounds and slot parameters details, required for proper slotting arithmetic.

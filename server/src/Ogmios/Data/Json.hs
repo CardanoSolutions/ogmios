@@ -141,7 +141,7 @@ encodeAcquireFailure = \case
     AcquireFailurePointTooOld ->
         encodeText "Target point is too old."
     AcquireFailurePointNotOnChain ->
-        encodeText "Target point doesn't longer exist."
+        encodeText "Target doesn't or no longer exist."
 
 encodeAcquireExpired
     :: AcquireFailure

@@ -280,7 +280,7 @@ encodeConwayGovCert = \case
             encodeText "delegateRepresentativeRegistration"
        <>
         "delegateRepresentative" .=
-            encodeDRep (Ledger.DRepCredential credential)
+            encodeObject (encodeDRep (Ledger.DRepCredential credential))
        <>
         "deposit" .=
             encodeCoin deposit
@@ -292,7 +292,7 @@ encodeConwayGovCert = \case
             encodeText "delegateRepresentativeRetirement"
        <>
         "delegateRepresentative" .=
-            encodeDRep (Ledger.DRepCredential credential)
+            encodeObject (encodeDRep (Ledger.DRepCredential credential))
        <>
         "deposit" .=
             encodeCoin deposit
@@ -301,7 +301,7 @@ encodeConwayGovCert = \case
             encodeText "delegateRepresentativeUpdate"
        <>
         "delegateRepresentative" .=
-            encodeDRep (Ledger.DRepCredential credential)
+            encodeObject (encodeDRep (Ledger.DRepCredential credential))
        <>
         "metadata" .=
             encodeStrictMaybe encodeAnchor anchor
@@ -369,17 +369,17 @@ encodeDelegatee = \case
     Cn.DelegStake poolId ->
         "stakePool" .= encodeSingleton "id" (Shelley.encodePoolId poolId)
     Cn.DelegVote drep ->
-        "delegateRepresentative" .= encodeDRep drep
+        "delegateRepresentative" .= encodeObject (encodeDRep drep)
     Cn.DelegStakeVote poolId drep ->
         "stakePool" .= encodeSingleton "id" (Shelley.encodePoolId poolId)
         <>
-        "delegateRepresentative" .= encodeDRep drep
+        "delegateRepresentative" .= encodeObject (encodeDRep drep)
 
 encodeDRep
     :: Crypto crypto
     => Ledger.DRep crypto
-    -> Json
-encodeDRep = encodeObject . \case
+    -> Series
+encodeDRep = \case
     Ledger.DRepCredential credential ->
         "type" .= encodeText "registered" <>
         "id" `Shelley.encodeCredential` credential

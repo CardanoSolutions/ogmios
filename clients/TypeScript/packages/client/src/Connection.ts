@@ -99,7 +99,7 @@ export class JSONRPCError extends Error {
 /** @category Constructor */
 export function createConnectionObject (config?: ConnectionConfig): Connection {
   if (config?.address && (config?.host || config?.port || config?.tls)) {
-    throw new Error("invalid connection configuration: cannot contain both address AND host/port/tls");
+    throw new Error('invalid connection configuration: cannot contain both address AND host/port/tls')
   }
 
   const _128MB = 128 * 1024 * 1024
@@ -107,7 +107,7 @@ export function createConnectionObject (config?: ConnectionConfig): Connection {
   const base = {
     host: config?.host ?? '127.0.0.1',
     port: config?.port ?? 1337,
-    tls: config?.tls ?? false,
+    tls: config?.tls ?? false
   }
 
   const hostAndPort = `${base.host}:${base.port}`
@@ -119,7 +119,7 @@ export function createConnectionObject (config?: ConnectionConfig): Connection {
 
   return {
     maxPayload: config?.maxPayload ?? _128MB,
-    address: config?.address ?? defaultAddress,
+    address: config?.address ?? defaultAddress
   }
 }
 
