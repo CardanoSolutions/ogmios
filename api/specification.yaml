@@ -1,7 +1,7 @@
 asyncapi: '2.4.0'
 info:
   title: Ogmios
-  version: '6.9.*'
+  version: '6.11.*'
   description: |
 
     ### Protocols
@@ -19,6 +19,7 @@ info:
       - [Error codes](/mini-protocols/local-state-query/#errors)
       - [LedgerState/Constitution](#operation-publish-/?QueryLedgerStateConstitution)
       - [LedgerState/ConstitutionalCommittee](#operation-publish-/?QueryLedgerStateConstitutionalCommittee)
+      - [LedgerState/DelegateRepresentative](#operation-publish-/?QueryLedgerStateDelegateRepresentatives)
       - [LedgerState/Dump](#operation-publish-/?QueryLedgerStateDump)
       - [LedgerState/Epoch](#operation-publish-/?QueryLedgerStateEpoch)
       - [LedgerState/EraStart](#operation-publish-/?QueryLedgerStateEraStart)
@@ -260,6 +261,20 @@ channels:
       message:
         oneOf:
           - $ref: "#/components/messages/QueryLedgerStateConstitutionalCommitteeResponse"
+
+  /?QueryLedgerStateDelegateRepresentatives:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateDelegateRepresentatives
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateDelegateRepresentatives"
+    subscribe:
+      operationId: QueryLedgerStateDelegateRepresentativesResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateDelegateRepresentativesResponse"
 
   /?QueryLedgerStateDump:
     description: |
@@ -819,6 +834,14 @@ components:
       payload:
         $ref: "/ogmios.json#/properties/QueryLedgerStateConstitutionalCommittee"
 
+    QueryLedgerStateDelegateRepresentatives:
+      title: QueryLedgerStateDelegateRepresentatives
+      name: "since v6.11.0"
+      description: |
+        Query currently registered delegate representatives, their stake (i.e. voting powers) and metadata about them. Note that 'params' is optional and can be used to filter out delegates. When omitted, ALL delegates are returned. Pre-defined options (always abstain and always no confidence) are ALWAYS returned.
+      payload:
+        $ref: "/ogmios.json#/properties/QueryLedgerStateDelegateRepresentatives"
+
     QueryNetworkBlockHeight:
       title: QueryNetworkBlockHeight
       name: "since v6.0.0"
@@ -952,6 +975,12 @@ components:
       name: "since v6.2.0"
       payload:
         $ref: "/ogmios.json#/properties/QueryLedgerStateConstitutionalCommitteeResponse"
+
+    QueryLedgerStateDelegateRepresentativesResponse:
+      title: QueryLedgerStateDelegateRepresentativesResponse
+      name: "since v6.11.0"
+      payload:
+        $ref: "/ogmios.json#/properties/QueryLedgerStateDelegateRepresentativesResponse"
 
     QueryNetworkBlockHeightResponse:
       title: QueryNetworkBlockHeightResponse

@@ -14,6 +14,7 @@
   , "QueryLedgerStateConstitution", "QueryLedgerStateConstitutionResponse"
   , "QueryLedgerStateConstitutionalCommittee", "QueryLedgerStateConstitutionalCommitteeResponse"
   , "QueryLedgerStateDump", "QueryLedgerStateDumpResponse"
+  , "QueryLedgerStateDelegateRepresentatives", "QueryLedgerStateDelegateRepresentativesResponse"
   , "QueryLedgerStateEpoch", "QueryLedgerStateEpochResponse"
   , "QueryLedgerStateEraStart", "QueryLedgerStateEraStartResponse"
   , "QueryLedgerStateEraSummaries", "QueryLedgerStateEraSummariesResponse"
@@ -672,6 +673,7 @@
         , "enum":
           [ "queryLedgerState/constitution"
           , "queryLedgerState/constitutionalCommittee"
+          , "queryLedgerState/delegateRepresentatives"
           , "queryLedgerState/epoch"
           , "queryLedgerState/eraStart"
           , "queryLedgerState/eraSummaries"
@@ -720,6 +722,7 @@
         , "enum":
           [ "queryLedgerState/constitution"
           , "queryLedgerState/constitutionalCommittee"
+          , "queryLedgerState/delegateRepresentatives"
           , "queryLedgerState/epoch"
           , "queryLedgerState/eraStart"
           , "queryLedgerState/eraSummaries"
@@ -767,6 +770,7 @@
         , "enum":
           [ "queryLedgerState/constitution"
           , "queryLedgerState/constitutionalCommittee"
+          , "queryLedgerState/delegateRepresentatives"
           , "queryLedgerState/epoch"
           , "queryLedgerState/eraStart"
           , "queryLedgerState/eraSummaries"
@@ -906,6 +910,71 @@
                   }
                 }
               ]
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
+      ]
+    }
+
+  , "QueryLedgerStateDelegateRepresentatives":
+    { "title": "QueryLedgerStateDelegateRepresentatives"
+    , "description": "Query currently registered delegate representatives, their stake (i.e. voting powers) and metadata about them. Note that 'params' is optional and can be used to filter out delegates. When omitted, ALL delegates are returned. Pre-defined options (always abstain and always no confidence) are ALWAYS returned."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/delegateRepresentatives" ]
+        }
+      , "params":
+        { "type": "object"
+        , "additionalProperties": false
+        , "properties":
+          { "scripts":
+            { "type": "array"
+            , "items": { "$ref": "ogmios.json#/definitions/AnyDelegateRepresentativeCredential" }
+            }
+          , "keys":
+            { "type": "array"
+            , "items": { "$ref": "ogmios.json#/definitions/AnyDelegateRepresentativeCredential" }
+            }
+          }
+        }
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateDelegateRepresentativesResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateDelegateRepresentativesResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/delegateRepresentatives" ]
+            }
+          , "result":
+            { "type": "array"
+            , "items": { "$ref": "cardano.json#/definitions/DelegateRepresentativeSummary" }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -2381,17 +2450,38 @@
   }
 
 , "definitions":
-  { "AnyStakeCredential":
+  { "_encodingBase16":
+      { "title": "Base16"
+      , "description": "A key or script hash in base16."
+      , "type": "string"
+      , "contentEncoding": "base16"
+      , "minLength": 56
+      , "maxLength": 56
+      }
+
+
+  , "AnyDelegateRepresentativeCredential":
+    { "title": "AnyDelegateRepresentativeCredential"
+    , "oneOf":
+      [ { "$ref": "ogmios.json#/definitions/_encodingBase16" }
+      , { "title": "Bech32<drep_vkh, drep_script>"
+        , "type": "string"
+        , "description": "A Blake2b 28-byte hash digest of a drep verification key or script."
+        , "contentEncoding": "bech32"
+        , "pattern": "^(drep_vkh|drep_script)1[0-9a-z]*$"
+        , "examples":
+          [ "drep_vkh12rtxfdsnnftykmpq2sw0uezgmh66zpr8t2mgr0rhmtm06ygr39j"
+          , "drep_script1mh66zpr8t2mgr0rhmtm065xkvjmp8xjkfdkzq4qulejyst8h2gg"
+          ]
+        }
+      ]
+    }
+
+  , "AnyStakeCredential":
     { "title": "AnyStakeCredential"
     , "oneOf":
-      [ { "title": "Base16"
-        , "description": "A stake key or script hash in base16."
-        , "type": "string"
-        , "contentEncoding": "base16"
-        , "minLength": 56
-        , "maxLength": 56
-        }
-      , { "title": "Bech32"
+      [ { "$ref": "ogmios.json#/definitions/_encodingBase16" }
+      , { "title": "Bech32<stake_vkh, script>"
         , "type": "string"
         , "description": "A Blake2b 28-byte hash digest of a verification key or script."
         , "contentEncoding": "bech32"
