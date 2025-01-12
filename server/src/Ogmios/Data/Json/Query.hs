@@ -774,10 +774,12 @@ parseQueryLedgerDelegateRepresentatives genResult =
             >>= traverset (decodeDRepCredential @crypto decodeAsScriptHash)
         let credentials =
                 byKeys <> byScripts
-        let dreps =
-                (Set.fromList [Ledger.DRepAlwaysAbstain, Ledger.DRepAlwaysNoConfidence])
-                <>
-                (Set.map Ledger.DRepCredential credentials)
+        let dreps
+                | null credentials = Set.empty
+                | otherwise =
+                    (Set.fromList [Ledger.DRepAlwaysAbstain, Ledger.DRepAlwaysNoConfidence])
+                    <>
+                    (Set.map Ledger.DRepCredential credentials)
         pure $ \case
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Nothing
