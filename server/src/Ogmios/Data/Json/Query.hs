@@ -1012,7 +1012,7 @@ parseQueryLedgerTreasuryAndReserves genResult =
 
 parseQueryLedgerDump
     :: forall crypto f. (Crypto crypto)
-    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Ledger.EpochState era))
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Ledger.NewEpochState era))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseQueryLedgerDump genResult =
@@ -1021,43 +1021,43 @@ parseQueryLedgerDump genResult =
             \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
                     Just $ SomeStandardQuery
-                        (LSQ.BlockQuery $ QueryIfCurrentShelley DebugEpochState)
+                        (LSQ.BlockQuery $ QueryIfCurrentShelley DebugNewEpochState)
                         (eraMismatchOrResult encodeEpochState)
                         (genResult $ Proxy @(ShelleyEra crypto))
 
                 SomeShelleyEra ShelleyBasedEraAllegra ->
                     Just $ SomeStandardQuery
-                        (LSQ.BlockQuery $ QueryIfCurrentAllegra DebugEpochState)
+                        (LSQ.BlockQuery $ QueryIfCurrentAllegra DebugNewEpochState)
                         (eraMismatchOrResult encodeEpochState)
                         (genResult $ Proxy @(AllegraEra crypto))
 
                 SomeShelleyEra ShelleyBasedEraMary ->
                     Just $ SomeStandardQuery
-                        (LSQ.BlockQuery $ QueryIfCurrentMary DebugEpochState)
+                        (LSQ.BlockQuery $ QueryIfCurrentMary DebugNewEpochState)
                         (eraMismatchOrResult encodeEpochState)
                         (genResult $ Proxy @(MaryEra crypto))
 
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     Just $ SomeStandardQuery
-                        (LSQ.BlockQuery $ QueryIfCurrentAlonzo DebugEpochState)
+                        (LSQ.BlockQuery $ QueryIfCurrentAlonzo DebugNewEpochState)
                         (eraMismatchOrResult encodeEpochState)
                         (genResult $ Proxy @(AlonzoEra crypto))
 
                 SomeShelleyEra ShelleyBasedEraBabbage ->
                     Just $ SomeStandardQuery
-                        (LSQ.BlockQuery $ QueryIfCurrentBabbage DebugEpochState)
+                        (LSQ.BlockQuery $ QueryIfCurrentBabbage DebugNewEpochState)
                         (eraMismatchOrResult encodeEpochState)
                         (genResult $ Proxy @(BabbageEra crypto))
 
                 SomeShelleyEra ShelleyBasedEraConway ->
                     Just $ SomeStandardQuery
-                        (LSQ.BlockQuery $ QueryIfCurrentConway DebugEpochState)
+                        (LSQ.BlockQuery $ QueryIfCurrentConway DebugNewEpochState)
                         (eraMismatchOrResult encodeEpochState)
                         (genResult $ Proxy @(ConwayEra crypto))
   where
     encodeEpochState
-        :: forall era. (EncCBOR (Ledger.EpochState era), Era era)
-        => Ledger.EpochState era
+        :: forall era. (EncCBOR (Ledger.NewEpochState era), Era era)
+        => Ledger.NewEpochState era
         -> Json
     encodeEpochState =
         encodeText . encodeBase16 . encodeCbor @era
