@@ -45,11 +45,9 @@ ifeq ($(VERSION),)
 	@echo "Missing \033[1;33mVERSION\033[00m argument."
 else
 	@echo "Bumping versions to $(VERSION)"
-	@sed -i '' 's/^version:\([^0-9]*\).*/version:\1$(VERSION)/' package.yaml
-	@sed -i '' 's/^version:\([^0-9]*\).*/version:\1$(VERSION)/' ogmios.cabal
-	@sed -i '' 's/"version": "[0-9]\.[0-9]\.[0-9]",/"version": "$(VERSION)",/' ../clients/TypeScript/package.json
-	@sed -i '' 's/"version": "[0-9]\.[0-9]\.[0-9]",/"version": "$(VERSION)",/' ../clients/TypeScript/packages/**/package.json
-	@sed -i '' 's/\("@cardano-ogmios\/.*":\) "[0-9]\.[0-9]\.[0-9]",/\1 "$(VERSION)",/' ../clients/TypeScript/packages/**/package.json
+	@sed -i 's/"version": "[0-9]\+\.[0-9]\+\.[0-9]\+",/"version": "$(VERSION)",/' ../clients/TypeScript/package.json
+	@sed -i 's/"version": "[0-9]\+\.[0-9]\+\.[0-9]\+",/"version": "$(VERSION)",/' ../clients/TypeScript/packages/**/package.json
+	@sed -i 's/\("@cardano-ogmios\/.*":\) "[0-9]\+\.[0-9]\+\.[0-9]\+",/\1 "$(VERSION)",/' ../clients/TypeScript/packages/**/package.json
 	@echo "All set. Don't forget to ALSO update the asset files for the documentation!"
 endif
 
