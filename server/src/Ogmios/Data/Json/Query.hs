@@ -817,15 +817,10 @@ parseQueryLedgerDelegateRepresentatives genResult =
             -- State but no distr
             --
             -- NOTE:
-            -- There shouldn't be any DRepState missing from the map... as
-            -- we expect the exact same keys to be available in both maps
-            -- (modulo the predefined DReps which are not available in the
-            -- second map).
-            --
-            -- If the case ever occurs anyway, we wouldn't know how to handle
-            -- it, so there's nothing else to do than discarding those rogue
-            -- entries.
-            Map.dropMissing
+            -- Somehow, DReps with 0 stake do not figure in the stake
+            -- distribution map; so we must account for them here by adding an
+            -- empty coin.
+            (Map.mapMaybeMissing $ \_drep -> Just . Registered mempty)
 
             -- Distr but no state
             --
