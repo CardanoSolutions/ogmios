@@ -149,7 +149,7 @@ jobs:
         CABAL: ${{ steps.version.outputs.version }}
 
     - name: 📎 Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ogmios-${{ github.sha }}-${{ matrix.arch }}-${{ matrix.os }}
         path: |
@@ -255,7 +255,7 @@ jobs:
         yarn lint
 
     - name: 📥 Download
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ogmios-${{ github.sha }}-${{ matrix.arch }}-${{ matrix.os }}
         path: server
@@ -330,7 +330,7 @@ jobs:
         yarn repl:pkg
 
     - name: 📎 Upload REPL exe
-      uses: actions/upload-artifact@v3.1.2
+      uses: actions/upload-artifact@v4
       with:
         name: cardano-ogmios-repl-${{ matrix.target }}-${{ github.sha }}
         path: clients/TypeScript/packages/repl/build/cardano-ogmios-repl-${{ matrix.target }}
@@ -371,7 +371,7 @@ jobs:
         ./scripts/pack.sh
 
     - name: 📎 Upload npm packages
-      uses: actions/upload-artifact@v3.1.2
+      uses: actions/upload-artifact@v4
       with:
         name: cardano-ogmios-clients-ts-packages
         path: |
@@ -442,7 +442,7 @@ jobs:
         echo "tag=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
 
     - name: 📥 Download
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ogmios-${{ github.sha }}-${{ matrix.arch }}-${{ matrix.os }}
         path: server
@@ -560,7 +560,7 @@ jobs:
           type=semver,pattern=v{{version}}
 
     - name: 📥 Download
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ogmios-${{ github.sha }}-${{ matrix.arch }}-${{ matrix.os }}
         path: server
@@ -586,7 +586,7 @@ jobs:
 
     - name: 💾  Upload digest
       if: ${{ github.event_name == 'push' }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: digests
         path: /tmp/digests/*
@@ -601,7 +601,7 @@ jobs:
         target: [ ogmios ]
     steps:
       - name: 📥 Download digests
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: digests
           path: /tmp/digests
