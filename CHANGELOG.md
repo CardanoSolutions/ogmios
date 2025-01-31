@@ -7,13 +7,19 @@ pre: "<b>6. </b>"
 math: true
 ---
 
+### [6.11.1] - 2025-01-31
+
+#### Changed
+
+- Fix missing DReps with no stake not showing up through `queryLedgerState/delegateRepresentatives`.
+
 ### [6.11.0] - 2025-01-12
 
 #### Added
 
 - The `queryLedgerState/stakePools` query now take an optional `includeStake: bool` parameter. When provided and set to `true`, each stake pool result will include an additional `stake` field with its current absolute live stake (reflecting its governance power).
 
-- A new query [`queryLedgerState/delegateRepresentatives`] to fetch all registered (and pre-defined) DReps, alongside their metadata and live stake. In a similar fashion to many other queries, DReps can be filtered using `keys` or `scripts` credentials in the query parameters. When both are omitted, all representatives are returned.
+- A new query [`queryLedgerState/delegateRepresentatives`](https://ogmios.dev/api/#operation-publish-/?QueryLedgerStateDelegateRepresentatives) to fetch all registered (and pre-defined) DReps, alongside their metadata and live stake. In a similar fashion to many other queries, DReps can be filtered using `keys` or `scripts` credentials in the query parameters. When both are omitted, all representatives are returned.
 
 #### Changed
 

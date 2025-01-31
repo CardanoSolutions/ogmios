@@ -61,7 +61,7 @@ export type Certificate =
   | DelegateRepresentativeRetirement;
 export type CredentialOrigin = "verificationKey" | "script";
 /**
- * A Blake2b 32-byte hash digest of a pool's verification key.
+ * A Blake2b 28-byte hash digest of a pool's verification key.
  */
 export type StakePoolId = string;
 export type DelegateRepresentative =
