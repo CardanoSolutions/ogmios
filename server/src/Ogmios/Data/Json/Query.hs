@@ -252,6 +252,7 @@ import qualified Data.Aeson.Types as Json
 import qualified Data.ByteString as BS
 import qualified Data.Map.Merge.Strict as Map
 import qualified Data.Map.Strict as Map
+import qualified Data.OMap.Strict as OMap
 import qualified Data.Sequence.Strict as StrictSeq
 import qualified Data.Set as Set
 import qualified Data.Text as T
@@ -269,6 +270,7 @@ import qualified Cardano.Ledger.Alonzo.Scripts as Ledger.Alonzo
 import qualified Cardano.Ledger.Babbage.TxBody as Ledger.Babbage
 import qualified Cardano.Ledger.BaseTypes as Ledger
 import qualified Cardano.Ledger.Coin as Ledger
+import qualified Cardano.Ledger.Conway.Governance as Ledger.Conway
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Credential as Ledger
 import qualified Cardano.Ledger.DRep as Ledger
@@ -1311,7 +1313,7 @@ parseQueryLedgerProposedProtocolParameters genResultInEra =
 
 parseQueryLedgerGovernanceProposals
     :: forall crypto f. (Crypto crypto)
-    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Seq (Ledger.GovActionState era)))
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Ledger.GovState era))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseQueryLedgerGovernanceProposals genResultInEra =
@@ -1330,19 +1332,24 @@ parseQueryLedgerGovernanceProposals genResultInEra =
                 Nothing
             SomeShelleyEra ShelleyBasedEraConway ->
                 Just $ SomeStandardQuery
-                    (LSQ.BlockQuery $ QueryIfCurrentConway (GetProposals mempty))
-                    (eraMismatchOrResult (encodeFoldable encodeGovActionState))
+                    (LSQ.BlockQuery $ QueryIfCurrentConway GetGovState)
+                    (eraMismatchOrResult
+                        (encodeFoldable encodeGovActionState
+                            . view Ledger.Conway.pPropsL
+                            . Ledger.Conway.cgsProposals
+                        )
+                    )
                     (genResultInEra (Proxy @(ConwayEra crypto)))
 
 parseQueryLedgerGovernanceProposalsByProposalReference
     :: forall crypto f. (Crypto crypto)
-    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Seq (Ledger.GovActionState era)))
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Ledger.GovState era))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseQueryLedgerGovernanceProposalsByProposalReference genResultInEra =
     let query = "governanceProposals" in
     Json.withObject (toString @Text query) $ \obj -> do
-        pps <- obj .: "proposals" >>= traverset (decodeGovActionId @crypto)
+        ks <- obj .: "proposals" >>= traverset (decodeGovActionId @crypto)
         pure $ \case
             SomeShelleyEra ShelleyBasedEraShelley ->
                 Nothing
@@ -1356,9 +1363,17 @@ parseQueryLedgerGovernanceProposalsByProposalReference genResultInEra =
                 Nothing
             SomeShelleyEra ShelleyBasedEraConway ->
                 Just $ SomeStandardQuery
-                    (LSQ.BlockQuery $ QueryIfCurrentConway (GetProposals pps))
-                    (eraMismatchOrResult (encodeFoldable encodeGovActionState))
+                    (LSQ.BlockQuery $ QueryIfCurrentConway GetGovState)
+                    (eraMismatchOrResult
+                        (encodeFoldable encodeGovActionState
+                            . (`Map.restrictKeys` ks)
+                            . OMap.toMap
+                            . view Ledger.Conway.pPropsL
+                            . Ledger.Conway.cgsProposals
+                        )
+                    )
                     (genResultInEra (Proxy @(ConwayEra crypto)))
+
 
 parseQueryLedgerLiveStakeDistribution
     :: forall crypto f. (Crypto crypto)

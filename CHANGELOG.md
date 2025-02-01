@@ -7,6 +7,12 @@ pre: "<b>6. </b>"
 math: true
 ---
 
+### [6.11.2] - 2025-02-01
+
+#### Changed
+
+- Fix (sometimes) missing governance proposals returned from the `queryLedgerState/governanceProposals` (likely) due to unfinished incremental calculations on the ledger state. The proposals are now pulled from a different location in the ledger state which ensures they are complete.
+
 ### [6.11.1] - 2025-01-31
 
 #### Changed

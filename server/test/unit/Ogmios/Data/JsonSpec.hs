@@ -201,7 +201,7 @@ import Test.Generators
     , genEvaluateTransactionResponse
     , genGenTxId
     , genGenesisConfig
-    , genGovActionStateResult
+    , genGovStateResult
     , genHardForkApplyTxErr
     , genInterpreterResult
     , genMempoolSizeAndCapacity
@@ -747,11 +747,11 @@ spec = do
                     }
                 ]
             }|])
-            (parseQueryLedgerGovernanceProposalsByProposalReference genGovActionStateResult)
+            (parseQueryLedgerGovernanceProposalsByProposalReference genGovStateResult)
 
         validateLedgerStateQuery 10 "governanceProposals"
             Nothing
-            (parseQueryLedgerGovernanceProposals genGovActionStateResult)
+            (parseQueryLedgerGovernanceProposals genGovStateResult)
 
         validateLedgerStateQuery 0 "delegateRepresentatives"
             (Just [aesonQQ|
