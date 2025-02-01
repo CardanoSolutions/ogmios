@@ -655,7 +655,7 @@ genGovStateResult _ _ =
             Just Refl{} ->
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)
-                    , (10, Right <$> arbitrary)
+                    , (10, Right <$> reasonablySized arbitrary)
                     ]
             Nothing ->
                 Nothing
