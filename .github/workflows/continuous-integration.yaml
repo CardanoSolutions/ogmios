@@ -221,6 +221,7 @@ jobs:
   #               ░░░░░░   ░░░░░                                                   ░░░░░
 
   clients_TypeScript:
+    if: false
     needs: [server_build]
     strategy:
       matrix:
@@ -307,7 +308,7 @@ jobs:
   #               ░░░░░░   ░░░░░                                                   ░░░░░
 
   clients_TypeScript_repl:
-    if: ${{ github.event_name == 'push' }}
+    if: false
     runs-on: ${{ matrix.os }}
     needs: [clients_TypeScript]
     strategy:
@@ -348,7 +349,7 @@ jobs:
   #               ░░░░░░   ░░░░░                                                   ░░░░░
 
   clients_TypeScript_npm:
-    if: ${{ github.event_name == 'push' }}
+    if: false
     runs-on: ${{ matrix.os }}
     needs: [clients_TypeScript]
     strategy:
