@@ -80,6 +80,8 @@ module Ogmios.Data.Json.Query
     , parseQueryLedgerGovernanceProposals
     , parseQueryLedgerGovernanceProposalsByProposalReference
     , parseQueryLedgerLiveStakeDistribution
+    , parseQueryLedgerNonces
+    , parseQueryLedgerOperationalCertificates
     , parseQueryLedgerProjectedRewards
     , parseQueryLedgerProposedProtocolParameters
     , parseQueryLedgerProtocolParameters
@@ -137,7 +139,8 @@ import Cardano.Ledger.Crypto
     ( HASH
     )
 import Cardano.Ledger.Keys
-    ( KeyRole (..)
+    ( HasKeyRole (coerceKeyRole)
+    , KeyRole (..)
     )
 import Cardano.Ledger.SafeHash
     ( unsafeMakeSafeHash
@@ -212,8 +215,15 @@ import Ouroboros.Consensus.HardFork.History.Summary
     , EraSummary (..)
     , Summary (..)
     )
+import Ouroboros.Consensus.Protocol.Abstract
+    ( ConsensusProtocol (ChainDepState)
+    )
 import Ouroboros.Consensus.Protocol.Praos
     ( PraosCrypto
+    , PraosState (..)
+    )
+import Ouroboros.Consensus.Protocol.TPraos
+    ( TPraosState (..)
     )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
@@ -260,6 +270,7 @@ import qualified Data.Text as T
 import qualified Cardano.Chain.Genesis as Byron
 import qualified Cardano.Crypto.Hashing as CC
 import qualified Cardano.Protocol.TPraos.API as TPraos
+import qualified Cardano.Protocol.TPraos.Rules.Prtcl as TPraos
 import qualified Ouroboros.Consensus.HardFork.Combinator.Ledger.Query as LSQ
 import qualified Ouroboros.Consensus.Ledger.Query as LSQ
 import qualified PlutusLedgerApi.Common as Plutus
@@ -304,6 +315,7 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 --
 -- import qualified Cardano.Ledger.PoolDistr as Ledger
 -- import qualified Cardano.Ledger.Api.State.Query as Ledger
+import qualified Cardano.Protocol.TPraos.Rules.Tickn as TPraos
 import qualified Ouroboros.Consensus.Shelley.Ledger.Query.Types as Ledger
 
 
@@ -414,6 +426,10 @@ instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
                 parseQueryLedgerTreasuryAndReserves id queryParams
             "LedgerState/delegateRepresentatives" ->
                 parseQueryLedgerDelegateRepresentatives id queryParams
+            "LedgerState/nonces" ->
+                parseQueryLedgerNonces (const id) queryParams
+            "LedgerState/operationalCertificates" ->
+                parseQueryLedgerOperationalCertificates (const id) queryParams
             "LedgerState/dump" ->
                 parseQueryLedgerDump (const id) queryParams
             "Network/blockHeight" ->
@@ -1058,6 +1074,145 @@ parseQueryLedgerDump genResult =
         -> Json
     encodeEpochState =
         encodeText . encodeBase16 . encodeCbor @era
+
+
+parseQueryLedgerNonces
+    :: forall crypto f. (Crypto crypto)
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (ChainDepState (EraProto era)))
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseQueryLedgerNonces genResult =
+    Json.withObject "nonces" $ \obj -> do
+        guard (null obj) $>
+            \case
+                SomeShelleyEra ShelleyBasedEraShelley ->
+                    Just $ SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentShelley DebugChainDepState)
+                        (eraMismatchOrResult encodeTPraosState)
+                        (genResult $ Proxy @(ShelleyEra crypto))
+
+                SomeShelleyEra ShelleyBasedEraAllegra ->
+                    Just $ SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentAllegra DebugChainDepState)
+                        (eraMismatchOrResult encodeTPraosState)
+                        (genResult $ Proxy @(AllegraEra crypto))
+
+                SomeShelleyEra ShelleyBasedEraMary ->
+                    Just $ SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentMary DebugChainDepState)
+                        (eraMismatchOrResult encodeTPraosState)
+                        (genResult $ Proxy @(MaryEra crypto))
+
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    Just $ SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentAlonzo DebugChainDepState)
+                        (eraMismatchOrResult encodeTPraosState)
+                        (genResult $ Proxy @(AlonzoEra crypto))
+
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    Just $ SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentBabbage DebugChainDepState)
+                        (eraMismatchOrResult encodePraosState)
+                        (genResult $ Proxy @(BabbageEra crypto))
+
+                SomeShelleyEra ShelleyBasedEraConway ->
+                    Just $ SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentConway DebugChainDepState)
+                        (eraMismatchOrResult encodePraosState)
+                        (genResult $ Proxy @(ConwayEra crypto))
+  where
+    encodeTPraosState
+        :: TPraosState crypto
+        -> Json
+    encodeTPraosState (TPraosState _ st) =
+        encodeObject (
+            "epochNonce" .=
+                Shelley.encodeNonce (TPraos.ticknStateEpochNonce tickn)
+         <> "candidateNonce" .=
+                Shelley.encodeNonce candidateNonce
+         <> "evolvingNonce" .=
+                Shelley.encodeNonce evolvingNonce
+         <> "lastEpochLastAncestor" .=
+                Shelley.encodeNonce (TPraos.ticknStatePrevHashNonce tickn)
+        )
+      where
+        TPraos.PrtclState _ evolvingNonce candidateNonce = TPraos.csProtocol st
+        tickn = TPraos.csTickn st
+
+    encodePraosState
+        :: PraosState crypto
+        -> Json
+    encodePraosState st =
+        encodeObject (
+            "epochNonce" .=
+                Shelley.encodeNonce (praosStateEpochNonce st)
+         <> "candidateNonce" .=
+                Shelley.encodeNonce (praosStateCandidateNonce st)
+         <> "evolvingNonce" .=
+                Shelley.encodeNonce (praosStateEvolvingNonce st)
+         <> "lastEpochLastAncestor" .=
+                Shelley.encodeNonce (praosStateLastEpochBlockNonce st)
+        )
+
+parseQueryLedgerOperationalCertificates
+    :: forall crypto f. (Crypto crypto)
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (ChainDepState (EraProto era)))
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseQueryLedgerOperationalCertificates genResult =
+    Json.withObject "operationalCertificates" $ \obj -> do
+        guard (null obj) $>
+            \case
+                SomeShelleyEra ShelleyBasedEraShelley ->
+                    Just $ SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentShelley DebugChainDepState)
+                        (eraMismatchOrResult encodeTPraosState)
+                        (genResult $ Proxy @(ShelleyEra crypto))
+
+                SomeShelleyEra ShelleyBasedEraAllegra ->
+                    Just $ SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentAllegra DebugChainDepState)
+                        (eraMismatchOrResult encodeTPraosState)
+                        (genResult $ Proxy @(AllegraEra crypto))
+
+                SomeShelleyEra ShelleyBasedEraMary ->
+                    Just $ SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentMary DebugChainDepState)
+                        (eraMismatchOrResult encodeTPraosState)
+                        (genResult $ Proxy @(MaryEra crypto))
+
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    Just $ SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentAlonzo DebugChainDepState)
+                        (eraMismatchOrResult encodeTPraosState)
+                        (genResult $ Proxy @(AlonzoEra crypto))
+
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    Just $ SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentBabbage DebugChainDepState)
+                        (eraMismatchOrResult encodePraosState)
+                        (genResult $ Proxy @(BabbageEra crypto))
+
+                SomeShelleyEra ShelleyBasedEraConway ->
+                    Just $ SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentConway DebugChainDepState)
+                        (eraMismatchOrResult encodePraosState)
+                        (genResult $ Proxy @(ConwayEra crypto))
+  where
+    encodeTPraosState
+        :: TPraosState crypto
+        -> Json
+    encodeTPraosState (TPraosState _ st) =
+        encodeMap (Shelley.stringifyPoolId . coerceKeyRole) encodeWord64 certificates
+      where
+        TPraos.PrtclState certificates _ _ = TPraos.csProtocol st
+
+    encodePraosState
+        :: PraosState crypto
+        -> Json
+    encodePraosState =
+        encodeMap (Shelley.stringifyPoolId . coerceKeyRole) encodeWord64 . praosStateOCertCounters
+
 
 parseQueryLedgerProjectedRewards
     :: forall crypto f. (Crypto crypto)
