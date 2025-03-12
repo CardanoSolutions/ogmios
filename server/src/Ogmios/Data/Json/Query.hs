@@ -24,6 +24,7 @@ module Ogmios.Data.Json.Query
     , RewardAccounts
     , RewardsProvenance
     , Deposits
+    , VoteDelegatees
     , RewardAccountSummaries
     , RewardAccountSummary (..)
     , Sh.Api.RewardInfoPool
@@ -358,6 +359,23 @@ data SomeQuery (f :: Type -> Type) block where
             -- Useful when `f ~ Gen` for testing.
         -> SomeQuery f block
 
+    SomeCompound2Query
+        :: forall f block a b c result crypto. (crypto ~ BlockCrypto block)
+        => LSQ.Query block (QueryResult crypto a)
+            -- ^ First query to run.
+        -> (a -> LSQ.Query block (QueryResult crypto b))
+            -- ^ Second query to run, using result from the first one.
+        -> (a -> b -> LSQ.Query block (QueryResult crypto c))
+            -- ^ Second query to run, using result from the first and second queries.
+        -> (a -> b -> c -> result)
+            -- ^ Combine results from first and second queries
+        -> (QueryResult crypto result -> Either Json Json)
+            -- ^ Serialize results to JSON encoding.
+        -> GenResult crypto f result
+            -- ^ Yield results in some applicative 'f' from some type definition.
+            -- Useful when `f ~ Gen` for testing.
+        -> SomeQuery f block
+
     SomeAdHocQuery
         :: forall f block result. ()
         =>  AdHocQuery result
@@ -456,6 +474,9 @@ type Delegations crypto =
 type Deposits crypto =
     Map (Ledger.Credential 'Staking crypto) Coin
 
+type VoteDelegatees crypto =
+    Map (Ledger.Credential 'Staking crypto) (Ledger.DRep crypto)
+
 type RewardAccounts crypto =
     Map (Ledger.Credential 'Staking crypto) Coin
 
@@ -468,7 +489,8 @@ type RewardsProvenance crypto =
     )
 
 data RewardAccountSummary crypto = RewardAccountSummary
-    { delegate :: !(Ledger.KeyHash 'StakePool crypto)
+    { poolDelegate :: !(StrictMaybe (Ledger.KeyHash 'StakePool crypto))
+    , drepDelegate :: !(StrictMaybe (Ledger.DRep crypto))
     , rewards :: !Coin
     , deposit :: !Coin
     } deriving (Eq, Show, Generic)
@@ -513,8 +535,10 @@ encodeRewardAccountSummaries =
     encodeMap
         Shelley.stringifyCredential
         (\summary -> encodeObject
-            ( "delegate" .=
-                encodeSingleton "id" (Shelley.encodePoolId (delegate summary))
+            ( "stakePool" .=? OmitWhenNothing
+                (encodeSingleton "id" . Shelley.encodePoolId) (poolDelegate summary)
+           <> "delegateRepresentative" .=? OmitWhenNothing
+               (encodeObject . Conway.encodeDRep) (drepDelegate summary)
            <> "rewards" .=
                 encodeCoin (rewards summary)
            <> "deposit" .=
@@ -1285,7 +1309,7 @@ parseQueryLedgerRewardAccountSummaries genResult =
                             (GetStakeDelegDeposits credentials)
                         )
                     )
-                    mergeAll
+                    (mergeAll mempty)
                     (eraMismatchOrResult encodeRewardAccountSummaries)
                     genResult
 
@@ -1301,7 +1325,7 @@ parseQueryLedgerRewardAccountSummaries genResult =
                             (GetStakeDelegDeposits credentials)
                         )
                     )
-                    mergeAll
+                    (mergeAll mempty)
                     (eraMismatchOrResult encodeRewardAccountSummaries)
                     genResult
 
@@ -1317,7 +1341,7 @@ parseQueryLedgerRewardAccountSummaries genResult =
                             (GetStakeDelegDeposits credentials)
                         )
                     )
-                    mergeAll
+                    (mergeAll mempty)
                     (eraMismatchOrResult encodeRewardAccountSummaries)
                     genResult
 
@@ -1333,7 +1357,7 @@ parseQueryLedgerRewardAccountSummaries genResult =
                             (GetStakeDelegDeposits credentials)
                         )
                     )
-                    mergeAll
+                    (mergeAll mempty)
                     (eraMismatchOrResult encodeRewardAccountSummaries)
                     genResult
 
@@ -1349,12 +1373,12 @@ parseQueryLedgerRewardAccountSummaries genResult =
                             (GetStakeDelegDeposits credentials)
                         )
                     )
-                    mergeAll
+                    (mergeAll mempty)
                     (eraMismatchOrResult encodeRewardAccountSummaries)
                     genResult
 
             SomeShelleyEra ShelleyBasedEraConway ->
-                SomeCompoundQuery
+                SomeCompound2Query
                     (LSQ.BlockQuery
                         (QueryIfCurrentConway
                             (GetFilteredDelegationsAndRewardAccounts credentials)
@@ -1365,25 +1389,47 @@ parseQueryLedgerRewardAccountSummaries genResult =
                             (GetStakeDelegDeposits credentials)
                         )
                     )
-                    mergeAll
+                    (\_ deposits -> LSQ.BlockQuery
+                        (QueryIfCurrentConway
+                            (GetFilteredVoteDelegatees (Map.keysSet deposits))
+                        )
+                    )
+                    (\a b c -> mergeAll c a b)
                     (eraMismatchOrResult encodeRewardAccountSummaries)
                     genResult
   where
     mergeAll
-        :: (Delegations crypto, RewardAccounts crypto)
+        :: VoteDelegatees crypto
+        -> (Delegations crypto, RewardAccounts crypto)
         -> Deposits crypto
         -> RewardAccountSummaries crypto
-    mergeAll (dlg, rwd) =
+    mergeAll dreps (dlg, rwd) =
         Map.merge
             Map.dropMissing
             Map.dropMissing
             (Map.zipWithMatched (const identity))
             (Map.merge
-                Map.dropMissing
-                Map.dropMissing
-                (Map.zipWithMatched (const RewardAccountSummary))
-                dlg
-                rwd
+                -- drep, but no pool; use default value for rewards --
+                -- although the case is probably impossible?
+                (Map.mapMissing $ \_ drep ->
+                    RewardAccountSummary SNothing (SJust drep) (Coin 0)
+                )
+                -- no drep, but a pool
+                (Map.mapMissing $ \_ mk -> mk SNothing)
+                -- Both drep and pool
+                (Map.zipWithMatched $ \_ drep mk -> mk (SJust drep))
+                dreps
+                (Map.merge
+                    Map.dropMissing
+                    Map.dropMissing
+                    (Map.zipWithMatched
+                        (\_ poolDelegate rewards drep ->
+                            RewardAccountSummary (SJust poolDelegate) drep rewards
+                        )
+                    )
+                    dlg
+                    rwd
+                )
             )
 
 parseQueryLedgerProtocolParameters

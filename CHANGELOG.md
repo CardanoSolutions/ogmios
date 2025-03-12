@@ -7,6 +7,12 @@ pre: "<b>6. </b>"
 math: true
 ---
 
+### [6.12.0] - UNRELEASED
+
+#### Changed
+
+- The `queryLedgerState/rewardAccountSummaries` now includes the delegate representative -- a.k.a DRep -- (if any) for each summary under a field `delegateRepresentative`. The field `delegate` has also been renamed to `stakePool` to disambiguate both. Also, the `stakePool` field is now _optional_ and may be omitted in case where a particular account is only delegated to a DRep. Similarly, the field `delegateRepresentative` will be ommitted when the account is only delegated to a stake pool.
+
 ### [6.11.2] - 2025-02-01
 
 #### Changed

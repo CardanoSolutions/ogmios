@@ -1207,6 +1207,20 @@ validateLedgerStateQuery n subMethod params parser = do
                                 (encodingToValue . encodeQueryResponse encodeResult)
                                 responseRefs
                             )
+                    SomeCompound2Query _ _ _ _ encodeResult genResult -> do
+                        case era of
+                            SomeShelleyEra ShelleyBasedEraConway -> do
+                                generateTestVectors (n, toString propName)
+                                    (genResult Proxy)
+                                    (encodeQueryResponse encodeResult)
+                            _someOtherEra ->
+                                pure ()
+                        runQuickCheck $ withMaxSuccess iterations $ forAllBlind
+                            (genResult Proxy)
+                            (prop_validateToJSON
+                                (encodingToValue . encodeQueryResponse encodeResult)
+                                responseRefs
+                            )
                     SomeAdHocQuery _ encodeResult genResult -> do
                         case era of
                             SomeShelleyEra ShelleyBasedEraConway -> do
@@ -1284,6 +1298,16 @@ validateNetworkQuery n subMethod params parser = do
                             responseRefs
                         )
                 Just (SomeCompoundQuery _ _ _ encodeResult genResult) -> do
+                    generateTestVectors (n, toString propName)
+                        (reasonablySized $ genResult Proxy)
+                        (encodeQueryResponse encodeResult)
+                    runQuickCheck $ withMaxSuccess n $ forAllBlind
+                        (reasonablySized $ genResult Proxy)
+                        (prop_validateToJSON
+                            (encodingToValue . encodeQueryResponse encodeResult)
+                            responseRefs
+                        )
+                Just (SomeCompound2Query _ _ _ _ encodeResult genResult) -> do
                     generateTestVectors (n, toString propName)
                         (reasonablySized $ genResult Proxy)
                         (encodeQueryResponse encodeResult)

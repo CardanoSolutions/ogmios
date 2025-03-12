@@ -2765,9 +2765,10 @@ export interface RewardAccountSummaries {
   [k: string]: RewardAccountSummary;
 }
 export interface RewardAccountSummary {
-  delegate: {
+  stakePool?: {
     id: StakePoolId;
   };
+  delegateRepresentative?: DelegateRepresentative;
   rewards: ValueAdaOnly;
   deposit: ValueAdaOnly;
 }
