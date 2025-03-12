@@ -51,13 +51,16 @@
 						<a href="_cardano_ogmios_schema.RewardAccountSummary.html" class="tsd-kind-icon">Reward<wbr>Account<wbr>Summary</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_cardano_ogmios_schema.RewardAccountSummary.html#delegate" class="tsd-kind-icon">delegate</a>
+								<a href="_cardano_ogmios_schema.RewardAccountSummary.html#delegateRepresentative" class="tsd-kind-icon">delegate<wbr>Representative</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_schema.RewardAccountSummary.html#deposit" class="tsd-kind-icon">deposit</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_schema.RewardAccountSummary.html#rewards" class="tsd-kind-icon">rewards</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.RewardAccountSummary.html#stakePool" class="tsd-kind-icon">stake<wbr>Pool</a>
 							</li>
 						</ul>
 					</li>
@@ -97,9 +100,10 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.RewardAccountSummary.html#delegate" class="tsd-kind-icon">delegate</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.RewardAccountSummary.html#delegateRepresentative" class="tsd-kind-icon">delegate<wbr>Representative</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.RewardAccountSummary.html#deposit" class="tsd-kind-icon">deposit</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.RewardAccountSummary.html#rewards" class="tsd-kind-icon">rewards</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.RewardAccountSummary.html#stakePool" class="tsd-kind-icon">stake<wbr>Pool</a></li>
 							</ul>
 						</section>
 					</div>
@@ -108,12 +112,45 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="delegate" class="tsd-anchor"></a>
-					<h3>delegate</h3>
-					<div class="tsd-signature tsd-kind-icon">delegate<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<a name="delegateRepresentative" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> delegate<wbr>Representative</h3>
+					<div class="tsd-signature tsd-kind-icon">delegate<wbr>Representative<span class="tsd-signature-symbol">:</span> <a href="../modules/_cardano_ogmios_schema.html#DelegateRepresentative" class="tsd-signature-type">DelegateRepresentative</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b11967a/clients/TypeScript/packages/schema/src/index.ts#L2768">packages/schema/src/index.ts:2768</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6297cc0/clients/TypeScript/packages/schema/src/index.ts#L2771">packages/schema/src/index.ts:2771</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="deposit" class="tsd-anchor"></a>
+					<h3>deposit</h3>
+					<div class="tsd-signature tsd-kind-icon">deposit<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_schema.ValueAdaOnly.html" class="tsd-signature-type">ValueAdaOnly</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6297cc0/clients/TypeScript/packages/schema/src/index.ts#L2773">packages/schema/src/index.ts:2773</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="rewards" class="tsd-anchor"></a>
+					<h3>rewards</h3>
+					<div class="tsd-signature tsd-kind-icon">rewards<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_schema.ValueAdaOnly.html" class="tsd-signature-type">ValueAdaOnly</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6297cc0/clients/TypeScript/packages/schema/src/index.ts#L2772">packages/schema/src/index.ts:2772</a>
+							</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="stakePool" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> stake<wbr>Pool</h3>
+					<div class="tsd-signature tsd-kind-icon">stake<wbr>Pool<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/6297cc0/clients/TypeScript/packages/schema/src/index.ts#L2768">packages/schema/src/index.ts:2768</a>
 							</li>
 						</ul>
 					</aside>
@@ -125,28 +162,6 @@
 							</li>
 						</ul>
 					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="deposit" class="tsd-anchor"></a>
-					<h3>deposit</h3>
-					<div class="tsd-signature tsd-kind-icon">deposit<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_schema.ValueAdaOnly.html" class="tsd-signature-type">ValueAdaOnly</a></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b11967a/clients/TypeScript/packages/schema/src/index.ts#L2772">packages/schema/src/index.ts:2772</a>
-							</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="rewards" class="tsd-anchor"></a>
-					<h3>rewards</h3>
-					<div class="tsd-signature tsd-kind-icon">rewards<span class="tsd-signature-symbol">:</span> <a href="_cardano_ogmios_schema.ValueAdaOnly.html" class="tsd-signature-type">ValueAdaOnly</a></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/b11967a/clients/TypeScript/packages/schema/src/index.ts#L2771">packages/schema/src/index.ts:2771</a>
-							</li>
-						</ul>
-					</aside>
 				</section>
 			</section>
 		</div>

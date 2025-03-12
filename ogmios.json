@@ -2746,9 +2746,9 @@
   , "RewardAccountSummary":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "delegate", "rewards", "deposit" ]
+    , "required": [ "rewards", "deposit" ]
     , "properties":
-      { "delegate":
+      { "stakePool":
         { "type": "object"
         , "additionalProperties": false
         , "required": [ "id" ]
@@ -2756,12 +2756,22 @@
           { "id": { "$ref": "cardano.json#/definitions/StakePoolId" }
           }
         }
+      , "delegateRepresentative": { "$ref": "cardano.json#/definitions/DelegateRepresentative" }
       , "rewards": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "deposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       }
     , "examples":
-      [ { "delegate": "pool1kchver88u3kygsak8wgll7htr8uxn5v35lfrsyy842nkscrzyvj"
+      [ { "stakePool": "pool1kchver88u3kygsak8wgll7htr8uxn5v35lfrsyy842nkscrzyvj"
         , "rewards": { "ada": { "lovelace": 219558722 } }
+        , "deposit": { "ada": { "lovelace": 2000000 } }
+        }
+      , { "delegateRepresentative": { "type": "abstain" }
+        , "rewards": { "ada": { "lovelace": 0 } }
+        , "deposit": { "ada": { "lovelace": 2000000 } }
+        }
+      , { "stakePool": "pool1kchver88u3kygsak8wgll7htr8uxn5v35lfrsyy842nkscrzyvj"
+        , "delegateRepresentative": { "type": "abstain" }
+        , "rewards": { "ada": { "lovelace": 12462615 } }
         , "deposit": { "ada": { "lovelace": 2000000 } }
         }
       ]
