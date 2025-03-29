@@ -1618,7 +1618,7 @@
         , "properties":
           { "includeStake":
             { "type": "boolean"
-            , "description": "When provided and set to 'true', the result will also include the live stake associated to each pool. This may take some additional time the first time this is queried within an epoch."
+            , "description": "When provided and set to 'true', the result will also include the voting stake associated to each pool. This may take some additional time the first time this is queried within an epoch."
             }
           , "stakePools":
             { "type": "array"

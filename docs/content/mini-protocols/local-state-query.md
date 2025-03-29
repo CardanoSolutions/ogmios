@@ -641,6 +641,34 @@ Be aware that it is possible for an acquire request to fail even if (and in part
 }
 ```
 
+#### stakePools (with voting stake)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/stakePools",
+  "params": {
+    "includeStake": true
+  }
+}
+```
+
+#### stakePools (filtered & with voting stake)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/stakePools",
+  "params": {
+    "includeStake": true,
+    "stakePools": [
+      { "id": "pool1pk2wzarn9mu64eel89dtg3g8h75c84jsy0q349glpsewgd7sdls" },
+      { "id": "4acf2773917c7b547c576a7ff110d2ba5733c1f1ca9cdc659aea3a56" }
+    ]
+  }
+}
+```
+
 #### treasuryAndReserves
 
 ```json
