@@ -914,7 +914,7 @@
       [ { "title": "DelegateRepresentativeSummary<Registered>"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "id", "from", "type", "mandate", "deposit", "stake", "delegators" ]
+        , "required": [ "id", "from", "type", "stake" ]
         , "properties":
           { "id":
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
