@@ -198,7 +198,7 @@ describe('Local state queries', () => {
         const keys = ['91a1b46bacf302e91a8cba443073f7bc84cc74701a338c111e8c6591'] as DigestBlake2B224[]
         const result = await LedgerStateQuery.rewardAccountSummaries(context, { keys })
         const item = result[keys[0]] as RewardAccountSummary
-        expect(item).toHaveProperty('delegate')
+        expect(item).toHaveProperty('stakePool')
         expect(item).toHaveProperty('rewards')
         expect(item).toHaveProperty('deposit')
       })
