@@ -33,7 +33,7 @@ jobs:
 
     - name: 💾 Cache cardano-node DB
       id: cache
-      uses: actions/cache@v3.3.1
+      uses: actions/cache@v4
       with:
         path: ${{ runner.temp }}/db-${{ matrix.network }}
         key: cardano-node-ogmios-${{ matrix.network }}-${{ steps.date-time.outputs.timestamp }}
@@ -41,7 +41,7 @@ jobs:
           cardano-node-ogmios-${{ matrix.network }}-
 
     - name: ⟲ Sync Node
-      uses: CardanoSolutions/gh-action-cardano-node-ogmios-docker-sync@v1.1.0
+      uses: CardanoSolutions/gh-action-cardano-node-ogmios-docker-sync@v1.2.2
       with:
         db-dir: ${{ runner.temp }}/db-${{ matrix.network }}
         network: ${{ matrix.network }}

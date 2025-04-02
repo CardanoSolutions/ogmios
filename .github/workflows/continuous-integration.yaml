@@ -69,7 +69,7 @@ jobs:
         nix develop github:input-output-hk/devx/${{ matrix.devx-version}}#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cat /nix/store/hviyb5sciblcyr5fc3vsqcwmfh1nz69w-cabal.project.local >> cabal.project.local && cabal update && cabal freeze"
 
     - name: 💾 Download Cache
-      uses: actions/cache/restore@v3
+      uses: actions/cache/restore@v4
       with:
         path: |
           ~/.cabal-static/packages
@@ -87,7 +87,7 @@ jobs:
         GIT_SHA: ${{ github.sha }}
 
     - name: 💾 Save Cache
-      uses: actions/cache/save@v3
+      uses: actions/cache/save@v4
       with:
         path: |
           ~/.cabal-static/packages
@@ -262,7 +262,7 @@ jobs:
 
     - name: 💾 Cache cardano-node DB
       id: cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ runner.temp }}/db-${{ matrix.network }}
         key: cardano-node-ogmios-${{ matrix.network }}-${{ steps.date-time.outputs.value }}
