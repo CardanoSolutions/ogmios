@@ -19,6 +19,8 @@ math: true
 
 - The `queryLedgerState/rewardAccountSummaries` now includes the delegate representative -- a.k.a DRep -- (if any) for each summary under a field `delegateRepresentative`. The field `delegate` has also been renamed to `stakePool` to disambiguate both. Also, the `stakePool` field is now _optional_ and may be omitted in case where a particular account is only delegated to a DRep. Similarly, the field `delegateRepresentative` will be ommitted when the account is only delegated to a stake pool.
 
+- The `queryLedgerState/delegateRepresentatives` no longer discards registered DReps that have unregistered but whose stake is still available. This may happen when a DRep is already unregistered, but his stake distribution is still available because still needed to ratify votes on the next epoch boundary. As a consequence, some of the fields for the registered drep summaries are now optional instead of required."
+
 ### [6.11.2] - 2025-02-01
 
 #### Changed

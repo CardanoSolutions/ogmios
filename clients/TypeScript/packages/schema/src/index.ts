@@ -2452,11 +2452,11 @@ export interface DelegateRepresentativeSummaryRegistered {
   id: DigestBlake2B224;
   from: CredentialOrigin;
   type: "registered";
-  mandate: Mandate;
+  mandate?: Mandate;
   metadata?: Anchor;
-  deposit: ValueAdaOnly;
+  deposit?: ValueAdaOnly;
   stake: ValueAdaOnly;
-  delegators: {
+  delegators?: {
     credential: DigestBlake2B224;
     from: CredentialOrigin;
   }[];
@@ -2830,7 +2830,7 @@ export interface QueryLedgerStateStakePools {
   method: "queryLedgerState/stakePools";
   params?: {
     /**
-     * When provided and set to 'true', the result will also include the live stake associated to each pool. This may take some additional time the first time this is queried within an epoch.
+     * When provided and set to 'true', the result will also include the voting stake associated to each pool. This may take some additional time the first time this is queried within an epoch.
      */
     includeStake?: boolean;
     stakePools?: {

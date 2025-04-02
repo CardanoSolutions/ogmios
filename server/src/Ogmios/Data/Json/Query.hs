@@ -498,7 +498,7 @@ data RewardAccountSummary crypto = RewardAccountSummary
 data DRepSummary crypto
     = AlwaysAbstain Coin
     | AlwaysNoConfidence Coin
-    | Registered Coin (Ledger.DRepState crypto)
+    | Registered Coin (Maybe (Ledger.DRepState crypto))
     deriving (Eq, Show, Generic)
 
 --
@@ -862,7 +862,7 @@ parseQueryLedgerDelegateRepresentatives genResult =
             -- Somehow, DReps with 0 stake do not figure in the stake
             -- distribution map; so we must account for them here by adding an
             -- empty coin.
-            (Map.mapMaybeMissing $ \_drep -> Just . Registered mempty)
+            (Map.mapMissing $ \_drep -> Registered mempty . Just)
 
             -- Distr but no state
             --
@@ -873,15 +873,15 @@ parseQueryLedgerDelegateRepresentatives genResult =
             --
             -- So we pull them apart into a different constructor variant so we
             -- can easily encode them differently.
-            (Map.mapMaybeMissing $ \drep coin ->
+            (Map.mapMissing $ \drep coin ->
                 case drep of
-                  Ledger.DRepAlwaysAbstain -> Just (AlwaysAbstain coin)
-                  Ledger.DRepAlwaysNoConfidence -> Just (AlwaysNoConfidence coin)
-                  Ledger.DRepCredential{} -> Nothing
+                  Ledger.DRepAlwaysAbstain -> AlwaysAbstain coin
+                  Ledger.DRepAlwaysNoConfidence -> AlwaysNoConfidence coin
+                  Ledger.DRepCredential{} -> Registered coin Nothing
             )
 
             -- Both distr and state (only occurs for registered DReps)
-            (Map.zipWithMatched $ \_ -> flip Registered)
+            (Map.zipWithMatched $ \_ st coin -> Registered coin (Just st))
 
     encodeDRepSummary
         :: Ledger.DRep crypto
@@ -892,7 +892,9 @@ parseQueryLedgerDelegateRepresentatives genResult =
             "stake" .= encodeCoin stake
         AlwaysNoConfidence stake ->
             "stake" .= encodeCoin stake
-        Registered stake summary ->
+        Registered stake Nothing ->
+            "stake" .= encodeCoin stake
+        Registered stake (Just summary) ->
               "mandate" .=
                 (encodeSingleton "epoch" . encodeEpochNo) (Ledger.drepExpiry summary)
            <> "deposit" .=
