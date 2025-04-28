@@ -320,6 +320,16 @@ describe('Local state queries', () => {
         expect(pools[a]).toBeDefined()
         expect(pools[b]).toBeDefined()
       })
+
+      it('Fetches stake pools with their stake included', async () => {
+        const pools = await LedgerStateQuery.stakePools(context, undefined, true)
+        expect(Object.keys(pools).length > 0)
+
+        for (const pool of Object.values(pools)) {
+          expect(pool.stake).toBeDefined()
+          expect(typeof pool.stake).toBe('object') // ValueAdaOnly
+        }
+      })
     })
 
     describe('systemStart', () => {
