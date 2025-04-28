@@ -9,11 +9,18 @@ type Response = Ogmios['QueryLedgerStateStakePoolsResponse']
  *
  * @category LedgerStateQuery
  */
-export function stakePools (context: InteractionContext, stakePools?: { id: StakePoolId }[]): Promise<{ [k: StakePoolId]: StakePool }> {
+export function stakePools (
+  context: InteractionContext,
+  stakePools?: { id: StakePoolId }[],
+  includeStake?: boolean
+): Promise<{ [k: StakePoolId]: StakePool }> {
   return Method<Request, Response, { [k: StakePoolId]: StakePool }>(
     {
       method: 'queryLedgerState/stakePools',
-      params: { stakePools }
+      params: {
+        stakePools,
+        includeStake
+      }
     },
     {},
     context

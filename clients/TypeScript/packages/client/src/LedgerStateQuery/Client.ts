@@ -74,7 +74,7 @@ export interface LedgerStateQueryClient {
     keys?: AnyStakeCredential[],
   }): ReturnType<typeof rewardAccountSummaries>
   rewardsProvenance(): ReturnType<typeof rewardsProvenance>
-  stakePools(filter?: { id: StakePoolId }[]): ReturnType<typeof stakePools>
+  stakePools(filter?: { id: StakePoolId }[], includeStake?: boolean): ReturnType<typeof stakePools>
   utxo(filter?: UtxoByOutputReferences | UtxoByAddresses): ReturnType<typeof utxo>
 }
 
@@ -191,8 +191,8 @@ export async function createLedgerStateQueryClient (
     rewardsProvenance () {
       return rewardsProvenance(context)
     },
-    stakePools (filter) {
-      return stakePools(context, filter)
+    stakePools (filter, includeStake) {
+      return stakePools(context, filter, includeStake)
     },
     utxo (filter) {
       return utxo(context, filter)
