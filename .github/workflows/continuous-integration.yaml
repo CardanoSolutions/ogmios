@@ -403,7 +403,7 @@ jobs:
       matrix:
         os: [ linux ]
         target: [ cardano-node-ogmios ]
-        network: [ mainnet, preprod, preview, sanchonet ]
+        network: [ mainnet, preprod, preview ]
         cardano-node: [ 10.1.4 ]
         cardano-node-latest: [  10.1.4 ]
         arch: [ x86_64 ]
