@@ -20,6 +20,8 @@
   , "QueryLedgerStateEraSummaries", "QueryLedgerStateEraSummariesResponse"
   , "QueryLedgerStateGovernanceProposals", "QueryLedgerStateGovernanceProposalsResponse"
   , "QueryLedgerStateLiveStakeDistribution", "QueryLedgerStateLiveStakeDistributionResponse"
+  , "QueryLedgerStateNonces", "QueryLedgerStateNoncesResponse"
+  , "QueryLedgerStateOperationalCertificates", "QueryLedgerStateOperationalCertificatesResponse"
   , "QueryLedgerStateProjectedRewards", "QueryLedgerStateProjectedRewardsResponse"
   , "QueryLedgerStateProposedProtocolParameters", "QueryLedgerStateProposedProtocolParametersResponse"
   , "QueryLedgerStateProtocolParameters", "QueryLedgerStateProtocolParametersResponse"
@@ -679,6 +681,8 @@
           , "queryLedgerState/eraSummaries"
           , "queryLedgerState/governanceProposals"
           , "queryLedgerState/liveStakeDistribution"
+          , "queryLedgerState/nonces"
+          , "queryLedgerState/operationalCertificates"
           , "queryLedgerState/projectedRewards"
           , "queryLedgerState/protocolParameters"
           , "queryLedgerState/proposedProtocolParameters"
@@ -728,6 +732,8 @@
           , "queryLedgerState/eraSummaries"
           , "queryLedgerState/governanceProposals"
           , "queryLedgerState/liveStakeDistribution"
+          , "queryLedgerState/nonces"
+          , "queryLedgerState/operationalCertificates"
           , "queryLedgerState/projectedRewards"
           , "queryLedgerState/protocolParameters"
           , "queryLedgerState/proposedProtocolParameters"
@@ -776,6 +782,8 @@
           , "queryLedgerState/eraSummaries"
           , "queryLedgerState/governanceProposals"
           , "queryLedgerState/liveStakeDistribution"
+          , "queryLedgerState/nonces"
+          , "queryLedgerState/operationalCertificates"
           , "queryLedgerState/projectedRewards"
           , "queryLedgerState/protocolParameters"
           , "queryLedgerState/proposedProtocolParameters"
@@ -1278,6 +1286,106 @@
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
         }
       }
+    }
+
+  , "QueryLedgerStateNonces":
+    { "title": "QueryLedgerStateNonces"
+    , "description": "Query consensus nonces information used to power randomness for leader election in every epoch."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/nonces" ]
+        }
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateNoncesResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateNoncesResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/nonces" ]
+            }
+          , "result":
+            { "$ref": "ogmios.json#/definitions/Nonces"
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
+      ]
+    }
+
+  , "QueryLedgerStateOperationalCertificates":
+    { "title": "QueryLedgerStateOperationalCertificates"
+    , "description": "Query operational certificate counters of all stake pools."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/operationalCertificates" ]
+        }
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateOperationalCertificatesResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateOperationalCertificatesResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/operationalCertificates" ]
+            }
+          , "result":
+            { "$ref": "ogmios.json#/definitions/OperationalCertificates"
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
+      ]
     }
 
   , "QueryLedgerStateLiveStakeDistributionResponse":
@@ -2683,6 +2791,29 @@
           }
         }
       ]
+    }
+
+  , "Nonces":
+    { "type": "object"
+    , "description": "Information related to the evolving nonce calculation in Praos, used to feed the randomness in the leader election schedule."
+    , "additionalProperties": false
+    , "required": [ "epochNonce", "candidateNonce", "evolvingNonce", "lastEpochLastAncestor" ]
+    , "properties":
+      { "epochNonce": { "$ref": "cardano.json#/definitions/Nonce" }
+      , "candidateNonce": { "$ref": "cardano.json#/definitions/Nonce" }
+      , "evolvingNonce": { "$ref": "cardano.json#/definitions/Nonce" }
+      , "lastEpochLastAncestor": { "$ref": "cardano.json#/definitions/Nonce" }
+      }
+    }
+
+  , "OperationalCertificates":
+    { "type": "object"
+    , "description": "Operational certificate counters from operating stake pools."
+    , "additionalProperties":
+      { "type": "integer"
+      , "description": "Current counter value."
+      }
+    , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
     }
 
   , "MempoolSizeAndCapacity":

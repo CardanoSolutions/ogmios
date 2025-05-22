@@ -1,7 +1,7 @@
 asyncapi: '2.4.0'
 info:
   title: Ogmios
-  version: '6.11.*'
+  version: '6.12.*'
   description: |
 
     ### Protocols
@@ -17,28 +17,32 @@ info:
 
     - [Ledger state queries](#operation-publish-/?AcquireLedgerState)
       - [Error codes](/mini-protocols/local-state-query/#errors)
-      - [LedgerState/Constitution](#operation-publish-/?QueryLedgerStateConstitution)
-      - [LedgerState/ConstitutionalCommittee](#operation-publish-/?QueryLedgerStateConstitutionalCommittee)
-      - [LedgerState/DelegateRepresentative](#operation-publish-/?QueryLedgerStateDelegateRepresentatives)
-      - [LedgerState/Dump](#operation-publish-/?QueryLedgerStateDump)
-      - [LedgerState/Epoch](#operation-publish-/?QueryLedgerStateEpoch)
-      - [LedgerState/EraStart](#operation-publish-/?QueryLedgerStateEraStart)
-      - [LedgerState/EraSummaries](#operation-publish-/?QueryLedgerStateEraSummaries)
-      - [LedgerState/GovernanceProposals](#operation-publish-/?QueryLedgerStateGovernanceProposals)
-      - [LedgerState/LiveStakeDistribution](#operation-publish-/?QueryLedgerStateLiveStakeDistribution)
-      - [LedgerState/ProjectedRewards](#operation-publish-/?QueryLedgerStateProjectedRewards)
-      - [LedgerState/ProtocolParameters](#operation-publish-/?QueryLedgerStateProtocolParameters)
-      - [LedgerState/ProposedProtocolParameters](#operation-publish-/?QueryLedgerStateProposedProtocolParameters)
-      - [LedgerState/RewardAccountSummaries](#operation-publish-/?QueryLedgerStateRewardAccountSummaries)
-      - [LedgerState/RewardsProvenance](#operation-publish-/?QueryLedgerStateRewardsProvenance)
-      - [LedgerState/StakePools](#operation-publish-/?QueryLedgerStateStakePools)
-      - [LedgerState/Tip](#operation-publish-/?QueryLedgerStateTip)
-      - [LedgerState/TreasuryAndReserves](#operation-publish-/?QueryLedgerStateTreasuryAndReserves)
-      - [LedgerState/Utxo](#operation-publish-/?QueryLedgerStateUtxo)
-      - [Network/BlockHeight](#operation-publish-/?QueryNetworkBlockHeight)
-      - [Network/GenesisConfiguration](#operation-publish-/?QueryNetworkGenesisConfiguration)
-      - [Network/StartTime](#operation-publish-/?QueryNetworkStartTime)
-      - [Network/Tip](#operation-publish-/?QueryNetworkTip)
+      - [ledgerState/constitution](#operation-publish-/?QueryLedgerStateConstitution)
+      - [ledgerState/constitutionalCommittee](#operation-publish-/?QueryLedgerStateConstitutionalCommittee)
+      - [ledgerState/delegateRepresentative](#operation-publish-/?QueryLedgerStateDelegateRepresentatives)
+      - [ledgerState/dump](#operation-publish-/?QueryLedgerStateDump)
+      - [ledgerState/epoch](#operation-publish-/?QueryLedgerStateEpoch)
+      - [ledgerState/eraStart](#operation-publish-/?QueryLedgerStateEraStart)
+      - [ledgerState/eraSummaries](#operation-publish-/?QueryLedgerStateEraSummaries)
+      - [ledgerState/governanceProposals](#operation-publish-/?QueryLedgerStateGovernanceProposals)
+      - [ledgerState/liveStakeDistribution](#operation-publish-/?QueryLedgerStateLiveStakeDistribution)
+      - [ledgerState/nonces](#operation-publish-/?QueryLedgerStateNonces)
+      - [ledgerState/operationalCertificates](#operation-publish-/?QueryLedgerStateOperationalCertificates)
+      - [ledgerState/projectedRewards](#operation-publish-/?QueryLedgerStateProjectedRewards)
+      - [ledgerState/protocolParameters](#operation-publish-/?QueryLedgerStateProtocolParameters)
+      - [ledgerState/proposedProtocolParameters](#operation-publish-/?QueryLedgerStateProposedProtocolParameters)
+      - [ledgerState/rewardAccountSummaries](#operation-publish-/?QueryLedgerStateRewardAccountSummaries)
+      - [ledgerState/rewardsProvenance](#operation-publish-/?QueryLedgerStateRewardsProvenance)
+      - [ledgerState/stakePools](#operation-publish-/?QueryLedgerStateStakePools)
+      - [ledgerState/tip](#operation-publish-/?QueryLedgerStateTip)
+      - [ledgerState/treasuryAndReserves](#operation-publish-/?QueryLedgerStateTreasuryAndReserves)
+      - [ledgerState/utxo](#operation-publish-/?QueryLedgerStateUtxo)
+
+    - [Network queries](#operation-publish-/?AcquireLedgerState)
+      - [network/blockHeight](#operation-publish-/?QueryNetworkBlockHeight)
+      - [network/genesisConfiguration](#operation-publish-/?QueryNetworkGenesisConfiguration)
+      - [network/startTime](#operation-publish-/?QueryNetworkStartTime)
+      - [network/tip](#operation-publish-/?QueryNetworkTip)
 
     ### Schemas
 
@@ -359,6 +363,34 @@ channels:
       message:
         oneOf:
           - $ref: "#/components/messages/QueryLedgerStateLiveStakeDistributionResponse"
+
+  /?QueryLedgerStateNonces:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateNonces
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateNonces"
+    subscribe:
+      operationId: QueryLedgerStateNoncesResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateNoncesResponse"
+
+  /?QueryLedgerStateOperationalCertificates:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateOperationalCertificates
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateOperationalCertificates"
+    subscribe:
+      operationId: QueryLedgerStateOperationalCertificatesResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateOperationalCertificatesResponse"
 
   /?QueryLedgerStateProjectedRewards:
     description: |
@@ -746,6 +778,22 @@ components:
       payload:
         $ref: "/ogmios.json#/properties/QueryLedgerStateLiveStakeDistribution"
 
+    QueryLedgerStateNonces:
+      title: QueryLedgerStateNonces
+      name: "since v6.12.0"
+      description: |
+        Query consensus nonces information used to power randomness for leader election in every epoch.
+      payload:
+        $ref: "/ogmios.json#/properties/QueryLedgerStateNonces"
+
+    QueryLedgerStateOperationalCertificates:
+      title: QueryLedgerStateOperationalCertificates
+      name: "since v6.12.0"
+      description: |
+        Query operational certificate counters of all stake pools.
+      payload:
+        $ref: "/ogmios.json#/properties/QueryLedgerStateOperationalCertificates"
+
     QueryLedgerStateProjectedRewards:
       title: QueryLedgerStateProjectedRewards
       name: "since v6.0.0"
@@ -909,6 +957,18 @@ components:
       name: "since v6.0.0"
       payload:
         $ref: "/ogmios.json#/properties/QueryLedgerStateLiveStakeDistributionResponse"
+
+    QueryLedgerStateNoncesResponse:
+      title: QueryLedgerStateNoncesResponse
+      name: "since v6.12.0"
+      payload:
+        $ref: "/ogmios.json#/properties/QueryLedgerStateNoncesResponse"
+
+    QueryLedgerStateOperationalCertificatesResponse:
+      title: QueryLedgerStateOperationalCertificatesResponse
+      name: "since v6.12.0"
+      payload:
+        $ref: "/ogmios.json#/properties/QueryLedgerStateOperationalCertificatesResponse"
 
     QueryLedgerStateProjectedRewardsResponse:
       title: QueryLedgerStateProjectedRewardsResponse
