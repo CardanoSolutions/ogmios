@@ -12,4 +12,4 @@
 	url = https://github.com/CardanoSolutions/hjsonschema.git
 [submodule "server/config"]
 	path = server/config
-	url = https://github.com/input-output-hk/cardano-configurations.git
+	url = https://github.com/cardano-foundation/cardano-configurations.git
