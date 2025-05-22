@@ -370,6 +370,18 @@ export interface Ogmios {
     | QueryLedgerStateUnavailableInCurrentEra
     | QueryLedgerStateAcquiredExpired;
   QueryLedgerStateLiveStakeDistribution: QueryLedgerStateLiveStakeDistribution;
+  QueryLedgerStateNonces: QueryLedgerStateNonces;
+  QueryLedgerStateNoncesResponse:
+    | QueryLedgerStateNoncesResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateOperationalCertificates: QueryLedgerStateOperationalCertificates;
+  QueryLedgerStateOperationalCertificatesResponse:
+    | QueryLedgerStateOperationalCertificatesResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
   QueryLedgerStateLiveStakeDistributionResponse:
     | QueryLedgerStateLiveStakeDistributionResponse
     | QueryLedgerStateEraMismatch
@@ -2285,6 +2297,8 @@ export interface QueryLedgerStateEraMismatch {
     | "queryLedgerState/eraSummaries"
     | "queryLedgerState/governanceProposals"
     | "queryLedgerState/liveStakeDistribution"
+    | "queryLedgerState/nonces"
+    | "queryLedgerState/operationalCertificates"
     | "queryLedgerState/projectedRewards"
     | "queryLedgerState/protocolParameters"
     | "queryLedgerState/proposedProtocolParameters"
@@ -2315,6 +2329,8 @@ export interface QueryLedgerStateUnavailableInCurrentEra {
     | "queryLedgerState/eraSummaries"
     | "queryLedgerState/governanceProposals"
     | "queryLedgerState/liveStakeDistribution"
+    | "queryLedgerState/nonces"
+    | "queryLedgerState/operationalCertificates"
     | "queryLedgerState/projectedRewards"
     | "queryLedgerState/protocolParameters"
     | "queryLedgerState/proposedProtocolParameters"
@@ -2344,6 +2360,8 @@ export interface QueryLedgerStateAcquiredExpired {
     | "queryLedgerState/eraSummaries"
     | "queryLedgerState/governanceProposals"
     | "queryLedgerState/liveStakeDistribution"
+    | "queryLedgerState/nonces"
+    | "queryLedgerState/operationalCertificates"
     | "queryLedgerState/projectedRewards"
     | "queryLedgerState/protocolParameters"
     | "queryLedgerState/proposedProtocolParameters"
@@ -2615,6 +2633,52 @@ export interface QueryLedgerStateLiveStakeDistribution {
   jsonrpc: "2.0";
   method: "queryLedgerState/liveStakeDistribution";
   id?: unknown;
+}
+/**
+ * Query consensus nonces information used to power randomness for leader election in every epoch.
+ */
+export interface QueryLedgerStateNonces {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/nonces";
+  id?: unknown;
+}
+export interface QueryLedgerStateNoncesResponse {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/nonces";
+  result: Nonces;
+  id?: unknown;
+}
+/**
+ * Information related to the evolving nonce calculation in Praos, used to feed the randomness in the leader election schedule.
+ */
+export interface Nonces {
+  epochNonce: Nonce;
+  candidateNonce: Nonce;
+  evolvingNonce: Nonce;
+  lastEpochLastAncestor: Nonce;
+}
+/**
+ * Query operational certificate counters of all stake pools.
+ */
+export interface QueryLedgerStateOperationalCertificates {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/operationalCertificates";
+  id?: unknown;
+}
+export interface QueryLedgerStateOperationalCertificatesResponse {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/operationalCertificates";
+  result: OperationalCertificates;
+  id?: unknown;
+}
+/**
+ * Operational certificate counters from operating stake pools.
+ */
+export interface OperationalCertificates {
+  /**
+   * Current counter value.
+   */
+  [k: string]: bigint;
 }
 export interface QueryLedgerStateLiveStakeDistributionResponse {
   jsonrpc: "2.0";

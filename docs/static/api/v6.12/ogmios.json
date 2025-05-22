@@ -21,7 +21,7 @@
   , "QueryLedgerStateGovernanceProposals", "QueryLedgerStateGovernanceProposalsResponse"
   , "QueryLedgerStateLiveStakeDistribution", "QueryLedgerStateLiveStakeDistributionResponse"
   , "QueryLedgerStateNonces", "QueryLedgerStateNoncesResponse"
-  , "QueryLedgerStateOperationalCertificates", "QueryLedgerStateOperationalCertificatesResponse"
+  , "QueryLedgerStateOperationalCertificate", "QueryLedgerStateOperationalCertificateResponse"
   , "QueryLedgerStateProjectedRewards", "QueryLedgerStateProjectedRewardsResponse"
   , "QueryLedgerStateProposedProtocolParameters", "QueryLedgerStateProposedProtocolParametersResponse"
   , "QueryLedgerStateProtocolParameters", "QueryLedgerStateProtocolParametersResponse"
@@ -1338,8 +1338,8 @@
       ]
     }
 
-  , "QueryLedgerStateOperationalCertificates":
-    { "title": "QueryLedgerStateOperationalCertificates"
+  , "QueryLedgerStateOperationalCertificate":
+    { "title": "QueryLedgerStateOperationalCertificate"
     , "description": "Query operational certificate counters of all stake pools."
     , "type": "object"
     , "required": [ "jsonrpc", "method" ]
@@ -1359,9 +1359,9 @@
       }
     }
 
-  , "QueryLedgerStateOperationalCertificatesResponse":
+  , "QueryLedgerStateOperationalCertificateResponse":
     { "oneOf":
-      [ { "title": "QueryLedgerStateOperationalCertificatesResponse"
+      [ { "title": "QueryLedgerStateOperationalCertificateResponse"
         , "type": "object"
         , "required": [ "jsonrpc", "method", "result" ]
         , "additionalProperties": false

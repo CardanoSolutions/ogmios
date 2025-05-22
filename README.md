@@ -63,6 +63,8 @@ See our [Ogmios client starter kit](https://github.com/CardanoSolutions/ogmios-t
   `eraSummaries`               | Era bounds and slot parameters details, required for proper slotting arithmetic.
   `governanceProposals`        | Currently active governance proposals and their ratification state (i.e. votes).
   `liveStakeDistribution`      | Distribution of the stake across all known stake pools, relative to the **total** stake in the network.
+  `nonces`                     | Consensus nonces information used to power randomness for leader election in every epoch.
+  `operationalCertificates`    | Operational certificate counters of all stake pools
   `projectedRewards`           | The projected rewards of an account in a context where the top stake pools are fully saturated. This projection gives, in principle, a ranking of stake pools that maximizes delegator rewards.
   `protocolParameters`         | The current protocol parameters.
   `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.

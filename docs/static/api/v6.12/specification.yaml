@@ -958,18 +958,6 @@ components:
       payload:
         $ref: "/ogmios.json#/properties/QueryLedgerStateLiveStakeDistributionResponse"
 
-    QueryLedgerStateNoncesResponse:
-      title: QueryLedgerStateNoncesResponse
-      name: "since v6.12.0"
-      payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateNoncesResponse"
-
-    QueryLedgerStateOperationalCertificatesResponse:
-      title: QueryLedgerStateOperationalCertificatesResponse
-      name: "since v6.12.0"
-      payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateOperationalCertificatesResponse"
-
     QueryLedgerStateProjectedRewardsResponse:
       title: QueryLedgerStateProjectedRewardsResponse
       name: "since v6.0.0"
