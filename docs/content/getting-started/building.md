@@ -74,11 +74,21 @@ git clone https://github.com/bitcoin-core/secp256k1.git
 cd secp256k1
 git reset --hard ac83be33d0956faf6b7f61a60ab524ef7d6a473a
 ./autogen.sh
-./configure --prefix=/usr --enable-module-schnorrsig --enable-experimental
+./configure --prefix=/usr/local/lib --libdir=/usr/local/lib --enable-module-schnorrsig --enable-experimental
 make
 make check
 sudo make install
 ```
+
+{{% notice tip %}}
+
+On MacOS, if the `cabal build` command fails to find `libsecp256k1` in `/usr/local/lib` but instead look for it in `/usr/lib`, you can try the following:
+
+```console
+install_name_tool -id /usr/local/lib/libsecp256k1.0.dylib /usr/local/lib/libsecp256k1.0.dylib
+```
+
+{{% /notice %}}
 
 #### `blst`
 
