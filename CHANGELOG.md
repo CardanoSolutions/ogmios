@@ -7,6 +7,20 @@ pre: "<b>6. </b>"
 math: true
 ---
 
+### [6.13.0] - UNRELEASED
+
+#### Added
+
+N/A
+
+#### Changed
+
+- **⚠️ BREAKING-CHANGE ⚠️**: `queryLedgerState/dump` no longer return a hex-encoded CBOR dump as part of the JSON response, but instead, serialise directly to a specified on-disk location.
+
+#### Removed
+
+N/A
+
 ### [6.12.0] - 2025-05-22
 
 #### Added

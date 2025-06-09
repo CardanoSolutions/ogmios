@@ -124,7 +124,6 @@ import Cardano.Ledger.Babbage
     ()
 import Cardano.Ledger.Binary
     ( Annotator
-    , EncCBOR
     , FromCBOR (..)
     , decCBOR
     , decodeFullDecoder
@@ -176,6 +175,9 @@ import Data.Aeson
     )
 import Data.Reflection
     ( give
+    )
+import Ogmios.Control.MonadDisk
+    ( MonadDisk (..)
     )
 import Ogmios.Data.EraTranslation
     ( MostRecentEra
@@ -241,6 +243,7 @@ import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
 import Ouroboros.Network.Block
     ( Point (..)
+    , Serialised (..)
     , Tip (..)
     , genesisPoint
     , pattern BlockPoint
@@ -344,6 +347,17 @@ data SomeQuery (f :: Type -> Type) block where
             -- Useful when `f ~ Gen` for testing.
         -> SomeQuery f block
 
+    SomeEffectfullQuery
+        :: forall f block result. ()
+        => LSQ.Query block result
+            -- ^ Query definition, bound to a result
+        -> (forall m. MonadDisk m => result -> m (Either Json Json))
+            -- ^ Serialize results to JSON encoding.
+        -> (Proxy result -> f result)
+            -- ^ Yield results in some applicative 'f' from some type definition.
+            -- Useful when `f ~ Gen` for testing.
+        -> SomeQuery f block
+
     SomeCompoundQuery
         :: forall f block a b result crypto. (crypto ~ BlockCrypto block)
         => LSQ.Query block (QueryResult crypto a)
@@ -399,7 +413,7 @@ type family GenesisConfig (era :: Type -> Type) :: Type where
     GenesisConfig AlonzoEra = AlonzoGenesis
     GenesisConfig ConwayEra = ConwayGenesis StandardCrypto
 
-instance Crypto crypto => FromJSON (Query Proxy (CardanoBlock crypto)) where
+instance (Crypto crypto) => FromJSON (Query Proxy (CardanoBlock crypto)) where
     parseJSON json = Json.withObject "Query" (\obj -> do
         queryName <- T.drop 5 <$> (obj .: "method")
         queryParams <- obj .:? "params" .!= Json.object []
@@ -1051,56 +1065,59 @@ parseQueryLedgerTreasuryAndReserves genResult =
 
 parseQueryLedgerDump
     :: forall crypto f. (Crypto crypto)
-    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Ledger.NewEpochState era))
+    => (forall era. Typeable era => Proxy era -> GenResult crypto f (Serialised (Ledger.NewEpochState era)))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseQueryLedgerDump genResult =
     Json.withObject "dump" $ \obj -> do
-        guard (null obj) $>
-            \case
-                SomeShelleyEra ShelleyBasedEraShelley ->
-                    Just $ SomeStandardQuery
-                        (LSQ.BlockQuery $ QueryIfCurrentShelley DebugNewEpochState)
-                        (eraMismatchOrResult encodeEpochState)
-                        (genResult $ Proxy @(ShelleyEra crypto))
+        filepath :: FilePath <- obj .: "to"
+        pure $ \case
+            SomeShelleyEra ShelleyBasedEraShelley ->
+                Just $ SomeEffectfullQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentShelley $ GetCBOR DebugNewEpochState)
+                    (saveToDisk filepath . eraMismatchOrResult unSerialised)
+                    (genResult $ Proxy @(ShelleyEra crypto))
 
-                SomeShelleyEra ShelleyBasedEraAllegra ->
-                    Just $ SomeStandardQuery
-                        (LSQ.BlockQuery $ QueryIfCurrentAllegra DebugNewEpochState)
-                        (eraMismatchOrResult encodeEpochState)
-                        (genResult $ Proxy @(AllegraEra crypto))
+            SomeShelleyEra ShelleyBasedEraAllegra ->
+                Just $ SomeEffectfullQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentAllegra $ GetCBOR DebugNewEpochState)
+                    (saveToDisk filepath . eraMismatchOrResult unSerialised)
+                    (genResult $ Proxy @(AllegraEra crypto))
 
-                SomeShelleyEra ShelleyBasedEraMary ->
-                    Just $ SomeStandardQuery
-                        (LSQ.BlockQuery $ QueryIfCurrentMary DebugNewEpochState)
-                        (eraMismatchOrResult encodeEpochState)
-                        (genResult $ Proxy @(MaryEra crypto))
+            SomeShelleyEra ShelleyBasedEraMary ->
+                Just $ SomeEffectfullQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentMary $ GetCBOR DebugNewEpochState)
+                    (saveToDisk filepath . eraMismatchOrResult unSerialised)
+                    (genResult $ Proxy @(MaryEra crypto))
 
-                SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    Just $ SomeStandardQuery
-                        (LSQ.BlockQuery $ QueryIfCurrentAlonzo DebugNewEpochState)
-                        (eraMismatchOrResult encodeEpochState)
-                        (genResult $ Proxy @(AlonzoEra crypto))
+            SomeShelleyEra ShelleyBasedEraAlonzo ->
+                Just $ SomeEffectfullQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentAlonzo $ GetCBOR DebugNewEpochState)
+                    (saveToDisk filepath . eraMismatchOrResult unSerialised)
+                    (genResult $ Proxy @(AlonzoEra crypto))
 
-                SomeShelleyEra ShelleyBasedEraBabbage ->
-                    Just $ SomeStandardQuery
-                        (LSQ.BlockQuery $ QueryIfCurrentBabbage DebugNewEpochState)
-                        (eraMismatchOrResult encodeEpochState)
-                        (genResult $ Proxy @(BabbageEra crypto))
+            SomeShelleyEra ShelleyBasedEraBabbage ->
+                Just $ SomeEffectfullQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentBabbage $ GetCBOR DebugNewEpochState)
+                    (saveToDisk filepath . eraMismatchOrResult unSerialised)
+                    (genResult $ Proxy @(BabbageEra crypto))
 
-                SomeShelleyEra ShelleyBasedEraConway ->
-                    Just $ SomeStandardQuery
-                        (LSQ.BlockQuery $ QueryIfCurrentConway DebugNewEpochState)
-                        (eraMismatchOrResult encodeEpochState)
-                        (genResult $ Proxy @(ConwayEra crypto))
+            SomeShelleyEra ShelleyBasedEraConway ->
+                Just $ SomeEffectfullQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentConway $ GetCBOR DebugNewEpochState)
+                    (saveToDisk filepath . eraMismatchOrResult unSerialised)
+                    (genResult $ Proxy @(ConwayEra crypto))
   where
-    encodeEpochState
-        :: forall era. (EncCBOR (Ledger.NewEpochState era), Era era)
-        => Ledger.NewEpochState era
-        -> Json
-    encodeEpochState =
-        encodeText . encodeBase16 . encodeCbor @era
-
+    saveToDisk
+        :: forall m. (MonadDisk m)
+        => FilePath
+        -> Either Json LByteString
+        -> m (Either Json Json)
+    saveToDisk filepath = \case
+        Left err -> pure (Left err)
+        Right bytes -> do
+            writeLByteString filepath bytes
+            pure $ Right encodeNull
 
 parseQueryLedgerNonces
     :: forall crypto f. (Crypto crypto)

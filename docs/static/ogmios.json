@@ -997,7 +997,7 @@
 
   , "QueryLedgerStateDump":
     { "title": "QueryLedgerStateDump"
-    , "description": "Get a dump of the entire Cardano ledger state (base16-encoded CBOR) corresponding to the 'EpochState'. Use at your own risks."
+    , "description": "Get a dump of the entire Cardano ledger state (CBOR) corresponding to the 'NewEpochState'. Take some time."
     , "type": "object"
     , "required": [ "jsonrpc", "method" ]
     , "additionalProperties": false
@@ -1009,6 +1009,17 @@
       , "method":
         { "type": "string"
         , "enum": [ "queryLedgerState/dump" ]
+        }
+      , "params":
+        { "type": "object"
+        , "required": ["to"]
+        , "additionalProperties": false
+        , "properties":
+          { "to":
+            { "type": "string"
+            , "description": "A filepath to dump the ledger state to disk, relative to the server's location."
+            }
+          }
         }
       , "id":
         { "description": "An arbitrary JSON value that will be mirrored back in the response."
@@ -1032,8 +1043,7 @@
             , "enum": [ "queryLedgerState/dump" ]
             }
           , "result":
-            { "type": "string"
-            , "contentEncoding": "base16"
+            { "type": "null"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
