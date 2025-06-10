@@ -49,11 +49,11 @@ import Ogmios.Control.Exception
     ( MonadCatch (..)
     , MonadThrow (..)
     )
-import Ogmios.Control.MonadDisk
-    ( MonadDisk (..)
-    )
 import Ogmios.Control.MonadAsync
     ( race
+    )
+import Ogmios.Control.MonadDisk
+    ( MonadDisk (..)
     )
 import Ogmios.Control.MonadLog
     ( MonadLog

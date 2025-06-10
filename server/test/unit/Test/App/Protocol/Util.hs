@@ -26,7 +26,8 @@ import Control.Monad.Class.MonadTimer
     ( MonadDelay
     )
 import Control.Monad.IOSim
-    ( runSimOrThrow
+    ( IOSim
+    , runSimOrThrow
     )
 import Ogmios.Control.Exception
     ( MonadCatch (..)
@@ -35,14 +36,14 @@ import Ogmios.Control.Exception
 import Ogmios.Control.MonadAsync
     ( race
     )
+import Ogmios.Control.MonadDisk
+    ( MonadDisk
+    )
 import Ogmios.Control.MonadLog
     ( MonadLog
     )
 import Ogmios.Control.MonadOuroboros
     ( MonadOuroboros
-    )
-import Ogmios.Control.MonadDisk
-    ( MonadDisk
     )
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..)
@@ -69,9 +70,6 @@ import Test.QuickCheck.Monadic
     ( monadicIO
     , pick
     , run
-    )
-import Control.Monad.IOSim
-    ( IOSim
     )
 
 import qualified Codec.Json.Rpc as Rpc

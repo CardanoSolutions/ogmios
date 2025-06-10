@@ -55,6 +55,9 @@ import Data.Aeson
     ( ToJSON (..)
     , genericToEncoding
     )
+import Ogmios.Control.MonadDisk
+    ( MonadDisk
+    )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
     , Logger
@@ -97,7 +100,6 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Client
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( Target (..)
     )
-import Ogmios.Control.MonadDisk (MonadDisk)
 
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
