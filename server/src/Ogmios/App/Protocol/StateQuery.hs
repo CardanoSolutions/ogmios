@@ -97,6 +97,7 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Client
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( Target (..)
     )
+import Ogmios.Control.MonadDisk (MonadDisk)
 
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
@@ -113,6 +114,7 @@ import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 mkStateQueryClient
     :: forall m crypto block point query.
         ( MonadSTM m
+        , MonadDisk m
         , MonadLog m
         , block ~ HardForkBlock (CardanoEras crypto)
         , point ~ Point block
@@ -188,6 +190,16 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
                         logWith tr $ StateQueryRequest { query, point = Nothing, era }
                         pure $ LSQ.SendMsgQuery qry $ LSQ.ClientStQuerying
                             { LSQ.recvMsgResult = \(encodeResult -> result) -> do
+                                yield $ encodeQueryLedgerStateResponse $ toResponse $
+                                    either QueryEraMismatch QueryResponse result
+                                pure $ LSQ.SendMsgRelease clientStIdle
+                            }
+
+                    Just (era, SomeEffectfullQuery qry encodeResult _proxy) -> do
+                        logWith tr $ StateQueryRequest { query, point = Nothing, era }
+                        pure $ LSQ.SendMsgQuery qry $ LSQ.ClientStQuerying
+                            { LSQ.recvMsgResult = \rawResult -> do
+                                result <- encodeResult rawResult
                                 yield $ encodeQueryLedgerStateResponse $ toResponse $
                                     either QueryEraMismatch QueryResponse result
                                 pure $ LSQ.SendMsgRelease clientStIdle
@@ -290,6 +302,16 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
                     logWith tr $ StateQueryRequest { query, point = Just pt, era }
                     pure $ LSQ.SendMsgQuery qry $ LSQ.ClientStQuerying
                         { LSQ.recvMsgResult = \(encodeResult -> result) -> do
+                            yield $ encodeQueryLedgerStateResponse $ toResponse $
+                                either QueryEraMismatch QueryResponse result
+                            clientStAcquired pt
+                        }
+
+                Just (era, SomeEffectfullQuery qry encodeResult _proxy) -> do
+                    logWith tr $ StateQueryRequest { query, point = Just pt, era }
+                    pure $ LSQ.SendMsgQuery qry $ LSQ.ClientStQuerying
+                        { LSQ.recvMsgResult = \rawResult -> do
+                            result <- encodeResult @m rawResult
                             yield $ encodeQueryLedgerStateResponse $ toResponse $
                                 either QueryEraMismatch QueryResponse result
                             clientStAcquired pt

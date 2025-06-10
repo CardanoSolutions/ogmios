@@ -49,6 +49,9 @@ import Ogmios.Control.Exception
     ( MonadCatch (..)
     , MonadThrow (..)
     )
+import Ogmios.Control.MonadDisk
+    ( MonadDisk (..)
+    )
 import Ogmios.Control.MonadAsync
     ( race
     )
@@ -212,7 +215,7 @@ spec = parallel $ do
 type Protocol = LocalStateQuery Block (Point Block) (Ledger.Query Block)
 
 withStateQueryClient
-    :: (MonadCatch m, MonadOuroboros m, MonadLog m)
+    :: forall m a. (MonadCatch m, MonadOuroboros m, MonadLog m, MonadDisk m)
     => ((StateQueryMessage Block -> m ()) ->  m Json -> m a)
     -> StdGen
     -> m a

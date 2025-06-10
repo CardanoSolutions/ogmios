@@ -41,6 +41,9 @@ import Ogmios.Control.MonadLog
 import Ogmios.Control.MonadOuroboros
     ( MonadOuroboros
     )
+import Ogmios.Control.MonadDisk
+    ( MonadDisk
+    )
 import Ogmios.Control.MonadSTM
     ( MonadSTM (..)
     , newTQueue
@@ -67,6 +70,9 @@ import Test.QuickCheck.Monadic
     , pick
     , run
     )
+import Control.Monad.IOSim
+    ( IOSim
+    )
 
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
@@ -76,14 +82,7 @@ import qualified Text.Show
 -- random numbers deterministically within the simulation. The random generator
 -- is however randomly seeded for each property run.
 prop_inIOSim
-    :: ( forall m.
-        ( MonadSTM m
-        , MonadCatch m
-        , MonadOuroboros m
-        , MonadDelay m
-        , MonadLog m
-        ) => StdGen -> m ()
-       )
+    :: (forall s. StdGen -> IOSim s ())
     -> Property
 prop_inIOSim action = monadicIO $ do
     seed <- mkStdGen <$> pick arbitrary

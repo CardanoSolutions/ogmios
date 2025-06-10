@@ -51,6 +51,7 @@ library
       Ogmios.Control.Exception
       Ogmios.Control.MonadAsync
       Ogmios.Control.MonadClock
+      Ogmios.Control.MonadDisk
       Ogmios.Control.MonadLog
       Ogmios.Control.MonadMetrics
       Ogmios.Control.MonadOuroboros

@@ -84,6 +84,9 @@ import Ogmios.Control.MonadClock
     ( MonadClock (..)
     , idle
     )
+import Ogmios.Control.MonadDisk
+    ( MonadDisk
+    )
 import Ogmios.Control.MonadLog
     ( HasSeverityAnnotation (..)
     , Logger
@@ -185,6 +188,7 @@ newWebSocketApp
         , MonadWebSocket m
         , MonadReader env m
         , MonadLog m
+        , MonadDisk m
         , HasType NetworkParameters env
         , HasType Configuration env
         , HasType (Sensors m) env
@@ -328,6 +332,7 @@ withExecutionUnitsEvaluator tr action = do
 withOuroborosClients
     :: forall m a.
         ( MonadAsync m
+        , MonadDisk m
         , MonadLink m
         , MonadLog m
         , MonadMetrics m

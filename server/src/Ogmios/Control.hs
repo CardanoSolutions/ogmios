@@ -27,6 +27,9 @@ import Ogmios.Control.MonadAsync
 import Ogmios.Control.MonadClock
     ( MonadClock
     )
+import Ogmios.Control.MonadDisk
+    ( MonadDisk
+    )
 import Ogmios.Control.MonadLog
     ( MonadLog (..)
     )
@@ -75,6 +78,7 @@ newtype App a = App
         , MonadST
         , MonadThread, MonadFork
         , MonadThrow, MonadCatch, MonadMask
+        , MonadDisk
         )
 
 -- NOTE:
