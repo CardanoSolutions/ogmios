@@ -59,6 +59,9 @@
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_cardano_ogmios_schema.QueryLedgerStateDump.html#method" class="tsd-kind-icon">method</a>
 							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_cardano_ogmios_schema.QueryLedgerStateDump.html#params" class="tsd-kind-icon">params</a>
+							</li>
 						</ul>
 					</li>
 				</ul>
@@ -85,7 +88,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>Get a dump of the entire Cardano ledger state (base16-encoded CBOR) corresponding to the &#39;EpochState&#39;. Use at your own risks.</p>
+						<p>Get a dump of the entire Cardano ledger state (CBOR) corresponding to the &#39;NewEpochState&#39;. Take some time.</p>
 					</div>
 				</div>
 			</section>
@@ -107,6 +110,7 @@
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.QueryLedgerStateDump.html#id" class="tsd-kind-icon">id</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.QueryLedgerStateDump.html#jsonrpc" class="tsd-kind-icon">jsonrpc</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.QueryLedgerStateDump.html#method" class="tsd-kind-icon">method</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_cardano_ogmios_schema.QueryLedgerStateDump.html#params" class="tsd-kind-icon">params</a></li>
 							</ul>
 						</section>
 					</div>
@@ -120,7 +124,7 @@
 					<div class="tsd-signature tsd-kind-icon">id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">unknown</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/a02cfcc/clients/TypeScript/packages/schema/src/index.ts#L2502">packages/schema/src/index.ts:2502</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/7cd34db/clients/TypeScript/packages/schema/src/index.ts#L2508">packages/schema/src/index.ts:2508</a>
 							</li>
 						</ul>
 					</aside>
@@ -131,7 +135,7 @@
 					<div class="tsd-signature tsd-kind-icon">jsonrpc<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"2.0"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/a02cfcc/clients/TypeScript/packages/schema/src/index.ts#L2500">packages/schema/src/index.ts:2500</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/7cd34db/clients/TypeScript/packages/schema/src/index.ts#L2500">packages/schema/src/index.ts:2500</a>
 							</li>
 						</ul>
 					</aside>
@@ -142,10 +146,34 @@
 					<div class="tsd-signature tsd-kind-icon">method<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"queryLedgerState/dump"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/a02cfcc/clients/TypeScript/packages/schema/src/index.ts#L2501">packages/schema/src/index.ts:2501</a>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/7cd34db/clients/TypeScript/packages/schema/src/index.ts#L2501">packages/schema/src/index.ts:2501</a>
 							</li>
 						</ul>
 					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="params" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> params</h3>
+					<div class="tsd-signature tsd-kind-icon">params<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li><span>Defined in</span> <a href="https://github.com/CardanoSolutions/ogmios/blob/7cd34db/clients/TypeScript/packages/schema/src/index.ts#L2502">packages/schema/src/index.ts:2502</a>
+							</li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>to<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+								<div class="tsd-comment tsd-typography">
+									<div class="lead">
+										<p>A filepath to dump the ledger state to disk, relative to the server&#39;s location.</p>
+									</div>
+								</div>
+							</li>
+						</ul>
+					</div>
 				</section>
 			</section>
 		</div>
