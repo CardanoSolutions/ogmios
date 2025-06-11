@@ -116,6 +116,7 @@ queryLedgerState             | Information
 `rewardAccountSummaries`     | Current delegation settings and rewards of chosen reward accounts.
 `rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
 `stakePools`                 | The list of all currently registered and active stake pools with their current parameters. This query can be made with or without specifying list of target `stakePools`. When no stake pools are provided as parameter, the query returns the list of all stake pools and their parameters from the node.
+`stakePoolsPerformances`     | Details about pools performances indicators for the ongoing epoch.
 `tip`                        | The current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger.
 `treasuryAndReserves`        | The Ada value of the treasury and reserves of the protocol.
 `utxo`                       | Current UTXO, possibly filtered by output reference.
@@ -668,6 +669,15 @@ Be aware that it is possible for an acquire request to fail even if (and in part
       { "id": "4acf2773917c7b547c576a7ff110d2ba5733c1f1ca9cdc659aea3a56" }
     ]
   }
+}
+```
+
+#### stakePoolsPerformances
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "queryLedgerState/stakePoolsPerformances"
 }
 ```
 

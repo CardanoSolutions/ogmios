@@ -11,11 +11,13 @@ math: true
 
 #### Added
 
-N/A
+- A new query `queryLedgerState/rewardsProvenance` which now re-implements and exposes the intermediate rewards calculation. The query name already exists, but the schema is now different. The previous behaviour can be recovered by using the new `queryLedgerState/stakePoolsPerformances` instead.
 
 #### Changed
 
 - **⚠️ BREAKING-CHANGE ⚠️**: `queryLedgerState/dump` no longer return a hex-encoded CBOR dump as part of the JSON response, but instead, serialise directly to a specified on-disk location.
+
+- **⚠️ BREAKING-CHANGE ⚠️**: `queryLedgerState/rewardsProvenance` has been renamed to `queryLedgerState/stakePoolsPerformances`. The schema remains otherwise unchanged.
 
 #### Removed
 

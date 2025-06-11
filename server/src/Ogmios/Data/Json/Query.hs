@@ -18,20 +18,20 @@ module Ogmios.Data.Json.Query
 
       -- ** Types in queries
     , AccountState (..)
+    , DRepSummary (..)
     , Delegations
+    , Deposits
     , GenesisConfig
     , Interpreter
-    , RewardAccounts
-    , RewardsProvenance
-    , Deposits
-    , VoteDelegatees
+    , Ledger.PoolParams
     , RewardAccountSummaries
     , RewardAccountSummary (..)
-    , Sh.Api.RewardInfoPool
+    , RewardAccounts
+    , RewardsProvenance (..)
     , Sh.Api.RewardParams
     , Sh.Desirability
-    , Ledger.PoolParams
-    , DRepSummary (..)
+    , StakePoolsPerformances
+    , VoteDelegatees
 
       -- * Encoders
     , encodeBound
@@ -45,9 +45,9 @@ module Ogmios.Data.Json.Query
     , encodePoint
     , encodePoolDistr
     , encodeRewardAccountSummaries
-    , encodeRewardInfoPool
     , encodeRewardsProvenance
     , encodeStakePools
+    , encodeStakePoolsPerformances
 
       -- * Decoders
     , decodeAddress
@@ -74,10 +74,10 @@ module Ogmios.Data.Json.Query
       -- * Parsers
     , parseQueryLedgerConstitution
     , parseQueryLedgerConstitutionalCommittee
+    , parseQueryLedgerDelegateRepresentatives
     , parseQueryLedgerEpoch
     , parseQueryLedgerEraStart
     , parseQueryLedgerEraSummaries
-    , parseQueryLedgerDelegateRepresentatives
     , parseQueryLedgerGovernanceProposals
     , parseQueryLedgerGovernanceProposalsByProposalReference
     , parseQueryLedgerLiveStakeDistribution
@@ -89,6 +89,7 @@ module Ogmios.Data.Json.Query
     , parseQueryLedgerRewardAccountSummaries
     , parseQueryLedgerRewardsProvenance
     , parseQueryLedgerStakePools
+    , parseQueryLedgerStakePoolsPerformances
     , parseQueryLedgerTip
     , parseQueryLedgerTreasuryAndReserves
     , parseQueryLedgerUtxo
@@ -128,6 +129,10 @@ import Cardano.Ledger.Binary
     , decCBOR
     , decodeFullDecoder
     )
+import Cardano.Ledger.Binary.Coders
+    ( Decode (D, From, RecD)
+    , (<!)
+    )
 import Cardano.Ledger.Conway.Genesis
     ( ConwayGenesis
     )
@@ -151,6 +156,11 @@ import Cardano.Ledger.Shelley.Genesis
 import Cardano.Ledger.Shelley.LedgerState
     ( AccountState (..)
     )
+import Cardano.Ledger.Shelley.Rewards
+    ( LeaderOnlyReward (..)
+    , PoolRewardInfo (..)
+    , StakeShare (..)
+    )
 import Cardano.Network.Protocol.NodeToClient
     ( GenTx
     , SerializedTransaction
@@ -173,6 +183,9 @@ import Codec.Serialise
 import Data.Aeson
     ( (.!=)
     )
+import Data.Generics.Product.Positions
+    ( position
+    )
 import Data.Reflection
     ( give
     )
@@ -184,6 +197,10 @@ import Ogmios.Data.EraTranslation
     , MultiEraTxOut (..)
     , MultiEraUTxO (..)
     , Upgrade (..)
+    )
+import Ogmios.Data.Ledger.Rewards
+    ( RewardsProvenance (..)
+    , newRewardsProvenance
     )
 import Ouroboros.Consensus.BlockchainTime
     ( SystemStart (..)
@@ -232,6 +249,9 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
     , ShelleyHash (..)
     )
+import Ouroboros.Consensus.Shelley.Ledger.Config
+    ( getCompactGenesis
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Query
     ( BlockQuery (..)
     , NonMyopicMemberRewards (..)
@@ -253,7 +273,11 @@ import Ouroboros.Network.Block
 import Ouroboros.Network.Point
     ( Block (..)
     )
+import PlutusPrelude
+    ( Default (def)
+    )
 
+import qualified Cardano.Ledger.Binary.Coders as Binary
 import qualified Cardano.Ledger.Binary.Decoding as Binary
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Codec.CBOR.Decoding as Cbor
@@ -438,6 +462,8 @@ instance (Crypto crypto) => FromJSON (Query Proxy (CardanoBlock crypto)) where
                 parseQueryLedgerRewardsProvenance id queryParams
             "LedgerState/stakePools" ->
                 parseQueryLedgerStakePools id id queryParams
+            "LedgerState/stakePoolsPerformances" ->
+                parseQueryLedgerStakePoolsPerformances id queryParams
             "LedgerState/tip" ->
                 parseQueryLedgerTip (const id) (const id) queryParams
             "LedgerState/utxo" ->
@@ -497,7 +523,7 @@ type RewardAccounts crypto =
 type RewardAccountSummaries crypto =
     Map (Ledger.Credential 'Staking crypto) (RewardAccountSummary crypto)
 
-type RewardsProvenance crypto =
+type StakePoolsPerformances crypto =
     ( Sh.Api.RewardParams
     , Map (Ledger.KeyHash 'StakePool crypto) Sh.Api.RewardInfoPool
     )
@@ -711,11 +737,11 @@ encodeRewardInfoPool poolId info =
         )
     & encodeObject
 
-encodeRewardsProvenance
-    :: Crypto crypto
-    => RewardsProvenance crypto
-    -> Json
-encodeRewardsProvenance (rp, pools) =
+encodeStakePoolsPerformances
+     :: Crypto crypto
+     => StakePoolsPerformances crypto
+     -> Json
+encodeStakePoolsPerformances (rp, pools) =
     "desiredNumberOfStakePools" .=
         encodeNatural (Sh.Api.nOpt rp) <>
     "stakePoolPledgeInfluence" .=
@@ -735,6 +761,89 @@ encodeRewardsProvenance (rp, pools) =
             (\pool -> (Sh.Api.stake pool <>))
             mempty
             pools
+
+encodeRewardsProvenance
+    :: Crypto crypto
+    => RewardsProvenance crypto
+    -> Json
+encodeRewardsProvenance rp =
+    encodeObject (
+           "totalStake" .= encodeCoin (totalStake rp)
+        <> "activeStake" .= encodeCoin (activeStake rp)
+        <> "fees" .= encodeCoin (fees rp)
+        <> "incentives" .= encodeCoin (deltaR1 rp)
+        <> "treasuryTax" .= encodeCoin (Coin $ deltaT1 rp)
+        <> "totalRewards" .= encodeCoin (Coin $ rPot rp)
+        <> "efficiency" .= encodeRational (eta rp)
+        <> "pools" .= encodeMap Shelley.stringifyPoolId encodePoolRewardInfo (pools rp)
+    )
+  where
+    encodePoolRewardInfo i =
+        "relativeStake" .= encodeRational (unStakeShare $ poolRelativeStake i) <>
+        "blocksMade" .= encodeNatural (poolBlocks i) <>
+        "totalRewards" .= encodeCoin (poolPot i) <>
+        "leaderReward" .= encodeCoin (lRewardAmount $ poolLeaderReward i)
+        & encodeObject
+
+-- Partially deserialise the NewEpochState, skipping the UTxO. This should
+-- allow to reduce the in-memory footprint of fetching the new epoch state
+-- for operations that do not require the entire UTxO.
+deserialisePartialNewEpochState
+    :: forall era crypto.
+        ( crypto ~ EraCrypto era
+        , Binary.Share (Ledger.TxOut era) ~ Binary.Interns (Ledger.Credential 'Staking crypto)
+        , Binary.DecCBOR (Ledger.StashedAVVMAddresses era)
+        , Ledger.EraTxOut era
+        , Ledger.EraGov era
+        )
+    => Serialised (Ledger.NewEpochState era)
+    -> Ledger.NewEpochState era
+deserialisePartialNewEpochState (Serialised bytes) =
+    either error identity $ decodeCbor @era "NewEpochState" decodeNewEpochState bytes
+  where
+    decodeNewEpochState :: forall s. Binary.Decoder s (Ledger.NewEpochState era)
+    decodeNewEpochState = Binary.decode $
+        RecD Ledger.NewEpochState
+          <! From
+          <! From
+          <! From
+          <! D decodePartialEpochState
+          <! From
+          <! From
+          <! From
+
+    decodePartialEpochState :: forall s. Binary.Decoder s (Ledger.EpochState era)
+    decodePartialEpochState =
+        Binary.decodeRecordNamed "EpochState" (const 4) $
+            flip evalStateT mempty $ Ledger.EpochState
+                <$> lift decCBOR
+                <*> decodePartialLedgerState
+                <*> Binary.decSharePlusCBOR
+                <*> Binary.decShareLensCBOR (position @2)
+
+    decodePartialLedgerState
+        :: forall s. ()
+        => StateT
+            ( Binary.Interns (Ledger.Credential 'Staking crypto)
+            , Binary.Interns (Ledger.KeyHash 'StakePool crypto)
+            )
+            (Binary.Decoder s)
+            (Ledger.LedgerState era)
+    decodePartialLedgerState =
+        Binary.decodeRecordNamedT "LedgerState" (const 2) $ do
+            cert <- Binary.decSharePlusCBOR
+            _utxo :: Ledger.UTxOState era <- Binary.decShareLensCBOR (position @1)
+            pure $ Ledger.LedgerState emptyUTxOState cert
+      where
+        emptyUTxOState :: Ledger.UTxOState era
+        emptyUTxOState = Ledger.UTxOState
+            { Ledger.utxosUtxo = mempty
+            , Ledger.utxosDeposited = mempty
+            , Ledger.utxosFees = mempty
+            , Ledger.utxosGovState = def
+            , Ledger.utxosStakeDistr = mempty
+            , Ledger.utxosDonation = mempty
+            }
 
 encodeSafeZone
     :: SafeZone
@@ -1784,17 +1893,17 @@ parseQueryNetworkGenesisConfiguration (genByron, genShelley, genAlonzo, genConwa
                 fail "Invalid era parameter. Only 'byron', 'shelley', \
                      \'alonzo' and 'conway' have a genesis configuration."
 
-parseQueryLedgerRewardsProvenance
+parseQueryLedgerStakePoolsPerformances
     :: forall crypto f. (Crypto crypto)
-    => GenResult crypto f (RewardsProvenance crypto)
+    => GenResult crypto f (StakePoolsPerformances crypto)
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseQueryLedgerRewardsProvenance genResult =
-    Json.withObject "rewardsProvenance" $ \obj -> do
+parseQueryLedgerStakePoolsPerformances genResult =
+    Json.withObject "stakePoolsPerformances" $ \obj -> do
         guard (null obj) $>
             ( \queryDef -> Just $ SomeStandardQuery
                 queryDef
-                (eraMismatchOrResult encodeRewardsProvenance)
+                (eraMismatchOrResult encodeStakePoolsPerformances)
                 genResult
             )
             .
@@ -1812,6 +1921,57 @@ parseQueryLedgerRewardsProvenance genResult =
                 SomeShelleyEra ShelleyBasedEraConway ->
                     LSQ.BlockQuery $ QueryIfCurrentConway GetRewardInfoPools
             )
+
+parseQueryLedgerRewardsProvenance
+    :: forall crypto f. (Crypto crypto)
+    => GenResult crypto f (RewardsProvenance crypto)
+    -> Json.Value
+    -> Json.Parser (QueryInEra f (CardanoBlock crypto))
+parseQueryLedgerRewardsProvenance genResult =
+    Json.withObject "rewardsProvenance" $ \obj -> do
+        guard (null obj) $> \case
+            SomeShelleyEra ShelleyBasedEraShelley ->
+                Just $ SomeCompoundQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentShelley GetGenesisConfig)
+                    (\_ -> LSQ.BlockQuery $ QueryIfCurrentShelley (GetCBOR DebugNewEpochState))
+                    (\(getCompactGenesis -> genesis) -> newRewardsProvenance genesis . deserialisePartialNewEpochState)
+                    (eraMismatchOrResult encodeRewardsProvenance)
+                    genResult
+            SomeShelleyEra ShelleyBasedEraAllegra ->
+                Just $ SomeCompoundQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentAllegra GetGenesisConfig)
+                    (\_ -> LSQ.BlockQuery $ QueryIfCurrentAllegra (GetCBOR DebugNewEpochState))
+                    (\(getCompactGenesis -> genesis) -> newRewardsProvenance genesis . deserialisePartialNewEpochState)
+                    (eraMismatchOrResult encodeRewardsProvenance)
+                    genResult
+            SomeShelleyEra ShelleyBasedEraMary ->
+                Just $ SomeCompoundQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentMary GetGenesisConfig)
+                    (\_ -> LSQ.BlockQuery $ QueryIfCurrentMary (GetCBOR DebugNewEpochState))
+                    (\(getCompactGenesis -> genesis) -> newRewardsProvenance genesis . deserialisePartialNewEpochState)
+                    (eraMismatchOrResult encodeRewardsProvenance)
+                    genResult
+            SomeShelleyEra ShelleyBasedEraAlonzo ->
+                Just $ SomeCompoundQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentAlonzo GetGenesisConfig)
+                    (\_ -> LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetCBOR DebugNewEpochState))
+                    (\(getCompactGenesis -> genesis) -> newRewardsProvenance genesis . deserialisePartialNewEpochState)
+                    (eraMismatchOrResult encodeRewardsProvenance)
+                    genResult
+            SomeShelleyEra ShelleyBasedEraBabbage ->
+                Just $ SomeCompoundQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentBabbage GetGenesisConfig)
+                    (\_ -> LSQ.BlockQuery $ QueryIfCurrentBabbage (GetCBOR DebugNewEpochState))
+                    (\(getCompactGenesis -> genesis) -> newRewardsProvenance genesis . deserialisePartialNewEpochState)
+                    (eraMismatchOrResult encodeRewardsProvenance)
+                    genResult
+            SomeShelleyEra ShelleyBasedEraConway ->
+                Just $ SomeCompoundQuery
+                    (LSQ.BlockQuery $ QueryIfCurrentConway GetGenesisConfig)
+                    (\_ -> LSQ.BlockQuery $ QueryIfCurrentConway (GetCBOR DebugNewEpochState))
+                    (\(getCompactGenesis -> genesis) -> newRewardsProvenance genesis . deserialisePartialNewEpochState)
+                    (eraMismatchOrResult encodeRewardsProvenance)
+                    genResult
 
 parseQueryLedgerStakePools
     :: forall crypto f. (Crypto crypto)

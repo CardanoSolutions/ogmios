@@ -60,6 +60,7 @@ library:
     - cardano-ledger-core
     - cardano-ledger-mary
     - cardano-ledger-shelley
+    - cardano-ledger-shelley
     - cardano-protocol-tpraos
     - cardano-slotting
     - cardano-strict-containers
@@ -107,8 +108,8 @@ library:
     - serialise
     - small-steps
     - sop-extras
-    - strict-sop-core
     - stm
+    - strict-sop-core
     - text
     - time
     - time-manager
@@ -116,11 +117,12 @@ library:
     - typed-protocols
     - unix
     - vector
+    - vector-map
     - wai
     - wai-websockets
     - warp
-    - yaml
     - websockets
+    - yaml
 
 executables:
   ogmios:

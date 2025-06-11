@@ -80,6 +80,7 @@ library
       Ogmios.Data.Ledger.PredicateFailure.Conway
       Ogmios.Data.Ledger.PredicateFailure.Mary
       Ogmios.Data.Ledger.PredicateFailure.Shelley
+      Ogmios.Data.Ledger.Rewards
       Ogmios.Data.Ledger.ScriptFailure
       Ogmios.Data.Metrics
       Ogmios.Data.Metrics.Prometheus
@@ -216,6 +217,7 @@ library
     , typed-protocols
     , unix
     , vector
+    , vector-map
     , wai
     , wai-websockets
     , warp

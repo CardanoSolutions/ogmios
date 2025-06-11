@@ -60,7 +60,8 @@ import Ogmios.Data.Json.Query
     , PoolParams
     , QueryResult
     , RewardAccountSummaries
-    , RewardsProvenance
+    , RewardsProvenance (..)
+    , StakePoolsPerformances
     )
 import Ogmios.Data.Ledger
     ( ContextErrorInAnyEra (..)
@@ -416,6 +417,26 @@ genRewardsProvenance
     :: forall crypto. (crypto ~ StandardCrypto)
     => Gen (RewardsProvenance crypto)
 genRewardsProvenance =
+    RewardsProvenance
+        <$> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> arbitrary
+        <*> reasonablySized arbitrary
+
+genStakePoolsPerformances
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Gen (StakePoolsPerformances crypto)
+genStakePoolsPerformances =
     (,) <$> genRewardParams
         <*> fmap fromList
             ( listOf1 $
@@ -906,6 +927,15 @@ genRewardsProvenanceResult
 genRewardsProvenanceResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> genRewardsProvenance)
+    ]
+
+genStakePoolsPerformancesResult
+    :: forall crypto. (crypto ~ StandardCrypto)
+    => Proxy (QueryResult crypto (StakePoolsPerformances crypto))
+    -> Gen (QueryResult crypto (StakePoolsPerformances crypto))
+genStakePoolsPerformancesResult _ = frequency
+    [ (1, Left <$> genMismatchEraInfo)
+    , (10, Right <$> genStakePoolsPerformances)
     ]
 
 genAccountStateResult

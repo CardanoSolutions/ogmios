@@ -71,6 +71,7 @@ See our [Ogmios client starter kit](https://github.com/CardanoSolutions/ogmios-t
   `rewardAccountSummaries`     | Current delegation settings and rewards of chosen reward accounts.
   `rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
   `stakePools`                 | The list of all pool identifiers currently registered and active, as well as their voting stake.
+  `stakePoolsPerformances`     | Details about pools performances indicators for the ongoing epoch.
   `tip`                        | The current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger.
   `treasuryAndReserves`        | The Ada value of the treasury and reserves of the protocol.
   `utxo`                       | Current UTXO, possibly filtered by output reference.

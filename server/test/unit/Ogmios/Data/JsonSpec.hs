@@ -94,6 +94,7 @@ import Ogmios.Data.Json.Query
     , parseQueryLedgerRewardAccountSummaries
     , parseQueryLedgerRewardsProvenance
     , parseQueryLedgerStakePools
+    , parseQueryLedgerStakePoolsPerformances
     , parseQueryLedgerTip
     , parseQueryLedgerTreasuryAndReserves
     , parseQueryLedgerUtxo
@@ -216,6 +217,7 @@ import Test.Generators
     , genProposedPParamsResult
     , genRewardAccountSummariesResult
     , genRewardsProvenanceResult
+    , genStakePoolsPerformancesResult
     , genSubmitResult
     , genSystemStart
     , genTip
@@ -722,6 +724,10 @@ spec = do
             |])
             (parseQueryLedgerStakePools genPoolParametersResultNoStake genPoolParametersResult)
 
+        validateLedgerStateQuery 30 "stakePoolsPerformances"
+            Nothing
+            (parseQueryLedgerStakePoolsPerformances genStakePoolsPerformancesResult)
+
         validateLedgerStateQuery 10 "constitution"
             Nothing
             (parseQueryLedgerConstitution genConstitutionResult)
@@ -1179,6 +1185,8 @@ validateLedgerStateQuery n subMethod params parser = do
                 -- the test for each era, we can reduce the number of expected
                 -- max success. In the end, the property run 1 time per era!
                 case qry of
+                    SomeEffectfullQuery{} -> do
+                        error "unexpected effectful query in JSON spec"
                     SomeStandardQuery _ encodeResult genResult -> do
                         case era of
                             SomeShelleyEra ShelleyBasedEraConway -> do
@@ -1287,6 +1295,8 @@ validateNetworkQuery n subMethod params parser = do
                     . encodeResult
 
             case queryInEra (SomeShelleyEra ShelleyBasedEraBabbage) of
+                Just SomeEffectfullQuery{} -> do
+                    error "unexpected effectful query in JSON spec"
                 Just (SomeStandardQuery _ encodeResult genResult) -> do
                     generateTestVectors (n, toString propName)
                         (reasonablySized $ genResult Proxy)
