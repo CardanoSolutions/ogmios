@@ -10,7 +10,7 @@ import {
   GovernanceActionTreasuryWithdrawals,
   Metadata,
   RewardAccountSummaries,
-  RewardsProvenance,
+  StakePoolsPerformances,
   StakePool,
   Transaction,
   TransactionOutput
@@ -496,28 +496,32 @@ describe('util', () => {
 
       it('RewardAccountSummaries', () => {
         const json = `
-          {
-            "58e1b65718531b42494610c506cef10ff031fa817a8ff75c0ab180e7": {
+          [
+            {
+              "from": "verificationKey",
+              "credential": "58e1b65718531b42494610c506cef10ff031fa817a8ff75c0ab180e7",
               "rewards": { "ada": { "lovelace": 782 } }
             },
-            "eccbfb5c619673f0648a42cc2f822c81cbc34aee41274638e89a7af5": {
+            {
+              "from": "verificationKey",
+              "credential": "eccbfb5c619673f0648a42cc2f822c81cbc34aee41274638e89a7af5",
               "delegate": { "id": "pool1uzn3gvvcztplwua6qnk966elln264kzsq6q9kprmpqj5zytzn03" }
             },
-            "22c81cbc34aee41274638e89a7af5eccbfb5c619673f0648a42cc2f8": {
+            {
+              "from": "verificationKey",
+              "credential": "22c81cbc34aee41274638e89a7af5eccbfb5c619673f0648a42cc2f8",
               "delegate": { "id": "pool1uzn3gvvcztplwua6qnk966elln264kzsq6q9kprmpqj5zytzn03" },
               "rewards": { "ada": { "lovelace": 42 } }
             }
-          }
+          ]
         `
 
         const result = safeJSON.parse(json) as RewardAccountSummaries
-        const stakeAddr1 = '58e1b65718531b42494610c506cef10ff031fa817a8ff75c0ab180e7'
-        expect(typeof result[stakeAddr1].rewards.ada.lovelace).toEqual('bigint')
-        const stakeAddr2 = '22c81cbc34aee41274638e89a7af5eccbfb5c619673f0648a42cc2f8'
-        expect(typeof result[stakeAddr2].rewards.ada.lovelace).toEqual('bigint')
+        expect(typeof result[0].rewards.ada.lovelace).toEqual('bigint')
+        expect(typeof result[2].rewards.ada.lovelace).toEqual('bigint')
       })
 
-      it('IndividualPoolRewardsProvenance', () => {
+      it('IndividualStakePoolPerformances', () => {
         const json = `
           {
             "desiredNumberOfStakePools": 267,
@@ -541,7 +545,7 @@ describe('util', () => {
         `
 
         const poolId = 'pool1an9lkhrpjeelqey2gtxzlq3vs89uxjhwgyn5vw8gnfa02v6328u'
-        const result = safeJSON.parse(json) as RewardsProvenance
+        const result = safeJSON.parse(json) as StakePoolsPerformances
         expect(typeof result.totalRewardsInEpoch.ada.lovelace).toEqual('bigint')
         expect(typeof result.activeStakeInEpoch.ada.lovelace).toEqual('bigint')
         expect(typeof result.stakePools[poolId].stake.ada.lovelace).toEqual('bigint')

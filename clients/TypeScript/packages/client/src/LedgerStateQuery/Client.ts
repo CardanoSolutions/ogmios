@@ -15,8 +15,8 @@ import {
   proposedProtocolParameters,
   protocolParameters,
   rewardAccountSummaries,
-  rewardsProvenance,
   stakePools,
+  stakePoolsPerformances,
   utxo
 } from './query'
 import {
@@ -73,8 +73,8 @@ export interface LedgerStateQueryClient {
     scripts?: AnyStakeCredential[],
     keys?: AnyStakeCredential[],
   }): ReturnType<typeof rewardAccountSummaries>
-  rewardsProvenance(): ReturnType<typeof rewardsProvenance>
   stakePools(filter?: { id: StakePoolId }[], includeStake?: boolean): ReturnType<typeof stakePools>
+  stakePoolsPerformances(): ReturnType<typeof stakePoolsPerformances>
   utxo(filter?: UtxoByOutputReferences | UtxoByAddresses): ReturnType<typeof utxo>
 }
 
@@ -188,11 +188,11 @@ export async function createLedgerStateQueryClient (
     rewardAccountSummaries (filter) {
       return rewardAccountSummaries(context, filter)
     },
-    rewardsProvenance () {
-      return rewardsProvenance(context)
-    },
     stakePools (filter, includeStake) {
       return stakePools(context, filter, includeStake)
+    },
+    stakePoolsPerformances () {
+      return stakePoolsPerformances(context)
     },
     utxo (filter) {
       return utxo(context, filter)

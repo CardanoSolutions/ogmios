@@ -67,9 +67,9 @@ import {
       scripts?: Schema.AnyStakeCredential[],
       keys?: Schema.AnyStakeCredential[]
     }) => LedgerStateQuery.rewardAccountSummaries(context, filters),
-    rewardsProvenance: () => LedgerStateQuery.rewardsProvenance(context),
     sizeOfMempool: () => MempoolMonitoring.sizeOfMempool(context),
     stakePools: () => LedgerStateQuery.stakePools(context),
+    stakePoolsPerformances: () => LedgerStateQuery.stakePoolsPerformances(context),
     submitTransaction: (
       bytes: string
     ) => TransactionSubmission.submitTransaction(context, bytes),

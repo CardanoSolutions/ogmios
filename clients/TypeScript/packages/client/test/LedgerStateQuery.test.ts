@@ -297,9 +297,9 @@ describe('Local state queries', () => {
         }
       })
     })
-    describe('rewardsProvenance', () => {
-      it('fetches rewards provenance for the ongoing epoch (new)', async () => {
-        const provenance = await LedgerStateQuery.rewardsProvenance(context)
+    describe('stakePoolsPerformances', () => {
+      it('fetches pools performance for the ongoing epoch (new)', async () => {
+        const provenance = await LedgerStateQuery.stakePoolsPerformances(context)
         expect(provenance).toBeDefined()
       })
     })
