@@ -34,6 +34,7 @@ info:
       - [ledgerState/rewardAccountSummaries](#operation-publish-/?QueryLedgerStateRewardAccountSummaries)
       - [ledgerState/rewardsProvenance](#operation-publish-/?QueryLedgerStateRewardsProvenance)
       - [ledgerState/stakePools](#operation-publish-/?QueryLedgerStateStakePools)
+      - [ledgerState/stakePoolsPerformances](#operation-publish-/?QueryLedgerStateStakePoolsPerformances)
       - [ledgerState/tip](#operation-publish-/?QueryLedgerStateTip)
       - [ledgerState/treasuryAndReserves](#operation-publish-/?QueryLedgerStateTreasuryAndReserves)
       - [ledgerState/utxo](#operation-publish-/?QueryLedgerStateUtxo)
@@ -476,6 +477,20 @@ channels:
         oneOf:
           - $ref: "#/components/messages/QueryLedgerStateStakePoolsResponse"
 
+  /?QueryLedgerStateStakePoolsPerformances:
+    description: |
+      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
+    publish:
+      operationId: QueryLedgerStateStakePoolsPerformances
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateStakePoolsPerformances"
+    subscribe:
+      operationId: QueryLedgerStateStakePoolsPerformancesResponse
+      message:
+        oneOf:
+          - $ref: "#/components/messages/QueryLedgerStateStakePoolsPerformancesResponse"
+
   /?QueryLedgerStateTip:
     description: |
       <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
@@ -842,6 +857,14 @@ components:
       payload:
         $ref: "/ogmios.json#/properties/QueryLedgerStateStakePools"
 
+    QueryLedgerStateStakePoolsPerformances:
+      title: QueryLedgerStateStakePoolsPerformances
+      name: "since v6.13.0"
+      description: |
+        Query details about pools performances indicators for the ongoing epoch.
+      payload:
+        $ref: "/ogmios.json#/properties/QueryLedgerStateStakePoolsPerformances"
+
     QueryLedgerStateTip:
       title: QueryLedgerStateTip
       name: "since v6.0.0"
@@ -1005,6 +1028,12 @@ components:
       name: "since v6.0.0"
       payload:
         $ref: "/ogmios.json#/properties/QueryLedgerStateStakePoolsResponse"
+
+    QueryLedgerStateStakePoolsPerformancesResponse:
+      title: QueryLedgerStateStakePoolsPerformancesResponse
+      name: "since v6.13.0"
+      payload:
+        $ref: "/ogmios.json#/properties/QueryLedgerStateStakePoolsPerformancesResponse"
 
     QueryLedgerStateTipResponse:
       title: QueryLedgerStateTipResponse

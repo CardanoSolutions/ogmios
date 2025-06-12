@@ -28,6 +28,7 @@
   , "QueryLedgerStateRewardAccountSummaries", "QueryLedgerStateRewardAccountSummariesResponse"
   , "QueryLedgerStateRewardsProvenance", "QueryLedgerStateRewardsProvenanceResponse"
   , "QueryLedgerStateStakePools", "QueryLedgerStateStakePoolsResponse"
+  , "QueryLedgerStateStakePoolsPerformances", "QueryLedgerStateStakePoolsPerformancesResponse"
   , "QueryLedgerStateTip", "QueryLedgerStateTipResponse"
   , "QueryLedgerStateTreasuryAndReserves", "QueryLedgerStateTreasuryAndReservesResponse"
   , "QueryLedgerStateUtxo", "QueryLedgerStateUtxoResponse"
@@ -689,6 +690,7 @@
           , "queryLedgerState/rewardAccountSummaries"
           , "queryLedgerState/rewardsProvenance"
           , "queryLedgerState/stakePools"
+          , "queryLedgerState/stakePoolsPerformances"
           , "queryLedgerState/utxo"
           , "queryLedgerState/tip"
           , "queryLedgerState/treasuryAndReserves"
@@ -740,6 +742,7 @@
           , "queryLedgerState/rewardAccountSummaries"
           , "queryLedgerState/rewardsProvenance"
           , "queryLedgerState/stakePools"
+          , "queryLedgerState/stakePoolsPerformances"
           , "queryLedgerState/utxo"
           , "queryLedgerState/tip"
           , "queryLedgerState/treasuryAndReserves"
@@ -790,6 +793,7 @@
           , "queryLedgerState/rewardAccountSummaries"
           , "queryLedgerState/rewardsProvenance"
           , "queryLedgerState/stakePools"
+          , "queryLedgerState/stakePoolsPerformances"
           , "queryLedgerState/utxo"
           , "queryLedgerState/tip"
           , "queryLedgerState/treasuryAndReserves"
@@ -1703,6 +1707,56 @@
             }
           , "result":
             { "$ref": "ogmios.json#/definitions/RewardsProvenance"
+            }
+          , "id":
+            { "description": "Any value that was set by a client request in the 'id' field."
+            }
+          }
+        }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
+      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
+      ]
+    }
+
+  , "QueryLedgerStateStakePoolsPerformances":
+    { "title": "QueryLedgerStateStakePoolsPerformances"
+    , "description": "Query details about pools performances indicators for the ongoing epoch."
+    , "type": "object"
+    , "required": [ "jsonrpc", "method" ]
+    , "additionalProperties": false
+    , "properties":
+      { "jsonrpc":
+        { "type": "string"
+        , "enum": [ "2.0" ]
+        }
+      , "method":
+        { "type": "string"
+        , "enum": [ "queryLedgerState/stakePoolsPerformances" ]
+        }
+      , "id":
+        { "description": "An arbitrary JSON value that will be mirrored back in the response."
+        }
+      }
+    }
+
+  , "QueryLedgerStateStakePoolsPerformancesResponse":
+    { "oneOf":
+      [ { "title": "QueryLedgerStateStakePoolsPerformancesResponse"
+        , "type": "object"
+        , "required": [ "jsonrpc", "method", "result" ]
+        , "additionalProperties": false
+        , "properties":
+          { "jsonrpc":
+            { "type": "string"
+            , "enum": [ "2.0" ]
+            }
+          , "method":
+            { "type": "string"
+            , "enum": [ "queryLedgerState/stakePoolsPerformances" ]
+            }
+          , "result":
+            { "$ref": "ogmios.json#/definitions/StakePoolsPerformances"
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -2919,6 +2973,46 @@
     }
 
   , "RewardsProvenance":
+    { "type": "object"
+    , "additionalProperties": false
+    , "required": [ "totalStake", "activeStake", "fees", "incentives", "treasuryTax", "totalRewards", "efficiency", "stakePools" ]
+    , "properties":
+      { "totalStake": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "activeStake": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "fees": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "incentives": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "treasuryTax": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "totalRewards": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+      , "efficiency": { "$ref": "cardano.json#/definitions/Ratio" }
+      , "stakePools":
+        { "type": "object"
+        , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
+        , "additionalProperties":
+          { "title": "StakePoolRewardsProvenance"
+          , "type": "object"
+          , "additionalProperties": false
+          , "required": [ "relativeStake", "blocksMade", "totalRewards", "leaderReward", "delegators" ]
+          , "properties":
+            { "relativeStake": { "$ref": "cardano.json#/definitions/Ratio" }
+            , "blocksMade": { "$ref": "cardano.json#/definitions/UInt32" }
+            , "totalRewards": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+            , "leaderReward": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+            , "delegators":
+              { "title": "Delegator"
+              , "type": "array"
+              , "items":
+                { "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
+                , "credential": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                , "stake": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+  , "StakePoolsPerformances":
     { "type": "object"
     , "description": "Details about how rewards are calculated for the ongoing epoch."
     , "additionalProperties": false
