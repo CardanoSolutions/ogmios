@@ -102,7 +102,7 @@ describe('Local state queries', () => {
       const rewardAccountSummaries = await client.rewardAccountSummaries({
         keys: ['91a1b46bacf302e91a8cba443073f7bc84cc74701a338c111e8c6591']
       })
-      expect(Object.keys(rewardAccountSummaries).length).toBe(1)
+      expect(rewardAccountSummaries.length).toBe(1)
 
       const bound = await client.eraStart()
       expect(bound.slot).toBeDefined()
@@ -197,7 +197,9 @@ describe('Local state queries', () => {
       it('fetches the current delegate and rewards for given stake key hashes', async () => {
         const keys = ['91a1b46bacf302e91a8cba443073f7bc84cc74701a338c111e8c6591'] as DigestBlake2B224[]
         const result = await LedgerStateQuery.rewardAccountSummaries(context, { keys })
-        const item = result[keys[0]] as RewardAccountSummary
+        const item = result[0] as RewardAccountSummary
+        expect(item).toHaveProperty('from')
+        expect(item).toHaveProperty('credential')
         expect(item).toHaveProperty('stakePool')
         expect(item).toHaveProperty('rewards')
         expect(item).toHaveProperty('deposit')

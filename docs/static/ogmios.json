@@ -1654,9 +1654,8 @@
             }
           , "result":
             { "title": "RewardAccountSummaries"
-            , "type": "object"
-            , "additionalProperties": { "$ref": "ogmios.json#/definitions/RewardAccountSummary" }
-            , "propertyNames": { "pattern": "^[0-9]+|[0-9a-f]+$" }
+            , "type": "array"
+            , "items": { "$ref": "ogmios.json#/definitions/RewardAccountSummary" }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."
@@ -2941,9 +2940,15 @@
   , "RewardAccountSummary":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "rewards", "deposit" ]
+    , "required": [ "from", "credential", "rewards", "deposit" ]
     , "properties":
-      { "stakePool":
+      { "from":
+        { "$ref": "cardano.json#/definitions/CredentialOrigin"
+        }
+      , "credential":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+        }
+      , "stakePool":
         { "type": "object"
         , "additionalProperties": false
         , "required": [ "id" ]
@@ -2956,15 +2961,21 @@
       , "deposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       }
     , "examples":
-      [ { "stakePool": "pool1kchver88u3kygsak8wgll7htr8uxn5v35lfrsyy842nkscrzyvj"
+      [ { "from": "verificationKey"
+        , "credential": "b62ecc8ce7e46c4443b63b91fffaeb19f869d191a7d2381087aaa768"
+        , "stakePool": "pool1kchver88u3kygsak8wgll7htr8uxn5v35lfrsyy842nkscrzyvj"
         , "rewards": { "ada": { "lovelace": 219558722 } }
         , "deposit": { "ada": { "lovelace": 2000000 } }
         }
-      , { "delegateRepresentative": { "type": "abstain" }
+      , { "from": "script"
+        , "credential": "81087aaa768b62ecc8ce7e46c4443b63b91fffaeb19f869d191a7d23"
+        , "delegateRepresentative": { "type": "abstain" }
         , "rewards": { "ada": { "lovelace": 0 } }
         , "deposit": { "ada": { "lovelace": 2000000 } }
         }
-      , { "stakePool": "pool1kchver88u3kygsak8wgll7htr8uxn5v35lfrsyy842nkscrzyvj"
+      , { "from": "script"
+        , "credential": "cc8ce7e46c4443b63b91fffaeb19f869d191a7d2381087aaa768b62e"
+        , "stakePool": "pool1kchver88u3kygsak8wgll7htr8uxn5v35lfrsyy842nkscrzyvj"
         , "delegateRepresentative": { "type": "abstain" }
         , "rewards": { "ada": { "lovelace": 12462615 } }
         , "deposit": { "ada": { "lovelace": 2000000 } }

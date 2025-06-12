@@ -569,10 +569,10 @@ encodeRewardAccountSummaries
     => RewardAccountSummaries crypto
     -> Json
 encodeRewardAccountSummaries =
-    encodeMap
-        Shelley.stringifyCredential
-        (\summary -> encodeObject
-            ( "stakePool" .=? OmitWhenNothing
+    encodeMapAsList
+        (\k summary -> encodeObject
+            ( Shelley.encodeCredential "credential" k
+           <> "stakePool" .=? OmitWhenNothing
                 (encodeSingleton "id" . Shelley.encodePoolId) (poolDelegate summary)
            <> "delegateRepresentative" .=? OmitWhenNothing
                (encodeObject . Conway.encodeDRep) (drepDelegate summary)
@@ -970,9 +970,16 @@ parseQueryLedgerDelegateRepresentatives genResult =
                         )
                     )
                     (mergeAll . Map.mapKeys Ledger.DRepCredential)
-                    (eraMismatchOrResult (encodeMapAsList encodeDRepSummary))
+                    (eraMismatchOrResult (encodeMapAsList encodeDRepSummary . withDefaultProtocolDreps))
                     genResult
   where
+    withDefaultProtocolDreps
+        :: Map (Ledger.DRep crypto) (DRepSummary  crypto)
+        -> Map (Ledger.DRep crypto) (DRepSummary  crypto)
+    withDefaultProtocolDreps
+        = Map.alter (<|> Just (AlwaysAbstain mempty)) Ledger.DRepAlwaysAbstain
+        . Map.alter (<|> Just (AlwaysNoConfidence mempty)) Ledger.DRepAlwaysNoConfidence
+
     mergeAll
         :: Map (Ledger.DRep crypto) (Ledger.DRepState crypto)
         -> Map (Ledger.DRep crypto) Coin

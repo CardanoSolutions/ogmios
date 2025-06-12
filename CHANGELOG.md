@@ -19,6 +19,8 @@ math: true
 
 - **⚠️ BREAKING-CHANGE ⚠️**: `queryLedgerState/rewardsProvenance` has been renamed to `queryLedgerState/stakePoolsPerformances`. The schema remains otherwise unchanged.
 
+- **⚠️ BREAKING-CHANGE ⚠️**: `queryLedgerState/rewardAccountSummaries` now returns a list of results instead of a map. While this is technically a breaking change, it is necessary to fix scenarios where a credential exist as both script and verification key and would therefore lead to conflict in the key space. The response is otherwise similar to its previous form.
+
 #### Removed
 
 N/A

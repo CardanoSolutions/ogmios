@@ -288,6 +288,7 @@ export type Bech32StakeVkhScript = string;
  * A stake address (a.k.a reward account)
  */
 export type StakeAddress = string;
+export type RewardAccountSummaries = RewardAccountSummary[];
 export type Delegator = {
   [k: string]: unknown;
 }[];
@@ -2843,10 +2844,9 @@ export interface QueryLedgerStateRewardAccountSummariesResponse {
   result: RewardAccountSummaries;
   id?: unknown;
 }
-export interface RewardAccountSummaries {
-  [k: string]: RewardAccountSummary;
-}
 export interface RewardAccountSummary {
+  from: CredentialOrigin;
+  credential: DigestBlake2B224;
   stakePool?: {
     id: StakePoolId;
   };
