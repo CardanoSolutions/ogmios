@@ -288,6 +288,9 @@ export type Bech32StakeVkhScript = string;
  * A stake address (a.k.a reward account)
  */
 export type StakeAddress = string;
+export type Delegator = {
+  [k: string]: unknown;
+}[];
 export type EraWithGenesis = "byron" | "shelley" | "alonzo" | "conway";
 export type UtcTime = string;
 /**
@@ -414,6 +417,12 @@ export interface Ogmios {
   QueryLedgerStateRewardsProvenance: QueryLedgerStateRewardsProvenance;
   QueryLedgerStateRewardsProvenanceResponse:
     | QueryLedgerStateRewardsProvenanceResponse
+    | QueryLedgerStateEraMismatch
+    | QueryLedgerStateUnavailableInCurrentEra
+    | QueryLedgerStateAcquiredExpired;
+  QueryLedgerStateStakePoolsPerformances: QueryLedgerStateStakePoolsPerformances;
+  QueryLedgerStateStakePoolsPerformancesResponse:
+    | QueryLedgerStateStakePoolsPerformancesResponse
     | QueryLedgerStateEraMismatch
     | QueryLedgerStateUnavailableInCurrentEra
     | QueryLedgerStateAcquiredExpired;
@@ -2305,6 +2314,7 @@ export interface QueryLedgerStateEraMismatch {
     | "queryLedgerState/rewardAccountSummaries"
     | "queryLedgerState/rewardsProvenance"
     | "queryLedgerState/stakePools"
+    | "queryLedgerState/stakePoolsPerformances"
     | "queryLedgerState/utxo"
     | "queryLedgerState/tip"
     | "queryLedgerState/treasuryAndReserves";
@@ -2337,6 +2347,7 @@ export interface QueryLedgerStateUnavailableInCurrentEra {
     | "queryLedgerState/rewardAccountSummaries"
     | "queryLedgerState/rewardsProvenance"
     | "queryLedgerState/stakePools"
+    | "queryLedgerState/stakePoolsPerformances"
     | "queryLedgerState/utxo"
     | "queryLedgerState/tip"
     | "queryLedgerState/treasuryAndReserves";
@@ -2368,6 +2379,7 @@ export interface QueryLedgerStateAcquiredExpired {
     | "queryLedgerState/rewardAccountSummaries"
     | "queryLedgerState/rewardsProvenance"
     | "queryLedgerState/stakePools"
+    | "queryLedgerState/stakePoolsPerformances"
     | "queryLedgerState/utxo"
     | "queryLedgerState/tip"
     | "queryLedgerState/treasuryAndReserves";
@@ -2494,17 +2506,23 @@ export interface DelegateRepresentativeAbstain1 {
   stake: ValueAdaOnly;
 }
 /**
- * Get a dump of the entire Cardano ledger state (base16-encoded CBOR) corresponding to the 'EpochState'. Use at your own risks.
+ * Get a dump of the entire Cardano ledger state (CBOR) corresponding to the 'NewEpochState'. Take some time.
  */
 export interface QueryLedgerStateDump {
   jsonrpc: "2.0";
   method: "queryLedgerState/dump";
+  params?: {
+    /**
+     * A filepath to dump the ledger state to disk, relative to the server's location.
+     */
+    to: string;
+  };
   id?: unknown;
 }
 export interface QueryLedgerStateDumpResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/dump";
-  result: string;
+  result: null;
   id?: unknown;
 }
 /**
@@ -2850,10 +2868,43 @@ export interface QueryLedgerStateRewardsProvenanceResponse {
   result: RewardsProvenance;
   id?: unknown;
 }
+export interface RewardsProvenance {
+  totalStake: ValueAdaOnly;
+  activeStake: ValueAdaOnly;
+  fees: ValueAdaOnly;
+  incentives: ValueAdaOnly;
+  treasuryTax: ValueAdaOnly;
+  totalRewards: ValueAdaOnly;
+  efficiency: Ratio;
+  stakePools: {
+    [k: string]: StakePoolRewardsProvenance;
+  };
+}
+export interface StakePoolRewardsProvenance {
+  relativeStake: Ratio;
+  blocksMade: UInt32;
+  totalRewards: ValueAdaOnly;
+  leaderReward: ValueAdaOnly;
+  delegators: Delegator;
+}
+/**
+ * Query details about pools performances indicators for the ongoing epoch.
+ */
+export interface QueryLedgerStateStakePoolsPerformances {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/stakePoolsPerformances";
+  id?: unknown;
+}
+export interface QueryLedgerStateStakePoolsPerformancesResponse {
+  jsonrpc: "2.0";
+  method: "queryLedgerState/stakePoolsPerformances";
+  result: StakePoolsPerformances;
+  id?: unknown;
+}
 /**
  * Details about how rewards are calculated for the ongoing epoch.
  */
-export interface RewardsProvenance {
+export interface StakePoolsPerformances {
   /**
    * Desired number of stake pools.
    */
