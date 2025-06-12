@@ -58,6 +58,7 @@ import Ogmios.Data.Json.Query
     , GenesisConfig
     , Interpreter
     , PoolParams
+    , PoolRewardsInfo (..)
     , QueryResult
     , RewardAccountSummaries
     , RewardsProvenance (..)
@@ -431,7 +432,21 @@ genRewardsProvenance =
         <*> arbitrary
         <*> arbitrary
         <*> arbitrary
-        <*> reasonablySized arbitrary
+        <*> fmap fromList
+            ( reasonablySized $ listOf1 $
+                (,) <$> arbitrary
+                    <*> genPoolRewardsInfo
+            )
+
+genPoolRewardsInfo
+    :: forall  crypto. (crypto ~ StandardCrypto)
+    => Gen (PoolRewardsInfo crypto)
+genPoolRewardsInfo = PoolRewardsInfo
+    <$> arbitrary
+    <*> arbitrary
+    <*> arbitrary
+    <*> arbitrary
+    <*> arbitrary
 
 genStakePoolsPerformances
     :: forall crypto. (crypto ~ StandardCrypto)

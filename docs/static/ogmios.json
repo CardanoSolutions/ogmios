@@ -2975,7 +2975,7 @@
   , "RewardsProvenance":
     { "type": "object"
     , "additionalProperties": false
-    , "required": [ "totalStake", "activeStake", "fees", "incentives", "treasuryTax", "totalRewards", "efficiency", "pools" ]
+    , "required": [ "totalStake", "activeStake", "fees", "incentives", "treasuryTax", "totalRewards", "efficiency", "stakePools" ]
     , "properties":
       { "totalStake": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "activeStake": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
@@ -2984,19 +2984,28 @@
       , "treasuryTax": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "totalRewards": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
       , "efficiency": { "$ref": "cardano.json#/definitions/Ratio" }
-      , "pools":
+      , "stakePools":
         { "type": "object"
         , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
         , "additionalProperties":
           { "title": "StakePoolRewardsProvenance"
           , "type": "object"
           , "additionalProperties": false
-          , "required": [ "relativeStake", "blocksMade", "totalRewards", "leaderReward"]
+          , "required": [ "relativeStake", "blocksMade", "totalRewards", "leaderReward", "delegators" ]
           , "properties":
             { "relativeStake": { "$ref": "cardano.json#/definitions/Ratio" }
             , "blocksMade": { "$ref": "cardano.json#/definitions/UInt32" }
             , "totalRewards": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
             , "leaderReward": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+            , "delegators":
+              { "title": "Delegator"
+              , "type": "array"
+              , "items":
+                { "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
+                , "credential": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                , "stake": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+                }
+              }
             }
           }
         }

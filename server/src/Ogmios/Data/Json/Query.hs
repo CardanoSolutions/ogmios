@@ -24,6 +24,7 @@ module Ogmios.Data.Json.Query
     , GenesisConfig
     , Interpreter
     , Ledger.PoolParams
+    , PoolRewardsInfo (..)
     , RewardAccountSummaries
     , RewardAccountSummary (..)
     , RewardAccounts
@@ -157,9 +158,7 @@ import Cardano.Ledger.Shelley.LedgerState
     ( AccountState (..)
     )
 import Cardano.Ledger.Shelley.Rewards
-    ( LeaderOnlyReward (..)
-    , PoolRewardInfo (..)
-    , StakeShare (..)
+    ( StakeShare (..)
     )
 import Cardano.Network.Protocol.NodeToClient
     ( GenTx
@@ -199,7 +198,8 @@ import Ogmios.Data.EraTranslation
     , Upgrade (..)
     )
 import Ogmios.Data.Ledger.Rewards
-    ( RewardsProvenance (..)
+    ( PoolRewardsInfo (..)
+    , RewardsProvenance (..)
     , newRewardsProvenance
     )
 import Ouroboros.Consensus.BlockchainTime
@@ -272,9 +272,6 @@ import Ouroboros.Network.Block
     )
 import Ouroboros.Network.Point
     ( Block (..)
-    )
-import PlutusPrelude
-    ( Default (def)
     )
 
 import qualified Cardano.Ledger.Binary.Coders as Binary
@@ -775,15 +772,19 @@ encodeRewardsProvenance rp =
         <> "treasuryTax" .= encodeCoin (Coin $ deltaT1 rp)
         <> "totalRewards" .= encodeCoin (Coin $ rPot rp)
         <> "efficiency" .= encodeRational (eta rp)
-        <> "pools" .= encodeMap Shelley.stringifyPoolId encodePoolRewardInfo (pools rp)
+        <> "stakePools" .= encodeMap Shelley.stringifyPoolId encodePoolRewardInfo (pools rp)
     )
   where
-    encodePoolRewardInfo i =
+    encodePoolRewardInfo i = encodeObject $
         "relativeStake" .= encodeRational (unStakeShare $ poolRelativeStake i) <>
         "blocksMade" .= encodeNatural (poolBlocks i) <>
         "totalRewards" .= encodeCoin (poolPot i) <>
-        "leaderReward" .= encodeCoin (lRewardAmount $ poolLeaderReward i)
-        & encodeObject
+        "leaderReward" .= encodeCoin (poolLeaderReward i) <>
+        "delegators" .= encodeMapAsList
+            (\k v -> encodeObject $
+                Shelley.encodeCredential "credential" k <>
+                "stake" .= encodeCoin v
+            ) (poolDelegators i)
 
 -- Partially deserialise the NewEpochState, skipping the UTxO. This should
 -- allow to reduce the in-memory footprint of fetching the new epoch state
@@ -832,18 +833,17 @@ deserialisePartialNewEpochState (Serialised bytes) =
     decodePartialLedgerState =
         Binary.decodeRecordNamedT "LedgerState" (const 2) $ do
             cert <- Binary.decSharePlusCBOR
-            _utxo :: Ledger.UTxOState era <- Binary.decShareLensCBOR (position @1)
-            pure $ Ledger.LedgerState emptyUTxOState cert
-      where
-        emptyUTxOState :: Ledger.UTxOState era
-        emptyUTxOState = Ledger.UTxOState
-            { Ledger.utxosUtxo = mempty
-            , Ledger.utxosDeposited = mempty
-            , Ledger.utxosFees = mempty
-            , Ledger.utxosGovState = def
-            , Ledger.utxosStakeDistr = mempty
-            , Ledger.utxosDonation = mempty
-            }
+            utxo <- Binary.decShareLensCBOR (position @1)
+            pure $ Ledger.LedgerState
+                Ledger.UTxOState
+                    { Ledger.utxosUtxo = mempty
+                    , Ledger.utxosDeposited = Ledger.utxosDeposited utxo
+                    , Ledger.utxosFees = Ledger.utxosFees utxo
+                    , Ledger.utxosGovState = Ledger.utxosGovState utxo
+                    , Ledger.utxosStakeDistr = Ledger.utxosStakeDistr utxo
+                    , Ledger.utxosDonation = Ledger.utxosDonation utxo
+                    }
+                cert
 
 encodeSafeZone
     :: SafeZone
@@ -2005,7 +2005,7 @@ parseQueryLedgerStakePools genResultNoStake genResult =
     mergeDistrAndParams =
         Map.merge
            Map.dropMissing
-           Map.dropMissing
+           (Map.mapMissing $ \_ params -> (params, SJust mempty))
            (Map.zipWithMatched $ \_ distr params -> (params, SJust distr))
 
     getFilteredStakePools includeStake ids
@@ -2063,10 +2063,15 @@ parseQueryLedgerStakePools genResultNoStake genResult =
             SomeShelleyEra ShelleyBasedEraBabbage ->
                 Nothing
             SomeShelleyEra ShelleyBasedEraConway ->
-                Just $ SomeCompoundQuery
-                    (LSQ.BlockQuery (QueryIfCurrentConway (GetSPOStakeDistr Set.empty)))
-                    (LSQ.BlockQuery . QueryIfCurrentConway . GetStakePoolParams . Map.keysSet)
-                    mergeDistrAndParams
+                Just $ SomeCompound2Query
+                    (LSQ.BlockQuery (QueryIfCurrentConway GetStakePools))
+                    (\_ -> LSQ.BlockQuery (QueryIfCurrentConway (GetSPOStakeDistr Set.empty)))
+                    -- NOTE: We need the extra 'GetStakePools' query here because:
+                    --
+                    -- 1. We cannot get all params for all stake pools without explicitly listing them.
+                    -- 2. The key set from SPOStakeDistr only contains pools that have delegators; so we're missing quite a lot of keys.
+                    (\allPools _ -> LSQ.BlockQuery (QueryIfCurrentConway (GetStakePoolParams allPools)))
+                    (const mergeDistrAndParams)
                     (eraMismatchOrResult encodeStakePools)
                     genResult
 
