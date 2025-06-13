@@ -22,25 +22,15 @@ import Ogmios.Prelude
 import Control.Exception
     ( evaluate
     )
-import Control.Monad.Class.MonadTimer
-    ( MonadDelay
-    )
 import Control.Monad.IOSim
     ( IOSim
     , runSimOrThrow
     )
 import Ogmios.Control.Exception
-    ( MonadCatch (..)
-    , MonadThrow (..)
+    ( MonadThrow (..)
     )
 import Ogmios.Control.MonadAsync
     ( race
-    )
-import Ogmios.Control.MonadDisk
-    ( MonadDisk
-    )
-import Ogmios.Control.MonadLog
-    ( MonadLog
     )
 import Ogmios.Control.MonadOuroboros
     ( MonadOuroboros
