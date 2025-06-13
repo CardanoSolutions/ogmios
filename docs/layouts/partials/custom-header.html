@@ -1,19 +1,25 @@
 <style type="text/css">
-  table.clients img {
-    width: 96px !important;
-    height: 96px !important;
+  nav.clients {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
   }
 
-  @media(max-width: 900px) {
-    table.clients tr {
-      display: flex;
-      flex-direction: column;
-    }
+  nav.clients a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
 
-    table.clients img {
-      width: 128px !important;
-      height: 128px !important;
-    }
+  nav.clients img {
+    width: 76px !important;
+    min-width: 76px !important;
+    height: auto !important;
+    margin: 0.5rem !important;
   }
 
   table.users {

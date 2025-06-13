@@ -15,7 +15,9 @@
 
 | Ogmios        | Cardano-node (mainnet, preview, preprod) |
 | ---           | ---                                      |
-| **`v6.11.*`** | **`10.1.2`, `10.1.3`, `10.1.4`**         |
+| **`v6.13.*`** | **`10.1.2`, `10.1.3`, `10.1.4`**         |
+| `v6.12.*`     | `10.1.2`, `10.1.3`, `10.1.4`             |
+| `v6.11.*`     | `10.1.2`, `10.1.3`, `10.1.4`             |
 | `v6.10.*`     | `10.1.2`, `10.1.3`, `10.1.4`             |
 | `v6.9.*`      | `10.1.2`, `10.1.3`                       |
 | `v6.8.*`      | `9.2.0`, `9.1.1`                         |
@@ -108,16 +110,23 @@ Finally, [discussions 💡][discussions] contains ongoing discussions regarding 
 
 Ogmios provides a language-agnostic API which can be implemented using any WebSocket or HTTP client. If you prefer using a SDK in your favorite language, see below the available clients (_maintained by the community_):
 
-<table align="center"><thead><tr>
-<td align="center"><img height=72 width=72 src=".github/clients/typescript.png" alt="Logo:TypeScript"><br/><a href="https://ogmios.dev/typescript/api/modules/_cardano_ogmios_client.html"><strong>TypeScript</strong></a></td>
-<td align="center"><img height=72 width=72 src=".github/clients/go.png" alt="Logo:Go"><br/><a href="https://github.com/savaki/ogmigo/#readme"><strong>Go</strong></a></td>
-<td align="center"><img height=72 width=72 src=".github/clients/kotlin.png" alt="Logo:Kotlin"><br/><a href="https://github.com/projectNEWM/kogmios#readme"><strong>Kotlin</strong></a></td>
-<td align="center"><img height=72 width=72 src=".github/clients/java.png" alt="Logo:Java"><br/><a href="https://github.com/adabox-aio/ogmios-java-client.git#readme"><strong>Java</strong></a></td>
-<td align="center"><img height=72 width=72 src=".github/clients/python.png" alt="Logo:Python"><br/><a href="https://ogmios-python.readthedocs.io/en/latest/examples/index.html"><strong>Python</Strong></a></td>
-<td align="center"><img height=72 width=72 src=".github/clients/elixir.png" alt="Logo:Python"><br/><a href="https://github.com/wowica/xogmios"><strong>Elixir</Strong></a></td>
-<td align="center"><img height=72 width=72 src=".github/clients/cpp.png" alt="Logo:C++"><br/><a href="https://gitlab.com/viperscience/libogmios"><strong>C++</Strong></a></td>
-<td align="center"><img height=72 width=72 src=".github/clients/csharp.png" alt="Logo:CSharp"><br/><a href="https://github.com/ItsDaveB/OgmiosDotnet"><strong>C#</Strong></a></td>
-</tr><thead></table>
+<table align="center"><thead>
+<tr>
+<td align="center"><a href="https://github.com/cardanosolutions/ogmios-mdk?tab=readme-ov-file#ogmios---minimal-development-kit"><img height=72 width=72 src="docs/static/images/clients/javascript.svg" alt="Logo:JavaScript"><br/><strong>JavaScript</strong></a></td>
+<td align="center"><a href="https://ogmios.dev/typescript/api/modules/_cardano_ogmios_client.html"><img height=72 width=72 src="docs/static/images/clients/typescript.svg" alt="Logo:TypeScript"><br/><strong>TypeScript</strong></a></td>
+<td align="center"><a href="https://github.com/SundaeSwap-finance/ogmigo/#readme"><img height=72 width=72 src="docs/static/images/clients/go.png" alt="Logo:Go"><br/><strong>Go</strong></a></td>
+</tr>
+<tr>
+<td align="center"><a href="https://github.com/projectNEWM/kogmios#readme"><img height=72 width=72 src="docs/static/images/clients/kotlin.png" alt="Logo:Kotlin"><br/><strong>Kotlin</strong></a></td>
+<td align="center"><a href="https://github.com/adabox-aio/ogmios-java-client.git#readme"><img height=72 width=72 src="docs/static/images/clients/java.png" alt="Logo:Java"><br/><strong>Java</strong></a></td>
+<td align="center"><a href="https://ogmios-python.readthedocs.io/en/latest/examples/index.html"><img height=72 width=72 src="docs/static/images/clients/python.png" alt="Logo:Python"><br/><strong>Python</strong></a></td>
+<tr>
+</tr>
+<td align="center"><a href="https://github.com/wowica/xogmios"><img height=72 width=72 src="docs/static/images/clients/elixir.png" alt="Logo:Python"><br/><strong>Elixir</strong></a></td>
+<td align="center"><a href="https://gitlab.com/viperscience/libogmios"><img height=72 width=72 src="docs/static/images/clients/cpp.png" alt="Logo:C++"><br/><strong>C++</strong></a></td>
+<td align="center"><a href="https://github.com/ItsDaveB/OgmiosDotnet"><img height=72 width=72 src="docs/static/images/clients/csharp.png" alt="Logo:CSharp"><br/><strong>C#</strong></a></td>
+</tr>
+<thead></table>
 
 ## Sponsors
 
