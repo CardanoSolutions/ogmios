@@ -246,24 +246,73 @@ paths:
         content:
           "application/json;charset=utf-8":
             schema:
-              type: object
-              description: |
-                A JSON-RPC request matching the [WebSocket API](../api), as POST data with `application/json` content-type. For example:
-
-                ```json
-                {
-                  "jsonrpc": "2.0",
-                  "method": "queryLedgerState/constitution"
-                }
-                ```
+              oneOf:
+                - title: Local Tx Submission
+                  oneOf:
+                    - $ref: "/ogmios.json#/properties/SubmitTransaction"
+                    - $ref: "/ogmios.json#/properties/EvaluateTransaction"
+                - title: Local State Query
+                  oneOf:
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateConstitution"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateConstitutionalCommittee"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateDump"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateDelegateRepresentatives"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateEpoch"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateEraStart"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateEraSummaries"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateGovernanceProposals"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateLiveStakeDistribution"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateNonces"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateOperationalCertificates"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateProjectedRewards"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateProposedProtocolParameters"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateProtocolParameters"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateRewardAccountSummaries"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateStakePools"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateStakePoolsPerformances"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateTip"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateTreasuryAndReserves"
+                    - $ref: "/ogmios.json#/properties/QueryLedgerStateUtxo"
+                    - $ref: "/ogmios.json#/properties/QueryNetworkBlockHeight"
+                    - $ref: "/ogmios.json#/properties/QueryNetworkGenesisConfiguration"
+                    - $ref: "/ogmios.json#/properties/QueryNetworkStartTime"
+                    - $ref: "/ogmios.json#/properties/QueryNetworkTip"
       responses:
         200:
           content:
             "application/json;charset=utf-8":
               schema:
-                type: object
-                description: |
-                  A JSON-RPC response matching the [WebSocket API](../api).
+                oneOf:
+                  - title: Local Tx Submission
+                    oneOf:
+                      - $ref: "/ogmios.json#/properties/SubmitTransactionResponse"
+                      - $ref: "/ogmios.json#/properties/EvaluateTransactionResponse"
+                  - title: Local State Query
+                    oneOf:
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateConstitutionResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateConstitutionalCommitteeResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateDumpResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateDelegateRepresentativesResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateEpochResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateEraStartResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateEraSummariesResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateGovernanceProposalsResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateLiveStakeDistributionResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateNoncesResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateOperationalCertificatesResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateProjectedRewardsResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateProposedProtocolParametersResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateProtocolParametersResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateRewardAccountSummariesResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateStakePoolsResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateStakePoolsPerformancesResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateTipResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateTreasuryAndReservesResponse"
+                      - $ref: "/ogmios.json#/properties/QueryLedgerStateUtxoResponse"
+                      - $ref: "/ogmios.json#/properties/QueryNetworkBlockHeightResponse"
+                      - $ref: "/ogmios.json#/properties/QueryNetworkGenesisConfigurationResponse"
+                      - $ref: "/ogmios.json#/properties/QueryNetworkStartTimeResponse"
+                      - $ref: "/ogmios.json#/properties/QueryNetworkTipResponse"
               examples:
                 rpc:
                   value:
