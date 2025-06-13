@@ -613,9 +613,9 @@ encodePredicateFailure reject = \case
     IncompleteWithdrawals { withdrawals } ->
         reject (predicateFailureCode 41)
             "The transaction contains incomplete or invalid rewards withdrawals. When present, \
-            \rewards withdrawals must consume rewards in full, there cannot be any leftover. The \
-            \field 'data.incompleteWithdrawals' contains a map of withdrawals and their current \
-            \rewards balance."
+            \rewards withdrawals must consume rewards in full, there cannot be any leftover. You \
+            \may also run into this error if the associatd stake credential is not registered. \
+            \The field 'data.incompleteWithdrawals' contains a map of culprit withdrawals."
             (pure $ encodeObject
                 ( "incompleteWithdrawals" .=
                     encodeMap Shelley.stringifyRewardAcnt encodeCoin withdrawals
