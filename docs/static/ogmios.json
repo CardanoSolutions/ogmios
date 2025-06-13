@@ -3973,7 +3973,7 @@
           }
         }
       , { "title": "SubmitTransactionFailure<IncompleteWithdrawals>"
-        , "description": "The transaction contains incomplete or invalid rewards withdrawals. When present, rewards withdrawals must consume rewards in full, there cannot be any leftover. The field 'data.incompleteWithdrawals' contains a map of withdrawals and their current rewards balance."
+        , "description": "The transaction contains incomplete or invalid rewards withdrawals. When present, rewards withdrawals must consume rewards in full, there cannot be any leftover. You may also run into this error if the associatd stake credential is not registered. The field 'data.incompleteWithdrawals' contains a map of culprit withdrawals."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
