@@ -283,7 +283,7 @@ connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
   where
     versions = combineVersions
         [ simpleSingletonVersions v vData (client v)
-        | v <- [ nodeToClientV_Latest .. nodeToClientV_Min ]
+        | v <- [ nodeToClientV_Min .. nodeToClientV_Latest ]
         ]
 
     tracers :: NetworkConnectTracers LocalAddress NodeToClientVersion
