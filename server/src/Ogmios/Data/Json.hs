@@ -85,8 +85,7 @@ import Ouroboros.Consensus.Byron.Ledger.Mempool
     ( encodeByronGenTx
     )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoBlock
-    , GenTx (..)
+    ( GenTx (..)
     , HardForkApplyTxErr (..)
     , HardForkBlock (..)
     , TxId (..)
@@ -153,13 +152,12 @@ encodeAcquireExpired = \case
         encodeText "Acquired point no longer exist."
 
 encodeBlock
-    :: forall crypto. (Era (ByronEra crypto))
-    => (MetadataFormat, IncludeCbor)
-    -> CardanoBlock crypto
+    :: (MetadataFormat, IncludeCbor)
+    -> CardanoBlock StandardCrypto
     -> Json
 encodeBlock opts = \case
     BlockByron blk ->
-        Byron.encodeABlockOrBoundary @crypto (snd opts) (byronBlockRaw blk)
+        Byron.encodeABlockOrBoundary (snd opts) (byronBlockRaw blk)
     BlockShelley blk ->
         Shelley.encodeBlock opts blk
     BlockAllegra blk ->
@@ -174,8 +172,7 @@ encodeBlock opts = \case
         Conway.encodeBlock opts blk
 
 encodeSubmitTransactionError
-    :: Crypto crypto
-    => (Rpc.FaultCode -> String -> Maybe Json -> Json)
+    :: (Rpc.FaultCode -> String -> Maybe Json -> Json)
     -> SubmitTransactionError (CardanoBlock crypto)
     -> Json
 encodeSubmitTransactionError reject = \case
@@ -243,10 +240,7 @@ encodeTip = \case
         & encodeObject
 
 encodeTx
-    :: forall crypto.
-        ( Crypto crypto
-        )
-    => (MetadataFormat, IncludeCbor)
+    :: (MetadataFormat, IncludeCbor)
     -> GenTx (CardanoBlock crypto)
     -> Json
 encodeTx opts = \case
@@ -266,8 +260,7 @@ encodeTx opts = \case
         error "encodeTx: unsupported Byron transaction."
 
 encodeGenTxId
-    :: Crypto crypto
-    => GenTxId (CardanoBlock crypto)
+    :: GenTxId (CardanoBlock crypto)
     -> Json
 encodeGenTxId = encodeObject . \case
     GenTxIdConway (ShelleyTxId x) ->

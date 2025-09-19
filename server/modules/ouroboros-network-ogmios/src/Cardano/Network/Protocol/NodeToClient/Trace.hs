@@ -26,10 +26,10 @@ import GHC.Generics
     ( Generic
     )
 import Network.Mux
-    ( WithMuxBearer (..)
+    ( WithBearer (..)
     )
 import Network.TypedProtocol.Codec
-    ( AnyMessageAndAgency (..)
+    ( AnyMessage (..)
     )
 import Ouroboros.Network.Driver.Simple
     ( TraceSendRecv (..)
@@ -57,7 +57,7 @@ type HandshakeTrace = TraceSendRecv (Handshake NodeToClientVersion Term)
 
 data TraceClient tx err
     = TrTxSubmission (TraceSendRecv (LocalTxSubmission tx err))
-    | TrHandshake (WithMuxBearer (ConnectionId LocalAddress) HandshakeTrace)
+    | TrHandshake (WithBearer (ConnectionId LocalAddress) HandshakeTrace)
     deriving (Generic, Show)
 
 encodeTraceClient
@@ -109,14 +109,14 @@ encodeTraceClient encodeTx encodeErr = \case
                 ]
 
     encodeTraceSendRecvHandshake
-        :: WithMuxBearer (ConnectionId LocalAddress) HandshakeTrace
+        :: WithBearer (ConnectionId LocalAddress) HandshakeTrace
         -> [Json.Pair]
     encodeTraceSendRecvHandshake = \case
-        WithMuxBearer _peerId (TraceSendMsg (AnyMessageAndAgency agency msg)) ->
+        WithBearer _peerId (TraceSendMsg (AnyMessageAndAgency agency msg)) ->
             [ "event" .= ("send" :: String)
             , "agency" .= show agency
             ] ++ encodeMsg msg
-        WithMuxBearer _peerId (TraceRecvMsg (AnyMessageAndAgency agency msg)) ->
+        WithBearer _peerId (TraceRecvMsg (AnyMessageAndAgency agency msg)) ->
             [ "event" .= ("receive" :: String)
             , "agency" .= show agency
             ] ++ encodeMsg msg

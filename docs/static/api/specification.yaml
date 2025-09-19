@@ -30,7 +30,6 @@ info:
       - [ledgerState/operationalCertificates](#operation-publish-/?QueryLedgerStateOperationalCertificates)
       - [ledgerState/projectedRewards](#operation-publish-/?QueryLedgerStateProjectedRewards)
       - [ledgerState/protocolParameters](#operation-publish-/?QueryLedgerStateProtocolParameters)
-      - [ledgerState/proposedProtocolParameters](#operation-publish-/?QueryLedgerStateProposedProtocolParameters)
       - [ledgerState/rewardAccountSummaries](#operation-publish-/?QueryLedgerStateRewardAccountSummaries)
       - [ledgerState/rewardsProvenance](#operation-publish-/?QueryLedgerStateRewardsProvenance)
       - [ledgerState/stakePools](#operation-publish-/?QueryLedgerStateStakePools)
@@ -420,20 +419,6 @@ channels:
       message:
         oneOf:
           - $ref: "#/components/messages/QueryLedgerStateProtocolParametersResponse"
-
-  /?QueryLedgerStateProposedProtocolParameters:
-    description: |
-      <p align="right"><a href="#asyncapi">Top ⬆️</a></p>
-    publish:
-      operationId: QueryLedgerStateProposedProtocolParameters
-      message:
-        oneOf:
-          - $ref: "#/components/messages/QueryLedgerStateProposedProtocolParameters"
-    subscribe:
-      operationId: QueryLedgerStateProposedProtocolParametersResponse
-      message:
-        oneOf:
-          - $ref: "#/components/messages/QueryLedgerStateProposedProtocolParametersResponse"
 
   /?QueryLedgerStateRewardAccountSummaries:
     description: |
@@ -825,14 +810,6 @@ components:
       payload:
         $ref: "/ogmios.json#/properties/QueryLedgerStateProtocolParameters"
 
-    QueryLedgerStateProposedProtocolParameters:
-      title: QueryLedgerStateProposedProtocolParameters
-      name: "since v6.0.0"
-      description: |
-        Query the last update proposal w.r.t. protocol parameters, if any.
-      payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateProposedProtocolParameters"
-
     QueryLedgerStateRewardAccountSummaries:
       title: QueryLedgerStateRewardAccountSummaries
       name: "since v6.0.0"
@@ -1004,12 +981,6 @@ components:
       name: "since v6.0.0"
       payload:
         $ref: "/ogmios.json#/properties/QueryLedgerStateProtocolParametersResponse"
-
-    QueryLedgerStateProposedProtocolParametersResponse:
-      title: QueryLedgerStateProposedProtocolParametersResponse
-      name: "since v6.0.0"
-      payload:
-        $ref: "/ogmios.json#/properties/QueryLedgerStateProposedProtocolParametersResponse"
 
     QueryLedgerStateRewardAccountSummariesResponse:
       title: QueryLedgerStateRewardAccountSummariesResponse

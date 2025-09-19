@@ -19,13 +19,13 @@ import qualified Cardano.Ledger.Api as Ledger
 import qualified Text.Show
 
 
-data EvaluateTransactionError crypto
-    = ScriptExecutionFailures (Map (ScriptPurposeIndexInAnyEra crypto) [TransactionScriptFailureInAnyEra crypto])
+data EvaluateTransactionError
+    = ScriptExecutionFailures (Map ScriptPurposeIndexInAnyEra [TransactionScriptFailureInAnyEra])
     | IncompatibleEra Text
     | UnsupportedEra Text
-    | OverlappingAdditionalUtxo (Set (TxIn crypto))
+    | OverlappingAdditionalUtxo (Set TxIn)
     | NodeTipTooOldErr NodeTipTooOldError
-    | CannotCreateEvaluationContext (ContextErrorInAnyEra crypto)
+    | CannotCreateEvaluationContext ContextErrorInAnyEra
 
 data NodeTipTooOldError = NodeTipTooOld
     { currentNodeEra :: Text
@@ -33,16 +33,16 @@ data NodeTipTooOldError = NodeTipTooOld
     }
     deriving (Show)
 
-deriving instance Crypto crypto => Show (EvaluateTransactionError crypto)
+deriving instance Show EvaluateTransactionError
 
-data TransactionScriptFailureInAnyEra crypto =
-    forall era. (Era (era crypto), EraCrypto (era crypto) ~ crypto)
+data TransactionScriptFailureInAnyEra =
+    forall era. (Era era)
     => TransactionScriptFailureInAnyEra
-        ( AlonzoBasedEra (era crypto)
-        , Ledger.TransactionScriptFailure (era crypto)
+        ( AlonzoBasedEra era
+        , Ledger.TransactionScriptFailure era
         )
 
-instance  Show (TransactionScriptFailureInAnyEra crypto) where
+instance  Show TransactionScriptFailureInAnyEra where
     show = \case
         TransactionScriptFailureInAnyEra (AlonzoBasedEraAlonzo, e) -> show e
         TransactionScriptFailureInAnyEra (AlonzoBasedEraBabbage, e) -> show e
@@ -54,8 +54,8 @@ instance  Show (TransactionScriptFailureInAnyEra crypto) where
 -- details.
 pickScriptFailure
     :: HasCallStack
-    => [TransactionScriptFailureInAnyEra crypto]
-    -> TransactionScriptFailureInAnyEra crypto
+    => [TransactionScriptFailureInAnyEra]
+    -> TransactionScriptFailureInAnyEra
 pickScriptFailure =
     head
     . fromMaybe (error "Empty list of script failures from the ledger!?")
@@ -63,7 +63,7 @@ pickScriptFailure =
     . sortOn scriptFailurePriority
 
 scriptFailurePriority
-    :: TransactionScriptFailureInAnyEra crypto
+    :: TransactionScriptFailureInAnyEra
     -> Word
 scriptFailurePriority = \case
     TransactionScriptFailureInAnyEra (_, Ledger.UnknownTxIn{}) -> 0

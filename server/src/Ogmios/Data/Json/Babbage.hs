@@ -18,9 +18,6 @@ import Cardano.Ledger.Api
 import Cardano.Ledger.Binary
     ( sizedValue
     )
-import Cardano.Ledger.Val
-    ( Val (..)
-    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
     )
@@ -59,10 +56,8 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 
 
 encodeBlock
-    :: ( Crypto crypto
-       )
-    => (MetadataFormat, IncludeCbor)
-    -> ShelleyBlock (Praos crypto) (BabbageEra crypto)
+    :: (MetadataFormat, IncludeCbor)
+    -> ShelleyBlock (Praos StandardCrypto) BabbageEra
     -> Json
 encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
@@ -78,8 +73,7 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         )
 
 encodeContextError
-    :: ( Crypto (EraCrypto era)
-       , Ba.PlutusPurpose AsIx era ~ Al.AlonzoPlutusPurpose AsIx era
+    :: ( Ba.PlutusPurpose AsIx era ~ Al.AlonzoPlutusPurpose AsIx era
        )
     => Ba.BabbageContextError era
     -> Json
@@ -108,8 +102,7 @@ encodeContextError err = encodeText $ case err of
         "Unknown transaction input (missing from UTxO set): " <> Shelley.stringifyTxIn i
 
 encodeHeader
-    :: Crypto crypto
-    => Praos.Header crypto
+    :: Praos.Header StandardCrypto
     -> Series
 encodeHeader (Praos.Header hBody _hSig) =
     "size" .=
@@ -229,7 +222,7 @@ encodePParamsHKD encode pure_ x =
     encode "stakePoolRetirementEpochBound"
         encodeEpochInterval (Ba.bppEMax x) <>
     encode "desiredNumberOfStakePools"
-        encodeNatural (Ba.bppNOpt x) <>
+        encodeWord16 (Ba.bppNOpt x) <>
     encode "stakePoolPledgeInfluence"
         encodeNonNegativeInterval (Ba.bppA0 x) <>
     encode "monetaryExpansion"
@@ -261,16 +254,12 @@ encodePParamsHKD encode pure_ x =
     & encodeObject
 
 encodeTx
-    :: forall era crypto.
-        ( Crypto crypto
-        , era ~ BabbageEra crypto
-        )
-    => (MetadataFormat, IncludeCbor)
-    -> Ba.AlonzoTx era
+    :: (MetadataFormat, IncludeCbor)
+    -> Ba.AlonzoTx BabbageEra
     -> Json
 encodeTx (fmt, opts) x =
     encodeObject
-        ( Shelley.encodeTxId (Ledger.txIdTxBody @(BabbageEra crypto) (Ba.body x))
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @BabbageEra (Ba.body x))
        <>
         "spends" .= Alonzo.encodeIsValid (Ba.isValid x)
        <>
@@ -281,7 +270,7 @@ encodeTx (fmt, opts) x =
         Alonzo.encodeWitnessSet opts (snd <$> auxiliary) Alonzo.encodeScriptPurposeIndex (Ba.wits x)
        <>
         if includeTransactionCbor opts then
-           "cbor" .= encodeByteStringBase16 (encodeCbor @era x)
+           "cbor" .= encodeByteStringBase16 (encodeCbor @BabbageEra x)
         else
            mempty
        )
@@ -295,10 +284,9 @@ encodeTx (fmt, opts) x =
             )
 
 encodeTxBody
-    :: Crypto crypto
-    => IncludeCbor
-    -> Ba.BabbageTxBody (BabbageEra crypto)
-    -> [Ledger.ScriptHash crypto]
+    :: IncludeCbor
+    -> Ba.BabbageTxBody BabbageEra
+    -> [Ledger.ScriptHash]
     -> Series
 encodeTxBody opts x scripts =
     "inputs" .=
@@ -345,8 +333,8 @@ encodeTxBody opts x scripts =
 encodeTxOut
     :: forall era.
         ( Ba.Script era ~ Al.AlonzoScript era
-        , Ba.Value era ~ Ma.MaryValue (Ledger.EraCrypto era)
-        , Val (Ba.Value era), Ba.AlonzoEraScript era
+        , Ba.Value era ~ Ma.MaryValue
+        , Ba.AlonzoEraScript era
         , Ledger.NativeScript era ~ Timelock era
         )
     =>IncludeCbor
@@ -372,7 +360,7 @@ encodeUtxo
     :: forall era.
         ( Ba.AlonzoEraScript era
         , Ba.Script era ~ Al.AlonzoScript era
-        , Ba.Value era ~ Ma.MaryValue (Ledger.EraCrypto era)
+        , Ba.Value era ~ Ma.MaryValue
         , Ba.TxOut era ~ Ba.BabbageTxOut era
         , Ledger.NativeScript era ~ Timelock era
         )

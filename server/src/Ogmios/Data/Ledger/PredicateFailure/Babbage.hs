@@ -26,12 +26,8 @@ import qualified Cardano.Ledger.Babbage.Rules as Ba
 import qualified Cardano.Ledger.Shelley.Rules as Sh
 
 encodeLedgerFailure
-    :: forall era crypto.
-        ( Crypto crypto
-        , era ~ BabbageEra crypto
-        )
-    => Sh.ShelleyLedgerPredFailure era
-    -> MultiEraPredicateFailure crypto
+    :: Sh.ShelleyLedgerPredFailure BabbageEra
+    -> MultiEraPredicateFailure
 encodeLedgerFailure = \case
     Sh.UtxowFailure e  ->
         encodeUtxowFailure AlonzoBasedEraBabbage (Alonzo.encodeUtxosFailure AlonzoBasedEraBabbage) e
@@ -39,15 +35,14 @@ encodeLedgerFailure = \case
         encodeDelegsFailure e
 
 encodeUtxowFailure
-    :: forall era crypto.
-        ( Era (era crypto)
-        , EraCrypto (era crypto) ~ crypto
-        , PredicateFailure (EraRule "UTXO" (era crypto)) ~ Ba.BabbageUtxoPredFailure (era crypto)
+    :: forall era.
+        ( Era era
+        , PredicateFailure (EraRule "UTXO" era) ~ Ba.BabbageUtxoPredFailure era
         )
-    => AlonzoBasedEra (era crypto)
-    -> (PredicateFailure (EraRule "UTXOS" (era crypto)) -> MultiEraPredicateFailure crypto)
-    -> Ba.BabbageUtxowPredFailure (era crypto)
-    -> MultiEraPredicateFailure crypto
+    => AlonzoBasedEra era
+    -> (PredicateFailure (EraRule "UTXOS" era) -> MultiEraPredicateFailure)
+    -> Ba.BabbageUtxowPredFailure era
+    -> MultiEraPredicateFailure
 encodeUtxowFailure era encodeUtxosFailure = \case
     Ba.MalformedReferenceScripts scripts ->
         MalformedScripts scripts
@@ -59,14 +54,11 @@ encodeUtxowFailure era encodeUtxosFailure = \case
         encodeUtxoFailure era encodeUtxosFailure e
 
 encodeUtxoFailure
-    :: forall era crypto.
-        ( Era (era crypto)
-        , EraCrypto (era crypto) ~ crypto
-        )
-    => AlonzoBasedEra (era crypto)
-    -> (PredicateFailure (EraRule "UTXOS" (era crypto)) -> MultiEraPredicateFailure crypto)
-    -> Ba.BabbageUtxoPredFailure (era crypto)
-    -> MultiEraPredicateFailure crypto
+    :: forall era. (Era era)
+    => AlonzoBasedEra era
+    -> (PredicateFailure (EraRule "UTXOS" era) -> MultiEraPredicateFailure)
+    -> Ba.BabbageUtxoPredFailure era
+    -> MultiEraPredicateFailure
 encodeUtxoFailure era encodeUtxosFailure = \case
     Ba.AlonzoInBabbageUtxoPredFailure e ->
         Alonzo.encodeUtxoFailure era encodeUtxosFailure e

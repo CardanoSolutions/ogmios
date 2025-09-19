@@ -56,6 +56,7 @@ module Ogmios.Data.Json.Prelude
     , encodeNominalDiffTime
     , encodeNominalDiffTimeMicro
     , encodeNonNegativeInterval
+    , encodeNonZero
     , encodeNull
     , encodePort
     , encodePositiveUnitInterval
@@ -112,6 +113,7 @@ import Cardano.Ledger.BaseTypes
     ( DnsName
     , EpochInterval (..)
     , NonNegativeInterval
+    , NonZero (..)
     , Port
     , PositiveUnitInterval
     , StrictMaybe (..)
@@ -119,6 +121,7 @@ import Cardano.Ledger.BaseTypes
     , Url
     , dnsToText
     , portToWord16
+    , unNonZero
     , unboundRational
     , urlToText
     )
@@ -376,6 +379,11 @@ encodeNonNegativeInterval :: NonNegativeInterval -> Json
 encodeNonNegativeInterval =
     encodeRational . unboundRational
 {-# INLINABLE encodeNonNegativeInterval #-}
+
+encodeNonZero :: (a -> Json) -> NonZero a -> Json
+encodeNonZero encode =
+    encode . unNonZero
+{-# INLINABLE encodeNonZero #-}
 
 encodeNull :: Json
 encodeNull =

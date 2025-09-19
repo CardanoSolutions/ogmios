@@ -40,7 +40,7 @@ module Cardano.Network.Protocol.NodeToClient
     , localTxMonitorClientPeer
 
     -- * Helpers / Re-exports
-    , MuxError (..)
+    , Error (..)
     , HandshakeProtocolError (..)
     , NodeToClientVersion
     , GenTx
@@ -60,9 +60,6 @@ import Prelude hiding
 import Cardano.Chain.Slotting
     ( EpochSlots (..)
     )
-import Cardano.Ledger.Crypto
-    ( StandardCrypto
-    )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient (..)
     )
@@ -76,7 +73,8 @@ import Control.Monad.Class.MonadST
     ( MonadST
     )
 import Control.Monad.Class.MonadThrow
-    ( MonadThrow
+    ( MonadMask
+    , MonadThrow (..)
     )
 import Control.Monad.IO.Class
     ( MonadIO (..)
@@ -102,8 +100,8 @@ import Data.Void
     ( Void
     )
 import Network.Mux
-    ( MuxError (..)
-    , MuxMode (..)
+    ( Error (..)
+    , Mode (..)
     )
 import Network.TypedProtocol.Codec
     ( Codec
@@ -138,6 +136,9 @@ import Ouroboros.Consensus.Network.NodeToClient
     )
 import Ouroboros.Consensus.Node.NetworkProtocolVersion
     ( SupportedNetworkProtocolVersion (..)
+    )
+import Ouroboros.Consensus.Shelley.Crypto
+    ( StandardCrypto
     )
 import Ouroboros.Consensus.Shelley.Ledger.Config
     ( CodecConfig (..)
@@ -195,6 +196,7 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Client
     )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
     ( LocalStateQuery
+    , State (..)
     )
 import Ouroboros.Network.Protocol.LocalTxMonitor.Client
     ( LocalTxMonitorClient
@@ -210,6 +212,9 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Client
 import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( LocalTxSubmission
     )
+
+import qualified Network.TypedProtocol.Stateful.Codec as Stateful
+import qualified Ouroboros.Network.Driver.Stateful as Stateful
 
 -- | Concrete block type.
 type Block = CardanoBlock StandardCrypto
@@ -269,16 +274,16 @@ data Clients m block = Clients
 connectClient
     :: MonadIO m
     => Tracer IO (TraceClient tx err)
-    -> (NodeToClientVersion -> Client IO)
+    -> (NodeToClientVersion -> NodeToClientVersionData -> Client IO)
     -> NodeToClientVersionData
     -> FilePath
     -> m ()
 connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
-    connectTo (localSnocket iocp) tracers versions addr
+    connectTo (localSnocket iocp) tracers versions addr >>= either throwIO return
   where
     versions = combineVersions
         [ simpleSingletonVersions v vData (client v)
-        | v <- [ nodeToClientV_Latest, pred nodeToClientV_Latest ]
+        | v <- [ nodeToClientV_Latest .. nodeToClientV_Min ]
         ]
 
     tracers :: NetworkConnectTracers LocalAddress NodeToClientVersion
@@ -290,13 +295,16 @@ connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
 nodeToClientV_Latest :: NodeToClientVersion
 nodeToClientV_Latest = maxBound
 
+nodeToClientV_Min :: NodeToClientVersion
+nodeToClientV_Min = NodeToClientV_17
+
 -- | Construct a network client
 mkClient
     :: forall m.
         ( MonadAsync m
         , MonadIO m
+        , MonadMask m
         , MonadST m
-        , MonadThrow m
         )
     => (forall a. m a -> IO a)
         -- ^ A natural transformation to unlift a particular 'm' into 'IO'.
@@ -306,8 +314,8 @@ mkClient
         -- ^ Static blockchain parameters
     -> Clients m Block
         -- ^ Clients with the driving logic
-    -> (NodeToClientVersion -> Client IO)
-mkClient unlift tr epochSlots clients = \nodeToClientV ->
+    -> (NodeToClientVersion -> NodeToClientVersionData -> Client IO)
+mkClient unlift tr epochSlots clients = \nodeToClientV nodeToClientVData ->
     nodeToClientProtocols
         NodeToClientProtocols
             { localChainSyncProtocol =
@@ -339,6 +347,7 @@ mkClient unlift tr epochSlots clients = \nodeToClientV ->
                         (hoistChannel liftIO channel)
             }
         nodeToClientV
+        nodeToClientVData
   where
     trChainSync    = nullTracer
     codecChainSync = cChainSyncCodec . codecs epochSlots
@@ -399,37 +408,37 @@ localTxSubmission unliftIO tr codec client channel =
 
 -- | Boilerplate for lifting a 'LocalTxMonitorClient'
 localTxMonitor
-    :: forall m protocol.
+    :: forall m protocol a.
         ( protocol ~ LocalTxMonitor (GenTxId Block) (GenTx Block) SlotNo
         , MonadThrow m
         )
-    => (forall a. m a -> IO a)
+    => (forall x. m x -> IO x)
         -- ^ A natural transformation to unlift a particular 'm' into 'IO'.
     -> Tracer m (TraceSendRecv protocol)
         -- ^ Base tracer for the mini-protocols
     -> Codec protocol DeserialiseFailure m ByteString
         -- ^ Codec for deserializing / serializing binary data
-    -> LocalTxMonitorClient (GenTxId Block) (GenTx Block) SlotNo m ()
+    -> LocalTxMonitorClient (GenTxId Block) (GenTx Block) SlotNo m a
         -- ^ Actual local tx submission client
     -> Channel m ByteString
         -- ^ A 'Channel' is an abstract communication instrument which
         -- transports serialized messages between peers (e.g. a unix
         -- socket).
-    -> IO ((), Maybe ByteString)
+    -> IO (a, Maybe ByteString)
 localTxMonitor unliftIO tr codec client channel =
     unliftIO $ runPeer tr codec channel (localTxMonitorClientPeer client)
 
 -- | Boilerplate for lifting a 'LocalStateQueryClient'
 localStateQuery
-    :: forall m protocol.
-        ( protocol ~ LocalStateQuery Block (Point Block) (Query Block)
-        , MonadThrow m
+    :: forall m.
+        ( MonadAsync m
+        , MonadMask m
         )
-    => (forall a. m a -> IO a)
+    => (forall x. m x -> IO x)
         -- ^ A natural transformation to unlift a particular 'm' into 'IO'.
-    -> Tracer m (TraceSendRecv protocol)
+    -> Tracer m (Stateful.TraceSendRecv (LocalStateQuery Block (Point Block) (Query Block)) State)
         -- ^ Base tracer for the mini-protocols
-    -> Codec protocol DeserialiseFailure m ByteString
+    -> Stateful.Codec (LocalStateQuery Block (Point Block) (Query Block)) DeserialiseFailure State m ByteString
         -- ^ Codec for deserializing / serializing binary data
     -> LocalStateQueryClient Block (Point Block) (Query Block) m ()
         -- ^ Actual local state query client.
@@ -439,7 +448,7 @@ localStateQuery
         -- socket).
     -> IO ((), Maybe ByteString)
 localStateQuery unliftIO tr codec client channel =
-    unliftIO $ runPeer tr codec channel (localStateQueryClientPeer client)
+    unliftIO $ Stateful.runPeer tr codec channel StateIdle (localStateQueryClientPeer client)
 
 -- | Client codecs for Cardano
 codecs

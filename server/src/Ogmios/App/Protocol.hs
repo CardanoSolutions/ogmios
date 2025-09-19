@@ -109,7 +109,6 @@ onUnmatchedMessage
         , FromJSON (QueryLedgerState block)
         , FromJSON (Point block)
         , FromJSON (MultiEraUTxO block)
-        , Crypto (BlockCrypto block)
         )
     => Rpc.Options
     -> ByteString

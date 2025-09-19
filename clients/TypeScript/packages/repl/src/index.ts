@@ -60,7 +60,6 @@ import {
       scripts?: Schema.AnyStakeCredential[],
       keys?: Schema.AnyStakeCredential[],
     }) => LedgerStateQuery.projectedRewards(context, filters),
-    proposedProtocolParameters: () => LedgerStateQuery.proposedProtocolParameters(context),
     protocolParameters: () => LedgerStateQuery.protocolParameters(context),
     releaseMempool: () => MempoolMonitoring.releaseMempool(context),
     rewardAccountSummaries: (filters?: {

@@ -30,11 +30,8 @@ import Ogmios.Data.Ledger.PredicateFailure
 import qualified Cardano.Ledger.Shelley.Rules as Sh
 
 encodeLedgerFailure
-    :: forall crypto.
-        ( Crypto crypto
-        )
-    => Sh.ShelleyLedgerPredFailure (ShelleyEra crypto)
-    -> MultiEraPredicateFailure crypto
+    :: Sh.ShelleyLedgerPredFailure ShelleyEra
+    -> MultiEraPredicateFailure
 encodeLedgerFailure = \case
     Sh.UtxowFailure e  ->
         encodeUtxowFailure encodeUtxoFailure e
@@ -42,12 +39,10 @@ encodeLedgerFailure = \case
         encodeDelegsFailure e
 
 encodeUtxowFailure
-    :: forall era crypto.
-        ( crypto ~ EraCrypto era
-        )
-    => (PredicateFailure (EraRule "UTXO" era) -> MultiEraPredicateFailure crypto)
+    :: forall era. ()
+    => (PredicateFailure (EraRule "UTXO" era) -> MultiEraPredicateFailure)
     -> Sh.ShelleyUtxowPredFailure era
-    -> MultiEraPredicateFailure crypto
+    -> MultiEraPredicateFailure
 encodeUtxowFailure encodeUtxoFailure_ = \case
     Sh.InvalidWitnessesUTXOW wits ->
         InvalidSignatures wits
@@ -73,25 +68,24 @@ encodeUtxowFailure encodeUtxoFailure_ = \case
         encodeUtxoFailure_ e
 
 encodeUtxoFailure
-    :: Crypto crypto
-    => Sh.ShelleyUtxoPredFailure (ShelleyEra crypto)
-    -> MultiEraPredicateFailure crypto
+    :: Sh.ShelleyUtxoPredFailure ShelleyEra
+    -> MultiEraPredicateFailure
 encodeUtxoFailure = \case
     Sh.BadInputsUTxO inputs ->
         UnknownUtxoReference inputs
-    Sh.ExpiredUTxO timeToLive currentSlot ->
+    Sh.ExpiredUTxO (Mismatch timeToLive currentSlot) ->
         let validityInterval = ValidityInterval
                 { invalidBefore = SNothing
                 , invalidHereafter = SJust timeToLive
                 }
-         in TransactionOutsideValidityInterval{ validityInterval, currentSlot }
+         in TransactionOutsideValidityInterval { validityInterval, currentSlot }
     Sh.MaxTxSizeUTxO (Mismatch measuredSize maximumSize) ->
         TransactionTooLarge { measuredSize, maximumSize }
     Sh.InputSetEmptyUTxO ->
         EmptyInputSet
     Sh.FeeTooSmallUTxO (Mismatch suppliedFee minimumRequiredFee) ->
         TransactionFeeTooSmall{minimumRequiredFee, suppliedFee}
-    Sh.ValueNotConservedUTxO consumed produced ->
+    Sh.ValueNotConservedUTxO (Mismatch consumed produced) ->
         let valueConsumed = ValueInAnyEra (ShelleyBasedEraShelley, consumed) in
         let valueProduced = ValueInAnyEra (ShelleyBasedEraShelley, produced) in
         ValueNotConserved { valueConsumed, valueProduced }
@@ -116,7 +110,7 @@ encodeDelegsFailure
     => PredicateFailure (EraRule "POOL" era)  ~ Sh.ShelleyPoolPredFailure era
     => PredicateFailure (EraRule "DELEG" era) ~ Sh.ShelleyDelegPredFailure era
     => Sh.ShelleyDelegsPredFailure era
-    -> MultiEraPredicateFailure (EraCrypto era)
+    -> MultiEraPredicateFailure
 encodeDelegsFailure = \case
     Sh.DelegateeNotRegisteredDELEG poolId ->
         UnknownStakePool poolId
@@ -131,7 +125,7 @@ encodeDeplFailure
         , PredicateFailure (EraRule "DELEG" era) ~ Sh.ShelleyDelegPredFailure era
         )
     => Sh.ShelleyDelplPredFailure era
-    -> MultiEraPredicateFailure (EraCrypto era)
+    -> MultiEraPredicateFailure
 encodeDeplFailure = \case
     Sh.PoolFailure e ->
         encodePoolFailure e
@@ -140,7 +134,7 @@ encodeDeplFailure = \case
 
 encodePoolFailure
     :: Sh.ShelleyPoolPredFailure era
-    -> MultiEraPredicateFailure (EraCrypto era)
+    -> MultiEraPredicateFailure
 encodePoolFailure = \case
     Sh.StakePoolNotRegisteredOnKeyPOOL poolId ->
         UnknownStakePool { poolId }
@@ -156,18 +150,16 @@ encodePoolFailure = \case
 
 encodeDelegFailure
     :: Sh.ShelleyDelegPredFailure era
-    -> MultiEraPredicateFailure (EraCrypto era)
+    -> MultiEraPredicateFailure
 encodeDelegFailure = \case
     Sh.StakeKeyAlreadyRegisteredDELEG credential ->
-        StakeCredentialAlreadyRegistered credential
-    Sh.StakeKeyInRewardsDELEG credential ->
         StakeCredentialAlreadyRegistered credential
     Sh.StakeKeyNotRegisteredDELEG credential ->
         StakeCredentialNotRegistered credential
     Sh.StakeDelegationImpossibleDELEG credential ->
         StakeCredentialNotRegistered credential
     Sh.StakeKeyNonZeroAccountBalanceDELEG balance ->
-        RewardAccountNotEmpty (fromMaybe mempty balance)
+        RewardAccountNotEmpty balance
     Sh.GenesisKeyNotInMappingDELEG{} ->
         InvalidGenesisDelegation
     Sh.DuplicateGenesisVRFDELEG{} ->

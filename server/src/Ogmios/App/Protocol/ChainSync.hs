@@ -63,7 +63,7 @@ import Data.Sequence
     ( Seq (..)
     , (|>)
     )
-import Network.TypedProtocol.Pipelined
+import Network.TypedProtocol
     ( Nat (..)
     , natToInt
     )

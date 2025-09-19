@@ -52,15 +52,15 @@ module Ogmios.Prelude
     , AlonzoEra
     , BabbageEra
     , CardanoEras
+    , CardanoBlock
     , ConwayEra
-    , Crypto
     , Era
-    , EraCrypto
     , MaryEra
     , Praos
     , ShelleyEra
-    , StandardCrypto
     , TPraos
+    , StandardCrypto
+    , BlockCrypto
 
       -- * CBOR Encoding/Decoding
     , encodeCbor
@@ -90,7 +90,6 @@ module Ogmios.Prelude
     , IsShelleyBasedEra (..)
     , AlonzoBasedEra (..)
     , IsAlonzoBasedEra (..)
-    , BlockCrypto
     , fromEraIndex
     ) where
 
@@ -101,13 +100,9 @@ import Cardano.Ledger.Binary
 import Cardano.Ledger.Core
     ( ByronEra
     )
-import Cardano.Ledger.Crypto
-    ( Crypto
-    , StandardCrypto
-    )
-import Cardano.Ledger.Era
+
+import Cardano.Ledger.Core
     ( Era
-    , EraCrypto
     )
 import Data.Aeson
     ( ToJSON (..)
@@ -170,7 +165,8 @@ import Ouroboros.Consensus.Protocol.Praos
     ( Praos
     )
 import Ouroboros.Consensus.Protocol.TPraos
-    ( TPraos
+    ( StandardCrypto
+    , TPraos
     )
 import Ouroboros.Consensus.Shelley.Eras
     ( AllegraEra
@@ -277,28 +273,28 @@ type family (:\:) (any :: k) (excluded :: k) :: Constraint where
     _ :\: _ = ()
 
 type family EraProto era :: Type where
-    EraProto (ShelleyEra crypto) = TPraos crypto
-    EraProto (AllegraEra crypto) = TPraos crypto
-    EraProto (MaryEra crypto)    = TPraos crypto
-    EraProto (AlonzoEra crypto)  = TPraos crypto
-    EraProto (BabbageEra crypto) = Praos crypto
-    EraProto (ConwayEra crypto)  = Praos crypto
+    EraProto ShelleyEra = TPraos StandardCrypto
+    EraProto AllegraEra = TPraos StandardCrypto
+    EraProto MaryEra    = TPraos StandardCrypto
+    EraProto AlonzoEra  = TPraos StandardCrypto
+    EraProto BabbageEra = Praos StandardCrypto
+    EraProto ConwayEra  = Praos StandardCrypto
 
 data ShelleyBasedEra era where
-    ShelleyBasedEraShelley :: forall crypto. ShelleyBasedEra (ShelleyEra crypto)
-    ShelleyBasedEraAllegra :: forall crypto. ShelleyBasedEra (AllegraEra crypto)
-    ShelleyBasedEraMary    :: forall crypto. ShelleyBasedEra (MaryEra crypto)
-    ShelleyBasedEraAlonzo  :: forall crypto. ShelleyBasedEra (AlonzoEra crypto)
-    ShelleyBasedEraBabbage :: forall crypto. ShelleyBasedEra (BabbageEra crypto)
-    ShelleyBasedEraConway  :: forall crypto. ShelleyBasedEra (ConwayEra crypto)
+    ShelleyBasedEraShelley :: ShelleyBasedEra ShelleyEra
+    ShelleyBasedEraAllegra :: ShelleyBasedEra AllegraEra
+    ShelleyBasedEraMary    :: ShelleyBasedEra MaryEra
+    ShelleyBasedEraAlonzo  :: ShelleyBasedEra AlonzoEra
+    ShelleyBasedEraBabbage :: ShelleyBasedEra BabbageEra
+    ShelleyBasedEraConway  :: ShelleyBasedEra ConwayEra
 deriving instance Show (ShelleyBasedEra era)
 deriving instance Eq (ShelleyBasedEra era)
 deriving instance Ord (ShelleyBasedEra era)
 
 data AlonzoBasedEra era where
-    AlonzoBasedEraAlonzo  :: forall crypto. AlonzoBasedEra (AlonzoEra crypto)
-    AlonzoBasedEraBabbage :: forall crypto. AlonzoBasedEra (BabbageEra crypto)
-    AlonzoBasedEraConway  :: forall crypto. AlonzoBasedEra (ConwayEra crypto)
+    AlonzoBasedEraAlonzo  :: AlonzoBasedEra AlonzoEra
+    AlonzoBasedEraBabbage :: AlonzoBasedEra BabbageEra
+    AlonzoBasedEraConway  :: AlonzoBasedEra ConwayEra
 deriving instance Show (AlonzoBasedEra era)
 deriving instance Eq (AlonzoBasedEra era)
 deriving instance Ord (AlonzoBasedEra era)
@@ -315,13 +311,13 @@ instance ToShelleyBasedEra AlonzoBasedEra where
 class IsAlonzoBasedEra era where
     alonzoBasedEra :: AlonzoBasedEra era
 
-instance IsAlonzoBasedEra (AlonzoEra crypto) where
+instance IsAlonzoBasedEra AlonzoEra where
     alonzoBasedEra = AlonzoBasedEraAlonzo
 
-instance IsAlonzoBasedEra (BabbageEra crypto) where
+instance IsAlonzoBasedEra BabbageEra where
     alonzoBasedEra = AlonzoBasedEraBabbage
 
-instance IsAlonzoBasedEra (ConwayEra crypto) where
+instance IsAlonzoBasedEra ConwayEra where
     alonzoBasedEra = AlonzoBasedEraConway
 
 data SomeShelleyEra =
@@ -341,22 +337,22 @@ instance ToJSON SomeShelleyEra where
 class IsShelleyBasedEra era where
     shelleyBasedEra :: ShelleyBasedEra era
 
-instance IsShelleyBasedEra (ShelleyEra crypto) where
+instance IsShelleyBasedEra ShelleyEra where
     shelleyBasedEra = ShelleyBasedEraShelley
 
-instance IsShelleyBasedEra (AllegraEra crypto) where
+instance IsShelleyBasedEra AllegraEra where
     shelleyBasedEra = ShelleyBasedEraAllegra
 
-instance IsShelleyBasedEra (MaryEra crypto) where
+instance IsShelleyBasedEra MaryEra where
     shelleyBasedEra = ShelleyBasedEraMary
 
-instance IsShelleyBasedEra (AlonzoEra crypto) where
+instance IsShelleyBasedEra AlonzoEra where
     shelleyBasedEra = ShelleyBasedEraAlonzo
 
-instance IsShelleyBasedEra (BabbageEra crypto) where
+instance IsShelleyBasedEra BabbageEra where
     shelleyBasedEra = ShelleyBasedEraBabbage
 
-instance IsShelleyBasedEra (ConwayEra crypto) where
+instance IsShelleyBasedEra ConwayEra where
     shelleyBasedEra = ShelleyBasedEraConway
 
 type family BlockCrypto block :: Type where
@@ -364,8 +360,7 @@ type family BlockCrypto block :: Type where
 
 -- | Convert an 'EraIndex' to a Shelley-based era.
 fromEraIndex
-    :: forall crypto. ()
-    => EraIndex (CardanoEras crypto)
+    :: EraIndex (CardanoEras StandardCrypto)
     -> Maybe SomeShelleyEra
 fromEraIndex = \case
     EraIndex                   Z{}       -> Nothing

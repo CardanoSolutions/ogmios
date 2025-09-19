@@ -40,58 +40,55 @@ import Cardano.Ledger.Keys
 import Ogmios.Data.EraTranslation
     ( MostRecentEra
     )
-import Ouroboros.Consensus.Cardano
-    ( CardanoBlock
-    )
 
 import qualified Prelude
 
-data DiscriminatedEntities crypto
-    = DiscriminatedAddresses (Set (Addr crypto))
-    | DiscriminatedRewardAccounts (Set (RewardAccount crypto))
-    | DiscriminatedPoolRegistrationCertificate (KeyHash 'StakePool crypto)
+data DiscriminatedEntities
+    = DiscriminatedAddresses (Set Addr)
+    | DiscriminatedRewardAccounts (Set RewardAccount)
+    | DiscriminatedPoolRegistrationCertificate (KeyHash 'StakePool)
     | DiscriminatedTransaction
     deriving (Show, Ord, Eq)
 
-data ValueInAnyEra crypto =
-    forall era. Era (era crypto) =>
+data ValueInAnyEra =
+    forall era. Era era =>
         ValueInAnyEra
-            ( ShelleyBasedEra (era crypto)
-            , Value (era crypto)
+            ( ShelleyBasedEra era
+            , Value era
             )
 
-data TxOutInAnyEra crypto =
-    forall era. Era (era crypto) =>
+data TxOutInAnyEra =
+    forall era. Era era =>
         TxOutInAnyEra
-            ( ShelleyBasedEra (era crypto)
-            , TxOut (era crypto)
+            ( ShelleyBasedEra era
+            , TxOut era
             )
 
-data ScriptPurposeItemInAnyEra crypto =
-    forall era. Era (era crypto) =>
+data ScriptPurposeItemInAnyEra =
+    forall era. Era era =>
         ScriptPurposeItemInAnyEra
-            ( AlonzoBasedEra (era crypto)
-            , PlutusPurpose AsItem (era crypto)
+            ( AlonzoBasedEra era
+            , PlutusPurpose AsItem era
             )
 
-data ScriptPurposeIndexInAnyEra crypto =
-    forall era. Era (era crypto) =>
+data ScriptPurposeIndexInAnyEra =
+    forall era. Era era =>
         ScriptPurposeIndexInAnyEra
-            ( AlonzoBasedEra (era crypto)
-            , PlutusPurpose AsIx (era crypto)
+            ( AlonzoBasedEra era
+            , PlutusPurpose AsIx era
             )
 
-instance Crypto crypto => Show (ScriptPurposeIndexInAnyEra crypto) where
+instance Show ScriptPurposeIndexInAnyEra where
     show = show . scriptPurposeInMostRecentEra
 
-instance Crypto crypto => Eq (ScriptPurposeIndexInAnyEra crypto) where
+instance Eq ScriptPurposeIndexInAnyEra where
     (==) = (==) `on` scriptPurposeInMostRecentEra
 
-instance Crypto crypto => Ord (ScriptPurposeIndexInAnyEra crypto) where
+instance Ord ScriptPurposeIndexInAnyEra where
     compare = compare `on` scriptPurposeInMostRecentEra
 
 scriptPurposeInMostRecentEra
-    :: ScriptPurposeIndexInAnyEra crypto
+    :: ScriptPurposeIndexInAnyEra
     -> PlutusPurpose AsIx (MostRecentEra (CardanoBlock crypto))
 scriptPurposeInMostRecentEra = \case
     ScriptPurposeIndexInAnyEra (AlonzoBasedEraAlonzo, ix) ->
@@ -101,14 +98,14 @@ scriptPurposeInMostRecentEra = \case
     ScriptPurposeIndexInAnyEra (AlonzoBasedEraConway, ix) ->
         ix
 
-data ContextErrorInAnyEra crypto =
-    forall era. Era (era crypto) =>
+data ContextErrorInAnyEra =
+    forall era. Era era =>
         ContextErrorInAnyEra
-            ( AlonzoBasedEra (era crypto)
-            , ContextError (era crypto)
+            ( AlonzoBasedEra era
+            , ContextError era
             )
 
-instance Show (ContextErrorInAnyEra crypto) where
+instance Show ContextErrorInAnyEra where
     show = \case
         ContextErrorInAnyEra (AlonzoBasedEraAlonzo, e) ->
             show e

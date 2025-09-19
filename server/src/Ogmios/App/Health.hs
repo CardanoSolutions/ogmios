@@ -93,6 +93,7 @@ import qualified Ogmios.App.Metrics as Metrics
 import Cardano.Network.Protocol.NodeToClient
     ( Block
     , Clients (..)
+    , Error (..)
     , NodeToClientVersion
     , connectClient
     , mkClient
@@ -108,7 +109,7 @@ import Data.Time.Clock
     ( DiffTime
     , UTCTime
     )
-import Network.TypedProtocol.Pipelined
+import Network.TypedProtocol
     ( N (..)
     )
 import Network.WebSockets
@@ -127,10 +128,6 @@ import Ouroboros.Network.Block
     , Tip (..)
     , genesisPoint
     , getTipPoint
-    )
-import Ouroboros.Network.Mux
-    ( MuxError (..)
-    , MuxErrorType (..)
     )
 import Ouroboros.Network.NodeToClient
     ( NodeToClientVersionData (NodeToClientVersionData)
@@ -157,6 +154,9 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Client
     ( LocalTxSubmissionClient (..)
     )
 
+import Control.Monad.Class.MonadThrow
+    ( MonadMask
+    )
 import qualified Data.Aeson as Json
 import qualified Data.Text as T
 import qualified Ouroboros.Consensus.HardFork.Combinator as LSQ
@@ -228,9 +228,9 @@ newHealthCheckClient tr Debouncer{debounce} = do
 connectHealthCheckClient
     :: forall m env.
         ( MonadIO m -- Needed by 'connectClient'
-        , MonadCatch m
         , MonadClock m
         , MonadLog m
+        , MonadMask m
         , MonadOuroboros m
         , MonadReader env m
         , HasType NetworkParameters env
@@ -283,14 +283,13 @@ connectHealthCheckClient tr embed (HealthCheckClient clients) = do
         || isResourceExhaustedError e
         || isInvalidArgumentOnSocket e
 
-    isRetryableMuxError :: MuxError -> Bool
-    isRetryableMuxError MuxError{errorType} =
-        case errorType of
-            MuxBearerClosed -> True
-            MuxSDUReadTimeout -> True
-            MuxSDUWriteTimeout -> True
-            MuxIOException e -> isRetryableIOException e
-            _notRetryable -> False
+    isRetryableMuxError :: Error -> Bool
+    isRetryableMuxError = \case
+        BearerClosed{} -> True
+        SDUReadTimeout -> True
+        SDUWriteTimeout -> True
+        IOException e _ -> isRetryableIOException e
+        _notRetryable -> False
 
     isRetryableConnectionException :: ConnectionException -> Bool
     isRetryableConnectionException = \case

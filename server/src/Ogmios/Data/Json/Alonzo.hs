@@ -31,7 +31,6 @@ import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Plutus.Language as Ledger
-import qualified Cardano.Ledger.SafeHash as Ledger
 
 import qualified Cardano.Ledger.Shelley.API as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
@@ -57,7 +56,7 @@ import qualified PlutusLedgerApi.Common as Plutus
 
 
 type AuxiliaryScripts era =
-    Map (Ledger.ScriptHash (Ledger.EraCrypto era)) (Ledger.Script era)
+    Map Ledger.ScriptHash (Ledger.Script era)
 
 --
 -- Encoders
@@ -99,9 +98,8 @@ encodeBinaryData =
     encodeByteStringBase16 . Ledger.originalBytes
 
 encodeBlock
-    :: Crypto crypto
-    => (MetadataFormat, IncludeCbor)
-    -> ShelleyBlock (TPraos crypto) (AlonzoEra crypto)
+    :: (MetadataFormat, IncludeCbor)
+    -> ShelleyBlock (TPraos StandardCrypto) AlonzoEra
     -> Json
 encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
@@ -121,8 +119,7 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     TPraos.BHeader hBody _ = blkHeader
 
 encodeContextError
-    :: Era era
-    => Al.AlonzoContextError era
+    :: Al.AlonzoContextError era
     -> Json
 encodeContextError err = encodeText $ case err of
     Al.TranslationLogicMissingInput i ->
@@ -153,8 +150,7 @@ encodeData =
     encodeByteStringBase16 . encodeCbor @era
 
 encodeDataHash
-    :: Crypto crypto
-    => Al.DataHash crypto
+    :: Al.DataHash
     -> Json
 encodeDataHash =
     Shelley.encodeHash . Ledger.extractHash
@@ -317,7 +313,7 @@ encodePParamsHKD encode pure_ x =
     encode "stakePoolRetirementEpochBound"
         encodeEpochInterval (Al.appEMax x) <>
     encode "desiredNumberOfStakePools"
-        encodeNatural (Al.appNOpt x) <>
+        encodeWord16 (Al.appNOpt x) <>
     encode "stakePoolPledgeInfluence"
         encodeNonNegativeInterval (Al.appA0 x) <>
     encode "monetaryExpansion"
@@ -441,8 +437,7 @@ encodeScriptPurposeIndex = encodeObject . \case
 
 encodeScriptPurposeItem
     :: forall era.
-        ( Era era
-        , Ledger.TxCert era ~ Sh.ShelleyTxCert era
+        ( Ledger.TxCert era ~ Sh.ShelleyTxCert era
         )
     => Al.AlonzoPlutusPurpose Ledger.AsItem era
     -> StrictMaybe Json
@@ -467,16 +462,12 @@ encodeScriptPurposeItem = fmap encodeObject . \case
             "certificate" .= encodeObject c
 
 encodeTx
-    :: forall era crypto.
-        ( Crypto crypto
-        , era ~ AlonzoEra crypto
-        )
-    => (MetadataFormat, IncludeCbor)
-    -> Al.AlonzoTx era
+    :: (MetadataFormat, IncludeCbor)
+    -> Al.AlonzoTx AlonzoEra
     -> Json
 encodeTx (fmt, opts) x =
     encodeObject
-        ( Shelley.encodeTxId (Ledger.txIdTxBody @(AlonzoEra crypto) (Al.body x))
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @AlonzoEra (Al.body x))
        <>
         "spends" .= encodeIsValid (Al.isValid x)
        <>
@@ -487,7 +478,7 @@ encodeTx (fmt, opts) x =
         encodeWitnessSet opts (snd <$> auxiliary) encodeScriptPurposeIndex (Al.wits x)
        <>
         if includeTransactionCbor opts then
-           "cbor" .= encodeByteStringBase16 (encodeCbor @era x)
+           "cbor" .= encodeByteStringBase16 (encodeCbor @AlonzoEra x)
         else
            mempty
        )
@@ -501,9 +492,8 @@ encodeTx (fmt, opts) x =
             )
 
 encodeTxBody
-    :: Crypto crypto
-    => Al.AlonzoTxBody (AlonzoEra crypto)
-    -> [Ledger.ScriptHash crypto]
+    :: Al.AlonzoTxBody AlonzoEra
+    -> [Ledger.ScriptHash]
     -> Series
 encodeTxBody x scripts =
     "inputs" .=
@@ -542,8 +532,7 @@ encodeTxBody x scripts =
         Shelley.encodeUpdate encodePParamsUpdate mirs <$> Al.atbUpdate x
 
 encodeTxOut
-    :: Crypto crypto
-    => Al.AlonzoTxOut (AlonzoEra crypto)
+    :: Al.AlonzoTxOut AlonzoEra
     -> Series
 encodeTxOut (Al.AlonzoTxOut addr value datum) =
     "address" .=
@@ -554,8 +543,7 @@ encodeTxOut (Al.AlonzoTxOut addr value datum) =
         encodeDataHash datum
 
 encodeUtxo
-    :: Crypto crypto
-    => Sh.UTxO (AlonzoEra crypto)
+    :: Sh.UTxO AlonzoEra
     -> Json
 encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
@@ -563,8 +551,7 @@ encodeUtxo =
     encodeIO i o = encodeObject (Shelley.encodeTxIn i <> encodeTxOut o)
 
 encodeScriptIntegrityHash
-    :: Crypto crypto
-    => Al.ScriptIntegrityHash crypto
+    :: Al.ScriptIntegrityHash
     -> Json
 encodeScriptIntegrityHash =
     Shelley.encodeHash . Ledger.extractHash
@@ -601,8 +588,7 @@ encodeWitnessSet opts (fromSMaybe mempty -> auxScripts) encodeScriptPurposeIndex
 --
 
 stringifyDataHash
-    :: Crypto crypto
-    => Al.DataHash crypto
+    :: Al.DataHash
     -> Text
 stringifyDataHash (Ledger.extractHash -> (CC.UnsafeHash h)) =
     encodeBase16 (fromShort h)

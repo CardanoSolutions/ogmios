@@ -114,11 +114,11 @@ import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 -- connection) and simply ensures correct execution of the state-query protocol.
 -- In particular, it also makes it easier to run queries _in the current era_.
 mkStateQueryClient
-    :: forall m crypto block point query.
+    :: forall m block point query.
         ( MonadSTM m
         , MonadDisk m
         , MonadLog m
-        , block ~ HardForkBlock (CardanoEras crypto)
+        , block ~ HardForkBlock (CardanoEras StandardCrypto)
         , point ~ Point block
         , query ~ Ledger.Query block
         )
@@ -408,8 +408,8 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
 -- Thus, Ogmios is doing the "heavy lifting" by sending queries directly in the
 -- current era, if they exist / are compatible.
 withCurrentEra
-    :: forall crypto block point query m f.
-        ( block ~ HardForkBlock (CardanoEras crypto)
+    :: forall block point query m f.
+        ( block ~ HardForkBlock (CardanoEras StandardCrypto)
         , query ~ Ledger.Query block
         , Applicative m
         )

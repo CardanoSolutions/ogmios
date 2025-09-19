@@ -7,7 +7,7 @@
 module Ogmios.Data.Ledger.PredicateFailure
     ( module Ogmios.Data.Ledger.PredicateFailure
     , Addr (..)
-    , AuxiliaryDataHash (..)
+    , TxAuxDataHash
     , Coin
     , Credential (..)
     , DataHash
@@ -60,9 +60,6 @@ import Cardano.Ledger.Alonzo.Scripts
 import Cardano.Ledger.Alonzo.Tx
     ( IsValid (..)
     )
-import Cardano.Ledger.AuxiliaryData
-    ( AuxiliaryDataHash (..)
-    )
 import Cardano.Ledger.BaseTypes
     ( Anchor
     , EpochNo (..)
@@ -85,6 +82,7 @@ import Cardano.Ledger.Credential
 import Cardano.Ledger.Hashes
     ( DataHash
     , ScriptHash (..)
+    , TxAuxDataHash
     )
 import Cardano.Ledger.Keys
     ( Hash
@@ -113,29 +111,29 @@ import PlutusLedgerApi.Common
     ( ExBudget (..)
     )
 
-data MultiEraPredicateFailure crypto
+data MultiEraPredicateFailure
     ---------------------------------------------------------------------------
     -- Rule → UTXOW
     ---------------------------------------------------------------------------
 
     -- All transaction key witnesses must comprised of valid signatures
     = InvalidSignatures
-        { culpritVerificationKeys :: [VKey 'Witness crypto]
+        { culpritVerificationKeys :: [VKey 'Witness]
         }
 
     -- All required verification key witnesses must be provided.
     | MissingSignatures
-        { missingSignatures :: Set (KeyHash 'Witness crypto)
+        { missingSignatures :: Set (KeyHash 'Witness)
         }
 
     -- All required script must be provided as witnesses.
     | MissingScriptWitnesses
-        { missingScripts :: Set (ScriptHash crypto)
+        { missingScripts :: Set ScriptHash
         }
 
     -- All scripts in a transaction must resolve.
     | FailingScript
-        { failingScripts :: Set (ScriptHash crypto)
+        { failingScripts :: Set ScriptHash
         }
 
     -- The execution budget that was calculated by the Plutus evaluator must be within bounds
@@ -146,23 +144,23 @@ data MultiEraPredicateFailure crypto
     -- Transaction must not contain extraneous scripts not associated to any
     -- output or metadata.
     | ExtraneousScriptWitnesses
-        { extraneousScripts :: Set (ScriptHash crypto)
+        { extraneousScripts :: Set ScriptHash
         }
 
     -- Metadata hash must be present in body if metadata are present.
     | MissingMetadataHash
-        { auxiliaryDataHash :: AuxiliaryDataHash crypto
+        { auxiliaryDataHash :: TxAuxDataHash
         }
 
     -- Metadata must be present if the body refers to them.
     | MissingMetadata
-        { auxiliaryDataHash :: AuxiliaryDataHash crypto
+        { auxiliaryDataHash :: TxAuxDataHash
         }
 
     -- Metadata hash in transaction body and computed from metadata must match.
     | MetadataHashMismatch
-        { providedAuxiliaryDataHash :: AuxiliaryDataHash crypto
-        , computedAuxiliaryDataHash :: AuxiliaryDataHash crypto
+        { providedAuxiliaryDataHash :: TxAuxDataHash
+        , computedAuxiliaryDataHash :: TxAuxDataHash
         }
 
     -- Metadata text and byte strings must be smaller that 64 (utf8) bytes.
@@ -170,36 +168,36 @@ data MultiEraPredicateFailure crypto
 
     -- All (phase-2) scripts must have an associated redeemer.
     | MissingRedeemers
-        { missingRedeemers :: [ScriptPurposeItemInAnyEra crypto]
+        { missingRedeemers :: [ScriptPurposeItemInAnyEra]
         }
 
     -- Transaction must not have redeemers not asociated to any script
     | ExtraneousRedeemers
-        { extraneousRedeemers :: [ScriptPurposeIndexInAnyEra crypto]
+        { extraneousRedeemers :: [ScriptPurposeIndexInAnyEra]
         }
 
     -- All (phase-2) script must have an associated datum
     | MissingDatums
-        { missingDatums :: Set (DataHash crypto)
+        { missingDatums :: Set DataHash
         }
 
     -- Transaction must not have datums not associated to any script or output
     | ExtraneousDatums
-        { extraneousDatums :: Set (DataHash crypto)
+        { extraneousDatums :: Set DataHash
         }
 
     -- A transaction with scripts, datums or redeemers must contain a 'script
     -- integrity hash' ensuring integrity of cost models and plutus version
     -- used.
     | ScriptIntegrityHashMismatch
-        { providedIntegrityHash :: StrictMaybe (ScriptIntegrityHash crypto)
-        , computedIntegrityHash :: StrictMaybe (ScriptIntegrityHash crypto)
+        { providedIntegrityHash :: StrictMaybe ScriptIntegrityHash
+        , computedIntegrityHash :: StrictMaybe ScriptIntegrityHash
         }
 
     -- All inputs locked by a script must have an accompanying datums, otherwise
     -- they forever unspendable.
     | OrphanScriptInputs
-        { orphanScriptInputs :: Set (TxIn crypto)
+        { orphanScriptInputs :: Set TxIn
         }
 
     -- All script languages must have an associated cost model
@@ -209,7 +207,7 @@ data MultiEraPredicateFailure crypto
 
     -- All witness or reference scripts payload must be valid Plutus scripts
     | MalformedScripts
-        { malformedScripts :: Set (ScriptHash crypto)
+        { malformedScripts :: Set ScriptHash
         }
 
     ---------------------------------------------------------------------------
@@ -218,7 +216,7 @@ data MultiEraPredicateFailure crypto
 
     -- All transaction inputs must be present in `UTxO` (inputs ⊆ dom utxo)
     | UnknownUtxoReference
-        { unknownOutputReferences :: Set (TxIn crypto)
+        { unknownOutputReferences :: Set TxIn
         }
 
     -- The ttl field marks the top of an open interval, so it must be strictly
@@ -237,7 +235,7 @@ data MultiEraPredicateFailure crypto
     -- The serialized size of a 'Value' must be below the 'max value size' (4000
     -- bytes in Shelley)
     | ValueSizeAboveLimit
-        { excessivelyLargeOutputs :: [TxOutInAnyEra crypto]
+        { excessivelyLargeOutputs :: [TxOutInAnyEra]
         }
 
     -- There is at least one input in the transaction body (txins txb ≠ ∅)
@@ -251,25 +249,25 @@ data MultiEraPredicateFailure crypto
 
     -- Value consumed and produced must match up exactly
     | ValueNotConserved
-        { valueConsumed :: ValueInAnyEra crypto
-        , valueProduced :: ValueInAnyEra crypto
+        { valueConsumed :: ValueInAnyEra
+        , valueProduced :: ValueInAnyEra
         }
 
     --  All addresses must match the expected network identifier
     | NetworkMismatch
         { expectedNetwork :: Network
-        , invalidEntities :: DiscriminatedEntities crypto
+        , invalidEntities :: DiscriminatedEntities
         }
 
     -- All outputs must carry more Ada than the scaled @minUTxOValue@
     | InsufficientAdaInOutput
-        { insufficientlyFundedOutputs :: [(TxOutInAnyEra crypto, Maybe Coin)]
+        { insufficientlyFundedOutputs :: [(TxOutInAnyEra, Maybe Coin)]
         }
 
     -- Bootstrap (i.e. Byron) addresses' attributes size must be smaller than the
     -- allowed size.
     | BootstrapAddressAttributesTooLarge
-        { culpritOutputs :: [TxOutInAnyEra crypto]
+        { culpritOutputs :: [TxOutInAnyEra]
         }
 
     -- Transaction must not attempt to mint or burn Ada
@@ -284,7 +282,7 @@ data MultiEraPredicateFailure crypto
 
     -- Input provided as collateral must not be locked by phase-2 script
     | CollateralInputLockedByScript
-        { collateralInputs :: [TxIn crypto]
+        { collateralInputs :: [TxIn]
         }
 
     -- Cannot convert slots (e.g. in validity intervals) that are too far in the
@@ -305,7 +303,7 @@ data MultiEraPredicateFailure crypto
     -- A collateral inputs contains non-Ada assets and there's no collateral
     -- return output.
     | NonAdaValueAsCollateral
-        { collateralValue :: ValueInAnyEra crypto
+        { collateralValue :: ValueInAnyEra
         }
 
     -- Transaction execution units must be smaller than the 'max execution
@@ -324,7 +322,7 @@ data MultiEraPredicateFailure crypto
 
     -- A utxo reference is present in both the inputs set and reference inputs.
     | ConflictingInputsAndReferences
-        { inputsPresentInBoth :: NonEmpty (TxIn crypto)
+        { inputsPresentInBoth :: NonEmpty TxIn
         }
 
     -- Since Conway, a transaction cannot include reference scripts beyond a
@@ -351,17 +349,17 @@ data MultiEraPredicateFailure crypto
     -- Voter on a specific governance action procedure must have the required
     -- votin permissions / role.
     | UnauthorizedVotes
-        { votes :: [(Voter crypto, GovActionId crypto)]
+        { votes :: [(Voter, GovActionId)]
         }
 
     -- Governance action must exist for voting
     | UnknownGovernanceActions
-        { governanceActions :: Set (GovActionId crypto)
+        { governanceActions :: Set GovActionId
         }
 
     --  Votes must be cast against non-expired action.
     | VotingOnExpiredActions
-        { votes :: [(Voter crypto, GovActionId crypto)]
+        { votes :: [(Voter, GovActionId)]
         }
 
     -- Mismatch between the deposit amount declared in a transaction and the
@@ -373,19 +371,19 @@ data MultiEraPredicateFailure crypto
 
     -- Committee members that are both added and removed in the same update.
     | ConflictingCommitteeUpdate
-        { conflictingMembers :: Set (Credential 'ColdCommitteeRole crypto)
+        { conflictingMembers :: Set (Credential 'ColdCommitteeRole)
         }
 
     -- Committee members set to retire in the past. \
     | InvalidCommitteeUpdate
-        { alreadyRetiredMembers :: Set (Credential 'ColdCommitteeRole crypto)
+        { alreadyRetiredMembers :: Set (Credential 'ColdCommitteeRole)
         }
 
     -- A governance action (except the first) must reference the immediately
     -- previous governance action of the same type.
     | InvalidPreviousGovernanceAction
         { invalidPreviousActions ::
-            [ (Anchor crypto, GovActionPurpose, StrictMaybe (GovActionId crypto))
+            [ (Anchor, GovActionPurpose, StrictMaybe GovActionId)
             ]
         }
 
@@ -399,8 +397,8 @@ data MultiEraPredicateFailure crypto
     -- Some specific governance actions must contain an extra guardrails hash
     -- digest which must match the one defined in the constitution.
     | ConstitutionGuardrailsHashMismatch
-        { providedHash :: StrictMaybe (ScriptHash crypto)
-        , expectedHash :: StrictMaybe (ScriptHash crypto)
+        { providedHash :: StrictMaybe ScriptHash
+        , expectedHash :: StrictMaybe ScriptHash
         }
 
     -- During the bootstrapping phase, actions can only be parameter change,
@@ -409,7 +407,7 @@ data MultiEraPredicateFailure crypto
 
     -- Voters credentials must be registered in the ledger state.
     | UnknownVoters
-        { unknownVoters :: [Voter crypto]
+        { unknownVoters :: [Voter]
         }
 
     -- | Treasury withdrawals that sum up to zero are not allowed
@@ -430,12 +428,12 @@ data MultiEraPredicateFailure crypto
 
     -- Stake pool must exist / be registered when delegating to it.
     | UnknownStakePool
-        { poolId :: KeyHash 'StakePool crypto
+        { poolId :: KeyHash 'StakePool
         }
 
     -- When present, withdrawals must withdraw rewards entirely
     | IncompleteWithdrawals
-        { withdrawals :: Map (RewardAccount crypto) Coin
+        { withdrawals :: Map RewardAccount Coin
         }
 
     ---------------------------------------------------------------------------
@@ -460,7 +458,7 @@ data MultiEraPredicateFailure crypto
 
     -- Stake pool metadata hash must be smaller than 32 bytes
     | StakePoolMetadataHashTooLarge
-        { poolId :: KeyHash 'StakePool crypto
+        { poolId :: KeyHash 'StakePool
         , computedMetadataHashSize :: Int
         }
 
@@ -470,12 +468,12 @@ data MultiEraPredicateFailure crypto
 
     -- One cannot register a stake credential twice
     | StakeCredentialAlreadyRegistered
-        { knownCredential :: Credential 'Staking crypto
+        { knownCredential :: Credential 'Staking
         }
 
     -- Stake credential must be registered for delegation
     | StakeCredentialNotRegistered
-        { unknownCredential :: Credential 'Staking crypto
+        { unknownCredential :: Credential 'Staking
         }
 
     -- Reward account must be empty when de-registering stake keys
@@ -485,7 +483,7 @@ data MultiEraPredicateFailure crypto
 
     -- Trying to withdraw from credentials that aren't delegated to a DRep
     | ForbiddenWithdrawal
-        { marginalizedCredentials :: Set (KeyHash 'Staking crypto)
+        { marginalizedCredentials :: Set (KeyHash 'Staking)
         }
 
     -- Trying to withdraw from the treasury an amount different from the one
@@ -515,18 +513,18 @@ data MultiEraPredicateFailure crypto
 
     -- One cannot register as a DRep twice
     | DRepAlreadyRegistered
-        { knownDelegateRepresentative :: Credential 'DRepRole crypto
+        { knownDelegateRepresentative :: Credential 'DRepRole
         }
 
     -- Delegate representative must be registered for delegation
     | DRepNotRegistered
-        { unknownDelegateRepresentative :: Credential 'DRepRole crypto
+        { unknownDelegateRepresentative :: Credential 'DRepRole
         }
 
     -- Committee member must be registered and active in order to (a) declare
     -- hot key or (b) resign.
     | UnknownConstitutionalCommitteeMember
-        { unknownConstitutionalCommitteeMember :: Credential 'ColdCommitteeRole crypto
+        { unknownConstitutionalCommitteeMember :: Credential 'ColdCommitteeRole
         }
 
     ---------------------------------------------------------------------------
@@ -534,7 +532,7 @@ data MultiEraPredicateFailure crypto
     ---------------------------------------------------------------------------
 
     | UnableToCreateScriptContext
-        { translationError :: ContextErrorInAnyEra crypto
+        { translationError :: ContextErrorInAnyEra
         }
 
     -- Some opaque errors from the mempool. Unclear to what it refers to
@@ -555,14 +553,14 @@ data MultiEraPredicateFailure crypto
 --
 -- Given that we only return errors one-by-one to clients, we have to prioritize
 -- which error to return from the list when presented with many.
-pickPredicateFailure :: NonEmpty (MultiEraPredicateFailure crypto) -> MultiEraPredicateFailure crypto
+pickPredicateFailure :: NonEmpty MultiEraPredicateFailure -> MultiEraPredicateFailure
 pickPredicateFailure =
     minimumBy (comparing predicateFailurePriority)
 
 -- | Return a priority index for ledger rules errors. Smaller means that errors
 -- should be considered first.
 predicateFailurePriority
-    :: MultiEraPredicateFailure crypto
+    :: MultiEraPredicateFailure
     -> Word
 predicateFailurePriority = \case
     ConflictingInputsAndReferences {} -> 0

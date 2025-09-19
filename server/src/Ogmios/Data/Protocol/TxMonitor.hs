@@ -123,8 +123,7 @@ data TxMonitorCodecs block = TxMonitorCodecs
     }
 
 mkTxMonitorCodecs
-    :: (FromJSON (Ledger.TxId (BlockCrypto block)))
-    => Rpc.Options
+    :: Rpc.Options
     -> (GenTxId block -> Json)
     -> (GenTx block -> Json)
     -> TxMonitorCodecs block
@@ -296,14 +295,13 @@ _encodeNextTransactionResponse opts encodeTxId encodeTx =
 -- HasTransaction
 --
 data HasTransaction block
-    = HasTransaction { id :: Ledger.TxId (BlockCrypto block) }
+    = HasTransaction { id :: Ledger.TxId }
     deriving (Generic)
 deriving instance Show (GenTxId block) => Show (HasTransaction block)
 deriving instance   Eq (GenTxId block) =>   Eq (HasTransaction block)
 
 _encodeHasTransaction
-    :: forall block. ()
-    => (Ledger.TxId (BlockCrypto block) -> Json)
+    :: (Ledger.TxId -> Json)
     -> Rpc.Request (HasTransaction block)
     -> Json
 _encodeHasTransaction encodeTxId =
@@ -312,7 +310,7 @@ _encodeHasTransaction encodeTxId =
             encodeTxId id
 
 _decodeHasTransaction
-    :: forall block. (FromJSON (Ledger.TxId (BlockCrypto block)))
+    :: forall block. (FromJSON Ledger.TxId)
     => Json.Value
     -> Json.Parser (Rpc.Request (HasTransaction block))
 _decodeHasTransaction =

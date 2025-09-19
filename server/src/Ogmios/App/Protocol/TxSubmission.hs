@@ -128,7 +128,6 @@ import Ogmios.Data.Protocol.TxSubmission
     )
 import Ouroboros.Consensus.Cardano.Block
     ( BlockQuery (..)
-    , CardanoBlock
     , CardanoQueryResult
     , GenTx (..)
     , HardForkApplyTxErr (..)
@@ -194,12 +193,11 @@ import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 import qualified Ouroboros.Network.Protocol.LocalTxMonitor.Client as LMM
 
 mkTxSubmissionClient
-    :: forall m block crypto.
+    :: forall m block.
         ( MonadSTM m
         , MonadLog m
         , HasTxId (SerializedTransaction block)
-        , Crypto crypto
-        , block ~ CardanoBlock crypto
+        , block ~ CardanoBlock StandardCrypto
         )
     => Logger TraceTxSubmission
         -- ^ A logger for the submission client
@@ -313,8 +311,8 @@ newExecutionUnitsEvaluator
         , MonadClock m
         , block ~ HardForkBlock (CardanoEras crypto)
         , crypto ~ StandardCrypto
-        , CanEvaluateScriptsInEra (BabbageEra crypto)
-        , CanEvaluateScriptsInEra (ConwayEra crypto)
+        , CanEvaluateScriptsInEra BabbageEra
+        , CanEvaluateScriptsInEra ConwayEra
         , ConvertRawTxId (GenTx (CardanoBlock crypto))
         )
     => Logger TraceTxSubmission
@@ -426,7 +424,7 @@ newExecutionUnitsEvaluator tr = do
                     clientStDrain slot start (tx : txs)
 
     localStateQueryClient
-        :: m (SomeEvaluationInAnyEra crypto)
+        :: m SomeEvaluationInAnyEra
         -> (EvaluateTransactionResponse block -> m ())
         -> LocalStateQueryClient block (Point block) (Query block) m ()
     localStateQueryClient await reply =
@@ -453,7 +451,7 @@ newExecutionUnitsEvaluator tr = do
                 }
 
         clientStAcquiring
-            :: SomeEvaluationInAnyEra crypto
+            :: SomeEvaluationInAnyEra
             -> LSQ.ClientStAcquiring block (Point block) (Query block) m ()
         clientStAcquiring args =
             LSQ.ClientStAcquiring
@@ -464,22 +462,22 @@ newExecutionUnitsEvaluator tr = do
                         pure $ LSQ.SendMsgRelease clientStIdle
                     )
                     -- Babbage
-                    (clientStAcquired0 @_ @(BabbageEra crypto) args evaluateExecutionUnits)
+                    (clientStAcquired0 @_ @BabbageEra args evaluateExecutionUnits)
                     -- Conway
-                    (clientStAcquired0 @_ @(ConwayEra crypto) args evaluateExecutionUnits)
+                    (clientStAcquired0 @_ @ConwayEra args evaluateExecutionUnits)
                 , LSQ.recvMsgFailure =
                     const $ pure $ LSQ.SendMsgAcquire VolatileTip (clientStAcquiring args)
                 }
 
         reAcquire
-            :: SomeEvaluationInAnyEra crypto
+            :: SomeEvaluationInAnyEra
             -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
         reAcquire
             = LSQ.SendMsgReAcquire VolatileTip . clientStAcquiring
 
         clientStAcquired0
-            :: forall proto era. (CanEvaluateScriptsInEra era, EraCrypto era ~ crypto)
-            => SomeEvaluationInAnyEra crypto
+            :: forall proto era. (CanEvaluateScriptsInEra era)
+            => SomeEvaluationInAnyEra
             -> (  PParams era
                -> SystemStart
                -> EpochInfo (Except PastHorizonException)
@@ -500,8 +498,8 @@ newExecutionUnitsEvaluator tr = do
                 }
 
         clientStAcquired1
-            :: forall proto era. (CanEvaluateScriptsInEra era, EraCrypto era ~ crypto)
-            => SomeEvaluationInAnyEra crypto
+            :: forall proto era. (CanEvaluateScriptsInEra era)
+            => SomeEvaluationInAnyEra
             -> (  SystemStart
                -> EpochInfo (Except PastHorizonException)
                -> UTxO era
@@ -518,8 +516,8 @@ newExecutionUnitsEvaluator tr = do
                 }
 
         clientStAcquired2
-            :: forall proto era. (CanEvaluateScriptsInEra era, EraCrypto era ~ crypto)
-            => SomeEvaluationInAnyEra crypto
+            :: forall proto era. (CanEvaluateScriptsInEra era)
+            => SomeEvaluationInAnyEra
             -> (  EpochInfo (Except PastHorizonException)
                -> UTxO era
                -> Tx era
@@ -535,8 +533,8 @@ newExecutionUnitsEvaluator tr = do
                 }
 
         clientStAcquired3
-            :: forall proto era. (CanEvaluateScriptsInEra era, EraCrypto era ~ crypto)
-            => SomeEvaluationInAnyEra crypto
+            :: forall proto era. (CanEvaluateScriptsInEra era)
+            => SomeEvaluationInAnyEra
             -> (  UTxO era
                -> Tx era
                -> EvaluateTransactionResponse block
@@ -556,9 +554,9 @@ newExecutionUnitsEvaluator tr = do
                 }
 
 type HoistQuery proto era =
-    forall r a crypto. (crypto ~ EraCrypto era, CardanoQueryResult crypto r ~ a)
-        => BlockQuery (ShelleyBlock (proto crypto) era) r
-        -> BlockQuery (CardanoBlock crypto) a
+    forall r a qf crypto. (CardanoQueryResult crypto r ~ a)
+        => BlockQuery (ShelleyBlock (proto crypto) era) qf r
+        -> BlockQuery (CardanoBlock crypto) qf a
 
 -- | Run local-state queries in either Babbage or Conway depending on where the network is at.
 --
@@ -574,11 +572,11 @@ selectEra
        )
 
     -- Selector for the Babbage era.
-    -> ( HoistQuery Praos (BabbageEra crypto) -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
+    -> ( HoistQuery Praos BabbageEra -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
        )
 
     -- Selector for the Babbage era.
-    -> ( HoistQuery Praos (ConwayEra crypto) -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
+    -> ( HoistQuery Praos ConwayEra -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
        )
 
     -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
@@ -599,18 +597,18 @@ selectEra fallback asBabbage asConway =
 -- SomeEvaluationInAnyEra
 --
 
-data SomeEvaluationInAnyEra crypto where
+data SomeEvaluationInAnyEra where
     SomeEvaluationInAnyEra
-        :: forall era crypto. (CanEvaluateScriptsInEra era, EraCrypto era ~ crypto)
+        :: forall era. (CanEvaluateScriptsInEra era)
         => !(UTxO era)
         -> !(Tx era)
-        -> SomeEvaluationInAnyEra crypto
+        -> SomeEvaluationInAnyEra
 
 -- | Return all unspent transaction outputs needed for evaluation. This includes
 -- standard inputs, but also reference ones and collaterals.
 inputsInAnyEra
-    :: SomeEvaluationInAnyEra crypto
-    -> Set (TxIn crypto)
+    :: SomeEvaluationInAnyEra
+    -> Set TxIn
 inputsInAnyEra (SomeEvaluationInAnyEra _ tx) =
     tx ^. bodyTxL . inputsTxBodyL
     <>
@@ -619,14 +617,13 @@ inputsInAnyEra (SomeEvaluationInAnyEra _ tx) =
     tx ^. bodyTxL . referenceInputsTxBodyL
 
 newEvaluateTransactionResponse
-    :: forall era crypto result.
+    :: forall era result.
         ( CanEvaluateScriptsInEra era
-        , crypto ~ EraCrypto era
         )
     => (UTxO era -> Tx era -> result)
-    -> (EvaluateTransactionError crypto -> result)
+    -> (EvaluateTransactionError -> result)
     -> UTxO era -- ^ Utxo fetched from the network
-    -> SomeEvaluationInAnyEra crypto -- ^ Tx & additional utxo
+    -> SomeEvaluationInAnyEra -- ^ Tx & additional utxo
     -> result
 newEvaluateTransactionResponse callback onError (UTxO networkUtxo) args =
     case translateToNetworkEra @era args of
@@ -668,7 +665,7 @@ translateToNetworkEra
     :: forall eraNetwork.
         ( CanEvaluateScriptsInEra eraNetwork
         )
-    => SomeEvaluationInAnyEra (EraCrypto eraNetwork)
+    => SomeEvaluationInAnyEra
     -> Maybe (UTxO eraNetwork, Tx eraNetwork)
 translateToNetworkEra (SomeEvaluationInAnyEra utxoOrig txOrig) =
     translate utxoOrig txOrig
@@ -684,8 +681,8 @@ translateToNetworkEra (SomeEvaluationInAnyEra utxoOrig txOrig) =
         let
             eraNetwork = typeRep @eraNetwork
             eraArgs    = typeRep @eraArgs
-            eraBabbage = typeRep @(BabbageEra StandardCrypto)
-            eraConway  = typeRep @(ConwayEra StandardCrypto)
+            eraBabbage = typeRep @BabbageEra
+            eraConway  = typeRep @ConwayEra
 
             sameEra =
                 case testEquality eraNetwork eraArgs of

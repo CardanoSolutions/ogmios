@@ -20,11 +20,8 @@ import Ogmios.Data.Ledger.PredicateFailure.Shelley
 import qualified Cardano.Ledger.Shelley.Rules as Sh
 
 encodeLedgerFailure
-    :: forall crypto.
-        ( Crypto crypto
-        )
-    => Sh.ShelleyLedgerPredFailure (MaryEra crypto)
-    -> MultiEraPredicateFailure crypto
+    :: Sh.ShelleyLedgerPredFailure MaryEra
+    -> MultiEraPredicateFailure
 encodeLedgerFailure = \case
     Sh.UtxowFailure e  ->
         encodeUtxowFailure (encodeUtxoFailure ShelleyBasedEraMary) e

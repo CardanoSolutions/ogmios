@@ -50,11 +50,8 @@ scriptFailureCode :: Int -> Rpc.FaultCode
 scriptFailureCode  = Rpc.FaultCustom . (+ 3011)
 
 encodeScriptFailure
-    :: forall crypto.
-        ( Crypto crypto
-        )
-    => Rpc.EmbedFault
-    -> TransactionScriptFailureInAnyEra crypto
+    :: Rpc.EmbedFault
+    -> TransactionScriptFailureInAnyEra
     -> Json
 encodeScriptFailure reject = \case
     TransactionScriptFailureInAnyEra (era, Ledger.MissingScript ptr _) ->
@@ -95,30 +92,27 @@ encodeScriptFailure reject = \case
             )
 
     TransactionScriptFailureInAnyEra (era, Ledger.RedeemerPointsToUnknownScriptHash ptr) ->
-        encodePredicateFailure @crypto reject (ExtraneousRedeemers [ScriptPurposeIndexInAnyEra (era, ptr)])
+        encodePredicateFailure reject (ExtraneousRedeemers [ScriptPurposeIndexInAnyEra (era, ptr)])
 
     TransactionScriptFailureInAnyEra (_, Ledger.MissingDatum datumHash) ->
-        encodePredicateFailure @crypto reject (MissingDatums (Set.singleton datumHash))
+        encodePredicateFailure reject (MissingDatums (Set.singleton datumHash))
 
     TransactionScriptFailureInAnyEra (_, Ledger.UnknownTxIn i) ->
-        encodePredicateFailure @crypto reject (UnknownUtxoReference (Set.singleton i))
+        encodePredicateFailure reject (UnknownUtxoReference (Set.singleton i))
 
     TransactionScriptFailureInAnyEra (_, Ledger.IncompatibleBudget budget) ->
-        encodePredicateFailure @crypto reject (ExecutionBudgetOutOfBounds budget)
+        encodePredicateFailure reject (ExecutionBudgetOutOfBounds budget)
 
     TransactionScriptFailureInAnyEra (_, Ledger.NoCostModelInLedgerState lang) ->
-        encodePredicateFailure @crypto reject (MissingCostModels [lang])
+        encodePredicateFailure reject (MissingCostModels [lang])
 
-    TransactionScriptFailureInAnyEra (era, (Ledger.ContextError err)) ->
+    TransactionScriptFailureInAnyEra (era, Ledger.ContextError err) ->
         let errInAnyEra = ContextErrorInAnyEra (era, err)
          in encodeEvaluationError reject (CannotCreateEvaluationContext errInAnyEra)
 
 encodeEvaluationError
-    :: forall crypto.
-        ( Crypto crypto
-        )
-    => Rpc.EmbedFault
-    -> EvaluateTransactionError crypto
+    :: Rpc.EmbedFault
+    -> EvaluateTransactionError
     -> Json
 encodeEvaluationError reject = \case
     IncompatibleEra era ->

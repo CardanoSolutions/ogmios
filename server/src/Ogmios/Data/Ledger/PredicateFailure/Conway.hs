@@ -30,15 +30,17 @@ import Ogmios.Data.Ledger.PredicateFailure.Shelley
 
 import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Api.UTxO as Ledger
+import Cardano.Ledger.BaseTypes
+    ( Mismatch (..)
+    )
 import qualified Cardano.Ledger.Conway.Rules as Cn
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 encodeLedgerFailure
-    :: Crypto crypto
-    => Cn.ConwayLedgerPredFailure (ConwayEra crypto)
-    -> MultiEraPredicateFailure crypto
+    :: Cn.ConwayLedgerPredFailure ConwayEra
+    -> MultiEraPredicateFailure
 encodeLedgerFailure = \case
     Cn.ConwayUtxowFailure e ->
         encodeUtxowFailure e
@@ -48,16 +50,16 @@ encodeLedgerFailure = \case
         encodeGovFailure e
     Cn.ConwayWdrlNotDelegatedToDRep ((Set.fromList . toList) -> marginalizedCredentials) ->
         ForbiddenWithdrawal { marginalizedCredentials }
-    Cn.ConwayTreasuryValueMismatch computedWithdrawal providedWithdrawal ->
+    Cn.ConwayTreasuryValueMismatch (Mismatch providedWithdrawal computedWithdrawal) ->
         TreasuryWithdrawalMismatch { providedWithdrawal, computedWithdrawal }
-    Cn.ConwayTxRefScriptsSizeTooBig (toInteger -> measuredSize) (toInteger -> maximumSize) ->
+    Cn.ConwayTxRefScriptsSizeTooBig (Mismatch (toInteger -> measuredSize) (toInteger -> maximumSize)) ->
         ReferenceScriptsTooLarge { measuredSize, maximumSize }
     Cn.ConwayMempoolFailure mempoolError ->
         UnexpectedMempoolError { mempoolError }
 
 encodeGovFailure
-    :: Cn.ConwayGovPredFailure (ConwayEra crypto)
-    -> MultiEraPredicateFailure crypto
+    :: Cn.ConwayGovPredFailure ConwayEra
+    -> MultiEraPredicateFailure
 encodeGovFailure = \case
     Cn.GovActionsDoNotExist (toList -> fromList -> governanceActions) ->
         UnknownGovernanceActions { governanceActions }
@@ -75,7 +77,7 @@ encodeGovFailure = \case
             , invalidEntities =
                 DiscriminatedRewardAccounts rewardAccounts
             }
-    Cn.ProposalDepositIncorrect providedDeposit (SJust -> expectedDeposit) ->
+    Cn.ProposalDepositIncorrect (Mismatch providedDeposit (SJust -> expectedDeposit)) ->
         GovernanceProposalDepositMismatch
             { providedDeposit
             , expectedDeposit
@@ -129,7 +131,7 @@ encodeGovFailure = \case
                     []
     Cn.VotingOnExpiredGovAction (toList -> voters) ->
         VotingOnExpiredActions voters
-    Cn.ProposalCantFollow _ proposedVersion currentVersion ->
+    Cn.ProposalCantFollow _ (Mismatch proposedVersion currentVersion) ->
         InvalidHardForkVersionBump { proposedVersion, currentVersion }
     Cn.InvalidPolicyHash providedHash expectedHash ->
         ConstitutionGuardrailsHashMismatch { providedHash, expectedHash }
@@ -147,8 +149,8 @@ encodeGovFailure = \case
         StakeCredentialNotRegistered { unknownCredential }
 
 encodeCertsFailure
-    :: Cn.ConwayCertsPredFailure (ConwayEra crypto)
-    -> MultiEraPredicateFailure crypto
+    :: Cn.ConwayCertsPredFailure ConwayEra
+    -> MultiEraPredicateFailure
 encodeCertsFailure = \case
     Cn.WithdrawalsNotInRewardsCERTS credentials ->
         IncompleteWithdrawals credentials
@@ -156,8 +158,8 @@ encodeCertsFailure = \case
         encodeCertFailure e
 
 encodeCertFailure
-    :: Cn.ConwayCertPredFailure (ConwayEra crypto)
-    -> MultiEraPredicateFailure crypto
+    :: Cn.ConwayCertPredFailure ConwayEra
+    -> MultiEraPredicateFailure
 encodeCertFailure = \case
     Cn.DelegFailure e ->
         encodeDelegFailure e
@@ -167,8 +169,8 @@ encodeCertFailure = \case
         encodeGovCertFailure e
 
 encodeDelegFailure
-    :: Cn.ConwayDelegPredFailure (ConwayEra crypto)
-    -> MultiEraPredicateFailure crypto
+    :: Cn.ConwayDelegPredFailure ConwayEra
+    -> MultiEraPredicateFailure
 encodeDelegFailure = \case
     -- NOTE: The discarded coin value here refers to the deposit as set in the
     -- transaction; it would be more useful and worth including if it were the
@@ -187,8 +189,8 @@ encodeDelegFailure = \case
         UnknownStakePool poolId
 
 encodeGovCertFailure
-    :: Cn.ConwayGovCertPredFailure (ConwayEra crypto)
-    -> MultiEraPredicateFailure crypto
+    :: Cn.ConwayGovCertPredFailure ConwayEra
+    -> MultiEraPredicateFailure
 encodeGovCertFailure = \case
     Cn.ConwayDRepAlreadyRegistered knownDelegateRepresentative ->
         DRepAlreadyRegistered { knownDelegateRepresentative }
@@ -197,21 +199,18 @@ encodeGovCertFailure = \case
     -- NOTE: The discarded coin value here refers to the deposit as set in the
     -- transaction; it would be more useful and worth including if it were the
     -- expected one.
-    Cn.ConwayDRepIncorrectDeposit providedDeposit (SJust -> expectedDeposit) ->
+    Cn.ConwayDRepIncorrectDeposit (Mismatch providedDeposit (SJust -> expectedDeposit)) ->
         DepositMismatch { providedDeposit, expectedDeposit }
     Cn.ConwayCommitteeHasPreviouslyResigned unknownConstitutionalCommitteeMember ->
         UnknownConstitutionalCommitteeMember { unknownConstitutionalCommitteeMember }
-    Cn.ConwayDRepIncorrectRefund providedDeposit (SJust -> expectedDeposit) ->
+    Cn.ConwayDRepIncorrectRefund (Mismatch providedDeposit (SJust -> expectedDeposit)) ->
         DepositMismatch { providedDeposit, expectedDeposit }
     Cn.ConwayCommitteeIsUnknown unknownConstitutionalCommitteeMember ->
         UnknownConstitutionalCommitteeMember { unknownConstitutionalCommitteeMember }
 
 encodeUtxoFailure
-    :: forall crypto.
-        ( Crypto crypto
-        )
-    => Cn.ConwayUtxoPredFailure (ConwayEra crypto)
-    -> MultiEraPredicateFailure crypto
+    :: Cn.ConwayUtxoPredFailure ConwayEra
+    -> MultiEraPredicateFailure
 encodeUtxoFailure = \case
     Cn.UtxosFailure e ->
         encodeUtxosFailure e
@@ -226,13 +225,13 @@ encodeUtxoFailure = \case
         -- It would be good to report those value back in the error.
         let culpritOutputs = (\(_, _, out) -> TxOutInAnyEra (era, out)) <$> outs in
         ValueSizeAboveLimit culpritOutputs
-    Cn.MaxTxSizeUTxO measuredSize maximumSize ->
+    Cn.MaxTxSizeUTxO (Mismatch measuredSize maximumSize) ->
         TransactionTooLarge { measuredSize, maximumSize }
     Cn.InputSetEmptyUTxO ->
         EmptyInputSet
-    Cn.FeeTooSmallUTxO minimumRequiredFee suppliedFee ->
+    Cn.FeeTooSmallUTxO (Mismatch suppliedFee minimumRequiredFee) ->
         TransactionFeeTooSmall { minimumRequiredFee, suppliedFee }
-    Cn.ValueNotConservedUTxO consumed produced ->
+    Cn.ValueNotConservedUTxO (Mismatch consumed produced) ->
         let valueConsumed = ValueInAnyEra (era, consumed) in
         let valueProduced = ValueInAnyEra (era, produced) in
         ValueNotConserved { valueConsumed, valueProduced }
@@ -253,7 +252,7 @@ encodeUtxoFailure = \case
         InsufficientCollateral { providedCollateral, minimumRequiredCollateral }
     Cn.ScriptsNotPaidUTxO utxo ->
         CollateralInputLockedByScript (Map.keys $ Ledger.unUTxO utxo)
-    Cn.WrongNetworkInTxBody expectedNetwork _providedNetwork ->
+    Cn.WrongNetworkInTxBody (Mismatch _providedNetwork expectedNetwork) ->
         let invalidEntities = DiscriminatedTransaction in
         NetworkMismatch { expectedNetwork, invalidEntities }
     Cn.OutsideForecast slot ->
@@ -263,9 +262,9 @@ encodeUtxoFailure = \case
         NonAdaValueAsCollateral valueInAnyEra
     Cn.NoCollateralInputs{} ->
         MissingCollateralInputs
-    Cn.TooManyCollateralInputs maximumCollateralInputs countedCollateralInputs ->
+    Cn.TooManyCollateralInputs (Mismatch countedCollateralInputs maximumCollateralInputs) ->
         TooManyCollateralInputs { maximumCollateralInputs, countedCollateralInputs }
-    Cn.ExUnitsTooBigUTxO maximumExUnits providedExUnits ->
+    Cn.ExUnitsTooBigUTxO (Mismatch providedExUnits maximumExUnits) ->
         ExecutionUnitsTooLarge { maximumExUnits, providedExUnits }
     Cn.IncorrectTotalCollateralField computedTotalCollateral declaredTotalCollateral ->
         TotalCollateralMismatch { computedTotalCollateral, declaredTotalCollateral }
@@ -283,11 +282,8 @@ encodeUtxoFailure = \case
     era = ShelleyBasedEraConway
 
 encodeUtxosFailure
-    :: forall crypto.
-        ( Crypto crypto
-        )
-    => Cn.ConwayUtxosPredFailure (ConwayEra crypto)
-    -> MultiEraPredicateFailure crypto
+    :: Cn.ConwayUtxosPredFailure ConwayEra
+    -> MultiEraPredicateFailure
 encodeUtxosFailure = \case
     Cn.ValidationTagMismatch validationTag mismatchReason ->
         ValidationTagMismatch { validationTag, mismatchReason }
@@ -295,11 +291,8 @@ encodeUtxosFailure = \case
         pickPredicateFailure (encodeCollectErrors AlonzoBasedEraConway errors)
 
 encodeUtxowFailure
-    :: forall crypto.
-        ( Crypto crypto
-        )
-    => Cn.ConwayUtxowPredFailure (ConwayEra crypto)
-    -> MultiEraPredicateFailure crypto
+    :: Cn.ConwayUtxowPredFailure ConwayEra
+    -> MultiEraPredicateFailure
 encodeUtxowFailure = \case
     Cn.UtxoFailure e ->
         encodeUtxoFailure e
@@ -313,7 +306,7 @@ encodeUtxowFailure = \case
     Cn.ExtraRedeemers redeemers ->
         let extraneousRedeemers = ScriptPurposeIndexInAnyEra . (era,) <$> redeemers
          in ExtraneousRedeemers { extraneousRedeemers }
-    Cn.PPViewHashesDontMatch providedIntegrityHash computedIntegrityHash ->
+    Cn.PPViewHashesDontMatch (Mismatch providedIntegrityHash computedIntegrityHash) ->
         ScriptIntegrityHashMismatch { providedIntegrityHash, computedIntegrityHash }
     Cn.UnspendableUTxONoDatumHash orphanScriptInputs ->
         OrphanScriptInputs { orphanScriptInputs }
@@ -329,7 +322,7 @@ encodeUtxowFailure = \case
         MissingMetadataHash hash
     Cn.MissingTxMetadata hash ->
         MissingMetadata hash
-    Cn.ConflictingMetadataHash providedAuxiliaryDataHash computedAuxiliaryDataHash ->
+    Cn.ConflictingMetadataHash (Mismatch providedAuxiliaryDataHash computedAuxiliaryDataHash) ->
         MetadataHashMismatch{providedAuxiliaryDataHash, computedAuxiliaryDataHash}
     Cn.InvalidMetadata ->
         InvalidMetadata

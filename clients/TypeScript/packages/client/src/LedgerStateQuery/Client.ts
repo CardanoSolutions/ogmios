@@ -12,7 +12,6 @@ import {
   networkStartTime,
   networkTip,
   projectedRewards,
-  proposedProtocolParameters,
   protocolParameters,
   rewardAccountSummaries,
   stakePools,
@@ -67,7 +66,6 @@ export interface LedgerStateQueryClient {
     scripts?: AnyStakeCredential[],
     keys?: AnyStakeCredential[]
   }): ReturnType<typeof projectedRewards>
-  proposedProtocolParameters(): ReturnType<typeof proposedProtocolParameters>
   protocolParameters(): ReturnType<typeof protocolParameters>
   rewardAccountSummaries(filter: {
     scripts?: AnyStakeCredential[],
@@ -178,9 +176,6 @@ export async function createLedgerStateQueryClient (
     },
     projectedRewards (filter) {
       return projectedRewards(context, filter)
-    },
-    proposedProtocolParameters () {
-      return proposedProtocolParameters(context)
     },
     protocolParameters () {
       return protocolParameters(context)

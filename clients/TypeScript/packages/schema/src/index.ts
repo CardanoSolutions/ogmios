@@ -397,12 +397,6 @@ export interface Ogmios {
     | QueryLedgerStateEraMismatch
     | QueryLedgerStateUnavailableInCurrentEra
     | QueryLedgerStateAcquiredExpired;
-  QueryLedgerStateProposedProtocolParameters: QueryLedgerStateProposedProtocolParameters;
-  QueryLedgerStateProposedProtocolParametersResponse:
-    | QueryLedgerStateProposedProtocolParametersResponse
-    | QueryLedgerStateEraMismatch
-    | QueryLedgerStateUnavailableInCurrentEra
-    | QueryLedgerStateAcquiredExpired;
   QueryLedgerStateProtocolParameters: QueryLedgerStateProtocolParameters;
   QueryLedgerStateProtocolParametersResponse:
     | QueryLedgerStateProtocolParametersResponse
@@ -1755,7 +1749,7 @@ export interface SubmitTransactionFailureUnknownStakePool {
   };
 }
 /**
- * The transaction contains incomplete or invalid rewards withdrawals. When present, rewards withdrawals must consume rewards in full, there cannot be any leftover. The field 'data.incompleteWithdrawals' contains a map of withdrawals and their current rewards balance.
+ * The transaction contains incomplete or invalid rewards withdrawals. When present, rewards withdrawals must consume rewards in full, there cannot be any leftover. You may also run into this error if the associatd stake credential is not registered. The field 'data.incompleteWithdrawals' contains a map of culprit withdrawals.
  */
 export interface SubmitTransactionFailureIncompleteWithdrawals {
   code: 3141;
@@ -2311,7 +2305,6 @@ export interface QueryLedgerStateEraMismatch {
     | "queryLedgerState/operationalCertificates"
     | "queryLedgerState/projectedRewards"
     | "queryLedgerState/protocolParameters"
-    | "queryLedgerState/proposedProtocolParameters"
     | "queryLedgerState/rewardAccountSummaries"
     | "queryLedgerState/rewardsProvenance"
     | "queryLedgerState/stakePools"
@@ -2344,7 +2337,6 @@ export interface QueryLedgerStateUnavailableInCurrentEra {
     | "queryLedgerState/operationalCertificates"
     | "queryLedgerState/projectedRewards"
     | "queryLedgerState/protocolParameters"
-    | "queryLedgerState/proposedProtocolParameters"
     | "queryLedgerState/rewardAccountSummaries"
     | "queryLedgerState/rewardsProvenance"
     | "queryLedgerState/stakePools"
@@ -2376,7 +2368,6 @@ export interface QueryLedgerStateAcquiredExpired {
     | "queryLedgerState/operationalCertificates"
     | "queryLedgerState/projectedRewards"
     | "queryLedgerState/protocolParameters"
-    | "queryLedgerState/proposedProtocolParameters"
     | "queryLedgerState/rewardAccountSummaries"
     | "queryLedgerState/rewardsProvenance"
     | "queryLedgerState/stakePools"
@@ -2740,20 +2731,6 @@ export interface ProjectedRewards {
   [k: string]: {
     [k: string]: ValueAdaOnly;
   };
-}
-/**
- * Query the last update proposal w.r.t. protocol parameters, if any.
- */
-export interface QueryLedgerStateProposedProtocolParameters {
-  jsonrpc: "2.0";
-  method: "queryLedgerState/proposedProtocolParameters";
-  id?: unknown;
-}
-export interface QueryLedgerStateProposedProtocolParametersResponse {
-  jsonrpc: "2.0";
-  method: "queryLedgerState/proposedProtocolParameters";
-  result: ProposedProtocolParameters[];
-  id?: unknown;
 }
 /**
  * Query the current protocol parameters.

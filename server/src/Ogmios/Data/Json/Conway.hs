@@ -24,14 +24,14 @@ import Cardano.Ledger.Binary
 import Cardano.Ledger.Conway.PParams
     ( THKD (..)
     )
+import Cardano.Ledger.Hashes
+    ( extractHash
+    )
 import Cardano.Ledger.HKD
     ( HKDFunctor (..)
     )
 import Cardano.Ledger.Keys
     ( KeyRole (..)
-    )
-import Cardano.Ledger.SafeHash
-    ( extractHash
     )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
@@ -79,8 +79,7 @@ import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
 encodeAnchor
-    :: Crypto crypto
-    => Cn.Anchor crypto
+    :: Cn.Anchor
     -> Json
 encodeAnchor x = encodeObject
     ( "url" .=
@@ -90,10 +89,8 @@ encodeAnchor x = encodeObject
     )
 
 encodeBlock
-    :: ( Crypto crypto
-       )
-    => (MetadataFormat, IncludeCbor)
-    -> ShelleyBlock (Praos crypto) (ConwayEra crypto)
+    :: (MetadataFormat, IncludeCbor)
+    -> ShelleyBlock (Praos StandardCrypto) ConwayEra
     -> Json
 encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
@@ -109,8 +106,7 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         )
 
 encodeCommittee
-    :: Crypto crypto
-    => Cn.Committee (ConwayEra crypto)
+    :: Cn.Committee ConwayEra
     -> Json
 encodeCommittee x = encodeObject
     ( "members" .=
@@ -120,8 +116,7 @@ encodeCommittee x = encodeObject
     )
 
 encodeCommitteeMembersState
-    :: Crypto crypto
-    => Cn.CommitteeMembersState crypto
+    :: Cn.CommitteeMembersState
     -> Json
 encodeCommitteeMembersState x = encodeObject
     ( "members" .=
@@ -131,9 +126,8 @@ encodeCommitteeMembersState x = encodeObject
     )
 
 encodeConstitutionalCommitteeMemberState
-    :: forall crypto. Crypto crypto
-    => Ledger.Credential 'ColdCommitteeRole crypto
-    -> Cn.CommitteeMemberState crypto
+    :: Ledger.Credential 'ColdCommitteeRole
+    -> Cn.CommitteeMemberState
     -> Json
 encodeConstitutionalCommitteeMemberState memberId st = encodeObject
     ( "id" `Shelley.encodeCredential` memberId
@@ -158,8 +152,7 @@ encodeMemberStatus = encodeText . \case
     Cn.Unrecognized -> "unrecognized"
 
 encodeHotCredAuthStatus
-    :: Crypto crypto
-    => Cn.HotCredAuthStatus crypto
+    :: Cn.HotCredAuthStatus
     -> Json
 encodeHotCredAuthStatus = \case
     Cn.MemberNotAuthorized ->
@@ -203,8 +196,7 @@ encodeNextEpochChange = fmap encodeObject . \case
             )
 
 encodeContextError
-    :: ( Crypto (EraCrypto era)
-       , PlutusPurpose AsIx era ~ Cn.ConwayPlutusPurpose AsIx era
+    :: ( PlutusPurpose AsIx era ~ Cn.ConwayPlutusPurpose AsIx era
        )
     => Cn.ConwayContextError era
     -> Json
@@ -247,8 +239,7 @@ encodeContextError err = encodeText $ case err of
         "Unknown transaction input (missing from UTxO set): " <> Shelley.stringifyTxIn i
 
 encodeConstitution
-    :: Era era
-    => Cn.Constitution era
+    :: Cn.Constitution era
     -> Series
 encodeConstitution x =
     "metadata" .=
@@ -259,8 +250,7 @@ encodeConstitution x =
             (Cn.constitutionScript x)
 
 encodeConstitutionalCommitteeMember
-    :: Crypto crypto
-    => Ledger.Credential 'ColdCommitteeRole crypto
+    :: Ledger.Credential 'ColdCommitteeRole
     -> StrictMaybe EpochNo
     -> Json
 encodeConstitutionalCommitteeMember memberId mandate =
@@ -271,8 +261,7 @@ encodeConstitutionalCommitteeMember memberId mandate =
         )
 
 encodeConwayGovCert
-    :: Crypto crypto
-    => Cn.ConwayGovCert crypto
+    :: Cn.ConwayGovCert
     -> Series
 encodeConwayGovCert = \case
     Cn.ConwayRegDRep credential deposit anchor ->
@@ -324,8 +313,7 @@ encodeConwayGovCert = \case
             encodeAnchor anchor
 
 encodeDelegCert
-    :: Crypto crypto
-    => Cn.ConwayDelegCert crypto
+    :: Cn.ConwayDelegCert
     -> NonEmpty Series
 encodeDelegCert = \case
     Cn.ConwayRegCert credential deposit ->
@@ -362,8 +350,7 @@ encodeDelegCert = \case
         ]
 
 encodeDelegatee
-    :: Crypto crypto
-    => Cn.Delegatee crypto
+    :: Cn.Delegatee
     -> Series
 encodeDelegatee = \case
     Cn.DelegStake poolId ->
@@ -376,8 +363,7 @@ encodeDelegatee = \case
         "delegateRepresentative" .= encodeObject (encodeDRep drep)
 
 encodeDRep
-    :: Crypto crypto
-    => Ledger.DRep crypto
+    :: Ledger.DRep
     -> Series
 encodeDRep = \case
     Ledger.DRepCredential credential ->
@@ -389,8 +375,7 @@ encodeDRep = \case
         "type" .= encodeText "noConfidence"
 
 encodeGenesis
-    :: Crypto crypto
-    => Cn.ConwayGenesis crypto
+    :: Cn.ConwayGenesis
     -> Json
 encodeGenesis x =
    encodeObject
@@ -418,8 +403,7 @@ encodeGenesis x =
        )
 
 encodeGovAction
-    :: Crypto crypto
-    => Cn.GovAction (ConwayEra crypto)
+    :: Cn.GovAction ConwayEra
     -> Json
 encodeGovAction = \case
     Cn.ParameterChange ancestor pparamsUpdate guardrails ->
@@ -488,8 +472,7 @@ encodeGovAction = \case
             )
 
 encodeGovActionId
-    :: Crypto crypto
-    => Cn.GovActionId crypto
+    :: Cn.GovActionId
     -> Json
 encodeGovActionId x =
     encodeObject
@@ -674,8 +657,7 @@ encodePoolVotingThresholds x =
     & encodeObject
 
 encodeProposalProcedure
-    :: Crypto crypto
-    => Cn.ProposalProcedure (ConwayEra crypto)
+    :: Cn.ProposalProcedure ConwayEra
     -> Series
 encodeProposalProcedure x =
       "deposit" .=
@@ -715,11 +697,10 @@ encodeScriptPurposeIndex = \case
                 encodeText "propose"
             )
   where
-    translate = Alonzo.encodeScriptPurposeIndex @(AlonzoEra (EraCrypto era))
+    translate = Alonzo.encodeScriptPurposeIndex @AlonzoEra
 
 encodeScriptPurposeItem
-    :: forall crypto. (Crypto crypto)
-    => Cn.ConwayPlutusPurpose AsItem (ConwayEra crypto)
+    :: Cn.ConwayPlutusPurpose AsItem ConwayEra
     -> Json
 encodeScriptPurposeItem = encodeObject . \case
     Cn.ConwaySpending (AsItem txIn) ->
@@ -738,7 +719,7 @@ encodeScriptPurposeItem = encodeObject . \case
         "purpose" .= encodeText "propose" <>
         "proposal" .= encodeObject (encodeProposalProcedure proposal)
     Cn.ConwayCertifying (AsItem cert) ->
-        case encodeTxCert @(ConwayEra crypto) cert of
+        case encodeTxCert @ConwayEra cert of
             -- Delegation certificate or credential de-registration certificate
             c :| [] ->
                 "purpose" .= encodeText "publish" <>
@@ -752,16 +733,12 @@ encodeScriptPurposeItem = encodeObject . \case
                 "certificate" .= encodeObject c
 
 encodeTx
-    :: forall era crypto.
-        ( Crypto crypto
-        , era ~ ConwayEra crypto
-        )
-   => (MetadataFormat, IncludeCbor)
-    -> Ba.AlonzoTx era
+    :: (MetadataFormat, IncludeCbor)
+    -> Ba.AlonzoTx ConwayEra
     -> Json
 encodeTx (fmt, opts) x =
     encodeObject
-        ( Shelley.encodeTxId (Ledger.txIdTxBody @(ConwayEra crypto) (Cn.body x))
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @ConwayEra (Cn.body x))
        <>
         "spends" .= Alonzo.encodeIsValid (Cn.isValid x)
        <>
@@ -772,7 +749,7 @@ encodeTx (fmt, opts) x =
         Alonzo.encodeWitnessSet opts (snd <$> auxiliary) encodeScriptPurposeIndex (Cn.wits x)
        <>
         if includeTransactionCbor opts then
-           "cbor" .= encodeByteStringBase16 (encodeCbor @era x)
+           "cbor" .= encodeByteStringBase16 (encodeCbor @ConwayEra x)
         else
            mempty
         )
@@ -786,10 +763,9 @@ encodeTx (fmt, opts) x =
             )
 
 encodeTxBody
-    :: Crypto crypto
-    => IncludeCbor
-    -> Cn.ConwayTxBody (ConwayEra crypto)
-    -> [Ledger.ScriptHash crypto]
+    :: IncludeCbor
+    -> Cn.ConwayTxBody ConwayEra
+    -> [Ledger.ScriptHash]
     -> Series
 encodeTxBody opts x scripts =
     "inputs" .=
@@ -839,10 +815,7 @@ encodeTxBody opts x scripts =
         )
 
 encodeTxCert
-    :: forall era.
-        ( Era era
-        )
-    => Cn.ConwayTxCert era
+    :: Cn.ConwayTxCert era
     -> NonEmpty Series
 encodeTxCert = \case
     Cn.ConwayTxCertDeleg dCert ->
@@ -853,8 +826,7 @@ encodeTxCert = \case
         encodeConwayGovCert cCert :| []
 
 encodeVotingProcedures
-    :: Crypto crypto
-    => Cn.VotingProcedures (ConwayEra crypto)
+    :: Cn.VotingProcedures ConwayEra
     -> Json
 encodeVotingProcedures =
     encodeList identity . Map.foldrWithKey encodeProcedures mempty . Cn.unVotingProcedures
@@ -864,10 +836,9 @@ encodeVotingProcedures =
             (\govActionId  -> (:) . encodeVotingProcedure issuer govActionId)
 
 encodeVotingProcedure
-    :: Crypto crypto
-    => Cn.Voter crypto
-    -> Cn.GovActionId crypto
-    -> Cn.VotingProcedure (ConwayEra crypto)
+    :: Cn.Voter
+    -> Cn.GovActionId
+    -> Cn.VotingProcedure ConwayEra
     -> Json
 encodeVotingProcedure issuer govActionId x =
     encodeObject
@@ -890,8 +861,7 @@ encodeVote = \case
     Cn.Abstain -> encodeText "abstain"
 
 encodeVoter
-    :: Crypto crypto
-    => Cn.Voter crypto
+    :: Cn.Voter
     -> Json
 encodeVoter = encodeObject . \case
     Cn.CommitteeVoter credential ->

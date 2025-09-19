@@ -28,16 +28,12 @@ import Cardano.Ledger.Coin
 import Cardano.Ledger.Credential
     ( Credential (..)
     )
-import Cardano.Ledger.EpochBoundary
+import Cardano.Ledger.State
     ( SnapShot (..)
     , SnapShots (..)
     , Stake (..)
     , sumAllStake
     , sumStakePerPool
-    )
-import Cardano.Ledger.Keys
-    ( KeyHash
-    , KeyRole (..)
     )
 import Cardano.Ledger.Shelley.Genesis
     ( ShelleyGenesis (..)
@@ -70,12 +66,12 @@ import qualified Cardano.Ledger.Shelley.Rewards as Ledger
 import qualified Data.Map.Strict as Map
 import qualified Data.VMap as VMap
 
-data RewardsProvenance crypto = RewardsProvenance
+data RewardsProvenance = RewardsProvenance
   { spe :: !Word64
   -- ^ The number of slots per epoch.
   , fees :: !Coin
   -- ^ Fees collected for those rewards.
-  , blocks :: !(BlocksMade crypto)
+  , blocks :: !BlocksMade
   -- ^ A map from pool ID (the key hash of the stake pool operator's
   -- verification key) to the number of blocks made in the given epoch.
   , maxSupply :: !Coin
@@ -102,15 +98,15 @@ data RewardsProvenance crypto = RewardsProvenance
   , activeStake :: !Coin
   -- ^ The amount of Lovelace that is delegated during the given epoch.
   , pools :: Map
-      (KeyHash 'StakePool crypto)
-      (PoolRewardsInfo crypto)
+      (KeyHash 'StakePool)
+      (PoolRewardsInfo)
   -- ^ Stake pools specific information needed to compute the rewards for its members.
   }
   deriving (Eq, Generic)
 
 -- | Stake Pool specific information needed to compute the rewards
 -- for its members.
-data PoolRewardsInfo crypto = PoolRewardsInfo
+data PoolRewardsInfo = PoolRewardsInfo
   { poolRelativeStake :: !StakeShare
   -- ^ The stake pool's stake divided by the total stake
   , poolPot :: !Coin
@@ -119,16 +115,16 @@ data PoolRewardsInfo crypto = PoolRewardsInfo
   -- ^ The number of blocks the stake pool produced
   , poolLeaderReward :: !Coin
   -- ^ The leader reward
-  , poolDelegators :: !(Map (Credential 'Staking crypto) Coin)
+  , poolDelegators :: !(Map (Credential 'Staking) Coin)
   -- ^ A map of all its delegators, and their respective stake.
   }
   deriving (Show, Eq, Ord, Generic)
 
 newRewardsProvenance
-    :: forall era crypto. (crypto ~ EraCrypto era, EraGov era)
-    => ShelleyGenesis crypto
+    :: forall era. (EraGov era)
+    => ShelleyGenesis
     -> NewEpochState era
-    -> RewardsProvenance crypto
+    -> RewardsProvenance
 newRewardsProvenance genesis nes =
     rewardsProvenance
         (sgEpochLength genesis)
@@ -144,13 +140,13 @@ newRewardsProvenance genesis nes =
 -- So instead, we provide code here to replay those calculation directly in
 -- Ogmios, given some NewEpochState.
 rewardsProvenance
-    :: forall era crypto. (crypto ~ EraCrypto era, EraGov era)
+    :: forall era. (EraGov era)
     => EpochSize
-    -> BlocksMade crypto
+    -> BlocksMade
     -> EpochState era
     -> Coin
     -> ActiveSlotCoeff
-    -> RewardsProvenance crypto
+    -> RewardsProvenance
 rewardsProvenance slotsPerEpoch b@(BlocksMade b') es@(EpochState acnt _ ss _) maxSupply asc =
     RewardsProvenance
         { spe = case slotsPerEpoch of EpochSize n -> n
@@ -227,7 +223,7 @@ rewardsProvenance slotsPerEpoch b@(BlocksMade b') es@(EpochState acnt _ ss _) ma
         totalStake
         activeStake
 
-    delegators :: Map (KeyHash 'StakePool crypto) (Map (Credential 'Staking crypto) Coin)
+    delegators :: Map (KeyHash 'StakePool) (Map (Credential 'Staking) Coin)
     delegators =
         VMap.foldlWithKey
             (flipFold $ \account ->

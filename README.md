@@ -15,6 +15,7 @@
 
 | Ogmios        | Cardano-node (mainnet, preview, preprod) |
 | ---           | ---                                      |
+| `master`      | **`10.5.1`**                             |
 | **`v6.13.*`** | **`10.1.2`, `10.1.3`, `10.1.4`**         |
 | `v6.12.*`     | `10.1.2`, `10.1.3`, `10.1.4`             |
 | `v6.11.*`     | `10.1.2`, `10.1.3`, `10.1.4`             |
@@ -69,7 +70,6 @@ See our [Ogmios client starter kit](https://github.com/CardanoSolutions/ogmios-t
   `operationalCertificates`    | Operational certificate counters of all stake pools
   `projectedRewards`           | The projected rewards of an account in a context where the top stake pools are fully saturated. This projection gives, in principle, a ranking of stake pools that maximizes delegator rewards.
   `protocolParameters`         | The current protocol parameters.
-  `proposedProtocolParameters` | The last update proposal w.r.t. protocol parameters, if any.
   `rewardAccountSummaries`     | Current delegation settings and rewards of chosen reward accounts.
   `rewardsProvenance`          | Get details about rewards calculation for the ongoing epoch.
   `stakePools`                 | The list of all pool identifiers currently registered and active, as well as their voting stake.

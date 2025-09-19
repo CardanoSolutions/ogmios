@@ -138,7 +138,7 @@ getHealthR = Handler $ \EnvServer{health, sensors, sampler} -> do
     header "Access-Control-Allow-Origin" "*"
     response@Health{connectionStatus, networkSynchronization} <- do
         metrics <- lift $ Metrics.sample sampler sensors
-        modifyHealth health (\h -> h { metrics })
+        lift $ modifyHealth health (\h -> h { metrics })
     status $ case (connectionStatus, networkSynchronization) of
         (Disconnected, _) -> status500
         (Connected, Just (NetworkSynchronization 1)) -> status200
@@ -152,7 +152,7 @@ getMetricsR = Handler $ \EnvServer{health, sensors, sampler} -> do
     status status200
     (raw . mkPrometheusMetrics) =<< do
         metrics <- lift $ Metrics.sample sampler sensors
-        modifyHealth health (\h -> h { metrics })
+        lift $ modifyHealth health (\h -> h { metrics })
 
 getFaviconR :: Handler
 getFaviconR = Handler $ \_env -> do

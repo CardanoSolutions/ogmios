@@ -21,9 +21,6 @@ module Ogmios.Data.EraTranslation
 
 import Ogmios.Prelude
 
-import Cardano.Crypto.DSIGN
-    ( DSIGNAlgorithm (..)
-    )
 import Cardano.Ledger.Babbage.Tx
     ( AlonzoTx (..)
     )
@@ -31,11 +28,9 @@ import Cardano.Ledger.Babbage.TxOut
     ( BabbageTxOut (..)
     )
 import Cardano.Ledger.Core
-    ( translateEraThroughCBOR
-    , upgradeTxBody
-    )
-import Cardano.Ledger.Era
     ( PreviousEra
+    , translateEraThroughCBOR
+    , upgradeTxBody
     )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
@@ -48,9 +43,6 @@ import Control.Monad.Trans.Except
     )
 import Data.Maybe.Strict
     ( StrictMaybe (..)
-    )
-import Ouroboros.Consensus.Cardano
-    ( CardanoBlock
     )
 import Ouroboros.Consensus.Cardano.Block
     ( GenTx (..)
@@ -65,7 +57,6 @@ import Ouroboros.Consensus.Shelley.Ledger.Mempool
 import qualified Cardano.Ledger.Alonzo.Tx as Alonzo
 import qualified Cardano.Ledger.Babbage.TxBody as Babbage
 import qualified Cardano.Ledger.Conway.Core as Conway
-import qualified Cardano.Ledger.Crypto as Ledger
 
 type family MostRecentEra block :: Type where
     MostRecentEra (CardanoBlock crypto) = BlockEra (LastElem (CardanoEras crypto))
@@ -81,7 +72,7 @@ class Upgrade (f :: Type -> Type) era where
 -- TxOut
 ----------
 
-instance Ledger.Crypto crypto => Upgrade BabbageTxOut (ConwayEra crypto) where
+instance Upgrade BabbageTxOut ConwayEra where
     type Upgraded BabbageTxOut = BabbageTxOut
     upgrade = force . Conway.upgradeTxOut
 
@@ -89,7 +80,7 @@ instance Ledger.Crypto crypto => Upgrade BabbageTxOut (ConwayEra crypto) where
 -- UTxO
 ----------
 
-instance Ledger.Crypto crypto => Upgrade UTxO (ConwayEra crypto) where
+instance Upgrade UTxO ConwayEra where
     type Upgraded UTxO = UTxO
     upgrade = force . UTxO . fmap upgrade . unUTxO
 
@@ -97,11 +88,7 @@ instance Ledger.Crypto crypto => Upgrade UTxO (ConwayEra crypto) where
 -- Tx
 ----------
 
-instance
-    ( Ledger.Crypto crypto
-    , NFData (SigDSIGN (Ledger.DSIGN crypto))
-    , NFData (VerKeyDSIGN (Ledger.DSIGN crypto))
-    ) => Upgrade AlonzoTx (ConwayEra crypto) where
+instance Upgrade AlonzoTx ConwayEra where
     type Upgraded AlonzoTx = AlonzoTx
     upgrade tx = force $ unsafeFromRight $ do
         body <- left show $ upgradeTxBody (Alonzo.body tx)
@@ -118,11 +105,8 @@ instance
 ----------
 
 upgradeGenTx
-    :: forall crypto.
-        ( Crypto crypto
-        )
-    => GenTx (CardanoBlock crypto)
-    -> Either Text (GenTx (CardanoBlock crypto))
+    :: GenTx (CardanoBlock StandardCrypto)
+    -> Either Text (GenTx (CardanoBlock StandardCrypto))
 upgradeGenTx = \case
     GenTxByron _ ->
         Left "cannot upgrade from Byron transaction: too old, use a more recent transaction builder."
@@ -133,12 +117,12 @@ upgradeGenTx = \case
     GenTxMary _ ->
         Left "cannot upgrade from Mary transaction: too old, use a more recent transaction builder."
     GenTxAlonzo (ShelleyTx hash txAlonzo) -> do
-        txBabbage <- left show $ runExcept $ translateEraThroughCBOR @(BabbageEra crypto) "AlonzoTx" txAlonzo
+        txBabbage <- left show $ runExcept $ translateEraThroughCBOR @BabbageEra "AlonzoTx" txAlonzo
         upgradeGenTx $ GenTxBabbage $ ShelleyTx hash txBabbage
     GenTxBabbage (ShelleyTx hash txBabbage) -> do
-        txConway <- left show $ runExcept $ translateEraThroughCBOR @(ConwayEra crypto) "BabbageTx" txBabbage
+        txConway <- left show $ runExcept $ translateEraThroughCBOR @ConwayEra "BabbageTx" txBabbage
         pure $ GenTxConway $ ShelleyTx hash txConway
-    latest@(GenTxConway(_))->
+    latest@(GenTxConway _)->
         Right latest
 
 unsafeFromRight :: (HasCallStack) => Either Text a -> a
@@ -148,38 +132,38 @@ unsafeFromRight = either error id
 
 data MultiEraUTxO block where
     UTxOInBabbageEra
-        :: UTxO (BabbageEra (BlockCrypto block))
+        :: UTxO BabbageEra
         -> MultiEraUTxO block
 
     UTxOInConwayEra
-        :: UTxO (ConwayEra (BlockCrypto block))
+        :: UTxO ConwayEra
         -> MultiEraUTxO block
 
 deriving instance
-    ( Eq (UTxO (BabbageEra (BlockCrypto block)))
-    , Eq (UTxO (ConwayEra (BlockCrypto block)))
+    ( Eq (UTxO BabbageEra)
+    , Eq (UTxO ConwayEra)
     ) => Eq (MultiEraUTxO block)
 
 deriving instance
-    ( Show (UTxO (BabbageEra (BlockCrypto block)))
-    , Show (UTxO (ConwayEra (BlockCrypto block)))
+    ( Show (UTxO BabbageEra)
+    , Show (UTxO ConwayEra)
     ) => Show (MultiEraUTxO block)
 
 data MultiEraTxOut block where
     TxOutInBabbageEra
-        :: Babbage.BabbageTxOut (BabbageEra (BlockCrypto block))
+        :: Babbage.BabbageTxOut BabbageEra
         -> MultiEraTxOut block
 
     TxOutInConwayEra
-        :: Babbage.BabbageTxOut (ConwayEra (BlockCrypto block))
+        :: Babbage.BabbageTxOut ConwayEra
         -> MultiEraTxOut block
 
 deriving instance
-    ( Eq (Babbage.BabbageTxOut (BabbageEra (BlockCrypto block)))
-    , Eq (Babbage.BabbageTxOut (ConwayEra (BlockCrypto block)))
+    ( Eq (Babbage.BabbageTxOut BabbageEra)
+    , Eq (Babbage.BabbageTxOut ConwayEra)
     ) => Eq (MultiEraTxOut block)
 
 deriving instance
-    ( Show (Babbage.BabbageTxOut (BabbageEra (BlockCrypto block)))
-    , Show (Babbage.BabbageTxOut (ConwayEra (BlockCrypto block)))
+    ( Show (Babbage.BabbageTxOut BabbageEra)
+    , Show (Babbage.BabbageTxOut ConwayEra)
     ) => Show (MultiEraTxOut block)

@@ -18,14 +18,14 @@ import Ogmios.Data.Ledger.PredicateFailure.Shelley
     )
 
 import qualified Cardano.Ledger.Allegra.Rules as Al
+import Cardano.Ledger.BaseTypes
+    ( Mismatch (..)
+    )
 import qualified Cardano.Ledger.Shelley.Rules as Sh
 
 encodeLedgerFailure
-    :: forall crypto.
-        ( Crypto crypto
-        )
-    => Sh.ShelleyLedgerPredFailure (AllegraEra crypto)
-    -> MultiEraPredicateFailure crypto
+    :: Sh.ShelleyLedgerPredFailure AllegraEra
+    -> MultiEraPredicateFailure
 encodeLedgerFailure = \case
     Sh.UtxowFailure e  ->
         encodeUtxowFailure (encodeUtxoFailure ShelleyBasedEraAllegra) e
@@ -33,13 +33,12 @@ encodeLedgerFailure = \case
         encodeDelegsFailure e
 
 encodeUtxoFailure
-    :: forall era crypto.
-        ( EraCrypto (era crypto) ~ crypto
-        , Era (era crypto)
+    :: forall era.
+        ( Era era
         )
-    => ShelleyBasedEra (era crypto)
-    -> Al.AllegraUtxoPredFailure (era crypto)
-    -> MultiEraPredicateFailure crypto
+    => ShelleyBasedEra era
+    -> Al.AllegraUtxoPredFailure era
+    -> MultiEraPredicateFailure
 encodeUtxoFailure era = \case
     Al.BadInputsUTxO inputs ->
         UnknownUtxoReference inputs
@@ -48,13 +47,13 @@ encodeUtxoFailure era = \case
     Al.OutputTooBigUTxO outs ->
         let culpritOutputs = (\out -> TxOutInAnyEra (era, out)) <$> outs in
         ValueSizeAboveLimit culpritOutputs
-    Al.MaxTxSizeUTxO measuredSize maximumSize ->
+    Al.MaxTxSizeUTxO (Mismatch measuredSize maximumSize) ->
         TransactionTooLarge { measuredSize, maximumSize }
     Al.InputSetEmptyUTxO ->
         EmptyInputSet
-    Al.FeeTooSmallUTxO minimumRequiredFee suppliedFee ->
+    Al.FeeTooSmallUTxO (Mismatch suppliedFee minimumRequiredFee) ->
         TransactionFeeTooSmall { minimumRequiredFee, suppliedFee }
-    Al.ValueNotConservedUTxO consumed produced ->
+    Al.ValueNotConservedUTxO (Mismatch consumed produced) ->
         let valueConsumed = ValueInAnyEra (era, consumed) in
         let valueProduced = ValueInAnyEra (era, produced) in
         ValueNotConserved { valueConsumed, valueProduced }

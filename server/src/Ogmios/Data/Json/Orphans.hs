@@ -38,8 +38,7 @@ import Ogmios.Data.Json.Query
     ( encodePoint
     )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoBlock
-    , HardForkApplyTxErr (..)
+    ( HardForkApplyTxErr (..)
     )
 import Ouroboros.Consensus.Protocol.Praos
     ( PraosCrypto
@@ -58,8 +57,7 @@ import qualified Data.Aeson as Json
 
 -- Only used for logging
 instance
-    ( Crypto crypto
-    , PraosCrypto crypto
+    ( PraosCrypto crypto
     , TPraos.PraosCrypto crypto
     ) =>
     ToJSON
@@ -86,27 +84,22 @@ instance ToJSON (Point (CardanoBlock crypto)) where
 -- FromJSON
 --
 
-instance
-    ( TPraos.PraosCrypto crypto
-    , PraosCrypto crypto
-    ) =>
-    FromJSON (MultiEraDecoder (GenTx (CardanoBlock crypto)))
-  where
+instance FromJSON (MultiEraDecoder (GenTx (CardanoBlock StandardCrypto))) where
     parseJSON = Json.withObject "CBOR" $ \o ->
         o .: "cbor" >>= decodeSerializedTransaction
 
-instance Crypto crypto => FromJSON (MultiEraUTxO (CardanoBlock crypto)) where
+instance FromJSON (MultiEraUTxO (CardanoBlock crypto)) where
     parseJSON = decodeUtxo
 
-instance Crypto crypto => FromJSON (Point (CardanoBlock crypto)) where
+instance FromJSON (Point (CardanoBlock crypto)) where
     parseJSON = decodePoint
 
-instance Crypto crypto => FromJSON (Tip (CardanoBlock crypto)) where
+instance FromJSON (Tip (CardanoBlock crypto)) where
     parseJSON = decodeTip
 
 --
 -- Monoid / Semigroup
 --
 
-deriving newtype instance Monoid (UTxO (AlonzoEra crypto))
-deriving newtype instance Monoid (UTxO (BabbageEra crypto))
+deriving newtype instance Monoid (UTxO AlonzoEra)
+deriving newtype instance Monoid (UTxO BabbageEra)

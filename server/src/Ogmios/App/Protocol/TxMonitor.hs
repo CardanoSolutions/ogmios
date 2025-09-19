@@ -72,9 +72,6 @@ import Ogmios.Data.Protocol.TxMonitor
     , TxMonitorCodecs (..)
     , TxMonitorMessage (..)
     )
-import Ouroboros.Consensus.Cardano
-    ( CardanoBlock
-    )
 import Ouroboros.Consensus.Cardano.Block
     ( TxId (..)
     )
@@ -205,10 +202,10 @@ mkTxMonitorClient defaultWithInternalError TxMonitorCodecs{..} queue yield nodeT
 
 inMultipleEras
     :: forall crypto constraint.
-        ( constraint ~ (MostRecentEra (CardanoBlock crypto) ~ ConwayEra crypto)
+        ( constraint ~ (MostRecentEra (CardanoBlock crypto) ~ ConwayEra)
         )
     => NodeToClientVersion
-    -> Ledger.TxId crypto
+    -> Ledger.TxId
     -> [GenTxId (CardanoBlock crypto)]
 inMultipleEras nodeToClientV id =
     -- The list is ordered from the "most probable era", down to the least

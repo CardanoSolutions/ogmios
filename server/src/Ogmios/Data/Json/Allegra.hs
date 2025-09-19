@@ -19,7 +19,6 @@ import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
-import qualified Cardano.Ledger.SafeHash as Ledger
 
 import qualified Cardano.Ledger.Shelley.BlockChain as Sh
 import qualified Cardano.Ledger.Shelley.Scripts as Sh
@@ -33,29 +32,27 @@ import qualified Cardano.Ledger.Allegra.TxBody as Al
 
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
-type AuxiliaryScripts crypto =
-    Map (Ledger.ScriptHash crypto) (Ledger.Script (AllegraEra crypto))
+type AuxiliaryScripts =
+    Map Ledger.ScriptHash (Ledger.Script AllegraEra)
 
 --
 -- Encoders
 --
 encodeAuxiliaryData
-    :: forall crypto era. (Era era, era ~ AllegraEra crypto)
-    => (MetadataFormat, IncludeCbor)
-    -> Al.AllegraTxAuxData era
-    -> (Json, AuxiliaryScripts crypto)
+    :: (MetadataFormat, IncludeCbor)
+    -> Al.AllegraTxAuxData AllegraEra
+    -> (Json, AuxiliaryScripts)
 encodeAuxiliaryData opts (Al.AllegraTxAuxData blob scripts) =
-    ( Shelley.encodeMetadataBlob @era opts blob
+    ( Shelley.encodeMetadataBlob @AllegraEra opts blob
     , foldr
-        (\script -> Map.insert (Ledger.hashScript @(AllegraEra crypto) script) script)
+        (\script -> Map.insert (Ledger.hashScript @AllegraEra script) script)
         mempty
         scripts
     )
 
 encodeBlock
-    :: Crypto crypto
-    => (MetadataFormat, IncludeCbor)
-    -> ShelleyBlock (TPraos crypto) (AllegraEra crypto)
+    :: (MetadataFormat, IncludeCbor)
+    -> ShelleyBlock (TPraos StandardCrypto) AllegraEra
     -> Json
 encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
@@ -121,16 +118,12 @@ encodeTimelock = encodeObject . \case
         "slot" .= encodeSlotNo s
 
 encodeTx
-    :: forall era crypto.
-        ( Crypto crypto
-        , era ~ AllegraEra crypto
-        )
-    => (MetadataFormat, IncludeCbor)
-    -> Sh.ShelleyTx era
+    :: (MetadataFormat, IncludeCbor)
+    -> Sh.ShelleyTx AllegraEra
     -> Json
 encodeTx (fmt, opts) x =
     encodeObject
-        ( Shelley.encodeTxId (Ledger.txIdTxBody @(AllegraEra crypto) (Sh.body x))
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @AllegraEra (Sh.body x))
        <>
         "spends" .= encodeText "inputs"
        <>
@@ -141,7 +134,7 @@ encodeTx (fmt, opts) x =
         encodeWitnessSet opts (snd <$> auxiliary) (Sh.wits x)
        <>
         if includeTransactionCbor opts then
-           "cbor" .= encodeByteStringBase16 (encodeCbor @era x)
+           "cbor" .= encodeByteStringBase16 (encodeCbor @AllegraEra x)
         else
            mempty
        )
@@ -155,9 +148,8 @@ encodeTx (fmt, opts) x =
             )
 
 encodeTxBody
-    :: Crypto crypto
-    => Al.AllegraTxBody (AllegraEra crypto)
-    -> [Ledger.ScriptHash crypto]
+    :: Al.AllegraTxBody AllegraEra
+    -> [Ledger.ScriptHash]
     -> Series
 encodeTxBody (Al.AllegraTxBody inps outs dCerts wdrls fee validity updates _) requiredScripts =
     "inputs" .=
@@ -186,8 +178,7 @@ encodeTxBody (Al.AllegraTxBody inps outs dCerts wdrls fee validity updates _) re
         Shelley.encodeUpdate Shelley.encodePParamsUpdate mirs <$> updates
 
 encodeUtxo
-    :: Crypto crypto
-    => Sh.UTxO (AllegraEra crypto)
+    :: Sh.UTxO AllegraEra
     -> Json
 encodeUtxo =
     Shelley.encodeUtxo
@@ -203,10 +194,9 @@ encodeValidityInterval x =
     & encodeObject
 
 encodeWitnessSet
-    :: Crypto crypto
-    => IncludeCbor
-    -> StrictMaybe (AuxiliaryScripts crypto)
-    -> Sh.ShelleyTxWits (AllegraEra crypto)
+    :: IncludeCbor
+    -> StrictMaybe AuxiliaryScripts
+    -> Sh.ShelleyTxWits AllegraEra
     -> Series
 encodeWitnessSet opts (fromSMaybe mempty -> auxScripts) x =
     "signatories" .=

@@ -23,7 +23,6 @@
   , "QueryLedgerStateNonces", "QueryLedgerStateNoncesResponse"
   , "QueryLedgerStateOperationalCertificates", "QueryLedgerStateOperationalCertificatesResponse"
   , "QueryLedgerStateProjectedRewards", "QueryLedgerStateProjectedRewardsResponse"
-  , "QueryLedgerStateProposedProtocolParameters", "QueryLedgerStateProposedProtocolParametersResponse"
   , "QueryLedgerStateProtocolParameters", "QueryLedgerStateProtocolParametersResponse"
   , "QueryLedgerStateRewardAccountSummaries", "QueryLedgerStateRewardAccountSummariesResponse"
   , "QueryLedgerStateRewardsProvenance", "QueryLedgerStateRewardsProvenanceResponse"
@@ -686,7 +685,6 @@
           , "queryLedgerState/operationalCertificates"
           , "queryLedgerState/projectedRewards"
           , "queryLedgerState/protocolParameters"
-          , "queryLedgerState/proposedProtocolParameters"
           , "queryLedgerState/rewardAccountSummaries"
           , "queryLedgerState/rewardsProvenance"
           , "queryLedgerState/stakePools"
@@ -738,7 +736,6 @@
           , "queryLedgerState/operationalCertificates"
           , "queryLedgerState/projectedRewards"
           , "queryLedgerState/protocolParameters"
-          , "queryLedgerState/proposedProtocolParameters"
           , "queryLedgerState/rewardAccountSummaries"
           , "queryLedgerState/rewardsProvenance"
           , "queryLedgerState/stakePools"
@@ -789,7 +786,6 @@
           , "queryLedgerState/operationalCertificates"
           , "queryLedgerState/projectedRewards"
           , "queryLedgerState/protocolParameters"
-          , "queryLedgerState/proposedProtocolParameters"
           , "queryLedgerState/rewardAccountSummaries"
           , "queryLedgerState/rewardsProvenance"
           , "queryLedgerState/stakePools"
@@ -1487,59 +1483,6 @@
             }
           , "result":
             { "$ref": "ogmios.json#/definitions/ProjectedRewards"
-            }
-          , "id":
-            { "description": "Any value that was set by a client request in the 'id' field."
-            }
-          }
-        }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateEraMismatch" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateUnavailableInCurrentEra" }
-      , { "$ref": "ogmios.json#/properties/QueryLedgerStateAcquiredExpired" }
-      ]
-    }
-
-  , "QueryLedgerStateProposedProtocolParameters":
-    { "title": "QueryLedgerStateProposedProtocolParameters"
-    , "description": "Query the last update proposal w.r.t. protocol parameters, if any."
-    , "type": "object"
-    , "required": [ "jsonrpc", "method" ]
-    , "additionalProperties": false
-    , "properties":
-      { "jsonrpc":
-        { "type": "string"
-        , "enum": [ "2.0" ]
-        }
-      , "method":
-        { "type": "string"
-        , "enum": [ "queryLedgerState/proposedProtocolParameters" ]
-        }
-      , "id":
-        { "description": "An arbitrary JSON value that will be mirrored back in the response."
-        }
-      }
-    }
-
-  , "QueryLedgerStateProposedProtocolParametersResponse":
-    { "oneOf":
-      [ { "title": "QueryLedgerStateProposedProtocolParametersResponse"
-        , "type": "object"
-        , "required": [ "jsonrpc", "method", "result" ]
-        , "additionalProperties": false
-        , "properties":
-          { "jsonrpc":
-            { "type": "string"
-            , "enum": [ "2.0" ]
-            }
-          , "method":
-            { "type": "string"
-            , "enum": [ "queryLedgerState/proposedProtocolParameters" ]
-            }
-          , "result":
-            { "type": "array"
-            , "items":
-              { "$ref": "cardano.json#/definitions/ProposedProtocolParameters"
-              }
             }
           , "id":
             { "description": "Any value that was set by a client request in the 'id' field."

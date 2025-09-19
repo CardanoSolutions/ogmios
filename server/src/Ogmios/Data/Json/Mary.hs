@@ -34,31 +34,28 @@ import qualified Cardano.Ledger.Allegra.TxAuxData as Al
 import qualified Cardano.Ledger.Mary.TxBody as Ma
 import qualified Cardano.Ledger.Mary.Value as Ma
 
-type AuxiliaryScripts crypto =
-    Map (Ledger.ScriptHash crypto) (Ledger.Script (MaryEra crypto))
+type AuxiliaryScripts =
+    Map Ledger.ScriptHash (Ledger.Script MaryEra)
 
 --
 -- Encoders
 --
 
 encodeAuxiliaryData
-    :: forall crypto era. (Era era, era ~ MaryEra crypto)
-    => (MetadataFormat, IncludeCbor)
-    -> Al.AllegraTxAuxData era
-    -> (Json, AuxiliaryScripts crypto)
+    :: (MetadataFormat, IncludeCbor)
+    -> Al.AllegraTxAuxData MaryEra
+    -> (Json, AuxiliaryScripts)
 encodeAuxiliaryData opts (Al.AllegraTxAuxData blob scripts) =
-    ( Shelley.encodeMetadataBlob @era opts blob
+    ( Shelley.encodeMetadataBlob @MaryEra opts blob
     , foldr
-        (\script -> Map.insert (Ledger.hashScript @(MaryEra crypto) script) script)
+        (\script -> Map.insert (Ledger.hashScript @MaryEra script) script)
         mempty
         scripts
     )
 
 encodeBlock
-    :: ( Crypto crypto
-       )
-    => (MetadataFormat, IncludeCbor)
-    -> ShelleyBlock (TPraos crypto) (MaryEra crypto)
+    :: (MetadataFormat, IncludeCbor)
+    -> ShelleyBlock (TPraos StandardCrypto) MaryEra
     -> Json
 encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
@@ -78,8 +75,7 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     TPraos.BHeader hBody _ = blkHeader
 
 encodeMultiAsset
-    :: Crypto crypto
-    => Ma.MultiAsset crypto
+    :: Ma.MultiAsset
     -> Series
 encodeMultiAsset (Ma.MultiAsset assets) =
     encodeMapSeries
@@ -88,23 +84,18 @@ encodeMultiAsset (Ma.MultiAsset assets) =
         assets
 
 encodePolicyId
-    :: Crypto crypto
-    => Ma.PolicyID crypto
+    :: Ma.PolicyID
     -> Json
 encodePolicyId (Ma.PolicyID hash) =
     Shelley.encodeScriptHash hash
 
 encodeTx
-    :: forall era crypto.
-       ( Crypto crypto
-       , era ~ MaryEra crypto
-       )
-    => (MetadataFormat, IncludeCbor)
-    -> Sh.ShelleyTx era
+    :: (MetadataFormat, IncludeCbor)
+    -> Sh.ShelleyTx MaryEra
     -> Json
 encodeTx (fmt, opts) x =
     encodeObject
-        ( Shelley.encodeTxId (Ledger.txIdTxBody @(MaryEra crypto) (Sh.body x))
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @MaryEra (Sh.body x))
        <>
         "spends" .= encodeText "inputs"
        <>
@@ -115,7 +106,7 @@ encodeTx (fmt, opts) x =
         encodeWitnessSet opts (snd <$> auxiliary) (Sh.wits x)
        <>
         if includeTransactionCbor opts then
-           "cbor" .= encodeByteStringBase16 (encodeCbor @era x)
+           "cbor" .= encodeByteStringBase16 (encodeCbor @MaryEra x)
         else
            mempty
        )
@@ -129,9 +120,8 @@ encodeTx (fmt, opts) x =
             )
 
 encodeTxBody
-    :: Crypto crypto
-    => Ma.MaryTxBody (MaryEra crypto)
-    -> [Ledger.ScriptHash crypto]
+    :: Ma.MaryTxBody MaryEra
+    -> [Ledger.ScriptHash]
     -> Series
 encodeTxBody (Ma.MaryTxBody inps outs dCerts wdrls fee validity updates _ mint) scripts =
     "inputs" .=
@@ -162,8 +152,7 @@ encodeTxBody (Ma.MaryTxBody inps outs dCerts wdrls fee validity updates _ mint) 
         Shelley.encodeUpdate Shelley.encodePParamsUpdate mirs <$> updates
 
 encodeTxOut
-    :: Crypto crypto
-    => Sh.ShelleyTxOut (MaryEra crypto)
+    :: Sh.ShelleyTxOut MaryEra
     -> Series
 encodeTxOut (Sh.ShelleyTxOut addr value) =
     "address" .=
@@ -172,8 +161,7 @@ encodeTxOut (Sh.ShelleyTxOut addr value) =
         encodeValue value
 
 encodeUtxo
-    :: Crypto crypto
-    => Sh.UTxO (MaryEra crypto)
+    :: Sh.UTxO MaryEra
     -> Json
 encodeUtxo =
     encodeList id . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) [] . Sh.unUTxO
@@ -181,8 +169,7 @@ encodeUtxo =
     encodeIO i o = encodeObject (Shelley.encodeTxIn i <> encodeTxOut o)
 
 encodeValue
-    :: Crypto crypto
-    => Ma.MaryValue crypto
+    :: Ma.MaryValue
     -> Json
 encodeValue (Ma.MaryValue lovelace assets) =
     encodeObject
@@ -191,10 +178,9 @@ encodeValue (Ma.MaryValue lovelace assets) =
         )
 
 encodeWitnessSet
-    :: Crypto crypto
-    => IncludeCbor
-    -> StrictMaybe (AuxiliaryScripts crypto)
-    -> Sh.ShelleyTxWits (MaryEra crypto)
+    :: IncludeCbor
+    -> StrictMaybe AuxiliaryScripts
+    -> Sh.ShelleyTxWits MaryEra
     -> Series
 encodeWitnessSet opts (fromSMaybe mempty -> auxScripts) x =
     "signatories" .=
@@ -211,7 +197,7 @@ encodeWitnessSet opts (fromSMaybe mempty -> auxScripts) x =
 -- Conversion To Text
 --
 
-stringifyPolicyId :: Crypto crypto => Ma.PolicyID crypto -> Text
+stringifyPolicyId :: Ma.PolicyID -> Text
 stringifyPolicyId (Ma.PolicyID pid) =
     Shelley.stringifyScriptHash pid
 

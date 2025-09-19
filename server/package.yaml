@@ -100,7 +100,6 @@ library:
     - prettyprinter
     - profunctors
     - prometheus
-    - reflection
     - relude
     - safe
     - safe-exceptions

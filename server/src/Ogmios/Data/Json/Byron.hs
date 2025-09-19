@@ -52,8 +52,7 @@ encodeAddress =
     encodeText . decodeUtf8 . By.addrToBase58
 
 encodeABlockOrBoundary
-    :: forall crypto. (Era (ByronEra crypto))
-    => IncludeCbor
+    :: IncludeCbor
     -> By.ABlockOrBoundary ByteString
     -> Json
 encodeABlockOrBoundary opts = encodeObject . \case
@@ -72,7 +71,7 @@ encodeABlockOrBoundary opts = encodeObject . \case
         <>
         "size" .= encodeSingleton "bytes" (encodeNatural (By.blockLength blk))
         <>
-        encodeABody @crypto opts (By.blockBody blk)
+        encodeABody opts (By.blockBody blk)
         <>
         "protocol" .= encodeObject
             ( "id" .= encodeAnnotated encodeProtocolMagicId (By.aHeaderProtocolMagicId h)
@@ -111,13 +110,13 @@ encodeABlockOrBoundary opts = encodeObject . \case
         h = By.boundaryHeader blk
 
 encodeABody
-    :: forall crypto any. (Era (ByronEra crypto))
+    :: forall any. ()
     => IncludeCbor
     -> By.ABody any
     -> Series
 encodeABody opts x =
     "transactions" .=
-        encodeATxPayload @crypto opts (By.bodyTxPayload x) <>
+        encodeATxPayload opts (By.bodyTxPayload x) <>
     "operationalCertificates" .=
         encodeADlgPayload (By.bodyDlgPayload x)
 
@@ -212,7 +211,7 @@ encodeTxOut x =
     & encodeObject
 
 encodeATxAux
-    :: forall crypto any. (Era (ByronEra crypto))
+    :: forall any. ()
     => IncludeCbor
     -> By.ATxAux any
     -> Json
@@ -223,7 +222,7 @@ encodeATxAux opts x =
        <> "spends" .=
             encodeText "inputs"
        <> encodeAnnotated
-            (encodeTx @crypto opts)
+            (encodeTx opts)
             (By.aTaTx x)
        <> "signatories" .=
             encodeAnnotated (encodeFoldable encodeTxInWitness) (By.aTaWitness x)
@@ -237,8 +236,7 @@ encodeATxAux opts x =
         )
 
 encodeTx
-    :: forall crypto. (Era (ByronEra crypto))
-    => IncludeCbor
+    :: IncludeCbor
     -> By.Tx
     -> Series
 encodeTx opts x =
@@ -249,17 +247,17 @@ encodeTx opts x =
         encodeFoldable encodeTxOut (By.txOutputs x)
   <>
      if includeTransactionCbor opts then
-        "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @(ByronEra crypto)) x)
+        "cbor" .= encodeByteStringBase16 (Binary.serialize' (Ledger.eraProtVerLow @ByronEra) x)
      else
         mempty
 
 encodeATxPayload
-    :: forall crypto any. (Era (ByronEra crypto))
+    :: forall any. ()
     => IncludeCbor
     -> By.ATxPayload any
     -> Json
 encodeATxPayload opts =
-    encodeList (encodeATxAux @crypto opts) . By.aUnTxPayload
+    encodeList (encodeATxAux opts) . By.aUnTxPayload
 
 encodeAUpdPayload
     :: By.Upd.APayload any

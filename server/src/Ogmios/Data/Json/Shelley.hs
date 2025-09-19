@@ -39,7 +39,6 @@ import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 import qualified Cardano.Protocol.TPraos.OCert as TPraos
 
 import qualified Cardano.Ledger.Api as Ledger
-import qualified Cardano.Ledger.AuxiliaryData as Ledger
 import qualified Cardano.Ledger.BaseTypes as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Coin as Ledger
@@ -47,7 +46,6 @@ import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Credential as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
 import qualified Cardano.Ledger.PoolParams as Ledger
-import qualified Cardano.Ledger.SafeHash as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
 
 import qualified Cardano.Ledger.Shelley.BlockChain as Sh
@@ -71,7 +69,7 @@ import qualified Ogmios.Data.Json.Byron as Byron
 --
 
 encodeAddress
-    :: Ledger.Addr crypto
+    :: Ledger.Addr
     -> Json
 encodeAddress = \case
     Ledger.AddrBootstrap addr ->
@@ -84,15 +82,13 @@ encodeAddress = \case
         Ledger.Testnet -> hrpAddrTestnet
 
 encodeAuxiliaryDataHash
-    :: Crypto crypto
-    => Ledger.AuxiliaryDataHash crypto
+    :: Ledger.TxAuxDataHash
     -> Json
 encodeAuxiliaryDataHash =
-    encodeHash . Ledger.extractHash . Ledger.unsafeAuxiliaryDataHash
+    encodeHash . Ledger.extractHash . Ledger.unTxAuxDataHash
 
 encodeBHeader
-    :: Crypto crypto
-    => TPraos.BHeader crypto
+    :: TPraos.BHeader StandardCrypto
     -> Series
 encodeBHeader (TPraos.BHeader hBody _hSig) =
     "ancestor" .=
@@ -119,9 +115,8 @@ encodeBHeader (TPraos.BHeader hBody _hSig) =
         )
 
 encodeBlock
-    :: Crypto crypto
-    => (MetadataFormat, IncludeCbor)
-    -> ShelleyBlock (TPraos crypto) (ShelleyEra crypto)
+    :: (MetadataFormat, IncludeCbor)
+    -> ShelleyBlock (TPraos StandardCrypto) ShelleyEra
     -> Json
 encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
     encodeObject
@@ -159,15 +154,14 @@ encodeCertifiedVRF x =
     & encodeObject
 
 encodeConstitutionalDelegCert
-    :: Crypto crypto
-    => Sh.GenesisDelegCert crypto
+    :: Sh.GenesisDelegCert
     -> Series
 encodeConstitutionalDelegCert (Sh.GenesisDelegCert key delegate vrf) =
     "type" .= encodeText "genesisDelegation"
     <>
     "delegate" .= encodeObject
         ( "id" .= encodeKeyHash delegate
-       <> "vrfVerificationKeyHash" .= encodeHash vrf
+       <> "vrfVerificationKeyHash" .= encodeHash (Ledger.unVRFVerKeyHash vrf)
         )
     <>
     "issuer" .= encodeObject
@@ -175,9 +169,9 @@ encodeConstitutionalDelegCert (Sh.GenesisDelegCert key delegate vrf) =
         )
 
 encodeCredential
-    :: forall any crypto. (any :\: 'StakePool, Crypto crypto)
+    :: forall any. (any :\: 'StakePool)
     => Text
-    -> Ledger.Credential any crypto
+    -> Ledger.Credential any
     -> Series
 encodeCredential k x = case x of
     Ledger.KeyHashObj h ->
@@ -186,18 +180,15 @@ encodeCredential k x = case x of
         "from" .= "script" <> k .= encodeScriptHash h
 
 encodeCredentialRaw
-    :: forall any crypto. (any :\: 'StakePool, Crypto crypto)
-    => Ledger.Credential any crypto
+    :: forall any. (any :\: 'StakePool)
+    => Ledger.Credential any
     -> Json
 encodeCredentialRaw x = case x of
     Ledger.KeyHashObj h -> encodeKeyHash h
     Ledger.ScriptHashObj h -> encodeScriptHash h
 
 encodeTxCerts
-    :: forall era.
-        ( Era era
-        )
-    => StrictSeq (Sh.ShelleyTxCert era)
+    :: StrictSeq (Sh.ShelleyTxCert era)
     -> ([Series], [Json])
 encodeTxCerts =
     foldr
@@ -207,10 +198,7 @@ encodeTxCerts =
         ([], [])
 
 encodeTxCert
-    :: forall era.
-        ( Era era
-        )
-    => Sh.ShelleyTxCert era
+    :: Sh.ShelleyTxCert era
     -> (StrictMaybe Series, [Json])
 encodeTxCert = \case
     Sh.ShelleyTxCertDelegCert (Sh.ShelleyRegCert credential) ->
@@ -292,8 +280,7 @@ encodeEntities tag encodeEntity =
         "entity" .= encodeEntity e
 
 encodeGenesis
-    :: Crypto crypto
-    => Sh.ShelleyGenesis crypto
+    :: Sh.ShelleyGenesis
     -> Json
 encodeGenesis x =
     "era" .=
@@ -307,7 +294,7 @@ encodeGenesis x =
     "activeSlotsCoefficient" .=
         encodePositiveUnitInterval (Sh.sgActiveSlotsCoeff x) <>
     "securityParameter" .=
-        encodeWord64 (Sh.sgSecurityParam x) <>
+        encodeNonZero encodeWord64 (Sh.sgSecurityParam x) <>
     "epochLength" .=
         encodeEpochSize (Sh.sgEpochLength x) <>
     "slotsPerKesPeriod" .=
@@ -330,17 +317,16 @@ encodeGenesis x =
         encodeShelleyGenesisStaking (Sh.sgStaking x)
     & encodeObject
 
-encodeGenDelegPair :: Crypto crypto => GenDelegPair crypto -> Json
+encodeGenDelegPair :: GenDelegPair -> Json
 encodeGenDelegPair x =
     "id" .=
         encodeKeyHash (genDelegKeyHash x) <>
     "vrfVerificationKeyHash" .=
-        encodeHash (genDelegVrfHash x)
+        encodeHash (Ledger.unVRFVerKeyHash $ genDelegVrfHash x)
     & encodeObject
 
 encodeGenesisVote
-    :: Crypto crypto
-    => Ledger.KeyHash 'Genesis crypto
+    :: Ledger.KeyHash 'Genesis
     -> Json
 encodeGenesisVote credential =
     encodeObject
@@ -359,14 +345,13 @@ encodeHash (CC.UnsafeHash h) =
     encodeByteStringBase16 (fromShort h)
 
 encodeHashHeader
-    :: TPraos.HashHeader crypto
+    :: TPraos.HashHeader
     -> Json
 encodeHashHeader =
     encodeByteStringBase16 . CC.hashToBytes . TPraos.unHashHeader
 
 encodeInitialDelegates
-    :: Crypto crypto
-    => Map (Ledger.KeyHash 'Genesis crypto) (GenDelegPair crypto)
+    :: Map (Ledger.KeyHash 'Genesis) GenDelegPair
     -> Json
 encodeInitialDelegates =
     encodeMapAsList
@@ -380,8 +365,8 @@ encodeInitialDelegates =
         )
 
 encodeKeyHash
-    :: forall any crypto. (any :\: StakePool, Crypto crypto)
-    => Ledger.KeyHash any crypto
+    :: forall any. (any :\: StakePool)
+    => Ledger.KeyHash any
     -> Json
 encodeKeyHash (Ledger.KeyHash h) =
     encodeHash h
@@ -529,8 +514,7 @@ encodeNonce = \case
     Ledger.Nonce h -> encodeHash h
 
 encodeOCert
-    :: Crypto crypto
-    => TPraos.OCert crypto
+    :: TPraos.OCert StandardCrypto
     -> Json
 encodeOCert x =
     "count" .=
@@ -552,8 +536,7 @@ encodeOutputVRF =
     encodeByteStringBase16 . CC.getOutputVRFBytes
 
 encodePoolCert
-    :: Crypto crypto
-    => Sh.PoolCert crypto
+    :: Sh.PoolCert
     -> Series
 encodePoolCert = \case
     Sh.RegPool params ->
@@ -572,8 +555,7 @@ encodePoolCert = \case
             )
 
 encodePoolId
-    :: Crypto crypto
-    => Ledger.KeyHash StakePool crypto
+    :: Ledger.KeyHash StakePool
     -> Json
 encodePoolId =
     encodeText . stringifyPoolId
@@ -589,12 +571,11 @@ encodePoolMetadata x =
     & encodeObject
 
 encodePoolParams
-    :: Crypto crypto
-    => Ledger.PoolParams crypto
+    :: Ledger.PoolParams
     -> Series
 encodePoolParams x =
     "vrfVerificationKeyHash" .=
-        encodeHash (Ledger.ppVrf x) <>
+        encodeHash (Ledger.unVRFVerKeyHash $ Ledger.ppVrf x) <>
     "pledge" .=
         encodeCoin (Ledger.ppPledge x) <>
     "cost" .=
@@ -711,7 +692,7 @@ encodePParamsHKD encode pure_ x =
     encode "stakePoolRetirementEpochBound"
         encodeEpochInterval (Sh.sppEMax x) <>
     encode "desiredNumberOfStakePools"
-        encodeNatural (Sh.sppNOpt x) <>
+        encodeWord16 (Sh.sppNOpt x) <>
     encode "stakePoolPledgeInfluence"
         encodeNonNegativeInterval (Sh.sppA0 x) <>
     encode "minStakePoolCost"
@@ -733,7 +714,7 @@ encodePParamsHKD encode pure_ x =
     & encodeObject
 
 encodePrevHash
-    :: TPraos.PrevHash crypto
+    :: TPraos.PrevHash
     -> Json
 encodePrevHash = \case
     TPraos.GenesisHash -> encodeText "genesis"
@@ -750,7 +731,7 @@ encodeProtVer x =
     & encodeObject
 
 encodeRewardAcnt
-    :: Sh.RewardAccount era
+    :: Sh.RewardAccount
     -> Json
 encodeRewardAcnt =
     encodeText . stringifyRewardAcnt
@@ -778,10 +759,9 @@ encodeScript opts script =
         )
 
 encodeScriptHash
-    :: Crypto crypto
-    => Sh.ScriptHash crypto
+    :: Ledger.ScriptHash
     -> Json
-encodeScriptHash (Sh.ScriptHash h) =
+encodeScriptHash (Ledger.ScriptHash h) =
     encodeHash h
 
 encodeSignedKES
@@ -791,7 +771,7 @@ encodeSignedKES
 encodeSignedKES (CC.SignedKES raw) =
     encodeByteStringBase16 . CC.rawSerialiseSigKES $ raw
 
-encodeShelleyGenesisStaking :: Crypto crypto => Sh.ShelleyGenesisStaking crypto -> Json
+encodeShelleyGenesisStaking :: Sh.ShelleyGenesisStaking -> Json
 encodeShelleyGenesisStaking x =
     "stakePools" .=
         encodeListMap
@@ -807,8 +787,7 @@ encodeShelleyGenesisStaking x =
     & encodeObject
 
 encodeShelleyHash
-    :: Crypto crypto
-    => ShelleyHash crypto
+    :: ShelleyHash
     -> Json
 encodeShelleyHash =
     encodeHash . unShelleyHash
@@ -847,13 +826,12 @@ encodeStakePoolRelay = encodeObject . \case
             encodeDnsName dns
 
 encodeTx
-    :: forall crypto era. (Crypto crypto, era ~ ShelleyEra crypto)
-    => (MetadataFormat, IncludeCbor)
-    -> Sh.ShelleyTx era
+    :: (MetadataFormat, IncludeCbor)
+    -> Sh.ShelleyTx ShelleyEra
     -> Json
 encodeTx (fmt, opts) x =
     encodeObject
-        ( encodeTxId (Ledger.txIdTxBody @(ShelleyEra crypto) (Sh.body x))
+        ( encodeTxId (Ledger.txIdTxBody @ShelleyEra (Sh.body x))
        <>
         "spends" .= encodeText "inputs"
        <>
@@ -864,7 +842,7 @@ encodeTx (fmt, opts) x =
         encodeWitnessSet opts (Sh.wits x)
        <>
         if includeTransactionCbor opts then
-           "cbor" .= encodeByteStringBase16 (encodeCbor @era x)
+           "cbor" .= encodeByteStringBase16 (encodeCbor @ShelleyEra x)
         else
            mempty
         )
@@ -875,8 +853,7 @@ encodeTx (fmt, opts) x =
         (encodeMetadata (fmt, opts) <$> Sh.auxiliaryData x)
 
 encodeTxBody
-    :: Crypto crypto
-    => Sh.ShelleyTxBody (ShelleyEra crypto)
+    :: Sh.ShelleyTxBody ShelleyEra
     -> Series
 encodeTxBody x =
     "inputs" .=
@@ -903,8 +880,7 @@ encodeTxBody x =
         encodeUpdate encodePParamsUpdate mirs <$> Sh.stbUpdate x
 
 encodeTxId
-    :: Crypto crypto
-    => Ledger.TxId crypto
+    :: Ledger.TxId
     -> Series
 encodeTxId =
     ("id" .=)
@@ -913,14 +889,13 @@ encodeTxId =
         . Ledger.unTxId
 
 encodeTxIn
-    :: Crypto crypto
-    => Ledger.TxIn crypto
+    :: Ledger.TxIn
     -> Series
 encodeTxIn (Ledger.TxIn txid (Ledger.TxIx ix)) =
     "transaction" .=
         encodeObject (encodeTxId txid) <>
     "index" .=
-        encodeWord64 ix
+        encodeWord16 ix
 
 encodeTxOut
     :: (Era era, Ledger.Value era ~ Coin)
@@ -933,11 +908,11 @@ encodeTxOut (Sh.ShelleyTxOut addr value) =
         encodeValue value
 
 encodeUpdate
-    :: forall era crypto. (crypto ~ EraCrypto era)
+    :: forall era. ()
     => (Ledger.PParamsUpdate era -> [Json])
     -> [Json]
     -> Sh.Update era
-    -> ([Ledger.KeyHash 'Genesis crypto], [Json])
+    -> ([Ledger.KeyHash 'Genesis], [Json])
 encodeUpdate encodePParamsUpdateInEra mirs (Sh.Update (Sh.ProposedPPUpdates m) _epoch) =
     Map.foldrWithKey
         (\k v (votes, proposals) -> (k : votes, encodePParamsUpdateInEra v ++ proposals))
@@ -985,8 +960,7 @@ encodeVerKeyVRF =
     encodeByteStringBase16 . CC.rawSerialiseVerKeyVRF
 
 encodeVKey
-    :: Crypto crypto
-    => Ledger.VKey any crypto
+    :: Ledger.VKey any
     -> Json
 encodeVKey =
     encodeVerKeyDSign . Ledger.unVKey
@@ -1001,15 +975,14 @@ encodeVotingPeriod = \case
         encodeText "voteForNextEpoch"
 
 encodeWdrl
-    :: Ledger.Withdrawals era
+    :: Ledger.Withdrawals
     -> Json
 encodeWdrl =
     encodeMap stringifyRewardAcnt encodeCoin . Ledger.unWithdrawals
 
 encodeWitnessSet
-    :: Crypto crypto
-    => IncludeCbor
-    -> Sh.ShelleyTxWits (ShelleyEra crypto)
+    :: IncludeCbor
+    -> Sh.ShelleyTxWits ShelleyEra
     -> Series
 encodeWitnessSet opts x =
     "signatories" .=
@@ -1022,8 +995,7 @@ encodeWitnessSet opts x =
         (encodeMap stringifyScriptHash (encodeScript opts)) (Sh.scriptWits x)
 
 encodeWitVKey
-    :: Crypto crypto
-    => Sh.WitVKey Witness crypto
+    :: Sh.WitVKey Witness
     -> Json
 encodeWitVKey (Sh.WitVKey key sig) =
     "key" .=
@@ -1033,8 +1005,7 @@ encodeWitVKey (Sh.WitVKey key sig) =
     & encodeObject
 
 encodeBootstrapWitness
-    :: Crypto crypto
-    => Ledger.BootstrapWitness crypto
+    :: Ledger.BootstrapWitness
     -> Json
 encodeBootstrapWitness (Ledger.BootstrapWitness key sig cc attr) =
     "key" .=
@@ -1053,7 +1024,7 @@ encodeBootstrapWitness (Ledger.BootstrapWitness key sig cc attr) =
 --
 
 stringifyAddress
-    :: Ledger.Addr crypto
+    :: Ledger.Addr
     -> Text
 stringifyAddress = \case
     Ledger.AddrBootstrap addr ->
@@ -1072,8 +1043,8 @@ stringifyCoin =
     show . unCoin
 
 stringifyCredential
-    :: forall any crypto. (any :\: StakePool, Crypto crypto)
-    => Ledger.Credential any crypto
+    :: forall any. (any :\: StakePool)
+    => Ledger.Credential any
     -> Text
 stringifyCredential = \case
     Ledger.KeyHashObj h -> stringifyKeyHash h
@@ -1082,8 +1053,8 @@ stringifyCredential = \case
     _ = keepRedundantConstraint (Proxy @(any :\: StakePool))
 
 stringifyKeyHash
-    :: forall any crypto. (any :\: StakePool, Crypto crypto)
-    => Ledger.KeyHash any crypto
+    :: forall any. (any :\: StakePool)
+    => Ledger.KeyHash any
     -> Text
 stringifyKeyHash (Ledger.KeyHash (CC.UnsafeHash h)) =
     encodeBase16 (fromShort h)
@@ -1091,14 +1062,13 @@ stringifyKeyHash (Ledger.KeyHash (CC.UnsafeHash h)) =
     _ = keepRedundantConstraint (Proxy @(any :\: StakePool))
 
 stringifyPoolId
-    :: Crypto crypto
-    => Ledger.KeyHash StakePool crypto
+    :: Ledger.KeyHash StakePool
     -> Text
 stringifyPoolId (Ledger.KeyHash (CC.UnsafeHash h)) =
     encodeBech32 hrpPool (fromShort h)
 
 stringifyRewardAcnt
-    :: Sh.RewardAccount era
+    :: Sh.RewardAccount
     -> Text
 stringifyRewardAcnt x@(Sh.RewardAccount ntwrk _credential) =
     encodeBech32 (hrp ntwrk) (Ledger.serialiseRewardAccount x)
@@ -1108,29 +1078,25 @@ stringifyRewardAcnt x@(Sh.RewardAccount ntwrk _credential) =
         Ledger.Testnet -> hrpStakeTestnet
 
 stringifyScriptHash
-    :: Crypto crypto
-    => Sh.ScriptHash crypto
+    :: Ledger.ScriptHash
     -> Text
-stringifyScriptHash (Sh.ScriptHash (CC.UnsafeHash h)) =
+stringifyScriptHash (Ledger.ScriptHash (CC.UnsafeHash h)) =
     encodeBase16 (fromShort h)
 
 stringifyTxId
-    :: Crypto crypto
-    => Ledger.TxId crypto
+    :: Ledger.TxId
     -> Text
 stringifyTxId (Ledger.TxId (Ledger.originalBytes -> bytes)) =
     encodeBase16 bytes
 
 stringifyTxIn
-    :: Crypto crypto
-    => Ledger.TxIn crypto
+    :: Ledger.TxIn
     -> Text
 stringifyTxIn (Ledger.TxIn txid (Ledger.TxIx ix)) =
     stringifyTxId txid <> "#" <> show ix
 
 stringifyVKey
-    :: Crypto crypto
-    => Ledger.VKey any crypto
+    :: Ledger.VKey any
     -> Text
 stringifyVKey =
     encodeBase16 . CC.rawSerialiseVerKeyDSIGN . Ledger.unVKey

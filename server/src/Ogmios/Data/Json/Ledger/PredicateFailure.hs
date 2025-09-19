@@ -38,9 +38,8 @@ predicateFailureCode :: Int -> Rpc.FaultCode
 predicateFailureCode  = Rpc.FaultCustom . (+ 3100)
 
 encodePredicateFailure
-    :: Crypto crypto
-    => Rpc.EmbedFault
-    -> MultiEraPredicateFailure crypto
+    :: Rpc.EmbedFault
+    -> MultiEraPredicateFailure
     -> Json
 encodePredicateFailure reject = \case
     InvalidSignatures { culpritVerificationKeys } ->
@@ -1014,7 +1013,7 @@ encodeTagMismatchDescription = encodeText . \case
     FailedUnexpectedly {} ->
         "The transaction failed unexpectedly."
 
-encodeTxOutInAnyEra :: TxOutInAnyEra crypto -> Json
+encodeTxOutInAnyEra :: TxOutInAnyEra -> Json
 encodeTxOutInAnyEra = encodeObject . \case
     TxOutInAnyEra (ShelleyBasedEraShelley, out) ->
         Shelley.encodeTxOut out
@@ -1029,7 +1028,7 @@ encodeTxOutInAnyEra = encodeObject . \case
     TxOutInAnyEra (ShelleyBasedEraConway, out) ->
         Babbage.encodeTxOut includeAllCbor out
 
-encodeValueInAnyEra :: ValueInAnyEra crypto -> Json
+encodeValueInAnyEra :: ValueInAnyEra -> Json
 encodeValueInAnyEra = \case
     ValueInAnyEra (ShelleyBasedEraShelley, value) ->
         Shelley.encodeValue value
@@ -1045,8 +1044,7 @@ encodeValueInAnyEra = \case
         Mary.encodeValue value
 
 encodeScriptPurposeItemInAnyEra
-    :: Crypto crypto
-    => ScriptPurposeItemInAnyEra crypto
+    :: ScriptPurposeItemInAnyEra
     -> StrictMaybe Json
 encodeScriptPurposeItemInAnyEra = \case
     ScriptPurposeItemInAnyEra (AlonzoBasedEraAlonzo, purpose) ->
@@ -1057,7 +1055,7 @@ encodeScriptPurposeItemInAnyEra = \case
         SJust (Conway.encodeScriptPurposeItem purpose)
 
 encodeScriptPurposeIndexInAnyEra
-    :: ScriptPurposeIndexInAnyEra crypto
+    :: ScriptPurposeIndexInAnyEra
     -> Json
 encodeScriptPurposeIndexInAnyEra = \case
     ScriptPurposeIndexInAnyEra (AlonzoBasedEraAlonzo, purpose) ->
@@ -1068,8 +1066,7 @@ encodeScriptPurposeIndexInAnyEra = \case
         Conway.encodeScriptPurposeIndex purpose
 
 encodeContextErrorInAnyEra
-    :: (Crypto crypto)
-    => ContextErrorInAnyEra crypto
+    :: ContextErrorInAnyEra
     -> Json
 encodeContextErrorInAnyEra = \case
     ContextErrorInAnyEra (AlonzoBasedEraAlonzo, err) ->
@@ -1080,8 +1077,7 @@ encodeContextErrorInAnyEra = \case
         Conway.encodeContextError err
 
 encodeDiscriminatedEntities
-    :: Crypto crypto
-    => DiscriminatedEntities crypto
+    :: DiscriminatedEntities
     -> Json.Series
 encodeDiscriminatedEntities = \case
     DiscriminatedAddresses addrs ->

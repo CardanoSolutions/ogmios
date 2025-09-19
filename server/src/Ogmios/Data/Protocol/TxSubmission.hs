@@ -99,11 +99,11 @@ import Cardano.Ledger.Babbage.TxBody
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
     )
+import Cardano.Ledger.State
+    ( EraUTxO (..)
+    )
 import Cardano.Ledger.TxIn
     ( TxIn (..)
-    )
-import Cardano.Ledger.UTxO
-    ( EraUTxO (..)
     )
 import Cardano.Network.Protocol.NodeToClient
     ( GenTxId
@@ -136,8 +136,7 @@ import Ogmios.Data.Ledger.ScriptFailure
     , TransactionScriptFailureInAnyEra (..)
     )
 import Ouroboros.Consensus.Cardano.Block
-    ( CardanoBlock
-    , GenTx (..)
+    ( GenTx (..)
     )
 import Ouroboros.Consensus.HardFork.History
     ( PastHorizonException
@@ -156,7 +155,6 @@ import qualified Ouroboros.Consensus.Shelley.Ledger.Mempool as Consensus
 
 import qualified Cardano.Crypto.Hash.Class as CC
 import qualified Cardano.Ledger.BaseTypes as Ledger
-import qualified Cardano.Ledger.SafeHash as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Types as Json
@@ -188,9 +186,9 @@ mkTxSubmissionCodecs
         )
     => Rpc.Options
     -> (GenTxId block -> Json)
-    -> (ScriptPurposeIndexInAnyEra (BlockCrypto block) -> Json)
+    -> (ScriptPurposeIndexInAnyEra -> Json)
     -> (ExUnits -> Json)
-    -> (Rpc.EmbedFault -> EvaluateTransactionError (BlockCrypto block) -> Json)
+    -> (Rpc.EmbedFault -> EvaluateTransactionError -> Json)
     -> (Rpc.EmbedFault -> SubmitTransactionError block -> Json)
     -> (Rpc.EmbedFault -> [(SomeShelleyEra, Binary.DecoderError, Word)] -> Json)
     -> TxSubmissionCodecs block
@@ -340,11 +338,11 @@ _decodeEvaluateTransaction =
         }
 
 data EvaluateTransactionResponse block
-    = EvaluationFailure (EvaluateTransactionError (BlockCrypto block))
-    | EvaluationResult (Map (ScriptPurposeIndexInAnyEra (BlockCrypto block)) ExUnits)
+    = EvaluationFailure EvaluateTransactionError
+    | EvaluationResult (Map ScriptPurposeIndexInAnyEra ExUnits)
     | EvaluateTransactionDeserialisationFailure [(SomeShelleyEra, Binary.DecoderError, Word)]
 
-deriving instance Crypto (BlockCrypto block) => Show (EvaluateTransactionResponse block)
+deriving instance Show (EvaluateTransactionResponse block)
 
 -- | Shorthand constructor for 'EvaluateTransactionResponse'
 unsupportedEra :: Text -> EvaluateTransactionResponse block
@@ -370,9 +368,9 @@ _encodeEvaluateTransactionResponse
     :: forall block. ()
     => Proxy block
     -> Rpc.Options
-    -> (ScriptPurposeIndexInAnyEra (BlockCrypto block) -> Json)
+    -> (ScriptPurposeIndexInAnyEra -> Json)
     -> (ExUnits -> Json)
-    -> (Rpc.EmbedFault -> EvaluateTransactionError (BlockCrypto block) -> Json)
+    -> (Rpc.EmbedFault -> EvaluateTransactionError -> Json)
     -> (Rpc.EmbedFault -> [(SomeShelleyEra, Binary.DecoderError, Word)] -> Json)
     -> Rpc.Response (EvaluateTransactionResponse block)
     -> Json
@@ -410,26 +408,23 @@ type CanEvaluateScriptsInEra era =
       , Script era ~ AlonzoScript era
       , EraPlutusContext era
       , IsAlonzoBasedEra era
-      , Crypto (EraCrypto era)
       )
 
 -- | Evaluate script executions units for the given transaction.
 evaluateExecutionUnits
-    :: forall era block ix crypto.
-      ( CanEvaluateScriptsInEra (era crypto)
-      , ix ~ ScriptPurposeIndexInAnyEra crypto
-      , crypto ~ BlockCrypto block
-      , crypto ~ EraCrypto (era crypto)
+    :: forall era block ix.
+      ( CanEvaluateScriptsInEra era
+      , ix ~ ScriptPurposeIndexInAnyEra
       )
-    => Core.PParams (era crypto)
+    => Core.PParams era
         -- ^ Protocol parameters
     -> SystemStart
         -- ^ Start of the blockchain, for converting slots to UTC times
     -> EpochInfo (Except PastHorizonException)
         -- ^ Information about epoch sizes, for converting slots to UTC times
-    -> UTxO (era crypto)
+    -> UTxO era
         -- ^ A UTXO needed to resolve inputs
-    -> Core.Tx (era crypto)
+    -> Core.Tx era
         -- ^ The actual transaction
     -> EvaluateTransactionResponse block
 evaluateExecutionUnits pparams systemStart epochInfo utxo tx =
@@ -440,14 +435,14 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx =
         else EvaluationFailure $ ScriptExecutionFailures failures
   where
     aggregateReports
-        :: PlutusPurpose AsIx (era crypto)
-        -> Either (TransactionScriptFailure (era crypto)) ExUnits
-        -> (Map ix [TransactionScriptFailureInAnyEra crypto], Map ix ExUnits)
-        -> (Map ix [TransactionScriptFailureInAnyEra crypto], Map ix ExUnits)
+        :: PlutusPurpose AsIx era
+        -> Either (TransactionScriptFailure era) ExUnits
+        -> (Map ix [TransactionScriptFailureInAnyEra], Map ix ExUnits)
+        -> (Map ix [TransactionScriptFailureInAnyEra], Map ix ExUnits)
     aggregateReports ptr result (failures, successes) =
         case result of
             Left scriptFailure ->
-                let failureInAnyEra = TransactionScriptFailureInAnyEra @crypto (alonzoBasedEra @(era crypto), scriptFailure)
+                let failureInAnyEra = TransactionScriptFailureInAnyEra (alonzoBasedEra @era, scriptFailure)
                  in ( Map.unionWith (++) (Map.singleton ix [failureInAnyEra]) failures
                     , successes
                     )
@@ -456,12 +451,12 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx =
                 , Map.singleton ix exUnits <> successes
                 )
       where
-        ix = ScriptPurposeIndexInAnyEra (alonzoBasedEra @(era crypto), ptr)
+        ix = ScriptPurposeIndexInAnyEra (alonzoBasedEra @era, ptr)
 
     reports
         :: Map
-            (PlutusPurpose AsIx (era crypto))
-            (Either (TransactionScriptFailure (era crypto)) ExUnits)
+            (PlutusPurpose AsIx era)
+            (Either (TransactionScriptFailure era) ExUnits)
     reports =
         evalTxExUnits
           pparams
@@ -476,8 +471,7 @@ evaluateExecutionUnits pparams systemStart epochInfo utxo tx =
 
 utxoFromMempool
     :: forall block crypto.
-        ( Crypto crypto
-        , block ~ CardanoBlock crypto
+        ( block ~ CardanoBlock crypto
         )
     => [GenTx block]
     -> MultiEraUTxO block
@@ -494,7 +488,7 @@ utxoFromMempool =
             )
             txs
 
-    withoutKeys :: Set (TxIn crypto) -> MultiEraUTxO block -> MultiEraUTxO block
+    withoutKeys :: Set TxIn -> MultiEraUTxO block -> MultiEraUTxO block
     withoutKeys ks = \case
         UTxOInBabbageEra (UTxO utxo) ->
             UTxOInBabbageEra (UTxO (Map.withoutKeys utxo ks))
@@ -512,11 +506,11 @@ utxoFromMempool =
         (UTxOInConwayEra (UTxO ul), UTxOInConwayEra (UTxO ur)) ->
             UTxOInConwayEra (UTxO (Map.union ul ur))
 
-    newUtxoFor :: TxId crypto -> [out] -> Map (TxIn crypto) out
+    newUtxoFor :: TxId -> [out] -> Map TxIn out
     newUtxoFor h outs =
         Map.fromList [ (TxIn h ix, out) | (out, ix) <- zip outs [minBound ..] ]
 
-    inputs :: GenTx block -> Set (TxIn crypto)
+    inputs :: GenTx block -> Set TxIn
     inputs = \case
         GenTxConway (Consensus.ShelleyTx _ tx) ->
             tx ^. Ledger.bodyTxL . Ledger.inputsTxBodyL
@@ -558,7 +552,7 @@ utxoFromMempool =
         GenTxByron{} ->
             error "outputs: unsupported era."
 
-mergeUtxo :: Crypto (BlockCrypto block) => MultiEraUTxO block -> MultiEraUTxO block -> MultiEraUTxO block
+mergeUtxo ::  MultiEraUTxO block -> MultiEraUTxO block -> MultiEraUTxO block
 mergeUtxo a b = case (a, b) of
     (UTxOInBabbageEra (unUTxO -> l), UTxOInBabbageEra (unUTxO -> r)) ->
         UTxOInBabbageEra $ UTxO (Map.union l r)
@@ -569,7 +563,7 @@ mergeUtxo a b = case (a, b) of
     (UTxOInConwayEra (unUTxO -> l), UTxOInConwayEra (unUTxO -> r)) ->
         UTxOInConwayEra $ UTxO (Map.union l r)
 
-utxoReferences :: Crypto crypto => MultiEraUTxO (CardanoBlock crypto) -> [Text]
+utxoReferences :: MultiEraUTxO (CardanoBlock crypto) -> [Text]
 utxoReferences = fmap txInToText . \case
     UTxOInBabbageEra (unUTxO -> u) -> Map.keys u
     UTxOInConwayEra  (unUTxO -> u) -> Map.keys u

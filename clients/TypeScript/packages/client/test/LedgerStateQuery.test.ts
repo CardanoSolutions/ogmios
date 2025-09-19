@@ -129,9 +129,6 @@ describe('Local state queries', () => {
         Object.values(Object.values(nonMyopicMemberRewards)[0])[0]
       ).toBeDefined()
 
-      const proposedProtocolParameters = await client.proposedProtocolParameters()
-      expect(proposedProtocolParameters).toBeDefined()
-
       const stakeDistribution = await client.liveStakeDistribution()
       expect(Object.values(stakeDistribution)[0].stake).toBeDefined()
 
@@ -250,12 +247,6 @@ describe('Local state queries', () => {
           })
           expect(Object.values(rewards[stakeKeyHash])[0]).toBeDefined()
         })
-      })
-    })
-    describe('proposedProtocolParameters', () => {
-      it('fetches the proposed protocol parameters', async () => {
-        const protocolParameters = await LedgerStateQuery.proposedProtocolParameters(context)
-        expect(protocolParameters).toBeDefined()
       })
     })
     describe('stakeDistribution', () => {
