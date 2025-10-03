@@ -20,7 +20,7 @@ jobs:
     - name: 🧰 Setup Node.js
       uses: actions/setup-node@v3.7.0
       with:
-        node-version: lts/Gallium
+        node-version: lts/jod
 
     - name: 🧰 Download Hugo
       run: |
