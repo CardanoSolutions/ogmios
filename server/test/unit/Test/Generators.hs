@@ -267,11 +267,12 @@ genMempoolSizeAndCapacity = MempoolSizeAndCapacity
 genMempoolMeasures :: Gen MempoolMeasures
 genMempoolMeasures = MempoolMeasures
     <$> arbitrary
-    <*> (Map.fromList <$> (listOf $ (,)
-            <$> (MeasureName <$> arbitrary)
-            <*> (SizeAndCapacity <$> arbitrary <*> arbitrary)
+    <*> (Map.fromList
+            <$> listOf ((,) . MeasureName
+                <$> arbitrary
+                <*> (SizeAndCapacity <$> arbitrary <*> arbitrary)
+            )
         )
-    )
 
 genWithOrigin :: Gen a -> Gen (Point.WithOrigin a)
 genWithOrigin genA = frequency

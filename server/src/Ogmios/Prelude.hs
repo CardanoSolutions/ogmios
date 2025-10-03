@@ -99,10 +99,7 @@ import Cardano.Ledger.Binary
     )
 import Cardano.Ledger.Core
     ( ByronEra
-    )
-
-import Cardano.Ledger.Core
-    ( Era
+    , Era
     )
 import Data.Aeson
     ( ToJSON (..)

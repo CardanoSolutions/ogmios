@@ -226,8 +226,9 @@ export const Method = <
           socket.removeListener('message', listener)
           try {
             const handler = res.handler || ((response, resolve, reject) => {
-              if (response.method === req.method && 'result' in response) {
-                resolve(response.result as A | PromiseLike<A>)
+              if (response.method === req.method && response) {
+                const success = response as unknown as { result: A | PromiseLike<A> };
+                resolve(success.result)
               } else {
                 reject(response)
               }

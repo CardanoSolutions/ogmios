@@ -914,7 +914,7 @@
       [ { "title": "DelegateRepresentativeSummary<Registered>"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "id", "from", "type", "stake" ]
+        , "required": [ "id", "from", "type", "stake", "mandate", "deposit", "delegators" ]
         , "properties":
           { "id":
             { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
@@ -955,7 +955,7 @@
       , { "title": "DelegateRepresentativeSummary<NoConfidence>"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "type", "stake" ]
+        , "required": [ "type", "stake", "delegators" ]
         , "properties":
           { "type":
             { "type": "string"
@@ -965,12 +965,24 @@
           , "stake":
             { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
             }
+          , "delegators":
+            { "type": "array"
+            , "items":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "credential", "from" ]
+              , "properties":
+                { "credential": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                , "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
+                }
+              }
+            }
           }
         }
       , { "title": "DelegateRepresentative<Abstain>"
         , "type": "object"
         , "additionalProperties": false
-        , "required": [ "type", "stake" ]
+        , "required": [ "type", "stake", "delegators" ]
         , "properties":
           { "type":
             { "type": "string"
@@ -979,6 +991,18 @@
             }
           , "stake":
             { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          , "delegators":
+            { "type": "array"
+            , "items":
+              { "type": "object"
+              , "additionalProperties": false
+              , "required": [ "credential", "from" ]
+              , "properties":
+                { "credential": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+                , "from": { "$ref": "cardano.json#/definitions/CredentialOrigin" }
+                }
+              }
             }
           }
         }
@@ -1941,7 +1965,6 @@
 
   , "StakePool":
     { "title": "StakePool"
-    , "description": "The field 'stake' is only present when explicitly requested (see related state-queries)."
     , "type": "object"
     , "additionalProperties": false
     , "required":
@@ -1986,9 +2009,6 @@
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Relay" }
         }
-      , "stake":
-        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
-        }
       }
     }
 
@@ -2002,6 +2022,52 @@
       [ "pool1qqqqpanw9zc0rzh0yp247nzf2s35uvnsm7aaesfl2nnejaev0uc"
       , "pool1qqqqqdk4zhsjuxxd8jyvwncf5eucfskz0xjjj64fdmlgj735lr9"
       ]
+    }
+
+  , "StakePoolView":
+    { "title": "StakePoolView"
+    , "description": "The field 'stake' is only present when explicitly requested (see related state-queries). The schema may only contain an id (and a stake) should the pool have just retired, but still be considered for ratification in the ongoing epoch."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required":
+      [ "id"
+      ]
+    , "properties":
+      { "id":
+        { "$ref": "cardano.json#/definitions/StakePoolId"
+        }
+      , "vrfVerificationKeyHash":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
+        }
+      , "owners":
+        { "type": "array"
+        , "items":
+          { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+          }
+        }
+      , "cost":
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+        }
+      , "margin":
+        { "$ref": "cardano.json#/definitions/Ratio"
+        }
+      , "pledge":
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+        }
+      , "rewardAccount":
+        { "$ref": "cardano.json#/definitions/RewardAccount"
+        }
+      , "metadata":
+        { "$ref": "cardano.json#/definitions/Anchor"
+        }
+      , "relays":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Relay" }
+        }
+      , "stake":
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+        }
+      }
     }
 
   , "StakePoolVotingThresholds":

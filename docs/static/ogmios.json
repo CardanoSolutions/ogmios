@@ -1770,7 +1770,7 @@
             }
           , "result":
             { "type": "object"
-            , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePool" }
+            , "additionalProperties": { "$ref": "cardano.json#/definitions/StakePoolView" }
             , "propertyNames": { "$ref": "cardano.json#/definitions/StakePoolId" }
             }
           , "id":

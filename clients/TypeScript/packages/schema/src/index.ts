@@ -738,9 +738,6 @@ export interface StakePoolRegistration {
   type: "stakePoolRegistration";
   stakePool: StakePool;
 }
-/**
- * The field 'stake' is only present when explicitly requested (see related state-queries).
- */
 export interface StakePool {
   id: StakePoolId;
   vrfVerificationKeyHash: DigestBlake2B256;
@@ -751,7 +748,6 @@ export interface StakePool {
   rewardAccount: RewardAccount;
   metadata?: Anchor;
   relays: Relay[];
-  stake?: ValueAdaOnly;
 }
 export interface Anchor {
   hash: DigestAny;
@@ -2474,11 +2470,11 @@ export interface DelegateRepresentativeSummaryRegistered {
   id: DigestBlake2B224;
   from: CredentialOrigin;
   type: "registered";
-  mandate?: Mandate;
+  mandate: Mandate;
   metadata?: Anchor;
-  deposit?: ValueAdaOnly;
+  deposit: ValueAdaOnly;
   stake: ValueAdaOnly;
-  delegators?: {
+  delegators: {
     credential: DigestBlake2B224;
     from: CredentialOrigin;
   }[];
@@ -2489,6 +2485,10 @@ export interface DelegateRepresentativeSummaryNoConfidence {
    */
   type: "noConfidence";
   stake: ValueAdaOnly;
+  delegators: {
+    credential: DigestBlake2B224;
+    from: CredentialOrigin;
+  }[];
 }
 export interface DelegateRepresentativeAbstain1 {
   /**
@@ -2496,6 +2496,10 @@ export interface DelegateRepresentativeAbstain1 {
    */
   type: "abstain";
   stake: ValueAdaOnly;
+  delegators: {
+    credential: DigestBlake2B224;
+    from: CredentialOrigin;
+  }[];
 }
 /**
  * Get a dump of the entire Cardano ledger state (CBOR) corresponding to the 'NewEpochState'. Take some time.
@@ -2935,9 +2939,24 @@ export interface QueryLedgerStateStakePoolsResponse {
   jsonrpc: "2.0";
   method: "queryLedgerState/stakePools";
   result: {
-    [k: string]: StakePool;
+    [k: string]: StakePoolView;
   };
   id?: unknown;
+}
+/**
+ * The field 'stake' is only present when explicitly requested (see related state-queries). The schema may only contain an id (and a stake) should the pool have just retired, but still be considered for ratification in the ongoing epoch.
+ */
+export interface StakePoolView {
+  id: StakePoolId;
+  vrfVerificationKeyHash?: DigestBlake2B256;
+  owners?: DigestBlake2B224[];
+  cost?: ValueAdaOnly;
+  margin?: Ratio;
+  pledge?: ValueAdaOnly;
+  rewardAccount?: RewardAccount;
+  metadata?: Anchor;
+  relays?: Relay[];
+  stake?: ValueAdaOnly;
 }
 /**
  * Query the current tip the ledger is at. Said differently, the slot number and header hash of the last block that has been processed by the ledger.

@@ -28,13 +28,6 @@ import Cardano.Ledger.Coin
 import Cardano.Ledger.Credential
     ( Credential (..)
     )
-import Cardano.Ledger.State
-    ( SnapShot (..)
-    , SnapShots (..)
-    , Stake (..)
-    , sumAllStake
-    , sumStakePerPool
-    )
 import Cardano.Ledger.Shelley.Genesis
     ( ShelleyGenesis (..)
     )
@@ -54,6 +47,13 @@ import Cardano.Ledger.Shelley.Rewards
     )
 import Cardano.Ledger.Slot
     ( EpochSize (..)
+    )
+import Cardano.Ledger.State
+    ( SnapShot (..)
+    , SnapShots (..)
+    , Stake (..)
+    , sumAllStake
+    , sumStakePerPool
     )
 import Cardano.Ledger.Val
     ( (<->)
