@@ -105,7 +105,7 @@ jobs:
     - name: 📦 Package
       run: |
         mkdir -p bin
-        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc94' && '9.4.8' }}/ogmios-${{ steps.version.outputs.version }}/x/ogmios/build/ogmios/ogmios ./bin/ogmios
+        cp ./server/dist-newstyle/build/${{ matrix.arch }}-${{ matrix.os }}/ghc-${{ matrix.compiler == 'ghc96' && '9.6.5' }}/ogmios-${{ steps.version.outputs.version }}/x/ogmios/build/ogmios/ogmios ./bin/ogmios
         mkdir -p share && chmod +w share
         mkdir -p share/zsh/site-functions
         ./bin/ogmios --zsh-completion-script ogmios > ./share/zsh/site-functions/_ogmios
