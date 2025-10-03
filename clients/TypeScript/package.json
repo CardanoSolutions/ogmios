@@ -46,7 +46,7 @@
     "eslint-plugin-standard": "^5.0.0",
     "eslint-watch": "^7.0.0",
     "jest": "^26.6.3",
-    "json-schema-to-typescript": "CardanoSolutions/json-schema-to-typescript",
+    "json-schema-to-typescript": "git+https://github.com/CardanoSolutions/json-schema-to-typescript.git",
     "shx": "^0.3.3",
     "ts-jest": "^26.5.3",
     "typedoc": "^0.21.4",
