@@ -34,14 +34,14 @@ import qualified Test.Cardano.Ledger.Alonzo.Arbitrary as Ledger
 import Test.Cardano.Ledger.Conway.Arbitrary
     ()
 
-instance Arbitrary (ScriptPurposeIndexInAnyEra StandardCrypto) where
+instance Arbitrary ScriptPurposeIndexInAnyEra where
     arbitrary = oneof
         [ ScriptPurposeIndexInAnyEra . (AlonzoBasedEraAlonzo,) <$> arbitrary
         , ScriptPurposeIndexInAnyEra . (AlonzoBasedEraBabbage,) <$> arbitrary
         , ScriptPurposeIndexInAnyEra . (AlonzoBasedEraConway,) <$> arbitrary
         ]
 
-instance Crypto crypto => Arbitrary (RewardAccountSummary crypto) where
+instance Arbitrary RewardAccountSummary where
     arbitrary = genericArbitrary
 
 instance (AlonzoEraScript era, Ledger.Script era ~ Ledger.AlonzoScript era) => Arbitrary (Ledger.PlutusScript era) where

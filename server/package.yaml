@@ -146,6 +146,7 @@ tests:
     - aeson
     - aeson-pretty
     - bytestring
+    - cardano-crypto-class
     - cardano-ledger-alonzo
     - cardano-ledger-alonzo:testlib
     - cardano-ledger-api
@@ -160,7 +161,6 @@ tests:
     - directory
     - file-embed
     - generic-arbitrary
-    - generics-sop
     - hspec
     - hspec-json-schema
     - io-classes

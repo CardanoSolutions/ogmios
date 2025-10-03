@@ -1,6 +1,6 @@
 cabal-version: 3.0
 
--- This file has been generated from package.yaml by hpack version 0.37.0.
+-- This file has been generated from package.yaml by hpack version 0.38.2.
 --
 -- see: https://github.com/sol/hpack
 
@@ -284,7 +284,6 @@ test-suite unit
   main-is: Spec.hs
   other-modules:
       Ogmios.App.Protocol.ChainSyncSpec
-      Ogmios.App.Protocol.StateQuerySpec
       Ogmios.App.Protocol.TxMonitorSpec
       Ogmios.App.Protocol.TxSubmissionSpec
       Ogmios.App.ProtocolSpec
@@ -348,6 +347,7 @@ test-suite unit
     , aeson-pretty
     , base >=4.7 && <5
     , bytestring
+    , cardano-crypto-class
     , cardano-ledger-alonzo
     , cardano-ledger-alonzo:testlib
     , cardano-ledger-api
@@ -362,7 +362,6 @@ test-suite unit
     , directory
     , file-embed
     , generic-arbitrary
-    , generics-sop
     , hspec
     , hspec-json-schema
     , io-classes

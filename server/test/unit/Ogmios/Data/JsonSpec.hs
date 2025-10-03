@@ -89,7 +89,6 @@ import Ogmios.Data.Json.Query
     , parseQueryLedgerGovernanceProposalsByProposalReference
     , parseQueryLedgerLiveStakeDistribution
     , parseQueryLedgerProjectedRewards
-    , parseQueryLedgerProposedProtocolParameters
     , parseQueryLedgerProtocolParameters
     , parseQueryLedgerRewardAccountSummaries
     , parseQueryLedgerRewardsProvenance
@@ -172,9 +171,6 @@ import Ouroboros.Consensus.Cardano.Block
     ( GenTx
     , HardForkApplyTxErr (..)
     )
-import Ouroboros.Consensus.Shelley.Eras
-    ( StandardAlonzo
-    )
 import Ouroboros.Network.Block
     ( Point (..)
     , Tip (..)
@@ -214,7 +210,6 @@ import Test.Generators
     , genPoolDistrResult
     , genPoolParametersResult
     , genPoolParametersResultNoStake
-    , genProposedPParamsResult
     , genRewardAccountSummariesResult
     , genRewardsProvenanceResult
     , genStakePoolsPerformancesResult
@@ -359,7 +354,7 @@ spec = do
 
         specify "Golden: Utxo_1.json" $ do
             json <- decodeFileThrow "Utxo_1.json"
-            case Json.parse (decodeUtxo @StandardCrypto) json of
+            case Json.parse decodeUtxo json of
                 Json.Error e -> do
                     show e `shouldContain` "couldn't decode plutus script"
                     show e `shouldContain` "Please drop 'd8184c820249'"
@@ -370,7 +365,7 @@ spec = do
 
         specify "Golden: Utxo_2.json" $ do
             json <- decodeFileThrow "Utxo_2.json"
-            case Json.parse (decodeUtxo @StandardCrypto) json of
+            case Json.parse decodeUtxo json of
                 Json.Error e ->
                     fail (show e)
                 Json.Success UTxOInBabbageEra{} ->
@@ -380,7 +375,7 @@ spec = do
 
         specify "Golden: Utxo_3.json" $ do
             json <- decodeFileThrow "Utxo_3.json"
-            case Json.parse (decodeUtxo @StandardCrypto) json of
+            case Json.parse decodeUtxo json of
                 Json.Error e ->
                     fail (show e)
                 Json.Success UTxOInBabbageEra{} ->
@@ -390,7 +385,7 @@ spec = do
 
         specify "Golden: Utxo_4.json" $ do
             json <- decodeFileThrow "Utxo_4.json"
-            case Json.parse (decodeUtxo @StandardCrypto) json of
+            case Json.parse decodeUtxo json of
                 Json.Error e -> do
                     show e `shouldContain` "couldn't decode plutus script"
                     show e `shouldContain` "Please drop '820249'"
@@ -401,7 +396,7 @@ spec = do
 
         specify "Golden: Script_Native_0.json" $ do
             json <- decodeFileThrow "Script_native_0.json"
-            case traverse @[] (Json.parse (decodeScript @(BabbageEra StandardCrypto))) json of
+            case traverse @[] (Json.parse (decodeScript @BabbageEra)) json of
                 Json.Error e ->
                     fail (show e)
                 Json.Success{}  ->
@@ -637,10 +632,6 @@ spec = do
         validateLedgerStateQuery 30 "protocolParameters"
             Nothing
             (parseQueryLedgerProtocolParameters genPParamsResult)
-
-        validateLedgerStateQuery 10 "proposedProtocolParameters"
-            Nothing
-            (parseQueryLedgerProposedProtocolParameters genProposedPParamsResult)
 
         validateLedgerStateQuery 10 "liveStakeDistribution"
             Nothing
@@ -1097,9 +1088,9 @@ instance Arbitrary SerializedTransaction where
           \259480D92538914F9BC955F07BCE78556DF5F6"
         ]
 
-propBinaryDataRoundtrip :: Ledger.Data StandardAlonzo -> Property
+propBinaryDataRoundtrip :: Ledger.Data AlonzoEra -> Property
 propBinaryDataRoundtrip dat =
-    let json = jsonToByteString (Alonzo.encodeData @StandardAlonzo dat)
+    let json = jsonToByteString (Alonzo.encodeData @AlonzoEra dat)
      in case decodeBase16 . T.encodeUtf8 <$> Json.decode (toLazy json) of
             Just (Right bytes) ->
                 let

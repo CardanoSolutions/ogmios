@@ -28,7 +28,6 @@ import Data.List
     )
 import Network.TypedProtocol.Codec
     ( Codec (..)
-    , PeerHasAgency (..)
     , SomeMessage (..)
     , runDecoder
     )
@@ -97,10 +96,8 @@ import Ouroboros.Consensus.Shelley.Ledger
     ( TxId (ShelleyTxId)
     )
 import Ouroboros.Network.Protocol.LocalTxMonitor.Type
-    ( ClientHasAgency (..)
-    , LocalTxMonitor (..)
-    , ServerHasAgency (..)
-    , TokBusyKind (..)
+    ( LocalTxMonitor (..)
+    , SingLocalTxMonitor (..)
     )
 import System.Random
     ( StdGen
@@ -115,7 +112,8 @@ import Test.App.Protocol.Util
     , withMockChannel
     )
 import Test.Generators
-    ( genMempoolSizeAndCapacity
+    ( genMempoolMeasures
+    , genMempoolSizeAndCapacity
     , genMirror
     , genTx
     , genTxId
@@ -245,7 +243,7 @@ txMonitorMockPeer
     -> (m LByteString, LByteString -> m ())
         -- ^ Read/Write from/To the channel
     -> m ()
-txMonitorMockPeer seed codec (recv, send) = flip evalStateT (seed, emptyServerState) $ forever $ do
+txMonitorMockPeer seed Codec{ encode, decode } (recv, send) = flip evalStateT (seed, emptyServerState) $ forever $ do
     doSomething
     ServerState{mempool,snapshot,cursor, slotNo} <- gets snd
     req <- lift recv
@@ -257,11 +255,11 @@ txMonitorMockPeer seed codec (recv, send) = flip evalStateT (seed, emptyServerSt
                 Nothing -> do
                     modifyRight (\st -> st { snapshot = Just mempool, cursor = 0 })
                     let msg = TxMonitor.MsgAcquired slotNo
-                    pure $ Just $ encode codec (ServerAgency TokAcquiring) msg
+                    pure $ Just $ encode msg
         Right (SomeMessage TxMonitor.MsgAwaitAcquire) -> do
             slotNo' <- waitForNewSnapshot
             let msg = TxMonitor.MsgAcquired slotNo'
-            pure $ Just $ encode codec (ServerAgency TokAcquiring) msg
+            pure $ Just $ encode msg
         Right (SomeMessage TxMonitor.MsgNextTx) -> do
             case snapshot of
                 Nothing ->
@@ -269,17 +267,17 @@ txMonitorMockPeer seed codec (recv, send) = flip evalStateT (seed, emptyServerSt
                 Just xs | length xs > cursor -> do
                     modifyRight (\st -> st { cursor = succ cursor })
                     let msg = TxMonitor.MsgReplyNextTx (Just (xs !! cursor))
-                    pure $ Just $ encode codec (ServerAgency (TokBusy TokNextTx)) msg
+                    pure $ Just $ encode msg
                 Just _ -> do
                     let msg = TxMonitor.MsgReplyNextTx Nothing
-                    pure $ Just $ encode codec (ServerAgency (TokBusy TokNextTx)) msg
+                    pure $ Just $ encode msg
         Right (SomeMessage (TxMonitor.MsgHasTx x)) -> do
             case snapshot of
                 Nothing ->
                     error "HasTransaction before acquiring."
                 Just (fmap txId -> xs) -> do
                     let msg = TxMonitor.MsgReplyHasTx (x `elem` xs)
-                    pure $ Just $ encode codec (ServerAgency (TokBusy TokHasTx)) msg
+                    pure $ Just $ encode msg
         Right (SomeMessage TxMonitor.MsgGetSizes) -> do
             case snapshot of
                 Nothing ->
@@ -287,7 +285,15 @@ txMonitorMockPeer seed codec (recv, send) = flip evalStateT (seed, emptyServerSt
                 Just{} -> do
                     sizes <- generateWith genMempoolSizeAndCapacity <$> stateLeft random
                     let msg = TxMonitor.MsgReplyGetSizes sizes
-                    pure $ Just $ encode codec (ServerAgency (TokBusy TokGetSizes)) msg
+                    pure $ Just $ encode msg
+        Right (SomeMessage TxMonitor.MsgGetMeasures) -> do
+            case snapshot of
+                Nothing ->
+                    error "GetMeasures before acquiring."
+                Just{} -> do
+                    measures <- generateWith genMempoolMeasures <$> stateLeft random
+                    let msg = TxMonitor.MsgReplyGetMeasures measures
+                    pure $ Just $ encode msg
         Right (SomeMessage TxMonitor.MsgRelease) -> do
             case snapshot of
                 Nothing ->
@@ -301,12 +307,12 @@ txMonitorMockPeer seed codec (recv, send) = flip evalStateT (seed, emptyServerSt
   where
     decodeOrThrow acquired bytes
         | acquired = do
-            decoder <- decode codec (ClientAgency TokAcquired)
+            decoder <- decode SingAcquired
             runDecoder [bytes] decoder >>= \case
                 Left failure -> throwIO $ FailedToDecodeMsg (show failure)
                 Right msg -> pure (Right msg)
         | otherwise = do
-            decoder <- decode codec (ClientAgency TokIdle)
+            decoder <- decode SingIdle
             runDecoder [bytes] decoder >>= \case
                 Left failure -> throwIO $ FailedToDecodeMsg (show failure)
                 Right msg -> pure (Left msg)
@@ -375,7 +381,7 @@ maxCapacity = 10
 plausibleTxs :: [GenTx Block]
 plausibleTxs = generateWith (vectorOf (2 * maxCapacity) genTx) 42
 
-plausibleTxsIds :: [Ledger.TxId StandardCrypto]
+plausibleTxsIds :: [Ledger.TxId]
 plausibleTxsIds = unGenTxId . txId <$> plausibleTxs
   where
     unGenTxId = \case
@@ -405,6 +411,7 @@ genTxMonitorAcquiredMessage = do
         , (10, pure (hasTx mirror plausible  , mirror, isHasTxResponse))
         , (10, pure (hasTx mirror unknown    , mirror, isHasTxResponse))
         , ( 5, pure (sizeOfMempool mirror  , mirror, isSizeOfMempoolResponse))
+        , ( 5, pure (getMeasures mirror  , mirror, isGetMeasuresResponse))
         , ( 5, pure (releaseMempool mirror   , mirror, isReleaseMempoolResponse))
         ]
 
@@ -446,7 +453,7 @@ isNextTxResponse :: ResponsePredicate
 isNextTxResponse = ResponsePredicate $
     \v -> ("method" `at` v)  == Just (toJSON @Text "nextTransaction")
 
-hasTx :: Rpc.Mirror -> Ledger.TxId StandardCrypto -> TxMonitorMessage Block
+hasTx :: Rpc.Mirror -> Ledger.TxId -> TxMonitorMessage Block
 hasTx mirror tx =
     MsgHasTransaction (HasTransaction tx) (Rpc.Response method mirror)
   where
@@ -465,6 +472,16 @@ sizeOfMempool mirror =
 isSizeOfMempoolResponse :: ResponsePredicate
 isSizeOfMempoolResponse = ResponsePredicate $
     \v -> ("method" `at` v)  == Just (toJSON @Text "sizeOfMempool")
+
+getMeasures :: Rpc.Mirror -> TxMonitorMessage Block
+getMeasures mirror =
+    MsgSizeOfMempool SizeOfMempool (Rpc.Response method mirror)
+  where
+    method = Just "getMeasures"
+
+isGetMeasuresResponse :: ResponsePredicate
+isGetMeasuresResponse = ResponsePredicate $
+    \v -> ("method" `at` v)  == Just (toJSON @Text "getMeasures")
 
 releaseMempool :: Rpc.Mirror -> TxMonitorMessage Block
 releaseMempool mirror =

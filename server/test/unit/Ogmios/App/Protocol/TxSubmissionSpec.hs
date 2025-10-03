@@ -57,9 +57,8 @@ import Test.QuickCheck
 
 import qualified Data.Map as Map
 
-type Tx' = Tx (BabbageEra StandardCrypto)
-type TxIn' = TxIn StandardCrypto
-type TxOut' = BabbageTxOut (BabbageEra StandardCrypto)
+type Tx' = Tx BabbageEra
+type TxOut' = BabbageTxOut BabbageEra
 
 spec :: Spec
 spec = parallel $ do
@@ -85,7 +84,7 @@ prop_merge =
             const
             (\_ -> error "evaluation failed unexpectedly")
             (UTxO utxoNetwork)
-            (SomeEvaluationInAnyEra @(BabbageEra StandardCrypto) (UTxO utxoUser) tx)
+            (SomeEvaluationInAnyEra @BabbageEra (UTxO utxoUser) tx)
 
 prop_coherent_intersection :: Property
 prop_coherent_intersection =
@@ -98,7 +97,7 @@ prop_coherent_intersection =
             const
             (\_ -> error "evaluation failed unexpectedly")
             (UTxO utxoNetwork)
-            (SomeEvaluationInAnyEra @(BabbageEra StandardCrypto) (UTxO utxoUser) tx)
+            (SomeEvaluationInAnyEra @BabbageEra (UTxO utxoUser) tx)
 
 prop_ambiguous_intersection :: Property
 prop_ambiguous_intersection =
@@ -113,9 +112,9 @@ prop_ambiguous_intersection =
   where
     mutateTxOut :: TxOut' -> TxOut'
     mutateTxOut (BabbageTxOut addr (MaryValue coins assets) datum script) =
-        BabbageTxOut addr (MaryValue (coins <> (Coin 1)) assets) datum script
+        BabbageTxOut addr (MaryValue (coins <> Coin 1) assets) datum script
 
-    property :: Map TxIn' TxOut' -> Map TxIn' TxOut' -> Tx' -> Property
+    property :: Map TxIn TxOut' -> Map TxIn TxOut' -> Tx' -> Property
     property utxoNetwork utxoUser tx =
         newEvaluateTransactionResponse
             (\_u _tx -> error "evaluation succeeded unexpectedly")

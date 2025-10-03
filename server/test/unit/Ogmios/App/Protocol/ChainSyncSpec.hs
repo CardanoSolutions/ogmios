@@ -23,7 +23,6 @@ import Data.Aeson
     )
 import Network.TypedProtocol.Codec
     ( Codec (..)
-    , PeerHasAgency (..)
     , SomeMessage (..)
     , runDecoder
     )
@@ -77,9 +76,8 @@ import Ouroboros.Network.Block
     )
 import Ouroboros.Network.Protocol.ChainSync.Type
     ( ChainSync (..)
-    , ClientHasAgency (..)
-    , ServerHasAgency (..)
-    , TokNextKind (..)
+    , SingChainSync (..)
+    , StNextKind (..)
     )
 import System.Random
     ( StdGen
@@ -232,27 +230,27 @@ chainSyncMockPeer
     -> (m LByteString, LByteString -> m ())
         -- ^ Read/Write from/To the channel
     -> m ()
-chainSyncMockPeer seed codec (recv, send) = flip evalStateT seed $ forever $ do
+chainSyncMockPeer seed Codec{ encode, decode } (recv, send) = flip evalStateT seed $ forever $ do
     req <- lift recv
     res <- lift (decodeOrThrow req) >>= \case
         SomeMessage ChainSync.MsgRequestNext -> do
             msg <- generateWith genNextBlockResponse <$> state random
-            pure $ Just $ encode codec (ServerAgency $ TokNext TokCanAwait) msg
+            pure $ Just $ encode msg
         SomeMessage ChainSync.MsgFindIntersect{} -> do
             msg <- generateWith genFindIntersectionResponse <$> state random
-            pure $ Just $ encode codec (ServerAgency TokIntersect) msg
+            pure $ Just $ encode msg
         SomeMessage ChainSync.MsgDone ->
             pure Nothing
     lift $ maybe (pure ()) send res
   where
     decodeOrThrow bytes = do
-        decoder <- decode codec (ClientAgency TokIdle)
+        decoder <- decode SingIdle
         runDecoder [bytes] decoder >>= \case
             Left failure -> throwIO $ FailedToDecodeMsg (show failure)
             Right msg -> pure msg
 
     genNextBlockResponse
-        :: Gen (ChainSync.Message Protocol ('StNext any) 'StIdle)
+        :: Gen (ChainSync.Message Protocol ('StNext 'StMustReply) 'StIdle)
     genNextBlockResponse = reasonablySized $ frequency
         [ (10, ChainSync.MsgRollForward <$> genBlock <*> genTip)
         , ( 1, ChainSync.MsgRollBackward <$> genPoint <*> genTip)
