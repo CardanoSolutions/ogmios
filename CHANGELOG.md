@@ -7,6 +7,32 @@ pre: "<b>6. </b>"
 math: true
 ---
 
+### [6.14.0] - 2025-10-03
+
+#### Added
+
+- `queryLedgerState/delegateRepresentatives` now returns the list of delegators also for the pre-defined always-abstain and always-no-confidence dreps.
+
+#### Changed
+
+- Bump dependencies to `cardano-node==10.5.1`.
+
+- `queryLedgerState/stakePools` will also include the stake of pools that have just retired. This is useful to consider the voting power granted to such pool for the upcoming epoch ratification.
+
+- Ogmios will now attempt to negotiate older versions of the client protocols, so that it can work with tools and libraries that are lagging behind. However, this means that when using an version that is too old, some state-queries may not work and result in an error. Ogmios will go as low as node-to-client version 17. The details of which queries are NOT available given versions is summarized in the table below:
+
+  | version | query not available                        |
+  | ---     | ---                                        |
+  | 17      | `queryLedgerState/delegateRepresentatives` |
+  | 18      | `queryLedgerState/delegateRepresentatives` |
+  | 19      | `queryLedgerState/delegateRepresentatives` |
+  | 20      | `queryLedgerState/delegateRepresentatives` |
+  | 21      | ø                                          |
+
+#### Removed
+
+- `queryLedgerState/proposedProtocolParameters` is no longer available in the underlying node and was already returning dummy data for a few versions. It's been removed.
+
 ### [6.13.0] - 2025-06-13
 
 #### Added

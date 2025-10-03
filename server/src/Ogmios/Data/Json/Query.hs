@@ -527,12 +527,7 @@ data RewardAccountSummary = RewardAccountSummary
 data DRepSummary
     = AlwaysAbstain Coin (Set (Ledger.Credential 'Staking))
     | AlwaysNoConfidence Coin (Set (Ledger.Credential 'Staking))
-    | Registered Coin RegisteredDRepState
-    deriving (Eq, Show, Generic)
-
-data RegisteredDRepState
-    = Some Ledger.DRepState
-    | Partial (Set (Ledger.Credential 'Staking))
+    | Registered Coin Ledger.DRepState
     deriving (Eq, Show, Generic)
 
 --
@@ -852,13 +847,13 @@ encodeSafeZone = \case
         encodeNull
 
 encodeStakePools
-    :: Map (Ledger.KeyHash 'StakePool) (Ledger.PoolParams, StrictMaybe Coin)
+    :: Map (Ledger.KeyHash 'StakePool) (Maybe Ledger.PoolParams, StrictMaybe Coin)
     -> Json
 encodeStakePools =
     encodeObject . encodeMapSeries Shelley.stringifyPoolId (\k (params, stake) ->
         encodeObject
             ( "id" .= Shelley.encodePoolId k
-           <> Shelley.encodePoolParams params
+           <> maybe mempty Shelley.encodePoolParams params
            <> "stake" .=? OmitWhenNothing encodeCoin stake
             )
     )
@@ -994,12 +989,9 @@ parseQueryLedgerDelegateRepresentatives genResult =
             -- Somehow, DReps with 0 stake do not figure in the stake
             -- distribution map; so we must account for them here by adding an
             -- empty coin.
-            (Map.mapMissing $ \key st ->
-                Registered mempty (
-                    Some (
-                        st { Ledger.drepDelegs = fromMaybe (Ledger.drepDelegs st) (Map.lookup key delegs) }
-                    )
-                )
+            (Map.mapMissing $ \key st -> Registered
+                mempty
+                (st { Ledger.drepDelegs = fromMaybe (Ledger.drepDelegs st) (Map.lookup key delegs) })
             )
 
             -- Distr but no state
@@ -1011,21 +1003,18 @@ parseQueryLedgerDelegateRepresentatives genResult =
             --
             -- So we pull them apart into a different constructor variant so we
             -- can easily encode them differently.
-            (Map.mapMissing $ \key coin ->
+            (Map.mapMaybeMissing $ \key coin ->
                 let delegators = fromMaybe Set.empty (Map.lookup key delegs) in
                 case key of
-                  Ledger.DRepAlwaysAbstain -> AlwaysAbstain coin delegators
-                  Ledger.DRepAlwaysNoConfidence -> AlwaysNoConfidence coin delegators
-                  Ledger.DRepCredential{} -> Registered coin (Partial delegators)
+                  Ledger.DRepAlwaysAbstain -> Just (AlwaysAbstain coin delegators)
+                  Ledger.DRepAlwaysNoConfidence -> Just (AlwaysNoConfidence coin delegators)
+                  Ledger.DRepCredential{} -> Nothing
             )
 
             -- Both distr and state (only occurs for registered DReps)
-            (Map.zipWithMatched $ \key st coin ->
-                Registered coin (
-                    Some (
-                        st { Ledger.drepDelegs = fromMaybe (Ledger.drepDelegs st) (Map.lookup key delegs) }
-                    )
-                )
+            (Map.zipWithMatched $ \key st coin -> Registered
+                coin
+                (st { Ledger.drepDelegs = fromMaybe (Ledger.drepDelegs st) (Map.lookup key delegs) })
             )
 
     encodeDRepSummary
@@ -1045,13 +1034,7 @@ parseQueryLedgerDelegateRepresentatives genResult =
               encodeFoldable
                   (encodeObject . Shelley.encodeCredential "credential")
                   delegators
-        Registered stake (Partial delegators) ->
-            "stake" .= encodeCoin stake
-         <> "delegators" .=
-              encodeFoldable
-                  (encodeObject . Shelley.encodeCredential "credential")
-                  delegators
-        Registered stake (Some summary) ->
+        Registered stake summary ->
               "mandate" .=
                 (encodeSingleton "epoch" . encodeEpochNo) (Ledger.drepExpiry summary)
            <> "deposit" .=
@@ -1969,8 +1952,8 @@ parseQueryLedgerRewardsProvenance genResult =
 
 parseQueryLedgerStakePools
     :: forall crypto f. ()
-    => GenResult crypto f (Map (Ledger.KeyHash 'StakePool) (Ledger.PoolParams))
-    -> GenResult crypto f (Map (Ledger.KeyHash 'StakePool) (Ledger.PoolParams, StrictMaybe Coin))
+    => GenResult crypto f (Map (Ledger.KeyHash 'StakePool) Ledger.PoolParams)
+    -> GenResult crypto f (Map (Ledger.KeyHash 'StakePool) (Maybe Ledger.PoolParams, StrictMaybe Coin))
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseQueryLedgerStakePools genResultNoStake genResult =
@@ -1982,17 +1965,17 @@ parseQueryLedgerStakePools genResultNoStake genResult =
                 ids <- traverset decodePoolId params
                 pure (getFilteredStakePools includeStake ids)
   where
-    encodeStakePoolsWithoutStake = encodeStakePools . Map.map (,SNothing)
+    encodeStakePoolsWithoutStake = encodeStakePools . Map.map (\params -> (Just params,SNothing))
 
     mergeDistrAndParams
         :: Map (Ledger.KeyHash 'StakePool) Coin
         -> Map (Ledger.KeyHash 'StakePool) Ledger.PoolParams
-        -> Map (Ledger.KeyHash 'StakePool) (Ledger.PoolParams, StrictMaybe Coin)
+        -> Map (Ledger.KeyHash 'StakePool) (Maybe Ledger.PoolParams, StrictMaybe Coin)
     mergeDistrAndParams =
         Map.merge
-           Map.dropMissing
-           (Map.mapMissing $ \_ params -> (params, SJust mempty))
-           (Map.zipWithMatched $ \_ distr params -> (params, SJust distr))
+           (Map.mapMissing $ \_ distr -> (Nothing, SJust distr))
+           (Map.mapMissing $ \_ params -> (Just params, SJust mempty))
+           (Map.zipWithMatched $ \_ distr params -> (Just params, SJust distr))
 
     getFilteredStakePools includeStake ids
         | includeStake = \case
