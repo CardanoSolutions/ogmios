@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["node", "jest"],
     "composite": true,
     "module": "commonjs",
     "target": "es2020",

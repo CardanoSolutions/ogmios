@@ -23,7 +23,7 @@
     "test": "shx echo No tests in this package"
   },
   "devDependencies": {
-    "json-schema-to-typescript": "https://github.com/CardanoSolutions/json-schema-to-typescript",
+    "json-schema-to-typescript": "git://github.com/CardanoSolutions/json-schema-to-typescript.git",
     "shx": "^0.3.3"
   },
   "files": [
