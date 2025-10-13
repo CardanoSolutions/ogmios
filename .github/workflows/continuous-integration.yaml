@@ -245,7 +245,7 @@ jobs:
     - name: 🧰 Setup Node.js
       uses: actions/setup-node@v3.7.0
       with:
-        node-version: lts/jod
+        node-version: lts/Gallium
 
     - name: 🔨 Build
       working-directory: clients/TypeScript
