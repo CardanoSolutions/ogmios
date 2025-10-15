@@ -11,7 +11,10 @@ math: true
 
 #### Added
 
-- `queryLedgerState/delegateRepresentatives` now returns the list of delegators also for the pre-defined always-abstain and always-no-confidence dreps.
+- ~~`queryLedgerState/delegateRepresentatives` now returns the list of delegators also for the pre-defined always-abstain and always-no-confidence dreps.~~
+
+> [!NOTE]
+> Couldn't get the query available in the cardano-node on-time, so this is still not available in this release, but should be ready for the next as soon as a version of cardano-node with support for the `GetDRepsDelegations` ledger state query is released.
 
 #### Changed
 
@@ -19,15 +22,7 @@ math: true
 
 - `queryLedgerState/stakePools` will also include the stake of pools that have just retired. This is useful to consider the voting power granted to such pool for the upcoming epoch ratification.
 
-- Ogmios will now attempt to negotiate older versions of the client protocols, so that it can work with tools and libraries that are lagging behind. However, this means that when using an version that is too old, some state-queries may not work and result in an error. Ogmios will go as low as node-to-client version 17. The details of which queries are NOT available given versions is summarized in the table below:
-
-  | version | query not available                        |
-  | ---     | ---                                        |
-  | 17      | `queryLedgerState/delegateRepresentatives` |
-  | 18      | `queryLedgerState/delegateRepresentatives` |
-  | 19      | `queryLedgerState/delegateRepresentatives` |
-  | 20      | `queryLedgerState/delegateRepresentatives` |
-  | 21      | ø                                          |
+- Ogmios will now attempt to negotiate older versions of the client protocols, so that it can work with tools and libraries that are lagging behind. Ogmios will go as low as node-to-client version 17. Beyond that, some queries will no longer work and the overall user experience would be degraded.
 
 #### Removed
 

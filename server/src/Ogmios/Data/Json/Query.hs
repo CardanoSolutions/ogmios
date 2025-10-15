@@ -949,23 +949,26 @@ parseQueryLedgerDelegateRepresentatives genResult =
             SomeShelleyEra ShelleyBasedEraBabbage ->
                 Nothing
             SomeShelleyEra ShelleyBasedEraConway ->
-                Just $ SomeCompound2Query
+                Just $ SomeCompoundQuery
+                    -- Re-enable as soon as NodeToClientV_23 becomes available
+                    -- in a released cardano-node.
+                    --
+                    -- (LSQ.BlockQuery
+                    --     (QueryIfCurrentConway
+                    --         (GetDRepDelegations dreps)
+                    --     )
+                    -- )
                     (LSQ.BlockQuery
-                        (QueryIfCurrentConway
-                            (GetDRepDelegations dreps)
-                        )
-                    )
-                    (\_ -> LSQ.BlockQuery
                         (QueryIfCurrentConway
                             (GetDRepState credentials)
                         )
                     )
-                    (\_ _ -> LSQ.BlockQuery
+                    (\_ -> LSQ.BlockQuery
                         (QueryIfCurrentConway
                             (GetDRepStakeDistr dreps)
                         )
                     )
-                    (\delegs st distr -> mergeAll delegs (Map.mapKeys Ledger.credToDRep st) distr)
+                    (\st distr -> let delegs = Map.empty in mergeAll delegs (Map.mapKeys Ledger.credToDRep st) distr)
                     (eraMismatchOrResult (encodeMapAsList encodeDRepSummary . withDefaultProtocolDreps))
                     genResult
   where
