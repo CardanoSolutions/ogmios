@@ -3999,9 +3999,9 @@ json-schema-ref-parser@^9.0.6:
   dependencies:
     "@apidevtools/json-schema-ref-parser" "9.0.9"
 
-"json-schema-to-typescript@git://github.com/CardanoSolutions/json-schema-to-typescript.git":
+"json-schema-to-typescript@git+https://github.com/CardanoSolutions/json-schema-to-typescript.git":
   version "10.1.5"
-  resolved "git://github.com/CardanoSolutions/json-schema-to-typescript.git#09cdb4c5d46a7eeae4fbb39b6815ad385b3160eb"
+  resolved "git+https://github.com/CardanoSolutions/json-schema-to-typescript.git#09cdb4c5d46a7eeae4fbb39b6815ad385b3160eb"
   dependencies:
     "@types/json-schema" "^7.0.6"
     "@types/lodash" "^4.14.168"
