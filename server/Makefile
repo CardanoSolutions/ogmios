@@ -15,7 +15,7 @@ lint: # Apply linters & file formatters
 	@hlint src test app -h .hlint.yaml
 
 shell: # Start a nix-shell with appropriate context
-	@nix develop --no-write-lock-file --refresh "github:CardanoSolutions/devx#ghc94-static-minimal-iog"
+	@nix develop --no-write-lock-file --refresh "github:CardanoSolutions/devx#ghc96-static-minimal-iog"
 
 dev: # Run local ogmios through cabal
 	cabal run ogmios -- \
