@@ -102,11 +102,10 @@ describe('TransactionSubmission', () => {
             alonzo: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 4.",
             babbage: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 4.",
             conway: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 4.",
-            mary: "invalid or incomplete value of type 'Transaction': An error occured while decoding value of type AllegraTxBodyRaw " +
-              '(MultiAsset StandardCrypto). field atbrTxFee with key 2, not decoded.',
-            allegra: "invalid or incomplete value of type 'Transaction': An error occured while decoding value of type AllegraTxBodyRaw (). " +
-              'field atbrTxFee with key 2, not decoded.',
-            shelley: "invalid or incomplete value of type 'Transaction': An error occured while decoding value of type ShelleyTxBodyRaw. " +
+            mary: "invalid or incomplete value of type 'Transaction': An error occured while decoding transaction body. field TxFee with key 2, not decoded.",
+            allegra: "invalid or incomplete value of type 'Transaction': An error occured while decoding transaction body. " +
+              'field TxFee with key 2, not decoded.',
+            shelley: "invalid or incomplete value of type 'Transaction': An error occured while decoding transaction body. " +
               'field fee with key 2, not decoded.'
           })
         }
