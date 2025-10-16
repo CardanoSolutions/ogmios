@@ -6,9 +6,9 @@ import {
   DigestBlake2B256,
   GenesisAlonzo,
   GenesisByron,
+  GenesisConway,
   GenesisShelley,
   Point,
-  QueryNetworkInvalidGenesis,
   RewardAccountSummary,
   Slot
 } from '@cardano-ogmios/schema'
@@ -84,14 +84,6 @@ describe('Local state queries', () => {
       expect(context.socket.readyState).toBe(context.socket.OPEN)
     })
 
-    it('rejects if the query is for another era', async () => {
-      try {
-        await client.genesisConfiguration('conway')
-      } catch (e) {
-        expect((e as QueryNetworkInvalidGenesis['error']).code).toBe(2004)
-      }
-    })
-
     it('exposes the queries, uses a single context, and should be shutdowned when done', async () => {
       const epoch = await client.epoch()
       expect(epoch).toBeDefined()
@@ -118,6 +110,9 @@ describe('Local state queries', () => {
 
       const alonzoGenesis = await client.genesisConfiguration('alonzo')
       expect((alonzoGenesis as GenesisAlonzo).updatableParameters.minUtxoDepositCoefficient).toBeDefined()
+
+      const conwayGenesis = await client.genesisConfiguration('conway')
+      expect((conwayGenesis as GenesisConway).constitution).toBeDefined()
 
       const point = await client.ledgerTip() as { slot: Slot, id: DigestBlake2B256 }
       expect(point.slot).toBeDefined()
@@ -224,11 +219,31 @@ describe('Local state queries', () => {
         expect(bound.epoch).toBeDefined()
       })
     })
-    describe('genesisConfig', () => {
-      it('fetches the config used to bootstrap the blockchain, excluding the genesis UTXO', async () => {
+    describe('genesisConfig(byron)', () => {
+      it('fetches the byron config used to bootstrap the blockchain, excluding the genesis UTXO', async () => {
+        const config = await LedgerStateQuery.genesisConfiguration(context, 'byron')
+        expect((config as GenesisByron).initialVouchers).toBeDefined()
+      })
+    })
+    describe('genesisConfig(shelley)', () => {
+      it('fetches the shelley config used to bootstrap the Shelley era', async () => {
         const config = await LedgerStateQuery.genesisConfiguration(context, 'shelley')
         expect((config as GenesisShelley).startTime).toBeDefined()
         expect((config as GenesisShelley).networkMagic).toBeDefined()
+      })
+    })
+    describe('genesisConfig(alonzo)', () => {
+      it('fetches the config used to bootstrap the Alonzo era', async () => {
+        const config = await LedgerStateQuery.genesisConfiguration(context, 'alonzo')
+        expect(config.updatableParameters.plutusCostModels['plutus:v1'])
+          .toEqual([197209, 0, 1, 1, 396231, 621, 0, 1, 150000, 1000, 0, 1, 150000, 32, 2477736, 29175, 4, 29773, 100, 29773, 100, 29773, 100, 29773, 100, 29773, 100, 29773, 100, 100, 100, 29773, 100, 150000, 32, 150000, 32, 150000, 32, 150000, 1000, 0, 1, 150000, 32, 150000, 1000, 0, 8, 148000, 425507, 118, 0, 1, 1, 150000, 1000, 0, 8, 150000, 112536, 247, 1, 150000, 10000, 1, 136542, 1326, 1, 1000, 150000, 1000, 1, 150000, 32, 150000, 32, 150000, 32, 1, 1, 150000, 1, 150000, 4, 103599, 248, 1, 103599, 248, 1, 145276, 1366, 1, 179690, 497, 1, 150000, 32, 150000, 32, 150000, 32, 150000, 32, 150000, 32, 150000, 32, 148000, 425507, 118, 0, 1, 1, 61516, 11218, 0, 1, 150000, 32, 148000, 425507, 118, 0, 1, 1, 148000, 425507, 118, 0, 1, 1, 2477736, 29175, 4, 0, 82363, 4, 150000, 5000, 0, 1, 150000, 32, 197209, 0, 1, 1, 150000, 32, 150000, 32, 150000, 32, 150000, 32, 150000, 32, 150000, 32, 150000, 32, 3345831, 1, 1])
+        expect((config as GenesisAlonzo).updatableParameters.minUtxoDepositCoefficient).toBeDefined()
+      })
+    })
+    describe('genesisConfig(conway)', () => {
+      it('fetches the config used to bootstrap the Conway era', async () => {
+        const config = await LedgerStateQuery.genesisConfiguration(context, 'conway')
+        expect((config as GenesisConway).constitution).toBeDefined()
       })
     })
     describe('ledgerTip', () => {

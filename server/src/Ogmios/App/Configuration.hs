@@ -48,7 +48,9 @@ import Data.Aeson
     , genericToEncoding
     )
 import Data.Aeson.Lens
-    ( _String
+    ( _JSON'
+    , _String
+    , _Value
     , key
     )
 import Data.Time.Clock.POSIX
@@ -78,7 +80,12 @@ import System.FilePath
     )
 
 import qualified Cardano.Chain.Genesis as Byron
+import qualified Cardano.Ledger.Alonzo.Genesis as Ledger
+import qualified Cardano.Ledger.Api as Ledger
+import qualified Cardano.Ledger.Plutus as Ledger
 import qualified Data.Aeson as Json
+import qualified Data.Map as Map
+import qualified Data.Set as Set
 import qualified Data.Text as T
 import qualified Data.Yaml as Yaml
 
@@ -137,7 +144,64 @@ readAlonzoGenesis configFile = do
         Nothing ->
             liftIO $ fail "Missing 'AlonzoGenesisFile' from node's configuration."
         Just (toString -> genesisFile) -> do
-            Yaml.decodeFileThrow (replaceFileName configFile genesisFile)
+            -- We have to decode Alonzo into an intermediate value first because
+            -- the default JSON decoder from the cardano-ledge can no longer
+            -- decode the genesis configuration.
+            --
+            -- The reason being that the decoder checks for the existence of
+            -- various parameters in the cost model for Plutus V1. Yet, new
+            -- parameters were added retro-actively to the cost model, so they
+            -- aren't present in the genesis config. But the decoder doesn't
+            -- care and fails.
+            --
+            -- So we have to manually add some placeholder key values to the
+            -- base genesis, so that the decoder can succeed; only to drop them
+            -- after from the map because they aren't actually part of the
+            -- genesis configuration.
+            value :: Yaml.Value <- Yaml.decodeFileThrow (replaceFileName configFile genesisFile)
+
+            let (costModelsWithFutureParams, sourceParamNames) = withFutureParameters (value ^. getter)
+                  where
+                    getter = key "costModels" . key "PlutusV1" . _JSON'
+
+            let valueWithPlaceholders = value & setter .~ Json.toJSON costModelsWithFutureParams
+                  where
+                    setter = key "costModels" . key "PlutusV1" . _Value
+
+            genesis <- liftIO $ Yaml.decodeThrow (Yaml.encode valueWithPlaceholders)
+
+            pure (withoutFutureParameters sourceParamNames genesis)
+  where
+    withFutureParameters :: Map Text Int64  -> (Map Text Int64, Set Text)
+    withFutureParameters genesisParams = foldr
+        (\paramName (params, sourceParamNames) ->
+            case Map.lookup paramName params of
+              Just{} -> (params, Set.insert paramName sourceParamNames)
+              Nothing -> (Map.insert paramName 0 params, sourceParamNames)
+        )
+        (genesisParams, Set.empty)
+        allV1ParamNames
+
+    allV1ParamNames :: [Text]
+    allV1ParamNames = Ledger.costModelParamNames Ledger.PlutusV1
+
+    withoutFutureParameters :: Set Text -> GenesisConfig AlonzoEra -> GenesisConfig AlonzoEra
+    withoutFutureParameters sourceParamNames config =
+        let
+            inner = Ledger.unAlonzoGenesisWrapper config
+            costModels = Ledger.uappCostModels inner
+            costModelsPruned = Map.adjust
+                (either (error . show) identity
+                    . Ledger.mkCostModel Ledger.PlutusV1
+                    . Map.elems
+                    . (`Map.restrictKeys` sourceParamNames)
+                    . Ledger.costModelToMap
+                )
+                Ledger.PlutusV1
+                (Ledger.costModelsValid costModels)
+         in
+            Ledger.AlonzoGenesisWrapper (inner { Ledger.uappCostModels = Ledger.mkCostModels costModelsPruned })
+
 
 readConwayGenesis :: MonadIO m => FilePath -> m (Either Text (GenesisConfig ConwayEra))
 readConwayGenesis configFile = do

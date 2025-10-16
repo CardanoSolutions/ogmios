@@ -227,7 +227,7 @@ export const Method = <
           try {
             const handler = res.handler || ((response, resolve, reject) => {
               if (response.method === req.method && response) {
-                const success = response as unknown as { result: A | PromiseLike<A> };
+                const success = response as unknown as { result: A | PromiseLike<A> }
                 resolve(success.result)
               } else {
                 reject(response)

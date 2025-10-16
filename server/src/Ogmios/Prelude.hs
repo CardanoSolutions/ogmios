@@ -25,6 +25,7 @@ module Ogmios.Prelude
     , typed
     , (^?)
     , (^.)
+    , (.~)
 
       -- * StrictMaybe
     , StrictMaybe
@@ -239,6 +240,11 @@ infixl 8 ^?
 (^?) :: s -> ((a -> Const (First a) a) -> s -> Const (First a) s) -> Maybe a
 s ^? l = getFirst (fmof l (First #. Just) s)
   where fmof l' f = getConst #. l' (Const #. f)
+
+-- | Copied from https://hackage.haskell.org/package/generic-lens-2.2.2.0/docs/src/Data.Generics.Internal.VL.Lens.html#.~
+infixr 4 .~
+(.~) :: ((a -> Identity b) -> s -> Identity t) -> b -> s -> t
+(.~) f b = runIdentity . f (Identity . const b)
 
 keepRedundantConstraint :: c => Proxy c -> ()
 keepRedundantConstraint _ = ()
