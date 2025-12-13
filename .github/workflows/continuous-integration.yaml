@@ -207,186 +207,6 @@ jobs:
             exit 1
         fi
 
-  #
-  #  ███████████                                █████████                      ███             █████         █████████  ████   ███                       █████
-  # ░█░░░███░░░█                               ███░░░░░███                    ░░░             ░░███         ███░░░░░███░░███  ░░░                       ░░███
-  # ░   ░███  ░  █████ ████ ████████   ██████ ░███    ░░░   ██████  ████████  ████  ████████  ███████      ███     ░░░  ░███  ████   ██████  ████████   ███████
-  #     ░███    ░░███ ░███ ░░███░░███ ███░░███░░█████████  ███░░███░░███░░███░░███ ░░███░░███░░░███░      ░███          ░███ ░░███  ███░░███░░███░░███ ░░░███░
-  #     ░███     ░███ ░███  ░███ ░███░███████  ░░░░░░░░███░███ ░░░  ░███ ░░░  ░███  ░███ ░███  ░███       ░███          ░███  ░███ ░███████  ░███ ░███   ░███
-  #     ░███     ░███ ░███  ░███ ░███░███░░░   ███    ░███░███  ███ ░███      ░███  ░███ ░███  ░███ ███   ░░███     ███ ░███  ░███ ░███░░░   ░███ ░███   ░███ ███
-  #     █████    ░░███████  ░███████ ░░██████ ░░█████████ ░░██████  █████     █████ ░███████   ░░█████     ░░█████████  █████ █████░░██████  ████ █████  ░░█████
-  #    ░░░░░      ░░░░░███  ░███░░░   ░░░░░░   ░░░░░░░░░   ░░░░░░  ░░░░░     ░░░░░  ░███░░░     ░░░░░       ░░░░░░░░░  ░░░░░ ░░░░░  ░░░░░░  ░░░░ ░░░░░    ░░░░░
-  #               ███ ░███  ░███                                                    ░███
-  #              ░░██████   █████                                                   █████
-  #               ░░░░░░   ░░░░░                                                   ░░░░░
-
-  clients_TypeScript:
-    needs: [server_build]
-    strategy:
-      matrix:
-        os: [ linux ]
-        arch: [ x86_64 ]
-        network: [ preview ]
-        cardano-node: [ 10.5.1 ]
-
-    runs-on: ${{ matrix.os == 'linux' && 'ubuntu-22.04' }}
-    steps:
-    - name: 📥 Checkout repository
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-
-    - name: ⌚ Get Date/Time
-      id: date-time
-      shell: bash
-      run: |
-        echo "::set-output name=value::$(/bin/date -u "+%Y%m%d-%H%M%S")"
-
-    - name: 🧰 Setup Node.js
-      uses: actions/setup-node@v3.7.0
-      with:
-        node-version: lts/jod
-
-    - name: 🔨 Build
-      working-directory: clients/TypeScript
-      run: |
-        yarn install --frozen-lockfile --non-interactive --logevel=error
-        yarn build
-        yarn lint
-
-    - name: 📥 Download
-      uses: actions/download-artifact@v4
-      with:
-        name: ogmios-${{ github.sha }}-${{ matrix.arch }}-${{ matrix.os }}
-        path: server
-
-    - name: 💾 Cache cardano-node DB
-      id: cache
-      uses: actions/cache@v4
-      with:
-        path: ${{ runner.temp }}/db-${{ matrix.network }}
-        key: cardano-node-ogmios-${{ matrix.network }}-${{ steps.date-time.outputs.value }}
-        restore-keys: |
-          cardano-node-ogmios-${{ matrix.network }}-
-
-    - name: 🔬 Test
-      if: ${{ matrix.network == 'preview' }}
-      working-directory: clients/TypeScript
-      shell: bash
-      env:
-        CONFDIR: /home/runner/work/ogmios/ogmios/server/config/network/${{ matrix.network }}
-      run: |
-        chmod +x ../../server/bin/ogmios
-        sudo ../../server/bin/ogmios --port 1337 --log-level error --node-socket ${{ runner.temp }}/ipc/node.socket --node-config $CONFDIR/cardano-node/config.json &
-
-        docker pull ghcr.io/intersectmbo/cardano-node:${{ matrix.cardano-node }}
-        docker run -d --name cardano-node \
-          -v ${{ runner.temp }}/db-${{ matrix.network }}:/db \
-          -v ${{ runner.temp }}/ipc:/ipc \
-          -v $CONFDIR/cardano-node:/config \
-          -v $CONFDIR/genesis:/genesis \
-          ghcr.io/intersectmbo/cardano-node:${{ matrix.cardano-node }} run --config /config/config.json --database-path /db --socket-path /ipc/node.socket --topology /config/topology.json
-
-        ../../scripts/wait-for-sync.sh 1337 1 "docker logs --since 10s cardano-node"
-
-        yarn test
-        docker stop cardano-node
-        docker rm cardano-node
-
-  #
-  #  ███████████                                █████████                      ███             █████       ███████████   ██████████ ███████████  █████
-  # ░█░░░███░░░█                               ███░░░░░███                    ░░░             ░░███       ░░███░░░░░███ ░░███░░░░░█░░███░░░░░███░░███
-  # ░   ░███  ░  █████ ████ ████████   ██████ ░███    ░░░   ██████  ████████  ████  ████████  ███████      ░███    ░███  ░███  █ ░  ░███    ░███ ░███
-  #     ░███    ░░███ ░███ ░░███░░███ ███░░███░░█████████  ███░░███░░███░░███░░███ ░░███░░███░░░███░       ░██████████   ░██████    ░██████████  ░███
-  #     ░███     ░███ ░███  ░███ ░███░███████  ░░░░░░░░███░███ ░░░  ░███ ░░░  ░███  ░███ ░███  ░███        ░███░░░░░███  ░███░░█    ░███░░░░░░   ░███
-  #     ░███     ░███ ░███  ░███ ░███░███░░░   ███    ░███░███  ███ ░███      ░███  ░███ ░███  ░███ ███    ░███    ░███  ░███ ░   █ ░███         ░███      █
-  #     █████    ░░███████  ░███████ ░░██████ ░░█████████ ░░██████  █████     █████ ░███████   ░░█████     █████   █████ ██████████ █████        ███████████
-  #    ░░░░░      ░░░░░███  ░███░░░   ░░░░░░   ░░░░░░░░░   ░░░░░░  ░░░░░     ░░░░░  ░███░░░     ░░░░░     ░░░░░   ░░░░░ ░░░░░░░░░░ ░░░░░        ░░░░░░░░░░░
-  #               ███ ░███  ░███                                                    ░███
-  #              ░░██████   █████                                                   █████
-  #               ░░░░░░   ░░░░░                                                   ░░░░░
-
-  clients_TypeScript_repl:
-    if: ${{ github.event_name == 'push' }}
-    runs-on: ${{ matrix.os }}
-    needs: [clients_TypeScript]
-    strategy:
-      matrix:
-        os: [ ubuntu-22.04 ]
-        target: [linux,macos,win.exe]
-    steps:
-    - name: 📥 Checkout repository
-      uses: actions/checkout@v3.5.3
-
-    - name: 🧰 Setup Node.js
-      uses: actions/setup-node@v3.7.0
-      with:
-        node-version: lts/jod
-
-    - name: 📦 Package REPL
-      working-directory: clients/TypeScript
-      run: |
-        yarn install --frozen-lockfile --non-interactive --logevel=error
-        yarn repl:pkg
-
-    - name: 📎 Upload REPL exe
-      uses: actions/upload-artifact@v4
-      with:
-        name: cardano-ogmios-repl-${{ matrix.target }}-${{ github.sha }}
-        path: clients/TypeScript/packages/repl/build/cardano-ogmios-repl-${{ matrix.target }}
-
-  #  ███████████                                █████████                      ███             █████       ██████   █████ ███████████  ██████   ██████
-  # ░█░░░███░░░█                               ███░░░░░███                    ░░░             ░░███       ░░██████ ░░███ ░░███░░░░░███░░██████ ██████
-  # ░   ░███  ░  █████ ████ ████████   ██████ ░███    ░░░   ██████  ████████  ████  ████████  ███████      ░███░███ ░███  ░███    ░███ ░███░█████░███
-  #     ░███    ░░███ ░███ ░░███░░███ ███░░███░░█████████  ███░░███░░███░░███░░███ ░░███░░███░░░███░       ░███░░███░███  ░██████████  ░███░░███ ░███
-  #     ░███     ░███ ░███  ░███ ░███░███████  ░░░░░░░░███░███ ░░░  ░███ ░░░  ░███  ░███ ░███  ░███        ░███ ░░██████  ░███░░░░░░   ░███ ░░░  ░███
-  #     ░███     ░███ ░███  ░███ ░███░███░░░   ███    ░███░███  ███ ░███      ░███  ░███ ░███  ░███ ███    ░███  ░░█████  ░███         ░███      ░███
-  #     █████    ░░███████  ░███████ ░░██████ ░░█████████ ░░██████  █████     █████ ░███████   ░░█████     █████  ░░█████ █████        █████     █████
-  #    ░░░░░      ░░░░░███  ░███░░░   ░░░░░░   ░░░░░░░░░   ░░░░░░  ░░░░░     ░░░░░  ░███░░░     ░░░░░     ░░░░░    ░░░░░ ░░░░░        ░░░░░     ░░░░░
-  #               ███ ░███  ░███                                                    ░███
-  #              ░░██████   █████                                                   █████
-  #               ░░░░░░   ░░░░░                                                   ░░░░░
-
-  clients_TypeScript_npm:
-    if: ${{ github.event_name == 'push' }}
-    runs-on: ${{ matrix.os }}
-    needs: [clients_TypeScript]
-    strategy:
-      matrix:
-        os: [ ubuntu-22.04 ]
-        package: [ schema, client, repl ]
-    steps:
-    - name: 📥 Checkout repository
-      uses: actions/checkout@v3.5.3
-
-    - name: 🧰 Setup Node.js
-      uses: actions/setup-node@v3.7.0
-      with:
-        node-version: lts/jod
-
-    - name: 📦 Pack
-      working-directory: clients/TypeScript
-      run: |
-        yarn install --frozen-lockfile --non-interactive --logevel=error
-        ./scripts/pack.sh
-
-    - name: 📎 Upload npm packages
-      uses: actions/upload-artifact@v4
-      with:
-        name: cardano-ogmios-clients-ts-packages
-        path: |
-          clients/TypeScript/cardano-ogmios-client-${{ github.sha }}.tgz
-          clients/TypeScript/cardano-ogmios-schema-${{ github.sha }}.tgz
-          clients/TypeScript/cardano-ogmios-repl-${{ github.sha }}.tgz
-
-    - name: 📤 Publish client package to npm registry
-      if: ${{ startsWith(github.ref, 'refs/tags') }}
-      uses: JS-DevTools/npm-publish@v2
-      with:
-        package: clients/TypeScript/packages/${{ matrix.package }}/package.json
-        strategy: upgrade
-        token: ${{ secrets.NPM_TOKEN }}
-
   #  ██████████      ███████      █████████  █████   ████ ██████████ ███████████
   # ░░███░░░░███   ███░░░░░███   ███░░░░░███░░███   ███░ ░░███░░░░░█░░███░░░░░███
   #  ░███   ░░███ ███     ░░███ ███     ░░░  ░███  ███    ░███  █ ░  ░███    ░███
@@ -404,8 +224,8 @@ jobs:
         os: [ linux ]
         target: [ cardano-node-ogmios ]
         network: [ mainnet, preprod, preview ]
-        cardano-node: [ 10.5.1 ]
-        cardano-node-latest: [  10.5.1 ]
+        cardano-node: [ 10.5.3 ]
+        cardano-node-latest: [  10.5.3 ]
         arch: [ x86_64 ]
     steps:
     - name: 📥 Checkout repository
@@ -436,10 +256,9 @@ jobs:
         echo "image=cardanosolutions/${{ matrix.target }}" >> $GITHUB_OUTPUT
 
     - name: 📝 Tag Variables
-      if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
       id: tag-variables
       run: |
-        echo "tag=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
+        echo "tag=v6.14.0" >> $GITHUB_OUTPUT
 
     - name: 📥 Download
       uses: actions/download-artifact@v4
@@ -479,7 +298,7 @@ jobs:
         cache-to: type=inline
 
     - name: "🏷️  :v*.*.*"
-      if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && matrix.network == 'mainnet' }}
+      if: ${{ matrix.network == 'mainnet' }}
       uses: docker/build-push-action@v4
       with:
         build-args: |
@@ -494,7 +313,6 @@ jobs:
         cache-to: type=inline
 
     - name: "🏷️  :v*.*.*-${{ matrix.network }}"
-      if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
       uses: docker/build-push-action@v4
       with:
         build-args: |
@@ -545,10 +363,9 @@ jobs:
         echo "image=cardanosolutions/${{ matrix.target }}" >> $GITHUB_OUTPUT
 
     - name: 📝 Tag Variables
-      if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
       id: tag-variables
       run: |
-        echo "tag=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
+        echo "tag=v6.14.0" >> $GITHUB_OUTPUT
 
     - name: 📝 Docker metadata
       id: meta
