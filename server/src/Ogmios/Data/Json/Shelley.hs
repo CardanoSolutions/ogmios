@@ -12,6 +12,15 @@ module Ogmios.Data.Json.Shelley where
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Ledger.Compactible
+    ( Compactible (..)
+    )
+import Data.Array.Byte
+    ( ByteArray (..)
+    )
+import Data.ByteString.Short
+    ( ShortByteString (..)
+    )
 import Cardano.Ledger.Keys
     ( GenDelegPair (..)
     , KeyRole (..)
@@ -43,12 +52,14 @@ import qualified Cardano.Ledger.BaseTypes as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Coin as Ledger
 import qualified Cardano.Ledger.Core as Ledger
+import qualified Cardano.Ledger.Babbage.Core as Ba
 import qualified Cardano.Ledger.Credential as Ledger
+import Cardano.Ledger.HKD ()
 import qualified Cardano.Ledger.Keys as Ledger
-import qualified Cardano.Ledger.PoolParams as Ledger
+import qualified Cardano.Ledger.State as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
 
-import qualified Cardano.Ledger.Shelley.BlockChain as Sh
+import qualified Cardano.Ledger.Shelley.BlockBody as Sh
 import qualified Cardano.Ledger.Shelley.Genesis as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.Rules as Sh
@@ -57,6 +68,7 @@ import qualified Cardano.Ledger.Shelley.Tx as Sh
 import qualified Cardano.Ledger.Shelley.TxAuxData as Sh
 import qualified Cardano.Ledger.Shelley.TxBody as Sh
 import qualified Cardano.Ledger.Shelley.TxCert as Sh
+import qualified Cardano.Ledger.Keys.WitVKey as Sh
 import qualified Cardano.Ledger.Shelley.TxOut as Sh
 import qualified Cardano.Ledger.Shelley.TxWits as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
@@ -130,7 +142,7 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           "size" .= encodeSingleton "bytes" (encodeWord32 (TPraos.bsize hBody))
         <>
-          "transactions" .= encodeFoldable (encodeTx opts) (Sh.txSeqTxns' txs)
+          "transactions" .= encodeFoldable (encodeTx opts) (Sh.shelleyBlockBodyTxs txs)
         )
   where
     TPraos.BHeader hBody _ = blkHeader
@@ -169,7 +181,7 @@ encodeConstitutionalDelegCert (Sh.GenesisDelegCert key delegate vrf) =
         )
 
 encodeCredential
-    :: forall any. (any :\: 'StakePool)
+    :: forall any. (any :\: StakePool)
     => Text
     -> Ledger.Credential any
     -> Series
@@ -180,7 +192,7 @@ encodeCredential k x = case x of
         "from" .= "script" <> k .= encodeScriptHash h
 
 encodeCredentialRaw
-    :: forall any. (any :\: 'StakePool)
+    :: forall any. (any :\: StakePool)
     => Ledger.Credential any
     -> Json
 encodeCredentialRaw x = case x of
@@ -326,7 +338,7 @@ encodeGenDelegPair x =
     & encodeObject
 
 encodeGenesisVote
-    :: Ledger.KeyHash 'Genesis
+    :: Ledger.KeyHash GenesisRole
     -> Json
 encodeGenesisVote credential =
     encodeObject
@@ -351,7 +363,7 @@ encodeHashHeader =
     encodeByteStringBase16 . CC.hashToBytes . TPraos.unHashHeader
 
 encodeInitialDelegates
-    :: Map (Ledger.KeyHash 'Genesis) GenDelegPair
+    :: Map (Ledger.KeyHash GenesisRole) GenDelegPair
     -> Json
 encodeInitialDelegates =
     encodeMapAsList
@@ -543,7 +555,7 @@ encodePoolCert = \case
         "type" .= encodeText "stakePoolRegistration"
         <>
         "stakePool" .= encodeObject
-            ( "id" .= encodePoolId (Ledger.ppId params)
+            ( "id" .= encodePoolId (Ledger.sppId params)
            <> encodePoolParams params
             )
     Sh.RetirePool keyHash epochNo ->
@@ -563,40 +575,42 @@ encodePoolId =
 encodePoolMetadata
     :: Ledger.PoolMetadata
     -> Json
-encodePoolMetadata x =
-    "url" .=
+encodePoolMetadata x = encodeObject
+    ( "url" .=
         encodeUrl (Ledger.pmUrl x) <>
-    "hash" .=
-        encodeByteStringBase16 (Ledger.pmHash x)
-    & encodeObject
+      "hash" .=
+        encodeByteStringBase16 (fromShort $ byteArrayToSBS $ Ledger.pmHash x)
+    )
+  where
+    byteArrayToSBS (ByteArray ba) = SBS ba
 
 encodePoolParams
-    :: Ledger.PoolParams
+    :: Ledger.StakePoolParams
     -> Series
 encodePoolParams x =
     "vrfVerificationKeyHash" .=
-        encodeHash (Ledger.unVRFVerKeyHash $ Ledger.ppVrf x) <>
+        encodeHash (Ledger.unVRFVerKeyHash $ Ledger.sppVrf x) <>
     "pledge" .=
-        encodeCoin (Ledger.ppPledge x) <>
+        encodeCoin (Ledger.sppPledge x) <>
     "cost" .=
-        encodeCoin (Ledger.ppCost x) <>
+        encodeCoin (Ledger.sppCost x) <>
     "margin" .=
-        encodeUnitInterval (Ledger.ppMargin x) <>
+        encodeUnitInterval (Ledger.sppMargin x) <>
     "rewardAccount" .=
-        encodeRewardAcnt (Ledger.ppRewardAccount x) <>
+        encodeRewardAcnt (Ledger.sppAccountAddress x) <>
     "owners" .=
-        encodeFoldable encodeKeyHash (Ledger.ppOwners x) <>
+        encodeFoldable encodeKeyHash (Ledger.sppOwners x) <>
     "relays" .=
-        encodeFoldable encodeStakePoolRelay (Ledger.ppRelays x) <>
+        encodeFoldable encodeStakePoolRelay (Ledger.sppRelays x) <>
     "metadata" .=? OmitWhenNothing
-        encodePoolMetadata (Ledger.ppMetadata x)
+        encodePoolMetadata (Ledger.sppMetadata x)
 
 encodePParams
     :: (Ledger.PParamsHKD Identity era ~ Sh.ShelleyPParams Identity era)
     => Ledger.PParams era
     -> Json
 encodePParams (Ledger.PParams x) =
-    encodePParamsHKD (\k encode v -> k .= encode v) identity x
+    encodePParamsHKD (\k enc v -> k .= enc v) (\k enc v -> k .= enc (fromCompact v)) identity x
 
 encodePParamsUpdate
     :: forall era.
@@ -627,6 +641,7 @@ encodePParamsUpdate (Ledger.PParamsUpdate x) =
                <> "parameters" .=
                     encodePParamsHKD
                         (\k encode v -> k .=? OmitWhenNothing encode v)
+                        (\k encode v -> k .=? OmitWhenNothing (encode . fromCompact) v)
                         (const SNothing)
                         x'
                <> "guardrails" .=
@@ -640,6 +655,7 @@ encodePParamsUpdate (Ledger.PParamsUpdate x) =
                <> "parameters" .=
                     encodePParamsHKD
                         (\k encode v -> k .=? OmitWhenNothing encode v)
+                        (\k encode v -> k .=? OmitWhenNothing (encode . fromCompact) v)
                         (const SNothing)
                         x'
                <> "guardrails" .=
@@ -661,33 +677,38 @@ encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
         (\(Ledger.PParamsUpdate x) ->
             encodePParamsHKD
                 (\k encode v -> k .=? OmitWhenNothing encode v)
+                (\k encode v -> k .=? OmitWhenNothing (encode . fromCompact) v)
                 (const SNothing)
                 x
         )
         m
+
+encodeCompactCoin :: Ledger.CompactForm Coin -> Json
+encodeCompactCoin = encodeCoin . fromCompact
 
 encodePParamsHKD
     :: forall f era.
         ( Ledger.PParamsHKD f era ~ Sh.ShelleyPParams f era
         )
     => (forall a. Text -> (a -> Json) -> Sh.HKD f a -> Series)
+    -> (forall a. Compactible a => Text -> (a -> Json) -> Sh.HKD f (Ledger.CompactForm a) -> Series)
     -> (Integer -> Sh.HKD f Integer)
     -> Ledger.PParamsHKD f era
     -> Json
-encodePParamsHKD encode pure_ x =
+encodePParamsHKD encode encodeCompact pure_ x =
     encode "minFeeCoefficient"
-        (encodeInteger . unCoin) (Sh.sppMinFeeA x) <>
-    encode "minFeeConstant"
-        encodeCoin (Sh.sppMinFeeB x) <>
+        (encodeInteger . unCoin . fromCompact . Ba.unCoinPerByte) (Sh.sppTxFeePerByte x) <>
+    encodeCompact "minFeeConstant"
+        encodeCoin (Sh.sppTxFeeFixed x) <>
     encode "maxBlockBodySize"
         (encodeSingleton "bytes" . encodeWord32) (Sh.sppMaxBBSize x) <>
     encode "maxBlockHeaderSize"
         (encodeSingleton "bytes" . encodeWord16) (Sh.sppMaxBHSize x) <>
     encode "maxTransactionSize"
         (encodeSingleton "bytes" . encodeWord32) (Sh.sppMaxTxSize x) <>
-    encode "stakeCredentialDeposit"
+    encodeCompact "stakeCredentialDeposit"
         encodeCoin (Sh.sppKeyDeposit x) <>
-    encode "stakePoolDeposit"
+    encodeCompact "stakePoolDeposit"
         encodeCoin (Sh.sppPoolDeposit x) <>
     encode "stakePoolRetirementEpochBound"
         encodeEpochInterval (Sh.sppEMax x) <>
@@ -695,7 +716,7 @@ encodePParamsHKD encode pure_ x =
         encodeWord16 (Sh.sppNOpt x) <>
     encode "stakePoolPledgeInfluence"
         encodeNonNegativeInterval (Sh.sppA0 x) <>
-    encode "minStakePoolCost"
+    encodeCompact "minStakePoolCost"
         encodeCoin (Sh.sppMinPoolCost x) <>
     encode "monetaryExpansion"
         encodeUnitInterval (Sh.sppRho x) <>
@@ -705,7 +726,7 @@ encodePParamsHKD encode pure_ x =
         encodeUnitInterval (Sh.sppD x) <>
     encode "extraEntropy"
         encodeNonce (Sh.sppExtraEntropy x) <>
-    encode "minUtxoDepositConstant"
+    encodeCompact "minUtxoDepositConstant"
         encodeCoin (Sh.sppMinUTxOValue x) <>
     encode "minUtxoDepositCoefficient"
         encodeInteger (pure_ 0) <>
@@ -731,7 +752,7 @@ encodeProtVer x =
     & encodeObject
 
 encodeRewardAcnt
-    :: Sh.RewardAccount
+    :: Ledger.AccountAddress
     -> Json
 encodeRewardAcnt =
     encodeText . stringifyRewardAcnt
@@ -827,33 +848,33 @@ encodeStakePoolRelay = encodeObject . \case
 
 encodeTx
     :: (MetadataFormat, IncludeCbor)
-    -> Sh.ShelleyTx ShelleyEra
+    -> Sh.Tx Ledger.TopTx ShelleyEra
     -> Json
-encodeTx (fmt, opts) x =
+encodeTx (fmt, opts) (Sh.MkShelleyTx x) =
     encodeObject
-        ( encodeTxId (Ledger.txIdTxBody @ShelleyEra (Sh.body x))
+        ( encodeTxId (Ledger.txIdTxBody @ShelleyEra (Sh.stBody x))
        <>
         "spends" .= encodeText "inputs"
        <>
-        encodeTxBody (Sh.body x)
+        encodeTxBody (Sh.stBody x)
        <>
         "metadata" .=? OmitWhenNothing identity metadata
        <>
-        encodeWitnessSet opts (Sh.wits x)
+        encodeWitnessSet opts (Sh.stWits x)
        <>
         if includeTransactionCbor opts then
-           "cbor" .= encodeByteStringBase16 (encodeCbor @ShelleyEra x)
+           "cbor" .= encodeByteStringBase16 (encodeCbor @ShelleyEra (Sh.MkShelleyTx x))
         else
            mempty
         )
   where
     metadata = liftA2
         (\hash body -> encodeObject ("hash" .= hash <> "labels" .= body))
-        (encodeAuxiliaryDataHash <$> Sh.stbMDHash (Sh.body x))
-        (encodeMetadata (fmt, opts) <$> Sh.auxiliaryData x)
+        (encodeAuxiliaryDataHash <$> Sh.stbMDHash (Sh.stBody x))
+        (encodeMetadata (fmt, opts) <$> Sh.stAuxData x)
 
 encodeTxBody
-    :: Sh.ShelleyTxBody ShelleyEra
+    :: Ledger.TxBody Ledger.TopTx ShelleyEra
     -> Series
 encodeTxBody x =
     "inputs" .=
@@ -912,7 +933,7 @@ encodeUpdate
     => (Ledger.PParamsUpdate era -> [Json])
     -> [Json]
     -> Sh.Update era
-    -> ([Ledger.KeyHash 'Genesis], [Json])
+    -> ([Ledger.KeyHash GenesisRole], [Json])
 encodeUpdate encodePParamsUpdateInEra mirs (Sh.Update (Sh.ProposedPPUpdates m) _epoch) =
     Map.foldrWithKey
         (\k v (votes, proposals) -> (k : votes, encodePParamsUpdateInEra v ++ proposals))
@@ -1068,10 +1089,10 @@ stringifyPoolId (Ledger.KeyHash (CC.UnsafeHash h)) =
     encodeBech32 hrpPool (fromShort h)
 
 stringifyRewardAcnt
-    :: Sh.RewardAccount
+    :: Ledger.AccountAddress
     -> Text
-stringifyRewardAcnt x@(Sh.RewardAccount ntwrk _credential) =
-    encodeBech32 (hrp ntwrk) (Ledger.serialiseRewardAccount x)
+stringifyRewardAcnt x@(Ledger.AccountAddress ntwrk _credential) =
+    encodeBech32 (hrp ntwrk) (Ledger.serialiseAccountAddress x)
   where
     hrp = \case
         Ledger.Mainnet -> hrpStakeMainnet

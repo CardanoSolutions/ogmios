@@ -6,6 +6,12 @@ module Ogmios.Data.Ledger.PredicateFailure.Babbage where
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.BaseTypes
+    ( Mismatch (..)
+    )
+
+import qualified Data.Set.NonEmpty as NESet
+
 import Cardano.Ledger.Core
     ( EraRule
     )
@@ -33,6 +39,10 @@ encodeLedgerFailure = \case
         encodeUtxowFailure AlonzoBasedEraBabbage (Alonzo.encodeUtxosFailure AlonzoBasedEraBabbage) e
     Sh.DelegsFailure e ->
         encodeDelegsFailure e
+    Sh.ShelleyWithdrawalsMissingAccounts _withdrawals ->
+        IncompleteWithdrawals mempty
+    Sh.ShelleyIncompleteWithdrawals _withdrawals ->
+        IncompleteWithdrawals mempty
 
 encodeUtxowFailure
     :: forall era.
@@ -45,9 +55,11 @@ encodeUtxowFailure
     -> MultiEraPredicateFailure
 encodeUtxowFailure era encodeUtxosFailure = \case
     Ba.MalformedReferenceScripts scripts ->
-        MalformedScripts scripts
+        MalformedScripts (NESet.toSet scripts)
     Ba.MalformedScriptWitnesses scripts ->
-        MalformedScripts scripts
+        MalformedScripts (NESet.toSet scripts)
+    Ba.ScriptIntegrityHashMismatch (Mismatch providedIntegrityHash computedIntegrityHash) _computedBodyHash ->
+        ScriptIntegrityHashMismatch { providedIntegrityHash, computedIntegrityHash }
     Ba.AlonzoInBabbageUtxowPredFailure e ->
         Alonzo.encodeUtxowFailure era (encodeUtxoFailure era encodeUtxosFailure) e
     Ba.UtxoFailure e ->
@@ -73,4 +85,4 @@ encodeUtxoFailure era encodeUtxosFailure = \case
                     , Just minAda
                     )
                 ) <$> outs
-         in InsufficientAdaInOutput { insufficientlyFundedOutputs }
+         in InsufficientAdaInOutput { insufficientlyFundedOutputs = toList insufficientlyFundedOutputs }

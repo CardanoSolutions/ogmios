@@ -14,6 +14,9 @@ import Ogmios.Prelude
 import Control.Monad.Class.MonadST
     ( MonadST
     )
+import Control.Monad.Class.MonadThrow
+    ( MonadEvaluate
+    )
 import Ogmios.Control.Exception
     ( MonadCatch
     , MonadMask
@@ -77,7 +80,7 @@ newtype App a = App
         , MonadClock
         , MonadST
         , MonadThread, MonadFork
-        , MonadThrow, MonadCatch, MonadMask
+        , MonadThrow, MonadCatch, MonadMask, MonadEvaluate
         , MonadDisk
         )
 

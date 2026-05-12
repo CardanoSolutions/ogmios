@@ -22,6 +22,7 @@ import Ogmios.Prelude
 import Cardano.Network.Protocol.NodeToClient
     ( Block
     , Clients (..)
+    , NodeToClientVersionData (..)
     , SerializedTransaction
     , SubmitTransactionError
     , connectClient
@@ -156,9 +157,6 @@ import Ogmios.Data.Protocol.TxSubmission
     ( TxSubmissionCodecs (..)
     , TxSubmissionMessage (..)
     , mkTxSubmissionCodecs
-    )
-import Ouroboros.Network.NodeToClient.Version
-    ( NodeToClientVersionData (NodeToClientVersionData)
     )
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     ( ChainSyncClientPipelined (..)

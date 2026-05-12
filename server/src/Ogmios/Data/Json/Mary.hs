@@ -23,7 +23,7 @@ import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 
-import qualified Cardano.Ledger.Shelley.BlockChain as Sh
+import qualified Cardano.Ledger.Shelley.BlockBody as Sh
 import qualified Cardano.Ledger.Shelley.Tx as Sh
 import qualified Cardano.Ledger.Shelley.TxOut as Sh
 import qualified Cardano.Ledger.Shelley.TxWits as Sh
@@ -69,7 +69,7 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           "size" .= encodeSingleton "bytes" (encodeWord32 (TPraos.bsize hBody))
         <>
-          "transactions" .= encodeFoldable (encodeTx opts) (Sh.txSeqTxns' txs)
+          "transactions" .= encodeFoldable (encodeTx opts) (Sh.shelleyBlockBodyTxs txs)
         )
   where
     TPraos.BHeader hBody _ = blkHeader
@@ -91,19 +91,19 @@ encodePolicyId (Ma.PolicyID hash) =
 
 encodeTx
     :: (MetadataFormat, IncludeCbor)
-    -> Sh.ShelleyTx MaryEra
+    -> Sh.Tx Ledger.TopTx MaryEra
     -> Json
 encodeTx (fmt, opts) x =
     encodeObject
-        ( Shelley.encodeTxId (Ledger.txIdTxBody @MaryEra (Sh.body x))
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @MaryEra (x ^. Ledger.bodyTxL))
        <>
         "spends" .= encodeText "inputs"
        <>
-        encodeTxBody (Sh.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
+        encodeTxBody (x ^. Ledger.bodyTxL) (strictMaybe mempty (Map.keys . snd) auxiliary)
        <>
         "metadata" .=? OmitWhenNothing fst auxiliary
        <>
-        encodeWitnessSet opts (snd <$> auxiliary) (Sh.wits x)
+        encodeWitnessSet opts (snd <$> auxiliary) (x ^. Ledger.witsTxL)
        <>
         if includeTransactionCbor opts then
            "cbor" .= encodeByteStringBase16 (encodeCbor @MaryEra x)
@@ -112,15 +112,15 @@ encodeTx (fmt, opts) x =
        )
   where
     auxiliary = do
-        hash <- Shelley.encodeAuxiliaryDataHash <$> Ma.mtbAuxDataHash (Sh.body x)
-        (labels, scripts) <- encodeAuxiliaryData (fmt, opts) <$> Sh.auxiliaryData x
+        hash <- Shelley.encodeAuxiliaryDataHash <$> Ma.mtbAuxDataHash (x ^. Ledger.bodyTxL)
+        (labels, scripts) <- encodeAuxiliaryData (fmt, opts) <$> x ^. Ledger.auxDataTxL
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts
             )
 
 encodeTxBody
-    :: Ma.MaryTxBody MaryEra
+    :: Ledger.TxBody Ledger.TopTx MaryEra
     -> [Ledger.ScriptHash]
     -> Series
 encodeTxBody (Ma.MaryTxBody inps outs dCerts wdrls fee validity updates _ mint) scripts =

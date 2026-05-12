@@ -27,6 +27,8 @@ import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
 import qualified Ogmios.Data.Json.Conway as Conway
+import Cardano.Ledger.Babbage.TxOut (BabbageTxOut)
+import Unsafe.Coerce (unsafeCoerce)
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
@@ -1027,6 +1029,8 @@ encodeTxOutInAnyEra = encodeObject . \case
         Babbage.encodeTxOut includeAllCbor out
     TxOutInAnyEra (ShelleyBasedEraConway, out) ->
         Babbage.encodeTxOut includeAllCbor out
+    TxOutInAnyEra (ShelleyBasedEraDijkstra, out) ->
+        Babbage.encodeTxOut includeAllCbor (unsafeCoerce out :: BabbageTxOut ConwayEra)
 
 encodeValueInAnyEra :: ValueInAnyEra -> Json
 encodeValueInAnyEra = \case
@@ -1042,6 +1046,8 @@ encodeValueInAnyEra = \case
         Mary.encodeValue value
     ValueInAnyEra (ShelleyBasedEraConway, value) ->
         Mary.encodeValue value
+    ValueInAnyEra (ShelleyBasedEraDijkstra, value) ->
+        Mary.encodeValue value
 
 encodeScriptPurposeItemInAnyEra
     :: ScriptPurposeItemInAnyEra
@@ -1053,6 +1059,8 @@ encodeScriptPurposeItemInAnyEra = \case
         Alonzo.encodeScriptPurposeItem purpose
     ScriptPurposeItemInAnyEra (AlonzoBasedEraConway, purpose) ->
         SJust (Conway.encodeScriptPurposeItem purpose)
+    ScriptPurposeItemInAnyEra (AlonzoBasedEraDijkstra, purpose) ->
+        SJust (Conway.encodeScriptPurposeItem (unsafeCoerce purpose))
 
 encodeScriptPurposeIndexInAnyEra
     :: ScriptPurposeIndexInAnyEra
@@ -1064,6 +1072,8 @@ encodeScriptPurposeIndexInAnyEra = \case
         Alonzo.encodeScriptPurposeIndex purpose
     ScriptPurposeIndexInAnyEra (AlonzoBasedEraConway, purpose) ->
         Conway.encodeScriptPurposeIndex purpose
+    ScriptPurposeIndexInAnyEra (AlonzoBasedEraDijkstra, purpose) ->
+        Conway.encodeScriptPurposeIndex (unsafeCoerce purpose)
 
 encodeContextErrorInAnyEra
     :: ContextErrorInAnyEra
@@ -1075,6 +1085,8 @@ encodeContextErrorInAnyEra = \case
         Babbage.encodeContextError err
     ContextErrorInAnyEra (AlonzoBasedEraConway, err) ->
         Conway.encodeContextError err
+    ContextErrorInAnyEra (AlonzoBasedEraDijkstra, err) ->
+        Conway.encodeContextError @ConwayEra (unsafeCoerce err)
 
 encodeDiscriminatedEntities
     :: DiscriminatedEntities

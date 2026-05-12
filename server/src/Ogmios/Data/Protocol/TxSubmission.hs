@@ -424,7 +424,7 @@ evaluateExecutionUnits
         -- ^ Information about epoch sizes, for converting slots to UTC times
     -> UTxO era
         -- ^ A UTXO needed to resolve inputs
-    -> Core.Tx era
+    -> Core.Tx Core.TopTx era
         -- ^ The actual transaction
     -> EvaluateTransactionResponse block
 evaluateExecutionUnits pparams systemStart epochInfo utxo tx =
@@ -494,6 +494,8 @@ utxoFromMempool =
             UTxOInBabbageEra (UTxO (Map.withoutKeys utxo ks))
         UTxOInConwayEra (UTxO utxo) ->
             UTxOInConwayEra (UTxO (Map.withoutKeys utxo ks))
+        UTxOInDijkstraEra (UTxO utxo) ->
+            UTxOInDijkstraEra (UTxO (Map.withoutKeys utxo ks))
 
     union :: MultiEraUTxO block -> MultiEraUTxO block -> MultiEraUTxO block
     union l r = case (l, r) of
@@ -505,6 +507,12 @@ utxoFromMempool =
             UTxOInConwayEra (UTxO (Map.union ul ur))
         (UTxOInConwayEra (UTxO ul), UTxOInConwayEra (UTxO ur)) ->
             UTxOInConwayEra (UTxO (Map.union ul ur))
+        (UTxOInDijkstraEra (UTxO ul), UTxOInDijkstraEra (UTxO ur)) ->
+            UTxOInDijkstraEra (UTxO (Map.union ul ur))
+        (_, UTxOInDijkstraEra (UTxO ur)) ->
+            UTxOInDijkstraEra (UTxO ur)
+        (UTxOInDijkstraEra (UTxO ul), _) ->
+            UTxOInDijkstraEra (UTxO ul)
 
     newUtxoFor :: TxId -> [out] -> Map TxIn out
     newUtxoFor h outs =
@@ -512,6 +520,8 @@ utxoFromMempool =
 
     inputs :: GenTx block -> Set TxIn
     inputs = \case
+        GenTxDijkstra (Consensus.ShelleyTx _ tx) ->
+            tx ^. Ledger.bodyTxL . Ledger.inputsTxBodyL
         GenTxConway (Consensus.ShelleyTx _ tx) ->
             tx ^. Ledger.bodyTxL . Ledger.inputsTxBodyL
         GenTxBabbage (Consensus.ShelleyTx _ tx) ->
@@ -529,6 +539,12 @@ utxoFromMempool =
 
     outputs :: GenTx block -> MultiEraUTxO block
     outputs = \case
+        GenTxDijkstra (Consensus.ShelleyTx h tx) ->
+            let
+                outs = tx ^. Ledger.bodyTxL . Ledger.outputsTxBodyL
+                utxo = newUtxoFor h (toList outs)
+             in
+                UTxOInDijkstraEra (UTxO utxo)
         GenTxConway (Consensus.ShelleyTx h tx) ->
             let
                 outs = tx ^. Ledger.bodyTxL . Ledger.outputsTxBodyL
@@ -562,11 +578,18 @@ mergeUtxo a b = case (a, b) of
         UTxOInConwayEra $ UTxO (Map.union l (upgrade <$> r))
     (UTxOInConwayEra (unUTxO -> l), UTxOInConwayEra (unUTxO -> r)) ->
         UTxOInConwayEra $ UTxO (Map.union l r)
+    (UTxOInDijkstraEra (unUTxO -> l), UTxOInDijkstraEra (unUTxO -> r)) ->
+        UTxOInDijkstraEra $ UTxO (Map.union l r)
+    (_, UTxOInDijkstraEra (unUTxO -> r)) ->
+        UTxOInDijkstraEra $ UTxO r
+    (UTxOInDijkstraEra (unUTxO -> l), _) ->
+        UTxOInDijkstraEra $ UTxO l
 
 utxoReferences :: MultiEraUTxO (CardanoBlock crypto) -> [Text]
 utxoReferences = fmap txInToText . \case
-    UTxOInBabbageEra (unUTxO -> u) -> Map.keys u
-    UTxOInConwayEra  (unUTxO -> u) -> Map.keys u
+    UTxOInBabbageEra  (unUTxO -> u) -> Map.keys u
+    UTxOInConwayEra   (unUTxO -> u) -> Map.keys u
+    UTxOInDijkstraEra (unUTxO -> u) -> Map.keys u
   where
     txInToText (Ledger.TxIn txid (Ledger.TxIx ix)) =
         let (CC.UnsafeHash h) = Ledger.extractHash (Ledger.unTxId txid)

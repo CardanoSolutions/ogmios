@@ -23,7 +23,7 @@ module Ogmios.Data.Ledger.PredicateFailure
     , Language (..)
     , Network (..)
     , ProtVer (..)
-    , RewardAccount (..)
+    , AccountAddress
     , ScriptHash (..)
     , ScriptIntegrityHash
     , ScriptPurposeItemInAnyEra (..)
@@ -42,8 +42,8 @@ module Ogmios.Data.Ledger.PredicateFailure
 import Ogmios.Prelude
 
 import Cardano.Ledger.Address
-    ( Addr (..)
-    , RewardAccount (..)
+    ( AccountAddress
+    , Addr (..)
     )
 import Cardano.Ledger.Allegra.Scripts
     ( ValidityInterval (..)
@@ -84,9 +84,11 @@ import Cardano.Ledger.Hashes
     , ScriptHash (..)
     , TxAuxDataHash
     )
-import Cardano.Ledger.Keys
+import Cardano.Crypto.Hash
     ( Hash
-    , KeyHash (..)
+    )
+import Cardano.Ledger.Keys
+    ( KeyHash (..)
     , KeyRole (..)
     , VKey (..)
     )
@@ -118,12 +120,12 @@ data MultiEraPredicateFailure
 
     -- All transaction key witnesses must comprised of valid signatures
     = InvalidSignatures
-        { culpritVerificationKeys :: [VKey 'Witness]
+        { culpritVerificationKeys :: [VKey Witness]
         }
 
     -- All required verification key witnesses must be provided.
     | MissingSignatures
-        { missingSignatures :: Set (KeyHash 'Witness)
+        { missingSignatures :: Set (KeyHash Witness)
         }
 
     -- All required script must be provided as witnesses.
@@ -371,12 +373,12 @@ data MultiEraPredicateFailure
 
     -- Committee members that are both added and removed in the same update.
     | ConflictingCommitteeUpdate
-        { conflictingMembers :: Set (Credential 'ColdCommitteeRole)
+        { conflictingMembers :: Set (Credential ColdCommitteeRole)
         }
 
     -- Committee members set to retire in the past. \
     | InvalidCommitteeUpdate
-        { alreadyRetiredMembers :: Set (Credential 'ColdCommitteeRole)
+        { alreadyRetiredMembers :: Set (Credential ColdCommitteeRole)
         }
 
     -- A governance action (except the first) must reference the immediately
@@ -428,12 +430,12 @@ data MultiEraPredicateFailure
 
     -- Stake pool must exist / be registered when delegating to it.
     | UnknownStakePool
-        { poolId :: KeyHash 'StakePool
+        { poolId :: KeyHash StakePool
         }
 
     -- When present, withdrawals must withdraw rewards entirely
     | IncompleteWithdrawals
-        { withdrawals :: Map RewardAccount Coin
+        { withdrawals :: Map AccountAddress Coin
         }
 
     ---------------------------------------------------------------------------
@@ -458,7 +460,7 @@ data MultiEraPredicateFailure
 
     -- Stake pool metadata hash must be smaller than 32 bytes
     | StakePoolMetadataHashTooLarge
-        { poolId :: KeyHash 'StakePool
+        { poolId :: KeyHash StakePool
         , computedMetadataHashSize :: Int
         }
 
@@ -468,12 +470,12 @@ data MultiEraPredicateFailure
 
     -- One cannot register a stake credential twice
     | StakeCredentialAlreadyRegistered
-        { knownCredential :: Credential 'Staking
+        { knownCredential :: Credential Staking
         }
 
     -- Stake credential must be registered for delegation
     | StakeCredentialNotRegistered
-        { unknownCredential :: Credential 'Staking
+        { unknownCredential :: Credential Staking
         }
 
     -- Reward account must be empty when de-registering stake keys
@@ -483,7 +485,7 @@ data MultiEraPredicateFailure
 
     -- Trying to withdraw from credentials that aren't delegated to a DRep
     | ForbiddenWithdrawal
-        { marginalizedCredentials :: Set (KeyHash 'Staking)
+        { marginalizedCredentials :: Set (KeyHash Staking)
         }
 
     -- Trying to withdraw from the treasury an amount different from the one
@@ -513,18 +515,18 @@ data MultiEraPredicateFailure
 
     -- One cannot register as a DRep twice
     | DRepAlreadyRegistered
-        { knownDelegateRepresentative :: Credential 'DRepRole
+        { knownDelegateRepresentative :: Credential DRepRole
         }
 
     -- Delegate representative must be registered for delegation
     | DRepNotRegistered
-        { unknownDelegateRepresentative :: Credential 'DRepRole
+        { unknownDelegateRepresentative :: Credential DRepRole
         }
 
     -- Committee member must be registered and active in order to (a) declare
     -- hot key or (b) resign.
     | UnknownConstitutionalCommitteeMember
-        { unknownConstitutionalCommitteeMember :: Credential 'ColdCommitteeRole
+        { unknownConstitutionalCommitteeMember :: Credential ColdCommitteeRole
         }
 
     ---------------------------------------------------------------------------

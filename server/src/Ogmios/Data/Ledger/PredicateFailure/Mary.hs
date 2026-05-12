@@ -27,3 +27,7 @@ encodeLedgerFailure = \case
         encodeUtxowFailure (encodeUtxoFailure ShelleyBasedEraMary) e
     Sh.DelegsFailure e ->
         encodeDelegsFailure e
+    Sh.ShelleyWithdrawalsMissingAccounts _withdrawals ->
+        IncompleteWithdrawals mempty
+    Sh.ShelleyIncompleteWithdrawals _withdrawals ->
+        IncompleteWithdrawals mempty

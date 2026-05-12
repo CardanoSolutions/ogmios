@@ -80,7 +80,10 @@ import System.FilePath
     )
 
 import qualified Cardano.Chain.Genesis as Byron
-import qualified Cardano.Ledger.Alonzo.Genesis as Ledger
+import Cardano.Ledger.Alonzo.Genesis
+    ( AlonzoExtraConfig (..)
+    , extraConfig
+    )
 import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Plutus as Ledger
 import qualified Data.Aeson as Json
@@ -186,21 +189,23 @@ readAlonzoGenesis configFile = do
     allV1ParamNames = Ledger.costModelParamNames Ledger.PlutusV1
 
     withoutFutureParameters :: Set Text -> GenesisConfig AlonzoEra -> GenesisConfig AlonzoEra
-    withoutFutureParameters sourceParamNames config =
-        let
-            inner = Ledger.unAlonzoGenesisWrapper config
-            costModels = Ledger.uappCostModels inner
-            costModelsPruned = Map.adjust
-                (either (error . show) identity
-                    . Ledger.mkCostModel Ledger.PlutusV1
-                    . Map.elems
-                    . (`Map.restrictKeys` sourceParamNames)
-                    . Ledger.costModelToMap
-                )
-                Ledger.PlutusV1
-                (Ledger.costModelsValid costModels)
-         in
-            Ledger.AlonzoGenesisWrapper (inner { Ledger.uappCostModels = Ledger.mkCostModels costModelsPruned })
+    withoutFutureParameters sourceParamNames genesis =
+        case extraConfig genesis of
+            Nothing -> genesis
+            Just (AlonzoExtraConfig maybeCostModels) ->
+                case maybeCostModels of
+                    Nothing -> genesis
+                    Just cms ->
+                        let pruned = Map.adjust pruneCostModel Ledger.PlutusV1 (Ledger.costModelsValid cms)
+                            cms' = Ledger.mkCostModels pruned
+                         in genesis { extraConfig = Just (AlonzoExtraConfig (Just cms')) }
+      where
+        pruneCostModel cm =
+            case Ledger.mkCostModel Ledger.PlutusV1 (Map.elems prunedParams) of
+                Right cm' -> cm'
+                Left _    -> cm
+          where
+            prunedParams = Map.restrictKeys (Ledger.costModelToMap cm) sourceParamNames
 
 
 readConwayGenesis :: MonadIO m => FilePath -> m (Either Text (GenesisConfig ConwayEra))

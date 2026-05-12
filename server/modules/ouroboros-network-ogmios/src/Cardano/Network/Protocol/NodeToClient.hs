@@ -43,6 +43,7 @@ module Cardano.Network.Protocol.NodeToClient
     , Error (..)
     , HandshakeProtocolError (..)
     , NodeToClientVersion
+    , NodeToClientVersionData (..)
     , GenTx
     , GenTxId
 
@@ -72,8 +73,12 @@ import Control.Monad.Class.MonadAsync
 import Control.Monad.Class.MonadST
     ( MonadST
     )
+import Control.DeepSeq
+    ( NFData
+    )
 import Control.Monad.Class.MonadThrow
-    ( MonadMask
+    ( MonadEvaluate
+    , MonadMask
     , MonadThrow (..)
     )
 import Control.Monad.IO.Class
@@ -103,6 +108,7 @@ import Network.Mux
     ( Error (..)
     , Mode (..)
     )
+import qualified Network.Mux
 import Network.TypedProtocol.Codec
     ( Codec
     )
@@ -163,7 +169,7 @@ import Ouroboros.Network.Mux
     , OuroborosApplication (..)
     , RunMiniProtocol (..)
     )
-import Ouroboros.Network.NodeToClient
+import Cardano.Network.NodeToClient
     ( LocalAddress
     , MinimalInitiatorContext
     , NetworkConnectTracers (..)
@@ -256,6 +262,7 @@ instance ConvertRawTxId (GenTx (CardanoBlock StandardCrypto)) where
         GenTxIdAlonzo x -> toRawTxIdHash x
         GenTxIdBabbage x -> toRawTxIdHash x
         GenTxIdConway x -> toRawTxIdHash x
+        GenTxIdDijkstra x -> toRawTxIdHash x
 
 -- | A handy type to pass clients around
 data Clients m block = Clients
@@ -288,7 +295,7 @@ connectClient tr client vData addr = liftIO $ withIOManager $ \iocp -> do
 
     tracers :: NetworkConnectTracers LocalAddress NodeToClientVersion
     tracers = NetworkConnectTracers
-        { nctMuxTracer = nullTracer
+        { nctMuxTracers = Network.Mux.nullTracers
         , nctHandshakeTracer = contramap TrHandshake tr
         }
 
@@ -302,6 +309,7 @@ nodeToClientV_Min = NodeToClientV_17
 mkClient
     :: forall m.
         ( MonadAsync m
+        , MonadEvaluate m
         , MonadIO m
         , MonadMask m
         , MonadST m
@@ -366,6 +374,7 @@ localChainSync
     :: forall m protocol.
         ( protocol ~ ChainSync Block (Point Block) (Tip Block)
         , MonadThrow m
+        , MonadEvaluate m
         , MonadAsync m
         )
     => (forall a. m a -> IO a)
@@ -389,6 +398,7 @@ localTxSubmission
     :: forall m protocol.
         ( protocol ~ LocalTxSubmission (SerializedTransaction Block) (SubmitTransactionError Block)
         , MonadThrow m
+        , MonadEvaluate m
         )
     => (forall a. m a -> IO a)
         -- ^ A natural transformation to unlift a particular 'm' into 'IO'.
@@ -411,6 +421,8 @@ localTxMonitor
     :: forall m protocol a.
         ( protocol ~ LocalTxMonitor (GenTxId Block) (GenTx Block) SlotNo
         , MonadThrow m
+        , MonadEvaluate m
+        , NFData a
         )
     => (forall x. m x -> IO x)
         -- ^ A natural transformation to unlift a particular 'm' into 'IO'.
@@ -432,6 +444,7 @@ localTxMonitor unliftIO tr codec client channel =
 localStateQuery
     :: forall m.
         ( MonadAsync m
+        , MonadEvaluate m
         , MonadMask m
         )
     => (forall x. m x -> IO x)
@@ -461,10 +474,11 @@ codecs epochSlots nodeToClientV =
   where
     supportedVersions = supportedNodeToClientVersions (Proxy @Block)
     cfg = CardanoCodecConfig
-        (let byron   = ByronCodecConfig epochSlots in byron)
-        (let shelley = ShelleyCodecConfig in shelley)
-        (let allegra = ShelleyCodecConfig in allegra)
-        (let mary    = ShelleyCodecConfig in mary)
-        (let alonzo  = ShelleyCodecConfig in alonzo)
-        (let babbage = ShelleyCodecConfig in babbage)
-        (let conway  = ShelleyCodecConfig in conway)
+        (let byron    = ByronCodecConfig epochSlots in byron)
+        (let shelley  = ShelleyCodecConfig in shelley)
+        (let allegra  = ShelleyCodecConfig in allegra)
+        (let mary     = ShelleyCodecConfig in mary)
+        (let alonzo   = ShelleyCodecConfig in alonzo)
+        (let babbage  = ShelleyCodecConfig in babbage)
+        (let conway   = ShelleyCodecConfig in conway)
+        (let dijkstra = ShelleyCodecConfig in dijkstra)
