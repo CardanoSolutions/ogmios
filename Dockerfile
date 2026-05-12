@@ -2,13 +2,13 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-ARG CARDANO_NODE_IMAGE=ghcr.io/intersectmbo/cardano-node:10.1.4
+ARG CARDANO_NODE_IMAGE=ghcr.io/intersectmbo/cardano-node:11.0.1
 
 #                                                                              #
 # --------------------------- BUILD (ogmios) --------------------------------- #
 #                                                                              #
 
-FROM --platform=${TARGETPLATFORM:-linux/amd64} busybox:1.35 as ogmios
+FROM busybox:1.35 AS ogmios
 
 LABEL name=ogmios
 LABEL description="A JSON WebSocket bridge for cardano-node."
@@ -28,10 +28,10 @@ ENTRYPOINT ["/bin/ogmios"]
 # --------------------- RUN (cardano-node & ogmios) -------------------------- #
 #                                                                              #
 
-FROM ${CARDANO_NODE_IMAGE} as cardano-node-ogmios
+FROM ${CARDANO_NODE_IMAGE} AS cardano-node-ogmios
 
 ARG NETWORK=mainnet
-ENV TINI_VERSION v0.19.0
+ENV TINI_VERSION=v0.19.0
 
 LABEL name=cardano-node-ogmios
 LABEL description="A Cardano node, side-by-side with its JSON WebSocket bridge."

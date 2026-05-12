@@ -2625,7 +2625,7 @@
       , "message": { "type": "string" }
       , "data":
         { "type": "object"
-        , "required": [ "shelley", "allegra", "mary", "alonzo", "babbage", "conway" ]
+        , "required": [ "shelley", "allegra", "mary", "alonzo", "babbage", "conway", "dijkstra" ]
         , "additionalProperties": false
         , "properties":
           { "shelley": { "type": "string" }
@@ -2634,6 +2634,7 @@
           , "alonzo": { "type": "string" }
           , "babbage": { "type": "string" }
           , "conway": { "type": "string" }
+          , "dijkstra": { "type": "string" }
           }
         }
       }

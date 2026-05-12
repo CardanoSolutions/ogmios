@@ -160,7 +160,7 @@
         }
       , "era":
         { "type": "string"
-        , "enum": [ "shelley", "allegra", "mary", "alonzo", "babbage", "conway" ]
+        , "enum": [ "shelley", "allegra", "mary", "alonzo", "babbage", "conway", "dijkstra" ]
         }
       , "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
       , "ancestor":
@@ -312,7 +312,7 @@
         , "additionalProperties": false
         , "required": [ "verificationKey" ]
         , "properties":
-          { "verificationKey": { "$ref": "cardano.json#/definitions/VerificationKey" }
+          { "verificationKey": { "$ref": "cardano.json#/definitions/ExtendedVerificationKey" }
           }
         }
       , "proposal":
@@ -1032,7 +1032,7 @@
   , "Era":
     { "title": "Era"
     , "type": "string"
-    , "enum": [ "byron", "shelley", "allegra", "mary", "alonzo", "babbage", "conway" ]
+    , "enum": [ "byron", "shelley", "allegra", "mary", "alonzo", "babbage", "conway", "dijkstra" ]
     }
 
   , "EraWithGenesis":
@@ -1754,7 +1754,7 @@
   , "Language":
     { "title": "Language"
     , "type": "string"
-    , "enum": [ "plutus:v1", "plutus:v2", "plutus:v3" ]
+    , "enum": [ "plutus:v1", "plutus:v2", "plutus:v3", "plutus:v4" ]
     }
 
   , "KesVerificationKey":
@@ -2421,7 +2421,7 @@
         , "properties":
           { "language":
             { "type": "string"
-            , "enum": [ "plutus:v1", "plutus:v2", "plutus:v3" ]
+            , "enum": [ "plutus:v1", "plutus:v2", "plutus:v3", "plutus:v4" ]
             }
           , "cbor":
             { "type": "string"
