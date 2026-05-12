@@ -185,9 +185,8 @@ import System.Directory
     ( createDirectoryIfMissing
     )
 import Test.Generators
-    ( genAccountStateResult
+    ( genChainAccountStateResult
     , genAcquireFailure
-    , genBlock
     , genBlockNo
     , genBoundResult
     , genCommitteeMembersStateResult
@@ -351,6 +350,9 @@ spec = do
                 Json.Success (UTxOInConwayEra utxo') ->
                     utxo' === upgrade utxo
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+                Json.Success (UTxOInDijkstraEra _) ->
+                    property False
+                        & counterexample "Unexpected: decoded Babbage UTxO as Dijkstra"
 
         specify "Golden: Utxo_1.json" $ do
             json <- decodeFileThrow "Utxo_1.json"
@@ -362,6 +364,8 @@ spec = do
                     fail "successfully decoded an invalid payload (as Babbage Utxo)?"
                 Json.Success UTxOInConwayEra{} ->
                     fail "successfully decoded an invalid payload( as Conway Utxo)?"
+                Json.Success UTxOInDijkstraEra{} ->
+                    fail "successfully decoded an invalid payload (as Dijkstra Utxo)?"
 
         specify "Golden: Utxo_2.json" $ do
             json <- decodeFileThrow "Utxo_2.json"
@@ -393,9 +397,11 @@ spec = do
                     fail "successfully decoded an invalid payload( as Babbage Utxo)?"
                 Json.Success UTxOInConwayEra{} ->
                     fail "successfully decoded an invalid payload (as Conway Utxo)?"
+                Json.Success UTxOInDijkstraEra{} ->
+                    fail "successfully decoded an invalid payload (as Dijkstra Utxo)?"
 
         specify "Golden: Script_Native_0.json" $ do
-            json <- decodeFileThrow "Script_native_0.json"
+            json <- decodeFileThrow "Script_Native_0.json"
             case traverse @[] (Json.parse (decodeScript @BabbageEra)) json of
                 Json.Error e ->
                     fail (show e)
@@ -729,7 +735,7 @@ spec = do
 
         validateLedgerStateQuery 10 "treasuryAndReserves"
             Nothing
-            (parseQueryLedgerTreasuryAndReserves genAccountStateResult)
+            (parseQueryLedgerTreasuryAndReserves genChainAccountStateResult)
 
         validateLedgerStateQuery 0 "governanceProposals"
             (Just [aesonQQ|{
@@ -898,6 +904,7 @@ instance Arbitrary (SubmitTransactionResponse Block) where
             , ( SomeShelleyEra ShelleyBasedEraAlonzo,  Binary.DecoderErrorVoid, 0 )
             , ( SomeShelleyEra ShelleyBasedEraBabbage, Binary.DecoderErrorVoid, 0 )
             , ( SomeShelleyEra ShelleyBasedEraConway,  Binary.DecoderErrorVoid, 0 )
+            , ( SomeShelleyEra ShelleyBasedEraDijkstra, Binary.DecoderErrorVoid, 0 )
             ]
           )
         ]
@@ -1000,9 +1007,6 @@ instance Arbitrary (Point Block) where
 
 instance Arbitrary (Tip Block) where
     arbitrary = genTip
-
-instance Arbitrary Block where
-    arbitrary = reasonablySized genBlock
 
 instance Arbitrary (GenTx Block) where
     arbitrary = genTx

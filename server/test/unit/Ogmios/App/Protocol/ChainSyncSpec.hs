@@ -22,7 +22,8 @@ import Data.Aeson
     ( ToJSON (..)
     )
 import Network.TypedProtocol.Codec
-    ( Codec (..)
+    ( Codec
+    , CodecF (..)
     , SomeMessage (..)
     , runDecoder
     )
