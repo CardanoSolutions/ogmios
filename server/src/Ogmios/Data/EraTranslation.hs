@@ -31,6 +31,7 @@ import Cardano.Ledger.Core
     , Tx
     , TxLevel (TopTx)
     , translateEraThroughCBOR
+    , upgradeTxOut
     )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
@@ -40,9 +41,6 @@ import Control.Arrow
     )
 import Control.Monad.Trans.Except
     ( runExcept
-    )
-import Unsafe.Coerce
-    ( unsafeCoerce
     )
 import Ouroboros.Consensus.Cardano.Block
     ( GenTx (..)
@@ -74,10 +72,9 @@ instance Upgrade BabbageTxOut ConwayEra where
     type Upgraded BabbageTxOut = BabbageTxOut
     upgrade = force . Conway.upgradeTxOut
 
--- NOTE: DijkstraEra follows Conway; TxOut is identical.
--- PreviousEra DijkstraEra = ConwayEra, so input is BabbageTxOut ConwayEra.
--- We use Conway.upgradeTxOut which upgrades from PreviousEra ConwayEra (=BabbageEra).
--- This instance won't be used directly; the UTxO DijkstraEra upgrade handles translation.
+instance Upgrade BabbageTxOut DijkstraEra where
+    type Upgraded BabbageTxOut = BabbageTxOut
+    upgrade = force . upgradeTxOut
 
 ----------
 -- UTxO
@@ -87,12 +84,9 @@ instance Upgrade UTxO ConwayEra where
     type Upgraded UTxO = UTxO
     upgrade = force . UTxO . fmap upgrade . unUTxO
 
--- NOTE: DijkstraEra follows Conway.
--- The UTxO structure is identical between Conway and Dijkstra.
--- PreviousEra DijkstraEra = ConwayEra, so this upgrades UTxO ConwayEra → UTxO DijkstraEra.
 instance Upgrade UTxO DijkstraEra where
     type Upgraded UTxO = UTxO
-    upgrade (UTxO m) = force $ UTxO $ unsafeCoerce m
+    upgrade = force . UTxO . fmap upgrade . unUTxO
 
 ----------
 -- Tx
