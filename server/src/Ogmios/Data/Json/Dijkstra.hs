@@ -44,7 +44,7 @@ import Ouroboros.Consensus.Shelley.Protocol.Praos
 import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Block as Ledger
-import qualified Cardano.Ledger.Core as Ledger
+import qualified Cardano.Ledger.Core as Ledger.Core
 import qualified Cardano.Ledger.HKD as Ledger
 
 import qualified Cardano.Ledger.Alonzo.PParams as Al
@@ -59,10 +59,10 @@ import qualified Cardano.Ledger.Conway.Governance as Cn
 import qualified Cardano.Ledger.Conway.TxInfo as Cn
 
 import qualified Cardano.Ledger.Dijkstra.Governance ()
-import qualified Cardano.Ledger.Dijkstra.PParams as Dp
-import qualified Cardano.Ledger.Dijkstra.Scripts as Dp
-import qualified Cardano.Ledger.Dijkstra.TxCert as Dp
-import qualified Cardano.Ledger.Dijkstra.TxInfo as Dp
+import qualified Cardano.Ledger.Dijkstra.PParams as Di
+import qualified Cardano.Ledger.Dijkstra.Scripts as Di
+import qualified Cardano.Ledger.Dijkstra.TxCert as Di
+import qualified Cardano.Ledger.Dijkstra.TxInfo as Di
 
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 import qualified Data.Map.Strict as Map
@@ -88,14 +88,14 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           Babbage.encodeHeader blkHeader
         <>
-          "transactions" .= encodeFoldable (encodeTx opts) (txs ^. Ledger.txSeqBlockBodyL)
+          "transactions" .= encodeFoldable (encodeTx opts) (txs ^. Ledger.Core.txSeqBlockBodyL)
         )
 
 -- | Encode a Dijkstra transaction by converting to Conway via CBOR roundtrip.
 -- Dijkstra and Conway share the same CBOR wire format, so this is safe.
 encodeTx
     :: (MetadataFormat, IncludeCbor)
-    -> Ledger.Tx Ledger.TopTx DijkstraEra
+    -> Ledger.Core.Tx Ledger.Core.TopTx DijkstraEra
     -> Json
 encodeTx opts x =
     case dijkstraToConwayTx x of
@@ -103,42 +103,42 @@ encodeTx opts x =
         Right conwayTx -> Conway.encodeTx opts conwayTx
 
 dijkstraToConwayTx
-    :: Ledger.Tx Ledger.TopTx DijkstraEra
-    -> Either Binary.DecoderError (Ledger.Tx Ledger.TopTx ConwayEra)
+    :: Ledger.Core.Tx Ledger.Core.TopTx DijkstraEra
+    -> Either Binary.DecoderError (Ledger.Core.Tx Ledger.Core.TopTx ConwayEra)
 dijkstraToConwayTx tx =
-    let bytes = Binary.serialize (Ledger.eraProtVerHigh @DijkstraEra) tx
+    let bytes = Binary.serialize (Ledger.Core.eraProtVerHigh @DijkstraEra) tx
      in Binary.decodeFullAnnotator
-            (Ledger.eraProtVerHigh @ConwayEra)
+            (Ledger.Core.eraProtVerHigh @ConwayEra)
             "Tx"
             Binary.decCBOR
             bytes
 
 encodeNativeScript
-    :: Dp.DijkstraNativeScript DijkstraEra
+    :: Di.DijkstraNativeScript DijkstraEra
     -> Json
 encodeNativeScript ns = encodeObject (go (getMemoRawType ns))
   where
     go = \case
-        Dp.DijkstraRequireSignature sig ->
+        Di.DijkstraRequireSignature sig ->
             "clause" .= encodeText "signature" <>
             "from" .= Shelley.encodeKeyHash sig
-        Dp.DijkstraRequireAllOf xs ->
+        Di.DijkstraRequireAllOf xs ->
             "clause" .= encodeText "all" <>
             "from" .= encodeFoldable encodeNativeScript xs
-        Dp.DijkstraRequireAnyOf xs ->
+        Di.DijkstraRequireAnyOf xs ->
             "clause" .= encodeText "any" <>
             "from" .= encodeFoldable encodeNativeScript xs
-        Dp.DijkstraRequireMOf n xs ->
+        Di.DijkstraRequireMOf n xs ->
             "clause" .= encodeText "some" <>
             "atLeast" .= encodeInteger (toInteger n) <>
             "from" .= encodeFoldable encodeNativeScript xs
-        Dp.DijkstraTimeStart s ->
+        Di.DijkstraTimeStart s ->
             "clause" .= encodeText "after" <>
             "slot" .= encodeSlotNo s
-        Dp.DijkstraTimeExpire s ->
+        Di.DijkstraTimeExpire s ->
             "clause" .= encodeText "before" <>
             "slot" .= encodeSlotNo s
-        Dp.DijkstraRequireGuard cred ->
+        Di.DijkstraRequireGuard cred ->
             "clause" .= encodeText "guard" <>
             "from" .= Shelley.encodeCredentialRaw cred
 
@@ -154,14 +154,14 @@ encodeScript opts = encodeObject . \case
             encodeNativeScript nativeScript <>
         if includeScriptCbor opts then
             "cbor" .=
-                encodeByteStringBase16 (Ledger.originalBytes nativeScript)
+                encodeByteStringBase16 (Ledger.Core.originalBytes nativeScript)
         else
             mempty
     Al.PlutusScript script ->
         "language" .=
             encodeText (Alonzo.stringifyLanguage (Al.plutusScriptLanguage script)) <>
         "cbor" .=
-            encodeByteStringBase16 (Ledger.originalBytes (Al.plutusScriptBinary script))
+            encodeByteStringBase16 (Ledger.Core.originalBytes (Al.plutusScriptBinary script))
 
 encodeTxOut
     :: IncludeCbor
@@ -184,30 +184,30 @@ encodeTxOut opts (Ba.BabbageTxOut addr value datum script) =
         (encodeScript opts) script
 
 encodeDelegCert
-    :: Dp.DijkstraDelegCert
+    :: Di.DijkstraDelegCert
     -> NonEmpty Series
 encodeDelegCert = \case
-    Dp.DijkstraRegCert credential deposit ->
+    Di.DijkstraRegCert credential deposit ->
         ( "type" .=
             encodeText "stakeCredentialRegistration"
        <> "credential" `Shelley.encodeCredential` credential
        <> "deposit" .=
             encodeCoin deposit
         ) :| []
-    Dp.DijkstraUnRegCert credential deposit ->
+    Di.DijkstraUnRegCert credential deposit ->
         ( "type" .=
             encodeText "stakeCredentialDeregistration"
         <> "credential" `Shelley.encodeCredential` credential
         <> "deposit" .=
             encodeCoin deposit
         ) :| []
-    Dp.DijkstraDelegCert credential delegatee ->
+    Di.DijkstraDelegCert credential delegatee ->
         ( "type" .=
             encodeText "stakeDelegation"
         <> "credential" `Shelley.encodeCredential` credential
         <> Conway.encodeDelegatee delegatee
         ) :| []
-    Dp.DijkstraRegDelegCert credential delegatee deposit ->
+    Di.DijkstraRegDelegCert credential delegatee deposit ->
         ( "type" .=
             encodeText "stakeCredentialRegistration"
        <> "credential" `Shelley.encodeCredential` credential
@@ -221,43 +221,43 @@ encodeDelegCert = \case
         ]
 
 encodeTxCert
-    :: Dp.DijkstraTxCert DijkstraEra
+    :: Di.DijkstraTxCert DijkstraEra
     -> NonEmpty Series
 encodeTxCert = \case
-    Dp.DijkstraTxCertDeleg dCert ->
+    Di.DijkstraTxCertDeleg dCert ->
         encodeDelegCert dCert
-    Dp.DijkstraTxCertPool pCert ->
+    Di.DijkstraTxCertPool pCert ->
         Shelley.encodePoolCert pCert :| []
-    Dp.DijkstraTxCertGov cCert ->
+    Di.DijkstraTxCertGov cCert ->
         Conway.encodeConwayGovCert cCert :| []
 
 encodeScriptPurposeIndex
-    :: Dp.DijkstraPlutusPurpose AsIx DijkstraEra
+    :: Di.DijkstraPlutusPurpose AsIx DijkstraEra
     -> Json
 encodeScriptPurposeIndex = \case
-    Dp.DijkstraSpending ix ->
+    Di.DijkstraSpending ix ->
         translate (Al.AlonzoSpending ix)
-    Dp.DijkstraMinting ix ->
+    Di.DijkstraMinting ix ->
         translate (Al.AlonzoMinting ix)
-    Dp.DijkstraCertifying (AsIx (AsIx -> ix)) ->
+    Di.DijkstraCertifying (AsIx (AsIx -> ix)) ->
         translate (Al.AlonzoCertifying ix)
-    Dp.DijkstraRewarding ix ->
+    Di.DijkstraRewarding ix ->
         translate (Al.AlonzoRewarding ix)
-    Dp.DijkstraVoting (AsIx ix) ->
+    Di.DijkstraVoting (AsIx ix) ->
         encodeObject
             ( "index" .=
                 encodeWord32 ix
            <> "purpose" .=
                 encodeText "vote"
             )
-    Dp.DijkstraProposing (AsIx ix) ->
+    Di.DijkstraProposing (AsIx ix) ->
         encodeObject
             ( "index" .=
                 encodeWord32 ix
            <> "purpose" .=
                 encodeText "propose"
             )
-    Dp.DijkstraGuarding (AsIx ix) ->
+    Di.DijkstraGuarding (AsIx ix) ->
         encodeObject
             ( "index" .=
                 encodeWord32 ix
@@ -268,25 +268,25 @@ encodeScriptPurposeIndex = \case
     translate = Alonzo.encodeScriptPurposeIndex @AlonzoEra
 
 encodeScriptPurposeItem
-    :: Dp.DijkstraPlutusPurpose AsItem DijkstraEra
+    :: Di.DijkstraPlutusPurpose AsItem DijkstraEra
     -> Json
 encodeScriptPurposeItem = encodeObject . \case
-    Dp.DijkstraSpending (AsItem txIn) ->
+    Di.DijkstraSpending (AsItem txIn) ->
         "purpose" .= encodeText "spend" <>
         "outputReference" .= encodeObject (Shelley.encodeTxIn txIn)
-    Dp.DijkstraMinting (AsItem policyId) ->
+    Di.DijkstraMinting (AsItem policyId) ->
         "purpose" .= encodeText "mint" <>
         "policy" .= Mary.encodePolicyId policyId
-    Dp.DijkstraRewarding (AsItem acct) ->
+    Di.DijkstraRewarding (AsItem acct) ->
         "purpose" .= encodeText "withdraw" <>
         "rewardAccount" .= Shelley.encodeRewardAcnt acct
-    Dp.DijkstraVoting (AsItem voter) ->
+    Di.DijkstraVoting (AsItem voter) ->
         "purpose" .= encodeText "vote" <>
         "issuer" .= Conway.encodeVoter voter
-    Dp.DijkstraProposing (AsItem proposal) ->
+    Di.DijkstraProposing (AsItem proposal) ->
         "purpose" .= encodeText "propose" <>
         "proposal" .= encodeObject (encodeProposalProcedure proposal)
-    Dp.DijkstraCertifying (AsItem cert) ->
+    Di.DijkstraCertifying (AsItem cert) ->
         case encodeTxCert cert of
             c :| [] ->
                 "purpose" .= encodeText "publish" <>
@@ -294,7 +294,7 @@ encodeScriptPurposeItem = encodeObject . \case
             _ :| (c : _) ->
                 "purpose" .= encodeText "publish" <>
                 "certificate" .= encodeObject c
-    Dp.DijkstraGuarding (AsItem scriptHash) ->
+    Di.DijkstraGuarding (AsItem scriptHash) ->
         "purpose" .= encodeText "guard" <>
         "script" .= Shelley.encodeScriptHash scriptHash
 
@@ -381,96 +381,96 @@ encodeGovAction = \case
             )
 
 encodePParamsUpdate
-    :: Ledger.PParamsUpdate DijkstraEra
+    :: Ledger.Core.PParamsUpdate DijkstraEra
     -> Json
-encodePParamsUpdate (Ledger.PParamsUpdate x) =
+encodePParamsUpdate (Ledger.Core.PParamsUpdate x) =
     encodePParamsHKD (\k enc v -> k .=? OmitWhenNothing enc v) (const SNothing) x
 
 encodePParamsHKD
     :: forall f era. (HKDFunctor f)
     => (forall a. Text -> (a -> Json) -> Ledger.HKD f a -> Series)
     -> (forall a. a -> Ledger.HKD f a)
-    -> Dp.DijkstraPParams f era
+    -> Di.DijkstraPParams f era
     -> Json
 encodePParamsHKD encode pure_ x =
     encode "minFeeCoefficient"
-        (encodeInteger . unCoin . fromCompact . Ba.unCoinPerByte) (unTHKD (Dp.dppTxFeePerByte x)) <>
+        (encodeInteger . unCoin . fromCompact . Ba.unCoinPerByte) (unTHKD (Di.dppTxFeePerByte x)) <>
     encode "minFeeConstant"
-        (encodeCoin . fromCompact) (unTHKD (Dp.dppTxFeeFixed x)) <>
+        (encodeCoin . fromCompact) (unTHKD (Di.dppTxFeeFixed x)) <>
     encode "minFeeReferenceScripts"
         (\(base :: NonNegativeInterval) -> encodeObject
             ( "base" .= encodeDouble (fromRational (unboundRational base))
             )
         )
-        (unTHKD (Dp.dppMinFeeRefScriptCostPerByte x)) <>
+        (unTHKD (Di.dppMinFeeRefScriptCostPerByte x)) <>
     encode "refScriptCostStride"
         (encodeNonZero encodeWord32)
-        (unTHKD (Dp.dppRefScriptCostStride x)) <>
+        (unTHKD (Di.dppRefScriptCostStride x)) <>
     encode "refScriptCostMultiplier"
         (\(v :: PositiveInterval) -> encodeRational (unboundRational v))
-        (unTHKD (Dp.dppRefScriptCostMultiplier x)) <>
+        (unTHKD (Di.dppRefScriptCostMultiplier x)) <>
     encode "maxBlockBodySize"
-        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Dp.dppMaxBBSize x)) <>
+        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxBBSize x)) <>
     encode "maxBlockHeaderSize"
-        (encodeSingleton "bytes" . encodeWord16) (unTHKD (Dp.dppMaxBHSize x)) <>
+        (encodeSingleton "bytes" . encodeWord16) (unTHKD (Di.dppMaxBHSize x)) <>
     encode "maxTransactionSize"
-        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Dp.dppMaxTxSize x)) <>
+        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxTxSize x)) <>
     encode "maxReferenceScriptSizePerBlock"
-        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Dp.dppMaxRefScriptSizePerBlock x)) <>
+        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxRefScriptSizePerBlock x)) <>
     encode "maxReferenceScriptSizePerTx"
-        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Dp.dppMaxRefScriptSizePerTx x)) <>
+        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxRefScriptSizePerTx x)) <>
     encode "stakeCredentialDeposit"
-        (encodeCoin . fromCompact) (unTHKD (Dp.dppKeyDeposit x)) <>
+        (encodeCoin . fromCompact) (unTHKD (Di.dppKeyDeposit x)) <>
     encode "stakePoolDeposit"
-        (encodeCoin . fromCompact) (unTHKD (Dp.dppPoolDeposit x)) <>
+        (encodeCoin . fromCompact) (unTHKD (Di.dppPoolDeposit x)) <>
     encode "stakePoolRetirementEpochBound"
-        encodeEpochInterval (unTHKD (Dp.dppEMax x)) <>
+        encodeEpochInterval (unTHKD (Di.dppEMax x)) <>
     encode "desiredNumberOfStakePools"
-        encodeWord16 (unTHKD (Dp.dppNOpt x)) <>
+        encodeWord16 (unTHKD (Di.dppNOpt x)) <>
     encode "stakePoolPledgeInfluence"
-        encodeNonNegativeInterval (unTHKD (Dp.dppA0 x)) <>
+        encodeNonNegativeInterval (unTHKD (Di.dppA0 x)) <>
     encode "monetaryExpansion"
-        encodeUnitInterval (unTHKD (Dp.dppRho x)) <>
+        encodeUnitInterval (unTHKD (Di.dppRho x)) <>
     encode "treasuryExpansion"
-        encodeUnitInterval (unTHKD (Dp.dppTau x)) <>
+        encodeUnitInterval (unTHKD (Di.dppTau x)) <>
     encode "minStakePoolCost"
-        (encodeCoin . fromCompact) (unTHKD (Dp.dppMinPoolCost x)) <>
+        (encodeCoin . fromCompact) (unTHKD (Di.dppMinPoolCost x)) <>
     encode "minUtxoDepositConstant"
         encodeCoin (pure_ (Coin 0)) <>
     encode "minUtxoDepositCoefficient"
-        (encodeInteger . unCoin . fromCompact . Ba.unCoinPerByte) (unTHKD (Dp.dppCoinsPerUTxOByte x)) <>
+        (encodeInteger . unCoin . fromCompact . Ba.unCoinPerByte) (unTHKD (Di.dppCoinsPerUTxOByte x)) <>
     encode "plutusCostModels"
-        Alonzo.encodeCostModels (unTHKD (Dp.dppCostModels x)) <>
+        Alonzo.encodeCostModels (unTHKD (Di.dppCostModels x)) <>
     encode "scriptExecutionPrices"
-        Alonzo.encodePrices (unTHKD (Dp.dppPrices x)) <>
+        Alonzo.encodePrices (unTHKD (Di.dppPrices x)) <>
     encode "maxExecutionUnitsPerTransaction"
-        (Alonzo.encodeExUnits . Al.unOrdExUnits) (unTHKD (Dp.dppMaxTxExUnits x)) <>
+        (Alonzo.encodeExUnits . Al.unOrdExUnits) (unTHKD (Di.dppMaxTxExUnits x)) <>
     encode "maxExecutionUnitsPerBlock"
-        (Alonzo.encodeExUnits . Al.unOrdExUnits) (unTHKD (Dp.dppMaxBlockExUnits x)) <>
+        (Alonzo.encodeExUnits . Al.unOrdExUnits) (unTHKD (Di.dppMaxBlockExUnits x)) <>
     encode "maxValueSize"
-        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Dp.dppMaxValSize x)) <>
+        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxValSize x)) <>
     encode "collateralPercentage"
-        encodeWord16 (unTHKD (Dp.dppCollateralPercentage x)) <>
+        encodeWord16 (unTHKD (Di.dppCollateralPercentage x)) <>
     encode "maxCollateralInputs"
-        encodeWord16 (unTHKD (Dp.dppMaxCollateralInputs x)) <>
+        encodeWord16 (unTHKD (Di.dppMaxCollateralInputs x)) <>
     encode "version"
-        Shelley.encodeProtVer (fromNoUpdate @f @ProtVer (Dp.dppProtocolVersion x)) <>
+        Shelley.encodeProtVer (fromNoUpdate @f @ProtVer (Di.dppProtocolVersion x)) <>
     encode "stakePoolVotingThresholds"
-        Conway.encodePoolVotingThresholds (unTHKD (Dp.dppPoolVotingThresholds x)) <>
+        Conway.encodePoolVotingThresholds (unTHKD (Di.dppPoolVotingThresholds x)) <>
     encode "delegateRepresentativeVotingThresholds"
-        Conway.encodeDRepVotingThresholds (unTHKD (Dp.dppDRepVotingThresholds x)) <>
+        Conway.encodeDRepVotingThresholds (unTHKD (Di.dppDRepVotingThresholds x)) <>
     encode "constitutionalCommitteeMinSize"
-        encodeWord16 (unTHKD (Dp.dppCommitteeMinSize x)) <>
+        encodeWord16 (unTHKD (Di.dppCommitteeMinSize x)) <>
     encode "constitutionalCommitteeMaxTermLength"
-        encodeEpochInterval (unTHKD (Dp.dppCommitteeMaxTermLength x)) <>
+        encodeEpochInterval (unTHKD (Di.dppCommitteeMaxTermLength x)) <>
     encode "governanceActionLifetime"
-        encodeEpochInterval (unTHKD (Dp.dppGovActionLifetime x)) <>
+        encodeEpochInterval (unTHKD (Di.dppGovActionLifetime x)) <>
     encode "governanceActionDeposit"
-        (encodeCoin . fromCompact) (unTHKD (Dp.dppGovActionDeposit x)) <>
+        (encodeCoin . fromCompact) (unTHKD (Di.dppGovActionDeposit x)) <>
     encode "delegateRepresentativeDeposit"
-        (encodeCoin . fromCompact) (unTHKD (Dp.dppDRepDeposit x)) <>
+        (encodeCoin . fromCompact) (unTHKD (Di.dppDRepDeposit x)) <>
     encode "delegateRepresentativeMaxIdleTime"
-        encodeEpochInterval (unTHKD (Dp.dppDRepActivity x))
+        encodeEpochInterval (unTHKD (Di.dppDRepActivity x))
     & encodeObject
 
 encodeConwayContextError
@@ -502,13 +502,13 @@ encodeConwayContextError err = encodeText $ case err of
     Cn.BabbageContextError (Ba.RedeemerPointerPointsToNothing purpose) ->
         let (title, ptr) =
                 case purpose of
-                    Dp.DijkstraSpending (AsIx ix) -> ("spending input", ix)
-                    Dp.DijkstraMinting (AsIx ix) -> ("minting policy", ix)
-                    Dp.DijkstraCertifying (AsIx ix) -> ("publishing certificate", ix)
-                    Dp.DijkstraRewarding (AsIx ix) -> ("withdrawing from account", ix)
-                    Dp.DijkstraVoting (AsIx ix) -> ("voting as voter", ix)
-                    Dp.DijkstraProposing (AsIx ix) -> ("proposing governance proposal", ix)
-                    Dp.DijkstraGuarding (AsIx ix) -> ("guarding script", ix)
+                    Di.DijkstraSpending (AsIx ix) -> ("spending input", ix)
+                    Di.DijkstraMinting (AsIx ix) -> ("minting policy", ix)
+                    Di.DijkstraCertifying (AsIx ix) -> ("publishing certificate", ix)
+                    Di.DijkstraRewarding (AsIx ix) -> ("withdrawing from account", ix)
+                    Di.DijkstraVoting (AsIx ix) -> ("voting as voter", ix)
+                    Di.DijkstraProposing (AsIx ix) -> ("proposing governance proposal", ix)
+                    Di.DijkstraGuarding (AsIx ix) -> ("guarding script", ix)
           in "Couldn't find corresponding redeemer for " <> title <> " #" <> show ptr <> ". Verify your transaction's construction."
     Cn.BabbageContextError (Ba.AlonzoContextError (Al.TimeTranslationPastHorizon e)) ->
         "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
@@ -518,16 +518,16 @@ encodeConwayContextError err = encodeText $ case err of
         "Reference inputs overlap with regular inputs. They must be disjoint."
 
 encodeContextError
-    :: Dp.DijkstraContextError DijkstraEra
+    :: Di.DijkstraContextError DijkstraEra
     -> Json
 encodeContextError = \case
-    Dp.ConwayContextError err ->
+    Di.ConwayContextError err ->
         encodeConwayContextError err
-    Dp.PointerPresentInOutput{} ->
+    Di.PointerPresentInOutput{} ->
         encodeText "Found outputs with pointer addresses. Those are no longer supported."
 
-encodePParams :: Ledger.PParams DijkstraEra -> Json
-encodePParams (Ledger.PParams x) =
+encodePParams :: Ledger.Core.PParams DijkstraEra -> Json
+encodePParams (Ledger.Core.PParams x) =
     encodePParamsHKD (\k enc v -> k .= enc v) identity x
 
 encodeUtxo :: Sh.UTxO DijkstraEra -> Json
