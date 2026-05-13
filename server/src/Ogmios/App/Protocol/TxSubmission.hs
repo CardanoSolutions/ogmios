@@ -312,7 +312,6 @@ newExecutionUnitsEvaluator
         , MonadClock m
         , block ~ HardForkBlock (CardanoEras crypto)
         , crypto ~ StandardCrypto
-        , CanEvaluateScriptsInEra BabbageEra
         , CanEvaluateScriptsInEra ConwayEra
         , CanEvaluateScriptsInEra DijkstraEra
         , ConvertRawTxId (GenTx (CardanoBlock crypto))
@@ -352,17 +351,11 @@ newExecutionUnitsEvaluator tr = do
                 (_, GenTxAlonzo{}) ->
                     return $ Left (unsupportedEra "alonzo")
 
-                (UTxOInBabbageEra utxo, GenTxBabbage (ShelleyTx _id tx)) -> do
-                    logWith tr $ TxSubmissionEvaluateArguments { utxoEra = "babbage", transactionEra = "babbage" }
-                    return $ Right (SomeEvaluationInAnyEra utxo tx)
+                (_, GenTxBabbage{}) ->
+                    return $ Left (unsupportedEra "babbage")
 
-                (UTxOInBabbageEra utxo, GenTxConway (ShelleyTx _id tx)) -> do
-                    logWith tr $ TxSubmissionEvaluateArguments { utxoEra = "babbage", transactionEra = "conway" }
-                    return $ Right (SomeEvaluationInAnyEra (upgrade utxo) tx)
-
-                (UTxOInConwayEra utxo, GenTxBabbage (ShelleyTx _id tx)) -> do
-                    logWith tr $ TxSubmissionEvaluateArguments { utxoEra = "conway", transactionEra = "babbage" }
-                    return $ Right (SomeEvaluationInAnyEra utxo (upgrade tx))
+                (UTxOInBabbageEra{}, _) ->
+                    return $ Left (unsupportedEra "babbage")
 
                 (UTxOInConwayEra utxo, GenTxConway (ShelleyTx _id tx)) -> do
                     logWith tr $ TxSubmissionEvaluateArguments { utxoEra = "conway", transactionEra = "conway" }
@@ -379,14 +372,6 @@ newExecutionUnitsEvaluator tr = do
                 (UTxOInDijkstraEra utxo, GenTxConway (ShelleyTx _id tx)) -> do
                     logWith tr $ TxSubmissionEvaluateArguments { utxoEra = "dijkstra", transactionEra = "conway" }
                     return $ Right (SomeEvaluationInAnyEra utxo (upgrade tx))
-
-                (UTxOInBabbageEra utxo, GenTxDijkstra (ShelleyTx _id tx)) -> do
-                    logWith tr $ TxSubmissionEvaluateArguments { utxoEra = "babbage", transactionEra = "dijkstra" }
-                    return $ Right (SomeEvaluationInAnyEra (upgrade @UTxO @DijkstraEra (upgrade utxo)) tx)
-
-                (UTxOInDijkstraEra utxo, GenTxBabbage (ShelleyTx _id tx)) -> do
-                    logWith tr $ TxSubmissionEvaluateArguments { utxoEra = "dijkstra", transactionEra = "babbage" }
-                    return $ Right (SomeEvaluationInAnyEra utxo (upgrade @(Tx TopTx) @DijkstraEra (upgrade tx)))
 
             , readMempoolM = do
                 logWith tr TxSubmissionLocalMempoolTryRead
@@ -483,8 +468,6 @@ newExecutionUnitsEvaluator tr = do
                         reply (nodeTipTooOld era)
                         pure $ LSQ.SendMsgRelease clientStIdle
                     )
-                    -- Babbage
-                    (clientStAcquired0 @_ @BabbageEra args evaluateExecutionUnits)
                     -- Conway
                     (clientStAcquired0 @_ @ConwayEra args evaluateExecutionUnits)
                     -- Dijkstra
@@ -582,7 +565,7 @@ type HoistQuery proto era =
         => BlockQuery (ShelleyBlock (proto crypto) era) qf r
         -> BlockQuery (CardanoBlock crypto) qf a
 
--- | Run local-state queries in either Babbage or Conway depending on where the network is at.
+-- | Run local-state queries in either Conway or Dijkstra depending on where the network is at.
 --
 -- This is crucial to allow the server to *dynamically* switch to the right era after the hard-fork.
 selectEra
@@ -591,12 +574,8 @@ selectEra
         , Applicative m
         )
 
-    -- Default selector, when the network era is older than Alonzo and doesn't support Phase-2 scripts.
+    -- Default selector, when the network era is older than Conway and doesn't support Phase-2 scripts.
     => ( Text -> m (LSQ.ClientStAcquired block (Point block) (Query block) m ())
-       )
-
-    -- Selector for the Babbage era.
-    -> ( HoistQuery Praos BabbageEra -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
        )
 
     -- Selector for the Conway era.
@@ -608,7 +587,7 @@ selectEra
        )
 
     -> LSQ.ClientStAcquired block (Point block) (Query block) m ()
-selectEra fallback asBabbage asConway asDijkstra =
+selectEra fallback asConway asDijkstra =
     LSQ.SendMsgQuery (Ledger.BlockQuery $ HF.QueryHardFork HF.GetCurrentEra) $
     LSQ.ClientStQuerying
         { LSQ.recvMsgResult = \case
@@ -617,7 +596,7 @@ selectEra fallback asBabbage asConway asDijkstra =
             EraIndex                (S (S Z{}))     -> fallback "Allegra"
             EraIndex             (S (S (S Z{})))    -> fallback "Mary"
             EraIndex          (S (S (S (S Z{}))))   -> fallback "Alonzo"
-            EraIndex       (S (S (S (S (S Z{})))))  -> pure (asBabbage QueryIfCurrentBabbage)
+            EraIndex       (S (S (S (S (S Z{})))))  -> fallback "Babbage"
             EraIndex    (S (S (S (S (S (S Z{})))))) -> pure (asConway QueryIfCurrentConway)
             EraIndex (S (S (S (S (S (S (S Z{}))))))) -> pure (asDijkstra QueryIfCurrentDijkstra)
         }
@@ -659,9 +638,9 @@ newEvaluateTransactionResponse callback onError (UTxO networkUtxo) args =
         Nothing ->
             error "impossible: arguments are not translatable to network era. \
                   \This can't happen because 'selectEra' enforces that queries \
-                  \are only executed if the network is either in 'Babbage' or \
-                  \'Conway'. The arguments themselves can also only be 'Babbage' \
-                  \or 'Conway'. Thus, we can't reach this point with any other \
+                  \are only executed if the network is either in 'Conway' or \
+                  \'Dijkstra'. The arguments themselves can also only be 'Conway' \
+                  \or 'Dijkstra'. Thus, we can't reach this point with any other \
                   \eras. We _could_ potentially capture this proof in the types \
                   \to convince the compiler of this."
         Just (UTxO userProvidedUtxo, tx) ->
