@@ -710,7 +710,6 @@ translateToNetworkEra (SomeEvaluationInAnyEra utxoOrig txOrig) =
         let
             eraNetwork  = typeRep @eraNetwork
             eraArgs     = typeRep @eraArgs
-            eraBabbage  = typeRep @BabbageEra
             eraConway   = typeRep @ConwayEra
             eraDijkstra = typeRep @DijkstraEra
 
@@ -721,30 +720,14 @@ translateToNetworkEra (SomeEvaluationInAnyEra utxoOrig txOrig) =
                     _ ->
                         Nothing
 
-            babbageToConway =
-                case (testEquality eraNetwork eraConway, testEquality eraArgs eraBabbage) of
-                    (Just Refl, Just Refl) -> do
-                        Just (upgrade utxo, upgrade tx)
-                    _ ->
-                        Nothing
-
             conwayToDijkstra =
                 case (testEquality eraNetwork eraDijkstra, testEquality eraArgs eraConway) of
                     (Just Refl, Just Refl) -> do
                         Just (upgrade utxo, upgrade tx)
                     _ ->
                         Nothing
-
-            babbageToDijkstra =
-                case (testEquality eraNetwork eraDijkstra, testEquality eraArgs eraBabbage) of
-                    (Just Refl, Just Refl) -> do
-                        let utxo' = upgrade @UTxO @ConwayEra utxo
-                            tx' = upgrade @(Tx TopTx) @ConwayEra tx
-                        Just (upgrade utxo', upgrade tx')
-                    _ ->
-                        Nothing
           in
-            sameEra <|> babbageToConway <|> conwayToDijkstra <|> babbageToDijkstra
+            sameEra <|> conwayToDijkstra
 
 --
 -- Logs
