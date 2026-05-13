@@ -1008,6 +1008,25 @@ encodePredicateFailure reject = \case
             \likely discoverd a critical bug..."
             Nothing
 
+    PointerAddressInCollateralReturn { pointerAddressOutput } ->
+        reject (predicateFailureCode 69)
+            "The collateral return output contains a pointer address. Pointer addresses — \
+            \which encode a stake reference as (slot, transaction-index, certificate-index) — \
+            \are not permitted in collateral return outputs in the Dijkstra era. The field \
+            \'data.output' describes the offending collateral return output."
+            (pure $ encodeObject
+                ( "output" .= encodeTxOutInAnyEra pointerAddressOutput
+                )
+            )
+
+    SpendingOutputFromSubTransaction ->
+        reject (predicateFailureCode 70)
+            "The transaction attempts to spend outputs that were created by its own \
+            \sub-transactions. A transaction — or any of its sub-transactions — cannot spend \
+            \outputs produced by a sub-transaction within the same top-level transaction, as \
+            \this would create a circular dependency."
+            Nothing
+
 encodeTagMismatchDescription :: TagMismatchDescription -> Json
 encodeTagMismatchDescription = encodeText . \case
     PassedUnexpectedly ->

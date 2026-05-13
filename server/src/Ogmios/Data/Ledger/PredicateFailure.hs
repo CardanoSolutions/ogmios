@@ -547,6 +547,20 @@ data MultiEraPredicateFailure
     -- modeled.
     | UnrecognizedCertificateType
 
+    ---------------------------------------------------------------------------
+    -- Rule → Dijkstra-specific
+    ---------------------------------------------------------------------------
+
+    -- A collateral return output contains a pointer address, which is not
+    -- allowed in Dijkstra.
+    | PointerAddressInCollateralReturn
+        { pointerAddressOutput :: TxOutInAnyEra
+        }
+
+    -- A transaction attempts to spend outputs produced by its own
+    -- sub-transactions, which creates a circular dependency.
+    | SpendingOutputFromSubTransaction
+
 
 -- | Return the most relevant ledger rule from a list of errors. What does 'most
 -- relevant' means -> some errors can actually be responsible for other errors
@@ -657,3 +671,6 @@ predicateFailurePriority = \case
 
     ValueNotConserved{} -> 20
     ValidationTagMismatch{} -> 20
+
+    PointerAddressInCollateralReturn{} -> 2
+    SpendingOutputFromSubTransaction{} -> 2

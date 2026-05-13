@@ -50,7 +50,6 @@ import Cardano.Ledger.Binary
 import Ouroboros.Consensus.Shelley.Ledger.Mempool
     ( ApplyTxError (..)
     )
-import Unsafe.Coerce (unsafeCoerce)
 import Cardano.Network.Protocol.NodeToClient
     ( GenTx
     , GenTxId
@@ -127,6 +126,7 @@ import qualified Ogmios.Data.Ledger.PredicateFailure.Allegra as Allegra
 import qualified Ogmios.Data.Ledger.PredicateFailure.Alonzo as Alonzo
 import qualified Ogmios.Data.Ledger.PredicateFailure.Babbage as Babbage
 import qualified Ogmios.Data.Ledger.PredicateFailure.Conway as Conway
+import qualified Ogmios.Data.Ledger.PredicateFailure.Dijkstra as Dijkstra
 import qualified Ogmios.Data.Ledger.PredicateFailure.Mary as Mary
 import qualified Ogmios.Data.Ledger.PredicateFailure.Shelley as Shelley
 
@@ -188,7 +188,7 @@ encodeSubmitTransactionError reject = \case
             (pure $ encodeEraMismatch e)
     ApplyTxErrDijkstra (DijkstraApplyTxError xs) ->
         (encodePredicateFailure reject . pickPredicateFailure)
-            (Conway.encodeLedgerFailure . unsafeCoerce <$> xs)
+            (Dijkstra.encodeMempoolFailure <$> xs)
     ApplyTxErrConway (ConwayApplyTxError xs) ->
         (encodePredicateFailure reject . pickPredicateFailure)
             (Conway.encodeLedgerFailure <$> xs)

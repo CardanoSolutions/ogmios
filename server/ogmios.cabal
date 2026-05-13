@@ -79,6 +79,7 @@ library
       Ogmios.Data.Ledger.PredicateFailure.Alonzo
       Ogmios.Data.Ledger.PredicateFailure.Babbage
       Ogmios.Data.Ledger.PredicateFailure.Conway
+      Ogmios.Data.Ledger.PredicateFailure.Dijkstra
       Ogmios.Data.Ledger.PredicateFailure.Mary
       Ogmios.Data.Ledger.PredicateFailure.Shelley
       Ogmios.Data.Ledger.Rewards
@@ -159,6 +160,7 @@ library
     , cardano-ledger-binary
     , cardano-ledger-byron
     , cardano-ledger-conway
+    , cardano-ledger-dijkstra
     , cardano-ledger-core
     , cardano-ledger-mary
     , cardano-ledger-shelley
