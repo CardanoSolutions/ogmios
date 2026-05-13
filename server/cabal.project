@@ -89,8 +89,3 @@ package text
 -- of the offending c++ dependencies)
 package formatting
   flags: +no-double-conversion
-
--- NOTE: GetDRepDelegations query and associated patches are now upstream
--- in cardano-node 11.0.1 (ouroboros-consensus 3.0.1, cardano-ledger-conway >= 1.22.1).
--- The previous source-repository-package patches for cardano-ledger,
--- ouroboros-network, and ouroboros-consensus have been removed.
