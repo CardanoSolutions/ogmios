@@ -58,10 +58,15 @@ import qualified Cardano.Ledger.Babbage.TxInfo as Ba
 import qualified Cardano.Ledger.Conway.Governance as Cn
 import qualified Cardano.Ledger.Conway.TxInfo as Cn
 
+import qualified Cardano.Ledger.Dijkstra.Governance ()
 import qualified Cardano.Ledger.Dijkstra.PParams as Dp
 import qualified Cardano.Ledger.Dijkstra.Scripts as Dp
 import qualified Cardano.Ledger.Dijkstra.TxCert as Dp
 import qualified Cardano.Ledger.Dijkstra.TxInfo as Dp
+
+import qualified Cardano.Ledger.Shelley.UTxO as Sh
+import qualified Data.Map.Strict as Map
+import qualified Data.OMap.Strict as OMap
 
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -520,3 +525,38 @@ encodeContextError = \case
         encodeConwayContextError err
     Dp.PointerPresentInOutput{} ->
         encodeText "Found outputs with pointer addresses. Those are no longer supported."
+
+encodePParams :: Ledger.PParams DijkstraEra -> Json
+encodePParams (Ledger.PParams x) =
+    encodePParamsHKD (\k enc v -> k .= enc v) identity x
+
+encodeUtxo :: Sh.UTxO DijkstraEra -> Json
+encodeUtxo =
+    encodeList id
+    . Map.foldrWithKey (\i o -> (:) (encodeObject (Shelley.encodeTxIn i <> encodeTxOut includeAllCbor o))) []
+    . Sh.unUTxO
+
+encodeGovActionState :: Cn.GovActionState DijkstraEra -> Json
+encodeGovActionState st =
+      "proposal" .= Conway.encodeGovActionId (Cn.gasId st)
+   <> encodeProposalProcedure (Cn.gasProposalProcedure st)
+   <> "since" .= (encodeSingleton "epoch" . encodeEpochNo) (Cn.gasProposedIn st)
+   <> "until" .= (encodeSingleton "epoch" . encodeEpochNo) (Cn.gasExpiresAfter st)
+   <> "votes" .= encodeMapAsList
+        (\issuer vote -> encodeObject
+            ( "issuer" .= Conway.encodeVoter issuer
+           <> "vote" .= Conway.encodeVote vote
+            )
+        )
+        (mconcat
+            [ Map.mapKeys Cn.CommitteeVoter (Cn.gasCommitteeVotes st)
+            , Map.mapKeys Cn.DRepVoter (Cn.gasDRepVotes st)
+            , Map.mapKeys Cn.StakePoolVoter (Cn.gasStakePoolVotes st)
+            ]
+        )
+    & encodeObject
+
+govProposals
+    :: Ledger.GovState DijkstraEra
+    -> OMap.OMap Cn.GovActionId (Cn.GovActionState DijkstraEra)
+govProposals = view Cn.pPropsL . Cn.cgsProposals

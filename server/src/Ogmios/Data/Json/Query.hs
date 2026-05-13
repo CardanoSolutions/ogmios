@@ -199,9 +199,6 @@ import Ogmios.Data.Ledger.Rewards
     , RewardsProvenance (..)
     , newRewardsProvenance
     )
-import Unsafe.Coerce
-    ( unsafeCoerce
-    )
 import Ouroboros.Consensus.BlockchainTime
     ( SystemStart (..)
     )
@@ -332,6 +329,7 @@ import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
 import qualified Ogmios.Data.Json.Byron as Byron
 import qualified Ogmios.Data.Json.Conway as Conway
+import qualified Ogmios.Data.Json.Dijkstra as Dijkstra
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
@@ -1704,7 +1702,7 @@ parseQueryLedgerProtocolParameters genResultInEra =
             SomeShelleyEra ShelleyBasedEraDijkstra ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentDijkstra GetCurrentPParams))
-                    (eraMismatchOrResult (Conway.encodePParams . (unsafeCoerce :: Ledger.PParams DijkstraEra -> Ledger.PParams ConwayEra)))
+                    (eraMismatchOrResult Dijkstra.encodePParams)
                     (genResultInEra (Proxy @DijkstraEra))
 
 parseQueryLedgerGovernanceProposals
@@ -1740,10 +1738,8 @@ parseQueryLedgerGovernanceProposals genResultInEra =
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery $ QueryIfCurrentDijkstra GetGovState)
                     (eraMismatchOrResult
-                        (encodeFoldable encodeGovActionState
-                            . view Ledger.Conway.pPropsL
-                            . Ledger.Conway.cgsProposals
-                            . (unsafeCoerce :: Ledger.GovState DijkstraEra -> Ledger.GovState ConwayEra)
+                        (encodeFoldable Dijkstra.encodeGovActionState
+                            . Dijkstra.govProposals
                         )
                     )
                     (genResultInEra (Proxy @DijkstraEra))
@@ -1784,12 +1780,10 @@ parseQueryLedgerGovernanceProposalsByProposalReference genResultInEra =
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery $ QueryIfCurrentDijkstra GetGovState)
                     (eraMismatchOrResult
-                        (encodeFoldable encodeGovActionState
+                        (encodeFoldable Dijkstra.encodeGovActionState
                             . (`Map.restrictKeys` ks)
                             . OMap.toMap
-                            . view Ledger.Conway.pPropsL
-                            . Ledger.Conway.cgsProposals
-                            . (unsafeCoerce :: Ledger.GovState DijkstraEra -> Ledger.GovState ConwayEra)
+                            . Dijkstra.govProposals
                         )
                     )
                     (genResultInEra (Proxy @DijkstraEra))
@@ -1869,7 +1863,7 @@ parseQueryLedgerUtxo genResultInEra =
             SomeShelleyEra ShelleyBasedEraDijkstra ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentDijkstra GetUTxOWhole))
-                    (eraMismatchOrResult (Babbage.encodeUtxo . (unsafeCoerce :: Sh.UTxO DijkstraEra -> Sh.UTxO ConwayEra)))
+                    (eraMismatchOrResult Dijkstra.encodeUtxo)
                     (genResultInEra (Proxy @DijkstraEra))
 
 parseQueryLedgerUtxoByAddress
@@ -1915,7 +1909,7 @@ parseQueryLedgerUtxoByAddress genResultInEra =
             SomeShelleyEra ShelleyBasedEraDijkstra ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery (QueryIfCurrentDijkstra (GetUTxOByAddress addrs)))
-                    (eraMismatchOrResult (Babbage.encodeUtxo . (unsafeCoerce :: Sh.UTxO DijkstraEra -> Sh.UTxO ConwayEra)))
+                    (eraMismatchOrResult Dijkstra.encodeUtxo)
                     (genResultInEra (Proxy @DijkstraEra))
 
 parseQueryLedgerUtxoByOutputReference
@@ -1961,7 +1955,7 @@ parseQueryLedgerUtxoByOutputReference genResultInEra =
             SomeShelleyEra ShelleyBasedEraDijkstra ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery $ QueryIfCurrentDijkstra (GetUTxOByTxIn ins))
-                    (eraMismatchOrResult (Babbage.encodeUtxo . (unsafeCoerce :: Sh.UTxO DijkstraEra -> Sh.UTxO ConwayEra)))
+                    (eraMismatchOrResult Dijkstra.encodeUtxo)
                     (genResultInEra (Proxy @DijkstraEra))
 
 parseQueryNetworkGenesisConfiguration
